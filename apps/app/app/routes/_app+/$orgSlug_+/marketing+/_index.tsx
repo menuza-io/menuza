@@ -11,6 +11,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from '@repo/ui/item'
+import { PageHeader } from '@repo/ui/page-header'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
@@ -139,14 +140,12 @@ export default function MarketingOverview() {
 
 	return (
 		<div className="space-y-8">
-			<header className="space-y-1">
-				<h1 className="text-2xl font-semibold tracking-tight">
-					{_(msg`Marketing`)}
-				</h1>
-				<p className="text-muted-foreground text-sm">
-					{_(msg`Broadcasts, automations, and performance at a glance.`)}
-				</p>
-			</header>
+			<PageHeader
+				title={_(msg`Marketing`)}
+				description={_(
+					msg`Broadcasts, automations, and performance at a glance.`,
+				)}
+			/>
 
 			<ItemGroup className="grid gap-3 sm:grid-cols-2">
 				{quickLinks.map((item) => (

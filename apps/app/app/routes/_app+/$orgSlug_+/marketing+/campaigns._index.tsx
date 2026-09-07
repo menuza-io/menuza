@@ -14,6 +14,7 @@ import {
 	ItemGroup,
 	ItemTitle,
 } from '@repo/ui/item'
+import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
@@ -68,23 +69,19 @@ export default function CampaignsIndexRoute() {
 
 	return (
 		<div className="space-y-8">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-				<header className="space-y-1">
-					<h1 className="text-2xl font-semibold tracking-tight">
-						{_(msg`Broadcasts`)}
-					</h1>
-					<p className="text-muted-foreground text-sm">
-						{_(msg`One-time email and SMS campaigns.`)}
-					</p>
-				</header>
-				<Button
-					render={<Link to={`/${orgSlug}/marketing/campaigns/new`} />}
-					className="shrink-0 gap-2"
-				>
-					<Icon name="plus" className="size-4" />
-					{_(msg`New broadcast`)}
-				</Button>
-			</div>
+			<PageHeader
+				title={_(msg`Broadcasts`)}
+				description={_(msg`One-time email and SMS campaigns.`)}
+				actions={
+					<Button
+						render={<Link to={`/${orgSlug}/marketing/campaigns/new`} />}
+						className="shrink-0 gap-2"
+					>
+						<Icon name="plus" className="size-4" />
+						{_(msg`New broadcast`)}
+					</Button>
+				}
+			/>
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="relative max-w-sm flex-1">

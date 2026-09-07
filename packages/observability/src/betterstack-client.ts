@@ -19,6 +19,15 @@ export async function getUptimeStatus(
 	apiKey: string,
 	statusPageUrl?: string,
 ): Promise<StatusInfo> {
+	if (!apiKey) {
+		return {
+			status: 'degraded',
+			message: 'Unable to fetch status',
+			upMonitors: 0,
+			totalMonitors: 0,
+		}
+	}
+
 	const cacheKey = `status:${apiKey}:${statusPageUrl || 'default'}`
 
 	// Check cache first

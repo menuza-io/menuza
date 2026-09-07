@@ -20,7 +20,7 @@ import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { PageTitle } from '@repo/ui/page-title'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Sheet,
 	SheetContent,
@@ -415,15 +415,13 @@ export default function CustomersRoute() {
 	}
 
 	return (
-		<div className="py-8 md:p-8">
-			<div className="mb-8">
-				<PageTitle
-					title="Customers"
-					description="Search, filter, and update customer contact details."
-				/>
-			</div>
+		<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
+			<PageHeader
+				title="Customers"
+				description="Search, filter, and update customer contact details."
+			/>
 
-			<div className="space-y-6">
+			<div className="mt-8 space-y-6">
 				<Filters
 					fields={CUSTOMER_FILTER_FIELDS}
 					query={filterQuery}

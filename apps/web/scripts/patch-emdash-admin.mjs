@@ -43,6 +43,93 @@ const MARKDOWN_INPUT_CASE = `case "markdown_input": {
 		}
 		`
 
+const MENU_DESCRIPTION_MARKER =
+	'message: "Short summary shown below the menu label"'
+
+function patchMenuItemDescriptions(code) {
+	if (code.includes(MENU_DESCRIPTION_MARKER)) return code
+
+	const replacements = [
+		[
+			`const targetVal = formData.get("target");
+		createMutation.mutate({`,
+			`const targetVal = formData.get("target");
+		const titleAttrVal = formData.get("titleAttr");
+		createMutation.mutate({`,
+		],
+		[
+			`target: (typeof targetVal === "string" ? targetVal : "") || void 0
+		});`,
+			`target: (typeof targetVal === "string" ? targetVal : "") || void 0,
+			titleAttr: (typeof titleAttrVal === "string" ? titleAttrVal.trim() : "") || void 0
+		});`,
+		],
+		[
+			`const uTargetVal = formData.get("target");
+		const uParentIdVal = formData.get("parentId");`,
+			`const uTargetVal = formData.get("target");
+		const uTitleAttrVal = formData.get("titleAttr");
+		const uParentIdVal = formData.get("parentId");`,
+		],
+		[
+			`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+				parentId:`,
+			`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+				titleAttr: typeof uTitleAttrVal === "string" ? uTitleAttrVal.trim() : "",
+				parentId:`,
+		],
+		[
+			`placeholder: _t({
+											id: "Xkfr5x",
+											message: "https://example.com or /about"
+										})
+									}),
+									/* @__PURE__ */ jsxs(Select, {`,
+			`placeholder: _t({
+											id: "Xkfr5x",
+											message: "https://example.com or /about"
+										})
+									}),
+									/* @__PURE__ */ jsx(Input, {
+										label: _t({ id: "menuItemDescription", message: "Description" }),
+										name: "titleAttr",
+										maxLength: 160,
+										placeholder: _t({
+											id: "menuItemDescriptionHint",
+											message: "Short summary shown below the menu label"
+										})
+									}),
+									/* @__PURE__ */ jsxs(Select, {`,
+		],
+		[
+			`defaultValue: editingItem.customUrl || ""
+							}),
+							/* @__PURE__ */ jsxs(Select, {`,
+			`defaultValue: editingItem.customUrl || ""
+							}),
+							/* @__PURE__ */ jsx(Input, {
+								label: _t({ id: "menuItemDescription", message: "Description" }),
+								name: "titleAttr",
+								maxLength: 160,
+								placeholder: _t({
+									id: "menuItemDescriptionHint",
+									message: "Short summary shown below the menu label"
+								}),
+								defaultValue: editingItem.titleAttr || ""
+							}),
+							/* @__PURE__ */ jsxs(Select, {`,
+		],
+	]
+
+	let patched = code
+	for (const [search, replacement] of replacements) {
+		if (!patched.includes(search)) return null
+		patched = patched.replace(search, replacement)
+	}
+
+	return patched
+}
+
 function patchAdminBundle(code) {
 	let patched = code
 
@@ -82,7 +169,7 @@ function patchAdminBundle(code) {
 		)
 	}
 
-	return patched === code ? code : patched
+	return patchMenuItemDescriptions(patched)
 }
 
 const require = createRequire(import.meta.url)
@@ -91,10 +178,11 @@ const source = readFileSync(adminPath, 'utf8')
 
 if (
 	source.includes('case "link_settings"') &&
-	source.includes('case "markdown_input"')
+	source.includes('case "markdown_input"') &&
+	source.includes(MENU_DESCRIPTION_MARKER)
 ) {
 	console.log(
-		'[patch-emdash-admin] @emdash-cms/admin already supports link_settings and markdown_input',
+		'[patch-emdash-admin] @emdash-cms/admin already supports custom fields and menu descriptions',
 	)
 	process.exit(0)
 }
@@ -109,5 +197,5 @@ if (!patched || patched === source) {
 
 writeFileSync(adminPath, patched)
 console.log(
-	'[patch-emdash-admin] Patched @emdash-cms/admin for link_settings and markdown_input',
+	'[patch-emdash-admin] Patched @emdash-cms/admin for custom fields and menu descriptions',
 )

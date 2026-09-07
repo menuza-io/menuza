@@ -175,10 +175,7 @@ describe('Website Redirects Route', () => {
 	it('action create-redirect prevents indirect circular redirect loop', async () => {
 		// First select: duplicate check returns empty
 		// Second select: detectRedirectCycle returns existing redirect /b -> /a
-		mockSelectResults(
-			[],
-			[{ id: 'r1', fromPath: '/b', toPath: '/a' }],
-		)
+		mockSelectResults([], [{ id: 'r1', fromPath: '/b', toPath: '/a' }])
 
 		const formData = new FormData()
 		formData.set('intent', 'create-redirect')

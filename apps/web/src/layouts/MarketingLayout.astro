@@ -2,6 +2,7 @@
 import Footer from '~/components/Footer.astro'
 import Header from '~/components/Header.astro'
 import Banner from '~/components/Banner.astro'
+import CookieConsentBanner from '~/components/CookieConsentBanner.astro'
 import PostHog from '~/components/PostHog.astro'
 import Frame from '~/components/site/Frame.astro'
 import '../styles/tailwind.css'
@@ -14,6 +15,7 @@ import {
 } from '~/lib/emdash'
 
 import { getDirection } from '@repo/i18n'
+import { getCookieConsentState } from '@repo/common/cookie-consent'
 import { ENV } from 'varlock/env'
 
 const currentLocale = Astro.currentLocale ?? 'en'
@@ -22,6 +24,14 @@ const dir = getDirection(currentLocale)
 const themeCookieName = resolveThemeCookieName(ENV.PUBLIC_APP_URL)
 const cookieHeader = Astro.request.headers.get('cookie')
 const theme = getThemeFromCookie(cookieHeader, themeCookieName)
+const cookieConsent = await getCookieConsentState(
+	Astro.request,
+	ENV.PUBLIC_APP_URL,
+)
+const cookiePolicyUrl = new URL(
+	'/legal/cookie-policy/',
+	ENV.PUBLIC_APP_URL,
+).toString()
 
 const [settings, primaryMenu, footerColumns, banner] = await Promise.all([
 	getSiteSettings(),
@@ -47,7 +57,7 @@ const isBannerEnabled: boolean = Boolean((banner as any)?.isEnabled)
 		<link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
 		<link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
 		<link rel="manifest" href="/site.webmanifest" crossorigin="use-credentials" />
-		<PostHog />
+		<PostHog consent={cookieConsent} />
 
 		<slot name="head" />
 	</head>
@@ -65,5 +75,8 @@ const isBannerEnabled: boolean = Boolean((banner as any)?.isEnabled)
 				<Footer settings={settings} footerColumns={footerColumns} />
 			</Frame>
 		</main>
+		{cookieConsent === undefined && (
+			<CookieConsentBanner cookiePolicyUrl={cookiePolicyUrl} />
+		)}
 	</body>
 </html>

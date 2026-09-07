@@ -5,23 +5,41 @@ import {
 	sharedCookieDomain,
 } from './cookie-domain.server.ts'
 
-export const cookieConsentCookie = createCookie(
-	operatorCookieName('cconsent'),
-	{
-		maxAge: 31_536_000, // one year
-		sameSite: 'lax',
-		path: '/',
-		httpOnly: true,
-		domain: sharedCookieDomain(),
-	},
-)
+const cookieConsentOptions = (origin?: string, domain?: string) => ({
+	maxAge: 31_536_000, // one year
+	sameSite: 'lax' as const,
+	path: '/',
+	httpOnly: true,
+	domain: domain ?? sharedCookieDomain(origin),
+})
 
-export async function getCookieConsentState(request: Request) {
+function createCookieConsentCookie(origin?: string, domain?: string) {
+	return createCookie(
+		operatorCookieName('cconsent', origin),
+		cookieConsentOptions(origin, domain),
+	)
+}
+
+/** Default App/Admin cookie, retained for existing callers and test fixtures. */
+export const cookieConsentCookie = createCookieConsentCookie()
+
+export async function getCookieConsentState(request: Request, origin?: string) {
 	const cookieHeader = request.headers.get('Cookie')
-	const cookie = (await cookieConsentCookie.parse(cookieHeader)) || {}
+	const consentCookie = origin
+		? createCookieConsentCookie(origin)
+		: cookieConsentCookie
+	const cookie = (await consentCookie.parse(cookieHeader)) || {}
 	return cookie.isCollapsed
 }
 
-export async function setCookieConsentState(isCollapsed: boolean) {
-	return await cookieConsentCookie.serialize({ isCollapsed })
+export async function setCookieConsentState(
+	isCollapsed: boolean,
+	origin?: string,
+	domain?: string,
+) {
+	const consentCookie =
+		origin || domain
+			? createCookieConsentCookie(origin, domain)
+			: cookieConsentCookie
+	return await consentCookie.serialize({ isCollapsed })
 }

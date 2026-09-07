@@ -43,7 +43,7 @@ export default function WebsiteLayout() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-4xl py-8 md:p-8">
+		<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
 			<div className="mb-8 md:mb-10">
 				<PageTitle
 					title={_(t`Website`)}
@@ -53,8 +53,8 @@ export default function WebsiteLayout() {
 				/>
 			</div>
 
-			<nav className="border-border mb-6 border-b">
-				<div className="-mb-px flex gap-4">
+			<nav className="border-border mb-6 [scrollbar-width:none] overflow-x-auto border-b [&::-webkit-scrollbar]:hidden">
+				<div className="-mb-px flex min-w-max gap-4">
 					{tabs.map((tab) => (
 						<Link
 							key={tab.href}

@@ -105,10 +105,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			updatedAt: now,
 		})
 		.onConflictDoUpdate({
-			target: [
-				WebsiteNotFoundLog.organizationId,
-				WebsiteNotFoundLog.path,
-			],
+			target: [WebsiteNotFoundLog.organizationId, WebsiteNotFoundLog.path],
 			set: {
 				hitCount: sql`${WebsiteNotFoundLog.hitCount} + 1`,
 				lastHitAt: now,

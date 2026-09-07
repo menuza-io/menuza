@@ -69,6 +69,7 @@
     "./divider": "./components/divider.tsx",
     "./annotated-layout": "./components/annotated-layout.tsx",
     "./page-title": "./components/page-title.tsx",
+    "./page-header": "./components/page-header.tsx",
     "./color-picker": "./components/color-picker.tsx",
     "./status-button": "./components/status-button.tsx",
     "./square-pen-icon": "./components/square-pen-icon.tsx",

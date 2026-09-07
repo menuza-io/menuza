@@ -1,0 +1,495 @@
+---
+import type { MenuItem } from 'emdash'
+
+interface Props {
+	items: MenuItem[]
+	currentPath: string
+	isMobile?: boolean
+}
+
+const { items, currentPath, isMobile = false } = Astro.props
+
+function normalizePath(path: string): string {
+	if (!path || path === '/') return '/'
+	return path.replace(/\/+$/, '') || '/'
+}
+
+function isCurrent(item: MenuItem): boolean {
+	try {
+		return (
+			normalizePath(new URL(item.url, Astro.url).pathname) ===
+			normalizePath(currentPath)
+		)
+	} catch {
+		return false
+	}
+}
+
+function hasCurrentDescendant(item: MenuItem): boolean {
+	return item.children.some(
+		(child) => isCurrent(child) || hasCurrentDescendant(child),
+	)
+}
+
+function itemRel(item: MenuItem): string | undefined {
+	return item.target === '_blank' ? 'noopener noreferrer' : undefined
+}
+
+function itemId(item: MenuItem): string {
+	return `navigation-menu-${item.id.replace(/[^a-zA-Z0-9_-]/g, '')}`
+}
+---
+
+{
+	isMobile ? (
+		<nav aria-label="Mobile navigation" data-navigation-menu data-mobile="true">
+			<ul class="flex list-none flex-col gap-1 p-0" role="list">
+				{items.map((item) =>
+					item.children.length > 0 ? (
+						<li>
+							<details class="group/navigation-disclosure rounded-xl">
+								<summary class="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2 text-[16px] font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 [&::-webkit-details-marker]:hidden">
+									<span>{item.label}</span>
+									<svg
+										class="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open/navigation-disclosure:rotate-180 motion-reduce:transition-none"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										aria-hidden="true"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="m6 9 6 6 6-6"
+										/>
+									</svg>
+								</summary>
+								<ul class="ml-3 flex list-none flex-col gap-1 border-l border-hairline py-1 pl-3" role="list">
+									{item.children.map((child) =>
+										child.children.length > 0 ? (
+											<li class="py-2">
+												<p class="px-3 text-[13px] font-semibold text-muted-foreground">
+													{child.label}
+												</p>
+												<ul class="mt-1 list-none p-0" role="list">
+													{child.children.map((grandchild) => (
+														<li>
+															<a
+																href={grandchild.url}
+																target={grandchild.target}
+																rel={itemRel(grandchild)}
+																aria-current={isCurrent(grandchild) ? 'page' : undefined}
+																class="flex min-h-11 flex-col justify-center rounded-lg px-3 py-2 text-[15px] text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+															>
+																<span class="font-medium">{grandchild.label}</span>
+																{grandchild.titleAttr && (
+																	<span class="mt-0.5 text-[13px] leading-5 text-muted-foreground">
+																		{grandchild.titleAttr}
+																	</span>
+																)}
+															</a>
+														</li>
+													))}
+												</ul>
+											</li>
+										) : (
+											<li>
+												<a
+												href={child.url}
+												target={child.target}
+												rel={itemRel(child)}
+													aria-current={isCurrent(child) ? 'page' : undefined}
+													class="flex min-h-11 flex-col justify-center rounded-lg px-3 py-2 text-[15px] text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+												>
+													<span class="font-medium">{child.label}</span>
+													{child.titleAttr && (
+														<span class="mt-0.5 text-[13px] leading-5 text-muted-foreground">
+															{child.titleAttr}
+														</span>
+													)}
+												</a>
+											</li>
+										),
+									)}
+								</ul>
+							</details>
+						</li>
+					) : (
+						<li>
+							<a
+								href={item.url}
+								target={item.target}
+								rel={itemRel(item)}
+								aria-current={isCurrent(item) ? 'page' : undefined}
+								class="flex min-h-11 items-center rounded-xl px-3 py-2 text-[16px] font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+							>
+								{item.label}
+							</a>
+						</li>
+					),
+				)}
+			</ul>
+		</nav>
+	) : (
+		<nav
+			aria-label="Primary navigation"
+			class="relative flex items-center justify-center"
+			data-navigation-menu
+			data-mobile="false"
+		>
+			<ul class="flex list-none items-center justify-center gap-1 p-0" role="list" data-navigation-menu-list>
+				{items.map((item) => {
+					const contentId = itemId(item)
+					const hasNestedColumns = item.children.some(
+						(child) => child.children.length > 0,
+					)
+					const usesWidePanel =
+						item.children.filter((child) => child.children.length > 0).length > 1
+
+					return (
+						<li class:list={{ relative: !usesWidePanel }} data-navigation-menu-item>
+							{item.children.length > 0 ? (
+								<>
+									<button
+										id={`${contentId}-trigger`}
+										type="button"
+										class="group/navigation-trigger inline-flex h-9 items-center justify-center rounded-full bg-transparent px-3 text-[15px] font-medium text-foreground/80 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/30 data-[active=true]:bg-muted data-[active=true]:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground"
+										aria-expanded="false"
+										aria-controls={contentId}
+										data-active={isCurrent(item) || hasCurrentDescendant(item) ? 'true' : undefined}
+										data-navigation-menu-trigger
+										data-state="closed"
+									>
+										{item.label}
+										<svg
+											class="relative top-px ml-1 size-3 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/navigation-trigger:rotate-180 motion-reduce:transition-none"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+											aria-hidden="true"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="m6 9 6 6 6-6"
+											/>
+										</svg>
+									</button>
+									<div
+										id={contentId}
+										class:list={[
+											'absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 overflow-hidden border border-hairline bg-background text-foreground',
+											usesWidePanel
+												? 'w-[min(72rem,calc(100vw-2rem))] rounded-2xl p-3 shadow-[0_18px_60px_rgba(0,0,0,0.14)]'
+												: 'w-80 max-w-[calc(100vw-2rem)] rounded-xl p-2 shadow-xl',
+										]}
+										aria-labelledby={`${contentId}-trigger`}
+										data-navigation-menu-content
+										data-state="closed"
+										hidden
+									>
+										{hasNestedColumns ? (
+											<ul
+												class:list={[
+													'grid list-none p-0',
+													usesWidePanel
+														? 'gap-4 md:grid-cols-2 xl:grid-cols-3'
+														: 'grid-cols-1 gap-1',
+												]}
+												role="list"
+											>
+												{item.children.map((column) => (
+													<li class="min-w-0 rounded-xl p-3">
+														{column.children.length > 0 ? (
+															<div role="group" aria-labelledby={`${itemId(column)}-heading`}>
+																<p id={`${itemId(column)}-heading`} class="mb-3 text-sm font-semibold text-muted-foreground">
+																	{column.label}
+																</p>
+																<ul class="flex list-none flex-col gap-1 p-0" role="list">
+																	{column.children.map((child) => (
+																		<li>
+																			<a
+																			href={child.url}
+																			target={child.target}
+																			rel={itemRel(child)}
+																				aria-current={isCurrent(child) ? 'page' : undefined}
+																				class="flex min-h-14 flex-col justify-center rounded-xl px-3 py-2.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+																				data-navigation-menu-link
+																			>
+																				<span class="text-[15px] font-medium leading-5">{child.label}</span>
+																				{child.titleAttr && (
+																					<span class="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
+																						{child.titleAttr}
+																					</span>
+																				)}
+																			</a>
+																		</li>
+																	))}
+																</ul>
+															</div>
+														) : (
+															<a
+																	href={column.url}
+																	target={column.target}
+																	rel={itemRel(column)}
+																aria-current={isCurrent(column) ? 'page' : undefined}
+																class="flex min-h-14 flex-col justify-center rounded-xl px-3 py-2.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+																data-navigation-menu-link
+															>
+																<span class="text-[15px] font-medium leading-5">{column.label}</span>
+																{column.titleAttr && (
+																	<span class="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
+																		{column.titleAttr}
+																	</span>
+																)}
+															</a>
+														)}
+													</li>
+												))}
+											</ul>
+										) : (
+											<ul class="flex list-none flex-col gap-1 p-0" role="list">
+												{item.children.map((child) => (
+													<li>
+														<a
+															href={child.url}
+															target={child.target}
+															rel={itemRel(child)}
+															aria-current={isCurrent(child) ? 'page' : undefined}
+															class="flex min-h-14 flex-col justify-center rounded-xl p-3 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted"
+															data-navigation-menu-link
+														>
+															<span class="text-[15px] font-medium leading-5">{child.label}</span>
+															{child.titleAttr && (
+																<span class="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
+																	{child.titleAttr}
+																</span>
+															)}
+														</a>
+													</li>
+												))}
+											</ul>
+										)}
+									</div>
+								</>
+							) : (
+								<a
+									href={item.url}
+									target={item.target}
+									rel={itemRel(item)}
+									aria-current={isCurrent(item) ? 'page' : undefined}
+									class="inline-flex h-9 items-center justify-center rounded-full px-3 text-[15px] font-medium text-foreground/80 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/30 aria-[current=page]:bg-muted aria-[current=page]:text-foreground"
+									data-navigation-menu-top-link
+								>
+									{item.label}
+								</a>
+							)}
+						</li>
+					)
+				})}
+			</ul>
+		</nav>
+	)
+}
+
+<script>
+	let cleanupNavigationMenus: (() => void) | undefined
+
+	function initializeNavigationMenus() {
+		cleanupNavigationMenus?.()
+
+		const cleanupCallbacks: Array<() => void> = []
+		const desktopMenus = document.querySelectorAll<HTMLElement>(
+			'[data-navigation-menu][data-mobile="false"]',
+		)
+
+		function listen(
+			target: EventTarget,
+			type: string,
+			listener: EventListener,
+			options?: AddEventListenerOptions,
+		) {
+			target.addEventListener(type, listener, options)
+			cleanupCallbacks.push(() => target.removeEventListener(type, listener, options))
+		}
+
+		desktopMenus.forEach((menu) => {
+			const items = Array.from(
+				menu.querySelectorAll<HTMLElement>('[data-navigation-menu-item]'),
+			)
+			const topLevelControls = Array.from(
+				menu.querySelectorAll<HTMLElement>(
+					'[data-navigation-menu-trigger], [data-navigation-menu-top-link]',
+				),
+			)
+			let closeTimer: ReturnType<typeof setTimeout> | undefined
+
+			function getParts(item: HTMLElement) {
+				return {
+					trigger: item.querySelector<HTMLButtonElement>(
+						'[data-navigation-menu-trigger]',
+					),
+					content: item.querySelector<HTMLElement>(
+						'[data-navigation-menu-content]',
+					),
+				}
+			}
+
+			function closeItem(item: HTMLElement, restoreFocus = false) {
+				const { trigger, content } = getParts(item)
+				if (!trigger || !content) return
+				trigger.setAttribute('aria-expanded', 'false')
+				trigger.dataset.state = 'closed'
+				content.dataset.state = 'closed'
+				content.hidden = true
+				if (restoreFocus) trigger.focus()
+			}
+
+			function closeAll(except?: HTMLElement) {
+				items.forEach((item) => {
+					if (item !== except) closeItem(item)
+				})
+			}
+
+			function openItem(
+				item: HTMLElement,
+				focusPosition?: 'first' | 'last',
+			) {
+				const { trigger, content } = getParts(item)
+				if (!trigger || !content) return
+				clearTimeout(closeTimer)
+				closeAll(item)
+				trigger.setAttribute('aria-expanded', 'true')
+				trigger.dataset.state = 'open'
+				content.dataset.state = 'open'
+				content.hidden = false
+
+				if (focusPosition) {
+					const links = Array.from(
+						content.querySelectorAll<HTMLAnchorElement>(
+							'[data-navigation-menu-link]',
+						),
+					)
+					const target = focusPosition === 'first' ? links[0] : links.at(-1)
+					target?.focus()
+				}
+			}
+
+			function focusTopLevel(current: HTMLElement, offset: number) {
+				const currentIndex = topLevelControls.indexOf(current)
+				if (currentIndex < 0 || topLevelControls.length === 0) return
+				const nextIndex =
+					(currentIndex + offset + topLevelControls.length) %
+					topLevelControls.length
+				topLevelControls[nextIndex]?.focus()
+			}
+
+			topLevelControls.forEach((control) => {
+				listen(control, 'keydown', (event) => {
+					const keyboardEvent = event as KeyboardEvent
+					if (keyboardEvent.key === 'ArrowRight') {
+						keyboardEvent.preventDefault()
+						focusTopLevel(control, 1)
+					} else if (keyboardEvent.key === 'ArrowLeft') {
+						keyboardEvent.preventDefault()
+						focusTopLevel(control, -1)
+					} else if (keyboardEvent.key === 'Home') {
+						keyboardEvent.preventDefault()
+						topLevelControls[0]?.focus()
+					} else if (keyboardEvent.key === 'End') {
+						keyboardEvent.preventDefault()
+						topLevelControls.at(-1)?.focus()
+					}
+				})
+
+				listen(control, 'focus', () => {
+					const focusedItem = control.closest<HTMLElement>(
+						'[data-navigation-menu-item]',
+					)
+					closeAll(focusedItem ?? undefined)
+				})
+			})
+
+			items.forEach((item) => {
+				const { trigger, content } = getParts(item)
+				if (!trigger || !content) return
+
+				listen(trigger, 'click', () => {
+					const isOpen = trigger.getAttribute('aria-expanded') === 'true'
+					if (isOpen) closeItem(item)
+					else openItem(item)
+				})
+
+				listen(trigger, 'keydown', (event) => {
+					const keyboardEvent = event as KeyboardEvent
+					if (keyboardEvent.key === 'ArrowDown') {
+						keyboardEvent.preventDefault()
+						openItem(item, 'first')
+					} else if (keyboardEvent.key === 'ArrowUp') {
+						keyboardEvent.preventDefault()
+						openItem(item, 'last')
+					} else if (keyboardEvent.key === 'Escape') {
+						keyboardEvent.preventDefault()
+						closeItem(item, true)
+					}
+				})
+
+				listen(content, 'keydown', (event) => {
+					const keyboardEvent = event as KeyboardEvent
+					const links = Array.from(
+						content.querySelectorAll<HTMLAnchorElement>(
+							'[data-navigation-menu-link]',
+						),
+					)
+					const currentIndex = links.indexOf(
+						document.activeElement as HTMLAnchorElement,
+					)
+
+					if (keyboardEvent.key === 'Escape') {
+						keyboardEvent.preventDefault()
+						closeItem(item, true)
+					} else if (keyboardEvent.key === 'ArrowDown' && links.length > 0) {
+						keyboardEvent.preventDefault()
+						links[(currentIndex + 1 + links.length) % links.length]?.focus()
+					} else if (keyboardEvent.key === 'ArrowUp' && links.length > 0) {
+						keyboardEvent.preventDefault()
+						links[(currentIndex - 1 + links.length) % links.length]?.focus()
+					} else if (keyboardEvent.key === 'Home') {
+						keyboardEvent.preventDefault()
+						links[0]?.focus()
+					} else if (keyboardEvent.key === 'End') {
+						keyboardEvent.preventDefault()
+						links.at(-1)?.focus()
+					}
+				})
+
+				if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+					listen(item, 'pointerenter', () => openItem(item))
+					listen(item, 'pointerleave', () => {
+						closeTimer = setTimeout(() => {
+							if (!item.contains(document.activeElement)) closeItem(item)
+						}, 120)
+					})
+				}
+			})
+
+			listen(menu, 'focusout', (event) => {
+				const focusEvent = event as FocusEvent
+				if (!menu.contains(focusEvent.relatedTarget as Node | null)) closeAll()
+			})
+
+			listen(document, 'pointerdown', (event) => {
+				if (!menu.contains(event.target as Node)) closeAll()
+			})
+		})
+
+		cleanupNavigationMenus = () => {
+			cleanupCallbacks.forEach((callback) => callback())
+		}
+	}
+
+	initializeNavigationMenus()
+	document.addEventListener('astro:page-load', initializeNavigationMenus)
+</script>

@@ -1,6 +1,8 @@
 ---
 import type { Menu, MenuItem } from 'emdash'
 
+import NavigationMenu from './ui/NavigationMenu.astro'
+
 interface Props {
 	menu: Menu | null
 	isMobile?: boolean
@@ -8,108 +10,10 @@ interface Props {
 
 const { menu, isMobile = false } = Astro.props
 const navItems: MenuItem[] = menu?.items ?? []
-
-const linkClass = isMobile
-	? 'block rounded-xl px-3 py-3 text-[16px] font-medium text-foreground transition-colors hover:bg-muted'
-	: 'text-[15px] text-foreground/80 transition-colors hover:text-foreground'
-
-const childLinkClass = isMobile
-	? 'block rounded-lg px-3 py-2 text-[15px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-	: 'block rounded-md px-3 py-2 text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 ---
 
-<nav class={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-7'}>
-	{
-		navItems.map((item) => {
-			if (item.children.length > 0) {
-				const dropdownId = `nav-dropdown-${item.id}`
-
-				return isMobile ? (
-					<details class="group rounded-xl px-1">
-						<summary class="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-3 text-[16px] font-medium text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
-							<span>{item.label}</span>
-							<svg
-								class="size-4 text-muted-foreground transition-transform group-open:rotate-180"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M19 9l-7 7-7-7"
-								/>
-							</svg>
-						</summary>
-						<div class="mt-1 flex flex-col gap-1 pb-2 pl-3">
-							{item.children.map((child) => (
-								<a
-									href={child.url}
-									target={child.target}
-									rel={child.target ? 'noopener noreferrer' : undefined}
-									class={childLinkClass}
-								>
-									{child.label}
-								</a>
-							))}
-						</div>
-					</details>
-				) : (
-					<div class="group relative">
-						<button
-							type="button"
-							class="flex items-center gap-1 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
-							aria-expanded="false"
-							aria-haspopup="true"
-							aria-controls={dropdownId}
-						>
-							<span>{item.label}</span>
-							<svg
-								class="size-3 text-muted-foreground transition-transform group-hover:rotate-180"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M19 9l-7 7-7-7"
-								/>
-							</svg>
-						</button>
-						<div
-							id={dropdownId}
-							class="invisible absolute left-0 top-full z-50 mt-2 min-w-48 rounded-xl border border-hairline bg-background/95 p-2 opacity-0 shadow-xl backdrop-blur-xl transition-all group-hover:visible group-hover:opacity-100"
-						>
-							{item.children.map((child) => (
-								<a
-									href={child.url}
-									target={child.target}
-									rel={child.target ? 'noopener noreferrer' : undefined}
-									class={childLinkClass}
-								>
-									{child.label}
-								</a>
-							))}
-						</div>
-					</div>
-				)
-			}
-
-			return (
-				<a
-					href={item.url}
-					target={item.target}
-					rel={item.target ? 'noopener noreferrer' : undefined}
-					class={linkClass}
-				>
-					{item.label}
-				</a>
-			)
-		})
-	}
-</nav>
+<NavigationMenu
+	items={navItems}
+	currentPath={Astro.url.pathname}
+	isMobile={isMobile}
+/>

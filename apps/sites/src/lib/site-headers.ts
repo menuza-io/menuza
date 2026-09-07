@@ -22,7 +22,13 @@ export function sitesScriptSrc(isDev: boolean) {
 }
 
 export function sitesConnectSrc(origins: string[]) {
-	return ['connect-src', "'self'", ...origins, CLOUDFLARE_INSIGHTS_CONNECT, ...GA_CONNECT_SRC]
+	return [
+		'connect-src',
+		"'self'",
+		...origins,
+		CLOUDFLARE_INSIGHTS_CONNECT,
+		...GA_CONNECT_SRC,
+	]
 		.filter(Boolean)
 		.join(' ')
 }

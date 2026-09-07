@@ -20,6 +20,7 @@ import {
 	ItemGroup,
 	ItemTitle,
 } from '@repo/ui/item'
+import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import {
 	Link,
@@ -254,23 +255,21 @@ export default function JourneysList() {
 
 	return (
 		<div className="space-y-8">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-				<header className="space-y-1">
-					<h1 className="text-2xl font-semibold tracking-tight">
-						{_(msg`Automations`)}
-					</h1>
-					<p className="text-muted-foreground text-sm">
-						{_(msg`Event-driven workflows with triggers, delays, and actions.`)}
-					</p>
-				</header>
-				<Button
-					render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
-					className="shrink-0 gap-2"
-				>
-					<Icon name="plus" className="size-4" />
-					{_(msg`New automation`)}
-				</Button>
-			</div>
+			<PageHeader
+				title={_(msg`Automations`)}
+				description={_(
+					msg`Event-driven workflows with triggers, delays, and actions.`,
+				)}
+				actions={
+					<Button
+						render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
+						className="shrink-0 gap-2"
+					>
+						<Icon name="plus" className="size-4" />
+						{_(msg`New automation`)}
+					</Button>
+				}
+			/>
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="relative max-w-sm flex-1">

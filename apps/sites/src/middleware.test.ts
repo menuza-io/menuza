@@ -163,7 +163,9 @@ describe('Sites middleware onRequest', () => {
 			request: new Request('http://acme.sites.localhost:3008/trap'),
 			locals: {},
 		}
-		const next = vi.fn().mockResolvedValue(new Response('next-handler', { status: 200 }))
+		const next = vi
+			.fn()
+			.mockResolvedValue(new Response('next-handler', { status: 200 }))
 
 		const response = (await onRequest(context, next)) as Response
 

@@ -1,0 +1,50 @@
+---
+import Button from '~/components/ui/Button.astro'
+
+interface Props {
+	cookiePolicyUrl: string
+}
+
+const { cookiePolicyUrl } = Astro.props
+---
+
+<aside
+	aria-label="Cookie consent"
+	class="fixed inset-x-4 bottom-4 z-50 max-w-[360px] rounded-2xl border border-border bg-background p-5 text-foreground shadow-lg sm:left-5 sm:right-auto sm:bottom-5"
+>
+	<p class="m-0 text-sm leading-6 text-muted-foreground">
+		We use cookies to enhance your experience, analyze site traffic, and deliver
+		personalized content.{' '}
+		<a
+			href={cookiePolicyUrl}
+			target="_blank"
+			rel="noreferrer"
+			class="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+		>
+			Read our Cookie Policy
+		</a>.
+	</p>
+
+	<form method="POST" action="/api/cookie-consent" class="mt-4 flex gap-2.5">
+		<Button
+			type="submit"
+			name="consent"
+			value="false"
+			variant="outline"
+			size="sm"
+			class="flex-1"
+		>
+			Reject
+		</Button>
+		<Button
+			type="submit"
+			name="consent"
+			value="true"
+			variant="solid"
+			size="sm"
+			class="flex-[2]"
+		>
+			Accept
+		</Button>
+	</form>
+</aside>
