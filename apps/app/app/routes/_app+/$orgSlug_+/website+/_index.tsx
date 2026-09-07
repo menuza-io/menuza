@@ -527,7 +527,7 @@ export default function WebsiteGeneralSettings() {
 	const actionData = useActionData<typeof action>()
 
 	return (
-		<AnnotatedLayout>
+		<AnnotatedLayout className="max-w-4xl">
 			<AnnotatedSection>
 				<SiteCard
 					organization={organization}

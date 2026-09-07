@@ -36,9 +36,8 @@ const loginUrl = `${appOrigin}${port ? `:2999` : ''}/login`
 		id="site-header-bar"
 		class="border-b border-transparent transition-colors duration-300"
 	>
-		<nav
+		<div
 			class="mx-auto flex h-16 max-w-[1312px] items-center justify-between px-5 sm:px-8 lg:px-14"
-			aria-label="Main navigation"
 		>
 			<div class="flex items-center gap-2">
 				<a href="/" aria-label={`${siteTitle} home`} class="flex items-center gap-2.5 text-foreground">
@@ -103,7 +102,7 @@ const loginUrl = `${appOrigin}${port ? `:2999` : ''}/login`
 				<button
 					id="mobile-menu-trigger"
 					type="button"
-					class="grid size-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
+					class="grid size-11 place-items-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 lg:hidden"
 					aria-label="Open menu"
 					aria-expanded="false"
 					aria-controls="mobile-menu-panel"
@@ -116,11 +115,12 @@ const loginUrl = `${appOrigin}${port ? `:2999` : ''}/login`
 					</svg>
 				</button>
 			</div>
-		</nav>
+		</div>
 
 		<div
 			id="mobile-menu-panel"
-			class="max-h-0 overflow-hidden border-t border-hairline bg-background/95 backdrop-blur-xl transition-[max-height] duration-300 lg:hidden"
+			class="max-h-0 overflow-y-auto border-t border-hairline bg-background/95 backdrop-blur-xl transition-[max-height] duration-300 motion-reduce:transition-none lg:hidden"
+			inert
 		>
 			<div class="flex flex-col gap-1 px-5 py-4 sm:px-8">
 				<Navigation menu={primaryMenu} isMobile={true} />
@@ -185,18 +185,23 @@ const loginUrl = `${appOrigin}${port ? `:2999` : ''}/login`
 			}
 		}
 
-		function closeMobileMenu() {
-			mobilePanel?.classList.remove('max-h-[480px]')
+		function closeMobileMenu(restoreFocus = false) {
+			mobilePanel?.classList.remove('max-h-[calc(100dvh-4rem)]')
 			mobilePanel?.classList.add('max-h-0', 'border-t-0')
+			if (mobilePanel) mobilePanel.inert = true
 			mobileTrigger?.setAttribute('aria-expanded', 'false')
+			mobileTrigger?.setAttribute('aria-label', 'Open menu')
 			iconOpen?.classList.remove('hidden')
 			iconClose?.classList.add('hidden')
+			if (restoreFocus) mobileTrigger?.focus()
 		}
 
 		function openMobileMenu() {
 			mobilePanel?.classList.remove('max-h-0', 'border-t-0')
-			mobilePanel?.classList.add('max-h-[480px]')
+			mobilePanel?.classList.add('max-h-[calc(100dvh-4rem)]')
+			if (mobilePanel) mobilePanel.inert = false
 			mobileTrigger?.setAttribute('aria-expanded', 'true')
+			mobileTrigger?.setAttribute('aria-label', 'Close menu')
 			iconOpen?.classList.add('hidden')
 			iconClose?.classList.remove('hidden')
 		}
@@ -218,8 +223,19 @@ const loginUrl = `${appOrigin}${port ? `:2999` : ''}/login`
 			addListener(mobileTrigger, 'click', toggleMobileMenu)
 		}
 
+		addListener(document, 'keydown', (event) => {
+			const keyboardEvent = event as KeyboardEvent
+			if (
+				keyboardEvent.key === 'Escape' &&
+				mobileTrigger?.getAttribute('aria-expanded') === 'true'
+			) {
+				keyboardEvent.preventDefault()
+				closeMobileMenu(true)
+			}
+		})
+
 		mobilePanel?.querySelectorAll('a').forEach((link) => {
-			addListener(link, 'click', closeMobileMenu)
+			addListener(link, 'click', () => closeMobileMenu())
 		})
 
 		cleanup = () => {

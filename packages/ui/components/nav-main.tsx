@@ -42,7 +42,7 @@ export function NavMain({
 		return new Set(activeItems)
 	})
 	const iconRefs = useRef<{ [key: string]: any }>({})
-	const { state } = useSidebar()
+	const { state, isMobile } = useSidebar()
 
 	useEffect(() => {
 		const activeItems = items
@@ -88,7 +88,7 @@ export function NavMain({
 					{items.map((item) => {
 						const hasSubItems = item.items && item.items.length > 0
 						const isOpen = openItems.has(item.title)
-						const isSidebarCollapsed = state === 'collapsed'
+						const isSidebarCollapsed = state === 'collapsed' && !isMobile
 
 						return (
 							<SidebarMenuItem key={item.title}>

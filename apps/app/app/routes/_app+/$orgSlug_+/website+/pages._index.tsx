@@ -36,6 +36,7 @@ import {
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Table,
 	TableBody,
@@ -542,29 +543,29 @@ export default function WebsitePagesRoute() {
 	const pageCount = pages.length
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-				<div className="space-y-1">
-					<h2 className="text-base font-semibold">
-						<Trans>Pages</Trans>
-					</h2>
-					<p className="text-muted-foreground text-sm">
-						<Trans>
-							Create and manage pages for your organization's website.
-						</Trans>
-					</p>
-				</div>
-				<CreatePageDialog
-					open={createOpen}
-					onOpenChange={setCreateOpen}
-					trigger={
-						<Button size="sm" className="shrink-0">
-							<Icon name="plus" className="size-4" />
-							<Trans>New Page</Trans>
-						</Button>
-					}
-				/>
-			</div>
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Pages</Trans>}
+				description={
+					<Trans>
+						Create and manage pages for your organization's website.
+					</Trans>
+				}
+				headingLevel="h2"
+				size="section"
+				actions={
+					<CreatePageDialog
+						open={createOpen}
+						onOpenChange={setCreateOpen}
+						trigger={
+							<Button size="sm" className="shrink-0">
+								<Icon name="plus" className="size-4" />
+								<Trans>New Page</Trans>
+							</Button>
+						}
+					/>
+				}
+			/>
 
 			{pages.length === 0 && !search ? (
 				<EmptyState

@@ -37,6 +37,7 @@ import {
 } from '@repo/ui/dropdown-menu'
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
+import { PageHeader } from '@repo/ui/page-header'
 import { Switch } from '@repo/ui/switch'
 import {
 	Table,
@@ -546,34 +547,34 @@ export default function WebsiteAnnouncementsRoute() {
 				activeLocale={activeLocale}
 				defaultLocale={localesConfig.defaultLocale}
 			>
-				<div className="space-y-6">
-					<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-						<div className="space-y-1">
-							<h2 className="text-base font-semibold">
-								<Trans>Announcements</Trans>
-							</h2>
-							<p className="text-muted-foreground text-sm">
-								<Trans>
-									Create banner announcements for your public organization site.
-									Enabled banners appear at the top of the site for visitors.
-								</Trans>
-							</p>
-						</div>
-						<div className="flex shrink-0 items-center gap-2">
-							<LocaleSwitcher className="max-w-none" />
-							<Button
-								type="button"
-								size="sm"
-								onClick={() => {
-									setEditing(null)
-									setSheetOpen(true)
-								}}
-							>
-								<Icon name="plus" className="size-4" />
-								<Trans>Add announcement</Trans>
-							</Button>
-						</div>
-					</div>
+				<div className="space-y-8">
+					<PageHeader
+						title={<Trans>Announcements</Trans>}
+						description={
+							<Trans>
+								Create banner announcements for your public organization site.
+								Enabled banners appear at the top of the site for visitors.
+							</Trans>
+						}
+						headingLevel="h2"
+						size="section"
+						actions={
+							<>
+								<LocaleSwitcher className="max-w-none" />
+								<Button
+									type="button"
+									size="sm"
+									onClick={() => {
+										setEditing(null)
+										setSheetOpen(true)
+									}}
+								>
+									<Icon name="plus" className="size-4" />
+									<Trans>Add announcement</Trans>
+								</Button>
+							</>
+						}
+					/>
 
 					{announcements.length === 0 ? (
 						<EmptyState

@@ -2,7 +2,11 @@ import { Trans } from '@lingui/macro'
 import { Button } from '@repo/ui/button'
 import { useFetcher } from 'react-router'
 
-export function CookieConsentBanner({ consent }: { consent: boolean | null }) {
+export function CookieConsentBanner({
+	consent,
+}: {
+	consent: boolean | undefined
+}) {
 	const fetcher = useFetcher()
 
 	if (consent !== undefined) {
@@ -10,59 +14,52 @@ export function CookieConsentBanner({ consent }: { consent: boolean | null }) {
 	}
 
 	return (
-		<div className="fixed bottom-0 left-0 z-10 box-border flex flex-row justify-center gap-5 p-5">
-			<div className="flex items-end justify-start">
-				<div className="relative z-[100] flex max-h-[calc(100vh-40px)] flex-col gap-3">
-					<div className="w-full max-w-[360px] overflow-scroll rounded-2xl border bg-white shadow-xs">
-						<div className="p-5">
-							<div>
-								<p className="m-0 p-0 text-sm leading-6 tracking-normal text-gray-800">
-									<Trans>
-										We use cookies to enhance your experience, analyze site
-										traffic and deliver personalized content.
-									</Trans>{' '}
-									<a
-										href="/legal/cookie-policy/"
-										target="_blank"
-										rel="noreferrer"
-										className="text-blue-700 no-underline"
-									>
-										<Trans>Read our Cookie Policy</Trans>
-									</a>
-									.
-								</p>
-							</div>
-							<div className="mt-4 flex flex-row gap-2.5">
-								<Button
-									type="button"
-									variant="secondary"
-									className="w-1/3"
-									onClick={() => {
-										void fetcher.submit(
-											{ consent: 'false' },
-											{ method: 'POST', action: '/resources/cookie-consent' },
-										)
-									}}
-								>
-									<Trans>Reject</Trans>
-								</Button>
-								<Button
-									type="button"
-									className="w-2/3"
-									onClick={() => {
-										void fetcher.submit(
-											{ consent: 'true' },
-											{ method: 'POST', action: '/resources/cookie-consent' },
-										)
-									}}
-								>
-									<Trans>Accept</Trans>
-								</Button>
-							</div>
-						</div>
-					</div>
-				</div>
+		<aside
+			aria-label="Cookie consent"
+			className="bg-background text-foreground fixed inset-x-4 bottom-4 z-[100] max-h-[calc(100svh-2rem)] max-w-[360px] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border p-5 shadow-lg sm:right-auto sm:bottom-5 sm:left-5"
+		>
+			<p className="text-muted-foreground m-0 text-sm leading-6">
+				<Trans>
+					We use cookies to enhance your experience, analyze site traffic and
+					deliver personalized content.
+				</Trans>{' '}
+				<a
+					href="/legal/cookie-policy/"
+					target="_blank"
+					rel="noreferrer"
+					className="text-foreground decoration-border hover:decoration-foreground font-medium underline underline-offset-4 transition-colors"
+				>
+					<Trans>Read our Cookie Policy</Trans>
+				</a>
+				.
+			</p>
+			<div className="mt-4 flex gap-2.5">
+				<Button
+					type="button"
+					variant="secondary"
+					className="flex-1"
+					onClick={() => {
+						void fetcher.submit(
+							{ consent: 'false' },
+							{ method: 'POST', action: '/resources/cookie-consent' },
+						)
+					}}
+				>
+					<Trans>Reject</Trans>
+				</Button>
+				<Button
+					type="button"
+					className="flex-[2]"
+					onClick={() => {
+						void fetcher.submit(
+							{ consent: 'true' },
+							{ method: 'POST', action: '/resources/cookie-consent' },
+						)
+					}}
+				>
+					<Trans>Accept</Trans>
+				</Button>
 			</div>
-		</div>
+		</aside>
 	)
 }

@@ -174,7 +174,7 @@ export async function executeJourneyStep(
 		}
 	}
 
-	const config = payload.config as {
+	const config = (payload.config || {}) as {
 		subject?: string
 		bodyHtml?: string
 		bodyText?: string

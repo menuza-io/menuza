@@ -39,6 +39,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	const newHeaders = new Headers(response.headers)
 	const isPreview = pathname === '/preview' || pathname.startsWith('/preview/')
+	const isHtml = response.headers
+		.get('Content-Type')
+		?.toLowerCase()
+		.includes('text/html')
 
 	for (const [key, value] of Object.entries(securityHeaders)) {
 		if (isPreview && key === 'X-Frame-Options') {
@@ -53,7 +57,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		newHeaders.set(key, value)
 	}
 
-	if (shouldSkipCache(pathname)) {
+	// HTML varies by shared theme and consent cookies. Never place one visitor's
+	// rendered preference state in the shared edge cache.
+	if (isHtml) {
+		newHeaders.set('Cache-Control', 'private, no-cache')
+	} else if (shouldSkipCache(pathname)) {
 		newHeaders.set('Cache-Control', CACHE_CONTROL_NO_CACHE)
 	} else {
 		newHeaders.set('Cache-Control', CACHE_CONTROL_STATIC)

@@ -1,9 +1,14 @@
 ---
 import { ENV } from 'varlock/env'
 
+interface Props {
+	consent: boolean | undefined
+}
+
+const { consent } = Astro.props
 const projectToken = ENV.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
 const host = ENV.PUBLIC_POSTHOG_HOST?.trim().replace(/\/$/, '')
-const enabled = Boolean(projectToken?.startsWith('phc_') && host)
+const enabled = Boolean(consent === true && projectToken?.startsWith('phc_') && host)
 const tokenJson = JSON.stringify(projectToken ?? '').replace(/</g, '\\u003c')
 const hostJson = JSON.stringify(host ?? '').replace(/</g, '\\u003c')
 const environmentJson = JSON.stringify(

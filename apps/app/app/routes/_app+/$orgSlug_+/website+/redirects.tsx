@@ -35,6 +35,7 @@ import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -344,13 +345,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
-		const hasCycle = await detectRedirectCycle(organization.id, fromPath, toPath)
+		const hasCycle = await detectRedirectCycle(
+			organization.id,
+			fromPath,
+			toPath,
+		)
 		if (hasCycle) {
 			return Response.json(
 				{
 					status: 'error',
 					errors: {
-						toPath: ['This redirect creates a circular loop with existing rules.'],
+						toPath: [
+							'This redirect creates a circular loop with existing rules.',
+						],
 					},
 				},
 				{ status: 400 },
@@ -448,7 +455,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				{
 					status: 'error',
 					errors: {
-						toPath: ['This redirect creates a circular loop with existing rules.'],
+						toPath: [
+							'This redirect creates a circular loop with existing rules.',
+						],
 					},
 				},
 				{ status: 400 },
@@ -724,9 +733,7 @@ export default function WebsiteRedirectsRoute() {
 	// Map of paths that have active redirects
 	const activeRedirectFromPaths = useMemo(() => {
 		return new Set(
-			redirects
-				.filter((r) => r.isEnabled)
-				.map((r) => r.fromPath.toLowerCase()),
+			redirects.filter((r) => r.isEnabled).map((r) => r.fromPath.toLowerCase()),
 		)
 	}, [redirects])
 
@@ -737,21 +744,19 @@ export default function WebsiteRedirectsRoute() {
 	const deleteLogPath = logToDelete?.path
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-8">
 			{/* Page Header */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-				<div className="space-y-1">
-					<h2 className="text-base font-semibold">
-						<Trans>Redirects & 404 History</Trans>
-					</h2>
-					<p className="text-muted-foreground text-sm">
-						<Trans>
-							Forward old or broken URLs to your new pages to preserve SEO rank
-							and customer traffic.
-						</Trans>
-					</p>
-				</div>
-				<div className="flex shrink-0 items-center gap-2">
+			<PageHeader
+				title={<Trans>Redirects & 404 History</Trans>}
+				description={
+					<Trans>
+						Forward old or broken URLs to your new pages to preserve SEO rank
+						and customer traffic.
+					</Trans>
+				}
+				headingLevel="h2"
+				size="section"
+				actions={
 					<Button
 						type="button"
 						size="sm"
@@ -761,8 +766,8 @@ export default function WebsiteRedirectsRoute() {
 						<Icon name="plus" className="size-4" />
 						<Trans>New Redirect</Trans>
 					</Button>
-				</div>
-			</div>
+				}
+			/>
 
 			<Tabs
 				value={activeTab}

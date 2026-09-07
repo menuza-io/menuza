@@ -14,7 +14,7 @@ import { useDirection } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { PageTitle } from '@repo/ui/page-title'
+import { PageHeader } from '@repo/ui/page-header'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 
@@ -283,62 +283,62 @@ export default function NotesRoute({
 	)
 
 	return (
-		<div className="flex h-full flex-col py-8 md:p-8">
-			<div className="flex items-center justify-between pb-4">
-				<PageTitle
-					title={_(t`Notes`)}
-					description={_(t`You can create notes for your organization here.`)}
-				/>
-				<div className="flex items-center gap-4">
-					<Tabs
-						value={viewMode}
-						onValueChange={(val) => {
-							if (val === 'cards' || val === 'kanban') {
-								void fetcher.submit({ viewMode: val }, { method: 'POST' })
-							}
-						}}
-					>
-						<TabsList>
-							<TabsTrigger value="cards" aria-label={_(t`Cards view`)}>
-								<Tooltip>
-									<TooltipTrigger
-										render={
-											<span>
-												<Icon name="blocks" />
-											</span>
-										}
-									></TooltipTrigger>
-									<TooltipContent>
-										<Trans>Cards</Trans>
-									</TooltipContent>
-								</Tooltip>
-							</TabsTrigger>
-							<TabsTrigger value="kanban" aria-label={_(t`Kanban board`)}>
-								<Tooltip>
-									<TooltipTrigger
-										render={
-											<span>
-												<Icon name="menu" />
-											</span>
-										}
-									></TooltipTrigger>
-									<TooltipContent>
-										<Trans>Kanban</Trans>
-									</TooltipContent>
-								</Tooltip>
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
-					<Button variant="default" render={<Link to="new" />}>
-						<Icon name="plus">
-							<Trans>New Note</Trans>
-						</Icon>
-					</Button>
-				</div>
-			</div>
+		<div className="mx-auto flex h-full w-full max-w-6xl flex-col py-8 md:px-6 lg:px-8">
+			<PageHeader
+				title={_(t`Notes`)}
+				description={_(t`You can create notes for your organization here.`)}
+				actions={
+					<>
+						<Tabs
+							value={viewMode}
+							onValueChange={(val) => {
+								if (val === 'cards' || val === 'kanban') {
+									void fetcher.submit({ viewMode: val }, { method: 'POST' })
+								}
+							}}
+						>
+							<TabsList>
+								<TabsTrigger value="cards" aria-label={_(t`Cards view`)}>
+									<Tooltip>
+										<TooltipTrigger
+											render={
+												<span>
+													<Icon name="blocks" />
+												</span>
+											}
+										></TooltipTrigger>
+										<TooltipContent>
+											<Trans>Cards</Trans>
+										</TooltipContent>
+									</Tooltip>
+								</TabsTrigger>
+								<TabsTrigger value="kanban" aria-label={_(t`Kanban board`)}>
+									<Tooltip>
+										<TooltipTrigger
+											render={
+												<span>
+													<Icon name="menu" />
+												</span>
+											}
+										></TooltipTrigger>
+										<TooltipContent>
+											<Trans>Kanban</Trans>
+										</TooltipContent>
+									</Tooltip>
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
+						<Button variant="default" render={<Link to="new" />}>
+							<Icon name="plus">
+								<Trans>New Note</Trans>
+							</Icon>
+						</Button>
+					</>
+				}
+			/>
 
 			{/* Search Section */}
-			<div className="pb-4">
+			<div className="pt-8 pb-4">
 				<form onSubmit={handleSearchSubmit} className="relative max-w-md">
 					<Input
 						type="search"
