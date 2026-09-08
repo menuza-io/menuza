@@ -158,7 +158,7 @@ async function sendEmailViaResend({
 
 	if (ENV.NODE_ENV === 'test') {
 		logger.debug({ to, subject }, 'Test mode: sendEmail called')
-	} else if (!ENV.RESEND_API_KEY && !ENV.MOCKS) {
+	} else if (!ENV.RESEND_API_KEY && process.env.MOCKS !== 'true') {
 		logger.warn(
 			{ email },
 			'RESEND_API_KEY not set and not in mocks mode. Email not sent.',

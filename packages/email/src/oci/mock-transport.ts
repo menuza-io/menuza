@@ -7,7 +7,7 @@ export const OCI_EMAIL_MOCK_SUBMIT_URL =
 	'https://mock.epic-stack.test/oci-email/actions/submitEmail'
 
 export function shouldUseOciEmailMockTransport() {
-	return String(ENV.MOCKS) === 'true'
+	return process.env.MOCKS === 'true'
 }
 
 type MockTransportInput = {
