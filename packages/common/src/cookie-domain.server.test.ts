@@ -3,9 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { getBrandDomain } from '@repo/config/brand'
 
 import {
+	getOperatorAdminUrl,
+	getOperatorAppUrl,
+	isAdminOperatorHost,
+	isAppOperatorHost,
 	isStagingOperatorHost,
 	operatorCookieName,
 	operatorThemeCookieName,
+	shouldApplyImpersonationToUserId,
 	sharedCookieDomain,
 	sharedCookieDomainFromHost,
 } from './cookie-domain.server.ts'
@@ -71,6 +76,67 @@ describe('isStagingOperatorHost', () => {
 		expect(isStagingOperatorHost('app-staging.example.com')).toBe(true)
 		expect(isStagingOperatorHost('admin-staging.example.com')).toBe(true)
 		expect(isStagingOperatorHost('app.example.com')).toBe(false)
+	})
+})
+
+describe('operator cross-origin URLs', () => {
+	it('builds app and admin URLs from ROOT_APP and the current origin', () => {
+		expect(
+			getOperatorAppUrl(
+				'https://admin.epic-startup.test:2999',
+				'epic-startup.test',
+			),
+		).toBe('https://app.epic-startup.test:2999')
+		expect(
+			getOperatorAdminUrl(
+				'https://app.epic-startup.test:2999',
+				'epic-startup.test',
+			),
+		).toBe('https://admin.epic-startup.test:2999')
+	})
+
+	it('uses staging host labels when the reference origin is staging', () => {
+		expect(
+			getOperatorAppUrl(
+				'https://admin-staging.example.com',
+				'example.com',
+			),
+		).toBe('https://app-staging.example.com')
+		expect(
+			getOperatorAdminUrl(
+				'https://app-staging.example.com',
+				'example.com',
+			),
+		).toBe('https://admin-staging.example.com')
+	})
+})
+
+describe('shouldApplyImpersonationToUserId', () => {
+	it('applies on app hosts but not admin hosts', () => {
+		expect(
+			shouldApplyImpersonationToUserId(
+				new Request('https://app.epic-startup.test:2999/'),
+			),
+		).toBe(true)
+		expect(
+			shouldApplyImpersonationToUserId(
+				new Request('https://admin.epic-startup.test:2999/users'),
+			),
+		).toBe(false)
+		expect(
+			shouldApplyImpersonationToUserId(
+				new Request('http://localhost:3001/'),
+			),
+		).toBe(true)
+	})
+})
+
+describe('operator host labels', () => {
+	it('detects app and admin operator hosts', () => {
+		expect(isAppOperatorHost('app.epic-startup.test:2999')).toBe(true)
+		expect(isAppOperatorHost('admin.epic-startup.test')).toBe(false)
+		expect(isAdminOperatorHost('admin.epic-startup.test')).toBe(true)
+		expect(isAdminOperatorHost('app.epic-startup.test')).toBe(false)
 	})
 })
 

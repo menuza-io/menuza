@@ -1,3 +1,4 @@
+import { ENV } from './env.js'
 export type EmailProvider = 'resend' | 'oci'
 
 /**
@@ -5,7 +6,7 @@ export type EmailProvider = 'resend' | 'oci'
  * marketing). Tenant customer marketing on tenant-api always uses OCI directly.
  */
 export function getEmailProvider(): EmailProvider {
-	const raw = process.env.EMAIL_PROVIDER?.trim().toLowerCase()
+	const raw = ENV.EMAIL_PROVIDER?.trim().toLowerCase()
 	return raw === 'oci' ? 'oci' : 'resend'
 }
 

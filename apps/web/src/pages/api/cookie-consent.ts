@@ -1,4 +1,7 @@
-import { setCookieConsentState } from '@repo/common/cookie-consent'
+import {
+	setCookieConsentState,
+	verifyCookieConsentRequestOrigin,
+} from '@repo/common/cookie-consent'
 import { type APIRoute } from 'astro'
 import { ENV } from 'varlock/env'
 
@@ -20,6 +23,10 @@ function getSafeReturnLocation(request: Request): string {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+	if (!verifyCookieConsentRequestOrigin(request)) {
+		return new Response('Invalid origin', { status: 403 })
+	}
+
 	const formData = await request.formData()
 	const preference = formData.get('consent')
 

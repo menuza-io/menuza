@@ -2,6 +2,7 @@
  * Asana integration provider implementation
  */
 
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -110,7 +111,7 @@ export class AsanaProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientId(): string {
-		const clientId = process.env.ASANA_CLIENT_ID
+		const clientId = ENV.ASANA_CLIENT_ID
 		if (!clientId) {
 			throw new Error('ASANA_CLIENT_ID environment variable is required')
 		}
@@ -118,7 +119,7 @@ export class AsanaProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientSecret(): string {
-		const clientSecret = process.env.ASANA_CLIENT_SECRET
+		const clientSecret = ENV.ASANA_CLIENT_SECRET
 		if (!clientSecret) {
 			throw new Error('ASANA_CLIENT_SECRET environment variable is required')
 		}

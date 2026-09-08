@@ -1,4 +1,9 @@
 import type { Request, Response, NextFunction } from 'express'
+import { ENV } from './env.js'
+import {
+	getRuntimeDeploymentId,
+	getRuntimeRegion,
+} from './runtime-env.js'
 import {
 	runWithRequestContext,
 	getRequestContext,
@@ -69,8 +74,8 @@ export function wideEventMiddleware(
 		],
 		requestIdHeader = 'x-request-id',
 		traceIdHeader = 'x-trace-id',
-		serviceName = process.env.SERVICE_NAME || 'unknown',
-		serviceVersion = process.env.SERVICE_VERSION ||
+		serviceName = ENV.SERVICE_NAME || 'unknown',
+		serviceVersion = ENV.SERVICE_VERSION ||
 			process.env.npm_package_version ||
 			'unknown',
 	} = options
@@ -111,8 +116,8 @@ export function wideEventMiddleware(
 				// Service info
 				service: serviceName,
 				version: serviceVersion,
-				region: process.env.CF_DATACENTER || process.env.REGION || undefined,
-				deploymentId: process.env.DEPLOYMENT_ID || undefined,
+				region: getRuntimeRegion(),
+				deploymentId: getRuntimeDeploymentId(),
 
 				// Request info
 				...(traceId && { traceId }),
@@ -218,7 +223,7 @@ export function addUserContext(context: {
  * In production, removes absolute file paths and potentially sensitive patterns.
  */
 function sanitizeStackTrace(stack: string): string {
-	const isProduction = process.env.NODE_ENV === 'production'
+	const isProduction = ENV.NODE_ENV === 'production'
 
 	if (!isProduction) {
 		return stack

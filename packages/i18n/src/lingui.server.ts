@@ -1,5 +1,6 @@
 import { type LinguiConfig } from '@lingui/conf'
 import { createCookie } from 'react-router'
+import { ENV } from './env.js'
 import { RemixLingui } from './remix.server'
 
 /**
@@ -14,7 +15,7 @@ export function createLocaleCookie(
 	return createCookie(name, {
 		path: '/',
 		sameSite: 'lax',
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 		httpOnly: true,
 		...options,
 	})

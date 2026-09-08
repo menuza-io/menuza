@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ENV } from './env.js'
 
 // Provider name validation
 export const ProviderNameSchema = z
@@ -16,7 +17,7 @@ export const UrlSchema = z
 			const parsed = new URL(url)
 			return (
 				parsed.protocol === 'https:' ||
-				(process.env.NODE_ENV === 'development' && parsed.protocol === 'http:')
+				(ENV.NODE_ENV === 'development' && parsed.protocol === 'http:')
 			)
 		} catch {
 			return false

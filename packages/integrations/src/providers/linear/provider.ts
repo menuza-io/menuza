@@ -3,6 +3,7 @@
  */
 
 import { getIntegrationUserAgent } from '@repo/config/brand'
+import { ENV } from '../../env.js'
 
 import {
 	type Integration,
@@ -110,7 +111,7 @@ export class LinearProvider extends BaseIntegrationProvider {
 		redirectUri: string,
 		additionalParams?: Record<string, any>,
 	): Promise<string> {
-		const clientId = process.env.LINEAR_CLIENT_ID
+		const clientId = ENV.LINEAR_CLIENT_ID
 		if (!clientId) {
 			throw new Error('LINEAR_CLIENT_ID environment variable is not set')
 		}
@@ -428,8 +429,8 @@ export class LinearProvider extends BaseIntegrationProvider {
 		code: string,
 		redirectUri?: string,
 	): Promise<LinearOAuthResponse> {
-		const clientId = process.env.LINEAR_CLIENT_ID
-		const clientSecret = process.env.LINEAR_CLIENT_SECRET
+		const clientId = ENV.LINEAR_CLIENT_ID
+		const clientSecret = ENV.LINEAR_CLIENT_SECRET
 
 		if (!clientId || !clientSecret) {
 			throw new Error(

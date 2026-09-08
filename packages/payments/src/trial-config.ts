@@ -4,10 +4,11 @@
  */
 
 import { type TrialConfig } from './types'
+import { ENV } from './env.js'
 
 export function getTrialConfig(): TrialConfig {
-	const trialDays = parseInt(process.env.TRIAL_DAYS || '14', 10)
-	const creditCardRequired = (process.env.CREDIT_CARD_REQUIRED_FOR_TRIAL ||
+	const trialDays = parseInt(String(ENV.TRIAL_DAYS ?? '14'), 10)
+	const creditCardRequired = (ENV.CREDIT_CARD_REQUIRED_FOR_TRIAL ||
 		'manual') as 'stripe' | 'manual'
 
 	// Validate configuration

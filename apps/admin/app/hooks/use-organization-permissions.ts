@@ -149,10 +149,10 @@ export function useOrganizationRole() {
 				id: permissions.organizationRole.id,
 				name: permissions.organizationRole.name,
 				level: permissions.organizationRole.level,
-				isAdmin: permissions.organizationRole.name === 'admin',
-				isMember: permissions.organizationRole.name === 'member',
-				isViewer: permissions.organizationRole.name === 'viewer',
-				isGuest: permissions.organizationRole.name === 'guest',
+				isAdmin: permissions.organizationRole.name.toLowerCase() === 'admin',
+				isMember: permissions.organizationRole.name.toLowerCase() === 'member',
+				isViewer: permissions.organizationRole.name.toLowerCase() === 'viewer',
+				isGuest: permissions.organizationRole.name.toLowerCase() === 'guest',
 			}
 		: null
 }

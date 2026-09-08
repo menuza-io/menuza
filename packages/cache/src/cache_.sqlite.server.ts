@@ -1,5 +1,6 @@
 import { isCloudflareWorkerRuntime } from '@repo/common'
 import { getInstanceInfo, getInternalInstanceDomain } from '@repo/common/litefs'
+import { ENV } from './env.js'
 
 export async function updatePrimaryCacheValue({
 	key,
@@ -19,7 +20,7 @@ export async function updatePrimaryCacheValue({
 		)
 	}
 	const domain = getInternalInstanceDomain(primaryInstance)
-	const token = process.env.INTERNAL_COMMAND_TOKEN
+	const token = ENV.INTERNAL_COMMAND_TOKEN
 	return fetch(`${domain}/cache/sqlite`, {
 		method: 'POST',
 		headers: {

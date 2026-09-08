@@ -67,28 +67,21 @@ describe('getDomainUrl', () => {
 		expect(getDomainUrl(request)).toBe(url)
 	})
 
-	test('respects X-Forwarded-Proto', () => {
+	test('respects X-Forwarded-Proto on trusted brand hosts', () => {
+		const domain = getBrandDomain()
+		const url = `http://${domain}`
+		const request = new Request(url, {
+			headers: { 'X-Forwarded-Proto': 'https' },
+		})
+		expect(getDomainUrl(request)).toBe(`https://${domain}`)
+	})
+
+	test('ignores X-Forwarded-Proto on untrusted hosts', () => {
 		const url = 'http://example.com'
 		const request = new Request(url, {
 			headers: { 'X-Forwarded-Proto': 'https' },
 		})
-		expect(getDomainUrl(request)).toBe('https://example.com')
-	})
-
-	test('respects x-forwarded-proto (lowercase)', () => {
-		const url = 'http://example.com'
-		const request = new Request(url, {
-			headers: { 'x-forwarded-proto': 'https' },
-		})
-		expect(getDomainUrl(request)).toBe('https://example.com')
-	})
-
-	test('respects X-Forwarded-Host', () => {
-		const url = 'http://example.com'
-		const request = new Request(url, {
-			headers: { 'X-Forwarded-Host': 'example.org' },
-		})
-		expect(getDomainUrl(request)).toBe('http://example.org')
+		expect(getDomainUrl(request)).toBe('http://example.com')
 	})
 
 	test('forces https for the brand domain', () => {

@@ -22,8 +22,9 @@ import { getInstanceInfo } from '@repo/common/litefs'
 import { LRUCache } from 'lru-cache'
 import { z } from 'zod'
 import { updatePrimaryCacheValue } from './cache_.sqlite.server'
+import { ENV } from './env.js'
 
-const CACHE_DATABASE_PATH = process.env.CACHE_DATABASE_PATH ?? './cache.db'
+const CACHE_DATABASE_PATH = ENV.CACHE_DATABASE_PATH ?? './cache.db'
 const CACHE_KV_PREFIX = 'CACHE:'
 
 export interface CacheKVNamespace {

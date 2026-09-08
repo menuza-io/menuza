@@ -8,6 +8,7 @@
  */
 
 import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'crypto'
+import { ENV } from './env.js'
 import { providerRegistry } from './provider'
 import {
 	type TokenData,
@@ -37,7 +38,7 @@ export class OAuthStateManager {
 	}
 
 	private static getHmacKey(): string {
-		const key = process.env.INTEGRATIONS_OAUTH_STATE_SECRET
+		const key = ENV.INTEGRATIONS_OAUTH_STATE_SECRET
 		if (!key) {
 			throw new Error(
 				'INTEGRATIONS_OAUTH_STATE_SECRET environment variable is required for OAuth security',

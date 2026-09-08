@@ -2,6 +2,7 @@
  * Slack integration provider implementation
  */
 
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -74,7 +75,7 @@ export class SlackProvider extends BaseIntegrationProvider {
 	readonly logoPath = '/icons/slack.svg'
 
 	private get clientId(): string {
-		const clientId = process.env.SLACK_CLIENT_ID
+		const clientId = ENV.SLACK_CLIENT_ID
 		if (!clientId) {
 			console.warn(
 				'SLACK_CLIENT_ID not found in environment variables, using demo client ID',
@@ -85,7 +86,7 @@ export class SlackProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientSecret(): string {
-		const clientSecret = process.env.SLACK_CLIENT_SECRET
+		const clientSecret = ENV.SLACK_CLIENT_SECRET
 		if (!clientSecret) {
 			console.warn(
 				'SLACK_CLIENT_SECRET not found in environment variables, using demo client secret',

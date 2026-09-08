@@ -114,33 +114,25 @@ function withSecurityHeaders(
 	env: SiteHostEnv,
 	cacheControl?: string,
 ) {
-	const newHeaders = new Headers(response.headers)
-
 	for (const [key, value] of Object.entries(securityHeadersFor(env))) {
-		newHeaders.set(key, value)
+		response.headers.set(key, value)
 	}
 
-	const existingVary = newHeaders.get('Vary')
+	const existingVary = response.headers.get('Vary')
 	const varyValues = new Set(
 		existingVary ? existingVary.split(',').map((v) => v.trim()) : [],
 	)
 	varyValues.add('Host')
 	varyValues.add('Accept-Encoding')
-	newHeaders.set('Vary', Array.from(varyValues).join(', '))
+	response.headers.set('Vary', Array.from(varyValues).join(', '))
 
 	if (pathname.startsWith('/api/')) {
-		newHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+		response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
 	} else if (cacheControl) {
-		newHeaders.set('Cache-Control', cacheControl)
+		response.headers.set('Cache-Control', cacheControl)
 	}
 
-	return asAstroResponse(
-		new Response(response.body, {
-			status: response.status,
-			statusText: response.statusText,
-			headers: newHeaders,
-		}),
-	)
+	return response
 }
 
 function waitUntil(context: { locals: App.Locals }, task: Promise<unknown>) {

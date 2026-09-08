@@ -1,24 +1,35 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mockEnv = vi.hoisted(() => ({
+	TRIAL_DAYS: 14 as number | string | undefined,
+	CREDIT_CARD_REQUIRED_FOR_TRIAL: 'manual' as 'stripe' | 'manual' | string,
+}))
+
+vi.mock('../src/env.js', () => ({
+	get ENV() {
+		return mockEnv
+	},
+}))
+
 import {
 	calculateManualTrialDaysRemaining,
 	getTrialConfig,
 } from '../src/trial-config'
 
 describe('Trial Configuration', () => {
-	const originalEnv = process.env
-
 	beforeEach(() => {
-		process.env = { ...originalEnv }
+		mockEnv.TRIAL_DAYS = 14
+		mockEnv.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'manual'
 	})
 
 	afterEach(() => {
-		process.env = originalEnv
+		vi.clearAllMocks()
 	})
 
 	describe('getTrialConfig', () => {
 		it('should return default values when env vars are not set', () => {
-			delete (process.env as any).TRIAL_DAYS
-			delete (process.env as any).CREDIT_CARD_REQUIRED_FOR_TRIAL
+			mockEnv.TRIAL_DAYS = undefined
+			mockEnv.CREDIT_CARD_REQUIRED_FOR_TRIAL = undefined as any
 
 			const config = getTrialConfig()
 			expect(config.trialDays).toBe(14)
@@ -26,8 +37,8 @@ describe('Trial Configuration', () => {
 		})
 
 		it('should use environment variables when set', () => {
-			process.env.TRIAL_DAYS = '30'
-			process.env.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'stripe'
+			mockEnv.TRIAL_DAYS = 30
+			mockEnv.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'stripe'
 
 			const config = getTrialConfig()
 			expect(config.trialDays).toBe(30)
@@ -35,7 +46,7 @@ describe('Trial Configuration', () => {
 		})
 
 		it('should throw error for invalid TRIAL_DAYS', () => {
-			process.env.TRIAL_DAYS = 'invalid'
+			mockEnv.TRIAL_DAYS = 'invalid'
 
 			expect(() => getTrialConfig()).toThrow(
 				'TRIAL_DAYS must be a valid positive number',
@@ -43,7 +54,7 @@ describe('Trial Configuration', () => {
 		})
 
 		it('should throw error for invalid CREDIT_CARD_REQUIRED_FOR_TRIAL', () => {
-			;(process.env as any).CREDIT_CARD_REQUIRED_FOR_TRIAL = 'invalid'
+			mockEnv.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'invalid'
 
 			expect(() => getTrialConfig()).toThrow(
 				'CREDIT_CARD_REQUIRED_FOR_TRIAL must be either "stripe" or "manual"',
@@ -53,8 +64,8 @@ describe('Trial Configuration', () => {
 
 	describe('calculateManualTrialDaysRemaining', () => {
 		beforeEach(() => {
-			process.env.TRIAL_DAYS = '14'
-			process.env.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'manual'
+			mockEnv.TRIAL_DAYS = 14
+			mockEnv.CREDIT_CARD_REQUIRED_FOR_TRIAL = 'manual'
 		})
 
 		it('should calculate correct days remaining for new organization', () => {
@@ -80,7 +91,7 @@ describe('Trial Configuration', () => {
 		})
 
 		it('should adapt to different TRIAL_DAYS values', () => {
-			process.env.TRIAL_DAYS = '30'
+			mockEnv.TRIAL_DAYS = 30
 
 			const tenDaysAgo = new Date()
 			tenDaysAgo.setDate(tenDaysAgo.getDate() - 10)

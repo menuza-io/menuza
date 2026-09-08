@@ -12,16 +12,16 @@ const { cookiePolicyUrl } = Astro.props
 	aria-label="Cookie consent"
 	class="fixed inset-x-4 bottom-4 z-50 max-w-[360px] rounded-2xl border border-border bg-background p-5 text-foreground shadow-lg sm:left-5 sm:right-auto sm:bottom-5"
 >
-	<p class="m-0 text-sm leading-6 text-muted-foreground">
+	<p class="m-0 text-sm leading-6 text-foreground">
 		We use cookies to enhance your experience, analyze site traffic, and deliver
 		personalized content.{' '}
 		<a
 			href={cookiePolicyUrl}
 			target="_blank"
-			rel="noreferrer"
+			rel="noopener noreferrer"
 			class="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
 		>
-			Read our Cookie Policy
+			Read our Cookie Policy<span class="sr-only"> (opens in new tab)</span>
 		</a>.
 	</p>
 

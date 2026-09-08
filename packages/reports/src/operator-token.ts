@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { SignJWT, jwtVerify } from 'jose'
+import { ENV } from './env.js'
 
 export const OPERATOR_TOKEN_AUD = 'tenant-api-operator'
 export const OPERATOR_TOKEN_ISS = 'epic-startup-control-plane'
@@ -82,7 +83,7 @@ export function resolvePublicTenantApiUrl(options: {
 		(options.dataRegion || 'us').toLowerCase() === 'ksa' ? 'ksa' : 'us'
 	const configured = region === 'ksa' ? options.ksaUrl : options.usUrl
 	if (configured) return configured.replace(/\/$/, '')
-	if (options.brandDomain && process.env.NODE_ENV !== 'production') {
+	if (options.brandDomain && ENV.NODE_ENV !== 'production') {
 		const host =
 			region === 'ksa'
 				? `api-ksa.${options.brandDomain}`

@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest --run",
+    "test": "../../node_modules/.bin/varlock run -- vitest --run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "test:e2e:install": "playwright install --with-deps chromium"

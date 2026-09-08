@@ -3,55 +3,38 @@
 
 /// <reference types="emdash/locals" />
 
-import type {
-	ContentBylineCredit,
-	TaxonomyTerm,
-	PortableTextBlock,
-} from 'emdash'
+import type { ContentBylineCredit, TaxonomyTerm, PortableTextBlock } from "emdash";
 
 export interface Page {
-	id: string
-	slug: string | null
-	status: string
-	title: string
-	content?: PortableTextBlock[]
-	createdAt: Date
-	updatedAt: Date
-	publishedAt: Date | null
-	bylines?: ContentBylineCredit[]
-	terms?: Record<string, TaxonomyTerm[]>
+  id: string;
+  slug: string | null;
+  status: string;
+  title: string;
+  content?: PortableTextBlock[];
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  bylines?: ContentBylineCredit[];
+  terms?: Record<string, TaxonomyTerm[]>;
 }
 
 export interface Post {
-	id: string
-	slug: string | null
-	status: string
-	title: string
-	content?: PortableTextBlock[]
-	featured_image?: {
-		id: string
-		src?: string
-		alt?: string
-		width?: number
-		height?: number
-		filename?: string
-		mimeType?: string
-		blurhash?: string
-		dominantColor?: string
-		provider?: string
-		previewUrl?: string
-		meta?: Record<string, unknown>
-	}
-	createdAt: Date
-	updatedAt: Date
-	publishedAt: Date | null
-	bylines?: ContentBylineCredit[]
-	terms?: Record<string, TaxonomyTerm[]>
+  id: string;
+  slug: string | null;
+  status: string;
+  title: string;
+  content?: PortableTextBlock[];
+  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; provider?: string; previewUrl?: string; meta?: Record<string, unknown> };
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  bylines?: ContentBylineCredit[];
+  terms?: Record<string, TaxonomyTerm[]>;
 }
 
-declare module 'emdash' {
-	interface EmDashCollections {
-		pages: Page
-		posts: Post
-	}
+declare module "emdash" {
+  interface EmDashCollections {
+    pages: Page;
+    posts: Post;
+  }
 }

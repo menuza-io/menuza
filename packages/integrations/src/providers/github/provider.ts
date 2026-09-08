@@ -3,6 +3,7 @@
  */
 
 import { getIntegrationUserAgent } from '@repo/config/brand'
+import { ENV } from '../../env.js'
 
 import {
 	type Integration,
@@ -122,7 +123,7 @@ export class GitHubProvider extends BaseIntegrationProvider {
 	}
 
 	private clientId(): string {
-		const clientId = process.env.GITHUB_INTEGRATION_CLIENT_ID
+		const clientId = ENV.GITHUB_INTEGRATION_CLIENT_ID
 		if (!clientId) {
 			throw new Error(
 				'GITHUB_INTEGRATION_CLIENT_ID environment variable is required',
@@ -132,7 +133,7 @@ export class GitHubProvider extends BaseIntegrationProvider {
 	}
 
 	private clientSecret(): string {
-		const clientSecret = process.env.GITHUB_INTEGRATION_CLIENT_SECRET
+		const clientSecret = ENV.GITHUB_INTEGRATION_CLIENT_SECRET
 		if (!clientSecret) {
 			throw new Error(
 				'GITHUB_INTEGRATION_CLIENT_SECRET environment variable is required',

@@ -493,12 +493,16 @@ function AppWithProviders() {
 				optimizerEndpoint="/resources/images"
 				getSrc={getImgSrc}
 			>
-				{data.impersonationInfo && (
-					<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
-				)}
-				<TooltipProvider>
-					<Outlet />
-				</TooltipProvider>
+				<div className="flex min-h-svh flex-col">
+					{data.impersonationInfo && (
+						<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
+					)}
+					<div className="flex min-h-0 flex-1 flex-col">
+						<TooltipProvider>
+							<Outlet />
+						</TooltipProvider>
+					</div>
+				</div>
 				<EpicToaster />
 				<CookieConsentBanner consent={data.cookieConsent} />
 			</OpenImgContextProvider>

@@ -1,4 +1,5 @@
 import { render } from '@react-email/components'
+import { ENV } from './env.js'
 import { brand } from '@repo/config/brand'
 import { type ReactElement } from 'react'
 import { z } from 'zod'
@@ -155,9 +156,9 @@ async function sendEmailViaResend({
 			: null),
 	}
 
-	if (process.env.NODE_ENV === 'test') {
+	if (ENV.NODE_ENV === 'test') {
 		logger.debug({ to, subject }, 'Test mode: sendEmail called')
-	} else if (!process.env.RESEND_API_KEY && !process.env.MOCKS) {
+	} else if (!ENV.RESEND_API_KEY && !ENV.MOCKS) {
 		logger.warn(
 			{ email },
 			'RESEND_API_KEY not set and not in mocks mode. Email not sent.',
@@ -172,7 +173,7 @@ async function sendEmailViaResend({
 		method: 'POST',
 		body: JSON.stringify(email),
 		headers: {
-			Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+			Authorization: `Bearer ${ENV.RESEND_API_KEY}`,
 			'Content-Type': 'application/json',
 		},
 	})

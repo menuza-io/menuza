@@ -34,8 +34,7 @@ export function rateLimit(name: string, config: RateLimitConfig) {
 	const cache = getLimiter(name, config)
 
 	return async (c: Context, next: Next) => {
-		// Bypass rate limiting in development mode
-		if ((ENV as any).NODE_ENV !== 'production') {
+		if (ENV.NODE_ENV !== 'production') {
 			return await next()
 		}
 
@@ -93,8 +92,7 @@ export function rateLimitByKey(
 	key: string,
 	config: RateLimitConfig,
 ): { limited: true; retryAfter: number } | { limited: false } {
-	// Bypass in development mode
-	if ((ENV as any).NODE_ENV !== 'production') {
+	if (ENV.NODE_ENV !== 'production') {
 		return { limited: false }
 	}
 
@@ -122,28 +120,16 @@ export function rateLimitByKey(
  */
 const GLOBAL_SEND_WINDOW_MS = 60 * 60 * 1000 // 1 hour
 export function getGlobalSendMax() {
-	let raw: string | undefined
-	try {
-		raw = ENV.GLOBAL_SMS_CAP || process.env.GLOBAL_SMS_CAP
-	} catch {
-		raw = process.env.GLOBAL_SMS_CAP
-	}
+	const raw = process.env.GLOBAL_SMS_CAP ?? ENV.GLOBAL_SMS_CAP
 	if (!raw) return 500
-	const parsed = Number.parseInt(raw, 10)
+	const parsed = Number.parseInt(String(raw), 10)
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : 500
 }
 let globalSendTimestamps: number[] = []
 
 export function checkGlobalSendCap():
 	{ limited: true; retryAfter: number } | { limited: false } {
-	// Bypass in development mode
-	let isProduction = false
-	try {
-		isProduction = (ENV as any).NODE_ENV === 'production'
-	} catch {
-		isProduction = process.env.NODE_ENV === 'production'
-	}
-	if (!isProduction) {
+	if (ENV.NODE_ENV !== 'production') {
 		return { limited: false }
 	}
 

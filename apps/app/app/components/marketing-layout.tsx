@@ -47,6 +47,7 @@ export function MarketingLayout({
 	return (
 		<>
 			<SidebarProvider
+				className="min-h-0 flex-1"
 				open={!isCollapsed}
 				style={
 					{

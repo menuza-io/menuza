@@ -32,7 +32,7 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "vitest --run",
+    "test": "../../node_modules/.bin/varlock run -- vitest --run",
     "test:watch": "vitest"
   },
   "dependencies": {

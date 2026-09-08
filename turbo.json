@@ -1,9 +1,14 @@
 {
 	"$schema": "https://turbo.build/schema.json",
-	"globalDependencies": ["**/.env.*local"],
+	"globalDependencies": ["**/.env.*local", "packages/**/.env.schema"],
 	"tasks": {
+		"//#env:codegen": {
+			"cache": true,
+			"inputs": ["packages/**/.env.schema", "scripts/codegen-package-env.mjs"],
+			"outputs": ["packages/**/src/env.ts", "packages/**/src/env.js"]
+		},
 		"build": {
-			"dependsOn": ["^build"],
+			"dependsOn": ["//#env:codegen", "^build"],
 			"outputs": ["build/**", "public/build/**", "dist/**", ".expo/**"],
 			"cache": true
 		},
@@ -58,20 +63,31 @@
 			"cache": true
 		},
 		"typecheck": {
+			"dependsOn": ["//#env:codegen"],
 			"cache": true
 		},
 		"db:seed": {
 			"cache": false
 		},
 		"test": {
-			"dependsOn": ["^build"],
+			"dependsOn": ["//#env:codegen", "^build"],
 			"cache": true
 		},
 		"test:e2e:run": {
-			"dependsOn": ["^build"],
+			"dependsOn": ["//#env:codegen", "^build"],
 			"cache": true
 		},
 		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"app#dev": {
+			"dependsOn": ["@repo/observability#build"],
+			"cache": false,
+			"persistent": true
+		},
+		"admin#dev": {
+			"dependsOn": ["@repo/observability#build"],
 			"cache": false,
 			"persistent": true
 		},

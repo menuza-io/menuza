@@ -3,6 +3,7 @@
  */
 
 import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -128,7 +129,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientId(): string {
-		const clientId = process.env.GITLAB_CLIENT_ID
+		const clientId = ENV.GITLAB_CLIENT_ID
 		if (!clientId) {
 			throw new Error('GITLAB_CLIENT_ID environment variable is required')
 		}
@@ -136,7 +137,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientSecret(): string {
-		const clientSecret = process.env.GITLAB_CLIENT_SECRET
+		const clientSecret = ENV.GITLAB_CLIENT_SECRET
 		if (!clientSecret) {
 			throw new Error('GITLAB_CLIENT_SECRET environment variable is required')
 		}

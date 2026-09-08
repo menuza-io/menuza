@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { isCiRuntime } from './runtime-env.js'
 import { randomUUID } from 'node:crypto'
 import { logger } from './logger.server.js'
 
@@ -92,7 +93,7 @@ export class WideEventBuilder {
 			...this.context,
 		}
 
-		if (process.env.CI) {
+		if (isCiRuntime()) {
 			// Do not log anything on CI/CD while running E2E tests!
 		} else if (finalData.error) {
 			logger.error(

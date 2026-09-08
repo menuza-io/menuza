@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
+import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { z } from 'zod'
 import {
 	getTenantDb,
@@ -23,6 +24,62 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
+export const JOURNEY_LIST_LIMIT = 100
+
+function isSqliteUniqueConstraintError(error: unknown) {
+	return (
+		error instanceof Error &&
+		(error.message.includes('UNIQUE constraint failed') ||
+			error.message.includes('SQLITE_CONSTRAINT_UNIQUE'))
+	)
+}
+
+function executionWasDispatched(execution: {
+	executionDetails?: string | null | unknown
+}) {
+	if (execution.executionDetails == null) return false
+	try {
+		const details =
+			typeof execution.executionDetails === 'string'
+				? JSON.parse(execution.executionDetails)
+				: execution.executionDetails
+		if (!details || typeof details !== 'object') return false
+		return (
+			details.dispatched === true ||
+			(typeof details.messageId === 'string' && details.messageId.length > 0) ||
+			(typeof details.sid === 'string' && details.sid.length > 0)
+		)
+	} catch {
+		return false
+	}
+}
+
+function deliveredResultFromDispatchedExecution(execution: {
+	id: string
+	executionDetails?: string | null | unknown
+}): StepExecutionResult {
+	let messageId: string | undefined
+	try {
+		const details =
+			typeof execution.executionDetails === 'string'
+				? JSON.parse(execution.executionDetails)
+				: execution.executionDetails
+		if (details && typeof details === 'object') {
+			if ('messageId' in details && typeof details.messageId === 'string') {
+				messageId = details.messageId
+			} else if ('sid' in details && typeof details.sid === 'string') {
+				messageId = details.sid
+			}
+		}
+	} catch {}
+
+	return {
+		success: true,
+		executionId: execution.id,
+		status: 'delivered',
+		messageId,
+	}
+}
 
 export type CreateJourneyInput = z.input<typeof createJourneySchema>
 export type UpdateJourneyInput = z.input<typeof updateJourneySchema>
@@ -58,63 +115,7 @@ export async function executeJourneyStep(
 ): Promise<StepExecutionResult> {
 	const db = await getTenantDb(orgId)
 
-	// Idempotency: if this (runId, nodeId) action already delivered, return the
-	// prior result instead of re-dispatching on a workflow retry.
-	const existing = await db
-		.select()
-		.from(journeyStepExecutions)
-		.where(
-			and(
-				eq(journeyStepExecutions.runId, payload.runId),
-				eq(journeyStepExecutions.nodeId, payload.nodeId),
-			),
-		)
-		.all()
-
-	const deliveredExecution = existing.find(
-		(e) => e.status === 'delivered' || e.status === 'completed',
-	)
-	if (deliveredExecution) {
-		let messageId: string | undefined
-		try {
-			const details =
-				typeof deliveredExecution.executionDetails === 'string'
-					? JSON.parse(deliveredExecution.executionDetails)
-					: deliveredExecution.executionDetails
-			if (details && typeof details === 'object' && 'messageId' in details) {
-				messageId = details.messageId as string
-			}
-		} catch {}
-		return {
-			success: true,
-			executionId: deliveredExecution.id,
-			status: 'delivered',
-			messageId,
-		}
-	}
-
-	const processingExecution = existing.find(
-		(e) =>
-			e.status === 'processing' &&
-			e.executedAt &&
-			Date.now() - new Date(e.executedAt).getTime() <
-				JOURNEY_PROCESSING_LEASE_MS,
-	)
-	if (processingExecution) {
-		return {
-			success: true,
-			executionId: processingExecution.id,
-			status: 'processing',
-		}
-	}
-
-	const stepExecutionId = randomUUID()
-
-	const rawType = payload.nodeType
-	const stepType =
-		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
-
-	// 1. Resolve customer PII locally (must exist before inserting foreign key)
+	// 1. Resolve customer PII locally
 	const customer = await db
 		.select()
 		.from(customers)
@@ -131,7 +132,7 @@ export async function executeJourneyStep(
 		}
 	}
 
-	// 2. Resolve journey run (must exist before inserting foreign key)
+	// 2. Resolve journey run
 	const run = await db
 		.select()
 		.from(journeyRuns)
@@ -148,19 +149,182 @@ export async function executeJourneyStep(
 		}
 	}
 
-	// 3. Record initial step execution in audit log
-	await db.insert(journeyStepExecutions).values({
-		id: stepExecutionId,
-		runId: payload.runId,
-		journeyId: payload.journeyId,
-		customerId: payload.customerId,
-		nodeId: payload.nodeId,
-		nodeType: rawType,
-		stepType,
-		status: 'processing',
-		retryCount: 0,
-		executedAt: new Date(),
-	})
+	const rawType = payload.nodeType
+	const stepType =
+		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
+
+	const txResult = await retryOnSqliteBusy(() =>
+		db.transaction(async (tx) => {
+			// Idempotency: if this (runId, nodeId) action already delivered, return the
+			// prior result instead of re-dispatching on a workflow retry.
+			const existing = await tx
+				.select()
+				.from(journeyStepExecutions)
+				.where(
+					and(
+						eq(journeyStepExecutions.runId, payload.runId),
+						eq(journeyStepExecutions.nodeId, payload.nodeId),
+					),
+				)
+				.all()
+
+			const deliveredExecution = existing.find(
+				(e) => e.status === 'delivered' || e.status === 'completed',
+			)
+			if (deliveredExecution) {
+				let messageId: string | undefined
+				try {
+					const details =
+						typeof deliveredExecution.executionDetails === 'string'
+							? JSON.parse(deliveredExecution.executionDetails)
+							: deliveredExecution.executionDetails
+					if (
+						details &&
+						typeof details === 'object' &&
+						'messageId' in details
+					) {
+						messageId = details.messageId as string
+					}
+				} catch {}
+				return {
+					success: true,
+					executionId: deliveredExecution.id,
+					status: 'delivered' as const,
+					messageId,
+				}
+			}
+
+			const processingExecution = existing.find(
+				(e) =>
+					e.status === 'processing' &&
+					e.executedAt &&
+					Date.now() - new Date(e.executedAt).getTime() <
+						JOURNEY_PROCESSING_LEASE_MS,
+			)
+			if (processingExecution) {
+				return {
+					success: true,
+					executionId: processingExecution.id,
+					status: 'processing' as const,
+				}
+			}
+
+			const dispatchedExecution = existing.find((e) =>
+				executionWasDispatched(e),
+			)
+			if (dispatchedExecution) {
+				return deliveredResultFromDispatchedExecution(dispatchedExecution)
+			}
+
+			const reclaimableExecution = existing.find(
+				(e) =>
+					!executionWasDispatched(e) &&
+					(e.status === 'failed' ||
+						(e.status === 'processing' &&
+							e.executedAt &&
+							Date.now() - new Date(e.executedAt).getTime() >=
+								JOURNEY_PROCESSING_LEASE_MS)),
+			)
+			if (reclaimableExecution) {
+				await tx
+					.update(journeyStepExecutions)
+					.set({
+						status: 'processing',
+						executedAt: new Date(),
+						retryCount: (reclaimableExecution.retryCount ?? 0) + 1,
+						errorMessage: null,
+						completedAt: null,
+					})
+					.where(eq(journeyStepExecutions.id, reclaimableExecution.id))
+
+				return {
+					_continue: true,
+					stepExecutionId: reclaimableExecution.id,
+				}
+			}
+
+			const stepExecutionId = randomUUID()
+
+			// 3. Record initial step execution in audit log
+			try {
+				await tx.insert(journeyStepExecutions).values({
+					id: stepExecutionId,
+					runId: payload.runId,
+					journeyId: payload.journeyId,
+					customerId: payload.customerId,
+					nodeId: payload.nodeId,
+					nodeType: rawType,
+					stepType,
+					status: 'processing',
+					retryCount: 0,
+					executedAt: new Date(),
+				})
+			} catch (error) {
+				if (!isSqliteUniqueConstraintError(error)) {
+					throw error
+				}
+
+				const raced = await tx
+					.select()
+					.from(journeyStepExecutions)
+					.where(
+						and(
+							eq(journeyStepExecutions.runId, payload.runId),
+							eq(journeyStepExecutions.nodeId, payload.nodeId),
+						),
+					)
+					.get()
+
+				if (!raced) throw error
+
+				if (raced.status === 'delivered' || raced.status === 'completed') {
+					return {
+						success: true,
+						executionId: raced.id,
+						status: 'delivered' as const,
+					}
+				}
+
+				if (executionWasDispatched(raced)) {
+					return deliveredResultFromDispatchedExecution(raced)
+				}
+
+				if (
+					raced.status === 'processing' &&
+					raced.executedAt &&
+					Date.now() - new Date(raced.executedAt).getTime() <
+						JOURNEY_PROCESSING_LEASE_MS
+				) {
+					return {
+						success: true,
+						executionId: raced.id,
+						status: 'processing' as const,
+					}
+				}
+
+				throw error
+			}
+
+			return {
+				_continue: true,
+				stepExecutionId,
+			}
+		}),
+	)
+
+	if (!('_continue' in txResult)) {
+		return txResult
+	}
+
+	const stepExecutionId = txResult.stepExecutionId
+	if (!stepExecutionId) {
+		return {
+			success: false,
+			status: 'failed',
+			error: 'Failed to acquire journey step execution lease',
+			statusCode: 500,
+		}
+	}
 
 	let contextData: Record<string, unknown> = {}
 	if (run.contextData) {
@@ -256,6 +420,18 @@ export async function executeJourneyStep(
 					? emailRes.data.messageId
 					: emailRes.data.messageId
 
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					executionDetails: JSON.stringify({
+						messageId,
+						channel: 'email',
+						dispatched: true,
+						dispatchedAt: new Date().toISOString(),
+					}),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+
 			// Record marketing message outbox entry
 			await db.insert(marketingMessages).values({
 				id: messageId,
@@ -297,6 +473,19 @@ export async function executeJourneyStep(
 				messageId,
 			}
 		} catch (dispatchErr) {
+			const dispatched = await db
+				.select({ executionDetails: journeyStepExecutions.executionDetails })
+				.from(journeyStepExecutions)
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+				.get()
+
+			if (dispatched && executionWasDispatched(dispatched)) {
+				return deliveredResultFromDispatchedExecution({
+					id: stepExecutionId,
+					executionDetails: dispatched.executionDetails,
+				})
+			}
+
 			const errorMessage =
 				dispatchErr instanceof Error
 					? dispatchErr.message
@@ -352,6 +541,19 @@ export async function executeJourneyStep(
 			const sid =
 				smsRes.sid || (smsRes.mock ? 'mock-sms-' + randomUUID() : randomUUID())
 
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					executionDetails: JSON.stringify({
+						sid,
+						channel: 'sms',
+						dispatched: true,
+						mock: smsRes.mock || false,
+						dispatchedAt: new Date().toISOString(),
+					}),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+
 			// Record marketing message outbox entry
 			await db.insert(marketingMessages).values({
 				id: randomUUID(),
@@ -394,6 +596,19 @@ export async function executeJourneyStep(
 				messageId: sid,
 			}
 		} catch (dispatchErr) {
+			const dispatched = await db
+				.select({ executionDetails: journeyStepExecutions.executionDetails })
+				.from(journeyStepExecutions)
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+				.get()
+
+			if (dispatched && executionWasDispatched(dispatched)) {
+				return deliveredResultFromDispatchedExecution({
+					id: stepExecutionId,
+					executionDetails: dispatched.executionDetails,
+				})
+			}
+
 			const errorMessage =
 				dispatchErr instanceof Error
 					? dispatchErr.message
@@ -841,6 +1056,7 @@ export async function listJourneys(orgId: string) {
 		.select()
 		.from(marketingJourneys)
 		.orderBy(desc(marketingJourneys.updatedAt))
+		.limit(JOURNEY_LIST_LIMIT)
 		.all()
 
 	const runs = await db
@@ -1210,6 +1426,7 @@ export async function listJourneyRuns(orgId: string, journeyId: string) {
 		.leftJoin(customers, eq(journeyRuns.customerId, customers.id))
 		.where(eq(journeyRuns.journeyId, journeyId))
 		.orderBy(desc(journeyRuns.startedAt))
+		.limit(JOURNEY_LIST_LIMIT)
 		.all()
 
 	return { runs }

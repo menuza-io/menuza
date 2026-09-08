@@ -1,4 +1,5 @@
 import { SpamError } from 'remix-utils/honeypot/server'
+import { ENV } from './env.js'
 
 const DEFAULT_NAME_FIELD_NAME = 'name__confirm'
 const DEFAULT_VALID_FROM_FIELD_NAME = 'from__confirm'
@@ -57,26 +58,32 @@ async function decrypt(value: string, seed: string) {
 }
 
 class AppHoneypot {
-	#encryptionSeed = process.env.HONEYPOT_SECRET ?? 'honeypot-dev-seed'
-	#validFromFieldName =
-		process.env.NODE_ENV === 'test' ? null : DEFAULT_VALID_FROM_FIELD_NAME
+	#encryptionSeed() {
+		return ENV.HONEYPOT_SECRET
+	}
+
+	#validFromFieldName() {
+		return ENV.NODE_ENV === 'test' ? null : DEFAULT_VALID_FROM_FIELD_NAME
+	}
 
 	async getInputProps({
 		validFromTimestamp = Date.now(),
 	}: { validFromTimestamp?: number } = {}) {
+		const validFromFieldName = this.#validFromFieldName()
 		return {
 			nameFieldName: DEFAULT_NAME_FIELD_NAME,
-			validFromFieldName: this.#validFromFieldName,
-			encryptedValidFrom: this.#validFromFieldName
-				? await encrypt(String(validFromTimestamp), this.#encryptionSeed)
+			validFromFieldName,
+			encryptedValidFrom: validFromFieldName
+				? await encrypt(String(validFromTimestamp), this.#encryptionSeed())
 				: '',
 		}
 	}
 
 	async check(formData: FormData) {
+		const validFromFieldName = this.#validFromFieldName()
 		if (
 			!formData.has(DEFAULT_NAME_FIELD_NAME) &&
-			!(this.#validFromFieldName && formData.has(this.#validFromFieldName))
+			!(validFromFieldName && formData.has(validFromFieldName))
 		) {
 			return
 		}
@@ -85,10 +92,10 @@ class AppHoneypot {
 		}
 		const honeypotValue = formData.get(DEFAULT_NAME_FIELD_NAME)
 		if (honeypotValue !== '') throw new SpamError('Honeypot input not empty')
-		if (!this.#validFromFieldName) return
-		const validFrom = formData.get(this.#validFromFieldName)
+		if (!validFromFieldName) return
+		const validFrom = formData.get(validFromFieldName)
 		if (!validFrom) throw new SpamError('Missing honeypot valid from input')
-		const time = await decrypt(String(validFrom), this.#encryptionSeed)
+		const time = await decrypt(String(validFrom), this.#encryptionSeed())
 		const timestamp = Number(time)
 		if (!time || Number.isNaN(timestamp) || timestamp <= 0) {
 			throw new SpamError('Invalid honeypot valid from input')

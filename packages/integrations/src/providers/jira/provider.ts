@@ -3,6 +3,7 @@
  */
 
 import { ssrfSafeFetch } from '@repo/security'
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -98,7 +99,7 @@ export class JiraProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientId(): string {
-		const clientId = process.env.JIRA_CLIENT_ID
+		const clientId = ENV.JIRA_CLIENT_ID
 		if (!clientId) {
 			console.warn(
 				'JIRA_CLIENT_ID not found in environment variables, using demo client ID',
@@ -109,7 +110,7 @@ export class JiraProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientSecret(): string {
-		const clientSecret = process.env.JIRA_CLIENT_SECRET
+		const clientSecret = ENV.JIRA_CLIENT_SECRET
 		if (!clientSecret) {
 			console.warn(
 				'JIRA_CLIENT_SECRET not found in environment variables, using demo client secret',

@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest --run",
+    "test": "../../node_modules/.bin/varlock run -- vitest --run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
@@ -24,6 +24,7 @@
     "@repo/common": "*",
     "lru-cache": "^11.1.0",
     "react-router": "^8.3.0",
+    "varlock": "^1.18.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

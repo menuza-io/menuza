@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { ENV } from './env.js'
 import { createCookieSessionStorage } from 'react-router'
 
 import {
@@ -11,7 +12,7 @@ export const IMPERSONATION_COOKIE_MAX_AGE = 15 * 60 // 15 minutes in seconds
 
 function getImpersonationSecret(): string {
 	const secret =
-		process.env.IMPERSONATION_SESSION_SECRET || process.env.SESSION_SECRET
+		ENV.IMPERSONATION_SESSION_SECRET || ENV.SESSION_SECRET
 	if (!secret) {
 		throw new Error(
 			'IMPERSONATION_SESSION_SECRET or SESSION_SECRET environment variable is required',
@@ -39,7 +40,7 @@ export const impersonationSessionStorage = createCookieSessionStorage({
 		httpOnly: true,
 		domain: sharedCookieDomain(),
 		secrets: impersonationSecrets,
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 	},
 })
 

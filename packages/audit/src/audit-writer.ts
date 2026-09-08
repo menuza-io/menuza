@@ -6,6 +6,7 @@ import { AuditAction } from './actions.ts'
 import { securityAlertService } from './alerting.ts'
 import { computeIntegrityHash } from './integrity.ts'
 import { auditRetentionManager } from './retention.ts'
+import { ENV } from './env.js'
 
 export interface AuditLogInput {
 	action: AuditAction
@@ -24,7 +25,7 @@ export class AuditLogWriter {
 	private static readonly ALLOWED_UPDATE_FIELDS = ['archived', 'retainUntil']
 
 	async log(input: AuditLogInput): Promise<void> {
-		if (process.env.NODE_ENV === 'test') {
+		if (ENV.NODE_ENV === 'test') {
 			return
 		}
 

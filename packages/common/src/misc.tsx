@@ -116,19 +116,33 @@ export function getErrorMessage(error: unknown) {
 }
 
 export function getDomainUrl(request: Request) {
+	// WARNING: We do NOT use X-Forwarded-Host to prevent host spoofing.
+	// If you are behind a reverse proxy, configure it to preserve the original Host header,
+	// or explicitly validate the X-Forwarded-Host against an allowlist before using it.
 	const host =
-		request.headers.get('X-Forwarded-Host') ??
 		request.headers.get('host') ??
 		new URL(request.url).host
+
+	const hostValue = host.split(',')[0]?.trim() ?? host
+	const hostLower = hostValue.toLowerCase()
+	const brandDomain = getBrandDomain().toLowerCase()
+	const isTrustedHost =
+		hostLower === 'localhost' ||
+		hostLower.endsWith('.localhost') ||
+		hostLower === brandDomain ||
+		hostLower.endsWith(`.${brandDomain}`)
+
+	const forwardedProto =
+		request.headers.get('X-Forwarded-Proto') ??
+		request.headers.get('x-forwarded-proto')
+
 	const protocol =
-		(
-			request.headers.get('X-Forwarded-Proto') ??
-			request.headers.get('x-forwarded-proto') ??
-			new URL(request.url).protocol.slice(0, -1)
-		)
+		(isTrustedHost && forwardedProto
+			? forwardedProto
+			: new URL(request.url).protocol.slice(0, -1))
 			.split(',')[0]
 			?.trim() ?? 'http'
-	const hostValue = host.split(',')[0]?.trim() ?? host
+
 	// If we're behind a proxy that terminates TLS, use https
 	// Also brute force for specific domain to match existing logic
 	if (protocol === 'https' || hostValue.includes(getBrandDomain())) {

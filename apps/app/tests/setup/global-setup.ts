@@ -19,10 +19,11 @@ const CONTROL_PLANE_MIGRATIONS = path.resolve(
 	process.cwd(),
 	'../../packages/database/drizzle',
 )
-const CONTROL_PLANE_MIGRATE = path.resolve(
+const CONTROL_PLANE_DATABASE = path.resolve(
 	process.cwd(),
-	'../../packages/database/src/migrate.ts',
+	'../../packages/database',
 )
+const VARLOCK = path.resolve(process.cwd(), '../../node_modules/.bin/varlock')
 
 async function latestSourceMtime() {
 	const schemaStat = await fsExtra.stat(CONTROL_PLANE_SCHEMA)
@@ -59,7 +60,8 @@ export async function setup() {
 		await fsExtra.remove(`${BASE_DATABASE_PATH}-shm`).catch(() => {})
 	}
 
-	await execaCommand(`npx tsx ${CONTROL_PLANE_MIGRATE}`, {
+	await execaCommand(`${VARLOCK} run -- tsx src/migrate.ts`, {
+		cwd: CONTROL_PLANE_DATABASE,
 		stdio: 'inherit',
 		env: {
 			...process.env,

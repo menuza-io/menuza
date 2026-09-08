@@ -93,8 +93,8 @@ async function getOrInsertUser({
 	}
 }
 
-async function setCookieConsent(page: any, isCollapsed: boolean = true) {
-	const cookieValue = await cookieConsentCookie.serialize({ isCollapsed })
+async function setCookieConsent(page: any, hasConsented: boolean = true) {
+	const cookieValue = await cookieConsentCookie.serialize({ hasConsented })
 	const cookieConfig = setCookieParser.parseString(cookieValue)
 	const newConfig = {
 		name: cookieConfig.name,

@@ -97,6 +97,9 @@ jobs:
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
 
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
+
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
 
@@ -122,8 +125,20 @@ jobs:
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
 
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
+
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
+
+      - name: 🔐 Write CI app env files
+        run: node scripts/write-ci-app-env.mjs
+        env:
+          SESSION_SECRET: test-session-secret-for-tests-only-min-32-chars
+          HONEYPOT_SECRET: test-honeypot-secret-for-tests-only
+          INTEGRATION_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          INTEGRATIONS_OAUTH_STATE_SECRET: test-oauth-state-secret-32-chars
+          TRUST_PROXY: true
 
       - name: 🏗 Build
         run: npm run build
@@ -150,6 +165,9 @@ jobs:
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
 
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
+
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
 
@@ -157,6 +175,12 @@ jobs:
         run: npm run test -- -- --coverage
         env:
           BASE_URL: http://localhost:3001
+          NODE_ENV: test
+          SESSION_SECRET: test-session-secret-for-tests-only-min-32-chars
+          HONEYPOT_SECRET: test-honeypot-secret-for-tests-only
+          INTEGRATION_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          INTEGRATIONS_OAUTH_STATE_SECRET: test-oauth-state-secret-32-chars
+          TRUST_PROXY: true
 
   playwright:
     name: 🎭 Playwright
@@ -188,9 +212,21 @@ jobs:
       - name: 📥 Install Playwright Browsers
         run: npm run test:e2e:install
 
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
+
       - name: 🛠 Setup Database
         run: |
           npm run db:migrate:deploy && npm run db:generate && npm run db:seed
+
+      - name: 🔐 Write CI app env files
+        run: node scripts/write-ci-app-env.mjs
+        env:
+          SESSION_SECRET: test-session-secret-for-tests-only-min-32-chars
+          HONEYPOT_SECRET: test-honeypot-secret-for-tests-only
+          INTEGRATION_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          INTEGRATIONS_OAUTH_STATE_SECRET: test-oauth-state-secret-32-chars
+          TRUST_PROXY: true
 
       - name: 🏗 Build affected apps
         run: |

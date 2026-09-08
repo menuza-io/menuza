@@ -9,7 +9,9 @@ import {
 	hashIp,
 	IMPERSONATION_COOKIE_MAX_AGE,
 } from '@repo/auth'
+import { getOperatorAppUrl } from '@repo/common/cookie-domain'
 import { createToastHeaders } from '@repo/common/toast'
+import { ENV } from 'varlock/env'
 import { ImpersonationSession, User, db, eq } from '@repo/database'
 import { data, redirect } from 'react-router'
 
@@ -117,8 +119,9 @@ export async function action({
 	const impSession = await impersonationSessionStorage.getSession()
 	impSession.set(impersonationSessionKey, impersonationSession.id)
 
-	// Redirect to main app as the impersonated user
-	throw redirect('/', {
+	// Redirect to main app as the impersonated user (separate origin from admin)
+	const appUrl = getOperatorAppUrl(ENV.BASE_URL, ENV.ROOT_APP)
+	throw redirect(`${appUrl}/`, {
 		headers: {
 			'set-cookie': await impersonationSessionStorage.commitSession(
 				impSession,

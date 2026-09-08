@@ -1,6 +1,8 @@
 import { type Context, Hono } from 'hono'
-import { logger } from 'hono/logger'
+import { logger as honoLogger } from 'hono/logger'
+import { logger } from '@repo/observability'
 import { isAllowedAnalyticsOrigin } from './lib/origin.ts'
+import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
 import { analyticsRoutes } from './routes/analytics.ts'
 import { authRoutes } from './routes/auth.ts'
@@ -30,7 +32,8 @@ function healthHandler(c: Context) {
 export function createTenantApiApp() {
 	const app = new Hono()
 
-	app.use('*', logger())
+	app.use('*', requestLoggingMiddleware())
+	app.use('*', honoLogger())
 
 	app.use('*', async (c, next) => {
 		const origin = c.req.header('Origin')
@@ -82,7 +85,15 @@ export function createTenantApiApp() {
 	})
 
 	app.onError((err, c) => {
-		console.error('Unhandled error in tenant-api:', err)
+		logger.error(
+			{
+				err,
+				requestId: c.res.headers.get('x-request-id'),
+				method: c.req.method,
+				path: c.req.path,
+			},
+			'Unhandled error in tenant-api',
+		)
 		return c.json({ error: 'Internal Server Error' }, 500)
 	})
 

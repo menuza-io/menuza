@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { ENV } from './env.js'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@libsql/client'
@@ -43,11 +44,11 @@ const pendingConnections = new Map<
 >()
 
 function getTenantDbDirectory() {
-	if (process.env.TENANT_DB_DIR) {
-		return path.resolve(process.env.TENANT_DB_DIR)
+	if (ENV.TENANT_DB_DIR) {
+		return path.resolve(ENV.TENANT_DB_DIR)
 	}
-	if (process.env.DATABASE_PATH) {
-		return path.dirname(path.resolve(process.cwd(), process.env.DATABASE_PATH))
+	if (ENV.DATABASE_PATH) {
+		return path.dirname(path.resolve(process.cwd(), ENV.DATABASE_PATH))
 	}
 	return path.resolve(
 		path.dirname(fileURLToPath(import.meta.url)),
@@ -125,6 +126,7 @@ async function getTenantDbFromFilesystem(
 		// WAL is the default for a single-writer VM. DELETE is only needed when
 		// a FUSE replicator (LiteFS) is in front of the file.
 		await db.run(sql`PRAGMA journal_mode = WAL;`)
+		await db.run(sql`PRAGMA busy_timeout = 30000;`)
 		// Enforce referential integrity. SQLite/libSQL default to OFF, which
 		// would silently accept orphaned rows and disable ON DELETE CASCADE.
 		await db.run(sql`PRAGMA foreign_keys = ON;`)

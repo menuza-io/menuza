@@ -108,7 +108,7 @@ export default defineConfig((config) => ({
 		ssr: {
 			noExternal: isCloudflareDeploy
 				? true
-				: ['@repo/email', '@repo/marketing', '@repo/marketing-workflow'],
+				: [/^@repo\//, '@posthog/react', 'posthog-js'],
 		},
 	}),
 	server: {

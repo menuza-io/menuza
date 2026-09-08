@@ -21,9 +21,9 @@
   },
   "scripts": {
     "build": "node packages/ui/generate-icons.js && turbo run build",
-    "dev": "node scripts/kill-dev-ports.mjs && NODE_TLS_REJECT_UNAUTHORIZED=0 npm-run-all --parallel dev:proxy dev:all dev:tenant-api:ksa",
-    "dev:http": "node scripts/kill-dev-ports.mjs && npm-run-all --parallel dev:proxy:http dev:all",
-    "dev:kill-ports": "node scripts/kill-dev-ports.mjs",
+    "dev": "node scripts/kill-dev-ports.mjs && npm run env:codegen && npx turbo run build --filter=@repo/observability && NODE_TLS_REJECT_UNAUTHORIZED=0 npm-run-all --parallel dev:proxy dev:all dev:tenant-api:ksa",
+    "dev:http": "node scripts/kill-dev-ports.mjs && npm run env:codegen && npm-run-all --parallel dev:proxy:http dev:all",
+    "env:codegen": "node scripts/codegen-package-env.mjs",
     "dev:all": "turbo run dev --filter=app --filter=web --filter=admin --filter=studio --filter=docs --filter=sites --filter=tenant-api --filter=jobs-cron --concurrency=20",
     "dev:proxy": "node dev-proxy.js",
     "dev:proxy:http": "PROXY_PROTOCOL=http node dev-proxy.js",
@@ -38,6 +38,7 @@
     "lint:oxc:fix": "oxlint --fix .",
     "lint:all": "npm run lint:oxc && npm run lint",
     "typecheck": "turbo run typecheck",
+    "validate": "npm run lint:all && npm run typecheck && npm run test && npm run test:e2e:run",
     "test": "turbo run test",
     "test:e2e:run": "turbo run test:e2e:run --concurrency=1 --log-order=stream",
     "test:e2e:install": "npx playwright install --with-deps",
@@ -98,7 +99,8 @@
       "prettier --write"
     ],
     "*.{js,jsx,ts,tsx}": [
-      "oxlint --fix --no-error-on-unmatched-pattern"
+      "oxlint --fix --no-error-on-unmatched-pattern",
+      "eslint --fix"
     ]
   },
   "volta": {

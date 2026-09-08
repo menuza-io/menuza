@@ -1,4 +1,5 @@
 import pino from 'pino'
+import { ENV } from './env.js'
 import type { Logger as PinoLogger } from 'pino'
 import { getClientIp as extractClientIp } from '@repo/security'
 
@@ -25,8 +26,8 @@ import { getClientIp as extractClientIp } from '@repo/security'
  * ```
  */
 
-const isDevelopment = process.env.NODE_ENV === 'development'
-const isTest = process.env.NODE_ENV === 'test'
+const isDevelopment = ENV.NODE_ENV === 'development'
+const isTest = ENV.NODE_ENV === 'test'
 
 // Redact sensitive fields from logs - expanded for OAuth, SSO, and authentication patterns
 const redactPaths = [

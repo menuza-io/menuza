@@ -1,11 +1,12 @@
 import twilio from 'twilio'
+import { ENV } from './env.js'
 
 let twilioClient: twilio.Twilio | null = null
 
 export function getTwilioClient() {
 	if (!twilioClient) {
-		const accountSid = process.env.TWILIO_ACCOUNT_SID
-		const authToken = process.env.TWILIO_AUTH_TOKEN
+		const accountSid = ENV.TWILIO_ACCOUNT_SID
+		const authToken = ENV.TWILIO_AUTH_TOKEN
 
 		if (!accountSid || !authToken) {
 			console.warn(
@@ -25,11 +26,11 @@ export async function sendSms({
 	to: string
 	message: string
 }) {
-	const from = process.env.TWILIO_FROM_NUMBER
+	const from = ENV.TWILIO_FROM_NUMBER
 	const client = getTwilioClient()
 
 	if (!client || !from) {
-		if (process.env.NODE_ENV === 'production') {
+		if (ENV.NODE_ENV === 'production') {
 			throw new Error(
 				'Twilio credentials not found. SMS disabled in production.',
 			)
@@ -38,8 +39,8 @@ export async function sendSms({
 		return { success: true, mock: true }
 	}
 
-	const region = (process.env.DATA_REGION || 'us').toLowerCase()
-	if (process.env.NODE_ENV === 'production' && region === 'ksa') {
+	const region = (ENV.DATA_REGION || 'us').toLowerCase()
+	if (ENV.NODE_ENV === 'production' && region === 'ksa') {
 		throw new Error(
 			'Twilio must not be used for KSA customer PII. Configure an in-kingdom SMS provider (see docs/tenant-data-residency.md).',
 		)

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	getCookieConsentState,
 	setCookieConsentState,
+	verifyCookieConsentRequestOrigin,
 } from './cookie-consent.server.ts'
 
 describe('shared cookie consent', () => {
@@ -49,5 +50,23 @@ describe('shared cookie consent', () => {
 		await expect(
 			getCookieConsentState(request, 'https://app.example.com'),
 		).resolves.toBe(true)
+	})
+
+	it('rejects cross-origin cookie consent posts', () => {
+		const request = new Request('https://app.example.com/resources/cookie-consent', {
+			method: 'POST',
+			headers: { Origin: 'https://evil.example' },
+		})
+
+		expect(verifyCookieConsentRequestOrigin(request)).toBe(false)
+	})
+
+	it('accepts same-origin cookie consent posts', () => {
+		const request = new Request('https://app.example.com/resources/cookie-consent', {
+			method: 'POST',
+			headers: { Origin: 'https://app.example.com' },
+		})
+
+		expect(verifyCookieConsentRequestOrigin(request)).toBe(true)
 	})
 })

@@ -585,30 +585,26 @@ export async function createPublicShopPaymentIntent(options: {
 }
 
 export async function listOrganizationShopOrders(organizationId: string) {
-	try {
-		const tenantDb = await getTenantDb(organizationId)
-		return tenantDb
-			.select({
-				id: shopOrders.id,
-				productName: shopOrders.productName,
-				amountCents: shopOrders.amountCents,
-				platformFeeCents: shopOrders.platformFeeCents,
-				orgPayoutCents: shopOrders.orgPayoutCents,
-				currency: shopOrders.currency,
-				status: shopOrders.status,
-				paymentProvider: shopOrders.paymentProvider,
-				createdAt: shopOrders.createdAt,
-				customerName: customers.name,
-				customerPhone: customers.phone,
-				customerEmail: customers.email,
-			})
-			.from(shopOrders)
-			.leftJoin(customers, eq(shopOrders.customerId, customers.id))
-			.orderBy(desc(shopOrders.createdAt))
-			.limit(50)
-	} catch {
-		return []
-	}
+	const tenantDb = await getTenantDb(organizationId)
+	return tenantDb
+		.select({
+			id: shopOrders.id,
+			productName: shopOrders.productName,
+			amountCents: shopOrders.amountCents,
+			platformFeeCents: shopOrders.platformFeeCents,
+			orgPayoutCents: shopOrders.orgPayoutCents,
+			currency: shopOrders.currency,
+			status: shopOrders.status,
+			paymentProvider: shopOrders.paymentProvider,
+			createdAt: shopOrders.createdAt,
+			customerName: customers.name,
+			customerPhone: customers.phone,
+			customerEmail: customers.email,
+		})
+		.from(shopOrders)
+		.leftJoin(customers, eq(shopOrders.customerId, customers.id))
+		.orderBy(desc(shopOrders.createdAt))
+		.limit(50)
 }
 
 export async function recordShopOrder(order: ShopOrderUpsert) {

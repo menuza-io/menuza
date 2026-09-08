@@ -1,4 +1,5 @@
 import common from 'oci-common'
+import { ENV } from '../env.js'
 
 export interface OciEmailConfig {
 	tenancyOcid: string
@@ -15,21 +16,21 @@ export interface OciEmailConfig {
 let cachedConfig: OciEmailConfig | null | undefined
 
 export function getOciEmailLogOcid(): string | null {
-	return process.env.OCI_EMAIL_LOG_OCID?.trim() || null
+	return ENV.OCI_EMAIL_LOG_OCID?.trim() || null
 }
 
 export function getOciEmailConfig(): OciEmailConfig | null {
 	if (cachedConfig !== undefined) return cachedConfig
 
-	const tenancyOcid = process.env.OCI_TENANCY_OCID
-	const userOcid = process.env.OCI_USER_OCID
-	const fingerprint = process.env.OCI_FINGERPRINT
-	const region = process.env.OCI_REGION
-	const compartmentId = process.env.OCI_EMAIL_COMPARTMENT_ID
-	const senderEmail = process.env.OCI_EMAIL_SENDER_EMAIL
-	const senderName = process.env.OCI_EMAIL_SENDER_NAME || 'Epic Startup'
-	const senderOcid = process.env.OCI_EMAIL_SENDER_OCID
-	const privateKey = process.env.OCI_PRIVATE_KEY?.replace(/\\n/g, '\n')
+	const tenancyOcid = ENV.OCI_TENANCY_OCID
+	const userOcid = ENV.OCI_USER_OCID
+	const fingerprint = ENV.OCI_FINGERPRINT
+	const region = ENV.OCI_REGION
+	const compartmentId = ENV.OCI_EMAIL_COMPARTMENT_ID
+	const senderEmail = ENV.OCI_EMAIL_SENDER_EMAIL
+	const senderName = ENV.OCI_EMAIL_SENDER_NAME || 'Epic Startup'
+	const senderOcid = ENV.OCI_EMAIL_SENDER_OCID
+	const privateKey = ENV.OCI_PRIVATE_KEY?.replace(/\\n/g, '\n')
 
 	if (
 		!tenancyOcid ||
