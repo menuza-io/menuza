@@ -4,6 +4,7 @@
  */
 
 import { type Integration } from './database-types'
+import { ENV } from './env.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -235,7 +236,7 @@ export class TokenManager {
 	): Promise<string | null> {
 		try {
 			if (
-				process.env.NODE_ENV === 'test' &&
+				ENV.NODE_ENV === 'test' &&
 				typeof integrationOrId !== 'string' &&
 				integrationOrId.accessToken &&
 				integrationOrId.accessToken !== 'encrypted-access'

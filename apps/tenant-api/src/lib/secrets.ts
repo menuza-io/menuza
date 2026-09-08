@@ -5,6 +5,8 @@ const INSECURE_SECRET_MARKERS = [
 	'your-jwt-secret',
 	'do-not-use-in-prod',
 	'change-me',
+	'super-duper-secret',
+	'super-duper-s3cr3t'
 ]
 
 function isInsecureSecret(value: string) {

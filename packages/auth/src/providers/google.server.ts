@@ -1,4 +1,5 @@
 import { SetCookie } from '@mjackson/headers'
+import { ENV } from '../env.js'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from 'react-router'
 import { GoogleStrategy, type GoogleProfile } from '@coji/remix-auth-google'
@@ -27,15 +28,15 @@ const GoogleUserParseResult = z
 	)
 
 const shouldMock =
-	process.env.GOOGLE_CLIENT_ID?.startsWith('MOCK_') ||
-	process.env.NODE_ENV === 'test'
+	ENV.GOOGLE_CLIENT_ID?.startsWith('MOCK_') ||
+	ENV.NODE_ENV === 'test'
 
 export class GoogleProvider implements AuthProvider {
 	getAuthStrategy() {
 		if (
-			!process.env.GOOGLE_CLIENT_ID ||
-			!process.env.GOOGLE_CLIENT_SECRET ||
-			!process.env.GOOGLE_REDIRECT_URI
+			!ENV.GOOGLE_CLIENT_ID ||
+			!ENV.GOOGLE_CLIENT_SECRET ||
+			!ENV.GOOGLE_REDIRECT_URI
 		) {
 			console.log(
 				'Google OAuth strategy not available because environment variables are not set',
@@ -44,9 +45,9 @@ export class GoogleProvider implements AuthProvider {
 		}
 		return new GoogleStrategy<ProviderUser>(
 			{
-				clientId: process.env.GOOGLE_CLIENT_ID,
-				clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-				redirectURI: process.env.GOOGLE_REDIRECT_URI,
+				clientId: ENV.GOOGLE_CLIENT_ID,
+				clientSecret: ENV.GOOGLE_CLIENT_SECRET,
+				redirectURI: ENV.GOOGLE_REDIRECT_URI,
 			},
 			async ({ profile }: { profile: GoogleProfile }) => {
 				return {
@@ -112,7 +113,7 @@ export class GoogleProvider implements AuthProvider {
 			sameSite: 'Lax',
 			httpOnly: true,
 			maxAge: 60 * 10,
-			secure: process.env.NODE_ENV === 'production' || undefined,
+			secure: ENV.NODE_ENV === 'production' || undefined,
 		})
 		throw redirect(`/auth/google/callback?${searchParams}`, {
 			headers: {

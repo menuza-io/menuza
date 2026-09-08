@@ -1,4 +1,5 @@
 import emaildataplane from 'oci-emaildataplane'
+import { ENV } from '../env.js'
 import { createOciAuthProvider, getOciEmailConfig } from './config.ts'
 import {
 	sendOciEmailViaMockTransport,
@@ -41,7 +42,7 @@ export async function sendOciEmail(
 	const config = getOciEmailConfig()
 
 	if (!config) {
-		if (process.env.NODE_ENV === 'production') {
+		if (ENV.NODE_ENV === 'production') {
 			return {
 				status: 'error',
 				error: {

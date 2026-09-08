@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { combineHeaders } from '@repo/common'
+import { shouldApplyImpersonationToUserId } from '@repo/common/cookie-domain'
 import { and, db, eq, gt, Password, Session, User } from '@repo/database'
 import {
 	type Password as PasswordRow,
@@ -8,6 +9,7 @@ import {
 import bcrypt from 'bcryptjs'
 import { redirect } from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
+import { validateImpersonation } from './impersonation.server.js'
 import { authSessionStorage } from './session.server.js'
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
@@ -26,6 +28,25 @@ function userWhere(
 }
 
 export async function getUserId(request: Request) {
+	const sessionUserId = await getSessionUserId(request)
+	if (!sessionUserId) return null
+
+	if (shouldApplyImpersonationToUserId(request)) {
+		const result = await validateImpersonation(request)
+		if (
+			result.valid &&
+			result.info &&
+			result.info.adminUserId === sessionUserId
+		) {
+			return result.info.targetUserId
+		}
+	}
+
+	return sessionUserId
+}
+
+/** Session user from the auth cookie (never the impersonation target). */
+export async function getSessionUserId(request: Request) {
 	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
 	)

@@ -6,6 +6,7 @@
 import { ssoCache } from './cache.server.ts'
 import { ssoConnectionPool } from './connection-pool.server.ts'
 import { validateOIDCIssuerUrl, validateEndpointUrl } from '@repo/validation'
+import { ENV } from './env.js'
 
 export interface OIDCDiscoveryDocument {
 	issuer: string
@@ -51,7 +52,7 @@ export async function discoverOIDCEndpoints(
 	issuerUrl: string,
 ): Promise<DiscoveryResult> {
 	// Log only in development mode to avoid information disclosure
-	if (process.env.NODE_ENV === 'development') {
+	if (ENV.NODE_ENV === 'development') {
 		console.log('Starting OIDC discovery')
 	}
 
@@ -77,7 +78,7 @@ export async function discoverOIDCEndpoints(
 		}
 
 		// IMMEDIATE FALLBACK FOR DEVELOPMENT
-		if (process.env.NODE_ENV === 'development') {
+		if (ENV.NODE_ENV === 'development') {
 			if (normalizedIssuer.includes('okta.com')) {
 				const fallbackEndpoints: EndpointConfiguration = {
 					authorizationUrl: `${normalizedIssuer}/v1/authorize`,

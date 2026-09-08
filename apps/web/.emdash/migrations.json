@@ -77,7 +77,11 @@
 	},
 	"i18n": {
 		"defaultLocale": "en",
-		"locales": ["en", "es", "ar"],
+		"locales": [
+			"en",
+			"es",
+			"ar"
+		],
 		"fallback": {
 			"es": "en",
 			"ar": "en"

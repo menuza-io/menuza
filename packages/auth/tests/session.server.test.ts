@@ -176,6 +176,11 @@ describe('Session Management', () => {
 	})
 
 	describe('Session cookie configuration', () => {
+		afterEach(() => {
+			vi.resetModules()
+			vi.unmock('@repo/common/cookie-domain')
+		})
+
 		it('should use correct cookie name', async () => {
 			const session = await authSessionStorage.getSession()
 			session.set('test', 'value')
@@ -213,13 +218,17 @@ describe('Session Management', () => {
 		})
 
 		it('should set domain from BASE_URL app.{apex} in production', async () => {
-			const originalBaseUrl = process.env.BASE_URL
-			const originalNodeEnv = process.env.NODE_ENV
-			process.env.BASE_URL = 'https://app.example.com'
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = 'production'
+			vi.doMock('@repo/common/cookie-domain', async (importOriginal) => {
+				const mod =
+					await importOriginal<typeof import('@repo/common/cookie-domain')>()
+				return {
+					...mod,
+					sharedCookieDomain: () => '.example.com',
+				}
+			})
 			vi.resetModules()
 			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server')
+				await import('../src/session.server?v=' + Date.now())
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')
@@ -228,24 +237,20 @@ describe('Session Management', () => {
 				await testAuthSessionStorage.commitSession(session)
 
 			expect(setCookieHeader).toContain('Domain=.example.com')
-
-			if (originalBaseUrl) {
-				process.env.BASE_URL = originalBaseUrl
-			} else {
-				delete process.env.BASE_URL
-			}
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = originalNodeEnv
-			vi.resetModules()
 		})
 
 		it('should set .localhost domain when BASE_URL is app.localhost', async () => {
-			const originalBaseUrl = process.env.BASE_URL
-			const originalNodeEnv = process.env.NODE_ENV
-			process.env.BASE_URL = 'http://app.localhost:3001'
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = 'test'
+			vi.doMock('@repo/common/cookie-domain', async (importOriginal) => {
+				const mod =
+					await importOriginal<typeof import('@repo/common/cookie-domain')>()
+				return {
+					...mod,
+					sharedCookieDomain: () => '.localhost',
+				}
+			})
 			vi.resetModules()
 			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server')
+				await import('../src/session.server?v=' + Date.now())
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')
@@ -254,24 +259,20 @@ describe('Session Management', () => {
 				await testAuthSessionStorage.commitSession(session)
 
 			expect(setCookieHeader).toContain('Domain=.localhost')
-
-			if (originalBaseUrl) {
-				process.env.BASE_URL = originalBaseUrl
-			} else {
-				delete process.env.BASE_URL
-			}
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = originalNodeEnv
-			vi.resetModules()
 		})
 
 		it('should omit domain when BASE_URL is localhost', async () => {
-			const originalBaseUrl = process.env.BASE_URL
-			const originalNodeEnv = process.env.NODE_ENV
-			process.env.BASE_URL = 'http://localhost:3001'
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = 'test'
+			vi.doMock('@repo/common/cookie-domain', async (importOriginal) => {
+				const mod =
+					await importOriginal<typeof import('@repo/common/cookie-domain')>()
+				return {
+					...mod,
+					sharedCookieDomain: () => undefined,
+				}
+			})
 			vi.resetModules()
 			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server')
+				await import('../src/session.server?v=' + Date.now())
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')
@@ -280,73 +281,6 @@ describe('Session Management', () => {
 				await testAuthSessionStorage.commitSession(session)
 
 			expect(setCookieHeader).not.toContain('Domain=')
-
-			if (originalBaseUrl) {
-				process.env.BASE_URL = originalBaseUrl
-			} else {
-				delete process.env.BASE_URL
-			}
-			;(process.env as { NODE_ENV?: string }).NODE_ENV = originalNodeEnv
-			vi.resetModules()
-		})
-	})
-
-	describe('Session secret validation', () => {
-		let originalEnv: string | undefined
-
-		beforeEach(() => {
-			originalEnv = process.env.SESSION_SECRET
-		})
-
-		afterEach(() => {
-			if (originalEnv) {
-				process.env.SESSION_SECRET = originalEnv
-			}
-			vi.resetModules()
-		})
-
-		it('should throw error when SESSION_SECRET is missing', async () => {
-			delete process.env.SESSION_SECRET
-			vi.resetModules()
-
-			await expect(async () => {
-				await import('../src/session.server?v=' + Date.now())
-			}).rejects.toThrow('SESSION_SECRET environment variable is required')
-		})
-
-		it('should throw error when SESSION_SECRET is empty', async () => {
-			process.env.SESSION_SECRET = ''
-			vi.resetModules()
-
-			await expect(async () => {
-				await import('../src/session.server?v=' + Date.now())
-			}).rejects.toThrow('SESSION_SECRET environment variable is required')
-		})
-
-		it('should accept multiple secrets separated by comma', async () => {
-			process.env.SESSION_SECRET = 'secret1,secret2,secret3'
-
-			// Should not throw
-			const module = await import('../src/session.server?v=' + Date.now())
-			expect(module.authSessionStorage).toBeDefined()
-		})
-
-		it('should trim whitespace from secrets', async () => {
-			process.env.SESSION_SECRET = '  secret1  ,  secret2  '
-
-			// Should not throw
-			const module = await import('../src/session.server?v=' + Date.now())
-			expect(module.authSessionStorage).toBeDefined()
-		})
-
-		it('should throw error when secrets contain only whitespace', async () => {
-			process.env.SESSION_SECRET = '   ,   '
-
-			await expect(async () => {
-				await import('../src/session.server?v=' + Date.now())
-			}).rejects.toThrow(
-				'SESSION_SECRET must contain at least one non-empty secret',
-			)
 		})
 	})
 

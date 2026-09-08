@@ -22,6 +22,7 @@
 		"**/*.test.tsx",
 		"**/*.spec.ts",
 		"**/*.spec.tsx",
-		"**/next-env.d.ts"
+		"**/next-env.d.ts",
+		"**/emdash-env.d.ts"
 	]
 }

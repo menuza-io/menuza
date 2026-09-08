@@ -10,6 +10,7 @@
  * - Message posting and notification handling
  */
 
+import { ENV } from './env.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -836,7 +837,7 @@ export class IntegrationManager {
 	 * @returns Note URL
 	 */
 	private generateNoteUrl(note: OrganizationNote): string {
-		const baseUrl = process.env.BASE_URL
+		const baseUrl = ENV.BASE_URL
 		if (!baseUrl) {
 			throw new Error('BASE_URL environment variable is required')
 		}

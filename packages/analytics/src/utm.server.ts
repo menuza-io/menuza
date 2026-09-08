@@ -1,4 +1,5 @@
 import { createCookieSessionStorage } from 'react-router'
+import { ENV } from './env.js'
 
 export type UtmParams = {
 	source?: string
@@ -9,7 +10,7 @@ export type UtmParams = {
 	referrer?: string
 }
 
-if (!process.env.SESSION_SECRET) {
+if (!ENV.SESSION_SECRET) {
 	throw new Error(
 		'SESSION_SECRET environment variable is required but not set. ' +
 			'Please add SESSION_SECRET to your .env file. ' +
@@ -17,7 +18,7 @@ if (!process.env.SESSION_SECRET) {
 	)
 }
 
-const utmSecrets = process.env.SESSION_SECRET.split(',').map((s) => s.trim())
+const utmSecrets = ENV.SESSION_SECRET.split(',').map((s) => s.trim())
 if (utmSecrets.length === 0 || utmSecrets.some((s) => s.length === 0)) {
 	throw new Error(
 		'SESSION_SECRET must contain at least one non-empty secret. ' +
@@ -32,7 +33,7 @@ const utmSessionStorage = createCookieSessionStorage({
 		path: '/',
 		httpOnly: true,
 		secrets: utmSecrets,
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 		maxAge: 60 * 60 * 24 * 30, // 30 days
 	},
 })

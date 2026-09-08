@@ -1,5 +1,20 @@
 import { beforeAll, afterEach, vi } from 'vitest'
 
+vi.mock('@repo/observability', () => ({
+	logger: {
+		error: vi.fn(),
+		warn: vi.fn(),
+		info: vi.fn(),
+		debug: vi.fn(),
+		child: vi.fn(() => ({
+			error: vi.fn(),
+			warn: vi.fn(),
+			info: vi.fn(),
+			debug: vi.fn(),
+		})),
+	},
+}))
+
 // Configure test environment
 beforeAll(() => {
 	// Set test environment variables

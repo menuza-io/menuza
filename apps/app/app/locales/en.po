@@ -76,7 +76,7 @@ msgstr ""
 #~ msgid "{0} steps"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:628
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:629
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} announcements"
 
@@ -124,7 +124,7 @@ msgstr ""
 msgid "{hours}h ago"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:202
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:203
 msgid "{journeyName} (Copy)"
 msgstr ""
 
@@ -136,11 +136,11 @@ msgstr ""
 msgid "{minutes}m ago"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1117
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1122
 msgid "{notFoundCount} missing URLs logged"
 msgstr "{notFoundCount} missing URLs logged"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:638
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:639
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
 
@@ -148,12 +148,12 @@ msgstr "{pageCount} pages"
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:157
 msgid "{recipientCount} recipients"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:994
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:999
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} redirects"
 
@@ -161,11 +161,15 @@ msgstr "{redirectCount} redirects"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
-#: app/components/impersonation-banner.tsx:43
-msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
-msgstr ""
+#: app/components/impersonation-banner.tsx:47
+msgid "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
+msgstr "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:349
+#: app/components/impersonation-banner.tsx:43
+#~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
+#~ msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:348
 msgid "{runsCount} runs"
 msgstr ""
 
@@ -177,7 +181,7 @@ msgstr ""
 msgid "{status}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:347
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:346
 msgid "{stepCount} steps"
 msgstr ""
 
@@ -251,19 +255,19 @@ msgstr ""
 msgid "${basePriceValue} billed annually"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 msgid "1 announcement"
 msgstr "1 announcement"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1115
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1120
 msgid "1 missing URL logged"
 msgstr "1 missing URL logged"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:636
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:637
 msgid "1 page"
 msgstr "1 page"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:992
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:997
 msgid "1 redirect"
 msgstr "1 redirect"
 
@@ -279,7 +283,7 @@ msgstr ""
 msgid "201-500 people"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:782
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:787
 msgid "404 Error History"
 msgstr "404 Error History"
 
@@ -300,7 +304,7 @@ msgstr ""
 msgid "Accent color"
 msgstr ""
 
-#: app/components/privacy-banner.tsx:63
+#: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
 msgstr ""
@@ -335,10 +339,10 @@ msgstr ""
 
 #: app/components/command-menu.tsx:115
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:606
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:622
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:865
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:607
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1047
 msgid "Actions"
 msgstr ""
 
@@ -347,9 +351,9 @@ msgid "active"
 msgstr ""
 
 #: app/components/settings/cards/sessions-card.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:72
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:55
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:114
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 msgid "Active"
@@ -394,7 +398,7 @@ msgstr ""
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:582
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr ""
 
@@ -538,9 +542,13 @@ msgstr ""
 msgid "Admin"
 msgstr ""
 
+#: app/components/impersonation-banner.tsx:35
+msgid "Admin impersonation active"
+msgstr "Admin impersonation active"
+
 #: app/components/impersonation-banner.tsx:33
-msgid "Admin Impersonation Active"
-msgstr ""
+#~ msgid "Admin Impersonation Active"
+#~ msgstr ""
 
 #: ../../packages/ai/src/components/ai-chat.tsx:181
 #~ msgid "AI"
@@ -563,8 +571,8 @@ msgstr ""
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:237
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:52
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
 msgid "All"
 msgstr ""
 
@@ -617,13 +625,13 @@ msgstr ""
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:448
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:449
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
 #: app/components/app-sidebar.tsx:314
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:553
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
 msgid "Announcements"
 msgstr ""
 
@@ -655,7 +663,7 @@ msgstr ""
 msgid "archived"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:56
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:57
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:116
 msgid "Archived"
 msgstr ""
@@ -664,7 +672,7 @@ msgstr ""
 #~ msgid "Are you sure you want to delete \"{0}\"?"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:427
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr ""
 
@@ -784,8 +792,8 @@ msgid "Automation saved successfully"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:278
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:87
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 msgid "Automations"
 msgstr ""
 
@@ -874,12 +882,12 @@ msgid "Broadcast not found"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:271
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:81
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:74
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:73
 msgid "Broadcasts"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:146
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr ""
 
@@ -947,13 +955,13 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1078
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:484
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:497
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:485
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1747
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1435
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1473
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1519
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
 #: app/routes/organizations+/create.tsx:796
 #: app/routes/organizations+/create.tsx:932
 msgid "Cancel"
@@ -983,12 +991,12 @@ msgstr ""
 msgid "Card position"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:312
+#: app/routes/_app+/$orgSlug_+/notes.tsx:311
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3966
 msgid "Cards"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:302
+#: app/routes/_app+/$orgSlug_+/notes.tsx:301
 msgid "Cards view"
 msgstr ""
 
@@ -1085,15 +1093,15 @@ msgstr ""
 msgid "Claude Desktop Setup"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1546
 msgid "Clear all 404 history?"
 msgstr "Clear all 404 history?"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:819
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:824
 msgid "Clear history"
 msgstr "Clear history"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1563
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
 msgid "Clear History"
 msgstr "Clear History"
 
@@ -1109,7 +1117,7 @@ msgstr ""
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:67
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:68
 msgid "Click rate"
 msgstr ""
 
@@ -1195,7 +1203,7 @@ msgstr ""
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:120
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:54
 msgid "Completed"
 msgstr ""
 
@@ -1311,7 +1319,7 @@ msgid "Contains (Partial Match)"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:593
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:594
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3246
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3436
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
@@ -1441,7 +1449,7 @@ msgstr ""
 msgid "Create and manage API keys to authenticate your MCP clients"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:552
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:550
 msgid "Create and manage pages for your organization's website."
 msgstr ""
 
@@ -1451,15 +1459,15 @@ msgstr ""
 msgid "Create API Key"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:321
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:320
 msgid "Create automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:556
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:554
 msgid "Create banner announcements for your public organization site. Enabled banners appear at the top of the site for visitors."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:135
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:132
 msgid "Create broadcast"
 msgstr ""
 
@@ -1491,8 +1499,8 @@ msgstr ""
 msgid "Create Password"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1092
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1097
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
 msgid "Create redirect"
 msgstr "Create redirect"
 
@@ -1500,19 +1508,19 @@ msgstr "Create redirect"
 msgid "Create your first API key to get started"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:225
 msgid "Create your first broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:315
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:314
 msgid "Create your first marketing automation."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:129
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:126
 msgid "Create your first one-time email or SMS campaign."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:573
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:574
 msgid "Create your first page to start building your website."
 msgstr ""
 
@@ -1520,7 +1528,7 @@ msgstr ""
 msgid "Created {createdDate}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:612
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:613
 msgid "Created By"
 msgstr ""
 
@@ -1594,7 +1602,7 @@ msgstr ""
 msgid "Custom trigger event"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1230
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1235
 msgid "Custom URL"
 msgstr "Custom URL"
 
@@ -1683,7 +1691,7 @@ msgstr ""
 #~ msgid "Data Table is a table that displays data in a grid format."
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:124
 msgid "Database connection error"
 msgstr ""
 
@@ -1721,20 +1729,20 @@ msgstr ""
 
 #: app/components/note/comment-item.tsx:230
 #: app/components/settings/passkey-manager.tsx:220
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:438
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1032
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1090
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:464
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:498
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:472
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:511
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:979
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1484
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:465
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:984
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1489
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1535
 msgid "Delete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1505
 msgid "Delete 404 log entry?"
 msgstr "Delete 404 log entry?"
 
@@ -1746,7 +1754,7 @@ msgstr ""
 #~ msgid "Delete announcement"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:474
 msgid "Delete announcement?"
 msgstr "Delete announcement?"
 
@@ -1786,7 +1794,7 @@ msgstr ""
 msgid "Delete link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1101
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1106
 msgid "Delete log entry"
 msgstr "Delete log entry"
 
@@ -1808,7 +1816,7 @@ msgstr ""
 msgid "Delete organization?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:486
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:487
 msgid "Delete page?"
 msgstr ""
 
@@ -1816,7 +1824,7 @@ msgstr ""
 msgid "Delete question"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1450
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1455
 msgid "Delete redirect rule?"
 msgstr "Delete redirect rule?"
 
@@ -1843,7 +1851,7 @@ msgstr ""
 msgid "Desktop"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1197
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1202
 msgid "Destination"
 msgstr "Destination"
 
@@ -1869,7 +1877,7 @@ msgstr ""
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1069
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1074
 msgid "Direct / Unknown"
 msgstr "Direct / Unknown"
 
@@ -1951,10 +1959,10 @@ msgid "draft"
 msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:53
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:239
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:403
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5861
 msgid "Draft"
 msgstr ""
@@ -1971,7 +1979,7 @@ msgstr "Draft something for me"
 msgid "Drag to reorder column"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:417
 msgid "Duplicate"
 msgstr ""
 
@@ -2040,9 +2048,9 @@ msgstr ""
 #: app/components/note/comment-item.tsx:223
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:975
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:457
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:429
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:972
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:458
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:977
 msgid "Edit"
 msgstr ""
 
@@ -2067,7 +2075,7 @@ msgstr "Edit note"
 msgid "Edit Note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1137
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
@@ -2105,7 +2113,7 @@ msgstr ""
 msgid "Email subject line is required."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:57
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:58
 msgid "Emails sent"
 msgstr ""
 
@@ -2125,7 +2133,7 @@ msgstr ""
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
 msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
@@ -2141,7 +2149,7 @@ msgstr ""
 msgid "Enter 6-digit OTP token"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1302
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1307
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 
@@ -2204,7 +2212,7 @@ msgstr ""
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 #: app/components/settings/cards/organization/announcement-sheet.tsx:271
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
 msgid "Error"
 msgstr ""
 
@@ -2212,11 +2220,11 @@ msgstr ""
 msgid "Errors"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 msgid "Event-driven workflows"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
@@ -2240,7 +2248,7 @@ msgstr ""
 msgid "Execution Runs"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1218
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1223
 msgid "Existing page"
 msgstr "Existing page"
 
@@ -2275,7 +2283,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:55
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:56
 msgid "Failed"
 msgstr ""
 
@@ -2299,11 +2307,11 @@ msgstr ""
 msgid "Failed to delete automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:178
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:179
 msgid "Failed to delete journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
 msgid "Failed to duplicate journey"
 msgstr ""
 
@@ -2311,7 +2319,7 @@ msgstr ""
 msgid "Failed to fetch current user information"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:186
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:187
 msgid "Failed to find original journey"
 msgstr ""
 
@@ -2328,15 +2336,15 @@ msgstr ""
 msgid "Failed to load broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:33
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:34
 msgid "Failed to load campaigns"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:92
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:93
 msgid "Failed to load journeys from regional tenant storage."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:128
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:129
 msgid "Failed to load marketing metrics"
 msgstr ""
 
@@ -2348,7 +2356,7 @@ msgstr ""
 msgid "Failed to pause automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:164
 msgid "Failed to pause journey"
 msgstr ""
 
@@ -2356,7 +2364,7 @@ msgstr ""
 msgid "Failed to publish automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:148
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:149
 msgid "Failed to publish journey"
 msgstr ""
 
@@ -2429,7 +2437,7 @@ msgstr ""
 #~ msgid "Form Submitted"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:748
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:752
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 
@@ -2621,22 +2629,22 @@ msgstr ""
 msgid "Hide replies ({replyCount})"
 msgstr "Hide replies ({replyCount})"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:938
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1060
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
 msgid "hit"
 msgstr "hit"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:938
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1060
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
 msgid "hits"
 msgstr "hits"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1032
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1037
 msgid "Hits"
 msgstr "Hits"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:381
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5770
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5803
 msgid "Home"
@@ -2691,7 +2699,7 @@ msgstr ""
 msgid "If you change your email, you'll need to verify the new address"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:831
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:836
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 
@@ -2710,6 +2718,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1071
 msgid "Immediately invalidate all tokens for this client"
 msgstr ""
+
+#: app/components/impersonation-banner.tsx:40
+msgid "Impersonating <0>{targetName}</0>"
+msgstr "Impersonating <0>{targetName}</0>"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:895
 msgid "Important Notes"
@@ -2736,7 +2748,7 @@ msgid "Includes {seats} user seats"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:269
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:342
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:343
 msgid "Info"
 msgstr ""
 
@@ -2824,11 +2836,11 @@ msgstr ""
 msgid "Join our Discord"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:198
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:199
 msgid "Journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:136
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:137
 msgid "journeyId is required"
 msgstr ""
 
@@ -2836,11 +2848,11 @@ msgstr ""
 msgid "Jump into an existing organization, accept pending invitations, or add a new one."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:326
+#: app/routes/_app+/$orgSlug_+/notes.tsx:325
 msgid "Kanban"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:316
+#: app/routes/_app+/$orgSlug_+/notes.tsx:315
 msgid "Kanban board"
 msgstr ""
 
@@ -2848,7 +2860,7 @@ msgstr ""
 msgid "Keep current region"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1372
 msgid "Keeps original indexing"
 msgstr "Keeps original indexing"
 
@@ -2886,7 +2898,7 @@ msgstr ""
 msgid "Last active {lastActiveValue}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1035
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1040
 msgid "Last Encountered"
 msgstr "Last Encountered"
 
@@ -2956,7 +2968,7 @@ msgstr ""
 #~ msgstr ""
 
 #: app/components/website/link-inspector.tsx:642
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:599
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
 msgid "Link"
 msgstr ""
 
@@ -2977,8 +2989,8 @@ msgstr ""
 msgid "Link URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:590
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:849
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:854
 msgid "Live"
 msgstr ""
 
@@ -3217,7 +3229,7 @@ msgstr ""
 msgid "Minutes"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1029
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1034
 msgid "Missing Path"
 msgstr "Missing Path"
 
@@ -3239,7 +3251,7 @@ msgid "More"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:219
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:378
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:377
 msgid "More actions"
 msgstr ""
 
@@ -3289,7 +3301,7 @@ msgid "Neutral feedback"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:984
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:949
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:954
 msgid "Never used"
 msgstr ""
 
@@ -3297,11 +3309,11 @@ msgstr ""
 msgid "New announcement"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:269
 msgid "New automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:85
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:81
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:70
 msgid "New broadcast"
 msgstr ""
@@ -3311,7 +3323,7 @@ msgstr ""
 msgid "New Customer Journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:855
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:860
 msgid "New Destination"
 msgstr "New Destination"
 
@@ -3323,7 +3335,7 @@ msgstr ""
 msgid "New icon preview"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:334
+#: app/routes/_app+/$orgSlug_+/notes.tsx:333
 msgid "New Note"
 msgstr ""
 
@@ -3340,11 +3352,11 @@ msgstr ""
 msgid "New Password"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1137
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
 msgid "New redirect"
 msgstr "New redirect"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:762
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:767
 msgid "New Redirect"
 msgstr "New Redirect"
 
@@ -3360,11 +3372,11 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1017
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1022
 msgid "No 404 errors match that search"
 msgstr "No 404 errors match that search"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1009
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1014
 msgid "No 404 errors recorded"
 msgstr "No 404 errors recorded"
 
@@ -3384,7 +3396,7 @@ msgstr ""
 msgid "No activity yet"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:580
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
 msgid "No announcements yet"
 msgstr ""
 
@@ -3392,7 +3404,7 @@ msgstr ""
 msgid "No API keys created yet"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:311
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:310
 msgid "No automations found"
 msgstr ""
 
@@ -3400,11 +3412,11 @@ msgstr ""
 msgid "No backup codes generated"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:125
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:122
 msgid "No broadcasts found"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:219
 msgid "No campaigns yet."
 msgstr ""
 
@@ -3486,12 +3498,12 @@ msgstr ""
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:597
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:598
 msgid "No pages match that search"
 msgstr ""
 
 #: app/components/website/link-inspector.tsx:447
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:571
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:572
 msgid "No pages yet"
 msgstr ""
 
@@ -3503,11 +3515,11 @@ msgstr ""
 msgid "No passkeys registered yet"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:829
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:834
 msgid "No redirects created yet"
 msgstr "No redirects created yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:837
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:842
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
@@ -3579,7 +3591,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:246
 #: app/components/command-menu.tsx:137
-#: app/routes/_app+/$orgSlug_+/notes.tsx:289
+#: app/routes/_app+/$orgSlug_+/notes.tsx:288
 msgid "Notes"
 msgstr ""
 
@@ -3619,11 +3631,11 @@ msgstr ""
 msgid "of {totalUsers} people"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1166
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1171
 msgid "Old path (Source)"
 msgstr "Old path (Source)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:852
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:857
 msgid "Old URL (Source)"
 msgstr "Old URL (Source)"
 
@@ -3640,11 +3652,11 @@ msgstr ""
 msgid "One moment…"
 msgstr "One moment…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:83
 msgid "One-time email and SMS"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:77
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:74
 msgid "One-time email and SMS campaigns."
 msgstr ""
 
@@ -3713,7 +3725,7 @@ msgstr "Open payout dashboard"
 msgid "Open preview"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:62
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:63
 msgid "Open rate"
 msgstr ""
 
@@ -3796,11 +3808,11 @@ msgstr ""
 
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:609
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:419
 msgid "Page actions"
 msgstr ""
 
@@ -3824,7 +3836,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:298
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:22
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:549
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
 msgstr ""
 
@@ -3865,7 +3877,7 @@ msgid "Password login is disabled because your organization \"{orgName}\" requir
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:191
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:406
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:405
 msgid "Pause"
 msgstr ""
 
@@ -3873,8 +3885,8 @@ msgstr ""
 msgid "paused"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:55
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:56
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:241
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:115
 msgid "Paused"
 msgstr ""
@@ -3906,11 +3918,11 @@ msgstr ""
 msgid "per month"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:179
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:178
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1384
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
@@ -4113,7 +4125,7 @@ msgid "Pro"
 msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:55
 msgid "Processing"
 msgstr ""
 
@@ -4145,8 +4157,8 @@ msgid "Public Access"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:395
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:447
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5875
 msgid "Publish"
 msgstr ""
@@ -4167,7 +4179,7 @@ msgstr ""
 msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:401
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5859
 msgid "Published"
 msgstr ""
@@ -4228,7 +4240,7 @@ msgstr "Read page details"
 msgid "Reading page details"
 msgstr "Reading page details"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:201
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:200
 msgid "Recent campaigns"
 msgstr ""
 
@@ -4248,19 +4260,19 @@ msgstr ""
 msgid "Recommended for"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1325
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1330
 msgid "Recommended for SEO"
 msgstr "Recommended for SEO"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:961
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:966
 msgid "Redirect actions"
 msgstr "Redirect actions"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1320
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1325
 msgid "Redirect type"
 msgstr "Redirect type"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1082
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1087
 msgid "Redirected"
 msgstr "Redirected"
 
@@ -4269,11 +4281,11 @@ msgstr "Redirected"
 msgid "Redirects"
 msgstr "Redirects"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:745
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:750
 msgid "Redirects & 404 History"
 msgstr "Redirects & 404 History"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1038
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1043
 msgid "Referrer"
 msgstr "Referrer"
 
@@ -4317,7 +4329,7 @@ msgstr ""
 msgid "Regular"
 msgstr ""
 
-#: app/components/privacy-banner.tsx:51
+#: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr ""
 
@@ -4504,7 +4516,7 @@ msgstr ""
 msgid "Rounded"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1140
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1145
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "Route incoming traffic from an old path to a new destination."
 
@@ -4621,7 +4633,7 @@ msgstr ""
 #: app/components/settings/cards/organization/site-analytics-card.tsx:88
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
 msgid "Save changes"
 msgstr ""
 
@@ -4688,7 +4700,7 @@ msgstr ""
 #~ msgid "Search"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:282
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
 msgid "Search automations..."
 msgstr ""
 
@@ -4696,7 +4708,7 @@ msgstr ""
 msgid "Search by name or email..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:93
 msgid "Search campaigns..."
 msgstr ""
 
@@ -4704,7 +4716,7 @@ msgstr ""
 msgid "Search for users in your organization"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:803
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:808
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
@@ -4721,7 +4733,7 @@ msgstr ""
 msgid "Search notes..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:587
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:588
 msgid "Search pages..."
 msgstr ""
 
@@ -4729,7 +4741,7 @@ msgstr ""
 msgid "Search preview"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:802
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search redirects..."
 msgstr "Search redirects..."
 
@@ -4797,7 +4809,7 @@ msgstr ""
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1248
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1253
 msgid "Select a website page"
 msgstr "Select a website page"
 
@@ -5187,7 +5199,7 @@ msgstr ""
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:615
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr ""
 
@@ -5215,9 +5227,13 @@ msgstr "Stop"
 msgid "Stop generation"
 msgstr ""
 
+#: app/components/impersonation-banner.tsx:65
+msgid "Stop impersonation"
+msgstr "Stop impersonation"
+
 #: app/components/impersonation-banner.tsx:60
-msgid "Stop Impersonation"
-msgstr ""
+#~ msgid "Stop Impersonation"
+#~ msgstr ""
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:349
 msgid "Storage migration"
@@ -5272,7 +5288,7 @@ msgid "Subscription Started"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:272
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
 msgid "Success"
 msgstr ""
 
@@ -5375,11 +5391,11 @@ msgstr ""
 msgid "Tell us more about your organization"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1385
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1390
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1334
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
@@ -5463,7 +5479,7 @@ msgstr ""
 msgid "The passwords must match"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1178
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1183
 msgid "The path on your old site that visitors or search engines request."
 msgstr "The path on your old site that visitors or search engines request."
 
@@ -5491,11 +5507,11 @@ msgstr ""
 msgid "Thinking..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:489
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:490
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:477
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "This action cannot be undone. Are you sure you want to delete this announcement?"
 
@@ -5535,15 +5551,15 @@ msgstr ""
 msgid "This will be the URL path for this page."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1503
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1508
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1544
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1549
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1453
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1458
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 
@@ -5581,7 +5597,7 @@ msgstr ""
 msgid "Titles and section headings."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:403
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:404
 msgid "Toggle announcement visibility"
 msgstr ""
 
@@ -5589,7 +5605,7 @@ msgstr ""
 msgid "Toggle notifications"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:885
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:890
 msgid "Toggle redirect active status"
 msgstr "Toggle redirect active status"
 
@@ -5609,7 +5625,7 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1350
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1355
 msgid "Transfers search rank"
 msgstr "Transfers search rank"
 
@@ -5671,14 +5687,14 @@ msgstr ""
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:599
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:839
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1019
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:844
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1024
 msgid "Try a different search term or clear the search."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:314
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:128
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:125
 msgid "Try adjusting your search or filter."
 msgstr ""
 
@@ -5701,9 +5717,9 @@ msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:596
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:597
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3884
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:858
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:863
 msgid "Type"
 msgstr ""
 
@@ -5732,7 +5748,7 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:227
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
 msgid "Unknown intent"
 msgstr ""
@@ -5741,7 +5757,7 @@ msgstr ""
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:462
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5925
 msgid "Unpublish"
 msgstr ""
@@ -5780,8 +5796,8 @@ msgstr ""
 msgid "Update your photo and personal details here."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:602
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:618
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:603
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
 msgstr ""
 
@@ -5844,11 +5860,11 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:776
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:781
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:861
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:866
 msgid "Usage"
 msgstr "Usage"
 
@@ -5945,7 +5961,7 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:207
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:206
 msgid "View all"
 msgstr ""
 
@@ -5965,7 +5981,7 @@ msgstr ""
 msgid "View notes from users you have access to"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:366
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:365
 msgid "View run history"
 msgstr ""
 
@@ -5992,7 +6008,7 @@ msgid "Want to go to the top of the waitlist?"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:270
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:343
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Warning"
 msgstr ""
 
@@ -6004,7 +6020,7 @@ msgstr ""
 msgid "We found your organization:"
 msgstr ""
 
-#: app/components/privacy-banner.tsx:24
+#: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content. <0>Read our Cookie Policy</0>."
 msgstr ""
 
@@ -6089,7 +6105,7 @@ msgstr ""
 msgid "What's missing?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1409
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
@@ -6106,7 +6122,7 @@ msgstr ""
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1011
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1016
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 
@@ -6114,7 +6130,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1284
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1289
 msgid "Will redirect to"
 msgstr "Will redirect to"
 
@@ -6172,8 +6188,8 @@ msgid "You are covered during our beta phase. No billing required at this time."
 msgstr ""
 
 #: app/components/impersonation-banner.tsx:36
-msgid "You are impersonating <0>{targetName}</0>"
-msgstr ""
+#~ msgid "You are impersonating <0>{targetName}</0>"
+#~ msgstr ""
 
 #: app/components/settings/cards/danger-card.tsx:65
 msgid "You can cancel this request before the scheduled date to keep your account. After deletion, all your data will be permanently removed."
@@ -6183,7 +6199,7 @@ msgstr ""
 msgid "You can change your photo later"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:290
+#: app/routes/_app+/$orgSlug_+/notes.tsx:289
 msgid "You can create notes for your organization here."
 msgstr ""
 

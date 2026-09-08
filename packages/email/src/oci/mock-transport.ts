@@ -1,4 +1,5 @@
 import { brand } from '@repo/config/brand'
+import { ENV } from '../env.js'
 import { getOciEmailConfig } from './config.ts'
 
 /** MSW-intercepted URL used when `MOCKS=true` (mirrors Resend's api.resend.com pattern). */
@@ -6,7 +7,7 @@ export const OCI_EMAIL_MOCK_SUBMIT_URL =
 	'https://mock.epic-stack.test/oci-email/actions/submitEmail'
 
 export function shouldUseOciEmailMockTransport() {
-	return process.env.MOCKS === 'true'
+	return String(ENV.MOCKS) === 'true'
 }
 
 type MockTransportInput = {

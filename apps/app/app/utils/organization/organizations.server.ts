@@ -388,6 +388,8 @@ export async function createOrganization({
 }
 
 export async function getOrganizationBySlug(slug: string) {
+	// Public lookup for SSO/login discovery. Returns only non-sensitive org metadata.
+	// Callers that expose org data must enforce membership separately.
 	const [organization] = await db
 		.select()
 		.from(Organization)

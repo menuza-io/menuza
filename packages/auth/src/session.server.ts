@@ -1,12 +1,11 @@
 import { createCookieSessionStorage } from 'react-router'
-
 import {
 	operatorCookieName,
 	sharedCookieDomain,
 } from '@repo/common/cookie-domain'
+import { ENV } from './env.js'
 
-// Validate SESSION_SECRET environment variable
-if (!process.env.SESSION_SECRET) {
+if (!ENV.SESSION_SECRET) {
 	throw new Error(
 		'SESSION_SECRET environment variable is required but not set. ' +
 			'Please add SESSION_SECRET to your .env file. ' +
@@ -14,10 +13,7 @@ if (!process.env.SESSION_SECRET) {
 	)
 }
 
-// Parse and validate session secrets
-const sessionSecrets = process.env.SESSION_SECRET.split(',').map((s) =>
-	s.trim(),
-)
+const sessionSecrets = ENV.SESSION_SECRET.split(',').map((s) => s.trim())
 if (sessionSecrets.length === 0 || sessionSecrets.some((s) => s.length === 0)) {
 	throw new Error(
 		'SESSION_SECRET must contain at least one non-empty secret. ' +
@@ -33,7 +29,7 @@ export const authSessionStorage = createCookieSessionStorage({
 		httpOnly: true,
 		domain: sharedCookieDomain(),
 		secrets: sessionSecrets,
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 	},
 })
 

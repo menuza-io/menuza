@@ -50,26 +50,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		}
 
 		if (isPreview && key === 'Content-Security-Policy') {
-			newHeaders.set(key, `${value} frame-ancestors 'self';`)
+			response.headers.set(key, `${value} frame-ancestors 'self';`)
 			continue
 		}
 
-		newHeaders.set(key, value)
+		response.headers.set(key, value)
 	}
 
 	// HTML varies by shared theme and consent cookies. Never place one visitor's
 	// rendered preference state in the shared edge cache.
 	if (isHtml) {
-		newHeaders.set('Cache-Control', 'private, no-cache')
+		response.headers.set('Cache-Control', 'private, no-cache')
 	} else if (shouldSkipCache(pathname)) {
-		newHeaders.set('Cache-Control', CACHE_CONTROL_NO_CACHE)
+		response.headers.set('Cache-Control', CACHE_CONTROL_NO_CACHE)
 	} else {
-		newHeaders.set('Cache-Control', CACHE_CONTROL_STATIC)
+		response.headers.set('Cache-Control', CACHE_CONTROL_STATIC)
 	}
 
-	return new Response(response.body, {
-		status: response.status,
-		statusText: response.statusText,
-		headers: newHeaders,
-	})
+	return response
 })

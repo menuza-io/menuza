@@ -1,6 +1,7 @@
 import { createCookieSessionStorage } from 'react-router'
+import { ENV } from './env.js'
 
-if (!process.env.SESSION_SECRET) {
+if (!ENV.SESSION_SECRET) {
 	throw new Error(
 		'SESSION_SECRET environment variable is required but not set. ' +
 			'Please add SESSION_SECRET to your .env file. ' +
@@ -8,7 +9,7 @@ if (!process.env.SESSION_SECRET) {
 	)
 }
 
-const verificationSecrets = process.env.SESSION_SECRET.split(',').map((s) =>
+const verificationSecrets = ENV.SESSION_SECRET.split(',').map((s) =>
 	s.trim(),
 )
 if (
@@ -29,6 +30,6 @@ export const verifySessionStorage = createCookieSessionStorage({
 		httpOnly: true,
 		maxAge: 60 * 10, // 10 minutes
 		secrets: verificationSecrets,
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 	},
 })

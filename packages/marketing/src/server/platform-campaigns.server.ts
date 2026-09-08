@@ -257,6 +257,15 @@ export async function dispatchPlatformCampaign(campaignId: string) {
 			try {
 				if (campaign.channel === 'email') {
 					if (!recipient.email) throw new Error('No email address')
+					const escapeHtml = (unsafe: string) => {
+						return unsafe
+							.replace(/&/g, "&amp;")
+							.replace(/</g, "&lt;")
+							.replace(/>/g, "&gt;")
+							.replace(/"/g, "&quot;")
+							.replace(/'/g, "&#039;");
+					};
+
 					const emailRes = await sendEmail({
 						to: recipient.email,
 						subject: interpolateMergeTags(
@@ -264,7 +273,7 @@ export async function dispatchPlatformCampaign(campaignId: string) {
 							mergeTags,
 						),
 						text: parsedContent,
-						html: `<p>${parsedContent.replace(/\n/g, '<br/>')}</p>`,
+						html: `<p>${escapeHtml(parsedContent).replace(/\n/g, '<br/>')}</p>`,
 						tags: buildPlatformMarketingResendTags(messageId, campaignId),
 					})
 					if (emailRes.status === 'error') {

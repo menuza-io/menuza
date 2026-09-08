@@ -7,7 +7,13 @@ export default defineConfig({
 		setupFiles: ['./tests/setup.ts'],
 		bail: 0, // Don't stop on first failure
 		env: {
+			VITEST: 'true',
 			DATABASE_URL: 'file:./data.db',
+			NODE_ENV: 'test',
+			HONEYPOT_SECRET: 'super-duper-s3cret',
+			INTEGRATION_ENCRYPTION_KEY:
+				'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+			INTEGRATIONS_OAUTH_STATE_SECRET: 'test-oauth-state-secret-32-chars',
 		},
 		coverage: {
 			provider: 'v8',

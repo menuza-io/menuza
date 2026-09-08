@@ -133,11 +133,8 @@ export default defineConfig((config) => ({
 			noExternal: isCloudflare
 				? true
 				: [
+						/^@repo\//,
 						'@posthog/react',
-						'@repo/ai',
-						'@repo/email',
-						'@repo/marketing',
-						'@repo/marketing-workflow',
 						'posthog-js',
 					],
 		},

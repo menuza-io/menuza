@@ -2,6 +2,7 @@
  * Notion integration provider implementation
  */
 
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -173,7 +174,7 @@ export class NotionProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientId(): string {
-		const clientId = process.env.NOTION_CLIENT_ID
+		const clientId = ENV.NOTION_CLIENT_ID
 		if (!clientId) {
 			throw new Error('NOTION_CLIENT_ID environment variable is required')
 		}
@@ -181,7 +182,7 @@ export class NotionProvider extends BaseIntegrationProvider {
 	}
 
 	private get clientSecret(): string {
-		const clientSecret = process.env.NOTION_CLIENT_SECRET
+		const clientSecret = ENV.NOTION_CLIENT_SECRET
 		if (!clientSecret) {
 			throw new Error('NOTION_CLIENT_SECRET environment variable is required')
 		}

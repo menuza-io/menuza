@@ -15,6 +15,9 @@ function sqliteUrl() {
 /**
  * Drizzle Kit config for the US control-plane SQLite database.
  * Run drizzle-kit from this package directory so schema/out stay relative.
+ *
+ * Intentionally uses process.env, not varlock/auto-load: drizzle-kit is invoked
+ * directly (studio, generate, push), not via `varlock run`.
  */
 export default defineConfig({
 	schema: './src/schema.ts',

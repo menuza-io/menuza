@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { ENV } from './env.js'
 
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm'
@@ -132,7 +133,10 @@ export function isValidEncryptionKey(key: string): boolean {
  * @returns The encryption key for SSO configuration
  */
 export function getSSOMasterKey(): string {
-	const key = process.env.SSO_ENCRYPTION_KEY
+	const key =
+		process.env.VITEST === 'true'
+			? process.env.SSO_ENCRYPTION_KEY
+			: ENV.SSO_ENCRYPTION_KEY
 	if (!key) {
 		throw new Error('SSO_ENCRYPTION_KEY environment variable is not set')
 	}
@@ -144,15 +148,33 @@ export function getSSOMasterKey(): string {
 	return key
 }
 
+export type EncryptionEnvVarName =
+	'INTEGRATION_ENCRYPTION_KEY' | 'SSO_ENCRYPTION_KEY'
+
+function getEnvEncryptionKey(
+	envVarName: EncryptionEnvVarName,
+): string | undefined {
+	if (process.env.VITEST === 'true') {
+		return process.env[envVarName]
+	}
+	if (envVarName === 'INTEGRATION_ENCRYPTION_KEY') {
+		return ENV.INTEGRATION_ENCRYPTION_KEY
+	}
+	if (envVarName === 'SSO_ENCRYPTION_KEY') {
+		return ENV.SSO_ENCRYPTION_KEY
+	}
+	return undefined
+}
+
 /**
  * Gets the encryption key from environment variables for integrations
  * @param envVarName - The name of the environment variable to use (defaults to INTEGRATION_ENCRYPTION_KEY)
  * @returns The encryption key
  */
 export function getEncryptionKey(
-	envVarName: string = 'INTEGRATION_ENCRYPTION_KEY',
+	envVarName: EncryptionEnvVarName = 'INTEGRATION_ENCRYPTION_KEY',
 ): string {
-	const key = process.env[envVarName]
+	const key = getEnvEncryptionKey(envVarName)
 	if (!key) {
 		throw new Error(`${envVarName} environment variable is not set`)
 	}
@@ -170,9 +192,9 @@ export function getEncryptionKey(
  * @returns True if encryption is configured
  */
 export function isEncryptionConfigured(
-	envVarName: string = 'INTEGRATION_ENCRYPTION_KEY',
+	envVarName: EncryptionEnvVarName = 'INTEGRATION_ENCRYPTION_KEY',
 ): boolean {
-	const keyString = process.env[envVarName]
+	const keyString = getEnvEncryptionKey(envVarName)
 	if (!keyString) {
 		return false
 	}

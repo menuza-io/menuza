@@ -13,7 +13,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest --run",
+    "test": "../../node_modules/.bin/varlock run -- vitest --run",
     "test:watch": "vitest"
   },
   "dependencies": {

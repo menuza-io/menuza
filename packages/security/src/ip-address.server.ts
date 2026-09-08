@@ -5,6 +5,8 @@
  * handling various proxy headers and request types.
  */
 
+import { ENV } from './env.js'
+
 /**
  * Options for configuring IP address extraction behavior
  */
@@ -68,9 +70,9 @@ export function getClientIp(
 	const {
 		fallback = '127.0.0.1',
 		returnUndefined = false,
-		trustProxy = process.env.TRUST_PROXY !== 'false',
-		trustedProxyCount = process.env.TRUSTED_PROXY_COUNT
-			? Number(process.env.TRUSTED_PROXY_COUNT)
+		trustProxy = ENV.TRUST_PROXY !== false,
+		trustedProxyCount = ENV.TRUSTED_PROXY_COUNT
+			? Number(ENV.TRUSTED_PROXY_COUNT)
 			: undefined,
 	} = options
 

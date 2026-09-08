@@ -216,7 +216,10 @@ export const journeyStepExecutions = sqliteTable(
 		completedAt: integer('completed_at', { mode: 'timestamp' }),
 	},
 	(table) => [
-		index('idx_journey_step_executions_run').on(table.runId, table.nodeId),
+		uniqueIndex('uniq_journey_step_executions_run_node').on(
+			table.runId,
+			table.nodeId,
+		),
 		index('idx_journey_step_executions_customer').on(table.customerId),
 		index('idx_journey_step_executions_status').on(table.status),
 	],

@@ -76,7 +76,7 @@ msgstr "{0} من {1} مستهدف"
 #~ msgid "{0} steps"
 #~ msgstr "{0} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:628
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:629
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} إعلانات"
 
@@ -124,7 +124,7 @@ msgstr "{first}، {second}، +{remainingCount} أخرى"
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:202
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:203
 msgid "{journeyName} (Copy)"
 msgstr "{journeyName} (نسخة)"
 
@@ -136,11 +136,11 @@ msgstr "{minutes} د {remainingSec} ث"
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1117
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1122
 msgid "{notFoundCount} missing URLs logged"
 msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:638
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:639
 msgid "{pageCount} pages"
 msgstr "{pageCount} صفحات"
 
@@ -148,12 +148,12 @@ msgstr "{pageCount} صفحات"
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsText}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:157
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:994
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:999
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} عمليات إعادة توجيه"
 
@@ -161,11 +161,15 @@ msgstr "{redirectCount} عمليات إعادة توجيه"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام رابطك!} other {# أشخاص انضموا باستخدام رابطك!}}"
 
-#: app/components/impersonation-banner.tsx:43
-msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
-msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # دقيقة} one {تنتهي الصلاحية خلال دقيقة واحدة} two {تنتهي الصلاحية خلال دقيقتين} few {تنتهي الصلاحية خلال # دقائق} many {تنتهي الصلاحية خلال # دقيقة} other {تنتهي الصلاحية خلال # دقيقة}}"
+#: app/components/impersonation-banner.tsx:47
+msgid "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
+msgstr "{remainingMinutes, plural, zero {متبقي # دقيقة} one {متبقي دقيقة واحدة} two {متبقي دقيقتان} few {متبقي # دقائق} many {متبقي # دقيقة} other {متبقي # دقيقة}}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:349
+#: app/components/impersonation-banner.tsx:43
+#~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
+#~ msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # دقيقة} one {تنتهي الصلاحية خلال دقيقة واحدة} two {تنتهي الصلاحية خلال دقيقتين} few {تنتهي الصلاحية خلال # دقائق} many {تنتهي الصلاحية خلال # دقيقة} other {تنتهي الصلاحية خلال # دقيقة}}"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:348
 msgid "{runsCount} runs"
 msgstr "{runsCount} تشغيل"
 
@@ -177,7 +181,7 @@ msgstr "منذ {seconds} ثانية"
 msgid "{status}"
 msgstr "{status}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:347
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:346
 msgid "{stepCount} steps"
 msgstr "{stepCount} خطوات"
 
@@ -251,19 +255,19 @@ msgstr "✓ تم المطالبة بنقاط Discord"
 msgid "${basePriceValue} billed annually"
 msgstr "${basePriceValue} يُفوتر سنوياً"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 msgid "1 announcement"
 msgstr "إعلان واحد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1115
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1120
 msgid "1 missing URL logged"
 msgstr "تم تسجيل عنوان URL مفقود واحد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:636
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:637
 msgid "1 page"
 msgstr "صفحة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:992
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:997
 msgid "1 redirect"
 msgstr "إعادة توجيه واحدة"
 
@@ -279,7 +283,7 @@ msgstr "11-50 شخص"
 msgid "201-500 people"
 msgstr "201-500 شخص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:782
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:787
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
 
@@ -300,7 +304,7 @@ msgstr "يوجد مستخدم بالفعل بهذا اسم المستخدم"
 msgid "Accent color"
 msgstr "لون التمييز"
 
-#: app/components/privacy-banner.tsx:63
+#: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
 msgstr "قبول"
@@ -335,10 +339,10 @@ msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:606
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:622
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:865
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:607
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1047
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -347,9 +351,9 @@ msgid "active"
 msgstr "نشط"
 
 #: app/components/settings/cards/sessions-card.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:72
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:55
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:114
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 msgid "Active"
@@ -394,7 +398,7 @@ msgstr "إضافة رابط"
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:582
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعارات الصيانة أو العروض الترويجية على موقعك العام."
 
@@ -538,9 +542,13 @@ msgstr "اضبط استعلام البحث لعرض المزيد."
 msgid "Admin"
 msgstr "مسؤول"
 
-#: app/components/impersonation-banner.tsx:33
-msgid "Admin Impersonation Active"
+#: app/components/impersonation-banner.tsx:35
+msgid "Admin impersonation active"
 msgstr "انتحال شخصية المسؤول نشط"
+
+#: app/components/impersonation-banner.tsx:33
+#~ msgid "Admin Impersonation Active"
+#~ msgstr "انتحال شخصية المسؤول نشط"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:181
 #~ msgid "AI"
@@ -563,8 +571,8 @@ msgstr "مساعد الذكاء الاصطناعي"
 msgid "Aim for one or two sentences that make someone click."
 msgstr "استهدف جملة أو جملتين تجعلان الزائر ينقر."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:237
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:52
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
 msgid "All"
 msgstr "الكل"
 
@@ -617,13 +625,13 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:448
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:449
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
 #: app/components/app-sidebar.tsx:314
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:553
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
 msgid "Announcements"
 msgstr "الإعلانات"
 
@@ -655,7 +663,7 @@ msgstr "العربية"
 msgid "archived"
 msgstr "مؤرشف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:56
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:57
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:116
 msgid "Archived"
 msgstr "مؤرشف"
@@ -664,7 +672,7 @@ msgstr "مؤرشف"
 #~ msgid "Are you sure you want to delete \"{0}\"?"
 #~ msgstr "هل أنت متأكد أنك تريد حذف \"{0}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:427
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 
@@ -784,8 +792,8 @@ msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
 #: app/components/app-sidebar.tsx:278
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:87
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 msgid "Automations"
 msgstr "الأتمتة"
 
@@ -874,12 +882,12 @@ msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
 #: app/components/app-sidebar.tsx:271
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:81
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:74
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:73
 msgid "Broadcasts"
 msgstr "البثّات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:146
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
 
@@ -947,13 +955,13 @@ msgstr "اسم الحملة"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1078
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:484
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:497
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:485
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1747
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1435
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1473
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1519
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
 #: app/routes/organizations+/create.tsx:796
 #: app/routes/organizations+/create.tsx:932
 msgid "Cancel"
@@ -983,12 +991,12 @@ msgstr "التسمية التوضيحية"
 msgid "Card position"
 msgstr "موضع البطاقة"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:312
+#: app/routes/_app+/$orgSlug_+/notes.tsx:311
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3966
 msgid "Cards"
 msgstr "بطاقات"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:302
+#: app/routes/_app+/$orgSlug_+/notes.tsx:301
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
@@ -1085,15 +1093,15 @@ msgstr "دائرة"
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1546
 msgid "Clear all 404 history?"
 msgstr "هل تريد مسح كل سجل 404؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:819
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:824
 msgid "Clear history"
 msgstr "مسح السجل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1563
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
 msgid "Clear History"
 msgstr "مسح السجل"
 
@@ -1109,7 +1117,7 @@ msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_co
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضمام للمطالبة بنقاطك تلقائياً."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:67
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:68
 msgid "Click rate"
 msgstr "معدل النقر"
 
@@ -1195,7 +1203,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:120
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:54
 msgid "Completed"
 msgstr "مكتمل"
 
@@ -1311,7 +1319,7 @@ msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:593
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:594
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3246
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3436
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
@@ -1441,7 +1449,7 @@ msgstr "إنشاء منظمة"
 msgid "Create and manage API keys to authenticate your MCP clients"
 msgstr "إنشاء وإدارة مفاتيح API لمصادقة عملاء MCP"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:552
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:550
 msgid "Create and manage pages for your organization's website."
 msgstr "إنشاء وإدارة صفحات موقع مؤسستك."
 
@@ -1451,15 +1459,15 @@ msgstr "إنشاء وإدارة صفحات موقع مؤسستك."
 msgid "Create API Key"
 msgstr "إنشاء مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:321
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:320
 msgid "Create automation"
 msgstr "إنشاء أتمتة"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:556
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:554
 msgid "Create banner announcements for your public organization site. Enabled banners appear at the top of the site for visitors."
 msgstr "أنشئ إعلانات شريطية لموقع مؤسستك العام. تظهر الإعلانات الشريطية المفعّلة أعلى الموقع للزوار."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:135
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:132
 msgid "Create broadcast"
 msgstr "إنشاء بث"
 
@@ -1491,8 +1499,8 @@ msgstr "إنشاء ملاحظة"
 msgid "Create Password"
 msgstr "إنشاء كلمة المرور"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1092
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1097
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
 msgid "Create redirect"
 msgstr "إنشاء إعادة توجيه"
 
@@ -1500,19 +1508,19 @@ msgstr "إنشاء إعادة توجيه"
 msgid "Create your first API key to get started"
 msgstr "أنشئ مفتاح API الأول للبدء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:225
 msgid "Create your first broadcast"
 msgstr "أنشئ أول بث لك"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:315
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:314
 msgid "Create your first marketing automation."
 msgstr "أنشئ أول أتمتة تسويقية لك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:129
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:126
 msgid "Create your first one-time email or SMS campaign."
 msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نصية لمرة واحدة."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:573
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:574
 msgid "Create your first page to start building your website."
 msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
 
@@ -1520,7 +1528,7 @@ msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
 msgid "Created {createdDate}"
 msgstr "تم الإنشاء {createdDate}"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:612
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:613
 msgid "Created By"
 msgstr "أنشأه"
 
@@ -1594,7 +1602,7 @@ msgstr "اسم الحدث المخصص"
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1230
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1235
 msgid "Custom URL"
 msgstr "عنوان URL مخصص"
 
@@ -1683,7 +1691,7 @@ msgstr "لوحة التحكم"
 #~ msgid "Data Table is a table that displays data in a grid format."
 #~ msgstr "جدول البيانات هو جدول يعرض البيانات بتنسيق شبكة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:124
 msgid "Database connection error"
 msgstr "خطأ في الاتصال بقاعدة البيانات"
 
@@ -1721,20 +1729,20 @@ msgstr "وحدة التأخير مطلوبة."
 
 #: app/components/note/comment-item.tsx:230
 #: app/components/settings/passkey-manager.tsx:220
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:438
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1032
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1090
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:464
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:498
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:472
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:511
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:979
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1484
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:465
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:984
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1489
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1535
 msgid "Delete"
 msgstr "حذف"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1505
 msgid "Delete 404 log entry?"
 msgstr "هل تريد حذف إدخال سجل 404؟"
 
@@ -1746,7 +1754,7 @@ msgstr "حذف الحساب"
 #~ msgid "Delete announcement"
 #~ msgstr "حذف الإعلان"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:474
 msgid "Delete announcement?"
 msgstr "هل تريد حذف الإعلان؟"
 
@@ -1786,7 +1794,7 @@ msgstr "حذف العنصر"
 msgid "Delete link"
 msgstr "حذف الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1101
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1106
 msgid "Delete log entry"
 msgstr "حذف إدخال السجل"
 
@@ -1808,7 +1816,7 @@ msgstr "حذف المؤسسة"
 msgid "Delete organization?"
 msgstr "حذف المؤسسة؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:486
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:487
 msgid "Delete page?"
 msgstr "حذف الصفحة؟"
 
@@ -1816,7 +1824,7 @@ msgstr "حذف الصفحة؟"
 msgid "Delete question"
 msgstr "حذف السؤال"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1450
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1455
 msgid "Delete redirect rule?"
 msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 
@@ -1843,7 +1851,7 @@ msgstr "الوصف"
 msgid "Desktop"
 msgstr "سطح المكتب"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1197
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1202
 msgid "Destination"
 msgstr "الوجهة"
 
@@ -1869,7 +1877,7 @@ msgstr "جهاز"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1069
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1074
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
 
@@ -1951,10 +1959,10 @@ msgid "draft"
 msgstr "مسودة"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:53
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:239
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:403
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5861
 msgid "Draft"
 msgstr "مسودة"
@@ -1971,7 +1979,7 @@ msgstr "اكتب مسودة لي"
 msgid "Drag to reorder column"
 msgstr "اسحب لإعادة ترتيب العمود"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:417
 msgid "Duplicate"
 msgstr "تكرار"
 
@@ -2040,9 +2048,9 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 #: app/components/note/comment-item.tsx:223
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:975
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:457
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:429
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:972
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:458
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:977
 msgid "Edit"
 msgstr "تعديل"
 
@@ -2067,7 +2075,7 @@ msgstr "تعديل الملاحظة"
 msgid "Edit Note"
 msgstr "تعديل ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1137
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
@@ -2105,7 +2113,7 @@ msgstr "البريد الإلكتروني / اسم المستخدم"
 msgid "Email subject line is required."
 msgstr "سطر موضوع البريد الإلكتروني مطلوب."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:57
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:58
 msgid "Emails sent"
 msgstr "رسائل البريد المُرسَلة"
 
@@ -2125,7 +2133,7 @@ msgstr "تفعيل تخزين S3 مخصص"
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
 msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
@@ -2141,7 +2149,7 @@ msgstr "الإنجليزية"
 msgid "Enter 6-digit OTP token"
 msgstr "أدخل رمز OTP المكون من 6 أرقام"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1302
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1307
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
 
@@ -2204,7 +2212,7 @@ msgstr "فريق Epic Startup"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 #: app/components/settings/cards/organization/announcement-sheet.tsx:271
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
 msgid "Error"
 msgstr "خطأ"
 
@@ -2212,11 +2220,11 @@ msgstr "خطأ"
 msgid "Errors"
 msgstr "أخطاء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 msgid "Event-driven workflows"
 msgstr "سير عمل قائم على الأحداث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
@@ -2240,7 +2248,7 @@ msgstr "سجل التنفيذ ({runCount})"
 msgid "Execution Runs"
 msgstr "عمليات التنفيذ"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1218
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1223
 msgid "Existing page"
 msgstr "صفحة موجودة"
 
@@ -2275,7 +2283,7 @@ msgstr "التلاشي للأعلى"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:55
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:56
 msgid "Failed"
 msgstr "فشل"
 
@@ -2299,11 +2307,11 @@ msgstr "فشل إنشاء الرحلة"
 msgid "Failed to delete automation"
 msgstr "فشل حذف الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:178
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:179
 msgid "Failed to delete journey"
 msgstr "فشل حذف الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
@@ -2311,7 +2319,7 @@ msgstr "فشل تكرار الرحلة"
 msgid "Failed to fetch current user information"
 msgstr "فشل جلب معلومات المستخدم الحالي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:186
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:187
 msgid "Failed to find original journey"
 msgstr "فشل العثور على الرحلة الأصلية"
 
@@ -2328,15 +2336,15 @@ msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 msgid "Failed to load broadcast"
 msgstr "فشل تحميل البث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:33
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:34
 msgid "Failed to load campaigns"
 msgstr "فشل تحميل الحملات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:92
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:93
 msgid "Failed to load journeys from regional tenant storage."
 msgstr "فشل تحميل الرحلات من تخزين المستأجر الإقليمي."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:128
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:129
 msgid "Failed to load marketing metrics"
 msgstr "فشل تحميل مقاييس التسويق"
 
@@ -2348,7 +2356,7 @@ msgstr "فشل تحميل الجدول الزمني"
 msgid "Failed to pause automation"
 msgstr "فشل إيقاف الأتمتة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:164
 msgid "Failed to pause journey"
 msgstr "فشل إيقاف الرحلة مؤقتاً"
 
@@ -2356,7 +2364,7 @@ msgstr "فشل إيقاف الرحلة مؤقتاً"
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:148
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:149
 msgid "Failed to publish journey"
 msgstr "فشل نشر الرحلة"
 
@@ -2429,7 +2437,7 @@ msgstr "هل نسيت كلمة المرور؟"
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:748
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:752
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "وجّه عناوين URL القديمة أو المعطلة إلى صفحاتك الجديدة للحفاظ على ترتيب محركات البحث وزيارات العملاء."
 
@@ -2621,22 +2629,22 @@ msgstr "إخفاء عن محركات البحث"
 msgid "Hide replies ({replyCount})"
 msgstr "إخفاء الردود ({replyCount})"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:938
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1060
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
 msgid "hit"
 msgstr "زيارة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:938
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1060
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
 msgid "hits"
 msgstr "زيارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1032
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1037
 msgid "Hits"
 msgstr "الزيارات"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:381
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5770
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5803
 msgid "Home"
@@ -2691,7 +2699,7 @@ msgstr "إذا كان هناك حساب بهذا اسم المستخدم أو ا
 msgid "If you change your email, you'll need to verify the new address"
 msgstr "إذا قمت بتغيير بريدك الإلكتروني، ستحتاج إلى التحقق من العنوان الجديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:831
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:836
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عناوين URL للصفحات، فأنشئ عمليات إعادة توجيه ليتم توجيه الزوار ومحركات البحث تلقائياً."
 
@@ -2710,6 +2718,10 @@ msgstr "رابط الصورة"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1071
 msgid "Immediately invalidate all tokens for this client"
 msgstr "إبطال جميع الرموز المميزة لهذا العميل فوراً"
+
+#: app/components/impersonation-banner.tsx:40
+msgid "Impersonating <0>{targetName}</0>"
+msgstr "انتحال شخصية <0>{targetName}</0>"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:895
 msgid "Important Notes"
@@ -2736,7 +2748,7 @@ msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:269
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:342
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:343
 msgid "Info"
 msgstr "معلومات"
 
@@ -2824,11 +2836,11 @@ msgstr "الانضمام إلى المنظمة"
 msgid "Join our Discord"
 msgstr "انضم إلى Discord الخاص بنا"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:198
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:199
 msgid "Journey"
 msgstr "رحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:136
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:137
 msgid "journeyId is required"
 msgstr "معرّف الرحلة مطلوب"
 
@@ -2836,11 +2848,11 @@ msgstr "معرّف الرحلة مطلوب"
 msgid "Jump into an existing organization, accept pending invitations, or add a new one."
 msgstr "انتقل إلى منظمة موجودة، أو اقبل الدعوات المعلقة، أو أضف منظمة جديدة."
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:326
+#: app/routes/_app+/$orgSlug_+/notes.tsx:325
 msgid "Kanban"
 msgstr "كانبان"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:316
+#: app/routes/_app+/$orgSlug_+/notes.tsx:315
 msgid "Kanban board"
 msgstr "لوحة كانبان"
 
@@ -2848,7 +2860,7 @@ msgstr "لوحة كانبان"
 msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1372
 msgid "Keeps original indexing"
 msgstr "يحافظ على الفهرسة الأصلية"
 
@@ -2886,7 +2898,7 @@ msgstr "آخر نشاط"
 msgid "Last active {lastActiveValue}"
 msgstr "آخر نشاط {lastActiveValue}"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1035
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1040
 msgid "Last Encountered"
 msgstr "آخر ظهور"
 
@@ -2956,7 +2968,7 @@ msgstr "الوضع الفاتح"
 #~ msgstr "الحد الأقصى"
 
 #: app/components/website/link-inspector.tsx:642
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:599
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
 msgid "Link"
 msgstr "رابط"
 
@@ -2977,8 +2989,8 @@ msgstr "تسمية الرابط"
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:590
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:849
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:854
 msgid "Live"
 msgstr "مباشر"
 
@@ -3217,7 +3229,7 @@ msgstr "دقائق"
 msgid "Minutes"
 msgstr "دقائق"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1029
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1034
 msgid "Missing Path"
 msgstr "المسار المفقود"
 
@@ -3239,7 +3251,7 @@ msgid "More"
 msgstr "المزيد"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:219
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:378
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:377
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
@@ -3289,7 +3301,7 @@ msgid "Neutral feedback"
 msgstr "ملاحظات محايدة"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:984
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:949
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:954
 msgid "Never used"
 msgstr "لم يُستخدم أبداً"
 
@@ -3297,11 +3309,11 @@ msgstr "لم يُستخدم أبداً"
 msgid "New announcement"
 msgstr "إعلان جديد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:269
 msgid "New automation"
 msgstr "أتمتة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:85
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:81
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:70
 msgid "New broadcast"
 msgstr "بث جديد"
@@ -3311,7 +3323,7 @@ msgstr "بث جديد"
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:855
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:860
 msgid "New Destination"
 msgstr "الوجهة الجديدة"
 
@@ -3323,7 +3335,7 @@ msgstr "البريد الإلكتروني الجديد"
 msgid "New icon preview"
 msgstr "معاينة الأيقونة الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:334
+#: app/routes/_app+/$orgSlug_+/notes.tsx:333
 msgid "New Note"
 msgstr "ملاحظة جديدة"
 
@@ -3340,11 +3352,11 @@ msgstr "صفحة جديدة"
 msgid "New Password"
 msgstr "كلمة المرور الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1137
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
 msgid "New redirect"
 msgstr "إعادة توجيه جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:762
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:767
 msgid "New Redirect"
 msgstr "إعادة توجيه جديدة"
 
@@ -3360,11 +3372,11 @@ msgstr "التالي"
 msgid "No"
 msgstr "لا"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1017
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1022
 msgid "No 404 errors match that search"
 msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1009
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1014
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
@@ -3384,7 +3396,7 @@ msgstr "لا يوجد اشتراك نشط"
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:580
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
 msgid "No announcements yet"
 msgstr "لا توجد إعلانات بعد"
 
@@ -3392,7 +3404,7 @@ msgstr "لا توجد إعلانات بعد"
 msgid "No API keys created yet"
 msgstr "لم يتم إنشاء مفاتيح API بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:311
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:310
 msgid "No automations found"
 msgstr "لم يتم العثور على أتمتة"
 
@@ -3400,11 +3412,11 @@ msgstr "لم يتم العثور على أتمتة"
 msgid "No backup codes generated"
 msgstr "لم يتم إنشاء رموز احتياطية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:125
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:122
 msgid "No broadcasts found"
 msgstr "لم يتم العثور على بثّات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:219
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
@@ -3486,12 +3498,12 @@ msgstr "لم يتم العثور على منظمة"
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr "لا توجد منظمة بالمعرف \"{orgSlug}\""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:597
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:598
 msgid "No pages match that search"
 msgstr "لا توجد صفحات تطابق هذا البحث"
 
 #: app/components/website/link-inspector.tsx:447
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:571
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:572
 msgid "No pages yet"
 msgstr "لا توجد صفحات بعد"
 
@@ -3503,11 +3515,11 @@ msgstr "لا توجد معاملات مطلوبة"
 msgid "No passkeys registered yet"
 msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:829
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:834
 msgid "No redirects created yet"
 msgstr "لا توجد عمليات إعادة توجيه بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:837
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:842
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
 
@@ -3579,7 +3591,7 @@ msgstr "ملاحظات"
 
 #: app/components/app-sidebar.tsx:246
 #: app/components/command-menu.tsx:137
-#: app/routes/_app+/$orgSlug_+/notes.tsx:289
+#: app/routes/_app+/$orgSlug_+/notes.tsx:288
 msgid "Notes"
 msgstr "الملاحظات"
 
@@ -3619,11 +3631,11 @@ msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1166
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1171
 msgid "Old path (Source)"
 msgstr "المسار القديم (المصدر)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:852
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:857
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
 
@@ -3640,11 +3652,11 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:83
 msgid "One-time email and SMS"
 msgstr "بريد إلكتروني ورسائل نصية لمرة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:77
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:74
 msgid "One-time email and SMS campaigns."
 msgstr "حملات بريد إلكتروني ورسائل نصية لمرة واحدة."
 
@@ -3713,7 +3725,7 @@ msgstr "فتح لوحة تحكم المدفوعات"
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:62
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:63
 msgid "Open rate"
 msgstr "معدل الفتح"
 
@@ -3796,11 +3808,11 @@ msgstr "نظرة عامة"
 
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:609
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr "صفحة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:419
 msgid "Page actions"
 msgstr "إجراءات الصفحة"
 
@@ -3824,7 +3836,7 @@ msgstr "رابط الصفحة"
 
 #: app/components/app-sidebar.tsx:298
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:22
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:549
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
 msgstr "الصفحات"
 
@@ -3865,7 +3877,7 @@ msgid "Password login is disabled because your organization \"{orgName}\" requir
 msgstr "تسجيل الدخول بكلمة المرور معطل لأن منظمتك \"{orgName}\" تتطلب تسجيل الدخول الموحد."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:191
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:406
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:405
 msgid "Pause"
 msgstr "إيقاف مؤقت"
 
@@ -3873,8 +3885,8 @@ msgstr "إيقاف مؤقت"
 msgid "paused"
 msgstr "متوقف مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:55
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:56
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:241
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:115
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
@@ -3906,11 +3918,11 @@ msgstr "الدعوات المعلقة"
 msgid "per month"
 msgstr "شهرياً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:179
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:178
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1384
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
 
@@ -4113,7 +4125,7 @@ msgid "Pro"
 msgstr "احترافي"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:55
 msgid "Processing"
 msgstr "قيد المعالجة"
 
@@ -4145,8 +4157,8 @@ msgid "Public Access"
 msgstr "الوصول العام"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:395
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:447
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5875
 msgid "Publish"
 msgstr "نشر"
@@ -4167,7 +4179,7 @@ msgstr "نشر التحديثات"
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:401
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5859
 msgid "Published"
 msgstr "منشور"
@@ -4228,7 +4240,7 @@ msgstr "تمت قراءة تفاصيل الصفحة"
 msgid "Reading page details"
 msgstr "قراءة تفاصيل الصفحة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:201
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:200
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
@@ -4248,19 +4260,19 @@ msgstr "المستلمون"
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1325
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1330
 msgid "Recommended for SEO"
 msgstr "موصى به لتحسين محركات البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:961
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:966
 msgid "Redirect actions"
 msgstr "إجراءات إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1320
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1325
 msgid "Redirect type"
 msgstr "نوع إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1082
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1087
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
@@ -4269,11 +4281,11 @@ msgstr "تمت إعادة التوجيه"
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:745
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:750
 msgid "Redirects & 404 History"
 msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1038
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1043
 msgid "Referrer"
 msgstr "المُحيل"
 
@@ -4317,7 +4329,7 @@ msgstr "تم التسجيل منذ {timeAgo}"
 msgid "Regular"
 msgstr "عادي"
 
-#: app/components/privacy-banner.tsx:51
+#: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
 
@@ -4504,7 +4516,7 @@ msgstr "اليمين"
 msgid "Rounded"
 msgstr "مستدير"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1140
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1145
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
@@ -4621,7 +4633,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/settings/cards/organization/site-analytics-card.tsx:88
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -4688,7 +4700,7 @@ msgstr "مجدول"
 #~ msgid "Search"
 #~ msgstr "بحث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:282
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
 msgid "Search automations..."
 msgstr "البحث في الأتمتة..."
 
@@ -4696,7 +4708,7 @@ msgstr "البحث في الأتمتة..."
 msgid "Search by name or email..."
 msgstr "البحث بالاسم أو البريد الإلكتروني..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:93
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
@@ -4704,7 +4716,7 @@ msgstr "البحث في الحملات..."
 msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:803
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:808
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
@@ -4721,7 +4733,7 @@ msgstr "البحث في الملاحظات بالعنوان أو المحتوى.
 msgid "Search notes..."
 msgstr "البحث في الملاحظات..."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:587
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:588
 msgid "Search pages..."
 msgstr "البحث في الصفحات..."
 
@@ -4729,7 +4741,7 @@ msgstr "البحث في الصفحات..."
 msgid "Search preview"
 msgstr "معاينة البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:802
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search redirects..."
 msgstr "ابحث في عمليات إعادة التوجيه..."
 
@@ -4797,7 +4809,7 @@ msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1248
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1253
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
@@ -5187,7 +5199,7 @@ msgstr "بدأ في"
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:615
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr "الحالة"
 
@@ -5215,9 +5227,13 @@ msgstr "إيقاف"
 msgid "Stop generation"
 msgstr "إيقاف التوليد"
 
-#: app/components/impersonation-banner.tsx:60
-msgid "Stop Impersonation"
+#: app/components/impersonation-banner.tsx:65
+msgid "Stop impersonation"
 msgstr "إيقاف انتحال الشخصية"
+
+#: app/components/impersonation-banner.tsx:60
+#~ msgid "Stop Impersonation"
+#~ msgstr "إيقاف انتحال الشخصية"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:349
 msgid "Storage migration"
@@ -5272,7 +5288,7 @@ msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:272
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
 msgid "Success"
 msgstr "نجاح"
 
@@ -5375,11 +5391,11 @@ msgstr "أخبرنا عن منظمتك..."
 msgid "Tell us more about your organization"
 msgstr "أخبرنا المزيد عن منظمتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1385
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1390
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهرسة البحث الأصلية. الأفضل للعروض قصيرة المدى أو الصيانة أو الحملات الموسمية."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1334
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
@@ -5463,7 +5479,7 @@ msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات �
 msgid "The passwords must match"
 msgstr "يجب أن تتطابق كلمات المرور"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1178
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1183
 msgid "The path on your old site that visitors or search engines request."
 msgstr "المسار في موقعك القديم الذي يطلبه الزوار أو محركات البحث."
 
@@ -5491,11 +5507,11 @@ msgstr "لن يتم عرض هذه الرموز مرة أخرى. احفظها ف�
 msgid "Thinking..."
 msgstr "جاري التفكير..."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:489
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:490
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف \"{pageTitle}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:477
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
@@ -5535,15 +5551,15 @@ msgstr "علامة التبويب هذه"
 msgid "This will be the URL path for this page."
 msgstr "سيكون هذا مسار الرابط لهذه الصفحة."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1503
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1508
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "سيؤدي ذلك إلى حذف سجل 404 للمسار <0>{deleteLogPath}</0> من سجلك."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1544
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1549
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "سيؤدي ذلك إلى حذف جميع أخطاء 404 المسجلة لموقع مؤسستك نهائياً. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1453
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1458
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً من <0>{deleteRedirectFrom}</0> إلى <1>{deleteRedirectTo}</1>. لن يُعاد توجيه الزوار الذين يطلبون عنوان URL القديم بعد الآن."
 
@@ -5581,7 +5597,7 @@ msgstr "العنوان"
 msgid "Titles and section headings."
 msgstr "العناوين وعناوين الأقسام."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:403
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:404
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
@@ -5589,7 +5605,7 @@ msgstr "تبديل ظهور الإعلان"
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:885
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:890
 msgid "Toggle redirect active status"
 msgstr "تبديل حالة تفعيل إعادة التوجيه"
 
@@ -5609,7 +5625,7 @@ msgstr "أفضل المساهمين"
 msgid "Total"
 msgstr "الإجمالي"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1350
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1355
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
 
@@ -5671,14 +5687,14 @@ msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:599
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:839
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1019
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:844
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1024
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:314
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:128
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:125
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
@@ -5701,9 +5717,9 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:596
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:597
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3884
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:858
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:863
 msgid "Type"
 msgstr "النوع"
 
@@ -5732,7 +5748,7 @@ msgstr "الولايات المتحدة"
 msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:227
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
 msgid "Unknown intent"
 msgstr "نية غير معروفة"
@@ -5741,7 +5757,7 @@ msgstr "نية غير معروفة"
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:462
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5925
 msgid "Unpublish"
 msgstr "إلغاء النشر"
@@ -5780,8 +5796,8 @@ msgstr "تحديث صورة الملف الشخصي"
 msgid "Update your photo and personal details here."
 msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:602
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:618
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:603
+#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
 msgstr "تم التحديث"
 
@@ -5844,11 +5860,11 @@ msgstr "جارٍ الرفع…"
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:776
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:781
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:861
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:866
 msgid "Usage"
 msgstr "الاستخدام"
 
@@ -5945,7 +5961,7 @@ msgstr "فيديو"
 msgid "View"
 msgstr "عرض"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:207
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:206
 msgid "View all"
 msgstr "عرض الكل"
 
@@ -5965,7 +5981,7 @@ msgstr "عرض الموقع المباشر"
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:366
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:365
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
@@ -5992,7 +6008,7 @@ msgid "Want to go to the top of the waitlist?"
 msgstr "تريد الذهاب إلى أعلى قائمة الانتظار?"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:270
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:343
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Warning"
 msgstr "تحذير"
 
@@ -6004,7 +6020,7 @@ msgstr "تحذيرات"
 msgid "We found your organization:"
 msgstr "وجدنا منظمتك:"
 
-#: app/components/privacy-banner.tsx:24
+#: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content. <0>Read our Cookie Policy</0>."
 msgstr "نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتحليل حركة المرور على الموقع وتقديم محتوى مخصص. <0>اقرأ سياسة ملفات تعريف الارتباط</0>."
 
@@ -6089,7 +6105,7 @@ msgstr "ماذا تريد أن تعرف؟"
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1409
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
 
@@ -6106,7 +6122,7 @@ msgstr "عندما يقوم شخص بـ <0>{0}</0>"
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
 msgstr "عندما يقوم شخص ما بالتسجيل باستخدام بريد إلكتروني يطابق نطاقك المُتحقق منه، سيتم إضافته تلقائياً إلى مؤسستك كعضو."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1011
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1016
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "عندما يطلب الزوار أو محركات البحث عنوان URL غير موجود، سيظهر هنا لتتمكن من إعداد عمليات إعادة توجيه."
 
@@ -6114,7 +6130,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1284
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1289
 msgid "Will redirect to"
 msgstr "ستتم إعادة التوجيه إلى"
 
@@ -6172,8 +6188,8 @@ msgid "You are covered during our beta phase. No billing required at this time."
 msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا توجد فوترة مطلوبة في الوقت الحالي."
 
 #: app/components/impersonation-banner.tsx:36
-msgid "You are impersonating <0>{targetName}</0>"
-msgstr "أنت تنتحل شخصية <0>{targetName}</0>"
+#~ msgid "You are impersonating <0>{targetName}</0>"
+#~ msgstr "أنت تنتحل شخصية <0>{targetName}</0>"
 
 #: app/components/settings/cards/danger-card.tsx:65
 msgid "You can cancel this request before the scheduled date to keep your account. After deletion, all your data will be permanently removed."
@@ -6183,7 +6199,7 @@ msgstr "يمكنك إلغاء هذا الطلب قبل التاريخ المحد
 msgid "You can change your photo later"
 msgstr "يمكنك تغيير صورتك لاحقاً"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:290
+#: app/routes/_app+/$orgSlug_+/notes.tsx:289
 msgid "You can create notes for your organization here."
 msgstr "يمكنك إنشاء ملاحظات لمنظمتك هنا."
 

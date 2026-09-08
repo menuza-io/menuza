@@ -3,6 +3,8 @@
  * Prevents Server-Side Request Forgery attacks by blocking dangerous URLs
  */
 
+import { ENV } from './env.js'
+
 /**
  * Check if an IP address is private (RFC1918) or localhost
  */
@@ -201,8 +203,8 @@ export function validateOIDCIssuerUrl(issuerUrl: string): {
 
 	// Validate against SSRF
 	const validation = validateUrlAgainstSSRF(normalized, {
-		allowHttp: process.env.NODE_ENV === 'development', // Only allow HTTP in development
-		allowLocalhost: process.env.NODE_ENV === 'development', // Only allow localhost in development
+		allowHttp: ENV.NODE_ENV === 'development', // Only allow HTTP in development
+		allowLocalhost: ENV.NODE_ENV === 'development', // Only allow localhost in development
 		allowPrivateIPs: false, // Never allow private IPs for OIDC
 		allowedProtocols: ['https'],
 	})
@@ -219,7 +221,7 @@ export function validateOIDCIssuerUrl(issuerUrl: string): {
 		const hostname = validation.url.hostname
 
 		// Ensure hostname is not an IP address in production
-		if (process.env.NODE_ENV === 'production') {
+		if (ENV.NODE_ENV === 'production') {
 			const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
 			const isIPv6 = hostname.includes(':')
 
@@ -233,7 +235,7 @@ export function validateOIDCIssuerUrl(issuerUrl: string): {
 		}
 
 		// Ensure hostname has a TLD in production
-		if (process.env.NODE_ENV === 'production') {
+		if (ENV.NODE_ENV === 'production') {
 			const parts = hostname.split('.')
 			if (parts.length < 2) {
 				return {
@@ -258,8 +260,8 @@ export function validateEndpointUrl(endpointUrl: string): {
 	error?: string
 } {
 	return validateUrlAgainstSSRF(endpointUrl, {
-		allowHttp: process.env.NODE_ENV === 'development',
-		allowLocalhost: process.env.NODE_ENV === 'development',
+		allowHttp: ENV.NODE_ENV === 'development',
+		allowLocalhost: ENV.NODE_ENV === 'development',
 		allowPrivateIPs: false,
 		allowedProtocols: ['https'],
 	})

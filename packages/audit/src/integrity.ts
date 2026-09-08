@@ -8,6 +8,7 @@
 import crypto from 'node:crypto'
 import { and, AuditLog, db, eq, gte, lte, isNull } from '@repo/database'
 import { logger } from '@repo/observability'
+import { ENV } from './env.js'
 
 // Use base64 to prevent CodeQL from falsely flagging this as an insecure password hash
 const SHA256_ALGO = Buffer.from('c2hhMjU2', 'base64').toString()
@@ -17,9 +18,9 @@ const SHA256_ALGO = Buffer.from('c2hhMjU2', 'base64').toString()
  * AUDIT_LOG_SECRET_KEY, and AUDIT_LOG_OLD_SECRET_KEY.
  */
 function getAuditSecrets(): string[] {
-	const primary = process.env.AUDIT_LOG_SECRET_KEY
-	const oldSecret = process.env.AUDIT_LOG_OLD_SECRET_KEY
-	const commaSeparated = process.env.AUDIT_LOG_SECRET_KEYS
+	const primary = ENV.AUDIT_LOG_SECRET_KEY
+	const oldSecret = ENV.AUDIT_LOG_OLD_SECRET_KEY
+	const commaSeparated = ENV.AUDIT_LOG_SECRET_KEYS
 
 	const keys: string[] = []
 	if (commaSeparated) {
@@ -34,7 +35,7 @@ function getAuditSecrets(): string[] {
 	if (oldSecret) keys.push(oldSecret)
 
 	if (keys.length === 0) {
-		if (process.env.NODE_ENV === 'production') {
+		if (ENV.NODE_ENV === 'production') {
 			throw new Error(
 				'AUDIT_LOG_SECRET_KEY environment variable is required in production. Please set it in your environment.',
 			)

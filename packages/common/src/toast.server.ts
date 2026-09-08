@@ -1,4 +1,5 @@
 import { createId as cuid } from '@paralleldrive/cuid2'
+import { ENV } from './env.js'
 import { createCookieSessionStorage, redirect } from 'react-router'
 import { z } from 'zod'
 import { combineHeaders } from './misc.js'
@@ -15,7 +16,7 @@ const ToastSchema = z.object({
 export type Toast = z.infer<typeof ToastSchema>
 export type ToastInput = z.input<typeof ToastSchema>
 
-if (!process.env.SESSION_SECRET) {
+if (!ENV.SESSION_SECRET) {
 	throw new Error(
 		'SESSION_SECRET environment variable is required but not set. ' +
 			'Please add SESSION_SECRET to your .env file. ' +
@@ -23,7 +24,7 @@ if (!process.env.SESSION_SECRET) {
 	)
 }
 
-const toastSecrets = process.env.SESSION_SECRET.split(',').map((s) => s.trim())
+const toastSecrets = ENV.SESSION_SECRET.split(',').map((s) => s.trim())
 if (toastSecrets.length === 0 || toastSecrets.some((s) => s.length === 0)) {
 	throw new Error(
 		'SESSION_SECRET must contain at least one non-empty secret. ' +
@@ -38,7 +39,7 @@ export const toastSessionStorage = createCookieSessionStorage({
 		path: '/',
 		httpOnly: true,
 		secrets: toastSecrets,
-		secure: process.env.NODE_ENV === 'production',
+		secure: ENV.NODE_ENV === 'production',
 	},
 })
 

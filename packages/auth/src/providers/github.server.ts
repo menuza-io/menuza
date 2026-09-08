@@ -1,4 +1,5 @@
 import { SetCookie } from '@mjackson/headers'
+import { ENV } from '../env.js'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from 'react-router'
 import { GitHubStrategy } from 'remix-auth-github'
@@ -21,8 +22,8 @@ const GitHubUserParseResult = z
 	)
 
 const shouldMock =
-	process.env.GITHUB_CLIENT_ID?.startsWith('MOCK_') ||
-	process.env.NODE_ENV === 'test'
+	ENV.GITHUB_CLIENT_ID?.startsWith('MOCK_') ||
+	ENV.NODE_ENV === 'test'
 
 const GitHubEmailSchema = z.object({
 	email: z.string(),
@@ -43,17 +44,17 @@ const GitHubUserResponseSchema = z.object({
 export class GitHubProvider implements AuthProvider {
 	getAuthStrategy() {
 		if (
-			!process.env.GITHUB_CLIENT_ID ||
-			!process.env.GITHUB_CLIENT_SECRET ||
-			!process.env.GITHUB_REDIRECT_URI
+			!ENV.GITHUB_CLIENT_ID ||
+			!ENV.GITHUB_CLIENT_SECRET ||
+			!ENV.GITHUB_REDIRECT_URI
 		) {
 			return null
 		}
 		return new GitHubStrategy<ProviderUser>(
 			{
-				clientId: process.env.GITHUB_CLIENT_ID,
-				clientSecret: process.env.GITHUB_CLIENT_SECRET,
-				redirectURI: process.env.GITHUB_REDIRECT_URI,
+				clientId: ENV.GITHUB_CLIENT_ID,
+				clientSecret: ENV.GITHUB_CLIENT_SECRET,
+				redirectURI: ENV.GITHUB_REDIRECT_URI,
 			},
 			async ({ tokens }) => {
 				const userResponse = await fetch('https://api.github.com/user', {
@@ -113,7 +114,7 @@ export class GitHubProvider implements AuthProvider {
 			async getFreshValue(context) {
 				const response = await fetch(
 					`https://api.github.com/user/${providerId}`,
-					{ headers: { Authorization: `token ${process.env.GITHUB_TOKEN}` } },
+					{ headers: { Authorization: `token ${ENV.GITHUB_TOKEN}` } },
 				)
 				const rawJson = await response.json()
 				const result = GitHubUserSchema.safeParse(rawJson)
@@ -144,7 +145,7 @@ export class GitHubProvider implements AuthProvider {
 			sameSite: 'Lax',
 			httpOnly: true,
 			maxAge: 60 * 10,
-			secure: process.env.NODE_ENV === 'production' || undefined,
+			secure: ENV.NODE_ENV === 'production' || undefined,
 		})
 		throw redirect(`/auth/github/callback?${searchParams}`, {
 			headers: {

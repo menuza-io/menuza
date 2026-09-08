@@ -89,3 +89,4 @@ base.*.db-wal
 base.*.db-shm
 data.*.db-wal
 data.*.db-shm
+apps/app/tests/database/

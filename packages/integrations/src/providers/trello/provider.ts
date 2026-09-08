@@ -2,6 +2,7 @@
  * Trello integration provider implementation
  */
 
+import { ENV } from '../../env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -82,7 +83,7 @@ export class TrelloProvider extends BaseIntegrationProvider {
 	}
 
 	private get apiKey(): string {
-		const apiKey = process.env.TRELLO_API_KEY
+		const apiKey = ENV.TRELLO_API_KEY
 		if (!apiKey) {
 			throw new Error('TRELLO_API_KEY environment variable is required')
 		}
@@ -90,7 +91,7 @@ export class TrelloProvider extends BaseIntegrationProvider {
 	}
 
 	private get apiSecret(): string {
-		const apiSecret = process.env.TRELLO_API_SECRET
+		const apiSecret = ENV.TRELLO_API_SECRET
 		if (!apiSecret) {
 			throw new Error('TRELLO_API_SECRET environment variable is required')
 		}

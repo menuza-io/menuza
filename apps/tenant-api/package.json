@@ -11,7 +11,7 @@
     "generate:do-migrations": "node scripts/generate-do-migrations.mjs",
     "build": "npm run generate:do-migrations && tsc",
     "typecheck": "npm run generate:do-migrations && tsc --noEmit",
-    "test": "vitest run",
+    "test": "../../node_modules/.bin/varlock run -- vitest run",
     "deploy:cf": "npm run generate:do-migrations && wrangler deploy"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "@repo/config": "*",
     "@repo/database": "^0.0.0",
     "@repo/email": "*",
+    "@repo/observability": "*",
     "@repo/reports": "*",
     "@repo/sms": "*",
     "@repo/tenant-db": "*",

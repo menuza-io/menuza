@@ -9,6 +9,7 @@ import {
 	type AnyD1Database,
 	type DrizzleD1Database,
 } from 'drizzle-orm/d1'
+import { ENV } from './env.js'
 import * as relations from './relations.ts'
 import * as tables from './schema.ts'
 
@@ -40,7 +41,7 @@ let libsqlClientInstance: Client | null = null
  * Prefer an existing file so all processes open the same database.
  */
 export function resolveSqliteFileUrl() {
-	const raw = process.env.DATABASE_URL
+	const raw = ENV.DATABASE_URL
 	if (raw) {
 		const filePath = raw.replace(/^file:/, '').replace(/\?.*$/, '')
 		if (path.isAbsolute(filePath)) {
@@ -57,15 +58,15 @@ export function resolveSqliteFileUrl() {
 			return `file:${fromPackage}`
 		}
 
-		if (process.env.DATABASE_PATH) {
-			return `file:${path.resolve(process.cwd(), process.env.DATABASE_PATH)}`
+		if (ENV.DATABASE_PATH) {
+			return `file:${path.resolve(process.cwd(), ENV.DATABASE_PATH)}`
 		}
 
 		return `file:${fromCwd}`
 	}
 
-	if (process.env.DATABASE_PATH) {
-		return `file:${path.resolve(process.cwd(), process.env.DATABASE_PATH)}`
+	if (ENV.DATABASE_PATH) {
+		return `file:${path.resolve(process.cwd(), ENV.DATABASE_PATH)}`
 	}
 
 	return `file:${path.resolve(getPackageDir(), 'db/data.db')}`

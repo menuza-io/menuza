@@ -1,4 +1,5 @@
 import { LRUCache } from 'lru-cache'
+import { ENV } from 'varlock/env'
 
 import { getBrandDomain, getLocalDomain } from '@repo/config/brand'
 import { and, db, eq, or, Organization } from '@repo/database'
@@ -46,7 +47,10 @@ const corsCache = new LRUCache<string, boolean>({
 })
 
 function appBaseUrl() {
-	return (process.env.APP_URL || process.env.BASE_URL || '').replace(/\/$/, '')
+	return (ENV.APP_URL || (ENV as { BASE_URL?: string }).BASE_URL || '').replace(
+		/\/$/,
+		'',
+	)
 }
 
 async function lookupOrganizationFromDatabase(where: {
@@ -54,7 +58,7 @@ async function lookupOrganizationFromDatabase(where: {
 	slug?: string
 	host?: string
 }): Promise<PublishedOrganization | null> {
-	if (process.env.TENANT_API_RUNTIME === 'workers') {
+	if (ENV.TENANT_API_RUNTIME === 'workers') {
 		return null
 	}
 
@@ -132,7 +136,7 @@ async function lookupOrganizationFromApp(query: {
 }
 
 function brandDomain() {
-	return (process.env.ROOT_APP || getBrandDomain()).toLowerCase()
+	return (ENV.ROOT_APP || getBrandDomain()).toLowerCase()
 }
 
 function parseOrigin(origin: string): URL | null {
@@ -164,7 +168,7 @@ export function resolveOriginBinding(
 	const url = parseOrigin(origin)
 	if (!url) return { kind: 'none' }
 
-	const isProd = process.env.NODE_ENV === 'production'
+	const isProd = ENV.NODE_ENV === 'production'
 	if (isProd && url.protocol !== 'https:') return { kind: 'none' }
 	if (!isProd && url.protocol !== 'http:' && url.protocol !== 'https:') {
 		return { kind: 'none' }
@@ -261,6 +265,10 @@ export async function resolveOrganizationForBrowserAuth(
 	origin: string | undefined,
 	body: { slug?: string; host?: string },
 ) {
+	if (origin && !(await isAllowedBrowserOrigin(origin))) {
+		return null
+	}
+
 	const fromOrigin = await resolveOrganizationFromOrigin(origin)
 	if (fromOrigin) {
 		if (body.slug && body.slug.toLowerCase() !== fromOrigin.slug) {
@@ -276,7 +284,7 @@ export async function resolveOrganizationForBrowserAuth(
 		return fromOrigin
 	}
 
-	const isProd = process.env.NODE_ENV === 'production'
+	const isProd = ENV.NODE_ENV === 'production'
 	if (!isProd && (body.slug || body.host)) {
 		return resolvePublishedOrganization(body)
 	}
@@ -289,7 +297,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 	if (cached !== undefined) return cached
 
 	const url = parseOrigin(origin)
-	const isProd = process.env.NODE_ENV === 'production'
+	const isProd = ENV.NODE_ENV === 'production'
 	const appHostname = `app.${brandDomain()}`
 	const appUrl = parseOrigin(appBaseUrl())
 	const isAppOrigin = Boolean(
@@ -311,7 +319,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 	let allowed = false
 
 	if (binding.kind === 'local-unbound') {
-		allowed = process.env.NODE_ENV !== 'production'
+		allowed = ENV.NODE_ENV !== 'production'
 	} else if (binding.kind === 'slug' || binding.kind === 'custom') {
 		const organization = await resolveOrganizationFromBinding(binding)
 		allowed = Boolean(
@@ -326,7 +334,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 export function isOperatorControlPlaneOrigin(origin: string) {
 	const url = parseOrigin(origin)
 	if (!url) return false
-	const isProd = process.env.NODE_ENV === 'production'
+	const isProd = ENV.NODE_ENV === 'production'
 	if (isProd && url.protocol !== 'https:') return false
 	if (!isProd && url.protocol !== 'http:' && url.protocol !== 'https:') {
 		return false
