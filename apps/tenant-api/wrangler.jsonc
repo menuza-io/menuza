@@ -2,6 +2,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "epic-startup-tenant-api-us",
 	"main": "./workers/index.ts",
+	"build": {
+		"command": "npm run generate:do-migrations",
+	},
 	"compatibility_date": "2026-08-13",
 	"compatibility_flags": [
 		"nodejs_compat",
