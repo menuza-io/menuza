@@ -16,16 +16,35 @@ import { ErrorList, Field } from '#app/components/forms.tsx'
 
 export const siteAnalyticsActionIntent = 'update-site-analytics'
 
-// Schema used by the form — keeps googleAnalyticsId as string for conform compatibility.
-// The action handler normalises the empty string to null before saving.
 export const SiteAnalyticsSchema = z.object({
 	organizationId: z.string(),
+	facebookPixelId: z
+		.string()
+		.trim()
+		.refine(
+			(value) => value === '' || /^\d{5,20}$/.test(value),
+			'Enter a valid numeric Pixel ID, or leave blank to disable.',
+		),
+	googleTagManagerId: z
+		.string()
+		.trim()
+		.refine(
+			(value) => value === '' || /^GTM-[A-Z0-9]+$/.test(value),
+			'Enter a valid container ID like GTM-XXXXXXX, or leave blank to disable.',
+		),
 	googleAnalyticsId: z
 		.string()
 		.trim()
 		.refine(
 			(val) => val === '' || /^G-[A-Z0-9]+$/.test(val),
 			'Enter a valid Measurement ID like G-XXXXXXXXXX, or leave blank to disable.',
+		),
+	tiktokPixelId: z
+		.string()
+		.trim()
+		.refine(
+			(value) => value === '' || /^[A-Z0-9]{10,30}$/.test(value),
+			'Enter a valid TikTok Pixel ID, or leave blank to disable.',
 		),
 })
 
@@ -35,7 +54,10 @@ export function SiteAnalyticsCard({
 }: {
 	organization: {
 		id: string
+		facebookPixelId?: string | null
+		googleTagManagerId?: string | null
 		googleAnalyticsId?: string | null
+		tiktokPixelId?: string | null
 	}
 	actionData?: { result?: unknown }
 }) {
@@ -51,7 +73,10 @@ export function SiteAnalyticsCard({
 		},
 		defaultValue: {
 			organizationId: organization.id,
+			facebookPixelId: organization.facebookPixelId ?? '',
+			googleTagManagerId: organization.googleTagManagerId ?? '',
 			googleAnalyticsId: organization.googleAnalyticsId ?? '',
+			tiktokPixelId: organization.tiktokPixelId ?? '',
 		},
 	})
 
@@ -60,12 +85,12 @@ export function SiteAnalyticsCard({
 			<Card>
 				<CardHeader>
 					<CardTitle>
-						<Trans>Google Analytics</Trans>
+						<Trans>Analytics and tracking</Trans>
 					</CardTitle>
 					<CardDescription>
 						<Trans>
-							Add a Google Analytics 4 Measurement ID to track visitors on your
-							tenant website. Leave blank to disable tracking.
+							Connect the analytics platforms you use on your public website.
+							Leave any field blank to disable that integration.
 						</Trans>
 					</CardDescription>
 				</CardHeader>
@@ -73,13 +98,40 @@ export function SiteAnalyticsCard({
 				<input type="hidden" name="organizationId" value={organization.id} />
 				<CardContent className="space-y-4">
 					<Field
-						labelProps={{ children: <Trans>Measurement ID</Trans> }}
+						labelProps={{ children: <Trans>Facebook Pixel ID</Trans> }}
+						inputProps={{
+							...getInputProps(fields.facebookPixelId, { type: 'text' }),
+							placeholder: '123456789012345',
+							autoComplete: 'off',
+						}}
+						errors={fields.facebookPixelId.errors}
+					/>
+					<Field
+						labelProps={{ children: <Trans>Google Tag Manager ID</Trans> }}
+						inputProps={{
+							...getInputProps(fields.googleTagManagerId, { type: 'text' }),
+							placeholder: 'GTM-XXXXXXX',
+							autoComplete: 'off',
+						}}
+						errors={fields.googleTagManagerId.errors}
+					/>
+					<Field
+						labelProps={{ children: <Trans>Google Analytics ID</Trans> }}
 						inputProps={{
 							...getInputProps(fields.googleAnalyticsId, { type: 'text' }),
 							placeholder: 'G-XXXXXXXXXX',
 							autoComplete: 'off',
 						}}
 						errors={fields.googleAnalyticsId.errors}
+					/>
+					<Field
+						labelProps={{ children: <Trans>TikTok Pixel ID</Trans> }}
+						inputProps={{
+							...getInputProps(fields.tiktokPixelId, { type: 'text' }),
+							placeholder: 'CXXXXXXXXXXXXXXXXXXX',
+							autoComplete: 'off',
+						}}
+						errors={fields.tiktokPixelId.errors}
 					/>
 					<ErrorList errors={form.errors} id={form.errorId} />
 				</CardContent>

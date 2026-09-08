@@ -152,6 +152,7 @@ import {
 	uploadWebsiteAsset,
 	uploadWebsiteSeoImage,
 } from '#app/utils/storage.server.ts'
+import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import {
 	ADDABLE_BLOCK_TYPES,
 	BLOCK_TYPES,
@@ -565,9 +566,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		chrome?.siteHeaderConfig ?? JSON.stringify(getDefaultConfig('header'))
 	const footerConfig =
 		chrome?.siteFooterConfig ?? JSON.stringify(getDefaultConfig('footer'))
+	let websiteForms: Array<{ id: string; name: string; status: string }> = []
+	try {
+		const { fetchTenant } = await getOperatorTenantClient(
+			request,
+			organization.slug,
+		)
+		const response = await fetchTenant('/operator/forms')
+		if (response.ok) {
+			const payload = (await response.json()) as {
+				forms?: Array<{ id: string; name: string; status: string }>
+			}
+			websiteForms = payload.forms ?? []
+		}
+	} catch {
+		// The page editor remains usable while the regional data plane is offline.
+	}
 
 	return {
 		organization,
+		websiteForms,
 		themeConfig,
 		sitePages,
 		page: {
@@ -2089,6 +2107,8 @@ function previewText(
 		}
 		case 'video':
 			return loc(config.videoUrl) || loc(config.title) || 'Video section'
+		case 'form':
+			return loc(config.formName) || 'Choose a form'
 		case 'cta':
 			return loc(config.heading) || 'Call to action'
 		default:
@@ -2780,6 +2800,8 @@ function renderBlockEditor(props: {
 			)
 		case 'video':
 			return <VideoEditor config={config} updateField={updateField} />
+		case 'form':
+			return <FormBlockEditor config={config} updateField={updateField} />
 		case 'cta':
 			return (
 				<CtaEditor config={config} updateField={updateField} {...editorProps} />
@@ -4027,6 +4049,64 @@ function CardsEditor({ config, updateField, listKey }: ListEditorProps) {
 					)}
 				/>
 			</div>
+		</div>
+	)
+}
+
+function FormBlockEditor({ config, updateField }: EditorProps) {
+	const { websiteForms } = useLoaderData<typeof loader>()
+	const formId = String(config.formId || '')
+	return (
+		<div className="space-y-5">
+			<EditorSection title="Form">
+				<div className="space-y-2">
+					<Label htmlFor="block-form">
+						<Trans>Connected form</Trans>
+					</Label>
+					<select
+						id="block-form"
+						value={formId}
+						onChange={(event) => {
+							const selected = websiteForms.find(
+								(form) => form.id === event.target.value,
+							)
+							updateField('formId', event.target.value)
+							updateField('formName', selected?.name ?? '')
+						}}
+						className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+					>
+						<option value="">
+							<Trans>Select a form</Trans>
+						</option>
+						{websiteForms
+							.filter((form) => form.status === 'published')
+							.map((form) => (
+								<option key={form.id} value={form.id}>
+									{form.name}
+								</option>
+							))}
+					</select>
+					{websiteForms.length === 0 ? (
+						<p className="text-muted-foreground text-xs">
+							<Trans>
+								Create and publish a form from Website → Forms first.
+							</Trans>
+						</p>
+					) : null}
+				</div>
+			</EditorSection>
+			<EditorSection title="Display">
+				<div className="flex items-center justify-between gap-3">
+					<Label htmlFor="form-show-title">
+						<Trans>Show form title</Trans>
+					</Label>
+					<Switch
+						id="form-show-title"
+						checked={config.showTitle !== false}
+						onCheckedChange={(checked) => updateField('showTitle', checked)}
+					/>
+				</div>
+			</EditorSection>
 		</div>
 	)
 }

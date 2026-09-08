@@ -224,6 +224,15 @@ export const BLOCK_TYPES = {
 			background: 'none',
 		},
 	},
+	form: {
+		label: 'Form',
+		icon: 'file-text' as IconName,
+		description: 'Embed one of your website forms',
+		defaultConfig: {
+			formId: '',
+			showTitle: true,
+		},
+	},
 	footer: {
 		label: 'Footer',
 		icon: 'share-2' as IconName,

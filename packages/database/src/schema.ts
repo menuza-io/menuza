@@ -2239,7 +2239,10 @@ export const Organization = sqliteTable(
 		shopProductDescription: text(),
 		shopProductPriceCents: integer(),
 		shopEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		facebookPixelId: text(),
+		googleTagManagerId: text(),
 		googleAnalyticsId: text(),
+		tiktokPixelId: text(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),

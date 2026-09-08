@@ -475,7 +475,68 @@ export const customerPaymentMethodsRelations = relations(
 )
 
 // ==========================================
-// 9. INFERRED TYPES
+// 9. WEBSITE FORMS (regional definitions + submissions)
+// ==========================================
+export const websiteForms = sqliteTable(
+	'website_forms',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		description: text('description'),
+		fields: text('fields', { mode: 'json' }).notNull().default('[]'),
+		submitLabel: text('submit_label').notNull().default('Submit'),
+		successMessage: text('success_message')
+			.notNull()
+			.default('Thank you. Your response has been received.'),
+		status: text('status', { enum: ['draft', 'published'] })
+			.notNull()
+			.default('published'),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [index('idx_website_forms_status').on(table.status)],
+)
+
+export const websiteFormSubmissions = sqliteTable(
+	'website_form_submissions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		formId: text('form_id')
+			.notNull()
+			.references(() => websiteForms.id, { onDelete: 'cascade' }),
+		values: text('values', { mode: 'json' }).notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_website_form_submissions_form_created').on(
+			table.formId,
+			table.createdAt,
+		),
+	],
+)
+
+export const websiteFormSubmissionsRelations = relations(
+	websiteFormSubmissions,
+	({ one }) => ({
+		form: one(websiteForms, {
+			fields: [websiteFormSubmissions.formId],
+			references: [websiteForms.id],
+		}),
+	}),
+)
+
+// ==========================================
+// 10. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -501,3 +562,5 @@ export type NewShopOrder = typeof shopOrders.$inferInsert
 export type CustomerPaymentMethod = typeof customerPaymentMethods.$inferSelect
 export type NewCustomerPaymentMethod =
 	typeof customerPaymentMethods.$inferInsert
+export type WebsiteForm = typeof websiteForms.$inferSelect
+export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect

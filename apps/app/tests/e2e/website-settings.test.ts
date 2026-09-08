@@ -3,6 +3,51 @@ import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Website General Settings & Site Locales', () => {
+	test('Operators can configure website analytics integrations', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await navigate('/:slug/website', { slug: org.slug })
+		await expect(page.getByLabel('Google Analytics ID')).toHaveCount(0)
+
+		await page.getByRole('link', { name: 'Analytics', exact: true }).click()
+		await page.getByLabel('Facebook Pixel ID').fill('123456789012345')
+		await page.getByLabel('Google Tag Manager ID').fill('GTM-ABC1234')
+		await page.getByLabel('Google Analytics ID').fill('G-ABC1234567')
+		await page.getByLabel('TikTok Pixel ID').fill('C1234567890ABCDEFGH')
+
+		await Promise.all([
+			page.waitForResponse(
+				(response) =>
+					response.url().includes('/website/analytics') &&
+					response.request().method() === 'POST',
+			),
+			page.getByRole('button', { name: /save changes/i }).click(),
+		])
+
+		const [savedOrganization] = await db
+			.select({
+				facebookPixelId: Organization.facebookPixelId,
+				googleTagManagerId: Organization.googleTagManagerId,
+				googleAnalyticsId: Organization.googleAnalyticsId,
+				tiktokPixelId: Organization.tiktokPixelId,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, org.id))
+			.limit(1)
+
+		expect(savedOrganization).toEqual({
+			facebookPixelId: '123456789012345',
+			googleTagManagerId: 'GTM-ABC1234',
+			googleAnalyticsId: 'G-ABC1234567',
+			tiktokPixelId: 'C1234567890ABCDEFGH',
+		})
+	})
+
 	test('Operators can toggle site published state and view subdomain link', async ({
 		page,
 		login,

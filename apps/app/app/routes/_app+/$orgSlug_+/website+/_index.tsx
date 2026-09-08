@@ -18,11 +18,6 @@ import {
 import { z } from 'zod'
 
 import {
-	SiteAnalyticsCard,
-	SiteAnalyticsSchema,
-	siteAnalyticsActionIntent,
-} from '#app/components/settings/cards/organization/site-analytics-card.tsx'
-import {
 	SiteCard,
 	SitePublishSchema,
 	SiteDataRegionSchema,
@@ -73,7 +68,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		dataRegion: true,
 		hasProvisionedDb: true,
-		googleAnalyticsId: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -474,50 +468,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
-	if (intent === siteAnalyticsActionIntent) {
-		await requirePermission(ORG_PERMISSIONS.UPDATE_WEBSITE_ANY)
-
-		const submission = parseWithZod(formData, {
-			schema: SiteAnalyticsSchema,
-		})
-
-		if (submission.status !== 'success') {
-			return Response.json({ result: submission.reply() })
-		}
-
-		const { googleAnalyticsId: rawId } = submission.value
-		const googleAnalyticsId = rawId.trim() === '' ? null : rawId.trim()
-
-		try {
-			await db
-				.update(Organization)
-				.set({ googleAnalyticsId })
-				.where(eq(Organization.id, organization.id))
-
-			await invalidateUserOrganizationsCache(userId)
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
-
-			return redirectWithToast(`/${organization.slug}/website`, {
-				title: googleAnalyticsId
-					? 'Google Analytics enabled'
-					: 'Google Analytics disabled',
-				description: googleAnalyticsId
-					? `Tracking ID ${googleAnalyticsId} saved.`
-					: 'Google Analytics has been removed from your site.',
-				type: 'success',
-			})
-		} catch {
-			return Response.json(
-				{ error: 'Failed to update Google Analytics settings' },
-				{ status: 500 },
-			)
-		}
-	}
-
 	return Response.json({ error: `Invalid intent: ${intent}` }, { status: 400 })
 }
 
@@ -541,13 +491,6 @@ export default function WebsiteGeneralSettings() {
 				<SiteLocalesCard
 					organization={organization}
 					localesConfig={localesConfig}
-					actionData={actionData}
-				/>
-			</AnnotatedSection>
-
-			<AnnotatedSection>
-				<SiteAnalyticsCard
-					organization={organization}
 					actionData={actionData}
 				/>
 			</AnnotatedSection>
