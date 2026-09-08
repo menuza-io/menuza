@@ -52,7 +52,10 @@ export type PublicSiteOrganization = {
 	siteLocales: string | null
 	siteDefaultLocale: string | null
 	siteIconKey: string | null
+	facebookPixelId: string | null
+	googleTagManagerId: string | null
 	googleAnalyticsId: string | null
+	tiktokPixelId: string | null
 	announcements: Array<{
 		id: string
 		content: string
@@ -86,7 +89,10 @@ export type PublicSitePayload = {
 	} | null
 	announcements: PublicSiteAnnouncement[]
 	redirects: PublicSiteRedirect[]
+	facebookPixelId: string | null
+	googleTagManagerId: string | null
 	googleAnalyticsId: string | null
+	tiktokPixelId: string | null
 }
 
 const ANNOUNCEMENT_TYPES = ['info', 'warning', 'error', 'success'] as const
@@ -185,7 +191,10 @@ export function toPublicSitePayload(
 			)
 			.filter((item): item is PublicSiteAnnouncement => item !== null),
 		redirects: organization.redirects ?? [],
+		facebookPixelId: organization.facebookPixelId ?? null,
+		googleTagManagerId: organization.googleTagManagerId ?? null,
 		googleAnalyticsId: organization.googleAnalyticsId ?? null,
+		tiktokPixelId: organization.tiktokPixelId ?? null,
 	}
 }
 

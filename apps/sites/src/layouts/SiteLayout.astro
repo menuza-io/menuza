@@ -1,7 +1,7 @@
 ---
 import { buildCustomSiteFontFaceCss } from '@repo/common/site-fonts'
 import { brand } from '@repo/config/brand'
-import GoogleAnalytics from '~/components/GoogleAnalytics.astro'
+import SiteAnalyticsIntegrations from '~/components/SiteAnalyticsIntegrations.astro'
 import { resolveMediaUrl } from '~/lib/media'
 import { type PublicSiteTheme } from '~/lib/org'
 import '../styles/tailwind.css'
@@ -27,7 +27,10 @@ interface Props {
 	orgSlug?: string | null
 	customHost?: string | null
 	defaultLocale?: string
+	facebookPixelId?: string | null
+	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
+	tiktokPixelId?: string | null
 }
 
 const {
@@ -46,7 +49,10 @@ const {
 	customHost,
 	defaultLocale = 'en',
 	alternateLinks = [],
+	facebookPixelId,
+	googleTagManagerId,
 	googleAnalyticsId,
+	tiktokPixelId,
 } = Astro.props
 const themeMode = theme?.mode ?? 'system'
 const themeCss = theme?.css ?? ''
@@ -164,7 +170,12 @@ const htmlClass =
 			}
 		</style>
 		<slot name="head" />
-		<GoogleAnalytics measurementId={googleAnalyticsId} />
+		<SiteAnalyticsIntegrations
+			facebookPixelId={facebookPixelId}
+			googleTagManagerId={googleTagManagerId}
+			googleAnalyticsId={googleAnalyticsId}
+			tiktokPixelId={tiktokPixelId}
+		/>
 		{/* Inject after bundled CSS so org theme tokens win over any leftover defaults. */}
 		{themeCss ? (
 			<style is:inline set:html={themeCss} id="org-site-theme" />

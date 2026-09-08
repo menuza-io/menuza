@@ -209,6 +209,10 @@ msgstr "Connexion"
 msgid "Something went wrong."
 msgstr "Une erreur s’est produite."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Submitting..."
+msgstr "Envoi en cours..."
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Merci pour votre achat !"
@@ -220,6 +224,10 @@ msgstr "Cette boutique n'est pas disponible pour le moment."
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
 msgstr "Impossible de démarrer le paiement. Veuillez réessayer."
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Unable to submit the form. Please try again."
+msgstr "Impossible d’envoyer le formulaire. Veuillez réessayer."
 
 #: src/pages/profile.astro.ts:3
 msgid "Update your basic details below."

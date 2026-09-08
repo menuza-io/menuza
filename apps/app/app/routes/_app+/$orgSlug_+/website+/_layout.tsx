@@ -24,6 +24,16 @@ export default function WebsiteLayout() {
 			isActive: location.pathname.includes(`/${orgSlug}/website/pages`),
 		},
 		{
+			label: _(t`Forms`),
+			href: `/${orgSlug}/website/forms`,
+			isActive: location.pathname.includes(`/${orgSlug}/website/forms`),
+		},
+		{
+			label: _(t`Analytics`),
+			href: `/${orgSlug}/website/analytics`,
+			isActive: location.pathname.includes(`/${orgSlug}/website/analytics`),
+		},
+		{
 			label: _(t`Announcements`),
 			href: `/${orgSlug}/website/announcements`,
 			isActive: location.pathname.includes(`/${orgSlug}/website/announcements`),

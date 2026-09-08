@@ -100,7 +100,10 @@ const alternateLinks = [
 	orgSlug={Astro.locals.orgSlug || organization.slug}
 	customHost={Astro.locals.customHost}
 	defaultLocale={defaultLocale}
+	facebookPixelId={organization.facebookPixelId ?? null}
+	googleTagManagerId={organization.googleTagManagerId ?? null}
 	googleAnalyticsId={organization.googleAnalyticsId ?? null}
+	tiktokPixelId={organization.tiktokPixelId ?? null}
 >
 	<div class="bg-background text-foreground flex min-h-dvh flex-col">
 		<AnnouncementBanners announcements={announcements} />
