@@ -30,6 +30,7 @@ export const authSessionStorage = createCookieSessionStorage({
 		domain: sharedCookieDomain(),
 		secrets: sessionSecrets,
 		secure: ENV.NODE_ENV === 'production',
+		...(process.env.MOCKS === 'true' ? { domain: 'localhost' } : {}),
 	},
 })
 
