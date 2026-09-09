@@ -92,7 +92,7 @@ msgstr ""
 msgid "{basePriceLabel} billed annually"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:227
+#: app/components/website/form-builder-sidebar.tsx:228
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, one {# choice} other {# choices}}"
 
@@ -299,6 +299,14 @@ msgstr ""
 msgid "51-200 people"
 msgstr ""
 
+#: app/utils/website/form-templates.ts:25
+msgid "A clean canvas with one field you can shape into anything."
+msgstr "A clean canvas with one field you can shape into anything."
+
+#: app/utils/website/form-templates.ts:41
+msgid "A short, low-friction form for prospective customers."
+msgstr "A short, low-friction form for prospective customers."
+
 #: app/routes/_auth+/onboarding_.$provider.tsx:128
 #: app/routes/_auth+/onboarding.tsx:119
 msgid "A user already exists with this username"
@@ -407,6 +415,10 @@ msgstr ""
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
+#: app/utils/website/field-types.ts:63
+msgid "Add a title between fields."
+msgstr "Add a title between fields."
+
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:582
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr ""
@@ -425,7 +437,7 @@ msgstr ""
 msgid "Add card"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:564
+#: app/components/website/form-builder-sidebar.tsx:566
 msgid "Add choice"
 msgstr "Add choice"
 
@@ -438,7 +450,7 @@ msgstr ""
 msgid "Add feature"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:162
+#: app/components/website/create-form-dialog.tsx:161
 #: app/components/website/form-builder-sidebar.tsx:127
 #: app/components/website/form-builder-sidebar.tsx:133
 msgid "Add field"
@@ -466,7 +478,7 @@ msgstr ""
 msgid "Add more connections"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:878
+#: app/components/website/form-builder-sidebar.tsx:881
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "Add name, email, choices, and more to start collecting responses."
 
@@ -517,6 +529,10 @@ msgstr ""
 msgid "Add social link"
 msgstr ""
 
+#: app/utils/website/field-types.ts:75
+msgid "Add supporting information."
+msgstr "Add supporting information."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:799
 msgid "Add the following configuration to the file:"
 msgstr ""
@@ -533,7 +549,7 @@ msgstr ""
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:142
+#: app/components/website/create-form-dialog.tsx:141
 msgid "Add, name, and order each field."
 msgstr "Add, name, and order each field."
 
@@ -858,8 +874,8 @@ msgstr ""
 msgid "Back to broadcasts"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:459
-#: app/components/website/form-builder-sidebar.tsx:641
+#: app/components/website/form-builder-sidebar.tsx:461
+#: app/components/website/form-builder-sidebar.tsx:643
 msgid "Back to fields"
 msgstr "Back to fields"
 
@@ -940,12 +956,12 @@ msgstr ""
 msgid "Bucket Name"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:569
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Build"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:486
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
 msgid "Builder"
 msgstr "Builder"
 
@@ -953,8 +969,8 @@ msgstr "Builder"
 msgid "Button"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:259
-#: app/components/website/form-builder-sidebar.tsx:694
+#: app/components/website/create-form-dialog.tsx:258
+#: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
 msgstr "Button label"
 
@@ -1000,7 +1016,7 @@ msgstr ""
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
 #: app/components/ui/photo-crop-form.tsx:219
-#: app/components/website/create-form-dialog.tsx:293
+#: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
@@ -1117,7 +1133,7 @@ msgstr "Checkout payout not connected"
 msgid "Checkout processor"
 msgstr "Checkout processor"
 
-#: app/components/website/form-builder-sidebar.tsx:548
+#: app/components/website/form-builder-sidebar.tsx:550
 msgid "Choices"
 msgstr "Choices"
 
@@ -1125,7 +1141,7 @@ msgstr "Choices"
 msgid "Choose a page..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:157
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:112
 msgid "Choose a starting point"
 msgstr "Choose a starting point"
 
@@ -1203,6 +1219,34 @@ msgstr ""
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr ""
+
+#: app/utils/website/field-types.ts:69
+msgid "Collect a date and time."
+msgstr "Collect a date and time."
+
+#: app/utils/website/field-types.ts:81
+msgid "Collect a longer written answer."
+msgstr "Collect a longer written answer."
+
+#: app/utils/website/form-templates.ts:31
+msgid "Collect a name, email address, and a detailed message."
+msgstr "Collect a name, email address, and a detailed message."
+
+#: app/utils/website/field-types.ts:27
+msgid "Collect a person’s name."
+msgstr "Collect a person’s name."
+
+#: app/utils/website/field-types.ts:51
+msgid "Collect a phone number."
+msgstr "Collect a phone number."
+
+#: app/utils/website/field-types.ts:33
+msgid "Collect a short written answer."
+msgstr "Collect a short written answer."
+
+#: app/utils/website/field-types.ts:39
+msgid "Collect a valid email address."
+msgstr "Collect a valid email address."
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:852
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:895
@@ -1375,6 +1419,14 @@ msgstr ""
 msgid "Connections"
 msgstr ""
 
+#: app/components/website/create-form-dialog.tsx:111
+msgid "Contact"
+msgstr "Contact"
+
+#: app/utils/website/form-templates.ts:30
+msgid "Contact form"
+msgstr "Contact form"
+
 #: app/routes/organizations+/create.tsx:1354
 msgid "Contact support"
 msgstr ""
@@ -1518,7 +1570,7 @@ msgstr ""
 msgid "Create an organization"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:238
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:193
 msgid "Create and customize"
 msgstr "Create and customize"
 
@@ -1556,8 +1608,8 @@ msgstr ""
 msgid "Create bullet points"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:86
-#: app/components/website/create-form-dialog.tsx:304
+#: app/components/website/create-form-dialog.tsx:75
+#: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:163
 msgid "Create form"
 msgstr "Create form"
@@ -1635,7 +1687,7 @@ msgstr "Creating page"
 msgid "Creating..."
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:306
+#: app/components/website/create-form-dialog.tsx:305
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -1692,6 +1744,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:164
 msgid "Custom Event Name"
 msgstr ""
+
+#: app/components/website/create-form-dialog.tsx:108
+msgid "Custom form"
+msgstr "Custom form"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:17
 msgid "Custom trigger event"
@@ -1789,6 +1845,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:124
 msgid "Database connection error"
 msgstr ""
+
+#: app/utils/website/field-types.ts:67
+#: app/utils/website/field-types.ts:70
+msgid "Date & time"
+msgstr "Date & time"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:292
 msgid "days"
@@ -1936,8 +1997,8 @@ msgid "Deny"
 msgstr ""
 
 #: app/components/settings/cards/organization/shop-card.tsx:268
-#: app/components/website/create-form-dialog.tsx:125
-#: app/components/website/form-builder-sidebar.tsx:681
+#: app/components/website/create-form-dialog.tsx:124
+#: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3712
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4022
 #: app/routes/organizations+/create.tsx:773
@@ -2067,7 +2128,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:442
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5944
@@ -2078,7 +2139,7 @@ msgstr ""
 msgid "Draft something for me"
 msgstr "Draft something for me"
 
-#: app/components/website/form-builder-sidebar.tsx:334
+#: app/components/website/form-builder-sidebar.tsx:335
 msgid "Drag to reorder"
 msgstr ""
 
@@ -2195,6 +2256,8 @@ msgstr "Edit redirect"
 #: app/components/website/link-inspector.tsx:468
 #: app/routes/_auth+/login.tsx:767
 #: app/routes/_auth+/signup.tsx:218
+#: app/utils/website/field-types.ts:37
+#: app/utils/website/field-types.ts:40
 msgid "Email"
 msgstr ""
 
@@ -2515,7 +2578,12 @@ msgstr ""
 msgid "Features"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:494
+#: app/components/website/create-form-dialog.tsx:117
+#: app/utils/website/form-templates.ts:50
+msgid "Feedback"
+msgstr "Feedback"
+
+#: app/components/website/form-builder-sidebar.tsx:496
 msgid "Field settings"
 msgstr "Field settings"
 
@@ -2523,8 +2591,8 @@ msgstr "Field settings"
 msgid "Field types"
 msgstr "Field types"
 
-#: app/components/website/create-form-dialog.tsx:139
-#: app/components/website/form-builder-sidebar.tsx:838
+#: app/components/website/create-form-dialog.tsx:138
+#: app/components/website/form-builder-sidebar.tsx:841
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:198
 msgid "Fields"
 msgstr "Fields"
@@ -2561,12 +2629,12 @@ msgstr "Form"
 #~ msgid "Form Identifier / Slug"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:220
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:175
 msgid "Form name"
 msgstr "Form name"
 
-#: app/components/website/form-builder-sidebar.tsx:649
-#: app/components/website/form-builder-sidebar.tsx:863
+#: app/components/website/form-builder-sidebar.tsx:651
+#: app/components/website/form-builder-sidebar.tsx:866
 msgid "Form settings"
 msgstr "Form settings"
 
@@ -2672,6 +2740,10 @@ msgstr ""
 msgid "Give me examples"
 msgstr ""
 
+#: app/utils/website/form-templates.ts:51
+msgid "Give visitors room to share thoughtful feedback."
+msgstr "Give visitors room to share thoughtful feedback."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
 msgstr "Go there"
@@ -2712,6 +2784,11 @@ msgstr ""
 #: app/components/data-table.tsx:813
 #~ msgid "Header"
 #~ msgstr ""
+
+#: app/utils/website/field-types.ts:61
+#: app/utils/website/field-types.ts:64
+msgid "Heading"
+msgstr "Heading"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:800
 msgid "Headings"
@@ -3029,8 +3106,8 @@ msgstr ""
 msgid "Kiro IDE Setup"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:172
-#: app/components/website/form-builder-sidebar.tsx:509
+#: app/components/website/create-form-dialog.tsx:171
+#: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
 msgstr "Label"
 
@@ -3090,6 +3167,11 @@ msgstr ""
 msgid "Layout"
 msgstr ""
 
+#: app/components/website/create-form-dialog.tsx:114
+#: app/utils/website/form-templates.ts:40
+msgid "Lead capture"
+msgstr "Lead capture"
+
 #: app/components/feature-updates.tsx:205
 #: app/components/settings/cards/organization/announcement-sheet.tsx:486
 msgid "Learn more"
@@ -3113,6 +3195,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
 msgid "Left"
 msgstr ""
+
+#: app/utils/website/field-types.ts:45
+msgid "Let people select one option."
+msgstr "Let people select one option."
+
+#: app/utils/website/field-types.ts:57
+msgid "Let people select several options."
+msgstr "Let people select several options."
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:776
 msgid "Light"
@@ -3212,6 +3302,11 @@ msgstr ""
 #: app/components/user-dropdown.tsx:72
 msgid "Logout"
 msgstr ""
+
+#: app/utils/website/field-types.ts:79
+#: app/utils/website/field-types.ts:82
+msgid "Long text"
+msgstr "Long text"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4171
 msgid "Look"
@@ -3420,6 +3515,11 @@ msgstr ""
 msgid "Multi-factor authentication"
 msgstr ""
 
+#: app/utils/website/field-types.ts:55
+#: app/utils/website/field-types.ts:58
+msgid "Multiple choice"
+msgstr "Multiple choice"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4810
 msgid "Muted"
 msgstr ""
@@ -3428,11 +3528,13 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
-#: app/components/website/create-form-dialog.tsx:96
-#: app/components/website/form-builder-sidebar.tsx:671
+#: app/components/website/create-form-dialog.tsx:85
+#: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4320
 #: app/routes/organizations+/create.tsx:690
+#: app/utils/website/field-types.ts:25
+#: app/utils/website/field-types.ts:28
 msgid "Name"
 msgstr ""
 
@@ -3495,7 +3597,7 @@ msgstr "New Destination"
 msgid "New Email"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:150
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:105
 msgid "New form"
 msgstr "New form"
 
@@ -3628,7 +3730,7 @@ msgstr ""
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:875
+#: app/components/website/form-builder-sidebar.tsx:878
 msgid "No fields yet"
 msgstr "No fields yet"
 
@@ -3699,7 +3801,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:670
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:642
 msgid "No responses yet."
 msgstr "No responses yet."
 
@@ -4020,6 +4122,11 @@ msgstr ""
 msgid "Pages"
 msgstr ""
 
+#: app/utils/website/field-types.ts:73
+#: app/utils/website/field-types.ts:76
+msgid "Paragraph"
+msgstr "Paragraph"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:851
 msgid "Paragraphs, navigation, and other text."
 msgstr ""
@@ -4119,6 +4226,11 @@ msgstr ""
 msgid "Phone links only work on devices that can place phone calls."
 msgstr ""
 
+#: app/utils/website/field-types.ts:49
+#: app/utils/website/field-types.ts:52
+msgid "Phone number"
+msgstr "Phone number"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:432
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
@@ -4176,7 +4288,7 @@ msgstr ""
 msgid "Pick a field to add to your form."
 msgstr "Pick a field to add to your form."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:163
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:118
 msgid "Pick a template, then customize every field in the builder."
 msgstr "Pick a template, then customize every field in the builder."
 
@@ -4265,7 +4377,7 @@ msgstr ""
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:578
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:550
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
 msgid "Preview"
 msgstr ""
@@ -4347,7 +4459,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:520
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5958
 msgid "Publish"
@@ -4361,7 +4473,7 @@ msgstr ""
 msgid "Publish and activate automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:522
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5960
 msgid "Publish updates"
 msgstr ""
@@ -4370,8 +4482,8 @@ msgstr ""
 msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:719
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:440
+#: app/components/website/form-builder-sidebar.tsx:721
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:242
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5942
@@ -4554,7 +4666,7 @@ msgstr ""
 msgid "Remove access from all devices except this one"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:591
+#: app/components/website/form-builder-sidebar.tsx:593
 msgid "Remove choice"
 msgstr "Remove choice"
 
@@ -4562,8 +4674,8 @@ msgstr "Remove choice"
 msgid "Remove domain"
 msgstr ""
 
-#: app/components/website/form-builder-sidebar.tsx:274
-#: app/components/website/form-builder-sidebar.tsx:502
+#: app/components/website/form-builder-sidebar.tsx:275
+#: app/components/website/form-builder-sidebar.tsx:504
 msgid "Remove field"
 msgstr "Remove field"
 
@@ -4643,8 +4755,8 @@ msgstr ""
 msgid "required"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:236
-#: app/components/website/form-builder-sidebar.tsx:602
+#: app/components/website/create-form-dialog.tsx:235
+#: app/components/website/form-builder-sidebar.tsx:604
 msgid "Required"
 msgstr "Required"
 
@@ -4672,8 +4784,8 @@ msgstr ""
 msgid "Reset to preset"
 msgstr "Reset to preset"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:488
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:460
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:612
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
 msgid "Responses"
 msgstr "Responses"
@@ -4852,7 +4964,7 @@ msgid "Save changes"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:508
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Save draft"
 msgstr ""
 
@@ -4901,7 +5013,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:506
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -5332,6 +5444,11 @@ msgstr ""
 msgid "Signing out..."
 msgstr ""
 
+#: app/utils/website/field-types.ts:43
+#: app/utils/website/field-types.ts:46
+msgid "Single choice"
+msgstr "Single choice"
+
 #: app/components/settings/cards/organization/billing-card.tsx:272
 msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
 msgstr ""
@@ -5415,9 +5532,13 @@ msgstr ""
 msgid "Star"
 msgstr "Star"
 
-#: app/components/website/create-form-dialog.tsx:89
+#: app/components/website/create-form-dialog.tsx:78
 msgid "Start from a template or build your own field set."
 msgstr "Start from a template or build your own field set."
+
+#: app/utils/website/form-templates.ts:24
+msgid "Start from scratch"
+msgstr "Start from scratch"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:69
 msgid "Start journey on lifecycle event"
@@ -5435,7 +5556,7 @@ msgstr ""
 msgid "Started At"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:108
+#: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
 msgstr "Starting point"
 
@@ -5511,7 +5632,7 @@ msgstr ""
 msgid "Subject Line"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:643
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:615
 msgid "Submissions are stored in this organization’s regional tenant database."
 msgstr "Submissions are stored in this organization’s regional tenant database."
 
@@ -5519,7 +5640,7 @@ msgstr "Submissions are stored in this organization’s regional tenant database
 msgid "Submit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:654
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:626
 msgid "Submitted"
 msgstr "Submitted"
 
@@ -5544,8 +5665,8 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#: app/components/website/create-form-dialog.tsx:271
-#: app/components/website/form-builder-sidebar.tsx:706
+#: app/components/website/create-form-dialog.tsx:270
+#: app/components/website/form-builder-sidebar.tsx:708
 msgid "Success message"
 msgstr "Success message"
 
@@ -5660,11 +5781,11 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:376
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:348
 msgid "Test again"
 msgstr "Test again"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:366
 msgid "Test mode — responses are not saved"
 msgstr "Test mode — responses are not saved"
 
@@ -5684,6 +5805,11 @@ msgstr ""
 #: app/components/website/link-inspector.tsx:638
 msgid "Text"
 msgstr ""
+
+#: app/utils/website/field-types.ts:31
+#: app/utils/website/field-types.ts:34
+msgid "Text field"
+msgstr "Text field"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3488
 msgid "Text only"
@@ -5989,8 +6115,8 @@ msgid "Two-factor authentication is currently enabled. Disabling it will make yo
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
-#: app/components/website/create-form-dialog.tsx:199
-#: app/components/website/form-builder-sidebar.tsx:519
+#: app/components/website/create-form-dialog.tsx:198
+#: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:597
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3908
@@ -6032,7 +6158,7 @@ msgstr ""
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:544
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6008
 msgid "Unpublish"
@@ -6378,7 +6504,7 @@ msgstr ""
 msgid "What tools can help?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:160
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "What would you like to collect?"
 msgstr "What would you like to collect?"
 

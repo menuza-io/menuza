@@ -58,11 +58,27 @@ const activeLocale =
 const defaultLocale =
 	organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
 const blockId = `website-form-${sectionId || formId || crypto.randomUUID()}`
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+const turnstileRequired = Boolean(turnstileSiteKey)
 const unavailable = Astro.locals.i18n._(msg`This form is currently unavailable.`)
 const selectForm = Astro.locals.i18n._(msg`Select a published form in the page editor.`)
 const submitting = Astro.locals.i18n._(msg`Submitting...`)
 const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Please try again.`)
+const verificationRequired = Astro.locals.i18n._(
+	msg`Complete the verification check before submitting.`,
+)
 ---
+
+{
+	turnstileRequired ? (
+		<script
+			is:inline
+			src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+			async
+			defer
+		/>
+	) : null
+}
 
 <section class="px-4 py-14 sm:py-20">
 	<div class="mx-auto w-full max-w-2xl">
@@ -100,6 +116,8 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 						)}
 						data-submitting-label={submitting}
 						data-error-label={submissionError}
+						data-verification-label={verificationRequired}
+						data-turnstile-site-key={turnstileSiteKey || undefined}
 					>
 						<div class="hidden" aria-hidden="true">
 							<label for={`${blockId}-website`}>Website</label>
@@ -182,6 +200,13 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 								</div>
 							)
 						})}
+						{turnstileRequired ? (
+							<div
+								class="cf-turnstile"
+								data-sitekey={turnstileSiteKey}
+								data-action="website-form"
+							/>
+						) : null}
 						<p data-form-status class="hidden" role="status" />
 						<button class={siteBtnPrimaryClass} type="submit">
 							{pickLocalized(form.submitLabel, activeLocale, defaultLocale)}
@@ -225,6 +250,19 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 				const formData = new FormData(formElement)
 				const website = String(formData.get('website') || '')
 				formData.delete('website')
+				const turnstileToken = String(
+					formData.get('cf-turnstile-response') || '',
+				)
+				formData.delete('cf-turnstile-response')
+				if (formElement.dataset.turnstileSiteKey && !turnstileToken) {
+					status.textContent =
+						formElement.dataset.verificationLabel ||
+						'Complete the verification check before submitting.'
+					status.className = errorClass
+					button.disabled = false
+					button.textContent = formElement.dataset.submitLabel || 'Submit'
+					return
+				}
 				try {
 					const response = await fetch(
 						`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`,
@@ -235,6 +273,7 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 								slug: formElement.dataset.orgSlug,
 								host: formElement.dataset.customHost,
 								website,
+								turnstileToken: turnstileToken || undefined,
 								values: Object.fromEntries(
 									Array.from(new Set(formData.keys())).map((key) => {
 										const values = formData.getAll(key).map(String)
@@ -256,6 +295,10 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 						)
 					}
 					formElement.reset()
+					const turnstile = globalThis.turnstile
+					if (turnstile && typeof turnstile.reset === 'function') {
+						turnstile.reset()
+					}
 					status.textContent =
 						formElement.dataset.successMessage ||
 						result.message ||
@@ -267,6 +310,10 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 							? error.message
 							: formElement.dataset.errorLabel || 'Unable to submit the form.'
 					status.className = errorClass
+					const turnstile = globalThis.turnstile
+					if (turnstile && typeof turnstile.reset === 'function') {
+						turnstile.reset()
+					}
 				} finally {
 					button.disabled = false
 					button.textContent = formElement.dataset.submitLabel || 'Submit'

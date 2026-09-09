@@ -16,26 +16,13 @@ import { Switch } from '@repo/ui/switch'
 import { useCallback, useState } from 'react'
 import { useFetcher } from 'react-router'
 
+import {
+	getFormTemplateFields,
+	type FormTemplateId,
+} from '#app/utils/website/form-templates.ts'
+
 type FieldType = PublicFormField['type']
 type FormField = PublicFormField
-
-const templateFields: Record<string, FormField[]> = {
-	blank: [{ id: 'name', label: 'Name', type: 'name', required: true }],
-	contact: [
-		{ id: 'name', label: 'Name', type: 'name', required: true },
-		{ id: 'email', label: 'Email', type: 'email', required: true },
-		{ id: 'message', label: 'Message', type: 'textarea', required: true },
-	],
-	lead: [
-		{ id: 'name', label: 'Name', type: 'name', required: true },
-		{ id: 'email', label: 'Email', type: 'email', required: true },
-		{ id: 'phone', label: 'Phone', type: 'tel', required: false },
-	],
-	feedback: [
-		{ id: 'email', label: 'Email', type: 'email', required: false },
-		{ id: 'feedback', label: 'Feedback', type: 'textarea', required: true },
-	],
-}
 
 function fieldId(label: string, index: number) {
 	return (
@@ -57,8 +44,10 @@ export function CreateFormDialog({
 	disabled?: boolean
 }) {
 	const fetcher = useFetcher<{ success?: string; error?: string }>()
-	const [template, setTemplate] = useState('blank')
-	const [fields, setFields] = useState<FormField[]>(templateFields.blank!)
+	const [template, setTemplate] = useState<FormTemplateId>('blank')
+	const [fields, setFields] = useState<FormField[]>(
+		getFormTemplateFields('blank') ?? [],
+	)
 
 	const closeAfterSuccess = useCallback(
 		(node: HTMLSpanElement | null) => {
@@ -67,9 +56,9 @@ export function CreateFormDialog({
 		[onOpenChange],
 	)
 
-	const chooseTemplate = (value: string) => {
+	const chooseTemplate = (value: FormTemplateId) => {
 		setTemplate(value)
-		setFields(templateFields[value]!.map((field) => ({ ...field })))
+		setFields(getFormTemplateFields(value) ?? [])
 	}
 
 	return (
@@ -110,13 +99,23 @@ export function CreateFormDialog({
 							<select
 								id="form-template"
 								value={template}
-								onChange={(event) => chooseTemplate(event.target.value)}
+								onChange={(event) =>
+									chooseTemplate(event.target.value as FormTemplateId)
+								}
 								className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
 							>
-								<option value="blank">Custom form</option>
-								<option value="contact">Contact</option>
-								<option value="lead">Lead capture</option>
-								<option value="feedback">Feedback</option>
+								<option value="blank">
+									<Trans>Custom form</Trans>
+								</option>
+								<option value="contact">
+									<Trans>Contact</Trans>
+								</option>
+								<option value="lead">
+									<Trans>Lead capture</Trans>
+								</option>
+								<option value="feedback">
+									<Trans>Feedback</Trans>
+								</option>
 							</select>
 						</div>
 					</div>

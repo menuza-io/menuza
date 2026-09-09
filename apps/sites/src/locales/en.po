@@ -46,6 +46,10 @@ msgstr "Cards used on past shop purchases on this account."
 msgid "Check your phone"
 msgstr "Check your phone"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "Complete the verification check before submitting."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continue"

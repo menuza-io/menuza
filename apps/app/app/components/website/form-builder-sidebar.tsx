@@ -50,11 +50,10 @@ import {
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateItemsButton } from '#app/components/website/translate-provider.tsx'
 import {
-	ADDABLE_FIELD_TYPES,
 	createField,
 	DEFAULT_CHOICE_OPTIONS,
-	FIELD_TYPES,
 	nextChoiceOption,
+	useFieldTypes,
 	type FieldType,
 } from '#app/utils/website/field-types.ts'
 import {
@@ -83,6 +82,7 @@ function AddFieldDialog({
 	trigger?: 'button' | 'insert' | 'footer'
 }) {
 	const { _ } = useLingui()
+	const { FIELD_TYPES, ADDABLE_FIELD_TYPES } = useFieldTypes()
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<FieldType>(
 		ADDABLE_FIELD_TYPES[0]?.type ?? 'name',
@@ -218,6 +218,7 @@ function FieldPreviewCard({
 	isDragging?: boolean
 }) {
 	const { _ } = useLingui()
+	const { FIELD_TYPES } = useFieldTypes()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const fieldDef = FIELD_TYPES[field.type]
 	const choiceCount = field.options?.length ?? 0
@@ -441,6 +442,7 @@ function FieldEditorPanel({
 	canRemove: boolean
 }) {
 	const { _ } = useLingui()
+	const { FIELD_TYPES, ADDABLE_FIELD_TYPES } = useFieldTypes()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const fieldDef = FIELD_TYPES[field.type]
 	const translateItems = collectFieldTranslationFields(
@@ -749,6 +751,7 @@ export function FormBuilderSidebar({
 	className?: string
 }) {
 	const { _ } = useLingui()
+	const { FIELD_TYPES } = useFieldTypes()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const [showSettings, setShowSettings] = useState(false)
 	const selected = form.fields.find((field) => field.id === selectedId) ?? null

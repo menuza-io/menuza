@@ -223,6 +223,24 @@ Files are stored in S3-compatible storage (Tigris):
 - Pre-signed URLs for access
 - No public bucket access
 
+## Tenant website form submissions
+
+Public form blocks on tenant sites post directly from the visitor browser to
+regional tenant-api. Responses are stored in per-org regional SQLite (see
+[tenant data residency](/docs/tenant-data-residency)).
+
+| Control | Implementation |
+| ------- | -------------- |
+| Bot mitigation | Honeypot field + optional Cloudflare Turnstile (`PUBLIC_TURNSTILE_SITE_KEY` on Sites, `TURNSTILE_SECRET_KEY` on tenant-api) |
+| Rate limiting | 30 submissions / IP / hour (`public-form-submissions`) |
+| Access | Published forms only; org resolved from `Origin` + slug/host |
+| Validation | Zod field schemas, email format, localized choice matching |
+| Retention | Cron purge via `DELETE /api/forms/purge-submissions` |
+
+Turnstile verification uses action `website-form` and hostnames in
+`TURNSTILE_HOSTNAMES`. Sites CSP allows `https://challenges.cloudflare.com` for
+the widget script and iframe.
+
 ## Security Headers
 
 The application sets security headers via Helmet:

@@ -1,5 +1,9 @@
+import { msg } from '@lingui/core/macro'
+import { type MessageDescriptor } from '@lingui/core'
+import { useLingui } from '@lingui/react'
 import { type PublicFormField } from '@repo/common/public-form'
 import { type IconName } from '@repo/ui/icon'
+import { useMemo } from 'react'
 
 export type FieldType = PublicFormField['type']
 
@@ -9,83 +13,112 @@ export function nextChoiceOption(count: number) {
 	return `Option ${count + 1}`
 }
 
-export const FIELD_TYPES: Record<
-	FieldType,
-	{
-		label: string
-		icon: IconName
-		description: string
-		defaultLabel: string
-	}
-> = {
+type FieldTypeMetaSource = {
+	label: MessageDescriptor
+	icon: IconName
+	description: MessageDescriptor
+	defaultLabel: MessageDescriptor
+}
+
+export const FIELD_TYPE_META: Record<FieldType, FieldTypeMetaSource> = {
 	name: {
-		label: 'Name',
+		label: msg`Name`,
 		icon: 'user',
-		description: 'Collect a person’s name.',
-		defaultLabel: 'Name',
+		description: msg`Collect a person’s name.`,
+		defaultLabel: msg`Name`,
 	},
 	text: {
-		label: 'Text field',
+		label: msg`Text field`,
 		icon: 'file-text',
-		description: 'Collect a short written answer.',
-		defaultLabel: 'Text field',
+		description: msg`Collect a short written answer.`,
+		defaultLabel: msg`Text field`,
 	},
 	email: {
-		label: 'Email',
+		label: msg`Email`,
 		icon: 'mail',
-		description: 'Collect a valid email address.',
-		defaultLabel: 'Email',
+		description: msg`Collect a valid email address.`,
+		defaultLabel: msg`Email`,
 	},
 	single_choice: {
-		label: 'Single choice',
+		label: msg`Single choice`,
 		icon: 'circle',
-		description: 'Let people select one option.',
-		defaultLabel: 'Single choice',
+		description: msg`Let people select one option.`,
+		defaultLabel: msg`Single choice`,
 	},
 	tel: {
-		label: 'Phone number',
+		label: msg`Phone number`,
 		icon: 'smartphone',
-		description: 'Collect a phone number.',
-		defaultLabel: 'Phone number',
+		description: msg`Collect a phone number.`,
+		defaultLabel: msg`Phone number`,
 	},
 	multiple_choice: {
-		label: 'Multiple choice',
+		label: msg`Multiple choice`,
 		icon: 'circle-check',
-		description: 'Let people select several options.',
-		defaultLabel: 'Multiple choice',
+		description: msg`Let people select several options.`,
+		defaultLabel: msg`Multiple choice`,
 	},
 	heading: {
-		label: 'Heading',
+		label: msg`Heading`,
 		icon: 'file-text',
-		description: 'Add a title between fields.',
-		defaultLabel: 'Heading',
+		description: msg`Add a title between fields.`,
+		defaultLabel: msg`Heading`,
 	},
 	datetime: {
-		label: 'Date & time',
+		label: msg`Date & time`,
 		icon: 'calendar',
-		description: 'Collect a date and time.',
-		defaultLabel: 'Date & time',
+		description: msg`Collect a date and time.`,
+		defaultLabel: msg`Date & time`,
 	},
 	paragraph: {
-		label: 'Paragraph',
+		label: msg`Paragraph`,
 		icon: 'message-square',
-		description: 'Add supporting information.',
-		defaultLabel: 'Paragraph',
+		description: msg`Add supporting information.`,
+		defaultLabel: msg`Paragraph`,
 	},
 	textarea: {
-		label: 'Long text',
+		label: msg`Long text`,
 		icon: 'edit',
-		description: 'Collect a longer written answer.',
-		defaultLabel: 'Long text',
+		description: msg`Collect a longer written answer.`,
+		defaultLabel: msg`Long text`,
 	},
 }
 
-export const ADDABLE_FIELD_TYPES = (
-	Object.keys(FIELD_TYPES) as FieldType[]
-).map((type) => ({
-	type,
-	...FIELD_TYPES[type],
-}))
+export type ResolvedFieldTypeMeta = {
+	label: string
+	icon: IconName
+	description: string
+	defaultLabel: string
+}
+
+export function resolveFieldTypes(
+	translate: (descriptor: MessageDescriptor) => string,
+) {
+	const FIELD_TYPES = Object.fromEntries(
+		Object.entries(FIELD_TYPE_META).map(([type, meta]) => [
+			type,
+			{
+				label: translate(meta.label),
+				icon: meta.icon,
+				description: translate(meta.description),
+				defaultLabel: translate(meta.defaultLabel),
+			},
+		]),
+	) as Record<FieldType, ResolvedFieldTypeMeta>
+
+	const ADDABLE_FIELD_TYPES = (Object.keys(FIELD_TYPES) as FieldType[]).map(
+		(type) => ({
+			type,
+			...FIELD_TYPES[type],
+		}),
+	)
+
+	return { FIELD_TYPES, ADDABLE_FIELD_TYPES }
+}
+
+export function useFieldTypes() {
+	const { _ } = useLingui()
+	return useMemo(() => resolveFieldTypes(_), [_])
+}
 
 export function uniqueFieldId(label: string, fields: PublicFormField[]) {
 	const base =

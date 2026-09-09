@@ -46,6 +46,10 @@ msgstr "Cartes utilisées pour des achats précédents dans la boutique avec ce 
 msgid "Check your phone"
 msgstr "Vérifiez votre téléphone"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "Terminez la vérification avant d’envoyer."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continuer"

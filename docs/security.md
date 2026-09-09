@@ -89,3 +89,33 @@ never sees those tokens as cookies.
 
 Do not add a Sites `/api/auth` BFF or Sites-hosted HttpOnly cookies for
 customers. See [tenant data residency](./tenant-data-residency.md).
+
+## Tenant public website forms
+
+Published form blocks on tenant sites submit directly from the browser to the
+regional tenant-api (`POST /forms/:formId/submissions`). Customer responses are
+stored in per-org regional SQLite, not the US control-plane database.
+
+Defense layers:
+
+1. **Honeypot** — A hidden `website` field in `FormBlock` silently accepts bot
+   submissions with `201` without storing data.
+2. **Cloudflare Turnstile** — When `PUBLIC_TURNSTILE_SITE_KEY` is set on Sites
+   and `TURNSTILE_SECRET_KEY` on tenant-api, submissions must include a valid
+   `turnstileToken` verified server-side via
+   `https://challenges.cloudflare.com/turnstile/v0/siteverify` with action
+   `website-form` and hostnames listed in `TURNSTILE_HOSTNAMES`. Verification is
+   skipped when the secret is unset (local development).
+3. **Rate limiting** — `public-form-submissions` allows 30 submissions per IP
+   per hour on tenant-api.
+4. **Origin resolution** — Submissions must resolve to an active organization
+   via browser `Origin` plus `slug` or custom `host`.
+5. **Published-only** — Draft forms are not exposed on public sites.
+6. **Server validation** — Required fields, length limits, email format, and
+   localized choice matching are enforced before insert.
+7. **Retention** — `jobs-cron` purges submissions older than the org retention
+   window via `DELETE /api/forms/purge-submissions`.
+
+Sites CSP allows Turnstile from `https://challenges.cloudflare.com` in
+`script-src` and `frame-src`. Do not proxy form POSTs through Sites SSR; that
+would transit regional customer PII through the US worker.

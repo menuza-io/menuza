@@ -23,19 +23,11 @@ import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Textarea } from '@repo/ui/textarea'
-import {
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react'
+import { useCallback, useContext, useMemo, useRef, useState } from 'react'
 import {
 	Link,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-	useBlocker,
 	useFetcher,
 	useLoaderData,
 } from 'react-router'
@@ -58,6 +50,12 @@ import {
 	deleteCachedPublicForm,
 	setCachedPublicForm,
 } from '#app/utils/sites/kv-cache.server.ts'
+import {
+	useConfirmBlocker,
+	useDirtyBeforeUnload,
+	useFetcherSavedSnapshot,
+	useMinWidthMediaQuery,
+} from '#app/utils/navigation-guards.ts'
 import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
@@ -249,7 +247,7 @@ export default function WebsiteFormBuilderRoute() {
 	const fetcher = useFetcher<typeof action>()
 	useAIPanelHotkey()
 	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
-	const [isLg, setIsLg] = useState(true)
+	const isLg = useMinWidthMediaQuery(1024)
 	const [form, setForm] = useState(initial.form)
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const [mode, setMode] = useState<'build' | 'preview' | 'responses'>('build')
@@ -259,47 +257,23 @@ export default function WebsiteFormBuilderRoute() {
 	const [activeLocale, setActiveLocale] = useState(initial.defaultLocale)
 	const pendingSnapshot = useRef('')
 
-	useEffect(() => {
-		const mql = window.matchMedia('(min-width: 1024px)')
-		const onChange = () => setIsLg(mql.matches)
-		onChange()
-		mql.addEventListener('change', onChange)
-		return () => mql.removeEventListener('change', onChange)
-	}, [])
-
-	useEffect(() => {
-		if (fetcher.data && 'form' in fetcher.data && fetcher.data.form) {
-			const responseForm = fetcher.data.form
-			setForm((current) =>
-				JSON.stringify(current) === pendingSnapshot.current
-					? responseForm
-					: current,
-			)
-			setSavedForm(responseForm)
-		}
-	}, [fetcher.data])
+	useFetcherSavedSnapshot<WebsiteForm>({
+		fetcherState: fetcher.state,
+		fetcherData:
+			fetcher.data && 'form' in fetcher.data && fetcher.data.form
+				? { form: fetcher.data.form as WebsiteForm }
+				: undefined,
+		pendingSnapshot,
+		setSaved: setSavedForm,
+		setDraft: setForm,
+	})
 
 	const isDirty = useMemo(
 		() => JSON.stringify(form) !== JSON.stringify(savedForm),
 		[form, savedForm],
 	)
-	const blocker = useBlocker(isDirty)
-	useEffect(() => {
-		if (blocker.state !== 'blocked') return
-		if (window.confirm('Leave without saving your form changes?')) {
-			blocker.proceed()
-		} else {
-			blocker.reset()
-		}
-	}, [blocker])
-	useEffect(() => {
-		const warn = (event: BeforeUnloadEvent) => {
-			if (!isDirty) return
-			event.preventDefault()
-		}
-		window.addEventListener('beforeunload', warn)
-		return () => window.removeEventListener('beforeunload', warn)
-	}, [isDirty])
+	useConfirmBlocker(isDirty, 'Leave without saving your form changes?')
+	useDirtyBeforeUnload(isDirty)
 	const submitForm = useCallback(
 		(nextForm: WebsiteForm) => {
 			pendingSnapshot.current = JSON.stringify(nextForm)

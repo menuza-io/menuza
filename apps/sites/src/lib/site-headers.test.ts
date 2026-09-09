@@ -13,6 +13,7 @@ describe('sitesScriptSrc', () => {
 		expect(sitesScriptSrc(false)).toContain(
 			'https://static.cloudflareinsights.com',
 		)
+		expect(sitesScriptSrc(false)).toContain('https://challenges.cloudflare.com')
 		expect(sitesScriptSrc(false)).toContain("'unsafe-inline'")
 		expect(sitesScriptSrc(false)).not.toContain('unsafe-eval')
 	})

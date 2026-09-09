@@ -97,6 +97,11 @@
       "import": "./src/public-form.ts",
       "default": "./src/public-form.ts"
     },
+    "./turnstile": {
+      "types": "./src/turnstile.server.ts",
+      "import": "./src/turnstile.server.ts",
+      "default": "./src/turnstile.server.ts"
+    },
     "./gdpr-export": {
       "types": "./src/gdpr-export.server.ts",
       "import": "./src/gdpr-export.server.ts",

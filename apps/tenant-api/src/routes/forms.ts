@@ -11,6 +11,12 @@ import {
 	validatePublicFormFieldChoices,
 } from '@repo/common/public-form'
 import { parseLocalizedString } from '@repo/common/site-locales'
+import {
+	isTurnstileConfigured,
+	parseTurnstileHostnames,
+	verifyTurnstileToken,
+} from '@repo/common/turnstile'
+import { ENV } from 'varlock/env'
 import { z } from 'zod'
 
 import {
@@ -54,6 +60,28 @@ const retentionPurgeSchema = z.object({
 	orgId: z.string().min(1),
 	retentionDays: z.number().int().min(1).max(3650).default(365),
 })
+
+const TURNSTILE_FORM_ACTION = 'website-form'
+
+function submissionClientIp(c: Context) {
+	const forwardedFor = c.req.header('x-forwarded-for')
+	const fromForwarded = forwardedFor?.split(',')[0]?.trim()
+	return fromForwarded || c.req.header('cf-connecting-ip') || undefined
+}
+
+async function verifyFormTurnstile(c: Context, token: unknown) {
+	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
+	if (!isTurnstileConfigured(secret)) return true
+	if (typeof token !== 'string' || !token.trim()) return false
+	const result = await verifyTurnstileToken({
+		secret,
+		token,
+		remoteIp: submissionClientIp(c),
+		expectedAction: TURNSTILE_FORM_ACTION,
+		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
+	})
+	return result.success
+}
 
 formSystemRoutes.post('/purge-submissions', async (c) => {
 	const internalToken = getInternalCommandToken()
@@ -119,6 +147,14 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 	const body = await c.req.json().catch(() => null)
 	if ((body as { website?: unknown } | null)?.website) {
 		return c.json({ success: true }, 201)
+	}
+	if (
+		!(await verifyFormTurnstile(
+			c,
+			(body as { turnstileToken?: unknown })?.turnstileToken,
+		))
+	) {
+		return c.json({ error: 'Verification failed. Please try again.' }, 403)
 	}
 	const identity = publicIdentitySchema.safeParse(body)
 	if (!identity.success) return c.json({ error: 'Invalid submission' }, 400)

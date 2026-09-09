@@ -46,6 +46,10 @@ msgstr "此账户在商店过往购买中使用的银行卡。"
 msgid "Check your phone"
 msgstr "请查看手机"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "提交前请完成验证。"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "继续"

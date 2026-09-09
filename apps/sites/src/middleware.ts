@@ -24,6 +24,7 @@ import {
 	sitesShopCheckoutConnectSrc,
 	sitesShopCheckoutFrameSrc,
 	sitesShopCheckoutScriptSrc,
+	sitesTurnstileFrameSrc,
 } from '~/lib/site-headers'
 import {
 	getPublicAppUrl,
@@ -84,6 +85,7 @@ function securityHeadersFor(env: SiteHostEnv) {
 			"base-uri 'self'",
 			"form-action 'self'",
 			sitesShopCheckoutFrameSrc(shopCheckoutCsp),
+			sitesTurnstileFrameSrc(),
 			`frame-ancestors 'self' ${frameAncestors} localhost:*`,
 		]
 			.filter(Boolean)

@@ -1,8 +1,6 @@
 import { Trans } from '@lingui/macro'
-import {
-	toPublicFormProjection,
-	type PublicFormField,
-} from '@repo/common/public-form'
+import { useLingui } from '@lingui/react'
+import { toPublicFormProjection } from '@repo/common/public-form'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -25,58 +23,12 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { setCachedPublicForm } from '#app/utils/sites/kv-cache.server.ts'
+import {
+	FORM_TEMPLATES,
+	getFormTemplate,
+} from '#app/utils/website/form-templates.ts'
 import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
-
-type FormField = PublicFormField
-
-const templates: Array<{
-	id: string
-	name: string
-	description: string
-	fields: FormField[]
-}> = [
-	{
-		id: 'blank',
-		name: 'Start from scratch',
-		description: 'A clean canvas with one field you can shape into anything.',
-		fields: [{ id: 'name', label: 'Name', type: 'name', required: false }],
-	},
-	{
-		id: 'contact',
-		name: 'Contact form',
-		description: 'Collect a name, email address, and a detailed message.',
-		fields: [
-			{ id: 'name', label: 'Name', type: 'name', required: true },
-			{ id: 'email', label: 'Email', type: 'email', required: true },
-			{ id: 'message', label: 'Message', type: 'textarea', required: true },
-		],
-	},
-	{
-		id: 'lead',
-		name: 'Lead capture',
-		description: 'A short, low-friction form for prospective customers.',
-		fields: [
-			{ id: 'name', label: 'Name', type: 'name', required: true },
-			{ id: 'email', label: 'Work email', type: 'email', required: true },
-			{ id: 'phone', label: 'Phone', type: 'tel', required: false },
-		],
-	},
-	{
-		id: 'feedback',
-		name: 'Feedback',
-		description: 'Give visitors room to share thoughtful feedback.',
-		fields: [
-			{ id: 'email', label: 'Email', type: 'email', required: false },
-			{
-				id: 'feedback',
-				label: 'Your feedback',
-				type: 'textarea',
-				required: true,
-			},
-		],
-	},
-]
 
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(120),
@@ -107,7 +59,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		Object.fromEntries(await request.formData()),
 	)
 	if (!parsed.success) return { error: 'Choose a template and enter a name.' }
-	const template = templates.find((item) => item.id === parsed.data.template)
+	const template = getFormTemplate(parsed.data.template)
 	if (!template) return { error: 'Template not found.' }
 	const response = await fetchTenant('/operator/forms', {
 		method: 'POST',
@@ -130,10 +82,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function NewWebsiteFormRoute() {
+	const { _ } = useLingui()
 	const [selected, setSelected] = useState('blank')
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
 	const isCreating = navigation.state !== 'idle'
+	const templates = FORM_TEMPLATES.map((template) => ({
+		...template,
+		name: _(template.name),
+		description: _(template.description),
+	}))
 	return (
 		<div className="bg-background fixed inset-0 z-50 flex h-dvh flex-col overflow-auto">
 			<header className="border-border flex h-12 shrink-0 items-center border-b px-3">

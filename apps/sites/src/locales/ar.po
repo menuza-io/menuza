@@ -46,6 +46,10 @@ msgstr "البطاقات المستخدمة في مشتريات المتجر ا�
 msgid "Check your phone"
 msgstr "تحقق من هاتفك"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "أكمل التحقق قبل الإرسال."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "متابعة"

@@ -11,7 +11,11 @@ type SitesWorkerConfig = SiteHostEnv & {
 
 type SitesDataKV = {
 	get<T>(key: string, type: 'json'): Promise<T | null>
-	put(key: string, value: string): Promise<void>
+	put(
+		key: string,
+		value: string,
+		options?: { expirationTtl?: number },
+	): Promise<void>
 }
 
 function readBinding(key: keyof SitesWorkerConfig): string | undefined {
