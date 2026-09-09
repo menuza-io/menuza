@@ -1,10 +1,15 @@
-import { and, count, desc, eq, lt } from 'drizzle-orm'
+import { and, count, desc, eq, lt, sql } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import {
 	getTenantDb,
 	websiteForms,
 	websiteFormSubmissions,
 } from '@repo/tenant-db'
+import {
+	publicFormFieldObjectSchema,
+	publicFormFieldsSchema,
+	validatePublicFormFieldChoices,
+} from '@repo/common/public-form'
 import { z } from 'zod'
 
 import {
@@ -23,21 +28,12 @@ export const publicFormRoutes = new Hono()
 export const formOperatorRoutes = new Hono()
 export const formSystemRoutes = new Hono()
 
-const fieldSchema = z.object({
-	id: z.string().min(1).max(50),
-	label: z.string().min(1).max(100),
-	type: z.enum(['text', 'email', 'tel', 'textarea']),
-	required: z.boolean().default(false),
-})
-
-const fieldsArraySchema = z
-	.array(fieldSchema)
-	.min(1)
-	.max(20)
-	.refine(
-		(fields) => new Set(fields.map((field) => field.id)).size === fields.length,
-		{ message: 'Field ids must be unique.' },
-	)
+const fieldSchema = publicFormFieldObjectSchema
+	.extend({
+		required: z.boolean().default(false),
+	})
+	.superRefine(validatePublicFormFieldChoices)
+const fieldsArraySchema = publicFormFieldsSchema
 
 const formSchema = z.object({
 	name: z.string().trim().min(1).max(120),
@@ -152,6 +148,7 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 
 	const values: Record<string, string> = {}
 	for (const field of fields) {
+		if (field.type === 'heading' || field.type === 'paragraph') continue
 		const value = String(rawValues.data[field.id] ?? '').trim()
 		if (field.required && !value) {
 			return c.json({ error: `${field.label} is required` }, 400)
@@ -163,6 +160,15 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 			!z.string().email().safeParse(value).success
 		) {
 			return c.json({ error: `${field.label} must be a valid email` }, 400)
+		}
+		if (
+			(field.type === 'single_choice' || field.type === 'multiple_choice') &&
+			value &&
+			value
+				.split(',')
+				.some((choice) => !(field.options ?? []).includes(choice.trim()))
+		) {
+			return c.json({ error: `${field.label} contains an invalid choice` }, 400)
 		}
 		values[field.id] = value
 	}
@@ -217,6 +223,29 @@ formOperatorRoutes.post('/', async (c) => {
 	const db = await getTenantDb(orgId)
 	const [form] = await db.insert(websiteForms).values(parsed.data).returning()
 	return c.json({ form }, 201)
+})
+
+formOperatorRoutes.put('/:formId', async (c) => {
+	let orgId: string
+	try {
+		orgId = (await authenticateOperator(c)).orgId
+	} catch (response) {
+		return response as Response
+	}
+	const parsed = formSchema.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) {
+		return c.json(
+			{ error: parsed.error.issues[0]?.message ?? 'Invalid form' },
+			400,
+		)
+	}
+	const db = await getTenantDb(orgId)
+	const [form] = await db
+		.update(websiteForms)
+		.set({ ...parsed.data, updatedAt: sql`(strftime('%s', 'now'))` })
+		.where(eq(websiteForms.id, c.req.param('formId')))
+		.returning()
+	return form ? c.json({ form }) : c.json({ error: 'Form not found' }, 404)
 })
 
 formOperatorRoutes.get('/:formId/submissions', async (c) => {

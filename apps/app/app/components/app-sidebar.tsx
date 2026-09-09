@@ -299,6 +299,16 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/website/pages`,
 					isActive: location.pathname.includes(`/${orgSlug}/website/pages`),
 				},
+				{
+					title: _(msg`Forms`),
+					url: `/${orgSlug}/website/forms`,
+					isActive: location.pathname.includes(`/${orgSlug}/website/forms`),
+				},
+				{
+					title: _(msg`Analytics`),
+					url: `/${orgSlug}/website/analytics`,
+					isActive: location.pathname.includes(`/${orgSlug}/website/analytics`),
+				},
 				...(homePageId
 					? [
 							{

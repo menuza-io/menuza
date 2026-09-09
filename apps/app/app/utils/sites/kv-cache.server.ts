@@ -2,6 +2,10 @@ import {
 	type KVNamespace,
 	type KVNamespaceListResult,
 } from '@cloudflare/workers-types'
+import {
+	publicFormKvKey,
+	type PublicFormProjection,
+} from '@repo/common/public-form'
 
 let siteDataKv: KVNamespace | null = null
 
@@ -69,4 +73,31 @@ export async function setCachedSiteData(key: string, data: unknown) {
 	try {
 		await siteDataKv.put(key, JSON.stringify(data))
 	} catch {}
+}
+
+export async function setCachedPublicForm(
+	organizationId: string,
+	form: PublicFormProjection,
+) {
+	if (!siteDataKv) return
+	const key = publicFormKvKey(organizationId, form.id)
+	try {
+		const current = await siteDataKv.get<PublicFormProjection>(key, 'json')
+		if (current && current.revision > form.revision) return
+		await siteDataKv.put(key, JSON.stringify(form))
+	} catch (error) {
+		console.error(`Failed to cache public form ${form.id}`, error)
+	}
+}
+
+export async function deleteCachedPublicForm(
+	organizationId: string,
+	formId: string,
+) {
+	if (!siteDataKv) return
+	try {
+		await siteDataKv.delete(publicFormKvKey(organizationId, formId))
+	} catch (error) {
+		console.error(`Failed to delete cached public form ${formId}`, error)
+	}
 }

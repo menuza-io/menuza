@@ -186,6 +186,10 @@ msgstr "حفظ التغييرات"
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "حدّد نموذجًا منشورًا في محرر الصفحة."
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "إرسال الرمز"
@@ -216,6 +220,10 @@ msgstr "جارٍ الإرسال..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "شكرًا لشرائك!"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "هذا النموذج غير متاح حاليًا."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

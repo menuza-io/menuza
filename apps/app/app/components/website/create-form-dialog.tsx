@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/macro'
+import { type PublicFormField } from '@repo/common/public-form'
 import { Button } from '@repo/ui/button'
 import {
 	Dialog,
@@ -15,23 +16,18 @@ import { Switch } from '@repo/ui/switch'
 import { useCallback, useState } from 'react'
 import { useFetcher } from 'react-router'
 
-type FieldType = 'text' | 'email' | 'tel' | 'textarea'
-type FormField = {
-	id: string
-	label: string
-	type: FieldType
-	required: boolean
-}
+type FieldType = PublicFormField['type']
+type FormField = PublicFormField
 
 const templateFields: Record<string, FormField[]> = {
-	blank: [{ id: 'name', label: 'Name', type: 'text', required: true }],
+	blank: [{ id: 'name', label: 'Name', type: 'name', required: true }],
 	contact: [
-		{ id: 'name', label: 'Name', type: 'text', required: true },
+		{ id: 'name', label: 'Name', type: 'name', required: true },
 		{ id: 'email', label: 'Email', type: 'email', required: true },
 		{ id: 'message', label: 'Message', type: 'textarea', required: true },
 	],
 	lead: [
-		{ id: 'name', label: 'Name', type: 'text', required: true },
+		{ id: 'name', label: 'Name', type: 'name', required: true },
 		{ id: 'email', label: 'Email', type: 'email', required: true },
 		{ id: 'phone', label: 'Phone', type: 'tel', required: false },
 	],

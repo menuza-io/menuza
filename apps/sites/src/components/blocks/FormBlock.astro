@@ -1,5 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { toPublicFormProjection } from '@repo/common/public-form'
+import { pickLocalized } from '@repo/common/site-locales'
 import {
 	siteBtnPrimaryClass,
 	siteFieldLabelClass,
@@ -7,10 +9,12 @@ import {
 	siteStatusErrorClass,
 	siteStatusSuccessClass,
 } from '~/lib/form-classes'
+import {
+	getCachedPublicForm,
+	setCachedPublicForm,
+} from '~/lib/public-form-cache'
 import { getTenantApiUrl } from '~/lib/tenant-api'
 
-type FormField = { id: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean }
-type WebsiteForm = { id: string; name: string; description: string | null; fields: FormField[]; submitLabel: string; successMessage: string }
 const { config } = Astro.props
 const organization = Astro.locals.organization
 const formId = String(config?.formId || '')
@@ -18,63 +22,253 @@ const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : '
 const params = new URLSearchParams()
 if (Astro.locals.orgSlug) params.set('slug', Astro.locals.orgSlug)
 if (Astro.locals.customHost) params.set('host', Astro.locals.customHost)
+
 async function loadForm() {
-	if (!formId || !tenantApiUrl) return null
+	if (!organization || !formId || !tenantApiUrl) return null
+	const cached = await getCachedPublicForm(organization.id, formId)
+	if (cached) return cached
 	try {
-		const response = await fetch(`${tenantApiUrl}/forms/${encodeURIComponent(formId)}?${params}`, {
-			headers: { Accept: 'application/json', Origin: Astro.url.origin },
-			signal: AbortSignal.timeout(3000),
-		})
+		const response = await fetch(
+			`${tenantApiUrl}/forms/${encodeURIComponent(formId)}?${params}`,
+			{
+				headers: { Accept: 'application/json', Origin: Astro.url.origin },
+				signal: AbortSignal.timeout(3000),
+			},
+		)
 		if (!response.ok) return null
-		return (await response.json()) as { form?: WebsiteForm }
+		const payload = (await response.json()) as {
+			form?: Parameters<typeof toPublicFormProjection>[0]
+		}
+		const projection = payload.form
+			? toPublicFormProjection(payload.form)
+			: null
+		if (projection) await setCachedPublicForm(organization.id, projection)
+		return projection
 	} catch {
 		return null
 	}
 }
-const payload = await loadForm()
-const form = payload?.form
-const blockId = `website-form-${formId}`
+
+const form = await loadForm()
+const activeLocale =
+	Astro.locals.requestedLocale ||
+	organization?.locale ||
+	organization?.defaultLocale ||
+	'en'
+const defaultLocale =
+	organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+const blockId = `website-form-${formId || crypto.randomUUID()}`
+const unavailable = Astro.locals.i18n._(msg`This form is currently unavailable.`)
+const selectForm = Astro.locals.i18n._(msg`Select a published form in the page editor.`)
 const submitting = Astro.locals.i18n._(msg`Submitting...`)
 const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Please try again.`)
 ---
 
 <section class="px-4 py-14 sm:py-20">
 	<div class="mx-auto w-full max-w-2xl">
-		{form ? (
-			<div class="space-y-7">
-				{config?.showTitle !== false ? <div class="space-y-2"><h2 class="font-heading text-3xl font-semibold tracking-tight text-foreground">{form.name}</h2>{form.description ? <p class="text-muted-foreground">{form.description}</p> : null}</div> : null}
-				<form id={blockId} class="space-y-5" data-form-id={form.id} data-tenant-api-url={tenantApiUrl} data-org-slug={Astro.locals.orgSlug || undefined} data-custom-host={Astro.locals.customHost || undefined} data-submit-label={form.submitLabel} data-submitting-label={submitting} data-error-label={submissionError}>
-					<div class="hidden" aria-hidden="true"><label for={`${blockId}-website`}>Website</label><input id={`${blockId}-website`} name="website" tabindex="-1" autocomplete="off" /></div>
-					{form.fields.map((field) => <div class="space-y-2"><label class={siteFieldLabelClass} for={`${blockId}-${field.id}`}>{field.label}{field.required ? <span aria-hidden="true"> *</span> : null}</label>{field.type === 'textarea' ? <textarea id={`${blockId}-${field.id}`} name={field.id} required={field.required} rows="5" maxlength="5000" class:list={[siteInputClass, 'h-auto resize-y']} /> : <input id={`${blockId}-${field.id}`} name={field.id} type={field.type} required={field.required} maxlength="5000" class={siteInputClass} />}</div>)}
-					<p data-form-status class="hidden" role="status"></p>
-					<button class={siteBtnPrimaryClass} type="submit">{form.submitLabel}</button>
-				</form>
-			</div>
-		) : <p class="text-muted-foreground text-center">Select a published form in the page editor.</p>}
+		{
+			form ? (
+				<div class="space-y-7">
+					{config?.showTitle !== false ? (
+						<div class="space-y-2">
+							<h2 class="font-heading text-3xl font-semibold tracking-tight text-foreground">
+								{pickLocalized(form.name, activeLocale, defaultLocale)}
+							</h2>
+							{form.description ? (
+								<p class="text-muted-foreground">
+									{pickLocalized(form.description, activeLocale, defaultLocale)}
+								</p>
+							) : null}
+						</div>
+					) : null}
+					<form
+						id={blockId}
+						class="space-y-5"
+						data-form-id={form.id}
+						data-tenant-api-url={tenantApiUrl}
+						data-org-slug={Astro.locals.orgSlug || undefined}
+						data-custom-host={Astro.locals.customHost || undefined}
+						data-submit-label={pickLocalized(
+							form.submitLabel,
+							activeLocale,
+							defaultLocale,
+						)}
+						data-success-message={pickLocalized(
+							form.successMessage,
+							activeLocale,
+							defaultLocale,
+						)}
+						data-submitting-label={submitting}
+						data-error-label={submissionError}
+					>
+						<div class="hidden" aria-hidden="true">
+							<label for={`${blockId}-website`}>Website</label>
+							<input
+								id={`${blockId}-website`}
+								name="website"
+								tabindex="-1"
+								autocomplete="off"
+							/>
+						</div>
+						{form.fields.map((field) => {
+							const fieldLabel = pickLocalized(
+								field.label,
+								activeLocale,
+								defaultLocale,
+							)
+							return field.type === 'heading' ? (
+								<h3 class="font-heading pt-2 text-xl font-semibold tracking-tight text-foreground">
+									{fieldLabel}
+								</h3>
+							) : field.type === 'paragraph' ? (
+								<p class="text-sm leading-relaxed text-muted-foreground">{fieldLabel}</p>
+							) : field.type === 'single_choice' || field.type === 'multiple_choice' ? (
+								<fieldset class="space-y-2">
+									<legend class={siteFieldLabelClass}>
+										{fieldLabel}
+										{field.required ? <span aria-hidden="true"> *</span> : null}
+									</legend>
+									<div class="space-y-2 pt-1">
+										{(field.options ?? []).map((choice) => {
+											const choiceLabel = pickLocalized(
+												choice,
+												activeLocale,
+												defaultLocale,
+											)
+											return (
+											<label class="flex items-center gap-2 text-sm text-foreground">
+												<input
+													type={field.type === 'single_choice' ? 'radio' : 'checkbox'}
+													name={field.id}
+													value={choiceLabel}
+													required={field.required && field.type === 'single_choice'}
+													class="size-4 accent-primary"
+												/>
+												{choiceLabel}
+											</label>
+											)
+										})}
+									</div>
+								</fieldset>
+							) : (
+								<div class="space-y-2">
+									<label
+										class={siteFieldLabelClass}
+										for={`${blockId}-${field.id}`}
+									>
+										{fieldLabel}
+										{field.required ? <span aria-hidden="true"> *</span> : null}
+									</label>
+									{field.type === 'textarea' ? (
+										<textarea
+											id={`${blockId}-${field.id}`}
+											name={field.id}
+											required={field.required}
+											rows="5"
+											maxlength="5000"
+											class:list={[siteInputClass, 'h-auto resize-y']}
+										/>
+									) : (
+										<input
+											id={`${blockId}-${field.id}`}
+											name={field.id}
+											type={field.type === 'datetime' ? 'datetime-local' : field.type === 'name' ? 'text' : field.type}
+											autocomplete={field.type === 'name' ? 'name' : field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : undefined}
+											required={field.required}
+											maxlength="5000"
+											class={siteInputClass}
+										/>
+									)}
+								</div>
+							)
+						})}
+						<p data-form-status class="hidden" role="status" />
+						<button class={siteBtnPrimaryClass} type="submit">
+							{pickLocalized(form.submitLabel, activeLocale, defaultLocale)}
+						</button>
+					</form>
+				</div>
+			) : (
+				<p class="text-muted-foreground text-center">
+					{formId ? unavailable : selectForm}
+				</p>
+			)
+		}
 	</div>
 </section>
 
-{form ? <script is:inline define:vars={{ blockId, successClass: siteStatusSuccessClass, errorClass: siteStatusErrorClass }}>
-	const formElement = document.getElementById(blockId)
-	formElement?.addEventListener('submit', async (event) => {
-		event.preventDefault()
-		if (!(formElement instanceof HTMLFormElement)) return
-		const button = formElement.querySelector('button[type="submit"]')
-		const status = formElement.querySelector('[data-form-status]')
-		if (!(button instanceof HTMLButtonElement) || !(status instanceof HTMLElement)) return
-		button.disabled = true
-		button.textContent = formElement.dataset.submittingLabel || 'Submitting...'
-		status.className = 'hidden'
-		const formData = new FormData(formElement)
-		const website = String(formData.get('website') || '')
-		formData.delete('website')
-		try {
-			const response = await fetch(`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: formElement.dataset.orgSlug, host: formElement.dataset.customHost, website, values: Object.fromEntries(formData.entries()) }) })
-			const result = await response.json()
-			if (!response.ok) throw new Error(result.error || formElement.dataset.errorLabel || 'Unable to submit the form.')
-			formElement.reset(); status.textContent = result.message; status.className = successClass
-		} catch (error) {
-			status.textContent = error instanceof Error ? error.message : formElement.dataset.errorLabel || 'Unable to submit the form.'; status.className = errorClass
-		} finally { button.disabled = false; button.textContent = formElement.dataset.submitLabel || 'Submit' }
-	})
-</script> : null}
+{
+	form ? (
+		<script
+			is:inline
+			define:vars={{
+				blockId,
+				successClass: siteStatusSuccessClass,
+				errorClass: siteStatusErrorClass,
+			}}
+		>
+			const formElement = document.getElementById(blockId)
+			formElement?.addEventListener('submit', async (event) => {
+				event.preventDefault()
+				if (!(formElement instanceof HTMLFormElement)) return
+				const button = formElement.querySelector('button[type="submit"]')
+				const status = formElement.querySelector('[data-form-status]')
+				if (
+					!(button instanceof HTMLButtonElement) ||
+					!(status instanceof HTMLElement)
+				)
+					return
+				button.disabled = true
+				button.textContent =
+					formElement.dataset.submittingLabel || 'Submitting...'
+				status.className = 'hidden'
+				const formData = new FormData(formElement)
+				const website = String(formData.get('website') || '')
+				formData.delete('website')
+				try {
+					const response = await fetch(
+						`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`,
+						{
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								slug: formElement.dataset.orgSlug,
+								host: formElement.dataset.customHost,
+								website,
+								values: Object.fromEntries(
+									Array.from(new Set(formData.keys())).map((key) => {
+										const values = formData.getAll(key).map(String)
+										return [key, values.length > 1 ? values.join(', ') : values[0] || '']
+									}),
+								),
+							}),
+						},
+					)
+					const result = await response.json()
+					if (!response.ok) {
+						throw new Error(
+							result.error ||
+								formElement.dataset.errorLabel ||
+								'Unable to submit the form.',
+						)
+					}
+					formElement.reset()
+					status.textContent =
+						formElement.dataset.successMessage ||
+						result.message ||
+						'Thank you.'
+					status.className = successClass
+				} catch (error) {
+					status.textContent =
+						error instanceof Error
+							? error.message
+							: formElement.dataset.errorLabel || 'Unable to submit the form.'
+					status.className = errorClass
+				} finally {
+					button.disabled = false
+					button.textContent = formElement.dataset.submitLabel || 'Submit'
+				}
+			})
+		</script>
+	) : null
+}

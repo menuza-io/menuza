@@ -186,6 +186,10 @@ msgstr "Save Changes"
 msgid "Saving..."
 msgstr "Saving..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "Select a published form in the page editor."
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "Send Code"
@@ -216,6 +220,10 @@ msgstr "Submitting..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Thank you for your purchase!"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "This form is currently unavailable."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

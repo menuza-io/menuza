@@ -186,6 +186,10 @@ msgstr "保存更改"
 msgid "Saving..."
 msgstr "保存中..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "请在页面编辑器中选择已发布的表单。"
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
@@ -216,6 +220,10 @@ msgstr "正在提交..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "此表单当前不可用。"
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

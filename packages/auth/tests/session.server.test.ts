@@ -223,12 +223,13 @@ describe('Session Management', () => {
 					await importOriginal<typeof import('@repo/common/cookie-domain')>()
 				return {
 					...mod,
-					sharedCookieDomain: () => '.example.com',
+					operatorSessionCookieDomain: () => '.example.com',
 				}
 			})
 			vi.resetModules()
-			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server?v=' + Date.now())
+			const { authSessionStorage: testAuthSessionStorage } = await import(
+				'../src/session.server?v=' + Date.now()
+			)
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')
@@ -245,12 +246,13 @@ describe('Session Management', () => {
 					await importOriginal<typeof import('@repo/common/cookie-domain')>()
 				return {
 					...mod,
-					sharedCookieDomain: () => '.localhost',
+					operatorSessionCookieDomain: () => '.localhost',
 				}
 			})
 			vi.resetModules()
-			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server?v=' + Date.now())
+			const { authSessionStorage: testAuthSessionStorage } = await import(
+				'../src/session.server?v=' + Date.now()
+			)
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')
@@ -267,12 +269,13 @@ describe('Session Management', () => {
 					await importOriginal<typeof import('@repo/common/cookie-domain')>()
 				return {
 					...mod,
-					sharedCookieDomain: () => undefined,
+					operatorSessionCookieDomain: () => undefined,
 				}
 			})
 			vi.resetModules()
-			const { authSessionStorage: testAuthSessionStorage } =
-				await import('../src/session.server?v=' + Date.now())
+			const { authSessionStorage: testAuthSessionStorage } = await import(
+				'../src/session.server?v=' + Date.now()
+			)
 
 			const session = await testAuthSessionStorage.getSession()
 			session.set('test', 'value')

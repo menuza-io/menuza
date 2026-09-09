@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { getBrandDomain } from '@repo/config/brand'
 
@@ -11,6 +11,7 @@ import {
 	operatorCookieName,
 	operatorThemeCookieName,
 	shouldApplyImpersonationToUserId,
+	operatorSessionCookieDomain,
 	sharedCookieDomain,
 	sharedCookieDomainFromHost,
 } from './cookie-domain.server.ts'
@@ -97,16 +98,10 @@ describe('operator cross-origin URLs', () => {
 
 	it('uses staging host labels when the reference origin is staging', () => {
 		expect(
-			getOperatorAppUrl(
-				'https://admin-staging.example.com',
-				'example.com',
-			),
+			getOperatorAppUrl('https://admin-staging.example.com', 'example.com'),
 		).toBe('https://app-staging.example.com')
 		expect(
-			getOperatorAdminUrl(
-				'https://app-staging.example.com',
-				'example.com',
-			),
+			getOperatorAdminUrl('https://app-staging.example.com', 'example.com'),
 		).toBe('https://admin-staging.example.com')
 	})
 })
@@ -124,9 +119,7 @@ describe('shouldApplyImpersonationToUserId', () => {
 			),
 		).toBe(false)
 		expect(
-			shouldApplyImpersonationToUserId(
-				new Request('http://localhost:3001/'),
-			),
+			shouldApplyImpersonationToUserId(new Request('http://localhost:3001/')),
 		).toBe(true)
 	})
 })
@@ -149,5 +142,40 @@ describe('sharedCookieDomain', () => {
 			'.lighteninggroup.com',
 		)
 		expect(sharedCookieDomain('http://localhost:3001')).toBeUndefined()
+	})
+})
+
+describe('operatorSessionCookieDomain', () => {
+	const previousMocks = process.env.MOCKS
+
+	afterEach(() => {
+		if (previousMocks === undefined) delete process.env.MOCKS
+		else process.env.MOCKS = previousMocks
+	})
+
+	it('keeps production apex domains when MOCKS is unset', () => {
+		delete process.env.MOCKS
+		expect(operatorSessionCookieDomain('https://app.epic-startup.dev')).toBe(
+			'.epic-startup.dev',
+		)
+	})
+
+	it('uses host-only cookies for localhost BASE_URL in mocks mode', () => {
+		process.env.MOCKS = 'true'
+		expect(operatorSessionCookieDomain('http://localhost:3001')).toBeUndefined()
+	})
+
+	it('uses host-only cookies when MOCKS is on but BASE_URL is a dev hostname', () => {
+		process.env.MOCKS = 'true'
+		expect(
+			operatorSessionCookieDomain('https://app.epic-startup.test:2999'),
+		).toBeUndefined()
+	})
+
+	it('keeps .localhost sharing when BASE_URL is app.localhost', () => {
+		process.env.MOCKS = 'true'
+		expect(operatorSessionCookieDomain('http://app.localhost:3001')).toBe(
+			'.localhost',
+		)
 	})
 })

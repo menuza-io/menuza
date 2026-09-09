@@ -92,6 +92,11 @@
       "import": "./src/site-link.ts",
       "default": "./src/site-link.ts"
     },
+    "./public-form": {
+      "types": "./src/public-form.ts",
+      "import": "./src/public-form.ts",
+      "default": "./src/public-form.ts"
+    },
     "./gdpr-export": {
       "types": "./src/gdpr-export.server.ts",
       "import": "./src/gdpr-export.server.ts",

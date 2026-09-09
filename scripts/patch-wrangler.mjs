@@ -999,14 +999,25 @@ function patchTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 			}
 		}
 
-		const sitesDataKvId = readEnv(
-			`SITES_DATA_KV_ID${suffix}`,
-			launchConfig,
-			`bindings.${bindingEnv}.sites.sites_data_kv_id`,
-		)
+		const sitesDataKvId =
+			readEnv(
+				`SITES_DATA_KV_ID${suffix}`,
+				launchConfig,
+				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
+			) ||
+			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
 		if (sitesDataKvId) {
 			if (deployEnv === 'staging') {
-				content += `\n[[env.staging.kv_namespaces]]\nbinding = "SITES_DATA_KV"\nid = "${sitesDataKvId}"\n`
+				const stagingKvPattern =
+					/(\[\[env\.staging\.kv_namespaces\]\]\s*\n\s*binding\s*=\s*"SITES_DATA_KV"\s*\n\s*id\s*=\s*")[^"]+(")/
+				if (stagingKvPattern.test(content)) {
+					content = content.replace(
+						stagingKvPattern,
+						`$1${sitesDataKvId}$2`,
+					)
+				} else {
+					content += `\n[[env.staging.kv_namespaces]]\nbinding = "SITES_DATA_KV"\nid = "${sitesDataKvId}"\n`
+				}
 				patches.push(
 					`env.staging.kv_namespaces (SITES_DATA_KV) ← SITES_DATA_KV_ID${suffix}`,
 				)
@@ -1154,6 +1165,33 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 			[`SITES_WORKER_NAME${suffix}`, 'SITES_WORKER_NAME'],
 			`bindings.${bindingEnv}.sites.worker_name`,
 		)
+
+		const sitesDataKvId =
+			readEnv(
+				`SITES_DATA_KV_ID${suffix}`,
+				launchConfig,
+				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
+			) ||
+			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
+		if (sitesDataKvId) {
+			if (!Array.isArray(config.kv_namespaces)) config.kv_namespaces = []
+			const binding = config.kv_namespaces.find(
+				(namespace) => namespace.binding === 'SITES_DATA_KV',
+			)
+			if (binding) {
+				binding.id = sitesDataKvId
+			} else {
+				config.kv_namespaces.push({
+					binding: 'SITES_DATA_KV',
+					id: sitesDataKvId,
+				})
+			}
+			patches.push(
+				`kv_namespaces.SITES_DATA_KV ← SITES_DATA_KV_ID${suffix}`,
+			)
+		} else if (requireBindings) {
+			missing.push(`SITES_DATA_KV_ID${suffix}`)
+		}
 
 		const appWorkerName = readEnv(
 			`APP_WORKER_NAME${suffix}`,

@@ -1,4 +1,9 @@
 import { Trans } from '@lingui/macro'
+import {
+	publicFormFieldsSchema,
+	toPublicFormProjection,
+	type PublicFormField,
+} from '@repo/common/public-form'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
@@ -13,30 +18,29 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { formatDistanceToNow } from 'date-fns'
-import { useState } from 'react'
 import {
 	Form,
 	Link,
+	Outlet,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	useActionData,
 	useLoaderData,
+	useLocation,
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
-import { CreateFormDialog } from '#app/components/website/create-form-dialog.tsx'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	deleteCachedPublicForm,
+	setCachedPublicForm,
+} from '#app/utils/sites/kv-cache.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
-type FormField = {
-	id: string
-	label: string
-	type: 'text' | 'email' | 'tel' | 'textarea'
-	required: boolean
-}
+type FormField = PublicFormField
 type WebsiteForm = {
 	id: string
 	name: string
@@ -45,26 +49,11 @@ type WebsiteForm = {
 	status: 'draft' | 'published'
 	submissionCount: number
 	updatedAt: string | null
+	submitLabel: string
+	successMessage: string
 }
 
-const fieldSchema = z.object({
-	id: z
-		.string()
-		.min(1)
-		.max(50)
-		.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-	label: z.string().trim().min(1).max(100),
-	type: z.enum(['text', 'email', 'tel', 'textarea']),
-	required: z.boolean(),
-})
-const fieldsArraySchema = z
-	.array(fieldSchema)
-	.min(1)
-	.max(20)
-	.refine(
-		(fields) => new Set(fields.map((field) => field.id)).size === fields.length,
-		{ message: 'Field labels must be unique.' },
-	)
+const fieldsArraySchema = publicFormFieldsSchema
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).default(''),
@@ -129,9 +118,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			method: 'POST',
 			body: JSON.stringify({ ...parsed.data, status: 'published' }),
 		})
-		return response.ok
-			? { success: 'Form created.' }
-			: { error: 'Unable to create the form.' }
+		if (!response.ok) return { error: 'Unable to create the form.' }
+		const payload = (await response.json()) as { form?: WebsiteForm }
+		const projection = payload.form
+			? toPublicFormProjection(payload.form)
+			: null
+		if (projection) await setCachedPublicForm(orgId, projection)
+		return { success: 'Form created.' }
 	}
 	if (intent === 'delete') {
 		const id = String(formData.get('id') || '')
@@ -139,17 +132,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const response = await fetchTenant(`/operator/forms/${id}`, {
 			method: 'DELETE',
 		})
-		return response.ok
-			? { success: 'Form deleted.' }
-			: { error: 'Unable to delete the form.' }
+		if (!response.ok) return { error: 'Unable to delete the form.' }
+		await deleteCachedPublicForm(orgId, id)
+		return { success: 'Form deleted.' }
 	}
 	return { error: 'Invalid action.' }
 }
 
 export default function WebsiteFormsRoute() {
+	const location = useLocation()
 	const { forms, error } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
-	const [createOpen, setCreateOpen] = useState(false)
+	if (!/\/website\/forms\/?$/.test(location.pathname)) return <Outlet />
+
 	return (
 		<div className="space-y-8">
 			<PageHeader
@@ -163,16 +158,11 @@ export default function WebsiteFormsRoute() {
 				headingLevel="h2"
 				size="section"
 				actions={
-					<Button onClick={() => setCreateOpen(true)} disabled={Boolean(error)}>
+					<Button render={<Link to="new" />}>
 						<Icon name="plus" className="size-4" />
 						<Trans>Create form</Trans>
 					</Button>
 				}
-			/>
-			<CreateFormDialog
-				open={createOpen}
-				onOpenChange={setCreateOpen}
-				disabled={Boolean(error)}
 			/>
 			{error ? (
 				<p className="text-destructive text-sm" role="alert">
@@ -194,6 +184,7 @@ export default function WebsiteFormsRoute() {
 					title="No forms yet"
 					description="Create a custom form or start from a template, then add it to a page."
 					icons={['file-text']}
+					action={{ label: 'Create form', href: 'new' }}
 				/>
 			) : (
 				<Frame className="overflow-hidden p-0">

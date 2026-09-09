@@ -189,7 +189,10 @@ function requestHandler(req, res) {
 	if (target) {
 		req.headers['x-forwarded-proto'] = protocol
 		req.headers['x-forwarded-host'] = host
-		proxy.web(req, res, { target, changeOrigin: true }, (err) => {
+		// Sites resolves the organization slug from the original Host header.
+		// Replacing it with localhost:3008 makes every proxied tenant site a 404.
+		const changeOrigin = target !== SITES_TARGET
+		proxy.web(req, res, { target, changeOrigin }, (err) => {
 			if (err.code === 'ECONNREFUSED') {
 				console.log(`⏳ Waiting for ${target} to start...`)
 				res.writeHead(503, {
@@ -238,7 +241,8 @@ function upgradeHandler(req, socket, head) {
 	if (target) {
 		req.headers['x-forwarded-proto'] = protocol
 		req.headers['x-forwarded-host'] = host
-		proxy.ws(req, socket, head, { target, changeOrigin: true })
+		const changeOrigin = target !== SITES_TARGET
+		proxy.ws(req, socket, head, { target, changeOrigin })
 	} else {
 		socket.destroy()
 	}

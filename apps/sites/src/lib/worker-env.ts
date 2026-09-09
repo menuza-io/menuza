@@ -9,6 +9,11 @@ type SitesWorkerConfig = SiteHostEnv & {
 	TENANT_API_URL_KSA?: string
 }
 
+type SitesDataKV = {
+	get<T>(key: string, type: 'json'): Promise<T | null>
+	put(key: string, value: string): Promise<void>
+}
+
 function readBinding(key: keyof SitesWorkerConfig): string | undefined {
 	const fromWorker =
 		cloudflareWorkerEnv[key as keyof typeof cloudflareWorkerEnv]
@@ -62,6 +67,18 @@ export function getAppServiceBinding(): { fetch: typeof fetch } | null {
 	const fromWorker = (cloudflareWorkerEnv as any)?.APP
 	if (fromWorker && typeof fromWorker.fetch === 'function') {
 		return fromWorker
+	}
+	return null
+}
+
+export function getSitesDataKV(): SitesDataKV | null {
+	const binding = (cloudflareWorkerEnv as any)?.SITES_DATA_KV
+	if (
+		binding &&
+		typeof binding.get === 'function' &&
+		typeof binding.put === 'function'
+	) {
+		return binding as SitesDataKV
 	}
 	return null
 }
