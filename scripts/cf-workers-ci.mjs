@@ -192,6 +192,10 @@ function buildApp(appKey) {
 
 	installDeps()
 
+	if (appKey === 'app' || appKey === 'admin') {
+		run('node', ['scripts/write-ci-app-env.mjs', '--for-cloudflare-build'])
+	}
+
 	if (config.turboFilter) {
 		run('npx', ['turbo', 'run', 'build', `--filter=${config.turboFilter}`], {
 			env: {

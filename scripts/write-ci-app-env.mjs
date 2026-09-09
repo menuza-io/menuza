@@ -10,6 +10,17 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
+const buildDefaults = {
+	SESSION_SECRET: 'build-time-session-secret-placeholder-min-32-chars',
+	HONEYPOT_SECRET: 'build-time-honeypot-secret-for-cloudflare-builds',
+	INTEGRATION_ENCRYPTION_KEY:
+		'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+	INTEGRATIONS_OAUTH_STATE_SECRET: 'build-oauth-state-secret-32-chars',
+	TRUST_PROXY: 'true',
+}
+
+const forCloudflareBuild = process.argv.includes('--for-cloudflare-build')
+
 const appEnvKeys = {
 	'apps/admin': ['SESSION_SECRET', 'HONEYPOT_SECRET', 'TRUST_PROXY'],
 	'apps/app': [
@@ -23,7 +34,12 @@ const appEnvKeys = {
 
 for (const [appDir, keys] of Object.entries(appEnvKeys)) {
 	const lines = keys
-		.map((key) => [key, process.env[key]])
+		.map((key) => {
+			const value =
+				process.env[key] ??
+				(forCloudflareBuild ? buildDefaults[key] : undefined)
+			return [key, value]
+		})
 		.filter(([, value]) => value != null && value !== '')
 		.map(([key, value]) => `${key}=${value}`)
 
