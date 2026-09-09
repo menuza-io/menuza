@@ -327,55 +327,82 @@ jobs:
       - name: 🚦 Check Performance Budget
         run: |
           echo "Checking performance scores against budget..."
+          node <<'EOF'
+          const fs = require('node:fs')
+          const path = require('node:path')
 
-          # Find all lighthouse result files
-          for file in .lighthouseci/lhr-*.json; do
-            if [ -f "$file" ]; then
-              echo "Checking: $file"
-              
-              # Extract scores using node
-              node -e "
-                const lhr = require('./$file');
-                const url = lhr.finalUrl || lhr.requestedUrl;
-                const perf = Math.round(lhr.categories.performance.score * 100);
-                const a11y = Math.round(lhr.categories.accessibility.score * 100);
-                const bp = Math.round(lhr.categories['best-practices'].score * 100);
-                const seo = Math.round(lhr.categories.seo.score * 100);
-                
-                console.log('URL:', url);
-                console.log('Performance:', perf);
-                console.log('Accessibility:', a11y);
-                console.log('Best Practices:', bp);
-                console.log('SEO:', seo);
-                
-                const perfThreshold = 85;
-                const threshold = 90;
-                let failed = false;
-                
-                if (perf < perfThreshold) {
-                  console.error('❌ Performance score ' + perf + ' is below threshold ' + perfThreshold);
-                  failed = true;
-                }
-                if (a11y < threshold) {
-                  console.error('❌ Accessibility score ' + a11y + ' is below threshold ' + threshold);
-                  failed = true;
-                }
-                if (bp < threshold) {
-                  console.error('❌ Best Practices score ' + bp + ' is below threshold ' + threshold);
-                  failed = true;
-                }
-                if (seo < threshold) {
-                  console.error('❌ SEO score ' + seo + ' is below threshold ' + threshold);
-                  failed = true;
-                }
-                
-                if (failed) {
-                  process.exit(1);
-                }
-                
-                console.log('✅ All scores pass threshold of', threshold);
-              "
-            fi
-          done
+          const median = (values) => {
+            const sorted = [...values].sort((a, b) => a - b)
+            const mid = Math.floor(sorted.length / 2)
+            return sorted.length % 2 === 0
+              ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+              : sorted[mid]
+          }
 
-          echo "✅ All pages pass performance budget!"
+          const byUrl = new Map()
+          for (const file of fs.readdirSync('.lighthouseci')) {
+            if (!file.startsWith('lhr-') || !file.endsWith('.json')) continue
+            const lhr = JSON.parse(
+              fs.readFileSync(path.join('.lighthouseci', file), 'utf8'),
+            )
+            const url = lhr.finalUrl || lhr.requestedUrl
+            const entry = byUrl.get(url) ?? {
+              performance: [],
+              accessibility: [],
+              bestPractices: [],
+              seo: [],
+            }
+            entry.performance.push(Math.round(lhr.categories.performance.score * 100))
+            entry.accessibility.push(
+              Math.round(lhr.categories.accessibility.score * 100),
+            )
+            entry.bestPractices.push(
+              Math.round(lhr.categories['best-practices'].score * 100),
+            )
+            entry.seo.push(Math.round(lhr.categories.seo.score * 100))
+            byUrl.set(url, entry)
+          }
+
+          const perfThreshold = 85
+          const threshold = 90
+          let failed = false
+
+          for (const [url, scores] of byUrl.entries()) {
+            const perf = median(scores.performance)
+            const a11y = median(scores.accessibility)
+            const bp = median(scores.bestPractices)
+            const seo = median(scores.seo)
+
+            console.log('URL:', url)
+            console.log('Performance (median):', perf)
+            console.log('Accessibility (median):', a11y)
+            console.log('Best Practices (median):', bp)
+            console.log('SEO (median):', seo)
+
+            if (perf < perfThreshold) {
+              console.error(
+                `❌ Performance score ${perf} is below threshold ${perfThreshold}`,
+              )
+              failed = true
+            }
+            if (a11y < threshold) {
+              console.error(
+                `❌ Accessibility score ${a11y} is below threshold ${threshold}`,
+              )
+              failed = true
+            }
+            if (bp < threshold) {
+              console.error(
+                `❌ Best Practices score ${bp} is below threshold ${threshold}`,
+              )
+              failed = true
+            }
+            if (seo < threshold) {
+              console.error(`❌ SEO score ${seo} is below threshold ${threshold}`)
+              failed = true
+            }
+          }
+
+          if (failed) process.exit(1)
+          console.log('✅ All pages pass performance budget!')
+          EOF

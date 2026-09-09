@@ -46,6 +46,10 @@ msgstr "Cards used on past shop purchases on this account."
 msgid "Check your phone"
 msgstr "Check your phone"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "Complete the verification check before submitting."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continue"
@@ -186,6 +190,10 @@ msgstr "Save Changes"
 msgid "Saving..."
 msgstr "Saving..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "Select a published form in the page editor."
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "Send Code"
@@ -216,6 +224,10 @@ msgstr "Submitting..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Thank you for your purchase!"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "This form is currently unavailable."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

@@ -92,6 +92,10 @@ msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
+#: app/components/website/form-builder-sidebar.tsx:228
+msgid "{choiceCount, plural, one {# choice} other {# choices}}"
+msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار واحد} two {خياران} few {# خيارات} many {# خياراً} other {# خيار}}"
+
 #: app/routes/mcp+/authorize.tsx:309
 msgid "{clientName} is requesting access to your organization data"
 msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
@@ -295,6 +299,14 @@ msgstr "500+ شخص"
 msgid "51-200 people"
 msgstr "51-200 شخص"
 
+#: app/utils/website/form-templates.ts:25
+msgid "A clean canvas with one field you can shape into anything."
+msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
+
+#: app/utils/website/form-templates.ts:41
+msgid "A short, low-friction form for prospective customers."
+msgstr "نموذج قصير وسهل لجمع بيانات العملاء المحتملين."
+
 #: app/routes/_auth+/onboarding_.$provider.tsx:128
 #: app/routes/_auth+/onboarding.tsx:119
 msgid "A user already exists with this username"
@@ -363,6 +375,7 @@ msgstr "نشط"
 msgid "Activity"
 msgstr "النشاط"
 
+#: app/components/website/form-builder-sidebar.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1772
 msgid "Add"
 msgstr "إضافة"
@@ -382,6 +395,10 @@ msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير
 msgid "Add a comment..."
 msgstr "أضف تعليقاً..."
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:503
+#~ msgid "Add a field"
+#~ msgstr "إضافة حقل"
+
 #: app/components/settings/cards/organization/site-analytics-card.tsx:66
 #~ msgid "Add a Google Analytics 4 Measurement ID to track visitors on your tenant website. Leave blank to disable tracking."
 #~ msgstr "أضف معرّف قياس Google Analytics 4 لتتبع زوار موقع المستأجر. اتركه فارغاً لتعطيل التتبع."
@@ -397,6 +414,10 @@ msgstr "إضافة رابط"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5719
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
+
+#: app/utils/website/field-types.ts:63
+msgid "Add a title between fields."
+msgstr "أضف عنوانًا بين الحقول."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:582
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
@@ -416,6 +437,10 @@ msgstr "إضافة دعوة أخرى"
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
+#: app/components/website/form-builder-sidebar.tsx:566
+msgid "Add choice"
+msgstr "إضافة خيار"
+
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:928
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4375
 msgid "Add column"
@@ -425,7 +450,9 @@ msgstr "إضافة عمود"
 msgid "Add feature"
 msgstr "إضافة ميزة"
 
-#: app/components/website/create-form-dialog.tsx:166
+#: app/components/website/create-form-dialog.tsx:161
+#: app/components/website/form-builder-sidebar.tsx:127
+#: app/components/website/form-builder-sidebar.tsx:133
 msgid "Add field"
 msgstr "إضافة حقل"
 
@@ -439,7 +466,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:404
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -450,6 +477,10 @@ msgstr "إضافة أعضاء"
 #: app/components/settings/cards/connections-card.tsx:45
 msgid "Add more connections"
 msgstr "إضافة المزيد من الاتصالات"
+
+#: app/components/website/form-builder-sidebar.tsx:881
+msgid "Add name, email, choices, and more to start collecting responses."
+msgstr "أضف الاسم والبريد الإلكتروني والخيارات وغيرها لبدء جمع الردود."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5877
 msgid "Add new page"
@@ -498,6 +529,10 @@ msgstr "إضافة قسم"
 msgid "Add social link"
 msgstr "إضافة رابط تواصل اجتماعي"
 
+#: app/utils/website/field-types.ts:75
+msgid "Add supporting information."
+msgstr "أضف معلومات توضيحية."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:799
 msgid "Add the following configuration to the file:"
 msgstr "أضف التكوين التالي إلى الملف:"
@@ -514,7 +549,7 @@ msgstr "إضافة رابط"
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
-#: app/components/website/create-form-dialog.tsx:146
+#: app/components/website/create-form-dialog.tsx:141
 msgid "Add, name, and order each field."
 msgstr "أضف كل حقل وسمّه ورتّبه."
 
@@ -633,6 +668,7 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
+#: app/components/app-sidebar.tsx:308
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:32
 msgid "Analytics"
 msgstr "التحليلات"
@@ -645,7 +681,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:314
+#: app/components/app-sidebar.tsx:324
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:37
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
 msgid "Announcements"
@@ -838,6 +874,11 @@ msgstr "العودة إلى الأتمتة"
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
+#: app/components/website/form-builder-sidebar.tsx:461
+#: app/components/website/form-builder-sidebar.tsx:643
+msgid "Back to fields"
+msgstr "العودة إلى الحقول"
+
 #: app/routes/_auth+/forgot-password.sent.tsx:49
 #: app/routes/_auth+/forgot-password.tsx:245
 msgid "Back to login"
@@ -869,7 +910,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:370
+#: app/components/app-sidebar.tsx:380
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -882,7 +923,7 @@ msgstr "الفوترة والاشتراك"
 msgid "Body"
 msgstr "النص الأساسي"
 
-#: app/components/app-sidebar.tsx:305
+#: app/components/app-sidebar.tsx:315
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5102
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5870
@@ -915,15 +956,21 @@ msgstr "تقوم المتصفحات بتشغيل الفيديو تلقائياً
 msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Build"
 msgstr "البناء"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
+msgid "Builder"
+msgstr "المنشئ"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3577
 msgid "Button"
 msgstr "الزر"
 
-#: app/components/website/create-form-dialog.tsx:263
+#: app/components/website/create-form-dialog.tsx:258
+#: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
 msgstr "نص الزر"
 
@@ -969,7 +1016,8 @@ msgstr "اسم الحملة"
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
 #: app/components/ui/photo-crop-form.tsx:219
-#: app/components/website/create-form-dialog.tsx:297
+#: app/components/website/create-form-dialog.tsx:292
+#: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
@@ -1085,9 +1133,17 @@ msgstr "دفعات الخروج غير متصلة"
 msgid "Checkout processor"
 msgstr "معالج الدفع عند الخروج"
 
+#: app/components/website/form-builder-sidebar.tsx:550
+msgid "Choices"
+msgstr "الخيارات"
+
 #: app/components/website/link-inspector.tsx:434
 msgid "Choose a page..."
 msgstr "اختر صفحة..."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:112
+msgid "Choose a starting point"
+msgstr "اختر نقطة بداية"
 
 #: app/components/website/create-page-dialog.tsx:99
 msgid "Choose a template"
@@ -1163,6 +1219,34 @@ msgstr "إغلاق"
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
+
+#: app/utils/website/field-types.ts:69
+msgid "Collect a date and time."
+msgstr "اجمع تاريخًا ووقتًا."
+
+#: app/utils/website/field-types.ts:81
+msgid "Collect a longer written answer."
+msgstr "اجمع إجابة مكتوبة أطول."
+
+#: app/utils/website/form-templates.ts:31
+msgid "Collect a name, email address, and a detailed message."
+msgstr "اجمع الاسم والبريد الإلكتروني ورسالة مفصلة."
+
+#: app/utils/website/field-types.ts:27
+msgid "Collect a person’s name."
+msgstr "اجمع اسم الشخص."
+
+#: app/utils/website/field-types.ts:51
+msgid "Collect a phone number."
+msgstr "اجمع رقم هاتف."
+
+#: app/utils/website/field-types.ts:33
+msgid "Collect a short written answer."
+msgstr "اجمع إجابة مكتوبة قصيرة."
+
+#: app/utils/website/field-types.ts:39
+msgid "Collect a valid email address."
+msgstr "اجمع بريدًا إلكترونيًا صالحًا."
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:852
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:895
@@ -1335,6 +1419,14 @@ msgstr "متصل في {createdAtDate}"
 msgid "Connections"
 msgstr "الاتصالات"
 
+#: app/components/website/create-form-dialog.tsx:111
+msgid "Contact"
+msgstr "اتصل"
+
+#: app/utils/website/form-templates.ts:30
+msgid "Contact form"
+msgstr "نموذج اتصال"
+
 #: app/routes/organizations+/create.tsx:1354
 msgid "Contact support"
 msgstr "اتصل بالدعم"
@@ -1478,6 +1570,10 @@ msgstr "إنشاء حساب"
 msgid "Create an organization"
 msgstr "إنشاء منظمة"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:193
+msgid "Create and customize"
+msgstr "إنشاء وتخصيص"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:628
 msgid "Create and manage API keys to authenticate your MCP clients"
 msgstr "إنشاء وإدارة مفاتيح API لمصادقة عملاء MCP"
@@ -1512,9 +1608,9 @@ msgstr "إنشاء بث"
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
-#: app/components/website/create-form-dialog.tsx:90
-#: app/components/website/create-form-dialog.tsx:308
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:168
+#: app/components/website/create-form-dialog.tsx:75
+#: app/components/website/create-form-dialog.tsx:303
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:163
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
@@ -1547,7 +1643,7 @@ msgstr "إنشاء كلمة المرور"
 msgid "Create redirect"
 msgstr "إنشاء إعادة توجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:158
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
 
@@ -1591,7 +1687,7 @@ msgstr "إنشاء الصفحة"
 msgid "Creating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/website/create-form-dialog.tsx:310
+#: app/components/website/create-form-dialog.tsx:305
 msgid "Creating…"
 msgstr "جارٍ الإنشاء…"
 
@@ -1648,6 +1744,10 @@ msgstr "حدث مخصص"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:164
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
+
+#: app/components/website/create-form-dialog.tsx:108
+msgid "Custom form"
+msgstr "نموذج مخصص"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:17
 msgid "Custom trigger event"
@@ -1745,6 +1845,11 @@ msgstr "لوحة التحكم"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:124
 msgid "Database connection error"
 msgstr "خطأ في الاتصال بقاعدة البيانات"
+
+#: app/utils/website/field-types.ts:67
+#: app/utils/website/field-types.ts:70
+msgid "Date & time"
+msgstr "التاريخ والوقت"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:292
 msgid "days"
@@ -1892,7 +1997,8 @@ msgid "Deny"
 msgstr "رفض"
 
 #: app/components/settings/cards/organization/shop-card.tsx:268
-#: app/components/website/create-form-dialog.tsx:129
+#: app/components/website/create-form-dialog.tsx:124
+#: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3712
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4022
 #: app/routes/organizations+/create.tsx:773
@@ -1994,6 +2100,10 @@ msgstr "تم"
 msgid "Double-click a block to add it instantly"
 msgstr "انقر نقراً مزدوجاً على الكتلة لإضافتها فوراً"
 
+#: app/components/website/form-builder-sidebar.tsx:186
+msgid "Double-click a field to add it instantly"
+msgstr "انقر نقراً مزدوجاً على الحقل لإضافته فوراً"
+
 #: app/components/notes-chart.tsx:123
 msgid "Down by {absTrend}% this period"
 msgstr "انخفض بنسبة {absTrend}٪ في هذه الفترة"
@@ -2018,7 +2128,8 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:253
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5944
 msgid "Draft"
@@ -2028,9 +2139,9 @@ msgstr "مسودة"
 msgid "Draft something for me"
 msgstr "اكتب مسودة لي"
 
-#: app/components/data-table.tsx:148
-#~ msgid "Drag to reorder"
-#~ msgstr "اسحب لإعادة الترتيب"
+#: app/components/website/form-builder-sidebar.tsx:335
+msgid "Drag to reorder"
+msgstr "اسحب لإعادة الترتيب"
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:643
 msgid "Drag to reorder column"
@@ -2145,6 +2256,8 @@ msgstr "تعديل إعادة التوجيه"
 #: app/components/website/link-inspector.tsx:468
 #: app/routes/_auth+/login.tsx:767
 #: app/routes/_auth+/signup.tsx:218
+#: app/utils/website/field-types.ts:37
+#: app/utils/website/field-types.ts:40
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -2465,8 +2578,22 @@ msgstr "معاينة الميزة"
 msgid "Features"
 msgstr "الميزات"
 
-#: app/components/website/create-form-dialog.tsx:143
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
+#: app/components/website/create-form-dialog.tsx:117
+#: app/utils/website/form-templates.ts:50
+msgid "Feedback"
+msgstr "تعليقات"
+
+#: app/components/website/form-builder-sidebar.tsx:496
+msgid "Field settings"
+msgstr "إعدادات الحقل"
+
+#: app/components/website/form-builder-sidebar.tsx:141
+msgid "Field types"
+msgstr "أنواع الحقول"
+
+#: app/components/website/create-form-dialog.tsx:138
+#: app/components/website/form-builder-sidebar.tsx:841
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:198
 msgid "Fields"
 msgstr "الحقول"
 
@@ -2502,17 +2629,23 @@ msgstr "النموذج"
 #~ msgid "Form Identifier / Slug"
 #~ msgstr "معرّف النموذج / المسار"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:179
-#~ msgid "Form name"
-#~ msgstr "اسم النموذج"
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:175
+msgid "Form name"
+msgstr "اسم النموذج"
+
+#: app/components/website/form-builder-sidebar.tsx:651
+#: app/components/website/form-builder-sidebar.tsx:866
+msgid "Form settings"
+msgstr "إعدادات النموذج"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:32
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:50
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
+#: app/components/app-sidebar.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:156
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:151
 msgid "Forms"
 msgstr "النماذج"
 
@@ -2537,7 +2670,7 @@ msgstr "كامل"
 msgid "Full Name"
 msgstr "الاسم الكامل"
 
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:346
 msgid "General"
 msgstr "عام"
 
@@ -2573,12 +2706,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:386
+#: app/components/app-sidebar.tsx:396
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:146
-#: app/components/app-sidebar.tsx:401
+#: app/components/app-sidebar.tsx:411
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -2598,7 +2731,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
 #: app/components/app-sidebar.tsx:154
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:419
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -2606,6 +2739,10 @@ msgstr "إرسال ملاحظات"
 #: ../../packages/ai/src/components/ai-chat.tsx:468
 msgid "Give me examples"
 msgstr "أعطني أمثلة"
+
+#: app/utils/website/form-templates.ts:51
+msgid "Give visitors room to share thoughtful feedback."
+msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
@@ -2647,6 +2784,11 @@ msgstr "الدفع كضيف"
 #: app/components/data-table.tsx:813
 #~ msgid "Header"
 #~ msgstr "العنوان"
+
+#: app/utils/website/field-types.ts:61
+#: app/utils/website/field-types.ts:64
+msgid "Heading"
+msgstr "عنوان"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:800
 msgid "Headings"
@@ -2839,12 +2981,16 @@ msgstr "يتضمن {seats} مقعد مستخدم"
 msgid "Info"
 msgstr "معلومات"
 
+#: app/components/website/form-builder-sidebar.tsx:109
+msgid "Insert field here"
+msgstr "إدراج حقل هنا"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:273
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:342
 msgid "Insert Merge Tags:"
 msgstr "إدراج وسوم الدمج:"
 
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:356
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1014
 msgid "Integrations"
@@ -2960,7 +3106,8 @@ msgstr "اسم المفتاح"
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
-#: app/components/website/create-form-dialog.tsx:176
+#: app/components/website/create-form-dialog.tsx:171
+#: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
 msgstr "التسمية"
 
@@ -3020,6 +3167,11 @@ msgstr "بدء تشغيل اختباري في المُنشئ"
 msgid "Layout"
 msgstr "التخطيط"
 
+#: app/components/website/create-form-dialog.tsx:114
+#: app/utils/website/form-templates.ts:40
+msgid "Lead capture"
+msgstr "جمع العملاء المحتملين"
+
 #: app/components/feature-updates.tsx:205
 #: app/components/settings/cards/organization/announcement-sheet.tsx:486
 msgid "Learn more"
@@ -3043,6 +3195,14 @@ msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر م�
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
 msgid "Left"
 msgstr "اليسار"
+
+#: app/utils/website/field-types.ts:45
+msgid "Let people select one option."
+msgstr "اسمح للناس باختيار خيار واحد."
+
+#: app/utils/website/field-types.ts:57
+msgid "Let people select several options."
+msgstr "اسمح للناس باختيار عدة خيارات."
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:776
 msgid "Light"
@@ -3143,6 +3303,11 @@ msgstr "ينطبق الشعار والخطوط والألوان والزوايا
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
+#: app/utils/website/field-types.ts:79
+#: app/utils/website/field-types.ts:82
+msgid "Long text"
+msgstr "نص طويل"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4171
 msgid "Look"
 msgstr "الشكل"
@@ -3224,7 +3389,7 @@ msgstr "إدارة كلمة المرور والمصادقة الثنائية و�
 msgid "Manage your personal data in accordance with GDPR Article 20."
 msgstr "إدارة بياناتك الشخصية وفقاً للمادة 20 من اللائحة العامة لحماية البيانات (GDPR)."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:63
 msgid "Manage your public organization website and appearance."
 msgstr "إدارة موقع مؤسستك العام ومظهره."
 
@@ -3255,7 +3420,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:366
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3290,7 +3455,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:341
+#: app/components/app-sidebar.tsx:351
 #: app/components/organization-members.tsx:141
 msgid "Members"
 msgstr "الأعضاء"
@@ -3350,6 +3515,11 @@ msgstr "المزيد من الإجراءات"
 msgid "Multi-factor authentication"
 msgstr "المصادقة متعددة العوامل"
 
+#: app/utils/website/field-types.ts:55
+#: app/utils/website/field-types.ts:58
+msgid "Multiple choice"
+msgstr "اختيار متعدد"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4810
 msgid "Muted"
 msgstr "بدون صوت"
@@ -3358,10 +3528,13 @@ msgstr "بدون صوت"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
-#: app/components/website/create-form-dialog.tsx:100
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:204
+#: app/components/website/create-form-dialog.tsx:85
+#: app/components/website/form-builder-sidebar.tsx:673
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4320
 #: app/routes/organizations+/create.tsx:690
+#: app/utils/website/field-types.ts:25
+#: app/utils/website/field-types.ts:28
 msgid "Name"
 msgstr "الاسم"
 
@@ -3423,6 +3596,10 @@ msgstr "الوجهة الجديدة"
 #: app/components/settings/email-form.tsx:64
 msgid "New Email"
 msgstr "البريد الإلكتروني الجديد"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:105
+msgid "New form"
+msgstr "نموذج جديد"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
@@ -3553,6 +3730,10 @@ msgstr "لم يتم العثور على رموز تعبيرية"
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
+#: app/components/website/form-builder-sidebar.tsx:878
+msgid "No fields yet"
+msgstr "لا توجد حقول بعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #~ msgid "No forms yet."
 #~ msgstr "لا توجد نماذج بعد."
@@ -3619,6 +3800,10 @@ msgstr "لا توجد عمليات إعادة توجيه بعد"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:842
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:642
+msgid "No responses yet."
+msgstr "لا توجد ردود بعد."
 
 #: app/components/data-table.tsx:612
 #~ msgid "No results."
@@ -3708,7 +3893,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:361
+#: app/components/app-sidebar.tsx:371
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -3937,6 +4122,11 @@ msgstr "رابط الصفحة"
 msgid "Pages"
 msgstr "الصفحات"
 
+#: app/utils/website/field-types.ts:73
+#: app/utils/website/field-types.ts:76
+msgid "Paragraph"
+msgstr "فقرة"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:851
 msgid "Paragraphs, navigation, and other text."
 msgstr "الفقرات والتنقل والنصوص الأخرى."
@@ -4036,6 +4226,11 @@ msgstr "الهاتف"
 msgid "Phone links only work on devices that can place phone calls."
 msgstr "تعمل روابط الهاتف فقط على الأجهزة القادرة على إجراء مكالمات هاتفية."
 
+#: app/utils/website/field-types.ts:49
+#: app/utils/website/field-types.ts:52
+msgid "Phone number"
+msgstr "رقم الهاتف"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:432
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
@@ -4088,6 +4283,14 @@ msgstr "الصور والفيديوهات"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1706
 msgid "Pick a block to insert into your page."
 msgstr "اختر كتلة لإدراجها في صفحتك."
+
+#: app/components/website/form-builder-sidebar.tsx:136
+msgid "Pick a field to add to your form."
+msgstr "اختر حقلاً لإضافته إلى نموذجك."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:118
+msgid "Pick a template, then customize every field in the builder."
+msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4805
 msgid "Plain"
@@ -4174,6 +4377,7 @@ msgstr "التصيير المسبق"
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:550
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
 msgid "Preview"
 msgstr "معاينة"
@@ -4255,6 +4459,7 @@ msgstr "الوصول العام"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5958
 msgid "Publish"
@@ -4268,6 +4473,7 @@ msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار �
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5960
 msgid "Publish updates"
 msgstr "نشر التحديثات"
@@ -4276,7 +4482,9 @@ msgstr "نشر التحديثات"
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:251
+#: app/components/website/form-builder-sidebar.tsx:721
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:242
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5942
 msgid "Published"
@@ -4374,7 +4582,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:321
+#: app/components/app-sidebar.tsx:331
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:42
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -4458,9 +4666,18 @@ msgstr "إزالة"
 msgid "Remove access from all devices except this one"
 msgstr "إزالة الوصول من جميع الأجهزة عدا هذا الجهاز"
 
+#: app/components/website/form-builder-sidebar.tsx:593
+msgid "Remove choice"
+msgstr "إزالة الخيار"
+
 #: app/components/settings/cards/organization/site-card.tsx:411
 msgid "Remove domain"
 msgstr "إزالة النطاق"
+
+#: app/components/website/form-builder-sidebar.tsx:275
+#: app/components/website/form-builder-sidebar.tsx:504
+msgid "Remove field"
+msgstr "إزالة الحقل"
 
 #: app/components/note/comment-image-preview.tsx:81
 #: app/components/ui/multi-image-upload.tsx:281
@@ -4538,7 +4755,8 @@ msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 msgid "required"
 msgstr "مطلوب"
 
-#: app/components/website/create-form-dialog.tsx:240
+#: app/components/website/create-form-dialog.tsx:235
+#: app/components/website/form-builder-sidebar.tsx:604
 msgid "Required"
 msgstr "مطلوب"
 
@@ -4566,7 +4784,9 @@ msgstr "إعادة تعيين إلى التلقائي"
 msgid "Reset to preset"
 msgstr "إعادة التعيين إلى الإعداد المسبق"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:216
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:460
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:612
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
 msgid "Responses"
 msgstr "الردود"
 
@@ -4744,6 +4964,7 @@ msgid "Save changes"
 msgstr "حفظ التغييرات"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
@@ -4771,6 +4992,10 @@ msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الا
 msgid "Save these codes now!"
 msgstr "احفظ هذه الرموز الآن!"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:440
+#~ msgid "Saved"
+#~ msgstr "تم الحفظ"
+
 #: app/components/data-table.tsx:236
 #: app/components/data-table.tsx:267
 #~ msgid "Saving {headerValue}"
@@ -4787,6 +5012,10 @@ msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
 
 #: app/components/settings/two-factor-form.tsx:162
 msgid "Scan QR Code or Enter Setup Key"
@@ -5080,7 +5309,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:328
+#: app/components/app-sidebar.tsx:338
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -5122,7 +5351,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:351
+#: app/components/app-sidebar.tsx:361
 msgid "Shop"
 msgstr "المتجر"
 
@@ -5215,6 +5444,11 @@ msgstr "تسجيل الدخول باسم"
 msgid "Signing out..."
 msgstr "جاري تسجيل الخروج..."
 
+#: app/utils/website/field-types.ts:43
+#: app/utils/website/field-types.ts:46
+msgid "Single choice"
+msgstr "اختيار واحد"
+
 #: app/components/settings/cards/organization/billing-card.tsx:272
 msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
 msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
@@ -5298,9 +5532,13 @@ msgstr "مربع"
 msgid "Star"
 msgstr "تمييز بنجمة"
 
-#: app/components/website/create-form-dialog.tsx:93
+#: app/components/website/create-form-dialog.tsx:78
 msgid "Start from a template or build your own field set."
 msgstr "ابدأ من قالب أو أنشئ مجموعة حقول مخصصة."
+
+#: app/utils/website/form-templates.ts:24
+msgid "Start from scratch"
+msgstr "ابدأ من الصفر"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:69
 msgid "Start journey on lifecycle event"
@@ -5318,14 +5556,14 @@ msgstr "ابدأ المحادثة بإضافة التعليق الأول."
 msgid "Started At"
 msgstr "بدأ في"
 
-#: app/components/website/create-form-dialog.tsx:112
+#: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
 msgstr "نقطة البداية"
 
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:210
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:201
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr "الحالة"
@@ -5394,9 +5632,17 @@ msgstr "الموضوع"
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:615
+msgid "Submissions are stored in this organization’s regional tenant database."
+msgstr "تُحفظ المشاركات في قاعدة بيانات المستأجر الإقليمية لهذه المؤسسة."
+
 #: app/components/core/feedback-modal.tsx:112
 msgid "Submit"
 msgstr "إرسال"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:626
+msgid "Submitted"
+msgstr "تاريخ الإرسال"
 
 #: app/components/settings/cards/organization/billing-card.tsx:178
 msgid "Subscribe"
@@ -5419,7 +5665,8 @@ msgstr "بدأ الاشتراك"
 msgid "Success"
 msgstr "نجاح"
 
-#: app/components/website/create-form-dialog.tsx:275
+#: app/components/website/create-form-dialog.tsx:270
+#: app/components/website/form-builder-sidebar.tsx:708
 msgid "Success message"
 msgstr "رسالة النجاح"
 
@@ -5534,6 +5781,14 @@ msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهر�
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:348
+msgid "Test again"
+msgstr "الاختبار مرة أخرى"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:366
+msgid "Test mode — responses are not saved"
+msgstr "وضع الاختبار — لا يتم حفظ الردود"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:153
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:370
 msgid "Test run"
@@ -5550,6 +5805,11 @@ msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: 
 #: app/components/website/link-inspector.tsx:638
 msgid "Text"
 msgstr "نص"
+
+#: app/utils/website/field-types.ts:31
+#: app/utils/website/field-types.ts:34
+msgid "Text field"
+msgstr "حقل نصي"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3488
 msgid "Text only"
@@ -5855,7 +6115,8 @@ msgid "Two-factor authentication is currently enabled. Disabling it will make yo
 msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيلها سيجعل حسابك أقل أماناً. يرجى إدخال رمز المصادقة أو رمز احتياطي للتأكيد."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
-#: app/components/website/create-form-dialog.tsx:203
+#: app/components/website/create-form-dialog.tsx:198
+#: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:597
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3908
@@ -5897,6 +6158,7 @@ msgstr "نية غير معروفة"
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6008
 msgid "Unpublish"
@@ -5937,7 +6199,7 @@ msgid "Update your photo and personal details here."
 msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:603
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:204
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
 msgstr "تم التحديث"
@@ -6186,7 +6448,7 @@ msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
 #: app/components/app-sidebar.tsx:287
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:59
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
 msgid "Website"
 msgstr "الموقع الإلكتروني"
 
@@ -6241,6 +6503,10 @@ msgstr "ماذا يجب أن أعرف أيضاً؟"
 #: ../../packages/ai/src/components/ai-chat.tsx:459
 msgid "What tools can help?"
 msgstr "ما الأدوات التي يمكن أن تساعد؟"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
+msgid "What would you like to collect?"
+msgstr "ما الذي ترغب في جمعه؟"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:52
 msgid "What would you like to know?"

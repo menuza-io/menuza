@@ -46,6 +46,10 @@ msgstr "Cartes utilisées pour des achats précédents dans la boutique avec ce 
 msgid "Check your phone"
 msgstr "Vérifiez votre téléphone"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "Terminez la vérification avant d’envoyer."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continuer"
@@ -186,6 +190,10 @@ msgstr "Enregistrer"
 msgid "Saving..."
 msgstr "Enregistrement..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "Sélectionnez un formulaire publié dans l’éditeur de page."
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "Envoyer le code"
@@ -216,6 +224,10 @@ msgstr "Envoi en cours..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Merci pour votre achat !"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "Ce formulaire est actuellement indisponible."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

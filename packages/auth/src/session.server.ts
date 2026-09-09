@@ -1,7 +1,7 @@
 import { createCookieSessionStorage } from 'react-router'
 import {
 	operatorCookieName,
-	sharedCookieDomain,
+	operatorSessionCookieDomain,
 } from '@repo/common/cookie-domain'
 import { ENV } from './env.js'
 
@@ -27,10 +27,9 @@ export const authSessionStorage = createCookieSessionStorage({
 		sameSite: 'lax', // CSRF protection is advised if changing to 'none'
 		path: '/',
 		httpOnly: true,
-		domain: sharedCookieDomain(),
+		domain: operatorSessionCookieDomain(),
 		secrets: sessionSecrets,
 		secure: ENV.NODE_ENV === 'production',
-		...(process.env.MOCKS === 'true' ? { domain: 'localhost' } : {}),
 	},
 })
 

@@ -46,6 +46,10 @@ msgstr "此账户在商店过往购买中使用的银行卡。"
 msgid "Check your phone"
 msgstr "请查看手机"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Complete the verification check before submitting."
+msgstr "提交前请完成验证。"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "继续"
@@ -186,6 +190,10 @@ msgstr "保存更改"
 msgid "Saving..."
 msgstr "保存中..."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Select a published form in the page editor."
+msgstr "请在页面编辑器中选择已发布的表单。"
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
@@ -216,6 +224,10 @@ msgstr "正在提交..."
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "This form is currently unavailable."
+msgstr "此表单当前不可用。"
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."

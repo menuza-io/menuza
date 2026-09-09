@@ -45,8 +45,10 @@ export default function WebsiteLayout() {
 		},
 	]
 
-	// Builder routes (pages.$pageId) render full-viewport, skip the layout chrome
-	const isBuilderRoute = /\/website\/pages\/[^/]+$/.test(location.pathname)
+	// Builders render full-viewport and skip the website settings chrome.
+	const isBuilderRoute =
+		/\/website\/pages\/[^/]+$/.test(location.pathname) ||
+		/\/website\/forms\/[^/]+$/.test(location.pathname)
 
 	if (isBuilderRoute) {
 		return <Outlet />

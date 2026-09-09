@@ -14,7 +14,10 @@ test.describe('Website General Settings & Site Locales', () => {
 		await navigate('/:slug/website', { slug: org.slug })
 		await expect(page.getByLabel('Google Analytics ID')).toHaveCount(0)
 
-		await page.getByRole('link', { name: 'Analytics', exact: true }).click()
+		await page
+			.locator('#main-content')
+			.getByRole('link', { name: 'Analytics', exact: true })
+			.click()
 		await page.getByLabel('Facebook Pixel ID').fill('123456789012345')
 		await page.getByLabel('Google Tag Manager ID').fill('GTM-ABC1234')
 		await page.getByLabel('Google Analytics ID').fill('G-ABC1234567')

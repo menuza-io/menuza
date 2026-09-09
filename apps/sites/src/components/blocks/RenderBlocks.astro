@@ -43,7 +43,7 @@ const bodySections = sections.filter(
 			case 'cta':
 				return <CtaBlock config={section.config} />
 			case 'form':
-				return <FormBlock config={section.config} />
+				return <FormBlock config={section.config} sectionId={section.id} />
 			default:
 				return null
 		}

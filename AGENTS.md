@@ -288,8 +288,10 @@ import { useActionData } from 'react-router'
 
 **Pre-commit Hook Considerations**:
 
-- Pre-commit hooks run Prettier, Oxlint, and ESLint via Husky + lint-staged on staged files
-- Typecheck and tests are not part of pre-commit; run `npm run validate` before pushing
+- Pre-commit hooks run Prettier, Oxlint, and ESLint via Husky + lint-staged on
+  staged files
+- Typecheck and tests are not part of pre-commit; run `npm run validate` before
+  pushing
 - Large changesets may timeout during pre-commit checks
 - If pre-commit fails due to timeout (not errors):
   1. Verify changes pass individually: `npm run lint`, `npm run typecheck`
@@ -404,6 +406,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   have this.
 - `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` - Tenant-api
   US node only (`@repo/sms`). Do not set on App or KSA.
+- `PUBLIC_TURNSTILE_SITE_KEY` - Sites only: Cloudflare Turnstile site key for
+  public form blocks. Empty disables the widget (local dev).
+- `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
+  siteverify secret and comma-separated allowed hostnames for form submissions.
 
 **CMS Storage**:
 
@@ -414,8 +420,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 
 **Pre-commit Checks**:
 
-- Husky runs `lint-staged` on commit (Prettier, Oxlint, and ESLint on staged `*.{js,jsx,ts,tsx}` files)
-- Typecheck and full test suites are **not** run in pre-commit; use `npm run validate` before pushing
+- Husky runs `lint-staged` on commit (Prettier, Oxlint, and ESLint on staged
+  `*.{js,jsx,ts,tsx}` files)
+- Typecheck and full test suites are **not** run in pre-commit; use
+  `npm run validate` before pushing
 
 **Before Submitting PR**:
 

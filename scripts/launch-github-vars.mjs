@@ -21,6 +21,7 @@ export function getGhVariables(config) {
 		['WEB_R2_BUCKET_NAME', prod.web.r2_bucket_name],
 		['WEB_WORKER_NAME', prod.web.worker_name],
 		['SITES_WORKER_NAME', prod.sites.worker_name],
+		['SITES_DATA_KV_ID', prod.sites.sites_data_kv_id],
 		['JOBS_CRON_WORKER_NAME', prod.jobs_cron.worker_name],
 		['TENANT_API_US_WORKER_NAME', prod.tenant_api.worker_name],
 		['APP_BASE_URL', urls.app_base_url],
@@ -56,6 +57,7 @@ export function getGhVariables(config) {
 		['WEB_R2_BUCKET_NAME_STAGING', staging.web.r2_bucket_name],
 		['WEB_WORKER_NAME_STAGING', staging.web.worker_name],
 		['SITES_WORKER_NAME_STAGING', staging.sites.worker_name],
+		['SITES_DATA_KV_ID_STAGING', staging.sites.sites_data_kv_id],
 		['JOBS_CRON_WORKER_NAME_STAGING', staging.jobs_cron.worker_name],
 		['TENANT_API_US_WORKER_NAME_STAGING', staging.tenant_api.worker_name],
 	]

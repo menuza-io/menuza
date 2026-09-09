@@ -16,6 +16,20 @@ Sites runs on port **3008**. Through the HTTPS proxy (`:2999`), the derived
 `{brand.slug}.test` domain and its org subdomains and custom domains are routed
 here.
 
+Published sites do not require a local KV namespace. Development safely runs
+without Cloudflare's edge cache. To open an organization site locally, add its
+hostname and restart the dev processes:
+
+```bash
+npm run setup:hosts
+npm run dev
+# https://acme.epic-stack.test:2999 (replace `acme` with the org slug)
+```
+
+Opening `localhost:3008` does not identify an organization. Re-run
+`npm run setup:hosts` after creating or publishing a new organization because
+`/etc/hosts` cannot provide wildcard subdomains.
+
 ### Env (varlock)
 
 Config is defined in [`.env.schema`](.env.schema) and loaded via

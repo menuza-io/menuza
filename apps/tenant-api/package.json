@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
+    "@repo/common": "*",
     "@repo/config": "*",
     "@repo/database": "^0.0.0",
     "@repo/email": "*",

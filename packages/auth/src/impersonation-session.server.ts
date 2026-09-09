@@ -4,15 +4,14 @@ import { createCookieSessionStorage } from 'react-router'
 
 import {
 	operatorCookieName,
-	sharedCookieDomain,
+	operatorSessionCookieDomain,
 } from '@repo/common/cookie-domain'
 
 const IMPERSONATION_SESSION_TTL = 15 * 60 * 1000 // 15 minutes in milliseconds
 export const IMPERSONATION_COOKIE_MAX_AGE = 15 * 60 // 15 minutes in seconds
 
 function getImpersonationSecret(): string {
-	const secret =
-		ENV.IMPERSONATION_SESSION_SECRET || ENV.SESSION_SECRET
+	const secret = ENV.IMPERSONATION_SESSION_SECRET || ENV.SESSION_SECRET
 	if (!secret) {
 		throw new Error(
 			'IMPERSONATION_SESSION_SECRET or SESSION_SECRET environment variable is required',
@@ -38,7 +37,7 @@ export const impersonationSessionStorage = createCookieSessionStorage({
 		sameSite: 'lax',
 		path: '/',
 		httpOnly: true,
-		domain: sharedCookieDomain(),
+		domain: operatorSessionCookieDomain(),
 		secrets: impersonationSecrets,
 		secure: ENV.NODE_ENV === 'production',
 	},

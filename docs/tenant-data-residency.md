@@ -307,6 +307,14 @@ safe: tenant-api returns 404/409 when `dataRegion !== DATA_REGION`.
 
 ### Website form submission retention and deletion
 
+The regional tenant database remains the source of truth for website forms.
+Published form definitions (name, description, field labels/types, and button
+copy) are projected into the shared `SITES_DATA_KV` namespace so Sites can
+render forms in the initial HTML without a regional request on every page view.
+Page blocks store only the form ID. KV is updated when a form is published or
+deleted and populated from tenant-api on a cache miss. It never contains form
+responses or submitted customer values.
+
 Website form submissions remain in the organization's regional tenant database.
 The daily `form-submission-retention` job asks the matching regional tenant-api
 to delete submissions older than 365 days; submission values never pass through

@@ -9,6 +9,10 @@ run_worker_first = ["/*"]
 html_handling = "none"
 not_found_handling = "none"
 
+[[kv_namespaces]]
+binding = "SITES_DATA_KV"
+id = "00000000000000000000000000000001"
+
 # Patched at deploy by scripts/patch-wrangler.mjs
 [vars]
 PUBLIC_APP_URL = "https://app.epic-startup.com"
@@ -25,3 +29,6 @@ name = "epic-startup-sites-preview"
 [env.staging]
 name = "epic-startup-sites-staging"
 
+[[env.staging.kv_namespaces]]
+binding = "SITES_DATA_KV"
+id = "00000000000000000000000000000002"

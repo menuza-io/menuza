@@ -31,15 +31,53 @@ export function sharedCookieDomainFromHost(
 	return `.${parts.slice(1).join('.')}`
 }
 
-export function sharedCookieDomain(
-	origin = ENV.BASE_URL,
-): string | undefined {
+export function sharedCookieDomain(origin = ENV.BASE_URL): string | undefined {
 	if (!origin) return undefined
 	try {
 		return sharedCookieDomainFromHost(new URL(origin).host)
 	} catch {
 		return undefined
 	}
+}
+
+function originHostname(origin: string | null | undefined): string | undefined {
+	if (!origin) return undefined
+	try {
+		return new URL(origin).hostname.toLowerCase()
+	} catch {
+		return undefined
+	}
+}
+
+function isLocalhostHostname(host: string): boolean {
+	return (
+		host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost')
+	)
+}
+
+/**
+ * Cookie Domain for operator auth sessions (`en_session`, `en_imp_session`).
+ *
+ * `BASE_URL` is often a `*.test` hostname for OAuth redirect URIs while local
+ * dev and Playwright still hit `http://localhost:{port}`. A BASE_URL-derived
+ * apex domain would block the browser from storing the cookie on localhost.
+ * When `MOCKS=true` (local `npm run dev` and CI E2E), use host-only cookies
+ * unless BASE_URL is already localhost-shaped (including `app.localhost`).
+ */
+export function operatorSessionCookieDomain(
+	origin = ENV.BASE_URL,
+): string | undefined {
+	const fromOrigin = sharedCookieDomain(origin)
+	if (!fromOrigin) return undefined
+
+	if (process.env.MOCKS === 'true') {
+		const host = originHostname(origin)
+		if (host && !isLocalhostHostname(host)) {
+			return undefined
+		}
+	}
+
+	return fromOrigin
 }
 
 export function isStagingOperatorHost(
@@ -77,8 +115,7 @@ export function isAdminOperatorHost(
  * Admin keeps the operator session; App shows the impersonated customer context.
  */
 export function shouldApplyImpersonationToUserId(request: Request): boolean {
-	const hostHeader =
-		request.headers.get('host') ?? new URL(request.url).host
+	const hostHeader = request.headers.get('host') ?? new URL(request.url).host
 	if (isAdminOperatorHost(hostHeader)) return false
 	if (isAppOperatorHost(hostHeader)) return true
 	const host = hostHeader.split(':')[0]?.toLowerCase() ?? ''
