@@ -25,6 +25,9 @@ describe('website block types', () => {
 		expect(
 			ADDABLE_BLOCK_TYPES.some((block) => block.type === 'testimonials'),
 		).toBe(true)
+		expect(ADDABLE_BLOCK_TYPES.some((block) => block.type === 'form')).toBe(
+			true,
+		)
 	})
 
 	it('pins header first and footer last when reordering', () => {

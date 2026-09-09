@@ -209,6 +209,10 @@ msgstr "Iniciar sesión"
 msgid "Something went wrong."
 msgstr "Algo salió mal."
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Submitting..."
+msgstr "Enviando..."
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "¡Gracias por tu compra!"
@@ -220,6 +224,10 @@ msgstr "Esta tienda no está disponible en este momento."
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
 msgstr "No se pudo iniciar el pago. Inténtalo de nuevo."
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Unable to submit the form. Please try again."
+msgstr "No se pudo enviar el formulario. Inténtalo de nuevo."
 
 #: src/pages/profile.astro.ts:3
 msgid "Update your basic details below."

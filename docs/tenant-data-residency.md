@@ -304,3 +304,13 @@ safe: tenant-api returns 404/409 when `dataRegion !== DATA_REGION`.
 | Empty customers after a region change  | Expected. Wipe is the product behavior; there is no PII migration.                                  |
 | Production tenant-api refuses to start | Placeholder `do-not-use-in-prod` secrets, missing `DATA_REGION`, or short `INTERNAL_COMMAND_TOKEN`. |
 | KSA OTP fails in production            | Twilio is blocked; configure in-kingdom SMS.                                                        |
+
+### Website form submission retention and deletion
+
+Website form submissions remain in the organization's regional tenant database.
+The daily `form-submission-retention` job asks the matching regional tenant-api
+to delete submissions older than 365 days; submission values never pass through
+the US control plane. For a data-subject deletion request, an authorized
+operator can delete one response with
+`DELETE /operator/forms/:formId/submissions/:submissionId`. Deleting a form
+still cascades to all of its submissions.

@@ -15,6 +15,7 @@ const JOB_ROUTES = {
 	'0 2 * * *': '/resources/jobs/audit-log-archival',
 	'0 3 * * *': '/resources/jobs/mcp-token-cleanup',
 	'0 4 * * *': '/resources/jobs/gdpr-erasure',
+	'0 5 * * *': '/resources/jobs/form-submission-retention',
 } as const
 
 const TENANT_ENGAGEMENT_SYNC_CRON = '0 * * * *'

@@ -209,6 +209,10 @@ msgstr "登录"
 msgid "Something went wrong."
 msgstr "出了点问题。"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Submitting..."
+msgstr "正在提交..."
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
@@ -220,6 +224,10 @@ msgstr "该商店目前不可用。"
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
 msgstr "无法开始结账，请重试。"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Unable to submit the form. Please try again."
+msgstr "无法提交表单。请重试。"
 
 #: src/pages/profile.astro.ts:3
 msgid "Update your basic details below."

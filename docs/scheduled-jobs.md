@@ -26,11 +26,12 @@ as the Admin cache route).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                | Purpose                       |
-| ----------- | ------------------------------------ | ----------------------------- |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival` | Archive old audit logs        |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`  | Remove expired MCP tokens     |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`       | Process pending GDPR erasures |
+| Cron        | Route                                       | Purpose                                                      |
+| ----------- | ------------------------------------------- | ------------------------------------------------------------ |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`        | Archive old audit logs                                       |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`         | Remove expired MCP tokens                                    |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`              | Process pending GDPR erasures                                |
+| `0 5 * * *` | `/resources/jobs/form-submission-retention` | Delete regional website-form submissions older than 365 days |
 
 ## Secrets and configuration
 

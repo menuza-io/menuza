@@ -71,6 +71,13 @@
 			"when": 1788721685225,
 			"tag": "0009_notification_sse_polling_indexes",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "6",
+			"when": 1788877782555,
+			"tag": "0010_organization_analytics_integrations",
+			"breakpoints": true
 		}
 	]
 }

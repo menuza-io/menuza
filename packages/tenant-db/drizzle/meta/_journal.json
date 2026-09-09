@@ -43,6 +43,20 @@
 			"when": 1788719155295,
 			"tag": "0005_refresh-token-reuse-detection",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1788720000000,
+			"tag": "0006_journey-step-idempotency",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "6",
+			"when": 1788884863954,
+			"tag": "0007_website_forms",
+			"breakpoints": true
 		}
 	]
 }

@@ -53,7 +53,10 @@ export type PublicOrganization = {
 	} | null
 	announcements?: PublicSiteAnnouncement[]
 	redirects?: PublicSiteRedirect[]
+	facebookPixelId?: string | null
+	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
+	tiktokPixelId?: string | null
 }
 
 function getAppUrl(): string {

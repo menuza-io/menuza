@@ -25,7 +25,7 @@ export const operatorRoutes = new Hono()
 
 const OPERATOR_LIST_LIMIT = 100
 
-async function authenticateOperator(c: Context) {
+export async function authenticateOperator(c: Context) {
 	const token = getBearerToken(c.req.header('Authorization')) || null
 	if (!token) {
 		throw c.json({ error: 'Unauthorized' }, 401)

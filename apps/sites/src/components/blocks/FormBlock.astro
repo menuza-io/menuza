@@ -1,0 +1,80 @@
+---
+import { msg } from '@lingui/core/macro'
+import {
+	siteBtnPrimaryClass,
+	siteFieldLabelClass,
+	siteInputClass,
+	siteStatusErrorClass,
+	siteStatusSuccessClass,
+} from '~/lib/form-classes'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+type FormField = { id: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean }
+type WebsiteForm = { id: string; name: string; description: string | null; fields: FormField[]; submitLabel: string; successMessage: string }
+const { config } = Astro.props
+const organization = Astro.locals.organization
+const formId = String(config?.formId || '')
+const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : ''
+const params = new URLSearchParams()
+if (Astro.locals.orgSlug) params.set('slug', Astro.locals.orgSlug)
+if (Astro.locals.customHost) params.set('host', Astro.locals.customHost)
+async function loadForm() {
+	if (!formId || !tenantApiUrl) return null
+	try {
+		const response = await fetch(`${tenantApiUrl}/forms/${encodeURIComponent(formId)}?${params}`, {
+			headers: { Accept: 'application/json', Origin: Astro.url.origin },
+			signal: AbortSignal.timeout(3000),
+		})
+		if (!response.ok) return null
+		return (await response.json()) as { form?: WebsiteForm }
+	} catch {
+		return null
+	}
+}
+const payload = await loadForm()
+const form = payload?.form
+const blockId = `website-form-${formId}`
+const submitting = Astro.locals.i18n._(msg`Submitting...`)
+const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Please try again.`)
+---
+
+<section class="px-4 py-14 sm:py-20">
+	<div class="mx-auto w-full max-w-2xl">
+		{form ? (
+			<div class="space-y-7">
+				{config?.showTitle !== false ? <div class="space-y-2"><h2 class="font-heading text-3xl font-semibold tracking-tight text-foreground">{form.name}</h2>{form.description ? <p class="text-muted-foreground">{form.description}</p> : null}</div> : null}
+				<form id={blockId} class="space-y-5" data-form-id={form.id} data-tenant-api-url={tenantApiUrl} data-org-slug={Astro.locals.orgSlug || undefined} data-custom-host={Astro.locals.customHost || undefined} data-submit-label={form.submitLabel} data-submitting-label={submitting} data-error-label={submissionError}>
+					<div class="hidden" aria-hidden="true"><label for={`${blockId}-website`}>Website</label><input id={`${blockId}-website`} name="website" tabindex="-1" autocomplete="off" /></div>
+					{form.fields.map((field) => <div class="space-y-2"><label class={siteFieldLabelClass} for={`${blockId}-${field.id}`}>{field.label}{field.required ? <span aria-hidden="true"> *</span> : null}</label>{field.type === 'textarea' ? <textarea id={`${blockId}-${field.id}`} name={field.id} required={field.required} rows="5" maxlength="5000" class:list={[siteInputClass, 'h-auto resize-y']} /> : <input id={`${blockId}-${field.id}`} name={field.id} type={field.type} required={field.required} maxlength="5000" class={siteInputClass} />}</div>)}
+					<p data-form-status class="hidden" role="status"></p>
+					<button class={siteBtnPrimaryClass} type="submit">{form.submitLabel}</button>
+				</form>
+			</div>
+		) : <p class="text-muted-foreground text-center">Select a published form in the page editor.</p>}
+	</div>
+</section>
+
+{form ? <script is:inline define:vars={{ blockId, successClass: siteStatusSuccessClass, errorClass: siteStatusErrorClass }}>
+	const formElement = document.getElementById(blockId)
+	formElement?.addEventListener('submit', async (event) => {
+		event.preventDefault()
+		if (!(formElement instanceof HTMLFormElement)) return
+		const button = formElement.querySelector('button[type="submit"]')
+		const status = formElement.querySelector('[data-form-status]')
+		if (!(button instanceof HTMLButtonElement) || !(status instanceof HTMLElement)) return
+		button.disabled = true
+		button.textContent = formElement.dataset.submittingLabel || 'Submitting...'
+		status.className = 'hidden'
+		const formData = new FormData(formElement)
+		const website = String(formData.get('website') || '')
+		formData.delete('website')
+		try {
+			const response = await fetch(`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: formElement.dataset.orgSlug, host: formElement.dataset.customHost, website, values: Object.fromEntries(formData.entries()) }) })
+			const result = await response.json()
+			if (!response.ok) throw new Error(result.error || formElement.dataset.errorLabel || 'Unable to submit the form.')
+			formElement.reset(); status.textContent = result.message; status.className = successClass
+		} catch (error) {
+			status.textContent = error instanceof Error ? error.message : formElement.dataset.errorLabel || 'Unable to submit the form.'; status.className = errorClass
+		} finally { button.disabled = false; button.textContent = formElement.dataset.submitLabel || 'Submit' }
+	})
+</script> : null}
