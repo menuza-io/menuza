@@ -58,6 +58,7 @@ import {
 	deleteCachedPublicForm,
 	setCachedPublicForm,
 } from '#app/utils/sites/kv-cache.server.ts'
+import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 type FormField = PublicFormField
@@ -101,12 +102,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 	const response = await fetchTenant(
 		`/operator/forms/${encodeURIComponent(params.formId || '')}/submissions`,
+		{ signal: AbortSignal.timeout(3000) },
 	)
 	if (!response.ok) {
-		throw new Response(
-			response.status === 404 ? 'Form not found' : 'Regional forms unavailable',
-			{ status: response.status },
-		)
+		if (response.status === 404) {
+			throw new Response('Form not found', { status: 404 })
+		}
+		throw new Response('Regional forms unavailable', { status: 502 })
 	}
 	const { locales } = parseSiteLocalesConfig(
 		organization.siteLocales,
@@ -150,11 +152,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			{ status: response.status },
 		)
 	}
-	const payload = (await response.json()) as { form: WebsiteForm }
-	const projection = toPublicFormProjection(payload.form)
+	const payload = await response.json().catch(() => null)
+	const savedForm = parseTenantFormResponse(payload)
+	if (!savedForm) {
+		return Response.json({ error: 'Unable to save the form.' }, { status: 502 })
+	}
+	const projection = toPublicFormProjection(savedForm)
 	if (projection) await setCachedPublicForm(orgId, projection)
-	else await deleteCachedPublicForm(orgId, payload.form.id)
-	return { success: true, form: payload.form }
+	else await deleteCachedPublicForm(orgId, savedForm.id)
+	return { success: true, form: savedForm }
 }
 
 function FormFieldPreview({ field }: { field: FormField }) {

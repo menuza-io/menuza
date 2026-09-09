@@ -15,7 +15,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { type PublicFormField } from '@repo/common/public-form'
 import { pickLocalized } from '@repo/common/site-locales'
 import { cn } from '@repo/ui'
@@ -35,7 +36,6 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { Switch } from '@repo/ui/switch'
 import {
 	useContext,
-	useEffect,
 	useId,
 	useState,
 	type Dispatch,
@@ -52,7 +52,9 @@ import { TranslateItemsButton } from '#app/components/website/translate-provider
 import {
 	ADDABLE_FIELD_TYPES,
 	createField,
+	DEFAULT_CHOICE_OPTIONS,
 	FIELD_TYPES,
+	nextChoiceOption,
 	type FieldType,
 } from '#app/utils/website/field-types.ts'
 import {
@@ -71,21 +73,6 @@ type WebsiteForm = {
 	successMessage: string
 }
 
-function fieldPreviewText(
-	field: PublicFormField,
-	activeLocale: string,
-	defaultLocale: string,
-) {
-	const label = pickLocalized(field.label, activeLocale, defaultLocale)
-	if (field.type === 'single_choice' || field.type === 'multiple_choice') {
-		const count = field.options?.length ?? 0
-		if (count > 0) {
-			return `${count} choice${count === 1 ? '' : 's'}`
-		}
-	}
-	return label || FIELD_TYPES[field.type].label
-}
-
 function AddFieldDialog({
 	position,
 	onAdd,
@@ -95,6 +82,7 @@ function AddFieldDialog({
 	onAdd: (type: FieldType, position: number) => void
 	trigger?: 'button' | 'insert' | 'footer'
 }) {
+	const { _ } = useLingui()
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<FieldType>(
 		ADDABLE_FIELD_TYPES[0]?.type ?? 'name',
@@ -118,7 +106,7 @@ function AddFieldDialog({
 					type="button"
 					className="group/insert relative -my-0.5 flex h-3.5 w-full items-center justify-center"
 					onClick={() => setOpen(true)}
-					aria-label="Insert field here"
+					aria-label={_(msg`Insert field here`)}
 				>
 					<span className="bg-border absolute inset-x-3 h-px origin-center scale-x-0 opacity-0 transition duration-150 ease-out group-hover/insert:scale-x-100 group-hover/insert:opacity-100 group-focus-visible/insert:scale-x-100 group-focus-visible/insert:opacity-100" />
 					<span className="border-border bg-background text-muted-foreground relative z-10 flex size-5 items-center justify-center rounded-full border opacity-0 shadow-sm transition duration-150 ease-out group-hover/insert:opacity-100 group-focus-visible/insert:opacity-100">
@@ -150,14 +138,8 @@ function AddFieldDialog({
 				</DialogHeader>
 				<div
 					role="listbox"
-					aria-label="Field types"
+					aria-label={_(msg`Field types`)}
 					className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-					onKeyDown={(event) => {
-						if (event.key === 'Enter') {
-							event.preventDefault()
-							confirmAdd()
-						}
-					}}
 				>
 					{ADDABLE_FIELD_TYPES.map((option) => {
 						const isSelected = selected === option.type
@@ -168,6 +150,7 @@ function AddFieldDialog({
 								role="option"
 								aria-selected={isSelected}
 								onClick={() => setSelected(option.type)}
+								onFocus={() => setSelected(option.type)}
 								onDoubleClick={() => confirmAdd(option.type)}
 								className={cn(
 									'group/tile border-border hover:bg-muted/50 focus-visible:ring-ring flex flex-col items-start gap-3 rounded-xl border p-3 text-left transition-[background-color,border-color] duration-150 outline-none focus-visible:ring-2',
@@ -234,9 +217,16 @@ function FieldPreviewCard({
 	dragHandle?: ReactNode
 	isDragging?: boolean
 }) {
+	const { _ } = useLingui()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const fieldDef = FIELD_TYPES[field.type]
-	const preview = fieldPreviewText(field, activeLocale, defaultLocale)
+	const choiceCount = field.options?.length ?? 0
+	const preview =
+		(field.type === 'single_choice' || field.type === 'multiple_choice') &&
+		choiceCount > 0
+			? _(plural(choiceCount, { one: '# choice', other: '# choices' }))
+			: pickLocalized(field.label, activeLocale, defaultLocale) ||
+				fieldDef.label
 
 	return (
 		<div
@@ -248,6 +238,7 @@ function FieldPreviewCard({
 			role="button"
 			tabIndex={0}
 			onKeyDown={(event) => {
+				if (event.target !== event.currentTarget) return
 				if (event.key === 'Enter' || event.key === ' ') {
 					event.preventDefault()
 					onSelect()
@@ -280,7 +271,7 @@ function FieldPreviewCard({
 					variant="ghost"
 					size="icon-xs"
 					className="text-destructive hover:text-destructive"
-					aria-label="Remove field"
+					aria-label={_(msg`Remove field`)}
 					onClick={(event) => {
 						event.stopPropagation()
 						onRemove()
@@ -304,6 +295,7 @@ function SortableFieldCard({
 	onSelect: () => void
 	onRemove: () => void
 }) {
+	const { _ } = useLingui()
 	const {
 		attributes,
 		listeners,
@@ -339,7 +331,7 @@ function SortableFieldCard({
 							'focus-visible:pointer-events-auto focus-visible:opacity-100',
 							isDragging && 'pointer-events-auto opacity-100',
 						)}
-						aria-label="Drag to reorder"
+						aria-label={_(msg`Drag to reorder`)}
 						{...attributes}
 						{...listeners}
 					>
@@ -367,12 +359,7 @@ function FieldsList({
 	onAdd: (type: FieldType, position: number) => void
 }) {
 	const dndId = useId()
-	const [items, setItems] = useState(fields)
 	const [isDragging, setIsDragging] = useState(false)
-
-	useEffect(() => {
-		setItems(fields)
-	}, [fields])
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -384,13 +371,11 @@ function FieldsList({
 		setIsDragging(false)
 		if (!over || active.id === over.id) return
 
-		const oldIndex = items.findIndex((field) => field.id === active.id)
-		const newIndex = items.findIndex((field) => field.id === over.id)
+		const oldIndex = fields.findIndex((field) => field.id === active.id)
+		const newIndex = fields.findIndex((field) => field.id === over.id)
 		if (oldIndex < 0 || newIndex < 0) return
 
-		const next = arrayMove(items, oldIndex, newIndex)
-		setItems(next)
-		onReorder(next.map((field) => field.id))
+		onReorder(arrayMove(fields, oldIndex, newIndex).map((field) => field.id))
 	}
 
 	return (
@@ -405,10 +390,10 @@ function FieldsList({
 				onDragEnd={handleDragEnd}
 			>
 				<SortableContext
-					items={items.map((field) => field.id)}
+					items={fields.map((field) => field.id)}
 					strategy={verticalListSortingStrategy}
 				>
-					{items.map((field, index) => (
+					{fields.map((field, index) => (
 						<div key={field.id}>
 							{index === 0 ? (
 								<div
@@ -455,6 +440,7 @@ function FieldEditorPanel({
 	onRemove: () => void
 	canRemove: boolean
 }) {
+	const { _ } = useLingui()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const fieldDef = FIELD_TYPES[field.type]
 	const translateItems = collectFieldTranslationFields(
@@ -470,7 +456,7 @@ function FieldEditorPanel({
 					variant="ghost"
 					size="icon-xs"
 					onClick={onBack}
-					aria-label="Back to fields"
+					aria-label={_(msg`Back to fields`)}
 				>
 					<Icon name="chevron-left" className="size-4" />
 				</Button>
@@ -513,7 +499,7 @@ function FieldEditorPanel({
 							size="icon-xs"
 							disabled={!canRemove}
 							onClick={onRemove}
-							aria-label="Remove field"
+							aria-label={_(msg`Remove field`)}
 						>
 							<Icon name="trash-2" className="size-4" />
 						</Button>
@@ -541,7 +527,7 @@ function FieldEditorPanel({
 									...(['single_choice', 'multiple_choice'].includes(
 										event.target.value,
 									) && !field.options?.length
-										? { options: ['Option 1', 'Option 2'] }
+										? { options: [...DEFAULT_CHOICE_OPTIONS] }
 										: {}),
 								})
 							}
@@ -569,7 +555,7 @@ function FieldEditorPanel({
 										onUpdate({
 											options: [
 												...(field.options ?? []),
-												`Option ${(field.options?.length ?? 0) + 1}`,
+												nextChoiceOption(field.options?.length ?? 0),
 											],
 										})
 									}
@@ -602,7 +588,7 @@ function FieldEditorPanel({
 												),
 											})
 										}
-										aria-label="Remove choice"
+										aria-label={_(msg`Remove choice`)}
 									>
 										<Icon name="x" className="size-4" />
 									</Button>
@@ -637,6 +623,7 @@ function FormSettingsPanel({
 	onBack: () => void
 	onChange: Dispatch<SetStateAction<WebsiteForm>>
 }) {
+	const { _ } = useLingui()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const translateItems = collectFormTranslationFields(
 		form,
@@ -651,7 +638,7 @@ function FormSettingsPanel({
 					variant="ghost"
 					size="icon-xs"
 					onClick={onBack}
-					aria-label="Back to fields"
+					aria-label={_(msg`Back to fields`)}
 				>
 					<Icon name="chevron-left" className="size-4" />
 				</Button>
@@ -761,6 +748,7 @@ export function FormBuilderSidebar({
 	setSelectedId: (id: string | null) => void
 	className?: string
 }) {
+	const { _ } = useLingui()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const [showSettings, setShowSettings] = useState(false)
 	const selected = form.fields.find((field) => field.id === selectedId) ?? null
@@ -771,13 +759,19 @@ export function FormBuilderSidebar({
 	)
 
 	const addField = (type: FieldType, position: number) => {
-		const field = createField(type, FIELD_TYPES[type].defaultLabel, form.fields)
+		let createdId: string | undefined
 		setForm((current) => {
+			const field = createField(
+				type,
+				FIELD_TYPES[type].defaultLabel,
+				current.fields,
+			)
+			createdId = field.id
 			const fields = [...current.fields]
 			fields.splice(position, 0, field)
 			return { ...current, fields }
 		})
-		setSelectedId(field.id)
+		if (createdId) setSelectedId(createdId)
 		setShowSettings(false)
 	}
 
@@ -794,12 +788,15 @@ export function FormBuilderSidebar({
 	}
 
 	const reorderFields = (orderedIds: string[]) => {
-		setForm((current) => ({
-			...current,
-			fields: orderedIds.map((id) =>
-				current.fields.find((field) => field.id === id)!,
-			),
-		}))
+		setForm((current) => {
+			const byId = new Map(current.fields.map((field) => [field.id, field]))
+			const ordered = orderedIds
+				.map((id) => byId.get(id))
+				.filter((field): field is PublicFormField => Boolean(field))
+			const listed = new Set(orderedIds)
+			const missing = current.fields.filter((field) => !listed.has(field.id))
+			return { ...current, fields: [...ordered, ...missing] }
+		})
 	}
 
 	return (
@@ -863,7 +860,7 @@ export function FormBuilderSidebar({
 								variant="ghost"
 								size="icon-xs"
 								onClick={() => setShowSettings(true)}
-								aria-label="Form settings"
+								aria-label={_(msg`Form settings`)}
 							>
 								<Icon name="cog" className="size-4" />
 							</Button>

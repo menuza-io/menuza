@@ -15,7 +15,7 @@ import {
 } from '~/lib/public-form-cache'
 import { getTenantApiUrl } from '~/lib/tenant-api'
 
-const { config } = Astro.props
+const { config, sectionId } = Astro.props
 const organization = Astro.locals.organization
 const formId = String(config?.formId || '')
 const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : ''
@@ -57,7 +57,7 @@ const activeLocale =
 	'en'
 const defaultLocale =
 	organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
-const blockId = `website-form-${formId || crypto.randomUUID()}`
+const blockId = `website-form-${sectionId || formId || crypto.randomUUID()}`
 const unavailable = Astro.locals.i18n._(msg`This form is currently unavailable.`)
 const selectForm = Astro.locals.i18n._(msg`Select a published form in the page editor.`)
 const submitting = Astro.locals.i18n._(msg`Submitting...`)
@@ -238,13 +238,16 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 								values: Object.fromEntries(
 									Array.from(new Set(formData.keys())).map((key) => {
 										const values = formData.getAll(key).map(String)
-										return [key, values.length > 1 ? values.join(', ') : values[0] || '']
+										return [
+											key,
+											values.length > 1 ? values : values[0] || '',
+										]
 									}),
 								),
 							}),
 						},
 					)
-					const result = await response.json()
+					const result = await response.json().catch(() => ({}))
 					if (!response.ok) {
 						throw new Error(
 							result.error ||

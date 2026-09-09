@@ -1,4 +1,5 @@
 import {
+	PUBLIC_FORM_CACHE_TTL_SECONDS,
 	publicFormKvKey,
 	publicFormProjectionSchema,
 	type PublicFormProjection,
@@ -34,7 +35,9 @@ export async function setCachedPublicForm(
 		const key = publicFormKvKey(organizationId, form.id)
 		const current = await kv.get<PublicFormProjection>(key, 'json')
 		if (current && current.revision > form.revision) return
-		await kv.put(key, JSON.stringify(form))
+		await kv.put(key, JSON.stringify(form), {
+			expirationTtl: PUBLIC_FORM_CACHE_TTL_SECONDS,
+		})
 	} catch {
 		// A cache write must never prevent the public form from rendering.
 	}

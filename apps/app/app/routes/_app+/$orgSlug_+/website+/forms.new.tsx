@@ -25,6 +25,7 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { setCachedPublicForm } from '#app/utils/sites/kv-cache.server.ts'
+import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 type FormField = PublicFormField
@@ -120,10 +121,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}),
 	})
 	if (!response.ok) return { error: 'Unable to create the form.' }
-	const payload = (await response.json()) as { form: any }
-	const projection = toPublicFormProjection(payload.form)
+	const payload = await response.json().catch(() => null)
+	const createdForm = parseTenantFormResponse(payload)
+	if (!createdForm) return { error: 'Unable to create the form.' }
+	const projection = toPublicFormProjection(createdForm)
 	if (projection) await setCachedPublicForm(orgId, projection)
-	return redirect(`/${params.orgSlug}/website/forms/${payload.form.id}`)
+	return redirect(`/${params.orgSlug}/website/forms/${createdForm.id}`)
 }
 
 export default function NewWebsiteFormRoute() {

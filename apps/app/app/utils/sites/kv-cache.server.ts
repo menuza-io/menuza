@@ -3,6 +3,7 @@ import {
 	type KVNamespaceListResult,
 } from '@cloudflare/workers-types'
 import {
+	PUBLIC_FORM_CACHE_TTL_SECONDS,
 	publicFormKvKey,
 	type PublicFormProjection,
 } from '@repo/common/public-form'
@@ -84,7 +85,9 @@ export async function setCachedPublicForm(
 	try {
 		const current = await siteDataKv.get<PublicFormProjection>(key, 'json')
 		if (current && current.revision > form.revision) return
-		await siteDataKv.put(key, JSON.stringify(form))
+		await siteDataKv.put(key, JSON.stringify(form), {
+			expirationTtl: PUBLIC_FORM_CACHE_TTL_SECONDS,
+		})
 	} catch (error) {
 		console.error(`Failed to cache public form ${form.id}`, error)
 	}

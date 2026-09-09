@@ -10,6 +10,7 @@ import {
 	publicFormFieldsSchema,
 	validatePublicFormFieldChoices,
 } from '@repo/common/public-form'
+import { parseLocalizedString } from '@repo/common/site-locales'
 import { z } from 'zod'
 
 import {
@@ -146,10 +147,59 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 		.safeParse((body as { values?: unknown })?.values)
 	if (!rawValues.success) return c.json({ error: 'Invalid submission' }, 400)
 
+	const optionLabels = (option: string) => {
+		const localized = parseLocalizedString(option)
+		const labels = Object.values(localized)
+			.map((label) => label?.trim())
+			.filter(Boolean) as string[]
+		return labels.length > 0 ? labels : [option.trim()]
+	}
+	const isValidChoice = (choice: string, options: string[]) =>
+		options.some((option) => optionLabels(option).includes(choice.trim()))
+
 	const values: Record<string, string> = {}
 	for (const field of fields) {
 		if (field.type === 'heading' || field.type === 'paragraph') continue
-		const value = String(rawValues.data[field.id] ?? '').trim()
+		const raw = rawValues.data[field.id]
+		if (field.type === 'multiple_choice') {
+			const selected = Array.isArray(raw)
+				? raw
+						.map(String)
+						.map((choice) => choice.trim())
+						.filter(Boolean)
+				: typeof raw === 'string'
+					? raw
+							.split(',')
+							.map((choice) => choice.trim())
+							.filter(Boolean)
+					: []
+			if (field.required && selected.length === 0) {
+				return c.json({ error: `${field.label} is required` }, 400)
+			}
+			if (
+				selected.some(
+					(choice) =>
+						!(field.options ?? []).length ||
+						!isValidChoice(choice, field.options ?? []),
+				)
+			) {
+				return c.json(
+					{ error: `${field.label} contains an invalid choice` },
+					400,
+				)
+			}
+			const serialized = selected.join(', ')
+			if (serialized.length > 5000) {
+				return c.json({ error: 'Value is too long' }, 400)
+			}
+			values[field.id] = serialized
+			continue
+		}
+
+		if (Array.isArray(raw)) {
+			return c.json({ error: `${field.label} must be a single value` }, 400)
+		}
+		const value = String(raw ?? '').trim()
 		if (field.required && !value) {
 			return c.json({ error: `${field.label} is required` }, 400)
 		}
@@ -162,11 +212,9 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 			return c.json({ error: `${field.label} must be a valid email` }, 400)
 		}
 		if (
-			(field.type === 'single_choice' || field.type === 'multiple_choice') &&
+			field.type === 'single_choice' &&
 			value &&
-			value
-				.split(',')
-				.some((choice) => !(field.options ?? []).includes(choice.trim()))
+			!isValidChoice(value, field.options ?? [])
 		) {
 			return c.json({ error: `${field.label} contains an invalid choice` }, 400)
 		}

@@ -3,6 +3,12 @@ import { type IconName } from '@repo/ui/icon'
 
 export type FieldType = PublicFormField['type']
 
+export const DEFAULT_CHOICE_OPTIONS = ['Option 1', 'Option 2']
+
+export function nextChoiceOption(count: number) {
+	return `Option ${count + 1}`
+}
+
 export const FIELD_TYPES: Record<
 	FieldType,
 	{
@@ -105,7 +111,7 @@ export function createField(
 		type,
 		required: false,
 		...(type === 'single_choice' || type === 'multiple_choice'
-			? { options: ['Option 1', 'Option 2'] }
+			? { options: [...DEFAULT_CHOICE_OPTIONS] }
 			: {}),
 	}
 }

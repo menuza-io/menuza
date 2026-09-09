@@ -15,6 +15,13 @@ const form = {
 			type: 'email' as const,
 			required: true,
 		},
+		{
+			id: 'plan',
+			label: 'Plan',
+			type: 'single_choice' as const,
+			required: false,
+			options: ['Basic', 'Pro'],
+		},
 	],
 	submitLabel: 'Submit',
 	successMessage: 'Thanks!',
@@ -29,6 +36,9 @@ describe('form translation', () => {
 			'form:submitLabel',
 			'form:successMessage',
 			'field:email:label',
+			'field:plan:label',
+			'field:plan:option:0',
+			'field:plan:option:1',
 		])
 	})
 
@@ -39,6 +49,19 @@ describe('form translation', () => {
 			'ar',
 			'en',
 		)
-		expect(next.name).toBe('{"en":"Contact","ar":"اتصل بنا"}')
+		expect(JSON.parse(next.name)).toEqual({ en: 'Contact', ar: 'اتصل بنا' })
+	})
+
+	it('applies translated choice options', () => {
+		const next = applyFormTranslations(
+			form,
+			[{ id: 'field:plan:option:1', text: 'احترافي' }],
+			'ar',
+			'en',
+		)
+		expect(JSON.parse(next.fields[1]!.options![1]!)).toEqual({
+			en: 'Pro',
+			ar: 'احترافي',
+		})
 	})
 })

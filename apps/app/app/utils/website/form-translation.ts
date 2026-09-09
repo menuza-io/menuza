@@ -134,26 +134,27 @@ export function applyFormTranslations(
 				activeLocale,
 				defaultLocale,
 			)
-		} else if (id.startsWith('field:') && id.includes(':label')) {
-			const fieldId = id.split(':')[1]
+		} else if (id.startsWith('field:')) {
+			const parts = id.split(':')
+			const fieldId = parts[1]
 			const field = next.fields.find((item) => item.id === fieldId)
 			if (!field) continue
-			field.label = applyLocalizedValue(
-				field.label,
-				text,
-				activeLocale,
-				defaultLocale,
-			)
-		} else if (id.startsWith('field:') && id.includes(':option:')) {
-			const [, fieldId, , optionIndex] = id.split(':')
-			const field = next.fields.find((item) => item.id === fieldId)
-			const index = Number.parseInt(optionIndex ?? '', 10)
-			if (!field?.options || Number.isNaN(index)) continue
-			field.options = field.options.map((option, itemIndex) =>
-				itemIndex === index
-					? applyLocalizedValue(option, text, activeLocale, defaultLocale)
-					: option,
-			)
+			if (parts.length === 3 && parts[2] === 'label') {
+				field.label = applyLocalizedValue(
+					field.label,
+					text,
+					activeLocale,
+					defaultLocale,
+				)
+			} else if (parts.length === 4 && parts[2] === 'option') {
+				const index = Number.parseInt(parts[3] ?? '', 10)
+				if (!field.options || Number.isNaN(index)) continue
+				field.options = field.options.map((option, itemIndex) =>
+					itemIndex === index
+						? applyLocalizedValue(option, text, activeLocale, defaultLocale)
+						: option,
+				)
+			}
 		}
 	}
 

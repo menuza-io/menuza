@@ -72,6 +72,9 @@ export function publicFormKvKey(organizationId: string, formId: string) {
 	return `public-form:v1:${organizationId}:${formId}`
 }
 
+/** Self-heal stale published-form projections when KV deletes fail. */
+export const PUBLIC_FORM_CACHE_TTL_SECONDS = 60 * 60 * 24
+
 export function toPublicFormProjection(form: {
 	id: string
 	name: string
