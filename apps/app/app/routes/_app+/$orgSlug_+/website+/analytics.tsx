@@ -93,9 +93,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			description: 'Your website tracking integrations have been saved.',
 			type: 'success',
 		})
-	} catch {
+	} catch (error) {
+		console.error('Failed to update analytics settings', error)
 		return Response.json(
-			{ error: 'Failed to update analytics settings' },
+			{
+				result: submission.reply({
+					formErrors: ['Failed to update analytics settings'],
+				}),
+			},
 			{ status: 500 },
 		)
 	}

@@ -572,7 +572,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			request,
 			organization.slug,
 		)
-		const response = await fetchTenant('/operator/forms')
+		const response = await fetchTenant('/operator/forms', {
+			signal: AbortSignal.timeout(3000),
+		})
 		if (response.ok) {
 			const payload = (await response.json()) as {
 				forms?: Array<{ id: string; name: string; status: string }>
@@ -4056,9 +4058,12 @@ function CardsEditor({ config, updateField, listKey }: ListEditorProps) {
 function FormBlockEditor({ config, updateField }: EditorProps) {
 	const { websiteForms } = useLoaderData<typeof loader>()
 	const formId = String(config.formId || '')
+	const publishedForms = websiteForms.filter(
+		(form) => form.status === 'published',
+	)
 	return (
 		<div className="space-y-5">
-			<EditorSection title="Form">
+			<EditorSection title={<Trans>Form</Trans>}>
 				<div className="space-y-2">
 					<Label htmlFor="block-form">
 						<Trans>Connected form</Trans>
@@ -4067,7 +4072,7 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 						id="block-form"
 						value={formId}
 						onChange={(event) => {
-							const selected = websiteForms.find(
+							const selected = publishedForms.find(
 								(form) => form.id === event.target.value,
 							)
 							updateField('formId', event.target.value)
@@ -4078,15 +4083,13 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 						<option value="">
 							<Trans>Select a form</Trans>
 						</option>
-						{websiteForms
-							.filter((form) => form.status === 'published')
-							.map((form) => (
-								<option key={form.id} value={form.id}>
-									{form.name}
-								</option>
-							))}
+						{publishedForms.map((form) => (
+							<option key={form.id} value={form.id}>
+								{form.name}
+							</option>
+						))}
 					</select>
-					{websiteForms.length === 0 ? (
+					{publishedForms.length === 0 ? (
 						<p className="text-muted-foreground text-xs">
 							<Trans>
 								Create and publish a form from Website → Forms first.
@@ -4095,7 +4098,7 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 					) : null}
 				</div>
 			</EditorSection>
-			<EditorSection title="Display">
+			<EditorSection title={<Trans>Display</Trans>}>
 				<div className="flex items-center justify-between gap-3">
 					<Label htmlFor="form-show-title">
 						<Trans>Show form title</Trans>

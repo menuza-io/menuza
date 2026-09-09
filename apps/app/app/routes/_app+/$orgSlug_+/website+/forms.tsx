@@ -1,15 +1,4 @@
 import { Trans } from '@lingui/macro'
-import { formatDistanceToNow } from 'date-fns'
-import { useState } from 'react'
-import {
-	Form,
-	Link,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	useActionData,
-	useLoaderData,
-} from 'react-router'
-import { z } from 'zod'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
@@ -23,6 +12,17 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
+import {
+	Form,
+	Link,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
+import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { CreateFormDialog } from '#app/components/website/create-form-dialog.tsx'
 import {
@@ -57,16 +57,20 @@ const fieldSchema = z.object({
 	type: z.enum(['text', 'email', 'tel', 'textarea']),
 	required: z.boolean(),
 })
+const fieldsArraySchema = z
+	.array(fieldSchema)
+	.min(1)
+	.max(20)
+	.refine(
+		(fields) => new Set(fields.map((field) => field.id)).size === fields.length,
+		{ message: 'Field labels must be unique.' },
+	)
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).default(''),
 	fields: z.string().transform((value, context) => {
 		try {
-			const parsed = z
-				.array(fieldSchema)
-				.min(1)
-				.max(20)
-				.safeParse(JSON.parse(value))
+			const parsed = fieldsArraySchema.safeParse(JSON.parse(value))
 			if (parsed.success) return parsed.data
 		} catch {}
 		context.addIssue({

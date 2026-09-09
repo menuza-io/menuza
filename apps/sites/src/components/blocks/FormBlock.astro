@@ -18,10 +18,20 @@ const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : '
 const params = new URLSearchParams()
 if (Astro.locals.orgSlug) params.set('slug', Astro.locals.orgSlug)
 if (Astro.locals.customHost) params.set('host', Astro.locals.customHost)
-const response = formId && tenantApiUrl
-	? await fetch(`${tenantApiUrl}/forms/${encodeURIComponent(formId)}?${params}`, { headers: { Accept: 'application/json', Origin: Astro.url.origin } }).catch(() => null)
-	: null
-const payload = response?.ok ? ((await response.json()) as { form?: WebsiteForm }) : null
+async function loadForm() {
+	if (!formId || !tenantApiUrl) return null
+	try {
+		const response = await fetch(`${tenantApiUrl}/forms/${encodeURIComponent(formId)}?${params}`, {
+			headers: { Accept: 'application/json', Origin: Astro.url.origin },
+			signal: AbortSignal.timeout(3000),
+		})
+		if (!response.ok) return null
+		return (await response.json()) as { form?: WebsiteForm }
+	} catch {
+		return null
+	}
+}
+const payload = await loadForm()
 const form = payload?.form
 const blockId = `website-form-${formId}`
 const submitting = Astro.locals.i18n._(msg`Submitting...`)
@@ -61,7 +71,7 @@ const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Pleas
 		try {
 			const response = await fetch(`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: formElement.dataset.orgSlug, host: formElement.dataset.customHost, website, values: Object.fromEntries(formData.entries()) }) })
 			const result = await response.json()
-			if (!response.ok) throw new Error(result.error)
+			if (!response.ok) throw new Error(result.error || formElement.dataset.errorLabel || 'Unable to submit the form.')
 			formElement.reset(); status.textContent = result.message; status.className = successClass
 		} catch (error) {
 			status.textContent = error instanceof Error ? error.message : formElement.dataset.errorLabel || 'Unable to submit the form.'; status.className = errorClass

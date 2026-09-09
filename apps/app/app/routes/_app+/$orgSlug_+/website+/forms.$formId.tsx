@@ -1,7 +1,6 @@
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { PageHeader } from '@repo/ui/page-header'
-import { useEffect, useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 
 import {
@@ -22,7 +21,7 @@ type ResponsesPayload = {
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const { jwt, tenantApiUrl, orgId } = await getOperatorTenantClient(
+	const { fetchTenant, orgId } = await getOperatorTenantClient(
 		request,
 		params.orgSlug || '',
 	)
@@ -31,35 +30,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orgId,
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	)
-	return { jwt, tenantApiUrl, formId: params.formId || '' }
+	const formId = params.formId || ''
+	try {
+		const response = await fetchTenant(
+			`/operator/forms/${encodeURIComponent(formId)}/submissions`,
+			{ signal: AbortSignal.timeout(3000) },
+		)
+		if (!response.ok) throw new Error('Unable to load responses')
+		return {
+			payload: (await response.json()) as ResponsesPayload,
+			error: null,
+		}
+	} catch {
+		return { payload: null, error: 'Unable to load responses' }
+	}
 }
 
 export default function WebsiteFormResponsesRoute() {
-	const { jwt, tenantApiUrl, formId } = useLoaderData<typeof loader>()
-	const [payload, setPayload] = useState<ResponsesPayload | null>(null)
-	const [error, setError] = useState<string | null>(null)
-
-	useEffect(() => {
-		const controller = new AbortController()
-		void fetch(`${tenantApiUrl}/operator/forms/${formId}/submissions`, {
-			headers: { Authorization: `Bearer ${jwt}` },
-			signal: controller.signal,
-		})
-			.then(async (response) => {
-				if (!response.ok) throw new Error('Unable to load responses')
-				setPayload((await response.json()) as ResponsesPayload)
-			})
-			.catch((caught) => {
-				if (!controller.signal.aborted) {
-					setError(
-						caught instanceof Error
-							? caught.message
-							: 'Unable to load responses',
-					)
-				}
-			})
-		return () => controller.abort()
-	}, [formId, jwt, tenantApiUrl])
+	const { payload, error } = useLoaderData<typeof loader>()
 
 	const form = payload?.form
 	const submissions = payload?.submissions ?? []
@@ -69,7 +57,7 @@ export default function WebsiteFormResponsesRoute() {
 			<div className="flex items-start justify-between gap-4">
 				<PageHeader
 					title={form?.name ?? 'Form responses'}
-					description="Responses load directly from the regional tenant database and do not pass through the app server."
+					description="Responses are loaded securely through the app server from the regional tenant database."
 				/>
 				<Button render={<Link to=".." />} variant="outline">
 					Back to forms
@@ -79,9 +67,6 @@ export default function WebsiteFormResponsesRoute() {
 				<p role="alert" className="text-destructive text-sm">
 					{error}
 				</p>
-			) : null}
-			{!payload && !error ? (
-				<p className="text-muted-foreground text-sm">Loading responses…</p>
 			) : null}
 			{form ? (
 				<div className="overflow-x-auto rounded-lg border">

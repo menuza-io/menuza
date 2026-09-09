@@ -1,8 +1,8 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "218c3fd5-cd1d-4893-871f-23636607eebf",
-	"prevId": "e3b54f8a-05cb-4953-97f1-13a1d97810df",
+	"id": "e3b54f8a-05cb-4953-97f1-13a1d97810df",
+	"prevId": "159536c5-1702-486a-9d3d-fa7f49205df8",
 	"tables": {
 		"customer_payment_methods": {
 			"name": "customer_payment_methods",
@@ -547,10 +547,10 @@
 				}
 			},
 			"indexes": {
-				"uniq_journey_step_executions_run_node": {
-					"name": "uniq_journey_step_executions_run_node",
+				"idx_journey_step_executions_run": {
+					"name": "idx_journey_step_executions_run",
 					"columns": ["run_id", "node_id"],
-					"isUnique": true
+					"isUnique": false
 				},
 				"idx_journey_step_executions_customer": {
 					"name": "idx_journey_step_executions_customer",
@@ -1122,146 +1122,6 @@
 					"onUpdate": "no action"
 				}
 			},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"checkConstraints": {}
-		},
-		"website_form_submissions": {
-			"name": "website_form_submissions",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "text",
-					"primaryKey": true,
-					"notNull": true,
-					"autoincrement": false
-				},
-				"form_id": {
-					"name": "form_id",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
-				},
-				"values": {
-					"name": "values",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false,
-					"default": "(strftime('%s', 'now'))"
-				}
-			},
-			"indexes": {
-				"idx_website_form_submissions_form_created": {
-					"name": "idx_website_form_submissions_form_created",
-					"columns": ["form_id", "created_at"],
-					"isUnique": false
-				}
-			},
-			"foreignKeys": {
-				"website_form_submissions_form_id_website_forms_id_fk": {
-					"name": "website_form_submissions_form_id_website_forms_id_fk",
-					"tableFrom": "website_form_submissions",
-					"tableTo": "website_forms",
-					"columnsFrom": ["form_id"],
-					"columnsTo": ["id"],
-					"onDelete": "cascade",
-					"onUpdate": "no action"
-				}
-			},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"checkConstraints": {}
-		},
-		"website_forms": {
-			"name": "website_forms",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "text",
-					"primaryKey": true,
-					"notNull": true,
-					"autoincrement": false
-				},
-				"name": {
-					"name": "name",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
-				},
-				"description": {
-					"name": "description",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
-				},
-				"fields": {
-					"name": "fields",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false,
-					"default": "'[]'"
-				},
-				"submit_label": {
-					"name": "submit_label",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false,
-					"default": "'Submit'"
-				},
-				"success_message": {
-					"name": "success_message",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false,
-					"default": "'Thank you. Your response has been received.'"
-				},
-				"status": {
-					"name": "status",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false,
-					"default": "'published'"
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false,
-					"default": "(strftime('%s', 'now'))"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false,
-					"default": "(strftime('%s', 'now'))"
-				}
-			},
-			"indexes": {
-				"idx_website_forms_status": {
-					"name": "idx_website_forms_status",
-					"columns": ["status"],
-					"isUnique": false
-				}
-			},
-			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
 			"checkConstraints": {}

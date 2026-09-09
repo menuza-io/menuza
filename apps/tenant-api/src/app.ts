@@ -8,7 +8,11 @@ import { analyticsRoutes } from './routes/analytics.ts'
 import { authRoutes } from './routes/auth.ts'
 import { shopRoutes } from './routes/shop.ts'
 import { engagementSyncRoutes } from './routes/engagement-sync.ts'
-import { formOperatorRoutes, publicFormRoutes } from './routes/forms.ts'
+import {
+	formOperatorRoutes,
+	formSystemRoutes,
+	publicFormRoutes,
+} from './routes/forms.ts'
 import {
 	journeyOperatorRoutes,
 	journeySystemRoutes,
@@ -68,10 +72,21 @@ export function createTenantApiApp() {
 		'/operator/*',
 		rateLimit('operator', { windowMs: 60 * 1000, maxRequests: 120 }),
 	)
-	app.use(
-		'/forms/*',
-		rateLimit('public-forms', { windowMs: 60 * 60 * 1000, maxRequests: 30 }),
-	)
+	const publicFormReadRateLimit = rateLimit('public-form-reads', {
+		windowMs: 60 * 1000,
+		maxRequests: 120,
+	})
+	const publicFormSubmissionRateLimit = rateLimit('public-form-submissions', {
+		windowMs: 60 * 60 * 1000,
+		maxRequests: 30,
+	})
+	app.use('/forms/*', async (c, next) => {
+		if (c.req.method === 'GET') return publicFormReadRateLimit(c, next)
+		if (c.req.method === 'POST' && c.req.path.endsWith('/submissions')) {
+			return publicFormSubmissionRateLimit(c, next)
+		}
+		await next()
+	})
 
 	app.get('/health', healthHandler)
 	app.get('/api/health', healthHandler)
@@ -81,6 +96,7 @@ export function createTenantApiApp() {
 	app.route('/forms', publicFormRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)
+	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/operator', operatorRoutes)

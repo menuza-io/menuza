@@ -12,7 +12,7 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 type FieldType = 'text' | 'email' | 'tel' | 'textarea'
@@ -64,9 +64,12 @@ export function CreateFormDialog({
 	const [template, setTemplate] = useState('blank')
 	const [fields, setFields] = useState<FormField[]>(templateFields.blank!)
 
-	useEffect(() => {
-		if (fetcher.data?.success) onOpenChange(false)
-	}, [fetcher.data, onOpenChange])
+	const closeAfterSuccess = useCallback(
+		(node: HTMLSpanElement | null) => {
+			if (node) onOpenChange(false)
+		},
+		[onOpenChange],
+	)
 
 	const chooseTemplate = (value: string) => {
 		setTemplate(value)
@@ -76,6 +79,9 @@ export function CreateFormDialog({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+				{fetcher.data?.success ? (
+					<span ref={closeAfterSuccess} hidden aria-hidden="true" />
+				) : null}
 				<fetcher.Form method="post" className="space-y-6">
 					<input type="hidden" name="intent" value="create" />
 					<input type="hidden" name="fields" value={JSON.stringify(fields)} />
@@ -175,15 +181,19 @@ export function CreateFormDialog({
 										placeholder="Field label"
 										onChange={(event) =>
 											setFields((current) =>
-												current.map((item, itemIndex) =>
-													itemIndex === index
-														? {
-																...item,
-																label: event.target.value,
-																id: fieldId(event.target.value, index),
-															}
-														: item,
-												),
+												current.map((item, itemIndex) => {
+													if (itemIndex !== index) return item
+													const taken = new Set(
+														current
+															.filter((_, otherIndex) => otherIndex !== index)
+															.map((other) => other.id),
+													)
+													const baseId = fieldId(event.target.value, index)
+													let id = baseId
+													let suffix = 2
+													while (taken.has(id)) id = `${baseId}-${suffix++}`
+													return { ...item, label: event.target.value, id }
+												}),
 											)
 										}
 									/>
