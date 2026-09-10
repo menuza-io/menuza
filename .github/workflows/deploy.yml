@@ -97,6 +97,9 @@ jobs:
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
 
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
+
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
 
@@ -121,6 +124,9 @@ jobs:
 
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
+
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
 
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
@@ -158,6 +164,9 @@ jobs:
 
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
+
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
 
       - name: 🛠 Setup Database
         run: npm run db:migrate:deploy && npm run db:generate
@@ -199,6 +208,9 @@ jobs:
 
       - name: 🔧 Rebuild native dependencies
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
+
+      - name: 🔐 Generate package env types
+        run: npm run env:codegen
 
       - name: 📥 Install Playwright Browsers
         run: |
