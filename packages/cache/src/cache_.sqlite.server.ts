@@ -1,6 +1,6 @@
 import { isCloudflareWorkerRuntime } from '@repo/common'
 import { getInstanceInfo, getInternalInstanceDomain } from '@repo/common/litefs'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 export async function updatePrimaryCacheValue({
 	key,

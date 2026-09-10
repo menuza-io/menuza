@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 import { createCookieSessionStorage, type SessionStorage } from 'react-router'
 
 import {

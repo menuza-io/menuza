@@ -9,7 +9,7 @@ import {
 	type AnyD1Database,
 	type DrizzleD1Database,
 } from 'drizzle-orm/d1'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 import * as relations from './relations.ts'
 import * as tables from './schema.ts'
 

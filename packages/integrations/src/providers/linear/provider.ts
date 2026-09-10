@@ -3,7 +3,7 @@
  */
 
 import { getIntegrationUserAgent } from '@repo/config/brand'
-import { ENV } from '../../package-env.ts'
+import { ENV } from '../../package-env.js'
 
 import {
 	type Integration,

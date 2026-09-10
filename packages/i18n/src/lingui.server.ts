@@ -1,6 +1,6 @@
 import { type LinguiConfig } from '@lingui/conf'
 import { createCookie } from 'react-router'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 import { RemixLingui } from './remix.server'
 
 /**

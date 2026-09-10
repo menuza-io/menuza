@@ -1,5 +1,5 @@
 import { createCookieSessionStorage } from 'react-router'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 if (!ENV.SESSION_SECRET) {
 	throw new Error(

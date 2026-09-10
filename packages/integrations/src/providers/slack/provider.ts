@@ -2,7 +2,7 @@
  * Slack integration provider implementation
  */
 
-import { ENV } from '../../package-env.ts'
+import { ENV } from '../../package-env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,

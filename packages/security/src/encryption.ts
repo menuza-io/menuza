@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm'

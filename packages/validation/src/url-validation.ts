@@ -3,7 +3,7 @@
  * Prevents Server-Side Request Forgery attacks by blocking dangerous URLs
  */
 
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 /**
  * Check if an IP address is private (RFC1918) or localhost

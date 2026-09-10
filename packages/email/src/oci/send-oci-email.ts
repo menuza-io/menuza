@@ -1,5 +1,5 @@
 import emaildataplane from 'oci-emaildataplane'
-import { ENV } from '../package-env.ts'
+import { ENV } from '../package-env.js'
 import { createOciAuthProvider, getOciEmailConfig } from './config.ts'
 import {
 	sendOciEmailViaMockTransport,

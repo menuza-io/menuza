@@ -1,5 +1,5 @@
 import { SpamError } from 'remix-utils/honeypot/server'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 const DEFAULT_NAME_FIELD_NAME = 'name__confirm'
 const DEFAULT_VALID_FROM_FIELD_NAME = 'from__confirm'

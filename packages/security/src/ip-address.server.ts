@@ -5,7 +5,7 @@
  * handling various proxy headers and request types.
  */
 
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 /**
  * Options for configuring IP address extraction behavior

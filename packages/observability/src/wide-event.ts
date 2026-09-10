@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 import { getRuntimeDeploymentId, getRuntimeRegion } from './runtime-env.js'
 import {
 	runWithRequestContext,

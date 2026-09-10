@@ -1,5 +1,5 @@
 import { SetCookie } from '@mjackson/headers'
-import { ENV } from '../package-env.ts'
+import { ENV } from '../package-env.js'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from 'react-router'
 import { GoogleStrategy, type GoogleProfile } from '@coji/remix-auth-google'

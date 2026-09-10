@@ -3,7 +3,7 @@
  */
 
 import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
-import { ENV } from '../../package-env.ts'
+import { ENV } from '../../package-env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,

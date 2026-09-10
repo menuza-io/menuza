@@ -1,5 +1,5 @@
 import { createCookieSessionStorage } from 'react-router'
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 
 export type UtmParams = {
 	source?: string

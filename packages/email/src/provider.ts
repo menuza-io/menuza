@@ -1,4 +1,4 @@
-import { ENV } from './package-env.ts'
+import { ENV } from './package-env.js'
 export type EmailProvider = 'resend' | 'oci'
 
 /**
