@@ -132,11 +132,7 @@ export default defineConfig((config) => ({
 		ssr: {
 			noExternal: isCloudflare
 				? true
-				: [
-						/^@repo\//,
-						'@posthog/react',
-						'posthog-js',
-					],
+				: [/^@repo\//, '@posthog/react', 'posthog-js'],
 		},
 	}),
 	server: {
@@ -156,7 +152,15 @@ export default defineConfig((config) => ({
 	plugins: [
 		...(isCloudflare ? [cloudflare({ viteEnvironment: { name: 'ssr' } })] : []),
 		cloudflareWorkerAliasPlugin(),
-		varlockVitePlugin(),
+		varlockVitePlugin(
+			isCloudflare
+				? {
+						ssrEdgeRuntime: true,
+						ssrEntryModuleIds: ['\0virtual:cloudflare/worker-entry'],
+						ssrInjectMode: 'resolved-env',
+					}
+				: undefined,
+		),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),
 		tailwindcss(),

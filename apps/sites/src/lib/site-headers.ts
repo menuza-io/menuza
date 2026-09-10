@@ -1,7 +1,7 @@
 import {
 	type ShopCheckoutCspOptions,
 	getShopCheckoutConnectSrc,
-	getShopCheckoutFrameSrc,
+	getShopCheckoutFrameSources,
 	getShopCheckoutScriptSrc,
 } from '@repo/payments/shop/client'
 
@@ -20,10 +20,6 @@ const GA_CONNECT_SRC = [
 export function sitesScriptSrc(isDev: boolean) {
 	const evalSrc = isDev ? " 'unsafe-eval'" : ''
 	return `script-src 'self' 'unsafe-inline'${evalSrc} ${CLOUDFLARE_INSIGHTS_SCRIPT} ${GA_SCRIPT_SRC} ${TURNSTILE_ORIGIN}`
-}
-
-export function sitesTurnstileFrameSrc() {
-	return `frame-src 'self' ${TURNSTILE_ORIGIN}`
 }
 
 export function sitesConnectSrc(origins: string[]) {
@@ -46,8 +42,12 @@ export function sitesShopCheckoutConnectSrc(options: ShopCheckoutCspOptions) {
 	return getShopCheckoutConnectSrc(options)
 }
 
-export function sitesShopCheckoutFrameSrc(options: ShopCheckoutCspOptions) {
-	return getShopCheckoutFrameSrc(options)
+export function sitesFrameSrc(options: ShopCheckoutCspOptions) {
+	const sources = new Set([
+		...getShopCheckoutFrameSources(options),
+		TURNSTILE_ORIGIN,
+	])
+	return `frame-src ${Array.from(sources).join(' ')}`
 }
 
 /** Prefer Vite `MODE` — a schema `DEV` flag used to shadow `import.meta.env.DEV`. */

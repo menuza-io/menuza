@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { ENV } from './env.js'
-import { createCookieSessionStorage } from 'react-router'
+import { createCookieSessionStorage, type SessionStorage } from 'react-router'
 
 import {
 	operatorCookieName,
@@ -31,17 +31,39 @@ if (impersonationSecrets.length === 0) {
 	)
 }
 
-export const impersonationSessionStorage = createCookieSessionStorage({
-	cookie: {
-		name: operatorCookieName('en_imp_session'),
-		sameSite: 'lax',
-		path: '/',
-		httpOnly: true,
-		domain: operatorSessionCookieDomain(),
-		secrets: impersonationSecrets,
-		secure: ENV.NODE_ENV === 'production',
+/**
+ * Lazy factory — same reason as `authSessionStorage` in session.server.ts.
+ * Must not evaluate `operatorSessionCookieDomain()` at module-load time in
+ * Cloudflare Workers, because the worker `env` bindings (including BASE_URL)
+ * are only available after the first `fetch()` call runs `applyWorkerEnv`.
+ */
+let _impersonationSessionStorage: SessionStorage | undefined
+
+function getImpersonationSessionStorage(): SessionStorage {
+	return (_impersonationSessionStorage ??= createCookieSessionStorage({
+		cookie: {
+			name: operatorCookieName('en_imp_session'),
+			sameSite: 'lax',
+			path: '/',
+			httpOnly: true,
+			domain: operatorSessionCookieDomain(),
+			secrets: impersonationSecrets,
+			secure: ENV.NODE_ENV === 'production',
+		},
+	}))
+}
+
+export const impersonationSessionStorage: SessionStorage = {
+	getSession(...args) {
+		return getImpersonationSessionStorage().getSession(...args)
 	},
-})
+	commitSession(...args) {
+		return getImpersonationSessionStorage().commitSession(...args)
+	},
+	destroySession(...args) {
+		return getImpersonationSessionStorage().destroySession(...args)
+	},
+}
 
 export const impersonationSessionKey = 'impersonationSessionId'
 

@@ -42,8 +42,17 @@ describe('Sites middleware onRequest', () => {
 
 		expect(next).toHaveBeenCalled()
 		expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
-		expect(response.headers.get('Content-Security-Policy')).toContain(
-			"default-src 'self'",
+		const contentSecurityPolicy = response.headers.get(
+			'Content-Security-Policy',
+		)
+		expect(contentSecurityPolicy).toContain("default-src 'self'")
+		const frameSrcDirectives = contentSecurityPolicy
+			?.split(';')
+			.filter((directive) => directive.trim().startsWith('frame-src '))
+		expect(frameSrcDirectives).toHaveLength(1)
+		expect(frameSrcDirectives?.[0]).toContain('https://polar.sh')
+		expect(frameSrcDirectives?.[0]).toContain(
+			'https://challenges.cloudflare.com',
 		)
 		expect(context.locals.orgSlug).toBe('acme')
 	})

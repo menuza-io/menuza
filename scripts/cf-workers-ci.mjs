@@ -171,7 +171,6 @@ function installDeps() {
 		'@astrojs/compiler-binding',
 	])
 	run('node', ['packages/ui/generate-icons.js'])
-	run('npm', ['run', 'env:codegen'])
 }
 
 function patchWrangler(appKey, deployEnv) {

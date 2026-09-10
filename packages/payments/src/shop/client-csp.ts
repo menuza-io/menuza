@@ -29,10 +29,14 @@ export function getShopCheckoutConnectSrc(options: ShopCheckoutCspOptions) {
 }
 
 export function getShopCheckoutFrameSrc(options: ShopCheckoutCspOptions) {
+	return ` frame-src ${getShopCheckoutFrameSources(options).join(' ')}`
+}
+
+export function getShopCheckoutFrameSources(options: ShopCheckoutCspOptions) {
 	const frames = ["'self'"]
-	if (options.inlineCard) frames.push(INLINE_CARD_FRAMES)
-	if (options.hostedEmbed) frames.push(HOSTED_EMBED_FRAMES)
-	return ` frame-src ${frames.join(' ')}`
+	if (options.inlineCard) frames.push(...INLINE_CARD_FRAMES.split(' '))
+	if (options.hostedEmbed) frames.push(...HOSTED_EMBED_FRAMES.split(' '))
+	return frames
 }
 
 export function getShopCheckoutUiForProcessor(

@@ -134,6 +134,13 @@ describe('operator host labels', () => {
 })
 
 describe('sharedCookieDomain', () => {
+	const previousBaseUrl = process.env.BASE_URL
+
+	afterEach(() => {
+		if (previousBaseUrl === undefined) delete process.env.BASE_URL
+		else process.env.BASE_URL = previousBaseUrl
+	})
+
 	it('reads the apex from BASE_URL', () => {
 		expect(sharedCookieDomain('https://app.epic-startup.dev')).toBe(
 			'.epic-startup.dev',
@@ -142,6 +149,11 @@ describe('sharedCookieDomain', () => {
 			'.lighteninggroup.com',
 		)
 		expect(sharedCookieDomain('http://localhost:3001')).toBeUndefined()
+	})
+
+	it('prefers the runtime BASE_URL when no origin is passed', () => {
+		process.env.BASE_URL = 'https://app.lighteninggroup.com'
+		expect(sharedCookieDomain()).toBe('.lighteninggroup.com')
 	})
 })
 

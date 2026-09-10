@@ -119,6 +119,7 @@ export {
 	getShopCheckoutScriptSrc,
 	getShopCheckoutConnectSrc,
 	getShopCheckoutFrameSrc,
+	getShopCheckoutFrameSources,
 	getShopCheckoutUiForProcessor,
 	SHOP_INLINE_CARD_SDK_URL,
 	SHOP_HOSTED_EMBED_SDK_URL,

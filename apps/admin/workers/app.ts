@@ -16,10 +16,10 @@ const cloudflareContext = createContext<{
 	ctx: ExecutionContext
 }>()
 
-const requestHandler = createRequestHandler(
-	() => import('virtual:react-router/server-build'),
-	import.meta.env.MODE,
-)
+type RequestHandler = ReturnType<typeof createRequestHandler>
+
+let requestHandler: RequestHandler | undefined
+let requestHandlerPromise: Promise<RequestHandler> | undefined
 
 function applyWorkerEnv(env: Env) {
 	const existingConfig = (globalThis as any).__varlockLoadedEnv?.config ?? {}
@@ -30,7 +30,7 @@ function applyWorkerEnv(env: Env) {
 			typeof value === 'number' ||
 			typeof value === 'boolean'
 		) {
-			newConfig[key] = { value: String(value) }
+			newConfig[key] = { ...newConfig[key], value: String(value) }
 			if (typeof process !== 'undefined' && process.env) {
 				process.env[key] = String(value)
 			}
@@ -45,9 +45,16 @@ function applyWorkerEnv(env: Env) {
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-		// Wrangler bindings must win over varlock's build-time .env snapshot
-		// so cookie Domain / BASE_URL match this workers.dev preview.
 		applyWorkerEnv(env)
+		requestHandlerPromise ??= import('virtual:react-router/server-build').then(
+			(build) => {
+				// The server build initializes Varlock's build-time fallback graph.
+				// Reapply bindings so runtime values (notably BASE_URL) win.
+				applyWorkerEnv(env)
+				return createRequestHandler(build, import.meta.env.MODE)
+			},
+		)
+		requestHandler ??= await requestHandlerPromise
 		bindCloudflareD1(env.DB)
 		bindCacheKV(env.CACHE)
 		await ensureLinguiRequestLocale(request)
