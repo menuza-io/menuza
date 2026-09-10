@@ -20,11 +20,10 @@ import {
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
 	sitesConnectSrc,
+	sitesFrameSrc,
 	sitesScriptSrc,
 	sitesShopCheckoutConnectSrc,
-	sitesShopCheckoutFrameSrc,
 	sitesShopCheckoutScriptSrc,
-	sitesTurnstileFrameSrc,
 } from '~/lib/site-headers'
 import {
 	getPublicAppUrl,
@@ -84,8 +83,7 @@ function securityHeadersFor(env: SiteHostEnv) {
 			"object-src 'none'",
 			"base-uri 'self'",
 			"form-action 'self'",
-			sitesShopCheckoutFrameSrc(shopCheckoutCsp),
-			sitesTurnstileFrameSrc(),
+			sitesFrameSrc(shopCheckoutCsp),
 			`frame-ancestors 'self' ${frameAncestors} localhost:*`,
 		]
 			.filter(Boolean)

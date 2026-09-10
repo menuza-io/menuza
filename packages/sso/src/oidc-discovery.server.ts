@@ -6,7 +6,7 @@
 import { ssoCache } from './cache.server.ts'
 import { ssoConnectionPool } from './connection-pool.server.ts'
 import { validateOIDCIssuerUrl, validateEndpointUrl } from '@repo/validation'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 
 export interface OIDCDiscoveryDocument {
 	issuer: string

@@ -130,7 +130,15 @@ export default defineConfig((config) => ({
 			? cloudflare({ viteEnvironment: { name: 'ssr' } })
 			: null,
 		cloudflareWorkerAliasPlugin(),
-		varlockVitePlugin(),
+		varlockVitePlugin(
+			isCloudflareDeploy
+				? {
+						ssrEdgeRuntime: true,
+						ssrEntryModuleIds: ['\0virtual:cloudflare/worker-entry'],
+						ssrInjectMode: 'resolved-env',
+					}
+				: undefined,
+		),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),
 		tailwindcss(),

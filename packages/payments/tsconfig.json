@@ -19,6 +19,6 @@
 		"rootDir": ".",
 		"types": ["node"]
 	},
-	"include": ["./**/*.ts"],
+	"include": ["./**/*.ts", "./**/*.js"],
 	"exclude": ["node_modules", "dist"]
 }

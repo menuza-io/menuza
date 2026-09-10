@@ -22,7 +22,7 @@ import { getInstanceInfo } from '@repo/common/litefs'
 import { LRUCache } from 'lru-cache'
 import { z } from 'zod'
 import { updatePrimaryCacheValue } from './cache_.sqlite.server'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 
 const CACHE_DATABASE_PATH = ENV.CACHE_DATABASE_PATH ?? './cache.db'
 const CACHE_KV_PREFIX = 'CACHE:'

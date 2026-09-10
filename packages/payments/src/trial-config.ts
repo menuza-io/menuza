@@ -4,7 +4,7 @@
  */
 
 import { type TrialConfig } from './types'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 
 export function getTrialConfig(): TrialConfig {
 	const trialDays = parseInt(String(ENV.TRIAL_DAYS ?? '14'), 10)

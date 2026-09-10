@@ -68,6 +68,8 @@ packages/**/*.js.map
 packages/**/*.d.ts.map
 !packages/**/*.config.js
 !packages/**/generate-icons.js
+!packages/**/src/package-env.js
+!packages/**/src/package-env.d.ts
 !packages/ui/vitest.config.ts
 
 .turbo

@@ -1,5 +1,5 @@
 import { brand } from '@repo/config/brand'
-import { ENV } from '../env.js'
+import { ENV } from '../package-env.js'
 import { getOciEmailConfig } from './config.ts'
 
 /** MSW-intercepted URL used when `MOCKS=true` (mirrors Resend's api.resend.com pattern). */

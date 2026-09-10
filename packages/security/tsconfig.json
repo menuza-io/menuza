@@ -8,6 +8,7 @@
 		"sourceMap": true,
 		"noEmit": false,
 		"allowImportingTsExtensions": false,
+		"allowJs": true,
 		"types": ["node"]
 	},
 	"include": ["src/**/*", "index.ts"],

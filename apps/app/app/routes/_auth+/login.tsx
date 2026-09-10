@@ -6,6 +6,7 @@ import { auditService, AuditAction } from '@repo/audit'
 import { requireAnonymous } from '@repo/auth'
 import { providerNames } from '@repo/auth/constants'
 import { getErrorMessage, useIsPending } from '@repo/common'
+import { sharedCookieDomain } from '@repo/common/cookie-domain'
 import { getPageTitle } from '@repo/config/brand'
 import { checkHoneypot } from '@repo/security'
 import {
@@ -43,6 +44,7 @@ import {
 import { ensureLinguiRequestLocale } from '#app/modules/lingui/lingui.server.ts'
 import { login } from '#app/utils/auth.server.ts'
 import { ProviderConnectionForm } from '#app/utils/connections.tsx'
+import { ENV } from '#app/utils/env.server.ts'
 import {
 	saveLastLoginMethod,
 	useLastLoginMethod,
@@ -82,9 +84,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
+	// DEBUG: expose cookie domain info so we can verify the fix in production
+	// (hidden in the DOM via data attributes — remove after confirming fix)
+	const debugBaseUrl = process.env.BASE_URL || ENV.BASE_URL || '(unset)'
+	const debugCookieDomain = sharedCookieDomain(debugBaseUrl) ?? '(host-only)'
+
 	return {
 		organization,
 		ssoConfig: ssoConfig && ssoConfig.isEnabled ? ssoConfig : null,
+		debugBaseUrl,
+		debugCookieDomain,
 	}
 }
 
@@ -239,7 +248,8 @@ export default function LoginPage({
 	const redirectTo = searchParams.get('redirectTo')
 	const isBanned = searchParams.get('banned') === 'true'
 	const error = searchParams.get('error')
-	const { organization, ssoConfig } = loaderData
+	const { organization, ssoConfig, debugBaseUrl, debugCookieDomain } =
+		loaderData
 
 	// Determine the current step based on action data
 	const ssoAvailable = (actionData as any)?.ssoAvailable
@@ -252,119 +262,131 @@ export default function LoginPage({
 	const usernameFromParams = searchParams.get('username')
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-xl">
-					<Trans>Welcome back</Trans>
-				</CardTitle>
-				<CardDescription>
-					{ssoAvailable && discoveredOrganization && !usePassword ? (
-						`Sign in to ${discoveredOrganization.name}`
-					) : (discoveredUsername && ssoAvailable === false) ||
-					  usePassword ||
-					  organization ? (
-						<Trans>Continue with your password</Trans>
-					) : (
-						<Trans>Sign in to your account</Trans>
-					)}
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				{isBanned && (
-					<div className="border-destructive bg-destructive/10 mb-4 rounded-lg border p-4">
-						<div className="text-destructive flex items-center gap-2">
-							<Icon name="lock" className="h-5 w-5" />
-							<h3 className="font-semibold">
-								<Trans>Account Suspended</Trans>
-							</h3>
+		<>
+			{/* DEBUG: hidden element to verify cookie domain in production — remove after confirming fix */}
+			<span
+				aria-hidden="true"
+				style={{ display: 'none' }}
+				data-debug-base-url={debugBaseUrl}
+				data-debug-cookie-domain={debugCookieDomain}
+				id="__debug_cookie_domain"
+			/>
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-xl">
+						<Trans>Welcome back</Trans>
+					</CardTitle>
+					<CardDescription>
+						{ssoAvailable && discoveredOrganization && !usePassword ? (
+							`Sign in to ${discoveredOrganization.name}`
+						) : (discoveredUsername && ssoAvailable === false) ||
+						  usePassword ||
+						  organization ? (
+							<Trans>Continue with your password</Trans>
+						) : (
+							<Trans>Sign in to your account</Trans>
+						)}
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					{isBanned && (
+						<div className="border-destructive bg-destructive/10 mb-4 rounded-lg border p-4">
+							<div className="text-destructive flex items-center gap-2">
+								<Icon name="lock" className="h-5 w-5" />
+								<h3 className="font-semibold">
+									<Trans>Account Suspended</Trans>
+								</h3>
+							</div>
+							<p className="text-destructive/80 mt-2 text-sm">
+								<Trans>
+									Your account has been suspended. Please contact support if you
+									believe this is an error.
+								</Trans>
+							</p>
 						</div>
-						<p className="text-destructive/80 mt-2 text-sm">
-							<Trans>
-								Your account has been suspended. Please contact support if you
-								believe this is an error.
-							</Trans>
-						</p>
-					</div>
-				)}
-
-				{error && (
-					<div className="mb-4 rounded-lg border border-orange-500 bg-orange-50 p-4">
-						<div className="flex items-center gap-2 text-orange-700">
-							<Icon name="alert-triangle" className="h-5 w-5" />
-							<h3 className="font-semibold">
-								<Trans>Login Error</Trans>
-							</h3>
-						</div>
-						<p className="mt-2 text-sm text-orange-600">
-							<Trans>
-								There was an issue with your login attempt. Please try again.
-							</Trans>
-						</p>
-					</div>
-				)}
-
-				<div className="space-y-6">
-					{/* Social Login Buttons - Always show first */}
-					<SocialLoginButtons redirectTo={redirectTo} />
-
-					{/* Divider */}
-					<div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-						<span className="bg-card text-muted-foreground relative z-10 px-2">
-							<Trans>Or continue with email or username</Trans>
-						</span>
-					</div>
-
-					{/* Step 1: Username/Email Input (initial state) */}
-					{!discoveredUsername && !organization && !usernameFromParams && (
-						<UsernameInputStep
-							redirectTo={redirectTo}
-							actionData={actionData}
-						/>
 					)}
 
-					{/* Step 2: SSO Available - Show SSO option */}
-					{ssoAvailable &&
-						discoveredOrganization &&
-						discoveredSSOConfig &&
-						!usePassword && (
-							<SSOLoginStep
-								organization={discoveredOrganization}
-								ssoConfig={discoveredSSOConfig}
-								username={discoveredUsername}
+					{error && (
+						<div className="mb-4 rounded-lg border border-orange-500 bg-orange-50 p-4">
+							<div className="flex items-center gap-2 text-orange-700">
+								<Icon name="alert-triangle" className="h-5 w-5" />
+								<h3 className="font-semibold">
+									<Trans>Login Error</Trans>
+								</h3>
+							</div>
+							<p className="mt-2 text-sm text-orange-600">
+								<Trans>
+									There was an issue with your login attempt. Please try again.
+								</Trans>
+							</p>
+						</div>
+					)}
+
+					<div className="space-y-6">
+						{/* Social Login Buttons - Always show first */}
+						<SocialLoginButtons redirectTo={redirectTo} />
+
+						{/* Divider */}
+						<div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+							<span className="bg-card text-muted-foreground relative z-10 px-2">
+								<Trans>Or continue with email or username</Trans>
+							</span>
+						</div>
+
+						{/* Step 1: Username/Email Input (initial state) */}
+						{!discoveredUsername && !organization && !usernameFromParams && (
+							<UsernameInputStep
 								redirectTo={redirectTo}
+								actionData={actionData}
 							/>
 						)}
 
-					{/* Step 3: Password Login - Show when no SSO or user chose password */}
-					{((discoveredUsername && ssoAvailable === false) ||
-						usePassword ||
-						organization ||
-						usernameFromParams) && (
-						<PasswordLoginStep
-							username={discoveredUsername || usernameFromParams}
-							organization={organization || discoveredOrganization}
-							ssoConfig={ssoConfig || discoveredSSOConfig}
-							redirectTo={redirectTo}
-							actionData={actionData}
-							showBackToSSO={usePassword && ssoAvailable && discoveredSSOConfig}
-						/>
-					)}
-				</div>
-			</CardContent>
-			<CardFooter className="block rounded-lg p-4 text-center text-sm">
-				<Trans>Don't have an account?</Trans>{' '}
-				<Link
-					to={
-						redirectTo
-							? `/signup?redirectTo=${encodeURIComponent(redirectTo)}`
-							: '/signup'
-					}
-					className="font-medium underline underline-offset-4"
-				>
-					<Trans>Create account</Trans>
-				</Link>
-			</CardFooter>
-		</Card>
+						{/* Step 2: SSO Available - Show SSO option */}
+						{ssoAvailable &&
+							discoveredOrganization &&
+							discoveredSSOConfig &&
+							!usePassword && (
+								<SSOLoginStep
+									organization={discoveredOrganization}
+									ssoConfig={discoveredSSOConfig}
+									username={discoveredUsername}
+									redirectTo={redirectTo}
+								/>
+							)}
+
+						{/* Step 3: Password Login - Show when no SSO or user chose password */}
+						{((discoveredUsername && ssoAvailable === false) ||
+							usePassword ||
+							organization ||
+							usernameFromParams) && (
+							<PasswordLoginStep
+								username={discoveredUsername || usernameFromParams}
+								organization={organization || discoveredOrganization}
+								ssoConfig={ssoConfig || discoveredSSOConfig}
+								redirectTo={redirectTo}
+								actionData={actionData}
+								showBackToSSO={
+									usePassword && ssoAvailable && discoveredSSOConfig
+								}
+							/>
+						)}
+					</div>
+				</CardContent>
+				<CardFooter className="block rounded-lg p-4 text-center text-sm">
+					<Trans>Don't have an account?</Trans>{' '}
+					<Link
+						to={
+							redirectTo
+								? `/signup?redirectTo=${encodeURIComponent(redirectTo)}`
+								: '/signup'
+						}
+						className="font-medium underline underline-offset-4"
+					>
+						<Trans>Create account</Trans>
+					</Link>
+				</CardFooter>
+			</Card>
+		</>
 	)
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { type Integration } from './database-types'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,

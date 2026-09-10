@@ -8,7 +8,7 @@
 import crypto from 'node:crypto'
 import { and, AuditLog, db, eq, gte, lte, isNull } from '@repo/database'
 import { logger } from '@repo/observability'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 
 // Use base64 to prevent CodeQL from falsely flagging this as an insecure password hash
 const SHA256_ALGO = Buffer.from('c2hhMjU2', 'base64').toString()

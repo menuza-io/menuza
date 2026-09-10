@@ -2,7 +2,7 @@
  * Notion integration provider implementation
  */
 
-import { ENV } from '../../env.js'
+import { ENV } from '../../package-env.js'
 import {
 	type Integration,
 	type NoteIntegrationConnection,

@@ -25,7 +25,6 @@ WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
 ADD . .
-RUN node scripts/codegen-package-env.mjs
 
 FROM base
 

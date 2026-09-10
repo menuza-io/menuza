@@ -8,7 +8,7 @@
  */
 
 import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'crypto'
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
 import { providerRegistry } from './provider'
 import {
 	type TokenData,

@@ -1,5 +1,5 @@
 import { SetCookie } from '@mjackson/headers'
-import { ENV } from '../env.js'
+import { ENV } from '../package-env.js'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from 'react-router'
 import { GitHubStrategy } from 'remix-auth-github'
@@ -22,8 +22,7 @@ const GitHubUserParseResult = z
 	)
 
 const shouldMock =
-	ENV.GITHUB_CLIENT_ID?.startsWith('MOCK_') ||
-	ENV.NODE_ENV === 'test'
+	ENV.GITHUB_CLIENT_ID?.startsWith('MOCK_') || ENV.NODE_ENV === 'test'
 
 const GitHubEmailSchema = z.object({
 	email: z.string(),

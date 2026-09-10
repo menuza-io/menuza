@@ -1,4 +1,9 @@
-import { ENV } from './env.js'
+import { ENV } from './package-env.js'
+
+function runtimeBaseUrl(): string | undefined {
+	return process.env.BASE_URL || ENV.BASE_URL
+}
+
 const OPERATOR_HOST_LABELS = new Set([
 	'app',
 	'admin',
@@ -31,7 +36,9 @@ export function sharedCookieDomainFromHost(
 	return `.${parts.slice(1).join('.')}`
 }
 
-export function sharedCookieDomain(origin = ENV.BASE_URL): string | undefined {
+export function sharedCookieDomain(
+	origin = runtimeBaseUrl(),
+): string | undefined {
 	if (!origin) return undefined
 	try {
 		return sharedCookieDomainFromHost(new URL(origin).host)
@@ -65,7 +72,7 @@ function isLocalhostHostname(host: string): boolean {
  * unless BASE_URL is already localhost-shaped (including `app.localhost`).
  */
 export function operatorSessionCookieDomain(
-	origin = ENV.BASE_URL,
+	origin = runtimeBaseUrl(),
 ): string | undefined {
 	const fromOrigin = sharedCookieDomain(origin)
 	if (!fromOrigin) return undefined
@@ -126,13 +133,13 @@ export function shouldApplyImpersonationToUserId(request: Request): boolean {
 /** Suffix staging operator cookie names so prod and staging can coexist in one browser. */
 export function operatorCookieName(
 	baseName: string,
-	origin = ENV.BASE_URL,
+	origin = runtimeBaseUrl(),
 ): string {
 	return isStagingOperatorOrigin(origin) ? `${baseName}_staging` : baseName
 }
 
 /** Shared theme preference cookie (`en_theme` / `en_theme_staging`). */
-export function operatorThemeCookieName(origin = ENV.BASE_URL): string {
+export function operatorThemeCookieName(origin = runtimeBaseUrl()): string {
 	return operatorCookieName('en_theme', origin)
 }
 

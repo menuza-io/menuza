@@ -12,6 +12,7 @@
 		"rewriteRelativeImportExtensions": true,
 		"target": "ES2020",
 		"lib": ["ES2021", "DOM", "DOM.Iterable"],
-		"types": ["node"]
+		"types": ["node"],
+		"allowJs": true
 	}
 }

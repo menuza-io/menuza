@@ -111,6 +111,11 @@
       "types": "./src/health.ts",
       "import": "./src/health.ts",
       "default": "./src/health.ts"
+    },
+    "./vitest-env": {
+      "types": "./src/vitest-env.ts",
+      "import": "./src/vitest-env.ts",
+      "default": "./src/vitest-env.ts"
     }
   },
   "scripts": {
