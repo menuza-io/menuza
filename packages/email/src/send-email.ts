@@ -1,5 +1,5 @@
 import { render } from '@react-email/components'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 import { brand } from '@repo/config/brand'
 import { type ReactElement } from 'react'
 import { z } from 'zod'

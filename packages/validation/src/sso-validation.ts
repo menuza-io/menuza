@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 // Provider name validation
 export const ProviderNameSchema = z

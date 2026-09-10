@@ -2,21 +2,8 @@
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local", "packages/**/.env.schema"],
 	"tasks": {
-		"//#env:codegen": {
-			"cache": true,
-			"inputs": [
-				"packages/**/.env.schema",
-				"apps/**/.env.schema",
-				"scripts/codegen-package-env.mjs"
-			],
-			"outputs": [
-				"packages/**/src/env.js",
-				"packages/**/src/env.ts",
-				"apps/**/env.d.ts"
-			]
-		},
 		"build": {
-			"dependsOn": ["//#env:codegen", "^build"],
+			"dependsOn": ["^build"],
 			"outputs": ["build/**", "public/build/**", "dist/**", ".expo/**"],
 			"cache": true
 		},
@@ -71,18 +58,17 @@
 			"cache": true
 		},
 		"typecheck": {
-			"dependsOn": ["//#env:codegen"],
 			"cache": true
 		},
 		"db:seed": {
 			"cache": false
 		},
 		"test": {
-			"dependsOn": ["//#env:codegen", "^build"],
+			"dependsOn": ["^build"],
 			"cache": true
 		},
 		"test:e2e:run": {
-			"dependsOn": ["//#env:codegen", "^build"],
+			"dependsOn": ["^build"],
 			"cache": true
 		},
 		"dev": {

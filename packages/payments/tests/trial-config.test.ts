@@ -5,7 +5,7 @@ const mockEnv = vi.hoisted(() => ({
 	CREDIT_CARD_REQUIRED_FOR_TRIAL: 'manual' as 'stripe' | 'manual' | string,
 }))
 
-vi.mock('../src/env.js', () => ({
+vi.mock('../src/package-env.ts', () => ({
 	get ENV() {
 		return mockEnv
 	},

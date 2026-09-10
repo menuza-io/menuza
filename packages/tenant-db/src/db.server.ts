@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@libsql/client'

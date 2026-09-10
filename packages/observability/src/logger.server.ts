@@ -1,5 +1,5 @@
 import pino from 'pino'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 import type { Logger as PinoLogger } from 'pino'
 import { getClientIp as extractClientIp } from '@repo/security'
 

@@ -1,5 +1,5 @@
 import twilio from 'twilio'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 let twilioClient: twilio.Twilio | null = null
 

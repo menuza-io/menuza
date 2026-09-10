@@ -6,7 +6,7 @@ import { AuditAction } from './actions.ts'
 import { securityAlertService } from './alerting.ts'
 import { computeIntegrityHash } from './integrity.ts'
 import { auditRetentionManager } from './retention.ts'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 export interface AuditLogInput {
 	action: AuditAction

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { SignJWT, jwtVerify } from 'jose'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 export const OPERATOR_TOKEN_AUD = 'tenant-api-operator'
 export const OPERATOR_TOKEN_ISS = 'epic-startup-control-plane'

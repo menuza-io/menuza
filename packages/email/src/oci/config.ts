@@ -1,5 +1,5 @@
 import common from 'oci-common'
-import { ENV } from '../env.js'
+import { ENV } from '../package-env.ts'
 
 export interface OciEmailConfig {
 	tenancyOcid: string

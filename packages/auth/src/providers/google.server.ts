@@ -1,5 +1,5 @@
 import { SetCookie } from '@mjackson/headers'
-import { ENV } from '../env.js'
+import { ENV } from '../package-env.ts'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from 'react-router'
 import { GoogleStrategy, type GoogleProfile } from '@coji/remix-auth-google'
@@ -28,8 +28,7 @@ const GoogleUserParseResult = z
 	)
 
 const shouldMock =
-	ENV.GOOGLE_CLIENT_ID?.startsWith('MOCK_') ||
-	ENV.NODE_ENV === 'test'
+	ENV.GOOGLE_CLIENT_ID?.startsWith('MOCK_') || ENV.NODE_ENV === 'test'
 
 export class GoogleProvider implements AuthProvider {
 	getAuthStrategy() {

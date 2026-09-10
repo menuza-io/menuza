@@ -1,5 +1,5 @@
 import { createCookieSessionStorage } from 'react-router'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 if (!ENV.SESSION_SECRET) {
 	throw new Error(
@@ -9,9 +9,7 @@ if (!ENV.SESSION_SECRET) {
 	)
 }
 
-const verificationSecrets = ENV.SESSION_SECRET.split(',').map((s) =>
-	s.trim(),
-)
+const verificationSecrets = ENV.SESSION_SECRET.split(',').map((s) => s.trim())
 if (
 	verificationSecrets.length === 0 ||
 	verificationSecrets.some((s) => s.length === 0)

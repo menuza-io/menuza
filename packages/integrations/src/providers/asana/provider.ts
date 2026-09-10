@@ -2,7 +2,7 @@
  * Asana integration provider implementation
  */
 
-import { ENV } from '../../env.js'
+import { ENV } from '../../package-env.ts'
 import {
 	type Integration,
 	type NoteIntegrationConnection,

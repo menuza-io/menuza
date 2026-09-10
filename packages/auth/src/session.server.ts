@@ -3,7 +3,7 @@ import {
 	operatorCookieName,
 	operatorSessionCookieDomain,
 } from '@repo/common/cookie-domain'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 if (!ENV.SESSION_SECRET) {
 	throw new Error(

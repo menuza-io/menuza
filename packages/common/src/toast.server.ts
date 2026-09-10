@@ -1,5 +1,5 @@
 import { createId as cuid } from '@paralleldrive/cuid2'
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 import { createCookieSessionStorage, redirect } from 'react-router'
 import { z } from 'zod'
 import { combineHeaders } from './misc.js'

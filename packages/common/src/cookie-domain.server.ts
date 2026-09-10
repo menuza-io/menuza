@@ -1,4 +1,4 @@
-import { ENV } from './env.js'
+import { ENV } from './package-env.ts'
 
 function runtimeBaseUrl(): string | undefined {
 	return process.env.BASE_URL || ENV.BASE_URL
