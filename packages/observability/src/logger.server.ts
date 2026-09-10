@@ -26,8 +26,24 @@ import { getClientIp as extractClientIp } from '@repo/security'
  * ```
  */
 
-const isDevelopment = ENV.NODE_ENV === 'development'
-const isTest = ENV.NODE_ENV === 'test'
+function readNodeEnv(): 'production' | 'development' | 'test' {
+	try {
+		return ENV.NODE_ENV
+	} catch {
+		const fromProcess = process.env.NODE_ENV
+		if (
+			fromProcess === 'development' ||
+			fromProcess === 'test' ||
+			fromProcess === 'production'
+		) {
+			return fromProcess
+		}
+		return 'production'
+	}
+}
+
+const isDevelopment = readNodeEnv() === 'development'
+const isTest = readNodeEnv() === 'test'
 
 // Redact sensitive fields from logs - expanded for OAuth, SSO, and authentication patterns
 const redactPaths = [
