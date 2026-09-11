@@ -5159,11 +5159,7 @@ export default function PageBuilderRoute() {
 	const [themeConfig, setThemeConfig] = useState(initialTheme)
 
 	useAIPanelHotkey()
-	const {
-		isOpen: isAIPanelOpen,
-		isExpanded: isAIPanelExpanded,
-		toggle: toggleAIPanel,
-	} = useAIPanel()
+	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
 
 	useEffect(() => {
 		const handleThemeChange = (e: any) => setThemeConfig(e.detail)
@@ -5770,14 +5766,14 @@ export default function PageBuilderRoute() {
 									aria-hidden
 								/>
 
-								<div className="min-w-0">
+								<div className="min-w-0 flex-1">
 									<DropdownMenu>
 										<DropdownMenuTrigger
 											render={
 												<Button
 													variant="ghost"
 													size="sm"
-													className="max-w-52 min-w-0 gap-1 px-1.5 font-medium"
+													className="w-full max-w-52 min-w-0 gap-1 px-1.5 font-medium"
 													aria-label="Page menu"
 												>
 													<span
@@ -5891,12 +5887,9 @@ export default function PageBuilderRoute() {
 									</Button>
 								</div>
 
-								<div className="hidden sm:block">
-									<GlobalAIToggle />
-								</div>
+								<GlobalAIToggle />
 
 								<Button
-									size="sm"
 									onClick={handlePublish}
 									disabled={publishFetcher.state !== 'idle'}
 								>
@@ -5929,14 +5922,6 @@ export default function PageBuilderRoute() {
 										}
 									/>
 									<DropdownMenuContent align="end" className="min-w-44">
-										<DropdownMenuItem
-											className="sm:hidden"
-											onClick={toggleAIPanel}
-										>
-											<Icon name="sparkles" className="size-4" />
-											<Trans>Ask AI</Trans>
-										</DropdownMenuItem>
-										<DropdownMenuSeparator className="sm:hidden" />
 										<DropdownMenuItem onClick={() => setIframeKey(Date.now())}>
 											<Icon name="refresh-cw" className="size-4" />
 											<Trans>Refresh preview</Trans>
