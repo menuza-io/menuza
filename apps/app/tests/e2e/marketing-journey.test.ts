@@ -90,10 +90,13 @@ test.describe('Marketing Automation Journey Builder E2E', () => {
 		await emailNode.click()
 
 		await expect(page.getByText(/subject line/i)).toBeVisible()
-		await expect(page.getByText(/insert merge tags/i)).toBeVisible()
+		// Merge tags render as chips in a rich field, with the catalogue of
+		// available tags offered as insert buttons.
+		await expect(page.getByText(/^insert$/i)).toBeVisible()
 		await expect(
-			page.getByRole('button', { name: /\{\{name\}\}/i }),
+			page.getByRole('button', { name: /^first name$/i }),
 		).toBeVisible()
+		await expect(page.getByRole('button', { name: /^company$/i })).toBeVisible()
 	})
 
 	test('User can navigate from marketing overview to automations', async ({
