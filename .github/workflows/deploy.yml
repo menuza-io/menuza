@@ -20,6 +20,7 @@ env:
   HUSKY: 0
   PUPPETEER_SKIP_DOWNLOAD: 'true'
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+  TURBO_R2_BUCKET: epic-startup-turbo-cache
   # Force npm to resolve linux-x64 optional native bindings even when lockfile
   # was generated on macOS. Fixes @libsql/linux-x64-gnu and similar missing modules.
   npm_config_os: linux
@@ -116,6 +117,25 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: ⚡ Set up Turbo remote cache
+        if: >
+          github.event_name == 'push' || (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.actor != 'dependabot[bot]')
+        continue-on-error: true
+        uses: rharkor/caching-for-turbo@69aec4f8e0792a339e9181bc38e07f4990ded015 # v2.3.12
+        with:
+          provider: s3
+          s3-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          s3-bucket: ${{ env.TURBO_R2_BUCKET }}
+          s3-region: auto
+          s3-endpoint:
+            https://${{ secrets.CLOUDFLARE_ACCOUNT_ID
+            }}.r2.cloudflarestorage.com
+          s3-prefix: turbo/
+          max-age: 30d
+
       - name: 📥 Download deps
         run: npm ci --ignore-scripts
 
@@ -152,6 +172,25 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+
+      - name: ⚡ Set up Turbo remote cache
+        if: >
+          github.event_name == 'push' || (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.actor != 'dependabot[bot]')
+        continue-on-error: true
+        uses: rharkor/caching-for-turbo@69aec4f8e0792a339e9181bc38e07f4990ded015 # v2.3.12
+        with:
+          provider: s3
+          s3-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          s3-bucket: ${{ env.TURBO_R2_BUCKET }}
+          s3-region: auto
+          s3-endpoint:
+            https://${{ secrets.CLOUDFLARE_ACCOUNT_ID
+            }}.r2.cloudflarestorage.com
+          s3-prefix: turbo/
+          max-age: 30d
 
       - name: 📥 Download deps
         run: npm ci --ignore-scripts
@@ -193,6 +232,25 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+
+      - name: ⚡ Set up Turbo remote cache
+        if: >
+          github.event_name == 'push' || (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.actor != 'dependabot[bot]')
+        continue-on-error: true
+        uses: rharkor/caching-for-turbo@69aec4f8e0792a339e9181bc38e07f4990ded015 # v2.3.12
+        with:
+          provider: s3
+          s3-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          s3-bucket: ${{ env.TURBO_R2_BUCKET }}
+          s3-region: auto
+          s3-endpoint:
+            https://${{ secrets.CLOUDFLARE_ACCOUNT_ID
+            }}.r2.cloudflarestorage.com
+          s3-prefix: turbo/
+          max-age: 30d
 
       - name: 📥 Download deps
         run: npm ci --ignore-scripts

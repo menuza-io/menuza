@@ -62,7 +62,25 @@ Prior to your first deployment, you'll need to do a few things:
    - Add `CLOUDFLARE_API_TOKEN` to your GitHub repo. Get this from
      [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
      (Create Custom Token with Workers edit permission).
-   - Add `CLOUDFLARE_ACCOUNT_ID` as a variable.
+   - Add `CLOUDFLARE_ACCOUNT_ID` as a secret.
+
+   CI can also share Turborepo build, typecheck, and unit-test artifacts through
+   a dedicated Cloudflare R2 bucket. Create the bucket and an R2 API token with
+   Object Read & Write access scoped only to that bucket:
+
+   ```sh
+   npx wrangler r2 bucket create epic-startup-turbo-cache
+   ```
+
+   Save the existing R2 token's Access Key ID as `AWS_ACCESS_KEY_ID` and its
+   Secret Access Key as `AWS_SECRET_ACCESS_KEY` in GitHub Actions secrets. The
+   token must include R2 Object Read & Write permission. The cache is
+   best-effort, expires objects after 30 days, and is disabled for fork and
+   Dependabot pull requests because GitHub does not expose repository secrets to
+   those runs. End-to-end tests are deliberately not cached so every eligible
+   E2E job executes the browser tests. `npm run launch:setup` can create the
+   bucket, open the account-specific R2 token creation page, and securely prompt
+   for and save both credentials.
 
 7. Commit!
 

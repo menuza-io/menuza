@@ -69,7 +69,7 @@
 		},
 		"test:e2e:run": {
 			"dependsOn": ["^build"],
-			"cache": true
+			"cache": false
 		},
 		"dev": {
 			"cache": false,

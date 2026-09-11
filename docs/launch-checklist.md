@@ -65,17 +65,28 @@ skip the interactive script. Generated secrets land in `launch.secrets.json`
 
 Set under **Settings → Secrets and variables → Actions → Secrets**.
 
-| Secret                        | Used by                                  | Purpose                                            |
-| ----------------------------- | ---------------------------------------- | -------------------------------------------------- |
-| `CLOUDFLARE_BUILDS_API_TOKEN` | `trigger-cf-builds`                      | User token with Workers Builds Configuration: Edit |
-| `CLOUDFLARE_API_TOKEN`        | Lighthouse preview deploy                | API token with Workers deployment permissions      |
-| `CLOUDFLARE_ACCOUNT_ID`       | Lighthouse preview + `trigger-cf-builds` | Cloudflare account ID                              |
-| `OCI_TENANT_SSH_KEY`          | `deploy-tenant-api-oci`                  | SSH private key for OCI VMs (KSA / optional US)    |
-| `GHCR_PULL_TOKEN`             | OCI deploy (optional)                    | PAT with `packages:read` if GHCR image is private  |
+| Secret                        | Used by                                 | Purpose                                            |
+| ----------------------------- | --------------------------------------- | -------------------------------------------------- |
+| `CLOUDFLARE_BUILDS_API_TOKEN` | `trigger-cf-builds`                     | User token with Workers Builds Configuration: Edit |
+| `CLOUDFLARE_API_TOKEN`        | Lighthouse preview deploy               | API token with Workers deployment permissions      |
+| `CLOUDFLARE_ACCOUNT_ID`       | Lighthouse, deploys, and Turbo R2 cache | Cloudflare account ID                              |
+| `AWS_ACCESS_KEY_ID`           | Turbo cache in GitHub Actions           | Existing Cloudflare R2 token ID                    |
+| `AWS_SECRET_ACCESS_KEY`       | Turbo cache in GitHub Actions           | Existing Cloudflare R2 token secret                |
+| `OCI_TENANT_SSH_KEY`          | `deploy-tenant-api-oci`                 | SSH private key for OCI VMs (KSA / optional US)    |
+| `GHCR_PULL_TOKEN`             | OCI deploy (optional)                   | PAT with `packages:read` if GHCR image is private  |
 
 Generate API token:
 [Cloudflare Dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
 (Custom token: Account → Workers Scripts, D1, KV, R2 → Edit).
+
+For the Turbo cache, create `epic-startup-turbo-cache` in R2 and reuse an
+existing R2 token with Object Read & Write permission. `npm run launch:setup`
+creates the bucket when Cloudflare resource creation is selected, then securely
+opens
+`https://dash.cloudflare.com/<ACCOUNT_ID>/r2/api-tokens/create?type=account`
+when GitHub setup is selected. After the user creates the bucket-scoped token,
+the launcher securely prompts for and saves its `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` values.
 
 ---
 
