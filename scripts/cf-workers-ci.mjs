@@ -170,7 +170,7 @@ function installDeps() {
 		'rolldown',
 		'@astrojs/compiler-binding',
 	])
-	run('node', ['packages/ui/generate-icons.js'])
+	run('npm', ['run', 'generate:icons'])
 }
 
 function patchWrangler(appKey, deployEnv) {

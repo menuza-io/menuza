@@ -28,4 +28,5 @@ export const CF_KV = {
 export const CF_R2 = {
 	web: `${CF_RESOURCE_PREFIX}-media`,
 	webStaging: `${CF_RESOURCE_PREFIX}-media-staging`,
+	turboCache: `${CF_RESOURCE_PREFIX}-turbo-cache`,
 }

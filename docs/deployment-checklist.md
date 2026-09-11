@@ -37,6 +37,8 @@ manually.
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+- `AWS_ACCESS_KEY_ID` (existing Cloudflare R2 token ID)
+- `AWS_SECRET_ACCESS_KEY` (existing Cloudflare R2 token secret)
 
 **Variables** — binding IDs and public URLs. See
 [Launch Checklist → GitHub Variables](./launch-checklist.md#github-actions--variables-bindings--urls).
@@ -76,6 +78,16 @@ npx wrangler r2 bucket create epic-startup-media
 
 Copy the generated IDs into GitHub Variables (not into committed wrangler
 files).
+
+Create the dedicated Turborepo remote-cache bucket once. The launch setup does
+this automatically when Cloudflare resource creation is selected and securely
+opens the account-specific R2 token creation page when GitHub setup is selected.
+It then securely prompts for the resulting credentials and saves them to GitHub.
+The token must have R2 Object Read & Write permission.
+
+```bash
+npx wrangler r2 bucket create epic-startup-turbo-cache
+```
 
 ## Step 4 — Wrangler secrets
 
