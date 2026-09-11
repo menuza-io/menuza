@@ -97,6 +97,21 @@
       "import": "./src/public-form.ts",
       "default": "./src/public-form.ts"
     },
+    "./email-blocks": {
+      "types": "./src/email-blocks.ts",
+      "import": "./src/email-blocks.ts",
+      "default": "./src/email-blocks.ts"
+    },
+    "./merge-tags": {
+      "types": "./src/merge-tags.ts",
+      "import": "./src/merge-tags.ts",
+      "default": "./src/merge-tags.ts"
+    },
+    "./email-theme": {
+      "types": "./src/email-theme.ts",
+      "import": "./src/email-theme.ts",
+      "default": "./src/email-theme.ts"
+    },
     "./turnstile": {
       "types": "./src/turnstile.server.ts",
       "import": "./src/turnstile.server.ts",

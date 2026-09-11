@@ -30,7 +30,7 @@ export function Logo({
 					</g>
 				</svg>
 			</div>
-			<div className="font-title font-bold group-data-[collapsible=icon]:hidden">
+			<div className="font-title font-normal group-data-[collapsible=icon]:hidden">
 				{brand.name}
 			</div>
 		</div>

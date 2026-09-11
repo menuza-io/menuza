@@ -52,6 +52,10 @@ export interface CampaignDetail {
 	channel: CampaignChannel
 	subject?: string | null
 	content: string
+	/** JSON array of email designer blocks, when the broadcast was designed. */
+	contentBlocks?: string | null
+	/** Design-time rendered HTML, when the broadcast was designed. */
+	contentHtml?: string | null
 	targetAudienceCount: number
 	audience?: string | null
 	createdAt: string | Date

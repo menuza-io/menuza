@@ -63,6 +63,25 @@ token must have permission to edit that D1 database.
 `npm run db:migrate:deploy` is for the local LibSQL development database used by
 tests and local development; it does not migrate Cloudflare D1.
 
+### Tenant database migrations
+
+Tenant `tenant_{orgId}.db` files are long-lived, so migrations are **applied
+lazily when a connection is opened** (`applyTenantMigrations`), on both the Node
+(OCI) filesystem path and the Cloudflare Durable Object path. This matters when
+a migration adds a column to an existing table: Drizzle enumerates columns on
+`select().from(table)`, so a stale file would fail every query until the org
+happened to be re-provisioned.
+
+Generate tenant migrations in `packages/tenant-db`:
+
+```sh
+cd packages/tenant-db
+npx drizzle-kit generate --name your_migration_name
+```
+
+They apply automatically on the next connection; `POST /api/provision` also
+forces the full migration run for a specific org.
+
 ## Seeding
 
 During development, you may want to seed your database with test data:

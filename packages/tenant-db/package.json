@@ -24,6 +24,7 @@
   "dependencies": {
     "@epic-web/remember": "^1.1.0",
     "@libsql/client": "^0.17.4",
+    "@repo/common": "*",
     "drizzle-orm": "^0.45.2",
     "lru-cache": "^11.5.2",
     "varlock": "^1.18.0",

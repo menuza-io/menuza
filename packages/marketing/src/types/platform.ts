@@ -24,6 +24,10 @@ export const createPlatformCampaignSchema = z.object({
 	channel: z.enum(CAMPAIGN_CHANNELS),
 	subject: z.string().optional(),
 	content: z.string().min(1),
+	/** JSON array of email designer blocks, when the broadcast was designed. */
+	contentBlocks: z.string().optional(),
+	/** Design-time rendered HTML, when the broadcast was designed. */
+	contentHtml: z.string().optional(),
 	audience: platformAudienceSchema.default('all_operators'),
 	targetOrganizationId: z.string().optional(),
 })
@@ -41,6 +45,8 @@ export interface PlatformCampaignRecord {
 	targetAudienceCount: number
 	subject: string | null
 	content: string
+	contentBlocks: string | null
+	contentHtml: string | null
 	createdAt: Date
 	updatedAt: Date
 }

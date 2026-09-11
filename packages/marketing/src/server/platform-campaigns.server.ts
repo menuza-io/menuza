@@ -21,7 +21,9 @@ import {
 } from '../types/campaign.ts'
 import {
 	buildRecipientMergeTags,
+	escapeHtml,
 	interpolateMergeTags,
+	interpolateMergeTagsHtml,
 } from '../utils/merge-tags.ts'
 import {
 	createPlatformCampaignSchema,
@@ -96,6 +98,8 @@ export async function getPlatformCampaign(
 		channel: campaign.channel as CampaignDetail['channel'],
 		subject: campaign.subject,
 		content: campaign.content,
+		contentBlocks: campaign.contentBlocks,
+		contentHtml: campaign.contentHtml,
 		targetAudienceCount: campaign.targetAudienceCount,
 		audience: campaign.audience,
 		createdAt: campaign.createdAt,
@@ -151,6 +155,8 @@ export async function createPlatformCampaign(
 		channel: parsed.channel,
 		subject: parsed.subject || null,
 		content: parsed.content,
+		contentBlocks: parsed.contentBlocks || null,
+		contentHtml: parsed.contentHtml || null,
 		status: 'Processing',
 		audience: parsed.audience,
 		targetOrganizationId: parsed.targetOrganizationId || null,
@@ -257,14 +263,9 @@ export async function dispatchPlatformCampaign(campaignId: string) {
 			try {
 				if (campaign.channel === 'email') {
 					if (!recipient.email) throw new Error('No email address')
-					const escapeHtml = (unsafe: string) => {
-						return unsafe
-							.replace(/&/g, "&amp;")
-							.replace(/</g, "&lt;")
-							.replace(/>/g, "&gt;")
-							.replace(/"/g, "&quot;")
-							.replace(/'/g, "&#039;");
-					};
+					const html = campaign.contentHtml
+						? interpolateMergeTagsHtml(campaign.contentHtml, mergeTags)
+						: `<p>${escapeHtml(parsedContent).replace(/\n/g, '<br/>')}</p>`
 
 					const emailRes = await sendEmail({
 						to: recipient.email,
@@ -273,7 +274,7 @@ export async function dispatchPlatformCampaign(campaignId: string) {
 							mergeTags,
 						),
 						text: parsedContent,
-						html: `<p>${escapeHtml(parsedContent).replace(/\n/g, '<br/>')}</p>`,
+						html,
 						tags: buildPlatformMarketingResendTags(messageId, campaignId),
 					})
 					if (emailRes.status === 'error') {

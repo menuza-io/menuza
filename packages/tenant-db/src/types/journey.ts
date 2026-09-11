@@ -1,3 +1,9 @@
+import { emailBlocksSchema } from '@repo/common/email-blocks'
+import {
+	isMergeTagName,
+	replaceMergeTokens,
+	resolveWithFallback,
+} from '@repo/common/merge-tags'
 import { z } from 'zod'
 
 // ==========================================
@@ -82,13 +88,31 @@ export const delayNodeDataSchema = z.object({
 })
 export type DelayNodeData = z.infer<typeof delayNodeDataSchema>
 
-export const actionEmailNodeDataSchema = z.object({
-	subject: z.string().min(1, 'Subject is required'),
-	bodyHtml: z.string().min(1, 'HTML body is required'),
-	bodyText: z.string().optional(),
-	fromName: z.string().optional(),
-	template: z.string().optional(),
-})
+export const actionEmailNodeDataSchema = z
+	.object({
+		subject: z.string().min(1, 'Subject is required'),
+		/**
+		 * Pre-rendered HTML body. When `blocks` is set this holds the full
+		 * document produced by the email designer at save time.
+		 */
+		bodyHtml: z.string().optional(),
+		bodyText: z.string().optional(),
+		fromName: z.string().optional(),
+		template: z.string().optional(),
+		/** Email designer blocks — the source of truth for editing. */
+		blocks: emailBlocksSchema.optional(),
+	})
+	.superRefine((data, context) => {
+		const hasBlocks = Array.isArray(data.blocks) && data.blocks.length > 0
+		const hasHtml = Boolean(data.bodyHtml && data.bodyHtml.trim().length > 0)
+		if (!hasBlocks && !hasHtml) {
+			context.addIssue({
+				code: 'custom',
+				message: 'Add an email design or an HTML body',
+				path: ['bodyHtml'],
+			})
+		}
+	})
 export type ActionEmailNodeData = z.infer<typeof actionEmailNodeDataSchema>
 
 export const actionSmsNodeDataSchema = z.object({
@@ -637,6 +661,10 @@ export function getDownstreamNodes(
  * - {{email}} -> customer.email or ''
  * - {{phone}} -> customer.phone or ''
  * - {{customKey}} -> contextData[customKey] or original tag
+ *
+ * Any tag accepts a fallback: `{{firstName|there}}` resolves to 'there' when the
+ * customer has no first name. A fallback takes precedence over the built-in
+ * default above, and an unknown tag with a fallback resolves to that fallback.
  */
 export function interpolateMergeTags(
 	template: string,
@@ -647,34 +675,73 @@ export function interpolateMergeTags(
 	},
 	contextData: Record<string, unknown> = {},
 ): string {
-	if (!template) return ''
-
-	return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+	return replaceMergeTokens(template, (key, fallback, raw) => {
 		switch (key) {
 			case 'name':
-				return customer.name && customer.name.trim().length > 0
-					? customer.name.trim()
-					: 'Customer'
+				return resolveWithFallback(customer.name, fallback, 'Customer')
 			case 'firstName': {
 				const trimmed = customer.name?.trim()
-				if (!trimmed) return 'Customer'
-				return trimmed.split(/\s+/)[0] || 'Customer'
+				const first = trimmed ? trimmed.split(/\s+/)[0] : ''
+				return resolveWithFallback(first, fallback, 'Customer')
 			}
 			case 'lastName': {
 				const trimmed = customer.name?.trim()
-				if (!trimmed) return ''
+				if (!trimmed) return resolveWithFallback('', fallback)
 				const parts = trimmed.split(/\s+/)
-				return parts.length > 1 ? parts.slice(1).join(' ') : ''
+				const rest = parts.length > 1 ? parts.slice(1).join(' ') : ''
+				return resolveWithFallback(rest, fallback)
 			}
 			case 'email':
-				return customer.email || ''
+				return resolveWithFallback(customer.email, fallback)
 			case 'phone':
-				return customer.phone || ''
+				return resolveWithFallback(customer.phone, fallback)
 			default:
 				if (contextData[key] !== undefined && contextData[key] !== null) {
-					return String(contextData[key])
+					return resolveWithFallback(String(contextData[key]), fallback)
 				}
-				return match
+				// Unknown tag: use the fallback when given, else keep it verbatim.
+				return fallback.trim() || raw
 		}
+	})
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#39;',
+}
+
+export function escapeHtmlValue(value: string): string {
+	return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char)
+}
+
+/**
+ * Same as `interpolateMergeTags`, but escapes every substituted value so
+ * customer PII cannot inject markup into a pre-rendered HTML email body.
+ * Use the plain variant for the text part of the message.
+ */
+export function interpolateMergeTagsHtml(
+	template: string,
+	customer: {
+		name?: string | null
+		email?: string | null
+		phone?: string | null
+	},
+	contextData: Record<string, unknown> = {},
+): string {
+	return replaceMergeTokens(template, (key, fallback, raw) => {
+		// Literal text is written by the editor and stays as-is; only the
+		// substituted values (and fallbacks) are escaped.
+		if (!isMergeTagName(key)) {
+			if (contextData[key] !== undefined && contextData[key] !== null) {
+				return escapeHtmlValue(
+					resolveWithFallback(String(contextData[key]), fallback),
+				)
+			}
+			return fallback.trim() ? escapeHtmlValue(fallback) : raw
+		}
+		return escapeHtmlValue(interpolateMergeTags(raw, customer, contextData))
 	})
 }

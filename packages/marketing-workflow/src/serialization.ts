@@ -1,4 +1,5 @@
 import {
+	type ActionEmailNodeData,
 	type WorkflowGraph,
 	type WorkflowNode,
 	type WorkflowEdge,
@@ -51,7 +52,7 @@ export function reactFlowToWorkflowGraph(
 					type: 'action_email' as const,
 					data: {
 						subject: String(node.data?.subject || ''),
-						bodyHtml: String(node.data?.bodyHtml || node.data?.bodyText || ''),
+						bodyHtml: String(node.data?.bodyHtml || ''),
 						bodyText: node.data?.bodyText
 							? String(node.data.bodyText)
 							: undefined,
@@ -60,6 +61,9 @@ export function reactFlowToWorkflowGraph(
 							: undefined,
 						template: node.data?.template
 							? String(node.data.template)
+							: undefined,
+						blocks: Array.isArray(node.data?.blocks)
+							? (node.data.blocks as NonNullable<ActionEmailNodeData['blocks']>)
 							: undefined,
 					},
 				}
