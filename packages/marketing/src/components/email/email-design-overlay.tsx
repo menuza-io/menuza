@@ -103,7 +103,10 @@ export function EmailDesignOverlay({
 					showCloseButton={false}
 					aria-label={title ?? _(msg`Email design`)}
 					className={cn(
-						'bg-muted fixed inset-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0',
+						// DialogContent is normally a centred card. This editor is a
+						// full-screen workspace, so override both its base and `sm:`
+						// popup constraints while retaining Dialog's focus management.
+						'bg-muted !inset-0 !top-0 !right-0 !bottom-0 !left-0 flex h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 data-closed:animate-none data-open:animate-none sm:!max-w-none',
 						className,
 					)}
 				>
