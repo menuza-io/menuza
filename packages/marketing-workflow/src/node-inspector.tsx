@@ -307,11 +307,11 @@ export function NodeInspector({
 											size="sm"
 											className="text-muted-foreground"
 											onClick={() => {
-												handleChange('blocks', undefined)
-												handleChange(
-													'bodyHtml',
-													data.bodyText || '<p></p><p></p>',
-												)
+												onUpdateNodeData(node.id, {
+													...data,
+													blocks: undefined,
+													bodyHtml: data.bodyText || '<p></p><p></p>',
+												})
 											}}
 										>
 											<Trans>Remove design</Trans>

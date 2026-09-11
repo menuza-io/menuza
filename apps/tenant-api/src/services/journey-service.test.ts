@@ -288,7 +288,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(updatedRun?.currentNodeId).toBe('node-email-welcome')
 		})
 
-		it('sends a designed email as a full HTML document and escapes merged PII', async () => {
+		it('uses the designed-email escaping path even when its blocks are empty', async () => {
 			const db = await getTenantDb(orgId)
 
 			const customer = (
@@ -335,7 +335,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 					bodyHtml:
 						'<!DOCTYPE html><html><body><p>Hi {{name}}</p></body></html>',
 					bodyText: 'Hi {{name}}',
-					blocks: [{ id: 'block-1', type: 'body', config: { text: 'Hi' } }],
+					blocks: [],
 				},
 			})
 

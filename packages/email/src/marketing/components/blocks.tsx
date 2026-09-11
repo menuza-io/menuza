@@ -156,8 +156,10 @@ function ImageBlock({
 				textAlign: block.config.align,
 			}}
 		>
-			{block.config.href ? (
-				<Link href={block.config.href}>{image}</Link>
+			{resolveEmailAssetUrl(block.config.href, theme.appUrl) ? (
+				<Link href={resolveEmailAssetUrl(block.config.href, theme.appUrl)}>
+					{image}
+				</Link>
 			) : (
 				image
 			)}
@@ -205,8 +207,8 @@ function ButtonBlock({
 				...(isFullWidth ? { width: '100%' } : null),
 			}}
 		>
-			{url.trim() ? (
-				<Button href={url} style={style}>
+			{resolveEmailAssetUrl(url, theme.appUrl) ? (
+				<Button href={resolveEmailAssetUrl(url, theme.appUrl)} style={style}>
 					{label}
 				</Button>
 			) : (

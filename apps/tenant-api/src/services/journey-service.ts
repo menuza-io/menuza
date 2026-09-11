@@ -11,6 +11,7 @@ import {
 	journeyStepExecutions,
 	marketingMessages,
 	validateWorkflowDAG,
+	actionEmailNodeDataSchema,
 	interpolateMergeTags,
 	interpolateMergeTagsHtml,
 	createJourneySchema,
@@ -339,16 +340,7 @@ export async function executeJourneyStep(
 		}
 	}
 
-	const config = (payload.config || {}) as {
-		subject?: string
-		bodyHtml?: string
-		bodyText?: string
-		fromName?: string
-		template?: string
-		messageText?: string
-		content?: string
-		blocks?: unknown[]
-	}
+	const config = payload.config || {}
 
 	// 4. Execute channel-specific dispatch
 	if (stepType === 'email') {
@@ -371,20 +363,40 @@ export async function executeJourneyStep(
 				statusCode: 422,
 			}
 		}
+		const legacyConfig = config as { content?: unknown }
+		const parsedConfig = actionEmailNodeDataSchema.safeParse({
+			subject: 'Notification',
+			...config,
+			bodyHtml:
+				typeof legacyConfig.content === 'string'
+					? legacyConfig.content
+					: (config as { bodyHtml?: unknown }).bodyHtml,
+		})
+		if (!parsedConfig.success) {
+			return {
+				success: false,
+				status: 'failed',
+				error: 'Invalid email journey configuration',
+				statusCode: 422,
+			}
+		}
+		const emailConfig = parsedConfig.data
 
-		const hasBlocks = Array.isArray(config.blocks) && config.blocks.length > 0
-		const rawSubject = config.subject || 'Notification'
-		const rawHtml = config.bodyHtml || config.content || ''
-		const rawText = config.bodyText || config.content || rawHtml
+		const isDesigned =
+			emailConfig.emailFormat === 'designed' ||
+			Array.isArray(emailConfig.blocks)
+		const rawSubject = emailConfig.subject || 'Notification'
+		const rawHtml = emailConfig.bodyHtml || ''
+		const rawText = emailConfig.bodyText || rawHtml
 
 		const subject = interpolateMergeTags(rawSubject, customer, contextData)
 		const text = interpolateMergeTags(rawText, customer, contextData)
-		const renderedHtml = hasBlocks
+		const renderedHtml = isDesigned
 			? interpolateMergeTagsHtml(rawHtml, customer, contextData)
 			: interpolateMergeTags(rawHtml, customer, contextData)
 		// Designed emails already hold a full HTML document; legacy nodes get the
 		// historical <p> wrapper.
-		const html = hasBlocks
+		const html = isDesigned
 			? renderedHtml
 			: renderedHtml
 				? `<p>${renderedHtml}</p>`
@@ -541,7 +553,8 @@ export async function executeJourneyStep(
 			}
 		}
 
-		const rawMessage = config.messageText || config.content || ''
+		const smsConfig = config as { messageText?: string; content?: string }
+		const rawMessage = smsConfig.messageText || smsConfig.content || ''
 		const message = interpolateMergeTags(rawMessage, customer, contextData)
 
 		try {

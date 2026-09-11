@@ -99,11 +99,16 @@ export const actionEmailNodeDataSchema = z
 		bodyText: z.string().optional(),
 		fromName: z.string().optional(),
 		template: z.string().optional(),
+		/** Distinguishes designed documents from legacy HTML content. */
+		emailFormat: z.enum(['designed', 'html']).optional(),
 		/** Email designer blocks — the source of truth for editing. */
 		blocks: emailBlocksSchema.optional(),
 	})
 	.superRefine((data, context) => {
-		const hasBlocks = Array.isArray(data.blocks) && data.blocks.length > 0
+		const isDesigned =
+			data.emailFormat === 'designed' || Array.isArray(data.blocks)
+		const hasBlocks =
+			isDesigned && Array.isArray(data.blocks) && data.blocks.length > 0
 		const hasHtml = Boolean(data.bodyHtml && data.bodyHtml.trim().length > 0)
 		if (!hasBlocks && !hasHtml) {
 			context.addIssue({

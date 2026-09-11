@@ -39,6 +39,14 @@ const emailBlockIdSchema = z
 
 const alignmentSchema = z.enum(EMAIL_BLOCK_ALIGNMENTS).default('left')
 
+const emailUrlSchema = z
+	.string()
+	.max(2_000)
+	.refine(
+		(value) => !value.trim() || /^https?:\/\//i.test(value.trim()),
+		'URL must use HTTP or HTTPS',
+	)
+
 export const emailHeadingBlockSchema = z.object({
 	id: emailBlockIdSchema,
 	type: z.literal('heading'),
@@ -69,9 +77,9 @@ export const emailImageBlockSchema = z.object({
 	id: emailBlockIdSchema,
 	type: z.literal('image'),
 	config: z.object({
-		url: z.string().max(2_000).default(''),
+		url: emailUrlSchema.default(''),
 		alt: z.string().max(300).default(''),
-		href: z.string().max(2_000).default(''),
+		href: emailUrlSchema.default(''),
 		width: z.number().min(10).max(100).default(100),
 		align: z.enum(EMAIL_BLOCK_ALIGNMENTS).default('center'),
 	}),
@@ -82,7 +90,7 @@ export const emailButtonBlockSchema = z.object({
 	type: z.literal('button'),
 	config: z.object({
 		label: z.string().max(120).default(''),
-		url: z.string().max(2_000).default(''),
+		url: emailUrlSchema.default(''),
 		variant: z.enum(EMAIL_BUTTON_VARIANTS).default('primary'),
 		width: z.enum(EMAIL_BUTTON_WIDTHS).default('auto'),
 		align: alignmentSchema,

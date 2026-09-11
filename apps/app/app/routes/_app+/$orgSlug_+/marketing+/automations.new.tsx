@@ -25,6 +25,45 @@ import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
+async function withRenderedEmails(
+	nodes: WorkflowGraph['nodes'],
+	branding: Awaited<ReturnType<typeof resolveEmailBrandingForOrg>>,
+) {
+	return Promise.all(
+		nodes.map(async (node) => {
+			if (node.type !== 'action_email' || !Array.isArray(node.data.blocks)) {
+				return node
+			}
+			if (node.data.blocks.length === 0) {
+				return {
+					...node,
+					data: {
+						...node.data,
+						emailFormat: 'designed' as const,
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
+			const rendered = await renderMarketingEmail({
+				blocks: node.data.blocks,
+				theme: branding,
+				socials: branding.socials,
+				subject: node.data.subject,
+			})
+			return {
+				...node,
+				data: {
+					...node.data,
+					emailFormat: 'designed' as const,
+					bodyHtml: rendered.html,
+					bodyText: rendered.text,
+				},
+			}
+		}),
+	)
+}
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	await getOperatorTenantClient(request, orgSlug)
@@ -70,6 +109,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		(triggerNode?.data as any)?.triggerType || 'phone_verified'
 	const triggerConfig =
 		((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
+	const branding = await resolveEmailBrandingForOrg(orgId)
+	const nodes = await withRenderedEmails(parsedGraph.nodes, branding)
+	const resolvedGraph = { ...parsedGraph, nodes }
 
 	// Create journey in tenant-api
 	const createRes = await fetchTenant('/operator/journeys', {
@@ -81,9 +123,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			),
 			triggerType,
 			triggerConfig,
-			nodes: parsedGraph.nodes,
+			nodes,
 			edges: parsedGraph.edges,
-			graphJson,
+			graphJson: JSON.stringify(resolvedGraph),
 		}),
 	})
 

@@ -237,7 +237,7 @@ function WorkflowCanvasInner({
 					: node,
 			)
 			setNodes(nextNodes)
-			void onSave(reactFlowToWorkflowGraph(nextNodes, edges), name)
+			return onSave(reactFlowToWorkflowGraph(nextNodes, edges), name)
 		},
 		[nodes, edges, name, onSave, setNodes],
 	)

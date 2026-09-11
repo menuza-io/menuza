@@ -3,6 +3,7 @@ import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
 import { randomUUID } from 'node:crypto'
 import { brand } from '@repo/config/brand'
+import { emailBlocksSchema } from '@repo/common/email-blocks'
 import {
 	getOciMarketingMetrics,
 	isOciEngagementLoggingConfigured,
@@ -342,7 +343,21 @@ const createCampaignSchema = z.object({
 	subject: z.string().optional(),
 	content: z.string().min(1, 'Content is required'),
 	/** JSON array of email designer blocks (source of truth for re-editing). */
-	contentBlocks: z.string().optional().nullable(),
+	contentBlocks: z
+		.string()
+		.transform((value, context) => {
+			try {
+				return emailBlocksSchema.parse(JSON.parse(value))
+			} catch {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Invalid email blocks',
+				})
+				return z.NEVER
+			}
+		})
+		.optional()
+		.nullable(),
 	/** Design-time rendered HTML for email broadcasts. */
 	contentHtml: z.string().optional().nullable(),
 	scheduledAt: z.string().datetime().optional().nullable(),
@@ -384,7 +399,9 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 			channel,
 			subject: subject || null,
 			content,
-			contentBlocks: body.contentBlocks || null,
+			contentBlocks: body.contentBlocks
+				? JSON.stringify(body.contentBlocks)
+				: null,
 			contentHtml: body.contentHtml || null,
 			status,
 			segmentationRules: JSON.stringify({ audience }),

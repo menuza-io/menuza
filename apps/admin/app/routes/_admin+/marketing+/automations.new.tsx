@@ -19,6 +19,44 @@ import {
 import { toast } from 'sonner'
 import { resolvePlatformEmailBranding } from '#app/utils/email-branding.server.ts'
 
+async function withRenderedEmails(
+	nodes: WorkflowGraph['nodes'],
+	branding: ReturnType<typeof resolvePlatformEmailBranding>,
+) {
+	return Promise.all(
+		nodes.map(async (node) => {
+			if (node.type !== 'action_email' || !Array.isArray(node.data.blocks)) {
+				return node
+			}
+			if (node.data.blocks.length === 0) {
+				return {
+					...node,
+					data: {
+						...node.data,
+						emailFormat: 'designed' as const,
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
+			const rendered = await renderMarketingEmail({
+				blocks: node.data.blocks,
+				theme: branding,
+				subject: node.data.subject,
+			})
+			return {
+				...node,
+				data: {
+					...node.data,
+					emailFormat: 'designed' as const,
+					bodyHtml: rendered.html,
+					bodyText: rendered.text,
+				},
+			}
+		}),
+	)
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
 	return {}
@@ -62,15 +100,20 @@ export async function action({ request }: ActionFunctionArgs) {
 		'org_created'
 	const triggerConfig =
 		(triggerNode?.data as { config?: Record<string, unknown> })?.config || {}
+	const nodes = await withRenderedEmails(
+		parsedGraph.nodes,
+		resolvePlatformEmailBranding(),
+	)
+	const resolvedGraph = { ...parsedGraph, nodes }
 
 	const created = await createPlatformJourney({
 		name: String(name),
 		description: i18n._(t`Platform automation created via visual builder.`),
 		triggerType,
 		triggerConfig,
-		nodes: parsedGraph.nodes,
+		nodes,
 		edges: parsedGraph.edges,
-		graphJson,
+		graphJson: JSON.stringify(resolvedGraph),
 	})
 
 	if (!created?.id) {

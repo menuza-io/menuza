@@ -14,7 +14,6 @@ import { Label } from '@repo/ui/label'
 import { Popover, PopoverContent } from '@repo/ui/popover'
 import {
 	useCallback,
-	useEffect,
 	useId,
 	useRef,
 	useState,
@@ -130,13 +129,16 @@ export function MergeTagField({
 	const [fallbackDraft, setFallbackDraft] = useState('')
 
 	// Sync external value changes without clobbering what the user is typing.
-	useEffect(() => {
-		const editor = editorRef.current
-		if (!editor) return
-		if (value === lastValueRef.current) return
-		editor.innerHTML = mergeValueToHtml(value)
-		lastValueRef.current = value
-	}, [value])
+	const setEditorRef = useCallback(
+		(editor: HTMLDivElement | null) => {
+			editorRef.current = editor
+			if (!editor) return
+			if (value === lastValueRef.current) return
+			editor.innerHTML = mergeValueToHtml(value)
+			lastValueRef.current = value
+		},
+		[value],
+	)
 
 	const emit = useCallback(
 		(next: string) => {
@@ -262,7 +264,7 @@ export function MergeTagField({
 	return (
 		<div className="space-y-1.5">
 			<div
-				ref={editorRef}
+				ref={setEditorRef}
 				id={id}
 				role="textbox"
 				aria-multiline={multiline}

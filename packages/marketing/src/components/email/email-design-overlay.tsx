@@ -12,9 +12,10 @@ import {
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
 import { Button } from '@repo/ui/button'
+import { Dialog, DialogContent } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { cn } from '@repo/ui'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useRef, useState, type ReactNode } from 'react'
 
 import { EmailBlockEditor } from './email-block-editor.tsx'
 
@@ -61,13 +62,12 @@ export function EmailDesignOverlay({
 	const [draft, setDraft] = useState<EmailBlock[]>(initialBlocks)
 	const [confirmDiscard, setConfirmDiscard] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
+	const wasOpenRef = useRef(open)
 
-	// Re-seed the draft each time the designer is opened so a discarded edit
-	// doesn't reappear on the next open.
-	useEffect(() => {
-		if (open) setDraft(initialBlocks)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [open])
+	// Re-seed the draft at the explicit open-session boundary so a discarded
+	// edit cannot reappear on the next open.
+	if (open && !wasOpenRef.current) setDraft(initialBlocks)
+	wasOpenRef.current = open
 
 	const isDirty = JSON.stringify(draft) !== JSON.stringify(initialBlocks)
 
@@ -78,18 +78,6 @@ export function EmailDesignOverlay({
 		}
 		onOpenChange(false)
 	}, [isDirty, onOpenChange])
-
-	useEffect(() => {
-		if (!open) return
-		const onKey = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape') return
-			event.stopPropagation()
-			if (confirmDiscard) return
-			requestClose()
-		}
-		window.addEventListener('keydown', onKey)
-		return () => window.removeEventListener('keydown', onKey)
-	}, [open, confirmDiscard, requestClose])
 
 	const handleSave = async () => {
 		setIsSaving(true)
@@ -105,75 +93,85 @@ export function EmailDesignOverlay({
 
 	return (
 		<>
-			<div
-				role="dialog"
-				aria-modal="true"
-				aria-label={title ?? _(msg`Email design`)}
-				className={cn(
-					'bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden',
-					className,
-				)}
+			<Dialog
+				open={open}
+				onOpenChange={(nextOpen) => {
+					if (!nextOpen && !confirmDiscard) requestClose()
+				}}
 			>
-				<header className="border-border bg-background flex h-12 shrink-0 items-center justify-between gap-3 border-b px-3">
-					<div className="flex min-w-0 items-center gap-2">
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon-xs"
-							onClick={requestClose}
-							aria-label={_(msg`Close email design`)}
-						>
-							<Icon name="arrow-left" className="size-4" />
-						</Button>
+				<DialogContent
+					showCloseButton={false}
+					aria-label={title ?? _(msg`Email design`)}
+					className={cn(
+						'bg-muted fixed inset-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0',
+						className,
+					)}
+				>
+					<header className="border-border bg-background flex h-12 shrink-0 items-center justify-between gap-3 border-b px-3">
+						<div className="flex min-w-0 items-center gap-2">
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-xs"
+								onClick={requestClose}
+								aria-label={_(msg`Close email design`)}
+							>
+								<Icon name="arrow-left" className="size-4" />
+							</Button>
 
-						<div className="bg-border hidden h-5 w-px sm:block" aria-hidden />
+							<div className="bg-border hidden h-5 w-px sm:block" aria-hidden />
 
-						<span className="max-w-48 truncate text-sm font-medium">
-							{title ?? _(msg`Email design`)}
-						</span>
+							<span className="max-w-48 truncate text-sm font-medium">
+								{title ?? _(msg`Email design`)}
+							</span>
 
-						<div className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
-							<span
-								className={cn(
-									'size-1.5 rounded-full',
-									isDirty ? 'bg-amber-500' : 'bg-muted-foreground/40',
+							<div className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
+								<span
+									className={cn(
+										'size-1.5 rounded-full',
+										isDirty ? 'bg-amber-500' : 'bg-muted-foreground/40',
+									)}
+								/>
+								{isDirty ? (
+									<Trans>Unsaved changes</Trans>
+								) : (
+									<Trans>Saved</Trans>
 								)}
-							/>
-							{isDirty ? <Trans>Unsaved changes</Trans> : <Trans>Saved</Trans>}
+							</div>
 						</div>
-					</div>
 
-					<div className="flex shrink-0 items-center gap-2">
-						{headerExtras}
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={requestClose}
-							disabled={isSaving}
-						>
-							<Trans>Cancel</Trans>
-						</Button>
-						<Button
-							type="button"
-							size="sm"
-							onClick={handleSave}
-							disabled={!isDirty || isSaving}
-						>
-							{isSaving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-						</Button>
-					</div>
-				</header>
+						<div className="flex shrink-0 items-center gap-2">
+							{headerExtras}
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={requestClose}
+								disabled={isSaving}
+							>
+								<Trans>Cancel</Trans>
+							</Button>
+							<Button
+								type="button"
+								size="sm"
+								onClick={handleSave}
+								disabled={!isDirty || isSaving}
+							>
+								{isSaving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+							</Button>
+						</div>
+					</header>
 
-				<div className={cn('flex min-h-0 flex-1 p-2', contentClassName)}>
-					<EmailBlockEditor
-						blocks={draft}
-						onChange={setDraft}
-						subject={subject ?? ''}
-						className="h-full min-h-0 flex-1"
-					/>
-				</div>
-			</div>
+					<div className={cn('flex min-h-0 flex-1 p-2', contentClassName)}>
+						<EmailBlockEditor
+							blocks={draft}
+							onChange={setDraft}
+							subject={subject ?? ''}
+							className="h-full min-h-0 flex-1"
+						/>
+					</div>
+				</DialogContent>
+			</Dialog>
 
 			<AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
 				<AlertDialogContent>

@@ -38,8 +38,19 @@ async function withRenderedEmails(
 			if (!node || typeof node !== 'object') return node
 			const record = node as { type?: string; data?: Record<string, unknown> }
 			if (record.type !== 'action_email' || !record.data) return node
-			const blocks = Array.isArray(record.data.blocks) ? record.data.blocks : []
-			if (blocks.length === 0) return node
+			if (!Array.isArray(record.data.blocks)) return node
+			const blocks = record.data.blocks
+			if (blocks.length === 0) {
+				return {
+					...record,
+					data: {
+						...record.data,
+						emailFormat: 'designed',
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
 
 			const rendered = await renderMarketingEmail({
 				blocks,
@@ -53,6 +64,7 @@ async function withRenderedEmails(
 				...record,
 				data: {
 					...record.data,
+					emailFormat: 'designed',
 					bodyHtml: rendered.html,
 					bodyText: rendered.text,
 				},

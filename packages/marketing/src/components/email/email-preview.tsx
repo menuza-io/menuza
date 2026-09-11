@@ -1,7 +1,7 @@
 import { Trans } from '@lingui/macro'
 import { cn } from '@repo/ui'
 import { Icon } from '@repo/ui/icon'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 /** Width the email is authored at; scaled down to fit narrower preview panes. */
 const EMAIL_PREVIEW_WIDTH = 600
@@ -32,15 +32,12 @@ export function EmailPreview({
 	framed = true,
 	className,
 }: EmailPreviewProps) {
-	const containerRef = useRef<HTMLDivElement>(null)
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [scale, setScale] = useState(1)
 	const [contentHeight, setContentHeight] = useState(480)
 
-	useEffect(() => {
-		const element = containerRef.current
+	const setContainerRef = useCallback((element: HTMLDivElement | null) => {
 		if (!element) return
-
 		const measure = () => {
 			const available = element.clientWidth
 			if (available <= 0) return
@@ -80,7 +77,7 @@ export function EmailPreview({
 	)
 
 	const surface = (
-		<div ref={containerRef} className="w-full overflow-hidden">
+		<div ref={setContainerRef} className="w-full overflow-hidden">
 			{html ? (
 				<div style={{ height: contentHeight * scale }}>
 					<iframe

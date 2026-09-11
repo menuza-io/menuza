@@ -124,22 +124,26 @@ async function getTenantDbFromFilesystem(
 		const client = createClient({ url: `file:${dbPath}` })
 		const db = drizzle(client, { schema })
 
-		// WAL is the default for a single-writer VM. DELETE is only needed when
-		// a FUSE replicator (LiteFS) is in front of the file.
-		await db.run(sql`PRAGMA journal_mode = WAL;`)
-		await db.run(sql`PRAGMA busy_timeout = 30000;`)
-		// Enforce referential integrity. SQLite/libSQL default to OFF, which
-		// would silently accept orphaned rows and disable ON DELETE CASCADE.
-		await db.run(sql`PRAGMA foreign_keys = ON;`)
+		try {
+			// WAL is the default for a single-writer VM. DELETE is only needed when
+			// a FUSE replicator (LiteFS) is in front of the file.
+			await db.run(sql`PRAGMA journal_mode = WAL;`)
+			await db.run(sql`PRAGMA busy_timeout = 30000;`)
+			// Enforce referential integrity. SQLite/libSQL default to OFF, which
+			// would silently accept orphaned rows and disable ON DELETE CASCADE.
+			await db.run(sql`PRAGMA foreign_keys = ON;`)
 
-		// Bring long-lived tenant files up to the current schema before anyone
-		// reads them; mirrors the Durable Object path. Runs once per org per
-		// process because the connection is cached below.
-		await applyTenantMigrations(db, orgId)
+			// Bring long-lived tenant files up to the current schema before anyone
+			// reads them; mirrors the Durable Object path. Runs once per org per
+			// process because the connection is cached below.
+			await applyTenantMigrations(db, orgId)
 
-		dbCache.set(orgId, { db, client })
-
-		return db
+			dbCache.set(orgId, { db, client })
+			return db
+		} catch (error) {
+			client.close()
+			throw error
+		}
 	})()
 
 	pendingConnections.set(orgId, connectionPromise)

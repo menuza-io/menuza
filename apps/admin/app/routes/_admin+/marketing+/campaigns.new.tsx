@@ -89,6 +89,9 @@ export async function action({ request }: ActionFunctionArgs) {
 	) {
 		const branding = resolvePlatformEmailBranding()
 		const blocks = normalizeEmailBlocks(blocksRaw)
+		if (blocks.length === 0) {
+			return { error: i18n._(t`Add at least one email block`) }
+		}
 		const rendered = await renderMarketingEmail({
 			blocks,
 			theme: branding,

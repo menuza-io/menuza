@@ -1,3 +1,5 @@
+import crypto from 'node:crypto'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { sql } from 'drizzle-orm'
@@ -16,6 +18,16 @@ import type { TenantDatabase } from './types.ts'
 
 const MIGRATION_RETRIES = 5
 const MIGRATION_RETRY_DELAY_MS = 100
+const LEGACY_BASELINE_TAG = '0000_initial'
+const LEGACY_BASELINE_MILLIS = 1787549109274
+const LEGACY_BASELINE_TABLES = [
+	'customers',
+	'marketing_campaigns',
+	'marketing_journeys',
+	'journey_runs',
+	'journey_step_executions',
+	'marketing_messages',
+] as const
 
 export function tenantMigrationsFolder(): string {
 	const currentFile = fileURLToPath(import.meta.url)
@@ -45,17 +57,49 @@ function isSqliteBusy(error: unknown) {
 	)
 }
 
-function isAlreadyAppliedError(error: unknown) {
+function isLegacyBaselineCollision(error: unknown) {
 	return collectErrorMessages(error).some((message) =>
-		/already exists/i.test(message),
+		/\btable customers already exists\b/i.test(message),
 	)
 }
 
-async function hasCustomersTable(db: TenantDatabase) {
-	const row = await db.get<{ name: string }>(
-		sql`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'customers' LIMIT 1`,
+async function recordLegacyBaselineIfComplete(db: TenantDatabase) {
+	const tables = await db.all<{ name: string }>(
+		sql`SELECT name FROM sqlite_master WHERE type = 'table'`,
 	)
-	return Boolean(row?.name)
+	if (
+		!LEGACY_BASELINE_TABLES.every((table) =>
+			tables.some((row) => row.name === table),
+		)
+	) {
+		return false
+	}
+
+	await db.run(sql`
+		CREATE TABLE IF NOT EXISTS __drizzle_migrations (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			hash text NOT NULL,
+			created_at numeric
+		)
+	`)
+	const existing = await db.get<{ count: number }>(
+		sql`SELECT count(*) AS count FROM __drizzle_migrations`,
+	)
+	if ((existing?.count ?? 0) !== 0) return false
+
+	const migrationPath = path.join(
+		tenantMigrationsFolder(),
+		`${LEGACY_BASELINE_TAG}.sql`,
+	)
+	const hash = crypto
+		.createHash('sha256')
+		.update(fs.readFileSync(migrationPath))
+		.digest('hex')
+	await db.run(sql`
+		INSERT INTO __drizzle_migrations (hash, created_at)
+		VALUES (${hash}, ${LEGACY_BASELINE_MILLIS})
+	`)
+	return true
 }
 
 /**
@@ -84,12 +128,11 @@ export async function applyTenantMigrations(
 				delay *= 2
 				continue
 			}
-
-			if (isAlreadyAppliedError(error) && (await hasCustomersTable(db))) {
-				console.info(
-					`Tenant DB for ${orgId} already migrated; treating as up to date`,
-				)
-				return
+			if (
+				isLegacyBaselineCollision(error) &&
+				(await recordLegacyBaselineIfComplete(db))
+			) {
+				continue
 			}
 
 			throw error

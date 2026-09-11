@@ -29,7 +29,7 @@ import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { ScrollArea } from '@repo/ui/scroll-area'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import { AddEmailBlockDialog } from './add-email-block-dialog.tsx'
@@ -317,10 +317,8 @@ export function EmailBlockEditor({
 	// Switch to side-by-side only when this editor is actually wide enough; a
 	// viewport breakpoint would clip the preview inside narrow hosts (e.g. a
 	// form column or a small dialog).
-	const containerRef = useRef<HTMLDivElement>(null)
 	const [isWide, setIsWide] = useState(false)
-	useEffect(() => {
-		const element = containerRef.current
+	const setContainerRef = useCallback((element: HTMLDivElement | null) => {
 		if (!element) return
 		const measure = () =>
 			setIsWide(element.clientWidth >= EDITOR_COLUMNS_MIN_WIDTH)
@@ -331,7 +329,10 @@ export function EmailBlockEditor({
 	}, [])
 
 	const previewFetcher = useFetcher<{ html?: string }>()
-	const [previewHtml, setPreviewHtml] = useState('')
+	const previewHtml =
+		typeof previewFetcher.data?.html === 'string'
+			? previewFetcher.data.html
+			: ''
 
 	// Keep the latest fetcher in a ref so the debounce effect does not depend on
 	// its (per-render) identity and re-submit in a loop.
@@ -351,13 +352,6 @@ export function EmailBlockEditor({
 		}, 300)
 		return () => clearTimeout(timeout)
 	}, [blocksJson, subject, previewEndpoint])
-
-	useEffect(() => {
-		const html = previewFetcher.data?.html
-		if (typeof html === 'string') {
-			setPreviewHtml((current) => (current === html ? current : html))
-		}
-	}, [previewFetcher.data])
 
 	const addBlock = (type: EmailBlockType, position: number) => {
 		const block = getDefaultEmailBlock(type)
@@ -400,7 +394,7 @@ export function EmailBlockEditor({
 
 	return (
 		<div
-			ref={containerRef}
+			ref={setContainerRef}
 			className={cn(
 				// Blocks and preview are separate surfaces with the same gap as the
 				// docked AI panel, so all three read as sibling sections.

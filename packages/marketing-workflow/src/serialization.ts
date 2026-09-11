@@ -5,6 +5,7 @@ import {
 	type WorkflowEdge,
 	workflowGraphSchema,
 } from '@repo/tenant-db/types/journey'
+import { emailBlockSchema } from '@repo/common/email-blocks'
 import { type Node, type Edge, type Viewport } from '@xyflow/react'
 
 /**
@@ -59,11 +60,17 @@ export function reactFlowToWorkflowGraph(
 						fromName: node.data?.fromName
 							? String(node.data.fromName)
 							: undefined,
+						emailFormat: Array.isArray(node.data?.blocks)
+							? 'designed'
+							: undefined,
 						template: node.data?.template
 							? String(node.data.template)
 							: undefined,
 						blocks: Array.isArray(node.data?.blocks)
-							? (node.data.blocks as NonNullable<ActionEmailNodeData['blocks']>)
+							? node.data.blocks.flatMap((block) => {
+									const parsed = emailBlockSchema.safeParse(block)
+									return parsed.success ? [parsed.data] : []
+								})
 							: undefined,
 					},
 				}

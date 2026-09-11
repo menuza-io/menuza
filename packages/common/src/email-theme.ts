@@ -175,13 +175,14 @@ export function resolveEmailAssetUrl(
 	if (!url) return ''
 	const trimmed = url.trim()
 	if (trimmed.length === 0) return ''
-	if (/^(https?:|data:|mailto:|tel:)/i.test(trimmed)) return trimmed
-	if (!appUrl) return trimmed
+	if (/^https?:\/\//i.test(trimmed)) return trimmed
+	if (!appUrl) return ''
 	const base = appUrl.endsWith('/') ? appUrl : `${appUrl}/`
 	try {
-		return new URL(trimmed, base).toString()
+		const resolved = new URL(trimmed, base)
+		return /^https?:$/i.test(resolved.protocol) ? resolved.toString() : ''
 	} catch {
-		return trimmed
+		return ''
 	}
 }
 

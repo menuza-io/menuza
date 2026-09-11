@@ -403,7 +403,7 @@ msgstr "إضافة"
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:103
+#: ../../packages/marketing/src/components/email/email-preview.tsx:100
 msgid "Add a block to see your email come to life."
 msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 
@@ -457,6 +457,10 @@ msgstr "إضافة إعلان"
 #: app/routes/organizations+/create.tsx:1162
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:76
+msgid "Add at least one email block"
+msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
@@ -860,7 +864,7 @@ msgstr "العملاء المصرح لهم"
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:80
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:122
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
 
@@ -869,19 +873,19 @@ msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:56
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:71
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:83
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:200
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:212
 msgid "Automation paused"
 msgstr "تم إيقاف الأتمتة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:178
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:190
 msgid "Automation published and activated!"
 msgstr "تم نشر الأتمتة وتفعيلها!"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:182
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:194
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
@@ -904,7 +908,7 @@ msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
 #: app/components/website/create-page-dialog.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:128
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:131
 msgid "Back"
 msgstr "رجوع"
 
@@ -1071,7 +1075,7 @@ msgstr "اسم الحملة"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
 #: ../../packages/marketing/src/components/campaign-form.tsx:144
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:155
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
 #: app/components/note/comment-input.tsx:209
@@ -1287,7 +1291,7 @@ msgstr "العميل"
 msgid "Close"
 msgstr "إغلاق"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:124
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
@@ -1865,7 +1869,7 @@ msgstr "معرّف العميل"
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:221
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:233
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
@@ -2127,11 +2131,11 @@ msgstr "تعطيل"
 msgid "Disable 2FA"
 msgstr "تعطيل المصادقة الثنائية"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:200
 msgid "Discard"
 msgstr "تجاهل"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:182
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
 
@@ -2370,8 +2374,8 @@ msgstr "محتوى نص البريد الإلكتروني مطلوب."
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:287
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:371
 #: ../../packages/marketing/src/components/campaign-form.tsx:110
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:132
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:125
 msgid "Email design"
 msgstr "تصميم البريد"
 
@@ -2384,7 +2388,7 @@ msgstr "نص HTML للبريد الإلكتروني"
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:72
+#: ../../packages/marketing/src/components/email/email-preview.tsx:69
 msgid "Email preview"
 msgstr "معاينة البريد"
 
@@ -2578,15 +2582,15 @@ msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMess
 msgid "Failed to copy account ID"
 msgstr "فشل نسخ معرف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:108
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:111
 msgid "Failed to create and dispatch campaign"
 msgstr "فشل إنشاء الحملة وإرسالها"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:93
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:135
 msgid "Failed to create journey"
 msgstr "فشل إنشاء الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:211
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:223
 msgid "Failed to delete automation"
 msgstr "فشل حذف الأتمتة"
 
@@ -2635,7 +2639,7 @@ msgstr "فشل تحميل مقاييس التسويق"
 msgid "Failed to load timeline"
 msgstr "فشل تحميل الجدول الزمني"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:196
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
 msgid "Failed to pause automation"
 msgstr "فشل إيقاف الأتمتة مؤقتاً"
 
@@ -2643,7 +2647,7 @@ msgstr "فشل إيقاف الأتمتة مؤقتاً"
 msgid "Failed to pause journey"
 msgstr "فشل إيقاف الرحلة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:172
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:184
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
 
@@ -2651,7 +2655,7 @@ msgstr "فشل نشر الأتمتة"
 msgid "Failed to publish journey"
 msgstr "فشل نشر الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:159
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:171
 msgid "Failed to save automation"
 msgstr "فشل حفظ الأتمتة"
 
@@ -2663,11 +2667,11 @@ msgstr "فشل الحفظ:"
 msgid "Failed to search for users"
 msgstr "فشل البحث عن المستخدمين"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:236
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:248
 msgid "Failed to trigger test automation"
 msgstr "فشل تشغيل اختبار الأتمتة"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:322
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:324
 msgid "Fallback"
 msgstr "القيمة الاحتياطية"
 
@@ -2881,11 +2885,11 @@ msgstr "معرّف Google Analytics"
 msgid "Google Tag Manager ID"
 msgstr "معرّف Google Tag Manager"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:58
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:97
 msgid "Graph data is required"
 msgstr "بيانات الرسم البياني مطلوبة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:118
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:130
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
@@ -3101,7 +3105,7 @@ msgstr "يتضمن {seats} مقعد مستخدم"
 msgid "Info"
 msgstr "معلومات"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:288
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:290
 msgid "Insert"
 msgstr "إدراج"
 
@@ -3127,8 +3131,8 @@ msgstr "إدراج وسوم الدمج:"
 msgid "Integrations"
 msgstr "التكاملات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:125
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:65
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:104
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
@@ -3224,7 +3228,7 @@ msgstr "لوحة كانبان"
 msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:193
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
 msgid "Keep editing"
 msgstr "متابعة التعديل"
 
@@ -3611,7 +3615,7 @@ msgstr "الأعضاء"
 msgid "Message"
 msgstr "الرسالة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:87
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:90
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -3730,12 +3734,12 @@ msgid "New automation"
 msgstr "أتمتة جديدة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:81
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:135
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:138
 msgid "New broadcast"
 msgstr "بث جديد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:53
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:150
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:92
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:192
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
@@ -4336,7 +4340,7 @@ msgstr "متوقف مؤقتاً"
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:303
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:315
 msgid "Pausing automation..."
 msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 
@@ -4656,11 +4660,11 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 msgid "Published"
 msgstr "منشور"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:293
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:305
 msgid "Publishing and activating automation..."
 msgstr "جارٍ نشر وتفعيل الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:143
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:185
 msgid "Publishing new journey..."
 msgstr "جارٍ نشر الرحلة الجديدة..."
 
@@ -4875,7 +4879,7 @@ msgstr "إزالة الوسائط"
 msgid "Remove member"
 msgstr "إزالة العضو"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:403
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:405
 msgid "Remove variable"
 msgstr "إزالة المتغير"
 
@@ -4887,7 +4891,7 @@ msgstr "تمت إزالة القسم"
 msgid "Removing section"
 msgstr "إزالة القسم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:76
+#: ../../packages/marketing/src/components/email/email-preview.tsx:73
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
@@ -5119,8 +5123,8 @@ msgstr "بدون زوائد"
 msgid "Saudi Arabia (KSA)"
 msgstr "المملكة العربية السعودية (KSA)"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:345
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/note/comment-input.tsx:162
 #: app/components/organization-members.tsx:112
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -5170,7 +5174,7 @@ msgstr "احفظ الملف وأعد تشغيل Claude Desktop"
 msgid "Save the file and restart Kiro IDE"
 msgstr "احفظ الملف وأعد تشغيل Kiro IDE"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:157
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:199
 msgid "Save the journey first before running test triggers."
 msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الاختبار."
 
@@ -5178,7 +5182,7 @@ msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الا
 msgid "Save these codes now!"
 msgstr "احفظ هذه الرموز الآن!"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:142
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:138
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -5187,11 +5191,11 @@ msgstr "تم الحفظ"
 #~ msgid "Saving {headerValue}"
 #~ msgstr "جاري حفظ {headerValue}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:281
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:293
 msgid "Saving automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:131
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:173
 msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
@@ -5199,7 +5203,7 @@ msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -5411,7 +5415,7 @@ msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ
 msgid "Send"
 msgstr "إرسال"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:141
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
@@ -5582,7 +5586,7 @@ msgstr "إظهار هذا الشريط على موقعك العام"
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
 msgstr "يظهر في علامات تبويب المتصفح ونتائج البحث. يعود إلى عنوان الصفحة عند تركه فارغاً."
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:351
 msgid "Shown to recipients who have no value for this field."
 msgstr "يُعرض للمستلمين الذين لا يملكون قيمة لهذا الحقل."
 
@@ -5906,7 +5910,7 @@ msgstr "مدعوم"
 msgid "Supported languages"
 msgstr "اللغات المدعومة"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:317
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:319
 msgid "Swap variable"
 msgstr "تبديل المتغير"
 
@@ -6010,7 +6014,7 @@ msgstr "تشغيل اختباري"
 #~ msgid "Test run triggered successfully (Run ID: {0})"
 #~ msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:244
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:256
 msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
@@ -6300,7 +6304,7 @@ msgstr "يُفعَّل عبر اختبار المسؤول أو API"
 msgid "Triggered via operator test or API"
 msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:314
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:326
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 
@@ -6368,7 +6372,7 @@ msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:227
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:249
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:261
 msgid "Unknown intent"
 msgstr "نية غير معروفة"
 
@@ -6387,7 +6391,7 @@ msgstr "إلغاء النشر"
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:142
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:136
 msgid "Unsaved changes"
 msgstr "تغييرات غير محفوظة"
 
@@ -6527,7 +6531,7 @@ msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً �
 msgid "Used when a visitor's preferred language isn't available, and as the required language for announcement content."
 msgstr "تُستخدم عند عدم توفر اللغة المفضلة للزائر، وكلغة إلزامية لمحتوى الإعلانات."
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:328
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:330
 msgid "Used when the value is empty"
 msgstr "يُستخدم عندما تكون القيمة فارغة"
 
@@ -6551,7 +6555,7 @@ msgstr "اسم المستخدم أو البريد الإلكتروني مطلو�
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:357
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
 msgid "Variables"
 msgstr "المتغيرات"
 
@@ -6923,7 +6927,7 @@ msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك
 msgid "Your department"
 msgstr "قسمك"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:185
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 

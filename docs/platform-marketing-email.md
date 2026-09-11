@@ -172,6 +172,17 @@ value → explicit fallback → built-in default**. For an unknown tag, the fall
 is used when present; otherwise the token is left verbatim. In HTML output the
 substituted value _and_ the fallback are escaped.
 
+### Unsubscribe follow-up
+
+The current email footer is informational only; it must not be treated as a
+functional opt-out action. Before enabling that action, implement a
+recipient-specific, signed unsubscribe URL and a regional preference endpoint
+that records the opt-out in the customer's tenant database. The send path must
+insert the URL after the message is associated with its recipient, and the
+endpoint must verify the token without routing tenant customer PII through the
+App or Sites control plane. Platform-operator marketing needs an equivalent
+US-control-plane preference flow.
+
 Not yet implemented (follow-ups): a working unsubscribe flow, per-locale email
 content, and AI tools that read or edit the journey/email design. The AI
 assistant is reachable in the automation editor but its server-side tools
