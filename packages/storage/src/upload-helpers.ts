@@ -21,18 +21,15 @@ function sanitizeAndExtractExtension(filename: string): string {
 	// eslint-disable-next-line no-control-regex
 	const cleaned = basename.replace(/\0/g, '')
 
-	// Validate filename contains only safe characters
-	if (!/^[\w\-. ]+$/.test(cleaned)) {
-		throw new Error('Invalid filename characters')
-	}
-
-	// Extract extension
-	const parts = cleaned.split('.')
-	if (parts.length < 2) {
+	// Only the extension is used in the generated object key. The original
+	// basename is deliberately discarded, so common characters such as
+	// parentheses and non-Latin letters do not need to be rejected.
+	const extensionSeparator = cleaned.lastIndexOf('.')
+	if (extensionSeparator <= 0 || extensionSeparator === cleaned.length - 1) {
 		return '' // No extension
 	}
 
-	const extension = parts[parts.length - 1]!.toLowerCase()
+	const extension = cleaned.slice(extensionSeparator + 1).toLowerCase()
 
 	// Validate extension against allowlist
 	const allowedExtensions = [

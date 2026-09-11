@@ -133,14 +133,10 @@ export function PhotoCropForm({
 	// Apply crop from the canvas-generated blob
 	function applyCrop(blob: Blob) {
 		if (currentSelectedFile) {
-			const croppedFile = new File(
-				[blob],
-				currentSelectedFile.name || defaultCroppedFilename,
-				{
-					type: 'image/jpeg',
-					lastModified: Date.now(),
-				},
-			)
+			const croppedFile = new File([blob], defaultCroppedFilename, {
+				type: 'image/jpeg',
+				lastModified: Date.now(),
+			})
 
 			setCroppedFile(croppedFile)
 		}

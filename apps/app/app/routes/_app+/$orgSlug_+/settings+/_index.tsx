@@ -208,7 +208,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				await invalidateUserOrganizationsCache(userId)
 
 				return Response.json({ status: 'success' })
-			} catch {
+			} catch (error) {
+				console.error('Failed to upload organization logo:', error)
 				return Response.json(
 					{ error: 'Failed to upload organization logo' },
 					{ status: 500 },
