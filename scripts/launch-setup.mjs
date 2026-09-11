@@ -21,7 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { confirm, input, password, select } from '@inquirer/prompts'
-import { CF_D1, CF_KV } from './cloudflare-resource-names.mjs'
+import { CF_D1, CF_KV, CF_R2 } from './cloudflare-resource-names.mjs'
 import { getGhVariables } from './launch-github-vars.mjs'
 import {
 	configureWorkersBuilds,
@@ -206,6 +206,74 @@ function setGhSecret(repo, name, value) {
 	if (result.status !== 0) {
 		throw new Error(result.stderr || result.stdout || `Could not set ${name}`)
 	}
+}
+
+async function applyTurboR2GhSecrets(repo, accountId) {
+	const shouldApply = await confirm({
+		message:
+			'Create or reuse Cloudflare R2 credentials and save them for the Turbo cache?',
+		default: true,
+	})
+	if (!shouldApply) return false
+
+	const credentialsFromEnv = Boolean(
+		process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY,
+	)
+	if (!credentialsFromEnv) {
+		const tokenUrl = accountId
+			? `https://dash.cloudflare.com/${accountId}/r2/api-tokens/create?type=account`
+			: 'https://dash.cloudflare.com/?to=/:account/r2/api-tokens'
+
+		log('\n⚡ Turborepo R2 credentials', 'bright')
+		log(`Create an account token named ${CF_R2.turboCache}.`, 'gray')
+		log('Permission: Object Read & Write.', 'gray')
+		log(`Bucket scope: ${CF_R2.turboCache} only.`, 'gray')
+		log(
+			'Copy both values from the confirmation page before leaving it.',
+			'gray',
+		)
+
+		const openTokenPage = await confirm({
+			message: 'Open the Cloudflare R2 account-token creation page now?',
+			default: true,
+		})
+		if (openTokenPage) openUrl(tokenUrl)
+
+		const tokenReady = await confirm({
+			message:
+				'Continue after creating the token and copying its Access Key ID and Secret Access Key?',
+			default: true,
+		})
+		if (!tokenReady) {
+			log(`Create the token later at: ${tokenUrl}`, 'yellow')
+			return false
+		}
+	}
+
+	const accessKeyId =
+		process.env.AWS_ACCESS_KEY_ID ||
+		(
+			await input({
+				message: 'Cloudflare R2 Access Key ID',
+				validate: (value) =>
+					value.trim() ? true : 'Access Key ID is required',
+			})
+		).trim()
+	const secretAccessKey =
+		process.env.AWS_SECRET_ACCESS_KEY ||
+		(
+			await password({
+				message: 'Cloudflare R2 Secret Access Key (input is hidden)',
+				mask: '*',
+				validate: (value) =>
+					value.trim() ? true : 'Secret Access Key is required',
+			})
+		).trim()
+
+	setGhSecret(repo, 'AWS_ACCESS_KEY_ID', accessKeyId)
+	setGhSecret(repo, 'AWS_SECRET_ACCESS_KEY', secretAccessKey)
+	log('✓ AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY', 'green')
+	return true
 }
 
 async function setupWorkersBuildsAfterDeploy(config, inferred, deployedEnvs) {
@@ -412,6 +480,16 @@ function runWrangler(args, cwd, { env, input } = {}) {
 		)
 	}
 	return result.stdout
+}
+
+function ensureR2Bucket(name) {
+	try {
+		runWrangler(['r2', 'bucket', 'info', name], rootDir)
+		log(`  ✓ R2 bucket already exists: ${name}`, 'gray')
+	} catch {
+		runWrangler(['r2', 'bucket', 'create', name], rootDir)
+		log(`  ✓ Created R2 bucket: ${name}`, 'gray')
+	}
 }
 
 function wranglerEnvArgs(deployEnv, { useEmptyEnv = false } = {}) {
@@ -988,6 +1066,8 @@ function printGhCommands(config, repo) {
 	console.log(`gh secret set CLOUDFLARE_API_TOKEN${repoFlag}`)
 	console.log(`gh secret set CLOUDFLARE_BUILDS_API_TOKEN${repoFlag}`)
 	console.log(`gh secret set CLOUDFLARE_ACCOUNT_ID${repoFlag}`)
+	console.log(`gh secret set AWS_ACCESS_KEY_ID${repoFlag}`)
+	console.log(`gh secret set AWS_SECRET_ACCESS_KEY${repoFlag}`)
 	console.log(
 		`# Optional OCI deploy: gh secret set OCI_TENANT_SSH_KEY${repoFlag}`,
 	)
@@ -1186,7 +1266,8 @@ async function main() {
 	})
 	const applyGh = ghAvailable()
 		? await confirm({
-				message: 'Apply GitHub Variables with gh CLI now?',
+				message:
+					'Apply GitHub Variables and the detected Cloudflare account ID secret with gh CLI now?',
 				default: false,
 			})
 		: false
@@ -1325,6 +1406,8 @@ async function main() {
 	if (createResources) {
 		log('\nCreating Cloudflare resources…', 'yellow')
 		try {
+			ensureR2Bucket(CF_R2.turboCache)
+
 			const appD1 = runWrangler(
 				['d1', 'create', CF_D1.app],
 				join(rootDir, 'apps/app'),
@@ -1470,6 +1553,29 @@ async function main() {
 				'yellow',
 			)
 			await applyGhVariables(config, inferred.githubRepo)
+			if (inferred.accountId) {
+				try {
+					setGhSecret(
+						inferred.githubRepo,
+						'CLOUDFLARE_ACCOUNT_ID',
+						inferred.accountId,
+					)
+					log('✓ CLOUDFLARE_ACCOUNT_ID', 'green')
+				} catch (error) {
+					log(
+						`✗ Failed to set CLOUDFLARE_ACCOUNT_ID: ${redactSecrets(error.message)}`,
+						'yellow',
+					)
+				}
+			}
+			try {
+				await applyTurboR2GhSecrets(inferred.githubRepo, inferred.accountId)
+			} catch (error) {
+				log(
+					`✗ Failed to set Turbo R2 credentials: ${redactSecrets(error.message)}`,
+					'yellow',
+				)
+			}
 		}
 	}
 
@@ -1581,7 +1687,7 @@ async function main() {
 		)
 	}
 	log(
-		'1. Set GitHub Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_BUILDS_API_TOKEN, CLOUDFLARE_ACCOUNT_ID',
+		'1. Set GitHub Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_BUILDS_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY',
 		'gray',
 	)
 	if (!secretsApplied) {
