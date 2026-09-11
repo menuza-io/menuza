@@ -14,7 +14,8 @@
 			"dependsOn": ["^build", "@repo/cache#build", "@repo/observability#build"]
 		},
 		"@repo/observability#build": {
-			"dependsOn": ["^build", "@repo/security#build"]
+			"dependsOn": ["^build", "@repo/security#build"],
+			"outputs": ["dist/**"]
 		},
 		"app#build": {
 			"dependsOn": [
