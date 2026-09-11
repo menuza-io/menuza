@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import {
 	WorkflowCanvas,
 	createDefaultJourneyGraph,
@@ -15,7 +16,53 @@ import {
 	redirect,
 } from 'react-router'
 import { toast } from 'sonner'
+import {
+	useAIPanel,
+	useAIPanelHotkey,
+} from '#app/components/ai/ai-panel-context.tsx'
+import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
+import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+async function withRenderedEmails(
+	nodes: WorkflowGraph['nodes'],
+	branding: Awaited<ReturnType<typeof resolveEmailBrandingForOrg>>,
+) {
+	return Promise.all(
+		nodes.map(async (node) => {
+			if (node.type !== 'action_email' || !Array.isArray(node.data.blocks)) {
+				return node
+			}
+			if (node.data.blocks.length === 0) {
+				return {
+					...node,
+					data: {
+						...node.data,
+						emailFormat: 'designed' as const,
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
+			const rendered = await renderMarketingEmail({
+				blocks: node.data.blocks,
+				theme: branding,
+				socials: branding.socials,
+				subject: node.data.subject,
+			})
+			return {
+				...node,
+				data: {
+					...node.data,
+					emailFormat: 'designed' as const,
+					bodyHtml: rendered.html,
+					bodyText: rendered.text,
+				},
+			}
+		}),
+	)
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -25,8 +72,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	// The email designer on this route renders its preview through the route
+	// action, so it must handle the preview intent before the journey create.
+	if (intent === 'email_preview') {
+		const branding = await resolveEmailBrandingForOrg(orgId)
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			socials: branding.socials,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
 	const name = formData.get('name') || i18n._(t`New Customer Journey`)
 	const graphJson = formData.get('graphJson')
 	const shouldPublish = formData.get('publish') === 'true'
@@ -47,6 +109,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		(triggerNode?.data as any)?.triggerType || 'phone_verified'
 	const triggerConfig =
 		((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
+	const branding = await resolveEmailBrandingForOrg(orgId)
+	const nodes = await withRenderedEmails(parsedGraph.nodes, branding)
+	const resolvedGraph = { ...parsedGraph, nodes }
 
 	// Create journey in tenant-api
 	const createRes = await fetchTenant('/operator/journeys', {
@@ -58,9 +123,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			),
 			triggerType,
 			triggerConfig,
-			nodes: parsedGraph.nodes,
+			nodes,
 			edges: parsedGraph.edges,
-			graphJson,
+			graphJson: JSON.stringify(resolvedGraph),
 		}),
 	})
 
@@ -88,6 +153,10 @@ export default function NewJourneyRoute() {
 	const { orgSlug } = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
+
+	useAIPanelHotkey()
+	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
+	const isLg = useMinWidthMediaQuery(1024)
 
 	const isSubmitting = fetcher.state !== 'idle'
 	const initialGraph = createDefaultJourneyGraph()
@@ -117,11 +186,12 @@ export default function NewJourneyRoute() {
 	}
 
 	return (
-		<div className="bg-background fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
+		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
 			<WorkflowCanvas
 				initialGraph={initialGraph}
 				journeyName={_(msg`New Customer Journey`)}
 				journeyStatus="draft"
+				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}
 				onTestRun={() => {
@@ -130,6 +200,7 @@ export default function NewJourneyRoute() {
 					)
 				}}
 				onBack={() => navigate(`/${orgSlug}/marketing/automations`)}
+				reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
 				isSaving={isSubmitting}
 				isPublishing={isSubmitting}
 			/>

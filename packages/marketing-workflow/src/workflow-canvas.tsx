@@ -14,6 +14,7 @@ import {
 	type Node,
 } from '@xyflow/react'
 import { useLingui } from '@lingui/react'
+import { cn } from '@repo/ui'
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -26,6 +27,7 @@ import {
 	useState,
 	type DragEvent,
 	type MouseEvent,
+	type ReactNode,
 } from 'react'
 import '@xyflow/react/dist/style.css'
 
@@ -63,6 +65,10 @@ interface WorkflowCanvasProps {
 	initialGraph?: WorkflowGraph | string
 	journeyName: string
 	journeyStatus: JourneyStatus
+	/** Extra controls rendered in the toolbar (e.g. the app's AI toggle). */
+	headerExtras?: ReactNode
+	/** Inset the canvas so the app's docked AI panel doesn't cover it. */
+	reserveAiPanelWidth?: boolean
 	onSave: (graph: WorkflowGraph, name: string) => Promise<void> | void
 	onPublish: (graph: WorkflowGraph, name: string) => Promise<void> | void
 	onPause?: () => Promise<void> | void
@@ -77,6 +83,8 @@ function WorkflowCanvasInner({
 	initialGraph,
 	journeyName: initialName,
 	journeyStatus,
+	headerExtras,
+	reserveAiPanelWidth,
 	onSave,
 	onPublish,
 	onPause,
@@ -216,6 +224,24 @@ function WorkflowCanvasInner({
 		[setNodes],
 	)
 
+	/**
+	 * Apply node data and persist the journey in one step, used by the email
+	 * designer's Save so an explicit save actually reaches the server (an
+	 * update-only change leaves the canvas with unsaved edits).
+	 */
+	const handleSaveNodeData = useCallback(
+		(nodeId: string, newData: Record<string, unknown>) => {
+			const nextNodes = nodes.map((node) =>
+				node.id === nodeId
+					? { ...node, data: { ...node.data, ...newData } }
+					: node,
+			)
+			setNodes(nextNodes)
+			return onSave(reactFlowToWorkflowGraph(nextNodes, edges), name)
+		},
+		[nodes, edges, name, onSave, setNodes],
+	)
+
 	const handleDeleteNode = useCallback(
 		(nodeId: string) => {
 			setNodes((nds) => nds.filter((node) => node.id !== nodeId))
@@ -248,7 +274,10 @@ function WorkflowCanvasInner({
 	}, [nodes, edges, name, onPublish])
 
 	return (
-		<div className="bg-background flex h-full w-full flex-col overflow-hidden">
+		// Muted chrome, like the website builders: the header and surface cards
+		// carry the background color, so the docked AI panel (which insets itself
+		// from the viewport edges) is separated from the canvas by the backdrop.
+		<div className="bg-muted flex h-full w-full flex-col overflow-hidden">
 			<WorkflowToolbar
 				name={name}
 				onNameChange={setName}
@@ -263,13 +292,21 @@ function WorkflowCanvasInner({
 				onBack={onBack}
 				onViewRuns={onViewRuns}
 				onFitView={() => fitView({ padding: 0.2, duration: 400 })}
+				headerExtras={headerExtras}
 			/>
 
-			<div className="flex min-h-0 flex-1" ref={reactFlowWrapper}>
+			<div
+				className={cn(
+					'flex min-h-0 flex-1',
+					// Leave room for the app's docked AI panel.
+					reserveAiPanelWidth && 'pr-107',
+				)}
+				ref={reactFlowWrapper}
+			>
 				<ResizablePanelGroup
 					direction="horizontal"
 					autoSaveId="marketing-automation-builder"
-					className="min-h-0 flex-1"
+					className="bg-muted min-h-0 flex-1"
 				>
 					<ResizablePanel
 						id="sidebar"
@@ -277,16 +314,23 @@ function WorkflowCanvasInner({
 						defaultSize={22}
 						minSize={15}
 						maxSize={40}
-						className="min-w-0"
+						className="m-2 mr-0 min-w-0 rounded-lg"
 					>
-						<aside className="border-border bg-background flex h-full min-w-0 flex-col border-r">
+						<aside className="bg-background flex h-full min-w-0 flex-col overflow-hidden rounded-xl">
 							{selectedNode ? (
 								<NodeInspector
 									node={selectedNode}
 									onUpdateNodeData={handleUpdateNodeData}
+									onSaveNodeData={handleSaveNodeData}
 									onDeleteNode={handleDeleteNode}
 									onClose={() => setSelectedNodeId(null)}
 									errors={validation.nodeErrors[selectedNode.id] || []}
+									emailDesignerHeaderExtras={headerExtras}
+									emailDesignerContentClassName={
+										// Docked AI panel (420px) + the same 8px gutter the
+										// designer's own sections use.
+										reserveAiPanelWidth ? 'lg:pr-[27.25rem]' : undefined
+									}
 								/>
 							) : (
 								<NodePalette onAddNode={handleAddNodeFromPalette} />
@@ -294,7 +338,7 @@ function WorkflowCanvasInner({
 						</aside>
 					</ResizablePanel>
 
-					<ResizableHandle withHandle />
+					<ResizableHandle withHandle className="bg-transparent" />
 
 					<ResizablePanel
 						id="canvas"
@@ -303,50 +347,52 @@ function WorkflowCanvasInner({
 						minSize={40}
 						className="min-w-0"
 					>
-						<div className="bg-background h-full w-full">
-							<ReactFlow
-								nodes={nodes}
-								edges={edges}
-								onNodesChange={onNodesChange}
-								onEdgesChange={onEdgesChange}
-								onConnect={onConnect}
-								isValidConnection={isValidConnection}
-								onDragOver={onDragOver}
-								onDrop={onDrop}
-								onNodeClick={onNodeClick}
-								onPaneClick={onPaneClick}
-								nodeTypes={nodeTypes}
-								edgeTypes={edgeTypes}
-								defaultEdgeOptions={{ type: 'workflow' }}
-								fitView
-								defaultViewport={
-									initialData.viewport || { x: 0, y: 0, zoom: 1 }
-								}
-								minZoom={0.2}
-								maxZoom={2}
-								snapToGrid
-								snapGrid={[16, 16]}
-								className="bg-background"
-								colorMode="system"
-							>
-								<Background
-									variant={BackgroundVariant.Dots}
-									gap={20}
-									size={1}
-									className="text-muted-foreground/20 opacity-20"
-								/>
-								<Controls
-									position="bottom-right"
-									className="bg-card overflow-hidden rounded-md border shadow-sm"
-								/>
-								<MiniMap
-									position="bottom-left"
-									zoomable
-									pannable
-									nodeStrokeWidth={3}
-									className="bg-card/90 [&_.react-flow__minimap-mask]:fill-background/80 [&_.react-flow__minimap-node]:fill-muted-foreground/30 !hidden overflow-hidden rounded-xl border shadow-md backdrop-blur-md sm:!block"
-								/>
-							</ReactFlow>
+						<div className="bg-muted/30 h-full w-full p-2">
+							<div className="bg-background h-full w-full overflow-hidden rounded-xl border shadow-sm">
+								<ReactFlow
+									nodes={nodes}
+									edges={edges}
+									onNodesChange={onNodesChange}
+									onEdgesChange={onEdgesChange}
+									onConnect={onConnect}
+									isValidConnection={isValidConnection}
+									onDragOver={onDragOver}
+									onDrop={onDrop}
+									onNodeClick={onNodeClick}
+									onPaneClick={onPaneClick}
+									nodeTypes={nodeTypes}
+									edgeTypes={edgeTypes}
+									defaultEdgeOptions={{ type: 'workflow' }}
+									fitView
+									defaultViewport={
+										initialData.viewport || { x: 0, y: 0, zoom: 1 }
+									}
+									minZoom={0.2}
+									maxZoom={2}
+									snapToGrid
+									snapGrid={[16, 16]}
+									className="bg-background"
+									colorMode="system"
+								>
+									<Background
+										variant={BackgroundVariant.Dots}
+										gap={20}
+										size={1}
+										className="text-muted-foreground/20 opacity-20"
+									/>
+									<Controls
+										position="bottom-right"
+										className="bg-card overflow-hidden rounded-md border shadow-sm"
+									/>
+									<MiniMap
+										position="bottom-left"
+										zoomable
+										pannable
+										nodeStrokeWidth={3}
+										className="bg-card/90 [&_.react-flow__minimap-mask]:fill-background/80 [&_.react-flow__minimap-node]:fill-muted-foreground/30 !hidden overflow-hidden rounded-xl border shadow-md backdrop-blur-md sm:!block"
+									/>
+								</ReactFlow>
+							</div>
 						</div>
 					</ResizablePanel>
 				</ResizablePanelGroup>

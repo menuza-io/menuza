@@ -22,13 +22,18 @@ msgid "(Expired)"
 msgstr "(منتهي الصلاحية)"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:381
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
+#. placeholder {0}: emailBlocks.length
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+msgid "{0} blocks · rendered in your website branding"
+msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
+
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:112
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -54,7 +59,7 @@ msgstr "{count} طلب"
 msgid "{currentSize} / {maxSize} max"
 msgstr "{currentSize} / {maxSize} كحد أقصى"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:234
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء تحقق}}"
 
@@ -98,11 +103,11 @@ msgstr "{userCount} مستخدم"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:515
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:557
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:541
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:583
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -125,7 +130,7 @@ msgstr "+{recentUsers} جديد هذا الأسبوع"
 #. placeholder {0}: conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.operator === 'equals' ? 'is' : data.operator === 'not_equals' ? 'is not' : 'contains'
 #. placeholder {2}: data.value
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:50
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:27
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 
@@ -133,7 +138,7 @@ msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>اطّلع على آخر تحديثاتنا.</p>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:314
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>مرحباً بك في خدمتنا!</p>"
 
@@ -153,7 +158,19 @@ msgstr "0 مفاتيح مرور"
 msgid "1-10 (higher = more permissions)"
 msgstr "1-10 (أعلى = صلاحيات أكثر)"
 
-#: app/components/privacy-banner.tsx:59
+#: ../../packages/marketing/src/components/email/block-meta.ts:19
+msgid "A large title that opens a section."
+msgstr "عنوان كبير يفتح قسمًا."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:39
+msgid "A link styled as a call to action."
+msgstr "رابط مُنسَّق كدعوة لاتخاذ إجراء."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:34
+msgid "A picture, logo, or product shot."
+msgstr "صورة أو شعار أو لقطة منتج."
+
+#: app/components/privacy-banner.tsx:60
 msgid "Accept"
 msgstr "قبول"
 
@@ -245,6 +262,24 @@ msgstr "معلومات النشاط"
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
+#: ../../packages/marketing/src/components/email/email-preview.tsx:100
+msgid "Add a block to see your email come to life."
+msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+msgid "Add a heading"
+msgstr "أضف عنوانًا"
+
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:93
+msgid "Add at least one email block"
+msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
+
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
+msgid "Add block"
+msgstr "إضافة كتلة"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:776
 msgid "Add feature"
 msgstr "إضافة ميزة"
@@ -288,6 +323,12 @@ msgstr "انتحال شخصية المدير نشط"
 msgid "Admin role required"
 msgstr "دور المدير مطلوب"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:240
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+msgid "Alignment"
+msgstr "المحاذاة"
+
 #: app/routes/_admin+/audit-logs.tsx:300
 #: app/routes/_admin+/gdpr-requests.tsx:503
 #: app/routes/_admin+/gdpr-requests.tsx:529
@@ -299,12 +340,12 @@ msgstr "الكل"
 msgid "All caches"
 msgstr "جميع ذاكرات التخزين المؤقت"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:345
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:352
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
 #: app/components/admin-users-table.tsx:335
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:131
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:200
 msgid "All organizations"
 msgstr "جميع المؤسسات"
 
@@ -325,7 +366,7 @@ msgstr "جميع مستويات الخطورة"
 msgid "All statuses"
 msgstr "جميع الحالات"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:117
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:186
 msgid "All Tenant Operators"
 msgstr "جميع مشغّلي المستأجرين"
 
@@ -344,6 +385,10 @@ msgstr "السماح بالتصدير"
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:448
 msgid "Allow users to export audit logs"
 msgstr "السماح للمستخدمين بتصدير سجلات المراجعة"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:198
+msgid "Alt text"
+msgstr "النص البديل"
 
 #: app/routes/_admin+/roles+/$roleId.tsx:867
 msgid "any - Any resources"
@@ -414,6 +459,10 @@ msgstr "طرق المصادقة"
 msgid "Authorization URL"
 msgstr "رابط التفويض"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
+msgid "Auto"
+msgstr "تلقائي"
+
 #: app/components/sso-configuration-form.tsx:242
 #: app/components/sso-configuration-overview.tsx:195
 msgid "Auto-Discovery"
@@ -436,15 +485,15 @@ msgstr "إنشاء حسابات المستخدمين تلقائياً لمستخ
 msgid "Automatically discover OAuth2 endpoints from the issuer URL"
 msgstr "اكتشاف نقاط نهاية OAuth2 تلقائياً من رابط المُصدر"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:137
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:142
 msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:33
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:82
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:129
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:197
 msgid "Automation saved"
 msgstr "تم حفظ الأتمتة"
 
@@ -457,19 +506,23 @@ msgstr "الأتمتة"
 msgid "Average Size"
 msgstr "الحجم المتوسط"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:84
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:152
 msgid "Back"
 msgstr "رجوع"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:99
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
 msgstr "العودة إلى الأتمتة"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:123
+msgid "Back to blocks"
+msgstr "العودة إلى الكتل"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:29
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:83
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
 msgid "Back to nodes"
 msgstr "العودة إلى العُقد"
 
@@ -546,9 +599,21 @@ msgstr "أدرج في القائمة السوداء بواسطة"
 msgid "Blacklisted IPs"
 msgstr "عناوين IP المدرجة في القائمة السوداء"
 
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
+msgid "Block types"
+msgstr "أنواع الكتل"
+
 #: app/routes/_admin+/ip-addresses+/index.tsx:175
 msgid "blocked"
 msgstr "محجوب"
+
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:238
+msgid "Blocks"
+msgstr "الكتل"
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:23
+msgid "Body text"
+msgstr "نص المحتوى"
 
 #: app/components/admin/feature-flags.tsx:143
 msgid "Boolean"
@@ -557,6 +622,10 @@ msgstr "منطقي"
 #: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:15
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+msgid "Broadcast preview"
+msgstr "معاينة البث"
 
 #: app/components/admin-sidebar.tsx:81
 #: app/routes/_admin+/marketing+/_index.tsx:30
@@ -567,9 +636,21 @@ msgstr "البثّات"
 msgid "Broadcasts and automations for tenant operators."
 msgstr "البثّات والأتمتة لمشغّلي المستأجرين."
 
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:328
+msgid "Build a branded HTML email with blocks."
+msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
+
 #: app/routes/_admin+/cache.tsx:868
 msgid "Bulk Actions ({selectedCount})"
 msgstr "إجراءات جماعية ({selectedCount})"
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:38
+msgid "Button"
+msgstr "زر"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:257
+msgid "Button label"
+msgstr "نص الزر"
 
 #: app/components/admin-sidebar.tsx:105
 #: app/routes/_admin+/index.tsx:373
@@ -585,12 +666,14 @@ msgstr "إدارة ذاكرة التخزين المؤقت"
 msgid "Cache Type:"
 msgstr "نوع ذاكرة التخزين المؤقت:"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:84
+#: ../../packages/marketing/src/components/campaign-form.tsx:87
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:407
-#: ../../packages/marketing/src/components/campaign-form.tsx:134
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
+#: ../../packages/marketing/src/components/campaign-form.tsx:144
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:659
@@ -606,11 +689,15 @@ msgstr "ملغي"
 msgid "Cancelled"
 msgstr "ملغي"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:53
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:81
+msgid "Center"
+msgstr "وسط"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:56
 msgid "Channel"
 msgstr "القناة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:99
+#: ../../packages/marketing/src/components/campaign-form.tsx:102
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
@@ -652,9 +739,13 @@ msgstr "معرف العميل:"
 msgid "Client Secret"
 msgstr "سر العميل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:359
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:366
 msgid "Close"
 msgstr "إغلاق"
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+msgid "Close email design"
+msgstr "إغلاق تصميم البريد"
 
 #: app/components/admin-organizations-table.tsx:473
 #: app/components/admin-users-table.tsx:360
@@ -699,7 +790,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:470
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -707,7 +798,7 @@ msgstr "منطق الشرط"
 msgid "Condition operator is required."
 msgstr "عامل الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:36
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:18
 msgid "Conditional split"
 msgstr "تفرّع شرطي"
 
@@ -719,7 +810,7 @@ msgstr "تغييرات الإعداد"
 msgid "Configuration"
 msgstr "الإعداد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:124
 msgid "Configuration required"
 msgstr "الإعداد مطلوب"
 
@@ -755,11 +846,11 @@ msgstr "تأكيد"
 msgid "Connected Accounts"
 msgstr "الحسابات المتصلة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:290
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:297
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:531
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -867,7 +958,7 @@ msgstr "المستخدمون المسجلون حالياً"
 msgid "Custom Event"
 msgstr "حدث مخصص"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:164
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:179
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
 
@@ -875,7 +966,7 @@ msgstr "اسم الحدث المخصص"
 msgid "Custom Retention Policy"
 msgstr "سياسة احتفاظ مخصصة"
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:17
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
@@ -884,15 +975,15 @@ msgid "customer"
 msgstr "عميل"
 
 #. placeholder {0}: data.value === 'true' ? '' : 'not '
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:43
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:21
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:382
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:389
 msgid "Customer ID"
 msgstr "معرّف العميل"
 
@@ -904,7 +995,7 @@ msgstr "معرّف العميل"
 #~ msgid "Customer Signup (Registration)"
 #~ msgstr "تسجيل العميل (التسجيل)"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:298
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:305
 msgid "Cycles"
 msgstr "دورات"
 
@@ -932,7 +1023,7 @@ msgstr "التاريخ"
 msgid "days"
 msgstr "أيام"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
 msgid "Days"
 msgstr "أيام"
 
@@ -977,8 +1068,8 @@ msgstr "حذف مفتاح ذاكرة التخزين المؤقت"
 msgid "Delete Cache Key"
 msgstr "حذف مفتاح ذاكرة التخزين المؤقت"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:99
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:113
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:114
 msgid "Delete node"
 msgstr "حذف العقدة"
 
@@ -1002,11 +1093,15 @@ msgstr "وصف ما يمكن لهذا الدور فعله..."
 msgid "Description"
 msgstr "الوصف"
 
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:300
+msgid "Design email"
+msgstr "تصميم البريد"
+
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:69
 msgid "Detailed information for IP {ip}"
 msgstr "معلومات تفصيلية لعنوان IP {ip}"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:309
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
 msgid "Detected"
 msgstr "مُكتشَف"
 
@@ -1024,6 +1119,14 @@ msgstr "تعطيل SSO"
 msgid "Disabled"
 msgstr "معطل"
 
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:200
+msgid "Discard"
+msgstr "تجاهل"
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
+msgid "Discard unsaved changes?"
+msgstr "تجاهل التغييرات غير المحفوظة؟"
+
 #: app/routes/_admin+/waitlist.tsx:346
 msgid "Discord"
 msgstr "Discord"
@@ -1036,9 +1139,13 @@ msgstr "إرسال بريد إلكتروني مخصص مع وسوم الدمج"
 msgid "Dispatch text message with merge tags"
 msgstr "إرسال رسالة نصية مع وسوم الدمج"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:486
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "Does Not Equal"
 msgstr "لا يساوي"
+
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
+msgid "Double-click a block to add it instantly"
+msgstr "انقر مرتين على كتلة لإضافتها فورًا"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:297
 msgid "draft"
@@ -1049,19 +1156,23 @@ msgstr "مسودة"
 msgid "Draft"
 msgstr "مسودة"
 
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:114
+msgid "Drag to reorder"
+msgstr "اسحب لإعادة الترتيب"
+
 #: app/routes/_admin+/marketing+/automations._index.tsx:237
 msgid "Duplicate"
 msgstr "تكرار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:185
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:200
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:501
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:168
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:183
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr "مثال: checkout_abandoned, tier_upgraded"
 
@@ -1073,11 +1184,11 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. create, read, approve, publish"
 msgstr "مثل: إنشاء، قراءة، موافقة، نشر"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:388
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:264
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:278
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
 
@@ -1085,9 +1196,13 @@ msgstr "مثال: سارة من التسويق"
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr "مثال: VIP, lead-hot, subscriber"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:251
-msgid "e.g. Welcome {{name}}!"
-msgstr "مثال: مرحباً {{name}}!"
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:266
+msgid "e.g. Welcome {{firstName}}!"
+msgstr "مثال: مرحبًا {{firstName}}!"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:263
+#~ msgid "e.g. Welcome {{name}}!"
+#~ msgstr "مثال: مرحباً {{name}}!"
 
 #: app/routes/_admin+/roles+/index.tsx:287
 msgid "e.g., editor, moderator, contributor"
@@ -1103,6 +1218,10 @@ msgstr "مثل: Okta، Azure AD، Auth0"
 #: app/routes/_admin+/marketing+/automations._index.tsx:201
 msgid "Edit"
 msgstr "تحرير"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:298
+msgid "Edit design"
+msgstr "تعديل التصميم"
 
 #: app/components/admin/feature-flags.tsx:93
 msgid "Edit Flag"
@@ -1126,14 +1245,14 @@ msgstr "تحرير تفاصيل مؤشر الميزة."
 msgid "Effective Value"
 msgstr "القيمة الفعالة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:36
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:236
 #: app/routes/_admin+/waitlist.tsx:337
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:429
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -1142,9 +1261,21 @@ msgstr "عنوان البريد الإلكتروني"
 msgid "Email body content is required."
 msgstr "محتوى نص البريد الإلكتروني مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:308
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:287
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:371
+#: ../../packages/marketing/src/components/campaign-form.tsx:110
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:125
+msgid "Email design"
+msgstr "تصميم البريد"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:337
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
+
+#: ../../packages/marketing/src/components/email/email-preview.tsx:69
+msgid "Email preview"
+msgstr "معاينة البريد"
 
 #: ../../packages/marketing-workflow/src/validation.ts:19
 msgid "Email subject line is required."
@@ -1162,11 +1293,11 @@ msgstr "البريد الإلكتروني أو اسم المستخدم أو ال
 msgid "Emails sent"
 msgstr "رسائل البريد المُرسَلة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:42
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
 msgid "Empty message"
 msgstr "رسالة فارغة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:42
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 msgid "Empty subject"
 msgstr "موضوع فارغ"
 
@@ -1253,7 +1384,7 @@ msgstr "المحو (المادة 17)"
 msgid "Error"
 msgstr "خطأ"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:320
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:327
 msgid "Errors"
 msgstr "أخطاء"
 
@@ -1261,7 +1392,7 @@ msgstr "أخطاء"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr "سير عمل قائم على الأحداث لدورة حياة مشغّل المستأجر."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -1307,11 +1438,11 @@ msgstr "فشل"
 msgid "Failed Requests"
 msgstr "الطلبات الفاشلة"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:61
+#: app/routes/_admin+/marketing+/automations.new.tsx:120
 msgid "Failed to create automation"
 msgstr "فشل إنشاء الأتمتة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:63
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:131
 msgid "Failed to create campaign"
 msgstr "فشل إنشاء الحملة"
 
@@ -1319,10 +1450,14 @@ msgstr "فشل إنشاء الحملة"
 msgid "Failed to format graph for validation"
 msgstr "فشل تنسيق الرسم البياني للتحقق"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:97
-#: app/routes/_admin+/marketing+/automations.new.tsx:74
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:165
+#: app/routes/_admin+/marketing+/automations.new.tsx:133
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:324
+msgid "Fallback"
+msgstr "القيمة الاحتياطية"
 
 #: app/components/admin-sidebar.tsx:129
 msgid "Feature Flags"
@@ -1365,11 +1500,11 @@ msgstr "البحث عن حسابات المستخدمين وإدارتها"
 msgid "First Seen"
 msgstr "أول ظهور"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:243
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:250
 msgid "Fit canvas view"
 msgstr "ملاءمة عرض اللوحة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:201
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 msgid "Fix validation errors before publishing"
 msgstr "أصلح أخطاء التحقق قبل النشر"
 
@@ -1403,9 +1538,13 @@ msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {se
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:260
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:274
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
+msgid "Full width"
+msgstr "عرض كامل"
 
 #: app/routes/_admin+/gdpr-requests.tsx:390
 msgid "GDPR Data Requests"
@@ -1443,11 +1582,11 @@ msgstr "الانتقال إلى الصفحة السابقة"
 msgid "Grant Access"
 msgstr "منح الوصول"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:33
+#: app/routes/_admin+/marketing+/automations.new.tsx:87
 msgid "Graph data is required"
 msgstr "بيانات الرسم البياني مطلوبة"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:64
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:123
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
@@ -1455,11 +1594,15 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Guest"
 msgstr "ضيف"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:18
+msgid "Heading"
+msgstr "عنوان"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:92
 msgid "Hi {{name}}, Check out our latest update."
 msgstr "مرحباً {{name}}، اطّلع على آخر تحديثاتنا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:358
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr "مرحباً {{name}}، مرحباً بك في خدمتنا!"
 
@@ -1471,7 +1614,7 @@ msgstr "مرحباً {{name}}، تحديث حسابك جاهز!"
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr "مرحباً {{name}}، حسابك في Epic Startup جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:388
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:430
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr "مرحباً {{name}}، تم تأكيد طلبك!"
 
@@ -1495,7 +1638,7 @@ msgstr "التخزين الساخن: {hotStorageDays} يوم"
 msgid "hours"
 msgstr "ساعات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:220
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:235
 msgid "Hours"
 msgstr "ساعات"
 
@@ -1531,6 +1674,14 @@ msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgid "Identity Provider Configuration"
 msgstr "إعداد موفر الهوية"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:33
+msgid "Image"
+msgstr "صورة"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:190
+msgid "Image URL"
+msgstr "رابط الصورة"
+
 #: app/components/admin-user-detail.tsx:224
 msgid "Impersonate"
 msgstr "انتحال الشخصية"
@@ -1560,8 +1711,19 @@ msgstr "غير مكتمل"
 msgid "Info"
 msgstr "معلومات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:342
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:290
+msgid "Insert"
+msgstr "إدراج"
+
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:54
+msgid "Insert block here"
+msgstr "إدراج كتلة هنا"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:86
+#~ msgid "Insert merge tag"
+#~ msgstr ""
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:384
 msgid "Insert Merge Tags:"
 msgstr "إدراج وسوم الدمج:"
 
@@ -1573,8 +1735,8 @@ msgstr "المثيل:"
 msgid "Integrations"
 msgstr "التكاملات"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:71
-#: app/routes/_admin+/marketing+/automations.new.tsx:40
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:130
+#: app/routes/_admin+/marketing+/automations.new.tsx:94
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
@@ -1602,7 +1764,7 @@ msgstr "عناوين IP المستخدمة من قبل هذا المستخدم"
 msgid "IP Information"
 msgstr "معلومات IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:458
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -1617,6 +1779,10 @@ msgstr "رابط المُصدر:"
 #: app/routes/_admin+/waitlist.tsx:349
 msgid "Joined"
 msgstr "انضم"
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+msgid "Keep editing"
+msgstr "متابعة التعديل"
 
 #: app/components/admin/feature-flags.tsx:371
 #: app/components/admin/feature-flags.tsx:476
@@ -1633,6 +1799,10 @@ msgstr "المفتاح"
 #: app/components/admin-cache-confirmation-dialog.tsx:86
 msgid "Keys to delete:"
 msgstr "المفاتيح المراد حذفها:"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:252
+msgid "Label"
+msgstr "التسمية"
 
 #: app/components/sso-user-management.tsx:455
 msgid "Last 30 days"
@@ -1675,7 +1845,7 @@ msgstr "آخر اختبار:"
 msgid "Last User Agent"
 msgstr "آخر وكيل مستخدم"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
@@ -1686,6 +1856,10 @@ msgstr "حالة الإطلاق حالياً <0>{launchStatus}</0>. قائمة �
 #: app/components/admin/feature-flags.tsx:623
 msgid "Leave Organization ID empty to view/set global user overrides. Enter an Organization ID to view/set overrides for that specific organization."
 msgstr "اترك معرف المؤسسة فارغاً لعرض/تعيين التجاوزات العامة للمستخدم. أدخل معرف المؤسسة لعرض/تعيين التجاوزات لتلك المؤسسة المحددة."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:80
+msgid "Left"
+msgstr "يسار"
 
 #: app/routes/_admin+/roles+/index.tsx:390
 msgid "Level"
@@ -1706,6 +1880,14 @@ msgstr "فاتح"
 #: app/components/nav-user.tsx:58
 msgid "Light mode"
 msgstr "الوضع الفاتح"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:260
+msgid "Link"
+msgstr "رابط"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:206
+msgid "Link (optional)"
+msgstr "رابط (اختياري)"
 
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:97
 #: app/routes/_admin+/ip-addresses+/index.tsx:206
@@ -1801,16 +1983,24 @@ msgstr "عضو"
 msgid "Members"
 msgstr "الأعضاء"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
+#~ msgid "Merge tags are replaced per recipient when the email is sent."
+#~ msgstr ""
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
-#: ../../packages/marketing/src/components/campaign-form.tsx:107
+#: ../../packages/marketing/src/components/campaign-form.tsx:116
 msgid "Message"
 msgstr "الرسالة"
+
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:106
+msgid "Message content is required"
+msgstr "محتوى الرسالة مطلوب"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
 msgid "minutes"
 msgstr "دقائق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:217
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:232
 msgid "Minutes"
 msgstr "دقائق"
 
@@ -1834,7 +2024,7 @@ msgstr "مراقبة وإدارة أداء ذاكرة تخزين النظام ا
 msgid "Monitor organization activity"
 msgstr "مراقبة نشاط المؤسسة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:219
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:226
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
@@ -1843,7 +2033,7 @@ msgstr "المزيد من الإجراءات"
 msgid "N/A"
 msgstr "غير متاح"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:480
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/routes/_admin+/roles+/$roleId.tsx:500
 #: app/routes/_admin+/roles+/$roleId.tsx:733
@@ -1866,7 +2056,7 @@ msgstr "أبداً"
 msgid "New Automation"
 msgstr "أتمتة جديدة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:91
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:159
 msgid "New broadcast"
 msgstr "بث جديد"
 
@@ -1883,8 +2073,8 @@ msgstr "ميزة جديدة"
 msgid "New permission"
 msgstr "صلاحية جديدة"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:28
-#: app/routes/_admin+/marketing+/automations.new.tsx:110
+#: app/routes/_admin+/marketing+/automations.new.tsx:82
+#: app/routes/_admin+/marketing+/automations.new.tsx:169
 msgid "New Platform Automation"
 msgstr "أتمتة منصة جديدة"
 
@@ -1894,7 +2084,7 @@ msgstr "أتمتة منصة جديدة"
 msgid "Next"
 msgstr "التالي"
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:86
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:69
 msgid "No"
 msgstr "لا"
 
@@ -1939,7 +2129,7 @@ msgstr "لا توجد حسابات متصلة"
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:120
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -2031,11 +2221,11 @@ msgid "No waitlist entries found"
 msgstr "لم يتم العثور على إدخالات قائمة الانتظار"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:58
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:282
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
 msgstr "العُقد"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:311
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:318
 #: app/components/admin-users-table.tsx:138
 #: app/components/admin-users-table.tsx:148
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:465
@@ -2046,7 +2236,7 @@ msgstr "بلا"
 msgid "Not Set"
 msgstr "غير محدد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:461
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:503
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -2078,7 +2268,7 @@ msgstr "إعداد OAuth2"
 msgid "Oldest Log"
 msgstr "أقدم سجل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:392
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:399
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإقليمي بيانات التعريف الشخصية محلياً."
 
@@ -2118,7 +2308,7 @@ msgstr "org - موارد المؤسسة"
 msgid "Organization"
 msgstr "المؤسسة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:127
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:196
 msgid "Organization (optional)"
 msgstr "المنظمة (اختياري)"
 
@@ -2153,6 +2343,10 @@ msgstr "تنطبق أدوار المؤسسة على مؤسسات محددة، ب
 msgid "Organizations"
 msgstr "المؤسسات"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:90
+msgid "Outline"
+msgstr "محدد"
+
 #: app/components/admin/feature-flags.tsx:283
 #: app/components/admin/feature-flags.tsx:292
 msgid "Override Value"
@@ -2185,6 +2379,10 @@ msgstr "الصفحة {page} من {totalPages}"
 msgid "Page Not Found"
 msgstr "الصفحة غير موجودة"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:28
+msgid "Paragraph text"
+msgstr "نص فقرة"
+
 #: app/components/admin-user-detail.tsx:683
 msgid "Passkeys"
 msgstr "مفاتيح المرور"
@@ -2197,7 +2395,7 @@ msgstr "كلمة المرور"
 msgid "Past Due"
 msgstr "متأخر"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:191
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
 #: app/routes/_admin+/marketing+/automations._index.tsx:225
 msgid "Pause"
 msgstr "إيقاف مؤقت"
@@ -2245,12 +2443,12 @@ msgstr "ذاكرة التخزين المؤقت الدائمة المخزنة ف�
 msgid "Personal + Organization notes"
 msgstr "الملاحظات الشخصية + المؤسسة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:432
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:435
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:477
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -2263,12 +2461,20 @@ msgstr "الهاتف موثّق"
 msgid "Phone Verified (OTP Success)"
 msgstr "الهاتف موثّق (نجاح OTP)"
 
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:78
+msgid "Pick a block to add to your email."
+msgstr "اختر كتلة لإضافتها إلى بريدك."
+
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:169
+msgid "Pick a layout, then customize the blocks."
+msgstr "اختر تخطيطًا ثم خصّص الكتل."
+
 #: app/components/sso-configuration-form.tsx:329
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr "PKCE مفعل"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:324
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
 
@@ -2276,7 +2482,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:52
+#: app/routes/_admin+/marketing+/automations.new.tsx:111
 msgid "Platform automation created via visual builder."
 msgstr "أُنشئت أتمتة المنصة عبر المُنشئ المرئي."
 
@@ -2296,7 +2502,7 @@ msgstr "سير عمل دورة حياة المنصة"
 msgid "Platform marketing"
 msgstr "تسويق المنصة"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:155
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:223
 msgid "Platform test runs are not yet wired to execution."
 msgstr "تشغيلات اختبار المنصة غير موصولة بالتنفيذ بعد."
 
@@ -2311,7 +2517,7 @@ msgid "Previous"
 msgstr "السابق"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:86
-#: ../../packages/marketing/src/components/campaign-form.tsx:72
+#: ../../packages/marketing/src/components/campaign-form.tsx:75
 msgid "Pro"
 msgstr "احترافي"
 
@@ -2345,24 +2551,24 @@ msgstr "اسم موفر الخدمة"
 msgid "Provider:"
 msgstr "موفر الخدمة:"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
 #: app/routes/_admin+/marketing+/automations._index.tsx:212
 msgid "Publish"
 msgstr "نشر"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:202
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:209
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:137
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:205
 msgid "Publishing automation..."
 msgstr "جارٍ نشر الأتمتة..."
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:102
+#: app/routes/_admin+/marketing+/automations.new.tsx:161
 msgid "Publishing new automation..."
 msgstr "جارٍ نشر الأتمتة الجديدة..."
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:206
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
 msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
@@ -2378,7 +2584,7 @@ msgstr "تطبيق سريع لسياسات الاحتفاظ بمعايير ال�
 msgid "Rank"
 msgstr "الترتيب"
 
-#: app/components/privacy-banner.tsx:30
+#: app/components/privacy-banner.tsx:32
 msgid "Read our Cookie Policy"
 msgstr "اقرأ سياسة ملفات تعريف الارتباط الخاصة بنا"
 
@@ -2431,7 +2637,7 @@ msgstr "تغييرات إعداد SSO الأخيرة وأنشطة المستخد
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -2439,13 +2645,30 @@ msgstr "المستلمون"
 msgid "Referrals"
 msgstr "الإحالات"
 
-#: app/components/privacy-banner.tsx:47
+#: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
+
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:143
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:138
+msgid "Remove block"
+msgstr "إزالة الكتلة"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:317
+msgid "Remove design"
+msgstr "إزالة التصميم"
 
 #: app/components/admin/feature-flags.tsx:338
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:405
+msgid "Remove variable"
+msgstr "إزالة المتغير"
+
+#: ../../packages/marketing/src/components/email/email-preview.tsx:73
+msgid "Rendering…"
+msgstr "جارٍ العرض…"
 
 #: app/components/admin-sidebar.tsx:44
 msgid "Reports"
@@ -2499,6 +2722,10 @@ msgstr "رابط الإلغاء (اختياري)"
 msgid "Revoke"
 msgstr "إلغاء"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:82
+msgid "Right"
+msgstr "يمين"
+
 #: app/components/sso-user-management.tsx:165
 #: app/routes/_admin+/roles+/index.tsx:387
 #: app/routes/_admin+/roles+/index.tsx:434
@@ -2530,7 +2757,7 @@ msgstr "الأدوار"
 msgid "Roles that apply within specific organizations"
 msgstr "الأدوار التي تنطبق على مؤسسات محددة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -2543,7 +2770,7 @@ msgstr "الصفوف لكل صفحة"
 msgid "Run Archival"
 msgstr "تشغيل الأرشفة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:146
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:151
 msgid "Run history"
 msgstr "سجل التشغيل"
 
@@ -2595,6 +2822,11 @@ msgstr "يُشغَّل عند تحديث العميل للاسم/البريد"
 msgid "Runs when customer verifies phone OTP"
 msgstr "يُشغَّل عند توثيق العميل لهاتفه عبر OTP"
 
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+msgid "Save"
+msgstr "حفظ"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:536
 #: app/routes/_admin+/roles+/system.$roleId.tsx:341
 msgid "Save Changes"
@@ -2604,7 +2836,7 @@ msgstr "حفظ التغييرات"
 msgid "Save Configuration"
 msgstr "حفظ الإعداد"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
@@ -2612,19 +2844,27 @@ msgstr "حفظ المسودة"
 msgid "Save Policy"
 msgstr "حفظ السياسة"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:116
+#: app/routes/_admin+/marketing+/automations.new.tsx:175
 msgid "Save the automation first before running test triggers."
 msgstr "احفظ الأتمتة أولاً قبل تشغيل محفّزات الاختبار."
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:94
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:138
+msgid "Saved"
+msgstr "تم الحفظ"
+
+#: app/routes/_admin+/marketing+/automations.new.tsx:153
 msgid "Saving new automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة الجديدة..."
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/sso-configuration-form.tsx:447
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:481
 msgid "Saving..."
 msgstr "جاري الحفظ..."
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/routes/_admin+/gdpr-requests.tsx:538
@@ -2704,11 +2944,11 @@ msgstr "أحداث الأمان"
 msgid "Select access level"
 msgstr "اختر مستوى الوصول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
 msgid "Select attribute"
 msgstr "اختر السمة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:113
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:182
 msgid "Select audience"
 msgstr "اختر الجمهور"
 
@@ -2716,7 +2956,7 @@ msgstr "اختر الجمهور"
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:479
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:521
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -2725,19 +2965,19 @@ msgstr "اختر العامل"
 msgid "Select role type"
 msgstr "اختر نوع الدور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:454
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 msgid "Select status"
 msgstr "اختر الحالة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:134
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:149
 msgid "Select trigger type"
 msgstr "اختر نوع المحفّز"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:155
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:170
 msgid "Select which event initiates this automated journey."
 msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمتة."
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:94
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:162
 msgid "Send a one-time message to tenant operators."
 msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأجرين."
 
@@ -2745,7 +2985,7 @@ msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأ
 msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:45
+#: ../../packages/marketing/src/components/campaign-form.tsx:48
 msgid "Send now"
 msgstr "إرسال الآن"
 
@@ -2757,14 +2997,14 @@ msgstr "أرسل رسائل بريد إلكتروني لمرة واحدة إلى
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:46
+#: ../../packages/marketing/src/components/campaign-form.tsx:49
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:82
-#: ../../packages/marketing/src/components/campaign-detail.tsx:136
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -2820,12 +3060,21 @@ msgstr "عرض {totalKeys} إدخال في ذاكرة التخزين المؤق�
 msgid "Showing {totalKeys} cache entries matching \"{query}\" in {cacheTypeUpper} cache"
 msgstr "عرض {totalKeys} إدخال في ذاكرة التخزين المؤقت مطابقة لـ \"{query}\" في ذاكرة التخزين المؤقت {cacheTypeUpper}"
 
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:351
+msgid "Shown to recipients who have no value for this field."
+msgstr "يُعرض للمستلمين الذين لا يملكون قيمة لهذا الحقل."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:155
 #: app/components/admin-organizations-table.tsx:263
 #: app/routes/_admin+/cache.tsx:617
 msgid "Size"
 msgstr "الحجم"
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:36
+#: ../../packages/marketing/src/components/email/block-meta.ts:29
+msgid "Smaller, muted supporting copy."
+msgstr "نص داعم أصغر وأهدأ."
+
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:18
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:15
 msgid "SMS"
 msgstr "رسالة نصية"
@@ -2834,7 +3083,7 @@ msgstr "رسالة نصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:369
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -2842,9 +3091,13 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:396
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:89
+msgid "Solid"
+msgstr "ممتلئ"
 
 #: app/routes/_admin+/waitlist.tsx:314
 msgid "Sort by Date"
@@ -2863,7 +3116,7 @@ msgstr "الترتيب حسب الترتيب"
 msgid "Source"
 msgstr "المصدر"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:120
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:189
 msgid "Specific Organization"
 msgstr "منظمة محددة"
 
@@ -2917,6 +3170,10 @@ msgstr "تاريخ البداية"
 msgid "Start journey on lifecycle event"
 msgstr "بدء الرحلة عند حدث دورة الحياة"
 
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:166
+msgid "Start with a template"
+msgstr "ابدأ بقالب"
+
 #: app/components/admin-organizations-table.tsx:274
 #: app/components/admin-users-table.tsx:169
 #: app/components/sso-configuration-overview.tsx:232
@@ -2945,15 +3202,19 @@ msgstr "إيقاف انتحال الشخصية"
 msgid "String"
 msgstr "نص"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:271
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:278
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإعداد العُقد."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:95
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
+msgid "Style"
+msgstr "النمط"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:98
 msgid "Subject"
 msgstr "الموضوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:262
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
@@ -2975,11 +3236,11 @@ msgstr "بدأ الاشتراك"
 msgid "Subscription Status"
 msgstr "حالة الاشتراك"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:88
+#: ../../packages/marketing/src/components/campaign-form.tsx:91
 msgid "Summer promo"
 msgstr "عرض الصيف"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:109
+#: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "supported"
 msgstr "مدعوم"
 
@@ -3000,6 +3261,10 @@ msgstr "عناوين IP المشبوهة"
 #: app/routes/_admin+/ip-addresses+/index.tsx:218
 msgid "Suspicious Score"
 msgstr "درجة الشبهة"
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:319
+msgid "Swap variable"
+msgstr "تبديل المتغير"
 
 #: app/components/admin/feature-flags.tsx:746
 #: app/routes/resources+/theme-switch.tsx:80
@@ -3058,7 +3323,7 @@ msgstr "صلاحيات على مستوى النظام لهذا الدور"
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:109
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:178
 msgid "Target Audience"
 msgstr "الجمهور المستهدف"
 
@@ -3066,7 +3331,7 @@ msgstr "الجمهور المستهدف"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -3079,14 +3344,19 @@ msgstr "الفريق"
 msgid "Test Connection"
 msgstr "اختبار الاتصال"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:153
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:370
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:158
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:377
 msgid "Test run"
 msgstr "تشغيل اختباري"
 
 #: app/components/sso-configuration-form.tsx:471
 msgid "Testing..."
 msgstr "جاري الاختبار..."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
+msgid "Text"
+msgstr "نص"
 
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
@@ -3102,15 +3372,19 @@ msgstr "ذاكرة التخزين المؤقت فارغة"
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:234
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:249
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:24
+msgid "The main paragraph copy of your email."
+msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
 msgstr "المظهر"
 
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:33
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:15
 msgid "Time delay"
 msgstr "تأخير زمني"
 
@@ -3170,11 +3444,11 @@ msgstr "إجمالي المستخدمين:"
 msgid "Trial"
 msgstr "تجربة"
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:33
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:22
 msgid "Trigger"
 msgstr "محفّز"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:380
 msgid "Trigger a test execution for a specific customer ID."
 msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 
@@ -3182,7 +3456,7 @@ msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 msgid "Trigger Event"
 msgstr "حدث المحفّز"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:125
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:140
 msgid "Trigger Event Type"
 msgstr "نوع حدث المحفّز"
 
@@ -3214,8 +3488,8 @@ msgstr "إزالة من القائمة السوداء"
 msgid "Unedited boilerplate text detected in email body."
 msgstr "تم اكتشاف نص قالب غير معدَّل في نص البريد الإلكتروني."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:204
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:213
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:219
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:228
 msgid "Unit"
 msgstr "الوحدة"
 
@@ -3225,13 +3499,17 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:131
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
 #: app/components/admin-organizations-table.tsx:122
 msgid "Unpaid"
 msgstr "غير مدفوع"
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:136
+msgid "Unsaved changes"
+msgstr "تغييرات غير محفوظة"
 
 #: app/components/sso-configuration-form.tsx:453
 msgid "Update Configuration"
@@ -3264,6 +3542,10 @@ msgstr "استخدم مفتاح الإثبات لتبادل الرموز لأم�
 #: app/routes/_admin+/roles+/$roleId.tsx:748
 msgid "Use this in your codebase to refer to this feature."
 msgstr "استخدم هذا في قاعدة الكود الخاصة بك للإشارة إلى هذه الميزة."
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:330
+msgid "Used when the value is empty"
+msgstr "يُستخدم عندما تكون القيمة فارغة"
 
 #: app/components/admin-users-table.tsx:100
 #: app/components/admin/feature-flags.tsx:752
@@ -3314,7 +3596,7 @@ msgstr "المستخدمون المرتبطون بعنوان IP هذا ({count})
 msgid "Users who have authenticated through SSO"
 msgstr "المستخدمون الذين تحققوا من خلال SSO"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:232
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:239
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
@@ -3322,7 +3604,11 @@ msgstr "اجتاز التحقق"
 msgid "Value"
 msgstr "القيمة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
+msgid "Variables"
+msgstr "المتغيرات"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -3364,7 +3650,7 @@ msgstr "عارض"
 
 #. placeholder {0}: data.duration
 #. placeholder {1}: delayUnitLabel(data.unit)
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:39
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:17
 msgid "Wait {0} {1}"
 msgstr "انتظر {0} {1}"
 
@@ -3388,11 +3674,11 @@ msgstr "إدارة قائمة الانتظار"
 msgid "Warning"
 msgstr "تحذير"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:333
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:340
 msgid "Warnings"
 msgstr "تحذيرات"
 
-#: app/components/privacy-banner.tsx:20
+#: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content."
 msgstr "نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتحليل حركة المرور على الموقع وتقديم محتوى مخصص."
 
@@ -3400,7 +3686,7 @@ msgstr "نستخدم ملفات تعريف الارتباط لتحسين تجر�
 msgid "weeks"
 msgstr "أسابيع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:226
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
 msgid "Weeks"
 msgstr "أسابيع"
 
@@ -3408,28 +3694,36 @@ msgstr "أسابيع"
 msgid "Welcome to Epic Startup, {{organizationName}}"
 msgstr "مرحباً بك في Epic Startup، {{organizationName}}"
 
-#. placeholder {0}: info.label
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
-msgid "When someone does <0>{0}</0>"
-msgstr "عندما يقوم شخص بـ <0>{0}</0>"
+#~ msgid "When someone does <0>{0}</0>"
+#~ msgstr "عندما يقوم شخص بـ <0>{0}</0>"
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:219
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:278
+msgid "Width"
+msgstr "العرض"
 
 #: ../../packages/marketing-workflow/src/validation.ts:14
 msgid "Workflow must contain at least one Trigger node."
 msgstr "يجب أن يحتوي سير العمل على عقدة محفّز واحدة على الأقل."
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:267
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:274
 msgid "Workflow validation"
 msgstr "التحقق من سير العمل"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:117
+#: ../../packages/marketing/src/components/campaign-form.tsx:126
 msgid "Write your email. Use {{name}} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {{name}} للتخصيص."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
+msgid "Write your message"
+msgstr "اكتب رسالتك"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:127
 msgid "Write your text message. Max 160 characters."
 msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:75
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:58
 msgid "Yes"
 msgstr "نعم"
 
@@ -3445,6 +3739,10 @@ msgstr "أنت تنتحل شخصية <0>{targetName}</0>"
 #: app/routes/_admin+/cache.tsx:937
 msgid "You don't have permission to access this admin area."
 msgstr "ليس لديك إذن للوصول إلى منطقة المدير هذه."
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
+msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
+msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:90
 msgid "Your Exclusive Update"

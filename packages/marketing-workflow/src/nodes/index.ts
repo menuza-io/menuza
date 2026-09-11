@@ -6,6 +6,7 @@ import { DelayNode } from './delay-node.tsx'
 import { TriggerNode } from './trigger-node.tsx'
 
 export { TriggerNode, DelayNode, ActionEmailNode, ActionSmsNode, ConditionNode }
+export * from './node-shell.tsx'
 
 export const nodeTypes = {
 	trigger: TriggerNode,

@@ -2,6 +2,7 @@ import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserWithRole } from '@repo/auth'
+import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import { createPlatformJourney } from '@repo/marketing/server/platform-journeys'
 import {
 	WorkflowCanvas,
@@ -16,6 +17,45 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { toast } from 'sonner'
+import { resolvePlatformEmailBranding } from '#app/utils/email-branding.server.ts'
+
+async function withRenderedEmails(
+	nodes: WorkflowGraph['nodes'],
+	branding: ReturnType<typeof resolvePlatformEmailBranding>,
+) {
+	return Promise.all(
+		nodes.map(async (node) => {
+			if (node.type !== 'action_email' || !Array.isArray(node.data.blocks)) {
+				return node
+			}
+			if (node.data.blocks.length === 0) {
+				return {
+					...node,
+					data: {
+						...node.data,
+						emailFormat: 'designed' as const,
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
+			const rendered = await renderMarketingEmail({
+				blocks: node.data.blocks,
+				theme: branding,
+				subject: node.data.subject,
+			})
+			return {
+				...node,
+				data: {
+					...node.data,
+					emailFormat: 'designed' as const,
+					bodyHtml: rendered.html,
+					bodyText: rendered.text,
+				},
+			}
+		}),
+	)
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -25,6 +65,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	// The email designer on this route renders its preview through the route
+	// action, so it must handle the preview intent before the journey create.
+	if (intent === 'email_preview') {
+		const branding = resolvePlatformEmailBranding()
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
 	const name = formData.get('name') || i18n._(t`New Platform Automation`)
 	const graphJson = formData.get('graphJson')
 	const shouldPublish = formData.get('publish') === 'true'
@@ -46,15 +100,20 @@ export async function action({ request }: ActionFunctionArgs) {
 		'org_created'
 	const triggerConfig =
 		(triggerNode?.data as { config?: Record<string, unknown> })?.config || {}
+	const nodes = await withRenderedEmails(
+		parsedGraph.nodes,
+		resolvePlatformEmailBranding(),
+	)
+	const resolvedGraph = { ...parsedGraph, nodes }
 
 	const created = await createPlatformJourney({
 		name: String(name),
 		description: i18n._(t`Platform automation created via visual builder.`),
 		triggerType,
 		triggerConfig,
-		nodes: parsedGraph.nodes,
+		nodes,
 		edges: parsedGraph.edges,
-		graphJson,
+		graphJson: JSON.stringify(resolvedGraph),
 	})
 
 	if (!created?.id) {

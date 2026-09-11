@@ -93,9 +93,18 @@ export function CampaignDetailView({
 					{campaign.channel === 'email' && campaign.subject ? (
 						<p className="text-sm font-medium">{campaign.subject}</p>
 					) : null}
-					<p className="text-muted-foreground mt-2 text-sm whitespace-pre-wrap">
-						{campaign.content}
-					</p>
+					{campaign.contentHtml ? (
+						<iframe
+							title={_(msg`Broadcast preview`)}
+							srcDoc={campaign.contentHtml}
+							sandbox="allow-same-origin"
+							className="mt-3 h-[640px] w-full rounded-md border"
+						/>
+					) : (
+						<p className="text-muted-foreground mt-2 text-sm whitespace-pre-wrap">
+							{campaign.content}
+						</p>
+					)}
 				</div>
 			</section>
 

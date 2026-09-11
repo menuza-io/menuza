@@ -17,6 +17,8 @@ export interface CampaignFormProps {
 	cancelTo?: string
 	showSmsProBadge?: boolean
 	audienceField?: ReactNode
+	/** Replaces the message textarea when the email channel is selected. */
+	emailDesigner?: ReactNode
 	submitLabel?: string
 	submittingLabel?: string
 }
@@ -27,6 +29,7 @@ export function CampaignForm({
 	cancelTo,
 	showSmsProBadge = true,
 	audienceField,
+	emailDesigner,
 	submitLabel,
 	submittingLabel,
 }: CampaignFormProps) {
@@ -102,25 +105,32 @@ export function CampaignForm({
 					</div>
 				) : null}
 
-				<div className="space-y-2">
-					<div className="flex items-center justify-between gap-4">
-						<Label htmlFor="content">{_(msg`Message`)}</Label>
-						<span className="text-muted-foreground text-xs">
-							{'{{name}}'} {_(msg`supported`)}
-						</span>
+				{channel === 'email' && emailDesigner ? (
+					<div className="space-y-2">
+						<Label>{_(msg`Email design`)}</Label>
+						{emailDesigner}
 					</div>
-					<Textarea
-						id="content"
-						name="content"
-						placeholder={
-							channel === 'email'
-								? _(msg`Write your email. Use {{name}} to personalize.`)
-								: _(msg`Write your text message. Max 160 characters.`)
-						}
-						className="min-h-[180px] resize-y"
-						required
-					/>
-				</div>
+				) : (
+					<div className="space-y-2">
+						<div className="flex items-center justify-between gap-4">
+							<Label htmlFor="content">{_(msg`Message`)}</Label>
+							<span className="text-muted-foreground text-xs">
+								{'{{name}}'} {_(msg`supported`)}
+							</span>
+						</div>
+						<Textarea
+							id="content"
+							name="content"
+							placeholder={
+								channel === 'email'
+									? _(msg`Write your email. Use {{name}} to personalize.`)
+									: _(msg`Write your text message. Max 160 characters.`)
+							}
+							className="min-h-[180px] resize-y"
+							required
+						/>
+					</div>
+				)}
 			</div>
 
 			<div className="flex items-center justify-between gap-3">

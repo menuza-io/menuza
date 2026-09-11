@@ -416,6 +416,27 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - Local: `apps/cms/public/media/`
 - Vercel: R2 via S3 API (`R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`)
 
+## Marketing Emails (HTML blocks)
+
+Broadcasts and automation email steps in App/Admin can be designed from blocks
+(heading, body text, paragraph, image, button) and are rendered with React Email
+in the org's website branding.
+
+- Blocks + schema: `packages/common/src/email-blocks.ts`
+- Merge tags (chips + fallbacks): `packages/common/src/merge-tags.ts` +
+  `MergeTagField` in `@repo/marketing`. Stored as `{{tag}}` / `{{tag|fallback}}`
+- Branding → email-safe colors/fonts: `packages/common/src/email-theme.ts`
+  (converts `oklch()` to hex; email clients support neither CSS vars nor oklch)
+- Renderer: `@repo/email/marketing` + `renderMarketingEmail()` in
+  `@repo/marketing/server/email-render`
+- Rendering happens **at design time** (App/Admin action) and the HTML is stored
+  (`content_html` / automation node `bodyHtml`); tenant-api and jobs-cron only
+  interpolate merge tags into it, with values HTML-escaped.
+- In automations the designer is a **full-screen overlay with an explicit Save**
+  (`EmailDesignOverlay`): it edits a local draft and discards it if you leave
+  without saving, so nothing hits the journey implicitly.
+- Details: `docs/platform-marketing-email.md`
+
 ## PR & Commit Guidelines
 
 **Pre-commit Checks**:

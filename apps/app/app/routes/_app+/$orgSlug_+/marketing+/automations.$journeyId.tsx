@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import {
 	WorkflowCanvas,
 	type WorkflowGraph,
@@ -15,7 +16,62 @@ import {
 	redirect,
 } from 'react-router'
 import { toast } from 'sonner'
+import {
+	useAIPanel,
+	useAIPanelHotkey,
+} from '#app/components/ai/ai-panel-context.tsx'
+import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
+import {
+	resolveEmailBrandingForOrg,
+	type OrganizationEmailBranding,
+} from '#app/utils/email-branding.server.ts'
+import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+/** Render every designed email node so the send path never needs React. */
+async function withRenderedEmails(
+	nodes: unknown[],
+	branding: OrganizationEmailBranding,
+): Promise<unknown[]> {
+	return Promise.all(
+		nodes.map(async (node) => {
+			if (!node || typeof node !== 'object') return node
+			const record = node as { type?: string; data?: Record<string, unknown> }
+			if (record.type !== 'action_email' || !record.data) return node
+			if (!Array.isArray(record.data.blocks)) return node
+			const blocks = record.data.blocks
+			if (blocks.length === 0) {
+				return {
+					...record,
+					data: {
+						...record.data,
+						emailFormat: 'designed',
+						bodyHtml: '',
+						bodyText: '',
+					},
+				}
+			}
+
+			const rendered = await renderMarketingEmail({
+				blocks,
+				theme: branding,
+				socials: branding.socials,
+				subject:
+					typeof record.data.subject === 'string' ? record.data.subject : '',
+			})
+
+			return {
+				...record,
+				data: {
+					...record.data,
+					emailFormat: 'designed',
+					bodyHtml: rendered.html,
+					bodyText: rendered.text,
+				},
+			}
+		}),
+	)
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -51,11 +107,22 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
-	if (intent === 'save') {
+	if (intent === 'email_preview') {
+		const branding = await resolveEmailBrandingForOrg(orgId)
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			socials: branding.socials,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
+	if (intent === 'save' || intent === 'publish') {
 		const name = formData.get('name')
 		const graphJson = formData.get('graphJson')
 
@@ -70,11 +137,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return { error: i18n._(t`Invalid graph format`) }
 		}
 
-		const triggerNode = parsedGraph.nodes.find((n: any) => n.type === 'trigger')
+		const branding = await resolveEmailBrandingForOrg(orgId)
+		const renderedGraph: WorkflowGraph = {
+			...parsedGraph,
+			nodes: (await withRenderedEmails(
+				parsedGraph.nodes,
+				branding,
+			)) as WorkflowGraph['nodes'],
+		}
+
+		const triggerNode = renderedGraph.nodes.find((n) => n.type === 'trigger')
 		const triggerType =
 			(triggerNode?.data as any)?.triggerType || 'phone_verified'
 		const triggerConfig =
 			((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
+		const serializedGraph = JSON.stringify(renderedGraph)
 
 		const updateRes = await fetchTenant(`/operator/journeys/${journeyId}`, {
 			method: 'PUT',
@@ -82,9 +159,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				name: name ? String(name) : undefined,
 				triggerType,
 				triggerConfig,
-				nodes: parsedGraph.nodes,
-				edges: parsedGraph.edges,
-				graphJson,
+				nodes: renderedGraph.nodes,
+				edges: renderedGraph.edges,
+				graphJson: serializedGraph,
 			}),
 		})
 
@@ -95,50 +172,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 
-		return { success: true, message: i18n._(t`Automation saved successfully`) }
-	}
+		if (intent === 'publish') {
+			const publishRes = await fetchTenant(
+				`/operator/journeys/${journeyId}/publish`,
+				{ method: 'POST' },
+			)
 
-	if (intent === 'publish') {
-		const graphJson = formData.get('graphJson')
-		const name = formData.get('name')
+			if (!publishRes.ok) {
+				const err = await publishRes.json().catch(() => ({}))
+				return {
+					error: (err as any).error || i18n._(t`Failed to publish automation`),
+				}
+			}
 
-		// First save latest graph
-		if (typeof graphJson === 'string') {
-			try {
-				const parsedGraph = JSON.parse(graphJson) as WorkflowGraph
-				const triggerNode = parsedGraph.nodes.find(
-					(n: any) => n.type === 'trigger',
-				)
-				await fetchTenant(`/operator/journeys/${journeyId}`, {
-					method: 'PUT',
-					body: JSON.stringify({
-						name: name ? String(name) : undefined,
-						triggerType: (triggerNode?.data as any)?.triggerType,
-						triggerConfig: (triggerNode?.data as any)?.config,
-						nodes: parsedGraph.nodes,
-						edges: parsedGraph.edges,
-						graphJson,
-					}),
-				})
-			} catch {}
-		}
-
-		const publishRes = await fetchTenant(
-			`/operator/journeys/${journeyId}/publish`,
-			{ method: 'POST' },
-		)
-
-		if (!publishRes.ok) {
-			const err = await publishRes.json().catch(() => ({}))
 			return {
-				error: (err as any).error || i18n._(t`Failed to publish automation`),
+				success: true,
+				message: i18n._(t`Automation published and activated!`),
 			}
 		}
 
-		return {
-			success: true,
-			message: i18n._(t`Automation published and activated!`),
-		}
+		return { success: true, message: i18n._(t`Automation saved successfully`) }
 	}
 
 	if (intent === 'pause') {
@@ -214,6 +267,10 @@ export default function JourneyBuilderRoute() {
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
 
+	useAIPanelHotkey()
+	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
+	const isLg = useMinWidthMediaQuery(1024)
+
 	const isSubmitting = fetcher.state !== 'idle'
 
 	// Initial graph from DB or raw json
@@ -270,11 +327,12 @@ export default function JourneyBuilderRoute() {
 	}
 
 	return (
-		<div className="bg-background fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
+		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
 			<WorkflowCanvas
 				initialGraph={initialGraph}
 				journeyName={journey.name}
 				journeyStatus={journey.status}
+				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}
 				onPause={handlePause}
@@ -283,6 +341,7 @@ export default function JourneyBuilderRoute() {
 				onViewRuns={() =>
 					navigate(`/${orgSlug}/marketing/automations/${journey.id}/runs`)
 				}
+				reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
 				isSaving={isSubmitting}
 				isPublishing={isSubmitting}
 			/>

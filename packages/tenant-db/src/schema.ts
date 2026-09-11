@@ -243,6 +243,10 @@ export const marketingCampaigns = sqliteTable('marketing_campaigns', {
 		.default('email'),
 	subject: text('subject'),
 	content: text('content').notNull().default(''),
+	/** JSON array of email blocks (source of truth for the email designer). */
+	contentBlocks: text('content_blocks'),
+	/** Design-time rendered HTML for email broadcasts. */
+	contentHtml: text('content_html'),
 	targetAudienceCount: integer('target_audience_count').default(0),
 	segmentationRules: text('segmentation_rules', { mode: 'json' }).default(
 		'{"audience": "all"}',

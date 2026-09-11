@@ -3,6 +3,7 @@ import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
 import { randomUUID } from 'node:crypto'
 import { brand } from '@repo/config/brand'
+import { emailBlocksSchema } from '@repo/common/email-blocks'
 import {
 	getOciMarketingMetrics,
 	isOciEngagementLoggingConfigured,
@@ -12,6 +13,7 @@ import {
 	customers,
 	getTenantDb,
 	interpolateMergeTags,
+	interpolateMergeTagsHtml,
 	marketingCampaigns,
 	marketingMessages,
 } from '@repo/tenant-db'
@@ -314,6 +316,8 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 				channel: campaign.channel,
 				subject: campaign.subject,
 				content: campaign.content,
+				contentBlocks: campaign.contentBlocks,
+				contentHtml: campaign.contentHtml,
 				targetAudienceCount: campaign.targetAudienceCount,
 				audience: segmentationRules?.audience ?? 'all',
 				createdAt: campaign.createdAt,
@@ -338,6 +342,24 @@ const createCampaignSchema = z.object({
 	audience: z.enum(['all', 'verified', 'unverified']).default('all'),
 	subject: z.string().optional(),
 	content: z.string().min(1, 'Content is required'),
+	/** JSON array of email designer blocks (source of truth for re-editing). */
+	contentBlocks: z
+		.string()
+		.transform((value, context) => {
+			try {
+				return emailBlocksSchema.parse(JSON.parse(value))
+			} catch {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Invalid email blocks',
+				})
+				return z.NEVER
+			}
+		})
+		.optional()
+		.nullable(),
+	/** Design-time rendered HTML for email broadcasts. */
+	contentHtml: z.string().optional().nullable(),
 	scheduledAt: z.string().datetime().optional().nullable(),
 })
 
@@ -377,6 +399,10 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 			channel,
 			subject: subject || null,
 			content,
+			contentBlocks: body.contentBlocks
+				? JSON.stringify(body.contentBlocks)
+				: null,
+			contentHtml: body.contentHtml || null,
 			status,
 			segmentationRules: JSON.stringify({ audience }),
 			scheduledAt: isScheduled ? new Date(scheduledAt) : null,
@@ -483,7 +509,9 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 							toName: customer.name,
 							subject: parsedSubject || 'Notification',
 							text: parsedContent,
-							html: `<p>${parsedContent}</p>`,
+							html: campaign.contentHtml
+								? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
+								: `<p>${parsedContent}</p>`,
 							context: {
 								orgId,
 								campaignId,
