@@ -20,7 +20,8 @@
     ]
   },
   "scripts": {
-    "build": "node packages/ui/generate-icons.js && turbo run build",
+    "build": "turbo run build",
+    "generate:icons": "node packages/ui/generate-icons.js",
     "dev": "node scripts/kill-dev-ports.mjs && npx turbo run build --filter=@repo/observability && NODE_TLS_REJECT_UNAUTHORIZED=0 npm-run-all --parallel dev:proxy dev:all dev:tenant-api:ksa",
     "dev:http": "node scripts/kill-dev-ports.mjs && npm-run-all --parallel dev:proxy:http dev:all",
     "dev:all": "turbo run dev --filter=app --filter=web --filter=admin --filter=studio --filter=docs --filter=sites --filter=tenant-api --filter=jobs-cron --concurrency=20",

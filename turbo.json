@@ -2,6 +2,17 @@
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local", "packages/**/.env.schema"],
 	"tasks": {
+		"//#generate:icons": {
+			"inputs": [
+				"packages/ui/generate-icons.js",
+				"packages/ui/other/svg-icons/**"
+			],
+			"outputs": [
+				"apps/app/app/components/ui/icons/**",
+				"apps/admin/app/components/ui/icons/**",
+				"packages/ui/components/icons/**"
+			]
+		},
 		"build": {
 			"dependsOn": ["^build"],
 			"outputs": ["build/**", "public/build/**", "dist/**", ".expo/**"],
@@ -16,6 +27,9 @@
 		"@repo/observability#build": {
 			"dependsOn": ["^build", "@repo/security#build"],
 			"outputs": ["dist/**"]
+		},
+		"@repo/ui#build": {
+			"dependsOn": ["^build", "//#generate:icons"]
 		},
 		"app#build": {
 			"dependsOn": [
@@ -77,12 +91,12 @@
 			"persistent": true
 		},
 		"app#dev": {
-			"dependsOn": ["@repo/observability#build"],
+			"dependsOn": ["@repo/observability#build", "//#generate:icons"],
 			"cache": false,
 			"persistent": true
 		},
 		"admin#dev": {
-			"dependsOn": ["@repo/observability#build"],
+			"dependsOn": ["@repo/observability#build", "//#generate:icons"],
 			"cache": false,
 			"persistent": true
 		},
