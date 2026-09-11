@@ -5105,45 +5105,40 @@ function InspectorTabs({
 		{
 			id: 'page' as const,
 			icon: 'file-text' as const,
-			label: <Trans>Page Settings</Trans>,
+			label: <Trans>Settings</Trans>,
 			ariaLabel: 'Page Settings',
 		},
 	]
 
 	return (
-		<nav aria-label="Builder panels" className="flex items-center">
+		<nav aria-label="Builder panels" className="w-full">
 			<div
 				role="tablist"
 				aria-orientation="horizontal"
-				className="flex items-center gap-0.5"
+				className="bg-muted grid grid-cols-3 gap-0.5 rounded-lg p-0.5"
 			>
 				{items.map((item) => {
 					const selected = value === item.id
 					return (
-						<Tooltip key={item.id}>
-							<TooltipTrigger
-								render={
-									<Button
-										variant="ghost"
-										size="icon-xs"
-										role="tab"
-										aria-selected={selected}
-										aria-label={item.ariaLabel}
-										className={cn(
-											'text-muted-foreground relative rounded-md transition-colors duration-150 ease-out',
-											'hover:text-foreground hover:bg-muted',
-											'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-											selected &&
-												'text-foreground bg-muted hover:bg-muted hover:text-foreground',
-										)}
-										onClick={() => onChange(item.id)}
-									>
-										<Icon name={item.icon} className="size-4" />
-									</Button>
-								}
-							/>
-							<TooltipContent side="bottom">{item.label}</TooltipContent>
-						</Tooltip>
+						<Button
+							key={item.id}
+							variant="ghost"
+							size="sm"
+							role="tab"
+							aria-selected={selected}
+							aria-label={item.ariaLabel}
+							className={cn(
+								'text-muted-foreground min-w-0 gap-1 rounded-md px-1.5 text-xs transition-colors duration-150 ease-out',
+								'hover:text-foreground hover:bg-background/60',
+								'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+								selected &&
+									'bg-background text-foreground hover:bg-background shadow-sm',
+							)}
+							onClick={() => onChange(item.id)}
+						>
+							<Icon name={item.icon} className="size-3.5 shrink-0" />
+							<span className="truncate">{item.label}</span>
+						</Button>
 					)
 				})}
 			</div>
