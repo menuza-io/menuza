@@ -2261,6 +2261,10 @@ export const PlatformMarketingCampaign = sqliteTable(
 		channel: text().notNull(),
 		subject: text(),
 		content: text().notNull(),
+		/** JSON array of email blocks (source of truth for the email designer). */
+		contentBlocks: text(),
+		/** Design-time rendered HTML for email campaigns. */
+		contentHtml: text(),
 		status: text().default('Draft').notNull(),
 		audience: text().default('all_operators').notNull(),
 		targetOrganizationId: text().references(() => Organization.id, {

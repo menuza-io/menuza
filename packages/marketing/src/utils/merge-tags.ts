@@ -1,11 +1,41 @@
+import {
+	replaceMergeTokens,
+	resolveWithFallback,
+} from '@repo/common/merge-tags'
+
 export function interpolateMergeTags(
 	template: string,
 	vars: Record<string, string | null | undefined>,
 ): string {
-	return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
-		const value = vars[key]
-		return value != null && value !== '' ? value : ''
-	})
+	return replaceMergeTokens(template, (tag, fallback) =>
+		resolveWithFallback(vars[tag], fallback),
+	)
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#39;',
+}
+
+export function escapeHtml(value: string): string {
+	return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char)
+}
+
+/**
+ * Interpolate merge tags into an HTML body, escaping each substituted value so
+ * customer data cannot inject markup. Use the plain `interpolateMergeTags` for
+ * the text part.
+ */
+export function interpolateMergeTagsHtml(
+	template: string,
+	vars: Record<string, string | null | undefined>,
+): string {
+	return replaceMergeTokens(template, (tag, fallback) =>
+		escapeHtml(resolveWithFallback(vars[tag], fallback)),
+	)
 }
 
 export function buildRecipientMergeTags(recipient: {

@@ -20,7 +20,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { type JourneyStatus } from './types.ts'
 import { type RealtimeValidationState } from './validation.ts'
 import { useWorkflowUiLabels } from './workflow-labels.ts'
@@ -39,6 +39,8 @@ interface WorkflowToolbarProps {
 	onBack: () => void
 	onViewRuns?: () => void
 	onFitView?: () => void
+	/** Extra controls rendered in the action cluster (e.g. the app's AI toggle). */
+	headerExtras?: ReactNode
 	className?: string
 }
 
@@ -56,6 +58,7 @@ export function WorkflowToolbar({
 	onBack,
 	onViewRuns,
 	onFitView,
+	headerExtras,
 	className,
 }: WorkflowToolbarProps) {
 	const { _ } = useLingui()
@@ -90,7 +93,7 @@ export function WorkflowToolbar({
 					className,
 				)}
 			>
-				<div className="flex min-w-0 items-center gap-1.5">
+				<div className="flex min-w-0 items-center gap-2">
 					<Button
 						type="button"
 						variant="ghost"
@@ -100,6 +103,8 @@ export function WorkflowToolbar({
 					>
 						<Icon name="arrow-left" className="size-4" />
 					</Button>
+
+					<div className="bg-border hidden h-5 w-px sm:block" aria-hidden />
 
 					{editingTitle ? (
 						<Input
@@ -157,9 +162,7 @@ export function WorkflowToolbar({
 							) : null}
 						</div>
 					)}
-				</div>
 
-				<div className="flex shrink-0 items-center gap-2">
 					<div className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
 						<span
 							className={cn(
@@ -175,6 +178,10 @@ export function WorkflowToolbar({
 						/>
 						<span className="capitalize">{journeyStatusLabel(status)}</span>
 					</div>
+				</div>
+
+				<div className="flex shrink-0 items-center gap-2">
+					{headerExtras}
 
 					<Button
 						type="button"

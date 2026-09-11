@@ -1,9 +1,18 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { CampaignForm } from '@repo/marketing'
+import {
+	buildEmailTemplateBlocks,
+	type EmailBlock,
+} from '@repo/common/email-blocks'
+import { CampaignForm, EmailBlockEditor } from '@repo/marketing'
+import {
+	normalizeEmailBlocks,
+	renderMarketingEmail,
+} from '@repo/marketing/server/email-render'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
+import { useState } from 'react'
 import {
 	Form,
 	Link,
@@ -12,17 +21,71 @@ import {
 	useNavigation,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+function EmailDesignerField() {
+	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
+		buildEmailTemplateBlocks('welcome'),
+	)
+
+	return (
+		<div className="space-y-3">
+			<input type="hidden" name="blocks" value={JSON.stringify(blocks)} />
+			<EmailBlockEditor blocks={blocks} onChange={setBlocks} />
+		</div>
+	)
+}
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	if (intent === 'email_preview') {
+		const branding = await resolveEmailBrandingForOrg(orgId)
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			socials: branding.socials,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
 	const name = formData.get('name')
 	const channel = formData.get('channel')
 	const subject = formData.get('subject')
 	const content = formData.get('content')
+	const blocksRaw = formData.get('blocks')
+
+	let resolvedContent = typeof content === 'string' ? content : ''
+	let contentHtml: string | undefined
+	let contentBlocks: string | undefined
+
+	if (
+		channel === 'email' &&
+		typeof blocksRaw === 'string' &&
+		blocksRaw.trim()
+	) {
+		const branding = await resolveEmailBrandingForOrg(orgId)
+		const blocks = normalizeEmailBlocks(blocksRaw)
+		const rendered = await renderMarketingEmail({
+			blocks,
+			theme: branding,
+			socials: branding.socials,
+			subject: typeof subject === 'string' ? subject : '',
+		})
+		resolvedContent = rendered.text
+		contentHtml = rendered.html
+		contentBlocks = JSON.stringify(blocks)
+	}
+
+	if (!resolvedContent) {
+		return { error: i18n._(t`Message content is required`) }
+	}
 
 	const createRes = await fetchTenant('/operator/marketing/campaigns', {
 		method: 'POST',
@@ -31,7 +94,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			name,
 			channel,
 			subject,
-			content,
+			content: resolvedContent,
+			contentHtml,
+			contentBlocks,
 		}),
 	})
 
@@ -54,7 +119,7 @@ export default function NewCampaignRoute() {
 	const isSubmitting = navigation.state === 'submitting'
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-8">
+		<div className="mx-auto max-w-5xl space-y-8">
 			<div className="flex items-start gap-3">
 				<Button
 					variant="ghost"
@@ -80,6 +145,7 @@ export default function NewCampaignRoute() {
 					error={actionData?.error}
 					isSubmitting={isSubmitting}
 					cancelTo=".."
+					emailDesigner={<EmailDesignerField />}
 				/>
 			</Form>
 		</div>

@@ -12,6 +12,7 @@ import {
 	marketingMessages,
 	validateWorkflowDAG,
 	interpolateMergeTags,
+	interpolateMergeTagsHtml,
 	createJourneySchema,
 	updateJourneySchema,
 	type ExecuteStepPayload,
@@ -346,6 +347,7 @@ export async function executeJourneyStep(
 		template?: string
 		messageText?: string
 		content?: string
+		blocks?: unknown[]
 	}
 
 	// 4. Execute channel-specific dispatch
@@ -370,13 +372,23 @@ export async function executeJourneyStep(
 			}
 		}
 
+		const hasBlocks = Array.isArray(config.blocks) && config.blocks.length > 0
 		const rawSubject = config.subject || 'Notification'
 		const rawHtml = config.bodyHtml || config.content || ''
 		const rawText = config.bodyText || config.content || rawHtml
 
 		const subject = interpolateMergeTags(rawSubject, customer, contextData)
-		const html = interpolateMergeTags(rawHtml, customer, contextData)
 		const text = interpolateMergeTags(rawText, customer, contextData)
+		const renderedHtml = hasBlocks
+			? interpolateMergeTagsHtml(rawHtml, customer, contextData)
+			: interpolateMergeTags(rawHtml, customer, contextData)
+		// Designed emails already hold a full HTML document; legacy nodes get the
+		// historical <p> wrapper.
+		const html = hasBlocks
+			? renderedHtml
+			: renderedHtml
+				? `<p>${renderedHtml}</p>`
+				: `<p>${text}</p>`
 
 		try {
 			const outboundMessageId = randomUUID()
@@ -384,7 +396,7 @@ export async function executeJourneyStep(
 				to: customer.email,
 				toName: customer.name,
 				subject,
-				html: html ? `<p>${html}</p>` : `<p>${text}</p>`,
+				html,
 				text: text || subject,
 				context: {
 					orgId,

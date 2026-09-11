@@ -2,8 +2,16 @@ import { i18n } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserWithRole } from '@repo/auth'
+import {
+	buildEmailTemplateBlocks,
+	type EmailBlock,
+} from '@repo/common/email-blocks'
 import { db, Organization } from '@repo/database'
-import { CampaignForm } from '@repo/marketing'
+import { CampaignForm, EmailBlockEditor } from '@repo/marketing'
+import {
+	normalizeEmailBlocks,
+	renderMarketingEmail,
+} from '@repo/marketing/server/email-render'
 import { createPlatformCampaign } from '@repo/marketing/server/platform-campaigns'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -15,6 +23,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { useState } from 'react'
 import {
 	Form,
 	Link,
@@ -25,6 +34,20 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 } from 'react-router'
+import { resolvePlatformEmailBranding } from '#app/utils/email-branding.server.ts'
+
+function EmailDesignerField() {
+	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
+		buildEmailTemplateBlocks('welcome'),
+	)
+
+	return (
+		<div className="space-y-3">
+			<input type="hidden" name="blocks" value={JSON.stringify(blocks)} />
+			<EmailBlockEditor blocks={blocks} onChange={setBlocks} />
+		</div>
+	)
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -39,14 +62,56 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	const adminUserId = await requireUserWithRole(request, 'admin')
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	if (intent === 'email_preview') {
+		const branding = resolvePlatformEmailBranding()
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
+	const channel = (formData.get('channel') as 'email' | 'sms') || 'email'
+	const subject = String(formData.get('subject') || '')
+	const blocksRaw = formData.get('blocks')
+
+	let content = String(formData.get('content') || '')
+	let contentHtml: string | undefined
+	let contentBlocks: string | undefined
+
+	if (
+		channel === 'email' &&
+		typeof blocksRaw === 'string' &&
+		blocksRaw.trim()
+	) {
+		const branding = resolvePlatformEmailBranding()
+		const blocks = normalizeEmailBlocks(blocksRaw)
+		const rendered = await renderMarketingEmail({
+			blocks,
+			theme: branding,
+			subject,
+		})
+		content = rendered.text
+		contentHtml = rendered.html
+		contentBlocks = JSON.stringify(blocks)
+	}
+
+	if (!content) {
+		return { error: i18n._(t`Message content is required`) }
+	}
 
 	try {
 		await createPlatformCampaign(
 			{
 				name: String(formData.get('name') || ''),
-				channel: (formData.get('channel') as 'email' | 'sms') || 'email',
-				subject: String(formData.get('subject') || ''),
-				content: String(formData.get('content') || ''),
+				channel,
+				subject,
+				content,
+				contentHtml,
+				contentBlocks,
 				audience:
 					(formData.get('audience') as 'all_operators' | 'organization') ||
 					'all_operators',
@@ -75,7 +140,7 @@ export default function AdminNewCampaignRoute() {
 	const isSubmitting = navigation.state === 'submitting'
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-8">
+		<div className="mx-auto max-w-5xl space-y-8">
 			<div className="flex items-start gap-3">
 				<Button
 					variant="ghost"
@@ -102,6 +167,7 @@ export default function AdminNewCampaignRoute() {
 					isSubmitting={isSubmitting}
 					cancelTo="/marketing/campaigns"
 					showSmsProBadge={false}
+					emailDesigner={<EmailDesignerField />}
 					audienceField={
 						<div className="space-y-4">
 							<div className="space-y-2">

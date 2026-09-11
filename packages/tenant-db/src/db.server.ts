@@ -11,6 +11,7 @@ import * as schema from './schema.ts'
 import { resolveTenantDb, resolveTenantOrgIds } from './resolver.ts'
 import type { TenantDatabase } from './types.ts'
 import { TENANT_ORG_ID_PATTERN } from './regions.ts'
+import { applyTenantMigrations } from './migrations.ts'
 
 type TenantDbInstance = {
 	db: ReturnType<typeof drizzle<typeof schema>>
@@ -130,6 +131,11 @@ async function getTenantDbFromFilesystem(
 		// Enforce referential integrity. SQLite/libSQL default to OFF, which
 		// would silently accept orphaned rows and disable ON DELETE CASCADE.
 		await db.run(sql`PRAGMA foreign_keys = ON;`)
+
+		// Bring long-lived tenant files up to the current schema before anyone
+		// reads them; mirrors the Durable Object path. Runs once per org per
+		// process because the connection is cached below.
+		await applyTenantMigrations(db, orgId)
 
 		dbCache.set(orgId, { db, client })
 

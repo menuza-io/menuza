@@ -1,5 +1,7 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type EmailBlock } from '@repo/common/email-blocks'
+import { EmailDesignOverlay, MergeTagField } from '@repo/marketing'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -15,7 +17,7 @@ import {
 } from '@repo/ui/select'
 import { Textarea } from '@repo/ui/textarea'
 import { type Node } from '@xyflow/react'
-import React from 'react'
+import { useState, type ReactNode } from 'react'
 import { type DelayUnit } from './types.ts'
 import { useWorkflowUiLabels } from './workflow-labels.ts'
 import { useWorkflowConfig } from './workflow-config.tsx'
@@ -23,27 +25,40 @@ import { useWorkflowConfig } from './workflow-config.tsx'
 interface NodeInspectorProps {
 	node: Node | null
 	onUpdateNodeData: (nodeId: string, newData: Record<string, any>) => void
+	/** Apply node data and persist the journey (used by the email designer). */
+	onSaveNodeData: (nodeId: string, newData: Record<string, any>) => void
 	onDeleteNode: (nodeId: string) => void
 	onClose: () => void
 	errors?: string[]
+	/** Extra header controls for the email designer (e.g. the AI toggle). */
+	emailDesignerHeaderExtras?: ReactNode
+	/** Content inset for the email designer (e.g. a docked AI panel). */
+	emailDesignerContentClassName?: string
 	className?: string
 }
 
 export function NodeInspector({
 	node,
 	onUpdateNodeData,
+	onSaveNodeData,
 	onDeleteNode,
 	onClose,
 	errors = [],
+	emailDesignerHeaderExtras,
+	emailDesignerContentClassName,
 	className,
 }: NodeInspectorProps) {
 	const { _ } = useLingui()
 	const { triggerOptions } = useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
+	const [designerOpen, setDesignerOpen] = useState(false)
 
 	if (!node) return null
 
 	const data = (node.data || {}) as Record<string, any>
+	const emailBlocks: EmailBlock[] = Array.isArray(data.blocks)
+		? (data.blocks as EmailBlock[])
+		: []
 
 	const handleChange = (key: string, value: any) => {
 		onUpdateNodeData(node.id, {
@@ -246,12 +261,11 @@ export function NodeInspector({
 								<Label htmlFor="subject" className="text-xs font-medium">
 									<Trans>Subject Line</Trans>
 								</Label>
-								<Input
+								<MergeTagField
 									id="subject"
-									placeholder={_(msg`e.g. Welcome {{name}}!`)}
+									placeholder={_(msg`e.g. Welcome {{firstName}}!`)}
 									value={data.subject || ''}
-									onChange={(e) => handleChange('subject', e.target.value)}
-									className="h-9"
+									onChange={(subject) => handleChange('subject', subject)}
 								/>
 							</div>
 
@@ -268,70 +282,98 @@ export function NodeInspector({
 								/>
 							</div>
 
-							<div className="space-y-1">
-								<span className="text-muted-foreground text-[11px] font-semibold">
-									<Trans>Insert Merge Tags:</Trans>
-								</span>
-								<div className="flex flex-wrap gap-1.5">
+							<div className="space-y-2">
+								<Label className="text-xs font-medium">
+									<Trans>Email design</Trans>
+								</Label>
+								<div className="flex flex-wrap items-center gap-2">
 									<Button
 										type="button"
 										variant="outline"
 										size="sm"
-										className="h-6 px-2 font-mono text-[11px]"
-										onClick={() => insertMergeTag('bodyHtml', '{{name}}')}
+										onClick={() => setDesignerOpen(true)}
 									>
-										+ {'{{name}}'}
+										<Icon name="paintbrush" className="size-3.5" />
+										{emailBlocks.length > 0 ? (
+											<Trans>Edit design</Trans>
+										) : (
+											<Trans>Design email</Trans>
+										)}
 									</Button>
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										className="h-6 px-2 font-mono text-[11px]"
-										onClick={() => insertMergeTag('bodyHtml', '{{email}}')}
-									>
-										+ {'{{email}}'}
-									</Button>
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										className="h-6 px-2 font-mono text-[11px]"
-										onClick={() => insertMergeTag('bodyHtml', '{{phone}}')}
-									>
-										+ {'{{phone}}'}
-									</Button>
+									{emailBlocks.length > 0 ? (
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											className="text-muted-foreground"
+											onClick={() => {
+												handleChange('blocks', undefined)
+												handleChange(
+													'bodyHtml',
+													data.bodyText || '<p></p><p></p>',
+												)
+											}}
+										>
+											<Trans>Remove design</Trans>
+										</Button>
+									) : null}
 								</div>
-							</div>
-
-							<div className="space-y-1.5">
-								<Label htmlFor="bodyHtml" className="text-xs font-medium">
-									<Trans>Email HTML Body</Trans>
-								</Label>
-								<Textarea
-									id="bodyHtml"
-									rows={6}
-									placeholder={_(
-										msg`<p>Hi {{name}},</p><p>Welcome to our service!</p>`,
+								<p className="text-muted-foreground text-[11px]">
+									{emailBlocks.length > 0 ? (
+										<Trans>
+											{emailBlocks.length} blocks · rendered in your website
+											branding
+										</Trans>
+									) : (
+										<Trans>Build a branded HTML email with blocks.</Trans>
 									)}
-									value={data.bodyHtml || ''}
-									onChange={(e) => handleChange('bodyHtml', e.target.value)}
-									className="font-mono text-xs"
-								/>
+								</p>
 							</div>
 
-							<div className="space-y-1.5">
-								<Label htmlFor="bodyText" className="text-xs font-medium">
-									<Trans>Plaintext Fallback (Optional)</Trans>
-								</Label>
-								<Textarea
-									id="bodyText"
-									rows={3}
-									placeholder={_(msg`Hi {{name}}, Welcome to our service!`)}
-									value={data.bodyText || ''}
-									onChange={(e) => handleChange('bodyText', e.target.value)}
-									className="text-xs"
-								/>
-							</div>
+							{emailBlocks.length === 0 ? (
+								<>
+									<div className="space-y-1.5">
+										<Label htmlFor="bodyHtml" className="text-xs font-medium">
+											<Trans>Email HTML Body</Trans>
+										</Label>
+										<Textarea
+											id="bodyHtml"
+											rows={6}
+											placeholder={_(
+												msg`<p>Hi {{name}},</p><p>Welcome to our service!</p>`,
+											)}
+											value={data.bodyHtml || ''}
+											onChange={(e) => handleChange('bodyHtml', e.target.value)}
+											className="font-mono text-xs"
+										/>
+									</div>
+
+									<div className="space-y-1.5">
+										<Label htmlFor="bodyText" className="text-xs font-medium">
+											<Trans>Plaintext Fallback (Optional)</Trans>
+										</Label>
+										<Textarea
+											id="bodyText"
+											rows={3}
+											placeholder={_(msg`Hi {{name}}, Welcome to our service!`)}
+											value={data.bodyText || ''}
+											onChange={(e) => handleChange('bodyText', e.target.value)}
+											className="text-xs"
+										/>
+									</div>
+								</>
+							) : null}
+
+							<EmailDesignOverlay
+								open={designerOpen}
+								onOpenChange={setDesignerOpen}
+								initialBlocks={emailBlocks}
+								title={_(msg`Email design`)}
+								subject={data.subject ?? ''}
+								headerExtras={emailDesignerHeaderExtras}
+								contentClassName={emailDesignerContentClassName}
+								onSave={(blocks) => onSaveNodeData(node.id, { blocks })}
+							/>
 						</div>
 					)}
 

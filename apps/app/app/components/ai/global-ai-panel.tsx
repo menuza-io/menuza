@@ -26,11 +26,16 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { resolveAppNavPath } from '#app/utils/ai/app-nav-routes.ts'
 import { useAIPanel } from './ai-panel-context'
 
-const WEBSITE_BUILDER_PATH = /\/website\/(?:pages|forms)\/[^/]+$/
+/**
+ * Full-viewport builder routes. The AI panel docks and uses a higher z-index
+ * tier on these so it isn't covered by the editor's own fixed overlay.
+ */
+const BUILDER_PATH =
+	/\/(?:website\/(?:pages|forms)|marketing\/automations)\/[^/]+$/
 
-function useIsWebsiteBuilderRoute() {
+function useIsBuilderRoute() {
 	const location = useLocation()
-	return WEBSITE_BUILDER_PATH.test(location.pathname)
+	return BUILDER_PATH.test(location.pathname)
 }
 
 // Lazy-load the AIChat component (and the heavy @repo/ai dependency tree)
@@ -145,7 +150,7 @@ function asString(value: unknown) {
 }
 
 function PanelBody() {
-	const isWebsiteBuilder = useIsWebsiteBuilderRoute()
+	const isBuilderRoute = useIsBuilderRoute()
 	const params = useParams()
 	const location = useLocation()
 	const fetcher = useFetcher()
@@ -327,7 +332,7 @@ function PanelBody() {
 			<header
 				className={cn(
 					'flex w-full shrink-0 items-center justify-between border-b transition-[width,height] ease-linear',
-					isWebsiteBuilder ? 'h-12' : 'h-(--header-height)',
+					isBuilderRoute ? 'h-12' : 'h-(--header-height)',
 				)}
 			>
 				<div className="flex items-center px-4">
@@ -336,7 +341,7 @@ function PanelBody() {
 					</span>
 				</div>
 				<div className="flex items-center justify-end gap-0.5 px-2 pr-3 md:pr-4">
-					<div className={cn(!isWebsiteBuilder && 'hidden md:contents')}>
+					<div className={cn(!isBuilderRoute && 'hidden md:contents')}>
 						<ExpandButton />
 					</div>
 					<CloseButton />
@@ -368,7 +373,7 @@ function AIPanelSurface() {
 	const { isOpen, isExpanded, close, collapse, hasActivated } = useAIPanel()
 	const { i18n } = useLingui()
 	const isMobile = useIsMobile()
-	const isWebsiteBuilder = useIsWebsiteBuilderRoute()
+	const isBuilderRoute = useIsBuilderRoute()
 	const isFullscreen = isOpen && isExpanded
 	const isVisible = isOpen || isFullscreen
 	const hasEverMountedRef = useRef(false)
@@ -408,7 +413,7 @@ function AIPanelSurface() {
 					onClick={collapse}
 					className={cn(
 						'animate-in fade-in-0 fixed inset-0 bg-black/10 duration-200 supports-backdrop-filter:backdrop-blur-xs',
-						isWebsiteBuilder ? 'z-60' : 'z-40',
+						isBuilderRoute ? 'z-60' : 'z-40',
 					)}
 				/>
 			) : null}
@@ -424,27 +429,27 @@ function AIPanelSurface() {
 					isMobile &&
 						cn(
 							'fixed inset-0',
-							isWebsiteBuilder ? 'z-60' : 'z-50',
+							isBuilderRoute ? 'z-60' : 'z-50',
 							!isOpen && 'invisible',
 						),
 					!isMobile &&
 						isFullscreen &&
 						cn(
 							'ring-foreground/10 animate-in fade-in-0 zoom-in-95 fixed rounded-xl shadow-lg ring-1 duration-200',
-							isWebsiteBuilder
+							isBuilderRoute
 								? 'inset-3 z-70 sm:inset-4'
 								: 'inset-3 z-50 sm:inset-4',
 						),
 					!isMobile &&
 						!isFullscreen &&
-						isWebsiteBuilder &&
+						isBuilderRoute &&
 						cn(
 							'fixed top-14 right-2 bottom-2 z-80 rounded-xl shadow-sm',
 							!isVisible && 'hidden',
 						),
 					!isMobile &&
 						!isFullscreen &&
-						!isWebsiteBuilder &&
+						!isBuilderRoute &&
 						cn(
 							'fixed top-2 right-2 bottom-2 z-40 rounded-xl shadow-sm',
 							'transition-[width,opacity] duration-300 ease-out',

@@ -22,7 +22,7 @@ export function PageTitle({
 		<div className={cn('flex min-w-0 flex-col gap-1', className)}>
 			<Heading
 				className={cn(
-					'font-semibold tracking-tight text-balance',
+					'font-normal tracking-tight text-balance',
 					size === 'page' ? 'text-2xl' : 'text-xl',
 				)}
 			>

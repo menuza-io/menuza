@@ -2,6 +2,7 @@ import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserWithRole } from '@repo/auth'
+import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import { createPlatformJourney } from '@repo/marketing/server/platform-journeys'
 import {
 	WorkflowCanvas,
@@ -16,6 +17,7 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { toast } from 'sonner'
+import { resolvePlatformEmailBranding } from '#app/utils/email-branding.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -25,6 +27,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	// The email designer on this route renders its preview through the route
+	// action, so it must handle the preview intent before the journey create.
+	if (intent === 'email_preview') {
+		const branding = resolvePlatformEmailBranding()
+		const { html } = await renderMarketingEmail({
+			blocks: formData.get('blocks'),
+			theme: branding,
+			subject: String(formData.get('subject') || ''),
+		})
+		return { html }
+	}
+
 	const name = formData.get('name') || i18n._(t`New Platform Automation`)
 	const graphJson = formData.get('graphJson')
 	const shouldPublish = formData.get('publish') === 'true'

@@ -14,23 +14,23 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:98
+#: app/components/ai/global-ai-panel.tsx:103
 msgid "Close assistant"
 msgstr "Close assistant"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:109
-#: app/components/ai/global-ai-panel.tsx:407
+#: app/components/ai/global-ai-panel.tsx:114
+#: app/components/ai/global-ai-panel.tsx:412
 msgid "Exit full screen"
 msgstr "Exit full screen"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:110
+#: app/components/ai/global-ai-panel.tsx:115
 msgid "Open full screen"
 msgstr "Open full screen"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:419
+#: app/components/ai/global-ai-panel.tsx:424
 msgid "AI assistant"
 msgstr "AI assistant"
 
@@ -49,9 +49,14 @@ msgid "{0, plural, one {Share with 1 member} other {Share with # members}}"
 msgstr ""
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:381
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
 msgid "{0} / 1600 chars"
 msgstr ""
+
+#. placeholder {0}: emailBlocks.length
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+msgid "{0} blocks · rendered in your website branding"
+msgstr "{0} blocks · rendered in your website branding"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:284
 #~ msgid "{0} characters"
@@ -59,7 +64,7 @@ msgstr ""
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:112
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -112,7 +117,7 @@ msgstr ""
 msgid "{diffSec}s (running)"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:234
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
 
@@ -208,15 +213,15 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:515
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:557
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:541
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:583
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:752
+#: app/routes/_auth+/login.tsx:774
 msgid "← Back to SSO login"
 msgstr ""
 
@@ -235,7 +240,7 @@ msgstr ""
 #. placeholder {0}: conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.operator === 'equals' ? 'is' : data.operator === 'not_equals' ? 'is not' : 'contains'
 #. placeholder {2}: data.value
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:50
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:27
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr ""
 
@@ -243,7 +248,7 @@ msgstr ""
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:314
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr ""
 
@@ -303,6 +308,18 @@ msgstr ""
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:19
+msgid "A large title that opens a section."
+msgstr "A large title that opens a section."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:39
+msgid "A link styled as a call to action."
+msgstr "A link styled as a call to action."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:34
+msgid "A picture, logo, or product shot."
+msgstr "A picture, logo, or product shot."
+
 #: app/utils/website/form-templates.ts:41
 msgid "A short, low-friction form for prospective customers."
 msgstr "A short, low-friction form for prospective customers."
@@ -337,7 +354,7 @@ msgstr ""
 msgid "Account settings"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:278
+#: app/routes/_auth+/login.tsx:297
 msgid "Account Suspended"
 msgstr ""
 
@@ -386,6 +403,10 @@ msgstr ""
 msgid "Add {0}"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-preview.tsx:103
+msgid "Add a block to see your email come to life."
+msgstr "Add a block to see your email come to life."
+
 #: app/components/settings/cards/organization/site-card.tsx:356
 msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
 msgstr ""
@@ -402,6 +423,10 @@ msgstr ""
 #: app/components/settings/cards/organization/site-analytics-card.tsx:66
 #~ msgid "Add a Google Analytics 4 Measurement ID to track visitors on your tenant website. Leave blank to disable tracking."
 #~ msgstr "Add a Google Analytics 4 Measurement ID to track visitors on your tenant website. Leave blank to disable tracking."
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+msgid "Add a heading"
+msgstr "Add a heading"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5611
 msgid "Add a hero, gallery, or any block between the header and footer."
@@ -432,6 +457,12 @@ msgstr ""
 #: app/routes/organizations+/create.tsx:1162
 msgid "Add another invitation"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
+msgid "Add block"
+msgstr "Add block"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4006
 msgid "Add card"
@@ -597,7 +628,7 @@ msgstr "Admin impersonation active"
 #~ msgid "AI"
 #~ msgstr ""
 
-#: app/components/ai/global-ai-panel.tsx:335
+#: app/components/ai/global-ai-panel.tsx:340
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:674
 msgid "AI Assistant"
 msgstr ""
@@ -614,6 +645,12 @@ msgstr ""
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:240
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+msgid "Alignment"
+msgstr "Alignment"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
 msgid "All"
@@ -623,7 +660,7 @@ msgstr ""
 #~ msgid "All assigned"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:345
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:352
 msgid "All checks passed. This workflow is ready to publish."
 msgstr ""
 
@@ -660,6 +697,7 @@ msgstr ""
 msgid "Already read"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:198
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3937
 msgid "Alt text"
 msgstr ""
@@ -753,7 +791,7 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 #~ msgid "Ask about this note..."
 #~ msgstr ""
 
-#: app/components/ai/global-ai-panel.tsx:484
+#: app/components/ai/global-ai-panel.tsx:489
 msgid "Ask AI"
 msgstr "Ask AI"
 
@@ -818,28 +856,32 @@ msgstr ""
 msgid "Authorized Clients"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:57
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
+msgid "Auto"
+msgstr "Auto"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:80
 msgid "Automated lifecycle journey created via visual builder."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:137
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:142
 msgid "Automation menu"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:56
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:27
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:71
 msgid "Automation not found"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:159
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:200
 msgid "Automation paused"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:178
 msgid "Automation published and activated!"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:98
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:182
 msgid "Automation saved successfully"
 msgstr ""
 
@@ -862,13 +904,17 @@ msgid "Avg/day"
 msgstr ""
 
 #: app/components/website/create-page-dialog.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:63
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:128
 msgid "Back"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:99
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:123
+msgid "Back to blocks"
+msgstr "Back to blocks"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:29
 msgid "Back to broadcasts"
@@ -884,7 +930,7 @@ msgstr "Back to fields"
 msgid "Back to login"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:83
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
 msgid "Back to nodes"
 msgstr ""
 
@@ -919,9 +965,21 @@ msgstr ""
 msgid "Billing & Subscription"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
+msgid "Block types"
+msgstr "Block types"
+
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:238
+msgid "Blocks"
+msgstr "Blocks"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:828
 msgid "Body"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:23
+msgid "Body text"
+msgstr "Body text"
 
 #: app/components/app-sidebar.tsx:315
 #: app/components/website/branding-panel.tsx:244
@@ -937,6 +995,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:73
 msgid "Broadcast not found"
 msgstr ""
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+msgid "Broadcast preview"
+msgstr "Broadcast preview"
 
 #: app/components/app-sidebar.tsx:271
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
@@ -956,19 +1018,25 @@ msgstr ""
 msgid "Bucket Name"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:541
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Build"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:328
+msgid "Build a branded HTML email with blocks."
+msgstr "Build a branded HTML email with blocks."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:460
 msgid "Builder"
 msgstr "Builder"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:38
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3577
 msgid "Button"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:257
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
@@ -996,12 +1064,14 @@ msgstr ""
 msgid "By deleting your organization you and your team will lose access and all data will be lost. This is a permanent action and cannot be undone."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:84
+#: ../../packages/marketing/src/components/campaign-form.tsx:87
 msgid "Campaign name"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:407
-#: ../../packages/marketing/src/components/campaign-form.tsx:134
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
+#: ../../packages/marketing/src/components/campaign-form.tsx:144
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:155
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
 #: app/components/note/comment-input.tsx:209
@@ -1069,6 +1139,7 @@ msgstr ""
 msgid "Cards view"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:81
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3346
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4219
 msgid "Center"
@@ -1107,12 +1178,12 @@ msgstr "Changes to this note will show up here as your team works on it."
 msgid "Changing this URL will break existing links to the page."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:53
+#: ../../packages/marketing/src/components/campaign-form.tsx:56
 #: app/components/note/integration-controls.tsx:323
 msgid "Channel"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:99
+#: ../../packages/marketing/src/components/campaign-form.tsx:102
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1141,7 +1212,7 @@ msgstr "Choices"
 msgid "Choose a page..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:112
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "Choose a starting point"
 msgstr "Choose a starting point"
 
@@ -1211,10 +1282,14 @@ msgstr ""
 msgid "Client"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:359
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:366
 #: app/components/onboarding-checklist.tsx:177
 msgid "Close"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:124
+msgid "Close email design"
+msgstr "Close email design"
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -1320,7 +1395,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:470
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
 msgid "Condition Logic"
 msgstr ""
 
@@ -1328,11 +1403,11 @@ msgstr ""
 msgid "Condition operator is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:36
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:18
 msgid "Conditional split"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:124
 msgid "Configuration required"
 msgstr ""
 
@@ -1415,7 +1490,7 @@ msgstr "Connected form"
 msgid "Connected on {createdAtDate}"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:290
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:297
 msgid "Connections"
 msgstr ""
 
@@ -1435,7 +1510,7 @@ msgstr ""
 msgid "Contact support for pricing"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:531
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -1448,7 +1523,7 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:674
+#: app/routes/_auth+/login.tsx:696
 #: app/routes/organizations+/create.tsx:801
 msgid "Continue"
 msgstr ""
@@ -1465,11 +1540,11 @@ msgstr "Continue payout setup"
 msgid "Continue to Payment"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:586
+#: app/routes/_auth+/login.tsx:608
 msgid "Continue with"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:266
+#: app/routes/_auth+/login.tsx:285
 msgid "Continue with your password"
 msgstr ""
 
@@ -1515,7 +1590,7 @@ msgstr ""
 msgid "Corners"
 msgstr ""
 
-#: app/components/ai/global-ai-panel.tsx:77
+#: app/components/ai/global-ai-panel.tsx:82
 msgid "Couldn't load the assistant."
 msgstr "Couldn't load the assistant."
 
@@ -1552,7 +1627,7 @@ msgstr ""
 msgid "Create a plan"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:364
+#: app/routes/_auth+/login.tsx:385
 #: app/routes/_auth+/onboarding_.$provider.tsx:358
 #: app/routes/_auth+/onboarding.tsx:532
 msgid "Create account"
@@ -1570,7 +1645,7 @@ msgstr ""
 msgid "Create an organization"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:193
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:196
 msgid "Create and customize"
 msgstr "Create and customize"
 
@@ -1741,7 +1816,7 @@ msgstr ""
 msgid "Custom Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:164
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:179
 msgid "Custom Event Name"
 msgstr ""
 
@@ -1749,7 +1824,7 @@ msgstr ""
 msgid "Custom form"
 msgstr "Custom form"
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:17
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
 msgid "Custom trigger event"
 msgstr ""
 
@@ -1762,11 +1837,11 @@ msgid "customer"
 msgstr ""
 
 #. placeholder {0}: data.value === 'true' ? '' : 'not '
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:43
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:21
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1774,7 +1849,7 @@ msgstr ""
 msgid "Customer data region"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:382
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:389
 msgid "Customer ID"
 msgstr ""
 
@@ -1790,7 +1865,7 @@ msgstr ""
 msgid "Customer UUID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:180
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:221
 msgid "customerId is required"
 msgstr ""
 
@@ -1806,7 +1881,7 @@ msgstr ""
 #~ msgid "Customize Columns"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:298
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:305
 msgid "Cycles"
 msgstr ""
 
@@ -1855,7 +1930,7 @@ msgstr "Date & time"
 msgid "days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
 msgid "Days"
 msgstr ""
 
@@ -1954,8 +2029,8 @@ msgstr ""
 msgid "Delete log entry"
 msgstr "Delete log entry"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:99
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:113
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:114
 msgid "Delete node"
 msgstr ""
 
@@ -2005,6 +2080,10 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:300
+msgid "Design email"
+msgstr "Design email"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5660
 msgid "Desktop"
 msgstr ""
@@ -2021,7 +2100,7 @@ msgstr ""
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:309
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
 msgid "Detected"
 msgstr ""
 
@@ -2047,6 +2126,14 @@ msgstr ""
 #: app/components/settings/two-factor-form.tsx:132
 msgid "Disable 2FA"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
+msgid "Discard"
+msgstr "Discard"
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:182
+msgid "Discard unsaved changes?"
+msgstr "Discard unsaved changes?"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:166
 #: app/components/settings/connections.tsx:89
@@ -2078,7 +2165,7 @@ msgstr "Display"
 msgid "DNS setup"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:486
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "Does Not Equal"
 msgstr ""
 
@@ -2086,7 +2173,7 @@ msgstr ""
 msgid "Domain"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:355
+#: app/routes/_auth+/login.tsx:376
 msgid "Don't have an account?"
 msgstr ""
 
@@ -2096,6 +2183,7 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1763
 msgid "Double-click a block to add it instantly"
 msgstr ""
@@ -2128,7 +2216,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:416
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5944
@@ -2139,6 +2227,7 @@ msgstr ""
 msgid "Draft something for me"
 msgstr "Draft something for me"
 
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:114
 #: app/components/website/form-builder-sidebar.tsx:335
 msgid "Drag to reorder"
 msgstr ""
@@ -2151,12 +2240,12 @@ msgstr ""
 msgid "Duplicate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:185
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:200
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:281
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:501
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "e.g. @gmail.com"
 msgstr ""
 
@@ -2176,7 +2265,7 @@ msgstr ""
 msgid "e.g. bob@gmail.com"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:168
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:183
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr ""
 
@@ -2184,11 +2273,11 @@ msgstr ""
 #~ msgid "e.g. contact-us, demo-request"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:388
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "e.g. cust_123"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:264
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:278
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
@@ -2200,9 +2289,13 @@ msgstr ""
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:251
-msgid "e.g. Welcome {{name}}!"
-msgstr ""
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:266
+msgid "e.g. Welcome {{firstName}}!"
+msgstr "e.g. Welcome {{firstName}}!"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:263
+#~ msgid "e.g. Welcome {{name}}!"
+#~ msgstr ""
 
 #: app/components/website/link-inspector.tsx:481
 msgid "e.g. You've got mail!"
@@ -2235,6 +2328,10 @@ msgstr ""
 msgid "Edit comment..."
 msgstr "Edit comment..."
 
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:298
+msgid "Edit design"
+msgstr "Edit design"
+
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Edit note"
 msgstr "Edit note"
@@ -2247,21 +2344,21 @@ msgstr ""
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:36
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/organization-invitations.tsx:424
 #: app/components/settings/cards/notification-preferences-card.tsx:25
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/website/link-inspector.tsx:368
 #: app/components/website/link-inspector.tsx:468
-#: app/routes/_auth+/login.tsx:767
+#: app/routes/_auth+/login.tsx:789
 #: app/routes/_auth+/signup.tsx:218
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:429
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr ""
@@ -2270,14 +2367,26 @@ msgstr ""
 msgid "Email body content is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:308
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:287
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:371
+#: ../../packages/marketing/src/components/campaign-form.tsx:110
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:132
+msgid "Email design"
+msgstr "Email design"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:337
 msgid "Email HTML Body"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:647
-#: app/routes/_auth+/login.tsx:772
+#: app/routes/_auth+/login.tsx:669
+#: app/routes/_auth+/login.tsx:794
 msgid "Email or Username"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-preview.tsx:72
+msgid "Email preview"
+msgstr "Email preview"
 
 #: ../../packages/marketing-workflow/src/validation.ts:19
 msgid "Email subject line is required."
@@ -2287,11 +2396,11 @@ msgstr ""
 msgid "Emails sent"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:42
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
 msgid "Empty message"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:42
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 msgid "Empty subject"
 msgstr ""
 
@@ -2340,8 +2449,8 @@ msgstr ""
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:653
-#: app/routes/_auth+/login.tsx:779
+#: app/routes/_auth+/login.tsx:675
+#: app/routes/_auth+/login.tsx:801
 msgid "Enter your email or username"
 msgstr ""
 
@@ -2358,7 +2467,7 @@ msgstr ""
 msgid "Enter your new password below."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:808
+#: app/routes/_auth+/login.tsx:830
 msgid "Enter your password"
 msgstr ""
 
@@ -2386,7 +2495,7 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:320
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:327
 msgid "Errors"
 msgstr ""
 
@@ -2398,7 +2507,7 @@ msgstr ""
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Exactly Equals"
 msgstr ""
 
@@ -2461,7 +2570,7 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:436
+#: app/routes/_auth+/login.tsx:458
 msgid "Failed to authenticate with passkey: {errorMessage}"
 msgstr ""
 
@@ -2469,15 +2578,15 @@ msgstr ""
 msgid "Failed to copy account ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:43
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:108
 msgid "Failed to create and dispatch campaign"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:70
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:93
 msgid "Failed to create journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:170
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:211
 msgid "Failed to delete automation"
 msgstr ""
 
@@ -2526,7 +2635,7 @@ msgstr ""
 msgid "Failed to load timeline"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:155
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:196
 msgid "Failed to pause automation"
 msgstr ""
 
@@ -2534,7 +2643,7 @@ msgstr ""
 msgid "Failed to pause journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:134
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:172
 msgid "Failed to publish automation"
 msgstr ""
 
@@ -2542,7 +2651,7 @@ msgstr ""
 msgid "Failed to publish journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:94
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:159
 msgid "Failed to save automation"
 msgstr ""
 
@@ -2554,9 +2663,13 @@ msgstr ""
 msgid "Failed to search for users"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:195
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:236
 msgid "Failed to trigger test automation"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:322
+msgid "Fallback"
+msgstr "Fallback"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:204
 msgid "Favicon and app icon variants generated."
@@ -2605,11 +2718,11 @@ msgstr ""
 msgid "Find potential issues"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:243
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:250
 msgid "Fit canvas view"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:201
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 msgid "Fix validation errors before publishing"
 msgstr ""
 
@@ -2617,7 +2730,7 @@ msgstr ""
 msgid "Forgot Password"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:801
+#: app/routes/_auth+/login.tsx:823
 msgid "Forgot your password?"
 msgstr ""
 
@@ -2629,7 +2742,7 @@ msgstr "Form"
 #~ msgid "Form Identifier / Slug"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:175
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:178
 msgid "Form name"
 msgstr "Form name"
 
@@ -2657,7 +2770,7 @@ msgstr "Forward old or broken URLs to your new pages to preserve SEO rank and cu
 msgid "Four"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:260
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:274
 msgid "From Name (Optional)"
 msgstr ""
 
@@ -2669,6 +2782,10 @@ msgstr ""
 #: app/routes/_auth+/onboarding.tsx:433
 msgid "Full Name"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
+msgid "Full width"
+msgstr "Full width"
 
 #: app/components/app-sidebar.tsx:346
 msgid "General"
@@ -2688,7 +2805,7 @@ msgstr ""
 msgid "Generate with AI"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:398
+#: app/routes/_auth+/login.tsx:420
 msgid "Generating Authentication Options"
 msgstr ""
 
@@ -2764,11 +2881,11 @@ msgstr "Google Analytics ID"
 msgid "Google Tag Manager ID"
 msgstr "Google Tag Manager ID"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:35
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:58
 msgid "Graph data is required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:63
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:118
 msgid "Graph data missing"
 msgstr ""
 
@@ -2785,6 +2902,7 @@ msgstr ""
 #~ msgid "Header"
 #~ msgstr ""
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/utils/website/field-types.ts:61
 #: app/utils/website/field-types.ts:64
 msgid "Heading"
@@ -2814,7 +2932,7 @@ msgstr ""
 msgid "Hi {{name}}, Check out our latest update."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:358
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr ""
 
@@ -2826,7 +2944,7 @@ msgstr ""
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:388
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:430
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr ""
 
@@ -2891,7 +3009,7 @@ msgstr "Hosted checkout not connected"
 msgid "hours"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:220
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:235
 msgid "Hours"
 msgstr ""
 
@@ -2932,6 +3050,7 @@ msgstr ""
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:33
 #: app/components/ui/multi-image-upload.tsx:268
 msgid "Image"
 msgstr ""
@@ -2940,6 +3059,7 @@ msgstr ""
 msgid "Image to crop"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:190
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4033
 msgid "Image URL"
 msgstr ""
@@ -2981,12 +3101,23 @@ msgstr ""
 msgid "Info"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:288
+msgid "Insert"
+msgstr "Insert"
+
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:54
+msgid "Insert block here"
+msgstr "Insert block here"
+
 #: app/components/website/form-builder-sidebar.tsx:109
 msgid "Insert field here"
 msgstr "Insert field here"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:342
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:86
+#~ msgid "Insert merge tag"
+#~ msgstr "Insert merge tag"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:384
 msgid "Insert Merge Tags:"
 msgstr ""
 
@@ -2996,12 +3127,12 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:70
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:42
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:125
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:65
 msgid "Invalid graph format"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:191
+#: app/routes/_auth+/login.tsx:200
 msgid "Invalid username or password"
 msgstr ""
 
@@ -3053,7 +3184,7 @@ msgstr ""
 msgid "IP Address"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:458
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -3093,6 +3224,10 @@ msgstr ""
 msgid "Keep current region"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:193
+msgid "Keep editing"
+msgstr "Keep editing"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1372
 msgid "Keeps original indexing"
 msgstr "Keeps original indexing"
@@ -3106,6 +3241,7 @@ msgstr ""
 msgid "Kiro IDE Setup"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:252
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
@@ -3144,8 +3280,8 @@ msgstr "Last Encountered"
 msgid "Last exported: {lastExportDateFormatted}"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:477
-#: app/routes/_auth+/login.tsx:488
+#: app/routes/_auth+/login.tsx:499
+#: app/routes/_auth+/login.tsx:510
 msgid "Last used"
 msgstr ""
 
@@ -3153,7 +3289,7 @@ msgstr ""
 msgid "Last Used"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
 msgid "Launch run"
 msgstr ""
 
@@ -3190,6 +3326,7 @@ msgstr ""
 msgid "Leave empty to keep this page at the root of your site."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:80
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3341
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3537
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
@@ -3218,10 +3355,15 @@ msgstr ""
 #~ msgid "Limit"
 #~ msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:260
 #: app/components/website/link-inspector.tsx:642
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
 msgid "Link"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:206
+msgid "Link (optional)"
+msgstr "Link (optional)"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4361
 msgid "Link columns"
@@ -3253,7 +3395,7 @@ msgstr ""
 msgid "Loading AI Assistant..."
 msgstr ""
 
-#: app/components/ai/global-ai-panel.tsx:68
+#: app/components/ai/global-ai-panel.tsx:73
 msgid "Loading assistant…"
 msgstr "Loading assistant…"
 
@@ -3274,11 +3416,11 @@ msgstr ""
 msgid "Log out"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:295
+#: app/routes/_auth+/login.tsx:314
 msgid "Login Error"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:392
+#: app/routes/_auth+/login.tsx:414
 msgid "Login with a passkey"
 msgstr ""
 
@@ -3460,10 +3602,18 @@ msgstr ""
 msgid "Members"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
+#~ msgid "Merge tags are replaced per recipient when the email is sent."
+#~ msgstr "Merge tags are replaced per recipient when the email is sent."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
-#: ../../packages/marketing/src/components/campaign-form.tsx:107
+#: ../../packages/marketing/src/components/campaign-form.tsx:116
 msgid "Message"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:87
+msgid "Message content is required"
+msgstr "Message content is required"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2518
 msgid "Meta description"
@@ -3481,7 +3631,7 @@ msgstr ""
 msgid "minutes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:217
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:232
 msgid "Minutes"
 msgstr ""
 
@@ -3506,7 +3656,7 @@ msgstr ""
 msgid "More"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:219
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:226
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:377
 msgid "More actions"
 msgstr ""
@@ -3524,7 +3674,7 @@ msgstr "Multiple choice"
 msgid "Muted"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:480
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
@@ -3580,12 +3730,12 @@ msgid "New automation"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:81
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:70
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:135
 msgid "New broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:30
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:53
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:150
 msgid "New Customer Journey"
 msgstr ""
 
@@ -3597,7 +3747,7 @@ msgstr "New Destination"
 msgid "New Email"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:105
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:108
 msgid "New form"
 msgstr "New form"
 
@@ -3638,7 +3788,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:86
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:69
 msgid "No"
 msgstr ""
 
@@ -3710,7 +3860,7 @@ msgstr ""
 msgid "No content yet"
 msgstr "No content yet"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:120
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr ""
 
@@ -3801,7 +3951,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:642
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:644
 msgid "No responses yet."
 msgstr "No responses yet."
 
@@ -3822,11 +3972,11 @@ msgid "No worries, we'll send you reset instructions."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:58
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:282
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:311
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:318
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3329
@@ -3843,7 +3993,7 @@ msgstr ""
 msgid "Not now"
 msgstr "Not now"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:461
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:503
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -3950,7 +4100,7 @@ msgstr ""
 msgid "Only selected members can access this note"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:392
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:399
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
 
@@ -4044,7 +4194,7 @@ msgstr ""
 msgid "Or continue with"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:313
+#: app/routes/_auth+/login.tsx:332
 msgid "Or continue with email or username"
 msgstr ""
 
@@ -4082,6 +4232,10 @@ msgstr ""
 #: app/routes/_app+/index.tsx:35
 msgid "Organizations are used to group your projects."
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:90
+msgid "Outline"
+msgstr "Outline"
 
 #: app/components/app-sidebar.tsx:264
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
@@ -4127,6 +4281,10 @@ msgstr ""
 msgid "Paragraph"
 msgstr "Paragraph"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:28
+msgid "Paragraph text"
+msgstr "Paragraph text"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:851
 msgid "Paragraphs, navigation, and other text."
 msgstr ""
@@ -4149,7 +4307,7 @@ msgid "Passkeys are a secure, passwordless way to sign in using your device's bi
 msgstr ""
 
 #: app/components/settings/password-form.tsx:112
-#: app/routes/_auth+/login.tsx:795
+#: app/routes/_auth+/login.tsx:817
 #: app/routes/_auth+/onboarding.tsx:451
 msgid "Password"
 msgstr ""
@@ -4163,7 +4321,7 @@ msgstr ""
 msgid "Password login is disabled because your organization \"{orgName}\" requires SSO."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:191
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:405
 msgid "Pause"
 msgstr ""
@@ -4178,7 +4336,7 @@ msgstr ""
 msgid "Paused"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:258
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:303
 msgid "Pausing automation..."
 msgstr ""
 
@@ -4231,12 +4389,12 @@ msgstr ""
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:432
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:435
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:477
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr ""
@@ -4280,6 +4438,10 @@ msgstr ""
 msgid "Photos and videos"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:78
+msgid "Pick a block to add to your email."
+msgstr "Pick a block to add to your email."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1706
 msgid "Pick a block to insert into your page."
 msgstr ""
@@ -4288,7 +4450,11 @@ msgstr ""
 msgid "Pick a field to add to your form."
 msgstr "Pick a field to add to your form."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:118
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:169
+msgid "Pick a layout, then customize the blocks."
+msgstr "Pick a layout, then customize the blocks."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:121
 msgid "Pick a template, then customize every field in the builder."
 msgstr "Pick a template, then customize every field in the builder."
 
@@ -4296,7 +4462,7 @@ msgstr "Pick a template, then customize every field in the builder."
 msgid "Plain"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:324
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
@@ -4336,8 +4502,8 @@ msgstr ""
 msgid "Please enter your 2FA code to verify your identity."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:107
-#: app/routes/_auth+/login.tsx:620
+#: app/routes/_auth+/login.tsx:116
+#: app/routes/_auth+/login.tsx:642
 msgid "Please enter your email or username"
 msgstr ""
 
@@ -4377,7 +4543,7 @@ msgstr ""
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:550
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:552
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
 msgid "Preview"
 msgstr ""
@@ -4421,7 +4587,7 @@ msgid "Private"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:86
-#: ../../packages/marketing/src/components/campaign-form.tsx:72
+#: ../../packages/marketing/src/components/campaign-form.tsx:75
 msgid "Pro"
 msgstr ""
 
@@ -4457,9 +4623,9 @@ msgstr ""
 msgid "Public Access"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5958
 msgid "Publish"
@@ -4469,11 +4635,11 @@ msgstr ""
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:202
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:209
 msgid "Publish and activate automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:496
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5960
 msgid "Publish updates"
 msgstr ""
@@ -4483,22 +4649,22 @@ msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
 #: app/components/website/form-builder-sidebar.tsx:721
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:242
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5942
 msgid "Published"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:293
 msgid "Publishing and activating automation..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:116
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:143
 msgid "Publishing new journey..."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:206
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
 msgid "Publishing..."
 msgstr ""
 
@@ -4558,11 +4724,11 @@ msgstr ""
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:590
+#: app/routes/_auth+/login.tsx:612
 msgid "Recommended for"
 msgstr ""
 
@@ -4643,7 +4809,7 @@ msgstr ""
 msgid "Reload page"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:830
+#: app/routes/_auth+/login.tsx:852
 #: app/routes/_auth+/onboarding_.$provider.tsx:341
 #: app/routes/_auth+/onboarding.tsx:518
 msgid "Remember me"
@@ -4666,9 +4832,18 @@ msgstr ""
 msgid "Remove access from all devices except this one"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:143
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:138
+msgid "Remove block"
+msgstr "Remove block"
+
 #: app/components/website/form-builder-sidebar.tsx:593
 msgid "Remove choice"
 msgstr "Remove choice"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:317
+msgid "Remove design"
+msgstr "Remove design"
 
 #: app/components/settings/cards/organization/site-card.tsx:411
 msgid "Remove domain"
@@ -4700,6 +4875,10 @@ msgstr ""
 msgid "Remove member"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:403
+msgid "Remove variable"
+msgstr "Remove variable"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:157
 msgid "Removed section"
 msgstr "Removed section"
@@ -4707,6 +4886,10 @@ msgstr "Removed section"
 #: ../../packages/ai/src/components/ai-chat.tsx:156
 msgid "Removing section"
 msgstr "Removing section"
+
+#: ../../packages/marketing/src/components/email/email-preview.tsx:76
+msgid "Rendering…"
+msgstr "Rendering…"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2598
@@ -4743,7 +4926,7 @@ msgstr ""
 msgid "Request permanent deletion of your account and all associated data. A 7-day grace period allows you to cancel if needed."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:404
+#: app/routes/_auth+/login.tsx:426
 msgid "Requesting your authorization"
 msgstr ""
 
@@ -4784,8 +4967,8 @@ msgstr ""
 msgid "Reset to preset"
 msgstr "Reset to preset"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:460
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:612
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:462
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:614
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
 msgid "Responses"
 msgstr "Responses"
@@ -4832,6 +5015,7 @@ msgstr ""
 msgid "Revoking..."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:82
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3542
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4224
 msgid "Right"
@@ -4846,7 +5030,7 @@ msgstr ""
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "Route incoming traffic from an old path to a new destination."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
 msgid "Routing Logic:"
 msgstr ""
 
@@ -4854,7 +5038,7 @@ msgstr ""
 msgid "Run Execution Timeline"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:146
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:151
 msgid "Run history"
 msgstr ""
 
@@ -4935,6 +5119,8 @@ msgstr ""
 msgid "Saudi Arabia (KSA)"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:345
 #: app/components/note/comment-input.tsx:162
 #: app/components/organization-members.tsx:112
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -4963,8 +5149,8 @@ msgstr ""
 msgid "Save changes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:482
 msgid "Save draft"
 msgstr ""
 
@@ -4984,7 +5170,7 @@ msgstr ""
 msgid "Save the file and restart Kiro IDE"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:129
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:157
 msgid "Save the journey first before running test triggers."
 msgstr ""
 
@@ -4992,28 +5178,29 @@ msgstr ""
 msgid "Save these codes now!"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:440
-#~ msgid "Saved"
-#~ msgstr "Saved"
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:142
+msgid "Saved"
+msgstr "Saved"
 
 #: app/components/data-table.tsx:236
 #: app/components/data-table.tsx:267
 #~ msgid "Saving {headerValue}"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:236
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:281
 msgid "Saving automation draft..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:104
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:131
 msgid "Saving new journey draft..."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:186
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 msgid "Saving..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -5156,7 +5343,7 @@ msgstr "Select a website page"
 #~ msgid "Select all"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
 msgid "Select attribute"
 msgstr ""
 
@@ -5172,7 +5359,7 @@ msgstr ""
 msgid "Select languages"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:479
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:521
 msgid "Select operator"
 msgstr ""
 
@@ -5184,7 +5371,7 @@ msgstr ""
 #~ msgid "Select row"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:454
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 msgid "Select status"
 msgstr ""
 
@@ -5192,7 +5379,7 @@ msgstr ""
 msgid "Select the languages visitors can browse your site in."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:134
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:149
 msgid "Select trigger type"
 msgstr ""
 
@@ -5200,7 +5387,7 @@ msgstr ""
 msgid "Select type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:155
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:170
 msgid "Select which event initiates this automated journey."
 msgstr ""
 
@@ -5224,7 +5411,7 @@ msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_
 msgid "Send"
 msgstr "Send"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:138
 msgid "Send a one-time email or SMS to your audience."
 msgstr ""
 
@@ -5241,7 +5428,7 @@ msgstr ""
 msgid "Send message"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:45
+#: ../../packages/marketing/src/components/campaign-form.tsx:48
 msgid "Send now"
 msgstr ""
 
@@ -5257,14 +5444,14 @@ msgstr ""
 msgid "Sending message"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:46
+#: ../../packages/marketing/src/components/campaign-form.tsx:49
 msgid "Sending..."
 msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:82
-#: ../../packages/marketing/src/components/campaign-detail.tsx:136
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr ""
 
@@ -5395,15 +5582,19 @@ msgstr ""
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
+msgid "Shown to recipients who have no value for this field."
+msgstr "Shown to recipients who have no value for this field."
+
 #: app/routes/_auth+/signup.tsx:257
 msgid "Sign in"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:843
+#: app/routes/_auth+/login.tsx:865
 msgid "Sign In"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:268
+#: app/routes/_auth+/login.tsx:287
 msgid "Sign in to your account"
 msgstr ""
 
@@ -5435,8 +5626,8 @@ msgstr ""
 msgid "Signed in as"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:560
-#: app/routes/_auth+/login.tsx:734
+#: app/routes/_auth+/login.tsx:582
+#: app/routes/_auth+/login.tsx:756
 msgid "Signing in as"
 msgstr ""
 
@@ -5461,6 +5652,10 @@ msgstr ""
 msgid "Site shop"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:155
+msgid "Size"
+msgstr "Size"
+
 #: app/routes/organizations+/create.tsx:973
 msgid "Skip for now"
 msgstr ""
@@ -5474,7 +5669,11 @@ msgstr ""
 msgid "Small"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:36
+#: ../../packages/marketing/src/components/email/block-meta.ts:29
+msgid "Smaller, muted supporting copy."
+msgstr "Smaller, muted supporting copy."
+
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:18
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:15
 msgid "SMS"
 msgstr ""
@@ -5483,7 +5682,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:369
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
 msgid "SMS Message Text"
 msgstr ""
 
@@ -5491,13 +5690,17 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:396
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4460
 msgid "Social links"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:89
+msgid "Solid"
+msgstr "Solid"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4182
 msgid "Solid banner"
@@ -5552,6 +5755,10 @@ msgstr ""
 #~ msgid "Start with a practical field set that is ready to publish."
 #~ msgstr "Start with a practical field set that is ready to publish."
 
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:166
+msgid "Start with a template"
+msgstr "Start with a template"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:280
 msgid "Started At"
 msgstr ""
@@ -5604,10 +5811,11 @@ msgstr "Stop impersonation"
 msgid "Storage migration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:271
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:278
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3608
@@ -5623,16 +5831,16 @@ msgstr ""
 msgid "Subdomain URL"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:95
+#: ../../packages/marketing/src/components/campaign-form.tsx:98
 #: app/components/website/link-inspector.tsx:477
 msgid "Subject"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:262
 msgid "Subject Line"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:615
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:617
 msgid "Submissions are stored in this organization’s regional tenant database."
 msgstr "Submissions are stored in this organization’s regional tenant database."
 
@@ -5640,7 +5848,7 @@ msgstr "Submissions are stored in this organization’s regional tenant database
 msgid "Submit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:626
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:628
 msgid "Submitted"
 msgstr "Submitted"
 
@@ -5682,7 +5890,7 @@ msgstr ""
 msgid "Summarize this note"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:88
+#: ../../packages/marketing/src/components/campaign-form.tsx:91
 msgid "Summer promo"
 msgstr ""
 
@@ -5690,13 +5898,17 @@ msgstr ""
 msgid "Super Admin"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:109
+#: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "supported"
 msgstr ""
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:178
 msgid "Supported languages"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:317
+msgid "Swap variable"
+msgstr "Swap variable"
 
 #: app/components/settings/cards/organization/site-card.tsx:242
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
@@ -5741,7 +5953,7 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Target Value"
 msgstr ""
 
@@ -5781,16 +5993,16 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:348
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:350
 msgid "Test again"
 msgstr "Test again"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:366
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:368
 msgid "Test mode — responses are not saved"
 msgstr "Test mode — responses are not saved"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:153
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:370
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:158
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:377
 msgid "Test run"
 msgstr ""
 
@@ -5798,10 +6010,12 @@ msgstr ""
 #~ msgid "Test run triggered successfully (Run ID: {0})"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:203
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:244
 msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
 #: app/components/website/link-inspector.tsx:638
 msgid "Text"
 msgstr ""
@@ -5854,7 +6068,7 @@ msgstr ""
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:234
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:249
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr ""
 
@@ -5865,6 +6079,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3174
 msgid "The header is shared across every page."
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:24
+msgid "The main paragraph copy of your email."
+msgstr "The main paragraph copy of your email."
 
 #: app/routes/mcp+/authorize.tsx:363
 msgid "The MCP client will only have access to data from the selected organization"
@@ -5886,7 +6104,7 @@ msgstr ""
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:299
+#: app/routes/_auth+/login.tsx:318
 msgid "There was an issue with your login attempt. Please try again."
 msgstr ""
 
@@ -5978,7 +6196,7 @@ msgstr ""
 msgid "TikTok Pixel ID"
 msgstr "TikTok Pixel ID"
 
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:33
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:15
 msgid "Time delay"
 msgstr ""
 
@@ -6054,11 +6272,11 @@ msgstr ""
 msgid "Trial period active"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:33
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:22
 msgid "Trigger"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:380
 msgid "Trigger a test execution for a specific customer ID."
 msgstr ""
 
@@ -6066,7 +6284,7 @@ msgstr ""
 msgid "Trigger Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:125
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:140
 msgid "Trigger Event Type"
 msgstr ""
 
@@ -6082,7 +6300,7 @@ msgstr ""
 msgid "Triggered via operator test or API"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:314
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr ""
 
@@ -6097,7 +6315,7 @@ msgstr ""
 msgid "Try adjusting your search or filter."
 msgstr ""
 
-#: app/components/ai/global-ai-panel.tsx:80
+#: app/components/ai/global-ai-panel.tsx:85
 msgid "Try again"
 msgstr "Try again"
 
@@ -6136,8 +6354,8 @@ msgstr ""
 msgid "Unedited boilerplate text detected in email body."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:204
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:213
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:219
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:228
 msgid "Unit"
 msgstr ""
 
@@ -6150,15 +6368,15 @@ msgid "Unknown error"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:227
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:249
 msgid "Unknown intent"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:131
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:516
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:518
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6008
 msgid "Unpublish"
@@ -6168,6 +6386,10 @@ msgstr ""
 #: app/components/ui/notification-bell.tsx:444
 msgid "Unread Notifications"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:142
+msgid "Unsaved changes"
+msgstr "Unsaved changes"
 
 #: app/components/favorite-notes.tsx:136
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1005
@@ -6293,7 +6515,7 @@ msgstr ""
 msgid "Use authenticator app instead"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:603
+#: app/routes/_auth+/login.tsx:625
 msgid "Use password instead"
 msgstr ""
 
@@ -6305,8 +6527,12 @@ msgstr ""
 msgid "Used when a visitor's preferred language isn't available, and as the required language for announcement content."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:328
+msgid "Used when the value is empty"
+msgstr "Used when the value is empty"
+
 #: app/components/settings/cards/profile-card.tsx:114
-#: app/routes/_auth+/login.tsx:769
+#: app/routes/_auth+/login.tsx:791
 #: app/routes/_auth+/onboarding_.$provider.tsx:270
 #: app/routes/_auth+/onboarding.tsx:417
 msgid "Username"
@@ -6316,20 +6542,24 @@ msgstr ""
 msgid "Username or Email"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:100
-#: app/routes/_auth+/login.tsx:696
+#: app/routes/_auth+/login.tsx:109
+#: app/routes/_auth+/login.tsx:718
 msgid "Username or email is required"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:232
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:239
 msgid "Validation passed"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:357
+msgid "Variables"
+msgstr "Variables"
 
 #: app/routes/_auth+/verify.tsx:139
 msgid "Verification Code"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Verification Status"
 msgstr ""
 
@@ -6350,7 +6580,7 @@ msgstr ""
 msgid "Verify Discord membership"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:406
+#: app/routes/_auth+/login.tsx:428
 msgid "Verifying your passkey"
 msgstr ""
 
@@ -6402,7 +6632,7 @@ msgstr ""
 
 #. placeholder {0}: data.duration
 #. placeholder {1}: delayUnitLabel(data.unit)
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:39
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:17
 msgid "Wait {0} {1}"
 msgstr ""
 
@@ -6419,11 +6649,11 @@ msgstr ""
 msgid "Warning"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:333
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:340
 msgid "Warnings"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:564
+#: app/routes/_auth+/login.tsx:586
 msgid "We found your organization:"
 msgstr ""
 
@@ -6456,7 +6686,7 @@ msgstr ""
 msgid "weeks"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:226
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
 msgid "Weeks"
 msgstr ""
 
@@ -6474,7 +6704,7 @@ msgstr ""
 msgid "Welcome aboard!"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:258
+#: app/routes/_auth+/login.tsx:277
 msgid "Welcome back"
 msgstr ""
 
@@ -6504,7 +6734,7 @@ msgstr ""
 msgid "What tools can help?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:118
 msgid "What would you like to collect?"
 msgstr "What would you like to collect?"
 
@@ -6524,10 +6754,9 @@ msgstr "When active, visitors requesting the old URL will be forwarded right awa
 msgid "When prompted, authorize the connection in your browser"
 msgstr ""
 
-#. placeholder {0}: info.label
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
-msgid "When someone does <0>{0}</0>"
-msgstr ""
+#~ msgid "When someone does <0>{0}</0>"
+#~ msgstr ""
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:75
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
@@ -6541,6 +6770,11 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:219
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:278
+msgid "Width"
+msgstr "Width"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1289
 msgid "Will redirect to"
 msgstr "Will redirect to"
@@ -6553,7 +6787,7 @@ msgstr ""
 msgid "Workflow must contain at least one Trigger node."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:267
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:274
 msgid "Workflow validation"
 msgstr ""
 
@@ -6569,15 +6803,19 @@ msgstr "Working on it"
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:117
+#: ../../packages/marketing/src/components/campaign-form.tsx:126
 msgid "Write your email. Use {{name}} to personalize."
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
+msgid "Write your message"
+msgstr "Write your message"
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:306
 msgid "Write your note content..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: ../../packages/marketing/src/components/campaign-form.tsx:127
 msgid "Write your text message. Max 160 characters."
 msgstr ""
 
@@ -6586,7 +6824,7 @@ msgstr ""
 msgid "Yearly"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:75
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:58
 msgid "Yes"
 msgstr ""
 
@@ -6649,7 +6887,7 @@ msgstr ""
 msgid "You receive"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:432
+#: app/routes/_auth+/login.tsx:454
 msgid "You're logged in! Navigating..."
 msgstr ""
 
@@ -6661,7 +6899,7 @@ msgstr ""
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:282
+#: app/routes/_auth+/login.tsx:301
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr ""
 
@@ -6684,6 +6922,10 @@ msgstr ""
 #: app/routes/organizations+/create.tsx:1055
 msgid "Your department"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:185
+msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
+msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:90
 msgid "Your Exclusive Update"

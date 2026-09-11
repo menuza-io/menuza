@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { eq } from 'drizzle-orm'
+import { sendOciEmail } from '@repo/email'
 import {
 	provisionTenantDb,
 	destroyTenantDb,
@@ -156,6 +157,36 @@ describe('Journey Service & Regional Message Dispatching', () => {
 		it('handles empty template strings safely', () => {
 			expect(interpolateMergeTags('', { name: 'Alex' })).toBe('')
 		})
+
+		it('uses a fallback when the customer value is missing', () => {
+			expect(interpolateMergeTags('Hey {{firstName|there}}', {})).toBe(
+				'Hey there',
+			)
+			expect(
+				interpolateMergeTags('Hey {{firstName|there}}', { name: 'Alex' }),
+			).toBe('Hey Alex')
+		})
+
+		it('prefers an explicit fallback over the built-in default', () => {
+			// `name` normally falls back to "Customer"; an explicit fallback wins.
+			expect(interpolateMergeTags('Hi {{name|friend}}', {})).toBe('Hi friend')
+			expect(interpolateMergeTags('Hi {{name}}', {})).toBe('Hi Customer')
+		})
+
+		it('uses the fallback for unknown tags and keeps them otherwise', () => {
+			expect(interpolateMergeTags('{{unknown}}', {})).toBe('{{unknown}}')
+			expect(interpolateMergeTags('{{unknown|fallback}}', {})).toBe('fallback')
+		})
+
+		it('falls back to context data before the fallback text', () => {
+			const contextData = { couponCode: 'SAVE50' }
+			expect(interpolateMergeTags('{{couponCode|NONE}}', {}, contextData)).toBe(
+				'SAVE50',
+			)
+			expect(interpolateMergeTags('{{other|NONE}}', {}, contextData)).toBe(
+				'NONE',
+			)
+		})
 	})
 
 	// =========================================================================
@@ -255,6 +286,73 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				.where(eq(journeyRuns.id, run.id))
 				.get()
 			expect(updatedRun?.currentNodeId).toBe('node-email-welcome')
+		})
+
+		it('sends a designed email as a full HTML document and escapes merged PII', async () => {
+			const db = await getTenantDb(orgId)
+
+			const customer = (
+				await db
+					.insert(customers)
+					.values({
+						name: 'Zoë <script>alert(1)</script>',
+						email: 'zoe@example.com',
+						phoneVerified: true,
+					})
+					.returning()
+			)[0]!
+
+			const journey = (
+				await db
+					.insert(marketingJourneys)
+					.values({ name: 'Designed Email Journey', status: 'active' })
+					.returning()
+			)[0]!
+
+			const run = (
+				await db
+					.insert(journeyRuns)
+					.values({
+						journeyId: journey.id,
+						customerId: customer.id,
+						status: 'running',
+					})
+					.returning()
+			)[0]!
+
+			const mockedSend = vi.mocked(sendOciEmail)
+			mockedSend.mockClear()
+
+			const result = await executeJourneyStep(orgId, {
+				orgId,
+				journeyId: journey.id,
+				runId: run.id,
+				customerId: customer.id,
+				nodeId: 'node-designed-email',
+				nodeType: 'action_email',
+				config: {
+					subject: 'Hello {{name}}',
+					bodyHtml:
+						'<!DOCTYPE html><html><body><p>Hi {{name}}</p></body></html>',
+					bodyText: 'Hi {{name}}',
+					blocks: [{ id: 'block-1', type: 'body', config: { text: 'Hi' } }],
+				},
+			})
+
+			expect(result.success).toBe(true)
+			expect(result.status).toBe('delivered')
+
+			const sent = mockedSend.mock.calls.at(-1)?.[0]
+			expect(sent).toBeDefined()
+			// Designed emails keep their full document (no legacy <p> wrapper).
+			expect(sent?.html).toContain('<!DOCTYPE html>')
+			expect(sent?.html).not.toMatch(/^<p>/)
+			// Merge values are HTML-escaped in the body but raw in the subject.
+			expect(sent?.html).toContain(
+				'Hi Zoë &lt;script&gt;alert(1)&lt;/script&gt;',
+			)
+			expect(sent?.html).not.toContain('<script>')
+			expect(sent?.subject).toBe('Hello Zoë <script>alert(1)</script>')
 		})
 
 		it('executes SMS action step, delivers SMS, and writes audit trail', async () => {

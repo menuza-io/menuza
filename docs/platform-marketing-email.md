@@ -105,3 +105,74 @@ Engagement sync runs on marketing metrics load and hourly via jobs-cron →
   for low-volume operator mail.
 - **`EMAIL_PROVIDER=oci`** lets you consolidate App/Admin onto OCI when ready
   without touching tenant-api.
+
+## Block-based HTML emails (broadcasts + automations)
+
+Marketing email bodies can be designed from blocks — heading, body text,
+paragraph text, image, and button — in the App (`/marketing`) and Admin
+(`/marketing`) UIs, replacing the plain-text-only composer.
+
+- **Blocks** — `packages/common/src/email-blocks.ts` defines the block types,
+  their Zod schemas/defaults, and starter templates. The block array is the
+  source of truth: `marketing_campaigns.content_blocks`,
+  `PlatformMarketingCampaign.contentBlocks`, and automation node `data.blocks`.
+  Buttons support a **Width** of `auto` (hugs the label) or `full` (spans the
+  email content width, label centred). Alignment applies to `auto` only.
+- **Branding** — `packages/common/src/email-theme.ts` turns an org's website
+  theme (`Organization.siteTheme`), logo, and name into email-safe literals.
+  `oklch()` tokens are converted to hex because email clients do not support CSS
+  variables or `oklch`. Tenant emails use the org's branding; platform emails
+  use the platform brand.
+- **Renderer** — `@repo/email/marketing` holds the isomorphic React Email
+  components (brand header, blocks, footer with unsubscribe text + copyright).
+  `renderMarketingEmail()` in `@repo/marketing/server/email-render` returns
+  `{ html, text }`.
+- **Design-time rendering** — the App/Admin route action renders the blocks when
+  the broadcast or automation is saved and stores the HTML (`content_html` /
+  node `bodyHtml`). The regional send paths (tenant-api, jobs-cron, platform
+  dispatch) only interpolate merge tags into that stored HTML, so no React runs
+  in the send path. Substituted values are HTML-escaped via
+  `interpolateMergeTagsHtml` so customer PII cannot inject markup.
+- **Editor preview** — the editor debounces a POST of the blocks to the current
+  route's action (`intent: 'email_preview'`) and renders the returned HTML in a
+  sandboxed iframe. This keeps `react-email`/`react-dom/server` out of the
+  browser bundle while previewing exactly what will be delivered.
+- **Explicit save (automations)** — in the automation email node the designer
+  opens **full screen** and edits a local draft (`EmailDesignOverlay`). Nothing
+  reaches the journey until **Save**, which persists the journey via the
+  canvas's normal save. Closing with pending changes asks for confirmation. The
+  broadcast composer keeps its inline designer and always saves with the
+  campaign.
+- **AI assistant** — the automation editor mounts the app's `GlobalAIToggle`, so
+  the assistant is reachable (⌘/) exactly as in the page and form editors. It
+  currently has navigation-only capabilities there; AI-driven journey/email
+  editing is not wired up yet (see below).
+- **Merge tags** — `{{name}}`, `{{firstName}}`, `{{lastName}}`, `{{email}}`,
+  `{{phone}}`, `{{organizationName}}`, supported in block text, button labels,
+  and subjects.
+
+### Merge tag chips and fallbacks
+
+In the email designer and the automation email-node inspector, merge tags render
+as inline chips rather than raw `{{token}}` text. Clicking a chip opens a **Swap
+variable** popover that lists the available tags (with sample values), lets you
+pick a different tag, and sets a **fallback** used when the recipient has no
+value for that field.
+
+- Catalog + token parsing: `packages/common/src/merge-tags.ts`
+- Chip editor: `MergeTagField` in `@repo/marketing`
+  (`packages/marketing/src/components/email/merge-tag-field.tsx`)
+- Stored syntax stays plain text: `{{firstName}}`, or `{{firstName|there}}` with
+  a fallback. The chip is only a rendering of that text, so nothing downstream
+  needs to understand chips.
+
+Fallbacks resolve in both interpolators (`@repo/marketing` and
+`packages/tenant-db/src/types/journey.ts`) with the same precedence: **customer
+value → explicit fallback → built-in default**. For an unknown tag, the fallback
+is used when present; otherwise the token is left verbatim. In HTML output the
+substituted value _and_ the fallback are escaped.
+
+Not yet implemented (follow-ups): a working unsubscribe flow, per-locale email
+content, and AI tools that read or edit the journey/email design. The AI
+assistant is reachable in the automation editor but its server-side tools
+(`packages/ai/src/route-handlers/chat.ts`) are still website-editor only.

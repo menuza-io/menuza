@@ -73,7 +73,7 @@ export function ReportLibrary({
 			)}
 		>
 			<div>
-				<p className="text-foreground text-sm font-semibold">Report Builder</p>
+				<p className="text-foreground text-sm">Report Builder</p>
 				<p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
 					{scope === 'platform'
 						? 'Platform counts for operators, orgs, and waitlist.'
@@ -181,9 +181,7 @@ export function ReportStart({
 	return (
 		<div className="min-w-0 flex-1">
 			<div className="max-w-3xl py-6">
-				<h1 className="text-foreground text-2xl font-semibold tracking-tight">
-					{heading}
-				</h1>
+				<h1 className="text-foreground text-2xl tracking-tight">{heading}</h1>
 				<p className="text-muted-foreground mt-2 max-w-prose text-sm leading-relaxed">
 					{description}
 				</p>

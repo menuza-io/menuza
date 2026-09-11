@@ -18,6 +18,8 @@
     "@lingui/core": "^5.0.1",
     "@lingui/macro": "^5.3.2",
     "@lingui/react": "^5.0.1",
+    "@repo/common": "*",
+    "@repo/marketing": "*",
     "@repo/tenant-db": "*",
     "@repo/ui": "*",
     "@xyflow/react": "^12.6.0",
