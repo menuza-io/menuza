@@ -92,7 +92,7 @@
   ],
   "scripts": {
     "dev": "node generate-icons.js --watch",
-    "build": "tsc",
+    "build": "npm run icons && tsc",
     "lint": "oxlint . && eslint . --ignore-pattern '.storybook/**' --ignore-pattern '**/*.stories.tsx' --ignore-pattern '**/*.stories.ts'",
     "lint:fix": "eslint . --ignore-pattern '.storybook/**' --ignore-pattern '**/*.stories.tsx' --ignore-pattern '**/*.stories.ts' --fix",
     "lint:oxc": "oxlint .",

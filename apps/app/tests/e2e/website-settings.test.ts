@@ -142,9 +142,9 @@ test.describe('Website General Settings & Site Locales', () => {
 		await expect(saveLanguagesBtn).toBeVisible()
 
 		// Select Arabic as an additional supported language
-		const languagesDropdownTrigger = page
-			.locator('button[aria-labelledby*="locales-label"]')
-			.first()
+		const languagesDropdownTrigger = page.getByRole('button', {
+			name: /supported languages/i,
+		})
 		await languagesDropdownTrigger.click()
 		await page.getByRole('menuitemcheckbox', { name: /Arabic/i }).click()
 		await page.keyboard.press('Escape')

@@ -1,12 +1,8 @@
 import { requireUserId } from '@repo/auth'
 import { definitionForNewReport, getCatalog, getSubject } from '@repo/reports'
-import {
-	listSavedReports,
-	parseDefinition,
-	saveReport,
-} from '@repo/reports/server'
-import { ReportWorkspace } from '@repo/reports/ui'
+import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
+import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/new.ts'
@@ -21,10 +17,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	})
 	const url = new URL(request.url)
 	const catalog = getCatalog('organization')
-	const saved = await listSavedReports({
-		scope: 'organization',
-		organizationId: organization.id,
-	})
 	const definition = definitionForNewReport(
 		'organization',
 		url.searchParams.get('template'),
@@ -34,12 +26,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		catalog,
 		definition,
 		orgSlug: organization.slug,
-		savedReports: saved.map((report) => ({
-			id: report.id,
-			title: report.title,
-			updatedAt: report.updatedAt.toISOString(),
-			subject: parseDefinition(report.definition).subject,
-		})),
 		hasProvisionedDb: organization.hasProvisionedDb,
 		tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
 			.tenantApiUrl,
@@ -71,22 +57,19 @@ export default function NewReportRoute() {
 	const subject = getSubject(data.catalog, data.definition.subject)
 
 	return (
-		<div className="-mx-4 h-[calc(100dvh-var(--header-height,3rem))] min-h-0 md:-mx-2">
-			<ReportWorkspace
-				catalog={data.catalog}
-				scope="organization"
-				initialDefinition={data.definition}
-				controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
-				tenantTokenUrl={
-					subject?.source === 'tenant-api'
-						? `/${data.orgSlug}/reports/token`
-						: null
-				}
-				tenantApiUrl={data.tenantApiUrl}
-				backHref={`/${data.orgSlug}/reports`}
-				hasTenantDb={data.hasProvisionedDb}
-				savedReports={data.savedReports}
-			/>
-		</div>
+		<AppReportWorkspace
+			catalog={data.catalog}
+			scope="organization"
+			initialDefinition={data.definition}
+			controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
+			tenantTokenUrl={
+				subject?.source === 'tenant-api'
+					? `/${data.orgSlug}/reports/token`
+					: null
+			}
+			tenantApiUrl={data.tenantApiUrl}
+			backHref={`/${data.orgSlug}/reports`}
+			hasTenantDb={data.hasProvisionedDb}
+		/>
 	)
 }

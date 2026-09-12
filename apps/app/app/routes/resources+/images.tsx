@@ -1,11 +1,67 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
-import { validateInstanceUrl } from '@repo/security'
+import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
+
+const ALLOWED_RASTER_MIME_TYPES = new Set([
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'image/avif',
+])
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024 // 10MB
+
+function isValidRasterBytes(buffer: ArrayBuffer): boolean {
+	const bytes = new Uint8Array(buffer.slice(0, 16))
+	if (bytes.length < 4) return false
+	// JPEG: FF D8 FF
+	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true
+	// PNG: 89 50 4E 47 0D 0A 1A 0A
+	if (
+		bytes[0] === 0x89 &&
+		bytes[1] === 0x50 &&
+		bytes[2] === 0x4e &&
+		bytes[3] === 0x47
+	)
+		return true
+	// GIF: GIF87a or GIF89a (47 49 46 38)
+	if (
+		bytes[0] === 0x47 &&
+		bytes[1] === 0x49 &&
+		bytes[2] === 0x46 &&
+		bytes[3] === 0x38
+	)
+		return true
+	// WebP: RIFF....WEBP (52 49 46 46 .... 57 45 42 50)
+	if (
+		bytes.length >= 12 &&
+		bytes[0] === 0x52 &&
+		bytes[1] === 0x49 &&
+		bytes[2] === 0x46 &&
+		bytes[3] === 0x46 &&
+		bytes[8] === 0x57 &&
+		bytes[9] === 0x45 &&
+		bytes[10] === 0x42 &&
+		bytes[11] === 0x50
+	)
+		return true
+	// AVIF: ....ftypavif or ....ftypavis
+	if (
+		bytes.length >= 12 &&
+		bytes[4] === 0x66 &&
+		bytes[5] === 0x74 &&
+		bytes[6] === 0x79 &&
+		bytes[7] === 0x70
+	)
+		return true
+	return false
+}
 
 type ImageFit = 'cover' | 'contain'
 type ImageFormat = 'webp' | 'avif' | 'png' | 'jpeg' | 'jpg'
@@ -98,12 +154,62 @@ async function streamStoredVideo(
 	})
 }
 
-function getImageResponseHeaders() {
+function getImageResponseHeaders(isExternal = false) {
 	const headers = new Headers()
-	headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+	headers.set(
+		'Cache-Control',
+		isExternal ? 'no-store' : 'public, max-age=31536000, immutable',
+	)
 	headers.set('Access-Control-Allow-Origin', '*')
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
 	return headers
+}
+
+async function fetchExternalImage(
+	request: Request,
+	searchParams: URLSearchParams,
+) {
+	const src = searchParams.get('src')
+	invariantResponse(src, 'src query parameter is required', { status: 400 })
+
+	const sourceUrl = new URL(src)
+	const requestUrl = new URL(request.url)
+	invariantResponse(
+		sourceUrl.origin !== requestUrl.origin,
+		'External image source required',
+		{ status: 400 },
+	)
+
+	const upstream = await ssrfSafeFetch(sourceUrl, {
+		signal: AbortSignal.timeout(10_000),
+	})
+	const rawContentType = upstream.headers.get('content-type')
+	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+
+	const contentLength = upstream.headers.get('content-length')
+	if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+		throw new Response('Payload Too Large', { status: 413 })
+	}
+
+	const arrayBuffer = await upstream.arrayBuffer()
+	if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+		throw new Response('Payload Too Large', { status: 413 })
+	}
+
+	if (!isValidRasterBytes(arrayBuffer)) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+
+	const headers = getImageResponseHeaders(true)
+	headers.set('Content-Type', mimeType)
+
+	return new Response(arrayBuffer, {
+		status: upstream.status,
+		headers,
+	})
 }
 
 async function fetchImageSource(
@@ -126,7 +232,10 @@ async function fetchImageSource(
 		if (!validation.valid) {
 			throw new Error(`Invalid image URL: ${validation.reason}`)
 		}
-		return fetch(src)
+		return fetch(src, {
+			redirect: 'error',
+			signal: AbortSignal.timeout(10_000),
+		})
 	}
 
 	const normalizedSrc = src.replace(/\\/g, '/').replace(/\.\.+/g, '')
@@ -148,11 +257,41 @@ async function getCloudflareImageResponse(
 		organizationId,
 	)
 
+	const src = searchParams.get('src')
+	const isExternal = Boolean(
+		!objectKey &&
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== new URL(request.url).origin,
+	)
+
 	if (!upstream.ok) {
 		return new Response(upstream.statusText, {
 			status: upstream.status,
-			headers: getImageResponseHeaders(),
+			headers: getImageResponseHeaders(isExternal),
 		})
+	}
+
+	if (isExternal) {
+		const contentLength = upstream.headers.get('content-length')
+		if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+			throw new Response('Payload Too Large', { status: 413 })
+		}
+		const arrayBuffer = await upstream.arrayBuffer()
+		if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+			throw new Response('Payload Too Large', { status: 413 })
+		}
+		if (!isValidRasterBytes(arrayBuffer)) {
+			throw new Response('Unsupported Media Type', { status: 415 })
+		}
+		const rawContentType = upstream.headers.get('content-type')
+		const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+		if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+			throw new Response('Unsupported Media Type', { status: 415 })
+		}
+		const headers = getImageResponseHeaders(true)
+		headers.set('Content-Type', mimeType)
+		return new Response(arrayBuffer, { headers, status: 200 })
 	}
 
 	const shouldTransform =
@@ -174,16 +313,27 @@ async function getCloudflareImageResponse(
 		} as RequestInit & { cf?: { image: Record<string, number | string> } })
 
 		if (transformed.ok) {
-			const headers = getImageResponseHeaders()
-			const contentType = transformed.headers.get('content-type')
-			if (contentType) headers.set('Content-Type', contentType)
+			const rawContentType = transformed.headers.get('content-type')
+			const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+			if (
+				isExternal &&
+				(!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))
+			) {
+				throw new Response('Unsupported Media Type', { status: 415 })
+			}
+			const headers = getImageResponseHeaders(isExternal)
+			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
 	}
 
-	const headers = getImageResponseHeaders()
-	const contentType = upstream.headers.get('content-type')
-	if (contentType) headers.set('Content-Type', contentType)
+	const rawContentType = upstream.headers.get('content-type')
+	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+	const headers = getImageResponseHeaders(isExternal)
+	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
 
@@ -218,8 +368,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const searchParams = url.searchParams
 
-	const headers = getImageResponseHeaders()
-
 	const objectKey = searchParams.get('objectKey')
 	const organizationId = searchParams.get('organizationId')
 
@@ -238,6 +386,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
+	const src = searchParams.get('src')
+	if (
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== url.origin &&
+		!isCloudflareWorkerRuntime()
+	) {
+		return fetchExternalImage(request, searchParams)
+	}
+
 	if (isCloudflareWorkerRuntime()) {
 		return getCloudflareImageResponse(
 			request,
@@ -248,6 +406,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 	}
 
 	const { getImgResponse } = await import('openimg/node')
+
+	const isExternal = Boolean(
+		!objectKey &&
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== url.origin,
+	)
+	const headers = getImageResponseHeaders(isExternal)
 
 	return getImgResponse(request, {
 		headers,

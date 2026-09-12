@@ -1,10 +1,6 @@
 import { requireUserWithRole } from '@repo/auth'
 import { definitionForNewReport, getCatalog } from '@repo/reports'
-import {
-	listSavedReports,
-	parseDefinition,
-	saveReport,
-} from '@repo/reports/server'
+import { parseDefinition, saveReport } from '@repo/reports/server'
 import { ReportWorkspace } from '@repo/reports/ui'
 import { redirect, useLoaderData } from 'react-router'
 import { type Route } from './+types/new.ts'
@@ -17,16 +13,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		url.searchParams.get('template'),
 	)
 
-	const saved = await listSavedReports({ scope: 'platform' })
 	return {
 		catalog: getCatalog('platform'),
 		definition,
-		savedReports: saved.map((report) => ({
-			id: report.id,
-			title: report.title,
-			updatedAt: report.updatedAt.toISOString(),
-			subject: parseDefinition(report.definition).subject,
-		})),
 	}
 }
 
@@ -56,7 +45,6 @@ export default function AdminNewReportRoute() {
 				initialDefinition={data.definition}
 				controlPlaneRunUrl="/reports/run"
 				backHref="/reports"
-				savedReports={data.savedReports}
 			/>
 		</div>
 	)

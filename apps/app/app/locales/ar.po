@@ -14,23 +14,23 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:103
+#: app/components/ai/global-ai-panel.tsx:104
 msgid "Close assistant"
 msgstr "إغلاق المساعد"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:114
-#: app/components/ai/global-ai-panel.tsx:412
+#: app/components/ai/global-ai-panel.tsx:115
+#: app/components/ai/global-ai-panel.tsx:429
 msgid "Exit full screen"
 msgstr "الخروج من ملء الشاشة"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:115
+#: app/components/ai/global-ai-panel.tsx:116
 msgid "Open full screen"
 msgstr "فتح بملء الشاشة"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:424
+#: app/components/ai/global-ai-panel.tsx:441
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
@@ -49,12 +49,12 @@ msgid "{0, plural, one {Share with 1 member} other {Share with # members}}"
 msgstr "{0, plural, one {مشاركة مع عضو واحد} other {مشاركة مع # أعضاء}}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:318
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
@@ -81,7 +81,7 @@ msgstr "{0} من {1} مستهدف"
 #~ msgid "{0} steps"
 #~ msgstr "{0} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:629
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:628
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} إعلانات"
 
@@ -129,6 +129,10 @@ msgstr "{field}"
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr "{first}، {second}، +{remainingCount} أخرى"
 
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:299
+msgid "{formCount} forms"
+msgstr "{formCount} نموذج"
+
 #: app/components/ui/notification-bell.tsx:57
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
@@ -145,7 +149,7 @@ msgstr "{minutes} د {remainingSec} ث"
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1122
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1121
 msgid "{notFoundCount} missing URLs logged"
 msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 
@@ -162,7 +166,7 @@ msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsT
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:999
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:998
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} عمليات إعادة توجيه"
 
@@ -213,11 +217,11 @@ msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:557
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:583
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -248,7 +252,7 @@ msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>اطّلع على آخر تحديثاتنا.</p>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:338
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>مرحباً بك في خدمتنا!</p>"
 
@@ -264,11 +268,15 @@ msgstr "✓ تم المطالبة بنقاط Discord"
 msgid "${basePriceValue} billed annually"
 msgstr "${basePriceValue} يُفوتر سنوياً"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 msgid "1 announcement"
 msgstr "إعلان واحد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1120
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:297
+msgid "1 form"
+msgstr "نموذج واحد"
+
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1119
 msgid "1 missing URL logged"
 msgstr "تم تسجيل عنوان URL مفقود واحد"
 
@@ -276,7 +284,7 @@ msgstr "تم تسجيل عنوان URL مفقود واحد"
 msgid "1 page"
 msgstr "صفحة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:997
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:996
 msgid "1 redirect"
 msgstr "إعادة توجيه واحدة"
 
@@ -292,7 +300,7 @@ msgstr "11-50 شخص"
 msgid "201-500 people"
 msgstr "201-500 شخص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:787
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
 
@@ -368,10 +376,11 @@ msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:607
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:606
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1047
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:869
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -403,7 +412,7 @@ msgstr "إضافة"
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:100
+#: ../../packages/marketing/src/components/email/email-preview.tsx:135
 msgid "Add a block to see your email come to life."
 msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 
@@ -428,7 +437,7 @@ msgstr "أضف تعليقاً..."
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5611
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5596
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة بين الترويسة والتذييل."
 
@@ -436,7 +445,7 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5719
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5704
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
@@ -444,12 +453,12 @@ msgstr "أضف قسماً من القائمة على اليسار لرؤية م�
 msgid "Add a title between fields."
 msgstr "أضف عنوانًا بين الحقول."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:582
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعارات الصيانة أو العروض الترويجية على موقعك العام."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:525
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:573
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:572
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
@@ -501,7 +510,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:412
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -517,7 +526,7 @@ msgstr "إضافة المزيد من الاتصالات"
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "أضف الاسم والبريد الإلكتروني والخيارات وغيرها لبدء جمع الردود."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5877
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5836
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
@@ -632,7 +641,7 @@ msgstr "انتحال شخصية المسؤول نشط"
 #~ msgid "AI"
 #~ msgstr "الذكاء الاصطناعي"
 
-#: app/components/ai/global-ai-panel.tsx:340
+#: app/components/ai/global-ai-panel.tsx:341
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:674
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
@@ -650,8 +659,9 @@ msgid "Aim for one or two sentences that make someone click."
 msgstr "استهدف جملة أو جملتين تجعلان الزائر ينقر."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:240
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:188
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:251
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
 msgid "Alignment"
 msgstr "المحاذاة"
 
@@ -701,7 +711,7 @@ msgstr "هل لديك حساب بالفعل؟"
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:198
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:209
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3937
 msgid "Alt text"
 msgstr "النص البديل"
@@ -710,7 +720,7 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:308
+#: app/components/app-sidebar.tsx:316
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:32
 msgid "Analytics"
 msgstr "التحليلات"
@@ -723,7 +733,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:324
+#: app/components/app-sidebar.tsx:332
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:37
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
 msgid "Announcements"
@@ -795,7 +805,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 #~ msgid "Ask about this note..."
 #~ msgstr "اسأل عن هذه الملاحظة..."
 
-#: app/components/ai/global-ai-panel.tsx:489
+#: app/components/ai/global-ai-panel.tsx:530
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
@@ -889,7 +899,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:278
+#: app/components/app-sidebar.tsx:286
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 msgid "Automations"
@@ -934,7 +944,7 @@ msgstr "العودة إلى الحقول"
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:93
 msgid "Back to nodes"
 msgstr "العودة إلى العُقد"
 
@@ -960,7 +970,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:380
+#: app/components/app-sidebar.tsx:388
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -985,10 +995,9 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:315
+#: app/components/app-sidebar.tsx:323
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5102
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5870
 msgid "Branding"
 msgstr "الهوية البصرية"
 
@@ -1004,7 +1013,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:271
+#: app/components/app-sidebar.tsx:279
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:73
 msgid "Broadcasts"
@@ -1023,11 +1032,11 @@ msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:543
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5870
 msgid "Build"
 msgstr "البناء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:328
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
 msgid "Build a branded HTML email with blocks."
 msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
 
@@ -1040,7 +1049,7 @@ msgstr "المنشئ"
 msgid "Button"
 msgstr "الزر"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:257
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
@@ -1068,14 +1077,14 @@ msgstr "بإنشاء حساب، فإنك توافق على <0>شروط الخد�
 msgid "By deleting your organization you and your team will lose access and all data will be lost. This is a permanent action and cannot be undone."
 msgstr "بحذف مؤسستك، ستفقد أنت وفريقك الوصول وسيتم فقدان جميع البيانات. هذا إجراء دائم ولا يمكن التراجع عنه."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:87
+#: ../../packages/marketing/src/components/campaign-form.tsx:89
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
-#: ../../packages/marketing/src/components/campaign-form.tsx:144
+#: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:155
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
 #: app/components/note/comment-input.tsx:209
@@ -1089,7 +1098,7 @@ msgstr "اسم الحملة"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
-#: app/components/ui/photo-crop-form.tsx:219
+#: app/components/ui/photo-crop-form.tsx:225
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
@@ -1101,10 +1110,10 @@ msgstr "اسم الحملة"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:485
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1767
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1435
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1473
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1519
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1434
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1472
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1518
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1556
 #: app/routes/organizations+/create.tsx:796
 #: app/routes/organizations+/create.tsx:932
 msgid "Cancel"
@@ -1182,12 +1191,12 @@ msgstr "ستظهر التغييرات في هذه الملاحظة هنا أثن
 msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:56
+#: ../../packages/marketing/src/components/campaign-form.tsx:58
 #: app/components/note/integration-controls.tsx:323
 msgid "Channel"
 msgstr "القناة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:102
+#: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
@@ -1245,15 +1254,15 @@ msgstr "دائرة"
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1546
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1545
 msgid "Clear all 404 history?"
 msgstr "هل تريد مسح كل سجل 404؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:824
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:823
 msgid "Clear history"
 msgstr "مسح السجل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1567
 msgid "Clear History"
 msgstr "مسح السجل"
 
@@ -1291,7 +1300,7 @@ msgstr "العميل"
 msgid "Close"
 msgstr "إغلاق"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:120
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
@@ -1399,7 +1408,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -1411,7 +1420,7 @@ msgstr "عامل الشرط مطلوب."
 msgid "Conditional split"
 msgstr "تفرّع شرطي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:124
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 msgid "Configuration required"
 msgstr "الإعداد مطلوب"
 
@@ -1514,12 +1523,12 @@ msgstr "اتصل بالدعم"
 msgid "Contact support for pricing"
 msgstr "اتصل بالدعم للحصول على الأسعار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:531
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:594
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:593
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3270
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3460
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3756
@@ -1594,7 +1603,7 @@ msgstr "نسخ الرابط"
 msgid "Corners"
 msgstr "الزوايا"
 
-#: app/components/ai/global-ai-panel.tsx:82
+#: app/components/ai/global-ai-panel.tsx:83
 msgid "Couldn't load the assistant."
 msgstr "تعذر تحميل المساعد."
 
@@ -1689,7 +1698,7 @@ msgstr "إنشاء نقاط تعداد"
 
 #: app/components/website/create-form-dialog.tsx:75
 #: app/components/website/create-form-dialog.tsx:303
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:163
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
@@ -1717,12 +1726,12 @@ msgstr "إنشاء ملاحظة"
 msgid "Create Password"
 msgstr "إنشاء كلمة المرور"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1097
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
 msgid "Create redirect"
 msgstr "إنشاء إعادة توجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:155
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
 
@@ -1820,7 +1829,7 @@ msgstr "نطاق مخصص"
 msgid "Custom Event"
 msgstr "حدث مخصص"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:179
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:174
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
 
@@ -1832,7 +1841,7 @@ msgstr "نموذج مخصص"
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1235
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1234
 msgid "Custom URL"
 msgstr "عنوان URL مخصص"
 
@@ -1845,7 +1854,7 @@ msgstr "عميل"
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:422
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -1873,7 +1882,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:252
+#: app/components/app-sidebar.tsx:260
 msgid "Customers"
 msgstr "العملاء"
 
@@ -1907,8 +1916,8 @@ msgstr "داكن"
 msgid "Dark mode"
 msgstr "الوضع الداكن"
 
-#: app/components/app-sidebar.tsx:117
-#: app/components/app-sidebar.tsx:234
+#: app/components/app-sidebar.tsx:122
+#: app/components/app-sidebar.tsx:242
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -1934,7 +1943,7 @@ msgstr "التاريخ والوقت"
 msgid "days"
 msgstr "أيام"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:233
 msgid "Days"
 msgstr "أيام"
 
@@ -1971,13 +1980,13 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:984
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1489
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1535
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1488
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1534
 msgid "Delete"
 msgstr "حذف"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1505
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1504
 msgid "Delete 404 log entry?"
 msgstr "هل تريد حذف إدخال سجل 404؟"
 
@@ -2029,12 +2038,12 @@ msgstr "حذف العنصر"
 msgid "Delete link"
 msgstr "حذف الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1106
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
 msgid "Delete log entry"
 msgstr "حذف إدخال السجل"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:113
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:114
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:108
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
 msgid "Delete node"
 msgstr "حذف العقدة"
 
@@ -2059,7 +2068,7 @@ msgstr "حذف الصفحة؟"
 msgid "Delete question"
 msgstr "حذف السؤال"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1455
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1454
 msgid "Delete redirect rule?"
 msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 
@@ -2084,15 +2093,15 @@ msgstr "رفض"
 msgid "Description"
 msgstr "الوصف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:300
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:295
 msgid "Design email"
 msgstr "تصميم البريد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5660
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5645
 msgid "Desktop"
 msgstr "سطح المكتب"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1202
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1201
 msgid "Destination"
 msgstr "الوجهة"
 
@@ -2118,7 +2127,7 @@ msgstr "جهاز"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1074
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
 
@@ -2131,11 +2140,11 @@ msgstr "تعطيل"
 msgid "Disable 2FA"
 msgstr "تعطيل المصادقة الثنائية"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:200
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:203
 msgid "Discard"
 msgstr "تجاهل"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
 
@@ -2169,7 +2178,7 @@ msgstr "العرض"
 msgid "DNS setup"
 msgstr "إعداد DNS"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -2221,9 +2230,9 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:416
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:244
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5944
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5795
 msgid "Draft"
 msgstr "مسودة"
 
@@ -2244,12 +2253,12 @@ msgstr "اسحب لإعادة ترتيب العمود"
 msgid "Duplicate"
 msgstr "تكرار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:200
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:195
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:281
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -2269,7 +2278,7 @@ msgstr "مثل: about-us"
 msgid "e.g. bob@gmail.com"
 msgstr "مثل: bob@gmail.com"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:183
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:178
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr "مثال: checkout_abandoned, tier_upgraded"
 
@@ -2281,7 +2290,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:278
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
 
@@ -2293,7 +2302,7 @@ msgstr "مثل: عاجل، اجتماع، مشروع"
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr "مثال: VIP, lead-hot, subscriber"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:266
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:261
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "مثال: مرحبًا {{firstName}}!"
 
@@ -2315,7 +2324,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:975
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:977
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
 msgid "Edit"
 msgstr "تعديل"
 
@@ -2332,7 +2341,7 @@ msgstr "تعديل العمود"
 msgid "Edit comment..."
 msgstr "تعديل التعليق..."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:298
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
@@ -2344,7 +2353,7 @@ msgstr "تعديل الملاحظة"
 msgid "Edit Note"
 msgstr "تعديل ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
@@ -2362,7 +2371,7 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:442
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -2371,15 +2380,15 @@ msgstr "عنوان البريد الإلكتروني"
 msgid "Email body content is required."
 msgstr "محتوى نص البريد الإلكتروني مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:287
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:371
-#: ../../packages/marketing/src/components/campaign-form.tsx:110
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:282
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:366
+#: ../../packages/marketing/src/components/campaign-form.tsx:112
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:125
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:128
 msgid "Email design"
 msgstr "تصميم البريد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:337
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:332
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
 
@@ -2388,7 +2397,7 @@ msgstr "نص HTML للبريد الإلكتروني"
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:69
+#: ../../packages/marketing/src/components/email/email-preview.tsx:104
 msgid "Email preview"
 msgstr "معاينة البريد"
 
@@ -2416,7 +2425,7 @@ msgstr "تفعيل تخزين S3 مخصص"
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1405
 msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
@@ -2432,7 +2441,7 @@ msgstr "الإنجليزية"
 msgid "Enter 6-digit OTP token"
 msgstr "أدخل رمز OTP المكون من 6 أرقام"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1307
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
 
@@ -2511,7 +2520,7 @@ msgstr "سير عمل قائم على الأحداث"
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -2531,7 +2540,7 @@ msgstr "سجل التنفيذ ({runCount})"
 msgid "Execution Runs"
 msgstr "عمليات التنفيذ"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1223
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1222
 msgid "Existing page"
 msgstr "صفحة موجودة"
 
@@ -2710,7 +2719,7 @@ msgstr "أنواع الحقول"
 
 #: app/components/website/create-form-dialog.tsx:138
 #: app/components/website/form-builder-sidebar.tsx:841
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:198
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:200
 msgid "Fields"
 msgstr "الحقول"
 
@@ -2760,9 +2769,9 @@ msgstr "إعدادات النموذج"
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: app/components/app-sidebar.tsx:303
+#: app/components/app-sidebar.tsx:311
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:151
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
 msgstr "النماذج"
 
@@ -2774,7 +2783,7 @@ msgstr "وجّه عناوين URL القديمة أو المعطلة إلى صف
 msgid "Four"
 msgstr "أربعة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:274
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:269
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
 
@@ -2791,11 +2800,11 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:354
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:293
+#: app/components/app-sidebar.tsx:301
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:15
 msgid "General Settings"
@@ -2827,16 +2836,16 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:396
+#: app/components/app-sidebar.tsx:404
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:146
-#: app/components/app-sidebar.tsx:411
+#: app/components/app-sidebar.tsx:151
+#: app/components/app-sidebar.tsx:419
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:89
+#: app/components/app-sidebar.tsx:94
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr "تواصل معنا"
@@ -2851,8 +2860,8 @@ msgstr "ابدأ"
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
-#: app/components/app-sidebar.tsx:154
-#: app/components/app-sidebar.tsx:419
+#: app/components/app-sidebar.tsx:159
+#: app/components/app-sidebar.tsx:427
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -2869,7 +2878,7 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/components/app-sidebar.tsx:206
+#: app/components/app-sidebar.tsx:211
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -2936,7 +2945,7 @@ msgstr "مرحباً"
 msgid "Hi {{name}}, Check out our latest update."
 msgstr "مرحباً {{name}}، اطّلع على آخر تحديثاتنا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:358
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr "مرحباً {{name}}، مرحباً بك في خدمتنا!"
 
@@ -2948,7 +2957,7 @@ msgstr "مرحباً {{name}}، تحديث حسابك جاهز!"
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr "مرحباً {{name}}، حسابك في Epic Startup جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:430
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:400
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr "مرحباً {{name}}، تم تأكيد طلبك!"
 
@@ -2980,24 +2989,24 @@ msgstr "إخفاء عن محركات البحث"
 msgid "Hide replies ({replyCount})"
 msgstr "إخفاء الردود ({replyCount})"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
 msgid "hit"
 msgstr "زيارة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:943
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1065
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
 msgid "hits"
 msgstr "زيارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1037
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1036
 msgid "Hits"
 msgstr "الزيارات"
 
 #: app/components/website/link-inspector.tsx:455
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5853
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5886
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5823
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5844
 msgid "Home"
 msgstr "الرئيسية"
 
@@ -3013,7 +3022,7 @@ msgstr "الدفع المستضاف غير متصل"
 msgid "hours"
 msgstr "ساعات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:235
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:230
 msgid "Hours"
 msgstr "ساعات"
 
@@ -3050,7 +3059,7 @@ msgstr "إذا كان هناك حساب بهذا اسم المستخدم أو ا
 msgid "If you change your email, you'll need to verify the new address"
 msgstr "إذا قمت بتغيير بريدك الإلكتروني، ستحتاج إلى التحقق من العنوان الجديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:836
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:835
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عناوين URL للصفحات، فأنشئ عمليات إعادة توجيه ليتم توجيه الزوار ومحركات البحث تلقائياً."
 
@@ -3059,11 +3068,11 @@ msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عنا
 msgid "Image"
 msgstr "صورة"
 
-#: app/components/ui/photo-crop-form.tsx:210
+#: app/components/ui/photo-crop-form.tsx:216
 msgid "Image to crop"
 msgstr "صورة للقص"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:190
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:201
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4033
 msgid "Image URL"
 msgstr "رابط الصورة"
@@ -3122,10 +3131,10 @@ msgstr "إدراج حقل هنا"
 #~ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:384
-msgid "Insert Merge Tags:"
-msgstr "إدراج وسوم الدمج:"
+#~ msgid "Insert Merge Tags:"
+#~ msgstr "إدراج وسوم الدمج:"
 
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:364
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1014
 msgid "Integrations"
@@ -3188,7 +3197,7 @@ msgstr "ستظهر الفواتير هنا بمجرد أن يكون لديك ا�
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -3228,11 +3237,11 @@ msgstr "لوحة كانبان"
 msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
 msgid "Keep editing"
 msgstr "متابعة التعديل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1372
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1371
 msgid "Keeps original indexing"
 msgstr "يحافظ على الفهرسة الأصلية"
 
@@ -3245,7 +3254,7 @@ msgstr "اسم المفتاح"
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:252
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:263
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
@@ -3276,7 +3285,7 @@ msgstr "آخر نشاط"
 msgid "Last active {lastActiveValue}"
 msgstr "آخر نشاط {lastActiveValue}"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1040
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1039
 msgid "Last Encountered"
 msgstr "آخر ظهور"
 
@@ -3359,13 +3368,13 @@ msgstr "الوضع الفاتح"
 #~ msgid "Limit"
 #~ msgstr "الحد الأقصى"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:260
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:271
 #: app/components/website/link-inspector.tsx:642
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:599
 msgid "Link"
 msgstr "رابط"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:206
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
 msgid "Link (optional)"
 msgstr "رابط (اختياري)"
 
@@ -3386,8 +3395,8 @@ msgstr "تسمية الرابط"
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:854
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:590
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
 msgid "Live"
 msgstr "مباشر"
 
@@ -3399,7 +3408,7 @@ msgstr "جاري التحميل"
 msgid "Loading AI Assistant..."
 msgstr "جاري تحميل مساعد الذكاء الاصطناعي..."
 
-#: app/components/ai/global-ai-panel.tsx:73
+#: app/components/ai/global-ai-panel.tsx:74
 msgid "Loading assistant…"
 msgstr "جارٍ تحميل المساعد…"
 
@@ -3553,7 +3562,7 @@ msgstr "تحديد الكل كمقروء"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/app-sidebar.tsx:258
+#: app/components/app-sidebar.tsx:266
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:144
 msgid "Marketing"
 msgstr "التسويق"
@@ -3566,7 +3575,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:366
+#: app/components/app-sidebar.tsx:374
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3601,7 +3610,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:351
+#: app/components/app-sidebar.tsx:359
 #: app/components/organization-members.tsx:141
 msgid "Members"
 msgstr "الأعضاء"
@@ -3611,7 +3620,7 @@ msgstr "الأعضاء"
 #~ msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
-#: ../../packages/marketing/src/components/campaign-form.tsx:116
+#: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr "الرسالة"
 
@@ -3635,15 +3644,15 @@ msgstr "ترحيل وسائط المؤسسة الحالية بعد الحفظ"
 msgid "minutes"
 msgstr "دقائق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:232
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:227
 msgid "Minutes"
 msgstr "دقائق"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1034
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1033
 msgid "Missing Path"
 msgstr "المسار المفقود"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5683
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5668
 msgid "Mobile"
 msgstr "الجوال"
 
@@ -3678,13 +3687,13 @@ msgstr "اختيار متعدد"
 msgid "Muted"
 msgstr "بدون صوت"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:480
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:195
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4320
 #: app/routes/organizations+/create.tsx:690
 #: app/utils/website/field-types.ts:25
@@ -3721,7 +3730,7 @@ msgid "Neutral feedback"
 msgstr "ملاحظات محايدة"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:984
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:954
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:953
 msgid "Never used"
 msgstr "لم يُستخدم أبداً"
 
@@ -3743,7 +3752,7 @@ msgstr "بث جديد"
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:860
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:859
 msgid "New Destination"
 msgstr "الوجهة الجديدة"
 
@@ -3776,11 +3785,11 @@ msgstr "صفحة جديدة"
 msgid "New Password"
 msgstr "كلمة المرور الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1142
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
 msgid "New redirect"
 msgstr "إعادة توجيه جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:767
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:766
 msgid "New Redirect"
 msgstr "إعادة توجيه جديدة"
 
@@ -3796,11 +3805,11 @@ msgstr "التالي"
 msgid "No"
 msgstr "لا"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1022
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1021
 msgid "No 404 errors match that search"
 msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1014
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1013
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
@@ -3820,7 +3829,7 @@ msgstr "لا يوجد اشتراك نشط"
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:580
 msgid "No announcements yet"
 msgstr "لا توجد إعلانات بعد"
 
@@ -3947,11 +3956,11 @@ msgstr "لا توجد معاملات مطلوبة"
 msgid "No passkeys registered yet"
 msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:834
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:833
 msgid "No redirects created yet"
 msgstr "لا توجد عمليات إعادة توجيه بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:842
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
 
@@ -3963,7 +3972,7 @@ msgstr "لا توجد ردود بعد."
 #~ msgid "No results."
 #~ msgstr "لا توجد نتائج."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5608
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5593
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
@@ -3997,7 +4006,7 @@ msgstr "غير متصل"
 msgid "Not now"
 msgstr "ليس الآن"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:503
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -4025,7 +4034,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:246
+#: app/components/app-sidebar.tsx:254
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:288
 msgid "Notes"
@@ -4047,7 +4056,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:371
+#: app/components/app-sidebar.tsx:379
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -4067,11 +4076,11 @@ msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1171
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
 msgid "Old path (Source)"
 msgstr "المسار القديم (المصدر)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:857
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
 
@@ -4157,7 +4166,7 @@ msgstr "فتح القائمة"
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5988
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5936
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
@@ -4226,7 +4235,7 @@ msgstr "حجم المنظمة"
 msgid "Organization Size"
 msgstr "حجم المؤسسة"
 
-#: app/components/app-sidebar.tsx:135
+#: app/components/app-sidebar.tsx:140
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -4241,7 +4250,7 @@ msgstr "تُستخدم المنظمات لتجميع مشاريعك."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/app-sidebar.tsx:264
+#: app/components/app-sidebar.tsx:272
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -4257,11 +4266,10 @@ msgid "Page actions"
 msgstr "إجراءات الصفحة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5864
-msgid "Page settings"
-msgstr "إعدادات الصفحة"
+#~ msgid "Page settings"
+#~ msgstr "إعدادات الصفحة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2400
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5108
 msgid "Page Settings"
 msgstr "إعدادات الصفحة"
 
@@ -4274,7 +4282,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:298
+#: app/components/app-sidebar.tsx:306
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:22
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -4371,7 +4379,7 @@ msgstr "شهرياً"
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1384
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1383
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
 
@@ -4393,12 +4401,12 @@ msgstr "تعمل روابط الهاتف فقط على الأجهزة القاد
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:477
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:448
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -4466,7 +4474,7 @@ msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 msgid "Plain"
 msgstr "عادي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:348
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
 
@@ -4548,7 +4556,7 @@ msgstr "التصيير المسبق"
 #~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:552
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5885
 msgid "Preview"
 msgstr "معاينة"
 
@@ -4591,7 +4599,7 @@ msgid "Private"
 msgstr "خاص"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:86
-#: ../../packages/marketing/src/components/campaign-form.tsx:75
+#: ../../packages/marketing/src/components/campaign-form.tsx:77
 msgid "Pro"
 msgstr "احترافي"
 
@@ -4604,7 +4612,7 @@ msgstr "قيد المعالجة"
 msgid "Product name"
 msgstr "اسم المنتج"
 
-#: app/components/app-sidebar.tsx:123
+#: app/components/app-sidebar.tsx:128
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:250
 msgid "Profile"
@@ -4631,7 +4639,7 @@ msgstr "الوصول العام"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5958
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5899
 msgid "Publish"
 msgstr "نشر"
 
@@ -4644,7 +4652,7 @@ msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:496
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5960
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5906
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
@@ -4654,9 +4662,9 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 
 #: app/components/website/form-builder-sidebar.tsx:721
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:242
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5942
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5793
 msgid "Published"
 msgstr "منشور"
 
@@ -4704,7 +4712,7 @@ msgstr "اقتباس"
 msgid "Rating"
 msgstr "التقييم"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:205
+#: app/components/settings/cards/organization/integrations-card.tsx:206
 msgid "Read documentation"
 msgstr "قراءة الوثائق"
 
@@ -4736,23 +4744,23 @@ msgstr "المستلمون"
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1330
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
 msgid "Recommended for SEO"
 msgstr "موصى به لتحسين محركات البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:966
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
 msgid "Redirect actions"
 msgstr "إجراءات إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1325
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1324
 msgid "Redirect type"
 msgstr "نوع إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1087
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1086
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:331
+#: app/components/app-sidebar.tsx:339
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:42
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -4761,7 +4769,7 @@ msgstr "عمليات إعادة التوجيه"
 msgid "Redirects & 404 History"
 msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1043
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
 msgid "Referrer"
 msgstr "المُحيل"
 
@@ -4769,7 +4777,7 @@ msgstr "المُحيل"
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5979
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
 msgid "Refresh preview"
 msgstr "تحديث المعاينة"
 
@@ -4845,7 +4853,7 @@ msgstr "إزالة الكتلة"
 msgid "Remove choice"
 msgstr "إزالة الخيار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:317
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:312
 msgid "Remove design"
 msgstr "إزالة التصميم"
 
@@ -4891,7 +4899,7 @@ msgstr "تمت إزالة القسم"
 msgid "Removing section"
 msgstr "إزالة القسم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:73
+#: ../../packages/marketing/src/components/email/email-preview.tsx:108
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
@@ -4914,7 +4922,7 @@ msgstr "رد"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:240
+#: app/components/app-sidebar.tsx:248
 msgid "Reports"
 msgstr "التقارير"
 
@@ -4973,7 +4981,7 @@ msgstr "إعادة التعيين إلى الإعداد المسبق"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:462
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:614
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:209
 msgid "Responses"
 msgstr "الردود"
 
@@ -5030,11 +5038,11 @@ msgstr "اليمين"
 msgid "Rounded"
 msgstr "مستدير"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1145
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1144
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -5123,14 +5131,14 @@ msgstr "بدون زوائد"
 msgid "Saudi Arabia (KSA)"
 msgstr "المملكة العربية السعودية (KSA)"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/note/comment-input.tsx:162
 #: app/components/organization-members.tsx:112
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
-#: app/components/ui/photo-crop-form.tsx:226
+#: app/components/ui/photo-crop-form.tsx:232
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr "حفظ"
@@ -5149,7 +5157,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1438
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -5182,7 +5190,7 @@ msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الا
 msgid "Save these codes now!"
 msgstr "احفظ هذه الرموز الآن!"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:138
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -5203,7 +5211,7 @@ msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -5242,7 +5250,7 @@ msgstr "البحث في الحملات..."
 msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:808
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
@@ -5254,8 +5262,8 @@ msgstr "البحث في الملاحظات"
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
 
+#: app/components/app-sidebar.tsx:457
 #: app/components/command-menu.tsx:102
-#: app/components/site-header.tsx:51
 msgid "Search notes..."
 msgstr "البحث في الملاحظات..."
 
@@ -5267,7 +5275,7 @@ msgstr "البحث في الصفحات..."
 msgid "Search preview"
 msgstr "معاينة البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
 msgid "Search redirects..."
 msgstr "ابحث في عمليات إعادة التوجيه..."
 
@@ -5301,7 +5309,7 @@ msgstr "ارتفاع القسم"
 #~ msgstr "نوع القسم"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5096
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5591
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5576
 msgid "Sections"
 msgstr "الأقسام"
 
@@ -5309,7 +5317,7 @@ msgstr "الأقسام"
 msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
-#: app/components/app-sidebar.tsx:129
+#: app/components/app-sidebar.tsx:134
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr "الأمان"
@@ -5339,7 +5347,7 @@ msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1253
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1252
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
@@ -5347,7 +5355,7 @@ msgstr "اختر صفحة موقع ويب"
 #~ msgid "Select all"
 #~ msgstr "تحديد الكل"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -5363,7 +5371,7 @@ msgstr "اختر صورة"
 msgid "Select languages"
 msgstr "اختر اللغات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:521
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:492
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -5375,7 +5383,7 @@ msgstr "اختر المنظمة"
 #~ msgid "Select row"
 #~ msgstr "تحديد صف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -5383,7 +5391,7 @@ msgstr "اختر الحالة"
 msgid "Select the languages visitors can browse your site in."
 msgstr "اختر اللغات التي يمكن للزوار تصفح موقعك بها."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:149
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:144
 msgid "Select trigger type"
 msgstr "اختر نوع المحفّز"
 
@@ -5391,7 +5399,7 @@ msgstr "اختر نوع المحفّز"
 msgid "Select type"
 msgstr "اختر النوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:170
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:165
 msgid "Select which event initiates this automated journey."
 msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمتة."
 
@@ -5432,7 +5440,7 @@ msgstr "إرسال الدعوات"
 msgid "Send message"
 msgstr "إرسال رسالة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:48
+#: ../../packages/marketing/src/components/campaign-form.tsx:50
 msgid "Send now"
 msgstr "إرسال الآن"
 
@@ -5448,7 +5456,7 @@ msgstr "إرسال رسالة نصية"
 msgid "Sending message"
 msgstr "جاري إرسال الرسالة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:49
+#: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
@@ -5500,10 +5508,11 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:338
+#: app/components/app-sidebar.tsx:346
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5108
 msgid "Settings"
 msgstr "الإعدادات"
 
@@ -5542,7 +5551,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:361
+#: app/components/app-sidebar.tsx:369
 msgid "Shop"
 msgstr "المتجر"
 
@@ -5686,7 +5695,7 @@ msgstr "الرسائل النصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:380
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -5694,7 +5703,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -5774,7 +5783,7 @@ msgstr "نقطة البداية"
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:201
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr "الحالة"
@@ -5819,7 +5828,7 @@ msgstr "ترحيل التخزين"
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإعداد العُقد."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:279
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3608
@@ -5835,12 +5844,12 @@ msgstr "النمط"
 msgid "Subdomain URL"
 msgstr "رابط النطاق الفرعي"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:98
+#: ../../packages/marketing/src/components/campaign-form.tsx:100
 #: app/components/website/link-inspector.tsx:477
 msgid "Subject"
 msgstr "الموضوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:262
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:257
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
@@ -5894,7 +5903,7 @@ msgstr "اقتراح تحسينات"
 msgid "Summarize this note"
 msgstr "تلخيص هذه الملاحظة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:91
+#: ../../packages/marketing/src/components/campaign-form.tsx:93
 msgid "Summer promo"
 msgstr "عرض الصيف"
 
@@ -5902,7 +5911,7 @@ msgstr "عرض الصيف"
 msgid "Super Admin"
 msgstr "المسؤول الأعلى"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: ../../packages/marketing/src/components/campaign-form.tsx:125
 msgid "supported"
 msgstr "مدعوم"
 
@@ -5957,7 +5966,7 @@ msgstr "طويل"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -5989,11 +5998,11 @@ msgstr "أخبرنا المزيد عن منظمتك"
 #~ msgid "Template"
 #~ msgstr "القالب"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1390
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1389
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهرسة البحث الأصلية. الأفضل للعروض قصيرة المدى أو الصيانة أو الحملات الموسمية."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1334
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1333
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
@@ -6019,7 +6028,7 @@ msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:177
 #: app/components/website/link-inspector.tsx:638
 msgid "Text"
 msgstr "نص"
@@ -6072,7 +6081,7 @@ msgstr "يسمح إعداد autoApprove بالموافقة التلقائية ع
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:249
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
 
@@ -6096,7 +6105,7 @@ msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات �
 msgid "The passwords must match"
 msgstr "يجب أن تتطابق كلمات المرور"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1183
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1182
 msgid "The path on your old site that visitors or search engines request."
 msgstr "المسار في موقعك القديم الذي يطلبه الزوار أو محركات البحث."
 
@@ -6104,7 +6113,7 @@ msgstr "المسار في موقعك القديم الذي يطلبه الزوا
 msgid "Theme"
 msgstr "السمة"
 
-#: app/components/app-sidebar.tsx:66
+#: app/components/app-sidebar.tsx:71
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -6168,15 +6177,15 @@ msgstr "علامة التبويب هذه"
 msgid "This will be the URL path for this page."
 msgstr "سيكون هذا مسار الرابط لهذه الصفحة."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1508
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1507
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "سيؤدي ذلك إلى حذف سجل 404 للمسار <0>{deleteLogPath}</0> من سجلك."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1549
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1548
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "سيؤدي ذلك إلى حذف جميع أخطاء 404 المسجلة لموقع مؤسستك نهائياً. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1458
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1457
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً من <0>{deleteRedirectFrom}</0> إلى <1>{deleteRedirectTo}</1>. لن يُعاد توجيه الزوار الذين يطلبون عنوان URL القديم بعد الآن."
 
@@ -6226,7 +6235,7 @@ msgstr "تبديل ظهور الإعلان"
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:890
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:889
 msgid "Toggle redirect active status"
 msgstr "تبديل حالة تفعيل إعادة التوجيه"
 
@@ -6246,7 +6255,7 @@ msgstr "أفضل المساهمين"
 msgid "Total"
 msgstr "الإجمالي"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1355
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1354
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
 
@@ -6288,7 +6297,7 @@ msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 msgid "Trigger Event"
 msgstr "حدث المحفّز"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:140
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:135
 msgid "Trigger Event Type"
 msgstr "نوع حدث المحفّز"
 
@@ -6309,8 +6318,8 @@ msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:844
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1024
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
@@ -6319,7 +6328,7 @@ msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
-#: app/components/ai/global-ai-panel.tsx:85
+#: app/components/ai/global-ai-panel.tsx:86
 msgid "Try again"
 msgstr "حاول مرة أخرى"
 
@@ -6340,9 +6349,9 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:597
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:596
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3908
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:863
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
 msgid "Type"
 msgstr "النوع"
 
@@ -6358,8 +6367,8 @@ msgstr "تعذر تحميل معلومات الأسعار"
 msgid "Unedited boilerplate text detected in email body."
 msgstr "تم اكتشاف نص قالب غير معدَّل في نص البريد الإلكتروني."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:219
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:228
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:214
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
 msgid "Unit"
 msgstr "الوحدة"
 
@@ -6382,7 +6391,7 @@ msgstr "مستلم بدون اسم"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:518
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6008
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5956
 msgid "Unpublish"
 msgstr "إلغاء النشر"
 
@@ -6391,7 +6400,7 @@ msgstr "إلغاء النشر"
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:136
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:139
 msgid "Unsaved changes"
 msgstr "تغييرات غير محفوظة"
 
@@ -6409,6 +6418,7 @@ msgid "Untranslated only"
 msgstr "غير المترجم فقط"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:108
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5903
 msgid "Update"
 msgstr "تحديث"
 
@@ -6424,8 +6434,8 @@ msgstr "تحديث صورة الملف الشخصي"
 msgid "Update your photo and personal details here."
 msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:603
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:204
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:602
+#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:206
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
 msgstr "تم التحديث"
@@ -6442,7 +6452,7 @@ msgstr "تم تحديث القسم"
 msgid "Updating section"
 msgstr "تحديث القسم"
 
-#: app/components/app-sidebar.tsx:82
+#: app/components/app-sidebar.tsx:87
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr "ترقية"
@@ -6489,11 +6499,11 @@ msgstr "جارٍ الرفع…"
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:781
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:780
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:866
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:865
 msgid "Usage"
 msgstr "الاستخدام"
 
@@ -6563,7 +6573,7 @@ msgstr "المتغيرات"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -6610,7 +6620,7 @@ msgstr "عرض وتنزيل فواتير الدفع الخاصة بك"
 msgid "View and manage this session"
 msgstr "عرض وإدارة هذه الجلسة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5997
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5945
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
@@ -6681,7 +6691,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:287
+#: app/components/app-sidebar.tsx:295
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
 msgid "Website"
 msgstr "الموقع الإلكتروني"
@@ -6690,7 +6700,7 @@ msgstr "الموقع الإلكتروني"
 msgid "weeks"
 msgstr "أسابيع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:236
 msgid "Weeks"
 msgstr "أسابيع"
 
@@ -6750,7 +6760,7 @@ msgstr "ماذا تريد أن تعرف؟"
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1409
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
 
@@ -6766,7 +6776,7 @@ msgstr "عند المطالبة، وافق على الاتصال في متصفح
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
 msgstr "عندما يقوم شخص ما بالتسجيل باستخدام بريد إلكتروني يطابق نطاقك المُتحقق منه، سيتم إضافته تلقائياً إلى مؤسستك كعضو."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1016
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1015
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "عندما يطلب الزوار أو محركات البحث عنوان URL غير موجود، سيظهر هنا لتتمكن من إعداد عمليات إعادة توجيه."
 
@@ -6774,12 +6784,12 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:219
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:278
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:230
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
 msgid "Width"
 msgstr "العرض"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1289
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1288
 msgid "Will redirect to"
 msgstr "ستتم إعادة التوجيه إلى"
 
@@ -6807,11 +6817,11 @@ msgstr "جارٍ العمل على ذلك"
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:126
+#: ../../packages/marketing/src/components/campaign-form.tsx:147
 msgid "Write your email. Use {{name}} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {{name}} للتخصيص."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:184
 msgid "Write your message"
 msgstr "اكتب رسالتك"
 
@@ -6819,9 +6829,13 @@ msgstr "اكتب رسالتك"
 msgid "Write your note content..."
 msgstr "اكتب محتوى ملاحظتك..."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:138
+msgid "Write your text message"
+msgstr "اكتب رسالتك النصية"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:127
-msgid "Write your text message. Max 160 characters."
-msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
+#~ msgid "Write your text message. Max 160 characters."
+#~ msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
 
 #: app/components/settings/cards/organization/billing-card.tsx:211
 #: app/routes/organizations+/create.tsx:894
@@ -6927,7 +6941,7 @@ msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك
 msgid "Your department"
 msgstr "قسمك"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:186
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 
@@ -6955,7 +6969,7 @@ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 msgid "Your organizations"
 msgstr "مؤسساتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5716
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5701
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
 

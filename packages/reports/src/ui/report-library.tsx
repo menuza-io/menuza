@@ -7,6 +7,7 @@ import {
 } from '@repo/ui/collapsible'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { type ReportScope } from '../catalog.ts'
@@ -179,73 +180,102 @@ export function ReportStart({
 	const categories = templateCategories(templates)
 
 	return (
-		<div className="min-w-0 flex-1">
-			<div className="max-w-3xl py-6">
-				<h1 className="text-foreground text-2xl tracking-tight">{heading}</h1>
-				<p className="text-muted-foreground mt-2 max-w-prose text-sm leading-relaxed">
-					{description}
-				</p>
+		<div className="mx-auto flex w-full max-w-6xl flex-col gap-10 py-8 md:px-6 lg:px-8">
+			<PageHeader
+				title={heading}
+				description={description}
+				actions={
+					<Button render={<Link to={`${basePath}/new`} />}>
+						<Icon name="plus" className="size-4" />
+						New report
+					</Button>
+				}
+			/>
 
-				{savedReports.length > 0 ? (
-					<section className="mt-10">
-						<h2 className="text-foreground text-sm font-semibold">
-							Saved reports
-						</h2>
-						<ul className="mt-3 divide-y border-y">
-							{savedReports.map((report) => (
-								<li key={report.id}>
-									<Link
-										to={`${basePath}/${report.id}`}
-										className="hover:bg-muted/60 focus-visible:ring-ring/50 flex items-baseline justify-between gap-4 px-1 py-3 outline-none focus-visible:ring-2"
-									>
-										<span className="text-foreground text-sm font-medium">
+			{savedReports.length > 0 ? (
+				<section className="space-y-3">
+					<div className="flex items-baseline justify-between gap-4">
+						<h2 className="text-base font-medium">Saved reports</h2>
+						<span className="text-muted-foreground text-sm tabular-nums">
+							{savedReports.length}
+						</span>
+					</div>
+					<ul className="bg-background divide-y overflow-hidden rounded-xl border">
+						{savedReports.map((report) => (
+							<li key={report.id}>
+								<Link
+									to={`${basePath}/${report.id}`}
+									className="hover:bg-muted/50 focus-visible:ring-ring/50 flex items-center justify-between gap-4 px-4 py-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset"
+								>
+									<span className="min-w-0">
+										<span className="block truncate text-sm font-medium">
 											{report.title}
 										</span>
-										<time
-											className="text-muted-foreground text-xs tabular-nums"
-											dateTime={report.updatedAt}
-										>
-											{new Date(report.updatedAt).toLocaleDateString()}
-										</time>
-									</Link>
-								</li>
-							))}
-						</ul>
-					</section>
-				) : null}
+										<span className="text-muted-foreground mt-0.5 block text-xs capitalize">
+											{report.subject.replaceAll('-', ' ')}
+										</span>
+									</span>
+									<time
+										className="text-muted-foreground shrink-0 text-xs tabular-nums"
+										dateTime={report.updatedAt}
+										suppressHydrationWarning
+									>
+										{new Date(report.updatedAt).toLocaleDateString('en-US', {
+											timeZone: 'UTC',
+										})}
+									</time>
+								</Link>
+							</li>
+						))}
+					</ul>
+				</section>
+			) : null}
 
-				{categories.map((category) => (
-					<section key={category} className="mt-10">
-						<h2 className="text-foreground text-sm font-semibold">
-							{category}
-						</h2>
-						<ul className="mt-3 divide-y border-y">
-							{templates
-								.filter((template) => template.category === category)
-								.map((template) => (
-									<li key={template.id}>
-										<Link
-											to={`${basePath}/new?template=${template.id}`}
-											className="hover:bg-muted/60 focus-visible:ring-ring/50 flex items-start justify-between gap-6 px-1 py-3 outline-none focus-visible:ring-2"
-										>
-											<span>
-												<span className="text-foreground block text-sm font-medium">
-													{template.title}
+			<section className="space-y-5">
+				<div>
+					<h2 className="text-base font-medium">Start from a template</h2>
+					<p className="text-muted-foreground mt-1 text-sm">
+						Choose a starting point, then refine it in the full-screen builder.
+					</p>
+				</div>
+				<div className="grid gap-6 lg:grid-cols-2">
+					{categories.map((category) => {
+						const categoryTemplates = templates.filter(
+							(template) => template.category === category,
+						)
+						return (
+							<div key={category} className="space-y-3">
+								<h3 className="text-muted-foreground text-sm font-medium">
+									{category}
+								</h3>
+								<ul className="bg-background divide-y overflow-hidden rounded-xl border">
+									{categoryTemplates.map((template) => (
+										<li key={template.id}>
+											<Link
+												to={`${basePath}/new?template=${template.id}`}
+												className="hover:bg-muted/50 focus-visible:ring-ring/50 flex items-start px-4 py-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset"
+											>
+												<span className="min-w-0 flex-1">
+													<span className="block text-sm font-medium">
+														{template.title}
+													</span>
+													<span className="text-muted-foreground mt-0.5 block text-sm leading-relaxed">
+														{template.description}
+													</span>
 												</span>
-												<span className="text-muted-foreground mt-0.5 block text-sm leading-relaxed">
-													{template.description}
-												</span>
-											</span>
-											<span className="text-primary mt-0.5 shrink-0 text-sm font-medium">
-												Open
-											</span>
-										</Link>
-									</li>
-								))}
-						</ul>
-					</section>
-				))}
-			</div>
+												<Icon
+													name="chevron-right"
+													className="text-muted-foreground mt-0.5 size-4 shrink-0"
+												/>
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+						)
+					})}
+				</div>
+			</section>
 		</div>
 	)
 }

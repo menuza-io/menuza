@@ -42,6 +42,7 @@ export function PhotoCropForm({
 	const [crop, setCrop] = useState<Crop>()
 	const internalFileInputRef = useRef<HTMLInputElement>(null)
 	const imgRef = useRef<HTMLImageElement | null>(null)
+	const cropVersionRef = useRef(0)
 
 	const { actionIntent, circularCrop = false, defaultCroppedFilename } = config
 
@@ -73,16 +74,25 @@ export function PhotoCropForm({
 	}
 
 	// Handle crop complete and automatically apply crop
-	function onCropComplete(crop: PixelCrop) {
+	async function onCropComplete(crop: PixelCrop) {
 		if (imgRef.current && crop.width && crop.height) {
-			const croppedUrl = getCroppedImg(imgRef.current, crop)
-			// Automatically create cropped file
-			void applyCropFromUrl(croppedUrl)
+			const currentVersion = ++cropVersionRef.current
+			try {
+				const blob = await getCroppedImageBlob(imgRef.current, crop)
+				if (currentVersion === cropVersionRef.current) {
+					applyCrop(blob)
+				}
+			} catch (error) {
+				console.error('Error applying crop:', error)
+			}
 		}
 	}
 
 	// Get cropped image
-	function getCroppedImg(image: HTMLImageElement, crop: PixelCrop): string {
+	function getCroppedImageBlob(
+		image: HTMLImageElement,
+		crop: PixelCrop,
+	): Promise<Blob> {
 		const canvas = document.createElement('canvas')
 		const scaleX = image.naturalWidth / image.width
 		const scaleY = image.naturalHeight / image.height
@@ -109,30 +119,30 @@ export function PhotoCropForm({
 			)
 		}
 
-		return canvas.toDataURL('image/jpeg', 0.9)
+		return new Promise((resolve, reject) => {
+			canvas.toBlob(
+				(blob) => {
+					if (blob) {
+						resolve(blob)
+					} else {
+						reject(new Error('Unable to create cropped image'))
+					}
+				},
+				'image/jpeg',
+				0.9,
+			)
+		})
 	}
 
-	// Apply crop from URL
-	async function applyCropFromUrl(croppedUrl: string) {
-		try {
-			if (croppedUrl && currentSelectedFile) {
-				const response = await fetch(croppedUrl)
-				const blob = await response.blob()
+	// Apply crop from the canvas-generated blob
+	function applyCrop(blob: Blob) {
+		if (currentSelectedFile) {
+			const croppedFile = new File([blob], defaultCroppedFilename, {
+				type: 'image/jpeg',
+				lastModified: Date.now(),
+			})
 
-				// Create File object from cropped blob
-				const croppedFile = new File(
-					[blob],
-					currentSelectedFile.name || defaultCroppedFilename,
-					{
-						type: 'image/jpeg',
-						lastModified: Date.now(),
-					},
-				)
-
-				setCroppedFile(croppedFile)
-			}
-		} catch (error) {
-			console.error('Error applying crop:', error)
+			setCroppedFile(croppedFile)
 		}
 	}
 
@@ -199,7 +209,7 @@ export function PhotoCropForm({
 				<ReactCrop
 					crop={crop}
 					onChange={(_, percentCrop) => setCrop(percentCrop)}
-					onComplete={(c) => onCropComplete(c)}
+					onComplete={(c) => void onCropComplete(c)}
 					aspect={1}
 					className="w-full"
 					circularCrop={circularCrop}

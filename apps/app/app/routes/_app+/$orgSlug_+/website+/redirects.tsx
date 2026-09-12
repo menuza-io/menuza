@@ -759,7 +759,6 @@ export default function WebsiteRedirectsRoute() {
 				actions={
 					<Button
 						type="button"
-						size="sm"
 						onClick={() => openCreateDrawer()}
 						className="gap-1.5"
 					>

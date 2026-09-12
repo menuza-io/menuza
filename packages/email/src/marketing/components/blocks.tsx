@@ -94,6 +94,7 @@ function BodyBlock({
 				fontSize: '16px',
 				lineHeight: '1.65',
 				color: theme.foreground,
+				textAlign: block.config.align,
 			}}
 		>
 			<TextWithLineBreaks text={block.config.text} />
@@ -117,6 +118,7 @@ function ParagraphBlock({
 				fontSize: '14px',
 				lineHeight: '1.65',
 				color: theme.mutedForeground,
+				textAlign: block.config.align,
 			}}
 		>
 			<TextWithLineBreaks text={block.config.text} />

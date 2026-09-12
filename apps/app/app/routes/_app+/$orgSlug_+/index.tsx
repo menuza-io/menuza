@@ -293,7 +293,7 @@ export default function OrganizationDashboard() {
 		onboardingProgress.isVisible
 
 	return (
-		<div className="flex flex-col gap-8 py-6 md:p-8">
+		<div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-8 py-8 md:px-6 lg:px-8">
 			<PageTitle
 				title={_(t`Welcome ${userName}!`)}
 				description={_(t`Your organization dashboard`)}

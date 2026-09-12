@@ -22,12 +22,12 @@ msgid "(Expired)"
 msgstr ""
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
 msgid "{0} / 1600 chars"
 msgstr ""
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:318
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} blocks · rendered in your website branding"
 
@@ -103,11 +103,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:557
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:583
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -138,7 +138,7 @@ msgstr ""
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:338
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr ""
 
@@ -262,7 +262,7 @@ msgstr ""
 msgid "Add {0}"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:100
+#: ../../packages/marketing/src/components/email/email-preview.tsx:135
 msgid "Add a block to see your email come to life."
 msgstr "Add a block to see your email come to life."
 
@@ -324,8 +324,9 @@ msgid "Admin role required"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:240
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:188
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:251
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
 msgid "Alignment"
 msgstr "Alignment"
 
@@ -386,7 +387,7 @@ msgstr ""
 msgid "Allow users to export audit logs"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:198
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:209
 msgid "Alt text"
 msgstr "Alt text"
 
@@ -522,7 +523,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:98
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:93
 msgid "Back to nodes"
 msgstr ""
 
@@ -636,7 +637,7 @@ msgstr ""
 msgid "Broadcasts and automations for tenant operators."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:328
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
 msgid "Build a branded HTML email with blocks."
 msgstr "Build a branded HTML email with blocks."
 
@@ -648,7 +649,7 @@ msgstr ""
 msgid "Button"
 msgstr "Button"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:257
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
 msgid "Button label"
 msgstr "Button label"
 
@@ -666,14 +667,14 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:87
+#: ../../packages/marketing/src/components/campaign-form.tsx:89
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
-#: ../../packages/marketing/src/components/campaign-form.tsx:144
+#: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:155
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:659
@@ -693,11 +694,11 @@ msgstr ""
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:56
+#: ../../packages/marketing/src/components/campaign-form.tsx:58
 msgid "Channel"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:102
+#: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -743,7 +744,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:120
 msgid "Close email design"
 msgstr "Close email design"
 
@@ -790,7 +791,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:512
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
 msgid "Condition Logic"
 msgstr ""
 
@@ -810,7 +811,7 @@ msgstr ""
 msgid "Configuration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:124
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 msgid "Configuration required"
 msgstr ""
 
@@ -850,7 +851,7 @@ msgstr ""
 msgid "Connections"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:531
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -958,7 +959,7 @@ msgstr ""
 msgid "Custom Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:179
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:174
 msgid "Custom Event Name"
 msgstr ""
 
@@ -979,7 +980,7 @@ msgstr ""
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:422
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1023,7 +1024,7 @@ msgstr ""
 msgid "days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:233
 msgid "Days"
 msgstr ""
 
@@ -1068,8 +1069,8 @@ msgstr ""
 msgid "Delete Cache Key"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:113
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:114
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:108
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
 msgid "Delete node"
 msgstr ""
 
@@ -1093,7 +1094,7 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:300
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:295
 msgid "Design email"
 msgstr "Design email"
 
@@ -1119,11 +1120,11 @@ msgstr ""
 msgid "Disabled"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:200
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:203
 msgid "Discard"
 msgstr "Discard"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -1139,7 +1140,7 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
 msgid "Does Not Equal"
 msgstr ""
 
@@ -1164,15 +1165,15 @@ msgstr "Drag to reorder"
 msgid "Duplicate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:200
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:195
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
 msgid "e.g. @gmail.com"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:183
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:178
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr ""
 
@@ -1188,7 +1189,7 @@ msgstr ""
 msgid "e.g. cust_123"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:278
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
@@ -1196,7 +1197,7 @@ msgstr ""
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:266
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:261
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "e.g. Welcome {{firstName}}!"
 
@@ -1219,7 +1220,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:298
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
 msgid "Edit design"
 msgstr "Edit design"
 
@@ -1252,7 +1253,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:442
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr ""
@@ -1261,19 +1262,19 @@ msgstr ""
 msgid "Email body content is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:287
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:371
-#: ../../packages/marketing/src/components/campaign-form.tsx:110
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:282
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:366
+#: ../../packages/marketing/src/components/campaign-form.tsx:112
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:125
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:128
 msgid "Email design"
 msgstr "Email design"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:337
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:332
 msgid "Email HTML Body"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:69
+#: ../../packages/marketing/src/components/email/email-preview.tsx:104
 msgid "Email preview"
 msgstr "Email preview"
 
@@ -1392,7 +1393,7 @@ msgstr ""
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 msgid "Exactly Equals"
 msgstr ""
 
@@ -1538,7 +1539,7 @@ msgstr ""
 #~ msgid "Form Submitted"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:274
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:269
 msgid "From Name (Optional)"
 msgstr ""
 
@@ -1602,7 +1603,7 @@ msgstr "Heading"
 msgid "Hi {{name}}, Check out our latest update."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:358
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr ""
 
@@ -1614,7 +1615,7 @@ msgstr ""
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:430
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:400
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr ""
 
@@ -1638,7 +1639,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:235
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:230
 msgid "Hours"
 msgstr ""
 
@@ -1678,7 +1679,7 @@ msgstr ""
 msgid "Image"
 msgstr "Image"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:190
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:201
 msgid "Image URL"
 msgstr "Image URL"
 
@@ -1724,8 +1725,8 @@ msgstr "Insert block here"
 #~ msgstr "Insert merge tag"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:384
-msgid "Insert Merge Tags:"
-msgstr ""
+#~ msgid "Insert Merge Tags:"
+#~ msgstr ""
 
 #: app/routes/_admin+/cache.tsx:429
 msgid "Instance:"
@@ -1764,7 +1765,7 @@ msgstr ""
 msgid "IP Information"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -1780,7 +1781,7 @@ msgstr ""
 msgid "Joined"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1800,7 +1801,7 @@ msgstr ""
 msgid "Keys to delete:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:252
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:263
 msgid "Label"
 msgstr "Label"
 
@@ -1881,11 +1882,11 @@ msgstr ""
 msgid "Light mode"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:260
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:271
 msgid "Link"
 msgstr "Link"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:206
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
 msgid "Link (optional)"
 msgstr "Link (optional)"
 
@@ -1988,7 +1989,7 @@ msgstr ""
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
-#: ../../packages/marketing/src/components/campaign-form.tsx:116
+#: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr ""
 
@@ -2000,7 +2001,7 @@ msgstr "Message content is required"
 msgid "minutes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:232
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:227
 msgid "Minutes"
 msgstr ""
 
@@ -2033,7 +2034,7 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:480
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/routes/_admin+/roles+/$roleId.tsx:500
 #: app/routes/_admin+/roles+/$roleId.tsx:733
@@ -2236,7 +2237,7 @@ msgstr ""
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:503
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -2443,12 +2444,12 @@ msgstr ""
 msgid "Personal + Organization notes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:477
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:448
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr ""
@@ -2474,7 +2475,7 @@ msgstr "Pick a layout, then customize the blocks."
 msgid "PKCE Enabled"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:348
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
@@ -2517,7 +2518,7 @@ msgid "Previous"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:86
-#: ../../packages/marketing/src/components/campaign-form.tsx:75
+#: ../../packages/marketing/src/components/campaign-form.tsx:77
 msgid "Pro"
 msgstr ""
 
@@ -2654,7 +2655,7 @@ msgstr ""
 msgid "Remove block"
 msgstr "Remove block"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:317
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:312
 msgid "Remove design"
 msgstr "Remove design"
 
@@ -2666,7 +2667,7 @@ msgstr ""
 msgid "Remove variable"
 msgstr "Remove variable"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:73
+#: ../../packages/marketing/src/components/email/email-preview.tsx:108
 msgid "Rendering…"
 msgstr "Rendering…"
 
@@ -2757,7 +2758,7 @@ msgstr ""
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Routing Logic:"
 msgstr ""
 
@@ -2822,7 +2823,7 @@ msgstr ""
 msgid "Runs when customer verifies phone OTP"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 msgid "Save"
 msgstr "Save"
@@ -2848,7 +2849,7 @@ msgstr ""
 msgid "Save the automation first before running test triggers."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:138
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
 msgid "Saved"
 msgstr "Saved"
 
@@ -2862,7 +2863,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:160
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2944,7 +2945,7 @@ msgstr ""
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
 msgid "Select attribute"
 msgstr ""
 
@@ -2956,7 +2957,7 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:521
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:492
 msgid "Select operator"
 msgstr ""
 
@@ -2965,15 +2966,15 @@ msgstr ""
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
 msgid "Select status"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:149
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:144
 msgid "Select trigger type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:170
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:165
 msgid "Select which event initiates this automated journey."
 msgstr ""
 
@@ -2985,7 +2986,7 @@ msgstr ""
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:48
+#: ../../packages/marketing/src/components/campaign-form.tsx:50
 msgid "Send now"
 msgstr ""
 
@@ -2997,7 +2998,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:49
+#: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr ""
 
@@ -3083,7 +3084,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:380
 msgid "SMS Message Text"
 msgstr ""
 
@@ -3091,7 +3092,7 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
@@ -3206,15 +3207,15 @@ msgstr ""
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:279
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:98
+#: ../../packages/marketing/src/components/campaign-form.tsx:100
 msgid "Subject"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:262
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:257
 msgid "Subject Line"
 msgstr ""
 
@@ -3236,11 +3237,11 @@ msgstr ""
 msgid "Subscription Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:91
+#: ../../packages/marketing/src/components/campaign-form.tsx:93
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: ../../packages/marketing/src/components/campaign-form.tsx:125
 msgid "supported"
 msgstr ""
 
@@ -3331,7 +3332,7 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Target Value"
 msgstr ""
 
@@ -3354,7 +3355,7 @@ msgid "Testing..."
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:177
 msgid "Text"
 msgstr "Text"
 
@@ -3372,7 +3373,7 @@ msgstr ""
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:249
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr ""
 
@@ -3456,7 +3457,7 @@ msgstr ""
 msgid "Trigger Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:140
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:135
 msgid "Trigger Event Type"
 msgstr ""
 
@@ -3488,8 +3489,8 @@ msgstr ""
 msgid "Unedited boilerplate text detected in email body."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:219
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:228
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:214
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
 msgid "Unit"
 msgstr ""
 
@@ -3507,7 +3508,7 @@ msgstr ""
 msgid "Unpaid"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:136
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:139
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3608,7 +3609,7 @@ msgstr ""
 msgid "Variables"
 msgstr "Variables"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 msgid "Verification Status"
 msgstr ""
 
@@ -3686,7 +3687,7 @@ msgstr ""
 msgid "weeks"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:236
 msgid "Weeks"
 msgstr ""
 
@@ -3698,8 +3699,8 @@ msgstr ""
 #~ msgid "When someone does <0>{0}</0>"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:219
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:278
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:230
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
 msgid "Width"
 msgstr "Width"
 
@@ -3711,17 +3712,21 @@ msgstr ""
 msgid "Workflow validation"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:126
+#: ../../packages/marketing/src/components/campaign-form.tsx:147
 msgid "Write your email. Use {{name}} to personalize."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:184
 msgid "Write your message"
 msgstr "Write your message"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:138
+msgid "Write your text message"
+msgstr "Write your text message"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:127
-msgid "Write your text message. Max 160 characters."
-msgstr ""
+#~ msgid "Write your text message. Max 160 characters."
+#~ msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:58
 msgid "Yes"
@@ -3740,7 +3745,7 @@ msgstr ""
 msgid "You don't have permission to access this admin area."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:186
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 

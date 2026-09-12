@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import {
 	useFetcher,
 	useLocation,
@@ -7,9 +7,8 @@ import {
 } from 'react-router'
 import { type ReportCatalog, type ReportScope } from '../catalog.ts'
 import { type ReportDefinition, reportDefinitionSchema } from '../dsl.ts'
-import { definitionForNewReport, templatesFor } from '../templates.ts'
+import { definitionForNewReport } from '../templates.ts'
 import { ReportBuilder } from './report-builder.tsx'
-import { ReportLibrary, type SavedReportSummary } from './report-library.tsx'
 import { useReportRunner } from './use-report-runner.ts'
 
 function cloneDefinition(definition: ReportDefinition): ReportDefinition {
@@ -25,7 +24,8 @@ export function ReportWorkspace({
 	tenantApiUrl,
 	backHref,
 	hasTenantDb,
-	savedReports,
+	headerExtras,
+	contentClassName,
 }: {
 	catalog: ReportCatalog
 	scope: ReportScope
@@ -35,7 +35,8 @@ export function ReportWorkspace({
 	tenantApiUrl?: string | null
 	backHref: string
 	hasTenantDb?: boolean
-	savedReports: SavedReportSummary[]
+	headerExtras?: ReactNode
+	contentClassName?: string
 }) {
 	const [definition, setDefinition] = useState(() =>
 		cloneDefinition(initialDefinition),
@@ -69,39 +70,31 @@ export function ReportWorkspace({
 	}, [backHref, fetcher.data, fetcher.state, navigate])
 
 	return (
-		<div className="flex h-full min-h-0 overflow-hidden">
-			<ReportLibrary
-				scope={scope}
-				templates={templatesFor(scope)}
-				savedReports={savedReports}
-				basePath={backHref}
-				activeTemplateId={searchParams.get('template')}
-				compact
+		<div className="bg-muted fixed inset-0 z-50 flex h-dvh min-h-0 flex-col overflow-hidden">
+			<ReportBuilder
+				catalog={catalog}
+				definition={definition}
+				onChange={setDefinition}
+				result={result}
+				error={error}
+				loading={loading}
+				updatedAt={updatedAt}
+				saving={fetcher.state !== 'idle'}
+				saveError={fetcher.data?.error}
+				backHref={backHref}
+				hasTenantDb={hasTenantDb}
+				headerExtras={headerExtras}
+				contentClassName={contentClassName}
+				onSave={() => {
+					fetcher.submit(
+						{
+							intent: 'save',
+							definition: JSON.stringify(definition),
+						},
+						{ method: 'post' },
+					)
+				}}
 			/>
-			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-				<ReportBuilder
-					catalog={catalog}
-					definition={definition}
-					onChange={setDefinition}
-					result={result}
-					error={error}
-					loading={loading}
-					updatedAt={updatedAt}
-					saving={fetcher.state !== 'idle'}
-					saveError={fetcher.data?.error}
-					backHref={backHref}
-					hasTenantDb={hasTenantDb}
-					onSave={() => {
-						fetcher.submit(
-							{
-								intent: 'save',
-								definition: JSON.stringify(definition),
-							},
-							{ method: 'post' },
-						)
-					}}
-				/>
-			</div>
 		</div>
 	)
 }

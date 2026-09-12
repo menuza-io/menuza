@@ -1,29 +1,19 @@
-import { Trans } from '@lingui/macro'
-import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
-import { Kbd } from '@repo/ui/kbd'
 import { SidebarTrigger } from '@repo/ui/sidebar'
-import { useState } from 'react'
 import { useFetcher } from 'react-router'
 import { useAIPanelHotkey } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
-import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
-import { CommandMenu } from './command-menu'
 import NotificationBell from './ui/notification-bell'
 
 export function SiteHeader({ isCollapsed }: { isCollapsed: boolean }) {
-	const [commandOpen, setCommandOpen] = useState(false)
 	const sidebar = useFetcher()
 
-	// Bind cmd+/ to toggle the AI panel.
-	useGlobalHotkeys(setCommandOpen)
 	useAIPanelHotkey()
 
 	return (
 		<>
 			<header
 				role="banner"
-				className="flex h-(--header-height) w-full shrink-0 items-center justify-between border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)"
+				className="relative flex h-(--header-height) w-full shrink-0 items-center justify-between border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)"
 			>
 				<div className="flex items-center px-4">
 					<SidebarTrigger
@@ -39,27 +29,11 @@ export function SiteHeader({ isCollapsed }: { isCollapsed: boolean }) {
 						type="submit"
 					/>
 				</div>
-				<div className="flex flex-1 items-center justify-end gap-2 px-2 pr-4 md:flex-none md:pr-6">
-					<Button
-						variant="outline"
-						className="bg-muted/50 text-muted-foreground relative h-8 w-[calc(100%-1rem)] flex-1 flex-row-reverse justify-start rounded-[0.5rem] text-sm font-normal shadow-none md:w-40 lg:w-64 ltr:text-left ltr:sm:pr-12 rtl:text-right rtl:sm:pl-12"
-						onClick={() => setCommandOpen(true)}
-						aria-haspopup="dialog"
-						aria-expanded={commandOpen}
-					>
-						<span className="min-w-0 flex-1 truncate">
-							<Trans>Search notes...</Trans>
-						</span>
-						<Icon name="search" className="mr-2 h-4 w-4 shrink-0" />
-						<Kbd className="absolute top-[0.3rem] ltr:right-[0.3rem] rtl:left-[0.3rem]">
-							<span className="text-xs">⌘</span>K
-						</Kbd>
-					</Button>
+				<div className="flex shrink-0 items-center gap-2 px-2 pr-4 md:pr-6">
 					<GlobalAIToggle />
 					<NotificationBell />
 				</div>
 			</header>
-			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 		</>
 	)
 }

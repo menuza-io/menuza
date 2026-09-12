@@ -563,7 +563,6 @@ export default function WebsiteAnnouncementsRoute() {
 								<LocaleSwitcher className="max-w-none" />
 								<Button
 									type="button"
-									size="sm"
 									onClick={() => {
 										setEditing(null)
 										setSheetOpen(true)

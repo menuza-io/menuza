@@ -5105,45 +5105,40 @@ function InspectorTabs({
 		{
 			id: 'page' as const,
 			icon: 'file-text' as const,
-			label: <Trans>Page Settings</Trans>,
+			label: <Trans>Settings</Trans>,
 			ariaLabel: 'Page Settings',
 		},
 	]
 
 	return (
-		<nav aria-label="Builder panels" className="flex items-center">
+		<nav aria-label="Builder panels" className="w-full">
 			<div
 				role="tablist"
 				aria-orientation="horizontal"
-				className="flex items-center gap-0.5"
+				className="bg-muted grid grid-cols-3 gap-0.5 rounded-lg p-0.5"
 			>
 				{items.map((item) => {
 					const selected = value === item.id
 					return (
-						<Tooltip key={item.id}>
-							<TooltipTrigger
-								render={
-									<Button
-										variant="ghost"
-										size="icon-xs"
-										role="tab"
-										aria-selected={selected}
-										aria-label={item.ariaLabel}
-										className={cn(
-											'text-muted-foreground relative rounded-md transition-colors duration-150 ease-out',
-											'hover:text-foreground hover:bg-muted',
-											'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-											selected &&
-												'text-foreground bg-muted hover:bg-muted hover:text-foreground',
-										)}
-										onClick={() => onChange(item.id)}
-									>
-										<Icon name={item.icon} className="size-4" />
-									</Button>
-								}
-							/>
-							<TooltipContent side="bottom">{item.label}</TooltipContent>
-						</Tooltip>
+						<Button
+							key={item.id}
+							variant="ghost"
+							size="sm"
+							role="tab"
+							aria-selected={selected}
+							aria-label={item.ariaLabel}
+							className={cn(
+								'text-muted-foreground min-w-0 gap-1 rounded-md px-1.5 text-xs transition-colors duration-150 ease-out',
+								'hover:text-foreground hover:bg-background/60',
+								'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+								selected &&
+									'bg-background text-foreground hover:bg-background shadow-sm',
+							)}
+							onClick={() => onChange(item.id)}
+						>
+							<Icon name={item.icon} className="size-3.5 shrink-0" />
+							<span className="truncate">{item.label}</span>
+						</Button>
 					)
 				})}
 			</div>
@@ -5345,11 +5340,6 @@ export default function PageBuilderRoute() {
 		setTitleValue(page.title)
 	}, [page.title])
 
-	const selectedSection = useMemo(
-		() => page.sections.find((s) => s.id === selectedSectionId) ?? null,
-		[page.sections, selectedSectionId],
-	)
-
 	const handleSaveTitle = useCallback(() => {
 		if (titleValue.trim() && titleValue !== page.title) {
 			void titleFetcher.submit(
@@ -5359,6 +5349,11 @@ export default function PageBuilderRoute() {
 		}
 		setEditingTitle(false)
 	}, [titleValue, page.title, titleFetcher])
+
+	const selectedSection = useMemo(
+		() => page.sections.find((s) => s.id === selectedSectionId) ?? null,
+		[page.sections, selectedSectionId],
+	)
 
 	const handleUpdatePageSettings = useCallback(
 		(settings: {
@@ -5532,6 +5527,15 @@ export default function PageBuilderRoute() {
 	const sectionsSidebar = (
 		<aside className="border-border bg-background flex h-full min-w-0 rounded-xl">
 			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+				<div className="border-border flex h-11 shrink-0 items-center border-b px-3">
+					<InspectorTabs
+						value={inspector}
+						onChange={(next) => {
+							setInspector(next)
+							if (next !== 'sections') setSelectedSectionId(null)
+						}}
+					/>
+				</div>
 				{inspector === 'page' ? (
 					<PageSettingsPanel
 						page={page}
@@ -5765,8 +5769,8 @@ export default function PageBuilderRoute() {
 					}}
 				>
 					<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
-						<header className="border-border bg-background flex h-12 shrink-0 items-center justify-between gap-3 border-b px-3">
-							<div className="flex min-w-0 items-center gap-2">
+						<header className="border-border bg-background flex h-12 shrink-0 items-center justify-between gap-2 border-b px-2 sm:gap-3 sm:px-3">
+							<div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
 								<Button
 									variant="ghost"
 									size="icon-xs"
@@ -5778,19 +5782,6 @@ export default function PageBuilderRoute() {
 
 								<div
 									className="bg-border hidden h-5 w-px sm:block"
-									aria-hidden
-								/>
-
-								<InspectorTabs
-									value={inspector}
-									onChange={(next) => {
-										setInspector(next)
-										if (next !== 'sections') setSelectedSectionId(null)
-									}}
-								/>
-
-								<div
-									className="bg-border mx-1 hidden h-5 w-px md:block"
 									aria-hidden
 								/>
 
@@ -5810,14 +5801,30 @@ export default function PageBuilderRoute() {
 										autoFocus
 									/>
 								) : (
-									<div className="flex items-center gap-1">
+									<div className="flex min-w-0 items-center gap-1">
 										<button
 											type="button"
-											className="hover:bg-muted focus-visible:ring-ring max-w-52 truncate rounded-md px-1.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+											className="hover:bg-muted focus-visible:ring-ring flex max-w-52 min-w-0 items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
 											onClick={() => setEditingTitle(true)}
 											title={displayTitle}
 										>
-											{displayTitle}
+											<span
+												className={cn(
+													'size-1.5 shrink-0 rounded-full',
+													optimisticStatus === 'published'
+														? 'bg-emerald-500'
+														: 'bg-muted-foreground/40',
+												)}
+												aria-hidden
+											/>
+											<span className="truncate">{displayTitle}</span>
+											<span className="sr-only">
+												{optimisticStatus === 'published' ? (
+													<Trans>Published</Trans>
+												) : (
+													<Trans>Draft</Trans>
+												)}
+											</span>
 										</button>
 										<DropdownMenu>
 											<DropdownMenuTrigger
@@ -5825,7 +5832,7 @@ export default function PageBuilderRoute() {
 													<Button
 														variant="ghost"
 														size="icon-xs"
-														className="text-muted-foreground hover:text-foreground"
+														className="text-muted-foreground hover:text-foreground shrink-0"
 														aria-label="Page menu"
 													>
 														<Icon name="chevron-down" className="size-3.5" />
@@ -5859,17 +5866,6 @@ export default function PageBuilderRoute() {
 													))}
 												</div>
 												<DropdownMenuSeparator />
-												<DropdownMenuItem onSelect={() => setInspector('page')}>
-													<Icon name="file-text" className="mr-2 size-4" />
-													<Trans>Page settings</Trans>
-												</DropdownMenuItem>
-												<DropdownMenuItem
-													onSelect={() => setInspector('branding')}
-												>
-													<Icon name="paintbrush" className="mr-2 size-4" />
-													<Trans>Branding</Trans>
-												</DropdownMenuItem>
-												<DropdownMenuSeparator />
 												<DropdownMenuItem
 													onSelect={() => setCreatePageOpen(true)}
 												>
@@ -5888,7 +5884,7 @@ export default function PageBuilderRoute() {
 								) : null}
 							</div>
 
-							<div className="flex shrink-0 items-center gap-2">
+							<div className="flex shrink-0 items-center gap-1 sm:gap-2">
 								<div className="hidden lg:block">{previewViewportToggle}</div>
 
 								<div
@@ -5929,26 +5925,9 @@ export default function PageBuilderRoute() {
 									</Button>
 								</div>
 
-								<div className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
-									<span
-										className={cn(
-											'size-1.5 rounded-full',
-											optimisticStatus === 'published'
-												? 'bg-emerald-500'
-												: 'bg-muted-foreground/40',
-										)}
-									/>
-									{optimisticStatus === 'published' ? (
-										<Trans>Published</Trans>
-									) : (
-										<Trans>Draft</Trans>
-									)}
-								</div>
-
 								<GlobalAIToggle />
 
 								<Button
-									size="sm"
 									onClick={handlePublish}
 									disabled={publishFetcher.state !== 'idle'}
 								>
@@ -5957,7 +5936,14 @@ export default function PageBuilderRoute() {
 									) : optimisticStatus === 'draft' ? (
 										<Trans>Publish</Trans>
 									) : (
-										<Trans>Publish updates</Trans>
+										<>
+											<span className="sm:hidden">
+												<Trans>Update</Trans>
+											</span>
+											<span className="hidden sm:inline">
+												<Trans>Publish updates</Trans>
+											</span>
+										</>
 									)}
 								</Button>
 

@@ -340,7 +340,7 @@ test.describe('Mobile Responsiveness', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu modal
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('ControlOrMeta+k')
 
 		// Verify modal is properly sized for mobile
 		const dialog = page.getByRole('dialog')

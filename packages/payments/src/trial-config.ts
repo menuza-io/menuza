@@ -3,8 +3,8 @@
  * Centralizes trial-related environment variable handling
  */
 
-import { type TrialConfig } from './types'
 import { ENV } from './package-env.js'
+import { type TrialConfig } from './types'
 
 export function getTrialConfig(): TrialConfig {
 	const trialDays = parseInt(String(ENV.TRIAL_DAYS ?? '14'), 10)

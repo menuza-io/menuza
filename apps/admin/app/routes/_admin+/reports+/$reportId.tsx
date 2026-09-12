@@ -2,7 +2,6 @@ import { requireUserWithRole } from '@repo/auth'
 import { getCatalog } from '@repo/reports'
 import {
 	getSavedReport,
-	listSavedReports,
 	parseDefinition,
 	saveReport,
 } from '@repo/reports/server'
@@ -19,16 +18,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	if (!report) {
 		throw new Response('Not Found', { status: 404 })
 	}
-	const saved = await listSavedReports({ scope: 'platform' })
 	return {
 		catalog: getCatalog('platform'),
 		definition: parseDefinition(report.definition),
-		savedReports: saved.map((item) => ({
-			id: item.id,
-			title: item.title,
-			updatedAt: item.updatedAt.toISOString(),
-			subject: parseDefinition(item.definition).subject,
-		})),
 	}
 }
 
@@ -59,7 +51,6 @@ export default function AdminSavedReportRoute() {
 				initialDefinition={data.definition}
 				controlPlaneRunUrl="/reports/run"
 				backHref="/reports"
-				savedReports={data.savedReports}
 			/>
 		</div>
 	)

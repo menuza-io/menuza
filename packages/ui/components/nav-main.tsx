@@ -147,9 +147,9 @@ export function NavMain({
 													handleMenuItemMouseLeave(item.title)
 												}
 											>
-												<div className="flex min-w-0 items-center gap-3">
+												<div className="flex min-w-0 items-center gap-2">
 													{item.icon && (
-														<span className="flex size-7 shrink-0 items-center justify-center group-data-[collapsible=icon]:size-4">
+														<span className="flex shrink-0 items-center justify-center group-data-[collapsible=icon]:size-4">
 															<item.icon
 																ref={(ref: any) =>
 																	(iconRefs.current[item.title] = ref)
@@ -186,9 +186,9 @@ export function NavMain({
 								) : (
 									<SidebarMenuButton
 										render={
-											<Link to={item.url} className="flex items-center gap-3">
+											<Link to={item.url} className="flex items-center">
 												{item.icon && (
-													<span className="flex size-7 shrink-0 items-center justify-center group-data-[collapsible=icon]:size-4">
+													<span className="flex shrink-0 items-center justify-center group-data-[collapsible=icon]:size-4">
 														<item.icon
 															ref={(ref: any) =>
 																(iconRefs.current[item.title] = ref)

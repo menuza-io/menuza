@@ -1,7 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import { templatesFor } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
-import { ReportLibrary, ReportStart } from '@repo/reports/ui'
+import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { type Route } from './+types/_index.ts'
@@ -35,20 +35,12 @@ export default function ReportsIndex() {
 	const basePath = `/${data.orgSlug}/reports`
 
 	return (
-		<div className="-mx-4 flex flex-col gap-6 md:-mx-2 lg:flex-row lg:items-stretch">
-			<ReportLibrary
-				scope="organization"
-				templates={data.templates}
-				savedReports={data.savedReports}
-				basePath={basePath}
-			/>
-			<ReportStart
-				heading="Analytics & Reports"
-				description={`Build a segmentation report for ${data.organizationName}. Customer and shop order counts run in the org data region from the browser and never pass through the US control plane.`}
-				templates={data.templates}
-				savedReports={data.savedReports}
-				basePath={basePath}
-			/>
-		</div>
+		<ReportStart
+			heading="Analytics & Reports"
+			description={`Build a segmentation report for ${data.organizationName}. Customer and shop order counts run in the org data region from the browser and never pass through the US control plane.`}
+			templates={data.templates}
+			savedReports={data.savedReports}
+			basePath={basePath}
+		/>
 	)
 }

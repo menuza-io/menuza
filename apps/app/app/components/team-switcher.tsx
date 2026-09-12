@@ -46,7 +46,7 @@ function OrganizationAvatar({
 	return (
 		<Avatar
 			className={cn(
-				'size-7 shrink-0 rounded-md group-data-[collapsible=icon]:size-6 after:rounded-md',
+				'size-7 shrink-0 rounded-[4px] group-data-[collapsible=icon]:border-0 after:rounded-[4px]',
 				className,
 			)}
 		>
@@ -57,7 +57,7 @@ function OrganizationAvatar({
 					className="rounded-md object-cover"
 				/>
 			) : null}
-			<AvatarFallback className="bg-sidebar-accent text-sidebar-foreground rounded-md text-xs font-medium">
+			<AvatarFallback className="bg-sidebar-accent text-sidebar-foreground rounded-[4px] text-xs font-medium">
 				{organization.name.slice(0, 2).toUpperCase()}
 			</AvatarFallback>
 		</Avatar>
@@ -118,7 +118,7 @@ export function TeamSwitcher() {
 							<SidebarMenuButton
 								size="lg"
 								tooltip={activeTeam.name}
-								className="group/org h-12 gap-3 px-2 transition-colors duration-150 ease-out group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 motion-reduce:transition-none"
+								className="group/org bg-background h-12 gap-3 rounded-[8px] border px-2 shadow-xs group-data-[collapsible=icon]:ml-0.5 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
 							>
 								<OrganizationAvatar organization={activeTeam} />
 								<div className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden ltr:text-left rtl:text-right">
@@ -163,7 +163,7 @@ export function TeamSwitcher() {
 											handleOrganizationSelect(userOrg.organization.id)
 											if (isMobile) toggleSidebar()
 										}}
-										className="gap-2 px-1.5 py-1.5"
+										className="gap-2 rounded-[8px] px-1.5 py-1.5"
 									>
 										<OrganizationAvatar
 											organization={userOrg.organization}
@@ -188,7 +188,7 @@ export function TeamSwitcher() {
 								)
 							})}
 							<DropdownMenuItem
-								className="gap-2 px-1.5 py-1.5"
+								className="gap-2 px-1.5 py-0.5"
 								onClick={() => isMobile && toggleSidebar()}
 								render={
 									<Link
@@ -207,7 +207,7 @@ export function TeamSwitcher() {
 							></DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
-								className="gap-2 px-1.5 py-1.5"
+								className="gap-2 px-1.5 py-0.5"
 								render={
 									<Link
 										to="/organizations/create"

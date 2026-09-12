@@ -1,10 +1,47 @@
 import { Trans } from '@lingui/macro'
 import { cn } from '@repo/ui'
 import { Icon } from '@repo/ui/icon'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 /** Width the email is authored at; scaled down to fit narrower preview panes. */
 const EMAIL_PREVIEW_WIDTH = 600
+
+/**
+ * The application CSP intentionally limits iframe images to the app origin.
+ * Keep that policy intact and route only external preview images through the
+ * existing same-origin image proxy. This is preview-only; sent email HTML is
+ * never rewritten.
+ */
+function rewriteExternalImageSources(html: string) {
+	if (typeof DOMParser === 'undefined') return html
+
+	const parsedDoc = new DOMParser().parseFromString(html, 'text/html')
+	for (const image of parsedDoc.images) {
+		const source = image.getAttribute('src')
+		if (!source) continue
+
+		let sourceUrl: URL
+		try {
+			sourceUrl = new URL(source, window.location.href)
+		} catch {
+			continue
+		}
+
+		if (
+			(sourceUrl.protocol !== 'http:' && sourceUrl.protocol !== 'https:') ||
+			sourceUrl.origin === window.location.origin
+		) {
+			continue
+		}
+
+		image.src = `/resources/images?src=${encodeURIComponent(sourceUrl.href)}`
+	}
+
+	const doctype = parsedDoc.doctype
+		? `<!DOCTYPE ${parsedDoc.doctype.name}>\n`
+		: ''
+	return `${doctype}${parsedDoc.documentElement.outerHTML}`
+}
 
 export type EmailPreviewProps = {
 	html: string
@@ -35,6 +72,7 @@ export function EmailPreview({
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [scale, setScale] = useState(1)
 	const [contentHeight, setContentHeight] = useState(480)
+	const previewHtml = useMemo(() => rewriteExternalImageSources(html), [html])
 
 	const setContainerRef = useCallback((element: HTMLDivElement | null) => {
 		if (!element) return
@@ -78,12 +116,12 @@ export function EmailPreview({
 
 	const surface = (
 		<div ref={setContainerRef} className="w-full overflow-hidden">
-			{html ? (
+			{previewHtml ? (
 				<div style={{ height: contentHeight * scale }}>
 					<iframe
 						ref={iframeRef}
 						title="Email preview"
-						srcDoc={html}
+						srcDoc={previewHtml}
 						onLoad={handleLoad}
 						sandbox="allow-same-origin"
 						className="border-0"
