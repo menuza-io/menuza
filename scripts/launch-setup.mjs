@@ -486,7 +486,18 @@ function ensureR2Bucket(name) {
 	try {
 		runWrangler(['r2', 'bucket', 'info', name], rootDir)
 		log(`  ✓ R2 bucket already exists: ${name}`, 'gray')
-	} catch {
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		const isMissing =
+			message.includes('not found') ||
+			message.includes('does not exist') ||
+			message.includes('10006') ||
+			message.includes('10020') ||
+			/bucket.*not found/i.test(message) ||
+			/not exist/i.test(message)
+		if (!isMissing) {
+			throw error
+		}
 		runWrangler(['r2', 'bucket', 'create', name], rootDir)
 		log(`  ✓ Created R2 bucket: ${name}`, 'gray')
 	}

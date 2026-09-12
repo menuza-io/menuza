@@ -5168,6 +5168,7 @@ export default function PageBuilderRoute() {
 			window.removeEventListener('epic-preview-theme-change', handleThemeChange)
 	}, [])
 	const params = useParams()
+	const titleFetcher = useFetcher()
 	const sectionFetcher = useFetcher()
 	const pageSettingsFetcher = useFetcher<{
 		status: string
@@ -5331,6 +5332,24 @@ export default function PageBuilderRoute() {
 		setIframeKey(Date.now())
 	}, [])
 	const [createPageOpen, setCreatePageOpen] = useState(false)
+	const [editingTitle, setEditingTitle] = useState(false)
+	const [titleValue, setTitleValue] = useState(page.title)
+
+	// Reset title when page data changes
+	useEffect(() => {
+		setTitleValue(page.title)
+	}, [page.title])
+
+	const handleSaveTitle = useCallback(() => {
+		if (titleValue.trim() && titleValue !== page.title) {
+			void titleFetcher.submit(
+				{ intent: updateTitleIntent, title: titleValue.trim() },
+				{ method: 'POST' },
+			)
+		}
+		setEditingTitle(false)
+	}, [titleValue, page.title, titleFetcher])
+
 	const selectedSection = useMemo(
 		() => page.sections.find((s) => s.id === selectedSectionId) ?? null,
 		[page.sections, selectedSectionId],
@@ -5766,78 +5785,97 @@ export default function PageBuilderRoute() {
 									aria-hidden
 								/>
 
-								<div className="min-w-0 flex-1">
-									<DropdownMenu>
-										<DropdownMenuTrigger
-											render={
-												<Button
-													variant="ghost"
-													size="sm"
-													className="w-full max-w-52 min-w-0 gap-1 px-1.5 font-medium"
-													aria-label="Page menu"
-												>
-													<span
-														className={cn(
-															'size-1.5 shrink-0 rounded-full',
-															optimisticStatus === 'published'
-																? 'bg-emerald-500'
-																: 'bg-muted-foreground/40',
-														)}
-														aria-hidden
-													/>
-													<span className="truncate" title={displayTitle}>
-														{displayTitle}
-													</span>
-													<span className="sr-only">
-														{optimisticStatus === 'published' ? (
-															<Trans>Published</Trans>
-														) : (
-															<Trans>Draft</Trans>
-														)}
-													</span>
-													<Icon
-														name="chevron-down"
-														className="text-muted-foreground size-3.5 shrink-0"
-													/>
-												</Button>
+								{editingTitle ? (
+									<LocalizedInput
+										value={titleValue}
+										onChange={(val) => setTitleValue(val)}
+										onBlur={handleSaveTitle}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') handleSaveTitle()
+											if (e.key === 'Escape') {
+												setTitleValue(page.title)
+												setEditingTitle(false)
 											}
-										/>
-										<DropdownMenuContent align="start" className="w-56">
-											<div className="max-h-75 overflow-y-auto">
-												{linkPages.map((p) => (
-													<DropdownMenuItem
-														key={p.id}
-														render={
-															<Link
-																to={`/${params.orgSlug}/website/pages/${p.id}`}
-																className="flex w-full items-center"
-															>
-																<span className="flex-1 truncate">
-																	{p.title}
-																</span>
-																{p.isHomePage && (
-																	<Badge
-																		variant="outline"
-																		className="ml-2 h-4 shrink-0 px-1 text-[10px]"
-																	>
-																		<Trans>Home</Trans>
-																	</Badge>
-																)}
-															</Link>
-														}
-													/>
-												))}
-											</div>
-											<DropdownMenuSeparator />
-											<DropdownMenuItem
-												onSelect={() => setCreatePageOpen(true)}
-											>
-												<Icon name="plus" className="mr-2 size-4" />
-												<Trans>Add new page</Trans>
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</div>
+										}}
+										className="h-7 max-w-56 text-sm font-medium"
+										autoFocus
+									/>
+								) : (
+									<div className="flex min-w-0 items-center gap-1">
+										<button
+											type="button"
+											className="hover:bg-muted focus-visible:ring-ring flex max-w-52 min-w-0 items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+											onClick={() => setEditingTitle(true)}
+											title={displayTitle}
+										>
+											<span
+												className={cn(
+													'size-1.5 shrink-0 rounded-full',
+													optimisticStatus === 'published'
+														? 'bg-emerald-500'
+														: 'bg-muted-foreground/40',
+												)}
+												aria-hidden
+											/>
+											<span className="truncate">{displayTitle}</span>
+											<span className="sr-only">
+												{optimisticStatus === 'published' ? (
+													<Trans>Published</Trans>
+												) : (
+													<Trans>Draft</Trans>
+												)}
+											</span>
+										</button>
+										<DropdownMenu>
+											<DropdownMenuTrigger
+												render={
+													<Button
+														variant="ghost"
+														size="icon-xs"
+														className="text-muted-foreground hover:text-foreground shrink-0"
+														aria-label="Page menu"
+													>
+														<Icon name="chevron-down" className="size-3.5" />
+													</Button>
+												}
+											/>
+											<DropdownMenuContent align="start" className="w-56">
+												<div className="max-h-75 overflow-y-auto">
+													{linkPages.map((p) => (
+														<DropdownMenuItem
+															key={p.id}
+															render={
+																<Link
+																	to={`/${params.orgSlug}/website/pages/${p.id}`}
+																	className="flex w-full items-center"
+																>
+																	<span className="flex-1 truncate">
+																		{p.title}
+																	</span>
+																	{p.isHomePage && (
+																		<Badge
+																			variant="outline"
+																			className="ml-2 h-4 shrink-0 px-1 text-[10px]"
+																		>
+																			<Trans>Home</Trans>
+																		</Badge>
+																	)}
+																</Link>
+															}
+														/>
+													))}
+												</div>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem
+													onSelect={() => setCreatePageOpen(true)}
+												>
+													<Icon name="plus" className="mr-2 size-4" />
+													<Trans>Add new page</Trans>
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+								)}
 
 								{page.isHomePage ? (
 									<Badge variant="outline" className="hidden sm:inline-flex">

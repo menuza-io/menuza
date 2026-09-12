@@ -10,7 +10,6 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { type CampaignChannel } from '../types/campaign.ts'
-import { MergeTagField } from './email/merge-tag-field.tsx'
 
 export interface CampaignFormProps {
 	error?: string | null
@@ -128,18 +127,16 @@ export function CampaignForm({
 							)}
 						</div>
 						{channel === 'sms' ? (
-							<>
-								<input type="hidden" name="content" value={smsContent} />
-								<MergeTagField
-									id="content"
-									value={smsContent}
-									onChange={(value) => setSmsContent(value.slice(0, 1600))}
-									multiline
-									rows={6}
-									placeholder={_(msg`Write your text message`)}
-									className="min-h-45 resize-y"
-								/>
-							</>
+							<Textarea
+								id="content"
+								name="content"
+								value={smsContent}
+								onChange={(e) => setSmsContent(e.target.value.slice(0, 1600))}
+								maxLength={1600}
+								placeholder={_(msg`Write your text message`)}
+								className="min-h-45 resize-y"
+								required
+							/>
 						) : (
 							<Textarea
 								id="content"

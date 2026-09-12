@@ -61,7 +61,7 @@ test.describe('Reports & Analytics Workspace', () => {
 			page.getByRole('heading', { name: /notes by status/i }),
 		).toBeVisible()
 		await expect(
-			page.getByRole('button', { name: /open assistant/i }),
+			page.getByRole('button', { name: /open assistant/i }).first(),
 		).toBeVisible()
 
 		// Click "Save Report"

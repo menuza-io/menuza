@@ -192,6 +192,8 @@ function OrganizationSidebar({
 	onFeedbackClick,
 	extensionId,
 	docsUrl,
+	commandOpen,
+	setCommandOpen,
 }: {
 	user: any
 	location: any
@@ -206,14 +208,13 @@ function OrganizationSidebar({
 	onFeedbackClick: () => void
 	extensionId?: string
 	docsUrl?: string | null
+	commandOpen: boolean
+	setCommandOpen: (open: boolean) => void
 }) {
 	const { _ } = useLingui()
 	const goToHomepageLabel = _(msg`Go to homepage`)
 	const searchNotesLabel = _(msg`Search notes`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
-	const [commandOpen, setCommandOpen] = useState(false)
-
-	useGlobalHotkeys(setCommandOpen)
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -510,7 +511,6 @@ function OrganizationSidebar({
 					userPreference={rootData?.requestInfo?.userPrefs?.theme}
 				/>
 			</SidebarFooter>
-			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 		</>
 	)
 }
@@ -529,7 +529,10 @@ export function AppSidebar({
 	const location = useLocation()
 	const [, setHasVisibleFeatureUpdates] = React.useState(true)
 	const [isFeedbackModalOpen, setIsFeedbackModalOpen] = React.useState(false)
+	const [commandOpen, setCommandOpen] = React.useState(false)
 	const direction = useDirection()
+
+	useGlobalHotkeys(setCommandOpen)
 
 	const orgSlug =
 		rootData?.userOrganizations?.currentOrganization?.organization.slug
@@ -561,81 +564,86 @@ export function AppSidebar({
 			}
 
 	return (
-		<Sidebar
-			side={direction === 'rtl' ? 'right' : 'left'}
-			collapsible="icon"
-			{...props}
-			className="overflow-hidden"
-		>
-			<FeedbackModal
-				isOpen={isFeedbackModalOpen}
-				onOpenChange={setIsFeedbackModalOpen}
-			/>
-			<div className="relative h-full">
-				{/* Account Sidebar */}
-				<motion.div
-					initial={{
-						x: isAccountRoute ? 0 : -300,
-						opacity: isAccountRoute ? 1 : 0,
-					}}
-					animate={{
-						x: isAccountRoute ? 0 : -300,
-						opacity: isAccountRoute ? 1 : 0,
-					}}
-					transition={{
-						duration: 0.4,
-						ease: [0.4, 0, 0.2, 1],
-						opacity: { duration: 0.3 },
-					}}
-					className="absolute inset-0 flex h-full flex-col"
-					style={{ pointerEvents: isAccountRoute ? 'auto' : 'none' }}
-					inert={!isAccountRoute ? true : undefined}
-				>
-					<AccountSidebar
-						user={userData}
-						location={location}
-						orgSlug={orgSlug}
-						docsUrl={rootData?.docsUrl}
-						onFeedbackClick={() => setIsFeedbackModalOpen(true)}
-					/>
-				</motion.div>
+		<>
+			<Sidebar
+				side={direction === 'rtl' ? 'right' : 'left'}
+				collapsible="icon"
+				{...props}
+				className="overflow-hidden"
+			>
+				<FeedbackModal
+					isOpen={isFeedbackModalOpen}
+					onOpenChange={setIsFeedbackModalOpen}
+				/>
+				<div className="relative h-full">
+					{/* Account Sidebar */}
+					<motion.div
+						initial={{
+							x: isAccountRoute ? 0 : -300,
+							opacity: isAccountRoute ? 1 : 0,
+						}}
+						animate={{
+							x: isAccountRoute ? 0 : -300,
+							opacity: isAccountRoute ? 1 : 0,
+						}}
+						transition={{
+							duration: 0.4,
+							ease: [0.4, 0, 0.2, 1],
+							opacity: { duration: 0.3 },
+						}}
+						className="absolute inset-0 flex h-full flex-col"
+						style={{ pointerEvents: isAccountRoute ? 'auto' : 'none' }}
+						inert={!isAccountRoute ? true : undefined}
+					>
+						<AccountSidebar
+							user={userData}
+							location={location}
+							orgSlug={orgSlug}
+							docsUrl={rootData?.docsUrl}
+							onFeedbackClick={() => setIsFeedbackModalOpen(true)}
+						/>
+					</motion.div>
 
-				{/* Organization Sidebar */}
-				<motion.div
-					initial={{
-						x: !isAccountRoute ? 0 : 300,
-						opacity: !isAccountRoute ? 1 : 0,
-					}}
-					animate={{
-						x: !isAccountRoute ? 0 : 300,
-						opacity: !isAccountRoute ? 1 : 0,
-					}}
-					transition={{
-						duration: 0.4,
-						ease: [0.4, 0, 0.2, 1],
-						opacity: { duration: 0.3 },
-					}}
-					className="absolute inset-0 flex h-full flex-col"
-					style={{ pointerEvents: !isAccountRoute ? 'auto' : 'none' }}
-					inert={isAccountRoute ? true : undefined}
-				>
-					<OrganizationSidebar
-						user={userData}
-						location={location}
-						onboardingProgress={onboardingProgress}
-						orgSlug={orgSlug}
-						organizationId={organizationId}
-						homePageId={homePageId}
-						favoriteNotes={rootData?.favoriteNotes}
-						setHasVisibleFeatureUpdates={setHasVisibleFeatureUpdates}
-						trialStatus={trialStatus}
-						rootData={rootData}
-						onFeedbackClick={() => setIsFeedbackModalOpen(true)}
-						extensionId={extensionId}
-						docsUrl={rootData?.docsUrl}
-					/>
-				</motion.div>
-			</div>
-		</Sidebar>
+					{/* Organization Sidebar */}
+					<motion.div
+						initial={{
+							x: !isAccountRoute ? 0 : 300,
+							opacity: !isAccountRoute ? 1 : 0,
+						}}
+						animate={{
+							x: !isAccountRoute ? 0 : 300,
+							opacity: !isAccountRoute ? 1 : 0,
+						}}
+						transition={{
+							duration: 0.4,
+							ease: [0.4, 0, 0.2, 1],
+							opacity: { duration: 0.3 },
+						}}
+						className="absolute inset-0 flex h-full flex-col"
+						style={{ pointerEvents: !isAccountRoute ? 'auto' : 'none' }}
+						inert={isAccountRoute ? true : undefined}
+					>
+						<OrganizationSidebar
+							user={userData}
+							location={location}
+							onboardingProgress={onboardingProgress}
+							orgSlug={orgSlug}
+							organizationId={organizationId}
+							homePageId={homePageId}
+							favoriteNotes={rootData?.favoriteNotes}
+							setHasVisibleFeatureUpdates={setHasVisibleFeatureUpdates}
+							trialStatus={trialStatus}
+							rootData={rootData}
+							onFeedbackClick={() => setIsFeedbackModalOpen(true)}
+							extensionId={extensionId}
+							docsUrl={rootData?.docsUrl}
+							commandOpen={commandOpen}
+							setCommandOpen={setCommandOpen}
+						/>
+					</motion.div>
+				</div>
+			</Sidebar>
+			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
+		</>
 	)
 }

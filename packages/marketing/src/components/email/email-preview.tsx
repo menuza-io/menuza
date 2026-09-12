@@ -15,8 +15,8 @@ const EMAIL_PREVIEW_WIDTH = 600
 function rewriteExternalImageSources(html: string) {
 	if (typeof DOMParser === 'undefined') return html
 
-	const document = new DOMParser().parseFromString(html, 'text/html')
-	for (const image of document.images) {
+	const parsedDoc = new DOMParser().parseFromString(html, 'text/html')
+	for (const image of parsedDoc.images) {
 		const source = image.getAttribute('src')
 		if (!source) continue
 
@@ -37,7 +37,10 @@ function rewriteExternalImageSources(html: string) {
 		image.src = `/resources/images?src=${encodeURIComponent(sourceUrl.href)}`
 	}
 
-	return document.documentElement.outerHTML
+	const doctype = parsedDoc.doctype
+		? `<!DOCTYPE ${parsedDoc.doctype.name}>\n`
+		: ''
+	return `${doctype}${parsedDoc.documentElement.outerHTML}`
 }
 
 export type EmailPreviewProps = {

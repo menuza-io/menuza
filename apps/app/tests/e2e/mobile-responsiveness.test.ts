@@ -340,10 +340,16 @@ test.describe('Mobile Responsiveness', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu modal
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('ControlOrMeta+k')
+		const dialog = page.getByRole('dialog')
+		if (!(await dialog.isVisible().catch(() => false))) {
+			await page.keyboard.press('Control+k')
+		}
+		if (!(await dialog.isVisible().catch(() => false))) {
+			await page.keyboard.press('Meta+k')
+		}
 
 		// Verify modal is properly sized for mobile
-		const dialog = page.getByRole('dialog')
 		await expect(dialog).toBeVisible()
 
 		const dialogBox = await dialog.boundingBox()
