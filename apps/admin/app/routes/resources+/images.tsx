@@ -14,6 +14,54 @@ const ALLOWED_RASTER_MIME_TYPES = new Set([
 	'image/avif',
 ])
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024 // 10MB
+
+function isValidRasterBytes(buffer: ArrayBuffer): boolean {
+	const bytes = new Uint8Array(buffer.slice(0, 16))
+	if (bytes.length < 4) return false
+	// JPEG: FF D8 FF
+	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true
+	// PNG: 89 50 4E 47 0D 0A 1A 0A
+	if (
+		bytes[0] === 0x89 &&
+		bytes[1] === 0x50 &&
+		bytes[2] === 0x4e &&
+		bytes[3] === 0x47
+	)
+		return true
+	// GIF: GIF87a or GIF89a (47 49 46 38)
+	if (
+		bytes[0] === 0x47 &&
+		bytes[1] === 0x49 &&
+		bytes[2] === 0x46 &&
+		bytes[3] === 0x38
+	)
+		return true
+	// WebP: RIFF....WEBP (52 49 46 46 .... 57 45 42 50)
+	if (
+		bytes.length >= 12 &&
+		bytes[0] === 0x52 &&
+		bytes[1] === 0x49 &&
+		bytes[2] === 0x46 &&
+		bytes[3] === 0x46 &&
+		bytes[8] === 0x57 &&
+		bytes[9] === 0x45 &&
+		bytes[10] === 0x42 &&
+		bytes[11] === 0x50
+	)
+		return true
+	// AVIF: ....ftypavif or ....ftypavis
+	if (
+		bytes.length >= 12 &&
+		bytes[4] === 0x66 &&
+		bytes[5] === 0x74 &&
+		bytes[6] === 0x79 &&
+		bytes[7] === 0x70
+	)
+		return true
+	return false
+}
+
 let cacheDir: string | 'no_cache' | null = null
 
 async function fetchExternalImage(request: Request) {
@@ -30,10 +78,26 @@ async function fetchExternalImage(request: Request) {
 		},
 	)
 
-	const upstream = await ssrfSafeFetch(sourceUrl)
+	const upstream = await ssrfSafeFetch(sourceUrl, {
+		signal: AbortSignal.timeout(10_000),
+	})
 	const rawContentType = upstream.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
 	if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+
+	const contentLength = upstream.headers.get('content-length')
+	if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+		throw new Response('Payload Too Large', { status: 413 })
+	}
+
+	const arrayBuffer = await upstream.arrayBuffer()
+	if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+		throw new Response('Payload Too Large', { status: 413 })
+	}
+
+	if (!isValidRasterBytes(arrayBuffer)) {
 		throw new Response('Unsupported Media Type', { status: 415 })
 	}
 
@@ -43,7 +107,7 @@ async function fetchExternalImage(request: Request) {
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
 	headers.set('Content-Type', mimeType)
 
-	return new Response(upstream.body, {
+	return new Response(arrayBuffer, {
 		status: upstream.status,
 		headers,
 	})
@@ -133,17 +197,40 @@ async function getCloudflareImageResponse(request: Request) {
 
 	const imageResponse = await fetch(imageUrl, {
 		headers: fetchHeaders,
+		redirect: 'error',
+		signal: AbortSignal.timeout(10_000),
 	})
 
 	if (!imageResponse.ok) {
 		throw new Response('Not Found', { status: 404 })
 	}
 
+	if (isExternal) {
+		const contentLength = imageResponse.headers.get('content-length')
+		if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+			throw new Response('Payload Too Large', { status: 413 })
+		}
+		const arrayBuffer = await imageResponse.arrayBuffer()
+		if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+			throw new Response('Payload Too Large', { status: 413 })
+		}
+		if (!isValidRasterBytes(arrayBuffer)) {
+			throw new Response('Unsupported Media Type', { status: 415 })
+		}
+		const rawContentType = imageResponse.headers.get('content-type')
+		const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+		if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+			throw new Response('Unsupported Media Type', { status: 415 })
+		}
+		headers.set('Content-Type', mimeType)
+		return new Response(arrayBuffer, {
+			headers,
+			status: imageResponse.status,
+		})
+	}
+
 	const rawContentType = imageResponse.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
-	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
-		throw new Response('Unsupported Media Type', { status: 415 })
-	}
 	if (mimeType) {
 		headers.set('Content-Type', mimeType)
 	}

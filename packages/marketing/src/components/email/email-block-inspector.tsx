@@ -47,17 +47,25 @@ function Segmented<T extends string>({
 	value,
 	options,
 	onChange,
+	'aria-label': ariaLabel,
 }: {
 	value: T
 	options: Array<{ value: T; label: ReactNode }>
 	onChange: (value: T) => void
+	'aria-label'?: string
 }) {
 	return (
-		<div className="border-border inline-flex rounded-lg border p-0.5">
+		<div
+			role="radiogroup"
+			aria-label={ariaLabel}
+			className="border-border inline-flex rounded-lg border p-0.5"
+		>
 			{options.map((option) => (
 				<button
 					key={option.value}
 					type="button"
+					role="radio"
+					aria-checked={value === option.value}
 					onClick={() => onChange(option.value)}
 					className={cn(
 						'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
@@ -154,6 +162,7 @@ export function EmailBlockInspector({
 							</Field>
 							<Field label={<Trans>Size</Trans>}>
 								<Segmented<EmailHeadingLevel>
+									aria-label={_(msg`Size`)}
 									value={block.config.level}
 									options={EMAIL_HEADING_LEVELS.map((level) => ({
 										value: level,
@@ -164,6 +173,7 @@ export function EmailBlockInspector({
 							</Field>
 							<Field label={<Trans>Alignment</Trans>}>
 								<Segmented<EmailBlockAlignment>
+									aria-label={_(msg`Alignment`)}
 									value={block.config.align}
 									options={alignOptions}
 									onChange={(align) => onUpdate({ align })}
@@ -278,6 +288,7 @@ export function EmailBlockInspector({
 							</Field>
 							<Field label={<Trans>Style</Trans>}>
 								<Segmented<EmailButtonVariant>
+									aria-label={_(msg`Style`)}
 									value={block.config.variant}
 									options={BUTTON_VARIANT_OPTIONS.map((option) => ({
 										value: option.value,
@@ -288,6 +299,7 @@ export function EmailBlockInspector({
 							</Field>
 							<Field label={<Trans>Width</Trans>}>
 								<Segmented<EmailButtonWidth>
+									aria-label={_(msg`Width`)}
 									value={block.config.width}
 									options={BUTTON_WIDTH_OPTIONS.map((option) => ({
 										value: option.value,

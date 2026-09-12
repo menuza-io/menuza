@@ -42,6 +42,7 @@ export function PhotoCropForm({
 	const [crop, setCrop] = useState<Crop>()
 	const internalFileInputRef = useRef<HTMLInputElement>(null)
 	const imgRef = useRef<HTMLImageElement | null>(null)
+	const cropVersionRef = useRef(0)
 
 	const { actionIntent, circularCrop = false, defaultCroppedFilename } = config
 
@@ -75,9 +76,12 @@ export function PhotoCropForm({
 	// Handle crop complete and automatically apply crop
 	async function onCropComplete(crop: PixelCrop) {
 		if (imgRef.current && crop.width && crop.height) {
+			const currentVersion = ++cropVersionRef.current
 			try {
 				const blob = await getCroppedImageBlob(imgRef.current, crop)
-				applyCrop(blob)
+				if (currentVersion === cropVersionRef.current) {
+					applyCrop(blob)
+				}
 			} catch (error) {
 				console.error('Error applying crop:', error)
 			}

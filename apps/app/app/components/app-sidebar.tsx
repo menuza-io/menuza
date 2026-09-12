@@ -215,6 +215,17 @@ function OrganizationSidebar({
 	const goToHomepageLabel = _(msg`Go to homepage`)
 	const searchNotesLabel = _(msg`Search notes`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
+	const [isMac, setIsMac] = useState(true)
+
+	useEffect(() => {
+		if (typeof navigator !== 'undefined') {
+			setIsMac(
+				/Mac|iPod|iPhone|iPad/i.test(
+					navigator.userAgent || navigator.platform || '',
+				),
+			)
+		}
+	}, [])
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -459,7 +470,7 @@ function OrganizationSidebar({
 						<Trans>Search notes...</Trans>
 					</span>
 					<Kbd className="absolute top-[0.3rem] right-[0.3rem] group-data-[collapsible=icon]:hidden">
-						<span className="text-xs">⌘</span>K
+						<span className="text-xs">{isMac ? '⌘' : 'Ctrl+'}</span>K
 					</Kbd>
 				</SidebarMenuButton>
 				<TeamSwitcher />

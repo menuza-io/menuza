@@ -37,6 +37,17 @@ interface NodeInspectorProps {
 	className?: string
 }
 
+function truncateSmsMergeTags(text: string, maxLength = 1600): string {
+	if (text.length <= maxLength) return text
+	let sliced = text.slice(0, maxLength)
+	const lastOpen = sliced.lastIndexOf('{{')
+	const lastClose = sliced.lastIndexOf('}}')
+	if (lastOpen !== -1 && (lastClose === -1 || lastClose < lastOpen)) {
+		sliced = sliced.slice(0, lastOpen)
+	}
+	return sliced
+}
+
 export function NodeInspector({
 	node,
 	onUpdateNodeData,
@@ -401,7 +412,10 @@ export function NodeInspector({
 									)}
 									value={data.messageText || ''}
 									onChange={(value) =>
-										handleChange('messageText', value.slice(0, 1600))
+										handleChange(
+											'messageText',
+											truncateSmsMergeTags(value, 1600),
+										)
 									}
 									className="text-xs"
 								/>
