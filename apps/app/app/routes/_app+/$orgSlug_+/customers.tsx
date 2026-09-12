@@ -421,7 +421,7 @@ export default function CustomersRoute() {
 				description="Search, filter, and update customer contact details."
 			/>
 
-			<div className="mt-8 space-y-6">
+			<div className="mt-8 space-y-4">
 				<Filters
 					fields={CUSTOMER_FILTER_FIELDS}
 					query={filterQuery}

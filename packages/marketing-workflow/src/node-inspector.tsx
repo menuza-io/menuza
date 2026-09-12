@@ -78,11 +78,6 @@ export function NodeInspector({
 		})
 	}
 
-	const insertMergeTag = (fieldKey: string, tag: string) => {
-		const currentVal = data[fieldKey] || ''
-		handleChange(fieldKey, `${currentVal} ${tag}`.trim())
-	}
-
 	const nodeTypeLabel = node.type?.replaceAll('_', ' ') ?? ''
 
 	return (
@@ -379,32 +374,6 @@ export function NodeInspector({
 
 					{node.type === 'action_sms' && (
 						<div className="space-y-4">
-							<div className="space-y-1">
-								<span className="text-muted-foreground text-[11px] font-semibold">
-									<Trans>Insert Merge Tags:</Trans>
-								</span>
-								<div className="flex flex-wrap gap-1.5">
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										className="h-6 px-2 font-mono text-[11px]"
-										onClick={() => insertMergeTag('messageText', '{{name}}')}
-									>
-										+ {'{{name}}'}
-									</Button>
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										className="h-6 px-2 font-mono text-[11px]"
-										onClick={() => insertMergeTag('messageText', '{{phone}}')}
-									>
-										+ {'{{phone}}'}
-									</Button>
-								</div>
-							</div>
-
 							<div className="space-y-1.5">
 								<div className="flex items-center justify-between">
 									<Label htmlFor="messageText" className="text-xs font-medium">
@@ -423,16 +392,18 @@ export function NodeInspector({
 										<Trans>{data.messageText?.length || 0} / 1600 chars</Trans>
 									</span>
 								</div>
-								<Textarea
+								<MergeTagField
 									id="messageText"
+									multiline
 									rows={5}
 									placeholder={_(
 										msg`Hi {{name}}, your order has been confirmed!`,
 									)}
 									value={data.messageText || ''}
-									onChange={(e) => handleChange('messageText', e.target.value)}
+									onChange={(value) =>
+										handleChange('messageText', value.slice(0, 1600))
+									}
 									className="text-xs"
-									maxLength={1600}
 								/>
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>

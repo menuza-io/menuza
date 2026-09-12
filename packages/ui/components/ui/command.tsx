@@ -76,7 +76,7 @@ function CommandInput({
 					{...props}
 				/>
 				<InputGroupAddon>
-					<Icon name="search" className="size-4 shrink-0 opacity-50" />
+					<Icon name="search" className="size-4 shrink-0" />
 				</InputGroupAddon>
 			</InputGroup>
 		</div>

@@ -184,7 +184,7 @@ export default function MarketingOverview() {
 										{loading ? (
 											<Skeleton className="mt-1 h-7 w-16" />
 										) : (
-											<p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
+											<p className="mt-1 text-2xl tracking-tight tabular-nums">
 												{item.format(metrics)}
 											</p>
 										)}

@@ -202,6 +202,7 @@ function IntegrationCard({
 					className="flex w-full items-center justify-between text-xs text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
 				>
 					<span className="flex items-center gap-1.5">
+						<Icon name="book-open" className="h-4 w-4" />
 						<Trans>Read documentation</Trans>
 					</span>
 					<Icon name="chevron-right" />

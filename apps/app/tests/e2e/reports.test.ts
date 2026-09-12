@@ -19,11 +19,11 @@ test.describe('Reports & Analytics Workspace', () => {
 			page.getByRole('heading', { name: /^analytics & reports$/i }),
 		).toBeVisible()
 
-		// Verify sidebar Report Builder
-		await expect(page.getByText('Report Builder')).toBeVisible()
+		// Verify the reports library action and template catalogue.
 		await expect(
 			page.getByRole('button', { name: /new report/i }),
 		).toBeVisible()
+		await expect(page.getByText('Start from a template')).toBeVisible()
 
 		// Verify template links are present in sidebar/start sections
 		await expect(
@@ -59,6 +59,9 @@ test.describe('Reports & Analytics Workspace', () => {
 
 		await expect(
 			page.getByRole('heading', { name: /notes by status/i }),
+		).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: /open assistant/i }),
 		).toBeVisible()
 
 		// Click "Save Report"

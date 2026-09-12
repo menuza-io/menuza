@@ -14,10 +14,7 @@ test.describe('Website General Settings & Site Locales', () => {
 		await navigate('/:slug/website', { slug: org.slug })
 		await expect(page.getByLabel('Google Analytics ID')).toHaveCount(0)
 
-		await page
-			.locator('#main-content')
-			.getByRole('link', { name: 'Analytics', exact: true })
-			.click()
+		await page.getByRole('link', { name: 'Analytics', exact: true }).click()
 		await page.getByLabel('Facebook Pixel ID').fill('123456789012345')
 		await page.getByLabel('Google Tag Manager ID').fill('GTM-ABC1234')
 		await page.getByLabel('Google Analytics ID').fill('G-ABC1234567')
@@ -142,9 +139,9 @@ test.describe('Website General Settings & Site Locales', () => {
 		await expect(saveLanguagesBtn).toBeVisible()
 
 		// Select Arabic as an additional supported language
-		const languagesDropdownTrigger = page
-			.locator('button[aria-labelledby*="locales-label"]')
-			.first()
+		const languagesDropdownTrigger = page.getByRole('button', {
+			name: /supported languages/i,
+		})
 		await languagesDropdownTrigger.click()
 		await page.getByRole('menuitemcheckbox', { name: /Arabic/i }).click()
 		await page.keyboard.press('Escape')

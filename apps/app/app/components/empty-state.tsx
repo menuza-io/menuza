@@ -72,12 +72,12 @@ export function EmptyState({
 						</div>
 					)}
 				</div>
-				<h2 className="text-foreground mt-6 font-medium">{title}</h2>
-				<p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">
+				<h2 className="text-foreground mt-6 text-lg font-medium">{title}</h2>
+				<p className="text-muted-foreground text-md mt-1 whitespace-pre-line">
 					{description}
 				</p>
 				{action && (
-					<Button className={cn('mt-4', 'shadow-sm active:shadow-none')}>
+					<Button className={cn('mt-4')}>
 						<Link to={action.href}>{action.label}</Link>
 					</Button>
 				)}

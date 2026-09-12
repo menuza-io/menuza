@@ -1,11 +1,19 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
-import { validateInstanceUrl } from '@repo/security'
+import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
+
+const ALLOWED_RASTER_MIME_TYPES = new Set([
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'image/avif',
+])
 
 type ImageFit = 'cover' | 'contain'
 type ImageFormat = 'webp' | 'avif' | 'png' | 'jpeg' | 'jpg'
@@ -98,12 +106,46 @@ async function streamStoredVideo(
 	})
 }
 
-function getImageResponseHeaders() {
+function getImageResponseHeaders(isExternal = false) {
 	const headers = new Headers()
-	headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+	headers.set(
+		'Cache-Control',
+		isExternal ? 'no-store' : 'public, max-age=31536000, immutable',
+	)
 	headers.set('Access-Control-Allow-Origin', '*')
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
 	return headers
+}
+
+async function fetchExternalImage(
+	request: Request,
+	searchParams: URLSearchParams,
+) {
+	const src = searchParams.get('src')
+	invariantResponse(src, 'src query parameter is required', { status: 400 })
+
+	const sourceUrl = new URL(src)
+	const requestUrl = new URL(request.url)
+	invariantResponse(
+		sourceUrl.origin !== requestUrl.origin,
+		'External image source required',
+		{ status: 400 },
+	)
+
+	const upstream = await ssrfSafeFetch(sourceUrl)
+	const rawContentType = upstream.headers.get('content-type')
+	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+
+	const headers = getImageResponseHeaders(true)
+	headers.set('Content-Type', mimeType)
+
+	return new Response(upstream.body, {
+		status: upstream.status,
+		headers,
+	})
 }
 
 async function fetchImageSource(
@@ -148,10 +190,18 @@ async function getCloudflareImageResponse(
 		organizationId,
 	)
 
+	const src = searchParams.get('src')
+	const isExternal = Boolean(
+		!objectKey &&
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== new URL(request.url).origin,
+	)
+
 	if (!upstream.ok) {
 		return new Response(upstream.statusText, {
 			status: upstream.status,
-			headers: getImageResponseHeaders(),
+			headers: getImageResponseHeaders(isExternal),
 		})
 	}
 
@@ -174,16 +224,27 @@ async function getCloudflareImageResponse(
 		} as RequestInit & { cf?: { image: Record<string, number | string> } })
 
 		if (transformed.ok) {
-			const headers = getImageResponseHeaders()
-			const contentType = transformed.headers.get('content-type')
-			if (contentType) headers.set('Content-Type', contentType)
+			const rawContentType = transformed.headers.get('content-type')
+			const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+			if (
+				isExternal &&
+				(!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))
+			) {
+				throw new Response('Unsupported Media Type', { status: 415 })
+			}
+			const headers = getImageResponseHeaders(isExternal)
+			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
 	}
 
-	const headers = getImageResponseHeaders()
-	const contentType = upstream.headers.get('content-type')
-	if (contentType) headers.set('Content-Type', contentType)
+	const rawContentType = upstream.headers.get('content-type')
+	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
+	const headers = getImageResponseHeaders(isExternal)
+	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
 
@@ -218,8 +279,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const searchParams = url.searchParams
 
-	const headers = getImageResponseHeaders()
-
 	const objectKey = searchParams.get('objectKey')
 	const organizationId = searchParams.get('organizationId')
 
@@ -238,6 +297,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
+	const src = searchParams.get('src')
+	if (
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== url.origin &&
+		!isCloudflareWorkerRuntime()
+	) {
+		return fetchExternalImage(request, searchParams)
+	}
+
 	if (isCloudflareWorkerRuntime()) {
 		return getCloudflareImageResponse(
 			request,
@@ -248,6 +317,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 	}
 
 	const { getImgResponse } = await import('openimg/node')
+
+	const isExternal = Boolean(
+		!objectKey &&
+		src &&
+		URL.canParse(src) &&
+		new URL(src).origin !== url.origin,
+	)
+	const headers = getImageResponseHeaders(isExternal)
 
 	return getImgResponse(request, {
 		headers,

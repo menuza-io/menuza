@@ -37,7 +37,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const response = await next()
 	const { pathname } = context.url
 
-	const newHeaders = new Headers(response.headers)
 	const isPreview = pathname === '/preview' || pathname.startsWith('/preview/')
 	const isHtml = response.headers
 		.get('Content-Type')

@@ -12,6 +12,7 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 	type ErrorInfo,
 	type ReactNode,
 } from 'react'
@@ -31,7 +32,7 @@ import { useAIPanel } from './ai-panel-context'
  * tier on these so it isn't covered by the editor's own fixed overlay.
  */
 const BUILDER_PATH =
-	/\/(?:website\/(?:pages|forms)|marketing\/automations)\/[^/]+$/
+	/\/(?:website\/(?:pages|forms)|marketing\/automations|reports)\/[^/]+$/
 
 function useIsBuilderRoute() {
 	const location = useLocation()
@@ -376,8 +377,24 @@ function AIPanelSurface() {
 	const isBuilderRoute = useIsBuilderRoute()
 	const isFullscreen = isOpen && isExpanded
 	const isVisible = isOpen || isFullscreen
+	const [isPresent, setIsPresent] = useState(isOpen)
 	const hasEverMountedRef = useRef(false)
 	if (hasActivated) hasEverMountedRef.current = true
+
+	// Keep the surface in the DOM long enough for its close transition to play.
+	// Without this presence state, builder routes switched straight to `display:
+	// none`, making the panel and the builder canvas jump at the same instant.
+	useEffect(() => {
+		if (isOpen) {
+			setIsPresent(true)
+			return
+		}
+		if (!isPresent) return
+		const timeout = window.setTimeout(() => setIsPresent(false), 180)
+		return () => window.clearTimeout(timeout)
+	}, [isOpen, isPresent])
+
+	const isRendered = isVisible || isPresent
 
 	useEffect(() => {
 		if (!isOpen) return
@@ -423,6 +440,7 @@ function AIPanelSurface() {
 				aria-modal={isFullscreen || isMobile || undefined}
 				aria-label={i18n._('AI assistant')}
 				aria-hidden={!isVisible}
+				inert={!isVisible}
 				className={cn(
 					'bg-background flex flex-col overflow-hidden',
 					!isVisible && 'pointer-events-none',
@@ -430,7 +448,9 @@ function AIPanelSurface() {
 						cn(
 							'fixed inset-0',
 							isBuilderRoute ? 'z-60' : 'z-50',
-							!isOpen && 'invisible',
+							!isRendered && 'invisible',
+							'transition-opacity duration-[180ms] [transition-timing-function:cubic-bezier(0.19,1,0.22,1)]',
+							isOpen ? 'opacity-100' : 'opacity-0',
 						),
 					!isMobile &&
 						isFullscreen &&
@@ -444,8 +464,10 @@ function AIPanelSurface() {
 						!isFullscreen &&
 						isBuilderRoute &&
 						cn(
-							'fixed top-14 right-2 bottom-2 z-80 rounded-xl shadow-sm',
-							!isVisible && 'hidden',
+							'fixed top-14 right-2 bottom-2 z-80 w-105 rounded-xl shadow-sm transition-[transform,opacity] duration-[180ms] [transition-timing-function:cubic-bezier(0.19,1,0.22,1)]',
+							isOpen
+								? 'translate-x-0 opacity-100'
+								: 'translate-x-[calc(100%+0.5rem)] opacity-0',
 						),
 					!isMobile &&
 						!isFullscreen &&
@@ -485,6 +507,26 @@ export function GlobalAIToggle() {
 			aria-label={isOpen ? 'Close assistant' : 'Open assistant'}
 			className="h-8 gap-1.5 rounded-lg px-2.5 text-sm font-normal"
 		>
+			<svg
+				fill="none"
+				xmlns="http://www.w3.org/2000/svg"
+				className="icon shrink-0"
+				width="18"
+				height="18"
+				viewBox="0 0 18 18"
+				style={{ strokeWidth: 1.5 }}
+			>
+				<path
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M9.563 2.813h-5.25a2.25 2.25 0 0 0-2.25 2.25v6.375a2.25 2.25 0 0 0 2.25 2.25h2.176a.75.75 0 0 1 .482.175l1.548 1.298a.75.75 0 0 0 .96.003l1.575-1.304a.75.75 0 0 1 .478-.172h2.156a2.25 2.25 0 0 0 2.25-2.25v-2.25"
+				></path>
+				<path
+					fill="currentColor"
+					d="m15.18 3.139-.522-1.359a.437.437 0 0 0-.816 0l-.522 1.359a.75.75 0 0 1-.431.43l-1.359.523a.437.437 0 0 0 0 .816l1.359.522a.75.75 0 0 1 .43.431l.523 1.359a.437.437 0 0 0 .816 0l.522-1.359a.75.75 0 0 1 .431-.43l1.359-.523a.437.437 0 0 0 0-.816l-1.359-.522a.75.75 0 0 1-.43-.431"
+				></path>
+			</svg>
 			<span className="hidden md:inline">
 				<Trans>Ask AI</Trans>
 			</span>

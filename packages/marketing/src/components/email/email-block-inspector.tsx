@@ -173,16 +173,27 @@ export function EmailBlockInspector({
 					) : null}
 
 					{block.type === 'body' || block.type === 'paragraph' ? (
-						<Field label={<Trans>Text</Trans>} htmlFor="block-text">
-							<MergeTagField
-								id="block-text"
-								multiline
-								rows={6}
-								value={block.config.text}
-								onChange={(text) => onUpdate({ text })}
-								placeholder={_(msg`Write your message`)}
-							/>
-						</Field>
+						<>
+							<Field label={<Trans>Text</Trans>} htmlFor="block-text">
+								<MergeTagField
+									id="block-text"
+									multiline
+									rows={6}
+									value={block.config.text}
+									onChange={(text) => onUpdate({ text })}
+									placeholder={_(msg`Write your message`)}
+								/>
+							</Field>
+							{block.type === 'body' || block.type === 'paragraph' ? (
+								<Field label={<Trans>Alignment</Trans>}>
+									<Segmented<EmailBlockAlignment>
+										value={block.config.align}
+										options={alignOptions}
+										onChange={(align) => onUpdate({ align })}
+									/>
+								</Field>
+							) : null}
+						</>
 					) : null}
 
 					{block.type === 'image' ? (

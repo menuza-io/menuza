@@ -62,6 +62,7 @@ export const emailBodyBlockSchema = z.object({
 	type: z.literal('body'),
 	config: z.object({
 		text: z.string().max(10_000).default(''),
+		align: alignmentSchema,
 	}),
 })
 
@@ -70,6 +71,7 @@ export const emailParagraphBlockSchema = z.object({
 	type: z.literal('paragraph'),
 	config: z.object({
 		text: z.string().max(10_000).default(''),
+		align: alignmentSchema,
 	}),
 })
 
@@ -147,13 +149,17 @@ export function getDefaultEmailBlock(type: EmailBlockType): EmailBlock {
 				type,
 				config: {
 					text: 'Write your message here. Use {{firstName}} to personalize.',
+					align: 'left',
 				},
 			}
 		case 'paragraph':
 			return {
 				id,
 				type,
-				config: { text: 'Add supporting details for your readers.' },
+				config: {
+					text: 'Add supporting details for your readers.',
+					align: 'left',
+				},
 			}
 		case 'image':
 			return {
@@ -234,6 +240,7 @@ export const EMAIL_BLOCK_TEMPLATES: ReadonlyArray<{
 				type: 'body',
 				config: {
 					text: 'Hi {{firstName}}, we are thrilled to have you here. Here are a few things to get you started.',
+					align: 'left',
 				},
 			},
 			{
@@ -264,11 +271,15 @@ export const EMAIL_BLOCK_TEMPLATES: ReadonlyArray<{
 				type: 'body',
 				config: {
 					text: 'Hi {{firstName}}, we have something exciting to share with you.',
+					align: 'left',
 				},
 			},
 			{
 				type: 'paragraph',
-				config: { text: 'Read the full details on our website.' },
+				config: {
+					text: 'Read the full details on our website.',
+					align: 'left',
+				},
 			},
 			{
 				type: 'button',
@@ -302,6 +313,7 @@ export const EMAIL_BLOCK_TEMPLATES: ReadonlyArray<{
 				type: 'body',
 				config: {
 					text: 'Hi {{firstName}}, our newest release is now available. Take a look and see what is new.',
+					align: 'left',
 				},
 			},
 			{

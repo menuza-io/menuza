@@ -8,7 +8,7 @@ export default function SettingsLayout() {
 	const { _ } = useLingui()
 
 	return (
-		<div className="mx-auto w-full max-w-4xl py-8 md:p-8">
+		<div className="mx-auto h-full w-full max-w-6xl flex-col gap-8 py-8 md:px-6 lg:px-8">
 			<div className="mb-8 md:mb-10">
 				<PageTitle
 					title={_(t`Settings`)}

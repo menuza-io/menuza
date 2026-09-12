@@ -10,6 +10,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { type CampaignChannel } from '../types/campaign.ts'
+import { MergeTagField } from './email/merge-tag-field.tsx'
 
 export interface CampaignFormProps {
 	error?: string | null
@@ -36,6 +37,8 @@ export function CampaignForm({
 	const { _ } = useLingui()
 	const { channelLabel } = useCampaignLabels()
 	const [channel, setChannel] = useState<CampaignChannel>('email')
+	const [smsContent, setSmsContent] = useState('')
+	const [emailContent, setEmailContent] = useState('')
 
 	const channels: Array<{
 		value: CampaignChannel
@@ -114,21 +117,42 @@ export function CampaignForm({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between gap-4">
 							<Label htmlFor="content">{_(msg`Message`)}</Label>
-							<span className="text-muted-foreground text-xs">
-								{'{{name}}'} {_(msg`supported`)}
-							</span>
+							{channel === 'sms' ? (
+								<span className="text-muted-foreground text-xs">
+									{smsContent.length} / 1600
+								</span>
+							) : (
+								<span className="text-muted-foreground text-xs">
+									{'{{name}}'} {_(msg`supported`)}
+								</span>
+							)}
 						</div>
-						<Textarea
-							id="content"
-							name="content"
-							placeholder={
-								channel === 'email'
-									? _(msg`Write your email. Use {{name}} to personalize.`)
-									: _(msg`Write your text message. Max 160 characters.`)
-							}
-							className="min-h-[180px] resize-y"
-							required
-						/>
+						{channel === 'sms' ? (
+							<>
+								<input type="hidden" name="content" value={smsContent} />
+								<MergeTagField
+									id="content"
+									value={smsContent}
+									onChange={(value) => setSmsContent(value.slice(0, 1600))}
+									multiline
+									rows={6}
+									placeholder={_(msg`Write your text message`)}
+									className="min-h-45 resize-y"
+								/>
+							</>
+						) : (
+							<Textarea
+								id="content"
+								name="content"
+								value={emailContent}
+								onChange={(e) => setEmailContent(e.target.value)}
+								placeholder={_(
+									msg`Write your email. Use {{name}} to personalize.`,
+								)}
+								className="min-h-45 resize-y"
+								required
+							/>
+						)}
 					</div>
 				)}
 			</div>

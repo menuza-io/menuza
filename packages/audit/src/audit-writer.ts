@@ -5,8 +5,8 @@ import { getClientIp } from '@repo/security'
 import { AuditAction } from './actions.ts'
 import { securityAlertService } from './alerting.ts'
 import { computeIntegrityHash } from './integrity.ts'
-import { auditRetentionManager } from './retention.ts'
 import { ENV } from './package-env.js'
+import { auditRetentionManager } from './retention.ts'
 
 export interface AuditLogInput {
 	action: AuditAction

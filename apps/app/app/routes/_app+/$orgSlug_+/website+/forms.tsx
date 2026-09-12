@@ -13,6 +13,7 @@ import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
@@ -143,6 +144,7 @@ export default function WebsiteFormsRoute() {
 	const location = useLocation()
 	const { forms, error } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
+	const formCount = forms.length
 	if (!/\/website\/forms\/?$/.test(location.pathname)) return <Outlet />
 
 	return (
@@ -187,8 +189,8 @@ export default function WebsiteFormsRoute() {
 					action={{ label: 'Create form', href: 'new' }}
 				/>
 			) : (
-				<Frame className="overflow-hidden p-0">
-					<Table>
+				<Frame className="w-full">
+					<Table variant="card">
 						<TableHeader>
 							<TableRow>
 								<TableHead>
@@ -206,7 +208,11 @@ export default function WebsiteFormsRoute() {
 								<TableHead className="text-right">
 									<Trans>Responses</Trans>
 								</TableHead>
-								<TableHead className="w-20" />
+								<TableHead className="w-16">
+									<span className="sr-only">
+										<Trans>Actions</Trans>
+									</span>
+								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -284,6 +290,18 @@ export default function WebsiteFormsRoute() {
 								</TableRow>
 							))}
 						</TableBody>
+						<TableFooter>
+							<TableRow>
+								<TableCell colSpan={5}>
+									{formCount === 1 ? (
+										<Trans>1 form</Trans>
+									) : (
+										<Trans>{formCount} forms</Trans>
+									)}
+								</TableCell>
+								<TableCell />
+							</TableRow>
+						</TableFooter>
 					</Table>
 				</Frame>
 			)}

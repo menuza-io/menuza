@@ -558,7 +558,7 @@ export default function WebsitePagesRoute() {
 						open={createOpen}
 						onOpenChange={setCreateOpen}
 						trigger={
-							<Button size="sm" className="shrink-0">
+							<Button className="shrink-0">
 								<Icon name="plus" className="size-4" />
 								<Trans>New Page</Trans>
 							</Button>

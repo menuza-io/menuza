@@ -1,5 +1,5 @@
-import { msg } from '@lingui/core/macro'
 import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react'
 import { type PublicFormField } from '@repo/common/public-form'
 import { type IconName } from '@repo/ui/icon'

@@ -1,5 +1,5 @@
-import { msg } from '@lingui/core/macro'
 import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { type PublicFormField } from '@repo/common/public-form'
 
 export const FORM_TEMPLATE_IDS = [

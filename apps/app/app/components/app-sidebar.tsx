@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader } from '@repo/ui/card'
 import { CircleHelpIcon } from '@repo/ui/circle-help'
 import { FoldersIcon } from '@repo/ui/folders-icon'
 import { HomeIcon } from '@repo/ui/home-icon'
+import { Icon } from '@repo/ui/icon'
+import { Kbd } from '@repo/ui/kbd'
 import { LaptopMinimalCheckIcon } from '@repo/ui/laptop-minimal-check-icon'
 import { LockOpenIcon } from '@repo/ui/lock-open-icon'
 import { Logo } from '@repo/ui/logo'
@@ -19,6 +21,7 @@ import {
 	SidebarContent,
 	SidebarFooter,
 	SidebarHeader,
+	SidebarMenuButton,
 } from '@repo/ui/sidebar'
 import { UserIcon } from '@repo/ui/user-icon'
 import { UserRoundPlusIcon } from '@repo/ui/user-round-plus'
@@ -29,8 +32,10 @@ import { NavMain } from '#app/components/nav-main.tsx'
 import { NavUser } from '#app/components/nav-user.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { TeamSwitcher } from '#app/components/team-switcher.tsx'
+import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
+import { CommandMenu } from './command-menu'
 import FeedbackModal from './core/feedback-modal'
 import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
@@ -204,7 +209,11 @@ function OrganizationSidebar({
 }) {
 	const { _ } = useLingui()
 	const goToHomepageLabel = _(msg`Go to homepage`)
+	const searchNotesLabel = _(msg`Search notes`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
+	const [commandOpen, setCommandOpen] = useState(false)
+
+	useGlobalHotkeys(setCommandOpen)
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -424,13 +433,34 @@ function OrganizationSidebar({
 
 	return (
 		<>
-			<SidebarHeader className="gap-1 px-2 pt-3 pb-1">
-				<Link to="/" aria-label={goToHomepageLabel}>
+			<SidebarHeader className="gap-2 px-2 pb-2">
+				<Link
+					to="/"
+					aria-label={goToHomepageLabel}
+					className="flex w-full justify-start"
+				>
 					<Logo
-						className="h-10 gap-3 px-2 text-base group-data-[collapsible=icon]:gap-0"
+						className="h-10 gap-1 px-1 text-base transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:gap-0 motion-reduce:transition-none"
 						aria-hidden="true"
 					/>
 				</Link>
+				<SidebarMenuButton
+					variant="outline"
+					tooltip={searchNotesLabel}
+					className="text-muted-foreground bg-background relative rounded-xl border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
+					onClick={() => setCommandOpen(true)}
+					aria-haspopup="dialog"
+					aria-expanded={commandOpen}
+					aria-label={searchNotesLabel}
+				>
+					<Icon name="search" className="h-4 w-4 shrink-0" />
+					<span className="min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
+						<Trans>Search notes...</Trans>
+					</span>
+					<Kbd className="absolute top-[0.3rem] right-[0.3rem] group-data-[collapsible=icon]:hidden">
+						<span className="text-xs">⌘</span>K
+					</Kbd>
+				</SidebarMenuButton>
 				<TeamSwitcher />
 			</SidebarHeader>
 
@@ -480,6 +510,7 @@ function OrganizationSidebar({
 					userPreference={rootData?.requestInfo?.userPrefs?.theme}
 				/>
 			</SidebarFooter>
+			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 		</>
 	)
 }
