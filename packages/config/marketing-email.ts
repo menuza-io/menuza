@@ -25,7 +25,7 @@ export type MarketingEmailHeaderField = keyof ReturnType<
 	typeof getMarketingEmailHeaders
 >
 
-/** Resend tag namespace from `brand.slug` (`menuza` → `epic_startup`). */
+/** Resend tag namespace from `brand.slug` (`menuza` → `menuza`). */
 export function getMarketingEmailTagNamespace() {
 	return brand.slug.replace(/-/g, '_')
 }
@@ -39,7 +39,7 @@ export function getMarketingEmailTags() {
 	} as const
 }
 
-/** Header prefix from `brand.slug` (`menuza` → `Epic-Startup`). */
+/** Header prefix from `brand.slug` (`menuza` → `Menuza`). */
 export function getMarketingEmailHeaderPrefix() {
 	return brand.slug
 		.split('-')

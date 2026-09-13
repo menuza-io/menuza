@@ -15,21 +15,21 @@ import {
 
 describe('marketing-email', () => {
 	it('derives tag and header names from brand.slug', () => {
-		expect(getMarketingEmailTagNamespace()).toBe('epic_startup')
-		expect(getMarketingEmailHeaderPrefix()).toBe('Epic-Startup')
+		expect(getMarketingEmailTagNamespace()).toBe('menuza')
+		expect(getMarketingEmailHeaderPrefix()).toBe('Menuza')
 		expect(getMarketingEmailTags()).toEqual({
-			scope: 'epic_startup_scope',
-			messageId: 'epic_startup_message_id',
-			campaignId: 'epic_startup_campaign_id',
+			scope: 'menuza_scope',
+			messageId: 'menuza_message_id',
+			campaignId: 'menuza_campaign_id',
 		})
-		expect(getMarketingEmailHeaders().orgId).toBe('X-Epic-Startup-Org-Id')
+		expect(getMarketingEmailHeaders().orgId).toBe('X-Menuza-Org-Id')
 	})
 
 	it('builds platform Resend tags', () => {
 		expect(buildPlatformMarketingResendTags('msg-1', 'camp-1')).toEqual({
-			epic_startup_scope: MARKETING_EMAIL_PLATFORM_SCOPE,
-			epic_startup_message_id: 'msg-1',
-			epic_startup_campaign_id: 'camp-1',
+			menuza_scope: MARKETING_EMAIL_PLATFORM_SCOPE,
+			menuza_message_id: 'msg-1',
+			menuza_campaign_id: 'camp-1',
 		})
 	})
 
@@ -40,10 +40,7 @@ describe('marketing-email', () => {
 			}),
 		).toBe(true)
 		expect(
-			getMarketingEmailTagValue(
-				{ epic_startup_message_id: 'msg-2' },
-				'messageId',
-			),
+			getMarketingEmailTagValue({ menuza_message_id: 'msg-2' }, 'messageId'),
 		).toBe('msg-2')
 		expect(
 			getMarketingEmailTagValue({ epic_message_id: 'legacy-msg' }, 'messageId'),
@@ -59,7 +56,7 @@ describe('marketing-email', () => {
 		).toBe('legacy')
 		expect(
 			getMarketingEmailHeaderValue(
-				{ 'X-Epic-Startup-Message-Id': 'current' },
+				{ 'X-Menuza-Message-Id': 'current' },
 				'messageId',
 			),
 		).toBe('current')

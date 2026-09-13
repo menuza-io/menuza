@@ -48,14 +48,14 @@ so forks white-label in one place.
 
 With the default slug `menuza`:
 
-| Purpose            | Resend tag                 | OCI / SMTP header            |
-| ------------------ | -------------------------- | ---------------------------- |
-| Scope (`platform`) | `epic_startup_scope`       | —                            |
-| Message id         | `epic_startup_message_id`  | `X-Epic-Startup-Message-Id`  |
-| Campaign id        | `epic_startup_campaign_id` | `X-Epic-Startup-Campaign-Id` |
-| Org id             | —                          | `X-Epic-Startup-Org-Id`      |
-| Journey id         | —                          | `X-Epic-Startup-Journey-Id`  |
-| Customer id        | —                          | `X-Epic-Startup-Customer-Id` |
+| Purpose            | Resend tag           | OCI / SMTP header      |
+| ------------------ | -------------------- | ---------------------- |
+| Scope (`platform`) | `menuza_scope`       | —                      |
+| Message id         | `menuza_message_id`  | `X-Menuza-Message-Id`  |
+| Campaign id        | `menuza_campaign_id` | `X-Menuza-Campaign-Id` |
+| Org id             | —                    | `X-Menuza-Org-Id`      |
+| Journey id         | —                    | `X-Menuza-Journey-Id`  |
+| Customer id        | —                    | `X-Menuza-Customer-Id` |
 
 Helpers live in `packages/config/marketing-email.ts`:
 
