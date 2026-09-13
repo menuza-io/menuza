@@ -63,6 +63,31 @@ function isLocalhostHostname(host: string): boolean {
 }
 
 /**
+ * Amp orbs serve App and Admin from sibling portal hostnames
+ * (`t-<thread>-p<port>.<portal-domain>`), so the operator session has to live on
+ * the shared portal domain to make a sign-in in one app apply to the other.
+ * Cookie names are scoped by thread so parallel orbs in one browser do not
+ * overwrite each other's sessions. Returns undefined outside orbs and for hosts
+ * that are not Amp portal hostnames.
+ */
+function orbPortalCookieScope(
+	origin: string | undefined,
+): { domain: string; suffix: string } | undefined {
+	if (!process.env.AMP_ORB || !origin) return undefined
+	try {
+		const labels = new URL(origin).hostname.split('.').filter(Boolean)
+		const [label, ...rest] = labels
+		if (!label || rest.length < 2) return undefined
+		// Portal hostnames end with the public portal port: t-<thread>-p<port>.
+		const threadLabel = label.replace(/-p\d+$/i, '')
+		if (threadLabel === label) return undefined
+		return { domain: `.${rest.join('.')}`, suffix: `_${threadLabel}` }
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * Cookie Domain for operator auth sessions (`en_session`, `en_imp_session`).
  *
  * `BASE_URL` is often a `*.test` hostname for OAuth redirect URIs while local
@@ -74,6 +99,9 @@ function isLocalhostHostname(host: string): boolean {
 export function operatorSessionCookieDomain(
 	origin = runtimeBaseUrl(),
 ): string | undefined {
+	const orbScope = orbPortalCookieScope(origin)
+	if (orbScope) return orbScope.domain
+
 	const fromOrigin = sharedCookieDomain(origin)
 	if (!fromOrigin) return undefined
 
@@ -135,6 +163,8 @@ export function operatorCookieName(
 	baseName: string,
 	origin = runtimeBaseUrl(),
 ): string {
+	const orbScope = orbPortalCookieScope(origin)
+	if (orbScope) return `${baseName}${orbScope.suffix}`
 	return isStagingOperatorOrigin(origin) ? `${baseName}_staging` : baseName
 }
 

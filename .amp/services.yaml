@@ -1,0 +1,29 @@
+# Long-running development services for Amp orbs.
+#
+# `amp orb services ensure` starts every service below and exposes the portals.
+# Each command runs from the repository root in a login shell with $PORT set.
+# App/Admin receive $PUBLIC_URL and use it as BASE_URL so session cookies and
+# redirects match the generated portal hostname (see docs/orbs for details).
+services:
+  app:
+    command: BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=app --env-mode=loose
+    port: 3001
+    health: /resources/healthcheck
+    portal:
+      title: App
+      description: Operator app. Sign in with kody / KodyLovesYou!2026.
+  admin:
+    command: BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=admin --env-mode=loose
+    port: 3005
+    health: /resources/healthcheck
+    portal:
+      title: Admin
+      description: Platform admin. Sign in with kody / KodyLovesYou!2026.
+  tenant-api:
+    command: npx turbo run dev --filter=tenant-api --env-mode=loose
+    port: 3007
+    health: /health
+  tenant-api-ksa:
+    command: DATA_REGION=ksa PORT=3009 npx turbo run dev --filter=tenant-api --env-mode=loose
+    port: 3009
+    health: /health

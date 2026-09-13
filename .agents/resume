@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Epic Startup — Amp orb resume.
+#
+# Runs after activation and on every orb wake. Keep it fast, idempotent, and
+# limited to repair work: dependencies and services are handled elsewhere.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+export VOLTA_HOME="${VOLTA_HOME:-$HOME/.volta}"
+case ":$PATH:" in *":$VOLTA_HOME/bin:"*) ;; *) export PATH="$VOLTA_HOME/bin:$PATH" ;; esac
+
+# The control-plane SQLite file lives on the orb volume; recreate and seed it if
+# a reset removed it. Checked before the hosts repair because setup-hosts.mjs
+# creates an empty database file when none exists. Failures are not suppressed:
+# a half-repaired database must surface instead of leaving a broken orb.
+if [ ! -s packages/database/db/data.db ]; then
+	npm run db:migrate:deploy >/dev/null
+	npm run db:seed >/dev/null
+	if [ ! -s packages/database/db/data.db ]; then
+		printf 'The control-plane database could not be recreated.\n' >&2
+		exit 1
+	fi
+fi
+
+# The HTTPS dev proxy (`npm run dev`) resolves brand hostnames from /etc/hosts.
+# setup-hosts.mjs logs and exits 0 when a write fails, so verify the entry.
+if ! grep -q "app.epic-startup.test" /etc/hosts 2>/dev/null; then
+	node scripts/setup-hosts.mjs >/dev/null
+	if ! grep -q "app.epic-startup.test" /etc/hosts; then
+		printf 'Could not add the local dev hostnames to /etc/hosts.\n' >&2
+		exit 1
+	fi
+fi

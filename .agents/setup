@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# Epic Startup — Amp orb setup.
+#
+# Runs for a fresh orb (and again when Amp refreshes a stale snapshot) to make
+# the repository ready to build, test, and run: pinned toolchain, workspace
+# dependencies, dev env files, control-plane SQLite, Playwright Chromium, and a
+# turbo build cache. Idempotent and fast on a warm filesystem.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+log() { printf '\n==> %s\n' "$*"; }
+step_started_at=0
+step() { step_started_at=$SECONDS; log "$*"; }
+step_done() { printf '    done in %ss\n' "$((SECONDS - step_started_at))"; }
+
+# ------------------------------------------------------------------ toolchain --
+step "Toolchain (Volta + pinned Node/npm)"
+export VOLTA_HOME="${VOLTA_HOME:-$HOME/.volta}"
+if [ ! -x "$VOLTA_HOME/bin/volta" ]; then
+	# Pinned, checksum-verified Volta release instead of piping the mutable
+	# https://get.volta.sh installer into bash.
+	volta_version='2.0.2'
+	case "$(uname -m)" in
+		x86_64 | amd64)
+		volta_asset="volta-${volta_version}-linux.tar.gz"
+		volta_sha256='6cec054c911fb925b629a09455775af6e95dc0f5694a4c28b63979ab9ef18037'
+		;;
+		aarch64 | arm64)
+		volta_asset="volta-${volta_version}-linux-arm.tar.gz"
+		volta_sha256='1eb92f8b711753aa576352b2e580b2f3fdadeab8664929ca1da3d0de65448517'
+		;;
+		*)
+		printf 'Unsupported architecture for Volta: %s\n' "$(uname -m)" >&2
+		exit 1
+		;;
+	esac
+	volta_archive="$(mktemp)"
+	curl -fsSL -o "$volta_archive" \
+		"https://github.com/volta-cli/volta/releases/download/v${volta_version}/${volta_asset}"
+	printf '%s  %s\n' "$volta_sha256" "$volta_archive" | sha256sum -c - >/dev/null
+	mkdir -p "$VOLTA_HOME/bin"
+	tar -xzf "$volta_archive" -C "$VOLTA_HOME/bin"
+	rm -f "$volta_archive"
+	for shim in node npm npx yarn yarnpkg pnpm; do
+		ln -sf volta-shim "$VOLTA_HOME/bin/$shim"
+	done
+fi
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+# Amp services and terminals run in non-interactive login shells, so the Volta
+# shims must be on PATH there too. The release tarball does not touch profiles.
+if ! grep -q 'VOLTA_HOME' "$HOME/.bash_profile" 2>/dev/null; then
+	{
+		printf '\n# Epic Startup orb toolchain (added by .agents/setup)\n'
+		printf 'export VOLTA_HOME="$HOME/.volta"\n'
+		printf 'export PATH="$VOLTA_HOME/bin:$PATH"\n'
+	} >>"$HOME/.bash_profile"
+fi
+
+pinned_node="$(awk '/"volta"/{found=1} found && /"node"/{gsub(/[",]/, ""); print $2; exit}' package.json)"
+pinned_npm="$(awk '/"volta"/{found=1} found && /"npm"/{gsub(/[",]/, ""); print $2; exit}' package.json)"
+volta install "node@${pinned_node:-22.18.0}" "npm@${pinned_npm:-10.9.0}"
+printf '    node %s / npm %s\n' "$(node -v)" "$(npm -v)"
+step_done
+
+# ------------------------------------------------------------ system packages --
+step "System packages (mkcert, libnss3-tools)"
+missing_packages=()
+for package in mkcert libnss3-tools; do
+	dpkg -s "$package" >/dev/null 2>&1 || missing_packages+=("$package")
+done
+if [ ${#missing_packages[@]} -gt 0 ]; then
+	sudo apt-get install -y -qq "${missing_packages[@]}" ||
+		{ sudo apt-get update -qq && sudo apt-get install -y -qq "${missing_packages[@]}"; }
+fi
+step_done
+
+# --------------------------------------------------------------- dependencies --
+step "Workspace dependencies (npm install)"
+export PUPPETEER_SKIP_DOWNLOAD=true
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# The lockfile was generated on macOS; force the linux-x64 glibc optional
+# native bindings (libsql, sharp, rolldown, astro compiler, ...).
+export npm_config_os=linux npm_config_cpu=x64 npm_config_libc=glibc
+npm install --no-audit --no-fund --loglevel=error
+step_done
+
+# ------------------------------------------------------------ dev env files --
+step "Dev env files (apps/app/.env, apps/admin/.env)"
+# Varlock validates required secrets when Vite loads its config, so builds and
+# dev servers need these gitignored files. Same placeholder values CI uses.
+if [ ! -f apps/app/.env ] || [ ! -f apps/admin/.env ]; then
+	SESSION_SECRET=test-session-secret-for-tests-only-min-32-chars \
+		HONEYPOT_SECRET=test-honeypot-secret-for-tests-only \
+		INTEGRATION_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+		INTEGRATIONS_OAUTH_STATE_SECRET=test-oauth-state-secret-32-chars \
+		TRUST_PROXY=true \
+		node scripts/write-ci-app-env.mjs
+fi
+step_done
+
+# ------------------------------------------------- database and local HTTPS --
+step "Control-plane database, SSL certificates, /etc/hosts"
+database_file="packages/database/db/data.db"
+database_was_present=0
+[ -f "$database_file" ] && database_was_present=1
+
+# Trust mkcert's local CA so the HTTPS dev proxy on :2999 is accepted. Fail
+# loudly when that cannot be done: `npm run setup` only generates the
+# certificate, it never checks that the CA is trusted.
+sudo -E env CAROOT="$(mkcert -CAROOT)" mkcert -install >/dev/null
+
+# Migrates the database, generates the wildcard *.test certificate, and adds
+# the local brand hostnames to /etc/hosts. Brand customization is interactive,
+# so it is skipped here (`npm run setup:brand` runs it on demand).
+SKIP_BRAND_SETUP=true npm run setup
+
+# Verify the generated certificate actually chains to a trusted CA.
+if ! openssl verify other/ssl/_wildcard.domain.me+2.pem >/dev/null; then
+	printf 'The local wildcard certificate is not trusted. Run `sudo mkcert -install` and retry.\n' >&2
+	exit 1
+fi
+
+# Seed only when the database was just created. Seeding is idempotent but adds
+# another set of demo rows on every warm run.
+if [ "$database_was_present" -eq 0 ]; then
+	npm run db:seed
+fi
+step_done
+
+# ------------------------------------------------------------------ playwright --
+step "Playwright Chromium (e2e browsers + system deps)"
+npx playwright install --with-deps chromium
+step_done
+
+# --------------------------------------------------------------------- build --
+step "Build all workspaces (turbo, cached)"
+# Some builds regenerate tracked files (varlock env types, emdash migrations) in
+# a different format. Remember what was already modified so the build's
+# regeneration can be reverted and the orb starts with a clean working tree.
+before_build=()
+while IFS= read -r -d '' file; do before_build+=("$file"); done < <(git diff --name-only -z)
+npm run build
+while IFS= read -r -d '' file; do
+	already_dirty=0
+	for before in "${before_build[@]}"; do
+		if [ "$before" = "$file" ]; then
+			already_dirty=1
+			break
+		fi
+	done
+	if [ "$already_dirty" -eq 0 ]; then
+		git checkout -- "$file"
+	fi
+done < <(git diff --name-only -z)
+step_done
+
+# ------------------------------------------------------------ orb agent notes --
+step "Orb agent notes"
+amp_agents_file="$HOME/.config/amp/AGENTS.md"
+marker="<!-- epic-startup-orb -->"
+if ! grep -qF "$marker" "$amp_agents_file" 2>/dev/null; then
+	mkdir -p "$(dirname "$amp_agents_file")"
+	cat >>"$amp_agents_file" <<'EOF'
+
+<!-- epic-startup-orb -->
+## Epic Startup orb notes
+
+- Toolchain: Volta-managed Node 22.18.0 and npm 10.9.0 (repository pins).
+- Preinstalled: workspace dependencies, control-plane SQLite (`packages/database/db/data.db`), Playwright Chromium, and a turbo build cache.
+- Seeded operator account: username `kody`, password `KodyLovesYou!2026`.
+- Dev services: `amp orb services ensure` starts app (:3001), admin (:3005), tenant-api (:3007), tenant-api-ksa (:3009); app and admin have portal links and share the operator session, so signing in through one signs you in to the other.
+- Database: `npm run db:migrate:deploy`, `npm run db:seed` (idempotent), `npm run db:reset` (destructive).
+- Dev servers regenerate `packages/security/src/env.ts` through varlock codegen, so it can show as modified after `npm run dev`; that is expected.
+- E2E: `npm run test:e2e:run` builds first and uses the preinstalled Playwright Chromium.
+<!-- /epic-startup-orb -->
+EOF
+fi
+step_done
+
+log "Orb setup complete — node $(node -v), npm $(npm -v)"
