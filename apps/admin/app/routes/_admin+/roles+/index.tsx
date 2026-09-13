@@ -3,7 +3,15 @@ import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { requireUserWithRole } from '@repo/auth'
-import { OrganizationRole, Role, db, eq } from '@repo/database'
+import {
+	OrganizationRole,
+	Role,
+	and,
+	db,
+	eq,
+	isNull,
+	sql,
+} from '@repo/database'
 import { Button } from '@repo/ui/button'
 import {
 	Card,
@@ -68,6 +76,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	// Get all organization roles and system roles with their permission counts concurrently.
 	const [organizationRoles, systemRoles] = await Promise.all([
 		db.query.OrganizationRole.findMany({
+			where: isNull(OrganizationRole.organizationId),
 			with: {
 				organizationPermissionToRoles: {
 					with: { permission: true },
@@ -124,7 +133,12 @@ export async function action({ request }: Route.ActionArgs) {
 				const [existingRole] = await db
 					.select({ id: OrganizationRole.id, name: OrganizationRole.name })
 					.from(OrganizationRole)
-					.where(eq(OrganizationRole.name, name))
+					.where(
+						and(
+							isNull(OrganizationRole.organizationId),
+							sql`lower(${OrganizationRole.name}) = lower(${name})`,
+						),
+					)
 					.limit(1)
 
 				if (existingRole) {
@@ -144,6 +158,7 @@ export async function action({ request }: Route.ActionArgs) {
 						name,
 						description: description || '',
 						level: level || 1,
+						organizationId: null,
 					})
 					.returning({ id: OrganizationRole.id })
 				if (!role) throw new Error('Failed to create organization role')

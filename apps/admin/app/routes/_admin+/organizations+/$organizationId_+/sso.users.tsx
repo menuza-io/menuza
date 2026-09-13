@@ -17,7 +17,9 @@ import {
 	db,
 	desc,
 	eq,
+	isNull,
 	like,
+	or,
 } from '@repo/database'
 import { useLoaderData } from 'react-router'
 import { z } from 'zod'
@@ -152,6 +154,12 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 			level: OrganizationRole.level,
 		})
 		.from(OrganizationRole)
+		.where(
+			or(
+				isNull(OrganizationRole.organizationId),
+				eq(OrganizationRole.organizationId, organization.id),
+			),
+		)
 		.orderBy(desc(OrganizationRole.level))
 
 	// Get SSO audit logs
@@ -214,6 +222,31 @@ export async function action({ request, params }: Route['ActionArgs']) {
 						{
 							result: submission.reply({
 								formErrors: ['Role ID is required'],
+							}),
+						},
+						{ status: 400 },
+					)
+				}
+
+				const [assignableRole] = await db
+					.select({ id: OrganizationRole.id })
+					.from(OrganizationRole)
+					.where(
+						and(
+							eq(OrganizationRole.id, roleId),
+							or(
+								isNull(OrganizationRole.organizationId),
+								eq(OrganizationRole.organizationId, params.organizationId),
+							),
+						),
+					)
+					.limit(1)
+
+				if (!assignableRole) {
+					return Response.json(
+						{
+							result: submission.reply({
+								formErrors: ['Role is not available for this organization'],
 							}),
 						},
 						{ status: 400 },

@@ -85,6 +85,13 @@
 			"when": 1789060048538,
 			"tag": "0011_platform_marketing_email_blocks",
 			"breakpoints": true
+		},
+		{
+			"idx": 12,
+			"version": "6",
+			"when": 1789324210760,
+			"tag": "0012_tenant_organization_roles",
+			"breakpoints": true
 		}
 	]
 }

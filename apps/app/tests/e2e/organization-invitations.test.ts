@@ -197,7 +197,30 @@ function membersAction(
 	orgSlug: string,
 	fields: Record<string, string>,
 ) {
-	return page.request.post(`/${orgSlug}/settings/members`, { form: fields })
+	return page.request.post(`/${orgSlug}/settings/members`, {
+		form: fields,
+		headers: { Accept: 'application/json' },
+	})
+}
+
+async function expectMemberActionError(
+	response: Awaited<ReturnType<typeof membersAction>>,
+	pattern: RegExp,
+) {
+	expect(response.status()).toBeGreaterThanOrEqual(400)
+	const contentType = response.headers()['content-type'] ?? ''
+	const text = await response.text()
+	if (contentType.includes('application/json')) {
+		const body = JSON.parse(text) as { error?: string }
+		expect(body.error).toMatch(pattern)
+		return
+	}
+	const embeddedError = /"error","([^"]+)"/.exec(text)?.[1]
+	if (embeddedError) {
+		expect(embeddedError).toMatch(pattern)
+		return
+	}
+	expect(text).toMatch(pattern)
 }
 
 test.describe('Email invitations', () => {
@@ -218,7 +241,7 @@ test.describe('Email invitations', () => {
 		const send = await membersAction(page, org.slug, {
 			intent: 'send-invitations',
 			'invites[0].email': inviteEmail,
-			'invites[0].role': 'member',
+			'invites[0].roleId': 'org_role_member',
 		})
 		expect(send.ok()).toBe(true)
 
@@ -632,7 +655,7 @@ test.describe('Roles and last-admin protection', () => {
 		const response = await membersAction(page, org.slug, {
 			intent: 'send-invitations',
 			'invites[0].email': faker.internet.email(),
-			'invites[0].role': 'member',
+			'invites[0].roleId': 'org_role_member',
 		})
 		expect(response.status()).toBe(403)
 	})
@@ -682,7 +705,7 @@ test.describe('Roles and last-admin protection', () => {
 		const promote = await membersAction(page, org.slug, {
 			intent: 'update-member-role',
 			userId: member.id,
-			role: 'admin',
+			roleId: 'org_role_admin',
 		})
 		expect(promote.ok()).toBe(true)
 		expect((await getMembership(org.id, member.id))?.organizationRoleId).toBe(
@@ -692,7 +715,7 @@ test.describe('Roles and last-admin protection', () => {
 		const demote = await membersAction(page, org.slug, {
 			intent: 'update-member-role',
 			userId: otherAdmin.id,
-			role: 'member',
+			roleId: 'org_role_member',
 		})
 		expect(demote.ok()).toBe(true)
 		expect(
@@ -710,10 +733,9 @@ test.describe('Roles and last-admin protection', () => {
 		const response = await membersAction(page, org.slug, {
 			intent: 'update-member-role',
 			userId: admin.id,
-			role: 'member',
+			roleId: 'org_role_member',
 		})
-		expect(response.status()).toBe(400)
-		expect(await response.text()).toContain('last admin')
+		await expectMemberActionError(response, /cannot change your own role/i)
 		expect((await getMembership(org.id, admin.id))?.organizationRoleId).toBe(
 			'org_role_admin',
 		)
@@ -729,8 +751,7 @@ test.describe('Roles and last-admin protection', () => {
 			intent: 'remove-member',
 			userId: admin.id,
 		})
-		expect(response.status()).toBe(400)
-		expect(await response.text()).toContain('cannot remove yourself')
+		await expectMemberActionError(response, /cannot remove yourself/i)
 		expect((await getMembership(org.id, admin.id))?.active).toBe(true)
 	})
 
@@ -748,7 +769,7 @@ test.describe('Roles and last-admin protection', () => {
 		const update = await membersAction(page, org.slug, {
 			intent: 'update-member-role',
 			userId: target.id,
-			role: 'admin',
+			roleId: 'org_role_admin',
 		})
 		expect(update.status()).toBe(403)
 

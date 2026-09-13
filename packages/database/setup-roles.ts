@@ -193,7 +193,7 @@ async function ensureOrgRole(role: (typeof ORG_ROLES)[number]) {
 		.where(eq(OrganizationRole.id, role.id))
 		.limit(1)
 	if (existing) return
-	await db.insert(OrganizationRole).values(role)
+	await db.insert(OrganizationRole).values({ ...role, organizationId: null })
 }
 
 async function ensurePermission(permission: (typeof ORG_PERMISSIONS)[number]) {

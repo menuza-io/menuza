@@ -1,16 +1,14 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2025-06-11 09:36-0500\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"X-Generator: @lingui/cli\n"
-"Language: ar\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
+"Language: \n"
 "Language-Team: \n"
+"Content-Type: \n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
@@ -49,12 +47,12 @@ msgid "{0, plural, one {Share with 1 member} other {Share with # members}}"
 msgstr "{0, plural, one {مشاركة مع عضو واحد} other {مشاركة مع # أعضاء}}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:403
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:318
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
@@ -217,11 +215,11 @@ msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:542
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:568
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -252,7 +250,7 @@ msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>اطّلع على آخر تحديثاتنا.</p>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:338
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:349
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>مرحباً بك في خدمتنا!</p>"
 
@@ -346,9 +344,17 @@ msgstr "لون التمييز"
 msgid "Accept"
 msgstr "قبول"
 
+#: app/components/roles/tenant-role-access-manager.tsx:806
+msgid "Access"
+msgstr "الوصول"
+
 #: app/components/settings/cards/organization/s3-storage-card.tsx:283
 msgid "Access Key ID"
 msgstr "معرف مفتاح الوصول"
+
+#: app/components/roles/tenant-role-access-manager.tsx:65
+msgid "Access to personal and shared team notes."
+msgstr "الوصول إلى الملاحظات الشخصية وملاحظات الفريق المشتركة."
 
 #: app/components/nav-user.tsx:172
 msgid "Account"
@@ -375,6 +381,7 @@ msgid "Acme Inc."
 msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
+#: app/components/roles/tenant-role-access-manager.tsx:723
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:606
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
@@ -412,7 +419,7 @@ msgstr "إضافة"
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:135
+#: ../../packages/marketing/src/components/email/email-preview.tsx:138
 msgid "Add a block to see your email come to life."
 msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 
@@ -433,11 +440,11 @@ msgstr "أضف تعليقاً..."
 #~ msgid "Add a Google Analytics 4 Measurement ID to track visitors on your tenant website. Leave blank to disable tracking."
 #~ msgstr "أضف معرّف قياس Google Analytics 4 لتتبع زوار موقع المستأجر. اتركه فارغاً لتعطيل التتبع."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:160
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5596
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5615
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة بين الترويسة والتذييل."
 
@@ -445,7 +452,7 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5704
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5723
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
@@ -462,7 +469,7 @@ msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعار�
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
-#: app/components/organization-invitations.tsx:288
+#: app/components/organization-invitations.tsx:294
 #: app/routes/organizations+/create.tsx:1162
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
@@ -510,7 +517,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:412
+#: app/components/app-sidebar.tsx:437
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -526,7 +533,7 @@ msgstr "إضافة المزيد من الاتصالات"
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "أضف الاسم والبريد الإلكتروني والخيارات وغيرها لبدء جمع الردود."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5836
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5873
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
@@ -626,8 +633,8 @@ msgid "Adjust your search query to show more."
 msgstr "اضبط استعلام البحث لعرض المزيد."
 
 #: app/components/organization-members.tsx:104
-msgid "Admin"
-msgstr "مسؤول"
+#~ msgid "Admin"
+#~ msgstr "مسؤول"
 
 #: app/components/impersonation-banner.tsx:35
 msgid "Admin impersonation active"
@@ -658,10 +665,11 @@ msgstr "مساعد الذكاء الاصطناعي"
 msgid "Aim for one or two sentences that make someone click."
 msgstr "استهدف جملة أو جملتين تجعلان الزائر ينقر."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:188
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:251
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:174
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:198
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:261
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:312
 msgid "Alignment"
 msgstr "المحاذاة"
 
@@ -703,6 +711,10 @@ msgstr "جميع المستلمين"
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
 
+#: app/components/roles/tenant-role-access-manager.tsx:612
+msgid "Allowed"
+msgstr "مسموح"
+
 #: app/routes/_auth+/signup.tsx:248
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
@@ -711,7 +723,7 @@ msgstr "هل لديك حساب بالفعل؟"
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:209
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:219
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3937
 msgid "Alt text"
 msgstr "النص البديل"
@@ -720,7 +732,7 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:316
+#: app/components/app-sidebar.tsx:332
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:32
 msgid "Analytics"
 msgstr "التحليلات"
@@ -733,7 +745,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:332
+#: app/components/app-sidebar.tsx:348
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:37
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
 msgid "Announcements"
@@ -780,6 +792,10 @@ msgstr "مؤرشف"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 
+#: app/components/roles/tenant-role-access-manager.tsx:863
+msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
+msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ لا يمكن التراجع عن هذا الإجراء."
+
 #: app/components/note/comment-item.tsx:123
 msgid "Are you sure you want to delete this comment?"
 msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
@@ -805,7 +821,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 #~ msgid "Ask about this note..."
 #~ msgstr "اسأل عن هذه الملاحظة..."
 
-#: app/components/ai/global-ai-panel.tsx:530
+#: app/components/ai/global-ai-panel.tsx:531
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
@@ -870,7 +886,7 @@ msgstr "تمت الموافقة {createdAt}"
 msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:105
 msgid "Auto"
 msgstr "تلقائي"
 
@@ -899,7 +915,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:286
+#: app/components/app-sidebar.tsx:302
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 msgid "Automations"
@@ -926,7 +942,7 @@ msgstr "رجوع"
 msgid "Back to automations"
 msgstr "العودة إلى الأتمتة"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:123
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:131
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
@@ -944,7 +960,7 @@ msgstr "العودة إلى الحقول"
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:93
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:104
 msgid "Back to nodes"
 msgstr "العودة إلى العُقد"
 
@@ -970,7 +986,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:388
+#: app/components/app-sidebar.tsx:413
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -978,6 +994,10 @@ msgstr "الفواتير"
 #: app/components/settings/cards/organization/billing-card.tsx:86
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
+
+#: app/components/roles/tenant-role-access-manager.tsx:199
+msgid "Blank"
+msgstr "فارغ"
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
 msgid "Block types"
@@ -995,7 +1015,7 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:323
+#: app/components/app-sidebar.tsx:339
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5102
 msgid "Branding"
@@ -1013,7 +1033,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:279
+#: app/components/app-sidebar.tsx:295
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:73
 msgid "Broadcasts"
@@ -1032,11 +1052,11 @@ msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:543
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5870
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5908
 msgid "Build"
 msgstr "البناء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:334
 msgid "Build a branded HTML email with blocks."
 msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
 
@@ -1044,12 +1064,20 @@ msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخد�
 msgid "Builder"
 msgstr "المنشئ"
 
+#: app/components/roles/tenant-role-access-manager.tsx:525
+msgid "Built-in"
+msgstr "مدمج"
+
+#: app/components/roles/tenant-role-access-manager.tsx:783
+msgid "Built-in Roles"
+msgstr "الأدوار المدمجة"
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3577
 msgid "Button"
 msgstr "الزر"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:278
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
@@ -1081,6 +1109,10 @@ msgstr "بحذف مؤسستك، ستفقد أنت وفريقك الوصول وس
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:91
+msgid "Can edit teammate notes"
+msgstr "يمكنه تعديل ملاحظات الزملاء"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
@@ -1090,6 +1122,8 @@ msgstr "اسم الحملة"
 #: app/components/note/comment-input.tsx:209
 #: app/components/note/comment-item.tsx:290
 #: app/components/note/share-note-button.tsx:317
+#: app/components/roles/tenant-role-access-manager.tsx:481
+#: app/components/roles/tenant-role-access-manager.tsx:871
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -1098,7 +1132,7 @@ msgstr "اسم الحملة"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
-#: app/components/ui/photo-crop-form.tsx:225
+#: app/components/ui/photo-crop-form.tsx:229
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
@@ -1152,7 +1186,7 @@ msgstr "بطاقات"
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:81
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:89
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3346
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4219
 msgid "Center"
@@ -1308,6 +1342,10 @@ msgstr "إغلاق تصميم البريد"
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
 
+#: app/components/roles/tenant-role-access-manager.tsx:108
+msgid "Collaborator visibility and access control."
+msgstr "رؤية المتعاونين والتحكم في الوصول."
+
 #: app/utils/website/field-types.ts:69
 msgid "Collect a date and time."
 msgstr "اجمع تاريخًا ووقتًا."
@@ -1384,7 +1422,7 @@ msgid "Complete two-factor authentication setup"
 msgstr "إكمال إعداد المصادقة الثنائية"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:235
-#: app/routes/_auth+/onboarding.tsx:394
+#: app/routes/_auth+/onboarding.tsx:399
 msgid "Complete your profile"
 msgstr "أكمل ملفك الشخصي"
 
@@ -1408,7 +1446,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -1420,7 +1458,7 @@ msgstr "عامل الشرط مطلوب."
 msgid "Conditional split"
 msgstr "تفرّع شرطي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:130
 msgid "Configuration required"
 msgstr "الإعداد مطلوب"
 
@@ -1438,7 +1476,7 @@ msgid "Confirm New Password"
 msgstr "تأكيد كلمة المرور الجديدة"
 
 #: app/components/settings/password-form.tsx:154
-#: app/routes/_auth+/onboarding.tsx:471
+#: app/routes/_auth+/onboarding.tsx:476
 #: app/routes/_auth+/reset-password.tsx:163
 msgid "Confirm Password"
 msgstr "تأكيد كلمة المرور"
@@ -1451,7 +1489,7 @@ msgstr "تأكيد الرفع"
 msgid "Confirm your new password"
 msgstr "أكد كلمة المرور الجديدة"
 
-#: app/routes/_auth+/onboarding.tsx:478
+#: app/routes/_auth+/onboarding.tsx:483
 msgid "Confirm your password"
 msgstr "أكد كلمة المرور"
 
@@ -1523,7 +1561,7 @@ msgstr "اتصل بالدعم"
 msgid "Contact support for pricing"
 msgstr "اتصل بالدعم للحصول على الأسعار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -1535,6 +1573,10 @@ msgstr "يحتوي (تطابق جزئي)"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4155
 msgid "Content"
 msgstr "المحتوى"
+
+#: app/components/roles/tenant-role-access-manager.tsx:168
+msgid "Content editor"
+msgstr "محرر المحتوى"
 
 #: app/routes/_auth+/login.tsx:696
 #: app/routes/organizations+/create.tsx:801
@@ -1565,7 +1607,7 @@ msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 msgid "Control who can access this note"
 msgstr "التحكم في من يمكنه الوصول إلى هذه الملاحظة"
 
-#: app/components/organization-invitations.tsx:206
+#: app/components/organization-invitations.tsx:200
 msgid "Copied"
 msgstr "تم النسخ"
 
@@ -1575,7 +1617,7 @@ msgstr "تم النسخ"
 msgid "Copied!"
 msgstr "تم النسخ!"
 
-#: app/components/organization-invitations.tsx:211
+#: app/components/organization-invitations.tsx:205
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
 #: app/routes/_auth+/waitlist.tsx:320
@@ -1616,6 +1658,10 @@ msgstr "تعذر فتح {routeTitle}"
 msgid "Create"
 msgstr "إنشاء"
 
+#: app/components/roles/tenant-role-access-manager.tsx:700
+msgid "Create a custom role to assign specific permissions to teammates."
+msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:163
 #~ msgid "Create a form"
 #~ msgstr "إنشاء نموذج"
@@ -1628,7 +1674,7 @@ msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء ا
 msgid "Create a new organization"
 msgstr "إنشاء منظمة جديدة"
 
-#: app/routes/_auth+/onboarding.tsx:456
+#: app/routes/_auth+/onboarding.tsx:461
 msgid "Create a password"
 msgstr "إنشاء كلمة مرور"
 
@@ -1642,7 +1688,7 @@ msgstr "إنشاء خطة"
 
 #: app/routes/_auth+/login.tsx:385
 #: app/routes/_auth+/onboarding_.$provider.tsx:358
-#: app/routes/_auth+/onboarding.tsx:532
+#: app/routes/_auth+/onboarding.tsx:537
 msgid "Create account"
 msgstr "إنشاء حساب"
 
@@ -1696,13 +1742,17 @@ msgstr "إنشاء بث"
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
+#: app/components/roles/tenant-role-access-manager.tsx:256
+msgid "Create Custom Role"
+msgstr "إنشاء دور مخصص"
+
 #: app/components/website/create-form-dialog.tsx:75
 #: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
-#: app/components/organization-invitations.tsx:223
+#: app/components/organization-invitations.tsx:217
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
@@ -1719,6 +1769,10 @@ msgstr "إنشاء ملاحظة جديدة"
 msgid "Create Note"
 msgstr "إنشاء ملاحظة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:69
+msgid "Create notes"
+msgstr "إنشاء ملاحظات"
+
 #: app/components/settings/cards/security-card.tsx:95
 #: app/components/settings/cards/security-card.tsx:133
 #: app/components/settings/cards/security-card.tsx:144
@@ -1734,6 +1788,11 @@ msgstr "إنشاء إعادة توجيه"
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:155
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
+
+#: app/components/roles/tenant-role-access-manager.tsx:489
+#: app/components/roles/tenant-role-access-manager.tsx:689
+msgid "Create role"
+msgstr "إنشاء دور"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:686
 msgid "Create your first API key to get started"
@@ -1754,6 +1813,10 @@ msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نص�
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:574
 msgid "Create your first page to start building your website."
 msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
+
+#: app/components/roles/tenant-role-access-manager.tsx:157
+msgid "Create, update, and publish web pages and announcements."
+msgstr "إنشاء صفحات ويب وإعلانات وتحديثها ونشرها."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:661
 msgid "Created {createdDate}"
@@ -1816,6 +1879,10 @@ msgstr "الاشتراك الحالي"
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
+#: app/components/roles/tenant-role-access-manager.tsx:525
+msgid "Custom"
+msgstr "مخصص"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:663
 msgid "Custom colors"
 msgstr "ألوان مخصصة"
@@ -1829,13 +1896,17 @@ msgstr "نطاق مخصص"
 msgid "Custom Event"
 msgstr "حدث مخصص"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:174
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:185
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
 
 #: app/components/website/create-form-dialog.tsx:108
 msgid "Custom form"
 msgstr "نموذج مخصص"
+
+#: app/components/roles/tenant-role-access-manager.tsx:674
+msgid "Custom Roles"
+msgstr "الأدوار المخصصة"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
 msgid "Custom trigger event"
@@ -1854,7 +1925,7 @@ msgstr "عميل"
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:422
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:436
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -1882,7 +1953,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:260
+#: app/components/app-sidebar.tsx:276
 msgid "Customers"
 msgstr "العملاء"
 
@@ -1917,7 +1988,7 @@ msgid "Dark mode"
 msgstr "الوضع الداكن"
 
 #: app/components/app-sidebar.tsx:122
-#: app/components/app-sidebar.tsx:242
+#: app/components/app-sidebar.tsx:258
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -1943,7 +2014,7 @@ msgstr "التاريخ والوقت"
 msgid "days"
 msgstr "أيام"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:233
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
 msgid "Days"
 msgstr "أيام"
 
@@ -1963,6 +2034,10 @@ msgstr "اللغة الافتراضية"
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:262
+msgid "Define role details and select what permissions members receive."
+msgstr "حدّد تفاصيل الدور واختر الصلاحيات التي يحصل عليها الأعضاء."
+
 #: ../../packages/marketing-workflow/src/validation.ts:17
 msgid "Delay duration must be at least 1."
 msgstr "يجب أن تكون مدة التأخير 1 على الأقل."
@@ -1972,6 +2047,8 @@ msgid "Delay unit is required."
 msgstr "وحدة التأخير مطلوبة."
 
 #: app/components/note/comment-item.tsx:230
+#: app/components/roles/tenant-role-access-manager.tsx:768
+#: app/components/roles/tenant-role-access-manager.tsx:878
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1032
@@ -2014,6 +2091,10 @@ msgstr "حذف العمود"
 #~ msgid "Delete comment"
 #~ msgstr "حذف التعليق"
 
+#: app/components/roles/tenant-role-access-manager.tsx:860
+msgid "Delete custom role"
+msgstr "حذف الدور المخصص"
+
 #: app/components/settings/cards/organization/site-card.tsx:239
 msgid "Delete customer data and switch region?"
 msgstr "حذف بيانات العملاء وتبديل المنطقة؟"
@@ -2026,7 +2107,7 @@ msgstr "حذف البيانات والتبديل"
 msgid "Delete feature"
 msgstr "حذف الميزة"
 
-#: app/components/organization-invitations.tsx:348
+#: app/components/organization-invitations.tsx:354
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
@@ -2042,8 +2123,8 @@ msgstr "حذف الرابط"
 msgid "Delete log entry"
 msgstr "حذف إدخال السجل"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:108
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:120
 msgid "Delete node"
 msgstr "حذف العقدة"
 
@@ -2059,6 +2140,10 @@ msgstr "حذف المؤسسة"
 #: app/components/settings/cards/organization/danger-zone-card.tsx:84
 msgid "Delete organization?"
 msgstr "حذف المؤسسة؟"
+
+#: app/components/roles/tenant-role-access-manager.tsx:95
+msgid "Delete own notes"
+msgstr "حذف الملاحظات الخاصة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:487
 msgid "Delete page?"
@@ -2080,10 +2165,23 @@ msgstr "حذف المراجعة"
 msgid "Delete social link"
 msgstr "حذف رابط التواصل الاجتماعي"
 
+#: app/components/roles/tenant-role-access-manager.tsx:100
+msgid "Delete team notes"
+msgstr "حذف ملاحظات الفريق"
+
+#: app/components/roles/tenant-role-access-manager.tsx:878
+msgid "Deleting…"
+msgstr "جارٍ الحذف…"
+
 #: app/routes/mcp+/authorize.tsx:455
 msgid "Deny"
 msgstr "رفض"
 
+#: app/components/roles/tenant-role-access-manager.tsx:288
+#: app/components/roles/tenant-role-access-manager.tsx:399
+#: app/components/roles/tenant-role-access-manager.tsx:578
+#: app/components/roles/tenant-role-access-manager.tsx:714
+#: app/components/roles/tenant-role-access-manager.tsx:800
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -2093,11 +2191,15 @@ msgstr "رفض"
 msgid "Description"
 msgstr "الوصف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:295
+#: app/components/roles/tenant-role-access-manager.tsx:376
+msgid "Deselect all"
+msgstr "إلغاء تحديد الكل"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:306
 msgid "Design email"
 msgstr "تصميم البريد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5645
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5664
 msgid "Desktop"
 msgstr "سطح المكتب"
 
@@ -2131,7 +2233,7 @@ msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجل
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
 
-#: app/components/organization-invitations.tsx:245
+#: app/components/organization-invitations.tsx:239
 msgid "Disable"
 msgstr "تعطيل"
 
@@ -2178,7 +2280,7 @@ msgstr "العرض"
 msgid "DNS setup"
 msgstr "إعداد DNS"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:513
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -2232,9 +2334,13 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:416
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5795
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5825
 msgid "Draft"
 msgstr "مسودة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:70
+msgid "Draft and create new notes in the organization."
+msgstr "مسودة وإنشاء ملاحظات جديدة في المنظمة."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:415
 msgid "Draft something for me"
@@ -2253,12 +2359,12 @@ msgstr "اسحب لإعادة ترتيب العمود"
 msgid "Duplicate"
 msgstr "تكرار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:195
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:206
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:281
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -2278,7 +2384,7 @@ msgstr "مثل: about-us"
 msgid "e.g. bob@gmail.com"
 msgstr "مثل: bob@gmail.com"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:178
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:189
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr "مثال: checkout_abandoned, tier_upgraded"
 
@@ -2290,7 +2396,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:284
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
 
@@ -2302,7 +2408,7 @@ msgstr "مثل: عاجل، اجتماع، مشروع"
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr "مثال: VIP, lead-hot, subscriber"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:261
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:272
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "مثال: مرحبًا {{firstName}}!"
 
@@ -2320,6 +2426,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 
 #: app/components/favorite-notes.tsx:110
 #: app/components/note/comment-item.tsx:223
+#: app/components/roles/tenant-role-access-manager.tsx:758
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:975
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:458
@@ -2341,7 +2448,11 @@ msgstr "تعديل العمود"
 msgid "Edit comment..."
 msgstr "تعديل التعليق..."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
+#: app/components/roles/tenant-role-access-manager.tsx:254
+msgid "Edit Custom Role"
+msgstr "تعديل الدور المخصص"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:304
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
@@ -2353,13 +2464,29 @@ msgstr "تعديل الملاحظة"
 msgid "Edit Note"
 msgstr "تعديل ملاحظة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:84
+msgid "Edit own notes"
+msgstr "تعديل الملاحظات الخاصة"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
+#: app/components/roles/tenant-role-access-manager.tsx:545
+msgid "Edit role"
+msgstr "تعديل الدور"
+
+#: app/components/roles/tenant-role-access-manager.tsx:89
+msgid "Edit team notes"
+msgstr "تعديل ملاحظات الفريق"
+
+#: app/components/roles/tenant-role-access-manager.tsx:156
+msgid "Edit website content"
+msgstr "تعديل محتوى الموقع"
+
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
-#: app/components/organization-invitations.tsx:424
+#: app/components/organization-invitations.tsx:430
 #: app/components/settings/cards/notification-preferences-card.tsx:25
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/website/link-inspector.tsx:368
@@ -2371,7 +2498,7 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:442
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:456
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -2380,15 +2507,15 @@ msgstr "عنوان البريد الإلكتروني"
 msgid "Email body content is required."
 msgstr "محتوى نص البريد الإلكتروني مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:282
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:366
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:377
 #: ../../packages/marketing/src/components/campaign-form.tsx:112
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:128
 msgid "Email design"
 msgstr "تصميم البريد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:332
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
 
@@ -2397,7 +2524,7 @@ msgstr "نص HTML للبريد الإلكتروني"
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:104
+#: ../../packages/marketing/src/components/email/email-preview.tsx:107
 msgid "Email preview"
 msgstr "معاينة البريد"
 
@@ -2449,7 +2576,7 @@ msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان 
 msgid "Enter backup code"
 msgstr "أدخل الرمز الاحتياطي"
 
-#: app/components/organization-invitations.tsx:423
+#: app/components/organization-invitations.tsx:429
 #: app/routes/organizations+/create.tsx:1203
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
@@ -2468,7 +2595,7 @@ msgid "Enter your email or username"
 msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:298
-#: app/routes/_auth+/onboarding.tsx:438
+#: app/routes/_auth+/onboarding.tsx:443
 msgid "Enter your full name"
 msgstr "أدخل اسمك الكامل"
 
@@ -2485,7 +2612,7 @@ msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:276
-#: app/routes/_auth+/onboarding.tsx:422
+#: app/routes/_auth+/onboarding.tsx:427
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
 
@@ -2520,7 +2647,7 @@ msgstr "سير عمل قائم على الأحداث"
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -2769,7 +2896,7 @@ msgstr "إعدادات النموذج"
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: app/components/app-sidebar.tsx:311
+#: app/components/app-sidebar.tsx:327
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -2783,7 +2910,7 @@ msgstr "وجّه عناوين URL القديمة أو المعطلة إلى صف
 msgid "Four"
 msgstr "أربعة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:269
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
 
@@ -2792,19 +2919,19 @@ msgid "Full"
 msgstr "كامل"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:293
-#: app/routes/_auth+/onboarding.tsx:433
+#: app/routes/_auth+/onboarding.tsx:438
 msgid "Full Name"
 msgstr "الاسم الكامل"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:106
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:354
+#: app/components/app-sidebar.tsx:370
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:301
+#: app/components/app-sidebar.tsx:317
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:15
 msgid "General Settings"
@@ -2836,12 +2963,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:429
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:151
-#: app/components/app-sidebar.tsx:419
+#: app/components/app-sidebar.tsx:444
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -2861,7 +2988,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
 #: app/components/app-sidebar.tsx:159
-#: app/components/app-sidebar.tsx:427
+#: app/components/app-sidebar.tsx:452
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -2878,7 +3005,7 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/components/app-sidebar.tsx:211
+#: app/components/app-sidebar.tsx:215
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -2945,7 +3072,7 @@ msgstr "مرحباً"
 msgid "Hi {{name}}, Check out our latest update."
 msgstr "مرحباً {{name}}، اطّلع على آخر تحديثاتنا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:364
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr "مرحباً {{name}}، مرحباً بك في خدمتنا!"
 
@@ -2957,7 +3084,7 @@ msgstr "مرحباً {{name}}، تحديث حسابك جاهز!"
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr "مرحباً {{name}}، حسابك في Epic Startup جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:400
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr "مرحباً {{name}}، تم تأكيد طلبك!"
 
@@ -2969,11 +3096,11 @@ msgstr "مرحباً {{name}}، منظمتك {{organizationName}} جاهزة."
 msgid "Hi {email}, just a few more details to get started."
 msgstr "مرحباً {email}، بعض التفاصيل فقط للبدء."
 
-#: app/routes/_auth+/onboarding.tsx:401
+#: app/routes/_auth+/onboarding.tsx:406
 msgid "Hi {email}, please complete your profile to join the organization."
 msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي للانضمام إلى المنظمة."
 
-#: app/routes/_auth+/onboarding.tsx:405
+#: app/routes/_auth+/onboarding.tsx:410
 msgid "Hi {email}, please complete your profile."
 msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
 
@@ -2988,6 +3115,13 @@ msgstr "إخفاء عن محركات البحث"
 #: app/components/note/comment-item.tsx:305
 msgid "Hide replies ({replyCount})"
 msgstr "إخفاء الردود ({replyCount})"
+
+#: app/components/roles/tenant-role-access-manager.tsx:102
+#: app/components/roles/tenant-role-access-manager.tsx:124
+#: app/components/roles/tenant-role-access-manager.tsx:141
+#: app/components/roles/tenant-role-access-manager.tsx:158
+msgid "High impact"
+msgstr "تأثير كبير"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
@@ -3005,8 +3139,8 @@ msgstr "الزيارات"
 
 #: app/components/website/link-inspector.tsx:455
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5823
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5844
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5860
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5882
 msgid "Home"
 msgstr "الرئيسية"
 
@@ -3022,7 +3156,7 @@ msgstr "الدفع المستضاف غير متصل"
 msgid "hours"
 msgstr "ساعات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:230
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
 msgid "Hours"
 msgstr "ساعات"
 
@@ -3035,7 +3169,7 @@ msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:321
-#: app/routes/_auth+/onboarding.tsx:501
+#: app/routes/_auth+/onboarding.tsx:506
 msgid "I agree to the Terms of Service and Privacy Policy"
 msgstr "أوافق على شروط الخدمة وسياسة الخصوصية"
 
@@ -3068,11 +3202,11 @@ msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عنا
 msgid "Image"
 msgstr "صورة"
 
-#: app/components/ui/photo-crop-form.tsx:216
+#: app/components/ui/photo-crop-form.tsx:220
 msgid "Image to crop"
 msgstr "صورة للقص"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:201
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:211
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4033
 msgid "Image URL"
 msgstr "رابط الصورة"
@@ -3134,7 +3268,11 @@ msgstr "إدراج حقل هنا"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr "إدراج وسوم الدمج:"
 
-#: app/components/app-sidebar.tsx:364
+#: app/components/roles/tenant-role-access-manager.tsx:835
+msgid "Inspect"
+msgstr "استعراض"
+
+#: app/components/app-sidebar.tsx:389
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1014
 msgid "Integrations"
@@ -3157,7 +3295,7 @@ msgstr "نوع التحقق غير صالح"
 msgid "Inverted"
 msgstr "معكوس"
 
-#: app/components/organization-invitations.tsx:257
+#: app/components/organization-invitations.tsx:251
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
@@ -3170,6 +3308,7 @@ msgid "Invite members"
 msgstr "دعوة أعضاء"
 
 #: app/components/command-menu.tsx:132
+#: app/components/roles/tenant-role-access-manager.tsx:117
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
@@ -3181,7 +3320,7 @@ msgstr "دعوة أعضاء الفريق"
 msgid "Invited by {invitedBy}"
 msgstr "مدعو من قبل {invitedBy}"
 
-#: app/components/organization-invitations.tsx:328
+#: app/components/organization-invitations.tsx:334
 msgid "Invited by {inviterName}"
 msgstr "مدعو من قبل {inviterName}"
 
@@ -3197,7 +3336,7 @@ msgstr "ستظهر الفواتير هنا بمجرد أن يكون لديك ا�
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:485
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -3254,7 +3393,7 @@ msgstr "اسم المفتاح"
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:263
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:273
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
@@ -3339,7 +3478,7 @@ msgstr "اتركه فارغاً للاحتفاظ بالمفتاح السري ا�
 msgid "Leave empty to keep this page at the root of your site."
 msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر موقعك."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:80
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:88
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3341
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3537
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
@@ -3368,13 +3507,13 @@ msgstr "الوضع الفاتح"
 #~ msgid "Limit"
 #~ msgstr "الحد الأقصى"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:271
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:281
 #: app/components/website/link-inspector.tsx:642
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:599
 msgid "Link"
 msgstr "رابط"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:227
 msgid "Link (optional)"
 msgstr "رابط (اختياري)"
 
@@ -3483,6 +3622,10 @@ msgstr "م@مثال.com"
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
+#: app/components/roles/tenant-role-access-manager.tsx:85
+msgid "Make modifications to notes created by this user."
+msgstr "إجراء تعديلات على الملاحظات التي أنشأها هذا المستخدم."
+
 #: app/components/note/share-note-button.tsx:325
 msgid "Make Public"
 msgstr "جعلها عامة"
@@ -3491,6 +3634,11 @@ msgstr "جعلها عامة"
 #: app/components/settings/cards/security-card.tsx:249
 msgid "Manage Passkeys"
 msgstr "إدارة مفاتيح المرور"
+
+#: app/components/organization-invitations.tsx:257
+#: app/components/organization-members.tsx:173
+msgid "Manage roles"
+msgstr "إدارة الأدوار"
 
 #: app/components/settings/cards/organization/billing-card.tsx:172
 msgid "Manage Subscription"
@@ -3520,7 +3668,7 @@ msgstr "إدارة إعدادات الإشعارات للقنوات ومسارا
 msgid "Manage your organization settings and preferences."
 msgstr "إدارة إعدادات وتفضيلات منظمتك."
 
-#: app/components/organization-members.tsx:144
+#: app/components/organization-members.tsx:167
 msgid "Manage your organization's members."
 msgstr "إدارة أعضاء منظمتك."
 
@@ -3562,7 +3710,7 @@ msgstr "تحديد الكل كمقروء"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/app-sidebar.tsx:266
+#: app/components/app-sidebar.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:144
 msgid "Marketing"
 msgstr "التسويق"
@@ -3575,7 +3723,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:374
+#: app/components/app-sidebar.tsx:399
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3598,22 +3746,30 @@ msgstr "رابط الوسائط"
 msgid "Medium"
 msgstr "متوسط"
 
+#: app/components/roles/tenant-role-access-manager.tsx:535
 #: app/components/team-switcher.tsx:132
 msgid "member"
 msgstr "عضو"
 
 #: app/components/organization-members.tsx:107
-msgid "Member"
-msgstr "عضو"
+#~ msgid "Member"
+#~ msgstr "عضو"
 
+#: app/components/roles/tenant-role-access-manager.tsx:535
 #: app/components/team-switcher.tsx:134
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:359
-#: app/components/organization-members.tsx:141
+#: app/components/app-sidebar.tsx:375
+#: app/components/organization-members.tsx:164
+#: app/components/roles/tenant-role-access-manager.tsx:717
+#: app/components/roles/tenant-role-access-manager.tsx:803
 msgid "Members"
 msgstr "الأعضاء"
+
+#: app/components/roles/tenant-role-access-manager.tsx:181
+msgid "Members & invites"
+msgstr "الأعضاء والدعوات"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
@@ -3644,7 +3800,7 @@ msgstr "ترحيل وسائط المؤسسة الحالية بعد الحفظ"
 msgid "minutes"
 msgstr "دقائق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:227
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
 msgid "Minutes"
 msgstr "دقائق"
 
@@ -3652,9 +3808,17 @@ msgstr "دقائق"
 msgid "Missing Path"
 msgstr "المسار المفقود"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5668
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5687
 msgid "Mobile"
 msgstr "الجوال"
+
+#: app/components/roles/tenant-role-access-manager.tsx:90
+msgid "Modify notes created by other team members."
+msgstr "تعديل الملاحظات التي أنشأها أعضاء الفريق الآخرون."
+
+#: app/components/roles/tenant-role-access-manager.tsx:139
+msgid "Modify organization settings"
+msgstr "تعديل إعدادات المنظمة"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:257
 msgid "Mono"
@@ -3687,7 +3851,7 @@ msgstr "اختيار متعدد"
 msgid "Muted"
 msgstr "بدون صوت"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:465
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
@@ -3813,7 +3977,7 @@ msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
-#: app/components/organization-invitations.tsx:186
+#: app/components/organization-invitations.tsx:180
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
 
@@ -3873,9 +4037,17 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
+#: app/components/roles/tenant-role-access-manager.tsx:697
+msgid "No custom roles created yet."
+msgstr "لم يتم إنشاء أدوار مخصصة بعد."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
+
+#: app/components/organization-invitations.tsx:460
+msgid "No description provided"
+msgstr "لم يُقدَّم وصف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:389
 msgid "No discrete action step dispatches recorded for this run."
@@ -3905,7 +4077,7 @@ msgstr "لا توجد حقول بعد"
 msgid "No invoices found"
 msgstr "لم يتم العثور على فواتير"
 
-#: app/components/organization-members.tsx:130
+#: app/components/organization-members.tsx:153
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
 
@@ -3972,7 +4144,7 @@ msgstr "لا توجد ردود بعد."
 #~ msgid "No results."
 #~ msgstr "لا توجد نتائج."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5593
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5612
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
@@ -3998,6 +4170,10 @@ msgstr "العُقد"
 msgid "None"
 msgstr "بلا"
 
+#: app/components/roles/tenant-role-access-manager.tsx:616
+msgid "Not allowed"
+msgstr "غير مسموح"
+
 #: app/components/settings/cards/organization/shop-card.tsx:106
 msgid "Not connected"
 msgstr "غير متصل"
@@ -4006,7 +4182,7 @@ msgstr "غير متصل"
 msgid "Not now"
 msgstr "ليس الآن"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:488
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -4034,11 +4210,19 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:254
+#: app/components/app-sidebar.tsx:270
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:288
 msgid "Notes"
 msgstr "الملاحظات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:64
+msgid "Notes & Documents"
+msgstr "الملاحظات والمستندات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:169
+msgid "Notes & website"
+msgstr "الملاحظات والموقع"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:394
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
@@ -4056,7 +4240,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:379
+#: app/components/app-sidebar.tsx:404
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -4125,6 +4309,14 @@ msgstr "فتح"
 msgid "Open {routeTitle}?"
 msgstr "هل تريد فتح {routeTitle}؟"
 
+#: app/components/roles/tenant-role-access-manager.tsx:80
+msgid "Open and view notes created by any organization teammate."
+msgstr "فتح وعرض الملاحظات التي أنشأها أي زميل في المنظمة."
+
+#: app/components/roles/tenant-role-access-manager.tsx:75
+msgid "Open and view notes created by this user."
+msgstr "فتح وعرض الملاحظات التي أنشأها هذا المستخدم."
+
 #: app/components/settings/cards/organization/shop-card.tsx:174
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
@@ -4162,11 +4354,15 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open menu"
 msgstr "فتح القائمة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:152
+msgid "Open pages and themes in the site builder."
+msgstr "فتح الصفحات والسمات في منشئ الموقع."
+
 #: app/components/settings/cards/organization/shop-card.tsx:142
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5936
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5974
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
@@ -4219,9 +4415,17 @@ msgstr "الطلبات المقدمة على موقعك العام."
 msgid "Organization Created"
 msgstr "تم إنشاء المنظمة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:130
+msgid "Organization details and configuration."
+msgstr "تفاصيل المنظمة وإعداداتها."
+
 #: app/routes/organizations+/create.tsx:631
 msgid "Organization logo preview"
 msgstr "معاينة شعار المنظمة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:129
+msgid "Organization Settings"
+msgstr "إعدادات المنظمة"
 
 #: app/components/settings/cards/organization/site-card.tsx:162
 msgid "Organization site"
@@ -4246,11 +4450,11 @@ msgstr "المنظمات"
 msgid "Organizations are used to group your projects."
 msgstr "تُستخدم المنظمات لتجميع مشاريعك."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:90
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/app-sidebar.tsx:272
+#: app/components/app-sidebar.tsx:288
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -4282,7 +4486,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:322
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:22
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -4320,7 +4524,7 @@ msgstr "مفاتيح المرور هي طريقة آمنة وبدون كلمة �
 
 #: app/components/settings/password-form.tsx:112
 #: app/routes/_auth+/login.tsx:817
-#: app/routes/_auth+/onboarding.tsx:451
+#: app/routes/_auth+/onboarding.tsx:456
 msgid "Password"
 msgstr "كلمة المرور"
 
@@ -4365,7 +4569,7 @@ msgstr "التحويلات مفعّلة"
 msgid "Pending"
 msgstr "قيد الانتظار"
 
-#: app/components/organization-invitations.tsx:310
+#: app/components/organization-invitations.tsx:316
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
@@ -4383,7 +4587,32 @@ msgstr "مقاييس الأداء"
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
 
-#: app/components/organization-invitations.tsx:164
+#: app/components/roles/tenant-role-access-manager.tsx:101
+msgid "Permanently delete notes created by any teammate."
+msgstr "حذف الملاحظات التي أنشأها أي زميل نهائيًا."
+
+#: app/components/roles/tenant-role-access-manager.tsx:96
+msgid "Permanently delete notes created by this user."
+msgstr "حذف الملاحظات التي أنشأها هذا المستخدم نهائيًا."
+
+#: app/components/roles/tenant-role-access-manager.tsx:396
+#: app/components/roles/tenant-role-access-manager.tsx:575
+msgid "Permission"
+msgstr "الصلاحية"
+
+#: app/components/roles/tenant-role-access-manager.tsx:720
+msgid "Permissions"
+msgstr "الصلاحيات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:536
+msgid "permissions granted"
+msgstr "صلاحيات ممنوحة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:473
+msgid "permissions selected"
+msgstr "صلاحيات محددة"
+
+#: app/components/organization-invitations.tsx:158
 msgid "Personal invite link"
 msgstr "رابط الدعوة الشخصي"
 
@@ -4401,12 +4630,12 @@ msgstr "تعمل روابط الهاتف فقط على الأجهزة القاد
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:448
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:462
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -4474,7 +4703,7 @@ msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 msgid "Plain"
 msgstr "عادي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:348
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:359
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
 
@@ -4489,6 +4718,10 @@ msgstr "الخطة غير متاحة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4478
 msgid "Platform"
 msgstr "المنصة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:820
+msgid "Platform-provided role."
+msgstr "دور توفره المنصة."
 
 #: app/routes/organizations+/create.tsx:1317
 msgid "Please check configuration"
@@ -4556,7 +4789,7 @@ msgstr "التصيير المسبق"
 #~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:552
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5885
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5923
 msgid "Preview"
 msgstr "معاينة"
 
@@ -4639,7 +4872,7 @@ msgstr "الوصول العام"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5899
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5937
 msgid "Publish"
 msgstr "نشر"
 
@@ -4652,7 +4885,7 @@ msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:496
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5906
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5944
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
@@ -4664,7 +4897,7 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5793
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5823
 msgid "Published"
 msgstr "منشور"
 
@@ -4716,9 +4949,17 @@ msgstr "التقييم"
 msgid "Read documentation"
 msgstr "قراءة الوثائق"
 
+#: app/components/roles/tenant-role-access-manager.tsx:135
+msgid "Read organization details, verified domain, and storage status."
+msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق وحالة التخزين."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:141
 msgid "Read page details"
 msgstr "تمت قراءة تفاصيل الصفحة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:191
+msgid "Read-only"
+msgstr "قراءة فقط"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:140
 msgid "Reading page details"
@@ -4760,7 +5001,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:339
+#: app/components/app-sidebar.tsx:355
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:42
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -4777,7 +5018,7 @@ msgstr "المُحيل"
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5927
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5965
 msgid "Refresh preview"
 msgstr "تحديث المعاينة"
 
@@ -4823,7 +5064,7 @@ msgstr "إعادة تحميل الصفحة"
 
 #: app/routes/_auth+/login.tsx:852
 #: app/routes/_auth+/onboarding_.$provider.tsx:341
-#: app/routes/_auth+/onboarding.tsx:518
+#: app/routes/_auth+/onboarding.tsx:523
 msgid "Remember me"
 msgstr "تذكرني"
 
@@ -4845,7 +5086,7 @@ msgid "Remove access from all devices except this one"
 msgstr "إزالة الوصول من جميع الأجهزة عدا هذا الجهاز"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:143
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:138
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:146
 msgid "Remove block"
 msgstr "إزالة الكتلة"
 
@@ -4853,7 +5094,7 @@ msgstr "إزالة الكتلة"
 msgid "Remove choice"
 msgstr "إزالة الخيار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:312
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
 msgid "Remove design"
 msgstr "إزالة التصميم"
 
@@ -4883,9 +5124,13 @@ msgstr "إزالة الرابط"
 msgid "Remove media"
 msgstr "إزالة الوسائط"
 
-#: app/components/organization-members.tsx:192
+#: app/components/organization-members.tsx:225
 msgid "Remove member"
 msgstr "إزالة العضو"
+
+#: app/components/roles/tenant-role-access-manager.tsx:122
+msgid "Remove team members"
+msgstr "إزالة أعضاء الفريق"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:405
 msgid "Remove variable"
@@ -4899,7 +5144,7 @@ msgstr "تمت إزالة القسم"
 msgid "Removing section"
 msgstr "إزالة القسم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:108
+#: ../../packages/marketing/src/components/email/email-preview.tsx:111
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
@@ -4922,7 +5167,7 @@ msgstr "رد"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:248
+#: app/components/app-sidebar.tsx:264
 msgid "Reports"
 msgstr "التقارير"
 
@@ -4955,7 +5200,7 @@ msgstr "مطلوب"
 msgid "Required"
 msgstr "مطلوب"
 
-#: app/components/organization-invitations.tsx:234
+#: app/components/organization-invitations.tsx:228
 msgid "Reset"
 msgstr "إعادة تعيين"
 
@@ -5018,6 +5263,10 @@ msgstr "إلغاء التفويض"
 msgid "Revoke session"
 msgstr "إلغاء الجلسة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:123
+msgid "Revoke workspace access and remove non-admin members."
+msgstr "إلغاء الوصول إلى مساحة العمل وإزالة الأعضاء غير المسؤولين."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:995
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1014
 msgid "Revoked"
@@ -5027,11 +5276,24 @@ msgstr "تم الإلغاء"
 msgid "Revoking..."
 msgstr "جاري الإلغاء..."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:82
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:90
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3542
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4224
 msgid "Right"
 msgstr "اليمين"
+
+#: app/components/roles/tenant-role-access-manager.tsx:711
+#: app/components/roles/tenant-role-access-manager.tsx:797
+msgid "Role"
+msgstr "الدور"
+
+#: app/components/roles/tenant-role-access-manager.tsx:269
+msgid "Role name"
+msgstr "اسم الدور"
+
+#: app/components/app-sidebar.tsx:382
+msgid "Roles & access"
+msgstr "الأدوار والصلاحيات"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3559
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3799
@@ -5042,7 +5304,7 @@ msgstr "مستدير"
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -5134,11 +5396,11 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/note/comment-input.tsx:162
-#: app/components/organization-members.tsx:112
+#: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
-#: app/components/ui/photo-crop-form.tsx:232
+#: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr "حفظ"
@@ -5152,6 +5414,7 @@ msgstr "وفّر 20٪"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
+#: app/components/roles/tenant-role-access-manager.tsx:487
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:112
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
@@ -5212,6 +5475,7 @@ msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: app/components/roles/tenant-role-access-manager.tsx:485
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -5254,6 +5518,7 @@ msgstr "البحث عن المستخدمين في منظمتك"
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
+#: app/components/app-sidebar.tsx:216
 #: app/routes/_app+/$orgSlug_+/notes.tsx:347
 msgid "Search notes"
 msgstr "البحث في الملاحظات"
@@ -5262,7 +5527,7 @@ msgstr "البحث في الملاحظات"
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
 
-#: app/components/app-sidebar.tsx:457
+#: app/components/app-sidebar.tsx:482
 #: app/components/command-menu.tsx:102
 msgid "Search notes..."
 msgstr "البحث في الملاحظات..."
@@ -5309,7 +5574,7 @@ msgstr "ارتفاع القسم"
 #~ msgstr "نوع القسم"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5096
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5576
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5595
 msgid "Sections"
 msgstr "الأقسام"
 
@@ -5331,6 +5596,10 @@ msgstr "مفتاح الأمان"
 msgid "Security Settings"
 msgstr "إعدادات الأمان"
 
+#: app/components/roles/tenant-role-access-manager.tsx:113
+msgid "See teammate names, emails, and assigned roles."
+msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4084
 msgid "Select a form"
 msgstr "اختر نموذجًا"
@@ -5351,11 +5620,11 @@ msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ ت
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
-#: app/components/data-table.tsx:170
-#~ msgid "Select all"
-#~ msgstr "تحديد الكل"
+#: app/components/roles/tenant-role-access-manager.tsx:378
+msgid "Select all"
+msgstr "تحديد الكل"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:452
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -5371,7 +5640,7 @@ msgstr "اختر صورة"
 msgid "Select languages"
 msgstr "اختر اللغات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:492
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:506
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -5383,7 +5652,7 @@ msgstr "اختر المنظمة"
 #~ msgid "Select row"
 #~ msgstr "تحديد صف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:481
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -5391,7 +5660,7 @@ msgstr "اختر الحالة"
 msgid "Select the languages visitors can browse your site in."
 msgstr "اختر اللغات التي يمكن للزوار تصفح موقعك بها."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:144
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:155
 msgid "Select trigger type"
 msgstr "اختر نوع المحفّز"
 
@@ -5399,7 +5668,7 @@ msgstr "اختر نوع المحفّز"
 msgid "Select type"
 msgstr "اختر النوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:165
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:176
 msgid "Select which event initiates this automated journey."
 msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمتة."
 
@@ -5431,10 +5700,14 @@ msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لم
 msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
-#: app/components/organization-invitations.tsx:295
+#: app/components/organization-invitations.tsx:301
 #: app/routes/organizations+/create.tsx:1169
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:118
+msgid "Send invitations to join the organization workspace."
+msgstr "إرسال دعوات للانضمام إلى مساحة عمل المنظمة."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
 msgid "Send message"
@@ -5508,7 +5781,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:362
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -5540,8 +5813,12 @@ msgid "Share Note"
 msgstr "مشاركة الملاحظة"
 
 #: app/components/organization-invitations.tsx:167
-msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
-msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
+#~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
+#~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
+
+#: app/components/organization-invitations.tsx:161
+msgid "Share this link to let people join your organization. They'll see you invited them."
+msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
 
 #: app/routes/_auth+/waitlist.tsx:283
 msgid "Share with others"
@@ -5551,7 +5828,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:369
+#: app/components/app-sidebar.tsx:394
 msgid "Shop"
 msgstr "المتجر"
 
@@ -5665,7 +5942,8 @@ msgstr "أيقونة الموقع"
 msgid "Site shop"
 msgstr "متجر الموقع"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:155
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:163
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
 msgid "Size"
 msgstr "الحجم"
 
@@ -5695,7 +5973,7 @@ msgstr "الرسائل النصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:380
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:391
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -5703,7 +5981,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -5711,7 +5989,7 @@ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 �
 msgid "Social links"
 msgstr "روابط التواصل الاجتماعي"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:89
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
 msgid "Solid"
 msgstr "ممتلئ"
 
@@ -5744,9 +6022,21 @@ msgstr "تفرّع المسار بناءً على قواعد (صحيح / خاط�
 msgid "Square"
 msgstr "مربع"
 
+#: app/components/roles/tenant-role-access-manager.tsx:786
+msgid "Standard platform roles. Click any role to review its active permissions."
+msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
+
+#: app/components/roles/tenant-role-access-manager.tsx:531
+msgid "Standard system role."
+msgstr "دور نظام قياسي."
+
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1005
 msgid "Star"
 msgstr "تمييز بنجمة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:305
+msgid "Start from a template"
+msgstr "البدء من قالب"
 
 #: app/components/website/create-form-dialog.tsx:78
 msgid "Start from a template or build your own field set."
@@ -5780,6 +6070,7 @@ msgstr "بدأ في"
 msgid "Starting point"
 msgstr "نقطة البداية"
 
+#: app/components/roles/tenant-role-access-manager.tsx:581
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
@@ -5828,7 +6119,8 @@ msgstr "ترحيل التخزين"
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإعداد العُقد."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:279
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:291
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3608
@@ -5849,7 +6141,7 @@ msgstr "رابط النطاق الفرعي"
 msgid "Subject"
 msgstr "الموضوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:257
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:268
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
@@ -5948,6 +6240,10 @@ msgstr "نظام السمة"
 msgid "Tags"
 msgstr "الوسوم"
 
+#: app/components/roles/tenant-role-access-manager.tsx:677
+msgid "Tailored roles specific to your organization with configured permissions."
+msgstr "أدوار مخصصة لمنظمتك مع صلاحيات مُعدّة."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:413
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
@@ -5966,13 +6262,21 @@ msgstr "طويل"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:524
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
 msgid "Team"
 msgstr "الفريق"
+
+#: app/components/roles/tenant-role-access-manager.tsx:107
+msgid "Team & Members"
+msgstr "الفريق والأعضاء"
+
+#: app/components/roles/tenant-role-access-manager.tsx:180
+msgid "Team manager"
+msgstr "مدير الفريق"
 
 #: app/components/leadership-card.tsx:55
 msgid "Team members who have created the most notes"
@@ -6027,8 +6331,8 @@ msgstr "تشغيل اختباري"
 msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:177
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:155
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:187
 #: app/components/website/link-inspector.tsx:638
 msgid "Text"
 msgstr "نص"
@@ -6051,7 +6355,7 @@ msgid "Thanks for referring."
 msgstr "شكراً لإحالتك."
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:172
-#: app/routes/_auth+/onboarding.tsx:340
+#: app/routes/_auth+/onboarding.tsx:345
 msgid "Thanks for signing up!"
 msgstr "شكراً لتسجيلك!"
 
@@ -6059,7 +6363,7 @@ msgstr "شكراً لتسجيلك!"
 msgid "Thanks for signing up! {inviterName} has invited you to join {orgName}. Review the invitation below."
 msgstr "شكراً لتسجيلك! دعاك {inviterName} للانضمام إلى {orgName}. راجع الدعوة أدناه."
 
-#: app/routes/_auth+/onboarding.tsx:330
+#: app/routes/_auth+/onboarding.tsx:335
 msgid "Thanks for signing up! We'll notify you when we're ready."
 msgstr "شكراً لتسجيلك! سنبلغك عندما نكون جاهزين."
 
@@ -6067,7 +6371,7 @@ msgstr "شكراً لتسجيلك! سنبلغك عندما نكون جاهزين
 msgid "Thanks for signing up! You have pending organization invitations."
 msgstr "شكراً لتسجيلك! لديك دعوات منظمة معلقة."
 
-#: app/routes/_auth+/onboarding.tsx:291
+#: app/routes/_auth+/onboarding.tsx:296
 msgid "Thanks for signing up! You've been automatically added to {orgNames} based on your email domain."
 msgstr "شكراً لتسجيلك! تمت إضافتك تلقائياً إلى {orgNames} بناءً على نطاق بريدك الإلكتروني."
 
@@ -6081,7 +6385,7 @@ msgstr "يسمح إعداد autoApprove بالموافقة التلقائية ع
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:255
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
 
@@ -6297,7 +6601,7 @@ msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 msgid "Trigger Event"
 msgstr "حدث المحفّز"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:135
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:146
 msgid "Trigger Event Type"
 msgstr "نوع حدث المحفّز"
 
@@ -6367,8 +6671,8 @@ msgstr "تعذر تحميل معلومات الأسعار"
 msgid "Unedited boilerplate text detected in email body."
 msgstr "تم اكتشاف نص قالب غير معدَّل في نص البريد الإلكتروني."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:214
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:225
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:234
 msgid "Unit"
 msgstr "الوحدة"
 
@@ -6391,7 +6695,7 @@ msgstr "مستلم بدون اسم"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:518
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5956
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5994
 msgid "Unpublish"
 msgstr "إلغاء النشر"
 
@@ -6418,7 +6722,7 @@ msgid "Untranslated only"
 msgstr "غير المترجم فقط"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:108
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5903
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5941
 msgid "Update"
 msgstr "تحديث"
 
@@ -6426,9 +6730,17 @@ msgstr "تحديث"
 msgid "Update Organization Logo"
 msgstr "تحديث شعار المنظمة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:140
+msgid "Update organization name, slug, and general preferences."
+msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات العامة."
+
 #: app/components/settings/cards/profile-photo.tsx:25
 msgid "Update Profile Photo"
 msgstr "تحديث صورة الملف الشخصي"
+
+#: app/components/roles/tenant-role-access-manager.tsx:261
+msgid "Update this role’s name, description, and permissions."
+msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 
 #: app/components/settings/cards/profile-card.tsx:82
 msgid "Update your photo and personal details here."
@@ -6548,7 +6860,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 #: app/components/settings/cards/profile-card.tsx:114
 #: app/routes/_auth+/login.tsx:791
 #: app/routes/_auth+/onboarding_.$provider.tsx:270
-#: app/routes/_auth+/onboarding.tsx:417
+#: app/routes/_auth+/onboarding.tsx:422
 msgid "Username"
 msgstr "اسم المستخدم"
 
@@ -6573,7 +6885,7 @@ msgstr "المتغيرات"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -6603,6 +6915,7 @@ msgstr "جاري التحقق من مفتاح المرور"
 msgid "Video"
 msgstr "فيديو"
 
+#: app/components/roles/tenant-role-access-manager.tsx:750
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
@@ -6620,13 +6933,21 @@ msgstr "عرض وتنزيل فواتير الدفع الخاصة بك"
 msgid "View and manage this session"
 msgstr "عرض وإدارة هذه الجلسة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5945
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5983
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
 #: app/routes/mcp+/authorize.tsx:394
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
+
+#: app/components/roles/tenant-role-access-manager.tsx:134
+msgid "View organization settings"
+msgstr "عرض إعدادات المنظمة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:74
+msgid "View own notes"
+msgstr "عرض الملاحظات الخاصة"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:240
 #~ msgid "View responses"
@@ -6636,9 +6957,25 @@ msgstr "عرض الملاحظات من المستخدمين الذين لديك 
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
+#: app/components/roles/tenant-role-access-manager.tsx:112
+msgid "View team members"
+msgstr "عرض أعضاء الفريق"
+
+#: app/components/roles/tenant-role-access-manager.tsx:79
+msgid "View team notes"
+msgstr "عرض ملاحظات الفريق"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:329
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
+
+#: app/components/roles/tenant-role-access-manager.tsx:151
+msgid "View website workspace"
+msgstr "عرض مساحة عمل الموقع"
+
+#: app/components/roles/tenant-role-access-manager.tsx:190
+msgid "Viewer"
+msgstr "مشاهد"
 
 #: app/components/settings/cards/organization/site-card.tsx:186
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
@@ -6691,22 +7028,30 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:295
+#: app/components/app-sidebar.tsx:311
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
 msgid "Website"
 msgstr "الموقع الإلكتروني"
+
+#: app/components/roles/tenant-role-access-manager.tsx:146
+msgid "Website & Publishing"
+msgstr "الموقع والنشر"
+
+#: app/components/roles/tenant-role-access-manager.tsx:147
+msgid "Website editor and public pages."
+msgstr "محرر الموقع والصفحات العامة."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:293
 msgid "weeks"
 msgstr "أسابيع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:236
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
 msgid "Weeks"
 msgstr "أسابيع"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:172
-#: app/routes/_auth+/onboarding.tsx:329
-#: app/routes/_auth+/onboarding.tsx:340
+#: app/routes/_auth+/onboarding.tsx:334
+#: app/routes/_auth+/onboarding.tsx:345
 msgid "Welcome"
 msgstr "مرحباً"
 
@@ -6714,7 +7059,7 @@ msgstr "مرحباً"
 msgid "Welcome {userName}!"
 msgstr "مرحباً {userName}!"
 
-#: app/routes/_auth+/onboarding.tsx:396
+#: app/routes/_auth+/onboarding.tsx:401
 msgid "Welcome aboard!"
 msgstr "مرحباً بك على متن الطائرة!"
 
@@ -6728,7 +7073,7 @@ msgstr "مرحباً بك في Epic Startup، {{organizationName}}"
 
 #: app/routes/_auth+/onboarding.tsx:182
 #: app/routes/_auth+/onboarding.tsx:211
-#: app/routes/_auth+/onboarding.tsx:290
+#: app/routes/_auth+/onboarding.tsx:295
 msgid "Welcome!"
 msgstr "مرحباً!"
 
@@ -6784,8 +7129,9 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:230
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:240
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:302
 msgid "Width"
 msgstr "العرض"
 
@@ -6821,7 +7167,7 @@ msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل 
 msgid "Write your email. Use {{name}} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {{name}} للتخصيص."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:184
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:194
 msgid "Write your message"
 msgstr "اكتب رسالتك"
 
@@ -6829,7 +7175,7 @@ msgstr "اكتب رسالتك"
 msgid "Write your note content..."
 msgstr "اكتب محتوى ملاحظتك..."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:138
+#: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 
@@ -6846,7 +7192,7 @@ msgstr "سنوي"
 msgid "Yes"
 msgstr "نعم"
 
-#: app/components/organization-members.tsx:169
+#: app/components/organization-members.tsx:201
 msgid "You"
 msgstr "أنت"
 
@@ -6897,7 +7243,7 @@ msgstr "لم تنضم إلى أي منظمات بعد."
 #: app/routes/_auth+/onboarding_.$provider.tsx:103
 #: app/routes/_auth+/onboarding_.$provider.tsx:194
 #: app/routes/_auth+/onboarding.tsx:97
-#: app/routes/_auth+/onboarding.tsx:358
+#: app/routes/_auth+/onboarding.tsx:363
 msgid "You must agree to the terms of service and privacy policy"
 msgstr "يجب أن توافق على شروط الخدمة وسياسة الخصوصية"
 
@@ -6969,7 +7315,7 @@ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 msgid "Your organizations"
 msgstr "مؤسساتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5701
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5720
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
 
@@ -6992,3 +7338,7 @@ msgstr "سيتم تشفير بيانات اعتماد S3 الخاصة بك وت�
 #: app/components/onboarding-checklist.tsx:191
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
+
+#: app/components/roles/tenant-role-access-manager.tsx:200
+msgid "Zero permissions"
+msgstr "بدون صلاحيات"

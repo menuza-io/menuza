@@ -7,6 +7,7 @@ import {
 	eq,
 	gt,
 	inArray,
+	isNull,
 	lte,
 	DataSubjectRequest,
 	Organization,
@@ -236,6 +237,7 @@ export async function createErasureRequest(
 			and(
 				eq(UserOrganization.userId, userId),
 				eq(OrganizationRole.name, 'admin'),
+				isNull(OrganizationRole.organizationId),
 			),
 		)
 	const blockingOrgs = []
@@ -243,7 +245,18 @@ export async function createErasureRequest(
 		const [adminCount] = await db
 			.select({ value: count() })
 			.from(UserOrganization)
-			.where(eq(UserOrganization.organizationId, membership.organizationId))
+			.innerJoin(
+				OrganizationRole,
+				eq(UserOrganization.organizationRoleId, OrganizationRole.id),
+			)
+			.where(
+				and(
+					eq(UserOrganization.organizationId, membership.organizationId),
+					eq(UserOrganization.active, true),
+					eq(OrganizationRole.name, 'admin'),
+					isNull(OrganizationRole.organizationId),
+				),
+			)
 		if ((adminCount?.value ?? 0) === 1) blockingOrgs.push(membership)
 	}
 

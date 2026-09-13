@@ -7,6 +7,7 @@ import {
 	desc,
 	eq,
 	inArray,
+	isNull,
 	Organization,
 	OrganizationImage,
 	OrganizationRole,
@@ -303,7 +304,12 @@ export async function createOrganization({
 		const [adminRole] = await tx
 			.select({ id: OrganizationRole.id })
 			.from(OrganizationRole)
-			.where(eq(OrganizationRole.name, 'admin'))
+			.where(
+				and(
+					eq(OrganizationRole.name, 'admin'),
+					isNull(OrganizationRole.organizationId),
+				),
+			)
 			.limit(1)
 		if (!adminRole) throw new Error('Admin role not found')
 		const [created] = await tx
