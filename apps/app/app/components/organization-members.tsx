@@ -27,13 +27,21 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { useState } from 'react'
-import { Form } from 'react-router'
+import { Form, Link } from 'react-router'
+
+export interface OrganizationRoleOption {
+	id: string
+	name: string
+	description: string
+	isBuiltIn: boolean
+}
 
 interface OrganizationMember {
 	userId: string
 	organizationRole: {
 		id: string
 		name: string
+		description: string
 		level: number
 	}
 	active: boolean
@@ -52,33 +60,33 @@ function OrganizationMemberRoleEditor({
 	member,
 	currentUserId,
 	members,
+	availableRoles,
 }: {
 	member: OrganizationMember
 	currentUserId: string
 	members: OrganizationMember[]
+	availableRoles?: OrganizationRoleOption[]
 }) {
+	availableRoles ??= []
 	const currentMember = members.find((m) => m.userId === currentUserId)
 	const isAdmin =
-		currentMember?.organizationRole.name.toLowerCase() === 'admin' &&
+		currentMember?.organizationRole.id === 'org_role_admin' &&
 		currentMember.active
 	const isSelf = member.userId === currentUserId
-	const [role, setRole] = useState(member.organizationRole.name)
+	const [roleId, setRoleId] = useState(member.organizationRole.id)
 
 	if (!isAdmin || isSelf) {
 		return (
 			<Badge
 				variant={
-					member.organizationRole.name.toLowerCase() === 'admin'
+					member.organizationRole.id === 'org_role_admin'
 						? 'default'
 						: 'secondary'
 				}
 				className="text-xs"
 			>
-				{member.organizationRole.name.toLowerCase() === 'admin' && (
+				{member.organizationRole.id === 'org_role_admin' && (
 					<Icon name="settings" className="mr-1 h-3 w-3" />
-				)}
-				{member.organizationRole.name.toLowerCase() === 'member' && (
-					<Icon name="user" className="mr-1 h-3 w-3" />
 				)}
 				{member.organizationRole.name}
 			</Badge>
@@ -89,23 +97,32 @@ function OrganizationMemberRoleEditor({
 		<Form method="POST" className="flex items-center gap-2">
 			<input type="hidden" name="intent" value="update-member-role" />
 			<input type="hidden" name="userId" value={member.userId} />
-			<input type="hidden" name="role" value={role} />
+			<input type="hidden" name="roleId" value={roleId} />
 			<Select
-				name="role"
-				defaultValue={member.organizationRole.name}
-				value={role}
-				onValueChange={(value) => setRole(value as string)}
+				name="roleId"
+				defaultValue={member.organizationRole.id}
+				value={roleId}
+				onValueChange={(value) => setRoleId(value as string)}
 			>
-				<SelectTrigger size="sm" className="w-28">
-					<SelectValue />
+				<SelectTrigger size="sm" className="w-40">
+					<SelectValue>
+						{availableRoles.find((role) => role.id === roleId)?.name ??
+							member.organizationRole.name}
+					</SelectValue>
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="admin">
-						<Trans>Admin</Trans>
-					</SelectItem>
-					<SelectItem value="member">
-						<Trans>Member</Trans>
-					</SelectItem>
+					{availableRoles.map((availableRole) => (
+						<SelectItem key={availableRole.id} value={availableRole.id}>
+							<div className="flex flex-col text-left">
+								<span>{availableRole.name}</span>
+								{availableRole.description && (
+									<span className="text-muted-foreground text-xs">
+										{availableRole.description}
+									</span>
+								)}
+							</div>
+						</SelectItem>
+					))}
 				</SelectContent>
 			</Select>
 			<Button type="submit" variant="outline" size="sm">
@@ -118,9 +135,15 @@ function OrganizationMemberRoleEditor({
 export function OrganizationMembers({
 	members = [],
 	currentUserId,
+	availableRoles = [],
+	organizationSlug,
+	canManageRoles = false,
 }: {
 	members?: OrganizationMember[]
 	currentUserId: string
+	availableRoles?: OrganizationRoleOption[]
+	organizationSlug?: string
+	canManageRoles?: boolean
 }) {
 	if (members.length === 0) {
 		return (
@@ -142,6 +165,15 @@ export function OrganizationMembers({
 				</CardTitle>
 				<CardDescription>
 					<Trans>Manage your organization's members.</Trans>
+					{organizationSlug && canManageRoles && (
+						<>
+							{' '}
+							·{' '}
+							<Link to={`/${organizationSlug}/settings/roles`}>
+								<Trans>Manage roles</Trans>
+							</Link>
+						</>
+					)}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -179,6 +211,7 @@ export function OrganizationMembers({
 									member={member}
 									currentUserId={currentUserId}
 									members={members}
+									availableRoles={availableRoles}
 								/>
 								{member.userId !== currentUserId && (
 									<Form method="POST">

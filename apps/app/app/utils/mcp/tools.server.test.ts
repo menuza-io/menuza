@@ -7,7 +7,6 @@ import {
 	NoteAccess,
 	Organization,
 	OrganizationNote,
-	OrganizationRole,
 	User,
 	UserOrganization,
 } from '@repo/database'
@@ -19,16 +18,11 @@ import './tools.server' // Import to register tools
 /**
  * Helper to add a user to an organization
  */
-async function addUserToOrganization(userId: string, organizationId: string) {
-	const [memberRole] = await db
-		.insert(OrganizationRole)
-		.values({
-			name: `test_member_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-			description: 'Test Member role',
-			level: 1,
-		})
-		.returning()
-	if (!memberRole) throw new Error('Member role not found')
+async function addUserToOrganization(
+	userId: string,
+	organizationId: string,
+	organizationRoleId: string = 'org_role_member',
+) {
 	const [existingRelation] = await db
 		.select()
 		.from(UserOrganization)
@@ -44,7 +38,7 @@ async function addUserToOrganization(userId: string, organizationId: string) {
 		await db.insert(UserOrganization).values({
 			userId,
 			organizationId,
-			organizationRoleId: memberRole.id,
+			organizationRoleId,
 			active: true,
 		})
 	}
@@ -89,8 +83,12 @@ describe('MCP Tools Service', () => {
 		if (!createdOrganization) throw new Error('Failed to insert organization')
 		testOrganization = createdOrganization
 
-		// Add user to organization
-		await addUserToOrganization(testUser.id, testOrganization.id)
+		// MCP token user: guest role (no org-wide note read) so note ACL tests match product rules
+		await addUserToOrganization(
+			testUser.id,
+			testOrganization.id,
+			'org_role_guest',
+		)
 
 		mockContext = { user: testUser, organization: testOrganization }
 	})

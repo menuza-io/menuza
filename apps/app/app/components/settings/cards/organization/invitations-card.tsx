@@ -1,5 +1,5 @@
 import { OrganizationInvitations } from '#app/components/organization-invitations.tsx'
-import { type OrganizationRoleName } from '#app/utils/organization/organizations.server.ts'
+import { type OrganizationRoleOption } from '#app/components/organization-members.tsx'
 
 interface OrganizationInvitation {
 	id: string
@@ -28,11 +28,15 @@ export function InvitationsCard({
 	inviteLink,
 	actionData,
 	availableRoles,
+	organizationSlug,
+	canManageRoles,
 }: {
 	pendingInvitations: OrganizationInvitation[]
 	inviteLink?: OrganizationInviteLink | null
 	actionData?: any
-	availableRoles?: OrganizationRoleName[]
+	availableRoles?: OrganizationRoleOption[]
+	organizationSlug?: string
+	canManageRoles?: boolean
 }) {
 	return (
 		<OrganizationInvitations
@@ -40,6 +44,8 @@ export function InvitationsCard({
 			inviteLink={inviteLink}
 			actionData={actionData}
 			availableRoles={availableRoles}
+			organizationSlug={organizationSlug}
+			canManageRoles={canManageRoles}
 		/>
 	)
 }

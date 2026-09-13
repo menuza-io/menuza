@@ -4,6 +4,8 @@ import {
 	db,
 	eq,
 	OrganizationInvitation,
+	OrganizationRole,
+	Permission,
 	UserOrganization,
 	_OrganizationPermissionToRole,
 } from '@repo/database'
@@ -91,6 +93,132 @@ describe('settings/members route integration', () => {
 	})
 
 	describe('action', () => {
+		it('assigns a custom role owned by the current organization', async () => {
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const customRoleId = `org_role_custom_${faker.string.alphanumeric(12)}`
+			await db.insert(OrganizationRole).values({
+				id: customRoleId,
+				name: 'Content coordinator',
+				description: 'Can coordinate published content',
+				level: 3,
+				organizationId: organization.id,
+			})
+			const target = await createTestUser()
+			await db.insert(UserOrganization).values({
+				userId: target.id,
+				organizationId: organization.id,
+				organizationRoleId: 'org_role_member',
+			})
+
+			const formData = new FormData()
+			formData.append('intent', 'update-member-role')
+			formData.append('userId', target.id)
+			formData.append('roleId', customRoleId)
+			const response = (await action({
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/settings/members`,
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: { orgSlug: organization.slug },
+				context: {},
+			} as any)) as Response
+
+			expect(getResponseStatus(response)).toBe(200)
+			const [membership] = await db
+				.select()
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.organizationId, organization.id),
+						eq(UserOrganization.userId, target.id),
+					),
+				)
+				.limit(1)
+			expect(membership?.organizationRoleId).toBe(customRoleId)
+		})
+
+		it('rejects assigning a role owned by another organization', async () => {
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const foreignOwner = await createTestUser()
+			const foreignOrganization = await createTestOrganization(
+				foreignOwner.id,
+				'admin',
+			)
+			const foreignRoleId = `org_role_foreign_${faker.string.alphanumeric(12)}`
+			await db.insert(OrganizationRole).values({
+				id: foreignRoleId,
+				name: 'Foreign role',
+				description: 'Must not cross tenant boundaries',
+				level: 3,
+				organizationId: foreignOrganization.id,
+			})
+			const target = await createTestUser()
+			await db.insert(UserOrganization).values({
+				userId: target.id,
+				organizationId: organization.id,
+				organizationRoleId: 'org_role_member',
+			})
+
+			const formData = new FormData()
+			formData.append('intent', 'update-member-role')
+			formData.append('userId', target.id)
+			formData.append('roleId', foreignRoleId)
+			const response = (await action({
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/settings/members`,
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: { orgSlug: organization.slug },
+				context: {},
+			} as any)) as Response
+
+			expect(getResponseStatus(response)).toBe(400)
+			expect((await response.json()) as { error?: string }).toMatchObject({
+				error: 'Role not found',
+			})
+		})
+
+		it('invites a user with a custom role owned by the organization', async () => {
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const customRoleId = `org_role_invite_${faker.string.alphanumeric(12)}`
+			await db.insert(OrganizationRole).values({
+				id: customRoleId,
+				name: 'Event coordinator',
+				description: 'Coordinates organization events',
+				level: 2,
+				organizationId: organization.id,
+			})
+			const inviteEmail = `custom-role-${faker.string.alphanumeric(8)}@example.com`
+			const formData = new FormData()
+			formData.append('intent', 'send-invitations')
+			formData.append('invites[0].email', inviteEmail)
+			formData.append('invites[0].roleId', customRoleId)
+			const response = (await action({
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/settings/members`,
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: { orgSlug: organization.slug },
+				context: {},
+			} as any)) as Response
+
+			expect(getResponseStatus(response)).toBe(200)
+			const [invitation] = await db
+				.select()
+				.from(OrganizationInvitation)
+				.where(
+					and(
+						eq(OrganizationInvitation.organizationId, organization.id),
+						eq(OrganizationInvitation.email, inviteEmail.toLowerCase()),
+					),
+				)
+				.limit(1)
+			expect(invitation?.organizationRoleId).toBe(customRoleId)
+		})
+
 		it('sends invitation and creates OrganizationInvitation row in database', async () => {
 			const { organization, cookie } = await setupTestOrgWithUser('admin')
 			const inviteEmail = `newmember_${Date.now()}@example.com`

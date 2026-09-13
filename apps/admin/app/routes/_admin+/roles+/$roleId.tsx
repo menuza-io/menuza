@@ -14,6 +14,7 @@ import {
 	asc,
 	db,
 	eq,
+	isNull,
 } from '@repo/database'
 import { Badge } from '@repo/ui/badge'
 import {
@@ -87,7 +88,8 @@ const UpdateRoleSchema = z.object({
 	selectedEntity: z.string().optional(),
 })
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
+	await requireUserWithRole(request, 'admin')
 	invariant(params.roleId, 'Role ID is required')
 
 	// Determine if this is a system role or organization role
@@ -128,7 +130,10 @@ export async function loader({ params }: Route.LoaderArgs) {
 	} else {
 		// Load organization role
 		const result = await db.query.OrganizationRole.findFirst({
-			where: eq(OrganizationRole.id, params.roleId),
+			where: and(
+				eq(OrganizationRole.id, params.roleId),
+				isNull(OrganizationRole.organizationId),
+			),
 			with: {
 				organizationPermissionToRoles: { with: { permission: true } },
 				organizations: true,
@@ -163,6 +168,21 @@ export async function loader({ params }: Route.LoaderArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
 	await requireUserWithRole(request, 'admin')
 	invariant(params.roleId, 'Role ID is required')
+
+	// This route is reserved for shared platform organization roles. Tenant-owned
+	// roles are managed from the tenant app and must never be mutable by ID here.
+	if (!params.roleId.startsWith('sys_')) {
+		const sharedRole = await db.query.OrganizationRole.findFirst({
+			columns: { id: true },
+			where: and(
+				eq(OrganizationRole.id, params.roleId),
+				isNull(OrganizationRole.organizationId),
+			),
+		})
+		if (!sharedRole) {
+			throw new Response('Role not found', { status: 404 })
+		}
+	}
 
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: UpdateRoleSchema })
@@ -208,7 +228,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 							...(name && { name }),
 							...(description && { description }),
 						})
-						.where(eq(OrganizationRole.id, params.roleId))
+						.where(
+							and(
+								eq(OrganizationRole.id, params.roleId),
+								isNull(OrganizationRole.organizationId),
+							),
+						)
 				}
 				return { result: submission.reply(), success: true }
 			}
@@ -273,7 +298,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 				} else {
 					await db
 						.delete(OrganizationRole)
-						.where(eq(OrganizationRole.id, params.roleId))
+						.where(
+							and(
+								eq(OrganizationRole.id, params.roleId),
+								isNull(OrganizationRole.organizationId),
+							),
+						)
 				}
 				return redirect('/roles')
 			}

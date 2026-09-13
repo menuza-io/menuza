@@ -3,6 +3,7 @@ import {
 	and,
 	db,
 	eq,
+	isNull,
 	Organization,
 	OrganizationRole,
 	SSOConfiguration as SSOConfigurationTable,
@@ -837,7 +838,12 @@ export class SSOAuthService {
 		const [organizationRole] = await db
 			.select()
 			.from(OrganizationRole)
-			.where(eq(OrganizationRole.name, defaultRole))
+			.where(
+				and(
+					eq(OrganizationRole.name, defaultRole),
+					isNull(OrganizationRole.organizationId),
+				),
+			)
 			.limit(1)
 
 		if (!organizationRole) {

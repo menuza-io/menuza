@@ -29,30 +29,118 @@ type PendingInvitation = NonNullable<
 	Awaited<ReturnType<typeof getInvitationByToken>>
 >
 
-async function getOrganizationRoleId(roleName: OrganizationRoleName) {
+async function getAssignableOrganizationRole({
+	organizationId,
+	roleId,
+	roleName,
+}: {
+	organizationId: string
+	roleId?: string
+	roleName?: OrganizationRoleName
+}) {
 	const [role] = await db
-		.select({ id: OrganizationRole.id })
+		.select()
 		.from(OrganizationRole)
-		.where(eq(OrganizationRole.name, roleName))
+		.where(
+			and(
+				roleId
+					? eq(OrganizationRole.id, roleId)
+					: eq(OrganizationRole.name, roleName ?? 'member'),
+				roleId
+					? or(
+							isNull(OrganizationRole.organizationId),
+							eq(OrganizationRole.organizationId, organizationId),
+						)
+					: isNull(OrganizationRole.organizationId),
+			),
+		)
 		.limit(1)
-	if (!role) throw new Error(`Organization role '${roleName}' not found`)
-	return role.id
+	if (!role) {
+		throw new Error(
+			roleId
+				? `Organization role '${roleId}' is not assignable to this organization`
+				: `Organization role '${roleName ?? 'member'}' not found`,
+		)
+	}
+	return role
+}
+
+async function requireBuiltInAdminMembership(
+	organizationId: string,
+	userId: string,
+) {
+	const [membership] = await db
+		.select({ userId: UserOrganization.userId })
+		.from(UserOrganization)
+		.where(
+			and(
+				eq(UserOrganization.userId, userId),
+				eq(UserOrganization.organizationId, organizationId),
+				eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+				eq(UserOrganization.active, true),
+			),
+		)
+		.limit(1)
+	invariantResponse(
+		membership,
+		'Only organization admins can invite as Admin',
+		{
+			status: 403,
+		},
+	)
+}
+
+export async function validateOrganizationInviteRoles(
+	organizationId: string,
+	invites: Array<{ roleId?: string; role?: OrganizationRoleName }>,
+	inviterId: string,
+) {
+	const organizationRoles = await Promise.all(
+		invites.map((invite) =>
+			getAssignableOrganizationRole({
+				organizationId,
+				roleId: invite.roleId,
+				roleName: invite.role,
+			}),
+		),
+	)
+
+	const requiresBuiltInAdmin = organizationRoles.some(
+		(role) => role.id === 'org_role_admin' || role.organizationId !== null,
+	)
+	if (requiresBuiltInAdmin) {
+		await requireBuiltInAdminMembership(organizationId, inviterId)
+	}
 }
 
 export async function createOrganizationInvitation({
 	organizationId,
-	email,
+	email: rawEmail,
 	role = 'member',
+	roleId,
 	inviterId,
 }: {
 	organizationId: string
 	email: string
 	role?: OrganizationRoleName
+	roleId?: string
 	inviterId: string
 }) {
+	const email = rawEmail.toLowerCase().trim()
 	const token = crypto.randomUUID()
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
-	const organizationRoleId = await getOrganizationRoleId(role)
+	const organizationRole = await getAssignableOrganizationRole({
+		organizationId,
+		roleId,
+		roleName: role,
+	})
+	if (
+		organizationRole.id === 'org_role_admin' ||
+		organizationRole.organizationId !== null
+	) {
+		await requireBuiltInAdminMembership(organizationId, inviterId)
+	}
+	const organizationRoleId = organizationRole.id
 	const [existing] = await db
 		.select({ id: OrganizationInvitation.id })
 		.from(OrganizationInvitation)
@@ -272,14 +360,22 @@ export async function validateAndAcceptInvitation(
 export async function createOrganizationInviteLink({
 	organizationId,
 	role = 'member',
+	roleId,
 	createdById,
 }: {
 	organizationId: string
 	role?: OrganizationRoleName
+	roleId?: string
 	createdById: string
 }) {
 	const token = crypto.randomUUID()
-	const organizationRoleId = await getOrganizationRoleId(role)
+	const organizationRoleId = (
+		await getAssignableOrganizationRole({
+			organizationId,
+			roleId,
+			roleName: role,
+		})
+	).id
 	await db
 		.insert(OrganizationInviteLink)
 		.values({ organizationId, token, organizationRoleId, createdById })
@@ -518,7 +614,7 @@ async function getInvitationByEmailAndOrganization(
 ) {
 	return findInvitation(
 		and(
-			eq(OrganizationInvitation.email, email),
+			eq(OrganizationInvitation.email, email.toLowerCase().trim()),
 			eq(OrganizationInvitation.organizationId, organizationId),
 		),
 	)

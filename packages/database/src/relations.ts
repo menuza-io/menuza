@@ -233,6 +233,7 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	storageMigrations: many(StorageMigration),
 	organizationNotes: many(OrganizationNote),
 	noteStatuses: many(OrganizationNoteStatus),
+	organizationRoles: many(OrganizationRole),
 	sentInvitations: many(OrganizationInvitation),
 	createdInviteLinks: many(OrganizationInviteLink),
 	organizations: many(UserOrganization),
@@ -519,7 +520,11 @@ export const _OrganizationPermissionToRoleRelations = relations(
 
 export const OrganizationRoleRelations = relations(
 	OrganizationRole,
-	({ many }) => ({
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationRole.organizationId],
+			references: [Organization.id],
+		}),
 		organizationPermissionToRoles: many(_OrganizationPermissionToRole),
 		sentInvitations: many(OrganizationInvitation),
 		createdInviteLinks: many(OrganizationInviteLink),

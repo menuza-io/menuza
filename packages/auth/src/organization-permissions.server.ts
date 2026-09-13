@@ -3,7 +3,9 @@ import {
 	db,
 	eq,
 	inArray,
+	isNull,
 	OrganizationRole,
+	or,
 	Permission,
 	UserOrganization,
 	_OrganizationPermissionToRole,
@@ -55,6 +57,10 @@ async function loadOrgRolePermissions(
 			and(
 				eq(UserOrganization.userId, userId),
 				eq(UserOrganization.organizationId, organizationId),
+				or(
+					isNull(OrganizationRole.organizationId),
+					eq(OrganizationRole.organizationId, organizationId),
+				),
 				eq(Permission.context, 'organization'),
 				...extraFilters,
 			),
@@ -216,6 +222,10 @@ export async function getUserOrganizationPermissionsForClient(
 			and(
 				eq(UserOrganization.userId, userId),
 				eq(UserOrganization.organizationId, organizationId),
+				or(
+					isNull(OrganizationRole.organizationId),
+					eq(OrganizationRole.organizationId, organizationId),
+				),
 			),
 		)
 		.limit(1)

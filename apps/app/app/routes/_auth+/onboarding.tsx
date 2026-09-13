@@ -252,7 +252,12 @@ export async function action({ request }: Route.ActionArgs) {
 				db
 					.select({ id: OrganizationRole.id })
 					.from(OrganizationRole)
-					.where(eq(OrganizationRole.name, 'member'))
+					.where(
+						and(
+							eq(OrganizationRole.name, 'member'),
+							isNull(OrganizationRole.organizationId),
+						),
+					)
 					.limit(1),
 			])
 
