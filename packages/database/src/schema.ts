@@ -5,6 +5,7 @@
  * integers. Schema changes: `drizzle-kit generate`, then `tsx src/migrate.ts`.
  */
 import { createId } from '@paralleldrive/cuid2'
+import { sql } from 'drizzle-orm'
 import {
 	blob,
 	foreignKey,
@@ -1071,6 +1072,12 @@ export const OrganizationRole = sqliteTable(
 		name: text().notNull(),
 		description: text().default('').notNull(),
 		level: integer().notNull(),
+		// NULL identifies a shared platform role. A non-null value makes this a
+		// tenant-owned role, which may only be assigned within that organization.
+		organizationId: text().references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -1081,7 +1088,13 @@ export const OrganizationRole = sqliteTable(
 	},
 	(table) => [
 		index('OrganizationRole_level_idx').on(table.level),
-		uniqueIndex('OrganizationRole_name_key').on(table.name),
+		index('OrganizationRole_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationRole_shared_name_key')
+			.on(sql`lower(${table.name})`)
+			.where(sql`${table.organizationId} IS NULL`),
+		uniqueIndex('OrganizationRole_organizationId_name_key')
+			.on(table.organizationId, sql`lower(${table.name})`)
+			.where(sql`${table.organizationId} IS NOT NULL`),
 	],
 )
 

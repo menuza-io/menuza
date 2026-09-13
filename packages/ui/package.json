@@ -43,6 +43,7 @@
     "./sidebar": "./components/ui/sidebar.tsx",
     "./field": "./components/ui/field.tsx",
     "./item": "./components/ui/item.tsx",
+    "./empty": "./components/ui/empty.tsx",
     "./input-group": "./components/ui/input-group.tsx",
     "./kbd": "./components/ui/kbd.tsx",
     "./icon": "./components/icon.tsx",

@@ -5,6 +5,7 @@ import {
 	count,
 	db,
 	eq,
+	isNull,
 	Organization,
 	OrganizationRole,
 	User,
@@ -71,12 +72,22 @@ async function seedOrganizations() {
 	const [adminRole] = await db
 		.select({ id: OrganizationRole.id })
 		.from(OrganizationRole)
-		.where(eq(OrganizationRole.name, 'admin'))
+		.where(
+			and(
+				eq(OrganizationRole.name, 'admin'),
+				isNull(OrganizationRole.organizationId),
+			),
+		)
 		.limit(1)
 	const [memberRole] = await db
 		.select({ id: OrganizationRole.id })
 		.from(OrganizationRole)
-		.where(eq(OrganizationRole.name, 'member'))
+		.where(
+			and(
+				eq(OrganizationRole.name, 'member'),
+				isNull(OrganizationRole.organizationId),
+			),
+		)
 		.limit(1)
 
 	if (!adminRole || !memberRole) {

@@ -216,6 +216,9 @@ function OrganizationSidebar({
 	const searchNotesLabel = _(msg`Search notes`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
 	const [isMac, setIsMac] = useState(true)
+	const canManageRoles =
+		rootData?.userOrganizations?.currentOrganization?.organizationRole.id ===
+		'org_role_admin'
 
 	useEffect(() => {
 		if (typeof navigator !== 'undefined') {
@@ -373,6 +376,15 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/settings/members`,
 					isActive: location.pathname === `/${orgSlug}/settings/members`,
 				},
+				...(canManageRoles
+					? [
+							{
+								title: _(msg`Roles & access`),
+								url: `/${orgSlug}/settings/roles`,
+								isActive: location.pathname === `/${orgSlug}/settings/roles`,
+							},
+						]
+					: []),
 				{
 					title: _(msg`Integrations`),
 					url: `/${orgSlug}/settings/integrations`,

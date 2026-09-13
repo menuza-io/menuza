@@ -42,30 +42,20 @@ import {
 } from '@repo/ui/item'
 import { Separator } from '@repo/ui/separator'
 import { useState } from 'react'
-import { Form } from 'react-router'
+import { Form, Link } from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
+import { type OrganizationRoleOption } from '#app/components/organization-members.tsx'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
-import { type OrganizationRoleName } from '#app/utils/organization/organizations.server.ts'
-
-// Create role descriptions map
-const ROLE_DESCRIPTIONS: Record<string, string> = {
-	admin: 'Full access to organization settings and member management.',
-	member: 'Standard organization member with basic permissions.',
-	viewer: 'Read-only access to organization content.',
-	guest: 'Limited access for temporary collaborators.',
-}
 
 // Create dynamic invite schema based on available roles
-function createInviteSchema(availableRoles: OrganizationRoleName[]) {
+function createInviteSchema() {
 	return z.object({
 		invites: z
 			.array(
 				z.object({
 					email: z.string().email('Invalid email address'),
-					role: z.enum(
-						availableRoles as [OrganizationRoleName, ...OrganizationRoleName[]],
-					),
+					roleId: z.string().min(1, 'A role is required'),
 				}),
 			)
 			.min(1, 'At least one invite is required')
@@ -80,7 +70,9 @@ export function OrganizationInvitations({
 	pendingInvitations = [],
 	inviteLink,
 	actionData,
-	availableRoles = ['admin', 'member'], // Default fallback for backwards compatibility
+	availableRoles = [],
+	organizationSlug,
+	canManageRoles = false,
 }: {
 	pendingInvitations?: Array<{
 		id: string
@@ -103,15 +95,17 @@ export function OrganizationInvitations({
 		createdAt: Date
 	} | null
 	actionData?: any
-	availableRoles?: OrganizationRoleName[]
+	availableRoles?: OrganizationRoleOption[]
+	organizationSlug?: string
+	canManageRoles?: boolean
 }) {
 	const { _ } = useLingui()
 	// Create dynamic schema and roles based on available roles
-	const InviteSchema = createInviteSchema(availableRoles)
+	const InviteSchema = createInviteSchema()
 	const roles = availableRoles.map((role) => ({
-		value: role,
-		label: role.charAt(0).toUpperCase() + role.slice(1),
-		description: ROLE_DESCRIPTIONS[role] || `${role} role`,
+		value: role.id,
+		label: role.name,
+		description: role.description,
 	}))
 
 	const [form, fields] = useForm({
@@ -122,7 +116,7 @@ export function OrganizationInvitations({
 			return parseWithZod(formData, { schema: InviteSchema })
 		},
 		defaultValue: {
-			invites: [{ email: '', role: availableRoles[0] || 'member' }], // Use first available role as default
+			invites: [{ email: '', roleId: availableRoles[0]?.id || '' }],
 		},
 		shouldRevalidate: 'onBlur',
 	})
@@ -165,8 +159,8 @@ export function OrganizationInvitations({
 					</CardTitle>
 					<CardDescription>
 						<Trans>
-							Share this link to let people join your organization as a Member.
-							They'll see you invited them.
+							Share this link to let people join your organization. They'll see
+							you invited them.
 						</Trans>
 					</CardDescription>
 				</CardHeader>
@@ -255,6 +249,15 @@ export function OrganizationInvitations({
 				<CardHeader>
 					<CardTitle className="text-lg">
 						<Trans>Invite by email</Trans>
+						{organizationSlug && canManageRoles && (
+							<>
+								{' '}
+								·{' '}
+								<Link to={`/${organizationSlug}/settings/roles`}>
+									<Trans>Manage roles</Trans>
+								</Link>
+							</>
+						)}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-6">
@@ -280,7 +283,10 @@ export function OrganizationInvitations({
 									onClick={() => {
 										form.insert({
 											name: fields.invites.name,
-											defaultValue: { email: '', role: 'member' },
+											defaultValue: {
+												email: '',
+												roleId: availableRoles[0]?.id || '',
+											},
 										})
 									}}
 								>
@@ -374,12 +380,12 @@ function InviteFieldset({
 	meta: FieldMetadata<
 		{
 			email: string
-			role: string
+			roleId: string
 		},
 		{
 			invites: {
 				email: string
-				role: string
+				roleId: string
 			}[]
 		},
 		string[]
@@ -388,12 +394,12 @@ function InviteFieldset({
 		invites: FieldMetadata<
 			{
 				email: string
-				role: string
+				roleId: string
 			}[],
 			{
 				invites: {
 					email: string
-					role: string
+					roleId: string
 				}[]
 			},
 			string[]
@@ -409,7 +415,7 @@ function InviteFieldset({
 }) {
 	const { _ } = useLingui()
 	const inviteFields = meta.getFieldset()
-	const role = useInputControl(inviteFields.role)
+	const role = useInputControl(inviteFields.roleId)
 	const { key: _key, ...emailProps } = getInputProps(inviteFields.email, {
 		type: 'email',
 	})
@@ -450,7 +456,8 @@ function InviteFieldset({
 										<div className="flex flex-col">
 											<span className="font-medium">{roleOption.label}</span>
 											<span className="text-muted-foreground group-data-[highlighted]:text-accent-foreground text-xs">
-												{roleOption.description}
+												{roleOption.description ||
+													_(msg`No description provided`)}
 											</span>
 										</div>
 									</DropdownMenuItem>

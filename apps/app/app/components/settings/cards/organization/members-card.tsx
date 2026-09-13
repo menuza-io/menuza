@@ -1,10 +1,14 @@
-import { OrganizationMembers } from '#app/components/organization-members.tsx'
+import {
+	OrganizationMembers,
+	type OrganizationRoleOption,
+} from '#app/components/organization-members.tsx'
 
 interface OrganizationMember {
 	userId: string
 	organizationRole: {
 		id: string
 		name: string
+		description: string
 		level: number
 	}
 	active: boolean
@@ -22,9 +26,23 @@ interface OrganizationMember {
 export function MembersCard({
 	members,
 	currentUserId,
+	availableRoles,
+	organizationSlug,
+	canManageRoles,
 }: {
 	members: OrganizationMember[]
 	currentUserId: string
+	availableRoles?: OrganizationRoleOption[]
+	organizationSlug?: string
+	canManageRoles?: boolean
 }) {
-	return <OrganizationMembers members={members} currentUserId={currentUserId} />
+	return (
+		<OrganizationMembers
+			members={members}
+			currentUserId={currentUserId}
+			availableRoles={availableRoles}
+			organizationSlug={organizationSlug}
+			canManageRoles={canManageRoles}
+		/>
+	)
 }

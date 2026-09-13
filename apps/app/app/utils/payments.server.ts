@@ -9,6 +9,7 @@ import {
 	count,
 	db,
 	eq,
+	isNull,
 	Organization as OrganizationTable,
 	OrganizationRole,
 	User,
@@ -366,6 +367,7 @@ export async function handleTrialEnd(subscription: {
 			and(
 				eq(UserOrganization.organizationId, organization.id),
 				eq(OrganizationRole.name, 'admin'),
+				isNull(OrganizationRole.organizationId),
 			),
 		)
 

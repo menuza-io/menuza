@@ -1,5 +1,7 @@
 import { parseWithZod } from '@conform-to/zod'
+import { auditService, AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
+import { invalidateUserOrganizationsCache } from '@repo/cache'
 import {
 	alias,
 	and,
@@ -9,6 +11,7 @@ import {
 	exists,
 	ne,
 	or,
+	isNull,
 	OrganizationRole,
 	User,
 	UserOrganization,
@@ -27,6 +30,7 @@ import { MembersCard } from '#app/components/settings/cards/organization/members
 
 import {
 	createOrganizationInvitation,
+	validateOrganizationInviteRoles,
 	sendOrganizationInvitationEmail,
 	getOrganizationInvitations,
 	deleteOrganizationInvitation,
@@ -36,7 +40,6 @@ import {
 } from '#app/utils/organization/invitation.server.ts'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { type OrganizationRoleName } from '#app/utils/organization/organizations.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
@@ -85,7 +88,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					with: { image: { columns: { id: true, altText: true } } },
 				},
 				organizationRole: {
-					columns: { id: true, name: true, level: true },
+					columns: { id: true, name: true, description: true, level: true },
 				},
 			},
 			where: (membership, { and, eq }) =>
@@ -96,37 +99,74 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			orderBy: (membership, { asc }) => [asc(membership.createdAt)],
 		}),
 		getOrganizationInviteLink(organization.id, userId),
-		getAvailableRoles(),
+		getAvailableRoles(organization.id),
 		getUserOrganizationPermissionsForClient(userId, organization.id),
 	])
+	const canManageRoles = members.some(
+		(member) =>
+			member.userId === userId &&
+			member.active &&
+			member.organizationRole.id === 'org_role_admin',
+	)
 
 	return {
 		organization,
 		pendingInvitations,
 		members,
 		inviteLink,
-		availableRoles,
+		availableRoles: canManageRoles
+			? availableRoles
+			: availableRoles.filter((role) => role.id !== 'org_role_admin'),
 		currentUserId: userId,
 		userPermissions,
+		canManageRoles,
 	}
 }
 
 // Get available roles from the database
-async function getAvailableRoles() {
+async function getAvailableRoles(organizationId: string) {
 	const roles = await db
-		.select({ name: OrganizationRole.name })
+		.select({
+			id: OrganizationRole.id,
+			name: OrganizationRole.name,
+			description: OrganizationRole.description,
+			organizationId: OrganizationRole.organizationId,
+		})
 		.from(OrganizationRole)
+		.where(
+			or(
+				isNull(OrganizationRole.organizationId),
+				eq(OrganizationRole.organizationId, organizationId),
+			),
+		)
 		.orderBy(desc(OrganizationRole.level))
-	return roles.map((r) => r.name) as OrganizationRoleName[]
+	return roles.map((role) => ({
+		...role,
+		isBuiltIn: role.organizationId === null,
+	}))
 }
 
 const InviteSchema = z.object({
 	invites: z
 		.array(
-			z.object({
-				email: z.string().email('Invalid email address'),
-				role: z.enum(['admin', 'member', 'viewer', 'guest'] as const),
-			}),
+			z
+				.object({
+					email: z.string().email('Invalid email address'),
+					roleId: z.string().min(1).optional(),
+					// Accept legacy callers while all current forms submit roleId.
+					role: z
+						.enum(['admin', 'member', 'viewer', 'guest'] as const)
+						.optional(),
+				})
+				.superRefine((value, ctx) => {
+					if (!value.roleId && !value.role) {
+						ctx.addIssue({
+							code: z.ZodIssueCode.custom,
+							message: 'A role is required',
+							path: ['roleId'],
+						})
+					}
+				}),
 		)
 		.min(1, 'At least one invite is required')
 		.max(
@@ -149,7 +189,7 @@ function otherActiveAdminsExist(organizationId: string, excludeUserId: string) {
 				and(
 					eq(OtherMembership.organizationId, organizationId),
 					eq(OtherMembership.active, true),
-					eq(OrganizationRole.name, 'admin'),
+					eq(OrganizationRole.id, 'org_role_admin'),
 					ne(OtherMembership.userId, excludeUserId),
 				),
 			),
@@ -192,6 +232,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const { invites } = submission.value
 
 		try {
+			await validateOrganizationInviteRoles(organization.id, invites)
+
 			const [currentUser] = await db
 				.select({ name: User.name, email: User.email })
 				.from(User)
@@ -202,6 +244,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				const { invitation } = await createOrganizationInvitation({
 					organizationId: organization.id,
 					email: invite.email,
+					roleId: invite.roleId,
 					role: invite.role,
 					inviterId: userId,
 				})
@@ -216,6 +259,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return Response.json({ result: submission.reply({ resetForm: true }) })
 		} catch (error) {
 			console.error('Error sending invitations:', error)
+			if (error instanceof Response) return error
+			if (
+				error instanceof Error &&
+				error.message.includes('not assignable to this organization')
+			) {
+				return Response.json(
+					{ error: 'That role is not available in this organization' },
+					{ status: 400 },
+				)
+			}
 			return Response.json(
 				{
 					result: submission.reply({
@@ -288,7 +341,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				const [target] = await db
 					.select({
 						userId: UserOrganization.userId,
-						roleName: OrganizationRole.name,
+						roleId: OrganizationRole.id,
 						active: UserOrganization.active,
 					})
 					.from(UserOrganization)
@@ -303,7 +356,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						),
 					)
 					.limit(1)
-				if (target?.active && target.roleName.toLowerCase() === 'admin') {
+				if (target?.active && target.roleId === 'org_role_admin') {
 					return Response.json(
 						{ error: 'Cannot remove the last admin of the organization' },
 						{ status: 400 },
@@ -333,30 +386,64 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	// --- update-member-role intent ---
 	if (intent === 'update-member-role') {
-		// Use unified permission system for authorization
-		await requireUserWithOrganizationPermission(
-			request,
-			organization.id,
-			ORG_PERMISSIONS.UPDATE_MEMBER_ANY,
-		)
+		// Role reassignment is intentionally restricted to the shared built-in
+		// admin role. A tenant role with UPDATE_MEMBER_ANY must not be able to
+		// grant itself more authority.
+		const [currentMembership] = await db
+			.select({ userId: UserOrganization.userId })
+			.from(UserOrganization)
+			.where(
+				and(
+					eq(UserOrganization.userId, userId),
+					eq(UserOrganization.organizationId, organization.id),
+					eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+					eq(UserOrganization.active, true),
+				),
+			)
+			.limit(1)
+		if (!currentMembership) {
+			return Response.json(
+				{ error: 'Only organization admins can update member roles' },
+				{ status: 403 },
+			)
+		}
 
 		const memberUserId = formData.get('userId')
-		const newRole = formData.get('role')
+		const submittedRoleId = formData.get('roleId')
+		const legacyRoleName = formData.get('role')
 
 		if (!memberUserId || typeof memberUserId !== 'string') {
 			return Response.json({ error: 'Missing userId' }, { status: 400 })
 		}
-		if (!newRole || typeof newRole !== 'string') {
+		if (
+			(!submittedRoleId || typeof submittedRoleId !== 'string') &&
+			(!legacyRoleName || typeof legacyRoleName !== 'string')
+		) {
 			return Response.json({ error: 'Missing role' }, { status: 400 })
 		}
-		if (!['admin', 'member'].includes(newRole)) {
-			return Response.json({ error: 'Invalid role' }, { status: 400 })
+		if (memberUserId === userId) {
+			return Response.json(
+				{ error: 'You cannot change your own role' },
+				{ status: 400 },
+			)
 		}
 
 		const [organizationRole] = await db
 			.select({ id: OrganizationRole.id })
 			.from(OrganizationRole)
-			.where(eq(OrganizationRole.name, newRole))
+			.where(
+				and(
+					submittedRoleId && typeof submittedRoleId === 'string'
+						? eq(OrganizationRole.id, submittedRoleId)
+						: eq(OrganizationRole.name, legacyRoleName as string),
+					submittedRoleId && typeof submittedRoleId === 'string'
+						? or(
+								isNull(OrganizationRole.organizationId),
+								eq(OrganizationRole.organizationId, organization.id),
+							)
+						: isNull(OrganizationRole.organizationId),
+				),
+			)
 			.limit(1)
 
 		if (!organizationRole) {
@@ -365,12 +452,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		try {
 			const lastAdminGuard =
-				newRole === 'member'
+				organizationRole.id !== 'org_role_admin'
 					? or(
 							ne(UserOrganization.organizationRoleId, 'org_role_admin'),
 							otherActiveAdminsExist(organization.id, memberUserId),
 						)
 					: undefined
+
+			const [existingMembership] = await db
+				.select({ organizationRoleId: UserOrganization.organizationRoleId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, memberUserId),
+						eq(UserOrganization.organizationId, organization.id),
+					),
+				)
+				.limit(1)
 
 			const [updated] = await db
 				.update(UserOrganization)
@@ -405,6 +503,25 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					{ status: 400 },
 				)
 			}
+			try {
+				await invalidateUserOrganizationsCache(memberUserId)
+			} catch (cacheError) {
+				console.error(
+					'Failed to invalidate user org cache after role update:',
+					cacheError,
+				)
+			}
+			await auditService.log({
+				action: AuditAction.ORG_MEMBER_ROLE_CHANGED,
+				userId,
+				targetUserId: memberUserId,
+				organizationId: organization.id,
+				details: 'Organization member role changed',
+				metadata: {
+					oldRoleId: existingMembership?.organizationRoleId,
+					newRoleId: organizationRole.id,
+				},
+			})
 			return Response.json({ success: true })
 		} catch (error) {
 			console.error('Error updating member role:', error)
@@ -425,7 +542,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		try {
 			const inviteLink = await createOrganizationInviteLink({
 				organizationId: organization.id,
-				role: 'member',
+				roleId: 'org_role_member',
 				createdById: userId,
 			})
 			return Response.json({ success: true, inviteLink })
@@ -448,7 +565,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		try {
 			const inviteLink = await createOrganizationInviteLink({
 				organizationId: organization.id,
-				role: 'member',
+				roleId: 'org_role_member',
 				createdById: userId,
 			})
 			return Response.json({ success: true, inviteLink })
@@ -485,18 +602,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function MembersSettings() {
 	const {
+		organization,
 		pendingInvitations,
 		members,
 		inviteLink,
 		availableRoles,
 		currentUserId,
+		canManageRoles,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
 	return (
 		<AnnotatedLayout>
 			<AnnotatedSection>
-				<MembersCard members={members} currentUserId={currentUserId} />
+				<MembersCard
+					members={members}
+					currentUserId={currentUserId}
+					availableRoles={availableRoles}
+					organizationSlug={organization.slug}
+					canManageRoles={canManageRoles}
+				/>
 			</AnnotatedSection>
 
 			<AnnotatedSection>
@@ -505,6 +630,8 @@ export default function MembersSettings() {
 					inviteLink={inviteLink}
 					actionData={actionData}
 					availableRoles={availableRoles}
+					organizationSlug={organization.slug}
+					canManageRoles={canManageRoles}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>
