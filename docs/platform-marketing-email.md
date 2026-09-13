@@ -26,7 +26,7 @@ OCI_PRIVATE_KEY=
 OCI_REGION=us-ashburn-1
 OCI_EMAIL_COMPARTMENT_ID=
 OCI_EMAIL_SENDER_EMAIL=
-OCI_EMAIL_SENDER_NAME=Epic Startup
+OCI_EMAIL_SENDER_NAME=Menuza
 OCI_EMAIL_LOG_OCID=          # required for open/click metrics on OCI
 ```
 
@@ -46,16 +46,16 @@ With `EMAIL_PROVIDER=resend` (default), behavior is unchanged: Resend API +
 Tag and header names are derived from `brand.slug` in `packages/config/brand.ts`
 so forks white-label in one place.
 
-With the default slug `epic-startup`:
+With the default slug `menuza`:
 
-| Purpose            | Resend tag                 | OCI / SMTP header            |
-| ------------------ | -------------------------- | ---------------------------- |
-| Scope (`platform`) | `epic_startup_scope`       | —                            |
-| Message id         | `epic_startup_message_id`  | `X-Epic-Startup-Message-Id`  |
-| Campaign id        | `epic_startup_campaign_id` | `X-Epic-Startup-Campaign-Id` |
-| Org id             | —                          | `X-Epic-Startup-Org-Id`      |
-| Journey id         | —                          | `X-Epic-Startup-Journey-Id`  |
-| Customer id        | —                          | `X-Epic-Startup-Customer-Id` |
+| Purpose            | Resend tag           | OCI / SMTP header      |
+| ------------------ | -------------------- | ---------------------- |
+| Scope (`platform`) | `menuza_scope`       | —                      |
+| Message id         | `menuza_message_id`  | `X-Menuza-Message-Id`  |
+| Campaign id        | `menuza_campaign_id` | `X-Menuza-Campaign-Id` |
+| Org id             | —                    | `X-Menuza-Org-Id`      |
+| Journey id         | —                    | `X-Menuza-Journey-Id`  |
+| Customer id        | —                    | `X-Menuza-Customer-Id` |
 
 Helpers live in `packages/config/marketing-email.ts`:
 

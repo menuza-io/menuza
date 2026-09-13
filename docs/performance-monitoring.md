@@ -1,7 +1,7 @@
 # Performance Monitoring
 
-The Epic Startup marketing website enforces strict performance budgets to ensure
-a fast, accessible experience for all users.
+The Menuza marketing website enforces strict performance budgets to ensure a
+fast, accessible experience for all users.
 
 ## Performance Requirements
 

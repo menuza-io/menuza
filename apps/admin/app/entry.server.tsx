@@ -33,7 +33,7 @@ async function setRuntimeHeaders(responseHeaders: Headers) {
 	const { currentInstance, primaryInstance } = await getInstanceInfo()
 
 	// Cloudflare Workers deployment
-	responseHeaders.set('cf-worker', 'epic-startup-admin')
+	responseHeaders.set('cf-worker', 'menuza-admin')
 	responseHeaders.set('cf-instance', currentInstance)
 	responseHeaders.set('cf-primary-instance', primaryInstance)
 }
@@ -163,7 +163,7 @@ export async function handleDataRequest(response: Response) {
 	const { currentInstance, primaryInstance } = await getInstanceInfo()
 
 	// Cloudflare Workers deployment
-	response.headers.set('cf-worker', 'epic-startup-admin')
+	response.headers.set('cf-worker', 'menuza-admin')
 	response.headers.set('cf-instance', currentInstance)
 	response.headers.set('cf-primary-instance', primaryInstance)
 

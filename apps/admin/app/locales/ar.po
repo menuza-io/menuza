@@ -1370,8 +1370,8 @@ msgid "Entries:"
 msgstr "الإدخالات:"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
-msgid "Epic Startup Team"
-msgstr "فريق Epic Startup"
+msgid "Menuza Team"
+msgstr "فريق Menuza"
 
 #: app/routes/_admin+/gdpr-requests.tsx:592
 msgid "Erasure"
@@ -1612,8 +1612,8 @@ msgid "Hi {{name}}, your account update is ready!"
 msgstr "مرحباً {{name}}، تحديث حسابك جاهز!"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:105
-msgid "Hi {{name}}, your Epic Startup account is ready."
-msgstr "مرحباً {{name}}، حسابك في Epic Startup جاهز."
+msgid "Hi {{name}}, your Menuza account is ready."
+msgstr "مرحباً {{name}}، حسابك في Menuza جاهز."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:400
 msgid "Hi {{name}}, your order has been confirmed!"
@@ -3692,8 +3692,8 @@ msgid "Weeks"
 msgstr "أسابيع"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:99
-msgid "Welcome to Epic Startup, {{organizationName}}"
-msgstr "مرحباً بك في Epic Startup، {{organizationName}}"
+msgid "Welcome to Menuza, {{organizationName}}"
+msgstr "مرحباً بك في Menuza، {{organizationName}}"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
 #~ msgid "When someone does <0>{0}</0>"

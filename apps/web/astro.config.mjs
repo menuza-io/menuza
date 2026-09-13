@@ -146,7 +146,7 @@ export default defineConfig({
 						host: process.env.POSTHOG_HOST,
 						sourcemaps: {
 							enabled: true,
-							releaseName: 'epic-startup-web',
+							releaseName: 'menuza-web',
 							releaseVersion:
 								process.env.COMMIT_SHA ?? process.env.npm_package_version,
 							deleteAfterUpload: true,

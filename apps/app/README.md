@@ -1,7 +1,7 @@
 <div align="center">
-  <h1 align="center"><a href="#">The Epic Startup App Portal🚀</a></h1>
+  <h1 align="center"><a href="#">The Menuza App Portal🚀</a></h1>
   <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Startup.
+    Ditch analysis paralysis and start shipping Menuza.
   </strong>
 </div>
 

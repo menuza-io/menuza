@@ -20,7 +20,7 @@ env:
   HUSKY: 0
   PUPPETEER_SKIP_DOWNLOAD: 'true'
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-  TURBO_R2_BUCKET: epic-startup-turbo-cache
+  TURBO_R2_BUCKET: menuza-turbo-cache
   # Force npm to resolve linux-x64 optional native bindings even when lockfile
   # was generated on macOS. Fixes @libsql/linux-x64-gnu and similar missing modules.
   npm_config_os: linux
@@ -350,7 +350,7 @@ jobs:
           fi
 
           node scripts/patch-wrangler.mjs --app app --env "$DEPLOY_ENV" --require-bindings
-          npx wrangler d1 migrations apply epic-startup-db --remote \
+          npx wrangler d1 migrations apply menuza-db --remote \
             --config apps/app/wrangler.deploy.jsonc "${WRANGLER_ENV[@]}"
 
   trigger-cf-deploys:

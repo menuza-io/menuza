@@ -18,9 +18,7 @@ import {
 
 describe('sharedCookieDomainFromHost', () => {
 	it('strips the app/admin label from a two-label apex', () => {
-		expect(sharedCookieDomainFromHost('app.epic-startup.dev')).toBe(
-			'.epic-startup.dev',
-		)
+		expect(sharedCookieDomainFromHost('app.menuza.dev')).toBe('.menuza.dev')
 		expect(sharedCookieDomainFromHost('app.preview.example.dev:2999')).toBe(
 			'.preview.example.dev',
 		)
@@ -83,17 +81,11 @@ describe('isStagingOperatorHost', () => {
 describe('operator cross-origin URLs', () => {
 	it('builds app and admin URLs from ROOT_APP and the current origin', () => {
 		expect(
-			getOperatorAppUrl(
-				'https://admin.epic-startup.test:2999',
-				'epic-startup.test',
-			),
-		).toBe('https://app.epic-startup.test:2999')
+			getOperatorAppUrl('https://admin.menuza.test:2999', 'menuza.test'),
+		).toBe('https://app.menuza.test:2999')
 		expect(
-			getOperatorAdminUrl(
-				'https://app.epic-startup.test:2999',
-				'epic-startup.test',
-			),
-		).toBe('https://admin.epic-startup.test:2999')
+			getOperatorAdminUrl('https://app.menuza.test:2999', 'menuza.test'),
+		).toBe('https://admin.menuza.test:2999')
 	})
 
 	it('uses staging host labels when the reference origin is staging', () => {
@@ -110,12 +102,12 @@ describe('shouldApplyImpersonationToUserId', () => {
 	it('applies on app hosts but not admin hosts', () => {
 		expect(
 			shouldApplyImpersonationToUserId(
-				new Request('https://app.epic-startup.test:2999/'),
+				new Request('https://app.menuza.test:2999/'),
 			),
 		).toBe(true)
 		expect(
 			shouldApplyImpersonationToUserId(
-				new Request('https://admin.epic-startup.test:2999/users'),
+				new Request('https://admin.menuza.test:2999/users'),
 			),
 		).toBe(false)
 		expect(
@@ -126,10 +118,10 @@ describe('shouldApplyImpersonationToUserId', () => {
 
 describe('operator host labels', () => {
 	it('detects app and admin operator hosts', () => {
-		expect(isAppOperatorHost('app.epic-startup.test:2999')).toBe(true)
-		expect(isAppOperatorHost('admin.epic-startup.test')).toBe(false)
-		expect(isAdminOperatorHost('admin.epic-startup.test')).toBe(true)
-		expect(isAdminOperatorHost('app.epic-startup.test')).toBe(false)
+		expect(isAppOperatorHost('app.menuza.test:2999')).toBe(true)
+		expect(isAppOperatorHost('admin.menuza.test')).toBe(false)
+		expect(isAdminOperatorHost('admin.menuza.test')).toBe(true)
+		expect(isAdminOperatorHost('app.menuza.test')).toBe(false)
 	})
 })
 
@@ -142,9 +134,7 @@ describe('sharedCookieDomain', () => {
 	})
 
 	it('reads the apex from BASE_URL', () => {
-		expect(sharedCookieDomain('https://app.epic-startup.dev')).toBe(
-			'.epic-startup.dev',
-		)
+		expect(sharedCookieDomain('https://app.menuza.dev')).toBe('.menuza.dev')
 		expect(sharedCookieDomain('https://app-staging.lighteninggroup.com')).toBe(
 			'.lighteninggroup.com',
 		)
@@ -167,8 +157,8 @@ describe('operatorSessionCookieDomain', () => {
 
 	it('keeps production apex domains when MOCKS is unset', () => {
 		delete process.env.MOCKS
-		expect(operatorSessionCookieDomain('https://app.epic-startup.dev')).toBe(
-			'.epic-startup.dev',
+		expect(operatorSessionCookieDomain('https://app.menuza.dev')).toBe(
+			'.menuza.dev',
 		)
 	})
 
@@ -180,7 +170,7 @@ describe('operatorSessionCookieDomain', () => {
 	it('uses host-only cookies when MOCKS is on but BASE_URL is a dev hostname', () => {
 		process.env.MOCKS = 'true'
 		expect(
-			operatorSessionCookieDomain('https://app.epic-startup.test:2999'),
+			operatorSessionCookieDomain('https://app.menuza.test:2999'),
 		).toBeUndefined()
 	})
 
@@ -231,11 +221,11 @@ describe('orb portal cookies', () => {
 		process.env.AMP_ORB = '1'
 		process.env.MOCKS = 'true'
 		expect(
-			operatorSessionCookieDomain('https://app.epic-startup.test:2999'),
+			operatorSessionCookieDomain('https://app.menuza.test:2999'),
 		).toBeUndefined()
 		expect(operatorSessionCookieDomain('http://localhost:3001')).toBeUndefined()
 		expect(
-			operatorCookieName('en_session', 'https://app.epic-startup.test:2999'),
+			operatorCookieName('en_session', 'https://app.menuza.test:2999'),
 		).toBe('en_session')
 	})
 

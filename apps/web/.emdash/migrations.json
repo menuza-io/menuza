@@ -77,11 +77,7 @@
 	},
 	"i18n": {
 		"defaultLocale": "en",
-		"locales": [
-			"en",
-			"es",
-			"ar"
-		],
+		"locales": ["en", "es", "ar"],
 		"fallback": {
 			"es": "en",
 			"ar": "en"
@@ -90,9 +86,9 @@
 	},
 	"database": {
 		"type": "sqlite",
-		"executorEntrypoint": "emdash/db/sqlite-migrations",
+		"executorEntrypoint": "@emdash-cms/cloudflare/db/d1-migrations",
 		"executorConfig": {
-			"url": "file:./.emdash/data.db"
+			"binding": "DB"
 		}
 	}
 }

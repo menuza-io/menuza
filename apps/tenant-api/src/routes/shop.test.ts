@@ -62,7 +62,7 @@ describe('tenant shop routes', () => {
 		})
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api')
-			.setIssuer('epic-startup')
+			.setIssuer('menuza')
 			.setExpirationTime('15m')
 			.sign(new TextEncoder().encode(jwtSecret))
 

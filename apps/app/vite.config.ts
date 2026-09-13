@@ -180,7 +180,7 @@ export default defineConfig((config) => ({
 					host: process.env.POSTHOG_HOST,
 					sourcemaps: {
 						enabled: true,
-						releaseName: 'epic-startup-app',
+						releaseName: 'menuza-app',
 						releaseVersion:
 							process.env.COMMIT_SHA ?? process.env.npm_package_version,
 						deleteAfterUpload: true,
