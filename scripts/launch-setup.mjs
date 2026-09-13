@@ -434,6 +434,8 @@ function generateSharedSecrets() {
 		app: {
 			JWT_SECRET: randomHex(16),
 			TENANT_CUSTOMER_JWT_SECRET: customerJwtSecret,
+			INTEGRATION_ENCRYPTION_KEY: randomHex(32),
+			INTEGRATIONS_OAUTH_STATE_SECRET: randomHex(16),
 		},
 		tenant_api: {
 			JWT_SECRET: customerJwtSecret,
@@ -577,6 +579,8 @@ function applyGeneratedWranglerSecrets(
 				['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
 				['JWT_SECRET', secrets.app.JWT_SECRET],
 				['TENANT_CUSTOMER_JWT_SECRET', secrets.app.TENANT_CUSTOMER_JWT_SECRET],
+				...(secrets.app.INTEGRATION_ENCRYPTION_KEY ? [['INTEGRATION_ENCRYPTION_KEY', secrets.app.INTEGRATION_ENCRYPTION_KEY]] : []),
+				...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET ? [['INTEGRATIONS_OAUTH_STATE_SECRET', secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET]] : []),
 				['SSO_ENCRYPTION_KEY', secrets.shared.SSO_ENCRYPTION_KEY],
 				['AUDIT_LOG_SECRET_KEY', secrets.shared.AUDIT_LOG_SECRET_KEY],
 				['LAUNCH_STATUS', launchStatus],
@@ -794,7 +798,8 @@ function astroWranglerDeploy(appKey, deployEnv) {
 
 function deployReactRouterApp(appKey, deployEnv, { build = true } = {}) {
 	const appDir = join(rootDir, 'apps', appKey)
-	if (build) {
+	const serverConfig = join(appDir, 'build/server/wrangler.json')
+	if (build || !existsSync(serverConfig)) {
 		runLaunchCommand('npm run build:cf', appDir, CF_BUILD_ENV)
 	}
 	patchWranglerApp(appKey, deployEnv)
@@ -854,8 +859,13 @@ async function deployCloudflareWorkers(
 
 	const steps = [
 		{
-			name: 'App',
-			run: () => deployReactRouterApp('app', deployEnv, { build: !skipBuilds }),
+			name: 'Tenant API US',
+			optional: true,
+			run: () => deployTenantApi(deployEnv),
+		},
+		{
+			name: 'Jobs Cron',
+			run: () => deployJobsCron(deployEnv),
 		},
 		{
 			name: 'Admin',
@@ -863,17 +873,12 @@ async function deployCloudflareWorkers(
 				deployReactRouterApp('admin', deployEnv, { build: !skipBuilds }),
 		},
 		{
-			name: 'Jobs Cron',
-			run: () => deployJobsCron(deployEnv),
-		},
-		{
-			name: 'Tenant API US',
-			optional: true,
-			run: () => deployTenantApi(deployEnv),
-		},
-		{
 			name: 'Web',
 			run: () => deployWeb(deployEnv, { build: !skipBuilds }),
+		},
+		{
+			name: 'App',
+			run: () => deployReactRouterApp('app', deployEnv, { build: !skipBuilds }),
 		},
 		{
 			name: 'Sites',
@@ -1328,6 +1333,8 @@ async function main() {
 		TENANT_OPERATOR_TOKEN: secrets.shared.TENANT_OPERATOR_TOKEN,
 		JWT_SECRET: secrets.app.JWT_SECRET,
 		TENANT_CUSTOMER_JWT_SECRET: secrets.app.TENANT_CUSTOMER_JWT_SECRET,
+		...(secrets.app.INTEGRATION_ENCRYPTION_KEY ? { INTEGRATION_ENCRYPTION_KEY: secrets.app.INTEGRATION_ENCRYPTION_KEY } : {}),
+		...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET ? { INTEGRATIONS_OAUTH_STATE_SECRET: secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET } : {}),
 		LAUNCH_STATUS: secrets.launch_status,
 		CREDIT_CARD_REQUIRED_FOR_TRIAL: secrets.credit_card_required_for_trial,
 		JOBS_CRON_WORKER_URL: jobsCronUrl,
