@@ -191,3 +191,61 @@ describe('operatorSessionCookieDomain', () => {
 		)
 	})
 })
+
+describe('orb portal cookies', () => {
+	const previousOrb = process.env.AMP_ORB
+	const previousMocks = process.env.MOCKS
+
+	afterEach(() => {
+		if (previousOrb === undefined) delete process.env.AMP_ORB
+		else process.env.AMP_ORB = previousOrb
+		if (previousMocks === undefined) delete process.env.MOCKS
+		else process.env.MOCKS = previousMocks
+	})
+
+	it('shares the operator session across App and Admin portal hosts', () => {
+		process.env.AMP_ORB = '1'
+		process.env.MOCKS = 'true'
+		expect(operatorSessionCookieDomain('https://t-abc-p21938.onamp.dev')).toBe(
+			'.onamp.dev',
+		)
+		expect(operatorSessionCookieDomain('https://t-abc-p22526.onamp.dev')).toBe(
+			'.onamp.dev',
+		)
+	})
+
+	it('scopes cookie names per thread so parallel orbs do not collide', () => {
+		process.env.AMP_ORB = '1'
+		expect(
+			operatorCookieName('en_session', 'https://t-abc-p21938.onamp.dev'),
+		).toBe('en_session_t-abc')
+		expect(
+			operatorCookieName('en_session', 'https://t-abc-p22526.onamp.dev'),
+		).toBe('en_session_t-abc')
+		expect(
+			operatorCookieName('en_session', 'https://t-xyz-p21938.onamp.dev'),
+		).toBe('en_session_t-xyz')
+	})
+
+	it('leaves non-portal origins alone inside orbs', () => {
+		process.env.AMP_ORB = '1'
+		process.env.MOCKS = 'true'
+		expect(
+			operatorSessionCookieDomain('https://app.epic-startup.test:2999'),
+		).toBeUndefined()
+		expect(operatorSessionCookieDomain('http://localhost:3001')).toBeUndefined()
+		expect(
+			operatorCookieName('en_session', 'https://app.epic-startup.test:2999'),
+		).toBe('en_session')
+	})
+
+	it('ignores portal hostnames outside orbs', () => {
+		delete process.env.AMP_ORB
+		expect(
+			operatorSessionCookieDomain('https://t-abc-p21938.onamp.dev'),
+		).toBeUndefined()
+		expect(
+			operatorCookieName('en_session', 'https://t-abc-p21938.onamp.dev'),
+		).toBe('en_session')
+	})
+})

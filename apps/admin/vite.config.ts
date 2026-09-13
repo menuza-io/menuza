@@ -112,7 +112,8 @@ export default defineConfig((config) => ({
 		},
 	}),
 	server: {
-		allowedHosts: [domain, 'localhost'],
+		// Amp orbs expose dev servers through generated portal hostnames.
+		allowedHosts: process.env.AMP_ORB ? true : [domain, 'localhost'],
 		watch: {
 			ignored: ['**/playwright-report/**', '**/node_modules/.vite-temp/**'],
 		},
