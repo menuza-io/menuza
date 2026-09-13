@@ -6,7 +6,7 @@ Status: accepted
 
 ## Context
 
-The Epic Startup monorepo contains two primary React Router web applications:
+The Menuza monorepo contains two primary React Router web applications:
 
 - `apps/app`: Main end-user application.
 - `apps/admin`: Enterprise administrative dashboard.

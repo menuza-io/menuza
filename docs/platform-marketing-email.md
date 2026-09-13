@@ -26,7 +26,7 @@ OCI_PRIVATE_KEY=
 OCI_REGION=us-ashburn-1
 OCI_EMAIL_COMPARTMENT_ID=
 OCI_EMAIL_SENDER_EMAIL=
-OCI_EMAIL_SENDER_NAME=Epic Startup
+OCI_EMAIL_SENDER_NAME=Menuza
 OCI_EMAIL_LOG_OCID=          # required for open/click metrics on OCI
 ```
 
@@ -46,7 +46,7 @@ With `EMAIL_PROVIDER=resend` (default), behavior is unchanged: Resend API +
 Tag and header names are derived from `brand.slug` in `packages/config/brand.ts`
 so forks white-label in one place.
 
-With the default slug `epic-startup`:
+With the default slug `menuza`:
 
 | Purpose            | Resend tag                 | OCI / SMTP header            |
 | ------------------ | -------------------------- | ---------------------------- |

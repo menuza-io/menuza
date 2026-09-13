@@ -97,7 +97,7 @@ WORKERS_CI_BRANCH=dev node scripts/cf-workers-ci.mjs deploy --app jobs-cron
 
 - Lint, typecheck, vitest, Playwright
 - OCI tenant-api (Docker + SSH)
-- Lighthouse PR preview (`epic-startup-preview` Worker)
+- Lighthouse PR preview (`menuza-preview` Worker)
 
 ## Troubleshooting
 

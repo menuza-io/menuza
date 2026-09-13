@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Interactive first-time launch setup for Epic Startup.
+ * Interactive first-time launch setup for Menuza.
  *
  * - Creates Cloudflare D1 / KV / R2 resources (optional)
  * - Writes launch.config.json for local patching
@@ -49,9 +49,9 @@ function readConfiguredLocalDomain() {
 		const brandPath = join(rootDir, 'packages/config/brand.ts')
 		const content = readFileSync(brandPath, 'utf8')
 		const slug = content.match(/^\tslug:\s*'([^']+)'/m)?.[1]
-		return slug ? `${slug}.test` : 'epic-startup.test'
+		return slug ? `${slug}.test` : 'menuza.test'
 	} catch {
-		return 'epic-startup.test'
+		return 'menuza.test'
 	}
 }
 
@@ -1239,7 +1239,7 @@ async function setupDeploymentPages(
 }
 
 async function main() {
-	log('\n🚀 Epic Startup — Launch Setup', 'bright')
+	log('\n🚀 Menuza — Launch Setup', 'bright')
 	log(
 		'Creates launch.config.json + launch.secrets.json and prints CI/CD steps.\n',
 		'gray',
@@ -1259,7 +1259,7 @@ async function main() {
 	printInferredSummary(inferred, log)
 
 	const apex = await input({
-		message: 'Platform apex domain (e.g. epic-startup.com)',
+		message: 'Platform apex domain (e.g. menuza.io)',
 		default:
 			inferred.urls.apex && !inferred.urls.apex.endsWith('.test')
 				? inferred.urls.apex
@@ -1395,20 +1395,20 @@ async function main() {
 
 	const defaultWorkerNames = {
 		production: {
-			app: `epic-startup-app${suffix}`,
-			admin: `epic-startup-admin${suffix}`,
-			web: `epic-startup${suffix}`,
-			sites: `epic-startup-sites${suffix}`,
-			jobs_cron: `epic-startup-jobs-cron${suffix}`,
-			tenant_api: `epic-startup-tenant-api-us${suffix}`,
+			app: `menuza-app${suffix}`,
+			admin: `menuza-admin${suffix}`,
+			web: `menuza${suffix}`,
+			sites: `menuza-sites${suffix}`,
+			jobs_cron: `menuza-jobs-cron${suffix}`,
+			tenant_api: `menuza-tenant-api-us${suffix}`,
 		},
 		staging: {
-			app: `epic-startup-app-staging${suffix}`,
-			admin: `epic-startup-admin-staging${suffix}`,
-			web: `epic-startup-staging${suffix}`,
-			sites: `epic-startup-sites-staging${suffix}`,
-			jobs_cron: `epic-startup-jobs-cron-staging${suffix}`,
-			tenant_api: `epic-startup-tenant-api-us-staging${suffix}`,
+			app: `menuza-app-staging${suffix}`,
+			admin: `menuza-admin-staging${suffix}`,
+			web: `menuza-staging${suffix}`,
+			sites: `menuza-sites-staging${suffix}`,
+			jobs_cron: `menuza-jobs-cron-staging${suffix}`,
+			tenant_api: `menuza-tenant-api-us-staging${suffix}`,
 		},
 	}
 

@@ -1370,7 +1370,7 @@ msgid "Entries:"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
-msgid "Epic Startup Team"
+msgid "Menuza Team"
 msgstr ""
 
 #: app/routes/_admin+/gdpr-requests.tsx:592
@@ -1612,7 +1612,7 @@ msgid "Hi {{name}}, your account update is ready!"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:105
-msgid "Hi {{name}}, your Epic Startup account is ready."
+msgid "Hi {{name}}, your Menuza account is ready."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:400
@@ -3692,7 +3692,7 @@ msgid "Weeks"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:99
-msgid "Welcome to Epic Startup, {{organizationName}}"
+msgid "Welcome to Menuza, {{organizationName}}"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39

@@ -1,8 +1,8 @@
 # Organization Sites
 
 Public Astro app that serves published organization websites at
-`{orgSlug}.{brand.domain}` (e.g. `acme.epic-startup.com`) and optional customer
-custom domains (e.g. `www.acme.com`) via Cloudflare for SaaS.
+`{orgSlug}.{brand.domain}` (e.g. `acme.menuza.io`) and optional customer custom
+domains (e.g. `www.acme.com`) via Cloudflare for SaaS.
 
 ## Local development
 
@@ -53,7 +53,7 @@ Production custom domains use
 3. Configure on the main app (`apps/app`):
    - `CLOUDFLARE_API_TOKEN` (SSL and Certificates Write)
    - `CLOUDFLARE_ZONE_ID`
-   - `CLOUDFLARE_CUSTOM_HOSTNAME_CNAME_TARGET` (e.g. `sites.epic-startup.com`)
+   - `CLOUDFLARE_CUSTOM_HOSTNAME_CNAME_TARGET` (e.g. `sites.menuza.io`)
 4. In Website → General Settings → Connect domain
 5. Customer CNAMEs their hostname to the CNAME target; SSL validates via HTTP
    DCV

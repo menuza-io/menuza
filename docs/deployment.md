@@ -28,7 +28,7 @@ Prior to your first deployment, you'll need to do a few things:
    wrangler deploy --dry-run  # This will create the worker if needed
 
    # Create D1 database
-   wrangler d1 create epic-startup
+   wrangler d1 create menuza
    ```
 
 4. Initialize Git.
@@ -69,7 +69,7 @@ Prior to your first deployment, you'll need to do a few things:
    Object Read & Write access scoped only to that bucket:
 
    ```sh
-   npx wrangler r2 bucket create epic-startup-turbo-cache
+   npx wrangler r2 bucket create menuza-turbo-cache
    ```
 
    Save the existing R2 token's Access Key ID as `AWS_ACCESS_KEY_ID` and its
@@ -187,7 +187,7 @@ On each VM, copy `apps/tenant-api/docker-compose.yml` and
 `/data/tenants`, then:
 
 ```sh
-export TENANT_API_IMAGE=ghcr.io/<owner>/epic-startup/tenant-api:<sha>
+export TENANT_API_IMAGE=ghcr.io/<owner>/menuza/tenant-api:<sha>
 docker compose up -d
 ```
 
@@ -200,8 +200,8 @@ TENANT_DB_DIR=/data/tenants
 JWT_SECRET=...   # unique per region
 AUTH_HMAC_SECRET=...
 INTERNAL_COMMAND_TOKEN=...   # same value as US App
-APP_URL=https://app.epic-startup.com
-ROOT_APP=epic-startup.com
+APP_URL=https://app.menuza.io
+ROOT_APP=menuza.io
 ```
 
 On US App:
@@ -282,10 +282,10 @@ definitely can.
 
 ```sh
 # Build the docker container
-docker build -t epic-startup . -f apps/app/other/Dockerfile --build-arg COMMIT_SHA=$(git rev-parse --short HEAD)
+docker build -t menuza . -f apps/app/other/Dockerfile --build-arg COMMIT_SHA=$(git rev-parse --short HEAD)
 
 # Run the docker container
-docker run -d -p 8787:8787 -e SESSION_SECRET='somesecret' -e HONEYPOT_SECRET='somesecret' epic-startup
+docker run -d -p 8787:8787 -e SESSION_SECRET='somesecret' -e HONEYPOT_SECRET='somesecret' menuza
 
 # http://localhost:8787 should now point to your docker instance
 ```

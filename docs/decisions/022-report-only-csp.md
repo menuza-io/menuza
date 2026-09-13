@@ -10,8 +10,8 @@ The original Epic Stack used a report-only
 [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
 during initial setup.
 
-In Epic Startup, production applications (`apps/web`, `apps/sites`, `apps/app`,
-and `apps/admin`) enforce strict Content Security Policy headers by default to
+In Menuza, production applications (`apps/web`, `apps/sites`, `apps/app`, and
+`apps/admin`) enforce strict Content Security Policy headers by default to
 guarantee tenant isolation and defense-in-depth against cross-site scripting
 (XSS) and injection attacks.
 

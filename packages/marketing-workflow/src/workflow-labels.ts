@@ -96,13 +96,13 @@ const TENANT_EMAIL_DEFAULTS = {
 const TENANT_SMS_DEFAULT = msg`Hi {{name}}, your account update is ready!`
 
 const PLATFORM_EMAIL_DEFAULTS = {
-	subject: msg`Welcome to Epic Startup, {{organizationName}}`,
+	subject: msg`Welcome to Menuza, {{organizationName}}`,
 	bodyHtml: msg`<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>`,
 	bodyText: msg`Hi {{name}}, Your organization {{organizationName}} is ready.`,
-	fromName: msg`Epic Startup Team`,
+	fromName: msg`Menuza Team`,
 }
 
-const PLATFORM_SMS_DEFAULT = msg`Hi {{name}}, your Epic Startup account is ready.`
+const PLATFORM_SMS_DEFAULT = msg`Hi {{name}}, your Menuza account is ready.`
 
 function buildPaletteItems(
 	_: (descriptor: ReturnType<typeof msg>) => string,

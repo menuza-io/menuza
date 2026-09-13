@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "epic-startup-jobs-cron",
+	"name": "menuza-jobs-cron",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-08-15",
 	"workers_dev": true,
@@ -26,7 +26,7 @@
 	"vars": {},
 	"env": {
 		"staging": {
-			"name": "epic-startup-jobs-cron-staging",
+			"name": "menuza-jobs-cron-staging",
 			"vars": {},
 		},
 	},

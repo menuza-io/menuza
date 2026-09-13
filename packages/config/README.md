@@ -1,6 +1,6 @@
 # @repo/config
 
-Centralized configuration for the Epic Startup monorepo.
+Centralized configuration for the Menuza monorepo.
 
 ## Brand Configuration
 
@@ -20,22 +20,22 @@ import {
 } from '@repo/config/brand'
 
 // Use brand name
-console.log(brand.name) // "Epic Startup"
-console.log(brand.slug) // "epic-startup"
-console.log(brand.domain) // "epic-startup.com"
-console.log(getBrandDomain()) // "epic-startup.com"
+console.log(brand.name) // "Menuza"
+console.log(brand.slug) // "menuza"
+console.log(brand.domain) // "menuza.io"
+console.log(getBrandDomain()) // "menuza.io"
 
 // Generate page titles
-const title = getPageTitle('Login') // "Login | Epic Startup"
+const title = getPageTitle('Login') // "Login | Menuza"
 
 // Use product-specific descriptions
 const appDescription = brand.products.app.description
 
 // Email subjects
-const subject = brand.email.welcome // "Welcome to Epic Startup!"
+const subject = brand.email.welcome // "Welcome to Menuza!"
 
 // Copyright text
-const copyright = getCopyright() // "© 2025 Epic Startup. All rights reserved."
+const copyright = getCopyright() // "© 2025 Menuza. All rights reserved."
 ```
 
 ### What's Centralized

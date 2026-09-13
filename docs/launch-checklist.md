@@ -1,6 +1,6 @@
 # Launch Checklist
 
-Complete guide for deploying Epic Startup: infrastructure bindings, GitHub
+Complete guide for deploying Menuza: infrastructure bindings, GitHub
 configuration, Wrangler secrets, and product launch phases.
 
 For day-to-day infrastructure steps, see also
@@ -38,13 +38,13 @@ npm run launch:setup
 ```
 
 When logged in via `npx wrangler login`, setup auto-detects D1/KV/R2 IDs (by
-`epic-startup-*` resource names), Worker names from wrangler configs, `ROOT_APP`
-from `.env`, and your GitHub repo from `git remote get-url origin` (falls back
-to `gh repo view` when origin is not GitHub).
+`menuza-*` resource names), Worker names from wrangler configs, `ROOT_APP` from
+`.env`, and your GitHub repo from `git remote get-url origin` (falls back to
+`gh repo view` when origin is not GitHub).
 
 Cloudflare **resource names** (D1, KV, R2) and **Worker names** use the
-`epic-startup-*` prefix in the template. `npm run setup` replaces `epic-startup`
-with your **short name** slug everywhere (Workers, databases, buckets, docs).
+`menuza-*` prefix in the template. `npm run setup` replaces `menuza` with your
+**short name** slug everywhere (Workers, databases, buckets, docs).
 
 Local deploy test:
 
@@ -79,10 +79,9 @@ Generate API token:
 [Cloudflare Dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
 (Custom token: Account → Workers Scripts, D1, KV, R2 → Edit).
 
-For the Turbo cache, create `epic-startup-turbo-cache` in R2 and reuse an
-existing R2 token with Object Read & Write permission. `npm run launch:setup`
-creates the bucket when Cloudflare resource creation is selected, then securely
-opens
+For the Turbo cache, create `menuza-turbo-cache` in R2 and reuse an existing R2
+token with Object Read & Write permission. `npm run launch:setup` creates the
+bucket when Cloudflare resource creation is selected, then securely opens
 `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/api-tokens/create?type=account`
 when GitHub setup is selected. After the user creates the bucket-scoped token,
 the launcher securely prompts for and saves its `AWS_ACCESS_KEY_ID` and
@@ -156,11 +155,11 @@ Create resources:
 
 ```bash
 cd apps/app
-npx wrangler d1 create epic-startup-db
-npx wrangler kv namespace create epic-startup-cache
+npx wrangler d1 create menuza-db
+npx wrangler kv namespace create menuza-cache
 # Staging:
-npx wrangler d1 create epic-startup-db-staging
-npx wrangler kv namespace create epic-startup-cache-staging
+npx wrangler d1 create menuza-db-staging
+npx wrangler kv namespace create menuza-cache-staging
 ```
 
 ### Admin (`apps/admin`)
@@ -187,8 +186,8 @@ login links and theme cookie name sync with App/Admin (see ADR 046).
 
 ```bash
 cd apps/web
-npx wrangler d1 create epic-startup-web-db
-npx wrangler r2 bucket create epic-startup-media
+npx wrangler d1 create menuza-web-db
+npx wrangler r2 bucket create menuza-media
 ```
 
 ### Sites (`apps/sites`)

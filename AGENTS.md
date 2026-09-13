@@ -1,11 +1,11 @@
 # AGENTS.md
 
 This file provides AI coding agents with essential context for working on the
-Epic Startup monorepo.
+Menuza monorepo.
 
 ## Project Overview
 
-**Epic Startup** is a production-ready, full-stack SaaS template built as a
+**Menuza** is a production-ready, full-stack SaaS template built as a
 Turborepo-based monorepo with npm workspaces. It includes multiple apps (main
 app, marketing site, admin dashboard, tenant sites, regional tenant-api, mobile
 app, CMS, jobs-cron, email templates, notifications) and shared packages (UI,
@@ -43,7 +43,7 @@ per-org SQLite on a block volume.
 ```bash
 # Initial setup (one-time)
 git clone <your-fork>
-cd epic-startup
+cd menuza
 PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run setup -s
 
 # Install Playwright browsers for E2E tests
@@ -174,7 +174,7 @@ When encountering many ESLint warnings, follow this systematic approach:
 
 **1. Import Order (`import/order`)**:
 
-Epic Startup enforces specific import ordering:
+Menuza enforces specific import ordering:
 
 ```typescript
 // ✅ Correct order
