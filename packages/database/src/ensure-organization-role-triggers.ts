@@ -102,8 +102,10 @@ END`,
 
 /** Reapply org-role assignment triggers (table recreation migrations can drop them). */
 export async function ensureOrganizationRoleAssignmentTriggers() {
-	for (const { name, create } of TRIGGER_DEFINITIONS) {
-		await db.run(sql.raw(`DROP TRIGGER IF EXISTS \`${name}\``))
-		await db.run(sql.raw(create))
-	}
+	await db.transaction(async (tx) => {
+		for (const { name, create } of TRIGGER_DEFINITIONS) {
+			await tx.run(sql.raw(`DROP TRIGGER IF EXISTS \`${name}\``))
+			await tx.run(sql.raw(create))
+		}
+	})
 }

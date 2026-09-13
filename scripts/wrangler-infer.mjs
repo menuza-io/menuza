@@ -175,14 +175,13 @@ function inferRepoUrls(rootDir) {
 function readJsoncEnvName(configPath, envName) {
 	if (!existsSync(configPath)) return null
 	const content = readFileSync(configPath, 'utf8')
+	const stripped = stripJsoncComments(content)
 	const envSection = new RegExp(
 		`"${envName}"\\s*:\\s*\\{[\\s\\S]*?"name"\\s*:\\s*"([^"]+)"`,
 		'm',
 	)
-	const match = content.match(envSection)
+	const match = stripped.match(envSection)
 	if (match?.[1]) return match[1]
-
-	const stripped = stripJsoncComments(content)
 	const withoutTrailingCommas = stripped.replace(/,(\s*[}\]])/g, '$1')
 	try {
 		const config = JSON.parse(withoutTrailingCommas)

@@ -48,6 +48,14 @@ import { ErrorList } from '#app/components/forms.tsx'
 import { type OrganizationRoleOption } from '#app/components/organization-members.tsx'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
 
+const DEFAULT_MEMBER_ROLE_ID = 'org_role_member'
+
+function resolveDefaultInviteRoleId(availableRoles: OrganizationRoleOption[]) {
+	return (
+		availableRoles.find((role) => role.id === DEFAULT_MEMBER_ROLE_ID)?.id ?? ''
+	)
+}
+
 // Create dynamic invite schema based on available roles
 function createInviteSchema() {
 	return z.object({
@@ -107,6 +115,7 @@ export function OrganizationInvitations({
 		label: role.name,
 		description: role.description,
 	}))
+	const defaultInviteRoleId = resolveDefaultInviteRoleId(availableRoles)
 
 	const [form, fields] = useForm({
 		id: 'invite-form',
@@ -116,7 +125,7 @@ export function OrganizationInvitations({
 			return parseWithZod(formData, { schema: InviteSchema })
 		},
 		defaultValue: {
-			invites: [{ email: '', roleId: availableRoles[0]?.id || '' }],
+			invites: [{ email: '', roleId: defaultInviteRoleId }],
 		},
 		shouldRevalidate: 'onBlur',
 	})
@@ -285,7 +294,7 @@ export function OrganizationInvitations({
 											name: fields.invites.name,
 											defaultValue: {
 												email: '',
-												roleId: availableRoles[0]?.id || '',
+												roleId: defaultInviteRoleId,
 											},
 										})
 									}}
@@ -297,7 +306,11 @@ export function OrganizationInvitations({
 
 							<div className="mt-6 space-y-2">
 								<ErrorList id={form.errorId} errors={form.errors} />
-								<Button type="submit" className="w-full">
+								<Button
+									type="submit"
+									className="w-full"
+									disabled={!defaultInviteRoleId}
+								>
 									<Trans>Send Invitations</Trans>
 								</Button>
 							</div>

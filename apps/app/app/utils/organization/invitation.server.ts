@@ -93,8 +93,9 @@ async function requireBuiltInAdminMembership(
 export async function validateOrganizationInviteRoles(
 	organizationId: string,
 	invites: Array<{ roleId?: string; role?: OrganizationRoleName }>,
+	inviterId: string,
 ) {
-	await Promise.all(
+	const organizationRoles = await Promise.all(
 		invites.map((invite) =>
 			getAssignableOrganizationRole({
 				organizationId,
@@ -103,6 +104,13 @@ export async function validateOrganizationInviteRoles(
 			}),
 		),
 	)
+
+	const requiresBuiltInAdmin = organizationRoles.some(
+		(role) => role.id === 'org_role_admin' || role.organizationId !== null,
+	)
+	if (requiresBuiltInAdmin) {
+		await requireBuiltInAdminMembership(organizationId, inviterId)
+	}
 }
 
 export async function createOrganizationInvitation({
@@ -126,7 +134,10 @@ export async function createOrganizationInvitation({
 		roleId,
 		roleName: role,
 	})
-	if (organizationRole.id === 'org_role_admin') {
+	if (
+		organizationRole.id === 'org_role_admin' ||
+		organizationRole.organizationId !== null
+	) {
 		await requireBuiltInAdminMembership(organizationId, inviterId)
 	}
 	const organizationRoleId = organizationRole.id

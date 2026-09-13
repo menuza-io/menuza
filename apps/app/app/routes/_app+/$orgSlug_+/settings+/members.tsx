@@ -232,7 +232,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const { invites } = submission.value
 
 		try {
-			await validateOrganizationInviteRoles(organization.id, invites)
+			await validateOrganizationInviteRoles(organization.id, invites, userId)
 
 			const [currentUser] = await db
 				.select({ name: User.name, email: User.email })
