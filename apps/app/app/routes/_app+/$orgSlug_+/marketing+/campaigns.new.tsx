@@ -20,8 +20,13 @@ import {
 	useActionData,
 	useNavigation,
 	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
 } from 'react-router'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 function EmailDesignerField() {
@@ -37,9 +42,28 @@ function EmailDesignerField() {
 	)
 }
 
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const orgSlug = params.orgSlug || ''
+	const { orgId } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
+	)
+
+	return { orgSlug }
+}
+
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
+	)
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')

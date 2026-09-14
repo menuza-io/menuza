@@ -1,0 +1,47 @@
+/* تطبيق المستأجر لنظام iOS — العربية */
+
+"app.loading" = "جارٍ التحميل…";
+"app.retry" = "إعادة المحاولة";
+
+"connect.title" = "الاتصال بموقعك";
+"connect.subtitle" = "أدخل عنوان موقعك لتحميل هويته البصرية.";
+"connect.fieldLabel" = "عنوان الموقع";
+"connect.placeholder" = "acme أو acme.example.com";
+"connect.action" = "اتصال";
+"connect.error" = "لم نتمكن من العثور على هذا الموقع. تحقق من العنوان وحاول مرة أخرى.";
+
+"announcement.learnMore" = "اعرف المزيد";
+
+"login.title" = "تسجيل الدخول";
+"login.subtitle" = "أدخل رقم هاتفك. سنرسل رمز تحقق.";
+"login.phone" = "رقم الهاتف";
+"login.phonePlaceholder" = "+966 50 000 0000";
+"login.action" = "إرسال الرمز";
+"login.invalidPhone" = "أدخل رقم هاتف صالحًا.";
+"login.networkError" = "خطأ في الشبكة. حاول مرة أخرى.";
+
+"verify.title" = "أدخل الرمز";
+"verify.subtitle" = "أرسلنا رمزًا مكوّنًا من ٦ أرقام إلى %@.";
+"verify.code" = "رمز التحقق";
+"verify.action" = "تحقق";
+"verify.resend" = "إرسال رمز جديد";
+"verify.changeNumber" = "استخدام رقم آخر";
+
+"name.title" = "اسمك";
+"name.subtitle" = "أخبرنا كيف نناديك.";
+"name.field" = "الاسم";
+"name.placeholder" = "محمد أحمد";
+"name.action" = "متابعة";
+
+"profile.title" = "ملفك الشخصي";
+"profile.subtitle" = "حدّث بياناتك الأساسية أدناه.";
+"profile.name" = "الاسم";
+"profile.email" = "البريد الإلكتروني";
+"profile.phone" = "رقم الهاتف";
+"profile.phoneLocked" = "لا يمكن تغيير رقم الهاتف في الوقت الحالي.";
+"profile.save" = "حفظ التغييرات";
+"profile.saved" = "تم تحديث الملف الشخصي بنجاح!";
+"profile.language" = "اللغة";
+"profile.languageSystem" = "لغة النظام";
+"profile.signOut" = "تسجيل الخروج";
+"profile.networkError" = "خطأ في الشبكة. حاول مرة أخرى.";

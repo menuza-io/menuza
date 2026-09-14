@@ -16,10 +16,10 @@ import {
 } from '@repo/common/user-permissions'
 import { authorize } from './authorize.server'
 
-export async function checkUserHasPermission(
+export async function userHasPermission(
 	userId: string,
 	permission: PermissionString,
-): Promise<string> {
+): Promise<boolean> {
 	const permissionData = parsePermissionString(permission)
 	const filters = [
 		eq(User.id, userId),
@@ -39,12 +39,20 @@ export async function checkUserHasPermission(
 		.innerJoin(Permission, eq(Permission.id, _PermissionToRole.A))
 		.where(and(...filters))
 		.limit(1)
-	if (!user) {
+	return Boolean(user)
+}
+
+export async function checkUserHasPermission(
+	userId: string,
+	permission: PermissionString,
+): Promise<string> {
+	const hasPermission = await userHasPermission(userId, permission)
+	if (!hasPermission) {
 		throw new Response(`Unauthorized: required permissions: ${permission}`, {
 			status: 403,
 		})
 	}
-	return user.id
+	return userId
 }
 
 export async function checkUserHasRole(
@@ -85,6 +93,13 @@ export async function requireUserWithPermission(
 	permission: PermissionString,
 ) {
 	return authorize.userPermission(request, permission)
+}
+
+export async function requireAnyUserWithPermission(
+	request: Request,
+	permissions: PermissionString[],
+) {
+	return authorize.userAnyPermission(request, permissions)
 }
 
 export async function requireUserWithRole(request: Request, name: string) {

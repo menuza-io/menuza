@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(EPIC_APP_DISPLAY_NAME)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- Platform endpoints. Values come from Config/Shared.xcconfig so a build
+	     can be pointed at any environment without touching Swift code. -->
+	<key>EpicAppBaseURL</key>
+	<string>$(EPIC_APP_BASE_URL)</string>
+	<key>EpicTenantAPIUSBaseURL</key>
+	<string>$(EPIC_TENANT_API_US_BASE_URL)</string>
+	<key>EpicTenantAPIKSABaseURL</key>
+	<string>$(EPIC_TENANT_API_KSA_BASE_URL)</string>
+	<key>EpicBrandDomain</key>
+	<string>$(EPIC_BRAND_DOMAIN)</string>
+	<key>EpicUseTLS</key>
+	<string>$(EPIC_USE_TLS)</string>
+
+	<!-- Optional white-label binding: leave empty to let the customer connect
+	     their own site on first launch. -->
+	<key>EpicSiteSlug</key>
+	<string>$(EPIC_SITE_SLUG)</string>
+	<key>EpicSiteHost</key>
+	<string>$(EPIC_SITE_HOST)</string>
+	<key>EpicSiteOrigin</key>
+	<string>$(EPIC_SITE_ORIGIN)</string>
+</dict>
+</plist>

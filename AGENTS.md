@@ -564,6 +564,10 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `apps/sites` - Public CMS HTML; injects tenant-api URL; no PII proxy
 - `apps/tenant-api` - Regional customer auth + SQLite (local US :3007, KSA
   :3009; production OCI Ashburn + Riyadh)
+- `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
+  branded shell, phone-OTP sign-in, and profile, reusing the published org
+  branding and the regional tenant-api. Keychain session; no PII proxy. Swift
+  tasks are opt-in (`npm run ios:test -w ios`) so Linux CI stays green
 
 ## Additional Resources
 

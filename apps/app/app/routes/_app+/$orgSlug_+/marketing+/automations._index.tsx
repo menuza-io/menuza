@@ -31,6 +31,11 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 const STATUS_FILTERS = ['all', 'active', 'draft', 'paused'] as const
@@ -82,7 +87,13 @@ function formatTriggerType(triggerType: string) {
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
+	)
 
 	try {
 		const res = await fetchTenant('/operator/journeys')
@@ -128,7 +139,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+	)
+
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	const journeyId = formData.get('journeyId')
@@ -230,6 +248,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function JourneysList() {
 	const { _ } = useLingui()
 	const { journeys, orgSlug, error } = useLoaderData<typeof loader>()
+	const hasPermission = useHasPermission()
+	const canManage = hasPermission('update:automation:any')
 	const fetcher = useFetcher()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -261,13 +281,15 @@ export default function JourneysList() {
 					msg`Event-driven workflows with triggers, delays, and actions.`,
 				)}
 				actions={
-					<Button
-						render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
-						className="shrink-0 gap-2"
-					>
-						<Icon name="plus" className="size-4" />
-						{_(msg`New automation`)}
-					</Button>
+					canManage ? (
+						<Button
+							render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
+							className="shrink-0 gap-2"
+						>
+							<Icon name="plus" className="size-4" />
+							{_(msg`New automation`)}
+						</Button>
+					) : null
 				}
 			/>
 
@@ -315,7 +337,7 @@ export default function JourneysList() {
 					}
 					icons={['play', 'route', 'clock']}
 					action={
-						!hasFilters
+						!hasFilters && canManage
 							? {
 									label: _(msg`Create automation`),
 									href: `/${orgSlug}/marketing/automations/new`,
@@ -329,25 +351,34 @@ export default function JourneysList() {
 						const stepCount = journey.stepCount
 						const runsCount = journey.runsCount
 						const journeyName = journey.name
+						const journeySummary = (
+							<>
+								<ItemTitle>{journey.name}</ItemTitle>
+								<ItemDescription>
+									<span className="capitalize">
+										{formatTriggerType(journey.triggerType)}
+									</span>
+									{' · '}
+									{_(msg`${stepCount} steps`)}
+									{' · '}
+									{_(msg`${runsCount} runs`)}
+								</ItemDescription>
+							</>
+						)
 
 						return (
 							<Item key={journey.id} variant="outline" size="sm">
 								<ItemContent>
-									<Link
-										to={`/${orgSlug}/marketing/automations/${journey.id}`}
-										className="min-w-0"
-									>
-										<ItemTitle>{journey.name}</ItemTitle>
-										<ItemDescription>
-											<span className="capitalize">
-												{formatTriggerType(journey.triggerType)}
-											</span>
-											{' · '}
-											{_(msg`${stepCount} steps`)}
-											{' · '}
-											{_(msg`${runsCount} runs`)}
-										</ItemDescription>
-									</Link>
+									{canManage ? (
+										<Link
+											to={`/${orgSlug}/marketing/automations/${journey.id}`}
+											className="min-w-0"
+										>
+											{journeySummary}
+										</Link>
+									) : (
+										<div className="min-w-0">{journeySummary}</div>
+									)}
 								</ItemContent>
 
 								<ItemActions>
@@ -367,77 +398,79 @@ export default function JourneysList() {
 										<Icon name="clock" className="size-4" />
 									</Button>
 
-									<DropdownMenu>
-										<DropdownMenuTrigger
-											render={
-												<Button
-													variant="ghost"
-													size="sm"
-													className="text-muted-foreground size-8 p-0"
-													title={_(msg`More actions`)}
-												>
-													<Icon name="ellipsis" className="size-4" />
-												</Button>
-											}
-										/>
-										<DropdownMenuContent align="end">
-											{journey.status === 'draft' ||
-											journey.status === 'paused' ? (
+									{canManage ? (
+										<DropdownMenu>
+											<DropdownMenuTrigger
+												render={
+													<Button
+														variant="ghost"
+														size="sm"
+														className="text-muted-foreground size-8 p-0"
+														title={_(msg`More actions`)}
+													>
+														<Icon name="ellipsis" className="size-4" />
+													</Button>
+												}
+											/>
+											<DropdownMenuContent align="end">
+												{journey.status === 'draft' ||
+												journey.status === 'paused' ? (
+													<DropdownMenuItem
+														onClick={() => {
+															void fetcher.submit(
+																{ intent: 'publish', journeyId: journey.id },
+																{ method: 'POST' },
+															)
+														}}
+													>
+														{_(msg`Publish`)}
+													</DropdownMenuItem>
+												) : journey.status === 'active' ? (
+													<DropdownMenuItem
+														onClick={() => {
+															void fetcher.submit(
+																{ intent: 'pause', journeyId: journey.id },
+																{ method: 'POST' },
+															)
+														}}
+													>
+														{_(msg`Pause`)}
+													</DropdownMenuItem>
+												) : null}
+
 												<DropdownMenuItem
 													onClick={() => {
 														void fetcher.submit(
-															{ intent: 'publish', journeyId: journey.id },
+															{ intent: 'duplicate', journeyId: journey.id },
 															{ method: 'POST' },
 														)
 													}}
 												>
-													{_(msg`Publish`)}
+													{_(msg`Duplicate`)}
 												</DropdownMenuItem>
-											) : journey.status === 'active' ? (
+
 												<DropdownMenuItem
+													className="text-destructive focus:text-destructive"
 													onClick={() => {
-														void fetcher.submit(
-															{ intent: 'pause', journeyId: journey.id },
-															{ method: 'POST' },
-														)
+														if (
+															confirm(
+																_(
+																	msg`Are you sure you want to delete "${journeyName}"?`,
+																),
+															)
+														) {
+															void fetcher.submit(
+																{ intent: 'delete', journeyId: journey.id },
+																{ method: 'POST' },
+															)
+														}
 													}}
 												>
-													{_(msg`Pause`)}
+													{_(msg`Delete`)}
 												</DropdownMenuItem>
-											) : null}
-
-											<DropdownMenuItem
-												onClick={() => {
-													void fetcher.submit(
-														{ intent: 'duplicate', journeyId: journey.id },
-														{ method: 'POST' },
-													)
-												}}
-											>
-												{_(msg`Duplicate`)}
-											</DropdownMenuItem>
-
-											<DropdownMenuItem
-												className="text-destructive focus:text-destructive"
-												onClick={() => {
-													if (
-														confirm(
-															_(
-																msg`Are you sure you want to delete "${journeyName}"?`,
-															),
-														)
-													) {
-														void fetcher.submit(
-															{ intent: 'delete', journeyId: journey.id },
-															{ method: 'POST' },
-														)
-													}
-												}}
-											>
-												{_(msg`Delete`)}
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									) : null}
 								</ItemActions>
 							</Item>
 						)

@@ -1,9 +1,11 @@
 import {
 	requireUserWithOrganizationPermission as _requireUserWithOrganizationPermission,
+	createForbiddenResponse,
+	getUserId,
 	ORG_PERMISSIONS,
 	getUserOrganizationPermissionsForClient,
+	userHasOrganizationPermission,
 	type OrganizationPermissionString,
-	getUserId,
 } from '@repo/auth'
 
 export { ORG_PERMISSIONS, getUserOrganizationPermissionsForClient }
@@ -26,4 +28,29 @@ export async function requireUserWithOrganizationPermission(
 		organizationId,
 		permission,
 	)
+}
+
+/**
+ * Require the user to have at least one of the given organization permissions.
+ * Useful for section landing pages that aggregate more than one resource.
+ */
+export async function requireAnyUserWithOrganizationPermission(
+	request: Request,
+	organizationId: string,
+	permissions: OrganizationPermissionString[],
+): Promise<string> {
+	const userId = await getUserId(request)
+	if (!userId) {
+		throw new Response('Unauthorized', { status: 401 })
+	}
+
+	for (const permission of permissions) {
+		if (
+			await userHasOrganizationPermission(userId, organizationId, permission)
+		) {
+			return userId
+		}
+	}
+
+	throw createForbiddenResponse(permissions.join(' or '))
 }

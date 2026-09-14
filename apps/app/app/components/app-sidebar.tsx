@@ -219,6 +219,18 @@ function OrganizationSidebar({
 	const canManageRoles =
 		rootData?.userOrganizations?.currentOrganization?.organizationRole.id ===
 		'org_role_admin'
+	const orgPermissions =
+		rootData?.userOrganizations?.currentOrganization?.organizationRole
+			?.permissions ?? []
+	const hasOrgPermission = (action: string, entity: string) =>
+		orgPermissions.some(
+			(permission: { action: string; entity: string }) =>
+				permission.action === action && permission.entity === entity,
+		)
+	const canReadWebsite = hasOrgPermission('read', 'website')
+	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
+	const canReadCampaigns = hasOrgPermission('read', 'campaign')
+	const canReadAutomations = hasOrgPermission('read', 'automation')
 
 	useEffect(() => {
 		if (typeof navigator !== 'undefined') {
@@ -420,6 +432,48 @@ function OrganizationSidebar({
 		},
 	]
 
+	// Only show sections the current role can read; every route is still
+	// enforced server-side.
+	const visibleNavMain = navMain
+		.filter((item) => {
+			if (item.url === `/${orgSlug}/marketing`) {
+				return canReadCampaigns || canReadAutomations
+			}
+			if (item.url === `/${orgSlug}/website`) {
+				return canReadWebsite || canReadAnnouncements
+			}
+			return true
+		})
+		.map((item) => {
+			if (!('items' in item) || !item.items) return item
+			if (item.url === `/${orgSlug}/marketing`) {
+				return {
+					...item,
+					items: item.items.filter((subItem) => {
+						if (subItem.url.includes('/marketing/campaigns')) {
+							return canReadCampaigns
+						}
+						if (subItem.url.includes('/marketing/automations')) {
+							return canReadAutomations
+						}
+						return true
+					}),
+				}
+			}
+			if (item.url === `/${orgSlug}/website`) {
+				return {
+					...item,
+					items: item.items.filter((subItem) => {
+						if (subItem.url.includes('/website/announcements')) {
+							return canReadAnnouncements
+						}
+						return canReadWebsite
+					}),
+				}
+			}
+			return item
+		})
+
 	const navSecondary = [
 		...(!isExtensionInstalled &&
 		extensionId &&
@@ -503,7 +557,7 @@ function OrganizationSidebar({
 						/>
 					)}
 
-				<NavMain items={navMain} />
+				<NavMain items={visibleNavMain} />
 
 				{/* Favorite Notes */}
 				{favoriteNotes && orgSlug && (

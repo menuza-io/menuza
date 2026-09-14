@@ -1,0 +1,14 @@
+// Release builds target production. Without a generated tenant config this is
+// the un-branded app: the customer picks their site on first launch, and every
+// request still goes to the regional tenant-api.
+#include "Shared.xcconfig"
+
+EPIC_USE_TLS = YES
+EPIC_APP_BASE_URL = app.epic-startup.com
+EPIC_TENANT_API_US_BASE_URL = tenant-us.epic-startup.com
+EPIC_TENANT_API_KSA_BASE_URL = tenant-ksa.epic-startup.com
+EPIC_BRAND_DOMAIN = epic-startup.com
+
+// Per-tenant overrides written by `npm run ios:tenant -w ios`
+// (scripts/generate-tenant.mjs). Included last so the tenant wins.
+#include? "Generated/Tenant.xcconfig"

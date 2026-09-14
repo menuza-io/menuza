@@ -37,6 +37,10 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 type JourneyStatus = 'draft' | 'active' | 'paused' | 'archived'
@@ -45,7 +49,13 @@ type RunStatus = 'completed' | 'running' | 'failed' | 'cancelled'
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
+	)
 
 	const [journeyRes, runsRes] = await Promise.all([
 		fetchTenant(`/operator/journeys/${journeyId}`),
@@ -85,7 +95,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
+	)
+
 	const formData = await request.formData()
 	const runId = formData.get('runId')
 

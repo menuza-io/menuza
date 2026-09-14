@@ -1,15 +1,16 @@
 // Shared permission utilities
 
 type Action = 'create' | 'read' | 'update' | 'delete'
-type Entity = 'user' | 'note'
 type Access = 'own' | 'any' | 'own,any' | 'any,own'
+// Entities are intentionally not a closed union: organization roles, system
+// roles, and future features each contribute their own entity names.
 export type PermissionString =
-	`${Action}:${Entity}` | `${Action}:${Entity}:${Access}`
+	`${Action}:${string}` | `${Action}:${string}:${Access}`
 
 export function parsePermissionString(permissionString: PermissionString) {
 	const [action, entity, access] = permissionString.split(':') as [
 		Action,
-		Entity,
+		string,
 		Access | undefined,
 	]
 	return {

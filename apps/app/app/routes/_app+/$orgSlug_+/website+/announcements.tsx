@@ -75,6 +75,7 @@ import {
 	LocaleSwitcher,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -127,7 +128,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
-		ORG_PERMISSIONS.READ_WEBSITE_ANY,
+		ORG_PERMISSIONS.READ_ANNOUNCEMENT_ANY,
 	)
 
 	const localesConfig = parseSiteLocalesConfig(
@@ -165,7 +166,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
-		ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
+		ORG_PERMISSIONS.UPDATE_ANNOUNCEMENT_ANY,
 	)
 
 	const localesConfig = parseSiteLocalesConfig(
@@ -378,6 +379,8 @@ function AnnouncementRow({
 	onEdit: (announcement: AnnouncementRecord) => void
 }) {
 	const { _ } = useLingui()
+	const hasPermission = useHasPermission()
+	const canManage = hasPermission('update:announcement:any')
 	const toggleFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
 	const busy = toggleFetcher.state !== 'idle' || deleteFetcher.state !== 'idle'
@@ -400,7 +403,7 @@ function AnnouncementRow({
 			<TableCell className="w-18">
 				<Switch
 					checked={isEnabled}
-					disabled={busy}
+					disabled={busy || !canManage}
 					aria-label={_(msg`Toggle announcement visibility`)}
 					onCheckedChange={(checked) => {
 						void toggleFetcher.submit(
@@ -415,13 +418,19 @@ function AnnouncementRow({
 				/>
 			</TableCell>
 			<TableCell className="max-w-70">
-				<button
-					type="button"
-					className="hover:text-primary line-clamp-2 text-left text-sm font-medium"
-					onClick={() => onEdit(announcement)}
-				>
-					{preview}
-				</button>
+				{canManage ? (
+					<button
+						type="button"
+						className="hover:text-primary line-clamp-2 text-left text-sm font-medium"
+						onClick={() => onEdit(announcement)}
+					>
+						{preview}
+					</button>
+				) : (
+					<span className="line-clamp-2 text-left text-sm font-medium">
+						{preview}
+					</span>
+				)}
 			</TableCell>
 			<TableCell>
 				<TypeBadge type={announcement.type} />
@@ -439,68 +448,75 @@ function AnnouncementRow({
 				})}
 			</TableCell>
 			<TableCell className="text-right">
-				<DropdownMenu>
-					<DropdownMenuTrigger
-						render={
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								disabled={busy}
-								aria-label={_(msg`Announcement actions`)}
-							>
-								<Icon name="ellipsis" className="size-4" />
-							</Button>
-						}
-					/>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={() => onEdit(announcement)}>
-							<Icon name="pencil" className="mr-2 size-4" />
-							<Trans>Edit</Trans>
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							className="text-destructive focus:text-destructive"
-							onClick={() => setDeleteDialogOpen(true)}
-						>
-							<Icon name="trash-2" className="mr-2 size-4" />
-							<Trans>Delete</Trans>
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				{canManage ? (
+					<>
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										disabled={busy}
+										aria-label={_(msg`Announcement actions`)}
+									>
+										<Icon name="ellipsis" className="size-4" />
+									</Button>
+								}
+							/>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem onClick={() => onEdit(announcement)}>
+									<Icon name="pencil" className="mr-2 size-4" />
+									<Trans>Edit</Trans>
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									className="text-destructive focus:text-destructive"
+									onClick={() => setDeleteDialogOpen(true)}
+								>
+									<Icon name="trash-2" className="mr-2 size-4" />
+									<Trans>Delete</Trans>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 
-				<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>
-								<Trans>Delete announcement?</Trans>
-							</AlertDialogTitle>
-							<AlertDialogDescription>
-								<Trans>
-									This action cannot be undone. Are you sure you want to delete
-									this announcement?
-								</Trans>
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel>
-								<Trans>Cancel</Trans>
-							</AlertDialogCancel>
-							<AlertDialogAction
-								onClick={() => {
-									void deleteFetcher.submit(
-										{
-											intent: deleteAnnouncementIntent,
-											id: announcement.id,
-										},
-										{ method: 'POST' },
-									)
-									setDeleteDialogOpen(false)
-								}}
-							>
-								<Trans>Delete</Trans>
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
+						<AlertDialog
+							open={deleteDialogOpen}
+							onOpenChange={setDeleteDialogOpen}
+						>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										<Trans>Delete announcement?</Trans>
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										<Trans>
+											This action cannot be undone. Are you sure you want to
+											delete this announcement?
+										</Trans>
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>
+										<Trans>Cancel</Trans>
+									</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={() => {
+											void deleteFetcher.submit(
+												{
+													intent: deleteAnnouncementIntent,
+													id: announcement.id,
+												},
+												{ method: 'POST' },
+											)
+											setDeleteDialogOpen(false)
+										}}
+									>
+										<Trans>Delete</Trans>
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</>
+				) : null}
 			</TableCell>
 		</TableRow>
 	)
@@ -509,6 +525,8 @@ function AnnouncementRow({
 export default function WebsiteAnnouncementsRoute() {
 	const { organization, announcements, localesConfig } =
 		useLoaderData<typeof loader>()
+	const hasPermission = useHasPermission()
+	const canManage = hasPermission('update:announcement:any')
 	const revalidator = useRevalidator()
 	const [sheetOpen, setSheetOpen] = useState(false)
 	const [editing, setEditing] = useState<AnnouncementRecord | null>(null)
@@ -561,16 +579,18 @@ export default function WebsiteAnnouncementsRoute() {
 						actions={
 							<>
 								<LocaleSwitcher className="max-w-none" />
-								<Button
-									type="button"
-									onClick={() => {
-										setEditing(null)
-										setSheetOpen(true)
-									}}
-								>
-									<Icon name="plus" className="size-4" />
-									<Trans>Add announcement</Trans>
-								</Button>
+								{canManage ? (
+									<Button
+										type="button"
+										onClick={() => {
+											setEditing(null)
+											setSheetOpen(true)
+										}}
+									>
+										<Icon name="plus" className="size-4" />
+										<Trans>Add announcement</Trans>
+									</Button>
+								) : null}
 							</>
 						}
 					/>

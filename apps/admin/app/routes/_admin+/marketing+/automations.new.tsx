@@ -1,7 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import { requireUserWithPermission, SYSTEM_PERMISSIONS } from '@repo/auth'
 import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import { createPlatformJourney } from '@repo/marketing/server/platform-journeys'
 import {
@@ -58,12 +58,18 @@ async function withRenderedEmails(
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+	)
 	return {}
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+	)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 

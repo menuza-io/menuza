@@ -1,0 +1,122 @@
+default_platform(:ios)
+
+# Release lanes for the tenant iOS app.
+#
+# The workflow (`.github/workflows/ios.yml`) generates the tenant config, the
+# App Store Connect API key file, and the version/build numbers before calling
+# these lanes — so the lanes stay small and secret-free.
+#
+#   bundle exec fastlane ios beta      # build + upload to TestFlight
+#   bundle exec fastlane ios release   # build + upload to App Store Connect
+#
+# See apps/ios/docs/app-store-release.md.
+
+PROJECT_FILE = 'EpicTenantApp.xcodeproj'
+APP_SCHEME = 'EpicTenantApp'
+
+def project_file
+  PROJECT_FILE
+end
+
+def app_scheme
+  APP_SCHEME
+end
+
+def api_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch('ASC_KEY_ID'),
+    issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+    key_filepath: ENV.fetch('ASC_KEY_PATH'),
+    duration: 1200,
+    in_house: false
+  )
+end
+
+# Lets Xcode create/download the distribution certificate and provisioning
+# profile for the tenant's team using the API key (no `match` repo needed).
+def signing_xcargs
+  [
+    '-allowProvisioningUpdates',
+    "-authenticationKeyPath #{ENV.fetch('ASC_KEY_PATH')}",
+    "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID')}",
+    "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID')}"
+  ].join(' ')
+end
+
+platform :ios do
+  desc 'Create the App Store Connect app record and bundle id for a new tenant'
+  lane :setup_app do
+    produce(
+      api_key: api_key,
+      app_identifier: ENV.fetch('PRODUCT_BUNDLE_IDENTIFIER'),
+      app_name: ENV.fetch('APP_DISPLAY_NAME'),
+      language: ENV.fetch('PRIMARY_LOCALE', 'en-US'),
+      sku: ENV.fetch('PRODUCT_BUNDLE_IDENTIFIER'),
+      team_id: ENV['APPLE_TEAM_ID'],
+      skip_itc: false
+    )
+  end
+
+  desc 'Build the tenant app and upload it to TestFlight'
+  lane :beta do
+    setup_ci if ENV['CI']
+
+    build_app(
+      project: project_file,
+      scheme: app_scheme,
+      configuration: 'Release',
+      export_method: 'app-store',
+      output_directory: 'build',
+      xcargs: signing_xcargs,
+      export_options: {
+        manageAppVersionAndBuildNumber: false
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+  end
+
+  desc 'Build the tenant app and upload it to App Store Connect'
+  lane :release do
+    setup_ci if ENV['CI']
+
+    build_app(
+      project: project_file,
+      scheme: app_scheme,
+      configuration: 'Release',
+      export_method: 'app-store',
+      output_directory: 'build',
+      xcargs: signing_xcargs,
+      export_options: {
+        manageAppVersionAndBuildNumber: false
+      }
+    )
+
+    # App Review requires in-app account deletion (Guideline 5.1.1(v)) and the
+    # app has no delete-account flow yet (see docs/app-store-release.md). Remove
+    # this guard once the tenant-api endpoint and the Profile screen action ship.
+    if ENV['SUBMIT_FOR_REVIEW'] == '1'
+      UI.user_error!(
+        'Refusing to submit for review: the app has no in-app account deletion ' +
+          'yet, which App Review requires for apps that create accounts. ' +
+          'Upload without SUBMIT_FOR_REVIEW=1 and submit manually once the ' +
+          'delete-account flow exists.'
+      )
+    end
+
+    # Binary-only by default: store metadata, screenshots, and the review
+    # submission stay deliberate (see docs/app-store-release.md).
+    upload_to_app_store(
+      api_key: api_key,
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      force: true
+    )
+  end
+end

@@ -79,7 +79,7 @@ msgstr "{0} من {1} مستهدف"
 #~ msgid "{0} steps"
 #~ msgstr "{0} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:628
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:648
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} إعلانات"
 
@@ -107,11 +107,11 @@ msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:156
 msgid "{diffSec}s"
 msgstr "{diffSec} ث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:136
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
 msgid "{diffSec}s (running)"
 msgstr "{diffSec} ث (قيد التشغيل)"
 
@@ -135,11 +135,11 @@ msgstr "{formCount} نموذج"
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:203
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:221
 msgid "{journeyName} (Copy)"
 msgstr "{journeyName} (نسخة)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:142
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
@@ -159,8 +159,8 @@ msgstr "{pageCount} صفحات"
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsText}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:248
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:157
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:275
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:172
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
 
@@ -180,7 +180,7 @@ msgstr "{remainingMinutes, plural, zero {متبقي # دقيقة} one {متبق�
 #~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
 #~ msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # دقيقة} one {تنتهي الصلاحية خلال دقيقة واحدة} two {تنتهي الصلاحية خلال دقيقتين} few {تنتهي الصلاحية خلال # دقائق} many {تنتهي الصلاحية خلال # دقيقة} other {تنتهي الصلاحية خلال # دقيقة}}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:348
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:364
 msgid "{runsCount} runs"
 msgstr "{runsCount} تشغيل"
 
@@ -192,7 +192,7 @@ msgstr "منذ {seconds} ثانية"
 msgid "{status}"
 msgstr "{status}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:346
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
 msgstr "{stepCount} خطوات"
 
@@ -266,7 +266,7 @@ msgstr "✓ تم المطالبة بنقاط Discord"
 msgid "${basePriceValue} billed annually"
 msgstr "${basePriceValue} يُفوتر سنوياً"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:646
 msgid "1 announcement"
 msgstr "إعلان واحد"
 
@@ -344,7 +344,7 @@ msgstr "لون التمييز"
 msgid "Accept"
 msgstr "قبول"
 
-#: app/components/roles/tenant-role-access-manager.tsx:806
+#: app/components/roles/tenant-role-access-manager.tsx:860
 msgid "Access"
 msgstr "الوصول"
 
@@ -381,9 +381,9 @@ msgid "Acme Inc."
 msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
-#: app/components/roles/tenant-role-access-manager.tsx:723
+#: app/components/roles/tenant-role-access-manager.tsx:777
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:606
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:869
@@ -396,10 +396,10 @@ msgid "active"
 msgstr "نشط"
 
 #: app/components/settings/cards/sessions-card.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:73
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:55
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:239
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:114
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 msgid "Active"
 msgstr "نشط"
@@ -460,21 +460,21 @@ msgstr "أضف قسماً من القائمة على اليسار لرؤية م�
 msgid "Add a title between fields."
 msgstr "أضف عنوانًا بين الحقول."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:581
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعارات الصيانة أو العروض الترويجية على موقعك العام."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:525
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:572
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
-#: app/components/organization-invitations.tsx:294
+#: app/components/organization-invitations.tsx:303
 #: app/routes/organizations+/create.tsx:1162
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:76
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:100
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
@@ -517,7 +517,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:437
+#: app/components/app-sidebar.tsx:491
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -673,8 +673,8 @@ msgstr "استهدف جملة أو جملتين تجعلان الزائر ينق
 msgid "Alignment"
 msgstr "المحاذاة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:53
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
 msgid "All"
 msgstr "الكل"
 
@@ -690,7 +690,7 @@ msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاه�
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:265
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
@@ -711,7 +711,7 @@ msgstr "جميع المستلمين"
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:612
+#: app/components/roles/tenant-role-access-manager.tsx:666
 msgid "Allowed"
 msgstr "مسموح"
 
@@ -732,8 +732,8 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:332
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:32
+#: app/components/app-sidebar.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
 
@@ -741,13 +741,13 @@ msgstr "التحليلات"
 msgid "Analytics and tracking"
 msgstr "التحليلات والتتبع"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:449
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:460
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:348
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:37
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:552
+#: app/components/app-sidebar.tsx:360
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
 msgstr "الإعلانات"
 
@@ -771,6 +771,10 @@ msgstr "مفاتيح API"
 msgid "Appearance"
 msgstr "المظهر"
 
+#: app/components/roles/tenant-role-access-manager.tsx:169
+msgid "Appears on the public site"
+msgstr "يظهر على الموقع العام"
+
 #: app/components/nav-user.tsx:102
 msgid "Arabic"
 msgstr "العربية"
@@ -779,8 +783,8 @@ msgstr "العربية"
 msgid "archived"
 msgstr "مؤرشف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:57
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:116
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:133
 msgid "Archived"
 msgstr "مؤرشف"
 
@@ -788,11 +792,11 @@ msgstr "مؤرشف"
 #~ msgid "Are you sure you want to delete \"{0}\"?"
 #~ msgstr "هل أنت متأكد أنك تريد حذف \"{0}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:458
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 
-#: app/components/roles/tenant-role-access-manager.tsx:863
+#: app/components/roles/tenant-role-access-manager.tsx:917
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ لا يمكن التراجع عن هذا الإجراء."
 
@@ -849,11 +853,11 @@ msgstr "تعيين المسؤوليات"
 #~ msgid "Attempt: {0} • Executed: {1}"
 #~ msgstr "المحاولة: {0} • نُفِّذ: {1}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:423
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:440
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:300
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
 
@@ -861,7 +865,7 @@ msgstr "سجل التدقيق"
 #~ msgid "Audit trail and step execution history triggered by \"{0}\"."
 #~ msgstr "سجل التدقيق وتاريخ تنفيذ الخطوات المُفعَّل بواسطة \"{0}\"."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:214
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:231
 msgid "Audit trail and step execution history triggered by \"{triggerLabel}\"."
 msgstr "سجل التدقيق وتاريخ تنفيذ الخطوات المُفعَّل بواسطة \"{triggerLabel}\"."
 
@@ -890,7 +894,7 @@ msgstr "العملاء المصرح لهم"
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:122
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:141
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
 
@@ -898,26 +902,26 @@ msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنش
 msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:56
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:83
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:66
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:94
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:212
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:230
 msgid "Automation paused"
 msgstr "تم إيقاف الأتمتة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:190
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
 msgid "Automation published and activated!"
 msgstr "تم نشر الأتمتة وتفعيلها!"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:194
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:212
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:302
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:88
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
+#: app/components/app-sidebar.tsx:314
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
 msgstr "الأتمتة"
 
@@ -934,7 +938,7 @@ msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
 #: app/components/website/create-page-dialog.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:131
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:155
 msgid "Back"
 msgstr "رجوع"
 
@@ -986,7 +990,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:413
+#: app/components/app-sidebar.tsx:425
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -995,7 +999,7 @@ msgstr "الفواتير"
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
-#: app/components/roles/tenant-role-access-manager.tsx:199
+#: app/components/roles/tenant-role-access-manager.tsx:253
 msgid "Blank"
 msgstr "فارغ"
 
@@ -1015,7 +1019,7 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:339
+#: app/components/app-sidebar.tsx:351
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5102
 msgid "Branding"
@@ -1025,7 +1029,7 @@ msgstr "الهوية البصرية"
 msgid "Break down complex tasks"
 msgstr "تقسيم المهام المعقدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:86
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
@@ -1033,13 +1037,17 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:295
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:82
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:73
+#: app/components/app-sidebar.tsx:307
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:101
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
 msgstr "البثّات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:146
+#: app/components/roles/tenant-role-access-manager.tsx:222
+msgid "Broadcasts & automations"
+msgstr "البثّات والأتمتة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:171
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
 
@@ -1064,11 +1072,11 @@ msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخد�
 msgid "Builder"
 msgstr "المنشئ"
 
-#: app/components/roles/tenant-role-access-manager.tsx:525
+#: app/components/roles/tenant-role-access-manager.tsx:579
 msgid "Built-in"
 msgstr "مدمج"
 
-#: app/components/roles/tenant-role-access-manager.tsx:783
+#: app/components/roles/tenant-role-access-manager.tsx:837
 msgid "Built-in Roles"
 msgstr "الأدوار المدمجة"
 
@@ -1122,8 +1130,8 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/note/comment-input.tsx:209
 #: app/components/note/comment-item.tsx:290
 #: app/components/note/share-note-button.tsx:317
-#: app/components/roles/tenant-role-access-manager.tsx:481
-#: app/components/roles/tenant-role-access-manager.tsx:871
+#: app/components/roles/tenant-role-access-manager.tsx:535
+#: app/components/roles/tenant-role-access-manager.tsx:925
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -1141,7 +1149,7 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1078
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:485
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1767
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1434
@@ -1165,7 +1173,7 @@ msgstr "إلغاء التعديل"
 msgid "Cancel reply"
 msgstr "إلغاء الرد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
 msgid "Cancelled"
 msgstr "ملغى"
 
@@ -1312,7 +1320,7 @@ msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_co
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضمام للمطالبة بنقاطك تلقائياً."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:68
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:85
 msgid "Click rate"
 msgstr "معدل النقر"
 
@@ -1433,8 +1441,8 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:120
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 msgid "Completed"
 msgstr "مكتمل"
 
@@ -1566,7 +1574,7 @@ msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:593
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3270
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3460
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3756
@@ -1574,7 +1582,7 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Content"
 msgstr "المحتوى"
 
-#: app/components/roles/tenant-role-access-manager.tsx:168
+#: app/components/roles/tenant-role-access-manager.tsx:207
 msgid "Content editor"
 msgstr "محرر المحتوى"
 
@@ -1607,7 +1615,7 @@ msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 msgid "Control who can access this note"
 msgstr "التحكم في من يمكنه الوصول إلى هذه الملاحظة"
 
-#: app/components/organization-invitations.tsx:200
+#: app/components/organization-invitations.tsx:209
 msgid "Copied"
 msgstr "تم النسخ"
 
@@ -1617,7 +1625,7 @@ msgstr "تم النسخ"
 msgid "Copied!"
 msgstr "تم النسخ!"
 
-#: app/components/organization-invitations.tsx:205
+#: app/components/organization-invitations.tsx:214
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
 #: app/routes/_auth+/waitlist.tsx:320
@@ -1658,7 +1666,7 @@ msgstr "تعذر فتح {routeTitle}"
 msgid "Create"
 msgstr "إنشاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:700
+#: app/components/roles/tenant-role-access-manager.tsx:754
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
@@ -1720,21 +1728,25 @@ msgstr "إنشاء وإدارة صفحات موقع مؤسستك."
 msgid "Create and publish a form from Website → Forms first."
 msgstr "أنشئ نموذجًا وانشره أولًا من الموقع الإلكتروني ← النماذج."
 
+#: app/components/roles/tenant-role-access-manager.tsx:185
+msgid "Create and send one-time email and SMS campaigns."
+msgstr "إنشاء وإرسال حملات بريد إلكتروني ورسائل SMS لمرة واحدة."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:388
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:482
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:635
 msgid "Create API Key"
 msgstr "إنشاء مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:320
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:342
 msgid "Create automation"
 msgstr "إنشاء أتمتة"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:554
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:572
 msgid "Create banner announcements for your public organization site. Enabled banners appear at the top of the site for visitors."
 msgstr "أنشئ إعلانات شريطية لموقع مؤسستك العام. تظهر الإعلانات الشريطية المفعّلة أعلى الموقع للزوار."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:132
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:147
 msgid "Create broadcast"
 msgstr "إنشاء بث"
 
@@ -1742,7 +1754,7 @@ msgstr "إنشاء بث"
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:256
+#: app/components/roles/tenant-role-access-manager.tsx:310
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
@@ -1752,7 +1764,7 @@ msgstr "إنشاء دور مخصص"
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:226
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
@@ -1789,8 +1801,8 @@ msgstr "إنشاء إعادة توجيه"
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
 
-#: app/components/roles/tenant-role-access-manager.tsx:489
-#: app/components/roles/tenant-role-access-manager.tsx:689
+#: app/components/roles/tenant-role-access-manager.tsx:543
+#: app/components/roles/tenant-role-access-manager.tsx:743
 msgid "Create role"
 msgstr "إنشاء دور"
 
@@ -1798,15 +1810,15 @@ msgstr "إنشاء دور"
 msgid "Create your first API key to get started"
 msgstr "أنشئ مفتاح API الأول للبدء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:225
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:251
 msgid "Create your first broadcast"
 msgstr "أنشئ أول بث لك"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:314
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:336
 msgid "Create your first marketing automation."
 msgstr "أنشئ أول أتمتة تسويقية لك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:126
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:141
 msgid "Create your first one-time email or SMS campaign."
 msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نصية لمرة واحدة."
 
@@ -1814,9 +1826,21 @@ msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نص�
 msgid "Create your first page to start building your website."
 msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
 
+#: app/components/roles/tenant-role-access-manager.tsx:168
+msgid "Create, edit, enable, and delete announcement banners."
+msgstr "إنشاء وتعديل وتمكين وحذف لافتات الإعلانات."
+
+#: app/components/roles/tenant-role-access-manager.tsx:196
+msgid "Create, edit, publish, pause, and delete automated journeys."
+msgstr "إنشاء وتعديل ونشر وإيقاف مؤقت وحذف مسارات الأتمتة."
+
 #: app/components/roles/tenant-role-access-manager.tsx:157
-msgid "Create, update, and publish web pages and announcements."
-msgstr "إنشاء صفحات ويب وإعلانات وتحديثها ونشرها."
+#~ msgid "Create, update, and publish web pages and announcements."
+#~ msgstr "إنشاء صفحات ويب وإعلانات وتحديثها ونشرها."
+
+#: app/components/roles/tenant-role-access-manager.tsx:157
+msgid "Create, update, and publish web pages, forms, and redirects."
+msgstr "إنشاء وتحديث ونشر صفحات الويب والنماذج وإعادة التوجيه."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:661
 msgid "Created {createdDate}"
@@ -1879,7 +1903,7 @@ msgstr "الاشتراك الحالي"
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
-#: app/components/roles/tenant-role-access-manager.tsx:525
+#: app/components/roles/tenant-role-access-manager.tsx:579
 msgid "Custom"
 msgstr "مخصص"
 
@@ -1904,7 +1928,7 @@ msgstr "اسم الحدث المخصص"
 msgid "Custom form"
 msgstr "نموذج مخصص"
 
-#: app/components/roles/tenant-role-access-manager.tsx:674
+#: app/components/roles/tenant-role-access-manager.tsx:728
 msgid "Custom Roles"
 msgstr "الأدوار المخصصة"
 
@@ -1945,15 +1969,15 @@ msgstr "معرّف العميل"
 #~ msgid "Customer Signup (Registration)"
 #~ msgstr "تسجيل العميل (التسجيل)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:278
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:295
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:233
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:251
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:276
+#: app/components/app-sidebar.tsx:288
 msgid "Customers"
 msgstr "العملاء"
 
@@ -1988,7 +2012,7 @@ msgid "Dark mode"
 msgstr "الوضع الداكن"
 
 #: app/components/app-sidebar.tsx:122
-#: app/components/app-sidebar.tsx:258
+#: app/components/app-sidebar.tsx:270
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -2001,7 +2025,7 @@ msgstr "لوحة التحكم"
 #~ msgid "Data Table is a table that displays data in a grid format."
 #~ msgstr "جدول البيانات هو جدول يعرض البيانات بتنسيق شبكة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:124
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:135
 msgid "Database connection error"
 msgstr "خطأ في الاتصال بقاعدة البيانات"
 
@@ -2034,7 +2058,7 @@ msgstr "اللغة الافتراضية"
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:262
+#: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Define role details and select what permissions members receive."
 msgstr "حدّد تفاصيل الدور واختر الصلاحيات التي يحصل عليها الأعضاء."
 
@@ -2047,14 +2071,14 @@ msgid "Delay unit is required."
 msgstr "وحدة التأخير مطلوبة."
 
 #: app/components/note/comment-item.tsx:230
-#: app/components/roles/tenant-role-access-manager.tsx:768
-#: app/components/roles/tenant-role-access-manager.tsx:878
+#: app/components/roles/tenant-role-access-manager.tsx:822
+#: app/components/roles/tenant-role-access-manager.tsx:932
 #: app/components/settings/passkey-manager.tsx:220
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1032
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1090
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:465
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
@@ -2075,7 +2099,7 @@ msgstr "حذف الحساب"
 #~ msgid "Delete announcement"
 #~ msgstr "حذف الإعلان"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:474
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:488
 msgid "Delete announcement?"
 msgstr "هل تريد حذف الإعلان؟"
 
@@ -2091,7 +2115,7 @@ msgstr "حذف العمود"
 #~ msgid "Delete comment"
 #~ msgstr "حذف التعليق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:860
+#: app/components/roles/tenant-role-access-manager.tsx:914
 msgid "Delete custom role"
 msgstr "حذف الدور المخصص"
 
@@ -2107,7 +2131,7 @@ msgstr "حذف البيانات والتبديل"
 msgid "Delete feature"
 msgstr "حذف الميزة"
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:367
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
@@ -2169,7 +2193,7 @@ msgstr "حذف رابط التواصل الاجتماعي"
 msgid "Delete team notes"
 msgstr "حذف ملاحظات الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:878
+#: app/components/roles/tenant-role-access-manager.tsx:932
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
@@ -2177,11 +2201,11 @@ msgstr "جارٍ الحذف…"
 msgid "Deny"
 msgstr "رفض"
 
-#: app/components/roles/tenant-role-access-manager.tsx:288
-#: app/components/roles/tenant-role-access-manager.tsx:399
-#: app/components/roles/tenant-role-access-manager.tsx:578
-#: app/components/roles/tenant-role-access-manager.tsx:714
-#: app/components/roles/tenant-role-access-manager.tsx:800
+#: app/components/roles/tenant-role-access-manager.tsx:342
+#: app/components/roles/tenant-role-access-manager.tsx:453
+#: app/components/roles/tenant-role-access-manager.tsx:632
+#: app/components/roles/tenant-role-access-manager.tsx:768
+#: app/components/roles/tenant-role-access-manager.tsx:854
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -2191,7 +2215,7 @@ msgstr "رفض"
 msgid "Description"
 msgstr "الوصف"
 
-#: app/components/roles/tenant-role-access-manager.tsx:376
+#: app/components/roles/tenant-role-access-manager.tsx:430
 msgid "Deselect all"
 msgstr "إلغاء تحديد الكل"
 
@@ -2233,7 +2257,7 @@ msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجل
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
 
-#: app/components/organization-invitations.tsx:239
+#: app/components/organization-invitations.tsx:248
 msgid "Disable"
 msgstr "تعطيل"
 
@@ -2328,9 +2352,9 @@ msgid "draft"
 msgstr "مسودة"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:54
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:240
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:113
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:130
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:416
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
@@ -2355,12 +2379,12 @@ msgstr "اسحب لإعادة الترتيب"
 msgid "Drag to reorder column"
 msgstr "اسحب لإعادة ترتيب العمود"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:417
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:449
 msgid "Duplicate"
 msgstr "تكرار"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:206
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:281
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:298
 msgid "Duration"
 msgstr "المدة"
 
@@ -2426,10 +2450,10 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 
 #: app/components/favorite-notes.tsx:110
 #: app/components/note/comment-item.tsx:223
-#: app/components/roles/tenant-role-access-manager.tsx:758
+#: app/components/roles/tenant-role-access-manager.tsx:812
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:975
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:458
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
 msgid "Edit"
@@ -2448,7 +2472,7 @@ msgstr "تعديل العمود"
 msgid "Edit comment..."
 msgstr "تعديل التعليق..."
 
-#: app/components/roles/tenant-role-access-manager.tsx:254
+#: app/components/roles/tenant-role-access-manager.tsx:308
 msgid "Edit Custom Role"
 msgstr "تعديل الدور المخصص"
 
@@ -2472,7 +2496,7 @@ msgstr "تعديل الملاحظات الخاصة"
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
-#: app/components/roles/tenant-role-access-manager.tsx:545
+#: app/components/roles/tenant-role-access-manager.tsx:599
 msgid "Edit role"
 msgstr "تعديل الدور"
 
@@ -2486,7 +2510,7 @@ msgstr "تعديل محتوى الموقع"
 
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
-#: app/components/organization-invitations.tsx:430
+#: app/components/organization-invitations.tsx:443
 #: app/components/settings/cards/notification-preferences-card.tsx:25
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/website/link-inspector.tsx:368
@@ -2532,7 +2556,7 @@ msgstr "معاينة البريد"
 msgid "Email subject line is required."
 msgstr "سطر موضوع البريد الإلكتروني مطلوب."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:58
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:75
 msgid "Emails sent"
 msgstr "رسائل البريد المُرسَلة"
 
@@ -2576,7 +2600,7 @@ msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان 
 msgid "Enter backup code"
 msgstr "أدخل الرمز الاحتياطي"
 
-#: app/components/organization-invitations.tsx:429
+#: app/components/organization-invitations.tsx:442
 #: app/routes/organizations+/create.tsx:1203
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
@@ -2631,7 +2655,7 @@ msgstr "فريق Menuza"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 #: app/components/settings/cards/organization/announcement-sheet.tsx:271
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
 msgid "Error"
 msgstr "خطأ"
 
@@ -2639,11 +2663,11 @@ msgstr "خطأ"
 msgid "Errors"
 msgstr "أخطاء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:112
 msgid "Event-driven workflows"
 msgstr "سير عمل قائم على الأحداث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
@@ -2659,11 +2683,11 @@ msgstr "مثال على الطلب"
 #~ msgid "Execution History ({0})"
 #~ msgstr "سجل التنفيذ ({0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:244
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:261
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:196
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:213
 msgid "Execution Runs"
 msgstr "عمليات التنفيذ"
 
@@ -2705,8 +2729,8 @@ msgid "Fade up"
 msgstr "التلاشي للأعلى"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:56
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 msgid "Failed"
 msgstr "فشل"
 
@@ -2718,23 +2742,23 @@ msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMess
 msgid "Failed to copy account ID"
 msgstr "فشل نسخ معرف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:135
 msgid "Failed to create and dispatch campaign"
 msgstr "فشل إنشاء الحملة وإرسالها"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:135
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:154
 msgid "Failed to create journey"
 msgstr "فشل إنشاء الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:223
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:241
 msgid "Failed to delete automation"
 msgstr "فشل حذف الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:179
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:197
 msgid "Failed to delete journey"
 msgstr "فشل حذف الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:235
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
@@ -2742,7 +2766,7 @@ msgstr "فشل تكرار الرحلة"
 msgid "Failed to fetch current user information"
 msgstr "فشل جلب معلومات المستخدم الحالي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:187
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:205
 msgid "Failed to find original journey"
 msgstr "فشل العثور على الرحلة الأصلية"
 
@@ -2754,44 +2778,44 @@ msgstr "فشل تنسيق الرسم البياني للتحقق"
 msgid "Failed to load AI Assistant"
 msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:39
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:45
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:52
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:58
 msgid "Failed to load broadcast"
 msgstr "فشل تحميل البث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:34
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:45
 msgid "Failed to load campaigns"
 msgstr "فشل تحميل الحملات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:93
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:104
 msgid "Failed to load journeys from regional tenant storage."
 msgstr "فشل تحميل الرحلات من تخزين المستأجر الإقليمي."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:129
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:154
 msgid "Failed to load marketing metrics"
 msgstr "فشل تحميل مقاييس التسويق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:98
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:115
 msgid "Failed to load timeline"
 msgstr "فشل تحميل الجدول الزمني"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:226
 msgid "Failed to pause automation"
 msgstr "فشل إيقاف الأتمتة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:164
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:182
 msgid "Failed to pause journey"
 msgstr "فشل إيقاف الرحلة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:184
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:202
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:149
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:167
 msgid "Failed to publish journey"
 msgstr "فشل نشر الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:171
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:189
 msgid "Failed to save automation"
 msgstr "فشل حفظ الأتمتة"
 
@@ -2803,7 +2827,7 @@ msgstr "فشل الحفظ:"
 msgid "Failed to search for users"
 msgstr "فشل البحث عن المستخدمين"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:266
 msgid "Failed to trigger test automation"
 msgstr "فشل تشغيل اختبار الأتمتة"
 
@@ -2896,8 +2920,8 @@ msgstr "إعدادات النموذج"
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: app/components/app-sidebar.tsx:327
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:27
+#: app/components/app-sidebar.tsx:339
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
 msgstr "النماذج"
@@ -2927,13 +2951,13 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:370
+#: app/components/app-sidebar.tsx:382
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:317
+#: app/components/app-sidebar.tsx:329
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:15
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
 msgstr "الإعدادات العامة"
 
@@ -2963,12 +2987,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:429
+#: app/components/app-sidebar.tsx:483
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:151
-#: app/components/app-sidebar.tsx:444
+#: app/components/app-sidebar.tsx:498
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -2988,7 +3012,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
 #: app/components/app-sidebar.tsx:159
-#: app/components/app-sidebar.tsx:452
+#: app/components/app-sidebar.tsx:506
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -3021,11 +3045,11 @@ msgstr "معرّف Google Analytics"
 msgid "Google Tag Manager ID"
 msgstr "معرّف Google Tag Manager"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:97
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:116
 msgid "Graph data is required"
 msgstr "بيانات الرسم البياني مطلوبة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:130
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:148
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
@@ -3120,6 +3144,7 @@ msgstr "إخفاء الردود ({replyCount})"
 #: app/components/roles/tenant-role-access-manager.tsx:124
 #: app/components/roles/tenant-role-access-manager.tsx:141
 #: app/components/roles/tenant-role-access-manager.tsx:158
+#: app/components/roles/tenant-role-access-manager.tsx:197
 msgid "High impact"
 msgstr "تأثير كبير"
 
@@ -3244,7 +3269,7 @@ msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:269
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:343
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Info"
 msgstr "معلومات"
 
@@ -3268,18 +3293,18 @@ msgstr "إدراج حقل هنا"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr "إدراج وسوم الدمج:"
 
-#: app/components/roles/tenant-role-access-manager.tsx:835
+#: app/components/roles/tenant-role-access-manager.tsx:889
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:401
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1014
 msgid "Integrations"
 msgstr "التكاملات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:137
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:104
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:155
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
@@ -3295,7 +3320,7 @@ msgstr "نوع التحقق غير صالح"
 msgid "Inverted"
 msgstr "معكوس"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:260
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
@@ -3320,7 +3345,7 @@ msgstr "دعوة أعضاء الفريق"
 msgid "Invited by {invitedBy}"
 msgstr "مدعو من قبل {invitedBy}"
 
-#: app/components/organization-invitations.tsx:334
+#: app/components/organization-invitations.tsx:347
 msgid "Invited by {inviterName}"
 msgstr "مدعو من قبل {inviterName}"
 
@@ -3352,11 +3377,11 @@ msgstr "الانضمام إلى المنظمة"
 msgid "Join our Discord"
 msgstr "انضم إلى Discord الخاص بنا"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:199
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
 msgid "Journey"
 msgstr "رحلة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:155
 msgid "journeyId is required"
 msgstr "معرّف الرحلة مطلوب"
 
@@ -3445,7 +3470,7 @@ msgstr "آخر استخدام"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:284
 msgid "Launch Test Run in Builder"
 msgstr "بدء تشغيل اختباري في المُنشئ"
 
@@ -3509,7 +3534,7 @@ msgstr "الوضع الفاتح"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:281
 #: app/components/website/link-inspector.tsx:642
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:599
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:619
 msgid "Link"
 msgstr "رابط"
 
@@ -3534,7 +3559,7 @@ msgstr "تسمية الرابط"
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:590
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:610
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
 msgid "Live"
 msgstr "مباشر"
@@ -3559,7 +3584,7 @@ msgstr "جاري تحميل القنوات..."
 msgid "Loading notes..."
 msgstr "جاري تحميل الملاحظات..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:384
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
@@ -3630,12 +3655,24 @@ msgstr "إجراء تعديلات على الملاحظات التي أنشأه�
 msgid "Make Public"
 msgstr "جعلها عامة"
 
+#: app/components/roles/tenant-role-access-manager.tsx:167
+msgid "Manage announcements"
+msgstr "إدارة الإعلانات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:195
+msgid "Manage automations"
+msgstr "إدارة الأتمتة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:184
+msgid "Manage broadcasts"
+msgstr "إدارة البثّات"
+
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
 msgid "Manage Passkeys"
 msgstr "إدارة مفاتيح المرور"
 
-#: app/components/organization-invitations.tsx:257
+#: app/components/organization-invitations.tsx:266
 #: app/components/organization-members.tsx:173
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
@@ -3692,7 +3729,7 @@ msgstr "إدارة كلمة المرور والمصادقة الثنائية و�
 msgid "Manage your personal data in accordance with GDPR Article 20."
 msgstr "إدارة بياناتك الشخصية وفقاً للمادة 20 من اللائحة العامة لحماية البيانات (GDPR)."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:63
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:85
 msgid "Manage your public organization website and appearance."
 msgstr "إدارة موقع مؤسستك العام ومظهره."
 
@@ -3710,10 +3747,15 @@ msgstr "تحديد الكل كمقروء"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/app-sidebar.tsx:282
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:144
+#: app/components/app-sidebar.tsx:294
+#: app/components/roles/tenant-role-access-manager.tsx:174
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:169
 msgid "Marketing"
 msgstr "التسويق"
+
+#: app/components/roles/tenant-role-access-manager.tsx:221
+msgid "Marketing manager"
+msgstr "مدير التسويق"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:938
 msgid "MCP clients authorized to access your organization data"
@@ -3723,7 +3765,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:399
+#: app/components/app-sidebar.tsx:411
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3746,7 +3788,7 @@ msgstr "رابط الوسائط"
 msgid "Medium"
 msgstr "متوسط"
 
-#: app/components/roles/tenant-role-access-manager.tsx:535
+#: app/components/roles/tenant-role-access-manager.tsx:589
 #: app/components/team-switcher.tsx:132
 msgid "member"
 msgstr "عضو"
@@ -3755,19 +3797,19 @@ msgstr "عضو"
 #~ msgid "Member"
 #~ msgstr "عضو"
 
-#: app/components/roles/tenant-role-access-manager.tsx:535
+#: app/components/roles/tenant-role-access-manager.tsx:589
 #: app/components/team-switcher.tsx:134
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:375
+#: app/components/app-sidebar.tsx:387
 #: app/components/organization-members.tsx:164
-#: app/components/roles/tenant-role-access-manager.tsx:717
-#: app/components/roles/tenant-role-access-manager.tsx:803
+#: app/components/roles/tenant-role-access-manager.tsx:771
+#: app/components/roles/tenant-role-access-manager.tsx:857
 msgid "Members"
 msgstr "الأعضاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:181
+#: app/components/roles/tenant-role-access-manager.tsx:232
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
@@ -3780,7 +3822,7 @@ msgstr "الأعضاء والدعوات"
 msgid "Message"
 msgstr "الرسالة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:90
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:114
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -3834,7 +3876,7 @@ msgid "More"
 msgstr "المزيد"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:226
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:377
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:409
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
@@ -3902,17 +3944,17 @@ msgstr "لم يُستخدم أبداً"
 msgid "New announcement"
 msgstr "إعلان جديد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:290
 msgid "New automation"
 msgstr "أتمتة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:81
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:162
 msgid "New broadcast"
 msgstr "بث جديد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:92
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:192
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
@@ -3977,7 +4019,7 @@ msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
-#: app/components/organization-invitations.tsx:180
+#: app/components/organization-invitations.tsx:189
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
 
@@ -3993,7 +4035,7 @@ msgstr "لا يوجد اشتراك نشط"
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:580
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
 msgid "No announcements yet"
 msgstr "لا توجد إعلانات بعد"
 
@@ -4001,7 +4043,7 @@ msgstr "لا توجد إعلانات بعد"
 msgid "No API keys created yet"
 msgstr "لم يتم إنشاء مفاتيح API بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:310
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:332
 msgid "No automations found"
 msgstr "لم يتم العثور على أتمتة"
 
@@ -4009,11 +4051,11 @@ msgstr "لم يتم العثور على أتمتة"
 msgid "No backup codes generated"
 msgstr "لم يتم إنشاء رموز احتياطية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:122
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:137
 msgid "No broadcasts found"
 msgstr "لم يتم العثور على بثّات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:219
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:244
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
@@ -4037,7 +4079,7 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:697
+#: app/components/roles/tenant-role-access-manager.tsx:751
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
@@ -4045,11 +4087,11 @@ msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
-#: app/components/organization-invitations.tsx:460
+#: app/components/organization-invitations.tsx:473
 msgid "No description provided"
 msgstr "لم يُقدَّم وصف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:389
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:406
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
@@ -4061,7 +4103,7 @@ msgstr "لا يوجد محرر متاح لهذا النوع من الكتل."
 msgid "No emojis found"
 msgstr "لم يتم العثور على رموز تعبيرية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:256
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:273
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
@@ -4170,7 +4212,7 @@ msgstr "العُقد"
 msgid "None"
 msgstr "بلا"
 
-#: app/components/roles/tenant-role-access-manager.tsx:616
+#: app/components/roles/tenant-role-access-manager.tsx:670
 msgid "Not allowed"
 msgstr "غير مسموح"
 
@@ -4210,7 +4252,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:270
+#: app/components/app-sidebar.tsx:282
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:288
 msgid "Notes"
@@ -4220,7 +4262,7 @@ msgstr "الملاحظات"
 msgid "Notes & Documents"
 msgstr "الملاحظات والمستندات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:169
+#: app/components/roles/tenant-role-access-manager.tsx:208
 msgid "Notes & website"
 msgstr "الملاحظات والموقع"
 
@@ -4240,7 +4282,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:416
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -4281,11 +4323,15 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:83
+#: app/components/roles/tenant-role-access-manager.tsx:175
+msgid "One-time broadcasts and automated journeys."
+msgstr "بثّات لمرة واحدة ومسارات أتمتة."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:102
 msgid "One-time email and SMS"
 msgstr "بريد إلكتروني ورسائل نصية لمرة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:74
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:87
 msgid "One-time email and SMS campaigns."
 msgstr "حملات بريد إلكتروني ورسائل نصية لمرة واحدة."
 
@@ -4355,8 +4401,12 @@ msgid "Open menu"
 msgstr "فتح القائمة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:152
-msgid "Open pages and themes in the site builder."
-msgstr "فتح الصفحات والسمات في منشئ الموقع."
+#~ msgid "Open pages and themes in the site builder."
+#~ msgstr "فتح الصفحات والسمات في منشئ الموقع."
+
+#: app/components/roles/tenant-role-access-manager.tsx:152
+msgid "Open pages, forms, and themes in the site builder."
+msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
 #: app/components/settings/cards/organization/shop-card.tsx:142
 msgid "Open payout dashboard"
@@ -4366,7 +4416,7 @@ msgstr "فتح لوحة تحكم المدفوعات"
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:63
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:80
 msgid "Open rate"
 msgstr "معدل الفتح"
 
@@ -4374,7 +4424,7 @@ msgstr "معدل الفتح"
 #~ msgid "Open Stripe dashboard"
 #~ msgstr "فتح لوحة Stripe"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:254
 msgid "Open Visual Builder"
 msgstr "فتح المُنشئ المرئي"
 
@@ -4454,7 +4504,7 @@ msgstr "تُستخدم المنظمات لتجميع مشاريعك."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/app-sidebar.tsx:288
+#: app/components/app-sidebar.tsx:300
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -4486,8 +4536,8 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:322
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:22
+#: app/components/app-sidebar.tsx:334
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
 msgstr "الصفحات"
@@ -4538,7 +4588,7 @@ msgid "Password login is disabled because your organization \"{orgName}\" requir
 msgstr "تسجيل الدخول بكلمة المرور معطل لأن منظمتك \"{orgName}\" تتطلب تسجيل الدخول الموحد."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:405
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 msgid "Pause"
 msgstr "إيقاف مؤقت"
 
@@ -4546,13 +4596,13 @@ msgstr "إيقاف مؤقت"
 msgid "paused"
 msgstr "متوقف مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:56
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:241
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:115
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:132
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:315
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:333
 msgid "Pausing automation..."
 msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 
@@ -4565,11 +4615,11 @@ msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:402
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:419
 msgid "Pending"
 msgstr "قيد الانتظار"
 
-#: app/components/organization-invitations.tsx:316
+#: app/components/organization-invitations.tsx:329
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
@@ -4579,7 +4629,7 @@ msgstr "الدعوات المعلقة"
 msgid "per month"
 msgstr "شهرياً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:178
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:203
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
@@ -4595,24 +4645,24 @@ msgstr "حذف الملاحظات التي أنشأها أي زميل نهائي
 msgid "Permanently delete notes created by this user."
 msgstr "حذف الملاحظات التي أنشأها هذا المستخدم نهائيًا."
 
-#: app/components/roles/tenant-role-access-manager.tsx:396
-#: app/components/roles/tenant-role-access-manager.tsx:575
+#: app/components/roles/tenant-role-access-manager.tsx:450
+#: app/components/roles/tenant-role-access-manager.tsx:629
 msgid "Permission"
 msgstr "الصلاحية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:720
+#: app/components/roles/tenant-role-access-manager.tsx:774
 msgid "Permissions"
 msgstr "الصلاحيات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:536
+#: app/components/roles/tenant-role-access-manager.tsx:590
 msgid "permissions granted"
 msgstr "صلاحيات ممنوحة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:473
+#: app/components/roles/tenant-role-access-manager.tsx:527
 msgid "permissions selected"
 msgstr "صلاحيات محددة"
 
-#: app/components/organization-invitations.tsx:158
+#: app/components/organization-invitations.tsx:167
 msgid "Personal invite link"
 msgstr "رابط الدعوة الشخصي"
 
@@ -4719,7 +4769,7 @@ msgstr "الخطة غير متاحة"
 msgid "Platform"
 msgstr "المنصة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:820
+#: app/components/roles/tenant-role-access-manager.tsx:874
 msgid "Platform-provided role."
 msgstr "دور توفره المنصة."
 
@@ -4837,7 +4887,7 @@ msgid "Pro"
 msgstr "احترافي"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:55
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:68
 msgid "Processing"
 msgstr "قيد المعالجة"
 
@@ -4869,7 +4919,7 @@ msgid "Public Access"
 msgstr "الوصول العام"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:394
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5937
@@ -4901,11 +4951,11 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 msgid "Published"
 msgstr "منشور"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:305
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:323
 msgid "Publishing and activating automation..."
 msgstr "جارٍ نشر وتفعيل الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:185
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:204
 msgid "Publishing new journey..."
 msgstr "جارٍ نشر الرحلة الجديدة..."
 
@@ -4957,7 +5007,11 @@ msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق و�
 msgid "Read page details"
 msgstr "تمت قراءة تفاصيل الصفحة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:191
+#: app/components/roles/tenant-role-access-manager.tsx:163
+msgid "Read the announcement banners shown on the public site."
+msgstr "قراءة لافتات الإعلانات المعروضة على الموقع العام."
+
+#: app/components/roles/tenant-role-access-manager.tsx:242
 msgid "Read-only"
 msgstr "قراءة فقط"
 
@@ -4965,7 +5019,7 @@ msgstr "قراءة فقط"
 msgid "Reading page details"
 msgstr "قراءة تفاصيل الصفحة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:200
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:225
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
@@ -5001,8 +5055,8 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:355
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:42
+#: app/components/app-sidebar.tsx:367
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
 
@@ -5167,7 +5221,7 @@ msgstr "رد"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:264
+#: app/components/app-sidebar.tsx:276
 msgid "Reports"
 msgstr "التقارير"
 
@@ -5200,7 +5254,7 @@ msgstr "مطلوب"
 msgid "Required"
 msgstr "مطلوب"
 
-#: app/components/organization-invitations.tsx:228
+#: app/components/organization-invitations.tsx:237
 msgid "Reset"
 msgstr "إعادة تعيين"
 
@@ -5282,16 +5336,16 @@ msgstr "جاري الإلغاء..."
 msgid "Right"
 msgstr "اليمين"
 
-#: app/components/roles/tenant-role-access-manager.tsx:711
-#: app/components/roles/tenant-role-access-manager.tsx:797
+#: app/components/roles/tenant-role-access-manager.tsx:765
+#: app/components/roles/tenant-role-access-manager.tsx:851
 msgid "Role"
 msgstr "الدور"
 
-#: app/components/roles/tenant-role-access-manager.tsx:269
+#: app/components/roles/tenant-role-access-manager.tsx:323
 msgid "Role name"
 msgstr "اسم الدور"
 
-#: app/components/app-sidebar.tsx:382
+#: app/components/app-sidebar.tsx:394
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -5308,7 +5362,7 @@ msgstr "وجّه الزيارات الواردة من مسار قديم إلى �
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:350
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:367
 msgid "Run Execution Timeline"
 msgstr "الجدول الزمني لتنفيذ التشغيل"
 
@@ -5316,7 +5370,7 @@ msgstr "الجدول الزمني لتنفيذ التشغيل"
 msgid "Run history"
 msgstr "سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:276
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:293
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
@@ -5324,16 +5378,16 @@ msgstr "معرّف التشغيل"
 #~ msgid "Run ID: {0}"
 #~ msgstr "معرّف التشغيل: {0}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:370
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:387
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:93
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:110
 msgid "runId is required"
 msgstr "معرّف التشغيل مطلوب"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:121
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
 msgid "Running"
 msgstr "قيد التشغيل"
 
@@ -5414,7 +5468,7 @@ msgstr "وفّر 20٪"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:487
+#: app/components/roles/tenant-role-access-manager.tsx:541
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:112
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
@@ -5445,7 +5499,7 @@ msgstr "احفظ الملف وأعد تشغيل Claude Desktop"
 msgid "Save the file and restart Kiro IDE"
 msgstr "احفظ الملف وأعد تشغيل Kiro IDE"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:199
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:218
 msgid "Save the journey first before running test triggers."
 msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الاختبار."
 
@@ -5462,11 +5516,11 @@ msgstr "تم الحفظ"
 #~ msgid "Saving {headerValue}"
 #~ msgstr "جاري حفظ {headerValue}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:293
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:311
 msgid "Saving automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:173
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:192
 msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
@@ -5475,7 +5529,7 @@ msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
-#: app/components/roles/tenant-role-access-manager.tsx:485
+#: app/components/roles/tenant-role-access-manager.tsx:539
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -5498,7 +5552,7 @@ msgstr "مجدول"
 #~ msgid "Search"
 #~ msgstr "بحث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
 msgstr "البحث في الأتمتة..."
 
@@ -5506,7 +5560,7 @@ msgstr "البحث في الأتمتة..."
 msgid "Search by name or email..."
 msgstr "البحث بالاسم أو البريد الإلكتروني..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:93
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:108
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
@@ -5527,7 +5581,7 @@ msgstr "البحث في الملاحظات"
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
 
-#: app/components/app-sidebar.tsx:482
+#: app/components/app-sidebar.tsx:536
 #: app/components/command-menu.tsx:102
 msgid "Search notes..."
 msgstr "البحث في الملاحظات..."
@@ -5596,6 +5650,14 @@ msgstr "مفتاح الأمان"
 msgid "Security Settings"
 msgstr "إعدادات الأمان"
 
+#: app/components/roles/tenant-role-access-manager.tsx:191
+msgid "See automated journeys and their run history."
+msgstr "عرض مسارات الأتمتة وسجل تشغيلها."
+
+#: app/components/roles/tenant-role-access-manager.tsx:180
+msgid "See one-time email and SMS campaign history."
+msgstr "عرض سجل حملات البريد الإلكتروني ورسائل SMS لمرة واحدة."
+
 #: app/components/roles/tenant-role-access-manager.tsx:113
 msgid "See teammate names, emails, and assigned roles."
 msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة."
@@ -5620,7 +5682,7 @@ msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ ت
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
-#: app/components/roles/tenant-role-access-manager.tsx:378
+#: app/components/roles/tenant-role-access-manager.tsx:432
 msgid "Select all"
 msgstr "تحديد الكل"
 
@@ -5692,7 +5754,7 @@ msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ
 msgid "Send"
 msgstr "إرسال"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:141
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:165
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
@@ -5700,7 +5762,7 @@ msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لم
 msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
-#: app/components/organization-invitations.tsx:301
+#: app/components/organization-invitations.tsx:314
 #: app/routes/organizations+/create.tsx:1169
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
@@ -5732,6 +5794,10 @@ msgstr "جاري إرسال الرسالة"
 #: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
+
+#: app/components/roles/tenant-role-access-manager.tsx:186
+msgid "Sends to customers"
+msgstr "يُرسل إلى العملاء"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
@@ -5781,7 +5847,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:362
+#: app/components/app-sidebar.tsx:374
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -5816,7 +5882,7 @@ msgstr "مشاركة الملاحظة"
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
 
-#: app/components/organization-invitations.tsx:161
+#: app/components/organization-invitations.tsx:170
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
 
@@ -5828,7 +5894,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:406
 msgid "Shop"
 msgstr "المتجر"
 
@@ -6022,11 +6088,11 @@ msgstr "تفرّع المسار بناءً على قواعد (صحيح / خاط�
 msgid "Square"
 msgstr "مربع"
 
-#: app/components/roles/tenant-role-access-manager.tsx:786
+#: app/components/roles/tenant-role-access-manager.tsx:840
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:531
+#: app/components/roles/tenant-role-access-manager.tsx:585
 msgid "Standard system role."
 msgstr "دور نظام قياسي."
 
@@ -6034,7 +6100,7 @@ msgstr "دور نظام قياسي."
 msgid "Star"
 msgstr "تمييز بنجمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:305
+#: app/components/roles/tenant-role-access-manager.tsx:359
 msgid "Start from a template"
 msgstr "البدء من قالب"
 
@@ -6062,7 +6128,7 @@ msgstr "ابدأ المحادثة بإضافة التعليق الأول."
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:280
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:297
 msgid "Started At"
 msgstr "بدأ في"
 
@@ -6070,9 +6136,9 @@ msgstr "بدأ في"
 msgid "Starting point"
 msgstr "نقطة البداية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:581
+#: app/components/roles/tenant-role-access-manager.tsx:635
 #: app/components/settings/cards/sessions-card.tsx:239
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:279
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
@@ -6091,7 +6157,7 @@ msgstr "الخطوة {currentStep} من {totalSteps}"
 #~ msgid "Step Executions ({0})"
 #~ msgstr "تنفيذات الخطوات ({0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:395
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:412
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
@@ -6174,7 +6240,7 @@ msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:272
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:347
 msgid "Success"
 msgstr "نجاح"
 
@@ -6240,7 +6306,7 @@ msgstr "نظام السمة"
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/components/roles/tenant-role-access-manager.tsx:677
+#: app/components/roles/tenant-role-access-manager.tsx:731
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "أدوار مخصصة لمنظمتك مع صلاحيات مُعدّة."
 
@@ -6274,7 +6340,7 @@ msgstr "الفريق"
 msgid "Team & Members"
 msgstr "الفريق والأعضاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:180
+#: app/components/roles/tenant-role-access-manager.tsx:231
 msgid "Team manager"
 msgstr "مدير الفريق"
 
@@ -6327,7 +6393,7 @@ msgstr "تشغيل اختباري"
 #~ msgid "Test run triggered successfully (Run ID: {0})"
 #~ msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:256
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:274
 msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
@@ -6441,7 +6507,7 @@ msgstr "جاري التفكير..."
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف \"{pageTitle}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:477
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:491
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
@@ -6531,7 +6597,7 @@ msgstr "العنوان"
 msgid "Titles and section headings."
 msgstr "العناوين وعناوين الأقسام."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:404
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:407
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
@@ -6617,7 +6683,7 @@ msgstr "يُفعَّل عبر اختبار المسؤول أو API"
 msgid "Triggered via operator test or API"
 msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:326
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:344
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 
@@ -6627,8 +6693,8 @@ msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:313
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:125
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:335
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:140
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
@@ -6653,7 +6719,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:596
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3908
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
 msgid "Type"
@@ -6684,8 +6750,8 @@ msgstr "الولايات المتحدة"
 msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:227
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:261
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:245
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:279
 msgid "Unknown intent"
 msgstr "نية غير معروفة"
 
@@ -6738,7 +6804,7 @@ msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات �
 msgid "Update Profile Photo"
 msgstr "تحديث صورة الملف الشخصي"
 
-#: app/components/roles/tenant-role-access-manager.tsx:261
+#: app/components/roles/tenant-role-access-manager.tsx:315
 msgid "Update this role’s name, description, and permissions."
 msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 
@@ -6746,7 +6812,7 @@ msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 msgid "Update your photo and personal details here."
 msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:602
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:622
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:206
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
@@ -6915,13 +6981,13 @@ msgstr "جاري التحقق من مفتاح المرور"
 msgid "Video"
 msgstr "فيديو"
 
-#: app/components/roles/tenant-role-access-manager.tsx:750
+#: app/components/roles/tenant-role-access-manager.tsx:804
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
 msgstr "عرض"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:206
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:231
 msgid "View all"
 msgstr "عرض الكل"
 
@@ -6932,6 +6998,18 @@ msgstr "عرض وتنزيل فواتير الدفع الخاصة بك"
 #: app/components/settings/cards/sessions-card.tsx:232
 msgid "View and manage this session"
 msgstr "عرض وإدارة هذه الجلسة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:162
+msgid "View announcements"
+msgstr "عرض الإعلانات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:190
+msgid "View automations"
+msgstr "عرض الأتمتة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:179
+msgid "View broadcasts"
+msgstr "عرض البثّات"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5983
 msgid "View live site"
@@ -6953,7 +7031,7 @@ msgstr "عرض الملاحظات الخاصة"
 #~ msgid "View responses"
 #~ msgstr "عرض الردود"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:365
+#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:396
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
@@ -6965,7 +7043,7 @@ msgstr "عرض أعضاء الفريق"
 msgid "View team notes"
 msgstr "عرض ملاحظات الفريق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:329
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:346
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
@@ -6973,7 +7051,7 @@ msgstr "عرض الجدول الزمني ←"
 msgid "View website workspace"
 msgstr "عرض مساحة عمل الموقع"
 
-#: app/components/roles/tenant-role-access-manager.tsx:190
+#: app/components/roles/tenant-role-access-manager.tsx:241
 msgid "Viewer"
 msgstr "مشاهد"
 
@@ -6996,7 +7074,7 @@ msgid "Want to go to the top of the waitlist?"
 msgstr "تريد الذهاب إلى أعلى قائمة الانتظار?"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:270
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
 msgid "Warning"
 msgstr "تحذير"
 
@@ -7028,8 +7106,8 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:311
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
+#: app/components/app-sidebar.tsx:323
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
 msgstr "الموقع الإلكتروني"
 
@@ -7038,8 +7116,12 @@ msgid "Website & Publishing"
 msgstr "الموقع والنشر"
 
 #: app/components/roles/tenant-role-access-manager.tsx:147
-msgid "Website editor and public pages."
-msgstr "محرر الموقع والصفحات العامة."
+#~ msgid "Website editor and public pages."
+#~ msgstr "محرر الموقع والصفحات العامة."
+
+#: app/components/roles/tenant-role-access-manager.tsx:147
+msgid "Website editor, announcements, and public pages."
+msgstr "محرر الموقع والإعلانات والصفحات العامة."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:293
 msgid "weeks"
@@ -7139,7 +7221,7 @@ msgstr "العرض"
 msgid "Will redirect to"
 msgstr "ستتم إعادة التوجيه إلى"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:377
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:394
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
 
@@ -7339,6 +7421,6 @@ msgstr "سيتم تشفير بيانات اعتماد S3 الخاصة بك وت�
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:200
+#: app/components/roles/tenant-role-access-manager.tsx:254
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"

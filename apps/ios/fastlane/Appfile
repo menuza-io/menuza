@@ -1,0 +1,9 @@
+# Per-tenant values are injected by the workflow (`TENANT_SLUG`,
+# `PRODUCT_BUNDLE_IDENTIFIER`, `APPLE_TEAM_ID`) before fastlane runs. Secrets
+# (App Store Connect API key) come from the tenant's GitHub environment.
+#
+# See apps/ios/docs/app-store-release.md.
+app_identifier(ENV['PRODUCT_BUNDLE_IDENTIFIER'] || 'com.epicstartup.tenant')
+apple_id(ENV['APPLE_ID']) if ENV['APPLE_ID']
+team_id(ENV['APPLE_TEAM_ID']) if ENV['APPLE_TEAM_ID']
+itc_team_id(ENV['ITC_TEAM_ID']) if ENV['ITC_TEAM_ID']

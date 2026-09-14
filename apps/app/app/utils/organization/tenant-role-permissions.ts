@@ -18,6 +18,12 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_settings_any',
 	'org_perm_read_website_any',
 	'org_perm_update_website_any',
+	'org_perm_read_announcement_any',
+	'org_perm_update_announcement_any',
+	'org_perm_read_campaign_any',
+	'org_perm_update_campaign_any',
+	'org_perm_read_automation_any',
+	'org_perm_update_automation_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]

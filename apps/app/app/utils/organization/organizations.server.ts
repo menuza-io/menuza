@@ -253,7 +253,23 @@ export async function getUserOrganizationsWithSlugHandling(
 	const userOrganizations =
 		organizations ?? (await getUserOrganizations(userId, true))
 	const defaultOrg = await getUserDefaultOrganization(userId)
-	const currentOrganization = defaultOrg || userOrganizations[0]
+	// getUserDefaultOrganization does not load role permissions, so merge them
+	// back in from the matching membership entry. Permission-aware UI (sidebar,
+	// route guards) reads them from the root loader data.
+	const defaultOrgWithPermissions = defaultOrg
+		? {
+				...defaultOrg,
+				organizationRole: {
+					...defaultOrg.organizationRole,
+					permissions:
+						userOrganizations.find(
+							(organization) =>
+								organization.organization.id === defaultOrg.organization.id,
+						)?.organizationRole.permissions ?? [],
+				},
+			}
+		: undefined
+	const currentOrganization = defaultOrgWithPermissions || userOrganizations[0]
 	if (
 		currentOrganization &&
 		orgSlug &&

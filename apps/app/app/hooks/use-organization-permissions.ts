@@ -53,7 +53,26 @@ export function useOrganizationPermissions(): UserOrganizationPermissions | null
 		currentRouteData?.userPermissions ||
 		null
 
-	return permissions
+	if (permissions) return permissions
+
+	// The root loader includes the current organization role (and its
+	// permissions) for every authenticated org route, so derive the same shape
+	// from there when a route does not provide its own permissions payload.
+	const currentOrganization =
+		currentRouteData?.userOrganizations?.currentOrganization
+	const organizationRole = currentOrganization?.organizationRole
+	if (!currentOrganization || !organizationRole?.permissions) return null
+
+	return {
+		userId: currentRouteData?.user?.id ?? '',
+		organizationId: currentOrganization.organization?.id ?? '',
+		organizationRole: {
+			id: organizationRole.id,
+			name: organizationRole.name,
+			level: organizationRole.level ?? 0,
+			permissions: organizationRole.permissions,
+		},
+	}
 }
 
 /**

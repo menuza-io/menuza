@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type * as PermissionsModule from '#app/utils/organization/permissions.server.ts'
+import {
+	requireAnyUserWithOrganizationPermission,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
 import {
 	loader as runsLoader,
@@ -15,6 +20,18 @@ import {
 import { action as newAction } from './automations.new.tsx'
 import { activateTestLingui } from './test-lingui.ts'
 
+vi.mock(
+	'#app/utils/organization/permissions.server.ts',
+	async (importOriginal) => {
+		const actual = await importOriginal<typeof PermissionsModule>()
+		return {
+			...actual,
+			requireUserWithOrganizationPermission: vi.fn(),
+			requireAnyUserWithOrganizationPermission: vi.fn(),
+		}
+	},
+)
+
 describe('Marketing Journeys UI & Route End-to-End Integration Suite', () => {
 	let mockFetchTenant: ReturnType<typeof vi.fn>
 	const testOrgSlug = 'epic-tenant'
@@ -24,6 +41,12 @@ describe('Marketing Journeys UI & Route End-to-End Integration Suite', () => {
 	beforeEach(() => {
 		activateTestLingui()
 		mockFetchTenant = vi.fn()
+		vi.mocked(requireUserWithOrganizationPermission).mockResolvedValue(
+			'user_test_123',
+		)
+		vi.mocked(requireAnyUserWithOrganizationPermission).mockResolvedValue(
+			'user_test_123',
+		)
 		vi.spyOn(tenantApiServer, 'getOperatorTenantClient').mockResolvedValue({
 			orgId: testOrgId,
 			orgSlug: testOrgSlug,

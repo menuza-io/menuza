@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+
+# Release automation for apps/ios (TestFlight + App Store). Pinned to a range
+# rather than an exact version so security patches can land without a PR here.
+gem 'fastlane', '>= 2.220'

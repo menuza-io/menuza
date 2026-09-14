@@ -179,6 +179,18 @@ export const ORG_PERMISSIONS = {
 	READ_WEBSITE_ANY: 'read:website:any' as const,
 	UPDATE_WEBSITE_ANY: 'update:website:any' as const,
 
+	// Website announcement permissions
+	READ_ANNOUNCEMENT_ANY: 'read:announcement:any' as const,
+	UPDATE_ANNOUNCEMENT_ANY: 'update:announcement:any' as const,
+
+	// Marketing broadcast permissions
+	READ_CAMPAIGN_ANY: 'read:campaign:any' as const,
+	UPDATE_CAMPAIGN_ANY: 'update:campaign:any' as const,
+
+	// Marketing automation permissions
+	READ_AUTOMATION_ANY: 'read:automation:any' as const,
+	UPDATE_AUTOMATION_ANY: 'update:automation:any' as const,
+
 	// Analytics permissions
 	READ_ANALYTICS_ANY: 'read:analytics:any' as const,
 } as const

@@ -144,17 +144,56 @@ export function getPermissionGroups(): PermissionGroup[] {
 		},
 		{
 			title: t`Website & Publishing`,
-			description: t`Website editor and public pages.`,
+			description: t`Website editor, announcements, and public pages.`,
 			permissions: [
 				{
 					id: 'org_perm_read_website_any',
 					label: t`View website workspace`,
-					description: t`Open pages and themes in the site builder.`,
+					description: t`Open pages, forms, and themes in the site builder.`,
 				},
 				{
 					id: 'org_perm_update_website_any',
 					label: t`Edit website content`,
-					description: t`Create, update, and publish web pages and announcements.`,
+					description: t`Create, update, and publish web pages, forms, and redirects.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_read_announcement_any',
+					label: t`View announcements`,
+					description: t`Read the announcement banners shown on the public site.`,
+				},
+				{
+					id: 'org_perm_update_announcement_any',
+					label: t`Manage announcements`,
+					description: t`Create, edit, enable, and delete announcement banners.`,
+					warning: t`Appears on the public site`,
+				},
+			],
+		},
+		{
+			title: t`Marketing`,
+			description: t`One-time broadcasts and automated journeys.`,
+			permissions: [
+				{
+					id: 'org_perm_read_campaign_any',
+					label: t`View broadcasts`,
+					description: t`See one-time email and SMS campaign history.`,
+				},
+				{
+					id: 'org_perm_update_campaign_any',
+					label: t`Manage broadcasts`,
+					description: t`Create and send one-time email and SMS campaigns.`,
+					warning: t`Sends to customers`,
+				},
+				{
+					id: 'org_perm_read_automation_any',
+					label: t`View automations`,
+					description: t`See automated journeys and their run history.`,
+				},
+				{
+					id: 'org_perm_update_automation_any',
+					label: t`Manage automations`,
+					description: t`Create, edit, publish, pause, and delete automated journeys.`,
 					warning: t`High impact`,
 				},
 			],
@@ -174,6 +213,18 @@ export function getPresets() {
 				'org_perm_update_note_own',
 				'org_perm_update_website_any',
 				'org_perm_read_website_any',
+				'org_perm_read_announcement_any',
+				'org_perm_update_announcement_any',
+			],
+		},
+		{
+			name: t`Marketing manager`,
+			description: t`Broadcasts & automations`,
+			permissionIds: [
+				'org_perm_read_campaign_any',
+				'org_perm_update_campaign_any',
+				'org_perm_read_automation_any',
+				'org_perm_update_automation_any',
 			],
 		},
 		{
@@ -193,6 +244,9 @@ export function getPresets() {
 				'org_perm_read_note_org',
 				'org_perm_read_member_any',
 				'org_perm_read_website_any',
+				'org_perm_read_announcement_any',
+				'org_perm_read_campaign_any',
+				'org_perm_read_automation_any',
 			],
 		},
 		{

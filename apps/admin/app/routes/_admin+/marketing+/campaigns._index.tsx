@@ -1,6 +1,10 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import {
+	requireUserWithPermission,
+	SYSTEM_PERMISSIONS,
+	userHasPermission,
+} from '@repo/auth'
 import { CampaignListGrid } from '@repo/marketing'
 import { listPlatformCampaigns } from '@repo/marketing/server/platform-campaigns'
 import { cn } from '@repo/ui'
@@ -22,14 +26,20 @@ const STATUS_FILTERS: Array<{
 ]
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
-	const campaigns = await listPlatformCampaigns()
-	return { campaigns, error: null }
+	const userId = await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.READ_PLATFORM_CAMPAIGN_ANY,
+	)
+	const [campaigns, canManage] = await Promise.all([
+		listPlatformCampaigns(),
+		userHasPermission(userId, SYSTEM_PERMISSIONS.UPDATE_PLATFORM_CAMPAIGN_ANY),
+	])
+	return { campaigns, canManage, error: null }
 }
 
 export default function AdminCampaignsIndexRoute() {
 	const { _ } = useLingui()
-	const { campaigns, error } = useLoaderData<typeof loader>()
+	const { campaigns, canManage, error } = useLoaderData<typeof loader>()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [statusFilter, setStatusFilter] = useState('all')
 
@@ -53,13 +63,15 @@ export default function AdminCampaignsIndexRoute() {
 						<Trans>Send one-time emails to tenant operators.</Trans>
 					</p>
 				</div>
-				<Button
-					render={<Link to="/marketing/campaigns/new" />}
-					className="gap-2"
-				>
-					<Icon name="plus" className="size-4" />
-					<Trans>New Broadcast</Trans>
-				</Button>
+				{canManage ? (
+					<Button
+						render={<Link to="/marketing/campaigns/new" />}
+						className="gap-2"
+					>
+						<Icon name="plus" className="size-4" />
+						<Trans>New Broadcast</Trans>
+					</Button>
+				) : null}
 			</div>
 
 			<div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -101,10 +113,14 @@ export default function AdminCampaignsIndexRoute() {
 						msg`Create your first platform email campaign for tenant operators.`,
 					)}
 					icons={['mail', 'send']}
-					action={{
-						label: _(msg`Create Broadcast`),
-						href: '/marketing/campaigns/new',
-					}}
+					action={
+						canManage
+							? {
+									label: _(msg`Create Broadcast`),
+									href: '/marketing/campaigns/new',
+								}
+							: undefined
+					}
 				/>
 			) : (
 				<CampaignListGrid
