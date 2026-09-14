@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Window backgrounds used by the two base themes. The org's own palette is
+  applied in code; these are only what shows before the first frame paints.
+  The launcher icon background lives in values/ic_launcher_background.xml, which
+  scripts/generate-tenant.mjs rewrites per tenant.
+-->
+<resources>
+	<color name="tenant_window_background">#FFFFFF</color>
+	<color name="tenant_window_background_dark">#0A0A0A</color>
+</resources>

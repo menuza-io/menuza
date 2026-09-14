@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant Android app — Deutsch -->
+<resources>
+	<string name="app_loading">Wird geladen…</string>
+	<string name="app_retry">Erneut versuchen</string>
+
+	<string name="connect_title">Mit deiner Website verbinden</string>
+	<string name="connect_subtitle">Gib die Adresse deiner Website ein, um ihr Branding zu laden.</string>
+	<string name="connect_field_label">Website-Adresse</string>
+	<string name="connect_placeholder">acme oder acme.example.com</string>
+	<string name="connect_action">Verbinden</string>
+	<string name="connect_error">Diese Website wurde nicht gefunden. Prüfe die Adresse und versuche es erneut.</string>
+
+	<string name="announcement_learn_more">Mehr erfahren</string>
+
+	<string name="login_title">Anmelden</string>
+	<string name="login_subtitle">Gib deine Telefonnummer ein. Wir senden dir einen Bestätigungscode.</string>
+	<string name="login_phone">Telefonnummer</string>
+	<string name="login_phone_placeholder">+49 151 00000000</string>
+	<string name="login_action">Code senden</string>
+	<string name="login_invalid_phone">Gib eine gültige Telefonnummer ein.</string>
+	<string name="login_network_error">Netzwerkfehler. Bitte versuche es erneut.</string>
+
+	<string name="verify_title">Code eingeben</string>
+	<string name="verify_subtitle">Wir haben einen 6-stelligen Code an %1$s gesendet.</string>
+	<string name="verify_code">Bestätigungscode</string>
+	<string name="verify_action">Bestätigen</string>
+	<string name="verify_resend">Neuen Code senden</string>
+	<string name="verify_change_number">Andere Nummer verwenden</string>
+
+	<string name="name_title">Dein Name</string>
+	<string name="name_subtitle">Sag uns, wie wir dich nennen sollen.</string>
+	<string name="name_field">Name</string>
+	<string name="name_placeholder">Anna Beispiel</string>
+	<string name="name_action">Weiter</string>
+
+	<string name="profile_title">Dein Profil</string>
+	<string name="profile_subtitle">Aktualisiere unten deine Basisdaten.</string>
+	<string name="profile_name">Name</string>
+	<string name="profile_email">E-Mail</string>
+	<string name="profile_phone">Telefonnummer</string>
+	<string name="profile_phone_locked">Die Telefonnummer kann derzeit nicht geändert werden.</string>
+	<string name="profile_save">Änderungen speichern</string>
+	<string name="profile_saved">Profil erfolgreich aktualisiert!</string>
+	<string name="profile_language">Sprache</string>
+	<string name="profile_language_system">Systemsprache</string>
+	<string name="profile_sign_out">Abmelden</string>
+	<string name="profile_network_error">Netzwerkfehler. Bitte versuche es erneut.</string>
+</resources>

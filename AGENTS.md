@@ -568,6 +568,11 @@ npm install --prefix packages/<name>                   # Install deps in package
   branded shell, phone-OTP sign-in, and profile, reusing the published org
   branding and the regional tenant-api. Keychain session; no PII proxy. Swift
   tasks are opt-in (`npm run ios:test -w ios`) so Linux CI stays green
+- `apps/android` - Tenant customer Android app (Kotlin, framework views only: no
+  AndroidX/Compose/OkHttp — see its README for the size budget): same branded
+  shell, phone-OTP sign-in, and profile as iOS, with the session in the Android
+  Keystore. Opt-in via `npm run android:* -w android`; the Android toolchain is
+  installed by `.agents/setup`
 
 ## Additional Resources
 

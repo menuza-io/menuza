@@ -1,0 +1,24 @@
+# Gradle / AGP
+.gradle/
+build/
+local.properties
+captures/
+.cxx/
+
+# Per-tenant build config (scripts/generate-tenant.mjs). The generated app icon
+# files under app/src/main/res are tracked: the generator restores the committed
+# placeholder first, exactly like apps/ios does with AppIcon-1024.png.
+app/tenant.properties
+app/keystore.properties
+
+# Play upload key material (never commit)
+*.jks
+*.keystore
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/metadata/android/*/changelogs/*.txt
+vendor/bundle/
+Gemfile.lock

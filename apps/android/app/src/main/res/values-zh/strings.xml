@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant Android app — 简体中文 -->
+<resources>
+	<string name="app_loading">加载中…</string>
+	<string name="app_retry">重试</string>
+
+	<string name="connect_title">连接你的网站</string>
+	<string name="connect_subtitle">输入你的网站地址以加载其品牌样式。</string>
+	<string name="connect_field_label">网站地址</string>
+	<string name="connect_placeholder">acme 或 acme.example.com</string>
+	<string name="connect_action">连接</string>
+	<string name="connect_error">未找到该网站。请检查地址后重试。</string>
+
+	<string name="announcement_learn_more">了解更多</string>
+
+	<string name="login_title">登录</string>
+	<string name="login_subtitle">输入你的手机号码，我们会发送验证码。</string>
+	<string name="login_phone">手机号码</string>
+	<string name="login_phone_placeholder">+86 138 0000 0000</string>
+	<string name="login_action">发送验证码</string>
+	<string name="login_invalid_phone">请输入有效的手机号码。</string>
+	<string name="login_network_error">网络错误，请重试。</string>
+
+	<string name="verify_title">输入验证码</string>
+	<string name="verify_subtitle">我们已向 %1$s 发送 6 位验证码。</string>
+	<string name="verify_code">验证码</string>
+	<string name="verify_action">验证</string>
+	<string name="verify_resend">重新发送验证码</string>
+	<string name="verify_change_number">使用其他号码</string>
+
+	<string name="name_title">你的名字</string>
+	<string name="name_subtitle">告诉我们如何称呼你。</string>
+	<string name="name_field">姓名</string>
+	<string name="name_placeholder">张三</string>
+	<string name="name_action">继续</string>
+
+	<string name="profile_title">个人资料</string>
+	<string name="profile_subtitle">在下方更新你的基本信息。</string>
+	<string name="profile_name">姓名</string>
+	<string name="profile_email">电子邮件</string>
+	<string name="profile_phone">手机号码</string>
+	<string name="profile_phone_locked">目前无法更改手机号码。</string>
+	<string name="profile_save">保存更改</string>
+	<string name="profile_saved">个人资料更新成功！</string>
+	<string name="profile_language">语言</string>
+	<string name="profile_language_system">跟随系统</string>
+	<string name="profile_sign_out">退出登录</string>
+	<string name="profile_network_error">网络错误，请重试。</string>
+</resources>

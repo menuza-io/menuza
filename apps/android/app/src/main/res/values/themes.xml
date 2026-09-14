@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Two base themes, one per appearance. The org's actual colors are applied in
+  code (`ThemePalette`), because they come from the tenant's published theme at
+  runtime — a static theme can only provide widget defaults the app does not
+  paint itself (cursor, selection, dialog chrome).
+
+  `AppTheme.Dark` is selected through a ContextThemeWrapper when the resolved
+  site theme is dark, or when it follows a dark system.
+-->
+<resources>
+
+	<style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+		<item name="android:windowBackground">@color/tenant_window_background</item>
+		<item name="android:colorAccent">#171717</item>
+		<item name="android:windowLightStatusBar">true</item>
+	</style>
+
+	<style name="AppTheme.Dark" parent="@android:style/Theme.Material.NoActionBar">
+		<item name="android:windowBackground">@color/tenant_window_background_dark</item>
+		<item name="android:colorAccent">#E5E5E5</item>
+		<item name="android:windowLightStatusBar">false</item>
+	</style>
+
+</resources>

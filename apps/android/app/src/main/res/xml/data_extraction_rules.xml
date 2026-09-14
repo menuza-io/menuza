@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The session lives in the Android Keystore and must never be restored onto
+  another device, so it is excluded from cloud backup and device transfer.
+  (allowBackup is also false in the manifest, which covers older releases.)
+-->
+<data-extraction-rules>
+	<cloud-backup>
+		<exclude domain="sharedpref" path="epic.tenant.session.xml" />
+	</cloud-backup>
+	<device-transfer>
+		<exclude domain="sharedpref" path="epic.tenant.session.xml" />
+	</device-transfer>
+</data-extraction-rules>

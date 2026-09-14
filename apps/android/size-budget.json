@@ -1,0 +1,5 @@
+{
+	"$comment": "Shipped-size budget for the tenant Android app, enforced by `npm run android:size -w android`. The numbers are deliberately tight: this app's whole point is a sub-200 KB download. If a change needs more room, change this file in the same PR and say why.",
+	"app/build/outputs/apk/release/app-release-unsigned.apk": 160000,
+	"app/build/outputs/bundle/release/app-release.aab": 220000
+}

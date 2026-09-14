@@ -1,0 +1,71 @@
+default_platform(:android)
+
+# Release lanes for the tenant Android app.
+#
+# The workflow (`.github/workflows/android.yml`) generates the tenant config and
+# the AAB, writes the upload keystore and the Play service-account key from the
+# tenant's GitHub environment, then calls these lanes — so the lanes stay small
+# and secret-free.
+#
+#   bundle exec fastlane android beta      # upload to the internal testing track
+#   bundle exec fastlane android release   # upload to production
+#
+# See apps/android/docs/play-store-release.md.
+
+def package_name
+  ENV.fetch('PLAY_PACKAGE_NAME') do
+    raise 'PLAY_PACKAGE_NAME is not set (it comes from tenants/<slug>.json)'
+  end
+end
+
+def aab_path
+  path = ENV.fetch('PLAY_AAB_PATH', 'app/build/outputs/bundle/release/app-release.aab')
+  raise "No AAB at #{path} — run bundleRelease first" unless File.exist?(path)
+
+  path
+end
+
+def service_account_key
+  key = ENV.fetch('PLAY_SERVICE_ACCOUNT_JSON_PATH') do
+    raise 'PLAY_SERVICE_ACCOUNT_JSON_PATH is not set (the tenant environment holds it)'
+  end
+  raise "No Play service account key at #{key}" unless File.exist?(key)
+
+  key
+end
+
+# Play has no build step here: the workflow already produced the AAB with the
+# tenant's application id, name, version and icon baked in.
+def upload_to_track(track:, release_status:)
+  upload_to_play_store(
+    package_name: package_name,
+    json_key: service_account_key,
+    aab: aab_path,
+    track: track,
+    release_status: release_status,
+    # Store listing text, screenshots and changelogs are managed in the Play
+    # Console (per tenant, per language) rather than from this repo.
+    skip_upload_metadata: true,
+    skip_upload_changelogs: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true
+  )
+end
+
+platform :android do
+  desc 'Upload the AAB to the internal testing track'
+  lane :beta do
+    upload_to_track(
+      track: ENV.fetch('PLAY_TRACK', 'internal'),
+      release_status: 'completed'
+    )
+  end
+
+  desc 'Upload the AAB to production (a draft unless PLAY_RELEASE_STATUS=completed)'
+  lane :release do
+    upload_to_track(
+      track: ENV.fetch('PLAY_TRACK', 'production'),
+      release_status: ENV.fetch('PLAY_RELEASE_STATUS', 'draft')
+    )
+  end
+end

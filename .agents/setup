@@ -77,6 +77,77 @@ if [ ${#missing_packages[@]} -gt 0 ]; then
 fi
 step_done
 
+# ------------------------------------------------------------- android toolchain --
+step "Android toolchain (JDK 17 + SDK platform 36)"
+# apps/android is framework-only but still needs a JDK, the Android SDK, and
+# build-tools to run `npm run android:test|build|apk|bundle -w android`.
+# The Android build targets Java 17, so the *version* matters, not just the
+# presence of `javac`: a runner with JDK 11 on PATH would otherwise skip the
+# install and fail the Gradle build.
+jdk_major="$(javac -version 2>/dev/null | sed -E 's/^javac ([0-9]+).*/\1/')"
+case "$jdk_major" in
+	'' | *[!0-9]*) jdk_major=0 ;;
+esac
+if [ "$jdk_major" -lt 17 ]; then
+	sudo apt-get update -qq
+	sudo apt-get install -y -qq openjdk-17-jdk-headless
+fi
+
+# Gradle prefers JAVA_HOME over PATH, so point it — and the non-interactive
+# login shells the orb uses — at the JDK that is actually installed.
+jdk_bin="$(command -v javac || true)"
+jdk_home=""
+if [ -n "$jdk_bin" ]; then
+	jdk_home="$(dirname "$(dirname "$(readlink -f "$jdk_bin" || true)")")"
+fi
+if [ -z "$jdk_home" ] || [ ! -x "$jdk_home/bin/javac" ]; then
+	printf 'No JDK 17+ found after installing openjdk-17-jdk-headless\n' >&2
+	exit 1
+fi
+export JAVA_HOME="$jdk_home"
+export PATH="$JAVA_HOME/bin:$PATH"
+printf '    %s\n' "$(javac -version 2>&1)"
+if ! grep -q 'JAVA_HOME' "$HOME/.bash_profile" 2>/dev/null; then
+	{
+		printf '\n# JDK for apps/android (added by .agents/setup)\n'
+		printf 'export JAVA_HOME="%s"\n' "$jdk_home"
+		printf 'export PATH="$JAVA_HOME/bin:$PATH"\n'
+	} >>"$HOME/.bash_profile"
+fi
+
+android_sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/android-sdk}}"
+if [ ! -x "$android_sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
+	android_tools_version='15859902'
+	android_tools_archive="$(mktemp)"
+	curl -fsSL -o "$android_tools_archive" \
+		"https://dl.google.com/android/repository/commandlinetools-linux-${android_tools_version}_latest.zip"
+	mkdir -p "$android_sdk/cmdline-tools"
+	rm -rf "$android_sdk/cmdline-tools/latest"
+	unzip -q "$android_tools_archive" -d "$android_sdk/cmdline-tools"
+	mv "$android_sdk/cmdline-tools/cmdline-tools" "$android_sdk/cmdline-tools/latest"
+	rm -f "$android_tools_archive"
+fi
+
+export ANDROID_SDK_ROOT="$android_sdk"
+export ANDROID_HOME="$android_sdk"
+export PATH="$android_sdk/cmdline-tools/latest/bin:$android_sdk/platform-tools:$PATH"
+if ! grep -q 'ANDROID_SDK_ROOT' "$HOME/.bash_profile" 2>/dev/null; then
+	{
+		printf '\n# Android toolchain for apps/android (added by .agents/setup)\n'
+		printf 'export ANDROID_SDK_ROOT="%s"\n' "$android_sdk"
+		printf 'export ANDROID_HOME="$ANDROID_SDK_ROOT"\n'
+		printf 'export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"\n'
+	} >>"$HOME/.bash_profile"
+fi
+
+# Licenses must be accepted before any package can be installed.
+yes | sdkmanager --licenses >/dev/null 2>&1 || true
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" >/dev/null
+printf '    %s\n' "$(sdkmanager --list_installed 2>/dev/null |
+	grep -E 'platforms;android-36|build-tools;36\.0\.0|platform-tools' |
+	tr -s ' ' | cut -d'|' -f1 | tr '\n' ' ')"
+step_done
+
 # --------------------------------------------------------------- dependencies --
 step "Workspace dependencies (npm install)"
 export PUPPETEER_SKIP_DOWNLOAD=true
@@ -170,6 +241,7 @@ if ! grep -qF "$marker" "$amp_agents_file" 2>/dev/null; then
 
 - Toolchain: Volta-managed Node 22.18.0 and npm 10.9.0 (repository pins).
 - Preinstalled: workspace dependencies, control-plane SQLite (`packages/database/db/data.db`), Playwright Chromium, and a turbo build cache.
+- Android toolchain: JDK 17 + Android SDK platform 36 / build-tools 36 at `$ANDROID_SDK_ROOT`, so `npm run android:test|build|apk|bundle -w android` work. `apps/ios` tasks are opt-in (`npm run ios:* -w ios`) and need macOS.
 - Seeded operator account: username `kody`, password `KodyLovesYou!2026`.
 - Dev services: `amp orb services ensure` starts app (:3001), admin (:3005), tenant-api (:3007), tenant-api-ksa (:3009); app and admin have portal links and share the operator session, so signing in through one signs you in to the other.
 - Database: `npm run db:migrate:deploy`, `npm run db:seed` (idempotent), `npm run db:reset` (destructive).

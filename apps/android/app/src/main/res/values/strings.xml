@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant Android app — English (source language). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+	<string name="app_loading">Loading…</string>
+	<string name="app_retry">Try again</string>
+
+	<string name="connect_title">Connect to your site</string>
+	<string name="connect_subtitle">Enter your site address to load its branding.</string>
+	<string name="connect_field_label">Site address</string>
+	<string name="connect_placeholder">acme or acme.example.com</string>
+	<string name="connect_action">Connect</string>
+	<string name="connect_error">We couldn\'t find that site. Check the address and try again.</string>
+
+	<string name="announcement_learn_more">Learn more</string>
+
+	<string name="login_title">Sign in</string>
+	<string name="login_subtitle">Enter your phone number. We\'ll send a verification code.</string>
+	<string name="login_phone">Phone number</string>
+	<string name="login_phone_placeholder" tools:ignore="TypographyDashes">+1 (555) 000-0000</string>
+	<string name="login_action">Send code</string>
+	<string name="login_invalid_phone">Enter a valid phone number.</string>
+	<string name="login_network_error">Network error. Please try again.</string>
+
+	<string name="verify_title">Enter your code</string>
+	<string name="verify_subtitle">We sent a 6-digit code to %1$s.</string>
+	<string name="verify_code">Verification code</string>
+	<string name="verify_action">Verify</string>
+	<string name="verify_resend">Send a new code</string>
+	<string name="verify_change_number">Use a different number</string>
+
+	<string name="name_title">Your name</string>
+	<string name="name_subtitle">Tell us what to call you.</string>
+	<string name="name_field">Name</string>
+	<string name="name_placeholder">Jane Doe</string>
+	<string name="name_action">Continue</string>
+
+	<string name="profile_title">Your profile</string>
+	<string name="profile_subtitle">Update your basic details below.</string>
+	<string name="profile_name">Name</string>
+	<string name="profile_email">Email</string>
+	<string name="profile_phone">Phone number</string>
+	<string name="profile_phone_locked">Phone number cannot be changed at this time.</string>
+	<string name="profile_save">Save changes</string>
+	<string name="profile_saved">Profile updated successfully!</string>
+	<string name="profile_language">Language</string>
+	<string name="profile_language_system">System default</string>
+	<string name="profile_sign_out">Sign out</string>
+	<string name="profile_network_error">Network error. Please try again.</string>
+</resources>

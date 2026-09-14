@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant Android app — Français -->
+<resources>
+	<string name="app_loading">Chargement…</string>
+	<string name="app_retry">Réessayer</string>
+
+	<string name="connect_title">Connectez votre site</string>
+	<string name="connect_subtitle">Saisissez l\'adresse de votre site pour charger son identité visuelle.</string>
+	<string name="connect_field_label">Adresse du site</string>
+	<string name="connect_placeholder">acme ou acme.example.com</string>
+	<string name="connect_action">Connecter</string>
+	<string name="connect_error">Site introuvable. Vérifiez l\'adresse et réessayez.</string>
+
+	<string name="announcement_learn_more">En savoir plus</string>
+
+	<string name="login_title">Se connecter</string>
+	<string name="login_subtitle">Saisissez votre numéro de téléphone. Nous vous enverrons un code de vérification.</string>
+	<string name="login_phone">Numéro de téléphone</string>
+	<string name="login_phone_placeholder">+33 6 00 00 00 00</string>
+	<string name="login_action">Envoyer le code</string>
+	<string name="login_invalid_phone">Saisissez un numéro de téléphone valide.</string>
+	<string name="login_network_error">Erreur réseau. Veuillez réessayer.</string>
+
+	<string name="verify_title">Saisissez votre code</string>
+	<string name="verify_subtitle">Nous avons envoyé un code à 6 chiffres au %1$s.</string>
+	<string name="verify_code">Code de vérification</string>
+	<string name="verify_action">Vérifier</string>
+	<string name="verify_resend">Envoyer un nouveau code</string>
+	<string name="verify_change_number">Utiliser un autre numéro</string>
+
+	<string name="name_title">Votre nom</string>
+	<string name="name_subtitle">Dites-nous comment vous appeler.</string>
+	<string name="name_field">Nom</string>
+	<string name="name_placeholder">Marie Dupont</string>
+	<string name="name_action">Continuer</string>
+
+	<string name="profile_title">Votre profil</string>
+	<string name="profile_subtitle">Mettez à jour vos informations ci-dessous.</string>
+	<string name="profile_name">Nom</string>
+	<string name="profile_email">E-mail</string>
+	<string name="profile_phone">Numéro de téléphone</string>
+	<string name="profile_phone_locked">Le numéro de téléphone ne peut pas être modifié pour le moment.</string>
+	<string name="profile_save">Enregistrer</string>
+	<string name="profile_saved">Profil mis à jour avec succès !</string>
+	<string name="profile_language">Langue</string>
+	<string name="profile_language_system">Langue du système</string>
+	<string name="profile_sign_out">Se déconnecter</string>
+	<string name="profile_network_error">Erreur réseau. Veuillez réessayer.</string>
+</resources>
