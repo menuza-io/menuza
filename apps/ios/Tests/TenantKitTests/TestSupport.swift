@@ -15,11 +15,17 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 		let url: URL
 	}
 
+	/// Replies computed per request, for tests that must not depend on the order
+	/// in which concurrent callers reach the transport.
+	typealias Handler = @Sendable (URLRequest) -> (status: Int, body: Any)
+
 	private let lock = NSLock()
 	private var responses: [(status: Int, data: Data, delayMs: Int)]
+	private let handler: Handler?
 	private(set) var recorded: [Recorded] = []
 
 	init(responses: [(status: Int, body: Any)] = []) {
+		self.handler = nil
 		self.responses = responses.map { response in
 			let data = (try? JSONSerialization.data(withJSONObject: response.body)) ?? Data()
 			return (response.status, data, 0)
@@ -27,18 +33,32 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 	}
 
 	init(rawResponses: [(status: Int, data: Data)]) {
+		self.handler = nil
 		self.responses = rawResponses.map { ($0.status, $0.data, 0) }
+	}
+
+	init(handler: @escaping Handler) {
+		self.handler = handler
+		self.responses = []
 	}
 
 	/// Like `rawResponses`, but each reply can be delayed — used to pin down
 	/// interleavings such as a refresh that lands after a sign-out.
 	init(delayedResponses: [(status: Int, data: Data, delayMs: Int)]) {
+		self.handler = nil
 		self.responses = delayedResponses.map { ($0.status, $0.data, $0.delayMs) }
 	}
 
 	func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
 		lock.lock()
-		let response = responses.isEmpty ? (200, Data("{}".utf8), 0) : responses.removeFirst()
+		let response: (Int, Data, Int)
+		if let handler {
+			let reply = handler(request)
+			let data = (try? JSONSerialization.data(withJSONObject: reply.body)) ?? Data()
+			response = (reply.status, data, 0)
+		} else {
+			response = responses.isEmpty ? (200, Data("{}".utf8), 0) : responses.removeFirst()
+		}
 		lock.unlock()
 
 		if response.2 > 0 {
@@ -76,6 +96,25 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 extension StubTransport {
 	static func json(_ object: Any, status: Int = 200) -> (status: Int, body: Any) {
 		(status, object)
+	}
+}
+
+/// A tiny thread-safe counter for handler-based stubs.
+final class Counter: @unchecked Sendable {
+	private let lock = NSLock()
+	private var value = 0
+
+	func increment() -> Int {
+		lock.lock()
+		defer { lock.unlock() }
+		value += 1
+		return value
+	}
+
+	var count: Int {
+		lock.lock()
+		defer { lock.unlock() }
+		return value
 	}
 }
 

@@ -163,27 +163,39 @@ final class CustomerSessionTests: XCTestCase {
 	}
 
 	func testConcurrentUnauthorizedCallsShareOneRefresh() async throws {
-		let accessToken = makeAccessToken()
 		let refreshed = makeAccessToken(name: "Ada Lovelace")
 		let storage = InMemoryTokenStorage(
-			tokens: AuthTokens(accessToken: accessToken, refreshToken: "refresh-1")
+			tokens: AuthTokens(accessToken: makeAccessToken(), refreshToken: "refresh-1")
 		)
-		// Two 401s (one per caller), then a single refresh, then both retries.
-		let transport = StubTransport(rawResponses: [
-			(status: 401, data: Data(#"{"error":"Invalid or expired token"}"#.utf8)),
-			(status: 401, data: Data(#"{"error":"Invalid or expired token"}"#.utf8)),
-			(status: 200, data: Data(#"{"success":true,"accessToken":"\#(refreshed)","refreshToken":"refresh-2"}"#.utf8)),
-			(status: 200, data: Data(#"{"customer":{"id":"cust_1","name":"Ada Lovelace"}}"#.utf8)),
-			(status: 200, data: Data(#"{"customer":{"id":"cust_1","name":"Ada Lovelace"}}"#.utf8)),
-		])
+		let refreshCalls = Counter()
+		// Path-keyed replies so the assertions hold whatever order the two
+		// callers reach the transport in: profile requests fail until a refresh
+		// has happened, which must occur exactly once.
+		let transport = StubTransport(handler: { request in
+			switch request.url?.path {
+			case "/auth/refresh":
+				_ = refreshCalls.increment()
+				return (200, ["success": true, "accessToken": refreshed, "refreshToken": "refresh-2"])
+			case "/auth/me":
+				if refreshCalls.count == 0 {
+					return (401, ["error": "Invalid or expired token"])
+				}
+				return (200, ["customer": ["id": "cust_1", "name": "Ada Lovelace"]])
+			default:
+				return (404, ["error": "unexpected \(request.url?.path ?? "")"])
+			}
+		})
 		let session = makeSession(transport: transport, storage: storage)
 
 		async let first = session.profile()
 		async let second = session.profile()
 		_ = try await (first, second)
 
-		let refreshCalls = transport.recorded.filter { $0.url.path == "/auth/refresh" }
-		XCTAssertEqual(refreshCalls.count, 1, "refresh tokens rotate; parallel refreshes would revoke the session")
+		XCTAssertEqual(
+			refreshCalls.count,
+			1,
+			"refresh tokens rotate; parallel refreshes would revoke the session"
+		)
 		XCTAssertEqual(storage.load()?.refreshToken, "refresh-2")
 	}
 
