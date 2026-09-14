@@ -19,7 +19,13 @@
  *                                    [--no-api] [--out <path>]
  */
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -29,6 +35,13 @@ const ICON_DIR = join(
 	'Sources/TenantApp/Resources/Assets.xcassets/AppIcon.appiconset',
 )
 const ICON_PATH = join(ICON_DIR, 'AppIcon-1024.png')
+// Kept outside the asset catalog so it is never overwritten: every generation
+// starts by restoring it, so a tenant without an icon cannot inherit the
+// previous tenant's icon.
+const ICON_PLACEHOLDER = join(
+	APP_ROOT,
+	'scripts/assets/AppIcon-placeholder.png',
+)
 
 function parseArgs(argv) {
 	const args = { flags: new Set() }
@@ -164,7 +177,17 @@ function resizeIcon(source, destination) {
 	}
 }
 
+function resetIcon() {
+	if (!existsSync(ICON_PLACEHOLDER)) {
+		fail(`Missing placeholder icon at ${ICON_PLACEHOLDER}`)
+	}
+	mkdirSync(ICON_DIR, { recursive: true })
+	copyFileSync(ICON_PLACEHOLDER, ICON_PATH)
+}
+
 async function resolveIcon(config, organization, { iconSource, useIcon }) {
+	// Always start from the placeholder, then try to replace it.
+	resetIcon()
 	if (!useIcon) return { applied: false, reason: 'icon generation disabled' }
 
 	const source =
@@ -208,7 +231,6 @@ async function resolveIcon(config, organization, { iconSource, useIcon }) {
 		return { applied: false, reason: `icon source not found: ${localPath}` }
 	}
 
-	mkdirSync(ICON_DIR, { recursive: true })
 	const applied = resizeIcon(localPath, ICON_PATH)
 	return {
 		applied,

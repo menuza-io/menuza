@@ -10,6 +10,8 @@
 "connect.action" = "Verbinden";
 "connect.error" = "Diese Website wurde nicht gefunden. Prüfe die Adresse und versuche es erneut.";
 
+"announcement.learnMore" = "Mehr erfahren";
+
 "login.title" = "Anmelden";
 "login.subtitle" = "Gib deine Telefonnummer ein. Wir senden dir einen Bestätigungscode.";
 "login.phone" = "Telefonnummer";

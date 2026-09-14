@@ -70,7 +70,8 @@ cp apps/ios/tenants/acme.json apps/ios/tenants/<slug>.json
 ```
 
 Set `"release": true` when the tenant is ready for the release workflow; without
-it the config is build-only (used for dry runs and CI).
+it the config is build-only (used for dry runs and CI) and the workflow refuses
+to release it.
 
 The app icon is pulled from the tenant's published site icon automatically.
 Upload one in the App (site settings) first, otherwise the committed placeholder
@@ -97,9 +98,10 @@ What the workflow does:
 2. `xcodebuild` a **simulator** build of the app target (the only place the
    SwiftUI code is compiled, since Xcode is macOS-only).
 3. Per tenant: generate `Config/Generated/Tenant.xcconfig` + app icon, run
-   XcodeGen, then `fastlane ios beta|release` with the tenant's API key. Release
-   builds start from `Config/Release.xcconfig` (production hosts, TLS on) and
-   the tenant file is included last, so it wins over both defaults.
+   XcodeGen, write the App Store Connect key to the runner, then
+   `fastlane ios beta|release`. Release builds start from
+   `Config/Release.xcconfig` (production hosts, TLS on) and the tenant file is
+   included last, so it wins over both defaults.
 4. Upload the `.ipa` and dSYMs as workflow artifacts.
 
 Locally (needs macOS + Xcode 26 + `bundle install`):
@@ -140,6 +142,14 @@ the runner label or `DEVELOPER_DIR`.
 If a tenant refuses to enroll, the honest options are the single multi-tenant
 app or a PWA — not publishing their brand from the platform account, which risks
 the whole developer account.
+
+## Submission guard
+
+`fastlane ios release` uploads the binary but **refuses to submit for review**
+(`SUBMIT_FOR_REVIEW=1`) while the app has no in-app account deletion, which App
+Review requires for apps that create accounts (Guideline 5.1.1(v)). Submit
+manually in App Store Connect until the delete-account flow ships, then remove
+the guard in `fastlane/Fastfile`.
 
 ## Known gaps (deliberate)
 

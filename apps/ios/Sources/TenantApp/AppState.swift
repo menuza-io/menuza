@@ -69,6 +69,9 @@ final class AppState: ObservableObject {
 	private(set) var configuration: TenantConfiguration
 	private var client: TenantAPIClient
 	private var session: CustomerSession?
+	/// Bumped whenever the sign-in attempt is abandoned, so a late OTP response
+	/// cannot sign the customer in after they backed out.
+	private var authAttempt = 0
 	private let preferences: AppPreferences
 
 	init(
@@ -227,10 +230,17 @@ final class AppState: ObservableObject {
 
 	func verify(code: String) async {
 		guard let session, let phone = pendingPhone else { return }
+		authAttempt += 1
+		let attempt = authAttempt
 		isBusy = true
 		errorMessage = nil
+		defer {
+			if attempt == authAttempt { isBusy = false }
+		}
+
 		do {
 			let result = try await session.verify(phone: phone, code: code)
+			guard attempt == authAttempt else { return }
 			isSignedIn = true
 			if result.needsName == true {
 				needsName = true
@@ -238,11 +248,12 @@ final class AppState: ObservableObject {
 				await loadProfile()
 			}
 		} catch let error as APIError {
+			guard attempt == authAttempt else { return }
 			errorMessage = message(for: error)
 		} catch {
+			guard attempt == authAttempt else { return }
 			errorMessage = language.string("login.networkError")
 		}
-		isBusy = false
 	}
 
 	func resendCode() async {
@@ -251,8 +262,12 @@ final class AppState: ObservableObject {
 	}
 
 	func cancelVerification() {
+		// Abandon the attempt: an in-flight `verify` that lands later must not
+		// sign the customer in, and its error must not reappear.
+		authAttempt += 1
 		pendingPhone = nil
 		errorMessage = nil
+		isBusy = false
 	}
 
 	func completeName(_ name: String) async {
@@ -271,6 +286,7 @@ final class AppState: ObservableObject {
 	}
 
 	func signOut() async {
+		authAttempt += 1
 		await session?.signOut()
 		isSignedIn = false
 		profile = nil

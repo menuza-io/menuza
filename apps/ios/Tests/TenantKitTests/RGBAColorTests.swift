@@ -88,6 +88,17 @@ final class RGBAColorTests: XCTestCase {
 		XCTAssertNil(RGBAColor.from(cssValue: "hsl(0 100% 50% / half)"))
 	}
 
+	func testRejectsNonFiniteNumbers() {
+		XCTAssertNil(RGBAColor.from(cssValue: "rgb(nan 0 0)"))
+		XCTAssertNil(RGBAColor.from(cssValue: "rgb(0 inf 0)"))
+		XCTAssertNil(RGBAColor.from(cssValue: "oklch(nan 0.1 30)"))
+		XCTAssertNil(RGBAColor.from(cssValue: "oklch(0.5 nan 30)"))
+		XCTAssertNil(RGBAColor.from(cssValue: "oklch(0.5 0.1 nan)"))
+		XCTAssertNil(RGBAColor.from(cssValue: "rgb(255 0 0 / nan)"))
+		// A NaN that somehow reaches the initializer must not leak into rendering.
+		XCTAssertEqual(RGBAColor(red: .nan, green: 0, blue: 0).red, 0)
+	}
+
 	func testParsesNamedColors() {
 		assertColor(RGBAColor.from(cssValue: "white"), 1, 1, 1)
 		assertColor(RGBAColor.from(cssValue: "transparent"), 0, 0, 0, alpha: 0)

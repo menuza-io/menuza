@@ -138,6 +138,37 @@ final class SupportTests: XCTestCase {
 		XCTAssertFalse(configuration.isBoundToTenant)
 	}
 
+	func testRejectsCleartextNonLoopbackEndpoints() {
+		// A misconfigured release build (prod host + TLS off) must not use http.
+		let configuration = TenantConfiguration.from(infoDictionary: [
+			"EpicUseTLS": "NO",
+			"EpicAppBaseURL": "app.epic-startup.com",
+			"EpicTenantAPIUSBaseURL": "tenant-us.epic-startup.com",
+		])
+		XCTAssertEqual(configuration.appBaseURL.scheme, "http")
+		XCTAssertEqual(configuration.appBaseURL.host, "localhost")
+		XCTAssertEqual(configuration.tenantAPIBaseURLUS.host, "localhost")
+
+		// Loopback over http stays available for development.
+		let development = TenantConfiguration.from(infoDictionary: [
+			"EpicUseTLS": "NO",
+			"EpicAppBaseURL": "localhost:3001",
+			"EpicTenantAPIUSBaseURL": "127.0.0.1:3007",
+		])
+		XCTAssertEqual(development.appBaseURL.absoluteString, "http://localhost:3001")
+		XCTAssertEqual(development.tenantAPIBaseURLUS.absoluteString, "http://127.0.0.1:3007")
+
+		// An explicit http:// URL is rejected the same way.
+		let explicit = TenantConfiguration.from(infoDictionary: [
+			"EpicAppBaseURL": "http://app.epic-startup.com",
+		])
+		XCTAssertEqual(explicit.appBaseURL.host, "localhost")
+
+		XCTAssertTrue(TenantConfiguration.isTransportSafe(URL(string: "https://acme.epic-startup.com")!))
+		XCTAssertTrue(TenantConfiguration.isTransportSafe(URL(string: "http://127.0.0.1:3001")!))
+		XCTAssertFalse(TenantConfiguration.isTransportSafe(URL(string: "http://acme.epic-startup.com")!))
+	}
+
 	func testRegionSelectsTheMatchingTenantAPINode() {
 		let configuration = makeConfiguration(region: "us")
 		XCTAssertEqual(configuration.tenantAPIBaseURL.host, "tenant-us.epic-startup.com")

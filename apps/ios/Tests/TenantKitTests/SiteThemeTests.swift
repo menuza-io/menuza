@@ -38,6 +38,13 @@ final class SiteThemeTokensTests: XCTestCase {
 		XCTAssertEqual(tokens.radiusRem ?? 0, 0.75, accuracy: 0.0001)
 	}
 
+	func testRejectsInvalidRadiusValues() {
+		XCTAssertNil(SiteThemeTokens.parse(css: "html { --radius: -5rem; }").radiusRem)
+		XCTAssertNil(SiteThemeTokens.parse(css: "html { --radius: nanrem; }").radiusRem)
+		XCTAssertNil(SiteThemeTokens.parse(css: "html { --radius: -8px; }").radiusRem)
+		XCTAssertEqual(SiteThemeTokens.parse(css: "html { --radius: 0rem; }").radiusRem, 0)
+	}
+
 	func testIgnoresUnknownColorSpaces() {
 		let tokens = SiteThemeTokens.parse(css: "html { --primary: color(display-p3 1 0 0); --ring: #ff0000; }")
 		XCTAssertNil(tokens.light["primary"])

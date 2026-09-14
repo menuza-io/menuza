@@ -66,6 +66,28 @@ public struct TenantConfiguration: Equatable, Sendable {
 		brandDomain: "epic-startup.test"
 	)
 
+	/// HTTPS anywhere, HTTP only on loopback (simulator and device development).
+	public static func isTransportSafe(_ url: URL) -> Bool {
+		switch url.scheme?.lowercased() {
+		case "https": return true
+		case "http": return isLoopbackHost(url.host)
+		default: return false
+		}
+	}
+
+	public static func isLoopbackHost(_ host: String?) -> Bool {
+		guard let host = host?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+			!host.isEmpty
+		else {
+			return false
+		}
+		return host == "localhost"
+			|| host == "::1"
+			|| host == "[::1]"
+			|| host.hasSuffix(".localhost")
+			|| host.hasPrefix("127.")
+	}
+
 	/// Reads `YES`/`NO` strings (xcconfig substitution) as well as real booleans.
 	private static func boolean(_ value: Any?) -> Bool? {
 		switch value {
@@ -90,8 +112,16 @@ public struct TenantConfiguration: Equatable, Sendable {
 			guard let raw = info[key] as? String else { return fallbackURL }
 			let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
 			guard !trimmed.isEmpty else { return fallbackURL }
-			if trimmed.contains("://") { return URL(string: trimmed) }
-			return URL(string: "\(scheme)://\(trimmed)")
+			let candidate = trimmed.contains("://")
+				? URL(string: trimmed)
+				: URL(string: "\(scheme)://\(trimmed)")
+			guard let candidate, isTransportSafe(candidate) else {
+				// Refuse cleartext to a non-loopback host: a misconfigured build
+				// fails against the dev defaults instead of sending customer
+				// tokens over plain HTTP.
+				return fallbackURL
+			}
+			return candidate
 		}
 
 		func string(_ key: String) -> String? {

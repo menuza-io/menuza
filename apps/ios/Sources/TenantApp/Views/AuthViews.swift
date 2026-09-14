@@ -120,6 +120,10 @@ struct VerifyView: View {
 						.buttonStyle(.plain)
 						.font(.footnote.weight(.medium))
 						.foregroundStyle(palette.primary)
+						// One OTP request at a time: resending or leaving mid-verify
+						// would race the in-flight attempt.
+						.disabled(state.isBusy)
+						.opacity(state.isBusy ? 0.6 : 1)
 					}
 				}
 			}

@@ -35,27 +35,36 @@ if [ ! -d "${SCHEME}.xcodeproj" ] || [ -n "${REGENERATE:-}" ]; then
 	fi
 fi
 
-# Find a simulator to use: the requested one, else the first available iPhone.
-device="${1:-${SIM_DEVICE:-iPhone 17}}"
-available_iphone() {
+# Simulators are addressed by UDID: device names repeat across runtimes, and
+# `simctl` refuses an ambiguous name.
+devices() {
 	xcrun simctl list devices available |
-		sed -n 's/^ *\(iPhone[^(]*[^ (]\) ([0-9A-F-]\{36\}) (.*/\1/p' |
-		head -1
+		sed -n 's/^ *\(.*\) (\([0-9A-F-]\{36\}\)) (.*/\1|\2/p'
 }
 
-if ! xcrun simctl list devices available | grep -q "    ${device} ("; then
-	fallback="$(available_iphone)"
+udid_for() {
+	devices | awk -F'|' -v name="$1" '$1 == name { print $2; exit }'
+}
+
+# The requested device, else the first available iPhone.
+requested="${1:-${SIM_DEVICE:-iPhone 17}}"
+udid="$(udid_for "$requested")"
+device="$requested"
+
+if [ -z "$udid" ]; then
+	fallback="$(devices | awk -F'|' '$1 ~ /^iPhone/ { print $1 "|" $2; exit }')"
 	[ -n "$fallback" ] || die "No iOS Simulator devices available. Install an iOS runtime in Xcode → Settings → Components."
-	log "Simulator '${device}' not available; using '${fallback}'"
-	device="$fallback"
+	device="${fallback%%|*}"
+	udid="${fallback##*|}"
+	log "Simulator '${requested}' not available; using '${device}'"
 fi
 
-log "Building ${SCHEME} (${CONFIG}) for ${device}"
+log "Building ${SCHEME} (${CONFIG}) for ${device} (${udid})"
 xcodebuild \
 	-project "${SCHEME}.xcodeproj" \
 	-scheme "$SCHEME" \
 	-configuration "$CONFIG" \
-	-destination "platform=iOS Simulator,name=${device}" \
+	-destination "platform=iOS Simulator,id=${udid}" \
 	-derivedDataPath "$DERIVED" \
 	build
 
@@ -65,15 +74,15 @@ bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${APP}/Info
 display_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "${APP}/Info.plist" 2>/dev/null || echo "$SCHEME")"
 
 log "Booting ${device}"
-xcrun simctl bootstatus "$device" -b >/dev/null
+xcrun simctl bootstatus "$udid" -b >/dev/null
 open -a Simulator
 
 log "Installing ${display_name} (${bundle_id})"
-xcrun simctl install "$device" "$APP"
+xcrun simctl install "$udid" "$APP"
 
 log "Launching"
-xcrun simctl launch "$device" "$bundle_id"
+xcrun simctl launch "$udid" "$bundle_id"
 
 printf '\n✓ %s is running on %s\n' "$display_name" "$device"
-printf '  Logs:     xcrun simctl spawn %s log stream --level debug --predicate %s\n' "$device" "'process == \"${SCHEME}\"'"
-printf '  Terminate: xcrun simctl terminate %s %s\n' "$device" "$bundle_id"
+printf '  Logs:     xcrun simctl spawn %s log stream --level debug --predicate %s\n' "$udid" "'process == \"${SCHEME}\"'"
+printf '  Terminate: xcrun simctl terminate %s %s\n' "$udid" "$bundle_id"

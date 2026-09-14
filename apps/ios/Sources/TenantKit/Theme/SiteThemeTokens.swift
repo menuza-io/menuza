@@ -161,14 +161,17 @@ public struct SiteThemeTokens: Equatable, Sendable {
 
 	static func remValue(_ raw: String) -> Double? {
 		let value = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+		let rem: Double?
 		if value.hasSuffix("rem") {
-			return Double(value.dropLast(3))
+			rem = Double(value.dropLast(3))
+		} else if value.hasSuffix("px") {
+			rem = Double(value.dropLast(2)).map { $0 / 16 }
+		} else {
+			rem = Double(value)
 		}
-		if value.hasSuffix("px") {
-			guard let pixels = Double(value.dropLast(2)) else { return nil }
-			return pixels / 16
-		}
-		return Double(value)
+		// A negative or non-finite radius is not a valid theme value.
+		guard let rem, rem.isFinite, rem >= 0 else { return nil }
+		return rem
 	}
 }
 

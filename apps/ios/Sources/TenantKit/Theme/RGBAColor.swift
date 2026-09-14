@@ -11,10 +11,15 @@ public struct RGBAColor: Equatable, Sendable, Hashable {
 	public let alpha: Double
 
 	public init(red: Double, green: Double, blue: Double, alpha: Double = 1) {
-		self.red = min(max(red, 0), 1)
-		self.green = min(max(green, 0), 1)
-		self.blue = min(max(blue, 0), 1)
-		self.alpha = min(max(alpha, 0), 1)
+		// `min`/`max` let NaN through, so sanitise before clamping.
+		func component(_ value: Double) -> Double {
+			guard value.isFinite else { return 0 }
+			return min(max(value, 0), 1)
+		}
+		self.red = component(red)
+		self.green = component(green)
+		self.blue = component(blue)
+		self.alpha = component(alpha)
 	}
 
 	public static let black = RGBAColor(red: 0, green: 0, blue: 0)
@@ -158,23 +163,28 @@ public struct RGBAColor: Equatable, Sendable, Hashable {
 	}
 
 	private static func componentValue(_ text: String, scale: Double) -> Double? {
+		let value: Double?
 		if text.hasSuffix("%") {
-			guard let number = Double(text.dropLast()) else { return nil }
-			return number / 100
+			value = Double(text.dropLast()).map { $0 / 100 }
+		} else {
+			value = Double(text).map { $0 / scale }
 		}
-		guard let number = Double(text) else { return nil }
-		return number / scale
+		guard let value, value.isFinite else { return nil }
+		return value
 	}
 
 	/// `nil` when an explicit alpha is present but unparsable, so the caller can
 	/// keep its fallback token instead of silently rendering an opaque color.
 	private static func alphaValue(_ text: String?) -> Double? {
 		guard let text, !text.isEmpty else { return 1 }
+		let value: Double?
 		if text.hasSuffix("%") {
-			guard let percentage = Double(text.dropLast()) else { return nil }
-			return percentage / 100
+			value = Double(text.dropLast()).map { $0 / 100 }
+		} else {
+			value = Double(text)
 		}
-		return Double(text)
+		guard let value, value.isFinite else { return nil }
+		return value
 	}
 
 	private static func fromFunctional(_ value: String, prefix: String) -> RGBAColor? {
@@ -249,13 +259,13 @@ public struct RGBAColor: Equatable, Sendable, Hashable {
 			return nil
 		}
 		guard let lightness = componentValue(components[0], scale: 1) else { return nil }
-		guard let chroma = Double(components[1]) else { return nil }
+		guard let chroma = Double(components[1]), chroma.isFinite else { return nil }
 		guard let alphaValue = alphaValue(alpha) else { return nil }
 		let hueText = components[2].replacingOccurrences(of: "deg", with: "")
 		let hue: Double
 		if hueText == "none" {
 			hue = 0
-		} else if let parsedHue = Double(hueText) {
+		} else if let parsedHue = Double(hueText), parsedHue.isFinite {
 			hue = parsedHue
 		} else {
 			// An unparsable hue would silently become red; let the caller fall back.
@@ -275,8 +285,8 @@ public struct RGBAColor: Equatable, Sendable, Hashable {
 		}
 		guard
 			let lightness = componentValue(components[0], scale: 1),
-			let a = Double(components[1]),
-			let b = Double(components[2]),
+			let a = Double(components[1]), a.isFinite,
+			let b = Double(components[2]), b.isFinite,
 			let alphaValue = alphaValue(alpha)
 		else {
 			return nil

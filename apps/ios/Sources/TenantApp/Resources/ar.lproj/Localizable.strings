@@ -10,6 +10,8 @@
 "connect.action" = "اتصال";
 "connect.error" = "لم نتمكن من العثور على هذا الموقع. تحقق من العنوان وحاول مرة أخرى.";
 
+"announcement.learnMore" = "اعرف المزيد";
+
 "login.title" = "تسجيل الدخول";
 "login.subtitle" = "أدخل رقم هاتفك. سنرسل رمز تحقق.";
 "login.phone" = "رقم الهاتف";

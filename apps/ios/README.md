@@ -64,11 +64,15 @@ Two deliberate choices keep CI green:
 un-branded app where customers connect their own site:
 
 ```bash
-npm run ios:tenants -w ios                        # list tenant configs
+npm run ios:tenants -w ios                        # list tenant configs (+ their GitHub environment)
 npm run ios:tenant -w ios -- --tenant acme        # write Config/Generated + app icon
 gh workflow run ios.yml -f tenant=acme -f lane=beta     # TestFlight
 gh workflow run ios.yml -f tenant=acme -f lane=release  # App Store upload
 ```
+
+The release workflow only ships tenants whose config sets `"release": true`
+(otherwise it fails fast, so a build-only fixture can never be uploaded), and it
+reads App Store Connect credentials from each tenant's GitHub environment.
 
 - Per-tenant builds are described by `tenants/<slug>.json` (bundle id, app name,
   site binding, version) — no secrets in the repo; App Store Connect keys live

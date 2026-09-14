@@ -10,6 +10,8 @@
 "connect.action" = "Connecter";
 "connect.error" = "Site introuvable. Vérifiez l'adresse et réessayez.";
 
+"announcement.learnMore" = "En savoir plus";
+
 "login.title" = "Se connecter";
 "login.subtitle" = "Saisissez votre numéro de téléphone. Nous vous enverrons un code de vérification.";
 "login.phone" = "Numéro de téléphone";

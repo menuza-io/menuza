@@ -12,7 +12,8 @@ public actor CustomerSession {
 	/// One in-flight refresh shared by every caller: tenant-api rotates refresh
 	/// tokens and revokes the family when a token is replayed, so two parallel
 	/// refreshes would sign the customer out.
-	private var refreshTask: Task<AuthTokens, Error>?
+	private var refreshTask: (id: Int, task: Task<AuthTokens, Error>)?
+	private var nextRefreshID = 0
 	/// Bumped on sign-out so a refresh that was already in flight cannot write
 	/// rotated tokens back into a session the customer just ended.
 	private var sessionGeneration = 0
@@ -62,7 +63,7 @@ public actor CustomerSession {
 
 	public func signOut() async {
 		sessionGeneration += 1
-		refreshTask?.cancel()
+		refreshTask?.task.cancel()
 		refreshTask = nil
 
 		let refreshToken = currentTokens?.refreshToken
@@ -123,9 +124,11 @@ public actor CustomerSession {
 	@discardableResult
 	public func refresh() async throws -> AuthTokens {
 		if let refreshTask {
-			return try await refreshTask.value
+			return try await refreshTask.task.value
 		}
 
+		nextRefreshID += 1
+		let refreshID = nextRefreshID
 		let generation = sessionGeneration
 		let task = Task<AuthTokens, Error> { [client] in
 			try await CustomerSession.performRefresh(
@@ -134,16 +137,22 @@ public actor CustomerSession {
 				generation: generation
 			)
 		}
-		refreshTask = task
+		refreshTask = (id: refreshID, task: task)
 
 		do {
 			let tokens = try await task.value
-			refreshTask = nil
+			clearRefreshTask(id: refreshID)
 			return tokens
 		} catch {
-			refreshTask = nil
+			clearRefreshTask(id: refreshID)
 			throw error
 		}
+	}
+
+	/// Only clears the slot when it still holds this task: sign-out may already
+	/// have installed a newer refresh, which must not be discarded.
+	private func clearRefreshTask(id: Int) {
+		if refreshTask?.id == id { refreshTask = nil }
 	}
 
 	private static func performRefresh(

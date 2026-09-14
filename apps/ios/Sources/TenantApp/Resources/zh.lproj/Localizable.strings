@@ -10,6 +10,8 @@
 "connect.action" = "连接";
 "connect.error" = "未找到该网站。请检查地址后重试。";
 
+"announcement.learnMore" = "了解更多";
+
 "login.title" = "登录";
 "login.subtitle" = "输入你的手机号码，我们会发送验证码。";
 "login.phone" = "手机号码";

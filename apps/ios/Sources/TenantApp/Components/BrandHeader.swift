@@ -43,6 +43,7 @@ struct BrandHeader: View {
 /// Mirrors the Sites announcement banner (type → colors).
 struct AnnouncementBanner: View {
 	@Environment(\.themePalette) private var palette
+	@Environment(\.appLanguage) private var language
 
 	let announcement: PublicSiteAnnouncement
 
@@ -70,7 +71,10 @@ struct AnnouncementBanner: View {
 				.multilineTextAlignment(.center)
 
 			if let linkUrl = announcement.linkUrl, let url = URL(string: linkUrl) {
-				Link(announcement.linkLabel ?? "Learn more", destination: url)
+				Link(
+					announcement.linkLabel ?? language.string("announcement.learnMore"),
+					destination: url
+				)
 					.font(.footnote.weight(.semibold))
 					.underline()
 			}

@@ -121,20 +121,6 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🔑 Write App Store Connect API key
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
-          TENANT_SLUG: ${{ matrix.tenant.slug }}
-        run: |
-          if [ -z "$ASC_KEY_CONTENT" ]; then
-            echo "::error::Missing ASC_KEY_CONTENT in the tenant-$TENANT_SLUG environment."
-            exit 1
-          fi
-          key_path="$RUNNER_TEMP/asc_${TENANT_SLUG}.p8"
-          printf '%s' "$ASC_KEY_CONTENT" | base64 --decode > "$key_path"
-          chmod 600 "$key_path"
-          echo "ASC_KEY_PATH=$key_path" >> "$GITHUB_ENV"
-
       - name: 🍺 Install tooling
         run: |
           brew install xcodegen
@@ -158,6 +144,20 @@ jobs:
             echo "APPLE_TEAM_ID=$team_id"
           } >> "$GITHUB_ENV"
           xcodegen generate
+
+      - name: 🔑 Write App Store Connect API key
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+        run: |
+          if [ -z "$ASC_KEY_CONTENT" ]; then
+            echo "::error::Missing ASC_KEY_CONTENT in the tenant-$TENANT_SLUG environment."
+            exit 1
+          fi
+          key_path="$RUNNER_TEMP/asc_${TENANT_SLUG}.p8"
+          printf '%s' "$ASC_KEY_CONTENT" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          echo "ASC_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
       - name: 🚀 Fastlane release lane
         working-directory: apps/ios

@@ -10,6 +10,8 @@
 "connect.action" = "Connect";
 "connect.error" = "We couldn't find that site. Check the address and try again.";
 
+"announcement.learnMore" = "Learn more";
+
 "login.title" = "Sign in";
 "login.subtitle" = "Enter your phone number. We'll send a verification code.";
 "login.phone" = "Phone number";

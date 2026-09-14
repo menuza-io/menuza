@@ -10,6 +10,8 @@
 "connect.action" = "Conectar";
 "connect.error" = "No encontramos ese sitio. Comprueba la dirección e inténtalo de nuevo.";
 
+"announcement.learnMore" = "Más información";
+
 "login.title" = "Iniciar sesión";
 "login.subtitle" = "Introduce tu número de teléfono. Te enviaremos un código de verificación.";
 "login.phone" = "Número de teléfono";

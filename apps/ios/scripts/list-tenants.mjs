@@ -33,10 +33,13 @@ const tenants = readdirSync(TENANTS_DIR)
 	.filter((file) => file.endsWith('.json'))
 	.map((file) => {
 		const config = JSON.parse(readFileSync(join(TENANTS_DIR, file), 'utf8'))
+		// The filename is a valid slug source too, so the environment fallback
+		// must use the resolved slug rather than the raw config value.
+		const slug = config.slug ?? file.replace(/\.json$/, '')
 		return {
-			slug: config.slug ?? file.replace(/\.json$/, ''),
+			slug,
 			displayName: config.displayName ?? '',
-			environment: config.environment ?? `tenant-${config.slug}`,
+			environment: config.environment ?? `tenant-${slug}`,
 			release: config.release === true,
 		}
 	})

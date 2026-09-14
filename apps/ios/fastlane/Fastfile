@@ -96,14 +96,25 @@ platform :ios do
       }
     )
 
+    # App Review requires in-app account deletion (Guideline 5.1.1(v)) and the
+    # app has no delete-account flow yet (see docs/app-store-release.md). Remove
+    # this guard once the tenant-api endpoint and the Profile screen action ship.
+    if ENV['SUBMIT_FOR_REVIEW'] == '1'
+      UI.user_error!(
+        'Refusing to submit for review: the app has no in-app account deletion ' +
+          'yet, which App Review requires for apps that create accounts. ' +
+          'Upload without SUBMIT_FOR_REVIEW=1 and submit manually once the ' +
+          'delete-account flow exists.'
+      )
+    end
+
     # Binary-only by default: store metadata, screenshots, and the review
-    # submission stay deliberate (see docs/app-store-release.md). Set
-    # SUBMIT_FOR_REVIEW=1 to submit automatically once metadata is in place.
+    # submission stay deliberate (see docs/app-store-release.md).
     upload_to_app_store(
       api_key: api_key,
       skip_metadata: true,
       skip_screenshots: true,
-      submit_for_review: ENV['SUBMIT_FOR_REVIEW'] == '1',
+      submit_for_review: false,
       automatic_release: false,
       force: true
     )
