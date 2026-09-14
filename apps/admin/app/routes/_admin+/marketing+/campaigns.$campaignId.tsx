@@ -1,12 +1,15 @@
 import { i18n } from '@lingui/core'
 import { t } from '@lingui/macro'
-import { requireUserWithRole } from '@repo/auth'
+import { requireUserWithPermission, SYSTEM_PERMISSIONS } from '@repo/auth'
 import { CampaignDetailView } from '@repo/marketing'
 import { getPlatformCampaign } from '@repo/marketing/server/platform-campaigns'
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.READ_PLATFORM_CAMPAIGN_ANY,
+	)
 
 	const campaignId = params.campaignId || ''
 	const campaign = await getPlatformCampaign(campaignId)

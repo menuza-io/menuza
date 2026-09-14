@@ -1,7 +1,11 @@
 import { i18n } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import {
+	requireUserWithPermission,
+	SYSTEM_PERMISSIONS,
+	userHasPermission,
+} from '@repo/auth'
 import {
 	deletePlatformJourney,
 	duplicatePlatformJourney,
@@ -50,13 +54,25 @@ const JOURNEY_STATUS_LABELS: Record<
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
-	const journeys = await listPlatformJourneys()
-	return { journeys, error: null }
+	const userId = await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.READ_PLATFORM_AUTOMATION_ANY,
+	)
+	const [journeys, canManage] = await Promise.all([
+		listPlatformJourneys(),
+		userHasPermission(
+			userId,
+			SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+		),
+	])
+	return { journeys, canManage, error: null }
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+	)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	const journeyId = String(formData.get('journeyId') || '')
@@ -85,7 +101,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function AdminAutomationsIndexRoute() {
 	const { _ } = useLingui()
-	const { journeys, error } = useLoaderData<typeof loader>()
+	const { journeys, canManage, error } = useLoaderData<typeof loader>()
 	const fetcher = useFetcher()
 	const [searchQuery, setSearchQuery] = useState('')
 
@@ -121,13 +137,15 @@ export default function AdminAutomationsIndexRoute() {
 						<Trans>Event-driven workflows for tenant operator lifecycle.</Trans>
 					</p>
 				</div>
-				<Button
-					render={<Link to="/marketing/automations/new" />}
-					className="gap-2"
-				>
-					<Icon name="plus" className="size-4" />
-					<Trans>New Automation</Trans>
-				</Button>
+				{canManage ? (
+					<Button
+						render={<Link to="/marketing/automations/new" />}
+						className="gap-2"
+					>
+						<Icon name="plus" className="size-4" />
+						<Trans>New Automation</Trans>
+					</Button>
+				) : null}
 			</div>
 
 			<Input
@@ -148,114 +166,140 @@ export default function AdminAutomationsIndexRoute() {
 					title={_(msg`No automations found`)}
 					description={_(msg`Create your first platform automation workflow.`)}
 					icons={['route', 'mail']}
-					action={{
-						label: _(msg`Create Automation`),
-						href: '/marketing/automations/new',
-					}}
+					action={
+						canManage
+							? {
+									label: _(msg`Create Automation`),
+									href: '/marketing/automations/new',
+								}
+							: undefined
+					}
 				/>
 			) : (
 				<ItemGroup>
-					{filtered.map((journey) => (
-						<Item key={journey.id} variant="outline" size="sm">
-							<ItemContent>
-								<Link
-									to={`/marketing/automations/${journey.id}`}
-									className="min-w-0"
-								>
-									<ItemTitle>{journey.name}</ItemTitle>
-									<ItemDescription>
-										{getTriggerLabel(journey.triggerType)}
-										{' · '}
-										{journey.stepCount} <Trans>steps</Trans>
-										{' · '}
-										{journey.runsCount} <Trans>runs</Trans>
-									</ItemDescription>
-								</Link>
-							</ItemContent>
-							<ItemActions>
-								<Badge variant="outline" className="text-[10px] capitalize">
-									{_(
-										JOURNEY_STATUS_LABELS[
-											journey.status as keyof typeof JOURNEY_STATUS_LABELS
-										],
-									)}
-								</Badge>
-								<DropdownMenu>
-									<DropdownMenuTrigger
-										render={
-											<Button
-												variant="ghost"
-												size="icon-xs"
-												aria-label={_(msg`Actions`)}
-											/>
-										}
-									>
-										<Icon name="ellipsis" className="size-4" />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem
-											render={
-												<Link to={`/marketing/automations/${journey.id}`} />
-											}
+					{filtered.map((journey) => {
+						const journeySummary = (
+							<>
+								<ItemTitle>{journey.name}</ItemTitle>
+								<ItemDescription>
+									{getTriggerLabel(journey.triggerType)}
+									{' · '}
+									{journey.stepCount} <Trans>steps</Trans>
+									{' · '}
+									{journey.runsCount} <Trans>runs</Trans>
+								</ItemDescription>
+							</>
+						)
+
+						return (
+							<Item key={journey.id} variant="outline" size="sm">
+								<ItemContent>
+									{canManage ? (
+										<Link
+											to={`/marketing/automations/${journey.id}`}
+											className="min-w-0"
 										>
-											<Trans>Edit</Trans>
-										</DropdownMenuItem>
-										{journey.status !== 'active' && (
-											<fetcher.Form method="post">
-												<input type="hidden" name="intent" value="publish" />
-												<input
-													type="hidden"
-													name="journeyId"
-													value={journey.id}
-												/>
-												<DropdownMenuItem render={<button type="submit" />}>
-													<Trans>Publish</Trans>
-												</DropdownMenuItem>
-											</fetcher.Form>
+											{journeySummary}
+										</Link>
+									) : (
+										<div className="min-w-0">{journeySummary}</div>
+									)}
+								</ItemContent>
+								<ItemActions>
+									<Badge variant="outline" className="text-[10px] capitalize">
+										{_(
+											JOURNEY_STATUS_LABELS[
+												journey.status as keyof typeof JOURNEY_STATUS_LABELS
+											],
 										)}
-										{journey.status === 'active' && (
-											<fetcher.Form method="post">
-												<input type="hidden" name="intent" value="pause" />
-												<input
-													type="hidden"
-													name="journeyId"
-													value={journey.id}
-												/>
-												<DropdownMenuItem render={<button type="submit" />}>
-													<Trans>Pause</Trans>
-												</DropdownMenuItem>
-											</fetcher.Form>
-										)}
-										<fetcher.Form method="post">
-											<input type="hidden" name="intent" value="duplicate" />
-											<input
-												type="hidden"
-												name="journeyId"
-												value={journey.id}
-											/>
-											<DropdownMenuItem render={<button type="submit" />}>
-												<Trans>Duplicate</Trans>
-											</DropdownMenuItem>
-										</fetcher.Form>
-										<fetcher.Form method="post">
-											<input type="hidden" name="intent" value="delete" />
-											<input
-												type="hidden"
-												name="journeyId"
-												value={journey.id}
-											/>
-											<DropdownMenuItem
-												className="text-destructive"
-												render={<button type="submit" />}
+									</Badge>
+									{canManage ? (
+										<DropdownMenu>
+											<DropdownMenuTrigger
+												render={
+													<Button
+														variant="ghost"
+														size="icon-xs"
+														aria-label={_(msg`Actions`)}
+													/>
+												}
 											>
-												<Trans>Delete</Trans>
-											</DropdownMenuItem>
-										</fetcher.Form>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</ItemActions>
-						</Item>
-					))}
+												<Icon name="ellipsis" className="size-4" />
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuItem
+													render={
+														<Link to={`/marketing/automations/${journey.id}`} />
+													}
+												>
+													<Trans>Edit</Trans>
+												</DropdownMenuItem>
+												{journey.status !== 'active' && (
+													<fetcher.Form method="post">
+														<input
+															type="hidden"
+															name="intent"
+															value="publish"
+														/>
+														<input
+															type="hidden"
+															name="journeyId"
+															value={journey.id}
+														/>
+														<DropdownMenuItem render={<button type="submit" />}>
+															<Trans>Publish</Trans>
+														</DropdownMenuItem>
+													</fetcher.Form>
+												)}
+												{journey.status === 'active' && (
+													<fetcher.Form method="post">
+														<input type="hidden" name="intent" value="pause" />
+														<input
+															type="hidden"
+															name="journeyId"
+															value={journey.id}
+														/>
+														<DropdownMenuItem render={<button type="submit" />}>
+															<Trans>Pause</Trans>
+														</DropdownMenuItem>
+													</fetcher.Form>
+												)}
+												<fetcher.Form method="post">
+													<input
+														type="hidden"
+														name="intent"
+														value="duplicate"
+													/>
+													<input
+														type="hidden"
+														name="journeyId"
+														value={journey.id}
+													/>
+													<DropdownMenuItem render={<button type="submit" />}>
+														<Trans>Duplicate</Trans>
+													</DropdownMenuItem>
+												</fetcher.Form>
+												<fetcher.Form method="post">
+													<input type="hidden" name="intent" value="delete" />
+													<input
+														type="hidden"
+														name="journeyId"
+														value={journey.id}
+													/>
+													<DropdownMenuItem
+														className="text-destructive"
+														render={<button type="submit" />}
+													>
+														<Trans>Delete</Trans>
+													</DropdownMenuItem>
+												</fetcher.Form>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									) : null}
+								</ItemActions>
+							</Item>
+						)
+					})}
 				</ItemGroup>
 			)}
 		</div>

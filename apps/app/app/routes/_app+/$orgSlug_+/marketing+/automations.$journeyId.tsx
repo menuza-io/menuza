@@ -26,6 +26,10 @@ import {
 	type OrganizationEmailBranding,
 } from '#app/utils/email-branding.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 /** Render every designed email node so the send path never needs React. */
@@ -76,7 +80,14 @@ async function withRenderedEmails(
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	// This route is the automation editor, so it requires write access.
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+	)
 
 	const res = await fetchTenant(`/operator/journeys/${journeyId}`)
 	if (!res.ok) {
@@ -108,6 +119,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+	)
+
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 

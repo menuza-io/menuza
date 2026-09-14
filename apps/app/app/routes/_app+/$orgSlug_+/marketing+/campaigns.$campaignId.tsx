@@ -4,11 +4,24 @@ import { CampaignDetailView, type CampaignDetail } from '@repo/marketing'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { jwt, tenantApiUrl } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, jwt, tenantApiUrl } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+	)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
+	)
 
 	return {
 		orgSlug,

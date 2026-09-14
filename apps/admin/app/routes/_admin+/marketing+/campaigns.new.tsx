@@ -1,7 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import { requireUserWithPermission, SYSTEM_PERMISSIONS } from '@repo/auth'
 import {
 	buildEmailTemplateBlocks,
 	type EmailBlock,
@@ -50,7 +50,10 @@ function EmailDesignerField() {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_CAMPAIGN_ANY,
+	)
 	const organizations = await db
 		.select({ id: Organization.id, name: Organization.name })
 		.from(Organization)
@@ -60,7 +63,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	const adminUserId = await requireUserWithRole(request, 'admin')
+	const adminUserId = await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_CAMPAIGN_ANY,
+	)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 

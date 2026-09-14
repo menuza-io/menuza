@@ -82,6 +82,26 @@ authorize.userPermission = async (
 }
 
 /**
+ * Namespace helper that succeeds when the user has at least one of the given
+ * permissions. Useful for section landing pages that aggregate resources.
+ */
+authorize.userAnyPermission = async (
+	request: Request,
+	permissions: PermissionString[],
+): Promise<string> => {
+	const userId = await requireUserId(request)
+	for (const permission of permissions) {
+		try {
+			await checkUserHasPermission(userId, permission)
+			return userId
+		} catch (error) {
+			if (!(error instanceof Response)) throw error
+		}
+	}
+	throw createForbiddenResponse(permissions.join(' or '))
+}
+
+/**
  * Namespace helper for user role check
  */
 authorize.userRole = async (

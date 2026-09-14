@@ -92,6 +92,13 @@
 			"when": 1789324210760,
 			"tag": "0012_tenant_organization_roles",
 			"breakpoints": true
+		},
+		{
+			"idx": 13,
+			"version": "6",
+			"when": 1789343643704,
+			"tag": "0013_website_announcement_marketing_permissions",
+			"breakpoints": true
 		}
 	]
 }

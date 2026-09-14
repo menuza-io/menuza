@@ -18,13 +18,24 @@ import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 const STATUS_FILTERS = ['all', 'completed', 'processing', 'failed'] as const
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
+	)
 
 	const res = await fetchTenant('/operator/marketing/campaigns')
 	if (!res.ok) {
@@ -46,6 +57,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function CampaignsIndexRoute() {
 	const { _ } = useLingui()
 	const { orgSlug, campaigns, error } = useLoaderData<typeof loader>()
+	const hasPermission = useHasPermission()
+	const canManage = hasPermission('update:campaign:any')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [statusFilter, setStatusFilter] = useState<string>('all')
 
@@ -73,13 +86,15 @@ export default function CampaignsIndexRoute() {
 				title={_(msg`Broadcasts`)}
 				description={_(msg`One-time email and SMS campaigns.`)}
 				actions={
-					<Button
-						render={<Link to={`/${orgSlug}/marketing/campaigns/new`} />}
-						className="shrink-0 gap-2"
-					>
-						<Icon name="plus" className="size-4" />
-						{_(msg`New broadcast`)}
-					</Button>
+					canManage ? (
+						<Button
+							render={<Link to={`/${orgSlug}/marketing/campaigns/new`} />}
+							className="shrink-0 gap-2"
+						>
+							<Icon name="plus" className="size-4" />
+							{_(msg`New broadcast`)}
+						</Button>
+					) : null
 				}
 			/>
 
@@ -127,7 +142,7 @@ export default function CampaignsIndexRoute() {
 					}
 					icons={['mail', 'send', 'smartphone']}
 					action={
-						!hasFilters
+						!hasFilters && canManage
 							? {
 									label: _(msg`Create broadcast`),
 									href: `/${orgSlug}/marketing/campaigns/new`,

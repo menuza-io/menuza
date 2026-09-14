@@ -1,6 +1,10 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import {
+	requireAnyUserWithPermission,
+	SYSTEM_PERMISSIONS,
+	userHasPermission,
+} from '@repo/auth'
 import { CampaignStatusBadge, type CampaignListItem } from '@repo/marketing'
 import {
 	getPlatformMarketingMetrics,
@@ -64,19 +68,63 @@ const METRIC_ITEMS = [
 ] as const
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	const userId = await requireAnyUserWithPermission(request, [
+		SYSTEM_PERMISSIONS.READ_PLATFORM_CAMPAIGN_ANY,
+		SYSTEM_PERMISSIONS.READ_PLATFORM_AUTOMATION_ANY,
+	])
+
+	// The overview shows campaign data, so only load it for users who can read
+	// campaigns; automation-only access still gets the quick links.
+	const [canReadCampaigns, canReadAutomations, canManageCampaigns] =
+		await Promise.all([
+			userHasPermission(userId, SYSTEM_PERMISSIONS.READ_PLATFORM_CAMPAIGN_ANY),
+			userHasPermission(
+				userId,
+				SYSTEM_PERMISSIONS.READ_PLATFORM_AUTOMATION_ANY,
+			),
+			userHasPermission(
+				userId,
+				SYSTEM_PERMISSIONS.UPDATE_PLATFORM_CAMPAIGN_ANY,
+			),
+		])
+
+	if (!canReadCampaigns) {
+		return {
+			metrics: null,
+			campaigns: [] as CampaignListItem[],
+			canReadCampaigns,
+			canReadAutomations,
+			canManageCampaigns,
+		}
+	}
 
 	const [metrics, campaigns] = await Promise.all([
 		getPlatformMarketingMetrics(),
 		listPlatformCampaigns(),
 	])
 
-	return { metrics, campaigns: campaigns.slice(0, 5) as CampaignListItem[] }
+	return {
+		metrics,
+		campaigns: campaigns.slice(0, 5) as CampaignListItem[],
+		canReadCampaigns,
+		canReadAutomations,
+		canManageCampaigns,
+	}
 }
 
 export default function MarketingOverviewRoute() {
 	const { _ } = useLingui()
-	const { metrics, campaigns } = useLoaderData<typeof loader>()
+	const {
+		metrics,
+		campaigns,
+		canReadCampaigns,
+		canReadAutomations,
+		canManageCampaigns,
+	} = useLoaderData<typeof loader>()
+
+	const quickLinks = QUICK_LINKS.filter((item) =>
+		item.to === '/marketing/campaigns' ? canReadCampaigns : canReadAutomations,
+	)
 
 	return (
 		<div className="space-y-8">
@@ -90,7 +138,7 @@ export default function MarketingOverviewRoute() {
 			</header>
 
 			<ItemGroup className="grid gap-3 sm:grid-cols-2">
-				{QUICK_LINKS.map((item) => (
+				{quickLinks.map((item) => (
 					<Item key={item.to} variant="outline" render={<Link to={item.to} />}>
 						<ItemMedia variant="icon">
 							<Icon name={item.icon} className="size-4" />
@@ -109,70 +157,76 @@ export default function MarketingOverviewRoute() {
 				))}
 			</ItemGroup>
 
-			<section aria-label={_(msg`Performance metrics`)}>
-				<ItemGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-					{METRIC_ITEMS.map((item) => (
-						<Item key={item.key} variant="outline" size="sm">
-							<ItemContent>
-								<ItemDescription>{_(item.label)}</ItemDescription>
-								<p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
-									{item.format(metrics)}
-								</p>
-							</ItemContent>
-						</Item>
-					))}
-				</ItemGroup>
-			</section>
-
-			<section aria-labelledby="recent-campaigns-heading">
-				<div className="mb-3 flex items-center justify-between gap-4">
-					<h2 id="recent-campaigns-heading" className="text-sm font-medium">
-						<Trans>Recent campaigns</Trans>
-					</h2>
-					<Link
-						to="/marketing/campaigns"
-						className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-					>
-						<Trans>View all</Trans>
-					</Link>
-				</div>
-
-				{campaigns.length === 0 ? (
-					<div className="px-4 py-10 text-center">
-						<p className="text-muted-foreground text-sm">
-							<Trans>No campaigns yet.</Trans>
-						</p>
-						<Link
-							to="/marketing/campaigns/new"
-							className="text-foreground mt-2 inline-block text-sm underline-offset-4 hover:underline"
-						>
-							<Trans>Create your first broadcast</Trans>
-						</Link>
-					</div>
-				) : (
-					<ItemGroup>
-						{campaigns.map((campaign) => (
-							<Item
-								key={campaign.id}
-								variant="outline"
-								size="sm"
-								render={<Link to={`/marketing/campaigns/${campaign.id}`} />}
-							>
+			{canReadCampaigns && metrics ? (
+				<section aria-label={_(msg`Performance metrics`)}>
+					<ItemGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+						{METRIC_ITEMS.map((item) => (
+							<Item key={item.key} variant="outline" size="sm">
 								<ItemContent>
-									<ItemTitle>{campaign.name}</ItemTitle>
-									<ItemDescription>
-										{campaign.targetAudienceCount.toLocaleString()}{' '}
-										<Trans>recipients</Trans>
-									</ItemDescription>
+									<ItemDescription>{_(item.label)}</ItemDescription>
+									<p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
+										{item.format(metrics)}
+									</p>
 								</ItemContent>
-								<ItemActions>
-									<CampaignStatusBadge status={campaign.status} />
-								</ItemActions>
 							</Item>
 						))}
 					</ItemGroup>
-				)}
-			</section>
+				</section>
+			) : null}
+
+			{canReadCampaigns ? (
+				<section aria-labelledby="recent-campaigns-heading">
+					<div className="mb-3 flex items-center justify-between gap-4">
+						<h2 id="recent-campaigns-heading" className="text-sm font-medium">
+							<Trans>Recent campaigns</Trans>
+						</h2>
+						<Link
+							to="/marketing/campaigns"
+							className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+						>
+							<Trans>View all</Trans>
+						</Link>
+					</div>
+
+					{campaigns.length === 0 ? (
+						<div className="px-4 py-10 text-center">
+							<p className="text-muted-foreground text-sm">
+								<Trans>No campaigns yet.</Trans>
+							</p>
+							{canManageCampaigns ? (
+								<Link
+									to="/marketing/campaigns/new"
+									className="text-foreground mt-2 inline-block text-sm underline-offset-4 hover:underline"
+								>
+									<Trans>Create your first broadcast</Trans>
+								</Link>
+							) : null}
+						</div>
+					) : (
+						<ItemGroup>
+							{campaigns.map((campaign) => (
+								<Item
+									key={campaign.id}
+									variant="outline"
+									size="sm"
+									render={<Link to={`/marketing/campaigns/${campaign.id}`} />}
+								>
+									<ItemContent>
+										<ItemTitle>{campaign.name}</ItemTitle>
+										<ItemDescription>
+											{campaign.targetAudienceCount.toLocaleString()}{' '}
+											<Trans>recipients</Trans>
+										</ItemDescription>
+									</ItemContent>
+									<ItemActions>
+										<CampaignStatusBadge status={campaign.status} />
+									</ItemActions>
+								</Item>
+							))}
+						</ItemGroup>
+					)}
+				</section>
+			) : null}
 		</div>
 	)
 }
