@@ -21,7 +21,7 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 
 	private let lock = NSLock()
 	private var responses: [(status: Int, data: Data, delayMs: Int)]
-	private let handler: Handler?
+	private let handler: (@Sendable (URLRequest) -> (status: Int, body: Any, delayMs: Int))?
 	private(set) var recorded: [Recorded] = []
 
 	init(responses: [(status: Int, body: Any)] = []) {
@@ -38,7 +38,18 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 	}
 
 	init(handler: @escaping Handler) {
-		self.handler = handler
+		self.handler = { request in
+			let reply = handler(request)
+			return (reply.status, reply.body, 0)
+		}
+		self.responses = []
+	}
+
+	/// Like `handler`, but each reply can be delayed — used to pin down
+	/// interleavings such as a stale `401` that lands after another caller has
+	/// already refreshed the session.
+	init(delayedHandler: @escaping @Sendable (URLRequest) -> (status: Int, body: Any, delayMs: Int)) {
+		self.handler = delayedHandler
 		self.responses = []
 	}
 
@@ -55,7 +66,7 @@ final class StubTransport: HTTPTransport, @unchecked Sendable {
 		if let handler {
 			let reply = handler(request)
 			let data = (try? JSONSerialization.data(withJSONObject: reply.body)) ?? Data()
-			response = (reply.status, data, 0)
+			response = (reply.status, data, reply.delayMs)
 		} else {
 			response = responses.isEmpty ? (200, Data("{}".utf8), 0) : responses.removeFirst()
 		}

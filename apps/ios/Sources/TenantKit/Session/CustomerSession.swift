@@ -79,9 +79,21 @@ public actor CustomerSession {
 		guard let accessToken = currentTokens?.accessToken else {
 			throw APIError.unauthorized
 		}
+		let generation = sessionGeneration
 		do {
 			return try await operation(accessToken)
 		} catch let error as APIError where error.isUnauthorized {
+			// Another caller may have refreshed while this request was in flight.
+			// Retrying with that rotated token avoids a redundant refresh (and a
+			// second rotation) for a 401 that predates it. A sign-out in the
+			// meantime must not be retried against, though.
+			if
+				generation == sessionGeneration,
+				let current = currentTokens?.accessToken,
+				current != accessToken
+			{
+				return try await operation(current)
+			}
 			// `refresh()` clears the session only for a terminal auth failure and
 			// rethrows transient errors, which must not sign the customer out.
 			let refreshed = try await refresh()

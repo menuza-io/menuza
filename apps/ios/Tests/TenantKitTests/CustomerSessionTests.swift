@@ -163,7 +163,7 @@ final class CustomerSessionTests: XCTestCase {
 	}
 
 	func testConcurrentUnauthorizedCallsShareOneRefresh() async throws {
-		let refreshed = makeAccessToken(name: "Ada Lovelace")
+		let refreshed = makeAccessToken(name: "Ada Byron")
 		let storage = InMemoryTokenStorage(
 			tokens: AuthTokens(accessToken: makeAccessToken(), refreshToken: "refresh-1")
 		)
@@ -195,6 +195,54 @@ final class CustomerSessionTests: XCTestCase {
 			refreshCalls.count,
 			1,
 			"refresh tokens rotate; parallel refreshes would revoke the session"
+		)
+		XCTAssertEqual(storage.load()?.refreshToken, "refresh-2")
+	}
+
+	func testStaleUnauthorizedReusesAnotherCallersRefresh() async throws {
+		let stale = makeAccessToken()
+		let rotated = makeAccessToken(name: "Ada Byron")
+		let storage = InMemoryTokenStorage(
+			tokens: AuthTokens(accessToken: stale, refreshToken: "refresh-1")
+		)
+		let refreshCalls = Counter()
+		let staleRequests = Counter()
+		let transport = StubTransport(delayedHandler: { request in
+			switch request.url?.path {
+			case "/auth/refresh":
+				_ = refreshCalls.increment()
+				return (200, ["success": true, "accessToken": rotated, "refreshToken": "refresh-2"], 0)
+			case "/auth/me":
+				guard request.value(forHTTPHeaderField: "Authorization") == "Bearer \(stale)" else {
+					return (200, ["customer": ["id": "cust_1", "name": "Ada Byron"]], 0)
+				}
+				// This caller's 401 only lands after the refresh below finished.
+				_ = staleRequests.increment()
+				return (401, ["error": "Invalid or expired token"], 150)
+			default:
+				return (404, ["error": "unexpected \(request.url?.path ?? "")"], 0)
+			}
+		})
+		let session = makeSession(transport: transport, storage: storage)
+
+		async let staleCall = session.profile()
+		for _ in 0..<2_000 where staleRequests.count == 0 {
+			await Task.yield()
+		}
+		XCTAssertEqual(staleRequests.count, 1, "the stale request should reach the transport")
+
+		// Another caller refreshes and rotates the tokens while that request is
+		// still in flight, so its 401 is answered by a token that is already
+		// stale — refreshing again would rotate the token a second time.
+		let refreshed = try await session.refresh()
+		XCTAssertEqual(refreshed.accessToken, rotated)
+
+		let profile = try await staleCall
+		XCTAssertEqual(profile.name, "Ada Byron")
+		XCTAssertEqual(
+			refreshCalls.count,
+			1,
+			"a 401 that predates another caller's refresh must retry with the rotated token"
 		)
 		XCTAssertEqual(storage.load()?.refreshToken, "refresh-2")
 	}
