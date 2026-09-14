@@ -18,6 +18,7 @@ import {
 	getOrganizationWithAccess,
 	getUserDefaultOrganization,
 	getUserOrganizations,
+	getUserOrganizationsWithSlugHandling,
 	setUserDefaultOrganization,
 	userHasOrganizationRole,
 	userHasOrgAccess,
@@ -122,6 +123,23 @@ describe('organizations.server integration', () => {
 		expect(
 			organizations.every((item) => item.organizationRole.permissions),
 		).toBe(true)
+	})
+
+	it('keeps role permissions on the current organization resolved from the default org', async () => {
+		const user = await createTestUser()
+		const org = await createTestOrganization(user.id, 'admin')
+		await setUserDefaultOrganization(user.id, org.id)
+
+		const result = await getUserOrganizationsWithSlugHandling(user.id, org.slug)
+
+		expect(result.currentOrganization?.organization.id).toBe(org.id)
+		expect(result.currentOrganization?.organizationRole.permissions).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ action: 'read', entity: 'website' }),
+				expect.objectContaining({ action: 'read', entity: 'announcement' }),
+				expect.objectContaining({ action: 'update', entity: 'campaign' }),
+			]),
+		)
 	})
 
 	it('checks user organization access and returns role information', async () => {

@@ -1,7 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserWithRole } from '@repo/auth'
+import { requireUserWithPermission, SYSTEM_PERMISSIONS } from '@repo/auth'
 import { renderMarketingEmail } from '@repo/marketing/server/email-render'
 import {
 	getPlatformJourneyById,
@@ -74,7 +74,12 @@ async function withRenderedEmails(
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	// This route is the automation editor, so it requires write access; the
+	// list stays readable with read-only permission.
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+	)
 	const journeyId = params.journeyId || ''
 	const journey = await getPlatformJourneyById(journeyId)
 
@@ -100,7 +105,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	await requireUserWithPermission(
+		request,
+		SYSTEM_PERMISSIONS.UPDATE_PLATFORM_AUTOMATION_ANY,
+	)
 	const journeyId = params.journeyId || ''
 	const formData = await request.formData()
 	const intent = formData.get('intent')

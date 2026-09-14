@@ -23,6 +23,10 @@ import {
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 async function withRenderedEmails(
@@ -66,13 +70,28 @@ async function withRenderedEmails(
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	await getOperatorTenantClient(request, orgSlug)
+	const { orgId } = await getOperatorTenantClient(request, orgSlug)
+
+	// This route is the automation builder, so it requires write access.
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+	)
+
 	return { orgSlug }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+
+	await requireUserWithOrganizationPermission(
+		request,
+		orgId,
+		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+	)
+
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
