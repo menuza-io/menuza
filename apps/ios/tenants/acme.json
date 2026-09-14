@@ -1,0 +1,19 @@
+{
+	"$comment": "A tenant app build. Secrets never live here \u2014 App Store Connect keys come from the GitHub environment named by `environment` (ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_CONTENT).",
+	"slug": "acme",
+	"displayName": "Acme Coffee",
+	"bundleId": "com.acmecoffee.app",
+	"appleTeamId": "ABCDE12345",
+	"marketingVersion": "1.0.0",
+	"primaryLocale": "en-US",
+	"environment": "tenant-acme",
+	"appUrl": "app.epic-startup.com",
+	"brandDomain": "epic-startup.com",
+	"tenantApiUs": "tenant-us.epic-startup.com",
+	"tenantApiKsa": "tenant-ksa.epic-startup.com",
+	"site": {
+		"slug": "acme",
+		"origin": "https://acme.epic-startup.com"
+	},
+	"release": false
+}

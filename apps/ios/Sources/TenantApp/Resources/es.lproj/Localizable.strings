@@ -1,0 +1,45 @@
+/* Tenant iOS app — Español */
+
+"app.loading" = "Cargando…";
+"app.retry" = "Reintentar";
+
+"connect.title" = "Conecta con tu sitio";
+"connect.subtitle" = "Introduce la dirección de tu sitio para cargar su identidad visual.";
+"connect.fieldLabel" = "Dirección del sitio";
+"connect.placeholder" = "acme o acme.example.com";
+"connect.action" = "Conectar";
+"connect.error" = "No encontramos ese sitio. Comprueba la dirección e inténtalo de nuevo.";
+
+"login.title" = "Iniciar sesión";
+"login.subtitle" = "Introduce tu número de teléfono. Te enviaremos un código de verificación.";
+"login.phone" = "Número de teléfono";
+"login.phonePlaceholder" = "+34 600 000 000";
+"login.action" = "Enviar código";
+"login.invalidPhone" = "Introduce un número de teléfono válido.";
+"login.networkError" = "Error de red. Inténtalo de nuevo.";
+
+"verify.title" = "Introduce tu código";
+"verify.subtitle" = "Enviamos un código de 6 dígitos a %@.";
+"verify.code" = "Código de verificación";
+"verify.action" = "Verificar";
+"verify.resend" = "Enviar un código nuevo";
+"verify.changeNumber" = "Usar otro número";
+
+"name.title" = "Tu nombre";
+"name.subtitle" = "Dinos cómo llamarte.";
+"name.field" = "Nombre";
+"name.placeholder" = "Ana García";
+"name.action" = "Continuar";
+
+"profile.title" = "Tu perfil";
+"profile.subtitle" = "Actualiza tus datos básicos a continuación.";
+"profile.name" = "Nombre";
+"profile.email" = "Correo electrónico";
+"profile.phone" = "Número de teléfono";
+"profile.phoneLocked" = "El número de teléfono no se puede cambiar por ahora.";
+"profile.save" = "Guardar cambios";
+"profile.saved" = "¡Perfil actualizado correctamente!";
+"profile.language" = "Idioma";
+"profile.languageSystem" = "Idioma del sistema";
+"profile.signOut" = "Cerrar sesión";
+"profile.networkError" = "Error de red. Inténtalo de nuevo.";

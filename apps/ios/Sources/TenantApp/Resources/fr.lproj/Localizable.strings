@@ -1,0 +1,45 @@
+/* Tenant iOS app — Français */
+
+"app.loading" = "Chargement…";
+"app.retry" = "Réessayer";
+
+"connect.title" = "Connectez votre site";
+"connect.subtitle" = "Saisissez l'adresse de votre site pour charger son identité visuelle.";
+"connect.fieldLabel" = "Adresse du site";
+"connect.placeholder" = "acme ou acme.example.com";
+"connect.action" = "Connecter";
+"connect.error" = "Site introuvable. Vérifiez l'adresse et réessayez.";
+
+"login.title" = "Se connecter";
+"login.subtitle" = "Saisissez votre numéro de téléphone. Nous vous enverrons un code de vérification.";
+"login.phone" = "Numéro de téléphone";
+"login.phonePlaceholder" = "+33 6 00 00 00 00";
+"login.action" = "Envoyer le code";
+"login.invalidPhone" = "Saisissez un numéro de téléphone valide.";
+"login.networkError" = "Erreur réseau. Veuillez réessayer.";
+
+"verify.title" = "Saisissez votre code";
+"verify.subtitle" = "Nous avons envoyé un code à 6 chiffres au %@.";
+"verify.code" = "Code de vérification";
+"verify.action" = "Vérifier";
+"verify.resend" = "Envoyer un nouveau code";
+"verify.changeNumber" = "Utiliser un autre numéro";
+
+"name.title" = "Votre nom";
+"name.subtitle" = "Dites-nous comment vous appeler.";
+"name.field" = "Nom";
+"name.placeholder" = "Marie Dupont";
+"name.action" = "Continuer";
+
+"profile.title" = "Votre profil";
+"profile.subtitle" = "Mettez à jour vos informations ci-dessous.";
+"profile.name" = "Nom";
+"profile.email" = "E-mail";
+"profile.phone" = "Numéro de téléphone";
+"profile.phoneLocked" = "Le numéro de téléphone ne peut pas être modifié pour le moment.";
+"profile.save" = "Enregistrer";
+"profile.saved" = "Profil mis à jour avec succès !";
+"profile.language" = "Langue";
+"profile.languageSystem" = "Langue du système";
+"profile.signOut" = "Se déconnecter";
+"profile.networkError" = "Erreur réseau. Veuillez réessayer.";

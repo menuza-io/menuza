@@ -1,0 +1,180 @@
+name: 🍎 iOS
+
+# Builds and ships the tenant iOS app (apps/ios).
+#
+# - Every PR/push: unit tests + a simulator build of the SwiftUI target, which is
+#   the only place the app target is compiled (Xcode is macOS-only).
+# - Manual dispatch: per-tenant TestFlight or App Store upload, using the
+#   tenant's GitHub environment for App Store Connect credentials.
+#
+# Requires a macOS runner with Xcode 26+ (Apple rejects uploads built with older
+# SDKs — see apps/ios/docs/app-store-release.md).
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description:
+          'Tenant slug from apps/ios/tenants, or "all" (release-enabled tenants)'
+        required: true
+        default: all
+      lane:
+        description: 'Release lane'
+        type: choice
+        options: [beta, release]
+        default: beta
+      submit_for_review:
+        description: 'Submit for App Review after upload (release lane only)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ios-${{ github.ref }}-${{ inputs.tenant || 'ci' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tenants:
+    name: 📋 Resolve tenant matrix
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 📋 List tenants
+        id: list
+        env:
+          TENANT_INPUT: ${{ inputs.tenant }}
+        run: |
+          if [ "$TENANT_INPUT" != "all" ]; then
+            case "$TENANT_INPUT" in
+              *[!a-z0-9-]* | '')
+                echo "::error::Invalid tenant slug: '$TENANT_INPUT'"
+                exit 1
+                ;;
+            esac
+            only="--only $TENANT_INPUT"
+          fi
+          list=$(node apps/ios/scripts/list-tenants.mjs --json --release-only ${only:-})
+          if [ "$list" = "[]" ]; then
+            echo "::error::No release-enabled tenant matched '$TENANT_INPUT'. Add \"release\": true to its config."
+            exit 1
+          fi
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "Releasing: $list"
+
+  test:
+    name: 🧪 Tests + simulator build
+    runs-on: macos-26
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🛠 Toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+          node --version
+
+      - name: 🧪 TenantKit unit tests
+        working-directory: apps/ios
+        run: swift test
+
+      - name: 🍺 Install XcodeGen
+        run: brew install xcodegen
+
+      - name: 🏗 Compile the app target (no signing)
+        working-directory: apps/ios
+        run: |
+          node scripts/generate-tenant.mjs --tenant ci --no-icon --no-api --build-number "${GITHUB_RUN_NUMBER}"
+          xcodegen generate
+          xcodebuild \
+            -project EpicTenantApp.xcodeproj \
+            -scheme EpicTenantApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  release:
+    name: 🚀 Release to TestFlight / App Store
+    needs: [tenants, test]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-26
+    environment: ${{ matrix.tenant.environment }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        tenant: ${{ fromJSON(needs.tenants.outputs.list) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🔑 Write App Store Connect API key
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+        run: |
+          if [ -z "$ASC_KEY_CONTENT" ]; then
+            echo "::error::Missing ASC_KEY_CONTENT in the tenant-$TENANT_SLUG environment."
+            exit 1
+          fi
+          key_path="$RUNNER_TEMP/asc_${TENANT_SLUG}.p8"
+          printf '%s' "$ASC_KEY_CONTENT" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          echo "ASC_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: 🍺 Install tooling
+        run: |
+          brew install xcodegen
+          cd apps/ios && bundle install
+
+      - name: ⚙️ Generate tenant config
+        id: tenant
+        working-directory: apps/ios
+        env:
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+        run: |
+          node scripts/generate-tenant.mjs \
+            --tenant "$TENANT_SLUG" \
+            --build-number "${GITHUB_RUN_NUMBER}"
+          bundle_id=$(grep -E '^PRODUCT_BUNDLE_IDENTIFIER' Config/Generated/Tenant.xcconfig | awk -F' = ' '{print $2}')
+          display_name=$(grep -E '^EPIC_APP_DISPLAY_NAME' Config/Generated/Tenant.xcconfig | awk -F' = ' '{print $2}')
+          team_id=$(grep -E '^DEVELOPMENT_TEAM' Config/Generated/Tenant.xcconfig | awk -F' = ' '{print $2}' || true)
+          {
+            echo "PRODUCT_BUNDLE_IDENTIFIER=$bundle_id"
+            echo "APP_DISPLAY_NAME=$display_name"
+            echo "APPLE_TEAM_ID=$team_id"
+          } >> "$GITHUB_ENV"
+          xcodegen generate
+
+      - name: 🚀 Fastlane release lane
+        working-directory: apps/ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          SUBMIT_FOR_REVIEW: ${{ inputs.submit_for_review && '1' || '0' }}
+          LANE: ${{ inputs.lane }}
+        run: bundle exec fastlane ios "$LANE"
+
+      - name: 📦 Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ matrix.tenant.slug }}-${{ github.run_number }}
+          path: |
+            apps/ios/build/*.ipa
+            apps/ios/build/*.app.dSYM.zip
+          if-no-files-found: ignore
+          retention-days: 14

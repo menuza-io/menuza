@@ -1,0 +1,45 @@
+/* Tenant iOS app — English (source language) */
+
+"app.loading" = "Loading…";
+"app.retry" = "Try again";
+
+"connect.title" = "Connect to your site";
+"connect.subtitle" = "Enter your site address to load its branding.";
+"connect.fieldLabel" = "Site address";
+"connect.placeholder" = "acme or acme.example.com";
+"connect.action" = "Connect";
+"connect.error" = "We couldn't find that site. Check the address and try again.";
+
+"login.title" = "Sign in";
+"login.subtitle" = "Enter your phone number. We'll send a verification code.";
+"login.phone" = "Phone number";
+"login.phonePlaceholder" = "+1 (555) 000-0000";
+"login.action" = "Send code";
+"login.invalidPhone" = "Enter a valid phone number.";
+"login.networkError" = "Network error. Please try again.";
+
+"verify.title" = "Enter your code";
+"verify.subtitle" = "We sent a 6-digit code to %@.";
+"verify.code" = "Verification code";
+"verify.action" = "Verify";
+"verify.resend" = "Send a new code";
+"verify.changeNumber" = "Use a different number";
+
+"name.title" = "Your name";
+"name.subtitle" = "Tell us what to call you.";
+"name.field" = "Name";
+"name.placeholder" = "Jane Doe";
+"name.action" = "Continue";
+
+"profile.title" = "Your profile";
+"profile.subtitle" = "Update your basic details below.";
+"profile.name" = "Name";
+"profile.email" = "Email";
+"profile.phone" = "Phone number";
+"profile.phoneLocked" = "Phone number cannot be changed at this time.";
+"profile.save" = "Save changes";
+"profile.saved" = "Profile updated successfully!";
+"profile.language" = "Language";
+"profile.languageSystem" = "System default";
+"profile.signOut" = "Sign out";
+"profile.networkError" = "Network error. Please try again.";

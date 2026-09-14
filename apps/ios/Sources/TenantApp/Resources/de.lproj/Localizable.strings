@@ -1,0 +1,45 @@
+/* Tenant iOS app — Deutsch */
+
+"app.loading" = "Wird geladen…";
+"app.retry" = "Erneut versuchen";
+
+"connect.title" = "Mit deiner Website verbinden";
+"connect.subtitle" = "Gib die Adresse deiner Website ein, um ihr Branding zu laden.";
+"connect.fieldLabel" = "Website-Adresse";
+"connect.placeholder" = "acme oder acme.example.com";
+"connect.action" = "Verbinden";
+"connect.error" = "Diese Website wurde nicht gefunden. Prüfe die Adresse und versuche es erneut.";
+
+"login.title" = "Anmelden";
+"login.subtitle" = "Gib deine Telefonnummer ein. Wir senden dir einen Bestätigungscode.";
+"login.phone" = "Telefonnummer";
+"login.phonePlaceholder" = "+49 151 00000000";
+"login.action" = "Code senden";
+"login.invalidPhone" = "Gib eine gültige Telefonnummer ein.";
+"login.networkError" = "Netzwerkfehler. Bitte versuche es erneut.";
+
+"verify.title" = "Code eingeben";
+"verify.subtitle" = "Wir haben einen 6-stelligen Code an %@ gesendet.";
+"verify.code" = "Bestätigungscode";
+"verify.action" = "Bestätigen";
+"verify.resend" = "Neuen Code senden";
+"verify.changeNumber" = "Andere Nummer verwenden";
+
+"name.title" = "Dein Name";
+"name.subtitle" = "Sag uns, wie wir dich nennen sollen.";
+"name.field" = "Name";
+"name.placeholder" = "Anna Beispiel";
+"name.action" = "Weiter";
+
+"profile.title" = "Dein Profil";
+"profile.subtitle" = "Aktualisiere unten deine Basisdaten.";
+"profile.name" = "Name";
+"profile.email" = "E-Mail";
+"profile.phone" = "Telefonnummer";
+"profile.phoneLocked" = "Die Telefonnummer kann derzeit nicht geändert werden.";
+"profile.save" = "Änderungen speichern";
+"profile.saved" = "Profil erfolgreich aktualisiert!";
+"profile.language" = "Sprache";
+"profile.languageSystem" = "Systemsprache";
+"profile.signOut" = "Abmelden";
+"profile.networkError" = "Netzwerkfehler. Bitte versuche es erneut.";

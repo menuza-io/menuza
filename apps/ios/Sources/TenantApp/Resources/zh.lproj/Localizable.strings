@@ -1,0 +1,45 @@
+/* Tenant iOS app — 简体中文 */
+
+"app.loading" = "加载中…";
+"app.retry" = "重试";
+
+"connect.title" = "连接你的网站";
+"connect.subtitle" = "输入你的网站地址以加载其品牌样式。";
+"connect.fieldLabel" = "网站地址";
+"connect.placeholder" = "acme 或 acme.example.com";
+"connect.action" = "连接";
+"connect.error" = "未找到该网站。请检查地址后重试。";
+
+"login.title" = "登录";
+"login.subtitle" = "输入你的手机号码，我们会发送验证码。";
+"login.phone" = "手机号码";
+"login.phonePlaceholder" = "+86 138 0000 0000";
+"login.action" = "发送验证码";
+"login.invalidPhone" = "请输入有效的手机号码。";
+"login.networkError" = "网络错误，请重试。";
+
+"verify.title" = "输入验证码";
+"verify.subtitle" = "我们已向 %@ 发送 6 位验证码。";
+"verify.code" = "验证码";
+"verify.action" = "验证";
+"verify.resend" = "重新发送验证码";
+"verify.changeNumber" = "使用其他号码";
+
+"name.title" = "你的名字";
+"name.subtitle" = "告诉我们如何称呼你。";
+"name.field" = "姓名";
+"name.placeholder" = "张三";
+"name.action" = "继续";
+
+"profile.title" = "个人资料";
+"profile.subtitle" = "在下方更新你的基本信息。";
+"profile.name" = "姓名";
+"profile.email" = "电子邮件";
+"profile.phone" = "手机号码";
+"profile.phoneLocked" = "目前无法更改手机号码。";
+"profile.save" = "保存更改";
+"profile.saved" = "个人资料更新成功！";
+"profile.language" = "语言";
+"profile.languageSystem" = "跟随系统";
+"profile.signOut" = "退出登录";
+"profile.networkError" = "网络错误，请重试。";
