@@ -1,0 +1,23 @@
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode (project is generated from project.yml by XcodeGen)
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+
+# Per-tenant build config + generated icons (scripts/generate-tenant.mjs)
+Config/Generated/
+
+# fastlane / build output
+build/
+vendor/bundle/
+Gemfile.lock
+
+# macOS
+.DS_Store

@@ -1,0 +1,17 @@
+{
+	"$comment": "Fixture used by CI to compile the app target. No secrets, no real tenant: it only proves the SwiftUI target builds for the simulator.",
+	"slug": "ci",
+	"displayName": "Tenant (CI)",
+	"bundleId": "com.epicstartup.tenant.ci",
+	"marketingVersion": "0.0.1",
+	"primaryLocale": "en-US",
+	"appUrl": "localhost:3001",
+	"brandDomain": "epic-startup.test",
+	"tenantApiUs": "localhost:3007",
+	"tenantApiKsa": "localhost:3009",
+	"site": {
+		"slug": "acme",
+		"origin": "http://acme.epic-startup.test:3010"
+	},
+	"release": false
+}

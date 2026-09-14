@@ -1,0 +1,22 @@
+{
+  "name": "ios",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Epic Startup tenant iOS app (SwiftUI + TenantKit)",
+  "scripts": {
+    "ios:build": "swift build",
+    "ios:test": "swift test",
+    "ios:generate": "xcodegen generate",
+    "ios:open": "npm run ios:generate && open EpicTenantApp.xcodeproj",
+    "ios:sim": "bash scripts/run-simulator.sh",
+    "ios:tenant": "node scripts/generate-tenant.mjs",
+    "ios:tenants": "node scripts/list-tenants.mjs",
+    "ios:xcode:build": "npm run ios:generate && xcodebuild -project EpicTenantApp.xcodeproj -scheme EpicTenantApp -destination 'generic/platform=iOS' build",
+    "ios:beta": "bundle exec fastlane ios beta",
+    "ios:release": "bundle exec fastlane ios release",
+    "ios:format": "swift-format format --in-place --recursive Sources Tests"
+  },
+  "engines": {
+    "node": ">=18.20.8"
+  }
+}

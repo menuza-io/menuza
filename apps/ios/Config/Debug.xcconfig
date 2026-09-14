@@ -1,0 +1,12 @@
+// Debug builds talk to the local dev servers over http.
+#include "Shared.xcconfig"
+
+EPIC_USE_TLS = NO
+EPIC_APP_BASE_URL = localhost:3001
+EPIC_TENANT_API_US_BASE_URL = localhost:3007
+EPIC_TENANT_API_KSA_BASE_URL = localhost:3009
+EPIC_BRAND_DOMAIN = epic-startup.test
+
+// Per-tenant overrides written by `npm run ios:tenant -w ios`
+// (scripts/generate-tenant.mjs). Included last so the tenant wins.
+#include? "Generated/Tenant.xcconfig"

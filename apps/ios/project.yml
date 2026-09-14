@@ -1,0 +1,57 @@
+name: EpicTenantApp
+options:
+  bundleIdPrefix: com.epicstartup
+  deploymentTarget:
+    iOS: '17.0'
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configs:
+  Debug: debug
+  Release: release
+
+packages:
+  # The platform-independent core (Foundation only) lives in this package so it
+  # can be built and tested with `swift test` on macOS and Linux. Unit tests run
+  # through SwiftPM (`npm run ios:test -w ios`), not through this Xcode scheme.
+  TenantKit:
+    path: .
+
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targets:
+  EpicTenantApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/TenantApp
+        excludes:
+          - 'Resources/Info.plist'
+    dependencies:
+      - package: TenantKit
+        product: TenantKit
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        PRODUCT_NAME: EpicTenantApp
+        INFOPLIST_FILE: Sources/TenantApp/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: '1,2'
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+
+schemes:
+  EpicTenantApp:
+    build:
+      targets:
+        EpicTenantApp: all
+    run:
+      config: Debug
+    archive:
+      config: Release
