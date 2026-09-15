@@ -51,7 +51,10 @@ fi
 # ------------------------------------------------------- install + launch --
 bash scripts/gradle.sh installDebug "$@"
 
-package="$(sed -n 's/^applicationId=//p' app/tenant.properties 2>/dev/null | head -1)"
+package=""
+if [ -f app/tenant.properties ]; then
+	package="$(sed -n 's/^applicationId=//p' app/tenant.properties | head -1)"
+fi
 package="${package:-com.epicstartup.tenant}"
 activity="$package/com.epicstartup.tenant.ui.MainActivity"
 

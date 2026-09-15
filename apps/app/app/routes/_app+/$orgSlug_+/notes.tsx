@@ -34,6 +34,10 @@ import { ENV } from 'varlock/env'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
 import { NotesCards } from './notes-cards.tsx'
 import { NotesKanbanBoard } from './notes-kanban-board.tsx'
 
@@ -68,9 +72,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	invariantResponse(organization, 'Organization not found', { status: 404 })
 
-	// Check if the user has access to this organization
+	// Check if the user has access and permission in this organization
 	const userId = await requireUserId(request)
 	await userHasOrgAccess(request, organization.id)
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.READ_NOTE_OWN,
+	)
 
 	// Get search query from URL
 	const url = new URL(request.url)

@@ -29,31 +29,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// If we get here via GET request, it's likely a callback from the SSO provider
 	const url = new URL(request.url)
 
-	// Check if this is a callback with auth parameters
+	// Check if this is a callback with auth parameters - redirect to canonical callback route
 	if (
 		url.searchParams.has('code') ||
 		url.searchParams.has('state') ||
 		url.searchParams.has('SAMLResponse')
 	) {
-		// Handle SSO callback - delegate to the SSO auth service
-		try {
-			const organizationSlug = params.organizationSlug
-			if (!organizationSlug) {
-				throw new Response('Organization slug is required', { status: 400 })
-			}
-
-			const organization = await getOrganizationBySlug(organizationSlug)
-			if (!organization) {
-				throw new Response('Organization not found', { status: 404 })
-			}
-
-			// Process the SSO callback
-			return await ssoAuthService.handleCallback(organization.id, request)
-		} catch (error) {
-			console.error('SSO callback error:', error)
-			// Redirect to login with error
-			return redirect('/login?error=sso_callback_failed')
+		const organizationSlug = params.organizationSlug
+		if (!organizationSlug) {
+			throw new Response('Organization slug is required', { status: 400 })
 		}
+		return redirect(
+			`/auth/sso/${encodeURIComponent(organizationSlug)}/callback?${url.searchParams.toString()}`,
+		)
 	}
 
 	// If no callback parameters, redirect to login

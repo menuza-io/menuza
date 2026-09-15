@@ -159,8 +159,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		}
 
 		// Consume the stored nonce for validation
-		const { nonce, cookieHeader: ignoredNonceCookieHeader } =
+		const { nonce, cookieHeader: nonceCookieHeader } =
 			await consumeNonce(request)
+
+		const cleanupHeaders = nonceCookieHeader
+			? combineHeaders(destroyRedirectTo, { 'set-cookie': nonceCookieHeader })
+			: destroyRedirectTo
 
 		// Handle OAuth callback with nonce for ID token validation
 		const authResult = await ssoAuthService
@@ -178,8 +182,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					}) as const,
 			)
 
-		// We'll add the nonce cookie header to clear it in all responses
-
 		if (!authResult.success) {
 			console.error('SSO authentication failed:', authResult.error)
 			trackSuspiciousActivity(activityKey, 'failed_auth')
@@ -192,7 +194,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						'Authentication with your identity provider failed. Please try again or contact your administrator.',
 					type: 'error',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: cleanupHeaders },
 			)
 		}
 
@@ -211,7 +213,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					title: 'Already Authenticated',
 					description: 'You are already logged in.',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: cleanupHeaders },
 			)
 		}
 
@@ -244,7 +246,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 							: 'Failed to provision user account',
 					type: 'error',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: cleanupHeaders },
 			)
 		}
 
@@ -257,14 +259,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 
 		// Create session for the authenticated user
-		return makeSession({
-			request,
-			user,
-			organizationId: organization.id,
-			redirectTo,
-			providerUser,
-			ssoConfig,
-		})
+		return makeSession(
+			{
+				request,
+				user,
+				organizationId: organization.id,
+				redirectTo,
+				providerUser,
+				ssoConfig,
+			},
+			{ headers: cleanupHeaders },
+		)
 	} catch (error: unknown) {
 		// Track failed authentication attempts
 		const organizationSlug = params.organizationSlug || ''

@@ -221,6 +221,7 @@ export const journeyStepExecutions = sqliteTable(
 			table.nodeId,
 		),
 		index('idx_journey_step_executions_customer').on(table.customerId),
+		index('idx_journey_step_executions_journey').on(table.journeyId),
 		index('idx_journey_step_executions_status').on(table.status),
 	],
 )

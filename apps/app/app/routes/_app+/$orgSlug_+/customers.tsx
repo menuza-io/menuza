@@ -43,6 +43,11 @@ import { formatDistanceToNow } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 interface CustomerListItem {
@@ -229,6 +234,17 @@ function matchesCustomerCondition(
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
+	const organization = await requireUserOrganization(request, orgSlug, {
+		id: true,
+	})
+
+	// Guard customer PII access
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.READ_SETTINGS_ANY,
+	)
+
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(request, orgSlug)
 
 	return { jwt, tenantApiUrl }

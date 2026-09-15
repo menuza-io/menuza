@@ -24,6 +24,7 @@ import {
 	and,
 	db,
 	eq,
+	inArray,
 	Organization,
 	OrganizationNote,
 	OrganizationNoteFavorite,
@@ -176,23 +177,45 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 								.from(_RoleToUser)
 								.innerJoin(Role, eq(_RoleToUser.A, Role.id))
 								.where(eq(_RoleToUser.B, userId))
-							const roles = await Promise.all(
-								roleRows.map(async (role) => ({
-									name: role.name,
-									permissions: await db
-										.select({
-											entity: Permission.entity,
-											action: Permission.action,
-											access: Permission.access,
-										})
-										.from(_PermissionToRole)
-										.innerJoin(
-											Permission,
-											eq(_PermissionToRole.A, Permission.id),
-										)
-										.where(eq(_PermissionToRole.B, role.id)),
-								})),
-							)
+							const roleIds = roleRows.map((r) => r.id)
+							const permissionRows =
+								roleIds.length > 0
+									? await db
+											.select({
+												roleId: _PermissionToRole.B,
+												entity: Permission.entity,
+												action: Permission.action,
+												access: Permission.access,
+											})
+											.from(_PermissionToRole)
+											.innerJoin(
+												Permission,
+												eq(_PermissionToRole.A, Permission.id),
+											)
+											.where(inArray(_PermissionToRole.B, roleIds))
+									: []
+
+							const permissionsByRoleId = new Map<
+								string,
+								Array<{ entity: string; action: string; access: string }>
+							>()
+							for (const row of permissionRows) {
+								let list = permissionsByRoleId.get(row.roleId)
+								if (!list) {
+									list = []
+									permissionsByRoleId.set(row.roleId, list)
+								}
+								list.push({
+									entity: row.entity,
+									action: row.action,
+									access: row.access,
+								})
+							}
+
+							const roles = roleRows.map((role) => ({
+								name: role.name,
+								permissions: permissionsByRoleId.get(role.id) || [],
+							}))
 							return {
 								id: userRow.id,
 								name: userRow.name,

@@ -90,7 +90,15 @@ operatorRoutes.get('/customers', async (c) => {
 			.select({ value: count() })
 			.from(customers)
 		const orgCustomers = await db
-			.select()
+			.select({
+				id: customers.id,
+				name: customers.name,
+				email: customers.email,
+				phone: customers.phone,
+				phoneVerified: customers.phoneVerified,
+				createdAt: customers.createdAt,
+				updatedAt: customers.updatedAt,
+			})
 			.from(customers)
 			.limit(limit)
 			.offset(offset)
@@ -142,7 +150,15 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 				updatedAt: new Date(),
 			})
 			.where(eq(customers.id, customerId))
-			.returning()
+			.returning({
+				id: customers.id,
+				name: customers.name,
+				email: customers.email,
+				phone: customers.phone,
+				phoneVerified: customers.phoneVerified,
+				createdAt: customers.createdAt,
+				updatedAt: customers.updatedAt,
+			})
 
 		if (!updated) {
 			return c.json({ error: 'Customer not found' }, 404)
