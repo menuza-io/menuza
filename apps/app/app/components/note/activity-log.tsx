@@ -174,6 +174,7 @@ function ActivityRow({ log, isLast }: { log: ActivityLog; isLast: boolean }) {
 				>
 					<Icon
 						name={config.icon}
+						// eslint-disable-next-line shadcn/require-static-classes -- color comes from the static action map above
 						className={cn('size-2.5', config.iconColor)}
 					/>
 				</div>

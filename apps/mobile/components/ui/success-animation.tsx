@@ -54,12 +54,14 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
 
 	return (
 		<View
+			// eslint-disable-next-line shadcn/no-inline-styles -- React Native animated values can only be passed through the style prop
 			style={styles.overlay}
 			className="items-center justify-center"
 			accessibilityLabel={t`Success`}
 			accessible={true}
 		>
 			<Animated.View
+				// eslint-disable-next-line shadcn/no-inline-styles -- React Native animated values can only be passed through the style prop
 				style={[
 					{
 						transform: [{ scale: scaleAnim }],

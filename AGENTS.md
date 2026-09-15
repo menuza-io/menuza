@@ -144,6 +144,21 @@ npm run validate       # lint + typecheck + test + e2e
 
 ## ESLint Best Practices
 
+**Design system rules (`@shadcn/lint`)**:
+
+`shadcn/*` ESLint rules check how design-system components are styled. The
+shared policy lives in `packages/config/eslint-preset.js`; component internals
+are exempt in `packages/ui/eslint.config.js` and
+`apps/mobile/eslint.config.mjs`.
+
+- Use theme tokens, existing variants, and sizes instead of raw palette colors,
+  arbitrary values, or inline styles.
+- A component's `no-restyle` contract lists what callers may change. Extend a
+  contract only when the design system intentionally allows the change;
+  otherwise fix the call site.
+- `cn` comes from the `cn` package (`@repo/ui` re-exports it). Do not add `clsx`
+  or `tailwind-merge`.
+
 **Fixing ESLint Warnings in Bulk**:
 
 When encountering many ESLint warnings, follow this systematic approach:

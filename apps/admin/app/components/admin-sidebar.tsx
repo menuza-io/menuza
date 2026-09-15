@@ -164,7 +164,7 @@ export function AdminSidebar({
 					<div className="text-sidebar-foreground text-sm font-bold">
 						<Trans>Admin Dashboard</Trans>
 					</div>
-					<div className="text-sidebar-muted-foreground text-xs">
+					<div className="text-muted-foreground text-xs">
 						<Trans>System Management</Trans>
 					</div>
 				</div>

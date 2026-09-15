@@ -105,9 +105,11 @@ const CUSTOMER_FILTER_FIELDS: FilterField[] = [
 			<BadgesOrStack
 				options={options}
 				fallback="any status"
+				// eslint-disable-next-line shadcn/require-static-classes -- classes come from the static tone map above
 				badgeClassName={(value) =>
 					VERIFICATION_TONES[value as keyof typeof VERIFICATION_TONES]?.badge
 				}
+				// eslint-disable-next-line shadcn/require-static-classes -- classes come from the static tone map above
 				dotClassName={(value) =>
 					VERIFICATION_TONES[value as keyof typeof VERIFICATION_TONES]?.dot
 				}
