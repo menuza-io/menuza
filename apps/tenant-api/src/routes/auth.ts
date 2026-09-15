@@ -437,10 +437,14 @@ authRoutes.post(
 		if ('error' in loaded) return loaded.error
 		const { organization, db } = loaded
 
-		const phoneLimit = rateLimitByKey('verify-phone', phone, {
-			maxRequests: 5,
-			windowMs: 10 * 60 * 1000,
-		})
+		const phoneLimit = rateLimitByKey(
+			'verify-phone',
+			JSON.stringify([organization.id, phone]),
+			{
+				maxRequests: 5,
+				windowMs: 10 * 60 * 1000,
+			},
+		)
 		if (phoneLimit.limited) {
 			return c.json(
 				{

@@ -245,6 +245,10 @@ class AppState(private val context: Context) {
 				notifyChanged()
 				if (tokens != null) loadProfile()
 			},
+			onFailure = { error ->
+				errorMessage = messageFor(error)
+				notifyChanged()
+			},
 		)
 	}
 

@@ -137,7 +137,9 @@ class MainActivity : Activity(), ScreenHost {
 	}
 
 	override fun openUrl(url: String) {
-		runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+		val uri = Uri.parse(url)
+		if (uri.scheme?.lowercase() !in setOf("http", "https")) return
+		runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
 	}
 
 	// MARK: - Rendering

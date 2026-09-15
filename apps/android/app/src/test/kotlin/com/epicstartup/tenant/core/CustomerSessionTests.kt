@@ -200,7 +200,7 @@ class CustomerSessionTest {
 	@Test
 	fun aRefreshThatLandsAfterSignOutCannotRestoreTheSession() {
 		val storage = InMemoryTokenStorage(AuthTokens(accessToken, "refresh_1"))
-		val transport = GatedTransport { request ->
+		val transport = GatedTransport(gateOn = { it.url.endsWith("/auth/refresh") }) { request ->
 			when {
 				request.url.endsWith("/auth/refresh") -> jsonResponse(
 					200,

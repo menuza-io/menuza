@@ -22,7 +22,11 @@ function parseArgs(argv) {
 			args.flags.add(name)
 			continue
 		}
-		args[name] = inline ?? argv[index + 1]
+		const argument = inline ?? argv[index + 1]
+		if (!argument || argument.startsWith('--')) {
+			throw new Error(`--${name} requires a value`)
+		}
+		args[name] = argument
 		if (inline === undefined) index += 1
 	}
 	return args

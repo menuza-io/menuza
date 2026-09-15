@@ -37,6 +37,7 @@ class CustomerSession(
 	 * Bumped on sign-out so a refresh that was already in flight cannot write
 	 * rotated tokens back into a session the customer just ended.
 	 */
+	@Volatile
 	private var sessionGeneration = 0
 
 	val tokens: AuthTokens? get() = currentTokens

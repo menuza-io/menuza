@@ -45,6 +45,7 @@ class HttpUrlConnectionTransport : HttpTransport {
 			connection.connectTimeout = request.timeoutMs
 			connection.readTimeout = request.timeoutMs
 			connection.useCaches = false
+			connection.instanceFollowRedirects = false
 			request.headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
 
 			val body = request.body

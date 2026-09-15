@@ -84,9 +84,10 @@ if (existsSync(budget)) {
 		const limit = limits[relative]
 		if (!limit) continue
 		const path = join(APP_ROOT, relative)
-		const size = existsSync(path) ? statSync(path).size : 0
-		const status = size <= limit ? 'ok' : 'OVER'
-		if (status === 'OVER') overBudget = true
+		const exists = existsSync(path)
+		const size = exists ? statSync(path).size : 0
+		const status = !exists ? 'MISSING' : size <= limit ? 'ok' : 'OVER'
+		if (status !== 'ok') overBudget = true
 		console.log(
 			`  ${status.padEnd(5)} ${label.padEnd(12)} ${human(size)} / ${human(limit)}`,
 		)

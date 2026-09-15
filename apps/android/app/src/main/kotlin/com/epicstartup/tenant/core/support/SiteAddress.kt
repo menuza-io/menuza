@@ -68,11 +68,32 @@ data class SiteAddress(
 				scheme = value.substring(0, schemeSeparator)
 				value = value.substring(schemeSeparator + 3)
 			}
+			if (scheme != "http" && scheme != "https") return null
 			value = value.substringBefore('/').substringBefore('?').trim()
 			if (value.isEmpty()) return null
+			if (value.any { it == '@' || it == '\\' || it.isWhitespace() }) return null
+
+			val portSeparator = value.lastIndexOf(':')
+			val hasPort = portSeparator >= 0
+			val hostname = if (hasPort) value.substring(0, portSeparator) else value
+			val port = if (hasPort) value.substring(portSeparator + 1).toIntOrNull() else null
+			val validHostname = hostname.split('.').all { label ->
+				label.isNotEmpty() &&
+					label.first().isLetterOrDigit() &&
+					label.last().isLetterOrDigit() &&
+					label.all { it.isLetterOrDigit() || it == '-' }
+			}
+			if (
+				!validHostname ||
+				(hasPort && (
+					value.indexOf(':') != portSeparator ||
+						port == null ||
+						port !in 1..65535 ||
+						!hostname.contains('.')
+				))
+			) return null
 
 			val brand = brandDomain.lowercase()
-			val hostname = value.substringBefore(':')
 
 			if (!hostname.contains('.')) {
 				// Bare slug → derive the site origin from the platform domain.

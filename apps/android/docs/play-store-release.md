@@ -82,8 +82,11 @@ run.
    own this declaration.
 8. **Content rating** questionnaire (the app has no ads, no user-generated
    content, no news).
-9. **Closed testing** — publish to an internal/closed track first; that is what
-   `npm run android:beta`/`gh workflow run android.yml -f lane=beta` does.
+9. **Closed testing** — publish to an internal or closed track first. By
+   default, `npm run android:beta` / `gh workflow run android.yml -f lane=beta`
+   targets the `internal` testing track. To target the closed testing track
+   (`alpha`), pass `-f track=alpha` (or set `PLAY_TRACK=alpha`). The `release`
+   lane targets `production`.
 
 ## Adding a tenant to the repo
 
@@ -138,10 +141,10 @@ npm run android:size -w android
 
 ## Versioning
 
-| Setting       | Source                | Rule                                                          |
-| ------------- | --------------------- | ------------------------------------------------------------- |
-| `versionName` | `tenants/<slug>.json` | User-visible; bump deliberately (`1.0.0` → `1.0.1`)           |
-| `versionCode` | `GITHUB_RUN_NUMBER`   | Must increase for **every** upload, including to a test track |
+| Setting       | Source                                   | Rule                                                                                          |
+| ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `versionName` | `tenants/<slug>.json`                    | User-visible; bump deliberately (`1.0.0` → `1.0.1`)                                           |
+| `versionCode` | `((RUN_NUMBER - 1) * 100 + RUN_ATTEMPT)` | Must increase for **every** upload; attempt-aware so retries yield a strictly increasing code |
 
 Play rejects an upload whose `versionCode` was already used for that application
 id, even if the previous one was only on an internal track.

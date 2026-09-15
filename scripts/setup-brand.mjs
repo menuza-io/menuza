@@ -198,6 +198,7 @@ async function promptFavicon() {
  */
 function escapeString(str) {
 	return str
+		.replace(/\\/g, "\\\\")
 		.replace(/'/g, "\\'")
 		.replace(/\n/g, '\\n')
 		.replace(/\$/g, () => '$$')
@@ -845,7 +846,7 @@ function nativeAppDisplayNamePairs(brandInfo) {
 	// Functions, not templates: a brand name may contain `$`.
 	return [
 		{
-			pattern: /^(EPIC_APP_DISPLAY_NAME = )Tenant$/m,
+			pattern: /^([A-Z][A-Z0-9_]*_APP_DISPLAY_NAME = )Tenant$/m,
 			replacement: (_match, prefix) => `${prefix}${brandInfo.name}`,
 		},
 		{

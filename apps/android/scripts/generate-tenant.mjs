@@ -233,6 +233,9 @@ function writePlaceholders() {
 }
 
 function writeBackground(color) {
+	if (!/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(color)) {
+		fail(`iconBackground must be a #RRGGBB or #AARRGGBB hex color: ${color}`)
+	}
 	mkdirSync(dirname(BACKGROUND_FILE), { recursive: true })
 	writeFileSync(
 		BACKGROUND_FILE,

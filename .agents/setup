@@ -97,10 +97,21 @@ fi
 # login shells the orb uses — at the JDK that is actually installed.
 jdk_bin="$(command -v javac || true)"
 jdk_home=""
-if [ -n "$jdk_bin" ]; then
+if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+	jdk_home="/usr/lib/jvm/java-17-openjdk-amd64"
+elif [ -d "/usr/lib/jvm/java-17-openjdk" ]; then
+	jdk_home="/usr/lib/jvm/java-17-openjdk"
+elif [ -n "$jdk_bin" ]; then
 	jdk_home="$(dirname "$(dirname "$(readlink -f "$jdk_bin" || true)")")"
 fi
-if [ -z "$jdk_home" ] || [ ! -x "$jdk_home/bin/javac" ]; then
+installed_major=""
+if [ -x "$jdk_home/bin/javac" ]; then
+	installed_major="$("$jdk_home/bin/javac" -version 2>/dev/null | sed -E 's/^javac ([0-9]+).*/\\1/')"
+fi
+case "$installed_major" in
+	'' | *[!0-9]*) installed_major=0 ;;
+esac
+if [ -z "$jdk_home" ] || [ ! -x "$jdk_home/bin/javac" ] || [ "$installed_major" -lt 17 ]; then
 	printf 'No JDK 17+ found after installing openjdk-17-jdk-headless\n' >&2
 	exit 1
 fi

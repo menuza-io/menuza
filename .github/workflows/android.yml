@@ -28,6 +28,11 @@ on:
         type: choice
         options: [beta, release]
         default: beta
+      track:
+        description: 'Play track (internal, alpha [closed test], beta, production; defaults by lane)'
+        type: choice
+        options: [default, internal, alpha, beta, production]
+        default: default
       release_status:
         description: 'Play release status (release lane only)'
         type: choice
@@ -172,13 +177,21 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq
           --no-install-recommends imagemagick
 
+      - name: 💎 Install Ruby dependencies
+        working-directory: apps/android
+        run: |
+          bundle config set --local deployment 'true'
+          bundle install
+
       - name: ⚙️ Generate tenant config
         working-directory: apps/android
         env:
           TENANT_SLUG: ${{ matrix.tenant.slug }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run:
           node scripts/generate-tenant.mjs --tenant "$TENANT_SLUG"
-          --build-number "${GITHUB_RUN_NUMBER}"
+          --build-number "$(( (RUN_NUMBER - 1) * 100 + RUN_ATTEMPT ))"
 
       - name: 🔑 Write the upload keystore
         env:
@@ -220,9 +233,9 @@ jobs:
           chmod 600 "$key"
           echo "PLAY_SERVICE_ACCOUNT_JSON_PATH=$key" >> "$GITHUB_ENV"
 
-      - name: 🏗 Build the signed AAB
+      - name: 🏗️ Build the signed AAB & APK
         working-directory: apps/android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
 
       - name: 📏 Size report
         working-directory: apps/android
@@ -232,9 +245,15 @@ jobs:
         working-directory: apps/android
         env:
           LANE: ${{ inputs.lane }}
+          TRACK_INPUT: ${{ inputs.track }}
           PLAY_RELEASE_STATUS: ${{ inputs.release_status }}
         run: |
-          bundle install
+          if [ -n "$TRACK_INPUT" ] && [ "$TRACK_INPUT" != "default" ]; then
+            case "$TRACK_INPUT" in
+              internal|alpha|beta|production) export PLAY_TRACK="$TRACK_INPUT" ;;
+              *) echo "::error::Invalid track: $TRACK_INPUT"; exit 1 ;;
+            esac
+          fi
           # `export`, not $GITHUB_ENV: fastlane runs in this same step.
           export PLAY_PACKAGE_NAME="$(grep -E '^applicationId=' app/tenant.properties | cut -d= -f2)"
           bundle exec fastlane android "$LANE"

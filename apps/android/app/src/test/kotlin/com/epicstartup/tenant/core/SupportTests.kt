@@ -129,6 +129,17 @@ class SiteAddressTest {
 	}
 
 	@Test
+	fun rejectsInvalidOrMaliciousInput() {
+		assertNull(SiteAddress.parse("ftp://acme.epic-startup.com", "epic-startup.com"))
+		assertNull(SiteAddress.parse("https://user:pass@acme.epic-startup.com", "epic-startup.com"))
+		assertNull(SiteAddress.parse("acme\\evil.com", "epic-startup.com"))
+		assertNull(SiteAddress.parse("acme:3010", "epic-startup.com"))
+		assertNull(SiteAddress.parse("acme.localhost:99999", "epic-startup.com"))
+		assertNull(SiteAddress.parse("acme.localhost:abc", "epic-startup.com"))
+		assertNull(SiteAddress.parse("invalid..host", "epic-startup.com"))
+	}
+
+	@Test
 	fun onlySendsHttpsOriginsAsTheAuthHeader() {
 		val https = SiteAddress(slug = "acme", origin = "https://acme.epic-startup.com")
 		assertEquals("https://acme.epic-startup.com", https.authOriginHeader)

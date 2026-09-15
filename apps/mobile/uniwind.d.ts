@@ -1,5 +1,4 @@
 import 'react-native'
-import 'react-native-safe-area-context'
 
 declare module 'react-native' {
 	interface ScrollViewProps {
@@ -36,12 +35,5 @@ declare module 'react-native' {
 
 	interface SectionListProps<ignoredItemT, ignoredSectionT> {
 		contentContainerClassName?: string
-	}
-}
-
-declare module 'react-native-safe-area-context' {
-	interface SafeAreaViewProps {
-		className?: string
-		style?: unknown
 	}
 }
