@@ -1,4 +1,4 @@
-# image-size: Denial of Service via crafted image buffer with zero-valued size field
-CVE-2025-71329
-# image-size: Denial of Service via crafted ICNS image buffer
-CVE-2025-71330
+# Transitive dependencies of Fastlane used only for Android CI release automation
+CVE-2026-85396
+CVE-2025-14762
+CVE-2026-54171
