@@ -337,7 +337,7 @@ function PanelBody() {
 				)}
 			>
 				<div className="flex items-center px-4">
-					<span className="text-md font-medium tracking-normal">
+					<span className="text-base font-medium tracking-normal">
 						<Trans>AI Assistant</Trans>
 					</span>
 				</div>
@@ -510,7 +510,7 @@ export function GlobalAIToggle() {
 			<svg
 				fill="none"
 				xmlns="http://www.w3.org/2000/svg"
-				className="icon shrink-0"
+				className="shrink-0"
 				width="18"
 				height="18"
 				viewBox="0 0 18 18"

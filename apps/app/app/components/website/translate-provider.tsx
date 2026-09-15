@@ -288,7 +288,7 @@ export function TranslateAllButton({
 		<Button
 			variant="ghost"
 			size="xs"
-			className="text-brand hover:bg-brand/10 hover:text-brand"
+			className="text-primary hover:bg-primary/10 hover:text-primary"
 			onClick={() =>
 				requestTranslate(
 					sections.map((section) => ({
@@ -328,7 +328,7 @@ export function TranslateItemsButton({
 			type="button"
 			variant="ghost"
 			size="xs"
-			className="text-brand hover:bg-brand/10 hover:text-brand"
+			className="text-primary hover:bg-primary/10 hover:text-primary"
 			onClick={() => requestTranslateItems(items, onApply)}
 			disabled={isTranslating}
 			title={`Translate all fields to ${activeLocale}`}

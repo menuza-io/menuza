@@ -338,7 +338,7 @@ export const NoteCard = ({
 											<TooltipTrigger
 												render={
 													<button
-														className="bg-background text-background-foreground flex items-center gap-1.5 rounded-bl-md border-b border-l border-black/10 px-2 py-1.5"
+														className="bg-background text-foreground flex items-center gap-1.5 rounded-bl-md border-b border-l border-black/10 px-2 py-1.5"
 														onClick={handleStartEdit}
 													>
 														<Icon name="pencil" className="h-3.5 w-3.5" />
@@ -358,7 +358,7 @@ export const NoteCard = ({
 										<TooltipTrigger
 											render={
 												<button
-													className="bg-background text-background-foreground flex items-center gap-1.5 rounded-tr-[16px] border-b border-l border-black/10 px-2 py-1.5"
+													className="bg-background text-foreground flex items-center gap-1.5 rounded-tr-[16px] border-b border-l border-black/10 px-2 py-1.5"
 													onClick={handleCopyLink}
 													aria-label={copied ? t`Link copied!` : t`Copy link`}
 												>
@@ -385,7 +385,7 @@ export const NoteCard = ({
 											className="h-1.5 w-1.5 rounded-full"
 											style={{ backgroundColor: statusColor }}
 										/>
-										<span className="text-background-foreground text-xs font-medium">
+										<span className="text-foreground text-xs font-medium">
 											{statusName}
 										</span>
 									</div>

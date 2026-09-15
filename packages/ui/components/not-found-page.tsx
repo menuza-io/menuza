@@ -6,7 +6,7 @@ import { Button } from './ui/button'
 export function NotFoundPage() {
 	return (
 		<section className="bg-background flex min-h-screen items-center justify-center overflow-hidden py-16 md:py-24">
-			<div className="max-w-container mx-auto w-full grow px-4 md:px-8">
+			<div className="mx-auto w-full max-w-7xl grow px-4 md:px-8">
 				<div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-16 text-center">
 					<div className="flex flex-col items-center justify-center gap-8 md:gap-12">
 						<div className="z-10 flex flex-col items-center justify-center gap-4 md:gap-6">
@@ -275,13 +275,13 @@ export function NotFoundPage() {
 											<stop offset="1" stopOpacity="0"></stop>
 										</radialGradient>
 										<clipPath id="clip0_4933_393109">
-											<rect width="768" height="768" fill="white"></rect>
+											<rect width="768" height="768"></rect>
 										</clipPath>
 										<clipPath id="clip1_4933_393109">
-											<rect width="768" height="768" fill="white"></rect>
+											<rect width="768" height="768"></rect>
 										</clipPath>
 										<clipPath id="clip2_4933_393109">
-											<rect width="768" height="768" fill="white"></rect>
+											<rect width="768" height="768"></rect>
 										</clipPath>
 									</defs>
 								</svg>
@@ -523,13 +523,13 @@ export function NotFoundPage() {
 											<stop offset="1" stopOpacity="0"></stop>
 										</radialGradient>
 										<clipPath id="clip0_4933_393121">
-											<rect width="480" height="480" fill="white"></rect>
+											<rect width="480" height="480"></rect>
 										</clipPath>
 										<clipPath id="clip1_4933_393121">
-											<rect width="480" height="480" fill="white"></rect>
+											<rect width="480" height="480"></rect>
 										</clipPath>
 										<clipPath id="clip2_4933_393121">
-											<rect width="480" height="480" fill="white"></rect>
+											<rect width="480" height="480"></rect>
 										</clipPath>
 									</defs>
 								</svg>

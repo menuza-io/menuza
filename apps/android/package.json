@@ -1,0 +1,23 @@
+{
+  "name": "android",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Epic Startup tenant Android app (Kotlin, framework-only Views)",
+  "scripts": {
+    "android:build": "bash scripts/gradle.sh assembleDebug",
+    "android:apk": "bash scripts/gradle.sh assembleRelease",
+    "android:bundle": "bash scripts/gradle.sh bundleRelease",
+    "android:test": "bash scripts/gradle.sh testDebugUnitTest",
+    "android:lint": "bash scripts/gradle.sh lintDebug",
+    "android:size": "node scripts/size-report.mjs",
+    "android:tenant": "node scripts/generate-tenant.mjs",
+    "android:tenants": "node scripts/list-tenants.mjs",
+    "android:install": "bash scripts/gradle.sh installDebug",
+    "android:run": "bash scripts/run-app.sh",
+    "android:beta": "bundle exec fastlane android beta",
+    "android:release": "bundle exec fastlane android release"
+  },
+  "engines": {
+    "node": ">=18.20.8"
+  }
+}

@@ -44,6 +44,7 @@ export function UserAvatar({
 			<AvatarFallback
 				className={cn(
 					'bg-muted text-muted-foreground text-xs font-medium',
+					// eslint-disable-next-line shadcn/require-static-classes -- callers may forward a fallback className
 					fallbackClassName,
 				)}
 			>

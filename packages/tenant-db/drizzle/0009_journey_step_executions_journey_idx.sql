@@ -1,0 +1,1 @@
+CREATE INDEX `idx_journey_step_executions_journey` ON `journey_step_executions` (`journey_id`);

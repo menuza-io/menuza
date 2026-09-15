@@ -38,7 +38,7 @@ export function Connections({ data }: ConnectionsProps) {
 							<div className="flex gap-2">
 								<Icon
 									name={connection.providerName as IconName}
-									className="text-background-foreground h-8 w-8"
+									className="text-foreground h-8 w-8"
 								/>
 								<div className="flex flex-col gap-0">
 									<div className="font-medium capitalize">

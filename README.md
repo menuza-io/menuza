@@ -34,6 +34,14 @@ Local HTTPS uses the automatically derived `{brand.slug}.test` domain (for
 example, `app.acme.test:2999`). The configured brand domain remains reserved for
 production and staging deployment URLs.
 
+Brand setup also renames the **native app identity**, so a fresh clone carries
+no trace of the template's brand: the iOS bundle id and Xcode project
+(`EpicTenantApp` → `<Brand>TenantApp`), the Android application id and Kotlin
+package (`com.epicstartup.tenant` → `com.<brandid>.tenant`), the
+xcconfig/Info.plist key prefixes (`EPIC_*` → `<BRAND>_*`), and the
+Keychain/Keystore service names. Per-tenant app configs are generated after
+setup (`npm run ios:tenant -w ios`, `npm run android:tenant -w android`).
+
 ## Repository layout
 
 The root workspace globs are `apps/*` and `packages/*`. Turborepo runs common
@@ -52,6 +60,11 @@ management.
 - `apps/tenant-api` — regional Hono service for customer phone OTP, auth, and
   per-organization tenant databases.
 - `apps/mobile` — Expo and React Native mobile application.
+- `apps/ios` — tenant customer iOS app (SwiftUI + `TenantKit`); white-label and
+  un-branded builds per organization, released through the App Store pipeline.
+- `apps/android` — tenant customer Android app (Kotlin, framework-only views);
+  the same feature set at a fraction of the download size, released through
+  Google Play.
 - `apps/chrome-extension` — Vite-powered Chrome and Firefox extension.
 - `apps/docs` — Mint documentation site for the project docs.
 - `apps/studio` — Drizzle Studio entry point for the local control-plane

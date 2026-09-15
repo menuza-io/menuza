@@ -3,6 +3,10 @@ import { SheetHeader, SheetTitle } from '@repo/ui/sheet'
 import { lazy, Suspense } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
 
 // Lazy load the heavy rich text editor
 const OrgNoteEditor = lazy(() =>
@@ -16,6 +20,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
+
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.CREATE_NOTE_OWN,
+	)
 
 	return { organizationId: organization.id }
 }

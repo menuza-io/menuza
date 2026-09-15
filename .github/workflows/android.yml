@@ -1,0 +1,270 @@
+name: 🤖 Android
+
+# Builds and ships the tenant Android app (apps/android).
+#
+# - Every PR/push: unit tests + a minified release build, plus the size report
+#   (a change that blows apps/android/size-budget.json fails the job).
+# - Manual dispatch: per-tenant Play upload, using the tenant's GitHub
+#   environment for the upload keystore and the Play service account.
+#
+# See apps/android/docs/play-store-release.md.
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['apps/android/**', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['apps/android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description:
+          'Tenant slug from apps/android/tenants, or "all" (release-enabled
+          tenants)'
+        required: true
+        default: all
+      lane:
+        description: 'Release lane'
+        type: choice
+        options: [beta, release]
+        default: beta
+      track:
+        description: 'Play track (internal, alpha [closed test], beta, production; defaults by lane)'
+        type: choice
+        options: [default, internal, alpha, beta, production]
+        default: default
+      release_status:
+        description: 'Play release status (release lane only)'
+        type: choice
+        options: [draft, completed]
+        default: draft
+
+concurrency:
+  group: android-${{ github.ref }}-${{ inputs.tenant || 'ci' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  ANDROID_COMPILE_SDK: '36'
+  ANDROID_BUILD_TOOLS: '36.0.0'
+
+jobs:
+  tenants:
+    name: 📋 Resolve tenant matrix
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 📋 List tenants
+        id: list
+        env:
+          TENANT_INPUT: ${{ inputs.tenant }}
+        run: |
+          if [ "$TENANT_INPUT" != "all" ]; then
+            case "$TENANT_INPUT" in
+              *[!a-z0-9-]* | '')
+                echo "::error::Invalid tenant slug: '$TENANT_INPUT'"
+                exit 1
+                ;;
+            esac
+            only="--only $TENANT_INPUT"
+          fi
+          list=$(node apps/android/scripts/list-tenants.mjs --json --release-only ${only:-})
+          if [ "$list" = "[]" ]; then
+            echo "::error::No release-enabled tenant matched '$TENANT_INPUT'. Add \"release\": true to its config."
+            exit 1
+          fi
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "Releasing: $list"
+
+  test:
+    name: 🧪 Tests + release build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ☕️ JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 🤖 Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages:
+            'platform-tools platforms;android-${{ env.ANDROID_COMPILE_SDK }}
+            build-tools;${{ env.ANDROID_BUILD_TOOLS }}'
+
+      - name: 🏗 Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 🖼 ImageMagick (icon composition)
+        run:
+          sudo apt-get update -qq && sudo apt-get install -y -qq
+          --no-install-recommends imagemagick
+
+      - name: ⚙️ Generate the CI tenant config
+        working-directory: apps/android
+        run:
+          node scripts/generate-tenant.mjs --tenant ci --no-api --build-number
+          "${GITHUB_RUN_NUMBER}"
+
+      - name: 🧪 Unit tests
+        working-directory: apps/android
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: 🏗 Release APK + AAB (R8 + resource shrinking)
+        working-directory: apps/android
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: 📏 Size report
+        working-directory: apps/android
+        run: node scripts/size-report.mjs
+
+      - name: 📦 Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-ci-${{ github.run_number }}
+          path: |
+            apps/android/app/build/outputs/apk/release/*.apk
+            apps/android/app/build/outputs/bundle/release/*.aab
+            apps/android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+  release:
+    name: 🚀 Release to Google Play
+    needs: [tenants, test]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    environment: ${{ matrix.tenant.environment }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        tenant: ${{ fromJSON(needs.tenants.outputs.list) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ☕️ JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 🤖 Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages:
+            'platform-tools platforms;android-${{ env.ANDROID_COMPILE_SDK }}
+            build-tools;${{ env.ANDROID_BUILD_TOOLS }}'
+
+      - name: 🏗 Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 🖼 ImageMagick (tenant icon)
+        run:
+          sudo apt-get update -qq && sudo apt-get install -y -qq
+          --no-install-recommends imagemagick
+
+      - name: 💎 Install Ruby dependencies
+        working-directory: apps/android
+        run: |
+          bundle config set --local deployment 'true'
+          bundle install
+
+      - name: ⚙️ Generate tenant config
+        working-directory: apps/android
+        env:
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run:
+          node scripts/generate-tenant.mjs --tenant "$TENANT_SLUG"
+          --build-number "$(( (RUN_NUMBER - 1) * 100 + RUN_ATTEMPT ))"
+
+      - name: 🔑 Write the upload keystore
+        env:
+          PLAY_KEYSTORE_BASE64: ${{ secrets.PLAY_KEYSTORE_BASE64 }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEY_ALIAS: ${{ secrets.PLAY_KEY_ALIAS }}
+          PLAY_KEY_PASSWORD: ${{ secrets.PLAY_KEY_PASSWORD }}
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+        run: |
+          missing=""
+          for name in PLAY_KEYSTORE_BASE64 PLAY_KEYSTORE_PASSWORD PLAY_KEY_ALIAS PLAY_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing in the tenant-$TENANT_SLUG environment:$missing"
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/upload-${TENANT_SLUG}.jks"
+          printf '%s' "$PLAY_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          {
+            echo "storeFile=$keystore"
+            echo "storePassword=$PLAY_KEYSTORE_PASSWORD"
+            echo "keyAlias=$PLAY_KEY_ALIAS"
+            echo "keyPassword=$PLAY_KEY_PASSWORD"
+          } > apps/android/app/keystore.properties
+
+      - name: 🔑 Write the Play service account key
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          TENANT_SLUG: ${{ matrix.tenant.slug }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::Missing PLAY_SERVICE_ACCOUNT_JSON in the tenant-$TENANT_SLUG environment."
+            exit 1
+          fi
+          key="$RUNNER_TEMP/play-${TENANT_SLUG}.json"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" | base64 --decode > "$key"
+          chmod 600 "$key"
+          echo "PLAY_SERVICE_ACCOUNT_JSON_PATH=$key" >> "$GITHUB_ENV"
+
+      - name: 🏗️ Build the signed AAB & APK
+        working-directory: apps/android
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: 📏 Size report
+        working-directory: apps/android
+        run: node scripts/size-report.mjs
+
+      - name: 🚀 Fastlane release lane
+        working-directory: apps/android
+        env:
+          LANE: ${{ inputs.lane }}
+          TRACK_INPUT: ${{ inputs.track }}
+          PLAY_RELEASE_STATUS: ${{ inputs.release_status }}
+        run: |
+          if [ -n "$TRACK_INPUT" ] && [ "$TRACK_INPUT" != "default" ]; then
+            case "$TRACK_INPUT" in
+              internal|alpha|beta|production) export PLAY_TRACK="$TRACK_INPUT" ;;
+              *) echo "::error::Invalid track: $TRACK_INPUT"; exit 1 ;;
+            esac
+          fi
+          # `export`, not $GITHUB_ENV: fastlane runs in this same step.
+          export PLAY_PACKAGE_NAME="$(grep -E '^applicationId=' app/tenant.properties | cut -d= -f2)"
+          bundle exec fastlane android "$LANE"
+
+      - name: 📦 Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.tenant.slug }}-${{ github.run_number }}
+          path: |
+            apps/android/app/build/outputs/bundle/release/*.aab
+            apps/android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: ignore
+          retention-days: 14

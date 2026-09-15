@@ -437,6 +437,26 @@ authRoutes.post(
 		if ('error' in loaded) return loaded.error
 		const { organization, db } = loaded
 
+		const phoneLimit = rateLimitByKey(
+			'verify-phone',
+			JSON.stringify([organization.id, phone]),
+			{
+				maxRequests: 5,
+				windowMs: 10 * 60 * 1000,
+			},
+		)
+		if (phoneLimit.limited) {
+			return c.json(
+				{
+					error: 'rate_limit_exceeded',
+					error_description:
+						'Too many verification attempts. Please request a new code.',
+					retry_after: phoneLimit.retryAfter,
+				},
+				429,
+			)
+		}
+
 		const customer = await db
 			.select()
 			.from(customers)

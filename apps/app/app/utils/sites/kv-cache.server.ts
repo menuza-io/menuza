@@ -69,10 +69,16 @@ export async function getCachedSiteData(key: string) {
 	}
 }
 
-export async function setCachedSiteData(key: string, data: unknown) {
+export async function setCachedSiteData(
+	key: string,
+	data: unknown,
+	ttlSeconds = 60 * 60 * 24, // 24 hours default expiration
+) {
 	if (!siteDataKv) return
 	try {
-		await siteDataKv.put(key, JSON.stringify(data))
+		await siteDataKv.put(key, JSON.stringify(data), {
+			expirationTtl: ttlSeconds,
+		})
 	} catch {}
 }
 

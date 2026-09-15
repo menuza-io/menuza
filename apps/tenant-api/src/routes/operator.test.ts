@@ -88,6 +88,9 @@ describe('Operator Routes', () => {
 		expect(body.total).toBe(3)
 		expect(body.page).toBe(1)
 		expect(body.limit).toBe(2)
+		expect(body.customers[0]).not.toHaveProperty('phoneVerificationCode')
+		expect(body.customers[0]).not.toHaveProperty('refreshTokenHash')
+		expect(body.customers[0]).not.toHaveProperty('stripeCustomerId')
 	})
 
 	it('updates customer name and email', async () => {
@@ -112,6 +115,9 @@ describe('Operator Routes', () => {
 		const body = await res.json()
 		expect(body.customer.name).toBe('New Name')
 		expect(body.customer.email).toBe('customer@example.com')
+		expect(body.customer).not.toHaveProperty('phoneVerificationCode')
+		expect(body.customer).not.toHaveProperty('refreshTokenHash')
+		expect(body.customer).not.toHaveProperty('stripeCustomerId')
 	})
 
 	it('computes marketing metrics via SQL aggregates accurately', async () => {

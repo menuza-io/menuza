@@ -7,6 +7,13 @@ interface RateLimitConfig {
 	maxRequests: number
 }
 
+function isProduction(): boolean {
+	return (
+		(process.env.NODE_ENV ?? (ENV as { NODE_ENV?: string }).NODE_ENV) ===
+		'production'
+	)
+}
+
 const limiters = new Map<string, LRUCache<string, number[]>>()
 
 function getLimiter(name: string, config: RateLimitConfig) {
@@ -34,7 +41,7 @@ export function rateLimit(name: string, config: RateLimitConfig) {
 	const cache = getLimiter(name, config)
 
 	return async (c: Context, next: Next) => {
-		if (ENV.NODE_ENV !== 'production') {
+		if (!isProduction()) {
 			return await next()
 		}
 
@@ -85,14 +92,14 @@ export function rateLimit(name: string, config: RateLimitConfig) {
 /**
  * Imperative per-key rate limiter for use inside handlers (e.g. per-phone).
  * Returns { limited: true, retryAfter } if the key has exceeded maxRequests
- * within windowMs, otherwise records the request and returns { limited: false }.
+ * within windowMs, otherwise records the request and returns { limited: false } warmer.
  */
 export function rateLimitByKey(
 	name: string,
 	key: string,
 	config: RateLimitConfig,
 ): { limited: true; retryAfter: number } | { limited: false } {
-	if (ENV.NODE_ENV !== 'production') {
+	if (!isProduction()) {
 		return { limited: false }
 	}
 
@@ -129,7 +136,7 @@ let globalSendTimestamps: number[] = []
 
 export function checkGlobalSendCap():
 	{ limited: true; retryAfter: number } | { limited: false } {
-	if (ENV.NODE_ENV !== 'production') {
+	if (!isProduction()) {
 		return { limited: false }
 	}
 

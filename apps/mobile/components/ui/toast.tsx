@@ -86,6 +86,7 @@ const Toast: React.FC<ToastProps> = ({
 
 	return (
 		<Animated.View
+			// eslint-disable-next-line shadcn/no-inline-styles -- React Native animated values can only be passed through the style prop
 			style={[
 				styles.container,
 				position === 'top' ? styles.topPosition : styles.bottomPosition,

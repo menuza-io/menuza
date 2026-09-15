@@ -135,7 +135,7 @@ export function PasskeyManager({
 					<div className="bg-muted mb-3 flex h-16 w-16 items-center justify-center rounded-full">
 						<Icon name="passkey" className="text-muted-foreground h-8 w-8" />
 					</div>
-					<p className="text-muted-foreground text-md">
+					<p className="text-muted-foreground text-base">
 						<Trans>No passkeys registered yet</Trans>
 					</p>
 				</div>

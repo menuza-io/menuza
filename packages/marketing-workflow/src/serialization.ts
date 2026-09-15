@@ -1,5 +1,4 @@
 import {
-	type ActionEmailNodeData,
 	type WorkflowGraph,
 	type WorkflowNode,
 	type WorkflowEdge,
