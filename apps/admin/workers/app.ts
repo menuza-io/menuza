@@ -22,6 +22,9 @@ let requestHandler: RequestHandler | undefined
 let requestHandlerPromise: Promise<RequestHandler> | undefined
 
 function applyWorkerEnv(env: Env) {
+	// Cloudflare bindings are the production source of truth. Keep the Varlock
+	// proxy and process.env aligned for shared packages that read ENV.* while
+	// avoiding any build-time environment snapshot in the Worker bundle.
 	const existingConfig = (globalThis as any).__varlockLoadedEnv?.config ?? {}
 	const newConfig: Record<string, { value: unknown }> = { ...existingConfig }
 	for (const [key, value] of Object.entries(env)) {
@@ -48,8 +51,8 @@ export default {
 		applyWorkerEnv(env)
 		requestHandlerPromise ??= import('virtual:react-router/server-build').then(
 			(build) => {
-				// The server build initializes Varlock's build-time fallback graph.
-				// Reapply bindings so runtime values (notably BASE_URL) win.
+				// The server build initializes Varlock before route modules load.
+				// Reapply bindings after that bootstrap so runtime values still win.
 				applyWorkerEnv(env)
 				return createRequestHandler(build, import.meta.env.MODE)
 			},

@@ -1,5 +1,4 @@
 import { Trans } from '@lingui/macro'
-import { providerNames } from '@repo/auth/constants'
 import {
 	Card,
 	CardContent,
@@ -8,7 +7,10 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Connections } from '#app/components/settings/connections.tsx'
-import { ProviderConnectionForm } from '#app/utils/connections.tsx'
+import {
+	ProviderConnectionForm,
+	useConfiguredProviders,
+} from '#app/utils/connections.tsx'
 
 export const disconnectProviderActionIntent = 'disconnect-provider'
 
@@ -28,6 +30,8 @@ interface ConnectionsCardProps {
 }
 
 export function ConnectionsCard({ connections }: ConnectionsCardProps) {
+	const configuredProviders = useConfiguredProviders()
+
 	return (
 		<Card className="w-full">
 			<CardHeader>
@@ -44,7 +48,7 @@ export function ConnectionsCard({ connections }: ConnectionsCardProps) {
 					<h3 className="text-center text-sm font-medium">
 						<Trans>Add more connections</Trans>
 					</h3>
-					{providerNames.map((providerName) => (
+					{configuredProviders.map((providerName) => (
 						<ProviderConnectionForm
 							key={providerName}
 							type="Connect"

@@ -3,7 +3,6 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { Trans, t } from '@lingui/macro'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { verifySessionStorage, requireAnonymous } from '@repo/auth'
-import { providerNames } from '@repo/auth/constants'
 import { useIsPending } from '@repo/common'
 import { brand, getPageTitle } from '@repo/config/brand'
 import { db, eq, User } from '@repo/database'
@@ -29,7 +28,10 @@ import {
 	ErrorList,
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
-import { ProviderConnectionForm } from '#app/utils/connections.tsx'
+import {
+	ProviderConnectionForm,
+	useConfiguredProviders,
+} from '#app/utils/connections.tsx'
 import { type Route } from './+types/signup.ts'
 import { onboardingInviteTokenSessionKey } from './onboarding'
 import { prepareVerification } from './verify.server.tsx'
@@ -156,6 +158,7 @@ export default function SignupRoute({
 	const [searchParams] = useSearchParams()
 	const redirectTo = searchParams.get('redirectTo')
 	const inviteToken = loaderData?.inviteToken
+	const configuredProviders = useConfiguredProviders()
 
 	const [form, fields] = useForm({
 		id: 'signup-form',
@@ -189,23 +192,27 @@ export default function SignupRoute({
 			<CardContent>
 				<div className="grid gap-6">
 					{/* Social Signup Buttons */}
-					<div className="flex flex-col gap-4">
-						{providerNames.map((providerName) => (
-							<ProviderConnectionForm
-								key={providerName}
-								type="Signup"
-								providerName={providerName}
-								redirectTo={redirectTo}
-							/>
-						))}
-					</div>
+					{configuredProviders.length > 0 ? (
+						<>
+							<div className="flex flex-col gap-4">
+								{configuredProviders.map((providerName) => (
+									<ProviderConnectionForm
+										key={providerName}
+										type="Signup"
+										providerName={providerName}
+										redirectTo={redirectTo}
+									/>
+								))}
+							</div>
 
-					{/* Divider */}
-					<div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-						<span className="bg-card text-muted-foreground relative z-10 px-2">
-							<Trans>Or continue with</Trans>
-						</span>
-					</div>
+							{/* Divider */}
+							<div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+								<span className="bg-card text-muted-foreground relative z-10 px-2">
+									<Trans>Or continue with</Trans>
+								</span>
+							</div>
+						</>
+					) : null}
 
 					{/* Email Signup Form */}
 					<Form method="POST" {...getFormProps(form)}>
