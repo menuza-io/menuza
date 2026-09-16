@@ -1,5 +1,6 @@
 import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
+import { createId } from '@paralleldrive/cuid2'
 import { logNoteActivity } from '@repo/audit'
 import {
 	requireUserWithOrganizationPermission,
@@ -78,6 +79,48 @@ const CommentImageSchema = z
 	.instanceof(File)
 	.refine((file) => file.size > 0 && file.size <= MAX_COMMENT_IMAGE_SIZE)
 	.refine((file) => COMMENT_IMAGE_TYPES.has(file.type))
+
+/**
+ * Deletes the storage objects uploaded for a comment that could not be saved,
+ * together with the media rows registered for them. Called when creating the
+ * comment fails after one or more uploads succeeded, so a failed comment never
+ * leaves orphaned objects or library entries behind.
+ */
+async function removeUploadedCommentImages(
+	objectKeys: string[],
+	organizationId: string,
+) {
+	if (objectKeys.length === 0) return
+
+	try {
+		await db
+			.delete(OrganizationMediaAsset)
+			.where(
+				and(
+					eq(OrganizationMediaAsset.organizationId, organizationId),
+					inArray(OrganizationMediaAsset.objectKey, objectKeys),
+				),
+			)
+	} catch (error) {
+		console.error(
+			'Failed to remove media rows for a failed comment upload:',
+			error,
+		)
+	}
+
+	const { deleteOrganizationStorageObject } =
+		await import('#app/utils/storage.server.ts')
+	for (const objectKey of objectKeys) {
+		try {
+			await deleteOrganizationStorageObject(objectKey, organizationId)
+		} catch (error) {
+			console.error(
+				`Failed to clean up uploaded comment image ${objectKey}:`,
+				error,
+			)
+		}
+	}
+}
 
 export async function userHasOrgAccess(userId: string, organizationId: string) {
 	await requireUserWithOrganizationPermission(
@@ -809,52 +852,67 @@ export async function handleAddCommentIntent({
 	}
 
 	try {
-		const [comment] = await db
-			.insert(NoteComment)
-			.values({
-				content: sanitizedContent,
-				noteId,
-				userId,
-				parentId,
-			})
-			.returning({ id: NoteComment.id })
-		if (!comment) throw new Error('Failed to create comment')
+		// Uploads happen before the transaction so the SQLite write lock is not
+		// held while we talk to storage. Every object we upload (and the media
+		// row registered for it) is tracked so it can be cleaned up when a later
+		// step fails.
+		const commentId = createId()
+		const uploadedObjectKeys: string[] = []
+		const uploadedImages: Array<{
+			commentId: string
+			objectKey: string
+			altText: string | null
+		}> = []
 
 		if (imageFiles.length > 0) {
 			const { uploadCommentImage } =
 				await import('#app/utils/storage.server.ts')
-			const uploadedImages = await Promise.all(
-				imageFiles.map((imageFile) =>
-					uploadCommentImage(
-						userId,
-						comment.id,
-						imageFile,
-						note.organizationId,
-					).then((objectKey) => ({
-						commentId: comment.id,
-						objectKey,
-						altText: null,
-					})),
-				),
-			)
-			await db.insert(NoteCommentImage).values(uploadedImages)
+			for (const imageFile of imageFiles) {
+				const objectKey = await uploadCommentImage(
+					userId,
+					commentId,
+					imageFile,
+					note.organizationId,
+				)
+				uploadedObjectKeys.push(objectKey)
+				uploadedImages.push({ commentId, objectKey, altText: null })
+			}
 		}
 
-		if (libraryAssets.length > 0) {
-			await db.insert(NoteCommentImage).values(
-				libraryAssets.map((asset) => ({
-					commentId: comment.id,
-					objectKey: asset.objectKey,
-					altText: asset.altText,
-				})),
-			)
+		try {
+			await db.transaction(async (tx) => {
+				await tx.insert(NoteComment).values({
+					id: commentId,
+					content: sanitizedContent,
+					noteId,
+					userId,
+					parentId,
+				})
+
+				if (uploadedImages.length > 0) {
+					await tx.insert(NoteCommentImage).values(uploadedImages)
+				}
+
+				if (libraryAssets.length > 0) {
+					await tx.insert(NoteCommentImage).values(
+						libraryAssets.map((asset) => ({
+							commentId,
+							objectKey: asset.objectKey,
+							altText: asset.altText,
+						})),
+					)
+				}
+			})
+		} catch (error) {
+			await removeUploadedCommentImages(uploadedObjectKeys, note.organizationId)
+			throw error
 		}
 
 		await logNoteActivity({
 			noteId,
 			userId,
 			action: 'comment_added',
-			commentId: comment.id,
+			commentId,
 			metadata: {
 				parentId,
 				hasImages: imageFiles.length > 0 || libraryAssets.length > 0,
@@ -891,7 +949,7 @@ export async function handleAddCommentIntent({
 
 			await notifyCommentMentions({
 				commentContent: sanitizedContent,
-				commentId: comment.id,
+				commentId,
 				noteId,
 				noteTitle,
 				noteOwnerId: noteWithTitle.createdById,
@@ -905,7 +963,7 @@ export async function handleAddCommentIntent({
 				noteId,
 				noteTitle,
 				noteOwnerId: noteWithTitle.createdById,
-				commentId: comment.id,
+				commentId,
 				commenterUserId: userId,
 				commenterName,
 				commentContent: sanitizedContent,

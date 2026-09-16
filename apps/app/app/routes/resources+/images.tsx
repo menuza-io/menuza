@@ -11,6 +11,7 @@ import {
 } from '@repo/database'
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import { isValidRasterBytes } from '@repo/storage'
+import { drainOnCancel } from '#app/utils/drain-on-cancel.server.ts'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
@@ -118,6 +119,7 @@ async function streamStoredVideo(
 	request: Request,
 	objectKey: string,
 	organizationId: string | null,
+	cacheable: boolean,
 ) {
 	const method = request.method === 'HEAD' ? 'HEAD' : 'GET'
 	const { url: storageUrl, headers: signedHeaders } =
@@ -140,7 +142,7 @@ async function streamStoredVideo(
 		headers: upstreamHeaders,
 	})
 
-	const responseHeaders = getImageResponseHeaders()
+	const responseHeaders = getImageResponseHeaders(cacheable)
 	for (const headerName of VIDEO_PASSTHROUGH_HEADERS) {
 		const value = upstream.headers.get(headerName)
 		if (value) responseHeaders.set(headerName, value)
@@ -160,11 +162,17 @@ async function streamStoredVideo(
 	})
 }
 
-function getImageResponseHeaders(isExternal = false) {
+/**
+ * Media that is not public (membership-authorized library assets, signed
+ * capability URLs, stored videos, external images) must not be stored by shared
+ * caches, otherwise a cached copy can be replayed without re-running
+ * authorization or after the signature expired.
+ */
+function getImageResponseHeaders(cacheable: boolean) {
 	const headers = new Headers()
 	headers.set(
 		'Cache-Control',
-		isExternal ? 'no-store' : 'public, max-age=31536000, immutable',
+		cacheable ? 'public, max-age=31536000, immutable' : 'no-store',
 	)
 	headers.set('Access-Control-Allow-Origin', '*')
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
@@ -209,7 +217,7 @@ async function fetchExternalImage(
 		throw new Response('Unsupported Media Type', { status: 415 })
 	}
 
-	const headers = getImageResponseHeaders(true)
+	const headers = getImageResponseHeaders(false)
 	headers.set('Content-Type', mimeType)
 
 	return new Response(arrayBuffer, {
@@ -249,6 +257,7 @@ async function getCloudflareImageResponse(
 	searchParams: URLSearchParams,
 	objectKey: string | null,
 	organizationId: string | null,
+	cacheable: boolean,
 ) {
 	const params = parseImageParams(searchParams)
 	const upstream = await fetchImageSource(
@@ -269,7 +278,7 @@ async function getCloudflareImageResponse(
 	if (!upstream.ok) {
 		return new Response(upstream.statusText, {
 			status: upstream.status,
-			headers: getImageResponseHeaders(isExternal),
+			headers: getImageResponseHeaders(cacheable && !isExternal),
 		})
 	}
 
@@ -290,7 +299,7 @@ async function getCloudflareImageResponse(
 		if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
 			throw new Response('Unsupported Media Type', { status: 415 })
 		}
-		const headers = getImageResponseHeaders(true)
+		const headers = getImageResponseHeaders(false)
 		headers.set('Content-Type', mimeType)
 		return new Response(arrayBuffer, { headers, status: 200 })
 	}
@@ -322,7 +331,7 @@ async function getCloudflareImageResponse(
 			) {
 				throw new Response('Unsupported Media Type', { status: 415 })
 			}
-			const headers = getImageResponseHeaders(isExternal)
+			const headers = getImageResponseHeaders(cacheable && !isExternal)
 			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
@@ -333,7 +342,7 @@ async function getCloudflareImageResponse(
 	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
 		throw new Response('Unsupported Media Type', { status: 415 })
 	}
-	const headers = getImageResponseHeaders(isExternal)
+	const headers = getImageResponseHeaders(cacheable && !isExternal)
 	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
@@ -372,6 +381,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 	let objectKey = searchParams.get('objectKey')
 	let organizationId = searchParams.get('organizationId')
 	const mediaId = searchParams.get('mediaId')
+	// Only assets we know are public may be cached by shared caches. Assets
+	// resolved through a `mediaId` become non-cacheable as soon as they are not
+	// public (membership-authorized or signed capability URLs).
+	let cacheable = true
 
 	if (mediaId) {
 		invariantResponse(
@@ -399,6 +412,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			asset.source === 'site-icon' ||
 			asset.source === 'website-seo' ||
 			asset.source === 'website-asset'
+		cacheable = isPublicMedia
 
 		const sig = searchParams.get('sig')
 		const hasValidSignature = verifyMediaSignature(
@@ -440,7 +454,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			})
 		}
 		if (isVideoObjectKey(objectKey)) {
-			return streamStoredVideo(request, objectKey, organizationId)
+			return streamStoredVideo(request, objectKey, organizationId, cacheable)
 		}
 	}
 
@@ -460,6 +474,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			searchParams,
 			objectKey,
 			organizationId,
+			cacheable,
 		)
 	}
 
@@ -471,9 +486,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		URL.canParse(src) &&
 		new URL(src).origin !== url.origin,
 	)
-	const headers = getImageResponseHeaders(isExternal)
+	const headers = getImageResponseHeaders(cacheable && !isExternal)
 
-	return getImgResponse(request, {
+	const imgResponse = await getImgResponse(request, {
 		headers,
 		allowlistedOrigins: [
 			getDomainUrl(request),
@@ -518,5 +533,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 				path: './public' + normalizedSrc,
 			}
 		},
+	})
+
+	if (!imgResponse.body) return imgResponse
+
+	// openimg streams the transformed image through a Node `PassThrough`
+	// (`Readable.toWeb`); draining on cancel keeps a client abort from killing
+	// the server. See `drainOnCancel`.
+	return new Response(drainOnCancel(imgResponse.body), {
+		status: imgResponse.status,
+		statusText: imgResponse.statusText,
+		headers: imgResponse.headers,
 	})
 }

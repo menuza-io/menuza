@@ -28,7 +28,19 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), note.`organizationId`, upload.`objectKey`,
-	'organization', COALESCE(upload.`mimeType`, 'application/octet-stream'), upload.`fileSize`,
+	'organization',
+	CASE
+		WHEN lower(upload.`mimeType`) LIKE 'image/%' THEN lower(upload.`mimeType`)
+		WHEN lower(upload.`objectKey`) LIKE '%.png' THEN 'image/png'
+		WHEN lower(upload.`objectKey`) LIKE '%.jpg' OR lower(upload.`objectKey`) LIKE '%.jpeg' THEN 'image/jpeg'
+		WHEN lower(upload.`objectKey`) LIKE '%.gif' THEN 'image/gif'
+		WHEN lower(upload.`objectKey`) LIKE '%.webp' THEN 'image/webp'
+		WHEN lower(upload.`objectKey`) LIKE '%.avif' THEN 'image/avif'
+		-- SQLite cannot sniff image bytes, so keys with no recognizable image
+		-- extension keep the legacy value rather than guessing a format.
+		ELSE 'application/octet-stream'
+	END,
+	upload.`fileSize`,
 	upload.`altText`, 'note', note.`createdById`, upload.`createdAt`, upload.`updatedAt`
 FROM `OrganizationNoteUpload` AS upload
 INNER JOIN `OrganizationNote` AS note ON note.`id` = upload.`noteId`
@@ -39,7 +51,16 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), note.`organizationId`, image.`objectKey`,
-	'organization', 'application/octet-stream', image.`altText`, 'comment', comment.`userId`,
+	'organization',
+	CASE
+		WHEN lower(image.`objectKey`) LIKE '%.png' THEN 'image/png'
+		WHEN lower(image.`objectKey`) LIKE '%.jpg' OR lower(image.`objectKey`) LIKE '%.jpeg' THEN 'image/jpeg'
+		WHEN lower(image.`objectKey`) LIKE '%.gif' THEN 'image/gif'
+		WHEN lower(image.`objectKey`) LIKE '%.webp' THEN 'image/webp'
+		WHEN lower(image.`objectKey`) LIKE '%.avif' THEN 'image/avif'
+		ELSE 'application/octet-stream'
+	END,
+	image.`altText`, 'comment', comment.`userId`,
 	image.`createdAt`, image.`updatedAt`
 FROM `NoteCommentImage` AS image
 INNER JOIN `NoteComment` AS comment ON comment.`id` = image.`commentId`
@@ -50,7 +71,16 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), image.`organizationId`, image.`objectKey`,
-	'platform', 'application/octet-stream', image.`altText`, 'organization-logo',
+	'platform',
+	CASE
+		WHEN lower(image.`objectKey`) LIKE '%.png' THEN 'image/png'
+		WHEN lower(image.`objectKey`) LIKE '%.jpg' OR lower(image.`objectKey`) LIKE '%.jpeg' THEN 'image/jpeg'
+		WHEN lower(image.`objectKey`) LIKE '%.gif' THEN 'image/gif'
+		WHEN lower(image.`objectKey`) LIKE '%.webp' THEN 'image/webp'
+		WHEN lower(image.`objectKey`) LIKE '%.avif' THEN 'image/avif'
+		ELSE 'application/octet-stream'
+	END,
+	image.`altText`, 'organization-logo',
 	image.`createdAt`, image.`updatedAt`
 FROM `OrganizationImage` AS image;--> statement-breakpoint
 INSERT OR IGNORE INTO `OrganizationMediaAsset` (
