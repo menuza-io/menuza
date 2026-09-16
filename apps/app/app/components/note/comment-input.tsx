@@ -10,6 +10,11 @@ import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import React, { useEffect, useState } from 'react'
 
+import {
+	MediaLibraryPicker,
+	type MediaLibraryAsset,
+} from '#app/components/media-library/media-library-picker.tsx'
+
 import { CommentImagePreview } from './comment-image-preview'
 import { CommentImageUpload } from './comment-image-upload'
 import { EmojiPickerButton } from './emoji-picker-button'
@@ -24,7 +29,11 @@ export interface MentionUser {
 
 interface CommentInputProps {
 	users: MentionUser[]
-	onSubmit: (comment: string, images?: File[]) => void
+	onSubmit: (
+		comment: string,
+		images?: File[],
+		libraryAssetIds?: string[],
+	) => void
 	value: string
 	className?: string
 	variant?: 'default' | 'inline' | 'edit'
@@ -32,6 +41,7 @@ interface CommentInputProps {
 	onCancel?: () => void
 	placeholder?: string
 	disabled?: boolean
+	orgSlug?: string
 }
 
 const editorChromeClassName =
@@ -47,11 +57,15 @@ const CommentInput: React.FC<CommentInputProps> = ({
 	users,
 	placeholder,
 	disabled = false,
+	orgSlug,
 }) => {
 	const { _ } = useLingui()
 	const [initialValue] = useState(value)
 	const [content, setContent] = useState(value)
 	const [selectedImages, setSelectedImages] = useState<File[]>([])
+	const [selectedLibraryAssets, setSelectedLibraryAssets] = useState<
+		MediaLibraryAsset[]
+	>([])
 	const [isFocused, setIsFocused] = useState(false)
 	const isInline = variant === 'inline'
 	const isEdit = variant === 'edit'
@@ -115,18 +129,34 @@ const CommentInput: React.FC<CommentInputProps> = ({
 	}, [editor, isEdit])
 
 	const handleSubmit = () => {
-		if ((content.trim() || selectedImages.length > 0) && !disabled) {
-			onSubmit(content, isEdit ? undefined : selectedImages)
+		if (
+			(content.trim() ||
+				selectedImages.length > 0 ||
+				selectedLibraryAssets.length > 0) &&
+			!disabled
+		) {
+			onSubmit(
+				content,
+				isEdit ? undefined : selectedImages,
+				isEdit ? undefined : selectedLibraryAssets.map((a) => a.id),
+			)
 			if (!isEdit) {
 				editor?.commands.clearContent()
 				setContent('')
 				setSelectedImages([])
+				setSelectedLibraryAssets([])
 			}
 		}
 	}
 
 	const handleImagesSelected = (files: File[]) => {
-		setSelectedImages((prev) => [...prev, ...files].slice(0, 3))
+		setSelectedImages((prev) => {
+			const remaining = Math.max(
+				0,
+				3 - selectedLibraryAssets.length - prev.length,
+			)
+			return [...prev, ...files.slice(0, remaining)]
+		})
 	}
 
 	const handleRemoveImage = (index: number) => {
@@ -177,10 +207,32 @@ const CommentInput: React.FC<CommentInputProps> = ({
 					<>
 						<CommentImageUpload
 							onImagesSelected={handleImagesSelected}
-							maxImages={3 - selectedImages.length}
-							disabled={disabled || selectedImages.length >= 3}
+							maxImages={
+								3 - selectedImages.length - selectedLibraryAssets.length
+							}
+							disabled={
+								disabled ||
+								selectedImages.length + selectedLibraryAssets.length >= 3
+							}
 							className="text-muted-foreground"
 						/>
+						{orgSlug ? (
+							<MediaLibraryPicker
+								orgSlug={orgSlug}
+								onSelect={(asset) => {
+									setSelectedLibraryAssets((prev) =>
+										[...prev, asset].slice(0, 3 - selectedImages.length),
+									)
+								}}
+								disabled={
+									disabled ||
+									selectedImages.length + selectedLibraryAssets.length >= 3
+								}
+								iconOnly
+								variant="ghost"
+								className="text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8 p-0"
+							/>
+						) : null}
 						<EmojiPickerButton
 							onEmojiSelect={handleEmojiSelect}
 							disabled={disabled}
@@ -212,7 +264,10 @@ const CommentInput: React.FC<CommentInputProps> = ({
 				<Button
 					size="sm"
 					disabled={
-						(!content.trim() && selectedImages.length === 0) || disabled
+						(!content.trim() &&
+							selectedImages.length === 0 &&
+							selectedLibraryAssets.length === 0) ||
+						disabled
 					}
 					onClick={handleSubmit}
 					className="px-5"
@@ -259,16 +314,71 @@ const CommentInput: React.FC<CommentInputProps> = ({
 					</div>
 				) : null}
 
+				{selectedLibraryAssets.length > 0 ? (
+					<div className="mt-2 flex flex-wrap gap-2">
+						{selectedLibraryAssets.map((asset, index) => (
+							<div key={asset.id} className="group relative">
+								<div className="bg-muted h-16 w-16 overflow-hidden rounded-lg border">
+									<img
+										src={asset.url}
+										alt={asset.altText ?? ''}
+										className="h-full w-full object-cover"
+										width={64}
+										height={64}
+									/>
+								</div>
+								<Button
+									type="button"
+									variant="destructive"
+									size="sm"
+									className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+									onClick={() =>
+										setSelectedLibraryAssets((prev) =>
+											prev.filter((ignoredA, i) => i !== index),
+										)
+									}
+									aria-label={_(msg`Remove image`)}
+								>
+									<Icon name="x" className="text-foreground h-3 w-3" />
+								</Button>
+							</div>
+						))}
+					</div>
+				) : null}
+
 				<div
 					className="mt-2 flex items-center justify-between gap-2"
 					onMouseDown={preventToolbarBlur}
 				>
-					<div className="flex items-center">
+					<div className="flex min-w-0 items-center gap-0.5">
 						<CommentImageUpload
 							onImagesSelected={handleImagesSelected}
-							maxImages={3 - selectedImages.length}
-							disabled={disabled || selectedImages.length >= 3}
+							maxImages={
+								3 - selectedImages.length - selectedLibraryAssets.length
+							}
+							disabled={
+								disabled ||
+								selectedImages.length + selectedLibraryAssets.length >= 3
+							}
+							className="text-muted-foreground"
 						/>
+						{orgSlug ? (
+							<MediaLibraryPicker
+								orgSlug={orgSlug}
+								onSelect={(asset) => {
+									setSelectedLibraryAssets((prev) =>
+										[...prev, asset].slice(0, 3 - selectedImages.length),
+									)
+								}}
+								disabled={
+									disabled ||
+									selectedImages.length + selectedLibraryAssets.length >= 3
+								}
+								iconOnly
+								variant="ghost"
+								className="text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8 p-0"
+							/>
+						) : null}
 						<EmojiPickerButton
 							onEmojiSelect={handleEmojiSelect}
 							disabled={disabled}
@@ -277,7 +387,10 @@ const CommentInput: React.FC<CommentInputProps> = ({
 					<Button
 						size="sm"
 						disabled={
-							(!content.trim() && selectedImages.length === 0) || disabled
+							(!content.trim() &&
+								selectedImages.length === 0 &&
+								selectedLibraryAssets.length === 0) ||
+							disabled
 						}
 						onClick={handleSubmit}
 						className="rounded-full px-4"
@@ -314,6 +427,38 @@ const CommentInput: React.FC<CommentInputProps> = ({
 						files={selectedImages}
 						onRemove={handleRemoveImage}
 					/>
+				</div>
+			) : null}
+
+			{selectedLibraryAssets.length > 0 ? (
+				<div className="mt-2 flex flex-wrap gap-2">
+					{selectedLibraryAssets.map((asset, index) => (
+						<div key={asset.id} className="group relative">
+							<div className="bg-muted h-16 w-16 overflow-hidden rounded-lg border">
+								<img
+									src={asset.url}
+									alt={asset.altText ?? ''}
+									className="h-full w-full object-cover"
+									width={64}
+									height={64}
+								/>
+							</div>
+							<Button
+								type="button"
+								variant="destructive"
+								size="sm"
+								className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+								onClick={() =>
+									setSelectedLibraryAssets((prev) =>
+										prev.filter((ignoredA, i) => i !== index),
+									)
+								}
+								aria-label={_(msg`Remove image`)}
+							>
+								<Icon name="x" className="text-foreground h-3 w-3" />
+							</Button>
+						</div>
+					))}
 				</div>
 			) : null}
 

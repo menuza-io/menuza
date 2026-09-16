@@ -22,12 +22,12 @@ msgid "(Expired)"
 msgstr ""
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:403
 msgid "{0} / 1600 chars"
 msgstr ""
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:318
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} blocks · rendered in your website branding"
 
@@ -95,7 +95,7 @@ msgstr ""
 msgid "{unit}"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:547
+#: app/routes/_admin+/roles+/$roleId.tsx:577
 #: app/routes/_admin+/roles+/system.$roleId.tsx:353
 msgid "{userCount} users"
 msgstr ""
@@ -103,11 +103,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:542
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:554
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:568
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -115,7 +115,7 @@ msgstr ""
 msgid "← Back to IP Addresses"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:222
+#: app/routes/_admin+/roles+/index.tsx:237
 msgid "+ New Role"
 msgstr ""
 
@@ -138,7 +138,7 @@ msgstr ""
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:338
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:349
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr ""
 
@@ -154,7 +154,7 @@ msgstr ""
 msgid "0 passkeys"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:321
+#: app/routes/_admin+/roles+/index.tsx:336
 msgid "1-10 (higher = more permissions)"
 msgstr ""
 
@@ -184,7 +184,7 @@ msgstr ""
 msgid "Access Granted"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:849
+#: app/routes/_admin+/roles+/$roleId.tsx:879
 msgid "Access Level"
 msgstr ""
 
@@ -192,11 +192,11 @@ msgstr ""
 msgid "across all caches"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:837
+#: app/routes/_admin+/roles+/$roleId.tsx:867
 msgid "Action"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:79
+#: app/routes/_admin+/marketing+/automations._index.tsx:95
 msgid "Action failed"
 msgstr ""
 
@@ -207,9 +207,9 @@ msgstr ""
 #: app/routes/_admin+/cache.tsx:626
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:251
 #: app/routes/_admin+/ip-addresses+/index.tsx:227
-#: app/routes/_admin+/marketing+/automations._index.tsx:189
-#: app/routes/_admin+/roles+/index.tsx:402
-#: app/routes/_admin+/roles+/index.tsx:446
+#: app/routes/_admin+/marketing+/automations._index.tsx:223
+#: app/routes/_admin+/roles+/index.tsx:417
+#: app/routes/_admin+/roles+/index.tsx:461
 #: app/routes/_admin+/waitlist.tsx:355
 msgid "Actions"
 msgstr ""
@@ -229,12 +229,12 @@ msgstr ""
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:127
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:278
 #: app/routes/_admin+/ip-addresses+/index.tsx:269
-#: app/routes/_admin+/marketing+/automations._index.tsx:47
+#: app/routes/_admin+/marketing+/automations._index.tsx:51
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:315
 msgid "Active"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:60
+#: app/routes/_admin+/marketing+/_index.tsx:64
 msgid "Active campaigns"
 msgstr ""
 
@@ -262,15 +262,15 @@ msgstr ""
 msgid "Add {0}"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:135
+#: ../../packages/marketing/src/components/email/email-preview.tsx:138
 msgid "Add a block to see your email come to life."
 msgstr "Add a block to see your email come to life."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:166
 msgid "Add a heading"
 msgstr "Add a heading"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:93
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:99
 msgid "Add at least one email block"
 msgstr "Add at least one email block"
 
@@ -280,7 +280,7 @@ msgstr "Add at least one email block"
 msgid "Add block"
 msgstr "Add block"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:776
+#: app/routes/_admin+/roles+/$roleId.tsx:806
 msgid "Add feature"
 msgstr ""
 
@@ -294,8 +294,8 @@ msgstr ""
 msgid "Add Override"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:799
-#: app/routes/_admin+/roles+/$roleId.tsx:892
+#: app/routes/_admin+/roles+/$roleId.tsx:829
+#: app/routes/_admin+/roles+/$roleId.tsx:922
 #: app/routes/_admin+/roles+/system.$roleId.tsx:385
 msgid "Add permission"
 msgstr ""
@@ -304,7 +304,7 @@ msgstr ""
 #: app/components/admin-sidebar.tsx:147
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
-#: app/routes/_admin+/roles+/$roleId.tsx:435
+#: app/routes/_admin+/roles+/$roleId.tsx:465
 #: app/routes/_admin+/roles+/system.$roleId.tsx:228
 msgid "Admin"
 msgstr ""
@@ -323,17 +323,18 @@ msgstr ""
 msgid "Admin role required"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:165
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:188
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:251
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:180
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:182
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:204
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:283
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:334
 msgid "Alignment"
 msgstr "Alignment"
 
 #: app/routes/_admin+/audit-logs.tsx:300
 #: app/routes/_admin+/gdpr-requests.tsx:503
 #: app/routes/_admin+/gdpr-requests.tsx:529
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:18
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:22
 msgid "All"
 msgstr ""
 
@@ -346,7 +347,7 @@ msgid "All checks passed. This workflow is ready to publish."
 msgstr ""
 
 #: app/components/admin-users-table.tsx:335
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:200
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:206
 msgid "All organizations"
 msgstr ""
 
@@ -367,7 +368,7 @@ msgstr ""
 msgid "All statuses"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:186
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:192
 msgid "All Tenant Operators"
 msgstr ""
 
@@ -387,11 +388,11 @@ msgstr ""
 msgid "Allow users to export audit logs"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:209
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "Alt text"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:867
+#: app/routes/_admin+/roles+/$roleId.tsx:897
 msgid "any - Any resources"
 msgstr ""
 
@@ -407,7 +408,7 @@ msgstr ""
 msgid "archived"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:49
+#: app/routes/_admin+/marketing+/automations._index.tsx:53
 msgid "Archived"
 msgstr ""
 
@@ -419,7 +420,7 @@ msgstr ""
 msgid "Are you sure you want to blacklist {ipAddress}? This will prevent all future requests from this IP address."
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:474
+#: app/routes/_admin+/roles+/$roleId.tsx:504
 msgid "Are you sure you want to delete this role?"
 msgstr ""
 
@@ -460,7 +461,7 @@ msgstr ""
 msgid "Authorization URL"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
 msgid "Auto"
 msgstr "Auto"
 
@@ -490,16 +491,16 @@ msgstr ""
 msgid "Automation menu"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:82
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:87
 msgid "Automation not found"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:197
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:205
 msgid "Automation saved"
 msgstr ""
 
 #: app/components/admin-sidebar.tsx:86
-#: app/routes/_admin+/marketing+/_index.tsx:36
+#: app/routes/_admin+/marketing+/_index.tsx:40
 msgid "Automations"
 msgstr ""
 
@@ -507,7 +508,7 @@ msgstr ""
 msgid "Average Size"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:152
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:158
 msgid "Back"
 msgstr ""
 
@@ -515,7 +516,7 @@ msgstr ""
 msgid "Back to automations"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:123
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:137
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
@@ -523,7 +524,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:93
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:104
 msgid "Back to nodes"
 msgstr ""
 
@@ -562,7 +563,7 @@ msgstr ""
 msgid "Banning..."
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:490
+#: app/routes/_admin+/roles+/$roleId.tsx:520
 #: app/routes/_admin+/roles+/system.$roleId.tsx:292
 msgid "Basic information"
 msgstr ""
@@ -608,7 +609,7 @@ msgstr "Block types"
 msgid "blocked"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:238
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:244
 msgid "Blocks"
 msgstr "Blocks"
 
@@ -620,7 +621,7 @@ msgstr "Body text"
 msgid "Boolean"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:15
+#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:18
 msgid "Broadcast not found"
 msgstr ""
 
@@ -629,15 +630,15 @@ msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
 #: app/components/admin-sidebar.tsx:81
-#: app/routes/_admin+/marketing+/_index.tsx:30
+#: app/routes/_admin+/marketing+/_index.tsx:34
 msgid "Broadcasts"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:88
+#: app/routes/_admin+/marketing+/_index.tsx:136
 msgid "Broadcasts and automations for tenant operators."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:334
 msgid "Build a branded HTML email with blocks."
 msgstr "Build a branded HTML email with blocks."
 
@@ -649,7 +650,7 @@ msgstr ""
 msgid "Button"
 msgstr "Button"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:268
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
 msgid "Button label"
 msgstr "Button label"
 
@@ -674,11 +675,11 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:155
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:659
-#: app/routes/_admin+/roles+/index.tsx:337
+#: app/routes/_admin+/roles+/index.tsx:352
 msgid "Cancel"
 msgstr ""
 
@@ -690,7 +691,7 @@ msgstr ""
 msgid "Cancelled"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:81
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 msgid "Center"
 msgstr "Center"
 
@@ -701,6 +702,10 @@ msgstr ""
 #: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
 msgstr ""
+
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:237
+msgid "Choose from library"
+msgstr "Choose from library"
 
 #: app/routes/_admin+/cache.tsx:789
 msgid "Clear {typeUpper}"
@@ -719,7 +724,7 @@ msgstr ""
 msgid "Clear selection"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:55
+#: app/routes/_admin+/marketing+/_index.tsx:59
 msgid "Click rate"
 msgstr ""
 
@@ -744,7 +749,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:120
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
 msgid "Close email design"
 msgstr "Close email design"
 
@@ -755,7 +760,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/routes/_admin+/gdpr-requests.tsx:541
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:19
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:23
 msgid "Completed"
 msgstr ""
 
@@ -791,7 +796,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:483
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
 msgid "Condition Logic"
 msgstr ""
 
@@ -811,7 +816,7 @@ msgstr ""
 msgid "Configuration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:130
 msgid "Configuration required"
 msgstr ""
 
@@ -851,7 +856,7 @@ msgstr ""
 msgid "Connections"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -863,7 +868,7 @@ msgstr ""
 msgid "Create a new feature flag at system level."
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:232
+#: app/routes/_admin+/roles+/index.tsx:247
 msgid "Create a new role with custom permissions"
 msgstr ""
 
@@ -875,11 +880,11 @@ msgstr ""
 msgid "Create an override at user level."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:152
+#: app/routes/_admin+/marketing+/automations._index.tsx:172
 msgid "Create Automation"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:105
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:119
 msgid "Create Broadcast"
 msgstr ""
 
@@ -887,7 +892,7 @@ msgstr ""
 msgid "Create Flag"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:229
+#: app/routes/_admin+/roles+/index.tsx:244
 msgid "Create New Role"
 msgstr ""
 
@@ -899,19 +904,19 @@ msgstr ""
 msgid "Create Override for \"{flagKey}\""
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:343
+#: app/routes/_admin+/roles+/index.tsx:358
 msgid "Create Role"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:149
+#: app/routes/_admin+/marketing+/_index.tsx:201
 msgid "Create your first broadcast"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:149
+#: app/routes/_admin+/marketing+/automations._index.tsx:167
 msgid "Create your first platform automation workflow."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:101
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:113
 msgid "Create your first platform email campaign for tenant operators."
 msgstr ""
 
@@ -921,7 +926,7 @@ msgstr ""
 msgid "Created"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:544
+#: app/routes/_admin+/roles+/$roleId.tsx:574
 #: app/routes/_admin+/roles+/system.$roleId.tsx:350
 msgid "Created {createdDate}"
 msgstr ""
@@ -938,7 +943,7 @@ msgstr ""
 msgid "Created: {createdAt}"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:341
+#: app/routes/_admin+/roles+/index.tsx:356
 msgid "Creating..."
 msgstr ""
 
@@ -959,7 +964,7 @@ msgstr ""
 msgid "Custom Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:174
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:185
 msgid "Custom Event Name"
 msgstr ""
 
@@ -980,7 +985,7 @@ msgstr ""
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:422
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:436
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1024,7 +1029,7 @@ msgstr ""
 msgid "days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:233
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
 msgid "Days"
 msgstr ""
 
@@ -1049,7 +1054,7 @@ msgid "Delay unit is required."
 msgstr ""
 
 #: app/components/admin/feature-flags.tsx:408
-#: app/routes/_admin+/marketing+/automations._index.tsx:251
+#: app/routes/_admin+/marketing+/automations._index.tsx:293
 msgid "Delete"
 msgstr ""
 
@@ -1069,32 +1074,32 @@ msgstr ""
 msgid "Delete Cache Key"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:108
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:109
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:119
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:120
 msgid "Delete node"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:480
+#: app/routes/_admin+/roles+/$roleId.tsx:510
 #: app/routes/_admin+/roles+/system.$roleId.tsx:281
 msgid "Delete role"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:304
+#: app/routes/_admin+/roles+/index.tsx:319
 msgid "Describe what this role can do..."
 msgstr ""
 
 #: app/components/admin-organizations-table.tsx:176
-#: app/routes/_admin+/roles+/$roleId.tsx:524
-#: app/routes/_admin+/roles+/$roleId.tsx:760
-#: app/routes/_admin+/roles+/$roleId.tsx:876
-#: app/routes/_admin+/roles+/index.tsx:299
-#: app/routes/_admin+/roles+/index.tsx:399
-#: app/routes/_admin+/roles+/index.tsx:443
+#: app/routes/_admin+/roles+/$roleId.tsx:554
+#: app/routes/_admin+/roles+/$roleId.tsx:790
+#: app/routes/_admin+/roles+/$roleId.tsx:906
+#: app/routes/_admin+/roles+/index.tsx:314
+#: app/routes/_admin+/roles+/index.tsx:414
+#: app/routes/_admin+/roles+/index.tsx:458
 #: app/routes/_admin+/roles+/system.$roleId.tsx:327
 msgid "Description"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:295
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:306
 msgid "Design email"
 msgstr "Design email"
 
@@ -1120,11 +1125,11 @@ msgstr ""
 msgid "Disabled"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:203
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
 msgid "Discard"
 msgstr "Discard"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:183
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -1140,7 +1145,7 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:513
 msgid "Does Not Equal"
 msgstr ""
 
@@ -1153,27 +1158,27 @@ msgid "draft"
 msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
-#: app/routes/_admin+/marketing+/automations._index.tsx:46
+#: app/routes/_admin+/marketing+/automations._index.tsx:50
 msgid "Draft"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:114
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:237
+#: app/routes/_admin+/marketing+/automations._index.tsx:279
 msgid "Duplicate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:195
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:206
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
 msgid "e.g. @gmail.com"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:178
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:189
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr ""
 
@@ -1181,7 +1186,7 @@ msgstr ""
 #~ msgid "e.g. contact-us, demo-request"
 #~ msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:842
+#: app/routes/_admin+/roles+/$roleId.tsx:872
 msgid "e.g. create, read, approve, publish"
 msgstr ""
 
@@ -1189,7 +1194,7 @@ msgstr ""
 msgid "e.g. cust_123"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:273
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:284
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
@@ -1197,7 +1202,7 @@ msgstr ""
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:261
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:272
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "e.g. Welcome {{firstName}}!"
 
@@ -1205,7 +1210,7 @@ msgstr "e.g. Welcome {{firstName}}!"
 #~ msgid "e.g. Welcome {{name}}!"
 #~ msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:287
+#: app/routes/_admin+/roles+/index.tsx:302
 msgid "e.g., editor, moderator, contributor"
 msgstr ""
 
@@ -1216,11 +1221,11 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:401
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
-#: app/routes/_admin+/marketing+/automations._index.tsx:201
+#: app/routes/_admin+/marketing+/automations._index.tsx:235
 msgid "Edit"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:304
 msgid "Edit design"
 msgstr "Edit design"
 
@@ -1253,7 +1258,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:442
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:456
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr ""
@@ -1262,19 +1267,19 @@ msgstr ""
 msgid "Email body content is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:282
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:366
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:377
 #: ../../packages/marketing/src/components/campaign-form.tsx:112
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:104
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:128
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:135
 msgid "Email design"
 msgstr "Email design"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:332
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
 msgid "Email HTML Body"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:104
+#: ../../packages/marketing/src/components/email/email-preview.tsx:107
 msgid "Email preview"
 msgstr "Email preview"
 
@@ -1282,7 +1287,7 @@ msgstr "Email preview"
 msgid "Email subject line is required."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:31
+#: app/routes/_admin+/marketing+/_index.tsx:35
 msgid "Email tenant operators"
 msgstr ""
 
@@ -1290,7 +1295,7 @@ msgstr ""
 msgid "Email, username, or name..."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:44
+#: app/routes/_admin+/marketing+/_index.tsx:48
 msgid "Emails sent"
 msgstr ""
 
@@ -1325,15 +1330,15 @@ msgstr ""
 msgid "End Date"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:770
+#: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:753
+#: app/routes/_admin+/roles+/$roleId.tsx:783
 msgid "Enter feature key"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:738
+#: app/routes/_admin+/roles+/$roleId.tsx:768
 msgid "Enter feature name"
 msgstr ""
 
@@ -1345,11 +1350,11 @@ msgstr ""
 msgid "Enter Organization ID (optional - for per-org overrides)"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:886
+#: app/routes/_admin+/roles+/$roleId.tsx:916
 msgid "Enter permission description"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:829
+#: app/routes/_admin+/roles+/$roleId.tsx:859
 msgid "Enter permission name"
 msgstr ""
 
@@ -1389,11 +1394,11 @@ msgstr ""
 msgid "Errors"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:121
+#: app/routes/_admin+/marketing+/automations._index.tsx:137
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Exactly Equals"
 msgstr ""
 
@@ -1431,7 +1436,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/routes/_admin+/gdpr-requests.tsx:547
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:21
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:25
 msgid "Failed"
 msgstr ""
 
@@ -1439,11 +1444,11 @@ msgstr ""
 msgid "Failed Requests"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:120
+#: app/routes/_admin+/marketing+/automations.new.tsx:126
 msgid "Failed to create automation"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:131
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:137
 msgid "Failed to create campaign"
 msgstr ""
 
@@ -1451,8 +1456,8 @@ msgstr ""
 msgid "Failed to format graph for validation"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:165
-#: app/routes/_admin+/marketing+/automations.new.tsx:133
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:173
+#: app/routes/_admin+/marketing+/automations.new.tsx:139
 msgid "Failed to publish automation"
 msgstr ""
 
@@ -1464,12 +1469,12 @@ msgstr "Fallback"
 msgid "Feature Flags"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:565
-#: app/routes/_admin+/roles+/$roleId.tsx:575
+#: app/routes/_admin+/roles+/$roleId.tsx:595
+#: app/routes/_admin+/roles+/$roleId.tsx:605
 msgid "Feature permissions"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:813
+#: app/routes/_admin+/roles+/$roleId.tsx:843
 msgid "Feature: {selectedEntity}"
 msgstr ""
 
@@ -1539,11 +1544,11 @@ msgstr ""
 #~ msgid "Form Submitted"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:269
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:111
 msgid "Full width"
 msgstr "Full width"
 
@@ -1555,7 +1560,7 @@ msgstr ""
 msgid "GDPR Requests"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:426
+#: app/routes/_admin+/roles+/index.tsx:441
 msgid "Global roles that apply across the entire system"
 msgstr ""
 
@@ -1583,11 +1588,11 @@ msgstr ""
 msgid "Grant Access"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:87
+#: app/routes/_admin+/marketing+/automations.new.tsx:93
 msgid "Graph data is required"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:123
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:131
 msgid "Graph data missing"
 msgstr ""
 
@@ -1603,7 +1608,7 @@ msgstr "Heading"
 msgid "Hi {{name}}, Check out our latest update."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:353
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:364
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr ""
 
@@ -1615,7 +1620,7 @@ msgstr ""
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:400
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr ""
 
@@ -1623,7 +1628,7 @@ msgstr ""
 msgid "Hi {{name}}, Your organization {{organizationName}} is ready."
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:326
+#: app/routes/_admin+/roles+/index.tsx:341
 msgid "Higher level roles can manage lower level roles"
 msgstr ""
 
@@ -1639,7 +1644,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:230
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
 msgid "Hours"
 msgstr ""
 
@@ -1679,7 +1684,7 @@ msgstr ""
 msgid "Image"
 msgstr "Image"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:201
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
 msgid "Image URL"
 msgstr "Image URL"
 
@@ -1736,8 +1741,8 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:130
-#: app/routes/_admin+/marketing+/automations.new.tsx:94
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:138
+#: app/routes/_admin+/marketing+/automations.new.tsx:100
 msgid "Invalid graph format"
 msgstr ""
 
@@ -1765,7 +1770,7 @@ msgstr ""
 msgid "IP Information"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:485
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -1781,7 +1786,7 @@ msgstr ""
 msgid "Joined"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1789,9 +1794,9 @@ msgstr "Keep editing"
 #: app/components/admin/feature-flags.tsx:476
 #: app/components/admin/feature-flags.tsx:650
 #: app/routes/_admin+/cache.tsx:614
-#: app/routes/_admin+/roles+/$roleId.tsx:462
-#: app/routes/_admin+/roles+/$roleId.tsx:511
-#: app/routes/_admin+/roles+/$roleId.tsx:745
+#: app/routes/_admin+/roles+/$roleId.tsx:492
+#: app/routes/_admin+/roles+/$roleId.tsx:541
+#: app/routes/_admin+/roles+/$roleId.tsx:775
 #: app/routes/_admin+/roles+/system.$roleId.tsx:260
 #: app/routes/_admin+/roles+/system.$roleId.tsx:314
 msgid "Key"
@@ -1801,7 +1806,7 @@ msgstr ""
 msgid "Keys to delete:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:263
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 msgid "Label"
 msgstr "Label"
 
@@ -1858,15 +1863,15 @@ msgstr ""
 msgid "Leave Organization ID empty to view/set global user overrides. Enter an Organization ID to view/set overrides for that specific organization."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:80
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:93
 msgid "Left"
 msgstr "Left"
 
-#: app/routes/_admin+/roles+/index.tsx:390
+#: app/routes/_admin+/roles+/index.tsx:405
 msgid "Level"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:313
+#: app/routes/_admin+/roles+/index.tsx:328
 msgid "Level (Organization roles only)"
 msgstr ""
 
@@ -1882,11 +1887,11 @@ msgstr ""
 msgid "Light mode"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:271
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
 msgid "Link"
 msgstr "Link"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:249
 msgid "Link (optional)"
 msgstr "Link (optional)"
 
@@ -1920,7 +1925,7 @@ msgstr ""
 msgid "Manage data export and deletion requests for compliance"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:366
+#: app/routes/_admin+/roles+/index.tsx:381
 msgid "Manage organization and system roles and permissions"
 msgstr ""
 
@@ -1936,7 +1941,7 @@ msgstr ""
 msgid "Manage Users"
 msgstr ""
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:394
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:427
 msgid "Manage users who authenticate through SSO for {organizationName}"
 msgstr ""
 
@@ -1959,7 +1964,7 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:37
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:61
-#: app/routes/_admin+/marketing+/automations._index.tsx:107
+#: app/routes/_admin+/marketing+/automations._index.tsx:123
 msgid "Manual Trigger"
 msgstr ""
 
@@ -1993,7 +1998,7 @@ msgstr ""
 msgid "Message"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:106
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:112
 msgid "Message content is required"
 msgstr "Message content is required"
 
@@ -2001,7 +2006,7 @@ msgstr "Message content is required"
 msgid "minutes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:227
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
 msgid "Minutes"
 msgstr ""
 
@@ -2034,16 +2039,16 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:451
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:465
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
-#: app/routes/_admin+/roles+/$roleId.tsx:500
-#: app/routes/_admin+/roles+/$roleId.tsx:733
-#: app/routes/_admin+/roles+/$roleId.tsx:824
+#: app/routes/_admin+/roles+/$roleId.tsx:530
+#: app/routes/_admin+/roles+/$roleId.tsx:763
+#: app/routes/_admin+/roles+/$roleId.tsx:854
 #: app/routes/_admin+/roles+/system.$roleId.tsx:302
 msgid "Name"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:282
+#: app/routes/_admin+/roles+/index.tsx:297
 msgid "Name *"
 msgstr ""
 
@@ -2053,29 +2058,29 @@ msgstr ""
 msgid "Never"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:129
+#: app/routes/_admin+/marketing+/automations._index.tsx:146
 msgid "New Automation"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:159
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:165
 msgid "New broadcast"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:61
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:72
 msgid "New Broadcast"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:717
-#: app/routes/_admin+/roles+/$roleId.tsx:724
+#: app/routes/_admin+/roles+/$roleId.tsx:747
+#: app/routes/_admin+/roles+/$roleId.tsx:754
 msgid "New feature"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:806
+#: app/routes/_admin+/roles+/$roleId.tsx:836
 msgid "New permission"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:82
-#: app/routes/_admin+/marketing+/automations.new.tsx:169
+#: app/routes/_admin+/marketing+/automations.new.tsx:88
+#: app/routes/_admin+/marketing+/automations.new.tsx:175
 msgid "New Platform Automation"
 msgstr ""
 
@@ -2102,11 +2107,11 @@ msgstr ""
 msgid "No audit logs found"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:148
+#: app/routes/_admin+/marketing+/automations._index.tsx:166
 msgid "No automations found"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:99
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:111
 msgid "No broadcasts found"
 msgstr ""
 
@@ -2118,7 +2123,7 @@ msgstr ""
 msgid "No cache keys match \"{query}\""
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:143
+#: app/routes/_admin+/marketing+/_index.tsx:194
 msgid "No campaigns yet."
 msgstr ""
 
@@ -2160,7 +2165,7 @@ msgstr ""
 msgid "No notes created"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:410
+#: app/routes/_admin+/roles+/index.tsx:425
 msgid "No organization roles found"
 msgstr ""
 
@@ -2197,7 +2202,7 @@ msgstr ""
 msgid "No system flags configured"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:454
+#: app/routes/_admin+/roles+/index.tsx:469
 msgid "No system roles found"
 msgstr ""
 
@@ -2237,7 +2242,7 @@ msgstr ""
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:488
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -2273,7 +2278,7 @@ msgstr ""
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:50
+#: app/routes/_admin+/marketing+/_index.tsx:54
 msgid "Open rate"
 msgstr ""
 
@@ -2291,16 +2296,16 @@ msgid "operator"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:49
-#: app/routes/_admin+/marketing+/automations._index.tsx:101
+#: app/routes/_admin+/marketing+/automations._index.tsx:117
 msgid "Operator Invited"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:764
-#: app/routes/_admin+/roles+/$roleId.tsx:880
+#: app/routes/_admin+/roles+/$roleId.tsx:794
+#: app/routes/_admin+/roles+/$roleId.tsx:910
 msgid "Optional"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:864
+#: app/routes/_admin+/roles+/$roleId.tsx:894
 msgid "org - Organization resources"
 msgstr ""
 
@@ -2309,12 +2314,12 @@ msgstr ""
 msgid "Organization"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:196
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:202
 msgid "Organization (optional)"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:45
-#: app/routes/_admin+/marketing+/automations._index.tsx:99
+#: app/routes/_admin+/marketing+/automations._index.tsx:115
 msgid "Organization Created"
 msgstr ""
 
@@ -2322,15 +2327,15 @@ msgstr ""
 msgid "Organization Override"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:264
+#: app/routes/_admin+/roles+/index.tsx:279
 msgid "Organization Role"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:376
+#: app/routes/_admin+/roles+/index.tsx:391
 msgid "Organization Roles"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:272
+#: app/routes/_admin+/roles+/index.tsx:287
 msgid "Organization roles apply within specific organizations, while system roles are global."
 msgstr ""
 
@@ -2344,7 +2349,7 @@ msgstr ""
 msgid "Organizations"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:90
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
 msgstr "Outline"
 
@@ -2358,7 +2363,7 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:861
+#: app/routes/_admin+/roles+/$roleId.tsx:891
 msgid "own - User's own resources"
 msgstr ""
 
@@ -2397,7 +2402,7 @@ msgid "Past Due"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
-#: app/routes/_admin+/marketing+/automations._index.tsx:225
+#: app/routes/_admin+/marketing+/automations._index.tsx:263
 msgid "Pause"
 msgstr ""
 
@@ -2405,7 +2410,7 @@ msgstr ""
 msgid "paused"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:48
+#: app/routes/_admin+/marketing+/automations._index.tsx:52
 msgid "Paused"
 msgstr ""
 
@@ -2425,13 +2430,13 @@ msgstr ""
 msgid "per SQLite entry"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:112
+#: app/routes/_admin+/marketing+/_index.tsx:161
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:558
-#: app/routes/_admin+/roles+/index.tsx:396
-#: app/routes/_admin+/roles+/index.tsx:440
+#: app/routes/_admin+/roles+/$roleId.tsx:588
+#: app/routes/_admin+/roles+/index.tsx:411
+#: app/routes/_admin+/roles+/index.tsx:455
 #: app/routes/_admin+/roles+/system.$roleId.tsx:364
 msgid "Permissions"
 msgstr ""
@@ -2444,12 +2449,12 @@ msgstr ""
 msgid "Personal + Organization notes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:448
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:462
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr ""
@@ -2466,7 +2471,7 @@ msgstr ""
 msgid "Pick a block to add to your email."
 msgstr "Pick a block to add to your email."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:169
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:175
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
@@ -2475,7 +2480,7 @@ msgstr "Pick a layout, then customize the blocks."
 msgid "PKCE Enabled"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:348
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:359
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
@@ -2483,27 +2488,27 @@ msgstr ""
 msgid "Plan Name"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:111
+#: app/routes/_admin+/marketing+/automations.new.tsx:117
 msgid "Platform automation created via visual builder."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:118
+#: app/routes/_admin+/marketing+/automations._index.tsx:134
 msgid "Platform Automations"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:50
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:60
 msgid "Platform Broadcasts"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:37
+#: app/routes/_admin+/marketing+/_index.tsx:41
 msgid "Platform lifecycle workflows"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:85
+#: app/routes/_admin+/marketing+/_index.tsx:133
 msgid "Platform marketing"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:223
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:231
 msgid "Platform test runs are not yet wired to execution."
 msgstr ""
 
@@ -2524,7 +2529,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
 #: app/routes/_admin+/gdpr-requests.tsx:535
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:20
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:24
 msgid "Processing"
 msgstr ""
 
@@ -2553,7 +2558,7 @@ msgid "Provider:"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
-#: app/routes/_admin+/marketing+/automations._index.tsx:212
+#: app/routes/_admin+/marketing+/automations._index.tsx:250
 msgid "Publish"
 msgstr ""
 
@@ -2561,11 +2566,11 @@ msgstr ""
 msgid "Publish and activate automation"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:205
+#: app/routes/_admin+/marketing+/automations.$journeyId.tsx:213
 msgid "Publishing automation..."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:161
+#: app/routes/_admin+/marketing+/automations.new.tsx:167
 msgid "Publishing new automation..."
 msgstr ""
 
@@ -2605,7 +2610,7 @@ msgstr ""
 msgid "Recent Activity"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:130
+#: app/routes/_admin+/marketing+/_index.tsx:181
 msgid "Recent campaigns"
 msgstr ""
 
@@ -2634,7 +2639,7 @@ msgid "Recent SSO configuration changes and user activities"
 msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-list.tsx:81
-#: app/routes/_admin+/marketing+/_index.tsx:165
+#: app/routes/_admin+/marketing+/_index.tsx:218
 msgid "recipients"
 msgstr ""
 
@@ -2650,12 +2655,12 @@ msgstr ""
 msgid "Reject"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:143
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:138
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
 msgid "Remove block"
 msgstr "Remove block"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:312
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
 msgid "Remove design"
 msgstr "Remove design"
 
@@ -2667,7 +2672,7 @@ msgstr ""
 msgid "Remove variable"
 msgstr "Remove variable"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:108
+#: ../../packages/marketing/src/components/email/email-preview.tsx:111
 msgid "Rendering…"
 msgstr "Rendering…"
 
@@ -2723,42 +2728,42 @@ msgstr ""
 msgid "Revoke"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:82
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:95
 msgid "Right"
 msgstr "Right"
 
 #: app/components/sso-user-management.tsx:165
-#: app/routes/_admin+/roles+/index.tsx:387
-#: app/routes/_admin+/roles+/index.tsx:434
+#: app/routes/_admin+/roles+/index.tsx:402
+#: app/routes/_admin+/roles+/index.tsx:449
 msgid "Role"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:530
+#: app/routes/_admin+/roles+/$roleId.tsx:560
 #: app/routes/_admin+/roles+/system.$roleId.tsx:333
 msgid "Role description"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:506
+#: app/routes/_admin+/roles+/$roleId.tsx:536
 #: app/routes/_admin+/roles+/system.$roleId.tsx:308
 msgid "Role name"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:251
+#: app/routes/_admin+/roles+/index.tsx:266
 msgid "Role Type"
 msgstr ""
 
 #: app/components/admin-sidebar.tsx:93
-#: app/routes/_admin+/roles+/$roleId.tsx:443
-#: app/routes/_admin+/roles+/index.tsx:363
+#: app/routes/_admin+/roles+/$roleId.tsx:473
+#: app/routes/_admin+/roles+/index.tsx:378
 #: app/routes/_admin+/roles+/system.$roleId.tsx:236
 msgid "Roles"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:379
+#: app/routes/_admin+/roles+/index.tsx:394
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Routing Logic:"
 msgstr ""
 
@@ -2779,7 +2784,7 @@ msgstr ""
 msgid "Run maintenance tasks on audit logs"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:171
+#: app/routes/_admin+/marketing+/automations._index.tsx:189
 msgid "runs"
 msgstr ""
 
@@ -2823,12 +2828,12 @@ msgstr ""
 msgid "Runs when customer verifies phone OTP"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 msgid "Save"
 msgstr "Save"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:536
+#: app/routes/_admin+/roles+/$roleId.tsx:566
 #: app/routes/_admin+/roles+/system.$roleId.tsx:341
 msgid "Save Changes"
 msgstr ""
@@ -2845,15 +2850,15 @@ msgstr ""
 msgid "Save Policy"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:175
+#: app/routes/_admin+/marketing+/automations.new.tsx:181
 msgid "Save the automation first before running test triggers."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 msgid "Saved"
 msgstr "Saved"
 
-#: app/routes/_admin+/marketing+/automations.new.tsx:153
+#: app/routes/_admin+/marketing+/automations.new.tsx:159
 msgid "Saving new automation draft..."
 msgstr ""
 
@@ -2863,7 +2868,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2890,7 +2895,7 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:134
+#: app/routes/_admin+/marketing+/automations._index.tsx:152
 msgid "Search automations..."
 msgstr ""
 
@@ -2902,7 +2907,7 @@ msgstr ""
 msgid "Search cache keys..."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:67
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:79
 msgid "Search campaigns..."
 msgstr ""
 
@@ -2940,16 +2945,16 @@ msgstr ""
 msgid "Security Events"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:854
-#: app/routes/_admin+/roles+/$roleId.tsx:857
+#: app/routes/_admin+/roles+/$roleId.tsx:884
+#: app/routes/_admin+/roles+/$roleId.tsx:887
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:452
 msgid "Select attribute"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:182
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:188
 msgid "Select audience"
 msgstr ""
 
@@ -2957,28 +2962,28 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:492
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:506
 msgid "Select operator"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:257
-#: app/routes/_admin+/roles+/index.tsx:260
+#: app/routes/_admin+/roles+/index.tsx:272
+#: app/routes/_admin+/roles+/index.tsx:275
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:467
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:481
 msgid "Select status"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:144
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:155
 msgid "Select trigger type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:165
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:176
 msgid "Select which event initiates this automated journey."
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:162
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:168
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
@@ -2990,7 +2995,7 @@ msgstr ""
 msgid "Send now"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:53
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:63
 msgid "Send one-time emails to tenant operators."
 msgstr ""
 
@@ -3065,7 +3070,8 @@ msgstr ""
 msgid "Shown to recipients who have no value for this field."
 msgstr "Shown to recipients who have no value for this field."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:155
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
 #: app/components/admin-organizations-table.tsx:263
 #: app/routes/_admin+/cache.tsx:617
 msgid "Size"
@@ -3084,7 +3090,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:380
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:391
 msgid "SMS Message Text"
 msgstr ""
 
@@ -3092,11 +3098,11 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:409
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:89
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:102
 msgid "Solid"
 msgstr "Solid"
 
@@ -3117,7 +3123,7 @@ msgstr ""
 msgid "Source"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:189
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:195
 msgid "Specific Organization"
 msgstr ""
 
@@ -3155,7 +3161,7 @@ msgstr ""
 msgid "SSO Provider"
 msgstr ""
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:391
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:424
 msgid "SSO Users"
 msgstr ""
 
@@ -3171,7 +3177,7 @@ msgstr ""
 msgid "Start journey on lifecycle event"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:166
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:172
 msgid "Start with a template"
 msgstr "Start with a template"
 
@@ -3191,7 +3197,7 @@ msgstr ""
 msgid "Status:"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/automations._index.tsx:169
+#: app/routes/_admin+/marketing+/automations._index.tsx:187
 msgid "steps"
 msgstr ""
 
@@ -3207,7 +3213,8 @@ msgstr ""
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:279
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
 msgid "Style"
 msgstr "Style"
 
@@ -3215,7 +3222,7 @@ msgstr "Style"
 msgid "Subject"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:257
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:268
 msgid "Subject Line"
 msgstr ""
 
@@ -3224,12 +3231,12 @@ msgid "Subscription"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:57
-#: app/routes/_admin+/marketing+/automations._index.tsx:105
+#: app/routes/_admin+/marketing+/automations._index.tsx:121
 msgid "Subscription Cancelled"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:53
-#: app/routes/_admin+/marketing+/automations._index.tsx:103
+#: app/routes/_admin+/marketing+/automations._index.tsx:119
 msgid "Subscription Started"
 msgstr ""
 
@@ -3285,21 +3292,21 @@ msgstr ""
 msgid "System Management"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:568
+#: app/routes/_admin+/roles+/$roleId.tsx:598
 #: app/routes/_admin+/roles+/system.$roleId.tsx:374
 #: app/routes/_admin+/roles+/system.$roleId.tsx:381
 msgid "System permissions"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:599
+#: app/routes/_admin+/roles+/$roleId.tsx:629
 msgid "System permissions management coming soon"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:267
+#: app/routes/_admin+/roles+/index.tsx:282
 msgid "System Role"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:423
+#: app/routes/_admin+/roles+/index.tsx:438
 msgid "System Roles"
 msgstr ""
 
@@ -3324,7 +3331,7 @@ msgstr ""
 msgid "Tags"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:178
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:184
 msgid "Target Audience"
 msgstr ""
 
@@ -3332,7 +3339,7 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:524
 msgid "Target Value"
 msgstr ""
 
@@ -3354,8 +3361,8 @@ msgstr ""
 msgid "Testing..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:147
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:177
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
 msgid "Text"
 msgstr "Text"
 
@@ -3373,7 +3380,7 @@ msgstr ""
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:255
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr ""
 
@@ -3457,7 +3464,7 @@ msgstr ""
 msgid "Trigger Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:135
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:146
 msgid "Trigger Event Type"
 msgstr ""
 
@@ -3489,8 +3496,8 @@ msgstr ""
 msgid "Unedited boilerplate text detected in email body."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:214
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:223
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:225
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:234
 msgid "Unit"
 msgstr ""
 
@@ -3508,7 +3515,7 @@ msgstr ""
 msgid "Unpaid"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:139
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3532,7 +3539,7 @@ msgstr ""
 msgid "Usage Statistics"
 msgstr ""
 
-#: app/routes/_admin+/roles+/index.tsx:292
+#: app/routes/_admin+/roles+/index.tsx:307
 msgid "Use lowercase letters, numbers, and hyphens only"
 msgstr ""
 
@@ -3540,7 +3547,7 @@ msgstr ""
 msgid "Use Proof Key for Code Exchange for enhanced security"
 msgstr ""
 
-#: app/routes/_admin+/roles+/$roleId.tsx:748
+#: app/routes/_admin+/roles+/$roleId.tsx:778
 msgid "Use this in your codebase to refer to this feature."
 msgstr ""
 
@@ -3583,8 +3590,8 @@ msgstr ""
 #: app/components/admin-sidebar.tsx:50
 #: app/routes/_admin+/index.tsx:300
 #: app/routes/_admin+/ip-addresses+/index.tsx:221
-#: app/routes/_admin+/roles+/index.tsx:393
-#: app/routes/_admin+/roles+/index.tsx:437
+#: app/routes/_admin+/roles+/index.tsx:408
+#: app/routes/_admin+/roles+/index.tsx:452
 #: app/routes/_admin+/users+/index.tsx:149
 msgid "Users"
 msgstr ""
@@ -3609,11 +3616,11 @@ msgstr ""
 msgid "Variables"
 msgstr "Variables"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
 msgid "Verification Status"
 msgstr ""
 
-#: app/routes/_admin+/marketing+/_index.tsx:136
+#: app/routes/_admin+/marketing+/_index.tsx:187
 msgid "View all"
 msgstr ""
 
@@ -3687,7 +3694,7 @@ msgstr ""
 msgid "weeks"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:236
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
 msgid "Weeks"
 msgstr ""
 
@@ -3699,8 +3706,9 @@ msgstr ""
 #~ msgid "When someone does <0>{0}</0>"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:230
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:289
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:324
 msgid "Width"
 msgstr "Width"
 
@@ -3716,11 +3724,11 @@ msgstr ""
 msgid "Write your email. Use {{name}} to personalize."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:184
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:200
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:138
+#: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "Write your text message"
 msgstr "Write your text message"
 
@@ -3745,7 +3753,7 @@ msgstr ""
 msgid "You don't have permission to access this admin area."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:186
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 

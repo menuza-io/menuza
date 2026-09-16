@@ -1,11 +1,50 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { invariantResponse } from '@epic-web/invariant'
+import { getUserId } from '@repo/auth'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
+import {
+	and,
+	db,
+	eq,
+	OrganizationMediaAsset,
+	UserOrganization,
+} from '@repo/database'
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
+
+export function signMediaId(mediaId: string): string {
+	const secret =
+		process.env.INTERNAL_COMMAND_TOKEN ||
+		process.env.SESSION_SECRET ||
+		'media-secret'
+	return createHmac('sha256', secret).update(`media:${mediaId}`).digest('hex')
+}
+
+function verifyMediaSignature(
+	mediaId: string,
+	signature: string | null,
+): boolean {
+	if (!signature) return false
+	const secret =
+		process.env.INTERNAL_COMMAND_TOKEN ||
+		process.env.SESSION_SECRET ||
+		'media-secret'
+	const expected = createHmac('sha256', secret)
+		.update(`media:${mediaId}`)
+		.digest('hex')
+	try {
+		return (
+			signature.length === expected.length &&
+			timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+		)
+	} catch {
+		return false
+	}
+}
 
 const ALLOWED_RASTER_MIME_TYPES = new Set([
 	'image/jpeg',
@@ -363,8 +402,61 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const searchParams = url.searchParams
 
-	const objectKey = searchParams.get('objectKey')
-	const organizationId = searchParams.get('organizationId')
+	let objectKey = searchParams.get('objectKey')
+	let organizationId = searchParams.get('organizationId')
+	const mediaId = searchParams.get('mediaId')
+
+	if (mediaId) {
+		invariantResponse(
+			/^[a-zA-Z0-9_-]{16,64}$/.test(mediaId),
+			'Invalid mediaId',
+			{
+				status: 400,
+			},
+		)
+		const [asset] = await db
+			.select({
+				objectKey: OrganizationMediaAsset.objectKey,
+				organizationId: OrganizationMediaAsset.organizationId,
+				storageScope: OrganizationMediaAsset.storageScope,
+				source: OrganizationMediaAsset.source,
+			})
+			.from(OrganizationMediaAsset)
+			.where(eq(OrganizationMediaAsset.id, mediaId))
+			.limit(1)
+		invariantResponse(asset, 'Media not found', { status: 404 })
+
+		const isPublicMedia =
+			asset.storageScope === 'platform' ||
+			asset.source === 'organization-logo' ||
+			asset.source === 'site-icon' ||
+			asset.source === 'website-seo' ||
+			asset.source === 'website-asset'
+
+		const sig = searchParams.get('sig')
+		const hasValidSignature = sig ? verifyMediaSignature(mediaId, sig) : false
+
+		if (!isPublicMedia && !hasValidSignature) {
+			const userId = await getUserId(request)
+			invariantResponse(userId, 'Unauthorized', { status: 401 })
+
+			const [membership] = await db
+				.select({ userId: UserOrganization.userId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, userId),
+						eq(UserOrganization.organizationId, asset.organizationId),
+					),
+				)
+				.limit(1)
+			invariantResponse(membership, 'Forbidden', { status: 403 })
+		}
+
+		objectKey = asset.objectKey
+		organizationId =
+			asset.storageScope === 'organization' ? asset.organizationId : null
+	}
 
 	if (objectKey) {
 		if (

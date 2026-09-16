@@ -7,6 +7,7 @@ import {
 	isNotNull,
 	NoteComment,
 	NoteCommentImage,
+	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteUpload,
 	OrganizationS3Config,
@@ -254,6 +255,30 @@ export async function collectOrgMediaObjects(
 ) {
 	const objects = new Map<string, string>()
 
+	const libraryAssets = await db
+		.select({
+			objectKey: OrganizationMediaAsset.objectKey,
+			mimeType: OrganizationMediaAsset.mimeType,
+			createdAt: OrganizationMediaAsset.createdAt,
+		})
+		.from(OrganizationMediaAsset)
+		.where(
+			and(
+				eq(OrganizationMediaAsset.organizationId, organizationId),
+				eq(OrganizationMediaAsset.storageScope, 'organization'),
+			),
+		)
+
+	for (const asset of libraryAssets) {
+		if (
+			options?.onlyUploadedBefore &&
+			asset.createdAt >= options.onlyUploadedBefore
+		) {
+			continue
+		}
+		objects.set(asset.objectKey, asset.mimeType)
+	}
+
 	const uploads = await db
 		.select({
 			objectKey: OrganizationNoteUpload.objectKey,
@@ -322,6 +347,16 @@ export async function collectOrgMediaObjectKeys(
  * it needs the actual key list.
  */
 export async function countOrgMediaObjectKeys(organizationId: string) {
+	const libraryKeys = db
+		.select({ objectKey: OrganizationMediaAsset.objectKey })
+		.from(OrganizationMediaAsset)
+		.where(
+			and(
+				eq(OrganizationMediaAsset.organizationId, organizationId),
+				eq(OrganizationMediaAsset.storageScope, 'organization'),
+			),
+		)
+
 	const uploadKeys = db
 		.select({ objectKey: OrganizationNoteUpload.objectKey })
 		.from(OrganizationNoteUpload)
@@ -352,7 +387,10 @@ export async function countOrgMediaObjectKeys(organizationId: string) {
 		.innerJoin(OrganizationNote, eq(NoteComment.noteId, OrganizationNote.id))
 		.where(eq(OrganizationNote.organizationId, organizationId))
 
-	const mediaKeys = uploadKeys.union(thumbnailKeys).union(commentImageKeys)
+	const mediaKeys = libraryKeys
+		.union(uploadKeys)
+		.union(thumbnailKeys)
+		.union(commentImageKeys)
 	const [result] = await db
 		.select({ count: sql<number>`count(*)` })
 		.from(mediaKeys.as('media_keys'))

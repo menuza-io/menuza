@@ -24,6 +24,11 @@ type InspectorProps = {
 	onUpdate: (patch: Record<string, unknown>) => void
 	onBack: () => void
 	onRemove: () => void
+	/** Optional callback invoked when the user clicks "Choose from library" on an image block.
+	 * Receives a setter for the image URL. Only rendered when this prop is provided. */
+	onChooseImageFromLibrary?: (
+		onSelect: (url: string, alt: string) => void,
+	) => void
 }
 
 function Field({
@@ -111,6 +116,7 @@ export function EmailBlockInspector({
 	onUpdate,
 	onBack,
 	onRemove,
+	onChooseImageFromLibrary,
 }: InspectorProps) {
 	const { _ } = useLingui()
 	const { getBlockType } = useEmailBlockTypes()
@@ -215,6 +221,22 @@ export function EmailBlockInspector({
 									value={block.config.url}
 									onChange={(event) => onUpdate({ url: event.target.value })}
 								/>
+								{onChooseImageFromLibrary ? (
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										className="mt-1.5 w-full"
+										onClick={() =>
+											onChooseImageFromLibrary((url, alt) => {
+												onUpdate({ url, ...(alt ? { alt } : {}) })
+											})
+										}
+									>
+										<Icon name="image" className="size-3.5" />
+										<Trans>Choose from library</Trans>
+									</Button>
+								) : null}
 							</Field>
 							<Field label={<Trans>Alt text</Trans>} htmlFor="block-image-alt">
 								<Input

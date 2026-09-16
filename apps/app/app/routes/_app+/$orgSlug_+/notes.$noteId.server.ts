@@ -12,6 +12,7 @@ import {
 	eq,
 	inArray,
 	Organization,
+	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteFavorite,
 	Integration,
@@ -673,6 +674,28 @@ export async function handleAddCommentIntent({
 		}
 	}
 
+	const imageCount = parseInt(formData.get('imageCount') as string) || 0
+	const libraryAssetCount =
+		parseInt(formData.get('libraryAssetCount') as string) || 0
+	if (
+		imageCount < 0 ||
+		libraryAssetCount < 0 ||
+		imageCount + libraryAssetCount > 10
+	) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						imageCount: [
+							'Invalid image count. Maximum 10 images allowed in total.',
+						],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
+
 	try {
 		const sanitizedContent = sanitizeCommentContent(content)
 		const [comment] = await db
@@ -686,19 +709,6 @@ export async function handleAddCommentIntent({
 			.returning({ id: NoteComment.id })
 		if (!comment) throw new Error('Failed to create comment')
 
-		const imageCount = parseInt(formData.get('imageCount') as string) || 0
-		if (imageCount < 0 || imageCount > 10) {
-			return data(
-				{
-					result: submission.reply({
-						fieldErrors: {
-							imageCount: ['Invalid image count. Maximum 10 images allowed.'],
-						},
-					}),
-				},
-				{ status: 400 },
-			)
-		}
 		if (imageCount > 0) {
 			const { uploadCommentImage } =
 				await import('#app/utils/storage.server.ts')
@@ -727,12 +737,50 @@ export async function handleAddCommentIntent({
 			}
 		}
 
+		if (libraryAssetCount > 0) {
+			const libraryAssetIds: string[] = []
+			for (let i = 0; i < libraryAssetCount; i++) {
+				const id = formData.get(`libraryAssetId-${i}`)
+				if (typeof id === 'string' && id) {
+					libraryAssetIds.push(id)
+				}
+			}
+
+			if (libraryAssetIds.length > 0) {
+				const libraryAssets = await db
+					.select({
+						objectKey: OrganizationMediaAsset.objectKey,
+						altText: OrganizationMediaAsset.altText,
+					})
+					.from(OrganizationMediaAsset)
+					.where(
+						and(
+							inArray(OrganizationMediaAsset.id, libraryAssetIds),
+							eq(OrganizationMediaAsset.organizationId, note.organizationId),
+						),
+					)
+
+				if (libraryAssets.length > 0) {
+					await db.insert(NoteCommentImage).values(
+						libraryAssets.map((asset) => ({
+							commentId: comment.id,
+							objectKey: asset.objectKey,
+							altText: asset.altText,
+						})),
+					)
+				}
+			}
+		}
+
 		await logNoteActivity({
 			noteId,
 			userId,
 			action: 'comment_added',
 			commentId: comment.id,
-			metadata: { parentId, hasImages: imageCount > 0 },
+			metadata: {
+				parentId,
+				hasImages: imageCount > 0 || libraryAssetCount > 0,
+			},
 		})
 
 		const [commenter, noteWithTitle, organization] = await Promise.all([

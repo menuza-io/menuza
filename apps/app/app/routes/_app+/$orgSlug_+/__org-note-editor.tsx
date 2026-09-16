@@ -64,6 +64,7 @@ export const MAX_UPLOAD_SIZE = 1024 * 1024 * 3 // 3MB
 
 const ImageFieldsetSchema = z.object({
 	id: z.string().optional(),
+	mediaId: z.string().optional(),
 	fileId: z.string().optional(), // Added to store unique file identifier
 	file: z
 		.any()
@@ -81,6 +82,7 @@ const ImageFieldsetSchema = z.object({
 
 const MediaFieldsetSchema = z.object({
 	id: z.string().optional(),
+	mediaId: z.string().optional(),
 	fileId: z.string().optional(),
 	type: z.enum(['image', 'video']).optional(),
 	file: z

@@ -12,6 +12,11 @@ import { Button } from '@repo/ui/button'
 import { FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import React, { useState, useRef, useCallback } from 'react'
+import { useParams } from 'react-router'
+import {
+	MediaLibraryPicker,
+	type MediaLibraryAsset,
+} from '#app/components/media-library/media-library-picker.tsx'
 import { VideoPoster } from '#app/components/ui/video-poster.tsx'
 import { type MediaFieldset } from '#app/routes/_app+/$orgSlug_+/__org-note-editor.tsx'
 import { useDragAndDrop } from './use-drag-and-drop.tsx'
@@ -57,6 +62,10 @@ export function MultiMediaUpload({
 	// Store preview URLs and files for each media key
 	const [previewUrls, setPreviewUrls] = useState<Map<string, string>>(new Map())
 	const [fileRefs, setFileRefs] = useState<Map<string, File>>(new Map())
+	const [libraryAssets, setLibraryAssets] = useState<
+		Map<string, MediaLibraryAsset>
+	>(new Map())
+	const { orgSlug = '' } = useParams<{ orgSlug: string }>()
 
 	const metaName = meta.name!
 
@@ -139,6 +148,28 @@ export function MultiMediaUpload({
 	}
 
 	const canAddMore = mediaList.length < maxFiles && !disabled
+	const handleLibrarySelect = useCallback(
+		(asset: MediaLibraryAsset) => {
+			form.insert({
+				name: metaName,
+				defaultValue: {
+					mediaId: asset.id,
+					type: 'image',
+					altText: asset.altText ?? '',
+				},
+			})
+			const updatedList = meta.getFieldList()
+			const newEntry = updatedList[updatedList.length - 1]
+			if (newEntry) {
+				setLibraryAssets((previous) => {
+					const next = new Map(previous)
+					next.set(newEntry.key as string, asset)
+					return next
+				})
+			}
+		},
+		[form, meta, metaName],
+	)
 
 	return (
 		<div className={cn('mt-4 space-y-4', className)}>
@@ -165,6 +196,7 @@ export function MultiMediaUpload({
 								meta={mediaMeta}
 								previewUrl={previewUrls.get(key)}
 								file={fileRefs.get(key)}
+								libraryAsset={libraryAssets.get(key)}
 								existingImage={existingImage}
 								existingVideo={existingVideo}
 								organizationId={organizationId}
@@ -176,6 +208,11 @@ export function MultiMediaUpload({
 										return newMap
 									})
 									setFileRefs((prev) => {
+										const newMap = new Map(prev)
+										newMap.delete(key)
+										return newMap
+									})
+									setLibraryAssets((prev) => {
 										const newMap = new Map(prev)
 										newMap.delete(key)
 										return newMap
@@ -199,7 +236,17 @@ export function MultiMediaUpload({
 					onDragOver={handleDragOver}
 					onDragLeave={handleDragLeave}
 					onDrop={handleDrop}
-					onClick={handleClick}
+					onClick={(event) => {
+						const target = event.target as HTMLElement
+						if (
+							target.closest(
+								'button, [data-slot="dialog"], [data-slot="dialog-content"], [data-slot="dialog-overlay"], [data-slot="dialog-portal"], [role="dialog"]',
+							)
+						) {
+							return
+						}
+						handleClick()
+					}}
 				>
 					<input
 						ref={fileInputRef}
@@ -228,6 +275,15 @@ export function MultiMediaUpload({
 								<p className="text-muted-foreground text-xs">
 									Or click to select files
 								</p>
+								{orgSlug ? (
+									<div className="pt-2" onClick={(e) => e.stopPropagation()}>
+										<MediaLibraryPicker
+											orgSlug={orgSlug}
+											onSelect={handleLibrarySelect}
+											disabled={!canAddMore}
+										/>
+									</div>
+								) : null}
 							</div>
 						</div>
 					</div>
@@ -241,6 +297,7 @@ function MediaPreview({
 	meta,
 	previewUrl,
 	file,
+	libraryAsset,
 	existingImage,
 	existingVideo,
 	organizationId,
@@ -251,6 +308,7 @@ function MediaPreview({
 	meta: FieldMetadata<MediaFieldset | null>
 	previewUrl?: string
 	file?: File
+	libraryAsset?: MediaLibraryAsset
 	existingImage?: {
 		id: string
 		altText: string | null
@@ -275,7 +333,7 @@ function MediaPreview({
 		: null
 
 	const hasExistingVideo = Boolean(existingVideo?.objectKey)
-	const mediaUrl = existingImageUrl ?? previewUrl
+	const mediaUrl = existingImageUrl ?? libraryAsset?.url ?? previewUrl
 
 	return (
 		<fieldset
@@ -283,6 +341,7 @@ function MediaPreview({
 			className="group relative aspect-square shrink-0"
 		>
 			<input {...getInputProps(fields.id, { type: 'hidden' })} />
+			<input {...getInputProps(fields.mediaId, { type: 'hidden' })} />
 			<input {...getInputProps(fields.type, { type: 'hidden' })} />
 			<label
 				htmlFor={fields.file.id}

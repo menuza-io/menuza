@@ -862,6 +862,7 @@ export default function NoteRoute() {
 								currentUserId={currentUserId}
 								users={mentionUsers}
 								organizationId={note.organization.id}
+								orgSlug={note.organization.slug}
 							/>
 						</div>
 					</TabsContent>

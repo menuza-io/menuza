@@ -2,6 +2,7 @@ import {
 	db,
 	NoteComment,
 	NoteCommentImage,
+	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteUpload,
 } from '@repo/database'
@@ -49,7 +50,16 @@ describe('countOrgMediaObjectKeys', () => {
 			objectKey: 'media/photo-thumb.jpg',
 			commentId: comment!.id,
 		})
+		await db.insert(OrganizationMediaAsset).values({
+			organizationId: organization.id,
+			objectKey: 'media/library-image.png',
+			mimeType: 'image/png',
+			fileName: 'library-image.png',
+			fileSize: 512,
+			source: 'library',
+			createdById: user.id,
+		})
 
-		await expect(countOrgMediaObjectKeys(organization.id)).resolves.toBe(2)
+		await expect(countOrgMediaObjectKeys(organization.id)).resolves.toBe(3)
 	})
 })

@@ -18,13 +18,13 @@ import {
 	createAuthenticatedRequest,
 	setupTestOrgWithUser,
 } from '#tests/test-utils.ts'
+import { loader as viewLoader } from './roles.$roleId.tsx'
+import { action as editAction } from './roles.$roleId_.edit.tsx'
 import {
 	action as deleteAction,
 	loader as indexLoader,
 } from './roles._index.tsx'
 import { action as createAction } from './roles.new.tsx'
-import { loader as viewLoader } from './roles.$roleId.tsx'
-import { action as editAction } from './roles.$roleId_.edit.tsx'
 
 function createRoleRequest(
 	url: string,

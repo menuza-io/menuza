@@ -63,11 +63,17 @@ interface CommentItemProps {
 	onCancelReply: () => void
 	onEditTo: (commentId: string) => void
 	onCancelEdit: () => void
-	onReply?: (commentId: string, content: string, images?: File[]) => void
+	onReply?: (
+		commentId: string,
+		content: string,
+		images?: File[],
+		libraryAssetIds?: string[],
+	) => void
 	onEdit?: (commentId: string, content: string) => void
 	onDelete?: (commentId: string) => void
 	organizationId: string
 	isThreadRoot?: boolean
+	orgSlug?: string
 }
 
 function formatCompactTime(date: string) {
@@ -100,14 +106,19 @@ export function CommentItem({
 	onDelete,
 	organizationId,
 	isThreadRoot = true,
+	orgSlug,
 }: CommentItemProps) {
 	const { _ } = useLingui()
 	const [repliesCollapsed, setRepliesCollapsed] = useState(false)
 	const [isDeleting, setIsDeleting] = useState(false)
 
-	const handleReply = (content: string, images?: File[]) => {
+	const handleReply = (
+		content: string,
+		images?: File[],
+		libraryAssetIds?: string[],
+	) => {
 		if (onReply) {
-			onReply(comment.id, content, images)
+			onReply(comment.id, content, images, libraryAssetIds)
 		}
 	}
 
@@ -326,6 +337,7 @@ export function CommentItem({
 								reply
 								onCancel={onCancelReply}
 								placeholder={_(msg`Leave a reply...`)}
+								orgSlug={orgSlug}
 							/>
 						</div>
 					) : null}
@@ -350,6 +362,7 @@ export function CommentItem({
 									onReply={onReply}
 									onEdit={onEdit}
 									onDelete={onDelete}
+									orgSlug={orgSlug}
 								/>
 							))}
 						</div>

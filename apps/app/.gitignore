@@ -14,6 +14,7 @@ node_modules
 /tests/fixtures/email/
 /tests/fixtures/uploaded/
 /tests/fixtures/openimg/example-r2-cloudflarestorage-com/mock-bucket/org/
+/tests/fixtures/openimg/example-r2-cloudflarestorage-com/mock-bucket/orgs/
 /tests/fixtures/openimg/example-r2-cloudflarestorage-com/mock-bucket/users/
 /tests/fixtures/openimg/metadata.json
 /coverage

@@ -113,6 +113,7 @@ import {
 	useAIPanelHotkey,
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
+import { MediaLibraryPicker } from '#app/components/media-library/media-library-picker.tsx'
 import {
 	deleteSiteIconActionIntent,
 	uploadSiteIconActionIntent,
@@ -2261,6 +2262,7 @@ function PageSettingsPanel({
 	slugError?: string | null
 }) {
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
+	const { orgSlug = '' } = useParams<{ orgSlug: string }>()
 	const fileInputRef = useRef<HTMLInputElement | null>(null)
 	const [slug, setSlug] = useState(() => displayPageSlug(page))
 	const [seoTitle, setSeoTitle] = useState(page.seoTitle ?? '')
@@ -2584,6 +2586,15 @@ function PageSettingsPanel({
 									/>
 								) : null}
 								<div className="flex flex-wrap gap-2 px-2 pb-2">
+									<MediaLibraryPicker
+										orgSlug={orgSlug}
+										triggerLabel="Choose from library"
+										onSelect={(asset) => {
+											setSeoImageUrl(asset.url)
+											setShowUrlInput(false)
+											persist({ seoImageUrl: asset.url })
+										}}
+									/>
 									<Button
 										variant="outline"
 										size="sm"
@@ -2627,6 +2638,15 @@ function PageSettingsPanel({
 							</div>
 						) : (
 							<div className="flex flex-wrap items-center gap-3">
+								<MediaLibraryPicker
+									orgSlug={orgSlug}
+									triggerLabel="Choose from library"
+									onSelect={(asset) => {
+										setSeoImageUrl(asset.url)
+										setShowUrlInput(false)
+										persist({ seoImageUrl: asset.url })
+									}}
+								/>
 								<Button
 									variant="outline"
 									size="sm"
@@ -5031,6 +5051,7 @@ function FieldAssetUpload({
 }) {
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const isPendingRef = useRef(false)
+	const { orgSlug = '' } = useParams<{ orgSlug: string }>()
 
 	// When upload completes successfully, trigger the callback if we initiated it
 	useEffect(() => {
@@ -5070,6 +5091,14 @@ function FieldAssetUpload({
 					{isUploading ? <Spinner className="mr-2" /> : null}
 					<Trans>Upload file</Trans>
 				</Button>
+				{accept.includes('image/') && orgSlug ? (
+					<MediaLibraryPicker
+						orgSlug={orgSlug}
+						triggerLabel="Choose from library"
+						className="w-full justify-start"
+						onSelect={(asset) => onUrlReady(asset.url)}
+					/>
+				) : null}
 				{uploadError && (
 					<p className="text-destructive text-xs" role="alert">
 						{uploadError}
