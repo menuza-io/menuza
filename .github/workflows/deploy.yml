@@ -312,6 +312,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, vitest, playwright]
     if: |
+      always() &&
       github.event_name == 'push' &&
       needs.lint.result == 'success' &&
       needs.typecheck.result == 'success' &&

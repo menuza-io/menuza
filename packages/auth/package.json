@@ -28,7 +28,7 @@
     "test:e2e:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
-    "@coji/remix-auth-google": "^3.0.2",
+    "@coji/remix-auth-google": "^4.2.0",
     "@epic-web/totp": "^4.0.1",
     "@mjackson/headers": "^0.10.0",
     "@paralleldrive/cuid2": "^2.2.2",

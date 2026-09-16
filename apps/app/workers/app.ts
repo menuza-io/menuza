@@ -1,17 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import './polyfill-crypto.ts'
-import { bindCacheKV } from '@repo/cache'
-import { bindCloudflareD1 } from '@repo/database'
 import {
 	createContext,
 	createRequestHandler,
 	RouterContextProvider,
 } from 'react-router'
 import { initVarlockEnv } from 'varlock/env'
-import { ensureLinguiRequestLocale } from '../app/modules/lingui/lingui.server.ts'
-import { bindSiteDataKV } from '../app/utils/sites/kv-cache.server.ts'
-import { bindTenantApiService } from '../app/utils/tenant-api-service.server.ts'
 
 const cloudflareContext = createContext<{
 	env: Env
@@ -28,14 +23,16 @@ function applyWorkerEnv(env: Env) {
 	// proxy and process.env aligned for shared packages that read ENV.* while
 	// avoiding any build-time environment snapshot in the Worker bundle.
 	const existingConfig = (globalThis as any).__varlockLoadedEnv?.config ?? {}
-	const newConfig: Record<string, { value: unknown }> = { ...existingConfig }
+	const newConfig: Record<string, { value: unknown }> = {}
 	for (const [key, value] of Object.entries(env)) {
 		if (
 			typeof value === 'string' ||
 			typeof value === 'number' ||
 			typeof value === 'boolean'
 		) {
-			newConfig[key] = { ...newConfig[key], value: String(value) }
+			// Preserve Varlock's sensitivity metadata when a legacy bootstrap blob is
+			// present, but never retain a value that is absent from Cloudflare `env`.
+			newConfig[key] = { ...existingConfig[key], value: String(value) }
 			if (typeof process !== 'undefined' && process.env) {
 				process.env[key] = String(value)
 			}
@@ -51,6 +48,19 @@ function applyWorkerEnv(env: Env) {
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		applyWorkerEnv(env)
+		const [
+			cacheModule,
+			databaseModule,
+			linguiModule,
+			siteDataModule,
+			tenantApiModule,
+		] = await Promise.all([
+			import('@repo/cache'),
+			import('@repo/database'),
+			import('../app/modules/lingui/lingui.server.ts'),
+			import('../app/utils/sites/kv-cache.server.ts'),
+			import('../app/utils/tenant-api-service.server.ts'),
+		])
 		requestHandlerPromise ??= import('virtual:react-router/server-build').then(
 			(build) => {
 				// The server build initializes Varlock before route modules load.
@@ -60,13 +70,13 @@ export default {
 			},
 		)
 		requestHandler ??= await requestHandlerPromise
-		bindCloudflareD1(env.DB)
-		bindCacheKV(env.CACHE)
-		bindSiteDataKV((env as any).SITES_DATA_KV)
+		databaseModule.bindCloudflareD1(env.DB)
+		cacheModule.bindCacheKV(env.CACHE)
+		siteDataModule.bindSiteDataKV((env as any).SITES_DATA_KV)
 		if ((env as any).TENANT_API) {
-			bindTenantApiService((env as any).TENANT_API)
+			tenantApiModule.bindTenantApiService((env as any).TENANT_API)
 		}
-		await ensureLinguiRequestLocale(request)
+		await linguiModule.ensureLinguiRequestLocale(request)
 
 		const loadContext = new RouterContextProvider()
 		loadContext.set(cloudflareContext, { env, ctx })
