@@ -382,7 +382,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}) => {
 		const value = clientId?.trim()
 		if (!value || !clientSecret?.trim() || !redirectUri?.trim()) return false
-		return ENV.NODE_ENV !== 'production' || !value.startsWith('MOCK_')
+		return (
+			process['env'].MOCKS === 'true' ||
+			ENV.NODE_ENV !== 'production' ||
+			!value.startsWith('MOCK_')
+		)
 	}
 	const configuredProviders = providerNames.filter((providerName) =>
 		hasConfiguredProvider(
