@@ -853,9 +853,9 @@ export async function handleAddCommentIntent({
 
 	try {
 		// Uploads happen before the transaction so the SQLite write lock is not
-		// held while we talk to storage. Every object we upload (and the media
-		// row registered for it) is tracked so it can be cleaned up when a later
-		// step fails.
+		// held while we talk to storage. Every uploaded object (and the media row
+		// registered for it) is tracked so a failed upload or database write can
+		// clean up the ones that already succeeded.
 		const commentId = createId()
 		const uploadedObjectKeys: string[] = []
 		const uploadedImages: Array<{
@@ -864,22 +864,22 @@ export async function handleAddCommentIntent({
 			altText: string | null
 		}> = []
 
-		if (imageFiles.length > 0) {
-			const { uploadCommentImage } =
-				await import('#app/utils/storage.server.ts')
-			for (const imageFile of imageFiles) {
-				const objectKey = await uploadCommentImage(
-					userId,
-					commentId,
-					imageFile,
-					note.organizationId,
-				)
-				uploadedObjectKeys.push(objectKey)
-				uploadedImages.push({ commentId, objectKey, altText: null })
-			}
-		}
-
 		try {
+			if (imageFiles.length > 0) {
+				const { uploadCommentImage } =
+					await import('#app/utils/storage.server.ts')
+				for (const imageFile of imageFiles) {
+					const objectKey = await uploadCommentImage(
+						userId,
+						commentId,
+						imageFile,
+						note.organizationId,
+					)
+					uploadedObjectKeys.push(objectKey)
+					uploadedImages.push({ commentId, objectKey, altText: null })
+				}
+			}
+
 			await db.transaction(async (tx) => {
 				await tx.insert(NoteComment).values({
 					id: commentId,

@@ -2,6 +2,11 @@ import { PassThrough, Readable } from 'node:stream'
 import { describe, expect, it } from 'vitest'
 import { drainOnCancel } from './drain-on-cancel.server.ts'
 
+/** `Readable.toWeb()` is typed with the DOM `ReadableStream` in some lib setups. */
+function toWeb(readable: Readable) {
+	return Readable.toWeb(readable) as unknown as ReadableStream<Uint8Array>
+}
+
 /**
  * Canceling a stream created with `Readable.toWeb()` while a resume tick is
  * already scheduled used to throw an uncatchable `ERR_INVALID_STATE: Controller
@@ -12,7 +17,7 @@ import { drainOnCancel } from './drain-on-cancel.server.ts'
 describe('drainOnCancel', () => {
 	it('forwards data from the source', async () => {
 		const source = new PassThrough()
-		const stream = drainOnCancel(Readable.toWeb(source))
+		const stream = drainOnCancel(toWeb(source))
 
 		source.write(Buffer.from('hello'))
 		source.write(Buffer.from(' world'))
@@ -30,26 +35,26 @@ describe('drainOnCancel', () => {
 	})
 
 	it('drains instead of canceling the source, so a client abort cannot crash the process', async () => {
-		const uncaught: Array<Error> = []
-		const onUncaught = (error: Error) => uncaught.push(error)
+		const uncaught: Array<unknown> = []
+		const onUncaught = (error: unknown) => uncaught.push(error)
 		process.on('uncaughtException', onUncaught)
 
 		try {
 			// A slow sink with a small high water mark forces the pause →
 			// `pull()` → `resume()` cycles that make the race reproducible.
 			for (let iteration = 0; iteration < 100; iteration++) {
+				let pushed = 0
 				const source = new Readable({
 					read() {
+						pushed += 16_384
 						this.push(Buffer.alloc(16 * 1024, 1))
-						if ((this.bytes = (this.bytes || 0) + 16_384) > 256 * 1024) {
-							this.push(null)
-						}
+						if (pushed > 256 * 1024) this.push(null)
 					},
 				})
 				const passThrough = new PassThrough({ highWaterMark: 16_384 })
 				source.pipe(passThrough)
 
-				const stream = drainOnCancel(Readable.toWeb(passThrough))
+				const stream = drainOnCancel(toWeb(passThrough))
 				const controller = new AbortController()
 				const sink = new WritableStream(
 					{
