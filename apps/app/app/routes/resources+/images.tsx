@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
 import { invariantResponse } from '@epic-web/invariant'
 import { getUserId } from '@repo/auth'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
@@ -12,53 +11,12 @@ import {
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import { isValidRasterBytes } from '@repo/storage'
 import { drainOnCancel } from '#app/utils/drain-on-cancel.server.ts'
+import { verifyMediaSignature } from '#app/utils/media-signing.server.ts'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
-
-const MEDIA_SIGNING_SECRET =
-	process.env.INTERNAL_COMMAND_TOKEN || process.env.SESSION_SECRET
-
-if (!MEDIA_SIGNING_SECRET) {
-	throw new Error(
-		'INTERNAL_COMMAND_TOKEN or SESSION_SECRET is required for media URL signing.',
-	)
-}
-
-export function signMediaId(mediaId: string, expiresAt: number): string {
-	return createHmac('sha256', MEDIA_SIGNING_SECRET)
-		.update(`media:${mediaId}:${expiresAt}`)
-		.digest('hex')
-}
-
-function verifyMediaSignature(
-	mediaId: string,
-	signature: string | null,
-	expiresAtValue: string | null,
-): boolean {
-	if (!signature || !expiresAtValue || !/^\d+$/u.test(expiresAtValue))
-		return false
-	const expiresAt = Number(expiresAtValue)
-	if (
-		!Number.isSafeInteger(expiresAt) ||
-		expiresAt <= Math.floor(Date.now() / 1000)
-	) {
-		return false
-	}
-	const expected = createHmac('sha256', MEDIA_SIGNING_SECRET)
-		.update(`media:${mediaId}:${expiresAt}`)
-		.digest('hex')
-	try {
-		return (
-			signature.length === expected.length &&
-			timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-		)
-	} catch {
-		return false
-	}
-}
 
 const ALLOWED_RASTER_MIME_TYPES = new Set([
 	'image/jpeg',
