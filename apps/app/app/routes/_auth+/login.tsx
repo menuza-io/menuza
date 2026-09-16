@@ -4,7 +4,6 @@ import { Trans, t } from '@lingui/macro'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { auditService, AuditAction } from '@repo/audit'
 import { requireAnonymous } from '@repo/auth'
-import { providerNames } from '@repo/auth/constants'
 import { getErrorMessage, useIsPending } from '@repo/common'
 import { sharedCookieDomain } from '@repo/common/cookie-domain'
 import { getPageTitle } from '@repo/config/brand'
@@ -43,7 +42,10 @@ import {
 } from '#app/components/forms.tsx'
 import { ensureLinguiRequestLocale } from '#app/modules/lingui/lingui.server.ts'
 import { login } from '#app/utils/auth.server.ts'
-import { ProviderConnectionForm } from '#app/utils/connections.tsx'
+import {
+	ProviderConnectionForm,
+	useConfiguredProviders,
+} from '#app/utils/connections.tsx'
 import { ENV } from '#app/utils/env.server.ts'
 import {
 	saveLastLoginMethod,
@@ -483,11 +485,12 @@ function PasskeyLogin({
 
 function SocialLoginButtons({ redirectTo }: { redirectTo: string | null }) {
 	const lastLoginMethod = useLastLoginMethod()
+	const configuredProviders = useConfiguredProviders()
 
 	return (
 		<div className="flex flex-col gap-3">
 			{/* Social Login Buttons */}
-			{providerNames.map((providerName) => (
+			{configuredProviders.map((providerName) => (
 				<div key={providerName} className="relative">
 					<ProviderConnectionForm
 						type="Login"

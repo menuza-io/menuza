@@ -522,8 +522,9 @@ describe('MCP Tools Service', () => {
 				fc.asyncProperty(
 					fc.integer({ min: 11, max: 20 }),
 					async (noteCount) => {
+						const baseCreatedAt = Date.now()
+
 						// Create multiple notes
-						const notes = []
 						for (let i = 0; i < noteCount; i++) {
 							const [note] = await db
 								.insert(OrganizationNote)
@@ -533,11 +534,10 @@ describe('MCP Tools Service', () => {
 									organizationId: mockContext.organization.id,
 									createdById: mockContext.user.id,
 									isPublic: true,
-									createdAt: new Date(Date.now() - i * 1000), // Stagger creation times
+									createdAt: new Date(baseCreatedAt - i * 1000), // Stagger creation times
 								})
 								.returning()
 							if (!note) throw new Error('Failed to insert note')
-							notes.push(note)
 						}
 
 						try {

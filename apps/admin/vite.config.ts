@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { cloudflare } from '@cloudflare/vite-plugin'
 import { lingui } from '@lingui/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
 import { getLocalDomain } from '@repo/config/brand'
 import tailwindcss from '@tailwindcss/vite'
+import { varlockCloudflareVitePlugin } from '@varlock/cloudflare-integration'
 import { varlockVitePlugin } from '@varlock/vite-integration'
 import { defineConfig, type Plugin } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
@@ -127,19 +127,10 @@ export default defineConfig((config) => ({
 		},
 	},
 	plugins: [
-		isCloudflareDeploy
-			? cloudflare({ viteEnvironment: { name: 'ssr' } })
-			: null,
 		cloudflareWorkerAliasPlugin(),
-		varlockVitePlugin(
-			isCloudflareDeploy
-				? {
-						ssrEdgeRuntime: true,
-						ssrEntryModuleIds: ['\0virtual:cloudflare/worker-entry'],
-						ssrInjectMode: 'resolved-env',
-					}
-				: undefined,
-		),
+		...(isCloudflareDeploy
+			? [varlockCloudflareVitePlugin({ viteEnvironment: { name: 'ssr' } })]
+			: [varlockVitePlugin()]),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),
 		tailwindcss(),

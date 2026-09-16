@@ -7,8 +7,14 @@ import {
 import { useIsPending } from '@repo/common'
 import { Icon } from '@repo/ui/icon'
 import { StatusButton } from '@repo/ui/status-button'
-import { Form } from 'react-router'
+import { Form, useRouteLoaderData } from 'react-router'
+import { type loader as rootLoader } from '#app/root.tsx'
 import { saveLastLoginMethod, type LoginMethod } from './last-login-method.ts'
+
+export function useConfiguredProviders() {
+	const rootData = useRouteLoaderData<typeof rootLoader>('root')
+	return rootData?.configuredProviders ?? []
+}
 
 export const providerIcons: Record<ProviderName, React.ReactNode> = {
 	[GITHUB_PROVIDER_NAME]: <Icon name="github" />,
@@ -24,9 +30,12 @@ export function ProviderConnectionForm({
 	type: 'Connect' | 'Login' | 'Signup'
 	providerName: ProviderName
 }) {
+	const configuredProviders = useConfiguredProviders()
 	const label = providerLabels[providerName]
 	const formAction = `/auth/${providerName}`
 	const isPending = useIsPending({ formAction })
+	if (!configuredProviders.includes(providerName)) return null
+
 	return (
 		<Form
 			className="flex items-center justify-center gap-2"
