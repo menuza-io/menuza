@@ -142,7 +142,7 @@ async function streamStoredVideo(
 		headers: upstreamHeaders,
 	})
 
-	const responseHeaders = getImageResponseHeaders(cacheable)
+	const responseHeaders = getImageResponseHeaders(cacheable && upstream.ok)
 	for (const headerName of VIDEO_PASSTHROUGH_HEADERS) {
 		const value = upstream.headers.get(headerName)
 		if (value) responseHeaders.set(headerName, value)
@@ -162,11 +162,25 @@ async function streamStoredVideo(
 	})
 }
 
+const PUBLIC_MEDIA_SOURCES = new Set([
+	'organization-logo',
+	'site-icon',
+	'website-seo',
+	'website-asset',
+])
+
+/** Platform-scoped assets and organization branding assets are public. */
+function isPublicMediaAsset(asset: { storageScope: string; source: string }) {
+	return (
+		asset.storageScope === 'platform' || PUBLIC_MEDIA_SOURCES.has(asset.source)
+	)
+}
+
 /**
  * Media that is not public (membership-authorized library assets, signed
- * capability URLs, stored videos, external images) must not be stored by shared
- * caches, otherwise a cached copy can be replayed without re-running
- * authorization or after the signature expired.
+ * capability URLs, direct object keys, stored videos, external images) must not
+ * be stored by shared caches, otherwise a cached copy can be replayed without
+ * re-running authorization or after the signature expired.
  */
 function getImageResponseHeaders(cacheable: boolean) {
 	const headers = new Headers()
@@ -278,7 +292,7 @@ async function getCloudflareImageResponse(
 	if (!upstream.ok) {
 		return new Response(upstream.statusText, {
 			status: upstream.status,
-			headers: getImageResponseHeaders(cacheable && !isExternal),
+			headers: getImageResponseHeaders(false),
 		})
 	}
 
@@ -378,13 +392,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const searchParams = url.searchParams
 
+	const src = searchParams.get('src')
 	let objectKey = searchParams.get('objectKey')
 	let organizationId = searchParams.get('organizationId')
 	const mediaId = searchParams.get('mediaId')
-	// Only assets we know are public may be cached by shared caches. Assets
-	// resolved through a `mediaId` become non-cacheable as soon as they are not
-	// public (membership-authorized or signed capability URLs).
-	let cacheable = true
+	// Only assets we can positively identify as public may be stored by shared
+	// caches. Private media (membership-authorized or signed capability URLs),
+	// direct object keys and external images are all non-cacheable.
+	let cacheable = false
 
 	if (mediaId) {
 		invariantResponse(
@@ -406,12 +421,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			.limit(1)
 		invariantResponse(asset, 'Media not found', { status: 404 })
 
-		const isPublicMedia =
-			asset.storageScope === 'platform' ||
-			asset.source === 'organization-logo' ||
-			asset.source === 'site-icon' ||
-			asset.source === 'website-seo' ||
-			asset.source === 'website-asset'
+		const isPublicMedia = isPublicMediaAsset(asset)
 		cacheable = isPublicMedia
 
 		const sig = searchParams.get('sig')
@@ -441,6 +451,21 @@ export async function loader({ request }: Route.LoaderArgs) {
 		objectKey = asset.objectKey
 		organizationId =
 			asset.storageScope === 'organization' ? asset.organizationId : null
+	} else if (objectKey) {
+		// A direct object key can point at private note or comment media, so it
+		// is only cacheable when it is a registered public branding asset.
+		const [asset] = await db
+			.select({
+				storageScope: OrganizationMediaAsset.storageScope,
+				source: OrganizationMediaAsset.source,
+			})
+			.from(OrganizationMediaAsset)
+			.where(eq(OrganizationMediaAsset.objectKey, objectKey))
+			.limit(1)
+		cacheable = asset ? isPublicMediaAsset(asset) : false
+	} else if (src && !URL.canParse(src)) {
+		// Local static assets served from `/public` or the client build.
+		cacheable = true
 	}
 
 	if (objectKey) {
@@ -458,7 +483,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
-	const src = searchParams.get('src')
 	if (
 		src &&
 		URL.canParse(src) &&

@@ -85,6 +85,11 @@ const CommentImageSchema = z
  * together with the media rows registered for them. Called when creating the
  * comment fails after one or more uploads succeeded, so a failed comment never
  * leaves orphaned objects or library entries behind.
+ *
+ * Each object is handled on its own, storage first: when storage cleanup fails
+ * the media row stays behind as the record of what still needs to be removed,
+ * and `deleteFromStorage` treats a missing object as success so a retry
+ * converges.
  */
 async function removeUploadedCommentImages(
 	objectKeys: string[],
@@ -92,24 +97,9 @@ async function removeUploadedCommentImages(
 ) {
 	if (objectKeys.length === 0) return
 
-	try {
-		await db
-			.delete(OrganizationMediaAsset)
-			.where(
-				and(
-					eq(OrganizationMediaAsset.organizationId, organizationId),
-					inArray(OrganizationMediaAsset.objectKey, objectKeys),
-				),
-			)
-	} catch (error) {
-		console.error(
-			'Failed to remove media rows for a failed comment upload:',
-			error,
-		)
-	}
-
 	const { deleteOrganizationStorageObject } =
 		await import('#app/utils/storage.server.ts')
+
 	for (const objectKey of objectKeys) {
 		try {
 			await deleteOrganizationStorageObject(objectKey, organizationId)
@@ -118,6 +108,20 @@ async function removeUploadedCommentImages(
 				`Failed to clean up uploaded comment image ${objectKey}:`,
 				error,
 			)
+			continue
+		}
+
+		try {
+			await db
+				.delete(OrganizationMediaAsset)
+				.where(
+					and(
+						eq(OrganizationMediaAsset.organizationId, organizationId),
+						eq(OrganizationMediaAsset.objectKey, objectKey),
+					),
+				)
+		} catch (error) {
+			console.error(`Failed to remove the media row for ${objectKey}:`, error)
 		}
 	}
 }
