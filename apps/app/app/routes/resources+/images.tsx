@@ -453,9 +453,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 			asset.storageScope === 'organization' ? asset.organizationId : null
 	} else if (objectKey) {
 		// A direct object key can point at private note or comment media, so it
-		// is only cacheable when it is a registered public branding asset.
+		// is only cacheable when it is a registered public branding asset, and
+		// registered private media still requires organization membership.
 		const [asset] = await db
 			.select({
+				organizationId: OrganizationMediaAsset.organizationId,
 				storageScope: OrganizationMediaAsset.storageScope,
 				source: OrganizationMediaAsset.source,
 			})
@@ -463,6 +465,26 @@ export async function loader({ request }: Route.LoaderArgs) {
 			.where(eq(OrganizationMediaAsset.objectKey, objectKey))
 			.limit(1)
 		cacheable = asset ? isPublicMediaAsset(asset) : false
+
+		if (asset && !cacheable) {
+			const userId = await getUserId(request)
+			invariantResponse(userId, 'Unauthorized', { status: 401 })
+
+			const [membership] = await db
+				.select({ userId: UserOrganization.userId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, userId),
+						eq(UserOrganization.organizationId, asset.organizationId),
+					),
+				)
+				.limit(1)
+			invariantResponse(membership, 'Forbidden', { status: 403 })
+
+			organizationId =
+				asset.storageScope === 'organization' ? asset.organizationId : null
+		}
 	} else if (src && !URL.canParse(src)) {
 		// Local static assets served from `/public` or the client build.
 		cacheable = true
