@@ -1,5 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 
+// Worker entry for the admin dashboard (Cloudflare Workers).
 import './polyfill-crypto.ts'
 import {
 	createContext,
