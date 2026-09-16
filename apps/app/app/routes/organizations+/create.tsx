@@ -76,7 +76,10 @@ import {
 	createRateLimitResponse,
 	ORGANIZATION_INVITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
-import { uploadOrganizationImage } from '#app/utils/storage.server.ts'
+import {
+	registerOrganizationMediaAsset,
+	uploadOrganizationImage,
+} from '#app/utils/storage.server.ts'
 import { shouldBeOnWaitlist } from '#app/utils/waitlist.server.ts'
 
 // Photo upload schema
@@ -242,6 +245,28 @@ export async function action({ request }: ActionFunctionArgs) {
 				userId,
 				imageObjectKey,
 			})
+			if (
+				imageObjectKey &&
+				logoFile &&
+				logoFile instanceof File &&
+				logoFile.size > 0
+			) {
+				try {
+					await registerOrganizationMediaAsset({
+						organizationId: organization.id,
+						objectKey: imageObjectKey,
+						file: logoFile,
+						storageScope: 'platform',
+						source: 'organization-logo',
+						createdById: userId,
+					})
+				} catch (registrationError) {
+					console.error(
+						'Failed to register organization logo media asset:',
+						registrationError,
+					)
+				}
+			}
 			// const launchStatus = getLaunchStatus()
 			// const shouldShowPricing =
 			// 	trialConfig.creditCardRequired === 'stripe' &&

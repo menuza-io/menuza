@@ -15,7 +15,7 @@ test.describe('Website General Settings & Site Locales', () => {
 		await expect(page.getByLabel('Google Analytics ID')).toHaveCount(0)
 
 		await page
-			.locator('#main-content')
+			.getByRole('main')
 			.getByRole('link', { name: 'Analytics', exact: true })
 			.click()
 		await page.getByLabel('Facebook Pixel ID').fill('123456789012345')

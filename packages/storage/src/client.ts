@@ -364,6 +364,26 @@ export async function uploadToStorage(
 }
 
 /**
+ * Delete a file from S3-compatible storage
+ */
+export async function deleteFromStorage(
+	key: string,
+	config: StorageConfig,
+): Promise<void> {
+	const { url, headers } = getSignedDeleteRequestInfo(key, config)
+	const response = await fetch(url, {
+		method: 'DELETE',
+		headers,
+	})
+
+	if (!response.ok && response.status !== 404) {
+		const errorMessage = `Failed to delete file from storage. Server responded with ${response.status}: ${response.statusText}`
+		console.error(errorMessage)
+		throw new Error(`Failed to delete object: ${key}`)
+	}
+}
+
+/**
  * Test S3 connection by uploading and deleting a test file
  */
 export async function testS3Connection(

@@ -95,3 +95,6 @@ base.*.db-shm
 data.*.db-wal
 data.*.db-shm
 apps/app/tests/database/
+.impeccable/
+apps/app/tests/fixtures/openimg/**/mock-bucket/orgs/
+

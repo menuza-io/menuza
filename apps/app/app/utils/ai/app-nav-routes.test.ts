@@ -30,6 +30,15 @@ describe('app nav routes', () => {
 		})
 	})
 
+	it('resolves the organization media library', () => {
+		const result = resolveAppNavPath('media', { orgSlug: 'acme' })
+		expect(result).toEqual({
+			ok: true,
+			path: '/acme/media',
+			route: expect.objectContaining({ id: 'media' }),
+		})
+	})
+
 	it('resolves account routes without an org slug', () => {
 		const result = resolveAppNavPath('account-profile', {})
 		expect(result).toEqual({

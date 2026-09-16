@@ -1,10 +1,19 @@
 import { type FileUpload } from '@mjackson/form-data-parser'
-import { db, eq, OrganizationS3Config } from '@repo/database'
+import {
+	and,
+	db,
+	eq,
+	Organization,
+	OrganizationMediaAsset,
+	OrganizationS3Config,
+} from '@repo/database'
 import { decrypt, getSSOMasterKey } from '@repo/security'
 import {
 	createStorageClient,
+	deleteFromStorage,
 	uploadProfileImage as _uploadProfileImage,
 	uploadOrganizationImage as _uploadOrganizationImage,
+	uploadOrganizationMediaImage as _uploadOrganizationMediaImage,
 	uploadNoteImage as _uploadNoteImage,
 	uploadCommentImage as _uploadCommentImage,
 	uploadNoteVideo as _uploadNoteVideo,
@@ -66,6 +75,70 @@ function createUploadOptions(): UploadOptions {
 	}
 }
 
+type MediaSource =
+	| 'comment'
+	| 'library'
+	| 'note'
+	| 'organization-logo'
+	| 'site-icon'
+	| 'video-thumbnail'
+	| 'website-asset'
+	| 'website-seo'
+
+export async function registerOrganizationMediaAsset({
+	organizationId,
+	objectKey,
+	file,
+	storageScope,
+	source,
+	createdById,
+	width,
+	height,
+}: {
+	organizationId: string
+	objectKey: string
+	file: File | FileUpload
+	storageScope: 'organization' | 'platform'
+	source: MediaSource
+	createdById?: string
+	width?: number
+	height?: number
+}) {
+	if (!file.type.startsWith('image/')) return null
+
+	const [asset] = await db
+		.insert(OrganizationMediaAsset)
+		.values({
+			organizationId,
+			objectKey,
+			storageScope,
+			mimeType: file.type,
+			fileName: file.name || null,
+			fileSize: file.size || null,
+			width: width ?? null,
+			height: height ?? null,
+			source,
+			createdById: createdById ?? null,
+		})
+		.onConflictDoNothing()
+		.returning()
+
+	if (asset) return asset
+
+	const [existing] = await db
+		.select()
+		.from(OrganizationMediaAsset)
+		.where(
+			and(
+				eq(OrganizationMediaAsset.organizationId, organizationId),
+				eq(OrganizationMediaAsset.objectKey, objectKey),
+			),
+		)
+		.limit(1)
+
+	return existing ?? null
+}
+
 // Export upload functions with app-specific configuration
 export async function uploadProfileImage(
 	userId: string,
@@ -80,53 +153,194 @@ export async function uploadProfileImage(
 	)
 }
 
+async function uploadAndRegisterOrganizationMedia({
+	organizationId,
+	file,
+	storageScope,
+	source,
+	createdById,
+	uploadFn,
+}: {
+	organizationId: string
+	file: File | FileUpload
+	storageScope: 'organization' | 'platform'
+	source: MediaSource
+	createdById?: string
+	uploadFn: () => Promise<string>
+}): Promise<string> {
+	const objectKey = await uploadFn()
+	try {
+		await registerOrganizationMediaAsset({
+			organizationId,
+			objectKey,
+			file,
+			storageScope,
+			source,
+			createdById,
+		})
+		return objectKey
+	} catch (error) {
+		try {
+			const options = createUploadOptions()
+			const config = await options.getConfig(
+				storageScope === 'platform' ? undefined : organizationId,
+			)
+			await deleteFromStorage(objectKey, config)
+		} catch (cleanupError) {
+			console.error(
+				`Failed to clean up uploaded object ${objectKey} after registration failure:`,
+				cleanupError,
+			)
+		}
+		throw error
+	}
+}
+
 export async function uploadOrganizationImage(
 	organizationId: string,
 	file: File | FileUpload,
 ) {
 	const defaultOptions = createUploadOptions()
-	return _uploadOrganizationImage(organizationId, file, {
+	const objectKey = await _uploadOrganizationImage(organizationId, file, {
 		...defaultOptions,
 		// Force organization logos to be stored in the platform's default bucket
 		getConfig: () => defaultOptions.getConfig(undefined),
 	})
+	const [organization] = await db
+		.select({ id: Organization.id })
+		.from(Organization)
+		.where(eq(Organization.id, organizationId))
+		.limit(1)
+	if (organization) {
+		try {
+			await registerOrganizationMediaAsset({
+				organizationId,
+				objectKey,
+				file,
+				storageScope: 'platform',
+				source: 'organization-logo',
+			})
+		} catch (error) {
+			try {
+				const config = await defaultOptions.getConfig(undefined)
+				await deleteFromStorage(objectKey, config)
+			} catch (cleanupError) {
+				console.error(
+					`Failed to clean up logo ${objectKey} after registration failure:`,
+					cleanupError,
+				)
+			}
+			throw error
+		}
+	}
+	return objectKey
+}
+
+export async function uploadOrganizationMediaFileOnly(
+	organizationId: string,
+	file: File | FileUpload,
+) {
+	return _uploadOrganizationMediaImage(
+		organizationId,
+		file,
+		createUploadOptions(),
+	)
+}
+
+export async function uploadOrganizationMediaImage(
+	organizationId: string,
+	file: File | FileUpload,
+	createdById?: string,
+) {
+	const {
+		key: objectKey,
+		file: validatedFile,
+		width,
+		height,
+	} = await _uploadOrganizationMediaImage(
+		organizationId,
+		file,
+		createUploadOptions(),
+	)
+
+	try {
+		await registerOrganizationMediaAsset({
+			organizationId,
+			objectKey,
+			file: validatedFile,
+			storageScope: 'organization',
+			source: 'library',
+			createdById,
+			width,
+			height,
+		})
+		return objectKey
+	} catch (error) {
+		try {
+			const options = createUploadOptions()
+			const config = await options.getConfig(organizationId)
+			await deleteFromStorage(objectKey, config)
+		} catch (cleanupError) {
+			console.error(
+				`Failed to clean up uploaded media ${objectKey} after registration failure:`,
+				cleanupError,
+			)
+		}
+		throw error
+	}
 }
 
 export async function uploadNoteImage(
 	userId: string,
 	noteId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	return _uploadNoteImage(
-		userId,
-		noteId,
-		file,
-		createUploadOptions(),
+	return uploadAndRegisterOrganizationMedia({
 		organizationId,
-	)
+		file,
+		storageScope: 'organization',
+		source: 'note',
+		createdById: userId,
+		uploadFn: () =>
+			_uploadNoteImage(
+				userId,
+				noteId,
+				file,
+				createUploadOptions(),
+				organizationId,
+			),
+	})
 }
 
 export async function uploadCommentImage(
 	userId: string,
 	commentId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	return _uploadCommentImage(
-		userId,
-		commentId,
-		file,
-		createUploadOptions(),
+	return uploadAndRegisterOrganizationMedia({
 		organizationId,
-	)
+		file,
+		storageScope: 'organization',
+		source: 'comment',
+		createdById: userId,
+		uploadFn: () =>
+			_uploadCommentImage(
+				userId,
+				commentId,
+				file,
+				createUploadOptions(),
+				organizationId,
+			),
+	})
 }
 
 export async function uploadNoteVideo(
 	userId: string,
 	noteId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
 	return _uploadNoteVideo(
 		userId,
@@ -142,16 +356,29 @@ export async function uploadVideoThumbnail(
 	noteId: string,
 	videoId: string,
 	thumbnailBuffer: Buffer,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	return _uploadVideoThumbnail(
-		userId,
-		noteId,
-		videoId,
-		thumbnailBuffer,
-		createUploadOptions(),
-		organizationId,
+	const thumbnailFile = new File(
+		[new Uint8Array(thumbnailBuffer)],
+		'thumbnail.jpg',
+		{ type: 'image/jpeg' },
 	)
+	return uploadAndRegisterOrganizationMedia({
+		organizationId,
+		file: thumbnailFile,
+		storageScope: 'organization',
+		source: 'video-thumbnail',
+		createdById: userId,
+		uploadFn: () =>
+			_uploadVideoThumbnail(
+				userId,
+				noteId,
+				videoId,
+				thumbnailBuffer,
+				createUploadOptions(),
+				organizationId,
+			),
+	})
 }
 
 export async function uploadSiteIcon(
@@ -159,10 +386,17 @@ export async function uploadSiteIcon(
 	file: File | FileUpload,
 ) {
 	const defaultOptions = createUploadOptions()
-	return _uploadSiteIcon(organizationId, file, {
-		...defaultOptions,
-		// Force site icons to be stored in the platform's default bucket
-		getConfig: () => defaultOptions.getConfig(undefined),
+	return uploadAndRegisterOrganizationMedia({
+		organizationId,
+		file,
+		storageScope: 'platform',
+		source: 'site-icon',
+		uploadFn: () =>
+			_uploadSiteIcon(organizationId, file, {
+				...defaultOptions,
+				// Force site icons to be stored in the platform's default bucket
+				getConfig: () => defaultOptions.getConfig(undefined),
+			}),
 	})
 }
 
@@ -172,10 +406,17 @@ export async function uploadWebsiteSeoImage(
 	file: File | FileUpload,
 ) {
 	const defaultOptions = createUploadOptions()
-	return _uploadWebsiteSeoImage(organizationId, pageId, file, {
-		...defaultOptions,
-		// Force SEO images to be stored in the platform's default bucket
-		getConfig: () => defaultOptions.getConfig(undefined),
+	return uploadAndRegisterOrganizationMedia({
+		organizationId,
+		file,
+		storageScope: 'platform',
+		source: 'website-seo',
+		uploadFn: () =>
+			_uploadWebsiteSeoImage(organizationId, pageId, file, {
+				...defaultOptions,
+				// Force SEO images to be stored in the platform's default bucket
+				getConfig: () => defaultOptions.getConfig(undefined),
+			}),
 	})
 }
 
@@ -185,10 +426,17 @@ export async function uploadWebsiteAsset(
 	file: File | FileUpload,
 ) {
 	const defaultOptions = createUploadOptions()
-	return _uploadWebsiteAsset(organizationId, pageId, file, {
-		...defaultOptions,
-		// Force assets to be stored in the platform's default bucket
-		getConfig: () => defaultOptions.getConfig(undefined),
+	return uploadAndRegisterOrganizationMedia({
+		organizationId,
+		file,
+		storageScope: 'platform',
+		source: 'website-asset',
+		uploadFn: () =>
+			_uploadWebsiteAsset(organizationId, pageId, file, {
+				...defaultOptions,
+				// Force assets to be stored in the platform's default bucket
+				getConfig: () => defaultOptions.getConfig(undefined),
+			}),
 	})
 }
 
@@ -256,3 +504,16 @@ export async function testS3Connection(config: StorageConfig) {
 
 // Re-export types
 export type { StorageConfig }
+export { deleteFromStorage }
+
+export async function deleteOrganizationStorageObject(
+	objectKey: string,
+	organizationId: string,
+	storageScope: 'organization' | 'platform' = 'organization',
+) {
+	const options = createUploadOptions()
+	const config = await options.getConfig(
+		storageScope === 'platform' ? undefined : organizationId,
+	)
+	await deleteFromStorage(objectKey, config)
+}

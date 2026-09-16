@@ -1937,6 +1937,58 @@ export const OrganizationSiteAsset = sqliteTable(
 	],
 )
 
+export const OrganizationMediaAsset = sqliteTable(
+	'OrganizationMediaAsset',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		objectKey: text().notNull(),
+		storageScope: text().default('organization').notNull(),
+		mimeType: text().notNull(),
+		fileName: text(),
+		fileSize: integer(),
+		width: integer(),
+		height: integer(),
+		altText: text(),
+		caption: text(),
+		source: text().default('library').notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrganizationMediaAsset_organizationId_objectKey_key').on(
+			table.organizationId,
+			table.objectKey,
+		),
+		index('OrganizationMediaAsset_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('OrganizationMediaAsset_organizationId_mimeType_idx').on(
+			table.organizationId,
+			table.mimeType,
+		),
+		index('OrganizationMediaAsset_createdById_idx').on(table.createdById),
+	],
+)
+
 export const WebsitePage = sqliteTable(
 	'WebsitePage',
 	{

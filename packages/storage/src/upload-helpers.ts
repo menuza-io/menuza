@@ -1,7 +1,14 @@
 import { type FileUpload } from '@mjackson/form-data-parser'
 import { createId } from '@paralleldrive/cuid2'
-import { type StorageConfig } from './types'
 import { uploadToStorage } from './client'
+import { detectRasterImage } from './raster-image'
+import { type StorageConfig } from './types'
+
+export {
+	detectRasterImage,
+	isValidRasterBytes,
+	type DetectedRasterFormat,
+} from './raster-image'
 
 /**
  * Upload options for organization-specific storage
@@ -91,6 +98,55 @@ export async function uploadOrganizationImage(
 	return uploadToStorage(file, key, config)
 }
 
+export type UploadedMediaResult = {
+	key: string
+	mimeType: string
+	extension: string
+	file: File
+	width: number
+	height: number
+}
+
+/**
+ * Upload an organization media image with raster validation
+ */
+export async function uploadOrganizationMediaImage(
+	organizationId: string,
+	file: File | FileUpload,
+	options: UploadOptions,
+): Promise<UploadedMediaResult> {
+	const buffer = await file.arrayBuffer()
+	const detected = detectRasterImage(buffer)
+	if (!detected) {
+		throw new Error(
+			'Invalid image content: only JPEG, PNG, GIF, WebP, and AVIF are supported',
+		)
+	}
+
+	const fileId = createId()
+	const timestamp = Date.now()
+	const key = `orgs/${organizationId}/media/images/${timestamp}-${fileId}.${detected.extension}`
+
+	const sanitizedName = file.name
+		? file.name.replace(/\0/g, '')
+		: `image.${detected.extension}`
+	const reconstructedFile = new File([buffer], sanitizedName, {
+		type: detected.mimeType,
+	})
+
+	const config = await options.getConfig(organizationId)
+	await uploadToStorage(reconstructedFile, key, config)
+
+	return {
+		key,
+		mimeType: detected.mimeType,
+		extension: detected.extension,
+		file: reconstructedFile,
+		width: detected.width,
+		height: detected.height,
+	}
+}
+
 /**
  * Upload a note image
  */
@@ -99,12 +155,8 @@ export async function uploadNoteImage(
 	noteId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for note uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -121,12 +173,8 @@ export async function uploadCommentImage(
 	commentId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for comment uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -143,12 +191,8 @@ export async function uploadNoteVideo(
 	noteId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for note video uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -166,12 +210,8 @@ export async function uploadVideoThumbnail(
 	videoId: string,
 	thumbnailBuffer: Buffer,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for video thumbnail uploads')
-	}
-
 	const fileId = createId()
 	const timestamp = Date.now()
 	const key = `orgs/${organizationId}/notes/${noteId}/videos/thumbnails/${timestamp}-${videoId}-${fileId}.jpg`

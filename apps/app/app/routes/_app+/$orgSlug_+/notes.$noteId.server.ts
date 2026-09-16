@@ -1,5 +1,6 @@
 import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
+import { createId } from '@paralleldrive/cuid2'
 import { logNoteActivity } from '@repo/audit'
 import {
 	requireUserWithOrganizationPermission,
@@ -12,6 +13,7 @@ import {
 	eq,
 	inArray,
 	Organization,
+	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteFavorite,
 	Integration,
@@ -24,7 +26,11 @@ import {
 } from '@repo/database'
 import { noteHooks, integrationManager } from '@repo/integrations'
 import { data, type ActionFunctionArgs } from 'react-router'
-import { sanitizeCommentContent } from '#app/utils/content-sanitization.server.ts'
+import { z } from 'zod'
+import {
+	sanitizeCommentContent,
+	sanitizeTextContent,
+} from '#app/utils/content-sanitization.server.ts'
 import {
 	notifyCommentMentions,
 	notifyNoteOwner,
@@ -47,6 +53,77 @@ import {
 export interface IntentContext extends ActionFunctionArgs {
 	formData: FormData
 	userId: string
+}
+
+const MAX_COMMENT_IMAGES = 10
+const MAX_COMMENT_IMAGE_SIZE = 3 * 1024 * 1024
+const COMMENT_IMAGE_TYPES = new Set([
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'image/avif',
+])
+
+const CommentAttachmentCountsSchema = z
+	.object({
+		imageCount: z.coerce.number().int().min(0).max(MAX_COMMENT_IMAGES),
+		libraryAssetCount: z.coerce.number().int().min(0).max(MAX_COMMENT_IMAGES),
+	})
+	.refine(
+		({ imageCount, libraryAssetCount }) =>
+			imageCount + libraryAssetCount <= MAX_COMMENT_IMAGES,
+	)
+
+const CommentImageSchema = z
+	.instanceof(File)
+	.refine((file) => file.size > 0 && file.size <= MAX_COMMENT_IMAGE_SIZE)
+	.refine((file) => COMMENT_IMAGE_TYPES.has(file.type))
+
+/**
+ * Deletes the storage objects uploaded for a comment that could not be saved,
+ * together with the media rows registered for them. Called when creating the
+ * comment fails after one or more uploads succeeded, so a failed comment never
+ * leaves orphaned objects or library entries behind.
+ *
+ * Each object is handled on its own, storage first: when storage cleanup fails
+ * the media row stays behind as the record of what still needs to be removed,
+ * and `deleteFromStorage` treats a missing object as success so a retry
+ * converges.
+ */
+async function removeUploadedCommentImages(
+	objectKeys: string[],
+	organizationId: string,
+) {
+	if (objectKeys.length === 0) return
+
+	const { deleteOrganizationStorageObject } =
+		await import('#app/utils/storage.server.ts')
+
+	for (const objectKey of objectKeys) {
+		try {
+			await deleteOrganizationStorageObject(objectKey, organizationId)
+		} catch (error) {
+			console.error(
+				`Failed to clean up uploaded comment image ${objectKey}:`,
+				error,
+			)
+			continue
+		}
+
+		try {
+			await db
+				.delete(OrganizationMediaAsset)
+				.where(
+					and(
+						eq(OrganizationMediaAsset.organizationId, organizationId),
+						eq(OrganizationMediaAsset.objectKey, objectKey),
+					),
+				)
+		} catch (error) {
+			console.error(`Failed to remove the media row for ${objectKey}:`, error)
+		}
+	}
 }
 
 export async function userHasOrgAccess(userId: string, organizationId: string) {
@@ -673,66 +750,177 @@ export async function handleAddCommentIntent({
 		}
 	}
 
-	try {
-		const sanitizedContent = sanitizeCommentContent(content)
-		const [comment] = await db
-			.insert(NoteComment)
-			.values({
-				content: sanitizedContent,
-				noteId,
-				userId,
-				parentId,
-			})
-			.returning({ id: NoteComment.id })
-		if (!comment) throw new Error('Failed to create comment')
+	const attachmentCounts = CommentAttachmentCountsSchema.safeParse({
+		imageCount: formData.get('imageCount') ?? 0,
+		libraryAssetCount: formData.get('libraryAssetCount') ?? 0,
+	})
+	if (!attachmentCounts.success) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						imageCount: [
+							'Invalid image count. Maximum 10 images allowed in total.',
+						],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
+	const { imageCount, libraryAssetCount } = attachmentCounts.data
 
-		const imageCount = parseInt(formData.get('imageCount') as string) || 0
-		if (imageCount < 0 || imageCount > 10) {
+	const imageFiles: File[] = []
+	for (let i = 0; i < imageCount; i++) {
+		const image = CommentImageSchema.safeParse(formData.get(`image-${i}`))
+		if (!image.success) {
 			return data(
 				{
 					result: submission.reply({
 						fieldErrors: {
-							imageCount: ['Invalid image count. Maximum 10 images allowed.'],
+							imageCount: ['One or more attached images are invalid.'],
 						},
 					}),
 				},
 				{ status: 400 },
 			)
 		}
-		if (imageCount > 0) {
-			const { uploadCommentImage } =
-				await import('#app/utils/storage.server.ts')
-			const imagePromises = []
-			for (let i = 0; i < imageCount; i++) {
-				const imageFile = formData.get(`image-${i}`) as File
-				if (imageFile && imageFile.size > 0) {
-					imagePromises.push(
-						uploadCommentImage(
-							userId,
-							comment.id,
-							imageFile,
-							note.organizationId,
-						).then((objectKey) => ({
-							commentId: comment.id,
-							objectKey,
-							altText: null,
-						})),
+		imageFiles.push(image.data)
+	}
+
+	const libraryAssetIds: string[] = []
+	for (let i = 0; i < libraryAssetCount; i++) {
+		const id = formData.get(`libraryAssetId-${i}`)
+		if (typeof id !== 'string' || !id) {
+			return data(
+				{
+					result: submission.reply({
+						fieldErrors: {
+							libraryAssetCount: ['One or more library assets are invalid.'],
+						},
+					}),
+				},
+				{ status: 400 },
+			)
+		}
+		libraryAssetIds.push(id)
+	}
+
+	const uniqueLibraryAssetIds = [...new Set(libraryAssetIds)]
+	const libraryAssets = uniqueLibraryAssetIds.length
+		? await db
+				.select({
+					id: OrganizationMediaAsset.id,
+					objectKey: OrganizationMediaAsset.objectKey,
+					altText: OrganizationMediaAsset.altText,
+				})
+				.from(OrganizationMediaAsset)
+				.where(
+					and(
+						inArray(OrganizationMediaAsset.id, uniqueLibraryAssetIds),
+						eq(OrganizationMediaAsset.organizationId, note.organizationId),
+					),
+				)
+		: []
+
+	if (libraryAssets.length !== uniqueLibraryAssetIds.length) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						libraryAssetCount: ['One or more library assets are unavailable.'],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
+
+	const sanitizedContent = sanitizeCommentContent(content)
+	const hasTextContent = sanitizeTextContent(sanitizedContent).trim().length > 0
+	if (
+		!hasTextContent &&
+		imageFiles.length === 0 &&
+		libraryAssets.length === 0
+	) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						content: ['Add a comment or attach at least one image.'],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
+
+	try {
+		// Uploads happen before the transaction so the SQLite write lock is not
+		// held while we talk to storage. Every uploaded object (and the media row
+		// registered for it) is tracked so a failed upload or database write can
+		// clean up the ones that already succeeded.
+		const commentId = createId()
+		const uploadedObjectKeys: string[] = []
+		const uploadedImages: Array<{
+			commentId: string
+			objectKey: string
+			altText: string | null
+		}> = []
+
+		try {
+			if (imageFiles.length > 0) {
+				const { uploadCommentImage } =
+					await import('#app/utils/storage.server.ts')
+				for (const imageFile of imageFiles) {
+					const objectKey = await uploadCommentImage(
+						userId,
+						commentId,
+						imageFile,
+						note.organizationId,
 					)
+					uploadedObjectKeys.push(objectKey)
+					uploadedImages.push({ commentId, objectKey, altText: null })
 				}
 			}
 
-			if (imagePromises.length > 0) {
-				const uploadedImages = await Promise.all(imagePromises)
-				await db.insert(NoteCommentImage).values(uploadedImages)
-			}
+			await db.transaction(async (tx) => {
+				await tx.insert(NoteComment).values({
+					id: commentId,
+					content: sanitizedContent,
+					noteId,
+					userId,
+					parentId,
+				})
+
+				if (uploadedImages.length > 0) {
+					await tx.insert(NoteCommentImage).values(uploadedImages)
+				}
+
+				if (libraryAssets.length > 0) {
+					await tx.insert(NoteCommentImage).values(
+						libraryAssets.map((asset) => ({
+							commentId,
+							objectKey: asset.objectKey,
+							altText: asset.altText,
+						})),
+					)
+				}
+			})
+		} catch (error) {
+			await removeUploadedCommentImages(uploadedObjectKeys, note.organizationId)
+			throw error
 		}
 
 		await logNoteActivity({
 			noteId,
 			userId,
 			action: 'comment_added',
-			commentId: comment.id,
-			metadata: { parentId, hasImages: imageCount > 0 },
+			commentId,
+			metadata: {
+				parentId,
+				hasImages: imageFiles.length > 0 || libraryAssets.length > 0,
+			},
 		})
 
 		const [commenter, noteWithTitle, organization] = await Promise.all([
@@ -765,7 +953,7 @@ export async function handleAddCommentIntent({
 
 			await notifyCommentMentions({
 				commentContent: sanitizedContent,
-				commentId: comment.id,
+				commentId,
 				noteId,
 				noteTitle,
 				noteOwnerId: noteWithTitle.createdById,
@@ -779,7 +967,7 @@ export async function handleAddCommentIntent({
 				noteId,
 				noteTitle,
 				noteOwnerId: noteWithTitle.createdById,
-				commentId: comment.id,
+				commentId,
 				commenterUserId: userId,
 				commenterName,
 				commentContent: sanitizedContent,

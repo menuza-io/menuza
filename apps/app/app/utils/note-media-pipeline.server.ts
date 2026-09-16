@@ -1,3 +1,4 @@
+import { and, db, eq, OrganizationMediaAsset } from '@repo/database'
 import {
 	type ImageFieldset,
 	type MediaFieldset,
@@ -16,6 +17,12 @@ function uploadHasFile(
 	upload: UploadFieldset,
 ): upload is UploadFieldset & { file: File } {
 	return Boolean(upload.file?.size && upload.file?.size > 0)
+}
+
+function uploadHasMediaId(
+	upload: UploadFieldset,
+): upload is UploadFieldset & { mediaId: string } {
+	return typeof upload.mediaId === 'string' && upload.mediaId.length > 0
 }
 
 export interface PreparedUploads {
@@ -82,9 +89,45 @@ export async function processNoteMediaUploads(
 
 	const newUploads = await Promise.all(
 		allUploads
-			.filter(uploadHasFile)
 			.filter((upload) => !upload.id)
 			.map(async (upload) => {
+				if (uploadHasMediaId(upload) && !uploadHasFile(upload)) {
+					const [asset] = await db
+						.select({
+							objectKey: OrganizationMediaAsset.objectKey,
+							mimeType: OrganizationMediaAsset.mimeType,
+							fileSize: OrganizationMediaAsset.fileSize,
+							altText: OrganizationMediaAsset.altText,
+						})
+						.from(OrganizationMediaAsset)
+						.where(
+							and(
+								eq(OrganizationMediaAsset.id, upload.mediaId),
+								eq(OrganizationMediaAsset.organizationId, organizationId),
+							),
+						)
+						.limit(1)
+
+					if (!asset || !asset.mimeType.startsWith('image/')) {
+						throw new Error(
+							'Selected media is not available in this organization',
+						)
+					}
+
+					return {
+						type: 'image',
+						altText: upload.altText || asset.altText || undefined,
+						objectKey: asset.objectKey,
+						mimeType: asset.mimeType,
+						fileSize: asset.fileSize ?? undefined,
+						status: 'completed',
+					}
+				}
+
+				if (!uploadHasFile(upload)) {
+					throw new Error('A file or media library image is required')
+				}
+
 				const isVideo =
 					upload.type === 'video' || upload.file?.type?.startsWith('video/')
 				const objectKey = isVideo

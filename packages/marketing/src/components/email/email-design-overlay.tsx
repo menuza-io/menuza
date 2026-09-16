@@ -35,6 +35,12 @@ export type EmailDesignOverlayProps = {
 	/** Called with the draft when the author confirms the change. */
 	onSave: (blocks: EmailBlock[]) => void | Promise<void>
 	className?: string
+	/** When provided, shows a "Choose from library" button in the image block
+	 * inspector. Callers open the media library picker and call the provided
+	 * setter with the selected URL and alt text. */
+	onChooseImageFromLibrary?: (
+		onSelect: (url: string, alt: string) => void,
+	) => void
 }
 
 /**
@@ -57,6 +63,7 @@ export function EmailDesignOverlay({
 	contentClassName,
 	onSave,
 	className,
+	onChooseImageFromLibrary,
 }: EmailDesignOverlayProps) {
 	const { _ } = useLingui()
 	const [draft, setDraft] = useState<EmailBlock[]>(initialBlocks)
@@ -171,6 +178,7 @@ export function EmailDesignOverlay({
 							onChange={setDraft}
 							subject={subject ?? ''}
 							className="h-full min-h-0 flex-1"
+							onChooseImageFromLibrary={onChooseImageFromLibrary}
 						/>
 					</div>
 				</DialogContent>
