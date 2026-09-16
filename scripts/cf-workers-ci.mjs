@@ -34,7 +34,6 @@ const rootDir = join(__dirname, '..')
  *     cwd: string,
  *     config?: string,
  *     npmScript?: string,
- *     varlockWrangler?: boolean,
  *     wranglerStagingEnv?: boolean,
  *     wranglerEmptyEnv?: boolean,
  *   },
@@ -50,7 +49,6 @@ const APPS = {
 		deploy: {
 			cwd: 'apps/app',
 			config: 'build/server/wrangler.deploy.json',
-			varlockWrangler: true,
 			wranglerStagingEnv: true,
 		},
 	},
@@ -64,7 +62,6 @@ const APPS = {
 		deploy: {
 			cwd: 'apps/admin',
 			config: 'build/server/wrangler.deploy.json',
-			varlockWrangler: true,
 			wranglerStagingEnv: true,
 		},
 	},
@@ -233,12 +230,7 @@ function deployApp(appKey) {
 		return
 	}
 
-	const args = [
-		deploy.varlockWrangler ? 'varlock-wrangler' : 'wrangler',
-		'deploy',
-		'--config',
-		deploy.config,
-	]
+	const args = ['wrangler', 'deploy', '--config', deploy.config]
 	if (deploy.wranglerStagingEnv && deployEnv === 'staging') {
 		args.push('--env', 'staging')
 	} else if (deploy.wranglerEmptyEnv) {

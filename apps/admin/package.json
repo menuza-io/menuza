@@ -12,7 +12,7 @@
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=6144 react-router build",
     "build:cf": "cross-env NODE_OPTIONS=--max-old-space-size=6144 DEPLOY_TARGET=cloudflare react-router build",
-    "deploy:cf": "npm run build:cf && node ../../scripts/patch-wrangler.mjs --app admin && varlock-wrangler deploy --config build/server/wrangler.deploy.json",
+    "deploy:cf": "npm run build:cf && node ../../scripts/patch-wrangler.mjs --app admin && wrangler deploy --config build/server/wrangler.deploy.json",
     "dev": "cross-env NODE_ENV=development MOCKS=true node --conditions development index.ts",
     "dev:cf": "cross-env DEPLOY_TARGET=cloudflare vite dev",
     "dev:no-mocks": "cross-env NODE_ENV=development node --conditions development index.ts",
