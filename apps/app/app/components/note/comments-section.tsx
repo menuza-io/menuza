@@ -32,6 +32,7 @@ interface CommentsSectionProps {
 	currentUserId: string
 	users: MentionUser[]
 	organizationId: string
+	orgSlug?: string
 }
 
 export function CommentsSection({
@@ -40,6 +41,7 @@ export function CommentsSection({
 	currentUserId,
 	users,
 	organizationId,
+	orgSlug,
 }: CommentsSectionProps) {
 	const { _ } = useLingui()
 	const [newComment] = useState('')
@@ -52,6 +54,7 @@ export function CommentsSection({
 		content: string,
 		images: File[] | undefined,
 		parentId?: string,
+		libraryAssetIds?: string[],
 	) => {
 		const formData = new FormData()
 		formData.append('intent', 'add-comment')
@@ -67,6 +70,13 @@ export function CommentsSection({
 				formData.append(`image-${index}`, image)
 			})
 			formData.append('imageCount', images.length.toString())
+		}
+
+		if (libraryAssetIds && libraryAssetIds.length > 0) {
+			libraryAssetIds.forEach((id, index) => {
+				formData.append(`libraryAssetId-${index}`, id)
+			})
+			formData.append('libraryAssetCount', libraryAssetIds.length.toString())
 		}
 
 		try {
@@ -89,10 +99,14 @@ export function CommentsSection({
 		}
 	}
 
-	const handleAddComment = async (content: string, images?: File[]) => {
+	const handleAddComment = async (
+		content: string,
+		images?: File[],
+		libraryAssetIds?: string[],
+	) => {
 		setIsSubmitting(true)
 		try {
-			await submitComment(content, images)
+			await submitComment(content, images, undefined, libraryAssetIds)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -102,8 +116,9 @@ export function CommentsSection({
 		parentId: string,
 		content: string,
 		images?: File[],
+		libraryAssetIds?: string[],
 	) => {
-		await submitComment(content, images, parentId)
+		await submitComment(content, images, parentId, libraryAssetIds)
 	}
 
 	const handleReplyTo = (commentId: string) => {
@@ -176,6 +191,7 @@ export function CommentsSection({
 				value={newComment}
 				disabled={isSubmitting}
 				placeholder={_(msg`Add a comment...`)}
+				orgSlug={orgSlug}
 			/>
 
 			{comments.length > 0 ? (
@@ -196,6 +212,7 @@ export function CommentsSection({
 							onEdit={handleEdit}
 							onDelete={handleDelete}
 							organizationId={organizationId}
+							orgSlug={orgSlug}
 						/>
 					))}
 				</div>

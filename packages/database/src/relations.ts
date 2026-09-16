@@ -55,6 +55,7 @@ import {
 	ApiKey,
 	OrganizationAnnouncement,
 	OrganizationSiteAsset,
+	OrganizationMediaAsset,
 	WebsitePage,
 	WebsitePageSection,
 	WebsiteRedirect,
@@ -133,6 +134,7 @@ export const UserRelations = relations(User, ({ one, many }) => ({
 	notificationPreferences: many(NotificationPreference),
 	notifications: many(Notification),
 	savedReports: many(SavedReport),
+	createdMediaAssets: many(OrganizationMediaAsset),
 }))
 
 export const NoteImageRelations = relations(NoteImage, ({ one }) => ({
@@ -245,6 +247,7 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	apiKeys: many(ApiKey),
 	announcements: many(OrganizationAnnouncement),
 	siteAssets: many(OrganizationSiteAsset),
+	mediaAssets: many(OrganizationMediaAsset),
 	createdWebsitePages: many(WebsitePage),
 	websiteRedirects: many(WebsiteRedirect),
 	websiteNotFoundLogs: many(WebsiteNotFoundLog),
@@ -768,6 +771,20 @@ export const OrganizationSiteAssetRelations = relations(
 		organization: one(Organization, {
 			fields: [OrganizationSiteAsset.organizationId],
 			references: [Organization.id],
+		}),
+	}),
+)
+
+export const OrganizationMediaAssetRelations = relations(
+	OrganizationMediaAsset,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMediaAsset.organizationId],
+			references: [Organization.id],
+		}),
+		createdBy: one(User, {
+			fields: [OrganizationMediaAsset.createdById],
+			references: [User.id],
 		}),
 	}),
 )

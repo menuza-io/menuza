@@ -1,11 +1,64 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { invariantResponse } from '@epic-web/invariant'
+import { getUserId } from '@repo/auth'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
+import {
+	and,
+	db,
+	eq,
+	OrganizationMediaAsset,
+	UserOrganization,
+} from '@repo/database'
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
+import { isValidRasterBytes } from '@repo/storage'
+import { drainOnCancel } from '#app/utils/drain-on-cancel.server.ts'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
+
+const MEDIA_SIGNING_SECRET =
+	process.env.INTERNAL_COMMAND_TOKEN || process.env.SESSION_SECRET
+
+if (!MEDIA_SIGNING_SECRET) {
+	throw new Error(
+		'INTERNAL_COMMAND_TOKEN or SESSION_SECRET is required for media URL signing.',
+	)
+}
+
+export function signMediaId(mediaId: string, expiresAt: number): string {
+	return createHmac('sha256', MEDIA_SIGNING_SECRET)
+		.update(`media:${mediaId}:${expiresAt}`)
+		.digest('hex')
+}
+
+function verifyMediaSignature(
+	mediaId: string,
+	signature: string | null,
+	expiresAtValue: string | null,
+): boolean {
+	if (!signature || !expiresAtValue || !/^\d+$/u.test(expiresAtValue))
+		return false
+	const expiresAt = Number(expiresAtValue)
+	if (
+		!Number.isSafeInteger(expiresAt) ||
+		expiresAt <= Math.floor(Date.now() / 1000)
+	) {
+		return false
+	}
+	const expected = createHmac('sha256', MEDIA_SIGNING_SECRET)
+		.update(`media:${mediaId}:${expiresAt}`)
+		.digest('hex')
+	try {
+		return (
+			signature.length === expected.length &&
+			timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+		)
+	} catch {
+		return false
+	}
+}
 
 const ALLOWED_RASTER_MIME_TYPES = new Set([
 	'image/jpeg',
@@ -16,52 +69,6 @@ const ALLOWED_RASTER_MIME_TYPES = new Set([
 ])
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024 // 10MB
-
-function isValidRasterBytes(buffer: ArrayBuffer): boolean {
-	const bytes = new Uint8Array(buffer.slice(0, 16))
-	if (bytes.length < 4) return false
-	// JPEG: FF D8 FF
-	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true
-	// PNG: 89 50 4E 47 0D 0A 1A 0A
-	if (
-		bytes[0] === 0x89 &&
-		bytes[1] === 0x50 &&
-		bytes[2] === 0x4e &&
-		bytes[3] === 0x47
-	)
-		return true
-	// GIF: GIF87a or GIF89a (47 49 46 38)
-	if (
-		bytes[0] === 0x47 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x38
-	)
-		return true
-	// WebP: RIFF....WEBP (52 49 46 46 .... 57 45 42 50)
-	if (
-		bytes.length >= 12 &&
-		bytes[0] === 0x52 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x46 &&
-		bytes[8] === 0x57 &&
-		bytes[9] === 0x45 &&
-		bytes[10] === 0x42 &&
-		bytes[11] === 0x50
-	)
-		return true
-	// AVIF: ....ftypavif or ....ftypavis
-	if (
-		bytes.length >= 12 &&
-		bytes[4] === 0x66 &&
-		bytes[5] === 0x74 &&
-		bytes[6] === 0x79 &&
-		bytes[7] === 0x70
-	)
-		return true
-	return false
-}
 
 type ImageFit = 'cover' | 'contain'
 type ImageFormat = 'webp' | 'avif' | 'png' | 'jpeg' | 'jpg'
@@ -112,6 +119,7 @@ async function streamStoredVideo(
 	request: Request,
 	objectKey: string,
 	organizationId: string | null,
+	cacheable: boolean,
 ) {
 	const method = request.method === 'HEAD' ? 'HEAD' : 'GET'
 	const { url: storageUrl, headers: signedHeaders } =
@@ -134,7 +142,7 @@ async function streamStoredVideo(
 		headers: upstreamHeaders,
 	})
 
-	const responseHeaders = getImageResponseHeaders()
+	const responseHeaders = getImageResponseHeaders(cacheable && upstream.ok)
 	for (const headerName of VIDEO_PASSTHROUGH_HEADERS) {
 		const value = upstream.headers.get(headerName)
 		if (value) responseHeaders.set(headerName, value)
@@ -154,11 +162,31 @@ async function streamStoredVideo(
 	})
 }
 
-function getImageResponseHeaders(isExternal = false) {
+const PUBLIC_MEDIA_SOURCES = new Set([
+	'organization-logo',
+	'site-icon',
+	'website-seo',
+	'website-asset',
+])
+
+/** Platform-scoped assets and organization branding assets are public. */
+function isPublicMediaAsset(asset: { storageScope: string; source: string }) {
+	return (
+		asset.storageScope === 'platform' || PUBLIC_MEDIA_SOURCES.has(asset.source)
+	)
+}
+
+/**
+ * Media that is not public (membership-authorized library assets, signed
+ * capability URLs, direct object keys, stored videos, external images) must not
+ * be stored by shared caches, otherwise a cached copy can be replayed without
+ * re-running authorization or after the signature expired.
+ */
+function getImageResponseHeaders(cacheable: boolean) {
 	const headers = new Headers()
 	headers.set(
 		'Cache-Control',
-		isExternal ? 'no-store' : 'public, max-age=31536000, immutable',
+		cacheable ? 'public, max-age=31536000, immutable' : 'no-store',
 	)
 	headers.set('Access-Control-Allow-Origin', '*')
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
@@ -203,7 +231,7 @@ async function fetchExternalImage(
 		throw new Response('Unsupported Media Type', { status: 415 })
 	}
 
-	const headers = getImageResponseHeaders(true)
+	const headers = getImageResponseHeaders(false)
 	headers.set('Content-Type', mimeType)
 
 	return new Response(arrayBuffer, {
@@ -243,6 +271,7 @@ async function getCloudflareImageResponse(
 	searchParams: URLSearchParams,
 	objectKey: string | null,
 	organizationId: string | null,
+	cacheable: boolean,
 ) {
 	const params = parseImageParams(searchParams)
 	const upstream = await fetchImageSource(
@@ -263,7 +292,7 @@ async function getCloudflareImageResponse(
 	if (!upstream.ok) {
 		return new Response(upstream.statusText, {
 			status: upstream.status,
-			headers: getImageResponseHeaders(isExternal),
+			headers: getImageResponseHeaders(false),
 		})
 	}
 
@@ -284,7 +313,7 @@ async function getCloudflareImageResponse(
 		if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
 			throw new Response('Unsupported Media Type', { status: 415 })
 		}
-		const headers = getImageResponseHeaders(true)
+		const headers = getImageResponseHeaders(false)
 		headers.set('Content-Type', mimeType)
 		return new Response(arrayBuffer, { headers, status: 200 })
 	}
@@ -316,7 +345,7 @@ async function getCloudflareImageResponse(
 			) {
 				throw new Response('Unsupported Media Type', { status: 415 })
 			}
-			const headers = getImageResponseHeaders(isExternal)
+			const headers = getImageResponseHeaders(cacheable && !isExternal)
 			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
@@ -327,7 +356,7 @@ async function getCloudflareImageResponse(
 	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
 		throw new Response('Unsupported Media Type', { status: 415 })
 	}
-	const headers = getImageResponseHeaders(isExternal)
+	const headers = getImageResponseHeaders(cacheable && !isExternal)
 	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
@@ -363,8 +392,103 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const searchParams = url.searchParams
 
-	const objectKey = searchParams.get('objectKey')
-	const organizationId = searchParams.get('organizationId')
+	const src = searchParams.get('src')
+	let objectKey = searchParams.get('objectKey')
+	let organizationId = searchParams.get('organizationId')
+	const mediaId = searchParams.get('mediaId')
+	// Only assets we can positively identify as public may be stored by shared
+	// caches. Private media (membership-authorized or signed capability URLs),
+	// direct object keys and external images are all non-cacheable.
+	let cacheable = false
+
+	if (mediaId) {
+		invariantResponse(
+			/^[a-zA-Z0-9_-]{16,64}$/.test(mediaId),
+			'Invalid mediaId',
+			{
+				status: 400,
+			},
+		)
+		const [asset] = await db
+			.select({
+				objectKey: OrganizationMediaAsset.objectKey,
+				organizationId: OrganizationMediaAsset.organizationId,
+				storageScope: OrganizationMediaAsset.storageScope,
+				source: OrganizationMediaAsset.source,
+			})
+			.from(OrganizationMediaAsset)
+			.where(eq(OrganizationMediaAsset.id, mediaId))
+			.limit(1)
+		invariantResponse(asset, 'Media not found', { status: 404 })
+
+		const isPublicMedia = isPublicMediaAsset(asset)
+		cacheable = isPublicMedia
+
+		const sig = searchParams.get('sig')
+		const hasValidSignature = verifyMediaSignature(
+			mediaId,
+			sig,
+			searchParams.get('expires'),
+		)
+
+		if (!isPublicMedia && !hasValidSignature) {
+			const userId = await getUserId(request)
+			invariantResponse(userId, 'Unauthorized', { status: 401 })
+
+			const [membership] = await db
+				.select({ userId: UserOrganization.userId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, userId),
+						eq(UserOrganization.organizationId, asset.organizationId),
+					),
+				)
+				.limit(1)
+			invariantResponse(membership, 'Forbidden', { status: 403 })
+		}
+
+		objectKey = asset.objectKey
+		organizationId =
+			asset.storageScope === 'organization' ? asset.organizationId : null
+	} else if (objectKey) {
+		// A direct object key can point at private note or comment media, so it
+		// is only cacheable when it is a registered public branding asset, and
+		// registered private media still requires organization membership.
+		const [asset] = await db
+			.select({
+				organizationId: OrganizationMediaAsset.organizationId,
+				storageScope: OrganizationMediaAsset.storageScope,
+				source: OrganizationMediaAsset.source,
+			})
+			.from(OrganizationMediaAsset)
+			.where(eq(OrganizationMediaAsset.objectKey, objectKey))
+			.limit(1)
+		cacheable = asset ? isPublicMediaAsset(asset) : false
+
+		if (asset && !cacheable) {
+			const userId = await getUserId(request)
+			invariantResponse(userId, 'Unauthorized', { status: 401 })
+
+			const [membership] = await db
+				.select({ userId: UserOrganization.userId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, userId),
+						eq(UserOrganization.organizationId, asset.organizationId),
+					),
+				)
+				.limit(1)
+			invariantResponse(membership, 'Forbidden', { status: 403 })
+
+			organizationId =
+				asset.storageScope === 'organization' ? asset.organizationId : null
+		}
+	} else if (src && !URL.canParse(src)) {
+		// Local static assets served from `/public` or the client build.
+		cacheable = true
+	}
 
 	if (objectKey) {
 		if (
@@ -377,11 +501,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 			})
 		}
 		if (isVideoObjectKey(objectKey)) {
-			return streamStoredVideo(request, objectKey, organizationId)
+			return streamStoredVideo(request, objectKey, organizationId, cacheable)
 		}
 	}
 
-	const src = searchParams.get('src')
 	if (
 		src &&
 		URL.canParse(src) &&
@@ -397,6 +520,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			searchParams,
 			objectKey,
 			organizationId,
+			cacheable,
 		)
 	}
 
@@ -408,9 +532,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		URL.canParse(src) &&
 		new URL(src).origin !== url.origin,
 	)
-	const headers = getImageResponseHeaders(isExternal)
+	const headers = getImageResponseHeaders(cacheable && !isExternal)
 
-	return getImgResponse(request, {
+	const imgResponse = await getImgResponse(request, {
 		headers,
 		allowlistedOrigins: [
 			getDomainUrl(request),
@@ -455,5 +579,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 				path: './public' + normalizedSrc,
 			}
 		},
+	})
+
+	if (!imgResponse.body) return imgResponse
+
+	// openimg streams the transformed image through a Node `PassThrough`
+	// (`Readable.toWeb`); draining on cancel keeps a client abort from killing
+	// the server. See `drainOnCancel`.
+	return new Response(drainOnCancel(imgResponse.body), {
+		status: imgResponse.status,
+		statusText: imgResponse.statusText,
+		headers: imgResponse.headers,
 	})
 }

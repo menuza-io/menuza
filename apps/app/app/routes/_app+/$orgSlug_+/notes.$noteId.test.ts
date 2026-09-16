@@ -2,6 +2,9 @@ import {
 	and,
 	db,
 	eq,
+	NoteComment,
+	NoteCommentImage,
+	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteFavorite,
 	UserOrganization,
@@ -10,6 +13,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	createAuthenticatedRequest,
 	createTestNote,
+	createTestOrganization,
 	createTestSession,
 	createTestUser,
 	getResponseStatus,
@@ -136,6 +140,100 @@ describe('notes.$noteId route integration', () => {
 	})
 
 	describe('action', () => {
+		it('creates an attachment-only comment from an organization library asset', async () => {
+			const { user, organization, cookie } =
+				await setupTestOrgWithUser('member')
+			const note = await createTestNote(organization.id, user.id)
+			const [asset] = await db
+				.insert(OrganizationMediaAsset)
+				.values({
+					organizationId: organization.id,
+					objectKey: `orgs/${organization.id}/media/images/comment.png`,
+					mimeType: 'image/png',
+					fileName: 'comment.png',
+					fileSize: 128,
+					source: 'library',
+					createdById: user.id,
+				})
+				.returning()
+
+			const formData = new FormData()
+			formData.append('intent', 'add-comment')
+			formData.append('noteId', note.id)
+			formData.append('content', '')
+			formData.append('libraryAssetCount', '1')
+			formData.append('libraryAssetId-0', asset!.id)
+
+			const request = createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/notes/${note.id}`,
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+			const response = await action({
+				request,
+				params: { orgSlug: organization.slug, noteId: note.id },
+				context: {},
+			} as any)
+
+			expect(getResponseStatus(response)).toBe(200)
+			const [comment] = await db
+				.select()
+				.from(NoteComment)
+				.where(eq(NoteComment.noteId, note.id))
+				.limit(1)
+			expect(comment?.content).toBe('')
+			const [image] = await db
+				.select()
+				.from(NoteCommentImage)
+				.where(eq(NoteCommentImage.commentId, comment!.id))
+				.limit(1)
+			expect(image?.objectKey).toBe(asset!.objectKey)
+		})
+
+		it('rejects an attachment-only comment that references another organization asset', async () => {
+			const { user, organization, cookie } =
+				await setupTestOrgWithUser('member')
+			const otherOrganization = await createTestOrganization(user.id, 'admin')
+			const note = await createTestNote(organization.id, user.id)
+			const [asset] = await db
+				.insert(OrganizationMediaAsset)
+				.values({
+					organizationId: otherOrganization.id,
+					objectKey: `orgs/${otherOrganization.id}/media/images/private.png`,
+					mimeType: 'image/png',
+					fileName: 'private.png',
+					fileSize: 128,
+					source: 'library',
+					createdById: user.id,
+				})
+				.returning()
+
+			const formData = new FormData()
+			formData.append('intent', 'add-comment')
+			formData.append('noteId', note.id)
+			formData.append('content', '')
+			formData.append('libraryAssetCount', '1')
+			formData.append('libraryAssetId-0', asset!.id)
+
+			const request = createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/notes/${note.id}`,
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+			const response = await action({
+				request,
+				params: { orgSlug: organization.slug, noteId: note.id },
+				context: {},
+			} as any)
+
+			expect(getResponseStatus(response)).toBe(400)
+			const comments = await db
+				.select()
+				.from(NoteComment)
+				.where(eq(NoteComment.noteId, note.id))
+			expect(comments).toHaveLength(0)
+		})
+
 		it('toggles favorite on a note', async () => {
 			const { user, organization, cookie } =
 				await setupTestOrgWithUser('member')

@@ -19,6 +19,7 @@
     "./badge": "./components/ui/badge.tsx",
     "./skeleton": "./components/ui/skeleton.tsx",
     "./progress": "./components/ui/progress.tsx",
+    "./slider": "./components/ui/slider.tsx",
     "./avatar": "./components/ui/avatar.tsx",
     "./tooltip": "./components/ui/tooltip.tsx",
     "./popover": "./components/ui/popover.tsx",

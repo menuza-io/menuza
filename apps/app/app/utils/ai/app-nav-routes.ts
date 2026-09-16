@@ -59,6 +59,14 @@ export const APP_NAV_ROUTES: readonly AppNavRoute[] = [
 		requiresOrg: true,
 	},
 	{
+		id: 'media',
+		title: 'Media library',
+		aliases: ['media', 'images', 'image library', 'assets'],
+		description: 'Reusable organization image library',
+		path: '/:orgSlug/media',
+		requiresOrg: true,
+	},
+	{
 		id: 'customers',
 		title: 'Customers',
 		aliases: ['customer list', 'contacts'],

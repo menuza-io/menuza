@@ -41,6 +41,7 @@ import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
 import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
+import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { SendIcon } from './icons/send-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
 import { NavSecondary } from './nav-secondary'
@@ -283,6 +284,12 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/notes`,
 			isActive: location.pathname.includes(`/${orgSlug}/notes`),
 			icon: FoldersIcon,
+		},
+		{
+			title: _(msg`Media library`),
+			url: `/${orgSlug}/media`,
+			isActive: location.pathname.includes(`/${orgSlug}/media`),
+			icon: GalleryHorizontalEndIcon,
 		},
 		{
 			title: _(msg`Customers`),

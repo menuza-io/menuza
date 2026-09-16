@@ -5,7 +5,6 @@ import {
 	eq,
 	OrganizationInvitation,
 	OrganizationRole,
-	Permission,
 	UserOrganization,
 	_OrganizationPermissionToRole,
 } from '@repo/database'

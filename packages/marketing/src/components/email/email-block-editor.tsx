@@ -51,6 +51,12 @@ export type EmailBlockEditorProps = {
 	previewEndpoint?: string
 	subject?: string
 	className?: string
+	/** When provided, shows a "Choose from library" button in the image block
+	 * inspector. Callers invoke the callback; the callback calls the provided
+	 * setter with the selected URL and alt text. */
+	onChooseImageFromLibrary?: (
+		onSelect: (url: string, alt: string) => void,
+	) => void
 }
 
 function SortableEmailBlockCard({
@@ -310,6 +316,7 @@ export function EmailBlockEditor({
 	previewEndpoint,
 	subject,
 	className,
+	onChooseImageFromLibrary,
 }: EmailBlockEditorProps) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const selected = blocks.find((block) => block.id === selectedId) ?? null
@@ -418,6 +425,7 @@ export function EmailBlockEditor({
 						onUpdate={(patch) => updateBlock(selected.id, patch)}
 						onBack={() => setSelectedId(null)}
 						onRemove={() => removeBlock(selected.id)}
+						onChooseImageFromLibrary={onChooseImageFromLibrary}
 					/>
 				) : (
 					<BlocksList
