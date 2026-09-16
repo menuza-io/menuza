@@ -32,11 +32,12 @@ async function connectUserRole(userId: string, roleName: string) {
 }
 
 async function createTestUser(createdUserIds: string[]) {
+	const unique = faker.string.uuid()
 	const [user] = await db
 		.insert(User)
 		.values({
-			email: faker.internet.email(),
-			username: `user-${faker.string.uuid().slice(0, 8)}`,
+			email: `user-${unique}@example.com`,
+			username: `user-${unique.slice(0, 8)}`,
 			name: faker.person.fullName(),
 		})
 		.returning()

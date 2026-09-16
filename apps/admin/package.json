@@ -12,7 +12,7 @@
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=6144 react-router build",
     "build:cf": "cross-env NODE_OPTIONS=--max-old-space-size=6144 DEPLOY_TARGET=cloudflare react-router build",
-    "deploy:cf": "npm run build:cf && node ../../scripts/patch-wrangler.mjs --app admin && wrangler deploy --config build/server/wrangler.deploy.json",
+    "deploy:cf": "npm run build:cf && node ../../scripts/patch-wrangler.mjs --app admin && wrangler deploy --config build/server/wrangler.deploy.json --keep-vars --env=",
     "dev": "cross-env NODE_ENV=development MOCKS=true node --conditions development index.ts",
     "dev:cf": "cross-env DEPLOY_TARGET=cloudflare vite dev",
     "dev:no-mocks": "cross-env NODE_ENV=development node --conditions development index.ts",
@@ -101,7 +101,6 @@
     "@tiptap/starter-kit": "^3.0.7",
     "@tiptap/suggestion": "^3.0.7",
     "@tusbar/cache-control": "1.0.2",
-    "@varlock/cloudflare-integration": "^1.5.1",
     "@varlock/vite-integration": "^1.5.1",
     "address": "^2.0.3",
     "bcryptjs": "^3.0.2",

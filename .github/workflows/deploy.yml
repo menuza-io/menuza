@@ -312,6 +312,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, vitest, playwright]
     if: |
+      always() &&
       github.event_name == 'push' &&
       needs.lint.result == 'success' &&
       needs.typecheck.result == 'success' &&
@@ -350,7 +351,8 @@ jobs:
           fi
 
           node scripts/patch-wrangler.mjs --app app --env "$DEPLOY_ENV" --require-bindings
-          npx wrangler d1 migrations apply epic-startup-db --remote \
+          # Use the D1 binding name (DB), not database_name — staging is epic-startup-db-staging.
+          npx wrangler d1 migrations apply DB --remote \
             --config apps/app/wrangler.deploy.jsonc "${WRANGLER_ENV[@]}"
 
   trigger-cf-deploys:
