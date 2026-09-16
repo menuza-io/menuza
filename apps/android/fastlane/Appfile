@@ -1,0 +1,7 @@
+# Play uploads authenticate with a service account JSON key that the workflow
+# writes from the tenant's GitHub environment (PLAY_SERVICE_ACCOUNT_JSON), and
+# with the upload keystore written from PLAY_KEYSTORE_BASE64. Nothing here is
+# read from the repo, so this file only documents the expectation.
+
+# The package name comes from the generated app/tenant.properties (baked into
+# the AAB) and is passed in as PLAY_PACKAGE_NAME by the workflow.

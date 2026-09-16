@@ -33,7 +33,7 @@ export function ErrorList({
 	return (
 		<ul id={id} className="flex flex-col gap-1">
 			{errorsToRender.map((e) => (
-				<li key={e} className="text-foreground-destructive text-[10px]">
+				<li key={e} className="text-destructive text-[10px]">
 					{e}
 				</li>
 			))}
@@ -187,7 +187,7 @@ export function CheckboxField({
 			<FieldLabel
 				htmlFor={id}
 				{...labelProps}
-				className="text-body-xs text-muted-foreground self-center font-normal"
+				className="text-muted-foreground self-center text-xs font-normal"
 			/>
 			<FieldError errors={convertErrorsToFieldFormat(errors)} />
 		</UIField>

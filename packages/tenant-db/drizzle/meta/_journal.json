@@ -64,6 +64,13 @@
 			"when": 1789060048515,
 			"tag": "0008_marketing_email_blocks",
 			"breakpoints": true
+		},
+		{
+			"idx": 9,
+			"version": "6",
+			"when": 1789447836172,
+			"tag": "0009_journey_step_executions_journey_idx",
+			"breakpoints": true
 		}
 	]
 }

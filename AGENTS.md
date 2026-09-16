@@ -144,6 +144,21 @@ npm run validate       # lint + typecheck + test + e2e
 
 ## ESLint Best Practices
 
+**Design system rules (`@shadcn/lint`)**:
+
+`shadcn/*` ESLint rules check how design-system components are styled. The
+shared policy lives in `packages/config/eslint-preset.js`; component internals
+are exempt in `packages/ui/eslint.config.js` and
+`apps/mobile/eslint.config.mjs`.
+
+- Use theme tokens, existing variants, and sizes instead of raw palette colors,
+  arbitrary values, or inline styles.
+- A component's `no-restyle` contract lists what callers may change. Extend a
+  contract only when the design system intentionally allows the change;
+  otherwise fix the call site.
+- `cn` comes from the `cn` package (`@repo/ui` re-exports it). Do not add `clsx`
+  or `tailwind-merge`.
+
 **Fixing ESLint Warnings in Bulk**:
 
 When encountering many ESLint warnings, follow this systematic approach:
@@ -568,6 +583,11 @@ npm install --prefix packages/<name>                   # Install deps in package
   branded shell, phone-OTP sign-in, and profile, reusing the published org
   branding and the regional tenant-api. Keychain session; no PII proxy. Swift
   tasks are opt-in (`npm run ios:test -w ios`) so Linux CI stays green
+- `apps/android` - Tenant customer Android app (Kotlin, framework views only: no
+  AndroidX/Compose/OkHttp — see its README for the size budget): same branded
+  shell, phone-OTP sign-in, and profile as iOS, with the session in the Android
+  Keystore. Opt-in via `npm run android:* -w android`; the Android toolchain is
+  installed by `.agents/setup`
 
 ## Additional Resources
 

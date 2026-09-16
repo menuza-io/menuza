@@ -9,6 +9,7 @@ import {
 	siteSectionBodyClass,
 	siteSectionHeadingClass,
 } from '~/lib/media'
+import { sanitizeContentBody } from '~/lib/sanitize'
 
 interface Props {
 	config: {
@@ -39,6 +40,7 @@ const shapeClass =
 const background = siteSectionBackground(config.background)
 const titleClass = siteSectionHeadingClass(config.background)
 const bodyClass = siteSectionBodyClass(config.background)
+const sanitizedBody = sanitizeContentBody(config.body)
 ---
 
 <section class:list={[siteSection, background]}>
@@ -56,7 +58,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 				{config.body ? (
 					<div
 						class:list={['mt-5 max-w-prose text-base leading-relaxed whitespace-pre-wrap', bodyClass]}
-						set:html={config.body}
+						set:html={sanitizedBody}
 					/>
 				) : null}
 				{config.ctaLabel ? (
@@ -88,7 +90,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 					{config.body ? (
 						<div
 							class:list={['mt-5 max-w-prose text-base leading-relaxed whitespace-pre-wrap', bodyClass]}
-							set:html={config.body}
+							set:html={sanitizedBody}
 						/>
 					) : null}
 					{config.ctaLabel ? (
@@ -119,7 +121,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 					{config.body ? (
 						<div
 							class:list={['mt-5 max-w-prose text-base leading-relaxed whitespace-pre-wrap', bodyClass]}
-							set:html={config.body}
+							set:html={sanitizedBody}
 						/>
 					) : null}
 					{config.ctaLabel ? (

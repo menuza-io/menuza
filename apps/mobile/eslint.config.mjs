@@ -6,6 +6,16 @@ import tsparser from '@typescript-eslint/parser'
 export default [
 	...defaultConfig,
 	{
+		// Design-system components own their internals; they may use arbitrary
+		// structural values and build class names dynamically.
+		files: ['components/ui/**'],
+		rules: {
+			'shadcn/no-restyle': 'off',
+			'shadcn/no-arbitrary-values': 'off',
+			'shadcn/require-static-classes': 'off',
+		},
+	},
+	{
 		files: ['**/*.test.{ts,tsx,js,jsx}', '**/*.spec.{ts,tsx,js,jsx}'],
 		rules: {
 			'epic-web/prefer-dispose-in-tests': 'off',

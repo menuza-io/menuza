@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl } from '@repo/common'
-import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
+import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import { ENV } from 'varlock/env'
 import { isCloudflareWorkerRuntime } from '#app/utils/runtime.server.ts'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
@@ -181,10 +181,6 @@ async function getCloudflareImageResponse(request: Request) {
 		invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 		if (URL.canParse(src)) {
-			const validation = validateInstanceUrl(src)
-			if (!validation.valid) {
-				throw new Error(`Invalid image URL: ${validation.reason}`)
-			}
 			imageUrl = src
 		} else {
 			const normalizedSrc = src.replace(/\\/g, '/').replace(/\.\.+/g, '')
@@ -195,11 +191,16 @@ async function getCloudflareImageResponse(request: Request) {
 		}
 	}
 
-	const imageResponse = await fetch(imageUrl, {
-		headers: fetchHeaders,
-		redirect: 'error',
-		signal: AbortSignal.timeout(10_000),
-	})
+	const imageResponse = isExternal
+		? await ssrfSafeFetch(imageUrl, {
+				headers: fetchHeaders,
+				signal: AbortSignal.timeout(10_000),
+			})
+		: await fetch(imageUrl, {
+				headers: fetchHeaders,
+				redirect: 'error',
+				signal: AbortSignal.timeout(10_000),
+			})
 
 	if (!imageResponse.ok) {
 		throw new Response('Not Found', { status: 404 })
@@ -297,7 +298,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 			if (URL.canParse(src)) {
-				const validation = validateInstanceUrl(src)
+				const validation = await validateInstanceUrlWithDns(src)
 				if (!validation.valid) {
 					throw new Error(`Invalid image URL: ${validation.reason}`)
 				}

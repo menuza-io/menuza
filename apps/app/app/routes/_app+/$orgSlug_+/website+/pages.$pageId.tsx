@@ -2187,7 +2187,7 @@ function SectionEditorPanel({
 					<Button
 						variant="ghost"
 						size="xs"
-						className="text-brand hover:bg-brand/10 hover:text-brand"
+						className="text-primary hover:bg-primary/10 hover:text-primary"
 						onClick={() =>
 							requestTranslate([{ id: section.id, type: section.type, config }])
 						}

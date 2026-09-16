@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext is refused everywhere except loopback: local development talks to
+  the dev servers over http, and production traffic must be https. This mirrors
+  `TenantConfiguration.isTransportSafe` on iOS, so a misconfigured build fails
+  against the dev defaults instead of sending customer tokens in the clear.
+
+  10.0.2.2 is the Android emulator's alias for the host machine's loopback.
+-->
+<network-security-config>
+	<base-config cleartextTrafficPermitted="false">
+		<trust-anchors>
+			<certificates src="system" />
+		</trust-anchors>
+	</base-config>
+	<domain-config cleartextTrafficPermitted="true">
+		<domain includeSubdomains="true">localhost</domain>
+		<domain includeSubdomains="true">10.0.2.2</domain>
+		<domain includeSubdomains="false">127.0.0.1</domain>
+	</domain-config>
+</network-security-config>

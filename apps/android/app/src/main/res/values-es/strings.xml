@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant Android app — Español -->
+<resources>
+	<string name="app_loading">Cargando…</string>
+	<string name="app_retry">Reintentar</string>
+
+	<string name="connect_title">Conecta con tu sitio</string>
+	<string name="connect_subtitle">Introduce la dirección de tu sitio para cargar su identidad visual.</string>
+	<string name="connect_field_label">Dirección del sitio</string>
+	<string name="connect_placeholder">acme o acme.example.com</string>
+	<string name="connect_action">Conectar</string>
+	<string name="connect_error">No encontramos ese sitio. Comprueba la dirección e inténtalo de nuevo.</string>
+
+	<string name="announcement_learn_more">Más información</string>
+
+	<string name="login_title">Iniciar sesión</string>
+	<string name="login_subtitle">Introduce tu número de teléfono. Te enviaremos un código de verificación.</string>
+	<string name="login_phone">Número de teléfono</string>
+	<string name="login_phone_placeholder">+34 600 000 000</string>
+	<string name="login_action">Enviar código</string>
+	<string name="login_invalid_phone">Introduce un número de teléfono válido.</string>
+	<string name="login_network_error">Error de red. Inténtalo de nuevo.</string>
+
+	<string name="verify_title">Introduce tu código</string>
+	<string name="verify_subtitle">Enviamos un código de 6 dígitos a %1$s.</string>
+	<string name="verify_code">Código de verificación</string>
+	<string name="verify_action">Verificar</string>
+	<string name="verify_resend">Enviar un código nuevo</string>
+	<string name="verify_change_number">Usar otro número</string>
+
+	<string name="name_title">Tu nombre</string>
+	<string name="name_subtitle">Dinos cómo llamarte.</string>
+	<string name="name_field">Nombre</string>
+	<string name="name_placeholder">Ana García</string>
+	<string name="name_action">Continuar</string>
+
+	<string name="profile_title">Tu perfil</string>
+	<string name="profile_subtitle">Actualiza tus datos básicos a continuación.</string>
+	<string name="profile_name">Nombre</string>
+	<string name="profile_email">Correo electrónico</string>
+	<string name="profile_phone">Número de teléfono</string>
+	<string name="profile_phone_locked">El número de teléfono no se puede cambiar por ahora.</string>
+	<string name="profile_save">Guardar cambios</string>
+	<string name="profile_saved">¡Perfil actualizado correctamente!</string>
+	<string name="profile_language">Idioma</string>
+	<string name="profile_language_system">Idioma del sistema</string>
+	<string name="profile_sign_out">Cerrar sesión</string>
+	<string name="profile_network_error">Error de red. Inténtalo de nuevo.</string>
+</resources>

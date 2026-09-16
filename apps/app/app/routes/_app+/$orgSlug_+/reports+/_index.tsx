@@ -13,6 +13,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		slug: true,
 		name: true,
 	})
+
 	const saved = await listSavedReports({
 		scope: 'organization',
 		organizationId: organization.id,

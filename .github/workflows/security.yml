@@ -91,6 +91,7 @@ jobs:
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
+          trivyignores: '.trivyignore'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

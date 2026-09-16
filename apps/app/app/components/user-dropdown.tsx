@@ -38,7 +38,7 @@ export function UserDropdown() {
 									width={256}
 									height={256}
 								/>
-								<span className="text-body-sm font-bold">
+								<span className="text-sm font-bold">
 									{user.name ?? user.username}
 								</span>
 							</Link>
@@ -50,14 +50,14 @@ export function UserDropdown() {
 				<DropdownMenuContent sideOffset={8} align="end">
 					<DropdownMenuItem>
 						<Link prefetch="intent" to={`/profile`}>
-							<Icon className="text-body-md" name="user">
+							<Icon className="text-base" name="user">
 								<Trans>Profile</Trans>
 							</Icon>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem>
 						<Link prefetch="intent" to={`/${organization.slug}`}>
-							<Icon className="text-body-md" name="clock">
+							<Icon className="text-base" name="clock">
 								<Trans>Dashboard</Trans>
 							</Icon>
 						</Link>
@@ -68,7 +68,7 @@ export function UserDropdown() {
 							submit(new FormData(), { method: 'POST', action: '/logout' })
 						}
 					>
-						<Icon className="text-body-md" name="log-out">
+						<Icon className="text-base" name="log-out">
 							<Trans>Logout</Trans>
 						</Icon>
 					</DropdownMenuItem>

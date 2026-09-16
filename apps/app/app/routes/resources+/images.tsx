@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
-import { ssrfSafeFetch, validateInstanceUrl } from '@repo/security'
+import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
@@ -228,12 +228,7 @@ async function fetchImageSource(
 	invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 	if (URL.canParse(src)) {
-		const validation = validateInstanceUrl(src)
-		if (!validation.valid) {
-			throw new Error(`Invalid image URL: ${validation.reason}`)
-		}
-		return fetch(src, {
-			redirect: 'error',
+		return ssrfSafeFetch(src, {
 			signal: AbortSignal.timeout(10_000),
 		})
 	}
@@ -437,7 +432,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 			if (URL.canParse(src)) {
-				const validation = validateInstanceUrl(src)
+				const validation = await validateInstanceUrlWithDns(src)
 				if (!validation.valid) {
 					throw new Error(`Invalid image URL: ${validation.reason}`)
 				}
