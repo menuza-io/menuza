@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { cloudflare } from '@cloudflare/vite-plugin'
 import { lingui } from '@lingui/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
 import { getLocalDomain } from '@repo/config/brand'
 import tailwindcss from '@tailwindcss/vite'
-import { varlockCloudflareVitePlugin } from '@varlock/cloudflare-integration'
 import { varlockVitePlugin } from '@varlock/vite-integration'
 import { defineConfig, type Plugin } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
@@ -129,7 +129,7 @@ export default defineConfig((config) => ({
 	plugins: [
 		cloudflareWorkerAliasPlugin(),
 		...(isCloudflareDeploy
-			? [varlockCloudflareVitePlugin({ viteEnvironment: { name: 'ssr' } })]
+			? [cloudflare({ viteEnvironment: { name: 'ssr' } })]
 			: [varlockVitePlugin()]),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),

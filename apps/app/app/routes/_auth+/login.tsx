@@ -5,7 +5,6 @@ import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { auditService, AuditAction } from '@repo/audit'
 import { requireAnonymous } from '@repo/auth'
 import { getErrorMessage, useIsPending } from '@repo/common'
-import { sharedCookieDomain } from '@repo/common/cookie-domain'
 import { getPageTitle } from '@repo/config/brand'
 import { checkHoneypot } from '@repo/security'
 import {
@@ -46,7 +45,6 @@ import {
 	ProviderConnectionForm,
 	useConfiguredProviders,
 } from '#app/utils/connections.tsx'
-import { ENV } from '#app/utils/env.server.ts'
 import {
 	saveLastLoginMethod,
 	useLastLoginMethod,
@@ -86,16 +84,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
-	// DEBUG: expose cookie domain info so we can verify the fix in production
-	// (hidden in the DOM via data attributes — remove after confirming fix)
-	const debugBaseUrl = process.env.BASE_URL || ENV.BASE_URL || '(unset)'
-	const debugCookieDomain = sharedCookieDomain(debugBaseUrl) ?? '(host-only)'
-
 	return {
 		organization,
 		ssoConfig: ssoConfig && ssoConfig.isEnabled ? ssoConfig : null,
-		debugBaseUrl,
-		debugCookieDomain,
 	}
 }
 
@@ -233,7 +224,6 @@ export async function action({ request }: Route.ActionArgs) {
 
 	const { session, remember, redirectTo } = submission.value
 
-	console.log('LOGIN SUCCESS! REDIRECT TO:', redirectTo)
 	return handleNewSession({
 		request,
 		session,
@@ -250,8 +240,7 @@ export default function LoginPage({
 	const redirectTo = searchParams.get('redirectTo')
 	const isBanned = searchParams.get('banned') === 'true'
 	const error = searchParams.get('error')
-	const { organization, ssoConfig, debugBaseUrl, debugCookieDomain } =
-		loaderData
+	const { organization, ssoConfig } = loaderData
 
 	// Determine the current step based on action data
 	const ssoAvailable = (actionData as any)?.ssoAvailable
@@ -265,14 +254,6 @@ export default function LoginPage({
 
 	return (
 		<>
-			{/* DEBUG: hidden element to verify cookie domain in production — remove after confirming fix */}
-			<span
-				aria-hidden="true"
-				style={{ display: 'none' }}
-				data-debug-base-url={debugBaseUrl}
-				data-debug-cookie-domain={debugCookieDomain}
-				id="__debug_cookie_domain"
-			/>
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-xl">
