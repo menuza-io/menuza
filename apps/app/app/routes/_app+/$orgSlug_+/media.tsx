@@ -1,4 +1,5 @@
-import { Trans } from '@lingui/macro'
+import { msg, Plural, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import {
@@ -103,15 +104,15 @@ const ReplaceSchema = z.object({
 		),
 })
 
-function getMediaUrl(id: string) {
-	return `/resources/images?mediaId=${encodeURIComponent(id)}`
+function getMediaUrl(id: string, updatedAt: Date) {
+	return `/resources/images?mediaId=${encodeURIComponent(id)}&v=${updatedAt.getTime()}`
 }
 
 function serializeAsset(asset: typeof OrganizationMediaAsset.$inferSelect) {
 	return {
 		id: asset.id,
 		objectKey: asset.objectKey,
-		url: getMediaUrl(asset.id),
+		url: getMediaUrl(asset.id, asset.updatedAt),
 		fileName: asset.fileName,
 		mimeType: asset.mimeType,
 		fileSize: asset.fileSize,
@@ -171,6 +172,119 @@ function getSourceLabel(source: string) {
 			return 'Website SEO'
 		default:
 			return 'Media library'
+	}
+}
+
+async function hasMediaObjectReferences(
+	organizationId: string,
+	objectKey: string,
+	assetId?: string,
+) {
+	const pageReferenceCondition = assetId
+		? or(
+				like(WebsitePageSection.config, `%${objectKey}%`),
+				like(WebsitePageSection.config, `%${assetId}%`),
+			)
+		: like(WebsitePageSection.config, `%${objectKey}%`)
+	const [asset, note, comment, logo, siteIcon, page] = await Promise.all([
+		db
+			.select({ id: OrganizationMediaAsset.id })
+			.from(OrganizationMediaAsset)
+			.where(
+				and(
+					eq(OrganizationMediaAsset.organizationId, organizationId),
+					eq(OrganizationMediaAsset.objectKey, objectKey),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: OrganizationNoteUpload.id })
+			.from(OrganizationNoteUpload)
+			.innerJoin(
+				OrganizationNote,
+				eq(OrganizationNoteUpload.noteId, OrganizationNote.id),
+			)
+			.where(
+				and(
+					eq(OrganizationNote.organizationId, organizationId),
+					eq(OrganizationNoteUpload.objectKey, objectKey),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: NoteCommentImage.id })
+			.from(NoteCommentImage)
+			.innerJoin(NoteComment, eq(NoteCommentImage.commentId, NoteComment.id))
+			.innerJoin(OrganizationNote, eq(NoteComment.noteId, OrganizationNote.id))
+			.where(
+				and(
+					eq(OrganizationNote.organizationId, organizationId),
+					eq(NoteCommentImage.objectKey, objectKey),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: OrganizationImage.id })
+			.from(OrganizationImage)
+			.where(
+				and(
+					eq(OrganizationImage.organizationId, organizationId),
+					eq(OrganizationImage.objectKey, objectKey),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: Organization.id })
+			.from(Organization)
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					eq(Organization.siteIconKey, objectKey),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: WebsitePageSection.id })
+			.from(WebsitePageSection)
+			.innerJoin(WebsitePage, eq(WebsitePageSection.pageId, WebsitePage.id))
+			.where(
+				and(
+					eq(WebsitePage.organizationId, organizationId),
+					pageReferenceCondition,
+				),
+			)
+			.limit(1),
+	])
+
+	return [asset, note, comment, logo, siteIcon, page].some(
+		(reference) => reference.length > 0,
+	)
+}
+
+async function deleteMediaObjectIfUnreferenced({
+	organizationId,
+	objectKey,
+	storageScope,
+	assetId,
+}: {
+	organizationId: string
+	objectKey: string
+	storageScope: string
+	assetId?: string
+}) {
+	if (await hasMediaObjectReferences(organizationId, objectKey, assetId)) return
+
+	try {
+		await deleteOrganizationStorageObject(
+			objectKey,
+			organizationId,
+			storageScope === 'platform' ? 'platform' : 'organization',
+		)
+	} catch (error) {
+		console.error(
+			`Failed to remove unreferenced media object ${objectKey}:`,
+			error,
+		)
 	}
 }
 
@@ -267,7 +381,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 				{ status: 400 },
 			)
 		}
-		await db
+		const [deleted] = await db
 			.delete(OrganizationMediaAsset)
 			.where(
 				and(
@@ -275,6 +389,19 @@ export async function action({ request, params }: Route.ActionArgs) {
 					eq(OrganizationMediaAsset.organizationId, organization.id),
 				),
 			)
+			.returning({
+				objectKey: OrganizationMediaAsset.objectKey,
+				storageScope: OrganizationMediaAsset.storageScope,
+			})
+		if (!deleted) {
+			return Response.json({ error: 'Media not found.' }, { status: 404 })
+		}
+		await deleteMediaObjectIfUnreferenced({
+			organizationId: organization.id,
+			objectKey: deleted.objectKey,
+			storageScope: deleted.storageScope,
+			assetId: result.data.id,
+		})
 		return Response.json({ deleted: true, deletedId: result.data.id })
 	}
 
@@ -292,7 +419,25 @@ export async function action({ request, params }: Route.ActionArgs) {
 				{ status: 400 },
 			)
 		}
+		const [existingAsset] = await db
+			.select({
+				objectKey: OrganizationMediaAsset.objectKey,
+				storageScope: OrganizationMediaAsset.storageScope,
+			})
+			.from(OrganizationMediaAsset)
+			.where(
+				and(
+					eq(OrganizationMediaAsset.id, result.data.id),
+					eq(OrganizationMediaAsset.organizationId, organization.id),
+				),
+			)
+			.limit(1)
+		if (!existingAsset) {
+			return Response.json({ error: 'Media not found.' }, { status: 404 })
+		}
+
 		let newObjectKey: string | undefined
+		let replacementCommitted = false
 		try {
 			const uploaded = await uploadOrganizationMediaFileOnly(
 				organization.id,
@@ -303,9 +448,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 				.update(OrganizationMediaAsset)
 				.set({
 					objectKey: newObjectKey,
+					storageScope: 'organization',
 					mimeType: uploaded.mimeType,
-					fileSize: result.data.imageFile.size,
-					fileName: result.data.imageFile.name || undefined,
+					fileSize: uploaded.file.size,
+					fileName: uploaded.file.name || null,
+					width: uploaded.width,
+					height: uploaded.height,
 					updatedAt: new Date(),
 				})
 				.where(
@@ -319,9 +467,17 @@ export async function action({ request, params }: Route.ActionArgs) {
 				await deleteOrganizationStorageObject(newObjectKey, organization.id)
 				return Response.json({ error: 'Media not found.' }, { status: 404 })
 			}
+			replacementCommitted = true
+			if (existingAsset.objectKey !== newObjectKey) {
+				await deleteMediaObjectIfUnreferenced({
+					organizationId: organization.id,
+					objectKey: existingAsset.objectKey,
+					storageScope: existingAsset.storageScope,
+				})
+			}
 			return Response.json({ asset: serializeAsset(replaced), replaced: true })
 		} catch (error) {
-			if (newObjectKey) {
+			if (newObjectKey && !replacementCommitted) {
 				await deleteOrganizationStorageObject(newObjectKey, organization.id)
 			}
 			console.error('Failed to replace media asset:', error)
@@ -551,6 +707,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 export default function MediaLibraryRoute({
 	loaderData,
 }: Route.ComponentProps) {
+	const { _ } = useLingui()
 	const uploadFetcher = useFetcher<MediaActionData>()
 	const detailsFetcher = useFetcher<MediaActionData>()
 	const fileInputRef = useRef<HTMLInputElement>(null)
@@ -564,23 +721,23 @@ export default function MediaLibraryRoute({
 		const asset = uploadFetcher.data?.asset
 		if (!asset || latestAssetId.current === asset.id) return
 		latestAssetId.current = asset.id
-		toast.success('Image added to your media library')
-	}, [uploadFetcher.data])
+		toast.success(_(msg`Image added to your media library`))
+	}, [_, uploadFetcher.data])
 
 	useEffect(() => {
 		if (detailsFetcher.data?.updated && detailsFetcher.data.asset) {
-			toast.success('Media details saved')
+			toast.success(_(msg`Media details saved`))
 			setSelectedAsset(detailsFetcher.data.asset)
 		} else if (detailsFetcher.data?.replaced && detailsFetcher.data.asset) {
-			toast.success('Image replaced successfully')
+			toast.success(_(msg`Image replaced successfully`))
 			setSelectedAsset(detailsFetcher.data.asset)
 		} else if (detailsFetcher.data?.deleted) {
-			toast.success('Image removed from media library')
+			toast.success(_(msg`Image removed from media library`))
 			setSelectedAsset(null)
 		} else if (detailsFetcher.data?.error) {
 			toast.error(detailsFetcher.data.error)
 		}
-	}, [detailsFetcher.data])
+	}, [_, detailsFetcher.data])
 
 	const handleUpdateAsset = useCallback(
 		(data: {
@@ -602,14 +759,18 @@ export default function MediaLibraryRoute({
 
 	const handleDeleteAsset = useCallback(
 		(id: string) => {
-			if (!window.confirm('Are you sure you want to remove this media asset?'))
+			if (
+				!window.confirm(
+					_(msg`Are you sure you want to remove this media asset?`),
+				)
+			)
 				return
 			const formData = new FormData()
 			formData.append('intent', 'delete')
 			formData.append('id', id)
 			void detailsFetcher.submit(formData, { method: 'POST' })
 		},
-		[detailsFetcher],
+		[_, detailsFetcher],
 	)
 
 	const handleReplaceAsset = useCallback(
@@ -704,20 +865,21 @@ export default function MediaLibraryRoute({
 						name="search"
 						type="search"
 						defaultValue={search}
-						placeholder="Search media"
-						aria-label="Search media library"
+						placeholder={_(msg`Search media`)}
+						aria-label={_(msg`Search media library`)}
 						className="pl-9"
 					/>
 				</Form>
 				<p className="text-muted-foreground text-sm tabular-nums">
-					{assets.length} {assets.length === 1 ? 'image' : 'images'}
+					<Plural value={assets.length} one="# image" other="# images" />
 				</p>
 			</div>
 
 			{assets.length ? (
 				<ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 					{assets.map((asset) => {
-						const name = asset.altText || asset.fileName || 'Untitled image'
+						const name =
+							asset.altText || asset.fileName || _(msg`Untitled image`)
 						const size = formatFileSize(asset.fileSize)
 						return (
 							<li
@@ -750,7 +912,7 @@ export default function MediaLibraryRoute({
 												void navigator.clipboard.writeText(
 													new URL(asset.url, window.location.origin).href,
 												)
-												toast.success('Image link copied')
+												toast.success(_(msg`Image link copied`))
 											}}
 										>
 											<Icon name="copy" />
@@ -778,11 +940,17 @@ export default function MediaLibraryRoute({
 				</ul>
 			) : (
 				<EmptyState
-					title={search ? 'No matching images' : 'Your media library is empty'}
+					title={
+						search
+							? _(msg`No matching images`)
+							: _(msg`Your media library is empty`)
+					}
 					description={
 						search
-							? 'Try a different search term.'
-							: 'Upload an image here, or add one to a note, comment, website page, or your organization settings.'
+							? _(msg`Try a different search term.`)
+							: _(
+									msg`Upload an image here, or add one to a note, comment, website page, or your organization settings.`,
+								)
 					}
 					icons={['image']}
 				/>
@@ -825,6 +993,7 @@ function MediaDetailsDialog({
 	onSaveCopy: (file: File) => void
 	isUpdating: boolean
 }) {
+	const { _ } = useLingui()
 	const [isEditing, setIsEditing] = useState(false)
 	const [fileName, setFileName] = useState('')
 	const [altText, setAltText] = useState('')
@@ -939,7 +1108,11 @@ function MediaDetailsDialog({
 					img.naturalHeight,
 				)
 
-				const mime = asset.mimeType === 'image/png' ? 'image/png' : 'image/jpeg'
+				const mime = ['image/png', 'image/webp', 'image/avif'].includes(
+					asset.mimeType,
+				)
+					? 'image/png'
+					: 'image/jpeg'
 				const ext = mime === 'image/png' ? '.png' : '.jpg'
 
 				canvas.toBlob(
@@ -971,11 +1144,11 @@ function MediaDetailsDialog({
 			setIsExporting(true)
 			const file = await exportTransformedImage('edited')
 			onReplace(asset.id, file)
-			toast.success('Saving edited image…')
+			toast.success(_(msg`Saving edited image…`))
 			setIsEditing(false)
 		} catch (error) {
 			console.error('Error saving edited image:', error)
-			toast.error('Failed to export edited image.')
+			toast.error(_(msg`Failed to export edited image.`))
 		} finally {
 			setIsExporting(false)
 		}
@@ -987,11 +1160,11 @@ function MediaDetailsDialog({
 			setIsExporting(true)
 			const file = await exportTransformedImage('copy')
 			onSaveCopy(file)
-			toast.success('Saving as new copy…')
+			toast.success(_(msg`Saving as new copy…`))
 			setIsEditing(false)
 		} catch (error) {
 			console.error('Error saving copy:', error)
-			toast.error('Failed to export image copy.')
+			toast.error(_(msg`Failed to export image copy.`))
 		} finally {
 			setIsExporting(false)
 		}
@@ -1041,6 +1214,33 @@ function MediaDetailsDialog({
 	const references = referencesFetcher.data?.references
 	const referenceCount = references?.length ?? 0
 	const isLoadingReferences = referencesFetcher.state !== 'idle'
+	const sourceLabel = (() => {
+		switch (asset.source) {
+			case 'comment':
+				return _(msg`Comment`)
+			case 'note':
+				return _(msg`Note`)
+			case 'organization-logo':
+				return _(msg`Organization logo`)
+			case 'site-icon':
+				return _(msg`Site icon`)
+			case 'video-thumbnail':
+				return _(msg`Video thumbnail`)
+			case 'website-asset':
+				return _(msg`Website`)
+			case 'website-seo':
+				return _(msg`Website SEO`)
+			default:
+				return _(msg`Main library`)
+		}
+	})()
+	const presetLabels = {
+		normal: _(msg`Normal`),
+		bw: _(msg`B&W`),
+		vivid: _(msg`Vivid`),
+		warm: _(msg`Warm`),
+		cool: _(msg`Cool`),
+	} as const
 
 	return (
 		<Dialog open={Boolean(asset)} onOpenChange={(open) => !open && onClose()}>
@@ -1054,7 +1254,7 @@ function MediaDetailsDialog({
 									<Trans>Media details</Trans>
 								</DialogTitle>
 								<DialogDescription className="truncate">
-									{asset.fileName || asset.altText || 'Untitled image'}
+									{asset.fileName || asset.altText || _(msg`Untitled image`)}
 								</DialogDescription>
 							</DialogHeader>
 						</div>
@@ -1100,16 +1300,18 @@ function MediaDetailsDialog({
 											<Icon name="refresh-cw" className="size-3" />
 											<Trans>Replace image</Trans>
 										</Button>
-										<Button
-											type="button"
-											variant="secondary"
-											size="xs"
-											onClick={() => setIsEditing(true)}
-											className="absolute top-2.5 right-2.5 shadow-sm"
-										>
-											<Icon name="pencil" className="size-3" />
-											<Trans>Edit image</Trans>
-										</Button>
+										{asset.mimeType !== 'image/gif' ? (
+											<Button
+												type="button"
+												variant="secondary"
+												size="xs"
+												onClick={() => setIsEditing(true)}
+												className="absolute top-2.5 right-2.5 shadow-sm"
+											>
+												<Icon name="pencil" className="size-3" />
+												<Trans>Edit image</Trans>
+											</Button>
+										) : null}
 									</div>
 
 									{/* Metadata Grid */}
@@ -1178,9 +1380,9 @@ function MediaDetailsDialog({
 														void navigator.clipboard.writeText(
 															new URL(asset.url, window.location.origin).href,
 														)
-														toast.success('URL copied to clipboard')
+														toast.success(_(msg`URL copied to clipboard`))
 													}}
-													aria-label="Copy URL"
+													aria-label={_(msg`Copy URL`)}
 													className="text-muted-foreground hover:text-foreground shrink-0"
 												>
 													<Icon name="copy" className="size-3.5" />
@@ -1197,7 +1399,7 @@ function MediaDetailsDialog({
 											<Label htmlFor="media-filename">
 												<Trans>Filename</Trans>
 											</Label>
-											<span title="File name of the media asset">
+											<span title={_(msg`File name of the media asset`)}>
 												<Icon
 													name="help-circle"
 													className="text-muted-foreground size-3.5 cursor-help"
@@ -1208,7 +1410,7 @@ function MediaDetailsDialog({
 											id="media-filename"
 											value={fileName}
 											onChange={(e) => setFileName(e.target.value)}
-											placeholder="Filename"
+											placeholder={_(msg`Filename`)}
 										/>
 									</div>
 
@@ -1222,11 +1424,7 @@ function MediaDetailsDialog({
 													name="image"
 													className="text-muted-foreground size-4"
 												/>
-												<span className="font-medium">
-													{asset.source === 'library'
-														? 'Main library'
-														: getSourceLabel(asset.source)}
-												</span>
+												<span className="font-medium">{sourceLabel}</span>
 											</div>
 											<Icon
 												name="chevron-down"
@@ -1240,7 +1438,9 @@ function MediaDetailsDialog({
 											<Label htmlFor="media-alt">
 												<Trans>Alt Text</Trans>
 											</Label>
-											<span title="Describe this image for accessibility">
+											<span
+												title={_(msg`Describe this image for accessibility`)}
+											>
 												<Icon
 													name="help-circle"
 													className="text-muted-foreground size-3.5 cursor-help"
@@ -1251,7 +1451,9 @@ function MediaDetailsDialog({
 											id="media-alt"
 											value={altText}
 											onChange={(e) => setAltText(e.target.value)}
-											placeholder="Describe this image for accessibility"
+											placeholder={_(
+												msg`Describe this image for accessibility`,
+											)}
 											rows={2}
 											className="resize-none"
 										/>
@@ -1265,7 +1467,7 @@ function MediaDetailsDialog({
 											id="media-caption"
 											value={caption}
 											onChange={(e) => setCaption(e.target.value)}
-											placeholder="Optional caption for display"
+											placeholder={_(msg`Optional caption for display`)}
 											rows={2}
 											className="resize-none"
 										/>
@@ -1282,8 +1484,11 @@ function MediaDetailsDialog({
 													variant="secondary"
 													className="px-1.5 py-0 text-[10px]"
 												>
-													{referenceCount}{' '}
-													{referenceCount === 1 ? 'place' : 'places'}
+													<Plural
+														value={referenceCount}
+														one="# place"
+														other="# places"
+													/>
 												</Badge>
 											) : null}
 										</div>
@@ -1356,7 +1561,7 @@ function MediaDetailsDialog({
 																			rel="noreferrer"
 																		/>
 																	}
-																	aria-label="Open reference"
+																	aria-label={_(msg`Open reference`)}
 																	className="shrink-0"
 																>
 																	<Icon name="arrow-right" className="size-3" />
@@ -1425,7 +1630,7 @@ function MediaDetailsDialog({
 									<Trans>Edit image</Trans>
 								</DialogTitle>
 								<DialogDescription className="truncate">
-									{asset.fileName || asset.altText || 'Untitled image'}
+									{asset.fileName || asset.altText || _(msg`Untitled image`)}
 								</DialogDescription>
 							</DialogHeader>
 						</div>
@@ -1446,7 +1651,7 @@ function MediaDetailsDialog({
 											size="icon-sm"
 											className="text-muted-foreground hover:text-foreground size-7 rounded-md"
 											onClick={() => setRotation((r) => (r - 90 + 360) % 360)}
-											aria-label="Rotate left"
+											aria-label={_(msg`Rotate left`)}
 										>
 											<svg
 												className="size-4 -scale-x-100"
@@ -1467,7 +1672,7 @@ function MediaDetailsDialog({
 											size="icon-sm"
 											className="text-muted-foreground hover:text-foreground size-7 rounded-md"
 											onClick={() => setRotation((r) => (r + 90) % 360)}
-											aria-label="Rotate right"
+											aria-label={_(msg`Rotate right`)}
 										>
 											<svg
 												className="size-4"
@@ -1493,7 +1698,7 @@ function MediaDetailsDialog({
 													: 'text-muted-foreground hover:text-foreground',
 											)}
 											onClick={() => setFlipH((f) => !f)}
-											aria-label="Flip horizontally"
+											aria-label={_(msg`Flip horizontally`)}
 										>
 											<svg
 												className="size-4"
@@ -1523,7 +1728,7 @@ function MediaDetailsDialog({
 													: 'text-muted-foreground hover:text-foreground',
 											)}
 											onClick={() => setFlipV((f) => !f)}
-											aria-label="Flip vertically"
+											aria-label={_(msg`Flip vertically`)}
 										>
 											<svg
 												className="size-4"
@@ -1554,10 +1759,7 @@ function MediaDetailsDialog({
 										{(['normal', 'bw', 'vivid', 'warm', 'cool'] as const).map(
 											(preset) => {
 												const isActive = activePreset === preset
-												const label =
-													preset === 'bw'
-														? 'B&W'
-														: preset.charAt(0).toUpperCase() + preset.slice(1)
+												const label = presetLabels[preset]
 												return (
 													<Button
 														key={preset}
@@ -1594,7 +1796,7 @@ function MediaDetailsDialog({
 							<div className="bg-muted/30 relative flex h-72 w-full items-center justify-center overflow-hidden rounded-lg border p-4 sm:h-80">
 								<img
 									src={asset.url}
-									alt="Editor preview"
+									alt={_(msg`Editor preview`)}
 									style={{
 										transform: `rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
 										// eslint-disable-next-line shadcn/no-inline-styles -- Dynamic canvas editor filter values
@@ -1625,7 +1827,7 @@ function MediaDetailsDialog({
 											setActivePreset(null)
 											setBrightness(typeof val === 'number' ? val : val[0])
 										}}
-										aria-label="Brightness"
+										aria-label={_(msg`Brightness`)}
 									/>
 								</div>
 
@@ -1647,7 +1849,7 @@ function MediaDetailsDialog({
 											setActivePreset(null)
 											setContrast(typeof val === 'number' ? val : val[0])
 										}}
-										aria-label="Contrast"
+										aria-label={_(msg`Contrast`)}
 									/>
 								</div>
 
@@ -1669,7 +1871,7 @@ function MediaDetailsDialog({
 											setActivePreset(null)
 											setSaturation(typeof val === 'number' ? val : val[0])
 										}}
-										aria-label="Saturation"
+										aria-label={_(msg`Saturation`)}
 									/>
 								</div>
 
@@ -1691,7 +1893,7 @@ function MediaDetailsDialog({
 											setActivePreset(null)
 											setGrayscale(typeof val === 'number' ? val : val[0])
 										}}
-										aria-label="Grayscale"
+										aria-label={_(msg`Grayscale`)}
 									/>
 								</div>
 							</div>

@@ -301,9 +301,16 @@ export async function collectOrgMediaObjects(
 			continue
 		}
 
-		objects.set(upload.objectKey, upload.mimeType ?? 'application/octet-stream')
+		if (!objects.has(upload.objectKey)) {
+			objects.set(
+				upload.objectKey,
+				upload.mimeType ?? 'application/octet-stream',
+			)
+		}
 		if (upload.thumbnailKey) {
-			objects.set(upload.thumbnailKey, 'image/jpeg')
+			if (!objects.has(upload.thumbnailKey)) {
+				objects.set(upload.thumbnailKey, 'image/jpeg')
+			}
 		}
 	}
 
@@ -325,7 +332,9 @@ export async function collectOrgMediaObjects(
 			continue
 		}
 
-		objects.set(image.objectKey, 'image/jpeg')
+		if (!objects.has(image.objectKey)) {
+			objects.set(image.objectKey, 'image/jpeg')
+		}
 	}
 
 	return [...objects.entries()]

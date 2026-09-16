@@ -1,7 +1,14 @@
 import { type FileUpload } from '@mjackson/form-data-parser'
 import { createId } from '@paralleldrive/cuid2'
-import { type StorageConfig } from './types'
 import { uploadToStorage } from './client'
+import { detectRasterImage } from './raster-image'
+import { type StorageConfig } from './types'
+
+export {
+	detectRasterImage,
+	isValidRasterBytes,
+	type DetectedRasterFormat,
+} from './raster-image'
 
 /**
  * Upload options for organization-specific storage
@@ -91,89 +98,13 @@ export async function uploadOrganizationImage(
 	return uploadToStorage(file, key, config)
 }
 
-export type DetectedRasterFormat = {
-	extension: 'jpg' | 'png' | 'gif' | 'webp' | 'avif'
-	mimeType:
-		'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' | 'image/avif'
-}
-
-export function detectRasterImage(
-	buffer: ArrayBuffer,
-): DetectedRasterFormat | null {
-	const bytes = new Uint8Array(buffer.slice(0, 16))
-	if (bytes.length < 4) return null
-
-	// JPEG: FF D8 FF
-	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-		return { extension: 'jpg', mimeType: 'image/jpeg' }
-	}
-
-	// PNG: 89 50 4E 47 0D 0A 1A 0A
-	if (
-		bytes[0] === 0x89 &&
-		bytes[1] === 0x50 &&
-		bytes[2] === 0x4e &&
-		bytes[3] === 0x47
-	) {
-		return { extension: 'png', mimeType: 'image/png' }
-	}
-
-	// GIF: GIF87a or GIF89a (47 49 46 38)
-	if (
-		bytes[0] === 0x47 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x38
-	) {
-		return { extension: 'gif', mimeType: 'image/gif' }
-	}
-
-	// WebP: RIFF....WEBP (52 49 46 46 .... 57 45 42 50)
-	if (
-		bytes.length >= 12 &&
-		bytes[0] === 0x52 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x46 &&
-		bytes[8] === 0x57 &&
-		bytes[9] === 0x45 &&
-		bytes[10] === 0x42 &&
-		bytes[11] === 0x50
-	) {
-		return { extension: 'webp', mimeType: 'image/webp' }
-	}
-
-	// AVIF: ....ftypavif or ....ftypavis
-	if (
-		bytes.length >= 12 &&
-		bytes[4] === 0x66 &&
-		bytes[5] === 0x74 &&
-		bytes[6] === 0x79 &&
-		bytes[7] === 0x70
-	) {
-		const brand = String.fromCharCode(
-			bytes[8] ?? 0,
-			bytes[9] ?? 0,
-			bytes[10] ?? 0,
-			bytes[11] ?? 0,
-		)
-		if (brand === 'avif' || brand === 'avis') {
-			return { extension: 'avif', mimeType: 'image/avif' }
-		}
-	}
-
-	return null
-}
-
-export function isValidRasterBytes(buffer: ArrayBuffer): boolean {
-	return detectRasterImage(buffer) !== null
-}
-
 export type UploadedMediaResult = {
 	key: string
 	mimeType: string
 	extension: string
 	file: File
+	width: number
+	height: number
 }
 
 /**
@@ -211,6 +142,8 @@ export async function uploadOrganizationMediaImage(
 		mimeType: detected.mimeType,
 		extension: detected.extension,
 		file: reconstructedFile,
+		width: detected.width,
+		height: detected.height,
 	}
 }
 
@@ -222,12 +155,8 @@ export async function uploadNoteImage(
 	noteId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for note uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -244,12 +173,8 @@ export async function uploadCommentImage(
 	commentId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for comment uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -266,12 +191,8 @@ export async function uploadNoteVideo(
 	noteId: string,
 	file: File | FileUpload,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for note video uploads')
-	}
-
 	const fileId = createId()
 	const fileExtension = sanitizeAndExtractExtension(file.name)
 	const timestamp = Date.now()
@@ -289,12 +210,8 @@ export async function uploadVideoThumbnail(
 	videoId: string,
 	thumbnailBuffer: Buffer,
 	options: UploadOptions,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		throw new Error('organizationId is required for video thumbnail uploads')
-	}
-
 	const fileId = createId()
 	const timestamp = Date.now()
 	const key = `orgs/${organizationId}/notes/${noteId}/videos/thumbnails/${timestamp}-${videoId}-${fileId}.jpg`

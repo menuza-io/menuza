@@ -92,6 +92,8 @@ export async function registerOrganizationMediaAsset({
 	storageScope,
 	source,
 	createdById,
+	width,
+	height,
 }: {
 	organizationId: string
 	objectKey: string
@@ -99,6 +101,8 @@ export async function registerOrganizationMediaAsset({
 	storageScope: 'organization' | 'platform'
 	source: MediaSource
 	createdById?: string
+	width?: number
+	height?: number
 }) {
 	if (!file.type.startsWith('image/')) return null
 
@@ -111,6 +115,8 @@ export async function registerOrganizationMediaAsset({
 			mimeType: file.type,
 			fileName: file.name || null,
 			fileSize: file.size || null,
+			width: width ?? null,
+			height: height ?? null,
 			source,
 			createdById: createdById ?? null,
 		})
@@ -246,12 +252,16 @@ export async function uploadOrganizationMediaImage(
 	file: File | FileUpload,
 	createdById?: string,
 ) {
-	const { key: objectKey, file: validatedFile } =
-		await _uploadOrganizationMediaImage(
-			organizationId,
-			file,
-			createUploadOptions(),
-		)
+	const {
+		key: objectKey,
+		file: validatedFile,
+		width,
+		height,
+	} = await _uploadOrganizationMediaImage(
+		organizationId,
+		file,
+		createUploadOptions(),
+	)
 
 	try {
 		await registerOrganizationMediaAsset({
@@ -261,6 +271,8 @@ export async function uploadOrganizationMediaImage(
 			storageScope: 'organization',
 			source: 'library',
 			createdById,
+			width,
+			height,
 		})
 		return objectKey
 	} catch (error) {
@@ -282,17 +294,8 @@ export async function uploadNoteImage(
 	userId: string,
 	noteId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		return _uploadNoteImage(
-			userId,
-			noteId,
-			file,
-			createUploadOptions(),
-			organizationId,
-		)
-	}
 	return uploadAndRegisterOrganizationMedia({
 		organizationId,
 		file,
@@ -314,17 +317,8 @@ export async function uploadCommentImage(
 	userId: string,
 	commentId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
-	if (!organizationId) {
-		return _uploadCommentImage(
-			userId,
-			commentId,
-			file,
-			createUploadOptions(),
-			organizationId,
-		)
-	}
 	return uploadAndRegisterOrganizationMedia({
 		organizationId,
 		file,
@@ -346,7 +340,7 @@ export async function uploadNoteVideo(
 	userId: string,
 	noteId: string,
 	file: File | FileUpload,
-	organizationId?: string,
+	organizationId: string,
 ) {
 	return _uploadNoteVideo(
 		userId,
@@ -362,23 +356,13 @@ export async function uploadVideoThumbnail(
 	noteId: string,
 	videoId: string,
 	thumbnailBuffer: Buffer,
-	organizationId?: string,
+	organizationId: string,
 ) {
 	const thumbnailFile = new File(
 		[new Uint8Array(thumbnailBuffer)],
 		'thumbnail.jpg',
 		{ type: 'image/jpeg' },
 	)
-	if (!organizationId) {
-		return _uploadVideoThumbnail(
-			userId,
-			noteId,
-			videoId,
-			thumbnailBuffer,
-			createUploadOptions(),
-			organizationId,
-		)
-	}
 	return uploadAndRegisterOrganizationMedia({
 		organizationId,
 		file: thumbnailFile,
@@ -524,9 +508,12 @@ export { deleteFromStorage }
 
 export async function deleteOrganizationStorageObject(
 	objectKey: string,
-	organizationId?: string,
+	organizationId: string,
+	storageScope: 'organization' | 'platform' = 'organization',
 ) {
 	const options = createUploadOptions()
-	const config = await options.getConfig(organizationId)
+	const config = await options.getConfig(
+		storageScope === 'platform' ? undefined : organizationId,
+	)
 	await deleteFromStorage(objectKey, config)
 }

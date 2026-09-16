@@ -85,7 +85,11 @@ function Slider<Value extends number | readonly number[] = number>({
 						data-variant={variant}
 						key={index}
 						index={_values.length > 1 ? index : undefined}
-						aria-label={ariaLabel}
+						aria-label={
+							_values.length > 1 && ariaLabel
+								? `${ariaLabel} ${index + 1}`
+								: ariaLabel
+						}
 						className={cn(
 							variant === 'pill'
 								? 'focus-visible:ring-ring size-8 cursor-pointer rounded-full opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50'

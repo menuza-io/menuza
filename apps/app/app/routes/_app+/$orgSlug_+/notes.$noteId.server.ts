@@ -25,7 +25,11 @@ import {
 } from '@repo/database'
 import { noteHooks, integrationManager } from '@repo/integrations'
 import { data, type ActionFunctionArgs } from 'react-router'
-import { sanitizeCommentContent } from '#app/utils/content-sanitization.server.ts'
+import { z } from 'zod'
+import {
+	sanitizeCommentContent,
+	sanitizeTextContent,
+} from '#app/utils/content-sanitization.server.ts'
 import {
 	notifyCommentMentions,
 	notifyNoteOwner,
@@ -49,6 +53,31 @@ export interface IntentContext extends ActionFunctionArgs {
 	formData: FormData
 	userId: string
 }
+
+const MAX_COMMENT_IMAGES = 10
+const MAX_COMMENT_IMAGE_SIZE = 3 * 1024 * 1024
+const COMMENT_IMAGE_TYPES = new Set([
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'image/avif',
+])
+
+const CommentAttachmentCountsSchema = z
+	.object({
+		imageCount: z.coerce.number().int().min(0).max(MAX_COMMENT_IMAGES),
+		libraryAssetCount: z.coerce.number().int().min(0).max(MAX_COMMENT_IMAGES),
+	})
+	.refine(
+		({ imageCount, libraryAssetCount }) =>
+			imageCount + libraryAssetCount <= MAX_COMMENT_IMAGES,
+	)
+
+const CommentImageSchema = z
+	.instanceof(File)
+	.refine((file) => file.size > 0 && file.size <= MAX_COMMENT_IMAGE_SIZE)
+	.refine((file) => COMMENT_IMAGE_TYPES.has(file.type))
 
 export async function userHasOrgAccess(userId: string, organizationId: string) {
 	await requireUserWithOrganizationPermission(
@@ -674,14 +703,11 @@ export async function handleAddCommentIntent({
 		}
 	}
 
-	const imageCount = parseInt(formData.get('imageCount') as string) || 0
-	const libraryAssetCount =
-		parseInt(formData.get('libraryAssetCount') as string) || 0
-	if (
-		imageCount < 0 ||
-		libraryAssetCount < 0 ||
-		imageCount + libraryAssetCount > 10
-	) {
+	const attachmentCounts = CommentAttachmentCountsSchema.safeParse({
+		imageCount: formData.get('imageCount') ?? 0,
+		libraryAssetCount: formData.get('libraryAssetCount') ?? 0,
+	})
+	if (!attachmentCounts.success) {
 		return data(
 			{
 				result: submission.reply({
@@ -695,9 +721,94 @@ export async function handleAddCommentIntent({
 			{ status: 400 },
 		)
 	}
+	const { imageCount, libraryAssetCount } = attachmentCounts.data
+
+	const imageFiles: File[] = []
+	for (let i = 0; i < imageCount; i++) {
+		const image = CommentImageSchema.safeParse(formData.get(`image-${i}`))
+		if (!image.success) {
+			return data(
+				{
+					result: submission.reply({
+						fieldErrors: {
+							imageCount: ['One or more attached images are invalid.'],
+						},
+					}),
+				},
+				{ status: 400 },
+			)
+		}
+		imageFiles.push(image.data)
+	}
+
+	const libraryAssetIds: string[] = []
+	for (let i = 0; i < libraryAssetCount; i++) {
+		const id = formData.get(`libraryAssetId-${i}`)
+		if (typeof id !== 'string' || !id) {
+			return data(
+				{
+					result: submission.reply({
+						fieldErrors: {
+							libraryAssetCount: ['One or more library assets are invalid.'],
+						},
+					}),
+				},
+				{ status: 400 },
+			)
+		}
+		libraryAssetIds.push(id)
+	}
+
+	const uniqueLibraryAssetIds = [...new Set(libraryAssetIds)]
+	const libraryAssets = uniqueLibraryAssetIds.length
+		? await db
+				.select({
+					id: OrganizationMediaAsset.id,
+					objectKey: OrganizationMediaAsset.objectKey,
+					altText: OrganizationMediaAsset.altText,
+				})
+				.from(OrganizationMediaAsset)
+				.where(
+					and(
+						inArray(OrganizationMediaAsset.id, uniqueLibraryAssetIds),
+						eq(OrganizationMediaAsset.organizationId, note.organizationId),
+					),
+				)
+		: []
+
+	if (libraryAssets.length !== uniqueLibraryAssetIds.length) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						libraryAssetCount: ['One or more library assets are unavailable.'],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
+
+	const sanitizedContent = sanitizeCommentContent(content)
+	const hasTextContent = sanitizeTextContent(sanitizedContent).trim().length > 0
+	if (
+		!hasTextContent &&
+		imageFiles.length === 0 &&
+		libraryAssets.length === 0
+	) {
+		return data(
+			{
+				result: submission.reply({
+					fieldErrors: {
+						content: ['Add a comment or attach at least one image.'],
+					},
+				}),
+			},
+			{ status: 400 },
+		)
+	}
 
 	try {
-		const sanitizedContent = sanitizeCommentContent(content)
 		const [comment] = await db
 			.insert(NoteComment)
 			.values({
@@ -709,67 +820,34 @@ export async function handleAddCommentIntent({
 			.returning({ id: NoteComment.id })
 		if (!comment) throw new Error('Failed to create comment')
 
-		if (imageCount > 0) {
+		if (imageFiles.length > 0) {
 			const { uploadCommentImage } =
 				await import('#app/utils/storage.server.ts')
-			const imagePromises = []
-			for (let i = 0; i < imageCount; i++) {
-				const imageFile = formData.get(`image-${i}`) as File
-				if (imageFile && imageFile.size > 0) {
-					imagePromises.push(
-						uploadCommentImage(
-							userId,
-							comment.id,
-							imageFile,
-							note.organizationId,
-						).then((objectKey) => ({
-							commentId: comment.id,
-							objectKey,
-							altText: null,
-						})),
-					)
-				}
-			}
-
-			if (imagePromises.length > 0) {
-				const uploadedImages = await Promise.all(imagePromises)
-				await db.insert(NoteCommentImage).values(uploadedImages)
-			}
+			const uploadedImages = await Promise.all(
+				imageFiles.map((imageFile) =>
+					uploadCommentImage(
+						userId,
+						comment.id,
+						imageFile,
+						note.organizationId,
+					).then((objectKey) => ({
+						commentId: comment.id,
+						objectKey,
+						altText: null,
+					})),
+				),
+			)
+			await db.insert(NoteCommentImage).values(uploadedImages)
 		}
 
-		if (libraryAssetCount > 0) {
-			const libraryAssetIds: string[] = []
-			for (let i = 0; i < libraryAssetCount; i++) {
-				const id = formData.get(`libraryAssetId-${i}`)
-				if (typeof id === 'string' && id) {
-					libraryAssetIds.push(id)
-				}
-			}
-
-			if (libraryAssetIds.length > 0) {
-				const libraryAssets = await db
-					.select({
-						objectKey: OrganizationMediaAsset.objectKey,
-						altText: OrganizationMediaAsset.altText,
-					})
-					.from(OrganizationMediaAsset)
-					.where(
-						and(
-							inArray(OrganizationMediaAsset.id, libraryAssetIds),
-							eq(OrganizationMediaAsset.organizationId, note.organizationId),
-						),
-					)
-
-				if (libraryAssets.length > 0) {
-					await db.insert(NoteCommentImage).values(
-						libraryAssets.map((asset) => ({
-							commentId: comment.id,
-							objectKey: asset.objectKey,
-							altText: asset.altText,
-						})),
-					)
-				}
-			}
+		if (libraryAssets.length > 0) {
+			await db.insert(NoteCommentImage).values(
+				libraryAssets.map((asset) => ({
+					commentId: comment.id,
+					objectKey: asset.objectKey,
+					altText: asset.altText,
+				})),
+			)
 		}
 
 		await logNoteActivity({
@@ -779,7 +857,7 @@ export async function handleAddCommentIntent({
 			commentId: comment.id,
 			metadata: {
 				parentId,
-				hasImages: imageCount > 0 || libraryAssetCount > 0,
+				hasImages: imageFiles.length > 0 || libraryAssets.length > 0,
 			},
 		})
 

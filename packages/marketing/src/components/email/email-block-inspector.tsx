@@ -229,7 +229,7 @@ export function EmailBlockInspector({
 										className="mt-1.5 w-full"
 										onClick={() =>
 											onChooseImageFromLibrary((url, alt) => {
-												onUpdate({ url, ...(alt ? { alt } : {}) })
+												onUpdate({ url, alt })
 											})
 										}
 									>

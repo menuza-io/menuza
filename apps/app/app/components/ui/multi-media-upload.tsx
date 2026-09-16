@@ -171,6 +171,40 @@ export function MultiMediaUpload({
 		[form, meta, metaName],
 	)
 
+	const handlePreviewFileSelect = useCallback((key: string, file: File) => {
+		setLibraryAssets((previous) => {
+			const next = new Map(previous)
+			next.delete(key)
+			return next
+		})
+		setFileRefs((previous) => {
+			const next = new Map(previous)
+			next.set(key, file)
+			return next
+		})
+
+		if (file.type.startsWith('video/')) {
+			setPreviewUrls((previous) => {
+				const next = new Map(previous)
+				next.delete(key)
+				return next
+			})
+			return
+		}
+
+		const reader = new FileReader()
+		reader.onload = (event) => {
+			const result = event.target?.result
+			if (typeof result !== 'string') return
+			setPreviewUrls((previous) => {
+				const next = new Map(previous)
+				next.set(key, result)
+				return next
+			})
+		}
+		reader.readAsDataURL(file)
+	}, [])
+
 	return (
 		<div className={cn('mt-4 space-y-4', className)}>
 			<FieldLabel className="text-sm font-medium">
@@ -201,6 +235,7 @@ export function MultiMediaUpload({
 								existingVideo={existingVideo}
 								organizationId={organizationId}
 								mediaTransformBaseUrl={mediaTransformBaseUrl}
+								onFileSelect={(file) => handlePreviewFileSelect(key, file)}
 								onRemove={() => {
 									setPreviewUrls((prev) => {
 										const newMap = new Map(prev)
@@ -302,6 +337,7 @@ function MediaPreview({
 	existingVideo,
 	organizationId,
 	mediaTransformBaseUrl,
+	onFileSelect,
 	onRemove,
 	disabled,
 }: {
@@ -321,19 +357,22 @@ function MediaPreview({
 	}
 	organizationId: string
 	mediaTransformBaseUrl?: string | null
+	onFileSelect: (file: File) => void
 	onRemove: () => void
 	disabled?: boolean
 }) {
 	const { _ } = useLingui()
 	const fields = meta.getFieldset()
-	const isVideo = file?.type.startsWith('video/') || existingVideo
+	const mediaIdInputRef = useRef<HTMLInputElement>(null)
+	const isVideo = file ? file.type.startsWith('video/') : Boolean(existingVideo)
 
-	const existingImageUrl = existingImage?.objectKey
-		? getNoteImgSrc(existingImage.objectKey, organizationId)
-		: null
+	const existingImageUrl =
+		!file && existingImage?.objectKey
+			? getNoteImgSrc(existingImage.objectKey, organizationId)
+			: null
 
-	const hasExistingVideo = Boolean(existingVideo?.objectKey)
-	const mediaUrl = existingImageUrl ?? libraryAsset?.url ?? previewUrl
+	const hasExistingVideo = !file && Boolean(existingVideo?.objectKey)
+	const mediaUrl = previewUrl ?? libraryAsset?.url ?? existingImageUrl
 
 	return (
 		<fieldset
@@ -341,7 +380,10 @@ function MediaPreview({
 			className="group relative aspect-square shrink-0"
 		>
 			<input {...getInputProps(fields.id, { type: 'hidden' })} />
-			<input {...getInputProps(fields.mediaId, { type: 'hidden' })} />
+			<input
+				{...getInputProps(fields.mediaId, { type: 'hidden' })}
+				ref={mediaIdInputRef}
+			/>
 			<input {...getInputProps(fields.type, { type: 'hidden' })} />
 			<label
 				htmlFor={fields.file.id}
@@ -391,6 +433,12 @@ function MediaPreview({
 				accept={isVideo ? 'video/*' : 'image/*'}
 				{...getInputProps(fields.file, { type: 'file' })}
 				ref={createFileInputRef(file)}
+				onChange={(event) => {
+					const selectedFile = event.currentTarget.files?.[0]
+					if (!selectedFile) return
+					if (mediaIdInputRef.current) mediaIdInputRef.current.value = ''
+					onFileSelect(selectedFile)
+				}}
 			/>
 			<div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
 				<Button

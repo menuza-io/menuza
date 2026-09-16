@@ -2588,7 +2588,6 @@ function PageSettingsPanel({
 								<div className="flex flex-wrap gap-2 px-2 pb-2">
 									<MediaLibraryPicker
 										orgSlug={orgSlug}
-										triggerLabel="Choose from library"
 										onSelect={(asset) => {
 											setSeoImageUrl(asset.url)
 											setShowUrlInput(false)
@@ -2640,7 +2639,6 @@ function PageSettingsPanel({
 							<div className="flex flex-wrap items-center gap-3">
 								<MediaLibraryPicker
 									orgSlug={orgSlug}
-									triggerLabel="Choose from library"
 									onSelect={(asset) => {
 										setSeoImageUrl(asset.url)
 										setShowUrlInput(false)
@@ -5094,7 +5092,6 @@ function FieldAssetUpload({
 				{accept.includes('image/') && orgSlug ? (
 					<MediaLibraryPicker
 						orgSlug={orgSlug}
-						triggerLabel="Choose from library"
 						className="w-full justify-start"
 						onSelect={(asset) => onUrlReady(asset.url)}
 					/>

@@ -10,31 +10,44 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
+import { isValidRasterBytes } from '@repo/storage'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
 } from '#app/utils/storage.server.ts'
 import { type Route } from './+types/images'
 
-export function signMediaId(mediaId: string): string {
-	const secret =
-		process.env.INTERNAL_COMMAND_TOKEN ||
-		process.env.SESSION_SECRET ||
-		'media-secret'
-	return createHmac('sha256', secret).update(`media:${mediaId}`).digest('hex')
+const MEDIA_SIGNING_SECRET =
+	process.env.INTERNAL_COMMAND_TOKEN || process.env.SESSION_SECRET
+
+if (!MEDIA_SIGNING_SECRET) {
+	throw new Error(
+		'INTERNAL_COMMAND_TOKEN or SESSION_SECRET is required for media URL signing.',
+	)
+}
+
+export function signMediaId(mediaId: string, expiresAt: number): string {
+	return createHmac('sha256', MEDIA_SIGNING_SECRET)
+		.update(`media:${mediaId}:${expiresAt}`)
+		.digest('hex')
 }
 
 function verifyMediaSignature(
 	mediaId: string,
 	signature: string | null,
+	expiresAtValue: string | null,
 ): boolean {
-	if (!signature) return false
-	const secret =
-		process.env.INTERNAL_COMMAND_TOKEN ||
-		process.env.SESSION_SECRET ||
-		'media-secret'
-	const expected = createHmac('sha256', secret)
-		.update(`media:${mediaId}`)
+	if (!signature || !expiresAtValue || !/^\d+$/u.test(expiresAtValue))
+		return false
+	const expiresAt = Number(expiresAtValue)
+	if (
+		!Number.isSafeInteger(expiresAt) ||
+		expiresAt <= Math.floor(Date.now() / 1000)
+	) {
+		return false
+	}
+	const expected = createHmac('sha256', MEDIA_SIGNING_SECRET)
+		.update(`media:${mediaId}:${expiresAt}`)
 		.digest('hex')
 	try {
 		return (
@@ -55,52 +68,6 @@ const ALLOWED_RASTER_MIME_TYPES = new Set([
 ])
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024 // 10MB
-
-function isValidRasterBytes(buffer: ArrayBuffer): boolean {
-	const bytes = new Uint8Array(buffer.slice(0, 16))
-	if (bytes.length < 4) return false
-	// JPEG: FF D8 FF
-	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true
-	// PNG: 89 50 4E 47 0D 0A 1A 0A
-	if (
-		bytes[0] === 0x89 &&
-		bytes[1] === 0x50 &&
-		bytes[2] === 0x4e &&
-		bytes[3] === 0x47
-	)
-		return true
-	// GIF: GIF87a or GIF89a (47 49 46 38)
-	if (
-		bytes[0] === 0x47 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x38
-	)
-		return true
-	// WebP: RIFF....WEBP (52 49 46 46 .... 57 45 42 50)
-	if (
-		bytes.length >= 12 &&
-		bytes[0] === 0x52 &&
-		bytes[1] === 0x49 &&
-		bytes[2] === 0x46 &&
-		bytes[3] === 0x46 &&
-		bytes[8] === 0x57 &&
-		bytes[9] === 0x45 &&
-		bytes[10] === 0x42 &&
-		bytes[11] === 0x50
-	)
-		return true
-	// AVIF: ....ftypavif or ....ftypavis
-	if (
-		bytes.length >= 12 &&
-		bytes[4] === 0x66 &&
-		bytes[5] === 0x74 &&
-		bytes[6] === 0x79 &&
-		bytes[7] === 0x70
-	)
-		return true
-	return false
-}
 
 type ImageFit = 'cover' | 'contain'
 type ImageFormat = 'webp' | 'avif' | 'png' | 'jpeg' | 'jpg'
@@ -434,7 +401,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 			asset.source === 'website-asset'
 
 		const sig = searchParams.get('sig')
-		const hasValidSignature = sig ? verifyMediaSignature(mediaId, sig) : false
+		const hasValidSignature = verifyMediaSignature(
+			mediaId,
+			sig,
+			searchParams.get('expires'),
+		)
 
 		if (!isPublicMedia && !hasValidSignature) {
 			const userId = await getUserId(request)

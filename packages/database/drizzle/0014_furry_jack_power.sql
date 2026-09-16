@@ -28,7 +28,7 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), note.`organizationId`, upload.`objectKey`,
-	'organization', COALESCE(upload.`mimeType`, 'image/unknown'), upload.`fileSize`,
+	'organization', COALESCE(upload.`mimeType`, 'application/octet-stream'), upload.`fileSize`,
 	upload.`altText`, 'note', note.`createdById`, upload.`createdAt`, upload.`updatedAt`
 FROM `OrganizationNoteUpload` AS upload
 INNER JOIN `OrganizationNote` AS note ON note.`id` = upload.`noteId`
@@ -39,7 +39,7 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), note.`organizationId`, image.`objectKey`,
-	'organization', 'image/unknown', image.`altText`, 'comment', comment.`userId`,
+	'organization', 'application/octet-stream', image.`altText`, 'comment', comment.`userId`,
 	image.`createdAt`, image.`updatedAt`
 FROM `NoteCommentImage` AS image
 INNER JOIN `NoteComment` AS comment ON comment.`id` = image.`commentId`
@@ -50,7 +50,7 @@ INSERT OR IGNORE INTO `OrganizationMediaAsset` (
 )
 SELECT
 	lower(hex(randomblob(12))), image.`organizationId`, image.`objectKey`,
-	'platform', 'image/unknown', image.`altText`, 'organization-logo',
+	'platform', 'application/octet-stream', image.`altText`, 'organization-logo',
 	image.`createdAt`, image.`updatedAt`
 FROM `OrganizationImage` AS image;--> statement-breakpoint
 INSERT OR IGNORE INTO `OrganizationMediaAsset` (

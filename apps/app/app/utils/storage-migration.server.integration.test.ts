@@ -9,7 +9,10 @@ import {
 import { describe, expect, it } from 'vitest'
 
 import { createTestOrganization, createTestUser } from '#tests/test-utils.ts'
-import { countOrgMediaObjectKeys } from './storage-migration.server.ts'
+import {
+	collectOrgMediaObjects,
+	countOrgMediaObjectKeys,
+} from './storage-migration.server.ts'
 
 describe('countOrgMediaObjectKeys', () => {
 	it('counts distinct media keys without loading the object list', async () => {
@@ -59,7 +62,22 @@ describe('countOrgMediaObjectKeys', () => {
 			source: 'library',
 			createdById: user.id,
 		})
+		await db.insert(OrganizationMediaAsset).values({
+			organizationId: organization.id,
+			objectKey: 'media/photo-thumb.jpg',
+			mimeType: 'image/png',
+			fileName: 'reused-library-image.png',
+			fileSize: 256,
+			source: 'library',
+			createdById: user.id,
+		})
 
 		await expect(countOrgMediaObjectKeys(organization.id)).resolves.toBe(3)
+		await expect(
+			collectOrgMediaObjects(organization.id),
+		).resolves.toContainEqual({
+			objectKey: 'media/photo-thumb.jpg',
+			contentType: 'image/png',
+		})
 	})
 })

@@ -15,7 +15,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { ScrollArea } from '@repo/ui/scroll-area'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 export type MediaLibraryAsset = {
@@ -100,14 +100,18 @@ export function MediaLibraryPicker({
 		if (fileInputRef.current) fileInputRef.current.value = ''
 	}, [])
 
-	const wasOpenRef = useRef(open)
-	if (open && !wasOpenRef.current) {
+	const wasOpenRef = useRef(false)
+	useEffect(() => {
+		if (!open) {
+			wasOpenRef.current = false
+			return
+		}
+
+		if (wasOpenRef.current) return
 		wasOpenRef.current = true
 		reset()
 		void fetcher.load(`/${orgSlug}/media?index`)
-	} else if (!open && wasOpenRef.current) {
-		wasOpenRef.current = false
-	}
+	}, [fetcher, open, orgSlug, reset])
 
 	const assets = fetcher.data?.assets ?? []
 	const isLoading = open && fetcher.state === 'loading' && !fetcher.data?.assets

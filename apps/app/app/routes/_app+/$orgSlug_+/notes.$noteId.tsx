@@ -395,7 +395,7 @@ export const BatchUpdateNoteAccessSchema = z.object({
 export const AddCommentSchema = z.object({
 	intent: z.literal('add-comment'),
 	noteId: z.string(),
-	content: z.string().min(1, 'Comment content cannot be empty'),
+	content: z.string().optional().default(''),
 	parentId: z.string().optional(),
 })
 
