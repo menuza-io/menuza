@@ -22,6 +22,7 @@
 						"pages": [
 							"essentials/applications",
 							"essentials/authentication",
+							"essentials/oauth-login",
 							"essentials/sso",
 							"essentials/database",
 							"essentials/styling",
