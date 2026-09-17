@@ -13,3 +13,7 @@ export function getLaunchStatus() {
 export function getDiscordInviteUrl() {
 	return ENV.DISCORD_INVITE_URL
 }
+
+export function getWhatsAppGroupInviteUrl() {
+	return ENV.WHATSAPP_GROUP_INVITE_URL
+}

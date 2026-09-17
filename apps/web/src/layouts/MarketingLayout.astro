@@ -15,6 +15,7 @@ import {
 } from '~/lib/emdash'
 
 import { getDirection } from '@repo/i18n'
+import { marketingSharedCookieDomain } from '@repo/common/cookie-domain'
 import { getCookieConsentState } from '@repo/common/cookie-consent'
 import { ENV } from 'varlock/env'
 
@@ -27,6 +28,7 @@ const theme = getThemeFromCookie(cookieHeader, themeCookieName)
 const cookieConsent = await getCookieConsentState(
 	Astro.request,
 	ENV.PUBLIC_APP_URL,
+	marketingSharedCookieDomain(Astro.request, ENV.PUBLIC_ROOT_APP),
 )
 const cookiePolicyUrl = new URL(
 	'/legal/cookie-policy/',

@@ -175,11 +175,11 @@ msgstr ""
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} redirects"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1481
+#: app/routes/_app+/$orgSlug_+/media.tsx:1487
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, one {# place} other {# places}}"
 
-#: app/routes/_auth+/waitlist.tsx:331
+#: app/routes/_auth+/waitlist.tsx:356
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
@@ -234,7 +234,7 @@ msgstr ""
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:774
+#: app/routes/_auth+/login.tsx:758
 msgid "← Back to SSO login"
 msgstr ""
 
@@ -242,11 +242,11 @@ msgstr ""
 msgid "+{trend}%"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:344
+#: app/routes/_auth+/waitlist.tsx:369
 msgid "+2 points"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:284
+#: app/routes/_auth+/waitlist.tsx:296
 msgid "+5 points/referral"
 msgstr ""
 
@@ -269,7 +269,7 @@ msgstr ""
 msgid "<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:350
+#: app/routes/_auth+/waitlist.tsx:375
 msgid "✓ Discord points claimed"
 msgstr ""
 
@@ -341,7 +341,7 @@ msgstr "A picture, logo, or product shot."
 msgid "A short, low-friction form for prospective customers."
 msgstr "A short, low-friction form for prospective customers."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:128
+#: app/routes/_auth+/onboarding_.$provider.tsx:132
 #: app/routes/_auth+/onboarding.tsx:119
 msgid "A user already exists with this username"
 msgstr ""
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Account settings"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:297
+#: app/routes/_auth+/login.tsx:280
 msgid "Account Suspended"
 msgstr ""
 
@@ -536,7 +536,7 @@ msgstr ""
 msgid "Add Members"
 msgstr ""
 
-#: app/components/settings/cards/connections-card.tsx:45
+#: app/components/settings/cards/connections-card.tsx:49
 msgid "Add more connections"
 msgstr ""
 
@@ -726,7 +726,7 @@ msgstr ""
 msgid "Allowed"
 msgstr "Allowed"
 
-#: app/routes/_auth+/signup.tsx:248
+#: app/routes/_auth+/signup.tsx:255
 msgid "Already have an account?"
 msgstr ""
 
@@ -739,7 +739,7 @@ msgstr ""
 msgid "Alt text"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1433
+#: app/routes/_app+/$orgSlug_+/media.tsx:1439
 msgid "Alt Text"
 msgstr "Alt Text"
 
@@ -790,7 +790,7 @@ msgstr ""
 msgid "Appears on the public site"
 msgstr "Appears on the public site"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1950
+#: app/routes/_app+/$orgSlug_+/media.tsx:1956
 msgid "Applying…"
 msgstr "Applying…"
 
@@ -960,7 +960,7 @@ msgstr ""
 msgid "Avg/day"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1235
+#: app/routes/_app+/$orgSlug_+/media.tsx:1239
 msgid "B&W"
 msgstr "B&W"
 
@@ -981,7 +981,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1910
+#: app/routes/_app+/$orgSlug_+/media.tsx:1916
 msgid "Back to details"
 msgstr "Back to details"
 
@@ -1060,8 +1060,8 @@ msgstr ""
 msgid "Break down complex tasks"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1809
-#: app/routes/_app+/$orgSlug_+/media.tsx:1824
+#: app/routes/_app+/$orgSlug_+/media.tsx:1815
+#: app/routes/_app+/$orgSlug_+/media.tsx:1830
 msgid "Brightness"
 msgstr "Brightness"
 
@@ -1141,7 +1141,7 @@ msgstr ""
 msgid "By continuing, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>."
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:365
+#: app/routes/_auth+/onboarding_.$provider.tsx:392
 msgid "By creating an account, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>."
 msgstr ""
 
@@ -1184,7 +1184,7 @@ msgstr "Can edit teammate notes"
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
-#: app/routes/_app+/$orgSlug_+/media.tsx:1597
+#: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
@@ -1216,7 +1216,7 @@ msgstr "Cancel reply"
 msgid "Cancelled"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1458
+#: app/routes/_app+/$orgSlug_+/media.tsx:1464
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3965
 msgid "Caption"
 msgstr ""
@@ -1291,7 +1291,7 @@ msgstr ""
 msgid "Check your email"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1496
+#: app/routes/_app+/$orgSlug_+/media.tsx:1502
 msgid "Checking references…"
 msgstr "Checking references…"
 
@@ -1369,7 +1369,7 @@ msgstr ""
 msgid "Click \"Edit Config\" to open claude_desktop_config.json"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:378
+#: app/routes/_auth+/waitlist.tsx:403
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr ""
 
@@ -1446,7 +1446,7 @@ msgid "Columns"
 msgstr ""
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1216
+#: app/routes/_app+/$orgSlug_+/media.tsx:1220
 msgid "Comment"
 msgstr ""
 
@@ -1457,6 +1457,10 @@ msgstr "Comment actions"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:672
 msgid "Comments"
 msgstr ""
+
+#: app/routes/_auth+/waitlist.tsx:425
+msgid "Community"
+msgstr "Community"
 
 #: app/components/onboarding-checklist.tsx:169
 msgid "complete"
@@ -1483,12 +1487,12 @@ msgstr ""
 msgid "Complete two-factor authentication setup"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:235
+#: app/routes/_auth+/onboarding_.$provider.tsx:262
 #: app/routes/_auth+/onboarding.tsx:399
 msgid "Complete your profile"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:183
+#: app/routes/_auth+/signup.tsx:186
 msgid "Complete your signup to join the organization"
 msgstr ""
 
@@ -1583,7 +1587,7 @@ msgstr ""
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr ""
 
-#: app/components/settings/cards/connections-card.tsx:35
+#: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
 msgstr ""
 
@@ -1640,7 +1644,7 @@ msgstr ""
 msgid "Content editor"
 msgstr "Content editor"
 
-#: app/routes/_auth+/login.tsx:696
+#: app/routes/_auth+/login.tsx:680
 #: app/routes/organizations+/create.tsx:826
 msgid "Continue"
 msgstr ""
@@ -1657,16 +1661,16 @@ msgstr "Continue payout setup"
 msgid "Continue to Payment"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:608
+#: app/routes/_auth+/login.tsx:592
 msgid "Continue with"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:285
+#: app/routes/_auth+/login.tsx:268
 msgid "Continue with your password"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1831
-#: app/routes/_app+/$orgSlug_+/media.tsx:1846
+#: app/routes/_app+/$orgSlug_+/media.tsx:1837
+#: app/routes/_app+/$orgSlug_+/media.tsx:1852
 msgid "Contrast"
 msgstr "Contrast"
 
@@ -1674,7 +1678,7 @@ msgstr "Contrast"
 msgid "Control who can access this note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1238
+#: app/routes/_app+/$orgSlug_+/media.tsx:1242
 msgid "Cool"
 msgstr "Cool"
 
@@ -1684,14 +1688,14 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:311
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
-#: app/routes/_auth+/waitlist.tsx:318
+#: app/routes/_auth+/waitlist.tsx:330
 msgid "Copied!"
 msgstr ""
 
 #: app/components/organization-invitations.tsx:214
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
-#: app/routes/_auth+/waitlist.tsx:320
+#: app/routes/_auth+/waitlist.tsx:332
 msgid "Copy"
 msgstr ""
 
@@ -1713,7 +1717,7 @@ msgstr ""
 msgid "Copy link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1379
+#: app/routes/_app+/$orgSlug_+/media.tsx:1385
 msgid "Copy URL"
 msgstr "Copy URL"
 
@@ -1762,8 +1766,8 @@ msgstr ""
 msgid "Create a plan"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:385
-#: app/routes/_auth+/onboarding_.$provider.tsx:358
+#: app/routes/_auth+/login.tsx:368
+#: app/routes/_auth+/onboarding_.$provider.tsx:385
 #: app/routes/_auth+/onboarding.tsx:537
 msgid "Create account"
 msgstr ""
@@ -1772,7 +1776,7 @@ msgstr ""
 msgid "Create action items"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:178
+#: app/routes/_auth+/signup.tsx:181
 msgid "Create an account"
 msgstr ""
 
@@ -2143,7 +2147,7 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:932
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
-#: app/routes/_app+/$orgSlug_+/media.tsx:1585
+#: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
@@ -2270,8 +2274,8 @@ msgstr "Deleting…"
 msgid "Deny"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1436
-#: app/routes/_app+/$orgSlug_+/media.tsx:1449
+#: app/routes/_app+/$orgSlug_+/media.tsx:1442
+#: app/routes/_app+/$orgSlug_+/media.tsx:1455
 msgid "Describe this image for accessibility"
 msgstr "Describe this image for accessibility"
 
@@ -2327,7 +2331,7 @@ msgstr ""
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1326
+#: app/routes/_app+/$orgSlug_+/media.tsx:1332
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
@@ -2390,7 +2394,7 @@ msgstr ""
 msgid "Domain"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:376
+#: app/routes/_auth+/login.tsx:359
 msgid "Don't have an account?"
 msgstr ""
 
@@ -2558,8 +2562,8 @@ msgstr "Edit Custom Role"
 msgid "Edit design"
 msgstr "Edit design"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1307
-#: app/routes/_app+/$orgSlug_+/media.tsx:1624
+#: app/routes/_app+/$orgSlug_+/media.tsx:1312
+#: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
 msgstr "Edit image"
 
@@ -2591,7 +2595,7 @@ msgstr "Edit team notes"
 msgid "Edit website content"
 msgstr "Edit website content"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1793
+#: app/routes/_app+/$orgSlug_+/media.tsx:1799
 msgid "Editor preview"
 msgstr "Editor preview"
 
@@ -2602,8 +2606,8 @@ msgstr "Editor preview"
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/website/link-inspector.tsx:368
 #: app/components/website/link-inspector.tsx:468
-#: app/routes/_auth+/login.tsx:789
-#: app/routes/_auth+/signup.tsx:218
+#: app/routes/_auth+/login.tsx:773
+#: app/routes/_auth+/signup.tsx:225
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -2630,8 +2634,8 @@ msgstr "Email design"
 msgid "Email HTML Body"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:669
-#: app/routes/_auth+/login.tsx:794
+#: app/routes/_auth+/login.tsx:653
+#: app/routes/_auth+/login.tsx:778
 msgid "Email or Username"
 msgstr ""
 
@@ -2700,12 +2704,12 @@ msgstr ""
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:675
-#: app/routes/_auth+/login.tsx:801
+#: app/routes/_auth+/login.tsx:659
+#: app/routes/_auth+/login.tsx:785
 msgid "Enter your email or username"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:298
+#: app/routes/_auth+/onboarding_.$provider.tsx:325
 #: app/routes/_auth+/onboarding.tsx:443
 msgid "Enter your full name"
 msgstr ""
@@ -2718,11 +2722,11 @@ msgstr ""
 msgid "Enter your new password below."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:830
+#: app/routes/_auth+/login.tsx:814
 msgid "Enter your password"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:276
+#: app/routes/_auth+/onboarding_.$provider.tsx:303
 #: app/routes/_auth+/onboarding.tsx:427
 msgid "Enter your username"
 msgstr ""
@@ -2821,7 +2825,7 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:458
+#: app/routes/_auth+/login.tsx:441
 msgid "Failed to authenticate with passkey: {errorMessage}"
 msgstr ""
 
@@ -2849,11 +2853,11 @@ msgstr ""
 msgid "Failed to duplicate journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1147
+#: app/routes/_app+/$orgSlug_+/media.tsx:1151
 msgid "Failed to export edited image."
 msgstr "Failed to export edited image."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1163
+#: app/routes/_app+/$orgSlug_+/media.tsx:1167
 msgid "Failed to export image copy."
 msgstr "Failed to export image copy."
 
@@ -2972,12 +2976,12 @@ msgstr "Fields"
 msgid "File"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1396
+#: app/routes/_app+/$orgSlug_+/media.tsx:1402
 msgid "File name of the media asset"
 msgstr "File name of the media asset"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1394
-#: app/routes/_app+/$orgSlug_+/media.tsx:1407
+#: app/routes/_app+/$orgSlug_+/media.tsx:1400
+#: app/routes/_app+/$orgSlug_+/media.tsx:1413
 msgid "Filename"
 msgstr "Filename"
 
@@ -2997,11 +3001,11 @@ msgstr ""
 msgid "Fix validation errors before publishing"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1695
+#: app/routes/_app+/$orgSlug_+/media.tsx:1701
 msgid "Flip horizontally"
 msgstr "Flip horizontally"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1725
+#: app/routes/_app+/$orgSlug_+/media.tsx:1731
 msgid "Flip vertically"
 msgstr "Flip vertically"
 
@@ -3009,7 +3013,7 @@ msgstr "Flip vertically"
 msgid "Forgot Password"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:823
+#: app/routes/_auth+/login.tsx:807
 msgid "Forgot your password?"
 msgstr ""
 
@@ -3035,7 +3039,7 @@ msgstr "Form settings"
 #~ msgid "Form Submitted"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1349
+#: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
 msgstr "Format:"
 
@@ -3061,7 +3065,7 @@ msgstr ""
 msgid "Full"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:293
+#: app/routes/_auth+/onboarding_.$provider.tsx:320
 #: app/routes/_auth+/onboarding.tsx:438
 msgid "Full Name"
 msgstr ""
@@ -3088,7 +3092,7 @@ msgstr ""
 msgid "Generate with AI"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:420
+#: app/routes/_auth+/login.tsx:403
 msgid "Generating Authentication Options"
 msgstr ""
 
@@ -3176,8 +3180,8 @@ msgstr ""
 msgid "Gray color"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1875
-#: app/routes/_app+/$orgSlug_+/media.tsx:1890
+#: app/routes/_app+/$orgSlug_+/media.tsx:1881
+#: app/routes/_app+/$orgSlug_+/media.tsx:1896
 msgid "Grayscale"
 msgstr "Grayscale"
 
@@ -3208,7 +3212,7 @@ msgstr ""
 msgid "Help us tailor recommendations to your organization."
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:259
+#: app/routes/_auth+/waitlist.tsx:271
 msgid "Here's how to do it:"
 msgstr ""
 
@@ -3240,7 +3244,7 @@ msgstr ""
 msgid "Hi {{name}}, Your organization {{organizationName}} is ready."
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:238
+#: app/routes/_auth+/onboarding_.$provider.tsx:265
 msgid "Hi {email}, just a few more details to get started."
 msgstr ""
 
@@ -3317,7 +3321,7 @@ msgstr "How can I help?"
 msgid "How can I implement this?"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:321
+#: app/routes/_auth+/onboarding_.$provider.tsx:348
 #: app/routes/_auth+/onboarding.tsx:506
 msgid "I agree to the Terms of Service and Privacy Policy"
 msgstr ""
@@ -3448,7 +3452,7 @@ msgstr ""
 msgid "Invalid graph format"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:200
+#: app/routes/_auth+/login.tsx:193
 msgid "Invalid username or password"
 msgstr ""
 
@@ -3505,17 +3509,25 @@ msgstr ""
 msgid "Is Verified (True)"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:365
+#: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:176
+#: app/routes/_auth+/signup.tsx:179
 msgid "Join organization"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:343
+#: app/routes/_auth+/waitlist.tsx:368
 msgid "Join our Discord"
 msgstr ""
+
+#: app/routes/_auth+/waitlist.tsx:424
+msgid "Join our WhatsApp group"
+msgstr "Join our WhatsApp group"
+
+#: app/routes/_auth+/waitlist.tsx:441
+msgid "Join WhatsApp group"
+msgstr "Join WhatsApp group"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
 msgid "Journey"
@@ -3597,8 +3609,8 @@ msgstr "Last Encountered"
 msgid "Last exported: {lastExportDateFormatted}"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:499
-#: app/routes/_auth+/login.tsx:510
+#: app/routes/_auth+/login.tsx:483
+#: app/routes/_auth+/login.tsx:494
 msgid "Last used"
 msgstr ""
 
@@ -3732,7 +3744,7 @@ msgstr ""
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1413
+#: app/routes/_app+/$orgSlug_+/media.tsx:1419
 msgid "Location"
 msgstr "Location"
 
@@ -3741,11 +3753,11 @@ msgstr "Location"
 msgid "Log out"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:314
+#: app/routes/_auth+/login.tsx:297
 msgid "Login Error"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:414
+#: app/routes/_auth+/login.tsx:397
 msgid "Login with a passkey"
 msgstr ""
 
@@ -3783,11 +3795,11 @@ msgstr ""
 msgid "Loose"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:224
+#: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1230
+#: app/routes/_app+/$orgSlug_+/media.tsx:1234
 msgid "Main library"
 msgstr "Main library"
 
@@ -3845,7 +3857,7 @@ msgstr ""
 msgid "Manage your active sessions. You're signed in on {sessionCount} {deviceText}"
 msgstr ""
 
-#: app/components/settings/cards/connections-card.tsx:38
+#: app/components/settings/cards/connections-card.tsx:42
 msgid "Manage your connected accounts here."
 msgstr ""
 
@@ -3930,7 +3942,7 @@ msgstr ""
 msgid "Media"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1250
+#: app/routes/_app+/$orgSlug_+/media.tsx:1254
 msgid "Media details"
 msgstr "Media details"
 
@@ -3953,6 +3965,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4942
 msgid "Medium"
 msgstr ""
+
+#: app/routes/_auth+/waitlist.tsx:444
+msgid "Meet other members and share updates in the group. An admin can add community points after you join."
+msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
 #: app/components/team-switcher.tsx:132
@@ -4390,7 +4406,7 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1234
+#: app/routes/_app+/$orgSlug_+/media.tsx:1238
 msgid "Normal"
 msgstr "Normal"
 
@@ -4406,7 +4422,7 @@ msgstr ""
 msgid "Not now"
 msgstr "Not now"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1501
+#: app/routes/_app+/$orgSlug_+/media.tsx:1507
 msgid "Not used in any notes, comments, or pages"
 msgstr "Not used in any notes, comments, or pages"
 
@@ -4418,7 +4434,7 @@ msgstr ""
 msgid "note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1218
+#: app/routes/_app+/$orgSlug_+/media.tsx:1222
 msgid "Note"
 msgstr "Note"
 
@@ -4434,7 +4450,7 @@ msgstr ""
 msgid "Note title..."
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:386
+#: app/routes/_auth+/waitlist.tsx:411
 msgid "Note: Discord verification is currently manual. Contact support after joining to claim your points."
 msgstr ""
 
@@ -4488,7 +4504,7 @@ msgstr ""
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:271
+#: app/routes/_auth+/waitlist.tsx:283
 msgid "of {totalUsers} people"
 msgstr ""
 
@@ -4610,7 +4626,7 @@ msgstr ""
 msgid "Open rate"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1558
+#: app/routes/_app+/$orgSlug_+/media.tsx:1564
 msgid "Open reference"
 msgstr "Open reference"
 
@@ -4643,15 +4659,15 @@ msgstr ""
 msgid "Operator Invited"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1464
+#: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Optional caption for display"
 msgstr "Optional caption for display"
 
-#: app/routes/_auth+/signup.tsx:206
+#: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:332
+#: app/routes/_auth+/login.tsx:315
 msgid "Or continue with email or username"
 msgstr ""
 
@@ -4667,7 +4683,7 @@ msgstr ""
 msgid "Organization details and configuration."
 msgstr "Organization details and configuration."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1220
+#: app/routes/_app+/$orgSlug_+/media.tsx:1224
 msgid "Organization logo"
 msgstr "Organization logo"
 
@@ -4775,7 +4791,7 @@ msgid "Passkeys are a secure, passwordless way to sign in using your device's bi
 msgstr ""
 
 #: app/components/settings/password-form.tsx:112
-#: app/routes/_auth+/login.tsx:817
+#: app/routes/_auth+/login.tsx:801
 #: app/routes/_auth+/onboarding.tsx:456
 msgid "Password"
 msgstr ""
@@ -4999,8 +5015,8 @@ msgstr ""
 msgid "Please enter your 2FA code to verify your identity."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:116
-#: app/routes/_auth+/login.tsx:642
+#: app/routes/_auth+/login.tsx:109
+#: app/routes/_auth+/login.tsx:626
 msgid "Please enter your email or username"
 msgstr ""
 
@@ -5036,7 +5052,7 @@ msgstr ""
 msgid "Prerender"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1750
+#: app/routes/_app+/$orgSlug_+/media.tsx:1756
 msgid "Presets"
 msgstr "Presets"
 
@@ -5097,7 +5113,7 @@ msgstr ""
 msgid "Processing"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1934
+#: app/routes/_app+/$orgSlug_+/media.tsx:1940
 msgid "Processing…"
 msgstr "Processing…"
 
@@ -5107,7 +5123,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:129
 #: app/components/user-dropdown.tsx:54
-#: app/routes/_auth+/onboarding_.$provider.tsx:250
+#: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
 msgstr ""
 
@@ -5245,7 +5261,7 @@ msgstr ""
 msgid "Recipients"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:612
+#: app/routes/_auth+/login.tsx:596
 msgid "Recommended for"
 msgstr ""
 
@@ -5326,8 +5342,8 @@ msgstr ""
 msgid "Reload page"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:852
-#: app/routes/_auth+/onboarding_.$provider.tsx:341
+#: app/routes/_auth+/login.tsx:836
+#: app/routes/_auth+/onboarding_.$provider.tsx:368
 #: app/routes/_auth+/onboarding.tsx:523
 msgid "Remember me"
 msgstr ""
@@ -5423,7 +5439,7 @@ msgstr ""
 msgid "Replace Asset..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1297
+#: app/routes/_app+/$orgSlug_+/media.tsx:1301
 msgid "Replace image"
 msgstr "Replace image"
 
@@ -5453,7 +5469,7 @@ msgstr ""
 msgid "Request permanent deletion of your account and all associated data. A 7-day grace period allows you to cancel if needed."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:426
+#: app/routes/_auth+/login.tsx:409
 msgid "Requesting your authorization"
 msgstr ""
 
@@ -5471,11 +5487,11 @@ msgid "Required"
 msgstr "Required"
 
 #: app/components/organization-invitations.tsx:237
-#: app/routes/_app+/$orgSlug_+/media.tsx:1783
+#: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1922
+#: app/routes/_app+/$orgSlug_+/media.tsx:1928
 msgid "Reset adjustments"
 msgstr "Reset adjustments"
 
@@ -5570,11 +5586,11 @@ msgstr "Role name"
 msgid "Roles & access"
 msgstr "Roles & access"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1648
+#: app/routes/_app+/$orgSlug_+/media.tsx:1654
 msgid "Rotate left"
 msgstr "Rotate left"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1669
+#: app/routes/_app+/$orgSlug_+/media.tsx:1675
 msgid "Rotate right"
 msgstr "Rotate right"
 
@@ -5672,8 +5688,8 @@ msgstr ""
 msgid "Sans"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1853
-#: app/routes/_app+/$orgSlug_+/media.tsx:1868
+#: app/routes/_app+/$orgSlug_+/media.tsx:1859
+#: app/routes/_app+/$orgSlug_+/media.tsx:1874
 msgid "Saturation"
 msgstr "Saturation"
 
@@ -5689,7 +5705,7 @@ msgstr ""
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
 #: app/components/ui/photo-crop-form.tsx:236
-#: app/routes/_app+/$orgSlug_+/media.tsx:1613
+#: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr ""
@@ -5699,7 +5715,7 @@ msgstr ""
 msgid "Save 20%"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1936
+#: app/routes/_app+/$orgSlug_+/media.tsx:1942
 msgid "Save as copy"
 msgstr "Save as copy"
 
@@ -5712,7 +5728,7 @@ msgstr ""
 #: app/components/settings/cards/organization/general-settings-card.tsx:112
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
 #: app/components/settings/cards/profile-card.tsx:192
-#: app/routes/_app+/$orgSlug_+/media.tsx:1952
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
 msgid "Save changes"
@@ -5756,7 +5772,7 @@ msgstr "Saved"
 #~ msgid "Saving {headerValue}"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1159
+#: app/routes/_app+/$orgSlug_+/media.tsx:1163
 msgid "Saving as new copy…"
 msgstr "Saving as new copy…"
 
@@ -5764,7 +5780,7 @@ msgstr "Saving as new copy…"
 msgid "Saving automation draft..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1143
+#: app/routes/_app+/$orgSlug_+/media.tsx:1147
 msgid "Saving edited image…"
 msgstr "Saving edited image…"
 
@@ -5778,7 +5794,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/roles/tenant-role-access-manager.tsx:539
-#: app/routes/_app+/$orgSlug_+/media.tsx:1613
+#: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "Saving…"
@@ -6142,6 +6158,10 @@ msgstr ""
 msgid "Share Note"
 msgstr ""
 
+#: app/routes/_auth+/waitlist.tsx:352
+msgid "Share on WhatsApp"
+msgstr "Share on WhatsApp"
+
 #: app/components/organization-invitations.tsx:167
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr ""
@@ -6150,7 +6170,7 @@ msgstr ""
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "Share this link to let people join your organization. They'll see you invited them."
 
-#: app/routes/_auth+/waitlist.tsx:283
+#: app/routes/_auth+/waitlist.tsx:295
 msgid "Share with others"
 msgstr ""
 
@@ -6206,15 +6226,15 @@ msgstr ""
 msgid "Shown to recipients who have no value for this field."
 msgstr "Shown to recipients who have no value for this field."
 
-#: app/routes/_auth+/signup.tsx:257
+#: app/routes/_auth+/signup.tsx:264
 msgid "Sign in"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:865
+#: app/routes/_auth+/login.tsx:849
 msgid "Sign In"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:287
+#: app/routes/_auth+/login.tsx:270
 msgid "Sign in to your account"
 msgstr ""
 
@@ -6226,7 +6246,7 @@ msgstr ""
 msgid "Sign out of all other devices"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:241
+#: app/routes/_auth+/signup.tsx:248
 msgid "Sign up"
 msgstr ""
 
@@ -6234,7 +6254,7 @@ msgstr ""
 msgid "Sign Up"
 msgstr ""
 
-#: app/routes/_auth+/signup.tsx:185
+#: app/routes/_auth+/signup.tsx:188
 msgid "Sign up with your social account or email"
 msgstr ""
 
@@ -6246,8 +6266,8 @@ msgstr ""
 msgid "Signed in as"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:582
-#: app/routes/_auth+/login.tsx:756
+#: app/routes/_auth+/login.tsx:566
+#: app/routes/_auth+/login.tsx:740
 msgid "Signing in as"
 msgstr ""
 
@@ -6265,7 +6285,7 @@ msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn m
 msgstr ""
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1222
+#: app/routes/_app+/$orgSlug_+/media.tsx:1226
 msgid "Site icon"
 msgstr ""
 
@@ -6278,7 +6298,7 @@ msgstr ""
 msgid "Size"
 msgstr "Size"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1317
+#: app/routes/_app+/$orgSlug_+/media.tsx:1323
 msgid "Size:"
 msgstr "Size:"
 
@@ -6685,14 +6705,18 @@ msgstr ""
 msgid "Text position"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:336
+#: app/routes/_auth+/waitlist.tsx:361
 msgid "Thanks for referring."
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:172
+#: app/routes/_auth+/onboarding_.$provider.tsx:199
 #: app/routes/_auth+/onboarding.tsx:345
 msgid "Thanks for signing up!"
 msgstr ""
+
+#: app/routes/_auth+/onboarding_.$provider.tsx:188
+msgid "Thanks for signing up! {inviterName} has invited you to join {organizationName}. Review the invitation below."
+msgstr "Thanks for signing up! {inviterName} has invited you to join {organizationName}. Review the invitation below."
 
 #: app/routes/_auth+/onboarding.tsx:183
 msgid "Thanks for signing up! {inviterName} has invited you to join {orgName}. Review the invitation below."
@@ -6756,7 +6780,7 @@ msgstr ""
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:318
+#: app/routes/_auth+/login.tsx:301
 msgid "There was an issue with your login attempt. Please try again."
 msgstr ""
 
@@ -6898,7 +6922,7 @@ msgstr ""
 msgid "Transfers search rank"
 msgstr "Transfers search rank"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1639
+#: app/routes/_app+/$orgSlug_+/media.tsx:1645
 msgid "Transform"
 msgstr "Transform"
 
@@ -7057,8 +7081,8 @@ msgid "Unstar"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:882
-#: app/routes/_app+/$orgSlug_+/media.tsx:1253
-#: app/routes/_app+/$orgSlug_+/media.tsx:1627
+#: app/routes/_app+/$orgSlug_+/media.tsx:1257
+#: app/routes/_app+/$orgSlug_+/media.tsx:1633
 msgid "Untitled image"
 msgstr "Untitled image"
 
@@ -7170,7 +7194,7 @@ msgstr ""
 msgid "Uploaded"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1340
+#: app/routes/_app+/$orgSlug_+/media.tsx:1346
 msgid "Uploaded:"
 msgstr "Uploaded:"
 
@@ -7185,7 +7209,7 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1377
+#: app/routes/_app+/$orgSlug_+/media.tsx:1383
 msgid "URL copied to clipboard"
 msgstr "URL copied to clipboard"
 
@@ -7193,7 +7217,7 @@ msgstr "URL copied to clipboard"
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1362
+#: app/routes/_app+/$orgSlug_+/media.tsx:1368
 msgid "URL:"
 msgstr "URL:"
 
@@ -7223,7 +7247,7 @@ msgstr ""
 msgid "Use authenticator app instead"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:625
+#: app/routes/_auth+/login.tsx:609
 msgid "Use password instead"
 msgstr ""
 
@@ -7235,7 +7259,7 @@ msgstr "Use selected"
 msgid "Use your own S3-compatible storage instead of the default storage"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1474
+#: app/routes/_app+/$orgSlug_+/media.tsx:1480
 msgid "Used in"
 msgstr "Used in"
 
@@ -7248,8 +7272,8 @@ msgid "Used when the value is empty"
 msgstr "Used when the value is empty"
 
 #: app/components/settings/cards/profile-card.tsx:114
-#: app/routes/_auth+/login.tsx:791
-#: app/routes/_auth+/onboarding_.$provider.tsx:270
+#: app/routes/_auth+/login.tsx:775
+#: app/routes/_auth+/onboarding_.$provider.tsx:297
 #: app/routes/_auth+/onboarding.tsx:422
 msgid "Username"
 msgstr ""
@@ -7258,8 +7282,8 @@ msgstr ""
 msgid "Username or Email"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:109
-#: app/routes/_auth+/login.tsx:718
+#: app/routes/_auth+/login.tsx:102
+#: app/routes/_auth+/login.tsx:702
 msgid "Username or email is required"
 msgstr ""
 
@@ -7292,11 +7316,11 @@ msgstr ""
 msgid "Verify"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:375
+#: app/routes/_auth+/waitlist.tsx:400
 msgid "Verify Discord membership"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:428
+#: app/routes/_auth+/login.tsx:411
 msgid "Verifying your passkey"
 msgstr ""
 
@@ -7305,7 +7329,7 @@ msgstr ""
 msgid "Video"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1224
+#: app/routes/_app+/$orgSlug_+/media.tsx:1228
 msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
@@ -7387,7 +7411,7 @@ msgstr "Viewer"
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1236
+#: app/routes/_app+/$orgSlug_+/media.tsx:1240
 msgid "Vivid"
 msgstr "Vivid"
 
@@ -7401,11 +7425,11 @@ msgstr ""
 msgid "Wait for a specified duration before next step"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:256
+#: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1237
+#: app/routes/_app+/$orgSlug_+/media.tsx:1241
 msgid "Warm"
 msgstr "Warm"
 
@@ -7418,7 +7442,7 @@ msgstr ""
 msgid "Warnings"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:586
+#: app/routes/_auth+/login.tsx:570
 msgid "We found your organization:"
 msgstr ""
 
@@ -7430,11 +7454,11 @@ msgstr ""
 msgid "We'd love to hear what went well or how we can improve the product experience."
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:246
+#: app/routes/_auth+/waitlist.tsx:258
 msgid "We'll notify you by email as soon as the waitlist opens."
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:400
+#: app/routes/_auth+/waitlist.tsx:457
 msgid "We'll send you an email at <0>{userEmail}</0> when we're ready to welcome you."
 msgstr ""
 
@@ -7443,7 +7467,7 @@ msgid "We've sent you a code to verify your email address."
 msgstr ""
 
 #: app/components/app-sidebar.tsx:330
-#: app/routes/_app+/$orgSlug_+/media.tsx:1226
+#: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
 msgstr ""
@@ -7460,7 +7484,7 @@ msgstr "Website & Publishing"
 msgid "Website editor, announcements, and public pages."
 msgstr "Website editor, announcements, and public pages."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1228
+#: app/routes/_app+/$orgSlug_+/media.tsx:1232
 msgid "Website SEO"
 msgstr "Website SEO"
 
@@ -7472,7 +7496,7 @@ msgstr ""
 msgid "Weeks"
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:172
+#: app/routes/_auth+/onboarding_.$provider.tsx:199
 #: app/routes/_auth+/onboarding.tsx:334
 #: app/routes/_auth+/onboarding.tsx:345
 msgid "Welcome"
@@ -7486,7 +7510,7 @@ msgstr ""
 msgid "Welcome aboard!"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:277
+#: app/routes/_auth+/login.tsx:260
 msgid "Welcome back"
 msgstr ""
 
@@ -7494,6 +7518,7 @@ msgstr ""
 msgid "Welcome to Epic Startup, {{organizationName}}"
 msgstr ""
 
+#: app/routes/_auth+/onboarding_.$provider.tsx:187
 #: app/routes/_auth+/onboarding.tsx:182
 #: app/routes/_auth+/onboarding.tsx:211
 #: app/routes/_auth+/onboarding.tsx:295
@@ -7631,7 +7656,7 @@ msgstr ""
 msgid "You can cancel this request before the scheduled date to keep your account. After deletion, all your data will be permanently removed."
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:256
+#: app/routes/_auth+/onboarding_.$provider.tsx:283
 msgid "You can change your photo later"
 msgstr ""
 
@@ -7663,8 +7688,8 @@ msgstr ""
 msgid "You haven't joined any organizations yet."
 msgstr ""
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:103
-#: app/routes/_auth+/onboarding_.$provider.tsx:194
+#: app/routes/_auth+/onboarding_.$provider.tsx:106
+#: app/routes/_auth+/onboarding_.$provider.tsx:221
 #: app/routes/_auth+/onboarding.tsx:97
 #: app/routes/_auth+/onboarding.tsx:363
 msgid "You must agree to the terms of service and privacy policy"
@@ -7674,11 +7699,11 @@ msgstr ""
 msgid "You receive"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:454
+#: app/routes/_auth+/login.tsx:437
 msgid "You're logged in! Navigating..."
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:243
+#: app/routes/_auth+/waitlist.tsx:255
 msgid "You're on the Waitlist!"
 msgstr ""
 
@@ -7686,7 +7711,7 @@ msgstr ""
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr ""
 
-#: app/routes/_auth+/login.tsx:301
+#: app/routes/_auth+/login.tsx:284
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr ""
 
@@ -7746,15 +7771,15 @@ msgstr ""
 msgid "Your page will appear here"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:263
+#: app/routes/_auth+/waitlist.tsx:275
 msgid "Your points"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:269
+#: app/routes/_auth+/waitlist.tsx:281
 msgid "Your rank"
 msgstr ""
 
-#: app/routes/_auth+/waitlist.tsx:295
+#: app/routes/_auth+/waitlist.tsx:307
 msgid "Your referral link"
 msgstr ""
 

@@ -90,8 +90,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				request.headers.get('cookie'),
 			)
 			verifySession.set(onboardingInviteTokenSessionKey, token)
+			const signupUrl = new URL('/signup', request.url)
+			signupUrl.searchParams.set('redirectTo', new URL(request.url).pathname)
 
-			return redirect('/signup', {
+			return redirect(`${signupUrl.pathname}?${signupUrl.searchParams}`, {
 				headers: {
 					'set-cookie': await verifySessionStorage.commitSession(verifySession),
 				},

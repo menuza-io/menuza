@@ -173,11 +173,11 @@ msgstr "{recipientCount} مستلم"
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} عمليات إعادة توجيه"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1481
+#: app/routes/_app+/$orgSlug_+/media.tsx:1487
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}"
 
-#: app/routes/_auth+/waitlist.tsx:331
+#: app/routes/_auth+/waitlist.tsx:356
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام رابطك!} other {# أشخاص انضموا باستخدام رابطك!}}"
 
@@ -232,7 +232,7 @@ msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
-#: app/routes/_auth+/login.tsx:774
+#: app/routes/_auth+/login.tsx:758
 msgid "← Back to SSO login"
 msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 
@@ -240,11 +240,11 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{trend}%"
 msgstr "+{trend}٪"
 
-#: app/routes/_auth+/waitlist.tsx:344
+#: app/routes/_auth+/waitlist.tsx:369
 msgid "+2 points"
 msgstr "+٢ نقطة"
 
-#: app/routes/_auth+/waitlist.tsx:284
+#: app/routes/_auth+/waitlist.tsx:296
 msgid "+5 points/referral"
 msgstr "+٥ نقاط/إحالة"
 
@@ -267,7 +267,7 @@ msgstr "<p>مرحباً {{name}}،</p><p>مرحباً بك في خدمتنا!</p
 msgid "<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>"
 msgstr "<p>مرحباً {{name}}،</p><p>منظمتك {{organizationName}} جاهزة.</p>"
 
-#: app/routes/_auth+/waitlist.tsx:350
+#: app/routes/_auth+/waitlist.tsx:375
 msgid "✓ Discord points claimed"
 msgstr "✓ تم المطالبة بنقاط Discord"
 
@@ -339,7 +339,7 @@ msgstr "صورة أو شعار أو لقطة منتج."
 msgid "A short, low-friction form for prospective customers."
 msgstr "نموذج قصير وسهل لجمع بيانات العملاء المحتملين."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:128
+#: app/routes/_auth+/onboarding_.$provider.tsx:132
 #: app/routes/_auth+/onboarding.tsx:119
 msgid "A user already exists with this username"
 msgstr "يوجد مستخدم بالفعل بهذا اسم المستخدم"
@@ -377,7 +377,7 @@ msgstr "تم نسخ معرف الحساب إلى الحافظة"
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
-#: app/routes/_auth+/login.tsx:297
+#: app/routes/_auth+/login.tsx:280
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
@@ -534,7 +534,7 @@ msgstr "إضافة أعضاء"
 msgid "Add Members"
 msgstr "إضافة أعضاء"
 
-#: app/components/settings/cards/connections-card.tsx:45
+#: app/components/settings/cards/connections-card.tsx:49
 msgid "Add more connections"
 msgstr "إضافة المزيد من الاتصالات"
 
@@ -724,7 +724,7 @@ msgstr "اكتملت جميع الخطوات"
 msgid "Allowed"
 msgstr "مسموح"
 
-#: app/routes/_auth+/signup.tsx:248
+#: app/routes/_auth+/signup.tsx:255
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
@@ -737,7 +737,7 @@ msgstr "تمت قراءتها بالفعل"
 msgid "Alt text"
 msgstr "النص البديل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1433
+#: app/routes/_app+/$orgSlug_+/media.tsx:1439
 msgid "Alt Text"
 msgstr "النص البديل"
 
@@ -788,7 +788,7 @@ msgstr "المظهر"
 msgid "Appears on the public site"
 msgstr "يظهر على الموقع العام"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1950
+#: app/routes/_app+/$orgSlug_+/media.tsx:1956
 msgid "Applying…"
 msgstr "جارٍ التطبيق…"
 
@@ -958,7 +958,7 @@ msgstr "الأدوات المتاحة"
 msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1235
+#: app/routes/_app+/$orgSlug_+/media.tsx:1239
 msgid "B&W"
 msgstr "أبيض وأسود"
 
@@ -979,7 +979,7 @@ msgstr "العودة إلى الكتل"
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1910
+#: app/routes/_app+/$orgSlug_+/media.tsx:1916
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
@@ -1058,8 +1058,8 @@ msgstr "الهوية البصرية"
 msgid "Break down complex tasks"
 msgstr "تقسيم المهام المعقدة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1809
-#: app/routes/_app+/$orgSlug_+/media.tsx:1824
+#: app/routes/_app+/$orgSlug_+/media.tsx:1815
+#: app/routes/_app+/$orgSlug_+/media.tsx:1830
 msgid "Brightness"
 msgstr "السطوع"
 
@@ -1139,7 +1139,7 @@ msgstr "بواسطة {createdByName}"
 msgid "By continuing, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>."
 msgstr "بالمتابعة، فإنك توافق على <0>شروط الخدمة</0> و<1>سياسة الخصوصية</1>."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:365
+#: app/routes/_auth+/onboarding_.$provider.tsx:392
 msgid "By creating an account, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>."
 msgstr "بإنشاء حساب، فإنك توافق على <0>شروط الخدمة</0> و<1>سياسة الخصوصية</1>."
 
@@ -1182,7 +1182,7 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
-#: app/routes/_app+/$orgSlug_+/media.tsx:1597
+#: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
@@ -1214,7 +1214,7 @@ msgstr "إلغاء الرد"
 msgid "Cancelled"
 msgstr "ملغى"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1458
+#: app/routes/_app+/$orgSlug_+/media.tsx:1464
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3965
 msgid "Caption"
 msgstr "التسمية التوضيحية"
@@ -1289,7 +1289,7 @@ msgstr "تحقق من تطبيق المصادقة الثنائية"
 msgid "Check your email"
 msgstr "تحقق من بريدك الإلكتروني"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1496
+#: app/routes/_app+/$orgSlug_+/media.tsx:1502
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
@@ -1367,7 +1367,7 @@ msgstr "انقر على \"إضافة خادم\" والصق هذا التكوين
 msgid "Click \"Edit Config\" to open claude_desktop_config.json"
 msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_config.json"
 
-#: app/routes/_auth+/waitlist.tsx:378
+#: app/routes/_auth+/waitlist.tsx:403
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضمام للمطالبة بنقاطك تلقائياً."
 
@@ -1444,7 +1444,7 @@ msgid "Columns"
 msgstr "الأعمدة"
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1216
+#: app/routes/_app+/$orgSlug_+/media.tsx:1220
 msgid "Comment"
 msgstr "تعليق"
 
@@ -1455,6 +1455,10 @@ msgstr "إجراءات التعليق"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:672
 msgid "Comments"
 msgstr "التعليقات"
+
+#: app/routes/_auth+/waitlist.tsx:425
+msgid "Community"
+msgstr "المجتمع"
 
 #: app/components/onboarding-checklist.tsx:169
 msgid "complete"
@@ -1481,12 +1485,12 @@ msgstr "أكمل هذه الخطوات للاستفادة القصوى من مس
 msgid "Complete two-factor authentication setup"
 msgstr "إكمال إعداد المصادقة الثنائية"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:235
+#: app/routes/_auth+/onboarding_.$provider.tsx:262
 #: app/routes/_auth+/onboarding.tsx:399
 msgid "Complete your profile"
 msgstr "أكمل ملفك الشخصي"
 
-#: app/routes/_auth+/signup.tsx:183
+#: app/routes/_auth+/signup.tsx:186
 msgid "Complete your signup to join the organization"
 msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 
@@ -1581,7 +1585,7 @@ msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {orga
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك للوصول إلى بيانات منظمتك بشكل آمن. اتبع التعليمات لعميلك المفضل أدناه."
 
-#: app/components/settings/cards/connections-card.tsx:35
+#: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
 msgstr "الحسابات المتصلة"
 
@@ -1638,7 +1642,7 @@ msgstr "المحتوى"
 msgid "Content editor"
 msgstr "محرر المحتوى"
 
-#: app/routes/_auth+/login.tsx:696
+#: app/routes/_auth+/login.tsx:680
 #: app/routes/organizations+/create.tsx:826
 msgid "Continue"
 msgstr "متابعة"
@@ -1655,16 +1659,16 @@ msgstr "متابعة إعداد المدفوعات"
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
-#: app/routes/_auth+/login.tsx:608
+#: app/routes/_auth+/login.tsx:592
 msgid "Continue with"
 msgstr "المتابعة باستخدام"
 
-#: app/routes/_auth+/login.tsx:285
+#: app/routes/_auth+/login.tsx:268
 msgid "Continue with your password"
 msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1831
-#: app/routes/_app+/$orgSlug_+/media.tsx:1846
+#: app/routes/_app+/$orgSlug_+/media.tsx:1837
+#: app/routes/_app+/$orgSlug_+/media.tsx:1852
 msgid "Contrast"
 msgstr "التباين"
 
@@ -1672,7 +1676,7 @@ msgstr "التباين"
 msgid "Control who can access this note"
 msgstr "التحكم في من يمكنه الوصول إلى هذه الملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1238
+#: app/routes/_app+/$orgSlug_+/media.tsx:1242
 msgid "Cool"
 msgstr "بارد"
 
@@ -1682,14 +1686,14 @@ msgstr "تم النسخ"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:311
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
-#: app/routes/_auth+/waitlist.tsx:318
+#: app/routes/_auth+/waitlist.tsx:330
 msgid "Copied!"
 msgstr "تم النسخ!"
 
 #: app/components/organization-invitations.tsx:214
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
-#: app/routes/_auth+/waitlist.tsx:320
+#: app/routes/_auth+/waitlist.tsx:332
 msgid "Copy"
 msgstr "نسخ"
 
@@ -1711,7 +1715,7 @@ msgstr "نسخ الكود"
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1379
+#: app/routes/_app+/$orgSlug_+/media.tsx:1385
 msgid "Copy URL"
 msgstr "نسخ الرابط"
 
@@ -1760,8 +1764,8 @@ msgstr "أنشئ كلمة مرور لحماية حسابك"
 msgid "Create a plan"
 msgstr "إنشاء خطة"
 
-#: app/routes/_auth+/login.tsx:385
-#: app/routes/_auth+/onboarding_.$provider.tsx:358
+#: app/routes/_auth+/login.tsx:368
+#: app/routes/_auth+/onboarding_.$provider.tsx:385
 #: app/routes/_auth+/onboarding.tsx:537
 msgid "Create account"
 msgstr "إنشاء حساب"
@@ -1770,7 +1774,7 @@ msgstr "إنشاء حساب"
 msgid "Create action items"
 msgstr "إنشاء عناصر العمل"
 
-#: app/routes/_auth+/signup.tsx:178
+#: app/routes/_auth+/signup.tsx:181
 msgid "Create an account"
 msgstr "إنشاء حساب"
 
@@ -2141,7 +2145,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/roles/tenant-role-access-manager.tsx:932
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
-#: app/routes/_app+/$orgSlug_+/media.tsx:1585
+#: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
@@ -2268,8 +2272,8 @@ msgstr "جارٍ الحذف…"
 msgid "Deny"
 msgstr "رفض"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1436
-#: app/routes/_app+/$orgSlug_+/media.tsx:1449
+#: app/routes/_app+/$orgSlug_+/media.tsx:1442
+#: app/routes/_app+/$orgSlug_+/media.tsx:1455
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
@@ -2325,7 +2329,7 @@ msgstr "جهاز"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1326
+#: app/routes/_app+/$orgSlug_+/media.tsx:1332
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
@@ -2388,7 +2392,7 @@ msgstr "لا يساوي"
 msgid "Domain"
 msgstr "النطاق"
 
-#: app/routes/_auth+/login.tsx:376
+#: app/routes/_auth+/login.tsx:359
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
@@ -2556,8 +2560,8 @@ msgstr "تعديل الدور المخصص"
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1307
-#: app/routes/_app+/$orgSlug_+/media.tsx:1624
+#: app/routes/_app+/$orgSlug_+/media.tsx:1312
+#: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
@@ -2589,7 +2593,7 @@ msgstr "تعديل ملاحظات الفريق"
 msgid "Edit website content"
 msgstr "تعديل محتوى الموقع"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1793
+#: app/routes/_app+/$orgSlug_+/media.tsx:1799
 msgid "Editor preview"
 msgstr "معاينة المحرر"
 
@@ -2600,8 +2604,8 @@ msgstr "معاينة المحرر"
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/website/link-inspector.tsx:368
 #: app/components/website/link-inspector.tsx:468
-#: app/routes/_auth+/login.tsx:789
-#: app/routes/_auth+/signup.tsx:218
+#: app/routes/_auth+/login.tsx:773
+#: app/routes/_auth+/signup.tsx:225
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -2628,8 +2632,8 @@ msgstr "تصميم البريد"
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
 
-#: app/routes/_auth+/login.tsx:669
-#: app/routes/_auth+/login.tsx:794
+#: app/routes/_auth+/login.tsx:653
+#: app/routes/_auth+/login.tsx:778
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
@@ -2698,12 +2702,12 @@ msgstr "أدخل أحد رموزك الاحتياطية للتحقق من هوي
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr "أدخل رمز كلمة المرور لمرة واحدة (OTP) المكون من 6 أرقام الذي يوفره لك تطبيق المصادقة."
 
-#: app/routes/_auth+/login.tsx:675
-#: app/routes/_auth+/login.tsx:801
+#: app/routes/_auth+/login.tsx:659
+#: app/routes/_auth+/login.tsx:785
 msgid "Enter your email or username"
 msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:298
+#: app/routes/_auth+/onboarding_.$provider.tsx:325
 #: app/routes/_auth+/onboarding.tsx:443
 msgid "Enter your full name"
 msgstr "أدخل اسمك الكامل"
@@ -2716,11 +2720,11 @@ msgstr "أدخل كلمة المرور الجديدة"
 msgid "Enter your new password below."
 msgstr "أدخل كلمة المرور الجديدة أدناه."
 
-#: app/routes/_auth+/login.tsx:830
+#: app/routes/_auth+/login.tsx:814
 msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:276
+#: app/routes/_auth+/onboarding_.$provider.tsx:303
 #: app/routes/_auth+/onboarding.tsx:427
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
@@ -2819,7 +2823,7 @@ msgstr "التلاشي للأعلى"
 msgid "Failed"
 msgstr "فشل"
 
-#: app/routes/_auth+/login.tsx:458
+#: app/routes/_auth+/login.tsx:441
 msgid "Failed to authenticate with passkey: {errorMessage}"
 msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMessage}"
 
@@ -2847,11 +2851,11 @@ msgstr "فشل حذف الرحلة"
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1147
+#: app/routes/_app+/$orgSlug_+/media.tsx:1151
 msgid "Failed to export edited image."
 msgstr "تعذر تصدير الصورة المعدّلة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1163
+#: app/routes/_app+/$orgSlug_+/media.tsx:1167
 msgid "Failed to export image copy."
 msgstr "تعذر تصدير نسخة الصورة."
 
@@ -2970,12 +2974,12 @@ msgstr "الحقول"
 msgid "File"
 msgstr "ملف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1396
+#: app/routes/_app+/$orgSlug_+/media.tsx:1402
 msgid "File name of the media asset"
 msgstr "اسم ملف عنصر الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1394
-#: app/routes/_app+/$orgSlug_+/media.tsx:1407
+#: app/routes/_app+/$orgSlug_+/media.tsx:1400
+#: app/routes/_app+/$orgSlug_+/media.tsx:1413
 msgid "Filename"
 msgstr "اسم الملف"
 
@@ -2995,11 +2999,11 @@ msgstr "ملاءمة عرض اللوحة"
 msgid "Fix validation errors before publishing"
 msgstr "أصلح أخطاء التحقق قبل النشر"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1695
+#: app/routes/_app+/$orgSlug_+/media.tsx:1701
 msgid "Flip horizontally"
 msgstr "قلب أفقيًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1725
+#: app/routes/_app+/$orgSlug_+/media.tsx:1731
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
@@ -3007,7 +3011,7 @@ msgstr "قلب عموديًا"
 msgid "Forgot Password"
 msgstr "نسيت كلمة المرور"
 
-#: app/routes/_auth+/login.tsx:823
+#: app/routes/_auth+/login.tsx:807
 msgid "Forgot your password?"
 msgstr "هل نسيت كلمة المرور؟"
 
@@ -3033,7 +3037,7 @@ msgstr "إعدادات النموذج"
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1349
+#: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
 msgstr "التنسيق:"
 
@@ -3059,7 +3063,7 @@ msgstr "اسم المرسل (اختياري)"
 msgid "Full"
 msgstr "كامل"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:293
+#: app/routes/_auth+/onboarding_.$provider.tsx:320
 #: app/routes/_auth+/onboarding.tsx:438
 msgid "Full Name"
 msgstr "الاسم الكامل"
@@ -3086,7 +3090,7 @@ msgstr "إنشاء رموز احتياطية"
 msgid "Generate with AI"
 msgstr "إنشاء بالذكاء الاصطناعي"
 
-#: app/routes/_auth+/login.tsx:420
+#: app/routes/_auth+/login.tsx:403
 msgid "Generating Authentication Options"
 msgstr "جاري إنشاء خيارات المصادقة"
 
@@ -3174,8 +3178,8 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Gray color"
 msgstr "اللون الرمادي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1875
-#: app/routes/_app+/$orgSlug_+/media.tsx:1890
+#: app/routes/_app+/$orgSlug_+/media.tsx:1881
+#: app/routes/_app+/$orgSlug_+/media.tsx:1896
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
@@ -3206,7 +3210,7 @@ msgstr "ساعدني في البدء"
 msgid "Help us tailor recommendations to your organization."
 msgstr "ساعدنا في تخصيص التوصيات لمؤسستك."
 
-#: app/routes/_auth+/waitlist.tsx:259
+#: app/routes/_auth+/waitlist.tsx:271
 msgid "Here's how to do it:"
 msgstr "إليك كيفية القيام بذلك:"
 
@@ -3238,7 +3242,7 @@ msgstr "مرحباً {{name}}، تم تأكيد طلبك!"
 msgid "Hi {{name}}, Your organization {{organizationName}} is ready."
 msgstr "مرحباً {{name}}، منظمتك {{organizationName}} جاهزة."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:238
+#: app/routes/_auth+/onboarding_.$provider.tsx:265
 msgid "Hi {email}, just a few more details to get started."
 msgstr "مرحباً {email}، بعض التفاصيل فقط للبدء."
 
@@ -3315,7 +3319,7 @@ msgstr "كيف يمكنني مساعدتك؟"
 msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:321
+#: app/routes/_auth+/onboarding_.$provider.tsx:348
 #: app/routes/_auth+/onboarding.tsx:506
 msgid "I agree to the Terms of Service and Privacy Policy"
 msgstr "أوافق على شروط الخدمة وسياسة الخصوصية"
@@ -3446,7 +3450,7 @@ msgstr "التكاملات"
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
-#: app/routes/_auth+/login.tsx:200
+#: app/routes/_auth+/login.tsx:193
 msgid "Invalid username or password"
 msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
 
@@ -3503,17 +3507,25 @@ msgstr "عنوان IP"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
-#: app/routes/_auth+/waitlist.tsx:365
+#: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
 msgstr "انضم إلى خادم Discord"
 
-#: app/routes/_auth+/signup.tsx:176
+#: app/routes/_auth+/signup.tsx:179
 msgid "Join organization"
 msgstr "الانضمام إلى المنظمة"
 
-#: app/routes/_auth+/waitlist.tsx:343
+#: app/routes/_auth+/waitlist.tsx:368
 msgid "Join our Discord"
 msgstr "انضم إلى Discord الخاص بنا"
+
+#: app/routes/_auth+/waitlist.tsx:424
+msgid "Join our WhatsApp group"
+msgstr "انضم إلى مجموعة واتساب"
+
+#: app/routes/_auth+/waitlist.tsx:441
+msgid "Join WhatsApp group"
+msgstr "انضم إلى مجموعة واتساب"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:217
 msgid "Journey"
@@ -3595,8 +3607,8 @@ msgstr "آخر ظهور"
 msgid "Last exported: {lastExportDateFormatted}"
 msgstr "آخر تصدير: {lastExportDateFormatted}"
 
-#: app/routes/_auth+/login.tsx:499
-#: app/routes/_auth+/login.tsx:510
+#: app/routes/_auth+/login.tsx:483
+#: app/routes/_auth+/login.tsx:494
 msgid "Last used"
 msgstr "آخر استخدام"
 
@@ -3730,7 +3742,7 @@ msgstr "جاري تحميل الملاحظات..."
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1413
+#: app/routes/_app+/$orgSlug_+/media.tsx:1419
 msgid "Location"
 msgstr "الموقع"
 
@@ -3739,11 +3751,11 @@ msgstr "الموقع"
 msgid "Log out"
 msgstr "تسجيل الخروج"
 
-#: app/routes/_auth+/login.tsx:314
+#: app/routes/_auth+/login.tsx:297
 msgid "Login Error"
 msgstr "خطأ في تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:414
+#: app/routes/_auth+/login.tsx:397
 msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
@@ -3781,11 +3793,11 @@ msgstr "الشكل"
 msgid "Loose"
 msgstr "متباعد"
 
-#: app/routes/_auth+/signup.tsx:224
+#: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1230
+#: app/routes/_app+/$orgSlug_+/media.tsx:1234
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
 
@@ -3843,7 +3855,7 @@ msgstr "إدارة جلساتك النشطة"
 msgid "Manage your active sessions. You're signed in on {sessionCount} {deviceText}"
 msgstr "إدارة جلساتك النشطة. أنت مسجل الدخول على {sessionCount} {deviceText}"
 
-#: app/components/settings/cards/connections-card.tsx:38
+#: app/components/settings/cards/connections-card.tsx:42
 msgid "Manage your connected accounts here."
 msgstr "إدارة حساباتك المتصلة هنا."
 
@@ -3928,7 +3940,7 @@ msgstr "خادم MCP"
 msgid "Media"
 msgstr "الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1250
+#: app/routes/_app+/$orgSlug_+/media.tsx:1254
 msgid "Media details"
 msgstr "تفاصيل الوسائط"
 
@@ -3951,6 +3963,10 @@ msgstr "رابط الوسائط"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4942
 msgid "Medium"
 msgstr "متوسط"
+
+#: app/routes/_auth+/waitlist.tsx:444
+msgid "Meet other members and share updates in the group. An admin can add community points after you join."
+msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
 #: app/components/team-switcher.tsx:132
@@ -4388,7 +4404,7 @@ msgstr "العُقد"
 msgid "None"
 msgstr "بلا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1234
+#: app/routes/_app+/$orgSlug_+/media.tsx:1238
 msgid "Normal"
 msgstr "عادي"
 
@@ -4404,7 +4420,7 @@ msgstr "غير متصل"
 msgid "Not now"
 msgstr "ليس الآن"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1501
+#: app/routes/_app+/$orgSlug_+/media.tsx:1507
 msgid "Not used in any notes, comments, or pages"
 msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو صفحات"
 
@@ -4416,7 +4432,7 @@ msgstr "غير موثّق (خاطئ)"
 msgid "note"
 msgstr "ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1218
+#: app/routes/_app+/$orgSlug_+/media.tsx:1222
 msgid "Note"
 msgstr "ملاحظة"
 
@@ -4432,7 +4448,7 @@ msgstr "محتوى الملاحظة..."
 msgid "Note title..."
 msgstr "عنوان الملاحظة..."
 
-#: app/routes/_auth+/waitlist.tsx:386
+#: app/routes/_auth+/waitlist.tsx:411
 msgid "Note: Discord verification is currently manual. Contact support after joining to claim your points."
 msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل بالدعم بعد الانضمام للمطالبة بنقاطك."
 
@@ -4486,7 +4502,7 @@ msgstr "إشعارات عندما يتم ذكرك في تعليق"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
-#: app/routes/_auth+/waitlist.tsx:271
+#: app/routes/_auth+/waitlist.tsx:283
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
@@ -4608,7 +4624,7 @@ msgstr "فتح المعاينة"
 msgid "Open rate"
 msgstr "معدل الفتح"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1558
+#: app/routes/_app+/$orgSlug_+/media.tsx:1564
 msgid "Open reference"
 msgstr "فتح المرجع"
 
@@ -4641,15 +4657,15 @@ msgstr "مشغّل"
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1464
+#: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
-#: app/routes/_auth+/signup.tsx:206
+#: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
 msgstr "أو تابع باستخدام"
 
-#: app/routes/_auth+/login.tsx:332
+#: app/routes/_auth+/login.tsx:315
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
 
@@ -4665,7 +4681,7 @@ msgstr "تم إنشاء المنظمة"
 msgid "Organization details and configuration."
 msgstr "تفاصيل المنظمة وإعداداتها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1220
+#: app/routes/_app+/$orgSlug_+/media.tsx:1224
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
@@ -4773,7 +4789,7 @@ msgid "Passkeys are a secure, passwordless way to sign in using your device's bi
 msgstr "مفاتيح المرور هي طريقة آمنة وبدون كلمة مرور لتسجيل الدخول باستخدام القياسات الحيوية لجهازك."
 
 #: app/components/settings/password-form.tsx:112
-#: app/routes/_auth+/login.tsx:817
+#: app/routes/_auth+/login.tsx:801
 #: app/routes/_auth+/onboarding.tsx:456
 msgid "Password"
 msgstr "كلمة المرور"
@@ -4997,8 +5013,8 @@ msgstr "يرجى إدخال استعلام بحث"
 msgid "Please enter your 2FA code to verify your identity."
 msgstr "يرجى إدخال رمز المصادقة الثنائية للتحقق من هويتك."
 
-#: app/routes/_auth+/login.tsx:116
-#: app/routes/_auth+/login.tsx:642
+#: app/routes/_auth+/login.tsx:109
+#: app/routes/_auth+/login.tsx:626
 msgid "Please enter your email or username"
 msgstr "يرجى إدخال بريدك الإلكتروني أو اسم المستخدم"
 
@@ -5034,7 +5050,7 @@ msgstr "التحميل المسبق"
 msgid "Prerender"
 msgstr "التصيير المسبق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1750
+#: app/routes/_app+/$orgSlug_+/media.tsx:1756
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
 
@@ -5095,7 +5111,7 @@ msgstr "احترافي"
 msgid "Processing"
 msgstr "قيد المعالجة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1934
+#: app/routes/_app+/$orgSlug_+/media.tsx:1940
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
@@ -5105,7 +5121,7 @@ msgstr "اسم المنتج"
 
 #: app/components/app-sidebar.tsx:129
 #: app/components/user-dropdown.tsx:54
-#: app/routes/_auth+/onboarding_.$provider.tsx:250
+#: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
 msgstr "الملف الشخصي"
 
@@ -5243,7 +5259,7 @@ msgstr "مستلمين"
 msgid "Recipients"
 msgstr "المستلمون"
 
-#: app/routes/_auth+/login.tsx:612
+#: app/routes/_auth+/login.tsx:596
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
@@ -5324,8 +5340,8 @@ msgstr "رفض"
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
 
-#: app/routes/_auth+/login.tsx:852
-#: app/routes/_auth+/onboarding_.$provider.tsx:341
+#: app/routes/_auth+/login.tsx:836
+#: app/routes/_auth+/onboarding_.$provider.tsx:368
 #: app/routes/_auth+/onboarding.tsx:523
 msgid "Remember me"
 msgstr "تذكرني"
@@ -5421,7 +5437,7 @@ msgstr "استبدال"
 msgid "Replace Asset..."
 msgstr "استبدال الملف..."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1297
+#: app/routes/_app+/$orgSlug_+/media.tsx:1301
 msgid "Replace image"
 msgstr "استبدال الصورة"
 
@@ -5451,7 +5467,7 @@ msgstr "طلب تكامل"
 msgid "Request permanent deletion of your account and all associated data. A 7-day grace period allows you to cancel if needed."
 msgstr "اطلب الحذف الدائم لحسابك وجميع البيانات المرتبطة به. تتيح لك فترة سماح مدتها 7 أيام إلغاء الطلب إذا لزم الأمر."
 
-#: app/routes/_auth+/login.tsx:426
+#: app/routes/_auth+/login.tsx:409
 msgid "Requesting your authorization"
 msgstr "جاري طلب التفويض"
 
@@ -5469,11 +5485,11 @@ msgid "Required"
 msgstr "مطلوب"
 
 #: app/components/organization-invitations.tsx:237
-#: app/routes/_app+/$orgSlug_+/media.tsx:1783
+#: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr "إعادة تعيين"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1922
+#: app/routes/_app+/$orgSlug_+/media.tsx:1928
 msgid "Reset adjustments"
 msgstr "إعادة تعيين التعديلات"
 
@@ -5568,11 +5584,11 @@ msgstr "اسم الدور"
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1648
+#: app/routes/_app+/$orgSlug_+/media.tsx:1654
 msgid "Rotate left"
 msgstr "تدوير لليسار"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1669
+#: app/routes/_app+/$orgSlug_+/media.tsx:1675
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
@@ -5670,8 +5686,8 @@ msgstr "تكوين تخزين S3"
 msgid "Sans"
 msgstr "بدون زوائد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1853
-#: app/routes/_app+/$orgSlug_+/media.tsx:1868
+#: app/routes/_app+/$orgSlug_+/media.tsx:1859
+#: app/routes/_app+/$orgSlug_+/media.tsx:1874
 msgid "Saturation"
 msgstr "التشبع"
 
@@ -5687,7 +5703,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
 #: app/components/ui/photo-crop-form.tsx:236
-#: app/routes/_app+/$orgSlug_+/media.tsx:1613
+#: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr "حفظ"
@@ -5697,7 +5713,7 @@ msgstr "حفظ"
 msgid "Save 20%"
 msgstr "وفّر 20٪"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1936
+#: app/routes/_app+/$orgSlug_+/media.tsx:1942
 msgid "Save as copy"
 msgstr "حفظ كنسخة"
 
@@ -5710,7 +5726,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/settings/cards/organization/general-settings-card.tsx:112
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
 #: app/components/settings/cards/profile-card.tsx:192
-#: app/routes/_app+/$orgSlug_+/media.tsx:1952
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
 msgid "Save changes"
@@ -5754,7 +5770,7 @@ msgstr "تم الحفظ"
 #~ msgid "Saving {headerValue}"
 #~ msgstr "جاري حفظ {headerValue}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1159
+#: app/routes/_app+/$orgSlug_+/media.tsx:1163
 msgid "Saving as new copy…"
 msgstr "جارٍ الحفظ كنسخة جديدة…"
 
@@ -5762,7 +5778,7 @@ msgstr "جارٍ الحفظ كنسخة جديدة…"
 msgid "Saving automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1143
+#: app/routes/_app+/$orgSlug_+/media.tsx:1147
 msgid "Saving edited image…"
 msgstr "جارٍ حفظ الصورة المعدّلة…"
 
@@ -5776,7 +5792,7 @@ msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/roles/tenant-role-access-manager.tsx:539
-#: app/routes/_app+/$orgSlug_+/media.tsx:1613
+#: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -6140,6 +6156,10 @@ msgstr "شارك تحديثاً أو إشعار صيانة أو عرضاً تر�
 msgid "Share Note"
 msgstr "مشاركة الملاحظة"
 
+#: app/routes/_auth+/waitlist.tsx:352
+msgid "Share on WhatsApp"
+msgstr "شارك على واتساب"
+
 #: app/components/organization-invitations.tsx:167
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
@@ -6148,7 +6168,7 @@ msgstr "مشاركة الملاحظة"
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
 
-#: app/routes/_auth+/waitlist.tsx:283
+#: app/routes/_auth+/waitlist.tsx:295
 msgid "Share with others"
 msgstr "شارك مع الآخرين"
 
@@ -6204,15 +6224,15 @@ msgstr "يظهر في علامات تبويب المتصفح ونتائج الب
 msgid "Shown to recipients who have no value for this field."
 msgstr "يُعرض للمستلمين الذين لا يملكون قيمة لهذا الحقل."
 
-#: app/routes/_auth+/signup.tsx:257
+#: app/routes/_auth+/signup.tsx:264
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:865
+#: app/routes/_auth+/login.tsx:849
 msgid "Sign In"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:287
+#: app/routes/_auth+/login.tsx:270
 msgid "Sign in to your account"
 msgstr "تسجيل الدخول إلى حسابك"
 
@@ -6224,7 +6244,7 @@ msgstr "تسجيل الخروج"
 msgid "Sign out of all other devices"
 msgstr "تسجيل الخروج من جميع الأجهزة الأخرى"
 
-#: app/routes/_auth+/signup.tsx:241
+#: app/routes/_auth+/signup.tsx:248
 msgid "Sign up"
 msgstr "إنشاء حساب"
 
@@ -6232,7 +6252,7 @@ msgstr "إنشاء حساب"
 msgid "Sign Up"
 msgstr "إنشاء حساب"
 
-#: app/routes/_auth+/signup.tsx:185
+#: app/routes/_auth+/signup.tsx:188
 msgid "Sign up with your social account or email"
 msgstr "أنشئ حساباً باستخدام حساب التواصل الاجتماعي أو البريد الإلكتروني"
 
@@ -6244,8 +6264,8 @@ msgstr "تم تسجيل الدخول"
 msgid "Signed in as"
 msgstr "تم تسجيل الدخول كـ"
 
-#: app/routes/_auth+/login.tsx:582
-#: app/routes/_auth+/login.tsx:756
+#: app/routes/_auth+/login.tsx:566
+#: app/routes/_auth+/login.tsx:740
 msgid "Signing in as"
 msgstr "تسجيل الدخول باسم"
 
@@ -6263,7 +6283,7 @@ msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn m
 msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1222
+#: app/routes/_app+/$orgSlug_+/media.tsx:1226
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
@@ -6276,7 +6296,7 @@ msgstr "متجر الموقع"
 msgid "Size"
 msgstr "الحجم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1317
+#: app/routes/_app+/$orgSlug_+/media.tsx:1323
 msgid "Size:"
 msgstr "الحجم:"
 
@@ -6683,14 +6703,18 @@ msgstr "نص فقط"
 msgid "Text position"
 msgstr "موضع النص"
 
-#: app/routes/_auth+/waitlist.tsx:336
+#: app/routes/_auth+/waitlist.tsx:361
 msgid "Thanks for referring."
 msgstr "شكراً لإحالتك."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:172
+#: app/routes/_auth+/onboarding_.$provider.tsx:199
 #: app/routes/_auth+/onboarding.tsx:345
 msgid "Thanks for signing up!"
 msgstr "شكراً لتسجيلك!"
+
+#: app/routes/_auth+/onboarding_.$provider.tsx:188
+msgid "Thanks for signing up! {inviterName} has invited you to join {organizationName}. Review the invitation below."
+msgstr "شكراً لتسجيلك! دعاك {inviterName} للانضمام إلى {organizationName}. راجع الدعوة أدناه."
 
 #: app/routes/_auth+/onboarding.tsx:183
 msgid "Thanks for signing up! {inviterName} has invited you to join {orgName}. Review the invitation below."
@@ -6754,7 +6778,7 @@ msgstr "السمة"
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
-#: app/routes/_auth+/login.tsx:318
+#: app/routes/_auth+/login.tsx:301
 msgid "There was an issue with your login attempt. Please try again."
 msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى."
 
@@ -6896,7 +6920,7 @@ msgstr "الإجمالي"
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1639
+#: app/routes/_app+/$orgSlug_+/media.tsx:1645
 msgid "Transform"
 msgstr "تحويل"
 
@@ -7055,8 +7079,8 @@ msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:882
-#: app/routes/_app+/$orgSlug_+/media.tsx:1253
-#: app/routes/_app+/$orgSlug_+/media.tsx:1627
+#: app/routes/_app+/$orgSlug_+/media.tsx:1257
+#: app/routes/_app+/$orgSlug_+/media.tsx:1633
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
@@ -7168,7 +7192,7 @@ msgstr "تحميل شعارك"
 msgid "Uploaded"
 msgstr "تم الرفع"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1340
+#: app/routes/_app+/$orgSlug_+/media.tsx:1346
 msgid "Uploaded:"
 msgstr "تاريخ الرفع:"
 
@@ -7183,7 +7207,7 @@ msgstr "جارٍ الرفع…"
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1377
+#: app/routes/_app+/$orgSlug_+/media.tsx:1383
 msgid "URL copied to clipboard"
 msgstr "تم نسخ الرابط إلى الحافظة"
 
@@ -7191,7 +7215,7 @@ msgstr "تم نسخ الرابط إلى الحافظة"
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1362
+#: app/routes/_app+/$orgSlug_+/media.tsx:1368
 msgid "URL:"
 msgstr "الرابط:"
 
@@ -7221,7 +7245,7 @@ msgstr "استخدم أي تطبيق مصادقة على جهازك المحمو
 msgid "Use authenticator app instead"
 msgstr "استخدم تطبيق المصادقة بدلاً من ذلك"
 
-#: app/routes/_auth+/login.tsx:625
+#: app/routes/_auth+/login.tsx:609
 msgid "Use password instead"
 msgstr "استخدم كلمة المرور بدلاً من ذلك"
 
@@ -7233,7 +7257,7 @@ msgstr "استخدام المحدد"
 msgid "Use your own S3-compatible storage instead of the default storage"
 msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً من التخزين الافتراضي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1474
+#: app/routes/_app+/$orgSlug_+/media.tsx:1480
 msgid "Used in"
 msgstr "مستخدم في"
 
@@ -7246,8 +7270,8 @@ msgid "Used when the value is empty"
 msgstr "يُستخدم عندما تكون القيمة فارغة"
 
 #: app/components/settings/cards/profile-card.tsx:114
-#: app/routes/_auth+/login.tsx:791
-#: app/routes/_auth+/onboarding_.$provider.tsx:270
+#: app/routes/_auth+/login.tsx:775
+#: app/routes/_auth+/onboarding_.$provider.tsx:297
 #: app/routes/_auth+/onboarding.tsx:422
 msgid "Username"
 msgstr "اسم المستخدم"
@@ -7256,8 +7280,8 @@ msgstr "اسم المستخدم"
 msgid "Username or Email"
 msgstr "اسم المستخدم أو البريد الإلكتروني"
 
-#: app/routes/_auth+/login.tsx:109
-#: app/routes/_auth+/login.tsx:718
+#: app/routes/_auth+/login.tsx:102
+#: app/routes/_auth+/login.tsx:702
 msgid "Username or email is required"
 msgstr "اسم المستخدم أو البريد الإلكتروني مطلوب"
 
@@ -7290,11 +7314,11 @@ msgstr "يجب أن يطابق النطاق المُتحقق منه نطاق ع�
 msgid "Verify"
 msgstr "تحقق"
 
-#: app/routes/_auth+/waitlist.tsx:375
+#: app/routes/_auth+/waitlist.tsx:400
 msgid "Verify Discord membership"
 msgstr "تحقق من عضوية Discord"
 
-#: app/routes/_auth+/login.tsx:428
+#: app/routes/_auth+/login.tsx:411
 msgid "Verifying your passkey"
 msgstr "جاري التحقق من مفتاح المرور"
 
@@ -7303,7 +7327,7 @@ msgstr "جاري التحقق من مفتاح المرور"
 msgid "Video"
 msgstr "فيديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1224
+#: app/routes/_app+/$orgSlug_+/media.tsx:1228
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
@@ -7385,7 +7409,7 @@ msgstr "مشاهد"
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم وبريدهم الإلكتروني في هذه المنطقة. تغييرها بعد تسجيل دخول العملاء يحذف تلك البيانات نهائياً — فهي لا تُنقل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1236
+#: app/routes/_app+/$orgSlug_+/media.tsx:1240
 msgid "Vivid"
 msgstr "زاهٍ"
 
@@ -7399,11 +7423,11 @@ msgstr "انتظر {0} {1}"
 msgid "Wait for a specified duration before next step"
 msgstr "انتظر مدة محددة قبل الخطوة التالية"
 
-#: app/routes/_auth+/waitlist.tsx:256
+#: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
 msgstr "تريد الذهاب إلى أعلى قائمة الانتظار?"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1237
+#: app/routes/_app+/$orgSlug_+/media.tsx:1241
 msgid "Warm"
 msgstr "دافئ"
 
@@ -7416,7 +7440,7 @@ msgstr "تحذير"
 msgid "Warnings"
 msgstr "تحذيرات"
 
-#: app/routes/_auth+/login.tsx:586
+#: app/routes/_auth+/login.tsx:570
 msgid "We found your organization:"
 msgstr "وجدنا منظمتك:"
 
@@ -7428,11 +7452,11 @@ msgstr "نستخدم ملفات تعريف الارتباط لتحسين تجر�
 msgid "We'd love to hear what went well or how we can improve the product experience."
 msgstr "نود أن نسمع ما سار على ما يرام أو كيف يمكننا تحسين تجربة المنتج."
 
-#: app/routes/_auth+/waitlist.tsx:246
+#: app/routes/_auth+/waitlist.tsx:258
 msgid "We'll notify you by email as soon as the waitlist opens."
 msgstr "سنبلغك بالبريد الإلكتروني بمجرد فتح قائمة الانتظار."
 
-#: app/routes/_auth+/waitlist.tsx:400
+#: app/routes/_auth+/waitlist.tsx:457
 msgid "We'll send you an email at <0>{userEmail}</0> when we're ready to welcome you."
 msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}</0> عندما نكون مستعدين للترحيب بك."
 
@@ -7441,7 +7465,7 @@ msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
 #: app/components/app-sidebar.tsx:330
-#: app/routes/_app+/$orgSlug_+/media.tsx:1226
+#: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
 msgstr "الموقع الإلكتروني"
@@ -7458,7 +7482,7 @@ msgstr "الموقع والنشر"
 msgid "Website editor, announcements, and public pages."
 msgstr "محرر الموقع والإعلانات والصفحات العامة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1228
+#: app/routes/_app+/$orgSlug_+/media.tsx:1232
 msgid "Website SEO"
 msgstr "تحسين محركات البحث للموقع"
 
@@ -7470,7 +7494,7 @@ msgstr "أسابيع"
 msgid "Weeks"
 msgstr "أسابيع"
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:172
+#: app/routes/_auth+/onboarding_.$provider.tsx:199
 #: app/routes/_auth+/onboarding.tsx:334
 #: app/routes/_auth+/onboarding.tsx:345
 msgid "Welcome"
@@ -7484,7 +7508,7 @@ msgstr "مرحباً {userName}!"
 msgid "Welcome aboard!"
 msgstr "مرحباً بك على متن الطائرة!"
 
-#: app/routes/_auth+/login.tsx:277
+#: app/routes/_auth+/login.tsx:260
 msgid "Welcome back"
 msgstr "مرحباً بعودتك"
 
@@ -7492,6 +7516,7 @@ msgstr "مرحباً بعودتك"
 msgid "Welcome to Epic Startup, {{organizationName}}"
 msgstr "مرحباً بك في Epic Startup، {{organizationName}}"
 
+#: app/routes/_auth+/onboarding_.$provider.tsx:187
 #: app/routes/_auth+/onboarding.tsx:182
 #: app/routes/_auth+/onboarding.tsx:211
 #: app/routes/_auth+/onboarding.tsx:295
@@ -7629,7 +7654,7 @@ msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا تو�
 msgid "You can cancel this request before the scheduled date to keep your account. After deletion, all your data will be permanently removed."
 msgstr "يمكنك إلغاء هذا الطلب قبل التاريخ المحدد للاحتفاظ بحسابك. بعد الحذف، ستتم إزالة جميع بياناتك نهائياً."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:256
+#: app/routes/_auth+/onboarding_.$provider.tsx:283
 msgid "You can change your photo later"
 msgstr "يمكنك تغيير صورتك لاحقاً"
 
@@ -7661,8 +7686,8 @@ msgstr "لم تقم بإنشاء أي ملاحظات بعد!"
 msgid "You haven't joined any organizations yet."
 msgstr "لم تنضم إلى أي منظمات بعد."
 
-#: app/routes/_auth+/onboarding_.$provider.tsx:103
-#: app/routes/_auth+/onboarding_.$provider.tsx:194
+#: app/routes/_auth+/onboarding_.$provider.tsx:106
+#: app/routes/_auth+/onboarding_.$provider.tsx:221
 #: app/routes/_auth+/onboarding.tsx:97
 #: app/routes/_auth+/onboarding.tsx:363
 msgid "You must agree to the terms of service and privacy policy"
@@ -7672,11 +7697,11 @@ msgstr "يجب أن توافق على شروط الخدمة وسياسة الخ�
 msgid "You receive"
 msgstr "تستلم"
 
-#: app/routes/_auth+/login.tsx:454
+#: app/routes/_auth+/login.tsx:437
 msgid "You're logged in! Navigating..."
 msgstr "تم تسجيل الدخول! جاري التوجيه..."
 
-#: app/routes/_auth+/waitlist.tsx:243
+#: app/routes/_auth+/waitlist.tsx:255
 msgid "You're on the Waitlist!"
 msgstr "أنت في قائمة الانتظار!"
 
@@ -7684,7 +7709,7 @@ msgstr "أنت في قائمة الانتظار!"
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr "أنت مسجل الدخول على {sessionCount, plural, one {# جهاز} other {# أجهزة}} كـ {userEmail}"
 
-#: app/routes/_auth+/login.tsx:301
+#: app/routes/_auth+/login.tsx:284
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr "تم تعليق حسابك. يرجى الاتصال بالدعم إذا كنت تعتقد أن هذا خطأ."
 
@@ -7744,15 +7769,15 @@ msgstr "مؤسساتك"
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
 
-#: app/routes/_auth+/waitlist.tsx:263
+#: app/routes/_auth+/waitlist.tsx:275
 msgid "Your points"
 msgstr "نقاطك"
 
-#: app/routes/_auth+/waitlist.tsx:269
+#: app/routes/_auth+/waitlist.tsx:281
 msgid "Your rank"
 msgstr "ترتيبك"
 
-#: app/routes/_auth+/waitlist.tsx:295
+#: app/routes/_auth+/waitlist.tsx:307
 msgid "Your referral link"
 msgstr "رابط الإحالة الخاص بك"
 

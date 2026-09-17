@@ -35,13 +35,15 @@ let _authSessionStorage: SessionStorage | undefined
 function getAuthSessionStorage(): SessionStorage {
 	if (_authSessionStorage) return _authSessionStorage
 
+	const domain = operatorSessionCookieDomain()
+
 	const storage = createCookieSessionStorage({
 		cookie: {
 			name: operatorCookieName('en_session'),
 			sameSite: 'lax', // CSRF protection is advised if changing to 'none'
 			path: '/',
 			httpOnly: true,
-			domain: operatorSessionCookieDomain(),
+			domain,
 			secrets: sessionSecrets,
 			secure: ENV.NODE_ENV === 'production',
 		},

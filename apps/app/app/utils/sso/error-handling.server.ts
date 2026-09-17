@@ -1,4 +1,4 @@
-import { destroyRedirectToHeader } from '@repo/common/redirect-cookie'
+import { destroyRedirectToHeaders } from '@repo/common/redirect-cookie'
 import { redirectWithToast } from '@repo/common/toast'
 
 // SSO-specific error types
@@ -217,6 +217,7 @@ export function createSSOError(
 export async function handleSSOError(
 	error: SSOError | Error | unknown,
 	fallbackUrl: string = '/login',
+	request?: Request,
 ): Promise<Response> {
 	let ssoError: SSOError
 
@@ -281,7 +282,7 @@ export async function handleSSOError(
 			type: 'error',
 		},
 		{
-			headers: new Headers({ 'set-cookie': destroyRedirectToHeader }),
+			headers: new Headers(destroyRedirectToHeaders(request)),
 			status: ssoError.statusCode >= 400 ? undefined : ssoError.statusCode,
 		},
 	)
@@ -402,6 +403,7 @@ export async function createSSOFallbackResponse(
 	organizationSlug: string,
 	originalError: SSOError,
 	redirectTo?: string,
+	request?: Request,
 ): Promise<Response> {
 	const fallbackUrl = `/login?org=${encodeURIComponent(organizationSlug)}${
 		redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : ''
@@ -414,7 +416,7 @@ export async function createSSOFallbackResponse(
 			description: `${originalError.userDescription} You can still log in using your username and password.`,
 			type: 'message',
 		},
-		{ headers: { 'set-cookie': destroyRedirectToHeader } },
+		{ headers: destroyRedirectToHeaders(request) },
 	)
 }
 

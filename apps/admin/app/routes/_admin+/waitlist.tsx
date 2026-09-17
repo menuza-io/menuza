@@ -21,8 +21,19 @@ import {
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
 import {
 	Table,
 	TableBody,
@@ -41,10 +52,13 @@ import {
 } from 'react-router'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import {
+	addWaitlistPoints,
 	grantEarlyAccess,
 	revokeEarlyAccess,
 } from '#app/utils/waitlist.server.ts'
 import { type Route } from './+types/waitlist.ts'
+
+const MAX_ADMIN_POINTS_ADJUSTMENT = 1000
 
 export async function loader({ request }: Route.LoaderArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -164,6 +178,22 @@ export async function action({ request }: Route.ActionArgs) {
 		} else if (intent === 'revoke-access') {
 			await revokeEarlyAccess(userId)
 			return Response.json({ success: true, message: 'Access revoked' })
+		} else if (intent === 'add-points') {
+			const points = Number(formData.get('points'))
+			if (
+				!Number.isSafeInteger(points) ||
+				points < 1 ||
+				points > MAX_ADMIN_POINTS_ADJUSTMENT
+			) {
+				return Response.json(
+					{
+						error: `Points must be a whole number between 1 and ${MAX_ADMIN_POINTS_ADJUSTMENT}`,
+					},
+					{ status: 400 },
+				)
+			}
+			await addWaitlistPoints(userId, points)
+			return Response.json({ success: true, message: 'Points added' })
 		}
 
 		return Response.json({ error: 'Invalid intent' }, { status: 400 })
@@ -420,38 +450,111 @@ export default function AdminWaitlistPage() {
 											)}
 										</TableCell>
 										<TableCell>
-											<Form method="post">
-												<input
-													type="hidden"
-													name="userId"
-													value={entry.userId}
-												/>
-												{entry.hasEarlyAccess ? (
-													<Button
-														type="submit"
-														name="intent"
-														value="revoke-access"
-														variant="outline"
-														size="sm"
-														disabled={isProcessing}
-													>
-														<Icon name="x" className="mr-1 h-3 w-3" />
-														<Trans>Revoke</Trans>
-													</Button>
-												) : (
-													<Button
-														type="submit"
-														name="intent"
-														value="grant-access"
-														variant="default"
-														size="sm"
-														disabled={isProcessing}
-													>
-														<Icon name="check" className="mr-1 h-3 w-3" />
-														<Trans>Grant Access</Trans>
-													</Button>
-												)}
-											</Form>
+											<div className="flex flex-wrap gap-2">
+												<Dialog>
+													<DialogTrigger
+														render={
+															<Button
+																variant="outline"
+																size="sm"
+																disabled={isProcessing}
+															>
+																<Icon name="plus" className="mr-1 h-3 w-3" />
+																<Trans>Add points</Trans>
+															</Button>
+														}
+													/>
+													<DialogContent>
+														<DialogHeader>
+															<DialogTitle>
+																<Trans>Add waitlist points</Trans>
+															</DialogTitle>
+															<DialogDescription>
+																<Trans>
+																	Add points to{' '}
+																	{entry.user.name ?? entry.user.username}'s
+																	current total of {entry.points}.
+																</Trans>
+															</DialogDescription>
+														</DialogHeader>
+														<Form method="post" className="space-y-4">
+															<input
+																type="hidden"
+																name="intent"
+																value="add-points"
+															/>
+															<input
+																type="hidden"
+																name="userId"
+																value={entry.userId}
+															/>
+															<div className="space-y-2">
+																<Label htmlFor={`points-${entry.id}`}>
+																	<Trans>Points to add</Trans>
+																</Label>
+																<Input
+																	id={`points-${entry.id}`}
+																	name="points"
+																	type="number"
+																	min={1}
+																	max={MAX_ADMIN_POINTS_ADJUSTMENT}
+																	defaultValue={5}
+																	required
+																/>
+																<p className="text-muted-foreground text-xs">
+																	<Trans>
+																		Enter a whole number from 1 to{' '}
+																		{MAX_ADMIN_POINTS_ADJUSTMENT}.
+																	</Trans>
+																</p>
+															</div>
+															<DialogFooter>
+																<DialogClose
+																	render={<Button variant="outline" />}
+																>
+																	<Trans>Cancel</Trans>
+																</DialogClose>
+																<Button type="submit" disabled={isProcessing}>
+																	<Icon name="plus" className="mr-1 h-4 w-4" />
+																	<Trans>Add points</Trans>
+																</Button>
+															</DialogFooter>
+														</Form>
+													</DialogContent>
+												</Dialog>
+												<Form method="post">
+													<input
+														type="hidden"
+														name="userId"
+														value={entry.userId}
+													/>
+													{entry.hasEarlyAccess ? (
+														<Button
+															type="submit"
+															name="intent"
+															value="revoke-access"
+															variant="outline"
+															size="sm"
+															disabled={isProcessing}
+														>
+															<Icon name="x" className="mr-1 h-3 w-3" />
+															<Trans>Revoke</Trans>
+														</Button>
+													) : (
+														<Button
+															type="submit"
+															name="intent"
+															value="grant-access"
+															variant="default"
+															size="sm"
+															disabled={isProcessing}
+														>
+															<Icon name="check" className="mr-1 h-3 w-3" />
+															<Trans>Grant Access</Trans>
+														</Button>
+													)}
+												</Form>
+											</div>
 										</TableCell>
 									</TableRow>
 								))
