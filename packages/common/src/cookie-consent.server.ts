@@ -2,6 +2,7 @@ import { createCookie } from 'react-router'
 
 import {
 	operatorCookieName,
+	requestPublicOrigin,
 	sharedCookieDomain,
 } from './cookie-domain.server.js'
 
@@ -44,11 +45,16 @@ export const cookieConsentCookie: CookieConsentCookie = {
 	},
 }
 
-export async function getCookieConsentState(request: Request, origin?: string) {
+export async function getCookieConsentState(
+	request: Request,
+	origin?: string,
+	domain?: string,
+) {
 	const cookieHeader = request.headers.get('Cookie')
-	const consentCookie = origin
-		? createCookieConsentCookie(origin)
-		: getDefaultCookieConsentCookie()
+	const consentCookie =
+		origin || domain
+			? createCookieConsentCookie(origin, domain)
+			: getDefaultCookieConsentCookie()
 	const cookie = (await consentCookie.parse(cookieHeader)) || {}
 	return cookie.hasConsented
 }
@@ -67,7 +73,7 @@ export async function setCookieConsentState(
 
 /** Reject cross-site POSTs; SameSite=Lax is the primary defense. */
 export function verifyCookieConsentRequestOrigin(request: Request) {
-	const requestOrigin = new URL(request.url).origin
+	const requestOrigin = requestPublicOrigin(request)
 	const origin = request.headers.get('Origin')
 	if (origin) {
 		try {
@@ -84,5 +90,6 @@ export function verifyCookieConsentRequestOrigin(request: Request) {
 			return false
 		}
 	}
-	return false
+	const fetchSite = request.headers.get('Sec-Fetch-Site')
+	return fetchSite === 'same-origin' || fetchSite === 'same-site'
 }

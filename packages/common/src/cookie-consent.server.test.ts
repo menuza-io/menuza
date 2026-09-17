@@ -53,18 +53,50 @@ describe('shared cookie consent', () => {
 	})
 
 	it('rejects cross-origin cookie consent posts', () => {
-		const request = new Request('https://app.example.com/resources/cookie-consent', {
-			method: 'POST',
-			headers: { Origin: 'https://evil.example' },
-		})
+		const request = new Request(
+			'https://app.example.com/resources/cookie-consent',
+			{
+				method: 'POST',
+				headers: { Origin: 'https://evil.example' },
+			},
+		)
 
 		expect(verifyCookieConsentRequestOrigin(request)).toBe(false)
 	})
 
 	it('accepts same-origin cookie consent posts', () => {
-		const request = new Request('https://app.example.com/resources/cookie-consent', {
+		const request = new Request(
+			'https://app.example.com/resources/cookie-consent',
+			{
+				method: 'POST',
+				headers: { Origin: 'https://app.example.com' },
+			},
+		)
+
+		expect(verifyCookieConsentRequestOrigin(request)).toBe(true)
+	})
+
+	it('accepts posts when Referer matches the public origin behind a proxy', () => {
+		const request = new Request(
+			'https://epic-startup.workers.dev/api/cookie-consent',
+			{
+				method: 'POST',
+				headers: {
+					Referer: 'https://www.example.com/pricing',
+					Host: 'www.example.com',
+					'X-Forwarded-Host': 'www.example.com',
+					'X-Forwarded-Proto': 'https',
+				},
+			},
+		)
+
+		expect(verifyCookieConsentRequestOrigin(request)).toBe(true)
+	})
+
+	it('accepts same-origin form posts without Origin or Referer', () => {
+		const request = new Request('https://www.example.com/api/cookie-consent', {
 			method: 'POST',
-			headers: { Origin: 'https://app.example.com' },
+			headers: { 'Sec-Fetch-Site': 'same-origin' },
 		})
 
 		expect(verifyCookieConsentRequestOrigin(request)).toBe(true)

@@ -17,6 +17,7 @@ import {
 	time,
 } from '@repo/common'
 import { getCookieConsentState } from '@repo/common/cookie-consent'
+import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { pipeHeaders } from '@repo/common/headers'
 import { getSidebarState } from '@repo/common/sidebar-cookie'
 import { getToast } from '@repo/common/toast'
@@ -66,7 +67,10 @@ import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
 import { useToast } from './components/toaster.tsx'
 import iconsHref from './components/ui/icons/sprite.svg?url'
-import { linguiServer, localeCookie } from './modules/lingui/lingui.server.ts'
+import {
+	linguiServer,
+	serializeLocaleCookie,
+} from './modules/lingui/lingui.server.ts'
 import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
@@ -416,6 +420,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			impersonationInfo,
 			cookieConsent,
 			launchStatus: getLaunchStatus(),
+			operatorCookieDomain: operatorSharedCookieDomain(request) ?? null,
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
@@ -431,7 +436,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			headers: combineHeaders(
 				{
 					'Server-Timing': timings.toString(),
-					'Set-Cookie': await localeCookie.serialize(locale),
+					'Set-Cookie': await serializeLocaleCookie(locale, request),
 				},
 				toastHeaders,
 				utmHeaders,
@@ -483,7 +488,10 @@ function Document({
 			}
 		>
 			<head>
-				<ClientHintCheck nonce={nonce} />
+				<ClientHintCheck
+					nonce={nonce}
+					cookieDomain={data?.operatorCookieDomain ?? undefined}
+				/>
 				<Meta />
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />

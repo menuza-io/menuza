@@ -1,11 +1,38 @@
 import * as cookie from 'cookie'
 
-const key = 'redirectTo'
-export const destroyRedirectToHeader = cookie.serialize(key, '', { maxAge: -1 })
+import { operatorSharedCookieDomain } from './cookie-domain.server.js'
 
-export function getRedirectCookieHeader(redirectTo?: string) {
+const key = 'redirectTo'
+
+function redirectCookieOptions(request?: Request) {
+	const domain = request ? operatorSharedCookieDomain(request) : undefined
+	return {
+		path: '/',
+		sameSite: 'lax' as const,
+		...(domain ? { domain } : {}),
+	}
+}
+
+export function destroyRedirectToHeader(request?: Request) {
+	return cookie.serialize(key, '', {
+		maxAge: -1,
+		...redirectCookieOptions(request),
+	})
+}
+
+export function destroyRedirectToHeaders(request?: Request) {
+	return { 'set-cookie': destroyRedirectToHeader(request) } as const
+}
+
+export function getRedirectCookieHeader(
+	redirectTo?: string,
+	request?: Request,
+) {
 	return redirectTo && redirectTo !== '/'
-		? cookie.serialize(key, redirectTo, { maxAge: 60 * 10 })
+		? cookie.serialize(key, redirectTo, {
+				maxAge: 60 * 10,
+				...redirectCookieOptions(request),
+			})
 		: null
 }
 

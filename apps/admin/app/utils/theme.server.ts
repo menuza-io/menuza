@@ -1,7 +1,7 @@
 import {
+	operatorSharedCookieDomain,
 	operatorThemeCookieName,
 	sharedCookieDomain,
-	sharedCookieDomainFromHost,
 } from '@repo/common/cookie-domain'
 import * as cookie from 'cookie'
 
@@ -16,8 +16,9 @@ export function getTheme(request: Request): Theme | null {
 }
 
 export function setTheme(theme: Theme | 'system', request?: Request) {
-	const host = request?.headers.get('host')
-	const domain = host ? sharedCookieDomainFromHost(host) : sharedCookieDomain()
+	const domain = request
+		? operatorSharedCookieDomain(request)
+		: sharedCookieDomain()
 	const cookieOptions = {
 		path: '/',
 		...(domain ? { domain } : {}),

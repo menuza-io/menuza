@@ -9,6 +9,7 @@ import {
 	time,
 } from '@repo/common'
 import { getCookieConsentState } from '@repo/common/cookie-consent'
+import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { pipeHeaders } from '@repo/common/headers'
 import { getSidebarState } from '@repo/common/sidebar-cookie'
 import { getToast } from '@repo/common/toast'
@@ -39,7 +40,10 @@ import { ImpersonationBanner } from './components/impersonation-banner.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
 import { useToast } from './components/toaster.tsx'
 import iconsHref from './components/ui/icons/sprite.svg?url'
-import { linguiServer, localeCookie } from './modules/lingui/lingui.server.ts'
+import {
+	linguiServer,
+	serializeLocaleCookie,
+} from './modules/lingui/lingui.server.ts'
 import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
 import './styles/tailwind.css'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
@@ -165,6 +169,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			locale,
 			impersonationInfo,
 			cookieConsent,
+			operatorCookieDomain: operatorSharedCookieDomain(request) ?? null,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,
@@ -174,7 +179,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			headers: combineHeaders(
 				{
 					'Server-Timing': timings.toString(),
-					'Set-Cookie': await localeCookie.serialize(locale),
+					'Set-Cookie': await serializeLocaleCookie(locale, request),
 				},
 				toastHeaders,
 				utmHeaders,
@@ -197,7 +202,7 @@ function Document({
 	env: Record<string, any>
 }) {
 	const allowIndexing = env.ALLOW_INDEXING !== false
-	const { locale } = useLoaderData<typeof loader>()
+	const { locale, operatorCookieDomain } = useLoaderData<typeof loader>()
 	const direction = getDirection(locale)
 
 	return (
@@ -207,7 +212,10 @@ function Document({
 			className={`${theme} h-full overflow-x-hidden`}
 		>
 			<head>
-				<ClientHintCheck nonce={nonce} />
+				<ClientHintCheck
+					nonce={nonce}
+					cookieDomain={operatorCookieDomain ?? undefined}
+				/>
 				<Meta />
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />

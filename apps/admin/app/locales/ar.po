@@ -179,8 +179,8 @@ msgstr "قبول"
 msgid "Access Denied"
 msgstr "تم رفض الوصول"
 
-#: app/routes/_admin+/waitlist.tsx:304
-#: app/routes/_admin+/waitlist.tsx:414
+#: app/routes/_admin+/waitlist.tsx:334
+#: app/routes/_admin+/waitlist.tsx:444
 msgid "Access Granted"
 msgstr "تم منح الوصول"
 
@@ -210,7 +210,7 @@ msgstr "فشل الإجراء"
 #: app/routes/_admin+/marketing+/automations._index.tsx:223
 #: app/routes/_admin+/roles+/index.tsx:417
 #: app/routes/_admin+/roles+/index.tsx:461
-#: app/routes/_admin+/waitlist.tsx:355
+#: app/routes/_admin+/waitlist.tsx:385
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -300,6 +300,21 @@ msgstr "إضافة تجاوز"
 msgid "Add permission"
 msgstr "إضافة صلاحية"
 
+#: app/routes/_admin+/waitlist.tsx:463
+#: app/routes/_admin+/waitlist.tsx:519
+msgid "Add points"
+msgstr "إضافة نقاط"
+
+#. placeholder {0}: entry.user.name ?? entry.user.username
+#. placeholder {1}: entry.points
+#: app/routes/_admin+/waitlist.tsx:473
+msgid "Add points to {0}'s current total of {1}."
+msgstr "أضف نقاطاً إلى إجمالي {0} الحالي البالغ {1}."
+
+#: app/routes/_admin+/waitlist.tsx:470
+msgid "Add waitlist points"
+msgstr "إضافة نقاط قائمة الانتظار"
+
 #: app/components/admin-sidebar.tsx:139
 #: app/components/admin-sidebar.tsx:147
 #: app/components/sso-configuration-form.tsx:392
@@ -376,7 +391,7 @@ msgstr "جميع مشغّلي المستأجرين"
 msgid "All types"
 msgstr "جميع الأنواع"
 
-#: app/routes/_admin+/waitlist.tsx:302
+#: app/routes/_admin+/waitlist.tsx:332
 msgid "All Users"
 msgstr "جميع المستخدمين"
 
@@ -680,6 +695,7 @@ msgstr "اسم الحملة"
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:659
 #: app/routes/_admin+/roles+/index.tsx:352
+#: app/routes/_admin+/waitlist.tsx:515
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -1133,7 +1149,7 @@ msgstr "تجاهل"
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
 
-#: app/routes/_admin+/waitlist.tsx:346
+#: app/routes/_admin+/waitlist.tsx:376
 msgid "Discord"
 msgstr "Discord"
 
@@ -1254,7 +1270,7 @@ msgstr "القيمة الفعالة"
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:236
-#: app/routes/_admin+/waitlist.tsx:337
+#: app/routes/_admin+/waitlist.tsx:367
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -1329,6 +1345,10 @@ msgstr "مفعل"
 #: app/routes/_admin+/audit-logs.tsx:274
 msgid "End Date"
 msgstr "تاريخ الانتهاء"
+
+#: app/routes/_admin+/waitlist.tsx:505
+msgid "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
+msgstr "أدخل عدداً صحيحاً من 1 إلى {MAX_ADMIN_POINTS_ADJUSTMENT}."
 
 #: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
@@ -1492,7 +1512,7 @@ msgstr "تصفية حسب المؤسسة"
 
 #: app/routes/_admin+/audit-logs.tsx:246
 #: app/routes/_admin+/gdpr-requests.tsx:474
-#: app/routes/_admin+/waitlist.tsx:283
+#: app/routes/_admin+/waitlist.tsx:313
 msgid "Filters"
 msgstr "المرشحات"
 
@@ -1584,7 +1604,7 @@ msgstr "الانتقال إلى الصفحة التالية"
 msgid "Go to previous page"
 msgstr "الانتقال إلى الصفحة السابقة"
 
-#: app/routes/_admin+/waitlist.tsx:451
+#: app/routes/_admin+/waitlist.tsx:553
 msgid "Grant Access"
 msgstr "منح الوصول"
 
@@ -1782,7 +1802,7 @@ msgstr "رابط المُصدر"
 msgid "Issuer URL:"
 msgstr "رابط المُصدر:"
 
-#: app/routes/_admin+/waitlist.tsx:349
+#: app/routes/_admin+/waitlist.tsx:379
 msgid "Joined"
 msgstr "انضم"
 
@@ -1855,7 +1875,7 @@ msgstr "آخر وكيل مستخدم"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_admin+/waitlist.tsx:269
+#: app/routes/_admin+/waitlist.tsx:299
 msgid "Launch status is currently <0>{launchStatus}</0>. The waitlist is only active when LAUNCH_STATUS is set to CLOSED_BETA."
 msgstr "حالة الإطلاق حالياً <0>{launchStatus}</0>. قائمة الانتظار نشطة فقط عندما يتم تعيين LAUNCH_STATUS إلى CLOSED_BETA."
 
@@ -1949,7 +1969,7 @@ msgstr "إدارة المستخدمين الذين يصادقون من خلال 
 msgid "Manage users, organizations, and system settings"
 msgstr "إدارة المستخدمين والمؤسسات وإعدادات النظام"
 
-#: app/routes/_admin+/waitlist.tsx:256
+#: app/routes/_admin+/waitlist.tsx:286
 msgid "Manage waitlist users and grant early access"
 msgstr "إدارة مستخدمي قائمة الانتظار ومنح الوصول المبكر"
 
@@ -2086,7 +2106,7 @@ msgstr "أتمتة منصة جديدة"
 
 #: app/routes/_admin+/audit-logs.tsx:445
 #: app/routes/_admin+/gdpr-requests.tsx:726
-#: app/routes/_admin+/waitlist.tsx:523
+#: app/routes/_admin+/waitlist.tsx:626
 msgid "Next"
 msgstr "التالي"
 
@@ -2222,7 +2242,7 @@ msgstr "لم يتحقق أي مستخدمين من خلال SSO حتى الآن.
 msgid "No users have been tracked for this IP address"
 msgstr "لم يتم تتبع أي مستخدمين لعنوان IP هذا"
 
-#: app/routes/_admin+/waitlist.tsx:366
+#: app/routes/_admin+/waitlist.tsx:396
 msgid "No waitlist entries found"
 msgstr "لم يتم العثور على إدخالات قائمة الانتظار"
 
@@ -2414,11 +2434,11 @@ msgstr "متوقف مؤقتاً"
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
 
-#: app/routes/_admin+/waitlist.tsx:418
+#: app/routes/_admin+/waitlist.tsx:448
 msgid "Pending"
 msgstr "قيد الانتظار"
 
-#: app/routes/_admin+/waitlist.tsx:303
+#: app/routes/_admin+/waitlist.tsx:333
 msgid "Pending Access"
 msgstr "الوصول قيد الانتظار"
 
@@ -2512,13 +2532,17 @@ msgstr "تسويق المنصة"
 msgid "Platform test runs are not yet wired to execution."
 msgstr "تشغيلات اختبار المنصة غير موصولة بالتنفيذ بعد."
 
-#: app/routes/_admin+/waitlist.tsx:340
+#: app/routes/_admin+/waitlist.tsx:370
 msgid "Points"
 msgstr "النقاط"
 
+#: app/routes/_admin+/waitlist.tsx:493
+msgid "Points to add"
+msgstr "النقاط المُضافة"
+
 #: app/routes/_admin+/audit-logs.tsx:437
 #: app/routes/_admin+/gdpr-requests.tsx:716
-#: app/routes/_admin+/waitlist.tsx:477
+#: app/routes/_admin+/waitlist.tsx:580
 msgid "Previous"
 msgstr "السابق"
 
@@ -2586,7 +2610,7 @@ msgstr "الإجراءات السريعة"
 msgid "Quick apply industry-standard retention policies"
 msgstr "تطبيق سريع لسياسات الاحتفاظ بمعايير الصناعة"
 
-#: app/routes/_admin+/waitlist.tsx:331
+#: app/routes/_admin+/waitlist.tsx:361
 msgid "Rank"
 msgstr "الترتيب"
 
@@ -2647,7 +2671,7 @@ msgstr "مستلمين"
 msgid "Recipients"
 msgstr "المستلمون"
 
-#: app/routes/_admin+/waitlist.tsx:343
+#: app/routes/_admin+/waitlist.tsx:373
 msgid "Referrals"
 msgstr "الإحالات"
 
@@ -2724,7 +2748,7 @@ msgstr "العودة إلى التطبيق"
 msgid "Revocation URL (Optional)"
 msgstr "رابط الإلغاء (اختياري)"
 
-#: app/routes/_admin+/waitlist.tsx:439
+#: app/routes/_admin+/waitlist.tsx:541
 msgid "Revoke"
 msgstr "إلغاء"
 
@@ -2899,7 +2923,7 @@ msgstr "بحث"
 msgid "Search automations..."
 msgstr "البحث في الأتمتة..."
 
-#: app/routes/_admin+/waitlist.tsx:291
+#: app/routes/_admin+/waitlist.tsx:321
 msgid "Search by name, email, or username..."
 msgstr "البحث بالاسم أو البريد الإلكتروني أو اسم المستخدم..."
 
@@ -3038,7 +3062,7 @@ msgstr "عرض {showing} من {totalEvents} حدث"
 msgid "Showing {showing} of {totalRequests} requests"
 msgstr "عرض {showing} من {totalRequests} طلب"
 
-#: app/routes/_admin+/waitlist.tsx:466
+#: app/routes/_admin+/waitlist.tsx:569
 msgid "Showing {startEntry} to {endEntry} of {totalCount} entries"
 msgstr "عرض {startEntry} إلى {endEntry} من {totalCount} إدخال"
 
@@ -3106,15 +3130,15 @@ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 �
 msgid "Solid"
 msgstr "ممتلئ"
 
-#: app/routes/_admin+/waitlist.tsx:314
+#: app/routes/_admin+/waitlist.tsx:344
 msgid "Sort by Date"
 msgstr "الترتيب حسب التاريخ"
 
-#: app/routes/_admin+/waitlist.tsx:313
+#: app/routes/_admin+/waitlist.tsx:343
 msgid "Sort by Points"
 msgstr "الترتيب حسب النقاط"
 
-#: app/routes/_admin+/waitlist.tsx:312
+#: app/routes/_admin+/waitlist.tsx:342
 msgid "Sort by Rank"
 msgstr "الترتيب حسب الترتيب"
 
@@ -3189,7 +3213,7 @@ msgstr "ابدأ بقالب"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:209
-#: app/routes/_admin+/waitlist.tsx:352
+#: app/routes/_admin+/waitlist.tsx:382
 msgid "Status"
 msgstr "الحالة"
 
@@ -3559,7 +3583,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 #: app/components/admin/feature-flags.tsx:752
 #: app/components/sso-user-management.tsx:162
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:233
-#: app/routes/_admin+/waitlist.tsx:334
+#: app/routes/_admin+/waitlist.tsx:364
 msgid "User"
 msgstr "المستخدم"
 
@@ -3670,11 +3694,11 @@ msgstr "انتظر مدة محددة قبل الخطوة التالية"
 msgid "Waitlist"
 msgstr "قائمة الانتظار"
 
-#: app/routes/_admin+/waitlist.tsx:323
+#: app/routes/_admin+/waitlist.tsx:353
 msgid "Waitlist Entries ({totalCount})"
 msgstr "إدخالات قائمة الانتظار ({totalCount})"
 
-#: app/routes/_admin+/waitlist.tsx:253
+#: app/routes/_admin+/waitlist.tsx:283
 msgid "Waitlist Management"
 msgstr "إدارة قائمة الانتظار"
 

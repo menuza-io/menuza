@@ -8,7 +8,7 @@ import { ProviderNameSchema, providerLabels } from '@repo/auth/constants'
 import { combineHeaders } from '@repo/common'
 import { ensurePrimary } from '@repo/common/litefs'
 import {
-	destroyRedirectToHeader,
+	destroyRedirectToHeaders,
 	getRedirectCookieValue,
 } from '@repo/common/redirect-cookie'
 import { createToastHeaders, redirectWithToast } from '@repo/common/toast'
@@ -23,8 +23,6 @@ import { type Route } from './+types/auth.$provider.callback.ts'
 import { handleNewSession } from './login.server.ts'
 import { onboardingEmailSessionKey } from './onboarding.tsx'
 import { prefilledProfileKey, providerIdKey } from './onboarding_.$provider.tsx'
-
-const destroyRedirectTo = { 'set-cookie': destroyRedirectToHeader }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	// this loader performs mutations, so we need to make sure we're on the
@@ -59,7 +57,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				description: `There was an error authenticating with ${label}.`,
 				type: 'error',
 			},
-			{ headers: destroyRedirectTo },
+			{ headers: destroyRedirectToHeaders(request) },
 		)
 	}
 
@@ -86,7 +84,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					title: 'Already Connected',
 					description: `Your "${profile.username}" ${label} account is already connected.`,
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		} else {
 			return redirectWithToast(
@@ -95,7 +93,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					title: 'Already Connected',
 					description: `The "${profile.username}" ${label} account is already connected to another account.`,
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
 	}
@@ -114,7 +112,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				type: 'success',
 				description: `Your "${profile.username}" ${label} account has been connected.`,
 			},
-			{ headers: destroyRedirectTo },
+			{ headers: destroyRedirectToHeaders(request) },
 		)
 	}
 
@@ -130,10 +128,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					description: `Your organization "${ssoEnforcement.organizationName}" requires SSO login.`,
 					type: 'message',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
-		return makeSession({ request, userId: existingConnection.userId })
+		return makeSession({
+			request,
+			userId: existingConnection.userId,
+			redirectTo,
+		})
 	}
 
 	// if the email matches a user in the db, then link the account and
@@ -154,7 +156,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					description: `Your organization "${ssoEnforcement.organizationName}" requires SSO login.`,
 					type: 'message',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
 
@@ -164,7 +166,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			userId: user.id,
 		})
 		return makeSession(
-			{ request, userId: user.id },
+			{ request, userId: user.id, redirectTo },
 			{
 				headers: await createToastHeaders({
 					title: 'Connected',
@@ -175,7 +177,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}
 
 	// this is a new user, so let's get them onboarded
-	const verifySession = await verifySessionStorage.getSession()
+	const verifySession = await verifySessionStorage.getSession(
+		request.headers.get('cookie'),
+	)
 	verifySession.set(onboardingEmailSessionKey, profile.email)
 	verifySession.set(prefilledProfileKey, {
 		...profile,
@@ -195,7 +199,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return redirect(onboardingRedirect, {
 		headers: combineHeaders(
 			{ 'set-cookie': await verifySessionStorage.commitSession(verifySession) },
-			destroyRedirectTo,
+			destroyRedirectToHeaders(request),
 		),
 	})
 }
@@ -214,7 +218,10 @@ async function makeSession(
 	const allowed = await canUserLogin(userId)
 	if (!allowed) {
 		return redirect('/login?banned=true', {
-			headers: combineHeaders(responseInit?.headers, destroyRedirectTo),
+			headers: combineHeaders(
+				responseInit?.headers,
+				destroyRedirectToHeaders(request),
+			),
 		})
 	}
 
@@ -240,6 +247,11 @@ async function makeSession(
 	if (!session) throw new Error('Failed to create session')
 	return handleNewSession(
 		{ request, session, redirectTo, remember: false },
-		{ headers: combineHeaders(responseInit?.headers, destroyRedirectTo) },
+		{
+			headers: combineHeaders(
+				responseInit?.headers,
+				destroyRedirectToHeaders(request),
+			),
+		},
 	)
 }
