@@ -24,7 +24,11 @@ import { Separator } from '@repo/ui/separator'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { redirect } from 'react-router'
-import { getLaunchStatus, getDiscordInviteUrl } from '#app/utils/env.server.ts'
+import {
+	getDiscordInviteUrl,
+	getLaunchStatus,
+	getWhatsAppGroupInviteUrl,
+} from '#app/utils/env.server.ts'
 import {
 	getOrCreateWaitlistEntry,
 	calculateUserRank,
@@ -61,9 +65,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url)
 	const baseUrl = `${url.protocol}//${url.host}`
 	const referralUrl = `${baseUrl}/r/${waitlistEntry.referralCode}`
+	const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
+		`Join me on the waitlist: ${referralUrl}`,
+	)}`
 
 	// Get Discord configuration
 	const discordInviteUrl = getDiscordInviteUrl()
+	const whatsappGroupInviteUrl = getWhatsAppGroupInviteUrl()
 	const hasDiscordOAuth =
 		!!process.env.DISCORD_CLIENT_ID &&
 		!!process.env.DISCORD_CLIENT_SECRET &&
@@ -80,7 +88,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		rank,
 		totalUsers,
 		referralUrl,
+		whatsappShareUrl,
 		discordInviteUrl,
+		whatsappGroupInviteUrl,
 		hasDiscordOAuth,
 	}
 }
@@ -173,7 +183,9 @@ export default function WaitlistPage({ loaderData }: Route.ComponentProps) {
 		rank,
 		totalUsers,
 		referralUrl,
+		whatsappShareUrl,
 		discordInviteUrl,
+		whatsappGroupInviteUrl,
 		hasDiscordOAuth,
 	} = loaderData
 	const [copied, setCopied] = useState(false)
@@ -326,6 +338,19 @@ export default function WaitlistPage({ loaderData }: Route.ComponentProps) {
 									</InputGroup>
 								</FieldContent>
 							</Field>
+							<Button
+								className="bg-primary text-primary-foreground hover:bg-chart-4 w-full"
+								render={
+									<a
+										href={whatsappShareUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									/>
+								}
+							>
+								<Icon name="message-circle" className="mr-2 h-4 w-4" />
+								<Trans>Share on WhatsApp</Trans>
+							</Button>
 							{referralCount > 0 && (
 								<p className="text-primary text-xs font-medium">
 									<Plural
@@ -392,6 +417,38 @@ export default function WaitlistPage({ loaderData }: Route.ComponentProps) {
 								</div>
 							)}
 						</WaitlistActionRow>
+
+						{whatsappGroupInviteUrl && (
+							<WaitlistActionRow
+								icon="message-circle"
+								title={<Trans>Join our WhatsApp group</Trans>}
+								badge={<Trans>Community</Trans>}
+								delay={shouldReduceMotion ? 0 : 0.42}
+								shouldReduceMotion={shouldReduceMotion}
+							>
+								<div className="flex flex-col gap-2">
+									<Button
+										className="bg-primary text-primary-foreground hover:bg-chart-4 w-full"
+										render={
+											<a
+												href={whatsappGroupInviteUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+											/>
+										}
+									>
+										<Icon name="message-circle" className="mr-2 h-4 w-4" />
+										<Trans>Join WhatsApp group</Trans>
+									</Button>
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											Meet other members and share updates in the group. An
+											admin can add community points after you join.
+										</Trans>
+									</p>
+								</div>
+							</WaitlistActionRow>
+						)}
 					</div>
 				</CardContent>
 

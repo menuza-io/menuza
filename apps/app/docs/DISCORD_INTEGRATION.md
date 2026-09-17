@@ -12,6 +12,23 @@ The Discord integration allows waitlist users to:
 2. Verify their Discord membership through OAuth
 3. Automatically earn +2 points after verification
 
+## WhatsApp Community Groups
+
+The waitlist also supports a WhatsApp group for communities where Discord is not
+a natural fit, such as restaurant and local-business startups. Set the optional
+invite URL in the app environment:
+
+```bash
+WHATSAPP_GROUP_INVITE_URL="https://chat.whatsapp.com/your-group-invite"
+```
+
+The waitlist will show both a `Share on WhatsApp` referral action and a
+`Join our WhatsApp group` action. WhatsApp does not provide a membership check
+for this invite flow, so group participation is intentionally manual: an admin
+can open **Admin → Waitlist**, choose **Add points**, and award the appropriate
+amount after confirming that the person joined. Admin awards accept whole
+numbers from 1 to 1,000 points.
+
 ## Setup Instructions
 
 ### 1. Create a Discord Application

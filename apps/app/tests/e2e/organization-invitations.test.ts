@@ -492,6 +492,79 @@ test.describe('Email invitations', () => {
 })
 
 test.describe('Shareable invite links', () => {
+	test('Unauthenticated users keep the invite link through signup', async ({
+		page,
+		navigate,
+	}) => {
+		const owner = await createUserRecord()
+		const org = await createOrgWithAdmin(owner.id)
+		const link = await insertInviteLink({
+			organizationId: org.id,
+			createdById: owner.id,
+		})
+
+		await navigate('/join/:token', { token: link.token })
+
+		const redirectTo = `/join/${link.token}`
+		await expect(page).toHaveURL(
+			new RegExp(`/signup\\?redirectTo=${encodeURIComponent(redirectTo)}`),
+		)
+		await expect(
+			page.getByText('Join organization', { exact: true }),
+		).toBeVisible()
+		await expect(page.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+			'href',
+			`/login?redirectTo=${encodeURIComponent(redirectTo)}`,
+		)
+	})
+
+	test('New social signups keep the invitation through onboarding', async ({
+		page,
+		navigate,
+		prepareGitHubUser,
+	}) => {
+		const githubUser = await prepareGitHubUser()
+		const owner = await createUserRecord()
+		const org = await createOrgWithAdmin(owner.id)
+		const link = await insertInviteLink({
+			organizationId: org.id,
+			createdById: owner.id,
+		})
+
+		await navigate('/join/:token', { token: link.token })
+		await page.getByRole('button', { name: /signup with github/i }).click()
+		await expect(page).toHaveURL(/\/onboarding\/github/)
+
+		await page
+			.getByRole('textbox', { name: /^username/i })
+			.fill(faker.internet.username())
+		await page.getByRole('textbox', { name: /full name/i }).fill('Invitee')
+		await page
+			.getByRole('checkbox', {
+				name: /i agree to the terms of service and privacy policy/i,
+			})
+			.check()
+		await page.getByRole('button', { name: /create account/i }).click()
+
+		await expect(page).toHaveURL(/\/organizations/)
+		await expect(page.getByText(org.name, { exact: true })).toBeVisible()
+
+		const [pending] = await db
+			.select()
+			.from(OrganizationInvitation)
+			.where(
+				and(
+					eq(OrganizationInvitation.organizationId, org.id),
+					eq(
+						OrganizationInvitation.email,
+						githubUser.primaryEmail.toLowerCase(),
+					),
+				),
+			)
+			.limit(1)
+		expect(pending?.organizationRoleId).toBe('org_role_member')
+	})
+
 	test('Admin can create a reusable invite link', async ({
 		page,
 		login,

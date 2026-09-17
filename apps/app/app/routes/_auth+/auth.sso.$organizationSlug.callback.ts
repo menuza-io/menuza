@@ -3,7 +3,7 @@ import { combineHeaders } from '@repo/common'
 import { getClientIp } from '@repo/common/ip-tracking'
 import { ensurePrimary } from '@repo/common/litefs'
 import {
-	destroyRedirectToHeader,
+	destroyRedirectToHeaders,
 	getRedirectCookieValue,
 } from '@repo/common/redirect-cookie'
 import { createToastHeaders, redirectWithToast } from '@repo/common/toast'
@@ -30,8 +30,6 @@ import { trackSuspiciousActivity } from '#app/utils/sso/rate-limit.server.ts'
 import { validateSSOOrganization } from '#app/utils/sso/sanitization.server.ts'
 import { type Route } from './+types/auth.sso.$organizationSlug.callback.ts'
 import { handleNewSession } from './login.server.ts'
-
-const destroyRedirectTo = { 'set-cookie': destroyRedirectToHeader }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	// this loader performs mutations, so we need to make sure we're on the
@@ -96,7 +94,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				callbackData.error,
 				callbackData.error_description,
 			)
-			throw await handleSSOError(oauthError)
+			throw await handleSSOError(oauthError, '/login', request)
 		}
 
 		if (!callbackData.code) {
@@ -105,7 +103,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				SSOErrorType.INVALID_CALLBACK,
 				'No authorization code received from identity provider',
 			)
-			throw await handleSSOError(error)
+			throw await handleSSOError(error, '/login', request)
 		}
 
 		const redirectTo = getRedirectCookieValue(request)
@@ -124,7 +122,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						'The organization you are trying to access does not exist.',
 					type: 'error',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
 
@@ -141,7 +139,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						'Single Sign-On is not configured for this organization.',
 					type: 'error',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
 
@@ -154,7 +152,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						'Single Sign-On is temporarily disabled for this organization.',
 					type: 'error',
 				},
-				{ headers: destroyRedirectTo },
+				{ headers: destroyRedirectToHeaders(request) },
 			)
 		}
 
@@ -163,8 +161,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			await consumeNonce(request)
 
 		const cleanupHeaders = nonceCookieHeader
-			? combineHeaders(destroyRedirectTo, { 'set-cookie': nonceCookieHeader })
-			: destroyRedirectTo
+			? combineHeaders(destroyRedirectToHeaders(request), {
+					'set-cookie': nonceCookieHeader,
+				})
+			: destroyRedirectToHeaders(request)
 
 		// Handle OAuth callback with nonce for ID token validation
 		const authResult = await ssoAuthService
@@ -290,7 +290,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				? error.message
 				: 'Unexpected error during SSO callback',
 		)
-		throw await handleSSOError(ssoError)
+		throw await handleSSOError(ssoError, '/login', request)
 	}
 }
 
@@ -318,7 +318,10 @@ async function makeSession(
 	const allowed = await canUserLogin(user.id)
 	if (!allowed) {
 		return redirect('/login?banned=true', {
-			headers: combineHeaders(responseInit?.headers, destroyRedirectTo),
+			headers: combineHeaders(
+				responseInit?.headers,
+				destroyRedirectToHeaders(request),
+			),
 		})
 	}
 
@@ -351,7 +354,7 @@ async function makeSession(
 		{
 			headers: combineHeaders(
 				responseInit?.headers,
-				destroyRedirectTo,
+				destroyRedirectToHeaders(request),
 				await createToastHeaders({
 					title: 'Welcome!',
 					description:

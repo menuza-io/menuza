@@ -62,6 +62,11 @@ function isLocalhostHostname(host: string): boolean {
 	)
 }
 
+/** RFC 2606 `.test` — local dev hostnames in `.env.schema` (not production apexes). */
+function isDevTestHostname(host: string): boolean {
+	return host === 'test' || host.endsWith('.test')
+}
+
 /**
  * Amp orbs serve App and Admin from sibling portal hostnames
  * (`t-<thread>-p<port>.<portal-domain>`), so the operator session has to live on
@@ -90,11 +95,12 @@ function orbPortalCookieScope(
 /**
  * Cookie Domain for operator auth sessions (`en_session`, `en_imp_session`).
  *
- * `BASE_URL` is often a `*.test` hostname for OAuth redirect URIs while local
- * dev and Playwright still hit `http://localhost:{port}`. A BASE_URL-derived
- * apex domain would block the browser from storing the cookie on localhost.
- * When `MOCKS=true` (local `npm run dev` and CI E2E), use host-only cookies
- * unless BASE_URL is already localhost-shaped (including `app.localhost`).
+ * Playwright and some flows use `http://localhost:{port}` while `BASE_URL` may
+ * still point at a production-shaped apex. Setting `Domain` from that apex would
+ * prevent the browser from storing the cookie on localhost. When `MOCKS=true`
+ * (local `npm run dev` and CI E2E), use host-only cookies unless `BASE_URL` is
+ * localhost-shaped (including `app.localhost`) or a reserved `.test` dev hostname
+ * (`app.epic-startup.test`) that matches how local HTTPS dev is served.
  */
 export function operatorSessionCookieDomain(
 	origin = runtimeBaseUrl(),
@@ -107,12 +113,83 @@ export function operatorSessionCookieDomain(
 
 	if (process.env.MOCKS === 'true') {
 		const host = originHostname(origin)
-		if (host && !isLocalhostHostname(host)) {
+		if (host && !isLocalhostHostname(host) && !isDevTestHostname(host)) {
 			return undefined
 		}
 	}
 
 	return fromOrigin
+}
+
+/**
+ * Domain for operator UI cookies (locale, theme, client hints, redirectTo).
+ * Uses the request Host first so localhost E2E stays host-only when BASE_URL
+ * is configured for OAuth on `*.test`; falls back to session cookie rules.
+ */
+export function operatorSharedCookieDomain(
+	request?: Request | null,
+): string | undefined {
+	if (!request) return operatorSessionCookieDomain()
+
+	const host =
+		request.headers.get('x-forwarded-host') ??
+		request.headers.get('host') ??
+		new URL(request.url).host
+
+	const fromHost = sharedCookieDomainFromHost(host)
+	if (fromHost) return fromHost
+
+	const hostname = host.split(':')[0]?.toLowerCase() ?? ''
+	if (isLocalhostHostname(hostname)) return undefined
+
+	return operatorSessionCookieDomain()
+}
+
+/** Public origin for CSRF checks behind reverse proxies (Cloudflare, etc.). */
+export function requestPublicOrigin(request: Request): string {
+	const url = new URL(request.url)
+	const forwardedHost = request.headers
+		.get('x-forwarded-host')
+		?.split(',')[0]
+		?.trim()
+	if (forwardedHost) {
+		url.host = forwardedHost
+	} else {
+		const host = request.headers.get('host')
+		if (host) url.host = host
+	}
+	const forwardedProto = request.headers
+		.get('x-forwarded-proto')
+		?.split(',')[0]
+		?.trim()
+	if (forwardedProto) {
+		url.protocol = `${forwardedProto}:`
+	}
+	return url.origin
+}
+
+/**
+ * Parent-domain consent/theme cookies for the marketing site (`www` / apex).
+ * Uses host-only cookies on localhost so dev on `:3002` is not paired with
+ * `Domain=.epic-startup.test` from env defaults.
+ */
+export function marketingSharedCookieDomain(
+	request: Request,
+	publicRootApp?: string | null,
+): string | undefined {
+	const host =
+		request.headers.get('x-forwarded-host') ??
+		request.headers.get('host') ??
+		new URL(request.url).host
+	const hostname = host.split(':')[0]?.toLowerCase() ?? ''
+	if (isLocalhostHostname(hostname)) return undefined
+
+	const root = publicRootApp?.trim().replace(/^\.+/, '')
+	if (root && !isLocalhostHostname(root)) {
+		return `.${root}`
+	}
+
+	return operatorSharedCookieDomain(request)
 }
 
 export function isStagingOperatorHost(

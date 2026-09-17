@@ -7,6 +7,7 @@ import {
 	gt,
 	lt,
 	or,
+	sql,
 	WaitlistEntry,
 	User,
 } from '@repo/database'
@@ -14,6 +15,7 @@ import { getLaunchStatus } from './env.server.ts'
 
 const REFERRAL_POINTS = 5
 const DISCORD_POINTS = 2
+export const MAX_ADMIN_POINTS_ADJUSTMENT = 1000
 
 export async function generateReferralCode(username: string): Promise<string> {
 	while (true) {
@@ -136,6 +138,28 @@ export async function awardDiscordPoints(userId: string) {
 		.update(WaitlistEntry)
 		.set({ hasJoinedDiscord: true, points: entry.points + DISCORD_POINTS })
 		.where(eq(WaitlistEntry.id, entry.id))
+}
+
+export async function addWaitlistPoints(userId: string, points: number) {
+	if (
+		!Number.isSafeInteger(points) ||
+		points < 1 ||
+		points > MAX_ADMIN_POINTS_ADJUSTMENT
+	) {
+		throw new Error(
+			`Points must be a whole number between 1 and ${MAX_ADMIN_POINTS_ADJUSTMENT}`,
+		)
+	}
+
+	const updatedEntries = await db
+		.update(WaitlistEntry)
+		.set({ points: sql`${WaitlistEntry.points} + ${points}` })
+		.where(eq(WaitlistEntry.userId, userId))
+		.returning({ id: WaitlistEntry.id })
+
+	if (updatedEntries.length === 0) {
+		throw new Error('Waitlist entry not found')
+	}
 }
 
 export async function linkReferral(userId: string, referralCode: string) {

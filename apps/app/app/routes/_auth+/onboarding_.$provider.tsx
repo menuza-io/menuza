@@ -44,7 +44,10 @@ import {
 
 import { signupWithConnection } from '#app/utils/auth.server.ts'
 import { type Route } from './+types/onboarding_.$provider.ts'
-import { onboardingEmailSessionKey } from './onboarding'
+import {
+	onboardingEmailSessionKey,
+	onboardingInviteTokenSessionKey,
+} from './onboarding'
 
 export const providerIdKey = 'providerId'
 export const prefilledProfileKey = 'prefilledProfile'
@@ -113,6 +116,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('cookie'),
 	)
+	const inviteToken = verifySession.get(onboardingInviteTokenSessionKey)
 
 	const submission = await parseWithZod(formData, {
 		schema: SignupFormSchema.superRefine(async (data, ctx) => {
@@ -166,6 +170,29 @@ export async function action({ request, params }: Route.ActionArgs) {
 		'set-cookie',
 		await verifySessionStorage.destroySession(verifySession),
 	)
+
+	if (typeof inviteToken === 'string') {
+		try {
+			const { createInvitationFromLink } =
+				await import('#app/utils/organization/invitation.server.ts')
+			const invitation = await createInvitationFromLink(inviteToken, email)
+			if (!invitation) throw new Error('Invitation could not be created')
+
+			const inviterName =
+				invitation.inviter?.name || invitation.inviter?.email || 'Someone'
+			const organizationName = invitation.organization.name
+			return redirectWithToast(
+				'/organizations',
+				{
+					title: t`Welcome!`,
+					description: t`Thanks for signing up! ${inviterName} has invited you to join ${organizationName}. Review the invitation below.`,
+				},
+				{ headers },
+			)
+		} catch (error) {
+			console.error('Error processing invite link during social signup:', error)
+		}
+	}
 
 	return redirectWithToast(
 		'/organizations',
