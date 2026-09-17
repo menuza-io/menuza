@@ -1,3 +1,4 @@
+import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import {
 	setCookieConsentState,
 	verifyCookieConsentRequestOrigin,
@@ -11,7 +12,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const formData = await request.formData()
 	const consent = formData.get('consent') === 'true'
-	const cookie = await setCookieConsentState(consent)
+	const cookie = await setCookieConsentState(
+		consent,
+		undefined,
+		operatorSharedCookieDomain(request),
+	)
 
 	const headers = new Headers()
 	headers.append('Set-Cookie', cookie)

@@ -24,7 +24,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 				typeof rawRedirectTo === 'string'
 					? rawRedirectTo
 					: getReferrerRoute(request)
-			const redirectToCookie = getRedirectCookieHeader(redirectTo)
+			const redirectToCookie = getRedirectCookieHeader(redirectTo, request)
 			if (redirectToCookie) {
 				error.headers.append('set-cookie', redirectToCookie)
 			}

@@ -45,7 +45,9 @@ vi.mock('../toast.server.ts', () => ({
 }))
 
 vi.mock('@repo/common/redirect-cookie', () => ({
-	destroyRedirectToHeader: 'redirect-to=; Max-Age=0',
+	destroyRedirectToHeaders: () => ({
+		'set-cookie': 'redirect-to=; Max-Age=0',
+	}),
 }))
 
 describe('SSO Error Handling Security Tests', () => {

@@ -166,6 +166,24 @@ test.describe('Waitlist Referral System', () => {
 		)
 	})
 
+	test('admins can add points to an existing waitlist entry', async ({
+		insertNewUser,
+	}) => {
+		const user = await insertNewUser()
+
+		await db.insert(WaitlistEntry).values({
+			userId: user.id,
+			referralCode: `${user.username}-3344`,
+			points: 1,
+		})
+
+		const { addWaitlistPoints } = await import('#app/utils/waitlist.server.ts')
+		await addWaitlistPoints(user.id, 7)
+
+		const updatedEntry = await getWaitlistEntryByUserId(user.id)
+		expect(updatedEntry?.points).toBe(8)
+	})
+
 	test('prevents self-referral', async ({ insertNewUser }) => {
 		const user = await insertNewUser()
 

@@ -12,6 +12,9 @@ import {
 	operatorThemeCookieName,
 	shouldApplyImpersonationToUserId,
 	operatorSessionCookieDomain,
+	operatorSharedCookieDomain,
+	marketingSharedCookieDomain,
+	requestPublicOrigin,
 	sharedCookieDomain,
 	sharedCookieDomainFromHost,
 } from './cookie-domain.server.ts'
@@ -167,10 +170,17 @@ describe('operatorSessionCookieDomain', () => {
 		expect(operatorSessionCookieDomain('http://localhost:3001')).toBeUndefined()
 	})
 
-	it('uses host-only cookies when MOCKS is on but BASE_URL is a dev hostname', () => {
+	it('shares .test apex when MOCKS is on and BASE_URL uses a .test hostname', () => {
+		process.env.MOCKS = 'true'
+		expect(operatorSessionCookieDomain('https://app.menuza.test:2999')).toBe(
+			'.menuza.test',
+		)
+	})
+
+	it('uses host-only cookies when MOCKS is on but BASE_URL is a non-test dev hostname', () => {
 		process.env.MOCKS = 'true'
 		expect(
-			operatorSessionCookieDomain('https://app.menuza.test:2999'),
+			operatorSessionCookieDomain('https://app.menuza.dev'),
 		).toBeUndefined()
 	})
 
@@ -179,6 +189,30 @@ describe('operatorSessionCookieDomain', () => {
 		expect(operatorSessionCookieDomain('http://app.localhost:3001')).toBe(
 			'.localhost',
 		)
+	})
+})
+
+describe('operatorSharedCookieDomain', () => {
+	const previousMocks = process.env.MOCKS
+	const previousBaseUrl = process.env.BASE_URL
+
+	afterEach(() => {
+		if (previousMocks === undefined) delete process.env.MOCKS
+		else process.env.MOCKS = previousMocks
+		if (previousBaseUrl === undefined) delete process.env.BASE_URL
+		else process.env.BASE_URL = previousBaseUrl
+	})
+
+	it('derives the apex from the request Host for operator apps', () => {
+		const request = new Request('https://app.epic-startup.test:2999/')
+		expect(operatorSharedCookieDomain(request)).toBe('.epic-startup.test')
+	})
+
+	it('stays host-only on localhost even when BASE_URL is .test', () => {
+		process.env.MOCKS = 'true'
+		process.env.BASE_URL = 'https://app.epic-startup.test:2999'
+		const request = new Request('http://localhost:3001/')
+		expect(operatorSharedCookieDomain(request)).toBeUndefined()
 	})
 })
 
@@ -220,9 +254,9 @@ describe('orb portal cookies', () => {
 	it('leaves non-portal origins alone inside orbs', () => {
 		process.env.AMP_ORB = '1'
 		process.env.MOCKS = 'true'
-		expect(
-			operatorSessionCookieDomain('https://app.menuza.test:2999'),
-		).toBeUndefined()
+		expect(operatorSessionCookieDomain('https://app.menuza.test:2999')).toBe(
+			'.menuza.test',
+		)
 		expect(operatorSessionCookieDomain('http://localhost:3001')).toBeUndefined()
 		expect(
 			operatorCookieName('en_session', 'https://app.menuza.test:2999'),
@@ -237,5 +271,45 @@ describe('orb portal cookies', () => {
 		expect(
 			operatorCookieName('en_session', 'https://t-abc-p21938.onamp.dev'),
 		).toBe('en_session')
+	})
+})
+
+describe('requestPublicOrigin', () => {
+	it('prefers forwarded host and proto over the worker URL', () => {
+		const request = new Request(
+			'https://epic-startup.workers.dev/api/cookie-consent',
+			{
+				method: 'POST',
+				headers: {
+					Host: 'www.example.com',
+					'X-Forwarded-Host': 'www.example.com',
+					'X-Forwarded-Proto': 'https',
+				},
+			},
+		)
+
+		expect(requestPublicOrigin(request)).toBe('https://www.example.com')
+	})
+})
+
+describe('marketingSharedCookieDomain', () => {
+	it('uses PUBLIC_ROOT_APP on the marketing apex', () => {
+		const request = new Request('https://www.example.com/', {
+			headers: { Host: 'www.example.com' },
+		})
+
+		expect(marketingSharedCookieDomain(request, 'example.com')).toBe(
+			'.example.com',
+		)
+	})
+
+	it('omits domain on localhost dev', () => {
+		const request = new Request('http://localhost:3002/', {
+			headers: { Host: 'localhost:3002' },
+		})
+
+		expect(
+			marketingSharedCookieDomain(request, 'epic-startup.test'),
+		).toBeUndefined()
 	})
 })

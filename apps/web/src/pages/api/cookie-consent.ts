@@ -1,3 +1,4 @@
+import { marketingSharedCookieDomain } from '@repo/common/cookie-domain'
 import {
 	setCookieConsentState,
 	verifyCookieConsentRequestOrigin,
@@ -34,11 +35,10 @@ export const POST: APIRoute = async ({ request }) => {
 		return new Response('Invalid cookie consent preference', { status: 400 })
 	}
 
-	const rootDomain = ENV.PUBLIC_ROOT_APP?.trim().replace(/^\.+/, '')
 	const cookie = await setCookieConsentState(
 		preference === 'true',
 		ENV.PUBLIC_APP_URL,
-		rootDomain ? `.${rootDomain}` : undefined,
+		marketingSharedCookieDomain(request, ENV.PUBLIC_ROOT_APP),
 	)
 
 	return new Response(null, {

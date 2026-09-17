@@ -393,7 +393,7 @@ export async function validateSSOOrganization(
 			'Too many failed authentication attempts',
 			`Activity key: ${activityKey}`,
 		)
-		throw await handleSSOError(error)
+		throw await handleSSOError(error, '/login', request)
 	}
 
 	return organizationSlug
