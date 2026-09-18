@@ -6,6 +6,7 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { ENV } from 'varlock/env'
 
+import { getGoogleMapsClientMode } from '#app/utils/maps/google-maps-mode.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	createOrganizationLocation,
@@ -36,6 +37,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserOrganization(request, params.orgSlug, { slug: true })
 	return {
 		googleMapsApiKey: ENV.PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null,
+		googleMapsMode: getGoogleMapsClientMode(),
 	}
 }
 

@@ -1,21 +1,24 @@
 'use client'
 
-import { Trans } from '@lingui/macro'
+import { type GoogleMapsClientMode } from '@repo/common/google-maps-mock'
 import { useEffect, useRef } from 'react'
 
+import { MockLocationMap } from '#app/components/locations/mock-location-map.tsx'
+
 type LocationMapProps = {
+	mapsMode: GoogleMapsClientMode
 	googleMapsApiKey?: string | null
 	latitude?: number | null
 	longitude?: number | null
 	onPinChange?: (lat: number, lng: number) => void
 }
 
-export function LocationMap({
+function LiveGoogleLocationMap({
 	googleMapsApiKey,
 	latitude,
 	longitude,
 	onPinChange,
-}: LocationMapProps) {
+}: Omit<LocationMapProps, 'mapsMode'>) {
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstanceRef = useRef<unknown>(null)
 	const markerRef = useRef<unknown>(null)
@@ -66,13 +69,34 @@ export function LocationMap({
 		}
 	}, [googleMapsApiKey, latitude, longitude])
 
-	if (!googleMapsApiKey?.trim()) {
+	return <div ref={mapRef} className="h-48 w-full rounded-lg border" />
+}
+
+export function LocationMap({
+	mapsMode,
+	googleMapsApiKey,
+	latitude,
+	longitude,
+	onPinChange,
+}: LocationMapProps) {
+	const useLiveMaps = mapsMode === 'live' && Boolean(googleMapsApiKey?.trim())
+
+	if (!useLiveMaps) {
 		return (
-			<p className="text-muted-foreground text-sm">
-				<Trans>Map preview appears when Google Maps is configured.</Trans>
-			</p>
+			<MockLocationMap
+				latitude={latitude}
+				longitude={longitude}
+				onPinChange={onPinChange}
+			/>
 		)
 	}
 
-	return <div ref={mapRef} className="h-48 w-full rounded-lg border" />
+	return (
+		<LiveGoogleLocationMap
+			googleMapsApiKey={googleMapsApiKey}
+			latitude={latitude}
+			longitude={longitude}
+			onPinChange={onPinChange}
+		/>
+	)
 }

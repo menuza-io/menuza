@@ -6,6 +6,7 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { ENV } from 'varlock/env'
 
+import { getGoogleMapsClientMode } from '#app/utils/maps/google-maps-mode.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	getOrganizationBrandHours,
@@ -43,6 +44,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		location,
 		resolvedHours,
 		googleMapsApiKey: ENV.PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null,
+		googleMapsMode: getGoogleMapsClientMode(),
 	}
 }
 

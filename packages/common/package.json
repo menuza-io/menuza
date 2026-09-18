@@ -137,6 +137,11 @@
       "import": "./src/location-hours.ts",
       "default": "./src/location-hours.ts"
     },
+    "./google-maps-mock": {
+      "types": "./src/google-maps-mock.ts",
+      "import": "./src/google-maps-mock.ts",
+      "default": "./src/google-maps-mock.ts"
+    },
     "./vitest-env": {
       "types": "./src/vitest-env.ts",
       "import": "./src/vitest-env.ts",

@@ -16,7 +16,7 @@ import { LocationMap } from '#app/components/locations/location-map.tsx'
 import { type loader } from './new.tsx'
 
 export default function NewRestaurantLocationPage() {
-	const { googleMapsApiKey } = useLoaderData<typeof loader>()
+	const { googleMapsApiKey, googleMapsMode } = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const [address, setAddress] = useState<AddressFieldValues>({
 		addressLine1: '',
@@ -92,11 +92,13 @@ export default function NewRestaurantLocationPage() {
 							</label>
 						</div>
 						<AddressAutocompleteField
+							mapsMode={googleMapsMode}
 							googleMapsApiKey={googleMapsApiKey}
 							values={address}
 							onChange={setAddress}
 						/>
 						<LocationMap
+							mapsMode={googleMapsMode}
 							googleMapsApiKey={googleMapsApiKey}
 							latitude={lat}
 							longitude={lng}

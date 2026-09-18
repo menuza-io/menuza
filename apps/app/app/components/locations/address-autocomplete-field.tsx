@@ -1,9 +1,13 @@
 'use client'
 
 import { Trans } from '@lingui/macro'
+import { googleMapsMockAddressFields } from '@repo/common/google-maps-mock'
+import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { useEffect, useRef, useState } from 'react'
+
+import { type GoogleMapsClientMode } from '@repo/common/google-maps-mock'
 
 export type AddressFieldValues = {
 	addressLine1: string
@@ -19,16 +23,19 @@ export type AddressFieldValues = {
 }
 
 type AddressAutocompleteFieldProps = {
+	mapsMode: GoogleMapsClientMode
 	googleMapsApiKey?: string | null
 	values: AddressFieldValues
 	onChange: (values: AddressFieldValues) => void
 }
 
 export function AddressAutocompleteField({
+	mapsMode,
 	googleMapsApiKey,
 	values,
 	onChange,
 }: AddressAutocompleteFieldProps) {
+	const useLiveMaps = mapsMode === 'live' && Boolean(googleMapsApiKey?.trim())
 	const searchRef = useRef<HTMLInputElement>(null)
 	const [mapsReady, setMapsReady] = useState(false)
 	const valuesRef = useRef(values)
@@ -38,7 +45,7 @@ export function AddressAutocompleteField({
 	onChangeRef.current = onChange
 
 	useEffect(() => {
-		if (!googleMapsApiKey?.trim()) return
+		if (!useLiveMaps || !googleMapsApiKey?.trim()) return
 		const scriptId = 'google-maps-places'
 		if (document.getElementById(scriptId)) {
 			setMapsReady(true)
@@ -52,10 +59,11 @@ export function AddressAutocompleteField({
 		)}&libraries=places`
 		script.onload = () => setMapsReady(true)
 		document.head.appendChild(script)
-	}, [googleMapsApiKey])
+	}, [googleMapsApiKey, useLiveMaps])
 
 	useEffect(() => {
-		if (!mapsReady || !searchRef.current || !googleMapsApiKey) return
+		if (!useLiveMaps || !mapsReady || !searchRef.current || !googleMapsApiKey)
+			return
 		const google = (window as typeof window & { google?: any }).google
 		if (!google?.maps?.places) return
 
@@ -111,21 +119,31 @@ export function AddressAutocompleteField({
 				google.maps.event.removeListener(listener)
 			}
 		}
-	}, [mapsReady, googleMapsApiKey])
+	}, [mapsReady, googleMapsApiKey, useLiveMaps])
 
 	const update = (patch: Partial<AddressFieldValues>) =>
 		onChange({ ...values, ...patch })
 
 	return (
 		<div className="flex flex-col gap-4">
-			{!googleMapsApiKey?.trim() ? (
-				<p className="text-muted-foreground rounded-lg border p-3 text-sm">
-					<Trans>
-						Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin.
-						You can still enter an address manually; saving will geocode on the
-						server when possible.
-					</Trans>
-				</p>
+			{!useLiveMaps ? (
+				<div className="flex flex-col gap-2 rounded-lg border border-dashed p-3">
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							Mock Google Maps (no API key). Use a sample address or enter
+							fields manually — save will use mock geocoding in dev.
+						</Trans>
+					</p>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className="w-fit"
+						onClick={() => onChange(googleMapsMockAddressFields())}
+					>
+						<Trans>Fill sample Houston address</Trans>
+					</Button>
+				</div>
 			) : (
 				<div className="space-y-1">
 					<Label htmlFor="address-search">

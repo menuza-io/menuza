@@ -30,8 +30,13 @@ import { WeeklyHoursEditor } from '#app/components/locations/weekly-hours-editor
 import { type loader } from './$locationId.tsx'
 
 export default function EditRestaurantLocationPage() {
-	const { organization, location, resolvedHours, googleMapsApiKey } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		location,
+		resolvedHours,
+		googleMapsApiKey,
+		googleMapsMode,
+	} = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
 	const tab = searchParams.get('tab') ?? 'details'
 	const navigation = useNavigation()
@@ -122,11 +127,13 @@ export default function EditRestaurantLocationPage() {
 									</label>
 								</div>
 								<AddressAutocompleteField
+									mapsMode={googleMapsMode}
 									googleMapsApiKey={googleMapsApiKey}
 									values={address}
 									onChange={setAddress}
 								/>
 								<LocationMap
+									mapsMode={googleMapsMode}
 									googleMapsApiKey={googleMapsApiKey}
 									latitude={lat}
 									longitude={lng}

@@ -409,7 +409,7 @@ msgstr ""
 
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:100
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:149
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:151
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
@@ -418,7 +418,7 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:113
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:115
 msgid "Active (requires map pin)"
 msgstr "Active (requires map pin)"
 
@@ -578,8 +578,8 @@ msgid "Add photo or video"
 msgstr ""
 
 #: app/components/locations/address-autocomplete-field.tsx:112
-msgid "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
-msgstr "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
+#~ msgid "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
+#~ msgstr "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
 msgid "Add question"
@@ -949,7 +949,7 @@ msgstr ""
 msgid "Auto"
 msgstr "Auto"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:262
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:264
 msgid "Auto-accept window (seconds)"
 msgstr "Auto-accept window (seconds)"
 
@@ -1157,7 +1157,7 @@ msgstr "Built-in"
 msgid "Built-in Roles"
 msgstr "Built-in Roles"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:249
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:251
 msgid "Busy mode extra wait (minutes)"
 msgstr "Busy mode extra wait (minutes)"
 
@@ -1226,7 +1226,7 @@ msgstr "Can edit teammate notes"
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
-#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:123
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:125
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
@@ -1390,7 +1390,7 @@ msgstr ""
 msgid "Circle"
 msgstr ""
 
-#: app/components/locations/address-autocomplete-field.tsx:157
+#: app/components/locations/address-autocomplete-field.tsx:186
 msgid "City"
 msgstr "City"
 
@@ -2193,11 +2193,11 @@ msgstr ""
 msgid "Default language required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:158
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:160
 msgid "Default location"
 msgstr "Default location"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:236
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:238
 msgid "Default prep time (minutes)"
 msgstr "Default prep time (minutes)"
 
@@ -2341,7 +2341,7 @@ msgstr "Delete team notes"
 msgid "Deleting…"
 msgstr "Deleting…"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:292
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:294
 msgid "Delivery is enabled for this branch."
 msgstr "Delivery is enabled for this branch."
 
@@ -3061,6 +3061,10 @@ msgstr "File name of the media asset"
 msgid "Filename"
 msgstr "Filename"
 
+#: app/components/locations/address-autocomplete-field.tsx:144
+msgid "Fill sample Houston address"
+msgstr "Fill sample Houston address"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:808
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "Find and reuse images uploaded across notes, comments, your website, and organization settings."
@@ -3703,6 +3707,10 @@ msgstr ""
 msgid "Last Used"
 msgstr ""
 
+#: app/components/locations/mock-location-map.tsx:40
+msgid "Latitude"
+msgstr "Latitude"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
 msgid "Launch run"
 msgstr ""
@@ -3882,6 +3890,10 @@ msgstr ""
 msgid "Long text"
 msgstr "Long text"
 
+#: app/components/locations/mock-location-map.tsx:55
+msgid "Longitude"
+msgstr "Longitude"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
 msgid "Look"
 msgstr ""
@@ -4002,9 +4014,13 @@ msgstr ""
 msgid "Manual Trigger"
 msgstr ""
 
+#: app/components/locations/mock-location-map.tsx:35
+msgid "Map preview — mock mode"
+msgstr "Map preview — mock mode"
+
 #: app/components/locations/location-map.tsx:48
-msgid "Map preview appears when Google Maps is configured."
-msgstr "Map preview appears when Google Maps is configured."
+#~ msgid "Map preview appears when Google Maps is configured."
+#~ msgstr "Map preview appears when Google Maps is configured."
 
 #: app/components/ui/notification-bell.tsx:464
 msgid "Mark all as read"
@@ -4142,6 +4158,14 @@ msgstr "Missing Path"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5713
 msgid "Mobile"
 msgstr ""
+
+#: app/components/locations/address-autocomplete-field.tsx:132
+msgid "Mock Google Maps (no API key). Use a sample address or enter fields manually — save will use mock geocoding in dev."
+msgstr "Mock Google Maps (no API key). Use a sample address or enter fields manually — save will use mock geocoding in dev."
+
+#: app/components/locations/mock-location-map.tsx:26
+msgid "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
+msgstr "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
 
 #: app/components/roles/tenant-role-access-manager.tsx:90
 msgid "Modify notes created by other team members."
@@ -4839,11 +4863,11 @@ msgstr ""
 msgid "Outline"
 msgstr "Outline"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:204
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:206
 msgid "Override brand online hours"
 msgstr "Override brand online hours"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:188
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:190
 msgid "Override brand store hours"
 msgstr "Override brand store hours"
 
@@ -5095,7 +5119,7 @@ msgstr "Pick a layout, then customize the blocks."
 msgid "Pick a template, then customize every field in the builder."
 msgstr "Pick a template, then customize every field in the builder."
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:279
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:281
 msgid "Pickup"
 msgstr "Pickup"
 
@@ -5657,6 +5681,10 @@ msgstr ""
 msgid "Reset to preset"
 msgstr "Reset to preset"
 
+#: app/components/locations/mock-location-map.tsx:82
+msgid "Reset to sample pin (Houston)"
+msgstr "Reset to sample pin (Houston)"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:462
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:614
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:209
@@ -5876,7 +5904,7 @@ msgstr ""
 msgid "Save changes"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:162
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:164
 msgid "Save details"
 msgstr "Save details"
 
@@ -5885,11 +5913,11 @@ msgstr "Save details"
 msgid "Save draft"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:220
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:222
 msgid "Save hours"
 msgstr "Save hours"
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:295
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:297
 msgid "Save kitchen settings"
 msgstr "Save kitchen settings"
 
@@ -5897,7 +5925,7 @@ msgstr "Save kitchen settings"
 msgid "Save languages"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:117
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:119
 msgid "Save location"
 msgstr "Save location"
 
@@ -5969,7 +5997,7 @@ msgstr ""
 msgid "Scheduled"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:288
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:290
 msgid "Scheduled orders"
 msgstr "Scheduled orders"
 
@@ -5977,7 +6005,7 @@ msgstr "Scheduled orders"
 msgid "Search"
 msgstr ""
 
-#: app/components/locations/address-autocomplete-field.tsx:121
+#: app/components/locations/address-autocomplete-field.tsx:150
 msgid "Search address"
 msgstr "Search address"
 
@@ -6593,7 +6621,7 @@ msgstr ""
 msgid "Starting point"
 msgstr "Starting point"
 
-#: app/components/locations/address-autocomplete-field.tsx:169
+#: app/components/locations/address-autocomplete-field.tsx:198
 msgid "State"
 msgstr "State"
 
@@ -6647,7 +6675,7 @@ msgstr ""
 msgid "Store"
 msgstr "Store"
 
-#: app/components/locations/address-autocomplete-field.tsx:134
+#: app/components/locations/address-autocomplete-field.tsx:163
 msgid "Street address"
 msgstr "Street address"
 
@@ -6727,7 +6755,7 @@ msgstr ""
 #~ msgid "Suggested questions"
 #~ msgstr ""
 
-#: app/components/locations/address-autocomplete-field.tsx:146
+#: app/components/locations/address-autocomplete-field.tsx:175
 msgid "Suite / unit"
 msgstr "Suite / unit"
 
@@ -7985,6 +8013,6 @@ msgstr ""
 msgid "Zero permissions"
 msgstr "Zero permissions"
 
-#: app/components/locations/address-autocomplete-field.tsx:181
+#: app/components/locations/address-autocomplete-field.tsx:210
 msgid "ZIP code"
 msgstr "ZIP code"

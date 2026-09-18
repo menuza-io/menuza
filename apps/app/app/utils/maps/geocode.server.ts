@@ -1,17 +1,13 @@
+import { GOOGLE_MAPS_MOCK_PLACE } from '@repo/common/google-maps-mock'
 import { ENV } from 'varlock/env'
+
+import { shouldMockGoogleMapsGeocode } from '#app/utils/maps/google-maps-mode.server.ts'
 
 export type GeocodeResult = {
 	latitude: number
 	longitude: number
 	formattedAddress?: string
 	googlePlaceId?: string
-}
-
-const MOCK_COORDS: GeocodeResult = {
-	latitude: 29.7604,
-	longitude: -95.3698,
-	formattedAddress: '123 Main St, Houston, TX 77002, USA',
-	googlePlaceId: 'mock-place-houston',
 }
 
 function buildAddressQuery(parts: {
@@ -45,11 +41,13 @@ export async function geocodeAddress(parts: {
 	const address = buildAddressQuery(parts)
 	if (!address.trim()) return null
 
-	if (
-		ENV.MOCK_GOOGLE_MAPS === true ||
-		process.env.MOCK_GOOGLE_MAPS === 'true'
-	) {
-		return { ...MOCK_COORDS, formattedAddress: address }
+	if (shouldMockGoogleMapsGeocode()) {
+		return {
+			latitude: GOOGLE_MAPS_MOCK_PLACE.latitude,
+			longitude: GOOGLE_MAPS_MOCK_PLACE.longitude,
+			formattedAddress: address,
+			googlePlaceId: GOOGLE_MAPS_MOCK_PLACE.googlePlaceId,
+		}
 	}
 
 	const apiKey = ENV.GOOGLE_MAPS_SERVER_API_KEY?.trim()
