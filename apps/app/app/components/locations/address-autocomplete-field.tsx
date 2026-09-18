@@ -31,6 +31,11 @@ export function AddressAutocompleteField({
 }: AddressAutocompleteFieldProps) {
 	const searchRef = useRef<HTMLInputElement>(null)
 	const [mapsReady, setMapsReady] = useState(false)
+	const valuesRef = useRef(values)
+	const onChangeRef = useRef(onChange)
+
+	valuesRef.current = values
+	onChangeRef.current = onChange
 
 	useEffect(() => {
 		if (!googleMapsApiKey?.trim()) return
@@ -67,7 +72,7 @@ export function AddressAutocompleteField({
 			},
 		)
 
-		autocomplete.addListener('place_changed', () => {
+		const listener = autocomplete.addListener('place_changed', () => {
 			const place = autocomplete.getPlace()
 			if (!place?.address_components) return
 
@@ -87,8 +92,8 @@ export function AddressAutocompleteField({
 			const lat = place.geometry?.location?.lat?.()
 			const lng = place.geometry?.location?.lng?.()
 
-			onChange({
-				...values,
+			onChangeRef.current({
+				...valuesRef.current,
 				addressLine1: [streetNumber, route].filter(Boolean).join(' '),
 				city,
 				state,
@@ -100,7 +105,13 @@ export function AddressAutocompleteField({
 				longitude: lng != null ? String(lng) : '',
 			})
 		})
-	}, [mapsReady, googleMapsApiKey, onChange, values])
+
+		return () => {
+			if (listener && google.maps.event?.removeListener) {
+				google.maps.event.removeListener(listener)
+			}
+		}
+	}, [mapsReady, googleMapsApiKey])
 
 	const update = (patch: Partial<AddressFieldValues>) =>
 		onChange({ ...values, ...patch })
