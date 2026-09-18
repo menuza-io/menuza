@@ -153,6 +153,22 @@ export const APP_NAV_ROUTES: readonly AppNavRoute[] = [
 		requiresOrg: true,
 	},
 	{
+		id: 'org-locations',
+		title: 'Locations',
+		aliases: ['branches', 'restaurant locations'],
+		description: 'Restaurant branch locations',
+		path: '/:orgSlug/locations',
+		requiresOrg: true,
+	},
+	{
+		id: 'org-menu',
+		title: 'Menu',
+		aliases: ['menu builder', 'catalog'],
+		description: 'Restaurant menu builder',
+		path: '/:orgSlug/menu',
+		requiresOrg: true,
+	},
+	{
 		id: 'org-settings-shop',
 		title: 'Shop',
 		aliases: ['store', 'commerce', 'shop settings'],

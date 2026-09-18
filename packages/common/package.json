@@ -37,6 +37,11 @@
       "import": "./src/sidebar-cookie.server.ts",
       "default": "./src/sidebar-cookie.server.ts"
     },
+    "./restaurant-location-cookie": {
+      "types": "./src/restaurant-location-cookie.server.ts",
+      "import": "./src/restaurant-location-cookie.server.ts",
+      "default": "./src/restaurant-location-cookie.server.ts"
+    },
     "./toast": {
       "types": "./src/toast.server.ts",
       "import": "./src/toast.server.ts",

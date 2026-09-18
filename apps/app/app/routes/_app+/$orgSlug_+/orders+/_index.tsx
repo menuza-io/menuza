@@ -11,6 +11,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { getSelectedRestaurantLocationId } from '@repo/common/restaurant-location-cookie'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	kitchenStatusSchema,
@@ -46,21 +47,32 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		dataRegion: true,
 	})
 
+	const selectedLocationId = await getSelectedRestaurantLocationId(
+		request,
+		organization.id,
+	)
+
 	const orders =
 		organization.hasProvisionedDb && organization.dataRegion === 'us'
-			? await listKitchenOrders(organization.id)
+			? await listKitchenOrders(organization.id, {
+					locationId: selectedLocationId,
+				})
 			: []
 
-	return { organization, orders }
+	return { organization, orders, selectedLocationId }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	await requireUserId(request)
-	const organization = await requireUserWithOrganizationPermission(
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+		slug: true,
+	})
+
+	await requireUserWithOrganizationPermission(
 		request,
-		params.orgSlug,
+		organization.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
-		{ id: true },
 	)
 
 	const formData = await request.formData()

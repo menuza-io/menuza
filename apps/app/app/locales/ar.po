@@ -554,7 +554,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
-#: app/components/team-switcher.tsx:222
+#: app/components/team-switcher.tsx:326
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add organization"
@@ -702,6 +702,14 @@ msgstr "جميع الميزات الأساسية مضمنة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:265
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
+
+#: app/components/team-switcher.tsx:91
+msgid "All locations"
+msgstr "جميع المواقع"
+
+#: app/components/team-switcher.tsx:246
+msgid "All locations (brand)"
+msgstr "جميع المواقع (العلامة)"
 
 #: app/components/ui/notification-bell.tsx:342
 #: app/components/ui/notification-bell.tsx:439
@@ -1953,7 +1961,7 @@ msgstr "مستخدم البوت الحالي"
 msgid "Current icon"
 msgstr "الأيقونة الحالية"
 
-#: app/components/team-switcher.tsx:179
+#: app/components/team-switcher.tsx:195
 msgid "Current organization"
 msgstr "المؤسسة الحالية"
 
@@ -3466,7 +3474,7 @@ msgstr "الدعوة عبر البريد الإلكتروني"
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
-#: app/components/team-switcher.tsx:204
+#: app/components/team-switcher.tsx:220
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
@@ -3738,6 +3746,7 @@ msgstr "جاري تحميل الملاحظات..."
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
+#: app/components/team-switcher.tsx:228
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 msgid "Location"
 msgstr "الموقع"
@@ -3828,6 +3837,10 @@ msgstr "إدارة الأتمتة"
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
 msgstr "إدارة البثّات"
+
+#: app/components/team-switcher.tsx:306
+msgid "Manage locations"
+msgstr "إدارة المواقع"
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -3969,7 +3982,7 @@ msgid "Meet other members and share updates in the group. An admin can add commu
 msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:132
+#: app/components/team-switcher.tsx:148
 msgid "member"
 msgstr "عضو"
 
@@ -3978,7 +3991,7 @@ msgstr "عضو"
 #~ msgstr "عضو"
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:134
+#: app/components/team-switcher.tsx:150
 msgid "members"
 msgstr "أعضاء"
 
@@ -4719,7 +4732,7 @@ msgstr "حجم المؤسسة"
 
 #: app/components/app-sidebar.tsx:142
 #: app/components/nav-user.tsx:189
-#: app/components/team-switcher.tsx:155
+#: app/components/team-switcher.tsx:171
 #: app/routes/_app+/organizations.tsx:192
 msgid "Organizations"
 msgstr "المنظمات"

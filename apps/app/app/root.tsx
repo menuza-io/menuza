@@ -19,6 +19,7 @@ import {
 import { getCookieConsentState } from '@repo/common/cookie-consent'
 import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { pipeHeaders } from '@repo/common/headers'
+import { getSelectedRestaurantLocationId } from '@repo/common/restaurant-location-cookie'
 import { getSidebarState } from '@repo/common/sidebar-cookie'
 import { getToast } from '@repo/common/toast'
 import { brand, getErrorTitle } from '@repo/config/brand'
@@ -392,6 +393,42 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			!value.startsWith('MOCK_')
 		)
 	}
+	let restaurantLocationContext: {
+		locations: Array<{ id: string; name: string; isDefault: boolean }>
+		selectedLocationId: string | null
+		selectedLocationName: string | null
+	} | null = null
+
+	if (currentOrgId) {
+		const { listOrganizationLocations } =
+			await import('#app/utils/organization/locations.server.ts')
+		const { ensureDefaultOrganizationLocation } =
+			await import('#app/utils/organization/locations.server.ts')
+		const orgName =
+			userOrganizations?.currentOrganization?.organization.name ?? 'Restaurant'
+		await ensureDefaultOrganizationLocation({
+			organizationId: currentOrgId,
+			name: `${orgName} — Main`,
+		})
+		const locations = await listOrganizationLocations(currentOrgId)
+		const selectedLocationId = await getSelectedRestaurantLocationId(
+			request,
+			currentOrgId,
+		)
+		const selectedLocationName = selectedLocationId
+			? (locations.find((row) => row.id === selectedLocationId)?.name ?? null)
+			: null
+		restaurantLocationContext = {
+			locations: locations.map((row) => ({
+				id: row.id,
+				name: row.name,
+				isDefault: row.isDefault,
+			})),
+			selectedLocationId,
+			selectedLocationName,
+		}
+	}
+
 	const configuredProviders = providerNames.filter((providerName) =>
 		hasConfiguredProvider(
 			providerName === GITHUB_PROVIDER_NAME
@@ -424,6 +461,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
+			restaurantLocationContext,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

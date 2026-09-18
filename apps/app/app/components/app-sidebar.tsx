@@ -418,13 +418,13 @@ function OrganizationSidebar({
 				},
 				{
 					title: _(msg`Locations`),
-					url: `/${orgSlug}/settings/locations`,
-					isActive: location.pathname === `/${orgSlug}/settings/locations`,
+					url: `/${orgSlug}/locations`,
+					isActive: location.pathname === `/${orgSlug}/locations`,
 				},
 				{
 					title: _(msg`Menu`),
-					url: `/${orgSlug}/settings/menu`,
-					isActive: location.pathname === `/${orgSlug}/settings/menu`,
+					url: `/${orgSlug}/menu`,
+					isActive: location.pathname === `/${orgSlug}/menu`,
 				},
 				{
 					title: _(msg`Shop`),

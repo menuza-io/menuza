@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import {
 	customers,
 	getTenantDb,
@@ -30,8 +30,14 @@ export type KitchenOrderRow = {
 	lineItemCount: number
 }
 
-export async function listKitchenOrders(organizationId: string) {
+export async function listKitchenOrders(
+	organizationId: string,
+	options?: { locationId?: string | null },
+) {
 	const tenantDb = await getTenantDb(organizationId)
+	const locationFilter = options?.locationId
+		? eq(shopOrders.locationId, options.locationId)
+		: undefined
 	const orders = await tenantDb
 		.select({
 			id: shopOrders.id,
@@ -48,6 +54,7 @@ export async function listKitchenOrders(organizationId: string) {
 		})
 		.from(shopOrders)
 		.leftJoin(customers, eq(shopOrders.customerId, customers.id))
+		.where(locationFilter ?? sql`1`)
 		.orderBy(desc(shopOrders.createdAt))
 		.limit(100)
 

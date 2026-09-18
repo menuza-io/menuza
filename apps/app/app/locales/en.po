@@ -556,7 +556,7 @@ msgstr ""
 msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
-#: app/components/team-switcher.tsx:222
+#: app/components/team-switcher.tsx:326
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add organization"
@@ -704,6 +704,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:265
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
+
+#: app/components/team-switcher.tsx:91
+msgid "All locations"
+msgstr "All locations"
+
+#: app/components/team-switcher.tsx:246
+msgid "All locations (brand)"
+msgstr "All locations (brand)"
 
 #: app/components/ui/notification-bell.tsx:342
 #: app/components/ui/notification-bell.tsx:439
@@ -1955,7 +1963,7 @@ msgstr ""
 msgid "Current icon"
 msgstr ""
 
-#: app/components/team-switcher.tsx:179
+#: app/components/team-switcher.tsx:195
 msgid "Current organization"
 msgstr ""
 
@@ -3468,7 +3476,7 @@ msgstr ""
 msgid "Invite Checkout payout contact"
 msgstr "Invite Checkout payout contact"
 
-#: app/components/team-switcher.tsx:204
+#: app/components/team-switcher.tsx:220
 msgid "Invite members"
 msgstr ""
 
@@ -3740,6 +3748,7 @@ msgstr ""
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
+#: app/components/team-switcher.tsx:228
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 msgid "Location"
 msgstr "Location"
@@ -3830,6 +3839,10 @@ msgstr "Manage automations"
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
+
+#: app/components/team-switcher.tsx:306
+msgid "Manage locations"
+msgstr "Manage locations"
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -3971,7 +3984,7 @@ msgid "Meet other members and share updates in the group. An admin can add commu
 msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:132
+#: app/components/team-switcher.tsx:148
 msgid "member"
 msgstr ""
 
@@ -3980,7 +3993,7 @@ msgstr ""
 #~ msgstr ""
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:134
+#: app/components/team-switcher.tsx:150
 msgid "members"
 msgstr ""
 
@@ -4721,7 +4734,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:142
 #: app/components/nav-user.tsx:189
-#: app/components/team-switcher.tsx:155
+#: app/components/team-switcher.tsx:171
 #: app/routes/_app+/organizations.tsx:192
 msgid "Organizations"
 msgstr ""

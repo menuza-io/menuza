@@ -22,7 +22,7 @@ import {
 	useSidebar,
 } from '@repo/ui/sidebar'
 import { useCallback, useMemo } from 'react'
-import { Link, useSubmit } from 'react-router'
+import { Form, Link, useRouteLoaderData, useSubmit } from 'react-router'
 import { useHotkeys } from '#app/hooks/use-hotkeys.ts'
 import { useUserOrganizations } from '#app/utils/organization/organizations.ts'
 
@@ -78,6 +78,18 @@ export function TeamSwitcher() {
 
 	const activeTeam = currentOrganization?.organization
 
+	const rootData = useRouteLoaderData('root') as {
+		restaurantLocationContext?: {
+			locations: Array<{ id: string; name: string; isDefault: boolean }>
+			selectedLocationId: string | null
+			selectedLocationName: string | null
+		} | null
+	}
+
+	const locationContext = rootData?.restaurantLocationContext
+	const locationLabel =
+		locationContext?.selectedLocationName ?? _(msg`All locations`)
+
 	const handleOrganizationSelect = useCallback(
 		(organizationId: string) => {
 			void submit(
@@ -125,7 +137,11 @@ export function TeamSwitcher() {
 									<span className="text-sidebar-foreground truncate text-sm leading-5 font-medium">
 										{activeTeam.name}
 									</span>
-									{memberCount > 0 ? (
+									{locationContext && locationContext.locations.length > 0 ? (
+										<span className="text-sidebar-foreground/60 truncate text-xs leading-4">
+											{locationLabel}
+										</span>
+									) : memberCount > 0 ? (
 										<span className="text-sidebar-foreground/60 truncate text-xs leading-4">
 											{memberCount}{' '}
 											{memberCount === 1 ? (
@@ -205,6 +221,96 @@ export function TeamSwitcher() {
 									</Link>
 								}
 							></DropdownMenuItem>
+							{locationContext && locationContext.locations.length > 0 ? (
+								<>
+									<DropdownMenuSeparator />
+									<DropdownMenuLabel>
+										<Trans>Location</Trans>
+									</DropdownMenuLabel>
+									<Form method="post" action="/organizations/set-location">
+										<input
+											type="hidden"
+											name="organizationId"
+											value={activeTeam.id}
+										/>
+										<input type="hidden" name="locationId" value="" />
+										<DropdownMenuItem
+											className="gap-2 rounded-[8px] px-1.5 py-1.5"
+											onClick={(event) => {
+												const form = event.currentTarget.closest('form')
+												if (form instanceof HTMLFormElement)
+													form.requestSubmit()
+												if (isMobile) toggleSidebar()
+											}}
+										>
+											<span className="min-w-0 flex-1 truncate">
+												<Trans>All locations (brand)</Trans>
+											</span>
+											{!locationContext.selectedLocationId ? (
+												<Icon
+													name="check"
+													className="text-primary size-4 shrink-0"
+												/>
+											) : null}
+										</DropdownMenuItem>
+									</Form>
+									{locationContext.locations.map((location) => (
+										<Form
+											key={location.id}
+											method="post"
+											action="/organizations/set-location"
+										>
+											<input
+												type="hidden"
+												name="organizationId"
+												value={activeTeam.id}
+											/>
+											<input
+												type="hidden"
+												name="locationId"
+												value={location.id}
+											/>
+											<DropdownMenuItem
+												className="gap-2 rounded-[8px] px-1.5 py-1.5"
+												onClick={(event) => {
+													const form = event.currentTarget.closest('form')
+													if (form instanceof HTMLFormElement)
+														form.requestSubmit()
+													if (isMobile) toggleSidebar()
+												}}
+											>
+												<span className="min-w-0 flex-1 truncate">
+													{location.name}
+												</span>
+												{locationContext.selectedLocationId === location.id ? (
+													<Icon
+														name="check"
+														className="text-primary size-4 shrink-0"
+													/>
+												) : null}
+											</DropdownMenuItem>
+										</Form>
+									))}
+									<DropdownMenuItem
+										className="gap-2 px-1.5 py-0.5"
+										onClick={() => isMobile && toggleSidebar()}
+										render={
+											<Link
+												to={`/${activeTeam.slug}/locations`}
+												className="flex items-center gap-2"
+											>
+												<span className="flex size-6 shrink-0 items-center justify-center">
+													<Icon
+														name="settings"
+														className="text-muted-foreground size-4"
+													/>
+												</span>
+												<Trans>Manage locations</Trans>
+											</Link>
+										}
+									/>
+								</>
+							) : null}
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								className="gap-2 px-1.5 py-0.5"

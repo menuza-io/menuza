@@ -28,9 +28,19 @@ export const menuItemSchema = z.object({
 
 export async function resolveMenuLocationId(
 	organizationId: string,
-	locationId?: string | null,
+	options?: { locationId?: string | null; request?: Request },
 ) {
-	if (locationId) return locationId
+	const explicit = options?.locationId
+	if (explicit) return explicit
+	if (options?.request) {
+		const { getSelectedRestaurantLocationId } =
+			await import('@repo/common/restaurant-location-cookie')
+		const fromCookie = await getSelectedRestaurantLocationId(
+			options.request,
+			organizationId,
+		)
+		if (fromCookie) return fromCookie
+	}
 	const defaultId = await getDefaultOrganizationLocationId(organizationId)
 	if (!defaultId) {
 		throw new Error('No restaurant location configured')
