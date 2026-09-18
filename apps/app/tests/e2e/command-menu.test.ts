@@ -21,7 +21,7 @@ test.describe('Command Menu', () => {
 
 		// Verify command menu is visible
 		await expect(page.getByRole('dialog')).toBeVisible()
-		await expect(page.getByPlaceholder(/search/i)).toBeVisible()
+		await expect(page.getByRole('dialog').getByRole('combobox')).toBeVisible()
 	})
 
 	test('Command menu opens with Ctrl+K shortcut on Windows/Linux', async ({
@@ -43,7 +43,7 @@ test.describe('Command Menu', () => {
 
 		// Verify command menu is visible
 		await expect(page.getByRole('dialog')).toBeVisible()
-		await expect(page.getByPlaceholder(/search/i)).toBeVisible()
+		await expect(page.getByRole('dialog').getByRole('combobox')).toBeVisible()
 	})
 
 	test('Command menu can be closed with Escape key', async ({
@@ -88,7 +88,7 @@ test.describe('Command Menu', () => {
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Test search input functionality
-		const searchInput = page.getByPlaceholder(/search/i)
+		const searchInput = page.getByRole('dialog').getByRole('combobox')
 		await expect(searchInput).toBeVisible()
 
 		// Type in search box
@@ -133,7 +133,7 @@ test.describe('Command Menu', () => {
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Verify basic interface elements
-		await expect(page.getByPlaceholder(/search/i)).toBeVisible()
+		await expect(page.getByRole('dialog').getByRole('combobox')).toBeVisible()
 		await expect(page.getByRole('listbox')).toBeVisible()
 	})
 
@@ -185,7 +185,10 @@ test.describe('Command Menu', () => {
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Search for something that doesn't exist
-		await page.getByPlaceholder(/search/i).fill('nonexistent-search-term-xyz')
+		await page
+			.getByRole('dialog')
+			.getByRole('combobox')
+			.fill('nonexistent-search-term-xyz')
 		await page.waitForTimeout(500)
 
 		// Verify empty state message (based on actual UI)

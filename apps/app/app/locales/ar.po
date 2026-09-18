@@ -526,7 +526,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:498
+#: app/components/app-sidebar.tsx:499
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -745,7 +745,7 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:351
+#: app/components/app-sidebar.tsx:352
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
@@ -758,7 +758,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:367
+#: app/components/app-sidebar.tsx:368
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -940,7 +940,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:321
+#: app/components/app-sidebar.tsx:322
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1019,7 +1019,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:432
+#: app/components/app-sidebar.tsx:433
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -1048,7 +1048,7 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:358
+#: app/components/app-sidebar.tsx:359
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1072,7 +1072,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:314
+#: app/components/app-sidebar.tsx:315
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -2047,7 +2047,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:295
+#: app/components/app-sidebar.tsx:296
 msgid "Customers"
 msgstr "العملاء"
 
@@ -2081,8 +2081,8 @@ msgstr "داكن"
 msgid "Dark mode"
 msgstr "الوضع الداكن"
 
-#: app/components/app-sidebar.tsx:123
-#: app/components/app-sidebar.tsx:271
+#: app/components/app-sidebar.tsx:124
+#: app/components/app-sidebar.tsx:272
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -2528,7 +2528,7 @@ msgstr "مثل: لديك بريد جديد!"
 msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr "مثل: Claude Desktop، Kiro IDE"
 
-#: app/components/favorite-notes.tsx:110
+#: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:234
 #: app/components/roles/tenant-role-access-manager.tsx:812
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
@@ -2736,10 +2736,6 @@ msgstr "أدخل اسم المستخدم أو البريد الإلكتروني"
 #: app/components/settings/cards/organization/billing-card.tsx:269
 msgid "Enterprise Plan"
 msgstr "الخطة المؤسسية"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
-msgid "Menuza Team"
-msgstr "فريق Menuza"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
@@ -3041,7 +3037,7 @@ msgstr "إعدادات النموذج"
 msgid "Format:"
 msgstr "التنسيق:"
 
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:347
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -3072,11 +3068,11 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:390
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:337
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -3108,16 +3104,16 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:490
+#: app/components/app-sidebar.tsx:491
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:152
-#: app/components/app-sidebar.tsx:505
+#: app/components/app-sidebar.tsx:153
+#: app/components/app-sidebar.tsx:506
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:95
+#: app/components/app-sidebar.tsx:96
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr "تواصل معنا"
@@ -3132,8 +3128,8 @@ msgstr "ابدأ"
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
-#: app/components/app-sidebar.tsx:160
-#: app/components/app-sidebar.tsx:513
+#: app/components/app-sidebar.tsx:161
+#: app/components/app-sidebar.tsx:514
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -3150,7 +3146,7 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/components/app-sidebar.tsx:216
+#: app/components/app-sidebar.tsx:217
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -3439,7 +3435,7 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:408
+#: app/components/app-sidebar.tsx:409
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -3909,7 +3905,7 @@ msgstr "تحديد الكل كمقروء"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/app-sidebar.tsx:301
+#: app/components/app-sidebar.tsx:302
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -3927,7 +3923,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:418
+#: app/components/app-sidebar.tsx:419
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3948,7 +3944,7 @@ msgstr "تفاصيل الوسائط"
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
-#: app/components/app-sidebar.tsx:289
+#: app/components/app-sidebar.tsx:290
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -3982,7 +3978,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:395
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:771
 #: app/components/roles/tenant-role-access-manager.tsx:857
@@ -3992,6 +3988,10 @@ msgstr "الأعضاء"
 #: app/components/roles/tenant-role-access-manager.tsx:232
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
+msgid "Menuza Team"
+msgstr "فريق Menuza"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
@@ -4456,7 +4456,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:283
+#: app/components/app-sidebar.tsx:284
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -4486,7 +4486,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:423
+#: app/components/app-sidebar.tsx:424
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -4551,7 +4551,7 @@ msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذ
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإقليمي بيانات التعريف الشخصية محلياً."
 
-#: app/components/favorite-notes.tsx:102
+#: app/components/favorite-notes.tsx:105
 msgid "Open"
 msgstr "فتح"
 
@@ -4705,7 +4705,7 @@ msgstr "حجم المنظمة"
 msgid "Organization Size"
 msgstr "حجم المؤسسة"
 
-#: app/components/app-sidebar.tsx:141
+#: app/components/app-sidebar.tsx:142
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -4720,7 +4720,7 @@ msgstr "تُستخدم المنظمات لتجميع مشاريعك."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/app-sidebar.tsx:307
+#: app/components/app-sidebar.tsx:308
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -4752,7 +4752,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:341
+#: app/components/app-sidebar.tsx:342
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -5119,7 +5119,7 @@ msgstr "جارٍ المعالجة…"
 msgid "Product name"
 msgstr "اسم المنتج"
 
-#: app/components/app-sidebar.tsx:129
+#: app/components/app-sidebar.tsx:130
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
@@ -5279,7 +5279,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:374
+#: app/components/app-sidebar.tsx:375
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -5451,7 +5451,7 @@ msgstr "رد"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:277
+#: app/components/app-sidebar.tsx:278
 msgid "Reports"
 msgstr "التقارير"
 
@@ -5580,7 +5580,7 @@ msgstr "الدور"
 msgid "Role name"
 msgstr "اسم الدور"
 
-#: app/components/app-sidebar.tsx:401
+#: app/components/app-sidebar.tsx:402
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -5809,11 +5809,9 @@ msgstr "حدد موعد مكالمة"
 msgid "Scheduled"
 msgstr "مجدول"
 
-#: app/components/search-bar.tsx:42
-#: app/components/search-bar.tsx:49
-#: app/components/search-bar.tsx:62
-#~ msgid "Search"
-#~ msgstr "بحث"
+#: app/components/app-sidebar.tsx:218
+msgid "Search"
+msgstr "بحث"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
@@ -5841,11 +5839,15 @@ msgstr "البحث في الوسائط"
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
+#: app/components/app-sidebar.tsx:544
+#: app/components/command-menu.tsx:102
+msgid "Search menu items..."
+msgstr "البحث في عناصر القائمة..."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
-#: app/components/app-sidebar.tsx:217
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
 msgstr "البحث في الملاحظات"
@@ -5856,8 +5858,8 @@ msgstr "البحث في الملاحظات بالعنوان أو المحتوى.
 
 #: app/components/app-sidebar.tsx:543
 #: app/components/command-menu.tsx:102
-msgid "Search notes..."
-msgstr "البحث في الملاحظات..."
+#~ msgid "Search notes..."
+#~ msgstr "البحث في الملاحظات..."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:588
 msgid "Search pages..."
@@ -5909,7 +5911,7 @@ msgstr "الأقسام"
 msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
-#: app/components/app-sidebar.tsx:135
+#: app/components/app-sidebar.tsx:136
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr "الأمان"
@@ -6125,7 +6127,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:381
+#: app/components/app-sidebar.tsx:382
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -6176,7 +6178,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:413
+#: app/components/app-sidebar.tsx:414
 msgid "Shop"
 msgstr "المتجر"
 
@@ -6774,7 +6776,7 @@ msgstr "المسار في موقعك القديم الذي يطلبه الزوا
 msgid "Theme"
 msgstr "السمة"
 
-#: app/components/app-sidebar.tsx:72
+#: app/components/app-sidebar.tsx:73
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -7073,7 +7075,7 @@ msgstr "الإشعارات غير المقروءة"
 msgid "Unsaved changes"
 msgstr "تغييرات غير محفوظة"
 
-#: app/components/favorite-notes.tsx:136
+#: app/components/favorite-notes.tsx:142
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
@@ -7135,7 +7137,7 @@ msgstr "تم تحديث القسم"
 msgid "Updating section"
 msgstr "تحديث القسم"
 
-#: app/components/app-sidebar.tsx:88
+#: app/components/app-sidebar.tsx:89
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr "ترقية"
@@ -7464,7 +7466,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:330
+#: app/components/app-sidebar.tsx:331
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
