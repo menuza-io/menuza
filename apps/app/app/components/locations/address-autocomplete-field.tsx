@@ -1,13 +1,14 @@
 'use client'
 
 import { Trans } from '@lingui/macro'
-import { googleMapsMockAddressFields } from '@repo/common/google-maps-mock'
+import {
+	googleMapsMockAddressFields,
+	type GoogleMapsClientMode,
+} from '@repo/common/google-maps-mock'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { useEffect, useRef, useState } from 'react'
-
-import { type GoogleMapsClientMode } from '@repo/common/google-maps-mock'
 
 export type AddressFieldValues = {
 	addressLine1: string

@@ -1,8 +1,8 @@
+import { createId } from '@paralleldrive/cuid2'
 import { GOOGLE_MAPS_MOCK_PLACE } from '@repo/common/google-maps-mock'
 import {
 	emptyLocationHoursBundle,
 	emptyWeeklyHours,
-	locationHoursBundleSchema,
 	parseLocationHoursJson,
 	serializeLocationHoursBundle,
 	validateLocationHoursBundle,
@@ -17,7 +17,6 @@ import {
 	OrganizationLocation,
 	sql,
 } from '@repo/database'
-import { createId } from '@paralleldrive/cuid2'
 import slugify from '@sindresorhus/slugify'
 import { z } from 'zod'
 
