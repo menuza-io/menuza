@@ -132,9 +132,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (published) {
 				const {
 					validateOrganizationCanPublish,
-					ensureDefaultOrganizationLocation,
+					ensurePublishReadyDefaultLocation,
 				} = await import('#app/utils/organization/locations.server.ts')
-				await ensureDefaultOrganizationLocation({
+				await ensurePublishReadyDefaultLocation({
 					organizationId: organization.id,
 					name: `${organization.name} — Main`,
 				})

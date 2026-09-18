@@ -12,10 +12,8 @@ const migrationSql = readFileSync(
 )
 
 describe('0015_organization_locations migration', () => {
-	it('creates OrganizationLocation idempotently', () => {
-		expect(migrationSql).toContain(
-			'CREATE TABLE IF NOT EXISTS `OrganizationLocation`',
-		)
+	it('indexes OrganizationLocation idempotently (table via ensure before migrate)', () => {
+		expect(migrationSql).not.toContain('CREATE TABLE `OrganizationLocation`')
 		expect(migrationSql).toContain(
 			'CREATE INDEX IF NOT EXISTS `OrganizationLocation_organizationId_idx`',
 		)

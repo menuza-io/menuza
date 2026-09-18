@@ -1,3 +1,4 @@
+import { GOOGLE_MAPS_MOCK_PLACE } from '@repo/common/google-maps-mock'
 import {
 	emptyLocationHoursBundle,
 	emptyWeeklyHours,
@@ -216,6 +217,61 @@ export async function ensureDefaultOrganizationLocation(options: {
 	}
 
 	return created.id
+}
+
+/**
+ * Ensures a default branch exists and meets publish gates (active, phone, map pin).
+ * Upgrades legacy auto-created inactive stubs from root loader / org create.
+ */
+export async function ensurePublishReadyDefaultLocation(options: {
+	organizationId: string
+	name?: string
+}): Promise<string> {
+	const locationId = await ensureDefaultOrganizationLocation(options)
+	const location = await getOrganizationLocation(
+		options.organizationId,
+		locationId,
+	)
+	if (!location) {
+		throw new Error('Default location not found.')
+	}
+
+	const needsBootstrap =
+		!location.active ||
+		location.latitude == null ||
+		location.longitude == null ||
+		!location.phone?.trim()
+
+	if (!needsBootstrap) {
+		return locationId
+	}
+
+	await db
+		.update(OrganizationLocation)
+		.set({
+			active: true,
+			phone: location.phone?.trim() || '+17135550100',
+			addressLine1:
+				location.addressLine1 ?? GOOGLE_MAPS_MOCK_PLACE.addressLine1,
+			city: location.city ?? GOOGLE_MAPS_MOCK_PLACE.city,
+			state: location.state ?? GOOGLE_MAPS_MOCK_PLACE.state,
+			postalCode: location.postalCode ?? GOOGLE_MAPS_MOCK_PLACE.postalCode,
+			country: location.country ?? GOOGLE_MAPS_MOCK_PLACE.country,
+			formattedAddress:
+				location.formattedAddress ?? GOOGLE_MAPS_MOCK_PLACE.formattedAddress,
+			googlePlaceId:
+				location.googlePlaceId ?? GOOGLE_MAPS_MOCK_PLACE.googlePlaceId,
+			latitude: location.latitude ?? GOOGLE_MAPS_MOCK_PLACE.latitude,
+			longitude: location.longitude ?? GOOGLE_MAPS_MOCK_PLACE.longitude,
+		})
+		.where(
+			and(
+				eq(OrganizationLocation.id, locationId),
+				eq(OrganizationLocation.organizationId, options.organizationId),
+			),
+		)
+
+	return locationId
 }
 
 async function clearOtherDefaultLocations(
