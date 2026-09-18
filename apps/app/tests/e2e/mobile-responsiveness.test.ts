@@ -69,34 +69,25 @@ test.describe('Mobile Responsiveness', () => {
 			.or(page.locator('[data-sidebar="trigger"]'))
 			.first()
 
-		// Try to open the sidebar if there's a trigger
-		if (await sidebarTrigger.isVisible().catch(() => false)) {
-			await sidebarTrigger.click()
-			await page.waitForTimeout(300) // Wait for animation
-		}
+		// The sidebar renders as a drawer on mobile, so open it
+		await expect(sidebarTrigger).toBeVisible()
+		await sidebarTrigger.click()
 
-		// Look for navigation links - they should be in the sidebar
-		const notesLink = page.getByRole('link', { name: /notes/i }).first()
-		const dashboardLink = page.getByRole('link', { name: /dashboard/i }).first()
-		const settingsLink = page.getByRole('link', { name: /settings/i }).first()
+		// eslint-disable-next-line playwright/no-raw-locators -- data-mobile attribute not supported by semantic queries
+		const mobileSidebar = page.locator('[data-mobile="true"]')
+		await expect(mobileSidebar).toBeVisible()
 
-		// Check if at least one navigation element is accessible
-		const hasNavigation =
-			(await notesLink.isVisible().catch(() => false)) ||
-			(await dashboardLink.isVisible().catch(() => false)) ||
-			(await settingsLink.isVisible().catch(() => false)) ||
-			(await notesLink
-				.count()
-				.then((count) => count > 0)
-				.catch(() => false)) // Link exists in DOM even if not visible
+		// The drawer holds the navigation links
+		const notesLink = mobileSidebar
+			.getByRole('link', { name: /notes/i })
+			.first()
+		await expect(notesLink).toBeVisible()
 
-		expect(hasNavigation).toBeTruthy()
-
-		// If notes link is visible, verify it works
-		if (await notesLink.isVisible().catch(() => false)) {
-			await notesLink.click()
-			await expect(page).toHaveURL(new RegExp(`/${org.slug}/notes`))
-		}
+		// Navigating from the drawer closes it so it does not keep covering the
+		// page the user moved to
+		await notesLink.click()
+		await expect(page).toHaveURL(new RegExp(`/${org.slug}/notes`))
+		await expect(mobileSidebar).toBeHidden()
 	})
 
 	test('Forms are usable on mobile devices', async ({

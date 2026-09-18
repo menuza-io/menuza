@@ -36,7 +36,7 @@ export default function FavoriteNotes({
 	favoriteNotes,
 	orgSlug,
 }: FavoriteNotesProps) {
-	const { isMobile } = useSidebar()
+	const { isMobile, setOpenMobile } = useSidebar()
 	const iconRefs = useRef<{ [key: string]: any }>({})
 
 	const handleMenuItemMouseEnter = (noteId: string) => {
@@ -95,7 +95,10 @@ export default function FavoriteNotes({
 								side={isMobile ? 'bottom' : 'right'}
 								align={isMobile ? 'end' : 'start'}
 							>
-								<DropdownMenuItem className="gap-2">
+								<DropdownMenuItem
+									className="gap-2"
+									onClick={() => isMobile && setOpenMobile(false)}
+								>
 									<Link to={`/${orgSlug}/notes/${favorite.note.id}`}>
 										<Icon name="folder" />
 										<span>
@@ -103,7 +106,10 @@ export default function FavoriteNotes({
 										</span>
 									</Link>
 								</DropdownMenuItem>
-								<DropdownMenuItem className="gap-2">
+								<DropdownMenuItem
+									className="gap-2"
+									onClick={() => isMobile && setOpenMobile(false)}
+								>
 									<Link to={`/${orgSlug}/notes/${favorite.note.id}/edit`}>
 										<Icon name="pencil" />
 										<span>
