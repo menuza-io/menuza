@@ -99,7 +99,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 		>
 			<Command>
 				<CommandInput
-					placeholder={_(t`Search notes...`)}
+					placeholder={_(t`Search menu items...`)}
 					value={query}
 					onValueChange={setQuery}
 				/>
