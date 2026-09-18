@@ -1,16 +1,15 @@
+import { brand, getBrandTeam } from '@repo/config/brand'
+
 import {
-	Html,
-	Container,
-	Text,
-	Head,
-	Body,
-	Button,
-	Section,
-	Heading,
-	Preview,
-	Tailwind,
-} from '@react-email/components'
-import { brand, getBrandTeam, getCopyright } from '@repo/config/brand'
+	EmailButton,
+	EmailCard,
+	EmailCode,
+	EmailEyebrow,
+	EmailHeading,
+	EmailLayout,
+	EmailNote,
+	EmailParagraph,
+} from '../components'
 
 export interface ForgotPasswordEmailProps {
 	onboardingUrl: string
@@ -24,69 +23,36 @@ export default function ForgotPasswordEmail({
 	firstName = 'Developer',
 }: ForgotPasswordEmailProps) {
 	return (
-		<Html lang="en" dir="ltr">
-			<Tailwind>
-				<Head />
-				<Preview>Reset your {brand.name} password</Preview>
-				<Body className="bg-[#F6F8FA] py-[40px] font-sans">
-					<Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] px-[32px] py-[40px]">
-						{/* Main Content */}
-						<Section>
-							<Heading className="mb-[16px] text-center text-[24px] font-bold text-[#020304]">
-								Reset Your Password, {firstName}
-							</Heading>
+		<EmailLayout
+			preview={`Reset your ${brand.name} password`}
+			fallbackUrl={onboardingUrl}
+		>
+			<EmailCard size="message">
+				<EmailEyebrow>Account security</EmailEyebrow>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								We received a request to reset your {brand.name} password. If
-								you didn't make this request, you can safely ignore this email.
-							</Text>
+				<EmailHeading>Reset your password, {firstName}</EmailHeading>
 
-							<Text className="mb-[16px] text-[16px] leading-[24px] text-[#020304]">
-								Here's your verification code:{' '}
-								<strong className="text-[#2563eb]">{otp}</strong>
-							</Text>
+				<EmailParagraph>
+					We received a request to reset your {brand.name} password. If you
+					didn't make this request, you can safely ignore this email.
+				</EmailParagraph>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								Or click the button below to reset your password:
-							</Text>
+				<EmailCode label="Here's your verification code:">{otp}</EmailCode>
 
-							<Section className="mb-[32px] text-center">
-								<Button
-									href={onboardingUrl}
-									className="box-border rounded-[6px] bg-[#2563eb] px-[24px] py-[12px] text-[16px] font-medium text-white no-underline"
-								>
-									Reset Password
-								</Button>
-							</Section>
+				<EmailButton href={onboardingUrl}>Reset Password</EmailButton>
 
-							<Text className="mb-[16px] text-[16px] leading-[24px] text-[#020304]">
-								For security reasons, this link will expire in 10 minutes. If
-								you need help, our support team is here to assist you.
-							</Text>
+				<EmailNote>
+					For security reasons, this link will expire in 10 minutes. If you need
+					help, our support team is here to assist you.
+				</EmailNote>
 
-							<Text className="text-[16px] leading-[24px] text-[#020304]">
-								Stay secure!
-								<br />
-								{getBrandTeam()}
-							</Text>
-						</Section>
-
-						{/* Footer */}
-						<Section className="mt-[40px] border-t border-solid border-[#E5E7EB] pt-[32px]">
-							<Text className="mb-[8px] text-center text-[14px] leading-[20px] text-[#6B7280]">
-								Organize your thoughts with {brand.name}
-							</Text>
-							<Text className="mb-[8px] text-center text-[12px] leading-[16px] text-[#6B7280]">
-								If the button doesn't work, copy this link: {onboardingUrl}
-							</Text>
-							<Text className="m-0 text-center text-[12px] leading-[16px] text-[#6B7280]">
-								{getCopyright()}
-							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
-		</Html>
+				<EmailNote className="mb-0">
+					Stay secure!
+					<br />
+					{getBrandTeam()}
+				</EmailNote>
+			</EmailCard>
+		</EmailLayout>
 	)
 }
 
