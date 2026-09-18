@@ -118,6 +118,10 @@ npm run dev --workspace=jobs-cron
 npm run dev --workspace=chrome-extension
 ```
 
+The `email` workspace is the React Email preview server. It is not part of
+`npm run dev` and listens on port `3012`, outside the regional service ports
+below.
+
 The local regional services are:
 
 | Process      |   Port | Region                                             |

@@ -24,6 +24,46 @@ export type { NewDeviceSigninEmailProps } from './templates/new-device-signin'
 export type { MentionEmailProps } from './templates/mention-email'
 export type { CommentEmailProps } from './templates/comment-email'
 
+// Email theme tokens (mirror the app's shadcn design tokens)
+export {
+	emailBrandLogoSize,
+	emailBrandLogoUrl,
+	emailTailwindConfig,
+	emailThemeColors,
+} from './theme'
+
+// Shared layout + element primitives used to compose transactional emails
+export {
+	EmailButton,
+	EmailCard,
+	EmailCode,
+	EmailEyebrow,
+	EmailField,
+	EmailDetails,
+	EmailHeading,
+	EmailLayout,
+	EmailLink,
+	EmailNote,
+	EmailParagraph,
+	EmailQuote,
+	EmailStep,
+	EmailSteps,
+	type EmailButtonProps,
+	type EmailCardProps,
+	type EmailCodeProps,
+	type EmailEyebrowProps,
+	type EmailFieldProps,
+	type EmailDetailsProps,
+	type EmailHeadingProps,
+	type EmailLayoutProps,
+	type EmailLinkProps,
+	type EmailNoteProps,
+	type EmailParagraphProps,
+	type EmailQuoteProps,
+	type EmailStepProps,
+	type EmailStepsProps,
+} from './components'
+
 // Export sendEmail function (App/Admin — routes via EMAIL_PROVIDER)
 export {
 	sendEmail,

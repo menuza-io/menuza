@@ -277,7 +277,7 @@ export async function notifyNoteOwner({
 			try {
 				const res = await sendEmail({
 					to: noteOwner.email,
-					subject: `New comment on your note: ${noteTitle}`,
+					subject: `New comment on "${noteTitle}"`,
 					react: CommentEmail(payload),
 				})
 				if (res.status === 'error') {

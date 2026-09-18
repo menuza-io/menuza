@@ -1,16 +1,15 @@
+import { brand } from '@repo/config/brand'
+
 import {
-	Body,
-	Container,
-	Head,
-	Html,
-	Preview,
-	Section,
-	Tailwind,
-	Text,
-	Heading,
-	Link,
-} from '@react-email/components'
-import { brand, getCopyright } from '@repo/config/brand'
+	EmailCard,
+	EmailDetails,
+	EmailEyebrow,
+	EmailField,
+	EmailHeading,
+	EmailLayout,
+	EmailLink,
+	EmailParagraph,
+} from '../components'
 
 export interface ContactTemplateProps {
 	readonly name: string
@@ -23,68 +22,32 @@ export const ContactTemplate = ({
 	email,
 	message,
 }: ContactTemplateProps) => (
-	<Html lang="en" dir="ltr">
-		<Tailwind>
-			<Head />
-			<Preview>New contact message from {name}</Preview>
-			<Body className="bg-[#F6F8FA] py-[40px] font-sans">
-				<Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] px-[32px] py-[40px]">
-					{/* Main Content */}
-					<Section>
-						<Heading className="mb-[16px] text-center text-[24px] font-bold text-[#020304]">
-							New Contact Message
-						</Heading>
+	<EmailLayout preview={`New contact message from ${name}`}>
+		<EmailCard>
+			<EmailEyebrow align="left">Contact form</EmailEyebrow>
 
-						<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-							You've received a new contact message through {brand.name}. Here
-							are the details:
-						</Text>
+			<EmailHeading align="left">New contact message</EmailHeading>
 
-						<Section className="mb-[24px] rounded-[6px] bg-[#F6F8FA] p-[20px]">
-							<Text className="mb-[8px] text-[16px] leading-[24px] text-[#020304]">
-								<strong>From:</strong> {name}
-							</Text>
-							<Text className="mb-[16px] text-[16px] leading-[24px] text-[#020304]">
-								<strong>Email:</strong>{' '}
-								<Link
-									href={`mailto:${email}`}
-									className="text-[#2563eb] no-underline"
-								>
-									{email}
-								</Link>
-							</Text>
-							<Text className="mb-[8px] text-[16px] leading-[24px] text-[#020304]">
-								<strong>Message:</strong>
-							</Text>
-							<Text className="mb-0 text-[16px] leading-[24px] text-[#020304]">
-								{message}
-							</Text>
-						</Section>
+			<EmailParagraph align="left">
+				You've received a new contact message through {brand.name}. Here are the
+				details:
+			</EmailParagraph>
 
-						<Text className="text-[16px] leading-[24px] text-[#020304]">
-							You can reply directly to this email address:{' '}
-							<Link
-								href={`mailto:${email}`}
-								className="text-[#2563eb] no-underline"
-							>
-								{email}
-							</Link>
-						</Text>
-					</Section>
+			<EmailDetails align="left" className="mb-0">
+				<EmailField label="From" value={name} />
+				<EmailField
+					label="Email"
+					value={<EmailLink href={`mailto:${email}`}>{email}</EmailLink>}
+				/>
+				<EmailField label="Message" value={message} className="mb-[24px]" />
 
-					{/* Footer */}
-					<Section className="mt-[40px] border-t border-solid border-[#E5E7EB] pt-[32px]">
-						<Text className="mb-[8px] text-center text-[14px] leading-[20px] text-[#6B7280]">
-							{brand.name} Contact Form
-						</Text>
-						<Text className="m-0 text-center text-[12px] leading-[16px] text-[#6B7280]">
-							{getCopyright()}
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Tailwind>
-	</Html>
+				<EmailParagraph align="left" className="mb-0">
+					You can reply directly to this email address:{' '}
+					<EmailLink href={`mailto:${email}`}>{email}</EmailLink>
+				</EmailParagraph>
+			</EmailDetails>
+		</EmailCard>
+	</EmailLayout>
 )
 
 ContactTemplate.PreviewProps = {

@@ -1,19 +1,15 @@
+import { Column, Hr, Row, Text } from '@react-email/components'
+import { brand } from '@repo/config/brand'
+
 import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Heading,
-	Html,
-	Link,
-	Preview,
-	Row,
-	Column,
-	Section,
-	Tailwind,
-	Text,
-} from '@react-email/components'
-import { brand, getCopyright } from '@repo/config/brand'
+	EmailButton,
+	EmailCard,
+	EmailEyebrow,
+	EmailField,
+	EmailHeading,
+	EmailLayout,
+	EmailParagraph,
+} from '../components'
 
 export interface InvoiceEmailProps {
 	orderNumber: string
@@ -33,192 +29,136 @@ export interface InvoiceEmailProps {
 }
 
 const InvoiceEmail = (props: InvoiceEmailProps) => {
+	const items = props.items ?? []
+
 	return (
-		<Html lang="en" dir="ltr">
-			<Tailwind>
-				<Head />
-				<Preview>
-					Invoice {props.orderNumber} - Your {brand.name} purchase confirmation
-				</Preview>
-				<Body className="bg-[#F6F8FA] py-[40px] font-sans">
-					<Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] px-[32px] py-[40px]">
-						{/* Header */}
-						<Section className="mb-[32px]">
-							<Heading className="mb-[16px] text-center text-[24px] font-bold text-[#020304]">
-								Invoice {props.orderNumber}
-							</Heading>
-						</Section>
+		<EmailLayout
+			preview={`Invoice ${props.orderNumber} - Your ${brand.name} purchase confirmation`}
+		>
+			<EmailCard>
+				<EmailEyebrow align="left">Billing</EmailEyebrow>
 
-						{/* Invoice Details */}
-						<Section className="mb-[32px]">
-							<Row>
-								<Column className="w-1/2">
-									<Text className="mb-[4px] text-[14px] font-medium text-[#6B7280]">
-										INVOICE NUMBER
-									</Text>
-									<Text className="mb-[16px] text-[16px] font-medium text-[#020304]">
-										{props.orderNumber}
-									</Text>
-									<Text className="mb-[4px] text-[14px] font-medium text-[#6B7280]">
-										INVOICE DATE
-									</Text>
-									<Text className="mb-0 text-[16px] text-[#020304]">
-										{props.invoiceDate}
-									</Text>
-								</Column>
-								<Column className="w-1/2 text-right">
-									<Text className="mb-[4px] text-[14px] font-medium text-[#6B7280]">
-										BILLED TO
-									</Text>
-									<Text className="mb-[16px] text-[16px] font-medium text-[#020304]">
-										{props.customerName}
-									</Text>
-									<Text className="mb-[4px] text-[14px] font-medium text-[#6B7280]">
-										EMAIL
-									</Text>
-									<Text className="mb-0 text-[16px] text-[#020304]">
-										{props.customerEmail}
-									</Text>
-								</Column>
-							</Row>
-						</Section>
+				<EmailHeading align="left" className="mb-[40px]">
+					Invoice {props.orderNumber}
+				</EmailHeading>
 
-						<Section className="mb-[24px] border-t border-solid border-[#E5E7EB] pt-[24px]" />
+				<Row>
+					<Column className="mobile:!block mobile:!w-full mobile:!max-w-full mobile:mb-[20px] mobile:pr-0 w-1/2 pr-[12px] align-top">
+						<EmailField label="Invoice number" value={props.orderNumber} />
+						<EmailField
+							label="Invoice date"
+							value={props.invoiceDate}
+							className="mb-0"
+						/>
+					</Column>
+					<Column className="mobile:!block mobile:!w-full mobile:!max-w-full w-1/2 align-top">
+						<EmailField label="Billed to" value={props.customerName} />
+						<EmailField
+							label="Email"
+							value={props.customerEmail}
+							className="mb-0"
+						/>
+					</Column>
+				</Row>
+			</EmailCard>
 
-						{/* Itemized Breakdown */}
-						<Section className="mb-[32px]">
-							<Text className="mb-[20px] text-[18px] font-medium text-[#020304]">
-								Order Summary
-							</Text>
+			<EmailCard>
+				<EmailHeading as="h2">Order summary</EmailHeading>
 
-							{/* Header Row */}
-							<Row className="mb-[16px] border-b border-[#E5E7EB] pb-[12px]">
-								<Column className="w-1/2">
-									<Text className="mb-0 text-[14px] font-medium text-[#6B7280]">
-										ITEM
-									</Text>
-								</Column>
-								<Column className="w-1/4 text-center">
-									<Text className="mb-0 text-[14px] font-medium text-[#6B7280]">
-										QTY
-									</Text>
-								</Column>
-								<Column className="w-1/4 text-right">
-									<Text className="mb-0 text-[14px] font-medium text-[#6B7280]">
-										AMOUNT
-									</Text>
-								</Column>
-							</Row>
-
-							{/* Items */}
-							{props.items?.map((item, index) => (
-								<Row key={index} className="mb-[12px]">
-									<Column className="w-1/2">
-										<Text className="mb-[2px] text-[16px] font-medium text-[#020304]">
-											{item.name}
-										</Text>
-										<Text className="mb-0 text-[14px] text-[#6B7280]">
-											{item.description}
-										</Text>
-									</Column>
-									<Column className="w-1/4 text-center">
-										<Text className="mb-0 text-[16px] text-[#020304]">
-											{item.quantity}
-										</Text>
-									</Column>
-									<Column className="w-1/4 text-right">
-										<Text className="mb-0 text-[16px] font-medium text-[#020304]">
-											${item.amount}
-										</Text>
-									</Column>
-								</Row>
-							))}
-						</Section>
-
-						<Section className="mb-[24px] border-t border-solid border-[#E5E7EB] pt-[24px]" />
-
-						{/* Total Section */}
-						<Section className="mb-[32px]">
-							<Row className="mb-[8px]">
-								<Column className="w-3/4">
-									<Text className="mb-0 text-right text-[16px] text-[#020304]">
-										Subtotal:
-									</Text>
-								</Column>
-								<Column className="w-1/4">
-									<Text className="mb-0 text-right text-[16px] text-[#020304]">
-										${props.subtotal}
-									</Text>
-								</Column>
-							</Row>
-							<Row className="mb-[8px]">
-								<Column className="w-3/4">
-									<Text className="mb-0 text-right text-[16px] text-[#020304]">
-										Tax:
-									</Text>
-								</Column>
-								<Column className="w-1/4">
-									<Text className="mb-0 text-right text-[16px] text-[#020304]">
-										${props.tax}
-									</Text>
-								</Column>
-							</Row>
-							<Row className="border-t border-[#E5E7EB] pt-[12px]">
-								<Column className="w-3/4">
-									<Text className="mb-0 text-right text-[18px] font-medium text-[#020304]">
-										Total:
-									</Text>
-								</Column>
-								<Column className="w-1/4">
-									<Text className="mb-0 text-right text-[18px] font-medium text-[#020304]">
-										${props.total}
-									</Text>
-								</Column>
-							</Row>
-						</Section>
-
-						{/* Download Button */}
-						<Section className="mb-[32px] text-center">
-							<Button
-								href={props.downloadUrl}
-								className="box-border rounded-[6px] bg-[#2563eb] px-[24px] py-[12px] text-[16px] font-medium text-white no-underline"
-							>
-								Download Invoice
-							</Button>
-						</Section>
-
-						<Text className="mb-[16px] text-center text-[16px] leading-[24px] text-[#020304]">
-							Questions about your invoice? Our support team is here to help.
+				<Row className="border-border mb-[16px] border-b border-solid pb-[12px]">
+					<Column className="w-1/2">
+						<Text className="text-13 text-muted-foreground m-0 text-left">
+							Item
 						</Text>
+					</Column>
+					<Column className="w-1/4">
+						<Text className="text-13 text-muted-foreground m-0 text-center">
+							Qty
+						</Text>
+					</Column>
+					<Column className="w-1/4">
+						<Text className="text-13 text-muted-foreground m-0 text-right">
+							Amount
+						</Text>
+					</Column>
+				</Row>
 
-						{/* Footer */}
-						<Section className="mt-[40px] border-t border-solid border-[#E5E7EB] pt-[32px]">
-							<Text className="mb-[8px] text-center text-[14px] leading-[20px] text-[#6B7280]">
-								Thank you for choosing {brand.name}
+				{items.map((item, index) => (
+					<Row
+						key={index}
+						className={index === items.length - 1 ? undefined : 'mb-[16px]'}
+					>
+						<Column className="w-1/2 align-top">
+							<Text className="text-16 text-foreground m-0 text-left font-medium">
+								{item.name}
 							</Text>
-							<Text className="mb-[8px] text-center text-[12px] leading-[16px] text-[#6B7280]">
-								<Link
-									href={`mailto:${brand.supportEmail}`}
-									className="text-[#2563eb] no-underline"
-								>
-									Contact Support
-								</Link>
-								{' | '}
-								<Link
-									href={props.downloadUrl}
-									className="text-[#2563eb] no-underline"
-								>
-									Download Invoice
-								</Link>
+							<Text className="text-13 text-muted-foreground m-0 text-left">
+								{item.description}
 							</Text>
-							<Text className="m-0 text-center text-[12px] leading-[16px] text-[#6B7280]">
-								{getCopyright()}
+						</Column>
+						<Column className="w-1/4 align-top">
+							<Text className="text-16 text-foreground m-0 text-center">
+								{item.quantity}
 							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
-		</Html>
+						</Column>
+						<Column className="w-1/4 align-top">
+							<Text className="text-16 text-foreground m-0 text-right font-medium">
+								${item.amount}
+							</Text>
+						</Column>
+					</Row>
+				))}
+
+				<Hr className="border-border my-[24px]" />
+
+				<Row className="mb-[8px]">
+					<Column className="w-3/4">
+						<Text className="text-16 text-muted-foreground m-0 text-right">
+							Subtotal
+						</Text>
+					</Column>
+					<Column className="w-1/4">
+						<Text className="text-16 text-foreground m-0 text-right">
+							${props.subtotal}
+						</Text>
+					</Column>
+				</Row>
+
+				<Row className="mb-[20px]">
+					<Column className="w-3/4">
+						<Text className="text-16 text-muted-foreground m-0 text-right">
+							Tax
+						</Text>
+					</Column>
+					<Column className="w-1/4">
+						<Text className="text-16 text-foreground m-0 text-right">
+							${props.tax}
+						</Text>
+					</Column>
+				</Row>
+
+				<Row className="border-border border-t border-solid pt-[16px]">
+					<Column className="w-3/4">
+						<Text className="text-16 text-foreground m-0 text-right font-semibold">
+							Total
+						</Text>
+					</Column>
+					<Column className="w-1/4">
+						<Text className="text-16 text-foreground m-0 text-right font-semibold">
+							${props.total}
+						</Text>
+					</Column>
+				</Row>
+			</EmailCard>
+
+			<EmailCard size="message">
+				<EmailButton href={props.downloadUrl}>Download Invoice</EmailButton>
+
+				<EmailParagraph className="mb-0">
+					Questions about your invoice? Our support team is here to help.
+				</EmailParagraph>
+			</EmailCard>
+		</EmailLayout>
 	)
 }
 
@@ -230,7 +170,7 @@ InvoiceEmail.PreviewProps = {
 	items: [
 		{
 			name: `${brand.name} Pro Plan`,
-			description: 'Monthly subscription - Advanced note-taking platform',
+			description: 'Monthly subscription',
 			quantity: 1,
 			amount: '29.00',
 		},
