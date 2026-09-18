@@ -13,6 +13,8 @@ const packageDir = path.resolve(
 
 await db.run(sql`PRAGMA busy_timeout = 5000`)
 await db.run(sql`PRAGMA journal_mode = WAL`)
+// Legacy / concurrent migrate: table + columns before journal (0015 uses IF NOT EXISTS).
+await ensureOrganizationLocationColumns()
 await migrate(db, {
 	migrationsFolder: path.join(packageDir, 'drizzle'),
 })

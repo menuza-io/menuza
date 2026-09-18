@@ -1,10 +1,11 @@
-import { db, OrganizationLocation, WaitlistEntry } from '@repo/database'
+import { db, WaitlistEntry } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test('location edit page loads without React update loop', async ({
 	page,
 	login,
+	navigate,
 }) => {
 	const user = await login()
 	await db
@@ -22,24 +23,6 @@ test('location edit page loads without React update loop', async ({
 		})
 
 	const organization = await createTestOrganization(user.id, 'admin')
-	const [location] = await db
-		.insert(OrganizationLocation)
-		.values({
-			organizationId: organization.id,
-			name: 'Smoke Test Location',
-			phone: '+17135551234',
-			addressLine1: '123 Main St',
-			city: 'Houston',
-			state: 'TX',
-			postalCode: '77002',
-			latitude: 29.7604,
-			longitude: -95.3698,
-			googlePlaceId: 'mock-place-houston',
-			formattedAddress: '123 Main St, Houston, TX 77002, USA',
-		})
-		.returning({ id: OrganizationLocation.id })
-
-	if (!location) throw new Error('Failed to create location')
 
 	const errors: string[] = []
 	page.on('pageerror', (error) => {
@@ -49,14 +32,15 @@ test('location edit page loads without React update loop', async ({
 		if (msg.type() === 'error') errors.push(msg.text())
 	})
 
-	const response = await page.goto(
-		`/${organization.slug}/locations/${location.id}`,
-		{ waitUntil: 'networkidle' },
-	)
-	expect(response?.status()).toBe(200)
-	await expect(
-		page.getByRole('heading', { name: 'Smoke Test Location' }),
-	).toBeVisible({ timeout: 15_000 })
+	await navigate('/:slug/locations', { slug: organization.slug })
+	await expect(page.getByRole('heading', { name: /locations/i })).toBeVisible({
+		timeout: 15_000,
+	})
+
+	const editControl = page.getByRole('button', { name: /^edit$/i }).first()
+	await expect(editControl).toBeVisible({ timeout: 15_000 })
+	await editControl.click()
+	await page.waitForLoadState('networkidle')
 	await page.waitForTimeout(1500)
 
 	const depthErrors = errors.filter((message) =>

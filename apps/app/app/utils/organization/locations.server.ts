@@ -103,6 +103,11 @@ export function assertLocationHasCoordinates(
 	>,
 ): void {
 	if (!location.active) return
+	if (location.latitude == null || location.longitude == null) {
+		throw new Error(
+			'Active locations require a verified map pin (latitude and longitude).',
+		)
+	}
 	const coords = coordinatesSchema.safeParse({
 		latitude: location.latitude,
 		longitude: location.longitude,
@@ -199,6 +204,7 @@ export async function ensureDefaultOrganizationLocation(options: {
 			name: options.name?.trim() || 'Main location',
 			isDefault: true,
 			active: false,
+			phone: '+17135550100',
 			deliveryEnabled: true,
 			pickupEnabled: true,
 			prepTimeMinutes: 15,
