@@ -57,7 +57,7 @@ export default defineConfig({
 	integrations: [
 		emdash({
 			database: isCloudflareBuild
-				? d1({ binding: 'DB' })
+				? d1({ binding: 'DB', session: 'auto' })
 				: sqlite({ url: 'file:./.emdash/data.db' }),
 			storage: isCloudflareBuild
 				? r2({ binding: 'MEDIA_BUCKET' })
