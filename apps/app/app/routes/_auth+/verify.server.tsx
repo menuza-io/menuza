@@ -10,6 +10,7 @@ import {
 } from '@repo/auth'
 import { getDomainUrl } from '@repo/common'
 import { redirectWithToast } from '@repo/common/toast'
+import { brand } from '@repo/config/brand'
 import { and, db, eq, User, Verification } from '@repo/database'
 import { EmailChangeNoticeEmail, sendEmail } from '@repo/email'
 import { data } from 'react-router'
@@ -75,7 +76,7 @@ export async function handleChangeEmailVerification({
 
 	void sendEmail({
 		to: preUpdateUser.email,
-		subject: 'Epic Stack email changed',
+		subject: `${brand.name} email changed`,
 		react: <EmailChangeNoticeEmail userId={user.id} />,
 	})
 

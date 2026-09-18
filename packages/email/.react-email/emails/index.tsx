@@ -6,3 +6,7 @@ export { default as ForgotPasswordEmail } from '../../src/templates/forgot-passw
 export { default as SignupEmail } from '../../src/templates/signup'
 export { default as EmailChangeEmail } from '../../src/templates/email-change'
 export { default as EmailChangeNoticeEmail } from '../../src/templates/email-change-notice'
+export { default as TrialEndingEmail } from '../../src/templates/trial-ending'
+export { default as NewDeviceSigninEmail } from '../../src/templates/new-device-signin'
+export { default as MentionEmail } from '../../src/templates/mention-email'
+export { default as CommentEmail } from '../../src/templates/comment-email'

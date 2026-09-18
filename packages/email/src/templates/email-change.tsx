@@ -1,16 +1,15 @@
+import { brand, getBrandTeam } from '@repo/config/brand'
+
 import {
-	Html,
-	Container,
-	Text,
-	Head,
-	Body,
-	Button,
-	Section,
-	Heading,
-	Preview,
-	Tailwind,
-} from '@react-email/components'
-import { brand, getBrandTeam, getCopyright } from '@repo/config/brand'
+	EmailButton,
+	EmailCard,
+	EmailCode,
+	EmailEyebrow,
+	EmailHeading,
+	EmailLayout,
+	EmailNote,
+	EmailParagraph,
+} from '../components'
 
 export interface EmailChangeEmailProps {
 	verifyUrl: string
@@ -24,70 +23,36 @@ export default function EmailChangeEmail({
 	firstName = 'Developer',
 }: EmailChangeEmailProps) {
 	return (
-		<Html lang="en" dir="ltr">
-			<Tailwind>
-				<Head />
-				<Preview>Verify your new {brand.name} email address</Preview>
-				<Body className="bg-[#F6F8FA] py-[40px] font-sans">
-					<Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] px-[32px] py-[40px]">
-						{/* Main Content */}
-						<Section>
-							<Heading className="mb-[16px] text-center text-[24px] font-bold text-[#020304]">
-								Verify Your New Email, {firstName}
-							</Heading>
+		<EmailLayout
+			preview={`Verify your new ${brand.name} email address`}
+			fallbackUrl={verifyUrl}
+		>
+			<EmailCard size="message">
+				<EmailEyebrow>Account security</EmailEyebrow>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								We need to verify your new email address to complete the change
-								to your {brand.name} account. This helps keep your account
-								secure.
-							</Text>
+				<EmailHeading>Verify your new email, {firstName}</EmailHeading>
 
-							<Text className="mb-[16px] text-[16px] leading-[24px] text-[#020304]">
-								Here's your verification code:{' '}
-								<strong className="text-[#2563eb]">{otp}</strong>
-							</Text>
+				<EmailParagraph>
+					We need to verify your new email address to complete the change to
+					your {brand.name} account. This helps keep your account secure.
+				</EmailParagraph>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								Or click the button below to verify your email:
-							</Text>
+				<EmailCode label="Here's your verification code:">{otp}</EmailCode>
 
-							<Section className="mb-[32px] text-center">
-								<Button
-									href={verifyUrl}
-									className="box-border rounded-[6px] bg-[#2563eb] px-[24px] py-[12px] text-[16px] font-medium text-white no-underline"
-								>
-									Verify Email
-								</Button>
-							</Section>
+				<EmailButton href={verifyUrl}>Verify Email</EmailButton>
 
-							<Text className="mb-[16px] text-[16px] leading-[24px] text-[#020304]">
-								If you didn't request this email change, please contact our
-								support team immediately to secure your account.
-							</Text>
+				<EmailNote>
+					If you didn't request this email change, please contact our support
+					team immediately to secure your account.
+				</EmailNote>
 
-							<Text className="text-[16px] leading-[24px] text-[#020304]">
-								Stay secure!
-								<br />
-								{getBrandTeam()}
-							</Text>
-						</Section>
-
-						{/* Footer */}
-						<Section className="mt-[40px] border-t border-solid border-[#E5E7EB] pt-[32px]">
-							<Text className="mb-[8px] text-center text-[14px] leading-[20px] text-[#6B7280]">
-								Organize your thoughts with {brand.name}
-							</Text>
-							<Text className="mb-[8px] text-center text-[12px] leading-[16px] text-[#6B7280]">
-								If the button doesn't work, copy this link: {verifyUrl}
-							</Text>
-							<Text className="m-0 text-center text-[12px] leading-[16px] text-[#6B7280]">
-								{getCopyright()}
-							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
-		</Html>
+				<EmailNote className="mb-0">
+					Stay secure!
+					<br />
+					{getBrandTeam()}
+				</EmailNote>
+			</EmailCard>
+		</EmailLayout>
 	)
 }
 

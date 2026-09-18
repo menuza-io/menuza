@@ -1,18 +1,17 @@
+import { brand } from '@repo/config/brand'
+
 import {
-	Html,
-	Container,
-	Text,
-	Link,
-	Head,
-	Body,
-	Button,
-	Section,
-	Heading,
-	Preview,
-	Tailwind,
-	Hr,
-} from '@react-email/components'
-import { brand, getCopyright } from '@repo/config/brand'
+	EmailButton,
+	EmailCard,
+	EmailDetails,
+	EmailEyebrow,
+	EmailField,
+	EmailHeading,
+	EmailLayout,
+	EmailLink,
+	EmailNote,
+	EmailParagraph,
+} from '../components'
 
 export interface NewDeviceSigninEmailProps {
 	firstName?: string
@@ -34,111 +33,42 @@ export default function NewDeviceSigninEmail({
 	secureAccountUrl,
 }: NewDeviceSigninEmailProps) {
 	return (
-		<Html lang="en" dir="ltr">
-			<Tailwind>
-				<Head />
-				<Preview>New sign-in detected to your {brand.name} account</Preview>
-				<Body className="bg-[#F6F8FA] py-[40px] font-sans">
-					<Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] px-[32px] py-[40px]">
-						{/* Main Content */}
-						<Section>
-							<Heading className="mb-[16px] text-center text-[24px] font-bold text-[#020304]">
-								New Sign-In Detected
-							</Heading>
+		<EmailLayout preview={`New sign-in detected to your ${brand.name} account`}>
+			<EmailCard>
+				<EmailEyebrow align="left">Security alert</EmailEyebrow>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								Hi {firstName},
-							</Text>
+				<EmailHeading align="left">New sign-in detected</EmailHeading>
 
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								We detected a new sign-in to your {brand.name} account from a
-								device we don't recognize.
-							</Text>
+				<EmailParagraph align="left">
+					Hi {firstName}, we detected a new sign-in to your {brand.name} account
+					from a device we don't recognize.
+				</EmailParagraph>
 
-							{/* Device Details Section */}
-							<Section className="mb-[24px] rounded-[6px] bg-[#F6F8FA] p-[20px]">
-								<Text className="mb-[8px] text-[14px] font-bold text-[#020304]">
-									Device details:
-								</Text>
+				<EmailDetails align="left" className="mb-8">
+					<EmailField label="Browser" value={deviceName} />
+					<EmailField label="Operating system" value={operatingSystem} />
+					{location ? <EmailField label="Location" value={location} /> : null}
+					<EmailField label="IP address" value={ipAddress} />
+					<EmailField label="Time" value={timestamp} className="mb-0" />
+				</EmailDetails>
 
-								<Text className="mb-[8px] text-[14px] leading-[20px] text-[#020304]">
-									<strong>Browser:</strong> {deviceName}
-								</Text>
+				<EmailButton href={secureAccountUrl}>Secure My Account</EmailButton>
 
-								<Text className="mb-[8px] text-[14px] leading-[20px] text-[#020304]">
-									<strong>Operating System:</strong> {operatingSystem}
-								</Text>
+				<EmailNote align="left">
+					If this was you, you can safely ignore this email. If you don't
+					recognize this activity, secure your account immediately.
+				</EmailNote>
 
-								{location && (
-									<Text className="mb-[8px] text-[14px] leading-[20px] text-[#020304]">
-										<strong>Location:</strong> {location}
-									</Text>
-								)}
-
-								<Text className="mb-[8px] text-[14px] leading-[20px] text-[#020304]">
-									<strong>IP Address:</strong> {ipAddress}
-								</Text>
-
-								<Text className="mb-[0] text-[14px] leading-[20px] text-[#020304]">
-									<strong>Time:</strong> {timestamp}
-								</Text>
-							</Section>
-
-							<Text className="mb-[24px] text-[16px] leading-[24px] text-[#020304]">
-								If this was you, you can safely ignore this email. If you don't
-								recognize this activity, please secure your account immediately.
-							</Text>
-
-							<Section className="mb-[32px] text-center">
-								<Button
-									href={secureAccountUrl}
-									className="box-border rounded-[6px] bg-[#dc2626] px-[24px] py-[12px] text-[16px] font-medium text-white no-underline"
-								>
-									Secure My Account
-								</Button>
-							</Section>
-
-							<Hr className="my-[24px] border-[#E5E7EB]" />
-
-							<Text className="mb-[16px] text-[14px] leading-[20px] text-[#6B7280]">
-								If you didn't sign in, please contact support immediately at{' '}
-								<Link
-									href={`mailto:${brand.supportEmail}`}
-									className="text-[#2563eb] no-underline"
-								>
-									{brand.supportEmail}
-								</Link>
-							</Text>
-						</Section>
-
-						{/* Footer */}
-						<Section className="mt-[40px] border-t border-solid border-[#E5E7EB] pt-[32px]">
-							<Text className="mb-[8px] text-center text-[14px] leading-[20px] text-[#6B7280]">
-								Organize your thoughts with {brand.name}
-							</Text>
-							<Text className="mb-[8px] text-center text-[12px] leading-[16px] text-[#6B7280]">
-								<Link
-									href={`mailto:${brand.supportEmail}`}
-									className="text-[#2563eb] no-underline"
-								>
-									Contact Support
-								</Link>
-								{' | '}
-								<Link
-									href={`${brand.url}/security`}
-									className="text-[#2563eb] no-underline"
-								>
-									Security Center
-								</Link>
-							</Text>
-							<Text className="m-0 text-center text-[12px] leading-[16px] text-[#6B7280]">
-								{getCopyright()}
-							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
-		</Html>
+				<EmailNote align="left" className="mb-0">
+					Still unsure?{' '}
+					<EmailLink href={`mailto:${brand.supportEmail}`}>
+						Contact support
+					</EmailLink>
+					{' · '}
+					<EmailLink href={`${brand.url}/security`}>Security center</EmailLink>
+				</EmailNote>
+			</EmailCard>
+		</EmailLayout>
 	)
 }
 

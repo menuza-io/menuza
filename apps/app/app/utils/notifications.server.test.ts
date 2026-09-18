@@ -166,7 +166,7 @@ describe('Notifications Server Utils', () => {
 			expect(sendEmail).toHaveBeenCalledWith(
 				expect.objectContaining({
 					to: 'owner@example.com',
-					subject: 'New comment on your note: Note 1',
+					subject: 'New comment on "Note 1"',
 				}),
 			)
 		})
