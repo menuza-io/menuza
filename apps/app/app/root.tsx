@@ -16,6 +16,7 @@ import {
 	makeTimings,
 	time,
 } from '@repo/common'
+import { getSelectedRestaurantLocationId } from '@repo/common/restaurant-location-cookie'
 import { getCookieConsentState } from '@repo/common/cookie-consent'
 import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { pipeHeaders } from '@repo/common/headers'
@@ -408,6 +409,40 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		),
 	)
 
+	let restaurantLocationContext: {
+		locations: Array<{ id: string; name: string; isDefault: boolean }>
+		selectedLocationId: string | null
+		selectedLocationName: string | null
+	} | null = null
+
+	if (currentOrgId) {
+		const { listOrganizationLocations, ensureDefaultOrganizationLocation } =
+			await import('#app/utils/organization/locations.server.ts')
+		const orgName =
+			userOrganizations?.currentOrganization?.organization.name ?? 'Restaurant'
+		await ensureDefaultOrganizationLocation({
+			organizationId: currentOrgId,
+			name: `${orgName} — Main`,
+		})
+		const locations = await listOrganizationLocations(currentOrgId)
+		const selectedLocationId = await getSelectedRestaurantLocationId(
+			request,
+			currentOrgId,
+		)
+		const selectedLocationName = selectedLocationId
+			? (locations.find((row) => row.id === selectedLocationId)?.name ?? null)
+			: null
+		restaurantLocationContext = {
+			locations: locations.map((row) => ({
+				id: row.id,
+				name: row.name,
+				isDefault: row.isDefault,
+			})),
+			selectedLocationId,
+			selectedLocationName,
+		}
+	}
+
 	return data(
 		{
 			user,
@@ -424,12 +459,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
+			restaurantLocationContext,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,
 				POSTHOG_PROJECT_TOKEN: ENV.POSTHOG_PROJECT_TOKEN,
 				POSTHOG_HOST: ENV.POSTHOG_HOST,
 				COMMIT_SHA: ENV.COMMIT_SHA,
+				PUBLIC_GOOGLE_MAPS_API_KEY:
+					ENV.PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null,
 			},
 		},
 		{

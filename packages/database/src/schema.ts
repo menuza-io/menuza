@@ -2308,10 +2308,73 @@ export const Organization = sqliteTable(
 		googleTagManagerId: text(),
 		googleAnalyticsId: text(),
 		tiktokPixelId: text(),
+		brandStoreHoursJson: text(),
+		brandOnlineHoursJson: text(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
 		uniqueIndex('Organization_slug_key').on(table.slug),
+	],
+)
+
+export const OrganizationLocation = sqliteTable(
+	'OrganizationLocation',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		slug: text(),
+		active: integer({ mode: 'boolean' }).default(true).notNull(),
+		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		addressLine1: text(),
+		addressLine2: text(),
+		city: text(),
+		state: text(),
+		postalCode: text(),
+		country: text().default('US'),
+		formattedAddress: text(),
+		latitude: real(),
+		longitude: real(),
+		googlePlaceId: text(),
+		phone: text(),
+		email: text(),
+		timezone: text().default('America/Chicago').notNull(),
+		storeHoursJson: text(),
+		onlineHoursJson: text(),
+		specialHoursJson: text(),
+		storeHoursOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		onlineHoursOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		hoursJson: text(),
+		prepTimeMinutes: integer().default(15).notNull(),
+		busyDelayMinutes: integer().default(0).notNull(),
+		acceptWindowSeconds: integer().default(0).notNull(),
+		pickupEnabled: integer({ mode: 'boolean' }).default(true).notNull(),
+		deliveryEnabled: integer({ mode: 'boolean' }).default(true).notNull(),
+		scheduledOrdersEnabled: integer({ mode: 'boolean' })
+			.default(true)
+			.notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationLocation_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationLocation_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
 	],
 )
 

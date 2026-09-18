@@ -127,6 +127,16 @@
       "import": "./src/health.ts",
       "default": "./src/health.ts"
     },
+    "./restaurant-location-cookie": {
+      "types": "./src/restaurant-location-cookie.server.ts",
+      "import": "./src/restaurant-location-cookie.server.ts",
+      "default": "./src/restaurant-location-cookie.server.ts"
+    },
+    "./location-hours": {
+      "types": "./src/location-hours.ts",
+      "import": "./src/location-hours.ts",
+      "default": "./src/location-hours.ts"
+    },
     "./vitest-env": {
       "types": "./src/vitest-env.ts",
       "import": "./src/vitest-env.ts",

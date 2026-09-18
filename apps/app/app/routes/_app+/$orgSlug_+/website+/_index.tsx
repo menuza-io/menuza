@@ -91,6 +91,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
+		name: true,
 		slug: true,
 		customDomain: true,
 		customDomainStatus: true,
@@ -129,6 +130,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		try {
 			if (published) {
+				const {
+					validateOrganizationCanPublish,
+					ensureDefaultOrganizationLocation,
+				} = await import('#app/utils/organization/locations.server.ts')
+				await ensureDefaultOrganizationLocation({
+					organizationId: organization.id,
+					name: `${organization.name} — Main`,
+				})
+				const publishBlocker = await validateOrganizationCanPublish(
+					organization.id,
+				)
+				if (publishBlocker) {
+					return Response.json({ error: publishBlocker }, { status: 400 })
+				}
 				await provisionTenantDatabase({
 					orgId: organization.id,
 					dataRegion: organization.dataRegion,
