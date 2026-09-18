@@ -1,4 +1,4 @@
-CREATE TABLE `OrganizationLocation` (
+CREATE TABLE IF NOT EXISTS `OrganizationLocation` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
 	`name` text NOT NULL,
@@ -18,5 +18,5 @@ CREATE TABLE `OrganizationLocation` (
 	FOREIGN KEY (`organizationId`) REFERENCES `Organization`(`id`) ON UPDATE cascade ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `OrganizationLocation_organizationId_idx` ON `OrganizationLocation` (`organizationId`);--> statement-breakpoint
-CREATE UNIQUE INDEX `OrganizationLocation_organizationId_slug_key` ON `OrganizationLocation` (`organizationId`,`slug`);
+CREATE INDEX IF NOT EXISTS `OrganizationLocation_organizationId_idx` ON `OrganizationLocation` (`organizationId`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `OrganizationLocation_organizationId_slug_key` ON `OrganizationLocation` (`organizationId`,`slug`);

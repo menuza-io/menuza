@@ -13,7 +13,9 @@ const migrationSql = readFileSync(
 
 describe('0015_organization_locations migration', () => {
 	it('creates OrganizationLocation with default flags', () => {
-		expect(migrationSql).toContain('CREATE TABLE `OrganizationLocation`')
+		expect(migrationSql).toContain(
+			'CREATE TABLE IF NOT EXISTS `OrganizationLocation`',
+		)
 		expect(migrationSql).toContain('`isDefault`')
 		expect(migrationSql).toContain('REFERENCES `Organization`')
 	})
