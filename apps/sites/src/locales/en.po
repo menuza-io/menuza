@@ -21,6 +21,10 @@ msgstr "Account"
 msgid "Account settings"
 msgstr "Account settings"
 
+#: src/pages/order.astro.ts:3
+msgid "Add to cart"
+msgstr "Add to cart"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
 msgstr "Back to shop"
@@ -90,6 +94,10 @@ msgstr "Language"
 msgid "Logout"
 msgstr "Logout"
 
+#: src/pages/order.astro.ts:3
+msgid "Menu is not available yet."
+msgstr "Menu is not available yet."
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "Mobile"
@@ -117,6 +125,10 @@ msgstr "No saved payment methods yet."
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "Open menu"
+
+#: src/pages/order.astro.ts:3
+msgid "Order"
+msgstr "Order"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
@@ -152,6 +164,10 @@ msgstr "Phone Number"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "Phone number cannot be changed at this time."
+
+#: src/pages/order.astro.ts:3
+msgid "Place order"
+msgstr "Place order"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
@@ -210,6 +226,10 @@ msgstr "Shop"
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "Sign in"
+
+#: src/pages/order.astro.ts:3
+msgid "Sign in to place an order"
+msgstr "Sign in to place an order"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -280,6 +300,10 @@ msgstr "What's your name?"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "When you buy something from the shop, your receipts will show up here."
+
+#: src/pages/order.astro.ts:3
+msgid "Your cart"
+msgstr "Your cart"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

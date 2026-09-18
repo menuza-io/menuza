@@ -71,6 +71,13 @@
 			"when": 1789447836172,
 			"tag": "0009_journey_step_executions_journey_idx",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "6",
+			"when": 1789500000001,
+			"tag": "0010_manuza_menu_orders",
+			"breakpoints": true
 		}
 	]
 }

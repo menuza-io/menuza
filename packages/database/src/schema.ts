@@ -2315,6 +2315,48 @@ export const Organization = sqliteTable(
 	],
 )
 
+export const OrganizationLocation = sqliteTable(
+	'OrganizationLocation',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		slug: text(),
+		addressLine1: text(),
+		addressLine2: text(),
+		city: text(),
+		state: text(),
+		postalCode: text(),
+		country: text().default('US'),
+		timezone: text().default('America/Chicago').notNull(),
+		hoursJson: text(),
+		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		active: integer({ mode: 'boolean' }).default(true).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationLocation_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationLocation_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+	],
+)
+
 export const PlatformMarketingCampaign = sqliteTable(
 	'PlatformMarketingCampaign',
 	{

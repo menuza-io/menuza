@@ -33,6 +33,7 @@ import {
 	SiteLocalesSchema,
 	siteLocalesActionIntent,
 } from '#app/components/settings/cards/organization/site-locales-card.tsx'
+import { ensureDefaultOrganizationLocation } from '#app/utils/organization/locations.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -134,6 +135,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					dataRegion: organization.dataRegion,
 					slug: organization.slug,
 					customDomain: organization.customDomain,
+				})
+				await ensureDefaultOrganizationLocation({
+					organizationId: organization.id,
+					name: `${organization.name} — Main`,
 				})
 			}
 

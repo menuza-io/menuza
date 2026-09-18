@@ -21,6 +21,7 @@ import {
 import { type User } from '@repo/database/types'
 import { data } from 'react-router'
 import { getDefaultConfig } from '#app/utils/website/block-types.ts'
+import { ensureDefaultOrganizationLocation } from '#app/utils/organization/locations.server.ts'
 import {
 	getDefaultHomePageSections,
 	HOME_PAGE_SLUG,
@@ -383,6 +384,10 @@ export async function createOrganization({
 			)
 		}
 		return created
+	})
+	await ensureDefaultOrganizationLocation({
+		organizationId: organization.id,
+		name: `${name} — Main`,
 	})
 	await auditService.log({
 		action: AuditAction.ORG_CREATED,

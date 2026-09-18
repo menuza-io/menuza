@@ -299,6 +299,12 @@ function OrganizationSidebar({
 			icon: UsersRoundIcon,
 		},
 		{
+			title: _(msg`Orders`),
+			url: `/${orgSlug}/orders`,
+			isActive: location.pathname.includes(`/${orgSlug}/orders`),
+			icon: SendIcon,
+		},
+		{
 			title: _(msg`Marketing`),
 			url: `/${orgSlug}/marketing`,
 			isActive: location.pathname.includes(`/${orgSlug}/marketing`),
@@ -409,6 +415,16 @@ function OrganizationSidebar({
 					title: _(msg`Integrations`),
 					url: `/${orgSlug}/settings/integrations`,
 					isActive: location.pathname === `/${orgSlug}/settings/integrations`,
+				},
+				{
+					title: _(msg`Locations`),
+					url: `/${orgSlug}/settings/locations`,
+					isActive: location.pathname === `/${orgSlug}/settings/locations`,
+				},
+				{
+					title: _(msg`Menu`),
+					url: `/${orgSlug}/settings/menu`,
+					isActive: location.pathname === `/${orgSlug}/settings/menu`,
 				},
 				{
 					title: _(msg`Shop`),

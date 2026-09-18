@@ -5,6 +5,7 @@ import { brand } from '@repo/config/brand'
 import {
 	resolveOrganizationForBrowserAuth,
 	findActiveOrganizationById,
+	resolvePublishedOrganization,
 } from '../src/lib/origin.ts'
 import { getBearerToken } from '../src/lib/secrets.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
@@ -113,6 +114,13 @@ export async function resolveOrgId(
 
 	if (pathname.startsWith('/operator')) {
 		return orgIdFromOperatorJwt(request, env)
+	}
+
+	if (pathname.startsWith('/menu')) {
+		const slug = url.searchParams.get('slug') ?? undefined
+		const host = url.searchParams.get('host') ?? undefined
+		const organization = await resolvePublishedOrganization({ slug, host })
+		return organization?.id ?? null
 	}
 
 	if (

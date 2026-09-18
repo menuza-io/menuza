@@ -20,6 +20,10 @@ type CreatedHomePageSection = {
 	config: string
 }
 
+vi.mock('#app/utils/organization/locations.server.ts', () => ({
+	ensureDefaultOrganizationLocation: vi.fn().mockResolvedValue('loc-default'),
+}))
+
 vi.mock('@repo/audit', () => ({
 	AuditAction: {
 		ORG_CREATED: 'ORG_CREATED',

@@ -404,6 +404,17 @@ export const shopOrders = sqliteTable(
 		})
 			.notNull()
 			.default('pending'),
+		locationId: text('location_id'),
+		fulfillmentType: text('fulfillment_type', {
+			enum: ['pickup', 'delivery'],
+		})
+			.notNull()
+			.default('pickup'),
+		kitchenStatus: text('kitchen_status', {
+			enum: ['placed', 'accepted', 'ready', 'completed', 'cancelled'],
+		})
+			.notNull()
+			.default('placed'),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -414,6 +425,8 @@ export const shopOrders = sqliteTable(
 	(table) => [
 		index('idx_shop_orders_customer').on(table.customerId),
 		index('idx_shop_orders_status').on(table.status),
+		index('idx_shop_orders_location').on(table.locationId),
+		index('idx_shop_orders_kitchen_status').on(table.kitchenStatus),
 		uniqueIndex('shop_orders_stripe_checkout_session_id_unique').on(
 			table.stripeCheckoutSessionId,
 		),
@@ -433,12 +446,170 @@ export const shopOrders = sqliteTable(
 	],
 )
 
-export const shopOrdersRelations = relations(shopOrders, ({ one }) => ({
+export const shopOrdersRelations = relations(shopOrders, ({ one, many }) => ({
 	customer: one(customers, {
 		fields: [shopOrders.customerId],
 		references: [customers.id],
 	}),
+	lineItems: many(shopOrderLineItems),
 }))
+
+export const shopOrderLineItems = sqliteTable(
+	'shop_order_line_items',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => shopOrders.id, { onDelete: 'cascade' }),
+		menuItemId: text('menu_item_id'),
+		name: text('name').notNull(),
+		quantity: integer('quantity').notNull().default(1),
+		unitPriceCents: integer('unit_price_cents').notNull(),
+		lineTotalCents: integer('line_total_cents').notNull(),
+		modifierSummary: text('modifier_summary'),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [index('idx_shop_order_line_items_order').on(table.orderId)],
+)
+
+export const shopOrderLineItemsRelations = relations(
+	shopOrderLineItems,
+	({ one }) => ({
+		order: one(shopOrders, {
+			fields: [shopOrderLineItems.orderId],
+			references: [shopOrders.id],
+		}),
+	}),
+)
+
+// ==========================================
+// 7b. RESTAURANT MENU (per-location catalog)
+// ==========================================
+export const menuCategories = sqliteTable(
+	'menu_categories',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_menu_categories_location').on(table.locationId),
+		index('idx_menu_categories_sort').on(table.locationId, table.sortOrder),
+	],
+)
+
+export const menuItems = sqliteTable(
+	'menu_items',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		categoryId: text('category_id')
+			.notNull()
+			.references(() => menuCategories.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		priceCents: integer('price_cents').notNull(),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_menu_items_category').on(table.categoryId),
+		index('idx_menu_items_location').on(table.locationId),
+	],
+)
+
+export const menuModifierGroups = sqliteTable(
+	'menu_modifier_groups',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		menuItemId: text('menu_item_id')
+			.notNull()
+			.references(() => menuItems.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		minSelections: integer('min_selections').notNull().default(0),
+		maxSelections: integer('max_selections').notNull().default(1),
+		required: integer('required', { mode: 'boolean' }).notNull().default(false),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [index('idx_menu_modifier_groups_item').on(table.menuItemId)],
+)
+
+export const menuModifierOptions = sqliteTable(
+	'menu_modifier_options',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		groupId: text('group_id')
+			.notNull()
+			.references(() => menuModifierGroups.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		priceCents: integer('price_cents').notNull().default(0),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [index('idx_menu_modifier_options_group').on(table.groupId)],
+)
+
+export const menuCategoriesRelations = relations(
+	menuCategories,
+	({ many }) => ({
+		items: many(menuItems),
+	}),
+)
+
+export const menuItemsRelations = relations(menuItems, ({ one, many }) => ({
+	category: one(menuCategories, {
+		fields: [menuItems.categoryId],
+		references: [menuCategories.id],
+	}),
+	modifierGroups: many(menuModifierGroups),
+}))
+
+export const menuModifierGroupsRelations = relations(
+	menuModifierGroups,
+	({ one, many }) => ({
+		menuItem: one(menuItems, {
+			fields: [menuModifierGroups.menuItemId],
+			references: [menuItems.id],
+		}),
+		options: many(menuModifierOptions),
+	}),
+)
+
+export const menuModifierOptionsRelations = relations(
+	menuModifierOptions,
+	({ one }) => ({
+		group: one(menuModifierGroups, {
+			fields: [menuModifierOptions.groupId],
+			references: [menuModifierGroups.id],
+		}),
+	}),
+)
 
 // ==========================================
 // 8. CUSTOMER PAYMENT METHODS (shop card snapshots)
@@ -563,6 +734,14 @@ export type NewMarketingMessage = typeof marketingMessages.$inferInsert
 
 export type ShopOrder = typeof shopOrders.$inferSelect
 export type NewShopOrder = typeof shopOrders.$inferInsert
+
+export type ShopOrderLineItem = typeof shopOrderLineItems.$inferSelect
+export type NewShopOrderLineItem = typeof shopOrderLineItems.$inferInsert
+
+export type MenuCategory = typeof menuCategories.$inferSelect
+export type MenuItem = typeof menuItems.$inferSelect
+export type MenuModifierGroup = typeof menuModifierGroups.$inferSelect
+export type MenuModifierOption = typeof menuModifierOptions.$inferSelect
 
 export type CustomerPaymentMethod = typeof customerPaymentMethods.$inferSelect
 export type NewCustomerPaymentMethod =

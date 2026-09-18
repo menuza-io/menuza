@@ -21,6 +21,10 @@ msgstr "账户"
 msgid "Account settings"
 msgstr "账户设置"
 
+#: src/pages/order.astro.ts:3
+msgid "Add to cart"
+msgstr "加入购物车"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
 msgstr "返回商店"
@@ -90,6 +94,10 @@ msgstr "语言"
 msgid "Logout"
 msgstr "退出"
 
+#: src/pages/order.astro.ts:3
+msgid "Menu is not available yet."
+msgstr "菜单暂不可用。"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "移动端"
@@ -117,6 +125,10 @@ msgstr "暂无已保存的支付方式。"
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "打开菜单"
+
+#: src/pages/order.astro.ts:3
+msgid "Order"
+msgstr "点餐"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
@@ -152,6 +164,10 @@ msgstr "电话号码"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "目前无法更改电话号码。"
+
+#: src/pages/order.astro.ts:3
+msgid "Place order"
+msgstr "提交订单"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
@@ -210,6 +226,10 @@ msgstr "商店"
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "登录"
+
+#: src/pages/order.astro.ts:3
+msgid "Sign in to place an order"
+msgstr "登录后下单"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -280,6 +300,10 @@ msgstr "您叫什么名字？"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "当您在商店购买商品时，您的收据将显示在这里。"
+
+#: src/pages/order.astro.ts:3
+msgid "Your cart"
+msgstr "您的购物车"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

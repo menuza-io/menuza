@@ -21,6 +21,10 @@ msgstr "الحساب"
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
+#: src/pages/order.astro.ts:3
+msgid "Add to cart"
+msgstr "أضف إلى السلة"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
 msgstr "العودة إلى المتجر"
@@ -90,6 +94,10 @@ msgstr "اللغة"
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
+#: src/pages/order.astro.ts:3
+msgid "Menu is not available yet."
+msgstr "القائمة غير متاحة بعد."
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "الجوال"
@@ -117,6 +125,10 @@ msgstr "لا توجد بطاقات محفوظة بعد."
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "فتح القائمة"
+
+#: src/pages/order.astro.ts:3
+msgid "Order"
+msgstr "اطلب"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
@@ -152,6 +164,10 @@ msgstr "رقم الهاتف"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "لا يمكن تغيير رقم الهاتف حالياً."
+
+#: src/pages/order.astro.ts:3
+msgid "Place order"
+msgstr "أكمل الطلب"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
@@ -210,6 +226,10 @@ msgstr "المتجر"
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "تسجيل الدخول"
+
+#: src/pages/order.astro.ts:3
+msgid "Sign in to place an order"
+msgstr "سجّل الدخول لإتمام الطلب"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -280,6 +300,10 @@ msgstr "ما اسمك؟"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "عندما تشتري شيئاً من المتجر، ستظهر إيصالاتك هنا."
+
+#: src/pages/order.astro.ts:3
+msgid "Your cart"
+msgstr "سلتك"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

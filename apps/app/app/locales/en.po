@@ -528,7 +528,7 @@ msgstr ""
 msgid "Add link"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:499
+#: app/components/app-sidebar.tsx:515
 msgid "Add members"
 msgstr ""
 
@@ -747,7 +747,7 @@ msgstr "Alt Text"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:352
+#: app/components/app-sidebar.tsx:358
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "Analytics"
@@ -760,7 +760,7 @@ msgstr "Analytics and tracking"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:368
+#: app/components/app-sidebar.tsx:374
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -942,7 +942,7 @@ msgstr ""
 msgid "Automation saved successfully"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:322
+#: app/components/app-sidebar.tsx:328
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1021,7 +1021,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:433
+#: app/components/app-sidebar.tsx:449
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr ""
@@ -1050,7 +1050,7 @@ msgstr ""
 msgid "Body text"
 msgstr "Body text"
 
-#: app/components/app-sidebar.tsx:359
+#: app/components/app-sidebar.tsx:365
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1074,7 +1074,7 @@ msgstr ""
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
-#: app/components/app-sidebar.tsx:315
+#: app/components/app-sidebar.tsx:321
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -3039,7 +3039,7 @@ msgstr "Form settings"
 msgid "Format:"
 msgstr "Format:"
 
-#: app/components/app-sidebar.tsx:347
+#: app/components/app-sidebar.tsx:353
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -3070,11 +3070,11 @@ msgstr ""
 msgid "Full width"
 msgstr "Full width"
 
-#: app/components/app-sidebar.tsx:390
+#: app/components/app-sidebar.tsx:396
 msgid "General"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:337
+#: app/components/app-sidebar.tsx:343
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -3106,12 +3106,12 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:491
+#: app/components/app-sidebar.tsx:507
 msgid "Get chrome extension"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:153
-#: app/components/app-sidebar.tsx:506
+#: app/components/app-sidebar.tsx:522
 msgid "Get help"
 msgstr ""
 
@@ -3131,7 +3131,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:161
-#: app/components/app-sidebar.tsx:514
+#: app/components/app-sidebar.tsx:530
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -3437,7 +3437,7 @@ msgstr "Insert field here"
 msgid "Inspect"
 msgstr "Inspect"
 
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:415
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -3744,6 +3744,10 @@ msgstr ""
 msgid "Location"
 msgstr "Location"
 
+#: app/components/app-sidebar.tsx:420
+msgid "Locations"
+msgstr "Locations"
+
 #: app/components/nav-user.tsx:300
 #: app/components/ui/header.tsx:144
 msgid "Log out"
@@ -3907,7 +3911,7 @@ msgstr ""
 msgid "Mark as read"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:302
+#: app/components/app-sidebar.tsx:308
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -3925,7 +3929,7 @@ msgstr ""
 msgid "MCP OAuth Setup Instructions"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:419
+#: app/components/app-sidebar.tsx:435
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr ""
@@ -3980,7 +3984,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:395
+#: app/components/app-sidebar.tsx:401
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:771
 #: app/components/roles/tenant-role-access-manager.tsx:857
@@ -3990,6 +3994,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:232
 msgid "Members & invites"
 msgstr "Members & invites"
+
+#: app/components/app-sidebar.tsx:425
+msgid "Menu"
+msgstr "Menu"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 msgid "Menuza Team"
@@ -4488,7 +4496,7 @@ msgstr ""
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:424
+#: app/components/app-sidebar.tsx:440
 msgid "Notifications"
 msgstr ""
 
@@ -4671,6 +4679,10 @@ msgstr ""
 msgid "Or continue with email or username"
 msgstr ""
 
+#: app/components/app-sidebar.tsx:302
+msgid "Orders"
+msgstr "Orders"
+
 #: app/components/settings/cards/organization/shop-card.tsx:345
 msgid "Orders placed on your public site."
 msgstr ""
@@ -4722,7 +4734,7 @@ msgstr ""
 msgid "Outline"
 msgstr "Outline"
 
-#: app/components/app-sidebar.tsx:308
+#: app/components/app-sidebar.tsx:314
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr ""
@@ -4754,7 +4766,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:342
+#: app/components/app-sidebar.tsx:348
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -5281,7 +5293,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:375
+#: app/components/app-sidebar.tsx:381
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "Redirects"
@@ -5582,7 +5594,7 @@ msgstr "Role"
 msgid "Role name"
 msgstr "Role name"
 
-#: app/components/app-sidebar.tsx:402
+#: app/components/app-sidebar.tsx:408
 msgid "Roles & access"
 msgstr "Roles & access"
 
@@ -5841,7 +5853,7 @@ msgstr "Search media"
 msgid "Search media library"
 msgstr "Search media library"
 
-#: app/components/app-sidebar.tsx:544
+#: app/components/app-sidebar.tsx:560
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
 msgstr "Search menu items..."
@@ -6129,7 +6141,7 @@ msgstr ""
 msgid "Set up authenticator app"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:382
+#: app/components/app-sidebar.tsx:388
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -6180,7 +6192,7 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:414
+#: app/components/app-sidebar.tsx:430
 msgid "Shop"
 msgstr ""
 
@@ -7468,7 +7480,7 @@ msgstr ""
 msgid "We've sent you a code to verify your email address."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:331
+#: app/components/app-sidebar.tsx:337
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"

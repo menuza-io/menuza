@@ -6,6 +6,11 @@ import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
 import { analyticsRoutes } from './routes/analytics.ts'
 import { authRoutes } from './routes/auth.ts'
+import {
+	foodOrderRoutes,
+	operatorFoodOrderRoutes,
+} from './routes/food-orders.ts'
+import { menuRoutes } from './routes/menu.ts'
 import { shopRoutes } from './routes/shop.ts'
 import { engagementSyncRoutes } from './routes/engagement-sync.ts'
 import {
@@ -93,6 +98,8 @@ export function createTenantApiApp() {
 
 	app.route('/auth', authRoutes)
 	app.route('/shop', shopRoutes)
+	app.route('/shop/food-orders', foodOrderRoutes)
+	app.route('/menu', menuRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)
@@ -100,6 +107,7 @@ export function createTenantApiApp() {
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/operator', operatorRoutes)
+	app.route('/operator/food', operatorFoodOrderRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 

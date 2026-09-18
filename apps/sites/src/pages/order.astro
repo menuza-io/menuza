@@ -1,0 +1,135 @@
+---
+import { msg } from '@lingui/core/macro'
+import SitePage from '~/components/SitePage.astro'
+import { getAppUrl, getTenantApiUrl } from '~/lib/worker-env'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+
+const orderTitle = i18n._(msg`Order`)
+const addToCart = i18n._(msg`Add to cart`)
+const cartTitle = i18n._(msg`Your cart`)
+const placeOrder = i18n._(msg`Place order`)
+const signInRequired = i18n._(msg`Sign in to place an order`)
+const emptyMenu = i18n._(msg`Menu is not available yet.`)
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const appUrl = getAppUrl()
+const tenantApiUrl = getTenantApiUrl(organization.dataRegion)
+const locParams = new URLSearchParams()
+if (customHost) locParams.set('host', customHost)
+else if (orgSlug) locParams.set('slug', orgSlug)
+
+let locationId: string | null = null
+let menuPayload: { categories: Array<unknown> } | null = null
+
+try {
+	const locRes = await fetch(
+		`${appUrl}/resources/sites/location?${locParams.toString()}`,
+		{ headers: { Accept: 'application/json' } },
+	)
+	if (locRes.ok) {
+		const locJson = (await locRes.json()) as { locationId?: string | null }
+		locationId = locJson.locationId ?? null
+	}
+	if (locationId) {
+		const menuParams = new URLSearchParams(locParams)
+		menuParams.set('locationId', locationId)
+		const menuRes = await fetch(
+			`${tenantApiUrl}/menu?${menuParams.toString()}`,
+			{ headers: { Accept: 'application/json' } },
+		)
+		if (menuRes.ok) {
+			menuPayload = (await menuRes.json()) as { categories: Array<unknown> }
+		}
+	}
+} catch {
+	/* menu unavailable */
+}
+
+const categories = menuPayload?.categories ?? []
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'order', title: orderTitle, slug: 'order', isHomePage: false, sections: [] }}
+	title={`${orderTitle} - ${organization.name}`}
+>
+	<div
+		id="menu-order-root"
+		class="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col gap-8 px-4 py-12"
+		data-location-id={locationId ?? undefined}
+		data-add-to-cart={addToCart}
+		data-place-order={placeOrder}
+		data-sign-in-required={signInRequired}
+		data-cart-title={cartTitle}
+	>
+		<header class="space-y-2 text-center">
+			<p class="text-sm text-muted-foreground">{organization.name}</p>
+			<h1 class="font-heading text-3xl font-semibold tracking-tight">{orderTitle}</h1>
+		</header>
+
+		{categories.length === 0 ? (
+			<p class="text-center text-muted-foreground">{emptyMenu}</p>
+		) : (
+			<div class="space-y-8" id="menu-catalog">
+				{categories.map((category: any) => (
+					<section class="space-y-4">
+						<h2 class="text-xl font-semibold">{category.name}</h2>
+						<ul class="space-y-3">
+							{category.items?.map((item: any) => (
+								<li
+									class="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
+									data-menu-item
+									data-item-id={item.id}
+									data-item-name={item.name}
+									data-item-price={item.priceCents}
+								>
+									<div>
+										<p class="font-medium">{item.name}</p>
+										{item.description ? (
+											<p class="text-sm text-muted-foreground">{item.description}</p>
+										) : null}
+										<p class="text-sm font-medium">
+											${(item.priceCents / 100).toFixed(2)}
+										</p>
+									</div>
+									<button
+										type="button"
+										class="menu-add-btn rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+									>
+										{addToCart}
+									</button>
+								</li>
+							))}
+						</ul>
+					</section>
+				))}
+			</div>
+		)}
+
+		<aside
+			id="menu-cart-panel"
+			class="sticky bottom-4 rounded-xl border border-border bg-card p-4 shadow-lg"
+		>
+			<h2 class="mb-2 font-semibold">{cartTitle}</h2>
+			<ul id="menu-cart-lines" class="mb-4 space-y-2 text-sm"></ul>
+			<p id="menu-cart-total" class="mb-3 font-medium"></p>
+			<button
+				id="menu-place-order"
+				type="button"
+				class="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+				disabled
+			>
+				{placeOrder}
+			</button>
+			<p id="menu-order-message" class="mt-2 text-sm text-muted-foreground"></p>
+		</aside>
+	</div>
+	<script type="module" src="/src/scripts/menu-order.ts"></script>
+</SitePage>

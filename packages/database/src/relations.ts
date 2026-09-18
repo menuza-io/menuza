@@ -13,6 +13,7 @@ import {
 	Permission,
 	_RoleToUser,
 	Organization,
+	OrganizationLocation,
 	OrganizationImage,
 	UtmSource,
 	Integration,
@@ -225,7 +226,18 @@ export const OrganizationImageRelations = relations(
 	}),
 )
 
+export const OrganizationLocationRelations = relations(
+	OrganizationLocation,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationLocation.organizationId],
+			references: [Organization.id],
+		}),
+	}),
+)
+
 export const OrganizationRelations = relations(Organization, ({ many }) => ({
+	locations: many(OrganizationLocation),
 	images: many(OrganizationImage),
 	integrations: many(Integration),
 	onboardingStepProgress: many(OnboardingStepProgress),
