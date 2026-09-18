@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { sql } from 'drizzle-orm'
 import { migrate } from 'drizzle-orm/libsql/migrator'
 import { db } from './client.ts'
+import { ensureOrganizationLocationColumns } from './ensure-organization-location-columns.ts'
 import { ensureOrganizationRoleAssignmentTriggers } from './ensure-organization-role-triggers.ts'
 
 const packageDir = path.resolve(
@@ -16,4 +17,5 @@ await migrate(db, {
 	migrationsFolder: path.join(packageDir, 'drizzle'),
 })
 await ensureOrganizationRoleAssignmentTriggers()
+await ensureOrganizationLocationColumns()
 console.log('✅ Database migrations completed successfully')
