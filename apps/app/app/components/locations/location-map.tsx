@@ -22,6 +22,7 @@ function LiveGoogleLocationMap({
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstanceRef = useRef<unknown>(null)
 	const markerRef = useRef<unknown>(null)
+	const lastPositionRef = useRef<{ lat: number; lng: number } | null>(null)
 	const onPinChangeRef = useRef(onPinChange)
 
 	onPinChangeRef.current = onPinChange
@@ -53,6 +54,7 @@ function LiveGoogleLocationMap({
 			})
 			mapInstanceRef.current = map
 			markerRef.current = marker
+			lastPositionRef.current = center
 			return
 		}
 
@@ -64,6 +66,11 @@ function LiveGoogleLocationMap({
 		}
 		if (latitude != null && longitude != null && marker && map) {
 			const position = { lat: latitude, lng: longitude }
+			const last = lastPositionRef.current
+			if (last?.lat === position.lat && last?.lng === position.lng) {
+				return
+			}
+			lastPositionRef.current = position
 			marker.setPosition(position)
 			map.setCenter(position)
 		}

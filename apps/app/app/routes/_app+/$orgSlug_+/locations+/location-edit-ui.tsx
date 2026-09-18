@@ -10,7 +10,7 @@ import { Button } from '@repo/ui/button'
 import { PageTitle } from '@repo/ui/page-title'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
 	Form,
 	Link,
@@ -37,9 +37,23 @@ export default function EditRestaurantLocationPage() {
 		googleMapsApiKey,
 		googleMapsMode,
 	} = useLoaderData<typeof loader>()
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const tab = searchParams.get('tab') ?? 'details'
 	const navigation = useNavigation()
+
+	const onTabChange = useCallback(
+		(nextTab: string) => {
+			setSearchParams(
+				(prev) => {
+					const params = new URLSearchParams(prev)
+					params.set('tab', nextTab)
+					return params
+				},
+				{ replace: true },
+			)
+		},
+		[setSearchParams],
+	)
 
 	const [address, setAddress] = useState<AddressFieldValues>({
 		addressLine1: location.addressLine1 ?? '',
@@ -61,6 +75,14 @@ export default function EditRestaurantLocationPage() {
 	const lat = address.latitude ? Number(address.latitude) : null
 	const lng = address.longitude ? Number(address.longitude) : null
 
+	const onPinChange = useCallback((nextLat: number, nextLng: number) => {
+		setAddress((prev) => ({
+			...prev,
+			latitude: String(nextLat),
+			longitude: String(nextLng),
+		}))
+	}, [])
+
 	return (
 		<div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-6 py-8 md:px-6 lg:px-8">
 			<div className="flex flex-wrap items-center justify-between gap-4">
@@ -72,15 +94,15 @@ export default function EditRestaurantLocationPage() {
 					<Trans>Back to list</Trans>
 				</Button>
 			</div>
-			<Tabs value={tab}>
+			<Tabs value={tab} onValueChange={onTabChange}>
 				<TabsList>
-					<TabsTrigger value="details" render={<Link to="?tab=details" />}>
+					<TabsTrigger value="details">
 						<Trans>Details</Trans>
 					</TabsTrigger>
-					<TabsTrigger value="hours" render={<Link to="?tab=hours" />}>
+					<TabsTrigger value="hours">
 						<Trans>Hours</Trans>
 					</TabsTrigger>
-					<TabsTrigger value="kitchen" render={<Link to="?tab=kitchen" />}>
+					<TabsTrigger value="kitchen">
 						<Trans>Kitchen</Trans>
 					</TabsTrigger>
 				</TabsList>
@@ -137,13 +159,7 @@ export default function EditRestaurantLocationPage() {
 									googleMapsApiKey={googleMapsApiKey}
 									latitude={lat}
 									longitude={lng}
-									onPinChange={(nextLat, nextLng) =>
-										setAddress((prev) => ({
-											...prev,
-											latitude: String(nextLat),
-											longitude: String(nextLng),
-										}))
-									}
+									onPinChange={onPinChange}
 								/>
 								<div className="flex flex-wrap gap-6">
 									<label className="flex items-center gap-2 text-sm">
