@@ -24,6 +24,7 @@ import {
 	type AddressFieldValues,
 } from '#app/components/locations/address-autocomplete-field.tsx'
 import { LocationMap } from '#app/components/locations/location-map.tsx'
+import { TimezoneSelectField } from '#app/components/locations/timezone-select-field.tsx'
 import { SpecialHoursEditor } from '#app/components/locations/special-hours-editor.tsx'
 import { WeeklyHoursEditor } from '#app/components/locations/weekly-hours-editor.tsx'
 
@@ -137,16 +138,13 @@ export default function EditRestaurantLocationPage() {
 											className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm"
 										/>
 									</label>
-									<label className="space-y-1">
-										<span className="text-sm font-medium">
-											<Trans>Timezone</Trans>
-										</span>
-										<input
+									<div className="space-y-1">
+										<TimezoneSelectField
 											name="timezone"
 											defaultValue={location.timezone}
-											className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm"
+											required
 										/>
-									</label>
+									</div>
 								</div>
 								<AddressAutocompleteField
 									mapsMode={googleMapsMode}
@@ -201,38 +199,46 @@ export default function EditRestaurantLocationPage() {
 									name="hoursPayload"
 									value={JSON.stringify(hoursBundle)}
 								/>
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										name="storeHoursOverride"
-										value="on"
-										defaultChecked={location.storeHoursOverride}
-									/>
-									<Trans>Override brand store hours</Trans>
-								</label>
-								<WeeklyHoursEditor
-									namePrefix="store"
-									value={hoursBundle.store}
-									onChange={(store) =>
-										setHoursBundle((prev) => ({ ...prev, store }))
-									}
-								/>
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										name="onlineHoursOverride"
-										value="on"
-										defaultChecked={location.onlineHoursOverride}
-									/>
-									<Trans>Override brand online hours</Trans>
-								</label>
-								<WeeklyHoursEditor
-									namePrefix="online"
-									value={hoursBundle.online}
-									onChange={(online) =>
-										setHoursBundle((prev) => ({ ...prev, online }))
-									}
-								/>
+								<div className="flex flex-col gap-6">
+									<div className="space-y-3">
+										<label className="flex items-center gap-2 text-sm">
+											<input
+												type="checkbox"
+												name="storeHoursOverride"
+												value="on"
+												defaultChecked={location.storeHoursOverride}
+											/>
+											<Trans>Override brand store hours</Trans>
+										</label>
+										<WeeklyHoursEditor
+											namePrefix="store"
+											title={<Trans>Store hours</Trans>}
+											value={hoursBundle.store}
+											onChange={(store) =>
+												setHoursBundle((prev) => ({ ...prev, store }))
+											}
+										/>
+									</div>
+									<div className="space-y-3">
+										<label className="flex items-center gap-2 text-sm">
+											<input
+												type="checkbox"
+												name="onlineHoursOverride"
+												value="on"
+												defaultChecked={location.onlineHoursOverride}
+											/>
+											<Trans>Override brand online hours</Trans>
+										</label>
+										<WeeklyHoursEditor
+											namePrefix="online"
+											title={<Trans>Online hours</Trans>}
+											value={hoursBundle.online}
+											onChange={(online) =>
+												setHoursBundle((prev) => ({ ...prev, online }))
+											}
+										/>
+									</div>
+								</div>
 								<SpecialHoursEditor
 									value={hoursBundle.special ?? []}
 									onChange={(special) =>

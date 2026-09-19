@@ -233,6 +233,7 @@ function OrganizationSidebar({
 	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
 	const canReadCampaigns = hasOrgPermission('read', 'campaign')
 	const canReadAutomations = hasOrgPermission('read', 'automation')
+	const canReadMenu = hasOrgPermission('read', 'menu')
 
 	useEffect(() => {
 		if (typeof navigator !== 'undefined') {
@@ -297,6 +298,12 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/customers`,
 			isActive: location.pathname.includes(`/${orgSlug}/customers`),
 			icon: UsersRoundIcon,
+		},
+		{
+			title: _(msg`Menu`),
+			url: `/${orgSlug}/menu`,
+			isActive: location.pathname.includes(`/${orgSlug}/menu`),
+			icon: FoldersIcon,
 		},
 		{
 			title: _(msg`Marketing`),
@@ -454,6 +461,9 @@ function OrganizationSidebar({
 			}
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
+			}
+			if (item.url === `/${orgSlug}/menu`) {
+				return canReadMenu
 			}
 			return true
 		})

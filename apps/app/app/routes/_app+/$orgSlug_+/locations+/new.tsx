@@ -14,10 +14,8 @@ import {
 	locationDetailsSchema,
 	locationKitchenSchema,
 } from '#app/utils/organization/locations.server.ts'
-import {
-	requireUserWithOrganizationPermission,
-	ORG_PERMISSIONS,
-} from '#app/utils/organization/permissions.server.ts'
+import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
+import { LOCATION_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 
 const CreateLocationSchema = locationDetailsSchema
 	.merge(locationAddressSchema)
@@ -51,7 +49,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
-		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		LOCATION_WRITE_PERMISSION,
 	)
 
 	const formData = await request.formData()

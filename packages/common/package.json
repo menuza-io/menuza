@@ -137,6 +137,16 @@
       "import": "./src/location-hours.ts",
       "default": "./src/location-hours.ts"
     },
+    "./iana-timezones": {
+      "types": "./src/iana-timezones.ts",
+      "import": "./src/iana-timezones.ts",
+      "default": "./src/iana-timezones.ts"
+    },
+    "./time-of-day": {
+      "types": "./src/time-of-day.ts",
+      "import": "./src/time-of-day.ts",
+      "default": "./src/time-of-day.ts"
+    },
     "./google-maps-mock": {
       "types": "./src/google-maps-mock.ts",
       "import": "./src/google-maps-mock.ts",

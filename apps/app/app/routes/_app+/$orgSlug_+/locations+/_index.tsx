@@ -13,7 +13,9 @@ import {
 } from '@repo/ui/table'
 import { type LoaderFunctionArgs, Link, useLoaderData } from 'react-router'
 
+import { LOCATION_READ_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 import {
 	ensureDefaultOrganizationLocation,
 	listOrganizationLocations,
@@ -25,6 +27,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		name: true,
 		slug: true,
 	})
+
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		LOCATION_READ_PERMISSION,
+	)
 
 	await ensureDefaultOrganizationLocation({
 		organizationId: organization.id,

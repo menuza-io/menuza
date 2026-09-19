@@ -12,6 +12,7 @@ import {
 	type AddressFieldValues,
 } from '#app/components/locations/address-autocomplete-field.tsx'
 import { LocationMap } from '#app/components/locations/location-map.tsx'
+import { TimezoneSelectField } from '#app/components/locations/timezone-select-field.tsx'
 
 import { type loader } from './new.tsx'
 
@@ -67,16 +68,11 @@ export default function NewRestaurantLocationPage() {
 									className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm"
 								/>
 							</label>
-							<label className="space-y-1">
-								<span className="text-sm font-medium">
-									<Trans>Timezone</Trans>
-								</span>
-								<input
-									name="timezone"
-									defaultValue="America/Chicago"
-									className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm"
-								/>
-							</label>
+							<TimezoneSelectField
+								name="timezone"
+								defaultValue="America/Chicago"
+								required
+							/>
 							<label className="space-y-1">
 								<span className="text-sm font-medium">
 									<Trans>Prep time (minutes)</Trans>

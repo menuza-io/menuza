@@ -18,15 +18,22 @@ import {
 	updateOrganizationLocation,
 } from '#app/utils/organization/locations.server.ts'
 import {
-	requireUserWithOrganizationPermission,
-	ORG_PERMISSIONS,
-} from '#app/utils/organization/permissions.server.ts'
+	LOCATION_READ_PERMISSION,
+	LOCATION_WRITE_PERMISSION,
+} from '#app/utils/menu-permissions.server.ts'
+import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
 	})
+
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		LOCATION_READ_PERMISSION,
+	)
 	const locationId = params.locationId
 	if (!locationId) throw new Response('Not Found', { status: 404 })
 
@@ -105,7 +112,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
-		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		LOCATION_WRITE_PERMISSION,
 	)
 
 	const existing = await getOrganizationLocation(organization.id, locationId)

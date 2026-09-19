@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { GOOGLE_MAPS_MOCK_PLACE } from '@repo/common/google-maps-mock'
+import { isValidIanaTimeZone } from '@repo/common/iana-timezones'
 import {
 	emptyLocationHoursBundle,
 	emptyWeeklyHours,
@@ -61,7 +62,12 @@ export const locationDetailsSchema = z.object({
 		.optional()
 		.or(z.literal(''))
 		.transform((value) => (value ? value : null)),
-	timezone: z.string().trim().min(1).max(80),
+	timezone: z
+		.string()
+		.trim()
+		.min(1)
+		.max(80)
+		.refine(isValidIanaTimeZone, 'Choose a valid timezone'),
 	active: z.boolean().optional().default(true),
 	isDefault: z.boolean().optional().default(false),
 })
