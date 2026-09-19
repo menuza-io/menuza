@@ -1,7 +1,10 @@
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { Button } from '@repo/ui/button'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -11,6 +14,9 @@ import {
 } from '@repo/ui/select'
 import { type ReactNode } from 'react'
 import { Link } from 'react-router'
+
+type SearchPlaceholder =
+	'menus' | 'categories' | 'items' | 'modifier-sets' | 'modifiers'
 
 export function MenuListHeader({
 	title,
@@ -30,7 +36,7 @@ export function MenuListHeader({
 	subtitle: ReactNode
 	searchQuery: string
 	onSearchChange: (value: string) => void
-	searchPlaceholder: string
+	searchPlaceholder: SearchPlaceholder
 	createHref?: string
 	createOnClick?: () => void
 	createLabel?: ReactNode
@@ -41,28 +47,42 @@ export function MenuListHeader({
 	) => void
 	extraActions?: ReactNode
 }) {
+	const { _ } = useLingui()
+	const searchMessages = {
+		menus: t`Search menus`,
+		categories: t`Search categories`,
+		items: t`Search items`,
+		'modifier-sets': t`Search modifier sets`,
+		modifiers: t`Search modifiers`,
+	} as const
+	const searchLabel = _(searchMessages[searchPlaceholder])
+
 	return (
-		<header className="mb-4 flex flex-col gap-3">
-			<div className="flex flex-wrap items-center gap-3">
-				<div className="min-w-0 flex-1">
-					<h2 className="text-lg font-semibold">{title}</h2>
-					<p className="text-muted-foreground text-xs">{subtitle}</p>
-				</div>
-				{extraActions}
-				{canCreate && (createHref || createOnClick) ? (
-					createOnClick ? (
-						<Button size="sm" onClick={createOnClick}>
-							<Icon name="plus" className="size-3.5" />
-							{createLabel}
-						</Button>
-					) : (
-						<Button size="sm" render={<Link to={createHref!} />}>
-							<Icon name="plus" className="size-3.5" />
-							{createLabel}
-						</Button>
-					)
-				) : null}
-			</div>
+		<div className="space-y-4">
+			<PageHeader
+				title={title}
+				description={subtitle}
+				headingLevel="h2"
+				size="section"
+				actions={
+					<>
+						{extraActions}
+						{canCreate && (createHref || createOnClick) ? (
+							createOnClick ? (
+								<Button size="sm" onClick={createOnClick}>
+									<Icon name="plus" className="size-4" />
+									{createLabel}
+								</Button>
+							) : (
+								<Button size="sm" render={<Link to={createHref!} />}>
+									<Icon name="plus" className="size-4" />
+									{createLabel}
+								</Button>
+							)
+						) : null}
+					</>
+				}
+			/>
 			<div className="flex flex-wrap gap-2">
 				<div className="relative min-w-56 flex-1">
 					<Icon
@@ -72,9 +92,9 @@ export function MenuListHeader({
 					<Input
 						value={searchQuery}
 						onChange={(event) => onSearchChange(event.target.value)}
-						placeholder={searchPlaceholder}
+						placeholder={searchLabel}
 						className="pl-8"
-						aria-label={searchPlaceholder}
+						aria-label={searchLabel}
 					/>
 				</div>
 				{availabilityFilter !== undefined && onAvailabilityFilterChange ? (
@@ -103,12 +123,10 @@ export function MenuListHeader({
 					</Select>
 				) : null}
 			</div>
-		</header>
+		</div>
 	)
 }
 
 export function MenuTableShell({ children }: { children: ReactNode }) {
-	return (
-		<div className="bg-card overflow-hidden rounded-lg border">{children}</div>
-	)
+	return <Frame className="w-full">{children}</Frame>
 }

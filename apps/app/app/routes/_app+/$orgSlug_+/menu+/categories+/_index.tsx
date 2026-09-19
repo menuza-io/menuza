@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
@@ -111,7 +111,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(base, {
 				type: 'success',
-				title: 'Category added',
+				title: t`Category added`,
 				description: '',
 			})
 		}
@@ -124,7 +124,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(base, {
 				type: 'success',
-				title: 'Category updated',
+				title: t`Category updated`,
 				description: '',
 			})
 		}
@@ -136,7 +136,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(base, {
 				type: 'success',
-				title: 'Category deleted',
+				title: t`Category deleted`,
 				description: '',
 			})
 		}
@@ -155,7 +155,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(base, {
 				type: 'success',
-				title: 'Category updated',
+				title: t`Category updated`,
 				description: '',
 			})
 		}
@@ -213,7 +213,7 @@ export default function MenuCategoriesPage() {
 				subtitle={scopeSubtitle}
 				searchQuery={query}
 				onSearchChange={setQuery}
-				searchPlaceholder="Search categories"
+				searchPlaceholder="categories"
 				createLabel={<Trans>Create category</Trans>}
 				canCreate={canEditMenu}
 				createOnClick={() => setCreateOpen(true)}
@@ -242,7 +242,7 @@ export default function MenuCategoriesPage() {
 			) : null}
 
 			<MenuTableShell>
-				<Table>
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
 							<TableHead>

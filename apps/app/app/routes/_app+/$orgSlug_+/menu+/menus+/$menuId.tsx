@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -69,7 +69,7 @@ export async function action(
 
 	if (intent === 'save-menu') {
 		const name = formData.get('name')?.toString().trim()
-		if (!name) return new Response('Name required', { status: 400 })
+		if (!name) return new Response(t`Name required`, { status: 400 })
 		await updateMenu(
 			organization.id,
 			menuLocationId,
@@ -87,7 +87,8 @@ export async function action(
 	}
 	if (intent === 'add-category') {
 		const categoryId = formData.get('categoryId')?.toString()
-		if (!categoryId) return new Response('categoryId required', { status: 400 })
+		if (!categoryId)
+			return new Response(t`Category is required`, { status: 400 })
 		await linkCategoryToMenu(
 			organization.id,
 			menuLocationId,
@@ -98,7 +99,8 @@ export async function action(
 	}
 	if (intent === 'remove-category') {
 		const categoryId = formData.get('categoryId')?.toString()
-		if (!categoryId) return new Response('categoryId required', { status: 400 })
+		if (!categoryId)
+			return new Response(t`Category is required`, { status: 400 })
 		await unlinkCategoryFromMenu(
 			organization.id,
 			menuLocationId,
@@ -107,7 +109,7 @@ export async function action(
 		)
 		return { ok: true }
 	}
-	return new Response('Unknown intent', { status: 400 })
+	return new Response(t`Unknown action`, { status: 400 })
 }
 
 export default function MenuDetailRoute() {
@@ -141,7 +143,9 @@ export default function MenuDetailRoute() {
 					<input type="hidden" name="intent" value="save-menu" />
 					<div className="grid gap-4 sm:grid-cols-2">
 						<div className="space-y-1 sm:col-span-2">
-							<Label htmlFor="menu-name">Display name</Label>
+							<Label htmlFor="menu-name">
+								<Trans>Display name</Trans>
+							</Label>
 							<Input
 								id="menu-name"
 								name="name"
@@ -150,20 +154,30 @@ export default function MenuDetailRoute() {
 							/>
 						</div>
 						<div className="space-y-1">
-							<Label htmlFor="menu-type">Menu type</Label>
+							<Label htmlFor="menu-type">
+								<Trans>Menu type</Trans>
+							</Label>
 							<Select name="menuType" defaultValue={menuType}>
 								<SelectTrigger id="menu-type" className="w-full">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="olo">Online ordering</SelectItem>
-									<SelectItem value="catering">Catering</SelectItem>
-									<SelectItem value="dine-in">Dine-in</SelectItem>
+									<SelectItem value="olo">
+										<Trans>Online ordering</Trans>
+									</SelectItem>
+									<SelectItem value="catering">
+										<Trans>Catering</Trans>
+									</SelectItem>
+									<SelectItem value="dine-in">
+										<Trans>Dine-in</Trans>
+									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="space-y-1">
-							<Label htmlFor="menu-description">Description</Label>
+							<Label htmlFor="menu-description">
+								<Trans>Description</Trans>
+							</Label>
 							<Textarea
 								id="menu-description"
 								name="description"
@@ -180,7 +194,7 @@ export default function MenuDetailRoute() {
 								name="active"
 								defaultChecked={menu.active}
 							/>
-							Available to guests
+							<Trans>Available to guests</Trans>
 						</label>
 						<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 							<input
@@ -188,7 +202,7 @@ export default function MenuDetailRoute() {
 								name="showCalories"
 								defaultChecked={menu.showCalories}
 							/>
-							Show calorie information
+							<Trans>Show calorie information</Trans>
 						</label>
 						<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 							<input
@@ -196,7 +210,7 @@ export default function MenuDetailRoute() {
 								name="instructionsEnabled"
 								defaultChecked={menu.instructionsEnabled}
 							/>
-							Enable instructions
+							<Trans>Enable instructions</Trans>
 						</label>
 					</div>
 					<Button type="submit" disabled={isSubmitting}>
@@ -269,7 +283,7 @@ export default function MenuDetailRoute() {
 									size="sm"
 									disabled={isSubmitting}
 								>
-									{`Remove ${category.name}`}
+									<Trans>Remove {category.name}</Trans>
 								</Button>
 							</Form>
 						))

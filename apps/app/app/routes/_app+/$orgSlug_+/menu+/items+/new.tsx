@@ -1,5 +1,6 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
@@ -62,6 +63,18 @@ const ITEM_ALLERGENS = [
 	'Shellfish',
 	'Sesame',
 ] as const
+
+const ITEM_ALLERGEN_LABELS = {
+	Gluten: <Trans>Gluten</Trans>,
+	Dairy: <Trans>Dairy</Trans>,
+	Eggs: <Trans>Eggs</Trans>,
+	Soy: <Trans>Soy</Trans>,
+	Peanuts: <Trans>Peanuts</Trans>,
+	'Tree nuts': <Trans>Tree nuts</Trans>,
+	Fish: <Trans>Fish</Trans>,
+	Shellfish: <Trans>Shellfish</Trans>,
+	Sesame: <Trans>Sesame</Trans>,
+} as const
 
 export async function loader(
 	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
@@ -129,7 +142,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	)
 	return redirectWithToast(`/${organization.slug}/menu/items/${item!.id}`, {
 		type: 'success',
-		title: 'Item created',
+		title: t`Item created`,
 		description: '',
 	})
 }
@@ -137,6 +150,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function NewMenuItemPage() {
 	const { organization, categories, catalogReady } =
 		useLoaderData<typeof loader>()
+	const { _ } = useLingui()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
 	const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
@@ -155,8 +169,8 @@ export default function NewMenuItemPage() {
 	return (
 		<AnnotatedLayout>
 			<AnnotatedSection
-				title="New item"
-				description="Add a menu item to your catalog."
+				title={<Trans>New item</Trans>}
+				description={<Trans>Add a menu item to your catalog.</Trans>}
 			>
 				{categories.length === 0 ? (
 					<p className="text-muted-foreground text-sm">
@@ -171,17 +185,21 @@ export default function NewMenuItemPage() {
 						<input type="hidden" name="categoryId" value={categoryId} />
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="space-y-1 sm:col-span-2">
-								<Label htmlFor="item-name">Display name</Label>
+								<Label htmlFor="item-name">
+									<Trans>Display name</Trans>
+								</Label>
 								<Input id="item-name" name="name" required />
 							</div>
 							<div className="space-y-1">
-								<Label htmlFor="item-category">Category</Label>
+								<Label htmlFor="item-category">
+									<Trans>Category</Trans>
+								</Label>
 								<Select
 									value={categoryId}
 									onValueChange={(value) => value && setCategoryId(value)}
 								>
 									<SelectTrigger id="item-category" className="w-full">
-										<SelectValue placeholder="Select category" />
+										<SelectValue placeholder={_(t`Select category`)} />
 									</SelectTrigger>
 									<SelectContent>
 										{categories.map((category) => (
@@ -193,7 +211,9 @@ export default function NewMenuItemPage() {
 								</Select>
 							</div>
 							<div className="space-y-1">
-								<Label htmlFor="item-price">Price (USD)</Label>
+								<Label htmlFor="item-price">
+									<Trans>Price (USD)</Trans>
+								</Label>
 								<Input
 									id="item-price"
 									name="priceDollars"
@@ -204,19 +224,27 @@ export default function NewMenuItemPage() {
 								/>
 							</div>
 							<div className="space-y-1 sm:col-span-2">
-								<Label htmlFor="item-description">Description</Label>
+								<Label htmlFor="item-description">
+									<Trans>Description</Trans>
+								</Label>
 								<Textarea id="item-description" name="description" rows={4} />
 							</div>
 							<div className="space-y-1 sm:col-span-2">
-								<Label htmlFor="item-image">Image URL</Label>
+								<Label htmlFor="item-image">
+									<Trans>Image URL</Trans>
+								</Label>
 								<Input id="item-image" name="imageUrl" type="url" />
 							</div>
 							<div className="space-y-1">
-								<Label htmlFor="item-points">Loyalty points</Label>
+								<Label htmlFor="item-points">
+									<Trans>Loyalty points</Trans>
+								</Label>
 								<Input id="item-points" name="points" type="number" min={0} />
 							</div>
 							<div className="space-y-1">
-								<Label>Calories</Label>
+								<Label>
+									<Trans>Calories</Trans>
+								</Label>
 								<div className="grid grid-cols-2 gap-2">
 									<Input
 										name="calorieMin"
@@ -235,14 +263,26 @@ export default function NewMenuItemPage() {
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2">
 							{[
-								['alcohol', 'Contains alcohol'],
-								['glutenFree', 'Gluten free'],
-								['vegetarian', 'Vegetarian'],
-								['taxable', 'Taxable'],
-								['popular', 'Popular item'],
-								['upsell', 'Use as an upsell'],
-								['excludeFromThrottle', 'Exclude from order throttling'],
-							].map(([name, label]) => (
+								{
+									name: 'alcohol',
+									label: <Trans>Contains alcohol</Trans>,
+								},
+								{
+									name: 'glutenFree',
+									label: <Trans>Gluten free</Trans>,
+								},
+								{
+									name: 'vegetarian',
+									label: <Trans>Vegetarian</Trans>,
+								},
+								{ name: 'taxable', label: <Trans>Taxable</Trans> },
+								{ name: 'popular', label: <Trans>Popular item</Trans> },
+								{ name: 'upsell', label: <Trans>Use as an upsell</Trans> },
+								{
+									name: 'excludeFromThrottle',
+									label: <Trans>Exclude from order throttling</Trans>,
+								},
+							].map(({ name, label }) => (
 								<label
 									key={name}
 									className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
@@ -257,7 +297,9 @@ export default function NewMenuItemPage() {
 							))}
 						</div>
 						<div className="space-y-2">
-							<Label>Allergens</Label>
+							<Label>
+								<Trans>Allergens</Trans>
+							</Label>
 							<div className="grid gap-2 sm:grid-cols-3">
 								{ITEM_ALLERGENS.map((allergen) => (
 									<label
@@ -265,7 +307,7 @@ export default function NewMenuItemPage() {
 										className="flex items-center gap-2 text-sm"
 									>
 										<input type="checkbox" name="allergens" value={allergen} />
-										{allergen}
+										{ITEM_ALLERGEN_LABELS[allergen]}
 									</label>
 								))}
 							</div>

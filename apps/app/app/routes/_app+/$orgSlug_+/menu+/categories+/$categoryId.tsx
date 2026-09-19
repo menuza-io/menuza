@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
@@ -98,7 +98,7 @@ export async function action(
 		)
 		return redirectWithToast(`/${organization.slug}/menu/categories`, {
 			type: 'success',
-			title: 'Category deleted',
+			title: t`Category deleted`,
 			description: '',
 		})
 	}
@@ -119,7 +119,7 @@ export async function action(
 	)
 	return redirectWithToast(detailUrl, {
 		type: 'success',
-		title: 'Category saved',
+		title: t`Category saved`,
 		description: '',
 	})
 }
@@ -148,7 +148,11 @@ export default function CategoryDetailPage() {
 	}
 
 	if (!category) {
-		return <p className="text-muted-foreground text-sm">Category not found.</p>
+		return (
+			<p className="text-muted-foreground text-sm">
+				<Trans>Category not found.</Trans>
+			</p>
+		)
 	}
 
 	const otherCategories = categories.filter(
@@ -161,15 +165,22 @@ export default function CategoryDetailPage() {
 		<div className="flex flex-col gap-8">
 			<AnnotatedLayout>
 				<AnnotatedSection
-					title="Category details"
-					description="Control the category name, description, availability, and merchandising."
+					title={<Trans>Category details</Trans>}
+					description={
+						<Trans>
+							Control the category name, description, availability, and
+							merchandising.
+						</Trans>
+					}
 				>
 					{canEditMenu ? (
 						<Form method="post" className="flex max-w-2xl flex-col gap-5">
 							<input type="hidden" name="intent" value="save-category" />
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-name">Display name</Label>
+									<Label htmlFor="category-name">
+										<Trans>Display name</Trans>
+									</Label>
 									<Input
 										id="category-name"
 										name="name"
@@ -178,7 +189,9 @@ export default function CategoryDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-description">Description</Label>
+									<Label htmlFor="category-description">
+										<Trans>Description</Trans>
+									</Label>
 									<Textarea
 										id="category-description"
 										name="description"
@@ -188,7 +201,9 @@ export default function CategoryDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-image">Image URL</Label>
+									<Label htmlFor="category-image">
+										<Trans>Image URL</Trans>
+									</Label>
 									<Input
 										id="category-image"
 										name="imageUrl"
@@ -204,13 +219,17 @@ export default function CategoryDetailPage() {
 									name="active"
 									defaultChecked={category.active}
 								/>
-								Available to guests
+								<Trans>Available to guests</Trans>
 							</label>
 							<div className="space-y-2">
 								<div>
-									<p className="text-sm font-medium">Upsell categories</p>
+									<p className="text-sm font-medium">
+										<Trans>Upsell categories</Trans>
+									</p>
 									<p className="text-muted-foreground text-xs">
-										Shown after a guest adds an item from this category.
+										<Trans>
+											Shown after a guest adds an item from this category.
+										</Trans>
 									</p>
 								</div>
 								<div className="grid gap-2 sm:grid-cols-2">
@@ -246,15 +265,17 @@ export default function CategoryDetailPage() {
 						<dl className="text-sm">
 							<dt className="font-medium">{category.name}</dt>
 							<dd className="text-muted-foreground mt-1">
-								{category.description ?? 'No description'}
+								{category.description ?? <Trans>No description</Trans>}
 							</dd>
 						</dl>
 					)}
 				</AnnotatedSection>
 
 				<AnnotatedSection
-					title="Items"
-					description="Items in this category, in the order guests see them."
+					title={<Trans>Items</Trans>}
+					description={
+						<Trans>Items in this category, in the order guests see them.</Trans>
+					}
 				>
 					{items.length ? (
 						<MenuReorderList
@@ -266,7 +287,7 @@ export default function CategoryDetailPage() {
 						/>
 					) : (
 						<p className="text-muted-foreground text-sm">
-							No items in this category yet.
+							<Trans>No items in this category yet.</Trans>
 						</p>
 					)}
 					{canEditMenu ? (
@@ -275,7 +296,7 @@ export default function CategoryDetailPage() {
 							variant="outline"
 							render={<Link to={`${base}/items/new`} />}
 						>
-							Add item
+							<Trans>Add item</Trans>
 						</Button>
 					) : null}
 				</AnnotatedSection>
@@ -285,7 +306,7 @@ export default function CategoryDetailPage() {
 				<Form method="post">
 					<input type="hidden" name="intent" value="delete-category" />
 					<Button type="submit" variant="destructive" disabled={isSubmitting}>
-						Delete category
+						<Trans>Delete category</Trans>
 					</Button>
 				</Form>
 			) : null}

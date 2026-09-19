@@ -77,7 +77,7 @@ export default function ModifierGroupsListPage() {
 				subtitle={scopeSubtitle}
 				searchQuery={query}
 				onSearchChange={setQuery}
-				searchPlaceholder="Search modifier sets"
+				searchPlaceholder="modifier-sets"
 				createHref={`${base}/new`}
 				createLabel={<Trans>Create modifier set</Trans>}
 				canCreate={canEditMenu}
@@ -89,7 +89,7 @@ export default function ModifierGroupsListPage() {
 				</Trans>
 			</p>
 			<MenuTableShell>
-				<Table>
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
 							<TableHead>

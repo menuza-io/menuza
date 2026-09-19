@@ -2,7 +2,7 @@ import { db, WaitlistEntry } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
-test('menu hub shows sidebar navigation and publish gate', async ({
+test('menu hub shows section navigation and publish gate', async ({
 	page,
 	login,
 	navigate,
@@ -29,10 +29,10 @@ test('menu hub shows sidebar navigation and publish gate', async ({
 		timeout: 15_000,
 	})
 
-	const menuNav = page.locator('nav[aria-label="Menu sections"]:visible')
+	const menuNav = page.getByRole('navigation', { name: /menu sections/i })
 	await expect(menuNav).toBeVisible()
 	for (const label of [
-		'Home',
+		'Overview',
 		'Menus',
 		'Categories',
 		'Items',

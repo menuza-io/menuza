@@ -1,4 +1,5 @@
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -23,7 +24,7 @@ export async function action(
 	const ctx = await loadMenuOperatorContextFromArgs(args)
 	const { organization, menuLocationId, catalogReady } = ctx
 	if (!catalogReady || !menuLocationId) {
-		return new Response('Catalog not ready', { status: 400 })
+		return new Response(t`Catalog not ready`, { status: 400 })
 	}
 	await requireUserWithOrganizationPermission(
 		args.request,
@@ -32,7 +33,7 @@ export async function action(
 	)
 	const formData = await args.request.formData()
 	const name = formData.get('name')?.toString().trim()
-	if (!name) return new Response('Name required', { status: 400 })
+	if (!name) return new Response(t`Name required`, { status: 400 })
 	const menu = await createMenu(
 		organization.id,
 		menuLocationId,
@@ -56,40 +57,53 @@ export async function loader(
 export default function NewMenuRoute() {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const { _ } = useLingui()
 
 	return (
 		<Form method="post" className="mx-auto flex max-w-2xl flex-col gap-6">
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="space-y-1 sm:col-span-2">
-					<Label htmlFor="name">Display name</Label>
-					<Input id="name" name="name" required placeholder="Lunch" />
+					<Label htmlFor="name">
+						<Trans>Display name</Trans>
+					</Label>
+					<Input id="name" name="name" required placeholder={_(t`Lunch`)} />
 				</div>
 				<div className="space-y-1">
-					<Label htmlFor="menu-type">Menu type</Label>
+					<Label htmlFor="menu-type">
+						<Trans>Menu type</Trans>
+					</Label>
 					<Select name="menuType" defaultValue="olo">
 						<SelectTrigger id="menu-type" className="w-full">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="olo">Online ordering</SelectItem>
-							<SelectItem value="catering">Catering</SelectItem>
-							<SelectItem value="dine-in">Dine-in</SelectItem>
+							<SelectItem value="olo">
+								<Trans>Online ordering</Trans>
+							</SelectItem>
+							<SelectItem value="catering">
+								<Trans>Catering</Trans>
+							</SelectItem>
+							<SelectItem value="dine-in">
+								<Trans>Dine-in</Trans>
+							</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
 				<div className="space-y-1">
-					<Label htmlFor="description">Description</Label>
+					<Label htmlFor="description">
+						<Trans>Description</Trans>
+					</Label>
 					<Textarea id="description" name="description" rows={3} />
 				</div>
 			</div>
 			<div className="grid gap-2 sm:grid-cols-2">
 				<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 					<input type="checkbox" name="showCalories" />
-					Show calorie information
+					<Trans>Show calorie information</Trans>
 				</label>
 				<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 					<input type="checkbox" name="instructionsEnabled" defaultChecked />
-					Enable instructions
+					<Trans>Enable instructions</Trans>
 				</label>
 			</div>
 			<div className="flex gap-2">

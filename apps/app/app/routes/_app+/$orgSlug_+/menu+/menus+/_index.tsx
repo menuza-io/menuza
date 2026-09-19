@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -47,7 +47,7 @@ export async function action(
 	const ctx = await loadMenuOperatorContextFromArgs(args)
 	const { organization, menuLocationId, catalogReady } = ctx
 	if (!catalogReady || !menuLocationId) {
-		return new Response('Catalog not ready', { status: 400 })
+		return new Response(t`Catalog not ready`, { status: 400 })
 	}
 	await requireUserWithOrganizationPermission(
 		args.request,
@@ -57,7 +57,7 @@ export async function action(
 	const formData = await args.request.formData()
 	const intent = formData.get('intent')
 	const menuId = formData.get('menuId')?.toString()
-	if (!menuId) return new Response('Missing menuId', { status: 400 })
+	if (!menuId) return new Response(t`Menu is required`, { status: 400 })
 
 	const { setMenuActive, deleteMenu } =
 		await import('#app/utils/menu-catalog.server.ts')
@@ -71,7 +71,7 @@ export async function action(
 		await deleteMenu(organization.id, menuLocationId, menuId)
 		return { ok: true }
 	}
-	return new Response('Unknown intent', { status: 400 })
+	return new Response(t`Unknown action`, { status: 400 })
 }
 
 export default function MenusListRoute() {
@@ -120,7 +120,7 @@ export default function MenusListRoute() {
 				subtitle={scopeSubtitle}
 				searchQuery={query}
 				onSearchChange={setQuery}
-				searchPlaceholder="Search menus"
+				searchPlaceholder="menus"
 				createHref={`${base}/new`}
 				createLabel={<Trans>Create menu</Trans>}
 				canCreate={canEditMenu}
@@ -129,7 +129,7 @@ export default function MenusListRoute() {
 			/>
 
 			<MenuTableShell>
-				<Table>
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
 							<TableHead>

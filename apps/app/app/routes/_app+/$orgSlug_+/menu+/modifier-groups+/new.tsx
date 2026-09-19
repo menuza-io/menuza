@@ -1,4 +1,5 @@
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -25,7 +26,7 @@ export async function action(
 	const ctx = await loadMenuOperatorContextFromArgs(args)
 	const { organization, menuLocationId, catalogReady } = ctx
 	if (!catalogReady || !menuLocationId) {
-		return new Response('Catalog not ready', { status: 400 })
+		return new Response(t`Catalog not ready`, { status: 400 })
 	}
 	await requireUserWithOrganizationPermission(
 		args.request,
@@ -34,7 +35,7 @@ export async function action(
 	)
 	const formData = await args.request.formData()
 	const name = formData.get('name')?.toString().trim()
-	if (!name) return new Response('Name required', { status: 400 })
+	if (!name) return new Response(t`Name required`, { status: 400 })
 	const displayType = formData.get('displayType')?.toString() ?? 'single-select'
 	const minSelections = Number(formData.get('minSelections') ?? 0)
 	const maxSelections = Number(formData.get('maxSelections') ?? 1)
@@ -64,6 +65,7 @@ export async function loader(
 export default function NewModifierGroupRoute() {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const { _ } = useLingui()
 
 	return (
 		<Form method="post" className="mx-auto flex max-w-2xl flex-col gap-5">
@@ -74,26 +76,45 @@ export default function NewModifierGroupRoute() {
 				</Trans>
 			</p>
 			<div className="space-y-1">
-				<Label htmlFor="name">Display name</Label>
-				<Input id="name" name="name" required placeholder="Choose a side" />
+				<Label htmlFor="name">
+					<Trans>Display name</Trans>
+				</Label>
+				<Input
+					id="name"
+					name="name"
+					required
+					placeholder={_(t`Choose a side`)}
+				/>
 			</div>
 			<div className="space-y-1">
-				<Label htmlFor="display-type">Selection type</Label>
+				<Label htmlFor="display-type">
+					<Trans>Selection type</Trans>
+				</Label>
 				<Select name="displayType" defaultValue="single-select">
 					<SelectTrigger id="display-type" className="w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="single-select">Single select</SelectItem>
-						<SelectItem value="multi-select">Multi select</SelectItem>
-						<SelectItem value="quantity-select">Quantity select</SelectItem>
-						<SelectItem value="pizza-topping">Pizza topping</SelectItem>
+						<SelectItem value="single-select">
+							<Trans>Single select</Trans>
+						</SelectItem>
+						<SelectItem value="multi-select">
+							<Trans>Multi select</Trans>
+						</SelectItem>
+						<SelectItem value="quantity-select">
+							<Trans>Quantity select</Trans>
+						</SelectItem>
+						<SelectItem value="pizza-topping">
+							<Trans>Pizza topping</Trans>
+						</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="space-y-1">
-					<Label htmlFor="min-selections">Minimum selections</Label>
+					<Label htmlFor="min-selections">
+						<Trans>Minimum selections</Trans>
+					</Label>
 					<Input
 						id="min-selections"
 						name="minSelections"
@@ -103,7 +124,9 @@ export default function NewModifierGroupRoute() {
 					/>
 				</div>
 				<div className="space-y-1">
-					<Label htmlFor="max-selections">Maximum selections</Label>
+					<Label htmlFor="max-selections">
+						<Trans>Maximum selections</Trans>
+					</Label>
 					<Input
 						id="max-selections"
 						name="maxSelections"
@@ -115,7 +138,7 @@ export default function NewModifierGroupRoute() {
 			</div>
 			<label className="flex items-center gap-2 text-sm">
 				<input type="checkbox" name="required" />
-				Required set
+				<Trans>Required set</Trans>
 			</label>
 			<div className="flex gap-2">
 				<Button type="submit" disabled={isSubmitting}>

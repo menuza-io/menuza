@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
@@ -106,7 +106,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (!item) {
 		return redirectWithToast(`/${organization.slug}/menu/items`, {
 			type: 'error',
-			title: 'Item not found',
+			title: t`Item not found`,
 			description: '',
 		})
 	}
@@ -179,7 +179,7 @@ export default function MenuItemsListPage() {
 				subtitle={scopeSubtitle}
 				searchQuery={query}
 				onSearchChange={setQuery}
-				searchPlaceholder="Search items"
+				searchPlaceholder="items"
 				createHref={`${itemsBase}/new`}
 				createLabel={<Trans>Create item</Trans>}
 				canCreate={canEditMenu}
@@ -219,7 +219,7 @@ export default function MenuItemsListPage() {
 			) : null}
 
 			<MenuTableShell>
-				<Table>
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
 							<TableHead>

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/macro'
 import { Badge } from '@repo/ui/badge'
 
 type ModifierOption = {
@@ -28,10 +29,10 @@ export function MenuModifierSetPreview({
 		<div className="overflow-hidden rounded-lg border">
 			<div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
 				<p className="min-w-0 flex-1 text-sm font-medium">
-					{name || 'Untitled modifier set'}
+					{name || <Trans>Untitled modifier set</Trans>}
 				</p>
 				<Badge variant={required ? 'default' : 'outline'}>
-					{required ? 'Required' : 'Optional'}
+					{required ? <Trans>Required</Trans> : <Trans>Optional</Trans>}
 				</Badge>
 				<span className="text-muted-foreground text-xs">
 					{minSelections}–{maxSelections > 0 ? maxSelections : '∞'}
@@ -40,7 +41,7 @@ export function MenuModifierSetPreview({
 			<ul className="divide-y">
 				{options.length === 0 ? (
 					<li className="text-muted-foreground px-3 py-6 text-center text-sm">
-						No options yet.
+						<Trans>No options yet.</Trans>
 					</li>
 				) : (
 					options.map((option) => (

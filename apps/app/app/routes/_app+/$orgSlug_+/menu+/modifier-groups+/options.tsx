@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
@@ -120,7 +120,7 @@ export async function action(
 		`/${organization.slug}/menu/modifier-groups/options`,
 		{
 			type: 'success',
-			title: 'Modifier updated',
+			title: t`Modifier updated`,
 			description: '',
 		},
 	)
@@ -161,21 +161,33 @@ export default function ModifiersListPage() {
 				}
 				searchQuery={query}
 				onSearchChange={setQuery}
-				searchPlaceholder="Search modifiers"
+				searchPlaceholder="modifiers"
 			/>
 			<p className="text-muted-foreground text-sm">
-				Options are reusable across items through their modifier sets.
+				<Trans>
+					Options are reusable across items through their modifier sets.
+				</Trans>
 			</p>
 			<MenuTableShell>
-				<Table>
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
-							<TableHead>Name</TableHead>
-							<TableHead>Modifier set</TableHead>
-							<TableHead>Price</TableHead>
-							<TableHead>Status</TableHead>
+							<TableHead>
+								<Trans>Name</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Modifier set</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Price</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Status</Trans>
+							</TableHead>
 							<TableHead className="w-28 text-end">
-								<span className="sr-only">Actions</span>
+								<span className="sr-only">
+									<Trans>Actions</Trans>
+								</span>
 							</TableHead>
 						</TableRow>
 					</TableHeader>
@@ -184,9 +196,11 @@ export default function ModifiersListPage() {
 							<TableRow>
 								<TableCell colSpan={5}>
 									<p className="text-muted-foreground px-4 py-12 text-center text-sm">
-										{query
-											? 'No modifiers match your search.'
-											: 'No modifiers yet.'}
+										{query ? (
+											<Trans>No modifiers match your search.</Trans>
+										) : (
+											<Trans>No modifiers yet.</Trans>
+										)}
 									</p>
 								</TableCell>
 							</TableRow>
@@ -205,9 +219,13 @@ export default function ModifiersListPage() {
 									</TableCell>
 									<TableCell>
 										{option.active ? (
-											<Badge variant="secondary">Available</Badge>
+											<Badge variant="secondary">
+												<Trans>Available</Trans>
+											</Badge>
 										) : (
-											<Badge variant="outline">Unavailable</Badge>
+											<Badge variant="outline">
+												<Trans>Unavailable</Trans>
+											</Badge>
 										)}
 									</TableCell>
 									<TableCell className="text-end" onClick={stopRowClick}>
@@ -229,7 +247,11 @@ export default function ModifiersListPage() {
 												size="sm"
 												disabled={isSubmitting}
 											>
-												{option.active ? '86' : 'Restock'}
+												{option.active ? (
+													<Trans>86</Trans>
+												) : (
+													<Trans>Restock</Trans>
+												)}
 											</Button>
 										</Form>
 									</TableCell>

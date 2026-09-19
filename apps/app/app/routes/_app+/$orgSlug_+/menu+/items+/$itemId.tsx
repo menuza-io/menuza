@@ -1,5 +1,6 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
@@ -81,6 +82,18 @@ const ITEM_ALLERGENS = [
 	'Shellfish',
 	'Sesame',
 ] as const
+
+const ITEM_ALLERGEN_LABELS = {
+	Gluten: <Trans>Gluten</Trans>,
+	Dairy: <Trans>Dairy</Trans>,
+	Eggs: <Trans>Eggs</Trans>,
+	Soy: <Trans>Soy</Trans>,
+	Peanuts: <Trans>Peanuts</Trans>,
+	'Tree nuts': <Trans>Tree nuts</Trans>,
+	Fish: <Trans>Fish</Trans>,
+	Shellfish: <Trans>Shellfish</Trans>,
+	Sesame: <Trans>Sesame</Trans>,
+} as const
 
 function optionalNumber(value: string | undefined) {
 	if (!value?.trim()) return null
@@ -167,7 +180,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(itemUrl, {
 				type: 'success',
-				title: 'Item saved',
+				title: t`Item saved`,
 				description: '',
 			})
 		}
@@ -175,7 +188,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			await deleteMenuItem(organization.id, ctx.menuLocationId, params.itemId!)
 			return redirectWithToast(listUrl, {
 				type: 'success',
-				title: 'Item deleted',
+				title: t`Item deleted`,
 				description: '',
 			})
 		}
@@ -192,7 +205,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				`/${organization.slug}/menu/modifier-groups/${group!.id}`,
 				{
 					type: 'success',
-					title: 'Modifier group created',
+					title: t`Modifier set created`,
 					description: '',
 				},
 			)
@@ -206,7 +219,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(itemUrl, {
 				type: 'success',
-				title: 'Modifier group detached',
+				title: t`Modifier set detached`,
 				description: '',
 			})
 		}
@@ -219,7 +232,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(itemUrl, {
 				type: 'success',
-				title: 'Modifier group attached',
+				title: t`Modifier set attached`,
 				description: '',
 			})
 		}
@@ -238,6 +251,7 @@ export default function MenuItemDetailPage() {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
 	const [categoryId, setCategoryId] = useState(item?.categoryId ?? '')
+	const { _ } = useLingui()
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -265,8 +279,13 @@ export default function MenuItemDetailPage() {
 		<div className="flex flex-col gap-8">
 			<AnnotatedLayout>
 				<AnnotatedSection
-					title="Item details"
-					description="The guest-facing content, price, and dietary information for this item."
+					title={<Trans>Item details</Trans>}
+					description={
+						<Trans>
+							The guest-facing content, price, and dietary information for this
+							item.
+						</Trans>
+					}
 				>
 					{canEditMenu ? (
 						<Form method="post" className="flex max-w-2xl flex-col gap-6">
@@ -274,7 +293,9 @@ export default function MenuItemDetailPage() {
 							<input type="hidden" name="categoryId" value={categoryId} />
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="item-name">Display name</Label>
+									<Label htmlFor="item-name">
+										<Trans>Display name</Trans>
+									</Label>
 									<Input
 										id="item-name"
 										name="name"
@@ -283,7 +304,9 @@ export default function MenuItemDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="item-category">Category</Label>
+									<Label htmlFor="item-category">
+										<Trans>Category</Trans>
+									</Label>
 									<Select
 										value={categoryId}
 										onValueChange={(value) => value && setCategoryId(value)}
@@ -301,7 +324,9 @@ export default function MenuItemDetailPage() {
 									</Select>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="item-price">Price (USD)</Label>
+									<Label htmlFor="item-price">
+										<Trans>Price (USD)</Trans>
+									</Label>
 									<Input
 										id="item-price"
 										name="priceDollars"
@@ -313,7 +338,9 @@ export default function MenuItemDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="item-description">Description</Label>
+									<Label htmlFor="item-description">
+										<Trans>Description</Trans>
+									</Label>
 									<Textarea
 										id="item-description"
 										name="description"
@@ -323,7 +350,9 @@ export default function MenuItemDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="item-image">Image URL</Label>
+									<Label htmlFor="item-image">
+										<Trans>Image URL</Trans>
+									</Label>
 									<Input
 										id="item-image"
 										name="imageUrl"
@@ -333,7 +362,9 @@ export default function MenuItemDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="item-points">Loyalty points</Label>
+									<Label htmlFor="item-points">
+										<Trans>Loyalty points</Trans>
+									</Label>
 									<Input
 										id="item-points"
 										name="points"
@@ -343,7 +374,9 @@ export default function MenuItemDetailPage() {
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="item-calories-min">Calories</Label>
+									<Label htmlFor="item-calories-min">
+										<Trans>Calories</Trans>
+									</Label>
 									<div className="grid grid-cols-2 gap-2">
 										<Input
 											id="item-calories-min"
@@ -368,23 +401,51 @@ export default function MenuItemDetailPage() {
 							<div className="space-y-3">
 								<div>
 									<p className="text-sm font-medium">
-										Dietary and merchandising
+										<Trans>Dietary and merchandising</Trans>
 									</p>
 									<p className="text-muted-foreground text-xs">
-										These flags power storefront labels, filters, and upsells.
+										<Trans>
+											These flags power storefront labels, filters, and upsells.
+										</Trans>
 									</p>
 								</div>
 								<div className="grid gap-2 sm:grid-cols-2">
 									{[
-										['alcohol', 'Contains alcohol', item.alcohol],
-										['glutenFree', 'Gluten free', item.glutenFree],
-										['vegetarian', 'Vegetarian', item.vegetarian],
-										['taxable', 'Taxable', item.taxable],
-										['popular', 'Popular item', item.popular],
-										['upsell', 'Use as an upsell', item.upsell],
+										[
+											'alcohol',
+											<Trans key="alcohol">Contains alcohol</Trans>,
+											item.alcohol,
+										],
+										[
+											'glutenFree',
+											<Trans key="glutenFree">Gluten free</Trans>,
+											item.glutenFree,
+										],
+										[
+											'vegetarian',
+											<Trans key="vegetarian">Vegetarian</Trans>,
+											item.vegetarian,
+										],
+										[
+											'taxable',
+											<Trans key="taxable">Taxable</Trans>,
+											item.taxable,
+										],
+										[
+											'popular',
+											<Trans key="popular">Popular item</Trans>,
+											item.popular,
+										],
+										[
+											'upsell',
+											<Trans key="upsell">Use as an upsell</Trans>,
+											item.upsell,
+										],
 										[
 											'excludeFromThrottle',
-											'Exclude from order throttling',
+											<Trans key="excludeFromThrottle">
+												Exclude from order throttling
+											</Trans>,
 											item.excludeFromThrottle,
 										],
 									].map(([name, label, checked]) => (
@@ -397,14 +458,16 @@ export default function MenuItemDetailPage() {
 												name={name as string}
 												defaultChecked={Boolean(checked)}
 											/>
-											{label as string}
+											{label}
 										</label>
 									))}
 								</div>
 							</div>
 
 							<div className="space-y-2">
-								<Label>Allergens</Label>
+								<Label>
+									<Trans>Allergens</Trans>
+								</Label>
 								<div className="grid gap-2 sm:grid-cols-3">
 									{ITEM_ALLERGENS.map((allergen) => (
 										<label
@@ -417,7 +480,7 @@ export default function MenuItemDetailPage() {
 												value={allergen}
 												defaultChecked={selectedAllergens.has(allergen)}
 											/>
-											{allergen}
+											{ITEM_ALLERGEN_LABELS[allergen]}
 										</label>
 									))}
 								</div>
@@ -445,8 +508,10 @@ export default function MenuItemDetailPage() {
 				</AnnotatedSection>
 
 				<AnnotatedSection
-					title="Modifier groups"
-					description="Reusable option sets and the order guests see them."
+					title={<Trans>Modifier sets</Trans>}
+					description={
+						<Trans>Reusable option sets and the order guests see them.</Trans>
+					}
 				>
 					{item.modifierSets.length === 0 ? (
 						<p className="text-muted-foreground text-sm">
@@ -454,51 +519,54 @@ export default function MenuItemDetailPage() {
 						</p>
 					) : (
 						<div className="space-y-4">
-							{item.modifierSets.map((group) => (
-								<div key={group.id} className="space-y-2">
-									<MenuModifierSetPreview
-										name={group.name}
-										displayType={group.displayType}
-										minSelections={group.minSelections}
-										maxSelections={group.maxSelections}
-										options={group.options}
-										preselectedOptionIds={group.preselectedOptionIds}
-									/>
-									<div className="flex items-center justify-end gap-2">
-										<Badge variant="outline">
-											{group.options.length} options
-										</Badge>
-										<Link
-											to={`/${organization.slug}/menu/modifier-groups/${group.id}`}
-											className="text-sm font-medium hover:underline"
-										>
-											Edit set
-										</Link>
-										{canEditMenu ? (
-											<Form method="post" className="inline">
-												<input
-													type="hidden"
-													name="intent"
-													value="detach-modifier-set"
-												/>
-												<input
-													type="hidden"
-													name="modifierSetId"
-													value={group.id}
-												/>
-												<Button
-													type="submit"
-													variant="ghost"
-													size="sm"
-													disabled={isSubmitting}
-												>
-													<Trans>Remove</Trans>
-												</Button>
-											</Form>
-										) : null}
+							{item.modifierSets.map((group) => {
+								const optionCount = group.options.length
+								return (
+									<div key={group.id} className="space-y-2">
+										<MenuModifierSetPreview
+											name={group.name}
+											displayType={group.displayType}
+											minSelections={group.minSelections}
+											maxSelections={group.maxSelections}
+											options={group.options}
+											preselectedOptionIds={group.preselectedOptionIds}
+										/>
+										<div className="flex items-center justify-end gap-2">
+											<Badge variant="outline">
+												{_(t`${optionCount} options`)}
+											</Badge>
+											<Link
+												to={`/${organization.slug}/menu/modifier-groups/${group.id}`}
+												className="text-sm font-medium hover:underline"
+											>
+												<Trans>Edit set</Trans>
+											</Link>
+											{canEditMenu ? (
+												<Form method="post" className="inline">
+													<input
+														type="hidden"
+														name="intent"
+														value="detach-modifier-set"
+													/>
+													<input
+														type="hidden"
+														name="modifierSetId"
+														value={group.id}
+													/>
+													<Button
+														type="submit"
+														variant="ghost"
+														size="sm"
+														disabled={isSubmitting}
+													>
+														<Trans>Remove</Trans>
+													</Button>
+												</Form>
+											) : null}
+										</div>
 									</div>
-								</div>
-							))}
+								)
+							})}
 						</div>
 					)}
 					{canEditMenu ? (

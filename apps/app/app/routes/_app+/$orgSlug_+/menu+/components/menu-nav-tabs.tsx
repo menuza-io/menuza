@@ -9,7 +9,11 @@ const tabs = [
 	{ segment: 'items', label: () => <Trans>Items</Trans> },
 	{
 		segment: 'modifier-groups',
-		label: () => <Trans>Modifier groups</Trans>,
+		label: () => <Trans>Modifier sets</Trans>,
+	},
+	{
+		segment: 'modifier-groups/options',
+		label: () => <Trans>Modifiers</Trans>,
 	},
 ] as const
 
@@ -27,7 +31,10 @@ export function MenuNavTabs({ orgSlug }: { orgSlug: string }) {
 				const active =
 					'exact' in tab && tab.exact
 						? location.pathname === base || location.pathname === `${base}/`
-						: location.pathname.startsWith(href)
+						: tab.segment === 'modifier-groups'
+							? location.pathname.startsWith(href) &&
+								!location.pathname.startsWith(`${href}/options`)
+							: location.pathname.startsWith(href)
 				return (
 					<Link
 						key={tab.segment}

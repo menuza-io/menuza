@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import { Trans } from '@lingui/macro'
+import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
@@ -141,7 +141,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(groupUrl, {
 				type: 'success',
-				title: 'Modifier group saved',
+				title: t`Modifier set saved`,
 				description: '',
 			})
 		}
@@ -153,7 +153,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(`/${organization.slug}/menu/modifier-groups`, {
 				type: 'success',
-				title: 'Modifier group deleted',
+				title: t`Modifier set deleted`,
 				description: '',
 			})
 		}
@@ -171,7 +171,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(groupUrl, {
 				type: 'success',
-				title: 'Option added',
+				title: t`Option added`,
 				description: '',
 			})
 		}
@@ -183,7 +183,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(groupUrl, {
 				type: 'success',
-				title: 'Option removed',
+				title: t`Option removed`,
 				description: '',
 			})
 		}
@@ -201,7 +201,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 			return redirectWithToast(groupUrl, {
 				type: 'success',
-				title: 'Option saved',
+				title: t`Option saved`,
 				description: '',
 			})
 		}
@@ -237,8 +237,8 @@ export default function ModifierGroupDetailPage() {
 		<div className="flex flex-col gap-8">
 			<AnnotatedLayout>
 				<AnnotatedSection
-					title="Group rules"
-					description="How many options diners can pick."
+					title={<Trans>Set rules</Trans>}
+					description={<Trans>How many options diners can pick.</Trans>}
 				>
 					{group.attachedItems.length ? (
 						<p className="text-muted-foreground mb-4 text-sm">
@@ -265,7 +265,9 @@ export default function ModifierGroupDetailPage() {
 						<Form method="post" className="flex max-w-2xl flex-col gap-4">
 							<input type="hidden" name="intent" value="update-group" />
 							<div className="space-y-1">
-								<Label htmlFor="group-name">Display name</Label>
+								<Label htmlFor="group-name">
+									<Trans>Display name</Trans>
+								</Label>
 								<Input
 									id="group-name"
 									name="name"
@@ -274,7 +276,9 @@ export default function ModifierGroupDetailPage() {
 								/>
 							</div>
 							<div className="space-y-1">
-								<Label htmlFor="display-type">Selection type</Label>
+								<Label htmlFor="display-type">
+									<Trans>Selection type</Trans>
+								</Label>
 								<Select
 									name="displayType"
 									defaultValue={group.displayType ?? 'single-select'}
@@ -283,17 +287,25 @@ export default function ModifierGroupDetailPage() {
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="single-select">Single select</SelectItem>
-										<SelectItem value="multi-select">Multi select</SelectItem>
-										<SelectItem value="quantity-select">
-											Quantity select
+										<SelectItem value="single-select">
+											<Trans>Single select</Trans>
 										</SelectItem>
-										<SelectItem value="pizza-topping">Pizza topping</SelectItem>
+										<SelectItem value="multi-select">
+											<Trans>Multi select</Trans>
+										</SelectItem>
+										<SelectItem value="quantity-select">
+											<Trans>Quantity select</Trans>
+										</SelectItem>
+										<SelectItem value="pizza-topping">
+											<Trans>Pizza topping</Trans>
+										</SelectItem>
 									</SelectContent>
 								</Select>
 								<p className="text-muted-foreground text-xs">
-									Controls whether guests choose one, many, quantities, or
-									toppings.
+									<Trans>
+										Controls whether guests choose one, many, quantities, or
+										toppings.
+									</Trans>
 								</p>
 							</div>
 							<div className="grid gap-4 sm:grid-cols-2">
@@ -333,9 +345,13 @@ export default function ModifierGroupDetailPage() {
 							</label>
 							<div className="space-y-2">
 								<div>
-									<p className="text-sm font-medium">Preselected options</p>
+									<p className="text-sm font-medium">
+										<Trans>Preselected options</Trans>
+									</p>
 									<p className="text-muted-foreground text-xs">
-										These options are selected for guests by default.
+										<Trans>
+											These options are selected for guests by default.
+										</Trans>
 									</p>
 								</div>
 								<div className="grid gap-2 sm:grid-cols-2">
@@ -372,8 +388,8 @@ export default function ModifierGroupDetailPage() {
 				</AnnotatedSection>
 
 				<AnnotatedSection
-					title="Options"
-					description="Choices and price adjustments."
+					title={<Trans>Options</Trans>}
+					description={<Trans>Choices and price adjustments.</Trans>}
 				>
 					{group.options.length === 0 ? (
 						<p className="text-muted-foreground text-sm">
@@ -384,7 +400,9 @@ export default function ModifierGroupDetailPage() {
 						<>
 							<div className="mb-4">
 								<div className="mb-2 flex items-center justify-between gap-2">
-									<p className="text-sm font-medium">Guest preview</p>
+									<p className="text-sm font-medium">
+										<Trans>Guest preview</Trans>
+									</p>
 									<Badge variant="outline">
 										{group.displayType ?? 'single-select'}
 									</Badge>
@@ -467,7 +485,7 @@ export default function ModifierGroupDetailPage() {
 														name="active"
 														defaultChecked={option.active}
 													/>
-													Active
+													<Trans>Active</Trans>
 												</label>
 												<Button
 													type="submit"
@@ -475,7 +493,7 @@ export default function ModifierGroupDetailPage() {
 													size="sm"
 													disabled={isSubmitting}
 												>
-													Save
+													<Trans>Save</Trans>
 												</Button>
 											</Form>
 										) : (
@@ -526,7 +544,9 @@ export default function ModifierGroupDetailPage() {
 								<Input id="option-name" name="optionName" required />
 							</div>
 							<div className="min-w-[12rem] flex-1 space-y-1">
-								<Label htmlFor="option-description">Description</Label>
+								<Label htmlFor="option-description">
+									<Trans>Description</Trans>
+								</Label>
 								<Input id="option-description" name="optionDescription" />
 							</div>
 							<div className="w-28 space-y-1">
