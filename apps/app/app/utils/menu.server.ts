@@ -23,4 +23,5 @@ export {
 	updateMenuCategory,
 	updateMenuItem,
 	updateModifierGroup,
+	updateModifierOption,
 } from '#app/utils/menu-catalog.server.ts'

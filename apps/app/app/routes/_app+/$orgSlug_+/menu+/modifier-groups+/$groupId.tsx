@@ -3,9 +3,17 @@ import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -16,16 +24,17 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	createModifierOption,
 	deleteModifierGroup,
 	deleteModifierOption,
 	getModifierGroup,
-	menuModifierGroupSchema,
 	menuModifierOptionSchema,
+	menuModifierSetSchema,
 	updateModifierGroup,
+	updateModifierOption,
 } from '#app/utils/menu-catalog.server.ts'
-import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	loadMenuOperatorContext,
 	loadMenuOperatorContextFromArgs,
@@ -42,13 +51,24 @@ const GroupActionSchema = z.object({
 		'update-group',
 		'delete-group',
 		'create-option',
+		'update-option',
 		'delete-option',
 	]),
 	name: z.string().optional(),
 	minSelections: z.coerce.number().optional(),
 	maxSelections: z.coerce.number().optional(),
 	required: z.coerce.boolean().optional(),
+	displayType: z
+		.enum([
+			'single-select',
+			'multi-select',
+			'quantity-select',
+			'pizza-topping',
+			'custom',
+		])
+		.optional(),
 	optionName: z.string().optional(),
+	optionDescription: z.string().optional(),
 	priceDollars: z.coerce.number().optional(),
 	optionId: z.string().optional(),
 })
@@ -97,15 +117,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	switch (submission.value.intent) {
 		case 'update-group': {
+			const minSelections = submission.value.minSelections ?? 0
+			const maxSelections =
+				submission.value.maxSelections ?? Math.max(1, minSelections)
+			const displayType = submission.value.displayType ?? 'single-select'
 			await updateModifierGroup(
 				organization.id,
 				ctx.menuLocationId,
 				params.groupId!,
-				menuModifierGroupSchema.omit({ menuItemId: true }).parse({
+				menuModifierSetSchema.parse({
 					name: submission.value.name,
-					minSelections: submission.value.minSelections,
-					maxSelections: submission.value.maxSelections,
-					required: submission.value.required,
+					minSelections: displayType === 'single-select' ? 1 : minSelections,
+					maxSelections:
+						displayType === 'single-select'
+							? 1
+							: Math.max(maxSelections, minSelections),
+					required: formData.has('required'),
+					displayType,
+					preselectedOptionIds: formData
+						.getAll('preselectedOptionIds')
+						.map((value) => value.toString()),
 				}),
 			)
 			return redirectWithToast(groupUrl, {
@@ -134,6 +165,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				params.groupId!,
 				menuModifierOptionSchema.parse({
 					name: submission.value.optionName,
+					description: submission.value.optionDescription || null,
 					priceCents,
 				}),
 			)
@@ -152,6 +184,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return redirectWithToast(groupUrl, {
 				type: 'success',
 				title: 'Option removed',
+				description: '',
+			})
+		}
+		case 'update-option': {
+			await updateModifierOption(
+				organization.id,
+				ctx.menuLocationId,
+				submission.value.optionId!,
+				menuModifierOptionSchema.parse({
+					name: submission.value.optionName,
+					description: submission.value.optionDescription || null,
+					priceCents: Math.round((submission.value.priceDollars ?? 0) * 100),
+					active: formData.has('active'),
+				}),
+			)
+			return redirectWithToast(groupUrl, {
+				type: 'success',
+				title: 'Option saved',
 				description: '',
 			})
 		}
@@ -212,18 +262,39 @@ export default function ModifierGroupDetailPage() {
 						</p>
 					)}
 					{canEditMenu ? (
-						<Form method="post" className="flex max-w-lg flex-col gap-4">
+						<Form method="post" className="flex max-w-2xl flex-col gap-4">
 							<input type="hidden" name="intent" value="update-group" />
 							<div className="space-y-1">
-								<Label htmlFor="group-name">
-									<Trans>Group name</Trans>
-								</Label>
+								<Label htmlFor="group-name">Display name</Label>
 								<Input
 									id="group-name"
 									name="name"
 									defaultValue={group.name}
 									required
 								/>
+							</div>
+							<div className="space-y-1">
+								<Label htmlFor="display-type">Selection type</Label>
+								<Select
+									name="displayType"
+									defaultValue={group.displayType ?? 'single-select'}
+								>
+									<SelectTrigger id="display-type" className="w-full">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="single-select">Single select</SelectItem>
+										<SelectItem value="multi-select">Multi select</SelectItem>
+										<SelectItem value="quantity-select">
+											Quantity select
+										</SelectItem>
+										<SelectItem value="pizza-topping">Pizza topping</SelectItem>
+									</SelectContent>
+								</Select>
+								<p className="text-muted-foreground text-xs">
+									Controls whether guests choose one, many, quantities, or
+									toppings.
+								</p>
 							</div>
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div className="space-y-1">
@@ -260,6 +331,37 @@ export default function ModifierGroupDetailPage() {
 								/>
 								<Trans>Required group</Trans>
 							</label>
+							<div className="space-y-2">
+								<div>
+									<p className="text-sm font-medium">Preselected options</p>
+									<p className="text-muted-foreground text-xs">
+										These options are selected for guests by default.
+									</p>
+								</div>
+								<div className="grid gap-2 sm:grid-cols-2">
+									{group.options.map((option) => (
+										<label
+											key={option.id}
+											className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+										>
+											<input
+												type="checkbox"
+												name="preselectedOptionIds"
+												value={option.id}
+												defaultChecked={group.preselectedOptionIds.includes(
+													option.id,
+												)}
+											/>
+											<span className="flex-1">{option.name}</span>
+											{option.priceCents > 0 ? (
+												<span className="text-muted-foreground text-xs">
+													+${(option.priceCents / 100).toFixed(2)}
+												</span>
+											) : null}
+										</label>
+									))}
+								</div>
+							</div>
 							<Button type="submit" disabled={isSubmitting}>
 								<Trans>Save group</Trans>
 							</Button>
@@ -280,6 +382,36 @@ export default function ModifierGroupDetailPage() {
 					) : null}
 					{group.options.length > 0 ? (
 						<>
+							<div className="mb-4">
+								<div className="mb-2 flex items-center justify-between gap-2">
+									<p className="text-sm font-medium">Guest preview</p>
+									<Badge variant="outline">
+										{group.displayType ?? 'single-select'}
+									</Badge>
+								</div>
+								<div className="rounded-lg border">
+									{group.options.map((option) => (
+										<div
+											key={option.id}
+											className="flex items-center gap-3 border-b px-3 py-2 text-sm last:border-b-0"
+										>
+											<span
+												className={
+													group.displayType === 'single-select'
+														? 'size-4 rounded-full border'
+														: 'size-4 rounded-sm border'
+												}
+											/>
+											<span className="flex-1">{option.name}</span>
+											{option.priceCents > 0 ? (
+												<span className="text-muted-foreground text-xs">
+													+${(option.priceCents / 100).toFixed(2)}
+												</span>
+											) : null}
+										</div>
+									))}
+								</div>
+							</div>
 							<MenuReorderList
 								rows={group.options.map((option) => ({
 									id: option.id,
@@ -295,21 +427,70 @@ export default function ModifierGroupDetailPage() {
 							/>
 							<ul className="mt-4 divide-y text-sm">
 								{group.options.map((option) => (
-									<li
-										key={option.id}
-										className="flex items-center justify-between gap-4 py-2"
-									>
-										<span>
-											{option.name}
-											{option.priceCents > 0 ? (
-												<span className="text-muted-foreground">
-													{' '}
-													(+${(option.priceCents / 100).toFixed(2)})
-												</span>
-											) : null}
-										</span>
+									<li key={option.id} className="flex flex-col gap-3 py-3">
 										{canEditMenu ? (
-											<Form method="post" className="inline">
+											<Form method="post" className="grid gap-2 sm:grid-cols-6">
+												<input
+													type="hidden"
+													name="intent"
+													value="update-option"
+												/>
+												<input
+													type="hidden"
+													name="optionId"
+													value={option.id}
+												/>
+												<Input
+													name="optionName"
+													defaultValue={option.name}
+													className="sm:col-span-2"
+													aria-label="Option name"
+												/>
+												<Input
+													name="optionDescription"
+													defaultValue={option.description ?? ''}
+													placeholder="Description"
+													className="sm:col-span-2"
+													aria-label="Option description"
+												/>
+												<Input
+													name="priceDollars"
+													type="number"
+													min={0}
+													step="0.01"
+													defaultValue={(option.priceCents / 100).toFixed(2)}
+													aria-label="Option price"
+												/>
+												<label className="flex items-center gap-2 text-xs">
+													<input
+														type="checkbox"
+														name="active"
+														defaultChecked={option.active}
+													/>
+													Active
+												</label>
+												<Button
+													type="submit"
+													variant="outline"
+													size="sm"
+													disabled={isSubmitting}
+												>
+													Save
+												</Button>
+											</Form>
+										) : (
+											<span>
+												{option.name}
+												{option.priceCents > 0 ? (
+													<span className="text-muted-foreground">
+														{' '}
+														(+${(option.priceCents / 100).toFixed(2)})
+													</span>
+												) : null}
+											</span>
+										)}
+										{canEditMenu ? (
+											<Form method="post" className="self-end">
 												<input
 													type="hidden"
 													name="intent"
@@ -343,6 +524,10 @@ export default function ModifierGroupDetailPage() {
 									<Trans>Option name</Trans>
 								</Label>
 								<Input id="option-name" name="optionName" required />
+							</div>
+							<div className="min-w-[12rem] flex-1 space-y-1">
+								<Label htmlFor="option-description">Description</Label>
+								<Input id="option-description" name="optionDescription" />
 							</div>
 							<div className="w-28 space-y-1">
 								<Label htmlFor="option-price">

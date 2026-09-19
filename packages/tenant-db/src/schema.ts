@@ -500,6 +500,17 @@ export const menus = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		menuType: text('menu_type', {
+			enum: ['olo', 'catering', 'dine-in'],
+		})
+			.notNull()
+			.default('olo'),
+		showCalories: integer('show_calories', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		instructionsEnabled: integer('instructions_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(true),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -541,6 +552,11 @@ export const menuCategories = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		imageUrl: text('image_url'),
+		upsellCategoryIds: text('upsell_category_ids', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
 		sortOrder: integer('sort_order').notNull().default(0),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -569,6 +585,27 @@ export const menuItems = sqliteTable(
 		name: text('name').notNull(),
 		description: text('description'),
 		priceCents: integer('price_cents').notNull(),
+		imageUrl: text('image_url'),
+		points: integer('points'),
+		alcohol: integer('alcohol', { mode: 'boolean' }).notNull().default(false),
+		glutenFree: integer('gluten_free', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		vegetarian: integer('vegetarian', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		allergens: text('allergens', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
+		calorieMin: integer('calorie_min'),
+		calorieMax: integer('calorie_max'),
+		popular: integer('popular', { mode: 'boolean' }).notNull().default(false),
+		upsell: integer('upsell', { mode: 'boolean' }).notNull().default(false),
+		taxable: integer('taxable', { mode: 'boolean' }).notNull().default(true),
+		excludeFromThrottle: integer('exclude_from_throttle', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -593,9 +630,24 @@ export const menuModifierSets = sqliteTable(
 			.$defaultFn(() => randomUUID()),
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
+		displayType: text('display_type', {
+			enum: [
+				'single-select',
+				'multi-select',
+				'quantity-select',
+				'pizza-topping',
+				'custom',
+			],
+		})
+			.notNull()
+			.default('single-select'),
 		minSelections: integer('min_selections').notNull().default(0),
 		maxSelections: integer('max_selections').notNull().default(1),
 		required: integer('required', { mode: 'boolean' }).notNull().default(false),
+		preselectedOptionIds: text('preselected_option_ids', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
 	(table) => [index('idx_menu_modifier_sets_location').on(table.locationId)],
@@ -628,7 +680,9 @@ export const menuModifierOptions = sqliteTable(
 			.notNull()
 			.references(() => menuModifierSets.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
+		description: text('description'),
 		priceCents: integer('price_cents').notNull().default(0),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
 	(table) => [index('idx_menu_modifier_options_set').on(table.modifierSetId)],

@@ -13,6 +13,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { Textarea } from '@repo/ui/textarea'
 import { useState } from 'react'
 import {
 	type ActionFunctionArgs,
@@ -23,12 +24,12 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	createMenuItem,
 	listCategoriesForLocation,
 	menuItemSchema,
 } from '#app/utils/menu-catalog.server.ts'
-import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	loadMenuOperatorContext,
 	loadMenuOperatorContextFromArgs,
@@ -44,7 +45,23 @@ const CreateItemSchema = z.object({
 	categoryId: z.string().min(1),
 	description: z.string().optional(),
 	priceDollars: z.coerce.number().min(0),
+	points: z.coerce.number().int().min(0).optional(),
+	imageUrl: z.string().optional(),
+	calorieMin: z.coerce.number().int().min(0).optional(),
+	calorieMax: z.coerce.number().int().min(0).optional(),
 })
+
+const ITEM_ALLERGENS = [
+	'Gluten',
+	'Dairy',
+	'Eggs',
+	'Soy',
+	'Peanuts',
+	'Tree nuts',
+	'Fish',
+	'Shellfish',
+	'Sesame',
+] as const
 
 export async function loader(
 	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
@@ -96,6 +113,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			categoryId: submission.value.categoryId,
 			description: submission.value.description || null,
 			priceCents,
+			imageUrl: submission.value.imageUrl || null,
+			points: submission.value.points ?? null,
+			alcohol: formData.has('alcohol'),
+			glutenFree: formData.has('glutenFree'),
+			vegetarian: formData.has('vegetarian'),
+			allergens: formData.getAll('allergens').map((value) => value.toString()),
+			calorieMin: submission.value.calorieMin ?? null,
+			calorieMax: submission.value.calorieMax ?? null,
+			popular: formData.has('popular'),
+			upsell: formData.has('upsell'),
+			taxable: formData.has('taxable'),
+			excludeFromThrottle: formData.has('excludeFromThrottle'),
 		}),
 	)
 	return redirectWithToast(`/${organization.slug}/menu/items/${item!.id}`, {
@@ -138,52 +167,108 @@ export default function NewMenuItemPage() {
 						</Trans>
 					</p>
 				) : (
-					<Form method="post" className="flex max-w-lg flex-col gap-4">
+					<Form method="post" className="flex max-w-2xl flex-col gap-6">
 						<input type="hidden" name="categoryId" value={categoryId} />
-						<div className="space-y-1">
-							<Label htmlFor="item-name">
-								<Trans>Name</Trans>
-							</Label>
-							<Input id="item-name" name="name" required />
+						<div className="grid gap-4 sm:grid-cols-2">
+							<div className="space-y-1 sm:col-span-2">
+								<Label htmlFor="item-name">Display name</Label>
+								<Input id="item-name" name="name" required />
+							</div>
+							<div className="space-y-1">
+								<Label htmlFor="item-category">Category</Label>
+								<Select
+									value={categoryId}
+									onValueChange={(value) => value && setCategoryId(value)}
+								>
+									<SelectTrigger id="item-category" className="w-full">
+										<SelectValue placeholder="Select category" />
+									</SelectTrigger>
+									<SelectContent>
+										{categories.map((category) => (
+											<SelectItem key={category.id} value={category.id}>
+												{category.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-1">
+								<Label htmlFor="item-price">Price (USD)</Label>
+								<Input
+									id="item-price"
+									name="priceDollars"
+									type="number"
+									min={0}
+									step="0.01"
+									required
+								/>
+							</div>
+							<div className="space-y-1 sm:col-span-2">
+								<Label htmlFor="item-description">Description</Label>
+								<Textarea id="item-description" name="description" rows={4} />
+							</div>
+							<div className="space-y-1 sm:col-span-2">
+								<Label htmlFor="item-image">Image URL</Label>
+								<Input id="item-image" name="imageUrl" type="url" />
+							</div>
+							<div className="space-y-1">
+								<Label htmlFor="item-points">Loyalty points</Label>
+								<Input id="item-points" name="points" type="number" min={0} />
+							</div>
+							<div className="space-y-1">
+								<Label>Calories</Label>
+								<div className="grid grid-cols-2 gap-2">
+									<Input
+										name="calorieMin"
+										type="number"
+										min={0}
+										placeholder="Min"
+									/>
+									<Input
+										name="calorieMax"
+										type="number"
+										min={0}
+										placeholder="Max"
+									/>
+								</div>
+							</div>
 						</div>
-						<div className="space-y-1">
-							<Label htmlFor="item-category">
-								<Trans>Category</Trans>
-							</Label>
-							<Select
-								value={categoryId}
-								onValueChange={(value) => value && setCategoryId(value)}
-							>
-								<SelectTrigger id="item-category" className="w-full">
-									<SelectValue placeholder="Select category" />
-								</SelectTrigger>
-								<SelectContent>
-									{categories.map((category) => (
-										<SelectItem key={category.id} value={category.id}>
-											{category.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+						<div className="grid gap-2 sm:grid-cols-2">
+							{[
+								['alcohol', 'Contains alcohol'],
+								['glutenFree', 'Gluten free'],
+								['vegetarian', 'Vegetarian'],
+								['taxable', 'Taxable'],
+								['popular', 'Popular item'],
+								['upsell', 'Use as an upsell'],
+								['excludeFromThrottle', 'Exclude from order throttling'],
+							].map(([name, label]) => (
+								<label
+									key={name}
+									className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+								>
+									<input
+										type="checkbox"
+										name={name}
+										defaultChecked={name === 'taxable'}
+									/>
+									{label}
+								</label>
+							))}
 						</div>
-						<div className="space-y-1">
-							<Label htmlFor="item-description">
-								<Trans>Description</Trans>
-							</Label>
-							<Input id="item-description" name="description" />
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="item-price">
-								<Trans>Price (USD)</Trans>
-							</Label>
-							<Input
-								id="item-price"
-								name="priceDollars"
-								type="number"
-								min={0}
-								step="0.01"
-								required
-							/>
+						<div className="space-y-2">
+							<Label>Allergens</Label>
+							<div className="grid gap-2 sm:grid-cols-3">
+								{ITEM_ALLERGENS.map((allergen) => (
+									<label
+										key={allergen}
+										className="flex items-center gap-2 text-sm"
+									>
+										<input type="checkbox" name="allergens" value={allergen} />
+										{allergen}
+									</label>
+								))}
+							</div>
 						</div>
 						<div className="flex gap-2">
 							<Button type="submit" disabled={isSubmitting}>

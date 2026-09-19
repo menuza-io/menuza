@@ -11,6 +11,10 @@ const resources = [
 		segment: 'modifier-groups',
 		label: () => <Trans>Modifier sets</Trans>,
 	},
+	{
+		segment: 'modifier-groups/options',
+		label: () => <Trans>Modifiers</Trans>,
+	},
 ] as const
 
 export function MenuSidebarNav({ orgSlug }: { orgSlug: string }) {
@@ -28,7 +32,10 @@ export function MenuSidebarNav({ orgSlug }: { orgSlug: string }) {
 					const active =
 						'exact' in entry && entry.exact
 							? location.pathname === base || location.pathname === `${base}/`
-							: location.pathname.startsWith(href)
+							: entry.segment === 'modifier-groups'
+								? location.pathname.startsWith(href) &&
+									!location.pathname.startsWith(`${href}/options`)
+								: location.pathname.startsWith(href)
 					return (
 						<Link
 							key={`m-${entry.segment}`}

@@ -11,12 +11,12 @@ import {
 import { useMemo } from 'react'
 import { useLoaderData } from 'react-router'
 
-import { listModifierGroupsForLocation } from '#app/utils/menu-catalog.server.ts'
 import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
+import { listModifierGroupsForLocation } from '#app/utils/menu-catalog.server.ts'
 import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 
-import { MenuClickableTableRow } from '../components/menu-clickable-table-row.tsx'
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuClickableTableRow } from '../components/menu-clickable-table-row.tsx'
 import {
 	MenuListHeader,
 	MenuTableShell,

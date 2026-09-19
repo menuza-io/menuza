@@ -1,0 +1,294 @@
+import { parseWithZod } from '@conform-to/zod'
+import { Trans } from '@lingui/macro'
+import { requireUserId } from '@repo/auth'
+import { redirectWithToast } from '@repo/common/toast'
+import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
+import { Button } from '@repo/ui/button'
+import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
+import { Textarea } from '@repo/ui/textarea'
+import { Form, Link, useLoaderData, useNavigation } from 'react-router'
+import { z } from 'zod'
+
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
+import {
+	deleteMenuCategory,
+	listCategoriesForLocation,
+	listItemsForLocation,
+	menuCategorySchema,
+	updateMenuCategory,
+} from '#app/utils/menu-catalog.server.ts'
+import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
+import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
+
+import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuReorderList } from '../components/menu-reorder-list.tsx'
+
+const CategoryDetailActionSchema = z.object({
+	intent: z.enum(['save-category', 'delete-category']),
+	name: z.string().optional(),
+	description: z.string().optional(),
+	imageUrl: z.string().optional(),
+})
+
+export async function loader(
+	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
+) {
+	const ctx = await loadMenuOperatorContextFromArgs(args)
+	if (!ctx.catalogReady || !ctx.menuLocationId) {
+		return { ...ctx, category: null, items: [], categories: [] }
+	}
+	const [categories, items] = await Promise.all([
+		listCategoriesForLocation(ctx.organization.id, ctx.menuLocationId),
+		listItemsForLocation(
+			ctx.organization.id,
+			ctx.menuLocationId,
+			args.params.categoryId,
+		),
+	])
+	return {
+		...ctx,
+		category:
+			categories.find((category) => category.id === args.params.categoryId) ??
+			null,
+		categories,
+		items,
+	}
+}
+
+export async function action(
+	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
+) {
+	const { request, params } = args
+	await requireUserId(request)
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+		slug: true,
+		hasProvisionedDb: true,
+		dataRegion: true,
+	})
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		MENU_WRITE_PERMISSION,
+	)
+	const ctx = await loadMenuOperatorContextFromArgs(args)
+	if (!ctx.catalogReady || !ctx.menuLocationId) {
+		const msg = menuCatalogUnavailableMessage(organization)
+		return redirectWithToast(
+			`/${organization.slug}/menu/categories/${params.categoryId}`,
+			{ type: 'error', title: msg.title, description: msg.description },
+		)
+	}
+
+	const formData = await request.formData()
+	const submission = parseWithZod(formData, {
+		schema: CategoryDetailActionSchema,
+	})
+	if (submission.status !== 'success') return submission.reply()
+
+	const detailUrl = `/${organization.slug}/menu/categories/${params.categoryId}`
+	if (submission.value.intent === 'delete-category') {
+		await deleteMenuCategory(
+			organization.id,
+			ctx.menuLocationId,
+			params.categoryId!,
+		)
+		return redirectWithToast(`/${organization.slug}/menu/categories`, {
+			type: 'success',
+			title: 'Category deleted',
+			description: '',
+		})
+	}
+
+	await updateMenuCategory(
+		organization.id,
+		ctx.menuLocationId,
+		params.categoryId!,
+		menuCategorySchema.parse({
+			name: submission.value.name,
+			description: submission.value.description || null,
+			imageUrl: submission.value.imageUrl || null,
+			upsellCategoryIds: formData
+				.getAll('upsellCategoryIds')
+				.map((value) => value.toString()),
+			active: formData.has('active'),
+		}),
+	)
+	return redirectWithToast(detailUrl, {
+		type: 'success',
+		title: 'Category saved',
+		description: '',
+	})
+}
+
+export default function CategoryDetailPage() {
+	const {
+		organization,
+		category,
+		items,
+		categories,
+		catalogReady,
+		canEditMenu,
+	} = useLoaderData<typeof loader>()
+	const navigation = useNavigation()
+	const isSubmitting = navigation.state !== 'idle'
+
+	if (!catalogReady) {
+		const msg = menuCatalogUnavailableMessage(organization)
+		return (
+			<MenuCatalogGate
+				title={msg.title}
+				description={msg.description}
+				websiteHref={`/${organization.slug}/website`}
+			/>
+		)
+	}
+
+	if (!category) {
+		return <p className="text-muted-foreground text-sm">Category not found.</p>
+	}
+
+	const otherCategories = categories.filter(
+		(candidate) => candidate.id !== category.id,
+	)
+	const upsellCategoryIds = new Set(category.upsellCategoryIds ?? [])
+	const base = `/${organization.slug}/menu`
+
+	return (
+		<div className="flex flex-col gap-8">
+			<AnnotatedLayout>
+				<AnnotatedSection
+					title="Category details"
+					description="Control the category name, description, availability, and merchandising."
+				>
+					{canEditMenu ? (
+						<Form method="post" className="flex max-w-2xl flex-col gap-5">
+							<input type="hidden" name="intent" value="save-category" />
+							<div className="grid gap-4 sm:grid-cols-2">
+								<div className="space-y-1 sm:col-span-2">
+									<Label htmlFor="category-name">Display name</Label>
+									<Input
+										id="category-name"
+										name="name"
+										defaultValue={category.name}
+										required
+									/>
+								</div>
+								<div className="space-y-1 sm:col-span-2">
+									<Label htmlFor="category-description">Description</Label>
+									<Textarea
+										id="category-description"
+										name="description"
+										defaultValue={category.description ?? ''}
+										rows={4}
+										maxLength={500}
+									/>
+								</div>
+								<div className="space-y-1 sm:col-span-2">
+									<Label htmlFor="category-image">Image URL</Label>
+									<Input
+										id="category-image"
+										name="imageUrl"
+										type="url"
+										defaultValue={category.imageUrl ?? ''}
+										placeholder="https://..."
+									/>
+								</div>
+							</div>
+							<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+								<input
+									type="checkbox"
+									name="active"
+									defaultChecked={category.active}
+								/>
+								Available to guests
+							</label>
+							<div className="space-y-2">
+								<div>
+									<p className="text-sm font-medium">Upsell categories</p>
+									<p className="text-muted-foreground text-xs">
+										Shown after a guest adds an item from this category.
+									</p>
+								</div>
+								<div className="grid gap-2 sm:grid-cols-2">
+									{otherCategories.map((candidate) => (
+										<label
+											key={candidate.id}
+											className="flex items-center gap-2 text-sm"
+										>
+											<input
+												type="checkbox"
+												name="upsellCategoryIds"
+												value={candidate.id}
+												defaultChecked={upsellCategoryIds.has(candidate.id)}
+											/>
+											{candidate.name}
+										</label>
+									))}
+								</div>
+							</div>
+							<div className="flex flex-wrap gap-2">
+								<Button type="submit" disabled={isSubmitting}>
+									<Trans>Save category</Trans>
+								</Button>
+								<Button
+									variant="outline"
+									render={<Link to={`${base}/categories`} />}
+								>
+									<Trans>Back to categories</Trans>
+								</Button>
+							</div>
+						</Form>
+					) : (
+						<dl className="text-sm">
+							<dt className="font-medium">{category.name}</dt>
+							<dd className="text-muted-foreground mt-1">
+								{category.description ?? 'No description'}
+							</dd>
+						</dl>
+					)}
+				</AnnotatedSection>
+
+				<AnnotatedSection
+					title="Items"
+					description="Items in this category, in the order guests see them."
+				>
+					{items.length ? (
+						<MenuReorderList
+							rows={items.map((item) => ({ id: item.id, label: item.name }))}
+							reorderAction={`/${organization.slug}/menu/reorder`}
+							reorderIntent="reorder-items"
+							extraFields={{ categoryId: category.id }}
+							disabled={!canEditMenu || isSubmitting}
+						/>
+					) : (
+						<p className="text-muted-foreground text-sm">
+							No items in this category yet.
+						</p>
+					)}
+					{canEditMenu ? (
+						<Button
+							className="mt-4"
+							variant="outline"
+							render={<Link to={`${base}/items/new`} />}
+						>
+							Add item
+						</Button>
+					) : null}
+				</AnnotatedSection>
+			</AnnotatedLayout>
+
+			{canEditMenu ? (
+				<Form method="post">
+					<input type="hidden" name="intent" value="delete-category" />
+					<Button type="submit" variant="destructive" disabled={isSubmitting}>
+						Delete category
+					</Button>
+				</Form>
+			) : null}
+		</div>
+	)
+}

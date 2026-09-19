@@ -1,6 +1,6 @@
 import { cn } from '@repo/ui'
 import { TableRow } from '@repo/ui/table'
-import { type ReactNode } from 'react'
+import { type MouseEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 
 export function MenuClickableTableRow({
@@ -18,11 +18,11 @@ export function MenuClickableTableRow({
 			tabIndex={0}
 			role="link"
 			className={cn('cursor-pointer', className)}
-			onClick={() => navigate(to)}
+			onClick={() => void navigate(to)}
 			onKeyDown={(event) => {
 				if (event.key === 'Enter' || event.key === ' ') {
 					event.preventDefault()
-					navigate(to)
+					void navigate(to)
 				}
 			}}
 		>
@@ -31,6 +31,6 @@ export function MenuClickableTableRow({
 	)
 }
 
-export function stopRowClick(event: React.MouseEvent) {
+export function stopRowClick(event: MouseEvent) {
 	event.stopPropagation()
 }

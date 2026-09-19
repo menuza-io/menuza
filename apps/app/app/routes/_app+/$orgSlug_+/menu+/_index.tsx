@@ -3,8 +3,8 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Link, useLoaderData } from 'react-router'
 
-import { getMenuOverviewStats } from '#app/utils/menu-catalog.server.ts'
 import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
+import { getMenuOverviewStats } from '#app/utils/menu-catalog.server.ts'
 import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 
 import { MenuCatalogGate } from './components/menu-catalog-gate.tsx'

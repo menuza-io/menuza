@@ -24,6 +24,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	createMenuCategory,
 	deleteMenuCategory,
@@ -32,7 +33,6 @@ import {
 	setMenuCategoryActive,
 	updateMenuCategory,
 } from '#app/utils/menu-catalog.server.ts'
-import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	loadMenuOperatorContext,
 	loadMenuOperatorContextFromArgs,
@@ -42,6 +42,10 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import {
+	MenuClickableTableRow,
+	stopRowClick,
+} from '../components/menu-clickable-table-row.tsx'
 import { MenuEditorSheet } from '../components/menu-editor-sheet.tsx'
 import {
 	MenuListHeader,
@@ -272,7 +276,10 @@ export default function MenuCategoriesPage() {
 							</TableRow>
 						) : (
 							filteredCategories.map((category) => (
-								<TableRow key={category.id}>
+								<MenuClickableTableRow
+									key={category.id}
+									to={`/${organization.slug}/menu/categories/${category.id}`}
+								>
 									<TableCell className="font-medium">{category.name}</TableCell>
 									<TableCell>
 										{category.active ? (
@@ -286,7 +293,7 @@ export default function MenuCategoriesPage() {
 										)}
 									</TableCell>
 									{canEditMenu ? (
-										<TableCell className="text-end">
+										<TableCell className="text-end" onClick={stopRowClick}>
 											<div className="flex flex-wrap justify-end gap-2">
 												<Form method="post" className="inline">
 													<input
@@ -331,7 +338,7 @@ export default function MenuCategoriesPage() {
 											</div>
 										</TableCell>
 									) : null}
-								</TableRow>
+								</MenuClickableTableRow>
 							))
 						)}
 					</TableBody>

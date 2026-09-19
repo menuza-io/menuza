@@ -12,17 +12,17 @@ import {
 import { useMemo, useState } from 'react'
 import { Form, useLoaderData, useNavigation } from 'react-router'
 
-import { listMenusForLocation } from '#app/utils/menu-catalog.server.ts'
 import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
+import { listMenusForLocation } from '#app/utils/menu-catalog.server.ts'
 import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
+import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import {
 	MenuClickableTableRow,
 	stopRowClick,
 } from '../components/menu-clickable-table-row.tsx'
-import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import {
 	MenuListHeader,
 	MenuTableShell,

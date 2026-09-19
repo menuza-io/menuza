@@ -85,6 +85,13 @@
 			"when": 1789600000001,
 			"tag": "0011_manuza_menus_and_modifier_sets",
 			"breakpoints": true
+		},
+		{
+			"idx": 12,
+			"version": "7",
+			"when": 1789700000001,
+			"tag": "0012_menu_resource_metadata",
+			"breakpoints": true
 		}
 	]
 }

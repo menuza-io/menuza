@@ -3,6 +3,14 @@ import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
+import { Textarea } from '@repo/ui/textarea'
+import {
 	Form,
 	Link,
 	useLoaderData,
@@ -10,6 +18,7 @@ import {
 	useParams,
 } from 'react-router'
 
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	getMenu,
 	linkCategoryToMenu,
@@ -18,7 +27,6 @@ import {
 	unlinkCategoryFromMenu,
 	updateMenu,
 } from '#app/utils/menu-catalog.server.ts'
-import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
@@ -66,7 +74,14 @@ export async function action(
 			organization.id,
 			menuLocationId,
 			menuId,
-			menuSchema.parse({ name }),
+			menuSchema.parse({
+				name,
+				description: formData.get('description')?.toString() || null,
+				menuType: formData.get('menuType')?.toString() || 'olo',
+				showCalories: formData.has('showCalories'),
+				instructionsEnabled: formData.has('instructionsEnabled'),
+				active: formData.has('active'),
+			}),
 		)
 		return { ok: true }
 	}
@@ -116,22 +131,73 @@ export default function MenuDetailRoute() {
 	const linkedIds = new Set(menu.categories.map((c) => c.id))
 	const availableToAdd = allCategories.filter((c) => !linkedIds.has(c.id))
 	const reorderAction = `/${organization.slug}/menu/reorder`
+	const menuType = menu.menuType ?? 'olo'
+	const menuName = menu.name
 
 	return (
-		<div className="flex max-w-2xl flex-col gap-8">
+		<div className="flex max-w-4xl flex-col gap-8">
 			{canEditMenu ? (
-				<Form method="post" className="flex flex-col gap-4">
+				<Form method="post" className="flex flex-col gap-6">
 					<input type="hidden" name="intent" value="save-menu" />
-					<div className="space-y-1">
-						<Label htmlFor="menu-name">
-							<Trans>Menu name</Trans>
-						</Label>
-						<Input
-							id="menu-name"
-							name="name"
-							defaultValue={menu.name}
-							required
-						/>
+					<div className="grid gap-4 sm:grid-cols-2">
+						<div className="space-y-1 sm:col-span-2">
+							<Label htmlFor="menu-name">Display name</Label>
+							<Input
+								id="menu-name"
+								name="name"
+								defaultValue={menu.name}
+								required
+							/>
+						</div>
+						<div className="space-y-1">
+							<Label htmlFor="menu-type">Menu type</Label>
+							<Select name="menuType" defaultValue={menuType}>
+								<SelectTrigger id="menu-type" className="w-full">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="olo">Online ordering</SelectItem>
+									<SelectItem value="catering">Catering</SelectItem>
+									<SelectItem value="dine-in">Dine-in</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="space-y-1">
+							<Label htmlFor="menu-description">Description</Label>
+							<Textarea
+								id="menu-description"
+								name="description"
+								defaultValue={menu.description ?? ''}
+								rows={3}
+								maxLength={500}
+							/>
+						</div>
+					</div>
+					<div className="grid gap-2 sm:grid-cols-3">
+						<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+							<input
+								type="checkbox"
+								name="active"
+								defaultChecked={menu.active}
+							/>
+							Available to guests
+						</label>
+						<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+							<input
+								type="checkbox"
+								name="showCalories"
+								defaultChecked={menu.showCalories}
+							/>
+							Show calorie information
+						</label>
+						<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+							<input
+								type="checkbox"
+								name="instructionsEnabled"
+								defaultChecked={menu.instructionsEnabled}
+							/>
+							Enable instructions
+						</label>
 					</div>
 					<Button type="submit" disabled={isSubmitting}>
 						<Trans>Save menu</Trans>
@@ -148,8 +214,8 @@ export default function MenuDetailRoute() {
 				<p className="text-muted-foreground text-sm">
 					<Trans>
 						Drag to set the order diners see on this menu. Categories are shared
-						across menus; this only changes order and membership for “
-						{menu.name}”.
+						across menus; this only changes order and membership for “{menuName}
+						”.
 					</Trans>
 				</p>
 				{menu.categories.length ? (
@@ -203,7 +269,7 @@ export default function MenuDetailRoute() {
 									size="sm"
 									disabled={isSubmitting}
 								>
-									<Trans>Remove {category.name}</Trans>
+									{`Remove ${category.name}`}
 								</Button>
 							</Form>
 						))

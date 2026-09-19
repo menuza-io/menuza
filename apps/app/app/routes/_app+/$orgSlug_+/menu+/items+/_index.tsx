@@ -21,12 +21,12 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	listCategoriesForLocation,
 	listItemsForLocation,
 	setMenuItemActive,
 } from '#app/utils/menu-catalog.server.ts'
-import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	loadMenuOperatorContext,
 	loadMenuOperatorContextFromArgs,
@@ -35,11 +35,11 @@ import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
+import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import {
 	MenuClickableTableRow,
 	stopRowClick,
 } from '../components/menu-clickable-table-row.tsx'
-import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import {
 	MenuListHeader,
 	MenuTableShell,

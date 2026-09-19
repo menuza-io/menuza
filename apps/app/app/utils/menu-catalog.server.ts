@@ -1,4 +1,3 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import {
 	getTenantDb,
 	menuCategories,
@@ -9,11 +8,14 @@ import {
 	menuModifierSets,
 	menus,
 } from '@repo/tenant-db'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const menuCategorySchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).optional().nullable(),
+	imageUrl: z.string().trim().url().optional().nullable(),
+	upsellCategoryIds: z.array(z.string().min(1)).optional().default([]),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
 	active: z.boolean().optional().default(true),
 })
@@ -23,6 +25,18 @@ export const menuItemSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(1000).optional().nullable(),
 	priceCents: z.coerce.number().int().min(0),
+	imageUrl: z.string().trim().url().optional().nullable(),
+	points: z.coerce.number().int().min(0).optional().nullable(),
+	alcohol: z.boolean().optional().default(false),
+	glutenFree: z.boolean().optional().default(false),
+	vegetarian: z.boolean().optional().default(false),
+	allergens: z.array(z.string().min(1)).optional().default([]),
+	calorieMin: z.coerce.number().int().min(0).optional().nullable(),
+	calorieMax: z.coerce.number().int().min(0).optional().nullable(),
+	popular: z.boolean().optional().default(false),
+	upsell: z.boolean().optional().default(false),
+	taxable: z.boolean().optional().default(true),
+	excludeFromThrottle: z.boolean().optional().default(false),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
 	active: z.boolean().optional().default(true),
 })
@@ -30,6 +44,9 @@ export const menuItemSchema = z.object({
 export const menuSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).optional().nullable(),
+	menuType: z.enum(['olo', 'catering', 'dine-in']).optional().default('olo'),
+	showCalories: z.boolean().optional().default(false),
+	instructionsEnabled: z.boolean().optional().default(true),
 	active: z.boolean().optional().default(true),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
 })
@@ -45,15 +62,28 @@ export const menuModifierGroupSchema = z.object({
 
 export const menuModifierSetSchema = z.object({
 	name: z.string().trim().min(1).max(120),
+	displayType: z
+		.enum([
+			'single-select',
+			'multi-select',
+			'quantity-select',
+			'pizza-topping',
+			'custom',
+		])
+		.optional()
+		.default('single-select'),
 	minSelections: z.coerce.number().int().min(0).optional().default(0),
 	maxSelections: z.coerce.number().int().min(1).optional().default(1),
 	required: z.boolean().optional().default(false),
+	preselectedOptionIds: z.array(z.string().min(1)).optional().default([]),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
 })
 
 export const menuModifierOptionSchema = z.object({
 	name: z.string().trim().min(1).max(120),
+	description: z.string().trim().max(500).optional().nullable(),
 	priceCents: z.coerce.number().int().min(0).optional().default(0),
+	active: z.boolean().optional().default(true),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
 })
 
@@ -957,6 +987,29 @@ export async function createModifierOption(
 		.values({ ...parsed, modifierSetId })
 		.returning()
 	return created
+}
+
+export async function updateModifierOption(
+	organizationId: string,
+	locationId: string,
+	optionId: string,
+	input: z.infer<typeof menuModifierOptionSchema>,
+) {
+	const parsed = menuModifierOptionSchema.parse(input)
+	const db = await tenantDb(organizationId)
+	const [option] = await db
+		.select()
+		.from(menuModifierOptions)
+		.where(eq(menuModifierOptions.id, optionId))
+		.limit(1)
+	if (!option) throw new Response('Option not found', { status: 404 })
+	await getModifierSet(organizationId, locationId, option.modifierSetId)
+	const [updated] = await db
+		.update(menuModifierOptions)
+		.set(parsed)
+		.where(eq(menuModifierOptions.id, optionId))
+		.returning()
+	return updated
 }
 
 export async function deleteModifierOption(
