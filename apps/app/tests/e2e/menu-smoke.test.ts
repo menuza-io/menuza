@@ -2,7 +2,7 @@ import { db, WaitlistEntry } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
-test('menu page loads for organization admin', async ({
+test('menu hub shows sidebar navigation and publish gate', async ({
 	page,
 	login,
 	navigate,
@@ -28,14 +28,28 @@ test('menu page loads for organization admin', async ({
 	await expect(page.getByRole('heading', { name: /^menu$/i })).toBeVisible({
 		timeout: 15_000,
 	})
-	await expect(
-		page
-			.getByRole('navigation', { name: /menu sections/i })
-			.getByRole('link', { name: /^home$/i }),
-	).toBeVisible()
-	await expect(
-		page
-			.getByRole('navigation', { name: /menu sections/i })
-			.getByRole('link', { name: /^menus$/i }),
-	).toBeVisible()
+
+	const menuNav = page.locator('nav[aria-label="Menu sections"]:visible')
+	await expect(menuNav).toBeVisible()
+	for (const label of [
+		'Home',
+		'Menus',
+		'Categories',
+		'Items',
+		'Modifier sets',
+		'Modifiers',
+	]) {
+		await expect(
+			menuNav.getByRole('link', { name: label, exact: true }),
+		).toBeVisible()
+	}
+
+	const publishGateLink = page.getByRole('link', {
+		name: /go to website settings/i,
+	})
+	await expect(publishGateLink).toBeVisible()
+	await expect(publishGateLink).toHaveAttribute(
+		'href',
+		`/${organization.slug}/website`,
+	)
 })
