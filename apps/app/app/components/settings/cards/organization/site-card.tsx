@@ -80,19 +80,32 @@ export function SiteCard({
 	actionData?: { result?: unknown }
 }) {
 	const [isPublished, setIsPublished] = useState(organization.sitePublished)
-	const publishFetcher = useFetcher<{ error?: string; status?: string }>()
+	const publishFetcher = useFetcher<{
+		error?: string
+		status?: string
+		sitePublished?: boolean
+	}>()
 
 	useEffect(() => {
 		setIsPublished(Boolean(organization.sitePublished))
 	}, [organization.sitePublished])
 
 	useEffect(() => {
+		if (publishFetcher.state !== 'idle') return
+
 		const data = publishFetcher.data
-		if (data?.error) {
+		if (!data) return
+
+		if (data.error) {
 			setIsPublished(Boolean(organization.sitePublished))
 			toast.error(data.error)
+			return
 		}
-	}, [publishFetcher.data, organization.sitePublished])
+
+		if (data.status === 'success' && typeof data.sitePublished === 'boolean') {
+			setIsPublished(data.sitePublished)
+		}
+	}, [publishFetcher.state, publishFetcher.data, organization.sitePublished])
 	const domainFetcher = useFetcher()
 	const DomainForm = domainFetcher.Form
 	const siteUrl = getOrgSiteUrl(organization.slug)

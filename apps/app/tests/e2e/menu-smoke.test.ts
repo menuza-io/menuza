@@ -24,8 +24,9 @@ test('menu page loads for organization admin', async ({
 
 	const organization = await createTestOrganization(user.id, 'admin')
 
-	await navigate('/:slug/menu', { slug: organization.slug })
+	await navigate('/:slug/menu/items', { slug: organization.slug })
 	await expect(page.getByRole('heading', { name: /^menu$/i })).toBeVisible({
 		timeout: 15_000,
 	})
+	await expect(page.getByRole('tab', { name: /^items$/i })).toBeVisible()
 })
