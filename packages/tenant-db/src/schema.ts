@@ -489,6 +489,62 @@ export const shopOrderLineItemsRelations = relations(
 // ==========================================
 // 7b. RESTAURANT MENU (per-location catalog)
 // ==========================================
+
+/** Branch menus (e.g. Lunch, Dinner). Categories attach via menu_category_links. */
+export const menus = sqliteTable(
+	'menus',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
+		menuType: text('menu_type', {
+			enum: ['olo', 'catering', 'dine-in'],
+		})
+			.notNull()
+			.default('olo'),
+		showCalories: integer('show_calories', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		instructionsEnabled: integer('instructions_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [index('idx_menus_location').on(table.locationId)],
+)
+
+export const menuCategoryLinks = sqliteTable(
+	'menu_category_links',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		menuId: text('menu_id')
+			.notNull()
+			.references(() => menus.id, { onDelete: 'cascade' }),
+		categoryId: text('category_id')
+			.notNull()
+			.references(() => menuCategories.id, { onDelete: 'cascade' }),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		index('idx_menu_category_links_menu').on(table.menuId),
+		index('idx_menu_category_links_category').on(table.categoryId),
+	],
+)
+
 export const menuCategories = sqliteTable(
 	'menu_categories',
 	{
@@ -498,6 +554,13 @@ export const menuCategories = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
+		imageUrl: text('image_url'),
+		upsellCategoryIds: text('upsell_category_ids', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
 		sortOrder: integer('sort_order').notNull().default(0),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -525,7 +588,30 @@ export const menuItems = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		priceCents: integer('price_cents').notNull(),
+		imageUrl: text('image_url'),
+		points: integer('points'),
+		alcohol: integer('alcohol', { mode: 'boolean' }).notNull().default(false),
+		glutenFree: integer('gluten_free', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		vegetarian: integer('vegetarian', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		allergens: text('allergens', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
+		calorieMin: integer('calorie_min'),
+		calorieMax: integer('calorie_max'),
+		popular: integer('popular', { mode: 'boolean' }).notNull().default(false),
+		upsell: integer('upsell', { mode: 'boolean' }).notNull().default(false),
+		taxable: integer('taxable', { mode: 'boolean' }).notNull().default(true),
+		excludeFromThrottle: integer('exclude_from_throttle', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -541,22 +627,54 @@ export const menuItems = sqliteTable(
 	],
 )
 
-export const menuModifierGroups = sqliteTable(
-	'menu_modifier_groups',
+/** Reusable modifier groups (Owner modifier-sets) at location scope. */
+export const menuModifierSets = sqliteTable(
+	'menu_modifier_sets',
 	{
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
-		menuItemId: text('menu_item_id')
-			.notNull()
-			.references(() => menuItems.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
+		nameI18n: text('name_i18n'),
+		displayType: text('display_type', {
+			enum: [
+				'single-select',
+				'multi-select',
+				'quantity-select',
+				'pizza-topping',
+				'custom',
+			],
+		})
+			.notNull()
+			.default('single-select'),
 		minSelections: integer('min_selections').notNull().default(0),
 		maxSelections: integer('max_selections').notNull().default(1),
 		required: integer('required', { mode: 'boolean' }).notNull().default(false),
+		preselectedOptionIds: text('preselected_option_ids', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default([]),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
-	(table) => [index('idx_menu_modifier_groups_item').on(table.menuItemId)],
+	(table) => [index('idx_menu_modifier_sets_location').on(table.locationId)],
+)
+
+export const menuItemModifierSetLinks = sqliteTable(
+	'menu_item_modifier_set_links',
+	{
+		menuItemId: text('menu_item_id')
+			.notNull()
+			.references(() => menuItems.id, { onDelete: 'cascade' }),
+		modifierSetId: text('modifier_set_id')
+			.notNull()
+			.references(() => menuModifierSets.id, { onDelete: 'cascade' }),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		index('idx_menu_item_modifier_set_item').on(table.menuItemId),
+		index('idx_menu_item_modifier_set_set').on(table.modifierSetId),
+	],
 )
 
 export const menuModifierOptions = sqliteTable(
@@ -565,20 +683,43 @@ export const menuModifierOptions = sqliteTable(
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
-		groupId: text('group_id')
+		modifierSetId: text('modifier_set_id')
 			.notNull()
-			.references(() => menuModifierGroups.id, { onDelete: 'cascade' }),
+			.references(() => menuModifierSets.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
+		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		priceCents: integer('price_cents').notNull().default(0),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
-	(table) => [index('idx_menu_modifier_options_group').on(table.groupId)],
+	(table) => [index('idx_menu_modifier_options_set').on(table.modifierSetId)],
+)
+
+export const menusRelations = relations(menus, ({ many }) => ({
+	categoryLinks: many(menuCategoryLinks),
+}))
+
+export const menuCategoryLinksRelations = relations(
+	menuCategoryLinks,
+	({ one }) => ({
+		menu: one(menus, {
+			fields: [menuCategoryLinks.menuId],
+			references: [menus.id],
+		}),
+		category: one(menuCategories, {
+			fields: [menuCategoryLinks.categoryId],
+			references: [menuCategories.id],
+		}),
+	}),
 )
 
 export const menuCategoriesRelations = relations(
 	menuCategories,
 	({ many }) => ({
 		items: many(menuItems),
+		menuLinks: many(menuCategoryLinks),
 	}),
 )
 
@@ -587,29 +728,43 @@ export const menuItemsRelations = relations(menuItems, ({ one, many }) => ({
 		fields: [menuItems.categoryId],
 		references: [menuCategories.id],
 	}),
-	modifierGroups: many(menuModifierGroups),
+	modifierSetLinks: many(menuItemModifierSetLinks),
 }))
 
-export const menuModifierGroupsRelations = relations(
-	menuModifierGroups,
-	({ one, many }) => ({
+export const menuModifierSetsRelations = relations(
+	menuModifierSets,
+	({ many }) => ({
+		options: many(menuModifierOptions),
+		itemLinks: many(menuItemModifierSetLinks),
+	}),
+)
+
+export const menuItemModifierSetLinksRelations = relations(
+	menuItemModifierSetLinks,
+	({ one }) => ({
 		menuItem: one(menuItems, {
-			fields: [menuModifierGroups.menuItemId],
+			fields: [menuItemModifierSetLinks.menuItemId],
 			references: [menuItems.id],
 		}),
-		options: many(menuModifierOptions),
+		modifierSet: one(menuModifierSets, {
+			fields: [menuItemModifierSetLinks.modifierSetId],
+			references: [menuModifierSets.id],
+		}),
 	}),
 )
 
 export const menuModifierOptionsRelations = relations(
 	menuModifierOptions,
 	({ one }) => ({
-		group: one(menuModifierGroups, {
-			fields: [menuModifierOptions.groupId],
-			references: [menuModifierGroups.id],
+		modifierSet: one(menuModifierSets, {
+			fields: [menuModifierOptions.modifierSetId],
+			references: [menuModifierSets.id],
 		}),
 	}),
 )
+
+/** @deprecated Use menuModifierSets — alias for transitional imports */
+export const menuModifierGroups = menuModifierSets
 
 // ==========================================
 // 8. CUSTOMER PAYMENT METHODS (shop card snapshots)
@@ -738,7 +893,13 @@ export type NewShopOrder = typeof shopOrders.$inferInsert
 export type ShopOrderLineItem = typeof shopOrderLineItems.$inferSelect
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type MenuItem = typeof menuItems.$inferSelect
-export type MenuModifierGroup = typeof menuModifierGroups.$inferSelect
+export type Menu = typeof menus.$inferSelect
+export type MenuCategoryLink = typeof menuCategoryLinks.$inferSelect
+export type MenuModifierSet = typeof menuModifierSets.$inferSelect
+export type MenuItemModifierSetLink =
+	typeof menuItemModifierSetLinks.$inferSelect
+/** @deprecated Renamed to MenuModifierSet */
+export type MenuModifierGroup = MenuModifierSet
 export type MenuModifierOption = typeof menuModifierOptions.$inferSelect
 
 export type CustomerPaymentMethod = typeof customerPaymentMethods.$inferSelect

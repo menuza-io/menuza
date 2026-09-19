@@ -71,6 +71,10 @@ msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:522
+#~ msgid "{0} options"
+#~ msgstr "{0} خيارات"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:249
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:158
 #~ msgid "{0} recipients"
@@ -156,6 +160,10 @@ msgstr "منذ {minutes} دقيقة"
 msgid "{notFoundCount} missing URLs logged"
 msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:605
+msgid "{optionCount} options"
+msgstr "{optionCount} خيارات"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:639
 msgid "{pageCount} pages"
 msgstr "{pageCount} صفحات"
@@ -240,6 +248,10 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{trend}%"
 msgstr "+{trend}٪"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:605
+msgid "+$ (USD)"
+msgstr "+$ (USD)"
+
 #: app/routes/_auth+/waitlist.tsx:369
 msgid "+2 points"
 msgstr "+٢ نقطة"
@@ -254,6 +266,10 @@ msgstr "+٥ نقاط/إحالة"
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:27
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:384
+msgid "<0>Manage items</0> in each category."
+msgstr "<0>أدِر الأصناف</0> في كل فئة."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:91
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
@@ -319,9 +335,15 @@ msgstr "500+ شخص"
 msgid "51-200 people"
 msgstr "51-200 شخص"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:102
-msgid "86'd"
-msgstr "86'd"
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:305
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:202
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:251
+msgid "86"
+msgstr "نفد"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:233
+#~ msgid "86'd"
+#~ msgstr "86'd"
 
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
@@ -397,6 +419,10 @@ msgstr "شركة Acme"
 #: app/components/roles/tenant-role-access-manager.tsx:777
 #: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:81
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:256
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:144
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:189
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -417,6 +443,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:536
 msgid "Active"
 msgstr "نشط"
 
@@ -424,11 +451,20 @@ msgstr "نشط"
 msgid "Active (requires map pin)"
 msgstr "Active (requires map pin)"
 
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:86
+#~ msgid "Active menu: {0}. Build categories and items, attach them to menus, and set modifier groups diners choose at checkout."
+#~ msgstr "القائمة النشطة: {0}. أنشئ الفئات والأصناف، اربطها بالقوائم، واضبط مجموعات الإضافات التي يختارها الزبائن عند الطلب."
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:87
+msgid "Active menu: {activeMenuName}. Build categories and items, attach them to menus, and set modifier groups diners choose at checkout."
+msgstr "القائمة النشطة: {activeMenuName}. أنشئ الفئات والأصناف، واربطها بالقوائم، وحدد مجموعات الإضافات التي يختارها الزبائن عند الدفع."
+
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:673
 msgid "Activity"
 msgstr "النشاط"
 
 #: app/components/website/form-builder-sidebar.tsx:195
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:271
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1773
 msgid "Add"
 msgstr "إضافة"
@@ -472,6 +508,11 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a link"
 msgstr "إضافة رابط"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:206
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:212
+msgid "Add a menu item to your catalog."
+msgstr "أضف صنفًا إلى كتالوجك."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5749
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
@@ -508,7 +549,7 @@ msgstr "إضافة كتلة"
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:137
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:253
 msgid "Add category"
 msgstr "Add category"
 
@@ -531,12 +572,17 @@ msgstr "إضافة ميزة"
 msgid "Add field"
 msgstr "إضافة حقل"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:342
+#~ msgid "Add group"
+#~ msgstr "إضافة مجموعة"
+
 #: app/components/note/comment-image-upload.tsx:91
 #: app/components/note/comment-image-upload.tsx:92
 msgid "Add images"
 msgstr "إضافة صور"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:189
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:101
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:340
 msgid "Add item"
 msgstr "Add item"
 
@@ -576,6 +622,10 @@ msgstr "إضافة الخطوات التالية"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:833
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:617
+msgid "Add option"
+msgstr "إضافة خيار"
 
 #: app/components/team-switcher.tsx:323
 #: app/routes/_app+/organizations.tsx:217
@@ -726,6 +776,10 @@ msgstr "الكل"
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
 
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:114
+msgid "All availability"
+msgstr "كل حالات التوفر"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:352
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
@@ -759,6 +813,11 @@ msgstr "جميع المستلمين"
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:538
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:346
+msgid "Allergens"
+msgstr "مسببات الحساسية"
 
 #: app/components/roles/tenant-role-access-manager.tsx:666
 msgid "Allowed"
@@ -899,8 +958,8 @@ msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:200
-msgid "Ask an admin to grant menu edit access or switch to a role with update permission."
-msgstr "Ask an admin to grant menu edit access or switch to a role with update permission."
+#~ msgid "Ask an admin to grant menu edit access or switch to a role with update permission."
+#~ msgstr "Ask an admin to grant menu edit access or switch to a role with update permission."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:681
 msgid "Ask anything…"
@@ -921,6 +980,18 @@ msgstr "الملف"
 #: ../../packages/ai/src/components/ai-chat.tsx:448
 msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:675
+msgid "Attach"
+msgstr "ربط"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:651
+msgid "Attach existing group"
+msgstr "ربط مجموعة موجودة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:294
+msgid "Attached to:"
+msgstr "مرتبطة بـ:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:413
 #~ msgid "Attempt: {0} • Executed: {1}"
@@ -1006,6 +1077,25 @@ msgstr "الأتمتة"
 msgid "Autoplay"
 msgstr "التشغيل التلقائي"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:252
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:235
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:139
+msgid "Availability"
+msgstr "التوفر"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:117
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:281
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:173
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:223
+msgid "Available"
+msgstr "متاح"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:274
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:197
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:256
+msgid "Available to guests"
+msgstr "متاح للضيوف"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1275
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
@@ -1020,6 +1110,7 @@ msgstr "أبيض وأسود"
 
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-resource-editor.tsx:63
 msgid "Back"
 msgstr "رجوع"
 
@@ -1035,6 +1126,10 @@ msgstr "العودة إلى الكتل"
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:260
+#~ msgid "Back to categories"
+#~ msgstr "العودة إلى الفئات"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1916
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
@@ -1044,6 +1139,10 @@ msgstr "العودة إلى التفاصيل"
 msgid "Back to fields"
 msgstr "العودة إلى الحقول"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:565
+msgid "Back to items"
+msgstr "العودة إلى الأصناف"
+
 #: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:95
 msgid "Back to list"
 msgstr "Back to list"
@@ -1052,6 +1151,10 @@ msgstr "Back to list"
 #: app/routes/_auth+/forgot-password.tsx:245
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:294
+msgid "Back to menus"
+msgstr "العودة إلى القوائم"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:104
 msgid "Back to nodes"
@@ -1108,21 +1211,41 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-scope-badge.tsx:14
+msgid "Branch catalog"
+msgstr "قائمة الفرع"
+
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:54
-msgid "Branch context"
-msgstr "Branch context"
+#~ msgid "Branch context"
+#~ msgstr "Branch context"
 
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:25
-msgid "Branch menu — changes apply to the selected location only."
-msgstr "Branch menu — changes apply to the selected location only."
+#~ msgid "Branch menu — changes apply to the selected location only."
+#~ msgstr "Branch menu — changes apply to the selected location only."
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-scope-badge.tsx:12
+msgid "Brand catalog"
+msgstr "قائمة العلامة"
 
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:52
-msgid "Brand context"
-msgstr "Brand context"
+#~ msgid "Brand context"
+#~ msgstr "Brand context"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:30
+msgid "Brand default catalog. Per-location overrides ship in a later phase."
+msgstr "كتالوج العلامة الافتراضي. تخصيصات كل موقع ستُضاف في مرحلة لاحقة."
 
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:29
-msgid "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
-msgstr "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
+#~ msgid "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
+#~ msgstr "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:206
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:172
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:113
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:70
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:159
+msgid "Brand scope — default location"
+msgstr "نطاق العلامة — الموقع الافتراضي"
 
 #: app/components/app-sidebar.tsx:366
 #: app/components/website/branding-panel.tsx:244
@@ -1228,6 +1351,11 @@ msgstr "بإنشاء حساب، فإنك توافق على <0>شروط الخد�
 msgid "By deleting your organization you and your team will lose access and all data will be lost. This is a permanent action and cannot be undone."
 msgstr "بحذف مؤسستك، ستفقد أنت وفريقك الوصول وسيتم فقدان جميع البيانات. هذا إجراء دائم ولا يمكن التراجع عنه."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:446
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:291
+msgid "Calories"
+msgstr "السعرات الحرارية"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:89
 msgid "Campaign name"
 msgstr "اسم الحملة"
@@ -1264,6 +1392,11 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:360
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-editor-sheet.tsx:48
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:368
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:118
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:182
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
@@ -1313,9 +1446,69 @@ msgstr "بطاقات"
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:149
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:50
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:27
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:45
+msgid "Catalog not ready"
+msgstr "الكتالوج غير جاهز"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:57
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:98
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:212
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:8
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:8
+msgid "Categories"
+msgstr "الفئات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:226
+msgid "Categories on this menu"
+msgstr "الفئات في هذه القائمة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:229
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:379
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:237
 msgid "Category"
 msgstr "Category"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:114
+msgid "Category added"
+msgstr "تمت إضافة الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:139
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:114
+msgid "Category deleted"
+msgstr "تم حذف الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:232
+msgid "Category details"
+msgstr "تفاصيل الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:91
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:103
+msgid "Category is required"
+msgstr "الفئة مطلوبة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:194
+msgid "Category not found."
+msgstr "لم يتم العثور على الفئة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:227
+msgid "Category order"
+msgstr "ترتيب الفئات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:156
+msgid "Category saved"
+msgstr "تم حفظ الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:127
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:158
+msgid "Category updated"
+msgstr "تم تحديث الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:169
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:84
+msgid "Catering"
+msgstr "تموين"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3364
@@ -1390,6 +1583,10 @@ msgstr "معالج الدفع عند الخروج"
 msgid "Choices"
 msgstr "الخيارات"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:437
+msgid "Choices and price adjustments."
+msgstr "الخيارات وتعديلات الأسعار."
+
 #: app/components/media-library/media-library-picker.tsx:149
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVIF."
@@ -1397,6 +1594,10 @@ msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVI
 #: app/components/website/link-inspector.tsx:434
 msgid "Choose a page..."
 msgstr "اختر صفحة..."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:86
+#~ msgid "Choose a side"
+#~ msgstr "اختر طبقًا جانبيًا"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "Choose a starting point"
@@ -1726,6 +1927,11 @@ msgstr "اتصل بالدعم للحصول على الأسعار"
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:485
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:313
+msgid "Contains alcohol"
+msgstr "يحتوي على كحول"
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3288
@@ -1769,9 +1975,17 @@ msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 msgid "Contrast"
 msgstr "التباين"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:234
+msgid "Control the category name, description, availability, and merchandising."
+msgstr "تحكم في اسم الفئة ووصفها وتوفرها وتسويقها."
+
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
 msgstr "التحكم في من يمكنه الوصول إلى هذه الملاحظة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:350
+msgid "Controls whether guests choose one, many, quantities, or toppings."
+msgstr "يحدد ما إذا كان الضيوف يختارون خيارًا واحدًا أو عدة خيارات أو كميات أو إضافات."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1242
 msgid "Cool"
@@ -1837,6 +2051,14 @@ msgstr "تعذر فتح {routeTitle}"
 msgid "Create"
 msgstr "إنشاء"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:691
+msgid "Create & attach"
+msgstr "إنشاء وربط"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:216
+msgid "Create a <0>category</0> first."
+msgstr "<0>أنشئ فئة</0> أولاً."
+
 #: app/components/roles/tenant-role-access-manager.tsx:754
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
@@ -1864,6 +2086,14 @@ msgstr "أنشئ كلمة مرور لحماية حسابك"
 #: ../../packages/ai/src/components/ai-chat.tsx:460
 msgid "Create a plan"
 msgstr "إنشاء خطة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:107
+msgid "Create a reusable modifier group, then attach it to items and add options on the next screen."
+msgstr "أنشئ مجموعة إضافات قابلة لإعادة الاستخدام، ثم اربطها بالأصناف وأضف الخيارات في الشاشة التالية."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:99
+msgid "Create a reusable set of options for menu items."
+msgstr "أنشئ مجموعة خيارات قابلة لإعادة الاستخدام لأصناف القائمة."
 
 #: app/routes/_auth+/login.tsx:368
 #: app/routes/_auth+/onboarding_.$provider.tsx:385
@@ -1925,6 +2155,11 @@ msgstr "إنشاء بث"
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:217
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:350
+msgid "Create category"
+msgstr "إنشاء فئة"
+
 #: app/components/roles/tenant-role-access-manager.tsx:310
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
@@ -1935,9 +2170,31 @@ msgstr "إنشاء دور مخصص"
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:175
+msgid "Create group"
+msgstr "إنشاء مجموعة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:184
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:362
+msgid "Create item"
+msgstr "إنشاء صنف"
+
 #: app/components/organization-invitations.tsx:226
 msgid "Create Link"
 msgstr "إنشاء رابط"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:125
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:111
+msgid "Create menu"
+msgstr "إنشاء قائمة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:82
+msgid "Create modifier set"
+msgstr "إنشاء مجموعة إضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:686
+msgid "Create new group"
+msgstr "إنشاء مجموعة جديدة"
 
 #: app/components/command-menu.tsx:123
 msgid "Create new note"
@@ -2168,10 +2425,21 @@ msgstr "دورات"
 msgid "Daily Notes Created"
 msgstr "الملاحظات اليومية المنشأة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:101
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:80
+msgid "Dairy"
+msgstr "منتجات الألبان"
+
 #: app/components/settings/cards/danger-card.tsx:44
 #: app/components/settings/cards/organization/danger-zone-card.tsx:49
 msgid "Danger"
 msgstr "خطر"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:214
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:337
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:271
+msgid "Danger zone"
+msgstr "منطقة الخطر"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:777
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3382
@@ -2242,6 +2510,10 @@ msgstr "Default location"
 msgid "Default prep time (minutes)"
 msgstr "Default prep time (minutes)"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:263
+msgid "Define how guests choose options and manage the options in this set."
+msgstr "حدد كيفية اختيار الضيوف للخيارات وأدر خيارات هذه المجموعة."
+
 #: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Define role details and select what permissions members receive."
 msgstr "حدّد تفاصيل الدور واختر الصلاحيات التي يحصل عليها الأعضاء."
@@ -2260,6 +2532,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:335
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
@@ -2292,6 +2565,10 @@ msgstr "هل تريد حذف الإعلان؟"
 msgid "Delete card"
 msgstr "حذف البطاقة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:222
+msgid "Delete category"
+msgstr "حذف الفئة"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4394
 msgid "Delete column"
 msgstr "حذف العمود"
@@ -2320,6 +2597,7 @@ msgstr "حذف الميزة"
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:345
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3883
 msgid "Delete item"
 msgstr "حذف العنصر"
@@ -2331,6 +2609,14 @@ msgstr "حذف الرابط"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
 msgid "Delete log entry"
 msgstr "حذف إدخال السجل"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:577
+#~ msgid "Delete modifier group"
+#~ msgstr "حذف مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:279
+msgid "Delete modifier set"
+msgstr "حذف مجموعة الإضافات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:120
@@ -2403,6 +2689,13 @@ msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:250
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:413
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:270
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:179
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:94
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:599
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:231
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:798
@@ -2451,9 +2744,18 @@ msgstr "جهاز"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:472
+msgid "Dietary and merchandising"
+msgstr "المعلومات الغذائية والتسويق"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1332
 msgid "Dimensions:"
 msgstr "الأبعاد:"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:172
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:87
+msgid "Dine-in"
+msgstr "تناول في المطعم"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
 msgid "Direct / Unknown"
@@ -2501,6 +2803,17 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4119
 msgid "Display"
 msgstr "العرض"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:376
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:243
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:370
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:228
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:147
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:67
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:317
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:113
+msgid "Display name"
+msgstr "الاسم المعروض"
 
 #: app/components/settings/cards/organization/site-card.tsx:353
 msgid "DNS setup"
@@ -2580,6 +2893,18 @@ msgstr "اسحب لإعادة الترتيب"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:643
 msgid "Drag to reorder column"
 msgstr "اسحب لإعادة ترتيب العمود"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:230
+msgid "Drag to set display order (applies to your default menu and new menus)."
+msgstr "اسحب لتحديد ترتيب العرض (ينطبق على القائمة الافتراضية والقوائم الجديدة)."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:149
+#~ msgid "Drag to set the order diners see on this menu. Categories are shared across menus; this only changes order and membership for “{0}”."
+#~ msgstr "اسحب لتحديد ترتيب ما يراه الزبائن في هذه القائمة. الفئات مشتركة بين القوائم؛ هذا يغيّر الترتيب والانتماء لـ «{0}» فقط."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:229
+msgid "Drag to set the order diners see on this menu. Categories are shared across menus; this only changes order and membership for “{menuName}”."
+msgstr "اسحب لتحديد ترتيب ما يراه الزبائن في هذه القائمة. الفئات مشتركة بين القوائم؛ هذا يغيّر الترتيب والانتماء لـ «{menuName}» فقط."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:449
 msgid "Duplicate"
@@ -2666,6 +2991,10 @@ msgstr "تعديل"
 msgid "Edit announcement"
 msgstr "تعديل الإعلان"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:206
+msgid "Edit category"
+msgstr "تعديل الفئة"
+
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:671
 msgid "Edit column"
 msgstr "تعديل العمود"
@@ -2688,6 +3017,18 @@ msgstr "تعديل التصميم"
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:327
+msgid "Edit item"
+msgstr "تعديل الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:189
+msgid "Edit modifier"
+msgstr "تعديل الإضافة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:261
+msgid "Edit modifier set"
+msgstr "تعديل مجموعة الإضافات"
+
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Edit note"
 msgstr "تعديل الملاحظة"
@@ -2708,6 +3049,10 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Edit role"
 msgstr "تعديل الدور"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:611
+msgid "Edit set"
+msgstr "تعديل المجموعة"
+
 #: app/components/roles/tenant-role-access-manager.tsx:89
 msgid "Edit team notes"
 msgstr "تعديل ملاحظات الفريق"
@@ -2716,9 +3061,22 @@ msgstr "تعديل ملاحظات الفريق"
 msgid "Edit website content"
 msgstr "تعديل محتوى الموقع"
 
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:35
+#~ msgid "Editing the brand default catalog (default location). Per-branch overrides ship in a later phase."
+#~ msgstr "تعديل قائمة العلامة الافتراضية (الموقع الافتراضي). تخصيصات الفروع ستتوفر في مرحلة لاحقة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:30
+#~ msgid "Editing the menu for the selected branch. Switch location in the header to change scope."
+#~ msgstr "تعديل قائمة الفرع المحدد. غيّر الموقع من الرأس لتغيير النطاق."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1799
 msgid "Editor preview"
 msgstr "معاينة المحرر"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:102
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:81
+msgid "Eggs"
+msgstr "البيض"
 
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
@@ -2787,6 +3145,11 @@ msgstr "تفعيل تخزين S3 مخصص"
 #: app/components/settings/cards/organization/shop-card.tsx:194
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:213
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:106
+msgid "Enable instructions"
+msgstr "تفعيل التعليمات"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1405
 msgid "Enable redirect immediately"
@@ -2886,6 +3249,11 @@ msgstr "يساوي تماماً"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1197
 msgid "Example Request"
 msgstr "مثال على الطلب"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:515
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:328
+msgid "Exclude from order throttling"
+msgstr "استبعاد من تحديد سرعة الطلبات"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:240
 #~ msgid "Execution History ({0})"
@@ -3114,6 +3482,11 @@ msgstr "البحث عن الصور وإعادة استخدامها عبر الم
 msgid "Find potential issues"
 msgstr "العثور على المشكلات المحتملة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:106
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:85
+msgid "Fish"
+msgstr "السمك"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:250
 msgid "Fit canvas view"
 msgstr "ملاءمة عرض اللوحة"
@@ -3269,6 +3642,16 @@ msgstr "أعطني أمثلة"
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:100
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:79
+msgid "Gluten"
+msgstr "الغلوتين"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:490
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:317
+msgid "Gluten free"
+msgstr "خالٍ من الغلوتين"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
@@ -3276,6 +3659,10 @@ msgstr "الانتقال إلى هناك"
 #: app/components/app-sidebar.tsx:217
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-catalog-gate.tsx:19
+msgid "Go to website settings"
+msgstr "الانتقال إلى إعدادات الموقع"
 
 #: app/components/settings/cards/organization/site-analytics-card.tsx:63
 #~ msgid "Google Analytics"
@@ -3306,9 +3693,18 @@ msgstr "اللون الرمادي"
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:219
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:59
+#~ msgid "Group name"
+#~ msgstr "اسم المجموعة"
+
 #: app/components/settings/cards/organization/shop-card.tsx:367
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:449
+msgid "Guest preview"
+msgstr "معاينة الضيف"
 
 #: app/components/data-table.tsx:188
 #: app/components/data-table.tsx:813
@@ -3381,9 +3777,13 @@ msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:82
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:291
 msgid "Hidden"
 msgstr "Hidden"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:316
+msgid "Hide"
+msgstr "إخفاء"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2702
 msgid "Hide from search engines"
@@ -3416,6 +3816,7 @@ msgid "Hits"
 msgstr "الزيارات"
 
 #: app/components/website/link-inspector.tsx:455
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:6
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5886
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5908
@@ -3446,6 +3847,10 @@ msgstr "كيف يمكنني مساعدتك؟"
 #: ../../packages/ai/src/components/ai-chat.tsx:470
 msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:290
+msgid "How many options diners can pick."
+msgstr "عدد الخيارات التي يمكن للزبائن اختيارها."
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:348
 #: app/routes/_auth+/onboarding.tsx:506
@@ -3502,6 +3907,9 @@ msgid "Image to crop"
 msgstr "صورة للقص"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:258
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:422
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:279
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4051
 msgid "Image URL"
 msgstr "رابط الصورة"
@@ -3638,6 +4046,54 @@ msgstr "عنوان IP"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:485
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:177
+msgid "Item created"
+msgstr "تم إنشاء الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:233
+msgid "Item deleted"
+msgstr "تم حذف الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:355
+msgid "Item details"
+msgstr "تفاصيل الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:352
+msgid "Item editor"
+msgstr "محرر الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:109
+msgid "Item not found"
+msgstr "لم يتم العثور على الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:317
+msgid "Item not found."
+msgstr "لم يتم العثور على الصنف."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:193
+msgid "Item order within category"
+msgstr "ترتيب الأصناف داخل الفئة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:225
+msgid "Item saved"
+msgstr "تم حفظ الصنف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:195
+#~ msgid "Item:"
+#~ msgstr "الصنف:"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:67
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:316
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:9
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:9
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:178
+msgid "Items"
+msgstr "الأصناف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:318
+msgid "Items in this category, in the order guests see them."
+msgstr "أصناف هذه الفئة بالترتيب الذي يراه الضيوف."
 
 #: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
@@ -3892,6 +4348,18 @@ msgstr "الموقع"
 msgid "Location name"
 msgstr "Location name"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:204
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:170
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:111
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:68
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:157
+msgid "Location scope"
+msgstr "نطاق الموقع"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:25
+msgid "Location-scoped catalog. Switch location in the header to change scope."
+msgstr "كتالوج على مستوى الموقع. غيّر الموقع من الشريط العلوي لتبديل النطاق."
+
 #: app/components/app-sidebar.tsx:426
 msgid "Locations"
 msgstr "Locations"
@@ -3947,6 +4415,15 @@ msgstr "الشكل"
 msgid "Loose"
 msgstr "متباعد"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:434
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:285
+msgid "Loyalty points"
+msgstr "نقاط الولاء"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:69
+msgid "Lunch"
+msgstr "الغداء"
+
 #: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
 msgstr "م@مثال.com"
@@ -3983,9 +4460,17 @@ msgstr "إدارة الأتمتة"
 msgid "Manage broadcasts"
 msgstr "إدارة البثّات"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:208
+msgid "Manage how this category appears across your storefront."
+msgstr "تحكم في كيفية ظهور هذه الفئة في متجرك."
+
 #: app/components/team-switcher.tsx:303
 msgid "Manage locations"
 msgstr "Manage locations"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:95
+msgid "Manage menus"
+msgstr "إدارة القوائم"
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -4000,6 +4485,14 @@ msgstr "إدارة الأدوار"
 #: app/components/settings/cards/organization/billing-card.tsx:172
 msgid "Manage Subscription"
 msgstr "إدارة الاشتراك"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:191
+msgid "Manage the localized name, description, price, and availability."
+msgstr "أدر الاسم والوصف والسعر والتوفر بلغات متعددة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:329
+msgid "Manage this item’s storefront content, pricing, and modifier sets."
+msgstr "أدر محتوى الصنف وأسعاره ومجموعات إضافاته في المتجر."
 
 #: app/routes/_app+/profile.tsx:116
 msgid "Manage your account settings and set e-mail preferences."
@@ -4085,6 +4578,14 @@ msgstr "التسويق"
 msgid "Marketing manager"
 msgstr "مدير التسويق"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:371
+msgid "Max selections"
+msgstr "الحد الأقصى للاختيارات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:158
+msgid "Maximum selections"
+msgstr "الحد الأقصى للاختيارات"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:938
 msgid "MCP clients authorized to access your organization data"
 msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات منظمتك"
@@ -4160,8 +4661,31 @@ msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
 #: app/components/app-sidebar.tsx:303
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:22
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:60
 msgid "Menu"
 msgstr "Menu"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:60
+msgid "Menu is required"
+msgstr "القائمة مطلوبة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:127
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:50
+#~ msgid "Menu name"
+#~ msgstr "اسم القائمة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:158
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:73
+msgid "Menu type"
+msgstr "نوع القائمة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:47
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:7
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:7
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:119
+msgid "Menus"
+msgstr "القوائم"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 msgid "Menuza Team"
@@ -4192,6 +4716,14 @@ msgstr "ترحيل الوسائط الحالية"
 msgid "Migrate existing org media after saving"
 msgstr "ترحيل وسائط المؤسسة الحالية بعد الحفظ"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:359
+msgid "Min selections"
+msgstr "الحد الأدنى للاختيارات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:146
+msgid "Minimum selections"
+msgstr "الحد الأدنى للاختيارات"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
 msgid "minutes"
 msgstr "دقائق"
@@ -4215,6 +4747,81 @@ msgstr "Mock Google Maps (no API key). Use a sample address or enter fields manu
 #: app/components/locations/mock-location-map.tsx:26
 msgid "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
 msgstr "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:218
+msgid "Modifier details"
+msgstr "تفاصيل الإضافة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:255
+msgid "Modifier group not found."
+msgstr "لم يتم العثور على مجموعة الإضافات."
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:76
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:12
+#~ msgid "Modifier groups"
+#~ msgstr "مجموعات الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:43
+#~ msgid "Modifier groups are attached to items. Create a group from an item detail page, then add options here."
+#~ msgstr "مجموعات الإضافات مرتبطة بالأصناف. أنشئ مجموعة من صفحة تفاصيل الصنف، ثم أضف الخيارات هنا."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:183
+msgid "Modifier not found."
+msgstr "لم يتم العثور على الإضافة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:147
+msgid "Modifier saved"
+msgstr "تم حفظ الإضافة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:179
+msgid "Modifier set"
+msgstr "مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:277
+msgid "Modifier set attached"
+msgstr "تم ربط مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:250
+msgid "Modifier set created"
+msgstr "تم إنشاء مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:179
+msgid "Modifier set deleted"
+msgstr "تم حذف مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:264
+msgid "Modifier set detached"
+msgstr "تم فصل مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:105
+msgid "Modifier set details"
+msgstr "تفاصيل مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:286
+msgid "Modifier set editor"
+msgstr "محرر مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:167
+msgid "Modifier set saved"
+msgstr "تم حفظ مجموعة الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:77
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:12
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:12
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:580
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:76
+msgid "Modifier sets"
+msgstr "مجموعات الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:123
+msgid "Modifier updated"
+msgstr "تم تحديث الإضافة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:16
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:16
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:154
+msgid "Modifiers"
+msgstr "الإضافات"
 
 #: app/components/roles/tenant-role-access-manager.tsx:90
 msgid "Modify notes created by other team members."
@@ -4242,6 +4849,11 @@ msgstr "المزيد"
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:339
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:132
+msgid "Multi select"
+msgstr "اختيار متعدد"
+
 #: app/components/settings/cards/security-card.tsx:160
 msgid "Multi-factor authentication"
 msgstr "المصادقة متعددة العوامل"
@@ -4262,8 +4874,12 @@ msgstr "بدون صوت"
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:66
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:132
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:169
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:249
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:226
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:136
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:96
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:176
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:224
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:715
@@ -4271,6 +4887,12 @@ msgstr "بدون صوت"
 #: app/utils/website/field-types.ts:28
 msgid "Name"
 msgstr "الاسم"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:72
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:36
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:55
+msgid "Name required"
+msgstr "الاسم مطلوب"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:868
 msgid "Navigate to Features → MCP Servers"
@@ -4318,9 +4940,9 @@ msgstr "أتمتة جديدة"
 msgid "New broadcast"
 msgstr "بث جديد"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:128
-msgid "New category"
-msgstr "New category"
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:179
+#~ msgid "New category"
+#~ msgstr "New category"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:111
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
@@ -4343,9 +4965,22 @@ msgstr "نموذج جديد"
 msgid "New icon preview"
 msgstr "معاينة الأيقونة الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:145
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:205
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:211
 msgid "New item"
 msgstr "New item"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:92
+#~ msgid "New menu"
+#~ msgstr "قائمة جديدة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:107
+msgid "New modifier group"
+msgstr "مجموعة إضافات جديدة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:97
+msgid "New modifier set"
+msgstr "مجموعة إضافات جديدة"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:342
 msgid "New Note"
@@ -4432,9 +5067,17 @@ msgstr "لم يتم العثور على بثّات"
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:245
+msgid "No categories on this menu yet."
+msgstr "لا توجد فئات في هذه القائمة بعد."
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:272
+msgid "No categories yet."
+msgstr "لا توجد فئات بعد."
+
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:69
-msgid "No categories yet. Add your first category below."
-msgstr "No categories yet. Add your first category below."
+#~ msgid "No categories yet. Add your first category below."
+#~ msgstr "No categories yet. Add your first category below."
 
 #: app/components/note/integration-controls.tsx:356
 msgid "No channels available"
@@ -4463,6 +5106,10 @@ msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 #: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:309
+msgid "No description"
+msgstr "لا يوجد وصف"
 
 #: app/components/organization-invitations.tsx:473
 msgid "No description provided"
@@ -4496,9 +5143,17 @@ msgstr "لا توجد حقول بعد"
 msgid "No invoices found"
 msgstr "لم يتم العثور على فواتير"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:331
+msgid "No items in this category yet."
+msgstr "لا توجد أصناف في هذه الفئة بعد."
+
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:88
-msgid "No items in this category."
-msgstr "No items in this category."
+#~ msgid "No items in this category."
+#~ msgstr "No items in this category."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:257
+msgid "No items yet. Add a category, then create your first item."
+msgstr "لا توجد أصناف بعد. أضف فئة، ثم أنشئ أول صنف."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:945
 msgid "No matching images"
@@ -4515,6 +5170,30 @@ msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة ل�
 #: app/components/organization-members.tsx:153
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:161
+msgid "No menus yet."
+msgstr "لا توجد قوائم بعد."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:587
+msgid "No modifier groups yet."
+msgstr "لا توجد مجموعات إضافات بعد."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:112
+msgid "No modifier sets match your search."
+msgstr "لا توجد مجموعات إضافات تطابق بحثك."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:114
+msgid "No modifier sets yet."
+msgstr "لا توجد مجموعات إضافات بعد."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:200
+msgid "No modifiers match your search."
+msgstr "لا توجد إضافات تطابق بحثك."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:202
+msgid "No modifiers yet."
+msgstr "لا توجد إضافات بعد."
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
@@ -4537,6 +5216,11 @@ msgstr "لم يتم العثور على ملاحظات."
 #: app/routes/_app+/$orgSlug_+/notes.tsx:391
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr "لا توجد ملاحظات تطابق بحثك عن \"{searchValue}\". جرب مصطلح بحث مختلف أو أنشئ ملاحظة جديدة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-modifier-set-preview.tsx:44
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:441
+msgid "No options yet."
+msgstr "لا توجد خيارات بعد."
 
 #: app/routes/_app+/organizations.tsx:383
 msgid "No organization found"
@@ -4621,6 +5305,10 @@ msgstr "عادي"
 msgid "Not allowed"
 msgstr "غير مسموح"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:307
+msgid "Not attached to any items yet. Open an item and attach this group."
+msgstr "غير مرتبطة بأي صنف بعد. افتح صنفًا واربط هذه المجموعة."
+
 #: app/components/settings/cards/organization/shop-card.tsx:106
 msgid "Not connected"
 msgstr "غير متصل"
@@ -4691,6 +5379,12 @@ msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:267
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:252
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:156
+msgid "Nothing matches your search. Try another term or clear filters."
+msgstr "لا توجد نتائج لبحثك. جرّب مصطلحًا آخر أو امسح الفلاتر."
+
 #: app/components/settings/cards/notification-preferences-card.tsx:207
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
@@ -4715,6 +5409,10 @@ msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:140
+#~ msgid "Off"
+#~ msgstr "متوقف"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
 msgid "Old path (Source)"
 msgstr "المسار القديم (المصدر)"
@@ -4722,6 +5420,14 @@ msgstr "المسار القديم (المصدر)"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:136
+#~ msgid "On"
+#~ msgstr "مفعّل"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:67
+#~ msgid "On item:"
+#~ msgstr "على الصنف:"
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -4757,6 +5463,8 @@ msgid "Online hours"
 msgstr "Online hours"
 
 #: app/components/locations/special-hours-editor.tsx:82
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:166
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:81
 msgid "Online ordering"
 msgstr "Online ordering"
 
@@ -4821,6 +5529,10 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open menu"
 msgstr "فتح القائمة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:209
+msgid "Open modifier set"
+msgstr "فتح مجموعة الإضافات"
+
 #: app/components/roles/tenant-role-access-manager.tsx:152
 #~ msgid "Open pages and themes in the site builder."
 #~ msgstr "فتح الصفحات والسمات في منشئ الموقع."
@@ -4874,9 +5586,42 @@ msgstr "مشغّل"
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:197
+msgid "Option added"
+msgstr "تمت إضافة الخيار"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:593
+msgid "Option name"
+msgstr "اسم الخيار"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:209
+msgid "Option removed"
+msgstr "تمت إزالة الخيار"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:227
+msgid "Option saved"
+msgstr "تم حفظ الخيار"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-modifier-set-preview.tsx:35
+msgid "Optional"
+msgstr "اختياري"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:329
+#~ msgid "options"
+#~ msgstr "خيارات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:102
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:436
+msgid "Options"
+msgstr "الخيارات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:167
+msgid "Options are reusable across items through their modifier sets."
+msgstr "يمكن إعادة استخدام الخيارات عبر الأصناف من خلال مجموعات الإضافات."
 
 #: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
@@ -4946,6 +5691,7 @@ msgid "Override brand store hours"
 msgstr "Override brand store hours"
 
 #: app/components/app-sidebar.tsx:315
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:6
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -5054,6 +5800,11 @@ msgstr "المدفوعات مفعّلة"
 #: app/components/settings/cards/organization/shop-card.tsx:115
 msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:104
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:83
+msgid "Peanuts"
+msgstr "الفول السوداني"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:419
@@ -5197,6 +5948,11 @@ msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 msgid "Pickup"
 msgstr "Pickup"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:345
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:138
+msgid "Pizza topping"
+msgstr "إضافة بيتزا"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4823
 msgid "Plain"
 msgstr "عادي"
@@ -5266,6 +6022,11 @@ msgstr "PNG، حتى 5 ميجابايت. يُستخدم كشعار وأيقون�
 msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
 msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAME. يتم توفير SSL تلقائياً عند تكوين Cloudflare for SaaS."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:505
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:324
+msgid "Popular item"
+msgstr "صنف شائع"
+
 #: app/components/core/feedback-modal.tsx:33
 msgid "Positive feedback"
 msgstr "ملاحظات إيجابية"
@@ -5290,6 +6051,10 @@ msgstr "Prep time (minutes)"
 msgid "Prerender"
 msgstr "التصيير المسبق"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:394
+msgid "Preselected options"
+msgstr "الخيارات المحددة مسبقًا"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1756
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
@@ -5303,11 +6068,19 @@ msgstr "الإعدادات المسبقة"
 msgid "Preview"
 msgstr "معاينة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:232
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:182
+msgid "Price"
+msgstr "السعر"
+
 #: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:175
-msgid "Price (USD cents)"
-msgstr "Price (USD cents)"
+#~ msgid "Price (USD cents)"
+#~ msgstr "Price (USD cents)"
 
 #: app/components/settings/cards/organization/shop-card.tsx:283
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:399
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:257
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:239
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
@@ -5438,6 +6211,11 @@ msgstr "رمز QR"
 #: app/components/settings/two-factor-form.tsx:186
 msgid "QR code for two-factor authentication setup. Scan this code with your authenticator app."
 msgstr "رمز QR لإعداد المصادقة الثنائية. امسح هذا الرمز باستخدام تطبيق المصادقة الخاص بك."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:342
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:135
+msgid "Quantity select"
+msgstr "اختيار الكمية"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3651
 msgid "Question"
@@ -5600,9 +6378,16 @@ msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
 #: app/components/website/branding-panel.tsx:314
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:631
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:576
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2634
 msgid "Remove"
 msgstr "إزالة"
+
+#. placeholder {0}: category.name
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:286
+msgid "Remove {0}"
+msgstr "إزالة {0}"
 
 #: app/components/settings/cards/sessions-card.tsx:375
 msgid "Remove access from all devices except this one"
@@ -5726,8 +6511,17 @@ msgstr "مطلوب"
 
 #: app/components/website/create-form-dialog.tsx:235
 #: app/components/website/form-builder-sidebar.tsx:604
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-modifier-set-preview.tsx:35
 msgid "Required"
 msgstr "مطلوب"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:389
+msgid "Required group"
+msgstr "مجموعة مطلوبة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:171
+msgid "Required set"
+msgstr "مجموعة مطلوبة"
 
 #: app/components/organization-invitations.tsx:237
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
@@ -5768,6 +6562,12 @@ msgstr "Reset to sample pin (Houston)"
 msgid "Responses"
 msgstr "الردود"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:307
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:204
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:253
+msgid "Restock"
+msgstr "إعادة التوفر"
+
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
 msgstr "النتيجة"
@@ -5775,6 +6575,18 @@ msgstr "النتيجة"
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
 msgstr "إعادة المحاولة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:54
+#~ msgid "Reusable modifier groups for this location. Add options on each group, then attach groups to items."
+#~ msgstr "مجموعات إضافات قابلة لإعادة الاستخدام لهذا الموقع. أضف الخيارات لكل مجموعة، ثم اربطها بالأصناف."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:86
+msgid "Reusable option groups. Define choices here, then attach sets to items."
+msgstr "مجموعات خيارات قابلة لإعادة الاستخدام. عرّف الخيارات هنا ثم اربط المجموعات بالأصناف."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:582
+msgid "Reusable option sets and the order guests see them."
+msgstr "مجموعات خيارات قابلة لإعادة الاستخدام وترتيب ظهورها للضيوف."
 
 #: app/components/data-table.tsx:286
 #: app/components/data-table.tsx:878
@@ -5953,6 +6765,8 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/settings/email-form.tsx:90
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:367
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:544
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr "حفظ"
@@ -5969,6 +6783,10 @@ msgstr "حفظ كنسخة"
 #: app/components/website/branding-panel.tsx:378
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:347
+msgid "Save category"
+msgstr "حفظ الفئة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:541
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
@@ -5990,9 +6808,17 @@ msgstr "Save details"
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:427
+msgid "Save group"
+msgstr "حفظ المجموعة"
+
 #: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:249
 msgid "Save hours"
 msgstr "Save hours"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:559
+msgid "Save item"
+msgstr "حفظ الصنف"
 
 #: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:324
 msgid "Save kitchen settings"
@@ -6005,6 +6831,14 @@ msgstr "حفظ اللغات"
 #: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:115
 msgid "Save location"
 msgstr "Save location"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:217
+msgid "Save menu"
+msgstr "حفظ القائمة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:261
+msgid "Save modifier"
+msgstr "حفظ الإضافة"
 
 #: app/components/settings/cards/organization/shop-card.tsx:313
 msgid "Save product"
@@ -6098,9 +6932,17 @@ msgstr "البحث بالاسم أو البريد الإلكتروني..."
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:53
+msgid "Search categories"
+msgstr "البحث في الفئات"
+
 #: app/routes/mcp+/authorize.tsx:385
 msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:54
+msgid "Search items"
+msgstr "البحث في الأصناف"
 
 #: app/components/media-library/media-library-picker.tsx:248
 #: app/routes/_app+/$orgSlug_+/media.tsx:868
@@ -6117,9 +6959,21 @@ msgstr "البحث في مكتبة الوسائط"
 msgid "Search menu items..."
 msgstr "البحث في عناصر القائمة..."
 
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:52
+msgid "Search menus"
+msgstr "البحث في القوائم"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:55
+msgid "Search modifier sets"
+msgstr "البحث في مجموعات الإضافات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:56
+msgid "Search modifiers"
+msgstr "البحث في الإضافات"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
@@ -6242,9 +7096,18 @@ msgstr "حدد صورة من مكتبتك أو ارفع صورة جديدة."
 msgid "Select attribute"
 msgstr "اختر السمة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:244
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:261
+msgid "Select category"
+msgstr "اختر فئة"
+
 #: app/components/settings/cards/organization/site-locales-card.tsx:261
 msgid "Select default language"
 msgstr "اختر اللغة الافتراضية"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:660
+msgid "Select group"
+msgstr "اختر مجموعة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2659
 msgid "Select image"
@@ -6294,6 +7157,11 @@ msgstr "محدد"
 #: app/components/note/share-note-button.tsx:216
 msgid "Selected Members"
 msgstr "الأعضاء المحددون"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:325
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:121
+msgid "Selection type"
+msgstr "نوع الاختيار"
 
 #: app/components/settings/cards/organization/shop-card.tsx:71
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
@@ -6371,6 +7239,11 @@ msgstr "بزوائد"
 msgid "Service"
 msgstr "الخدمة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:108
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:87
+msgid "Sesame"
+msgstr "السمسم"
+
 #: app/components/settings/cards/sessions-card.tsx:229
 msgid "Session Details"
 msgstr "تفاصيل الجلسة"
@@ -6391,6 +7264,14 @@ msgstr "تعيين المواعيد النهائية"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:429
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:199
+msgid "Set membership"
+msgstr "عضوية المجموعة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:289
+msgid "Set rules"
+msgstr "قواعد المجموعة"
 
 #: app/components/website/create-page-dialog.tsx:143
 msgid "Set the title and URL for your new page."
@@ -6451,6 +7332,11 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:107
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:86
+msgid "Shellfish"
+msgstr "المحار"
+
 #: app/components/app-sidebar.tsx:421
 msgid "Shop"
 msgstr "المتجر"
@@ -6462,6 +7348,15 @@ msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكي
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4941
 msgid "Short"
 msgstr "قصير"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:318
+msgid "Show"
+msgstr "إظهار"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:205
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:102
+msgid "Show calorie information"
+msgstr "إظهار معلومات السعرات الحرارية"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4122
 msgid "Show form title"
@@ -6490,6 +7385,10 @@ msgstr "إظهار هذا الشريط على موقعك العام"
 #: app/components/data-table.tsx:749
 #~ msgid "Showing total visitors for the last 6 months"
 #~ msgstr "عرض إجمالي الزوار لآخر 6 أشهر"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:282
+msgid "Shown after a guest adds an item from this category."
+msgstr "تظهر بعد أن يضيف الضيف صنفًا من هذه الفئة."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2510
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
@@ -6551,6 +7450,11 @@ msgstr "جاري تسجيل الخروج..."
 #: app/utils/website/field-types.ts:43
 #: app/utils/website/field-types.ts:46
 msgid "Single choice"
+msgstr "اختيار واحد"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:336
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:129
+msgid "Single select"
 msgstr "اختيار واحد"
 
 #: app/components/settings/cards/organization/billing-card.tsx:272
@@ -6637,6 +7541,11 @@ msgstr "بعض الحقول مترجمة بالفعل"
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:103
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:82
+msgid "Soy"
+msgstr "الصويا"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3833
 msgid "Spacing"
 msgstr "التباعد"
@@ -6707,6 +7616,7 @@ msgstr "State"
 #: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:78
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:185
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -6915,6 +7825,11 @@ msgstr "طويل"
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:500
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:323
+msgid "Taxable"
+msgstr "خاضع للضريبة"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
 msgid "Team"
 msgstr "الفريق"
@@ -7046,6 +7961,10 @@ msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانت�
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr "التذييل مشترك عبر كل صفحة. اترك حقوق النشر فارغة لاستخدام اسم المؤسسة والسنة الحالية."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:357
+msgid "The guest-facing content, price, and dietary information for this item."
+msgstr "المحتوى والسعر والمعلومات الغذائية التي يراها الضيف لهذا الصنف."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3192
 msgid "The header is shared across every page."
 msgstr "الترويسة مشتركة عبر كل صفحة."
@@ -7086,6 +8005,14 @@ msgstr "هذه هي أدوات MCP المتاحة في منظمتك. يمكن ل
 msgid "These codes will not be shown again. Store them in a secure location like a password manager."
 msgstr "لن يتم عرض هذه الرموز مرة أخرى. احفظها في مكان آمن مثل مدير كلمات المرور."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:475
+msgid "These flags power storefront labels, filters, and upsells."
+msgstr "تستخدم هذه العلامات في تسميات المتجر والفلاتر والاقتراحات."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:397
+msgid "These options are selected for guests by default."
+msgstr "تُحدد هذه الخيارات للضيوف افتراضيًا."
+
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
 msgid "Thinking..."
 msgstr "جاري التفكير..."
@@ -7125,6 +8052,11 @@ msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائ�
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:767
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
+
+#. placeholder {0}: set.name
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:220
+msgid "This option belongs to the {0} modifier set."
+msgstr "ينتمي هذا الخيار إلى مجموعة الإضافات {0}."
 
 #: app/components/website/link-inspector.tsx:600
 msgid "This tab"
@@ -7237,6 +8169,11 @@ msgstr "ترجمة الكل"
 msgid "Translate All"
 msgstr "ترجمة الكل"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:105
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:84
+msgid "Tree nuts"
+msgstr "المكسرات الشجرية"
+
 #: app/routes/_app+/$orgSlug_+/index.tsx:318
 #: app/routes/_app+/$orgSlug_+/index.tsx:327
 msgid "trending"
@@ -7306,6 +8243,14 @@ msgstr "حاول مرة أخرى"
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:166
+#~ msgid "Turn off"
+#~ msgstr "إيقاف"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:168
+#~ msgid "Turn on"
+#~ msgstr "تشغيل"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3795
 msgid "Two"
 msgstr "اثنان"
@@ -7333,6 +8278,10 @@ msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
 
 #: app/components/locations/weekly-hours-editor.tsx:214
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-list-header.tsx:120
+#: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:285
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:177
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:227
 msgid "Unavailable"
 msgstr "Unavailable"
 
@@ -7348,6 +8297,11 @@ msgstr "الوحدة"
 #: app/components/settings/cards/organization/site-card.tsx:106
 msgid "United States"
 msgstr "الولايات المتحدة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:74
+#: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:112
+msgid "Unknown action"
+msgstr "إجراء غير معروف"
 
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:442
 msgid "Unknown error"
@@ -7387,6 +8341,10 @@ msgstr "إلغاء التفضيل"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1633
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
+
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-modifier-set-preview.tsx:32
+msgid "Untitled modifier set"
+msgstr "مجموعة إضافات بلا عنوان"
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:684
 msgid "Untitled Note"
@@ -7505,6 +8463,10 @@ msgstr "تاريخ الرفع:"
 msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:279
+msgid "Upsell categories"
+msgstr "فئات الاقتراحات"
+
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2616
@@ -7544,6 +8506,11 @@ msgstr "استخدم صورة بحجم 1200×630 بكسل على الأقل (1.9
 msgid "Use any authenticator app on your mobile device to scan the QR code, or enter the Setup Key manually."
 msgstr "استخدم أي تطبيق مصادقة على جهازك المحمول لمسح رمز QR، أو أدخل مفتاح الإعداد يدوياً."
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:510
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:325
+msgid "Use as an upsell"
+msgstr "استخدام كاقتراح إضافي"
+
 #: app/components/settings/two-factor-form.tsx:111
 #: app/routes/_auth+/verify.tsx:191
 msgid "Use authenticator app instead"
@@ -7564,6 +8531,10 @@ msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً �
 #: app/routes/_app+/$orgSlug_+/media.tsx:1480
 msgid "Used in"
 msgstr "مستخدم في"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:99
+msgid "Used on items"
+msgstr "مستخدمة في الأصناف"
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:244
 msgid "Used when a visitor's preferred language isn't available, and as the required language for announcement content."
@@ -7596,6 +8567,11 @@ msgstr "اجتاز التحقق"
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
 msgid "Variables"
 msgstr "المتغيرات"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:495
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:321
+msgid "Vegetarian"
+msgstr "نباتي"
 
 #: app/routes/_auth+/verify.tsx:139
 msgid "Verification Code"
@@ -7708,6 +8684,10 @@ msgstr "عرض مساحة عمل الموقع"
 #: app/components/roles/tenant-role-access-manager.tsx:241
 msgid "Viewer"
 msgstr "مشاهد"
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:287
+msgid "Visible"
+msgstr "ظاهر"
 
 #: app/components/settings/cards/organization/site-card.tsx:186
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."

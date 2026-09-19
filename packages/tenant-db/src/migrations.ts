@@ -32,7 +32,24 @@ const LEGACY_BASELINE_TABLES = [
 export function tenantMigrationsFolder(): string {
 	const currentFile = fileURLToPath(import.meta.url)
 	const packageRoot = path.dirname(path.dirname(currentFile))
-	return path.join(packageRoot, 'drizzle')
+	const candidates = [
+		path.join(packageRoot, 'drizzle'),
+		// Production app bundles resolve import.meta.url inside
+		// apps/app/build/server. Keep the workspace migration assets available
+		// when the package itself is externalized by the bundler.
+		path.resolve(process.cwd(), '../../packages/tenant-db/drizzle'),
+		path.resolve(process.cwd(), '../packages/tenant-db/drizzle'),
+		path.resolve(process.cwd(), 'packages/tenant-db/drizzle'),
+	]
+	const migrationsFolder = candidates.find((candidate) =>
+		fs.existsSync(path.join(candidate, 'meta', '_journal.json')),
+	)
+	if (!migrationsFolder) {
+		throw new Error(
+			`Tenant migration assets are unavailable. Searched: ${candidates.join(', ')}`,
+		)
+	}
+	return migrationsFolder
 }
 
 function collectErrorMessages(error: unknown): string[] {
