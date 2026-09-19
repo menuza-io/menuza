@@ -175,7 +175,7 @@ export function InputOTPSlot({ index, className }: InputOTPSlotProps) {
 	return (
 		<TextInput
 			ref={inputRef}
-			className={`text-foreground bg-background h-12 w-12 rounded-lg border-2 text-center text-lg font-semibold ${
+			className={`text-foreground bg-background h-12 w-12 rounded-lg border-2 text-center text-lg ${
 				isFocused ? 'border-primary bg-slate-50' : 'border-input'
 			} ${disabled ? 'bg-muted text-muted-foreground' : ''} ${className ?? ''}`}
 			value={currentValue}

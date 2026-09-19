@@ -170,7 +170,7 @@ function FormFieldPreview({ field }: { field: FormField }) {
 
 	if (field.type === 'heading') {
 		return (
-			<h2 className="pt-2 text-lg font-semibold tracking-tight">{label}</h2>
+			<h2 className="pt-2 text-lg tracking-tight">{label}</h2>
 		)
 	}
 	if (field.type === 'paragraph') {
@@ -327,7 +327,7 @@ export default function WebsiteFormBuilderRoute() {
 				)}
 			>
 				<div className="border-border border-b px-6 py-5 sm:px-8">
-					<h1 className="text-xl font-semibold tracking-tight">
+					<h1 className="text-xl tracking-tight">
 						{localizedName}
 					</h1>
 					{localizedDescription ? (
@@ -610,7 +610,7 @@ function Responses({
 		<ScrollArea className="bg-background min-h-0 flex-1">
 			<div className="mx-auto max-w-6xl p-6 sm:p-10">
 				<div className="mb-6">
-					<h1 className="text-xl font-semibold">
+					<h1 className="text-xl">
 						<Trans>Responses</Trans>
 					</h1>
 					<p className="text-muted-foreground mt-1 text-sm">

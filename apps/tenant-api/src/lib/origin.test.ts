@@ -11,9 +11,9 @@ describe('operator CORS origins', () => {
 	const localDomain = getLocalDomain()
 
 	it('allows the App and Admin control-plane hosts', () => {
-		expect(isOperatorControlPlaneOrigin(`https://app.${localDomain}:2999`)).toBe(
-			true,
-		)
+		expect(
+			isOperatorControlPlaneOrigin(`https://app.${localDomain}:2999`),
+		).toBe(true)
 		expect(
 			isOperatorControlPlaneOrigin(`https://admin.${localDomain}:2999`),
 		).toBe(true)

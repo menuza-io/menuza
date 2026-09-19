@@ -572,7 +572,7 @@ export function ReadOnlyRoleView({
 			<Frame className="w-full">
 				<FrameHeader>
 					<div className="flex items-center gap-2.5">
-						<FrameTitle className="text-lg font-semibold">
+						<FrameTitle className="text-lg">
 							{role.name}
 						</FrameTitle>
 						<Badge variant="secondary" className="text-xs font-normal">

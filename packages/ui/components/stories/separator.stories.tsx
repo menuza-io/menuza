@@ -39,7 +39,7 @@ export const Vertical: Story = {
 export const InContent: Story = {
 	render: () => (
 		<div className="w-[400px] space-y-4">
-			<h2 className="text-lg font-semibold">Section Title</h2>
+			<h2 className="text-lg">Section Title</h2>
 			<p className="text-muted-foreground text-sm">
 				This is some content above the separator.
 			</p>

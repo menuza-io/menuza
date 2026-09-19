@@ -162,7 +162,7 @@ export function OnboardingChecklist({
 
 				<CardAction className="flex items-center gap-3">
 					<div className="text-right">
-						<div className="text-lg font-semibold tracking-tight tabular-nums">
+						<div className="text-lg tracking-tight tabular-nums">
 							{Math.round(progressPercentage)}%
 						</div>
 						<div className="text-muted-foreground text-xs">

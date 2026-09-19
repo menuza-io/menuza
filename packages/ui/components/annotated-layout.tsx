@@ -46,7 +46,7 @@ export function AnnotatedSection({
 		(title || description ? (
 			<div className="flex flex-col gap-1">
 				{title ? (
-					<h2 className="text-base font-semibold tracking-tight">{title}</h2>
+					<h2 className="text-base tracking-tight">{title}</h2>
 				) : null}
 				{description ? (
 					<p className="text-muted-foreground text-sm text-pretty">

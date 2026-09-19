@@ -71,7 +71,7 @@ const visibleTrustItems = trustItems.filter(
 
 		{
 			displayHeadline && (
-				<h1 class="max-w-4xl text-balance text-[clamp(2.75rem,8vw,7rem)] font-semibold leading-[0.96] tracking-[-0.055em] text-foreground sm:tracking-[-0.075em]">
+				<h1 class="max-w-4xl text-balance text-[clamp(2.75rem,8vw,7rem)] leading-[0.96] tracking-[-0.055em] text-foreground sm:tracking-[-0.075em]">
 					<MarkdownInline content={displayHeadline} />
 					{headlineAccent && (
 						<span class="text-brand">
@@ -99,7 +99,7 @@ const visibleTrustItems = trustItems.filter(
 					<Button
 						href={primaryHref}
 						variant="brand"
-						class="h-14 w-full gap-2 px-6 text-[15px] font-semibold transition-transform hover:-translate-y-0.5"
+						class="h-14 w-full gap-2 px-6 text-[15px] transition-transform hover:-translate-y-0.5"
 					>
 						{primaryLabel}
 						<svg

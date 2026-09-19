@@ -578,7 +578,7 @@ function NewApiKeyModal({
 									className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400"
 								/>
 								<div className="text-sm text-yellow-800 dark:text-yellow-200">
-									<div className="mb-1 font-semibold">
+									<div className="mb-1">
 										<Trans>Important:</Trans>
 									</div>
 									<div>
@@ -1063,7 +1063,7 @@ function RevokeConfirmationDialog({
 
 				<div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
 					<div className="text-sm text-red-800 dark:text-red-200">
-						<div className="mb-1 font-semibold">
+						<div className="mb-1">
 							<Trans>This will:</Trans>
 						</div>
 						<ul className="list-inside list-disc space-y-1">

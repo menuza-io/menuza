@@ -29,7 +29,7 @@ export default function CommentEmail({
 				<EmailHeading>New comment</EmailHeading>
 
 				<EmailParagraph>
-					<strong className="text-foreground font-semibold">
+					<strong className="text-foreground">
 						{commenterName}
 					</strong>{' '}
 					left a new comment on "{noteTitle}".

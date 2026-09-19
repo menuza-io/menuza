@@ -2,7 +2,7 @@ import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Command Menu', () => {
-	test('Command menu opens with Cmd+K shortcut', async ({
+	test('Command menu opens with the F shortcut', async ({
 		page,
 		login,
 		navigate,
@@ -17,29 +17,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu with keyboard shortcut
-		await page.keyboard.press('Meta+k') // Mac
-
-		// Verify command menu is visible
-		await expect(page.getByRole('dialog')).toBeVisible()
-		await expect(page.getByPlaceholder(/search/i)).toBeVisible()
-	})
-
-	test('Command menu opens with Ctrl+K shortcut on Windows/Linux', async ({
-		page,
-		login,
-		navigate,
-	}) => {
-		const user = await login()
-
-		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
-
-		// Navigate to organization page
-		await navigate('/:slug', { slug: org.slug })
-		await page.waitForLoadState('networkidle')
-
-		// Open command menu with keyboard shortcut
-		await page.keyboard.press('Control+k') // Windows/Linux
+		await page.keyboard.press('f')
 
 		// Verify command menu is visible
 		await expect(page.getByRole('dialog')).toBeVisible()
@@ -61,7 +39,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Close with Escape key
@@ -84,7 +62,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Test search input functionality
@@ -110,7 +88,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Test that command menu can be closed
@@ -129,7 +107,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Verify basic interface elements
@@ -152,7 +130,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Test keyboard navigation
@@ -181,7 +159,7 @@ test.describe('Command Menu', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu
-		await page.keyboard.press('Meta+k')
+		await page.keyboard.press('f')
 		await expect(page.getByRole('dialog')).toBeVisible()
 
 		// Search for something that doesn't exist

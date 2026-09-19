@@ -195,7 +195,7 @@ function App() {
 								</span>
 							) : (
 								<span
-									className={`text-sm font-semibold ${isLoggedIn ? 'text-green-600' : 'text-red-600'}`}
+									className={`text-sm ${isLoggedIn ? 'text-green-600' : 'text-red-600'}`}
 								>
 									{isLoggedIn ? 'Logged In' : 'Not Logged In'}
 								</span>
@@ -232,7 +232,7 @@ function App() {
 						? 'Permission has been granted for:'
 						: 'Grant permission to inject script on:'}
 					<br />
-					<span className="text-foreground font-semibold">{url}</span>
+					<span className="text-foreground">{url}</span>
 				</p>
 				<div>
 					{hasPermission ? (

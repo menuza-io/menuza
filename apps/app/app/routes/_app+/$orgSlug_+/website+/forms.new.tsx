@@ -114,7 +114,7 @@ export default function NewWebsiteFormRoute() {
 					<p className="text-muted-foreground mb-2 text-sm">
 						<Trans>Choose a starting point</Trans>
 					</p>
-					<h1 className="text-3xl font-semibold tracking-tight">
+					<h1 className="text-3xl tracking-tight">
 						<Trans>What would you like to collect?</Trans>
 					</h1>
 					<p className="text-muted-foreground mt-3 text-sm leading-relaxed">

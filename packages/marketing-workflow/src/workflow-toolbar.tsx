@@ -288,7 +288,7 @@ export function WorkflowToolbar({
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>Nodes</Trans>
 								</p>
-								<p className="text-base font-semibold tabular-nums">
+								<p className="text-base tabular-nums">
 									{validation.nodeCount}
 								</p>
 							</div>
@@ -296,7 +296,7 @@ export function WorkflowToolbar({
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>Connections</Trans>
 								</p>
-								<p className="text-base font-semibold tabular-nums">
+								<p className="text-base tabular-nums">
 									{validation.edgeCount}
 								</p>
 							</div>
@@ -306,7 +306,7 @@ export function WorkflowToolbar({
 								</p>
 								<p
 									className={cn(
-										'text-base font-semibold',
+										'text-base',
 										validation.hasCycles
 											? 'text-destructive'
 											: 'text-emerald-600',
