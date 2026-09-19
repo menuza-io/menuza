@@ -3,8 +3,10 @@ import { cn } from '@repo/ui'
 import { Link, useLocation } from 'react-router'
 
 const tabs = [
-	{ segment: 'items', label: () => <Trans>Items</Trans> },
+	{ segment: '', label: () => <Trans>Overview</Trans>, exact: true },
+	{ segment: 'menus', label: () => <Trans>Menus</Trans> },
 	{ segment: 'categories', label: () => <Trans>Categories</Trans> },
+	{ segment: 'items', label: () => <Trans>Items</Trans> },
 	{
 		segment: 'modifier-groups',
 		label: () => <Trans>Modifier groups</Trans>,
@@ -21,8 +23,11 @@ export function MenuNavTabs({ orgSlug }: { orgSlug: string }) {
 			aria-label="Menu sections"
 		>
 			{tabs.map((tab) => {
-				const href = `${base}/${tab.segment}`
-				const active = location.pathname.startsWith(href)
+				const href = tab.segment ? `${base}/${tab.segment}` : base
+				const active =
+					'exact' in tab && tab.exact
+						? location.pathname === base || location.pathname === `${base}/`
+						: location.pathname.startsWith(href)
 				return (
 					<Link
 						key={tab.segment}

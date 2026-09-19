@@ -35,6 +35,7 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuReorderList } from '../components/menu-reorder-list.tsx'
 
 const GroupActionSchema = z.object({
 	intent: z.enum([
@@ -174,15 +175,13 @@ export default function ModifierGroupDetailPage() {
 		)
 	}
 
-	if (!group?.item) {
+	if (!group) {
 		return (
 			<p className="text-muted-foreground text-sm">
 				<Trans>Modifier group not found.</Trans>
 			</p>
 		)
 	}
-
-	const menuItem = group.item
 
 	return (
 		<div className="flex flex-col gap-8">
@@ -191,15 +190,27 @@ export default function ModifierGroupDetailPage() {
 					title="Group rules"
 					description="How many options diners can pick."
 				>
-					<p className="text-muted-foreground mb-4 text-sm">
-						<Trans>Item:</Trans>{' '}
-						<Link
-							to={`/${organization.slug}/menu/items/${menuItem.id}`}
-							className="text-foreground hover:underline"
-						>
-							{menuItem.name}
-						</Link>
-					</p>
+					{group.attachedItems.length ? (
+						<p className="text-muted-foreground mb-4 text-sm">
+							<Trans>Attached to:</Trans>{' '}
+							{group.attachedItems.map((item) => (
+								<Link
+									key={item.id}
+									to={`/${organization.slug}/menu/items/${item.id}`}
+									className="text-foreground hover:underline"
+								>
+									{item.name}
+								</Link>
+							))}
+						</p>
+					) : (
+						<p className="text-muted-foreground mb-4 text-sm">
+							<Trans>
+								Not attached to any items yet. Open an item and attach this
+								group.
+							</Trans>
+						</p>
+					)}
 					{canEditMenu ? (
 						<Form method="post" className="flex max-w-lg flex-col gap-4">
 							<input type="hidden" name="intent" value="update-group" />
@@ -266,44 +277,64 @@ export default function ModifierGroupDetailPage() {
 						<p className="text-muted-foreground text-sm">
 							<Trans>No options yet.</Trans>
 						</p>
-					) : (
-						<ul className="divide-y text-sm">
-							{group.options.map((option) => (
-								<li
-									key={option.id}
-									className="flex items-center justify-between gap-4 py-2"
-								>
-									<span>
-										{option.name}
-										{option.priceCents > 0 ? (
-											<span className="text-muted-foreground">
-												{' '}
-												(+${(option.priceCents / 100).toFixed(2)})
-											</span>
+					) : null}
+					{group.options.length > 0 ? (
+						<>
+							<MenuReorderList
+								rows={group.options.map((option) => ({
+									id: option.id,
+									label:
+										option.priceCents > 0
+											? `${option.name} (+$${(option.priceCents / 100).toFixed(2)})`
+											: option.name,
+								}))}
+								reorderAction={`/${organization.slug}/menu/reorder`}
+								reorderIntent="reorder-modifier-options"
+								extraFields={{ modifierSetId: group.id }}
+								disabled={!canEditMenu || isSubmitting}
+							/>
+							<ul className="mt-4 divide-y text-sm">
+								{group.options.map((option) => (
+									<li
+										key={option.id}
+										className="flex items-center justify-between gap-4 py-2"
+									>
+										<span>
+											{option.name}
+											{option.priceCents > 0 ? (
+												<span className="text-muted-foreground">
+													{' '}
+													(+${(option.priceCents / 100).toFixed(2)})
+												</span>
+											) : null}
+										</span>
+										{canEditMenu ? (
+											<Form method="post" className="inline">
+												<input
+													type="hidden"
+													name="intent"
+													value="delete-option"
+												/>
+												<input
+													type="hidden"
+													name="optionId"
+													value={option.id}
+												/>
+												<Button
+													type="submit"
+													variant="ghost"
+													size="sm"
+													disabled={isSubmitting}
+												>
+													<Trans>Remove</Trans>
+												</Button>
+											</Form>
 										) : null}
-									</span>
-									{canEditMenu ? (
-										<Form method="post" className="inline">
-											<input
-												type="hidden"
-												name="intent"
-												value="delete-option"
-											/>
-											<input type="hidden" name="optionId" value={option.id} />
-											<Button
-												type="submit"
-												variant="ghost"
-												size="sm"
-												disabled={isSubmitting}
-											>
-												<Trans>Remove</Trans>
-											</Button>
-										</Form>
-									) : null}
-								</li>
-							))}
-						</ul>
-					)}
+									</li>
+								))}
+							</ul>
+						</>
+					) : null}
 					{canEditMenu ? (
 						<Form method="post" className="mt-4 flex flex-wrap items-end gap-2">
 							<input type="hidden" name="intent" value="create-option" />

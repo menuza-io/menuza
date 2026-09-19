@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/macro'
+import { Button } from '@repo/ui/button'
 import { Link, useLoaderData } from 'react-router'
 
 import { listModifierGroupsForLocation } from '#app/utils/menu-catalog.server.ts'
@@ -22,7 +23,8 @@ export async function loader(
 }
 
 export default function ModifierGroupsListPage() {
-	const { organization, groups, catalogReady } = useLoaderData<typeof loader>()
+	const { organization, groups, catalogReady, canEditMenu } =
+		useLoaderData<typeof loader>()
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -37,10 +39,21 @@ export default function ModifierGroupsListPage() {
 
 	return (
 		<div className="flex flex-col gap-4">
+			{canEditMenu ? (
+				<div className="flex justify-end">
+					<Button
+						render={
+							<Link to={`/${organization.slug}/menu/modifier-groups/new`} />
+						}
+					>
+						<Trans>New modifier group</Trans>
+					</Button>
+				</div>
+			) : null}
 			<p className="text-muted-foreground text-sm">
 				<Trans>
-					Modifier groups are attached to items. Create a group from an item
-					detail page, then add options here.
+					Reusable modifier groups for this location. Add options on each group,
+					then attach groups to items.
 				</Trans>
 			</p>
 			{groups.length === 0 ? (
@@ -62,7 +75,9 @@ export default function ModifierGroupsListPage() {
 									{group.name}
 								</Link>
 								<p className="text-muted-foreground text-sm">
-									<Trans>On item:</Trans> {group.itemName}
+									{group.attachedItems.length
+										? group.attachedItems.map((i) => i.name).join(', ')
+										: '—'}
 								</p>
 							</div>
 							<span className="text-muted-foreground text-sm">

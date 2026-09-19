@@ -25,11 +25,13 @@ import {
 import { z } from 'zod'
 
 import {
+	attachModifierSetToItem,
 	createModifierGroup,
 	deleteMenuItem,
-	deleteModifierGroup,
+	detachModifierSetFromItem,
 	getMenuItem,
 	listCategoriesForLocation,
+	listModifierSetsForLocation,
 	menuItemSchema,
 	menuModifierGroupSchema,
 	updateMenuItem,
@@ -50,27 +52,30 @@ const ItemActionSchema = z.object({
 		'update-item',
 		'delete-item',
 		'create-modifier-group',
-		'delete-modifier-group',
+		'detach-modifier-set',
+		'attach-modifier-set',
 	]),
+	groupId: z.string().optional(),
+	modifierSetId: z.string().optional(),
 	name: z.string().optional(),
 	categoryId: z.string().optional(),
 	description: z.string().optional(),
 	priceDollars: z.coerce.number().optional(),
 	groupName: z.string().optional(),
-	groupId: z.string().optional(),
 })
 
 export async function loader(args: LoaderFunctionArgs) {
 	const { params } = args
 	const ctx = await loadMenuOperatorContextFromArgs(args)
 	if (!ctx.catalogReady || !ctx.menuLocationId) {
-		return { ...ctx, item: null, categories: [] }
+		return { ...ctx, item: null, categories: [], allModifierSets: [] }
 	}
-	const [item, categories] = await Promise.all([
+	const [item, categories, allModifierSets] = await Promise.all([
 		getMenuItem(ctx.organization.id, ctx.menuLocationId, params.itemId!),
 		listCategoriesForLocation(ctx.organization.id, ctx.menuLocationId),
+		listModifierSetsForLocation(ctx.organization.id, ctx.menuLocationId),
 	])
-	return { ...ctx, item, categories }
+	return { ...ctx, item, categories, allModifierSets }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -134,10 +139,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			const group = await createModifierGroup(
 				organization.id,
 				ctx.menuLocationId,
-				menuModifierGroupSchema.parse({
+				{
 					menuItemId: params.itemId!,
-					name: submission.value.groupName,
-				}),
+					name: submission.value.groupName ?? '',
+				},
 			)
 			return redirectWithToast(
 				`/${organization.slug}/menu/modifier-groups/${group!.id}`,
@@ -148,15 +153,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				},
 			)
 		}
-		case 'delete-modifier-group': {
-			await deleteModifierGroup(
+		case 'detach-modifier-set': {
+			await detachModifierSetFromItem(
 				organization.id,
 				ctx.menuLocationId,
-				submission.value.groupId!,
+				params.itemId!,
+				submission.value.modifierSetId!,
 			)
 			return redirectWithToast(itemUrl, {
 				type: 'success',
-				title: 'Modifier group removed',
+				title: 'Modifier group detached',
+				description: '',
+			})
+		}
+		case 'attach-modifier-set': {
+			await attachModifierSetToItem(
+				organization.id,
+				ctx.menuLocationId,
+				params.itemId!,
+				submission.value.modifierSetId!,
+			)
+			return redirectWithToast(itemUrl, {
+				type: 'success',
+				title: 'Modifier group attached',
 				description: '',
 			})
 		}
@@ -164,8 +183,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function MenuItemDetailPage() {
-	const { organization, item, categories, catalogReady, canEditMenu } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		item,
+		categories,
+		allModifierSets,
+		catalogReady,
+		canEditMenu,
+	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
 	const [categoryId, setCategoryId] = useState(item?.categoryId ?? '')
@@ -283,13 +308,13 @@ export default function MenuItemDetailPage() {
 					title="Modifier groups"
 					description="Choices diners make when ordering this item."
 				>
-					{item.modifierGroups.length === 0 ? (
+					{item.modifierSets.length === 0 ? (
 						<p className="text-muted-foreground text-sm">
 							<Trans>No modifier groups yet.</Trans>
 						</p>
 					) : (
 						<ul className="divide-y text-sm">
-							{item.modifierGroups.map((group) => (
+							{item.modifierSets.map((group) => (
 								<li
 									key={group.id}
 									className="flex items-center justify-between gap-4 py-3"
@@ -308,9 +333,13 @@ export default function MenuItemDetailPage() {
 											<input
 												type="hidden"
 												name="intent"
-												value="delete-modifier-group"
+												value="detach-modifier-set"
 											/>
-											<input type="hidden" name="groupId" value={group.id} />
+											<input
+												type="hidden"
+												name="modifierSetId"
+												value={group.id}
+											/>
 											<Button
 												type="submit"
 												variant="ghost"
@@ -326,22 +355,59 @@ export default function MenuItemDetailPage() {
 						</ul>
 					)}
 					{canEditMenu ? (
-						<Form method="post" className="mt-4 flex flex-wrap items-end gap-2">
-							<input
-								type="hidden"
-								name="intent"
-								value="create-modifier-group"
-							/>
-							<div className="min-w-[12rem] flex-1 space-y-1">
-								<Label htmlFor="group-name">
-									<Trans>New modifier group</Trans>
-								</Label>
-								<Input id="group-name" name="groupName" required />
-							</div>
-							<Button type="submit" disabled={isSubmitting}>
-								<Trans>Add group</Trans>
-							</Button>
-						</Form>
+						<div className="mt-4 flex flex-col gap-4">
+							<Form method="post" className="flex flex-wrap items-end gap-2">
+								<input
+									type="hidden"
+									name="intent"
+									value="attach-modifier-set"
+								/>
+								<div className="min-w-[12rem] flex-1 space-y-1">
+									<Label htmlFor="attach-set">
+										<Trans>Attach existing group</Trans>
+									</Label>
+									<select
+										id="attach-set"
+										name="modifierSetId"
+										required
+										className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+									>
+										<option value="">
+											<Trans>Select group</Trans>
+										</option>
+										{allModifierSets
+											.filter(
+												(set) =>
+													!item.modifierSets.some((g) => g.id === set.id),
+											)
+											.map((set) => (
+												<option key={set.id} value={set.id}>
+													{set.name}
+												</option>
+											))}
+									</select>
+								</div>
+								<Button type="submit" disabled={isSubmitting}>
+									<Trans>Attach</Trans>
+								</Button>
+							</Form>
+							<Form method="post" className="flex flex-wrap items-end gap-2">
+								<input
+									type="hidden"
+									name="intent"
+									value="create-modifier-group"
+								/>
+								<div className="min-w-[12rem] flex-1 space-y-1">
+									<Label htmlFor="group-name">
+										<Trans>Create new group</Trans>
+									</Label>
+									<Input id="group-name" name="groupName" required />
+								</div>
+								<Button type="submit" disabled={isSubmitting}>
+									<Trans>Create &amp; attach</Trans>
+								</Button>
+							</Form>
+						</div>
 					) : null}
 				</AnnotatedSection>
 			</AnnotatedLayout>

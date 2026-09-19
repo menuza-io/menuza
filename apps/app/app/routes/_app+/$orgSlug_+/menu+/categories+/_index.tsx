@@ -42,6 +42,7 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuReorderList } from '../components/menu-reorder-list.tsx'
 
 const CategoryActionSchema = z.object({
 	intent: z.enum(['create', 'update', 'delete', 'toggle-active']),
@@ -184,6 +185,26 @@ export default function MenuCategoriesPage() {
 						<Trans>Add</Trans>
 					</Button>
 				</Form>
+			) : null}
+
+			{categories.length > 0 ? (
+				<section className="space-y-2">
+					<h3 className="text-sm font-medium">
+						<Trans>Category order</Trans>
+					</h3>
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							Drag to set display order (applies to your default menu and new
+							menus).
+						</Trans>
+					</p>
+					<MenuReorderList
+						rows={categories.map((c) => ({ id: c.id, label: c.name }))}
+						reorderAction={`/${organization.slug}/menu/reorder`}
+						reorderIntent="reorder-categories"
+						disabled={!canEditMenu || isSubmitting}
+					/>
+				</section>
 			) : null}
 
 			<Table>

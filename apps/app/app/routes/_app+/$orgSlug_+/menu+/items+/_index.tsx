@@ -37,6 +37,7 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuReorderList } from '../components/menu-reorder-list.tsx'
 
 const ItemActionSchema = z.object({
 	intent: z.enum(['toggle-active']),
@@ -116,8 +117,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function MenuItemsListPage() {
-	const { organization, items, categoryNameById, catalogReady, canEditMenu } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		items,
+		categories,
+		categoryNameById,
+		catalogReady,
+		canEditMenu,
+	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
 
@@ -141,6 +148,37 @@ export default function MenuItemsListPage() {
 						<Trans>Add item</Trans>
 					</Button>
 				</div>
+			) : null}
+
+			{categories.length > 0 && items.length > 0 ? (
+				<section className="space-y-6">
+					<h3 className="text-sm font-medium">
+						<Trans>Item order within category</Trans>
+					</h3>
+					{categories.map((category) => {
+						const categoryItems = items
+							.filter((item) => item.categoryId === category.id)
+							.sort((a, b) => a.sortOrder - b.sortOrder)
+						if (!categoryItems.length) return null
+						return (
+							<div key={category.id} className="space-y-2">
+								<p className="text-muted-foreground text-sm font-medium">
+									{category.name}
+								</p>
+								<MenuReorderList
+									rows={categoryItems.map((item) => ({
+										id: item.id,
+										label: item.name,
+									}))}
+									reorderAction={`/${organization.slug}/menu/reorder`}
+									reorderIntent="reorder-items"
+									extraFields={{ categoryId: category.id }}
+									disabled={!canEditMenu || isSubmitting}
+								/>
+							</div>
+						)
+					})}
+				</section>
 			) : null}
 
 			<Table>
