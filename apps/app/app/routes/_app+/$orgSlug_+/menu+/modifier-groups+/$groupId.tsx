@@ -1,6 +1,11 @@
 import { parseWithZod } from '@conform-to/zod'
 import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import {
+	parseLocalizedString,
+	pickLocalized,
+	serializeLocalizedString,
+} from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Badge } from '@repo/ui/badge'
@@ -14,6 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -45,6 +51,12 @@ import { requireUserWithOrganizationPermission } from '#app/utils/organization/p
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import { MenuReorderList } from '../components/menu-reorder-list.tsx'
+import {
+	MenuEditorCard,
+	MenuEditorSidebarCard,
+	MenuLocalizedInput,
+	MenuResourceEditorPage,
+} from '../components/menu-resource-editor.tsx'
 
 const GroupActionSchema = z.object({
 	intent: z.enum([
@@ -55,6 +67,7 @@ const GroupActionSchema = z.object({
 		'delete-option',
 	]),
 	name: z.string().optional(),
+	nameI18n: z.string().optional(),
 	minSelections: z.coerce.number().optional(),
 	maxSelections: z.coerce.number().optional(),
 	required: z.coerce.boolean().optional(),
@@ -126,7 +139,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				ctx.menuLocationId,
 				params.groupId!,
 				menuModifierSetSchema.parse({
-					name: submission.value.name,
+					name: pickLocalized(
+						submission.value.nameI18n ?? submission.value.name,
+						ctx.localesConfig.defaultLocale,
+						ctx.localesConfig.defaultLocale,
+					),
+					nameI18n: serializeLocalizedString(
+						parseLocalizedString(
+							submission.value.nameI18n ?? submission.value.name,
+							ctx.localesConfig.defaultLocale,
+						),
+					),
 					minSelections: displayType === 'single-select' ? 1 : minSelections,
 					maxSelections:
 						displayType === 'single-select'
@@ -209,10 +232,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ModifierGroupDetailPage() {
-	const { organization, group, catalogReady, canEditMenu } =
+	const { organization, group, catalogReady, canEditMenu, localesConfig } =
 		useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const [nameI18n, setNameI18n] = useState(group?.nameI18n ?? group?.name ?? '')
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -232,352 +256,371 @@ export default function ModifierGroupDetailPage() {
 			</p>
 		)
 	}
-
 	return (
-		<div className="flex flex-col gap-8">
-			<AnnotatedLayout>
-				<AnnotatedSection
-					title={<Trans>Set rules</Trans>}
-					description={<Trans>How many options diners can pick.</Trans>}
-				>
-					{group.attachedItems.length ? (
-						<p className="text-muted-foreground mb-4 text-sm">
-							<Trans>Attached to:</Trans>{' '}
-							{group.attachedItems.map((item) => (
-								<Link
-									key={item.id}
-									to={`/${organization.slug}/menu/items/${item.id}`}
-									className="text-foreground hover:underline"
-								>
-									{item.name}
-								</Link>
-							))}
-						</p>
-					) : (
-						<p className="text-muted-foreground mb-4 text-sm">
-							<Trans>
-								Not attached to any items yet. Open an item and attach this
-								group.
-							</Trans>
-						</p>
-					)}
-					{canEditMenu ? (
-						<Form method="post" className="flex max-w-2xl flex-col gap-4">
-							<input type="hidden" name="intent" value="update-group" />
-							<div className="space-y-1">
-								<Label htmlFor="group-name">
-									<Trans>Display name</Trans>
-								</Label>
-								<Input
-									id="group-name"
+		<MenuResourceEditorPage
+			title={<Trans>Edit modifier set</Trans>}
+			description={
+				<Trans>
+					Define how guests choose options and manage the options in this set.
+				</Trans>
+			}
+			localesConfig={localesConfig}
+			backHref={`/${organization.slug}/menu/modifier-groups`}
+			sidebar={
+				canEditMenu ? (
+					<MenuEditorSidebarCard title={<Trans>Danger zone</Trans>}>
+						<Form method="post">
+							<input type="hidden" name="intent" value="delete-group" />
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isSubmitting}
+							>
+								<Trans>Delete modifier set</Trans>
+							</Button>
+						</Form>
+					</MenuEditorSidebarCard>
+				) : null
+			}
+		>
+			<MenuEditorCard title={<Trans>Modifier set editor</Trans>}>
+				<AnnotatedLayout>
+					<AnnotatedSection
+						title={<Trans>Set rules</Trans>}
+						description={<Trans>How many options diners can pick.</Trans>}
+					>
+						{group.attachedItems.length ? (
+							<p className="text-muted-foreground mb-4 text-sm">
+								<Trans>Attached to:</Trans>{' '}
+								{group.attachedItems.map((item) => (
+									<Link
+										key={item.id}
+										to={`/${organization.slug}/menu/items/${item.id}`}
+										className="text-foreground hover:underline"
+									>
+										{item.name}
+									</Link>
+								))}
+							</p>
+						) : (
+							<p className="text-muted-foreground mb-4 text-sm">
+								<Trans>
+									Not attached to any items yet. Open an item and attach this
+									group.
+								</Trans>
+							</p>
+						)}
+						{canEditMenu ? (
+							<Form method="post" className="flex max-w-2xl flex-col gap-4">
+								<input type="hidden" name="intent" value="update-group" />
+								<MenuLocalizedInput
+									label={<Trans>Display name</Trans>}
 									name="name"
-									defaultValue={group.name}
+									value={nameI18n}
+									onChange={setNameI18n}
 									required
 								/>
-							</div>
-							<div className="space-y-1">
-								<Label htmlFor="display-type">
-									<Trans>Selection type</Trans>
-								</Label>
-								<Select
-									name="displayType"
-									defaultValue={group.displayType ?? 'single-select'}
-								>
-									<SelectTrigger id="display-type" className="w-full">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="single-select">
-											<Trans>Single select</Trans>
-										</SelectItem>
-										<SelectItem value="multi-select">
-											<Trans>Multi select</Trans>
-										</SelectItem>
-										<SelectItem value="quantity-select">
-											<Trans>Quantity select</Trans>
-										</SelectItem>
-										<SelectItem value="pizza-topping">
-											<Trans>Pizza topping</Trans>
-										</SelectItem>
-									</SelectContent>
-								</Select>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Controls whether guests choose one, many, quantities, or
-										toppings.
-									</Trans>
-								</p>
-							</div>
-							<div className="grid gap-4 sm:grid-cols-2">
 								<div className="space-y-1">
-									<Label htmlFor="min-sel">
-										<Trans>Min selections</Trans>
+									<Label htmlFor="display-type">
+										<Trans>Selection type</Trans>
 									</Label>
-									<Input
-										id="min-sel"
-										name="minSelections"
-										type="number"
-										min={0}
-										defaultValue={group.minSelections}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label htmlFor="max-sel">
-										<Trans>Max selections</Trans>
-									</Label>
-									<Input
-										id="max-sel"
-										name="maxSelections"
-										type="number"
-										min={1}
-										defaultValue={group.maxSelections}
-									/>
-								</div>
-							</div>
-							<label className="flex items-center gap-2 text-sm">
-								<input
-									type="checkbox"
-									name="required"
-									value="true"
-									defaultChecked={group.required}
-								/>
-								<Trans>Required group</Trans>
-							</label>
-							<div className="space-y-2">
-								<div>
-									<p className="text-sm font-medium">
-										<Trans>Preselected options</Trans>
-									</p>
+									<Select
+										name="displayType"
+										defaultValue={group.displayType ?? 'single-select'}
+									>
+										<SelectTrigger id="display-type" className="w-full">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="single-select">
+												<Trans>Single select</Trans>
+											</SelectItem>
+											<SelectItem value="multi-select">
+												<Trans>Multi select</Trans>
+											</SelectItem>
+											<SelectItem value="quantity-select">
+												<Trans>Quantity select</Trans>
+											</SelectItem>
+											<SelectItem value="pizza-topping">
+												<Trans>Pizza topping</Trans>
+											</SelectItem>
+										</SelectContent>
+									</Select>
 									<p className="text-muted-foreground text-xs">
 										<Trans>
-											These options are selected for guests by default.
+											Controls whether guests choose one, many, quantities, or
+											toppings.
 										</Trans>
 									</p>
 								</div>
-								<div className="grid gap-2 sm:grid-cols-2">
-									{group.options.map((option) => (
-										<label
-											key={option.id}
-											className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-										>
-											<input
-												type="checkbox"
-												name="preselectedOptionIds"
-												value={option.id}
-												defaultChecked={group.preselectedOptionIds.includes(
-													option.id,
-												)}
-											/>
-											<span className="flex-1">{option.name}</span>
-											{option.priceCents > 0 ? (
-												<span className="text-muted-foreground text-xs">
-													+${(option.priceCents / 100).toFixed(2)}
-												</span>
-											) : null}
-										</label>
-									))}
+								<div className="grid gap-4 sm:grid-cols-2">
+									<div className="space-y-1">
+										<Label htmlFor="min-sel">
+											<Trans>Min selections</Trans>
+										</Label>
+										<Input
+											id="min-sel"
+											name="minSelections"
+											type="number"
+											min={0}
+											defaultValue={group.minSelections}
+										/>
+									</div>
+									<div className="space-y-1">
+										<Label htmlFor="max-sel">
+											<Trans>Max selections</Trans>
+										</Label>
+										<Input
+											id="max-sel"
+											name="maxSelections"
+											type="number"
+											min={1}
+											defaultValue={group.maxSelections}
+										/>
+									</div>
 								</div>
-							</div>
-							<Button type="submit" disabled={isSubmitting}>
-								<Trans>Save group</Trans>
-							</Button>
-						</Form>
-					) : (
-						<p className="font-medium">{group.name}</p>
-					)}
-				</AnnotatedSection>
-
-				<AnnotatedSection
-					title={<Trans>Options</Trans>}
-					description={<Trans>Choices and price adjustments.</Trans>}
-				>
-					{group.options.length === 0 ? (
-						<p className="text-muted-foreground text-sm">
-							<Trans>No options yet.</Trans>
-						</p>
-					) : null}
-					{group.options.length > 0 ? (
-						<>
-							<div className="mb-4">
-								<div className="mb-2 flex items-center justify-between gap-2">
-									<p className="text-sm font-medium">
-										<Trans>Guest preview</Trans>
-									</p>
-									<Badge variant="outline">
-										{group.displayType ?? 'single-select'}
-									</Badge>
-								</div>
-								<div className="rounded-lg border">
-									{group.options.map((option) => (
-										<div
-											key={option.id}
-											className="flex items-center gap-3 border-b px-3 py-2 text-sm last:border-b-0"
-										>
-											<span
-												className={
-													group.displayType === 'single-select'
-														? 'size-4 rounded-full border'
-														: 'size-4 rounded-sm border'
-												}
-											/>
-											<span className="flex-1">{option.name}</span>
-											{option.priceCents > 0 ? (
-												<span className="text-muted-foreground text-xs">
-													+${(option.priceCents / 100).toFixed(2)}
-												</span>
-											) : null}
-										</div>
-									))}
-								</div>
-							</div>
-							<MenuReorderList
-								rows={group.options.map((option) => ({
-									id: option.id,
-									label:
-										option.priceCents > 0
-											? `${option.name} (+$${(option.priceCents / 100).toFixed(2)})`
-											: option.name,
-								}))}
-								reorderAction={`/${organization.slug}/menu/reorder`}
-								reorderIntent="reorder-modifier-options"
-								extraFields={{ modifierSetId: group.id }}
-								disabled={!canEditMenu || isSubmitting}
-							/>
-							<ul className="mt-4 divide-y text-sm">
-								{group.options.map((option) => (
-									<li key={option.id} className="flex flex-col gap-3 py-3">
-										{canEditMenu ? (
-											<Form method="post" className="grid gap-2 sm:grid-cols-6">
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										name="required"
+										value="true"
+										defaultChecked={group.required}
+									/>
+									<Trans>Required group</Trans>
+								</label>
+								<div className="space-y-2">
+									<div>
+										<p className="text-sm font-medium">
+											<Trans>Preselected options</Trans>
+										</p>
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												These options are selected for guests by default.
+											</Trans>
+										</p>
+									</div>
+									<div className="grid gap-2 sm:grid-cols-2">
+										{group.options.map((option) => (
+											<label
+												key={option.id}
+												className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+											>
 												<input
-													type="hidden"
-													name="intent"
-													value="update-option"
-												/>
-												<input
-													type="hidden"
-													name="optionId"
+													type="checkbox"
+													name="preselectedOptionIds"
 													value={option.id}
+													defaultChecked={group.preselectedOptionIds.includes(
+														option.id,
+													)}
 												/>
-												<Input
-													name="optionName"
-													defaultValue={option.name}
-													className="sm:col-span-2"
-													aria-label="Option name"
-												/>
-												<Input
-													name="optionDescription"
-													defaultValue={option.description ?? ''}
-													placeholder="Description"
-													className="sm:col-span-2"
-													aria-label="Option description"
-												/>
-												<Input
-													name="priceDollars"
-													type="number"
-													min={0}
-													step="0.01"
-													defaultValue={(option.priceCents / 100).toFixed(2)}
-													aria-label="Option price"
-												/>
-												<label className="flex items-center gap-2 text-xs">
-													<input
-														type="checkbox"
-														name="active"
-														defaultChecked={option.active}
-													/>
-													<Trans>Active</Trans>
-												</label>
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={isSubmitting}
-												>
-													<Trans>Save</Trans>
-												</Button>
-											</Form>
-										) : (
-											<span>
-												{option.name}
+												<span className="flex-1">{option.name}</span>
 												{option.priceCents > 0 ? (
-													<span className="text-muted-foreground">
-														{' '}
-														(+${(option.priceCents / 100).toFixed(2)})
+													<span className="text-muted-foreground text-xs">
+														+${(option.priceCents / 100).toFixed(2)}
 													</span>
 												) : null}
-											</span>
-										)}
-										{canEditMenu ? (
-											<Form method="post" className="self-end">
-												<input
-													type="hidden"
-													name="intent"
-													value="delete-option"
-												/>
-												<input
-													type="hidden"
-													name="optionId"
-													value={option.id}
-												/>
-												<Button
-													type="submit"
-													variant="ghost"
-													size="sm"
-													disabled={isSubmitting}
-												>
-													<Trans>Remove</Trans>
-												</Button>
-											</Form>
-										) : null}
-									</li>
-								))}
-							</ul>
-						</>
-					) : null}
-					{canEditMenu ? (
-						<Form method="post" className="mt-4 flex flex-wrap items-end gap-2">
-							<input type="hidden" name="intent" value="create-option" />
-							<div className="min-w-[10rem] flex-1 space-y-1">
-								<Label htmlFor="option-name">
-									<Trans>Option name</Trans>
-								</Label>
-								<Input id="option-name" name="optionName" required />
-							</div>
-							<div className="min-w-[12rem] flex-1 space-y-1">
-								<Label htmlFor="option-description">
-									<Trans>Description</Trans>
-								</Label>
-								<Input id="option-description" name="optionDescription" />
-							</div>
-							<div className="w-28 space-y-1">
-								<Label htmlFor="option-price">
-									<Trans>+$ (USD)</Trans>
-								</Label>
-								<Input
-									id="option-price"
-									name="priceDollars"
-									type="number"
-									min={0}
-									step="0.01"
-									defaultValue={0}
-								/>
-							</div>
-							<Button type="submit" disabled={isSubmitting}>
-								<Trans>Add option</Trans>
-							</Button>
-						</Form>
-					) : null}
-				</AnnotatedSection>
-			</AnnotatedLayout>
+											</label>
+										))}
+									</div>
+								</div>
+								<Button type="submit" disabled={isSubmitting}>
+									<Trans>Save group</Trans>
+								</Button>
+							</Form>
+						) : (
+							<p className="font-medium">{group.name}</p>
+						)}
+					</AnnotatedSection>
 
-			{canEditMenu ? (
-				<Form method="post">
-					<input type="hidden" name="intent" value="delete-group" />
-					<Button type="submit" variant="destructive" disabled={isSubmitting}>
-						<Trans>Delete modifier group</Trans>
-					</Button>
-				</Form>
-			) : null}
-		</div>
+					<AnnotatedSection
+						title={<Trans>Options</Trans>}
+						description={<Trans>Choices and price adjustments.</Trans>}
+					>
+						{group.options.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								<Trans>No options yet.</Trans>
+							</p>
+						) : null}
+						{group.options.length > 0 ? (
+							<>
+								<div className="mb-4">
+									<div className="mb-2 flex items-center justify-between gap-2">
+										<p className="text-sm font-medium">
+											<Trans>Guest preview</Trans>
+										</p>
+										<Badge variant="outline">
+											{group.displayType ?? 'single-select'}
+										</Badge>
+									</div>
+									<div className="rounded-lg border">
+										{group.options.map((option) => (
+											<div
+												key={option.id}
+												className="flex items-center gap-3 border-b px-3 py-2 text-sm last:border-b-0"
+											>
+												<span
+													className={
+														group.displayType === 'single-select'
+															? 'size-4 rounded-full border'
+															: 'size-4 rounded-sm border'
+													}
+												/>
+												<span className="flex-1">{option.name}</span>
+												{option.priceCents > 0 ? (
+													<span className="text-muted-foreground text-xs">
+														+${(option.priceCents / 100).toFixed(2)}
+													</span>
+												) : null}
+											</div>
+										))}
+									</div>
+								</div>
+								<MenuReorderList
+									rows={group.options.map((option) => ({
+										id: option.id,
+										label:
+											option.priceCents > 0
+												? `${option.name} (+$${(option.priceCents / 100).toFixed(2)})`
+												: option.name,
+									}))}
+									reorderAction={`/${organization.slug}/menu/reorder`}
+									reorderIntent="reorder-modifier-options"
+									extraFields={{ modifierSetId: group.id }}
+									disabled={!canEditMenu || isSubmitting}
+								/>
+								<ul className="mt-4 divide-y text-sm">
+									{group.options.map((option) => (
+										<li key={option.id} className="flex flex-col gap-3 py-3">
+											{canEditMenu ? (
+												<Form
+													method="post"
+													className="grid gap-2 sm:grid-cols-6"
+												>
+													<input
+														type="hidden"
+														name="intent"
+														value="update-option"
+													/>
+													<input
+														type="hidden"
+														name="optionId"
+														value={option.id}
+													/>
+													<Input
+														name="optionName"
+														defaultValue={option.name}
+														className="sm:col-span-2"
+														aria-label="Option name"
+													/>
+													<Input
+														name="optionDescription"
+														defaultValue={option.description ?? ''}
+														placeholder="Description"
+														className="sm:col-span-2"
+														aria-label="Option description"
+													/>
+													<Input
+														name="priceDollars"
+														type="number"
+														min={0}
+														step="0.01"
+														defaultValue={(option.priceCents / 100).toFixed(2)}
+														aria-label="Option price"
+													/>
+													<label className="flex items-center gap-2 text-xs">
+														<input
+															type="checkbox"
+															name="active"
+															defaultChecked={option.active}
+														/>
+														<Trans>Active</Trans>
+													</label>
+													<Button
+														type="submit"
+														variant="outline"
+														size="sm"
+														disabled={isSubmitting}
+													>
+														<Trans>Save</Trans>
+													</Button>
+												</Form>
+											) : (
+												<span>
+													{option.name}
+													{option.priceCents > 0 ? (
+														<span className="text-muted-foreground">
+															{' '}
+															(+${(option.priceCents / 100).toFixed(2)})
+														</span>
+													) : null}
+												</span>
+											)}
+											{canEditMenu ? (
+												<Form method="post" className="self-end">
+													<input
+														type="hidden"
+														name="intent"
+														value="delete-option"
+													/>
+													<input
+														type="hidden"
+														name="optionId"
+														value={option.id}
+													/>
+													<Button
+														type="submit"
+														variant="ghost"
+														size="sm"
+														disabled={isSubmitting}
+													>
+														<Trans>Remove</Trans>
+													</Button>
+												</Form>
+											) : null}
+										</li>
+									))}
+								</ul>
+							</>
+						) : null}
+						{canEditMenu ? (
+							<Form
+								method="post"
+								className="mt-4 flex flex-wrap items-end gap-2"
+							>
+								<input type="hidden" name="intent" value="create-option" />
+								<div className="min-w-[10rem] flex-1 space-y-1">
+									<Label htmlFor="option-name">
+										<Trans>Option name</Trans>
+									</Label>
+									<Input id="option-name" name="optionName" required />
+								</div>
+								<div className="min-w-[12rem] flex-1 space-y-1">
+									<Label htmlFor="option-description">
+										<Trans>Description</Trans>
+									</Label>
+									<Input id="option-description" name="optionDescription" />
+								</div>
+								<div className="w-28 space-y-1">
+									<Label htmlFor="option-price">
+										<Trans>+$ (USD)</Trans>
+									</Label>
+									<Input
+										id="option-price"
+										name="priceDollars"
+										type="number"
+										min={0}
+										step="0.01"
+										defaultValue={0}
+									/>
+								</div>
+								<Button type="submit" disabled={isSubmitting}>
+									<Trans>Add option</Trans>
+								</Button>
+							</Form>
+						) : null}
+					</AnnotatedSection>
+				</AnnotatedLayout>
+			</MenuEditorCard>
+		</MenuResourceEditorPage>
 	)
 }

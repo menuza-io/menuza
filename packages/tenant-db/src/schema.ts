@@ -500,6 +500,8 @@ export const menus = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		menuType: text('menu_type', {
 			enum: ['olo', 'catering', 'dine-in'],
 		})
@@ -552,6 +554,8 @@ export const menuCategories = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		imageUrl: text('image_url'),
 		upsellCategoryIds: text('upsell_category_ids', { mode: 'json' })
 			.$type<string[]>()
@@ -584,6 +588,8 @@ export const menuItems = sqliteTable(
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		priceCents: integer('price_cents').notNull(),
 		imageUrl: text('image_url'),
 		points: integer('points'),
@@ -630,6 +636,7 @@ export const menuModifierSets = sqliteTable(
 			.$defaultFn(() => randomUUID()),
 		locationId: text('location_id').notNull(),
 		name: text('name').notNull(),
+		nameI18n: text('name_i18n'),
 		displayType: text('display_type', {
 			enum: [
 				'single-select',
@@ -681,6 +688,8 @@ export const menuModifierOptions = sqliteTable(
 			.references(() => menuModifierSets.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
 		description: text('description'),
+		nameI18n: text('name_i18n'),
+		descriptionI18n: text('description_i18n'),
 		priceCents: integer('price_cents').notNull().default(0),
 		active: integer('active', { mode: 'boolean' }).notNull().default(true),
 		sortOrder: integer('sort_order').notNull().default(0),

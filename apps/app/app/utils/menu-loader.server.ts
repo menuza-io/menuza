@@ -1,4 +1,5 @@
 import { getUserId } from '@repo/auth'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { type LoaderFunctionArgs } from 'react-router'
 
 import { resolveMenuLocationId } from '#app/utils/menu-location.server.ts'
@@ -20,6 +21,8 @@ export async function loadMenuOperatorContext(
 		id: true,
 		name: true,
 		slug: true,
+		siteLocales: true,
+		siteDefaultLocale: true,
 		hasProvisionedDb: true,
 		dataRegion: true,
 	})
@@ -54,6 +57,10 @@ export async function loadMenuOperatorContext(
 
 	return {
 		organization,
+		localesConfig: parseSiteLocalesConfig(
+			organization.siteLocales,
+			organization.siteDefaultLocale,
+		),
 		menuLocationId,
 		operatorContext,
 		selectedBranchId,

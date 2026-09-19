@@ -2,8 +2,12 @@ import { parseWithZod } from '@conform-to/zod'
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
+import {
+	parseLocalizedString,
+	pickLocalized,
+	serializeLocalizedString,
+} from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
-import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -14,7 +18,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { Textarea } from '@repo/ui/textarea'
 import { useState } from 'react'
 import {
 	type ActionFunctionArgs,
@@ -40,11 +43,19 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import {
+	MenuEditorCard,
+	MenuLocalizedInput,
+	MenuLocalizedTextarea,
+	MenuResourceEditorPage,
+} from '../components/menu-resource-editor.tsx'
 
 const CreateItemSchema = z.object({
 	name: z.string().trim().min(1),
+	nameI18n: z.string().optional(),
 	categoryId: z.string().min(1),
 	description: z.string().optional(),
+	descriptionI18n: z.string().optional(),
 	priceDollars: z.coerce.number().min(0),
 	points: z.coerce.number().int().min(0).optional(),
 	imageUrl: z.string().optional(),
@@ -122,9 +133,30 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		organization.id,
 		ctx.menuLocationId,
 		menuItemSchema.parse({
-			name: submission.value.name,
+			name: pickLocalized(
+				submission.value.nameI18n ?? submission.value.name,
+				ctx.localesConfig.defaultLocale,
+				ctx.localesConfig.defaultLocale,
+			),
+			nameI18n: serializeLocalizedString(
+				parseLocalizedString(
+					submission.value.nameI18n ?? submission.value.name,
+					ctx.localesConfig.defaultLocale,
+				),
+			),
 			categoryId: submission.value.categoryId,
-			description: submission.value.description || null,
+			description:
+				pickLocalized(
+					submission.value.descriptionI18n ?? submission.value.description,
+					ctx.localesConfig.defaultLocale,
+					ctx.localesConfig.defaultLocale,
+				) || null,
+			descriptionI18n: serializeLocalizedString(
+				parseLocalizedString(
+					submission.value.descriptionI18n ?? submission.value.description,
+					ctx.localesConfig.defaultLocale,
+				),
+			),
 			priceCents,
 			imageUrl: submission.value.imageUrl || null,
 			points: submission.value.points ?? null,
@@ -148,12 +180,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function NewMenuItemPage() {
-	const { organization, categories, catalogReady } =
+	const { organization, categories, catalogReady, localesConfig } =
 		useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
 	const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
+	const [nameI18n, setNameI18n] = useState('')
+	const [descriptionI18n, setDescriptionI18n] = useState('')
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -167,8 +201,13 @@ export default function NewMenuItemPage() {
 	}
 
 	return (
-		<AnnotatedLayout>
-			<AnnotatedSection
+		<MenuResourceEditorPage
+			title={<Trans>New item</Trans>}
+			description={<Trans>Add a menu item to your catalog.</Trans>}
+			localesConfig={localesConfig}
+			backHref={`/${organization.slug}/menu/items`}
+		>
+			<MenuEditorCard
 				title={<Trans>New item</Trans>}
 				description={<Trans>Add a menu item to your catalog.</Trans>}
 			>
@@ -184,11 +223,14 @@ export default function NewMenuItemPage() {
 					<Form method="post" className="flex max-w-2xl flex-col gap-6">
 						<input type="hidden" name="categoryId" value={categoryId} />
 						<div className="grid gap-4 sm:grid-cols-2">
-							<div className="space-y-1 sm:col-span-2">
-								<Label htmlFor="item-name">
-									<Trans>Display name</Trans>
-								</Label>
-								<Input id="item-name" name="name" required />
+							<div className="sm:col-span-2">
+								<MenuLocalizedInput
+									label={<Trans>Display name</Trans>}
+									name="name"
+									value={nameI18n}
+									onChange={setNameI18n}
+									required
+								/>
 							</div>
 							<div className="space-y-1">
 								<Label htmlFor="item-category">
@@ -223,11 +265,14 @@ export default function NewMenuItemPage() {
 									required
 								/>
 							</div>
-							<div className="space-y-1 sm:col-span-2">
-								<Label htmlFor="item-description">
-									<Trans>Description</Trans>
-								</Label>
-								<Textarea id="item-description" name="description" rows={4} />
+							<div className="sm:col-span-2">
+								<MenuLocalizedTextarea
+									label={<Trans>Description</Trans>}
+									name="description"
+									value={descriptionI18n}
+									onChange={setDescriptionI18n}
+									rows={4}
+								/>
 							</div>
 							<div className="space-y-1 sm:col-span-2">
 								<Label htmlFor="item-image">
@@ -325,7 +370,7 @@ export default function NewMenuItemPage() {
 						</div>
 					</Form>
 				)}
-			</AnnotatedSection>
-		</AnnotatedLayout>
+			</MenuEditorCard>
+		</MenuResourceEditorPage>
 	)
 }

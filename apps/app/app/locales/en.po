@@ -162,7 +162,7 @@ msgstr ""
 msgid "{notFoundCount} missing URLs logged"
 msgstr "{notFoundCount} missing URLs logged"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:536
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:605
 msgid "{optionCount} options"
 msgstr "{optionCount} options"
 
@@ -250,7 +250,7 @@ msgstr ""
 msgid "+{trend}%"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:554
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:605
 msgid "+$ (USD)"
 msgstr "+$ (USD)"
 
@@ -445,7 +445,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:488
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:536
 msgid "Active"
 msgstr ""
 
@@ -510,7 +510,8 @@ msgstr ""
 msgid "Add a link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:173
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:206
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:212
 msgid "Add a menu item to your catalog."
 msgstr "Add a menu item to your catalog."
 
@@ -583,7 +584,7 @@ msgid "Add images"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:101
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:299
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:340
 msgid "Add item"
 msgstr "Add item"
 
@@ -624,7 +625,7 @@ msgstr ""
 msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:566
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:617
 msgid "Add option"
 msgstr "Add option"
 
@@ -815,8 +816,8 @@ msgstr ""
 msgid "All steps complete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:469
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:301
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:538
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:346
 msgid "Allergens"
 msgstr "Allergens"
 
@@ -982,15 +983,15 @@ msgstr ""
 msgid "Assign responsibilities"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:606
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:675
 msgid "Attach"
 msgstr "Attach"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:582
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:651
 msgid "Attach existing group"
 msgstr "Attach existing group"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:245
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:294
 msgid "Attached to:"
 msgstr "Attached to:"
 
@@ -1091,8 +1092,9 @@ msgstr "Availability"
 msgid "Available"
 msgstr "Available"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:222
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:274
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:197
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:256
 msgid "Available to guests"
 msgstr "Available to guests"
 
@@ -1110,6 +1112,7 @@ msgstr "B&W"
 
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
+#: app/routes/_app+/$orgSlug_+/menu+/components/menu-resource-editor.tsx:63
 msgid "Back"
 msgstr ""
 
@@ -1126,8 +1129,8 @@ msgid "Back to broadcasts"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:260
-msgid "Back to categories"
-msgstr "Back to categories"
+#~ msgid "Back to categories"
+#~ msgstr "Back to categories"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1916
 msgid "Back to details"
@@ -1138,7 +1141,7 @@ msgstr "Back to details"
 msgid "Back to fields"
 msgstr "Back to fields"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:496
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:565
 msgid "Back to items"
 msgstr "Back to items"
 
@@ -1350,8 +1353,8 @@ msgstr ""
 msgid "By deleting your organization you and your team will lose access and all data will be lost. This is a permanent action and cannot be undone."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:378
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:246
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:446
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:291
 msgid "Calories"
 msgstr "Calories"
 
@@ -1393,9 +1396,9 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:360
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-editor-sheet.tsx:48
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:323
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:368
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:118
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:152
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:182
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:917
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
@@ -1447,7 +1450,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:50
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:27
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:29
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:45
 msgid "Catalog not ready"
 msgstr "Catalog not ready"
 
@@ -1464,8 +1467,8 @@ msgid "Categories on this menu"
 msgstr "Categories on this menu"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:229
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:308
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:195
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:379
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:237
 msgid "Category"
 msgstr "Category"
 
@@ -1474,11 +1477,11 @@ msgid "Category added"
 msgstr "Category added"
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:139
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:101
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:114
 msgid "Category deleted"
 msgstr "Category deleted"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:168
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:232
 msgid "Category details"
 msgstr "Category details"
 
@@ -1487,7 +1490,7 @@ msgstr "Category details"
 msgid "Category is required"
 msgstr "Category is required"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:153
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:194
 msgid "Category not found."
 msgstr "Category not found."
 
@@ -1495,7 +1498,7 @@ msgstr "Category not found."
 msgid "Category order"
 msgstr "Category order"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:122
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:156
 msgid "Category saved"
 msgstr "Category saved"
 
@@ -1582,7 +1585,7 @@ msgstr "Checkout processor"
 msgid "Choices"
 msgstr "Choices"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:392
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:437
 msgid "Choices and price adjustments."
 msgstr "Choices and price adjustments."
 
@@ -1595,8 +1598,8 @@ msgid "Choose a page..."
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:86
-msgid "Choose a side"
-msgstr "Choose a side"
+#~ msgid "Choose a side"
+#~ msgstr "Choose a side"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "Choose a starting point"
@@ -1926,8 +1929,8 @@ msgstr ""
 msgid "Contains (Partial Match)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:416
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:268
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:485
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:313
 msgid "Contains alcohol"
 msgstr "Contains alcohol"
 
@@ -1974,7 +1977,7 @@ msgstr ""
 msgid "Contrast"
 msgstr "Contrast"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:170
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:234
 msgid "Control the category name, description, availability, and merchandising."
 msgstr "Control the category name, description, availability, and merchandising."
 
@@ -1982,7 +1985,7 @@ msgstr "Control the category name, description, availability, and merchandising.
 msgid "Control who can access this note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:305
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:350
 msgid "Controls whether guests choose one, many, quantities, or toppings."
 msgstr "Controls whether guests choose one, many, quantities, or toppings."
 
@@ -2050,11 +2053,11 @@ msgstr "Couldn't open {routeTitle}"
 msgid "Create"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:622
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:691
 msgid "Create & attach"
 msgstr "Create & attach"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:177
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:216
 msgid "Create a <0>category</0> first."
 msgstr "Create a <0>category</0> first."
 
@@ -2086,9 +2089,13 @@ msgstr ""
 msgid "Create a plan"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:73
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:107
 msgid "Create a reusable modifier group, then attach it to items and add options on the next screen."
 msgstr "Create a reusable modifier group, then attach it to items and add options on the next screen."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:99
+msgid "Create a reusable set of options for menu items."
+msgstr "Create a reusable set of options for menu items."
 
 #: app/routes/_auth+/login.tsx:368
 #: app/routes/_auth+/onboarding_.$provider.tsx:385
@@ -2165,12 +2172,12 @@ msgstr "Create Custom Role"
 msgid "Create form"
 msgstr "Create form"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:145
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:175
 msgid "Create group"
 msgstr "Create group"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:184
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:317
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:362
 msgid "Create item"
 msgstr "Create item"
 
@@ -2187,7 +2194,7 @@ msgstr "Create menu"
 msgid "Create modifier set"
 msgstr "Create modifier set"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:617
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:686
 msgid "Create new group"
 msgstr "Create new group"
 
@@ -2420,8 +2427,8 @@ msgstr ""
 msgid "Daily Notes Created"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:88
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:69
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:101
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:80
 msgid "Dairy"
 msgstr "Dairy"
 
@@ -2429,6 +2436,12 @@ msgstr "Dairy"
 #: app/components/settings/cards/organization/danger-zone-card.tsx:49
 msgid "Danger"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:214
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:337
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:271
+msgid "Danger zone"
+msgstr "Danger zone"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:777
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3382
@@ -2499,6 +2512,10 @@ msgstr "Default location"
 msgid "Default prep time (minutes)"
 msgstr "Default prep time (minutes)"
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:263
+msgid "Define how guests choose options and manage the options in this set."
+msgstr "Define how guests choose options and manage the options in this set."
+
 #: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Define role details and select what permissions members receive."
 msgstr "Define role details and select what permissions members receive."
@@ -2550,7 +2567,7 @@ msgstr "Delete announcement?"
 msgid "Delete card"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:309
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:222
 msgid "Delete category"
 msgstr "Delete category"
 
@@ -2582,7 +2599,7 @@ msgstr ""
 msgid "Delete invitation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:634
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:345
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3883
 msgid "Delete item"
 msgstr ""
@@ -2596,8 +2613,12 @@ msgid "Delete log entry"
 msgstr "Delete log entry"
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:577
-msgid "Delete modifier group"
-msgstr "Delete modifier group"
+#~ msgid "Delete modifier group"
+#~ msgstr "Delete modifier group"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:279
+msgid "Delete modifier set"
+msgstr "Delete modifier set"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:120
@@ -2670,12 +2691,13 @@ msgstr "Describe this image for accessibility"
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:193
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:342
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:228
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:250
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:413
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:270
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:179
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:94
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:548
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:599
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:231
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:798
@@ -2724,7 +2746,7 @@ msgstr ""
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:404
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:472
 msgid "Dietary and merchandising"
 msgstr "Dietary and merchandising"
 
@@ -2785,13 +2807,13 @@ msgid "Display"
 msgstr "Display"
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:376
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:182
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:297
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:189
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:243
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:370
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:228
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:147
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:67
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:269
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:80
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:317
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:113
 msgid "Display name"
 msgstr "Display name"
 
@@ -2971,6 +2993,10 @@ msgstr ""
 msgid "Edit announcement"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:206
+msgid "Edit category"
+msgstr "Edit category"
+
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:671
 msgid "Edit column"
 msgstr ""
@@ -2993,6 +3019,18 @@ msgstr "Edit design"
 msgid "Edit image"
 msgstr "Edit image"
 
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:327
+msgid "Edit item"
+msgstr "Edit item"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:189
+msgid "Edit modifier"
+msgstr "Edit modifier"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:261
+msgid "Edit modifier set"
+msgstr "Edit modifier set"
+
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Edit note"
 msgstr "Edit note"
@@ -3013,7 +3051,7 @@ msgstr "Edit redirect"
 msgid "Edit role"
 msgstr "Edit role"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:542
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:611
 msgid "Edit set"
 msgstr "Edit set"
 
@@ -3037,8 +3075,8 @@ msgstr "Edit website content"
 msgid "Editor preview"
 msgstr "Editor preview"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:89
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:70
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:102
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:81
 msgid "Eggs"
 msgstr "Eggs"
 
@@ -3214,8 +3252,8 @@ msgstr ""
 msgid "Example Request"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:446
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:283
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:515
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:328
 msgid "Exclude from order throttling"
 msgstr "Exclude from order throttling"
 
@@ -3446,8 +3484,8 @@ msgstr "Find and reuse images uploaded across notes, comments, your website, and
 msgid "Find potential issues"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:93
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:74
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:106
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:85
 msgid "Fish"
 msgstr "Fish"
 
@@ -3606,13 +3644,13 @@ msgstr ""
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "Give visitors room to share thoughtful feedback."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:87
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:68
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:100
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:79
 msgid "Gluten"
 msgstr "Gluten"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:421
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:272
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:490
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:317
 msgid "Gluten free"
 msgstr "Gluten free"
 
@@ -3666,7 +3704,7 @@ msgstr "Grayscale"
 msgid "Guest checkout"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:404
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:449
 msgid "Guest preview"
 msgstr "Guest preview"
 
@@ -3812,7 +3850,7 @@ msgstr "How can I help?"
 msgid "How can I implement this?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:241
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:290
 msgid "How many options diners can pick."
 msgstr "How many options diners can pick."
 
@@ -3871,9 +3909,9 @@ msgid "Image to crop"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:205
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:354
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:234
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:258
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:422
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:279
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4051
 msgid "Image URL"
 msgstr ""
@@ -4011,23 +4049,27 @@ msgstr ""
 msgid "Is Verified (True)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:145
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:177
 msgid "Item created"
 msgstr "Item created"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:191
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:233
 msgid "Item deleted"
 msgstr "Item deleted"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:282
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:355
 msgid "Item details"
 msgstr "Item details"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:352
+msgid "Item editor"
+msgstr "Item editor"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:109
 msgid "Item not found"
 msgstr "Item not found"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:270
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:317
 msgid "Item not found."
 msgstr "Item not found."
 
@@ -4035,7 +4077,7 @@ msgstr "Item not found."
 msgid "Item order within category"
 msgstr "Item order within category"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:183
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:225
 msgid "Item saved"
 msgstr "Item saved"
 
@@ -4044,14 +4086,14 @@ msgstr "Item saved"
 #~ msgstr "Item:"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:67
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:275
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:316
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:9
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:9
 #: app/routes/_app+/$orgSlug_+/menu+/items+/_index.tsx:178
 msgid "Items"
 msgstr "Items"
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:277
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:318
 msgid "Items in this category, in the order guests see them."
 msgstr "Items in this category, in the order guests see them."
 
@@ -4375,8 +4417,8 @@ msgstr ""
 msgid "Loose"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:366
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:434
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:285
 msgid "Loyalty points"
 msgstr "Loyalty points"
 
@@ -4420,6 +4462,10 @@ msgstr "Manage automations"
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
 
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:208
+msgid "Manage how this category appears across your storefront."
+msgstr "Manage how this category appears across your storefront."
+
 #: app/components/team-switcher.tsx:303
 msgid "Manage locations"
 msgstr "Manage locations"
@@ -4441,6 +4487,14 @@ msgstr "Manage roles"
 #: app/components/settings/cards/organization/billing-card.tsx:172
 msgid "Manage Subscription"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:191
+msgid "Manage the localized name, description, price, and availability."
+msgstr "Manage the localized name, description, price, and availability."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:329
+msgid "Manage this item’s storefront content, pricing, and modifier sets."
+msgstr "Manage this item’s storefront content, pricing, and modifier sets."
 
 #: app/routes/_app+/profile.tsx:116
 msgid "Manage your account settings and set e-mail preferences."
@@ -4526,11 +4580,11 @@ msgstr ""
 msgid "Marketing manager"
 msgstr "Marketing manager"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:326
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:371
 msgid "Max selections"
 msgstr "Max selections"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:128
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:158
 msgid "Maximum selections"
 msgstr "Maximum selections"
 
@@ -4664,11 +4718,11 @@ msgstr ""
 msgid "Migrate existing org media after saving"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:314
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:359
 msgid "Min selections"
 msgstr "Min selections"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:116
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:146
 msgid "Minimum selections"
 msgstr "Minimum selections"
 
@@ -4696,7 +4750,11 @@ msgstr "Mock Google Maps (no API key). Use a sample address or enter fields manu
 msgid "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
 msgstr "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:231
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:218
+msgid "Modifier details"
+msgstr "Modifier details"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:255
 msgid "Modifier group not found."
 msgstr "Modifier group not found."
 
@@ -4709,34 +4767,50 @@ msgstr "Modifier group not found."
 #~ msgid "Modifier groups are attached to items. Create a group from an item detail page, then add options here."
 #~ msgstr "Modifier groups are attached to items. Create a group from an item detail page, then add options here."
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:183
+msgid "Modifier not found."
+msgstr "Modifier not found."
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:147
+msgid "Modifier saved"
+msgstr "Modifier saved"
+
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:179
 msgid "Modifier set"
 msgstr "Modifier set"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:235
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:277
 msgid "Modifier set attached"
 msgstr "Modifier set attached"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:208
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:250
 msgid "Modifier set created"
 msgstr "Modifier set created"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:156
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:179
 msgid "Modifier set deleted"
 msgstr "Modifier set deleted"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:222
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:264
 msgid "Modifier set detached"
 msgstr "Modifier set detached"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:144
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:105
+msgid "Modifier set details"
+msgstr "Modifier set details"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:286
+msgid "Modifier set editor"
+msgstr "Modifier set editor"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:167
 msgid "Modifier set saved"
 msgstr "Modifier set saved"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:77
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-nav-tabs.tsx:12
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-sidebar-nav.tsx:12
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:511
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:580
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:76
 msgid "Modifier sets"
 msgstr "Modifier sets"
@@ -4777,8 +4851,8 @@ msgstr ""
 msgid "More actions"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:294
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:102
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:339
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:132
 msgid "Multi select"
 msgstr "Multi select"
 
@@ -4807,6 +4881,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/_index.tsx:136
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:96
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options.tsx:176
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:224
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:715
@@ -4817,7 +4892,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:72
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/new.tsx:36
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:38
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:55
 msgid "Name required"
 msgstr "Name required"
 
@@ -4892,7 +4967,8 @@ msgstr "New form"
 msgid "New icon preview"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:172
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:205
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:211
 msgid "New item"
 msgstr "New item"
 
@@ -4903,6 +4979,10 @@ msgstr "New item"
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:107
 msgid "New modifier group"
 msgstr "New modifier group"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:97
+msgid "New modifier set"
+msgstr "New modifier set"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:342
 msgid "New Note"
@@ -5029,7 +5109,7 @@ msgstr "No custom roles created yet."
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:268
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:309
 msgid "No description"
 msgstr "No description"
 
@@ -5065,7 +5145,7 @@ msgstr "No fields yet"
 msgid "No invoices found"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:290
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:331
 msgid "No items in this category yet."
 msgstr "No items in this category yet."
 
@@ -5097,7 +5177,7 @@ msgstr ""
 msgid "No menus yet."
 msgstr "No menus yet."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:518
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:587
 msgid "No modifier groups yet."
 msgstr "No modifier groups yet."
 
@@ -5140,7 +5220,7 @@ msgid "No notes match your search for \"{searchValue}\". Try a different search 
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/components/menu-modifier-set-preview.tsx:44
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:396
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:441
 msgid "No options yet."
 msgstr "No options yet."
 
@@ -5227,7 +5307,7 @@ msgstr "Normal"
 msgid "Not allowed"
 msgstr "Not allowed"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:258
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:307
 msgid "Not attached to any items yet. Open an item and attach this group."
 msgstr "Not attached to any items yet. Open an item and attach this group."
 
@@ -5451,6 +5531,10 @@ msgstr ""
 msgid "Open menu"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:209
+msgid "Open modifier set"
+msgstr "Open modifier set"
+
 #: app/components/roles/tenant-role-access-manager.tsx:152
 #~ msgid "Open pages and themes in the site builder."
 #~ msgstr "Open pages and themes in the site builder."
@@ -5504,19 +5588,19 @@ msgstr ""
 msgid "Operator Invited"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:174
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:197
 msgid "Option added"
 msgstr "Option added"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:542
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:593
 msgid "Option name"
 msgstr "Option name"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:186
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:209
 msgid "Option removed"
 msgstr "Option removed"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:204
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:227
 msgid "Option saved"
 msgstr "Option saved"
 
@@ -5533,7 +5617,7 @@ msgstr "Optional caption for display"
 #~ msgstr "options"
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/_index.tsx:102
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:391
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:436
 msgid "Options"
 msgstr "Options"
 
@@ -5719,8 +5803,8 @@ msgstr ""
 msgid "Payouts enabled"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:91
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:72
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:104
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:83
 msgid "Peanuts"
 msgstr "Peanuts"
 
@@ -5866,8 +5950,8 @@ msgstr "Pick a template, then customize every field in the builder."
 msgid "Pickup"
 msgstr "Pickup"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:300
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:108
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:345
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:138
 msgid "Pizza topping"
 msgstr "Pizza topping"
 
@@ -5940,8 +6024,8 @@ msgstr ""
 msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:436
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:279
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:505
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:324
 msgid "Popular item"
 msgstr "Popular item"
 
@@ -5969,7 +6053,7 @@ msgstr "Prep time (minutes)"
 msgid "Prerender"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:349
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:394
 msgid "Preselected options"
 msgstr "Preselected options"
 
@@ -5996,8 +6080,9 @@ msgstr "Price"
 #~ msgstr "Price (USD cents)"
 
 #: app/components/settings/cards/organization/shop-card.tsx:283
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:328
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:215
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:399
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:257
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:239
 msgid "Price (USD)"
 msgstr ""
 
@@ -6129,8 +6214,8 @@ msgstr ""
 msgid "QR code for two-factor authentication setup. Scan this code with your authenticator app."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:297
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:105
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:342
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:135
 msgid "Quantity select"
 msgstr "Quantity select"
 
@@ -6295,8 +6380,8 @@ msgstr ""
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
 #: app/components/website/branding-panel.tsx:314
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:562
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:528
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:631
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:576
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2634
 msgid "Remove"
 msgstr ""
@@ -6432,11 +6517,11 @@ msgstr ""
 msgid "Required"
 msgstr "Required"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:344
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:389
 msgid "Required group"
 msgstr "Required group"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:141
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:171
 msgid "Required set"
 msgstr "Required set"
 
@@ -6501,7 +6586,7 @@ msgstr ""
 msgid "Reusable option groups. Define choices here, then attach sets to items."
 msgstr "Reusable option groups. Define choices here, then attach sets to items."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:513
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:582
 msgid "Reusable option sets and the order guests see them."
 msgstr "Reusable option sets and the order guests see them."
 
@@ -6683,7 +6768,7 @@ msgstr ""
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/menu+/categories+/_index.tsx:367
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:496
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:544
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:858
 msgid "Save"
 msgstr ""
@@ -6701,7 +6786,7 @@ msgstr "Save as copy"
 msgid "Save Branding"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:254
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:347
 msgid "Save category"
 msgstr "Save category"
 
@@ -6725,7 +6810,7 @@ msgstr "Save details"
 msgid "Save draft"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:382
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:427
 msgid "Save group"
 msgstr "Save group"
 
@@ -6733,7 +6818,7 @@ msgstr "Save group"
 msgid "Save hours"
 msgstr "Save hours"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:490
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:559
 msgid "Save item"
 msgstr "Save item"
 
@@ -6752,6 +6837,10 @@ msgstr "Save location"
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:217
 msgid "Save menu"
 msgstr "Save menu"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:261
+msgid "Save modifier"
+msgstr "Save modifier"
 
 #: app/components/settings/cards/organization/shop-card.tsx:313
 msgid "Save product"
@@ -7009,7 +7098,7 @@ msgstr "Select an image from your library or upload a new one."
 msgid "Select attribute"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:202
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:244
 #: app/routes/_app+/$orgSlug_+/menu+/menus+/$menuId.tsx:261
 msgid "Select category"
 msgstr "Select category"
@@ -7018,7 +7107,7 @@ msgstr "Select category"
 msgid "Select default language"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:591
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:660
 msgid "Select group"
 msgstr "Select group"
 
@@ -7071,8 +7160,8 @@ msgstr ""
 msgid "Selected Members"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:280
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:91
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:325
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:121
 msgid "Selection type"
 msgstr "Selection type"
 
@@ -7152,8 +7241,8 @@ msgstr ""
 msgid "Service"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:95
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:76
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:108
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:87
 msgid "Sesame"
 msgstr "Sesame"
 
@@ -7178,7 +7267,11 @@ msgstr ""
 msgid "Set expiration date (optional)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:199
+msgid "Set membership"
+msgstr "Set membership"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:289
 msgid "Set rules"
 msgstr "Set rules"
 
@@ -7241,8 +7334,8 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:94
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:75
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:107
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:86
 msgid "Shellfish"
 msgstr "Shellfish"
 
@@ -7295,7 +7388,7 @@ msgstr ""
 #~ msgid "Showing total visitors for the last 6 months"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:230
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:282
 msgid "Shown after a guest adds an item from this category."
 msgstr "Shown after a guest adds an item from this category."
 
@@ -7361,8 +7454,8 @@ msgstr ""
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:291
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:99
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:336
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/new.tsx:129
 msgid "Single select"
 msgstr "Single select"
 
@@ -7450,8 +7543,8 @@ msgstr ""
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:90
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:71
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:103
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:82
 msgid "Soy"
 msgstr "Soy"
 
@@ -7734,8 +7827,8 @@ msgstr ""
 msgid "Target Value"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:431
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:278
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:500
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:323
 msgid "Taxable"
 msgstr "Taxable"
 
@@ -7870,7 +7963,7 @@ msgstr ""
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:284
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:357
 msgid "The guest-facing content, price, and dietary information for this item."
 msgstr "The guest-facing content, price, and dietary information for this item."
 
@@ -7914,11 +8007,11 @@ msgstr ""
 msgid "These codes will not be shown again. Store them in a secure location like a password manager."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:407
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:475
 msgid "These flags power storefront labels, filters, and upsells."
 msgstr "These flags power storefront labels, filters, and upsells."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:352
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/$groupId.tsx:397
 msgid "These options are selected for guests by default."
 msgstr "These options are selected for guests by default."
 
@@ -7961,6 +8054,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:767
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr ""
+
+#. placeholder {0}: set.name
+#: app/routes/_app+/$orgSlug_+/menu+/modifier-groups+/options+/$optionId.tsx:220
+msgid "This option belongs to the {0} modifier set."
+msgstr "This option belongs to the {0} modifier set."
 
 #: app/components/website/link-inspector.tsx:600
 msgid "This tab"
@@ -8073,8 +8171,8 @@ msgstr ""
 msgid "Translate All"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:92
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:73
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:105
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:84
 msgid "Tree nuts"
 msgstr "Tree nuts"
 
@@ -8367,7 +8465,7 @@ msgstr "Uploaded:"
 msgid "Uploading…"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:227
+#: app/routes/_app+/$orgSlug_+/menu+/categories+/$categoryId.tsx:279
 msgid "Upsell categories"
 msgstr "Upsell categories"
 
@@ -8410,8 +8508,8 @@ msgstr ""
 msgid "Use any authenticator app on your mobile device to scan the QR code, or enter the Setup Key manually."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:441
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:280
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:510
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:325
 msgid "Use as an upsell"
 msgstr "Use as an upsell"
 
@@ -8472,8 +8570,8 @@ msgstr ""
 msgid "Variables"
 msgstr "Variables"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:426
-#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:276
+#: app/routes/_app+/$orgSlug_+/menu+/items+/$itemId.tsx:495
+#: app/routes/_app+/$orgSlug_+/menu+/items+/new.tsx:321
 msgid "Vegetarian"
 msgstr "Vegetarian"
 

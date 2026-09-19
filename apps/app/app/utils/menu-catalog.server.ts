@@ -14,6 +14,8 @@ import { z } from 'zod'
 export const menuCategorySchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).optional().nullable(),
+	nameI18n: z.string().optional().nullable(),
+	descriptionI18n: z.string().optional().nullable(),
 	imageUrl: z.string().trim().url().optional().nullable(),
 	upsellCategoryIds: z.array(z.string().min(1)).optional().default([]),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),
@@ -24,6 +26,8 @@ export const menuItemSchema = z.object({
 	categoryId: z.string().min(1),
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(1000).optional().nullable(),
+	nameI18n: z.string().optional().nullable(),
+	descriptionI18n: z.string().optional().nullable(),
 	priceCents: z.coerce.number().int().min(0),
 	imageUrl: z.string().trim().url().optional().nullable(),
 	points: z.coerce.number().int().min(0).optional().nullable(),
@@ -44,6 +48,8 @@ export const menuItemSchema = z.object({
 export const menuSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).optional().nullable(),
+	nameI18n: z.string().optional().nullable(),
+	descriptionI18n: z.string().optional().nullable(),
 	menuType: z.enum(['olo', 'catering', 'dine-in']).optional().default('olo'),
 	showCalories: z.boolean().optional().default(false),
 	instructionsEnabled: z.boolean().optional().default(true),
@@ -62,6 +68,7 @@ export const menuModifierGroupSchema = z.object({
 
 export const menuModifierSetSchema = z.object({
 	name: z.string().trim().min(1).max(120),
+	nameI18n: z.string().optional().nullable(),
 	displayType: z
 		.enum([
 			'single-select',
@@ -82,6 +89,8 @@ export const menuModifierSetSchema = z.object({
 export const menuModifierOptionSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	description: z.string().trim().max(500).optional().nullable(),
+	nameI18n: z.string().optional().nullable(),
+	descriptionI18n: z.string().optional().nullable(),
 	priceCents: z.coerce.number().int().min(0).optional().default(0),
 	active: z.boolean().optional().default(true),
 	sortOrder: z.coerce.number().int().min(0).optional().default(0),

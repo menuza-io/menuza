@@ -1,12 +1,16 @@
 import { parseWithZod } from '@conform-to/zod'
 import { Trans, t } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import {
+	parseLocalizedString,
+	pickLocalized,
+	serializeLocalizedString,
+} from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
-import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { Textarea } from '@repo/ui/textarea'
+import { useState } from 'react'
 import { Form, Link, useLoaderData, useNavigation } from 'react-router'
 import { z } from 'zod'
 
@@ -25,11 +29,20 @@ import { requireUserWithOrganizationPermission } from '#app/utils/organization/p
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 import { MenuReorderList } from '../components/menu-reorder-list.tsx'
+import {
+	MenuEditorCard,
+	MenuEditorSidebarCard,
+	MenuLocalizedInput,
+	MenuLocalizedTextarea,
+	MenuResourceEditorPage,
+} from '../components/menu-resource-editor.tsx'
 
 const CategoryDetailActionSchema = z.object({
 	intent: z.enum(['save-category', 'delete-category']),
 	name: z.string().optional(),
+	nameI18n: z.string().optional(),
 	description: z.string().optional(),
+	descriptionI18n: z.string().optional(),
 	imageUrl: z.string().optional(),
 })
 
@@ -108,8 +121,29 @@ export async function action(
 		ctx.menuLocationId,
 		params.categoryId!,
 		menuCategorySchema.parse({
-			name: submission.value.name,
-			description: submission.value.description || null,
+			name: pickLocalized(
+				submission.value.nameI18n || submission.value.name,
+				ctx.localesConfig.defaultLocale,
+				ctx.localesConfig.defaultLocale,
+			),
+			nameI18n: serializeLocalizedString(
+				parseLocalizedString(
+					submission.value.nameI18n || submission.value.name,
+					ctx.localesConfig.defaultLocale,
+				),
+			),
+			description:
+				pickLocalized(
+					submission.value.descriptionI18n || submission.value.description,
+					ctx.localesConfig.defaultLocale,
+					ctx.localesConfig.defaultLocale,
+				) || null,
+			descriptionI18n: serializeLocalizedString(
+				parseLocalizedString(
+					submission.value.descriptionI18n || submission.value.description,
+					ctx.localesConfig.defaultLocale,
+				),
+			),
 			imageUrl: submission.value.imageUrl || null,
 			upsellCategoryIds: formData
 				.getAll('upsellCategoryIds')
@@ -132,9 +166,16 @@ export default function CategoryDetailPage() {
 		categories,
 		catalogReady,
 		canEditMenu,
+		localesConfig,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const [nameI18n, setNameI18n] = useState(
+		category?.nameI18n ?? category?.name ?? '',
+	)
+	const [descriptionI18n, setDescriptionI18n] = useState(
+		category?.descriptionI18n ?? category?.description ?? '',
+	)
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -160,11 +201,34 @@ export default function CategoryDetailPage() {
 	)
 	const upsellCategoryIds = new Set(category.upsellCategoryIds ?? [])
 	const base = `/${organization.slug}/menu`
-
 	return (
-		<div className="flex flex-col gap-8">
-			<AnnotatedLayout>
-				<AnnotatedSection
+		<MenuResourceEditorPage
+			title={<Trans>Edit category</Trans>}
+			description={
+				<Trans>Manage how this category appears across your storefront.</Trans>
+			}
+			localesConfig={localesConfig}
+			backHref={`${base}/categories`}
+			sidebar={
+				canEditMenu ? (
+					<MenuEditorSidebarCard title={<Trans>Danger zone</Trans>}>
+						<Form method="post">
+							<input type="hidden" name="intent" value="delete-category" />
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isSubmitting}
+							>
+								<Trans>Delete category</Trans>
+							</Button>
+						</Form>
+					</MenuEditorSidebarCard>
+				) : null
+			}
+		>
+			<Form method="post" className="space-y-6">
+				<input type="hidden" name="intent" value="save-category" />
+				<MenuEditorCard
 					title={<Trans>Category details</Trans>}
 					description={
 						<Trans>
@@ -174,44 +238,32 @@ export default function CategoryDetailPage() {
 					}
 				>
 					{canEditMenu ? (
-						<Form method="post" className="flex max-w-2xl flex-col gap-5">
-							<input type="hidden" name="intent" value="save-category" />
-							<div className="grid gap-4 sm:grid-cols-2">
-								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-name">
-										<Trans>Display name</Trans>
-									</Label>
-									<Input
-										id="category-name"
-										name="name"
-										defaultValue={category.name}
-										required
-									/>
-								</div>
-								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-description">
-										<Trans>Description</Trans>
-									</Label>
-									<Textarea
-										id="category-description"
-										name="description"
-										defaultValue={category.description ?? ''}
-										rows={4}
-										maxLength={500}
-									/>
-								</div>
-								<div className="space-y-1 sm:col-span-2">
-									<Label htmlFor="category-image">
-										<Trans>Image URL</Trans>
-									</Label>
-									<Input
-										id="category-image"
-										name="imageUrl"
-										type="url"
-										defaultValue={category.imageUrl ?? ''}
-										placeholder="https://..."
-									/>
-								</div>
+						<div className="space-y-5">
+							<MenuLocalizedInput
+								label={<Trans>Display name</Trans>}
+								name="name"
+								value={nameI18n}
+								onChange={setNameI18n}
+								required
+							/>
+							<MenuLocalizedTextarea
+								label={<Trans>Description</Trans>}
+								name="description"
+								value={descriptionI18n}
+								onChange={setDescriptionI18n}
+								rows={4}
+							/>
+							<div className="space-y-1.5">
+								<Label htmlFor="category-image">
+									<Trans>Image URL</Trans>
+								</Label>
+								<Input
+									id="category-image"
+									name="imageUrl"
+									type="url"
+									defaultValue={category.imageUrl ?? ''}
+									placeholder="https://..."
+								/>
 							</div>
 							<label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 								<input
@@ -249,18 +301,7 @@ export default function CategoryDetailPage() {
 									))}
 								</div>
 							</div>
-							<div className="flex flex-wrap gap-2">
-								<Button type="submit" disabled={isSubmitting}>
-									<Trans>Save category</Trans>
-								</Button>
-								<Button
-									variant="outline"
-									render={<Link to={`${base}/categories`} />}
-								>
-									<Trans>Back to categories</Trans>
-								</Button>
-							</div>
-						</Form>
+						</div>
 					) : (
 						<dl className="text-sm">
 							<dt className="font-medium">{category.name}</dt>
@@ -269,9 +310,9 @@ export default function CategoryDetailPage() {
 							</dd>
 						</dl>
 					)}
-				</AnnotatedSection>
+				</MenuEditorCard>
 
-				<AnnotatedSection
+				<MenuEditorCard
 					title={<Trans>Items</Trans>}
 					description={
 						<Trans>Items in this category, in the order guests see them.</Trans>
@@ -299,17 +340,15 @@ export default function CategoryDetailPage() {
 							<Trans>Add item</Trans>
 						</Button>
 					) : null}
-				</AnnotatedSection>
-			</AnnotatedLayout>
-
-			{canEditMenu ? (
-				<Form method="post">
-					<input type="hidden" name="intent" value="delete-category" />
-					<Button type="submit" variant="destructive" disabled={isSubmitting}>
-						<Trans>Delete category</Trans>
-					</Button>
-				</Form>
-			) : null}
-		</div>
+				</MenuEditorCard>
+				{canEditMenu ? (
+					<div className="flex justify-end">
+						<Button type="submit" disabled={isSubmitting}>
+							<Trans>Save category</Trans>
+						</Button>
+					</div>
+				) : null}
+			</Form>
+		</MenuResourceEditorPage>
 	)
 }

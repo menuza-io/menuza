@@ -208,7 +208,7 @@ export default function ModifiersListPage() {
 							filteredOptions.map((option) => (
 								<MenuClickableTableRow
 									key={option.id}
-									to={`/${organization.slug}/menu/modifier-groups/${option.setId}`}
+									to={`/${organization.slug}/menu/modifier-groups/options/${option.id}`}
 								>
 									<TableCell className="font-medium">{option.name}</TableCell>
 									<TableCell className="text-muted-foreground">
