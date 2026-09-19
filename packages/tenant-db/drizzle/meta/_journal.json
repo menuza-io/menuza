@@ -78,6 +78,13 @@
 			"when": 1789500000001,
 			"tag": "0010_manuza_menu_catalog",
 			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "6",
+			"when": 1789600000001,
+			"tag": "0011_manuza_menus_and_modifier_sets",
+			"breakpoints": true
 		}
 	]
 }

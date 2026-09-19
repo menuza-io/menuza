@@ -28,4 +28,14 @@ test('menu page loads for organization admin', async ({
 	await expect(page.getByRole('heading', { name: /^menu$/i })).toBeVisible({
 		timeout: 15_000,
 	})
+	await expect(
+		page
+			.getByRole('navigation', { name: /menu sections/i })
+			.getByRole('link', { name: /^overview$/i }),
+	).toBeVisible()
+	await expect(
+		page
+			.getByRole('navigation', { name: /menu sections/i })
+			.getByRole('link', { name: /^menus$/i }),
+	).toBeVisible()
 })
