@@ -1,9 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
-import {
-	getUserId,
-	requireUserId,
-	userHasOrganizationPermission,
-} from '@repo/auth'
+import { getUserId, requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
@@ -22,7 +18,10 @@ import {
 } from '#app/utils/menu.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ensureDefaultOrganizationLocation } from '#app/utils/organization/locations.server.ts'
-import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	userHasOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 
 import MenuBuilderPage from './menu-builder-ui.tsx'
 
