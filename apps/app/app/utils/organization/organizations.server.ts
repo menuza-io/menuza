@@ -384,6 +384,13 @@ export async function createOrganization({
 		}
 		return created
 	})
+	const { ensureDefaultOrganizationLocation } =
+		await import('#app/utils/organization/locations.server.ts')
+	await ensureDefaultOrganizationLocation({
+		organizationId: organization.id,
+		name: `${name} — Main`,
+	})
+
 	await auditService.log({
 		action: AuditAction.ORG_CREATED,
 		userId,

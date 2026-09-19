@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { sql } from 'drizzle-orm'
 import { migrate } from 'drizzle-orm/libsql/migrator'
 import { db } from './client.ts'
+import { ensureOrganizationLocationColumns } from './ensure-organization-location-columns.ts'
 import { ensureOrganizationRoleAssignmentTriggers } from './ensure-organization-role-triggers.ts'
 
 const packageDir = path.resolve(
@@ -12,8 +13,11 @@ const packageDir = path.resolve(
 
 await db.run(sql`PRAGMA busy_timeout = 5000`)
 await db.run(sql`PRAGMA journal_mode = WAL`)
+// Table + widen legacy rows before journal (0015 only adds indexes + org columns).
+await ensureOrganizationLocationColumns()
 await migrate(db, {
 	migrationsFolder: path.join(packageDir, 'drizzle'),
 })
 await ensureOrganizationRoleAssignmentTriggers()
+await ensureOrganizationLocationColumns()
 console.log('✅ Database migrations completed successfully')

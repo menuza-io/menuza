@@ -13,6 +13,7 @@ import {
 	Permission,
 	_RoleToUser,
 	Organization,
+	OrganizationLocation,
 	OrganizationImage,
 	UtmSource,
 	Integration,
@@ -254,7 +255,18 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	notificationPreferences: many(NotificationPreference),
 	notifications: many(Notification),
 	savedReports: many(SavedReport),
+	locations: many(OrganizationLocation),
 }))
+
+export const OrganizationLocationRelations = relations(
+	OrganizationLocation,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationLocation.organizationId],
+			references: [Organization.id],
+		}),
+	}),
+)
 
 export const UtmSourceRelations = relations(UtmSource, ({ one }) => ({
 	user: one(User, {

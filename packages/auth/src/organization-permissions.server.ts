@@ -193,6 +193,14 @@ export const ORG_PERMISSIONS = {
 
 	// Analytics permissions
 	READ_ANALYTICS_ANY: 'read:analytics:any' as const,
+
+	// Restaurant menu (tenant catalog)
+	READ_MENU_ANY: 'read:menu:any' as const,
+	UPDATE_MENU_ANY: 'update:menu:any' as const,
+
+	// Restaurant locations (control-plane branches)
+	READ_LOCATION_ANY: 'read:location:any' as const,
+	UPDATE_LOCATION_ANY: 'update:location:any' as const,
 } as const
 
 /**

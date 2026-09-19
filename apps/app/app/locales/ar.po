@@ -319,6 +319,10 @@ msgstr "500+ شخص"
 msgid "51-200 people"
 msgstr "51-200 شخص"
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:102
+msgid "86'd"
+msgstr "86'd"
+
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
@@ -391,6 +395,7 @@ msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
 #: app/components/roles/tenant-role-access-manager.tsx:777
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:81
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
@@ -405,6 +410,8 @@ msgid "active"
 msgstr "نشط"
 
 #: app/components/settings/cards/sessions-card.tsx:249
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:108
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:170
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
@@ -412,6 +419,10 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 msgid "Active"
 msgstr "نشط"
+
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:111
+msgid "Active (requires map pin)"
+msgstr "Active (requires map pin)"
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:673
 msgid "Activity"
@@ -497,6 +508,10 @@ msgstr "إضافة كتلة"
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:137
+msgid "Add category"
+msgstr "Add category"
+
 #: app/components/website/form-builder-sidebar.tsx:566
 msgid "Add choice"
 msgstr "إضافة خيار"
@@ -521,12 +536,20 @@ msgstr "إضافة حقل"
 msgid "Add images"
 msgstr "إضافة صور"
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:189
+msgid "Add item"
+msgstr "Add item"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3218
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4456
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/app-sidebar.tsx:499
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:59
+msgid "Add location"
+msgstr "Add location"
+
+#: app/components/app-sidebar.tsx:514
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -554,7 +577,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
-#: app/components/team-switcher.tsx:222
+#: app/components/team-switcher.tsx:323
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add organization"
@@ -563,6 +586,10 @@ msgstr "إضافة منظمة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3882
 msgid "Add photo or video"
 msgstr "إضافة صورة أو فيديو"
+
+#: app/components/locations/address-autocomplete-field.tsx:112
+#~ msgid "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
+#~ msgstr "Add PUBLIC_GOOGLE_MAPS_API_KEY for address autocomplete and map pin. You can still enter an address manually; saving will geocode on the server when possible."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
 msgid "Add question"
@@ -585,9 +612,17 @@ msgstr "إضافة قسم"
 #~ msgid "Add Section"
 #~ msgstr "إضافة قسم"
 
+#: app/components/locations/weekly-hours-editor.tsx:112
+#~ msgid "Add shift"
+#~ msgstr "Add shift"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4490
 msgid "Add social link"
 msgstr "إضافة رابط تواصل اجتماعي"
+
+#: app/components/locations/special-hours-editor.tsx:125
+msgid "Add special hours"
+msgstr "Add special hours"
 
 #: app/utils/website/field-types.ts:75
 msgid "Add supporting information."
@@ -703,6 +738,11 @@ msgstr "جميع الميزات الأساسية مضمنة"
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
+#: app/components/team-switcher.tsx:91
+#: app/components/team-switcher.tsx:242
+msgid "All locations (brand)"
+msgstr "All locations (brand)"
+
 #: app/components/ui/notification-bell.tsx:342
 #: app/components/ui/notification-bell.tsx:439
 msgid "All Notifications"
@@ -745,7 +785,7 @@ msgstr "النص البديل"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:352
+#: app/components/app-sidebar.tsx:359
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
@@ -758,7 +798,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:368
+#: app/components/app-sidebar.tsx:375
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -787,6 +827,14 @@ msgstr "المظهر"
 #: app/components/roles/tenant-role-access-manager.tsx:169
 msgid "Appears on the public site"
 msgstr "يظهر على الموقع العام"
+
+#: app/components/locations/special-hours-editor.tsx:47
+msgid "Applies to"
+msgstr "Applies to"
+
+#: app/components/locations/weekly-hours-editor.tsx:154
+msgid "Apply"
+msgstr "Apply"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1956
 msgid "Applying…"
@@ -849,6 +897,10 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 #: app/components/ai/global-ai-panel.tsx:531
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:200
+msgid "Ask an admin to grant menu edit access or switch to a role with update permission."
+msgstr "Ask an admin to grant menu edit access or switch to a role with update permission."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:681
 msgid "Ask anything…"
@@ -915,6 +967,10 @@ msgstr "العملاء المصرح لهم"
 msgid "Auto"
 msgstr "تلقائي"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:291
+msgid "Auto-accept window (seconds)"
+msgstr "Auto-accept window (seconds)"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:141
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
@@ -940,7 +996,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:322
+#: app/components/app-sidebar.tsx:329
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -988,6 +1044,10 @@ msgstr "العودة إلى التفاصيل"
 msgid "Back to fields"
 msgstr "العودة إلى الحقول"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:95
+msgid "Back to list"
+msgstr "Back to list"
+
 #: app/routes/_auth+/forgot-password.sent.tsx:49
 #: app/routes/_auth+/forgot-password.tsx:245
 msgid "Back to login"
@@ -1019,7 +1079,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:433
+#: app/components/app-sidebar.tsx:445
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -1048,7 +1108,23 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:359
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:54
+msgid "Branch context"
+msgstr "Branch context"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:25
+msgid "Branch menu — changes apply to the selected location only."
+msgstr "Branch menu — changes apply to the selected location only."
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:52
+msgid "Brand context"
+msgstr "Brand context"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:29
+msgid "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
+msgstr "Brand menu — editing the default location catalog (shared template until per-branch overrides ship)."
+
+#: app/components/app-sidebar.tsx:366
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1072,7 +1148,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:315
+#: app/components/app-sidebar.tsx:322
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -1114,6 +1190,10 @@ msgstr "مدمج"
 #: app/components/roles/tenant-role-access-manager.tsx:837
 msgid "Built-in Roles"
 msgstr "الأدوار المدمجة"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:278
+msgid "Busy mode extra wait (minutes)"
+msgstr "Busy mode extra wait (minutes)"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3595
@@ -1180,6 +1260,7 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:121
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
@@ -1231,6 +1312,10 @@ msgstr "بطاقات"
 #: app/routes/_app+/$orgSlug_+/notes.tsx:310
 msgid "Cards view"
 msgstr "عرض البطاقات"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:149
+msgid "Category"
+msgstr "Category"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3364
@@ -1343,6 +1428,14 @@ msgstr "اختر خطتك"
 msgid "Circle"
 msgstr "دائرة"
 
+#: app/components/locations/address-autocomplete-field.tsx:187
+msgid "City"
+msgstr "City"
+
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:69
+msgid "City / State"
+msgstr "City / State"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:785
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
@@ -1396,6 +1489,10 @@ msgstr "إغلاق"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
+
+#: app/components/locations/special-hours-editor.tsx:95
+msgid "Closed all day"
+msgstr "Closed all day"
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -1715,6 +1812,10 @@ msgstr "نسخ الكود"
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
+#: app/components/locations/weekly-hours-editor.tsx:127
+msgid "Copy times to"
+msgstr "Copy times to"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1385
 msgid "Copy URL"
 msgstr "نسخ الرابط"
@@ -1953,7 +2054,7 @@ msgstr "مستخدم البوت الحالي"
 msgid "Current icon"
 msgstr "الأيقونة الحالية"
 
-#: app/components/team-switcher.tsx:179
+#: app/components/team-switcher.tsx:190
 msgid "Current organization"
 msgstr "المؤسسة الحالية"
 
@@ -2047,7 +2148,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:296
+#: app/components/app-sidebar.tsx:297
 msgid "Customers"
 msgstr "العملاء"
 
@@ -2082,7 +2183,7 @@ msgid "Dark mode"
 msgstr "الوضع الداكن"
 
 #: app/components/app-sidebar.tsx:124
-#: app/components/app-sidebar.tsx:272
+#: app/components/app-sidebar.tsx:273
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -2098,6 +2199,10 @@ msgstr "لوحة التحكم"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:135
 msgid "Database connection error"
 msgstr "خطأ في الاتصال بقاعدة البيانات"
+
+#: app/components/locations/special-hours-editor.tsx:33
+msgid "Date"
+msgstr "Date"
 
 #: app/utils/website/field-types.ts:67
 #: app/utils/website/field-types.ts:70
@@ -2117,6 +2222,7 @@ msgid "Decline"
 msgstr "رفض"
 
 #: app/components/website/link-inspector.tsx:622
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:92
 msgid "Default"
 msgstr "افتراضي"
 
@@ -2127,6 +2233,14 @@ msgstr "اللغة الافتراضية"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:430
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:179
+msgid "Default location"
+msgstr "Default location"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:265
+msgid "Default prep time (minutes)"
+msgstr "Default prep time (minutes)"
 
 #: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Define role details and select what permissions members receive."
@@ -2268,6 +2382,10 @@ msgstr "حذف ملاحظات الفريق"
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:321
+msgid "Delivery is enabled for this branch."
+msgstr "Delivery is enabled for this branch."
+
 #: app/routes/mcp+/authorize.tsx:455
 msgid "Deny"
 msgstr "رفض"
@@ -2314,6 +2432,10 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها."
 #: app/components/settings/cards/organization/danger-zone-card.tsx:52
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيتم إزالة جميع بياناتك بشكل دائم من خوادمنا."
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:101
+msgid "Details"
+msgstr "Details"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
 msgid "Detected"
@@ -2531,6 +2653,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 #: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:234
 #: app/components/roles/tenant-role-access-manager.tsx:812
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:126
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
@@ -2979,6 +3102,10 @@ msgstr "اسم ملف عنصر الوسائط"
 msgid "Filename"
 msgstr "اسم الملف"
 
+#: app/components/locations/address-autocomplete-field.tsx:145
+msgid "Fill sample Houston address"
+msgstr "Fill sample Houston address"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:808
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
@@ -3037,7 +3164,7 @@ msgstr "إعدادات النموذج"
 msgid "Format:"
 msgstr "التنسيق:"
 
-#: app/components/app-sidebar.tsx:347
+#: app/components/app-sidebar.tsx:354
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -3068,11 +3195,11 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:390
+#: app/components/app-sidebar.tsx:397
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:337
+#: app/components/app-sidebar.tsx:344
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -3104,12 +3231,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:491
+#: app/components/app-sidebar.tsx:506
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:153
-#: app/components/app-sidebar.tsx:506
+#: app/components/app-sidebar.tsx:521
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -3129,7 +3256,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
 #: app/components/app-sidebar.tsx:161
-#: app/components/app-sidebar.tsx:514
+#: app/components/app-sidebar.tsx:529
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -3254,6 +3381,10 @@ msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:82
+msgid "Hidden"
+msgstr "Hidden"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2702
 msgid "Hide from search engines"
 msgstr "إخفاء عن محركات البحث"
@@ -3304,6 +3435,7 @@ msgid "hours"
 msgstr "ساعات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:241
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:104
 msgid "Hours"
 msgstr "ساعات"
 
@@ -3398,6 +3530,10 @@ msgstr "مهم:"
 msgid "In-App"
 msgstr "داخل التطبيق"
 
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:112
+msgid "Inactive"
+msgstr "Inactive"
+
 #: app/components/settings/cards/organization/billing-card.tsx:431
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
@@ -3425,7 +3561,7 @@ msgstr "إدراج حقل هنا"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:86
 #~ msgid "Insert merge tag"
-#~ msgstr ""
+#~ msgstr "Insert merge tag"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:384
 #~ msgid "Insert Merge Tags:"
@@ -3435,7 +3571,7 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:416
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -3466,7 +3602,7 @@ msgstr "الدعوة عبر البريد الإلكتروني"
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
-#: app/components/team-switcher.tsx:204
+#: app/components/team-switcher.tsx:215
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
@@ -3564,6 +3700,10 @@ msgstr "اسم المفتاح"
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:107
+msgid "Kitchen"
+msgstr "Kitchen"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
@@ -3611,6 +3751,10 @@ msgstr "آخر استخدام"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:957
 msgid "Last Used"
 msgstr "آخر استخدام"
+
+#: app/components/locations/mock-location-map.tsx:40
+msgid "Latitude"
+msgstr "Latitude"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
 msgid "Launch run"
@@ -3738,9 +3882,19 @@ msgstr "جاري تحميل الملاحظات..."
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
+#: app/components/team-switcher.tsx:223
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 msgid "Location"
 msgstr "الموقع"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:121
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:53
+msgid "Location name"
+msgstr "Location name"
+
+#: app/components/app-sidebar.tsx:426
+msgid "Locations"
+msgstr "Locations"
 
 #: app/components/nav-user.tsx:300
 #: app/components/ui/header.tsx:144
@@ -3780,6 +3934,10 @@ msgstr "تسجيل الخروج"
 #: app/utils/website/field-types.ts:82
 msgid "Long text"
 msgstr "نص طويل"
+
+#: app/components/locations/mock-location-map.tsx:55
+msgid "Longitude"
+msgstr "Longitude"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
 msgid "Look"
@@ -3824,6 +3982,10 @@ msgstr "إدارة الأتمتة"
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
 msgstr "إدارة البثّات"
+
+#: app/components/team-switcher.tsx:303
+msgid "Manage locations"
+msgstr "Manage locations"
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -3897,6 +4059,14 @@ msgstr "إدارة موقع مؤسستك العام ومظهره."
 msgid "Manual Trigger"
 msgstr "تشغيل يدوي"
 
+#: app/components/locations/mock-location-map.tsx:35
+msgid "Map preview — mock mode"
+msgstr "Map preview — mock mode"
+
+#: app/components/locations/location-map.tsx:48
+#~ msgid "Map preview appears when Google Maps is configured."
+#~ msgstr "Map preview appears when Google Maps is configured."
+
 #: app/components/ui/notification-bell.tsx:464
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
@@ -3905,7 +4075,7 @@ msgstr "تحديد الكل كمقروء"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/app-sidebar.tsx:302
+#: app/components/app-sidebar.tsx:309
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -3923,7 +4093,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:419
+#: app/components/app-sidebar.tsx:431
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -3944,7 +4114,7 @@ msgstr "تفاصيل الوسائط"
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
-#: app/components/app-sidebar.tsx:290
+#: app/components/app-sidebar.tsx:291
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -3965,7 +4135,7 @@ msgid "Meet other members and share updates in the group. An admin can add commu
 msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:132
+#: app/components/team-switcher.tsx:145
 msgid "member"
 msgstr "عضو"
 
@@ -3974,11 +4144,11 @@ msgstr "عضو"
 #~ msgstr "عضو"
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
-#: app/components/team-switcher.tsx:134
+#: app/components/team-switcher.tsx:145
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:395
+#: app/components/app-sidebar.tsx:402
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:771
 #: app/components/roles/tenant-role-access-manager.tsx:857
@@ -3989,13 +4159,17 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
+#: app/components/app-sidebar.tsx:303
+msgid "Menu"
+msgstr "Menu"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 msgid "Menuza Team"
 msgstr "فريق Menuza"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
-#~ msgstr ""
+#~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
@@ -4033,6 +4207,14 @@ msgstr "المسار المفقود"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5713
 msgid "Mobile"
 msgstr "الجوال"
+
+#: app/components/locations/address-autocomplete-field.tsx:133
+msgid "Mock Google Maps (no API key). Use a sample address or enter fields manually — save will use mock geocoding in dev."
+msgstr "Mock Google Maps (no API key). Use a sample address or enter fields manually — save will use mock geocoding in dev."
+
+#: app/components/locations/mock-location-map.tsx:26
+msgid "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
+msgstr "Mock map (no Google API key). Coordinates are used for delivery and publish validation."
 
 #: app/components/roles/tenant-role-access-manager.tsx:90
 msgid "Modify notes created by other team members."
@@ -4079,6 +4261,9 @@ msgstr "بدون صوت"
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:66
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:132
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:169
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:715
@@ -4133,6 +4318,10 @@ msgstr "أتمتة جديدة"
 msgid "New broadcast"
 msgstr "بث جديد"
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:128
+msgid "New category"
+msgstr "New category"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:111
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
 msgid "New Customer Journey"
@@ -4153,6 +4342,10 @@ msgstr "نموذج جديد"
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
 msgstr "معاينة الأيقونة الجديدة"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:145
+msgid "New item"
+msgstr "New item"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:342
 msgid "New Note"
@@ -4239,6 +4432,10 @@ msgstr "لم يتم العثور على بثّات"
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:69
+msgid "No categories yet. Add your first category below."
+msgstr "No categories yet. Add your first category below."
+
 #: app/components/note/integration-controls.tsx:356
 msgid "No channels available"
 msgstr "لا توجد قنوات متاحة"
@@ -4298,6 +4495,10 @@ msgstr "لا توجد حقول بعد"
 #: app/components/settings/cards/organization/invoices-card.tsx:88
 msgid "No invoices found"
 msgstr "لم يتم العثور على فواتير"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:88
+msgid "No items in this category."
+msgstr "No items in this category."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:945
 msgid "No matching images"
@@ -4382,6 +4583,14 @@ msgstr "لا توجد ردود بعد."
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
+#: app/components/locations/special-hours-editor.tsx:23
+msgid "No special hours yet. Add holidays or one-off closures."
+msgstr "No special hours yet. Add holidays or one-off closures."
+
+#: app/components/locations/timezone-select-field.tsx:82
+msgid "No timezone found."
+msgstr "No timezone found."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
@@ -4456,7 +4665,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:284
+#: app/components/app-sidebar.tsx:285
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -4486,7 +4695,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:424
+#: app/components/app-sidebar.tsx:436
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -4542,6 +4751,14 @@ msgstr "حملات بريد إلكتروني ورسائل نصية لمرة وا
 #: app/components/settings/two-factor-form.tsx:198
 msgid "One-time Password URI"
 msgstr "رابط كلمة المرور لمرة واحدة"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:234
+msgid "Online hours"
+msgstr "Online hours"
+
+#: app/components/locations/special-hours-editor.tsx:82
+msgid "Online ordering"
+msgstr "Online ordering"
 
 #: app/components/note/share-note-button.tsx:195
 msgid "Only selected members can access this note"
@@ -4707,7 +4924,7 @@ msgstr "حجم المؤسسة"
 
 #: app/components/app-sidebar.tsx:142
 #: app/components/nav-user.tsx:189
-#: app/components/team-switcher.tsx:155
+#: app/components/team-switcher.tsx:166
 #: app/routes/_app+/organizations.tsx:192
 msgid "Organizations"
 msgstr "المنظمات"
@@ -4720,7 +4937,15 @@ msgstr "تُستخدم المنظمات لتجميع مشاريعك."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/app-sidebar.tsx:308
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:230
+msgid "Override brand online hours"
+msgstr "Override brand online hours"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:211
+msgid "Override brand store hours"
+msgstr "Override brand store hours"
+
+#: app/components/app-sidebar.tsx:315
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -4752,7 +4977,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:342
+#: app/components/app-sidebar.tsx:349
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -4884,6 +5109,9 @@ msgstr "رابط الدعوة الشخصي"
 
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:72
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:132
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:63
 msgid "Phone"
 msgstr "الهاتف"
 
@@ -4964,6 +5192,10 @@ msgstr "اختر تخطيطًا ثم خصّص الكتل."
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:121
 msgid "Pick a template, then customize every field in the builder."
 msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:308
+msgid "Pickup"
+msgstr "Pickup"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4823
 msgid "Plain"
@@ -5046,6 +5278,14 @@ msgstr "الجلب المسبق"
 msgid "Preload"
 msgstr "التحميل المسبق"
 
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:75
+msgid "Prep"
+msgstr "Prep"
+
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:78
+msgid "Prep time (minutes)"
+msgstr "Prep time (minutes)"
+
 #: app/components/website/link-inspector.tsx:626
 msgid "Prerender"
 msgstr "التصيير المسبق"
@@ -5062,6 +5302,10 @@ msgstr "الإعدادات المسبقة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
 msgid "Preview"
 msgstr "معاينة"
+
+#: app/routes/_app+/$orgSlug_+/menu-builder-ui.tsx:175
+msgid "Price (USD cents)"
+msgstr "Price (USD cents)"
 
 #: app/components/settings/cards/organization/shop-card.tsx:283
 msgid "Price (USD)"
@@ -5279,7 +5523,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:375
+#: app/components/app-sidebar.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -5351,6 +5595,7 @@ msgstr "تذكرني"
 msgid "Remember your password?"
 msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 
+#: app/components/locations/special-hours-editor.tsx:104
 #: app/components/note/share-note-button.tsx:240
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
@@ -5451,7 +5696,7 @@ msgstr "رد"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:278
+#: app/components/app-sidebar.tsx:279
 msgid "Reports"
 msgstr "التقارير"
 
@@ -5512,6 +5757,10 @@ msgstr "إعادة تعيين إلى التلقائي"
 #: app/components/settings/cards/organization/site-theme-card.tsx:575
 msgid "Reset to preset"
 msgstr "إعادة التعيين إلى الإعداد المسبق"
+
+#: app/components/locations/mock-location-map.tsx:82
+msgid "Reset to sample pin (Houston)"
+msgstr "Reset to sample pin (Houston)"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:462
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:614
@@ -5580,7 +5829,7 @@ msgstr "الدور"
 msgid "Role name"
 msgstr "اسم الدور"
 
-#: app/components/app-sidebar.tsx:402
+#: app/components/app-sidebar.tsx:409
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -5732,14 +5981,30 @@ msgstr "حفظ العلامة التجارية"
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:183
+msgid "Save details"
+msgstr "Save details"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:482
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:249
+msgid "Save hours"
+msgstr "Save hours"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:324
+msgid "Save kitchen settings"
+msgstr "Save kitchen settings"
+
 #: app/components/settings/cards/organization/site-locales-card.tsx:307
 msgid "Save languages"
 msgstr "حفظ اللغات"
+
+#: app/routes/_app+/$orgSlug_+/locations+/new-location-ui.tsx:115
+msgid "Save location"
+msgstr "Save location"
 
 #: app/components/settings/cards/organization/shop-card.tsx:313
 msgid "Save product"
@@ -5809,9 +6074,17 @@ msgstr "حدد موعد مكالمة"
 msgid "Scheduled"
 msgstr "مجدول"
 
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:317
+msgid "Scheduled orders"
+msgstr "Scheduled orders"
+
 #: app/components/app-sidebar.tsx:218
 msgid "Search"
 msgstr "بحث"
+
+#: app/components/locations/address-autocomplete-field.tsx:151
+msgid "Search address"
+msgstr "Search address"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
@@ -5839,7 +6112,7 @@ msgstr "البحث في الوسائط"
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
-#: app/components/app-sidebar.tsx:544
+#: app/components/app-sidebar.tsx:559
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
 msgstr "البحث في عناصر القائمة..."
@@ -6127,7 +6400,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
-#: app/components/app-sidebar.tsx:382
+#: app/components/app-sidebar.tsx:389
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -6178,7 +6451,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:414
+#: app/components/app-sidebar.tsx:421
 msgid "Shop"
 msgstr "المتجر"
 
@@ -6425,8 +6698,13 @@ msgstr "بدأ في"
 msgid "Starting point"
 msgstr "نقطة البداية"
 
+#: app/components/locations/address-autocomplete-field.tsx:199
+msgid "State"
+msgstr "State"
+
 #: app/components/roles/tenant-role-access-manager.tsx:635
 #: app/components/settings/cards/sessions-card.tsx:239
+#: app/routes/_app+/$orgSlug_+/locations+/_index.tsx:78
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
@@ -6469,6 +6747,18 @@ msgstr "إيقاف انتحال الشخصية"
 #: app/components/settings/cards/organization/s3-storage-card.tsx:349
 msgid "Storage migration"
 msgstr "ترحيل التخزين"
+
+#: app/components/locations/special-hours-editor.tsx:65
+msgid "Store"
+msgstr "Store"
+
+#: app/routes/_app+/$orgSlug_+/locations+/location-edit-ui.tsx:215
+msgid "Store hours"
+msgstr "Store hours"
+
+#: app/components/locations/address-autocomplete-field.tsx:164
+msgid "Street address"
+msgstr "Street address"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:278
 msgid "Structural checks for triggers, connections, and node configuration."
@@ -6545,6 +6835,10 @@ msgstr "اقتراح تحسينات"
 #: ../../packages/ai/src/components/ai-chat.tsx:246
 #~ msgid "Suggested questions"
 #~ msgstr "أسئلة مقترحة"
+
+#: app/components/locations/address-autocomplete-field.tsx:176
+msgid "Suite / unit"
+msgstr "Suite / unit"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:405
 msgid "Summarize this note"
@@ -6880,6 +7174,10 @@ msgstr "تأخير زمني"
 msgid "Time Delay"
 msgstr "تأخير زمني"
 
+#: app/components/locations/timezone-select-field.tsx:58
+msgid "Timezone"
+msgstr "Timezone"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3720
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4030
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4399
@@ -7033,6 +7331,10 @@ msgstr "اكتب اسم المؤسسة \"{orgName}\" للتأكيد."
 #: app/components/settings/cards/organization/billing-card.tsx:251
 msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
+
+#: app/components/locations/weekly-hours-editor.tsx:214
+msgid "Unavailable"
+msgstr "Unavailable"
 
 #: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Unedited boilerplate text detected in email body."
@@ -7466,7 +7768,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:331
+#: app/components/app-sidebar.tsx:338
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -7794,3 +8096,7 @@ msgstr "تقدم الإعداد"
 #: app/components/roles/tenant-role-access-manager.tsx:254
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
+
+#: app/components/locations/address-autocomplete-field.tsx:211
+msgid "ZIP code"
+msgstr "ZIP code"

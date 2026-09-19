@@ -8,7 +8,11 @@ import {
 	type OrganizationPermissionString,
 } from '@repo/auth'
 
-export { ORG_PERMISSIONS, getUserOrganizationPermissionsForClient }
+export {
+	ORG_PERMISSIONS,
+	getUserOrganizationPermissionsForClient,
+	userHasOrganizationPermission,
+}
 
 /**
  * Require user to have organization permission - throws 403 if not
