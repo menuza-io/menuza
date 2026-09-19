@@ -50,11 +50,16 @@ function assertLocationRow<T extends { locationId: string }>(
 	return row
 }
 
+/** Menu runs in the App against regional SQLite; repair missing files after publish. */
+async function getMenuTenantDb(organizationId: string) {
+	return getTenantDb(organizationId, { createIfMissing: true })
+}
+
 export async function listMenuForLocation(
 	organizationId: string,
 	locationId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const categories = await tenantDb
 		.select()
 		.from(menuCategories)
@@ -112,7 +117,7 @@ export async function listCategoriesForLocation(
 	organizationId: string,
 	locationId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	return tenantDb
 		.select()
 		.from(menuCategories)
@@ -124,7 +129,7 @@ export async function listItemsForLocation(
 	organizationId: string,
 	locationId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	return tenantDb
 		.select()
 		.from(menuItems)
@@ -136,7 +141,7 @@ export async function listModifierGroupsForLocation(
 	organizationId: string,
 	locationId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const items = await tenantDb
 		.select({ id: menuItems.id, name: menuItems.name })
 		.from(menuItems)
@@ -173,7 +178,7 @@ export async function getMenuItem(
 	locationId: string,
 	itemId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [item] = await tenantDb
 		.select()
 		.from(menuItems)
@@ -210,7 +215,7 @@ export async function getModifierGroup(
 	locationId: string,
 	groupId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [group] = await tenantDb
 		.select()
 		.from(menuModifierGroups)
@@ -240,7 +245,7 @@ export async function createMenuCategory(
 	input: z.infer<typeof menuCategorySchema>,
 ) {
 	const parsed = menuCategorySchema.parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [created] = await tenantDb
 		.insert(menuCategories)
 		.values({ locationId, ...parsed })
@@ -255,7 +260,7 @@ export async function updateMenuCategory(
 	input: z.infer<typeof menuCategorySchema>,
 ) {
 	const parsed = menuCategorySchema.parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuCategories)
@@ -276,7 +281,7 @@ export async function deleteMenuCategory(
 	locationId: string,
 	categoryId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuCategories)
@@ -292,7 +297,7 @@ export async function setMenuCategoryActive(
 	categoryId: string,
 	active: boolean,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuCategories)
@@ -311,7 +316,7 @@ export async function createMenuItem(
 	input: z.infer<typeof menuItemSchema>,
 ) {
 	const parsed = menuItemSchema.parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [category] = await tenantDb
 		.select()
 		.from(menuCategories)
@@ -333,7 +338,7 @@ export async function updateMenuItem(
 	input: z.infer<typeof menuItemSchema>,
 ) {
 	const parsed = menuItemSchema.parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuItems)
@@ -361,7 +366,7 @@ export async function deleteMenuItem(
 	locationId: string,
 	itemId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuItems)
@@ -377,7 +382,7 @@ export async function setMenuItemActive(
 	itemId: string,
 	active: boolean,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [existing] = await tenantDb
 		.select()
 		.from(menuItems)
@@ -396,7 +401,7 @@ export async function createModifierGroup(
 	input: z.infer<typeof menuModifierGroupSchema>,
 ) {
 	const parsed = menuModifierGroupSchema.parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [item] = await tenantDb
 		.select()
 		.from(menuItems)
@@ -418,7 +423,7 @@ export async function updateModifierGroup(
 	input: Omit<z.infer<typeof menuModifierGroupSchema>, 'menuItemId'>,
 ) {
 	const parsed = menuModifierGroupSchema.omit({ menuItemId: true }).parse(input)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	await getModifierGroup(organizationId, locationId, groupId)
 	const [updated] = await tenantDb
 		.update(menuModifierGroups)
@@ -434,7 +439,7 @@ export async function deleteModifierGroup(
 	groupId: string,
 ) {
 	await getModifierGroup(organizationId, locationId, groupId)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	await tenantDb
 		.delete(menuModifierGroups)
 		.where(eq(menuModifierGroups.id, groupId))
@@ -448,7 +453,7 @@ export async function createModifierOption(
 ) {
 	const parsed = menuModifierOptionSchema.parse(input)
 	await getModifierGroup(organizationId, locationId, groupId)
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [created] = await tenantDb
 		.insert(menuModifierOptions)
 		.values({ ...parsed, groupId })
@@ -461,7 +466,7 @@ export async function deleteModifierOption(
 	locationId: string,
 	optionId: string,
 ) {
-	const tenantDb = await getTenantDb(organizationId)
+	const tenantDb = await getMenuTenantDb(organizationId)
 	const [option] = await tenantDb
 		.select()
 		.from(menuModifierOptions)

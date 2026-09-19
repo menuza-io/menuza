@@ -1,3 +1,4 @@
+import { getTenantDb, provisionTenantDb } from '@repo/tenant-db'
 import { ENV } from 'varlock/env'
 import { getBoundTenantApiService } from '../tenant-api-service.server.ts'
 
@@ -100,7 +101,24 @@ export async function provisionTenantDatabase(options: {
 	slug?: string
 	customDomain?: string | null
 }) {
-	return callTenantCommand({ ...options, path: '/api/provision' })
+	const result = await callTenantCommand({ ...options, path: '/api/provision' })
+
+	// App loaders (e.g. menu catalog) open tenant SQLite on this machine for US
+	// orgs. Re-run provisioning locally so a successful API call cannot leave
+	// hasProvisionedDb true without a file when tenant-api was unreachable or
+	// used a different TENANT_DB_DIR.
+	if (resolveRegion(options.dataRegion) === 'us') {
+		await provisionTenantDb(options.orgId)
+		try {
+			await getTenantDb(options.orgId)
+		} catch {
+			throw new Error(
+				'Tenant database file was not created. Start tenant-api (port 3007) or run `npm run dev` so publish can provision customer data.',
+			)
+		}
+	}
+
+	return result
 }
 
 export async function deprovisionTenantDatabase(options: {
