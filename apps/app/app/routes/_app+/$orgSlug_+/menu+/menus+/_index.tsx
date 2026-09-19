@@ -9,7 +9,8 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { Form, Link, useLoaderData, useNavigation } from 'react-router'
+import { useMemo, useState } from 'react'
+import { Form, useLoaderData, useNavigation } from 'react-router'
 
 import { listMenusForLocation } from '#app/utils/menu-catalog.server.ts'
 import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
@@ -17,7 +18,16 @@ import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.t
 import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
+import {
+	MenuClickableTableRow,
+	stopRowClick,
+} from '../components/menu-clickable-table-row.tsx'
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import {
+	MenuListHeader,
+	MenuTableShell,
+} from '../components/menu-list-header.tsx'
+import { useMenuListSearch } from '../components/use-menu-list-search.ts'
 
 export async function loader(
 	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
@@ -65,10 +75,24 @@ export async function action(
 }
 
 export default function MenusListRoute() {
-	const { organization, menus, catalogReady, canEditMenu } =
+	const { organization, menus, catalogReady, canEditMenu, operatorContext } =
 		useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const { query, setQuery } = useMenuListSearch()
+	const [availabilityFilter, setAvailabilityFilter] = useState<
+		'all' | 'available' | 'unavailable'
+	>('all')
+
+	const filteredMenus = useMemo(() => {
+		const needle = query.toLowerCase()
+		return menus.filter((menu) => {
+			if (needle && !menu.name.toLowerCase().includes(needle)) return false
+			if (availabilityFilter === 'available' && !menu.active) return false
+			if (availabilityFilter === 'unavailable' && menu.active) return false
+			return true
+		})
+	}, [menus, query, availabilityFilter])
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -82,67 +106,80 @@ export default function MenusListRoute() {
 	}
 
 	const base = `/${organization.slug}/menu/menus`
+	const scopeSubtitle =
+		operatorContext === 'branch' ? (
+			<Trans>Location scope</Trans>
+		) : (
+			<Trans>Brand scope — default location</Trans>
+		)
 
 	return (
-		<div className="flex flex-col gap-6">
-			{canEditMenu ? (
-				<div className="flex justify-end">
-					<Button render={<Link to={`${base}/new`} />}>
-						<Trans>New menu</Trans>
-					</Button>
-				</div>
-			) : null}
+		<div className="p-0 lg:p-0">
+			<MenuListHeader
+				title={<Trans>Menus</Trans>}
+				subtitle={scopeSubtitle}
+				searchQuery={query}
+				onSearchChange={setQuery}
+				searchPlaceholder="Search menus"
+				createHref={`${base}/new`}
+				createLabel={<Trans>Create menu</Trans>}
+				canCreate={canEditMenu}
+				availabilityFilter={availabilityFilter}
+				onAvailabilityFilterChange={setAvailabilityFilter}
+			/>
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Trans>Name</Trans>
-						</TableHead>
-						<TableHead>
-							<Trans>Status</Trans>
-						</TableHead>
-						{canEditMenu ? (
-							<TableHead className="text-end">
-								<Trans>Actions</Trans>
-							</TableHead>
-						) : null}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{menus.length === 0 ? (
+			<MenuTableShell>
+				<Table>
+					<TableHeader>
 						<TableRow>
-							<TableCell colSpan={canEditMenu ? 3 : 2}>
-								<p className="text-muted-foreground py-6 text-center text-sm">
-									<Trans>No menus yet.</Trans>
-								</p>
-							</TableCell>
+							<TableHead>
+								<Trans>Name</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Availability</Trans>
+							</TableHead>
+							{canEditMenu ? (
+								<TableHead className="w-28 text-end">
+									<span className="sr-only">
+										<Trans>Actions</Trans>
+									</span>
+								</TableHead>
+							) : null}
 						</TableRow>
-					) : (
-						menus.map((menu) => (
-							<TableRow key={menu.id}>
-								<TableCell>
-									<Link
-										to={`${base}/${menu.id}`}
-										className="font-medium hover:underline"
-									>
-										{menu.name}
-									</Link>
+					</TableHeader>
+					<TableBody>
+						{filteredMenus.length === 0 ? (
+							<TableRow>
+								<TableCell colSpan={canEditMenu ? 3 : 2}>
+									<p className="text-muted-foreground px-4 py-12 text-center text-sm">
+										{query ? (
+											<Trans>
+												Nothing matches your search. Try another term or clear
+												filters.
+											</Trans>
+										) : (
+											<Trans>No menus yet.</Trans>
+										)}
+									</p>
 								</TableCell>
-								<TableCell>
-									{menu.active ? (
-										<Badge variant="secondary">
-											<Trans>On</Trans>
-										</Badge>
-									) : (
-										<Badge variant="outline">
-											<Trans>Off</Trans>
-										</Badge>
-									)}
-								</TableCell>
-								{canEditMenu ? (
-									<TableCell className="text-end">
-										<div className="flex flex-wrap justify-end gap-2">
+							</TableRow>
+						) : (
+							filteredMenus.map((menu) => (
+								<MenuClickableTableRow key={menu.id} to={`${base}/${menu.id}`}>
+									<TableCell className="font-medium">{menu.name}</TableCell>
+									<TableCell>
+										{menu.active ? (
+											<Badge variant="secondary">
+												<Trans>Available</Trans>
+											</Badge>
+										) : (
+											<Badge variant="outline">
+												<Trans>Unavailable</Trans>
+											</Badge>
+										)}
+									</TableCell>
+									{canEditMenu ? (
+										<TableCell className="text-end" onClick={stopRowClick}>
 											<Form method="post" className="inline">
 												<input
 													type="hidden"
@@ -162,20 +199,20 @@ export default function MenusListRoute() {
 													disabled={isSubmitting}
 												>
 													{menu.active ? (
-														<Trans>Turn off</Trans>
+														<Trans>86</Trans>
 													) : (
-														<Trans>Turn on</Trans>
+														<Trans>Restock</Trans>
 													)}
 												</Button>
 											</Form>
-										</div>
-									</TableCell>
-								) : null}
-							</TableRow>
-						))
-					)}
-				</TableBody>
-			</Table>
+										</TableCell>
+									) : null}
+								</MenuClickableTableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</MenuTableShell>
 		</div>
 	)
 }

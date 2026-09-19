@@ -31,7 +31,7 @@ test('menu page loads for organization admin', async ({
 	await expect(
 		page
 			.getByRole('navigation', { name: /menu sections/i })
-			.getByRole('link', { name: /^overview$/i }),
+			.getByRole('link', { name: /^home$/i }),
 	).toBeVisible()
 	await expect(
 		page

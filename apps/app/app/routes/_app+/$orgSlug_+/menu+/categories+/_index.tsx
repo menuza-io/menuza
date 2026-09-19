@@ -4,7 +4,6 @@ import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import {
@@ -15,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	Form,
@@ -42,7 +42,13 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import { MenuEditorSheet } from '../components/menu-editor-sheet.tsx'
+import {
+	MenuListHeader,
+	MenuTableShell,
+} from '../components/menu-list-header.tsx'
 import { MenuReorderList } from '../components/menu-reorder-list.tsx'
+import { useMenuListSearch } from '../components/use-menu-list-search.ts'
 
 const CategoryActionSchema = z.object({
 	intent: z.enum(['create', 'update', 'delete', 'toggle-active']),
@@ -153,10 +159,30 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function MenuCategoriesPage() {
-	const { organization, categories, catalogReady, canEditMenu } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		categories,
+		catalogReady,
+		canEditMenu,
+		operatorContext,
+	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const { query, setQuery } = useMenuListSearch()
+	const [availabilityFilter, setAvailabilityFilter] = useState<
+		'all' | 'available' | 'unavailable'
+	>('all')
+	const [createOpen, setCreateOpen] = useState(false)
+
+	const filteredCategories = useMemo(() => {
+		const needle = query.toLowerCase()
+		return categories.filter((category) => {
+			if (needle && !category.name.toLowerCase().includes(needle)) return false
+			if (availabilityFilter === 'available' && !category.active) return false
+			if (availabilityFilter === 'unavailable' && category.active) return false
+			return true
+		})
+	}, [categories, query, availabilityFilter])
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -169,23 +195,27 @@ export default function MenuCategoriesPage() {
 		)
 	}
 
+	const scopeSubtitle =
+		operatorContext === 'branch' ? (
+			<Trans>Location scope</Trans>
+		) : (
+			<Trans>Brand scope — default location</Trans>
+		)
+
 	return (
 		<div className="flex flex-col gap-6">
-			{canEditMenu ? (
-				<Form method="post" className="flex flex-wrap items-end gap-4">
-					<input type="hidden" name="intent" value="create" />
-					<div className="min-w-[12rem] flex-1 space-y-1">
-						<Label htmlFor="new-category-name">
-							<Trans>New category</Trans>
-						</Label>
-						<Input id="new-category-name" name="name" required />
-					</div>
-					<Button type="submit" disabled={isSubmitting}>
-						<Icon name="plus" className="size-4" />
-						<Trans>Add</Trans>
-					</Button>
-				</Form>
-			) : null}
+			<MenuListHeader
+				title={<Trans>Categories</Trans>}
+				subtitle={scopeSubtitle}
+				searchQuery={query}
+				onSearchChange={setQuery}
+				searchPlaceholder="Search categories"
+				createLabel={<Trans>Create category</Trans>}
+				canCreate={canEditMenu}
+				createOnClick={() => setCreateOpen(true)}
+				availabilityFilter={availabilityFilter}
+				onAvailabilityFilterChange={setAvailabilityFilter}
+			/>
 
 			{categories.length > 0 ? (
 				<section className="space-y-2">
@@ -207,97 +237,142 @@ export default function MenuCategoriesPage() {
 				</section>
 			) : null}
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Trans>Name</Trans>
-						</TableHead>
-						<TableHead>
-							<Trans>Status</Trans>
-						</TableHead>
-						{canEditMenu ? (
-							<TableHead className="text-end">
-								<Trans>Actions</Trans>
-							</TableHead>
-						) : null}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{categories.length === 0 ? (
+			<MenuTableShell>
+				<Table>
+					<TableHeader>
 						<TableRow>
-							<TableCell colSpan={canEditMenu ? 3 : 2}>
-								<p className="text-muted-foreground py-6 text-center text-sm">
-									<Trans>No categories yet.</Trans>
-								</p>
-							</TableCell>
+							<TableHead>
+								<Trans>Name</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Availability</Trans>
+							</TableHead>
+							{canEditMenu ? (
+								<TableHead className="text-end">
+									<Trans>Actions</Trans>
+								</TableHead>
+							) : null}
 						</TableRow>
-					) : (
-						categories.map((category) => (
-							<TableRow key={category.id}>
-								<TableCell className="font-medium">{category.name}</TableCell>
-								<TableCell>
-									{category.active ? (
-										<Badge variant="secondary">
-											<Trans>Visible</Trans>
-										</Badge>
-									) : (
-										<Badge variant="outline">
-											<Trans>Hidden</Trans>
-										</Badge>
-									)}
+					</TableHeader>
+					<TableBody>
+						{filteredCategories.length === 0 ? (
+							<TableRow>
+								<TableCell colSpan={canEditMenu ? 3 : 2}>
+									<p className="text-muted-foreground px-4 py-12 text-center text-sm">
+										{query ? (
+											<Trans>
+												Nothing matches your search. Try another term or clear
+												filters.
+											</Trans>
+										) : (
+											<Trans>No categories yet.</Trans>
+										)}
+									</p>
 								</TableCell>
-								{canEditMenu ? (
-									<TableCell className="text-end">
-										<div className="flex flex-wrap justify-end gap-2">
-											<Form method="post" className="inline">
-												<input
-													type="hidden"
-													name="intent"
-													value="toggle-active"
-												/>
-												<input
-													type="hidden"
-													name="categoryId"
-													value={category.id}
-												/>
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={isSubmitting}
-												>
-													{category.active ? (
-														<Trans>Hide</Trans>
-													) : (
-														<Trans>Show</Trans>
-													)}
-												</Button>
-											</Form>
-											<Form method="post" className="inline">
-												<input type="hidden" name="intent" value="delete" />
-												<input
-													type="hidden"
-													name="categoryId"
-													value={category.id}
-												/>
-												<Button
-													type="submit"
-													variant="ghost"
-													size="sm"
-													disabled={isSubmitting}
-												>
-													<Trans>Delete</Trans>
-												</Button>
-											</Form>
-										</div>
-									</TableCell>
-								) : null}
 							</TableRow>
-						))
-					)}
-				</TableBody>
-			</Table>
+						) : (
+							filteredCategories.map((category) => (
+								<TableRow key={category.id}>
+									<TableCell className="font-medium">{category.name}</TableCell>
+									<TableCell>
+										{category.active ? (
+											<Badge variant="secondary">
+												<Trans>Visible</Trans>
+											</Badge>
+										) : (
+											<Badge variant="outline">
+												<Trans>Hidden</Trans>
+											</Badge>
+										)}
+									</TableCell>
+									{canEditMenu ? (
+										<TableCell className="text-end">
+											<div className="flex flex-wrap justify-end gap-2">
+												<Form method="post" className="inline">
+													<input
+														type="hidden"
+														name="intent"
+														value="toggle-active"
+													/>
+													<input
+														type="hidden"
+														name="categoryId"
+														value={category.id}
+													/>
+													<Button
+														type="submit"
+														variant="outline"
+														size="sm"
+														disabled={isSubmitting}
+													>
+														{category.active ? (
+															<Trans>Hide</Trans>
+														) : (
+															<Trans>Show</Trans>
+														)}
+													</Button>
+												</Form>
+												<Form method="post" className="inline">
+													<input type="hidden" name="intent" value="delete" />
+													<input
+														type="hidden"
+														name="categoryId"
+														value={category.id}
+													/>
+													<Button
+														type="submit"
+														variant="ghost"
+														size="sm"
+														disabled={isSubmitting}
+													>
+														<Trans>Delete</Trans>
+													</Button>
+												</Form>
+											</div>
+										</TableCell>
+									) : null}
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</MenuTableShell>
+
+			<MenuEditorSheet
+				open={createOpen}
+				title={<Trans>Create category</Trans>}
+				operatorContext={operatorContext}
+				onClose={() => setCreateOpen(false)}
+				footer={
+					<div className="flex justify-end gap-2 border-t px-4 py-3">
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => setCreateOpen(false)}
+						>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button
+							type="submit"
+							form="create-category-form"
+							disabled={isSubmitting}
+						>
+							<Trans>Save</Trans>
+						</Button>
+					</div>
+				}
+			>
+				<Form method="post" id="create-category-form" className="space-y-4">
+					<input type="hidden" name="intent" value="create" />
+					<div className="space-y-1">
+						<Label htmlFor="new-category-name">
+							<Trans>Display name</Trans>
+						</Label>
+						<Input id="new-category-name" name="name" required />
+					</div>
+				</Form>
+			</MenuEditorSheet>
+
 			<p className="text-muted-foreground text-sm">
 				<Trans>
 					<Link to={`/${organization.slug}/menu/items`}>Manage items</Link> in

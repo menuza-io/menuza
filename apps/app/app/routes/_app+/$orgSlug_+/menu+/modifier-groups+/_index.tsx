@@ -1,12 +1,27 @@
 import { Trans } from '@lingui/macro'
-import { Button } from '@repo/ui/button'
-import { Link, useLoaderData } from 'react-router'
+import { Badge } from '@repo/ui/badge'
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@repo/ui/table'
+import { useMemo } from 'react'
+import { useLoaderData } from 'react-router'
 
 import { listModifierGroupsForLocation } from '#app/utils/menu-catalog.server.ts'
 import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 
+import { MenuClickableTableRow } from '../components/menu-clickable-table-row.tsx'
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import {
+	MenuListHeader,
+	MenuTableShell,
+} from '../components/menu-list-header.tsx'
+import { useMenuListSearch } from '../components/use-menu-list-search.ts'
 
 export async function loader(
 	args: Parameters<typeof loadMenuOperatorContextFromArgs>[0],
@@ -23,8 +38,18 @@ export async function loader(
 }
 
 export default function ModifierGroupsListPage() {
-	const { organization, groups, catalogReady, canEditMenu } =
+	const { organization, groups, catalogReady, canEditMenu, operatorContext } =
 		useLoaderData<typeof loader>()
+	const { query, setQuery } = useMenuListSearch()
+
+	const filteredGroups = useMemo(() => {
+		const needle = query.toLowerCase()
+		return groups.filter((group) => {
+			const attached = group.attachedItems.map((i) => i.name).join(' ')
+			const haystack = `${group.name} ${attached}`.toLowerCase()
+			return !needle || haystack.includes(needle)
+		})
+	}, [groups, query])
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -37,56 +62,81 @@ export default function ModifierGroupsListPage() {
 		)
 	}
 
+	const base = `/${organization.slug}/menu/modifier-groups`
+	const scopeSubtitle =
+		operatorContext === 'branch' ? (
+			<Trans>Location scope</Trans>
+		) : (
+			<Trans>Brand scope — default location</Trans>
+		)
+
 	return (
 		<div className="flex flex-col gap-4">
-			{canEditMenu ? (
-				<div className="flex justify-end">
-					<Button
-						render={
-							<Link to={`/${organization.slug}/menu/modifier-groups/new`} />
-						}
-					>
-						<Trans>New modifier group</Trans>
-					</Button>
-				</div>
-			) : null}
+			<MenuListHeader
+				title={<Trans>Modifier sets</Trans>}
+				subtitle={scopeSubtitle}
+				searchQuery={query}
+				onSearchChange={setQuery}
+				searchPlaceholder="Search modifier sets"
+				createHref={`${base}/new`}
+				createLabel={<Trans>Create modifier set</Trans>}
+				canCreate={canEditMenu}
+			/>
 			<p className="text-muted-foreground text-sm">
 				<Trans>
-					Reusable modifier groups for this location. Add options on each group,
-					then attach groups to items.
+					Reusable option groups. Define choices here, then attach sets to
+					items.
 				</Trans>
 			</p>
-			{groups.length === 0 ? (
-				<p className="text-muted-foreground py-8 text-center text-sm">
-					<Trans>No modifier groups yet.</Trans>
-				</p>
-			) : (
-				<ul className="divide-y rounded-lg border">
-					{groups.map((group) => (
-						<li
-							key={group.id}
-							className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-						>
-							<div>
-								<Link
-									to={`/${organization.slug}/menu/modifier-groups/${group.id}`}
-									className="font-medium hover:underline"
+			<MenuTableShell>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>
+								<Trans>Name</Trans>
+							</TableHead>
+							<TableHead className="hidden lg:table-cell">
+								<Trans>Used on items</Trans>
+							</TableHead>
+							<TableHead className="hidden sm:table-cell">
+								<Trans>Options</Trans>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filteredGroups.length === 0 ? (
+							<TableRow>
+								<TableCell colSpan={3}>
+									<p className="text-muted-foreground px-4 py-12 text-center text-sm">
+										{query ? (
+											<Trans>No modifier sets match your search.</Trans>
+										) : (
+											<Trans>No modifier sets yet.</Trans>
+										)}
+									</p>
+								</TableCell>
+							</TableRow>
+						) : (
+							filteredGroups.map((group) => (
+								<MenuClickableTableRow
+									key={group.id}
+									to={`${base}/${group.id}`}
 								>
-									{group.name}
-								</Link>
-								<p className="text-muted-foreground text-sm">
-									{group.attachedItems.length
-										? group.attachedItems.map((i) => i.name).join(', ')
-										: '—'}
-								</p>
-							</div>
-							<span className="text-muted-foreground text-sm">
-								{group.options.length} <Trans>options</Trans>
-							</span>
-						</li>
-					))}
-				</ul>
-			)}
+									<TableCell className="font-medium">{group.name}</TableCell>
+									<TableCell className="text-muted-foreground hidden lg:table-cell">
+										{group.attachedItems.length
+											? group.attachedItems.map((i) => i.name).join(', ')
+											: '—'}
+									</TableCell>
+									<TableCell className="hidden sm:table-cell">
+										<Badge variant="secondary">{group.options.length}</Badge>
+									</TableCell>
+								</MenuClickableTableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</MenuTableShell>
 		</div>
 	)
 }

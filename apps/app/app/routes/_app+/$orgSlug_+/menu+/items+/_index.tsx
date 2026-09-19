@@ -4,7 +4,6 @@ import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
 import {
 	Table,
 	TableBody,
@@ -13,10 +12,10 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	Form,
-	Link,
 	useLoaderData,
 	useNavigation,
 } from 'react-router'
@@ -36,8 +35,17 @@ import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
+import {
+	MenuClickableTableRow,
+	stopRowClick,
+} from '../components/menu-clickable-table-row.tsx'
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
+import {
+	MenuListHeader,
+	MenuTableShell,
+} from '../components/menu-list-header.tsx'
 import { MenuReorderList } from '../components/menu-reorder-list.tsx'
+import { useMenuListSearch } from '../components/use-menu-list-search.ts'
 
 const ItemActionSchema = z.object({
 	intent: z.enum(['toggle-active']),
@@ -124,9 +132,26 @@ export default function MenuItemsListPage() {
 		categoryNameById,
 		catalogReady,
 		canEditMenu,
+		operatorContext,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state !== 'idle'
+	const { query, setQuery } = useMenuListSearch()
+	const [availabilityFilter, setAvailabilityFilter] = useState<
+		'all' | 'available' | 'unavailable'
+	>('all')
+
+	const filteredItems = useMemo(() => {
+		const needle = query.toLowerCase()
+		return items.filter((item) => {
+			const categoryName = categoryNameById[item.categoryId] ?? ''
+			const haystack = `${item.name} ${categoryName}`.toLowerCase()
+			if (needle && !haystack.includes(needle)) return false
+			if (availabilityFilter === 'available' && !item.active) return false
+			if (availabilityFilter === 'unavailable' && item.active) return false
+			return true
+		})
+	}, [items, categoryNameById, query, availabilityFilter])
 
 	if (!catalogReady) {
 		const msg = menuCatalogUnavailableMessage(organization)
@@ -139,16 +164,28 @@ export default function MenuItemsListPage() {
 		)
 	}
 
+	const itemsBase = `/${organization.slug}/menu/items`
+	const scopeSubtitle =
+		operatorContext === 'branch' ? (
+			<Trans>Location scope</Trans>
+		) : (
+			<Trans>Brand scope — default location</Trans>
+		)
+
 	return (
 		<div className="flex flex-col gap-6">
-			{canEditMenu ? (
-				<div className="flex justify-end">
-					<Button render={<Link to={`/${organization.slug}/menu/items/new`} />}>
-						<Icon name="plus" className="size-4" />
-						<Trans>Add item</Trans>
-					</Button>
-				</div>
-			) : null}
+			<MenuListHeader
+				title={<Trans>Items</Trans>}
+				subtitle={scopeSubtitle}
+				searchQuery={query}
+				onSearchChange={setQuery}
+				searchPlaceholder="Search items"
+				createHref={`${itemsBase}/new`}
+				createLabel={<Trans>Create item</Trans>}
+				canCreate={canEditMenu}
+				availabilityFilter={availabilityFilter}
+				onAvailabilityFilterChange={setAvailabilityFilter}
+			/>
 
 			{categories.length > 0 && items.length > 0 ? (
 				<section className="space-y-6">
@@ -181,68 +218,76 @@ export default function MenuItemsListPage() {
 				</section>
 			) : null}
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Trans>Name</Trans>
-						</TableHead>
-						<TableHead>
-							<Trans>Category</Trans>
-						</TableHead>
-						<TableHead>
-							<Trans>Price</Trans>
-						</TableHead>
-						<TableHead>
-							<Trans>Available</Trans>
-						</TableHead>
-						<TableHead className="text-end">
-							<Trans>Actions</Trans>
-						</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{items.length === 0 ? (
+			<MenuTableShell>
+				<Table>
+					<TableHeader>
 						<TableRow>
-							<TableCell colSpan={5}>
-								<p className="text-muted-foreground py-6 text-center text-sm">
-									<Trans>
-										No items yet. Add a category, then create your first item.
-									</Trans>
-								</p>
-							</TableCell>
+							<TableHead>
+								<Trans>Name</Trans>
+							</TableHead>
+							<TableHead className="hidden lg:table-cell">
+								<Trans>Category</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Price</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Availability</Trans>
+							</TableHead>
+							{canEditMenu ? (
+								<TableHead className="w-28 text-end">
+									<span className="sr-only">
+										<Trans>Actions</Trans>
+									</span>
+								</TableHead>
+							) : null}
 						</TableRow>
-					) : (
-						items.map((item) => (
-							<TableRow key={item.id}>
-								<TableCell className="font-medium">
-									<Link
-										to={`/${organization.slug}/menu/items/${item.id}`}
-										className="hover:underline"
-									>
-										{item.name}
-									</Link>
+					</TableHeader>
+					<TableBody>
+						{filteredItems.length === 0 ? (
+							<TableRow>
+								<TableCell colSpan={canEditMenu ? 5 : 4}>
+									<p className="text-muted-foreground px-4 py-12 text-center text-sm">
+										{query ? (
+											<Trans>
+												Nothing matches your search. Try another term or clear
+												filters.
+											</Trans>
+										) : (
+											<Trans>
+												No items yet. Add a category, then create your first
+												item.
+											</Trans>
+										)}
+									</p>
 								</TableCell>
-								<TableCell>
-									{categoryNameById[item.categoryId] ?? '—'}
-								</TableCell>
-								<TableCell className="tabular-nums">
-									${(item.priceCents / 100).toFixed(2)}
-								</TableCell>
-								<TableCell>
-									{item.active ? (
-										<Badge variant="secondary">
-											<Trans>Yes</Trans>
-										</Badge>
-									) : (
-										<Badge variant="outline">
-											<Trans>86&apos;d</Trans>
-										</Badge>
-									)}
-								</TableCell>
-								<TableCell className="text-end">
-									<div className="flex flex-wrap justify-end gap-2">
-										{canEditMenu ? (
+							</TableRow>
+						) : (
+							filteredItems.map((item) => (
+								<MenuClickableTableRow
+									key={item.id}
+									to={`${itemsBase}/${item.id}`}
+								>
+									<TableCell className="font-medium">{item.name}</TableCell>
+									<TableCell className="text-muted-foreground hidden lg:table-cell">
+										{categoryNameById[item.categoryId] ?? '—'}
+									</TableCell>
+									<TableCell className="tabular-nums">
+										${(item.priceCents / 100).toFixed(2)}
+									</TableCell>
+									<TableCell>
+										{item.active ? (
+											<Badge variant="secondary">
+												<Trans>Available</Trans>
+											</Badge>
+										) : (
+											<Badge variant="outline">
+												<Trans>Unavailable</Trans>
+											</Badge>
+										)}
+									</TableCell>
+									{canEditMenu ? (
+										<TableCell className="text-end" onClick={stopRowClick}>
 											<Form method="post" className="inline">
 												<input
 													type="hidden"
@@ -263,25 +308,14 @@ export default function MenuItemsListPage() {
 													)}
 												</Button>
 											</Form>
-										) : null}
-										<Button
-											variant="ghost"
-											size="sm"
-											render={
-												<Link
-													to={`/${organization.slug}/menu/items/${item.id}`}
-												/>
-											}
-										>
-											<Trans>Edit</Trans>
-										</Button>
-									</div>
-								</TableCell>
-							</TableRow>
-						))
-					)}
-				</TableBody>
-			</Table>
+										</TableCell>
+									) : null}
+								</MenuClickableTableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</MenuTableShell>
 		</div>
 	)
 }
