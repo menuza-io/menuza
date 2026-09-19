@@ -25,10 +25,10 @@ import {
 	menuModifierOptionSchema,
 	updateModifierGroup,
 } from '#app/utils/menu-catalog.server.ts'
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
 import {
 	loadMenuOperatorContext,
 	loadMenuOperatorContextFromArgs,
-	menuCatalogUnavailableMessage,
 } from '#app/utils/menu-loader.server.ts'
 import { MENU_WRITE_PERMISSION } from '#app/utils/menu-permissions.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'

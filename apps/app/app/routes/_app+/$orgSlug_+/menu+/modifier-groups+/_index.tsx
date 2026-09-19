@@ -2,10 +2,8 @@ import { Trans } from '@lingui/macro'
 import { Link, useLoaderData } from 'react-router'
 
 import { listModifierGroupsForLocation } from '#app/utils/menu-catalog.server.ts'
-import {
-	loadMenuOperatorContextFromArgs,
-	menuCatalogUnavailableMessage,
-} from '#app/utils/menu-loader.server.ts'
+import { menuCatalogUnavailableMessage } from '#app/utils/menu-catalog-messages.ts'
+import { loadMenuOperatorContextFromArgs } from '#app/utils/menu-loader.server.ts'
 
 import { MenuCatalogGate } from '../components/menu-catalog-gate.tsx'
 
