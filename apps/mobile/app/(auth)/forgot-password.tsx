@@ -68,7 +68,7 @@ export default function ForgotPasswordScreen() {
 				<View className="flex-1">
 					<View className="gap-4">
 						<View className="gap-2">
-							<Text className="text-foreground text-base font-semibold">
+							<Text className="text-foreground text-base">
 								Email
 							</Text>
 							<Controller
@@ -113,7 +113,7 @@ export default function ForgotPasswordScreen() {
 						onPress={handleBackToSignIn}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							Back to sign in
 						</Text>
 					</TouchableOpacity>

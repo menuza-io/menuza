@@ -21,7 +21,7 @@ import {
 
 function statusBadgeClass(status: CampaignStatus) {
 	return cn(
-		'shrink-0 text-[10px] font-semibold',
+		'shrink-0 text-[10px]',
 		status === 'Completed' &&
 			'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
 		status === 'Processing' &&

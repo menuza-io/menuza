@@ -161,7 +161,7 @@ export function ReportVisualization({
 				<p className="text-muted-foreground text-sm">
 					{definition.settings.title}
 				</p>
-				<p className="text-foreground text-6xl font-semibold tabular-nums">
+				<p className="text-foreground text-6xl tabular-nums">
 					{result.total.toLocaleString()}
 				</p>
 			</div>

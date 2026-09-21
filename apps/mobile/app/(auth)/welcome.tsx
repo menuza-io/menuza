@@ -89,7 +89,7 @@ export default function WelcomeScreen() {
 							Already have an account?{' '}
 						</Text>
 						<TouchableOpacity onPress={handleSignIn} accessibilityRole="link">
-							<Text className="text-primary text-base font-semibold">
+							<Text className="text-primary text-base">
 								Sign In
 							</Text>
 						</TouchableOpacity>
@@ -120,7 +120,7 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 			}}
 		>
 			<Text className="mb-3 text-3xl">{icon}</Text>
-			<Text className="text-foreground mb-2 text-center text-base font-semibold">
+			<Text className="text-foreground mb-2 text-center text-base">
 				{title}
 			</Text>
 			<Text className="text-muted-foreground text-center text-sm leading-5">

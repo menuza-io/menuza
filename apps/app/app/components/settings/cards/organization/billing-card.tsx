@@ -265,7 +265,7 @@ export function BillingCard({
 				<CardContent className="p-0">
 					<Item>
 						<ItemContent>
-							<ItemTitle className="text-base font-semibold">
+							<ItemTitle className="text-base">
 								<Trans>Enterprise Plan</Trans>
 							</ItemTitle>
 							<ItemDescription>

@@ -157,7 +157,7 @@ export default function OnboardingScreen() {
 				<View className="flex-1">
 					<View className="gap-5">
 						<View className="gap-2">
-							<Text className="text-foreground mb-1 text-base font-semibold">
+							<Text className="text-foreground mb-1 text-base">
 								Username
 							</Text>
 							<Controller
@@ -184,7 +184,7 @@ export default function OnboardingScreen() {
 						</View>
 
 						<View className="gap-2">
-							<Text className="text-foreground mb-1 text-base font-semibold">
+							<Text className="text-foreground mb-1 text-base">
 								Full Name
 							</Text>
 							<Controller
@@ -208,7 +208,7 @@ export default function OnboardingScreen() {
 						</View>
 
 						<View className="gap-2">
-							<Text className="text-foreground mb-1 text-base font-semibold">
+							<Text className="text-foreground mb-1 text-base">
 								Password
 							</Text>
 							<Controller
@@ -250,7 +250,7 @@ export default function OnboardingScreen() {
 						</View>
 
 						<View className="gap-2">
-							<Text className="text-foreground mb-1 text-base font-semibold">
+							<Text className="text-foreground mb-1 text-base">
 								Confirm Password
 							</Text>
 							<Controller
@@ -349,7 +349,7 @@ export default function OnboardingScreen() {
 						onPress={handleBackToVerification}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							Back to verification
 						</Text>
 					</TouchableOpacity>

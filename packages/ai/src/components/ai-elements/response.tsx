@@ -198,7 +198,7 @@ const components: Options['components'] = {
 	),
 	h1: ({ children, className, ...props }: any) => (
 		<h1
-			className={cn('mt-6 mb-2 text-3xl font-semibold', className)}
+			className={cn('mt-6 mb-2 text-3xl', className)}
 			{...props}
 		>
 			{children}
@@ -206,32 +206,32 @@ const components: Options['components'] = {
 	),
 	h2: ({ children, className, ...props }: any) => (
 		<h2
-			className={cn('mt-6 mb-2 text-2xl font-semibold', className)}
+			className={cn('mt-6 mb-2 text-2xl', className)}
 			{...props}
 		>
 			{children}
 		</h2>
 	),
 	h3: ({ children, className, ...props }: any) => (
-		<h3 className={cn('mt-6 mb-2 text-xl font-semibold', className)} {...props}>
+		<h3 className={cn('mt-6 mb-2 text-xl', className)} {...props}>
 			{children}
 		</h3>
 	),
 	h4: ({ children, className, ...props }: any) => (
-		<h4 className={cn('mt-6 mb-2 text-lg font-semibold', className)} {...props}>
+		<h4 className={cn('mt-6 mb-2 text-lg', className)} {...props}>
 			{children}
 		</h4>
 	),
 	h5: ({ children, className, ...props }: any) => (
 		<h5
-			className={cn('mt-6 mb-2 text-base font-semibold', className)}
+			className={cn('mt-6 mb-2 text-base', className)}
 			{...props}
 		>
 			{children}
 		</h5>
 	),
 	h6: ({ children, className, ...props }: any) => (
-		<h6 className={cn('mt-6 mb-2 text-sm font-semibold', className)} {...props}>
+		<h6 className={cn('mt-6 mb-2 text-sm', className)} {...props}>
 			{children}
 		</h6>
 	),

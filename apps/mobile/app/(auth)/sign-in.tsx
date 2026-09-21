@@ -165,7 +165,7 @@ export default function SignInScreen() {
 						<View className="bg-destructive/10 border-destructive/30 mb-6 rounded-lg border p-4">
 							<View className="mb-2 flex-row items-center">
 								<Text className="mr-2 text-xl">🔒</Text>
-								<Text className="text-destructive text-base font-semibold">
+								<Text className="text-destructive text-base">
 									<Trans>Account Suspended</Trans>
 								</Text>
 							</View>
@@ -186,7 +186,7 @@ export default function SignInScreen() {
 								accessibilityRole="button"
 								accessibilityLabel={t`Contact Support`}
 							>
-								<Text className="text-sm font-semibold text-white">
+								<Text className="text-sm text-white">
 									<Trans>Contact Support</Trans>
 								</Text>
 							</Pressable>
@@ -219,7 +219,7 @@ export default function SignInScreen() {
 					{/* Login Form */}
 					<View className="gap-4">
 						<View className="gap-2">
-							<Text className="text-foreground text-base font-semibold">
+							<Text className="text-foreground text-base">
 								<Trans>Username</Trans>
 							</Text>
 							<Controller
@@ -246,7 +246,7 @@ export default function SignInScreen() {
 
 						<View className="gap-2">
 							<View className="flex-row items-center justify-between">
-								<Text className="text-foreground text-base font-semibold">
+								<Text className="text-foreground text-base">
 									<Trans>Password</Trans>
 								</Text>
 								<TouchableOpacity
@@ -331,7 +331,7 @@ export default function SignInScreen() {
 						onPress={handleNavigateToSignUp}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							<Trans>Create account</Trans>
 						</Text>
 					</TouchableOpacity>

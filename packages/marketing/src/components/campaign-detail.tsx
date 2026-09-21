@@ -69,7 +69,7 @@ export function CampaignDetailView({
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div className="space-y-2">
 						<div className="flex flex-wrap items-center gap-2">
-							<h1 className="text-2xl font-semibold tracking-tight">
+							<h1 className="text-2xl tracking-tight">
 								{campaign.name}
 							</h1>
 							<CampaignStatusBadge status={campaign.status} />

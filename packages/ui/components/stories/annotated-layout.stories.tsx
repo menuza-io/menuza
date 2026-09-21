@@ -93,7 +93,7 @@ export const ContentOnly: Story = {
 		<AnnotatedLayout>
 			<AnnotatedSection>
 				<div className="bg-card rounded-xl border p-6">
-					<h2 className="text-base font-semibold">Full-width card section</h2>
+					<h2 className="text-base">Full-width card section</h2>
 					<p className="text-muted-foreground mt-1 text-sm">
 						When cards carry their own headers, sections span the full measure —
 						no empty third column.

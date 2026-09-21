@@ -1417,7 +1417,7 @@ function PlanCard({
 						<Trans>{basePriceLabel} billed annually</Trans>
 					</div>
 				)}
-				<h3 className="text-lg font-semibold">{title}</h3>
+				<h3 className="text-lg">{title}</h3>
 			</div>
 			<ul className="text-muted-foreground space-y-2 text-sm">
 				<li>
