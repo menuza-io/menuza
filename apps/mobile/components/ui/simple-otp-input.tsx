@@ -86,7 +86,7 @@ export function SimpleOTPInput({
 					ref={(ref) => {
 						inputRefs.current[index] = ref
 					}}
-					className={`text-foreground bg-background h-12 w-12 rounded-lg border-2 text-center text-lg font-semibold ${
+					className={`text-foreground bg-background h-12 w-12 rounded-lg border-2 text-center text-lg ${
 						focusedIndex === index
 							? 'border-primary bg-slate-50'
 							: 'border-input'

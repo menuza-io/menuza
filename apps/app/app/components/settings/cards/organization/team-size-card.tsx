@@ -65,7 +65,7 @@ export default function TeamSizeCard({
 						<Trans>Team Size</Trans>
 					</CardTitle>
 					<CardDescription>
-						<Trans>Help us tailor recommendations to your organization.</Trans>
+						<Trans>Help us tailor recommendations to your restaurant.</Trans>
 					</CardDescription>
 				</CardHeader>
 				<input type="hidden" name="intent" value="update-team-size" />
@@ -73,7 +73,7 @@ export default function TeamSizeCard({
 				<CardContent className="pt-0">
 					<Field data-invalid={fields.size.errors?.length ? true : undefined}>
 						<FieldLabel htmlFor={fields.size.id}>
-							<Trans>Organization Size</Trans>
+							<Trans>Restaurant Size</Trans>
 						</FieldLabel>
 						<div className="flex flex-col gap-3 sm:flex-row sm:items-start">
 							<div className="min-w-0 flex-1">

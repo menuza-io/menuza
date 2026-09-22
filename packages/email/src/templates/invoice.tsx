@@ -139,12 +139,12 @@ const InvoiceEmail = (props: InvoiceEmailProps) => {
 
 				<Row className="border-border border-t border-solid pt-[16px]">
 					<Column className="w-3/4">
-						<Text className="text-16 text-foreground m-0 text-right font-semibold">
+						<Text className="text-16 text-foreground m-0 text-right">
 							Total
 						</Text>
 					</Column>
 					<Column className="w-1/4">
-						<Text className="text-16 text-foreground m-0 text-right font-semibold">
+						<Text className="text-16 text-foreground m-0 text-right">
 							${props.total}
 						</Text>
 					</Column>

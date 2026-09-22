@@ -134,7 +134,7 @@ export default function OrganizationsScreen() {
 								</View>
 								<View className="ml-3 flex-1">
 									<View className="flex-row items-center">
-										<Text className="text-foreground text-base font-semibold">
+										<Text className="text-foreground text-base">
 											{item.name}
 										</Text>
 										{item.isDefault && (

@@ -29,10 +29,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		throw redirect('/waitlist')
 	}
 
-	// If no organization found, redirect to create one
 	return redirectWithToast('/organizations/create', {
-		title: i18n._(t`Create an organization`),
-		description: i18n._(t`Organizations are used to group your projects.`),
+		title: i18n._(t`Create a restaurant`),
+		description: i18n._(
+			t`Restaurants are used to manage your locations, menus, and orders.`,
+		),
 		type: 'message',
 	})
 }

@@ -58,9 +58,7 @@ export function GeneralSettingsCard({
 					<Trans>General Settings</Trans>
 				</CardTitle>
 				<CardDescription>
-					<Trans>
-						Manage your organization's name, slug, and profile image.
-					</Trans>
+					<Trans>Manage your restaurant's name, slug, and profile image.</Trans>
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="pt-6">

@@ -2315,6 +2315,56 @@ export const Organization = sqliteTable(
 	],
 )
 
+export const OrganizationLocation = sqliteTable(
+	'OrganizationLocation',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		slug: text().notNull(),
+		phone: text(),
+		timezone: text().default('America/New_York').notNull(),
+		taxRate: real().default(0).notNull(),
+		address: text(),
+		storeHours: text(),
+		onlineHours: text(),
+		specialHours: text(),
+		prepTime: integer().default(15).notNull(),
+		largeOrderThreshold: real().default(100),
+		largeOrderThresholdType: text().default('dollars').notNull(),
+		largeOrderExtraPrepTime: integer().default(15).notNull(),
+		fulfillmentOptions: text(),
+		inHouseTips: text(),
+		scheduling: text(),
+		deliveryConfig: text(),
+		deliveryZones: text(),
+		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
+		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationLocation_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationLocation_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+	],
+)
+
 export const PlatformMarketingCampaign = sqliteTable(
 	'PlatformMarketingCampaign',
 	{
@@ -2534,5 +2584,450 @@ export const SavedReport = sqliteTable(
 		),
 		index('SavedReport_scope_updatedAt_idx').on(table.scope, table.updatedAt),
 		index('SavedReport_createdById_idx').on(table.createdById),
+	],
+)
+
+// --- Menu Management System ---
+
+export const OrganizationMenu = sqliteTable(
+	'OrganizationMenu',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		displayName: text().notNull(),
+		internalName: text(),
+		menuType: text().default('online_pos_kiosk').notNull(),
+		nutritionalInfo: integer({ mode: 'boolean' }).default(true).notNull(),
+		specialInstructions: integer({ mode: 'boolean' }).default(true).notNull(),
+		availabilityHours: text(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenu_organizationId_idx').on(table.organizationId),
+	],
+)
+
+export const OrganizationMenuCategory = sqliteTable(
+	'OrganizationMenuCategory',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		displayName: text().notNull(),
+		internalName: text(),
+		description: text(),
+		upsellCategoryIds: text().default('[]').notNull(),
+		availabilityHours: text(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuCategory_organizationId_idx').on(
+			table.organizationId,
+		),
+	],
+)
+
+export const OrganizationMenuCategoryAssignment = sqliteTable(
+	'OrganizationMenuCategoryAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		categoryId: text()
+			.notNull()
+			.references(() => OrganizationMenuCategory.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuCategoryAssignment_menuId_idx').on(table.menuId),
+		index('OrganizationMenuCategoryAssignment_categoryId_idx').on(
+			table.categoryId,
+		),
+		uniqueIndex('OrganizationMenuCategoryAssignment_menu_category_key').on(
+			table.menuId,
+			table.categoryId,
+		),
+	],
+)
+
+export const OrganizationMenuItem = sqliteTable(
+	'OrganizationMenuItem',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		displayName: text().notNull(),
+		internalName: text(),
+		description: text(),
+		price: real().default(0).notNull(),
+		imageKey: text(),
+		imageUrl: text(),
+		imageKeys: text().default('[]').notNull(),
+		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
+		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
+		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
+		allergens: text().default('[]').notNull(),
+		calorieMin: integer(),
+		calorieMax: integer(),
+		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
+		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
+		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuItem_organizationId_idx').on(table.organizationId),
+	],
+)
+
+export const OrganizationMenuItemCategoryAssignment = sqliteTable(
+	'OrganizationMenuItemCategoryAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		categoryId: text()
+			.notNull()
+			.references(() => OrganizationMenuCategory.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		itemId: text()
+			.notNull()
+			.references(() => OrganizationMenuItem.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuItemCategoryAssignment_categoryId_idx').on(
+			table.categoryId,
+		),
+		index('OrganizationMenuItemCategoryAssignment_itemId_idx').on(table.itemId),
+		uniqueIndex('OrganizationMenuItemCategoryAssignment_cat_item_key').on(
+			table.categoryId,
+			table.itemId,
+		),
+	],
+)
+
+export const OrganizationMenuModifierGroup = sqliteTable(
+	'OrganizationMenuModifierGroup',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		internalName: text(),
+		selectionType: text().default('single').notNull(),
+		minSelections: integer().default(0).notNull(),
+		maxSelections: integer(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuModifierGroup_organizationId_idx').on(
+			table.organizationId,
+		),
+	],
+)
+
+export const OrganizationMenuItemModifierGroupAssignment = sqliteTable(
+	'OrganizationMenuItemModifierGroupAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		itemId: text()
+			.notNull()
+			.references(() => OrganizationMenuItem.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		modifierGroupId: text()
+			.notNull()
+			.references(() => OrganizationMenuModifierGroup.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuItemModifierGroupAssignment_itemId_idx').on(
+			table.itemId,
+		),
+		index('OrganizationMenuItemModifierGroupAssignment_modifierGroupId_idx').on(
+			table.modifierGroupId,
+		),
+		uniqueIndex(
+			'OrganizationMenuItemModifierGroupAssignment_item_group_key',
+		).on(table.itemId, table.modifierGroupId),
+	],
+)
+
+export const OrganizationMenuOption = sqliteTable(
+	'OrganizationMenuOption',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		displayName: text().notNull(),
+		internalName: text(),
+		description: text(),
+		imageKey: text(),
+		price: real().default(0).notNull(),
+		priceWhole: real(),
+		priceLeft: real(),
+		priceRight: real(),
+		calories: integer(),
+		minSelections: integer().default(0).notNull(),
+		maxSelections: integer(),
+		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
+		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
+		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
+		isTopping: integer({ mode: 'boolean' }).default(false).notNull(),
+		allergens: text().default('[]').notNull(),
+		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuOption_organizationId_idx').on(table.organizationId),
+	],
+)
+
+export const OrganizationMenuModifierGroupOptionAssignment = sqliteTable(
+	'OrganizationMenuModifierGroupOptionAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		modifierGroupId: text()
+			.notNull()
+			.references(() => OrganizationMenuModifierGroup.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		optionId: text()
+			.notNull()
+			.references(() => OrganizationMenuOption.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		priceOverride: real(),
+		priceWholeOverride: real(),
+		priceLeftOverride: real(),
+		priceRightOverride: real(),
+		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index(
+			'OrganizationMenuModifierGroupOptionAssignment_modifierGroupId_idx',
+		).on(table.modifierGroupId),
+		index('OrganizationMenuModifierGroupOptionAssignment_optionId_idx').on(
+			table.optionId,
+		),
+		uniqueIndex(
+			'OrganizationMenuModifierGroupOptionAssignment_group_option_key',
+		).on(table.modifierGroupId, table.optionId),
+	],
+)
+
+export const OrganizationMenuModifierOption = sqliteTable(
+	'OrganizationMenuModifierOption',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		modifierGroupId: text()
+			.notNull()
+			.references(() => OrganizationMenuModifierGroup.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		displayName: text().notNull(),
+		internalName: text(),
+		description: text(),
+		imageKey: text(),
+		price: real().default(0).notNull(),
+		priceWhole: real(),
+		priceLeft: real(),
+		priceRight: real(),
+		minSelections: integer().default(0).notNull(),
+		maxSelections: integer(),
+		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
+		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
+		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
+		isTopping: integer({ mode: 'boolean' }).default(false).notNull(),
+		allergens: text().default('[]').notNull(),
+		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
+		availabilityStatus: text().default('available').notNull(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuModifierOption_modifierGroupId_idx').on(
+			table.modifierGroupId,
+		),
+	],
+)
+
+export const OrganizationMenuLocationOverride = sqliteTable(
+	'OrganizationMenuLocationOverride',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		entityType: text().notNull(), // 'menu' | 'category' | 'item' | 'modifier_group' | 'modifier_option'
+		entityId: text().notNull(),
+		isEnabled: integer({ mode: 'boolean' }),
+		price: real(),
+		availabilityStatus: text(),
+		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuLocationOverride_locationId_idx').on(
+			table.locationId,
+		),
+		uniqueIndex('OrganizationMenuLocationOverride_loc_entity_key').on(
+			table.locationId,
+			table.entityType,
+			table.entityId,
+		),
 	],
 )

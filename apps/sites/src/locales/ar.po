@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "1. Fulfillment Mode"
+msgstr "١. طريقة الاستلام"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "2. Contact Information"
+msgstr "٢. معلومات الاتصال"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "3. Delivery Address"
+msgstr "٣. عنوان التوصيل"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "الحساب"
@@ -20,6 +32,31 @@ msgstr "الحساب"
 #: src/components/AccountShell.astro.ts:3
 msgid "Account settings"
 msgstr "إعدادات الحساب"
+
+#: src/pages/menu.astro.ts:3
+msgid "Add"
+msgstr "إضافة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Add a Tip for the Team"
+msgstr "إضافة إكرامية للفريق"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "Add to Order"
+msgstr "إضافة إلى الطلب"
+
+#: src/pages/menu.astro.ts:3
+msgid "Any dietary preferences, sauce on the side, etc."
+msgstr "أي تفضيلات غذائية، صلصة جانبية، إلخ."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Apt / Suite / Unit"
+msgstr "شقة / جناح / وحدة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Back to Menu"
+msgstr "العودة إلى القائمة"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
@@ -46,6 +83,14 @@ msgstr "البطاقات المستخدمة في مشتريات المتجر ا�
 msgid "Check your phone"
 msgstr "تحقق من هاتفك"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Checkout"
+msgstr "إتمام الطلب"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "City / Region"
+msgstr "المدينة / المنطقة"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "أكمل التحقق قبل الإرسال."
@@ -54,17 +99,60 @@ msgstr "أكمل التحقق قبل الإرسال."
 msgid "Continue"
 msgstr "متابعة"
 
+#: src/pages/menu.astro.ts:3
+msgid "Currently Closed"
+msgstr "مغلق حاليًا"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize"
+msgstr "تخصيص"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize Item"
+msgstr "تخصيص الصنف"
+
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery"
+msgstr "توصيل"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Fee"
+msgstr "رسوم التوصيل"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery Instructions"
+msgstr "تعليمات التوصيل"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Order"
+msgstr "طلب توصيل"
 
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Email Address *"
+msgstr "البريد الإلكتروني *"
+
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "أدخل رقم هاتفك. سنرسل رمز تحقق."
+
+#: src/pages/menu.astro.ts:3
+msgid "Estimated Tax"
+msgstr "الضريبة المقدرة"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Estimated Time"
+msgstr "الوقت المقدر"
 
 #: src/pages/profile.astro.ts:3
 msgid "Expires"
@@ -74,9 +162,30 @@ msgstr "تنتهي"
 msgid "Expiry"
 msgstr "تاريخ الانتهاء"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Explore Menu"
+msgstr "تصفح القائمة"
+
+#: src/pages/menu.astro.ts:3
+msgid "Explore our menu and add your favorite dishes."
+msgstr "تصفح قائمتنا وأضف أطباقك المفضلة."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Free"
+msgstr "مجاني"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
 msgstr "الاسم الكامل"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Full Name *"
+msgstr "الاسم الكامل *"
+
+#: src/pages/menu.astro.ts:3
+msgid "Gluten-Free"
+msgstr "خالٍ من الغلوتين"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -86,9 +195,25 @@ msgstr "رمز التحقق غير صالح."
 msgid "Language"
 msgstr "اللغة"
 
+#: src/pages/menu.astro.ts:3
+msgid "Left"
+msgstr "النصف الأيسر"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "تسجيل الخروج"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Looks like you haven't added any dishes to your order yet."
+msgstr "يبدو أنك لم تضف أي أطباق إلى طلبك بعد."
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu & Ordering"
+msgstr "القائمة والطلب"
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu Coming Soon"
+msgstr "القائمة قريبًا"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
@@ -114,12 +239,28 @@ msgstr "لا توجد طلبات بعد."
 msgid "No saved payment methods yet."
 msgstr "لا توجد بطاقات محفوظة بعد."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "No Tip"
+msgstr "بدون إكرامية"
+
+#: src/pages/menu.astro.ts:3
+msgid "Open for orders"
+msgstr "مفتوح للطلبات"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "فتح القائمة"
 
+#: src/pages/menu.astro.ts:3
+msgid "Optional"
+msgstr "اختياري"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
+msgstr "تم تأكيد الطلب"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Confirmed"
 msgstr "تم تأكيد الطلب"
 
 #: src/pages/profile.astro.ts:3
@@ -127,10 +268,26 @@ msgstr "تم تأكيد الطلب"
 msgid "Order history"
 msgstr "سجل الطلبات"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Order More Food"
+msgstr "طلب المزيد من الطعام"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Number"
+msgstr "رقم الطلب"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Order Summary"
+msgstr "ملخص الطلب"
+
 #: src/components/AccountShell.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "الطلبات"
+
+#: src/pages/menu.astro.ts:3
+msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
+msgstr "يقوم مطبخنا بإعداد أطباق شهية. تابعنا قريبًا للاطلاع على القائمة الكاملة."
 
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
@@ -149,13 +306,34 @@ msgstr "طرق الدفع"
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Phone Number *"
+msgstr "رقم الهاتف *"
+
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "لا يمكن تغيير رقم الهاتف حالياً."
 
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pickup"
+msgstr "استلام"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup Order"
+msgstr "طلب استلام"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Place Order"
+msgstr "تأكيد الطلب"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
 msgstr "الرئيسي"
+
+#: src/pages/menu.astro.ts:3
+msgid "Proceed to Checkout"
+msgstr "متابعة الدفع"
 
 #: src/pages/shop.astro.ts:3
 msgid "Processing payment..."
@@ -177,9 +355,37 @@ msgstr "المشتريات من المتجر أثناء تسجيل الدخول 
 msgid "Purchases from the shop while signed in."
 msgstr "المشتريات من المتجر أثناء تسجيل الدخول."
 
+#: src/pages/menu.astro.ts:3
+msgid "Quantity"
+msgstr "الكمية"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Receipt"
+msgstr "إيصال الطلب"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "تظهر إيصالات المشتريات المكتملة هنا مع الحالة والمبلغ."
+
+#: src/pages/menu.astro.ts:3
+msgid "Remove"
+msgstr "حذف"
+
+#: src/pages/menu.astro.ts:3
+msgid "Required"
+msgstr "مطلوب"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Return to Homepage"
+msgstr "العودة إلى الصفحة الرئيسية"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Review your order details and enter your contact information to complete your order."
+msgstr "راجع تفاصيل طلبك وأدخل بيانات الاتصال لإتمام طلبك."
+
+#: src/pages/menu.astro.ts:3
+msgid "Right"
+msgstr "النصف الأيمن"
 
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
@@ -189,6 +395,10 @@ msgstr "حفظ التغييرات"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
+msgstr "دفع آمن. بإتمام الطلب فإنك توافق على شروط وأحكام المطعم."
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
@@ -217,9 +427,32 @@ msgstr "تسجيل الدخول"
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
 
+#: src/pages/menu.astro.ts:3
+msgid "Special Instructions"
+msgstr "تعليمات خاصة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Street Address *"
+msgstr "عنوان الشارع *"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
 msgstr "جارٍ الإرسال..."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Subtotal"
+msgstr "المجموع الفرعي"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tax"
+msgstr "الضريبة"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Thank you for your order!"
+msgstr "شكرًا لطلبك!"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
@@ -232,6 +465,20 @@ msgstr "هذا النموذج غير متاح حاليًا."
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "هذا المتجر غير متاح حاليًا."
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tip"
+msgstr "الإكرامية"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Total"
+msgstr "المجموع الإجمالي"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Total Paid"
+msgstr "الإجمالي المدفوع"
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -249,6 +496,10 @@ msgstr "حدّث بياناتك الأساسية أدناه."
 msgid "Use a new card"
 msgstr "استخدام بطاقة جديدة"
 
+#: src/pages/menu.astro.ts:3
+msgid "Vegetarian"
+msgstr "نباتي"
+
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
 msgstr "رمز التحقق"
@@ -261,6 +512,10 @@ msgstr "تحقق"
 msgid "Verifying..."
 msgstr "جارٍ التحقق..."
 
+#: src/pages/menu.astro.ts:3
+msgid "View Order"
+msgstr "عرض الطلب"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "تعذّر تأكيد هذا الطلب."
@@ -268,6 +523,10 @@ msgstr "تعذّر تأكيد هذا الطلب."
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "سنستخدمه في ملفك الشخصي. يمكنك تغييره لاحقاً."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We've received your order and our kitchen is preparing your meal."
+msgstr "لقد استلمنا طلبك ومطبخنا يقوم بإعداد وجبتك الآن."
 
 #: src/pages/verify.astro.ts:3
 msgid "We've sent a 6-digit code to"
@@ -280,6 +539,22 @@ msgstr "ما اسمك؟"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "عندما تشتري شيئاً من المتجر، ستظهر إيصالاتك هنا."
+
+#: src/pages/menu.astro.ts:3
+msgid "Whole"
+msgstr "كاملة"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your cart is empty"
+msgstr "سلة طلباتك فارغة"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your Order"
+msgstr "طلبك"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Your Order is Empty"
+msgstr "سلة طلباتك فارغة"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

@@ -75,7 +75,7 @@ export default function DashboardScreen() {
 					{/* Quick Actions */}
 					<Card className="mb-4">
 						<CardHeader>
-							<Text className="text-foreground text-lg font-semibold">
+							<Text className="text-foreground text-lg">
 								<Trans>Quick Actions</Trans>
 							</Text>
 						</CardHeader>
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
 					<Card className="mb-4">
 						<CardHeader>
 							<View className="flex-row items-center justify-between">
-								<Text className="text-foreground text-lg font-semibold">
+								<Text className="text-foreground text-lg">
 									<Trans>Your Organizations</Trans>
 								</Text>
 								<TouchableOpacity
@@ -140,18 +140,18 @@ export default function DashboardScreen() {
 											}`}
 										>
 											<View className="bg-primary/10 h-10 w-10 items-center justify-center rounded-full">
-												<Text className="text-primary font-semibold">
+												<Text className="text-primary">
 													{org.name.charAt(0).toUpperCase()}
 												</Text>
 											</View>
 											<View className="ml-3 flex-1">
 												<View className="flex-row items-center">
-													<Text className="text-foreground text-sm font-semibold">
+													<Text className="text-foreground text-sm">
 														{org.name}
 													</Text>
 													{org.isDefault && (
 														<View className="bg-primary ml-2 rounded-full px-2 py-0.5">
-															<Text className="text-primary-foreground text-[10px] font-semibold uppercase">
+															<Text className="text-primary-foreground text-[10px] uppercase">
 																<Trans>Current</Trans>
 															</Text>
 														</View>

@@ -63,6 +63,18 @@ import {
 	NotificationPreference,
 	Notification,
 	SavedReport,
+	OrganizationLocation,
+	OrganizationMenu,
+	OrganizationMenuCategory,
+	OrganizationMenuCategoryAssignment,
+	OrganizationMenuItem,
+	OrganizationMenuItemCategoryAssignment,
+	OrganizationMenuModifierGroup,
+	OrganizationMenuItemModifierGroupAssignment,
+	OrganizationMenuOption,
+	OrganizationMenuModifierGroupOptionAssignment,
+	OrganizationMenuModifierOption,
+	OrganizationMenuLocationOverride,
 } from './schema.ts'
 
 export const NoteRelations = relations(Note, ({ one, many }) => ({
@@ -254,7 +266,25 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	notificationPreferences: many(NotificationPreference),
 	notifications: many(Notification),
 	savedReports: many(SavedReport),
+	locations: many(OrganizationLocation),
+	menus: many(OrganizationMenu),
+	menuCategories: many(OrganizationMenuCategory),
+	menuItems: many(OrganizationMenuItem),
+	menuModifierGroups: many(OrganizationMenuModifierGroup),
+	menuOptions: many(OrganizationMenuOption),
+	menuLocationOverrides: many(OrganizationMenuLocationOverride),
 }))
+
+export const OrganizationLocationRelations = relations(
+	OrganizationLocation,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationLocation.organizationId],
+			references: [Organization.id],
+		}),
+		menuOverrides: many(OrganizationMenuLocationOverride),
+	}),
+)
 
 export const UtmSourceRelations = relations(UtmSource, ({ one }) => ({
 	user: one(User, {
@@ -863,6 +893,147 @@ export const WebsiteNotFoundLogRelations = relations(
 		organization: one(Organization, {
 			fields: [WebsiteNotFoundLog.organizationId],
 			references: [Organization.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuRelations = relations(
+	OrganizationMenu,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenu.organizationId],
+			references: [Organization.id],
+		}),
+		categoryAssignments: many(OrganizationMenuCategoryAssignment),
+	}),
+)
+
+export const OrganizationMenuCategoryRelations = relations(
+	OrganizationMenuCategory,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuCategory.organizationId],
+			references: [Organization.id],
+		}),
+		menuAssignments: many(OrganizationMenuCategoryAssignment),
+		itemAssignments: many(OrganizationMenuItemCategoryAssignment),
+	}),
+)
+
+export const OrganizationMenuCategoryAssignmentRelations = relations(
+	OrganizationMenuCategoryAssignment,
+	({ one }) => ({
+		menu: one(OrganizationMenu, {
+			fields: [OrganizationMenuCategoryAssignment.menuId],
+			references: [OrganizationMenu.id],
+		}),
+		category: one(OrganizationMenuCategory, {
+			fields: [OrganizationMenuCategoryAssignment.categoryId],
+			references: [OrganizationMenuCategory.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuItemRelations = relations(
+	OrganizationMenuItem,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuItem.organizationId],
+			references: [Organization.id],
+		}),
+		categoryAssignments: many(OrganizationMenuItemCategoryAssignment),
+		modifierGroupAssignments: many(OrganizationMenuItemModifierGroupAssignment),
+	}),
+)
+
+export const OrganizationMenuItemCategoryAssignmentRelations = relations(
+	OrganizationMenuItemCategoryAssignment,
+	({ one }) => ({
+		category: one(OrganizationMenuCategory, {
+			fields: [OrganizationMenuItemCategoryAssignment.categoryId],
+			references: [OrganizationMenuCategory.id],
+		}),
+		item: one(OrganizationMenuItem, {
+			fields: [OrganizationMenuItemCategoryAssignment.itemId],
+			references: [OrganizationMenuItem.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuModifierGroupRelations = relations(
+	OrganizationMenuModifierGroup,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuModifierGroup.organizationId],
+			references: [Organization.id],
+		}),
+		options: many(OrganizationMenuModifierOption),
+		optionAssignments: many(OrganizationMenuModifierGroupOptionAssignment),
+		itemAssignments: many(OrganizationMenuItemModifierGroupAssignment),
+	}),
+)
+
+export const OrganizationMenuOptionRelations = relations(
+	OrganizationMenuOption,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuOption.organizationId],
+			references: [Organization.id],
+		}),
+		modifierGroupAssignments: many(
+			OrganizationMenuModifierGroupOptionAssignment,
+		),
+	}),
+)
+
+export const OrganizationMenuModifierGroupOptionAssignmentRelations = relations(
+	OrganizationMenuModifierGroupOptionAssignment,
+	({ one }) => ({
+		modifierGroup: one(OrganizationMenuModifierGroup, {
+			fields: [OrganizationMenuModifierGroupOptionAssignment.modifierGroupId],
+			references: [OrganizationMenuModifierGroup.id],
+		}),
+		option: one(OrganizationMenuOption, {
+			fields: [OrganizationMenuModifierGroupOptionAssignment.optionId],
+			references: [OrganizationMenuOption.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuItemModifierGroupAssignmentRelations = relations(
+	OrganizationMenuItemModifierGroupAssignment,
+	({ one }) => ({
+		item: one(OrganizationMenuItem, {
+			fields: [OrganizationMenuItemModifierGroupAssignment.itemId],
+			references: [OrganizationMenuItem.id],
+		}),
+		modifierGroup: one(OrganizationMenuModifierGroup, {
+			fields: [OrganizationMenuItemModifierGroupAssignment.modifierGroupId],
+			references: [OrganizationMenuModifierGroup.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuModifierOptionRelations = relations(
+	OrganizationMenuModifierOption,
+	({ one }) => ({
+		modifierGroup: one(OrganizationMenuModifierGroup, {
+			fields: [OrganizationMenuModifierOption.modifierGroupId],
+			references: [OrganizationMenuModifierGroup.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuLocationOverrideRelations = relations(
+	OrganizationMenuLocationOverride,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuLocationOverride.organizationId],
+			references: [Organization.id],
+		}),
+		location: one(OrganizationLocation, {
+			fields: [OrganizationMenuLocationOverride.locationId],
+			references: [OrganizationLocation.id],
 		}),
 	}),
 )

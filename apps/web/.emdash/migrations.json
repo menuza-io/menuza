@@ -90,9 +90,9 @@
 	},
 	"database": {
 		"type": "sqlite",
-		"executorEntrypoint": "@emdash-cms/cloudflare/db/d1-migrations",
+		"executorEntrypoint": "emdash/db/sqlite-migrations",
 		"executorConfig": {
-			"binding": "DB"
+			"url": "file:./.emdash/data.db"
 		}
 	}
 }

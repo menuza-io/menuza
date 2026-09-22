@@ -37,6 +37,21 @@
       "import": "./src/sidebar-cookie.server.ts",
       "default": "./src/sidebar-cookie.server.ts"
     },
+    "./location-types": {
+      "types": "./src/location-types.ts",
+      "import": "./src/location-types.ts",
+      "default": "./src/location-types.ts"
+    },
+    "./location-currency": {
+      "types": "./src/location-currency.ts",
+      "import": "./src/location-currency.ts",
+      "default": "./src/location-currency.ts"
+    },
+    "./menu-types": {
+      "types": "./src/menu-types.ts",
+      "import": "./src/menu-types.ts",
+      "default": "./src/menu-types.ts"
+    },
     "./toast": {
       "types": "./src/toast.server.ts",
       "import": "./src/toast.server.ts",
@@ -131,6 +146,11 @@
       "types": "./src/vitest-env.ts",
       "import": "./src/vitest-env.ts",
       "default": "./src/vitest-env.ts"
+    },
+    "./location-availability": {
+      "types": "./src/location-availability.ts",
+      "import": "./src/location-availability.ts",
+      "default": "./src/location-availability.ts"
     }
   },
   "scripts": {

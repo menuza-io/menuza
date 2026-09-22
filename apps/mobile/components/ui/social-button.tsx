@@ -92,9 +92,7 @@ export function SocialButton({
 				) : (
 					<Ionicons name={config.icon} size={20} color={config.textColor} />
 				)}
-				<Text className="text-base font-semibold text-white">
-					{getButtonText()}
-				</Text>
+				<Text className="text-base text-white">{getButtonText()}</Text>
 			</View>
 		</TouchableOpacity>
 	)

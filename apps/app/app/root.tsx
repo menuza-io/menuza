@@ -24,10 +24,13 @@ import { getToast } from '@repo/common/toast'
 import { brand, getErrorTitle } from '@repo/config/brand'
 import {
 	and,
+	asc,
 	db,
+	desc,
 	eq,
 	inArray,
 	Organization,
+	OrganizationLocation,
 	OrganizationNote,
 	OrganizationNoteFavorite,
 	Permission,
@@ -374,6 +377,32 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		}
 	}
 
+	const currentOrgSlug =
+		userOrganizations?.currentOrganization?.organization.slug
+	const [locations, selectedLocationId] = await Promise.all([
+		currentOrgId
+			? db
+					.select({
+						id: OrganizationLocation.id,
+						name: OrganizationLocation.name,
+						slug: OrganizationLocation.slug,
+						isDefault: OrganizationLocation.isDefault,
+						isActive: OrganizationLocation.isActive,
+					})
+					.from(OrganizationLocation)
+					.where(eq(OrganizationLocation.organizationId, currentOrgId))
+					.orderBy(
+						desc(OrganizationLocation.isDefault),
+						asc(OrganizationLocation.createdAt),
+					)
+			: [],
+		currentOrgSlug
+			? (
+					await import('./utils/location/location-cookie.server.ts')
+				).getSelectedLocation(request, currentOrgSlug)
+			: 'all',
+	])
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -416,6 +445,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			honeyProps,
 			locale,
 			userOrganizations,
+			locations,
+			selectedLocationId,
 			favoriteNotes,
 			impersonationInfo,
 			cookieConsent,

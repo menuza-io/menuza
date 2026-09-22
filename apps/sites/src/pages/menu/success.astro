@@ -1,0 +1,202 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import SitePage from '~/components/SitePage.astro'
+import { siteBtnPrimary, siteBtnGhost, siteContainer } from '~/lib/media'
+import { siteCardClass } from '~/lib/form-classes'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const requestedLocale =
+	Astro.locals.requestedLocale ||
+	organization?.locale ||
+	organization?.defaultLocale ||
+	'en'
+const defaultLocale = organization?.defaultLocale || 'en'
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
+const homeHref = getLocaleHref('/', requestedLocale, defaultLocale)
+
+const successTitle = i18n._(msg`Order Confirmed`)
+const thankYouTitle = i18n._(msg`Thank you for your order!`)
+const thankYouDesc = i18n._(msg`We've received your order and our kitchen is preparing your meal.`)
+const orderNumLabel = i18n._(msg`Order Number`)
+const estTimeLabel = i18n._(msg`Estimated Time`)
+const receiptTitle = i18n._(msg`Receipt`)
+const subtotalText = i18n._(msg`Subtotal`)
+const taxText = i18n._(msg`Tax`)
+const deliveryFeeText = i18n._(msg`Delivery Fee`)
+const tipText = i18n._(msg`Tip`)
+const totalPaidText = i18n._(msg`Total Paid`)
+const orderMoreLabel = i18n._(msg`Order More Food`)
+const returnHomeLabel = i18n._(msg`Return to Homepage`)
+const pickupOrderText = i18n._(msg`Pickup Order`)
+const deliveryOrderText = i18n._(msg`Delivery Order`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'success', title: successTitle, slug: 'menu/success', isHomePage: false, sections: [] }}
+	title={`${successTitle} - ${organization.name}`}
+>
+	<div class="min-h-screen bg-background py-12 sm:py-20">
+		<div class:list={[siteContainer, "max-w-xl text-center space-y-8"]}>
+			{/* Celebration Badge */}
+			<div class="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-md">
+				<svg xmlns="http://www.w3.org/2000/svg" class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+			</div>
+
+			<div class="space-y-2">
+				<span class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+					{successTitle}
+				</span>
+				<h1 class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+					{thankYouTitle}
+				</h1>
+				<p class="text-sm text-muted-foreground">
+					{thankYouDesc}
+				</p>
+			</div>
+
+			{/* Order Details Card */}
+			<div id="order-summary-card" class:list={[siteCardClass, "text-start space-y-6"]}>
+				<div class="flex items-center justify-between border-b border-border pb-4">
+					<div>
+						<p class="text-xs text-muted-foreground uppercase">{orderNumLabel}</p>
+						<p id="order-num" class="font-heading text-lg font-bold text-foreground">#ORD-XXXXX</p>
+					</div>
+					<div class="text-end">
+						<p class="text-xs text-muted-foreground uppercase">{estTimeLabel}</p>
+						<p id="order-est-time" class="font-heading text-sm text-emerald-600 dark:text-emerald-400">~25-35 minutes</p>
+					</div>
+				</div>
+
+				{/* Fulfillment Info */}
+				<div class="rounded-lg bg-muted/40 p-3 text-xs space-y-1">
+					<p class="font-semibold text-foreground flex items-center gap-1.5" id="order-mode-text">
+						🥡 {pickupOrderText}
+					</p>
+					<p class="text-muted-foreground" id="order-recipient-text">
+						Guest
+					</p>
+				</div>
+
+				{/* Receipt Breakdown */}
+				<div class="space-y-3">
+					<h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">{receiptTitle}</h3>
+					<div id="order-items-list" class="space-y-2 divide-y divide-border/60 text-xs">
+						<!-- Injected via client script -->
+					</div>
+					<div class="border-t border-border pt-3 space-y-1.5 text-xs text-muted-foreground">
+						<div class="flex justify-between">
+							<span>{subtotalText}</span>
+							<span id="order-subtotal" class="font-medium text-foreground">$0.00</span>
+						</div>
+						<div class="flex justify-between">
+							<span>{taxText}</span>
+							<span id="order-tax" class="font-medium text-foreground">$0.00</span>
+						</div>
+						<div id="order-deliv-row" class="flex justify-between hidden">
+							<span>{deliveryFeeText}</span>
+							<span id="order-delivery-fee" class="font-medium text-foreground">$0.00</span>
+						</div>
+						<div class="flex justify-between">
+							<span>{tipText}</span>
+							<span id="order-tip" class="font-medium text-foreground">$0.00</span>
+						</div>
+						<div class="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
+							<span>{totalPaidText}</span>
+							<span id="order-total">$0.00</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+				<a href={menuHref} class:list={[siteBtnPrimary, "w-full sm:w-auto px-6 py-2.5"]}>
+					{orderMoreLabel}
+				</a>
+				<a href={homeHref} class:list={[siteBtnGhost, "w-full sm:w-auto px-6 py-2.5"]}>
+					{returnHomeLabel}
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<script id="success-labels" type="application/json" is:inline set:html={JSON.stringify({ locale: requestedLocale, pickupOrder: pickupOrderText, deliveryOrder: deliveryOrderText })} />
+
+	<script>
+		try {
+			const labelsEl = document.getElementById('success-labels')
+			const labels = labelsEl ? JSON.parse(labelsEl.textContent || '{}') : {}
+			const saved = localStorage.getItem('menuza_recent_order')
+			if (saved) {
+				const order = JSON.parse(saved)
+				const formatCurrency = (num: number) => {
+					const valid = Number.isFinite(num) ? num : 0
+					const sign = valid < 0 ? '-' : ''
+					return `${sign}$${Math.abs(valid).toLocaleString('en-US', {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					})}`
+				}
+
+				const orderNumEl = document.getElementById('order-num')
+				const estTimeEl = document.getElementById('order-est-time')
+				const modeTextEl = document.getElementById('order-mode-text')
+				const recipientTextEl = document.getElementById('order-recipient-text')
+				const itemsListEl = document.getElementById('order-items-list')
+				const subtotalEl = document.getElementById('order-subtotal')
+				const taxEl = document.getElementById('order-tax')
+				const delivRow = document.getElementById('order-deliv-row')
+				const delivFeeEl = document.getElementById('order-delivery-fee')
+				const tipEl = document.getElementById('order-tip')
+				const totalEl = document.getElementById('order-total')
+
+				if (orderNumEl) orderNumEl.textContent = `#${order.orderNumber}`
+				if (estTimeEl) {
+					estTimeEl.textContent = order.mode === 'delivery' ? '~35-45 minutes' : '~15-25 minutes'
+				}
+				if (modeTextEl) {
+					modeTextEl.textContent = order.mode === 'delivery' ? `🚗 ${labels.deliveryOrder || 'Delivery Order'}` : `🥡 ${labels.pickupOrder || 'Pickup Order'}`
+				}
+				if (recipientTextEl) {
+					recipientTextEl.textContent = `${order.customerName} • ${order.customerPhone}${
+						order.deliveryAddress ? ` • Deliver to: ${order.deliveryAddress}` : ''
+					}`
+				}
+
+				if (itemsListEl && order.items) {
+					itemsListEl.innerHTML = order.items
+						.map(
+							(it: any) => `
+						<div class="pt-2 first:pt-0 flex justify-between items-start">
+							<div>
+								<span class="font-medium text-foreground">${it.quantity}x ${it.name}</span>
+								${it.options && it.options.length > 0 ? `<p class="text-[11px] text-muted-foreground">${it.options.map((o: any) => o.optionName).join(', ')}</p>` : ''}
+							</div>
+							<span class="font-semibold text-foreground">${formatCurrency(it.unitPrice * it.quantity)}</span>
+						</div>
+					`,
+						)
+						.join('')
+				}
+
+				if (subtotalEl) subtotalEl.textContent = formatCurrency(order.subtotal || 0)
+				if (taxEl) taxEl.textContent = formatCurrency(order.tax || 0)
+				if (delivRow && delivFeeEl) {
+					if (order.mode === 'delivery') {
+						delivRow.classList.remove('hidden')
+						delivFeeEl.textContent = formatCurrency(order.deliveryFee || 0)
+					}
+				}
+				if (tipEl) tipEl.textContent = formatCurrency(order.tip || 0)
+				if (totalEl) totalEl.textContent = formatCurrency(order.total || 0)
+			}
+		} catch {}
+	</script>
+</SitePage>

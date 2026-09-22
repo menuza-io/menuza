@@ -28,9 +28,7 @@ export const Default: Story = {
 				className="w-[350px] space-y-2"
 			>
 				<div className="flex items-center justify-between space-x-4">
-					<h4 className="text-sm font-semibold">
-						@peduarte starred 3 repositories
-					</h4>
+					<h4 className="text-sm">@peduarte starred 3 repositories</h4>
 					<CollapsibleTrigger
 						render={
 							<Button variant="ghost" size="sm">

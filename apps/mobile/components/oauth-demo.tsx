@@ -54,9 +54,7 @@ export function OAuthDemo() {
 				</Text>
 
 				<View className="bg-secondary mb-6 items-center rounded-lg p-5">
-					<Text className="text-foreground mb-1 text-lg font-semibold">
-						{user.email}
-					</Text>
+					<Text className="text-foreground mb-1 text-lg">{user.email}</Text>
 					<Text className="text-muted-foreground mb-1 text-base">
 						@{user.username}
 					</Text>
@@ -99,7 +97,7 @@ export function OAuthDemo() {
 					})
 				) : (
 					<View className="rounded-lg border border-yellow-500 bg-yellow-100 p-5">
-						<Text className="mb-2 text-center text-base font-semibold text-yellow-800">
+						<Text className="mb-2 text-center text-base text-yellow-800">
 							No OAuth providers configured
 						</Text>
 						<Text className="text-center text-sm leading-5 text-yellow-800">
@@ -111,7 +109,7 @@ export function OAuthDemo() {
 			</View>
 
 			<View className="border-border bg-card rounded-lg border p-4">
-				<Text className="text-foreground mb-2 text-sm font-semibold">
+				<Text className="text-foreground mb-2 text-sm">
 					Available Providers:
 				</Text>
 				{configuredProviders.map((provider) => {

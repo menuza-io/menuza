@@ -183,9 +183,7 @@ export default function VerifyEmailScreen() {
 						onPress={handleBackToSignIn}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
-							Back to sign in
-						</Text>
+						<Text className="text-primary text-base">Back to sign in</Text>
 					</TouchableOpacity>
 				</View>
 			</ScrollView>

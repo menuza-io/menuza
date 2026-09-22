@@ -1137,7 +1137,7 @@ export default function WebsiteRedirectsRoute() {
 					className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
 				>
 					<SheetHeader className="border-b px-6 py-4.5">
-						<SheetTitle className="text-base font-semibold">
+						<SheetTitle className="text-base">
 							{editingRedirect ? _(t`Edit redirect`) : _(t`New redirect`)}
 						</SheetTitle>
 						<SheetDescription className="text-muted-foreground text-xs">
@@ -1347,9 +1347,7 @@ export default function WebsiteRedirectsRoute() {
 												: 'text-muted-foreground hover:text-foreground',
 										)}
 									>
-										<span className="text-xs font-semibold">
-											301 · Permanent
-										</span>
+										<span className="text-xs">301 · Permanent</span>
 										<span className="text-muted-foreground mt-0.5 text-[11px] font-normal">
 											<Trans>Transfers search rank</Trans>
 										</span>
@@ -1364,9 +1362,7 @@ export default function WebsiteRedirectsRoute() {
 												: 'text-muted-foreground hover:text-foreground',
 										)}
 									>
-										<span className="text-xs font-semibold">
-											302 · Temporary
-										</span>
+										<span className="text-xs">302 · Temporary</span>
 										<span className="text-muted-foreground mt-0.5 text-[11px] font-normal">
 											<Trans>Keeps original indexing</Trans>
 										</span>

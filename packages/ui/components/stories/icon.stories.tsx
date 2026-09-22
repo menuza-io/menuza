@@ -441,7 +441,7 @@ export const IconCategories: Story = {
 					<div className="space-y-8">
 						{Object.entries(filteredCategories).map(([category, icons]) => (
 							<div key={category}>
-								<h3 className="mb-4 text-lg font-semibold">{category}</h3>
+								<h3 className="mb-4 text-lg">{category}</h3>
 								<div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
 									{icons.map((iconName) => (
 										<div

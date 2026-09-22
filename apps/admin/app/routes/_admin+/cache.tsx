@@ -513,7 +513,7 @@ export default function CacheAdminRoute() {
 								name="database"
 								className="text-muted-foreground mb-4 h-12 w-12"
 							/>
-							<h2 className="mb-2 text-lg font-semibold">
+							<h2 className="mb-2 text-lg">
 								<Trans>No cache entries found</Trans>
 							</h2>
 							<p className="text-muted-foreground text-center">
