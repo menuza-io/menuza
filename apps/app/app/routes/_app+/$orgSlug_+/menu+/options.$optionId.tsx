@@ -338,6 +338,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			.delete(OrganizationMenuLocationOverride)
 			.where(
 				and(
+					eq(OrganizationMenuLocationOverride.organizationId, organization.id),
 					eq(OrganizationMenuLocationOverride.entityType, 'modifier_option'),
 					eq(OrganizationMenuLocationOverride.entityId, optionId),
 				),

@@ -23,6 +23,7 @@ import {
 } from 'react-router'
 import { CategoryForm } from '#app/components/menu/category-form.tsx'
 import {
+	assertCategoryIdsInOrganization,
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertMenuInOrganization,
@@ -144,6 +145,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	await assertCategoryIdsInOrganization(organization.id, data.upsellCategoryIds)
 	await assertItemIdsInOrganization(organization.id, data.assignedItemIds)
 	for (const menuId of data.assignedMenuIds) {
 		await assertMenuInOrganization(organization.id, menuId)

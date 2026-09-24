@@ -26,7 +26,6 @@ import { ModifierForm } from '#app/components/menu/modifier-form.tsx'
 import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
-	assertOptionIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -158,12 +157,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			: null
 	const overrideEntries = Object.values(data.locationOverrides ?? {})
 
-	await assertOptionIdsInOrganization(
-		organization.id,
-		options
-			.map((opt) => opt.id)
-			.filter((id): id is string => typeof id === 'string'),
-	)
 	await assertItemIdsInOrganization(organization.id, assignedItemIds)
 	await assertLocationIdsInOrganization(
 		organization.id,

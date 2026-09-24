@@ -54,6 +54,7 @@ import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const DeleteCategorySchema = z.object({
 	intent: z.literal('delete-category'),
@@ -95,6 +96,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
+		slug: true,
 	})
 
 	const formData = await request.formData()
@@ -112,6 +114,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				eq(OrganizationMenuCategory.organizationId, organization.id),
 			),
 		)
+
+	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return Response.json({ success: true })
 }

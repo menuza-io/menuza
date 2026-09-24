@@ -127,7 +127,7 @@ const deliveryOrderText = i18n._(msg`Delivery Order`)
 		</div>
 	</div>
 
-	<script id="success-labels" type="application/json" is:inline set:html={JSON.stringify({ locale: requestedLocale, pickupOrder: pickupOrderText, deliveryOrder: deliveryOrderText })} />
+	<script id="success-labels" type="application/json" is:inline set:html={JSON.stringify({ locale: requestedLocale, pickupOrder: pickupOrderText, deliveryOrder: deliveryOrderText }).replace(/</g, '\\u003c')} />
 
 	<script>
 		try {
