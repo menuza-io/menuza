@@ -2,8 +2,7 @@ import path from 'node:path'
 import { db, eq, Organization, OrganizationLocation } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 
-const SCREENSHOTS_DIR =
-	'/Users/zama/.gemini/antigravity/brain/9582b1c2-9a30-4e4d-9f43-932e789f70db/screenshots'
+const SCREENSHOTS_DIR = 'test-results/audit'
 
 test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 	test('renders customer-facing menu, customization modal, cart drawer, and checkout in Arabic with RTL layout', async ({
@@ -29,10 +28,9 @@ test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 		})
 
 		// A. Validate HTML lang and dir attributes
-		const htmlLang = await page.getAttribute('html', 'lang')
-		const htmlDir = await page.getAttribute('html', 'dir')
-		expect(htmlLang).toBe('ar')
-		expect(htmlDir).toBe('rtl')
+		const html = page.locator('html')
+		await expect(html).toHaveAttribute('lang', 'ar')
+		await expect(html).toHaveAttribute('dir', 'rtl')
 
 		// B. Validate Translated Title and Headings
 		await expect(page).toHaveTitle(/القائمة والطلب/)
@@ -167,8 +165,7 @@ test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 
 		// Validate Checkout Page is in Arabic
 		expect(page.url()).toContain('/ar/menu/checkout')
-		const checkoutHtmlDir = await page.getAttribute('html', 'dir')
-		expect(checkoutHtmlDir).toBe('rtl')
+		await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
 		await expect(page).toHaveTitle(/إتمام الطلب/)
 
 		await expect(
@@ -209,8 +206,7 @@ test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 
 		// Validate Success Page is in Arabic
 		expect(page.url()).toContain('/ar/menu/success')
-		const successHtmlDir = await page.getAttribute('html', 'dir')
-		expect(successHtmlDir).toBe('rtl')
+		await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
 		await expect(page).toHaveTitle(/تم تأكيد الطلب/)
 
 		await expect(

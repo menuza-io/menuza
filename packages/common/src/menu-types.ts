@@ -103,26 +103,51 @@ export const AvailabilityStatusSchema = z.enum(AVAILABILITY_STATUSES)
 export const MenuTypeSchema = z.enum(MENU_TYPES)
 export const ModifierSelectionTypeSchema = z.enum(MODIFIER_SELECTION_TYPES)
 
+// HTML forms submit the empty string for cleared optional controls. Treat that
+// as "no value" instead of coercing it into an Invalid Date / NaN, while still
+// rejecting genuinely malformed input (e.g. `"not-a-date"`).
+const emptyStringToNull = (value: unknown) =>
+	value === '' || value === undefined ? null : value
+
+const OptionalDateInputSchema = z.preprocess(
+	emptyStringToNull,
+	z.coerce.date().nullable(),
+)
+
+const OptionalCountInputSchema = z.preprocess(
+	emptyStringToNull,
+	z.coerce.number().int().min(0).nullable(),
+)
+
+const LocationOverrideInputSchema = z.object({
+	locationId: z.string(),
+	isEnabled: z.boolean().nullable().optional(),
+	price: z.coerce.number().min(0).nullable().optional(),
+	availabilityStatus: AvailabilityStatusSchema.nullable().optional(),
+	unavailableUntil: OptionalDateInputSchema,
+})
+
 export const ModifierOptionInputSchema = z.object({
 	id: z.string().optional(),
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
 	description: z.string().optional(),
 	imageKey: z.string().optional().nullable(),
-	price: z.coerce.number().min(0).default(0),
-	priceWhole: z.coerce.number().min(0).optional().nullable(),
-	priceLeft: z.coerce.number().min(0).optional().nullable(),
-	priceRight: z.coerce.number().min(0).optional().nullable(),
-	minSelections: z.coerce.number().min(0).default(0),
-	maxSelections: z.coerce.number().min(0).optional().nullable(),
+	price: z.coerce.number().finite().min(0).default(0),
+	priceWhole: z.coerce.number().finite().min(0).optional().nullable(),
+	priceLeft: z.coerce.number().finite().min(0).optional().nullable(),
+	priceRight: z.coerce.number().finite().min(0).optional().nullable(),
+	minSelections: z.coerce.number().int().min(0).default(0),
+	maxSelections: OptionalCountInputSchema,
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
 	isTopping: z.boolean().default(false),
+	isDefault: z.boolean().default(false),
 	allergens: z.array(AllergenSchema).default([]),
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	position: z.number().default(0),
 })
 
@@ -135,13 +160,13 @@ export const MenuOptionInputSchema = z.object({
 	description: z.string().optional(),
 	imageKey: z.string().optional().nullable(),
 	imageUrl: z.string().optional().nullable(),
-	price: z.coerce.number().min(0).default(0),
-	priceWhole: z.coerce.number().min(0).optional().nullable(),
-	priceLeft: z.coerce.number().min(0).optional().nullable(),
-	priceRight: z.coerce.number().min(0).optional().nullable(),
-	calories: z.coerce.number().min(0).optional().nullable(),
-	minSelections: z.coerce.number().min(0).default(0),
-	maxSelections: z.coerce.number().min(0).optional().nullable(),
+	price: z.coerce.number().finite().min(0).default(0),
+	priceWhole: z.coerce.number().finite().min(0).optional().nullable(),
+	priceLeft: z.coerce.number().finite().min(0).optional().nullable(),
+	priceRight: z.coerce.number().finite().min(0).optional().nullable(),
+	calories: OptionalCountInputSchema,
+	minSelections: z.coerce.number().int().min(0).default(0),
+	maxSelections: OptionalCountInputSchema,
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
@@ -149,18 +174,10 @@ export const MenuOptionInputSchema = z.object({
 	allergens: z.array(AllergenSchema).default([]),
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	modifierGroupIds: z.array(z.string()).default([]),
 	locationOverrides: z
-		.record(
-			z.string(),
-			z.object({
-				isEnabled: z.boolean().nullable().optional(),
-				price: z.coerce.number().nullable().optional(),
-				availabilityStatus: AvailabilityStatusSchema.nullable().optional(),
-				unavailableUntil: z.coerce.date().optional().nullable(),
-			}),
-		)
+		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
 	position: z.number().default(0),
 })
@@ -172,12 +189,16 @@ export const ModifierGroupInputSchema = z.object({
 	name: z.string().min(1, 'Group name is required'),
 	internalName: z.string().optional(),
 	selectionType: ModifierSelectionTypeSchema.default('single'),
-	minSelections: z.coerce.number().min(0).default(0),
-	maxSelections: z.coerce.number().min(0).optional().nullable(),
+	minSelections: z.coerce.number().int().min(0).default(0),
+	maxSelections: OptionalCountInputSchema,
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	options: z.array(ModifierOptionInputSchema).default([]),
 	optionIds: z.array(z.string()).default([]),
+	assignedItemIds: z.array(z.string()).default([]),
+	locationOverrides: z
+		.record(z.string(), LocationOverrideInputSchema)
+		.optional(),
 	position: z.number().default(0),
 })
 
@@ -188,7 +209,7 @@ export const MenuItemInputSchema = z.object({
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
 	description: z.string().optional(),
-	price: z.coerce.number().min(0, 'Price must be positive'),
+	price: z.coerce.number().finite().min(0, 'Price must be positive'),
 	imageKey: z.string().optional().nullable(),
 	imageUrl: z.string().optional().nullable(),
 	imageKeys: z.array(z.string()).max(5).default([]),
@@ -196,26 +217,20 @@ export const MenuItemInputSchema = z.object({
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
 	allergens: z.array(AllergenSchema).default([]),
-	calorieMin: z.coerce.number().min(0).optional().nullable(),
-	calorieMax: z.coerce.number().min(0).optional().nullable(),
+	calorieMin: OptionalCountInputSchema,
+	calorieMax: OptionalCountInputSchema,
 	applySalesTax: z.boolean().default(true),
 	excludeFromOverride: z.boolean().default(false),
 	isPopular: z.boolean().default(false),
 	isUpsell: z.boolean().default(false),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	categoryIds: z.array(z.string()).default([]),
+	assignedCategoryIds: z.array(z.string()).default([]),
 	modifierGroupIds: z.array(z.string()).default([]),
+	assignedModifierGroupIds: z.array(z.string()).default([]),
 	locationOverrides: z
-		.record(
-			z.string(),
-			z.object({
-				isEnabled: z.boolean().nullable().optional(),
-				price: z.coerce.number().nullable().optional(),
-				availabilityStatus: AvailabilityStatusSchema.nullable().optional(),
-				unavailableUntil: z.coerce.date().optional().nullable(),
-			}),
-		)
+		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
 	position: z.number().default(0),
 })
@@ -258,10 +273,15 @@ export const MenuCategoryInputSchema = z.object({
 	upsellCategoryIds: z.array(z.string()).default([]),
 	availabilityHours: z.string().optional().nullable(),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	excludeFromOverride: z.boolean().default(false),
 	itemIds: z.array(z.string()).default([]),
 	menuIds: z.array(z.string()).default([]),
+	assignedItemIds: z.array(z.string()).default([]),
+	assignedMenuIds: z.array(z.string()).default([]),
+	locationOverrides: z
+		.record(z.string(), LocationOverrideInputSchema)
+		.optional(),
 	position: z.number().default(0),
 })
 
@@ -276,17 +296,11 @@ export const MenuInputSchema = z.object({
 	specialInstructions: z.boolean().default(true),
 	availabilityHours: z.string().optional().nullable(),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
-	unavailableUntil: z.coerce.date().optional().nullable(),
+	unavailableUntil: OptionalDateInputSchema,
 	categoryIds: z.array(z.string()).default([]),
+	assignedCategoryIds: z.array(z.string()).default([]),
 	locationOverrides: z
-		.record(
-			z.string(),
-			z.object({
-				isEnabled: z.boolean().nullable().optional(),
-				availabilityStatus: AvailabilityStatusSchema.nullable().optional(),
-				unavailableUntil: z.coerce.date().optional().nullable(),
-			}),
-		)
+		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
 	position: z.number().default(0),
 })

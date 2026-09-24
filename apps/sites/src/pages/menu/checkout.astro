@@ -2,7 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
-import { fetchPublishedSiteMenu } from '~/lib/org'
+import { fetchPublishedSiteMenu, type PublicLocationData } from '~/lib/org'
 import { siteBtnPrimary, siteContainer } from '~/lib/media'
 import {
 	siteCardClass,
@@ -33,6 +33,30 @@ const menuPayload = await fetchPublishedSiteMenu({
 
 const locations = menuPayload?.locations ?? []
 const currency = menuPayload?.organization?.currency || 'USD'
+
+// Resolve the active location exactly like the menu page (URL param → default →
+// first) so checkout and the menu agree on the same cart's tax rate and fee.
+const urlLocation = Astro.url.searchParams.get('location')
+const activeLocation: PublicLocationData | undefined =
+	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
+	locations.find((l) => l.isDefault) ||
+	locations[0]
+
+// Delivery fee lives on the DeliveryZone (DeliveryConfig has no fee field).
+// Without a geocoded customer address we can't radius/zip-match, so pick the
+// first enabled, allowed in-house zone; if none is configured we charge 0
+// rather than assuming a fee. The fee only applies when mode is 'delivery'.
+function resolveDeliveryFee(location: PublicLocationData | undefined): number {
+	const zones: any[] = Array.isArray(location?.deliveryZones) ? location?.deliveryZones ?? [] : []
+	const applicable =
+		zones.find((z) => z?.provider === 'in_house' && z.enabled !== false && z.restriction !== 'disallowed') ??
+		zones.find((z) => z?.enabled !== false && z.restriction !== 'disallowed')
+	return typeof applicable?.deliveryFee === 'number' ? applicable.deliveryFee : 0
+}
+
+// Sales tax is stored as a percent (e.g. 8.25), never a fraction.
+const taxRate = activeLocation?.taxRate ?? 0
+const deliveryFee = resolveDeliveryFee(activeLocation)
 
 const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
 const successHref = getLocaleHref('/menu/success', requestedLocale, defaultLocale)
@@ -113,7 +137,7 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 									<input type="radio" name="fulfillment_mode" value="delivery" id="radio-delivery" class="size-4 text-primary">
 									<span class="text-xs sm:text-sm text-foreground">🚗 {deliveryLabel}</span>
 								</div>
-								<span id="delivery-fee-badge" class="text-xs text-muted-foreground">+$3.99</span>
+								<span id="delivery-fee-badge" class="text-xs text-muted-foreground">{deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : freeLabel}</span>
 							</label>
 						</div>
 					</div>
@@ -229,7 +253,7 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 		</div>
 	</div>
 
-	<script id="checkout-meta" type="application/json" is:inline set:html={JSON.stringify({ organizationId: organization.id, currency, locale: requestedLocale, successUrl: successHref, locations })} />
+	<script id="checkout-meta" type="application/json" is:inline set:html={JSON.stringify({ organizationId: organization.id, currency, locale: requestedLocale, successUrl: successHref, locations, taxRate, deliveryFee }).replace(/</g, '\\u003c')} />
 
 	<script>
 		const metaEl = document.getElementById('checkout-meta')
@@ -256,6 +280,10 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 		let mode = (localStorage.getItem(modeKey) as any) || 'pickup'
 		let tipPercent = 15
 
+		// Location-derived values resolved server-side (same source as the menu page).
+		const taxRate = typeof meta.taxRate === 'number' ? meta.taxRate : 0
+		const locationDeliveryFee = typeof meta.deliveryFee === 'number' ? meta.deliveryFee : 0
+
 		function formatCurrency(num: number) {
 			const valid = Number.isFinite(num) ? num : 0
 			const sign = valid < 0 ? '-' : ''
@@ -265,34 +293,49 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 			})}`
 		}
 
-		function renderCheckout() {
+		// Build nodes with textContent so operator/guest text is never parsed as HTML.
+		function createEl(tag: string, className?: string, text?: string) {
+			const node = document.createElement(tag)
+			if (className) node.className = className
+			if (text !== undefined) node.textContent = text
+			return node
+		}
+
+		// Single source of truth for cart maths so the summary and the stored
+		// order record can never drift apart.
+		function computeTotals() {
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const tax = subtotal * 0.0825 // fallback or from location
-			const deliveryFee = mode === 'delivery' ? 3.99 : 0
+			const tax = subtotal * (taxRate / 100)
+			const fee = mode === 'delivery' ? locationDeliveryFee : 0
 			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal + tax + deliveryFee + tip
+			const total = subtotal + tax + fee + tip
+			return { subtotal, tax, deliveryFee: fee, tip, total }
+		}
+
+		function renderCheckout() {
+			const { subtotal, tax, deliveryFee, tip, total } = computeTotals()
 
 			// Render items
 			const list = document.getElementById('checkout-items-list')
 			if (list) {
-				list.innerHTML = cart
-					.map(
-						(it) => `
-					<div class="pt-3 first:pt-0">
-						<div class="flex justify-between items-start text-xs text-foreground">
-							<span>${it.quantity}x ${it.name}</span>
-							<span>${formatCurrency(it.unitPrice * it.quantity)}</span>
-						</div>
-						${
-							it.options && it.options.length > 0
-								? `<p class="text-[11px] text-muted-foreground mt-0.5">${it.options.map((o: any) => o.optionName).join(', ')}</p>`
-								: ''
-						}
-						${it.instructions ? `<p class="text-[11px] italic text-muted-foreground">Note: ${it.instructions}</p>` : ''}
-					</div>
-				`,
-					)
-					.join('')
+				const rows = cart.map((it) => {
+					const row = createEl('div', 'pt-3 first:pt-0')
+					const head = createEl('div', 'flex justify-between items-start text-xs text-foreground')
+					head.appendChild(createEl('span', undefined, `${it.quantity}x ${it.name}`))
+					head.appendChild(createEl('span', undefined, formatCurrency(it.unitPrice * it.quantity)))
+					row.appendChild(head)
+
+					if (it.options && it.options.length > 0) {
+						row.appendChild(
+							createEl('p', 'text-[11px] text-muted-foreground mt-0.5', it.options.map((o: any) => o.optionName).join(', ')),
+						)
+					}
+					if (it.instructions) {
+						row.appendChild(createEl('p', 'text-[11px] italic text-muted-foreground', `Note: ${it.instructions}`))
+					}
+					return row
+				})
+				list.replaceChildren(...rows)
 			}
 
 			// Render amounts
@@ -390,11 +433,7 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 				return
 			}
 
-			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const tax = subtotal * 0.0825
-			const deliveryFee = mode === 'delivery' ? 3.99 : 0
-			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal + tax + deliveryFee + tip
+			const { subtotal, tax, deliveryFee, tip, total } = computeTotals()
 
 			const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`
 			const orderRecord = {

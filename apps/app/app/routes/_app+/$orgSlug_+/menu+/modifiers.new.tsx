@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { ModifierGroupInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
@@ -22,6 +23,11 @@ import {
 	useNavigation,
 } from 'react-router'
 import { ModifierForm } from '#app/components/menu/modifier-form.tsx'
+import {
+	assertItemIdsInOrganization,
+	assertLocationIdsInOrganization,
+	assertOptionIdsInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -105,175 +111,193 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	const formData = await request.formData()
-	const name = String(formData.get('name') || '')
-	const internalName = String(formData.get('internalName') || '') || null
-	const selectionType = String(formData.get('selectionType') || 'single')
-	const maxSelectionsStr = String(formData.get('maxSelections') || '')
-	const submittedMinSelections =
-		parseInt(String(formData.get('minSelections') || '0'), 10) || 0
-	const minSelections =
-		selectionType === 'single'
-			? Math.min(Math.max(submittedMinSelections, 0), 1)
-			: submittedMinSelections
-	const maxSelections =
-		selectionType === 'single'
-			? 1
-			: maxSelectionsStr
-				? parseInt(maxSelectionsStr, 10)
-				: null
-	const availabilityStatus = String(
-		formData.get('availabilityStatus') || 'available',
-	)
-	const unavailableUntilRaw = String(formData.get('unavailableUntil') || '')
-	const unavailableUntil =
-		(availabilityStatus === 'unavailable_until' ||
-			availabilityStatus === 'unavailable_until_tomorrow') &&
-		unavailableUntilRaw
-			? new Date(unavailableUntilRaw)
-			: null
+	const rawData: Record<string, unknown> = {}
 
-	const optionsRaw = String(formData.get('options') || '[]')
-	let options: any[] = []
-	try {
-		options = JSON.parse(optionsRaw) as any[]
-	} catch {}
-
-	const assignedItemIdsRaw = String(formData.get('assignedItemIds') || '[]')
-	let assignedItemIds: string[] = []
-	try {
-		assignedItemIds = JSON.parse(assignedItemIdsRaw) as string[]
-	} catch {}
-
-	const locationOverridesRaw = String(formData.get('locationOverrides') || '{}')
-	let locationOverrides: Record<string, any> = {}
-	try {
-		locationOverrides = JSON.parse(locationOverridesRaw) as Record<string, any>
-	} catch {}
-
-	// Create Group
-	const [newGroup] = await db
-		.insert(OrganizationMenuModifierGroup)
-		.values({
-			organizationId: organization.id,
-			name,
-			internalName,
-			selectionType,
-			minSelections,
-			maxSelections,
-			availabilityStatus,
-			unavailableUntil,
-		})
-		.returning()
-
-	if (!newGroup) {
-		throw new Error('Failed to create modifier group')
-	}
-
-	// Create or link reusable menu options, then assign them to this group.
-	// OrganizationMenuOption is the single source of truth used by both the
-	// Options page and modifier groups.
-	if (options.length > 0) {
-		const isPizzaGroup = selectionType === 'pizza'
-
-		for (let i = 0; i < options.length; i++) {
-			const opt = options[i]
-			const optionPrice = opt.price || 0
-			const priceWhole = isPizzaGroup ? optionPrice : (opt.priceWhole ?? null)
-			const priceLeft = isPizzaGroup ? (opt.priceLeft ?? null) : null
-			const priceRight = isPizzaGroup ? (opt.priceRight ?? null) : null
-			let targetOptionId = opt.id
-			if (targetOptionId) {
-				const [existing] = await db
-					.select({ id: OrganizationMenuOption.id })
-					.from(OrganizationMenuOption)
-					.where(
-						and(
-							eq(OrganizationMenuOption.id, targetOptionId),
-							eq(OrganizationMenuOption.organizationId, organization.id),
-						),
-					)
-					.limit(1)
-				if (!existing) targetOptionId = undefined
+	for (const [key, value] of formData.entries()) {
+		if (key === 'options' || key === 'assignedItemIds') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = []
 			}
-			if (!targetOptionId) {
-				const [created] = await db
-					.insert(OrganizationMenuOption)
-					.values({
-						organizationId: organization.id,
-						displayName: opt.displayName,
-						internalName: opt.internalName || null,
-						price: optionPrice,
-						priceWhole,
-						priceLeft,
-						priceRight,
-						isGlutenFree: opt.isGlutenFree ?? false,
-						isVegetarian: opt.isVegetarian ?? false,
-						isAlcohol: opt.isAlcohol ?? false,
-						isTopping: isPizzaGroup || (opt.isTopping ?? false),
-						position: i,
-					})
-					.returning()
-				targetOptionId = created?.id
-			} else {
-				await db
-					.update(OrganizationMenuOption)
-					.set({
-						displayName: opt.displayName,
-						internalName: opt.internalName || null,
-						price: optionPrice,
-						priceWhole,
-						priceLeft,
-						priceRight,
-						isGlutenFree: opt.isGlutenFree ?? false,
-						isVegetarian: opt.isVegetarian ?? false,
-						isAlcohol: opt.isAlcohol ?? false,
-						isTopping: isPizzaGroup || (opt.isTopping ?? false),
-						updatedAt: new Date(),
-					})
-					.where(
-						and(
-							eq(OrganizationMenuOption.id, targetOptionId),
-							eq(OrganizationMenuOption.organizationId, organization.id),
-						),
-					)
+		} else if (key === 'locationOverrides') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = {}
 			}
-			if (targetOptionId) {
-				await db.insert(OrganizationMenuModifierGroupOptionAssignment).values({
-					modifierGroupId: newGroup.id,
-					optionId: targetOptionId,
-					isDefault: opt.isDefault ?? false,
-					position: i,
-				})
-			}
+		} else {
+			rawData[key] = value
 		}
 	}
 
-	// Insert Item Assignments
-	if (assignedItemIds.length > 0) {
-		await db.insert(OrganizationMenuItemModifierGroupAssignment).values(
-			assignedItemIds.map((itemId, index) => ({
-				itemId,
-				modifierGroupId: newGroup.id,
-				position: index,
-			})),
+	const parsed = ModifierGroupInputSchema.safeParse(rawData)
+	if (!parsed.success) {
+		return Response.json(
+			{ error: parsed.error.flatten().fieldErrors },
+			{ status: 400 },
 		)
 	}
 
-	// Insert Location Overrides
-	const overrideEntries = Object.values(locationOverrides)
-	if (overrideEntries.length > 0) {
-		await db.insert(OrganizationMenuLocationOverride).values(
-			overrideEntries.map((entry: any) => ({
+	const data = parsed.data
+
+	const { options, assignedItemIds, selectionType, availabilityStatus, name } =
+		data
+	const internalName = data.internalName || null
+	const minSelections =
+		selectionType === 'single'
+			? Math.min(Math.max(data.minSelections, 0), 1)
+			: data.minSelections
+	const maxSelections =
+		selectionType === 'single' ? 1 : (data.maxSelections ?? null)
+	const unavailableUntil =
+		(availabilityStatus === 'unavailable_until' ||
+			availabilityStatus === 'unavailable_until_tomorrow') &&
+		data.unavailableUntil
+			? data.unavailableUntil
+			: null
+	const overrideEntries = Object.values(data.locationOverrides ?? {})
+
+	await assertOptionIdsInOrganization(
+		organization.id,
+		options
+			.map((opt) => opt.id)
+			.filter((id): id is string => typeof id === 'string'),
+	)
+	await assertItemIdsInOrganization(organization.id, assignedItemIds)
+	await assertLocationIdsInOrganization(
+		organization.id,
+		overrideEntries
+			.map((entry) => entry.locationId)
+			.filter((id): id is string => typeof id === 'string'),
+	)
+
+	await db.transaction(async (tx) => {
+		// Create Group
+		const [newGroup] = await tx
+			.insert(OrganizationMenuModifierGroup)
+			.values({
 				organizationId: organization.id,
-				locationId: entry.locationId,
-				entityType: 'modifier_group',
-				entityId: newGroup.id,
-				isEnabled: entry.isEnabled,
-				price: entry.price,
-				availabilityStatus: entry.availabilityStatus,
-			})),
-		)
-	}
+				name,
+				internalName,
+				selectionType,
+				minSelections,
+				maxSelections,
+				availabilityStatus,
+				unavailableUntil,
+			})
+			.returning()
+
+		if (!newGroup) {
+			throw new Error('Failed to create modifier group')
+		}
+
+		// Create or link reusable menu options, then assign them to this group.
+		// OrganizationMenuOption is the single source of truth used by both the
+		// Options page and modifier groups.
+		if (options.length > 0) {
+			const isPizzaGroup = selectionType === 'pizza'
+
+			for (const [i, opt] of options.entries()) {
+				const optionPrice = opt.price || 0
+				const priceWhole = isPizzaGroup ? optionPrice : (opt.priceWhole ?? null)
+				const priceLeft = isPizzaGroup ? (opt.priceLeft ?? null) : null
+				const priceRight = isPizzaGroup ? (opt.priceRight ?? null) : null
+				let targetOptionId = opt.id
+				if (targetOptionId) {
+					const [existing] = await tx
+						.select({ id: OrganizationMenuOption.id })
+						.from(OrganizationMenuOption)
+						.where(
+							and(
+								eq(OrganizationMenuOption.id, targetOptionId),
+								eq(OrganizationMenuOption.organizationId, organization.id),
+							),
+						)
+						.limit(1)
+					if (!existing) targetOptionId = undefined
+				}
+				if (!targetOptionId) {
+					const [created] = await tx
+						.insert(OrganizationMenuOption)
+						.values({
+							organizationId: organization.id,
+							displayName: opt.displayName,
+							internalName: opt.internalName || null,
+							price: optionPrice,
+							priceWhole,
+							priceLeft,
+							priceRight,
+							isGlutenFree: opt.isGlutenFree ?? false,
+							isVegetarian: opt.isVegetarian ?? false,
+							isAlcohol: opt.isAlcohol ?? false,
+							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							position: i,
+						})
+						.returning()
+					targetOptionId = created?.id
+				} else {
+					await tx
+						.update(OrganizationMenuOption)
+						.set({
+							displayName: opt.displayName,
+							internalName: opt.internalName || null,
+							price: optionPrice,
+							priceWhole,
+							priceLeft,
+							priceRight,
+							isGlutenFree: opt.isGlutenFree ?? false,
+							isVegetarian: opt.isVegetarian ?? false,
+							isAlcohol: opt.isAlcohol ?? false,
+							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							updatedAt: new Date(),
+						})
+						.where(
+							and(
+								eq(OrganizationMenuOption.id, targetOptionId),
+								eq(OrganizationMenuOption.organizationId, organization.id),
+							),
+						)
+				}
+				if (targetOptionId) {
+					await tx
+						.insert(OrganizationMenuModifierGroupOptionAssignment)
+						.values({
+							modifierGroupId: newGroup.id,
+							optionId: targetOptionId,
+							isDefault: opt.isDefault ?? false,
+							position: i,
+						})
+				}
+			}
+		}
+
+		// Insert Item Assignments
+		if (assignedItemIds.length > 0) {
+			await tx.insert(OrganizationMenuItemModifierGroupAssignment).values(
+				assignedItemIds.map((itemId, index) => ({
+					itemId,
+					modifierGroupId: newGroup.id,
+					position: index,
+				})),
+			)
+		}
+
+		// Insert Location Overrides
+		if (overrideEntries.length > 0) {
+			await tx.insert(OrganizationMenuLocationOverride).values(
+				overrideEntries.map((entry) => ({
+					organizationId: organization.id,
+					locationId: entry.locationId,
+					entityType: 'modifier_group',
+					entityId: newGroup.id,
+					isEnabled: entry.isEnabled,
+					price: entry.price,
+					availabilityStatus: entry.availabilityStatus,
+				})),
+			)
+		}
+	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 

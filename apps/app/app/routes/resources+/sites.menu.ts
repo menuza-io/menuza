@@ -42,6 +42,7 @@ import {
 	OrganizationMenuOption,
 } from '@repo/database'
 import { getClientIp } from '@repo/security'
+import { type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 import { type LoaderFunctionArgs } from 'react-router'
 import {
 	checkRateLimit,
@@ -199,9 +200,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const slug = url.searchParams.get('slug')?.trim().toLowerCase() || null
 	const host =
 		url.searchParams.get('host')?.trim().toLowerCase().split(':')[0] || null
-	const lng = url.searchParams.get('lng') || null
 	const locationId = url.searchParams.get('locationId') || null
-	const isPreview = url.searchParams.get('preview') === 'true'
+	// Accept both `preview=1` (sent by apps/sites) and `preview=true`.
+	const previewParam = url.searchParams.get('preview')
+	const wantsPreview = previewParam === '1' || previewParam === 'true'
 
 	if (!slug && !host) {
 		throw new Response('Not Found', { status: 404 })
@@ -224,6 +226,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		slug: string
 		siteDefaultLocale: string | null
 		siteLocales: string | null
+		customDomain: string | null
 		currency: string
 	}
 	let org: OrgSelect | undefined
@@ -235,6 +238,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				slug: Organization.slug,
 				siteDefaultLocale: Organization.siteDefaultLocale,
 				siteLocales: Organization.siteLocales,
+				customDomain: Organization.customDomain,
 				dataRegion: Organization.dataRegion,
 			})
 			.from(Organization)
@@ -253,6 +257,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				slug: found.slug,
 				siteDefaultLocale: found.siteDefaultLocale,
 				siteLocales: found.siteLocales,
+				customDomain: found.customDomain,
 				currency: found.dataRegion === 'ksa' ? 'SAR' : 'USD',
 			}
 		}
@@ -264,6 +269,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				slug: Organization.slug,
 				siteDefaultLocale: Organization.siteDefaultLocale,
 				siteLocales: Organization.siteLocales,
+				customDomain: Organization.customDomain,
 				dataRegion: Organization.dataRegion,
 			})
 			.from(Organization)
@@ -283,6 +289,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				slug: found.slug,
 				siteDefaultLocale: found.siteDefaultLocale,
 				siteLocales: found.siteLocales,
+				customDomain: found.customDomain,
 				currency: found.dataRegion === 'ksa' ? 'SAR' : 'USD',
 			}
 		}
@@ -292,8 +299,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		throw new Response('Not Found', { status: 404 })
 	}
 
+	// `preview` bypasses the edge KV cache, which forces an uncached full menu
+	// scan. Only honour it when the request presents the organization's own
+	// custom domain via the `host` signal this route already trusts to resolve a
+	// custom-domain org, so an anonymous `?preview=1` cannot trigger it.
+	const isPreview =
+		wantsPreview && Boolean(host) && org.customDomain?.toLowerCase() === host
+
 	const orgId = org.id
-	const queryHash = `${locationId || 'all'}-${lng || 'default'}`
+	const queryHash = locationId || 'all'
 	const cacheKey = getSiteKvKey('page', orgId, `menu-${queryHash}`)
 
 	// Check KV Cache
@@ -370,7 +384,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 
 	const now = new Date()
-	const isEntityAvailable = (statusCol: any, untilCol: any) =>
+	const isEntityAvailable = (
+		statusCol: AnySQLiteColumn,
+		untilCol: AnySQLiteColumn,
+	) =>
 		or(
 			eq(statusCol, 'available'),
 			and(
@@ -412,10 +429,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		)
 		.orderBy(asc(OrganizationMenuCategory.position))
 
-	// 5. Fetch Menu <-> Category Assignments
+	// 5. Fetch Menu <-> Category Assignments (scoped to this org's menus)
 	const menuCategoryAssignments = await db
 		.select()
 		.from(OrganizationMenuCategoryAssignment)
+		.where(
+			inArray(
+				OrganizationMenuCategoryAssignment.menuId,
+				menus.map((menu) => menu.id),
+			),
+		)
 		.orderBy(asc(OrganizationMenuCategoryAssignment.position))
 
 	// 6. Fetch Items
@@ -433,10 +456,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		)
 		.orderBy(asc(OrganizationMenuItem.position))
 
-	// 7. Fetch Category <-> Item Assignments
+	// 7. Fetch Category <-> Item Assignments (scoped to this org's categories)
 	const categoryItemAssignments = await db
 		.select()
 		.from(OrganizationMenuItemCategoryAssignment)
+		.where(
+			inArray(
+				OrganizationMenuItemCategoryAssignment.categoryId,
+				categories.map((category) => category.id),
+			),
+		)
 		.orderBy(asc(OrganizationMenuItemCategoryAssignment.position))
 
 	// 8. Fetch Modifier Groups
@@ -454,10 +483,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		)
 		.orderBy(asc(OrganizationMenuModifierGroup.position))
 
-	// 9. Fetch Item <-> Modifier Group Assignments
+	// 9. Fetch Item <-> Modifier Group Assignments (scoped to this org's items)
 	const itemModifierAssignments = await db
 		.select()
 		.from(OrganizationMenuItemModifierGroupAssignment)
+		.where(
+			inArray(
+				OrganizationMenuItemModifierGroupAssignment.itemId,
+				items.map((item) => item.id),
+			),
+		)
 		.orderBy(asc(OrganizationMenuItemModifierGroupAssignment.position))
 
 	// 10. Fetch Options & Assignments
@@ -478,6 +513,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const groupOptionAssignments = await db
 		.select()
 		.from(OrganizationMenuModifierGroupOptionAssignment)
+		.where(
+			inArray(
+				OrganizationMenuModifierGroupOptionAssignment.modifierGroupId,
+				modifierGroups.map((group) => group.id),
+			),
+		)
 		.orderBy(asc(OrganizationMenuModifierGroupOptionAssignment.position))
 
 	// 11. Fetch Location Overrides
@@ -497,12 +538,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		}>
 	> = {}
 	for (const ov of overrides) {
-		const isExpired = isUnavailableUntilExpired(
-			ov.availabilityStatus,
-			ov.unavailableUntil,
-			now,
-		)
-		const effectiveStatus = isExpired ? 'available' : ov.availabilityStatus
+		// `isUnavailableUntilExpired(null, ...)` returns true, so only coerce an
+		// expired status when the override actually specifies one. Otherwise keep
+		// `null` so the inherited (parent entity) status is left untouched.
+		const effectiveStatus =
+			ov.availabilityStatus &&
+			isUnavailableUntilExpired(ov.availabilityStatus, ov.unavailableUntil, now)
+				? 'available'
+				: ov.availabilityStatus
 
 		locationOverridesMap[ov.locationId] ??= []
 		locationOverridesMap[ov.locationId]?.push({

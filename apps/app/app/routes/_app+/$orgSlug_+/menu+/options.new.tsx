@@ -21,6 +21,10 @@ import {
 	useNavigation,
 } from 'react-router'
 import { OptionForm } from '#app/components/menu/option-form.tsx'
+import {
+	assertLocationIdsInOrganization,
+	assertModifierGroupIdsInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -130,6 +134,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	await assertModifierGroupIdsInOrganization(
+		organization.id,
+		data.modifierGroupIds ?? [],
+	)
+	await assertLocationIdsInOrganization(
+		organization.id,
+		Object.keys(data.locationOverrides ?? {}),
+	)
+
 	// Automatically determine isTopping based on assigned modifier groups
 	let isTopping = data.isTopping
 	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
@@ -145,76 +158,86 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		isTopping = pizzaGroups.length > 0
 	}
 
-	// 1. Insert into OrganizationMenuOption
-	const [createdOption] = await db
-		.insert(OrganizationMenuOption)
-		.values({
-			organizationId: organization.id,
-			displayName: data.displayName,
-			internalName: data.internalName || null,
-			description: data.description || null,
-			imageKey: data.imageKey || null,
-			price: data.price,
-			priceWhole: isTopping ? data.price : null,
-			priceLeft: isTopping ? (data.priceLeft ?? null) : null,
-			priceRight: isTopping ? (data.priceRight ?? null) : null,
-			calories: data.calories ?? null,
-			minSelections: data.minSelections,
-			maxSelections: data.maxSelections ?? null,
-			isAlcohol: data.isAlcohol,
-			isGlutenFree: data.isGlutenFree,
-			isVegetarian: data.isVegetarian,
-			isTopping,
-			allergens: JSON.stringify(data.allergens),
-			applySalesTax: data.applySalesTax,
-			availabilityStatus: data.availabilityStatus,
-			unavailableUntil:
-				(data.availabilityStatus === 'unavailable_until' ||
-					data.availabilityStatus === 'unavailable_until_tomorrow') &&
-				data.unavailableUntil
-					? data.unavailableUntil
-					: null,
-			position: data.position,
-		})
-		.returning()
+	let createdOptionId: string | undefined
 
-	if (!createdOption) {
+	await db.transaction(async (tx) => {
+		// 1. Insert into OrganizationMenuOption
+		const [createdOption] = await tx
+			.insert(OrganizationMenuOption)
+			.values({
+				organizationId: organization.id,
+				displayName: data.displayName,
+				internalName: data.internalName || null,
+				description: data.description || null,
+				imageKey: data.imageKey || null,
+				price: data.price,
+				priceWhole: isTopping ? data.price : null,
+				priceLeft: isTopping ? (data.priceLeft ?? null) : null,
+				priceRight: isTopping ? (data.priceRight ?? null) : null,
+				calories: data.calories ?? null,
+				minSelections: data.minSelections,
+				maxSelections: data.maxSelections ?? null,
+				isAlcohol: data.isAlcohol,
+				isGlutenFree: data.isGlutenFree,
+				isVegetarian: data.isVegetarian,
+				isTopping,
+				allergens: JSON.stringify(data.allergens),
+				applySalesTax: data.applySalesTax,
+				availabilityStatus: data.availabilityStatus,
+				unavailableUntil:
+					(data.availabilityStatus === 'unavailable_until' ||
+						data.availabilityStatus === 'unavailable_until_tomorrow') &&
+					data.unavailableUntil
+						? data.unavailableUntil
+						: null,
+				position: data.position,
+			})
+			.returning()
+
+		if (!createdOption) {
+			return
+		}
+
+		createdOptionId = createdOption.id
+
+		// 2. Insert modifier group assignments
+		if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
+			const assignmentRows = data.modifierGroupIds.map((groupId, idx) => ({
+				modifierGroupId: groupId,
+				optionId: createdOption.id,
+				position: idx,
+			}))
+
+			await tx
+				.insert(OrganizationMenuModifierGroupOptionAssignment)
+				.values(assignmentRows)
+		}
+
+		// 3. Insert location overrides
+		if (data.locationOverrides) {
+			const overrideRows = Object.entries(data.locationOverrides).map(
+				([locId, override]) => ({
+					organizationId: organization.id,
+					locationId: locId,
+					entityType: 'modifier_option',
+					entityId: createdOption.id,
+					isEnabled: override.isEnabled ?? null,
+					price: override.price ?? null,
+					availabilityStatus: override.availabilityStatus ?? null,
+				}),
+			)
+
+			if (overrideRows.length > 0) {
+				await tx.insert(OrganizationMenuLocationOverride).values(overrideRows)
+			}
+		}
+	})
+
+	if (!createdOptionId) {
 		return Response.json(
 			{ error: 'Failed to create menu option' },
 			{ status: 500 },
 		)
-	}
-
-	// 2. Insert modifier group assignments
-	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
-		const assignmentRows = data.modifierGroupIds.map((groupId, idx) => ({
-			modifierGroupId: groupId,
-			optionId: createdOption.id,
-			position: idx,
-		}))
-
-		await db
-			.insert(OrganizationMenuModifierGroupOptionAssignment)
-			.values(assignmentRows)
-	}
-
-	// 3. Insert location overrides
-	if (data.locationOverrides) {
-		const overrideRows = Object.entries(data.locationOverrides).map(
-			([locId, override]) => ({
-				organizationId: organization.id,
-				locationId: locId,
-				entityType: 'modifier_option',
-				entityId: createdOption.id,
-				isEnabled: override.isEnabled ?? null,
-				price: override.price ?? null,
-				availabilityStatus: override.availabilityStatus ?? null,
-			}),
-		)
-
-		if (overrideRows.length > 0) {
-			await db.insert(OrganizationMenuLocationOverride).values(overrideRows)
-		}
 	}
 
 	// Purge site KV cache

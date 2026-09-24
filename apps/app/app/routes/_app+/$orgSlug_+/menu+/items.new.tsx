@@ -1,5 +1,8 @@
 import { requireUserId } from '@repo/auth'
-import { parseMenuItemImageKeys } from '@repo/common/menu-types'
+import {
+	MenuItemInputSchema,
+	parseMenuItemImageKeys,
+} from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
@@ -22,7 +25,13 @@ import {
 	useNavigation,
 } from 'react-router'
 import { ItemForm } from '#app/components/menu/item-form.tsx'
+import {
+	assertCategoryIdsInOrganization,
+	assertLocationIdsInOrganization,
+	assertModifierGroupIdsInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -98,140 +107,149 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	const formData = await request.formData()
-	const displayName = String(formData.get('displayName') || '')
-	const internalName = String(formData.get('internalName') || '') || null
-	const description = String(formData.get('description') || '') || null
-	const price = parseFloat(String(formData.get('price') || '0')) || 0
-	const imageKey = String(formData.get('imageKey') || '') || null
-	const imageUrl = String(formData.get('imageUrl') || '') || null
+	const rawData: Record<string, unknown> = {}
+
+	for (const [key, value] of formData.entries()) {
+		if (
+			key === 'allergens' ||
+			key === 'imageKeys' ||
+			key === 'assignedCategoryIds' ||
+			key === 'assignedModifierGroupIds'
+		) {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = []
+			}
+		} else if (key === 'locationOverrides') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = {}
+			}
+		} else if (
+			key === 'isAlcohol' ||
+			key === 'isGlutenFree' ||
+			key === 'isVegetarian' ||
+			key === 'applySalesTax' ||
+			key === 'excludeFromOverride' ||
+			key === 'isPopular' ||
+			key === 'isUpsell'
+		) {
+			rawData[key] = value === 'true'
+		} else {
+			rawData[key] = value
+		}
+	}
+
+	const parsed = MenuItemInputSchema.safeParse(rawData)
+	if (!parsed.success) {
+		return Response.json(
+			{ error: parsed.error.flatten().fieldErrors },
+			{ status: 400 },
+		)
+	}
+
+	const data = parsed.data
+
 	const imageKeys = parseMenuItemImageKeys(
-		String(formData.get('imageKeys') || '[]'),
-		imageKey,
+		JSON.stringify(data.imageKeys),
+		data.imageKey ?? null,
 	)
 	const primaryImageKey = imageKeys[0] ?? null
 
-	const isAlcohol = formData.get('isAlcohol') === 'true'
-	const isGlutenFree = formData.get('isGlutenFree') === 'true'
-	const isVegetarian = formData.get('isVegetarian') === 'true'
-
-	const allergensRaw = String(formData.get('allergens') || '[]')
-	let allergens: string[] = []
-	try {
-		allergens = JSON.parse(allergensRaw) as string[]
-	} catch {}
-
-	const calorieMinStr = String(formData.get('calorieMin') || '')
-	const calorieMaxStr = String(formData.get('calorieMax') || '')
-	const calorieMin = calorieMinStr ? parseInt(calorieMinStr, 10) : null
-	const calorieMax = calorieMaxStr ? parseInt(calorieMaxStr, 10) : null
-
-	const applySalesTax = formData.get('applySalesTax') === 'true'
-	const excludeFromOverride = formData.get('excludeFromOverride') === 'true'
-	const isPopular = formData.get('isPopular') === 'true'
-	const isUpsell = formData.get('isUpsell') === 'true'
-	const availabilityStatus = String(
-		formData.get('availabilityStatus') || 'available',
+	await assertCategoryIdsInOrganization(
+		organization.id,
+		data.assignedCategoryIds,
 	)
-	const unavailableUntilRaw = String(formData.get('unavailableUntil') || '')
-	const unavailableUntil =
-		(availabilityStatus === 'unavailable_until' ||
-			availabilityStatus === 'unavailable_until_tomorrow') &&
-		unavailableUntilRaw
-			? new Date(unavailableUntilRaw)
-			: null
-
-	const assignedCategoryIdsRaw = String(
-		formData.get('assignedCategoryIds') || '[]',
+	await assertModifierGroupIdsInOrganization(
+		organization.id,
+		data.assignedModifierGroupIds,
 	)
-	let assignedCategoryIds: string[] = []
-	try {
-		assignedCategoryIds = JSON.parse(assignedCategoryIdsRaw) as string[]
-	} catch {}
-
-	const assignedModifierGroupIdsRaw = String(
-		formData.get('assignedModifierGroupIds') || '[]',
+	await assertLocationIdsInOrganization(
+		organization.id,
+		Object.values(data.locationOverrides ?? {})
+			.map((entry) => entry.locationId)
+			.filter((id): id is string => typeof id === 'string'),
 	)
-	let assignedModifierGroupIds: string[] = []
-	try {
-		assignedModifierGroupIds = JSON.parse(
-			assignedModifierGroupIdsRaw,
-		) as string[]
-	} catch {}
 
-	const locationOverridesRaw = String(formData.get('locationOverrides') || '{}')
-	let locationOverrides: Record<string, any> = {}
-	try {
-		locationOverrides = JSON.parse(locationOverridesRaw) as Record<string, any>
-	} catch {}
-
-	// Create Item
-	const [newItem] = await db
-		.insert(OrganizationMenuItem)
-		.values({
-			organizationId: organization.id,
-			displayName,
-			internalName,
-			description,
-			price,
-			imageKey: primaryImageKey,
-			imageUrl: primaryImageKey ? imageUrl : null,
-			imageKeys: JSON.stringify(imageKeys),
-			isAlcohol,
-			isGlutenFree,
-			isVegetarian,
-			allergens: JSON.stringify(allergens),
-			calorieMin,
-			calorieMax,
-			applySalesTax,
-			excludeFromOverride,
-			isPopular,
-			isUpsell,
-			availabilityStatus,
-			unavailableUntil,
-		})
-		.returning()
-
-	if (!newItem) {
-		throw new Error('Failed to create item')
-	}
-
-	// Insert Category Assignments
-	if (assignedCategoryIds.length > 0) {
-		await db.insert(OrganizationMenuItemCategoryAssignment).values(
-			assignedCategoryIds.map((categoryId, index) => ({
-				categoryId,
-				itemId: newItem.id,
-				position: index,
-			})),
-		)
-	}
-
-	// Insert Modifier Group Assignments
-	if (assignedModifierGroupIds.length > 0) {
-		await db.insert(OrganizationMenuItemModifierGroupAssignment).values(
-			assignedModifierGroupIds.map((modifierGroupId, index) => ({
-				itemId: newItem.id,
-				modifierGroupId,
-				position: index,
-			})),
-		)
-	}
-
-	// Insert Location Overrides
-	const overrideEntries = Object.values(locationOverrides)
-	if (overrideEntries.length > 0) {
-		await db.insert(OrganizationMenuLocationOverride).values(
-			overrideEntries.map((entry: any) => ({
+	await db.transaction(async (tx) => {
+		// Create Item
+		const [newItem] = await tx
+			.insert(OrganizationMenuItem)
+			.values({
 				organizationId: organization.id,
-				locationId: entry.locationId,
-				entityType: 'item',
-				entityId: newItem.id,
-				isEnabled: entry.isEnabled,
-				price: entry.price,
-				availabilityStatus: entry.availabilityStatus,
-			})),
-		)
-	}
+				displayName: data.displayName,
+				internalName: data.internalName || null,
+				description: data.description || null,
+				price: data.price,
+				imageKey: primaryImageKey,
+				imageUrl: primaryImageKey ? data.imageUrl || null : null,
+				imageKeys: JSON.stringify(imageKeys),
+				isAlcohol: data.isAlcohol,
+				isGlutenFree: data.isGlutenFree,
+				isVegetarian: data.isVegetarian,
+				allergens: JSON.stringify(data.allergens),
+				calorieMin: data.calorieMin ?? null,
+				calorieMax: data.calorieMax ?? null,
+				applySalesTax: data.applySalesTax,
+				excludeFromOverride: data.excludeFromOverride,
+				isPopular: data.isPopular,
+				isUpsell: data.isUpsell,
+				availabilityStatus: data.availabilityStatus,
+				unavailableUntil:
+					(data.availabilityStatus === 'unavailable_until' ||
+						data.availabilityStatus === 'unavailable_until_tomorrow') &&
+					data.unavailableUntil
+						? data.unavailableUntil
+						: null,
+			})
+			.returning()
+
+		if (!newItem) {
+			throw new Error('Failed to create item')
+		}
+
+		// Insert Category Assignments
+		if (data.assignedCategoryIds.length > 0) {
+			await tx.insert(OrganizationMenuItemCategoryAssignment).values(
+				data.assignedCategoryIds.map((categoryId, index) => ({
+					categoryId,
+					itemId: newItem.id,
+					position: index,
+				})),
+			)
+		}
+
+		// Insert Modifier Group Assignments
+		if (data.assignedModifierGroupIds.length > 0) {
+			await tx.insert(OrganizationMenuItemModifierGroupAssignment).values(
+				data.assignedModifierGroupIds.map((modifierGroupId, index) => ({
+					itemId: newItem.id,
+					modifierGroupId,
+					position: index,
+				})),
+			)
+		}
+
+		// Insert Location Overrides
+		const overrideEntries = Object.values(data.locationOverrides ?? {})
+		if (overrideEntries.length > 0) {
+			await tx.insert(OrganizationMenuLocationOverride).values(
+				overrideEntries.map((entry) => ({
+					organizationId: organization.id,
+					locationId: entry.locationId,
+					entityType: 'item',
+					entityId: newItem.id,
+					isEnabled: entry.isEnabled,
+					price: entry.price,
+					availabilityStatus: entry.availabilityStatus,
+				})),
+			)
+		}
+	})
+
+	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return redirect(`/${organization.slug}/menu/items`)
 }

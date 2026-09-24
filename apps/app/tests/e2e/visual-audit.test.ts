@@ -9,8 +9,7 @@ import {
 } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 
-const SCREENSHOTS_DIR =
-	'/Users/zama/.gemini/antigravity/brain/9582b1c2-9a30-4e4d-9f43-932e789f70db/screenshots'
+const SCREENSHOTS_DIR = 'test-results/audit'
 
 test.describe('Visual Audit & Browser Layout Inspection', () => {
 	test('Inspect operator and customer screens across viewports', async ({
@@ -161,13 +160,13 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		// 1. Locations List
 		await captureScreen(
 			'operator-locations-list',
-			`http://localhost:3001/${org!.slug}/settings/locations`,
+			`/${org!.slug}/settings/locations`,
 		)
 
 		// 2. Location Form (Edit or New)
 		const locUrl = location
-			? `http://localhost:3001/${org!.slug}/settings/locations/${location.id}`
-			: `http://localhost:3001/${org!.slug}/settings/locations/new`
+			? `/${org!.slug}/settings/locations/${location.id}`
+			: `/${org!.slug}/settings/locations/new`
 		await captureScreen('operator-location-form', locUrl, {
 			actionBeforeSnap: async () => {
 				await page.locator('#loc-country').scrollIntoViewIfNeeded()
@@ -176,23 +175,14 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		})
 
 		// 3. Menu Overview
-		await captureScreen(
-			'operator-menu-overview',
-			`http://localhost:3001/${org!.slug}/menu`,
-		)
+		await captureScreen('operator-menu-overview', `/${org!.slug}/menu`)
 
 		// 4. Menus List & Form
-		await captureScreen(
-			'operator-menus-list',
-			`http://localhost:3001/${org!.slug}/menu/menus`,
-		)
-		await captureScreen(
-			'operator-menu-form',
-			`http://localhost:3001/${org!.slug}/menu/menus/new`,
-		)
+		await captureScreen('operator-menus-list', `/${org!.slug}/menu/menus`)
+		await captureScreen('operator-menu-form', `/${org!.slug}/menu/menus/new`)
 		await captureScreen(
 			'operator-menu-form-capabilities',
-			`http://localhost:3001/${org!.slug}/menu/menus/new`,
+			`/${org!.slug}/menu/menus/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -206,25 +196,19 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		// 5. Categories List & Form
 		await captureScreen(
 			'operator-categories-list',
-			`http://localhost:3001/${org!.slug}/menu/categories`,
+			`/${org!.slug}/menu/categories`,
 		)
 		await captureScreen(
 			'operator-category-form',
-			`http://localhost:3001/${org!.slug}/menu/categories/new`,
+			`/${org!.slug}/menu/categories/new`,
 		)
 
 		// 6. Items List & Form
-		await captureScreen(
-			'operator-items-list',
-			`http://localhost:3001/${org!.slug}/menu/items`,
-		)
-		await captureScreen(
-			'operator-item-form',
-			`http://localhost:3001/${org!.slug}/menu/items/new`,
-		)
+		await captureScreen('operator-items-list', `/${org!.slug}/menu/items`)
+		await captureScreen('operator-item-form', `/${org!.slug}/menu/items/new`)
 		await captureScreen(
 			'operator-item-form-dietary',
-			`http://localhost:3001/${org!.slug}/menu/items/new`,
+			`/${org!.slug}/menu/items/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -236,7 +220,7 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		)
 		await captureScreen(
 			'operator-item-form-promotions',
-			`http://localhost:3001/${org!.slug}/menu/items/new`,
+			`/${org!.slug}/menu/items/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -248,7 +232,7 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		)
 		await captureScreen(
 			'operator-item-form-locations',
-			`http://localhost:3001/${org!.slug}/menu/items/new`,
+			`/${org!.slug}/menu/items/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -262,15 +246,15 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		// 7. Modifiers List & Form
 		await captureScreen(
 			'operator-modifiers-list',
-			`http://localhost:3001/${org!.slug}/menu/modifiers`,
+			`/${org!.slug}/menu/modifiers`,
 		)
 		await captureScreen(
 			'operator-modifier-form',
-			`http://localhost:3001/${org!.slug}/menu/modifiers/new`,
+			`/${org!.slug}/menu/modifiers/new`,
 		)
 		await captureScreen(
 			'operator-modifier-form-behavior',
-			`http://localhost:3001/${org!.slug}/menu/modifiers/new`,
+			`/${org!.slug}/menu/modifiers/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -282,17 +266,14 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		)
 
 		// 8. Options List & Form
-		await captureScreen(
-			'operator-options-list',
-			`http://localhost:3001/${org!.slug}/menu/options`,
-		)
+		await captureScreen('operator-options-list', `/${org!.slug}/menu/options`)
 		await captureScreen(
 			'operator-option-form',
-			`http://localhost:3001/${org!.slug}/menu/options/new`,
+			`/${org!.slug}/menu/options/new`,
 		)
 		await captureScreen(
 			'operator-option-form-dietary',
-			`http://localhost:3001/${org!.slug}/menu/options/new`,
+			`/${org!.slug}/menu/options/new`,
 			{
 				actionBeforeSnap: async () => {
 					await page
@@ -304,7 +285,7 @@ test.describe('Visual Audit & Browser Layout Inspection', () => {
 		)
 		await captureScreen(
 			'operator-option-form-pizza-assigned',
-			`http://localhost:3001/${org!.slug}/menu/options/new`,
+			`/${org!.slug}/menu/options/new`,
 			{
 				actionBeforeSnap: async () => {
 					// Select the Pizza Topping group in Assigned Modifier Groups

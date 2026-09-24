@@ -52,6 +52,15 @@ const activeLocation: PublicLocationData | undefined =
 	locations.find((l) => l.isDefault) ||
 	locations[0]
 
+// LocationAddress exposes streetNumber/streetName (there is no `street` field).
+// Join whichever parts are present; empty string hides the line entirely.
+const activeStreetLine = [
+	activeLocation?.address?.streetNumber,
+	activeLocation?.address?.streetName,
+]
+	.filter(Boolean)
+	.join(' ')
+
 // Tie currency to the active location's address (USD or CAD)
 const currency =
 	activeLocation?.currency ||
@@ -98,7 +107,11 @@ const specialInstructionsPlaceholder = i18n._(msg`Any dietary preferences, sauce
 const quantityLabel = i18n._(msg`Quantity`)
 const menuComingSoonTitle = i18n._(msg`Menu Coming Soon`)
 const menuComingSoonDesc = i18n._(msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`)
-const checkoutHref = getLocaleHref('/menu/checkout', requestedLocale, defaultLocale)
+// Carry the active location into checkout so both pages resolve the same
+// tax rate / delivery fee for the same cart.
+const checkoutHref =
+	getLocaleHref('/menu/checkout', requestedLocale, defaultLocale) +
+	(activeLocation ? `?location=${encodeURIComponent(activeLocation.id)}` : '')
 
 // Collect categories across active menus
 const allCategories: PublicMenuCategoryData[] = []
@@ -137,13 +150,25 @@ const localizedMenus = menus.map((menu) => ({
 	})),
 }))
 
+// Delivery fee lives on the DeliveryZone (DeliveryConfig has no fee field).
+// Without a geocoded customer address we can't radius/zip-match, so pick the
+// first enabled, allowed in-house zone; if none is configured we charge 0
+// rather than assuming a fee. Applied only when fulfilment mode is 'delivery'.
+function resolveDeliveryFee(location: PublicLocationData | undefined): number {
+	const zones: any[] = Array.isArray(location?.deliveryZones) ? location?.deliveryZones ?? [] : []
+	const applicable =
+		zones.find((z) => z?.provider === 'in_house' && z.enabled !== false && z.restriction !== 'disallowed') ??
+		zones.find((z) => z?.enabled !== false && z.restriction !== 'disallowed')
+	return typeof applicable?.deliveryFee === 'number' ? applicable.deliveryFee : 0
+}
+
 const clientMenuData = {
 	organizationId: organization.id,
 	currency,
 	locale: requestedLocale,
 	activeLocationId: activeLocation?.id ?? '',
 	taxRate: activeLocation?.taxRate ?? 0,
-	deliveryFee: activeLocation?.deliveryConfig?.deliveryFee ?? 3.99,
+	deliveryFee: resolveDeliveryFee(activeLocation),
 	menus: localizedMenus,
 	labels: {
 		emptyCartTitle: i18n._(msg`Your cart is empty`),
@@ -194,8 +219,8 @@ const clientMenuData = {
 							) : activeLocation ? (
 								<div class="flex items-center gap-1.5 text-xs sm:text-sm text-foreground">
 									<span>📍 {getLocalizedMenuValue(activeLocation.name, requestedLocale, defaultLocale)}</span>
-									{activeLocation.address?.street ? (
-										<span class="text-xs text-muted-foreground hidden md:inline">({activeLocation.address.street})</span>
+									{activeStreetLine ? (
+										<span class="text-xs text-muted-foreground hidden md:inline">({activeStreetLine})</span>
 									) : null}
 								</div>
 							) : null}
@@ -532,7 +557,7 @@ const clientMenuData = {
 							<span id="drawer-subtotal" class="font-medium text-foreground">$0.00</span>
 						</div>
 						<div class="flex justify-between">
-							<span>{taxText} ({((activeLocation?.taxRate ?? 0) * 100).toFixed(1)}%)</span>
+							<span>{taxText} ({(activeLocation?.taxRate ?? 0).toFixed(1)}%)</span>
 							<span id="drawer-tax" class="font-medium text-foreground">$0.00</span>
 						</div>
 						<div id="drawer-delivery-row" class="flex justify-between hidden">
@@ -558,7 +583,7 @@ const clientMenuData = {
 	</div>
 
 	{/* Client Menu Data for Scripts */}
-	<script id="menu-data" type="application/json" is:inline set:html={JSON.stringify(clientMenuData)} />
+	<script id="menu-data" type="application/json" is:inline set:html={JSON.stringify(clientMenuData).replace(/</g, '\\u003c')} />
 
 	<script>
 		type CartItem = {
@@ -618,10 +643,36 @@ const clientMenuData = {
 			})}`
 		}
 
+		// Build nodes with textContent so operator/guest text is never parsed as HTML.
+		function createEl(tag: string, className?: string, text?: string) {
+			const node = document.createElement(tag)
+			if (className) node.className = className
+			if (text !== undefined) node.textContent = text
+			return node
+		}
+
+		// Escape values interpolated into trusted HTML templates (modifier markup).
+		function escapeHtml(value: unknown) {
+			return String(value ?? '').replace(/[&<>"']/g, (ch) => {
+				switch (ch) {
+					case '&':
+						return '&amp;'
+					case '<':
+						return '&lt;'
+					case '>':
+						return '&gt;'
+					case '"':
+						return '&quot;'
+					default:
+						return '&#39;'
+				}
+			})
+		}
+
 		// Calculate Totals
 		function getCartTotals() {
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const tax = subtotal * (menuData.taxRate || 0)
+			const tax = subtotal * ((menuData.taxRate || 0) / 100)
 			const deliveryFee = fulfillmentMode === 'delivery' && subtotal > 0 ? (menuData.deliveryFee || 0) : 0
 			const total = subtotal + tax + deliveryFee
 			const count = cart.reduce((acc, it) => acc + it.quantity, 0)
@@ -677,51 +728,64 @@ const clientMenuData = {
 			if (!container) return
 
 			if (cart.length === 0) {
-				container.innerHTML = `
-					<div class="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-10 mb-2 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-						<p class="text-sm font-medium">${(menuData as any).labels?.emptyCartTitle || 'Your cart is empty'}</p>
-						<p class="text-xs mt-0.5">${(menuData as any).labels?.emptyCartDesc || 'Explore our menu and add your favorite dishes.'}</p>
-					</div>
-				`
+				const empty = createEl(
+					'div',
+					'flex flex-col items-center justify-center py-12 text-center text-muted-foreground',
+				)
+				// Static, trusted icon; text nodes below are set via textContent.
+				empty.innerHTML =
+					'<svg xmlns="http://www.w3.org/2000/svg" class="size-10 mb-2 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
+				empty.appendChild(
+					createEl('p', 'text-sm font-medium', (menuData as any).labels?.emptyCartTitle || 'Your cart is empty'),
+				)
+				empty.appendChild(
+					createEl('p', 'text-xs mt-0.5', (menuData as any).labels?.emptyCartDesc || 'Explore our menu and add your favorite dishes.'),
+				)
+				container.replaceChildren(empty)
 				return
 			}
 
-			container.innerHTML = cart
-				.map(
-					(item, idx) => `
-					<div class="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-xs">
-						<div class="space-y-1 flex-1">
-							<div class="flex items-center justify-between">
-								<h4 class="text-sm text-foreground">${item.name}</h4>
-								<span class="text-xs text-foreground">${formatCurrency(item.unitPrice * item.quantity)}</span>
-							</div>
-							${
-								item.options && item.options.length > 0
-									? `<ul class="text-[11px] text-muted-foreground space-y-0.5">
-										${item.options
-											.map(
-												(o) =>
-													`<li>• ${o.half && o.half !== 'whole' ? `[${o.half.toUpperCase()}] ` : ''}${o.optionName}${
-														o.priceDelta > 0 ? ` (+${formatCurrency(o.priceDelta)})` : ''
-													}</li>`,
-											)
-											.join('')}
-									</ul>`
-									: ''
-							}
-							${item.instructions ? `<p class="text-[11px] italic text-muted-foreground">"${item.instructions}"</p>` : ''}
-							<div class="flex items-center gap-2 pt-2">
-								<button type="button" class="js-cart-minus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted" data-idx="${idx}">-</button>
-								<span class="text-xs text-foreground min-w-4 text-center">${item.quantity}</span>
-								<button type="button" class="js-cart-plus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted" data-idx="${idx}">+</button>
-								<button type="button" class="js-cart-remove text-[11px] text-destructive hover:underline ml-auto" data-idx="${idx}">${(menuData as any).labels?.remove || 'Remove'}</button>
-							</div>
-						</div>
-					</div>
-				`,
-				)
-				.join('')
+			// Build rows as DOM nodes; item/option/instruction text is set with
+			// textContent so operator-authored menu text is never parsed as HTML.
+			const rows = cart.map((item, idx) => {
+				const row = createEl('div', 'flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-xs')
+				const col = createEl('div', 'space-y-1 flex-1')
+				const header = createEl('div', 'flex items-center justify-between')
+				header.appendChild(createEl('h4', 'text-sm text-foreground', item.name))
+				header.appendChild(createEl('span', 'text-xs text-foreground', formatCurrency(item.unitPrice * item.quantity)))
+				col.appendChild(header)
+
+				if (item.options && item.options.length > 0) {
+					const ul = createEl('ul', 'text-[11px] text-muted-foreground space-y-0.5')
+					for (const o of item.options) {
+						const halfPrefix = o.half && o.half !== 'whole' ? `[${o.half.toUpperCase()}] ` : ''
+						const priceSuffix = o.priceDelta > 0 ? ` (+${formatCurrency(o.priceDelta)})` : ''
+						ul.appendChild(createEl('li', undefined, `• ${halfPrefix}${o.optionName}${priceSuffix}`))
+					}
+					col.appendChild(ul)
+				}
+
+				if (item.instructions) {
+					col.appendChild(createEl('p', 'text-[11px] italic text-muted-foreground', `"${item.instructions}"`))
+				}
+
+				const actions = createEl('div', 'flex items-center gap-2 pt-2')
+				const makeBtn = (className: string, label: string) => {
+					const btn = createEl('button', className, label)
+					btn.setAttribute('type', 'button')
+					btn.setAttribute('data-idx', String(idx))
+					return btn
+				}
+				actions.appendChild(makeBtn('js-cart-minus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted', '-'))
+				actions.appendChild(createEl('span', 'text-xs text-foreground min-w-4 text-center', String(item.quantity)))
+				actions.appendChild(makeBtn('js-cart-plus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted', '+'))
+				actions.appendChild(makeBtn('js-cart-remove text-[11px] text-destructive hover:underline ml-auto', (menuData as any).labels?.remove || 'Remove'))
+				col.appendChild(actions)
+
+				row.appendChild(col)
+				return row
+			})
+			container.replaceChildren(...rows)
 
 			// Wire item stepper buttons
 			container.querySelectorAll('.js-cart-minus').forEach((btn) => {
@@ -898,7 +962,7 @@ const clientMenuData = {
 							return `
 								<div class="rounded-xl border border-border bg-card p-4 space-y-3" data-group-id="${grp.id}">
 									<div class="flex items-center justify-between">
-										<h4 class="font-heading text-sm text-foreground">${grp.name}</h4>
+										<h4 class="font-heading text-sm text-foreground">${escapeHtml(grp.name)}</h4>
 										<span class="text-[11px] font-medium text-muted-foreground">
 											${grp.minSelections > 0
 												? ((menuData as any).locale === 'ar' ? `مطلوب (اختر ${grp.minSelections})` : `Required (choose ${grp.minSelections})`)
@@ -911,18 +975,18 @@ const clientMenuData = {
 												if (isPizza) {
 													return `
 														<div class="flex items-center justify-between p-2 rounded-lg border border-border/70 text-xs">
-															<span class="font-medium text-foreground">${opt.displayName}</span>
+															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
 															<div class="flex items-center gap-1.5">
 																<label class="flex items-center gap-1 cursor-pointer">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="whole" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${opt.displayName}" data-price="${opt.priceWhole || opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
+																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="whole" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.priceWhole || opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
 																	<span>${(menuData as any).labels?.whole || 'Whole'} (+${formatCurrency(opt.priceWhole || opt.price || 0)})</span>
 																</label>
 																<label class="flex items-center gap-1 cursor-pointer ml-2">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="left" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${opt.displayName} (${(menuData as any).labels?.left || 'Left'})" data-price="${opt.priceLeft || (opt.price ? opt.price / 2 : 0)}">
+																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="left" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)} (${escapeHtml((menuData as any).labels?.left || 'Left')})" data-price="${opt.priceLeft || (opt.price ? opt.price / 2 : 0)}">
 																	<span>${(menuData as any).labels?.left || 'Left'}</span>
 																</label>
 																<label class="flex items-center gap-1 cursor-pointer ml-2">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="right" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${opt.displayName} (${(menuData as any).labels?.right || 'Right'})" data-price="${opt.priceRight || (opt.price ? opt.price / 2 : 0)}">
+																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="right" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)} (${escapeHtml((menuData as any).labels?.right || 'Right')})" data-price="${opt.priceRight || (opt.price ? opt.price / 2 : 0)}">
 																	<span>${(menuData as any).labels?.right || 'Right'}</span>
 																</label>
 															</div>
@@ -933,8 +997,8 @@ const clientMenuData = {
 													return `
 														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
 															<div class="flex items-center gap-2">
-																<input type="radio" name="grp_${grp.id}" value="${opt.id}" class="size-4 text-primary js-modifier-radio" data-group-id="${grp.id}" data-group-name="${grp.name}" data-opt-id="${opt.id}" data-opt-name="${opt.displayName}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-																<span class="font-medium text-foreground">${opt.displayName}</span>
+																<input type="radio" name="grp_${grp.id}" value="${opt.id}" class="size-4 text-primary js-modifier-radio" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
+																<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
 															</div>
 															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
 														</label>
@@ -943,8 +1007,8 @@ const clientMenuData = {
 												return `
 													<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
 														<div class="flex items-center gap-2">
-															<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${grp.name}" data-opt-id="${opt.id}" data-opt-name="${opt.displayName}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-															<span class="font-medium text-foreground">${opt.displayName}</span>
+															<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
+															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
 														</div>
 														<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
 													</label>

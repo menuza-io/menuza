@@ -24,6 +24,11 @@ import {
 } from 'react-router'
 import { type LocationOverrideState } from '#app/components/menu/location-overrides-card.tsx'
 import { OptionForm } from '#app/components/menu/option-form.tsx'
+import {
+	assertLocationIdsInOrganization,
+	assertModifierGroupIdsInOrganization,
+	assertOptionIdsInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -208,6 +213,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Not Found', { status: 404 })
 	}
 
+	await assertOptionIdsInOrganization(organization.id, [optionId])
+
 	const formData = await request.formData()
 	const rawData: Record<string, unknown> = {}
 
@@ -245,6 +252,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	await assertModifierGroupIdsInOrganization(
+		organization.id,
+		data.modifierGroupIds ?? [],
+	)
+	await assertLocationIdsInOrganization(
+		organization.id,
+		Object.keys(data.locationOverrides ?? {}),
+	)
+
 	// Automatically determine isTopping based on assigned modifier groups
 	let isTopping = data.isTopping
 	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
@@ -260,87 +276,91 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		isTopping = pizzaGroups.length > 0
 	}
 
-	// 1. Update OrganizationMenuOption
-	await db
-		.update(OrganizationMenuOption)
-		.set({
-			displayName: data.displayName,
-			internalName: data.internalName || null,
-			description: data.description || null,
-			imageKey: data.imageKey || null,
-			price: data.price,
-			priceWhole: isTopping ? data.price : null,
-			priceLeft: isTopping ? (data.priceLeft ?? null) : null,
-			priceRight: isTopping ? (data.priceRight ?? null) : null,
-			calories: data.calories ?? null,
-			minSelections: data.minSelections,
-			maxSelections: data.maxSelections ?? null,
-			isAlcohol: data.isAlcohol,
-			isGlutenFree: data.isGlutenFree,
-			isVegetarian: data.isVegetarian,
-			isTopping,
-			allergens: JSON.stringify(data.allergens),
-			applySalesTax: data.applySalesTax,
-			availabilityStatus: data.availabilityStatus,
-			unavailableUntil:
-				(data.availabilityStatus === 'unavailable_until' ||
-					data.availabilityStatus === 'unavailable_until_tomorrow') &&
-				data.unavailableUntil
-					? data.unavailableUntil
-					: null,
-			updatedAt: new Date(),
-		})
-		.where(
-			and(
-				eq(OrganizationMenuOption.id, optionId),
-				eq(OrganizationMenuOption.organizationId, organization.id),
-			),
-		)
+	await db.transaction(async (tx) => {
+		// 1. Update OrganizationMenuOption
+		await tx
+			.update(OrganizationMenuOption)
+			.set({
+				displayName: data.displayName,
+				internalName: data.internalName || null,
+				description: data.description || null,
+				imageKey: data.imageKey || null,
+				price: data.price,
+				priceWhole: isTopping ? data.price : null,
+				priceLeft: isTopping ? (data.priceLeft ?? null) : null,
+				priceRight: isTopping ? (data.priceRight ?? null) : null,
+				calories: data.calories ?? null,
+				minSelections: data.minSelections,
+				maxSelections: data.maxSelections ?? null,
+				isAlcohol: data.isAlcohol,
+				isGlutenFree: data.isGlutenFree,
+				isVegetarian: data.isVegetarian,
+				isTopping,
+				allergens: JSON.stringify(data.allergens),
+				applySalesTax: data.applySalesTax,
+				availabilityStatus: data.availabilityStatus,
+				unavailableUntil:
+					(data.availabilityStatus === 'unavailable_until' ||
+						data.availabilityStatus === 'unavailable_until_tomorrow') &&
+					data.unavailableUntil
+						? data.unavailableUntil
+						: null,
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(OrganizationMenuOption.id, optionId),
+					eq(OrganizationMenuOption.organizationId, organization.id),
+				),
+			)
 
-	// 2. Re-sync modifier group assignments
-	await db
-		.delete(OrganizationMenuModifierGroupOptionAssignment)
-		.where(eq(OrganizationMenuModifierGroupOptionAssignment.optionId, optionId))
+		// 2. Re-sync modifier group assignments
+		await tx
+			.delete(OrganizationMenuModifierGroupOptionAssignment)
+			.where(
+				eq(OrganizationMenuModifierGroupOptionAssignment.optionId, optionId),
+			)
 
-	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
-		const assignmentRows = data.modifierGroupIds.map((groupId, idx) => ({
-			modifierGroupId: groupId,
-			optionId,
-			position: idx,
-		}))
+		if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
+			const assignmentRows = data.modifierGroupIds.map((groupId, idx) => ({
+				modifierGroupId: groupId,
+				optionId,
+				position: idx,
+			}))
 
-		await db
-			.insert(OrganizationMenuModifierGroupOptionAssignment)
-			.values(assignmentRows)
-	}
-
-	// 3. Re-sync location overrides
-	await db
-		.delete(OrganizationMenuLocationOverride)
-		.where(
-			and(
-				eq(OrganizationMenuLocationOverride.entityType, 'modifier_option'),
-				eq(OrganizationMenuLocationOverride.entityId, optionId),
-			),
-		)
-
-	if (data.locationOverrides) {
-		const overrideRows = Object.entries(data.locationOverrides).map(
-			([locId, override]) => ({
-				organizationId: organization.id,
-				locationId: locId,
-				entityType: 'modifier_option',
-				entityId: optionId,
-				isEnabled: override.isEnabled ?? null,
-				price: override.price ?? null,
-				availabilityStatus: override.availabilityStatus ?? null,
-			}),
-		)
-
-		if (overrideRows.length > 0) {
-			await db.insert(OrganizationMenuLocationOverride).values(overrideRows)
+			await tx
+				.insert(OrganizationMenuModifierGroupOptionAssignment)
+				.values(assignmentRows)
 		}
-	}
+
+		// 3. Re-sync location overrides
+		await tx
+			.delete(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.entityType, 'modifier_option'),
+					eq(OrganizationMenuLocationOverride.entityId, optionId),
+				),
+			)
+
+		if (data.locationOverrides) {
+			const overrideRows = Object.entries(data.locationOverrides).map(
+				([locId, override]) => ({
+					organizationId: organization.id,
+					locationId: locId,
+					entityType: 'modifier_option',
+					entityId: optionId,
+					isEnabled: override.isEnabled ?? null,
+					price: override.price ?? null,
+					availabilityStatus: override.availabilityStatus ?? null,
+				}),
+			)
+
+			if (overrideRows.length > 0) {
+				await tx.insert(OrganizationMenuLocationOverride).values(overrideRows)
+			}
+		}
+	})
 
 	// Purge site KV cache
 	await purgeOrganizationSiteCache(organization.id, organization.slug)

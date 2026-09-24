@@ -145,6 +145,14 @@ const deliveryOrderText = i18n._(msg`Delivery Order`)
 					})}`
 				}
 
+				// Build nodes with textContent so operator/guest text is never parsed as HTML.
+				const createEl = (tag: string, className?: string, text?: string) => {
+					const node = document.createElement(tag)
+					if (className) node.className = className
+					if (text !== undefined) node.textContent = text
+					return node
+				}
+
 				const orderNumEl = document.getElementById('order-num')
 				const estTimeEl = document.getElementById('order-est-time')
 				const modeTextEl = document.getElementById('order-mode-text')
@@ -171,19 +179,20 @@ const deliveryOrderText = i18n._(msg`Delivery Order`)
 				}
 
 				if (itemsListEl && order.items) {
-					itemsListEl.innerHTML = order.items
-						.map(
-							(it: any) => `
-						<div class="pt-2 first:pt-0 flex justify-between items-start">
-							<div>
-								<span class="font-medium text-foreground">${it.quantity}x ${it.name}</span>
-								${it.options && it.options.length > 0 ? `<p class="text-[11px] text-muted-foreground">${it.options.map((o: any) => o.optionName).join(', ')}</p>` : ''}
-							</div>
-							<span class="font-semibold text-foreground">${formatCurrency(it.unitPrice * it.quantity)}</span>
-						</div>
-					`,
-						)
-						.join('')
+					const rows = order.items.map((it: any) => {
+						const row = createEl('div', 'pt-2 first:pt-0 flex justify-between items-start')
+						const info = createEl('div')
+						info.appendChild(createEl('span', 'font-medium text-foreground', `${it.quantity}x ${it.name}`))
+						if (it.options && it.options.length > 0) {
+							info.appendChild(
+								createEl('p', 'text-[11px] text-muted-foreground', it.options.map((o: any) => o.optionName).join(', ')),
+							)
+						}
+						row.appendChild(info)
+						row.appendChild(createEl('span', 'font-semibold text-foreground', formatCurrency(it.unitPrice * it.quantity)))
+						return row
+					})
+					itemsListEl.replaceChildren(...rows)
 				}
 
 				if (subtotalEl) subtotalEl.textContent = formatCurrency(order.subtotal || 0)

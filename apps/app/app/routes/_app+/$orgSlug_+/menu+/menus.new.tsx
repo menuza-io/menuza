@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { MenuInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
@@ -19,7 +20,12 @@ import {
 	useNavigation,
 } from 'react-router'
 import { MenuForm } from '#app/components/menu/menu-form.tsx'
+import {
+	assertCategoryIdsInOrganization,
+	assertLocationIdsInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -80,83 +86,103 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	const formData = await request.formData()
-	const displayName = String(formData.get('displayName') || '')
-	const internalName = String(formData.get('internalName') || '') || null
-	const menuType = String(formData.get('menuType') || 'online_pos_kiosk')
-	const nutritionalInfo = formData.get('nutritionalInfo') === 'true'
-	const specialInstructions = formData.get('specialInstructions') === 'true'
-	const availabilityStatus = String(
-		formData.get('availabilityStatus') || 'available',
-	)
-	const unavailableUntilRaw = String(formData.get('unavailableUntil') || '')
-	const unavailableUntil =
-		(availabilityStatus === 'unavailable_until' ||
-			availabilityStatus === 'unavailable_until_tomorrow') &&
-		unavailableUntilRaw
-			? new Date(unavailableUntilRaw)
-			: null
-	const availabilityHours =
-		String(formData.get('availabilityHours') || '') || null
+	const rawData: Record<string, unknown> = {}
 
-	const assignedCategoryIdsRaw = String(
-		formData.get('assignedCategoryIds') || '[]',
-	)
-	let assignedCategoryIds: string[] = []
-	try {
-		assignedCategoryIds = JSON.parse(assignedCategoryIdsRaw) as string[]
-	} catch {}
-
-	const locationOverridesRaw = String(formData.get('locationOverrides') || '{}')
-	let locationOverrides: Record<string, any> = {}
-	try {
-		locationOverrides = JSON.parse(locationOverridesRaw) as Record<string, any>
-	} catch {}
-
-	// Create Menu
-	const [newMenu] = await db
-		.insert(OrganizationMenu)
-		.values({
-			organizationId: organization.id,
-			displayName,
-			internalName,
-			menuType,
-			nutritionalInfo,
-			specialInstructions,
-			availabilityStatus,
-			unavailableUntil,
-			availabilityHours,
-		})
-		.returning()
-
-	if (!newMenu) {
-		throw new Error('Failed to create menu')
+	for (const [key, value] of formData.entries()) {
+		if (key === 'assignedCategoryIds') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = []
+			}
+		} else if (key === 'locationOverrides') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = {}
+			}
+		} else if (key === 'nutritionalInfo' || key === 'specialInstructions') {
+			rawData[key] = value === 'true'
+		} else {
+			rawData[key] = value
+		}
 	}
 
-	// Insert Category Assignments
-	if (assignedCategoryIds.length > 0) {
-		await db.insert(OrganizationMenuCategoryAssignment).values(
-			assignedCategoryIds.map((categoryId, index) => ({
-				menuId: newMenu.id,
-				categoryId,
-				position: index,
-			})),
+	const parsed = MenuInputSchema.safeParse(rawData)
+	if (!parsed.success) {
+		return Response.json(
+			{ error: parsed.error.flatten().fieldErrors },
+			{ status: 400 },
 		)
 	}
 
-	// Insert Location Overrides
-	const overrideEntries = Object.values(locationOverrides)
-	if (overrideEntries.length > 0) {
-		await db.insert(OrganizationMenuLocationOverride).values(
-			overrideEntries.map((entry: any) => ({
+	const data = parsed.data
+
+	await assertCategoryIdsInOrganization(
+		organization.id,
+		data.assignedCategoryIds,
+	)
+	await assertLocationIdsInOrganization(
+		organization.id,
+		Object.values(data.locationOverrides ?? {})
+			.map((entry) => entry.locationId)
+			.filter((id): id is string => typeof id === 'string'),
+	)
+
+	await db.transaction(async (tx) => {
+		// Create Menu
+		const [newMenu] = await tx
+			.insert(OrganizationMenu)
+			.values({
 				organizationId: organization.id,
-				locationId: entry.locationId,
-				entityType: 'menu',
-				entityId: newMenu.id,
-				isEnabled: entry.isEnabled,
-				availabilityStatus: entry.availabilityStatus,
-			})),
-		)
-	}
+				displayName: data.displayName,
+				internalName: data.internalName || null,
+				menuType: data.menuType,
+				nutritionalInfo: data.nutritionalInfo,
+				specialInstructions: data.specialInstructions,
+				availabilityStatus: data.availabilityStatus,
+				unavailableUntil:
+					(data.availabilityStatus === 'unavailable_until' ||
+						data.availabilityStatus === 'unavailable_until_tomorrow') &&
+					data.unavailableUntil
+						? data.unavailableUntil
+						: null,
+				availabilityHours: data.availabilityHours || null,
+			})
+			.returning()
+
+		if (!newMenu) {
+			throw new Error('Failed to create menu')
+		}
+
+		// Insert Category Assignments
+		if (data.assignedCategoryIds.length > 0) {
+			await tx.insert(OrganizationMenuCategoryAssignment).values(
+				data.assignedCategoryIds.map((categoryId, index) => ({
+					menuId: newMenu.id,
+					categoryId,
+					position: index,
+				})),
+			)
+		}
+
+		// Insert Location Overrides
+		const overrideEntries = Object.values(data.locationOverrides ?? {})
+		if (overrideEntries.length > 0) {
+			await tx.insert(OrganizationMenuLocationOverride).values(
+				overrideEntries.map((entry) => ({
+					organizationId: organization.id,
+					locationId: entry.locationId,
+					entityType: 'menu',
+					entityId: newMenu.id,
+					isEnabled: entry.isEnabled,
+					availabilityStatus: entry.availabilityStatus,
+				})),
+			)
+		}
+	})
+
+	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return redirect(`/${organization.slug}/menu/menus`)
 }

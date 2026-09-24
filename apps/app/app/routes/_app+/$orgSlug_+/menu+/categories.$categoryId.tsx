@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { MenuCategoryInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
@@ -22,7 +23,14 @@ import {
 	useNavigation,
 } from 'react-router'
 import { CategoryForm } from '#app/components/menu/category-form.tsx'
+import {
+	assertCategoryInOrganization,
+	assertItemIdsInOrganization,
+	assertLocationIdsInOrganization,
+	assertMenuInOrganization,
+} from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -175,123 +183,140 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Category not found', { status: 404 })
 	}
 
+	await assertCategoryInOrganization(organization.id, categoryId)
+
 	const formData = await request.formData()
-	const displayName = String(formData.get('displayName') || '')
-	const internalName = String(formData.get('internalName') || '') || null
-	const description = String(formData.get('description') || '') || null
-	const availabilityStatus = String(
-		formData.get('availabilityStatus') || 'available',
+	const rawData: Record<string, unknown> = {}
+
+	for (const [key, value] of formData.entries()) {
+		if (
+			key === 'assignedItemIds' ||
+			key === 'assignedMenuIds' ||
+			key === 'upsellCategoryIds'
+		) {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = []
+			}
+		} else if (key === 'locationOverrides') {
+			try {
+				rawData[key] = JSON.parse(value as string)
+			} catch {
+				rawData[key] = {}
+			}
+		} else if (key === 'excludeFromOverride') {
+			rawData[key] = value === 'true'
+		} else {
+			rawData[key] = value
+		}
+	}
+
+	const parsed = MenuCategoryInputSchema.safeParse(rawData)
+	if (!parsed.success) {
+		return Response.json(
+			{ error: parsed.error.flatten().fieldErrors },
+			{ status: 400 },
+		)
+	}
+
+	const data = parsed.data
+
+	await assertItemIdsInOrganization(organization.id, data.assignedItemIds)
+	for (const menuId of data.assignedMenuIds) {
+		await assertMenuInOrganization(organization.id, menuId)
+	}
+	await assertLocationIdsInOrganization(
+		organization.id,
+		Object.values(data.locationOverrides ?? {})
+			.map((entry) => entry.locationId)
+			.filter((id): id is string => typeof id === 'string'),
 	)
-	const unavailableUntilRaw = String(formData.get('unavailableUntil') || '')
-	const unavailableUntil =
-		(availabilityStatus === 'unavailable_until' ||
-			availabilityStatus === 'unavailable_until_tomorrow') &&
-		unavailableUntilRaw
-			? new Date(unavailableUntilRaw)
-			: null
-	const availabilityHours =
-		String(formData.get('availabilityHours') || '') || null
-	const excludeFromOverride = formData.get('excludeFromOverride') === 'true'
 
-	const assignedItemIdsRaw = String(formData.get('assignedItemIds') || '[]')
-	let assignedItemIds: string[] = []
-	try {
-		assignedItemIds = JSON.parse(assignedItemIdsRaw) as string[]
-	} catch {}
+	await db.transaction(async (tx) => {
+		// Update Category
+		await tx
+			.update(OrganizationMenuCategory)
+			.set({
+				displayName: data.displayName,
+				internalName: data.internalName || null,
+				description: data.description || null,
+				availabilityStatus: data.availabilityStatus,
+				unavailableUntil:
+					(data.availabilityStatus === 'unavailable_until' ||
+						data.availabilityStatus === 'unavailable_until_tomorrow') &&
+					data.unavailableUntil
+						? data.unavailableUntil
+						: null,
+				availabilityHours: data.availabilityHours || null,
+				excludeFromOverride: data.excludeFromOverride,
+				upsellCategoryIds: JSON.stringify(data.upsellCategoryIds),
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(OrganizationMenuCategory.id, categoryId),
+					eq(OrganizationMenuCategory.organizationId, organization.id),
+				),
+			)
 
-	const assignedMenuIdsRaw = String(formData.get('assignedMenuIds') || '[]')
-	let assignedMenuIds: string[] = []
-	try {
-		assignedMenuIds = JSON.parse(assignedMenuIdsRaw) as string[]
-	} catch {}
+		// Replace item assignments
+		await tx
+			.delete(OrganizationMenuItemCategoryAssignment)
+			.where(eq(OrganizationMenuItemCategoryAssignment.categoryId, categoryId))
 
-	const upsellCategoryIdsRaw = String(formData.get('upsellCategoryIds') || '[]')
-	let upsellCategoryIds: string[] = []
-	try {
-		upsellCategoryIds = JSON.parse(upsellCategoryIdsRaw) as string[]
-	} catch {}
+		if (data.assignedItemIds.length > 0) {
+			await tx.insert(OrganizationMenuItemCategoryAssignment).values(
+				data.assignedItemIds.map((itemId, index) => ({
+					categoryId,
+					itemId,
+					position: index,
+				})),
+			)
+		}
 
-	const locationOverridesRaw = String(formData.get('locationOverrides') || '{}')
-	let locationOverrides: Record<string, any> = {}
-	try {
-		locationOverrides = JSON.parse(locationOverridesRaw) as Record<string, any>
-	} catch {}
+		// Replace menu assignments
+		await tx
+			.delete(OrganizationMenuCategoryAssignment)
+			.where(eq(OrganizationMenuCategoryAssignment.categoryId, categoryId))
 
-	// Update Category
-	await db
-		.update(OrganizationMenuCategory)
-		.set({
-			displayName,
-			internalName,
-			description,
-			availabilityStatus,
-			unavailableUntil,
-			availabilityHours,
-			excludeFromOverride,
-			upsellCategoryIds: JSON.stringify(upsellCategoryIds),
-			updatedAt: new Date(),
-		})
-		.where(
-			and(
-				eq(OrganizationMenuCategory.id, categoryId),
-				eq(OrganizationMenuCategory.organizationId, organization.id),
-			),
-		)
+		if (data.assignedMenuIds.length > 0) {
+			await tx.insert(OrganizationMenuCategoryAssignment).values(
+				data.assignedMenuIds.map((menuId, index) => ({
+					menuId,
+					categoryId,
+					position: index,
+				})),
+			)
+		}
 
-	// Replace item assignments
-	await db
-		.delete(OrganizationMenuItemCategoryAssignment)
-		.where(eq(OrganizationMenuItemCategoryAssignment.categoryId, categoryId))
+		// Replace location overrides
+		await tx
+			.delete(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.organizationId, organization.id),
+					eq(OrganizationMenuLocationOverride.entityType, 'category'),
+					eq(OrganizationMenuLocationOverride.entityId, categoryId),
+				),
+			)
 
-	if (assignedItemIds.length > 0) {
-		await db.insert(OrganizationMenuItemCategoryAssignment).values(
-			assignedItemIds.map((itemId, index) => ({
-				categoryId,
-				itemId,
-				position: index,
-			})),
-		)
-	}
+		const overrideEntries = Object.values(data.locationOverrides ?? {})
+		if (overrideEntries.length > 0) {
+			await tx.insert(OrganizationMenuLocationOverride).values(
+				overrideEntries.map((entry) => ({
+					organizationId: organization.id,
+					locationId: entry.locationId,
+					entityType: 'category',
+					entityId: categoryId,
+					isEnabled: entry.isEnabled,
+					availabilityStatus: entry.availabilityStatus,
+				})),
+			)
+		}
+	})
 
-	// Replace menu assignments
-	await db
-		.delete(OrganizationMenuCategoryAssignment)
-		.where(eq(OrganizationMenuCategoryAssignment.categoryId, categoryId))
-
-	if (assignedMenuIds.length > 0) {
-		await db.insert(OrganizationMenuCategoryAssignment).values(
-			assignedMenuIds.map((menuId, index) => ({
-				menuId,
-				categoryId,
-				position: index,
-			})),
-		)
-	}
-
-	// Replace location overrides
-	await db
-		.delete(OrganizationMenuLocationOverride)
-		.where(
-			and(
-				eq(OrganizationMenuLocationOverride.organizationId, organization.id),
-				eq(OrganizationMenuLocationOverride.entityType, 'category'),
-				eq(OrganizationMenuLocationOverride.entityId, categoryId),
-			),
-		)
-
-	const overrideEntries = Object.values(locationOverrides)
-	if (overrideEntries.length > 0) {
-		await db.insert(OrganizationMenuLocationOverride).values(
-			overrideEntries.map((entry: any) => ({
-				organizationId: organization.id,
-				locationId: entry.locationId,
-				entityType: 'category',
-				entityId: categoryId,
-				isEnabled: entry.isEnabled,
-				availabilityStatus: entry.availabilityStatus,
-			})),
-		)
-	}
+	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return redirect(`/${organization.slug}/menu/categories`)
 }
