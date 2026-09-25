@@ -68,6 +68,7 @@ export interface OptionFormData {
 	imageKey: string | null
 	imageUrl: string | null
 	modifierGroupIds: string[]
+	nestedModifierGroupIds?: string[]
 	locationOverrides?: Record<string, LocationOverrideState>
 }
 
@@ -199,6 +200,18 @@ export function OptionForm({
 			prev.includes(allergen)
 				? prev.filter((a) => a !== allergen)
 				: [...prev, allergen],
+		)
+	}
+
+	const [nestedModifierGroupIds, setNestedModifierGroupIds] = useState<
+		string[]
+	>(initialData?.nestedModifierGroupIds ?? [])
+
+	const toggleNestedModifierGroup = (groupId: string) => {
+		setNestedModifierGroupIds((prev) =>
+			prev.includes(groupId)
+				? prev.filter((id) => id !== groupId)
+				: [...prev, groupId],
 		)
 	}
 
@@ -782,6 +795,95 @@ export function OptionForm({
 														</Item>
 													)
 												})}
+											</ItemGroup>
+										)}
+									</FramePanel>
+								</Frame>
+								{/* Nested / Sub Modifier Groups (Conditional Modifiers) */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<div className="flex items-center justify-between">
+											<FrameTitle className="text-base">
+												<Trans>Nested Modifiers</Trans>
+											</FrameTitle>
+											{nestedModifierGroupIds.length > 0 && (
+												<Badge variant="secondary" className="text-xs">
+													{nestedModifierGroupIds.length}{' '}
+													{nestedModifierGroupIds.length === 1
+														? 'group'
+														: 'groups'}
+												</Badge>
+											)}
+										</div>
+										<FrameDescription>
+											<Trans>
+												Attach secondary modifier groups that appear when this
+												modifier item is selected by a customer (e.g. selecting
+												"French Fries" prompts for "Fry Size").
+											</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel className="space-y-3">
+										{availableModifierGroups.filter(
+											(g) => !selectedGroupIds.has(g.id),
+										).length === 0 ? (
+											<p className="text-muted-foreground py-4 text-center text-xs">
+												<Trans>
+													No other modifier groups available to nest.
+												</Trans>
+											</p>
+										) : (
+											<ItemGroup className="divide-border/60 divide-y rounded-md border">
+												{availableModifierGroups
+													.filter((g) => !selectedGroupIds.has(g.id))
+													.map((group) => {
+														const isSelected = nestedModifierGroupIds.includes(
+															group.id,
+														)
+														return (
+															<Item
+																key={group.id}
+																className={cn(
+																	'flex cursor-pointer items-center justify-between p-3 transition-colors',
+																	isSelected &&
+																		'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
+																)}
+																onClick={() =>
+																	toggleNestedModifierGroup(group.id)
+																}
+															>
+																<div className="flex min-w-0 flex-1 items-center gap-2.5">
+																	<Checkbox
+																		id={`nested-group-${group.id}`}
+																		checked={isSelected}
+																		onCheckedChange={() =>
+																			toggleNestedModifierGroup(group.id)
+																		}
+																	/>
+																	<ItemContent className="min-w-0">
+																		<ItemTitle className="truncate text-xs font-medium">
+																			{getLocalizedMenuValue(
+																				group.name,
+																				activeLocale,
+																				defaultLocale,
+																			)}
+																		</ItemTitle>
+																		{group.internalName && (
+																			<ItemDescription className="truncate text-[11px]">
+																				{group.internalName}
+																			</ItemDescription>
+																		)}
+																	</ItemContent>
+																</div>
+																<Badge
+																	variant="outline"
+																	className="text-muted-foreground text-[10px] capitalize"
+																>
+																	{group.selectionType ?? 'standard'}
+																</Badge>
+															</Item>
+														)
+													})}
 											</ItemGroup>
 										)}
 									</FramePanel>

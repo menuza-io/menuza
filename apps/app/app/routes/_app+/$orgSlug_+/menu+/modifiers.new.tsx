@@ -14,6 +14,7 @@ import {
 	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 } from '@repo/database'
 import {
 	type ActionFunctionArgs,
@@ -45,6 +46,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 	const defaultLocale = localesConfig.defaultLocale
 	const supportedLocales = localesConfig.locales
+
+	const allModifierGroups =
+		await db.query.OrganizationMenuModifierGroup.findMany({
+			where: eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+			orderBy: [asc(OrganizationMenuModifierGroup.name)],
+		})
 
 	const allItems = await db.query.OrganizationMenuItem.findMany({
 		where: eq(OrganizationMenuItem.organizationId, organization.id),
@@ -78,8 +85,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.where(eq(OrganizationMenuOption.organizationId, organization.id))
 		.orderBy(asc(OrganizationMenuOption.position))
 
+	const parentOptionsQuery = await db.query.OrganizationMenuOption.findMany({
+		where: eq(OrganizationMenuOption.organizationId, organization.id),
+		with: {
+			modifierGroupAssignments: {
+				with: {
+					modifierGroup: true,
+				},
+			},
+		},
+		orderBy: [asc(OrganizationMenuOption.displayName)],
+	})
+
+	const availableParentOptions = parentOptionsQuery.map((opt) => ({
+		id: opt.id,
+		displayName: opt.displayName,
+		internalName: opt.internalName,
+		groupName: opt.modifierGroupAssignments[0]?.modifierGroup?.name ?? null,
+		groupInternalName:
+			opt.modifierGroupAssignments[0]?.modifierGroup?.internalName ?? null,
+	}))
+
 	return {
 		organization,
+		initialParentOptionIds: [] as string[],
+		availableParentOptions,
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
@@ -88,6 +118,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			displayName: i.displayName,
 			internalName: i.internalName,
 			price: i.price,
+		})),
+		availableModifierGroups: allModifierGroups.map((g) => ({
+			id: g.id,
+			name: g.name,
+			internalName: g.internalName,
 		})),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
@@ -210,6 +245,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						.limit(1)
 					if (!existing) targetOptionId = undefined
 				}
+				const nestedIds = opt.nestedModifierGroupIds ?? []
 				if (!targetOptionId) {
 					const [created] = await tx
 						.insert(OrganizationMenuOption)
@@ -225,6 +261,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							position: i,
 						})
 						.returning()
@@ -243,6 +280,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							updatedAt: new Date(),
 						})
 						.where(
@@ -303,6 +341,9 @@ export default function CreateModifierGroupRoute() {
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
+		availableModifierGroups,
+		initialParentOptionIds,
+		availableParentOptions,
 		allItems,
 		allLocations,
 	} = useLoaderData<typeof loader>()
@@ -313,6 +354,7 @@ export default function CreateModifierGroupRoute() {
 		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
 			<ModifierForm
 				pageTitle="Create Modifier Group"
+				availableModifierGroups={availableModifierGroups}
 				orgSlug={organization.slug}
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}

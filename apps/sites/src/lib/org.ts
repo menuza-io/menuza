@@ -423,6 +423,8 @@ export type PublicMenuOptionData = {
 	applySalesTax: boolean
 	availabilityStatus: string
 	position: number
+	nestedModifierGroupIds?: string[]
+	nestedModifierGroups?: PublicModifierGroupData[]
 }
 
 export type PublicModifierGroupData = {
@@ -466,6 +468,8 @@ export type PublicMenuCategoryData = {
 	internalName: string | null
 	description: string | null
 	upsellCategoryIds: string[]
+	parentId?: string | null
+	subcategories?: PublicMenuCategoryData[]
 	availabilityStatus: string
 	position: number
 	items: PublicMenuItemData[]

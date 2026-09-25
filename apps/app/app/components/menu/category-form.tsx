@@ -1,8 +1,19 @@
 import { Trans } from '@lingui/macro'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import {
+	getLocalizedMenuValue,
+	getCategoryDepth,
+	isValidParentCategory,
+} from '@repo/common/menu-types'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Checkbox } from '@repo/ui/checkbox'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
 import {
 	Frame,
 	FrameAction,
@@ -15,7 +26,7 @@ import { Input } from '@repo/ui/input'
 import { Item, ItemContent, ItemGroup, ItemTitle } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Form } from 'react-router'
 import {
 	LocaleContext,
@@ -34,6 +45,7 @@ import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
 
 export interface CategoryFormData {
+	parentId?: string | null
 	displayName: string
 	internalName: string
 	description: string
@@ -52,6 +64,7 @@ export interface CategoryFormData {
 }
 
 interface CategoryFormProps {
+	categoryId?: string
 	initialData?: Partial<CategoryFormData>
 	orgSlug: string
 	defaultLocale: string
@@ -69,6 +82,7 @@ interface CategoryFormProps {
 	allCategories: Array<{
 		id: string
 		displayName: string
+		parentId?: string | null
 	}>
 	allLocations: LocationItem[]
 	isSubmitting: boolean
@@ -76,6 +90,7 @@ interface CategoryFormProps {
 }
 
 export function CategoryForm({
+	categoryId,
 	initialData,
 	orgSlug,
 	defaultLocale,
@@ -88,6 +103,57 @@ export function CategoryForm({
 	pageTitle,
 }: CategoryFormProps) {
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
+	const [parentId, setParentId] = useState<string | null>(
+		initialData?.parentId ?? null,
+	)
+
+	const categoriesMap = useMemo(
+		() => new Map(allCategories.map((c) => [c.id, c])),
+		[allCategories],
+	)
+
+	const effectiveCategoryId = categoryId || (initialData as any)?.id
+
+	const eligibleCategories = useMemo(() => {
+		return allCategories
+			.filter((c) => {
+				if (effectiveCategoryId && c.id === effectiveCategoryId) {
+					return false
+				}
+				const check = isValidParentCategory(
+					effectiveCategoryId,
+					c.id,
+					allCategories,
+					3,
+				)
+				return check.valid
+			})
+			.map((c) => {
+				const depth = getCategoryDepth(c.id, categoriesMap)
+				const name =
+					getLocalizedMenuValue(c.displayName, activeLocale, defaultLocale) ||
+					'Untitled'
+				const indentPrefix = depth === 1 ? '' : depth === 2 ? '↳ ' : '↳↳ '
+				const levelLabel = depth === 1 ? 'Top-Level' : `Level ${depth}`
+				return {
+					id: c.id,
+					name,
+					depth,
+					indentPrefix,
+					levelLabel,
+				}
+			})
+	}, [
+		allCategories,
+		effectiveCategoryId,
+		categoriesMap,
+		activeLocale,
+		defaultLocale,
+	])
+
+	const currentParentDepth = parentId
+		? getCategoryDepth(parentId, categoriesMap)
+		: 0
 
 	// State
 	const [displayName, setDisplayName] = useState(
@@ -159,6 +225,7 @@ export function CategoryForm({
 			>
 				<Form method="POST" className="flex flex-1 flex-col">
 					{/* Hidden inputs to submit values */}
+					<input type="hidden" name="parentId" value={parentId ?? ''} />
 					<input type="hidden" name="displayName" value={displayName} />
 					<input type="hidden" name="description" value={description} />
 					<input
@@ -219,6 +286,80 @@ export function CategoryForm({
 										</FrameDescription>
 									</FrameHeader>
 									<FramePanel className="space-y-4">
+										<div className="space-y-2">
+											<div className="flex items-center justify-between">
+												<Label className="text-xs">
+													<Trans>Parent Category (Hierarchy)</Trans>
+												</Label>
+												{parentId && (
+													<Badge variant="secondary" className="text-[10px]">
+														<Trans>
+															Level {currentParentDepth + 1} Subcategory
+														</Trans>
+													</Badge>
+												)}
+											</div>
+											<input
+												type="hidden"
+												name="parentId"
+												value={parentId ?? ''}
+											/>
+											<Select
+												value={parentId ?? 'none'}
+												onValueChange={(val) => {
+													setParentId(
+														val === 'none' || !val ? null : (val as string),
+													)
+												}}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue>
+														{parentId
+															? (() => {
+																	const m = eligibleCategories.find(
+																		(c) => c.id === parentId,
+																	)
+																	return m
+																		? `${m.name} (${m.levelLabel})`
+																		: parentId
+																})()
+															: 'None (Top-Level Category)'}
+													</SelectValue>
+												</SelectTrigger>
+												<SelectContent align="start" className="max-h-60">
+													<SelectItem value="none">
+														<span className="text-muted-foreground">
+															<Trans>None (Top-Level Category)</Trans>
+														</span>
+													</SelectItem>
+													{eligibleCategories.map((cat) => (
+														<SelectItem key={cat.id} value={cat.id}>
+															<div className="flex items-center gap-2">
+																{cat.depth > 1 && (
+																	<span className="text-muted-foreground font-mono">
+																		{cat.indentPrefix}
+																	</span>
+																)}
+																<span>{cat.name}</span>
+																<Badge
+																	variant="outline"
+																	className="px-1 py-0 text-[10px] font-normal"
+																>
+																	{cat.levelLabel}
+																</Badge>
+															</div>
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<p className="text-muted-foreground text-[11px]">
+												<Trans>
+													Nest up to 3 levels deep (e.g. Drinks &gt; Hot Coffees
+													&gt; Americanos).
+												</Trans>
+											</p>
+										</div>
+
 										<div className="space-y-2">
 											<Label className="text-xs">
 												<Trans>Category Name (Guest-Facing)</Trans>

@@ -11,6 +11,7 @@ import {
 	OrganizationMenuModifierGroup,
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 } from '@repo/database'
 import {
 	type ActionFunctionArgs,
@@ -104,6 +105,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (
 			key === 'allergens' ||
 			key === 'modifierGroupIds' ||
+			key === 'nestedModifierGroupIds' ||
 			key === 'locationOverrides'
 		) {
 			try {
@@ -137,6 +139,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertModifierGroupIdsInOrganization(
 		organization.id,
 		data.modifierGroupIds ?? [],
+	)
+	await assertModifierGroupIdsInOrganization(
+		organization.id,
+		data.nestedModifierGroupIds ?? [],
 	)
 	await assertLocationIdsInOrganization(
 		organization.id,
@@ -183,6 +189,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,
+				nestedModifierGroupIds: JSON.stringify(
+					data.nestedModifierGroupIds ?? [],
+				),
 				availabilityStatus: data.availabilityStatus,
 				unavailableUntil:
 					(data.availabilityStatus === 'unavailable_until' ||
@@ -211,6 +220,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			await tx
 				.insert(OrganizationMenuModifierGroupOptionAssignment)
 				.values(assignmentRows)
+		}
+
+		// 3. Insert nested modifier group assignments
+		if (data.nestedModifierGroupIds && data.nestedModifierGroupIds.length > 0) {
+			await tx
+				.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
+				.values(
+					data.nestedModifierGroupIds.map((groupId, idx) => ({
+						optionId: createdOption.id,
+						modifierGroupId: groupId,
+						position: idx,
+					})),
+				)
 		}
 
 		// 3. Insert location overrides

@@ -12,6 +12,7 @@ import {
 	OrganizationMenuModifierGroup,
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMediaAsset,
 } from '@repo/database'
 import {
@@ -149,6 +150,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.where(eq(OrganizationLocation.organizationId, organization.id))
 		.orderBy(OrganizationLocation.isDefault, OrganizationLocation.name)
 
+	let nestedModifierGroupIds: string[] = []
+	try {
+		if (option.nestedModifierGroupIds) {
+			nestedModifierGroupIds = JSON.parse(
+				option.nestedModifierGroupIds,
+			) as string[]
+		}
+	} catch {}
+
 	let parsedAllergens: string[] = []
 	try {
 		if (option.allergens) {
@@ -196,6 +206,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			imageKey: option.imageKey,
 			imageUrl,
 			modifierGroupIds,
+			nestedModifierGroupIds,
 			locationOverrides: locationOverridesMap,
 		},
 	}
@@ -222,6 +233,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (
 			key === 'allergens' ||
 			key === 'modifierGroupIds' ||
+			key === 'nestedModifierGroupIds' ||
 			key === 'locationOverrides'
 		) {
 			try {
@@ -255,6 +267,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertModifierGroupIdsInOrganization(
 		organization.id,
 		data.modifierGroupIds ?? [],
+	)
+	await assertModifierGroupIdsInOrganization(
+		organization.id,
+		data.nestedModifierGroupIds ?? [],
 	)
 	await assertLocationIdsInOrganization(
 		organization.id,
@@ -298,6 +314,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,
+				nestedModifierGroupIds: JSON.stringify(
+					data.nestedModifierGroupIds ?? [],
+				),
 				availabilityStatus: data.availabilityStatus,
 				unavailableUntil:
 					(data.availabilityStatus === 'unavailable_until' ||

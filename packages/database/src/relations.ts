@@ -73,6 +73,7 @@ import {
 	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationMenuOption,
 	OrganizationMenuModifierGroupOptionAssignment,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMenuModifierOption,
 	OrganizationMenuLocationOverride,
 } from './schema.ts'
@@ -917,6 +918,14 @@ export const OrganizationMenuCategoryRelations = relations(
 		}),
 		menuAssignments: many(OrganizationMenuCategoryAssignment),
 		itemAssignments: many(OrganizationMenuItemCategoryAssignment),
+		parent: one(OrganizationMenuCategory, {
+			fields: [OrganizationMenuCategory.parentId],
+			references: [OrganizationMenuCategory.id],
+			relationName: 'CategoryToParent',
+		}),
+		subcategories: many(OrganizationMenuCategory, {
+			relationName: 'CategoryToParent',
+		}),
 	}),
 )
 
@@ -970,6 +979,9 @@ export const OrganizationMenuModifierGroupRelations = relations(
 		options: many(OrganizationMenuModifierOption),
 		optionAssignments: many(OrganizationMenuModifierGroupOptionAssignment),
 		itemAssignments: many(OrganizationMenuItemModifierGroupAssignment),
+		parentOptionAssignments: many(
+			OrganizationMenuOptionNestedModifierGroupAssignment,
+		),
 	}),
 )
 
@@ -982,6 +994,9 @@ export const OrganizationMenuOptionRelations = relations(
 		}),
 		modifierGroupAssignments: many(
 			OrganizationMenuModifierGroupOptionAssignment,
+		),
+		nestedModifierGroupAssignments: many(
+			OrganizationMenuOptionNestedModifierGroupAssignment,
 		),
 	}),
 )
@@ -1037,3 +1052,17 @@ export const OrganizationMenuLocationOverrideRelations = relations(
 		}),
 	}),
 )
+
+export const OrganizationMenuOptionNestedModifierGroupAssignmentRelations =
+	relations(OrganizationMenuOptionNestedModifierGroupAssignment, ({ one }) => ({
+		option: one(OrganizationMenuOption, {
+			fields: [OrganizationMenuOptionNestedModifierGroupAssignment.optionId],
+			references: [OrganizationMenuOption.id],
+		}),
+		modifierGroup: one(OrganizationMenuModifierGroup, {
+			fields: [
+				OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
+			],
+			references: [OrganizationMenuModifierGroup.id],
+		}),
+	}))

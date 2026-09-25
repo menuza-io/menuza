@@ -148,6 +148,7 @@ export const ModifierOptionInputSchema = z.object({
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
+	nestedModifierGroupIds: z.array(z.string()).default([]),
 	position: z.number().default(0),
 })
 
@@ -176,6 +177,7 @@ export const MenuOptionInputSchema = z.object({
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
 	modifierGroupIds: z.array(z.string()).default([]),
+	nestedModifierGroupIds: z.array(z.string()).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -267,6 +269,7 @@ export function parseMenuItemImageKeys(
 
 export const MenuCategoryInputSchema = z.object({
 	id: z.string().optional(),
+	parentId: z.string().nullable().optional(),
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
 	description: z.string().optional(),
@@ -308,3 +311,91 @@ export const MenuInputSchema = z.object({
 export type MenuInput = z.infer<typeof MenuInputSchema>
 
 export * from './location-availability.ts'
+
+export interface CategoryHierarchyNode {
+	id: string
+	parentId: string | null
+	displayName: string
+}
+
+export function getCategoryDepth(
+	categoryId: string,
+	categoriesMap: Map<string, { id: string; parentId?: string | null }>,
+): number {
+	let depth = 1
+	let currentId: string | null | undefined = categoryId
+	const visited = new Set<string>()
+
+	while (currentId) {
+		if (visited.has(currentId)) {
+			return -1
+		}
+		visited.add(currentId)
+		const cat = categoriesMap.get(currentId)
+		if (!cat || !cat.parentId) break
+		depth++
+		currentId = cat.parentId
+	}
+	return depth
+}
+
+export function isValidParentCategory(
+	categoryId: string | null | undefined,
+	proposedParentId: string | null | undefined,
+	allCategories: Array<{ id: string; parentId?: string | null }>,
+	maxDepth = 3,
+): { valid: boolean; reason?: string } {
+	if (!proposedParentId) return { valid: true }
+	if (categoryId && proposedParentId === categoryId) {
+		return { valid: false, reason: 'A category cannot be its own parent.' }
+	}
+
+	const map = new Map(allCategories.map((c) => [c.id, c]))
+	if (!map.has(proposedParentId)) {
+		return { valid: false, reason: 'Parent category does not exist.' }
+	}
+
+	if (categoryId) {
+		let curr: string | null | undefined = proposedParentId
+		const seen = new Set<string>()
+		while (curr) {
+			if (curr === categoryId) {
+				return {
+					valid: false,
+					reason: 'Cannot set a descendant category as parent.',
+				}
+			}
+			if (seen.has(curr)) break
+			seen.add(curr)
+			curr = map.get(curr)?.parentId
+		}
+	}
+
+	const parentDepth = getCategoryDepth(proposedParentId, map)
+	if (parentDepth < 0) {
+		return {
+			valid: false,
+			reason: 'Circular hierarchy detected in parent chain.',
+		}
+	}
+
+	function getMaxSubtreeDepth(rootId: string): number {
+		let maxSub = 0
+		for (const c of allCategories) {
+			if (c.parentId === rootId) {
+				maxSub = Math.max(maxSub, 1 + getMaxSubtreeDepth(c.id))
+			}
+		}
+		return maxSub
+	}
+
+	const subtreeDepth = categoryId ? getMaxSubtreeDepth(categoryId) : 0
+	if (parentDepth + 1 + subtreeDepth > maxDepth) {
+		return {
+			valid: false,
+			reason: `Categories are limited to a maximum of ${maxDepth} levels.`,
+		}
+	}
+
+	return { valid: true }
+}

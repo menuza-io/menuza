@@ -113,15 +113,65 @@ const checkoutHref =
 	getLocaleHref('/menu/checkout', requestedLocale, defaultLocale) +
 	(activeLocation ? `?location=${encodeURIComponent(activeLocation.id)}` : '')
 
+// Helper to count total items across category and its subcategories (up to 3 levels)
+function getCategoryTotalItemCount(cat: PublicMenuCategoryData): number {
+	let count = (cat.items || []).length
+	for (const sub of cat.subcategories || []) {
+		count += getCategoryTotalItemCount(sub)
+	}
+	return count
+}
+
 // Collect categories across active menus
 const allCategories: PublicMenuCategoryData[] = []
 for (const menu of menus) {
 	if (menu.availabilityStatus !== 'unavailable') {
 		for (const cat of menu.categories) {
-			if (cat.availabilityStatus !== 'unavailable' && cat.items.length > 0) {
+			if (cat.availabilityStatus !== 'unavailable') {
 				allCategories.push(cat)
 			}
 		}
+	}
+}
+
+// Top-level categories (no parentId) with at least 1 item directly or in subcategories
+const topLevelCategories = allCategories.filter(
+	(cat) => !cat.parentId && getCategoryTotalItemCount(cat) > 0,
+)
+
+function localizeOption(opt: any): any {
+	return {
+		...opt,
+		displayName: getLocalizedMenuValue(opt.displayName, requestedLocale, defaultLocale),
+		description: opt.description ? getLocalizedMenuValue(opt.description, requestedLocale, defaultLocale) : '',
+		nestedModifierGroups: (opt.nestedModifierGroups || []).map(localizeModifierGroup),
+	}
+}
+
+function localizeModifierGroup(grp: any): any {
+	return {
+		...grp,
+		name: getLocalizedMenuValue(grp.name, requestedLocale, defaultLocale),
+		options: (grp.options || []).map(localizeOption),
+	}
+}
+
+function localizeItem(item: any): any {
+	return {
+		...item,
+		displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
+		description: item.description ? getLocalizedMenuValue(item.description, requestedLocale, defaultLocale) : '',
+		modifierGroups: (item.modifierGroups || []).map(localizeModifierGroup),
+	}
+}
+
+function localizeCategory(cat: any): any {
+	return {
+		...cat,
+		displayName: getLocalizedMenuValue(cat.displayName, requestedLocale, defaultLocale),
+		description: cat.description ? getLocalizedMenuValue(cat.description, requestedLocale, defaultLocale) : '',
+		items: (cat.items || []).map(localizeItem),
+		subcategories: (cat.subcategories || []).map(localizeCategory),
 	}
 }
 
@@ -129,25 +179,7 @@ for (const menu of menus) {
 const localizedMenus = menus.map((menu) => ({
 	...menu,
 	displayName: getLocalizedMenuValue(menu.displayName, requestedLocale, defaultLocale),
-	categories: menu.categories.map((cat) => ({
-		...cat,
-		displayName: getLocalizedMenuValue(cat.displayName, requestedLocale, defaultLocale),
-		description: cat.description ? getLocalizedMenuValue(cat.description, requestedLocale, defaultLocale) : '',
-		items: cat.items.map((item) => ({
-			...item,
-			displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
-			description: item.description ? getLocalizedMenuValue(item.description, requestedLocale, defaultLocale) : '',
-			modifierGroups: item.modifierGroups.map((grp) => ({
-				...grp,
-				name: getLocalizedMenuValue(grp.name, requestedLocale, defaultLocale),
-				options: grp.options.map((opt) => ({
-					...opt,
-					displayName: getLocalizedMenuValue(opt.displayName, requestedLocale, defaultLocale),
-					description: opt.description ? getLocalizedMenuValue(opt.description, requestedLocale, defaultLocale) : '',
-				})),
-			})),
-		})),
-	})),
+	categories: menu.categories.map(localizeCategory),
 }))
 
 // Delivery fee lives on the DeliveryZone (DeliveryConfig has no fee field).
@@ -270,10 +302,10 @@ const clientMenuData = {
 			</div>
 
 			{/* Sticky Category Quick Nav Bar */}
-			{allCategories.length > 0 ? (
+			{topLevelCategories.length > 0 ? (
 				<div class:list={[siteContainer, "py-2.5"]}>
 					<nav class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth" aria-label="Menu categories">
-						{allCategories.map((cat, idx) => {
+						{topLevelCategories.map((cat, idx) => {
 							const catName = getLocalizedMenuValue(cat.displayName, requestedLocale, defaultLocale)
 							return (
 								<a
@@ -296,7 +328,7 @@ const clientMenuData = {
 
 		{/* Main Food Items Section */}
 		<main class:list={[siteContainer, "py-8"]}>
-			{allCategories.length === 0 ? (
+			{topLevelCategories.length === 0 ? (
 				<div class="flex flex-col items-center justify-center py-24 text-center">
 					<div class="size-16 rounded-full border border-border bg-muted/40 flex items-center justify-center text-muted-foreground mb-4">
 						<svg xmlns="http://www.w3.org/2000/svg" class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
@@ -305,39 +337,35 @@ const clientMenuData = {
 					<p class="text-sm text-muted-foreground max-w-sm mt-1">{menuComingSoonDesc}</p>
 				</div>
 			) : (
-				<div class="space-y-12">
-					{allCategories.map((category) => {
+				<div class="space-y-16">
+					{topLevelCategories.map((category) => {
 						const catTitle = getLocalizedMenuValue(category.displayName, requestedLocale, defaultLocale)
 						const catDesc = category.description ? getLocalizedMenuValue(category.description, requestedLocale, defaultLocale) : ''
 
 						return (
 							<section id={`category-${category.id}`} class="scroll-mt-36">
-								<div class="mb-4">
+								<div class="mb-5">
 									<h2 class="font-heading text-2xl font-bold tracking-tight text-foreground">{catTitle}</h2>
 									{catDesc ? (
 										<p class="text-sm text-muted-foreground mt-0.5">{catDesc}</p>
 									) : null}
 								</div>
 
-								<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-									{category.items.map((item) => {
-										const itemName = getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)
-										const itemDesc = item.description ? getLocalizedMenuValue(item.description, requestedLocale, defaultLocale) : ''
-										const hasModifiers = item.modifierGroups && item.modifierGroups.length > 0
-										const itemImgUrl = resolveMediaUrl(item.imageUrl)
-
-										return (
+								{/* Direct Items in Level 1 Category */}
+								{category.items.length > 0 && (
+									<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+										{category.items.map((item) => (
 											<div
 												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
 												data-item-id={item.id}
 											>
 												<div class="space-y-2">
 													{/* Item Image */}
-													{itemImgUrl ? (
+													{resolveMediaUrl(item.imageUrl) ? (
 														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
 															<img
-																src={itemImgUrl}
-																alt={itemName}
+																src={resolveMediaUrl(item.imageUrl)}
+																alt={getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)}
 																loading="lazy"
 																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
 															/>
@@ -348,9 +376,9 @@ const clientMenuData = {
 													<div>
 														<div class="flex items-start justify-between gap-2">
 															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
-																{itemName}
+																{getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)}
 															</h3>
-															<span class="shrink-0 text-foreground text-sm">
+															<span class="shrink-0 text-foreground text-sm font-medium">
 																{formatPrice(item.price)}
 															</span>
 														</div>
@@ -382,9 +410,9 @@ const clientMenuData = {
 														</div>
 
 														{/* Description */}
-														{itemDesc ? (
+														{item.description ? (
 															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
-																{itemDesc}
+																{getLocalizedMenuValue(item.description, requestedLocale, defaultLocale)}
 															</p>
 														) : null}
 													</div>
@@ -393,24 +421,248 @@ const clientMenuData = {
 												{/* Action Button */}
 												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
 													<div class="text-[11px] text-muted-foreground">
-														{hasModifiers ? (requestedLocale === 'ar' ? `خيارات ${item.modifierGroups.length}` : `${item.modifierGroups.length} options`) : ''}
+														{item.modifierGroups && item.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${item.modifierGroups.length}` : `${item.modifierGroups.length} options`) : ''}
 													</div>
 													<button
 														type="button"
 														class:list={[
 															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-															hasModifiers
+															item.modifierGroups && item.modifierGroups.length > 0
 																? "border border-border bg-background text-foreground hover:bg-muted"
 																: "bg-primary text-primary-foreground hover:bg-primary/90"
 														]}
 													>
-														{hasModifiers ? customizeLabel : `+ ${addLabel}`}
+														{item.modifierGroups && item.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
 													</button>
 												</div>
 											</div>
-										)
-									})}
-								</div>
+))}
+									</div>
+								)}
+
+								{/* Level 2 Subcategories */}
+								{category.subcategories && category.subcategories.length > 0 && (
+									<div class="space-y-8 pl-0 sm:pl-1">
+										{category.subcategories.map((subcat) => {
+											const subTitle = getLocalizedMenuValue(subcat.displayName, requestedLocale, defaultLocale)
+											const subDesc = subcat.description ? getLocalizedMenuValue(subcat.description, requestedLocale, defaultLocale) : ''
+
+											return (
+												<div id={`category-${subcat.id}`} class="rounded-2xl border border-border/70 bg-card/60 p-4 sm:p-6 space-y-5 shadow-xs">
+													<div class="border-b border-border/60 pb-3">
+														<div class="flex items-center gap-2">
+															<span class="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">Subcategory</span>
+															<span class="text-xs text-muted-foreground">•</span>
+															<span class="text-xs text-muted-foreground">{subcat.items.length} items</span>
+														</div>
+														<h3 class="font-heading text-xl font-bold text-foreground mt-1.5">{subTitle}</h3>
+														{subDesc ? <p class="text-xs text-muted-foreground mt-0.5">{subDesc}</p> : null}
+													</div>
+
+													{/* Subcategory direct items */}
+													{subcat.items.length > 0 && (
+														<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+															{subcat.items.map((subItem) => (
+											<div
+												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
+												data-item-id={subItem.id}
+											>
+												<div class="space-y-2">
+													{/* Item Image */}
+													{resolveMediaUrl(subItem.imageUrl) ? (
+														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
+															<img
+																src={resolveMediaUrl(subItem.imageUrl)}
+																alt={getLocalizedMenuValue(subItem.displayName, requestedLocale, defaultLocale)}
+																loading="lazy"
+																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+															/>
+														</div>
+													) : null}
+
+													{/* Title, Badges & Price */}
+													<div>
+														<div class="flex items-start justify-between gap-2">
+															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
+																{getLocalizedMenuValue(subItem.displayName, requestedLocale, defaultLocale)}
+															</h3>
+															<span class="shrink-0 text-foreground text-sm font-medium">
+																{formatPrice(subItem.price)}
+															</span>
+														</div>
+
+														{/* Dietary Tags & Calories */}
+														<div class="flex flex-wrap items-center gap-1.5 mt-1">
+															{subItem.isVegetarian ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+																	🌱 {vegetarianLabel}
+																</span>
+															) : null}
+															{subItem.isGlutenFree ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+																	🌾 {glutenFreeLabel}
+																</span>
+															) : null}
+															{subItem.isAlcohol ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
+																	🔞 21+
+																</span>
+															) : null}
+															{subItem.calorieMin ? (
+																<span class="text-[11px] text-muted-foreground">
+																	{subItem.calorieMax && subItem.calorieMax !== subItem.calorieMin
+																		? `${subItem.calorieMin}-${subItem.calorieMax} Cal`
+																		: `${subItem.calorieMin} Cal`}
+																</span>
+															) : null}
+														</div>
+
+														{/* Description */}
+														{subItem.description ? (
+															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
+																{getLocalizedMenuValue(subItem.description, requestedLocale, defaultLocale)}
+															</p>
+														) : null}
+													</div>
+												</div>
+
+												{/* Action Button */}
+												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+													<div class="text-[11px] text-muted-foreground">
+														{subItem.modifierGroups && subItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subItem.modifierGroups.length}` : `${subItem.modifierGroups.length} options`) : ''}
+													</div>
+													<button
+														type="button"
+														class:list={[
+															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
+															subItem.modifierGroups && subItem.modifierGroups.length > 0
+																? "border border-border bg-background text-foreground hover:bg-muted"
+																: "bg-primary text-primary-foreground hover:bg-primary/90"
+														]}
+													>
+														{subItem.modifierGroups && subItem.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
+													</button>
+												</div>
+											</div>
+))}
+														</div>
+													)}
+
+													{/* Level 3 Sub-subcategories */}
+													{subcat.subcategories && subcat.subcategories.length > 0 && (
+														<div class="space-y-6 pt-2">
+															{subcat.subcategories.map((subSub) => {
+																const subSubTitle = getLocalizedMenuValue(subSub.displayName, requestedLocale, defaultLocale)
+																const subSubDesc = subSub.description ? getLocalizedMenuValue(subSub.description, requestedLocale, defaultLocale) : ''
+
+																return (
+																	<div id={`category-${subSub.id}`} class="rounded-xl border border-border/50 bg-background/80 p-4 space-y-4">
+																		<div class="border-b border-border/40 pb-2">
+																			<h4 class="font-heading text-base font-semibold text-foreground flex items-center gap-2">
+																				<span class="text-primary font-bold">↳</span>
+																				<span>{subSubTitle}</span>
+																				<span class="text-xs font-normal text-muted-foreground">({subSub.items.length})</span>
+																			</h4>
+																			{subSubDesc ? <p class="text-xs text-muted-foreground mt-0.5">{subSubDesc}</p> : null}
+																		</div>
+
+																		{subSub.items.length > 0 && (
+																			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+																				{subSub.items.map((subSubItem) => (
+											<div
+												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
+												data-item-id={subSubItem.id}
+											>
+												<div class="space-y-2">
+													{/* Item Image */}
+													{resolveMediaUrl(subSubItem.imageUrl) ? (
+														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
+															<img
+																src={resolveMediaUrl(subSubItem.imageUrl)}
+																alt={getLocalizedMenuValue(subSubItem.displayName, requestedLocale, defaultLocale)}
+																loading="lazy"
+																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+															/>
+														</div>
+													) : null}
+
+													{/* Title, Badges & Price */}
+													<div>
+														<div class="flex items-start justify-between gap-2">
+															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
+																{getLocalizedMenuValue(subSubItem.displayName, requestedLocale, defaultLocale)}
+															</h3>
+															<span class="shrink-0 text-foreground text-sm font-medium">
+																{formatPrice(subSubItem.price)}
+															</span>
+														</div>
+
+														{/* Dietary Tags & Calories */}
+														<div class="flex flex-wrap items-center gap-1.5 mt-1">
+															{subSubItem.isVegetarian ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+																	🌱 {vegetarianLabel}
+																</span>
+															) : null}
+															{subSubItem.isGlutenFree ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+																	🌾 {glutenFreeLabel}
+																</span>
+															) : null}
+															{subSubItem.isAlcohol ? (
+																<span class="inline-flex items-center gap-0.5 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
+																	🔞 21+
+																</span>
+															) : null}
+															{subSubItem.calorieMin ? (
+																<span class="text-[11px] text-muted-foreground">
+																	{subSubItem.calorieMax && subSubItem.calorieMax !== subSubItem.calorieMin
+																		? `${subSubItem.calorieMin}-${subSubItem.calorieMax} Cal`
+																		: `${subSubItem.calorieMin} Cal`}
+																</span>
+															) : null}
+														</div>
+
+														{/* Description */}
+														{subSubItem.description ? (
+															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
+																{getLocalizedMenuValue(subSubItem.description, requestedLocale, defaultLocale)}
+															</p>
+														) : null}
+													</div>
+												</div>
+
+												{/* Action Button */}
+												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+													<div class="text-[11px] text-muted-foreground">
+														{subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subSubItem.modifierGroups.length}` : `${subSubItem.modifierGroups.length} options`) : ''}
+													</div>
+													<button
+														type="button"
+														class:list={[
+															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
+															subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0
+																? "border border-border bg-background text-foreground hover:bg-muted"
+																: "bg-primary text-primary-foreground hover:bg-primary/90"
+														]}
+													>
+														{subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
+													</button>
+												</div>
+											</div>
+))}
+																			</div>
+																		)}
+																	</div>
+																)
+															})}
+														</div>
+													)}
+												</div>
+											)
+										})}
+									</div>
+								)}
 							</section>
 						)
 					})}
@@ -885,9 +1137,18 @@ const clientMenuData = {
 		function findItemById(itemId: string) {
 			for (const menu of menuData.menus || []) {
 				for (const cat of menu.categories || []) {
-					for (const it of cat.items || []) {
-						if (it.id === itemId) return it
+					const checkCategory = (c: any): any => {
+						for (const it of c.items || []) {
+							if (it.id === itemId) return it
+						}
+						for (const sub of c.subcategories || []) {
+							const found = checkCategory(sub)
+							if (found) return found
+						}
+						return null
 					}
+					const found = checkCategory(cat)
+					if (found) return found
 				}
 			}
 			return null
@@ -972,8 +1233,9 @@ const clientMenuData = {
 									<div class="space-y-2">
 										${(grp.options || [])
 											.map((opt: any) => {
+												let optHtml = ''
 												if (isPizza) {
-													return `
+													optHtml = `
 														<div class="flex items-center justify-between p-2 rounded-lg border border-border/70 text-xs">
 															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
 															<div class="flex items-center gap-1.5">
@@ -992,9 +1254,8 @@ const clientMenuData = {
 															</div>
 														</div>
 													`
-												}
-												if (isRadio) {
-													return `
+												} else if (isRadio) {
+													optHtml = `
 														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
 															<div class="flex items-center gap-2">
 																<input type="radio" name="grp_${grp.id}" value="${opt.id}" class="size-4 text-primary js-modifier-radio" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
@@ -1003,16 +1264,66 @@ const clientMenuData = {
 															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
 														</label>
 													`
+												} else {
+													optHtml = `
+														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
+															<div class="flex items-center gap-2">
+																<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
+																<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
+															</div>
+															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+														</label>
+													`
 												}
-												return `
-													<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
-														<div class="flex items-center gap-2">
-															<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
+
+												let nestedHtml = ''
+												if (opt.nestedModifierGroups && opt.nestedModifierGroups.length > 0) {
+													nestedHtml = `
+														<div class="js-nested-groups-container hidden ml-4 mt-2 pl-3 border-l-2 border-primary/30 space-y-2.5" data-parent-option-id="${opt.id}">
+															${opt.nestedModifierGroups.map((nestedGrp: any) => {
+																const isNestedRadio = nestedGrp.selectionType === 'single'
+																return `
+																	<div class="rounded-lg border border-border/70 bg-muted/20 p-3 space-y-2" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-min-selections="${nestedGrp.minSelections || 0}">
+																		<div class="flex items-center justify-between">
+																			<h5 class="text-xs font-semibold text-foreground">${escapeHtml(nestedGrp.name)}</h5>
+																			<span class="text-[10px] text-muted-foreground font-medium">
+																				${nestedGrp.minSelections > 0
+																					? ((menuData as any).locale === 'ar' ? `مطلوب (اختر ${nestedGrp.minSelections})` : `Required (choose ${nestedGrp.minSelections})`)
+																	: ((menuData as any).labels?.optional || 'Optional')}
+																			</span>
+																		</div>
+																		<div class="space-y-1.5">
+																			${(nestedGrp.options || []).map((nestedOpt: any) => {
+																				if (isNestedRadio) {
+																					return `
+																						<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
+																							<div class="flex items-center gap-2">
+																								<input type="radio" name="grp_${nestedGrp.id}" value="${nestedOpt.id}" class="size-3.5 text-primary js-modifier-radio" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
+																								<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
+																							</div>
+																							<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+																						</label>
+																					`
+																				}
+																				return `
+																					<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
+																						<div class="flex items-center gap-2">
+																							<input type="checkbox" class="size-3.5 rounded text-primary js-modifier-checkbox" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
+																							<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
+																						</div>
+																						<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+																					</label>
+																				`
+																			}).join('')}
+																		</div>
+																	</div>
+																`
+															}).join('')}
 														</div>
-														<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-													</label>
-												`
+													`
+												}
+
+												return `<div>${optHtml}${nestedHtml}</div>`
 											})
 											.join('')}
 									</div>
@@ -1020,6 +1331,35 @@ const clientMenuData = {
 							`
 						})
 						.join('')
+
+					// Helpers to activate / deactivate nested conditional modifier groups
+					function hideNestedForOption(optId: string) {
+						const nestedContainer = groupsContainer?.querySelector(
+							`.js-nested-groups-container[data-parent-option-id="${optId}"]`
+						)
+						if (nestedContainer) {
+							nestedContainer.classList.add('hidden')
+							nestedContainer.querySelectorAll<HTMLInputElement>('input').forEach((input) => {
+								const nGId = input.getAttribute('data-group-id')
+								if (nGId) delete selectedOptionsMap[nGId]
+								input.checked = false
+							})
+						}
+					}
+
+					function showNestedForOption(optId: string) {
+						const nestedContainer = groupsContainer?.querySelector(
+							`.js-nested-groups-container[data-parent-option-id="${optId}"]`
+						)
+						if (nestedContainer) {
+							nestedContainer.classList.remove('hidden')
+							nestedContainer
+								.querySelectorAll<HTMLInputElement>(
+									'.js-modifier-radio:checked, .js-modifier-checkbox:checked, .js-pizza-opt:checked'
+								)
+								.forEach((input) => input.dispatchEvent(new Event('change', { bubbles: true })))
+						}
+					}
 
 					// Attach radio listeners
 					groupsContainer.querySelectorAll('.js-modifier-radio').forEach((radio) => {
@@ -1030,7 +1370,17 @@ const clientMenuData = {
 							const optId = target.getAttribute('data-opt-id') || ''
 							const optName = target.getAttribute('data-opt-name') || ''
 							const price = Number(target.getAttribute('data-price') || 0)
+
+							// Deactivate nested groups for all other options in this radio group
+							groupsContainer
+								?.querySelectorAll<HTMLInputElement>(`input[name="${target.name}"]:not([value="${optId}"])`)
+								?.forEach((sibling) => {
+									const sibOptId = sibling.getAttribute('data-opt-id') || sibling.value
+									if (sibOptId) hideNestedForOption(sibOptId)
+								})
+
 							selectedOptionsMap[gId] = [{ optionId: optId, optionName: optName, priceDelta: price, groupId: gId, groupName: gName }]
+							showNestedForOption(optId)
 							updateModalAddButton()
 						})
 					})
@@ -1048,8 +1398,10 @@ const clientMenuData = {
 							selectedOptionsMap[gId] = selectedOptionsMap[gId] || []
 							if (target.checked) {
 								selectedOptionsMap[gId].push({ optionId: optId, optionName: optName, priceDelta: price, groupId: gId, groupName: gName })
+								showNestedForOption(optId)
 							} else {
 								selectedOptionsMap[gId] = selectedOptionsMap[gId].filter((o) => o.optionId !== optId)
+								hideNestedForOption(optId)
 							}
 							updateModalAddButton()
 						})
@@ -1131,6 +1483,29 @@ const clientMenuData = {
 					}
 				}
 			}
+
+			// Validate required sub/nested modifier groups that are currently active
+			let nestedValidationFailed = false
+			const modalGroupsEl = document.getElementById('modal-modifier-groups')
+			modalGroupsEl
+				?.querySelectorAll('.js-nested-groups-container:not(.hidden)')
+				.forEach((container: Element) => {
+					if (nestedValidationFailed) return
+					container.querySelectorAll('[data-group-id]').forEach((grpEl: Element) => {
+						if (nestedValidationFailed) return
+						const nGId = grpEl.getAttribute('data-group-id')
+						const nMin = Number(grpEl.getAttribute('data-min-selections') || 0)
+						const nName = grpEl.getAttribute('data-group-name') || 'Option'
+						if (nMin > 0 && nGId) {
+							const chosen = selectedOptionsMap[nGId] || []
+							if (chosen.length < nMin) {
+								alert(`Please make at least ${nMin} selection for "${nName}".`)
+								nestedValidationFailed = true
+							}
+						}
+					})
+				})
+			if (nestedValidationFailed) return
 
 			// Flatten options
 			const flatOptions: any[] = []

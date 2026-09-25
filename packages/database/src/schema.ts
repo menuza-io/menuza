@@ -2645,6 +2645,10 @@ export const OrganizationMenuCategory = sqliteTable(
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		parentId: text().references((): any => OrganizationMenuCategory.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -2658,6 +2662,7 @@ export const OrganizationMenuCategory = sqliteTable(
 		index('OrganizationMenuCategory_organizationId_idx').on(
 			table.organizationId,
 		),
+		index('OrganizationMenuCategory_parentId_idx').on(table.parentId),
 	],
 )
 
@@ -2884,6 +2889,7 @@ export const OrganizationMenuOption = sqliteTable(
 		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		nestedModifierGroupIds: text().default('[]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -2937,6 +2943,40 @@ export const OrganizationMenuModifierGroupOptionAssignment = sqliteTable(
 		uniqueIndex(
 			'OrganizationMenuModifierGroupOptionAssignment_group_option_key',
 		).on(table.modifierGroupId, table.optionId),
+	],
+)
+
+export const OrganizationMenuOptionNestedModifierGroupAssignment = sqliteTable(
+	'OrganizationMenuOptionNestedModifierGroupAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		optionId: text()
+			.notNull()
+			.references(() => OrganizationMenuOption.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		modifierGroupId: text()
+			.notNull()
+			.references(() => OrganizationMenuModifierGroup.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		position: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrgMenuOptNestedModGrpAsgn_optId_idx').on(table.optionId),
+		index('OrgMenuOptNestedModGrpAsgn_groupId_idx').on(table.modifierGroupId),
+		uniqueIndex('OrgMenuOptNestedModGrpAsgn_opt_group_key').on(
+			table.optionId,
+			table.modifierGroupId,
+		),
 	],
 )
 

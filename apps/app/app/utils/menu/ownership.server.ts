@@ -1,3 +1,4 @@
+import { isValidParentCategory } from '@repo/common/menu-types'
 import {
 	and,
 	db,
@@ -187,4 +188,27 @@ export async function assertLocationIdsInOrganization(
 			),
 		)
 	return orgOwnedIds(rows, locationIds, 'Location')
+}
+
+export async function assertValidParentCategoryInOrganization(
+	organizationId: string,
+	categoryId: string | null | undefined,
+	parentId: string | null | undefined,
+) {
+	if (!parentId) return null
+	const allCategories = await db
+		.select({
+			id: OrganizationMenuCategory.id,
+			parentId: OrganizationMenuCategory.parentId,
+		})
+		.from(OrganizationMenuCategory)
+		.where(eq(OrganizationMenuCategory.organizationId, organizationId))
+
+	const check = isValidParentCategory(categoryId, parentId, allCategories, 3)
+	if (!check.valid) {
+		throw new Response(check.reason || 'Invalid parent category', {
+			status: 400,
+		})
+	}
+	return parentId
 }
