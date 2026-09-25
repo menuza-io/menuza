@@ -406,7 +406,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
 
 			{/* Quick Actions */}
 			<div className="mt-8">
-				<h2 className="mb-4 text-xl font-semibold">
+				<h2 className="mb-4 text-xl">
 					<Trans>Quick Actions</Trans>
 				</h2>
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

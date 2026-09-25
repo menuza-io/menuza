@@ -71,7 +71,7 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
 				className="bg-card items-center rounded-2xl p-8 shadow-lg"
 			>
 				<Text className="mb-3 text-5xl text-green-500">✓</Text>
-				<Text className="text-foreground text-center text-lg font-semibold">
+				<Text className="text-foreground text-center text-lg">
 					{displayMessage}
 				</Text>
 			</Animated.View>

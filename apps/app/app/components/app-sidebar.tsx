@@ -11,10 +11,10 @@ import { FoldersIcon } from '@repo/ui/folders-icon'
 import { HomeIcon } from '@repo/ui/home-icon'
 import { Icon } from '@repo/ui/icon'
 import { Kbd } from '@repo/ui/kbd'
-import { LaptopMinimalCheckIcon } from '@repo/ui/laptop-minimal-check-icon'
 import { LockOpenIcon } from '@repo/ui/lock-open-icon'
 import { Logo } from '@repo/ui/logo'
 import { MessageSquareMoreIcon } from '@repo/ui/message-square-more'
+import { MonitorCogIcon } from '@repo/ui/monitor-cog-icon'
 import { SettingsGearIcon } from '@repo/ui/settings-gear-icon'
 import {
 	Sidebar,
@@ -217,7 +217,6 @@ function OrganizationSidebar({
 	const goToHomepageLabel = _(msg`Go to homepage`)
 	const searchNotesLabel = _(msg`Search`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
-	const [isMac, setIsMac] = useState(true)
 	const canManageRoles =
 		rootData?.userOrganizations?.currentOrganization?.organizationRole.id ===
 		'org_role_admin'
@@ -233,16 +232,6 @@ function OrganizationSidebar({
 	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
 	const canReadCampaigns = hasOrgPermission('read', 'campaign')
 	const canReadAutomations = hasOrgPermission('read', 'automation')
-
-	useEffect(() => {
-		if (typeof navigator !== 'undefined') {
-			setIsMac(
-				/Mac|iPod|iPhone|iPad/i.test(
-					navigator.userAgent || navigator.platform || '',
-				),
-			)
-		}
-	}, [])
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -331,7 +320,7 @@ function OrganizationSidebar({
 			title: _(msg`Website`),
 			url: `/${orgSlug}/website`,
 			isActive: location.pathname.includes(`/${orgSlug}/website`),
-			icon: LaptopMinimalCheckIcon,
+			icon: MonitorCogIcon,
 			items: [
 				{
 					title: _(msg`General Settings`),
@@ -533,7 +522,7 @@ function OrganizationSidebar({
 				<SidebarMenuButton
 					variant="outline"
 					tooltip={searchNotesLabel}
-					className="text-muted-foreground bg-background relative rounded-xl border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
+					className="text-muted-foreground bg-background relative rounded-md border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
 					onClick={() => setCommandOpen(true)}
 					aria-haspopup="dialog"
 					aria-expanded={commandOpen}
@@ -544,7 +533,7 @@ function OrganizationSidebar({
 						<Trans>Search menu items...</Trans>
 					</span>
 					<Kbd className="absolute top-[0.3rem] right-[0.3rem] group-data-[collapsible=icon]:hidden">
-						<span className="text-xs">{isMac ? '⌘' : 'Ctrl+'}</span>K
+						F
 					</Kbd>
 				</SidebarMenuButton>
 				<TeamSwitcher />

@@ -601,7 +601,7 @@ export default function AdminRoleDetailPage() {
 
 						<TabsContent value="feature" className="space-y-4">
 							<div className="flex items-center justify-between">
-								<h2 className="text-lg font-semibold">
+								<h2 className="text-lg">
 									<Trans>Feature permissions</Trans>
 								</h2>
 								<CreateFeatureDialog />

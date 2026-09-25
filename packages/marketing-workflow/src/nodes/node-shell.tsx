@@ -65,7 +65,7 @@ export function WorkflowNodeShell({
 					)}
 				>
 					<Icon name={icon} size="xs" className="shrink-0" />
-					<h4 className="truncate text-xs font-semibold">{typeLabel}</h4>
+					<h4 className="truncate text-xs">{typeLabel}</h4>
 				</FrameTitle>
 				{badge ? (
 					<FrameAction>

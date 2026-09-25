@@ -171,11 +171,11 @@ export default function VerifyCodeScreen() {
 							name="code"
 							render={({ field: { onChange, value } }) => (
 								<View className="mb-2 items-center">
-									<Text className="text-foreground mb-3 text-center text-base font-semibold">
+									<Text className="text-foreground mb-3 text-center text-base">
 										<Trans>Enter 6-character code:</Trans>
 									</Text>
 									<TextInput
-										className={`bg-background text-foreground h-16 w-full rounded-xl border-2 text-center text-2xl font-semibold tracking-widest ${
+										className={`bg-background text-foreground h-16 w-full rounded-xl border-2 text-center text-2xl tracking-widest ${
 											errors.code
 												? 'border-destructive bg-destructive/5'
 												: isLoading
@@ -253,7 +253,7 @@ export default function VerifyCodeScreen() {
 						onPress={handleBackToSignUp}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							<Trans>Back to sign up</Trans>
 						</Text>
 					</TouchableOpacity>
@@ -261,7 +261,7 @@ export default function VerifyCodeScreen() {
 					<Text className="text-muted-foreground text-base">•</Text>
 
 					<TouchableOpacity onPress={handleGoToSignIn} accessibilityRole="link">
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							<Trans>Already have an account?</Trans>
 						</Text>
 					</TouchableOpacity>

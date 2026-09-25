@@ -86,7 +86,7 @@ export function OrganizationSwitcher({
 				{!compact && (
 					<View className="ml-2 flex-1">
 						<Text
-							className="text-foreground text-sm font-semibold"
+							className="text-foreground text-sm"
 							numberOfLines={1}
 						>
 							{currentOrg.name}
@@ -148,7 +148,7 @@ export function OrganizationSwitcher({
 
 											{/* Name & Role */}
 											<View className="ml-3 flex-1">
-												<Text className="text-foreground text-sm font-semibold">
+												<Text className="text-foreground text-sm">
 													{item.name}
 												</Text>
 												<Text className="text-muted-foreground text-xs capitalize">

@@ -90,7 +90,7 @@ export default function AdminCampaignsIndexRoute() {
 							className={cn(
 								'rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors',
 								statusFilter === filter.value
-									? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+									? 'bg-primary text-primary-foreground shadow-xs'
 									: 'text-muted-foreground hover:text-foreground',
 							)}
 						>

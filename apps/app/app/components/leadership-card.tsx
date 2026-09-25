@@ -96,7 +96,7 @@ export function LeadershipCard({ leaders, className }: LeadershipCardProps) {
 								</div>
 
 								<div className="flex shrink-0 items-center gap-1.5">
-									<span className="text-sm font-semibold tabular-nums">
+									<span className="text-sm tabular-nums">
 										{leader.notesCount}
 									</span>
 									<span className="text-muted-foreground text-xs">

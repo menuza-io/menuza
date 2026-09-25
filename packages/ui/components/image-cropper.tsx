@@ -181,7 +181,7 @@ function ImageCropperFooter({
 						variant="outline"
 						onClick={onCancel}
 					>
-						<Icon name="trash-2" className="mr-1.5 size-4" />
+						<Icon name="trash-2" className="size-4" />
 						Cancel
 					</Button>
 				}
@@ -193,7 +193,7 @@ function ImageCropperFooter({
 				onClick={onCrop}
 				disabled={disabled}
 			>
-				<Icon name="pencil" className="mr-1.5 size-4" />
+				<Icon name="pencil" className="size-4" />
 				Apply Crop
 			</Button>
 		</DialogFooter>

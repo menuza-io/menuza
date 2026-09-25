@@ -69,7 +69,7 @@ function itemId(item: MenuItem): string {
 									{item.children.map((child) =>
 										child.children.length > 0 ? (
 											<li class="py-2">
-												<p class="px-3 text-[13px] font-semibold text-muted-foreground">
+												<p class="px-3 text-[13px] text-muted-foreground">
 													{child.label}
 												</p>
 												<ul class="mt-1 list-none p-0" role="list">
@@ -204,7 +204,7 @@ function itemId(item: MenuItem): string {
 													<li class="min-w-0 rounded-xl p-3">
 														{column.children.length > 0 ? (
 															<div role="group" aria-labelledby={`${itemId(column)}-heading`}>
-																<p id={`${itemId(column)}-heading`} class="mb-3 text-sm font-semibold text-muted-foreground">
+																<p id={`${itemId(column)}-heading`} class="mb-3 text-sm text-muted-foreground">
 																	{column.label}
 																</p>
 																<ul class="flex list-none flex-col gap-1 p-0" role="list">

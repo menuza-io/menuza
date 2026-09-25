@@ -7,11 +7,11 @@ import { FileTextIcon } from '../animated-icons/file-text-icon'
 import { FoldersIcon } from '../animated-icons/folders-icon'
 import { GlobeIcon } from '../animated-icons/globe-icon'
 import { HomeIcon, type HomeIconHandle } from '../animated-icons/home-icon'
-import { LaptopMinimalCheckIcon } from '../animated-icons/laptop-minimal-check-icon'
 import { ListTodoIcon } from '../animated-icons/list-todo'
 import { LockOpenIcon } from '../animated-icons/lock-open-icon'
 import { LogoutIcon } from '../animated-icons/logout-icon'
 import { MessageSquareMoreIcon } from '../animated-icons/message-square-more'
+import { MonitorCogIcon } from '../animated-icons/monitor-cog-icon'
 import { SettingsGearIcon } from '../animated-icons/settings-gear-icon'
 import { ShieldCheckIcon } from '../animated-icons/shield-check-icon'
 import { SunMoonIcon } from '../animated-icons/sun-moon-icon'
@@ -145,6 +145,11 @@ export const AllAnimatedIcons: Story = {
 				description: 'Message/chat icon',
 			},
 			{
+				name: 'Monitor Cog',
+				component: MonitorCogIcon,
+				description: 'Website icon with rotating cog',
+			},
+			{
 				name: 'Settings Gear',
 				component: SettingsGearIcon,
 				description: 'Settings icon with rotation',
@@ -215,7 +220,7 @@ export const InteractiveShowcase: Story = {
 			{ name: 'Folders', component: FoldersIcon },
 			{ name: 'Globe', component: GlobeIcon },
 			{ name: 'Home', component: HomeIcon },
-			{ name: 'Laptop Minimal Check', component: LaptopMinimalCheckIcon },
+			{ name: 'Monitor Cog', component: MonitorCogIcon },
 			{ name: 'List Todo', component: ListTodoIcon },
 			{ name: 'Lock Open', component: LockOpenIcon },
 			{ name: 'Logout', component: LogoutIcon },
@@ -238,7 +243,7 @@ export const InteractiveShowcase: Story = {
 				<div className="flex flex-col gap-8 md:flex-row">
 					{/* Icon Selector */}
 					<div className="flex-1">
-						<h3 className="mb-4 text-lg font-semibold">Select an Icon</h3>
+						<h3 className="mb-4 text-lg">Select an Icon</h3>
 						<div className="grid max-h-96 grid-cols-2 gap-2 overflow-y-auto pr-2">
 							{animatedIcons.map(({ name }) => (
 								<Button
@@ -256,7 +261,7 @@ export const InteractiveShowcase: Story = {
 
 					{/* Icon Display */}
 					<div className="flex-1">
-						<h3 className="mb-4 text-lg font-semibold">Preview</h3>
+						<h3 className="mb-4 text-lg">Preview</h3>
 						<div className="border-border bg-muted/50 flex flex-col items-center gap-6 rounded-lg border p-8">
 							<SelectedIconComponent ref={iconRef} size={80} />
 							<div className="text-center">
@@ -298,7 +303,7 @@ export const UsageExamples: Story = {
 
 			{/* Navigation */}
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Navigation</h3>
+				<h3 className="text-lg">Navigation</h3>
 				<div className="border-border flex items-center gap-4 rounded-lg border p-4">
 					<ArrowLeftIcon size={24} />
 					<span>Back to Dashboard</span>
@@ -307,7 +312,7 @@ export const UsageExamples: Story = {
 
 			{/* Settings */}
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Settings Menu</h3>
+				<h3 className="text-lg">Settings Menu</h3>
 				<div className="border-border flex items-center gap-4 rounded-lg border p-4">
 					<SettingsGearIcon size={24} />
 					<span>Account Settings</span>
@@ -316,7 +321,7 @@ export const UsageExamples: Story = {
 
 			{/* Theme Toggle */}
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Theme Toggle</h3>
+				<h3 className="text-lg">Theme Toggle</h3>
 				<Button variant="outline" className="gap-2">
 					<SunMoonIcon size={20} />
 					Toggle Theme
@@ -325,7 +330,7 @@ export const UsageExamples: Story = {
 
 			{/* User Actions */}
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">User Actions</h3>
+				<h3 className="text-lg">User Actions</h3>
 				<div className="flex gap-4">
 					<Button variant="outline" className="gap-2">
 						<UserIcon size={20} />
@@ -344,7 +349,7 @@ export const UsageExamples: Story = {
 
 			{/* Status Indicators */}
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Status & Info</h3>
+				<h3 className="text-lg">Status & Info</h3>
 				<div className="flex gap-4">
 					<div className="flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 p-3">
 						<ShieldCheckIcon size={20} />

@@ -27,7 +27,7 @@ export const Default: Story = {
 				<FrameDescription>Brief description about the section</FrameDescription>
 			</FrameHeader>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Section title</h2>
+				<h2 className="text-sm">Section title</h2>
 				<p className="text-muted-foreground text-sm">Section description</p>
 			</FramePanel>
 			<FrameFooter>
@@ -45,11 +45,11 @@ export const SeparatedPanels: Story = {
 				<FrameDescription>Brief description about the section</FrameDescription>
 			</FrameHeader>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Separated panel</h2>
+				<h2 className="text-sm">Separated panel</h2>
 				<p className="text-muted-foreground text-sm">Section description</p>
 			</FramePanel>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Separated panel</h2>
+				<h2 className="text-sm">Separated panel</h2>
 				<p className="text-muted-foreground text-sm">Section description</p>
 			</FramePanel>
 		</Frame>
@@ -64,11 +64,11 @@ export const StackedPanels: Story = {
 				<FrameDescription>Brief description about the section</FrameDescription>
 			</FrameHeader>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Stacked panel</h2>
+				<h2 className="text-sm">Stacked panel</h2>
 				<p className="text-muted-foreground text-sm">Section description</p>
 			</FramePanel>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Stacked panel</h2>
+				<h2 className="text-sm">Stacked panel</h2>
 				<p className="text-muted-foreground text-sm">Section description</p>
 			</FramePanel>
 		</Frame>
@@ -88,7 +88,7 @@ export const WithAction: Story = {
 				</FrameAction>
 			</FrameHeader>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Panel with header action</h2>
+				<h2 className="text-sm">Panel with header action</h2>
 				<p className="text-muted-foreground text-sm">
 					This panel has an action button in the header
 				</p>
@@ -110,7 +110,7 @@ export const ComplexExample: Story = {
 				</FrameAction>
 			</FrameHeader>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Profile Information</h2>
+				<h2 className="text-sm">Profile Information</h2>
 				<div className="mt-2 space-y-1 text-sm">
 					<p>
 						<span className="font-medium">Name:</span> John Doe
@@ -121,7 +121,7 @@ export const ComplexExample: Story = {
 				</div>
 			</FramePanel>
 			<FramePanel>
-				<h2 className="text-sm font-semibold">Account Settings</h2>
+				<h2 className="text-sm">Account Settings</h2>
 				<div className="mt-2 space-y-2 text-sm">
 					<div className="flex items-center justify-between">
 						<span>Two-factor authentication</span>

@@ -108,25 +108,25 @@ export const WithIcons: Story = {
 				<TabsTrigger value="notifications">🔔 Notifications</TabsTrigger>
 			</TabsList>
 			<TabsContent value="overview" className="space-y-4">
-				<h3 className="text-lg font-semibold">Overview</h3>
+				<h3 className="text-lg">Overview</h3>
 				<p className="text-muted-foreground text-sm">
 					View your overview and key metrics here.
 				</p>
 			</TabsContent>
 			<TabsContent value="analytics" className="space-y-4">
-				<h3 className="text-lg font-semibold">Analytics</h3>
+				<h3 className="text-lg">Analytics</h3>
 				<p className="text-muted-foreground text-sm">
 					Analyze your data and trends.
 				</p>
 			</TabsContent>
 			<TabsContent value="reports" className="space-y-4">
-				<h3 className="text-lg font-semibold">Reports</h3>
+				<h3 className="text-lg">Reports</h3>
 				<p className="text-muted-foreground text-sm">
 					Generate and view reports.
 				</p>
 			</TabsContent>
 			<TabsContent value="notifications" className="space-y-4">
-				<h3 className="text-lg font-semibold">Notifications</h3>
+				<h3 className="text-lg">Notifications</h3>
 				<p className="text-muted-foreground text-sm">
 					Manage your notification preferences.
 				</p>

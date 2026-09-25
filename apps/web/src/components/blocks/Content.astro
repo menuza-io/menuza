@@ -47,8 +47,8 @@ const renderLexicalContent = (content: any) => {
 					h2: 'font-display mb-5 text-[28px] font-medium tracking-[-0.02em] text-foreground sm:text-[32px]',
 					h3: 'mb-4 text-[22px] font-medium text-foreground',
 					h4: 'mb-3 text-[18px] font-medium text-foreground',
-					h5: 'mb-3 text-[16px] font-semibold text-foreground',
-					h6: 'mb-2 text-[15px] font-semibold text-foreground',
+					h5: 'mb-3 text-[16px] text-foreground',
+					h6: 'mb-2 text-[15px] text-foreground',
 				}
 				return `<${tag} class="${headingClasses[tag] || headingClasses.h2}">${text}</${tag}>`
 			}
