@@ -1347,7 +1347,9 @@ export default function WebsiteRedirectsRoute() {
 												: 'text-muted-foreground hover:text-foreground',
 										)}
 									>
-										<span className="text-xs">301 · Permanent</span>
+										<span className="text-xs">
+											301 · Permanent
+										</span>
 										<span className="text-muted-foreground mt-0.5 text-[11px] font-normal">
 											<Trans>Transfers search rank</Trans>
 										</span>
@@ -1362,7 +1364,9 @@ export default function WebsiteRedirectsRoute() {
 												: 'text-muted-foreground hover:text-foreground',
 										)}
 									>
-										<span className="text-xs">302 · Temporary</span>
+										<span className="text-xs">
+											302 · Temporary
+										</span>
 										<span className="text-muted-foreground mt-0.5 text-[11px] font-normal">
 											<Trans>Keeps original indexing</Trans>
 										</span>

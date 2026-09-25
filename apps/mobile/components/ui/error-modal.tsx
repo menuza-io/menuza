@@ -123,7 +123,9 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 										onPress={onDismiss}
 										accessibilityRole="button"
 									>
-										<Text className="text-primary-foreground text-sm">OK</Text>
+										<Text className="text-primary-foreground text-sm">
+											OK
+										</Text>
 									</TouchableOpacity>
 								)}
 							</View>
