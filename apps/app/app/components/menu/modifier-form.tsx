@@ -518,6 +518,14 @@ export function ModifierForm({
 		initialData?.options ?? [],
 	)
 
+	const [activeSubGroupIds, setActiveSubGroupIds] = useState<string[]>(() => {
+		const s = new Set<string>()
+		for (const o of initialData?.options ?? []) {
+			for (const id of o.nestedModifierGroupIds ?? []) s.add(id)
+		}
+		return Array.from(s)
+	})
+
 	const [selectedItemIds, setSelectedItemIds] = useState<string[]>(
 		initialData?.assignedItemIds ?? [],
 	)
@@ -1094,6 +1102,191 @@ export function ModifierForm({
 									)}
 								</Frame>
 
+								{/* Nested Modifier Groups Frame */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<FrameTitle className="flex items-center gap-2 text-base">
+											<Icon name="route" className="text-primary size-4" />
+											<Trans>Nested Modifier Groups</Trans>
+										</FrameTitle>
+										<FrameDescription>
+											<Trans>
+												Trigger child modifier groups when specific options are
+												selected.
+											</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel className="space-y-4 p-5">
+										{activeSubGroupIds.length === 0 ? (
+											<div className="text-muted-foreground bg-muted/20 border-border/60 rounded-md border border-dashed p-4 text-center text-sm">
+												<Trans>No nested modifier groups added yet.</Trans>
+											</div>
+										) : (
+											<div className="space-y-4">
+												{activeSubGroupIds.map((subId) => {
+													const grp = availableModifierGroups.find(
+														(g) => g.id === subId,
+													)
+													if (!grp) return null
+
+													const grpName =
+														getLocalizedMenuValue(
+															grp.name,
+															activeLocale,
+															defaultLocale,
+														) ||
+														grp.internalName ||
+														grp.name ||
+														'Untitled'
+													return (
+														<div
+															key={subId}
+															className="border-border bg-card space-y-3 rounded-xl border p-4"
+														>
+															<div className="flex items-center justify-between">
+																<div className="flex items-center gap-2">
+																	<Icon
+																		name="route"
+																		className="text-muted-foreground size-4"
+																	/>
+																	<h4 className="text-sm font-semibold">
+																		{grpName}
+																	</h4>
+																</div>
+																<Button
+																	variant="ghost"
+																	size="icon-sm"
+																	className="text-destructive hover:bg-destructive/10"
+																	type="button"
+																	onClick={() => {
+																		setActiveSubGroupIds((prev) =>
+																			prev.filter((id) => id !== subId),
+																		)
+																		setOptions((prev) =>
+																			prev.map((o) => ({
+																				...o,
+																				nestedModifierGroupIds: (
+																					o.nestedModifierGroupIds || []
+																				).filter((id) => id !== subId),
+																			})),
+																		)
+																	}}
+																>
+																	<Icon name="trash" className="size-4" />
+																</Button>
+															</div>
+															<div className="border-border/50 space-y-2 border-t pt-2">
+																<p className="text-muted-foreground mt-1 mb-1 text-xs font-medium">
+																	<Trans>Triggered by options:</Trans>
+																</p>
+																{options.length === 0 ? (
+																	<p className="text-muted-foreground text-[11px] italic">
+																		<Trans>
+																			Add options to this group first.
+																		</Trans>
+																	</p>
+																) : (
+																	<div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+																		{options.map((opt) => {
+																			const isActive = (
+																				opt.nestedModifierGroupIds || []
+																			).includes(subId)
+																			const optName =
+																				getLocalizedMenuValue(
+																					opt.displayName,
+																					activeLocale,
+																					defaultLocale,
+																				) ||
+																				opt.internalName ||
+																				opt.displayName ||
+																				'Untitled option'
+																			return (
+																				<label
+																					key={opt.id}
+																					className={`flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-xs transition-colors select-none ${isActive ? 'border-primary/50 bg-primary/5 dark:bg-primary/10' : 'border-border/60 hover:bg-muted/40'}`}
+																				>
+																					<div className="flex h-full items-center">
+																						<input
+																							type="checkbox"
+																							className="border-input text-primary focus:ring-primary size-3.5 rounded"
+																							checked={isActive}
+																							onChange={(e) => {
+																								if (e.target.checked)
+																									handleAddOptionNestedGroup(
+																										opt.id,
+																										subId,
+																									)
+																								else
+																									handleRemoveOptionNestedGroup(
+																										opt.id,
+																										subId,
+																									)
+																							}}
+																						/>
+																					</div>
+																					<span
+																						className={`truncate font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}
+																					>
+																						{optName}
+																					</span>
+																				</label>
+																			)
+																		})}
+																	</div>
+																)}
+															</div>
+														</div>
+													)
+												})}
+											</div>
+										)}
+
+										<div className="pt-1">
+											<Select
+												value="placeholder"
+												onValueChange={(val) => {
+													if (val && val !== 'placeholder') {
+														setActiveSubGroupIds((prev) => [...prev, val])
+													}
+												}}
+											>
+												<SelectTrigger className="bg-muted/10 w-full border-dashed shadow-none sm:max-w-xs">
+													<SelectValue placeholder="+ Add nested modifier group" />
+												</SelectTrigger>
+												<SelectContent align="start" className="max-h-64">
+													<SelectItem
+														value="placeholder"
+														disabled
+														className="hidden"
+													>
+														<Trans>Select sub-modifier group...</Trans>
+													</SelectItem>
+													{eligibleModifierGroups.filter(
+														(g) => !activeSubGroupIds.includes(g.id),
+													).length === 0 && (
+														<div className="text-muted-foreground p-2 text-center text-xs">
+															<Trans>No other modifier groups available.</Trans>
+														</div>
+													)}
+													{eligibleModifierGroups
+														.filter((g) => !activeSubGroupIds.includes(g.id))
+														.map((g) => (
+															<SelectItem key={g.id} value={g.id}>
+																{getLocalizedMenuValue(
+																	g.name,
+																	activeLocale,
+																	defaultLocale,
+																) ||
+																	g.internalName ||
+																	'Untitled'}
+															</SelectItem>
+														))}
+												</SelectContent>
+											</Select>
+										</div>
+									</FramePanel>
+								</Frame>
+
 								{/* Options Management Frame */}
 								<Frame className="w-full" stackedPanels={!isOptionSorting}>
 									<FrameHeader>
@@ -1141,12 +1334,6 @@ export function ModifierForm({
 														}
 														onEdit={() => handleOpenEdit(option)}
 														onRemove={() => handleRemoveOption(option.id)}
-														onAddNestedGroup={(groupId) =>
-															handleAddOptionNestedGroup(option.id, groupId)
-														}
-														onRemoveNestedGroup={(groupId) =>
-															handleRemoveOptionNestedGroup(option.id, groupId)
-														}
 													/>
 												))}
 											</SortableContext>
