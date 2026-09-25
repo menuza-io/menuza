@@ -1004,17 +1004,13 @@ function patchTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 				`SITES_DATA_KV_ID${suffix}`,
 				launchConfig,
 				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
-			) ||
-			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
+			) || readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
 		if (sitesDataKvId) {
 			if (deployEnv === 'staging') {
 				const stagingKvPattern =
 					/(\[\[env\.staging\.kv_namespaces\]\]\s*\n\s*binding\s*=\s*"SITES_DATA_KV"\s*\n\s*id\s*=\s*")[^"]+(")/
 				if (stagingKvPattern.test(content)) {
-					content = content.replace(
-						stagingKvPattern,
-						`$1${sitesDataKvId}$2`,
-					)
+					content = content.replace(stagingKvPattern, `$1${sitesDataKvId}$2`)
 				} else {
 					content += `\n[[env.staging.kv_namespaces]]\nbinding = "SITES_DATA_KV"\nid = "${sitesDataKvId}"\n`
 				}
@@ -1171,8 +1167,7 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 				`SITES_DATA_KV_ID${suffix}`,
 				launchConfig,
 				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
-			) ||
-			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
+			) || readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
 		if (sitesDataKvId) {
 			if (!Array.isArray(config.kv_namespaces)) config.kv_namespaces = []
 			const binding = config.kv_namespaces.find(
@@ -1186,9 +1181,7 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 					id: sitesDataKvId,
 				})
 			}
-			patches.push(
-				`kv_namespaces.SITES_DATA_KV ← SITES_DATA_KV_ID${suffix}`,
-			)
+			patches.push(`kv_namespaces.SITES_DATA_KV ← SITES_DATA_KV_ID${suffix}`)
 		} else if (requireBindings) {
 			missing.push(`SITES_DATA_KV_ID${suffix}`)
 		}
