@@ -8,6 +8,13 @@ import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Checkbox } from '@repo/ui/checkbox'
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
+import {
 	Frame,
 	FrameAction,
 	FrameDescription,
@@ -276,22 +283,59 @@ export function CategoryForm({
 													</Badge>
 												)}
 											</div>
-											<select
+											<input
+												type="hidden"
 												name="parentId"
 												value={parentId ?? ''}
-												onChange={(e) =>
-													setParentId(e.target.value ? e.target.value : null)
-												}
-												className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs transition-colors focus:ring-1 focus:outline-none"
+											/>
+											<Select
+												value={parentId ?? 'none'}
+												onValueChange={(val) => {
+													setParentId(
+														val === 'none' || !val ? null : (val as string),
+													)
+												}}
 											>
-												<option value="">None (Top-Level Category)</option>
-												{eligibleCategories.map((cat) => (
-													<option key={cat.id} value={cat.id}>
-														{cat.indentPrefix}
-														{cat.name} ({cat.levelLabel})
-													</option>
-												))}
-											</select>
+												<SelectTrigger className="w-full">
+													<SelectValue>
+														{parentId
+															? (() => {
+																	const m = eligibleCategories.find(
+																		(c) => c.id === parentId,
+																	)
+																	return m
+																		? `${m.name} (${m.levelLabel})`
+																		: parentId
+																})()
+															: 'None (Top-Level Category)'}
+													</SelectValue>
+												</SelectTrigger>
+												<SelectContent align="start" className="max-h-60">
+													<SelectItem value="none">
+														<span className="text-muted-foreground">
+															<Trans>None (Top-Level Category)</Trans>
+														</span>
+													</SelectItem>
+													{eligibleCategories.map((cat) => (
+														<SelectItem key={cat.id} value={cat.id}>
+															<div className="flex items-center gap-2">
+																{cat.depth > 1 && (
+																	<span className="text-muted-foreground font-mono">
+																		{cat.indentPrefix}
+																	</span>
+																)}
+																<span>{cat.name}</span>
+																<Badge
+																	variant="outline"
+																	className="px-1 py-0 text-[10px] font-normal"
+																>
+																	{cat.levelLabel}
+																</Badge>
+															</div>
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<p className="text-muted-foreground text-[11px]">
 												<Trans>
 													Nest up to 3 levels deep (e.g. Drinks &gt; Hot Coffees

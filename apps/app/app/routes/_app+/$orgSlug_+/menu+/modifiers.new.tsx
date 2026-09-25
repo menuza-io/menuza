@@ -329,6 +329,7 @@ export default function CreateModifierGroupRoute() {
 		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
 			<ModifierForm
 				pageTitle="Create Modifier Group"
+				availableModifierGroups={availableModifierGroups}
 				orgSlug={organization.slug}
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}

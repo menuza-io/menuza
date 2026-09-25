@@ -9,6 +9,8 @@ import {
 	desc,
 	and,
 	OrganizationMenuModifierGroup,
+	OrganizationMenuOption,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 } from '@repo/database'
 import {
 	AlertDialog,
@@ -145,6 +147,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+	const nestedAssignments = await db
+		.select({
+			modifierGroupId:
+				OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
+			parentOptionName: OrganizationMenuOption.displayName,
+		})
+		.from(OrganizationMenuOptionNestedModifierGroupAssignment)
+		.innerJoin(
+			OrganizationMenuOption,
+			eq(
+				OrganizationMenuOption.id,
+				OrganizationMenuOptionNestedModifierGroupAssignment.optionId,
+			),
+		)
+		.where(eq(OrganizationMenuOption.organizationId, organization.id))
+
+	const nestedParentMap = new Map<string, string[]>()
+	for (const a of nestedAssignments) {
+		const list = nestedParentMap.get(a.modifierGroupId) ?? []
+		list.push(a.parentOptionName)
+		nestedParentMap.set(a.modifierGroupId, list)
+	}
+
 	const groups = await db.query.OrganizationMenuModifierGroup.findMany({
 		where: eq(OrganizationMenuModifierGroup.organizationId, organization.id),
 		with: {
@@ -172,6 +197,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				: null,
 			optionsCount: g.optionAssignments.length,
 			updatedAt: g.updatedAt.toISOString(),
+			parentOptions: nestedParentMap.get(g.id) ?? [],
 		})),
 	}
 }
@@ -299,17 +325,45 @@ export default function ModifiersIndexRoute() {
 										return (
 											<TableRow key={group.id}>
 												<TableCell>
-													<Link
-														to={`/${organization.slug}/menu/modifiers/${group.id}`}
-														className="hover:text-primary text-foreground text-sm font-medium"
-													>
-														{groupTitle}
-													</Link>
+													<div className="flex items-center gap-2">
+														<Link
+															to={`/${organization.slug}/menu/modifiers/${group.id}`}
+															className="hover:text-primary text-foreground text-sm font-medium"
+														>
+															{groupTitle}
+														</Link>
+														{group.parentOptions &&
+															group.parentOptions.length > 0 && (
+																<Badge
+																	variant="outline"
+																	className="gap-1 border-indigo-500/30 bg-indigo-500/10 px-1.5 py-0 text-[10px] text-indigo-600"
+																>
+																	<Icon name="route" className="size-2.5" />
+																	<Trans>Sub-Group</Trans>
+																</Badge>
+															)}
+													</div>
 													{group.internalName && (
 														<span className="text-muted-foreground block text-xs">
 															{group.internalName}
 														</span>
 													)}
+													{group.parentOptions &&
+														group.parentOptions.length > 0 && (
+															<p className="text-muted-foreground mt-0.5 text-[11px]">
+																<Trans>Conditional under:</Trans>{' '}
+																{group.parentOptions
+																	.map(
+																		(opt: string) =>
+																			getLocalizedMenuValue(
+																				opt,
+																				defaultLocale,
+																				defaultLocale,
+																			) || opt,
+																	)
+																	.join(', ')}
+															</p>
+														)}
 												</TableCell>
 												<TableCell>
 													<Badge

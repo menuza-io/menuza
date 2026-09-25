@@ -42,7 +42,7 @@ import { Item, ItemContent, ItemTitle, ItemDescription } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
-import { useId, useState } from 'react'
+import { useId, useState, useMemo } from 'react'
 import { Form } from 'react-router'
 import {
 	LocaleContext,
@@ -83,6 +83,7 @@ function SortableOptionRow({
 	selectionType,
 	activeLocale,
 	defaultLocale,
+	availableModifierGroups,
 	onToggleDefault,
 	onEdit,
 	onRemove,
@@ -91,6 +92,11 @@ function SortableOptionRow({
 	selectionType: 'single' | 'multiple' | 'quantity' | 'pizza'
 	activeLocale: string
 	defaultLocale: string
+	availableModifierGroups: Array<{
+		id: string
+		name: string
+		internalName: string | null
+	}>
 	onToggleDefault: (isDefault: boolean) => void
 	onEdit: () => void
 	onRemove: () => void
@@ -116,6 +122,28 @@ function SortableOptionRow({
 		option.priceLeft ??
 		option.priceRight ??
 		(priceWhole > 0 ? priceWhole / 2 : 0)
+
+	const nestedGroupNames = useMemo(() => {
+		if (
+			!option.nestedModifierGroupIds ||
+			option.nestedModifierGroupIds.length === 0
+		)
+			return []
+		return option.nestedModifierGroupIds
+			.map((gId) => {
+				const found = availableModifierGroups.find((g) => g.id === gId)
+				return found
+					? getLocalizedMenuValue(found.name, activeLocale, defaultLocale) ||
+							found.name
+					: null
+			})
+			.filter(Boolean) as string[]
+	}, [
+		option.nestedModifierGroupIds,
+		availableModifierGroups,
+		activeLocale,
+		defaultLocale,
+	])
 
 	return (
 		<FramePanel
@@ -196,6 +224,38 @@ function SortableOptionRow({
 						{option.internalName}
 					</p>
 				) : null}
+
+				{/* Nested Sub-Modifier Groups badge / configure button */}
+				{nestedGroupNames.length > 0 ? (
+					<div className="mt-1 flex flex-wrap items-center gap-1.5">
+						<span className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+							<Icon name="route" className="size-3" />
+							<Trans>Sub-Modifier Group(s) Active:</Trans>
+						</span>
+						{nestedGroupNames.map((name: string, i: number) => (
+							<span
+								key={i}
+								className="inline-flex items-center rounded border border-indigo-500/20 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300"
+							>
+								{name}
+							</span>
+						))}
+					</div>
+				) : (
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation()
+							onEdit()
+						}}
+						className="text-muted-foreground hover:text-foreground mt-1 flex items-center gap-1 text-[11px] transition-colors"
+					>
+						<Icon name="plus" className="size-3" />
+						<span>
+							<Trans>Add sub-modifier group (e.g. fry size)</Trans>
+						</span>
+					</button>
+				)}
 			</div>
 
 			{isPizza ? (
@@ -244,6 +304,7 @@ function SortableOptionRow({
 }
 
 export interface ModifierGroupFormData {
+	id?: string
 	name: string
 	internalName: string
 	selectionType: 'single' | 'multiple' | 'quantity' | 'pizza'
@@ -387,6 +448,11 @@ export function ModifierForm({
 	const [modalIsDefault, setModalIsDefault] = useState(false)
 	const [modalNestedModifierGroupIds, setModalNestedModifierGroupIds] =
 		useState<string[]>([])
+
+	const eligibleModifierGroups = useMemo(() => {
+		const currentGroupId = initialData?.id
+		return availableModifierGroups.filter((g) => g.id !== currentGroupId)
+	}, [availableModifierGroups, initialData?.id])
 
 	const handleAddExistingOption = (opt: {
 		id: string
@@ -611,6 +677,7 @@ export function ModifierForm({
 			isAlcohol: modalIsAlcohol,
 			isTopping: isPizza || editingOption.isTopping,
 			isDefault: modalIsDefault,
+			nestedModifierGroupIds: modalNestedModifierGroupIds,
 		}
 
 		setOptions((currentOptions) =>
@@ -960,6 +1027,7 @@ export function ModifierForm({
 														selectionType={selectionType}
 														activeLocale={activeLocale}
 														defaultLocale={defaultLocale}
+														availableModifierGroups={eligibleModifierGroups}
 														onToggleDefault={(checked) =>
 															handleSetOptionDefault(option.id, checked)
 														}
@@ -1233,6 +1301,80 @@ export function ModifierForm({
 												</span>
 											</button>
 										</div>
+									</div>
+
+									<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
+										<div className="flex items-center gap-1.5">
+											<Icon name="route" className="text-primary size-4" />
+											<Label className="text-xs font-semibold">
+												<Trans>Sub / Nested Modifier Groups</Trans>
+											</Label>
+										</div>
+										<p className="text-muted-foreground text-[11px]">
+											<Trans>
+												When a customer selects this option, reveal these
+												conditional modifier groups (e.g. selecting "French
+												Fries" unlocks "Fry Size").
+											</Trans>
+										</p>
+										{eligibleModifierGroups.length === 0 ? (
+											<p className="text-muted-foreground text-xs italic">
+												<Trans>
+													No other modifier groups available to nest.
+												</Trans>
+											</p>
+										) : (
+											<div className="border-border/50 bg-background/50 max-h-36 space-y-1.5 overflow-y-auto rounded-md border p-2">
+												{eligibleModifierGroups.map(
+													(grp: {
+														id: string
+														name: string
+														internalName: string | null
+													}) => {
+														const isChecked =
+															modalNestedModifierGroupIds.includes(grp.id)
+														const grpDisplayName =
+															getLocalizedMenuValue(
+																grp.name,
+																activeLocale,
+																defaultLocale,
+															) ||
+															grp.internalName ||
+															grp.name
+														return (
+															<label
+																key={grp.id}
+																className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs"
+															>
+																<Checkbox
+																	checked={isChecked}
+																	onCheckedChange={(checked) => {
+																		if (checked) {
+																			setModalNestedModifierGroupIds((prev) => [
+																				...prev,
+																				grp.id,
+																			])
+																		} else {
+																			setModalNestedModifierGroupIds((prev) =>
+																				prev.filter((id) => id !== grp.id),
+																			)
+																		}
+																	}}
+																/>
+																<span className="text-foreground font-medium">
+																	{grpDisplayName}
+																</span>
+																{grp.internalName && (
+																	<span className="text-muted-foreground text-[10px]">
+																		({grp.internalName})
+																	</span>
+																)}
+															</label>
+														)
+													},
+												)}
+											</div>
+										)}
 									</div>
 
 									<DialogFooter className="gap-2 sm:justify-end">
@@ -1515,6 +1657,78 @@ export function ModifierForm({
 											</span>
 										</button>
 									</div>
+								</div>
+
+								<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
+									<div className="flex items-center gap-1.5">
+										<Icon name="route" className="text-primary size-4" />
+										<Label className="text-xs font-semibold">
+											<Trans>Sub / Nested Modifier Groups</Trans>
+										</Label>
+									</div>
+									<p className="text-muted-foreground text-[11px]">
+										<Trans>
+											When a customer selects this option, reveal these
+											conditional modifier groups (e.g. selecting "French Fries"
+											unlocks "Fry Size").
+										</Trans>
+									</p>
+									{eligibleModifierGroups.length === 0 ? (
+										<p className="text-muted-foreground text-xs italic">
+											<Trans>No other modifier groups available to nest.</Trans>
+										</p>
+									) : (
+										<div className="border-border/50 bg-background/50 max-h-36 space-y-1.5 overflow-y-auto rounded-md border p-2">
+											{eligibleModifierGroups.map(
+												(grp: {
+													id: string
+													name: string
+													internalName: string | null
+												}) => {
+													const isChecked =
+														modalNestedModifierGroupIds.includes(grp.id)
+													const grpDisplayName =
+														getLocalizedMenuValue(
+															grp.name,
+															activeLocale,
+															defaultLocale,
+														) ||
+														grp.internalName ||
+														grp.name
+													return (
+														<label
+															key={grp.id}
+															className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs"
+														>
+															<Checkbox
+																checked={isChecked}
+																onCheckedChange={(checked) => {
+																	if (checked) {
+																		setModalNestedModifierGroupIds((prev) => [
+																			...prev,
+																			grp.id,
+																		])
+																	} else {
+																		setModalNestedModifierGroupIds((prev) =>
+																			prev.filter((id) => id !== grp.id),
+																		)
+																	}
+																}}
+															/>
+															<span className="text-foreground font-medium">
+																{grpDisplayName}
+															</span>
+															{grp.internalName && (
+																<span className="text-muted-foreground text-[10px]">
+																	({grp.internalName})
+																</span>
+															)}
+														</label>
+													)
+												},
+											)}
+										</div>
+									)}
 								</div>
 
 								<DialogFooter className="gap-2 sm:justify-end">

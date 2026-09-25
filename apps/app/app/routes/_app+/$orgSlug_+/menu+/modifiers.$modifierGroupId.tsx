@@ -490,6 +490,7 @@ export default function EditModifierGroupRoute() {
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
+		availableModifierGroups,
 		group,
 		allItems,
 		allLocations,
@@ -502,6 +503,7 @@ export default function EditModifierGroupRoute() {
 			<ModifierForm
 				pageTitle="Edit Modifier Group"
 				initialData={group}
+				availableModifierGroups={availableModifierGroups}
 				orgSlug={organization.slug}
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}

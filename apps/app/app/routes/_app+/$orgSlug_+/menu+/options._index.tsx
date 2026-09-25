@@ -158,6 +158,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					modifierGroup: true,
 				},
 			},
+			nestedModifierGroupAssignments: {
+				with: {
+					modifierGroup: true,
+				},
+			},
 		},
 		orderBy: [
 			asc(OrganizationMenuOption.position),
@@ -201,11 +206,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				internalName: a.modifierGroup.internalName,
 			}))
 
+		const nestedGroups = (opt.nestedModifierGroupAssignments ?? [])
+			.filter((a) => Boolean(a.modifierGroup))
+			.map((a) => ({
+				id: a.modifierGroup.id,
+				name: a.modifierGroup.name,
+				internalName: a.modifierGroup.internalName,
+			}))
+
 		return {
 			...opt,
 			imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
 			allergensList: parsedAllergens,
 			assignedGroups,
+			nestedGroups,
 		}
 	})
 
@@ -464,26 +478,50 @@ export default function OptionsIndexRoute() {
 
 										{/* Assigned Modifier Groups (Many-to-Many) */}
 										<TableCell className="hidden sm:table-cell">
-											<div className="flex max-w-xs flex-wrap gap-1">
-												{option.assignedGroups.length === 0 ? (
-													<span className="text-muted-foreground text-xs italic">
-														<Trans>Unassigned</Trans>
-													</span>
-												) : (
-													option.assignedGroups.map((g) => (
-														<Badge
-															key={g.id}
-															variant="outline"
-															className="text-xs"
-														>
-															{getLocalizedMenuValue(
-																g.name,
-																defaultLocale,
-																defaultLocale,
-															)}
-														</Badge>
-													))
-												)}
+											<div className="space-y-1">
+												<div className="flex max-w-xs flex-wrap gap-1">
+													{option.assignedGroups.length === 0 ? (
+														<span className="text-muted-foreground text-xs italic">
+															<Trans>Unassigned</Trans>
+														</span>
+													) : (
+														option.assignedGroups.map((g) => (
+															<Badge
+																key={g.id}
+																variant="outline"
+																className="text-xs"
+															>
+																{getLocalizedMenuValue(
+																	g.name,
+																	defaultLocale,
+																	defaultLocale,
+																)}
+															</Badge>
+														))
+													)}
+												</div>
+												{option.nestedGroups &&
+													option.nestedGroups.length > 0 && (
+														<div className="flex flex-wrap items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400">
+															<Icon name="route" className="size-3" />
+															<span>
+																<Trans>Triggers sub-groups:</Trans>
+															</span>
+															{option.nestedGroups.map((g) => (
+																<Badge
+																	key={g.id}
+																	variant="secondary"
+																	className="px-1 py-0 text-[10px] font-normal"
+																>
+																	{getLocalizedMenuValue(
+																		g.name,
+																		defaultLocale,
+																		defaultLocale,
+																	)}
+																</Badge>
+															))}
+														</div>
+													)}
 											</div>
 										</TableCell>
 

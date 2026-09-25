@@ -93,7 +93,7 @@ msgid "{0} menus"
 msgstr "{0} menus"
 
 #. placeholder {0}: filteredGroups.length
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:395
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:443
 msgid "{0} modifier groups"
 msgstr "{0} modifier groups"
 
@@ -348,7 +348,7 @@ msgstr "1 menu"
 msgid "1 missing URL logged"
 msgstr "1 missing URL logged"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:392
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:440
 msgid "1 modifier group"
 msgstr "1 modifier group"
 
@@ -477,8 +477,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:306
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:253
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:283
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:341
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:309
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:355
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:588
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:690
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
@@ -565,7 +565,7 @@ msgstr ""
 msgid "Add a link"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:494
+#: app/components/menu/category-form.tsx:525
 msgid "Add a menu"
 msgstr "Add a menu"
 
@@ -585,12 +585,12 @@ msgstr "Add a title between fields."
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr ""
 
-#: app/components/menu/category-form.tsx:347
-#: app/components/menu/modifier-form.tsx:993
+#: app/components/menu/category-form.tsx:378
+#: app/components/menu/modifier-form.tsx:1056
 msgid "Add an item"
 msgstr "Add an item"
 
-#: app/components/menu/modifier-form.tsx:1061
+#: app/components/menu/modifier-form.tsx:1124
 msgid "Add an Option"
 msgstr "Add an Option"
 
@@ -663,9 +663,9 @@ msgstr "Add group"
 msgid "Add images"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:346
+#: app/components/menu/category-form.tsx:377
 #: app/components/menu/menu-sortable-category.tsx:179
-#: app/components/menu/modifier-form.tsx:992
+#: app/components/menu/modifier-form.tsx:1055
 msgid "Add item"
 msgstr "Add item"
 
@@ -688,7 +688,7 @@ msgstr ""
 msgid "Add Members"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:493
+#: app/components/menu/category-form.tsx:524
 msgid "Add menu"
 msgstr "Add menu"
 
@@ -716,11 +716,11 @@ msgstr ""
 msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
-#: app/components/menu/modifier-form.tsx:982
+#: app/components/menu/modifier-form.tsx:1045
 msgid "Add option"
 msgstr "Add option"
 
-#: app/components/menu/modifier-form.tsx:1249
+#: app/components/menu/modifier-form.tsx:1371
 msgid "Add Option"
 msgstr "Add Option"
 
@@ -773,6 +773,10 @@ msgstr ""
 msgid "Add Special Hours Override"
 msgstr "Add Special Hours Override"
 
+#: app/components/menu/modifier-form.tsx:251
+msgid "Add sub-modifier group (e.g. fry size)"
+msgstr "Add sub-modifier group (e.g. fry size)"
+
 #: app/utils/website/field-types.ts:75
 msgid "Add supporting information."
 msgstr "Add supporting information."
@@ -781,7 +785,7 @@ msgstr "Add supporting information."
 msgid "Add the following configuration to the file:"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:929
+#: app/components/menu/modifier-form.tsx:991
 msgid "Add the individual choices, prices, and dietary tags."
 msgstr "Add the individual choices, prices, and dietary tags."
 
@@ -882,8 +886,8 @@ msgstr ""
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1232
-#: app/components/menu/modifier-form.tsx:1514
+#: app/components/menu/modifier-form.tsx:1295
+#: app/components/menu/modifier-form.tsx:1636
 msgid "Alcohol (21+)"
 msgstr "Alcohol (21+)"
 
@@ -1136,16 +1140,16 @@ msgstr ""
 msgid "Assigned Categories"
 msgstr "Assigned Categories"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:335
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:349
 msgid "Assigned Groups"
 msgstr "Assigned Groups"
 
-#: app/components/menu/category-form.tsx:342
-#: app/components/menu/modifier-form.tsx:988
+#: app/components/menu/category-form.tsx:373
+#: app/components/menu/modifier-form.tsx:1051
 msgid "Assigned Items"
 msgstr "Assigned Items"
 
-#: app/components/menu/category-form.tsx:491
+#: app/components/menu/category-form.tsx:522
 msgid "Assigned Menus"
 msgstr "Assigned Menus"
 
@@ -1287,7 +1291,7 @@ msgstr "Back to details"
 msgid "Back to fields"
 msgstr "Back to fields"
 
-#: app/components/menu/modifier-form.tsx:1245
+#: app/components/menu/modifier-form.tsx:1367
 msgid "Back to list"
 msgstr "Back to list"
 
@@ -1296,7 +1300,7 @@ msgstr "Back to list"
 msgid "Back to login"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:684
+#: app/components/menu/modifier-form.tsx:746
 msgid "Back to modifier groups"
 msgstr "Back to modifier groups"
 
@@ -1508,7 +1512,7 @@ msgstr "Can edit teammate notes"
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/menu/menu-form-header.tsx:49
-#: app/components/menu/modifier-form.tsx:1526
+#: app/components/menu/modifier-form.tsx:1707
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:301
 #: app/components/note/share-note-button.tsx:317
@@ -1532,8 +1536,8 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:470
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:509
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:398
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:427
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:572
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:475
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:607
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
@@ -1609,11 +1613,11 @@ msgstr "Category"
 msgid "Category actions"
 msgstr "Category actions"
 
-#: app/components/menu/category-form.tsx:257
+#: app/components/menu/category-form.tsx:264
 msgid "Category Information"
 msgstr "Category Information"
 
-#: app/components/menu/category-form.tsx:305
+#: app/components/menu/category-form.tsx:336
 msgid "Category Name (Guest-Facing)"
 msgstr "Category Name (Guest-Facing)"
 
@@ -1957,6 +1961,10 @@ msgstr "Conditional"
 msgid "Conditional split"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:352
+msgid "Conditional under:"
+msgstr "Conditional under:"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:130
 msgid "Configuration required"
 msgstr ""
@@ -1969,7 +1977,7 @@ msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn P
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 
-#: app/components/menu/modifier-form.tsx:738
+#: app/components/menu/modifier-form.tsx:800
 msgid "Configure how guests interact with these options."
 msgstr "Configure how guests interact with these options."
 
@@ -2227,7 +2235,7 @@ msgstr "Create a custom role to assign specific permissions to teammates."
 msgid "Create a menu to start organizing your dishes and drinks."
 msgstr "Create a menu to start organizing your dishes and drinks."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:257
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:283
 msgid "Create a modifier group to start offering custom choices."
 msgstr "Create a modifier group to start offering custom choices."
 
@@ -2235,7 +2243,7 @@ msgstr "Create a modifier group to start offering custom choices."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1066
+#: app/components/menu/modifier-form.tsx:1129
 msgid "Create a new choice for this modifier group."
 msgstr "Create a new choice for this modifier group."
 
@@ -2344,7 +2352,7 @@ msgstr "Create categories to group menu items together for menus and ordering."
 msgid "Create Category"
 msgstr "Create Category"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:217
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:243
 msgid "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 msgstr "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 
@@ -2374,11 +2382,11 @@ msgstr "Create Location"
 msgid "Create Menu"
 msgstr "Create Menu"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:229
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:255
 msgid "Create Modifier Group"
 msgstr "Create Modifier Group"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:238
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:264
 msgid "Create modifier groups like \"Meat Temperature\", \"Choice of Dressing\", or \"Pizza Toppings\"."
 msgstr "Create modifier groups like \"Meat Temperature\", \"Choice of Dressing\", or \"Pizza Toppings\"."
 
@@ -2390,8 +2398,8 @@ msgstr ""
 msgid "Create New Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1059
-#: app/components/menu/modifier-form.tsx:1262
+#: app/components/menu/modifier-form.tsx:1122
+#: app/components/menu/modifier-form.tsx:1384
 msgid "Create New Option"
 msgstr "Create New Option"
 
@@ -2404,8 +2412,8 @@ msgstr ""
 msgid "Create notes"
 msgstr "Create notes"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:283
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:314
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:297
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:328
 msgid "Create Option"
 msgstr "Create Option"
 
@@ -2446,7 +2454,7 @@ msgstr ""
 msgid "Create your first menu (e.g. Main Menu, Lunch, Catering) to start organizing categories and items."
 msgstr "Create your first menu (e.g. Main Menu, Lunch, Catering) to start organizing categories and items."
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:303
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:317
 msgid "Create your first menu option to customize modifier groups and menu items."
 msgstr "Create your first menu option to customize modifier groups and menu items."
 
@@ -2762,8 +2770,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:521
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:351
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:410
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:379
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:442
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:427
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:490
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:735
@@ -2849,7 +2857,7 @@ msgstr "Delete Location"
 msgid "Delete log entry"
 msgstr "Delete log entry"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:561
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:596
 msgid "Delete Menu Option?"
 msgstr "Delete Menu Option?"
 
@@ -2857,7 +2865,7 @@ msgstr "Delete Menu Option?"
 msgid "Delete menu?"
 msgstr "Delete menu?"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:415
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:463
 msgid "Delete modifier group?"
 msgstr "Delete modifier group?"
 
@@ -2870,8 +2878,8 @@ msgstr ""
 msgid "Delete note?"
 msgstr "Delete note?"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:528
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:575
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:563
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:610
 msgid "Delete Option"
 msgstr "Delete Option"
 
@@ -2989,7 +2997,7 @@ msgstr "Describe this image for accessibility"
 msgid "Description"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:329
+#: app/components/menu/category-form.tsx:360
 #: app/components/menu/item-form.tsx:428
 #: app/components/menu/option-form.tsx:433
 msgid "Description (Guest-Facing)"
@@ -3042,12 +3050,12 @@ msgid "Didn't receive the email? Check your spam folder, or try again with a dif
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:299
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:332
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:346
 msgid "Dietary & Allergens"
 msgstr "Dietary & Allergens"
 
-#: app/components/menu/modifier-form.tsx:1178
-#: app/components/menu/modifier-form.tsx:1460
+#: app/components/menu/modifier-form.tsx:1241
+#: app/components/menu/modifier-form.tsx:1582
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
@@ -3114,7 +3122,7 @@ msgstr ""
 msgid "Dish or drink title, description, and internal SKU/code."
 msgstr "Dish or drink title, description, and internal SKU/code."
 
-#: app/components/menu/category-form.tsx:344
+#: app/components/menu/category-form.tsx:375
 msgid "Dishes and beverages in this category."
 msgstr "Dishes and beverages in this category."
 
@@ -3321,7 +3329,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:453
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:342
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:370
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:418
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
@@ -3355,7 +3363,7 @@ msgstr "Edit Delivery Zone"
 msgid "Edit design"
 msgstr "Edit design"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:519
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:554
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:702
 msgid "Edit Details"
 msgstr "Edit Details"
@@ -3377,11 +3385,11 @@ msgstr "Edit note"
 msgid "Edit Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:228
+#: app/components/menu/modifier-form.tsx:283
 msgid "Edit option"
 msgstr "Edit option"
 
-#: app/components/menu/modifier-form.tsx:1351
+#: app/components/menu/modifier-form.tsx:1473
 msgid "Edit Option"
 msgstr "Edit Option"
 
@@ -3608,7 +3616,7 @@ msgstr ""
 msgid "Exclude from Throttling"
 msgstr "Exclude from Throttling"
 
-#: app/components/menu/category-form.tsx:460
+#: app/components/menu/category-form.tsx:491
 msgid "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 msgstr "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 
@@ -3628,7 +3636,7 @@ msgstr ""
 msgid "Exempt from kitchen prep delay calculations."
 msgstr "Exempt from kitchen prep delay calculations."
 
-#: app/components/menu/category-form.tsx:473
+#: app/components/menu/category-form.tsx:504
 msgid "Exempt from Throttling"
 msgstr "Exempt from Throttling"
 
@@ -3929,7 +3937,7 @@ msgstr ""
 msgid "Free"
 msgstr "Free"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:394
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:408
 msgid "Free ($0.00)"
 msgstr "Free ($0.00)"
 
@@ -4041,8 +4049,8 @@ msgid "Give visitors room to share thoughtful feedback."
 msgstr "Give visitors room to share thoughtful feedback."
 
 #: app/components/menu/item-form.tsx:545
-#: app/components/menu/modifier-form.tsx:1196
-#: app/components/menu/modifier-form.tsx:1478
+#: app/components/menu/modifier-form.tsx:1259
+#: app/components/menu/modifier-form.tsx:1600
 #: app/components/menu/option-form.tsx:632
 msgid "Gluten-Free"
 msgstr "Gluten-Free"
@@ -4084,7 +4092,7 @@ msgstr ""
 msgid "Grayscale"
 msgstr "Grayscale"
 
-#: app/components/menu/modifier-form.tsx:707
+#: app/components/menu/modifier-form.tsx:769
 msgid "Group Name (Guest-Facing)"
 msgstr "Group Name (Guest-Facing)"
 
@@ -4102,11 +4110,11 @@ msgid "Guest Live Preview"
 msgstr "Guest Live Preview"
 
 #: app/components/menu/menu-form.tsx:182
-#: app/components/menu/modifier-form.tsx:701
+#: app/components/menu/modifier-form.tsx:763
 msgid "Guest-facing name and internal identifier."
 msgstr "Guest-facing name and internal identifier."
 
-#: app/components/menu/category-form.tsx:260
+#: app/components/menu/category-form.tsx:267
 msgid "Guest-facing name, internal identifier, and description."
 msgstr "Guest-facing name, internal identifier, and description."
 
@@ -4114,27 +4122,27 @@ msgstr "Guest-facing name, internal identifier, and description."
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "Guest-facing name, internal SKU, and description."
 
-#: app/components/menu/modifier-form.tsx:798
+#: app/components/menu/modifier-form.tsx:860
 msgid "Guests can pick multiple options."
 msgstr "Guests can pick multiple options."
 
-#: app/components/menu/modifier-form.tsx:774
+#: app/components/menu/modifier-form.tsx:836
 msgid "Guests can pick up to 1 option."
 msgstr "Guests can pick up to 1 option."
 
-#: app/components/menu/modifier-form.tsx:871
+#: app/components/menu/modifier-form.tsx:933
 msgid "Guests can skip this selection."
 msgstr "Guests can skip this selection."
 
-#: app/components/menu/modifier-form.tsx:822
+#: app/components/menu/modifier-form.tsx:884
 msgid "Guests choose counts per option."
 msgstr "Guests choose counts per option."
 
-#: app/components/menu/modifier-form.tsx:867
+#: app/components/menu/modifier-form.tsx:929
 msgid "Guests must choose one option before continuing."
 msgstr "Guests must choose one option before continuing."
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:399
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:413
 msgid "Half"
 msgstr "Half"
 
@@ -4436,11 +4444,11 @@ msgstr "Inspect"
 msgid "Integrations"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:317
+#: app/components/menu/category-form.tsx:348
 #: app/components/menu/menu-form.tsx:200
-#: app/components/menu/modifier-form.tsx:719
-#: app/components/menu/modifier-form.tsx:1091
-#: app/components/menu/modifier-form.tsx:1373
+#: app/components/menu/modifier-form.tsx:781
+#: app/components/menu/modifier-form.tsx:1154
+#: app/components/menu/modifier-form.tsx:1495
 msgid "Internal Reference (Optional)"
 msgstr "Internal Reference (Optional)"
 
@@ -4538,11 +4546,11 @@ msgstr "Item Photos"
 msgid "Items"
 msgstr "Items"
 
-#: app/components/menu/category-form.tsx:476
+#: app/components/menu/category-form.tsx:507
 msgid "Items in this category will not add preparation delay to orders."
 msgstr "Items in this category will not add preparation delay to orders."
 
-#: app/components/menu/modifier-form.tsx:990
+#: app/components/menu/modifier-form.tsx:1053
 msgid "Items that offer this modifier group."
 msgstr "Items that offer this modifier group."
 
@@ -4611,7 +4619,7 @@ msgstr ""
 msgid "Kiro IDE Setup"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:457
+#: app/components/menu/category-form.tsx:488
 msgid "Kitchen Throttling Exemption"
 msgstr "Kitchen Throttling Exemption"
 
@@ -4723,8 +4731,8 @@ msgstr ""
 msgid "Left ½"
 msgstr "Left ½"
 
-#: app/components/menu/modifier-form.tsx:1121
-#: app/components/menu/modifier-form.tsx:1403
+#: app/components/menu/modifier-form.tsx:1184
+#: app/components/menu/modifier-form.tsx:1525
 msgid "Left or right ($)"
 msgstr "Left or right ($)"
 
@@ -4737,7 +4745,7 @@ msgid "Let people select several options."
 msgstr "Let people select several options."
 
 #. placeholder {0}: currentParentDepth + 1
-#: app/components/menu/category-form.tsx:273
+#: app/components/menu/category-form.tsx:280
 msgid "Level {0} Subcategory"
 msgstr "Level {0} Subcategory"
 
@@ -5045,7 +5053,7 @@ msgstr "Mark Active"
 msgid "Mark all as read"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:147
+#: app/components/menu/modifier-form.tsx:172
 msgid "Mark as preselected"
 msgstr "Mark as preselected"
 
@@ -5071,7 +5079,7 @@ msgstr "Marketing manager"
 msgid "Maximum advance ordering window (days)"
 msgstr "Maximum advance ordering window (days)"
 
-#: app/components/menu/modifier-form.tsx:907
+#: app/components/menu/modifier-form.tsx:969
 #: app/components/menu/option-form.tsx:573
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
@@ -5170,7 +5178,7 @@ msgstr "Menu item"
 msgid "Menu Name (Guest-Facing)"
 msgstr "Menu Name (Guest-Facing)"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:274
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:288
 msgid "Menu Options"
 msgstr "Menu Options"
 
@@ -5197,7 +5205,7 @@ msgstr "Menu Type & Capabilities"
 msgid "Menus"
 msgstr "Menus"
 
-#: app/components/menu/category-form.tsx:492
+#: app/components/menu/category-form.tsx:523
 msgid "Menus that display this category."
 msgstr "Menus that display this category."
 
@@ -5238,7 +5246,7 @@ msgstr "Min Order: ${minOrder}"
 msgid "Minimum Order ($)"
 msgstr "Minimum Order ($)"
 
-#: app/components/menu/modifier-form.tsx:888
+#: app/components/menu/modifier-form.tsx:950
 #: app/components/menu/option-form.tsx:558
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
@@ -5259,15 +5267,15 @@ msgstr "Missing Path"
 msgid "Mobile"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:267
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:293
 msgid "Modifier Group"
 msgstr "Modifier Group"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:354
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:402
 msgid "Modifier group actions"
 msgstr "Modifier group actions"
 
-#: app/components/menu/modifier-form.tsx:698
+#: app/components/menu/modifier-form.tsx:760
 msgid "Modifier Group Information"
 msgstr "Modifier Group Information"
 
@@ -5278,11 +5286,11 @@ msgstr "Modifier Group Name"
 #: app/components/app-sidebar.tsx:320
 #: app/components/menu/item-form.tsx:494
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:215
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:241
 msgid "Modifier Groups"
 msgstr "Modifier Groups"
 
-#: app/components/menu/modifier-form.tsx:926
+#: app/components/menu/modifier-form.tsx:988
 msgid "Modifier Options"
 msgstr "Modifier Options"
 
@@ -5325,7 +5333,7 @@ msgstr "Multiple"
 msgid "Multiple choice"
 msgstr "Multiple choice"
 
-#: app/components/menu/modifier-form.tsx:795
+#: app/components/menu/modifier-form.tsx:857
 msgid "Multiple Choice (Checkboxes)"
 msgstr "Multiple Choice (Checkboxes)"
 
@@ -5371,7 +5379,7 @@ msgstr ""
 msgid "Negative feedback"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:296
+#: app/components/menu/category-form.tsx:327
 msgid "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 msgstr "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 
@@ -5608,8 +5616,8 @@ msgstr "No fields yet"
 msgid "No invoices found"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:352
-#: app/components/menu/modifier-form.tsx:998
+#: app/components/menu/category-form.tsx:383
+#: app/components/menu/modifier-form.tsx:1061
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
 
@@ -5641,7 +5649,7 @@ msgstr "No matching images"
 msgid "No matching locations"
 msgstr "No matching locations"
 
-#: app/components/menu/modifier-form.tsx:1283
+#: app/components/menu/modifier-form.tsx:1405
 msgid "No matching options found."
 msgstr "No matching options found."
 
@@ -5657,7 +5665,7 @@ msgstr "No media yet. Upload an image to get started."
 msgid "No members found."
 msgstr ""
 
-#: app/components/menu/category-form.tsx:499
+#: app/components/menu/category-form.tsx:530
 msgid "No menus assigned yet. Add a menu to make this category visible."
 msgstr "No menus assigned yet. Add a menu to make this category visible."
 
@@ -5681,11 +5689,11 @@ msgstr "No modifier groups assigned yet. Add one to get started."
 msgid "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 msgstr "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:253
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:279
 msgid "No modifier groups match these filters"
 msgstr "No modifier groups match these filters"
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:236
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:262
 msgid "No modifier groups yet"
 msgstr "No modifier groups yet"
 
@@ -5711,15 +5719,15 @@ msgstr ""
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:937
+#: app/components/menu/modifier-form.tsx:999
 msgid "No options added yet. Click “Add option” to get started."
 msgstr "No options added yet. Click “Add option” to get started."
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:299
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:313
 msgid "No options found"
 msgstr "No options found"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:309
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:323
 msgid "No options match your active filters."
 msgstr "No options match your active filters."
 
@@ -5731,10 +5739,12 @@ msgstr "No options match your active filters."
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:394
+#: app/components/menu/category-form.tsx:425
 msgid "No other categories available for upsell."
 msgstr "No other categories available for upsell."
 
+#: app/components/menu/modifier-form.tsx:1315
+#: app/components/menu/modifier-form.tsx:1656
 #: app/components/menu/option-form.tsx:831
 msgid "No other modifier groups available to nest."
 msgstr "No other modifier groups available to nest."
@@ -5805,6 +5815,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3839
 msgid "None"
 msgstr ""
+
+#: app/components/menu/category-form.tsx:306
+msgid "None (Top-Level Category)"
+msgstr "None (Top-Level Category)"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1238
 msgid "Normal"
@@ -6092,16 +6106,16 @@ msgstr ""
 msgid "Operator Invited"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:326
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:340
 msgid "Option"
 msgstr "Option"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:541
 msgid "Option actions"
 msgstr "Option actions"
 
-#: app/components/menu/modifier-form.tsx:1079
-#: app/components/menu/modifier-form.tsx:1361
+#: app/components/menu/modifier-form.tsx:1142
+#: app/components/menu/modifier-form.tsx:1483
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
@@ -6135,7 +6149,7 @@ msgstr "Optional caption for display"
 
 #: app/components/app-sidebar.tsx:325
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:273
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:299
 msgid "Options"
 msgstr "Options"
 
@@ -6272,7 +6286,7 @@ msgstr ""
 msgid "Parameters"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:269
+#: app/components/menu/category-form.tsx:276
 msgid "Parent Category (Hierarchy)"
 msgstr "Parent Category (Hierarchy)"
 
@@ -6483,7 +6497,7 @@ msgstr "Pickup Tips"
 msgid "Pizza Topping"
 msgstr "Pizza Topping"
 
-#: app/components/menu/modifier-form.tsx:843
+#: app/components/menu/modifier-form.tsx:905
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
@@ -6588,17 +6602,17 @@ msgstr ""
 msgid "Prerender"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:154
-#: app/components/menu/modifier-form.tsx:160
+#: app/components/menu/modifier-form.tsx:179
+#: app/components/menu/modifier-form.tsx:185
 msgid "Preselected"
 msgstr "Preselected"
 
-#: app/components/menu/modifier-form.tsx:147
+#: app/components/menu/modifier-form.tsx:172
 msgid "Preselected (default)"
 msgstr "Preselected (default)"
 
-#: app/components/menu/modifier-form.tsx:1170
-#: app/components/menu/modifier-form.tsx:1452
+#: app/components/menu/modifier-form.tsx:1233
+#: app/components/menu/modifier-form.tsx:1574
 msgid "Preselected (Included when guests first open this group)"
 msgstr "Preselected (Included when guests first open this group)"
 
@@ -6620,8 +6634,8 @@ msgstr ""
 msgid "Price"
 msgstr "Price"
 
-#: app/components/menu/modifier-form.tsx:1143
-#: app/components/menu/modifier-form.tsx:1425
+#: app/components/menu/modifier-form.tsx:1206
+#: app/components/menu/modifier-form.tsx:1547
 msgid "Price ($)"
 msgstr "Price ($)"
 
@@ -6633,7 +6647,7 @@ msgstr ""
 msgid "Price / count"
 msgstr "Price / count"
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:329
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:343
 msgid "Price Delta"
 msgstr "Price Delta"
 
@@ -6787,7 +6801,7 @@ msgstr ""
 msgid "Quantity"
 msgstr "Quantity"
 
-#: app/components/menu/modifier-form.tsx:819
+#: app/components/menu/modifier-form.tsx:881
 msgid "Quantity Counter (+/-)"
 msgstr "Quantity Counter (+/-)"
 
@@ -6875,7 +6889,7 @@ msgstr ""
 msgid "Recommended for SEO"
 msgstr "Recommended for SEO"
 
-#: app/components/menu/category-form.tsx:377
+#: app/components/menu/category-form.tsx:408
 msgid "Recommended Upsells & Pairings"
 msgstr "Recommended Upsells & Pairings"
 
@@ -7021,7 +7035,7 @@ msgstr ""
 msgid "Remove member"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:237
+#: app/components/menu/modifier-form.tsx:292
 msgid "Remove option"
 msgstr "Remove option"
 
@@ -7113,7 +7127,7 @@ msgstr "Required • Pick {minSelections}"
 msgid "Required • Pick {minSelections}{maxSelectionsSuffix}"
 msgstr "Required • Pick {minSelections}{maxSelectionsSuffix}"
 
-#: app/components/menu/modifier-form.tsx:863
+#: app/components/menu/modifier-form.tsx:925
 msgid "Required selection"
 msgstr "Required selection"
 
@@ -7192,7 +7206,7 @@ msgstr ""
 msgid "Retry"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:276
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:290
 msgid "Reusable options with images, pricing, allergens, and dietary profiles assigned across multiple modifier groups."
 msgstr "Reusable options with images, pricing, allergens, and dietary profiles assigned across multiple modifier groups."
 
@@ -7278,7 +7292,7 @@ msgstr "Route incoming traffic from an old path to a new destination."
 msgid "Routing Logic:"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:276
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:302
 msgid "Rules"
 msgstr "Rules"
 
@@ -7418,7 +7432,7 @@ msgid "Save changes"
 msgstr ""
 
 #: app/components/locations/location-form.tsx:997
-#: app/components/menu/modifier-form.tsx:1529
+#: app/components/menu/modifier-form.tsx:1710
 msgid "Save Changes"
 msgstr "Save Changes"
 
@@ -7431,7 +7445,7 @@ msgstr ""
 msgid "Save languages"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:685
+#: app/components/menu/modifier-form.tsx:747
 msgid "Save Modifier Group"
 msgstr "Save Modifier Group"
 
@@ -7531,7 +7545,7 @@ msgstr "Search and select location address with Google Autocomplete."
 msgid "Search automations..."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1272
+#: app/components/menu/modifier-form.tsx:1394
 msgid "Search available options..."
 msgstr "Search available options..."
 
@@ -7667,7 +7681,7 @@ msgstr "Select a category to display this item."
 msgid "Select a form"
 msgstr "Select a form"
 
-#: app/components/menu/category-form.tsx:496
+#: app/components/menu/category-form.tsx:527
 msgid "Select a menu to display this category."
 msgstr "Select a menu to display this category."
 
@@ -7703,15 +7717,15 @@ msgstr "Select all modifier groups where this option should appear. Assigning to
 msgid "Select an image from your library or upload a new one."
 msgstr "Select an image from your library or upload a new one."
 
-#: app/components/menu/category-form.tsx:349
+#: app/components/menu/category-form.tsx:380
 msgid "Select an item to add to this category."
 msgstr "Select an item to add to this category."
 
-#: app/components/menu/modifier-form.tsx:995
+#: app/components/menu/modifier-form.tsx:1058
 msgid "Select an item to offer this modifier group."
 msgstr "Select an item to offer this modifier group."
 
-#: app/components/menu/modifier-form.tsx:1068
+#: app/components/menu/modifier-form.tsx:1131
 msgid "Select an option to add to this modifier group."
 msgstr "Select an option to add to this modifier group."
 
@@ -7788,11 +7802,11 @@ msgstr "Selected Address"
 msgid "Selected Members"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:735
+#: app/components/menu/modifier-form.tsx:797
 msgid "Selection Behavior & Limits"
 msgstr "Selection Behavior & Limits"
 
-#: app/components/menu/modifier-form.tsx:746
+#: app/components/menu/modifier-form.tsx:808
 msgid "Selection Mode"
 msgstr "Selection Mode"
 
@@ -8020,7 +8034,7 @@ msgstr ""
 msgid "Show this banner on your public site"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:543
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:578
 msgid "Showing {filteredOptionsCount} of {totalCount} options"
 msgstr "Showing {filteredOptionsCount} of {totalCount} options"
 
@@ -8094,7 +8108,7 @@ msgstr "Single"
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/components/menu/modifier-form.tsx:771
+#: app/components/menu/modifier-form.tsx:833
 msgid "Single Choice (Radio)"
 msgstr "Single Choice (Radio)"
 
@@ -8267,8 +8281,8 @@ msgstr "State / Province"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:286
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:302
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:249
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:279
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:338
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:305
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:352
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
@@ -8340,6 +8354,16 @@ msgstr ""
 msgid "Style"
 msgstr ""
 
+#: app/components/menu/modifier-form.tsx:1305
+#: app/components/menu/modifier-form.tsx:1646
+msgid "Sub / Nested Modifier Groups"
+msgstr "Sub / Nested Modifier Groups"
+
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:341
+msgid "Sub-Group"
+msgstr "Sub-Group"
+
+#: app/components/menu/modifier-form.tsx:230
 #: app/components/menu/modifier-guest-preview.tsx:79
 msgid "Sub-Modifier Group(s) Active:"
 msgstr "Sub-Modifier Group(s) Active:"
@@ -8407,7 +8431,7 @@ msgstr "Suggest as an add-on at checkout."
 msgid "Suggest improvements"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:380
+#: app/components/menu/category-form.tsx:411
 msgid "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 msgstr "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 
@@ -8757,11 +8781,11 @@ msgstr "This will permanently delete this menu item and remove it from all menus
 msgid "This will permanently delete this menu. Categories and items associated with it will remain intact."
 msgstr "This will permanently delete this menu. Categories and items associated with it will remain intact."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:466
 msgid "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
 msgstr "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:564
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:599
 msgid "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
 msgstr "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
 
@@ -8851,7 +8875,7 @@ msgstr "Too Many Requests"
 msgid "Top Contributors"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:441
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:455
 msgid "Topping"
 msgstr "Topping"
 
@@ -8929,6 +8953,10 @@ msgstr ""
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
+msgid "Triggers sub-groups:"
+msgstr "Triggers sub-groups:"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
@@ -8951,11 +8979,11 @@ msgstr "Try adjusting your filters or clear them to see all items."
 msgid "Try adjusting your filters or clear them to see all menus."
 msgstr "Try adjusting your filters or clear them to see all menus."
 
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:256
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:282
 msgid "Try adjusting your filters or clear them to see all modifier groups."
 msgstr "Try adjusting your filters or clear them to see all modifier groups."
 
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:307
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:321
 msgid "Try adjusting your filters or clear them to see all options."
 msgstr "Try adjusting your filters or clear them to see all options."
 
@@ -8990,7 +9018,7 @@ msgstr ""
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:240
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:270
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:296
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3926
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
@@ -9015,7 +9043,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:359
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:370
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:470
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:485
 msgid "Unassigned"
 msgstr "Unassigned"
 
@@ -9121,7 +9149,7 @@ msgstr ""
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "Update location details, hours, and fulfillment preferences."
 
-#: app/components/menu/modifier-form.tsx:1354
+#: app/components/menu/modifier-form.tsx:1476
 msgid "Update option details and pricing."
 msgstr "Update option details and pricing."
 
@@ -9330,8 +9358,8 @@ msgid "Variables"
 msgstr "Variables"
 
 #: app/components/menu/item-form.tsx:561
-#: app/components/menu/modifier-form.tsx:1214
-#: app/components/menu/modifier-form.tsx:1496
+#: app/components/menu/modifier-form.tsx:1277
+#: app/components/menu/modifier-form.tsx:1618
 #: app/components/menu/option-form.tsx:648
 msgid "Vegetarian"
 msgstr "Vegetarian"
@@ -9602,6 +9630,8 @@ msgstr ""
 msgid "What's missing?"
 msgstr ""
 
+#: app/components/menu/modifier-form.tsx:1309
+#: app/components/menu/modifier-form.tsx:1650
 #: app/components/menu/option-form.tsx:819
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
@@ -9631,7 +9661,7 @@ msgid "When you get notifications, they'll show up here."
 msgstr ""
 
 #: app/components/menu/modifier-guest-preview.tsx:479
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:398
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:412
 msgid "Whole"
 msgstr "Whole"
 
@@ -9639,12 +9669,12 @@ msgstr "Whole"
 msgid "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 msgstr "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 
-#: app/components/menu/modifier-form.tsx:207
+#: app/components/menu/modifier-form.tsx:262
 msgid "Whole / Left or right"
 msgstr "Whole / Left or right"
 
-#: app/components/menu/modifier-form.tsx:1104
-#: app/components/menu/modifier-form.tsx:1386
+#: app/components/menu/modifier-form.tsx:1167
+#: app/components/menu/modifier-form.tsx:1508
 msgid "Whole pizza ($)"
 msgstr "Whole pizza ($)"
 
@@ -9652,7 +9682,7 @@ msgstr "Whole pizza ($)"
 msgid "Whole pizza price ($)"
 msgstr "Whole pizza price ($)"
 
-#: app/components/menu/modifier-form.tsx:846
+#: app/components/menu/modifier-form.tsx:908
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "Whole pizza, left half, or right half pricing."
 
