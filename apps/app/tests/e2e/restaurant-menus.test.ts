@@ -5,7 +5,9 @@ import {
 	eq,
 	OrganizationMenu,
 	OrganizationMenuCategory,
+	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItem,
+	OrganizationMenuItemCategoryAssignment,
 	OrganizationMenuModifierGroup,
 	OrganizationMenuOption,
 	OrganizationMenuModifierGroupOptionAssignment,
@@ -99,6 +101,7 @@ test.describe('Restaurant Menu Management System', () => {
 
 		expect(createdDbMenu).toBeTruthy()
 		expect(createdDbMenu?.displayName).toContain(menuDisplayName)
+		if (!createdDbMenu) throw new Error('Failed to create test menu')
 
 		// 3. Switch to "Categories" tab and create a category
 		await main.getByRole('link', { name: /categories/i }).click()
@@ -125,13 +128,25 @@ test.describe('Restaurant Menu Management System', () => {
 			.getByPlaceholder(/appetizers_main_kitchen/i)
 			.fill(categoryInternalName)
 
-		// Assign to created Menu
-		const menuCheckbox = page.getByRole('checkbox', {
-			name: new RegExp(menuDisplayName, 'i'),
-		})
-		if (await menuCheckbox.isVisible()) {
-			await menuCheckbox.check()
-		}
+		// Assign to the created menu. "Assigned Menus" is not a checkbox list —
+		// it is an "Add menu" button that opens a picker dialog. We assert the
+		// control is present and usable so a missing/renamed control fails the
+		// test loudly instead of silently skipping the assignment (which would
+		// leave an orphan category that never renders on the overview).
+		const addMenuBtn = page.getByRole('button', { name: /^add menu$/i })
+		await expect(addMenuBtn).toBeVisible()
+		await expect(addMenuBtn).toBeEnabled()
+		await addMenuBtn.click()
+
+		const addMenuDialog = page.getByRole('dialog')
+		await expect(addMenuDialog).toBeVisible()
+		await addMenuDialog.getByRole('button', { name: menuDisplayName }).click()
+		await expect(addMenuDialog).toBeHidden()
+
+		// The form must have staged the selected menu id before it is submitted.
+		await expect(page.locator('input[name="assignedMenuIds"]')).toHaveValue(
+			new RegExp(createdDbMenu.id),
+		)
 
 		// Save category
 		const saveCategoryBtn = page.getByRole('button', {
@@ -165,6 +180,23 @@ test.describe('Restaurant Menu Management System', () => {
 			.limit(1)
 
 		expect(createdDbCategory).toBeTruthy()
+		if (!createdDbCategory) throw new Error('Failed to create test category')
+
+		// The category must be linked to the menu in the join table the Menu
+		// Overview reads; an unassigned category can never render there.
+		const categoryMenuLinks = await db
+			.select()
+			.from(OrganizationMenuCategoryAssignment)
+			.where(
+				and(
+					eq(
+						OrganizationMenuCategoryAssignment.categoryId,
+						createdDbCategory.id,
+					),
+					eq(OrganizationMenuCategoryAssignment.menuId, createdDbMenu.id),
+				),
+			)
+		expect(categoryMenuLinks).toHaveLength(1)
 
 		// 4. Switch to "Items" tab and create an item
 		await main.getByRole('link', { name: /^items$/i }).click()
@@ -191,13 +223,27 @@ test.describe('Restaurant Menu Management System', () => {
 		await page.getByPlaceholder(/risotto_truffle/i).fill(itemInternalName)
 		await page.getByPlaceholder('0.00').first().fill(itemPrice)
 
-		// Assign category if checkbox/select is present
-		const catCheckbox = page.getByRole('checkbox', {
-			name: new RegExp(categoryDisplayName, 'i'),
+		// Assign the item to the category just created. "Assigned Categories" is
+		// also an "Add category" picker dialog rather than a checkbox list, and
+		// the assignment is required for the item to show up on the overview.
+		const addCategoryBtn = page.getByRole('button', {
+			name: /^add category$/i,
 		})
-		if (await catCheckbox.isVisible()) {
-			await catCheckbox.check()
-		}
+		await expect(addCategoryBtn).toBeVisible()
+		await expect(addCategoryBtn).toBeEnabled()
+		await addCategoryBtn.click()
+
+		const addCategoryDialog = page.getByRole('dialog')
+		await expect(addCategoryDialog).toBeVisible()
+		await addCategoryDialog
+			.getByRole('button', { name: categoryDisplayName })
+			.click()
+		await expect(addCategoryDialog).toBeHidden()
+
+		// The form must have staged the selected category id before it is submitted.
+		await expect(page.locator('input[name="assignedCategoryIds"]')).toHaveValue(
+			new RegExp(createdDbCategory.id),
+		)
 
 		// Save item
 		const saveItemBtn = page.getByRole('button', { name: /save item/i })
@@ -231,6 +277,23 @@ test.describe('Restaurant Menu Management System', () => {
 
 		expect(createdDbItem).toBeTruthy()
 		expect(createdDbItem?.price).toBe(16.5)
+		if (!createdDbItem) throw new Error('Failed to create test item')
+
+		// The item must be linked to the category so it renders inside the
+		// category card on the Menu Overview.
+		const itemCategoryLinks = await db
+			.select()
+			.from(OrganizationMenuItemCategoryAssignment)
+			.where(
+				and(
+					eq(
+						OrganizationMenuItemCategoryAssignment.categoryId,
+						createdDbCategory.id,
+					),
+					eq(OrganizationMenuItemCategoryAssignment.itemId, createdDbItem.id),
+				),
+			)
+		expect(itemCategoryLinks).toHaveLength(1)
 
 		// 5. Switch to "Modifier Groups" tab and test Live Guest Preview
 		await main.getByRole('link', { name: /modifier groups/i }).click()
