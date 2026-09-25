@@ -10,6 +10,7 @@ import {
 	and,
 	OrganizationMenuModifierGroup,
 	OrganizationMenuOption,
+	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 } from '@repo/database'
 import {
@@ -95,6 +96,19 @@ const MODIFIER_GROUP_FILTER_FIELDS: FilterField[] = [
 		],
 	},
 	{
+		id: 'hierarchy',
+		label: 'Hierarchy',
+		type: 'select',
+		defaultOperator: 'is_any_of',
+		searchable: false,
+		icon: <Icon name="route" className="size-3.5" />,
+		options: [
+			{ value: 'all', label: 'All modifier groups' },
+			{ value: 'top_level', label: 'Top-level groups' },
+			{ value: 'sub_group', label: 'Sub-modifier groups' },
+		],
+	},
+	{
 		id: 'status',
 		label: 'Status',
 		type: 'select',
@@ -170,6 +184,36 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		nestedParentMap.set(a.modifierGroupId, list)
 	}
 
+	const optionSubGroupAssignments = await db
+		.select({
+			parentModifierGroupId:
+				OrganizationMenuModifierGroupOptionAssignment.modifierGroupId,
+			childSubGroupName: OrganizationMenuModifierGroup.name,
+		})
+		.from(OrganizationMenuOptionNestedModifierGroupAssignment)
+		.innerJoin(
+			OrganizationMenuModifierGroupOptionAssignment,
+			eq(
+				OrganizationMenuModifierGroupOptionAssignment.optionId,
+				OrganizationMenuOptionNestedModifierGroupAssignment.optionId,
+			),
+		)
+		.innerJoin(
+			OrganizationMenuModifierGroup,
+			eq(
+				OrganizationMenuModifierGroup.id,
+				OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
+			),
+		)
+		.where(eq(OrganizationMenuModifierGroup.organizationId, organization.id))
+
+	const groupChildSubGroupsMap = new Map<string, string[]>()
+	for (const a of optionSubGroupAssignments) {
+		const list = groupChildSubGroupsMap.get(a.parentModifierGroupId) ?? []
+		list.push(a.childSubGroupName)
+		groupChildSubGroupsMap.set(a.parentModifierGroupId, list)
+	}
+
 	const groups = await db.query.OrganizationMenuModifierGroup.findMany({
 		where: eq(OrganizationMenuModifierGroup.organizationId, organization.id),
 		with: {
@@ -198,6 +242,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			optionsCount: g.optionAssignments.length,
 			updatedAt: g.updatedAt.toISOString(),
 			parentOptions: nestedParentMap.get(g.id) ?? [],
+			childSubGroups: groupChildSubGroupsMap.get(g.id) ?? [],
 		})),
 	}
 }
@@ -220,6 +265,8 @@ export default function ModifiersIndexRoute() {
 					return group.internalName ?? ''
 				case 'selectionType':
 					return group.selectionType
+				case 'hierarchy':
+					return group.parentOptions.length > 0 ? 'sub_group' : 'top_level'
 				case 'status':
 					return group.availabilityStatus
 				default:

@@ -85,8 +85,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.where(eq(OrganizationMenuOption.organizationId, organization.id))
 		.orderBy(asc(OrganizationMenuOption.position))
 
+	const parentOptionsQuery = await db.query.OrganizationMenuOption.findMany({
+		where: eq(OrganizationMenuOption.organizationId, organization.id),
+		with: {
+			modifierGroupAssignments: {
+				with: {
+					modifierGroup: true,
+				},
+			},
+		},
+		orderBy: [asc(OrganizationMenuOption.displayName)],
+	})
+
+	const availableParentOptions = parentOptionsQuery.map((opt) => ({
+		id: opt.id,
+		displayName: opt.displayName,
+		internalName: opt.internalName,
+		groupName: opt.modifierGroupAssignments[0]?.modifierGroup?.name ?? null,
+		groupInternalName:
+			opt.modifierGroupAssignments[0]?.modifierGroup?.internalName ?? null,
+	}))
+
 	return {
 		organization,
+		initialParentOptionIds: [] as string[],
+		availableParentOptions,
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
@@ -291,6 +314,30 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
+		// Sync parent option triggers (when this new group is configured as a sub-group)
+		if (formData.has('parentOptionIds')) {
+			let parentOptionIds: string[] = []
+			try {
+				parentOptionIds = JSON.parse(
+					formData.get('parentOptionIds') as string,
+				) as string[]
+			} catch {
+				parentOptionIds = []
+			}
+
+			if (parentOptionIds.length > 0) {
+				await tx
+					.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
+					.values(
+						parentOptionIds.map((optId, idx) => ({
+							optionId: optId,
+							modifierGroupId: newGroup.id,
+							position: idx,
+						})),
+					)
+			}
+		}
+
 		// Insert Location Overrides
 		if (overrideEntries.length > 0) {
 			await tx.insert(OrganizationMenuLocationOverride).values(
@@ -319,6 +366,8 @@ export default function CreateModifierGroupRoute() {
 		supportedLocales,
 		availableOptions,
 		availableModifierGroups,
+		initialParentOptionIds,
+		availableParentOptions,
 		allItems,
 		allLocations,
 	} = useLoaderData<typeof loader>()

@@ -350,6 +350,7 @@ export default function EditCategoryRoute() {
 		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
 			<CategoryForm
 				pageTitle="Edit Category"
+				categoryId={category.id}
 				initialData={category}
 				orgSlug={organization.slug}
 				defaultLocale={defaultLocale}

@@ -112,10 +112,20 @@ export function CategoryForm({
 		[allCategories],
 	)
 
+	const effectiveCategoryId = categoryId || (initialData as any)?.id
+
 	const eligibleCategories = useMemo(() => {
 		return allCategories
 			.filter((c) => {
-				const check = isValidParentCategory(categoryId, c.id, allCategories, 3)
+				if (effectiveCategoryId && c.id === effectiveCategoryId) {
+					return false
+				}
+				const check = isValidParentCategory(
+					effectiveCategoryId,
+					c.id,
+					allCategories,
+					3,
+				)
 				return check.valid
 			})
 			.map((c) => {
@@ -133,7 +143,13 @@ export function CategoryForm({
 					levelLabel,
 				}
 			})
-	}, [allCategories, categoryId, categoriesMap, activeLocale, defaultLocale])
+	}, [
+		allCategories,
+		effectiveCategoryId,
+		categoriesMap,
+		activeLocale,
+		defaultLocale,
+	])
 
 	const currentParentDepth = parentId
 		? getCategoryDepth(parentId, categoriesMap)

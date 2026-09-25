@@ -162,8 +162,48 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.where(eq(OrganizationMenuOption.organizationId, organization.id))
 		.orderBy(asc(OrganizationMenuOption.position))
 
+	const parentAssignments =
+		await db.query.OrganizationMenuOptionNestedModifierGroupAssignment.findMany(
+			{
+				where: eq(
+					OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
+					modifierGroupId,
+				),
+			},
+		)
+	const initialParentOptionIds = parentAssignments.map((a) => a.optionId)
+
+	const parentOptionsQuery = await db.query.OrganizationMenuOption.findMany({
+		where: eq(OrganizationMenuOption.organizationId, organization.id),
+		with: {
+			modifierGroupAssignments: {
+				with: {
+					modifierGroup: true,
+				},
+			},
+		},
+		orderBy: [asc(OrganizationMenuOption.displayName)],
+	})
+
+	const availableParentOptions = parentOptionsQuery
+		.filter((opt) => {
+			const groupIds = opt.modifierGroupAssignments.map(
+				(a) => a.modifierGroupId,
+			)
+			return !groupIds.includes(modifierGroupId)
+		})
+		.map((opt) => ({
+			id: opt.id,
+			displayName: opt.displayName,
+			groupName: opt.modifierGroupAssignments[0]?.modifierGroup?.name ?? null,
+			groupInternalName:
+				opt.modifierGroupAssignments[0]?.modifierGroup?.internalName ?? null,
+		}))
+
 	return {
 		organization,
+		initialParentOptionIds,
+		availableParentOptions,
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
@@ -433,6 +473,39 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 
+		// Sync parent option triggers (when this group is configured as a sub-group)
+		if (formData.has('parentOptionIds')) {
+			let parentOptionIds: string[] = []
+			try {
+				parentOptionIds = JSON.parse(
+					formData.get('parentOptionIds') as string,
+				) as string[]
+			} catch {
+				parentOptionIds = []
+			}
+
+			await tx
+				.delete(OrganizationMenuOptionNestedModifierGroupAssignment)
+				.where(
+					eq(
+						OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
+						modifierGroupId,
+					),
+				)
+
+			if (parentOptionIds.length > 0) {
+				await tx
+					.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
+					.values(
+						parentOptionIds.map((optId, idx) => ({
+							optionId: optId,
+							modifierGroupId,
+							position: idx,
+						})),
+					)
+			}
+		}
+
 		// Replace Item Assignments
 		await tx
 			.delete(OrganizationMenuItemModifierGroupAssignment)
@@ -491,6 +564,8 @@ export default function EditModifierGroupRoute() {
 		supportedLocales,
 		availableOptions,
 		availableModifierGroups,
+		initialParentOptionIds,
+		availableParentOptions,
 		group,
 		allItems,
 		allLocations,

@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { cn } from '@repo/ui'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import {
@@ -42,6 +43,13 @@ import { Item, ItemContent, ItemTitle, ItemDescription } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
 import { useId, useState, useMemo } from 'react'
 import { Form } from 'react-router'
 import {
@@ -87,6 +95,8 @@ function SortableOptionRow({
 	onToggleDefault,
 	onEdit,
 	onRemove,
+	onAddNestedGroup,
+	onRemoveNestedGroup,
 }: {
 	option: ModifierOptionData
 	selectionType: 'single' | 'multiple' | 'quantity' | 'pizza'
@@ -100,6 +110,8 @@ function SortableOptionRow({
 	onToggleDefault: (isDefault: boolean) => void
 	onEdit: () => void
 	onRemove: () => void
+	onAddNestedGroup?: (groupId: string) => void
+	onRemoveNestedGroup?: (groupId: string) => void
 }) {
 	const {
 		attributes,
@@ -225,37 +237,90 @@ function SortableOptionRow({
 					</p>
 				) : null}
 
-				{/* Nested Sub-Modifier Groups badge / configure button */}
-				{nestedGroupNames.length > 0 ? (
-					<div className="mt-1 flex flex-wrap items-center gap-1.5">
-						<span className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
-							<Icon name="route" className="size-3" />
-							<Trans>Sub-Modifier Group(s) Active:</Trans>
+				{/* Nested Sub-Modifier Groups badge / direct selector */}
+				<div
+					className="mt-1.5 flex flex-wrap items-center gap-1.5"
+					onClick={(e) => e.stopPropagation()}
+				>
+					<span className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+						<Icon name="route" className="size-3" />
+						<Trans>Sub-Groups:</Trans>
+					</span>
+					{option.nestedModifierGroupIds &&
+					option.nestedModifierGroupIds.length > 0 ? (
+						option.nestedModifierGroupIds.map((groupId) => {
+							const found = availableModifierGroups.find(
+								(g) => g.id === groupId,
+							)
+							const name = found
+								? getLocalizedMenuValue(
+										found.name,
+										activeLocale,
+										defaultLocale,
+									) || found.name
+								: groupId
+							return (
+								<span
+									key={groupId}
+									className="inline-flex items-center gap-1 rounded border border-indigo-500/20 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300"
+								>
+									{name}
+									{onRemoveNestedGroup && (
+										<button
+											type="button"
+											onClick={() => onRemoveNestedGroup(groupId)}
+											className="hover:text-destructive rounded-full p-0.5 transition-colors"
+										>
+											<Icon name="x" className="size-2.5" />
+										</button>
+									)}
+								</span>
+							)
+						})
+					) : (
+						<span className="text-muted-foreground text-[11px] italic">
+							<Trans>None</Trans>
 						</span>
-						{nestedGroupNames.map((name: string, i: number) => (
-							<span
-								key={i}
-								className="inline-flex items-center rounded border border-indigo-500/20 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300"
+					)}
+					{onAddNestedGroup &&
+						availableModifierGroups.filter(
+							(g) => !(option.nestedModifierGroupIds ?? []).includes(g.id),
+						).length > 0 && (
+							<Select
+								value="placeholder"
+								onValueChange={(val) => {
+									if (val && val !== 'placeholder') {
+										onAddNestedGroup(val)
+									}
+								}}
 							>
-								{name}
-							</span>
-						))}
-					</div>
-				) : (
-					<button
-						type="button"
-						onClick={(e) => {
-							e.stopPropagation()
-							onEdit()
-						}}
-						className="text-muted-foreground hover:text-foreground mt-1 flex items-center gap-1 text-[11px] transition-colors"
-					>
-						<Icon name="plus" className="size-3" />
-						<span>
-							<Trans>Add sub-modifier group (e.g. fry size)</Trans>
-						</span>
-					</button>
-				)}
+								<SelectTrigger className="border-border h-5 w-auto gap-1 border-dashed px-1.5 text-[10px] font-normal">
+									<SelectValue placeholder="+ Sub-group" />
+								</SelectTrigger>
+								<SelectContent align="start" className="max-h-56">
+									<SelectItem value="placeholder" disabled>
+										<Trans>Select sub-modifier group...</Trans>
+									</SelectItem>
+									{availableModifierGroups
+										.filter(
+											(g) =>
+												!(option.nestedModifierGroupIds ?? []).includes(g.id),
+										)
+										.map((g) => (
+											<SelectItem key={g.id} value={g.id}>
+												{getLocalizedMenuValue(
+													g.name,
+													activeLocale,
+													defaultLocale,
+												) ||
+													g.internalName ||
+													'Untitled'}
+											</SelectItem>
+										))}
+								</SelectContent>
+							</Select>
+						)}
+				</div>
 			</div>
 
 			{isPizza ? (
@@ -352,6 +417,14 @@ interface ModifierFormProps {
 		price: number
 	}>
 	allLocations: LocationItem[]
+	initialParentOptionIds?: string[]
+	availableParentOptions?: Array<{
+		id: string
+		displayName: string
+		internalName?: string | null
+		groupName: string | null
+		groupInternalName: string | null
+	}>
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -365,11 +438,52 @@ export function ModifierForm({
 	availableOptions = [],
 	allItems,
 	allLocations,
+	initialParentOptionIds = [],
+	availableParentOptions = [],
 	isSubmitting,
 	pageTitle,
 }: ModifierFormProps) {
 	const { _ } = useLingui()
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
+	const [parentOptionIds, setParentOptionIds] = useState<string[]>(
+		initialParentOptionIds ?? [],
+	)
+	const [isSubModifierGroup, setIsSubModifierGroup] = useState<boolean>(
+		(initialParentOptionIds?.length ?? 0) > 0,
+	)
+
+	const handleAddOptionNestedGroup = (
+		optionId: string,
+		targetGroupId: string,
+	) => {
+		setOptions((prev) =>
+			prev.map((opt) => {
+				if (opt.id !== optionId) return opt
+				const existing = opt.nestedModifierGroupIds ?? []
+				if (existing.includes(targetGroupId)) return opt
+				return {
+					...opt,
+					nestedModifierGroupIds: [...existing, targetGroupId],
+				}
+			}),
+		)
+	}
+
+	const handleRemoveOptionNestedGroup = (
+		optionId: string,
+		targetGroupId: string,
+	) => {
+		setOptions((prev) =>
+			prev.map((opt) => {
+				if (opt.id !== optionId) return opt
+				const existing = opt.nestedModifierGroupIds ?? []
+				return {
+					...opt,
+					nestedModifierGroupIds: existing.filter((id) => id !== targetGroupId),
+				}
+			}),
+		)
+	}
 
 	// State
 	const [name, setName] = useState(
@@ -986,6 +1100,204 @@ export function ModifierForm({
 									)}
 								</Frame>
 
+								{/* Hierarchy & Sub-Modifier Group Settings Frame */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<FrameTitle className="flex items-center gap-2 text-base">
+											<Icon
+												name="route"
+												className="size-4 text-indigo-600 dark:text-indigo-400"
+											/>
+											<Trans>Hierarchy & Sub-Modifier Group</Trans>
+										</FrameTitle>
+										<FrameDescription>
+											<Trans>
+												Choose whether this group appears directly on items or
+												is conditionally revealed by an option in another group.
+											</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel className="space-y-4 p-5">
+										<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+											<div
+												onClick={() => {
+													setIsSubModifierGroup(false)
+													setParentOptionIds([])
+												}}
+												className={`cursor-pointer rounded-lg border p-3.5 transition-all ${
+													!isSubModifierGroup
+														? 'border-primary bg-primary/5 ring-primary ring-1'
+														: 'border-border hover:border-border/80 hover:bg-muted/40'
+												}`}
+											>
+												<div className="flex items-center justify-between">
+													<span className="text-foreground text-sm font-medium">
+														<Trans>Top-Level Group</Trans>
+													</span>
+													{!isSubModifierGroup && (
+														<Badge variant="outline" className="text-[10px]">
+															<Trans>Active</Trans>
+														</Badge>
+													)}
+												</div>
+												<p className="text-muted-foreground mt-1 text-xs">
+													<Trans>
+														Standard modifier group assigned directly to menu
+														items (e.g. "Choose your side", "Burger Toppings").
+													</Trans>
+												</p>
+											</div>
+
+											<div
+												onClick={() => setIsSubModifierGroup(true)}
+												className={`cursor-pointer rounded-lg border p-3.5 transition-all ${
+													isSubModifierGroup
+														? 'border-indigo-600 bg-indigo-500/5 ring-1 ring-indigo-600 dark:border-indigo-500 dark:ring-indigo-500'
+														: 'border-border hover:border-border/80 hover:bg-muted/40'
+												}`}
+											>
+												<div className="flex items-center justify-between">
+													<span className="flex items-center gap-1.5 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+														<Icon name="route" className="size-3.5" />
+														<Trans>Sub-Modifier Group</Trans>
+													</span>
+													{isSubModifierGroup && (
+														<Badge
+															variant="outline"
+															className="border-indigo-500/40 text-[10px] text-indigo-600"
+														>
+															<Trans>Conditional</Trans>
+														</Badge>
+													)}
+												</div>
+												<p className="text-muted-foreground mt-1 text-xs">
+													<Trans>
+														Hidden until a guest picks a specific option in
+														another group (e.g. selecting "French Fries" reveals
+														"Fry Size").
+													</Trans>
+												</p>
+											</div>
+										</div>
+
+										{isSubModifierGroup && (
+											<div className="space-y-3 rounded-md border border-indigo-500/30 bg-indigo-500/5 p-4">
+												<div>
+													<Label className="text-foreground text-xs font-semibold">
+														<Trans>Parent Trigger Option</Trans>
+													</Label>
+													<p className="text-muted-foreground text-xs">
+														<Trans>
+															Select which option in another modifier group
+															reveals this sub-modifier group when selected by a
+															customer.
+														</Trans>
+													</p>
+												</div>
+
+												{availableParentOptions.length === 0 ? (
+													<p className="text-muted-foreground text-xs italic">
+														<Trans>
+															No other modifier options found in this
+															organization.
+														</Trans>
+													</p>
+												) : (
+													<div className="space-y-2">
+														<Select
+															value={parentOptionIds[0] ?? 'none'}
+															onValueChange={(val) => {
+																if (val === 'none' || !val) {
+																	setParentOptionIds([])
+																} else {
+																	setParentOptionIds([val])
+																}
+															}}
+														>
+															<SelectTrigger className="bg-background w-full">
+																<SelectValue>
+																	{parentOptionIds[0]
+																		? (() => {
+																				const opt = availableParentOptions.find(
+																					(o) => o.id === parentOptionIds[0],
+																				)
+																				if (!opt) return parentOptionIds[0]
+																				const grpName = opt.groupName
+																					? getLocalizedMenuValue(
+																							opt.groupName,
+																							activeLocale,
+																							defaultLocale,
+																						) ||
+																						opt.groupInternalName ||
+																						'Group'
+																					: 'Group'
+																				const optName =
+																					getLocalizedMenuValue(
+																						opt.displayName,
+																						activeLocale,
+																						defaultLocale,
+																					) ||
+																					opt.internalName ||
+																					'Option'
+																				return `${grpName} ➔ ${optName}`
+																			})()
+																		: 'Select parent trigger option...'}
+																</SelectValue>
+															</SelectTrigger>
+															<SelectContent align="start" className="max-h-60">
+																<SelectItem value="none">
+																	<span className="text-muted-foreground italic">
+																		<Trans>None selected</Trans>
+																	</span>
+																</SelectItem>
+																{availableParentOptions.map((opt) => {
+																	const grpName = opt.groupName
+																		? getLocalizedMenuValue(
+																				opt.groupName,
+																				activeLocale,
+																				defaultLocale,
+																			) ||
+																			opt.groupInternalName ||
+																			'Group'
+																		: 'Group'
+																	const optName =
+																		getLocalizedMenuValue(
+																			opt.displayName,
+																			activeLocale,
+																			defaultLocale,
+																		) ||
+																		opt.internalName ||
+																		'Option'
+																	return (
+																		<SelectItem key={opt.id} value={opt.id}>
+																			<span className="text-muted-foreground font-semibold">
+																				{grpName}
+																			</span>{' '}
+																			➔ {optName}
+																		</SelectItem>
+																	)
+																})}
+															</SelectContent>
+														</Select>
+
+														{parentOptionIds.length > 0 && (
+															<div className="flex items-center gap-1.5 text-xs text-indigo-700 dark:text-indigo-300">
+																<Icon name="route" className="size-3.5" />
+																<span>
+																	<Trans>
+																		This group will be revealed whenever a
+																		customer chooses the selected parent option.
+																	</Trans>
+																</span>
+															</div>
+														)}
+													</div>
+												)}
+											</div>
+										)}
+									</FramePanel>
+								</Frame>
+
 								{/* Options Management Frame */}
 								<Frame className="w-full" stackedPanels={!isOptionSorting}>
 									<FrameHeader>
@@ -1033,6 +1345,12 @@ export function ModifierForm({
 														}
 														onEdit={() => handleOpenEdit(option)}
 														onRemove={() => handleRemoveOption(option.id)}
+														onAddNestedGroup={(groupId) =>
+															handleAddOptionNestedGroup(option.id, groupId)
+														}
+														onRemoveNestedGroup={(groupId) =>
+															handleRemoveOptionNestedGroup(option.id, groupId)
+														}
 													/>
 												))}
 											</SortableContext>
