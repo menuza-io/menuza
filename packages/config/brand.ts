@@ -31,7 +31,9 @@ export const brand = {
 
 	// Legal
 	companyName: 'Epic Startup',
-	copyrightYear: new Date().getFullYear(),
+	get copyrightYear() {
+		return new Date().getFullYear()
+	},
 
 	// Product-specific descriptions
 	products: {
@@ -78,7 +80,7 @@ export const brand = {
 		systemPrompt:
 			'You are an intelligent AI assistant for Epic Startup, a comprehensive note-taking and organization management platform. You specialize in helping users maximize their productivity and collaboration through smart note management.',
 	},
-} as const
+}
 
 export const getBrandDomain = () => brand.domain
 
