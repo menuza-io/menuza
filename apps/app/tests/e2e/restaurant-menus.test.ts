@@ -302,7 +302,7 @@ test.describe('Restaurant Menu Management System', () => {
 
 		// Save modifier group
 		const saveModifierBtn = page.getByRole('button', {
-			name: /save group/i,
+			name: /save modifier group/i,
 		})
 		await Promise.all([
 			page.waitForResponse(
