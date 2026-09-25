@@ -337,7 +337,7 @@ export default function CategoriesIndexRoute() {
 														{cat.parentId &&
 															categoriesMap.get(cat.parentId) && (
 																<span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-																	<Trans>Under</Trans>
+																	<Trans>Under</Trans>{' '}
 																	{getLocalizedMenuValue(
 																		categoriesMap.get(cat.parentId)!
 																			.displayName,
