@@ -1,7 +1,7 @@
 # Deployment Checklist
 
-Infrastructure steps for deploying Epic Startup. For the full per-app variable
-tables, Wrangler secrets, and product launch phases, see
+Infrastructure steps for deploying Menuza. For the full per-app variable tables,
+Wrangler secrets, and product launch phases, see
 [Launch Checklist](./launch-checklist.md).
 
 ## Overview
@@ -68,12 +68,12 @@ If you skipped resource creation in `launch:setup`:
 
 ```bash
 cd apps/app
-npx wrangler d1 create epic-startup-db
-npx wrangler kv namespace create epic-startup-cache
+npx wrangler d1 create menuza-db
+npx wrangler kv namespace create menuza-cache
 
 cd ../web
-npx wrangler d1 create epic-startup-web-db
-npx wrangler r2 bucket create epic-startup-media
+npx wrangler d1 create menuza-web-db
+npx wrangler r2 bucket create menuza-media
 ```
 
 Copy the generated IDs into GitHub Variables (not into committed wrangler
@@ -86,7 +86,7 @@ It then securely prompts for the resulting credentials and saves them to GitHub.
 The token must have R2 Object Read & Write permission.
 
 ```bash
-npx wrangler r2 bucket create epic-startup-turbo-cache
+npx wrangler r2 bucket create menuza-turbo-cache
 ```
 
 ## Step 4 — Wrangler secrets

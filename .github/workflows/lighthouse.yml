@@ -18,7 +18,7 @@ permissions:
   deployments: write
 
 env:
-  CLOUDFLARE_PROJECT_NAME: epic-startup-web
+  CLOUDFLARE_PROJECT_NAME: menuza-web
   HUSKY: 0
   PUPPETEER_SKIP_DOWNLOAD: 'true'
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
@@ -64,7 +64,7 @@ jobs:
         env:
           WEB_D1_DATABASE_ID: ${{ vars.WEB_D1_DATABASE_ID }}
           WEB_R2_BUCKET_NAME: ${{ vars.WEB_R2_BUCKET_NAME }}
-          WEB_WORKER_NAME_PREVIEW: epic-startup-preview
+          WEB_WORKER_NAME_PREVIEW: menuza-preview
           ROOT_APP: ${{ vars.ROOT_APP }}
           PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL }}
 

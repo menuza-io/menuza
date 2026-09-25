@@ -83,9 +83,9 @@ export function Footer() {
 
 1. Sign up at [BetterStack](https://betterstack.com)
 2. Create uptime monitors for your services:
-   - `epic-startup.com` - Main website
-   - `app.epic-startup.com/health` - App health endpoint
-   - `admin.epic-startup.com/health` - Admin health endpoint
+   - `menuza.io` - Main website
+   - `app.menuza.io/health` - App health endpoint
+   - `admin.menuza.io/health` - Admin health endpoint
 3. Get your API key from the dashboard
 4. Add the API key to your environment variables
 

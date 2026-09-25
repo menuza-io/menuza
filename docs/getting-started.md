@@ -1,8 +1,8 @@
-# Getting Started with Epic Startup
+# Getting Started with Menuza
 
-Epic Startup is a full-stack SaaS starter monorepo. It includes the operator
-app, public tenant sites, regional tenant APIs, a marketing site, an admin
-dashboard, and shared packages.
+Menuza is a full-stack SaaS starter monorepo. It includes the operator app,
+public tenant sites, regional tenant APIs, a marketing site, an admin dashboard,
+and shared packages.
 
 ## Requirements
 

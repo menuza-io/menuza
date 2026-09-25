@@ -28,7 +28,7 @@ export function getOciEmailConfig(): OciEmailConfig | null {
 	const region = ENV.OCI_REGION
 	const compartmentId = ENV.OCI_EMAIL_COMPARTMENT_ID
 	const senderEmail = ENV.OCI_EMAIL_SENDER_EMAIL
-	const senderName = ENV.OCI_EMAIL_SENDER_NAME || 'Epic Startup'
+	const senderName = ENV.OCI_EMAIL_SENDER_NAME || 'Menuza'
 	const senderOcid = ENV.OCI_EMAIL_SENDER_OCID
 	const privateKey = ENV.OCI_PRIVATE_KEY?.replace(/\\n/g, '\n')
 

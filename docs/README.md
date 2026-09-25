@@ -1,7 +1,7 @@
-# Epic Startup Documentation
+# Menuza Documentation
 
-The goal of The Epic Startup is to provide solid opinions for teams to hit the
-ground running on their web applications.
+The goal of The Menuza is to provide solid opinions for teams to hit the ground
+running on their web applications.
 
 This stack is still under active development. Documentation will rapidly improve
 in the coming weeks. Stay tuned!

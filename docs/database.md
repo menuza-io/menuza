@@ -50,7 +50,7 @@ To deploy migrations to production on Cloudflare D1:
 
 ```sh
 cd apps/app
-npx wrangler d1 migrations apply epic-startup-db --remote \
+npx wrangler d1 migrations apply menuza-db --remote \
   --config wrangler.deploy.jsonc
 ```
 
@@ -98,7 +98,7 @@ or download these snapshots via the Cloudflare Dashboard or using
 
 ```sh
 # Example of taking a manual backup
-npx wrangler d1 backup create epic-startup-db
+npx wrangler d1 backup create menuza-db
 ```
 
 For tenant databases on OCI, you should configure standard OCI block volume

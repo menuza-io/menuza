@@ -1,13 +1,13 @@
 {
 	"expo": {
-		"name": "Epic Startup Mobile",
-		"slug": "epic-startup-mobile",
+		"name": "Menuza Mobile",
+		"slug": "menuza-mobile",
 		"version": "1.0.0",
 		"orientation": "portrait",
 		"icon": "./assets/icon.png",
 		"userInterfaceStyle": "light",
 		"newArchEnabled": true,
-		"scheme": "epic-startup",
+		"scheme": "menuza",
 		"splash": {
 			"image": "./assets/splash-icon.png",
 			"resizeMode": "contain",
@@ -15,7 +15,7 @@
 		},
 		"ios": {
 			"supportsTablet": true,
-			"bundleIdentifier": "com.epicstartup.mobile"
+			"bundleIdentifier": "com.menuza.mobile"
 		},
 		"android": {
 			"adaptiveIcon": {
@@ -24,7 +24,7 @@
 			},
 			"edgeToEdgeEnabled": true,
 			"predictiveBackGestureEnabled": false,
-			"package": "com.epicstartup.mobile"
+			"package": "com.menuza.mobile"
 		},
 		"web": {
 			"favicon": "./assets/favicon.png",
@@ -36,7 +36,7 @@
 			"reactCanary": true
 		},
 		"linking": {
-			"prefixes": ["epic-startup://", "https://epic-startup.com"],
+			"prefixes": ["menuza://", "https://menuza.io"],
 			"config": {
 				"screens": {
 					"index": "",

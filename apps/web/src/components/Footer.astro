@@ -1,7 +1,6 @@
 ---
 import { brand, getCopyright } from '@repo/config/brand'
 import type { SiteSettings } from 'emdash'
-import LanguageSwitcher from './LanguageSwitcher.astro'
 import SectionSeam from './site/SectionSeam.astro'
 import { type FooterMenuColumn, resolveSiteLogo } from '../lib/emdash'
 
@@ -38,18 +37,7 @@ const displayColumns = footerColumns
 						</>
 					) : (
 						<>
-							<svg
-								aria-hidden="true"
-								class="size-5 text-brand"
-								viewBox="0 0 65 65"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
-									fill="currentColor"
-									d="M39.445 25.555 37 17.163 65 0 47.821 28l-8.376-2.445Zm-13.89 0L28 17.163 0 0l17.179 28 8.376-2.445Zm13.89 13.89L37 47.837 65 65 47.821 37l-8.376 2.445Zm-13.89 0L28 47.837 0 65l17.179-28 8.376 2.445Z"
-								/>
-							</svg>
+							<svg aria-hidden="true" viewBox="0 0 34 21" fill="none" class="h-[19px] w-[31px] shrink-0 text-brand"><path d="M28.4 20.638H33.5V2.83797C33.5 0.337973 30.4 -0.962027 28.5 0.837973L21.6 7.23797C19.2 9.63797 15.1 10.338 12 7.43797L5.5 0.937973C3.5 -0.862027 0.3 0.237973 0 2.53797V20.638H5.7V12.838C5.7 11.438 4.5 9.43797 4.5 9.43797C7.5 11.238 11 12.038 16.8 12.138C21.2 12.138 26.2 11.538 29.1 9.53797C29.1 9.53797 27.8 11.338 27.8 12.638V20.638H28.4Z" fill="currentColor"></path><path d="M9.90002 14.938C10.4 17.238 12.6 20.638 16.8 20.738C20.6 20.738 23 18.138 23.8 15.038C19 15.938 14.9 16.038 9.90002 14.938Z" fill="currentColor"></path></svg>
 							<span class="text-[19px] leading-none tracking-[-0.025em]">
 								{siteTitle}
 							</span>
@@ -88,7 +76,7 @@ const displayColumns = footerColumns
 	<div class="mt-16 flex flex-col gap-4 border-t border-border pt-7 sm:flex-row sm:items-center sm:justify-between">
 		<p class="text-[13px] text-muted-foreground">{copyrightText}</p>
 		<div class="flex items-center gap-6">
-			<LanguageSwitcher variant="footer" />
+			<!-- <LanguageSwitcher variant="footer" /> -->
 			<a href="/tos" class="text-[13px] text-muted-foreground transition-colors hover:text-foreground">
 				Terms
 			</a>

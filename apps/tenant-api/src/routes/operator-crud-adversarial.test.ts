@@ -117,7 +117,7 @@ describe('Adversarial Stress Suite: Operator CRUD & Auth Lifecycle Triggers', ()
 		})
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api')
-			.setIssuer('epic-startup')
+			.setIssuer('menuza')
 			.setExpirationTime('15m')
 			.sign(secret)
 	}

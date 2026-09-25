@@ -27,8 +27,8 @@ if (sessionSecrets.length === 0 || sessionSecrets.some((s) => s.length === 0)) {
  * `vars` binding before `operatorSessionCookieDomain()` is called.
  *
  * If we evaluated this at module-load time, the varlock bundle default
- * (`https://app.epic-startup.test:2999`) would be used instead of the
- * production value, producing cookies with `Domain=.epic-startup.test`.
+ * (`https://app.menuza.test:2999`) would be used instead of the
+ * production value, producing cookies with `Domain=.menuza.test`.
  */
 let _authSessionStorage: SessionStorage | undefined
 

@@ -6,9 +6,9 @@ Status: accepted
 
 ## Context
 
-Epic Startup deploys staging from the `dev` branch onto the **same Cloudflare
-zone** as production (`yourdomain.com`). Staging URLs were originally nested
-under `app.stage.yourdomain.com`, `admin.stage.yourdomain.com`, etc.
+Menuza deploys staging from the `dev` branch onto the **same Cloudflare zone**
+as production (`yourdomain.com`). Staging URLs were originally nested under
+`app.stage.yourdomain.com`, `admin.stage.yourdomain.com`, etc.
 
 Cloudflare **Universal SSL** covers only the apex and **one** subdomain level
 (`*.yourdomain.com`). Hostnames like `app.stage.yourdomain.com` require **Total
