@@ -258,28 +258,44 @@ test.describe('Restaurant Menu Management System', () => {
 		// Verify the live guest preview header updates dynamically with the group name!
 		await expect(page.getByText(groupDisplayName).last()).toBeVisible()
 
-		// Test option rows
-		const addOptionBtn = page.getByRole('button', {
-			name: /add (new )?option/i,
-		})
+		// Options are created through the "Add option" dialog - it does not
+		// append an inline row on the page - so drive that dialog for each one.
+		const addOptionBtn = main.getByRole('button', { name: /add option/i })
 		await expect(addOptionBtn).toBeVisible()
 
+		const addOptionViaDialog = async (name: string, price?: string) => {
+			await addOptionBtn.click()
+
+			const dialog = page.getByRole('dialog')
+			await expect(dialog).toBeVisible()
+
+			// The dialog opens in "pick an existing option" mode whenever
+			// reusable options already exist; switch it to the create form so
+			// the name/price inputs are rendered.
+			const createNewOptionBtn = dialog.getByRole('button', {
+				name: /create new option/i,
+			})
+			if (await createNewOptionBtn.isVisible().catch(() => false)) {
+				await createNewOptionBtn.click()
+			}
+
+			await dialog.getByPlaceholder(/ranch, pepperoni/i).fill(name)
+			if (price !== undefined) {
+				await dialog.getByPlaceholder('0.00').fill(price)
+			}
+
+			await dialog.getByRole('button', { name: /add option/i }).click()
+			await expect(dialog).toBeHidden()
+		}
+
 		// Option 1: Regular Crust ($0.00)
-		const firstOptionName = page.getByPlaceholder(/ranch, pepperoni/i).first()
-		await firstOptionName.fill('Regular 12" Thin')
+		await addOptionViaDialog('Regular 12" Thin')
 
 		// Verify option appears in Guest Live Preview!
 		await expect(page.getByText('Regular 12" Thin').last()).toBeVisible()
 
 		// Add second option: Large Crust ($3.50)
-		await addOptionBtn.click()
-		const secondOptionName = page.getByPlaceholder(/ranch, pepperoni/i).nth(1)
-		await secondOptionName.fill('Large 16" Hand Tossed')
-
-		const secondOptionPrice = page.getByPlaceholder('0.00').nth(1)
-		if (await secondOptionPrice.isVisible()) {
-			await secondOptionPrice.fill('3.50')
-		}
+		await addOptionViaDialog('Large 16" Hand Tossed', '3.50')
 
 		// Verify second option in Guest Live Preview
 		await expect(page.getByText('Large 16" Hand Tossed').last()).toBeVisible()
@@ -462,6 +478,6 @@ test.describe('Restaurant Menu Management System', () => {
 				),
 			)
 
-		expect(assignments.length).toBe(1)
+		expect(assignments).toHaveLength(1)
 	})
 })
