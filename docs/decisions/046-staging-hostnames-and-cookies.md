@@ -82,8 +82,8 @@ cookie as App and Admin:
 - **Cookie name** — derived from `PUBLIC_APP_URL` via
   `operatorThemeCookieName()` (`en_theme` or `en_theme_staging`).
 - **Cookie domain** — `Domain=.{PUBLIC_ROOT_APP}` (same apex as App/Admin).
-- **Login / signup links** — `Header.astro` uses `PUBLIC_APP_URL`, patched from
-  `PUBLIC_APP_URL` / `PUBLIC_APP_URL_STAGING` at deploy time.
+- **Login / signup links** — `Header.astro` reads `PUBLIC_APP_URL` from the Web
+  Worker's Cloudflare runtime bindings for the deployed environment.
 
 App/Admin theme switchers support `system` | `light` | `dark` (clearing the
 cookie for `system`). Web only toggles `light` | `dark`; when the cookie is

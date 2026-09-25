@@ -1,10 +1,10 @@
-import { marketingSharedCookieDomain } from '@repo/common/cookie-domain'
 import {
 	setCookieConsentState,
 	verifyCookieConsentRequestOrigin,
 } from '@repo/common/cookie-consent'
+import { marketingSharedCookieDomain } from '@repo/common/cookie-domain'
 import { type APIRoute } from 'astro'
-import { ENV } from 'varlock/env'
+import { getWebEnv } from '../../lib/runtime-env'
 
 export const prerender = false
 
@@ -37,8 +37,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 	const cookie = await setCookieConsentState(
 		preference === 'true',
-		ENV.PUBLIC_APP_URL,
-		marketingSharedCookieDomain(request, ENV.PUBLIC_ROOT_APP),
+		getWebEnv('PUBLIC_APP_URL'),
+		marketingSharedCookieDomain(request, getWebEnv('PUBLIC_ROOT_APP')),
 	)
 
 	return new Response(null, {

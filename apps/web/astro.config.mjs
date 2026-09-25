@@ -139,6 +139,18 @@ export default defineConfig({
 			dedupe: ['react', 'react-dom', '@emdash-cms/admin'],
 		},
 		plugins: [
+			{
+				name: 'web-runtime-env',
+				resolveId(id) {
+					if (id === 'web:worker-env') return '\0web:worker-env'
+				},
+				load(id) {
+					if (id !== '\0web:worker-env') return
+					return isCloudflareBuild
+						? "export { env } from 'cloudflare:workers'"
+						: 'export const env = import.meta.env'
+				},
+			},
 			shouldUploadSourceMaps
 				? posthog({
 						personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,

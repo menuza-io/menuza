@@ -182,8 +182,12 @@ Admin shares the **same D1 database** as App in most installs — use the same
 | `WEB_R2_BUCKET_NAME`  | `WEB_R2_BUCKET_NAME_STAGING` |
 | `WEB_WORKER_NAME`     | `WEB_WORKER_NAME_STAGING`    |
 
-`PUBLIC_APP_URL` / `PUBLIC_APP_URL_STAGING` are patched into the Web Worker for
-login links and theme cookie name sync with App/Admin (see ADR 046).
+For the Web Worker, set `PUBLIC_APP_URL` and `PUBLIC_ROOT_APP` in each
+Cloudflare Worker's **Settings → Variables and Secrets**. The staging Worker
+needs its own values. `ROOT_APP` is also accepted in place of `PUBLIC_ROOT_APP`.
+These are runtime bindings for login links and shared cookies (see ADR 046);
+GitHub Variables and Cloudflare **Build variables** do not set them. Web deploys
+keep dashboard variables and omit the local `wrangler.toml` defaults.
 
 ```bash
 cd apps/web

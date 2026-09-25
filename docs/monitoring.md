@@ -38,20 +38,22 @@ key is not.
 Runtime/build variables:
 
 ```text
-POSTHOG_PROJECT_TOKEN=phc_...        # App and deploy patcher
+POSTHOG_PROJECT_TOKEN=phc_...        # App runtime and Web Worker runtime
 POSTHOG_HOST=https://us.i.posthog.com
 POSTHOG_PERSONAL_API_KEY=phx_...     # build secret; source-map upload only
 POSTHOG_PROJECT_ID=12345             # build variable; source-map upload only
 COMMIT_SHA=<deployed git sha>
 ```
 
-For a staging deployment, the patcher first checks
+For App/Admin and log destination patching in staging, the patcher first checks
 `POSTHOG_PROJECT_TOKEN_STAGING`, `POSTHOG_HOST_STAGING`, and
 `POSTHOG_LOGS_DESTINATION_STAGING`.
 
-The marketing runtime names are `PUBLIC_POSTHOG_PROJECT_TOKEN`,
-`PUBLIC_POSTHOG_HOST`, and `PUBLIC_POSTHOG_RELEASE`. Do not set them separately
-in CI: `scripts/patch-wrangler.mjs` derives them from the shared names above.
+Set the marketing runtime values in each Web Worker's **Settings → Variables and
+Secrets**: `PUBLIC_POSTHOG_PROJECT_TOKEN`, `PUBLIC_POSTHOG_HOST`, and optionally
+`PUBLIC_POSTHOG_RELEASE`. The shared names `POSTHOG_PROJECT_TOKEN`,
+`POSTHOG_HOST`, and `COMMIT_SHA` also work. Cloudflare Build variables only
+affect the build and do not supply Worker runtime bindings.
 
 Add the public token as a Cloudflare Worker secret for App:
 
