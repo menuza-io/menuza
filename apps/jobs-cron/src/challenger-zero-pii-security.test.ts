@@ -37,7 +37,7 @@ describe('Challenger 2 — Adversarial Zero-PII & API Security Verification', ()
 		}))
 
 		workerEnv = {
-			APP_BASE_URL: 'https://app.epic-startup.com',
+			APP_BASE_URL: 'https://app.menuza.io',
 			INTERNAL_COMMAND_TOKEN: mockInternalToken,
 			TENANT_API_URL: 'http://localhost:3007',
 			TENANT_API_URL_KSA: 'http://localhost:3009',
@@ -55,7 +55,7 @@ describe('Challenger 2 — Adversarial Zero-PII & API Security Verification', ()
 			INTERNAL_COMMAND_TOKEN: mockInternalToken,
 			TENANT_API_URL: 'http://localhost:3007',
 			TENANT_API_URL_KSA: 'http://localhost:3009',
-			APP_BASE_URL: 'https://app.epic-startup.com',
+			APP_BASE_URL: 'https://app.menuza.io',
 		}
 
 		mockStep = {

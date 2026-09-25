@@ -81,7 +81,7 @@ function previewWebWorkerName(launchConfig) {
 			'WEB_WORKER_NAME_PREVIEW',
 			launchConfig,
 			'bindings.preview.web.worker_name',
-		) || 'epic-startup-preview'
+		) || 'menuza-preview'
 	)
 }
 

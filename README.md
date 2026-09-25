@@ -1,6 +1,6 @@
-# Epic Startup
+# Menuza
 
-Epic Startup is a full-stack SaaS monorepo. It uses npm workspaces and
+Menuza is a full-stack SaaS monorepo. It uses npm workspaces and
 [Turborepo](https://turbo.build/repo/docs) to coordinate React Router, Astro,
 Expo, Cloudflare Worker, and shared TypeScript projects.
 
@@ -20,7 +20,7 @@ setup flow from the root:
 
 ```sh
 git clone https://github.com/mohammedzamakhan/epic-startup.git
-cd epic-startup
+cd menuza
 npm install # for agents PUPPETEER_SKIP_DOWNLOAD=true npm install
 npm run setup
 ```

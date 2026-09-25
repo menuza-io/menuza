@@ -3,63 +3,63 @@
 	"bindings": {
 		"production": {
 			"app": {
-				"worker_name": "epic-startup-app",
+				"worker_name": "menuza-app",
 				"d1_database_id": "00000000-0000-0000-0000-000000000001",
 				"kv_namespace_id": "00000000000000000000000000000001",
 				"sites_data_kv_id": "00000000000000000000000000000001"
 			},
 			"admin": {
-				"worker_name": "epic-startup-admin",
+				"worker_name": "menuza-admin",
 				"d1_database_id": "00000000-0000-0000-0000-000000000001",
 				"kv_namespace_id": "00000000000000000000000000000001"
 			},
 			"web": {
-				"worker_name": "epic-startup",
+				"worker_name": "menuza",
 				"d1_database_id": "00000000-0000-0000-0000-000000000002",
-				"r2_bucket_name": "epic-startup-media"
+				"r2_bucket_name": "menuza-media"
 			},
 			"sites": {
-				"worker_name": "epic-startup-sites",
+				"worker_name": "menuza-sites",
 				"sites_data_kv_id": "00000000000000000000000000000001"
 			},
 			"jobs_cron": {
-				"worker_name": "epic-startup-jobs-cron"
+				"worker_name": "menuza-jobs-cron"
 			},
 			"tenant_api": {
-				"worker_name": "epic-startup-tenant-api-us"
+				"worker_name": "menuza-tenant-api-us"
 			}
 		},
 		"preview": {
 			"web": {
-				"worker_name": "epic-startup-preview"
+				"worker_name": "menuza-preview"
 			}
 		},
 		"staging": {
 			"app": {
-				"worker_name": "epic-startup-app-staging",
+				"worker_name": "menuza-app-staging",
 				"d1_database_id": "00000000-0000-0000-0000-000000000003",
 				"kv_namespace_id": "00000000000000000000000000000002",
 				"sites_data_kv_id": "00000000000000000000000000000002"
 			},
 			"admin": {
-				"worker_name": "epic-startup-admin-staging",
+				"worker_name": "menuza-admin-staging",
 				"d1_database_id": "00000000-0000-0000-0000-000000000003",
 				"kv_namespace_id": "00000000000000000000000000000002"
 			},
 			"web": {
-				"worker_name": "epic-startup-staging",
+				"worker_name": "menuza-staging",
 				"d1_database_id": "00000000-0000-0000-0000-000000000004",
-				"r2_bucket_name": "epic-startup-media-staging"
+				"r2_bucket_name": "menuza-media-staging"
 			},
 			"sites": {
-				"worker_name": "epic-startup-sites-staging",
+				"worker_name": "menuza-sites-staging",
 				"sites_data_kv_id": "00000000000000000000000000000002"
 			},
 			"jobs_cron": {
-				"worker_name": "epic-startup-jobs-cron-staging"
+				"worker_name": "menuza-jobs-cron-staging"
 			},
 			"tenant_api": {
-				"worker_name": "epic-startup-tenant-api-us-staging"
+				"worker_name": "menuza-tenant-api-us-staging"
 			}
 		}
 	},

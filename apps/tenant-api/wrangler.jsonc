@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "epic-startup-tenant-api-us",
+	"name": "menuza-tenant-api-us",
 	"main": "./workers/index.ts",
 	"build": {
 		"command": "npm run generate:do-migrations",
@@ -43,7 +43,7 @@
 	},
 	"env": {
 		"staging": {
-			"name": "epic-startup-tenant-api-us-staging",
+			"name": "menuza-tenant-api-us-staging",
 			"vars": {
 				"DATA_REGION": "us",
 				"NODE_ENV": "production",

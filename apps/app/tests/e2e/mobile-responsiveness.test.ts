@@ -348,7 +348,7 @@ test.describe('Mobile Responsiveness', () => {
 		}
 
 		// Test modal interaction on mobile
-		const searchInput = page.getByPlaceholder(/search/i)
+		const searchInput = dialog.getByRole('combobox')
 		await expect(searchInput).toBeVisible()
 		// Use click instead of tap (tap requires hasTouch context option)
 		await searchInput.click()

@@ -481,7 +481,7 @@ test.describe('Accessibility', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Open command menu (modal dialog)
-		const searchButton = page.getByRole('button', { name: /search notes/i })
+		const searchButton = page.getByRole('button', { name: /^search$/i })
 		await searchButton.click()
 
 		// Verify dialog has proper ARIA attributes
@@ -496,8 +496,7 @@ test.describe('Accessibility', () => {
 
 		// Wait for the dialog animation to complete and the input to gain focus
 		// Radix UI delays autofocus until the open animation finishes
-		// eslint-disable-next-line playwright/no-raw-locators -- command menu input has no semantic textbox role
-		await expect(dialog.locator('input').first()).toBeFocused()
+		await expect(dialog.getByRole('combobox')).toBeFocused()
 
 		// Test focus trap - focus should stay within dialog
 		// Tab past the search input; Base UI's FloatingFocusManager uses FocusGuard

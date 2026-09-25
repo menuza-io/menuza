@@ -1,4 +1,4 @@
-name = "epic-startup-sites"
+name = "menuza-sites"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env", "assets_navigation_has_no_effect"]
 workers_dev = true
@@ -15,19 +15,19 @@ id = "00000000000000000000000000000001"
 
 # Patched at deploy by scripts/patch-wrangler.mjs
 [vars]
-PUBLIC_APP_URL = "https://app.epic-startup.com"
-ROOT_APP = "epic-startup.com"
-PUBLIC_SITE_HOST_SUFFIXES = "epic-startup.com,workers.dev"
-TENANT_API_URL = "https://tenant-us.epic-startup.com"
+PUBLIC_APP_URL = "https://app.menuza.io"
+ROOT_APP = "menuza.io"
+PUBLIC_SITE_HOST_SUFFIXES = "menuza.io,workers.dev"
+TENANT_API_URL = "https://tenant-us.menuza.io"
 
 [env.production]
-name = "epic-startup-sites"
+name = "menuza-sites"
 
 [env.preview]
-name = "epic-startup-sites-preview"
+name = "menuza-sites-preview"
 
 [env.staging]
-name = "epic-startup-sites-staging"
+name = "menuza-sites-staging"
 
 [[env.staging.kv_namespaces]]
 binding = "SITES_DATA_KV"

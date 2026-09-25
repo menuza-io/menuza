@@ -173,18 +173,18 @@ function createPlatformPaletteItems(): PaletteItem[] {
 		{
 			...BASE_PALETTE_ITEMS[2]!,
 			defaultData: {
-				subject: 'Welcome to Epic Startup, {{organizationName}}',
+				subject: 'Welcome to Menuza, {{organizationName}}',
 				bodyHtml:
 					'<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>',
 				bodyText:
 					'Hi {{name}}, Your organization {{organizationName}} is ready.',
-				fromName: 'Epic Startup Team',
+				fromName: 'Menuza Team',
 			},
 		},
 		{
 			...BASE_PALETTE_ITEMS[3]!,
 			defaultData: {
-				messageText: 'Hi {{name}}, your Epic Startup account is ready.',
+				messageText: 'Hi {{name}}, your Menuza account is ready.',
 			},
 		},
 		{
@@ -218,11 +218,11 @@ export function createDefaultPlatformJourneyGraph(): WorkflowGraph {
 				type: 'action_email',
 				position: { x: 250, y: 390 },
 				data: {
-					subject: 'Welcome to Epic Startup, {{organizationName}}',
+					subject: 'Welcome to Menuza, {{organizationName}}',
 					bodyHtml:
 						'<p>Hi {{name}},</p><p>Your organization is ready to go.</p>',
 					bodyText: 'Hi {{name}}, Your organization is ready to go.',
-					fromName: 'Epic Startup Team',
+					fromName: 'Menuza Team',
 				},
 			},
 		],

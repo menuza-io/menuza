@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "epic-startup-admin",
+	"name": "menuza-admin",
 	"main": "./workers/app.ts",
 	"compatibility_date": "2026-08-20",
 	"compatibility_flags": [
@@ -15,7 +15,7 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "epic-startup-db",
+			"database_name": "menuza-db",
 			"database_id": "00000000-0000-0000-0000-000000000001",
 			"migrations_dir": "../../packages/database/drizzle",
 		},
@@ -32,11 +32,11 @@
 	},
 	"env": {
 		"staging": {
-			"name": "epic-startup-admin-staging",
+			"name": "menuza-admin-staging",
 			"d1_databases": [
 				{
 					"binding": "DB",
-					"database_name": "epic-startup-db-staging",
+					"database_name": "menuza-db-staging",
 					"database_id": "00000000-0000-0000-0000-000000000003",
 					"migrations_dir": "../../packages/database/drizzle",
 				},

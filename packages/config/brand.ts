@@ -14,69 +14,68 @@ export function toBrandSlug(name: string) {
 
 export const brand = {
 	// Core brand identity
-	name: 'Epic Startup',
-	shortName: 'Epic Startup',
-	slug: 'epic-startup',
-	domain: 'epic-startup.com',
-	tagline: 'Build your next startup even faster',
-	description:
-		'Epic Startup is a modern SaaS boilerplate that helps developers and founders launch production-ready applications in minutes.',
+	name: 'Menuza',
+	shortName: 'menuza',
+	slug: 'menuza',
+	domain: 'menuza.io',
+	tagline: 'Shopify for Restaurants',
+	description: 'Restaurant OS for SMB Restaurant owners',
 
 	// URLs
-	url: 'https://epic-startup.com',
-	supportEmail: 'support@epic-startup.com',
+	url: 'https://menuza.io',
+	supportEmail: 'support@menuza.io',
 
 	// Social/Meta
-	twitterHandle: '@epicstartup',
+	twitterHandle: '@getmenuza',
 
 	// Legal
-	companyName: 'Epic Startup',
+	companyName: 'Menuza',
 	copyrightYear: new Date().getFullYear(),
 
 	// Product-specific descriptions
 	products: {
 		app: {
-			name: 'Epic Startup',
+			name: 'Menuza',
 			description: "Your own captain's log",
 			tagline: 'Comprehensive note-taking and organization management platform',
 		},
 		admin: {
-			name: 'Epic Startup Admin',
-			description: 'Admin dashboard for Epic Startup',
+			name: 'Menuza Admin',
+			description: 'Admin dashboard for Menuza',
 		},
 		web: {
-			name: 'Epic Startup',
+			name: 'Menuza',
 			description:
 				'Modern SaaS boilerplate that helps developers and founders launch production-ready applications in minutes.',
 		},
 		extension: {
-			name: 'Epic Startup Extension',
-			chrome: 'Epic Startup Chrome Extension',
-			firefox: 'Epic Startup Firefox Extension',
-			description: 'Chrome extension for Epic Startup',
+			name: 'Menuza Extension',
+			chrome: 'Menuza Chrome Extension',
+			firefox: 'Menuza Firefox Extension',
+			description: 'Chrome extension for Menuza',
 		},
 		cms: {
-			name: 'Epic Startup CMS',
-			description: 'Content management system for Epic Startup',
+			name: 'Menuza CMS',
+			description: 'Content management system for Menuza',
 		},
 		sites: {
-			name: 'Epic Startup Sites',
+			name: 'Menuza Sites',
 			description: 'Public organization websites',
 		},
 	},
 
 	// Email subjects
 	email: {
-		passwordReset: 'Epic Startup Password Reset',
-		welcome: 'Welcome to Epic Startup!',
-		emailChange: 'Epic Startup Email Change Verification',
-		newDeviceSignin: 'New Sign-In Detected - Epic Startup',
+		passwordReset: 'Menuza Password Reset',
+		welcome: 'Welcome to Menuza!',
+		emailChange: 'Menuza Email Change Verification',
+		newDeviceSignin: 'New Sign-In Detected - Menuza',
 	},
 
 	// AI Assistant configuration
 	ai: {
 		systemPrompt:
-			'You are an intelligent AI assistant for Epic Startup, a comprehensive note-taking and organization management platform. You specialize in helping users maximize their productivity and collaboration through smart note management.',
+			'You are an intelligent AI assistant for Menuza, a comprehensive note-taking and organization management platform. You specialize in helping users maximize their productivity and collaboration through smart note management.',
 	},
 } as const
 

@@ -36,18 +36,18 @@ describe('email provider', () => {
 describe('marketingTagsToOciHeaders', () => {
 	it('maps platform marketing tags to OCI headers', () => {
 		const headers = marketingTagsToOciHeaders({
-			epic_startup_scope: 'platform',
-			epic_startup_message_id: 'msg-1',
-			epic_startup_campaign_id: 'camp-1',
+			menuza_scope: 'platform',
+			menuza_message_id: 'msg-1',
+			menuza_campaign_id: 'camp-1',
 		})
 
 		expect(headers).toEqual({
-			'X-Epic-Startup-Message-Id': 'msg-1',
-			'X-Epic-Startup-Campaign-Id': 'camp-1',
+			'X-Menuza-Message-Id': 'msg-1',
+			'X-Menuza-Campaign-Id': 'camp-1',
 		})
 		expect(
 			getMarketingMessageIdFromTags({
-				epic_startup_message_id: 'msg-1',
+				menuza_message_id: 'msg-1',
 			}),
 		).toBe('msg-1')
 	})
@@ -69,8 +69,8 @@ describe('sendEmail routing', () => {
 			html: '<p>Hi</p>',
 			text: 'Hi',
 			tags: {
-				epic_startup_message_id: 'msg-1',
-				epic_startup_campaign_id: 'camp-1',
+				menuza_message_id: 'msg-1',
+				menuza_campaign_id: 'camp-1',
 			},
 		})
 
@@ -80,8 +80,8 @@ describe('sendEmail routing', () => {
 				subject: 'Hello',
 				messageId: 'msg-1',
 				headerFields: {
-					'X-Epic-Startup-Message-Id': 'msg-1',
-					'X-Epic-Startup-Campaign-Id': 'camp-1',
+					'X-Menuza-Message-Id': 'msg-1',
+					'X-Menuza-Campaign-Id': 'camp-1',
 				},
 			}),
 		)

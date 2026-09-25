@@ -28,7 +28,7 @@ describe('entry.server runtime headers', () => {
 		;(globalThis as { caches?: unknown }).caches = { default: {} }
 		const response = new Response('ok')
 		const result = await handleDataRequest(response)
-		expect(result.headers.get('cf-worker')).toBe('epic-startup-app')
+		expect(result.headers.get('cf-worker')).toBe('menuza-app')
 		expect(result.headers.get('cf-datacenter')).toBe('unknown')
 	})
 
@@ -37,7 +37,7 @@ describe('entry.server runtime headers', () => {
 		process.env.CF_DATACENTER = 'iad'
 		const response = new Response('ok')
 		const result = await handleDataRequest(response)
-		expect(result.headers.get('cf-worker')).toBe('epic-startup-app')
+		expect(result.headers.get('cf-worker')).toBe('menuza-app')
 		expect(result.headers.get('cf-datacenter')).toBe('iad')
 	})
 })

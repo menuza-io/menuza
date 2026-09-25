@@ -161,7 +161,7 @@ async function getGitHubRepoMetadata(repo) {
 		const response = await fetch(`https://api.github.com/${endpoint}`, {
 			headers: {
 				Accept: 'application/vnd.github+json',
-				'User-Agent': 'epic-startup-workers-builds-setup',
+				'User-Agent': 'menuza-workers-builds-setup',
 			},
 		})
 		if (!response.ok) {
@@ -271,7 +271,7 @@ function buildTriggerPayload({
 		external_script_id: workerTag,
 		repo_connection_uuid: repoConnectionUuid,
 		build_token_uuid: buildTokenUuid,
-		trigger_name: `${workerName || `epic-startup-${entry.app}-${tier}`}-ci`,
+		trigger_name: `${workerName || `menuza-${entry.app}-${tier}`}-ci`,
 		build_command: `${BUILD_COMMAND_PREFIX} ${entry.app}`,
 		deploy_command: `${DEPLOY_COMMAND_PREFIX} ${entry.app}`,
 		root_directory: '/',
@@ -389,7 +389,7 @@ function selectBuildToken(tokens, preferredUuid) {
 	}
 
 	const named = tokens.find((item) =>
-		item.build_token_name?.toLowerCase().includes('epic-startup'),
+		item.build_token_name?.toLowerCase().includes('menuza'),
 	)
 	if (named) return named
 	if (tokens.length === 1) return tokens[0]

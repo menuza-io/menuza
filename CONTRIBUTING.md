@@ -41,7 +41,7 @@ If the setup script doesn't work, you can try to run the commands manually:
 
 ```sh
 git clone <your-fork>
-cd ./epic-startup
+cd ./menuza
 
 # Install deps
 npm install

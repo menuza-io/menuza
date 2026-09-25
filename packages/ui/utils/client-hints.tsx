@@ -55,7 +55,7 @@ export function ClientHintCheck({
 		function handleThemeChange() {
 			const value = schemaMatch.matches ? 'dark' : 'light'
 			document.cookie = `${colorSchemeHint.cookieName}=${value}; Max-Age=31536000; SameSite=Lax; path=/${domainAttr}`
-			revalidate()
+			void revalidate()
 		}
 
 		schemaMatch.addEventListener('change', handleThemeChange)

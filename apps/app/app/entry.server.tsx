@@ -54,7 +54,7 @@ function applySecurityHeaders(responseHeaders: Headers) {
 
 function applyRuntimeHeaders(responseHeaders: Headers, request?: Request) {
 	if (isCloudflareWorkerRuntime()) {
-		responseHeaders.set('cf-worker', 'epic-startup-app')
+		responseHeaders.set('cf-worker', 'menuza-app')
 		const cfColo = (request as any)?.cf?.colo
 		const datacenter =
 			cfColo ||

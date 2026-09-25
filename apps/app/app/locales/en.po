@@ -528,7 +528,7 @@ msgstr ""
 msgid "Add link"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:498
+#: app/components/app-sidebar.tsx:499
 msgid "Add members"
 msgstr ""
 
@@ -747,7 +747,7 @@ msgstr "Alt Text"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:351
+#: app/components/app-sidebar.tsx:352
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "Analytics"
@@ -760,7 +760,7 @@ msgstr "Analytics and tracking"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:367
+#: app/components/app-sidebar.tsx:368
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -942,7 +942,7 @@ msgstr ""
 msgid "Automation saved successfully"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:321
+#: app/components/app-sidebar.tsx:322
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1021,7 +1021,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:432
+#: app/components/app-sidebar.tsx:433
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr ""
@@ -1050,7 +1050,7 @@ msgstr ""
 msgid "Body text"
 msgstr "Body text"
 
-#: app/components/app-sidebar.tsx:358
+#: app/components/app-sidebar.tsx:359
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1074,7 +1074,7 @@ msgstr ""
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
-#: app/components/app-sidebar.tsx:314
+#: app/components/app-sidebar.tsx:315
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -2049,7 +2049,7 @@ msgstr ""
 msgid "customerId is required"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:295
+#: app/components/app-sidebar.tsx:296
 msgid "Customers"
 msgstr ""
 
@@ -2083,8 +2083,8 @@ msgstr ""
 msgid "Dark mode"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:123
-#: app/components/app-sidebar.tsx:271
+#: app/components/app-sidebar.tsx:124
+#: app/components/app-sidebar.tsx:272
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr ""
@@ -2530,7 +2530,7 @@ msgstr ""
 msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr ""
 
-#: app/components/favorite-notes.tsx:110
+#: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:234
 #: app/components/roles/tenant-role-access-manager.tsx:812
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
@@ -2737,10 +2737,6 @@ msgstr ""
 
 #: app/components/settings/cards/organization/billing-card.tsx:269
 msgid "Enterprise Plan"
-msgstr ""
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
-msgid "Epic Startup Team"
 msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
@@ -3043,7 +3039,7 @@ msgstr "Form settings"
 msgid "Format:"
 msgstr "Format:"
 
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:347
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -3074,11 +3070,11 @@ msgstr ""
 msgid "Full width"
 msgstr "Full width"
 
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:390
 msgid "General"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:337
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -3110,16 +3106,16 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:490
+#: app/components/app-sidebar.tsx:491
 msgid "Get chrome extension"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:152
-#: app/components/app-sidebar.tsx:505
+#: app/components/app-sidebar.tsx:153
+#: app/components/app-sidebar.tsx:506
 msgid "Get help"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:95
+#: app/components/app-sidebar.tsx:96
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr ""
@@ -3134,8 +3130,8 @@ msgstr ""
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:160
-#: app/components/app-sidebar.tsx:513
+#: app/components/app-sidebar.tsx:161
+#: app/components/app-sidebar.tsx:514
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -3152,7 +3148,7 @@ msgstr "Give visitors room to share thoughtful feedback."
 msgid "Go there"
 msgstr "Go there"
 
-#: app/components/app-sidebar.tsx:216
+#: app/components/app-sidebar.tsx:217
 msgid "Go to homepage"
 msgstr ""
 
@@ -3233,7 +3229,7 @@ msgid "Hi {{name}}, your account update is ready!"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:105
-msgid "Hi {{name}}, your Epic Startup account is ready."
+msgid "Hi {{name}}, your Menuza account is ready."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:411
@@ -3441,7 +3437,7 @@ msgstr "Insert field here"
 msgid "Inspect"
 msgstr "Inspect"
 
-#: app/components/app-sidebar.tsx:408
+#: app/components/app-sidebar.tsx:409
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -3911,7 +3907,7 @@ msgstr ""
 msgid "Mark as read"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:301
+#: app/components/app-sidebar.tsx:302
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -3929,7 +3925,7 @@ msgstr ""
 msgid "MCP OAuth Setup Instructions"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:418
+#: app/components/app-sidebar.tsx:419
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr ""
@@ -3950,7 +3946,7 @@ msgstr "Media details"
 msgid "Media details saved"
 msgstr "Media details saved"
 
-#: app/components/app-sidebar.tsx:289
+#: app/components/app-sidebar.tsx:290
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -3984,7 +3980,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:395
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:771
 #: app/components/roles/tenant-role-access-manager.tsx:857
@@ -3994,6 +3990,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:232
 msgid "Members & invites"
 msgstr "Members & invites"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
+msgid "Menuza Team"
+msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
@@ -4458,7 +4458,7 @@ msgstr ""
 msgid "notes"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:283
+#: app/components/app-sidebar.tsx:284
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -4488,7 +4488,7 @@ msgstr ""
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:423
+#: app/components/app-sidebar.tsx:424
 msgid "Notifications"
 msgstr ""
 
@@ -4553,7 +4553,7 @@ msgstr ""
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
 
-#: app/components/favorite-notes.tsx:102
+#: app/components/favorite-notes.tsx:105
 msgid "Open"
 msgstr ""
 
@@ -4707,7 +4707,7 @@ msgstr ""
 msgid "Organization Size"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:141
+#: app/components/app-sidebar.tsx:142
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -4722,7 +4722,7 @@ msgstr ""
 msgid "Outline"
 msgstr "Outline"
 
-#: app/components/app-sidebar.tsx:307
+#: app/components/app-sidebar.tsx:308
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr ""
@@ -4754,7 +4754,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:341
+#: app/components/app-sidebar.tsx:342
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -5121,7 +5121,7 @@ msgstr "Processing…"
 msgid "Product name"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:129
+#: app/components/app-sidebar.tsx:130
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
@@ -5281,7 +5281,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:374
+#: app/components/app-sidebar.tsx:375
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "Redirects"
@@ -5453,7 +5453,7 @@ msgstr ""
 #~ msgid "Replying to comment"
 #~ msgstr ""
 
-#: app/components/app-sidebar.tsx:277
+#: app/components/app-sidebar.tsx:278
 msgid "Reports"
 msgstr ""
 
@@ -5582,7 +5582,7 @@ msgstr "Role"
 msgid "Role name"
 msgstr "Role name"
 
-#: app/components/app-sidebar.tsx:401
+#: app/components/app-sidebar.tsx:402
 msgid "Roles & access"
 msgstr "Roles & access"
 
@@ -5811,11 +5811,9 @@ msgstr ""
 msgid "Scheduled"
 msgstr ""
 
-#: app/components/search-bar.tsx:42
-#: app/components/search-bar.tsx:49
-#: app/components/search-bar.tsx:62
-#~ msgid "Search"
-#~ msgstr ""
+#: app/components/app-sidebar.tsx:218
+msgid "Search"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
@@ -5843,11 +5841,15 @@ msgstr "Search media"
 msgid "Search media library"
 msgstr "Search media library"
 
+#: app/components/app-sidebar.tsx:544
+#: app/components/command-menu.tsx:102
+msgid "Search menu items..."
+msgstr "Search menu items..."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
-#: app/components/app-sidebar.tsx:217
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
 msgstr ""
@@ -5858,8 +5860,8 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:543
 #: app/components/command-menu.tsx:102
-msgid "Search notes..."
-msgstr ""
+#~ msgid "Search notes..."
+#~ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:588
 msgid "Search pages..."
@@ -5911,7 +5913,7 @@ msgstr ""
 msgid "Secure your account with an extra verification step"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:135
+#: app/components/app-sidebar.tsx:136
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr ""
@@ -6127,7 +6129,7 @@ msgstr ""
 msgid "Set up authenticator app"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:381
+#: app/components/app-sidebar.tsx:382
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -6178,7 +6180,7 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:413
+#: app/components/app-sidebar.tsx:414
 msgid "Shop"
 msgstr ""
 
@@ -6776,7 +6778,7 @@ msgstr "The path on your old site that visitors or search engines request."
 msgid "Theme"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:72
+#: app/components/app-sidebar.tsx:73
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
@@ -7075,7 +7077,7 @@ msgstr ""
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
-#: app/components/favorite-notes.tsx:136
+#: app/components/favorite-notes.tsx:142
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Unstar"
 msgstr ""
@@ -7137,7 +7139,7 @@ msgstr "Updated section"
 msgid "Updating section"
 msgstr "Updating section"
 
-#: app/components/app-sidebar.tsx:88
+#: app/components/app-sidebar.tsx:89
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr ""
@@ -7466,7 +7468,7 @@ msgstr ""
 msgid "We've sent you a code to verify your email address."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:330
+#: app/components/app-sidebar.tsx:331
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -7515,7 +7517,7 @@ msgid "Welcome back"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:99
-msgid "Welcome to Epic Startup, {{organizationName}}"
+msgid "Welcome to Menuza, {{organizationName}}"
 msgstr ""
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:187

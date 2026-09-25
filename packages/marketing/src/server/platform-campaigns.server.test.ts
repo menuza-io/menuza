@@ -126,9 +126,9 @@ describe('dispatchPlatformCampaign', () => {
 		)
 		expect(mockSendEmail.mock.calls[0]?.[0]?.tags).toEqual(
 			expect.objectContaining({
-				epic_startup_scope: MARKETING_EMAIL_PLATFORM_SCOPE,
-				epic_startup_message_id: 'message-1',
-				epic_startup_campaign_id: 'campaign-1',
+				menuza_scope: MARKETING_EMAIL_PLATFORM_SCOPE,
+				menuza_message_id: 'message-1',
+				menuza_campaign_id: 'campaign-1',
 			}),
 		)
 	})

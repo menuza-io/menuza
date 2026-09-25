@@ -215,7 +215,7 @@ function OrganizationSidebar({
 }) {
 	const { _ } = useLingui()
 	const goToHomepageLabel = _(msg`Go to homepage`)
-	const searchNotesLabel = _(msg`Search notes`)
+	const searchNotesLabel = _(msg`Search`)
 	const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
 	const canManageRoles =
 		rootData?.userOrganizations?.currentOrganization?.organizationRole.id ===
@@ -530,7 +530,7 @@ function OrganizationSidebar({
 				>
 					<Icon name="search" className="h-4 w-4 shrink-0" />
 					<span className="min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
-						<Trans>Search notes...</Trans>
+						<Trans>Search menu items...</Trans>
 					</span>
 					<Kbd className="absolute top-[0.3rem] right-[0.3rem] group-data-[collapsible=icon]:hidden">
 						F

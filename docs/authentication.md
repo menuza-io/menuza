@@ -74,13 +74,13 @@ GITHUB_CLIENT_ID="72fa***************a"
 GITHUB_CLIENT_SECRET="b2c6d323b**************************eae016"
 ```
 
-Now, run the epic-startup app in dev mode, go to login page, and use the
+Now, run the menuza app in dev mode, go to login page, and use the
 `Login with GitHub` option. You will be redirected to GitHub, and prompted to
 authorize the "MY_EPIC_APPLICATION_DEVELOPMENT" (or whatever the name of your
 OAuth app is) OAuth app to access your GitHub account data. After you give your
-consent, you will be redirected to your epic-startup app running on localhost,
-and the onboarding will kick off. You can now refresh your GitHub OAuth app page
-and see how the number of registered users increased to `1`.
+consent, you will be redirected to your menuza app running on localhost, and the
+onboarding will kick off. You can now refresh your GitHub OAuth app page and see
+how the number of registered users increased to `1`.
 
 Something to appreciate here, is that you as the GitHub OAuth app owner (since
 you created it in your GitHub account) and you as a user authorizing this GitHub
