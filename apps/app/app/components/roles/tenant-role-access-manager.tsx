@@ -572,7 +572,9 @@ export function ReadOnlyRoleView({
 			<Frame className="w-full">
 				<FrameHeader>
 					<div className="flex items-center gap-2.5">
-						<FrameTitle className="text-lg">{role.name}</FrameTitle>
+						<FrameTitle className="text-lg">
+							{role.name}
+						</FrameTitle>
 						<Badge variant="secondary" className="text-xs font-normal">
 							{role.isBuiltIn ? <Trans>Built-in</Trans> : <Trans>Custom</Trans>}
 						</Badge>

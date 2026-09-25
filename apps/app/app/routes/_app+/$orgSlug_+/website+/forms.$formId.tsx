@@ -169,7 +169,9 @@ function FormFieldPreview({ field }: { field: FormField }) {
 	)
 
 	if (field.type === 'heading') {
-		return <h2 className="pt-2 text-lg tracking-tight">{label}</h2>
+		return (
+			<h2 className="pt-2 text-lg tracking-tight">{label}</h2>
+		)
 	}
 	if (field.type === 'paragraph') {
 		return (
@@ -325,7 +327,9 @@ export default function WebsiteFormBuilderRoute() {
 				)}
 			>
 				<div className="border-border border-b px-6 py-5 sm:px-8">
-					<h1 className="text-xl tracking-tight">{localizedName}</h1>
+					<h1 className="text-xl tracking-tight">
+						{localizedName}
+					</h1>
 					{localizedDescription ? (
 						<p className="text-muted-foreground mt-2 text-sm leading-relaxed">
 							{localizedDescription}

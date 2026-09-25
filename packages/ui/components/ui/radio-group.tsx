@@ -27,7 +27,10 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
 				data-slot="radio-group-indicator"
 				className="group-aria-invalid/radio-group-item:text-destructive text-primary absolute inset-0 flex items-center justify-center"
 			>
-				<span aria-hidden="true" className="size-2 rounded-full bg-current" />
+				<span
+					aria-hidden="true"
+					className="size-2 rounded-full bg-current"
+				/>
 			</RadioPrimitive.Indicator>
 		</RadioPrimitive.Root>
 	)

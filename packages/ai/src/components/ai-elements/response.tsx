@@ -197,12 +197,18 @@ const components: Options['components'] = {
 		</a>
 	),
 	h1: ({ children, className, ...props }: any) => (
-		<h1 className={cn('mt-6 mb-2 text-3xl', className)} {...props}>
+		<h1
+			className={cn('mt-6 mb-2 text-3xl', className)}
+			{...props}
+		>
 			{children}
 		</h1>
 	),
 	h2: ({ children, className, ...props }: any) => (
-		<h2 className={cn('mt-6 mb-2 text-2xl', className)} {...props}>
+		<h2
+			className={cn('mt-6 mb-2 text-2xl', className)}
+			{...props}
+		>
 			{children}
 		</h2>
 	),
@@ -217,7 +223,10 @@ const components: Options['components'] = {
 		</h4>
 	),
 	h5: ({ children, className, ...props }: any) => (
-		<h5 className={cn('mt-6 mb-2 text-base', className)} {...props}>
+		<h5
+			className={cn('mt-6 mb-2 text-base', className)}
+			{...props}
+		>
 			{children}
 		</h5>
 	),

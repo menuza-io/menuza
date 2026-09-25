@@ -288,13 +288,17 @@ export function WorkflowToolbar({
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>Nodes</Trans>
 								</p>
-								<p className="text-base tabular-nums">{validation.nodeCount}</p>
+								<p className="text-base tabular-nums">
+									{validation.nodeCount}
+								</p>
 							</div>
 							<div>
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>Connections</Trans>
 								</p>
-								<p className="text-base tabular-nums">{validation.edgeCount}</p>
+								<p className="text-base tabular-nums">
+									{validation.edgeCount}
+								</p>
 							</div>
 							<div>
 								<p className="text-muted-foreground text-[11px]">

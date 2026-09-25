@@ -31,8 +31,10 @@ export default function MentionEmail({
 				<EmailHeading>You were mentioned!</EmailHeading>
 
 				<EmailParagraph>
-					<strong className="text-foreground">{commenterName}</strong> mentioned
-					you in a comment on "{noteTitle}".
+					<strong className="text-foreground">
+						{commenterName}
+					</strong>{' '}
+					mentioned you in a comment on "{noteTitle}".
 				</EmailParagraph>
 
 				<EmailQuote>"{commentContent}"</EmailQuote>

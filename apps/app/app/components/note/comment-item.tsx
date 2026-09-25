@@ -203,7 +203,9 @@ export function CommentItem({
 
 				<div className="min-w-0 flex-1">
 					<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-						<span className="text-foreground text-sm">{userName}</span>
+						<span className="text-foreground text-sm">
+							{userName}
+						</span>
 						<div className="flex items-center gap-0.5">
 							<time
 								dateTime={comment.createdAt}
