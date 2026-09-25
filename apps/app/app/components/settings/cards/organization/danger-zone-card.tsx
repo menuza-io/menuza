@@ -59,11 +59,11 @@ export default function DangerZoneCard({
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0 flex-1">
 						<h3 className="text-foreground mb-2 font-medium">
-							<Trans>Delete organization</Trans>
+							<Trans>Delete restaurant</Trans>
 						</h3>
 						<p className="text-muted-foreground text-sm text-pretty">
 							<Trans>
-								By deleting your organization you and your team will lose access
+								By deleting your restaurant you and your team will lose access
 								and all data will be lost. This is a permanent action and cannot
 								be undone.
 							</Trans>
@@ -74,18 +74,18 @@ export default function DangerZoneCard({
 							render={
 								<Button variant="destructive" className="shrink-0 self-start">
 									<Icon name="trash-2" />
-									<Trans>Delete organization</Trans>
+									<Trans>Delete restaurant</Trans>
 								</Button>
 							}
 						></DialogTrigger>
 						<DialogContent className="sm:max-w-md">
 							<DialogHeader>
 								<DialogTitle className="text-destructive">
-									<Trans>Delete organization?</Trans>
+									<Trans>Delete restaurant?</Trans>
 								</DialogTitle>
 								<DialogDescription>
 									<Trans>
-										By deleting your organization you and your team will lose
+										By deleting your restaurant you and your team will lose
 										access and all data will be lost. This is a permanent action
 										and cannot be undone.
 									</Trans>
@@ -96,7 +96,7 @@ export default function DangerZoneCard({
 								<div className="space-y-2">
 									<Label htmlFor="confirmation">
 										<Trans>
-											Type the organization name "{orgName}" to confirm.
+											Type the restaurant name "{orgName}" to confirm.
 										</Trans>
 									</Label>
 									<Input
@@ -119,7 +119,7 @@ export default function DangerZoneCard({
 									/>
 									<Label htmlFor="understand" className="text-sm">
 										<Trans>
-											I'll not be able to access the organization and its data
+											I'll not be able to access the restaurant and its data
 											anymore
 										</Trans>
 									</Label>

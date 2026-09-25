@@ -164,7 +164,7 @@ export function OrganizationMembers({
 					<Trans>Members</Trans>
 				</CardTitle>
 				<CardDescription>
-					<Trans>Manage your organization's members.</Trans>
+					<Trans>Manage your restaurant's members.</Trans>
 					{organizationSlug && canManageRoles && (
 						<>
 							{' '}

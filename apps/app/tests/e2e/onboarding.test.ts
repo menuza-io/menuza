@@ -2,7 +2,15 @@ import { invariant } from '@epic-web/invariant'
 import { faker } from '@faker-js/faker'
 import { normalizeEmail, normalizeUsername } from '@repo/auth'
 import { brand } from '@repo/config/brand'
-import { and, Connection, db, eq, User } from '@repo/database'
+import {
+	and,
+	Connection,
+	db,
+	eq,
+	like,
+	RateLimitEntry,
+	User,
+} from '@repo/database'
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from '@repo/validation'
 import { readEmail } from '#tests/mocks/utils.ts'
 import { createUser, expect, test as base } from '#tests/playwright-utils.ts'
@@ -13,6 +21,24 @@ const CODE_REGEX =
 function extractUrl(text: string) {
 	const match = text.match(URL_REGEX)
 	return match?.groups?.url
+}
+
+/**
+ * Clear the DB-backed forgot-password rate-limit bucket.
+ *
+ * `start:mocks` (what Playwright uses under CI) runs the production build, so
+ * the limiter in `apps/app/app/routes/_auth+/forgot-password.tsx` allows only
+ * 3 requests per hour per IP. That counter lives in the shared test database,
+ * so it accumulates across retries and across runs, and can leave the
+ * "reset password with a short code" submit stuck on `/forgot-password` with a
+ * 429 instead of redirecting to `/verify`. Resetting the bucket before each
+ * forgot-password attempt keeps the tests isolated without weakening the
+ * production limit.
+ */
+async function resetForgotPasswordRateLimit() {
+	await db
+		.delete(RateLimitEntry)
+		.where(like(RateLimitEntry.keyId, 'auth-forgot-password:%'))
 }
 
 const test = base.extend<{
@@ -411,7 +437,7 @@ test('login as existing user', async ({ page, insertNewUser, navigate }) => {
 
 	// After login, user should be redirected and see the Dashboard button in header
 	await expect(
-		page.getByRole('heading', { name: 'Create a new organization' }),
+		page.getByRole('heading', { name: 'Create a new restaurant' }),
 	).toBeVisible()
 })
 
@@ -423,6 +449,9 @@ test('reset password with a link', async ({
 	const originalPassword = faker.internet.password() + 'A1!'
 	const user = await insertNewUser({ password: originalPassword })
 	invariant(user.name, 'User name not found')
+
+	// Keep this attempt from inheriting the shared rate-limit budget.
+	await resetForgotPasswordRateLimit()
 
 	await navigate('/login')
 	await page
@@ -507,7 +536,7 @@ test('reset password with a link', async ({
 	await expect(page).toHaveURL(`/organizations/create`)
 
 	await expect(
-		page.getByRole('heading', { name: 'Create a new organization' }),
+		page.getByRole('heading', { name: 'Create a new restaurant' }),
 	).toBeVisible()
 })
 
@@ -517,6 +546,9 @@ test('reset password with a short code', async ({
 	navigate,
 }) => {
 	const user = await insertNewUser()
+	// Keep this attempt from inheriting the shared rate-limit budget (earlier
+	// forgot-password submits, including retries, consume the same bucket).
+	await resetForgotPasswordRateLimit()
 	await navigate('/login')
 	await page
 		.getByRole('textbox', { name: /email or username/i })

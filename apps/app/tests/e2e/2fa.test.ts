@@ -112,11 +112,11 @@ test('Users can add 2FA to their account and use it when logging in', async ({
 
 	await expect(
 		page.getByText(
-			'An organization is a workspace where teams collect, organize, and work together.',
+			'A restaurant is your workspace to manage locations, menus, online ordering, and delivery.',
 		),
 	).toBeVisible()
 
 	await expect(
-		page.getByRole('heading', { name: 'Create a new organization' }),
+		page.getByRole('heading', { name: 'Create a new restaurant' }),
 	).toBeVisible()
 })

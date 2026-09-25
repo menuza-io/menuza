@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "1. Fulfillment Mode"
+msgstr "1. Fulfillment Mode"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "2. Contact Information"
+msgstr "2. Contact Information"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "3. Delivery Address"
+msgstr "3. Delivery Address"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "Account"
@@ -20,6 +32,31 @@ msgstr "Account"
 #: src/components/AccountShell.astro.ts:3
 msgid "Account settings"
 msgstr "Account settings"
+
+#: src/pages/menu.astro.ts:3
+msgid "Add"
+msgstr "Add"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Add a Tip for the Team"
+msgstr "Add a Tip for the Team"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "Add to Order"
+msgstr "Add to Order"
+
+#: src/pages/menu.astro.ts:3
+msgid "Any dietary preferences, sauce on the side, etc."
+msgstr "Any dietary preferences, sauce on the side, etc."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Apt / Suite / Unit"
+msgstr "Apt / Suite / Unit"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Back to Menu"
+msgstr "Back to Menu"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
@@ -46,6 +83,14 @@ msgstr "Cards used on past shop purchases on this account."
 msgid "Check your phone"
 msgstr "Check your phone"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Checkout"
+msgstr "Checkout"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "City / Region"
+msgstr "City / Region"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "Complete the verification check before submitting."
@@ -54,17 +99,60 @@ msgstr "Complete the verification check before submitting."
 msgid "Continue"
 msgstr "Continue"
 
+#: src/pages/menu.astro.ts:3
+msgid "Currently Closed"
+msgstr "Currently Closed"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize"
+msgstr "Customize"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize Item"
+msgstr "Customize Item"
+
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery"
+msgstr "Delivery"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Fee"
+msgstr "Delivery Fee"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery Instructions"
+msgstr "Delivery Instructions"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Order"
+msgstr "Delivery Order"
 
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "Email"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Email Address *"
+msgstr "Email Address *"
+
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "Enter your phone number. We'll send a verification code."
+
+#: src/pages/menu.astro.ts:3
+msgid "Estimated Tax"
+msgstr "Estimated Tax"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Estimated Time"
+msgstr "Estimated Time"
 
 #: src/pages/profile.astro.ts:3
 msgid "Expires"
@@ -74,9 +162,30 @@ msgstr "Expires"
 msgid "Expiry"
 msgstr "Expiry"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Explore Menu"
+msgstr "Explore Menu"
+
+#: src/pages/menu.astro.ts:3
+msgid "Explore our menu and add your favorite dishes."
+msgstr "Explore our menu and add your favorite dishes."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Free"
+msgstr "Free"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
 msgstr "Full name"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Full Name *"
+msgstr "Full Name *"
+
+#: src/pages/menu.astro.ts:3
+msgid "Gluten-Free"
+msgstr "Gluten-Free"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -86,9 +195,25 @@ msgstr "Invalid verification code."
 msgid "Language"
 msgstr "Language"
 
+#: src/pages/menu.astro.ts:3
+msgid "Left"
+msgstr "Left"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "Logout"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Looks like you haven't added any dishes to your order yet."
+msgstr "Looks like you haven't added any dishes to your order yet."
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu & Ordering"
+msgstr "Menu & Ordering"
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu Coming Soon"
+msgstr "Menu Coming Soon"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
@@ -114,23 +239,55 @@ msgstr "No orders yet."
 msgid "No saved payment methods yet."
 msgstr "No saved payment methods yet."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "No Tip"
+msgstr "No Tip"
+
+#: src/pages/menu.astro.ts:3
+msgid "Open for orders"
+msgstr "Open for orders"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "Open menu"
 
+#: src/pages/menu.astro.ts:3
+msgid "Optional"
+msgstr "Optional"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
 msgstr "Order confirmed"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Confirmed"
+msgstr "Order Confirmed"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order history"
 msgstr "Order history"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Order More Food"
+msgstr "Order More Food"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Number"
+msgstr "Order Number"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Order Summary"
+msgstr "Order Summary"
+
 #: src/components/AccountShell.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "Orders"
+
+#: src/pages/menu.astro.ts:3
+msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
+msgstr "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
@@ -149,13 +306,34 @@ msgstr "Payment methods"
 msgid "Phone Number"
 msgstr "Phone Number"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Phone Number *"
+msgstr "Phone Number *"
+
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "Phone number cannot be changed at this time."
 
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pickup"
+msgstr "Pickup"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup Order"
+msgstr "Pickup Order"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Place Order"
+msgstr "Place Order"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
 msgstr "Primary"
+
+#: src/pages/menu.astro.ts:3
+msgid "Proceed to Checkout"
+msgstr "Proceed to Checkout"
 
 #: src/pages/shop.astro.ts:3
 msgid "Processing payment..."
@@ -177,9 +355,37 @@ msgstr "Purchases from the shop while signed in to this account."
 msgid "Purchases from the shop while signed in."
 msgstr "Purchases from the shop while signed in."
 
+#: src/pages/menu.astro.ts:3
+msgid "Quantity"
+msgstr "Quantity"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Receipt"
+msgstr "Receipt"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "Receipts for completed purchases appear here with status and amount."
+
+#: src/pages/menu.astro.ts:3
+msgid "Remove"
+msgstr "Remove"
+
+#: src/pages/menu.astro.ts:3
+msgid "Required"
+msgstr "Required"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Return to Homepage"
+msgstr "Return to Homepage"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Review your order details and enter your contact information to complete your order."
+msgstr "Review your order details and enter your contact information to complete your order."
+
+#: src/pages/menu.astro.ts:3
+msgid "Right"
+msgstr "Right"
 
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
@@ -189,6 +395,10 @@ msgstr "Save Changes"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "Saving..."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
+msgstr "Secure checkout. By placing your order you agree to the restaurant's terms."
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
@@ -217,9 +427,32 @@ msgstr "Sign in"
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
+#: src/pages/menu.astro.ts:3
+msgid "Special Instructions"
+msgstr "Special Instructions"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Street Address *"
+msgstr "Street Address *"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
 msgstr "Submitting..."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Subtotal"
+msgstr "Subtotal"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tax"
+msgstr "Tax"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Thank you for your order!"
+msgstr "Thank you for your order!"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
@@ -232,6 +465,20 @@ msgstr "This form is currently unavailable."
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "This shop is not available right now."
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tip"
+msgstr "Tip"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Total"
+msgstr "Total"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Total Paid"
+msgstr "Total Paid"
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -249,6 +496,10 @@ msgstr "Update your basic details below."
 msgid "Use a new card"
 msgstr "Use a new card"
 
+#: src/pages/menu.astro.ts:3
+msgid "Vegetarian"
+msgstr "Vegetarian"
+
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
 msgstr "Verification Code"
@@ -261,6 +512,10 @@ msgstr "Verify"
 msgid "Verifying..."
 msgstr "Verifying..."
 
+#: src/pages/menu.astro.ts:3
+msgid "View Order"
+msgstr "View Order"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "We could not confirm this order."
@@ -268,6 +523,10 @@ msgstr "We could not confirm this order."
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "We'll use this on your profile. You can change it later."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We've received your order and our kitchen is preparing your meal."
+msgstr "We've received your order and our kitchen is preparing your meal."
 
 #: src/pages/verify.astro.ts:3
 msgid "We've sent a 6-digit code to"
@@ -280,6 +539,22 @@ msgstr "What's your name?"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "When you buy something from the shop, your receipts will show up here."
+
+#: src/pages/menu.astro.ts:3
+msgid "Whole"
+msgstr "Whole"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your cart is empty"
+msgstr "Your cart is empty"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your Order"
+msgstr "Your Order"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Your Order is Empty"
+msgstr "Your Order is Empty"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

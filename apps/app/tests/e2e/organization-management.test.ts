@@ -24,8 +24,10 @@ test.describe('Organization Management', () => {
 		await navigate('/organizations')
 		await page.waitForLoadState('networkidle')
 
-		// Header CTA (distinct from empty-state "Add organization" when user has no orgs)
-		await page.getByRole('button', { name: '+ Add organization' }).click()
+		// Header CTA (distinct from empty-state "Add restaurant" when user has no orgs)
+		await page
+			.getByRole('button', { name: /\+\s*add (restaurant|organization)/i })
+			.click()
 		await expect(page).toHaveURL('/organizations/create')
 
 		// Fill in organization details

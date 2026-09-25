@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "1. Fulfillment Mode"
+msgstr "1. 配送方式"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "2. Contact Information"
+msgstr "2. 联系信息"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "3. Delivery Address"
+msgstr "3. 配送地址"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "账户"
@@ -20,6 +32,31 @@ msgstr "账户"
 #: src/components/AccountShell.astro.ts:3
 msgid "Account settings"
 msgstr "账户设置"
+
+#: src/pages/menu.astro.ts:3
+msgid "Add"
+msgstr "添加"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Add a Tip for the Team"
+msgstr "为团队添加小费"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "Add to Order"
+msgstr "加入订单"
+
+#: src/pages/menu.astro.ts:3
+msgid "Any dietary preferences, sauce on the side, etc."
+msgstr "任何饮食偏好、酱料另放等"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Apt / Suite / Unit"
+msgstr "公寓 / 套房 / 单元"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Back to Menu"
+msgstr "返回菜单"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
@@ -46,6 +83,14 @@ msgstr "此账户在商店过往购买中使用的银行卡。"
 msgid "Check your phone"
 msgstr "请查看手机"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Checkout"
+msgstr "结账"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "City / Region"
+msgstr "城市 / 地区"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "提交前请完成验证。"
@@ -54,17 +99,60 @@ msgstr "提交前请完成验证。"
 msgid "Continue"
 msgstr "继续"
 
+#: src/pages/menu.astro.ts:3
+msgid "Currently Closed"
+msgstr "目前休息中"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize"
+msgstr "自定义"
+
+#: src/pages/menu.astro.ts:3
+msgid "Customize Item"
+msgstr "自定义菜品"
+
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery"
+msgstr "配送"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Fee"
+msgstr "配送费"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery Instructions"
+msgstr "配送说明"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Delivery Order"
+msgstr "配送订单"
 
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "电子邮件"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Email Address *"
+msgstr "电子邮箱 *"
+
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "请输入手机号，我们将发送验证码。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Estimated Tax"
+msgstr "预估税费"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Estimated Time"
+msgstr "预计时间"
 
 #: src/pages/profile.astro.ts:3
 msgid "Expires"
@@ -74,9 +162,30 @@ msgstr "到期"
 msgid "Expiry"
 msgstr "有效期"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Explore Menu"
+msgstr "浏览菜单"
+
+#: src/pages/menu.astro.ts:3
+msgid "Explore our menu and add your favorite dishes."
+msgstr "浏览我们的菜单，添加您喜爱的菜品。"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Free"
+msgstr "免费"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
 msgstr "全名"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Full Name *"
+msgstr "姓名 *"
+
+#: src/pages/menu.astro.ts:3
+msgid "Gluten-Free"
+msgstr "无麸质"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -86,9 +195,25 @@ msgstr "验证码无效。"
 msgid "Language"
 msgstr "语言"
 
+#: src/pages/menu.astro.ts:3
+msgid "Left"
+msgstr "左半"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "退出"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Looks like you haven't added any dishes to your order yet."
+msgstr "看起来您还没有在订单中添加任何菜品。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu & Ordering"
+msgstr "菜单与点餐"
+
+#: src/pages/menu.astro.ts:3
+msgid "Menu Coming Soon"
+msgstr "菜单即将上线"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
@@ -114,12 +239,28 @@ msgstr "暂无订单。"
 msgid "No saved payment methods yet."
 msgstr "暂无已保存的支付方式。"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "No Tip"
+msgstr "不给小费"
+
+#: src/pages/menu.astro.ts:3
+msgid "Open for orders"
+msgstr "接受订单中"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "打开菜单"
 
+#: src/pages/menu.astro.ts:3
+msgid "Optional"
+msgstr "可选"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
+msgstr "订单已确认"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Confirmed"
 msgstr "订单已确认"
 
 #: src/pages/profile.astro.ts:3
@@ -127,10 +268,26 @@ msgstr "订单已确认"
 msgid "Order history"
 msgstr "订单历史"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Order More Food"
+msgstr "继续点餐"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Order Number"
+msgstr "订单号"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Order Summary"
+msgstr "订单摘要"
+
 #: src/components/AccountShell.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "订单"
+
+#: src/pages/menu.astro.ts:3
+msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
+msgstr "我们的厨房正在准备美味佳肴。请稍后回来查看完整的在线菜单。"
 
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
@@ -149,13 +306,34 @@ msgstr "支付方式"
 msgid "Phone Number"
 msgstr "电话号码"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Phone Number *"
+msgstr "电话号码 *"
+
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "目前无法更改电话号码。"
 
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pickup"
+msgstr "自取"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup Order"
+msgstr "自取订单"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Place Order"
+msgstr "提交订单"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
 msgstr "主导航"
+
+#: src/pages/menu.astro.ts:3
+msgid "Proceed to Checkout"
+msgstr "去结账"
 
 #: src/pages/shop.astro.ts:3
 msgid "Processing payment..."
@@ -177,9 +355,37 @@ msgstr "登录此账户后在商店的购买记录。"
 msgid "Purchases from the shop while signed in."
 msgstr "登录后在商店的购买记录。"
 
+#: src/pages/menu.astro.ts:3
+msgid "Quantity"
+msgstr "数量"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Receipt"
+msgstr "收据"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "已完成购买的收据将在此显示状态和金额。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Remove"
+msgstr "移除"
+
+#: src/pages/menu.astro.ts:3
+msgid "Required"
+msgstr "必填"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Return to Homepage"
+msgstr "返回首页"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Review your order details and enter your contact information to complete your order."
+msgstr "请核对订单详情并填写联系信息以完成订单。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Right"
+msgstr "右半"
 
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
@@ -189,6 +395,10 @@ msgstr "保存更改"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "保存中..."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
+msgstr "安全结账。提交订单即表示您同意餐厅的条款。"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
@@ -217,9 +427,32 @@ msgstr "登录"
 msgid "Something went wrong."
 msgstr "出了点问题。"
 
+#: src/pages/menu.astro.ts:3
+msgid "Special Instructions"
+msgstr "特别说明"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Street Address *"
+msgstr "街道地址 *"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
 msgstr "正在提交..."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Subtotal"
+msgstr "小计"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tax"
+msgstr "税费"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Thank you for your order!"
+msgstr "感谢您的订单！"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
@@ -232,6 +465,20 @@ msgstr "此表单当前不可用。"
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Tip"
+msgstr "小费"
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Total"
+msgstr "总计"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Total Paid"
+msgstr "已付总额"
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -249,6 +496,10 @@ msgstr "请在下方更新您的基本信息。"
 msgid "Use a new card"
 msgstr "使用新卡"
 
+#: src/pages/menu.astro.ts:3
+msgid "Vegetarian"
+msgstr "素食"
+
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
 msgstr "验证码"
@@ -261,6 +512,10 @@ msgstr "验证"
 msgid "Verifying..."
 msgstr "验证中..."
 
+#: src/pages/menu.astro.ts:3
+msgid "View Order"
+msgstr "查看订单"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "我们无法确认此订单。"
@@ -268,6 +523,10 @@ msgstr "我们无法确认此订单。"
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "我们将在您的资料中使用此姓名，之后可以更改。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We've received your order and our kitchen is preparing your meal."
+msgstr "我们已收到您的订单，厨房正在准备您的餐点。"
 
 #: src/pages/verify.astro.ts:3
 msgid "We've sent a 6-digit code to"
@@ -280,6 +539,22 @@ msgstr "您叫什么名字？"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "当您在商店购买商品时，您的收据将显示在这里。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Whole"
+msgstr "整份"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your cart is empty"
+msgstr "您的购物车是空的"
+
+#: src/pages/menu.astro.ts:3
+msgid "Your Order"
+msgstr "您的订单"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Your Order is Empty"
+msgstr "您的订单是空的"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

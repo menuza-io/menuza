@@ -379,3 +379,140 @@ export async function createShopPaymentIntent(
 		error?: string
 	}>
 }
+
+export type PublicLocationData = {
+	id: string
+	name: string
+	slug: string
+	phone: string | null
+	timezone: string
+	taxRate: number
+	address: any
+	currency?: 'USD' | 'CAD'
+	storeHours: any
+	onlineHours: any
+	specialHours: any
+	prepTime: number
+	fulfillmentOptions: any
+	inHouseTips: any
+	scheduling: any
+	deliveryConfig: any
+	deliveryZones: any[]
+	isDefault: boolean
+}
+
+export type PublicMenuOptionData = {
+	id: string
+	displayName: string
+	internalName: string | null
+	description: string | null
+	imageKey: string | null
+	imageUrl: string | null
+	price: number
+	priceWhole: number | null
+	priceLeft: number | null
+	priceRight: number | null
+	calories: number | null
+	minSelections: number
+	maxSelections: number | null
+	isAlcohol: boolean
+	isGlutenFree: boolean
+	isVegetarian: boolean
+	isTopping: boolean
+	allergens: string[]
+	applySalesTax: boolean
+	availabilityStatus: string
+	position: number
+}
+
+export type PublicModifierGroupData = {
+	id: string
+	name: string
+	internalName: string | null
+	selectionType: 'single' | 'multiple' | 'quantity' | 'pizza'
+	minSelections: number
+	maxSelections: number | null
+	availabilityStatus: string
+	position: number
+	options: PublicMenuOptionData[]
+}
+
+export type PublicMenuItemData = {
+	id: string
+	displayName: string
+	internalName: string | null
+	description: string | null
+	price: number
+	imageKey: string | null
+	imageUrl: string | null
+	imageKeys: string[]
+	imageUrls: string[]
+	isAlcohol: boolean
+	isGlutenFree: boolean
+	isVegetarian: boolean
+	allergens: string[]
+	calorieMin: number | null
+	calorieMax: number | null
+	isPopular: boolean
+	isUpsell: boolean
+	availabilityStatus: string
+	position: number
+	modifierGroups: PublicModifierGroupData[]
+}
+
+export type PublicMenuCategoryData = {
+	id: string
+	displayName: string
+	internalName: string | null
+	description: string | null
+	upsellCategoryIds: string[]
+	availabilityStatus: string
+	position: number
+	items: PublicMenuItemData[]
+}
+
+export type PublicMenuData = {
+	id: string
+	displayName: string
+	internalName: string | null
+	menuType: string
+	nutritionalInfo: boolean
+	specialInstructions: boolean
+	availabilityStatus: string
+	position: number
+	categories: PublicMenuCategoryData[]
+}
+
+export type PublicSiteMenuPayload = {
+	organization: {
+		id: string
+		name: string
+		slug: string
+		currency: string
+		defaultLocale: string
+		locales: string[]
+	}
+	locations: PublicLocationData[]
+	menus: PublicMenuData[]
+}
+
+export async function fetchPublishedSiteMenu(options: {
+	slug?: string | null
+	host?: string | null
+	lng?: string | null
+	locationId?: string | null
+	preview?: boolean
+}): Promise<PublicSiteMenuPayload | null> {
+	const params = new URLSearchParams()
+	if (options.slug) params.set('slug', options.slug)
+	if (options.host) params.set('host', options.host)
+	if (options.lng) params.set('lng', options.lng)
+	if (options.locationId) params.set('locationId', options.locationId)
+	if (options.preview) params.set('preview', '1')
+	if (!params.size) return null
+
+	return fetchAppJson<PublicSiteMenuPayload>(
+		`${getAppUrl()}/resources/sites/menu?${params.toString()}`,
+		!options.preview,
+	)
+}

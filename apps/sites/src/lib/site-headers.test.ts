@@ -35,6 +35,8 @@ describe('isSitesAppRoute', () => {
 	it('treats auth pages as app routes so CMS prefetch is skipped', () => {
 		expect(isSitesAppRoute('/login')).toBe(true)
 		expect(isSitesAppRoute('/profile')).toBe(true)
+		expect(isSitesAppRoute('/menu')).toBe(true)
+		expect(isSitesAppRoute('/menu/checkout')).toBe(true)
 		expect(isSitesAppRoute('/')).toBe(false)
 		expect(isSitesAppRoute('/about')).toBe(false)
 	})

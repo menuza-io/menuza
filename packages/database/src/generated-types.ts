@@ -30,6 +30,12 @@ export type BackupCode = InferSelectModel<typeof schema.BackupCode>
 export type BackupCodeInsert = InferInsertModel<typeof schema.BackupCode>
 export type Organization = InferSelectModel<typeof schema.Organization>
 export type OrganizationInsert = InferInsertModel<typeof schema.Organization>
+export type OrganizationLocation = InferSelectModel<
+	typeof schema.OrganizationLocation
+>
+export type OrganizationLocationInsert = InferInsertModel<
+	typeof schema.OrganizationLocation
+>
 export type OrganizationAnnouncement = InferSelectModel<
 	typeof schema.OrganizationAnnouncement
 >

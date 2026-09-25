@@ -22,8 +22,13 @@ import {
 	useSidebar,
 } from '@repo/ui/sidebar'
 import { useCallback, useMemo } from 'react'
-import { Link, useSubmit } from 'react-router'
+import { Link, useFetcher, useSubmit } from 'react-router'
 import { useHotkeys } from '#app/hooks/use-hotkeys.ts'
+import {
+	useLocationsData,
+	useSelectedLocation,
+	getLocationDisplayName,
+} from '#app/utils/location/locations.ts'
 import { useUserOrganizations } from '#app/utils/organization/organizations.ts'
 
 // Chrome and Firefox reserve Cmd/Ctrl+1-9 for tab switching and pages cannot
@@ -67,6 +72,7 @@ function OrganizationAvatar({
 export function TeamSwitcher() {
 	const { _ } = useLingui()
 	const submit = useSubmit()
+	const locationFetcher = useFetcher<{ success: boolean; locationId: string }>()
 	const { isMobile, toggleSidebar } = useSidebar()
 
 	const userOrganizations = useUserOrganizations() || {
@@ -103,11 +109,39 @@ export function TeamSwitcher() {
 	)
 	useHotkeys(switchShortcuts)
 
+	const { locations, selectedLocationId } = useLocationsData()
+	const selectedLocation = useSelectedLocation()
+
+	const optimisticLocationId =
+		(locationFetcher.formData?.get('locationId') as string | undefined) ??
+		selectedLocationId
+
+	const effectiveLocation =
+		optimisticLocationId === 'all'
+			? null
+			: locations.find((l) => l.id === optimisticLocationId) || selectedLocation
+
+	const selectedLocationTitle = effectiveLocation
+		? getLocationDisplayName(effectiveLocation.name)
+		: _(msg`All locations`)
+
+	const handleLocationSelect = useCallback(
+		(locationId: string) => {
+			if (!activeTeam) return
+			void locationFetcher.submit(
+				{ orgSlug: activeTeam.slug, locationId },
+				{
+					method: 'post',
+					action: '/resources/location-selection',
+				},
+			)
+		},
+		[locationFetcher, activeTeam],
+	)
+
 	if (!activeTeam) {
 		return null
 	}
-
-	const memberCount = activeTeam.userCount ?? 0
 
 	return (
 		<SidebarMenu>
@@ -125,16 +159,9 @@ export function TeamSwitcher() {
 									<span className="text-sidebar-foreground truncate text-sm leading-5 font-medium">
 										{activeTeam.name}
 									</span>
-									{memberCount > 0 ? (
-										<span className="text-sidebar-foreground/60 truncate text-xs leading-4">
-											{memberCount}{' '}
-											{memberCount === 1 ? (
-												<Trans>member</Trans>
-											) : (
-												<Trans>members</Trans>
-											)}
-										</span>
-									) : null}
+									<span className="text-sidebar-foreground/60 truncate text-xs leading-4">
+										{selectedLocationTitle}
+									</span>
 								</div>
 								<Icon
 									name="chevron-down"
@@ -150,9 +177,94 @@ export function TeamSwitcher() {
 						sideOffset={4}
 						style={{ width: 'var(--anchor-width)' }}
 					>
+						{/* Locations Section */}
 						<DropdownMenuGroup>
 							<DropdownMenuLabel>
-								<Trans>Organizations</Trans>
+								<Trans>Locations</Trans>
+							</DropdownMenuLabel>
+							<DropdownMenuItem
+								onClick={() => {
+									handleLocationSelect('all')
+									if (isMobile) toggleSidebar()
+								}}
+								className="gap-2 rounded-[8px] px-1.5 py-1.5"
+							>
+								<span className="flex size-6 shrink-0 items-center justify-center">
+									<Icon
+										name="building"
+										className="text-muted-foreground size-4"
+									/>
+								</span>
+								<span className="min-w-0 flex-1 truncate font-medium">
+									<Trans>All locations</Trans>
+								</span>
+								{optimisticLocationId === 'all' || !effectiveLocation ? (
+									<Icon
+										name="check"
+										className="text-primary size-4 shrink-0"
+										title={_(msg`Current location`)}
+									/>
+								) : null}
+							</DropdownMenuItem>
+							{locations.map((loc) => {
+								const isCurrent = loc.id === optimisticLocationId
+								const locName = getLocationDisplayName(loc.name)
+								return (
+									<DropdownMenuItem
+										key={loc.id}
+										onClick={() => {
+											handleLocationSelect(loc.id)
+											if (isMobile) toggleSidebar()
+										}}
+										className="gap-2 rounded-[8px] px-1.5 py-1.5"
+									>
+										<span className="flex size-6 shrink-0 items-center justify-center">
+											<span
+												aria-hidden="true"
+												className={cn(
+													'size-2 rounded-full',
+													loc.isActive
+														? 'bg-emerald-500'
+														: 'bg-muted-foreground/60',
+												)}
+											/>
+										</span>
+										<span className="min-w-0 flex-1 truncate">{locName}</span>
+										{isCurrent ? (
+											<Icon
+												name="check"
+												className="text-primary size-4 shrink-0"
+												title={_(msg`Current location`)}
+											/>
+										) : null}
+									</DropdownMenuItem>
+								)
+							})}
+							<DropdownMenuItem
+								className="gap-2 px-1.5 py-0.5"
+								onClick={() => isMobile && toggleSidebar()}
+								render={
+									<Link
+										to={`/${activeTeam.slug}/settings/locations`}
+										className="flex items-center gap-2"
+									>
+										<span className="flex size-6 shrink-0 items-center justify-center">
+											<Icon
+												name="gear"
+												className="text-muted-foreground size-4"
+											/>
+										</span>
+										<Trans>Manage locations</Trans>
+									</Link>
+								}
+							/>
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+
+						{/* Restaurants Section */}
+						<DropdownMenuGroup>
+							<DropdownMenuLabel>
+								<Trans>Restaurants</Trans>
 							</DropdownMenuLabel>
 							{organizations.map((userOrg, index) => {
 								const isCurrent = userOrg.organization.id === activeTeam.id
@@ -176,7 +288,7 @@ export function TeamSwitcher() {
 											<Icon
 												name="check"
 												className="text-primary size-4 shrink-0"
-												title={_(msg`Current organization`)}
+												title={_(msg`Current restaurant`)}
 											/>
 										) : null}
 										{index < MAX_SHORTCUTS ? (
@@ -219,7 +331,7 @@ export function TeamSwitcher() {
 												className="text-muted-foreground size-4"
 											/>
 										</span>
-										<Trans>Add organization</Trans>
+										<Trans>Add restaurant</Trans>
 									</Link>
 								}
 							></DropdownMenuItem>

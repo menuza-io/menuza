@@ -617,14 +617,14 @@ function Step1({ actionData }: { actionData: any }) {
 			<CardHeader>
 				<CardTitle>
 					<h2>
-						<Trans>Create a new organization</Trans>
+						<Trans>Create a new restaurant</Trans>
 					</h2>
 				</CardTitle>
 
 				<CardDescription>
 					<Trans>
-						An organization is a workspace where teams collect, organize, and
-						work together.
+						A restaurant is your workspace to manage locations, menus, online
+						ordering, and delivery.
 					</Trans>
 				</CardDescription>
 			</CardHeader>
@@ -653,7 +653,7 @@ function Step1({ actionData }: { actionData: any }) {
 											{previewImage ? (
 												<img
 													src={previewImage}
-													alt={_(t`Organization logo preview`)}
+													alt={_(t`Restaurant logo preview`)}
 													className="size-full object-cover"
 												/>
 											) : (
@@ -800,7 +800,7 @@ function Step1({ actionData }: { actionData: any }) {
 								<Textarea
 									{...getInputProps(fields.description, { type: 'text' })}
 									rows={3}
-									placeholder={_(t`Tell us about your organization...`)}
+									placeholder={_(t`Tell us about your restaurant...`)}
 									aria-invalid={
 										fields.description.errors?.length ? true : undefined
 									}
@@ -1019,7 +1019,7 @@ function Step4({ orgId, actionData }: { orgId: string; actionData: any }) {
 		<Card>
 			<CardHeader>
 				<CardTitle>
-					<Trans>Tell us more about your organization</Trans>
+					<Trans>Tell us more about your restaurant</Trans>
 				</CardTitle>
 				<CardDescription>
 					<Trans>
@@ -1040,13 +1040,13 @@ function Step4({ orgId, actionData }: { orgId: string; actionData: any }) {
 							}
 						>
 							<FieldLabel htmlFor={fields.organizationSize.id}>
-								<Trans>Organization size</Trans>
+								<Trans>Restaurant size</Trans>
 							</FieldLabel>
 							<Select
 								name={fields.organizationSize.name}
 								defaultValue={fields.organizationSize.initialValue}
 								items={[
-									{ value: null, label: 'Select organization size' },
+									{ value: null, label: 'Select restaurant size' },
 									...organizationSizes.map((size) => ({
 										value: size.value,
 										label: size.label,

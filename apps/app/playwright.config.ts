@@ -36,6 +36,9 @@ export default defineConfig({
 			name: 'chromium',
 			use: {
 				...devices['Desktop Chrome'],
+				launchOptions: {
+					args: ['--host-rules=MAP *.menuza.test [::1]'],
+				},
 			},
 		},
 	],

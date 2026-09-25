@@ -12,7 +12,7 @@ export default function SettingsLayout() {
 			<div className="mb-4">
 				<PageTitle
 					title={_(t`Settings`)}
-					description={_(t`Manage your organization settings and preferences.`)}
+					description={_(t`Manage your restaurant settings and preferences.`)}
 				/>
 			</div>
 			<Outlet />

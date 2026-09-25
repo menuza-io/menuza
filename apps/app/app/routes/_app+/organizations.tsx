@@ -189,9 +189,9 @@ export default function OrganizationsPage() {
 		<div className="mx-auto w-full max-w-3xl py-8 md:p-8">
 			<div className="mb-8 md:mb-10">
 				<PageTitle
-					title={_(t`Organizations`)}
+					title={_(t`Restaurants`)}
 					description={_(
-						t`Jump into an existing organization, accept pending invitations, or add a new one.`,
+						t`Jump into an existing restaurant, accept pending invitations, or add a new one.`,
 					)}
 				/>
 
@@ -214,7 +214,7 @@ export default function OrganizationsPage() {
 						className="shrink-0 self-stretch sm:self-auto"
 					>
 						<span className="mr-1">+</span>
-						<Trans>Add organization</Trans>
+						<Trans>Add restaurant</Trans>
 					</Button>
 				</div>
 			</div>
@@ -334,7 +334,7 @@ export default function OrganizationsPage() {
 					</Card>
 				)}
 
-				<section className="min-w-0" aria-label={_(t`Your organizations`)}>
+				<section className="min-w-0" aria-label={_(t`Your restaurants`)}>
 					<ItemGroup>
 						{filteredOrganizations.map((org: UserOrganizationWithRole) => (
 							<Item
@@ -364,7 +364,7 @@ export default function OrganizationsPage() {
 										to={`/${org.organization.slug}/settings`}
 										onClick={(e) => e.stopPropagation()}
 										className="hover:bg-accent rounded-md p-2 transition-colors"
-										title="Organization settings"
+										title="Restaurant settings"
 									>
 										<Icon name="gear" className="block h-4 w-4" />
 									</Link>
@@ -380,15 +380,15 @@ export default function OrganizationsPage() {
 					{(filteredOrganizations.length === 0 && searchQuery) ||
 					organizations.length === 0 ? (
 						<EmptyState
-							title={_(t`No organization found`)}
+							title={_(t`No restaurant found`)}
 							description={
 								searchQuery
 									? _(t`Adjust your search query to show more.`)
-									: _(t`You haven't joined any organizations yet.`)
+									: _(t`You haven't joined any restaurants yet.`)
 							}
 							icons={['folder-open']}
 							action={{
-								label: _(t`Add organization`),
+								label: _(t`Add restaurant`),
 								href: '/organizations/create',
 							}}
 						/>

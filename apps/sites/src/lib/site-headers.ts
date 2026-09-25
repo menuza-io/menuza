@@ -73,16 +73,21 @@ const APP_ROUTE_SLUGS = new Set([
 	'complete-name',
 	'profile',
 	'shop',
+	'menu',
 ])
 
 export function isSitesShopRoute(pathname: string) {
 	return pathname.replace(/^\/+|\/+$/g, '').startsWith('shop')
 }
 
+export function isSitesMenuRoute(pathname: string) {
+	return pathname.replace(/^\/+|\/+$/g, '').startsWith('menu')
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
-	return isSitesShopRoute(pathname)
+	return isSitesShopRoute(pathname) || isSitesMenuRoute(pathname)
 }
 
 export function publishedHtmlCacheUrl(requestUrl: URL, host: string | null) {

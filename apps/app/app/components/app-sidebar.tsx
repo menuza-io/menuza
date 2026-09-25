@@ -45,6 +45,7 @@ import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { SendIcon } from './icons/send-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
+import { UtensilsIcon } from './icons/utensils-icon'
 import { NavSecondary } from './nav-secondary'
 
 // Upgrade Account Card Component
@@ -139,7 +140,7 @@ function AccountSidebar({
 			icon: LockOpenIcon,
 		},
 		{
-			title: _(msg`Organizations`),
+			title: _(msg`Restaurants`),
 			url: '/organizations',
 			isActive: isOrganizationsRoute,
 			icon: BuildingIcon,
@@ -288,6 +289,46 @@ function OrganizationSidebar({
 			icon: UsersRoundIcon,
 		},
 		{
+			title: _(msg`Menu`),
+			url: `/${orgSlug}/menu`,
+			isActive: location.pathname.includes(`/${orgSlug}/menu`),
+			icon: UtensilsIcon,
+			items: [
+				{
+					title: _(msg`Overview`),
+					url: `/${orgSlug}/menu`,
+					isActive:
+						location.pathname === `/${orgSlug}/menu` ||
+						location.pathname === `/${orgSlug}/menu/`,
+				},
+				{
+					title: _(msg`Menus`),
+					url: `/${orgSlug}/menu/menus`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/menus`),
+				},
+				{
+					title: _(msg`Categories`),
+					url: `/${orgSlug}/menu/categories`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/categories`),
+				},
+				{
+					title: _(msg`Items`),
+					url: `/${orgSlug}/menu/items`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/items`),
+				},
+				{
+					title: _(msg`Modifier Groups`),
+					url: `/${orgSlug}/menu/modifiers`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/modifiers`),
+				},
+				{
+					title: _(msg`Options`),
+					url: `/${orgSlug}/menu/options`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/options`),
+				},
+			],
+		},
+		{
 			title: _(msg`Marketing`),
 			url: `/${orgSlug}/marketing`,
 			isActive: location.pathname.includes(`/${orgSlug}/marketing`),
@@ -379,6 +420,13 @@ function OrganizationSidebar({
 					title: _(msg`General`),
 					url: `/${orgSlug}/settings`,
 					isActive: location.pathname === `/${orgSlug}/settings`,
+				},
+				{
+					title: _(msg`Locations`),
+					url: `/${orgSlug}/settings/locations`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/settings/locations`,
+					),
 				},
 				{
 					title: _(msg`Members`),

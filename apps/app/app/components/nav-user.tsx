@@ -186,7 +186,7 @@ export function NavUser({
 										}
 										size={16}
 									/>
-									<Trans>Organizations</Trans>
+									<Trans>Restaurants</Trans>
 								</Link>
 							}
 						></DropdownMenuItem>

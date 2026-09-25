@@ -86,7 +86,7 @@ export function BillingCard({
 						<Trans>Billing & Subscription</Trans>
 					</CardTitle>
 					<CardDescription>
-						<Trans>Manage your organization's subscription</Trans>
+						<Trans>Manage your restaurant's subscription</Trans>
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -117,7 +117,7 @@ export function BillingCard({
 						<Trans>Current Subscription</Trans>
 					</CardTitle>
 					<CardDescription>
-						<Trans>Your organization's current plan and billing status</Trans>
+						<Trans>Your restaurant's current plan and billing status</Trans>
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="p-0">
