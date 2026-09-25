@@ -17,22 +17,24 @@ import {
 import { getDirection } from '@repo/i18n'
 import { marketingSharedCookieDomain } from '@repo/common/cookie-domain'
 import { getCookieConsentState } from '@repo/common/cookie-consent'
-import { ENV } from 'varlock/env'
+import { getWebEnv } from '../lib/runtime-env'
 
 const currentLocale = Astro.currentLocale ?? 'en'
 const dir = getDirection(currentLocale)
 
-const themeCookieName = resolveThemeCookieName(ENV.PUBLIC_APP_URL)
+const appUrl = getWebEnv('PUBLIC_APP_URL')
+const rootApp = getWebEnv('PUBLIC_ROOT_APP')
+const themeCookieName = resolveThemeCookieName(appUrl)
 const cookieHeader = Astro.request.headers.get('cookie')
 const theme = getThemeFromCookie(cookieHeader, themeCookieName)
 const cookieConsent = await getCookieConsentState(
 	Astro.request,
-	ENV.PUBLIC_APP_URL,
-	marketingSharedCookieDomain(Astro.request, ENV.PUBLIC_ROOT_APP),
+	appUrl,
+	marketingSharedCookieDomain(Astro.request, rootApp),
 )
 const cookiePolicyUrl = new URL(
 	'/legal/cookie-policy/',
-	ENV.PUBLIC_APP_URL,
+	appUrl,
 ).toString()
 
 const [settings, primaryMenu, footerColumns, banner] = await Promise.all([

@@ -76,6 +76,7 @@ const APPS = {
 		deploy: {
 			cwd: 'apps/web',
 			config: 'dist/server/wrangler.deploy.json',
+			keepVars: true,
 			wranglerEmptyEnv: true,
 		},
 	},

@@ -21,8 +21,9 @@ At the end of the launch flow:
    **Workers Builds Configuration: Edit** and **Workers Scripts: Read**.
 5. Let setup save the trigger IDs and Cloudflare credentials to GitHub Actions.
 
-Everything else is applied through the API. No Worker-by-Worker variable copying
-is required.
+Everything else is applied through the API. Web runtime variables are managed on
+the Web Worker dashboard; see the
+[Web launch checklist](launch-checklist.md#web--marketing-appsweb).
 
 The two tokens serve different purposes: the **Worker build API token** selected
 inside Settings → Builds lets Cloudflare deploy the Worker, while

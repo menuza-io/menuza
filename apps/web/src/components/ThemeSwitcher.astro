@@ -2,9 +2,9 @@
 // Theme Switcher Component for Astro
 // Toggles between light and dark themes using the operator theme cookie (shared with App/Admin).
 import { getThemeFromCookie, resolveThemeCookieName } from '~/utils/theme'
-import { ENV } from 'varlock/env'
+import { getWebEnv } from '../lib/runtime-env'
 
-const themeCookieName = resolveThemeCookieName(ENV.PUBLIC_APP_URL)
+const themeCookieName = resolveThemeCookieName(getWebEnv('PUBLIC_APP_URL'))
 const cookieHeader = Astro.request.headers.get('cookie')
 const initialTheme = getThemeFromCookie(cookieHeader, themeCookieName)
 ---
@@ -46,7 +46,7 @@ const initialTheme = getThemeFromCookie(cookieHeader, themeCookieName)
 	</svg>
 </button>
 
-<script define:vars={{ themeCookieName, publicRootApp: ENV.PUBLIC_ROOT_APP }}>
+<script define:vars={{ themeCookieName, publicRootApp: getWebEnv('PUBLIC_ROOT_APP') }}>
 	function setCookie(name, value) {
 		const domain = publicRootApp ? `.${publicRootApp}` : ''
 		const domainAttr = domain ? `; domain=${domain}` : ''
