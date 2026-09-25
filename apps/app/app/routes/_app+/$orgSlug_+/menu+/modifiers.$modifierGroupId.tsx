@@ -473,39 +473,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 
-		// Sync parent option triggers (when this group is configured as a sub-group)
-		if (formData.has('parentOptionIds')) {
-			let parentOptionIds: string[] = []
-			try {
-				parentOptionIds = JSON.parse(
-					formData.get('parentOptionIds') as string,
-				) as string[]
-			} catch {
-				parentOptionIds = []
-			}
-
-			await tx
-				.delete(OrganizationMenuOptionNestedModifierGroupAssignment)
-				.where(
-					eq(
-						OrganizationMenuOptionNestedModifierGroupAssignment.modifierGroupId,
-						modifierGroupId,
-					),
-				)
-
-			if (parentOptionIds.length > 0) {
-				await tx
-					.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
-					.values(
-						parentOptionIds.map((optId, idx) => ({
-							optionId: optId,
-							modifierGroupId,
-							position: idx,
-						})),
-					)
-			}
-		}
-
 		// Replace Item Assignments
 		await tx
 			.delete(OrganizationMenuItemModifierGroupAssignment)

@@ -314,30 +314,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
-		// Sync parent option triggers (when this new group is configured as a sub-group)
-		if (formData.has('parentOptionIds')) {
-			let parentOptionIds: string[] = []
-			try {
-				parentOptionIds = JSON.parse(
-					formData.get('parentOptionIds') as string,
-				) as string[]
-			} catch {
-				parentOptionIds = []
-			}
-
-			if (parentOptionIds.length > 0) {
-				await tx
-					.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
-					.values(
-						parentOptionIds.map((optId, idx) => ({
-							optionId: optId,
-							modifierGroupId: newGroup.id,
-							position: idx,
-						})),
-					)
-			}
-		}
-
 		// Insert Location Overrides
 		if (overrideEntries.length > 0) {
 			await tx.insert(OrganizationMenuLocationOverride).values(

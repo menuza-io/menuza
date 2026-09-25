@@ -505,7 +505,7 @@ export default function OptionsIndexRoute() {
 														<div className="flex flex-wrap items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400">
 															<Icon name="route" className="size-3" />
 															<span>
-																<Trans>Triggers sub-groups:</Trans>
+																<Trans>Nested modifier groups:</Trans>
 															</span>
 															{option.nestedGroups.map((g) => (
 																<Badge

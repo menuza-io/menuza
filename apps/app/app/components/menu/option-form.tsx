@@ -804,7 +804,7 @@ export function OptionForm({
 									<FrameHeader>
 										<div className="flex items-center justify-between">
 											<FrameTitle className="text-base">
-												<Trans>Nested / Sub-Modifier Groups</Trans>
+												<Trans>Nested Modifiers</Trans>
 											</FrameTitle>
 											{nestedModifierGroupIds.length > 0 && (
 												<Badge variant="secondary" className="text-xs">
@@ -817,9 +817,9 @@ export function OptionForm({
 										</div>
 										<FrameDescription>
 											<Trans>
-												When a customer selects this option, reveal these
-												conditional modifier groups (e.g. selecting "French
-												Fries" unlocks "Fry Size").
+												Attach secondary modifier groups that appear when this
+												modifier item is selected by a customer (e.g. selecting
+												"French Fries" prompts for "Fry Size").
 											</Trans>
 										</FrameDescription>
 									</FrameHeader>

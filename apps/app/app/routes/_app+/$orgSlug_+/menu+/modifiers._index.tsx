@@ -95,19 +95,7 @@ const MODIFIER_GROUP_FILTER_FIELDS: FilterField[] = [
 			{ value: 'pizza', label: 'Pizza' },
 		],
 	},
-	{
-		id: 'hierarchy',
-		label: 'Hierarchy',
-		type: 'select',
-		defaultOperator: 'is_any_of',
-		searchable: false,
-		icon: <Icon name="route" className="size-3.5" />,
-		options: [
-			{ value: 'all', label: 'All modifier groups' },
-			{ value: 'top_level', label: 'Top-level groups' },
-			{ value: 'sub_group', label: 'Sub-modifier groups' },
-		],
-	},
+
 	{
 		id: 'status',
 		label: 'Status',
@@ -265,8 +253,6 @@ export default function ModifiersIndexRoute() {
 					return group.internalName ?? ''
 				case 'selectionType':
 					return group.selectionType
-				case 'hierarchy':
-					return group.parentOptions.length > 0 ? 'sub_group' : 'top_level'
 				case 'status':
 					return group.availabilityStatus
 				default:
@@ -386,7 +372,7 @@ export default function ModifiersIndexRoute() {
 																	className="gap-1 border-indigo-500/30 bg-indigo-500/10 px-1.5 py-0 text-[10px] text-indigo-600"
 																>
 																	<Icon name="route" className="size-2.5" />
-																	<Trans>Sub-Group</Trans>
+																	<Trans>Nested Modifier</Trans>
 																</Badge>
 															)}
 													</div>
@@ -398,7 +384,7 @@ export default function ModifiersIndexRoute() {
 													{group.parentOptions &&
 														group.parentOptions.length > 0 && (
 															<p className="text-muted-foreground mt-0.5 text-[11px]">
-																<Trans>Conditional under:</Trans>{' '}
+																<Trans>Nested under:</Trans>{' '}
 																{group.parentOptions
 																	.map(
 																		(opt: string) =>

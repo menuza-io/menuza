@@ -1233,8 +1233,9 @@ const clientMenuData = {
 									<div class="space-y-2">
 										${(grp.options || [])
 											.map((opt: any) => {
+												let optHtml = ''
 												if (isPizza) {
-													return `
+													optHtml = `
 														<div class="flex items-center justify-between p-2 rounded-lg border border-border/70 text-xs">
 															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
 															<div class="flex items-center gap-1.5">
@@ -1253,9 +1254,8 @@ const clientMenuData = {
 															</div>
 														</div>
 													`
-												}
-												if (isRadio) {
-													return `
+												} else if (isRadio) {
+													optHtml = `
 														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
 															<div class="flex items-center gap-2">
 																<input type="radio" name="grp_${grp.id}" value="${opt.id}" class="size-4 text-primary js-modifier-radio" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
@@ -1264,16 +1264,66 @@ const clientMenuData = {
 															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
 														</label>
 													`
+												} else {
+													optHtml = `
+														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
+															<div class="flex items-center gap-2">
+																<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
+																<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
+															</div>
+															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+														</label>
+													`
 												}
-												return `
-													<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
-														<div class="flex items-center gap-2">
-															<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
+
+												let nestedHtml = ''
+												if (opt.nestedModifierGroups && opt.nestedModifierGroups.length > 0) {
+													nestedHtml = `
+														<div class="js-nested-groups-container hidden ml-4 mt-2 pl-3 border-l-2 border-primary/30 space-y-2.5" data-parent-option-id="${opt.id}">
+															${opt.nestedModifierGroups.map((nestedGrp: any) => {
+																const isNestedRadio = nestedGrp.selectionType === 'single'
+																return `
+																	<div class="rounded-lg border border-border/70 bg-muted/20 p-3 space-y-2" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-min-selections="${nestedGrp.minSelections || 0}">
+																		<div class="flex items-center justify-between">
+																			<h5 class="text-xs font-semibold text-foreground">${escapeHtml(nestedGrp.name)}</h5>
+																			<span class="text-[10px] text-muted-foreground font-medium">
+																				${nestedGrp.minSelections > 0
+																					? ((menuData as any).locale === 'ar' ? `مطلوب (اختر ${nestedGrp.minSelections})` : `Required (choose ${nestedGrp.minSelections})`)
+																	: ((menuData as any).labels?.optional || 'Optional')}
+																			</span>
+																		</div>
+																		<div class="space-y-1.5">
+																			${(nestedGrp.options || []).map((nestedOpt: any) => {
+																				if (isNestedRadio) {
+																					return `
+																						<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
+																							<div class="flex items-center gap-2">
+																								<input type="radio" name="grp_${nestedGrp.id}" value="${nestedOpt.id}" class="size-3.5 text-primary js-modifier-radio" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
+																								<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
+																							</div>
+																							<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+																						</label>
+																					`
+																				}
+																				return `
+																					<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
+																						<div class="flex items-center gap-2">
+																							<input type="checkbox" class="size-3.5 rounded text-primary js-modifier-checkbox" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
+																							<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
+																						</div>
+																						<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
+																					</label>
+																				`
+																			}).join('')}
+																		</div>
+																	</div>
+																`
+															}).join('')}
 														</div>
-														<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-													</label>
-												`
+													`
+												}
+
+												return `<div>${optHtml}${nestedHtml}</div>`
 											})
 											.join('')}
 									</div>
