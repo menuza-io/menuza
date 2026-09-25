@@ -133,6 +133,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 		categories = catAssignments.map((ca) => ({
 			id: ca.category.id,
+			parentId: ca.category.parentId ?? null,
 			displayName: ca.category.displayName,
 			description: ca.category.description,
 			internalName: ca.category.internalName,

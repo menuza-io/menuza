@@ -29,6 +29,7 @@ export interface PreviewOption {
 	isVegetarian?: boolean
 	isTopping?: boolean
 	isDefault?: boolean
+	nestedModifierGroupIds?: string[]
 	allergens?: string[]
 }
 
@@ -38,6 +39,11 @@ interface ModifierGuestPreviewProps {
 	minSelections: number
 	maxSelections?: number | null
 	options: PreviewOption[]
+	availableModifierGroups?: Array<{
+		id: string
+		name: string
+		internalName: string | null
+	}>
 	locale?: string
 	defaultLocale?: string
 	className?: string
@@ -49,6 +55,7 @@ export function ModifierGuestPreview({
 	minSelections,
 	maxSelections,
 	options,
+	availableModifierGroups,
 	locale = 'en',
 	defaultLocale = 'en',
 	className,
@@ -59,6 +66,42 @@ export function ModifierGuestPreview({
 		new Set(),
 	)
 	const [quantities, setQuantities] = useState<Record<string, number>>({})
+	const renderNestedGroups = (option: PreviewOption) => {
+		if (
+			!option.nestedModifierGroupIds ||
+			option.nestedModifierGroupIds.length === 0
+		)
+			return null
+		return (
+			<div className="border-primary/20 bg-muted/40 my-2 ml-8 space-y-1.5 rounded-md border p-2.5">
+				<div className="text-primary flex items-center gap-1.5 text-[11px] font-semibold">
+					<span>↳</span>
+					<Trans>Sub-Modifier Group(s) Active:</Trans>
+				</div>
+				{option.nestedModifierGroupIds.map((groupId) => {
+					const grp = availableModifierGroups?.find((g) => g.id === groupId)
+					return (
+						<div
+							key={groupId}
+							className="bg-background flex items-center justify-between rounded border px-2 py-1 text-xs"
+						>
+							<span className="text-foreground font-medium">
+								{grp
+									? getLocalizedMenuValue(grp.name, locale, defaultLocale) ||
+										grp.internalName ||
+										grp.name
+									: groupId}
+							</span>
+							<Badge variant="outline" className="text-[10px]">
+								<Trans>Conditional</Trans>
+							</Badge>
+						</div>
+					)
+				})}
+			</div>
+		)
+	}
+
 	// Pizza mode: map option id to 'whole' | 'left' | 'right' | null
 	const [pizzaSelections, setPizzaSelections] = useState<
 		Record<string, 'whole' | 'left' | 'right'>
@@ -208,43 +251,45 @@ export function ModifierGuestPreview({
 						if (selectionType === 'single') {
 							const isChecked = selectedSingle === option.id
 							return (
-								<label
-									key={option.id}
-									onClick={() =>
-										setSelectedSingle(isChecked ? null : option.id)
-									}
-									className={cn(
-										'hover:bg-muted/40 flex cursor-pointer items-center justify-between p-3.5 text-sm transition-colors',
-										isChecked && 'bg-primary/5',
-									)}
-								>
-									<div className="flex items-center gap-3">
-										<div
-											className={cn(
-												'border-primary/40 flex size-4.5 items-center justify-center rounded-full border transition-all',
-												isChecked &&
-													'border-primary bg-primary text-primary-foreground',
-											)}
-										>
-											{isChecked && (
-												<div className="size-2 rounded-full bg-white" />
-											)}
-										</div>
-										<div>
-											<span className="text-foreground font-medium">
-												{optName}
-											</span>
-											<DietaryBadges option={option} />
-										</div>
-									</div>
-									<div className="text-muted-foreground text-xs font-medium">
-										{option.price > 0 ? (
-											`+$${option.price.toFixed(2)}`
-										) : (
-											<Trans>Free</Trans>
+								<div key={option.id} className="flex flex-col">
+									<label
+										onClick={() =>
+											setSelectedSingle(isChecked ? null : option.id)
+										}
+										className={cn(
+											'hover:bg-muted/40 flex cursor-pointer items-center justify-between p-3.5 text-sm transition-colors',
+											isChecked && 'bg-primary/5',
 										)}
-									</div>
-								</label>
+									>
+										<div className="flex items-center gap-3">
+											<div
+												className={cn(
+													'border-primary/40 flex size-4.5 items-center justify-center rounded-full border transition-all',
+													isChecked &&
+														'border-primary bg-primary text-primary-foreground',
+												)}
+											>
+												{isChecked && (
+													<div className="size-2 rounded-full bg-white" />
+												)}
+											</div>
+											<div>
+												<span className="text-foreground font-medium">
+													{optName}
+												</span>
+												<DietaryBadges option={option} />
+											</div>
+										</div>
+										<div className="text-muted-foreground text-xs font-medium">
+											{option.price > 0 ? (
+												`+${option.price.toFixed(2)}`
+											) : (
+												<Trans>Free</Trans>
+											)}
+										</div>
+									</label>
+									{isChecked && renderNestedGroups(option)}
+								</div>
 							)
 						}
 
@@ -255,49 +300,51 @@ export function ModifierGuestPreview({
 								Boolean(maxSelections && selectedMultiple.size >= maxSelections)
 
 							return (
-								<label
-									key={option.id}
-									onClick={() => {
-										if (isDisabled) return
-										const next = new Set(selectedMultiple)
-										if (isChecked) {
-											next.delete(option.id)
-										} else {
-											next.add(option.id)
-										}
-										setSelectedMultiple(next)
-									}}
-									className={cn(
-										'hover:bg-muted/40 flex cursor-pointer items-center justify-between p-3.5 text-sm transition-colors',
-										isChecked && 'bg-primary/5',
-										isDisabled && 'cursor-not-allowed opacity-50',
-									)}
-								>
-									<div className="flex items-center gap-3">
-										<div
-											className={cn(
-												'border-primary/40 flex size-4.5 items-center justify-center rounded border transition-all',
-												isChecked &&
-													'border-primary bg-primary text-primary-foreground',
-											)}
-										>
-											{isChecked && <Icon name="check" className="size-3" />}
-										</div>
-										<div>
-											<span className="text-foreground font-medium">
-												{optName}
-											</span>
-											<DietaryBadges option={option} />
-										</div>
-									</div>
-									<div className="text-muted-foreground text-xs font-medium">
-										{option.price > 0 ? (
-											`+$${option.price.toFixed(2)}`
-										) : (
-											<Trans>Free</Trans>
+								<div key={option.id} className="flex flex-col">
+									<label
+										onClick={() => {
+											if (isDisabled) return
+											const next = new Set(selectedMultiple)
+											if (isChecked) {
+												next.delete(option.id)
+											} else {
+												next.add(option.id)
+											}
+											setSelectedMultiple(next)
+										}}
+										className={cn(
+											'hover:bg-muted/40 flex cursor-pointer items-center justify-between p-3.5 text-sm transition-colors',
+											isChecked && 'bg-primary/5',
+											isDisabled && 'cursor-not-allowed opacity-50',
 										)}
-									</div>
-								</label>
+									>
+										<div className="flex items-center gap-3">
+											<div
+												className={cn(
+													'border-primary/40 flex size-4.5 items-center justify-center rounded border transition-all',
+													isChecked &&
+														'border-primary bg-primary text-primary-foreground',
+												)}
+											>
+												{isChecked && <Icon name="check" className="size-3" />}
+											</div>
+											<div>
+												<span className="text-foreground font-medium">
+													{optName}
+												</span>
+												<DietaryBadges option={option} />
+											</div>
+										</div>
+										<div className="text-muted-foreground text-xs font-medium">
+											{option.price > 0 ? (
+												`+${option.price.toFixed(2)}`
+											) : (
+												<Trans>Free</Trans>
+											)}
+										</div>
+									</label>
+									{isChecked && renderNestedGroups(option)}
+								</div>
 							)
 						}
 

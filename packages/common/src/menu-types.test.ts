@@ -7,6 +7,10 @@ import {
 	MODIFIER_SELECTION_TYPES,
 	MenuItemInputSchema,
 	MenuInputSchema,
+	MenuCategoryInputSchema,
+	MenuOptionInputSchema,
+	getCategoryDepth,
+	isValidParentCategory,
 	ModifierGroupInputSchema,
 	ModifierOptionInputSchema,
 	getLocalizedMenuValue,
@@ -135,5 +139,91 @@ describe('menu-types', () => {
 			specialInstructions: true,
 		})
 		expect(parsed.success).toBe(true)
+	})
+	it('validates MenuCategoryInputSchema with parentId', () => {
+		const parsed = MenuCategoryInputSchema.safeParse({
+			displayName: 'Hot Coffees',
+			parentId: 'cat_drinks_1',
+		})
+		expect(parsed.success).toBe(true)
+		if (parsed.success) {
+			expect(parsed.data.parentId).toBe('cat_drinks_1')
+		}
+	})
+
+	it('validates category hierarchy depth and prevents cycles', () => {
+		const categories = [
+			{ id: 'drinks', parentId: null },
+			{ id: 'hot_coffees', parentId: 'drinks' },
+			{ id: 'americanos', parentId: 'hot_coffees' },
+		]
+		const map = new Map(categories.map((c) => [c.id, c]))
+
+		expect(getCategoryDepth('drinks', map)).toBe(1)
+		expect(getCategoryDepth('hot_coffees', map)).toBe(2)
+		expect(getCategoryDepth('americanos', map)).toBe(3)
+
+		// Adding Level 4 should be rejected (maxDepth = 3)
+		const level4Check = isValidParentCategory(
+			'blonde_americano',
+			'americanos',
+			categories,
+			3,
+		)
+		expect(level4Check.valid).toBe(false)
+		expect(level4Check.reason).toContain('maximum of 3 levels')
+
+		// Self-parenting should be rejected
+		const selfCheck = isValidParentCategory('drinks', 'drinks', categories, 3)
+		expect(selfCheck.valid).toBe(false)
+		expect(selfCheck.reason).toContain('cannot be its own parent')
+
+		// Circular reference (descendant as parent) should be rejected
+		const cycleCheck = isValidParentCategory(
+			'drinks',
+			'hot_coffees',
+			categories,
+			3,
+		)
+		expect(cycleCheck.valid).toBe(false)
+		expect(cycleCheck.reason).toContain('descendant')
+
+		// Valid parent assignment
+		const validCheck = isValidParentCategory(
+			'cold_coffees',
+			'drinks',
+			categories,
+			3,
+		)
+		expect(validCheck.valid).toBe(true)
+	})
+
+	it('validates ModifierOptionInputSchema and MenuOptionInputSchema with nestedModifierGroupIds', () => {
+		const parsedOption = ModifierOptionInputSchema.safeParse({
+			displayName: 'French Fries',
+			price: 4.5,
+			nestedModifierGroupIds: ['grp_fry_size', 'grp_dipping_sauce'],
+		})
+		expect(parsedOption.success).toBe(true)
+		if (parsedOption.success) {
+			expect(parsedOption.data.nestedModifierGroupIds).toEqual([
+				'grp_fry_size',
+				'grp_dipping_sauce',
+			])
+		}
+
+		const parsedMenuOption = MenuOptionInputSchema.safeParse({
+			displayName: 'French Fries',
+			price: 4.5,
+			modifierGroupIds: ['grp_sides'],
+			nestedModifierGroupIds: ['grp_fry_size'],
+		})
+		expect(parsedMenuOption.success).toBe(true)
+		if (parsedMenuOption.success) {
+			expect(parsedMenuOption.data.modifierGroupIds).toEqual(['grp_sides'])
+			expect(parsedMenuOption.data.nestedModifierGroupIds).toEqual([
+				'grp_fry_size',
+			])
+		}
 	})
 })

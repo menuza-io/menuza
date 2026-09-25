@@ -1,4 +1,5 @@
 import { Trans, t } from '@lingui/macro'
+import { cn } from '@repo/ui'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
@@ -41,7 +42,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -62,6 +63,18 @@ const DeleteCategorySchema = z.object({
 })
 
 const CATEGORY_FILTER_FIELDS: FilterField[] = [
+	{
+		id: 'hierarchy',
+		label: 'Hierarchy',
+		type: 'select',
+		defaultOperator: 'is_any_of',
+		searchable: false,
+		icon: <Icon name="folder-open" className="size-3.5" />,
+		options: [
+			{ value: 'top_level', label: 'Top-Level Categories' },
+			{ value: 'subcategories', label: 'Subcategories' },
+		],
+	},
 	{
 		id: 'name',
 		label: 'Name',
@@ -150,6 +163,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		defaultLocale,
 		categories: categories.map((c) => ({
 			id: c.id,
+			parentId: c.parentId ?? null,
 			displayName: c.displayName,
 			internalName: c.internalName,
 			availabilityStatus: c.availabilityStatus,
@@ -173,9 +187,15 @@ export default function CategoriesIndexRoute() {
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
+	const categoriesMap = useMemo(
+		() => new Map(categories.map((c) => [c.id, c])),
+		[categories],
+	)
 	const getFieldValue = useCallback(
 		(category: (typeof categories)[number], field: string) => {
 			switch (field) {
+				case 'hierarchy':
+					return category.parentId ? 'subcategories' : 'top_level'
 				case 'name':
 					return getLocalizedMenuValue(
 						category.displayName,
@@ -286,17 +306,52 @@ export default function CategoriesIndexRoute() {
 										return (
 											<TableRow key={cat.id}>
 												<TableCell>
-													<Link
-														to={`/${organization.slug}/menu/categories/${cat.id}`}
-														className="hover:text-primary text-foreground text-sm font-medium"
+													<div
+														className={cn(
+															'flex flex-col gap-0.5',
+															cat.parentId &&
+																'border-primary/30 border-l-2 pl-4',
+														)}
 													>
-														{catTitle}
-													</Link>
-													{cat.internalName && (
-														<span className="text-muted-foreground block text-xs">
-															{cat.internalName}
-														</span>
-													)}
+														<div className="flex items-center gap-2">
+															{cat.parentId && (
+																<span className="text-primary/70 text-xs font-semibold select-none">
+																	↳
+																</span>
+															)}
+															<Link
+																to={`/${organization.slug}/menu/categories/${cat.id}`}
+																className="hover:text-primary text-foreground text-sm font-medium"
+															>
+																{catTitle}
+															</Link>
+															{cat.parentId && (
+																<Badge
+																	variant="outline"
+																	className="text-muted-foreground px-1 py-0 text-[10px] font-normal"
+																>
+																	<Trans>Subcategory</Trans>
+																</Badge>
+															)}
+														</div>
+														{cat.parentId &&
+															categoriesMap.get(cat.parentId) && (
+																<span className="text-muted-foreground flex items-center gap-1 text-[11px]">
+																	<Trans>Under</Trans>
+																	{getLocalizedMenuValue(
+																		categoriesMap.get(cat.parentId)!
+																			.displayName,
+																		defaultLocale,
+																		defaultLocale,
+																	)}
+																</span>
+															)}
+														{cat.internalName && (
+															<span className="text-muted-foreground block text-xs">
+																{cat.internalName}
+															</span>
+														)}
+													</div>
 												</TableCell>
 												<TableCell className="hidden md:table-cell">
 													{cat.menus.length === 0 ? (

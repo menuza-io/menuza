@@ -99,6 +99,8 @@ export interface PublicMenuOptionData {
 	applySalesTax: boolean
 	availabilityStatus: string
 	position: number
+	nestedModifierGroupIds?: string[]
+	nestedModifierGroups?: PublicModifierGroupData[]
 }
 
 export interface PublicModifierGroupData {
@@ -141,6 +143,8 @@ export interface PublicMenuCategoryData {
 	displayName: string
 	internalName: string | null
 	description: string | null
+	parentId?: string | null
+	subcategories?: PublicMenuCategoryData[]
 	upsellCategoryIds: string[]
 	availabilityStatus: string
 	position: number
@@ -622,6 +626,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				isVegetarian: Boolean(opt.isVegetarian),
 				isTopping: Boolean(opt.isTopping),
 				isDefault: false,
+				nestedModifierGroupIds: safeJsonParse<string[]>(
+					opt.nestedModifierGroupIds,
+					[],
+				),
 				allergens: safeJsonParse<string[]>(opt.allergens, []),
 				applySalesTax: Boolean(opt.applySalesTax),
 				availabilityStatus: isUnavailableUntilExpired(
@@ -680,6 +688,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			} satisfies PublicModifierGroupData,
 		]),
 	)
+
+	// Attach nestedModifierGroups to each option
+	for (const group of groupsMap.values()) {
+		for (const opt of group.options) {
+			if (opt.nestedModifierGroupIds && opt.nestedModifierGroupIds.length > 0) {
+				opt.nestedModifierGroups = opt.nestedModifierGroupIds
+					.map((gId) => groupsMap.get(gId))
+					.filter(Boolean) as PublicModifierGroupData[]
+			}
+		}
+	}
 
 	// Item -> Modifier Groups
 	const groupsByItemId = new Map<string, PublicModifierGroupData[]>()
@@ -757,6 +776,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				displayName: cat.displayName,
 				internalName: cat.internalName,
 				description: cat.description,
+				parentId: cat.parentId ?? null,
+				subcategories: [] as PublicMenuCategoryData[],
 				upsellCategoryIds: safeJsonParse<string[]>(cat.upsellCategoryIds, []),
 				availabilityStatus: isUnavailableUntilExpired(
 					cat.availabilityStatus,
@@ -770,6 +791,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			} satisfies PublicMenuCategoryData,
 		]),
 	)
+
+	// Link subcategories in categoriesMap
+	for (const cat of categoriesMap.values()) {
+		if (cat.parentId) {
+			const parent = categoriesMap.get(cat.parentId)
+			if (parent) {
+				parent.subcategories = parent.subcategories ?? []
+				parent.subcategories.push(cat)
+			}
+		}
+	}
 
 	// Menu -> Categories
 	const categoriesByMenuId = new Map<string, PublicMenuCategoryData[]>()

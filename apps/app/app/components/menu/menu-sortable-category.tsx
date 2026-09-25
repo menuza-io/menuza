@@ -23,6 +23,7 @@ export interface OverviewCategoryData {
 	displayName: string
 	description: string | null
 	internalName: string | null
+	parentId?: string | null
 	position: number
 	items: OverviewItemData[]
 }
@@ -97,12 +98,19 @@ export const MenuSortableCategory = memo(function MenuSortableCategory({
 								/>
 							</button>
 							<div className="min-w-0">
-								<Link
-									to={`/${orgSlug}/menu/categories/${category.id}`}
-									className="text-foreground hover:text-primary block truncate text-sm"
-								>
-									{categoryName}
-								</Link>
+								<div className="flex items-center gap-1.5">
+									<Link
+										to={`/${orgSlug}/menu/categories/${category.id}`}
+										className="text-foreground hover:text-primary block truncate text-sm"
+									>
+										{categoryName}
+									</Link>
+									{category.parentId && (
+										<span className="text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5 text-[10px] font-normal">
+											↳ Subcategory
+										</span>
+									)}
+								</div>
 								{category.description ? (
 									<p className="text-muted-foreground mt-0.5 truncate text-xs">
 										{getLocalizedMenuValue(

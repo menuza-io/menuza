@@ -14,6 +14,8 @@ import {
 	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
+	ne,
 } from '@repo/database'
 import {
 	type ActionFunctionArgs,
@@ -74,6 +76,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isVegetarian: OrganizationMenuOption.isVegetarian,
 			isAlcohol: OrganizationMenuOption.isAlcohol,
 			isTopping: OrganizationMenuOption.isTopping,
+			nestedModifierGroupIds: OrganizationMenuOption.nestedModifierGroupIds,
 			isDefault: OrganizationMenuModifierGroupOptionAssignment.isDefault,
 		})
 		.from(OrganizationMenuModifierGroupOptionAssignment)
@@ -98,6 +101,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 	const defaultLocale = localesConfig.defaultLocale
 	const supportedLocales = localesConfig.locales
+
+	const allModifierGroups =
+		await db.query.OrganizationMenuModifierGroup.findMany({
+			where: and(
+				eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+				ne(OrganizationMenuModifierGroup.id, group.id),
+			),
+			orderBy: [asc(OrganizationMenuModifierGroup.name)],
+		})
 
 	const allItems = await db.query.OrganizationMenuItem.findMany({
 		where: eq(OrganizationMenuItem.organizationId, organization.id),
@@ -178,6 +190,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				isAlcohol: opt.isAlcohol,
 				isTopping: opt.isTopping,
 				isDefault: opt.isDefault,
+				nestedModifierGroupIds: (() => {
+					try {
+						return opt.nestedModifierGroupIds
+							? (JSON.parse(opt.nestedModifierGroupIds) as string[])
+							: []
+					} catch {
+						return []
+					}
+				})(),
 			})),
 			assignedItemIds: group.itemAssignments.map((ia) => ia.itemId),
 			locationOverrides,
@@ -187,6 +208,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			displayName: i.displayName,
 			internalName: i.internalName,
 			price: i.price,
+		})),
+		availableModifierGroups: allModifierGroups.map((g) => ({
+			id: g.id,
+			name: g.name,
+			internalName: g.internalName,
 		})),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
@@ -326,6 +352,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					if (!existing) targetOptionId = undefined
 				}
 				if (!targetOptionId) {
+					const nestedIds = opt.nestedModifierGroupIds ?? []
 					const [created] = await tx
 						.insert(OrganizationMenuOption)
 						.values({
@@ -340,11 +367,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							position: i,
 						})
 						.returning()
 					targetOptionId = created?.id
 				} else {
+					const nestedIds = opt.nestedModifierGroupIds ?? []
 					await tx
 						.update(OrganizationMenuOption)
 						.set({
@@ -358,6 +387,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							updatedAt: new Date(),
 						})
 						.where(
@@ -376,6 +406,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isDefault: opt.isDefault ?? false,
 							position: i,
 						})
+
+					// Sync nested modifier group assignments
+					await tx
+						.delete(OrganizationMenuOptionNestedModifierGroupAssignment)
+						.where(
+							eq(
+								OrganizationMenuOptionNestedModifierGroupAssignment.optionId,
+								targetOptionId,
+							),
+						)
+
+					const nestedIds = opt.nestedModifierGroupIds ?? []
+					if (nestedIds.length > 0) {
+						await tx
+							.insert(OrganizationMenuOptionNestedModifierGroupAssignment)
+							.values(
+								nestedIds.map((groupId, pos) => ({
+									optionId: targetOptionId!,
+									modifierGroupId: groupId,
+									position: pos,
+								})),
+							)
+					}
 				}
 			}
 		}

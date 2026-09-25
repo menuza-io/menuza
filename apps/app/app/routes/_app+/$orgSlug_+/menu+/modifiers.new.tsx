@@ -14,6 +14,7 @@ import {
 	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuOptionNestedModifierGroupAssignment,
 } from '@repo/database'
 import {
 	type ActionFunctionArgs,
@@ -45,6 +46,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 	const defaultLocale = localesConfig.defaultLocale
 	const supportedLocales = localesConfig.locales
+
+	const allModifierGroups =
+		await db.query.OrganizationMenuModifierGroup.findMany({
+			where: eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+			orderBy: [asc(OrganizationMenuModifierGroup.name)],
+		})
 
 	const allItems = await db.query.OrganizationMenuItem.findMany({
 		where: eq(OrganizationMenuItem.organizationId, organization.id),
@@ -88,6 +95,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			displayName: i.displayName,
 			internalName: i.internalName,
 			price: i.price,
+		})),
+		availableModifierGroups: allModifierGroups.map((g) => ({
+			id: g.id,
+			name: g.name,
+			internalName: g.internalName,
 		})),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
@@ -210,6 +222,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						.limit(1)
 					if (!existing) targetOptionId = undefined
 				}
+				const nestedIds = opt.nestedModifierGroupIds ?? []
 				if (!targetOptionId) {
 					const [created] = await tx
 						.insert(OrganizationMenuOption)
@@ -225,6 +238,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							position: i,
 						})
 						.returning()
@@ -243,6 +257,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							updatedAt: new Date(),
 						})
 						.where(
@@ -303,6 +318,7 @@ export default function CreateModifierGroupRoute() {
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
+		availableModifierGroups,
 		allItems,
 		allLocations,
 	} = useLoaderData<typeof loader>()

@@ -29,6 +29,7 @@ import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertMenuInOrganization,
+	assertValidParentCategoryInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -137,6 +138,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			availabilityStatus: category.availabilityStatus as
 				'available' | 'unavailable_until_tomorrow' | 'unavailable',
 			availabilityHours: category.availabilityHours ?? '',
+			parentId: category.parentId ?? null,
 			excludeFromOverride: category.excludeFromOverride,
 			assignedItemIds: category.itemAssignments.map((ia) => ia.itemId),
 			assignedMenuIds: category.menuAssignments.map((ma) => ma.menuId),
@@ -153,12 +155,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: m.id,
 			displayName: m.displayName,
 		})),
-		allCategories: allCategories
-			.filter((c) => c.id !== category.id)
-			.map((c) => ({
-				id: c.id,
-				displayName: c.displayName,
-			})),
+		allCategories: allCategories.map((c) => ({
+			id: c.id,
+			displayName: c.displayName,
+			parentId: c.parentId ?? null,
+		})),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
 			name: l.name,
@@ -223,6 +224,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	if (data.parentId) {
+		await assertValidParentCategoryInOrganization(
+			organization.id,
+			categoryId,
+			data.parentId,
+		)
+	}
 	await assertCategoryIdsInOrganization(organization.id, data.upsellCategoryIds)
 	await assertItemIdsInOrganization(organization.id, data.assignedItemIds)
 	for (const menuId of data.assignedMenuIds) {
@@ -253,6 +261,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				availabilityHours: data.availabilityHours || null,
 				excludeFromOverride: data.excludeFromOverride,
 				upsellCategoryIds: JSON.stringify(data.upsellCategoryIds),
+				parentId: data.parentId || null,
 				updatedAt: new Date(),
 			})
 			.where(

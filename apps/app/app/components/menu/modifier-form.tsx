@@ -74,6 +74,7 @@ export interface ModifierOptionData {
 	isAlcohol?: boolean
 	isTopping?: boolean
 	isDefault?: boolean
+	nestedModifierGroupIds?: string[]
 	availabilityStatus?: string
 }
 
@@ -261,6 +262,11 @@ export interface ModifierGroupFormData {
 
 interface ModifierFormProps {
 	initialData?: Partial<ModifierGroupFormData>
+	availableModifierGroups?: Array<{
+		id: string
+		name: string
+		internalName: string | null
+	}>
 	orgSlug: string
 	defaultLocale: string
 	supportedLocales?: string[]
@@ -291,6 +297,7 @@ interface ModifierFormProps {
 
 export function ModifierForm({
 	initialData,
+	availableModifierGroups = [],
 	orgSlug,
 	defaultLocale,
 	supportedLocales = [defaultLocale],
@@ -378,6 +385,8 @@ export function ModifierForm({
 	const [modalIsVegetarian, setModalIsVegetarian] = useState(false)
 	const [modalIsAlcohol, setModalIsAlcohol] = useState(false)
 	const [modalIsDefault, setModalIsDefault] = useState(false)
+	const [modalNestedModifierGroupIds, setModalNestedModifierGroupIds] =
+		useState<string[]>([])
 
 	const handleAddExistingOption = (opt: {
 		id: string
@@ -526,6 +535,7 @@ export function ModifierForm({
 		setModalIsVegetarian(false)
 		setModalIsAlcohol(false)
 		setModalIsDefault(false)
+		setModalNestedModifierGroupIds([])
 		setDialogMode('create')
 	}
 
@@ -552,6 +562,7 @@ export function ModifierForm({
 			isAlcohol: modalIsAlcohol,
 			isTopping: isPizza,
 			isDefault: modalIsDefault,
+			nestedModifierGroupIds: modalNestedModifierGroupIds,
 		}
 
 		if (modalIsDefault && selectionType === 'single') {
@@ -581,6 +592,7 @@ export function ModifierForm({
 		setModalIsVegetarian(option.isVegetarian ?? false)
 		setModalIsAlcohol(option.isAlcohol ?? false)
 		setModalIsDefault(option.isDefault ?? false)
+		setModalNestedModifierGroupIds(option.nestedModifierGroupIds ?? [])
 	}
 
 	const handleSaveEditOption = () => {
@@ -1010,6 +1022,7 @@ export function ModifierForm({
 								{/* Live Guest Preview Card */}
 								<ModifierGuestPreview
 									groupName={name}
+									availableModifierGroups={availableModifierGroups}
 									selectionType={selectionType}
 									minSelections={effectiveMinSelections}
 									maxSelections={parsedMaxSelections}
