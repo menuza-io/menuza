@@ -288,7 +288,7 @@ function SortableOptionRow({
 						).length > 0 && (
 							<Select
 								value="placeholder"
-								onValueChange={(val) => {
+								onValueChange={(val: string | null) => {
 									if (val && val !== 'placeholder') {
 										onAddNestedGroup(val)
 									}
@@ -1172,7 +1172,7 @@ export function ModifierForm({
 																		)
 																	}}
 																>
-																	<Icon name="trash" className="size-4" />
+																	<Icon name="trash-2" className="size-4" />
 																</Button>
 															</div>
 															<div className="border-border/50 space-y-2 border-t pt-2">
@@ -1243,40 +1243,35 @@ export function ModifierForm({
 
 										<div className="pt-1">
 											<Select
-												value="placeholder"
-												onValueChange={(val) => {
-													if (val && val !== 'placeholder') {
+												key={activeSubGroupIds.length}
+												disabled={
+													eligibleModifierGroups.filter(
+														(g) => !activeSubGroupIds.includes(g.id),
+													).length === 0
+												}
+												onValueChange={(val: string | null) => {
+													if (val) {
 														setActiveSubGroupIds((prev) => [...prev, val])
 													}
 												}}
 											>
-												<SelectTrigger className="bg-muted/10 w-full border-dashed shadow-none sm:max-w-xs">
-													<SelectValue placeholder="+ Add nested modifier group" />
+												<SelectTrigger className="bg-card w-full border-dashed shadow-none sm:max-w-xs">
+													<SelectValue
+														placeholder={
+															eligibleModifierGroups.filter(
+																(g) => !activeSubGroupIds.includes(g.id),
+															).length === 0
+																? _(t`No other modifier groups available`)
+																: _(t`+ Add nested modifier group`)
+														}
+													/>
 												</SelectTrigger>
 												<SelectContent align="start" className="max-h-64">
-													<SelectItem
-														value="placeholder"
-														disabled
-														className="hidden"
-													>
-														<Trans>Select sub-modifier group...</Trans>
-													</SelectItem>
-													{eligibleModifierGroups.filter(
-														(g) => !activeSubGroupIds.includes(g.id),
-													).length === 0 && (
-														<div className="text-muted-foreground p-2 text-center text-xs">
-															<Trans>No other modifier groups available.</Trans>
-														</div>
-													)}
 													{eligibleModifierGroups
 														.filter((g) => !activeSubGroupIds.includes(g.id))
 														.map((g) => (
 															<SelectItem key={g.id} value={g.id}>
-																{getLocalizedMenuValue(
-																	g.name,
-																	activeLocale,
-																	defaultLocale,
-																) ||
+																{getLocalizedMenuValue(g.name, activeLocale) ||
 																	g.internalName ||
 																	'Untitled'}
 															</SelectItem>
