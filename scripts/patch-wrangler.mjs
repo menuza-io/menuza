@@ -788,6 +788,9 @@ function patchTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 	}
 
 	if (appKey === 'web') {
+		// Source vars are useful for local development, but deploys use dashboard vars.
+		content = content.replace(/^\[vars\]\s*\n(?:(?!^\[).*(?:\n|$))*/gm, '')
+		content = `keep_vars = true\n${content}`
 		const d1Id = readEnv(
 			`WEB_D1_DATABASE_ID${suffix}`,
 			launchConfig,
@@ -813,69 +816,6 @@ function patchTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 				/(bucket_name\s*=\s*")[^"]+(")/,
 				`$1${bucket}$2`,
 				`bucket_name ← WEB_R2_BUCKET_NAME${suffix}`,
-			)
-		}
-
-		const rootApp = readUrlSetting(
-			'ROOT_APP',
-			'root_app',
-			deployEnv,
-			launchConfig,
-		)
-		if (rootApp) {
-			applyToml(
-				/(PUBLIC_ROOT_APP\s*=\s*")[^"]+(")/,
-				`$1${rootApp}$2`,
-				`PUBLIC_ROOT_APP ← ROOT_APP${suffix}`,
-			)
-		}
-
-		const publicAppUrl = readUrlSetting(
-			'PUBLIC_APP_URL',
-			'public_app_url',
-			deployEnv,
-			launchConfig,
-		)
-		if (publicAppUrl) {
-			applyToml(
-				/(PUBLIC_APP_URL\s*=\s*")[^"]+(")/,
-				`$1${publicAppUrl}$2`,
-				`PUBLIC_APP_URL ← PUBLIC_APP_URL${suffix}`,
-			)
-		}
-
-		const posthogProjectToken = readEnv(
-			`POSTHOG_PROJECT_TOKEN${suffix}`,
-			launchConfig,
-			`observability.${bindingEnv}.posthog_project_token`,
-		)
-		if (posthogProjectToken) {
-			applyToml(
-				/(PUBLIC_POSTHOG_PROJECT_TOKEN\s*=\s*")[^"]*(")/,
-				`$1${posthogProjectToken}$2`,
-				`PUBLIC_POSTHOG_PROJECT_TOKEN ← POSTHOG_PROJECT_TOKEN${suffix}`,
-			)
-		}
-
-		const posthogHost = readEnv(
-			`POSTHOG_HOST${suffix}`,
-			launchConfig,
-			`observability.${bindingEnv}.posthog_host`,
-		)
-		if (posthogHost) {
-			applyToml(
-				/(PUBLIC_POSTHOG_HOST\s*=\s*")[^"]*(")/,
-				`$1${posthogHost}$2`,
-				`PUBLIC_POSTHOG_HOST ← POSTHOG_HOST${suffix}`,
-			)
-		}
-
-		const release = readEnv('COMMIT_SHA', launchConfig)
-		if (release) {
-			applyToml(
-				/(PUBLIC_POSTHOG_RELEASE\s*=\s*")[^"]*(")/,
-				`$1${release}$2`,
-				'PUBLIC_POSTHOG_RELEASE ← COMMIT_SHA',
 			)
 		}
 
@@ -1004,17 +944,13 @@ function patchTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 				`SITES_DATA_KV_ID${suffix}`,
 				launchConfig,
 				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
-			) ||
-			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
+			) || readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
 		if (sitesDataKvId) {
 			if (deployEnv === 'staging') {
 				const stagingKvPattern =
 					/(\[\[env\.staging\.kv_namespaces\]\]\s*\n\s*binding\s*=\s*"SITES_DATA_KV"\s*\n\s*id\s*=\s*")[^"]+(")/
 				if (stagingKvPattern.test(content)) {
-					content = content.replace(
-						stagingKvPattern,
-						`$1${sitesDataKvId}$2`,
-					)
+					content = content.replace(stagingKvPattern, `$1${sitesDataKvId}$2`)
 				} else {
 					content += `\n[[env.staging.kv_namespaces]]\nbinding = "SITES_DATA_KV"\nid = "${sitesDataKvId}"\n`
 				}
@@ -1101,6 +1037,10 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 	}
 
 	if (appKey === 'web') {
+		// Astro copies wrangler.toml vars into its generated config. Deployment
+		// must omit those defaults so dashboard values remain the source of truth.
+		delete config.vars
+		config.keep_vars = true
 		if (
 			!patch(
 				'd1_databases[0].database_id',
@@ -1116,19 +1056,6 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 			[`WEB_R2_BUCKET_NAME${suffix}`, 'WEB_R2_BUCKET_NAME'],
 			`bindings.${bindingEnv}.web.r2_bucket_name`,
 		)
-		patchUrlVar('vars.PUBLIC_ROOT_APP', 'ROOT_APP', 'root_app')
-		patchUrlVar('vars.PUBLIC_APP_URL', 'PUBLIC_APP_URL', 'public_app_url')
-		patch(
-			'vars.PUBLIC_POSTHOG_PROJECT_TOKEN',
-			[`POSTHOG_PROJECT_TOKEN${suffix}`, 'POSTHOG_PROJECT_TOKEN'],
-			`observability.${bindingEnv}.posthog_project_token`,
-		)
-		patch(
-			'vars.PUBLIC_POSTHOG_HOST',
-			[`POSTHOG_HOST${suffix}`, 'POSTHOG_HOST'],
-			`observability.${bindingEnv}.posthog_host`,
-		)
-		patch('vars.PUBLIC_POSTHOG_RELEASE', ['COMMIT_SHA'], 'build.commit_sha')
 		const logsDestination = readEnv(
 			`POSTHOG_LOGS_DESTINATION${suffix}`,
 			launchConfig,
@@ -1171,8 +1098,7 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 				`SITES_DATA_KV_ID${suffix}`,
 				launchConfig,
 				`bindings.${bindingEnv}.sites.sites_data_kv_id`,
-			) ||
-			readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
+			) || readEnv(`APP_SITES_DATA_KV_ID${suffix}`, launchConfig, null)
 		if (sitesDataKvId) {
 			if (!Array.isArray(config.kv_namespaces)) config.kv_namespaces = []
 			const binding = config.kv_namespaces.find(
@@ -1186,9 +1112,7 @@ function patchAstroTomlApp(appKey, deployEnv, launchConfig, requireBindings) {
 					id: sitesDataKvId,
 				})
 			}
-			patches.push(
-				`kv_namespaces.SITES_DATA_KV ← SITES_DATA_KV_ID${suffix}`,
-			)
+			patches.push(`kv_namespaces.SITES_DATA_KV ← SITES_DATA_KV_ID${suffix}`)
 		} else if (requireBindings) {
 			missing.push(`SITES_DATA_KV_ID${suffix}`)
 		}
