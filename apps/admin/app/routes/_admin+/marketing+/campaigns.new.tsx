@@ -161,7 +161,7 @@ export default function AdminNewCampaignRoute() {
 					<Icon name="arrow-left" className="size-4" />
 				</Button>
 				<header className="space-y-1">
-					<h1 className="text-2xl font-semibold tracking-tight">
+					<h1 className="text-2xl tracking-tight">
 						<Trans>New broadcast</Trans>
 					</h1>
 					<p className="text-muted-foreground text-sm">

@@ -21,7 +21,7 @@ export const Default: Story = {
 			></HoverCardTrigger>
 			<HoverCardContent>
 				<div className="space-y-2">
-					<h4 className="text-sm font-semibold">Hover Card</h4>
+					<h4 className="text-sm">Hover Card</h4>
 					<p className="text-sm">
 						This is a hover card. It appears when you hover over the trigger.
 					</p>
@@ -44,7 +44,7 @@ export const WithAvatar: Story = {
 						<AvatarFallback>VC</AvatarFallback>
 					</Avatar>
 					<div className="space-y-1">
-						<h4 className="text-sm font-semibold">@username</h4>
+						<h4 className="text-sm">@username</h4>
 						<p className="text-sm">
 							Software engineer and creator of various open source projects.
 						</p>
@@ -68,7 +68,7 @@ export const RichContent: Story = {
 			></HoverCardTrigger>
 			<HoverCardContent className="w-80">
 				<div className="space-y-2">
-					<h4 className="text-sm font-semibold">Premium Product</h4>
+					<h4 className="text-sm">Premium Product</h4>
 					<p className="text-muted-foreground text-sm">
 						A high-quality product with excellent features.
 					</p>

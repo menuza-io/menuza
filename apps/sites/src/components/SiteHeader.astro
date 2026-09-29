@@ -65,7 +65,7 @@ const mobileNav = i18n._(msg`Mobile`)
 				/>
 			) : null}
 			{showName || !logoSrc ? (
-				<span class="truncate font-heading text-[15px] font-semibold tracking-tight text-foreground">
+				<span class="truncate font-heading text-[15px] tracking-tight text-foreground">
 					{organization.name}
 				</span>
 			) : (
@@ -93,7 +93,7 @@ const mobileNav = i18n._(msg`Mobile`)
 							hreflang={locale.code}
 							aria-current={locale.active ? 'true' : undefined}
 							class:list={[
-								'rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide uppercase transition-colors',
+								'rounded-md px-2 py-1 text-[11px] tracking-wide uppercase transition-colors',
 								locale.active
 									? 'bg-primary text-primary-foreground'
 									: 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -168,7 +168,7 @@ const mobileNav = i18n._(msg`Mobile`)
 									href={locale.href}
 									hreflang={locale.code}
 									class:list={[
-										'rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide uppercase',
+										'rounded-md px-2 py-1 text-[11px] tracking-wide uppercase',
 										locale.active
 											? 'bg-primary text-primary-foreground'
 											: 'bg-muted text-muted-foreground',

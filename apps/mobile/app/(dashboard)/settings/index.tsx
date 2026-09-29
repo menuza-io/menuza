@@ -79,7 +79,7 @@ export default function SettingsScreen() {
 							</Text>
 						</View>
 						<View className="ml-3 flex-1">
-							<Text className="text-foreground text-lg font-semibold">
+							<Text className="text-foreground text-lg">
 								{user?.name || user?.username}
 							</Text>
 							<Text className="text-muted-foreground text-sm">

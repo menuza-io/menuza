@@ -129,7 +129,7 @@ export default function MarketingOverviewRoute() {
 	return (
 		<div className="space-y-8">
 			<header className="space-y-1">
-				<h1 className="text-2xl font-semibold tracking-tight">
+				<h1 className="text-2xl tracking-tight">
 					<Trans>Platform marketing</Trans>
 				</h1>
 				<p className="text-muted-foreground text-sm">
@@ -164,7 +164,7 @@ export default function MarketingOverviewRoute() {
 							<Item key={item.key} variant="outline" size="sm">
 								<ItemContent>
 									<ItemDescription>{_(item.label)}</ItemDescription>
-									<p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
+									<p className="mt-1 text-2xl tracking-tight tabular-nums">
 										{item.format(metrics)}
 									</p>
 								</ItemContent>

@@ -142,7 +142,7 @@ function RailButton({
 					>
 						<Icon name={icon} className="size-4" />
 						{badge ? (
-							<span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[10px] font-semibold tabular-nums">
+							<span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[10px] tabular-nums">
 								{badge}
 							</span>
 						) : null}
@@ -261,7 +261,7 @@ export function ReportBuilder({
 						</Link>
 						<div className="bg-border hidden h-5 w-px sm:block" aria-hidden />
 						<div className="min-w-0 flex-1">
-							<h1 className="text-foreground truncate text-base leading-tight font-semibold">
+							<h1 className="text-foreground truncate text-base leading-tight">
 								{definition.settings.title || 'New Report'}
 							</h1>
 							{definition.settings.notes ? (
@@ -446,7 +446,7 @@ export function ReportBuilder({
 						</nav>
 						<div className="flex h-full min-w-0 flex-1 flex-col">
 							<div className="flex items-center justify-between border-b px-4 py-3">
-								<h2 className="text-sm font-semibold">
+								<h2 className="text-sm">
 									{panel === 'group' && listMode
 										? 'Columns'
 										: panel

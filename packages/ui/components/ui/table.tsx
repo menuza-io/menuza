@@ -50,7 +50,7 @@ function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
 				'dark:before:shadow-[0_-1px_--theme(--color-white/8%)]',
 				'in-data-[variant=card]:*:[tr]:border-0',
 				'in-data-[variant=card]:*:[tr]:*:[td]:border-b',
-				'in-data-[variant=card]:*:[tr]:*:[td]:bg-card',
+				'in-data-[variant=card]:*:[tr]:*:[td]:bg-background',
 				'in-data-[variant=card]:*:[tr]:first:*:[td]:first:rounded-ss-sm',
 				'in-data-[variant=card]:*:[tr]:*:[td]:first:border-s',
 				'in-data-[variant=card]:*:[tr]:first:*:[td]:border-t',
@@ -154,6 +154,16 @@ function TableCaption({
 	)
 }
 
+function TableSpacer({ colSpan = 1 }: { colSpan?: number }) {
+	return (
+		<tbody aria-hidden="true" data-slot="table-spacer">
+			<tr className="h-3">
+				<td colSpan={colSpan} className="h-3 border-0 bg-transparent p-0" />
+			</tr>
+		</tbody>
+	)
+}
+
 export {
 	Table,
 	TableHeader,
@@ -163,4 +173,5 @@ export {
 	TableRow,
 	TableCell,
 	TableCaption,
+	TableSpacer,
 }

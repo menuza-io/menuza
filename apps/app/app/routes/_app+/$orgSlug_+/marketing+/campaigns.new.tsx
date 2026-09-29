@@ -237,9 +237,7 @@ export default function NewCampaignRoute() {
 					<Icon name="arrow-left" className="size-4" />
 				</Button>
 				<header className="space-y-1">
-					<h1 className="text-2xl font-semibold tracking-tight">
-						{_(msg`New broadcast`)}
-					</h1>
+					<h1 className="text-2xl tracking-tight">{_(msg`New broadcast`)}</h1>
 					<p className="text-muted-foreground text-sm">
 						{_(msg`Send a one-time email or SMS to your audience.`)}
 					</p>

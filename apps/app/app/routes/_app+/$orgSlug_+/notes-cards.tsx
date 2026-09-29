@@ -403,7 +403,7 @@ export const NoteCard = ({
 									value={editTitle}
 									onChange={(e) => setEditTitle(e.target.value)}
 									onKeyDown={handleKeyDown}
-									className="h-8 flex-1 px-2 font-semibold"
+									className="h-8 flex-1 px-2"
 									placeholder={_(t`Note title...`)}
 								/>
 								<div className="flex items-center gap-1">
@@ -466,9 +466,7 @@ export const NoteCard = ({
 										</TooltipContent>
 									</Tooltip>
 								)}
-								<h3 className="flex-1 text-lg leading-tight font-semibold">
-									{note.title}
-								</h3>
+								<h3 className="flex-1 text-lg leading-tight">{note.title}</h3>
 							</div>
 							{/* Content preview */}
 							{note.content &&

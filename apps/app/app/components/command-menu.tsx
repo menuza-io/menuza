@@ -168,7 +168,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 							<span>
 								<Trans>Account settings</Trans>
 							</span>
-							<CommandShortcut>⌘P</CommandShortcut>
+							<CommandShortcut>P</CommandShortcut>
 						</CommandItem>
 						<CommandItem
 							onSelect={() => {
@@ -180,7 +180,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 							<span>
 								<Trans>Billing</Trans>
 							</span>
-							<CommandShortcut>⌘B</CommandShortcut>
+							<CommandShortcut>B</CommandShortcut>
 						</CommandItem>
 						<CommandItem
 							onSelect={() => {
@@ -192,7 +192,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 							<span>
 								<Trans>Settings</Trans>
 							</span>
-							<CommandShortcut>⌘S</CommandShortcut>
+							<CommandShortcut>S</CommandShortcut>
 						</CommandItem>
 					</CommandGroup>
 				</CommandList>

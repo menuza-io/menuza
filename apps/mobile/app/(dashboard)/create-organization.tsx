@@ -131,7 +131,7 @@ export default function CreateOrganizationScreen() {
 					{/* Form */}
 					<Card className="mb-4">
 						<CardHeader>
-							<Text className="text-foreground text-lg font-semibold">
+							<Text className="text-foreground text-lg">
 								<Trans>Organization Details</Trans>
 							</Text>
 						</CardHeader>
@@ -199,7 +199,7 @@ export default function CreateOrganizationScreen() {
 								</Text>
 								<Text className="text-foreground text-sm">
 									app.example.com/
-									<Text className="text-primary font-semibold">{slug}</Text>
+									<Text className="text-primary">{slug}</Text>
 								</Text>
 							</CardContent>
 						</Card>

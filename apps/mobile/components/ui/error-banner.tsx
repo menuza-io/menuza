@@ -59,7 +59,7 @@ const ErrorBanner: React.FC<ErrorBannerProps> = ({
 							accessibilityRole="button"
 							accessibilityLabel={actionText}
 						>
-							<Text className={`text-xs font-semibold ${textStyles[type]}`}>
+							<Text className={`text-xs ${textStyles[type]}`}>
 								{actionText}
 							</Text>
 						</TouchableOpacity>

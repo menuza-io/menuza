@@ -534,7 +534,7 @@ export function NotFoundPage() {
 									</defs>
 								</svg>
 							</div>
-							<h1 className="text-foreground z-10 text-3xl font-semibold md:text-5xl lg:text-6xl">
+							<h1 className="text-foreground z-10 text-3xl md:text-5xl lg:text-6xl">
 								Page not found
 							</h1>
 							<p className="text-muted-foreground z-10 text-lg md:text-xl">

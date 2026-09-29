@@ -88,7 +88,7 @@ export default function ProfileEditScreen() {
 					{/* Form */}
 					<Card className="mb-4">
 						<CardHeader>
-							<Text className="text-foreground text-lg font-semibold">
+							<Text className="text-foreground text-lg">
 								Profile Information
 							</Text>
 						</CardHeader>

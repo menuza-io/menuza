@@ -66,7 +66,7 @@ function JourneyStatusBadge({ status }: { status: JourneyListItem['status'] }) {
 		<Badge
 			variant="outline"
 			className={cn(
-				'shrink-0 text-[10px] font-semibold capitalize',
+				'shrink-0 text-[10px] capitalize',
 				status === 'active' &&
 					'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
 				status === 'draft' && 'bg-muted text-muted-foreground border-border',

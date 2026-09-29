@@ -83,7 +83,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 								>
 									<Text className="text-2xl">{getIcon()}</Text>
 								</View>
-								<Text className="text-foreground text-center text-lg font-semibold">
+								<Text className="text-foreground text-center text-lg">
 									{title}
 								</Text>
 							</View>
@@ -99,7 +99,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 										onPress={secondaryAction.onPress}
 										accessibilityRole="button"
 									>
-										<Text className="text-foreground text-sm font-semibold">
+										<Text className="text-foreground text-sm">
 											{secondaryAction.text}
 										</Text>
 									</TouchableOpacity>
@@ -111,7 +111,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 										onPress={primaryAction.onPress}
 										accessibilityRole="button"
 									>
-										<Text className="text-primary-foreground text-sm font-semibold">
+										<Text className="text-primary-foreground text-sm">
 											{primaryAction.text}
 										</Text>
 									</TouchableOpacity>
@@ -123,9 +123,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 										onPress={onDismiss}
 										accessibilityRole="button"
 									>
-										<Text className="text-primary-foreground text-sm font-semibold">
-											OK
-										</Text>
+										<Text className="text-primary-foreground text-sm">OK</Text>
 									</TouchableOpacity>
 								)}
 							</View>

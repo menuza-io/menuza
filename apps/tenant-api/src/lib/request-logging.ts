@@ -1,6 +1,10 @@
 import { type MiddlewareHandler } from 'hono'
 import { ENV } from 'varlock/env'
-import { generateRequestId, logger, runWithRequestContext } from '@repo/observability'
+import {
+	generateRequestId,
+	logger,
+	runWithRequestContext,
+} from '@repo/observability'
 
 const SKIP_PATHS = new Set(['/health', '/api/health'])
 

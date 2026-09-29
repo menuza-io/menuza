@@ -579,8 +579,22 @@ function applyGeneratedWranglerSecrets(
 				['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
 				['JWT_SECRET', secrets.app.JWT_SECRET],
 				['TENANT_CUSTOMER_JWT_SECRET', secrets.app.TENANT_CUSTOMER_JWT_SECRET],
-				...(secrets.app.INTEGRATION_ENCRYPTION_KEY ? [['INTEGRATION_ENCRYPTION_KEY', secrets.app.INTEGRATION_ENCRYPTION_KEY]] : []),
-				...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET ? [['INTEGRATIONS_OAUTH_STATE_SECRET', secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET]] : []),
+				...(secrets.app.INTEGRATION_ENCRYPTION_KEY
+					? [
+							[
+								'INTEGRATION_ENCRYPTION_KEY',
+								secrets.app.INTEGRATION_ENCRYPTION_KEY,
+							],
+						]
+					: []),
+				...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET
+					? [
+							[
+								'INTEGRATIONS_OAUTH_STATE_SECRET',
+								secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET,
+							],
+						]
+					: []),
 				['SSO_ENCRYPTION_KEY', secrets.shared.SSO_ENCRYPTION_KEY],
 				['AUDIT_LOG_SECRET_KEY', secrets.shared.AUDIT_LOG_SECRET_KEY],
 				['LAUNCH_STATUS', launchStatus],
@@ -1333,8 +1347,15 @@ async function main() {
 		TENANT_OPERATOR_TOKEN: secrets.shared.TENANT_OPERATOR_TOKEN,
 		JWT_SECRET: secrets.app.JWT_SECRET,
 		TENANT_CUSTOMER_JWT_SECRET: secrets.app.TENANT_CUSTOMER_JWT_SECRET,
-		...(secrets.app.INTEGRATION_ENCRYPTION_KEY ? { INTEGRATION_ENCRYPTION_KEY: secrets.app.INTEGRATION_ENCRYPTION_KEY } : {}),
-		...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET ? { INTEGRATIONS_OAUTH_STATE_SECRET: secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET } : {}),
+		...(secrets.app.INTEGRATION_ENCRYPTION_KEY
+			? { INTEGRATION_ENCRYPTION_KEY: secrets.app.INTEGRATION_ENCRYPTION_KEY }
+			: {}),
+		...(secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET
+			? {
+					INTEGRATIONS_OAUTH_STATE_SECRET:
+						secrets.app.INTEGRATIONS_OAUTH_STATE_SECRET,
+				}
+			: {}),
 		LAUNCH_STATUS: secrets.launch_status,
 		CREDIT_CARD_REQUIRED_FOR_TRIAL: secrets.credit_card_required_for_trial,
 		JOBS_CRON_WORKER_URL: jobsCronUrl,

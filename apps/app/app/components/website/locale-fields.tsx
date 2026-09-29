@@ -69,7 +69,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
 										aria-label={label}
 										onClick={() => setActiveLocale(locale)}
 										className={cn(
-											'h-6 min-w-6 shrink-0 rounded-md px-1.5 text-[11px] font-semibold tracking-wide uppercase transition-colors duration-150',
+											'h-6 min-w-6 shrink-0 rounded-md px-1.5 text-[11px] tracking-wide uppercase transition-colors duration-150',
 											'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
 											selected
 												? 'bg-muted text-foreground'

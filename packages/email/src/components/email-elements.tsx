@@ -106,10 +106,7 @@ export function EmailHeading({
 	if (as === 'h2') {
 		return (
 			<Section className={classes('mb-[40px]', className)}>
-				<Heading
-					as="h2"
-					className="text-foreground text-24 m-0 text-left font-semibold"
-				>
+				<Heading as="h2" className="text-foreground text-24 m-0 text-left">
 					{children}
 				</Heading>
 			</Section>
@@ -124,7 +121,7 @@ export function EmailHeading({
 			<Heading
 				as="h1"
 				className={classes(
-					'text-foreground m-0 font-semibold',
+					'text-foreground m-0',
 					align === 'center'
 						? classes(
 								size === 'hero' ? 'text-40' : 'text-28',
@@ -240,7 +237,7 @@ export function EmailCode({ children, label, className }: EmailCodeProps) {
 						className,
 					)}
 				>
-					<Text className="text-28 text-foreground m-0 font-semibold tracking-[0.2em]">
+					<Text className="text-28 text-foreground m-0 tracking-[0.2em]">
 						{children}
 					</Text>
 				</Section>
@@ -401,9 +398,7 @@ export function EmailStep({ n, title, body, last }: EmailStepProps) {
 			</Column>
 			<Column className="align-top">
 				<Section className="mb-[4px]">
-					<Text className="text-16 text-foreground m-0 font-semibold">
-						{title}
-					</Text>
+					<Text className="text-16 text-foreground m-0">{title}</Text>
 				</Section>
 				{body ? (
 					<Text className="text-16 text-muted-foreground m-0">{body}</Text>

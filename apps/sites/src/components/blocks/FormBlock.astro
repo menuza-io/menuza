@@ -87,7 +87,7 @@ const verificationRequired = Astro.locals.i18n._(
 				<div class="space-y-7">
 					{config?.showTitle !== false ? (
 						<div class="space-y-2">
-							<h2 class="font-heading text-3xl font-semibold tracking-tight text-foreground">
+							<h2 class="font-heading text-3xl tracking-tight text-foreground">
 								{pickLocalized(form.name, activeLocale, defaultLocale)}
 							</h2>
 							{form.description ? (
@@ -135,7 +135,7 @@ const verificationRequired = Astro.locals.i18n._(
 								defaultLocale,
 							)
 							return field.type === 'heading' ? (
-								<h3 class="font-heading pt-2 text-xl font-semibold tracking-tight text-foreground">
+								<h3 class="font-heading pt-2 text-xl tracking-tight text-foreground">
 									{fieldLabel}
 								</h3>
 							) : field.type === 'paragraph' ? (

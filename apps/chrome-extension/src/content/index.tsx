@@ -94,7 +94,7 @@ function ContentApp({ onClose }: { onClose: () => void }) {
 							<span className="text-muted-foreground text-xs">Loading...</span>
 						) : (
 							<span
-								className={`text-xs font-semibold ${isLoggedIn ? 'text-green-600' : 'text-red-600'}`}
+								className={`text-xs ${isLoggedIn ? 'text-green-600' : 'text-red-600'}`}
 							>
 								{isLoggedIn ? 'Logged In' : 'Not Logged In'}
 							</span>

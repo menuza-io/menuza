@@ -215,7 +215,7 @@ export default function JourneyRunsRoute() {
 						<Badge
 							variant="outline"
 							className={cn(
-								'text-[10px] font-semibold capitalize',
+								'text-[10px] capitalize',
 								journey.status === 'active' &&
 									'border-emerald-500/30 bg-emerald-500/10 text-emerald-600',
 								journey.status === 'draft' && 'bg-muted text-muted-foreground',
@@ -239,7 +239,7 @@ export default function JourneyRunsRoute() {
 					}
 					variant="outline"
 					size="sm"
-					className="gap-1.5 text-xs font-semibold"
+					className="gap-1.5 text-xs"
 				>
 					<svg
 						className="size-3.5"
@@ -304,7 +304,7 @@ export default function JourneyRunsRoute() {
 								<TableBody>
 									{runs.map((run) => (
 										<TableRow key={run.id} className="hover:bg-muted/30">
-											<TableCell className="font-mono text-xs font-semibold">
+											<TableCell className="font-mono text-xs">
 												{run.id.slice(0, 8)}...{run.id.slice(-6)}
 											</TableCell>
 											<TableCell className="text-muted-foreground font-mono text-xs">
@@ -314,7 +314,7 @@ export default function JourneyRunsRoute() {
 												<Badge
 													variant="outline"
 													className={cn(
-														'text-[10px] font-semibold capitalize',
+														'text-[10px] capitalize',
 														run.status === 'completed' &&
 															'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
 														run.status === 'running' &&
@@ -425,12 +425,12 @@ export default function JourneyRunsRoute() {
 											>
 												<div className="space-y-1">
 													<div className="flex items-center gap-2">
-														<span className="text-foreground font-mono text-xs font-semibold">
+														<span className="text-foreground font-mono text-xs">
 															{step.nodeId}
 														</span>
 														<Badge
 															variant="outline"
-															className="text-[9px] font-semibold tracking-wider uppercase"
+															className="text-[9px] tracking-wider uppercase"
 														>
 															{step.nodeType}
 														</Badge>

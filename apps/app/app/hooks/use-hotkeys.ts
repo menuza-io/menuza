@@ -36,17 +36,17 @@ export function useGlobalHotkeys(setCommandOpen: (open: boolean) => void) {
 
 	const configs: HotkeyConfig[] = [
 		{
-			key: 'cmd+k,ctrl+k',
+			key: 'f',
 			action: () => setCommandOpen(true),
 			description: 'Open command menu',
 		},
 		{
-			key: 'cmd+a,ctrl+a',
+			key: 'p',
 			action: () => void navigate('/profile'),
 			description: 'Go to account settings',
 		},
 		{
-			key: 'cmd+b,ctrl+b',
+			key: 'b',
 			action: () => {
 				if (orgSlug) {
 					void navigate(`/${orgSlug}/settings/billing`)
@@ -55,7 +55,7 @@ export function useGlobalHotkeys(setCommandOpen: (open: boolean) => void) {
 			description: 'Go to billing',
 		},
 		{
-			key: 'cmd+s,ctrl+s',
+			key: 's',
 			action: () => {
 				if (orgSlug) {
 					void navigate(`/${orgSlug}/settings`)

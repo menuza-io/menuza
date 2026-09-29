@@ -46,7 +46,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 		<div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
 			{items.map((item) => (
 				<div>
-					<h3 class:list={['text-xl font-semibold tracking-tight', headingClass]}>{item.title}</h3>
+					<h3 class:list={['text-xl tracking-tight', headingClass]}>{item.title}</h3>
 					{item.description ? (
 						<p class:list={['mt-3 text-sm leading-relaxed', bodyClass]}>
 							{item.description}

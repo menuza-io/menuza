@@ -27,7 +27,7 @@ export const Default: Story = {
 						<div className="p-1">
 							<Card>
 								<CardContent className="flex aspect-square items-center justify-center p-6">
-									<span className="text-4xl font-semibold">{index + 1}</span>
+									<span className="text-4xl">{index + 1}</span>
 								</CardContent>
 							</Card>
 						</div>
@@ -54,7 +54,7 @@ export const MultipleItemsPerView: Story = {
 						<div className="p-1">
 							<Card>
 								<CardContent className="flex aspect-square items-center justify-center p-6">
-									<span className="text-3xl font-semibold">{index + 1}</span>
+									<span className="text-3xl">{index + 1}</span>
 								</CardContent>
 							</Card>
 						</div>
@@ -105,7 +105,7 @@ export const Vertical: Story = {
 						<div className="p-1">
 							<Card>
 								<CardContent className="flex items-center justify-center p-6">
-									<span className="text-3xl font-semibold">{index + 1}</span>
+									<span className="text-3xl">{index + 1}</span>
 								</CardContent>
 							</Card>
 						</div>

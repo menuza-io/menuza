@@ -322,7 +322,7 @@ export default function AuthorizePage() {
 							</CardHeader>
 							<CardContent>
 								<div className="flex items-center gap-3">
-									<div className="bg-primary text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
+									<div className="bg-primary text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full text-sm">
 										{user.name?.charAt(0).toUpperCase() || 'U'}
 									</div>
 									<div>

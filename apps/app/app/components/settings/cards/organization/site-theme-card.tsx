@@ -659,14 +659,14 @@ function CssVarsEditor({
 				>
 					<Icon name="pocket-knife" size="xs" />
 				</span>
-				<span className="text-foreground min-w-0 flex-1 text-[13px] leading-snug font-semibold">
+				<span className="text-foreground min-w-0 flex-1 text-[13px] leading-snug">
 					{_(msg`Custom colors`)}
 				</span>
 				{overrideCount > 0 ? (
 					<span
 						className={cn(
 							'inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5',
-							'bg-foreground text-background text-[10px] font-semibold tabular-nums',
+							'bg-foreground text-background text-[10px] tabular-nums',
 						)}
 					>
 						{overrideCount}
@@ -715,7 +715,7 @@ function CssVarsEditor({
 							{TOKEN_GROUPS.map((group) => (
 								<div key={group.id} className="space-y-2">
 									<div className="space-y-0.5">
-										<h4 className="text-foreground text-[11px] font-semibold tracking-tight uppercase">
+										<h4 className="text-foreground text-[11px] tracking-tight uppercase">
 											{group.label}
 										</h4>
 										<p className="text-muted-foreground text-[10.5px] leading-snug">

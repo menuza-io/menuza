@@ -171,7 +171,7 @@ export default function SignUpScreen() {
 						<View className="bg-primary/10 border-primary/30 mb-6 rounded-lg border p-4">
 							<View className="mb-2 flex-row items-center">
 								<Text className="mr-2 text-xl">📧</Text>
-								<Text className="text-primary text-base font-semibold">
+								<Text className="text-primary text-base">
 									<Trans>Organization Invite</Trans>
 								</Text>
 							</View>
@@ -210,7 +210,7 @@ export default function SignUpScreen() {
 					{/* Signup Form */}
 					<View className="gap-4">
 						<View className="gap-2">
-							<Text className="text-foreground text-base font-semibold">
+							<Text className="text-foreground text-base">
 								<Trans>Email</Trans>
 							</Text>
 							<Controller
@@ -274,7 +274,7 @@ export default function SignUpScreen() {
 						onPress={handleNavigateToSignIn}
 						accessibilityRole="link"
 					>
-						<Text className="text-primary text-base font-semibold">
+						<Text className="text-primary text-base">
 							<Trans>Sign in</Trans>
 						</Text>
 					</TouchableOpacity>

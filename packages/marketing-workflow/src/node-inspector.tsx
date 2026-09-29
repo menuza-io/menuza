@@ -535,7 +535,7 @@ export function NodeInspector({
 							)}
 
 							<div className="bg-muted/40 space-y-1.5 rounded-lg border p-3 text-xs">
-								<p className="text-foreground font-semibold">
+								<p className="text-foreground">
 									<Trans>Routing Logic:</Trans>
 								</p>
 								<p className="text-muted-foreground text-[11px]">
@@ -551,7 +551,7 @@ export function NodeInspector({
 												: data.operator === 'not_equals'
 													? ' does not equal '
 													: ' contains '}
-										<span className="text-foreground font-semibold">
+										<span className="text-foreground">
 											{data.field === 'phoneVerified'
 												? data.value === 'true'
 													? 'Verified'

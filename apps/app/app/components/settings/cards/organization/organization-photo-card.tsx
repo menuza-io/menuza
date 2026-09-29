@@ -40,7 +40,7 @@ export function OrganizationPhoto({
 			imgClassName={cn(
 				'bg-primary h-full w-full rounded-md object-contain',
 				!organization.image?.objectKey &&
-					'flex items-center justify-center p-4 text-6xl font-semibold',
+					'flex items-center justify-center p-4 text-6xl',
 			)}
 			renderForm={({ setIsOpen, selectedFile }) => (
 				<OrganizationPhotoForm

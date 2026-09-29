@@ -66,7 +66,7 @@ export const Card: React.FC<CardProps> = ({
 				)}
 				{title && (
 					<div className="prose">
-						<h3 className="mb-2 text-xl font-semibold">
+						<h3 className="mb-2 text-xl">
 							<a href={href} className="transition-colors hover:text-blue-600">
 								{title}
 							</a>

@@ -229,13 +229,13 @@ Public form blocks on tenant sites post directly from the visitor browser to
 regional tenant-api. Responses are stored in per-org regional SQLite, as
 described in the tenant data residency documentation.
 
-| Control | Implementation |
-| ------- | -------------- |
+| Control        | Implementation                                                                                                              |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Bot mitigation | Honeypot field + optional Cloudflare Turnstile (`PUBLIC_TURNSTILE_SITE_KEY` on Sites, `TURNSTILE_SECRET_KEY` on tenant-api) |
-| Rate limiting | 30 submissions / IP / hour (`public-form-submissions`) |
-| Access | Published forms only; org resolved from `Origin` + slug/host |
-| Validation | Zod field schemas, email format, localized choice matching |
-| Retention | Cron purge via `DELETE /api/forms/purge-submissions` |
+| Rate limiting  | 30 submissions / IP / hour (`public-form-submissions`)                                                                      |
+| Access         | Published forms only; org resolved from `Origin` + slug/host                                                                |
+| Validation     | Zod field schemas, email format, localized choice matching                                                                  |
+| Retention      | Cron purge via `DELETE /api/forms/purge-submissions`                                                                        |
 
 Turnstile verification uses action `website-form` and hostnames in
 `TURNSTILE_HOSTNAMES`. Sites CSP allows `https://challenges.cloudflare.com` for

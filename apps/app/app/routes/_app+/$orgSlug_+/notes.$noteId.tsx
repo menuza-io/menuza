@@ -679,7 +679,7 @@ export default function NoteRoute() {
 			<SheetHeader className="border-b pb-4">
 				<SheetTitle
 					id="note-title"
-					className="pr-8 text-left text-lg leading-snug font-semibold"
+					className="pr-8 text-left text-lg leading-snug"
 				>
 					{note.title || <Trans>Untitled Note</Trans>}
 				</SheetTitle>

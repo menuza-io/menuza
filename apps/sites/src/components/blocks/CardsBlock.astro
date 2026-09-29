@@ -66,7 +66,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 						) : null}
 						<div class="pt-4">
 							{item.title ? (
-								<h3 class:list={['text-lg font-semibold tracking-tight', headingClass]}>
+								<h3 class:list={['text-lg tracking-tight', headingClass]}>
 									{item.title}
 								</h3>
 							) : null}
@@ -76,7 +76,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 								</p>
 							) : null}
 							{item.ctaLabel ? (
-								<p class:list={['mt-3 text-sm font-semibold', config.background === 'inverted' ? headingClass : 'text-primary']}>{item.ctaLabel}</p>
+								<p class:list={['mt-3 text-sm', config.background === 'inverted' ? headingClass : 'text-primary']}>{item.ctaLabel}</p>
 							) : null}
 						</div>
 					</>

@@ -67,7 +67,7 @@ const getColSpanClass = (colSpan?: string) => {
 					{stat.variant === 'dashboard' && stat.icon && (
 						<div class="mb-4 text-brand" set:html={stat.icon} />
 					)}
-					<h3 class="text-[17px] font-semibold text-foreground">{stat.title}</h3>
+					<h3 class="text-[17px] text-foreground">{stat.title}</h3>
 					<p class="mt-2 text-[14px] leading-relaxed text-muted-foreground">{stat.description}</p>
 				</article>
 			))

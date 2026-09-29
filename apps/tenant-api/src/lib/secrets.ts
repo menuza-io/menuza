@@ -6,7 +6,7 @@ const INSECURE_SECRET_MARKERS = [
 	'do-not-use-in-prod',
 	'change-me',
 	'super-duper-secret',
-	'super-duper-s3cr3t'
+	'super-duper-s3cr3t',
 ]
 
 function isInsecureSecret(value: string) {

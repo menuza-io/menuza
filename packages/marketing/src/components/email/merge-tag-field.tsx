@@ -355,7 +355,7 @@ export function MergeTagField({
 					</div>
 
 					<div className="space-y-0.5">
-						<p className="text-muted-foreground px-1 text-[11px] font-semibold tracking-wide uppercase">
+						<p className="text-muted-foreground px-1 text-[11px] tracking-wide uppercase">
 							<Trans>Variables</Trans>
 						</p>
 						<div className="max-h-56 overflow-auto">

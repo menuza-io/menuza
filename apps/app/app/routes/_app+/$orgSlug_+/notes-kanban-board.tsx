@@ -29,7 +29,7 @@ import { ColorPicker } from '@repo/ui/color-picker'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { StatusButton } from '@repo/ui/status-button'
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { useFetcher, useFetchers } from 'react-router'
 
@@ -273,6 +273,7 @@ export function NotesKanbanBoard({
 	}, [notes, pendingNotes, pendingNoteCreates, columns])
 
 	// --- DnD-kit setup ---
+	const dndId = useId()
 	const sensors = useSensors(
 		useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
 		useSensor(TouchSensor, {
@@ -448,6 +449,7 @@ export function NotesKanbanBoard({
 	// --- Render ---
 	return (
 		<DndContext
+			id={dndId}
 			sensors={sensors}
 			collisionDetection={collisionStrategy}
 			onDragStart={handleDragStart}
@@ -461,6 +463,7 @@ export function NotesKanbanBoard({
 			accessibility={{ announcements }}
 		>
 			<SortableContext
+				id={dndId}
 				items={columns.map((col) => makeColumnDragId(col.id))}
 				strategy={horizontalListSortingStrategy}
 			>
@@ -634,7 +637,7 @@ const KanbanColumn = React.memo(function KanbanColumn({
 			}`}
 		>
 			{/* header ------------------------------------------------------- */}
-			<div className="group mb-1 flex w-full items-center gap-2 font-semibold">
+			<div className="group mb-1 flex w-full items-center gap-2">
 				{/* Drag handle for column */}
 				{dragHandleProps && (
 					<div

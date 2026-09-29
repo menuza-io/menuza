@@ -140,7 +140,7 @@ export default function LandingScreen() {
 				className="items-center px-8 pt-6"
 				style={{ paddingBottom: Math.max(insets.bottom, 20) + 30 }}
 			>
-				<Text className="text-foreground mb-2 text-center text-2xl font-semibold">
+				<Text className="text-foreground mb-2 text-center text-2xl">
 					{slides[currentIndex].title}
 				</Text>
 				<Text className="text-muted-foreground mb-8 text-center text-base">
@@ -170,7 +170,7 @@ export default function LandingScreen() {
 					accessibilityRole="button"
 					accessibilityLabel={t`Get Started`}
 				>
-					<Text className="text-primary-foreground text-base font-semibold">
+					<Text className="text-primary-foreground text-base">
 						<Trans>Get Started</Trans>
 					</Text>
 				</Pressable>

@@ -377,7 +377,7 @@ export default function AdminSystemRoleDetailPage() {
 
 						<TabsContent value="system" className="space-y-4">
 							<div className="flex items-center justify-between">
-								<h2 className="text-lg font-semibold">
+								<h2 className="text-lg">
 									<Trans>System permissions</Trans>
 								</h2>
 								{!isCoreRole && (

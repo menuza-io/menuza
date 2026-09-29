@@ -58,6 +58,7 @@
     "./list-todo": "./components/animated-icons/list-todo.tsx",
     "./languages-icon": "./components/animated-icons/languages-icon.tsx",
     "./laptop-minimal-check-icon": "./components/animated-icons/laptop-minimal-check-icon.tsx",
+    "./monitor-cog-icon": "./components/animated-icons/monitor-cog-icon.tsx",
     "./lock-open-icon": "./components/animated-icons/lock-open-icon.tsx",
     "./logout-icon": "./components/animated-icons/logout-icon.tsx",
     "./message-square-more": "./components/animated-icons/message-square-more.tsx",

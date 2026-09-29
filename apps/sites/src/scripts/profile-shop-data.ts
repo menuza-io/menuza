@@ -163,7 +163,7 @@ export function renderOrderHistory(
 
 		const amount = document.createElement('p')
 		amount.className =
-			'shrink-0 text-sm font-semibold tabular-nums text-foreground sm:text-base'
+			'shrink-0 text-sm tabular-nums text-foreground sm:text-base'
 		amount.textContent = String(order.amount ?? '')
 
 		item.append(details, amount)

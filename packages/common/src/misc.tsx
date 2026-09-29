@@ -119,9 +119,7 @@ export function getDomainUrl(request: Request) {
 	// WARNING: We do NOT use X-Forwarded-Host to prevent host spoofing.
 	// If you are behind a reverse proxy, configure it to preserve the original Host header,
 	// or explicitly validate the X-Forwarded-Host against an allowlist before using it.
-	const host =
-		request.headers.get('host') ??
-		new URL(request.url).host
+	const host = request.headers.get('host') ?? new URL(request.url).host
 
 	const hostValue = host.split(',')[0]?.trim() ?? host
 	const hostLower = hostValue.toLowerCase()
@@ -139,7 +137,8 @@ export function getDomainUrl(request: Request) {
 	const protocol =
 		(isTrustedHost && forwardedProto
 			? forwardedProto
-			: new URL(request.url).protocol.slice(0, -1))
+			: new URL(request.url).protocol.slice(0, -1)
+		)
 			.split(',')[0]
 			?.trim() ?? 'http'
 
