@@ -80,11 +80,11 @@ function patchMenuItemDescriptions(code) {
 		],
 		[
 			`placeholder: _t({
-											id: "Xkfr5x",
-											message: "https://example.com or /about"
-										})
-									}),
-									/* @__PURE__ */ jsxs(Select, {`,
+												id: "Xkfr5x",
+												message: "https://example.com or /about"
+											})
+										}),
+										/* @__PURE__ */ jsxs(Select, {`,
 			`placeholder: _t({
 											id: "Xkfr5x",
 											message: "https://example.com or /about"
@@ -169,7 +169,7 @@ function patchAdminBundle(code) {
 		)
 	}
 
-	return patchMenuItemDescriptions(patched)
+	return patchMenuItemDescriptions(patched) ?? patched
 }
 
 const require = createRequire(import.meta.url)

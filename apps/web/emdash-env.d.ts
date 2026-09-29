@@ -4,6 +4,7 @@
 /// <reference types="emdash/locals" />
 
 import type {
+	BylineSummary,
 	ContentBylineCredit,
 	TaxonomyTerm,
 	PortableTextBlock,
@@ -18,6 +19,7 @@ export interface Page {
 	createdAt: Date
 	updatedAt: Date
 	publishedAt: Date | null
+	byline?: BylineSummary | null
 	bylines?: ContentBylineCredit[]
 	terms?: Record<string, TaxonomyTerm[]>
 }
@@ -38,6 +40,8 @@ export interface Post {
 		mimeType?: string
 		blurhash?: string
 		dominantColor?: string
+		focalX?: number
+		focalY?: number
 		provider?: string
 		previewUrl?: string
 		meta?: Record<string, unknown>
@@ -51,6 +55,8 @@ export interface Post {
 			mimeType?: string
 			blurhash?: string
 			dominantColor?: string
+			focalX?: number
+			focalY?: number
 			provider?: string
 			previewUrl?: string
 			meta?: Record<string, unknown>
@@ -59,6 +65,7 @@ export interface Post {
 	createdAt: Date
 	updatedAt: Date
 	publishedAt: Date | null
+	byline?: BylineSummary | null
 	bylines?: ContentBylineCredit[]
 	terms?: Record<string, TaxonomyTerm[]>
 }
