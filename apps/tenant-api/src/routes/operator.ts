@@ -27,7 +27,7 @@ export const operatorRoutes = new Hono()
 
 const OPERATOR_LIST_LIMIT = 100
 
-export async function authenticateOperator(c: Context) {
+export async function authenticateOperator(c: Context, scope?: 'mailbox') {
 	const token = getBearerToken(c.req.header('Authorization')) || null
 	if (!token) {
 		throw c.json({ error: 'Unauthorized' }, 401)
@@ -38,20 +38,20 @@ export async function authenticateOperator(c: Context) {
 		throw c.json({ error: 'Not configured' }, 503)
 	}
 
-	let decoded: { orgId: string; role: string }
+	let decoded: { orgId: string; role: string; sub?: string; scope?: string }
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
 		const { payload } = await jwtVerify(token, secret, {
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
 		})
-		decoded = payload as { orgId: string; role: string }
+		decoded = payload as typeof decoded
 	} catch (error) {
 		console.error('Operator token verification failed:', error)
 		throw c.json({ error: 'Unauthorized' }, 401)
 	}
 
-	if (!decoded.orgId) {
+	if (!decoded.orgId || decoded.scope !== scope) {
 		throw c.json({ error: 'Unauthorized' }, 401)
 	}
 
