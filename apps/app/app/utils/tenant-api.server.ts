@@ -64,6 +64,7 @@ export function resolveRegionalTenantApiUrls(
 export async function getOperatorTenantClient(
 	request: Request,
 	orgSlug: string,
+	options: { scope?: 'mailbox' } = {},
 ): Promise<OperatorTenantClient> {
 	const userId = await requireUserId(request)
 	invariant(orgSlug, 'orgSlug is required')
@@ -106,7 +107,9 @@ export async function getOperatorTenantClient(
 	const jwt = await new SignJWT({
 		orgId: organization.id,
 		role: 'operator',
+		scope: options.scope,
 	})
+		.setSubject(userId)
 		.setProtectedHeader({ alg: 'HS256' })
 		.setAudience('tenant-api-operator')
 		.setIssuer(brand.shortName)

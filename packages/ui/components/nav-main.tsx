@@ -14,6 +14,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarMenuBadge,
 	SidebarMenuSub,
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
@@ -28,6 +29,8 @@ export function NavMain({
 		url: string
 		icon?: React.ComponentType<any>
 		isActive: boolean
+		badge?: number
+		badgeLabel?: string
 		items?: {
 			title: string
 			url: string
@@ -210,6 +213,13 @@ export function NavMain({
 										onMouseLeave={() => handleMenuItemMouseLeave(item.title)}
 									></SidebarMenuButton>
 								)}
+								{item.badge != null && item.badge > 0 ? (
+									<SidebarMenuBadge
+										aria-label={item.badgeLabel ?? `${item.badge} unread`}
+									>
+										{item.badge > 99 ? '99+' : item.badge}
+									</SidebarMenuBadge>
+								) : null}
 							</SidebarMenuItem>
 						)
 					})}
