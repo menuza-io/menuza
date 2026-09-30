@@ -3,6 +3,7 @@
  */
 
 import { http, HttpResponse } from 'msw'
+import { posSandboxHandlers } from '../../src/pos/sandbox'
 
 export const handlers = [
 	// Slack API mocks
@@ -503,6 +504,9 @@ export const handlers = [
 			url: 'https://trello.com/c/card-123',
 		})
 	}),
+
+	// POS / delivery platform sandbox
+	...posSandboxHandlers,
 
 	// Generic error handler for unmatched requests
 	http.all('*', ({ request }) => {

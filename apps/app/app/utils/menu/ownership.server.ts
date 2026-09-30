@@ -9,7 +9,9 @@ import {
 	OrganizationMenuCategory,
 	OrganizationMenuItem,
 	OrganizationMenuModifierGroup,
+	OrganizationMediaAsset,
 	OrganizationMenuOption,
+	or,
 } from '@repo/database'
 
 async function orgOwnedIds(
@@ -154,6 +156,31 @@ export async function assertModifierGroupIdsInOrganization(
 			),
 		)
 	return orgOwnedIds(rows, modifierGroupIds, 'Modifier group')
+}
+
+export async function assertMediaKeysInOrganization(
+	organizationId: string,
+	keys: string[],
+) {
+	if (keys.length === 0) return
+	const rows = await db
+		.select({
+			id: OrganizationMediaAsset.id,
+			objectKey: OrganizationMediaAsset.objectKey,
+		})
+		.from(OrganizationMediaAsset)
+		.where(
+			and(
+				eq(OrganizationMediaAsset.organizationId, organizationId),
+				or(
+					inArray(OrganizationMediaAsset.id, keys),
+					inArray(OrganizationMediaAsset.objectKey, keys),
+				),
+			),
+		)
+	const owned = new Set(rows.flatMap((row) => [row.id, row.objectKey]))
+	if (keys.some((key) => !owned.has(key)))
+		throw new Response('Variation photo not found', { status: 404 })
 }
 
 export async function assertOptionIdsInOrganization(

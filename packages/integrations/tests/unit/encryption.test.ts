@@ -239,6 +239,18 @@ describe('IntegrationEncryptionService', () => {
 			expect(result.expiresIn).toBeLessThanOrEqual(300) // Less than 5 minutes
 		})
 
+		it('treats corrupt legacy expiry timestamps as expired', () => {
+			const tokenData: TokenData = {
+				accessToken: 'access-token-123',
+				expiresAt: new Date(4_102_444_800),
+			}
+
+			const result = encryptionService.validateToken(tokenData)
+
+			expect(result.isValid).toBe(false)
+			expect(result.isExpired).toBe(true)
+		})
+
 		it('should identify expired token', () => {
 			const tokenData: TokenData = {
 				accessToken: 'access-token-123',

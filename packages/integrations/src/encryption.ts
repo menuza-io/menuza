@@ -18,6 +18,29 @@ import { type TokenData } from './types'
 // Environment variable for encryption key
 const ENCRYPTION_KEY_ENV = 'INTEGRATION_ENCRYPTION_KEY' as const
 
+/** Ignore corrupt legacy expiry values (e.g. Unix seconds stored as ms). */
+const MIN_SANE_TOKEN_EXPIRY_MS = Date.UTC(2020, 0, 1)
+
+/**
+ * Normalizes expiry timestamps from the DB or token payloads.
+ */
+export function coerceExpiresAt(raw: unknown): Date | undefined {
+	if (raw == null) return undefined
+	let date: Date
+	if (raw instanceof Date) {
+		date = raw
+	} else if (typeof raw === 'number') {
+		date = raw > 1_000_000_000_000 ? new Date(raw) : new Date(raw * 1000)
+	} else if (typeof raw === 'string' && raw.trim()) {
+		date = new Date(raw)
+	} else {
+		return undefined
+	}
+	if (Number.isNaN(date.getTime())) return new Date(0)
+	if (date.getTime() < MIN_SANE_TOKEN_EXPIRY_MS) return new Date(0)
+	return date
+}
+
 /**
  * Encrypted token data structure
  */
@@ -112,7 +135,7 @@ export class IntegrationEncryptionService {
 		tokenData: TokenData | EncryptedTokenData,
 	): TokenValidationResult {
 		const now = new Date()
-		const expiresAt = tokenData.expiresAt
+		const expiresAt = coerceExpiresAt(tokenData.expiresAt)
 
 		// If no expiration date, assume token is valid but needs refresh check
 		if (!expiresAt) {

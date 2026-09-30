@@ -43,7 +43,7 @@ describe('SlackProvider - OAuth Flow', () => {
 
 			// Validate and parse state using the standardized OAuth state manager
 			const { OAuthStateManager } = await import('../../../src/oauth-manager')
-			const decodedState = OAuthStateManager.validateState(state!)
+			const decodedState = OAuthStateManager.parseState(state!)
 
 			expect(decodedState.organizationId).toBe(organizationId)
 			expect(decodedState.providerName).toBe('slack')

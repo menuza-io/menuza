@@ -559,3 +559,15 @@ msgstr "سلة طلباتك فارغة"
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
 msgstr "ملفك الشخصي"
+
+msgid "From"
+msgstr "ابتداءً من"
+
+msgid "Sold out"
+msgstr "نفد المخزون"
+
+msgid "This combination is sold out. Choose another combination."
+msgstr "نفدت هذه التركيبة. اختر تركيبة أخرى."
+
+msgid "Some items are no longer available and were removed from your order."
+msgstr "لم تعد بعض الأصناف متوفرة وتمت إزالتها من طلبك."

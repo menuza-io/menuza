@@ -28,6 +28,7 @@ import { ItemForm } from '#app/components/menu/item-form.tsx'
 import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
+	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -113,6 +114,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (
 			key === 'allergens' ||
 			key === 'imageKeys' ||
+			key === 'variations' ||
 			key === 'assignedCategoryIds' ||
 			key === 'assignedModifierGroupIds'
 		) {
@@ -151,6 +153,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	await assertMediaKeysInOrganization(
+		organization.id,
+		data.variations.variants.flatMap((variant) =>
+			variant.imageKey ? [variant.imageKey] : [],
+		),
+	)
 
 	const imageKeys = parseMenuItemImageKeys(
 		JSON.stringify(data.imageKeys),
@@ -182,7 +190,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				displayName: data.displayName,
 				internalName: data.internalName || null,
 				description: data.description || null,
-				price: data.price,
+				price: data.variations.variants.length
+					? Math.min(
+							...data.variations.variants.map((variant) => variant.price),
+						)
+					: data.price,
+				variations: JSON.stringify(data.variations),
 				imageKey: primaryImageKey,
 				imageUrl: primaryImageKey ? data.imageUrl || null : null,
 				imageKeys: JSON.stringify(imageKeys),
@@ -242,7 +255,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					entityType: 'item',
 					entityId: newItem.id,
 					isEnabled: entry.isEnabled,
-					price: entry.price,
+					price: data.variations.groups.length ? null : entry.price,
 					availabilityStatus: entry.availabilityStatus,
 				})),
 			)

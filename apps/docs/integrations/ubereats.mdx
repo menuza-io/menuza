@@ -1,0 +1,78 @@
+---
+title: 'Uber Eats Integration'
+description: 'Keep your Uber Eats delivery menu current with prices and availability'
+---
+
+# Uber Eats Integration
+
+Connect Uber Eats to keep your delivery menu current.
+
+## Overview
+
+The Uber Eats integration lets you:
+
+- Import menus, categories, items, modifiers, dietary labels and alcohol flags
+- Push your full menu — menus, categories, items and modifier groups
+- Suspend and restore individual items for sold-out days
+
+## How it works
+
+Uber Eats is a **menu-level** platform: a sync submits the whole menu document in
+one request, so anything omitted from the submission is removed. Make sure every
+item you want to keep is included.
+
+Merchant **Connect** uses OAuth `authorization_code` with scope
+`eats.pos_provisioning`. Menu and store API calls use a separate
+`client_credentials` token with scopes such as `eats.store` (handled by Menuza
+after you connect).
+
+## Uber Developer setup
+
+1. In the [Uber Developer Dashboard](https://developer.uber.com/), create an
+   **Eats Marketplace** app. Choose **Testing** while building; create a separate
+   **Production** app when you go live.
+2. Add this **Redirect URI** (must match exactly, including scheme and port):
+
+   `{BASE_URL}/api/integrations/oauth/callback`
+
+   Local dev example: `https://app.menuza.test:2999/api/integrations/oauth/callback`
+
+3. Copy the **Client ID** and **Client secret** into your App environment:
+
+   - `UBER_EATS_CLIENT_ID`
+   - `UBER_EATS_CLIENT_SECRET`
+
+### Testing vs production domains
+
+Uber registers Testing and Production clients on **different OAuth hosts**. Using
+the wrong host produces **Invalid client** / “unable to fetch client metadata”.
+
+| Dashboard app type | OAuth host                       | API host                    |
+| ------------------ | -------------------------------- | --------------------------- |
+| **Testing**        | `https://sandbox-login.uber.com` | `https://test-api.uber.com` |
+| **Production**     | `https://auth.uber.com`          | `https://api.uber.com`      |
+
+Menuza defaults to **Testing** when `UBER_EATS_ENVIRONMENT` is unset. For a
+Production app, set:
+
+```bash
+UBER_EATS_ENVIRONMENT=production
+```
+
+Optional overrides: `UBER_EATS_AUTHORIZE_URL`, `UBER_EATS_BASE_URL`.
+
+## Connect
+
+1. Open **Settings → Integrations**.
+2. Find **Uber Eats** and click **Connect**.
+3. Sign in with the Uber account that owns your Eats store(s).
+4. After redirect, Menuza lists stores from Uber and finishes the connection.
+
+If Uber shows **Invalid client**, check that the Client ID is from your Eats app,
+the redirect URI is registered on that app, and you are not using the wrong OAuth
+scope (merchant connect requires `eats.pos_provisioning`).
+
+## Notes
+
+Without `UBER_EATS_CLIENT_ID` / `UBER_EATS_CLIENT_SECRET`, connections run in
+**sandbox mode** against a simulated store for local development.

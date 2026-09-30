@@ -14,6 +14,7 @@ import {
 	isNotNull,
 } from '@repo/database'
 import {
+	coerceExpiresAt,
 	integrationEncryption,
 	type EncryptedTokenData,
 	type TokenValidationResult,
@@ -108,8 +109,9 @@ export class TokenManager {
 		providerName: string,
 		refreshToken: string,
 		attempt: number = 1,
+		providerOverride?: IntegrationProvider,
 	): Promise<TokenData> {
-		const provider = providerRegistry.get(providerName)
+		const provider = providerOverride ?? providerRegistry.get(providerName)
 
 		if (!provider.refreshToken) {
 			throw new Error(`Provider ${providerName} does not support token refresh`)
@@ -144,6 +146,7 @@ export class TokenManager {
 					providerName,
 					refreshToken,
 					attempt + 1,
+					providerOverride,
 				)
 			}
 
@@ -213,7 +216,7 @@ export class TokenManager {
 			const encryptedData: EncryptedTokenData = {
 				encryptedAccessToken: integration.accessToken,
 				encryptedRefreshToken: integration.refreshToken || undefined,
-				expiresAt: integration.tokenExpiresAt || undefined,
+				expiresAt: coerceExpiresAt(integration.tokenExpiresAt),
 				scope: config?.scope,
 				iv: '',
 			}
@@ -280,25 +283,39 @@ export class TokenManager {
 			}
 
 			if (tokenData.refreshToken) {
-				const refreshedTokenData = provider?.refreshToken
-					? await provider.refreshToken(tokenData.refreshToken)
-					: await this.refreshTokenWithRetry(
-							effectiveProviderName,
-							tokenData.refreshToken,
-						)
-
-				if (refreshedTokenData && refreshedTokenData.accessToken) {
-					if (!refreshedTokenData.refreshToken) {
-						refreshedTokenData.refreshToken = tokenData.refreshToken
-					}
-					await this.storeTokenData(integrationId, refreshedTokenData)
-					await this.logTokenOperation(
-						integrationId,
-						'token_refresh',
-						'success',
+				try {
+					const refreshedTokenData = await this.refreshTokenWithRetry(
+						effectiveProviderName,
+						tokenData.refreshToken,
+						1,
+						provider,
 					)
-					return refreshedTokenData.accessToken
+
+					if (refreshedTokenData?.accessToken) {
+						if (!refreshedTokenData.refreshToken) {
+							refreshedTokenData.refreshToken = tokenData.refreshToken
+						}
+						await this.storeTokenData(integrationId, refreshedTokenData)
+						await this.logTokenOperation(
+							integrationId,
+							'token_refresh',
+							'success',
+						)
+						return refreshedTokenData.accessToken
+					}
+				} catch (error) {
+					console.error('Token refresh failed:', error)
+					if (this.isReauthError(error) || !validation.isValid) {
+						await db
+							.update(IntegrationTable)
+							.set({ isActive: false, updatedAt: new Date() })
+							.where(eq(IntegrationTable.id, integrationId))
+					}
 				}
+			}
+
+			if (validation.isValid) {
+				return tokenData.accessToken
 			}
 
 			return null

@@ -159,10 +159,8 @@ export abstract class BaseIntegrationProvider implements IntegrationProvider {
 	}
 
 	/**
-	 * Parse and validate OAuth state
-	 * @param state - State string to validate
-	 * @returns Parsed state data
-	 * @throws Error if state is invalid or expired
+	 * Parse OAuth state during `handleCallback`. The nonce is consumed once in
+	 * `oauthFlow.complete` before the provider runs; do not consume it again here.
 	 */
 	protected parseOAuthState(state: string): {
 		organizationId: string
@@ -170,8 +168,7 @@ export abstract class BaseIntegrationProvider implements IntegrationProvider {
 		timestamp: number
 		[key: string]: any
 	} {
-		// Import here to avoid circular dependencies
-		return OAuthStateManager.validateState(state)
+		return OAuthStateManager.parseState(state)
 	}
 
 	/**

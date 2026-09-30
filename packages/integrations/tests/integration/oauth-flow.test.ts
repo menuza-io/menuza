@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mockDb } from '../utils/mock-database'
+import { mockDb, queryChain } from '../utils/mock-database'
+
+vi.mock('../../src/encryption', () => ({
+	encryptToken: vi.fn().mockResolvedValue('encrypted-token'),
+	decryptToken: vi.fn().mockResolvedValue('decrypted-token'),
+}))
 
 vi.mock('@repo/database', () => {
 	const table = new Proxy({}, { get: (_, property) => property })
@@ -15,13 +20,15 @@ vi.mock('@repo/database', () => {
 		desc: vi.fn(),
 		eq: vi.fn(),
 		gte: vi.fn(),
+		isNull: vi.fn(),
 	}
 })
 
 vi.mock('../../src/oauth-manager', () => ({
 	OAuthStateManager: {
 		generateState: vi.fn().mockReturnValue('state-1'),
-		validateState: vi.fn().mockReturnValue({
+		registerStateNonce: vi.fn().mockResolvedValue(undefined),
+		validateState: vi.fn().mockResolvedValue({
 			organizationId: 'org-1',
 			providerName: 'slack',
 			timestamp: Date.now(),
@@ -55,6 +62,42 @@ describe('OAuth flow', () => {
 			state: 'state-1',
 		})
 		expect(provider.getAuthUrl).toHaveBeenCalled()
+	})
+
+	it('deduplicates concurrent callbacks for the same state', async () => {
+		const integration = {
+			id: 'int-1',
+			organizationId: 'org-1',
+			providerName: 'slack',
+		}
+		mockDb.select.mockImplementation(() => queryChain([]))
+		mockDb.insert.mockImplementation(() => queryChain([integration] as any))
+
+		let calls = 0
+		let release: () => void = () => {}
+		const gate = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		const provider = {
+			name: 'slack',
+			type: 'productivity' as const,
+			handleCallback: vi.fn(async () => {
+				calls++
+				await gate
+				return { accessToken: 'token' }
+			}),
+		}
+		integrationManager.registerProvider(provider as any)
+
+		const params = { organizationId: 'org-1', code: 'code', state: 'state-1' }
+		const first = oauthFlow.complete('slack', params)
+		const second = oauthFlow.complete('slack', params)
+		release()
+
+		const [a, b] = await Promise.all([first, second])
+		expect(calls).toBe(1)
+		expect(provider.handleCallback).toHaveBeenCalledTimes(1)
+		expect(a).toEqual(b)
 	})
 
 	it('rejects a callback whose state belongs to another provider', async () => {

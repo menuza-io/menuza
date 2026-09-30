@@ -62,6 +62,20 @@ export default defineConfig({
 			LAUNCH_STATUS: process.argv.some((arg) => arg.includes('waitlist'))
 				? 'CLOSED_BETA'
 				: 'LAUNCHED',
+			// Force the POS platform sandbox during E2E even if the developer's
+			// `.env` has real (or OAuth) credentials. `MOCK_`/`demo-` values are the
+			// sentinels that keep the mock on.
+			CLOVER_APP_ID: 'MOCK_CLOVER_APP_ID',
+			CLOVER_APP_SECRET: 'MOCK_CLOVER_APP_SECRET',
+			SQUARE_APP_ID: 'MOCK_SQUARE_APP_ID',
+			SQUARE_APP_SECRET: 'MOCK_SQUARE_APP_SECRET',
+			TOAST_CLIENT_ID: 'MOCK_TOAST_CLIENT_ID',
+			TOAST_CLIENT_SECRET: 'MOCK_TOAST_CLIENT_SECRET',
+			UBER_EATS_CLIENT_ID: 'MOCK_UBER_EATS_CLIENT_ID',
+			UBER_EATS_CLIENT_SECRET: 'MOCK_UBER_EATS_CLIENT_SECRET',
+			DOORDASH_DEVELOPER_ID: 'MOCK_DOORDASH_DEVELOPER_ID',
+			DOORDASH_KEY_ID: 'MOCK_DOORDASH_KEY_ID',
+			DOORDASH_SIGNING_SECRET: 'MOCK_DOORDASH_SIGNING_SECRET',
 		},
 	},
 })

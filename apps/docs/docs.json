@@ -54,6 +54,16 @@
 						"pages": ["integrations/index"]
 					},
 					{
+						"group": "Point of sale & delivery",
+						"pages": [
+							"integrations/clover",
+							"integrations/square",
+							"integrations/toast",
+							"integrations/ubereats",
+							"integrations/doordash"
+						]
+					},
+					{
 						"group": "Available Integrations",
 						"pages": [
 							"integrations/slack",

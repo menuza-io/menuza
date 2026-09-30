@@ -1,0 +1,71 @@
+---
+title: 'Clover Integration'
+description: 'Sync your Clover catalog of items, categories and modifiers with your menu'
+---
+
+# Clover Integration
+
+Connect Clover to keep your point-of-sale catalog and your menu in step.
+
+## Overview
+
+The Clover integration lets you:
+
+- Import items, categories and modifiers from Clover into your menu
+- Push item names, categories, prices, availability and modifiers back to Clover
+- Mark items sold out without resubmitting the whole catalog
+
+## How it works
+
+Clover is an **item-level** platform: each menu item is created or updated on its
+own, so a single price change does not rewrite the whole catalog. Sold-out
+changes go through Clover's dedicated availability endpoint.
+
+## Connect
+
+1. Open **Settings → Integrations**.
+2. Find **Clover** and click **Connect**.
+3. If `CLOVER_APP_ID` and `CLOVER_APP_SECRET` are set, Menuza sends you through
+   Clover merchant OAuth (sandbox or production, depending on your app). Without
+   those variables, the in-process **sandbox** simulator is used instead.
+
+## Clover Developer Dashboard (required for OAuth)
+
+Register URLs that **exactly** match your app `BASE_URL` (including host and port):
+
+| Field                 | Example (local dev with proxy)                                 |
+| --------------------- | -------------------------------------------------------------- |
+| Site URL              | `https://app.menuza.test:2999`                                 |
+| Alternate Launch Path | `https://app.menuza.test:2999/api/integrations/oauth/callback` |
+| Authorized redirect   | Same as Alternate Launch Path                                  |
+
+Menuza always sends this redirect URI on authorize:
+
+`{BASE_URL}/api/integrations/oauth/callback`
+
+If Clover keeps showing merchant selection or never returns to Menuza, the redirect
+URI in the request usually does not match what is saved in the dashboard.
+
+### Requested permissions (import / sync)
+
+Menuza needs Clover REST access to your catalog. In **App Settings → Requested
+Permissions**, enable at least:
+
+| Permission          | Used for                           |
+| ------------------- | ---------------------------------- |
+| **Read merchant**   | Store profile during connect       |
+| **Read inventory**  | Import menu                        |
+| **Write inventory** | Push menu changes and availability |
+
+Clover returns **401 Unauthorized** for both expired tokens and missing
+permissions. If import fails after a successful connect, permissions are the most
+common cause.
+
+After you add or change permissions, **uninstall the app from your test merchant**
+(in the Clover dashboard: App Market → My Apps → ⋮ → Uninstall), then disconnect
+and connect again in Menuza so the merchant accepts the updated permissions.
+
+## Notes
+
+With `CLOVER_APP_ID` and `CLOVER_APP_SECRET` configured, merchants authorize via
+Clover OAuth. Without app credentials, connections use the in-process sandbox.

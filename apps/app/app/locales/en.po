@@ -10079,3 +10079,123 @@ msgstr "Zip Codes (comma or space separated)"
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "Zone Name"
+
+msgid "Connect your POS"
+msgstr "Connect your POS"
+
+msgid "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
+msgstr "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
+
+msgid "Finish onboarding"
+msgstr "Finish onboarding"
+
+msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+msgstr "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+
+msgid "From"
+msgstr "From"
+
+msgid "variations"
+msgstr "variations"
+
+msgid "Just now"
+msgstr "Just now"
+
+msgid "Connect your point of sale and delivery platforms to sync your menu."
+msgstr "Connect your point of sale and delivery platforms to sync your menu."
+
+msgid "Connected"
+msgstr "Connected"
+
+msgid "Sandbox"
+msgstr "Sandbox"
+
+msgid "Point of sale"
+msgstr "Point of sale"
+
+msgid "Synced {lastSync}"
+msgstr "Synced {lastSync}"
+
+msgid "Import menu"
+msgstr "Import menu"
+
+msgid "This platform is import-only. Menu changes stay here."
+msgstr "This platform is import-only. Menu changes stay here."
+
+msgid "Create a menu to sync it to this platform."
+msgstr "Create a menu to sync it to this platform."
+
+msgid "Sync"
+msgstr "Sync"
+
+msgid "DoorDash store ID"
+msgstr "DoorDash store ID"
+
+msgid "From DoorDash Portal or onboarding"
+msgstr "From DoorDash Portal or onboarding"
+
+msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
+msgstr "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
+
+msgid "this option"
+msgstr "this option"
+
+msgid "Remove {optionName}? Its combinations will be removed when you save the item."
+msgstr "Remove {optionName}? Its combinations will be removed when you save the item."
+
+msgid "Variations"
+msgstr "Variations"
+
+msgid "Options like size or color. Price and availability per combination."
+msgstr "Options like size or color. Price and availability per combination."
+
+msgid "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
+msgstr "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
+
+msgid "Option name"
+msgstr "Option name"
+
+msgid "Use a different option name."
+msgstr "Use a different option name."
+
+msgid "Values"
+msgstr "Values"
+
+msgid "Use a different value."
+msgstr "Use a different value."
+
+msgid "This item has reached the 100 combination limit."
+msgstr "This item has reached the 100 combination limit."
+
+msgid "Combinations"
+msgstr "Combinations"
+
+msgid "Variant"
+msgstr "Variant"
+
+msgid "Availability"
+msgstr "Availability"
+
+msgid "Choose photo for {name}"
+msgstr "Choose photo for {name}"
+
+msgid "Use item photo"
+msgstr "Use item photo"
+
+msgid "Price for {name}"
+msgstr "Price for {name}"
+
+msgid "Availability for {name}"
+msgstr "Availability for {name}"
+
+msgid "Select a return time"
+msgstr "Select a return time"
+
+msgid "Return time for {name}"
+msgstr "Return time for {name}"
+
+msgid "Until {returnTime}"
+msgstr "Until {returnTime}"
+
+msgid "Combination prices are set below. Sales tax applies to every combination."
+msgstr "Combination prices are set below. Sales tax applies to every combination."

@@ -4,7 +4,19 @@ import { OAuthStateManager } from './oauth-manager'
 import { type OAuthCallbackParams } from './types'
 import { type Integration } from './database-types'
 
+// Process-global, so concurrent deliveries still dedupe if the dev module graph
+// ends up with more than one OAuthFlow instance.
+const oauthGlobals = globalThis as unknown as {
+	__integrationOAuthInFlight?: Map<string, Promise<Integration>>
+}
+
 class OAuthFlow {
+	// Deduplicates concurrent callback deliveries for the same state so only one
+	// token exchange runs.
+	private get inFlight(): Map<string, Promise<Integration>> {
+		return (oauthGlobals.__integrationOAuthInFlight ??= new Map())
+	}
+
 	/**
 	 * Start OAuth flow for a provider
 	 */
@@ -31,6 +43,7 @@ class OAuthFlow {
 		// but since we passed state, hopefully it uses it or we can just parse it
 		const url = new URL(authUrl)
 		const finalState = url.searchParams.get('state') || state
+		await OAuthStateManager.registerStateNonce(finalState)
 
 		// Log activity (using a dummy ID since we don't have an integration ID yet)
 		// Wait, logIntegrationActivity requires an integration ID. The prompt says "log activity".
@@ -44,9 +57,28 @@ class OAuthFlow {
 	}
 
 	/**
-	 * Complete OAuth flow by handling callback
+	 * Complete OAuth flow by handling callback. Concurrent deliveries for the
+	 * same state share one run, so a duplicate callback cannot start a second
+	 * token exchange or trip the replay guard while the first is still in flight.
 	 */
 	async complete(
+		providerName: string,
+		params: OAuthCallbackParams,
+	): Promise<Integration> {
+		const key = params.oauthToken
+			? `oauth1:${providerName}:${params.oauthToken}`
+			: `oauth2:${providerName}:${params.state}`
+		const existing = this.inFlight.get(key)
+		if (existing) return existing
+
+		const run = this.runComplete(providerName, params).finally(() => {
+			this.inFlight.delete(key)
+		})
+		this.inFlight.set(key, run)
+		return run
+	}
+
+	private async runComplete(
 		providerName: string,
 		params: OAuthCallbackParams,
 	): Promise<Integration> {
@@ -81,7 +113,7 @@ class OAuthFlow {
 		} else {
 			// Standard OAuth 2.0 state validation
 			try {
-				stateData = OAuthStateManager.validateState(params.state)
+				stateData = await OAuthStateManager.validateState(params.state)
 			} catch (error) {
 				throw new Error(`Invalid OAuth state: ${error}`)
 			}
@@ -105,17 +137,31 @@ class OAuthFlow {
 
 		const integration = await integrationManager.createIntegration({
 			organizationId: stateData.organizationId,
+			organizationLocationId:
+				typeof stateData.organizationLocationId === 'string'
+					? stateData.organizationLocationId
+					: undefined,
 			providerName,
 			tokenData,
 			config: {},
 		})
 
-		await integrationManager.logIntegrationActivity(
-			integration.id,
-			'oauth_complete',
-			'success',
-			{ provider: providerName },
-		)
+		try {
+			await integrationManager.logIntegrationActivity(
+				integration.id,
+				'oauth_complete',
+				'success',
+				{ provider: providerName },
+			)
+		} catch {
+			// Logging is best-effort.
+		}
+
+		const { isPosProvider } = await import('./pos/types.ts')
+		if (isPosProvider(providerName)) {
+			const { finalizePosOAuthConnection } = await import('./pos/service.ts')
+			return finalizePosOAuthConnection(integration)
+		}
 
 		return integration
 	}

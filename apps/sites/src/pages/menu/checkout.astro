@@ -2,7 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
-import { fetchPublishedSiteMenu, type PublicLocationData } from '~/lib/org'
+import { fetchPublishedSiteMenu, type PublicLocationData, type PublicMenuCategoryData } from '~/lib/org'
 import { siteBtnPrimary, siteContainer } from '~/lib/media'
 import {
 	siteCardClass,
@@ -25,18 +25,32 @@ if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
 }
 
+const urlLocation = Astro.url.searchParams.get('location')
 const menuPayload = await fetchPublishedSiteMenu({
 	slug: orgSlug,
 	host: customHost,
 	lng: requestedLocale,
+	locationId: urlLocation,
 })
+
+const unavailableVariantIds = new Set<string>()
+function indexUnavailableVariants(category: PublicMenuCategoryData) {
+	for (const item of category.items) {
+		for (const variant of item.variations.variants) {
+			if (variant.availabilityStatus === 'unavailable') unavailableVariantIds.add(variant.id)
+		}
+	}
+	for (const child of category.subcategories ?? []) indexUnavailableVariants(child)
+}
+for (const menu of menuPayload?.menus ?? []) {
+	for (const category of menu.categories) indexUnavailableVariants(category)
+}
 
 const locations = menuPayload?.locations ?? []
 const currency = menuPayload?.organization?.currency || 'USD'
 
 // Resolve the active location exactly like the menu page (URL param → default →
 // first) so checkout and the menu agree on the same cart's tax rate and fee.
-const urlLocation = Astro.url.searchParams.get('location')
 const activeLocation: PublicLocationData | undefined =
 	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
 	locations.find((l) => l.isDefault) ||
@@ -90,6 +104,7 @@ const tipText = i18n._(msg`Tip`)
 const totalText = i18n._(msg`Total`)
 const placeOrderLabel = i18n._(msg`Place Order`)
 const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree to the restaurant's terms.`)
+const cartAvailabilityNotice = i18n._(msg`Some items are no longer available and were removed from your order.`)
 ---
 
 <SitePage
@@ -99,6 +114,7 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 >
 	<div class="min-h-screen bg-background py-10 sm:py-16">
 		<div class:list={[siteContainer, "max-w-4xl"]}>
+			<p id="cart-availability-notice" class="hidden mb-6 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground" role="status">{cartAvailabilityNotice}</p>
 			<div class="mb-8">
 				<a href={menuHref} class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2">
 					<svg xmlns="http://www.w3.org/2000/svg" class="size-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
@@ -253,7 +269,7 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 		</div>
 	</div>
 
-	<script id="checkout-meta" type="application/json" is:inline set:html={JSON.stringify({ organizationId: organization.id, currency, locale: requestedLocale, successUrl: successHref, locations, taxRate, deliveryFee }).replace(/</g, '\\u003c')} />
+	<script id="checkout-meta" type="application/json" is:inline set:html={JSON.stringify({ organizationId: organization.id, currency, locale: requestedLocale, successUrl: successHref, locations, taxRate, deliveryFee, unavailableVariantIds: [...unavailableVariantIds] }).replace(/</g, '\\u003c')} />
 
 	<script>
 		const metaEl = document.getElementById('checkout-meta')
@@ -267,6 +283,15 @@ const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree 
 			const saved = localStorage.getItem(storageKey)
 			if (saved) cart = JSON.parse(saved)
 		} catch {}
+		if (meta.unavailableVariantIds?.length) {
+			const unavailableVariants = new Set(meta.unavailableVariantIds)
+			const originalCount = cart.length
+			cart = cart.filter((item) => !item.variantId || !unavailableVariants.has(item.variantId))
+			if (cart.length !== originalCount) {
+				localStorage.setItem(storageKey, JSON.stringify(cart))
+				document.getElementById('cart-availability-notice')?.classList.remove('hidden')
+			}
+		}
 
 		if (cart.length === 0) {
 			const root = document.getElementById('checkout-root')

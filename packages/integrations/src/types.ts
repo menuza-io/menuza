@@ -269,13 +269,21 @@ export interface OAuthCallbackParams {
 	errorDescription?: string
 	oauthToken?: string
 	oauthVerifier?: string
+	/** Merchant/store id some providers include on the callback URL (e.g. Clover). */
+	merchantId?: string
+	/** Registered OAuth callback URL (required by some token exchanges). */
+	redirectUri?: string
 }
 
 // OAuth state data
 export interface OAuthState {
 	organizationId: string
 	providerName: string
+	/** Menuza location for POS and Google Business Profile OAuth. */
+	organizationLocationId?: string
 	redirectUrl?: string
+	/** OAuth redirect URI registered with the provider (token exchange). */
+	oauthRedirectUri?: string
 	timestamp: number
 	nonce?: string
 	[key: string]: any
@@ -284,8 +292,15 @@ export interface OAuthState {
 // Integration status types
 export type IntegrationStatus = 'active' | 'inactive' | 'error' | 'expired'
 
-// Integration provider types
-export type ProviderType = 'productivity' | 'ticketing' | 'communication'
+// Integration provider types. `pos`/`delivery` are restaurant POS and delivery
+// marketplace platforms (see `./pos`).
+export type ProviderType =
+	| 'productivity'
+	| 'ticketing'
+	| 'communication'
+	| 'pos'
+	| 'delivery'
+	| 'business-profile'
 
 // Integration log entry
 export interface IntegrationLogEntry {

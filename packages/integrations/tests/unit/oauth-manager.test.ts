@@ -3,6 +3,21 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+
+const consumedOAuthNonces = new Set<string>()
+vi.mock('../../src/oauth-nonce-store.ts', () => ({
+	registerOAuthNonce: vi.fn(async (nonce: string) => {
+		consumedOAuthNonces.delete(nonce)
+	}),
+	consumeOAuthNonce: vi.fn(async (nonce: string) => {
+		if (consumedOAuthNonces.has(nonce)) return false
+		consumedOAuthNonces.add(nonce)
+		return true
+	}),
+	isOAuthNonceConsumed: vi.fn(async (nonce: string) =>
+		consumedOAuthNonces.has(nonce),
+	),
+}))
 import {
 	OAuthStateManager,
 	OAuthCallbackHandler,
@@ -39,7 +54,7 @@ const mockProvider: IntegrationProvider = {
 
 describe('OAuthStateManager', () => {
 	beforeEach(() => {
-		// Mock environment variables
+		consumedOAuthNonces.clear()
 		vi.stubEnv(
 			'INTEGRATIONS_OAUTH_STATE_SECRET',
 			mockEnv.INTEGRATIONS_OAUTH_STATE_SECRET,
@@ -65,7 +80,7 @@ describe('OAuthStateManager', () => {
 			expect(state).toContain('.')
 
 			// Should be able to parse the state back
-			const parsedState = OAuthStateManager.validateState(state)
+			const parsedState = OAuthStateManager.parseState(state)
 			expect(parsedState.organizationId).toBe(organizationId)
 			expect(parsedState.providerName).toBe(providerName)
 		})
@@ -83,7 +98,7 @@ describe('OAuthStateManager', () => {
 				additionalData,
 			)
 
-			const parsedState = OAuthStateManager.validateState(state)
+			const parsedState = OAuthStateManager.parseState(state)
 			expect(parsedState.redirectUrl).toBe(redirectUrl)
 			expect(parsedState.customField).toBe('value')
 		})
@@ -122,7 +137,7 @@ describe('OAuthStateManager', () => {
 	})
 
 	describe('validateState', () => {
-		it('should validate a valid state', () => {
+		it('should validate a valid state', async () => {
 			const organizationId = 'org-123'
 			const providerName = 'slack'
 
@@ -130,7 +145,8 @@ describe('OAuthStateManager', () => {
 				organizationId,
 				providerName,
 			)
-			const parsedState = OAuthStateManager.validateState(state)
+			await OAuthStateManager.registerStateNonce(state)
+			const parsedState = await OAuthStateManager.validateState(state)
 
 			expect(parsedState.organizationId).toBe(organizationId)
 			expect(parsedState.providerName).toBe(providerName)
@@ -140,19 +156,19 @@ describe('OAuthStateManager', () => {
 
 		it('should throw error for empty state', () => {
 			expect(() => {
-				OAuthStateManager.validateState('')
+				OAuthStateManager.parseState('')
 			}).toThrow('Invalid state: empty or non-string')
 		})
 
 		it('should throw error for non-string state', () => {
 			expect(() => {
-				OAuthStateManager.validateState(null as any)
+				OAuthStateManager.parseState(null as any)
 			}).toThrow('Invalid state: empty or non-string')
 		})
 
 		it('should throw error for malformed state', () => {
 			expect(() => {
-				OAuthStateManager.validateState('invalid-state-format')
+				OAuthStateManager.parseState('invalid-state-format')
 			}).toThrow('Invalid state: malformed structure')
 		})
 
@@ -162,7 +178,7 @@ describe('OAuthStateManager', () => {
 			const tamperedState = `${payload}.tampered-signature`
 
 			expect(() => {
-				OAuthStateManager.validateState(tamperedState)
+				OAuthStateManager.parseState(tamperedState)
 			}).toThrow('Invalid state: signature verification failed')
 		})
 
@@ -177,7 +193,7 @@ describe('OAuthStateManager', () => {
 			Date.now = originalNow
 
 			expect(() => {
-				OAuthStateManager.validateState(expiredState)
+				OAuthStateManager.parseState(expiredState)
 			}).toThrow('Invalid state: expired')
 		})
 
@@ -191,7 +207,7 @@ describe('OAuthStateManager', () => {
 			const invalidState = `${payload}.${signature}`
 
 			expect(() => {
-				OAuthStateManager.validateState(invalidState)
+				OAuthStateManager.parseState(invalidState)
 			}).toThrow('Invalid state: signature verification failed')
 		})
 
@@ -206,7 +222,7 @@ describe('OAuthStateManager', () => {
 			Date.now = originalNow
 
 			expect(() => {
-				OAuthStateManager.validateState(futureState)
+				OAuthStateManager.parseState(futureState)
 			}).toThrow('Invalid state: timestamp is in the future')
 		})
 
@@ -221,22 +237,31 @@ describe('OAuthStateManager', () => {
 			Date.now = originalNow
 
 			expect(() => {
-				OAuthStateManager.validateState(futureState)
+				OAuthStateManager.parseState(futureState)
 			}).toThrow('Invalid state: timestamp is in the future')
 		})
 
-		it('should reject consumed nonces on replay', () => {
-			OAuthStateManager.clearConsumedNonces()
+		it('should reject consumed nonces on replay', async () => {
 			const state = OAuthStateManager.generateState('org-123', 'slack')
+			await OAuthStateManager.registerStateNonce(state)
 
-			// First validation succeeds and marks nonce as consumed
-			const first = OAuthStateManager.validateState(state, true)
+			const first = await OAuthStateManager.validateState(state, true)
 			expect(first.organizationId).toBe('org-123')
 
-			// Replay attempt fails
-			expect(() => {
-				OAuthStateManager.validateState(state, true)
-			}).toThrow('Invalid state: nonce already consumed (replay detected)')
+			await expect(
+				OAuthStateManager.validateState(state, true),
+			).rejects.toThrow(
+				'Invalid state: nonce already consumed (replay detected)',
+			)
+		})
+
+		it('should allow peeking at a consumed state', async () => {
+			const state = OAuthStateManager.generateState('org-123', 'slack')
+			await OAuthStateManager.registerStateNonce(state)
+			await OAuthStateManager.validateState(state, true)
+
+			const peeked = await OAuthStateManager.validateState(state, false)
+			expect(peeked.organizationId).toBe('org-123')
 		})
 	})
 })

@@ -17,6 +17,7 @@ vi.mock('@repo/database', () => {
 		desc: operator,
 		eq: operator,
 		gte: operator,
+		isNull: operator,
 	}
 })
 
@@ -41,6 +42,7 @@ describe('IntegrationManager with Drizzle', () => {
 
 	it('creates an integration through insert().values().returning()', async () => {
 		const integration = createTestIntegration()
+		mockDb.select.mockImplementationOnce(() => queryChain([]))
 		mockDb.insert.mockImplementationOnce(() => queryChain([integration]))
 
 		await expect(

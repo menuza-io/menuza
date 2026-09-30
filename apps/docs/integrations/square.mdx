@@ -1,0 +1,72 @@
+---
+title: 'Square Integration'
+description: 'Keep your Square items, categories and modifiers in step with your menu'
+---
+
+# Square Integration
+
+Connect Square to manage your catalog and menu from one place.
+
+## Overview
+
+The Square integration lets you:
+
+- Import items, categories, modifiers, images and dietary tags from Square
+- Push item details, prices, availability, images and allergens back to Square
+- Mark items sold out through the catalog API
+
+## How it works
+
+Square is an **item-level** platform. Writes go through the Catalog
+`batch-upsert` endpoint with idempotency keys, so a retried sync does not
+duplicate items. Known item versions guard against overwriting a catalog that
+changed underneath you.
+
+## Connect
+
+1. Open **Settings → Integrations**.
+2. Find **Square** and click **Connect**.
+3. If `SQUARE_APP_ID` and `SQUARE_APP_SECRET` are set, Menuza redirects you to
+   Square OAuth (sandbox when the application id starts with `sandbox-`).
+   Without those variables, the in-process **sandbox** simulator is used.
+
+## Square Developer Dashboard (OAuth)
+
+In your [Square Developer Dashboard](https://developer.squareup.com/apps), open
+the application and set **OAuth → Redirect URL** to:
+
+`{BASE_URL}/api/integrations/oauth/callback`
+
+Example for local dev: `https://app.menuza.test:2999/api/integrations/oauth/callback`
+
+OAuth and the Connect API use **`https://connect.squareupsandbox.com`** in
+sandbox (not `https://squareupsandbox.com`). You usually do not need
+`SQUARE_BASE_URL` or `SQUARE_AUTHORIZE_URL` unless you override defaults; if you
+set them, use the `connect.*` host.
+
+### Sandbox OAuth (required before Connect)
+
+Square **sandbox** OAuth only works when you already have an active seller
+session in the **same browser** (not a private/incognito window). If you skip
+this step, the authorize page can look blank or show:
+
+_To start the OAuth flow for a sandbox account, first launch the seller test
+account from the Developer Console._
+
+1. Open the [Square Developer Dashboard](https://developer.squareup.com/apps)
+   and switch the environment toggle to **Sandbox**.
+2. Go to **Sandbox test accounts** (left nav).
+3. For **Default Test Account** (or your seller test account), click **Open** or
+   **Square Dashboard** and leave that dashboard tab open.
+4. In Menuza, click **Connect** on Square again and complete **Allow** on the
+   authorization screen.
+
+Production OAuth does not require opening the dashboard first. See Square’s
+[OAuth walkthrough](https://developer.squareup.com/docs/oauth-api/walkthrough)
+for creating a separate seller test account when simulating a third-party app.
+
+## Notes
+
+With `SQUARE_APP_ID` and `SQUARE_APP_SECRET` configured, merchants
+connect through Square OAuth and tokens are stored per organization. Without app
+credentials, connections use the in-process sandbox for demos and local dev.

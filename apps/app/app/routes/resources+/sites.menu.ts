@@ -17,6 +17,7 @@ import {
 import {
 	isUnavailableUntilExpired,
 	parseMenuItemImageKeys,
+	parseMenuVariations,
 } from '@repo/common/menu-types'
 import {
 	and,
@@ -125,6 +126,20 @@ export interface PublicMenuItemData {
 	imageUrl: string | null
 	imageKeys: string[]
 	imageUrls: string[]
+	variations: {
+		groups: Array<{
+			id: string
+			name: string
+			values: Array<{ id: string; name: string }>
+		}>
+		variants: Array<{
+			id: string
+			valueIds: string[]
+			price: number
+			imageUrl: string | null
+			availabilityStatus: 'available' | 'unavailable'
+		}>
+	}
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
@@ -567,6 +582,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		for (const imageKey of parseMenuItemImageKeys(it.imageKeys, it.imageKey)) {
 			allImageKeys.add(imageKey)
 		}
+		for (const variant of parseMenuVariations(it.variations).variants) {
+			if (variant.imageKey) allImageKeys.add(variant.imageKey)
+		}
 	}
 	for (const opt of options) {
 		if (opt.imageKey) allImageKeys.add(opt.imageKey)
@@ -713,9 +731,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 
 	// Items Map
+	let nextVariationExpiry: number | null = null
 	const itemsMap = new Map(
 		items.map((item) => {
 			const imageKeys = parseMenuItemImageKeys(item.imageKeys, item.imageKey)
+			const variations = parseMenuVariations(item.variations)
+			for (const variant of variations.variants) {
+				if (
+					variant.availabilityStatus !== 'unavailable_until' ||
+					!variant.unavailableUntil
+				)
+					continue
+				const expiresAt = new Date(variant.unavailableUntil).getTime()
+				if (expiresAt > now.getTime())
+					nextVariationExpiry = Math.min(
+						nextVariationExpiry ?? expiresAt,
+						expiresAt,
+					)
+			}
+			const effectiveVariants = variations.variants.map((variant) => ({
+				...variant,
+				availabilityStatus: isUnavailableUntilExpired(
+					variant.availabilityStatus,
+					variant.unavailableUntil,
+					now,
+				)
+					? ('available' as const)
+					: ('unavailable' as const),
+			}))
+			const availableVariants = effectiveVariants.filter(
+				(variant) => variant.availabilityStatus === 'available',
+			)
 			const imageUrls = imageKeys.flatMap((imageKey) => {
 				const imageUrl = mediaMap.get(imageKey)
 				return imageUrl ? [imageUrl] : []
@@ -728,11 +774,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					displayName: item.displayName,
 					internalName: item.internalName,
 					description: item.description,
-					price: item.price,
+					price: availableVariants.length
+						? Math.min(...availableVariants.map((variant) => variant.price))
+						: item.price,
 					imageKey: imageKeys[0] ?? null,
 					imageUrl: imageUrls[0] ?? null,
 					imageKeys,
 					imageUrls,
+					variations: {
+						groups: variations.groups,
+						variants: effectiveVariants.map((variant) => ({
+							id: variant.id,
+							valueIds: variant.valueIds,
+							price: variant.price,
+							availabilityStatus: variant.availabilityStatus,
+							imageUrl: variant.imageKey
+								? (mediaMap.get(variant.imageKey) ?? null)
+								: null,
+						})),
+					},
 					isAlcohol: Boolean(item.isAlcohol),
 					isGlutenFree: Boolean(item.isGlutenFree),
 					isVegetarian: Boolean(item.isVegetarian),
@@ -853,13 +913,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		locationOverrides: locationOverridesMap,
 	}
 
-	if (!isPreview) {
-		await setCachedSiteData(cacheKey, payload)
+	const secondsUntilVariationReturn =
+		nextVariationExpiry === null
+			? null
+			: Math.ceil((nextVariationExpiry - now.getTime()) / 1000)
+	if (
+		!isPreview &&
+		(secondsUntilVariationReturn === null || secondsUntilVariationReturn >= 60)
+	) {
+		await setCachedSiteData(
+			cacheKey,
+			payload,
+			secondsUntilVariationReturn ?? undefined,
+		)
 	}
+
+	const cacheControl =
+		secondsUntilVariationReturn !== null && secondsUntilVariationReturn < 60
+			? `public, max-age=${Math.max(1, secondsUntilVariationReturn)}`
+			: 'public, max-age=60, stale-while-revalidate=300'
 
 	return Response.json(payload, {
 		headers: {
-			'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+			'Cache-Control': cacheControl,
 			Vary: 'Accept-Language',
 		},
 	})

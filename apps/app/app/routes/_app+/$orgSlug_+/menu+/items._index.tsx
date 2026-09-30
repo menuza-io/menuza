@@ -1,7 +1,10 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import {
+	getLocalizedMenuValue,
+	parseMenuVariations,
+} from '@repo/common/menu-types'
 import { db, eq, asc, desc, and, OrganizationMenuItem } from '@repo/database'
 import {
 	AlertDialog,
@@ -171,6 +174,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				displayName: i.displayName,
 				internalName: i.internalName,
 				price: i.price,
+				variationCount: parseMenuVariations(i.variations).variants.length,
 				imageUrl: i.imageUrl,
 				isAlcohol: i.isAlcohol,
 				isGlutenFree: i.isGlutenFree,
@@ -361,8 +365,14 @@ export default function ItemsIndexRoute() {
 												</TableCell>
 												<TableCell className="text-right whitespace-nowrap sm:text-left">
 													<span className="text-sm">
-														${item.price.toFixed(2)}
+														{item.variationCount > 0 && <Trans>From</Trans>} $
+														{item.price.toFixed(2)}
 													</span>
+													{item.variationCount > 0 && (
+														<span className="text-muted-foreground block text-xs">
+															{item.variationCount} <Trans>variations</Trans>
+														</span>
+													)}
 												</TableCell>
 												<TableCell className="hidden sm:table-cell">
 													{item.categories.length === 0 ? (

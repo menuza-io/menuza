@@ -12,6 +12,8 @@ export function queryChain(rows: QueryResult = []): any {
 		leftJoin: () => chain,
 		values: () => chain,
 		set: () => chain,
+		onConflictDoNothing: () => chain,
+		onConflictDoUpdate: () => chain,
 		returning: () => chain,
 		// oxlint-disable-next-line unicorn/no-thenable
 		then: (

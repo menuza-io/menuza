@@ -119,7 +119,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: 'A location with this URL slug already exists.' }
 	}
 
-	await db.transaction(async (tx) => {
+	const newLocationId = await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
 				.update(OrganizationLocation)
@@ -127,36 +127,49 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.where(eq(OrganizationLocation.organizationId, organization.id))
 		}
 
-		await tx.insert(OrganizationLocation).values({
-			organizationId: organization.id,
-			name: data.name,
-			slug: data.slug,
-			phone: data.phone || null,
-			timezone: data.timezone,
-			taxRate: data.taxRate,
-			isActive: data.isActive,
-			isDefault: data.isDefault,
-			address: data.address || null,
-			storeHours: data.storeHours || null,
-			onlineHours: data.onlineHours || null,
-			specialHours: data.specialHours || null,
-			prepTime: data.prepTime,
-			largeOrderThreshold: data.largeOrderThreshold,
-			largeOrderThresholdType: data.largeOrderThresholdType,
-			largeOrderExtraPrepTime: data.largeOrderExtraPrepTime,
-			fulfillmentOptions: data.fulfillmentOptions || null,
-			inHouseTips: data.inHouseTips || null,
-			scheduling: data.scheduling || null,
-			deliveryConfig: data.deliveryConfig || null,
-			deliveryZones: data.deliveryZones || null,
-		})
+		const [created] = await tx
+			.insert(OrganizationLocation)
+			.values({
+				organizationId: organization.id,
+				name: data.name,
+				slug: data.slug,
+				phone: data.phone || null,
+				timezone: data.timezone,
+				taxRate: data.taxRate,
+				isActive: data.isActive,
+				isDefault: data.isDefault,
+				address: data.address || null,
+				storeHours: data.storeHours || null,
+				onlineHours: data.onlineHours || null,
+				specialHours: data.specialHours || null,
+				prepTime: data.prepTime,
+				largeOrderThreshold: data.largeOrderThreshold,
+				largeOrderThresholdType: data.largeOrderThresholdType,
+				largeOrderExtraPrepTime: data.largeOrderExtraPrepTime,
+				fulfillmentOptions: data.fulfillmentOptions || null,
+				inHouseTips: data.inHouseTips || null,
+				scheduling: data.scheduling || null,
+				deliveryConfig: data.deliveryConfig || null,
+				deliveryZones: data.deliveryZones || null,
+			})
+			.returning({ id: OrganizationLocation.id })
+
+		return created?.id
 	})
 
-	return redirectWithToast(`/${organization.slug}/settings/locations`, {
-		type: 'success',
-		title: 'Location created',
-		description: 'New restaurant location has been configured successfully.',
-	})
+	if (!newLocationId) {
+		return { error: 'Failed to create location.' }
+	}
+
+	return redirectWithToast(
+		`/${organization.slug}/settings/integrations?locationId=${encodeURIComponent(newLocationId)}`,
+		{
+			type: 'success',
+			title: 'Location created',
+			description:
+				'New restaurant location has been configured successfully. Connect POS and delivery for this location below.',
+		},
+	)
 }
 
 export default function NewLocationRoute() {

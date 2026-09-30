@@ -449,6 +449,20 @@ export type PublicMenuItemData = {
 	imageUrl: string | null
 	imageKeys: string[]
 	imageUrls: string[]
+	variations: {
+		groups: Array<{
+			id: string
+			name: string
+			values: Array<{ id: string; name: string }>
+		}>
+		variants: Array<{
+			id: string
+			valueIds: string[]
+			price: number
+			imageUrl: string | null
+			availabilityStatus: 'available' | 'unavailable'
+		}>
+	}
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean

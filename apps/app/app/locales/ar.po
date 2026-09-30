@@ -10077,3 +10077,123 @@ msgstr "الرموز البريدية (مفصولة بفواصل أو مسافا
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "اسم المنطقة"
+
+msgid "Connect your POS"
+msgstr "اربط نظام نقاط البيع"
+
+msgid "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
+msgstr "اربط نظام نقاط البيع أو منصة توصيل للحفاظ على تحديث قائمتك. يمكنك القيام بذلك لاحقًا من الإعدادات."
+
+msgid "Finish onboarding"
+msgstr "إنهاء الإعداد"
+
+msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+msgstr "عند إعداد بيانات اعتماد المنصة، يربط OAuth متجرك الفعلي. وبدونها، تتوفر بيئة الاختبار المحلية فقط."
+
+msgid "From"
+msgstr "ابتداءً من"
+
+msgid "variations"
+msgstr "تنويعات"
+
+msgid "Just now"
+msgstr "الآن"
+
+msgid "Connect your point of sale and delivery platforms to sync your menu."
+msgstr "اربط أنظمة نقاط البيع ومنصات التوصيل لمزامنة قائمتك."
+
+msgid "Connected"
+msgstr "متصل"
+
+msgid "Sandbox"
+msgstr "بيئة اختبار"
+
+msgid "Point of sale"
+msgstr "نقطة بيع"
+
+msgid "Synced {lastSync}"
+msgstr "تمت المزامنة {lastSync}"
+
+msgid "Import menu"
+msgstr "استيراد القائمة"
+
+msgid "This platform is import-only. Menu changes stay here."
+msgstr "تدعم هذه المنصة الاستيراد فقط. تبقى تغييرات القائمة هنا."
+
+msgid "Create a menu to sync it to this platform."
+msgstr "أنشئ قائمة لمزامنتها مع هذه المنصة."
+
+msgid "Sync"
+msgstr "مزامنة"
+
+msgid "DoorDash store ID"
+msgstr "معرّف متجر DoorDash"
+
+msgid "From DoorDash Portal or onboarding"
+msgstr "من بوابة DoorDash أو أثناء الإعداد"
+
+msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
+msgstr "متجر DoorDash واحد لكل اتصال. استخدم معرّف المتجر الذي تعيّنه DoorDash بعد الإعداد (SSIO أو إعداد المتجر)."
+
+msgid "this option"
+msgstr "هذا الخيار"
+
+msgid "Remove {optionName}? Its combinations will be removed when you save the item."
+msgstr "هل تريد إزالة {optionName}؟ ستُحذف تركيباته عند حفظ الصنف."
+
+msgid "Variations"
+msgstr "التنويعات"
+
+msgid "Options like size or color. Price and availability per combination."
+msgstr "خيارات مثل الحجم أو اللون. سعر وتوفر لكل تركيبة."
+
+msgid "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
+msgstr "مثلًا، أضف الحجم بقيمتي صغير ومتوسط، ثم اللون بقيمتي أسود وأزرق. تظهر التركيبات تلقائيًا."
+
+msgid "Option name"
+msgstr "اسم الخيار"
+
+msgid "Use a different option name."
+msgstr "استخدم اسم خيار مختلفًا."
+
+msgid "Values"
+msgstr "القيم"
+
+msgid "Use a different value."
+msgstr "استخدم قيمة مختلفة."
+
+msgid "This item has reached the 100 combination limit."
+msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
+
+msgid "Combinations"
+msgstr "التركيبات"
+
+msgid "Variant"
+msgstr "التنويع"
+
+msgid "Availability"
+msgstr "التوفر"
+
+msgid "Choose photo for {name}"
+msgstr "اختر صورة لـ {name}"
+
+msgid "Use item photo"
+msgstr "استخدام صورة الصنف"
+
+msgid "Price for {name}"
+msgstr "سعر {name}"
+
+msgid "Availability for {name}"
+msgstr "توفر {name}"
+
+msgid "Select a return time"
+msgstr "اختر وقت العودة"
+
+msgid "Return time for {name}"
+msgstr "وقت عودة {name}"
+
+msgid "Until {returnTime}"
+msgstr "حتى {returnTime}"
+
+msgid "Combination prices are set below. Sales tax applies to every combination."
+msgstr "تُحدَّد أسعار التركيبات أدناه. تُطبَّق ضريبة المبيعات على كل تركيبة."

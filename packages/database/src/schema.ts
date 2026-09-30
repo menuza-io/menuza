@@ -323,8 +323,14 @@ export const Integration = sqliteTable(
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		organizationLocationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
 		providerName: text().notNull(),
 		providerType: text().notNull(),
+		/** DoorDash store id / Clover merchant id for cross-org uniqueness. */
+		externalStoreId: text(),
 		accessToken: text(),
 		refreshToken: text(),
 		tokenExpiresAt: integer({ mode: 'timestamp_ms' }),
@@ -340,13 +346,28 @@ export const Integration = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		uniqueIndex('Integration_organizationId_providerName_key').on(
-			table.organizationId,
-			table.providerName,
-		),
 		index('Integration_organizationId_idx').on(table.organizationId),
+		index('Integration_organizationLocationId_idx').on(
+			table.organizationLocationId,
+		),
+		uniqueIndex('Integration_org_provider_orgwide_key')
+			.on(table.organizationId, table.providerName)
+			.where(sql`${table.organizationLocationId} IS NULL`),
+		uniqueIndex('Integration_location_provider_key')
+			.on(table.organizationLocationId, table.providerName)
+			.where(sql`${table.organizationLocationId} IS NOT NULL`),
+		uniqueIndex('Integration_provider_external_store_key').on(
+			table.providerName,
+			table.externalStoreId,
+		),
 	],
 )
+
+export const IntegrationOAuthNonce = sqliteTable('IntegrationOAuthNonce', {
+	nonce: text().primaryKey().notNull(),
+	expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	consumedAt: integer({ mode: 'timestamp_ms' }),
+})
 
 export const NoteIntegrationConnection = sqliteTable(
 	'NoteIntegrationConnection',
@@ -2722,6 +2743,7 @@ export const OrganizationMenuItem = sqliteTable(
 		imageKey: text(),
 		imageUrl: text(),
 		imageKeys: text().default('[]').notNull(),
+		variations: text().default('{"groups":[],"variants":[]}').notNull(),
 		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
 		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
 		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
@@ -3068,6 +3090,52 @@ export const OrganizationMenuLocationOverride = sqliteTable(
 			table.locationId,
 			table.entityType,
 			table.entityId,
+		),
+	],
+)
+
+// Maps a menu entity to its counterpart on a connected POS/delivery platform,
+// so imports and pushes are idempotent across syncs.
+export const OrganizationMenuPosLink = sqliteTable(
+	'OrganizationMenuPosLink',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		integrationId: text()
+			.notNull()
+			.references(() => Integration.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		providerName: text().notNull(),
+		entityType: text().notNull(), // 'category' | 'item' | 'modifier_group'
+		remoteId: text().notNull(),
+		localId: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuPosLink_organizationId_idx').on(
+			table.organizationId,
+		),
+		index('OrganizationMenuPosLink_integrationId_idx').on(table.integrationId),
+		uniqueIndex('OrganizationMenuPosLink_integration_entity_remote_key').on(
+			table.integrationId,
+			table.entityType,
+			table.remoteId,
 		),
 	],
 )
