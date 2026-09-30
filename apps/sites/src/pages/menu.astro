@@ -11,6 +11,7 @@ import {
 	fetchPublishedSiteMenu,
 	type PublicLocationData,
 	type PublicMenuCategoryData,
+	type PublicMenuItemData,
 } from '~/lib/org'
 import { resolveMediaUrl, siteBtnPrimary, siteContainer } from '~/lib/media'
 import { siteInputClass, siteFieldLabelClass } from '~/lib/form-classes'
@@ -86,6 +87,8 @@ function formatPrice(amount: number) {
 }
 
 const menuTitle = i18n._(msg`Menu & Ordering`)
+const fromPriceLabel = i18n._(msg`From`)
+const soldOutLabel = i18n._(msg`Sold out`)
 const deliveryLabel = i18n._(msg`Delivery`)
 const pickupLabel = i18n._(msg`Pickup`)
 const openStatusText = i18n._(msg`Open for orders`)
@@ -107,6 +110,15 @@ const specialInstructionsPlaceholder = i18n._(msg`Any dietary preferences, sauce
 const quantityLabel = i18n._(msg`Quantity`)
 const menuComingSoonTitle = i18n._(msg`Menu Coming Soon`)
 const menuComingSoonDesc = i18n._(msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`)
+function isItemSoldOut(item: PublicMenuItemData): boolean {
+	return item.variations.variants.length > 0 &&
+		item.variations.variants.every((variant) => variant.availabilityStatus === 'unavailable')
+}
+function itemPriceLabel(item: PublicMenuItemData): string {
+	if (!item.variations.variants.length) return formatPrice(item.price)
+	if (isItemSoldOut(item)) return soldOutLabel
+	return `${fromPriceLabel} ${formatPrice(Math.min(...item.variations.variants.filter((variant) => variant.availabilityStatus === 'available').map((variant) => variant.price)))}`
+}
 // Carry the active location into checkout so both pages resolve the same
 // tax rate / delivery fee for the same cart.
 const checkoutHref =
@@ -162,6 +174,7 @@ function localizeItem(item: any): any {
 		displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
 		description: item.description ? getLocalizedMenuValue(item.description, requestedLocale, defaultLocale) : '',
 		modifierGroups: (item.modifierGroups || []).map(localizeModifierGroup),
+		variations: item.variations,
 	}
 }
 
@@ -207,6 +220,8 @@ const clientMenuData = {
 		emptyCartDesc: i18n._(msg`Explore our menu and add your favorite dishes.`),
 		remove: i18n._(msg`Remove`),
 		addToOrder: i18n._(msg`Add to Order`),
+		combinationUnavailable: i18n._(msg`This combination is sold out. Choose another combination.`),
+		soldOut: soldOutLabel,
 		required: i18n._(msg`Required`),
 		optional: i18n._(msg`Optional`),
 		free: i18n._(msg`Free`),
@@ -356,8 +371,9 @@ const clientMenuData = {
 									<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
 										{category.items.map((item) => (
 											<div
-												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
+												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(item) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
 												data-item-id={item.id}
+												data-sold-out={isItemSoldOut(item)}
 											>
 												<div class="space-y-2">
 													{/* Item Image */}
@@ -379,7 +395,7 @@ const clientMenuData = {
 																{getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)}
 															</h3>
 															<span class="shrink-0 text-foreground text-sm font-medium">
-																{formatPrice(item.price)}
+														{itemPriceLabel(item)}
 															</span>
 														</div>
 
@@ -423,16 +439,17 @@ const clientMenuData = {
 													<div class="text-[11px] text-muted-foreground">
 														{item.modifierGroups && item.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${item.modifierGroups.length}` : `${item.modifierGroups.length} options`) : ''}
 													</div>
-													<button
-														type="button"
-														class:list={[
+											<button
+												type="button"
+												disabled={isItemSoldOut(item)}
+												class:list={[
 															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-															item.modifierGroups && item.modifierGroups.length > 0
+															isItemSoldOut(item) || item.modifierGroups.length > 0 || item.variations.variants.length > 0
 																? "border border-border bg-background text-foreground hover:bg-muted"
 																: "bg-primary text-primary-foreground hover:bg-primary/90"
 														]}
 													>
-														{item.modifierGroups && item.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
+														{isItemSoldOut(item) ? soldOutLabel : item.modifierGroups.length > 0 || item.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
 													</button>
 												</div>
 											</div>
@@ -464,8 +481,9 @@ const clientMenuData = {
 														<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 															{subcat.items.map((subItem) => (
 											<div
-												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
+												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(subItem) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
 												data-item-id={subItem.id}
+												data-sold-out={isItemSoldOut(subItem)}
 											>
 												<div class="space-y-2">
 													{/* Item Image */}
@@ -487,7 +505,7 @@ const clientMenuData = {
 																{getLocalizedMenuValue(subItem.displayName, requestedLocale, defaultLocale)}
 															</h3>
 															<span class="shrink-0 text-foreground text-sm font-medium">
-																{formatPrice(subItem.price)}
+														{itemPriceLabel(subItem)}
 															</span>
 														</div>
 
@@ -531,16 +549,17 @@ const clientMenuData = {
 													<div class="text-[11px] text-muted-foreground">
 														{subItem.modifierGroups && subItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subItem.modifierGroups.length}` : `${subItem.modifierGroups.length} options`) : ''}
 													</div>
-													<button
-														type="button"
-														class:list={[
+											<button
+												type="button"
+												disabled={isItemSoldOut(subItem)}
+												class:list={[
 															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-															subItem.modifierGroups && subItem.modifierGroups.length > 0
+														isItemSoldOut(subItem) || subItem.modifierGroups.length > 0 || subItem.variations.variants.length > 0
 																? "border border-border bg-background text-foreground hover:bg-muted"
 																: "bg-primary text-primary-foreground hover:bg-primary/90"
 														]}
 													>
-														{subItem.modifierGroups && subItem.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
+													{isItemSoldOut(subItem) ? soldOutLabel : subItem.modifierGroups.length > 0 || subItem.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
 													</button>
 												</div>
 											</div>
@@ -570,8 +589,9 @@ const clientMenuData = {
 																			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 																				{subSub.items.map((subSubItem) => (
 											<div
-												class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-md cursor-pointer js-item-card"
+												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(subSubItem) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
 												data-item-id={subSubItem.id}
+												data-sold-out={isItemSoldOut(subSubItem)}
 											>
 												<div class="space-y-2">
 													{/* Item Image */}
@@ -593,7 +613,7 @@ const clientMenuData = {
 																{getLocalizedMenuValue(subSubItem.displayName, requestedLocale, defaultLocale)}
 															</h3>
 															<span class="shrink-0 text-foreground text-sm font-medium">
-																{formatPrice(subSubItem.price)}
+														{itemPriceLabel(subSubItem)}
 															</span>
 														</div>
 
@@ -637,16 +657,17 @@ const clientMenuData = {
 													<div class="text-[11px] text-muted-foreground">
 														{subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subSubItem.modifierGroups.length}` : `${subSubItem.modifierGroups.length} options`) : ''}
 													</div>
-													<button
-														type="button"
-														class:list={[
+											<button
+												type="button"
+												disabled={isItemSoldOut(subSubItem)}
+												class:list={[
 															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-															subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0
+														isItemSoldOut(subSubItem) || subSubItem.modifierGroups.length > 0 || subSubItem.variations.variants.length > 0
 																? "border border-border bg-background text-foreground hover:bg-muted"
 																: "bg-primary text-primary-foreground hover:bg-primary/90"
 														]}
 													>
-														{subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0 ? customizeLabel : `+ ${addLabel}`}
+													{isItemSoldOut(subSubItem) ? soldOutLabel : subSubItem.modifierGroups.length > 0 || subSubItem.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
 													</button>
 												</div>
 											</div>
@@ -724,7 +745,9 @@ const clientMenuData = {
 					</div>
 
 					{/* Dynamic Modifier Groups Container */}
-					<div id="modal-modifier-groups" class="space-y-6"></div>
+				<div id="modal-variation-groups" class="space-y-4"></div>
+				<p id="modal-variation-unavailable" class="hidden text-sm text-destructive" role="status"></p>
+				<div id="modal-modifier-groups" class="space-y-6"></div>
 
 					{/* Special Instructions */}
 					<div class="space-y-2">
@@ -841,6 +864,7 @@ const clientMenuData = {
 		type CartItem = {
 			id: string
 			itemId: string
+			variantId?: string
 			name: string
 			basePrice: number
 			unitPrice: number
@@ -1121,6 +1145,8 @@ const clientMenuData = {
 
 		// Item Customization Modal State
 		let activeModalItem: any = null
+		let selectedVariant: any = null
+		let selectedVariationValues: string[] = []
 		let modalQuantity = 1
 		let selectedOptionsMap: Record<
 			string,
@@ -1156,7 +1182,7 @@ const clientMenuData = {
 
 		function calculateModalPrice() {
 			if (!activeModalItem) return 0
-			let unit = activeModalItem.price
+			let unit = selectedVariant?.price ?? activeModalItem.price
 			for (const list of Object.values(selectedOptionsMap)) {
 				for (const opt of list) {
 					unit += opt.priceDelta || 0
@@ -1166,8 +1192,19 @@ const clientMenuData = {
 		}
 
 		function updateModalAddButton() {
-			const btn = document.getElementById('modal-add-btn')
+			const btn = document.getElementById('modal-add-btn') as HTMLButtonElement | null
 			if (!btn) return
+			const unavailable = Boolean(
+				activeModalItem?.variations?.groups?.length &&
+				(!selectedVariant || selectedVariant.availabilityStatus === 'unavailable'),
+			)
+			btn.disabled = unavailable
+			btn.classList.toggle('opacity-50', unavailable)
+			btn.classList.toggle('cursor-not-allowed', unavailable)
+			if (unavailable) {
+				btn.textContent = (menuData as any).labels?.soldOut || 'Sold out'
+				return
+			}
 			const total = calculateModalPrice()
 			const addPrefix = (menuData as any).labels?.addToOrder || 'Add to Order'
 			btn.textContent = `${addPrefix} • ${formatCurrency(total)}`
@@ -1178,6 +1215,36 @@ const clientMenuData = {
 			if (!item) return
 
 			activeModalItem = item
+			const firstAvailableVariant = (item.variations?.variants || []).find((variant: any) => variant.availabilityStatus !== 'unavailable')
+			selectedVariationValues = firstAvailableVariant ? [...firstAvailableVariant.valueIds] : (item.variations?.groups || []).map((group: any) => group.values?.[0]?.id || '')
+			selectedVariant = null
+			function refreshVariation() {
+				selectedVariant = (item.variations?.variants || []).find((variant: any) => variant.valueIds.every((id: string, index: number) => id === selectedVariationValues[index])) || null
+				const unavailable = Boolean(item.variations?.groups?.length && (!selectedVariant || selectedVariant.availabilityStatus === 'unavailable'))
+				const unavailableMessage = document.getElementById('modal-variation-unavailable')
+				if (unavailableMessage) {
+					unavailableMessage.textContent = (menuData as any).labels?.combinationUnavailable || 'This combination is sold out. Choose another combination.'
+					unavailableMessage.classList.toggle('hidden', !unavailable)
+				}
+				const currentPrice = selectedVariant?.price ?? item.price
+				const priceEl = document.getElementById('modal-item-price')
+				if (priceEl) priceEl.textContent = formatCurrency(currentPrice)
+				const imgContainer = document.getElementById('modal-item-img-container')
+				const imageUrl = selectedVariant?.imageUrl || item.imageUrl
+				if (imgContainer) {
+					imgContainer.innerHTML = ''
+					if (imageUrl) {
+						const img = document.createElement('img')
+						img.id = 'modal-item-img'
+						img.src = imageUrl
+						img.alt = item.displayName
+						img.className = 'size-full object-cover'
+						imgContainer.appendChild(img)
+						imgContainer.classList.remove('hidden')
+					} else imgContainer.classList.add('hidden')
+				}
+				updateModalAddButton()
+			}
 			modalQuantity = 1
 			selectedOptionsMap = {}
 
@@ -1185,7 +1252,6 @@ const clientMenuData = {
 			const nameEl = document.getElementById('modal-item-name')
 			const descEl = document.getElementById('modal-item-desc')
 			const priceEl = document.getElementById('modal-item-price')
-			const imgContainer = document.getElementById('modal-item-img-container')
 			const instructionsEl = document.getElementById('modal-special-instructions') as HTMLTextAreaElement
 			const qtyValueEl = document.getElementById('modal-qty-value')
 
@@ -1195,19 +1261,21 @@ const clientMenuData = {
 			if (instructionsEl) instructionsEl.value = ''
 			if (qtyValueEl) qtyValueEl.textContent = '1'
 
-			if (imgContainer) {
-				imgContainer.innerHTML = ''
-				if (item.imageUrl) {
-					const imgEl = document.createElement('img')
-					imgEl.id = 'modal-item-img'
-					imgEl.src = item.imageUrl
-					imgEl.alt = item.displayName
-					imgEl.className = 'size-full object-cover'
-					imgContainer.appendChild(imgEl)
-					imgContainer.classList.remove('hidden')
-				} else {
-					imgContainer.classList.add('hidden')
-				}
+			refreshVariation()
+			const variationsContainer = document.getElementById('modal-variation-groups')
+			if (variationsContainer) {
+				variationsContainer.innerHTML = (item.variations?.groups || []).map((group: any, index: number) => `
+					<div class="space-y-2">
+						<label class="block text-sm font-medium text-foreground" for="modal-variation-${index}">${escapeHtml(group.name)}</label>
+						<select id="modal-variation-${index}" class="js-variation-select w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" data-index="${index}">
+							${(group.values || []).map((option: any) => `<option value="${escapeHtml(option.id)}" ${option.id === selectedVariationValues[index] ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}
+						</select>
+					</div>
+				`).join('')
+				variationsContainer.querySelectorAll<HTMLSelectElement>('.js-variation-select').forEach((select) => select.addEventListener('change', () => {
+					selectedVariationValues[Number(select.dataset.index)] = select.value
+					refreshVariation()
+				}))
 			}
 
 			// Render modifier groups
@@ -1472,6 +1540,10 @@ const clientMenuData = {
 		// Add to order button
 		document.getElementById('modal-add-btn')?.addEventListener('click', () => {
 			if (!activeModalItem) return
+			if (
+				activeModalItem.variations?.groups?.length &&
+				(!selectedVariant || selectedVariant.availabilityStatus === 'unavailable')
+			) return
 
 			// Validate required modifier groups
 			for (const grp of activeModalItem.modifierGroups || []) {
@@ -1514,17 +1586,20 @@ const clientMenuData = {
 			}
 
 			const optionsDelta = flatOptions.reduce((acc, o) => acc + (o.priceDelta || 0), 0)
-			const unitPrice = activeModalItem.price + optionsDelta
+			if (activeModalItem.variations?.groups?.length && !selectedVariant) return
+			const variationPrice = selectedVariant?.price ?? activeModalItem.price
+			const unitPrice = variationPrice + optionsDelta
 			const instructions = (document.getElementById('modal-special-instructions') as HTMLTextAreaElement)?.value || ''
 
 			cart.push({
 				id: `cart_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
 				itemId: activeModalItem.id,
+				variantId: selectedVariant?.id,
 				name: activeModalItem.displayName,
-				basePrice: activeModalItem.price,
+				basePrice: variationPrice,
 				unitPrice,
 				quantity: modalQuantity,
-				options: flatOptions,
+				options: [...(activeModalItem.variations?.groups || []).map((group: any, index: number) => ({ groupId: group.id, groupName: group.name, optionId: selectedVariationValues[index], optionName: group.values.find((option: any) => option.id === selectedVariationValues[index])?.name || '', priceDelta: 0 })), ...flatOptions],
 				instructions,
 			})
 
@@ -1535,6 +1610,7 @@ const clientMenuData = {
 		// Item Card Click Handlers
 		document.querySelectorAll('.js-item-card').forEach((card) => {
 			card.addEventListener('click', () => {
+				if (card.getAttribute('data-sold-out') === 'true') return
 				const itemId = card.getAttribute('data-item-id')
 				if (itemId) openItemModal(itemId)
 			})

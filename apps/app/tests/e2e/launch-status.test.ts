@@ -83,6 +83,7 @@ test.describe.serial('Launch Status Flows', () => {
 		await page.getByRole('combobox').last().click()
 		await page.getByRole('option', { name: /engineering/i }).click()
 		await page.getByRole('button', { name: /complete setup/i }).click()
+		await page.getByRole('button', { name: /finish onboarding/i }).click()
 
 		// Should go to the org dashboard
 		await expect(page).toHaveURL(new RegExp(`/${orgSlug}`))
@@ -145,6 +146,7 @@ test.describe.serial('Launch Status Flows', () => {
 		await page.getByRole('combobox').last().click()
 		await page.getByRole('option', { name: /engineering/i }).click()
 		await page.getByRole('button', { name: /complete setup/i }).click()
+		await page.getByRole('button', { name: /finish onboarding/i }).click()
 
 		// Should go to the org dashboard
 		await expect(page).toHaveURL(new RegExp(`/${orgSlug}`))

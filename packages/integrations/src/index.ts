@@ -69,6 +69,13 @@ export {
 // OAuth flow management
 export { OAuthStateManager, OAuthCallbackHandler } from './oauth-manager'
 export { oauthFlow } from './oauth-flow'
+export {
+	readOAuthAuthorizationCode,
+	readOAuthStateFromRequest,
+	peekOAuthState,
+	needsCloverAuthorizeStep,
+	integrationOAuthCallbackUrl,
+} from './oauth-callback-params.ts'
 
 // Note notification system
 export {
@@ -89,6 +96,23 @@ export {
 } from './note-hooks'
 
 export * from './providers'
+export {
+	listGoogleBusinessLocations,
+	importGoogleBusinessLocation,
+} from './providers/google-business-profile/service'
+
+export {
+	assertLocationInOrganization,
+	ensureDefaultOrganizationLocation,
+	findScopedIntegration,
+	getDefaultOrganizationLocationId,
+	requireLocationIdForProvider,
+	resolveOrganizationLocationIdForConnect,
+} from './location-integrations.ts'
+export { isLocationScopedIntegration } from './integration-scope.ts'
+
+// POS and delivery-platform integrations (Clover, Square, Toast, Uber Eats, DoorDash)
+export * from './pos'
 
 export type {
 	Integration,

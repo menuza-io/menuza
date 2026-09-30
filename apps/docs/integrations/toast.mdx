@@ -1,0 +1,33 @@
+---
+title: 'Toast Integration'
+description: 'Bring your Toast menu into one workspace and push sold-out items back'
+---
+
+# Toast Integration
+
+Connect Toast to keep your menu and item availability aligned.
+
+## Overview
+
+The Toast integration lets you:
+
+- Import menus, groups, items, modifiers, allergens and alcohol flags from Toast
+- Push sold-out and back-in-stock updates through Toast's stock API
+
+## How it works
+
+Toast is **import-only** for menu content: its partner menus API is read-only, so
+menu structure and prices are never written back. Availability is different —
+Toast exposes a stock endpoint, so sold-out changes sync both ways.
+
+## Connect
+
+1. Open **Settings → Integrations**.
+2. Find **Toast** and click **Connect**.
+3. The connection is created in **sandbox mode**. Import and availability updates
+   operate against a simulated Toast restaurant.
+
+## Notes
+
+Live Toast accounts (partner auth) are not wired yet. Until then, every
+connection runs in sandbox mode.

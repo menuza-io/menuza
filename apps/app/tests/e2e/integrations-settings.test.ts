@@ -1,9 +1,9 @@
-import { db, eq, Integration } from '@repo/database'
+import { db, eq, Integration, OrganizationLocation } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Integration Settings & Providers Management', () => {
-	test('Operators can view available integrations catalog and request banner', async ({
+	test('Operators can view the POS integrations catalog', async ({
 		page,
 		login,
 		navigate,
@@ -14,28 +14,26 @@ test.describe('Integration Settings & Providers Management', () => {
 		await navigate('/:slug/settings/integrations', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// Verify page title and header
 		await expect(
-			page.getByRole('heading', { name: /^settings$/i }),
+			page.getByRole('heading', { name: /^integrations$/i }).first(),
 		).toBeVisible()
-		await expect(page.getByText('Integrations').first()).toBeVisible()
 
-		// Verify provider cards in the catalog
+		// The POS/delivery platforms are shown
+		await expect(page.getByText('Clover').first()).toBeVisible()
+		await expect(page.getByText('Square').first()).toBeVisible()
+		await expect(page.getByText('Toast').first()).toBeVisible()
+		await expect(page.getByText('Uber Eats').first()).toBeVisible()
+		await expect(page.getByText('DoorDash').first()).toBeVisible()
+
 		await expect(page.getByText('Slack').first()).toBeVisible()
 		await expect(page.getByText('Jira').first()).toBeVisible()
-		await expect(page.getByText('Linear').first()).toBeVisible()
-		await expect(page.getByText('GitLab').first()).toBeVisible()
 
-		// Verify request integration banner
 		await expect(
-			page.getByText(/need an integration but don't see it here\?/i),
-		).toBeVisible()
-		await expect(
-			page.getByRole('link', { name: /request integration/i }),
+			page.getByText(/need an integration but don't see it here\?/i).first(),
 		).toBeVisible()
 	})
 
-	test('Operators can view connected integrations and disconnect an active integration', async ({
+	test('Operators can connect a POS platform in sandbox mode', async ({
 		page,
 		login,
 		navigate,
@@ -43,31 +41,73 @@ test.describe('Integration Settings & Providers Management', () => {
 		const user = await login()
 		const org = await createTestOrganization(user.id, 'admin')
 
-		// Seed an active Slack integration
+		await navigate('/:slug/settings/integrations', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		await page
+			.getByRole('group', { name: 'Clover', exact: true })
+			.getByRole('button', { name: /^connect$/i })
+			.click()
+
+		// The connected card shows the Connected badge and a Disconnect action
+		await expect(page.getByText('Connected').first()).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: /^disconnect$/i }),
+		).toBeVisible()
+
+		const [integration] = await db
+			.select()
+			.from(Integration)
+			.where(eq(Integration.organizationId, org.id))
+			.limit(1)
+		expect(integration?.providerName).toBe('clover')
+	})
+
+	test('Operators can disconnect an active POS integration', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		const [location] = await db
+			.insert(OrganizationLocation)
+			.values({
+				organizationId: org.id,
+				name: 'Main location',
+				slug: 'main',
+				isDefault: true,
+			})
+			.returning()
+		if (!location) throw new Error('Seeded location not found')
+		const organizationLocationId = location.id
+
 		const [seededIntegration] = await db
 			.insert(Integration)
 			.values({
 				organizationId: org.id,
-				providerName: 'slack',
-				providerType: 'productivity',
-				config: '{}',
+				organizationLocationId,
+				providerName: 'clover',
+				providerType: 'pos',
+				config: JSON.stringify({
+					environment: 'sandbox',
+					merchantId: 'M_SANDBOX_CLOVER',
+				}),
 				isActive: true,
 			})
 			.returning()
 
 		if (!seededIntegration) throw new Error('Seeded integration not found')
-		expect(seededIntegration).toBeTruthy()
 
 		await navigate('/:slug/settings/integrations', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// Verify disconnect button appears for connected integration
 		const disconnectButton = page.getByRole('button', {
 			name: /^disconnect$/i,
 		})
 		await expect(disconnectButton).toBeVisible()
 
-		// Disconnect the integration
 		await Promise.all([
 			page.waitForResponse(
 				(res) =>
@@ -77,12 +117,10 @@ test.describe('Integration Settings & Providers Management', () => {
 			disconnectButton.click(),
 		])
 
-		// Verify button reverts to Connect
 		await expect(
 			page.getByRole('button', { name: /^disconnect$/i }),
-		).not.toBeVisible()
+		).toHaveCount(0)
 
-		// Verify integration was removed from the database
 		const [deletedIntegration] = await db
 			.select()
 			.from(Integration)

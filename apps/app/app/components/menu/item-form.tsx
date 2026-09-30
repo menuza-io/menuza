@@ -1,8 +1,9 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { useState } from 'react'
-import { Form } from 'react-router'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import {
+	getLocalizedMenuValue,
+	type MenuVariations,
+} from '@repo/common/menu-types'
 import { Button } from '@repo/ui/button'
 import {
 	Frame,
@@ -15,7 +16,8 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { MenuAvailabilityCard } from './menu-availability-card.tsx'
+import { useState } from 'react'
+import { Form, useActionData } from 'react-router'
 import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
@@ -26,14 +28,16 @@ import {
 	LocalizedTextarea,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { AssignedSortableList } from './assigned-sortable-list.tsx'
+import { ItemVariations } from './item-variations.tsx'
 import {
 	LocationOverridesCard,
 	type LocationItem,
 	type LocationOverrideState,
 } from './location-overrides-card.tsx'
 import { MenuAllergenSelector } from './menu-allergen-selector.tsx'
+import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
-import { AssignedSortableList } from './assigned-sortable-list.tsx'
 
 export interface ItemFormData {
 	displayName: string
@@ -43,6 +47,8 @@ export interface ItemFormData {
 	imageKey: string | null
 	imageUrl: string | null
 	images: ItemImage[]
+	variations: MenuVariations
+	variationImageUrls: Record<string, string>
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
@@ -101,6 +107,7 @@ export function ItemForm({
 	pageTitle,
 }: ItemFormProps) {
 	const { _ } = useLingui()
+	const actionData = useActionData<{ error?: Record<string, string[]> }>()
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 
 	// State
@@ -114,6 +121,9 @@ export function ItemForm({
 		initialData?.description ?? JSON.stringify({ [defaultLocale]: '' }),
 	)
 	const [price, setPrice] = useState<number>(initialData?.price ?? 0)
+	const [variations, setVariations] = useState<MenuVariations>(
+		initialData?.variations ?? { groups: [], variants: [] },
+	)
 	const [images, setImages] = useState<ItemImage[]>(
 		initialData?.images ??
 			(initialData?.imageKey && initialData.imageUrl
@@ -223,6 +233,14 @@ export function ItemForm({
 				defaultLocale={defaultLocale}
 			>
 				<Form method="POST" className="flex flex-1 flex-col">
+					{actionData?.error && (
+						<div
+							role="alert"
+							className="border-destructive text-destructive mx-auto mt-4 w-full max-w-6xl rounded-md border p-3 text-sm"
+						>
+							{Object.values(actionData.error).flat().join(' ')}
+						</div>
+					)}
 					{/* Hidden inputs to submit values */}
 					<input type="hidden" name="displayName" value={displayName} />
 					<input type="hidden" name="description" value={description} />
@@ -241,6 +259,14 @@ export function ItemForm({
 						name="imageKeys"
 						value={JSON.stringify(images.map((image) => image.key))}
 					/>
+					<input
+						type="hidden"
+						name="variations"
+						value={JSON.stringify(variations)}
+					/>
+					{variations.groups.length > 0 && (
+						<input type="hidden" name="price" value={price} />
+					)}
 					<input type="hidden" name="isAlcohol" value={String(isAlcohol)} />
 					<input
 						type="hidden"
@@ -305,7 +331,7 @@ export function ItemForm({
 										<FrameTitle className="text-base">
 											<Trans>Item Photos</Trans>
 										</FrameTitle>
-										<FrameDescription className="text-xs">
+										<FrameDescription>
 											<Trans>
 												Add up to five high-resolution photos. The first photo
 												is used on menu cards. Photos are stored in your
@@ -392,7 +418,7 @@ export function ItemForm({
 										<FrameTitle className="text-base">
 											<Trans>Item Information</Trans>
 										</FrameTitle>
-										<FrameDescription className="text-xs">
+										<FrameDescription>
 											<Trans>
 												Dish or drink title, description, and internal SKU/code.
 											</Trans>
@@ -443,32 +469,41 @@ export function ItemForm({
 										<FrameTitle className="text-base">
 											<Trans>Pricing & Tax</Trans>
 										</FrameTitle>
-										<FrameDescription className="text-xs">
-											<Trans>
-												Set baseline dish price and sales tax settings.
-											</Trans>
+										<FrameDescription>
+											{variations.groups.length ? (
+												<Trans>
+													Combination prices are set below. Sales tax applies to
+													every combination.
+												</Trans>
+											) : (
+												<Trans>
+													Set baseline dish price and sales tax settings.
+												</Trans>
+											)}
 										</FrameDescription>
 									</FrameHeader>
-									<FramePanel className="p-5">
-										<div className="max-w-xs space-y-2">
-											<Label htmlFor="price-input" className="text-xs">
-												<Trans>Base Price ($)</Trans>
-											</Label>
-											<Input
-												id="price-input"
-												type="number"
-												name="price"
-												step="0.01"
-												min="0"
-												value={price || ''}
-												onChange={(e) =>
-													setPrice(parseFloat(e.target.value) || 0)
-												}
-												placeholder="0.00"
-												required
-											/>
-										</div>
-									</FramePanel>
+									{variations.groups.length === 0 && (
+										<FramePanel className="p-5">
+											<div className="max-w-xs space-y-2">
+												<Label htmlFor="price-input" className="text-xs">
+													<Trans>Base Price ($)</Trans>
+												</Label>
+												<Input
+													id="price-input"
+													type="number"
+													name="price"
+													step="0.01"
+													min="0"
+													value={price || ''}
+													onChange={(e) =>
+														setPrice(parseFloat(e.target.value) || 0)
+													}
+													placeholder="0.00"
+													required
+												/>
+											</div>
+										</FramePanel>
+									)}
 									<FramePanel className="flex items-center justify-between px-5 py-3.5">
 										<Label
 											htmlFor="tax-switch"
@@ -488,6 +523,16 @@ export function ItemForm({
 										/>
 									</FramePanel>
 								</Frame>
+
+								<ItemVariations
+									value={variations}
+									onChange={setVariations}
+									images={images}
+									defaultPrice={price}
+									orgSlug={orgSlug}
+									locations={allLocations}
+									initialImageUrls={initialData?.variationImageUrls}
+								/>
 
 								{/* Modifier Groups Assignment Frame */}
 								<AssignedSortableList
@@ -523,7 +568,7 @@ export function ItemForm({
 								/>
 
 								{/* Nutrition, Dietary & Allergens Frame */}
-								<Frame className="w-full lg:grid lg:grid-cols-[minmax(0,15.5rem)_minmax(0,1fr)] lg:gap-1 [&>[data-slot=frame-panel-header]]:col-span-full [&>[data-slot=frame-panel]+[data-slot=frame-panel]]:lg:mt-0">
+								<Frame className="w-full lg:grid lg:grid-cols-[minmax(0,15.5rem)_minmax(0,1fr)] [&>[data-slot=frame-panel-header]]:col-span-full [&>[data-slot=frame-panel]+[data-slot=frame-panel]]:lg:mt-0">
 									<FrameHeader>
 										<FrameTitle className="text-base">
 											<Trans>Dietary, Allergens & Calories</Trans>
@@ -672,7 +717,7 @@ export function ItemForm({
 										<FrameTitle className="text-base">
 											<Trans>Promotions & Highlights</Trans>
 										</FrameTitle>
-										<FrameDescription className="text-xs">
+										<FrameDescription>
 											<Trans>
 												Feature this item prominently in ordering flows.
 											</Trans>
@@ -741,7 +786,7 @@ export function ItemForm({
 									locations={allLocations}
 									overrides={locationOverrides}
 									onChange={setLocationOverrides}
-									allowPriceOverride={true}
+									allowPriceOverride={variations.groups.length === 0}
 									basePrice={price}
 								/>
 							</div>

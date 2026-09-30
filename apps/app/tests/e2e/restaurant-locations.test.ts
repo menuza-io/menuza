@@ -98,12 +98,11 @@ test.describe('Restaurant Locations Management & Switching', () => {
 			saveBtn.click(),
 		])
 
-		// Verify redirect to locations list
-		await expect(page).toHaveURL(new RegExp(`/${org.slug}/settings/locations$`))
+		// New locations continue to their integration setup.
+		await expect(page).toHaveURL(
+			new RegExp(`/${org.slug}/settings/integrations\\?locationId=[^&]+$`),
+		)
 		await page.waitForLoadState('networkidle')
-
-		// Verify location appears in the table
-		await expect(page.getByText(locationName)).toBeVisible()
 
 		// Verify in SQLite database
 		const [createdLocation] = await db
@@ -121,6 +120,12 @@ test.describe('Restaurant Locations Management & Switching', () => {
 		expect(createdLocation?.name).toContain(locationName)
 		expect(createdLocation?.phone).toBe(phone)
 		expect(createdLocation?.prepTime).toBe(25)
+		expect(new URL(page.url()).searchParams.get('locationId')).toBe(
+			createdLocation!.id,
+		)
+
+		await navigate('/:slug/settings/locations', { slug: org.slug })
+		await expect(page.getByText(locationName)).toBeVisible()
 
 		// 6. Edit Location
 		await page.getByText(locationName).click()

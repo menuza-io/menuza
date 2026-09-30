@@ -6,6 +6,7 @@ import {
 	MENU_TYPES,
 	MODIFIER_SELECTION_TYPES,
 	MenuItemInputSchema,
+	MenuVariationsSchema,
 	MenuInputSchema,
 	MenuCategoryInputSchema,
 	MenuOptionInputSchema,
@@ -15,6 +16,7 @@ import {
 	ModifierOptionInputSchema,
 	getLocalizedMenuValue,
 	parseMenuItemImageKeys,
+	reconcileMenuVariations,
 } from './menu-types.ts'
 
 describe('menu-types', () => {
@@ -106,6 +108,193 @@ describe('menu-types', () => {
 			imageKeys: ['not-supported'],
 		})
 		expect(option).not.toHaveProperty('imageKeys')
+	})
+
+	it('requires a priced variation for every size and color combination', () => {
+		const groups = [
+			{
+				id: 'size',
+				name: 'Size',
+				values: [
+					{ id: 'small', name: 'Small' },
+					{ id: 'large', name: 'Large' },
+				],
+			},
+			{
+				id: 'color',
+				name: 'Color',
+				values: [
+					{ id: 'black', name: 'Black' },
+					{ id: 'blue', name: 'Blue' },
+				],
+			},
+		]
+		const variants = groups[0]!.values.flatMap((size) =>
+			groups[1]!.values.map((color) => ({
+				id: `${size.id}-${color.id}`,
+				valueIds: [size.id, color.id],
+				price: size.id === 'large' ? 15 : 12,
+				imageKey: color.id === 'black' ? 'black-photo' : null,
+			})),
+		)
+		expect(MenuVariationsSchema.safeParse({ groups, variants }).success).toBe(
+			true,
+		)
+		const legacy = MenuVariationsSchema.parse({ groups, variants })
+		expect(
+			legacy.variants.every(
+				(variant) =>
+					variant.availabilityStatus === 'available' &&
+					variant.unavailableUntil === null,
+			),
+		).toBe(true)
+		expect(
+			MenuVariationsSchema.safeParse({
+				groups,
+				variants: [
+					{ ...variants[0], availabilityStatus: 'unavailable_until' },
+					...variants.slice(1),
+				],
+			}).success,
+		).toBe(false)
+		expect(
+			MenuVariationsSchema.parse({
+				groups,
+				variants: [
+					{
+						...variants[0],
+						availabilityStatus: 'unavailable_until',
+						unavailableUntil: '2030-01-01T12:00:00.000Z',
+					},
+					...variants.slice(1),
+				],
+			}).variants[0]?.availabilityStatus,
+		).toBe('unavailable_until')
+		expect(
+			MenuVariationsSchema.safeParse({ groups, variants: variants.slice(1) })
+				.success,
+		).toBe(false)
+		expect(
+			MenuVariationsSchema.safeParse({
+				groups,
+				variants: [...variants.slice(1), variants[1]],
+			}).success,
+		).toBe(false)
+		expect(
+			MenuVariationsSchema.safeParse({
+				groups,
+				variants: [{ ...variants[0], price: -1 }, ...variants.slice(1)],
+			}).success,
+		).toBe(false)
+	})
+
+	it('keeps combination pricing and photos when option names change', () => {
+		const size = {
+			id: 'size',
+			name: 'Size',
+			values: [{ id: 'small', name: 'Small' }],
+		}
+		const color = {
+			id: 'color',
+			name: 'Color',
+			values: [{ id: 'black', name: 'Black' }],
+		}
+		const first = reconcileMenuVariations(
+			{ groups: [], variants: [] },
+			[size, color],
+			10,
+			() => 'first',
+		)
+		const priced = {
+			...first,
+			variants: [
+				{
+					...first.variants[0]!,
+					price: 12,
+					imageKey: 'black-photo',
+					availabilityStatus: 'unavailable' as const,
+				},
+			],
+		}
+		const renamed = reconcileMenuVariations(
+			priced,
+			[{ ...size, name: 'Fit' }, color],
+			10,
+			() => 'unused',
+		)
+		expect(renamed.variants).toEqual(priced.variants)
+		const expanded = reconcileMenuVariations(
+			renamed,
+			[
+				{ ...size, values: [...size.values, { id: 'large', name: 'Large' }] },
+				color,
+			],
+			10,
+			() => 'second',
+		)
+		expect(expanded.variants).toEqual([
+			priced.variants[0],
+			{
+				id: 'second',
+				valueIds: ['large', 'black'],
+				price: 10,
+				imageKey: null,
+				availabilityStatus: 'available',
+				unavailableUntil: null,
+			},
+		])
+		const withAnotherColor = reconcileMenuVariations(
+			priced,
+			[
+				size,
+				{ ...color, values: [...color.values, { id: 'blue', name: 'Blue' }] },
+			],
+			10,
+			() => 'new-color',
+		)
+		expect(withAnotherColor.variants[1]?.price).toBe(10)
+		expect(withAnotherColor.variants[1]?.availabilityStatus).toBe('available')
+		const withoutColor = reconcileMenuVariations(
+			priced,
+			[size],
+			10,
+			() => 'unused',
+		)
+		expect(withoutColor.variants).toEqual([
+			{
+				...priced.variants[0],
+				valueIds: ['small'],
+				availabilityStatus: 'available',
+			},
+		])
+		const withFinish = reconcileMenuVariations(
+			priced,
+			[
+				...priced.groups,
+				{
+					id: 'finish',
+					name: 'Finish',
+					values: [
+						{ id: 'matte', name: 'Matte' },
+						{ id: 'gloss', name: 'Gloss' },
+					],
+				},
+			],
+			10,
+			() => 'new-finish',
+		)
+		expect(withFinish.variants.map((variant) => variant.price)).toEqual([
+			12, 12,
+		])
+		expect(withFinish.variants.map((variant) => variant.imageKey)).toEqual([
+			'black-photo',
+			'black-photo',
+		])
+		expect(
+			withFinish.variants.every(
+				(variant) => variant.availabilityStatus === 'available',
+			),
+		).toBe(true)
 	})
 
 	it('validates ModifierGroupInputSchema with pizza option pricing', () => {

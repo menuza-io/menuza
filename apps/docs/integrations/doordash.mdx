@@ -1,0 +1,76 @@
+---
+title: 'DoorDash Integration'
+description: 'Sync your DoorDash storefront menu, categories and item availability'
+---
+
+# DoorDash Integration
+
+Connect DoorDash to keep your storefront menu and availability in step.
+
+## How aggregator platforms model DoorDash
+
+Products like Otter and Owner.com treat DoorDash in **two layers**:
+
+1. **Platform credentials (Menuza env)** — One DoorDash **developer** access key for Menuza as
+   integrator. Used to sign short-lived JWTs (`developer_id`, `key_id`, `signing_secret`).
+   Never put these on a tenant row.
+
+2. **Per-restaurant linkage (integration row)** — Each merchant connection stores:
+   - **Menuza location id** — Your canonical store in Menuza. DoorDash calls this
+     `partner_store_id` / `location_id` in [SSIO](https://developer.doordash.com/en-US/docs/marketplace/overview/onboarding/ssio/)
+     and [Store Onboarding](https://developer.doordash.com/en-US/docs/marketplace/overview/onboarding/sow/).
+   - **DoorDash store id** — The id DoorDash uses for menu APIs (`/api/v1/stores/{store_id}/...`)
+     after onboarding. Comes from SSIO mapping, Portal, or optional merchant-entered id during
+     onboarding rescue.
+
+Menuza does **not** use a global `DOORDASH_STORE_ID` in env — that would only work for a
+single-tenant dev hack.
+
+## Environment variables (Menuza app only)
+
+| Portal field     | Env var                   |
+| ---------------- | ------------------------- |
+| `developer_id`   | `DOORDASH_DEVELOPER_ID`   |
+| `key_id`         | `DOORDASH_KEY_ID`         |
+| `signing_secret` | `DOORDASH_SIGNING_SECRET` |
+
+Optional: `DOORDASH_BASE_URL` (default `https://openapi.doordash.com`).
+
+## Connect (per organization)
+
+When JWT credentials are configured:
+
+1. Open **Settings → Integrations → DoorDash**.
+2. Choose the **Menuza location** this DoorDash store corresponds to.
+3. Enter the **DoorDash store ID** for that restaurant.
+4. Click **Connect**.
+
+Menuza saves both ids on the integration config and mints JWTs from env keys on each API call.
+
+Without JWT env vars, Connect uses the in-app **sandbox** mock (no store id required).
+
+## Onboarding in production
+
+DoorDash production flow (what you will certify toward):
+
+- **SSIO** — Merchant OAuth on DoorDash, pick which DoorDash store maps to which partner
+  `location_id`, then call initialize onboarding with `doordash_store_uuid` + `location_id`.
+- **Store Onboarding Webhook** — POST store metadata with `partner_store_id` (Menuza location id)
+  and optional `doordash_store_id` for matching.
+
+Menuza’s Connect form is the manual step until SSIO OAuth is implemented: operators complete
+DoorDash onboarding in Portal, then paste the assigned store id per location.
+
+Manual store linking also requires `DOORDASH_ALLOW_MANUAL_STORE_LINK=true` when JWT
+credentials are configured. Without this flag, Menuza requires verified DoorDash
+onboarding before linking a store.
+
+## Multi-location brands
+
+DoorDash connections are scoped to the selected Menuza location. An organization can
+configure a separate DoorDash integration for each location, linking each restaurant
+to its own DoorDash store.
+
+## Menu sync
+
+DoorDash is **menu-level**: submissions are versioned and processed asynchronously. Read the current catalog before syncing so submissions use the latest remote version.

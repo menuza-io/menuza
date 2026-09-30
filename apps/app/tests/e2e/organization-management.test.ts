@@ -68,6 +68,7 @@ test.describe('Organization Management', () => {
 		await page.getByRole('option', { name: /engineering/i }).click()
 
 		await page.getByRole('button', { name: /complete setup/i }).click()
+		await page.getByRole('button', { name: /finish onboarding/i }).click()
 
 		// Verify organization was created and user is redirected
 		await expect(page).toHaveURL(new RegExp(`/${orgSlug}`))

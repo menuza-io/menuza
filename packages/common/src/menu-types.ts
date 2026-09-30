@@ -103,6 +103,198 @@ export const AvailabilityStatusSchema = z.enum(AVAILABILITY_STATUSES)
 export const MenuTypeSchema = z.enum(MENU_TYPES)
 export const ModifierSelectionTypeSchema = z.enum(MODIFIER_SELECTION_TYPES)
 
+export const MenuVariationGroupSchema = z.object({
+	id: z.string().min(1),
+	name: z.string().trim().min(1, 'Variation name is required').max(80),
+	values: z
+		.array(
+			z.object({
+				id: z.string().min(1),
+				name: z.string().trim().min(1, 'Option name is required').max(80),
+			}),
+		)
+		.min(1, 'Add at least one option')
+		.max(100),
+})
+
+export const MenuVariationSchema = z
+	.object({
+		id: z.string().min(1),
+		valueIds: z.array(z.string()).min(1).max(3),
+		price: z.number().finite().min(0, 'Variation price must be positive'),
+		imageKey: z.string().nullable().default(null),
+		availabilityStatus: z
+			.enum(['available', 'unavailable_until', 'unavailable'])
+			.default('available'),
+		unavailableUntil: z
+			.string()
+			.refine(
+				(value) => !Number.isNaN(Date.parse(value)),
+				'Invalid return time',
+			)
+			.nullable()
+			.default(null),
+	})
+	.refine(
+		(variant) =>
+			variant.availabilityStatus !== 'unavailable_until' ||
+			variant.unavailableUntil !== null,
+		{ path: ['unavailableUntil'], message: 'Choose when it becomes available' },
+	)
+
+export const MenuVariationsSchema = z
+	.object({
+		groups: z
+			.array(MenuVariationGroupSchema)
+			.max(3, 'Use up to three variation groups'),
+		variants: z
+			.array(MenuVariationSchema)
+			.max(100, 'Use up to 100 combinations'),
+	})
+	.superRefine((data, context) => {
+		const names = new Set<string>()
+		const groupIds = new Set<string>()
+		let combinations = 1
+		for (const group of data.groups) {
+			if (groupIds.has(group.id))
+				context.addIssue({
+					code: 'custom',
+					message: 'Variation group IDs must be unique',
+				})
+			groupIds.add(group.id)
+			const name = group.name.toLocaleLowerCase()
+			if (names.has(name))
+				context.addIssue({
+					code: 'custom',
+					message: 'Variation names must be unique',
+				})
+			names.add(name)
+			const values = new Set<string>()
+			const valueIds = new Set<string>()
+			for (const value of group.values) {
+				if (valueIds.has(value.id))
+					context.addIssue({
+						code: 'custom',
+						message: `Option IDs in ${group.name} must be unique`,
+					})
+				valueIds.add(value.id)
+				const valueName = value.name.toLocaleLowerCase()
+				if (values.has(valueName))
+					context.addIssue({
+						code: 'custom',
+						message: `Options in ${group.name} must be unique`,
+					})
+				values.add(valueName)
+			}
+			combinations *= group.values.length
+		}
+		if (combinations > 100)
+			context.addIssue({
+				code: 'custom',
+				message: 'Use up to 100 combinations',
+			})
+		if (data.variants.length !== (data.groups.length ? combinations : 0)) {
+			context.addIssue({
+				code: 'custom',
+				message: 'Every option combination needs a price',
+			})
+		}
+		const seen = new Set<string>()
+		const variantIds = new Set<string>()
+		for (const variant of data.variants) {
+			if (variantIds.has(variant.id))
+				context.addIssue({
+					code: 'custom',
+					message: 'Variation IDs must be unique',
+				})
+			variantIds.add(variant.id)
+			const valid =
+				variant.valueIds.length === data.groups.length &&
+				variant.valueIds.every((id, index) =>
+					data.groups[index]?.values.some((value) => value.id === id),
+				)
+			const key = variant.valueIds.join('\u0000')
+			if (!valid || seen.has(key))
+				context.addIssue({
+					code: 'custom',
+					message: 'Invalid or duplicate variation combination',
+				})
+			seen.add(key)
+		}
+	})
+
+export type MenuVariations = z.infer<typeof MenuVariationsSchema>
+
+export function reconcileMenuVariations(
+	current: MenuVariations,
+	groups: MenuVariations['groups'],
+	defaultPrice: number,
+	createId: () => string = () => crypto.randomUUID(),
+): MenuVariations {
+	if (groups.length === 0) return { groups, variants: [] }
+	const existing = new Map(
+		current.variants.map((variant) => [
+			variant.valueIds.join('\u0000'),
+			variant,
+		]),
+	)
+	const sameGroups =
+		current.groups.length === groups.length &&
+		groups.every((group, index) => group.id === current.groups[index]?.id)
+	const sharedGroups = groups.flatMap((group, newIndex) => {
+		const oldIndex = current.groups.findIndex((entry) => entry.id === group.id)
+		return oldIndex < 0 ? [] : [{ oldIndex, newIndex }]
+	})
+	const usedIds = new Set<string>()
+	const combinations = groups.reduce<string[][]>(
+		(rows, group) =>
+			rows.flatMap((ids) => group.values.map((value) => [...ids, value.id])),
+		[[]],
+	)
+	return {
+		groups,
+		variants: combinations.map((valueIds) => {
+			const exact = sameGroups
+				? existing.get(valueIds.join('\u0000'))
+				: undefined
+			if (exact) {
+				usedIds.add(exact.id)
+				return exact
+			}
+			const inherited =
+				sharedGroups.length > 0 && !sameGroups
+					? current.variants.find((variant) =>
+							sharedGroups.every(
+								({ oldIndex, newIndex }) =>
+									variant.valueIds[oldIndex] === valueIds[newIndex],
+							),
+						)
+					: undefined
+			const id =
+				inherited && !usedIds.has(inherited.id) ? inherited.id : createId()
+			usedIds.add(id)
+			return {
+				id,
+				valueIds,
+				price: inherited?.price ?? defaultPrice,
+				imageKey: inherited?.imageKey ?? null,
+				availabilityStatus: 'available',
+				unavailableUntil: null,
+			}
+		}),
+	}
+}
+
+export function parseMenuVariations(
+	value: string | null | undefined,
+): MenuVariations {
+	try {
+		const parsed = MenuVariationsSchema.safeParse(JSON.parse(value || '{}'))
+		if (parsed.success) return parsed.data
+	} catch {}
+	return { groups: [], variants: [] }
+}
+
 // HTML forms submit the empty string for cleared optional controls. Treat that
 // as "no value" instead of coercing it into an Invalid Date / NaN, while still
 // rejecting genuinely malformed input (e.g. `"not-a-date"`).
@@ -215,6 +407,7 @@ export const MenuItemInputSchema = z.object({
 	imageKey: z.string().optional().nullable(),
 	imageUrl: z.string().optional().nullable(),
 	imageKeys: z.array(z.string()).max(5).default([]),
+	variations: MenuVariationsSchema.default({ groups: [], variants: [] }),
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),

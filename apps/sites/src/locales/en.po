@@ -559,3 +559,15 @@ msgstr "Your Order is Empty"
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
 msgstr "Your Profile"
+
+msgid "From"
+msgstr "From"
+
+msgid "Sold out"
+msgstr "Sold out"
+
+msgid "This combination is sold out. Choose another combination."
+msgstr "This combination is sold out. Choose another combination."
+
+msgid "Some items are no longer available and were removed from your order."
+msgstr "Some items are no longer available and were removed from your order."

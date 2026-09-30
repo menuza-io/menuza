@@ -5,6 +5,7 @@ import { __setMockLaunchStatus } from '#app/utils/env.server.ts'
 import {
 	createAuthenticatedRequest,
 	createTestSession,
+	createTestOrganization,
 	createTestUser,
 } from '#tests/test-utils.ts'
 import { action, loader } from './create.tsx'
@@ -71,6 +72,28 @@ describe('organizations+/create route integration', () => {
 	})
 
 	describe('action', () => {
+		it.each([
+			'connect-pos-onboarding',
+			'connect-google-business-profile',
+			'import-google-business-profile',
+		])('rejects non-admin members for %s', async (intent) => {
+			const user = await createTestUser()
+			const { cookie } = await createTestSession(user.id)
+			const org = await createTestOrganization(user.id, 'member')
+			const formData = new FormData()
+			formData.set('intent', intent)
+			formData.set('orgId', org.id)
+			formData.set('providerName', 'clover')
+			const request = createAuthenticatedRequest(
+				'http://localhost:3000/organizations/create',
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+			await expect(
+				action({ request, params: {}, context: {} } as any),
+			).rejects.toMatchObject({ status: 403 })
+		})
+
 		it('redirects unauthenticated users to login', async () => {
 			const formData = new FormData()
 			formData.append('intent', 'create-organization')
@@ -177,7 +200,7 @@ describe('organizations+/create route integration', () => {
 			expect(membership?.organizationRoleId).toBe('org_role_admin')
 		})
 
-		it('handles complete-setup intent and redirects to org dashboard', async () => {
+		it('handles complete-setup intent and continues to the POS step', async () => {
 			const user = await createTestUser()
 			const { cookie } = await createTestSession(user.id)
 			const { createTestOrganization } = await import('#tests/test-utils.ts')
@@ -202,9 +225,9 @@ describe('organizations+/create route integration', () => {
 			} as any)) as Response
 
 			expect(response.status).toBe(302)
-			expect(response.headers.get('Location')).toBe(
-				`/${org.slug}?celebrate=true`,
-			)
+			const location = response.headers.get('Location') ?? ''
+			expect(location).toContain('/organizations/create?step=')
+			expect(location).toContain(`orgId=${org.id}`)
 
 			// Verify size updated on organization
 			const [updatedOrg] = await db
@@ -214,6 +237,34 @@ describe('organizations+/create route integration', () => {
 				.limit(1)
 
 			expect(updatedOrg?.size).toBe('11-50')
+		})
+
+		it('handles finish-onboarding intent and redirects to the org dashboard', async () => {
+			const user = await createTestUser()
+			const { cookie } = await createTestSession(user.id)
+			const { createTestOrganization } = await import('#tests/test-utils.ts')
+			const org = await createTestOrganization(user.id, 'admin')
+
+			const formData = new FormData()
+			formData.append('intent', 'finish-onboarding')
+			formData.append('orgId', org.id)
+
+			const request = createAuthenticatedRequest(
+				'http://localhost:3000/organizations/create',
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+
+			const response = (await action({
+				request,
+				params: {},
+				context: {},
+			} as any)) as Response
+
+			expect(response.status).toBe(302)
+			expect(response.headers.get('Location')).toBe(
+				`/${org.slug}?celebrate=true`,
+			)
 		})
 	})
 })

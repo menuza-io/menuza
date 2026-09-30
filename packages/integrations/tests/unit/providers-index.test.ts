@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
 	initializeProviders,
 	getAvailableProviders,
+	getAvailablePosProviders,
 } from '../../src/providers/index'
 import { providerRegistry } from '../../src/provider'
 
@@ -77,6 +78,8 @@ vi.mock('../../src/provider', () => ({
 	providerRegistry: {
 		register: vi.fn(),
 	},
+	// POS providers extend this base class, so the mocked module must expose it.
+	BaseIntegrationProvider: class {},
 }))
 
 describe('Providers Index', () => {
@@ -92,8 +95,8 @@ describe('Providers Index', () => {
 		it('should register all providers', () => {
 			initializeProviders()
 
-			// Verify that register was called for each provider
-			expect(providerRegistry.register).toHaveBeenCalledTimes(9)
+			// Nine note providers, five POS/delivery providers, and GBP.
+			expect(providerRegistry.register).toHaveBeenCalledTimes(15)
 
 			// Verify each provider was registered
 			const registerCalls = vi.mocked(providerRegistry.register).mock.calls
@@ -108,6 +111,30 @@ describe('Providers Index', () => {
 			expect(providerNames).toContain('asana')
 			expect(providerNames).toContain('trello')
 			expect(providerNames).toContain('github')
+			expect(providerNames).toContain('clover')
+			expect(providerNames).toContain('square')
+			expect(providerNames).toContain('toast')
+			expect(providerNames).toContain('ubereats')
+			expect(providerNames).toContain('doordash')
+			expect(providerNames).toContain('google-business-profile')
+		})
+
+		it('should expose POS providers for the integrations page', () => {
+			const providers = getAvailablePosProviders()
+
+			expect(providers.map((provider) => provider.name)).toEqual([
+				'clover',
+				'square',
+				'toast',
+				'ubereats',
+				'doordash',
+			])
+			providers.forEach((provider) => {
+				expect(provider.type === 'pos' || provider.type === 'delivery').toBe(
+					true,
+				)
+				expect(typeof provider.icon).toBe('string')
+			})
 		})
 	})
 

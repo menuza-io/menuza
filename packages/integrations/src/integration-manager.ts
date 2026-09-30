@@ -26,6 +26,11 @@ import {
 	inArray,
 } from '@repo/database'
 import {
+	findScopedIntegration,
+	resolveOrganizationLocationIdForConnect,
+} from './location-integrations.ts'
+import { isLocationScopedIntegration } from './integration-scope.ts'
+import {
 	type Integration,
 	type NoteIntegrationConnection,
 	type OrganizationNote,
@@ -64,6 +69,8 @@ export type ConnectionWithRelations = NoteIntegrationConnection & {
  */
 export interface CreateIntegrationParams {
 	organizationId: string
+	/** Required for POS and Google Business Profile connections. */
+	organizationLocationId?: string | null
 	providerName: string
 	tokenData: TokenData
 	config?: Record<string, any>
@@ -198,7 +205,23 @@ export class IntegrationManager {
 	async createIntegration(
 		params: CreateIntegrationParams,
 	): Promise<Integration> {
-		const { organizationId, providerName, tokenData, config = {} } = params
+		const {
+			organizationId,
+			providerName,
+			tokenData,
+			config = {},
+			organizationLocationId: locationParam,
+		} = params
+
+		const organizationLocationId =
+			await resolveOrganizationLocationIdForConnect(
+				organizationId,
+				providerName,
+				locationParam,
+			)
+		if (isLocationScopedIntegration(providerName) && !organizationLocationId) {
+			throw new Error('A restaurant location is required for this integration.')
+		}
 
 		const provider = this.getProvider(providerName)
 
@@ -209,25 +232,106 @@ export class IntegrationManager {
 			? await encryptToken(tokenData.refreshToken)
 			: null
 
-		// Create integration record
-		const [integration] = await db
-			.insert(IntegrationTable)
-			.values({
-				organizationId,
-				providerName,
-				providerType: provider.type,
-				accessToken: encryptedAccessToken,
-				refreshToken: encryptedRefreshToken,
-				tokenExpiresAt: tokenData.expiresAt,
-				config: JSON.stringify({
-					...config,
-					scope: tokenData.scope,
-					metadata: tokenData.metadata || {},
-				}),
-				isActive: true,
-				lastSyncAt: new Date(),
-			})
-			.returning()
+		const now = new Date()
+		const metadata = tokenData.metadata ?? {}
+		let preservedConfig: Record<string, unknown> = {}
+		if (providerName === 'google-business-profile' && organizationLocationId) {
+			const [previous] = await db
+				.select({ config: IntegrationTable.config })
+				.from(IntegrationTable)
+				.where(
+					and(
+						eq(IntegrationTable.organizationId, organizationId),
+						eq(IntegrationTable.providerName, providerName),
+						eq(IntegrationTable.organizationLocationId, organizationLocationId),
+					),
+				)
+				.limit(1)
+			try {
+				preservedConfig = JSON.parse(previous?.config ?? '{}') as Record<
+					string,
+					unknown
+				>
+			} catch {
+				preservedConfig = {}
+			}
+		}
+		const { isPosProvider } = await import('./pos/types.ts')
+		const { hasAppCredentials, providerUsesMerchantOAuth } =
+			await import('./pos/credentials.ts')
+		const merchantId =
+			typeof metadata.merchantId === 'string' ? metadata.merchantId : ''
+		const locationId =
+			typeof metadata.locationId === 'string' ? metadata.locationId : merchantId
+		const posEnvironment =
+			isPosProvider(providerName) &&
+			(hasAppCredentials(providerName) ||
+				(providerName === 'doordash' && hasAppCredentials('doordash')))
+				? 'live'
+				: isPosProvider(providerName)
+					? 'sandbox'
+					: null
+		const externalStoreId =
+			isPosProvider(providerName) && posEnvironment === 'live' && locationId
+				? locationId
+				: null
+		const configJson = JSON.stringify(
+			isPosProvider(providerName)
+				? {
+						...config,
+						environment: posEnvironment ?? 'sandbox',
+						merchantId,
+						locationId,
+						scope: tokenData.scope,
+						metadata,
+					}
+				: {
+						...preservedConfig,
+						...config,
+						scope: tokenData.scope,
+						metadata,
+					},
+		)
+
+		const existing = await findScopedIntegration(
+			organizationId,
+			providerName,
+			organizationLocationId,
+		)
+
+		const rowValues = {
+			organizationId,
+			organizationLocationId,
+			providerName,
+			providerType: provider.type,
+			externalStoreId,
+			accessToken: encryptedAccessToken,
+			refreshToken: encryptedRefreshToken,
+			tokenExpiresAt: tokenData.expiresAt ?? null,
+			config: configJson,
+			isActive: true,
+			lastSyncAt: now,
+			updatedAt: now,
+		}
+
+		let integration: Integration | undefined
+		if (existing) {
+			const [updated] = await db
+				.update(IntegrationTable)
+				.set(rowValues)
+				.where(eq(IntegrationTable.id, existing.id))
+				.returning()
+			integration = updated
+		} else {
+			const [created] = await db
+				.insert(IntegrationTable)
+				.values({
+					...rowValues,
+					createdAt: now,
+				})
+				.returning()
+			integration = created
+		}
 
 		if (!integration) {
 			throw new Error('Failed to create integration')
@@ -337,32 +441,32 @@ export class IntegrationManager {
 	 * @param integrationId - Integration ID to disconnect
 	 */
 	async disconnectIntegration(integrationId: string): Promise<void> {
-		// Get integration details for logging
 		const integration = await this.getIntegration(integrationId)
 		if (!integration) {
 			throw new Error('Integration not found')
 		}
 
-		// Delete all connections first
+		const { tokenManager } = await import('./token-manager.ts')
+		const provider = providerRegistry.get(integration.providerName)
+		await tokenManager.revokeToken(integrationId, provider)
+
+		console.info('[integration] disconnected', {
+			integrationId,
+			organizationId: integration.organizationId,
+			provider: integration.providerName,
+		})
+
 		await db
 			.delete(ConnectionTable)
 			.where(eq(ConnectionTable.integrationId, integrationId))
 
-		// Delete integration logs
 		await db
 			.delete(IntegrationLogTable)
 			.where(eq(IntegrationLogTable.integrationId, integrationId))
 
-		// Delete the integration
 		await db
 			.delete(IntegrationTable)
 			.where(eq(IntegrationTable.id, integrationId))
-
-		// Log disconnection
-		await this.logIntegrationActivity(integrationId, 'disconnect', 'success', {
-			provider: integration.providerName,
-			connectionCount: integration.connections?.length || 0,
-		})
 	}
 
 	// Note-to-Channel Connection Management

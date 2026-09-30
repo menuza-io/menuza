@@ -76,6 +76,7 @@ import {
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMenuModifierOption,
 	OrganizationMenuLocationOverride,
+	OrganizationMenuPosLink,
 } from './schema.ts'
 
 export const NoteRelations = relations(Note, ({ one, many }) => ({
@@ -284,6 +285,7 @@ export const OrganizationLocationRelations = relations(
 			references: [Organization.id],
 		}),
 		menuOverrides: many(OrganizationMenuLocationOverride),
+		integrations: many(Integration),
 	}),
 )
 
@@ -298,6 +300,10 @@ export const IntegrationRelations = relations(Integration, ({ one, many }) => ({
 	organization: one(Organization, {
 		fields: [Integration.organizationId],
 		references: [Organization.id],
+	}),
+	location: one(OrganizationLocation, {
+		fields: [Integration.organizationLocationId],
+		references: [OrganizationLocation.id],
 	}),
 	noteConnections: many(NoteIntegrationConnection),
 	logs: many(IntegrationLog),
@@ -1049,6 +1055,20 @@ export const OrganizationMenuLocationOverrideRelations = relations(
 		location: one(OrganizationLocation, {
 			fields: [OrganizationMenuLocationOverride.locationId],
 			references: [OrganizationLocation.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuPosLinkRelations = relations(
+	OrganizationMenuPosLink,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuPosLink.organizationId],
+			references: [Organization.id],
+		}),
+		integration: one(Integration, {
+			fields: [OrganizationMenuPosLink.integrationId],
+			references: [Integration.id],
 		}),
 	}),
 )

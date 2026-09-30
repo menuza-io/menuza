@@ -11,6 +11,7 @@ import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
+import { redirectWithToast } from '@repo/common/toast'
 import {
 	and,
 	db,
@@ -19,6 +20,13 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
+import {
+	ensureDefaultOrganizationLocation,
+	getAvailablePosProviders,
+	integrationManager,
+	listGoogleBusinessLocations,
+	importGoogleBusinessLocation,
+} from '@repo/integrations'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -44,6 +52,7 @@ import { useState, useEffect } from 'react'
 import {
 	redirect,
 	type ActionFunctionArgs,
+	Form,
 	Link,
 	useActionData,
 	useLoaderData,
@@ -56,6 +65,8 @@ import {
 } from '#app/components/forms.tsx'
 
 import { getLaunchStatus } from '#app/utils/env.server.ts'
+import { connectGoogleBusinessProfile } from '#app/utils/integrations/google-business-profile.server.ts'
+import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
 import {
 	createOrganizationInvitation,
 	sendOrganizationInvitationEmail,
@@ -66,6 +77,7 @@ import {
 	setUserDefaultOrganization,
 	userHasOrgAccess,
 } from '#app/utils/organization/organizations.server.ts'
+import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
 import {
 	getTrialConfig,
 	getPlansAndPrices,
@@ -170,6 +182,17 @@ const Step4Schema = z.object({
 	userDepartment: z.string().min(1, { message: 'Department is required' }),
 })
 
+function showsOnboardingPricing(
+	creditCardRequired: string,
+	launchStatus: string,
+) {
+	return (
+		creditCardRequired === 'stripe' &&
+		launchStatus !== 'PUBLIC_BETA' &&
+		launchStatus !== 'CLOSED_BETA'
+	)
+}
+
 export async function loader({ request }: { request: Request }) {
 	const userId = await requireUserId(request)
 
@@ -184,10 +207,10 @@ export async function loader({ request }: { request: Request }) {
 	let plansAndPrices = null
 
 	// Only fetch plans if we need Stripe subscription and not in PUBLIC_BETA or CLOSED_BETA
-	const shouldShowPricing =
-		trialConfig.creditCardRequired === 'stripe' &&
-		launchStatus !== 'PUBLIC_BETA' &&
-		launchStatus !== 'CLOSED_BETA'
+	const shouldShowPricing = showsOnboardingPricing(
+		trialConfig.creditCardRequired,
+		launchStatus,
+	)
 
 	if (shouldShowPricing) {
 		try {
@@ -197,10 +220,52 @@ export async function loader({ request }: { request: Request }) {
 		}
 	}
 
+	const url = new URL(request.url)
+	const onboardingOrgId = url.searchParams.get('orgId')
+	let onboardingLocationId: string | null = null
+	let googleConnected = false
+	let googleLocations: Array<{ name: string; title: string }> = []
+	let googleError: string | null = null
+	if (
+		onboardingOrgId &&
+		Number(url.searchParams.get('step')) >= (shouldShowPricing ? 5 : 4)
+	) {
+		await userHasOrgAccess(request, onboardingOrgId)
+		onboardingLocationId =
+			await ensureDefaultOrganizationLocation(onboardingOrgId)
+		const integrations =
+			await integrationManager.getOrganizationIntegrations(onboardingOrgId)
+		googleConnected = integrations.some(
+			(item) =>
+				item.providerName === 'google-business-profile' &&
+				item.organizationLocationId === onboardingLocationId &&
+				item.isActive,
+		)
+		if (googleConnected && onboardingLocationId) {
+			try {
+				googleLocations = (
+					await listGoogleBusinessLocations(
+						onboardingOrgId,
+						onboardingLocationId,
+					)
+				).map(({ name, title }) => ({ name, title }))
+			} catch (error) {
+				googleError =
+					error instanceof Error
+						? error.message
+						: 'Could not load Google locations'
+			}
+		}
+	}
 	return {
 		trialConfig,
 		plansAndPrices,
 		launchStatus,
+		posProviders: getAvailablePosProviders(),
+		onboardingLocationId,
+		googleConnected,
+		googleLocations,
+		googleError,
 	}
 }
 
@@ -356,10 +421,10 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 
 		const launchStatus = getLaunchStatus()
-		const shouldShowPricing =
-			trialConfig.creditCardRequired === 'stripe' &&
-			launchStatus !== 'PUBLIC_BETA' &&
-			launchStatus !== 'CLOSED_BETA'
+		const shouldShowPricing = showsOnboardingPricing(
+			trialConfig.creditCardRequired,
+			launchStatus,
+		)
 
 		// Determine next step based on trial configuration and launch status
 		const nextStep = shouldShowPricing ? 4 : 3
@@ -440,6 +505,136 @@ export async function action({ request }: ActionFunctionArgs) {
 					)
 			})
 
+			// The POS step is the final step; connect there (or skip) to finish.
+			const launchStatus = getLaunchStatus()
+			const shouldShowPricing = showsOnboardingPricing(
+				trialConfig.creditCardRequired,
+				launchStatus,
+			)
+			return redirect(
+				`/organizations/create?step=${shouldShowPricing ? 5 : 4}&orgId=${orgId}`,
+			)
+		} catch (error) {
+			console.error('Failed to complete setup', error)
+			return submission.reply({
+				formErrors: ['Failed to complete setup'],
+			})
+		}
+	}
+
+	if (intent === 'connect-pos-onboarding') {
+		const orgId = formData.get('orgId') as string
+		const providerName = String(formData.get('providerName') ?? '')
+		await requireOrganizationAdmin(request, orgId)
+		const organizationLocationId =
+			String(formData.get('organizationLocationId') ?? '').trim() ||
+			(await ensureDefaultOrganizationLocation(orgId))
+		if (!providerName) {
+			return Response.json({ error: 'No platform selected' }, { status: 400 })
+		}
+		const step = showsOnboardingPricing(
+			trialConfig.creditCardRequired,
+			getLaunchStatus(),
+		)
+			? 5
+			: 4
+		const afterRedirectUrl = `/organizations/create?step=${step}&orgId=${orgId}`
+		try {
+			const oauthRedirect = await connectPosPlatform(
+				request,
+				orgId,
+				providerName,
+				{
+					afterRedirectUrl,
+					organizationLocationId,
+				},
+			)
+			if (oauthRedirect) return oauthRedirect
+		} catch (error) {
+			console.error('Failed to connect POS platform', error)
+			return Response.json(
+				{
+					error:
+						error instanceof Error
+							? error.message
+							: 'Failed to connect platform',
+				},
+				{ status: 400 },
+			)
+		}
+		return redirect(afterRedirectUrl)
+	}
+	if (intent === 'connect-google-business-profile') {
+		const orgId = String(formData.get('orgId') ?? '')
+		await requireOrganizationAdmin(request, orgId)
+		const organizationLocationId =
+			String(formData.get('organizationLocationId') ?? '').trim() ||
+			(await ensureDefaultOrganizationLocation(orgId))
+		const step = showsOnboardingPricing(
+			trialConfig.creditCardRequired,
+			getLaunchStatus(),
+		)
+			? 5
+			: 4
+		try {
+			return await connectGoogleBusinessProfile(
+				request,
+				orgId,
+				`/organizations/create?step=${step}&orgId=${orgId}`,
+				organizationLocationId,
+			)
+		} catch (error) {
+			return Response.json(
+				{
+					error:
+						error instanceof Error ? error.message : 'Could not connect Google',
+				},
+				{ status: 400 },
+			)
+		}
+	}
+	if (intent === 'import-google-business-profile') {
+		const orgId = String(formData.get('orgId') ?? '')
+		await requireOrganizationAdmin(request, orgId)
+		const organizationLocationId =
+			String(formData.get('organizationLocationId') ?? '').trim() ||
+			(await ensureDefaultOrganizationLocation(orgId))
+		const step = showsOnboardingPricing(
+			trialConfig.creditCardRequired,
+			getLaunchStatus(),
+		)
+			? 5
+			: 4
+		const path = `/organizations/create?step=${step}&orgId=${orgId}`
+		try {
+			await importGoogleBusinessLocation(
+				orgId,
+				String(formData.get('locationName') ?? ''),
+				organizationLocationId,
+			)
+			return redirectWithToast(path, {
+				title: 'Restaurant imported',
+				description: 'Google business and location details were imported.',
+				type: 'success',
+			})
+		} catch (error) {
+			return redirectWithToast(path, {
+				title: 'Import failed',
+				description:
+					error instanceof Error
+						? error.message
+						: 'Could not import Google location',
+				type: 'error',
+			})
+		}
+	}
+
+	// Handle step 5: Skip POS (optional) and finish
+	if (intent === 'finish-onboarding') {
+		const orgId = formData.get('orgId') as string
+		await userHasOrgAccess(request, orgId)
+
+		try {
 			const [organization] = await db
 				.select({ slug: Organization.slug })
 				.from(Organization)
@@ -452,9 +647,10 @@ export async function action({ request }: ActionFunctionArgs) {
 			return redirect(`/${organization?.slug}?celebrate=true`)
 		} catch (error) {
 			console.error('Failed to complete setup', error)
-			return submission.reply({
-				formErrors: ['Failed to complete setup'],
-			})
+			return Response.json(
+				{ error: 'Failed to complete setup' },
+				{ status: 500 },
+			)
 		}
 	}
 
@@ -463,18 +659,26 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function CreateOrganizationPage() {
 	const actionData = useActionData<typeof action>()
-	const { trialConfig, plansAndPrices, launchStatus } =
-		useLoaderData<typeof loader>()
+	const {
+		trialConfig,
+		plansAndPrices,
+		launchStatus,
+		posProviders,
+		onboardingLocationId,
+		googleConnected,
+		googleLocations,
+		googleError,
+	} = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
 	const rawStep = parseInt(searchParams.get('step') || '1')
 	// Validate step to prevent logic bypass
 	const currentStep = Math.max(1, Math.min(rawStep, 5))
 	const orgId = searchParams.get('orgId')
 
-	const shouldShowPricing =
-		trialConfig.creditCardRequired === 'stripe' &&
-		launchStatus !== 'PUBLIC_BETA' &&
-		launchStatus !== 'CLOSED_BETA'
+	const shouldShowPricing = showsOnboardingPricing(
+		trialConfig.creditCardRequired,
+		launchStatus,
+	)
 
 	// Dynamic step configuration based on trial mode
 	const steps = shouldShowPricing
@@ -499,6 +703,11 @@ export default function CreateOrganizationPage() {
 					title: 'Additional Info',
 					description: 'Complete setup',
 				},
+				{
+					number: 5,
+					title: 'Connect POS',
+					description: 'Sync your menu',
+				},
 			]
 		: [
 				{
@@ -515,6 +724,11 @@ export default function CreateOrganizationPage() {
 					number: 3,
 					title: 'Additional Info',
 					description: 'Complete setup',
+				},
+				{
+					number: 4,
+					title: 'Connect POS',
+					description: 'Sync your menu',
 				},
 			]
 	const totalSteps = steps.length
@@ -559,6 +773,16 @@ export default function CreateOrganizationPage() {
 					{currentStep === 4 && orgId && (
 						<Step4 orgId={orgId} actionData={actionData} />
 					)}
+					{currentStep === 5 && orgId && (
+						<StepPos
+							orgId={orgId}
+							onboardingLocationId={onboardingLocationId}
+							posProviders={posProviders}
+							googleConnected={googleConnected}
+							googleLocations={googleLocations}
+							googleError={googleError}
+						/>
+					)}
 				</>
 			) : (
 				<>
@@ -567,6 +791,16 @@ export default function CreateOrganizationPage() {
 					)}
 					{currentStep === 3 && orgId && (
 						<Step4 orgId={orgId} actionData={actionData} />
+					)}
+					{currentStep === 4 && orgId && (
+						<StepPos
+							orgId={orgId}
+							onboardingLocationId={onboardingLocationId}
+							posProviders={posProviders}
+							googleConnected={googleConnected}
+							googleLocations={googleLocations}
+							googleError={googleError}
+						/>
 					)}
 				</>
 			)}
@@ -1120,6 +1354,160 @@ function Step4({ orgId, actionData }: { orgId: string; actionData: any }) {
 				</form>
 			</CardContent>
 		</Card>
+	)
+}
+
+function StepPos({
+	orgId,
+	onboardingLocationId,
+	posProviders,
+	googleConnected,
+	googleLocations,
+	googleError,
+}: {
+	orgId: string
+	onboardingLocationId: string | null
+	googleConnected: boolean
+	googleLocations: Array<{ name: string; title: string }>
+	googleError: string | null
+	posProviders: Array<{
+		name: string
+		displayName: string
+		description: string
+		icon: string
+	}>
+}) {
+	const locationField = onboardingLocationId ? (
+		<input
+			type="hidden"
+			name="organizationLocationId"
+			value={onboardingLocationId}
+		/>
+	) : null
+
+	return (
+		<div className="space-y-4">
+			<Card>
+				<CardHeader>
+					<CardTitle>Import from Google Business Profile</CardTitle>
+					<CardDescription>
+						Choose your Google listing to add restaurant details and its
+						location.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-3">
+					{googleConnected ? (
+						<>
+							<p>Google Business Profile connected</p>
+							{googleError ? <p role="alert">{googleError}</p> : null}
+							{googleLocations.length ? (
+								<Form method="post" className="space-y-2">
+									<input
+										type="hidden"
+										name="intent"
+										value="import-google-business-profile"
+									/>
+									<input type="hidden" name="orgId" value={orgId} />
+									{locationField}
+									<select
+										name="locationName"
+										aria-label="Google location"
+										className="border-input bg-background w-full rounded-md border p-2"
+										required
+									>
+										{googleLocations.map((location) => (
+											<option key={location.name} value={location.name}>
+												{location.title}
+											</option>
+										))}
+									</select>
+									<Button type="submit" className="w-full">
+										Import selected location
+									</Button>
+								</Form>
+							) : !googleError ? (
+								<p>No Google locations are available for this account.</p>
+							) : null}
+						</>
+					) : (
+						<Form method="post">
+							<input type="hidden" name="orgId" value={orgId} />
+							{locationField}
+							<Button
+								type="submit"
+								name="intent"
+								value="connect-google-business-profile"
+								className="w-full"
+								disabled={!onboardingLocationId}
+							>
+								Connect Google Business Profile
+							</Button>
+						</Form>
+					)}
+				</CardContent>
+			</Card>
+			<Card>
+				<CardHeader>
+					<CardTitle>
+						<Trans>Connect your POS</Trans>
+					</CardTitle>
+					<CardDescription>
+						<Trans>
+							Connect a point of sale or delivery platform to keep your menu in
+							sync. You can also do this later from Settings.
+						</Trans>
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-3">
+					{posProviders.map((provider) => (
+						<Form method="POST" key={provider.name}>
+							<input
+								type="hidden"
+								name="intent"
+								value="connect-pos-onboarding"
+							/>
+							<input type="hidden" name="orgId" value={orgId} />
+							{locationField}
+							<input type="hidden" name="providerName" value={provider.name} />
+							<Button
+								type="submit"
+								variant="outline"
+								className="h-auto w-full justify-start gap-3 py-3"
+							>
+								<Icon
+									name={provider.icon as never}
+									className="size-5 shrink-0"
+								/>
+								<span className="flex flex-col items-start text-left">
+									<span className="text-sm font-medium">
+										{provider.displayName}
+									</span>
+									<span className="text-muted-foreground text-xs font-normal">
+										{provider.description}
+									</span>
+								</span>
+							</Button>
+						</Form>
+					))}
+
+					<Form method="POST" className="pt-2">
+						<input type="hidden" name="intent" value="finish-onboarding" />
+						<input type="hidden" name="orgId" value={orgId} />
+						<Button type="submit" variant="ghost" className="w-full">
+							<Trans>Finish onboarding</Trans>
+						</Button>
+					</Form>
+
+					<p className="text-muted-foreground text-center text-xs">
+						<Trans>
+							With platform credentials configured, OAuth connects your live
+							store. Without them, only the local development sandbox is
+							available.
+						</Trans>
+					</p>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }
 

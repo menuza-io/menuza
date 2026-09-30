@@ -4,6 +4,7 @@ import {
 	count,
 	db,
 	eq,
+	inArray,
 	Integration,
 	isNotNull,
 	OnboardingProgress,
@@ -14,6 +15,7 @@ import {
 	OrganizationNote,
 	UserOrganization,
 } from '@repo/database'
+import { POS_PROVIDER_NAMES } from './pos-providers.ts'
 
 async function countRows(table: any, condition: any): Promise<number> {
 	const [row] = await db.select({ value: count() }).from(table).where(condition)
@@ -394,6 +396,7 @@ async function getDetectionData(userId: string, organizationId: string) {
 		membersCount,
 		organization,
 		integrationsCount,
+		posIntegrationsCount,
 		invitationsCount,
 	] = await Promise.all([
 		countRows(
@@ -425,6 +428,14 @@ async function getDetectionData(userId: string, organizationId: string) {
 			and(
 				eq(Integration.organizationId, organizationId),
 				eq(Integration.isActive, true),
+			),
+		),
+		countRows(
+			Integration,
+			and(
+				eq(Integration.organizationId, organizationId),
+				eq(Integration.isActive, true),
+				inArray(Integration.providerName, POS_PROVIDER_NAMES),
 			),
 		),
 		countRows(
@@ -484,6 +495,7 @@ async function getDetectionData(userId: string, organizationId: string) {
 		hasUsedAiChat: !!aiChatStep,
 		hasUsedCommandMenu: !!commandMenuStep,
 		hasIntegrations: integrationsCount > 0,
+		hasPosIntegration: posIntegrationsCount > 0,
 	}
 }
 
@@ -505,6 +517,8 @@ function evaluateDetectionCondition(
 			return data.hasUsedCommandMenu
 		case 'hasIntegrations':
 			return data.hasIntegrations
+		case 'hasPosIntegration':
+			return data.hasPosIntegration
 		default:
 			return false
 	}

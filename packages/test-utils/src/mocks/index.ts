@@ -4,6 +4,7 @@ import { handlers as githubHandlers } from './github.ts'
 import { handlers as googlePlacesHandlers } from './google-places.ts'
 import { handlers as pwnedPasswordApiHandlers } from './pwned-passwords.ts'
 import { handlers as ociEmailHandlers } from './oci-email.ts'
+import { handlers as posHandlers } from './pos.ts'
 import { handlers as resendHandlers } from './resend.ts'
 import { handlers as stripeHandlers } from './stripe.ts'
 import { handlers as tenantApiHandlers } from './tenant-api.ts'
@@ -16,6 +17,7 @@ export const server = setupServer(
 	...resendHandlers,
 	...ociEmailHandlers,
 	...githubHandlers,
+	...posHandlers,
 	...tigrisHandlers,
 	...pwnedPasswordApiHandlers,
 )

@@ -1,6 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import {
 	MenuItemInputSchema,
+	parseMenuVariations,
 	parseMenuItemImageKeys,
 } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
@@ -33,6 +34,7 @@ import {
 	assertCategoryIdsInOrganization,
 	assertItemInOrganization,
 	assertLocationIdsInOrganization,
+	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -72,8 +74,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const imageKeys = parseMenuItemImageKeys(item.imageKeys, item.imageKey)
+	const variations = parseMenuVariations(item.variations)
+	const mediaKeys = [
+		...new Set([
+			...imageKeys,
+			...variations.variants.flatMap((variant) =>
+				variant.imageKey ? [variant.imageKey] : [],
+			),
+		]),
+	]
 	const mediaAssets =
-		imageKeys.length > 0
+		mediaKeys.length > 0
 			? await db
 					.select({
 						id: OrganizationMediaAsset.id,
@@ -85,8 +96,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						and(
 							eq(OrganizationMediaAsset.organizationId, organization.id),
 							or(
-								inArray(OrganizationMediaAsset.id, imageKeys),
-								inArray(OrganizationMediaAsset.objectKey, imageKeys),
+								inArray(OrganizationMediaAsset.id, mediaKeys),
+								inArray(OrganizationMediaAsset.objectKey, mediaKeys),
 							),
 						),
 					)
@@ -166,6 +177,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			imageKey: item.imageKey,
 			imageUrl: item.imageUrl,
 			images,
+			variationImageUrls: Object.fromEntries(mediaUrlsByKey),
+			variations: {
+				...variations,
+				variants: variations.variants.map((variant) => ({
+					...variant,
+					imageKey:
+						variant.imageKey && mediaUrlsByKey.has(variant.imageKey)
+							? variant.imageKey
+							: null,
+				})),
+			},
 			isAlcohol: item.isAlcohol,
 			isGlutenFree: item.isGlutenFree,
 			isVegetarian: item.isVegetarian,
@@ -228,6 +250,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (
 			key === 'allergens' ||
 			key === 'imageKeys' ||
+			key === 'variations' ||
 			key === 'assignedCategoryIds' ||
 			key === 'assignedModifierGroupIds'
 		) {
@@ -266,6 +289,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	await assertMediaKeysInOrganization(
+		organization.id,
+		data.variations.variants.flatMap((variant) =>
+			variant.imageKey ? [variant.imageKey] : [],
+		),
+	)
 
 	const imageKeys = parseMenuItemImageKeys(
 		JSON.stringify(data.imageKeys),
@@ -296,7 +325,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				displayName: data.displayName,
 				internalName: data.internalName || null,
 				description: data.description || null,
-				price: data.price,
+				price: data.variations.variants.length
+					? Math.min(
+							...data.variations.variants.map((variant) => variant.price),
+						)
+					: data.price,
+				variations: JSON.stringify(data.variations),
 				imageKey: primaryImageKey,
 				imageUrl: primaryImageKey ? data.imageUrl || null : null,
 				imageKeys: JSON.stringify(imageKeys),
@@ -376,7 +410,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					entityType: 'item',
 					entityId: itemId,
 					isEnabled: entry.isEnabled,
-					price: entry.price,
+					price: data.variations.groups.length ? null : entry.price,
 					availabilityStatus: entry.availabilityStatus,
 				})),
 			)

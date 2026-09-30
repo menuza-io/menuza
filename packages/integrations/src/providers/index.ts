@@ -3,6 +3,14 @@
  */
 
 import { providerRegistry } from '../provider'
+import {
+	CloverProvider,
+	DoorDashProvider,
+	SquareProvider,
+	ToastProvider,
+	UberEatsProvider,
+	createPosProviders,
+} from '../pos/providers'
 import { SlackProvider } from './slack/provider'
 import { JiraProvider } from './jira/provider'
 import { LinearProvider } from './linear/provider'
@@ -12,6 +20,7 @@ import { NotionProvider } from './notion/provider'
 import { AsanaProvider } from './asana/provider'
 import { TrelloProvider } from './trello/provider'
 import { GitHubProvider } from './github/provider'
+import { GoogleBusinessProfileProvider } from './google-business-profile/provider'
 
 /**
  * Initialize and register all available integration providers
@@ -43,9 +52,34 @@ export function initializeProviders(): void {
 
 	// Register GitHub provider
 	providerRegistry.register(new GitHubProvider())
+	providerRegistry.register(new GoogleBusinessProfileProvider())
+
+	// Register POS and delivery providers
+	for (const provider of createPosProviders()) {
+		providerRegistry.register(provider)
+	}
 
 	// Future providers can be registered here
 	// providerRegistry.register(new TeamsProvider())
+}
+
+/**
+ * Get the POS and delivery providers shown on the integrations page.
+ *
+ * The note/productivity providers above are intentionally omitted: this app
+ * connects menus to point-of-sale and delivery platforms.
+ */
+export function getAvailablePosProviders() {
+	return createPosProviders().map((provider) => ({
+		name: provider.name,
+		type: provider.type,
+		kind: provider.kind,
+		displayName: provider.displayName,
+		description: provider.description,
+		icon: provider.icon,
+		writeMode: provider.writeMode,
+		logoPath: provider.logoPath,
+	}))
 }
 
 /**
@@ -140,4 +174,13 @@ export { NotionProvider }
 export { AsanaProvider }
 export { TrelloProvider }
 export { GitHubProvider }
+export { GoogleBusinessProfileProvider }
+export {
+	CloverProvider,
+	DoorDashProvider,
+	SquareProvider,
+	ToastProvider,
+	UberEatsProvider,
+	createPosProviders,
+} from '../pos/providers'
 export { providerRegistry } from '../provider'

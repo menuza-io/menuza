@@ -99,6 +99,23 @@ export const DEFAULT_ONBOARDING_STEPS = [
 		},
 		sortOrder: 6,
 	},
+	{
+		key: 'connect_pos',
+		title: 'Connect your POS',
+		description:
+			'Connect Clover, Square, Toast, Uber Eats or DoorDash to sync your menu (completes when a platform is connected)',
+		icon: 'plug',
+		actionConfig: {
+			type: 'navigate' as const,
+			target: '/settings/integrations',
+			label: 'Connect POS',
+		},
+		autoDetect: true,
+		detectConfig: {
+			condition: 'hasPosIntegration',
+		},
+		sortOrder: 7,
+	},
 ]
 
 // Initialize onboarding steps in database

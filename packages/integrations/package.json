@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./pos/sandbox": {
+      "types": "./src/pos/sandbox.ts",
+      "import": "./src/pos/sandbox.ts"
     }
   },
   "scripts": {
@@ -27,9 +31,12 @@
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@remix-run/server-runtime": "^2.17.5",
+    "@repo/common": "*",
     "@repo/config": "*",
+    "@repo/database": "*",
     "@repo/security": "*",
     "lru-cache": "^11.1.0",
+    "msw": "^2.11.4",
     "react-router": "^8.3.0",
     "zod": "^3.25.76"
   },
