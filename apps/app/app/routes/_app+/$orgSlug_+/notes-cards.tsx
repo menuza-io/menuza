@@ -466,9 +466,7 @@ export const NoteCard = ({
 										</TooltipContent>
 									</Tooltip>
 								)}
-								<h3 className="flex-1 text-lg leading-tight">
-									{note.title}
-								</h3>
+								<h3 className="flex-1 text-lg leading-tight">{note.title}</h3>
 							</div>
 							{/* Content preview */}
 							{note.content &&

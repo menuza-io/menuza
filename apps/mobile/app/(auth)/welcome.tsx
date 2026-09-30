@@ -89,9 +89,7 @@ export default function WelcomeScreen() {
 							Already have an account?{' '}
 						</Text>
 						<TouchableOpacity onPress={handleSignIn} accessibilityRole="link">
-							<Text className="text-primary text-base">
-								Sign In
-							</Text>
+							<Text className="text-primary text-base">Sign In</Text>
 						</TouchableOpacity>
 					</View>
 				</View>

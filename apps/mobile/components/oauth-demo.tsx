@@ -54,9 +54,7 @@ export function OAuthDemo() {
 				</Text>
 
 				<View className="bg-secondary mb-6 items-center rounded-lg p-5">
-					<Text className="text-foreground mb-1 text-lg">
-						{user.email}
-					</Text>
+					<Text className="text-foreground mb-1 text-lg">{user.email}</Text>
 					<Text className="text-muted-foreground mb-1 text-base">
 						@{user.username}
 					</Text>
