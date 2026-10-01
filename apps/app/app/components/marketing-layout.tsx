@@ -1,4 +1,5 @@
 import { type OnboardingProgressData } from '@repo/common/onboarding'
+import { cn } from '@repo/ui'
 import { SidebarInset, SidebarProvider } from '@repo/ui/sidebar'
 import { type ReactNode } from 'react'
 import { useLocation } from 'react-router'
@@ -44,10 +45,12 @@ export function MarketingLayout({
 	trialStatus = null,
 	extensionId = null,
 }: MarketingLayoutProps) {
+	const { pathname } = useLocation()
+	const isMailbox = /\/mailbox\/?$/.test(pathname)
 	return (
 		<>
 			<SidebarProvider
-				className="min-h-0 flex-1"
+				className={cn('min-h-0 flex-1', isMailbox && 'h-dvh max-h-dvh')}
 				open={!isCollapsed}
 				style={
 					{
@@ -63,9 +66,17 @@ export function MarketingLayout({
 					extensionId={extensionId || undefined}
 				/>
 				{/* Main column: the inset (sidebar + header + page content). */}
-				<SidebarInset role="main" className="min-w-0">
+				<SidebarInset
+					role="main"
+					className={cn('min-w-0', isMailbox && 'min-h-0')}
+				>
 					<SiteHeader isCollapsed={isCollapsed} />
-					<div className="@container/main flex flex-1 flex-col gap-2 px-4 md:px-2">
+					<div
+						className={cn(
+							'@container/main flex flex-1 flex-col gap-2 px-4 md:px-2',
+							isMailbox && 'min-h-0',
+						)}
+					>
 						{children}
 					</div>
 				</SidebarInset>

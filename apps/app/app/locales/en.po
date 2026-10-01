@@ -99,7 +99,7 @@ msgstr "{0} modifier groups"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:121
+#: ../../packages/marketing/src/components/campaign-detail.tsx:119
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -115,6 +115,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:342
 #~ msgid "{0} steps"
 #~ msgstr ""
+
+#: app/components/app-sidebar.tsx:302
+#~ msgid "{0} unread"
+#~ msgstr "{0} unread"
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:648
 msgid "{announcementCount} announcements"
@@ -179,6 +183,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:221
 msgid "{journeyName} (Copy)"
 msgstr ""
+
+#: app/components/app-sidebar.tsx:303
+msgid "{mailboxUnreadLabelCount} unread"
+msgstr "{mailboxUnreadLabelCount} unread"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -248,6 +256,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:286
+msgid "{total} submissions"
+msgstr "{total} submissions"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:304
 msgid "{totalNotes} total notes"
@@ -415,6 +427,9 @@ msgstr "A picture, logo, or product shot."
 #: app/routes/organizations+/create.tsx:625
 msgid "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
 msgstr "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:646
+msgid "A place for every inquiry"
+msgstr "A place for every inquiry"
 
 #: app/utils/website/form-templates.ts:41
 msgid "A short, low-friction form for prospective customers."
@@ -443,6 +458,7 @@ msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media libra
 msgstr "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 
 #: app/components/roles/tenant-role-access-manager.tsx:860
+#: app/components/roles/tenant-role-access-manager.tsx:858
 msgid "Access"
 msgstr "Access"
 
@@ -479,7 +495,7 @@ msgid "Acme Inc."
 msgstr ""
 
 #: app/components/command-menu.tsx:115
-#: app/components/roles/tenant-role-access-manager.tsx:777
+#: app/components/roles/tenant-role-access-manager.tsx:775
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:502
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
@@ -689,6 +705,7 @@ msgid "Add Location"
 msgstr "Add Location"
 
 #: app/components/app-sidebar.tsx:536
+#: app/components/app-sidebar.tsx:504
 msgid "Add members"
 msgstr ""
 
@@ -894,6 +911,10 @@ msgstr ""
 #~ msgid "AI Assistant ready to help with this note"
 #~ msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:600
+msgid "AI drafting hasn’t been enabled for this mailbox."
+msgstr "AI drafting hasn’t been enabled for this mailbox."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:228
 #~ msgid "AI is thinking..."
 #~ msgstr ""
@@ -929,7 +950,7 @@ msgstr ""
 #~ msgid "All assigned"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:352
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:348
 msgid "All checks passed. This workflow is ready to publish."
 msgstr ""
 
@@ -981,6 +1002,7 @@ msgstr "Allow Special Instructions"
 
 #: app/components/locations/delivery-zones-manager.tsx:222
 #: app/components/roles/tenant-role-access-manager.tsx:666
+#: app/components/roles/tenant-role-access-manager.tsx:664
 msgid "Allowed"
 msgstr "Allowed"
 
@@ -1006,6 +1028,7 @@ msgstr "Alt Text"
 #~ msgstr ""
 
 #: app/components/app-sidebar.tsx:382
+#: app/components/app-sidebar.tsx:356
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "Analytics"
@@ -1019,6 +1042,7 @@ msgid "Announcement actions"
 msgstr "Announcement actions"
 
 #: app/components/app-sidebar.tsx:398
+#: app/components/app-sidebar.tsx:372
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -1087,6 +1111,7 @@ msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot
 msgstr "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
 #: app/components/roles/tenant-role-access-manager.tsx:917
+#: app/components/roles/tenant-role-access-manager.tsx:915
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 
@@ -1248,6 +1273,7 @@ msgid "Automation saved successfully"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:352
+#: app/components/app-sidebar.tsx:326
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1331,6 +1357,9 @@ msgstr ""
 #: app/components/menu/option-form.tsx:300
 msgid "Back to options"
 msgstr "Back to options"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:445
+msgid "Back to submissions"
+msgstr "Back to submissions"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3340
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4817
@@ -1375,6 +1404,7 @@ msgid "Billed monthly"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:470
+#: app/components/app-sidebar.tsx:437
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr ""
@@ -1404,6 +1434,7 @@ msgid "Body text"
 msgstr "Body text"
 
 #: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:363
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1423,11 +1454,12 @@ msgstr "Brightness"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:96
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
 #: app/components/app-sidebar.tsx:345
+#: app/components/app-sidebar.tsx:319
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -1449,7 +1481,7 @@ msgstr ""
 msgid "Bucket Name"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:543
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:539
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5934
 msgid "Build"
 msgstr ""
@@ -1458,15 +1490,15 @@ msgstr ""
 msgid "Build a branded HTML email with blocks."
 msgstr "Build a branded HTML email with blocks."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:460
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:456
 msgid "Builder"
 msgstr "Builder"
 
-#: app/components/roles/tenant-role-access-manager.tsx:579
+#: app/components/roles/tenant-role-access-manager.tsx:577
 msgid "Built-in"
 msgstr "Built-in"
 
-#: app/components/roles/tenant-role-access-manager.tsx:837
+#: app/components/roles/tenant-role-access-manager.tsx:835
 msgid "Built-in Roles"
 msgstr "Built-in Roles"
 
@@ -1521,7 +1553,7 @@ msgstr ""
 msgid "Can edit teammate notes"
 msgstr "Can edit teammate notes"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
@@ -1534,10 +1566,10 @@ msgstr "Can edit teammate notes"
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
 #: app/components/note/comment-input.tsx:261
-#: app/components/note/comment-item.tsx:301
+#: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:317
 #: app/components/roles/tenant-role-access-manager.tsx:535
-#: app/components/roles/tenant-role-access-manager.tsx:925
+#: app/components/roles/tenant-role-access-manager.tsx:923
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -1565,10 +1597,10 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1768
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1434
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1472
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1518
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1556
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
 #: app/routes/organizations+/create.tsx:821
 #: app/routes/organizations+/create.tsx:957
 msgid "Cancel"
@@ -1789,16 +1821,26 @@ msgid "Clear"
 msgstr "Clear"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1545
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
 msgid "Clear all 404 history?"
 msgstr "Clear all 404 history?"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:571
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:572
+msgid "Clear draft"
+msgstr "Clear draft"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:823
 msgid "Clear history"
 msgstr "Clear history"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1567
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1563
 msgid "Clear History"
 msgstr "Clear History"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:625
+#~ msgid "Clear the message to generate a new AI draft."
+#~ msgstr "Clear the message to generate a new AI draft."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:871
 msgid "Click \"Add Server\" and paste this configuration:"
@@ -1833,7 +1875,7 @@ msgstr ""
 msgid "Client"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:366
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/onboarding-checklist.tsx:177
 msgid "Close"
 msgstr ""
@@ -1902,7 +1944,7 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
-#: app/components/note/comment-item.tsx:225
+#: app/components/note/comment-item.tsx:223
 msgid "Comment actions"
 msgstr "Comment actions"
 
@@ -2092,7 +2134,7 @@ msgstr "Connected form"
 msgid "Connected on {createdAtDate}"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:297
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:295
 msgid "Connections"
 msgstr ""
 
@@ -2171,6 +2213,10 @@ msgstr "Control overall ordering availability for guests."
 msgid "Control who can access this note"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:245
+#~ msgid "Conversations start here. Review and reply to your website submissions."
+#~ msgstr "Conversations start here. Review and reply to your website submissions."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1242
 msgid "Cool"
 msgstr "Cool"
@@ -2226,6 +2272,14 @@ msgstr "Copy URL"
 msgid "Corners"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:229
+msgid "Could not create a draft. Try again."
+msgstr "Could not create a draft. Try again."
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:172
+msgid "Could not update read status. Try again."
+msgstr "Could not update read status. Try again."
+
 #: app/components/ai/global-ai-panel.tsx:83
 msgid "Couldn't load the assistant."
 msgstr "Couldn't load the assistant."
@@ -2248,6 +2302,7 @@ msgid "Create a category to start organizing menu items."
 msgstr "Create a category to start organizing menu items."
 
 #: app/components/roles/tenant-role-access-manager.tsx:754
+#: app/components/roles/tenant-role-access-manager.tsx:752
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "Create a custom role to assign specific permissions to teammates."
 
@@ -2449,7 +2504,7 @@ msgid "Create Password"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Create redirect"
 msgstr "Create redirect"
 
@@ -2458,7 +2513,7 @@ msgid "Create reusable forms, then place them on any website page with a Form bl
 msgstr "Create reusable forms, then place them on any website page with a Form block."
 
 #: app/components/roles/tenant-role-access-manager.tsx:543
-#: app/components/roles/tenant-role-access-manager.tsx:743
+#: app/components/roles/tenant-role-access-manager.tsx:741
 msgid "Create role"
 msgstr "Create role"
 
@@ -2584,7 +2639,7 @@ msgstr ""
 msgid "Cursor Setup"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:579
+#: app/components/roles/tenant-role-access-manager.tsx:577
 msgid "Custom"
 msgstr "Custom"
 
@@ -2622,6 +2677,7 @@ msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "Custom options, toppings, sides, and choices offered with this item."
 
 #: app/components/roles/tenant-role-access-manager.tsx:728
+#: app/components/roles/tenant-role-access-manager.tsx:726
 msgid "Custom Roles"
 msgstr "Custom Roles"
 
@@ -2650,7 +2706,7 @@ msgstr ""
 msgid "Customer data region"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:389
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:385
 msgid "Customer ID"
 msgstr ""
 
@@ -2671,6 +2727,7 @@ msgid "customerId is required"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:286
+#: app/components/app-sidebar.tsx:289
 msgid "Customers"
 msgstr ""
 
@@ -2686,7 +2743,7 @@ msgstr "Customers pick up orders in-store."
 #~ msgid "Customize Columns"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:305
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
 msgstr ""
 
@@ -2710,6 +2767,8 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:125
 #: app/components/app-sidebar.tsx:262
+#: app/components/app-sidebar.tsx:126
+#: app/components/app-sidebar.tsx:265
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr ""
@@ -2782,9 +2841,9 @@ msgstr ""
 msgid "Delay unit is required."
 msgstr ""
 
-#: app/components/note/comment-item.tsx:241
-#: app/components/roles/tenant-role-access-manager.tsx:822
-#: app/components/roles/tenant-role-access-manager.tsx:932
+#: app/components/note/comment-item.tsx:239
+#: app/components/roles/tenant-role-access-manager.tsx:820
+#: app/components/roles/tenant-role-access-manager.tsx:930
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
@@ -2804,12 +2863,12 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1488
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1534
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1484
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
 msgid "Delete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1504
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
 msgid "Delete 404 log entry?"
 msgstr "Delete 404 log entry?"
 
@@ -2841,7 +2900,7 @@ msgstr ""
 #~ msgid "Delete comment"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:914
+#: app/components/roles/tenant-role-access-manager.tsx:912
 msgid "Delete custom role"
 msgstr "Delete custom role"
 
@@ -2928,7 +2987,7 @@ msgstr ""
 msgid "Delete question"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1454
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1450
 msgid "Delete redirect rule?"
 msgstr "Delete redirect rule?"
 
@@ -2957,7 +3016,7 @@ msgstr ""
 msgid "Delete team notes"
 msgstr "Delete team notes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:932
+#: app/components/roles/tenant-role-access-manager.tsx:930
 msgid "Deleting…"
 msgstr "Deleting…"
 
@@ -3009,9 +3068,9 @@ msgstr "Describe this image for accessibility"
 
 #: app/components/roles/tenant-role-access-manager.tsx:342
 #: app/components/roles/tenant-role-access-manager.tsx:453
-#: app/components/roles/tenant-role-access-manager.tsx:632
-#: app/components/roles/tenant-role-access-manager.tsx:768
-#: app/components/roles/tenant-role-access-manager.tsx:854
+#: app/components/roles/tenant-role-access-manager.tsx:630
+#: app/components/roles/tenant-role-access-manager.tsx:766
+#: app/components/roles/tenant-role-access-manager.tsx:852
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -3060,6 +3119,7 @@ msgid "Details & Address"
 msgstr "Details & Address"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:312
 msgid "Detected"
 msgstr ""
 
@@ -3230,7 +3290,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:130
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:416
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5851
@@ -3248,6 +3308,13 @@ msgstr "Draft something for me"
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:321
 msgid "Drag and reorder your menu categories and items exactly as they appear to guests."
 msgstr "Drag and reorder your menu categories and items exactly as they appear to guests."
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:563
+msgid "Draft with AI"
+msgstr "Draft with AI"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:561
+msgid "Drafting…"
+msgstr "Drafting…"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 #: app/components/website/form-builder-sidebar.tsx:335
@@ -3307,7 +3374,7 @@ msgstr "e.g. Christmas Day, Summer Festival"
 #~ msgid "e.g. contact-us, demo-request"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:391
 msgid "e.g. cust_123"
 msgstr ""
 
@@ -3354,6 +3421,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:453
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:342
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
+#: app/components/note/comment-item.tsx:232
+#: app/components/roles/tenant-role-access-manager.tsx:810
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
@@ -3371,7 +3440,7 @@ msgid "Edit column"
 msgstr ""
 
 #: app/components/note/comment-input.tsx:77
-#: app/components/note/comment-item.tsx:258
+#: app/components/note/comment-item.tsx:256
 msgid "Edit comment..."
 msgstr "Edit comment..."
 
@@ -3425,7 +3494,7 @@ msgstr "Edit own notes"
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
-#: app/components/roles/tenant-role-access-manager.tsx:599
+#: app/components/roles/tenant-role-access-manager.tsx:597
 msgid "Edit role"
 msgstr "Edit role"
 
@@ -3514,6 +3583,7 @@ msgid "Enable or disable available fulfillment channels for this location."
 msgstr "Enable or disable available fulfillment channels for this location."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1405
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
 msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
@@ -3600,7 +3670,7 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:327
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:323
 msgid "Errors"
 msgstr ""
 
@@ -3932,6 +4002,10 @@ msgstr "Form name"
 msgid "Form settings"
 msgstr "Form settings"
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:270
+msgid "Form submissions"
+msgstr "Form submissions"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:32
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:50
 #~ msgid "Form Submitted"
@@ -3942,6 +4016,8 @@ msgid "Format:"
 msgstr "Format:"
 
 #: app/components/app-sidebar.tsx:377
+#: app/components/app-sidebar.tsx:351
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:42
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -3999,6 +4075,11 @@ msgid "General"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:367
+#: app/components/app-sidebar.tsx:394
+msgid "General"
+msgstr ""
+
+#: app/components/app-sidebar.tsx:341
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -4040,6 +4121,16 @@ msgid "Get help"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:97
+#: app/components/app-sidebar.tsx:496
+msgid "Get chrome extension"
+msgstr ""
+
+#: app/components/app-sidebar.tsx:155
+#: app/components/app-sidebar.tsx:511
+msgid "Get help"
+msgstr ""
+
+#: app/components/app-sidebar.tsx:98
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr ""
@@ -4060,6 +4151,8 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:162
 #: app/components/app-sidebar.tsx:551
+#: app/components/app-sidebar.tsx:163
+#: app/components/app-sidebar.tsx:519
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -4084,6 +4177,7 @@ msgid "Go there"
 msgstr "Go there"
 
 #: app/components/app-sidebar.tsx:218
+#: app/components/app-sidebar.tsx:219
 msgid "Go to homepage"
 msgstr ""
 
@@ -4261,7 +4355,7 @@ msgstr "Hidden"
 msgid "Hide from search engines"
 msgstr ""
 
-#: app/components/note/comment-item.tsx:316
+#: app/components/note/comment-item.tsx:314
 msgid "Hide replies ({replyCount})"
 msgstr "Hide replies ({replyCount})"
 
@@ -4466,11 +4560,12 @@ msgstr "Insert field here"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:889
+#: app/components/roles/tenant-role-access-manager.tsx:887
 msgid "Inspect"
 msgstr "Inspect"
 
 #: app/components/app-sidebar.tsx:446
+#: app/components/app-sidebar.tsx:413
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -4638,7 +4733,7 @@ msgstr ""
 msgid "Keep editing"
 msgstr "Keep editing"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1371
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
 msgid "Keeps original indexing"
 msgstr "Keeps original indexing"
 
@@ -4715,7 +4810,7 @@ msgstr ""
 msgid "Last Used"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
 msgstr ""
 
@@ -4740,7 +4835,7 @@ msgid "Learn more"
 msgstr ""
 
 #: app/components/note/comment-input.tsx:75
-#: app/components/note/comment-item.tsx:339
+#: app/components/note/comment-item.tsx:337
 msgid "Leave a reply..."
 msgstr "Leave a reply..."
 
@@ -4751,6 +4846,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2447
 msgid "Leave empty to keep this page at the root of your site."
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:80
+msgid "Leave the mailbox and discard your reply drafts?"
+msgstr "Leave the mailbox and discard your reply drafts?"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:93
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3359
@@ -4855,6 +4954,10 @@ msgstr ""
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:306
+msgid "Loading submissions"
+msgstr "Loading submissions"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
 msgid "Location"
@@ -4936,6 +5039,14 @@ msgstr ""
 #: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
 msgstr ""
+
+#: app/components/app-sidebar.tsx:295
+msgid "Mailbox"
+msgstr "Mailbox"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:255
+msgid "Mailbox sources"
+msgstr "Mailbox sources"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1234
 msgid "Main library"
@@ -5098,6 +5209,15 @@ msgid "Mark Inactive"
 msgstr "Mark Inactive"
 
 #: app/components/app-sidebar.tsx:332
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:463
+msgid "Mark read"
+msgstr "Mark read"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:461
+msgid "Mark unread"
+msgstr "Mark unread"
+
+#: app/components/app-sidebar.tsx:306
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -5125,6 +5245,7 @@ msgid "MCP OAuth Setup Instructions"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:456
+#: app/components/app-sidebar.tsx:423
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr ""
@@ -5146,6 +5267,7 @@ msgid "Media details saved"
 msgstr "Media details saved"
 
 #: app/components/app-sidebar.tsx:280
+#: app/components/app-sidebar.tsx:283
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -5166,6 +5288,8 @@ msgid "Meet other members and share updates in the group. An admin can add commu
 msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
 #: app/components/roles/tenant-role-access-manager.tsx:589
+#: app/components/roles/tenant-role-access-manager.tsx:587
+#: app/components/team-switcher.tsx:132
 msgid "member"
 msgstr ""
 
@@ -5178,9 +5302,15 @@ msgid "members"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:432
+#: app/components/roles/tenant-role-access-manager.tsx:587
+#: app/components/team-switcher.tsx:134
+msgid "members"
+msgstr ""
+
+#: app/components/app-sidebar.tsx:399
 #: app/components/organization-members.tsx:164
-#: app/components/roles/tenant-role-access-manager.tsx:771
-#: app/components/roles/tenant-role-access-manager.tsx:857
+#: app/components/roles/tenant-role-access-manager.tsx:769
+#: app/components/roles/tenant-role-access-manager.tsx:855
 msgid "Members"
 msgstr ""
 
@@ -5249,8 +5379,9 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:90
+#: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:534
 msgid "Message"
 msgstr ""
 
@@ -5465,7 +5596,7 @@ msgid "New automation"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:241
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:240
 msgid "New broadcast"
 msgstr ""
 
@@ -5489,6 +5620,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:108
 msgid "New form"
 msgstr "New form"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:348
+msgid "New form submissions will appear here."
+msgstr "New form submissions will appear here."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
@@ -5540,6 +5675,7 @@ msgid "New tab"
 msgstr ""
 
 #: app/components/website/create-page-dialog.tsx:132
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:429
 msgid "Next"
 msgstr ""
 
@@ -5632,11 +5768,11 @@ msgstr ""
 msgid "No content yet"
 msgstr "No content yet"
 
-#: app/components/roles/tenant-role-access-manager.tsx:751
+#: app/components/roles/tenant-role-access-manager.tsx:749
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:129
+#: ../../packages/marketing/src/components/campaign-detail.tsx:127
 msgid "No delivery records yet."
 msgstr ""
 
@@ -5712,6 +5848,9 @@ msgstr "No matching locations"
 #: app/components/menu/modifier-form.tsx:1857
 msgid "No matching options found."
 msgstr "No matching options found."
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:337
+msgid "No matching submissions"
+msgstr "No matching submissions"
 
 #: app/components/media-library/media-library-picker.tsx:332
 msgid "No media matches your search."
@@ -5854,7 +5993,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:644
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
 msgid "No responses yet."
 msgstr "No responses yet."
 
@@ -5873,6 +6012,9 @@ msgstr ""
 #: app/components/locations/special-hours-picker.tsx:236
 msgid "No special hours or holiday closures scheduled."
 msgstr "No special hours or holiday closures scheduled."
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:341
+msgid "No submissions yet"
+msgstr "No submissions yet"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
@@ -5889,6 +6031,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:318
 #: app/components/menu/modifier-form.tsx:282
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3347
@@ -5909,7 +6052,7 @@ msgstr "None (Top-Level Category)"
 msgid "Normal"
 msgstr "Normal"
 
-#: app/components/roles/tenant-role-access-manager.tsx:670
+#: app/components/roles/tenant-role-access-manager.tsx:668
 msgid "Not allowed"
 msgstr "Not allowed"
 
@@ -5962,6 +6105,7 @@ msgid "notes"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:274
+#: app/components/app-sidebar.tsx:277
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -5974,6 +6118,11 @@ msgstr "Notes & Documents"
 #: app/components/roles/tenant-role-access-manager.tsx:208
 msgid "Notes & website"
 msgstr "Notes & website"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:607
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:610
+msgid "Notes for AI"
+msgstr "Notes for AI"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:403
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
@@ -5992,6 +6141,7 @@ msgid "Notification Preferences"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:461
+#: app/components/app-sidebar.tsx:428
 msgid "Notifications"
 msgstr ""
 
@@ -6076,7 +6226,7 @@ msgstr "Online Ordering, POS & Kiosk"
 msgid "Only selected members can access this note"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:399
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
 
@@ -6120,6 +6270,11 @@ msgstr "Open hosted dashboard"
 #: app/components/website/link-inspector.tsx:593
 msgid "Open in"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:582
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:583
+msgid "Open in email app"
+msgstr "Open in email app"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:503
 msgid "Open in new tab"
@@ -6295,6 +6450,7 @@ msgstr ""
 #~ msgstr ""
 
 #: app/components/app-sidebar.tsx:142
+#: app/components/app-sidebar.tsx:144
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -6320,6 +6476,7 @@ msgstr "Override regular operating hours on holidays, events, or closures."
 #: app/components/app-sidebar.tsx:298
 #: app/components/app-sidebar.tsx:338
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:15
+#: app/components/app-sidebar.tsx:312
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr ""
@@ -6352,6 +6509,7 @@ msgid "Page URL"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:372
+#: app/components/app-sidebar.tsx:346
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -6456,7 +6614,7 @@ msgstr ""
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1383
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
@@ -6469,15 +6627,15 @@ msgid "Permanently delete notes created by this user."
 msgstr "Permanently delete notes created by this user."
 
 #: app/components/roles/tenant-role-access-manager.tsx:450
-#: app/components/roles/tenant-role-access-manager.tsx:629
+#: app/components/roles/tenant-role-access-manager.tsx:627
 msgid "Permission"
 msgstr "Permission"
 
-#: app/components/roles/tenant-role-access-manager.tsx:774
+#: app/components/roles/tenant-role-access-manager.tsx:772
 msgid "Permissions"
 msgstr "Permissions"
 
-#: app/components/roles/tenant-role-access-manager.tsx:590
+#: app/components/roles/tenant-role-access-manager.tsx:588
 msgid "permissions granted"
 msgstr "permissions granted"
 
@@ -6618,7 +6776,7 @@ msgstr ""
 msgid "Platform"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:874
+#: app/components/roles/tenant-role-access-manager.tsx:872
 msgid "Platform-provided role."
 msgstr "Platform-provided role."
 
@@ -6721,7 +6879,7 @@ msgstr "Presets"
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:552
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
 msgid "Preview"
 msgstr ""
@@ -6735,6 +6893,9 @@ msgstr "Price"
 #: app/components/menu/modifier-form.tsx:1999
 msgid "Price ($)"
 msgstr "Price ($)"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:418
+msgid "Previous"
+msgstr "Previous"
 
 #: app/components/settings/cards/organization/shop-card.tsx:283
 msgid "Price (USD)"
@@ -6811,6 +6972,7 @@ msgid "Product name"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:131
+#: app/components/app-sidebar.tsx:132
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
@@ -6843,7 +7005,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:494
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5963
 msgid "Publish"
@@ -6857,7 +7019,7 @@ msgstr ""
 msgid "Publish and activate automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:496
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5970
 msgid "Publish updates"
 msgstr ""
@@ -6867,7 +7029,7 @@ msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
 #: app/components/website/form-builder-sidebar.tsx:721
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:414
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:410
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
@@ -6974,7 +7136,7 @@ msgstr ""
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:117
+#: ../../packages/marketing/src/components/campaign-detail.tsx:115
 msgid "Recipients"
 msgstr ""
 
@@ -7003,6 +7165,7 @@ msgid "Redirected"
 msgstr "Redirected"
 
 #: app/components/app-sidebar.tsx:405
+#: app/components/app-sidebar.tsx:379
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "Redirects"
@@ -7014,6 +7177,10 @@ msgstr "Redirects & 404 History"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
 msgid "Referrer"
 msgstr "Referrer"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:255
+#~ msgid "Refresh"
+#~ msgstr "Refresh"
 
 #: app/components/settings/cards/organization/shop-card.tsx:161
 msgid "Refresh Checkout setup"
@@ -7179,7 +7346,7 @@ msgstr "Replace image"
 
 #: app/components/note/comment-input.tsx:194
 #: app/components/note/comment-input.tsx:398
-#: app/components/note/comment-item.tsx:303
+#: app/components/note/comment-item.tsx:301
 msgid "Reply"
 msgstr ""
 
@@ -7188,6 +7355,7 @@ msgstr ""
 #~ msgstr ""
 
 #: app/components/app-sidebar.tsx:268
+#: app/components/app-sidebar.tsx:271
 msgid "Reports"
 msgstr ""
 
@@ -7262,8 +7430,8 @@ msgstr ""
 msgid "Reset to preset"
 msgstr "Reset to preset"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:462
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:614
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:610
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:209
 msgid "Responses"
 msgstr "Responses"
@@ -7298,6 +7466,9 @@ msgstr "Restrict when this is available to guests, such as lunch from 11:00 AM t
 #: app/components/locations/delivery-zones-manager.tsx:221
 msgid "Restricted (No Delivery)"
 msgstr "Restricted (No Delivery)"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:350
+msgid "Responses to your website forms will arrive here."
+msgstr "Responses to your website forms will arrive here."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
@@ -7310,6 +7481,9 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:290
 msgid "Reusable options with images, pricing, allergens, and dietary profiles assigned across multiple modifier groups."
 msgstr "Reusable options with images, pricing, allergens, and dietary profiles assigned across multiple modifier groups."
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:611
+#~ msgid "Review your reply, then send it from your email app."
+#~ msgstr "Review your reply, then send it from your email app."
 
 #: app/components/data-table.tsx:286
 #: app/components/data-table.tsx:878
@@ -7361,6 +7535,8 @@ msgstr "Right ½"
 
 #: app/components/roles/tenant-role-access-manager.tsx:765
 #: app/components/roles/tenant-role-access-manager.tsx:851
+#: app/components/roles/tenant-role-access-manager.tsx:763
+#: app/components/roles/tenant-role-access-manager.tsx:849
 msgid "Role"
 msgstr "Role"
 
@@ -7369,6 +7545,7 @@ msgid "Role name"
 msgstr "Role name"
 
 #: app/components/app-sidebar.tsx:439
+#: app/components/app-sidebar.tsx:406
 msgid "Roles & access"
 msgstr "Roles & access"
 
@@ -7528,7 +7705,7 @@ msgstr ""
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1437
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
 msgstr ""
 
@@ -7538,7 +7715,7 @@ msgid "Save Changes"
 msgstr "Save Changes"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:482
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr ""
 
@@ -7614,7 +7791,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/roles/tenant-role-access-manager.tsx:539
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:480
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -7681,6 +7858,7 @@ msgstr "Search menu items..."
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
+#: app/components/app-sidebar.tsx:220
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
 msgstr ""
@@ -7689,7 +7867,7 @@ msgstr ""
 msgid "Search notes by title or content..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:543
+#: app/components/app-sidebar.tsx:549
 #: app/components/command-menu.tsx:102
 #~ msgid "Search notes..."
 #~ msgstr ""
@@ -7705,6 +7883,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
 msgid "Search redirects..."
 msgstr "Search redirects..."
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:278
+msgid "Search submissions"
+msgstr "Search submissions"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:279
+msgid "Search submissions…"
+msgstr "Search submissions…"
 
 #: app/components/note/share-note-button.tsx:261
 msgid "Search team members..."
@@ -7745,6 +7931,7 @@ msgid "Secure your account with an extra verification step"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:137
+#: app/components/app-sidebar.tsx:138
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr ""
@@ -7797,6 +7984,10 @@ msgstr ""
 #: app/components/data-table.tsx:852
 #~ msgid "Select a status"
 #~ msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:649
+msgid "Select a submission to read the details and start a reply."
+msgstr "Select a submission to read the details and start a reply."
 
 #: app/routes/organizations+/create.tsx:877
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
@@ -7931,7 +8122,7 @@ msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_
 msgid "Send"
 msgstr "Send"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:244
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:242
 msgid "Send a one-time email or SMS to your audience."
 msgstr ""
 
@@ -7978,8 +8169,8 @@ msgstr "Sends to customers"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:82
-#: ../../packages/marketing/src/components/campaign-detail.tsx:145
+#: ../../packages/marketing/src/components/campaign-detail.tsx:80
+#: ../../packages/marketing/src/components/campaign-detail.tsx:143
 msgid "Sent {0}"
 msgstr ""
 
@@ -8049,6 +8240,7 @@ msgid "Set when online ordering, pickup, and delivery are accepted for this loca
 msgstr "Set when online ordering, pickup, and delivery are accepted for this location."
 
 #: app/components/app-sidebar.tsx:412
+#: app/components/app-sidebar.tsx:386
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -8100,6 +8292,7 @@ msgid "Shared across every page"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:451
+#: app/components/app-sidebar.tsx:418
 msgid "Shop"
 msgstr ""
 
@@ -8131,7 +8324,7 @@ msgstr "Show form title"
 msgid "Show product on your public site"
 msgstr ""
 
-#: app/components/note/comment-item.tsx:314
+#: app/components/note/comment-item.tsx:312
 msgid "Show replies ({replyCount})"
 msgstr "Show replies ({replyCount})"
 
@@ -8335,6 +8528,11 @@ msgid "Standard restaurant menus for dine-in, takeout, and delivery."
 msgstr "Standard restaurant menus for dine-in, takeout, and delivery."
 
 #: app/components/roles/tenant-role-access-manager.tsx:585
+#: app/components/roles/tenant-role-access-manager.tsx:838
+msgid "Standard platform roles. Click any role to review its active permissions."
+msgstr "Standard platform roles. Click any role to review its active permissions."
+
+#: app/components/roles/tenant-role-access-manager.tsx:583
 msgid "Standard system role."
 msgstr "Standard system role."
 
@@ -8387,6 +8585,7 @@ msgid "State / Province"
 msgstr "State / Province"
 
 #: app/components/roles/tenant-role-access-manager.tsx:635
+#: app/components/roles/tenant-role-access-manager.tsx:633
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
@@ -8498,6 +8697,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:100
 #: app/components/website/link-inspector.tsx:477
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:521
 msgid "Subject"
 msgstr ""
 
@@ -8505,7 +8705,11 @@ msgstr ""
 msgid "Subject Line"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:617
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:436
+msgid "Submission details"
+msgstr "Submission details"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:613
 msgid "Submissions are stored in this organization’s regional tenant database."
 msgstr "Submissions are stored in this organization’s regional tenant database."
 
@@ -8513,7 +8717,7 @@ msgstr "Submissions are stored in this organization’s regional tenant database
 msgid "Submit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:628
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:624
 msgid "Submitted"
 msgstr "Submitted"
 
@@ -8620,7 +8824,7 @@ msgstr "Table ordering and in-house steps."
 msgid "Tags"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:731
+#: app/components/roles/tenant-role-access-manager.tsx:729
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "Tailored roles specific to your organization with configured permissions."
 
@@ -8690,7 +8894,7 @@ msgstr "Tell us more about your restaurant"
 #~ msgid "Template"
 #~ msgstr "Template"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1389
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1385
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 
@@ -8698,16 +8902,16 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:350
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:346
 msgid "Test again"
 msgstr "Test again"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:368
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:364
 msgid "Test mode — responses are not saved"
 msgstr "Test mode — responses are not saved"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:158
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:377
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
 msgid "Test run"
 msgstr ""
 
@@ -8810,6 +9014,7 @@ msgid "Theme"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:74
+#: app/components/app-sidebar.tsx:75
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
@@ -8876,6 +9081,9 @@ msgstr ""
 #: app/components/menu/modifier-form.tsx:1477
 msgid "This modifier group is triggered when customers select these modifier items:"
 msgstr "This modifier group is triggered when customers select these modifier items:"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:633
+msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
+msgstr "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 
 #: app/components/website/link-inspector.tsx:600
 msgid "This tab"
@@ -8885,15 +9093,15 @@ msgstr ""
 msgid "This will be the URL path for this page."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1507
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1503
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1548
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1544
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1457
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1453
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 
@@ -8975,6 +9183,10 @@ msgstr ""
 msgid "Titles and section headings."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:508
+msgid "To: {recipient}"
+msgstr "To: {recipient}"
+
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:407
 msgid "Toggle announcement visibility"
 msgstr ""
@@ -9015,7 +9227,7 @@ msgstr "Topping"
 msgid "Total"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1354
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
 msgid "Transfers search rank"
 msgstr "Transfers search rank"
 
@@ -9059,6 +9271,7 @@ msgid "Trigger a child modifier group when a guest selects one of these options.
 msgstr "Trigger a child modifier group when a guest selects one of these options."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:380
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:376
 msgid "Trigger a test execution for a specific customer ID."
 msgstr ""
 
@@ -9146,6 +9359,7 @@ msgid "Try adjusting your search or filter."
 msgstr ""
 
 #: app/components/ai/global-ai-panel.tsx:86
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:326
 msgid "Try again"
 msgstr "Try again"
 
@@ -9153,6 +9367,10 @@ msgstr "Try again"
 #: ../../packages/ai/src/components/ai-chat.tsx:889
 msgid "Try another answer"
 msgstr "Try another answer"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:346
+msgid "Try another name, email, or message."
+msgstr "Try another name, email, or message."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3795
 msgid "Two"
@@ -9228,6 +9446,9 @@ msgstr "Under"
 #: app/components/locations/delivery-zone-map.tsx:382
 msgid "Undo"
 msgstr "Undo"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:115
+msgid "Unable to load submissions. Try again."
+msgstr "Unable to load submissions. Try again."
 
 #: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Unedited boilerplate text detected in email body."
@@ -9251,20 +9472,28 @@ msgstr ""
 msgid "Unknown intent"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:140
+#: ../../packages/marketing/src/components/campaign-detail.tsx:138
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:518
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6020
 msgid "Unpublish"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:396
+msgid "Unread"
+msgstr "Unread"
+
 #: app/components/ui/notification-bell.tsx:343
 #: app/components/ui/notification-bell.tsx:444
 msgid "Unread Notifications"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:297
+msgid "Unread only"
+msgstr "Unread only"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
 msgid "Unsaved changes"
@@ -9341,6 +9570,7 @@ msgid "Updating section"
 msgstr "Updating section"
 
 #: app/components/app-sidebar.tsx:90
+#: app/components/app-sidebar.tsx:91
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr ""
@@ -9555,7 +9785,7 @@ msgstr ""
 msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
-#: app/components/roles/tenant-role-access-manager.tsx:804
+#: app/components/roles/tenant-role-access-manager.tsx:802
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
@@ -9609,6 +9839,10 @@ msgstr "View own notes"
 msgid "View run history"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:401
+msgid "View submission details"
+msgstr "View submission details"
+
 #: app/components/roles/tenant-role-access-manager.tsx:112
 msgid "View team members"
 msgstr "View team members"
@@ -9660,7 +9894,7 @@ msgstr "Warm"
 msgid "Warning"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:340
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:336
 msgid "Warnings"
 msgstr ""
 
@@ -9689,6 +9923,7 @@ msgid "We've sent you a code to verify your email address."
 msgstr ""
 
 #: app/components/app-sidebar.tsx:361
+#: app/components/app-sidebar.tsx:335
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -9713,6 +9948,10 @@ msgstr "Website SEO"
 #: app/components/locations/availability-picker.tsx:114
 msgid "Weekdays"
 msgstr "Weekdays"
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:383
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:476
+msgid "Website visitor"
+msgstr "Website visitor"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:293
 msgid "weeks"
@@ -9763,6 +10002,10 @@ msgstr ""
 msgid "What else should I know?"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:615
+msgid "What should your reply include? (optional)"
+msgstr "What should your reply include? (optional)"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:459
 msgid "What tools can help?"
 msgstr ""
@@ -9785,6 +10028,7 @@ msgid "When a customer selects this option, reveal these conditional modifier gr
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
@@ -9880,6 +10124,10 @@ msgstr "Write your message"
 msgid "Write your note content..."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:543
+msgid "Write your reply…"
+msgstr "Write your reply…"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "Write your text message"
 msgstr "Write your text message"
@@ -9959,6 +10207,10 @@ msgstr ""
 #: app/components/settings/cards/organization/shop-card.tsx:384
 msgid "You receive"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:339
+msgid "You’re all caught up"
+msgstr "You’re all caught up"
 
 #: app/routes/_auth+/login.tsx:437
 msgid "You're logged in! Navigating..."

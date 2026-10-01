@@ -4,6 +4,7 @@ import {
 	integer,
 	index,
 	uniqueIndex,
+	primaryKey,
 } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
@@ -538,6 +539,22 @@ export const websiteFormSubmissionsRelations = relations(
 			references: [websiteForms.id],
 		}),
 	}),
+)
+
+// Read receipts are scoped to the authenticated operator, never a shared inbox flag.
+export const mailboxReadReceipts = sqliteTable(
+	'mailbox_read_receipts',
+	{
+		submissionId: text('submission_id')
+			.notNull()
+			.references(() => websiteFormSubmissions.id, { onDelete: 'cascade' }),
+		operatorId: text('operator_id').notNull(),
+		readAt: integer('read_at', { mode: 'timestamp' }).notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.submissionId, table.operatorId] }),
+		index('idx_mailbox_read_receipts_operator').on(table.operatorId),
+	],
 )
 
 // ==========================================

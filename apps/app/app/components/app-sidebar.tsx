@@ -34,6 +34,7 @@ import { NavUser } from '#app/components/nav-user.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { TeamSwitcher } from '#app/components/team-switcher.tsx'
 import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
+import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import { CommandMenu } from './command-menu'
@@ -43,6 +44,7 @@ import { FeatureUpdates } from './feature-updates'
 import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
+import { MailboxIcon } from './icons/mailbox-icon'
 import { SendIcon } from './icons/send-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
 import { UtensilsIcon } from './icons/utensils-icon'
@@ -230,6 +232,8 @@ function OrganizationSidebar({
 				permission.action === action && permission.entity === entity,
 		)
 	const canReadWebsite = hasOrgPermission('read', 'website')
+	const mailboxUnreadCount = useMailboxUnreadCount(orgSlug, canReadWebsite)
+	const mailboxUnreadLabelCount = mailboxUnreadCount ?? 0
 	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
 	const canReadCampaigns = hasOrgPermission('read', 'campaign')
 	const canReadAutomations = hasOrgPermission('read', 'automation')
@@ -327,6 +331,17 @@ function OrganizationSidebar({
 					isActive: location.pathname.includes(`/${orgSlug}/menu/options`),
 				},
 			],
+		},
+		{
+			title: _(msg`Mailbox`),
+			url: `/${orgSlug}/mailbox`,
+			isActive: location.pathname === `/${orgSlug}/mailbox`,
+			icon: MailboxIcon,
+			badge:
+				mailboxUnreadCount && mailboxUnreadCount > 0
+					? mailboxUnreadCount
+					: undefined,
+			badgeLabel: _(msg`${mailboxUnreadLabelCount} unread`),
 		},
 		{
 			title: _(msg`Marketing`),
@@ -481,6 +496,7 @@ function OrganizationSidebar({
 	// enforced server-side.
 	const visibleNavMain = navMain
 		.filter((item) => {
+			if (item.url === `/${orgSlug}/mailbox`) return canReadWebsite
 			if (item.url === `/${orgSlug}/marketing`) {
 				return canReadCampaigns || canReadAutomations
 			}
