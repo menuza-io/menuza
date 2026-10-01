@@ -18,6 +18,7 @@ import {
 	journeySystemRoutes,
 } from './routes/journeys.ts'
 import { operatorRoutes } from './routes/operator.ts'
+import { mailboxRoutes } from './routes/mailbox.ts'
 import { provisionRoutes } from './routes/provision.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
@@ -101,6 +102,7 @@ export function createTenantApiApp() {
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
+	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 
 	app.notFound((c) => {
