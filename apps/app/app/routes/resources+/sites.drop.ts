@@ -22,6 +22,7 @@ import {
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationDrop,
 	OrganizationDropPickupWindow,
+	UserOrganization,
 } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
@@ -67,13 +68,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		)
 	}
 
-	// Preview protection: only authenticated admin or authorized preview requests can view draft drops or bypass KV cache
-	const wantsPreview = url.searchParams.get('preview') === 'true'
-	const authUser = wantsPreview
-		? await getUserId(request).catch(() => null)
-		: null
-	const isPreview = Boolean(authUser)
-
 	// 1. Resolve organization
 	const org = await db.query.Organization.findFirst({
 		where: and(
@@ -96,6 +90,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	if (!org) {
 		return Response.json({ error: 'Organization not found' }, { status: 404 })
+	}
+
+	// Preview protection: only authenticated organization members can preview draft drops or bypass KV cache
+	const wantsPreview = url.searchParams.get('preview') === 'true'
+	let isPreview = false
+	if (wantsPreview) {
+		const authUserId = await getUserId(request).catch(() => null)
+		if (authUserId) {
+			const member = await db.query.UserOrganization.findFirst({
+				where: and(
+					eq(UserOrganization.organizationId, org.id),
+					and(
+						eq(UserOrganization.userId, authUserId),
+						eq(UserOrganization.active, true),
+					),
+				),
+				columns: { userId: true },
+			})
+			isPreview = Boolean(member)
+		}
 	}
 
 	const cacheKey = getSiteKvKey('page', org.id, `drop-${dropSlug}`)

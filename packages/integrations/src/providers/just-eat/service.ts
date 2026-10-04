@@ -168,10 +168,9 @@ export async function importJustEatLocation(
 	if (!isJustEatMockMode()) {
 		throw new Error('Just Eat live listing import is not supported yet.')
 	}
-	const location =
-		MOCK_JUST_EAT_LOCATIONS.find(
-			(candidate) => candidate.id === restaurantId,
-		) ?? MOCK_JUST_EAT_LOCATIONS[0]
+	const location = MOCK_JUST_EAT_LOCATIONS.find(
+		(candidate) => candidate.id === restaurantId,
+	)
 	if (!location) throw new Error('Just Eat restaurant listing was not found.')
 	const config = parseIntegrationConfig(integration.config)
 
@@ -232,6 +231,9 @@ export async function listJustEatReviews(
 	organizationId: string,
 	pageTokens: JustEatReviewPageTokens = {},
 ) {
+	if (!isJustEatMockMode()) {
+		return { reviews: [], totalReviewCount: 0, nextPageTokens: {} }
+	}
 	const connectedLocations = await db
 		.select({
 			id: OrganizationLocation.id,

@@ -173,9 +173,9 @@ export async function importDeliverooLocation(
 	if (!isDeliverooMockMode()) {
 		throw new Error('Deliveroo live listing import is not supported yet.')
 	}
-	const location =
-		MOCK_DELIVEROO_LOCATIONS.find((candidate) => candidate.id === siteId) ??
-		MOCK_DELIVEROO_LOCATIONS[0]
+	const location = MOCK_DELIVEROO_LOCATIONS.find(
+		(candidate) => candidate.id === siteId,
+	)
 	if (!location) throw new Error('Deliveroo site listing was not found.')
 	const config = parseIntegrationConfig(integration.config)
 

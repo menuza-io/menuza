@@ -40,7 +40,7 @@ if (drop.status === 'closed') {
 	dropState = 'closed'
 } else if (closeDate && now > closeDate) {
 	dropState = 'closed'
-} else if (drop.status === 'scheduled' || (openDate && now < openDate)) {
+} else if (openDate ? now < openDate : drop.status === 'scheduled') {
 	dropState = 'upcoming'
 } else {
 	dropState = 'live'
@@ -401,7 +401,12 @@ inventoryOverrides.forEach((inv) => {
 	</div>
 
 	<!-- Client Script for Countdowns and Cart State -->
-	<script is:inline>
+	<script is:inline define:vars={{
+		currency: dropData?.organization?.currency || 'USD',
+		dropId: drop.id,
+		dropTitle: drop.title,
+		dropSlugValue: drop.slug,
+	}}>
 		// Countdown timer logic
 		const timerElem = document.getElementById('countdown-timer');
 		if (timerElem) {
@@ -439,7 +444,7 @@ inventoryOverrides.forEach((inv) => {
 		const cartCountEl = document.getElementById('cart-item-count');
 		const cartTotalEl = document.getElementById('cart-total-price');
 		const checkoutBtn = document.getElementById('drop-checkout-btn');
-		const currency = dropData?.organization?.currency || 'USD';
+		// currency passed via define:vars
 		const currencyFormatter = new Intl.NumberFormat(undefined, {
 			style: 'currency',
 			currency,
@@ -485,13 +490,13 @@ inventoryOverrides.forEach((inv) => {
 				}
 				try {
 					sessionStorage.setItem('drop_cart', JSON.stringify({
-						dropId: drop.id,
-						dropTitle: drop.title,
+						dropId,
+						dropTitle,
 						slot: selectedSlot,
 						items: cart,
 					}));
 				} catch (e) {}
-				window.location.href = `/menu/checkout?drop=${encodeURIComponent(drop.slug)}&slot=${encodeURIComponent(selectedSlot)}`;
+				window.location.href = `/menu/checkout?drop=${encodeURIComponent(dropSlugValue)}&slot=${encodeURIComponent(selectedSlot)}`;
 			});
 		}
 	</script>

@@ -343,7 +343,9 @@ export async function listYelpReviews(
 				return { reviews, total: allReviews.length, next }
 			}
 
-			const businessId = (config.businessId as string) || location.id
+			const businessId =
+				typeof config.businessId === 'string' ? config.businessId : ''
+			if (!businessId) return { reviews: [], total: 0, next: null }
 			const url = new URL(
 				`https://api.yelp.com/v3/businesses/${encodeURIComponent(businessId)}/reviews`,
 			)

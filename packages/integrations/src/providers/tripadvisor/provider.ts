@@ -34,6 +34,15 @@ function credentials() {
 	}
 	if (apiKey && !clientId) {
 		const isMockKey = apiKey.startsWith('MOCK_')
+		if (
+			isMockKey &&
+			process.env.NODE_ENV === 'production' &&
+			process.env.MOCKS !== 'true'
+		) {
+			throw new Error(
+				'TripAdvisor mock credentials cannot be used in production',
+			)
+		}
 		return {
 			clientId: apiKey,
 			clientSecret: apiKey,

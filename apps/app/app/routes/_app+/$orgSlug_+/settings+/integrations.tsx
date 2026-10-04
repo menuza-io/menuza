@@ -425,6 +425,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const providerName = String(
 			formData.get('providerName') || 'google-business-profile',
 		)
+		if (!isReviewProvider(providerName)) {
+			return redirectWithToast(redirectTo, {
+				title: 'Disconnect failed',
+				description: 'Unknown review platform.',
+				type: 'error',
+			})
+		}
 		const integrationsForOrg =
 			await integrationManager.getOrganizationIntegrations(organization.id)
 		const target = integrationsForOrg.find(

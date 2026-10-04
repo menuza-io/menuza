@@ -360,11 +360,11 @@ msgstr "1 category"
 msgid "1 form"
 msgstr "1 form"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1008
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1007
 msgid "1 hour before"
 msgstr "1 hour before"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:340
+#: app/components/menu/drop-wizard/drop-drawers.tsx:336
 msgid "1 hour before slot"
 msgstr "1 hour before slot"
 
@@ -408,19 +408,19 @@ msgstr ""
 msgid "11-50 people"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1002
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1001
 msgid "15 minutes before"
 msgstr "15 minutes before"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:334
+#: app/components/menu/drop-wizard/drop-drawers.tsx:330
 msgid "15 minutes before slot"
 msgstr "15 minutes before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1011
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1010
 msgid "2 hours before"
 msgstr "2 hours before"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:343
+#: app/components/menu/drop-wizard/drop-drawers.tsx:339
 msgid "2 hours before slot"
 msgstr "2 hours before slot"
 
@@ -428,15 +428,15 @@ msgstr "2 hours before slot"
 msgid "201-500 people"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:346
+#: app/components/menu/drop-wizard/drop-drawers.tsx:342
 msgid "24 hours before slot"
 msgstr "24 hours before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1005
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1004
 msgid "30 minutes before"
 msgstr "30 minutes before"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:337
+#: app/components/menu/drop-wizard/drop-drawers.tsx:333
 msgid "30 minutes before slot"
 msgstr "30 minutes before slot"
 
@@ -444,7 +444,7 @@ msgstr "30 minutes before slot"
 msgid "404 Error History"
 msgstr "404 Error History"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:999
+#: app/components/menu/drop-wizard/drop-drawers.tsx:998
 msgid "5 minutes before"
 msgstr "5 minutes before"
 
@@ -722,7 +722,7 @@ msgstr "Add delivery zone"
 msgid "Add Delivery Zone"
 msgstr "Add Delivery Zone"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:931
+#: app/components/menu/drop-wizard/drop-drawers.tsx:930
 msgid "Add drop reminder"
 msgstr "Add drop reminder"
 
@@ -736,7 +736,7 @@ msgstr ""
 msgid "Add field"
 msgstr "Add field"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:839
+#: app/components/menu/drop-wizard/drop-drawers.tsx:838
 msgid "Add gift card to menu"
 msgstr "Add gift card to menu"
 
@@ -833,7 +833,7 @@ msgstr "Add Photo"
 msgid "Add photo or video"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:206
+#: app/components/menu/drop-wizard/drop-drawers.tsx:201
 #: app/components/menu/drop-wizard/drop-form.tsx:491
 msgid "Add pickup window"
 msgstr "Add pickup window"
@@ -842,7 +842,7 @@ msgstr "Add pickup window"
 msgid "Add question"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1038
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1037
 #: app/components/menu/drop-wizard/drop-form.tsx:870
 msgid "Add reminder"
 msgstr "Add reminder"
@@ -935,7 +935,7 @@ msgstr "Added section"
 msgid "Adding section"
 msgstr "Adding section"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:752
+#: app/components/menu/drop-wizard/drop-drawers.tsx:751
 #: app/components/menu/drop-wizard/drop-form.tsx:990
 msgid "Additional options"
 msgstr "Additional options"
@@ -1050,6 +1050,10 @@ msgstr ""
 msgid "All days"
 msgstr "All days"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:641
+msgid "All items in this section share from this pool."
+msgstr "All items in this section share from this pool."
+
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
 msgid "All locations"
@@ -1072,11 +1076,11 @@ msgstr ""
 msgid "All steps complete"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:808
+#: app/components/menu/drop-wizard/drop-drawers.tsx:807
 msgid "Allow customers to preview menu items before orders open."
 msgstr "Allow customers to preview menu items before orders open."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:842
+#: app/components/menu/drop-wizard/drop-drawers.tsx:841
 msgid "Allow customers to purchase gift cards alongside their drop order."
 msgstr "Allow customers to purchase gift cards alongside their drop order."
 
@@ -1524,12 +1528,12 @@ msgstr "Basic identifiers, URL slug, and regional settings."
 msgid "Becomes available"
 msgstr "Becomes available"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:964
+#: app/components/menu/drop-wizard/drop-drawers.tsx:963
 #: app/components/menu/drop-wizard/drop-form.tsx:905
 msgid "Before drop closes"
 msgstr "Before drop closes"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:961
+#: app/components/menu/drop-wizard/drop-drawers.tsx:960
 #: app/components/menu/drop-wizard/drop-form.tsx:903
 msgid "Before drop opens"
 msgstr "Before drop opens"
@@ -1699,7 +1703,7 @@ msgstr "Can edit teammate notes"
 #: app/components/locations/location-form.tsx:988
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1035
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1034
 #: app/components/menu/drop-wizard/drop-form.tsx:1159
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
@@ -1889,7 +1893,7 @@ msgstr ""
 msgid "Checking references…"
 msgstr "Checking references…"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:759
+#: app/components/menu/drop-wizard/drop-drawers.tsx:758
 msgid "Checkout countdown timer"
 msgstr "Checkout countdown timer"
 
@@ -2736,7 +2740,7 @@ msgstr "Create Option"
 msgid "Create Password"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:113
+#: app/components/menu/drop-wizard/drop-drawers.tsx:108
 msgid "Create pickup window"
 msgstr "Create pickup window"
 
@@ -2921,8 +2925,8 @@ msgstr "Custom options, toppings, sides, and choices offered with this item."
 msgid "Custom Roles"
 msgstr "Custom Roles"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:967
-#: app/components/menu/drop-wizard/drop-drawers.tsx:976
+#: app/components/menu/drop-wizard/drop-drawers.tsx:966
+#: app/components/menu/drop-wizard/drop-drawers.tsx:975
 msgid "Custom scheduled time"
 msgstr "Custom scheduled time"
 
@@ -2959,6 +2963,11 @@ msgstr ""
 msgid "Customer ID"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:501
+#: app/components/menu/drop-wizard/drop-drawers.tsx:670
+msgid "Customer limits"
+msgstr "Customer limits"
+
 #: app/components/mailbox/reviews-tab.tsx:337
 msgid "Customer reviews"
 msgstr "Customer reviews"
@@ -2983,11 +2992,11 @@ msgstr ""
 msgid "Customers"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:196
+#: app/components/menu/drop-wizard/drop-drawers.tsx:191
 msgid "Customers choose their pickup time in intervals of this duration."
 msgstr "Customers choose their pickup time in intervals of this duration."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:777
+#: app/components/menu/drop-wizard/drop-drawers.tsx:776
 msgid "Customers have this much time to finish checkout before their items are released back to inventory."
 msgstr "Customers have this much time to finish checkout before their items are released back to inventory."
 
@@ -3497,7 +3506,7 @@ msgstr ""
 msgid "Display"
 msgstr "Display"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:825
+#: app/components/menu/drop-wizard/drop-drawers.tsx:824
 msgid "Display remaining badges (e.g. \"Only 3 left\") on item cards."
 msgstr "Display remaining badges (e.g. \"Only 3 left\") on item cards."
 
@@ -3523,8 +3532,8 @@ msgstr ""
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
-#: app/components/menu/drop-wizard/drop-drawers.tsx:360
-#: app/components/menu/drop-wizard/drop-drawers.tsx:858
+#: app/components/menu/drop-wizard/drop-drawers.tsx:356
+#: app/components/menu/drop-wizard/drop-drawers.tsx:857
 #: app/components/settings/backup-codes-display.tsx:108
 msgid "Done"
 msgstr ""
@@ -3897,11 +3906,11 @@ msgstr "Enable redirect immediately"
 msgid "Enabled"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:165
+#: app/components/menu/drop-wizard/drop-drawers.tsx:160
 msgid "End Time"
 msgstr "End Time"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:89
+#: app/components/menu/drop-wizard/drop-drawers.tsx:84
 msgid "End time must be after start time"
 msgstr "End time must be after start time"
 
@@ -4739,7 +4748,7 @@ msgstr "How can I help?"
 msgid "How can I implement this?"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:351
+#: app/components/menu/drop-wizard/drop-drawers.tsx:347
 msgid "How far in advance customers must order before a pickup slot."
 msgstr "How far in advance customers must order before a pickup slot."
 
@@ -4928,11 +4937,11 @@ msgstr ""
 msgid "inventory (pooled)"
 msgstr "inventory (pooled)"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:450
+#: app/components/menu/drop-wizard/drop-drawers.tsx:467
 msgid "Inventory limit"
 msgstr "Inventory limit"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:822
+#: app/components/menu/drop-wizard/drop-drawers.tsx:821
 msgid "Inventory remaining on storefront"
 msgstr "Inventory remaining on storefront"
 
@@ -5017,8 +5026,8 @@ msgid "Items in this category will not add preparation delay to orders."
 msgstr "Items in this category will not add preparation delay to orders."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:633
-msgid "Items in this section share a total pooled inventory limit."
-msgstr "Items in this section share a total pooled inventory limit."
+#~ msgid "Items in this section share a total pooled inventory limit."
+#~ msgstr "Items in this section share a total pooled inventory limit."
 
 #: app/components/menu/modifier-form.tsx:1419
 msgid "Items that offer this modifier group."
@@ -5246,13 +5255,13 @@ msgstr ""
 #~ msgid "Limit"
 #~ msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:280
+#: app/components/menu/drop-wizard/drop-drawers.tsx:275
 msgid "Limit orders per pickup time"
 msgstr "Limit orders per pickup time"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:491
-msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
-msgstr "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
+#~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
+#~ msgstr "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
 #: app/components/website/link-inspector.tsx:642
@@ -5323,7 +5332,7 @@ msgstr ""
 msgid "Loading submissions"
 msgstr "Loading submissions"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:120
+#: app/components/menu/drop-wizard/drop-drawers.tsx:115
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
 msgid "Location"
@@ -5605,34 +5614,44 @@ msgid "Marketing manager"
 msgstr "Marketing manager"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:673
-msgid "Max items from this section a customer can purchase in one order."
-msgstr "Max items from this section a customer can purchase in one order."
+#~ msgid "Max items from this section a customer can purchase in one order."
+#~ msgstr "Max items from this section a customer can purchase in one order."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:692
-msgid "Max items from this section allowed across any single pickup slot."
-msgstr "Max items from this section allowed across any single pickup slot."
+#~ msgid "Max items from this section allowed across any single pickup slot."
+#~ msgstr "Max items from this section allowed across any single pickup slot."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:512
-msgid "Max number of this item a customer can add to their cart."
-msgstr "Max number of this item a customer can add to their cart."
+#~ msgid "Max number of this item a customer can add to their cart."
+#~ msgstr "Max number of this item a customer can add to their cart."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:530
-msgid "Max number that can be scheduled for a single pickup slot."
-msgstr "Max number that can be scheduled for a single pickup slot."
+#~ msgid "Max number that can be scheduled for a single pickup slot."
+#~ msgstr "Max number that can be scheduled for a single pickup slot."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:301
+#: app/components/menu/drop-wizard/drop-drawers.tsx:297
 msgid "Max orders per slot"
 msgstr "Max orders per slot"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:506
+#: app/components/menu/drop-wizard/drop-drawers.tsx:675
+msgid "Max per customer order"
+msgstr "Max per customer order"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:502
 #: app/components/menu/drop-wizard/drop-drawers.tsx:663
-msgid "Max per order"
-msgstr "Max per order"
+#~ msgid "Max per order"
+#~ msgstr "Max per order"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:519
+#: app/components/menu/drop-wizard/drop-drawers.tsx:688
+msgid "Max per pickup slot"
+msgstr "Max per pickup slot"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:520
 #: app/components/menu/drop-wizard/drop-drawers.tsx:682
-msgid "Max per pickup time"
-msgstr "Max per pickup time"
+#~ msgid "Max per pickup time"
+#~ msgstr "Max per pickup time"
 
 #: app/components/locations/location-form.tsx:813
 msgid "Maximum advance ordering window (days)"
@@ -5745,7 +5764,7 @@ msgstr "Menu Options"
 msgid "Menu Overview"
 msgstr "Menu Overview"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:805
+#: app/components/menu/drop-wizard/drop-drawers.tsx:804
 msgid "Menu preview"
 msgstr "Menu preview"
 
@@ -6252,7 +6271,7 @@ msgstr "No items match these filters"
 msgid "No items yet"
 msgstr "No items yet"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:331
+#: app/components/menu/drop-wizard/drop-drawers.tsx:327
 msgid "No lead time (orders stay open until slot)"
 msgstr "No lead time (orders stay open until slot)"
 
@@ -6631,7 +6650,7 @@ msgstr ""
 msgid "Offline"
 msgstr "Offline"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:988
+#: app/components/menu/drop-wizard/drop-drawers.tsx:987
 msgid "Offset"
 msgstr "Offset"
 
@@ -6912,7 +6931,7 @@ msgstr ""
 msgid "Or continue with email or username"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:320
+#: app/components/menu/drop-wizard/drop-drawers.tsx:316
 msgid "Order lead time"
 msgstr "Order lead time"
 
@@ -6928,7 +6947,7 @@ msgstr "Orders can be delivered inside this zone"
 msgid "Orders close"
 msgstr "Orders close"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1024
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1023
 msgid "Orders close time must be configured in Step 1 first."
 msgstr "Orders close time must be configured in Step 1 first."
 
@@ -6936,11 +6955,11 @@ msgstr "Orders close time must be configured in Step 1 first."
 msgid "Orders open"
 msgstr "Orders open"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:788
+#: app/components/menu/drop-wizard/drop-drawers.tsx:787
 msgid "Orders open time"
 msgstr "Orders open time"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1017
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1016
 msgid "Orders open time must be configured in Step 1 first."
 msgstr "Orders open time must be configured in Step 1 first."
 
@@ -7281,11 +7300,11 @@ msgstr "Pick a template, then customize every field in the builder."
 msgid "Pickup"
 msgstr "Pickup"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:141
+#: app/components/menu/drop-wizard/drop-drawers.tsx:136
 msgid "Pickup Date"
 msgstr "Pickup Date"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:178
+#: app/components/menu/drop-wizard/drop-drawers.tsx:173
 msgid "Pickup interval (minutes)"
 msgstr "Pickup interval (minutes)"
 
@@ -7301,7 +7320,7 @@ msgstr "Pickup schedule"
 msgid "pickup slots (every"
 msgstr "pickup slots (every"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:257
+#: app/components/menu/drop-wizard/drop-drawers.tsx:252
 msgid "Pickup times occur"
 msgstr "Pickup times occur"
 
@@ -7313,7 +7332,7 @@ msgstr "Pickup Tips"
 msgid "Pickup Window"
 msgstr "Pickup Window"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:250
+#: app/components/menu/drop-wizard/drop-drawers.tsx:245
 #: app/components/menu/drop-wizard/drop-form.tsx:500
 msgid "Pickup window settings"
 msgstr "Pickup window settings"
@@ -7406,6 +7425,14 @@ msgstr ""
 #: app/components/locations/delivery-zone-map.tsx:358
 msgid "Polygon Area: {pointCount} points"
 msgstr "Polygon Area: {pointCount} points"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:653
+msgid "Pooled quantity available"
+msgstr "Pooled quantity available"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:638
+msgid "Pooled section limit"
+msgstr "Pooled section limit"
 
 #: app/components/menu/item-form.tsx:732
 msgid "Popular Item"
@@ -7653,6 +7680,10 @@ msgstr ""
 msgid "Quantity"
 msgstr "Quantity"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:484
+msgid "Quantity available"
+msgstr "Quantity available"
+
 #: app/components/menu/modifier-form.tsx:1017
 msgid "Quantity Counter (+/-)"
 msgstr "Quantity Counter (+/-)"
@@ -7842,7 +7873,7 @@ msgstr ""
 msgid "Remember your password?"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:938
+#: app/components/menu/drop-wizard/drop-drawers.tsx:937
 msgid "Reminder title"
 msgstr "Reminder title"
 
@@ -8321,7 +8352,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
-#: app/components/menu/drop-wizard/drop-drawers.tsx:540
+#: app/components/menu/drop-wizard/drop-drawers.tsx:534
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -8588,10 +8619,9 @@ msgid "Section height"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:630
-msgid "Section pooled inventory"
-msgstr "Section pooled inventory"
+#~ msgid "Section pooled inventory"
+#~ msgstr "Section pooled inventory"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:618
 #: app/components/menu/drop-wizard/drop-form.tsx:723
 msgid "Section settings"
 msgstr "Section settings"
@@ -8647,7 +8677,7 @@ msgstr "Select a category to display this item."
 msgid "Select a form"
 msgstr "Select a form"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:127
+#: app/components/menu/drop-wizard/drop-drawers.tsx:122
 msgid "Select a location"
 msgstr "Select a location"
 
@@ -8889,6 +8919,10 @@ msgstr ""
 msgid "Sessions"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:627
+msgid "Set a pooled inventory limit for all items in this section."
+msgstr "Set a pooled inventory limit for all items in this section."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:710
 msgid "Set as Default"
 msgstr "Set as Default"
@@ -8913,7 +8947,7 @@ msgstr ""
 msgid "Set expiration date (optional)"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:453
+#: app/components/menu/drop-wizard/drop-drawers.tsx:470
 msgid "Set how many of this item are available for this drop."
 msgstr "Set how many of this item are available for this drop."
 
@@ -8937,13 +8971,13 @@ msgstr ""
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "Set when online ordering, pickup, and delivery are accepted for this location."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:283
+#: app/components/menu/drop-wizard/drop-drawers.tsx:278
 msgid "Setting a limit helps you pace preparation and avoid crowding."
 msgstr "Setting a limit helps you pace preparation and avoid crowding."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:488
-msgid "Setting a limit helps you sell out"
-msgstr "Setting a limit helps you sell out"
+#~ msgid "Setting a limit helps you sell out"
+#~ msgstr "Setting a limit helps you sell out"
 
 #: app/components/app-sidebar.tsx:427
 #: app/components/command-menu.tsx:160
@@ -9040,7 +9074,7 @@ msgstr "Show replies ({replyCount})"
 msgid "Show specific examples"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:791
+#: app/components/menu/drop-wizard/drop-drawers.tsx:790
 msgid "Show the exact countdown timer until drop orders open."
 msgstr "Show the exact countdown timer until drop orders open."
 
@@ -9267,7 +9301,7 @@ msgstr ""
 msgid "Start the conversation by adding the first comment."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:154
+#: app/components/menu/drop-wizard/drop-drawers.tsx:149
 msgid "Start Time"
 msgstr "Start Time"
 
@@ -9967,12 +10001,12 @@ msgid "Total"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:467
-msgid "Total Available"
-msgstr "Total Available"
+#~ msgid "Total Available"
+#~ msgstr "Total Available"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:647
-msgid "Total Section Inventory"
-msgstr "Total Section Inventory"
+#~ msgid "Total Section Inventory"
+#~ msgstr "Total Section Inventory"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
 msgid "Transfers search rank"
@@ -10037,7 +10071,7 @@ msgstr ""
 msgid "Trigger event type is required."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:950
+#: app/components/menu/drop-wizard/drop-drawers.tsx:949
 msgid "Trigger timing"
 msgstr "Trigger timing"
 

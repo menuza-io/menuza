@@ -34,7 +34,7 @@ import {
 	SheetFooter,
 } from '@repo/ui/sheet'
 import { Switch } from '@repo/ui/switch'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export interface LocationOption {
 	id: string
@@ -63,6 +63,7 @@ export function CreatePickupWindowDrawer({
 }: CreatePickupWindowDrawerProps) {
 	const { _ } = useLingui()
 	const [locationId, setLocationId] = useState(locations[0]?.id || '')
+	const effectiveLocationId = locationId || locations[0]?.id || ''
 	const [date, setDate] = useState(() => {
 		const nextSaturday = new Date()
 		nextSaturday.setDate(
@@ -77,21 +78,15 @@ export function CreatePickupWindowDrawer({
 		useState(defaultInterval)
 	const [timeError, setTimeError] = useState<string | null>(null)
 
-	useEffect(() => {
-		if (locations.length > 0 && !locationId && locations[0]) {
-			setLocationId(locations[0].id)
-		}
-	}, [locations, locationId])
-
 	const handleAdd = () => {
-		if (!locationId || !date || !startTime || !endTime) return
+		if (!effectiveLocationId || !date || !startTime || !endTime) return
 		if (endTime <= startTime) {
 			setTimeError(t`End time must be after start time`)
 			return
 		}
 		setTimeError(null)
 		onAddWindow({
-			locationId,
+			locationId: effectiveLocationId,
 			date,
 			startTime,
 			endTime,
@@ -236,7 +231,7 @@ export function PickupWindowSettingsDrawer({
 	leadTimeMinutes,
 	onLeadTimeChange,
 }: PickupWindowSettingsDrawerProps) {
-	const [hasMaxLimit, setHasMaxLimit] = useState(maxOrdersPerSlot !== null)
+	const hasMaxLimit = maxOrdersPerSlot !== null
 	const [maxLimitVal, setMaxLimitVal] = useState(maxOrdersPerSlot ?? 5)
 
 	return (
@@ -289,8 +284,9 @@ export function PickupWindowSettingsDrawer({
 							<Switch
 								checked={hasMaxLimit}
 								onCheckedChange={(checked) => {
-									setHasMaxLimit(checked)
-									onMaxOrdersChange(checked ? maxLimitVal : null)
+									onMaxOrdersChange(
+										checked ? (maxOrdersPerSlot ?? maxLimitVal ?? 5) : null,
+									)
 								}}
 							/>
 						</div>
@@ -304,7 +300,7 @@ export function PickupWindowSettingsDrawer({
 									id="pw-max-orders"
 									type="number"
 									min={1}
-									value={maxLimitVal}
+									value={maxOrdersPerSlot ?? maxLimitVal}
 									onChange={(e) => {
 										const val = Number(e.target.value) || 1
 										setMaxLimitVal(val)
@@ -373,6 +369,7 @@ interface ItemInventoryDrawerProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	item: { id: string; displayName: string; price: number } | null
+	currency?: string
 	override?: DropInventoryInput
 	onSave: (override: DropInventoryInput) => void
 }
@@ -381,40 +378,61 @@ export function ItemInventoryDrawer({
 	open,
 	onOpenChange,
 	item,
+	currency,
 	override,
 	onSave,
 }: ItemInventoryDrawerProps) {
-	const [hasInventoryLimit, setHasInventoryLimit] = useState(false)
-	const [inventory, setInventory] = useState<number>(10)
-	const [maxPerOrder, setMaxPerOrder] = useState<string>('')
-	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>('')
-
-	useEffect(() => {
-		if (override) {
-			setHasInventoryLimit(
-				override.inventory !== null && override.inventory !== undefined,
-			)
-			setInventory(override.inventory ?? 10)
-			setMaxPerOrder(
-				override.maxPerOrder !== null && override.maxPerOrder !== undefined
-					? String(override.maxPerOrder)
-					: '',
-			)
-			setMaxPerPickupSlot(
-				override.maxPerPickupSlot !== null &&
-					override.maxPerPickupSlot !== undefined
-					? String(override.maxPerPickupSlot)
-					: '',
-			)
-		} else {
-			setHasInventoryLimit(false)
-			setInventory(10)
-			setMaxPerOrder('')
-			setMaxPerPickupSlot('')
-		}
-	}, [override, open])
-
 	if (!item) return null
+
+	return (
+		<Sheet open={open} onOpenChange={onOpenChange}>
+			<SheetContent
+				side="right"
+				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
+			>
+				{open && (
+					<ItemInventoryForm
+						key={`${item.id}:${override?.id ?? (override ? 'override' : 'new')}`}
+						item={item}
+						currency={currency}
+						override={override}
+						onSave={onSave}
+						onOpenChange={onOpenChange}
+					/>
+				)}
+			</SheetContent>
+		</Sheet>
+	)
+}
+
+function ItemInventoryForm({
+	item,
+	currency,
+	override,
+	onSave,
+	onOpenChange,
+}: {
+	item: { id: string; displayName: string; price: number }
+	currency?: string
+	override?: DropInventoryInput
+	onSave: (override: DropInventoryInput) => void
+	onOpenChange: (open: boolean) => void
+}) {
+	const [hasInventoryLimit, setHasInventoryLimit] = useState(
+		override?.inventory !== null && override?.inventory !== undefined,
+	)
+	const [inventory, setInventory] = useState<number>(override?.inventory ?? 10)
+	const [maxPerOrder, setMaxPerOrder] = useState<string>(
+		override?.maxPerOrder !== null && override?.maxPerOrder !== undefined
+			? String(override.maxPerOrder)
+			: '',
+	)
+	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>(
+		override?.maxPerPickupSlot !== null &&
+			override?.maxPerPickupSlot !== undefined
+			? String(override.maxPerPickupSlot)
+			: '',
+	)
 
 	const handleSave = () => {
 		onSave({
@@ -428,120 +446,95 @@ export function ItemInventoryDrawer({
 	}
 
 	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
-				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
-			>
-				<SheetHeader>
-					<SheetTitle className="text-xl font-semibold">
-						{item.displayName}
-					</SheetTitle>
-					<p className="text-muted-foreground text-sm">
-						${item.price.toFixed(2)}
-					</p>
-				</SheetHeader>
+		<>
+			<SheetHeader>
+				<SheetTitle className="text-xl font-semibold">
+					{item.displayName}
+				</SheetTitle>
+				<p className="text-muted-foreground text-sm">
+					{new Intl.NumberFormat(undefined, {
+						style: 'currency',
+						currency: currency || 'USD',
+					}).format(item.price)}
+				</p>
+			</SheetHeader>
 
-				<div className="space-y-6">
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label className="text-base">
-									<Trans>Inventory limit</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Set how many of this item are available for this drop.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={hasInventoryLimit}
-								onCheckedChange={setHasInventoryLimit}
-							/>
+			<div className="space-y-6">
+				<div className="space-y-3">
+					<div className="flex items-center justify-between">
+						<div className="space-y-0.5">
+							<Label className="text-base">
+								<Trans>Inventory limit</Trans>
+							</Label>
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									Set how many of this item are available for this drop.
+								</Trans>
+							</p>
 						</div>
-
-						{hasInventoryLimit && (
-							<div className="space-y-1.5 pt-1">
-								<Label htmlFor="item-inventory-count">
-									<Trans>Total Available</Trans>
-								</Label>
-								<Input
-									id="item-inventory-count"
-									type="number"
-									min={1}
-									value={inventory}
-									onChange={(e) => setInventory(Number(e.target.value) || 1)}
-								/>
-							</div>
-						)}
-					</div>
-
-					{/* Tip card from hotplate */}
-					<Card className="bg-muted/40 border-primary/30 flex gap-3 border-dashed p-4 text-sm">
-						<Icon
-							name="help-circle"
-							className="text-primary mt-0.5 size-5 shrink-0"
+						<Switch
+							checked={hasInventoryLimit}
+							onCheckedChange={setHasInventoryLimit}
 						/>
-						<div className="space-y-1">
-							<p className="text-foreground font-medium">
-								<Trans>Setting a limit helps you sell out</Trans>
-							</p>
-							<p className="text-muted-foreground text-xs leading-relaxed">
-								<Trans>
-									Limiting how many items you sell builds urgency and keeps
-									customers excited for your next drop.
-								</Trans>
-							</p>
-						</div>
-					</Card>
-
-					<div className="space-y-4 border-t pt-2">
-						<div className="space-y-1.5">
-							<Label htmlFor="item-max-order">
-								<Trans>Max per order</Trans>
-							</Label>
-							<Input
-								id="item-max-order"
-								type="number"
-								placeholder="No limit"
-								value={maxPerOrder}
-								onChange={(e) => setMaxPerOrder(e.target.value)}
-							/>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Max number of this item a customer can add to their cart.
-								</Trans>
-							</p>
-						</div>
-
-						<div className="space-y-1.5">
-							<Label htmlFor="item-max-slot">
-								<Trans>Max per pickup time</Trans>
-							</Label>
-							<Input
-								id="item-max-slot"
-								type="number"
-								placeholder="No limit"
-								value={maxPerPickupSlot}
-								onChange={(e) => setMaxPerPickupSlot(e.target.value)}
-							/>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Max number that can be scheduled for a single pickup slot.
-								</Trans>
-							</p>
-						</div>
 					</div>
+
+					{hasInventoryLimit && (
+						<div className="space-y-1.5 pl-1">
+							<Label htmlFor="item-inv-count">
+								<Trans>Quantity available</Trans>
+							</Label>
+							<Input
+								id="item-inv-count"
+								type="number"
+								min={1}
+								value={inventory}
+								onChange={(e) =>
+									setInventory(Math.max(1, Number(e.target.value) || 1))
+								}
+							/>
+						</div>
+					)}
 				</div>
 
-				<SheetFooter className="mt-auto border-t pt-4">
-					<Button onClick={handleSave} className="w-full">
-						<Trans>Save</Trans>
-					</Button>
-				</SheetFooter>
-			</SheetContent>
-		</Sheet>
+				<div className="space-y-4 border-t pt-4">
+					<h4 className="text-sm font-medium">
+						<Trans>Customer limits</Trans>
+					</h4>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="item-max-order">
+							<Trans>Max per customer order</Trans>
+						</Label>
+						<Input
+							id="item-max-order"
+							type="number"
+							placeholder="No limit"
+							value={maxPerOrder}
+							onChange={(e) => setMaxPerOrder(e.target.value)}
+						/>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="item-max-slot">
+							<Trans>Max per pickup slot</Trans>
+						</Label>
+						<Input
+							id="item-max-slot"
+							type="number"
+							placeholder="No limit"
+							value={maxPerPickupSlot}
+							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<SheetFooter className="mt-auto border-t pt-4">
+				<Button onClick={handleSave} className="w-full">
+					<Trans>Save</Trans>
+				</Button>
+			</SheetFooter>
+		</>
 	)
 }
 
@@ -564,37 +557,54 @@ export function SectionInventoryDrawer({
 	override,
 	onSave,
 }: SectionInventoryDrawerProps) {
-	const [hasPooledInventory, setHasPooledInventory] = useState(false)
-	const [inventory, setInventory] = useState<number>(20)
-	const [maxPerOrder, setMaxPerOrder] = useState<string>('')
-	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>('')
-
-	useEffect(() => {
-		if (override) {
-			setHasPooledInventory(
-				override.inventory !== null && override.inventory !== undefined,
-			)
-			setInventory(override.inventory ?? 20)
-			setMaxPerOrder(
-				override.maxPerOrder !== null && override.maxPerOrder !== undefined
-					? String(override.maxPerOrder)
-					: '',
-			)
-			setMaxPerPickupSlot(
-				override.maxPerPickupSlot !== null &&
-					override.maxPerPickupSlot !== undefined
-					? String(override.maxPerPickupSlot)
-					: '',
-			)
-		} else {
-			setHasPooledInventory(false)
-			setInventory(20)
-			setMaxPerOrder('')
-			setMaxPerPickupSlot('')
-		}
-	}, [override, open])
-
 	if (!category) return null
+
+	return (
+		<Sheet open={open} onOpenChange={onOpenChange}>
+			<SheetContent
+				side="right"
+				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
+			>
+				{open && (
+					<SectionInventoryForm
+						key={`${category.id}:${override?.id ?? (override ? 'override' : 'new')}`}
+						category={category}
+						override={override}
+						onSave={onSave}
+						onOpenChange={onOpenChange}
+					/>
+				)}
+			</SheetContent>
+		</Sheet>
+	)
+}
+
+function SectionInventoryForm({
+	category,
+	override,
+	onSave,
+	onOpenChange,
+}: {
+	category: { id: string; displayName: string }
+	override?: DropInventoryInput
+	onSave: (override: DropInventoryInput) => void
+	onOpenChange: (open: boolean) => void
+}) {
+	const [hasPooledInventory, setHasPooledInventory] = useState(
+		override?.inventory !== null && override?.inventory !== undefined,
+	)
+	const [inventory, setInventory] = useState<number>(override?.inventory ?? 20)
+	const [maxPerOrder, setMaxPerOrder] = useState<string>(
+		override?.maxPerOrder !== null && override?.maxPerOrder !== undefined
+			? String(override.maxPerOrder)
+			: '',
+	)
+	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>(
+		override?.maxPerPickupSlot !== null &&
+			override?.maxPerPickupSlot !== undefined
+			? String(override.maxPerPickupSlot)
+			: '',
+	)
 
 	const handleSave = () => {
 		onSave({
@@ -608,103 +618,92 @@ export function SectionInventoryDrawer({
 	}
 
 	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
-				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
-			>
-				<SheetHeader>
-					<SheetTitle className="text-xl font-semibold">
-						<Trans>Section settings</Trans>
-					</SheetTitle>
-					<p className="text-muted-foreground text-sm">
-						{category.displayName}
-					</p>
-				</SheetHeader>
+		<>
+			<SheetHeader>
+				<SheetTitle className="text-xl font-semibold">
+					{category.displayName}
+				</SheetTitle>
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Set a pooled inventory limit for all items in this section.
+					</Trans>
+				</p>
+			</SheetHeader>
 
-				<div className="space-y-6">
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label className="text-base">
-									<Trans>Section pooled inventory</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Items in this section share a total pooled inventory limit.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={hasPooledInventory}
-								onCheckedChange={setHasPooledInventory}
-							/>
-						</div>
-
-						{hasPooledInventory && (
-							<div className="space-y-1.5 pt-1">
-								<Label htmlFor="sec-inventory">
-									<Trans>Total Section Inventory</Trans>
-								</Label>
-								<Input
-									id="sec-inventory"
-									type="number"
-									min={1}
-									value={inventory}
-									onChange={(e) => setInventory(Number(e.target.value) || 1)}
-								/>
-							</div>
-						)}
-					</div>
-
-					<div className="space-y-4 border-t pt-2">
-						<div className="space-y-1.5">
-							<Label htmlFor="sec-max-order">
-								<Trans>Max per order</Trans>
+			<div className="space-y-6">
+				<div className="space-y-3">
+					<div className="flex items-center justify-between">
+						<div className="space-y-0.5">
+							<Label className="text-base">
+								<Trans>Pooled section limit</Trans>
 							</Label>
-							<Input
-								id="sec-max-order"
-								type="number"
-								placeholder="No limit"
-								value={maxPerOrder}
-								onChange={(e) => setMaxPerOrder(e.target.value)}
-							/>
 							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Max items from this section a customer can purchase in one
-									order.
-								</Trans>
+								<Trans>All items in this section share from this pool.</Trans>
 							</p>
 						</div>
+						<Switch
+							checked={hasPooledInventory}
+							onCheckedChange={setHasPooledInventory}
+						/>
+					</div>
 
-						<div className="space-y-1.5">
-							<Label htmlFor="sec-max-slot">
-								<Trans>Max per pickup time</Trans>
+					{hasPooledInventory && (
+						<div className="space-y-1.5 pl-1">
+							<Label htmlFor="sec-inv-count">
+								<Trans>Pooled quantity available</Trans>
 							</Label>
 							<Input
-								id="sec-max-slot"
+								id="sec-inv-count"
 								type="number"
-								placeholder="No limit"
-								value={maxPerPickupSlot}
-								onChange={(e) => setMaxPerPickupSlot(e.target.value)}
+								min={1}
+								value={inventory}
+								onChange={(e) =>
+									setInventory(Math.max(1, Number(e.target.value) || 1))
+								}
 							/>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Max items from this section allowed across any single pickup
-									slot.
-								</Trans>
-							</p>
 						</div>
-					</div>
+					)}
 				</div>
 
-				<SheetFooter className="mt-auto border-t pt-4">
-					<Button onClick={handleSave} className="w-full">
-						<Trans>Save section settings</Trans>
-					</Button>
-				</SheetFooter>
-			</SheetContent>
-		</Sheet>
+				<div className="space-y-4 border-t pt-4">
+					<h4 className="text-sm font-medium">
+						<Trans>Customer limits</Trans>
+					</h4>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="sec-max-order">
+							<Trans>Max per customer order</Trans>
+						</Label>
+						<Input
+							id="sec-max-order"
+							type="number"
+							placeholder="No limit"
+							value={maxPerOrder}
+							onChange={(e) => setMaxPerOrder(e.target.value)}
+						/>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="sec-max-slot">
+							<Trans>Max per pickup slot</Trans>
+						</Label>
+						<Input
+							id="sec-max-slot"
+							type="number"
+							placeholder="No limit"
+							value={maxPerPickupSlot}
+							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<SheetFooter className="mt-auto border-t pt-4">
+				<Button onClick={handleSave} className="w-full">
+					<Trans>Save section settings</Trans>
+				</Button>
+			</SheetFooter>
+		</>
 	)
 }
 
@@ -1034,7 +1033,7 @@ export function AddReminderModal({
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						<Trans>Cancel</Trans>
 					</Button>
-					<Button onClick={handleAdd} disabled={!title}>
+					<Button onClick={handleAdd} disabled={!canAdd}>
 						<Trans>Add reminder</Trans>
 					</Button>
 				</DialogFooter>
