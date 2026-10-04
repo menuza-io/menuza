@@ -61,7 +61,7 @@ npm run test:e2e:install
 npm run dev
 
 # Start specific apps
-npm run dev:app             # Main React Router app (port 3001)
+npm run dev:app             # Main React Router app (port 3001, Cloudflare Workers dev)
 npm run dev:web             # Astro marketing site (port 3002)
 npm run dev:sites           # Tenant public sites (port 3008)
 npm run dev:tenant-api      # US tenant-api (port 3007, DATA_REGION=us)
@@ -72,7 +72,8 @@ npm run dev:mobile          # Expo mobile app
 
 # Database management
 npm run db:studio      # Drizzle Studio UI (port 5555)
-npm run db:migrate:deploy # Apply control-plane SQL migrations
+npm run db:migrate:deploy # Apply control-plane SQL migrations (LibSQL / tests)
+npm run db:migrate:d1:local -w app # Same migrations on Workers local D1 (app dev)
 npm run db:seed        # Seed database with test data
 npm run db:reset       # Reset database (destructive)
 ```

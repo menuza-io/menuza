@@ -8,6 +8,8 @@
   "types": "./index.ts",
   "exports": {
     "./mailbox": "./src/mailbox.ts",
+    "./chat": "./src/chat.ts",
+    "./chat-markdown": "./src/chat-markdown.ts",
     ".": {
       "types": "./index.ts",
       "import": "./index.ts",

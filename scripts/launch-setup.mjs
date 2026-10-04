@@ -3,6 +3,8 @@
  * Interactive first-time launch setup for Epic Startup.
  *
  * - Creates Cloudflare D1 / KV / R2 resources (optional)
+ * - App worker deploy applies team-chat `ChatOrg` Durable Objects (Wrangler DO
+ *   migration in apps/app/wrangler.jsonc — not tenant-api generate:do-migrations)
  * - Writes launch.config.json for local patching
  * - Generates shared secrets in launch.secrets.json (gitignored)
  * - Applies generated Wrangler secrets after deploy (optional)
@@ -698,7 +700,10 @@ function applyRemoteD1Migrations(config) {
 		return
 	}
 
-	log('\nApplying control-plane D1 migrations to Cloudflare…', 'yellow')
+	log(
+		'\nApplying control-plane D1 migrations to Cloudflare (chat channel tables in D1; ChatOrg DO registers on App worker deploy)…',
+		'yellow',
+	)
 	const appDir = join(rootDir, 'apps/app')
 	const patchScript = join(rootDir, 'scripts/patch-wrangler.mjs')
 	// Always migrate via wrangler.deploy.jsonc — the Vite-built deploy config omits migrations_dir.
@@ -817,6 +822,12 @@ function deployReactRouterApp(appKey, deployEnv, { build = true } = {}) {
 		runLaunchCommand('npm run build:cf', appDir, CF_BUILD_ENV)
 	}
 	patchWranglerApp(appKey, deployEnv)
+	if (appKey === 'app') {
+		log(
+			'  Team chat: wrangler deploy applies ChatOrg Durable Object migration (enable Durable Objects on the Cloudflare account if deploy fails).',
+			'gray',
+		)
+	}
 	wranglerDeploy(appDir, 'build/server/wrangler.deploy.json', deployEnv)
 }
 
@@ -1559,7 +1570,7 @@ async function main() {
 		hasD1 && inferred.wranglerLoggedIn
 			? await confirm({
 					message:
-						'Apply control-plane D1 migrations to Cloudflare (App + Admin; production + staging)?',
+						'Apply control-plane D1 migrations to Cloudflare (App + Admin D1; production + staging)? ChatOrg DO is separate — applied when the App worker deploys.',
 					default: true,
 				})
 			: false

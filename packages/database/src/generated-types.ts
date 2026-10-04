@@ -36,6 +36,12 @@ export type OrganizationAnnouncement = InferSelectModel<
 export type OrganizationAnnouncementInsert = InferInsertModel<
 	typeof schema.OrganizationAnnouncement
 >
+export type OrganizationChatChannel = InferSelectModel<
+	typeof schema.OrganizationChatChannel
+>
+export type OrganizationChatChannelInsert = InferInsertModel<
+	typeof schema.OrganizationChatChannel
+>
 export type OrganizationSiteAsset = InferSelectModel<
 	typeof schema.OrganizationSiteAsset
 >

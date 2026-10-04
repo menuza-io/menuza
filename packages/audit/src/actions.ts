@@ -66,6 +66,12 @@ export enum AuditAction {
 	NOTE_COMMENT_ADDED = 'note_comment_added',
 	NOTE_COMMENT_UPDATED = 'note_comment_updated',
 	NOTE_COMMENT_DELETED = 'note_comment_deleted',
+
+	// Team chat
+	CHAT_CHANNEL_CREATED = 'chat_channel_created',
+	CHAT_CHANNEL_UPDATED = 'chat_channel_updated',
+	CHAT_CHANNEL_DELETED = 'chat_channel_deleted',
+	CHAT_RETENTION_UPDATED = 'chat_retention_updated',
 	NOTE_STATUS_CHANGED = 'note_status_changed',
 	NOTE_PRIORITY_CHANGED = 'note_priority_changed',
 	NOTE_ACCESS_GRANTED = 'note_access_granted',

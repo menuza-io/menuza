@@ -31,6 +31,7 @@ export {
 	bindCloudflareD1,
 	db,
 	isD1Bound,
+	resetSqliteClientForTests,
 	resolveSqliteFileUrl,
 	schema,
 	sqliteClient,

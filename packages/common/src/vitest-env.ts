@@ -17,8 +17,14 @@ const testEnv = new Proxy(
 	},
 )
 
+function useTestEnv() {
+	return typeof process !== 'undefined' && process.env.VITEST === 'true'
+}
+
 /** Vitest reads `process.env`; production uses Varlock's resolved ENV. */
-export const ENV =
-	typeof process !== 'undefined' && process.env.VITEST === 'true'
-		? testEnv
-		: _ENV
+export const ENV = new Proxy({} as typeof _ENV, {
+	get(_target, prop) {
+		const source = useTestEnv() ? testEnv : _ENV
+		return source[prop as keyof typeof _ENV]
+	},
+})
