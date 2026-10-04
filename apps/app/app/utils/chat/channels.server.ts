@@ -65,22 +65,7 @@ export async function listChannelsForUser(
 		.limit(1)
 	if (!membership) return []
 
-	const [channels, viaRole, viaMember] = await Promise.all([
-		db
-			.select({
-				id: OrganizationChatChannel.id,
-				name: OrganizationChatChannel.name,
-				description: OrganizationChatChannel.description,
-				access: OrganizationChatChannel.access,
-				kind: OrganizationChatChannel.kind,
-				createdById: OrganizationChatChannel.createdById,
-				showHistoryToNewMembers:
-					OrganizationChatChannel.showHistoryToNewMembers,
-			})
-			.from(OrganizationChatChannel)
-			.where(eq(OrganizationChatChannel.organizationId, organizationId))
-			.orderBy(asc(OrganizationChatChannel.name))
-			.limit(CHAT_LIMITS.syncChannelsMax),
+	const [viaRole, viaMember] = await Promise.all([
 		db
 			.select({ channelId: OrganizationChatChannelRole.channelId })
 			.from(OrganizationChatChannelRole)
@@ -96,12 +81,72 @@ export async function listChannelsForUser(
 		...viaRole.map((row) => row.channelId),
 		...viaMember.map((row) => row.channelId),
 	])
-	const visible = channels.filter((channel) => {
-		if (channel.kind === 'dm' || channel.kind === 'group') {
-			return allowed.has(channel.id)
-		}
-		return channel.access === 'everyone' || allowed.has(channel.id)
-	})
+
+	type ChannelRow = {
+		id: string
+		name: string
+		description: string
+		access: 'everyone' | 'restricted'
+		kind: 'channel' | 'dm' | 'group'
+		createdById: string | null
+		showHistoryToNewMembers: boolean
+	}
+	const byId = new Map<string, ChannelRow>()
+
+	const publicTeamChannels = await db
+		.select({
+			id: OrganizationChatChannel.id,
+			name: OrganizationChatChannel.name,
+			description: OrganizationChatChannel.description,
+			access: OrganizationChatChannel.access,
+			kind: OrganizationChatChannel.kind,
+			createdById: OrganizationChatChannel.createdById,
+			showHistoryToNewMembers: OrganizationChatChannel.showHistoryToNewMembers,
+		})
+		.from(OrganizationChatChannel)
+		.where(
+			and(
+				eq(OrganizationChatChannel.organizationId, organizationId),
+				eq(OrganizationChatChannel.kind, 'channel'),
+				eq(OrganizationChatChannel.access, 'everyone'),
+			),
+		)
+	for (const row of publicTeamChannels) byId.set(row.id, row)
+
+	for (const ids of chunk([...allowed], 50)) {
+		if (ids.length === 0) continue
+		const memberChannels = await db
+			.select({
+				id: OrganizationChatChannel.id,
+				name: OrganizationChatChannel.name,
+				description: OrganizationChatChannel.description,
+				access: OrganizationChatChannel.access,
+				kind: OrganizationChatChannel.kind,
+				createdById: OrganizationChatChannel.createdById,
+				showHistoryToNewMembers:
+					OrganizationChatChannel.showHistoryToNewMembers,
+			})
+			.from(OrganizationChatChannel)
+			.where(
+				and(
+					eq(OrganizationChatChannel.organizationId, organizationId),
+					inArray(OrganizationChatChannel.id, ids),
+				),
+			)
+		for (const row of memberChannels) byId.set(row.id, row)
+	}
+
+	const all = [...byId.values()]
+	const conversations = all.filter(
+		(channel) => channel.kind === 'dm' || channel.kind === 'group',
+	)
+	const teamChannels = all
+		.filter((channel) => channel.kind === 'channel')
+		.sort((a, b) => a.name.localeCompare(b.name))
+		.slice(0, CHAT_LIMITS.syncChannelsMax)
+	const visible = [...conversations, ...teamChannels].sort((a, b) =>
+		a.name.localeCompare(b.name),
+	)
 	return decorateChannelSummaries(organizationId, userId, visible)
 }
 
@@ -268,7 +313,12 @@ async function assertNameAvailable(
 			name: OrganizationChatChannel.name,
 		})
 		.from(OrganizationChatChannel)
-		.where(eq(OrganizationChatChannel.organizationId, organizationId))
+		.where(
+			and(
+				eq(OrganizationChatChannel.organizationId, organizationId),
+				eq(OrganizationChatChannel.kind, 'channel'),
+			),
+		)
 	const taken = rows.some(
 		(row) =>
 			row.id !== exceptChannelId &&
@@ -311,7 +361,12 @@ export async function createChannel(
 	const existing = await db
 		.select({ id: OrganizationChatChannel.id })
 		.from(OrganizationChatChannel)
-		.where(eq(OrganizationChatChannel.organizationId, organizationId))
+		.where(
+			and(
+				eq(OrganizationChatChannel.organizationId, organizationId),
+				eq(OrganizationChatChannel.kind, 'channel'),
+			),
+		)
 		.limit(CHAT_LIMITS.syncChannelsMax)
 	if (existing.length >= CHAT_LIMITS.syncChannelsMax) {
 		throw new ChatChannelError(
@@ -364,6 +419,9 @@ export async function updateChannel(
 ) {
 	const channel = await getChannelInOrganization(organizationId, channelId)
 	if (!channel) throw new ChatChannelError('Channel not found.')
+	if (channel.kind !== 'channel') {
+		throw new ChatChannelError('Channel not found.')
+	}
 	await assertNameAvailable(organizationId, input.name, channelId)
 	await assertAudienceBelongsToOrganization(organizationId, input)
 
@@ -435,7 +493,9 @@ export async function updateChannel(
 
 export async function deleteChannel(organizationId: string, channelId: string) {
 	const channel = await getChannelInOrganization(organizationId, channelId)
-	if (!channel) throw new ChatChannelError('Channel not found.')
+	if (!channel || channel.kind !== 'channel') {
+		throw new ChatChannelError('Channel not found.')
+	}
 	// Role and member rows go with it via ON DELETE CASCADE.
 	await db
 		.delete(OrganizationChatChannel)

@@ -1946,10 +1946,9 @@ export const OrganizationChatChannel = sqliteTable(
 		index('OrganizationChatChannel_organizationId_idx').on(
 			table.organizationId,
 		),
-		uniqueIndex('OrganizationChatChannel_organizationId_name_key').on(
-			table.organizationId,
-			sql`lower(${table.name})`,
-		),
+		uniqueIndex('OrganizationChatChannel_organizationId_name_key')
+			.on(table.organizationId, sql`lower(${table.name})`)
+			.where(sql`${table.kind} = 'channel'`),
 		uniqueIndex('OrganizationChatChannel_organizationId_dmPairKey_key').on(
 			table.organizationId,
 			table.dmPairKey,

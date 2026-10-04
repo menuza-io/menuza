@@ -346,25 +346,37 @@ export class ChatStore {
 		if (!term) return []
 		const channels = options.channelIds ?? []
 		if (channels.length === 0) return []
-		const channelClause = ` AND m.channel_id IN (${placeholders(channels.length)})`
-		const rows = this.all<{
+		const rows: {
 			id: number
 			channel_id: string
 			body: string
 			created_at: number
 			author_id: string
-		}>(
-			`SELECT m.id, m.channel_id, m.body, m.created_at, m.author_id
-				FROM messages_fts fts
-				INNER JOIN messages m ON m.id = fts.rowid
-				WHERE messages_fts MATCH ? AND m.deleted_at IS NULL${channelClause}
-				ORDER BY m.id DESC
-				LIMIT ?`,
-			term,
-			...channels,
-			limit,
-		)
-		return rows.map((row) => ({
+		}[] = []
+		for (const part of chunk(channels)) {
+			const channelClause = ` AND m.channel_id IN (${placeholders(part.length)})`
+			rows.push(
+				...this.all<{
+					id: number
+					channel_id: string
+					body: string
+					created_at: number
+					author_id: string
+				}>(
+					`SELECT m.id, m.channel_id, m.body, m.created_at, m.author_id
+						FROM messages_fts fts
+						INNER JOIN messages m ON m.id = fts.rowid
+						WHERE messages_fts MATCH ? AND m.deleted_at IS NULL${channelClause}
+						ORDER BY m.id DESC
+						LIMIT ?`,
+					term,
+					...part,
+					limit,
+				),
+			)
+		}
+		rows.sort((a, b) => b.id - a.id)
+		return rows.slice(0, limit).map((row) => ({
 			id: row.id,
 			channel: row.channel_id,
 			body: row.body,
@@ -591,17 +603,23 @@ export class ChatStore {
 		).map((row) => row.id)
 		if (ids.length === 0) return 0
 		for (const part of chunk(ids)) {
-			const placeholders = part.map(() => '?').join(', ')
+			const inList = part.map(() => '?').join(', ')
 			this.run(
-				`DELETE FROM reactions WHERE message_id IN (${placeholders})`,
+				`DELETE FROM message_attachments WHERE message_id IN (${inList})`,
 				...part,
 			)
-			this.run(`DELETE FROM messages WHERE id IN (${placeholders})`, ...part)
+			this.run(`DELETE FROM reactions WHERE message_id IN (${inList})`, ...part)
+			this.run(`DELETE FROM messages WHERE id IN (${inList})`, ...part)
 		}
 		return ids.length
 	}
 
 	deleteChannel(channel: string) {
+		this.run(
+			`DELETE FROM message_attachments WHERE message_id IN
+				(SELECT id FROM messages WHERE channel_id = ?)`,
+			channel,
+		)
 		this.run(
 			`DELETE FROM reactions WHERE message_id IN
 				(SELECT id FROM messages WHERE channel_id = ?)`,

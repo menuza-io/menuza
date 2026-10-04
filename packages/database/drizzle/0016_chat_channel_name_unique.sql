@@ -1,0 +1,2 @@
+DROP INDEX `OrganizationChatChannel_organizationId_name_key`;--> statement-breakpoint
+CREATE UNIQUE INDEX `OrganizationChatChannel_organizationId_name_key` ON `OrganizationChatChannel` (`organizationId`,lower("name")) WHERE "OrganizationChatChannel"."kind" = 'channel';

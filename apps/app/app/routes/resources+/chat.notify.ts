@@ -13,7 +13,7 @@ const bodySchema = z.object({
 })
 
 export async function action({ request }: ActionFunctionArgs) {
-	requireInternalCommandAuth(request)
+	await requireInternalCommandAuth(request)
 	const parsed = bodySchema.safeParse(await request.json().catch(() => null))
 	if (!parsed.success) {
 		return new Response('Bad request', { status: 400 })

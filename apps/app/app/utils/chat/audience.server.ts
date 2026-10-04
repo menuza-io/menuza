@@ -45,13 +45,18 @@ export async function resolveChannelAudiences(
 	)
 	if (channelIds.length === 0) return audiences
 
-	const channels: { id: string; access: 'everyone' | 'restricted' }[] = []
+	const channels: {
+		id: string
+		access: 'everyone' | 'restricted'
+		kind: 'channel' | 'dm' | 'group'
+	}[] = []
 	for (const ids of chunk([...new Set(channelIds)])) {
 		channels.push(
 			...(await db
 				.select({
 					id: OrganizationChatChannel.id,
 					access: OrganizationChatChannel.access,
+					kind: OrganizationChatChannel.kind,
 				})
 				.from(OrganizationChatChannel)
 				.where(
@@ -78,7 +83,12 @@ export async function resolveChannelAudiences(
 		)
 
 	const restrictedIds = channels
-		.filter((channel) => channel.access === 'restricted')
+		.filter(
+			(channel) =>
+				channel.kind === 'dm' ||
+				channel.kind === 'group' ||
+				channel.access === 'restricted',
+		)
 		.map((channel) => channel.id)
 	const roleIdsByChannel = new Map<string, Set<string>>()
 	const userIdsByChannel = new Map<string, Set<string>>()
@@ -113,7 +123,7 @@ export async function resolveChannelAudiences(
 
 	for (const channel of channels) {
 		const audience = audiences.get(channel.id)!
-		if (channel.access === 'everyone') {
+		if (channel.kind === 'channel' && channel.access === 'everyone') {
 			for (const member of members) audience.add(member.userId)
 			continue
 		}

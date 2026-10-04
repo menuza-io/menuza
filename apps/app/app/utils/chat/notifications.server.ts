@@ -15,6 +15,7 @@ import {
 } from '@repo/common/chat-markdown'
 import { type ChatMessage } from '@repo/common/chat'
 import { resolveMentionsToUserIds } from '@repo/notifications'
+import { resolveChannelAudiences } from '#app/utils/chat/audience.server.ts'
 import { sanitizeTextContent } from '#app/utils/content-sanitization.server.ts'
 
 const appUrl = process.env.BASE_URL
@@ -80,7 +81,13 @@ export async function notifyChatMessage({
 		extractChatMentionUserIds(message.body),
 		members,
 	)
-	const mentionTargets = mentionIds.filter((id) => id !== authorId)
+	const audiences = await resolveChannelAudiences(organizationId, [
+		message.channel,
+	])
+	const channelAudience = audiences.get(message.channel) ?? new Set<string>()
+	const mentionTargets = mentionIds.filter(
+		(id) => id !== authorId && channelAudience.has(id),
+	)
 
 	for (const userId of mentionTargets) {
 		await upsertChatNotification({

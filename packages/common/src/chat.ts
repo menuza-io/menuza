@@ -50,7 +50,7 @@ export function isValidReactionEmoji(value: string) {
 		value.length > 0 &&
 		value.length <= CHAT_LIMITS.emojiMax &&
 		!/\s/u.test(value) &&
-		/\p{Extended_Pictographic}|\p{Regional_Indicator}|^[0-9#*]\uFE0F?\u20E3$/u.test(
+		/^(?:\p{Extended_Pictographic}(?:\u200D\p{Extended_Pictographic})*|\p{Regional_Indicator}|[0-9#*]\uFE0F?\u20E3)+$/u.test(
 			value,
 		)
 	)

@@ -11,7 +11,7 @@ import {
 } from '@repo/ui/dialog'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFetcher, useNavigate } from 'react-router'
 
 type Member = { id: string; label: string }
@@ -41,14 +41,18 @@ export function ChatComposeDialog({
 	const [filter, setFilter] = useState('')
 	const pending = fetcher.state !== 'idle'
 	const result = fetcher.data
+	const onCreatedRef = useRef(onCreated)
+	onCreatedRef.current = onCreated
+	const handledChannelIdRef = useRef<string | null>(null)
 
 	useEffect(() => {
-		if (result?.ok) {
-			onCreated(result.channelId)
+		if (result?.ok && handledChannelIdRef.current !== result.channelId) {
+			handledChannelIdRef.current = result.channelId
+			onCreatedRef.current(result.channelId)
 			void navigate(`?channel=${result.channelId}`)
 			onClose()
 		}
-	}, [result, navigate, onClose, onCreated])
+	}, [result, navigate, onClose])
 
 	const visible = members.filter((member) =>
 		member.label.toLowerCase().includes(filter.trim().toLowerCase()),

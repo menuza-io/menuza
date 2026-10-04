@@ -11,6 +11,20 @@ import {
 import { isActiveOrganizationMember } from './audience.server.ts'
 import { ChatChannelError } from './channels.server.ts'
 
+const ID_CHUNK = 50
+
+function chunk<T>(items: T[], size = ID_CHUNK) {
+	const chunks: T[][] = []
+	for (let index = 0; index < items.length; index += size) {
+		chunks.push(items.slice(index, index + size))
+	}
+	return chunks
+}
+
+function isUniqueViolation(error: unknown) {
+	return /unique/i.test(error instanceof Error ? error.message : String(error))
+}
+
 export function dmPairKey(userA: string, userB: string) {
 	return [userA, userB].sort().join(':')
 }
@@ -41,26 +55,45 @@ export async function findOrCreateDirectMessage(
 		.limit(1)
 	if (existing) return existing.id
 
-	const [channel] = await db
-		.insert(OrganizationChatChannel)
-		.values({
-			organizationId,
-			name: `dm:${pairKey}`,
-			description: '',
-			access: 'restricted',
-			kind: 'dm',
-			dmPairKey: pairKey,
-			createdById: userId,
-		})
-		.returning({ id: OrganizationChatChannel.id })
-	if (!channel) throw new ChatChannelError('Could not start the chat.', 'form')
+	try {
+		const [channel] = await db
+			.insert(OrganizationChatChannel)
+			.values({
+				organizationId,
+				name: `dm:${pairKey}`,
+				description: '',
+				access: 'restricted',
+				kind: 'dm',
+				dmPairKey: pairKey,
+				createdById: userId,
+			})
+			.returning({ id: OrganizationChatChannel.id })
+		if (!channel) {
+			throw new ChatChannelError('Could not start the chat.', 'form')
+		}
 
-	await db.insert(OrganizationChatChannelMember).values([
-		{ channelId: channel.id, userId },
-		{ channelId: channel.id, userId: targetUserId },
-	])
+		await db.insert(OrganizationChatChannelMember).values([
+			{ channelId: channel.id, userId },
+			{ channelId: channel.id, userId: targetUserId },
+		])
 
-	return channel.id
+		return channel.id
+	} catch (error) {
+		if (!isUniqueViolation(error)) throw error
+		const [race] = await db
+			.select({ id: OrganizationChatChannel.id })
+			.from(OrganizationChatChannel)
+			.where(
+				and(
+					eq(OrganizationChatChannel.organizationId, organizationId),
+					eq(OrganizationChatChannel.dmPairKey, pairKey),
+					eq(OrganizationChatChannel.kind, 'dm'),
+				),
+			)
+			.limit(1)
+		if (race) return race.id
+		throw error
+	}
 }
 
 export async function createGroupChat(
@@ -247,18 +280,20 @@ export async function listGroupMemberIdsByChannel(
 	channelIds: string[],
 ): Promise<Record<string, string[]>> {
 	if (channelIds.length === 0) return {}
-	const rows = await db
-		.select({
-			channelId: OrganizationChatChannelMember.channelId,
-			userId: OrganizationChatChannelMember.userId,
-		})
-		.from(OrganizationChatChannelMember)
-		.where(inArray(OrganizationChatChannelMember.channelId, channelIds))
 	const byChannel: Record<string, string[]> = {}
-	for (const row of rows) {
-		const list = byChannel[row.channelId] ?? []
-		list.push(row.userId)
-		byChannel[row.channelId] = list
+	for (const ids of chunk(channelIds)) {
+		const rows = await db
+			.select({
+				channelId: OrganizationChatChannelMember.channelId,
+				userId: OrganizationChatChannelMember.userId,
+			})
+			.from(OrganizationChatChannelMember)
+			.where(inArray(OrganizationChatChannelMember.channelId, ids))
+		for (const row of rows) {
+			const list = byChannel[row.channelId] ?? []
+			list.push(row.userId)
+			byChannel[row.channelId] = list
+		}
 	}
 	return byChannel
 }
@@ -271,28 +306,25 @@ export async function decorateChannelSummaries(
 	const dmIds = channels.filter((c) => c.kind === 'dm').map((c) => c.id)
 	if (dmIds.length === 0) return channels
 
-	const peers = await db
-		.select({
-			channelId: OrganizationChatChannelMember.channelId,
-			userId: OrganizationChatChannelMember.userId,
-		})
-		.from(OrganizationChatChannelMember)
-		.where(
-			and(
-				inArray(OrganizationChatChannelMember.channelId, dmIds),
-				// not me
-			),
-		)
-
 	const peerByChannel = new Map<string, string>()
-	for (const row of peers) {
-		if (row.userId === userId) continue
-		peerByChannel.set(row.channelId, row.userId)
+	for (const ids of chunk(dmIds)) {
+		const peers = await db
+			.select({
+				channelId: OrganizationChatChannelMember.channelId,
+				userId: OrganizationChatChannelMember.userId,
+			})
+			.from(OrganizationChatChannelMember)
+			.where(inArray(OrganizationChatChannelMember.channelId, ids))
+		for (const row of peers) {
+			if (row.userId === userId) continue
+			peerByChannel.set(row.channelId, row.userId)
+		}
 	}
 
 	const peerIds = [...new Set(peerByChannel.values())]
 	const names = new Map<string, string>()
-	if (peerIds.length > 0) {
+	for (const ids of chunk(peerIds)) {
+		if (ids.length === 0) continue
 		const users = await db
 			.select({
 				id: User.id,
@@ -300,7 +332,7 @@ export async function decorateChannelSummaries(
 				username: User.username,
 			})
 			.from(User)
-			.where(inArray(User.id, peerIds))
+			.where(inArray(User.id, ids))
 		for (const user of users) {
 			names.set(user.id, user.name?.trim() || user.username)
 		}

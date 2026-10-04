@@ -42,6 +42,7 @@ export function tryAuthenticateMockProvider(
 	providerName: ProviderName,
 	request: Request,
 ): ProviderUser | null {
+	if (process.env.NODE_ENV === 'production') return null
 	if (!isMockOAuthProvider(providerName)) return null
 
 	const url = new URL(request.url)
