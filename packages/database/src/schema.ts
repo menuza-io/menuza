@@ -3139,3 +3139,159 @@ export const OrganizationMenuPosLink = sqliteTable(
 		),
 	],
 )
+
+// --- Menu Drops System ---
+
+export const OrganizationDrop = sqliteTable(
+	'OrganizationDrop',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		title: text().notNull(),
+		slug: text().notNull(),
+		description: text(),
+		coverImageKey: text(),
+		coverImageUrl: text(),
+		status: text().default('draft').notNull(),
+		ordersOpenAt: integer('ordersOpenAt', { mode: 'timestamp_ms' }),
+		ordersCloseAt: integer('ordersCloseAt', { mode: 'timestamp_ms' }),
+		visibility: text().default('public').notNull(),
+		checkoutHoldMinutes: integer().default(5).notNull(),
+		showOrdersOpenTime: integer({ mode: 'boolean' }).default(true).notNull(),
+		showMenuPreview: integer({ mode: 'boolean' }).default(true).notNull(),
+		showInventoryRemaining: integer({ mode: 'boolean' })
+			.default(true)
+			.notNull(),
+		includeGiftCard: integer({ mode: 'boolean' }).default(false).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationDrop_organizationId_idx').on(table.organizationId),
+		index('OrganizationDrop_menuId_idx').on(table.menuId),
+		uniqueIndex('OrganizationDrop_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+	],
+)
+
+export const OrganizationDropPickupWindow = sqliteTable(
+	'OrganizationDropPickupWindow',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		dropId: text()
+			.notNull()
+			.references(() => OrganizationDrop.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		date: text().notNull(),
+		startTime: text().notNull(),
+		endTime: text().notNull(),
+		slotIntervalMinutes: integer().default(30).notNull(),
+		maxOrdersPerSlot: integer(),
+		orderLeadTimeMinutes: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationDropPickupWindow_dropId_idx').on(table.dropId),
+		index('OrganizationDropPickupWindow_locationId_idx').on(table.locationId),
+	],
+)
+
+export const OrganizationDropInventory = sqliteTable(
+	'OrganizationDropInventory',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		dropId: text()
+			.notNull()
+			.references(() => OrganizationDrop.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		entityType: text().notNull(), // 'item' | 'category'
+		entityId: text().notNull(),
+		inventory: integer(),
+		maxPerOrder: integer(),
+		maxPerPickupSlot: integer(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationDropInventory_dropId_idx').on(table.dropId),
+		uniqueIndex('OrganizationDropInventory_drop_entity_key').on(
+			table.dropId,
+			table.entityType,
+			table.entityId,
+		),
+	],
+)
+
+export const OrganizationDropReminder = sqliteTable(
+	'OrganizationDropReminder',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		dropId: text()
+			.notNull()
+			.references(() => OrganizationDrop.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		title: text().notNull(),
+		message: text(),
+		triggerType: text().notNull(), // 'before_open' | 'before_close' | 'custom'
+		scheduledAt: integer('scheduledAt', { mode: 'timestamp_ms' }).notNull(),
+		status: text().default('pending').notNull(),
+		sentAt: integer('sentAt', { mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [index('OrganizationDropReminder_dropId_idx').on(table.dropId)],
+)

@@ -534,3 +534,94 @@ export async function fetchPublishedSiteMenu(options: {
 		!options.preview,
 	)
 }
+
+export type PublicDropData = {
+	organization: {
+		id: string
+		name: string
+		slug: string
+		currency: string
+	}
+	drop: {
+		id: string
+		title: string
+		slug: string
+		description: string | null
+		coverImageKey: string | null
+		coverImageUrl: string | null
+		status: string
+		ordersOpenAt: string | null
+		ordersCloseAt: string | null
+		visibility: 'public' | 'unlisted'
+		checkoutHoldMinutes: number
+		showOrdersOpenTime: boolean
+		showMenuPreview: boolean
+		showInventoryRemaining: boolean
+		includeGiftCard: boolean
+	}
+	pickupWindows: Array<{
+		id: string
+		locationId: string
+		location: {
+			id: string
+			name: string
+			phone: string | null
+			address: any
+			timezone?: string
+		} | null
+		date: string
+		startTime: string
+		endTime: string
+		slotIntervalMinutes: number
+		maxOrdersPerSlot: number | null
+		orderLeadTimeMinutes: number
+		slots: Array<{ time: string; displayTime: string }>
+	}>
+	inventoryOverrides: Array<{
+		id: string
+		entityType: 'item' | 'category'
+		entityId: string
+		inventory: number | null
+		maxPerOrder: number | null
+		maxPerPickupSlot: number | null
+	}>
+	categories: Array<{
+		id: string
+		displayName: string
+		internalName: string | null
+		description: string | null
+		items: Array<{
+			id: string
+			displayName: string
+			internalName: string | null
+			description: string | null
+			price: number
+			imageKey: string | null
+			imageUrl: string | null
+			imageKeys: string[]
+			imageUrls: string[]
+			variations: any
+			modifierGroups: any[]
+		}>
+	}>
+}
+
+export async function fetchPublishedDrop(options: {
+	slug?: string | null
+	host?: string | null
+	dropSlug: string
+	lng?: string | null
+	preview?: boolean
+}): Promise<PublicDropData | null> {
+	const params = new URLSearchParams()
+	if (options.slug) params.set('slug', options.slug)
+	if (options.host) params.set('host', options.host)
+	params.set('drop', options.dropSlug)
+	if (options.lng) params.set('lng', options.lng)
+	if (options.preview) params.set('preview', 'true')
+
+	return fetchAppJson<PublicDropData>(
+		`${getAppUrl()}/resources/sites/drop?${params.toString()}`,
+		!options.preview,
+	)
+}

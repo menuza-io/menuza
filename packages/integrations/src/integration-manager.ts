@@ -29,7 +29,10 @@ import {
 	findScopedIntegration,
 	resolveOrganizationLocationIdForConnect,
 } from './location-integrations.ts'
-import { isLocationScopedIntegration } from './integration-scope.ts'
+import {
+	isLocationScopedIntegration,
+	isReviewProvider,
+} from './integration-scope.ts'
 import {
 	type Integration,
 	type NoteIntegrationConnection,
@@ -235,7 +238,7 @@ export class IntegrationManager {
 		const now = new Date()
 		const metadata = tokenData.metadata ?? {}
 		let preservedConfig: Record<string, unknown> = {}
-		if (providerName === 'google-business-profile' && organizationLocationId) {
+		if (isReviewProvider(providerName) && organizationLocationId) {
 			const [previous] = await db
 				.select({ config: IntegrationTable.config })
 				.from(IntegrationTable)

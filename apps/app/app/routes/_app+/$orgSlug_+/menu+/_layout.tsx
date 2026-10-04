@@ -26,6 +26,14 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/menus/`,
 		},
 		{
+			label: _(t`Drops`),
+			href: `/${orgSlug}/menu/drops`,
+			isActive:
+				location.pathname === `/${orgSlug}/menu/drops` ||
+				location.pathname === `/${orgSlug}/menu/drops/` ||
+				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
+		},
+		{
 			label: _(t`Categories`),
 			href: `/${orgSlug}/menu/categories`,
 			isActive:
@@ -57,7 +65,7 @@ export default function MenuLayout() {
 
 	// Create and Edit views render full-page Shopify-style chrome
 	const isEditOrCreate =
-		/\/menu\/(menus|categories|items|modifiers|options)\/(new|[^/]+)$/.test(
+		/\/menu\/(menus|categories|items|modifiers|options|drops)\/(new|[^/]+)$/.test(
 			location.pathname,
 		)
 
@@ -71,7 +79,7 @@ export default function MenuLayout() {
 				<PageTitle
 					title={_(t`Menu`)}
 					description={_(
-						t`Manage your menus, categories, items, and modifier groups.`,
+						t`Manage your menus, categories, items, drops, and modifier groups.`,
 					)}
 				/>
 			</div>

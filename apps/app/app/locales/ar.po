@@ -81,12 +81,12 @@ msgstr "{0} تصنيفات"
 #~ msgstr "{0} حرف"
 
 #. placeholder {0}: filteredItems.length
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:478
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:488
 msgid "{0} items"
 msgstr "{0} عناصر"
 
 #. placeholder {0}: filteredMenus.length
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:367
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:370
 msgid "{0} menus"
 msgstr "{0} قوائم"
 
@@ -130,7 +130,7 @@ msgstr "{avgPerDay} متوسط يومي"
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 
-#: app/routes/organizations+/create.tsx:1417
+#: app/routes/organizations+/create.tsx:1805
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
@@ -182,7 +182,7 @@ msgstr "منذ {hours} ساعة"
 msgid "{journeyName} (Copy)"
 msgstr "{journeyName} (نسخة)"
 
-#: app/components/app-sidebar.tsx:303
+#: app/components/app-sidebar.tsx:344
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "عدد غير المقروء: {mailboxUnreadLabelCount}"
 
@@ -202,7 +202,7 @@ msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 msgid "{pageCount} pages"
 msgstr "{pageCount} صفحات"
 
-#: app/components/menu/item-form.tsx:376
+#: app/components/menu/item-form.tsx:402
 msgid "{photoCount}/5 photos"
 msgstr "{photoCount}/5 صور"
 
@@ -213,6 +213,10 @@ msgstr "{pointsCount} نقطة"
 #: app/components/settings/cards/organization/s3-storage-card.tsx:355
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsText}"
+
+#: app/components/mailbox/reviews-tab.tsx:487
+msgid "{rating} / 5"
+msgstr "{rating} / 5"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:281
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:172
@@ -247,6 +251,10 @@ msgstr "{runsCount} تشغيل"
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
+#: app/components/mailbox/reviews-tab.tsx:627
+msgid "{selectedRating} / 5 stars"
+msgstr "{selectedRating} / 5 نجوم"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:319
 msgid "{status}"
 msgstr "{status}"
@@ -255,7 +263,7 @@ msgstr "{status}"
 msgid "{stepCount} steps"
 msgstr "{stepCount} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:286
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:290
 msgid "{total} submissions"
 msgstr "عدد الردود: {total}"
 
@@ -275,7 +283,7 @@ msgstr "{triggerCount} من {optionCount}"
 msgid "{unit}"
 msgstr "{unit}"
 
-#: app/routes/organizations+/create.tsx:701
+#: app/routes/organizations+/create.tsx:935
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 
@@ -350,7 +358,15 @@ msgstr "تصنيف واحد"
 msgid "1 form"
 msgstr "نموذج واحد"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:475
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1008
+msgid "1 hour before"
+msgstr "قبل ساعة واحدة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:340
+msgid "1 hour before slot"
+msgstr "قبل ساعة واحدة من الموعد"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:485
 msgid "1 item"
 msgstr "عنصر واحد"
 
@@ -358,7 +374,7 @@ msgstr "عنصر واحد"
 msgid "1 location"
 msgstr "فرع واحد"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:364
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:367
 msgid "1 menu"
 msgstr "قائمة واحدة"
 
@@ -390,13 +406,45 @@ msgstr "1-10 أشخاص"
 msgid "11-50 people"
 msgstr "11-50 شخص"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1002
+msgid "15 minutes before"
+msgstr "قبل 15 دقيقة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:334
+msgid "15 minutes before slot"
+msgstr "قبل 15 دقيقة من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1011
+msgid "2 hours before"
+msgstr "قبل ساعتين"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:343
+msgid "2 hours before slot"
+msgstr "قبل ساعتين من الموعد"
+
 #: app/components/settings/cards/organization/team-size-card.tsx:56
 msgid "201-500 people"
 msgstr "201-500 شخص"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:346
+msgid "24 hours before slot"
+msgstr "قبل 24 ساعة من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1005
+msgid "30 minutes before"
+msgstr "قبل 30 دقيقة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:337
+msgid "30 minutes before slot"
+msgstr "قبل 30 دقيقة من الموعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:999
+msgid "5 minutes before"
+msgstr "قبل 5 دقائق"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:57
 msgid "500+ people"
@@ -422,12 +470,13 @@ msgstr "رابط مُنسَّق كدعوة لاتخاذ إجراء."
 msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
 
-#: app/routes/organizations+/create.tsx:625
-msgid "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
-msgstr "المطعم هو مساحة عملك لإدارة الفروع وقوائم الطعام والطلب عبر الإنترنت والتوصيل."
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:646
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:650
 msgid "A place for every inquiry"
 msgstr "مكان لكل استفسار"
+
+#: app/routes/organizations+/create.tsx:859
+msgid "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
+msgstr "المطعم هو مساحة عملك لإدارة الفروع وقوائم الطعام والطلب عبر الإنترنت والتوصيل."
 
 #: app/utils/website/form-templates.ts:41
 msgid "A short, low-friction form for prospective customers."
@@ -451,11 +500,10 @@ msgstr "قبول"
 msgid "Accept orders and show this location on the website."
 msgstr "استقبال الطلبات وإظهار هذا الفرع على الموقع."
 
-#: app/components/menu/item-form.tsx:380
+#: app/components/menu/item-form.tsx:406
 msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 msgstr "يقبل ملفات JPG وPNG وWebP حتى 5 ميجابايت. تُرفع الملفات مباشرة إلى مكتبة الوسائط."
 
-#: app/components/roles/tenant-role-access-manager.tsx:860
 #: app/components/roles/tenant-role-access-manager.tsx:858
 msgid "Access"
 msgstr "الوصول"
@@ -484,11 +532,11 @@ msgstr "إعدادات الحساب"
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
-#: app/routes/organizations+/create.tsx:759
+#: app/routes/organizations+/create.tsx:993
 msgid "acme"
 msgstr "acme"
 
-#: app/routes/organizations+/create.tsx:724
+#: app/routes/organizations+/create.tsx:958
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
@@ -497,8 +545,9 @@ msgstr "شركة Acme"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:502
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:306
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:253
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:154
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:310
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:256
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:342
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:355
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:588
@@ -515,6 +564,7 @@ msgstr "الإجراءات"
 msgid "active"
 msgstr "نشط"
 
+#: app/components/settings/cards/organization/review-integrations-card.tsx:92
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
@@ -549,7 +599,7 @@ msgstr "إضافة {0}"
 msgid "Add a block to see your email come to life."
 msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 
-#: app/components/menu/item-form.tsx:632
+#: app/components/menu/item-form.tsx:677
 #: app/components/menu/menu-form.tsx:341
 msgid "Add a category"
 msgstr "إضافة تصنيف"
@@ -591,13 +641,17 @@ msgstr "إضافة رابط"
 msgid "Add a menu"
 msgstr "إضافة قائمة"
 
-#: app/components/menu/item-form.tsx:502
+#: app/components/menu/item-form.tsx:547
 msgid "Add a modifier group"
 msgstr "إضافة مجموعة إضافات"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5749
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:677
+msgid "Add a section from your menu categories to start populating items for this drop."
+msgstr "أضف قسمًا من فئات القائمة لبدء ملء العناصر لهذا الطرح."
 
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
@@ -622,7 +676,7 @@ msgid "Add announcement"
 msgstr "إضافة إعلان"
 
 #: app/components/organization-invitations.tsx:303
-#: app/routes/organizations+/create.tsx:1187
+#: app/routes/organizations+/create.tsx:1575
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
@@ -640,7 +694,7 @@ msgstr "إضافة كتلة"
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
-#: app/components/menu/item-form.tsx:631
+#: app/components/menu/item-form.tsx:676
 #: app/components/menu/menu-form.tsx:340
 msgid "Add category"
 msgstr "إضافة تصنيف"
@@ -666,6 +720,10 @@ msgstr "إضافة منطقة توصيل"
 msgid "Add Delivery Zone"
 msgstr "إضافة منطقة توصيل"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:931
+msgid "Add drop reminder"
+msgstr "إضافة تذكير بالطرح"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3714
 msgid "Add feature"
 msgstr "إضافة ميزة"
@@ -676,7 +734,11 @@ msgstr "إضافة ميزة"
 msgid "Add field"
 msgstr "إضافة حقل"
 
-#: app/components/menu/item-form.tsx:501
+#: app/components/menu/drop-wizard/drop-drawers.tsx:839
+msgid "Add gift card to menu"
+msgstr "إضافة بطاقة هدايا إلى القائمة"
+
+#: app/components/menu/item-form.tsx:546
 msgid "Add group"
 msgstr "إضافة مجموعة"
 
@@ -698,12 +760,11 @@ msgstr "إضافة رابط"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:532
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:180
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:193
 msgid "Add Location"
 msgstr "إضافة فرع"
 
-#: app/components/app-sidebar.tsx:536
-#: app/components/app-sidebar.tsx:504
+#: app/components/app-sidebar.tsx:552
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -743,6 +804,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
+#: app/components/menu/item-variations.tsx:283
 #: app/components/menu/modifier-form.tsx:1181
 msgid "Add option"
 msgstr "إضافة خيار"
@@ -761,7 +823,7 @@ msgstr "Add options to this group first."
 #~ msgid "Add organization"
 #~ msgstr "إضافة منظمة"
 
-#: app/components/menu/item-form.tsx:372
+#: app/components/menu/item-form.tsx:398
 msgid "Add Photo"
 msgstr "إضافة صورة"
 
@@ -769,9 +831,19 @@ msgstr "إضافة صورة"
 msgid "Add photo or video"
 msgstr "إضافة صورة أو فيديو"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:206
+#: app/components/menu/drop-wizard/drop-form.tsx:491
+msgid "Add pickup window"
+msgstr "إضافة نافذة استلام"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
 msgid "Add question"
 msgstr "إضافة سؤال"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1038
+#: app/components/menu/drop-wizard/drop-form.tsx:870
+msgid "Add reminder"
+msgstr "إضافة تذكير"
 
 #: app/components/team-switcher.tsx:334
 #: app/routes/_app+/organizations.tsx:217
@@ -787,6 +859,7 @@ msgstr "إضافة مراجعة"
 #~ msgid "Add reviewer"
 #~ msgstr "إضافة مراجع"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:662
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1698
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1704
 msgid "Add section"
@@ -795,6 +868,10 @@ msgstr "إضافة قسم"
 #: app/components/data-table.tsx:544
 #~ msgid "Add Section"
 #~ msgstr "إضافة قسم"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1123
+msgid "Add section to drop"
+msgstr "إضافة قسم إلى الطرح"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4490
 msgid "Add social link"
@@ -824,7 +901,7 @@ msgstr "أضف الخيارات الفردية والأسعار والعلاما
 msgid "Add this configuration to your .kiro/settings/mcp.json:"
 msgstr "أضف هذا التكوين إلى ملف .kiro/settings/mcp.json:"
 
-#: app/components/menu/item-form.tsx:309
+#: app/components/menu/item-form.tsx:335
 msgid "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 msgstr "أضف حتى خمس صور عالية الدقة. تُستخدم الصورة الأولى في بطاقات القائمة. تُحفظ الصور في مكتبة الوسائط الخاصة بمؤسستك."
 
@@ -832,7 +909,7 @@ msgstr "أضف حتى خمس صور عالية الدقة. تُستخدم الص
 msgid "Add URL"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:261
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:265
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "أضف أطباقك ومشروباتك وإبداعاتك لبناء قائمة مطعمك."
 
@@ -840,7 +917,7 @@ msgstr "أضف أطباقك ومشروباتك وإبداعاتك لبناء ق�
 msgid "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 msgstr "أضف أول فرع لمطعمك لضبط ساعات العمل وتوفر القائمة ومناطق التوصيل."
 
-#: app/routes/organizations+/create.tsx:978
+#: app/routes/organizations+/create.tsx:1212
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
@@ -856,11 +933,16 @@ msgstr "تمت إضافة القسم"
 msgid "Adding section"
 msgstr "إضافة قسم"
 
-#: app/routes/organizations+/create.tsx:1436
+#: app/components/menu/drop-wizard/drop-drawers.tsx:752
+#: app/components/menu/drop-wizard/drop-form.tsx:990
+msgid "Additional options"
+msgstr "خيارات إضافية"
+
+#: app/routes/organizations+/create.tsx:1824
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر"
 
-#: app/routes/organizations+/create.tsx:1429
+#: app/routes/organizations+/create.tsx:1817
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر<0>({annualPriceLabel} يُفوتر سنوياً لكل مستخدم)</0>"
 
@@ -909,7 +991,8 @@ msgstr "مساعد الذكاء الاصطناعي"
 #~ msgid "AI Assistant ready to help with this note"
 #~ msgstr "مساعد الذكاء الاصطناعي جاهز للمساعدة في هذه الملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:600
+#: app/components/mailbox/reviews-tab.tsx:742
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:604
 msgid "AI drafting hasn’t been enabled for this mailbox."
 msgstr "لم يتم تفعيل صياغة الردود بالذكاء الاصطناعي لصندوق الوارد هذا."
 
@@ -926,7 +1009,7 @@ msgstr "استهدف جملة أو جملتين تجعلان الزائر ينق
 msgid "Alcohol (21+)"
 msgstr "كحول (21+)"
 
-#: app/components/menu/item-form.tsx:577
+#: app/components/menu/item-form.tsx:622
 #: app/components/menu/option-form.tsx:664
 msgid "Alcoholic"
 msgstr "كحولي"
@@ -939,6 +1022,7 @@ msgstr "كحولي"
 msgid "Alignment"
 msgstr "المحاذاة"
 
+#: app/components/mailbox/reviews-tab.tsx:67
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
 msgid "All"
@@ -952,7 +1036,7 @@ msgstr "الكل"
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
-#: app/routes/organizations+/create.tsx:1441
+#: app/routes/organizations+/create.tsx:1829
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
@@ -986,6 +1070,14 @@ msgstr "جميع المستلمين"
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:808
+msgid "Allow customers to preview menu items before orders open."
+msgstr "السماح للعملاء بمعاينة عناصر القائمة قبل فتح الطلبات."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:842
+msgid "Allow customers to purchase gift cards alongside their drop order."
+msgstr "السماح للعملاء بشراء بطاقات الهدايا إلى جانب طلب الطرح."
+
 #: app/components/locations/location-form.tsx:793
 msgid "Allow customers to schedule orders for future dates."
 msgstr "السماح للعملاء بجدولة الطلبات لتواريخ مستقبلية."
@@ -999,7 +1091,6 @@ msgid "Allow Special Instructions"
 msgstr "السماح بالتعليمات الخاصة"
 
 #: app/components/locations/delivery-zones-manager.tsx:222
-#: app/components/roles/tenant-role-access-manager.tsx:666
 #: app/components/roles/tenant-role-access-manager.tsx:664
 msgid "Allowed"
 msgstr "مسموح"
@@ -1025,8 +1116,7 @@ msgstr "النص البديل"
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:382
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:397
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
@@ -1039,16 +1129,24 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:398
-#: app/components/app-sidebar.tsx:372
+#: app/components/app-sidebar.tsx:413
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
 msgstr "الإعلانات"
 
+#: app/components/mailbox/reviews-tab.tsx:454
+#: app/components/mailbox/reviews-tab.tsx:621
+msgid "Anonymous diner"
+msgstr "زبون مجهول"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3661
 msgid "Answer"
 msgstr "الإجابة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:953
+msgid "Anyone can view and discover this drop on your site."
+msgstr "يمكن لأي شخص عرض هذا الطرح واكتشافه على موقعك."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:553
 msgid "API Key"
@@ -1070,7 +1168,7 @@ msgstr "المظهر"
 msgid "Appears on the public site"
 msgstr "يظهر على الموقع العام"
 
-#: app/components/menu/item-form.tsx:478
+#: app/components/menu/item-form.tsx:513
 #: app/components/menu/option-form.tsx:596
 msgid "Apply Sales Tax"
 msgstr "تطبيق ضريبة المبيعات"
@@ -1108,7 +1206,6 @@ msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد من حذف \"{locToDeleteName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف ساعات العمل ومناطق التوصيل."
 
-#: app/components/roles/tenant-role-access-manager.tsx:917
 #: app/components/roles/tenant-role-access-manager.tsx:915
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ لا يمكن التراجع عن هذا الإجراء."
@@ -1174,7 +1271,11 @@ msgstr "أسنِد التصنيفات إلى هذه القائمة أو أنشئ
 msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
 
-#: app/components/menu/item-form.tsx:625
+#: app/components/menu/drop-wizard/drop-form.tsx:647
+msgid "Assign sections and items to this drop, and set pooled or per-item limits."
+msgstr "عيّن الأقسام والعناصر لهذا الطرح، وحدد حدودًا مجمعة أو لكل عنصر."
+
+#: app/components/menu/item-form.tsx:670
 #: app/components/menu/menu-form.tsx:336
 msgid "Assigned Categories"
 msgstr "التصنيفات المسندة"
@@ -1245,6 +1346,10 @@ msgstr "العملاء المصرح لهم"
 msgid "Auto"
 msgstr "تلقائي"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:856
+msgid "Automated customer notifications to create excitement and urge checkout."
+msgstr "إشعارات تلقائية للعملاء لخلق الحماس وحثهم على الدفع."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:141
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
@@ -1270,8 +1375,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:352
-#: app/components/app-sidebar.tsx:326
+#: app/components/app-sidebar.tsx:367
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1281,10 +1385,21 @@ msgstr "الأتمتة"
 msgid "Autoplay"
 msgstr "التشغيل التلقائي"
 
+#: app/components/menu/item-variations.tsx:304
+#: app/components/menu/item-variations.tsx:489
+msgid "Availability"
+msgstr "التوفر"
+
+#: app/components/menu/item-variations.tsx:495
+msgid "Availability for {name}"
+msgstr "توفر {name}"
+
 #: app/components/menu/menu-availability-card.tsx:238
 msgid "Availability Status"
 msgstr "حالة التوفر"
 
+#: app/components/menu/item-variations.tsx:509
+#: app/components/menu/item-variations.tsx:522
 #: app/components/menu/menu-availability-card.tsx:228
 #: app/components/menu/menu-availability-card.tsx:263
 #: app/components/menu/menu-status-badge.tsx:49
@@ -1310,7 +1425,7 @@ msgstr "أبيض وأسود"
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:261
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:175
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:188
 msgid "Back"
 msgstr "رجوع"
 
@@ -1335,6 +1450,10 @@ msgstr "العودة إلى التفاصيل"
 msgid "Back to fields"
 msgstr "العودة إلى الحقول"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:820
+msgid "Back to Info"
+msgstr "العودة إلى المعلومات"
+
 #: app/components/menu/modifier-form.tsx:1819
 msgid "Back to list"
 msgstr "العودة إلى القائمة"
@@ -1343,6 +1462,10 @@ msgstr "العودة إلى القائمة"
 #: app/routes/_auth+/forgot-password.tsx:245
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1012
+msgid "Back to Menu"
+msgstr "العودة إلى القائمة"
 
 #: app/components/menu/modifier-form.tsx:882
 msgid "Back to modifier groups"
@@ -1355,7 +1478,12 @@ msgstr "العودة إلى العُقد"
 #: app/components/menu/option-form.tsx:300
 msgid "Back to options"
 msgstr "العودة إلى الخيارات"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:445
+
+#: app/components/mailbox/reviews-tab.tsx:566
+msgid "Back to reviews"
+msgstr "العودة إلى التقييمات"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:449
 msgid "Back to submissions"
 msgstr "العودة إلى الردود"
 
@@ -1377,7 +1505,7 @@ msgstr "رموز احتياطية"
 msgid "Base Preparation Time (minutes)"
 msgstr "وقت التحضير الأساسي (دقائق)"
 
-#: app/components/menu/item-form.tsx:455
+#: app/components/menu/item-form.tsx:489
 msgid "Base Price ($)"
 msgstr "السعر الأساسي ($)"
 
@@ -1389,9 +1517,20 @@ msgstr "فرق السعر الأساسي ($)"
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "المعرّفات الأساسية والرابط والإعدادات الإقليمية."
 
+#: app/components/menu/item-variations.tsx:545
 #: app/components/menu/menu-availability-card.tsx:290
 msgid "Becomes available"
 msgstr "يصبح متوفرًا"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:964
+#: app/components/menu/drop-wizard/drop-form.tsx:905
+msgid "Before drop closes"
+msgstr "قبل إغلاق الطرح"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:961
+#: app/components/menu/drop-wizard/drop-form.tsx:903
+msgid "Before drop opens"
+msgstr "قبل فتح الطرح"
 
 #: app/components/settings/cards/organization/billing-card.tsx:96
 msgid "Beta Access"
@@ -1401,8 +1540,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:470
-#: app/components/app-sidebar.tsx:437
+#: app/components/app-sidebar.tsx:485
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -1431,8 +1569,7 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:389
-#: app/components/app-sidebar.tsx:363
+#: app/components/app-sidebar.tsx:404
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1456,8 +1593,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:345
-#: app/components/app-sidebar.tsx:319
+#: app/components/app-sidebar.tsx:360
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -1538,7 +1674,7 @@ msgstr "بإنشاء حساب، فإنك توافق على <0>شروط الخد�
 msgid "By deleting your restaurant you and your team will lose access and all data will be lost. This is a permanent action and cannot be undone."
 msgstr "بحذف مطعمك ستفقد أنت وفريقك الوصول وستُفقد جميع البيانات. هذا إجراء دائم ولا يمكن التراجع عنه."
 
-#: app/components/menu/item-form.tsx:590
+#: app/components/menu/item-form.tsx:635
 #: app/components/menu/option-form.tsx:677
 msgid "Calories (kCal)"
 msgstr "السعرات الحرارية (كيلو كالوري)"
@@ -1561,6 +1697,8 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/locations/location-form.tsx:988
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1035
+#: app/components/menu/drop-wizard/drop-form.tsx:1159
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
 #: app/components/note/comment-input.tsx:261
@@ -1584,8 +1722,9 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:470
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:509
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:398
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:286
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:519
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:401
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:514
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:610
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
@@ -1599,8 +1738,8 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
-#: app/routes/organizations+/create.tsx:821
-#: app/routes/organizations+/create.tsx:957
+#: app/routes/organizations+/create.tsx:1055
+#: app/routes/organizations+/create.tsx:1191
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -1638,11 +1777,11 @@ msgstr "بطاقات"
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
-#: app/components/app-sidebar.tsx:310
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:29
+#: app/components/app-sidebar.tsx:314
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:37
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:225
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:296
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:243
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:300
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:246
 msgid "Categories"
 msgstr "التصنيفات"
 
@@ -1650,7 +1789,7 @@ msgstr "التصنيفات"
 msgid "Categories that belong to this menu."
 msgstr "التصنيفات التي تنتمي إلى هذه القائمة."
 
-#: app/components/menu/item-form.tsx:627
+#: app/components/menu/item-form.tsx:672
 msgid "Categories that display this item on the menu."
 msgstr "التصنيفات التي تعرض هذا العنصر في القائمة."
 
@@ -1727,7 +1866,7 @@ msgstr "القناة"
 msgid "Charge sales tax on this option at checkout."
 msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند الدفع."
 
-#: app/components/menu/item-form.tsx:481
+#: app/components/menu/item-form.tsx:516
 msgid "Charge tax at checkout."
 msgstr "تحصيل الضريبة عند الدفع."
 
@@ -1747,6 +1886,10 @@ msgstr "تحقق من بريدك الإلكتروني"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1502
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:759
+msgid "Checkout countdown timer"
+msgstr "مؤقت العد التنازلي للدفع"
 
 #: app/components/settings/cards/organization/shop-card.tsx:101
 msgid "Checkout payout not connected"
@@ -1785,6 +1928,15 @@ msgstr "اختر ملفاً..."
 msgid "Choose from library"
 msgstr "اختر من المكتبة"
 
+#: app/components/menu/item-variations.tsx:330
+#: app/components/menu/item-variations.tsx:331
+msgid "Choose photo for {name}"
+msgstr "اختر صورة لـ {name}"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:688
+msgid "Choose section"
+msgstr "اختر القسم"
+
 #: app/components/locations/location-form.tsx:843
 msgid "Choose supported delivery channels and estimated transit times."
 msgstr "اختر قنوات التوصيل المدعومة وأوقات التنقل المقدرة."
@@ -1797,7 +1949,7 @@ msgstr "اختر قنوات التوصيل المدعومة وأوقات الت�
 msgid "Choose which languages your public website supports, and which one visitors see by default."
 msgstr "اختر اللغات التي يدعمها موقعك العام، واللغة التي يراها الزوار افتراضياً."
 
-#: app/routes/organizations+/create.tsx:874
+#: app/routes/organizations+/create.tsx:1108
 msgid "Choose your plan"
 msgstr "اختر خطتك"
 
@@ -1818,13 +1970,14 @@ msgstr "إعداد Claude Desktop"
 msgid "Clear"
 msgstr "مسح"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1545
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
 msgid "Clear all 404 history?"
 msgstr "هل تريد مسح كل سجل 404؟"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:571
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:572
+#: app/components/mailbox/reviews-tab.tsx:707
+#: app/components/mailbox/reviews-tab.tsx:708
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:575
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:576
 msgid "Clear draft"
 msgstr "مسح المسودة"
 
@@ -1855,6 +2008,10 @@ msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضم
 #: app/components/locations/delivery-zone-map.tsx:365
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "انقر في أي مكان على الخريطة لإضافة زوايا المضلع"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:524
+msgid "Click here or the + button above to schedule your pickup window."
+msgstr "انقر هنا أو على زر + أعلاه لجدولة نافذة الاستلام."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:84
 msgid "Click rate"
@@ -1890,6 +2047,10 @@ msgstr "مغلق"
 #: app/components/locations/special-hours-picker.tsx:153
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:214
+msgid "Closes:"
+msgstr "يغلق:"
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -1937,6 +2098,14 @@ msgstr "اسم العمود"
 msgid "Columns"
 msgstr "الأعمدة"
 
+#: app/components/menu/item-form.tsx:474
+msgid "Combination prices are set below. Sales tax applies to every combination."
+msgstr "تُحدَّد أسعار التركيبات أدناه. تُطبَّق ضريبة المبيعات على كل تركيبة."
+
+#: app/components/menu/item-variations.tsx:290
+msgid "Combinations"
+msgstr "التركيبات"
+
 #: app/components/note/comment-input.tsx:196
 #: app/routes/_app+/$orgSlug_+/media.tsx:1220
 msgid "Comment"
@@ -1963,7 +2132,7 @@ msgstr "المجتمع"
 msgid "complete"
 msgstr "مكتمل"
 
-#: app/routes/organizations+/create.tsx:1117
+#: app/routes/organizations+/create.tsx:1351
 msgid "Complete Setup"
 msgstr "إكمال الإعداد"
 
@@ -2041,6 +2210,10 @@ msgstr "اضبط المناطق المسموح بها والممنوعة عبر 
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "اضبط قواعد التوصيل والأسعار ومزود الخدمة ومناطق الحدود."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:841
+msgid "Configure drop announcements, visibility, and checkout limits."
+msgstr "تكوين إعلانات الطرح والظهور وحدود الدفع."
+
 #: app/components/menu/modifier-form.tsx:936
 msgid "Configure how guests interact with these options."
 msgstr "اضبط كيفية تفاعل العملاء مع هذه الخيارات."
@@ -2049,7 +2222,7 @@ msgstr "اضبط كيفية تفاعل العملاء مع هذه الخيارا
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "اضبط أوقات العمل الأسبوعية لساعات المطعم والطلب عبر الإنترنت."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:183
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:196
 msgid "Configure your new restaurant location details, operating hours, and delivery settings."
 msgstr "اضبط تفاصيل فرع مطعمك الجديد وساعات العمل وإعدادات التوصيل."
 
@@ -2085,12 +2258,27 @@ msgid "Confirm your password"
 msgstr "أكد كلمة المرور"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:188
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:364
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:387
 msgid "Connect"
 msgstr "اتصال"
+
+#. placeholder {0}: provider.displayName
+#: app/components/settings/cards/organization/review-integrations-card.tsx:187
+msgid "Connect {0}"
+msgstr "ربط {0}"
+
+#: app/routes/organizations+/create.tsx:1455
+msgid "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
+msgstr "اربط نظام نقاط البيع أو منصة توصيل للحفاظ على تحديث قائمتك. يمكنك القيام بذلك لاحقًا من الإعدادات."
 
 #: app/components/settings/cards/organization/site-card.tsx:450
 msgid "Connect domain"
 msgstr "ربط نطاق"
+
+#: app/components/mailbox/reviews-tab.tsx:429
+msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, or OpenTable in Settings to view and reply to customer reviews here."
+msgstr "قم بربط Google أو Yelp أو TripAdvisor أو Deliveroo أو Just Eat أو OpenTable في الإعدادات لعرض تقييمات العملاء والرد عليها هنا."
 
 #: app/components/settings/cards/organization/shop-card.tsx:130
 msgid "Connect payout account"
@@ -2111,6 +2299,23 @@ msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {orga
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:752
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك للوصول إلى بيانات منظمتك بشكل آمن. اتبع التعليمات لعميلك المفضل أدناه."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:93
+msgid "Connect your point of sale and delivery platforms to sync your menu."
+msgstr "اربط أنظمة نقاط البيع ومنصات التوصيل لمزامنة قائمتك."
+
+#: app/routes/organizations+/create.tsx:1452
+msgid "Connect your POS"
+msgstr "اربط نظام نقاط البيع"
+
+#: app/components/settings/cards/organization/review-integrations-card.tsx:50
+msgid "Connect your restaurant pages across review and ordering platforms to monitor diner feedback and reply to reviews directly from Menuza."
+msgstr "اربط صفحات مطعمك عبر منصات التقييم والطلب لمتابعة آراء الزبائن والرد على التقييمات مباشرة من Menuza."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:179
+#: app/components/settings/cards/organization/review-integrations-card.tsx:79
+msgid "Connected"
+msgstr "متصل"
 
 #: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
@@ -2144,7 +2349,7 @@ msgstr "اتصل"
 msgid "Contact form"
 msgstr "نموذج اتصال"
 
-#: app/routes/organizations+/create.tsx:1379
+#: app/routes/organizations+/create.tsx:1767
 msgid "Contact support"
 msgstr "اتصل بالدعم"
 
@@ -2170,7 +2375,7 @@ msgid "Content editor"
 msgstr "محرر المحتوى"
 
 #: app/routes/_auth+/login.tsx:680
-#: app/routes/organizations+/create.tsx:826
+#: app/routes/organizations+/create.tsx:1060
 msgid "Continue"
 msgstr "متابعة"
 
@@ -2182,9 +2387,17 @@ msgstr "متابعة إعداد المدفوعات"
 #~ msgid "Continue Stripe setup"
 #~ msgstr "متابعة إعداد Stripe"
 
-#: app/routes/organizations+/create.tsx:961
+#: app/components/menu/drop-wizard/drop-form.tsx:632
+msgid "Continue to Menu"
+msgstr "المتابعة إلى القائمة"
+
+#: app/routes/organizations+/create.tsx:1195
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:827
+msgid "Continue to Schedule"
+msgstr "المتابعة إلى الجدول"
 
 #: app/routes/_auth+/login.tsx:592
 msgid "Continue with"
@@ -2199,13 +2412,17 @@ msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/components/menu/location-overrides-card.tsx:91
+#: app/components/menu/location-overrides-card.tsx:90
 msgid "Control availability and custom pricing per location."
 msgstr "تحكم في التوفر والأسعار المخصصة لكل فرع."
 
 #: app/components/menu/menu-availability-card.tsx:241
 msgid "Control overall ordering availability for guests."
 msgstr "تحكم في توفر الطلبات بشكل عام للعملاء."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:580
+msgid "Control when customers can view and place orders for this drop."
+msgstr "التحكم في وقت تمكن العملاء من عرض وتقديم الطلبات لهذا الطرح."
 
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
@@ -2270,11 +2487,20 @@ msgstr "نسخ الرابط"
 msgid "Corners"
 msgstr "الزوايا"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:229
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:233
 msgid "Could not create a draft. Try again."
 msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:172
+#: app/components/mailbox/reviews-tab.tsx:266
+msgid "Could not create a reply suggestion. Try again."
+msgstr "تعذر إنشاء اقتراح رد. حاول مجدداً."
+
+#: app/components/mailbox/reviews-tab.tsx:301
+#: app/components/mailbox/reviews-tab.tsx:325
+msgid "Could not post your reply."
+msgstr "تعذر نشر ردك."
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:176
 msgid "Could not update read status. Try again."
 msgstr "تعذّر تحديث حالة القراءة. حاول مرة أخرى."
 
@@ -2299,7 +2525,6 @@ msgstr "إنشاء"
 msgid "Create a category to start organizing menu items."
 msgstr "أنشئ تصنيفًا لتنظيم عناصر القائمة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:754
 #: app/components/roles/tenant-role-access-manager.tsx:752
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
@@ -2308,9 +2533,13 @@ msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة 
 #~ msgid "Create a form"
 #~ msgstr "إنشاء نموذج"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:227
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:230
 msgid "Create a menu to start organizing your dishes and drinks."
 msgstr "أنشئ قائمة لتنظيم أطباقك ومشروباتك."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:258
+msgid "Create a menu to sync it to this platform."
+msgstr "أنشئ قائمة لمزامنتها مع هذه المنصة."
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:316
 msgid "Create a modifier group to start offering custom choices."
@@ -2328,7 +2557,7 @@ msgstr "أنشئ خيارًا جديدًا لمجموعة الإضافات هذ�
 #~ msgid "Create a new organization"
 #~ msgstr "إنشاء منظمة جديدة"
 
-#: app/routes/organizations+/create.tsx:620
+#: app/routes/organizations+/create.tsx:854
 msgid "Create a new restaurant"
 msgstr "إنشاء مطعم جديد"
 
@@ -2362,7 +2591,7 @@ msgstr "إنشاء عناصر العمل"
 msgid "Create an account"
 msgstr "إنشاء حساب"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:280
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:284
 msgid "Create an item to start building your menu."
 msgstr "أنشئ عنصرًا لبدء بناء قائمتك."
 
@@ -2382,11 +2611,11 @@ msgstr "إنشاء وإدارة مفاتيح API لمصادقة عملاء MCP"
 msgid "Create and manage pages for your organization's website."
 msgstr "إنشاء وإدارة صفحات موقع مؤسستك."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:242
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:246
 msgid "Create and manage your dishes, beverages, sides, and retail products."
 msgstr "أنشئ وأدر أطباقك ومشروباتك وأطباقك الجانبية ومنتجاتك."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:189
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:192
 msgid "Create and manage your menus for dine-in, online ordering, POS, and catering."
 msgstr "أنشئ وأدر قوائمك لتناول الطعام في المطعم والطلب عبر الإنترنت ونقاط البيع والتموين."
 
@@ -2437,13 +2666,17 @@ msgstr "أنشئ خيارات وإضافات وعجائن ودرجات حرار�
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:123
+msgid "Create drop"
+msgstr "إنشاء طرح"
+
 #: app/components/website/create-form-dialog.tsx:75
 #: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "إنشاء النموذج"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:252
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:256
 msgid "Create Item"
 msgstr "إنشاء عنصر"
 
@@ -2455,7 +2688,7 @@ msgstr "إنشاء رابط"
 msgid "Create Location"
 msgstr "إنشاء فرع"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:199
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:202
 msgid "Create Menu"
 msgstr "إنشاء قائمة"
 
@@ -2501,6 +2734,10 @@ msgstr "إنشاء خيار"
 msgid "Create Password"
 msgstr "إنشاء كلمة المرور"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:113
+msgid "Create pickup window"
+msgstr "إنشاء نافذة استلام"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Create redirect"
@@ -2522,6 +2759,10 @@ msgstr "أنشئ مفتاح API الأول للبدء"
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:257
 msgid "Create your first broadcast"
 msgstr "أنشئ أول بث لك"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:132
+msgid "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
+msgstr "أنشئ أول طرح محدود الوقت للبيع سريعًا وبناء الترقب وإدارة نوافذ الاستلام."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:336
 msgid "Create your first marketing automation."
@@ -2670,14 +2911,22 @@ msgstr "نموذج مخصص"
 msgid "Custom Hours"
 msgstr "ساعات مخصصة"
 
-#: app/components/menu/item-form.tsx:496
+#: app/components/menu/item-form.tsx:541
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "خيارات وإضافات وأطباق جانبية مخصصة تُقدَّم مع هذا العنصر."
 
-#: app/components/roles/tenant-role-access-manager.tsx:728
 #: app/components/roles/tenant-role-access-manager.tsx:726
 msgid "Custom Roles"
 msgstr "الأدوار المخصصة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:967
+#: app/components/menu/drop-wizard/drop-drawers.tsx:976
+msgid "Custom scheduled time"
+msgstr "وقت مجدول مخصص"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:906
+msgid "Custom timing"
+msgstr "توقيت مخصص"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
 msgid "Custom trigger event"
@@ -2708,6 +2957,10 @@ msgstr "منطقة بيانات العملاء"
 msgid "Customer ID"
 msgstr "معرّف العميل"
 
+#: app/components/mailbox/reviews-tab.tsx:337
+msgid "Customer reviews"
+msgstr "تقييمات العملاء"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:16
 #~ msgid "Customer Signup"
 #~ msgstr "تسجيل العميل"
@@ -2724,10 +2977,17 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:286
-#: app/components/app-sidebar.tsx:289
+#: app/components/app-sidebar.tsx:290
 msgid "Customers"
 msgstr "العملاء"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:196
+msgid "Customers choose their pickup time in intervals of this duration."
+msgstr "يختار العملاء وقت استلامهم بفترات من هذه المدة."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:777
+msgid "Customers have this much time to finish checkout before their items are released back to inventory."
+msgstr "لدى العملاء هذا الوقت لإتمام الدفع قبل إعادة عناصرهم إلى المخزون."
 
 #: app/components/settings/cards/organization/shop-card.tsx:295
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
@@ -2763,10 +3023,8 @@ msgstr "داكن"
 msgid "Dark mode"
 msgstr "الوضع الداكن"
 
-#: app/components/app-sidebar.tsx:125
-#: app/components/app-sidebar.tsx:262
-#: app/components/app-sidebar.tsx:126
-#: app/components/app-sidebar.tsx:265
+#: app/components/app-sidebar.tsx:127
+#: app/components/app-sidebar.tsx:266
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -2847,10 +3105,12 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:423
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:482
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:462
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:521
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:351
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:410
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:255
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:300
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:472
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:531
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:354
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:413
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:466
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:529
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
@@ -2910,6 +3170,10 @@ msgstr "حذف بيانات العملاء وتبديل المنطقة؟"
 msgid "Delete data and switch"
 msgstr "حذف البيانات والتبديل"
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:275
+msgid "Delete drop?"
+msgstr "حذف الطرح؟"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3715
 msgid "Delete feature"
 msgstr "حذف الميزة"
@@ -2922,7 +3186,7 @@ msgstr "حذف الدعوة"
 msgid "Delete item"
 msgstr "حذف العنصر"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:498
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:508
 msgid "Delete item?"
 msgstr "حذف العنصر؟"
 
@@ -2942,7 +3206,7 @@ msgstr "حذف إدخال السجل"
 msgid "Delete Menu Option?"
 msgstr "حذف خيار القائمة؟"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:387
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:390
 msgid "Delete menu?"
 msgstr "حذف القائمة؟"
 
@@ -3018,7 +3282,12 @@ msgstr "حذف ملاحظات الفريق"
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
+#: app/components/mailbox/reviews-tab.tsx:75
+msgid "Deliveroo"
+msgstr "Deliveroo"
+
 #: app/components/locations/location-form.tsx:674
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:208
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:641
 msgid "Delivery"
 msgstr "التوصيل"
@@ -3074,12 +3343,12 @@ msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
-#: app/routes/organizations+/create.tsx:798
+#: app/routes/organizations+/create.tsx:1032
 msgid "Description"
 msgstr "الوصف"
 
 #: app/components/menu/category-form.tsx:389
-#: app/components/menu/item-form.tsx:428
+#: app/components/menu/item-form.tsx:454
 #: app/components/menu/option-form.tsx:433
 msgid "Description (Guest-Facing)"
 msgstr "الوصف (الظاهر للعميل)"
@@ -3116,7 +3385,6 @@ msgstr "التفاصيل"
 msgid "Details & Address"
 msgstr "التفاصيل والعنوان"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:312
 msgid "Detected"
 msgstr "مُكتشَف"
@@ -3131,7 +3399,7 @@ msgstr "جهاز"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:299
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:303
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:346
 msgid "Dietary & Allergens"
 msgstr "النظام الغذائي ومسببات الحساسية"
@@ -3141,7 +3409,7 @@ msgstr "النظام الغذائي ومسببات الحساسية"
 msgid "Dietary Tags"
 msgstr "العلامات الغذائية"
 
-#: app/components/menu/item-form.tsx:529
+#: app/components/menu/item-form.tsx:574
 #: app/components/menu/option-form.tsx:616
 msgid "Dietary, Allergens & Calories"
 msgstr "النظام الغذائي ومسببات الحساسية والسعرات"
@@ -3192,6 +3460,8 @@ msgid "Disclose any allergens present to inform guest dietary and safety filters
 msgstr "اذكر مسببات الحساسية الموجودة لتفعيل فلاتر النظام الغذائي والسلامة للعملاء."
 
 #: app/components/settings/cards/organization/integrations-card.tsx:166
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:320
+#: app/components/settings/cards/organization/review-integrations-card.tsx:163
 #: app/components/settings/connections.tsx:89
 msgid "Disconnect"
 msgstr "قطع الاتصال"
@@ -3200,7 +3470,7 @@ msgstr "قطع الاتصال"
 msgid "Disconnect any active MCP connections"
 msgstr "قطع أي اتصالات MCP نشطة"
 
-#: app/components/menu/item-form.tsx:396
+#: app/components/menu/item-form.tsx:422
 msgid "Dish or drink title, description, and internal SKU/code."
 msgstr "اسم الطبق أو المشروب ووصفه ورمزه الداخلي."
 
@@ -3225,7 +3495,11 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 msgid "Display"
 msgstr "العرض"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:305
+#: app/components/menu/drop-wizard/drop-drawers.tsx:825
+msgid "Display remaining badges (e.g. \"Only 3 left\") on item cards."
+msgstr "عرض شارات التوفر المتبقي (مثل \"متبقي 3 فقط\") على بطاقات العناصر."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:308
 msgid "Displayed"
 msgstr "معروض"
 
@@ -3247,6 +3521,8 @@ msgstr "ليس لديك حساب؟"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
+#: app/components/menu/drop-wizard/drop-drawers.tsx:360
+#: app/components/menu/drop-wizard/drop-drawers.tsx:858
 #: app/components/settings/backup-codes-display.tsx:108
 msgid "Done"
 msgstr "تم"
@@ -3254,6 +3530,10 @@ msgstr "تم"
 #: app/components/locations/location-form.tsx:904
 msgid "DoorDash Drive"
 msgstr "دوورداش درايف"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:339
+msgid "DoorDash store ID"
+msgstr "معرّف متجر DoorDash"
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1764
@@ -3303,16 +3583,19 @@ msgstr "مسودة وإنشاء ملاحظات جديدة في المنظمة."
 msgid "Draft something for me"
 msgstr "اكتب مسودة لي"
 
-#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:321
-msgid "Drag and reorder your menu categories and items exactly as they appear to guests."
-msgstr "اسحب وأعد ترتيب تصنيفات وعناصر القائمة تمامًا كما تظهر للعملاء."
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:563
+#: app/components/mailbox/reviews-tab.tsx:700
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:567
 msgid "Draft with AI"
 msgstr "صياغة بالذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:561
+#: app/components/mailbox/reviews-tab.tsx:698
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:565
 msgid "Drafting…"
 msgstr "جارٍ إعداد المسودة…"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:321
+msgid "Drag and reorder your menu categories and items exactly as they appear to guests."
+msgstr "اسحب وأعد ترتيب تصنيفات وعناصر القائمة تمامًا كما تظهر للعملاء."
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 #: app/components/website/form-builder-sidebar.tsx:335
@@ -3330,6 +3613,31 @@ msgstr "رسم منطقة التوصيل على الخريطة"
 #: app/components/locations/delivery-zones-manager.tsx:395
 msgid "Draw Polygon"
 msgstr "رسم مضلع"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:142
+msgid "Drop"
+msgstr "طرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:456
+msgid "Drop description"
+msgstr "وصف الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:853
+msgid "Drop reminders"
+msgstr "تذكيرات الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:442
+msgid "Drop title"
+msgstr "عنوان الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:932
+msgid "Drop visibility"
+msgstr "ظهور الطرح"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:29
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:111
+msgid "Drops"
+msgstr "الطروحات"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:449
 msgid "Duplicate"
@@ -3413,14 +3721,13 @@ msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr "مثل: Claude Desktop، Kiro IDE"
 
 #: app/components/favorite-notes.tsx:116
-#: app/components/note/comment-item.tsx:234
-#: app/components/roles/tenant-role-access-manager.tsx:812
-#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:453
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:342
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
 #: app/components/note/comment-item.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:810
+#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:236
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:463
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:345
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
@@ -3580,7 +3887,6 @@ msgstr "تمكين الدفع المستضاف"
 msgid "Enable or disable available fulfillment channels for this location."
 msgstr "فعّل أو عطّل قنوات التنفيذ المتاحة لهذا الفرع."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1405
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
 msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
@@ -3588,6 +3894,14 @@ msgstr "تفعيل إعادة التوجيه فوراً"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:373
 msgid "Enabled"
 msgstr "مفعّل"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:165
+msgid "End Time"
+msgstr "وقت الانتهاء"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:89
+msgid "End time must be after start time"
+msgstr "يجب أن يكون وقت الانتهاء بعد وقت البدء"
 
 #: app/components/nav-user.tsx:101
 msgid "English"
@@ -3610,7 +3924,7 @@ msgid "Enter backup code"
 msgstr "أدخل الرمز الاحتياطي"
 
 #: app/components/organization-invitations.tsx:442
-#: app/routes/organizations+/create.tsx:1228
+#: app/routes/organizations+/create.tsx:1616
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
 
@@ -3692,6 +4006,10 @@ msgstr "سير عمل قائم على الأحداث"
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
+#: app/components/mailbox/reviews-tab.tsx:778
+msgid "Every review, in one place"
+msgstr "جميع التقييمات في مكان واحد"
+
 #: app/components/menu/assigned-sortable-list.tsx:266
 msgid "Everything available is already assigned."
 msgstr "كل المتاح مُسند بالفعل."
@@ -3704,7 +4022,7 @@ msgstr "يساوي تماماً"
 msgid "Example Request"
 msgstr "مثال على الطلب"
 
-#: app/components/menu/item-form.tsx:723
+#: app/components/menu/item-form.tsx:768
 msgid "Exclude from Throttling"
 msgstr "استثناء من تنظيم الطلبات"
 
@@ -3724,7 +4042,7 @@ msgstr "سجل التنفيذ ({runCount})"
 msgid "Execution Runs"
 msgstr "عمليات التنفيذ"
 
-#: app/components/menu/item-form.tsx:726
+#: app/components/menu/item-form.tsx:771
 msgid "Exempt from kitchen prep delay calculations."
 msgstr "معفى من احتساب تأخير تحضير المطبخ."
 
@@ -3907,7 +4225,7 @@ msgstr "المفضلة"
 msgid "Feature Preview"
 msgstr "معاينة الميزة"
 
-#: app/components/menu/item-form.tsx:676
+#: app/components/menu/item-form.tsx:721
 msgid "Feature this item prominently in ordering flows."
 msgstr "أبرز هذا العنصر في مسارات الطلب."
 
@@ -3959,6 +4277,10 @@ msgstr "البحث عن الصور وإعادة استخدامها عبر الم
 msgid "Find potential issues"
 msgstr "العثور على المشكلات المحتملة"
 
+#: app/routes/organizations+/create.tsx:1497
+msgid "Finish onboarding"
+msgstr "إنهاء الإعداد"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:250
 msgid "Fit canvas view"
 msgstr "ملاءمة عرض اللوحة"
@@ -3974,6 +4296,10 @@ msgstr "قلب أفقيًا"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1731
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
+
+#: app/components/menu/item-variations.tsx:153
+msgid "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
+msgstr "مثلًا، أضف الحجم بقيمتي صغير ومتوسط، ثم اللون بقيمتي أسود وأزرق. تظهر التركيبات تلقائيًا."
 
 #: app/routes/_auth+/forgot-password.tsx:181
 msgid "Forgot Password"
@@ -4000,7 +4326,7 @@ msgstr "اسم النموذج"
 msgid "Form settings"
 msgstr "إعدادات النموذج"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:270
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:274
 msgid "Form submissions"
 msgstr "ردود النماذج"
 
@@ -4013,9 +4339,8 @@ msgstr "ردود النماذج"
 msgid "Format:"
 msgstr "التنسيق:"
 
-#: app/components/app-sidebar.tsx:377
-#: app/components/app-sidebar.tsx:351
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:42
+#: app/components/app-sidebar.tsx:392
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:44
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -4038,6 +4363,14 @@ msgstr "مجاني"
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:408
 msgid "Free ($0.00)"
 msgstr "مجاني ($0.00)"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:368
+msgid "From"
+msgstr "ابتداءً من"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:346
+msgid "From DoorDash Portal or onboarding"
+msgstr "من بوابة DoorDash أو أثناء الإعداد"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
@@ -4068,16 +4401,11 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:420
+#: app/components/app-sidebar.tsx:435
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:367
-#: app/components/app-sidebar.tsx:394
-msgid "General"
-msgstr "عام"
-
-#: app/components/app-sidebar.tsx:341
+#: app/components/app-sidebar.tsx:382
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -4109,26 +4437,16 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:528
+#: app/components/app-sidebar.tsx:544
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:154
-#: app/components/app-sidebar.tsx:543
+#: app/components/app-sidebar.tsx:156
+#: app/components/app-sidebar.tsx:559
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:97
-#: app/components/app-sidebar.tsx:496
-msgid "Get chrome extension"
-msgstr "احصل على إضافة كروم"
-
-#: app/components/app-sidebar.tsx:155
-#: app/components/app-sidebar.tsx:511
-msgid "Get help"
-msgstr "احصل على المساعدة"
-
-#: app/components/app-sidebar.tsx:98
+#: app/components/app-sidebar.tsx:99
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr "تواصل معنا"
@@ -4139,7 +4457,7 @@ msgstr "تواصل معنا"
 msgid "Get Started"
 msgstr "ابدأ"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:208
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:211
 msgid "Get started by creating your first menu to categorize dishes and drinks."
 msgstr "ابدأ بإنشاء أول قائمة لتصنيف الأطباق والمشروبات."
 
@@ -4147,10 +4465,8 @@ msgstr "ابدأ بإنشاء أول قائمة لتصنيف الأطباق وا
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
-#: app/components/app-sidebar.tsx:162
-#: app/components/app-sidebar.tsx:551
-#: app/components/app-sidebar.tsx:163
-#: app/components/app-sidebar.tsx:519
+#: app/components/app-sidebar.tsx:164
+#: app/components/app-sidebar.tsx:567
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -4163,7 +4479,7 @@ msgstr "أعطني أمثلة"
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 
-#: app/components/menu/item-form.tsx:545
+#: app/components/menu/item-form.tsx:590
 #: app/components/menu/modifier-form.tsx:1697
 #: app/components/menu/modifier-form.tsx:2052
 #: app/components/menu/option-form.tsx:632
@@ -4174,10 +4490,13 @@ msgstr "خالٍ من الغلوتين"
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/components/app-sidebar.tsx:218
-#: app/components/app-sidebar.tsx:219
+#: app/components/app-sidebar.tsx:220
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
+
+#: app/components/mailbox/reviews-tab.tsx:70
+msgid "Google"
+msgstr "Google"
 
 #: app/components/settings/cards/organization/site-analytics-card.tsx:63
 #~ msgid "Google Analytics"
@@ -4216,7 +4535,7 @@ msgstr "اسم المجموعة (الظاهر للعميل)"
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
-#: app/components/menu/item-form.tsx:532
+#: app/components/menu/item-form.tsx:577
 #: app/components/menu/option-form.tsx:619
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "العلامات الغذائية للعميل ومعلومات الإفصاح عن مسببات الحساسية."
@@ -4341,7 +4660,7 @@ msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:309
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
 msgid "Hidden"
 msgstr "مخفي"
 
@@ -4418,6 +4737,10 @@ msgstr "كيف يمكنني مساعدتك؟"
 msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:351
+msgid "How far in advance customers must order before a pickup slot."
+msgstr "كم يجب على العملاء الطلب مسبقًا قبل فترة الاستلام."
+
 #: app/routes/_auth+/onboarding_.$provider.tsx:348
 #: app/routes/_auth+/onboarding.tsx:506
 msgid "I agree to the Terms of Service and Privacy Policy"
@@ -4489,6 +4812,10 @@ msgstr "إبطال جميع الرموز المميزة لهذا العميل ف
 msgid "Impersonating <0>{targetName}</0>"
 msgstr "انتحال شخصية <0>{targetName}</0>"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:246
+msgid "Import menu"
+msgstr "استيراد القائمة"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:895
 msgid "Important Notes"
 msgstr "ملاحظات مهمة"
@@ -4529,7 +4856,7 @@ msgstr "غير نشط"
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 
-#: app/routes/organizations+/create.tsx:1424
+#: app/routes/organizations+/create.tsx:1812
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
@@ -4562,9 +4889,9 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:446
-#: app/components/app-sidebar.tsx:413
+#: app/components/app-sidebar.tsx:461
 #: app/components/settings/cards/organization/integrations-card.tsx:58
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:90
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
 msgstr "التكاملات"
@@ -4577,7 +4904,7 @@ msgstr "التكاملات"
 msgid "Internal Reference (Optional)"
 msgstr "المرجع الداخلي (اختياري)"
 
-#: app/components/menu/item-form.tsx:416
+#: app/components/menu/item-form.tsx:442
 #: app/components/menu/option-form.tsx:421
 msgid "Internal Reference / SKU (Optional)"
 msgstr "المرجع الداخلي / رمز المنتج (اختياري)"
@@ -4594,6 +4921,18 @@ msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
 #: app/routes/_auth+/verify.tsx:101
 msgid "Invalid Verification Type"
 msgstr "نوع التحقق غير صالح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:709
+msgid "inventory (pooled)"
+msgstr "المخزون (مجمّع)"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:450
+msgid "Inventory limit"
+msgstr "حد المخزون"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:822
+msgid "Inventory remaining on storefront"
+msgstr "المخزون المتبقي في المتجر"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4833
 msgid "Inverted"
@@ -4616,7 +4955,7 @@ msgstr "دعوة أعضاء"
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
-#: app/routes/organizations+/create.tsx:975
+#: app/routes/organizations+/create.tsx:1209
 msgid "Invite team members"
 msgstr "دعوة أعضاء الفريق"
 
@@ -4644,36 +4983,40 @@ msgstr "عنوان IP"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:290
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:294
 msgid "Item"
 msgstr "العنصر"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:437
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:447
 msgid "Item actions"
 msgstr "إجراءات العنصر"
 
-#: app/components/menu/item-form.tsx:393
+#: app/components/menu/item-form.tsx:419
 msgid "Item Information"
 msgstr "معلومات العنصر"
 
-#: app/components/menu/item-form.tsx:404
+#: app/components/menu/item-form.tsx:430
 msgid "Item Name (Guest-Facing)"
 msgstr "اسم العنصر (الظاهر للعميل)"
 
-#: app/components/menu/item-form.tsx:306
+#: app/components/menu/item-form.tsx:332
 msgid "Item Photos"
 msgstr "صور العنصر"
 
-#: app/components/app-sidebar.tsx:315
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
+#: app/components/app-sidebar.tsx:319
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:44
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:283
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:244
 msgid "Items"
 msgstr "العناصر"
 
 #: app/components/menu/category-form.tsx:536
 msgid "Items in this category will not add preparation delay to orders."
 msgstr "لن تضيف عناصر هذا التصنيف تأخيرًا في التحضير للطلبات."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:633
+msgid "Items in this section share a total pooled inventory limit."
+msgstr "تشترك العناصر في هذا القسم في إجمالي حد المخزون المجمّع."
 
 #: app/components/menu/modifier-form.tsx:1419
 msgid "Items that offer this modifier group."
@@ -4714,6 +5057,14 @@ msgstr "معرّف الرحلة مطلوب"
 #: app/routes/_app+/organizations.tsx:194
 msgid "Jump into an existing restaurant, accept pending invitations, or add a new one."
 msgstr "انتقل إلى مطعم حالي، أو اقبل الدعوات المعلّقة، أو أضف مطعمًا جديدًا."
+
+#: app/components/mailbox/reviews-tab.tsx:76
+msgid "Just Eat"
+msgstr "Just Eat"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:69
+msgid "Just now"
+msgstr "الآن"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:334
 msgid "Kanban"
@@ -4845,7 +5196,8 @@ msgstr "اتركه فارغاً للاحتفاظ بالمفتاح السري ا�
 msgid "Leave empty to keep this page at the root of your site."
 msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر موقعك."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:80
+#: app/components/mailbox/reviews-tab.tsx:150
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:84
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "هل تريد مغادرة صندوق الوارد وتجاهل مسودات الردود؟"
 
@@ -4892,6 +5244,14 @@ msgstr "الوضع الفاتح"
 #~ msgid "Limit"
 #~ msgstr "الحد الأقصى"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:280
+msgid "Limit orders per pickup time"
+msgstr "تحديد الطلبات لكل وقت استلام"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:491
+msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
+msgstr "يساعد تحديد عدد العناصر التي تبيعها على خلق حالة إلحاح وحماس لدى العملاء لطرحك القادم."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
 #: app/components/website/link-inspector.tsx:642
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:619
@@ -4919,6 +5279,7 @@ msgstr "تسمية الرابط"
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:201
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:610
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
 msgid "Live"
@@ -4948,14 +5309,19 @@ msgstr "جارٍ تحميل الوسائط…"
 msgid "Loading notes..."
 msgstr "جاري تحميل الملاحظات..."
 
+#: app/components/mailbox/reviews-tab.tsx:394
+msgid "Loading reviews"
+msgstr "جارٍ تحميل التقييمات"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:306
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:310
 msgid "Loading submissions"
 msgstr "جارٍ تحميل الردود"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:120
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
 msgid "Location"
@@ -4973,7 +5339,7 @@ msgstr "تفاصيل الفرع"
 msgid "Location Name"
 msgstr "اسم الفرع"
 
-#: app/components/menu/location-overrides-card.tsx:88
+#: app/components/menu/location-overrides-card.tsx:87
 msgid "Location Overrides"
 msgstr "تجاوزات الفرع"
 
@@ -4981,7 +5347,7 @@ msgstr "تجاوزات الفرع"
 msgid "Location Status"
 msgstr "حالة الفرع"
 
-#: app/components/app-sidebar.tsx:425
+#: app/components/app-sidebar.tsx:440
 #: app/components/team-switcher.tsx:183
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:519
 msgid "Locations"
@@ -5001,7 +5367,7 @@ msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
 #: app/components/website/branding-panel.tsx:262
-#: app/routes/organizations+/create.tsx:648
+#: app/routes/organizations+/create.tsx:882
 msgid "Logo"
 msgstr "الشعار"
 
@@ -5038,11 +5404,11 @@ msgstr "متباعد"
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/components/app-sidebar.tsx:295
+#: app/components/app-sidebar.tsx:336
 msgid "Mailbox"
 msgstr "صندوق الوارد"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:255
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:259
 msgid "Mailbox sources"
 msgstr "مصادر صندوق الوارد"
 
@@ -5081,6 +5447,10 @@ msgstr "إدارة الأتمتة"
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
 msgstr "إدارة البثّات"
+
+#: app/components/mailbox/reviews-tab.tsx:445
+msgid "Manage integrations"
+msgstr "إدارة عمليات الربط"
 
 #: app/components/team-switcher.tsx:257
 msgid "Manage locations"
@@ -5125,8 +5495,12 @@ msgid "Manage your connected accounts here."
 msgstr "إدارة حساباتك المتصلة هنا."
 
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:74
-msgid "Manage your menus, categories, items, and modifier groups."
-msgstr "أدر قوائمك وتصنيفاتك وعناصرك ومجموعات الإضافات."
+#~ msgid "Manage your menus, categories, items, and modifier groups."
+#~ msgstr "أدر قوائمك وتصنيفاتك وعناصرك ومجموعات الإضافات."
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:82
+msgid "Manage your menus, categories, items, drops, and modifier groups."
+msgstr "إدارة القوائم والفئات والعناصر والطروحات ومجموعات المعدلات."
 
 #: app/components/settings/cards/notification-preferences-card.tsx:210
 msgid "Manage your notification settings for different channels and workflows."
@@ -5206,24 +5580,57 @@ msgstr "تحديد كمقروء"
 msgid "Mark Inactive"
 msgstr "تعيين كغير نشط"
 
-#: app/components/app-sidebar.tsx:332
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:463
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:467
 msgid "Mark read"
 msgstr "تحديد كمقروء"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:461
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:465
 msgid "Mark unread"
 msgstr "تحديد كغير مقروء"
 
-#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:347
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
 msgstr "التسويق"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:838
+msgid "Marketing and scheduling"
+msgstr "التسويق والجدولة"
+
 #: app/components/roles/tenant-role-access-manager.tsx:221
 msgid "Marketing manager"
 msgstr "مدير التسويق"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:673
+msgid "Max items from this section a customer can purchase in one order."
+msgstr "الحد الأقصى للعناصر من هذا القسم التي يمكن للعميل شراؤها في طلب واحد."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:692
+msgid "Max items from this section allowed across any single pickup slot."
+msgstr "الحد الأقصى للعناصر من هذا القسم المسموح بها في أي فترة استلام واحدة."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:512
+msgid "Max number of this item a customer can add to their cart."
+msgstr "الحد الأقصى لعدد هذا العنصر الذي يمكن للعميل إضافته إلى سلته."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:530
+msgid "Max number that can be scheduled for a single pickup slot."
+msgstr "الحد الأقصى لعدد الطلبات الممكن جدولتها لفترة استلام واحدة."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:301
+msgid "Max orders per slot"
+msgstr "الحد الأقصى للطلبات لكل فترة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:502
+#: app/components/menu/drop-wizard/drop-drawers.tsx:663
+msgid "Max per order"
+msgstr "الحد الأقصى لكل طلب"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:520
+#: app/components/menu/drop-wizard/drop-drawers.tsx:682
+msgid "Max per pickup time"
+msgstr "الحد الأقصى لكل وقت استلام"
 
 #: app/components/locations/location-form.tsx:813
 msgid "Maximum advance ordering window (days)"
@@ -5242,8 +5649,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:456
-#: app/components/app-sidebar.tsx:423
+#: app/components/app-sidebar.tsx:471
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -5264,8 +5670,7 @@ msgstr "تفاصيل الوسائط"
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
-#: app/components/app-sidebar.tsx:280
-#: app/components/app-sidebar.tsx:283
+#: app/components/app-sidebar.tsx:284
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -5285,9 +5690,7 @@ msgstr "متوسط"
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
 msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:589
 #: app/components/roles/tenant-role-access-manager.tsx:587
-#: app/components/team-switcher.tsx:132
 msgid "member"
 msgstr "عضو"
 
@@ -5295,17 +5698,11 @@ msgstr "عضو"
 #~ msgid "Member"
 #~ msgstr "عضو"
 
-#: app/components/roles/tenant-role-access-manager.tsx:589
-msgid "members"
-msgstr "أعضاء"
-
-#: app/components/app-sidebar.tsx:432
 #: app/components/roles/tenant-role-access-manager.tsx:587
-#: app/components/team-switcher.tsx:134
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:399
+#: app/components/app-sidebar.tsx:447
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:769
 #: app/components/roles/tenant-role-access-manager.tsx:855
@@ -5316,13 +5713,13 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
-#: app/components/app-sidebar.tsx:292
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:72
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:237
+#: app/components/app-sidebar.tsx:296
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:80
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:240
 msgid "Menu"
 msgstr "القائمة"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:326
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:329
 msgid "Menu actions"
 msgstr "إجراءات القائمة"
 
@@ -5346,6 +5743,18 @@ msgstr "خيارات القائمة"
 msgid "Menu Overview"
 msgstr "نظرة عامة على القائمة"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:805
+msgid "Menu preview"
+msgstr "معاينة القائمة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1000
+msgid "Menu preview off"
+msgstr "معاينة القائمة معطلة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:999
+msgid "Menu preview on"
+msgstr "معاينة القائمة مفعلة"
+
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:434
 msgid "Menu Settings"
 msgstr "إعدادات القائمة"
@@ -5358,10 +5767,10 @@ msgstr "نوع القائمة"
 msgid "Menu Type & Capabilities"
 msgstr "نوع القائمة والإمكانات"
 
-#: app/components/app-sidebar.tsx:305
+#: app/components/app-sidebar.tsx:309
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:22
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:280
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:187
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:190
 msgid "Menus"
 msgstr "القوائم"
 
@@ -5379,7 +5788,7 @@ msgstr "فريق Menuza"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:534
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:538
 msgid "Message"
 msgstr "الرسالة"
 
@@ -5444,9 +5853,9 @@ msgstr "معلومات مجموعة الإضافات"
 msgid "Modifier Group Name"
 msgstr "اسم مجموعة الإضافات"
 
-#: app/components/app-sidebar.tsx:320
-#: app/components/menu/item-form.tsx:494
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
+#: app/components/app-sidebar.tsx:324
+#: app/components/menu/item-form.tsx:539
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:274
 msgid "Modifier Groups"
 msgstr "مجموعات الإضافات"
@@ -5468,7 +5877,7 @@ msgid "Mono"
 msgstr "أحادي المسافة"
 
 #: app/components/settings/cards/organization/billing-card.tsx:200
-#: app/routes/organizations+/create.tsx:905
+#: app/routes/organizations+/create.tsx:1139
 msgid "Monthly"
 msgstr "شهري"
 
@@ -5510,7 +5919,7 @@ msgstr "بدون صوت"
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
-#: app/routes/organizations+/create.tsx:715
+#: app/routes/organizations+/create.tsx:949
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
 msgid "Name"
@@ -5533,8 +5942,13 @@ msgid "Need a new code? Request one here."
 msgstr "بحاجة إلى رمز جديد؟ اطلب واحداً هنا."
 
 #: app/components/settings/cards/organization/integrations-card.tsx:80
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:119
 msgid "Need an integration but don't see it here?"
 msgstr "هل تحتاج إلى تكامل ولكن لا تراه هنا؟"
+
+#: app/components/mailbox/reviews-tab.tsx:505
+msgid "Needs reply"
+msgstr "يحتاج إلى رد"
 
 #: app/components/core/feedback-modal.tsx:31
 msgid "Negative feedback"
@@ -5619,7 +6033,7 @@ msgstr "البريد الإلكتروني الجديد"
 msgid "New form"
 msgstr "نموذج جديد"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:348
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:352
 msgid "New form submissions will appear here."
 msgstr "ستظهر ردود النماذج الجديدة هنا."
 
@@ -5672,8 +6086,12 @@ msgstr "إعادة توجيه جديدة"
 msgid "New tab"
 msgstr "علامة تبويب جديدة"
 
+#: app/components/mailbox/reviews-tab.tsx:534
+msgid "Newer"
+msgstr "الأحدث"
+
 #: app/components/website/create-page-dialog.tsx:132
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:429
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:433
 msgid "Next"
 msgstr "التالي"
 
@@ -5733,7 +6151,7 @@ msgstr "لا توجد حملات بعد."
 msgid "No categories assigned to this menu"
 msgstr "لا توجد تصنيفات مسندة إلى هذه القائمة"
 
-#: app/components/menu/item-form.tsx:637
+#: app/components/menu/item-form.tsx:682
 #: app/components/menu/menu-form.tsx:346
 msgid "No categories assigned yet. Add a category to get started."
 msgstr "لا توجد تصنيفات مسندة بعد. أضف تصنيفًا للبدء."
@@ -5786,6 +6204,10 @@ msgstr "لم يُقدَّم وصف"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:130
+msgid "No drops scheduled yet"
+msgstr "لا توجد طروحات مجدولة بعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2840
 msgid "No editor available for this block type."
 msgstr "لا يوجد محرر متاح لهذا النوع من الكتل."
@@ -5815,17 +6237,22 @@ msgstr "لم يتم العثور على فواتير"
 msgid "No items assigned yet. Add one to get started."
 msgstr "لا توجد عناصر مسندة بعد. أضف عنصرًا للبدء."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:747
 #: app/components/menu/menu-sortable-category.tsx:174
 msgid "No items in this category yet."
 msgstr "لا توجد عناصر في هذا التصنيف بعد."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:276
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:280
 msgid "No items match these filters"
 msgstr "لا توجد عناصر مطابقة لهذه الفلاتر"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:259
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:263
 msgid "No items yet"
 msgstr "لا توجد عناصر بعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:331
+msgid "No lead time (orders stay open until slot)"
+msgstr "بدون مهلة مسبقة (تظل الطلبات مفتوحة حتى وقت الاستلام)"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "No locations found."
@@ -5846,7 +6273,8 @@ msgstr "لا توجد فروع مطابقة"
 #: app/components/menu/modifier-form.tsx:1857
 msgid "No matching options found."
 msgstr "لم يتم العثور على خيارات مطابقة."
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:337
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:341
 msgid "No matching submissions"
 msgstr "لا توجد ردود مطابقة"
 
@@ -5870,15 +6298,15 @@ msgstr "لا توجد قوائم مسندة بعد. أضف قائمة لجعل �
 msgid "No menus created yet"
 msgstr "لم يتم إنشاء أي قوائم بعد"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:223
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:226
 msgid "No menus match these filters"
 msgstr "لا توجد قوائم مطابقة لهذه الفلاتر"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:206
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:209
 msgid "No menus yet"
 msgstr "لا توجد قوائم بعد"
 
-#: app/components/menu/item-form.tsx:507
+#: app/components/menu/item-form.tsx:552
 msgid "No modifier groups assigned yet. Add one to get started."
 msgstr "لا توجد مجموعات إضافات مسندة بعد. أضف واحدة للبدء."
 
@@ -5983,6 +6411,10 @@ msgstr "لا توجد معاملات مطلوبة"
 msgid "No passkeys registered yet"
 msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:521
+msgid "No pickup window added yet"
+msgstr "لم تتم إضافة نافذة استلام بعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:833
 msgid "No redirects created yet"
 msgstr "لا توجد عمليات إعادة توجيه بعد"
@@ -6003,6 +6435,22 @@ msgstr "لم يتم العثور على أي مطعم"
 #~ msgid "No results."
 #~ msgstr "لا توجد نتائج."
 
+#: app/components/mailbox/reviews-tab.tsx:422
+msgid "No reviews connected yet"
+msgstr "لم يتم ربط أي تقييمات بعد"
+
+#: app/components/mailbox/reviews-tab.tsx:424
+msgid "No reviews found"
+msgstr "لم يتم العثور على أي تقييمات"
+
+#: app/components/mailbox/reviews-tab.tsx:435
+msgid "No reviews match the selected filter."
+msgstr "لا توجد تقييمات تطابق الفلتر المحدد."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:674
+msgid "No sections added to this drop yet"
+msgstr "لم تتم إضافة أقسام إلى هذا الطرح بعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5638
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
@@ -6010,7 +6458,8 @@ msgstr "لا توجد أقسام بعد"
 #: app/components/locations/special-hours-picker.tsx:236
 msgid "No special hours or holiday closures scheduled."
 msgstr "لا توجد ساعات خاصة أو إغلاقات للأعياد مجدولة."
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:341
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:345
 msgid "No submissions yet"
 msgstr "لا توجد ردود بعد"
 
@@ -6018,18 +6467,26 @@ msgstr "لا توجد ردود بعد"
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:200
+msgid "No windows"
+msgstr "لا توجد نوافذ"
+
 #: app/routes/_auth+/forgot-password.tsx:184
 msgid "No worries, we'll send you reset instructions."
 msgstr "لا تقلق، سنرسل لك تعليمات إعادة التعيين."
+
+#: app/components/mailbox/reviews-tab.tsx:511
+#: app/components/mailbox/reviews-tab.tsx:637
+msgid "No written comment"
+msgstr "لا يوجد تعليق مكتوب"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:58
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
 msgstr "العُقد"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:318
-#: app/components/menu/modifier-form.tsx:282
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
+#: app/components/menu/modifier-form.tsx:282
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3347
@@ -6054,6 +6511,7 @@ msgstr "عادي"
 msgid "Not allowed"
 msgstr "غير مسموح"
 
+#: app/components/settings/cards/organization/review-integrations-card.tsx:82
 #: app/components/settings/cards/organization/shop-card.tsx:106
 msgid "Not connected"
 msgstr "غير متصل"
@@ -6102,8 +6560,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:274
-#: app/components/app-sidebar.tsx:277
+#: app/components/app-sidebar.tsx:278
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -6117,8 +6574,10 @@ msgstr "الملاحظات والمستندات"
 msgid "Notes & website"
 msgstr "الملاحظات والموقع"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:607
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:610
+#: app/components/mailbox/reviews-tab.tsx:747
+#: app/components/mailbox/reviews-tab.tsx:750
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:611
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:614
 msgid "Notes for AI"
 msgstr "ملاحظات للذكاء الاصطناعي"
 
@@ -6138,8 +6597,7 @@ msgstr "لا شيء هنا بعد!"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:461
-#: app/components/app-sidebar.tsx:428
+#: app/components/app-sidebar.tsx:476
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -6151,7 +6609,7 @@ msgstr "إشعارات عندما يعلق شخص ما على ملاحظاتك"
 msgid "Notifications when you are mentioned in a comment"
 msgstr "إشعارات عندما يتم ذكرك في تعليق"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:246
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:249
 msgid "Nutrition Info"
 msgstr "معلومات التغذية"
 
@@ -6167,6 +6625,14 @@ msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
+#: app/components/settings/cards/organization/review-integrations-card.tsx:94
+msgid "Offline"
+msgstr "غير متصل"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:988
+msgid "Offset"
+msgstr "الفارق الزمني"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
 msgid "Old path (Source)"
 msgstr "المسار القديم (المصدر)"
@@ -6174,6 +6640,10 @@ msgstr "المسار القديم (المصدر)"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
+
+#: app/components/mailbox/reviews-tab.tsx:548
+msgid "Older"
+msgstr "الأقدم"
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -6183,6 +6653,10 @@ msgstr "تقدم الإعداد"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:945
 msgid "Once you connect an AI client using the setup instructions below, it will appear here."
 msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخدام تعليمات الإعداد أدناه، سيظهر هنا."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:350
+msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
+msgstr "متجر DoorDash واحد لكل اتصال. استخدم معرّف المتجر الذي تعيّنه DoorDash بعد الإعداد (SSIO أو إعداد المتجر)."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:815
 msgid "One moment…"
@@ -6220,6 +6694,10 @@ msgstr "ساعات الطلب عبر الإنترنت مطابقة لساعات 
 msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:974
+msgid "Only people with the secret link can view and order."
+msgstr "فقط الأشخاص الذين لديهم الرابط السري يمكنهم العرض والطلب."
+
 #: app/components/note/share-note-button.tsx:195
 msgid "Only selected members can access this note"
 msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذه الملاحظة"
@@ -6252,6 +6730,14 @@ msgstr "فتح لوحة تحكم الدفع"
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:996
+msgid "Open countdown hidden"
+msgstr "العد التنازلي للفتح مخفي"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:995
+msgid "Open countdown visible"
+msgstr "العد التنازلي للفتح ظاهر"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:865
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
@@ -6269,8 +6755,8 @@ msgstr "فتح لوحة التحكم المستضافة"
 msgid "Open in"
 msgstr "فتح في"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:582
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:583
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:586
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:587
 msgid "Open in email app"
 msgstr "فتح في تطبيق البريد"
 
@@ -6285,6 +6771,11 @@ msgstr "افتح إعدادات Kiro IDE"
 #: app/components/ui/notification-bell.tsx:454
 msgid "Open menu"
 msgstr "فتح القائمة"
+
+#. placeholder {0}: selected.providerDisplayName
+#: app/components/mailbox/reviews-tab.tsx:597
+msgid "Open on {0}"
+msgstr "فتح في {0}"
 
 #: app/components/roles/tenant-role-access-manager.tsx:152
 #~ msgid "Open pages and themes in the site builder."
@@ -6331,6 +6822,14 @@ msgstr "فُتِح {0}"
 msgid "Opened {routeTitle}"
 msgstr "تم فتح {routeTitle}"
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:208
+msgid "Opens:"
+msgstr "يفتح:"
+
+#: app/components/mailbox/reviews-tab.tsx:77
+msgid "OpenTable"
+msgstr "OpenTable"
+
 #: app/components/locations/location-form.tsx:307
 #: app/components/locations/location-form.tsx:500
 msgid "Operating Hours"
@@ -6365,6 +6864,10 @@ msgstr "اسم الخيار المعروض (الظاهر للعميل)"
 msgid "Option Information"
 msgstr "معلومات الخيار"
 
+#: app/components/menu/item-variations.tsx:177
+msgid "Option name"
+msgstr "اسم الخيار"
+
 #: app/components/menu/option-form.tsx:409
 msgid "Option Name (Guest-Facing)"
 msgstr "اسم الخيار (الظاهر للعميل)"
@@ -6389,11 +6892,15 @@ msgstr "اختياري • حتى {maxSelections}"
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
-#: app/components/app-sidebar.tsx:325
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
+#: app/components/app-sidebar.tsx:329
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:58
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:332
 msgid "Options"
 msgstr "الخيارات"
+
+#: app/components/menu/item-variations.tsx:145
+msgid "Options like size or color. Price and availability per combination."
+msgstr "خيارات مثل الحجم أو اللون. سعر وتوفر لكل تركيبة."
 
 #: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
@@ -6403,6 +6910,10 @@ msgstr "أو تابع باستخدام"
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:320
+msgid "Order lead time"
+msgstr "مهلة الطلب المسبق"
+
 #: app/components/locations/location-form.tsx:531
 msgid "Order Preparation Time"
 msgstr "وقت تحضير الطلب"
@@ -6411,9 +6922,33 @@ msgstr "وقت تحضير الطلب"
 msgid "Orders can be delivered inside this zone"
 msgstr "يمكن توصيل الطلبات داخل هذه المنطقة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:613
+msgid "Orders close"
+msgstr "إغلاق الطلبات"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1024
+msgid "Orders close time must be configured in Step 1 first."
+msgstr "يجب تحديد وقت إغلاق الطلبات في الخطوة 1 أولاً."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:595
+msgid "Orders open"
+msgstr "فتح الطلبات"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:788
+msgid "Orders open time"
+msgstr "وقت فتح الطلبات"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:1017
+msgid "Orders open time must be configured in Step 1 first."
+msgstr "يجب تحديد وقت فتح الطلبات في الخطوة 1 أولاً."
+
 #: app/components/settings/cards/organization/shop-card.tsx:345
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:151
+msgid "Orders Schedule"
+msgstr "جدول الطلبات"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:45
 msgid "Organization Created"
@@ -6471,10 +7006,9 @@ msgstr "محدد"
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "تجاوز ساعات العمل المعتادة في الأعياد أو المناسبات أو الإغلاقات."
 
-#: app/components/app-sidebar.tsx:298
-#: app/components/app-sidebar.tsx:338
+#: app/components/app-sidebar.tsx:302
+#: app/components/app-sidebar.tsx:353
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:15
-#: app/components/app-sidebar.tsx:312
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr "نظرة عامة"
@@ -6484,6 +7018,10 @@ msgstr "نظرة عامة"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr "صفحة"
+
+#: app/components/mailbox/reviews-tab.tsx:537
+msgid "Page {pageNumber}"
+msgstr "الصفحة {pageNumber}"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:419
 msgid "Page actions"
@@ -6506,8 +7044,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:372
-#: app/components/app-sidebar.tsx:346
+#: app/components/app-sidebar.tsx:387
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -6604,7 +7141,7 @@ msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
 
 #: app/components/settings/cards/organization/billing-card.tsx:418
-#: app/routes/organizations+/create.tsx:1412
+#: app/routes/organizations+/create.tsx:1800
 msgid "per month"
 msgstr "شهرياً"
 
@@ -6742,9 +7279,42 @@ msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 msgid "Pickup"
 msgstr "الاستلام"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:141
+msgid "Pickup Date"
+msgstr "تاريخ الاستلام"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:178
+msgid "Pickup interval (minutes)"
+msgstr "فترة الاستلام (بالدقائق)"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:546
+msgid "Pickup Location"
+msgstr "موقع الاستلام"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:475
+msgid "Pickup schedule"
+msgstr "جدول الاستلام"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:552
+msgid "pickup slots (every"
+msgstr "فترات استلام (كل"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:257
+msgid "Pickup times occur"
+msgstr "أوقات الاستلام تتكرر"
+
 #: app/components/locations/location-form.tsx:756
 msgid "Pickup Tips"
 msgstr "بقشيش الاستلام"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:148
+msgid "Pickup Window"
+msgstr "نافذة الاستلام"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:250
+#: app/components/menu/drop-wizard/drop-form.tsx:500
+msgid "Pickup window settings"
+msgstr "إعدادات نافذة الاستلام"
 
 #: app/components/menu/option-form.tsx:776
 msgid "Pizza Topping"
@@ -6766,7 +7336,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
-#: app/routes/organizations+/create.tsx:1339
+#: app/routes/organizations+/create.tsx:1727
 msgid "Plan not available"
 msgstr "الخطة غير متاحة"
 
@@ -6782,7 +7352,7 @@ msgstr "دور توفره المنصة."
 msgid "Platters, party bundles, and advanced lead-time catering menus."
 msgstr "أطباق مشتركة وعروض حفلات وقوائم تموين بوقت تحضير مسبق."
 
-#: app/routes/organizations+/create.tsx:1342
+#: app/routes/organizations+/create.tsx:1730
 msgid "Please check configuration"
 msgstr "يرجى التحقق من التكوين"
 
@@ -6823,6 +7393,10 @@ msgstr "PNG، حتى 5 ميجابايت. الموصى به 512×512."
 msgid "PNG, up to 5 MB. Used as logo and favicon."
 msgstr "PNG، حتى 5 ميجابايت. يُستخدم كشعار وأيقونة مفضلة."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:210
+msgid "Point of sale"
+msgstr "نقطة بيع"
+
 #: app/components/settings/cards/organization/site-card.tsx:307
 msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
 msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAME. يتم توفير SSL تلقائياً عند تكوين Cloudflare for SaaS."
@@ -6831,7 +7405,7 @@ msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAM
 msgid "Polygon Area: {pointCount} points"
 msgstr "مساحة المضلع: {pointCount} نقطة"
 
-#: app/components/menu/item-form.tsx:687
+#: app/components/menu/item-form.tsx:732
 msgid "Popular Item"
 msgstr "عنصر شائع"
 
@@ -6839,9 +7413,17 @@ msgstr "عنصر شائع"
 msgid "Positive feedback"
 msgstr "ملاحظات إيجابية"
 
+#: app/components/mailbox/reviews-tab.tsx:734
+msgid "Post reply"
+msgstr "نشر الرد"
+
 #: app/components/locations/address-autocomplete.tsx:257
 msgid "Postal / ZIP Code"
 msgstr "الرمز البريدي"
+
+#: app/components/mailbox/reviews-tab.tsx:649
+msgid "Posted {selectedReplyDate}"
+msgstr "نُشر في {selectedReplyDate}"
 
 #: app/components/website/link-inspector.tsx:624
 msgid "Prefetch"
@@ -6877,23 +7459,27 @@ msgstr "الإعدادات المسبقة"
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:300
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
 msgid "Preview"
 msgstr "معاينة"
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:422
+msgid "Previous"
+msgstr "السابق"
+
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:293
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:297
 msgid "Price"
 msgstr "السعر"
 
+#: app/components/menu/item-variations.tsx:301
+#: app/components/menu/item-variations.tsx:368
 #: app/components/menu/modifier-form.tsx:1644
 #: app/components/menu/modifier-form.tsx:1999
 msgid "Price ($)"
 msgstr "السعر ($)"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:418
-msgid "Previous"
-msgstr "السابق"
 
 #: app/components/settings/cards/organization/shop-card.tsx:283
 msgid "Price (USD)"
@@ -6907,12 +7493,16 @@ msgstr "السعر / الكمية"
 msgid "Price Delta"
 msgstr "فرق السعر"
 
+#: app/components/menu/item-variations.tsx:372
+msgid "Price for {name}"
+msgstr "سعر {name}"
+
 #: app/components/settings/cards/organization/billing-card.tsx:389
-#: app/routes/organizations+/create.tsx:1376
+#: app/routes/organizations+/create.tsx:1764
 msgid "Price not configured"
 msgstr "السعر غير مكوّن"
 
-#: app/components/menu/item-form.tsx:444
+#: app/components/menu/item-form.tsx:470
 #: app/components/menu/option-form.tsx:448
 msgid "Pricing & Tax"
 msgstr "التسعير والضريبة"
@@ -6921,7 +7511,7 @@ msgstr "التسعير والضريبة"
 msgid "Pricing not available"
 msgstr "الأسعار غير متاحة"
 
-#: app/components/menu/item-form.tsx:336
+#: app/components/menu/item-form.tsx:362
 #: app/components/website/link-inspector.tsx:394
 msgid "Primary"
 msgstr "أساسي"
@@ -6939,7 +7529,7 @@ msgstr "الزر الأساسي"
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
-#: app/routes/organizations+/create.tsx:1445
+#: app/routes/organizations+/create.tsx:1833
 msgid "Priority support"
 msgstr "دعم الأولوية"
 
@@ -6969,8 +7559,7 @@ msgstr "جارٍ المعالجة…"
 msgid "Product name"
 msgstr "اسم المنتج"
 
-#: app/components/app-sidebar.tsx:131
-#: app/components/app-sidebar.tsx:132
+#: app/components/app-sidebar.tsx:133
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
@@ -6989,13 +7578,17 @@ msgstr "اكتمل الملف الشخصي (الاسم/البريد)"
 msgid "Profile Settings"
 msgstr "إعدادات الملف الشخصي"
 
-#: app/components/menu/item-form.tsx:705
+#: app/components/menu/item-form.tsx:750
 msgid "Promote as Upsell"
 msgstr "الترويج كبيع إضافي"
 
-#: app/components/menu/item-form.tsx:673
+#: app/components/menu/item-form.tsx:718
 msgid "Promotions & Highlights"
 msgstr "العروض والإبرازات"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:950
+msgid "Public"
+msgstr "عام"
 
 #: app/components/note/share-note-button.tsx:189
 msgid "Public Access"
@@ -7094,11 +7687,16 @@ msgstr "مسافة النطاق ({radiusValue} {radiusUnit})"
 msgid "Radius: {radiusValue} {radiusUnit}"
 msgstr "النطاق: {radiusValue} {radiusUnit}"
 
+#: app/components/mailbox/reviews-tab.tsx:489
+msgid "Rated"
+msgstr "تم التقييم"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4347
 msgid "Rating"
 msgstr "التقييم"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:206
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:403
 msgid "Read documentation"
 msgstr "قراءة الوثائق"
 
@@ -7162,8 +7760,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:405
-#: app/components/app-sidebar.tsx:379
+#: app/components/app-sidebar.tsx:420
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -7176,9 +7773,9 @@ msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
 msgid "Referrer"
 msgstr "المُحيل"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:255
-#~ msgid "Refresh"
-#~ msgstr "تحديث"
+#: app/components/mailbox/reviews-tab.tsx:607
+msgid "Refresh"
+msgstr "تحديث"
 
 #: app/components/settings/cards/organization/shop-card.tsx:161
 msgid "Refresh Checkout setup"
@@ -7187,6 +7784,10 @@ msgstr "تحديث إعدادات الدفع"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5991
 msgid "Refresh preview"
 msgstr "تحديث المعاينة"
+
+#: app/components/mailbox/reviews-tab.tsx:351
+msgid "Refresh reviews"
+msgstr "تحديث التقييمات"
 
 #: app/components/settings/cards/organization/site-card.tsx:392
 msgid "Refresh status"
@@ -7239,6 +7840,11 @@ msgstr "تذكرني"
 msgid "Remember your password?"
 msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:938
+msgid "Reminder title"
+msgstr "عنوان التذكير"
+
+#: app/components/menu/item-variations.tsx:201
 #: app/components/menu/option-form.tsx:379
 #: app/components/note/share-note-button.tsx:240
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
@@ -7247,6 +7853,10 @@ msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2634
 msgid "Remove"
 msgstr "إزالة"
+
+#: app/components/menu/item-variations.tsx:115
+msgid "Remove {optionName}? Its combinations will be removed when you save the item."
+msgstr "هل تريد إزالة {optionName}؟ ستُحذف تركيباته عند حفظ الصنف."
 
 #: app/components/settings/cards/sessions-card.tsx:375
 msgid "Remove access from all devices except this one"
@@ -7281,7 +7891,7 @@ msgstr "إزالة الحقل"
 msgid "Remove image"
 msgstr "إزالة الصورة"
 
-#: app/routes/organizations+/create.tsx:1287
+#: app/routes/organizations+/create.tsx:1675
 msgid "Remove invite"
 msgstr "إزالة الدعوة"
 
@@ -7305,9 +7915,14 @@ msgstr "إزالة مجموعة الإضافات الفرعية"
 msgid "Remove option"
 msgstr "إزالة الخيار"
 
-#: app/components/menu/item-form.tsx:345
+#: app/components/menu/item-form.tsx:371
+#: app/components/menu/item-variations.tsx:357
 msgid "Remove photo"
 msgstr "إزالة الصورة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:736
+msgid "Remove section from drop"
+msgstr "إزالة القسم من الطرح"
 
 #: app/components/roles/tenant-role-access-manager.tsx:122
 msgid "Remove team members"
@@ -7342,18 +7957,25 @@ msgstr "استبدال الملف..."
 msgid "Replace image"
 msgstr "استبدال الصورة"
 
+#: app/components/mailbox/reviews-tab.tsx:500
+msgid "Replied"
+msgstr "تم الرد"
+
 #: app/components/note/comment-input.tsx:194
 #: app/components/note/comment-input.tsx:398
 #: app/components/note/comment-item.tsx:301
 msgid "Reply"
 msgstr "رد"
 
+#: app/components/mailbox/reviews-tab.tsx:664
+msgid "Reply to review"
+msgstr "الرد على التقييم"
+
 #: app/components/note/comment-input.tsx:150
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/app-sidebar.tsx:268
-#: app/components/app-sidebar.tsx:271
+#: app/components/app-sidebar.tsx:272
 msgid "Reports"
 msgstr "التقارير"
 
@@ -7362,6 +7984,7 @@ msgid "Request deletion"
 msgstr "طلب الحذف"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:87
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:126
 msgid "Request integration"
 msgstr "طلب تكامل"
 
@@ -7420,7 +8043,7 @@ msgstr "إعادة تعيين كلمة المرور"
 msgid "Reset Password"
 msgstr "إعادة تعيين كلمة المرور"
 
-#: app/routes/organizations+/create.tsx:782
+#: app/routes/organizations+/create.tsx:1016
 msgid "Reset to auto-generated"
 msgstr "إعادة تعيين إلى التلقائي"
 
@@ -7434,11 +8057,15 @@ msgstr "إعادة التعيين إلى الإعداد المسبق"
 msgid "Responses"
 msgstr "الردود"
 
-#: app/routes/organizations+/create.tsx:656
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:354
+msgid "Responses to your website forms will arrive here."
+msgstr "ستصل ردود نماذج موقعك إلى هنا."
+
+#: app/routes/organizations+/create.tsx:890
 msgid "Restaurant logo preview"
 msgstr "معاينة شعار المطعم"
 
-#: app/routes/organizations+/create.tsx:1043
+#: app/routes/organizations+/create.tsx:1277
 msgid "Restaurant size"
 msgstr "حجم المطعم"
 
@@ -7446,7 +8073,7 @@ msgstr "حجم المطعم"
 msgid "Restaurant Size"
 msgstr "حجم المطعم"
 
-#: app/components/app-sidebar.tsx:143
+#: app/components/app-sidebar.tsx:145
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:267
 #: app/routes/_app+/organizations.tsx:192
@@ -7464,9 +8091,6 @@ msgstr "حدّد وقت توفر هذا للعملاء، مثل الغداء م�
 #: app/components/locations/delivery-zones-manager.tsx:221
 msgid "Restricted (No Delivery)"
 msgstr "مقيّد (بدون توصيل)"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:350
-msgid "Responses to your website forms will arrive here."
-msgstr "ستصل ردود نماذج موقعك إلى هنا."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
@@ -7476,9 +8100,22 @@ msgstr "النتيجة"
 msgid "Retry"
 msgstr "إعادة المحاولة"
 
+#: app/components/menu/item-variations.tsx:565
+msgid "Return time for {name}"
+msgstr "وقت عودة {name}"
+
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:290
 msgid "Reusable options with images, pricing, allergens, and dietary profiles assigned across multiple modifier groups."
 msgstr "خيارات قابلة لإعادة الاستخدام مع صور وأسعار ومسببات حساسية وملفات غذائية تُسند عبر عدة مجموعات إضافات."
+
+#: app/components/mailbox/reviews-tab.tsx:634
+msgid "Review"
+msgstr "التقييم"
+
+#: app/components/mailbox/reviews-tab.tsx:557
+msgid "Review details"
+msgstr "تفاصيل التقييم"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:611
 #~ msgid "Review your reply, then send it from your email app."
 #~ msgstr "راجع ردك، ثم أرسله من تطبيق البريد لديك."
@@ -7488,9 +8125,18 @@ msgstr "خيارات قابلة لإعادة الاستخدام مع صور وأ
 #~ msgid "Reviewers"
 #~ msgstr "المراجعون"
 
+#: app/components/mailbox/reviews-tab.tsx:346
+msgid "reviews"
+msgstr "تقييمات"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:45
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4309
 msgid "Reviews"
 msgstr "المراجعات"
+
+#: app/components/settings/cards/organization/review-integrations-card.tsx:47
+msgid "Reviews & Listings"
+msgstr "التقييمات والقوائم"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1010
 msgid "Revoke"
@@ -7531,8 +8177,6 @@ msgstr "اليمين"
 msgid "Right ½"
 msgstr "النصف الأيمن"
 
-#: app/components/roles/tenant-role-access-manager.tsx:765
-#: app/components/roles/tenant-role-access-manager.tsx:851
 #: app/components/roles/tenant-role-access-manager.tsx:763
 #: app/components/roles/tenant-role-access-manager.tsx:849
 msgid "Role"
@@ -7542,8 +8186,7 @@ msgstr "الدور"
 msgid "Role name"
 msgstr "اسم الدور"
 
-#: app/components/app-sidebar.tsx:439
-#: app/components/app-sidebar.tsx:406
+#: app/components/app-sidebar.tsx:454
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -7657,6 +8300,10 @@ msgstr "نسبة ضريبة المبيعات (%)"
 msgid "Same price for left or right half."
 msgstr "نفس السعر للنصف الأيسر أو الأيمن."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:203
+msgid "Sandbox"
+msgstr "بيئة اختبار"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:229
 msgid "Sans"
 msgstr "بدون زوائد"
@@ -7672,6 +8319,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+#: app/components/menu/drop-wizard/drop-drawers.tsx:540
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -7684,7 +8332,7 @@ msgid "Save"
 msgstr "حفظ"
 
 #: app/components/settings/cards/organization/billing-card.tsx:213
-#: app/routes/organizations+/create.tsx:921
+#: app/routes/organizations+/create.tsx:1155
 msgid "Save 20%"
 msgstr "وفّر 20٪"
 
@@ -7696,6 +8344,8 @@ msgstr "حفظ كنسخة"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:346
+#: app/components/menu/drop-wizard/drop-form.tsx:1027
 #: app/components/roles/tenant-role-access-manager.tsx:541
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
@@ -7713,6 +8363,7 @@ msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
+#: app/components/menu/drop-wizard/drop-form.tsx:316
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr "حفظ المسودة"
@@ -7736,6 +8387,10 @@ msgstr "حفظ التجاوز"
 #: app/components/settings/cards/organization/shop-card.tsx:313
 msgid "Save product"
 msgstr "حفظ المنتج"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:703
+msgid "Save section settings"
+msgstr "حفظ إعدادات القسم"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:808
 msgid "Save the file and restart Claude Desktop"
@@ -7783,10 +8438,13 @@ msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
+#: app/components/menu/drop-wizard/drop-form.tsx:329
+#: app/components/menu/drop-wizard/drop-form.tsx:344
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: app/components/mailbox/reviews-tab.tsx:730
 #: app/components/roles/tenant-role-access-manager.tsx:539
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
@@ -7801,11 +8459,24 @@ msgstr "مسح رمز QR أو إدخال مفتاح الإعداد"
 msgid "Schedule a call"
 msgstr "حدد موعد مكالمة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:331
+#: app/components/menu/drop-wizard/drop-form.tsx:1025
+msgid "Schedule drop"
+msgstr "جدولة الطرح"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:113
+msgid "Schedule limited-time menu drops with inventory limits and pickup slots."
+msgstr "جدولة طروحات القائمة محدودة الوقت مع حدود المخزون وفترات الاستلام."
+
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 msgid "Scheduled"
 msgstr "مجدول"
 
-#: app/components/app-sidebar.tsx:219
+#: app/components/menu/drop-wizard/drop-form.tsx:1023
+msgid "Scheduling..."
+msgstr "جارٍ الجدولة..."
+
+#: app/components/app-sidebar.tsx:221
 msgid "Search"
 msgstr "بحث"
 
@@ -7847,7 +8518,7 @@ msgstr "البحث في الوسائط"
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
-#: app/components/app-sidebar.tsx:581
+#: app/components/app-sidebar.tsx:597
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
 msgstr "البحث في عناصر القائمة..."
@@ -7856,7 +8527,6 @@ msgstr "البحث في عناصر القائمة..."
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
-#: app/components/app-sidebar.tsx:220
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
 msgstr "البحث في الملاحظات"
@@ -7882,11 +8552,11 @@ msgstr "معاينة البحث"
 msgid "Search redirects..."
 msgstr "ابحث في عمليات إعادة التوجيه..."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:278
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:282
 msgid "Search submissions"
 msgstr "البحث في الردود"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:279
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:283
 msgid "Search submissions…"
 msgstr "البحث في الردود…"
 
@@ -7915,6 +8585,15 @@ msgstr "مفتاح الوصول السري"
 msgid "Section height"
 msgstr "ارتفاع القسم"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:630
+msgid "Section pooled inventory"
+msgstr "مخزون القسم المجمّع"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:618
+#: app/components/menu/drop-wizard/drop-form.tsx:723
+msgid "Section settings"
+msgstr "إعدادات القسم"
+
 #: app/components/data-table.tsx:196
 #~ msgid "Section Type"
 #~ msgstr "نوع القسم"
@@ -7928,8 +8607,7 @@ msgstr "الأقسام"
 msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
-#: app/components/app-sidebar.tsx:137
-#: app/components/app-sidebar.tsx:138
+#: app/components/app-sidebar.tsx:139
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr "الأمان"
@@ -7959,7 +8637,7 @@ msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية
 msgid "Select a category to add to this menu."
 msgstr "اختر تصنيفًا لإضافته إلى هذه القائمة."
 
-#: app/components/menu/item-form.tsx:634
+#: app/components/menu/item-form.tsx:679
 msgid "Select a category to display this item."
 msgstr "اختر تصنيفًا لعرض هذا العنصر."
 
@@ -7967,13 +8645,25 @@ msgstr "اختر تصنيفًا لعرض هذا العنصر."
 msgid "Select a form"
 msgstr "اختر نموذجًا"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:127
+msgid "Select a location"
+msgstr "اختر موقعًا"
+
 #: app/components/menu/category-form.tsx:556
 msgid "Select a menu to display this category."
 msgstr "اختر قائمة لعرض هذا التصنيف."
 
-#: app/components/menu/item-form.tsx:504
+#: app/components/menu/item-form.tsx:549
 msgid "Select a modifier group for this item."
 msgstr "اختر مجموعة إضافات لهذا العنصر."
+
+#: app/components/menu/item-variations.tsx:552
+msgid "Select a return time"
+msgstr "اختر وقت العودة"
+
+#: app/components/mailbox/reviews-tab.tsx:781
+msgid "Select a review to read it and post a reply."
+msgstr "حدد تقييماً لقراءته ونشر رد عليه."
 
 #: app/components/website/create-page-dialog.tsx:102
 msgid "Select a starting layout for your new page."
@@ -7983,11 +8673,11 @@ msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 #~ msgid "Select a status"
 #~ msgstr "اختر حالة"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:649
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:653
 msgid "Select a submission to read the details and start a reply."
 msgstr "اختر ردًا لقراءة تفاصيله وبدء الإجابة عليه."
 
-#: app/routes/organizations+/create.tsx:877
+#: app/routes/organizations+/create.tsx:1111
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
@@ -8047,7 +8737,7 @@ msgstr "اختر المنظمة"
 msgid "Select Photo"
 msgstr "اختيار صورة"
 
-#: app/components/menu/item-form.tsx:370
+#: app/components/menu/item-form.tsx:396
 msgid "Select Photos"
 msgstr "اختيار صور"
 
@@ -8129,7 +8819,7 @@ msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
 #: app/components/organization-invitations.tsx:314
-#: app/routes/organizations+/create.tsx:1194
+#: app/routes/organizations+/create.tsx:1582
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
 
@@ -8201,7 +8891,7 @@ msgstr "الجلسات"
 msgid "Set as Default"
 msgstr "تعيين كافتراضي"
 
-#: app/components/menu/item-form.tsx:447
+#: app/components/menu/item-form.tsx:479
 msgid "Set baseline dish price and sales tax settings."
 msgstr "حدّد سعر الطبق الأساسي وإعدادات ضريبة المبيعات."
 
@@ -8221,9 +8911,17 @@ msgstr "تعيين المواعيد النهائية"
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:453
+msgid "Set how many of this item are available for this drop."
+msgstr "حدد الكمية المتوفرة من هذا العنصر لهذا الطرح."
+
 #: app/components/locations/availability-picker.tsx:440
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "حدّد ساعات العمل الفعلية التي يمكن للعملاء فيها زيارة هذا الفرع."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:478
+msgid "Set the pickup times and locations where customers will collect their orders."
+msgstr "حدد أوقات ومواقع الاستلام التي سيستلم العملاء طلباتهم منها."
 
 #: app/components/website/create-page-dialog.tsx:143
 msgid "Set the title and URL for your new page."
@@ -8237,8 +8935,15 @@ msgstr "إعداد تطبيق المصادقة"
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاستلام والتوصيل لهذا الفرع."
 
-#: app/components/app-sidebar.tsx:412
-#: app/components/app-sidebar.tsx:386
+#: app/components/menu/drop-wizard/drop-drawers.tsx:283
+msgid "Setting a limit helps you pace preparation and avoid crowding."
+msgstr "يساعد وضع حد على تنظيم التحضير وتجنب الازدحام."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:488
+msgid "Setting a limit helps you sell out"
+msgstr "يساعد وضع حد على نفاد الكمية بالكامل"
+
+#: app/components/app-sidebar.tsx:427
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -8273,6 +8978,10 @@ msgstr "مشاركة الملاحظة"
 msgid "Share on WhatsApp"
 msgstr "شارك على واتساب"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:461
+msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
+msgstr "شارك القصة وراء هذا الطرح أو تعليمات الاستلام أو المكونات الخاصة..."
+
 #: app/components/organization-invitations.tsx:167
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
@@ -8289,8 +8998,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:451
-#: app/components/app-sidebar.tsx:418
+#: app/components/app-sidebar.tsx:466
 msgid "Shop"
 msgstr "المتجر"
 
@@ -8302,7 +9010,7 @@ msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكي
 msgid "Short"
 msgstr "قصير"
 
-#: app/components/menu/item-form.tsx:690
+#: app/components/menu/item-form.tsx:735
 msgid "Show \"Popular\" badge on menus."
 msgstr "إظهار شارة \"شائع\" في القوائم."
 
@@ -8329,6 +9037,10 @@ msgstr "إظهار الردود ({replyCount})"
 #: ../../packages/ai/src/components/ai-chat.tsx:458
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:791
+msgid "Show the exact countdown timer until drop orders open."
+msgstr "إظهار مؤقت العد التنازلي الدقيق حتى فتح طلبات الطرح."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:376
 msgid "Show this banner on your public site"
@@ -8434,12 +9146,12 @@ msgstr "الحجم"
 msgid "Size:"
 msgstr "الحجم:"
 
-#: app/routes/organizations+/create.tsx:998
+#: app/routes/organizations+/create.tsx:1232
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
 #: app/components/settings/cards/organization/general-settings-card.tsx:88
-#: app/routes/organizations+/create.tsx:736
+#: app/routes/organizations+/create.tsx:970
 msgid "Slug"
 msgstr "الرابط الثابت"
 
@@ -8517,18 +9229,13 @@ msgstr "مربع"
 #~ msgid "Standard modifier group assigned directly to menu items (e.g. \"Choose your side\", \"Burger Toppings\")."
 #~ msgstr "مجموعة تعديل قياسية مخصصة مباشرة لعناصر القائمة (مثل \"اختر طبق جانبي\"، \"إضافات البرجر\")."
 
-#: app/components/roles/tenant-role-access-manager.tsx:840
+#: app/components/roles/tenant-role-access-manager.tsx:838
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
 #: app/components/menu/menu-form.tsx:255
 msgid "Standard restaurant menus for dine-in, takeout, and delivery."
 msgstr "قوائم مطعم قياسية لتناول الطعام في المطعم والطلب الخارجي والتوصيل."
-
-#: app/components/roles/tenant-role-access-manager.tsx:585
-#: app/components/roles/tenant-role-access-manager.tsx:838
-msgid "Standard platform roles. Click any role to review its active permissions."
-msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
 #: app/components/roles/tenant-role-access-manager.tsx:583
 msgid "Standard system role."
@@ -8558,6 +9265,10 @@ msgstr "بدء الرحلة عند حدث دورة الحياة"
 msgid "Start the conversation by adding the first comment."
 msgstr "ابدأ المحادثة بإضافة التعليق الأول."
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:154
+msgid "Start Time"
+msgstr "وقت البدء"
+
 #: app/components/locations/address-autocomplete.tsx:139
 msgid "Start typing an address, city, or zip code..."
 msgstr "ابدأ بكتابة عنوان أو مدينة أو رمز بريدي..."
@@ -8582,15 +9293,15 @@ msgstr "نقطة البداية"
 msgid "State / Province"
 msgstr "الولاية / المنطقة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:635
 #: app/components/roles/tenant-role-access-manager.tsx:633
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:286
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:302
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:249
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:145
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:306
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:252
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:338
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:352
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
@@ -8603,7 +9314,7 @@ msgstr "الحالة"
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
 
-#: app/routes/organizations+/create.tsx:539
+#: app/routes/organizations+/create.tsx:753
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
@@ -8695,7 +9406,7 @@ msgstr "رابط النطاق الفرعي"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:100
 #: app/components/website/link-inspector.tsx:477
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:521
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:525
 msgid "Subject"
 msgstr "الموضوع"
 
@@ -8703,7 +9414,7 @@ msgstr "الموضوع"
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:436
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:440
 msgid "Submission details"
 msgstr "تفاصيل الرد"
 
@@ -8745,7 +9456,7 @@ msgstr "نجاح"
 msgid "Success message"
 msgstr "رسالة النجاح"
 
-#: app/components/menu/item-form.tsx:708
+#: app/components/menu/item-form.tsx:753
 msgid "Suggest as an add-on at checkout."
 msgstr "اقترح كإضافة عند الدفع."
 
@@ -8797,9 +9508,21 @@ msgstr "تبديل المتغير"
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:288
+msgid "Sync"
+msgstr "مزامنة"
+
+#: app/components/settings/cards/organization/review-integrations-card.tsx:141
+msgid "Sync details"
+msgstr "مزامنة التفاصيل"
+
 #: app/components/settings/cards/organization/shop-card.tsx:192
 msgid "Sync hosted product"
 msgstr "مزامنة المنتج المستضاف"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:215
+msgid "Synced {lastSync}"
+msgstr "تمت المزامنة {lastSync}"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:345
 #~ msgid "System"
@@ -8876,7 +9599,7 @@ msgstr "أخبرني المزيد"
 #~ msgid "Tell us about your organization..."
 #~ msgstr "أخبرنا عن منظمتك..."
 
-#: app/routes/organizations+/create.tsx:803
+#: app/routes/organizations+/create.tsx:1037
 msgid "Tell us about your restaurant..."
 msgstr "أخبرنا عن مطعمك..."
 
@@ -8884,7 +9607,7 @@ msgstr "أخبرنا عن مطعمك..."
 #~ msgid "Tell us more about your organization"
 #~ msgstr "أخبرنا المزيد عن منظمتك"
 
-#: app/routes/organizations+/create.tsx:1022
+#: app/routes/organizations+/create.tsx:1256
 msgid "Tell us more about your restaurant"
 msgstr "أخبرنا المزيد عن مطعمك"
 
@@ -9011,8 +9734,7 @@ msgstr "المسار في موقعك القديم الذي يطلبه الزوا
 msgid "Theme"
 msgstr "السمة"
 
-#: app/components/app-sidebar.tsx:74
-#: app/components/app-sidebar.tsx:75
+#: app/components/app-sidebar.tsx:76
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -9060,7 +9782,7 @@ msgstr "هذا الجهاز"
 #~ msgid "This group will be revealed whenever a customer chooses the selected parent option."
 #~ msgstr "سيتم إظهار هذه المجموعة عند اختيار العميل للخيار الرئيسي المحدد."
 
-#: app/routes/organizations+/create.tsx:1025
+#: app/routes/organizations+/create.tsx:1259
 msgid "This helps us customize your experience and provide better insights."
 msgstr "يساعدنا هذا في تخصيص تجربتك وتقديم رؤى أفضل."
 
@@ -9076,10 +9798,23 @@ msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائ�
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
 
+#: app/components/menu/item-variations.tsx:262
+msgid "This item has reached the 100 combination limit."
+msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
+
 #: app/components/menu/modifier-form.tsx:1477
 msgid "This modifier group is triggered when customers select these modifier items:"
 msgstr "يتم تفعيل مجموعة المعدِّلات هذه عندما يختار العملاء عناصر التعديل التالية:"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:633
+
+#: app/components/menu/item-variations.tsx:110
+msgid "this option"
+msgstr "هذا الخيار"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:252
+msgid "This platform is import-only. Menu changes stay here."
+msgstr "تدعم هذه المنصة الاستيراد فقط. تبقى تغييرات القائمة هنا."
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:637
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 msgstr "لا يتضمن هذا الرد عنوان بريد إلكتروني. يمكنك مراجعة تفاصيله، لكن لا يمكن الإجابة عليه بالبريد الإلكتروني."
 
@@ -9107,11 +9842,15 @@ msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً
 msgid "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
 msgstr "سيؤدي هذا إلى حذف التصنيف نهائيًا. لن تُحذف العناصر في هذا التصنيف، لكنها ستصبح غير مسندة."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:501
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:278
+msgid "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
+msgstr "سيؤدي هذا إلى حذف هذا الطرح نهائيًا وإزالة جدول الاستلام وحدود المخزون الخاصة به. لا يمكن التراجع عن هذا الإجراء."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:511
 msgid "This will permanently delete this menu item and remove it from all menus and categories."
 msgstr "سيؤدي هذا إلى حذف عنصر القائمة نهائيًا وإزالته من جميع القوائم والتصنيفات."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:390
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:393
 msgid "This will permanently delete this menu. Categories and items associated with it will remain intact."
 msgstr "سيؤدي هذا إلى حذف القائمة نهائيًا. ستبقى التصنيفات والعناصر المرتبطة بها كما هي."
 
@@ -9181,7 +9920,7 @@ msgstr "العنوان"
 msgid "Titles and section headings."
 msgstr "العناوين وعناوين الأقسام."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:508
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:512
 msgid "To: {recipient}"
 msgstr "إلى: {recipient}"
 
@@ -9224,6 +9963,14 @@ msgstr "إضافة"
 #: app/components/notes-chart.tsx:66
 msgid "Total"
 msgstr "الإجمالي"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:467
+msgid "Total Available"
+msgstr "إجمالي المتوفر"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:647
+msgid "Total Section Inventory"
+msgstr "إجمالي مخزون القسم"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
 msgid "Transfers search rank"
@@ -9268,7 +10015,6 @@ msgstr "محفّز"
 msgid "Trigger a child modifier group when a guest selects one of these options."
 msgstr "فعِّل مجموعة إضافات فرعية عندما يختار الضيف أحد هذه الخيارات."
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:380
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:376
 msgid "Trigger a test execution for a specific customer ID."
 msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
@@ -9288,6 +10034,10 @@ msgstr "نوع حدث المحفّز"
 #: ../../packages/marketing-workflow/src/validation.ts:16
 msgid "Trigger event type is required."
 msgstr "نوع حدث المحفّز مطلوب."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:950
+msgid "Trigger timing"
+msgstr "توقيت الإشعار"
 
 #: app/components/locations/location-form.tsx:616
 msgid "Trigger when order exceeds ({thresholdUnit})"
@@ -9317,6 +10067,10 @@ msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 #~ msgid "Triggers sub-groups:"
 #~ msgstr "يُفعّل مجموعات فرعية:"
 
+#: app/components/mailbox/reviews-tab.tsx:74
+msgid "TripAdvisor"
+msgstr "TripAdvisor"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
@@ -9331,11 +10085,11 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your filters or clear them to see all categories."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل التصنيفات."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:279
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:283
 msgid "Try adjusting your filters or clear them to see all items."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل العناصر."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:229
 msgid "Try adjusting your filters or clear them to see all menus."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل القوائم."
 
@@ -9357,7 +10111,8 @@ msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
 #: app/components/ai/global-ai-panel.tsx:86
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:326
+#: app/components/mailbox/reviews-tab.tsx:414
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:330
 msgid "Try again"
 msgstr "حاول مرة أخرى"
 
@@ -9366,7 +10121,7 @@ msgstr "حاول مرة أخرى"
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:346
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:350
 msgid "Try another name, email, or message."
 msgstr "جرّب اسمًا أو بريدًا إلكترونيًا أو رسالة أخرى."
 
@@ -9382,7 +10137,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:243
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:329
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3926
@@ -9406,12 +10161,23 @@ msgstr "أوبر إيتس"
 msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
 
+#: app/components/mailbox/reviews-tab.tsx:192
+#: app/components/mailbox/reviews-tab.tsx:214
+msgid "Unable to load reviews."
+msgstr "تعذر تحميل التقييمات."
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:119
+msgid "Unable to load submissions. Try again."
+msgstr "تعذّر تحميل الردود. حاول مرة أخرى."
+
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:359
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:370
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:380
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:485
 msgid "Unassigned"
 msgstr "غير مسند"
 
+#: app/components/menu/item-variations.tsx:513
+#: app/components/menu/item-variations.tsx:534
 #: app/components/menu/menu-availability-card.tsx:231
 #: app/components/menu/menu-availability-card.tsx:279
 #: app/components/menu/menu-status-badge.tsx:59
@@ -9422,6 +10188,8 @@ msgstr "غير متوفر"
 msgid "Unavailable until"
 msgstr "غير متوفر حتى"
 
+#: app/components/menu/item-variations.tsx:511
+#: app/components/menu/item-variations.tsx:528
 #: app/components/menu/menu-availability-card.tsx:229
 #: app/components/menu/menu-availability-card.tsx:230
 #: app/components/menu/menu-availability-card.tsx:271
@@ -9444,9 +10212,6 @@ msgstr "تحت"
 #: app/components/locations/delivery-zone-map.tsx:382
 msgid "Undo"
 msgstr "تراجع"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:115
-msgid "Unable to load submissions. Try again."
-msgstr "تعذّر تحميل الردود. حاول مرة أخرى."
 
 #: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Unedited boilerplate text detected in email body."
@@ -9470,6 +10235,14 @@ msgstr "خطأ غير معروف"
 msgid "Unknown intent"
 msgstr "نية غير معروفة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:796
+msgid "Unlimited"
+msgstr "غير محدود"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:971
+msgid "Unlisted"
+msgstr "غير مدرج"
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:138
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
@@ -9480,7 +10253,7 @@ msgstr "مستلم بدون اسم"
 msgid "Unpublish"
 msgstr "إلغاء النشر"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:396
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:400
 msgid "Unread"
 msgstr "غير مقروء"
 
@@ -9489,7 +10262,7 @@ msgstr "غير مقروء"
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:297
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:301
 msgid "Unread only"
 msgstr "غير المقروء فقط"
 
@@ -9501,6 +10274,14 @@ msgstr "تغييرات غير محفوظة"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
+
+#: app/components/menu/item-variations.tsx:590
+msgid "Until {returnTime}"
+msgstr "حتى {returnTime}"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:266
+msgid "Untitled drop"
+msgstr "طرح بدون عنوان"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:882
 #: app/routes/_app+/$orgSlug_+/media.tsx:1257
@@ -9541,6 +10322,10 @@ msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات �
 msgid "Update Profile Photo"
 msgstr "تحديث صورة الملف الشخصي"
 
+#: app/components/mailbox/reviews-tab.tsx:732
+msgid "Update reply"
+msgstr "تحديث الرد"
+
 #: app/components/roles/tenant-role-access-manager.tsx:315
 msgid "Update this role’s name, description, and permissions."
 msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
@@ -9567,8 +10352,7 @@ msgstr "تم تحديث القسم"
 msgid "Updating section"
 msgstr "تحديث القسم"
 
-#: app/components/app-sidebar.tsx:90
-#: app/components/app-sidebar.tsx:91
+#: app/components/app-sidebar.tsx:92
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr "ترقية"
@@ -9617,7 +10401,7 @@ msgstr "تحميل جديد"
 msgid "Upload photo"
 msgstr "تحميل صورة"
 
-#: app/routes/organizations+/create.tsx:697
+#: app/routes/organizations+/create.tsx:931
 msgid "Upload your logo"
 msgstr "تحميل شعارك"
 
@@ -9669,6 +10453,14 @@ msgstr "الاستخدام"
 msgid "Use a backup code instead"
 msgstr "استخدم رمز احتياطي بدلاً من ذلك"
 
+#: app/components/menu/item-variations.tsx:192
+msgid "Use a different option name."
+msgstr "استخدم اسم خيار مختلفًا."
+
+#: app/components/menu/item-variations.tsx:254
+msgid "Use a different value."
+msgstr "استخدم قيمة مختلفة."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2560
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
 msgstr "استخدم صورة بحجم 1200×630 بكسل على الأقل (1.91:1) للحصول على أفضل النتائج."
@@ -9681,6 +10473,10 @@ msgstr "استخدم أي تطبيق مصادقة على جهازك المحمو
 #: app/routes/_auth+/verify.tsx:191
 msgid "Use authenticator app instead"
 msgstr "استخدم تطبيق المصادقة بدلاً من ذلك"
+
+#: app/components/menu/item-variations.tsx:355
+msgid "Use item photo"
+msgstr "استخدام صورة الصنف"
 
 #: app/routes/_auth+/login.tsx:609
 msgid "Use password instead"
@@ -9730,11 +10526,27 @@ msgstr "اسم المستخدم أو البريد الإلكتروني مطلو�
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
+#: app/components/menu/item-variations.tsx:206
+msgid "Values"
+msgstr "القيم"
+
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
 msgid "Variables"
 msgstr "المتغيرات"
 
-#: app/components/menu/item-form.tsx:561
+#: app/components/menu/item-variations.tsx:298
+msgid "Variant"
+msgstr "التنويع"
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:373
+msgid "variations"
+msgstr "تنويعات"
+
+#: app/components/menu/item-variations.tsx:142
+msgid "Variations"
+msgstr "التنويعات"
+
+#: app/components/menu/item-form.tsx:606
 #: app/components/menu/modifier-form.tsx:1715
 #: app/components/menu/modifier-form.tsx:2070
 #: app/components/menu/option-form.tsx:648
@@ -9837,7 +10649,11 @@ msgstr "عرض الملاحظات الخاصة"
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:401
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:248
+msgid "View storefront"
+msgstr "عرض المتجر"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:405
 msgid "View submission details"
 msgstr "عرض تفاصيل الرد"
 
@@ -9920,8 +10736,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:361
-#: app/components/app-sidebar.tsx:335
+#: app/components/app-sidebar.tsx:376
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -9943,13 +10758,14 @@ msgstr "محرر الموقع والإعلانات والصفحات العامة
 msgid "Website SEO"
 msgstr "تحسين محركات البحث للموقع"
 
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:480
+msgid "Website visitor"
+msgstr "زائر الموقع"
+
 #: app/components/locations/availability-picker.tsx:114
 msgid "Weekdays"
 msgstr "أيام الأسبوع"
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:383
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:476
-msgid "Website visitor"
-msgstr "زائر الموقع"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:293
 msgid "weeks"
@@ -10000,7 +10816,8 @@ msgstr "بماذا يمكنك مساعدتي؟"
 msgid "What else should I know?"
 msgstr "ماذا يجب أن أعرف أيضاً؟"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:615
+#: app/components/mailbox/reviews-tab.tsx:766
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:619
 msgid "What should your reply include? (optional)"
 msgstr "ما الذي تريد تضمينه في ردك؟ (اختياري)"
 
@@ -10016,6 +10833,10 @@ msgstr "ما الذي ترغب في جمعه؟"
 msgid "What would you like to know?"
 msgstr "ماذا تريد أن تعرف؟"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:644
+msgid "What you are selling"
+msgstr "ما تبيعه"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:436
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
@@ -10025,10 +10846,13 @@ msgstr "ما الذي ينقص؟"
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "عندما يختار العميل هذا الخيار، أظهر مجموعات الإضافات الشرطية هذه (مثل اختيار «بطاطس مقلية» يفتح «حجم البطاطس»)."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:577
+msgid "When orders open and close"
+msgstr "متى تفتح الطلبات وتغلق"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "When prompted, authorize the connection in your browser"
@@ -10086,6 +10910,10 @@ msgstr "العرض"
 msgid "Will redirect to"
 msgstr "ستتم إعادة التوجيه إلى"
 
+#: app/routes/organizations+/create.tsx:1502
+msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+msgstr "عند إعداد بيانات اعتماد المنصة، يربط OAuth متجرك الفعلي. وبدونها، تتوفر بيئة الاختبار المحلية فقط."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:394
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
@@ -10106,6 +10934,10 @@ msgstr "جارٍ العمل على ذلك"
 #~ msgid "Write a reply..."
 #~ msgstr "اكتب رداً..."
 
+#: app/components/mailbox/reviews-tab.tsx:669
+msgid "Write a response to this review…"
+msgstr "اكتب رداً على هذا التقييم…"
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:331
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
@@ -10122,7 +10954,7 @@ msgstr "اكتب رسالتك"
 msgid "Write your note content..."
 msgstr "اكتب محتوى ملاحظتك..."
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:543
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:547
 msgid "Write your reply…"
 msgstr "اكتب ردك…"
 
@@ -10135,9 +10967,13 @@ msgstr "اكتب رسالتك النصية"
 #~ msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
 
 #: app/components/settings/cards/organization/billing-card.tsx:211
-#: app/routes/organizations+/create.tsx:919
+#: app/routes/organizations+/create.tsx:1153
 msgid "Yearly"
 msgstr "سنوي"
+
+#: app/components/mailbox/reviews-tab.tsx:73
+msgid "Yelp"
+msgstr "Yelp"
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:58
 msgid "Yes"
@@ -10206,7 +11042,7 @@ msgstr "يجب أن توافق على شروط الخدمة وسياسة الخ�
 msgid "You receive"
 msgstr "تستلم"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:339
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:343
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
 
@@ -10242,7 +11078,7 @@ msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن ت
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
 
-#: app/routes/organizations+/create.tsx:1080
+#: app/routes/organizations+/create.tsx:1314
 msgid "Your department"
 msgstr "قسمك"
 
@@ -10294,6 +11130,10 @@ msgstr "ترتيبك"
 msgid "Your referral link"
 msgstr "رابط الإحالة الخاص بك"
 
+#: app/components/mailbox/reviews-tab.tsx:643
+msgid "Your reply"
+msgstr "ردك"
+
 #: app/components/settings/cards/organization/billing-card.tsx:120
 msgid "Your restaurant's current plan and billing status"
 msgstr "خطة مطعمك الحالية وحالة الفوترة"
@@ -10329,123 +11169,3 @@ msgstr "الرموز البريدية (مفصولة بفواصل أو مسافا
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "اسم المنطقة"
-
-msgid "Connect your POS"
-msgstr "اربط نظام نقاط البيع"
-
-msgid "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
-msgstr "اربط نظام نقاط البيع أو منصة توصيل للحفاظ على تحديث قائمتك. يمكنك القيام بذلك لاحقًا من الإعدادات."
-
-msgid "Finish onboarding"
-msgstr "إنهاء الإعداد"
-
-msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
-msgstr "عند إعداد بيانات اعتماد المنصة، يربط OAuth متجرك الفعلي. وبدونها، تتوفر بيئة الاختبار المحلية فقط."
-
-msgid "From"
-msgstr "ابتداءً من"
-
-msgid "variations"
-msgstr "تنويعات"
-
-msgid "Just now"
-msgstr "الآن"
-
-msgid "Connect your point of sale and delivery platforms to sync your menu."
-msgstr "اربط أنظمة نقاط البيع ومنصات التوصيل لمزامنة قائمتك."
-
-msgid "Connected"
-msgstr "متصل"
-
-msgid "Sandbox"
-msgstr "بيئة اختبار"
-
-msgid "Point of sale"
-msgstr "نقطة بيع"
-
-msgid "Synced {lastSync}"
-msgstr "تمت المزامنة {lastSync}"
-
-msgid "Import menu"
-msgstr "استيراد القائمة"
-
-msgid "This platform is import-only. Menu changes stay here."
-msgstr "تدعم هذه المنصة الاستيراد فقط. تبقى تغييرات القائمة هنا."
-
-msgid "Create a menu to sync it to this platform."
-msgstr "أنشئ قائمة لمزامنتها مع هذه المنصة."
-
-msgid "Sync"
-msgstr "مزامنة"
-
-msgid "DoorDash store ID"
-msgstr "معرّف متجر DoorDash"
-
-msgid "From DoorDash Portal or onboarding"
-msgstr "من بوابة DoorDash أو أثناء الإعداد"
-
-msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
-msgstr "متجر DoorDash واحد لكل اتصال. استخدم معرّف المتجر الذي تعيّنه DoorDash بعد الإعداد (SSIO أو إعداد المتجر)."
-
-msgid "this option"
-msgstr "هذا الخيار"
-
-msgid "Remove {optionName}? Its combinations will be removed when you save the item."
-msgstr "هل تريد إزالة {optionName}؟ ستُحذف تركيباته عند حفظ الصنف."
-
-msgid "Variations"
-msgstr "التنويعات"
-
-msgid "Options like size or color. Price and availability per combination."
-msgstr "خيارات مثل الحجم أو اللون. سعر وتوفر لكل تركيبة."
-
-msgid "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
-msgstr "مثلًا، أضف الحجم بقيمتي صغير ومتوسط، ثم اللون بقيمتي أسود وأزرق. تظهر التركيبات تلقائيًا."
-
-msgid "Option name"
-msgstr "اسم الخيار"
-
-msgid "Use a different option name."
-msgstr "استخدم اسم خيار مختلفًا."
-
-msgid "Values"
-msgstr "القيم"
-
-msgid "Use a different value."
-msgstr "استخدم قيمة مختلفة."
-
-msgid "This item has reached the 100 combination limit."
-msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
-
-msgid "Combinations"
-msgstr "التركيبات"
-
-msgid "Variant"
-msgstr "التنويع"
-
-msgid "Availability"
-msgstr "التوفر"
-
-msgid "Choose photo for {name}"
-msgstr "اختر صورة لـ {name}"
-
-msgid "Use item photo"
-msgstr "استخدام صورة الصنف"
-
-msgid "Price for {name}"
-msgstr "سعر {name}"
-
-msgid "Availability for {name}"
-msgstr "توفر {name}"
-
-msgid "Select a return time"
-msgstr "اختر وقت العودة"
-
-msgid "Return time for {name}"
-msgstr "وقت عودة {name}"
-
-msgid "Until {returnTime}"
-msgstr "حتى {returnTime}"
-
-msgid "Combination prices are set below. Sales tax applies to every combination."
-msgstr "تُحدَّد أسعار التركيبات أدناه. تُطبَّق ضريبة المبيعات على كل تركيبة."

@@ -308,11 +308,23 @@ export abstract class BaseIntegrationProvider implements IntegrationProvider {
 	}
 }
 
+let defaultInitializer: (() => void) | null = null
+
+export function registerDefaultInitializer(fn: () => void): void {
+	defaultInitializer = fn
+}
+
 /**
  * Registry for managing integration providers
  */
 export class ProviderRegistry {
 	private providers = new Map<string, IntegrationProvider>()
+
+	private ensureInitialized(): void {
+		if (this.providers.size === 0 && defaultInitializer) {
+			defaultInitializer()
+		}
+	}
 
 	/**
 	 * Register a new integration provider
@@ -329,7 +341,12 @@ export class ProviderRegistry {
 	 * @throws Error if provider not found
 	 */
 	get(name: string): IntegrationProvider {
-		const provider = this.providers.get(name)
+		this.ensureInitialized()
+		let provider = this.providers.get(name)
+		if (!provider && defaultInitializer) {
+			defaultInitializer()
+			provider = this.providers.get(name)
+		}
 		if (!provider) {
 			throw new Error(`Integration provider '${name}' not found`)
 		}
@@ -341,6 +358,7 @@ export class ProviderRegistry {
 	 * @returns Array of all providers
 	 */
 	getAll(): IntegrationProvider[] {
+		this.ensureInitialized()
 		return Array.from(this.providers.values())
 	}
 
@@ -359,6 +377,7 @@ export class ProviderRegistry {
 	 * @returns True if provider is registered
 	 */
 	has(name: string): boolean {
+		this.ensureInitialized()
 		return this.providers.has(name)
 	}
 

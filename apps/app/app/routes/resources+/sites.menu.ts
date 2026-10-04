@@ -27,6 +27,7 @@ import {
 	eq,
 	inArray,
 	lte,
+	ne,
 	or,
 	Organization,
 	OrganizationLocation,
@@ -425,6 +426,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.where(
 			and(
 				eq(OrganizationMenu.organizationId, orgId),
+				ne(OrganizationMenu.menuType, 'drop'),
 				isEntityAvailable(
 					OrganizationMenu.availabilityStatus,
 					OrganizationMenu.unavailableUntil,

@@ -2,7 +2,7 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { db, eq, asc, desc, and, OrganizationMenu } from '@repo/database'
+import { db, eq, ne, asc, desc, and, OrganizationMenu } from '@repo/database'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -123,7 +123,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const menus = await db.query.OrganizationMenu.findMany({
-		where: eq(OrganizationMenu.organizationId, organization.id),
+		where: and(
+			eq(OrganizationMenu.organizationId, organization.id),
+			ne(OrganizationMenu.menuType, 'drop'),
+		),
 		with: {
 			categoryAssignments: true,
 		},

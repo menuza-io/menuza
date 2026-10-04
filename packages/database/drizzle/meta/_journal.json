@@ -127,6 +127,13 @@
 			"when": 1790477935868,
 			"tag": "0017_pos_integrations_and_variations",
 			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "6",
+			"when": 1790600000000,
+			"tag": "0018_menu_drops_system",
+			"breakpoints": true
 		}
 	]
 }

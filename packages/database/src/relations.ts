@@ -77,6 +77,10 @@ import {
 	OrganizationMenuModifierOption,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
+	OrganizationDrop,
+	OrganizationDropPickupWindow,
+	OrganizationDropInventory,
+	OrganizationDropReminder,
 } from './schema.ts'
 
 export const NoteRelations = relations(Note, ({ one, many }) => ({
@@ -275,6 +279,7 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	menuModifierGroups: many(OrganizationMenuModifierGroup),
 	menuOptions: many(OrganizationMenuOption),
 	menuLocationOverrides: many(OrganizationMenuLocationOverride),
+	drops: many(OrganizationDrop),
 }))
 
 export const OrganizationLocationRelations = relations(
@@ -286,6 +291,7 @@ export const OrganizationLocationRelations = relations(
 		}),
 		menuOverrides: many(OrganizationMenuLocationOverride),
 		integrations: many(Integration),
+		dropPickupWindows: many(OrganizationDropPickupWindow),
 	}),
 )
 
@@ -912,6 +918,7 @@ export const OrganizationMenuRelations = relations(
 			references: [Organization.id],
 		}),
 		categoryAssignments: many(OrganizationMenuCategoryAssignment),
+		drops: many(OrganizationDrop),
 	}),
 )
 
@@ -1086,3 +1093,54 @@ export const OrganizationMenuOptionNestedModifierGroupAssignmentRelations =
 			references: [OrganizationMenuModifierGroup.id],
 		}),
 	}))
+
+export const OrganizationDropRelations = relations(
+	OrganizationDrop,
+	({ one, many }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationDrop.organizationId],
+			references: [Organization.id],
+		}),
+		menu: one(OrganizationMenu, {
+			fields: [OrganizationDrop.menuId],
+			references: [OrganizationMenu.id],
+		}),
+		pickupWindows: many(OrganizationDropPickupWindow),
+		inventoryOverrides: many(OrganizationDropInventory),
+		reminders: many(OrganizationDropReminder),
+	}),
+)
+
+export const OrganizationDropPickupWindowRelations = relations(
+	OrganizationDropPickupWindow,
+	({ one }) => ({
+		drop: one(OrganizationDrop, {
+			fields: [OrganizationDropPickupWindow.dropId],
+			references: [OrganizationDrop.id],
+		}),
+		location: one(OrganizationLocation, {
+			fields: [OrganizationDropPickupWindow.locationId],
+			references: [OrganizationLocation.id],
+		}),
+	}),
+)
+
+export const OrganizationDropInventoryRelations = relations(
+	OrganizationDropInventory,
+	({ one }) => ({
+		drop: one(OrganizationDrop, {
+			fields: [OrganizationDropInventory.dropId],
+			references: [OrganizationDrop.id],
+		}),
+	}),
+)
+
+export const OrganizationDropReminderRelations = relations(
+	OrganizationDropReminder,
+	({ one }) => ({
+		drop: one(OrganizationDrop, {
+			fields: [OrganizationDropReminder.dropId],
+			references: [OrganizationDrop.id],
+		}),
+	}),
+)

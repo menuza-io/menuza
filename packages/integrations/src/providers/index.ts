@@ -2,15 +2,8 @@
  * Integration providers registry and initialization
  */
 
-import { providerRegistry } from '../provider'
-import {
-	CloverProvider,
-	DoorDashProvider,
-	SquareProvider,
-	ToastProvider,
-	UberEatsProvider,
-	createPosProviders,
-} from '../pos/providers'
+import { providerRegistry, registerDefaultInitializer } from '../provider'
+import { createPosProviders } from '../pos/providers'
 import { SlackProvider } from './slack/provider'
 import { JiraProvider } from './jira/provider'
 import { LinearProvider } from './linear/provider'
@@ -21,6 +14,11 @@ import { AsanaProvider } from './asana/provider'
 import { TrelloProvider } from './trello/provider'
 import { GitHubProvider } from './github/provider'
 import { GoogleBusinessProfileProvider } from './google-business-profile/provider'
+import { YelpProvider } from './yelp/provider'
+import { TripAdvisorProvider } from './tripadvisor/provider'
+import { DeliverooProvider } from './deliveroo/provider'
+import { JustEatProvider } from './just-eat/provider'
+import { OpenTableProvider } from './opentable/provider'
 
 /**
  * Initialize and register all available integration providers
@@ -53,6 +51,11 @@ export function initializeProviders(): void {
 	// Register GitHub provider
 	providerRegistry.register(new GitHubProvider())
 	providerRegistry.register(new GoogleBusinessProfileProvider())
+	providerRegistry.register(new YelpProvider())
+	providerRegistry.register(new TripAdvisorProvider())
+	providerRegistry.register(new DeliverooProvider())
+	providerRegistry.register(new JustEatProvider())
+	providerRegistry.register(new OpenTableProvider())
 
 	// Register POS and delivery providers
 	for (const provider of createPosProviders()) {
@@ -62,6 +65,8 @@ export function initializeProviders(): void {
 	// Future providers can be registered here
 	// providerRegistry.register(new TeamsProvider())
 }
+
+registerDefaultInitializer(initializeProviders)
 
 /**
  * Get the POS and delivery providers shown on the integrations page.
@@ -175,6 +180,19 @@ export { AsanaProvider }
 export { TrelloProvider }
 export { GitHubProvider }
 export { GoogleBusinessProfileProvider }
+export { YelpProvider }
+export { TripAdvisorProvider }
+export { DeliverooProvider }
+export { JustEatProvider }
+export { OpenTableProvider }
+export {
+	getAvailableReviewProviders,
+	listUnifiedReviews,
+	replyToUnifiedReview,
+	type UnifiedReview,
+	type UnifiedReviewPageTokens,
+	type ReviewProviderDisplayInfo,
+} from './unified-reviews'
 export {
 	CloverProvider,
 	DoorDashProvider,

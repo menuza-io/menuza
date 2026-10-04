@@ -37,7 +37,6 @@ launch.workers-builds.json
 
 # generated files
 /app/components/ui/icons
-packages/ui/components/icons/
 .react-router/
 
 dist
