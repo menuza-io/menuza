@@ -7,7 +7,12 @@ import {
 	createRequestHandler,
 	RouterContextProvider,
 } from 'react-router'
-import { initVarlockEnv } from 'varlock/env'
+import { startDevMocksIfEnabled } from './dev-mocks.ts'
+import { installDevS3Mock } from './dev-s3-mock.ts'
+import { applyWorkerEnv } from './worker-env.ts'
+
+// Durable Object classes must be exported from the Worker entry.
+export { ChatOrg } from './chat-org.ts'
 
 const cloudflareContext = createContext<{
 	env: Env
@@ -19,48 +24,27 @@ type RequestHandler = ReturnType<typeof createRequestHandler>
 let requestHandler: RequestHandler | undefined
 let requestHandlerPromise: Promise<RequestHandler> | undefined
 
-function applyWorkerEnv(env: Env) {
-	// Cloudflare bindings are the production source of truth. Keep the Varlock
-	// proxy and process.env aligned for shared packages that read ENV.* while
-	// avoiding any build-time environment snapshot in the Worker bundle.
-	const existingConfig = (globalThis as any).__varlockLoadedEnv?.config ?? {}
-	const newConfig: Record<string, { value: unknown }> = {}
-	for (const [key, value] of Object.entries(env)) {
-		if (
-			typeof value === 'string' ||
-			typeof value === 'number' ||
-			typeof value === 'boolean'
-		) {
-			// Preserve Varlock's sensitivity metadata when a legacy bootstrap blob is
-			// present, but never retain a value that is absent from Cloudflare `env`.
-			newConfig[key] = { ...existingConfig[key], value: String(value) }
-			if (typeof process !== 'undefined' && process.env) {
-				process.env[key] = String(value)
-			}
-		}
-	}
-	;(globalThis as any).__varlockLoadedEnv = {
-		...(globalThis as any).__varlockLoadedEnv,
-		config: newConfig,
-	}
-	initVarlockEnv({ allowFail: true })
-}
-
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		applyWorkerEnv(env)
+		installDevS3Mock(env)
+		await startDevMocksIfEnabled()
 		const [
 			cacheModule,
 			databaseModule,
 			linguiModule,
 			siteDataModule,
 			tenantApiModule,
+			chatNamespaceModule,
+			chatUpgradeModule,
 		] = await Promise.all([
 			import('@repo/cache'),
 			import('@repo/database'),
 			import('../app/modules/lingui/lingui.server.ts'),
 			import('../app/utils/sites/kv-cache.server.ts'),
 			import('../app/utils/tenant-api-service.server.ts'),
+			import('../app/utils/chat/namespace.server.ts'),
+			import('../app/utils/chat/upgrade.server.ts'),
 		])
 		requestHandlerPromise ??= import('virtual:react-router/server-build').then(
 			(build) => {
@@ -77,6 +61,13 @@ export default {
 		if ((env as any).TENANT_API) {
 			tenantApiModule.bindTenantApiService((env as any).TENANT_API)
 		}
+		chatNamespaceModule.bindChatNamespace(env.CHAT_ORG)
+
+		// Chat WebSockets bypass the React Router handler: they are authenticated
+		// here and forwarded to the organization's Durable Object.
+		const chatResponse = await chatUpgradeModule.handleChatRequest(request)
+		if (chatResponse) return chatResponse
+
 		await linguiModule.ensureLinguiRequestLocale(request)
 
 		const loadContext = new RouterContextProvider()

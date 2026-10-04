@@ -85,10 +85,13 @@ const RESERVED_SUBDOMAINS = new Set([
 
 const SITES_TARGET = 'http://localhost:3008'
 
+const appUpstream =
+	process.env.APP_DEV_UPSTREAM?.trim() || 'http://localhost:3001'
+
 // Target mappings
 const targets = {
 	[`${domain}:${port}`]: 'http://localhost:3002',
-	[`app.${domain}:${port}`]: 'http://localhost:3001',
+	[`app.${domain}:${port}`]: appUpstream,
 	[`studio.${domain}:${port}`]: 'http://localhost:3003',
 	[`docs.${domain}:${port}`]: 'http://localhost:3004',
 	[`admin.${domain}:${port}`]: 'http://localhost:3005',
@@ -264,4 +267,5 @@ server.on('upgrade', upgradeHandler)
 
 server.listen(port, '127.0.0.1', () => {
 	console.log(`HTTPS Reverse proxy listening on port ${port}`)
+	console.log(`  app → ${appUpstream}`)
 })

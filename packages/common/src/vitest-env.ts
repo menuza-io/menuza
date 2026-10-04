@@ -20,4 +20,4 @@ const envProxy = new Proxy(
 )
 
 /** Reads `process.env` with fallback to Varlock's resolved ENV. */
-export const ENV = envProxy
+export const ENV = envProxy as typeof _ENV

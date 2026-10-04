@@ -205,6 +205,22 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Create, edit, publish, and delete marketing automations',
 	},
+	{
+		id: 'org_perm_update_chat_any',
+		action: 'update',
+		entity: 'chat',
+		access: 'any',
+		context: 'organization',
+		description: 'Create and manage team chat channels and their access',
+	},
+	{
+		id: 'org_perm_create_chat_group',
+		action: 'create',
+		entity: 'chat',
+		access: 'group',
+		context: 'organization',
+		description: 'Create group chats and add members',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

@@ -28,6 +28,7 @@ import { z } from 'zod'
 import { InvitationsCard } from '#app/components/settings/cards/organization/invitations-card.tsx'
 import { MembersCard } from '#app/components/settings/cards/organization/members-card.tsx'
 
+import { notifyChat } from '#app/utils/chat/namespace.server.ts'
 import {
 	createOrganizationInvitation,
 	validateOrganizationInviteRoles,
@@ -365,6 +366,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				return Response.json({ error: 'Member not found' }, { status: 404 })
 			}
 
+			// Drop the removed member's open chat sockets right away instead of
+			// waiting for the room's ~30s access re-check.
+			await notifyChat(organization.id, (room) => room.evictUser(memberUserId))
+
 			try {
 				await updateSeatQuantity(organization.id)
 			} catch (error) {
@@ -511,6 +516,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					cacheError,
 				)
 			}
+			// A role change can alter chat access and moderation rights; make the
+			// room re-read them now. The member stays connected.
+			await notifyChat(organization.id, (room) => room.invalidate())
 			await auditService.log({
 				action: AuditAction.ORG_MEMBER_ROLE_CHANGED,
 				userId,

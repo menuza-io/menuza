@@ -134,6 +134,13 @@
 			"when": 1790600000000,
 			"tag": "0018_menu_drops_system",
 			"breakpoints": true
+		},
+		{
+			"idx": 19,
+			"version": "6",
+			"when": 1791125924019,
+			"tag": "0019_team_chat",
+			"breakpoints": true
 		}
 	]
 }

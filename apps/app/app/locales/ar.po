@@ -34,7 +34,11 @@ msgstr "المساعد الذكي"
 
 #: app/components/settings/cards/organization/billing-card.tsx:438
 msgid "(${annualPrice} billed annually per user)"
-msgstr "(${annualPrice} يُفوتر سنوياً لكل مستخدم)"
+msgstr "(${annualPrice} يُفوتر سنوياً لكل مستخدم)<<<<<<< HEAD"
+
+#: app/components/chat/chat-message.tsx:97
+msgid "(edited)"
+msgstr "(تم التعديل)"
 
 #: app/components/locations/address-autocomplete.tsx:322
 msgid "(Tied to Canada address)"
@@ -42,7 +46,11 @@ msgstr "(مرتبط بعنوان في كندا)"
 
 #: app/components/locations/address-autocomplete.tsx:324
 msgid "(Tied to US address)"
-msgstr "(مرتبط بعنوان في الولايات المتحدة)"
+msgstr "(مرتبط بعنوان في الولايات المتحدة)======="
+
+#: app/components/chat/chat-group-settings-dialog.tsx:95
+msgid "(you)"
+msgstr "(أنت)>>>>>>> upstream/main"
 
 #. placeholder {0}: organization._count.users
 #: app/components/settings/cards/organization/billing-card.tsx:159
@@ -134,17 +142,25 @@ msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
+#: app/components/app-sidebar.tsx:316
+#~ msgid "{chatUnreadLabelCount} unread"
+#~ msgstr "عدد غير المقروء: {chatUnreadLabelCount}"
+
 #: app/components/website/form-builder-sidebar.tsx:228
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار واحد} two {خياران} few {# خيارات} many {# خياراً} other {# خيار}}"
 
 #: app/routes/mcp+/authorize.tsx:309
 msgid "{clientName} is requesting access to your organization data"
-msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
+msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
 msgid "{count} locations"
-msgstr "{count} فروع"
+msgstr "{count} فروع======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:118
+msgid "{days} days"
+msgstr "{days} يومًا>>>>>>> upstream/main"
 
 #: app/components/ui/notification-bell.tsx:61
 msgid "{days}d ago"
@@ -170,6 +186,10 @@ msgstr "{field}"
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr "{first}، {second}، +{remainingCount} أخرى"
 
+#: app/components/chat/chat-view.tsx:640
+msgid "{firstTypingName} is typing…"
+msgstr "{firstTypingName} يكتب…"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:299
 msgid "{formCount} forms"
 msgstr "{formCount} نموذج"
@@ -185,15 +205,23 @@ msgstr "{int} دقيقة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:221
 msgid "{journeyName} (Copy)"
-msgstr "{journeyName} (نسخة)"
+msgstr "{journeyName} (نسخة)<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:344
+#: app/components/chat/chat-sidebar-link.tsx:21
+msgid "{label}, {total} unread"
+msgstr "{label}، {total} غير مقروءة"
+
+#: app/components/app-sidebar.tsx:348
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "عدد غير المقروء: {mailboxUnreadLabelCount}"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:59
+msgid "{memberCount, plural, one {# person} other {# people}}"
+msgstr "{memberCount, plural, zero {لا يوجد أشخاص} one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصاً} other {# شخص}}>>>>>>> upstream/main"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:770
 msgid "{min} minutes"
-msgstr "{min} دقيقة"
+msgstr "{min} دقيقة======="
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -252,17 +280,25 @@ msgstr "{remainingMinutes, plural, zero {متبقي # دقيقة} one {متبق�
 #~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
 #~ msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # دقيقة} one {تنتهي الصلاحية خلال دقيقة واحدة} two {تنتهي الصلاحية خلال دقيقتين} few {تنتهي الصلاحية خلال # دقائق} many {تنتهي الصلاحية خلال # دقيقة} other {تنتهي الصلاحية خلال # دقيقة}}"
 
+#: app/components/chat/chat-message.tsx:142
+msgid "{replyCount, plural, one {# reply} other {# replies}}"
+msgstr "{replyCount, plural, zero {لا توجد ردود} one {رد واحد} two {ردان} few {# ردود} many {# رداً} other {# رد}}"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:364
 msgid "{runsCount} runs"
 msgstr "{runsCount} تشغيل"
 
 #: app/components/ui/notification-bell.tsx:49
 msgid "{seconds}s ago"
-msgstr "منذ {seconds} ثانية"
+msgstr "منذ {seconds} ثانية<<<<<<< HEAD"
 
 #: app/components/mailbox/reviews-tab.tsx:627
 msgid "{selectedRating} / 5 stars"
-msgstr "{selectedRating} / 5 نجوم"
+msgstr "{selectedRating} / 5 نجوم======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:480
+msgid "{selectedRoleCount} roles and {selectedMemberCount} people selected"
+msgstr "تم تحديد {selectedRoleCount} من الأدوار و{selectedMemberCount} من الأشخاص>>>>>>> upstream/main"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:319
 msgid "{status}"
@@ -270,7 +306,16 @@ msgstr "{status}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
-msgstr "{stepCount} خطوات"
+msgstr "{stepCount} خطوات<<<<<<< HEAD"
+
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:290
+#: app/components/chat/chat-view.tsx:410
+#~ msgid "{threadReplyCount, plural, one {# reply} other {# replies}}"
+#~ msgstr "{threadReplyCount, plural, zero {لا توجد ردود} one {رد واحد} two {ردان} few {# ردود} many {# رداً} other {# رد}}"
+
+#: app/components/chat/chat-view.tsx:693
+msgid "{threadTotalReplies, plural, one {# reply} other {# replies}}"
+msgstr "{threadTotalReplies, plural, zero {لا توجد ردود} one {رد واحد} two {ردان} few {# ردود} many {# رداً} other {# رد}}"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:290
 msgid "{total} submissions"
@@ -290,7 +335,11 @@ msgstr "{triggerCount} من {optionCount}"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:317
 msgid "{unit}"
-msgstr "{unit}"
+msgstr "{unit}<<<<<<< HEAD"
+
+#: app/components/chat/chat-view.tsx:312
+msgid "{unread} unread"
+msgstr "{unread} غير مقروءة"
 
 #: app/routes/organizations+/create.tsx:935
 msgid "*.png, *.jpeg files up to 5 MB"
@@ -503,7 +552,7 @@ msgstr "لون التمييز"
 #: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
-msgstr "قبول"
+msgstr "قبول<<<<<<< HEAD"
 
 #: app/components/locations/location-form.tsx:428
 msgid "Accept orders and show this location on the website."
@@ -513,7 +562,7 @@ msgstr "استقبال الطلبات وإظهار هذا الفرع على ال
 msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 msgstr "يقبل ملفات JPG وPNG وWebP حتى 5 ميجابايت. تُرفع الملفات مباشرة إلى مكتبة الوسائط."
 
-#: app/components/roles/tenant-role-access-manager.tsx:858
+#: app/components/roles/tenant-role-access-manager.tsx:875
 msgid "Access"
 msgstr "الوصول"
 
@@ -550,7 +599,7 @@ msgid "Acme Inc."
 msgstr "شركة Acme"
 
 #: app/components/command-menu.tsx:115
-#: app/components/roles/tenant-role-access-manager.tsx:775
+#: app/components/roles/tenant-role-access-manager.tsx:792
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:502
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
@@ -599,8 +648,10 @@ msgid "Add"
 msgstr "إضافة"
 
 #. placeholder {0}: item.label
+#. placeholder {0}: member.label
 #: ../../packages/marketing-workflow/src/node-palette.tsx:98
 #: ../../packages/marketing-workflow/src/node-palette.tsx:104
+#: app/components/chat/chat-group-settings-dialog.tsx:137
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
@@ -765,7 +816,7 @@ msgstr "إضافة عنصر"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3218
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4456
 msgid "Add link"
-msgstr "إضافة رابط"
+msgstr "إضافة رابط<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:532
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
@@ -773,7 +824,7 @@ msgstr "إضافة رابط"
 msgid "Add Location"
 msgstr "إضافة فرع"
 
-#: app/components/app-sidebar.tsx:552
+#: app/components/app-sidebar.tsx:565
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -832,6 +883,10 @@ msgstr "Add options to this group first."
 #~ msgid "Add organization"
 #~ msgstr "إضافة منظمة"
 
+#: app/components/chat/chat-group-settings-dialog.tsx:106
+msgid "Add people"
+msgstr "إضافة أشخاص"
+
 #: app/components/menu/item-form.tsx:398
 msgid "Add Photo"
 msgstr "إضافة صورة"
@@ -847,10 +902,14 @@ msgstr "إضافة نافذة استلام"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
 msgid "Add question"
-msgstr "إضافة سؤال"
+msgstr "إضافة سؤال<<<<<<< HEAD"
+
+#: app/components/chat/chat-message.tsx:266
+msgid "Add reaction"
+msgstr "إضافة تفاعل>>>>>>> upstream/main"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1037
-#: app/components/menu/drop-wizard/drop-form.tsx:889
+#: app/components/menu/drop-wizard/drop-form.tsx:892
 msgid "Add reminder"
 msgstr "إضافة تذكير"
 
@@ -858,7 +917,7 @@ msgstr "إضافة تذكير"
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add restaurant"
-msgstr "إضافة مطعم"
+msgstr "إضافة مطعم======="
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4321
 msgid "Add review"
@@ -878,7 +937,7 @@ msgstr "إضافة قسم"
 #~ msgid "Add Section"
 #~ msgstr "إضافة قسم"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1144
+#: app/components/menu/drop-wizard/drop-form.tsx:1147
 msgid "Add section to drop"
 msgstr "إضافة قسم إلى الطرح"
 
@@ -943,7 +1002,7 @@ msgid "Adding section"
 msgstr "إضافة قسم"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:751
-#: app/components/menu/drop-wizard/drop-form.tsx:1009
+#: app/components/menu/drop-wizard/drop-form.tsx:1012
 msgid "Additional options"
 msgstr "خيارات إضافية"
 
@@ -1051,7 +1110,7 @@ msgstr "جميع الميزات الأساسية مضمنة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:265
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
-msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
+msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي.<<<<<<< HEAD"
 
 #: app/components/locations/availability-picker.tsx:106
 msgid "All days"
@@ -1064,7 +1123,11 @@ msgstr "تشترك جميع الأصناف في هذا القسم في هذا ا
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
 msgid "All locations"
-msgstr "كل الفروع"
+msgstr "كل الفروع======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:545
+msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
+msgstr "ستُحذف جميع الرسائل في هذه القناة نهائياً للجميع. لا يمكن التراجع عن هذا الإجراء.>>>>>>> upstream/main"
 
 #: app/components/ui/notification-bell.tsx:342
 #: app/components/ui/notification-bell.tsx:439
@@ -1081,7 +1144,7 @@ msgstr "جميع المستلمين"
 
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
-msgstr "اكتملت جميع الخطوات"
+msgstr "اكتملت جميع الخطوات<<<<<<< HEAD"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:807
 msgid "Allow customers to preview menu items before orders open."
@@ -1104,7 +1167,7 @@ msgid "Allow Special Instructions"
 msgstr "السماح بالتعليمات الخاصة"
 
 #: app/components/locations/delivery-zones-manager.tsx:222
-#: app/components/roles/tenant-role-access-manager.tsx:664
+#: app/components/roles/tenant-role-access-manager.tsx:681
 msgid "Allowed"
 msgstr "مسموح"
 
@@ -1127,9 +1190,9 @@ msgstr "النص البديل"
 
 #: app/routes/organizations+/create.tsx:625
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
-#~ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
+#~ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا.<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:397
+#: app/components/app-sidebar.tsx:401
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
@@ -1140,9 +1203,9 @@ msgstr "التحليلات والتتبع"
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:460
 msgid "Announcement actions"
-msgstr "إجراءات الإعلان"
+msgstr "إجراءات الإعلان<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:413
+#: app/components/app-sidebar.tsx:417
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -1157,7 +1220,7 @@ msgstr "زبون مجهول"
 msgid "Answer"
 msgstr "الإجابة"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:972
+#: app/components/menu/drop-wizard/drop-form.tsx:975
 msgid "Anyone can view and discover this drop on your site."
 msgstr "يمكن لأي شخص عرض هذا الطرح واكتشافه على موقعك."
 
@@ -1172,6 +1235,10 @@ msgstr "تم إنشاء مفتاح API"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:625
 msgid "API Keys"
 msgstr "مفاتيح API"
+
+#: app/components/app-sidebar.tsx:592
+msgid "App header"
+msgstr "ترويسة التطبيق"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:894
 msgid "Appearance"
@@ -1213,13 +1280,13 @@ msgstr "مؤرشف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:458
 msgid "Are you sure you want to delete \"{journeyName}\"?"
-msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
+msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:781
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد من حذف \"{locToDeleteName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف ساعات العمل ومناطق التوصيل."
 
-#: app/components/roles/tenant-role-access-manager.tsx:915
+#: app/components/roles/tenant-role-access-manager.tsx:932
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ لا يمكن التراجع عن هذا الإجراء."
 
@@ -1359,7 +1426,7 @@ msgstr "العملاء المصرح لهم"
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:875
+#: app/components/menu/drop-wizard/drop-form.tsx:878
 msgid "Automated customer notifications to create excitement and urge checkout."
 msgstr "إشعارات تلقائية للعملاء لخلق الحماس وحثهم على الدفع."
 
@@ -1386,9 +1453,9 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:212
 msgid "Automation saved successfully"
-msgstr "تم حفظ الأتمتة بنجاح"
+msgstr "تم حفظ الأتمتة بنجاح<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:367
+#: app/components/app-sidebar.tsx:371
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1454,6 +1521,10 @@ msgstr "العودة إلى الكتل"
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
+#: app/components/chat/chat-view.tsx:485
+msgid "Back to channels"
+msgstr "العودة إلى القنوات"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1916
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
@@ -1463,7 +1534,7 @@ msgstr "العودة إلى التفاصيل"
 msgid "Back to fields"
 msgstr "العودة إلى الحقول"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:839
+#: app/components/menu/drop-wizard/drop-form.tsx:842
 msgid "Back to Info"
 msgstr "العودة إلى المعلومات"
 
@@ -1476,7 +1547,7 @@ msgstr "العودة إلى القائمة"
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1031
+#: app/components/menu/drop-wizard/drop-form.tsx:1034
 msgid "Back to Menu"
 msgstr "العودة إلى القائمة"
 
@@ -1536,12 +1607,12 @@ msgid "Becomes available"
 msgstr "يصبح متوفرًا"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:963
-#: app/components/menu/drop-wizard/drop-form.tsx:924
+#: app/components/menu/drop-wizard/drop-form.tsx:927
 msgid "Before drop closes"
 msgstr "قبل إغلاق الطرح"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:960
-#: app/components/menu/drop-wizard/drop-form.tsx:922
+#: app/components/menu/drop-wizard/drop-form.tsx:925
 msgid "Before drop opens"
 msgstr "قبل فتح الطرح"
 
@@ -1551,9 +1622,9 @@ msgstr "الوصول التجريبي"
 
 #: app/components/settings/cards/organization/billing-card.tsx:148
 msgid "Billed monthly"
-msgstr "الفوترة الشهرية"
+msgstr "الفوترة الشهرية<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:485
+#: app/components/app-sidebar.tsx:498
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -1562,7 +1633,7 @@ msgstr "الفواتير"
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
-#: app/components/roles/tenant-role-access-manager.tsx:253
+#: app/components/roles/tenant-role-access-manager.tsx:270
 msgid "Blank"
 msgstr "فارغ"
 
@@ -1580,9 +1651,9 @@ msgstr "النص الأساسي"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:23
 msgid "Body text"
-msgstr "نص المحتوى"
+msgstr "نص المحتوى<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:408
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1604,15 +1675,15 @@ msgstr "لم يتم العثور على البث"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:96
 msgid "Broadcast preview"
-msgstr "معاينة البث"
+msgstr "معاينة البث<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:360
+#: app/components/app-sidebar.tsx:364
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
 msgstr "البثّات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:222
+#: app/components/roles/tenant-role-access-manager.tsx:239
 msgid "Broadcasts & automations"
 msgstr "البثّات والأتمتة"
 
@@ -1641,11 +1712,11 @@ msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخد�
 msgid "Builder"
 msgstr "المنشئ"
 
-#: app/components/roles/tenant-role-access-manager.tsx:577
+#: app/components/roles/tenant-role-access-manager.tsx:594
 msgid "Built-in"
 msgstr "مدمج"
 
-#: app/components/roles/tenant-role-access-manager.tsx:835
+#: app/components/roles/tenant-role-access-manager.tsx:852
 msgid "Built-in Roles"
 msgstr "الأدوار المدمجة"
 
@@ -1704,6 +1775,10 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
+#: app/components/chat/chat-compose-dialog.tsx:172
+#: app/components/chat/chat-composer.tsx:324
+#: app/components/chat/chat-message.tsx:391
+#: app/components/chat/chat-view.tsx:824
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
 #: app/components/locations/delivery-zones-manager.tsx:558
@@ -1711,14 +1786,14 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1034
-#: app/components/menu/drop-wizard/drop-form.tsx:1180
+#: app/components/menu/drop-wizard/drop-form.tsx:1183
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:317
-#: app/components/roles/tenant-role-access-manager.tsx:535
-#: app/components/roles/tenant-role-access-manager.tsx:923
+#: app/components/roles/tenant-role-access-manager.tsx:552
+#: app/components/roles/tenant-role-access-manager.tsx:940
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -1743,6 +1818,8 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:500
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:558
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:792
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
@@ -1790,7 +1867,7 @@ msgstr "بطاقات"
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
-#: app/components/app-sidebar.tsx:314
+#: app/components/app-sidebar.tsx:318
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:37
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:225
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:300
@@ -1873,7 +1950,12 @@ msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الرواب
 #: ../../packages/marketing/src/components/campaign-form.tsx:58
 #: app/components/note/integration-controls.tsx:323
 msgid "Channel"
-msgstr "القناة"
+msgstr "القناة<<<<<<< HEAD"
+
+#: app/components/chat/chat-view.tsx:322
+#: app/components/chat/chat-view.tsx:425
+msgid "Channels"
+msgstr "القنوات"
 
 #: app/components/menu/option-form.tsx:599
 msgid "Charge sales tax on this option at checkout."
@@ -1881,7 +1963,32 @@ msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند
 
 #: app/components/menu/item-form.tsx:516
 msgid "Charge tax at checkout."
-msgstr "تحصيل الضريبة عند الدفع."
+msgstr "تحصيل الضريبة عند الدفع.======="
+
+#: app/components/app-sidebar.tsx:467
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:153
+msgid "Chat channels"
+msgstr "قنوات الدردشة"
+
+#: app/routes/_app+/$orgSlug_+/chat.tsx:223
+#~ msgid "Chat needs the Cloudflare dev server (`npm run dev:cf -w app` on port 3001). The HTTPS app URL on :2999 uses the Node server unless nothing is listening on 3001 or you set APP_DEV_UPSTREAM for the dev proxy."
+#~ msgstr "تحتاج الدردشة إلى خادم التطوير Cloudflare (`npm run dev:cf -w app` على المنفذ 3001). عنوان التطبيق HTTPS على :2999 يستخدم خادم Node ما لم يكن المنفذ 3001 فارغًا أو تضبط APP_DEV_UPSTREAM لوسيط التطوير."
+
+#: app/components/chat/chat-unavailable.tsx:31
+msgid "Chat needs the Cloudflare Workers dev server (the default <0>npm run dev</0> app, not <1>dev:node</1>). After pulling migrations, run local D1 migrate for the app if channels never appear."
+msgstr "تحتاج الدردشة إلى خادم تطوير Cloudflare Workers (التطبيق الافتراضي <0>npm run dev</0> وليس <1>dev:node</1>). بعد سحب الترحيلات، نفّذ ترحيل D1 المحلي للتطبيق إذا لم تظهر القنوات."
+
+#: app/routes/_app+/$orgSlug_+/chat.tsx:223
+#~ msgid "Chat runs on Cloudflare Durable Objects. Start the app with `npm run dev:cf -w app` to use it locally."
+#~ msgstr "تعمل الدردشة على Cloudflare Durable Objects. شغّل التطبيق باستخدام `npm run dev:cf -w app` لاستخدامها محلياً."
+
+#: app/components/chat/chat-unavailable.tsx:48
+msgid "Chat settings"
+msgstr "إعدادات الدردشة"
+
+#: app/routes/_app+/$orgSlug_+/chat.tsx:223
+#~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
+#~ msgstr "تستخدم الدردشة Cloudflare Durable Objects. شغّل المشروع بـ <0>npm run dev</0> (وليس <1>npm run dev:node -w app</1> لخادم Node فقط). إن لم تُحمَّل الدردشة، طبّق ترحيلات D1 المحلية — راجع docs/team-chat.md.>>>>>>> upstream/main"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
@@ -1916,6 +2023,10 @@ msgstr "معالج الدفع عند الخروج"
 msgid "Choices"
 msgstr "الخيارات"
 
+#: app/components/chat/chat-view.tsx:556
+msgid "Choose a channel, group, or direct message from the list."
+msgstr "اختر قناة أو مجموعة أو رسالة مباشرة من القائمة."
+
 #: app/components/media-library/media-library-picker.tsx:149
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVIF."
@@ -1939,16 +2050,24 @@ msgstr "اختر ملفاً..."
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:237
 #: app/components/media-library/media-library-picker.tsx:195
 msgid "Choose from library"
-msgstr "اختر من المكتبة"
+msgstr "اختر من المكتبة<<<<<<< HEAD"
 
 #: app/components/menu/item-variations.tsx:330
 #: app/components/menu/item-variations.tsx:331
 msgid "Choose photo for {name}"
 msgstr "اختر صورة لـ {name}"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:110
+msgid "Choose retention"
+msgstr "اختر مدة الاحتفاظ"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:707
 msgid "Choose section"
 msgstr "اختر القسم"
+
+#: app/components/chat/chat-compose-dialog.tsx:111
+msgid "Choose someone"
+msgstr "اختر شخصًا>>>>>>> upstream/main"
 
 #: app/components/locations/location-form.tsx:843
 msgid "Choose supported delivery channels and estimated transit times."
@@ -1956,7 +2075,7 @@ msgstr "اختر قنوات التوصيل المدعومة وأوقات الت�
 
 #: app/components/menu/modifier-form.tsx:1100
 #~ msgid "Choose whether this group appears directly on items or is conditionally revealed by an option in another group."
-#~ msgstr "اختر ما إذا كانت هذه المجموعة ستظهر مباشرة على العناصر أو سيتم إظهارها بشكل مشروط عبر خيار في مجموعة أخرى."
+#~ msgstr "اختر ما إذا كانت هذه المجموعة ستظهر مباشرة على العناصر أو سيتم إظهارها بشكل مشروط عبر خيار في مجموعة أخرى.======="
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:162
 msgid "Choose which languages your public website supports, and which one visitors see by default."
@@ -2002,6 +2121,10 @@ msgstr "مسح السجل"
 msgid "Clear History"
 msgstr "مسح السجل"
 
+#: app/components/chat/chat-view.tsx:370
+msgid "Clear search"
+msgstr "مسح البحث"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:625
 #~ msgid "Clear the message to generate a new AI draft."
 #~ msgstr "امسح الرسالة لإنشاء مسودة جديدة بالذكاء الاصطناعي."
@@ -2044,13 +2167,18 @@ msgid "Client"
 msgstr "العميل"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
+#: app/components/chat/chat-group-settings-dialog.tsx:181
 #: app/components/onboarding-checklist.tsx:177
 msgid "Close"
 msgstr "إغلاق"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
 msgid "Close email design"
-msgstr "إغلاق تصميم البريد"
+msgstr "إغلاق تصميم البريد<<<<<<< HEAD"
+
+#: app/components/chat/chat-view.tsx:669
+msgid "Close thread"
+msgstr "إغلاق سلسلة الردود>>>>>>> upstream/main"
 
 #: app/components/locations/availability-picker.tsx:372
 #: app/components/locations/special-hours-picker.tsx:274
@@ -2063,7 +2191,7 @@ msgstr "مغلق طوال اليوم"
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:214
 msgid "Closes:"
-msgstr "يغلق:"
+msgstr "يغلق:======="
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -2223,7 +2351,7 @@ msgstr "اضبط المناطق المسموح بها والممنوعة عبر 
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "اضبط قواعد التوصيل والأسعار ومزود الخدمة ومناطق الحدود."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:860
+#: app/components/menu/drop-wizard/drop-form.tsx:863
 msgid "Configure drop announcements, visibility, and checkout limits."
 msgstr "تكوين إعلانات الطرح والظهور وحدود الدفع."
 
@@ -2350,6 +2478,18 @@ msgstr "النموذج المرتبط"
 msgid "Connected on {createdAtDate}"
 msgstr "متصل في {createdAtDate}"
 
+#: app/components/chat/chat-view.tsx:788
+msgid "Connecting to team chat…"
+msgstr "جارٍ الاتصال بدردشة الفريق…"
+
+#: app/components/chat/chat-view.tsx:675
+#~ msgid "Connecting…"
+#~ msgstr "جارٍ الاتصال…"
+
+#: app/components/chat/chat-view.tsx:786
+msgid "Connection lost. Reconnecting…"
+msgstr "انقطع الاتصال. جارٍ إعادة الاتصال…"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:295
 msgid "Connections"
 msgstr "الاتصالات"
@@ -2383,7 +2523,7 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Content"
 msgstr "المحتوى"
 
-#: app/components/roles/tenant-role-access-manager.tsx:207
+#: app/components/roles/tenant-role-access-manager.tsx:224
 msgid "Content editor"
 msgstr "محرر المحتوى"
 
@@ -2408,7 +2548,7 @@ msgstr "المتابعة إلى القائمة"
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:846
+#: app/components/menu/drop-wizard/drop-form.tsx:849
 msgid "Continue to Schedule"
 msgstr "المتابعة إلى الجدول"
 
@@ -2502,20 +2642,42 @@ msgstr "الزوايا"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:233
 msgid "Could not create a draft. Try again."
-msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى."
+msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى.<<<<<<< HEAD"
 
 #: app/components/mailbox/reviews-tab.tsx:266
 msgid "Could not create a reply suggestion. Try again."
 msgstr "تعذر إنشاء اقتراح رد. حاول مجدداً."
+
+#: app/components/chat/chat-view.tsx:133
+#: app/components/chat/chat-view.tsx:179
+msgid "Could not load messages."
+msgstr "تعذّر تحميل الرسائل."
+
+#: app/components/chat/chat-view.tsx:275
+msgid "Could not load replies."
+msgstr "تعذّر تحميل الردود."
 
 #: app/components/mailbox/reviews-tab.tsx:301
 #: app/components/mailbox/reviews-tab.tsx:325
 msgid "Could not post your reply."
 msgstr "تعذر نشر ردك."
 
+#: app/components/chat/chat-composer.tsx:216
+#: app/components/chat/chat-message.tsx:351
+msgid "Could not send message."
+msgstr "تعذّر إرسال الرسالة."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:176
 msgid "Could not update read status. Try again."
 msgstr "تعذّر تحديث حالة القراءة. حاول مرة أخرى."
+
+#: app/components/chat/chat-composer.tsx:116
+msgid "Could not upload image."
+msgstr "تعذر رفع الصورة."
+
+#: app/components/chat/chat-composer.tsx:107
+msgid "Could not upload image. Try again."
+msgstr "تعذّر رفع الصورة. حاول مرة أخرى."
 
 #: app/components/ai/global-ai-panel.tsx:83
 msgid "Couldn't load the assistant."
@@ -2532,13 +2694,21 @@ msgstr "الدولة"
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
 msgid "Create"
-msgstr "إنشاء"
+msgstr "إنشاء<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:267
 msgid "Create a category to start organizing menu items."
 msgstr "أنشئ تصنيفًا لتنظيم عناصر القائمة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:752
+#: app/components/chat/chat-view.tsx:245
+msgid "Create a channel"
+msgstr "إنشاء قناة"
+
+#: app/components/chat/chat-view.tsx:230
+msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
+msgstr "أنشئ قناة لبدء التواصل مع فريقك. يمكنك قصر القناة على أدوار أو أشخاص معيّنين."
+
+#: app/components/roles/tenant-role-access-manager.tsx:769
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
@@ -2660,7 +2830,7 @@ msgstr "إنشاء بث"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:435
 msgid "Create bullet points"
-msgstr "إنشاء نقاط تعداد"
+msgstr "إنشاء نقاط تعداد<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:248
 msgid "Create categories to group menu items together for menus and ordering."
@@ -2671,11 +2841,19 @@ msgstr "أنشئ تصنيفات لتجميع عناصر القائمة معًا 
 msgid "Create Category"
 msgstr "إنشاء تصنيف"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:506
+msgid "Create channel"
+msgstr "إنشاء القناة"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:156
+msgid "Create channels for your team and choose which roles or people can read and post in them."
+msgstr "أنشئ قنوات لفريقك وحدّد الأدوار أو الأشخاص الذين يمكنهم القراءة والنشر فيها."
+
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:276
 msgid "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 msgstr "أنشئ خيارات وإضافات وعجائن ودرجات حرارة وخيارات مخصصة لأطباقك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:310
+#: app/components/roles/tenant-role-access-manager.tsx:327
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
@@ -2687,11 +2865,15 @@ msgstr "إنشاء طرح"
 #: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
-msgstr "إنشاء النموذج"
+msgstr "إنشاء النموذج<<<<<<< HEAD"
+
+#: app/components/roles/tenant-role-access-manager.tsx:213
+msgid "Create group chats"
+msgstr "إنشاء محادثات جماعية>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:256
 msgid "Create Item"
-msgstr "إنشاء عنصر"
+msgstr "إنشاء عنصر======="
 
 #: app/components/organization-invitations.tsx:226
 msgid "Create Link"
@@ -2760,8 +2942,8 @@ msgstr "إنشاء إعادة توجيه"
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
 
-#: app/components/roles/tenant-role-access-manager.tsx:543
-#: app/components/roles/tenant-role-access-manager.tsx:741
+#: app/components/roles/tenant-role-access-manager.tsx:560
+#: app/components/roles/tenant-role-access-manager.tsx:758
 msgid "Create role"
 msgstr "إنشاء دور"
 
@@ -2771,11 +2953,15 @@ msgstr "أنشئ مفتاح API الأول للبدء"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:257
 msgid "Create your first broadcast"
-msgstr "أنشئ أول بث لك"
+msgstr "أنشئ أول بث لك<<<<<<< HEAD"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:195
+msgid "Create your first channel"
+msgstr "أنشئ أول قناة>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:132
 msgid "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
-msgstr "أنشئ أول طرح محدود الوقت للبيع سريعًا وبناء الترقب وإدارة نوافذ الاستلام."
+msgstr "أنشئ أول طرح محدود الوقت للبيع سريعًا وبناء الترقب وإدارة نوافذ الاستلام.======="
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:336
 msgid "Create your first marketing automation."
@@ -2796,6 +2982,10 @@ msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نص�
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:574
 msgid "Create your first page to start building your website."
 msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
+
+#: app/components/roles/tenant-role-access-manager.tsx:208
+msgid "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
+msgstr "إنشاء القنوات وتعديلها وحذفها، وتحديد الأدوار والأعضاء الذين يمكنهم الوصول إليها، وإزالة الرسائل في القنوات التي يمكنهم فتحها. لا يمنح الوصول إلى القنوات المقيّدة."
 
 #: app/components/roles/tenant-role-access-manager.tsx:168
 msgid "Create, edit, enable, and delete announcement banners."
@@ -2891,7 +3081,7 @@ msgstr "الاشتراك الحالي"
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
-#: app/components/roles/tenant-role-access-manager.tsx:577
+#: app/components/roles/tenant-role-access-manager.tsx:594
 msgid "Custom"
 msgstr "مخصص"
 
@@ -2918,7 +3108,7 @@ msgstr "اسم الحدث المخصص"
 
 #: app/components/website/create-form-dialog.tsx:108
 msgid "Custom form"
-msgstr "نموذج مخصص"
+msgstr "نموذج مخصص<<<<<<< HEAD"
 
 #: app/components/locations/special-hours-picker.tsx:166
 msgid "Custom Hours"
@@ -2928,7 +3118,7 @@ msgstr "ساعات مخصصة"
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "خيارات وإضافات وأطباق جانبية مخصصة تُقدَّم مع هذا العنصر."
 
-#: app/components/roles/tenant-role-access-manager.tsx:726
+#: app/components/roles/tenant-role-access-manager.tsx:743
 msgid "Custom Roles"
 msgstr "الأدوار المخصصة"
 
@@ -2937,7 +3127,7 @@ msgstr "الأدوار المخصصة"
 msgid "Custom scheduled time"
 msgstr "وقت مجدول مخصص"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:925
+#: app/components/menu/drop-wizard/drop-form.tsx:928
 msgid "Custom timing"
 msgstr "توقيت مخصص"
 
@@ -2993,9 +3183,9 @@ msgstr "معرّف العميل الفريد"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:251
 msgid "customerId is required"
-msgstr "معرّف العميل مطلوب"
+msgstr "معرّف العميل مطلوب<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:290
+#: app/components/app-sidebar.tsx:294
 msgid "Customers"
 msgstr "العملاء"
 
@@ -3039,10 +3229,10 @@ msgstr "داكن"
 
 #: app/components/nav-user.tsx:90
 msgid "Dark mode"
-msgstr "الوضع الداكن"
+msgstr "الوضع الداكن<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:127
-#: app/components/app-sidebar.tsx:266
+#: app/components/app-sidebar.tsx:129
+#: app/components/app-sidebar.tsx:270
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr "لوحة التحكم"
@@ -3093,13 +3283,13 @@ msgstr "اللغة الافتراضية"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:430
 msgid "Default language required"
-msgstr "اللغة الافتراضية مطلوبة"
+msgstr "اللغة الافتراضية مطلوبة<<<<<<< HEAD"
 
 #: app/components/locations/delivery-zones-manager.tsx:169
 msgid "Define allowed and restricted delivery areas by radius, zip codes, or polygon maps."
 msgstr "حدّد مناطق التوصيل المسموح بها والممنوعة حسب النطاق أو الرموز البريدية أو المضلعات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:316
+#: app/components/roles/tenant-role-access-manager.tsx:333
 msgid "Define role details and select what permissions members receive."
 msgstr "حدّد تفاصيل الدور واختر الصلاحيات التي يحصل عليها الأعضاء."
 
@@ -3115,9 +3305,10 @@ msgstr "يجب أن تكون مدة التأخير 1 على الأقل."
 msgid "Delay unit is required."
 msgstr "وحدة التأخير مطلوبة."
 
+#: app/components/chat/chat-view.tsx:832
 #: app/components/note/comment-item.tsx:239
-#: app/components/roles/tenant-role-access-manager.tsx:820
-#: app/components/roles/tenant-role-access-manager.tsx:930
+#: app/components/roles/tenant-role-access-manager.tsx:837
+#: app/components/roles/tenant-role-access-manager.tsx:947
 #: app/components/settings/passkey-manager.tsx:220
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
@@ -3133,6 +3324,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:529
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:239
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:735
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
@@ -3143,6 +3335,10 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
 msgid "Delete"
 msgstr "حذف"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:542
+msgid "Delete {channelName}?"
+msgstr "حذف {channelName}؟"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
 msgid "Delete 404 log entry?"
@@ -3162,11 +3358,15 @@ msgstr "هل تريد حذف الإعلان؟"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4025
 msgid "Delete card"
-msgstr "حذف البطاقة"
+msgstr "حذف البطاقة<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:459
 msgid "Delete category?"
-msgstr "حذف التصنيف؟"
+msgstr "حذف التصنيف؟======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:571
+msgid "Delete channel"
+msgstr "حذف القناة>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4394
 msgid "Delete column"
@@ -3176,7 +3376,7 @@ msgstr "حذف العمود"
 #~ msgid "Delete comment"
 #~ msgstr "حذف التعليق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:912
+#: app/components/roles/tenant-role-access-manager.tsx:929
 msgid "Delete custom role"
 msgstr "حذف الدور المخصص"
 
@@ -3218,7 +3418,7 @@ msgstr "حذف الفرع"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
 msgid "Delete log entry"
-msgstr "حذف إدخال السجل"
+msgstr "حذف إدخال السجل<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:599
 msgid "Delete Menu Option?"
@@ -3228,9 +3428,17 @@ msgstr "حذف خيار القائمة؟"
 msgid "Delete menu?"
 msgstr "حذف القائمة؟"
 
+#: app/components/chat/chat-message.tsx:299
+msgid "Delete message"
+msgstr "حذف الرسالة"
+
+#: app/components/chat/chat-view.tsx:813
+msgid "Delete message?"
+msgstr "حذف الرسالة؟>>>>>>> upstream/main"
+
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:502
 msgid "Delete modifier group?"
-msgstr "حذف مجموعة الإضافات؟"
+msgstr "حذف مجموعة الإضافات؟======="
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:120
@@ -3296,7 +3504,7 @@ msgstr "حذف رابط التواصل الاجتماعي"
 msgid "Delete team notes"
 msgstr "حذف ملاحظات الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:930
+#: app/components/roles/tenant-role-access-manager.tsx:947
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
@@ -3351,19 +3559,20 @@ msgstr "رفض"
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
-#: app/components/roles/tenant-role-access-manager.tsx:342
-#: app/components/roles/tenant-role-access-manager.tsx:453
-#: app/components/roles/tenant-role-access-manager.tsx:630
-#: app/components/roles/tenant-role-access-manager.tsx:766
-#: app/components/roles/tenant-role-access-manager.tsx:852
+#: app/components/roles/tenant-role-access-manager.tsx:359
+#: app/components/roles/tenant-role-access-manager.tsx:470
+#: app/components/roles/tenant-role-access-manager.tsx:647
+#: app/components/roles/tenant-role-access-manager.tsx:783
+#: app/components/roles/tenant-role-access-manager.tsx:869
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:369
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:1032
 msgid "Description"
-msgstr "الوصف"
+msgstr "الوصف<<<<<<< HEAD"
 
 #: app/components/menu/category-form.tsx:389
 #: app/components/menu/item-form.tsx:454
@@ -3371,7 +3580,7 @@ msgstr "الوصف"
 msgid "Description (Guest-Facing)"
 msgstr "الوصف (الظاهر للعميل)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:430
+#: app/components/roles/tenant-role-access-manager.tsx:447
 msgid "Deselect all"
 msgstr "إلغاء تحديد الكل"
 
@@ -3451,6 +3660,14 @@ msgstr "بقشيش تناول الطعام في المطعم"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
+
+#: app/components/chat/chat-compose-dialog.tsx:76
+msgid "Direct message"
+msgstr "رسالة مباشرة"
+
+#: app/components/chat/chat-view.tsx:426
+msgid "Direct messages"
+msgstr "رسائل مباشرة"
 
 #: app/components/organization-invitations.tsx:248
 msgid "Disable"
@@ -3640,7 +3857,7 @@ msgstr "طرح"
 msgid "Drop description"
 msgstr "وصف الطرح"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:872
+#: app/components/menu/drop-wizard/drop-form.tsx:875
 msgid "Drop reminders"
 msgstr "تذكيرات الطرح"
 
@@ -3648,7 +3865,7 @@ msgstr "تذكيرات الطرح"
 msgid "Drop title"
 msgstr "عنوان الطرح"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:951
+#: app/components/menu/drop-wizard/drop-form.tsx:954
 msgid "Drop visibility"
 msgstr "ظهور الطرح"
 
@@ -3744,7 +3961,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 
 #: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:232
-#: app/components/roles/tenant-role-access-manager.tsx:810
+#: app/components/roles/tenant-role-access-manager.tsx:827
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:236
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:463
@@ -3752,6 +3969,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:231
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
@@ -3762,6 +3980,10 @@ msgstr "تعديل"
 msgid "Edit announcement"
 msgstr "تعديل الإعلان"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+msgid "Edit channel"
+msgstr "تعديل القناة"
+
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:674
 msgid "Edit column"
 msgstr "تعديل العمود"
@@ -3771,7 +3993,7 @@ msgstr "تعديل العمود"
 msgid "Edit comment..."
 msgstr "تعديل التعليق..."
 
-#: app/components/roles/tenant-role-access-manager.tsx:308
+#: app/components/roles/tenant-role-access-manager.tsx:325
 msgid "Edit Custom Role"
 msgstr "تعديل الدور المخصص"
 
@@ -3791,11 +4013,15 @@ msgstr "تعديل التفاصيل"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1312
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
-msgstr "تعديل الصورة"
+msgstr "تعديل الصورة<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:266
 msgid "Edit Location"
-msgstr "تعديل الفرع"
+msgstr "تعديل الفرع======="
+
+#: app/components/chat/chat-message.tsx:288
+msgid "Edit message"
+msgstr "تعديل الرسالة>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Edit note"
@@ -3821,7 +4047,7 @@ msgstr "تعديل الملاحظات الخاصة"
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
-#: app/components/roles/tenant-role-access-manager.tsx:597
+#: app/components/roles/tenant-role-access-manager.tsx:614
 msgid "Edit role"
 msgstr "تعديل الدور"
 
@@ -3962,6 +4188,10 @@ msgstr "أدخل الرموز البريدية التي تنطبق عليها م
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr "أدخل رمز كلمة المرور لمرة واحدة (OTP) المكون من 6 أرقام الذي يوفره لك تطبيق المصادقة."
 
+#: app/components/chat/chat-composer.tsx:249
+msgid "Enter to send. Shift+Enter for a new line."
+msgstr "Enter للإرسال. Shift+Enter لسطر جديد."
+
 #: app/routes/_auth+/login.tsx:659
 #: app/routes/_auth+/login.tsx:785
 msgid "Enter your email or username"
@@ -4026,15 +4256,31 @@ msgstr "سير عمل قائم على الأحداث"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
 msgid "Event-driven workflows with triggers, delays, and actions."
-msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
+msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات.<<<<<<< HEAD"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:398
+msgid "Every active member can read and post."
+msgstr "يمكن لكل عضو نشط القراءة والنشر."
 
 #: app/components/mailbox/reviews-tab.tsx:778
 msgid "Every review, in one place"
 msgstr "جميع التقييمات في مكان واحد"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:211
+msgid "Everyone"
+msgstr "الجميع"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:409
+msgid "Everyone else won't see that it exists."
+msgstr "لن يرى الآخرون أن القناة موجودة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:395
+msgid "Everyone on the team"
+msgstr "جميع أعضاء الفريق>>>>>>> upstream/main"
+
 #: app/components/menu/assigned-sortable-list.tsx:266
 msgid "Everything available is already assigned."
-msgstr "كل المتاح مُسند بالفعل."
+msgstr "كل المتاح مُسند بالفعل.======="
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Exactly Equals"
@@ -4359,9 +4605,13 @@ msgstr "ردود النماذج"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
-msgstr "التنسيق:"
+msgstr "التنسيق:<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:392
+#: app/components/chat/chat-message.tsx:182
+msgid "Former member"
+msgstr "عضو سابق"
+
+#: app/components/app-sidebar.tsx:396
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:44
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
@@ -4421,13 +4671,13 @@ msgstr "الاسم الكامل"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:111
 msgid "Full width"
-msgstr "عرض كامل"
+msgstr "عرض كامل<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:435
+#: app/components/app-sidebar.tsx:439
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:382
+#: app/components/app-sidebar.tsx:386
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -4457,18 +4707,18 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 #: app/components/settings/backup-codes-display.tsx:149
 #: app/components/settings/backup-codes-display.tsx:170
 msgid "Generating..."
-msgstr "جاري الإنشاء..."
+msgstr "جاري الإنشاء...<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:544
+#: app/components/app-sidebar.tsx:557
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:156
-#: app/components/app-sidebar.tsx:559
+#: app/components/app-sidebar.tsx:158
+#: app/components/app-sidebar.tsx:572
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:99
+#: app/components/app-sidebar.tsx:101
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr "تواصل معنا"
@@ -4485,10 +4735,10 @@ msgstr "ابدأ بإنشاء أول قائمة لتصنيف الأطباق وا
 
 #: app/components/onboarding-checklist.tsx:115
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
-msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
+msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:164
-#: app/components/app-sidebar.tsx:567
+#: app/components/app-sidebar.tsx:166
+#: app/components/app-sidebar.tsx:580
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -4510,9 +4760,9 @@ msgstr "خالٍ من الغلوتين"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
-msgstr "الانتقال إلى هناك"
+msgstr "الانتقال إلى هناك<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:220
+#: app/components/app-sidebar.tsx:222
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -4547,11 +4797,27 @@ msgstr "اللون الرمادي"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1881
 #: app/routes/_app+/$orgSlug_+/media.tsx:1896
 msgid "Grayscale"
-msgstr "تدرج الرمادي"
+msgstr "تدرج الرمادي<<<<<<< HEAD"
+
+#: app/components/chat/chat-compose-dialog.tsx:85
+msgid "Group"
+msgstr "مجموعة"
+
+#: app/components/chat/chat-compose-dialog.tsx:123
+msgid "Group name"
+msgstr "اسم المجموعة"
 
 #: app/components/menu/modifier-form.tsx:905
 msgid "Group Name (Guest-Facing)"
-msgstr "اسم المجموعة (الظاهر للعميل)"
+msgstr "اسم المجموعة (الظاهر للعميل)======="
+
+#: app/components/chat/chat-view.tsx:522
+msgid "Group settings"
+msgstr "إعدادات المجموعة"
+
+#: app/components/chat/chat-view.tsx:427
+msgid "Groups"
+msgstr "مجموعات>>>>>>> upstream/main"
 
 #: app/components/settings/cards/organization/shop-card.tsx:367
 msgid "Guest checkout"
@@ -4707,6 +4973,7 @@ msgstr "إخفاء الردود ({replyCount})"
 #: app/components/roles/tenant-role-access-manager.tsx:141
 #: app/components/roles/tenant-role-access-manager.tsx:158
 #: app/components/roles/tenant-role-access-manager.tsx:197
+#: app/components/roles/tenant-role-access-manager.tsx:209
 msgid "High impact"
 msgstr "تأثير كبير"
 
@@ -4907,16 +5174,20 @@ msgstr "إدراج حقل هنا"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr "إدراج وسوم الدمج:"
 
-#: app/components/roles/tenant-role-access-manager.tsx:887
+#: app/components/roles/tenant-role-access-manager.tsx:904
 msgid "Inspect"
-msgstr "استعراض"
+msgstr "استعراض<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:461
+#: app/components/app-sidebar.tsx:474
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:90
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
-msgstr "التكاملات"
+msgstr "التكاملات<<<<<<< HEAD"
+
+#: app/components/roles/tenant-role-access-manager.tsx:203
+msgid "Internal channels for your team."
+msgstr "قنوات داخلية لفريقك.>>>>>>> upstream/main"
 
 #: app/components/menu/category-form.tsx:377
 #: app/components/menu/menu-form.tsx:200
@@ -4929,7 +5200,7 @@ msgstr "المرجع الداخلي (اختياري)"
 #: app/components/menu/item-form.tsx:442
 #: app/components/menu/option-form.tsx:421
 msgid "Internal Reference / SKU (Optional)"
-msgstr "المرجع الداخلي / رمز المنتج (اختياري)"
+msgstr "المرجع الداخلي / رمز المنتج (اختياري)======="
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:155
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
@@ -5025,7 +5296,7 @@ msgstr "اسم العنصر (الظاهر للعميل)"
 msgid "Item Photos"
 msgstr "صور العنصر"
 
-#: app/components/app-sidebar.tsx:319
+#: app/components/app-sidebar.tsx:323
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:44
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:283
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:244
@@ -5103,6 +5374,10 @@ msgstr "الإبقاء على المنطقة الحالية"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 msgid "Keep editing"
 msgstr "متابعة التعديل"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
+msgid "Keep forever"
+msgstr "الاحتفاظ دائمًا"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
 msgid "Keeps original indexing"
@@ -5307,6 +5582,14 @@ msgstr "عنوان الرابط"
 msgid "Live"
 msgstr "مباشر"
 
+#: app/components/chat/chat-view.tsx:708
+msgid "Load earlier replies"
+msgstr "تحميل ردود أقدم"
+
+#: app/components/chat/chat-view.tsx:585
+msgid "Load older messages"
+msgstr "تحميل الرسائل الأقدم"
+
 #: ../../packages/ai/src/components/ai-elements/loader.tsx:92
 msgid "Loading"
 msgstr "جاري التحميل"
@@ -5326,6 +5609,10 @@ msgstr "جاري تحميل القنوات..."
 #: app/components/media-library/media-library-picker.tsx:288
 msgid "Loading media…"
 msgstr "جارٍ تحميل الوسائط…"
+
+#: app/components/chat/chat-view.tsx:572
+msgid "Loading messages…"
+msgstr "جارٍ تحميل الرسائل…"
 
 #: app/components/command-menu.tsx:109
 msgid "Loading notes..."
@@ -5369,7 +5656,7 @@ msgstr "تجاوزات الفرع"
 msgid "Location Status"
 msgstr "حالة الفرع"
 
-#: app/components/app-sidebar.tsx:440
+#: app/components/app-sidebar.tsx:444
 #: app/components/team-switcher.tsx:183
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:519
 msgid "Locations"
@@ -5424,9 +5711,9 @@ msgstr "متباعد"
 
 #: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
-msgstr "م@مثال.com"
+msgstr "م@مثال.com<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:340
 msgid "Mailbox"
 msgstr "صندوق الوارد"
 
@@ -5468,7 +5755,15 @@ msgstr "إدارة الأتمتة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
-msgstr "إدارة البثّات"
+msgstr "إدارة البثّات<<<<<<< HEAD"
+
+#: app/components/chat/chat-view.tsx:446
+msgid "Manage channels"
+msgstr "إدارة القنوات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:207
+msgid "Manage chat channels"
+msgstr "إدارة قنوات الدردشة>>>>>>> upstream/main"
 
 #: app/components/mailbox/reviews-tab.tsx:445
 msgid "Manage integrations"
@@ -5480,7 +5775,7 @@ msgstr "إدارة الفروع"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:463
 msgid "Manage Menu Categories"
-msgstr "إدارة تصنيفات القائمة"
+msgstr "إدارة تصنيفات القائمة======="
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -5608,19 +5903,19 @@ msgstr "تحديد كمقروء"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:465
 msgid "Mark unread"
-msgstr "تحديد كغير مقروء"
+msgstr "تحديد كغير مقروء<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:347
+#: app/components/app-sidebar.tsx:351
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
-msgstr "التسويق"
+msgstr "التسويق<<<<<<< HEAD"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:857
+#: app/components/menu/drop-wizard/drop-form.tsx:860
 msgid "Marketing and scheduling"
 msgstr "التسويق والجدولة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:221
+#: app/components/roles/tenant-role-access-manager.tsx:238
 msgid "Marketing manager"
 msgstr "مدير التسويق"
 
@@ -5679,9 +5974,9 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:749
 msgid "MCP OAuth Setup Instructions"
-msgstr "تعليمات إعداد MCP OAuth"
+msgstr "تعليمات إعداد MCP OAuth<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:471
+#: app/components/app-sidebar.tsx:484
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -5700,9 +5995,9 @@ msgstr "تفاصيل الوسائط"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:729
 msgid "Media details saved"
-msgstr "تم حفظ تفاصيل الوسائط"
+msgstr "تم حفظ تفاصيل الوسائط<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:284
+#: app/components/app-sidebar.tsx:288
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -5720,32 +6015,33 @@ msgstr "متوسط"
 
 #: app/routes/_auth+/waitlist.tsx:444
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
-msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
+msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك.<<<<<<< HEAD"
 
-#: app/components/roles/tenant-role-access-manager.tsx:587
+#: app/components/roles/tenant-role-access-manager.tsx:604
 msgid "member"
 msgstr "عضو"
 
 #: app/components/organization-members.tsx:107
 #~ msgid "Member"
-#~ msgstr "عضو"
+#~ msgstr "عضو<<<<<<< HEAD"
 
-#: app/components/roles/tenant-role-access-manager.tsx:587
+#: app/components/roles/tenant-role-access-manager.tsx:604
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:447
+#: app/components/app-sidebar.tsx:451
+#: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:164
-#: app/components/roles/tenant-role-access-manager.tsx:769
-#: app/components/roles/tenant-role-access-manager.tsx:855
+#: app/components/roles/tenant-role-access-manager.tsx:786
+#: app/components/roles/tenant-role-access-manager.tsx:872
 msgid "Members"
 msgstr "الأعضاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:232
+#: app/components/roles/tenant-role-access-manager.tsx:249
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
-#: app/components/app-sidebar.tsx:296
+#: app/components/app-sidebar.tsx:300
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:80
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:240
 msgid "Menu"
@@ -5779,11 +6075,11 @@ msgstr "نظرة عامة على القائمة"
 msgid "Menu preview"
 msgstr "معاينة القائمة"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1019
+#: app/components/menu/drop-wizard/drop-form.tsx:1022
 msgid "Menu preview off"
 msgstr "معاينة القائمة معطلة"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1018
+#: app/components/menu/drop-wizard/drop-form.tsx:1021
 msgid "Menu preview on"
 msgstr "معاينة القائمة مفعلة"
 
@@ -5799,7 +6095,7 @@ msgstr "نوع القائمة"
 msgid "Menu Type & Capabilities"
 msgstr "نوع القائمة والإمكانات"
 
-#: app/components/app-sidebar.tsx:309
+#: app/components/app-sidebar.tsx:313
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:22
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:280
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:190
@@ -5820,13 +6116,30 @@ msgstr "فريق Menuza"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: app/components/chat/chat-message.tsx:380
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:538
 msgid "Message"
 msgstr "الرسالة"
 
+#: app/components/chat/chat-view.tsx:646
+msgid "Message #{activeName}"
+msgstr "رسالة في #{activeName}"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:192
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
+
+#: app/components/chat/chat-composer.tsx:201
+msgid "Message is too long."
+msgstr "الرسالة طويلة جداً."
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:81
+msgid "Message retention"
+msgstr "الاحتفاظ بالرسائل"
+
+#: app/components/chat/chat-view.tsx:537
+msgid "Messages"
+msgstr "الرسائل"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2520
 msgid "Meta description"
@@ -5885,7 +6198,7 @@ msgstr "معلومات مجموعة الإضافات"
 msgid "Modifier Group Name"
 msgstr "اسم مجموعة الإضافات"
 
-#: app/components/app-sidebar.tsx:324
+#: app/components/app-sidebar.tsx:328
 #: app/components/menu/item-form.tsx:539
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:274
@@ -5949,6 +6262,7 @@ msgstr "بدون صوت"
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:349
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:949
@@ -6042,11 +6356,16 @@ msgstr "أتمتة جديدة"
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:240
 msgid "New broadcast"
-msgstr "بث جديد"
+msgstr "بث جديد<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:350
 msgid "New Category"
-msgstr "تصنيف جديد"
+msgstr "تصنيف جديد======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:175
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+msgid "New channel"
+msgstr "قناة جديدة>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:111
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
@@ -6071,15 +6390,25 @@ msgstr "ستظهر ردود النماذج الجديدة هنا."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
-msgstr "معاينة الأيقونة الجديدة"
+msgstr "معاينة الأيقونة الجديدة<<<<<<< HEAD"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:357
 msgid "New Item"
 msgstr "عنصر جديد"
 
+#: app/components/chat/chat-compose-dialog.tsx:136
+#: app/components/chat/chat-group-settings-dialog.tsx:163
+msgid "New members can read earlier messages"
+msgstr "يمكن للأعضاء الجدد قراءة الرسائل السابقة"
+
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:343
 msgid "New Menu"
 msgstr "قائمة جديدة"
+
+#: app/components/chat/chat-compose-dialog.tsx:66
+#: app/components/chat/chat-view.tsx:422
+msgid "New message"
+msgstr "رسالة جديدة>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:364
 msgid "New Modifier Group"
@@ -6087,7 +6416,7 @@ msgstr "مجموعة إضافات جديدة"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:371
 msgid "New Modifier Option"
-msgstr "خيار إضافات جديد"
+msgstr "خيار إضافات جديد======="
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:342
 msgid "New Note"
@@ -6200,6 +6529,15 @@ msgstr "لا توجد تصنيفات بعد"
 msgid "No channels available"
 msgstr "لا توجد قنوات متاحة"
 
+#: app/components/chat/chat-view.tsx:226
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:184
+msgid "No channels yet"
+msgstr "لا توجد قنوات بعد"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:358
+#~ msgid "No channels yet. Create the first one."
+#~ msgstr "لا توجد قنوات بعد. أنشئ أول قناة."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:944
 msgid "No clients have been authorized yet"
 msgstr "لم يتم تفويض أي عملاء بعد"
@@ -6216,7 +6554,7 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:749
+#: app/components/roles/tenant-role-access-manager.tsx:766
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
@@ -6327,7 +6665,7 @@ msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة ل�
 
 #: app/components/organization-members.tsx:153
 msgid "No members found."
-msgstr "لم يتم العثور على أعضاء."
+msgstr "لم يتم العثور على أعضاء.<<<<<<< HEAD"
 
 #: app/components/menu/category-form.tsx:559
 msgid "No menus assigned yet. Add a menu to make this category visible."
@@ -6344,6 +6682,18 @@ msgstr "لا توجد قوائم مطابقة لهذه الفلاتر"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:209
 msgid "No menus yet"
 msgstr "لا توجد قوائم بعد"
+
+#: app/components/chat/chat-view.tsx:389
+msgid "No messages matched your search."
+msgstr "لم يُعثَر على رسائل مطابقة لبحثك."
+
+#: app/components/chat/chat-view.tsx:593
+msgid "No messages yet"
+msgstr "لا توجد رسائل بعد"
+
+#: app/components/chat/chat-view.tsx:494
+#~ msgid "No messages yet. Say hello!"
+#~ msgstr "لا توجد رسائل بعد. ابدأ بالترحيب!>>>>>>> upstream/main"
 
 #: app/components/menu/item-form.tsx:552
 msgid "No modifier groups assigned yet. Add one to get started."
@@ -6367,7 +6717,7 @@ msgstr "لا توجد مجموعات فرعية بعد"
 
 #: app/components/menu/modifier-form.tsx:1122
 #~ msgid "No nested modifier groups added yet."
-#~ msgstr "No nested modifier groups added yet."
+#~ msgstr "No nested modifier groups added yet.======="
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
@@ -6389,7 +6739,15 @@ msgstr "لم يتم العثور على ملاحظات."
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:391
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
-msgstr "لا توجد ملاحظات تطابق بحثك عن \"{searchValue}\". جرب مصطلح بحث مختلف أو أنشئ ملاحظة جديدة."
+msgstr "لا توجد ملاحظات تطابق بحثك عن \"{searchValue}\". جرب مصطلح بحث مختلف أو أنشئ ملاحظة جديدة.<<<<<<< HEAD"
+
+#: app/components/chat/chat-group-settings-dialog.tsx:118
+msgid "No one else to add."
+msgstr "لا يوجد أحد آخر للإضافة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:457
+msgid "No one matches your search."
+msgstr "لا يوجد أحد يطابق بحثك.>>>>>>> upstream/main"
 
 #: app/components/menu/modifier-form.tsx:1135
 msgid "No options added yet. Click “Add option” to get started."
@@ -6401,7 +6759,7 @@ msgstr "لم يتم العثور على خيارات"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:323
 msgid "No options match your active filters."
-msgstr "لا توجد خيارات مطابقة للفلاتر النشطة."
+msgstr "لا توجد خيارات مطابقة للفلاتر النشطة.======="
 
 #: app/routes/_app+/organizations.tsx:383
 #~ msgid "No organization found"
@@ -6546,7 +6904,7 @@ msgstr "بلا (فئة من المستوى الأعلى)"
 msgid "Normal"
 msgstr "عادي"
 
-#: app/components/roles/tenant-role-access-manager.tsx:668
+#: app/components/roles/tenant-role-access-manager.tsx:685
 msgid "Not allowed"
 msgstr "غير مسموح"
 
@@ -6597,9 +6955,9 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 
 #: app/components/leadership-card.tsx:104
 msgid "notes"
-msgstr "ملاحظات"
+msgstr "ملاحظات<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:278
+#: app/components/app-sidebar.tsx:282
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -6609,7 +6967,7 @@ msgstr "الملاحظات"
 msgid "Notes & Documents"
 msgstr "الملاحظات والمستندات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:208
+#: app/components/roles/tenant-role-access-manager.tsx:225
 msgid "Notes & website"
 msgstr "الملاحظات والموقع"
 
@@ -6634,9 +6992,9 @@ msgstr "لا شيء هنا بعد!"
 
 #: app/components/settings/cards/notification-preferences-card.tsx:207
 msgid "Notification Preferences"
-msgstr "تفضيلات الإشعارات"
+msgstr "تفضيلات الإشعارات<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:476
+#: app/components/app-sidebar.tsx:489
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -6678,11 +7036,15 @@ msgstr "المسار القديم (المصدر)"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
 msgid "Old URL (Source)"
-msgstr "عنوان URL القديم (المصدر)"
+msgstr "عنوان URL القديم (المصدر)<<<<<<< HEAD"
 
 #: app/components/mailbox/reviews-tab.tsx:548
 msgid "Older"
-msgstr "الأقدم"
+msgstr "الأقدم======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:84
+msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
+msgstr "تُزال رسائل الدردشة الجماعية الأقدم تلقائيًا من غرفة الدردشة في مؤسستك. الرسائل المباشرة والمجموعات (عند تفعيلها) تتبع نفس السياسة.>>>>>>> upstream/main"
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -6733,13 +7095,17 @@ msgstr "ساعات الطلب عبر الإنترنت مطابقة لساعات 
 msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:993
+#: app/components/menu/drop-wizard/drop-form.tsx:996
 msgid "Only people with the secret link can view and order."
 msgstr "فقط الأشخاص الذين لديهم الرابط السري يمكنهم العرض والطلب."
 
 #: app/components/note/share-note-button.tsx:195
 msgid "Only selected members can access this note"
 msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذه الملاحظة"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:406
+msgid "Only selected roles and people"
+msgstr "الأدوار والأشخاص المحددون فقط"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
@@ -6769,11 +7135,11 @@ msgstr "فتح لوحة تحكم الدفع"
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1015
+#: app/components/menu/drop-wizard/drop-form.tsx:1018
 msgid "Open countdown hidden"
 msgstr "العد التنازلي للفتح مخفي"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1014
+#: app/components/menu/drop-wizard/drop-form.tsx:1017
 msgid "Open countdown visible"
 msgstr "العد التنازلي للفتح ظاهر"
 
@@ -6843,6 +7209,10 @@ msgstr "فتح المرجع"
 #: app/components/settings/cards/organization/shop-card.tsx:105
 #~ msgid "Open Stripe dashboard"
 #~ msgstr "فتح لوحة Stripe"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:169
+msgid "Open team chat"
+msgstr "افتح دردشة الفريق"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:254
 msgid "Open Visual Builder"
@@ -6931,7 +7301,7 @@ msgstr "اختياري • حتى {maxSelections}"
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
-#: app/components/app-sidebar.tsx:329
+#: app/components/app-sidebar.tsx:333
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:58
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:332
 msgid "Options"
@@ -7019,10 +7389,11 @@ msgstr "موقع المؤسسة"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:76
 #~ msgid "Organization Size"
-#~ msgstr "حجم المؤسسة"
+#~ msgstr "حجم المؤسسة<<<<<<< HEAD"
 
 #: app/components/app-sidebar.tsx:142
 #: app/components/app-sidebar.tsx:144
+#: app/components/app-sidebar.tsx:146
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -7039,14 +7410,14 @@ msgstr "نظّم العناصر في تصنيفات (مثل المقبلات و�
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
-msgstr "محدد"
+msgstr "محدد<<<<<<< HEAD"
 
 #: app/components/locations/special-hours-picker.tsx:91
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "تجاوز ساعات العمل المعتادة في الأعياد أو المناسبات أو الإغلاقات."
 
-#: app/components/app-sidebar.tsx:302
-#: app/components/app-sidebar.tsx:353
+#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:357
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:15
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
@@ -7081,9 +7452,9 @@ msgstr "عنوان الصفحة"
 #: app/components/website/create-page-dialog.tsx:171
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2413
 msgid "Page URL"
-msgstr "رابط الصفحة"
+msgstr "رابط الصفحة<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:387
+#: app/components/app-sidebar.tsx:391
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -7179,6 +7550,10 @@ msgstr "قيد الانتظار"
 msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:445
+msgid "People"
+msgstr "الأشخاص"
+
 #: app/components/settings/cards/organization/billing-card.tsx:418
 #: app/routes/organizations+/create.tsx:1800
 msgid "per month"
@@ -7200,20 +7575,20 @@ msgstr "حذف الملاحظات التي أنشأها أي زميل نهائي
 msgid "Permanently delete notes created by this user."
 msgstr "حذف الملاحظات التي أنشأها هذا المستخدم نهائيًا."
 
-#: app/components/roles/tenant-role-access-manager.tsx:450
-#: app/components/roles/tenant-role-access-manager.tsx:627
+#: app/components/roles/tenant-role-access-manager.tsx:467
+#: app/components/roles/tenant-role-access-manager.tsx:644
 msgid "Permission"
 msgstr "الصلاحية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:772
+#: app/components/roles/tenant-role-access-manager.tsx:789
 msgid "Permissions"
 msgstr "الصلاحيات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:588
+#: app/components/roles/tenant-role-access-manager.tsx:605
 msgid "permissions granted"
 msgstr "صلاحيات ممنوحة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:527
+#: app/components/roles/tenant-role-access-manager.tsx:544
 msgid "permissions selected"
 msgstr "صلاحيات محددة"
 
@@ -7297,6 +7672,10 @@ msgstr "اختر كتلة لإضافتها إلى بريدك."
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1707
 msgid "Pick a block to insert into your page."
 msgstr "اختر كتلة لإدراجها في صفحتك."
+
+#: app/components/chat/chat-view.tsx:553
+msgid "Pick a conversation"
+msgstr "اختر محادثة"
 
 #: app/components/website/form-builder-sidebar.tsx:136
 msgid "Pick a field to add to your form."
@@ -7383,7 +7762,7 @@ msgstr "الخطة غير متاحة"
 msgid "Platform"
 msgstr "المنصة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:872
+#: app/components/roles/tenant-role-access-manager.tsx:889
 msgid "Platform-provided role."
 msgstr "دور توفره المنصة."
 
@@ -7604,9 +7983,9 @@ msgstr "جارٍ المعالجة…"
 
 #: app/components/settings/cards/organization/shop-card.tsx:254
 msgid "Product name"
-msgstr "اسم المنتج"
+msgstr "اسم المنتج<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:133
+#: app/components/app-sidebar.tsx:135
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
 msgid "Profile"
@@ -7633,7 +8012,7 @@ msgstr "الترويج كبيع إضافي"
 msgid "Promotions & Highlights"
 msgstr "العروض والإبرازات"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:969
+#: app/components/menu/drop-wizard/drop-form.tsx:972
 msgid "Public"
 msgstr "عام"
 
@@ -7746,6 +8125,10 @@ msgstr "تم التقييم"
 msgid "Rating"
 msgstr "التقييم"
 
+#: app/components/chat/chat-message.tsx:252
+msgid "React with {emoji}"
+msgstr "التفاعل بـ {emoji}"
+
 #: app/components/settings/cards/organization/integrations-card.tsx:206
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:403
 msgid "Read documentation"
@@ -7763,7 +8146,7 @@ msgstr "تمت قراءة تفاصيل الصفحة"
 msgid "Read the announcement banners shown on the public site."
 msgstr "قراءة لافتات الإعلانات المعروضة على الموقع العام."
 
-#: app/components/roles/tenant-role-access-manager.tsx:242
+#: app/components/roles/tenant-role-access-manager.tsx:259
 msgid "Read-only"
 msgstr "قراءة فقط"
 
@@ -7809,9 +8192,9 @@ msgstr "نوع إعادة التوجيه"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1086
 msgid "Redirected"
-msgstr "تمت إعادة التوجيه"
+msgstr "تمت إعادة التوجيه<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:420
+#: app/components/app-sidebar.tsx:424
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -7876,6 +8259,7 @@ msgstr "عادي"
 msgid "Reject"
 msgstr "رفض"
 
+#: app/components/chat/chat-unavailable.tsx:58
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:893
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
@@ -8016,17 +8400,25 @@ msgstr "تم الرد"
 #: app/components/note/comment-input.tsx:398
 #: app/components/note/comment-item.tsx:301
 msgid "Reply"
-msgstr "رد"
+msgstr "رد<<<<<<< HEAD"
+
+#: app/components/chat/chat-message.tsx:277
+msgid "Reply in thread"
+msgstr "الرد في سلسلة الردود"
 
 #: app/components/mailbox/reviews-tab.tsx:664
 msgid "Reply to review"
-msgstr "الرد على التقييم"
+msgstr "الرد على التقييم======="
+
+#: app/components/chat/chat-view.tsx:738
+msgid "Reply…"
+msgstr "رد…>>>>>>> upstream/main"
 
 #: app/components/note/comment-input.tsx:150
 #~ msgid "Replying to comment"
-#~ msgstr "الرد على التعليق"
+#~ msgstr "الرد على التعليق<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:272
+#: app/components/app-sidebar.tsx:276
 msgid "Reports"
 msgstr "التقارير"
 
@@ -8110,7 +8502,7 @@ msgstr "الردود"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:354
 msgid "Responses to your website forms will arrive here."
-msgstr "ستصل ردود نماذج موقعك إلى هنا."
+msgstr "ستصل ردود نماذج موقعك إلى هنا.<<<<<<< HEAD"
 
 #: app/routes/organizations+/create.tsx:890
 msgid "Restaurant logo preview"
@@ -8124,7 +8516,7 @@ msgstr "حجم المطعم"
 msgid "Restaurant Size"
 msgstr "حجم المطعم"
 
-#: app/components/app-sidebar.tsx:145
+#: app/components/app-sidebar.tsx:147
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:267
 #: app/routes/_app+/organizations.tsx:192
@@ -8139,13 +8531,25 @@ msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك و�
 msgid "Restrict when this is available to guests, such as lunch from 11:00 AM to 3:00 PM."
 msgstr "حدّد وقت توفر هذا للعملاء، مثل الغداء من 11:00 صباحًا حتى 3:00 مساءً."
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:212
+msgid "Restricted"
+msgstr "مقيّدة"
+
 #: app/components/locations/delivery-zones-manager.tsx:221
 msgid "Restricted (No Delivery)"
-msgstr "مقيّد (بدون توصيل)"
+msgstr "مقيّد (بدون توصيل)======="
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:322
+msgid "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
+msgstr "القنوات المقيّدة مرئية فقط للأدوار والأشخاص الذين تختارهم. كونك مسؤولاً لا يمنحك الوصول وحده.>>>>>>> upstream/main"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
 msgstr "النتيجة"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:93
+msgid "Retention period"
+msgstr "مدة الاحتفاظ"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
@@ -8222,22 +8626,26 @@ msgstr "جاري الإلغاء..."
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3560
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4242
 msgid "Right"
-msgstr "اليمين"
+msgstr "اليمين<<<<<<< HEAD"
 
 #: app/components/menu/modifier-guest-preview.tsx:499
 msgid "Right ½"
 msgstr "النصف الأيمن"
 
-#: app/components/roles/tenant-role-access-manager.tsx:763
-#: app/components/roles/tenant-role-access-manager.tsx:849
+#: app/components/roles/tenant-role-access-manager.tsx:780
+#: app/components/roles/tenant-role-access-manager.tsx:866
 msgid "Role"
 msgstr "الدور"
 
-#: app/components/roles/tenant-role-access-manager.tsx:323
+#: app/components/roles/tenant-role-access-manager.tsx:340
 msgid "Role name"
-msgstr "اسم الدور"
+msgstr "اسم الدور<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:454
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:420
+msgid "Roles"
+msgstr "الأدوار"
+
+#: app/components/app-sidebar.tsx:458
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -8370,6 +8778,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+#: app/components/chat/chat-message.tsx:196
 #: app/components/menu/drop-wizard/drop-drawers.tsx:534
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
@@ -8393,17 +8802,18 @@ msgstr "حفظ كنسخة"
 
 #: app/components/website/branding-panel.tsx:378
 msgid "Save Branding"
-msgstr "حفظ العلامة التجارية"
+msgstr "حفظ العلامة التجارية<<<<<<< HEAD"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:352
-#: app/components/menu/drop-wizard/drop-form.tsx:1048
-#: app/components/roles/tenant-role-access-manager.tsx:541
+#: app/components/menu/drop-wizard/drop-form.tsx:1051
+#: app/components/roles/tenant-role-access-manager.tsx:558
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:504
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
 msgstr "حفظ التغييرات"
@@ -8496,7 +8906,7 @@ msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/mailbox/reviews-tab.tsx:730
-#: app/components/roles/tenant-role-access-manager.tsx:539
+#: app/components/roles/tenant-role-access-manager.tsx:556
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
@@ -8511,7 +8921,7 @@ msgid "Schedule a call"
 msgstr "حدد موعد مكالمة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:335
-#: app/components/menu/drop-wizard/drop-form.tsx:1046
+#: app/components/menu/drop-wizard/drop-form.tsx:1049
 msgid "Schedule drop"
 msgstr "جدولة الطرح"
 
@@ -8523,11 +8933,11 @@ msgstr "جدولة طروحات القائمة محدودة الوقت مع حد
 msgid "Scheduled"
 msgstr "مجدول"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1044
+#: app/components/menu/drop-wizard/drop-form.tsx:1047
 msgid "Scheduling..."
 msgstr "جارٍ الجدولة..."
 
-#: app/components/app-sidebar.tsx:221
+#: app/components/app-sidebar.tsx:223
 msgid "Search"
 msgstr "بحث"
 
@@ -8541,11 +8951,15 @@ msgstr "ابحث واختر عنوان الفرع باستخدام الإكما�
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
-msgstr "البحث في الأتمتة..."
+msgstr "البحث في الأتمتة...<<<<<<< HEAD"
 
 #: app/components/menu/modifier-form.tsx:1846
 msgid "Search available options..."
-msgstr "ابحث في الخيارات المتاحة..."
+msgstr "ابحث في الخيارات المتاحة...======="
+
+#: app/components/chat/chat-compose-dialog.tsx:99
+msgid "Search by name"
+msgstr "البحث بالاسم>>>>>>> upstream/main"
 
 #: app/components/settings/cards/organization/jira-bot-user-search.tsx:184
 msgid "Search by name or email..."
@@ -8567,16 +8981,21 @@ msgstr "البحث في الوسائط"
 #: app/components/media-library/media-library-picker.tsx:249
 #: app/routes/_app+/$orgSlug_+/media.tsx:869
 msgid "Search media library"
-msgstr "البحث في مكتبة الوسائط"
+msgstr "البحث في مكتبة الوسائط<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:597
+#: app/components/app-sidebar.tsx:625
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
-msgstr "البحث في عناصر القائمة..."
+msgstr "البحث في عناصر القائمة...======="
+
+#: app/components/chat/chat-view.tsx:361
+#: app/components/chat/chat-view.tsx:362
+msgid "Search messages"
+msgstr "ابحث في الرسائل>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
-msgstr "ابحث في عناوين URL المفقودة..."
+msgstr "ابحث في عناوين URL المفقودة...<<<<<<< HEAD======="
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
@@ -8586,7 +9005,7 @@ msgstr "البحث في الملاحظات"
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
 
-#: app/components/app-sidebar.tsx:549
+#: app/components/app-sidebar.tsx:577
 #: app/components/command-menu.tsx:102
 #~ msgid "Search notes..."
 #~ msgstr "البحث في الملاحظات..."
@@ -8595,13 +9014,26 @@ msgstr "البحث في الملاحظات بالعنوان أو المحتوى.
 msgid "Search pages..."
 msgstr "البحث في الصفحات..."
 
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:450
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:451
+msgid "Search people"
+msgstr "البحث عن أشخاص"
+
+#: app/components/chat/chat-compose-dialog.tsx:141
+msgid "Search people to add"
+msgstr "ابحث عن أشخاص لإضافتهم"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2461
 msgid "Search preview"
 msgstr "معاينة البحث"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
 msgid "Search redirects..."
-msgstr "ابحث في عمليات إعادة التوجيه..."
+msgstr "ابحث في عمليات إعادة التوجيه...<<<<<<< HEAD"
+
+#: app/components/chat/chat-view.tsx:385
+msgid "Search results"
+msgstr "نتائج البحث"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:282
 msgid "Search submissions"
@@ -8610,6 +9042,10 @@ msgstr "البحث في الردود"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:283
 msgid "Search submissions…"
 msgstr "البحث في الردود…"
+
+#: app/components/chat/chat-group-settings-dialog.tsx:112
+msgid "Search team members"
+msgstr "ابحث في أعضاء الفريق"
 
 #: app/components/note/share-note-button.tsx:261
 msgid "Search team members..."
@@ -8655,9 +9091,9 @@ msgstr "الأقسام"
 
 #: app/components/settings/cards/security-card.tsx:168
 msgid "Secure your account with an extra verification step"
-msgstr "أمّن حسابك بخطوة تحقق إضافية"
+msgstr "أمّن حسابك بخطوة تحقق إضافية<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:139
+#: app/components/app-sidebar.tsx:141
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr "الأمان"
@@ -8681,7 +9117,7 @@ msgstr "عرض سجل حملات البريد الإلكتروني ورسائل 
 
 #: app/components/roles/tenant-role-access-manager.tsx:113
 msgid "See teammate names, emails, and assigned roles."
-msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة."
+msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة.<<<<<<< HEAD"
 
 #: app/components/menu/menu-form.tsx:343
 msgid "Select a category to add to this menu."
@@ -8689,7 +9125,11 @@ msgstr "اختر تصنيفًا لإضافته إلى هذه القائمة."
 
 #: app/components/menu/item-form.tsx:679
 msgid "Select a category to display this item."
-msgstr "اختر تصنيفًا لعرض هذا العنصر."
+msgstr "اختر تصنيفًا لعرض هذا العنصر.======="
+
+#: app/components/chat/chat-view.tsx:463
+#~ msgid "Select a channel to start."
+#~ msgstr "اختر قناة للبدء.>>>>>>> upstream/main"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4102
 msgid "Select a form"
@@ -8735,7 +9175,7 @@ msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ ت
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
-#: app/components/roles/tenant-role-access-manager.tsx:432
+#: app/components/roles/tenant-role-access-manager.tsx:449
 msgid "Select all"
 msgstr "تحديد الكل"
 
@@ -8878,6 +9318,8 @@ msgid "Send invitations to join the organization workspace."
 msgstr "إرسال دعوات للانضمام إلى مساحة عمل المنظمة."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
+#: app/components/chat/chat-composer.tsx:332
+#: app/components/chat/chat-message.tsx:398
 msgid "Send message"
 msgstr "إرسال رسالة"
 
@@ -8892,6 +9334,10 @@ msgstr "إرسال تعليمات إعادة التعيين"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:80
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
+
+#: app/components/chat/chat-view.tsx:596
+msgid "Send the first message — your team will see it here."
+msgstr "أرسل أول رسالة — سيراها فريقك هنا."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:165
 msgid "Sending message"
@@ -8983,7 +9429,7 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 
 #: app/components/settings/cards/security-card.tsx:187
 msgid "Set up authenticator app"
-msgstr "إعداد تطبيق المصادقة"
+msgstr "إعداد تطبيق المصادقة<<<<<<< HEAD"
 
 #: app/components/locations/availability-picker.tsx:462
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
@@ -8997,7 +9443,7 @@ msgstr "يساعد وضع حد على تنظيم التحضير وتجنب ال�
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "يساعد وضع حد على نفاد الكمية بالكامل"
 
-#: app/components/app-sidebar.tsx:427
+#: app/components/app-sidebar.tsx:431
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -9014,6 +9460,10 @@ msgstr "الإعداد غير مكتمل"
 #: app/components/settings/two-factor-form.tsx:179
 msgid "Setup key"
 msgstr "مفتاح الإعداد"
+
+#: app/components/chat/chat-view.tsx:641
+msgid "Several people are typing…"
+msgstr "عدة أشخاص يكتبون…"
 
 #: app/components/note/share-note-button.tsx:167
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1010
@@ -9050,9 +9500,9 @@ msgstr "شارك مع الآخرين"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3182
 msgid "Shared across every page"
-msgstr "مشترك عبر كل صفحة"
+msgstr "مشترك عبر كل صفحة<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:466
+#: app/components/app-sidebar.tsx:479
 msgid "Shop"
 msgstr "المتجر"
 
@@ -9076,9 +9526,17 @@ msgstr "إظهار السعرات الحرارية وتنبيهات مسببات
 msgid "Show form title"
 msgstr "إظهار عنوان النموذج"
 
+#: app/components/chat/chat-message.tsx:92
+msgid "Show less"
+msgstr "عرض أقل"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:87
 #~ msgid "Show me features"
 #~ msgstr "أرني الميزات"
+
+#: app/components/chat/chat-message.tsx:92
+msgid "Show more"
+msgstr "عرض المزيد"
 
 #: app/components/settings/cards/organization/shop-card.tsx:309
 msgid "Show product on your public site"
@@ -9258,6 +9716,14 @@ msgstr "بعض الحقول تختلف بالفعل عن اللغة الافتر
 msgid "Some fields are already translated"
 msgstr "بعض الحقول مترجمة بالفعل"
 
+#: app/components/chat/chat-view.tsx:196
+msgid "Someone"
+msgstr "شخص ما"
+
+#: app/components/chat/chat-view.tsx:208
+msgid "Something went wrong."
+msgstr "حدث خطأ ما."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:205
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
@@ -9277,13 +9743,13 @@ msgstr "تفرّع المسار بناءً على قواعد (صحيح / خاط�
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3587
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3827
 msgid "Square"
-msgstr "مربع"
+msgstr "مربع<<<<<<< HEAD"
 
 #: app/components/menu/modifier-form.tsx:1129
 #~ msgid "Standard modifier group assigned directly to menu items (e.g. \"Choose your side\", \"Burger Toppings\")."
 #~ msgstr "مجموعة تعديل قياسية مخصصة مباشرة لعناصر القائمة (مثل \"اختر طبق جانبي\"، \"إضافات البرجر\")."
 
-#: app/components/roles/tenant-role-access-manager.tsx:838
+#: app/components/roles/tenant-role-access-manager.tsx:855
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
@@ -9291,7 +9757,7 @@ msgstr "أدوار المنصة القياسية. انقر أي دور لمرا�
 msgid "Standard restaurant menus for dine-in, takeout, and delivery."
 msgstr "قوائم مطعم قياسية لتناول الطعام في المطعم والطلب الخارجي والتوصيل."
 
-#: app/components/roles/tenant-role-access-manager.tsx:583
+#: app/components/roles/tenant-role-access-manager.tsx:600
 msgid "Standard system role."
 msgstr "دور نظام قياسي."
 
@@ -9299,7 +9765,15 @@ msgstr "دور نظام قياسي."
 msgid "Star"
 msgstr "تمييز بنجمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:359
+#: app/components/chat/chat-compose-dialog.tsx:196
+msgid "Start"
+msgstr "بدء"
+
+#: app/components/chat/chat-view.tsx:372
+#~ msgid "Start a conversation with someone on your team."
+#~ msgstr "ابدأ محادثة مع شخص في فريقك."
+
+#: app/components/roles/tenant-role-access-manager.tsx:376
 msgid "Start from a template"
 msgstr "البدء من قالب"
 
@@ -9310,6 +9784,10 @@ msgstr "ابدأ من قالب أو أنشئ مجموعة حقول مخصصة."
 #: app/utils/website/form-templates.ts:24
 msgid "Start from scratch"
 msgstr "ابدأ من الصفر"
+
+#: app/components/roles/tenant-role-access-manager.tsx:214
+msgid "Start group conversations and add teammates."
+msgstr "ابدأ محادثات جماعية وأضف الزملاء."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:69
 msgid "Start journey on lifecycle event"
@@ -9341,13 +9819,13 @@ msgstr "بدأ في"
 
 #: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
-msgstr "نقطة البداية"
+msgstr "نقطة البداية<<<<<<< HEAD"
 
 #: app/components/locations/address-autocomplete.tsx:244
 msgid "State / Province"
 msgstr "الولاية / المنطقة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:633
+#: app/components/roles/tenant-role-access-manager.tsx:650
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:296
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
@@ -9599,7 +10077,7 @@ msgstr "الطلب من الطاولة وخطوات الخدمة الداخلي�
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/components/roles/tenant-role-access-manager.tsx:729
+#: app/components/roles/tenant-role-access-manager.tsx:746
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "أدوار مخصصة لمنظمتك مع صلاحيات مُعدّة."
 
@@ -9633,9 +10111,26 @@ msgstr "الفريق"
 msgid "Team & Members"
 msgstr "الفريق والأعضاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:231
+#: app/components/chat/chat-sidebar-link.tsx:20
+#: app/components/roles/tenant-role-access-manager.tsx:202
+msgid "Team chat"
+msgstr "دردشة الفريق"
+
+#: app/routes/_app+/$orgSlug_+/chat.tsx:220
+#~ msgid "Team chat isn't available here"
+#~ msgstr "دردشة الفريق غير متاحة هنا"
+
+#: app/components/chat/chat-unavailable.tsx:28
+msgid "Team chat isn't running in this environment"
+msgstr "دردشة الفريق غير متاحة في هذه البيئة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:248
 msgid "Team manager"
 msgstr "مدير الفريق"
+
+#: app/components/chat/chat-compose-dialog.tsx:92
+msgid "Team member"
+msgstr "عضو الفريق"
 
 #: app/components/leadership-card.tsx:55
 msgid "Team members who have created the most notes"
@@ -9786,9 +10281,9 @@ msgstr "المسار في موقعك القديم الذي يطلبه الزوا
 
 #: app/components/nav-user.tsx:220
 msgid "Theme"
-msgstr "السمة"
+msgstr "السمة<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:76
+#: app/components/app-sidebar.tsx:78
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -9850,11 +10345,15 @@ msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائ�
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:767
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
-msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
+msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي.<<<<<<< HEAD"
 
 #: app/components/menu/item-variations.tsx:262
 msgid "This item has reached the 100 combination limit."
 msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
+
+#: app/components/chat/chat-message.tsx:148
+msgid "This message was deleted."
+msgstr "تم حذف هذه الرسالة."
 
 #: app/components/menu/modifier-form.tsx:1477
 msgid "This modifier group is triggered when customers select these modifier items:"
@@ -9867,6 +10366,10 @@ msgstr "هذا الخيار"
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:252
 msgid "This platform is import-only. Menu changes stay here."
 msgstr "تدعم هذه المنصة الاستيراد فقط. تبقى تغييرات القائمة هنا."
+
+#: app/components/chat/chat-view.tsx:816
+msgid "This removes the message for everyone in the channel. This can't be undone."
+msgstr "سيؤدي هذا إلى إزالة الرسالة للجميع في القناة. لا يمكن التراجع عن هذا الإجراء."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:637
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
@@ -9923,6 +10426,11 @@ msgstr "سيؤدي هذا إلى:"
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:146
 msgid "Thought for {duration} seconds"
 msgstr "فكّر لمدة {duration} ثانية"
+
+#: app/components/chat/chat-view.tsx:659
+#: app/components/chat/chat-view.tsx:664
+msgid "Thread"
+msgstr "سلسلة الردود"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3800
 msgid "Three"
@@ -10165,6 +10673,7 @@ msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
 #: app/components/ai/global-ai-panel.tsx:86
+#: app/components/chat/chat-view.tsx:566
 #: app/components/mailbox/reviews-tab.tsx:414
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:330
 msgid "Try again"
@@ -10287,15 +10796,19 @@ msgstr "خطأ غير معروف"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:245
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:279
 msgid "Unknown intent"
-msgstr "نية غير معروفة"
+msgstr "نية غير معروفة<<<<<<< HEAD"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:815
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:57
+msgid "Unknown role"
+msgstr "دور غير معروف>>>>>>> upstream/main"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:818
 msgid "Unlimited"
 msgstr "غير محدود"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:990
+#: app/components/menu/drop-wizard/drop-form.tsx:993
 msgid "Unlisted"
-msgstr "غير مدرج"
+msgstr "غير مدرج======="
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:138
 msgid "Unnamed recipient"
@@ -10374,13 +10887,13 @@ msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات �
 
 #: app/components/settings/cards/profile-photo.tsx:25
 msgid "Update Profile Photo"
-msgstr "تحديث صورة الملف الشخصي"
+msgstr "تحديث صورة الملف الشخصي<<<<<<< HEAD"
 
 #: app/components/mailbox/reviews-tab.tsx:732
 msgid "Update reply"
 msgstr "تحديث الرد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:315
+#: app/components/roles/tenant-role-access-manager.tsx:332
 msgid "Update this role’s name, description, and permissions."
 msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 
@@ -10404,9 +10917,9 @@ msgstr "تم تحديث القسم"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:152
 msgid "Updating section"
-msgstr "تحديث القسم"
+msgstr "تحديث القسم<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:92
+#: app/components/app-sidebar.tsx:94
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr "ترقية"
@@ -10426,6 +10939,10 @@ msgstr "ارفع أيقونة PNG لموقعك العام. سنقوم تلقائ
 #: app/components/settings/cards/organization/site-icon-card.tsx:239
 msgid "Upload a site icon"
 msgstr "رفع أيقونة الموقع"
+
+#: app/components/chat/chat-composer.tsx:124
+msgid "Upload already in progress."
+msgstr "الرفع قيد التنفيذ بالفعل."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:952
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
@@ -10467,6 +10984,7 @@ msgstr "تم الرفع"
 msgid "Uploaded:"
 msgstr "تاريخ الرفع:"
 
+#: app/components/chat/chat-composer.tsx:310
 #: app/components/website/link-inspector.tsx:542
 #: app/routes/_app+/$orgSlug_+/media.tsx:843
 msgid "Uploading…"
@@ -10649,7 +11167,7 @@ msgstr "فيديو"
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
-#: app/components/roles/tenant-role-access-manager.tsx:802
+#: app/components/roles/tenant-role-access-manager.tsx:819
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
@@ -10727,7 +11245,7 @@ msgstr "عرض الجدول الزمني ←"
 msgid "View website workspace"
 msgstr "عرض مساحة عمل الموقع"
 
-#: app/components/roles/tenant-role-access-manager.tsx:241
+#: app/components/roles/tenant-role-access-manager.tsx:258
 msgid "Viewer"
 msgstr "مشاهد"
 
@@ -10788,9 +11306,9 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 
 #: app/routes/_auth+/verify.tsx:65
 msgid "We've sent you a code to verify your email address."
-msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
+msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني.<<<<<<< HEAD"
 
-#: app/components/app-sidebar.tsx:376
+#: app/components/app-sidebar.tsx:380
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -10902,11 +11420,15 @@ msgstr "عندما يختار العميل هذا الخيار، أظهر مجم
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
 msgid "When active, visitors requesting the old URL will be forwarded right away."
-msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
+msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً.<<<<<<< HEAD"
+
+#: app/components/chat/chat-group-settings-dialog.tsx:166
+msgid "When off, people only see messages from after they joined."
+msgstr "عند الإيقاف، يرى الأشخاص الرسائل من بعد انضمامهم فقط.>>>>>>> upstream/main"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:596
 msgid "When orders open and close"
-msgstr "متى تفتح الطلبات وتغلق"
+msgstr "متى تفتح الطلبات وتغلق======="
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "When prompted, authorize the connection in your browser"
@@ -10926,7 +11448,11 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 
 #: app/components/ui/notification-bell.tsx:228
 msgid "When you get notifications, they'll show up here."
-msgstr "عند وصول الإشعارات، ستظهر هنا."
+msgstr "عند وصول الإشعارات، ستظهر هنا.<<<<<<< HEAD"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:382
+msgid "Who can access this channel?"
+msgstr "من يمكنه الوصول إلى هذه القناة؟>>>>>>> upstream/main"
 
 #: app/components/menu/modifier-guest-preview.tsx:479
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:412
@@ -10952,7 +11478,7 @@ msgstr "سعر البيتزا كاملة ($)"
 
 #: app/components/menu/modifier-form.tsx:1044
 msgid "Whole pizza, left half, or right half pricing."
-msgstr "تسعير البيتزا كاملة أو النصف الأيسر أو الأيمن."
+msgstr "تسعير البيتزا كاملة أو النصف الأيسر أو الأيمن.======="
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
@@ -10983,6 +11509,10 @@ msgstr "التحقق من سير العمل"
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 msgid "Working on it"
 msgstr "جارٍ العمل على ذلك"
+
+#: app/components/chat/chat-composer.tsx:85
+msgid "Write a message…"
+msgstr "اكتب رسالة…"
 
 #: app/components/note/comment-item.tsx:267
 #~ msgid "Write a reply..."
@@ -11069,6 +11599,10 @@ msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة
 msgid "You do not have permission to view this note"
 msgstr "ليس لديك إذن لعرض هذه الملاحظة"
 
+#: app/components/chat/chat-view.tsx:235
+msgid "You don't have access to any channels yet. Ask an admin to add you to one."
+msgstr "ليس لديك حق الوصول إلى أي قناة بعد. اطلب من أحد المسؤولين إضافتك إلى قناة."
+
 #: app/routes/_app+/organizations.tsx:237
 msgid "You have been invited to join the following organizations. Choose to accept or decline each invitation."
 msgstr "تمت دعوتك للانضمام إلى المنظمات التالية. اختر قبول أو رفض كل دعوة."
@@ -11091,6 +11625,10 @@ msgstr "لم تنضم إلى أي مطعم بعد."
 #: app/routes/_auth+/onboarding.tsx:363
 msgid "You must agree to the terms of service and privacy policy"
 msgstr "يجب أن توافق على شروط الخدمة وسياسة الخصوصية"
+
+#: app/components/chat/chat-view.tsx:781
+msgid "You no longer have access to this chat. Reload the page to check your channels."
+msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
 
 #: app/components/settings/cards/organization/shop-card.tsx:384
 msgid "You receive"
@@ -11204,7 +11742,11 @@ msgstr "سيتم تشفير بيانات اعتماد S3 الخاصة بك وت�
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:254
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:187
+msgid "Your team will see channels here once you create one. Members open chat from the sidebar next to the logo."
+msgstr "ستظهر القنوات هنا بعد إنشاء أول قناة. يفتح أعضاء الفريق الدردشة من الشريط الجانبي بجانب الشعار."
+
+#: app/components/roles/tenant-role-access-manager.tsx:271
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
 
