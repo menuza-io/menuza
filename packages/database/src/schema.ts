@@ -1918,6 +1918,117 @@ export const OrganizationAnnouncement = sqliteTable(
 	],
 )
 
+/**
+ * Team chat channels. This table is the source of truth for *who may see a
+ * channel*; message content lives in the per-organization `ChatOrg` Durable
+ * Object. `access` is `everyone` (every active member) or `restricted`
+ * (members whose role is in `OrganizationChatChannelRole`, plus anyone in
+ * `OrganizationChatChannelMember`).
+ */
+export const OrganizationChatChannel = sqliteTable(
+	'OrganizationChatChannel',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		description: text().default('').notNull(),
+		access: text({ enum: ['everyone', 'restricted'] })
+			.default('everyone')
+			.notNull(),
+		kind: text({ enum: ['channel', 'dm', 'group'] })
+			.default('channel')
+			.notNull(),
+		/** Stable key for a 1:1 DM (`userA:userB`, sorted). */
+		dmPairKey: text(),
+		showHistoryToNewMembers: integer({ mode: 'boolean' })
+			.default(false)
+			.notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationChatChannel_organizationId_idx').on(
+			table.organizationId,
+		),
+		uniqueIndex('OrganizationChatChannel_organizationId_name_key')
+			.on(table.organizationId, sql`lower(${table.name})`)
+			.where(sql`${table.kind} = 'channel'`),
+		uniqueIndex('OrganizationChatChannel_organizationId_dmPairKey_key').on(
+			table.organizationId,
+			table.dmPairKey,
+		),
+	],
+)
+
+export const OrganizationChatChannelRole = sqliteTable(
+	'OrganizationChatChannelRole',
+	{
+		channelId: text()
+			.notNull()
+			.references(() => OrganizationChatChannel.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationRoleId: text()
+			.notNull()
+			.references(() => OrganizationRole.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.channelId, table.organizationRoleId],
+			name: 'OrganizationChatChannelRole_channelId_organizationRoleId_pk',
+		}),
+		index('OrganizationChatChannelRole_organizationRoleId_idx').on(
+			table.organizationRoleId,
+		),
+	],
+)
+
+export const OrganizationChatChannelMember = sqliteTable(
+	'OrganizationChatChannelMember',
+	{
+		channelId: text()
+			.notNull()
+			.references(() => OrganizationChatChannel.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		joinedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.channelId, table.userId],
+			name: 'OrganizationChatChannelMember_channelId_userId_pk',
+		}),
+		index('OrganizationChatChannelMember_userId_idx').on(table.userId),
+	],
+)
+
 export const OrganizationSiteAsset = sqliteTable(
 	'OrganizationSiteAsset',
 	{
@@ -2329,6 +2440,8 @@ export const Organization = sqliteTable(
 		googleTagManagerId: text(),
 		googleAnalyticsId: text(),
 		tiktokPixelId: text(),
+		/** Team chat message retention in days; null keeps messages forever. */
+		chatRetentionDays: integer(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),

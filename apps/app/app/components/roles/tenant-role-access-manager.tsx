@@ -198,6 +198,23 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Team chat`,
+			description: t`Internal channels for your team.`,
+			permissions: [
+				{
+					id: 'org_perm_update_chat_any',
+					label: t`Manage chat channels`,
+					description: t`Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_create_chat_group',
+					label: t`Create group chats`,
+					description: t`Start group conversations and add teammates.`,
+				},
+			],
+		},
 	]
 }
 

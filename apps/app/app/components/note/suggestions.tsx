@@ -6,11 +6,12 @@ import { type MentionUser } from './comment-input'
 import { MentionList } from './mention-list'
 
 export default function getSuggestions(
-	items: MentionUser[],
+	items: MentionUser[] | (() => MentionUser[]),
 ): Omit<SuggestionOptions<any, MentionNodeAttrs>, 'editor'> {
+	const resolveItems = () => (typeof items === 'function' ? items() : items)
 	return {
 		items: ({ query }: { query: string }): MentionUser[] => {
-			return items
+			return resolveItems()
 				.filter((item) =>
 					item.name.toLowerCase().startsWith(query.toLowerCase()),
 				)

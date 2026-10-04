@@ -33,10 +33,12 @@ import { NavMain } from '#app/components/nav-main.tsx'
 import { NavUser } from '#app/components/nav-user.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { TeamSwitcher } from '#app/components/team-switcher.tsx'
+import { useChatUnreadCount } from '#app/hooks/use-chat-unread.ts'
 import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
 import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
+import { ChatSidebarLink } from './chat/chat-sidebar-link.tsx'
 import { CommandMenu } from './command-menu'
 import FeedbackModal from './core/feedback-modal'
 import FavoriteNotes from './favorite-notes'
@@ -234,6 +236,8 @@ function OrganizationSidebar({
 	const canReadWebsite = hasOrgPermission('read', 'website')
 	const mailboxUnreadCount = useMailboxUnreadCount(orgSlug, canReadWebsite)
 	const mailboxUnreadLabelCount = mailboxUnreadCount ?? 0
+	const canManageChat = hasOrgPermission('update', 'chat')
+	const chatUnreadCount = useChatUnreadCount(orgSlug, true)
 	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
 	const canReadCampaigns = hasOrgPermission('read', 'campaign')
 	const canReadAutomations = hasOrgPermission('read', 'automation')
@@ -457,6 +461,15 @@ function OrganizationSidebar({
 							},
 						]
 					: []),
+				...(canManageChat
+					? [
+							{
+								title: _(msg`Chat channels`),
+								url: `/${orgSlug}/settings/chat`,
+								isActive: location.pathname === `/${orgSlug}/settings/chat`,
+							},
+						]
+					: []),
 				{
 					title: _(msg`Integrations`),
 					url: `/${orgSlug}/settings/integrations`,
@@ -573,16 +586,31 @@ function OrganizationSidebar({
 	return (
 		<>
 			<SidebarHeader className="gap-2 px-2 pb-2">
-				<Link
-					to="/"
-					aria-label={goToHomepageLabel}
-					className="flex w-full justify-start"
+				<div
+					className="flex w-full min-w-0 items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-stretch group-data-[collapsible=icon]:gap-1"
+					role="group"
+					aria-label={_(msg`App header`)}
 				>
-					<Logo
-						className="h-10 gap-1 px-1 text-base transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:gap-0 motion-reduce:transition-none"
-						aria-hidden="true"
-					/>
-				</Link>
+					<Link
+						to="/"
+						aria-label={goToHomepageLabel}
+						className="flex min-w-0 flex-1 justify-start overflow-hidden group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center"
+					>
+						<Logo
+							className="h-10 max-w-full gap-1 px-1 text-base transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 motion-reduce:transition-none"
+							aria-hidden="true"
+						/>
+					</Link>
+					{orgSlug ? (
+						<div className="flex shrink-0 items-center ps-1.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:ps-0">
+							<ChatSidebarLink
+								orgSlug={orgSlug}
+								unreadCount={chatUnreadCount}
+								isActive={location.pathname === `/${orgSlug}/chat`}
+							/>
+						</div>
+					) : null}
+				</div>
 				<SidebarMenuButton
 					variant="outline"
 					tooltip={searchNotesLabel}

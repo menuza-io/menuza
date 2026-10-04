@@ -93,7 +93,8 @@
 		"app#dev": {
 			"dependsOn": ["@repo/observability#build", "//#generate:icons"],
 			"cache": false,
-			"persistent": true
+			"persistent": true,
+			"passThroughEnv": ["DEPLOY_TARGET", "PORT", "MOCKS", "DEV_PROXY_PORT"]
 		},
 		"admin#dev": {
 			"dependsOn": ["@repo/observability#build", "//#generate:icons"],

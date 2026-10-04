@@ -21,8 +21,13 @@ const GitHubUserParseResult = z
 		}),
 	)
 
-const shouldMock =
-	ENV.GITHUB_CLIENT_ID?.startsWith('MOCK_') || ENV.NODE_ENV === 'test'
+function shouldMock() {
+	return (
+		process.env.MOCKS === 'true' ||
+		ENV.GITHUB_CLIENT_ID?.startsWith('MOCK_') ||
+		ENV.NODE_ENV === 'test'
+	)
+}
 
 const GitHubEmailSchema = z.object({
 	email: z.string(),
@@ -131,7 +136,7 @@ export class GitHubProvider implements AuthProvider {
 	}
 
 	async handleMockAction(request: Request) {
-		if (!shouldMock) return
+		if (!shouldMock()) return
 
 		const state = cuid()
 		const code =
@@ -147,6 +152,7 @@ export class GitHubProvider implements AuthProvider {
 			secure: ENV.NODE_ENV === 'production' || undefined,
 		})
 		throw redirect(`/auth/github/callback?${searchParams}`, {
+			status: 303,
 			headers: {
 				'Set-Cookie': cookie.toString(),
 			},

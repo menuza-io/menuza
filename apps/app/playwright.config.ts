@@ -55,6 +55,8 @@ export default defineConfig({
 			BASE_URL: `http://localhost:${PORT}`,
 			NODE_ENV: 'test',
 			MOCKS: 'true',
+			VITE_DIRECT_DEV: '1',
+			NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=6144',
 			// Local `.env` is often CLOSED_BETA for product work. CI has no such
 			// file and defaults to LAUNCHED. Do not inherit `.env` here — it would
 			// send `/organizations` to the waitlist. Waitlist tests match `waitlist`

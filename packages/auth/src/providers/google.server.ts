@@ -27,8 +27,13 @@ const GoogleUserParseResult = z
 		}),
 	)
 
-const shouldMock =
-	ENV.GOOGLE_CLIENT_ID?.startsWith('MOCK_') || ENV.NODE_ENV === 'test'
+function shouldMock() {
+	return (
+		process.env.MOCKS === 'true' ||
+		ENV.GOOGLE_CLIENT_ID?.startsWith('MOCK_') ||
+		ENV.NODE_ENV === 'test'
+	)
+}
 
 export class GoogleProvider implements AuthProvider {
 	getAuthStrategy() {
@@ -98,7 +103,7 @@ export class GoogleProvider implements AuthProvider {
 	}
 
 	async handleMockAction(request: Request) {
-		if (!shouldMock) return
+		if (!shouldMock()) return
 
 		const state = cuid()
 		// allows us to inject a code when running e2e tests,
@@ -116,6 +121,7 @@ export class GoogleProvider implements AuthProvider {
 			secure: ENV.NODE_ENV === 'production' || undefined,
 		})
 		throw redirect(`/auth/google/callback?${searchParams}`, {
+			status: 303,
 			headers: {
 				'Set-Cookie': cookie.toString(),
 			},

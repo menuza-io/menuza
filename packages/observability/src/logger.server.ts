@@ -45,6 +45,15 @@ function readNodeEnv(): 'production' | 'development' | 'test' {
 const isDevelopment = readNodeEnv() === 'development'
 const isTest = readNodeEnv() === 'test'
 
+/** Pino's `transport` spawns a worker thread; that breaks in Workers and Vite's runner. */
+function canUsePinoPrettyTransport(): boolean {
+	if (!isDevelopment || isTest) return false
+	if (process.env.DEPLOY_TARGET === 'cloudflare') return false
+	const workerCaches = (globalThis as { caches?: { default?: unknown } }).caches
+	if (workerCaches !== undefined && 'default' in workerCaches) return false
+	return true
+}
+
 // Redact sensitive fields from logs - expanded for OAuth, SSO, and authentication patterns
 const redactPaths = [
 	// Password fields
@@ -227,29 +236,20 @@ const createLogger = (): PinoLogger => {
 		},
 	}
 
-	// Use pretty printing in development with graceful fallback
-	if (isDevelopment) {
-		try {
-			return pino({
-				...baseConfig,
-				transport: {
-					target: 'pino-pretty',
-					options: {
-						colorize: true,
-						translateTime: 'HH:MM:ss.l',
-						ignore: 'pid,hostname,node_version',
-						singleLine: false,
-						messageFormat: '{msg}',
-					},
+	if (canUsePinoPrettyTransport()) {
+		return pino({
+			...baseConfig,
+			transport: {
+				target: 'pino-pretty',
+				options: {
+					colorize: true,
+					translateTime: 'HH:MM:ss.l',
+					ignore: 'pid,hostname,node_version',
+					singleLine: false,
+					messageFormat: '{msg}',
 				},
-			})
-		} catch (error) {
-			console.warn(
-				'pino-pretty not available, falling back to JSON logs:',
-				error,
-			)
-			return pino(baseConfig)
-		}
+			},
+		})
 	}
 
 	// Production: structured JSON

@@ -193,6 +193,11 @@ export const ORG_PERMISSIONS = {
 
 	// Analytics permissions
 	READ_ANALYTICS_ANY: 'read:analytics:any' as const,
+
+	// Team chat: manage channels and who can access them. Using chat only
+	// requires access to a channel, not a permission.
+	UPDATE_CHAT_ANY: 'update:chat:any' as const,
+	CREATE_CHAT_GROUP: 'create:chat:group' as const,
 } as const
 
 /**

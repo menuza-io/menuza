@@ -31,6 +31,21 @@
 			"id": "00000000000000000000000000000001",
 		},
 	],
+	// Team chat: one SQLite-backed Durable Object per organization.
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "CHAT_ORG",
+				"class_name": "ChatOrg",
+			},
+		],
+	},
+	"migrations": [
+		{
+			"tag": "chat-v1",
+			"new_sqlite_classes": ["ChatOrg"],
+		},
+	],
 	// Secrets — set via `wrangler secret put <NAME>` (never commit values).
 	// Runtime URLs and LAUNCH_STATUS also belong in secrets, not vars — see docs/launch-checklist.md.
 	// SESSION_SECRET, HONEYPOT_SECRET, RESEND_API_KEY, STRIPE_*, INTERNAL_COMMAND_TOKEN,
@@ -60,6 +75,20 @@
 				{
 					"binding": "SITES_DATA_KV",
 					"id": "00000000000000000000000000000002",
+				},
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "CHAT_ORG",
+						"class_name": "ChatOrg",
+					},
+				],
+			},
+			"migrations": [
+				{
+					"tag": "chat-v1",
+					"new_sqlite_classes": ["ChatOrg"],
 				},
 			],
 			"vars": {

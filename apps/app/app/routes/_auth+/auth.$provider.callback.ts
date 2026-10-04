@@ -1,7 +1,9 @@
 import {
 	getUserId,
+	isWorkersDevMockOAuthCallback,
 	normalizeEmail,
 	normalizeUsername,
+	tryAuthenticateMockProvider,
 	verifySessionStorage,
 } from '@repo/auth'
 import { ProviderNameSchema, providerLabels } from '@repo/auth/constants'
@@ -33,35 +35,53 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const redirectTo = getRedirectCookieValue(request)
 	const label = providerLabels[providerName]
 
-	const authResult = await authenticator
-		.authenticate(providerName, request)
-		.then(
-			(data) =>
-				({
-					success: true,
-					data,
-				}) as const,
-			(error) =>
-				({
-					success: false,
-					error,
-				}) as const,
-		)
+	let profile: Awaited<ReturnType<typeof authenticator.authenticate>>
 
-	if (!authResult.success) {
-		console.error(authResult.error)
-		throw await redirectWithToast(
-			'/login',
-			{
-				title: 'Auth Failed',
-				description: `There was an error authenticating with ${label}.`,
-				type: 'error',
-			},
-			{ headers: destroyRedirectToHeaders(request) },
-		)
+	if (isWorkersDevMockOAuthCallback(providerName)) {
+		const mockProfile = tryAuthenticateMockProvider(providerName, request)
+		if (!mockProfile) {
+			throw await redirectWithToast(
+				'/login',
+				{
+					title: 'Auth Failed',
+					description: `There was an error authenticating with ${label}.`,
+					type: 'error',
+				},
+				{ headers: destroyRedirectToHeaders(request) },
+			)
+		}
+		profile = mockProfile
+	} else {
+		const authResult = await authenticator
+			.authenticate(providerName, request)
+			.then(
+				(data) =>
+					({
+						success: true,
+						data,
+					}) as const,
+				(error) =>
+					({
+						success: false,
+						error,
+					}) as const,
+			)
+
+		if (!authResult.success) {
+			console.error(authResult.error)
+			throw await redirectWithToast(
+				'/login',
+				{
+					title: 'Auth Failed',
+					description: `There was an error authenticating with ${label}.`,
+					type: 'error',
+				},
+				{ headers: destroyRedirectToHeaders(request) },
+			)
+		}
+
+		profile = authResult.data
 	}
-
-	const { data: profile } = authResult
 
 	const [existingConnection] = await db
 		.select({ userId: Connection.userId })
