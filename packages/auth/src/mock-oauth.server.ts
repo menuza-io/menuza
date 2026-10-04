@@ -25,9 +25,11 @@ export function isMockOAuthProvider(providerName: ProviderName) {
 	return false
 }
 
-/** Callback bypass for Workers dev only; Vitest uses MSW + MOCK_* client ids. */
+/** Callback bypass for Workers dev only; Vitest/Playwright use MSW + MOCK_* client ids. */
 export function isWorkersDevMockOAuthCallback(providerName: ProviderName) {
 	if (process.env.MOCKS !== 'true') return false
+	// Playwright sets MOCKS=true for email capture; OAuth still goes through MSW.
+	if (process.env.CI === 'true') return false
 	return isMockOAuthProvider(providerName)
 }
 

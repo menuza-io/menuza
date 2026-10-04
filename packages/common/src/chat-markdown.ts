@@ -1,8 +1,9 @@
-/** Mention token stored in message bodies: `@[Display Name](user:userId)` */
-export const CHAT_MENTION_RE = /@\[([^\]]+)\]\(user:([^)]+)\)/g
-
 const MENTION_LABEL_MAX = 200
 const MENTION_ID_MAX = 128
+
+function isAsciiWhitespace(char: string) {
+	return char === ' ' || char === '\t' || char === '\n' || char === '\r'
+}
 
 export function chatMentionMarkdown(label: string, userId: string) {
 	const safeLabel = label.replace(/\]/g, '').trim() || 'Member'
@@ -15,7 +16,7 @@ function readAttrValue(fragment: string, name: string): string | null {
 	while (from < fragment.length) {
 		const start = fragment.indexOf(needle, from)
 		if (start === -1) return null
-		if (start > 0 && !/\s/.test(fragment[start - 1]!)) {
+		if (start > 0 && !isAsciiWhitespace(fragment[start - 1]!)) {
 			from = start + 1
 			continue
 		}
