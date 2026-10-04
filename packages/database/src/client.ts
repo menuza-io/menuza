@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { remember } from '@epic-web/remember'
+import { forget, remember } from '@epic-web/remember'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle as drizzleLibsql } from 'drizzle-orm/libsql'
 import {
@@ -41,7 +41,10 @@ let libsqlClientInstance: Client | null = null
  * Prefer an existing file so all processes open the same database.
  */
 export function resolveSqliteFileUrl() {
-	const raw = ENV.DATABASE_URL
+	const raw =
+		process.env.VITEST === 'true' && process.env.DATABASE_URL
+			? process.env.DATABASE_URL
+			: ENV.DATABASE_URL
 	if (raw) {
 		const filePath = raw.replace(/^file:/, '').replace(/\?.*$/, '')
 		if (path.isAbsolute(filePath)) {
@@ -161,6 +164,18 @@ export const db: ControlPlaneDb = new Proxy({} as ControlPlaneDb, {
 		return value
 	},
 })
+
+/** Re-open SQLite after Vitest copies a fresh worker database file. */
+export function resetSqliteClientForTests() {
+	if (process.env.VITEST !== 'true') {
+		throw new Error('resetSqliteClientForTests is only for Vitest')
+	}
+	void libsqlClientInstance?.close?.()
+	forget('libsql')
+	forget('drizzle')
+	libsqlClientInstance = null
+	libsqlDb = null
+}
 
 export const sqliteClient = new Proxy({} as Client, {
 	get(_target, prop, receiver) {

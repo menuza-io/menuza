@@ -12,18 +12,21 @@ export async function loader() {
 
 export async function action({ request, params }: Route.ActionArgs) {
 	const providerName = ProviderNameSchema.parse(params.provider)
+	const formData = await request
+		.clone()
+		.formData()
+		.catch(() => null)
+	const redirectToFromForm = formData?.get('redirectTo')
+	const redirectTo =
+		typeof redirectToFromForm === 'string'
+			? redirectToFromForm
+			: getReferrerRoute(request)
 
 	try {
 		await handleMockAction(providerName, request)
 		return await authenticator.authenticate(providerName, request)
 	} catch (error: unknown) {
 		if (error instanceof Response) {
-			const formData = await request.formData()
-			const rawRedirectTo = formData.get('redirectTo')
-			const redirectTo =
-				typeof rawRedirectTo === 'string'
-					? rawRedirectTo
-					: getReferrerRoute(request)
 			const redirectToCookie = getRedirectCookieHeader(redirectTo, request)
 			if (redirectToCookie) {
 				error.headers.append('set-cookie', redirectToCookie)

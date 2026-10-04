@@ -34,7 +34,7 @@ npm run dev
 Or start an individual app:
 
 ```sh
-npm run dev:app        # Operator app on :3001
+npm run dev:app        # Operator app on :3001 (Workers dev — same as `npm run dev`)
 npm run dev:web        # Marketing site on :3002
 npm run dev:sites      # Public tenant sites on :3008
 npm run dev:tenant-api # US tenant API on :3007
@@ -48,8 +48,18 @@ authentication, data regions, or customer data handling.
 
 ## Database and validation
 
+The operator app on Workers dev uses **local D1** (`.wrangler/state`), not only
+the LibSQL file under `packages/database`. After pulling new control-plane
+migrations, apply both:
+
 ```sh
 npm run db:migrate:deploy
+npm run db:migrate:d1:local -w app
+```
+
+`npm run dev:app` runs `db:migrate:d1:local` automatically before Vite starts.
+
+```sh
 npm run db:seed
 npm run lint
 npm run typecheck

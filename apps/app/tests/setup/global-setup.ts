@@ -3,13 +3,7 @@ import { execaCommand } from 'execa'
 import fsExtra from 'fs-extra'
 import './init-env.ts'
 import 'varlock/auto-load'
-
-import '#app/utils/cache.server.ts'
-
-export const BASE_DATABASE_PATH = path.join(
-	process.cwd(),
-	`./tests/database/base.db`,
-)
+import { BASE_DATABASE_PATH } from './database-paths.ts'
 
 const CONTROL_PLANE_SCHEMA = path.resolve(
 	process.cwd(),
@@ -52,12 +46,11 @@ export async function setup() {
 	if (databaseExists) {
 		const databaseLastModifiedAt = (await fsExtra.stat(BASE_DATABASE_PATH))
 			.mtimeMs
-		if (databaseLastModifiedAt > (await latestSourceMtime())) {
-			return
+		if (databaseLastModifiedAt <= (await latestSourceMtime())) {
+			await fsExtra.remove(BASE_DATABASE_PATH)
+			await fsExtra.remove(`${BASE_DATABASE_PATH}-wal`).catch(() => {})
+			await fsExtra.remove(`${BASE_DATABASE_PATH}-shm`).catch(() => {})
 		}
-		await fsExtra.remove(BASE_DATABASE_PATH)
-		await fsExtra.remove(`${BASE_DATABASE_PATH}-wal`).catch(() => {})
-		await fsExtra.remove(`${BASE_DATABASE_PATH}-shm`).catch(() => {})
 	}
 
 	await execaCommand(`${VARLOCK} run -- tsx src/migrate.ts`, {

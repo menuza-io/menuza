@@ -6,7 +6,7 @@ import { reactRouter } from '@react-router/dev/vite'
 import { getLocalDomain } from '@repo/config/brand'
 import tailwindcss from '@tailwindcss/vite'
 import { varlockVitePlugin } from '@varlock/vite-integration'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, searchForWorkspaceRoot, type Plugin } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 import macrosPlugin from 'vite-plugin-babel-macros'
 
@@ -15,6 +15,9 @@ const domain = `app.${getLocalDomain()}`
 
 const MODE = process.env.NODE_ENV
 const isCloudflare = process.env.DEPLOY_TARGET === 'cloudflare'
+/** Playwright and curl hit :3001 without the TLS proxy; use WS HMR on localhost. */
+const directWorkersDev =
+	isCloudflare && MODE === 'development' && process.env.VITE_DIRECT_DEV === '1'
 const hasPostHogSourceMapCredentials = Boolean(
 	process.env.POSTHOG_PERSONAL_API_KEY && process.env.POSTHOG_PROJECT_ID,
 )
@@ -124,6 +127,10 @@ export default defineConfig((config) => ({
 			'@repo/marketing',
 			'@repo/marketing-workflow',
 		],
+		// Cloudflare dev re-optimizes often; stale browser requests should retry, not 504.
+		...(isCloudflare && MODE === 'development'
+			? { ignoreOutdatedRequests: true }
+			: {}),
 	},
 	...(MODE !== 'test' && {
 		// Vite 6 merges legacy `ssr.noExternal` arrays with the Cloudflare
@@ -136,19 +143,44 @@ export default defineConfig((config) => ({
 		},
 	}),
 	server: {
+		// Match the HTTPS dev proxy (`app.{brand}.test:2999` → localhost:3001) when
+		// the Node `dev` server is not running on that port.
+		...(isCloudflare
+			? {
+					port: Number(process.env.PORT ?? 3001),
+					// Fail fast if Node `dev` still holds :3001 (proxy targets 3001 by default).
+					strictPort: true,
+				}
+			: {}),
 		// Amp orbs expose dev servers through generated portal hostnames.
 		allowedHosts: process.env.AMP_ORB ? true : [domain, 'localhost'],
 		watch: {
 			ignored: ['**/playwright-report/**', '**/node_modules/.vite-temp/**'],
 		},
 		fs: {
-			allow: ['..'],
+			// Workspace packages (`@repo/*`, e.g. icon sprites in `packages/ui`) live
+			// outside `apps/app`; Vite 8 denies serving them unless the monorepo root
+			// is allowed.
+			allow: [searchForWorkspaceRoot(appDir)],
 		},
-		hmr: {
-			host: 'localhost',
-			port: 24679,
-			protocol: 'ws',
-		},
+		hmr: isCloudflare
+			? directWorkersDev
+				? {
+						host: 'localhost',
+						port: Number(process.env.VITE_HMR_PORT ?? 24679),
+						protocol: 'ws',
+					}
+				: {
+						// `dev-proxy.js` → app.{brand}.test:2999 → this server (see server.port).
+						protocol: 'wss',
+						host: domain,
+						clientPort: Number(process.env.DEV_PROXY_PORT ?? 2999),
+					}
+			: {
+					host: 'localhost',
+					port: Number(process.env.VITE_HMR_PORT ?? 24679),
+					protocol: 'ws',
+				},
 	},
 	plugins: [
 		cloudflareWorkerAliasPlugin(),

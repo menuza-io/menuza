@@ -41,6 +41,7 @@ export function ProviderConnectionForm({
 			className="flex items-center justify-center gap-2"
 			action={formAction}
 			method="POST"
+			reloadDocument={type === 'Login' || type === 'Signup'}
 			onSubmit={() => {
 				// Save the login method when form is submitted
 				if (
