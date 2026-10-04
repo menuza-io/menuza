@@ -36,7 +36,7 @@ msgstr "AI assistant"
 
 #: app/components/settings/cards/organization/billing-card.tsx:438
 msgid "(${annualPrice} billed annually per user)"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-message.tsx:97
 msgid "(edited)"
@@ -48,11 +48,11 @@ msgstr "(Tied to Canada address)"
 
 #: app/components/locations/address-autocomplete.tsx:324
 msgid "(Tied to US address)"
-msgstr "(Tied to US address)======="
+msgstr "(Tied to US address)"
 
 #: app/components/chat/chat-group-settings-dialog.tsx:95
 msgid "(you)"
-msgstr "(you)>>>>>>> upstream/main"
+msgstr "(you)"
 
 #. placeholder {0}: organization._count.users
 #: app/components/settings/cards/organization/billing-card.tsx:159
@@ -154,15 +154,15 @@ msgstr "{choiceCount, plural, one {# choice} other {# choices}}"
 
 #: app/routes/mcp+/authorize.tsx:309
 msgid "{clientName} is requesting access to your organization data"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
 msgid "{count} locations"
-msgstr "{count} locations======="
+msgstr "{count} locations"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:118
 msgid "{days} days"
-msgstr "{days} days>>>>>>> upstream/main"
+msgstr "{days} days"
 
 #: app/components/ui/notification-bell.tsx:61
 msgid "{days}d ago"
@@ -207,7 +207,7 @@ msgstr "{int} minutes"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:221
 msgid "{journeyName} (Copy)"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-sidebar-link.tsx:21
 msgid "{label}, {total} unread"
@@ -219,11 +219,11 @@ msgstr "{mailboxUnreadLabelCount} unread"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:59
 msgid "{memberCount, plural, one {# person} other {# people}}"
-msgstr "{memberCount, plural, one {# person} other {# people}}>>>>>>> upstream/main"
+msgstr "{memberCount, plural, one {# person} other {# people}}"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:770
 msgid "{min} minutes"
-msgstr "{min} minutes======="
+msgstr "{min} minutes"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -292,15 +292,15 @@ msgstr ""
 
 #: app/components/ui/notification-bell.tsx:49
 msgid "{seconds}s ago"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/mailbox/reviews-tab.tsx:627
 msgid "{selectedRating} / 5 stars"
-msgstr "{selectedRating} / 5 stars======="
+msgstr "{selectedRating} / 5 stars"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:480
 msgid "{selectedRoleCount} roles and {selectedMemberCount} people selected"
-msgstr "{selectedRoleCount} roles and {selectedMemberCount} people selected>>>>>>> upstream/main"
+msgstr "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:319
 msgid "{status}"
@@ -308,7 +308,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:290
 #: app/components/chat/chat-view.tsx:410
@@ -337,7 +337,7 @@ msgstr "{triggerCount} of {optionCount}"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:317
 msgid "{unit}"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-view.tsx:312
 msgid "{unread} unread"
@@ -554,7 +554,7 @@ msgstr ""
 #: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/locations/location-form.tsx:428
 msgid "Accept orders and show this location on the website."
@@ -818,7 +818,7 @@ msgstr "Add item"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3218
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4456
 msgid "Add link"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:532
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
@@ -904,11 +904,11 @@ msgstr "Add pickup window"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
 msgid "Add question"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-message.tsx:266
 msgid "Add reaction"
-msgstr "Add reaction>>>>>>> upstream/main"
+msgstr "Add reaction"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1037
 #: app/components/menu/drop-wizard/drop-form.tsx:892
@@ -919,7 +919,7 @@ msgstr "Add reminder"
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add restaurant"
-msgstr "Add restaurant======="
+msgstr "Add restaurant"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4321
 msgid "Add review"
@@ -1112,7 +1112,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:265
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/locations/availability-picker.tsx:106
 msgid "All days"
@@ -1125,11 +1125,11 @@ msgstr "All items in this section share from this pool."
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
 msgid "All locations"
-msgstr "All locations======="
+msgstr "All locations"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:545
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
-msgstr "All messages in this channel are permanently deleted for everyone. This can't be undone.>>>>>>> upstream/main"
+msgstr "All messages in this channel are permanently deleted for everyone. This can't be undone."
 
 #: app/components/ui/notification-bell.tsx:342
 #: app/components/ui/notification-bell.tsx:439
@@ -1146,7 +1146,7 @@ msgstr ""
 
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:807
 msgid "Allow customers to preview menu items before orders open."
@@ -1192,7 +1192,7 @@ msgstr "Alt Text"
 
 #: app/routes/organizations+/create.tsx:625
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
-#~ msgstr "<<<<<<< HEAD"
+#~ msgstr ""
 
 #: app/components/app-sidebar.tsx:401
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
@@ -1205,7 +1205,7 @@ msgstr "Analytics and tracking"
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:460
 msgid "Announcement actions"
-msgstr "Announcement actions<<<<<<< HEAD"
+msgstr "Announcement actions"
 
 #: app/components/app-sidebar.tsx:417
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -1282,7 +1282,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:458
 msgid "Are you sure you want to delete \"{journeyName}\"?"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:781
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
@@ -1455,7 +1455,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:212
 msgid "Automation saved successfully"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:371
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
@@ -1624,7 +1624,7 @@ msgstr ""
 
 #: app/components/settings/cards/organization/billing-card.tsx:148
 msgid "Billed monthly"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:498
 #: app/components/command-menu.tsx:181
@@ -1653,7 +1653,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:23
 msgid "Body text"
-msgstr "Body text<<<<<<< HEAD"
+msgstr "Body text"
 
 #: app/components/app-sidebar.tsx:408
 #: app/components/website/branding-panel.tsx:244
@@ -1677,7 +1677,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:96
 msgid "Broadcast preview"
-msgstr "Broadcast preview<<<<<<< HEAD"
+msgstr "Broadcast preview"
 
 #: app/components/app-sidebar.tsx:364
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
@@ -1952,7 +1952,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/campaign-form.tsx:58
 #: app/components/note/integration-controls.tsx:323
 msgid "Channel"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-view.tsx:322
 #: app/components/chat/chat-view.tsx:425
@@ -1965,7 +1965,7 @@ msgstr "Charge sales tax on this option at checkout."
 
 #: app/components/menu/item-form.tsx:516
 msgid "Charge tax at checkout."
-msgstr "Charge tax at checkout.======="
+msgstr "Charge tax at checkout."
 
 #: app/components/app-sidebar.tsx:467
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:153
@@ -1990,7 +1990,7 @@ msgstr "Chat settings"
 
 #: app/routes/_app+/$orgSlug_+/chat.tsx:223
 #~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
-#~ msgstr "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md.>>>>>>> upstream/main"
+#~ msgstr "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
@@ -2052,7 +2052,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:237
 #: app/components/media-library/media-library-picker.tsx:195
 msgid "Choose from library"
-msgstr "Choose from library<<<<<<< HEAD"
+msgstr "Choose from library"
 
 #: app/components/menu/item-variations.tsx:330
 #: app/components/menu/item-variations.tsx:331
@@ -2069,7 +2069,7 @@ msgstr "Choose section"
 
 #: app/components/chat/chat-compose-dialog.tsx:111
 msgid "Choose someone"
-msgstr "Choose someone>>>>>>> upstream/main"
+msgstr "Choose someone"
 
 #: app/components/locations/location-form.tsx:843
 msgid "Choose supported delivery channels and estimated transit times."
@@ -2077,7 +2077,7 @@ msgstr "Choose supported delivery channels and estimated transit times."
 
 #: app/components/menu/modifier-form.tsx:1100
 #~ msgid "Choose whether this group appears directly on items or is conditionally revealed by an option in another group."
-#~ msgstr "Choose whether this group appears directly on items or is conditionally revealed by an option in another group.======="
+#~ msgstr "Choose whether this group appears directly on items or is conditionally revealed by an option in another group."
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:162
 msgid "Choose which languages your public website supports, and which one visitors see by default."
@@ -2176,11 +2176,11 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
 msgid "Close email design"
-msgstr "Close email design<<<<<<< HEAD"
+msgstr "Close email design"
 
 #: app/components/chat/chat-view.tsx:669
 msgid "Close thread"
-msgstr "Close thread>>>>>>> upstream/main"
+msgstr "Close thread"
 
 #: app/components/locations/availability-picker.tsx:372
 #: app/components/locations/special-hours-picker.tsx:274
@@ -2193,7 +2193,7 @@ msgstr "Closed all day"
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:214
 msgid "Closes:"
-msgstr "Closes:======="
+msgstr "Closes:"
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -2644,7 +2644,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:233
 msgid "Could not create a draft. Try again."
-msgstr "Could not create a draft. Try again.<<<<<<< HEAD"
+msgstr "Could not create a draft. Try again."
 
 #: app/components/mailbox/reviews-tab.tsx:266
 msgid "Could not create a reply suggestion. Try again."
@@ -2696,7 +2696,7 @@ msgstr "Country"
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
 msgid "Create"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:267
 msgid "Create a category to start organizing menu items."
@@ -2832,7 +2832,7 @@ msgstr ""
 
 #: ../../packages/ai/src/components/ai-chat.tsx:435
 msgid "Create bullet points"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:248
 msgid "Create categories to group menu items together for menus and ordering."
@@ -2867,15 +2867,15 @@ msgstr "Create drop"
 #: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
-msgstr "Create form<<<<<<< HEAD"
+msgstr "Create form"
 
 #: app/components/roles/tenant-role-access-manager.tsx:213
 msgid "Create group chats"
-msgstr "Create group chats>>>>>>> upstream/main"
+msgstr "Create group chats"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:256
 msgid "Create Item"
-msgstr "Create Item======="
+msgstr "Create Item"
 
 #: app/components/organization-invitations.tsx:226
 msgid "Create Link"
@@ -2955,15 +2955,15 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:257
 msgid "Create your first broadcast"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:195
 msgid "Create your first channel"
-msgstr "Create your first channel>>>>>>> upstream/main"
+msgstr "Create your first channel"
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:132
 msgid "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
-msgstr "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows.======="
+msgstr "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:336
 msgid "Create your first marketing automation."
@@ -3110,7 +3110,7 @@ msgstr ""
 
 #: app/components/website/create-form-dialog.tsx:108
 msgid "Custom form"
-msgstr "Custom form<<<<<<< HEAD"
+msgstr "Custom form"
 
 #: app/components/locations/special-hours-picker.tsx:166
 msgid "Custom Hours"
@@ -3185,7 +3185,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:251
 msgid "customerId is required"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:294
 msgid "Customers"
@@ -3231,7 +3231,7 @@ msgstr ""
 
 #: app/components/nav-user.tsx:90
 msgid "Dark mode"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:129
 #: app/components/app-sidebar.tsx:270
@@ -3285,7 +3285,7 @@ msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:430
 msgid "Default language required"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/locations/delivery-zones-manager.tsx:169
 msgid "Define allowed and restricted delivery areas by radius, zip codes, or polygon maps."
@@ -3360,15 +3360,15 @@ msgstr "Delete announcement?"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4025
 msgid "Delete card"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:459
 msgid "Delete category?"
-msgstr "Delete category?======="
+msgstr "Delete category?"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:571
 msgid "Delete channel"
-msgstr "Delete channel>>>>>>> upstream/main"
+msgstr "Delete channel"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4394
 msgid "Delete column"
@@ -3420,7 +3420,7 @@ msgstr "Delete Location"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
 msgid "Delete log entry"
-msgstr "Delete log entry<<<<<<< HEAD"
+msgstr "Delete log entry"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:599
 msgid "Delete Menu Option?"
@@ -3436,11 +3436,11 @@ msgstr "Delete message"
 
 #: app/components/chat/chat-view.tsx:813
 msgid "Delete message?"
-msgstr "Delete message?>>>>>>> upstream/main"
+msgstr "Delete message?"
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:502
 msgid "Delete modifier group?"
-msgstr "Delete modifier group?======="
+msgstr "Delete modifier group?"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:120
@@ -3574,7 +3574,7 @@ msgstr "Describe this image for accessibility"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:1032
 msgid "Description"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/category-form.tsx:389
 #: app/components/menu/item-form.tsx:454
@@ -4015,15 +4015,15 @@ msgstr "Edit Details"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1312
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
-msgstr "Edit image<<<<<<< HEAD"
+msgstr "Edit image"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:266
 msgid "Edit Location"
-msgstr "Edit Location======="
+msgstr "Edit Location"
 
 #: app/components/chat/chat-message.tsx:288
 msgid "Edit message"
-msgstr "Edit message>>>>>>> upstream/main"
+msgstr "Edit message"
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Edit note"
@@ -4258,7 +4258,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:281
 msgid "Event-driven workflows with triggers, delays, and actions."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:398
 msgid "Every active member can read and post."
@@ -4278,11 +4278,11 @@ msgstr "Everyone else won't see that it exists."
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:395
 msgid "Everyone on the team"
-msgstr "Everyone on the team>>>>>>> upstream/main"
+msgstr "Everyone on the team"
 
 #: app/components/menu/assigned-sortable-list.tsx:266
 msgid "Everything available is already assigned."
-msgstr "Everything available is already assigned.======="
+msgstr "Everything available is already assigned."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:510
 msgid "Exactly Equals"
@@ -4607,7 +4607,7 @@ msgstr "Form submissions"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
-msgstr "Format:<<<<<<< HEAD"
+msgstr "Format:"
 
 #: app/components/chat/chat-message.tsx:182
 msgid "Former member"
@@ -4673,7 +4673,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:111
 msgid "Full width"
-msgstr "Full width<<<<<<< HEAD"
+msgstr "Full width"
 
 #: app/components/app-sidebar.tsx:439
 msgid "General"
@@ -4709,7 +4709,7 @@ msgstr ""
 #: app/components/settings/backup-codes-display.tsx:149
 #: app/components/settings/backup-codes-display.tsx:170
 msgid "Generating..."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:557
 msgid "Get chrome extension"
@@ -4737,7 +4737,7 @@ msgstr "Get started by creating your first menu to categorize dishes and drinks.
 
 #: app/components/onboarding-checklist.tsx:115
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:166
 #: app/components/app-sidebar.tsx:580
@@ -4762,7 +4762,7 @@ msgstr "Gluten-Free"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
-msgstr "Go there<<<<<<< HEAD"
+msgstr "Go there"
 
 #: app/components/app-sidebar.tsx:222
 msgid "Go to homepage"
@@ -4799,7 +4799,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1881
 #: app/routes/_app+/$orgSlug_+/media.tsx:1896
 msgid "Grayscale"
-msgstr "Grayscale<<<<<<< HEAD"
+msgstr "Grayscale"
 
 #: app/components/chat/chat-compose-dialog.tsx:85
 msgid "Group"
@@ -4811,7 +4811,7 @@ msgstr "Group name"
 
 #: app/components/menu/modifier-form.tsx:905
 msgid "Group Name (Guest-Facing)"
-msgstr "Group Name (Guest-Facing)======="
+msgstr "Group Name (Guest-Facing)"
 
 #: app/components/chat/chat-view.tsx:522
 msgid "Group settings"
@@ -4819,7 +4819,7 @@ msgstr "Group settings"
 
 #: app/components/chat/chat-view.tsx:427
 msgid "Groups"
-msgstr "Groups>>>>>>> upstream/main"
+msgstr "Groups"
 
 #: app/components/settings/cards/organization/shop-card.tsx:367
 msgid "Guest checkout"
@@ -5178,18 +5178,18 @@ msgstr "Insert field here"
 
 #: app/components/roles/tenant-role-access-manager.tsx:904
 msgid "Inspect"
-msgstr "Inspect<<<<<<< HEAD"
+msgstr "Inspect"
 
 #: app/components/app-sidebar.tsx:474
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:90
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/roles/tenant-role-access-manager.tsx:203
 msgid "Internal channels for your team."
-msgstr "Internal channels for your team.>>>>>>> upstream/main"
+msgstr "Internal channels for your team."
 
 #: app/components/menu/category-form.tsx:377
 #: app/components/menu/menu-form.tsx:200
@@ -5202,7 +5202,7 @@ msgstr "Internal Reference (Optional)"
 #: app/components/menu/item-form.tsx:442
 #: app/components/menu/option-form.tsx:421
 msgid "Internal Reference / SKU (Optional)"
-msgstr "Internal Reference / SKU (Optional)======="
+msgstr "Internal Reference / SKU (Optional)"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:155
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
@@ -5713,7 +5713,7 @@ msgstr ""
 
 #: app/routes/_auth+/signup.tsx:231
 msgid "m@example.com"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:340
 msgid "Mailbox"
@@ -5757,7 +5757,7 @@ msgstr "Manage automations"
 
 #: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "Manage broadcasts"
-msgstr "Manage broadcasts<<<<<<< HEAD"
+msgstr "Manage broadcasts"
 
 #: app/components/chat/chat-view.tsx:446
 msgid "Manage channels"
@@ -5765,7 +5765,7 @@ msgstr "Manage channels"
 
 #: app/components/roles/tenant-role-access-manager.tsx:207
 msgid "Manage chat channels"
-msgstr "Manage chat channels>>>>>>> upstream/main"
+msgstr "Manage chat channels"
 
 #: app/components/mailbox/reviews-tab.tsx:445
 msgid "Manage integrations"
@@ -5777,7 +5777,7 @@ msgstr "Manage locations"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:463
 msgid "Manage Menu Categories"
-msgstr "Manage Menu Categories======="
+msgstr "Manage Menu Categories"
 
 #: app/components/settings/cards/security-card.tsx:242
 #: app/components/settings/cards/security-card.tsx:249
@@ -5905,13 +5905,13 @@ msgstr "Mark read"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:465
 msgid "Mark unread"
-msgstr "Mark unread<<<<<<< HEAD"
+msgstr "Mark unread"
 
 #: app/components/app-sidebar.tsx:351
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:860
 msgid "Marketing and scheduling"
@@ -5976,7 +5976,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:749
 msgid "MCP OAuth Setup Instructions"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:484
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
@@ -5997,7 +5997,7 @@ msgstr "Media details"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:729
 msgid "Media details saved"
-msgstr "Media details saved<<<<<<< HEAD"
+msgstr "Media details saved"
 
 #: app/components/app-sidebar.tsx:288
 #: app/components/media-library/media-library-picker.tsx:229
@@ -6017,7 +6017,7 @@ msgstr ""
 
 #: app/routes/_auth+/waitlist.tsx:444
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
-msgstr "Meet other members and share updates in the group. An admin can add community points after you join.<<<<<<< HEAD"
+msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
 #: app/components/roles/tenant-role-access-manager.tsx:604
 msgid "member"
@@ -6025,7 +6025,7 @@ msgstr ""
 
 #: app/components/organization-members.tsx:107
 #~ msgid "Member"
-#~ msgstr "<<<<<<< HEAD"
+#~ msgstr ""
 
 #: app/components/roles/tenant-role-access-manager.tsx:604
 msgid "members"
@@ -6358,16 +6358,16 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:240
 msgid "New broadcast"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:350
 msgid "New Category"
-msgstr "New Category======="
+msgstr "New Category"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:175
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
 msgid "New channel"
-msgstr "New channel>>>>>>> upstream/main"
+msgstr "New channel"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:111
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
@@ -6392,7 +6392,7 @@ msgstr "New form submissions will appear here."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:357
 msgid "New Item"
@@ -6410,7 +6410,7 @@ msgstr "New Menu"
 #: app/components/chat/chat-compose-dialog.tsx:66
 #: app/components/chat/chat-view.tsx:422
 msgid "New message"
-msgstr "New message>>>>>>> upstream/main"
+msgstr "New message"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:364
 msgid "New Modifier Group"
@@ -6418,7 +6418,7 @@ msgstr "New Modifier Group"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:371
 msgid "New Modifier Option"
-msgstr "New Modifier Option======="
+msgstr "New Modifier Option"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:342
 msgid "New Note"
@@ -6667,7 +6667,7 @@ msgstr "No media yet. Upload an image to get started."
 
 #: app/components/organization-members.tsx:153
 msgid "No members found."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/category-form.tsx:559
 msgid "No menus assigned yet. Add a menu to make this category visible."
@@ -6695,7 +6695,7 @@ msgstr "No messages yet"
 
 #: app/components/chat/chat-view.tsx:494
 #~ msgid "No messages yet. Say hello!"
-#~ msgstr "No messages yet. Say hello!>>>>>>> upstream/main"
+#~ msgstr "No messages yet. Say hello!"
 
 #: app/components/menu/item-form.tsx:552
 msgid "No modifier groups assigned yet. Add one to get started."
@@ -6719,7 +6719,7 @@ msgstr "No nested groups yet"
 
 #: app/components/menu/modifier-form.tsx:1122
 #~ msgid "No nested modifier groups added yet."
-#~ msgstr "No nested modifier groups added yet.======="
+#~ msgstr "No nested modifier groups added yet."
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
@@ -6741,7 +6741,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:391
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-group-settings-dialog.tsx:118
 msgid "No one else to add."
@@ -6749,7 +6749,7 @@ msgstr "No one else to add."
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:457
 msgid "No one matches your search."
-msgstr "No one matches your search.>>>>>>> upstream/main"
+msgstr "No one matches your search."
 
 #: app/components/menu/modifier-form.tsx:1135
 msgid "No options added yet. Click “Add option” to get started."
@@ -6761,7 +6761,7 @@ msgstr "No options found"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:323
 msgid "No options match your active filters."
-msgstr "No options match your active filters.======="
+msgstr "No options match your active filters."
 
 #: app/routes/_app+/organizations.tsx:383
 #~ msgid "No organization found"
@@ -6957,7 +6957,7 @@ msgstr ""
 
 #: app/components/leadership-card.tsx:104
 msgid "notes"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:282
 #: app/components/command-menu.tsx:137
@@ -6994,7 +6994,7 @@ msgstr ""
 
 #: app/components/settings/cards/notification-preferences-card.tsx:207
 msgid "Notification Preferences"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:489
 msgid "Notifications"
@@ -7038,15 +7038,15 @@ msgstr "Old path (Source)"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
 msgid "Old URL (Source)"
-msgstr "Old URL (Source)<<<<<<< HEAD"
+msgstr "Old URL (Source)"
 
 #: app/components/mailbox/reviews-tab.tsx:548
 msgid "Older"
-msgstr "Older======="
+msgstr "Older"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:84
 msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
-msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy.>>>>>>> upstream/main"
+msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -7391,7 +7391,7 @@ msgstr ""
 
 #: app/components/settings/cards/organization/team-size-card.tsx:76
 #~ msgid "Organization Size"
-#~ msgstr "<<<<<<< HEAD"
+#~ msgstr ""
 
 #: app/components/app-sidebar.tsx:142
 #: app/components/app-sidebar.tsx:144
@@ -7412,7 +7412,7 @@ msgstr "Organize items into categories (e.g. Appetizers, Entrees, Drinks, Desser
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
-msgstr "Outline<<<<<<< HEAD"
+msgstr "Outline"
 
 #: app/components/locations/special-hours-picker.tsx:91
 msgid "Override regular operating hours on holidays, events, or closures."
@@ -7454,7 +7454,7 @@ msgstr ""
 #: app/components/website/create-page-dialog.tsx:171
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2413
 msgid "Page URL"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:391
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -7985,7 +7985,7 @@ msgstr "Processing…"
 
 #: app/components/settings/cards/organization/shop-card.tsx:254
 msgid "Product name"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:135
 #: app/components/user-dropdown.tsx:54
@@ -8194,7 +8194,7 @@ msgstr "Redirect type"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1086
 msgid "Redirected"
-msgstr "Redirected<<<<<<< HEAD"
+msgstr "Redirected"
 
 #: app/components/app-sidebar.tsx:424
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -8402,7 +8402,7 @@ msgstr "Replied"
 #: app/components/note/comment-input.tsx:398
 #: app/components/note/comment-item.tsx:301
 msgid "Reply"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/chat/chat-message.tsx:277
 msgid "Reply in thread"
@@ -8410,15 +8410,15 @@ msgstr "Reply in thread"
 
 #: app/components/mailbox/reviews-tab.tsx:664
 msgid "Reply to review"
-msgstr "Reply to review======="
+msgstr "Reply to review"
 
 #: app/components/chat/chat-view.tsx:738
 msgid "Reply…"
-msgstr "Reply…>>>>>>> upstream/main"
+msgstr "Reply…"
 
 #: app/components/note/comment-input.tsx:150
 #~ msgid "Replying to comment"
-#~ msgstr "<<<<<<< HEAD"
+#~ msgstr ""
 
 #: app/components/app-sidebar.tsx:276
 msgid "Reports"
@@ -8504,7 +8504,7 @@ msgstr "Responses"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:354
 msgid "Responses to your website forms will arrive here."
-msgstr "Responses to your website forms will arrive here.<<<<<<< HEAD"
+msgstr "Responses to your website forms will arrive here."
 
 #: app/routes/organizations+/create.tsx:890
 msgid "Restaurant logo preview"
@@ -8539,11 +8539,11 @@ msgstr "Restricted"
 
 #: app/components/locations/delivery-zones-manager.tsx:221
 msgid "Restricted (No Delivery)"
-msgstr "Restricted (No Delivery)======="
+msgstr "Restricted (No Delivery)"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:322
 msgid "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
-msgstr "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own.>>>>>>> upstream/main"
+msgstr "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
@@ -8628,7 +8628,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3560
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4242
 msgid "Right"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/modifier-guest-preview.tsx:499
 msgid "Right ½"
@@ -8641,7 +8641,7 @@ msgstr "Role"
 
 #: app/components/roles/tenant-role-access-manager.tsx:340
 msgid "Role name"
-msgstr "Role name<<<<<<< HEAD"
+msgstr "Role name"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:420
 msgid "Roles"
@@ -8804,7 +8804,7 @@ msgstr "Save as copy"
 
 #: app/components/website/branding-panel.tsx:378
 msgid "Save Branding"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:352
 #: app/components/menu/drop-wizard/drop-form.tsx:1051
@@ -8953,15 +8953,15 @@ msgstr "Search and select location address with Google Autocomplete."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:303
 msgid "Search automations..."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/modifier-form.tsx:1846
 msgid "Search available options..."
-msgstr "Search available options...======="
+msgstr "Search available options..."
 
 #: app/components/chat/chat-compose-dialog.tsx:99
 msgid "Search by name"
-msgstr "Search by name>>>>>>> upstream/main"
+msgstr "Search by name"
 
 #: app/components/settings/cards/organization/jira-bot-user-search.tsx:184
 msgid "Search by name or email..."
@@ -8983,21 +8983,21 @@ msgstr "Search media"
 #: app/components/media-library/media-library-picker.tsx:249
 #: app/routes/_app+/$orgSlug_+/media.tsx:869
 msgid "Search media library"
-msgstr "Search media library<<<<<<< HEAD"
+msgstr "Search media library"
 
 #: app/components/app-sidebar.tsx:625
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
-msgstr "Search menu items...======="
+msgstr "Search menu items..."
 
 #: app/components/chat/chat-view.tsx:361
 #: app/components/chat/chat-view.tsx:362
 msgid "Search messages"
-msgstr "Search messages>>>>>>> upstream/main"
+msgstr "Search messages"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
 msgid "Search missing URLs..."
-msgstr "Search missing URLs...<<<<<<< HEAD======="
+msgstr "Search missing URLs..."
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:356
 msgid "Search notes"
@@ -9031,7 +9031,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
 msgid "Search redirects..."
-msgstr "Search redirects...<<<<<<< HEAD"
+msgstr "Search redirects..."
 
 #: app/components/chat/chat-view.tsx:385
 msgid "Search results"
@@ -9093,7 +9093,7 @@ msgstr ""
 
 #: app/components/settings/cards/security-card.tsx:168
 msgid "Secure your account with an extra verification step"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:141
 #: app/routes/mcp+/authorize.tsx:405
@@ -9119,7 +9119,7 @@ msgstr "See one-time email and SMS campaign history."
 
 #: app/components/roles/tenant-role-access-manager.tsx:113
 msgid "See teammate names, emails, and assigned roles."
-msgstr "See teammate names, emails, and assigned roles.<<<<<<< HEAD"
+msgstr "See teammate names, emails, and assigned roles."
 
 #: app/components/menu/menu-form.tsx:343
 msgid "Select a category to add to this menu."
@@ -9127,11 +9127,11 @@ msgstr "Select a category to add to this menu."
 
 #: app/components/menu/item-form.tsx:679
 msgid "Select a category to display this item."
-msgstr "Select a category to display this item.======="
+msgstr "Select a category to display this item."
 
 #: app/components/chat/chat-view.tsx:463
 #~ msgid "Select a channel to start."
-#~ msgstr "Select a channel to start.>>>>>>> upstream/main"
+#~ msgstr "Select a channel to start."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4102
 msgid "Select a form"
@@ -9431,7 +9431,7 @@ msgstr ""
 
 #: app/components/settings/cards/security-card.tsx:187
 msgid "Set up authenticator app"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/locations/availability-picker.tsx:462
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
@@ -9502,7 +9502,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3182
 msgid "Shared across every page"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:479
 msgid "Shop"
@@ -9745,7 +9745,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3587
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3827
 msgid "Square"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/modifier-form.tsx:1129
 #~ msgid "Standard modifier group assigned directly to menu items (e.g. \"Choose your side\", \"Burger Toppings\")."
@@ -9821,7 +9821,7 @@ msgstr ""
 
 #: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
-msgstr "Starting point<<<<<<< HEAD"
+msgstr "Starting point"
 
 #: app/components/locations/address-autocomplete.tsx:244
 msgid "State / Province"
@@ -10283,7 +10283,7 @@ msgstr "The path on your old site that visitors or search engines request."
 
 #: app/components/nav-user.tsx:220
 msgid "Theme"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:78
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
@@ -10347,7 +10347,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:767
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/menu/item-variations.tsx:262
 msgid "This item has reached the 100 combination limit."
@@ -10798,11 +10798,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:245
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:279
 msgid "Unknown intent"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:57
 msgid "Unknown role"
-msgstr "Unknown role>>>>>>> upstream/main"
+msgstr "Unknown role"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:818
 msgid "Unlimited"
@@ -10810,7 +10810,7 @@ msgstr "Unlimited"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:993
 msgid "Unlisted"
-msgstr "Unlisted======="
+msgstr "Unlisted"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:138
 msgid "Unnamed recipient"
@@ -10889,7 +10889,7 @@ msgstr "Update organization name, slug, and general preferences."
 
 #: app/components/settings/cards/profile-photo.tsx:25
 msgid "Update Profile Photo"
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/mailbox/reviews-tab.tsx:732
 msgid "Update reply"
@@ -10919,7 +10919,7 @@ msgstr "Updated section"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:152
 msgid "Updating section"
-msgstr "Updating section<<<<<<< HEAD"
+msgstr "Updating section"
 
 #: app/components/app-sidebar.tsx:94
 #: app/components/settings/cards/organization/billing-card.tsx:460
@@ -11308,7 +11308,7 @@ msgstr ""
 
 #: app/routes/_auth+/verify.tsx:65
 msgid "We've sent you a code to verify your email address."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/components/app-sidebar.tsx:380
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
@@ -11422,15 +11422,15 @@ msgstr "When a customer selects this option, reveal these conditional modifier g
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
 msgid "When active, visitors requesting the old URL will be forwarded right away."
-msgstr "When active, visitors requesting the old URL will be forwarded right away.<<<<<<< HEAD"
+msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
 #: app/components/chat/chat-group-settings-dialog.tsx:166
 msgid "When off, people only see messages from after they joined."
-msgstr "When off, people only see messages from after they joined.>>>>>>> upstream/main"
+msgstr "When off, people only see messages from after they joined."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:596
 msgid "When orders open and close"
-msgstr "When orders open and close======="
+msgstr "When orders open and close"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "When prompted, authorize the connection in your browser"
@@ -11450,11 +11450,11 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 
 #: app/components/ui/notification-bell.tsx:228
 msgid "When you get notifications, they'll show up here."
-msgstr "<<<<<<< HEAD"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:382
 msgid "Who can access this channel?"
-msgstr "Who can access this channel?>>>>>>> upstream/main"
+msgstr "Who can access this channel?"
 
 #: app/components/menu/modifier-guest-preview.tsx:479
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:412
@@ -11480,7 +11480,7 @@ msgstr "Whole pizza price ($)"
 
 #: app/components/menu/modifier-form.tsx:1044
 msgid "Whole pizza, left half, or right half pricing."
-msgstr "Whole pizza, left half, or right half pricing.======="
+msgstr "Whole pizza, left half, or right half pricing."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
