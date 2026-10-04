@@ -115,7 +115,7 @@ export function CreatePickupWindowDrawer({
 							<Trans>Location</Trans>
 						</Label>
 						<Select
-							value={locationId}
+							value={effectiveLocationId}
 							onValueChange={(val) => setLocationId(val || '')}
 						>
 							<SelectTrigger id="pw-location" className="w-full">
@@ -182,7 +182,7 @@ export function CreatePickupWindowDrawer({
 							<SelectContent>
 								{DROP_SLOT_INTERVALS.map((int) => (
 									<SelectItem key={int} value={String(int)}>
-										{int} minutes
+										<Trans>{int} minutes</Trans>
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -261,7 +261,7 @@ export function PickupWindowSettingsDrawer({
 							<SelectContent>
 								{DROP_SLOT_INTERVALS.map((int) => (
 									<SelectItem key={int} value={String(int)}>
-										{int} minutes
+										<Trans>{int} minutes</Trans>
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -508,7 +508,7 @@ function ItemInventoryForm({
 						<Input
 							id="item-max-order"
 							type="number"
-							placeholder="No limit"
+							placeholder={t`No limit`}
 							value={maxPerOrder}
 							onChange={(e) => setMaxPerOrder(e.target.value)}
 						/>
@@ -521,7 +521,7 @@ function ItemInventoryForm({
 						<Input
 							id="item-max-slot"
 							type="number"
-							placeholder="No limit"
+							placeholder={t`No limit`}
 							value={maxPerPickupSlot}
 							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
 						/>
@@ -677,7 +677,7 @@ function SectionInventoryForm({
 						<Input
 							id="sec-max-order"
 							type="number"
-							placeholder="No limit"
+							placeholder={t`No limit`}
 							value={maxPerOrder}
 							onChange={(e) => setMaxPerOrder(e.target.value)}
 						/>
@@ -690,7 +690,7 @@ function SectionInventoryForm({
 						<Input
 							id="sec-max-slot"
 							type="number"
-							placeholder="No limit"
+							placeholder={t`No limit`}
 							value={maxPerPickupSlot}
 							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
 						/>
@@ -767,7 +767,7 @@ export function AdditionalOptionsDrawer({
 							<SelectContent>
 								{DROP_CHECKOUT_HOLD_OPTIONS.map((min) => (
 									<SelectItem key={min} value={String(min)}>
-										{min} minutes
+										<Trans>{min} minutes</Trans>
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -938,7 +938,7 @@ export function AddReminderModal({
 						</Label>
 						<Input
 							id="rem-title"
-							placeholder="e.g. We are about to drop!"
+							placeholder={t`e.g. We are about to drop!`}
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 						/>

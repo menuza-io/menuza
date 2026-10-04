@@ -61,6 +61,7 @@ export interface DropFormProps {
 		assignedCategoryIds?: string[]
 	}
 	isEdit?: boolean
+	currency?: string
 }
 
 function formatToLocalDateTimeInput(dateInput?: Date | string | null): string {
@@ -78,6 +79,7 @@ export function DropForm({
 	availableItems,
 	initialData,
 	isEdit = false,
+	currency = 'USD',
 }: DropFormProps) {
 	const { _ } = useLingui()
 	const navigation = useNavigation()
@@ -307,10 +309,11 @@ export function DropForm({
 								<Button
 									form="drop-form"
 									type="submit"
+									name="status"
+									value="draft"
 									variant="outline"
 									size="sm"
 									disabled={isSubmitting || !title}
-									onClick={() => setStatus('draft')}
 									className="font-medium"
 								>
 									<Trans>Save draft</Trans>
@@ -318,11 +321,12 @@ export function DropForm({
 								<Button
 									form="drop-form"
 									type="submit"
+									name="status"
+									value="scheduled"
 									size="sm"
 									disabled={
 										isSubmitting || !title || pickupWindows.length === 0
 									}
-									onClick={() => setStatus('scheduled')}
 									className="font-medium"
 								>
 									{isSubmitting ? (
@@ -336,6 +340,8 @@ export function DropForm({
 							<Button
 								form="drop-form"
 								type="submit"
+								name="status"
+								value={status}
 								size="sm"
 								disabled={isSubmitting || !title || pickupWindows.length === 0}
 								className="font-medium"
@@ -382,7 +388,6 @@ export function DropForm({
 					<input type="hidden" name="title" value={title} />
 					<input type="hidden" name="slug" value={slug} />
 					<input type="hidden" name="description" value={description} />
-					<input type="hidden" name="status" value={status} />
 					<input type="hidden" name="visibility" value={visibility} />
 					<input type="hidden" name="ordersOpenAt" value={ordersOpenAt} />
 					<input type="hidden" name="ordersCloseAt" value={ordersCloseAt} />
@@ -429,7 +434,21 @@ export function DropForm({
 					<input
 						type="hidden"
 						name="reminders"
-						value={JSON.stringify(reminders)}
+						value={JSON.stringify(
+							reminders.map((r) => {
+								let scheduledAt = r.scheduledAt
+								if (r.triggerType === 'before_open' && ordersOpenAt) {
+									const openDate = new Date(ordersOpenAt)
+									const offset = 2 * 60 * 60 * 1000
+									scheduledAt = new Date(openDate.getTime() - offset)
+								} else if (r.triggerType === 'before_close' && ordersCloseAt) {
+									const closeDate = new Date(ordersCloseAt)
+									const offset = 2 * 60 * 60 * 1000
+									scheduledAt = new Date(closeDate.getTime() - offset)
+								}
+								return { ...r, scheduledAt }
+							}),
+						)}
 					/>
 
 					{/* TAB 1: INFO */}
@@ -781,7 +800,10 @@ export function DropForm({
 																				{item.displayName}
 																			</p>
 																			<p className="text-muted-foreground text-xs">
-																				${item.price.toFixed(2)}
+																				{new Intl.NumberFormat(undefined, {
+																					style: 'currency',
+																					currency,
+																				}).format(item.price)}
 																			</p>
 																		</div>
 																	</div>
@@ -1014,6 +1036,8 @@ export function DropForm({
 
 								<Button
 									type="submit"
+									name="status"
+									value={status === 'draft' ? 'scheduled' : status}
 									disabled={
 										isSubmitting || !title || pickupWindows.length === 0
 									}

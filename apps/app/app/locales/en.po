@@ -180,6 +180,11 @@ msgstr "{formCount} forms"
 msgid "{hours}h ago"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:185
+#: app/components/menu/drop-wizard/drop-drawers.tsx:264
+msgid "{int} minutes"
+msgstr "{int} minutes"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:221
 msgid "{journeyName} (Copy)"
 msgstr ""
@@ -187,6 +192,10 @@ msgstr ""
 #: app/components/app-sidebar.tsx:344
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:770
+msgid "{min} minutes"
+msgstr "{min} minutes"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -651,7 +660,7 @@ msgstr "Add a modifier group"
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:677
+#: app/components/menu/drop-wizard/drop-form.tsx:696
 msgid "Add a section from your menu categories to start populating items for this drop."
 msgstr "Add a section from your menu categories to start populating items for this drop."
 
@@ -834,7 +843,7 @@ msgid "Add photo or video"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:201
-#: app/components/menu/drop-wizard/drop-form.tsx:491
+#: app/components/menu/drop-wizard/drop-form.tsx:510
 msgid "Add pickup window"
 msgstr "Add pickup window"
 
@@ -843,7 +852,7 @@ msgid "Add question"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1037
-#: app/components/menu/drop-wizard/drop-form.tsx:870
+#: app/components/menu/drop-wizard/drop-form.tsx:889
 msgid "Add reminder"
 msgstr "Add reminder"
 
@@ -861,7 +870,7 @@ msgstr ""
 #~ msgid "Add reviewer"
 #~ msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:662
+#: app/components/menu/drop-wizard/drop-form.tsx:681
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1698
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1704
 msgid "Add section"
@@ -871,7 +880,7 @@ msgstr ""
 #~ msgid "Add Section"
 #~ msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1123
+#: app/components/menu/drop-wizard/drop-form.tsx:1144
 msgid "Add section to drop"
 msgstr "Add section to drop"
 
@@ -936,7 +945,7 @@ msgid "Adding section"
 msgstr "Adding section"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:751
-#: app/components/menu/drop-wizard/drop-form.tsx:990
+#: app/components/menu/drop-wizard/drop-form.tsx:1009
 msgid "Additional options"
 msgstr "Additional options"
 
@@ -1150,7 +1159,7 @@ msgstr "Anonymous diner"
 msgid "Answer"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:953
+#: app/components/menu/drop-wizard/drop-form.tsx:972
 msgid "Anyone can view and discover this drop on your site."
 msgstr "Anyone can view and discover this drop on your site."
 
@@ -1277,7 +1286,7 @@ msgstr "Assign categories to this menu or create a new category to begin."
 msgid "Assign responsibilities"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:647
+#: app/components/menu/drop-wizard/drop-form.tsx:666
 msgid "Assign sections and items to this drop, and set pooled or per-item limits."
 msgstr "Assign sections and items to this drop, and set pooled or per-item limits."
 
@@ -1352,7 +1361,7 @@ msgstr ""
 msgid "Auto"
 msgstr "Auto"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:856
+#: app/components/menu/drop-wizard/drop-form.tsx:875
 msgid "Automated customer notifications to create excitement and urge checkout."
 msgstr "Automated customer notifications to create excitement and urge checkout."
 
@@ -1456,7 +1465,7 @@ msgstr "Back to details"
 msgid "Back to fields"
 msgstr "Back to fields"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:820
+#: app/components/menu/drop-wizard/drop-form.tsx:839
 msgid "Back to Info"
 msgstr "Back to Info"
 
@@ -1469,7 +1478,7 @@ msgstr "Back to list"
 msgid "Back to login"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1012
+#: app/components/menu/drop-wizard/drop-form.tsx:1031
 msgid "Back to Menu"
 msgstr "Back to Menu"
 
@@ -1529,12 +1538,12 @@ msgid "Becomes available"
 msgstr "Becomes available"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:963
-#: app/components/menu/drop-wizard/drop-form.tsx:905
+#: app/components/menu/drop-wizard/drop-form.tsx:924
 msgid "Before drop closes"
 msgstr "Before drop closes"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:960
-#: app/components/menu/drop-wizard/drop-form.tsx:903
+#: app/components/menu/drop-wizard/drop-form.tsx:922
 msgid "Before drop opens"
 msgstr "Before drop opens"
 
@@ -1704,7 +1713,7 @@ msgstr "Can edit teammate notes"
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1034
-#: app/components/menu/drop-wizard/drop-form.tsx:1159
+#: app/components/menu/drop-wizard/drop-form.tsx:1180
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
 #: app/components/note/comment-input.tsx:261
@@ -1939,7 +1948,7 @@ msgstr "Choose from library"
 msgid "Choose photo for {name}"
 msgstr "Choose photo for {name}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:688
+#: app/components/menu/drop-wizard/drop-form.tsx:707
 msgid "Choose section"
 msgstr "Choose section"
 
@@ -2015,7 +2024,7 @@ msgstr ""
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "Click anywhere on the map to add polygon corners"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:524
+#: app/components/menu/drop-wizard/drop-form.tsx:543
 msgid "Click here or the + button above to schedule your pickup window."
 msgstr "Click here or the + button above to schedule your pickup window."
 
@@ -2216,7 +2225,7 @@ msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn P
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:841
+#: app/components/menu/drop-wizard/drop-form.tsx:860
 msgid "Configure drop announcements, visibility, and checkout limits."
 msgstr "Configure drop announcements, visibility, and checkout limits."
 
@@ -2393,7 +2402,7 @@ msgstr "Continue payout setup"
 #~ msgid "Continue Stripe setup"
 #~ msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:632
+#: app/components/menu/drop-wizard/drop-form.tsx:651
 msgid "Continue to Menu"
 msgstr "Continue to Menu"
 
@@ -2401,7 +2410,7 @@ msgstr "Continue to Menu"
 msgid "Continue to Payment"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:827
+#: app/components/menu/drop-wizard/drop-form.tsx:846
 msgid "Continue to Schedule"
 msgstr "Continue to Schedule"
 
@@ -2426,7 +2435,7 @@ msgstr "Control availability and custom pricing per location."
 msgid "Control overall ordering availability for guests."
 msgstr "Control overall ordering availability for guests."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:580
+#: app/components/menu/drop-wizard/drop-form.tsx:599
 msgid "Control when customers can view and place orders for this drop."
 msgstr "Control when customers can view and place orders for this drop."
 
@@ -2930,7 +2939,7 @@ msgstr "Custom Roles"
 msgid "Custom scheduled time"
 msgstr "Custom scheduled time"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:906
+#: app/components/menu/drop-wizard/drop-form.tsx:925
 msgid "Custom timing"
 msgstr "Custom timing"
 
@@ -3629,19 +3638,19 @@ msgstr "Draw Polygon"
 msgid "Drop"
 msgstr "Drop"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:456
+#: app/components/menu/drop-wizard/drop-form.tsx:475
 msgid "Drop description"
 msgstr "Drop description"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:853
+#: app/components/menu/drop-wizard/drop-form.tsx:872
 msgid "Drop reminders"
 msgstr "Drop reminders"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:442
+#: app/components/menu/drop-wizard/drop-form.tsx:461
 msgid "Drop title"
 msgstr "Drop title"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:932
+#: app/components/menu/drop-wizard/drop-form.tsx:951
 msgid "Drop visibility"
 msgstr "Drop visibility"
 
@@ -3714,6 +3723,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:158
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr ""
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:941
+msgid "e.g. We are about to drop!"
+msgstr "e.g. We are about to drop!"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:272
 msgid "e.g. Welcome {{firstName}}!"
@@ -4933,7 +4946,7 @@ msgstr ""
 msgid "Invalid Verification Type"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:709
+#: app/components/menu/drop-wizard/drop-form.tsx:728
 msgid "inventory (pooled)"
 msgstr "inventory (pooled)"
 
@@ -5605,7 +5618,7 @@ msgstr "Mark unread"
 msgid "Marketing"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:838
+#: app/components/menu/drop-wizard/drop-form.tsx:857
 msgid "Marketing and scheduling"
 msgstr "Marketing and scheduling"
 
@@ -5768,11 +5781,11 @@ msgstr "Menu Overview"
 msgid "Menu preview"
 msgstr "Menu preview"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1000
+#: app/components/menu/drop-wizard/drop-form.tsx:1019
 msgid "Menu preview off"
 msgstr "Menu preview off"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:999
+#: app/components/menu/drop-wizard/drop-form.tsx:1018
 msgid "Menu preview on"
 msgstr "Menu preview on"
 
@@ -6258,7 +6271,7 @@ msgstr ""
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:747
+#: app/components/menu/drop-wizard/drop-form.tsx:766
 #: app/components/menu/menu-sortable-category.tsx:174
 msgid "No items in this category yet."
 msgstr "No items in this category yet."
@@ -6274,6 +6287,13 @@ msgstr "No items yet"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:327
 msgid "No lead time (orders stay open until slot)"
 msgstr "No lead time (orders stay open until slot)"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:511
+#: app/components/menu/drop-wizard/drop-drawers.tsx:524
+#: app/components/menu/drop-wizard/drop-drawers.tsx:680
+#: app/components/menu/drop-wizard/drop-drawers.tsx:693
+msgid "No limit"
+msgstr "No limit"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "No locations found."
@@ -6432,7 +6452,7 @@ msgstr ""
 msgid "No passkeys registered yet"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:521
+#: app/components/menu/drop-wizard/drop-form.tsx:540
 msgid "No pickup window added yet"
 msgstr "No pickup window added yet"
 
@@ -6468,7 +6488,7 @@ msgstr "No reviews found"
 msgid "No reviews match the selected filter."
 msgstr "No reviews match the selected filter."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:674
+#: app/components/menu/drop-wizard/drop-form.tsx:693
 msgid "No sections added to this drop yet"
 msgstr "No sections added to this drop yet"
 
@@ -6715,7 +6735,7 @@ msgstr "Online hours match store hours"
 msgid "Online Ordering, POS & Kiosk"
 msgstr "Online Ordering, POS & Kiosk"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:974
+#: app/components/menu/drop-wizard/drop-form.tsx:993
 msgid "Only people with the secret link can view and order."
 msgstr "Only people with the secret link can view and order."
 
@@ -6751,11 +6771,11 @@ msgstr "Open Checkout dashboard"
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:996
+#: app/components/menu/drop-wizard/drop-form.tsx:1015
 msgid "Open countdown hidden"
 msgstr "Open countdown hidden"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:995
+#: app/components/menu/drop-wizard/drop-form.tsx:1014
 msgid "Open countdown visible"
 msgstr "Open countdown visible"
 
@@ -6943,7 +6963,7 @@ msgstr "Order Preparation Time"
 msgid "Orders can be delivered inside this zone"
 msgstr "Orders can be delivered inside this zone"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:613
+#: app/components/menu/drop-wizard/drop-form.tsx:632
 msgid "Orders close"
 msgstr "Orders close"
 
@@ -6951,7 +6971,7 @@ msgstr "Orders close"
 msgid "Orders close time must be configured in Step 1 first."
 msgstr "Orders close time must be configured in Step 1 first."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:595
+#: app/components/menu/drop-wizard/drop-form.tsx:614
 msgid "Orders open"
 msgstr "Orders open"
 
@@ -7308,15 +7328,15 @@ msgstr "Pickup Date"
 msgid "Pickup interval (minutes)"
 msgstr "Pickup interval (minutes)"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:546
+#: app/components/menu/drop-wizard/drop-form.tsx:565
 msgid "Pickup Location"
 msgstr "Pickup Location"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:475
+#: app/components/menu/drop-wizard/drop-form.tsx:494
 msgid "Pickup schedule"
 msgstr "Pickup schedule"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:552
+#: app/components/menu/drop-wizard/drop-form.tsx:571
 msgid "pickup slots (every"
 msgstr "pickup slots (every"
 
@@ -7333,7 +7353,7 @@ msgid "Pickup Window"
 msgstr "Pickup Window"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:245
-#: app/components/menu/drop-wizard/drop-form.tsx:500
+#: app/components/menu/drop-wizard/drop-form.tsx:519
 msgid "Pickup window settings"
 msgstr "Pickup window settings"
 
@@ -7488,7 +7508,7 @@ msgstr "Presets"
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:300
+#: app/components/menu/drop-wizard/drop-form.tsx:302
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
 msgid "Preview"
@@ -7615,7 +7635,7 @@ msgstr "Promote as Upsell"
 msgid "Promotions & Highlights"
 msgstr "Promotions & Highlights"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:950
+#: app/components/menu/drop-wizard/drop-form.tsx:969
 msgid "Public"
 msgstr "Public"
 
@@ -7953,7 +7973,7 @@ msgstr "Remove option"
 msgid "Remove photo"
 msgstr "Remove photo"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:736
+#: app/components/menu/drop-wizard/drop-form.tsx:755
 msgid "Remove section from drop"
 msgstr "Remove section from drop"
 
@@ -8377,8 +8397,8 @@ msgstr "Save as copy"
 msgid "Save Branding"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:346
-#: app/components/menu/drop-wizard/drop-form.tsx:1027
+#: app/components/menu/drop-wizard/drop-form.tsx:352
+#: app/components/menu/drop-wizard/drop-form.tsx:1048
 #: app/components/roles/tenant-role-access-manager.tsx:541
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
@@ -8396,7 +8416,7 @@ msgid "Save Changes"
 msgstr "Save Changes"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/menu/drop-wizard/drop-form.tsx:316
+#: app/components/menu/drop-wizard/drop-form.tsx:319
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr ""
@@ -8471,8 +8491,8 @@ msgid "Saving new journey draft..."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/menu/drop-wizard/drop-form.tsx:329
-#: app/components/menu/drop-wizard/drop-form.tsx:344
+#: app/components/menu/drop-wizard/drop-form.tsx:333
+#: app/components/menu/drop-wizard/drop-form.tsx:350
 msgid "Saving..."
 msgstr ""
 
@@ -8492,8 +8512,8 @@ msgstr ""
 msgid "Schedule a call"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:331
-#: app/components/menu/drop-wizard/drop-form.tsx:1025
+#: app/components/menu/drop-wizard/drop-form.tsx:335
+#: app/components/menu/drop-wizard/drop-form.tsx:1046
 msgid "Schedule drop"
 msgstr "Schedule drop"
 
@@ -8505,7 +8525,7 @@ msgstr "Schedule limited-time menu drops with inventory limits and pickup slots.
 msgid "Scheduled"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1023
+#: app/components/menu/drop-wizard/drop-form.tsx:1044
 msgid "Scheduling..."
 msgstr "Scheduling..."
 
@@ -8622,7 +8642,7 @@ msgstr ""
 #~ msgid "Section pooled inventory"
 #~ msgstr "Section pooled inventory"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:723
+#: app/components/menu/drop-wizard/drop-form.tsx:742
 msgid "Section settings"
 msgstr "Section settings"
 
@@ -8955,7 +8975,7 @@ msgstr "Set how many of this item are available for this drop."
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "Set the physical operating hours when customers can visit this restaurant location."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:478
+#: app/components/menu/drop-wizard/drop-form.tsx:497
 msgid "Set the pickup times and locations where customers will collect their orders."
 msgstr "Set the pickup times and locations where customers will collect their orders."
 
@@ -9014,7 +9034,7 @@ msgstr ""
 msgid "Share on WhatsApp"
 msgstr "Share on WhatsApp"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:461
+#: app/components/menu/drop-wizard/drop-form.tsx:480
 msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
 msgstr "Share the story behind this drop, pickup instructions, or special ingredients..."
 
@@ -10271,11 +10291,11 @@ msgstr ""
 msgid "Unknown intent"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:796
+#: app/components/menu/drop-wizard/drop-form.tsx:815
 msgid "Unlimited"
 msgstr "Unlimited"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:971
+#: app/components/menu/drop-wizard/drop-form.tsx:990
 msgid "Unlisted"
 msgstr "Unlisted"
 
@@ -10315,7 +10335,7 @@ msgstr ""
 msgid "Until {returnTime}"
 msgstr "Until {returnTime}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:266
+#: app/components/menu/drop-wizard/drop-form.tsx:268
 msgid "Untitled drop"
 msgstr "Untitled drop"
 
@@ -10869,7 +10889,7 @@ msgstr "What would you like to collect?"
 msgid "What would you like to know?"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:644
+#: app/components/menu/drop-wizard/drop-form.tsx:663
 msgid "What you are selling"
 msgstr "What you are selling"
 
@@ -10886,7 +10906,7 @@ msgstr "When a customer selects this option, reveal these conditional modifier g
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:577
+#: app/components/menu/drop-wizard/drop-form.tsx:596
 msgid "When orders open and close"
 msgstr "When orders open and close"
 

@@ -21,14 +21,7 @@ function useDefaultLocalMockCredentials() {
 function credentials() {
 	const clientId = readEnv('GBP_CLIENT_ID')
 	const clientSecret = readEnv('GBP_CLIENT_SECRET')
-	if (!clientId && !clientSecret && useDefaultLocalMockCredentials()) {
-		return {
-			clientId: 'MOCK_GBP_CLIENT_ID',
-			clientSecret: 'MOCK_GBP_CLIENT_SECRET',
-			isMock: true,
-		}
-	}
-	if (!clientId || !clientSecret) {
+	if (!clientId && !clientSecret) {
 		if (useDefaultLocalMockCredentials()) {
 			return {
 				clientId: 'MOCK_GBP_CLIENT_ID',
@@ -37,6 +30,11 @@ function credentials() {
 			}
 		}
 		throw new Error('Google Business Profile is not configured')
+	}
+	if (!clientId || !clientSecret) {
+		throw new Error(
+			'Google Business Profile requires both GBP_CLIENT_ID and GBP_CLIENT_SECRET to be configured',
+		)
 	}
 	const isMockClientId = clientId.startsWith('MOCK_')
 	const isMockClientSecret = clientSecret.startsWith('MOCK_')

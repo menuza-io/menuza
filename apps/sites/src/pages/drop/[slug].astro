@@ -258,7 +258,7 @@ inventoryOverrides.forEach((inv) => {
 				</div>
 
 				<!-- Pickup Slot Selection -->
-				{pickupWindows[0]?.slots && pickupWindows[0].slots.length > 0 && (
+				{pickupWindows[0]?.slots && pickupWindows[0].slots.length > 0 ? (
 					<div class="rounded-xl border bg-card p-5 shadow-sm space-y-3">
 						<label for="pickup-slot-select" class="text-sm font-semibold text-foreground block">
 							Select your pickup slot:
@@ -273,6 +273,10 @@ inventoryOverrides.forEach((inv) => {
 								</option>
 							))}
 						</select>
+					</div>
+				) : (
+					<div class="rounded-xl border border-dashed bg-muted/30 p-5 text-center text-sm text-muted-foreground">
+						No pickup time slots are currently available for this drop.
 					</div>
 				)}
 
@@ -456,8 +460,9 @@ inventoryOverrides.forEach((inv) => {
 
 			if (cartCountEl) cartCountEl.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
 			if (cartTotalEl) cartTotalEl.textContent = currencyFormatter.format(totalPrice);
+			const hasSlotSelect = Boolean(document.getElementById('pickup-slot-select'));
 			if (checkoutBtn) {
-				checkoutBtn.disabled = totalQty === 0;
+				checkoutBtn.disabled = totalQty === 0 || !hasSlotSelect;
 			}
 		}
 
@@ -482,7 +487,11 @@ inventoryOverrides.forEach((inv) => {
 		if (checkoutBtn) {
 			checkoutBtn.addEventListener('click', () => {
 				const slotSelect = document.getElementById('pickup-slot-select');
-				const selectedSlot = slotSelect ? slotSelect.value : '';
+				if (!slotSelect) {
+					alert('No pickup time slots are currently available for this drop.');
+					return;
+				}
+				const selectedSlot = slotSelect.value;
 				if (!selectedSlot) {
 					alert('Please select a pickup time slot first.');
 					slotSelect?.focus();

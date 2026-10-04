@@ -1,3 +1,4 @@
+import { getLocationCurrency } from '@repo/common/location-currency'
 import { requireUserId } from '@repo/auth'
 import { DropInputSchema } from '@repo/common/menu-types'
 import {
@@ -89,6 +90,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			timezone: l.timezone ?? undefined,
 		})),
 		availableCategories: formattedCategories,
+		currency: getLocationCurrency(locations[0]?.address),
 		availableItems: items.map((i) => ({
 			id: i.id,
 			displayName: i.displayName,
@@ -155,12 +157,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function DropNewRoute() {
-	const { orgSlug, locations, availableCategories, availableItems } =
+	const { orgSlug, locations, availableCategories, availableItems, currency } =
 		useLoaderData<typeof loader>()
 
 	return (
 		<DropForm
 			orgSlug={orgSlug}
+			currency={currency}
 			locations={locations}
 			availableCategories={availableCategories}
 			availableItems={availableItems}

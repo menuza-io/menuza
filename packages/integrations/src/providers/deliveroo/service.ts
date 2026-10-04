@@ -327,6 +327,12 @@ export async function replyToDeliverooReview(
 	reviewId: string,
 	comment: string,
 ) {
+	if (!isDeliverooMockMode()) {
+		throw new Error('Deliveroo does not support public review replies via API.')
+	}
+	if (!MOCK_DELIVEROO_REVIEWS.some((review) => review.id === reviewId)) {
+		throw new Error('Deliveroo review was not found in the local sample data.')
+	}
 	const parsedComment = z.string().trim().min(1).max(4096).parse(comment)
 	const { integration } = await getConnection(organizationId, locationId)
 	const rawConfig = parseIntegrationConfig(integration.config)

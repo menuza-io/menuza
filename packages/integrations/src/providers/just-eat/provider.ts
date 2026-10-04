@@ -36,8 +36,8 @@ function credentials() {
 		const isMockKey = apiKey.startsWith('MOCK_')
 		if (
 			isMockKey &&
-			process.env.NODE_ENV === 'production' &&
-			process.env.MOCKS !== 'true'
+			readEnv('NODE_ENV') === 'production' &&
+			readEnv('MOCKS') !== 'true'
 		) {
 			throw new Error('Just Eat mock credentials cannot be used in production')
 		}
