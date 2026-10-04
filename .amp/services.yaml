@@ -6,14 +6,16 @@
 # redirects match the generated portal hostname (see docs/orbs for details).
 services:
   app:
-    command: BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=app --env-mode=loose
+    command:
+      BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=app --env-mode=loose
     port: 3001
     health: /resources/healthcheck
     portal:
       title: App
       description: Operator app. Sign in with kody / KodyLovesYou!2026.
   admin:
-    command: BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=admin --env-mode=loose
+    command:
+      BASE_URL="$PUBLIC_URL" npx turbo run dev --filter=admin --env-mode=loose
     port: 3005
     health: /resources/healthcheck
     portal:
@@ -24,6 +26,8 @@ services:
     port: 3007
     health: /health
   tenant-api-ksa:
-    command: DATA_REGION=ksa PORT=3009 npx turbo run dev --filter=tenant-api --env-mode=loose
+    command:
+      DATA_REGION=ksa PORT=3009 npx turbo run dev --filter=tenant-api
+      --env-mode=loose
     port: 3009
     health: /health

@@ -29,7 +29,9 @@ on:
         options: [beta, release]
         default: beta
       track:
-        description: 'Play track (internal, alpha [closed test], beta, production; defaults by lane)'
+        description:
+          'Play track (internal, alpha [closed test], beta, production; defaults
+          by lane)'
         type: choice
         options: [default, internal, alpha, beta, production]
         default: default

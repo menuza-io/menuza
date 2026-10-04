@@ -17,6 +17,9 @@ import {
 	getLocalizedMenuValue,
 	parseMenuItemImageKeys,
 	reconcileMenuVariations,
+	generatePickupSlots,
+	DropInputSchema,
+	DropPickupWindowInputSchema,
 } from './menu-types.ts'
 
 describe('menu-types', () => {
@@ -414,5 +417,68 @@ describe('menu-types', () => {
 				'grp_fry_size',
 			])
 		}
+	})
+
+	it('generates accurate pickup slots without exceeding window boundaries', () => {
+		const slots = generatePickupSlots('10:00', '11:30', 30)
+		expect(slots).toHaveLength(3)
+		expect(slots[0]).toEqual({
+			time: '10:00',
+			displayTime: '10:00am',
+		})
+		expect(slots[1]).toEqual({
+			time: '10:30',
+			displayTime: '10:30am',
+		})
+		expect(slots[2]).toEqual({
+			time: '11:00',
+			displayTime: '11:00am',
+		})
+
+		// When window is smaller than interval
+		const emptySlots = generatePickupSlots('10:00', '10:15', 30)
+		expect(emptySlots).toHaveLength(0)
+
+		// 15-minute interval check
+		const slots15 = generatePickupSlots('14:00', '14:45', 15)
+		expect(slots15).toHaveLength(3)
+		expect(slots15[0]?.displayTime).toBe('2:00pm')
+		expect(slots15[2]?.displayTime).toBe('2:30pm')
+	})
+
+	it('validates DropInputSchema with defaults and pickup windows', () => {
+		const validDrop = {
+			title: 'Friday Night Cookie Drop',
+			slug: 'friday-night-cookie-drop',
+			status: 'scheduled',
+			pickupWindows: [
+				{
+					locationId: 'loc_123',
+					date: '2026-10-10',
+					startTime: '12:00',
+					endTime: '14:00',
+					slotIntervalMinutes: 30,
+					maxOrdersPerSlot: 10,
+				},
+			],
+			assignedCategoryIds: ['cat_1', 'cat_2'],
+		}
+
+		const parsed = DropInputSchema.safeParse(validDrop)
+		expect(parsed.success).toBe(true)
+		if (parsed.success) {
+			expect(parsed.data.checkoutHoldMinutes).toBe(5)
+			expect(parsed.data.showOrdersOpenTime).toBe(true)
+			expect(parsed.data.showMenuPreview).toBe(true)
+			expect(parsed.data.showInventoryRemaining).toBe(true)
+			expect(parsed.data.pickupWindows[0]?.slotIntervalMinutes).toBe(30)
+		}
+
+		// Invalid status should fail
+		const invalidStatus = DropInputSchema.safeParse({
+			...validDrop,
+			status: 'nonexistent_status',
+		})
+		expect(invalidStatus.success).toBe(false)
 	})
 })

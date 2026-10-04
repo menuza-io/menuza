@@ -2,7 +2,6 @@ import {
 	type Integration,
 	type NoteIntegrationConnection,
 } from '../../database-types'
-import { ENV } from '../../package-env.js'
 import { BaseIntegrationProvider } from '../../provider'
 import {
 	type Channel,
@@ -11,15 +10,64 @@ import {
 	type TokenData,
 } from '../../types'
 
+import { readEnv } from '../../env-reader.ts'
+
 const SCOPE = 'https://www.googleapis.com/auth/business.manage'
 
+function useDefaultLocalMockCredentials() {
+	return readEnv('MOCKS') === 'true' || readEnv('NODE_ENV') !== 'production'
+}
+
 function credentials() {
-	const clientId = ENV.GBP_CLIENT_ID
-	const clientSecret = ENV.GBP_CLIENT_SECRET
-	if (!clientId || !clientSecret) {
+	const clientId = readEnv('GBP_CLIENT_ID')
+	const clientSecret = readEnv('GBP_CLIENT_SECRET')
+	if (!clientId && !clientSecret) {
+		if (useDefaultLocalMockCredentials()) {
+			return {
+				clientId: 'MOCK_GBP_CLIENT_ID',
+				clientSecret: 'MOCK_GBP_CLIENT_SECRET',
+				isMock: true,
+			}
+		}
 		throw new Error('Google Business Profile is not configured')
 	}
-	return { clientId, clientSecret }
+	if (!clientId || !clientSecret) {
+		throw new Error(
+			'Google Business Profile requires both GBP_CLIENT_ID and GBP_CLIENT_SECRET to be configured',
+		)
+	}
+	const isMockClientId = clientId.startsWith('MOCK_')
+	const isMockClientSecret = clientSecret.startsWith('MOCK_')
+	if (isMockClientId !== isMockClientSecret) {
+		throw new Error(
+			'Use MOCK_ for both GBP_CLIENT_ID and GBP_CLIENT_SECRET when mocking Google Business Profile.',
+		)
+	}
+	if (
+		isMockClientId &&
+		readEnv('NODE_ENV') === 'production' &&
+		readEnv('MOCKS') !== 'true'
+	) {
+		throw new Error(
+			'Mock Google Business Profile credentials are disabled in production.',
+		)
+	}
+	return { clientId, clientSecret, isMock: isMockClientId }
+}
+
+export function isGoogleBusinessProfileMockMode() {
+	const clientId = readEnv('GBP_CLIENT_ID')
+	const clientSecret = readEnv('GBP_CLIENT_SECRET')
+	if (!clientId && !clientSecret) return useDefaultLocalMockCredentials()
+	if (!clientId || !clientSecret) return useDefaultLocalMockCredentials()
+	const isMockClientId = clientId.startsWith('MOCK_')
+	const isMockClientSecret = clientSecret.startsWith('MOCK_')
+	if (isMockClientId !== isMockClientSecret) {
+		throw new Error(
+			'Use MOCK_ for both GBP_CLIENT_ID and GBP_CLIENT_SECRET when mocking Google Business Profile.',
+		)
+	}
+	return isMockClientId
 }
 
 async function exchangeToken(params: URLSearchParams): Promise<TokenData> {
@@ -60,11 +108,17 @@ export class GoogleBusinessProfileProvider extends BaseIntegrationProvider {
 		redirectUri: string,
 		additionalParams?: Record<string, any>,
 	) {
-		const { clientId } = credentials()
+		const { clientId, isMock } = credentials()
 		const state =
 			typeof additionalParams?.state === 'string'
 				? additionalParams.state
 				: this.generateOAuthState(organizationId, additionalParams)
+		if (isMock) {
+			const callback = new URL(redirectUri)
+			callback.searchParams.set('code', 'mock-google-business-profile-code')
+			callback.searchParams.set('state', state)
+			return callback.toString()
+		}
 		const query = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
@@ -78,9 +132,22 @@ export class GoogleBusinessProfileProvider extends BaseIntegrationProvider {
 	}
 
 	async handleCallback(params: OAuthCallbackParams): Promise<TokenData> {
-		const { clientId, clientSecret } = credentials()
+		const { clientId, clientSecret, isMock } = credentials()
 		if (!params.code || !params.redirectUri)
 			throw new Error('Missing Google authorization code or redirect URI')
+		if (isMock) {
+			if (params.code !== 'mock-google-business-profile-code') {
+				throw new Error(
+					'Invalid mock Google Business Profile authorization code',
+				)
+			}
+			return {
+				accessToken: 'mock-google-business-profile-access-token',
+				refreshToken: 'mock-google-business-profile-refresh-token',
+				expiresAt: new Date(Date.now() + 3600 * 1000),
+				scope: SCOPE,
+			}
+		}
 		return exchangeToken(
 			new URLSearchParams({
 				code: params.code,
@@ -93,7 +160,18 @@ export class GoogleBusinessProfileProvider extends BaseIntegrationProvider {
 	}
 
 	async refreshToken(refreshToken: string): Promise<TokenData> {
-		const { clientId, clientSecret } = credentials()
+		const { clientId, clientSecret, isMock } = credentials()
+		if (isMock) {
+			if (refreshToken !== 'mock-google-business-profile-refresh-token') {
+				throw new Error('Invalid mock Google Business Profile refresh token')
+			}
+			return {
+				accessToken: 'mock-google-business-profile-access-token',
+				refreshToken,
+				expiresAt: new Date(Date.now() + 3600 * 1000),
+				scope: SCOPE,
+			}
+		}
 		return exchangeToken(
 			new URLSearchParams({
 				refresh_token: refreshToken,
@@ -116,6 +194,7 @@ export class GoogleBusinessProfileProvider extends BaseIntegrationProvider {
 	async validateConnection(
 		integration: NoteIntegrationConnection & { integration: Integration },
 	): Promise<boolean> {
+		if (isGoogleBusinessProfileMockMode()) return true
 		return (
 			await this.makeAuthenticatedRequest(
 				integration.integration,

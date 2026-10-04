@@ -9,7 +9,11 @@ import {
 	websiteFormSubmissions,
 } from '@repo/tenant-db'
 import { z } from 'zod'
-import { draftMailboxReply, isMailboxAIConfigured } from '../lib/mailbox-ai.ts'
+import {
+	draftGoogleReviewReply,
+	draftMailboxReply,
+	isMailboxAIConfigured,
+} from '../lib/mailbox-ai.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { rateLimit } from '../lib/rate-limit.ts'
@@ -43,6 +47,48 @@ function readJoin(operatorId: string) {
 		eq(mailboxReadReceipts.operatorId, operatorId),
 	)
 }
+
+mailboxRoutes.get('/ai/status', (c) =>
+	c.json({ aiAvailable: isMailboxAIConfigured() }),
+)
+
+const googleReviewDraftSchema = z.object({
+	location: z.string().trim().min(1).max(200),
+	reviewer: z.string().trim().max(200).default(''),
+	starRating: z.enum(['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE']).optional(),
+	review: z.string().trim().max(3000).default(''),
+	notes: z.string().trim().max(2000).default(''),
+	platform: z.string().trim().max(100).optional(),
+})
+
+mailboxRoutes.post(
+	'/reviews/draft',
+	rateLimit('mailbox-ai', { windowMs: 60000, maxRequests: 10 }),
+	async (c) => {
+		const parsed = googleReviewDraftSchema.safeParse(
+			await c.req.json().catch(() => null),
+		)
+		if (!parsed.success)
+			return c.json({ error: 'Invalid review drafting details.' }, 400)
+		if (!isMailboxAIConfigured())
+			return c.json(
+				{ error: 'AI drafting is not configured for this mailbox.' },
+				503,
+			)
+		try {
+			const reply = await draftGoogleReviewReply(parsed.data)
+			return c.json({ reply })
+		} catch {
+			return c.json(
+				{
+					error:
+						'Could not create a reply suggestion. Try again or write your reply.',
+				},
+				502,
+			)
+		}
+	},
+)
 
 mailboxRoutes.get('/count', async (c) => {
 	const auth = c.get('operator')

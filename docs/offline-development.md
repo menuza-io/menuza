@@ -62,7 +62,28 @@ GITHUB_CLIENT_ID = 'MOCK_GITHUB_CLIENT_ID'
 GITHUB_CLIENT_SECRET = 'MOCK_GITHUB_CLIENT_SECRET'
 ```
 
-Mock OAuth providers are automatically used when prefixed with `MOCK_`.
+Mock OAuth providers are automatically used when prefixed with `MOCK_`. The
+standard `npm run dev:app` command sets `MOCKS=true`; review platforms (Google
+Business Profile, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable) then use
+their local OAuth callback, sample restaurant locations, sample reviews, and
+locally persisted replies without extra credentials. If you run the app without
+`MOCKS=true`, set credentials with `MOCK_` prefix to enable the same behavior:
+
+```bash
+# .env
+GBP_CLIENT_ID='MOCK_GBP_CLIENT_ID'
+GBP_CLIENT_SECRET='MOCK_GBP_CLIENT_SECRET'
+YELP_CLIENT_ID='MOCK_YELP_CLIENT_ID'
+YELP_CLIENT_SECRET='MOCK_YELP_CLIENT_SECRET'
+TRIPADVISOR_CLIENT_ID='MOCK_TRIPADVISOR_CLIENT_ID'
+TRIPADVISOR_CLIENT_SECRET='MOCK_TRIPADVISOR_CLIENT_SECRET'
+DELIVEROO_CLIENT_ID='MOCK_DELIVEROO_CLIENT_ID'
+DELIVEROO_CLIENT_SECRET='MOCK_DELIVEROO_CLIENT_SECRET'
+JUST_EAT_CLIENT_ID='MOCK_JUST_EAT_CLIENT_ID'
+JUST_EAT_CLIENT_SECRET='MOCK_JUST_EAT_CLIENT_SECRET'
+OPENTABLE_CLIENT_ID='MOCK_OPENTABLE_CLIENT_ID'
+OPENTABLE_CLIENT_SECRET='MOCK_OPENTABLE_CLIENT_SECRET'
+```
 
 ### Object Storage (Tigris / R2)
 

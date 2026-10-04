@@ -1,4 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
+import {
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	Link,
+	useLoaderData,
+} from 'react-router'
 import { redirectWithToast } from '@repo/common/toast'
 import {
 	asc,
@@ -11,17 +17,29 @@ import {
 	ensureDefaultOrganizationLocation,
 	getAvailablePosProviders,
 	getAvailableProviders,
+	getAvailableReviewProviders,
 	hasAppCredentials,
 	importCatalog,
+	importDeliverooLocation,
+	importGoogleBusinessLocation,
+	importJustEatLocation,
+	importOpenTableLocation,
+	importTripAdvisorLocation,
+	importYelpLocation,
 	integrationManager,
 	isPosSandboxConnectAllowed,
-	localizedText,
+	isReviewProvider,
+	listDeliverooLocations,
 	listGoogleBusinessLocations,
-	importGoogleBusinessLocation,
+	listJustEatLocations,
+	listOpenTableLocations,
+	listTripAdvisorLocations,
+	listYelpLocations,
+	localizedText,
 	parsePosConfig,
 	pushMenu,
+	type ReviewProviderName,
 } from '@repo/integrations'
-import { Button } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
@@ -29,14 +47,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
-import {
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	Form,
-	Link,
-	useLoaderData,
-} from 'react-router'
-
 import {
 	IntegrationsCard,
 	connectIntegrationActionIntent,
@@ -49,9 +59,15 @@ import {
 	importPosMenuActionIntent,
 	syncPosMenuActionIntent,
 } from '#app/components/settings/cards/organization/pos-integrations-card.tsx'
-
-import { connectGoogleBusinessProfile } from '#app/utils/integrations/google-business-profile.server.ts'
+import {
+	ReviewIntegrationsCard,
+	connectReviewActionIntent,
+	disconnectReviewActionIntent,
+	importReviewActionIntent,
+	type ReviewIntegrationItem,
+} from '#app/components/settings/cards/organization/review-integrations-card.tsx'
 import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
+import { connectReviewProvider } from '#app/utils/integrations/review-providers.server.ts'
 import { getLocationDisplayName } from '#app/utils/location/locations.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
@@ -107,41 +123,84 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		(item) => item.organizationLocationId === selectedLocationId,
 	)
 
-	const googleIntegration = scopedIntegrations.find(
-		(item) => item.providerName === 'google-business-profile',
+	const availableReviewProviders = getAvailableReviewProviders()
+	const reviewProviderNames = new Set(
+		availableReviewProviders.map((p) => p.name),
 	)
-	let googleLocations: Array<{ name: string; title: string }> = []
-	let googleError: string | null = null
-	if (googleIntegration?.isActive) {
-		try {
-			googleLocations = (
-				await listGoogleBusinessLocations(organization.id, selectedLocationId)
-			).map(({ name, title }) => ({ name, title }))
-		} catch (error) {
-			googleError =
-				error instanceof Error
-					? error.message
-					: 'Could not load Google locations'
-		}
-	}
+
+	const reviewProviders: ReviewIntegrationItem[] = await Promise.all(
+		availableReviewProviders.map(async (provider) => {
+			const integration = scopedIntegrations.find(
+				(item) => item.providerName === provider.name,
+			)
+			let locations: Array<{ name: string; title: string }> = []
+			let error: string | null = null
+			if (integration?.isActive) {
+				try {
+					if (provider.name === 'google-business-profile') {
+						locations = (
+							await listGoogleBusinessLocations(
+								organization.id,
+								selectedLocationId,
+							)
+						).map(({ name, title }) => ({ name, title }))
+					} else if (provider.name === 'yelp') {
+						locations = (
+							await listYelpLocations(organization.id, selectedLocationId)
+						).map(({ id, name }) => ({ name: id, title: name }))
+					} else if (provider.name === 'tripadvisor') {
+						locations = (
+							await listTripAdvisorLocations(
+								organization.id,
+								selectedLocationId,
+							)
+						).map(({ location_id, name }) => ({
+							name: location_id,
+							title: name,
+						}))
+					} else if (provider.name === 'deliveroo') {
+						locations = (
+							await listDeliverooLocations(organization.id, selectedLocationId)
+						).map(({ id, name }) => ({ name: id, title: name }))
+					} else if (provider.name === 'just-eat') {
+						locations = (
+							await listJustEatLocations(organization.id, selectedLocationId)
+						).map(({ id, name }) => ({ name: id, title: name }))
+					} else if (provider.name === 'opentable') {
+						locations = (
+							await listOpenTableLocations(organization.id, selectedLocationId)
+						).map(({ rid, name }) => ({ name: rid, title: name }))
+					}
+				} catch (err) {
+					error =
+						err instanceof Error
+							? err.message
+							: `Could not load ${provider.displayName} locations`
+				}
+			}
+			return {
+				name: provider.name,
+				displayName: provider.displayName,
+				description: provider.description,
+				icon: provider.icon,
+				isActive: Boolean(integration?.isActive),
+				integrationId: integration?.id,
+				locations,
+				error,
+			}
+		}),
+	)
 
 	return {
 		organization,
-		googleIntegration: googleIntegration
-			? {
-					id: googleIntegration.id,
-					isActive: googleIntegration.isActive,
-				}
-			: null,
-		googleLocations,
-		googleError,
+		reviewProviders,
 		availablePosProviders,
 		availableNoteProviders,
 		selectedLocationId,
 		noteIntegrations: integrations.filter(
 			(integration) =>
 				!posProviderNames.has(integration.providerName) &&
-				integration.providerName !== 'google-business-profile',
+				!reviewProviderNames.has(integration.providerName as any),
 		),
 		integrations: scopedIntegrations
 			.filter((integration) => posProviderNames.has(integration.providerName))
@@ -185,6 +244,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		'connect-google-business-profile',
 		'disconnect-google-business-profile',
 		'import-google-business-profile',
+		connectReviewActionIntent,
+		disconnectReviewActionIntent,
+		importReviewActionIntent,
 		connectPosActionIntent,
 		disconnectPosActionIntent,
 		importPosMenuActionIntent,
@@ -244,7 +306,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 	}
 
-	if (intent === 'connect-google-business-profile') {
+	if (
+		intent === connectReviewActionIntent ||
+		intent === 'connect-google-business-profile'
+	) {
+		const rawProvider = String(
+			formData.get('providerName') || 'google-business-profile',
+		)
+		if (!isReviewProvider(rawProvider)) {
+			return redirectWithToast(redirectTo, {
+				title: 'Connection failed',
+				description: 'Unknown review platform.',
+				type: 'error',
+			})
+		}
+		const providerName = rawProvider as ReviewProviderName
 		if (!locationFromForm) {
 			return redirectWithToast(redirectTo, {
 				title: 'Connection failed',
@@ -253,9 +329,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 		}
 		try {
-			return await connectGoogleBusinessProfile(
+			return await connectReviewProvider(
 				request,
 				organization.id,
+				providerName,
 				redirectTo,
 				locationFromForm,
 			)
@@ -263,47 +340,109 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return redirectWithToast(redirectTo, {
 				title: 'Connection failed',
 				description:
-					error instanceof Error ? error.message : 'Could not connect Google',
+					error instanceof Error
+						? error.message
+						: `Could not connect ${providerName}`,
 				type: 'error',
 			})
 		}
 	}
-	if (intent === 'import-google-business-profile') {
-		try {
-			await importGoogleBusinessLocation(
-				organization.id,
-				String(formData.get('locationName') ?? ''),
-				locationFromForm || undefined,
-			)
+
+	if (
+		intent === importReviewActionIntent ||
+		intent === 'import-google-business-profile'
+	) {
+		const providerName = String(
+			formData.get('providerName') || 'google-business-profile',
+		)
+		if (!isReviewProvider(providerName)) {
 			return redirectWithToast(redirectTo, {
-				title: 'Restaurant imported',
-				description:
-					'Restaurant details and location were imported from Google.',
+				title: 'Import failed',
+				description: 'Unknown review platform.',
+				type: 'error',
+			})
+		}
+		const locationName = String(formData.get('locationName') ?? '')
+		try {
+			if (providerName === 'google-business-profile') {
+				await importGoogleBusinessLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'yelp') {
+				await importYelpLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'tripadvisor') {
+				await importTripAdvisorLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'deliveroo') {
+				await importDeliverooLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'just-eat') {
+				await importJustEatLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'opentable') {
+				await importOpenTableLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			}
+			return redirectWithToast(redirectTo, {
+				title: 'Details synced',
+				description: 'Restaurant and listing details were updated.',
 				type: 'success',
 			})
 		} catch (error) {
 			return redirectWithToast(redirectTo, {
-				title: 'Import failed',
+				title: 'Sync failed',
 				description:
 					error instanceof Error
 						? error.message
-						: 'Could not import Google location',
+						: 'Could not sync listing details',
 				type: 'error',
 			})
 		}
 	}
-	if (intent === 'disconnect-google-business-profile') {
+
+	if (
+		intent === disconnectReviewActionIntent ||
+		intent === 'disconnect-google-business-profile'
+	) {
+		const providerName = String(
+			formData.get('providerName') || 'google-business-profile',
+		)
+		if (!isReviewProvider(providerName)) {
+			return redirectWithToast(redirectTo, {
+				title: 'Disconnect failed',
+				description: 'Unknown review platform.',
+				type: 'error',
+			})
+		}
 		const integrationsForOrg =
 			await integrationManager.getOrganizationIntegrations(organization.id)
-		const google = integrationsForOrg.find(
+		const target = integrationsForOrg.find(
 			(item) =>
-				item.providerName === 'google-business-profile' &&
+				item.providerName === providerName &&
 				item.organizationLocationId === locationFromForm,
 		)
-		if (google) await integrationManager.disconnectIntegration(google.id)
+		if (target) await integrationManager.disconnectIntegration(target.id)
 		return redirectWithToast(redirectTo, {
 			title: 'Disconnected',
-			description: 'Google Business Profile was disconnected.',
+			description: 'The integration was disconnected.',
 			type: 'success',
 		})
 	}
@@ -429,9 +568,7 @@ export default function IntegrationsSettings() {
 		locations,
 		doorDashLiveConfigured,
 		selectedLocationId,
-		googleIntegration,
-		googleLocations,
-		googleError,
+		reviewProviders,
 	} = useLoaderData<typeof loader>()
 
 	const locationPicker =
@@ -441,7 +578,7 @@ export default function IntegrationsSettings() {
 					<CardTitle>Restaurant location</CardTitle>
 					<CardDescription>
 						Integrations apply to the selected location. Each location can have
-						its own POS, delivery, and Google Business Profile connections.
+						its own POS, delivery, and review platform connections.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-2">
@@ -469,80 +606,10 @@ export default function IntegrationsSettings() {
 				integrations={noteIntegrations}
 				availableProviders={availableNoteProviders}
 			/>
-			<Card>
-				<CardHeader>
-					<CardTitle>Google Business Profile</CardTitle>
-					<CardDescription>
-						Bring your restaurant name, description, address, phone and opening
-						hours into Menuza.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					{googleIntegration?.isActive ? (
-						<>
-							<p>Connected to Google Business Profile</p>
-							{googleError ? <p role="alert">{googleError}</p> : null}
-							{googleLocations.length ? (
-								<Form method="post" className="flex gap-2">
-									<input
-										type="hidden"
-										name="intent"
-										value="import-google-business-profile"
-									/>
-									<input
-										type="hidden"
-										name="organizationLocationId"
-										value={selectedLocationId}
-									/>
-									<select
-										name="locationName"
-										aria-label="Google location"
-										className="border-input bg-background rounded-md border px-3"
-										required
-									>
-										{googleLocations.map((location) => (
-											<option key={location.name} value={location.name}>
-												{location.title}
-											</option>
-										))}
-									</select>
-									<Button type="submit">Import location</Button>
-								</Form>
-							) : null}
-							<Form method="post">
-								<input
-									type="hidden"
-									name="organizationLocationId"
-									value={selectedLocationId}
-								/>
-								<Button
-									type="submit"
-									name="intent"
-									value="disconnect-google-business-profile"
-									variant="outline"
-								>
-									Disconnect
-								</Button>
-							</Form>
-						</>
-					) : (
-						<Form method="post">
-							<input
-								type="hidden"
-								name="organizationLocationId"
-								value={selectedLocationId}
-							/>
-							<Button
-								type="submit"
-								name="intent"
-								value="connect-google-business-profile"
-							>
-								Connect Google Business Profile
-							</Button>
-						</Form>
-					)}
-				</CardContent>
-			</Card>
+			<ReviewIntegrationsCard
+				selectedLocationId={selectedLocationId}
+				providers={reviewProviders}
+			/>
 			<PosIntegrationsCard
 				selectedLocationId={selectedLocationId}
 				integrations={integrations}

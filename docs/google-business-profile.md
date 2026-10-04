@@ -24,6 +24,12 @@ uses its own credentials and consent flow. Reauthorizing an active connection
 preserves the selected location link. A later import refreshes that location
 from Google. Menuza does not write changes back to Google.
 
+For offline local development, the standard `npm run dev:app` command sets
+`MOCKS=true`, so GBP uses a local callback, sample restaurant listing, and
+sample reviews; replies are stored with the local integration record. If you run
+without `MOCKS=true`, set both `GBP_CLIENT_ID` and `GBP_CLIENT_SECRET` to values
+prefixed with `MOCK_`. Mock credentials are disabled in production.
+
 Google API references:
 [accounts.locations.list](https://developers.google.com/my-business/reference/businessinformation/rest/v1/accounts.locations/list),
 [locations.get](https://developers.google.com/my-business/reference/businessinformation/rest/v1/locations/get).

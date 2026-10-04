@@ -1,0 +1,512 @@
+---
+import SitePage from '~/components/SitePage.astro'
+import { fetchPublishedDrop } from '~/lib/org'
+
+const organization = Astro.locals.organization
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const dropSlug = Astro.params.slug
+const url = new URL(Astro.request.url)
+const isPreview = url.searchParams.get('preview') === 'true'
+
+if (!dropSlug) {
+	return new Response('Not Found', { status: 404 })
+}
+
+const dropData = await fetchPublishedDrop({
+	slug: orgSlug,
+	host: customHost,
+	dropSlug,
+	lng: Astro.locals.requestedLocale,
+	preview: isPreview,
+})
+
+if (!dropData || !organization) {
+	return new Response('Drop Not Found', { status: 404 })
+}
+
+const drop = dropData.drop
+const pickupWindows = dropData.pickupWindows
+const inventoryOverrides = dropData.inventoryOverrides
+const categories = dropData.categories
+const currency = dropData.organization.currency || 'USD'
+
+const now = new Date()
+const openDate = drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null
+const closeDate = drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null
+
+let dropState: 'upcoming' | 'live' | 'closed' = 'live'
+if (drop.status === 'closed') {
+	dropState = 'closed'
+} else if (closeDate && now > closeDate) {
+	dropState = 'closed'
+} else if (openDate ? now < openDate : drop.status === 'scheduled') {
+	dropState = 'upcoming'
+} else {
+	dropState = 'live'
+}
+
+function formatPrice(amount: number) {
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency,
+	}).format(amount)
+}
+
+const inventoryMap = new Map<string, number | null>()
+inventoryOverrides.forEach((inv) => {
+	inventoryMap.set(`${inv.entityType}:${inv.entityId}`, inv.inventory)
+})
+---
+
+<SitePage
+	organization={organization}
+	page={{
+		id: `drop-${drop.id}`,
+		title: drop.title,
+		slug: `drop/${drop.slug}`,
+		isHomePage: false,
+		sections: [],
+	}}
+	title={`${drop.title} - ${organization.name}`}
+>
+	<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+		<!-- Cover Image & Header Banner -->
+		<div class="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
+			{drop.coverImageUrl && (
+				<div class="aspect-[21/9] w-full overflow-hidden bg-muted">
+					<img
+						src={drop.coverImageUrl}
+						alt={drop.title}
+						class="h-full w-full object-cover"
+					/>
+				</div>
+			)}
+
+			<div class="p-6 sm:p-8">
+				<div class="flex flex-wrap items-center justify-between gap-3">
+					<span
+						class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
+							dropState === 'live'
+								? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+								: dropState === 'upcoming'
+									? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+									: 'bg-muted text-muted-foreground'
+						}`}
+					>
+						{dropState === 'live'
+							? '🔥 Limited Time Drop: Live'
+							: dropState === 'upcoming'
+								? '⏰ Drop Scheduled'
+								: 'Drop Ended'}
+					</span>
+
+					{pickupWindows[0] && (
+						<div class="text-xs font-medium text-muted-foreground">
+							Pickup: {pickupWindows[0].date} ({pickupWindows[0].startTime} - {pickupWindows[0].endTime})
+						</div>
+					)}
+				</div>
+
+				<h1 class="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+					{drop.title}
+				</h1>
+
+				{drop.description && (
+					<p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+						{drop.description}
+					</p>
+				)}
+
+				<!-- Pickup Locations Card -->
+				{pickupWindows.length > 0 && (
+					<div class="mt-6 rounded-xl border bg-muted/30 p-4">
+						<h2 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+							Pickup Details
+						</h2>
+						<div class="mt-2 grid gap-3 sm:grid-cols-2">
+							{pickupWindows.map((pw) => (
+								<div class="rounded-lg border bg-background p-3">
+									<p class="text-sm font-semibold text-foreground">
+										{pw.location?.name || 'Pickup Point'}
+									</p>
+									<p class="mt-0.5 text-xs text-muted-foreground">
+										{pw.date} &bull; {pw.startTime} - {pw.endTime}
+									</p>
+									{pw.location?.address && (
+										<p class="mt-1 text-xs text-muted-foreground/80">
+											{pw.location.address.formattedAddress ||
+												[pw.location.address.address1, pw.location.address.city]
+													.filter(Boolean)
+													.join(', ')}
+										</p>
+									)}
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+
+		<!-- STATE 1: UPCOMING TEASER & COUNTDOWN -->
+		{dropState === 'upcoming' && (
+			<div class="mt-8 space-y-8">
+				<div class="rounded-2xl border bg-card p-6 text-center shadow-sm sm:p-10">
+					<h2 class="text-base font-semibold text-foreground sm:text-lg">
+						Orders Open In
+					</h2>
+					<div
+						id="countdown-timer"
+						data-target-time={drop.ordersOpenAt}
+						class="mt-4 flex justify-center gap-3 sm:gap-6 text-center"
+					>
+						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
+							<span id="countdown-days" class="text-2xl font-bold sm:text-4xl">--</span>
+							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Days</span>
+						</div>
+						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
+							<span id="countdown-hours" class="text-2xl font-bold sm:text-4xl">--</span>
+							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Hours</span>
+						</div>
+						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
+							<span id="countdown-mins" class="text-2xl font-bold sm:text-4xl">--</span>
+							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Mins</span>
+						</div>
+						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
+							<span id="countdown-secs" class="text-2xl font-bold sm:text-4xl">--</span>
+							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Secs</span>
+						</div>
+					</div>
+
+					{drop.showOrdersOpenTime && openDate && (
+						<p class="mt-4 text-xs text-muted-foreground">
+							Orders open on {openDate.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}
+						</p>
+					)}
+				</div>
+
+				<!-- Menu Preview if allowed -->
+				{drop.showMenuPreview && categories.length > 0 && (
+					<div class="space-y-6">
+						<div class="flex items-center justify-between border-b pb-3">
+							<h3 class="text-lg font-semibold tracking-tight text-foreground">
+								Drop Preview
+							</h3>
+							<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+								Ordering opens soon
+							</span>
+						</div>
+
+						{categories.map((category) => (
+							<div class="space-y-4">
+								<h4 class="text-base font-semibold text-foreground">
+									{category.displayName}
+								</h4>
+								<div class="grid gap-4 sm:grid-cols-2">
+									{category.items.map((item) => (
+										<div class="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-sm">
+											{item.imageUrl && (
+												<img
+													src={item.imageUrl}
+													alt={item.displayName}
+													class="size-16 rounded-lg object-cover bg-muted"
+												/>
+											)}
+											<div class="flex-1 min-w-0">
+												<p class="font-medium text-foreground truncate">
+													{item.displayName}
+												</p>
+												{item.description && (
+													<p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+														{item.description}
+													</p>
+												)}
+												<p class="mt-2 text-sm font-semibold text-foreground">
+													{formatPrice(item.price)}
+												</p>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
+		)}
+
+		<!-- STATE 2: LIVE ORDERING -->
+		{dropState === 'live' && (
+			<div class="mt-8 space-y-8" id="drop-ordering-root">
+				<!-- Hold Timer Urgency Header -->
+				<div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-foreground">
+					<div class="flex items-center gap-2">
+						<span class="relative flex size-2.5">
+							<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+							<span class="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
+						</span>
+						<span class="font-medium">
+							Drop is live! Items in cart are held for {drop.checkoutHoldMinutes} minutes during checkout.
+						</span>
+					</div>
+					{closeDate && (
+						<span class="hidden sm:inline-block text-xs font-semibold text-red-600 dark:text-red-400">
+							Closes: {closeDate.toLocaleDateString()}
+						</span>
+					)}
+				</div>
+
+				<!-- Pickup Slot Selection -->
+				{pickupWindows[0]?.slots && pickupWindows[0].slots.length > 0 ? (
+					<div class="rounded-xl border bg-card p-5 shadow-sm space-y-3">
+						<label for="pickup-slot-select" class="text-sm font-semibold text-foreground block">
+							Select your pickup slot:
+						</label>
+						<select
+							id="pickup-slot-select"
+							class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+						>
+							{pickupWindows[0].slots.map((slot) => (
+								<option value={slot.time}>
+									{pickupWindows[0].date} at {slot.displayTime}
+								</option>
+							))}
+						</select>
+					</div>
+				) : (
+					<div class="rounded-xl border border-dashed bg-muted/30 p-5 text-center text-sm text-muted-foreground">
+						No pickup time slots are currently available for this drop.
+					</div>
+				)}
+
+				<!-- Menu Categories & Items List -->
+				<div class="space-y-8">
+					{categories.map((category) => (
+						<div class="space-y-4">
+							<div class="flex items-center justify-between border-b pb-2">
+								<h3 class="text-lg font-bold text-foreground">
+									{category.displayName}
+								</h3>
+							</div>
+
+							<div class="grid gap-4 sm:grid-cols-2">
+								{category.items.map((item) => {
+									const itemInv = inventoryMap.get(`item:${item.id}`)
+									const isSoldOut = itemInv !== null && itemInv !== undefined && itemInv <= 0
+									const showRemaining =
+										drop.showInventoryRemaining &&
+										itemInv !== null &&
+										itemInv !== undefined &&
+										itemInv > 0 &&
+										itemInv <= 5
+
+									return (
+										<div class="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-sm transition hover:shadow-md">
+											<div class="flex gap-4">
+												{item.imageUrl && (
+													<img
+														src={item.imageUrl}
+														alt={item.displayName}
+														class="size-20 rounded-lg object-cover bg-muted shrink-0"
+													/>
+												)}
+												<div class="flex-1 min-w-0">
+													<p class="font-semibold text-foreground truncate">
+														{item.displayName}
+													</p>
+													{item.description && (
+														<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
+															{item.description}
+														</p>
+													)}
+													<p class="mt-2 font-bold text-foreground">
+														{formatPrice(item.price)}
+													</p>
+
+													{showRemaining && (
+														<span class="mt-1 inline-block text-[11px] font-semibold text-orange-600 dark:text-orange-400">
+															Only {itemInv} left!
+														</span>
+													)}
+												</div>
+											</div>
+
+											<div class="mt-4 pt-3 border-t flex items-center justify-between">
+												{isSoldOut ? (
+													<span class="text-xs font-semibold uppercase text-muted-foreground">
+														Sold Out
+													</span>
+												) : (
+													<button
+														type="button"
+														data-item-id={item.id}
+														data-item-name={item.displayName}
+														data-item-price={item.price}
+														class="drop-add-to-cart inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+													>
+														Add to order
+													</button>
+												)}
+											</div>
+										</div>
+									)
+								})}
+							</div>
+						</div>
+					))}
+				</div>
+
+				<!-- Floating Sticky Cart Hold Bar -->
+				<div
+					id="drop-cart-bar"
+					class="sticky bottom-6 z-20 flex items-center justify-between rounded-2xl border bg-background/95 p-4 shadow-xl backdrop-blur-md transition-all"
+				>
+					<div class="space-y-0.5">
+						<p class="text-xs font-semibold text-muted-foreground">
+							Your Drop Order &bull; <span id="cart-item-count">0 items</span>
+						</p>
+						<p class="text-base font-bold text-foreground" id="cart-total-price">
+							$0.00
+						</p>
+					</div>
+
+					<button
+						id="drop-checkout-btn"
+						type="button"
+						class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
+						disabled
+					>
+						Checkout Now
+					</button>
+				</div>
+			</div>
+		)}
+
+		<!-- STATE 3: CLOSED -->
+		{dropState === 'closed' && (
+			<div class="mt-8 rounded-2xl border bg-card p-10 text-center shadow-sm space-y-4">
+				<h2 class="text-xl font-bold text-foreground">
+					This Drop is Now Closed
+				</h2>
+				<p class="text-sm text-muted-foreground max-w-md mx-auto">
+					All pickup orders have closed for this drop. Thank you for supporting our kitchen! Stay tuned for our next announcement.
+				</p>
+				<div class="pt-2">
+					<a
+						href="/menu"
+						class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+					>
+						View regular menu
+					</a>
+				</div>
+			</div>
+		)}
+	</div>
+
+	<!-- Client Script for Countdowns and Cart State -->
+	<script is:inline define:vars={{
+		currency: dropData?.organization?.currency || 'USD',
+		dropId: drop.id,
+		dropTitle: drop.title,
+		dropSlugValue: drop.slug,
+	}}>
+		// Countdown timer logic
+		const timerElem = document.getElementById('countdown-timer');
+		if (timerElem) {
+			const targetStr = timerElem.getAttribute('data-target-time');
+			if (targetStr) {
+				const target = new Date(targetStr).getTime();
+				const daysEl = document.getElementById('countdown-days');
+				const hoursEl = document.getElementById('countdown-hours');
+				const minsEl = document.getElementById('countdown-mins');
+				const secsEl = document.getElementById('countdown-secs');
+
+				function updateTimer() {
+					const diff = target - Date.now();
+					if (diff <= 0) {
+						window.location.reload();
+						return;
+					}
+					const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+					const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+					const m = Math.floor((diff / (1000 * 60)) % 60);
+					const s = Math.floor((diff / 1000) % 60);
+
+					if (daysEl) daysEl.textContent = String(d).padStart(2, '0');
+					if (hoursEl) hoursEl.textContent = String(h).padStart(2, '0');
+					if (minsEl) minsEl.textContent = String(m).padStart(2, '0');
+					if (secsEl) secsEl.textContent = String(s).padStart(2, '0');
+				}
+				updateTimer();
+				setInterval(updateTimer, 1000);
+			}
+		}
+
+		// Cart state and buttons
+		let cart = [];
+		const cartCountEl = document.getElementById('cart-item-count');
+		const cartTotalEl = document.getElementById('cart-total-price');
+		const checkoutBtn = document.getElementById('drop-checkout-btn');
+		// currency passed via define:vars
+		const currencyFormatter = new Intl.NumberFormat(undefined, {
+			style: 'currency',
+			currency,
+		});
+
+		function updateCartUi() {
+			const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+			const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+			if (cartCountEl) cartCountEl.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
+			if (cartTotalEl) cartTotalEl.textContent = currencyFormatter.format(totalPrice);
+			const hasSlotSelect = Boolean(document.getElementById('pickup-slot-select'));
+			if (checkoutBtn) {
+				checkoutBtn.disabled = totalQty === 0 || !hasSlotSelect;
+			}
+		}
+
+		document.querySelectorAll('.drop-add-to-cart').forEach((btn) => {
+			btn.addEventListener('click', (e) => {
+				const target = e.currentTarget;
+				const id = target.getAttribute('data-item-id');
+				const name = target.getAttribute('data-item-name');
+				const price = parseFloat(target.getAttribute('data-item-price') || '0');
+
+				const existing = cart.find((i) => i.id === id);
+				if (existing) {
+					existing.quantity += 1;
+				} else {
+					cart.push({ id, name, price, quantity: 1 });
+				}
+
+				updateCartUi();
+			});
+		});
+
+		if (checkoutBtn) {
+			checkoutBtn.addEventListener('click', () => {
+				const slotSelect = document.getElementById('pickup-slot-select');
+				if (!slotSelect) {
+					alert('No pickup time slots are currently available for this drop.');
+					return;
+				}
+				const selectedSlot = slotSelect.value;
+				if (!selectedSlot) {
+					alert('Please select a pickup time slot first.');
+					slotSelect?.focus();
+					return;
+				}
+				try {
+					sessionStorage.setItem('drop_cart', JSON.stringify({
+						dropId,
+						dropTitle,
+						slot: selectedSlot,
+						items: cart,
+					}));
+				} catch (e) {}
+				window.location.href = `/menu/checkout?drop=${encodeURIComponent(dropSlugValue)}&slot=${encodeURIComponent(selectedSlot)}`;
+			});
+		}
+	</script>
+</SitePage>

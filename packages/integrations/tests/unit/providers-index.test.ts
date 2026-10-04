@@ -78,6 +78,7 @@ vi.mock('../../src/provider', () => ({
 	providerRegistry: {
 		register: vi.fn(),
 	},
+	registerDefaultInitializer: vi.fn(),
 	// POS providers extend this base class, so the mocked module must expose it.
 	BaseIntegrationProvider: class {},
 }))
@@ -95,8 +96,8 @@ describe('Providers Index', () => {
 		it('should register all providers', () => {
 			initializeProviders()
 
-			// Nine note providers, five POS/delivery providers, and GBP.
-			expect(providerRegistry.register).toHaveBeenCalledTimes(15)
+			// Nine note providers, five POS/delivery providers, and six review providers (GBP, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable).
+			expect(providerRegistry.register).toHaveBeenCalledTimes(20)
 
 			// Verify each provider was registered
 			const registerCalls = vi.mocked(providerRegistry.register).mock.calls
@@ -117,6 +118,11 @@ describe('Providers Index', () => {
 			expect(providerNames).toContain('ubereats')
 			expect(providerNames).toContain('doordash')
 			expect(providerNames).toContain('google-business-profile')
+			expect(providerNames).toContain('yelp')
+			expect(providerNames).toContain('tripadvisor')
+			expect(providerNames).toContain('deliveroo')
+			expect(providerNames).toContain('just-eat')
+			expect(providerNames).toContain('opentable')
 		})
 
 		it('should expose POS providers for the integrations page', () => {
@@ -135,6 +141,21 @@ describe('Providers Index', () => {
 				)
 				expect(typeof provider.icon).toBe('string')
 			})
+		})
+
+		it('should expose review providers for the integrations and mailbox pages', async () => {
+			const { getAvailableReviewProviders } =
+				await import('../../src/providers')
+			const reviewProviders = getAvailableReviewProviders()
+
+			expect(reviewProviders.map((p) => p.name)).toEqual([
+				'google-business-profile',
+				'yelp',
+				'tripadvisor',
+				'deliveroo',
+				'just-eat',
+				'opentable',
+			])
 		})
 	})
 
