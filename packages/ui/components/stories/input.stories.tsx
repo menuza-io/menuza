@@ -9,7 +9,17 @@ const meta = {
 	argTypes: {
 		type: {
 			control: 'select',
-			options: ['text', 'email', 'password', 'number', 'search', 'tel', 'url'],
+			options: [
+				'text',
+				'email',
+				'password',
+				'number',
+				'search',
+				'tel',
+				'url',
+				'date',
+				'time',
+			],
 		},
 		disabled: {
 			control: 'boolean',
@@ -41,6 +51,20 @@ export const Password: Story = {
 	args: {
 		type: 'password',
 		placeholder: 'Enter password',
+	},
+}
+
+export const DateInput: Story = {
+	args: {
+		type: 'date',
+		defaultValue: '2026-10-10',
+	},
+}
+
+export const TimeInput: Story = {
+	args: {
+		type: 'time',
+		defaultValue: '12:00',
 	},
 }
 
@@ -92,6 +116,18 @@ export const FormExample: Story = {
 					Password
 				</label>
 				<Input id="password" type="password" placeholder="••••••••" />
+			</div>
+			<div className="space-y-2">
+				<label htmlFor="date" className="text-sm font-medium">
+					Date
+				</label>
+				<Input id="date" type="date" defaultValue="2026-10-10" />
+			</div>
+			<div className="space-y-2">
+				<label htmlFor="time" className="text-sm font-medium">
+					Time
+				</label>
+				<Input id="time" type="time" defaultValue="12:00" />
 			</div>
 		</form>
 	),

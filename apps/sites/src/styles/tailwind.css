@@ -4,6 +4,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+	color-scheme: light;
+}
+
+.dark {
+	color-scheme: dark;
+}
+
 /*
  * Color tokens come from the org theme CSS injected in SiteLayout.
  * Keep only the Tailwind ↔ CSS-variable bridge here.
