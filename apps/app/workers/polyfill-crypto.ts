@@ -11,7 +11,13 @@ if (
 	typeof (nodeCrypto as { getRandomValues?: unknown }).getRandomValues !==
 		'function'
 ) {
-	;(
-		nodeCrypto as { getRandomValues: Crypto['getRandomValues'] }
-	).getRandomValues = webCrypto.getRandomValues.bind(webCrypto)
+	try {
+		Reflect.set(
+			nodeCrypto,
+			'getRandomValues',
+			webCrypto.getRandomValues.bind(webCrypto),
+		)
+	} catch {
+		// Ignore if non-extensible in runtime
+	}
 }
