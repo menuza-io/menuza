@@ -26,14 +26,6 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/menus/`,
 		},
 		{
-			label: _(t`Drops`),
-			href: `/${orgSlug}/menu/drops`,
-			isActive:
-				location.pathname === `/${orgSlug}/menu/drops` ||
-				location.pathname === `/${orgSlug}/menu/drops/` ||
-				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
-		},
-		{
 			label: _(t`Categories`),
 			href: `/${orgSlug}/menu/categories`,
 			isActive:
@@ -60,6 +52,14 @@ export default function MenuLayout() {
 			isActive:
 				location.pathname === `/${orgSlug}/menu/options` ||
 				location.pathname === `/${orgSlug}/menu/options/`,
+		},
+		{
+			label: _(t`Drops`),
+			href: `/${orgSlug}/menu/drops`,
+			isActive:
+				location.pathname === `/${orgSlug}/menu/drops` ||
+				location.pathname === `/${orgSlug}/menu/drops/` ||
+				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
 		},
 	]
 

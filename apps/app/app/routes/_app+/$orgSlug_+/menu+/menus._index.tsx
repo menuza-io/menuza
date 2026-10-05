@@ -2,7 +2,16 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { db, eq, ne, asc, desc, and, OrganizationMenu } from '@repo/database'
+import {
+	db,
+	eq,
+	ne,
+	asc,
+	desc,
+	and,
+	OrganizationDrop,
+	OrganizationMenu,
+} from '@repo/database'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -34,7 +43,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -81,6 +90,7 @@ const MENU_FILTER_FIELDS: FilterField[] = [
 		options: [
 			{ value: 'available', label: 'Available' },
 			{ value: 'unavailable', label: 'Unavailable' },
+			{ value: 'hidden', label: 'Hidden' },
 		],
 	},
 ]
@@ -97,6 +107,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (!result.success) {
 		return Response.json({ error: 'Invalid request' }, { status: 400 })
+	}
+
+	const [referencingDrop] = await db
+		.select({ id: OrganizationDrop.id })
+		.from(OrganizationDrop)
+		.where(
+			and(
+				eq(OrganizationDrop.menuId, result.data.menuId),
+				eq(OrganizationDrop.organizationId, organization.id),
+			),
+		)
+		.limit(1)
+
+	if (referencingDrop) {
+		return Response.json(
+			{
+				error:
+					'This menu is used by a drop. Delete or retarget that drop before deleting the menu.',
+			},
+			{ status: 409 },
+		)
 	}
 
 	await db
@@ -156,8 +187,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function MenusIndexRoute() {
 	const { organization, defaultLocale, menus } = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
-	const deleteFetcher = useFetcher()
+	const deleteFetcher = useFetcher<{ success?: boolean; error?: string }>()
 	const [deleteMenuId, setDeleteMenuId] = useState<string | null>(null)
+	const [deleteError, setDeleteError] = useState<string | null>(null)
+
+	useEffect(() => {
+		if (deleteFetcher.state !== 'idle' || !deleteFetcher.data) return
+		if (deleteFetcher.data.success) {
+			setDeleteMenuId(null)
+			setDeleteError(null)
+			return
+		}
+		if (deleteFetcher.data.error) setDeleteError(deleteFetcher.data.error)
+	}, [deleteFetcher.state, deleteFetcher.data])
 	const getFieldValue = useCallback(
 		(menu: (typeof menus)[number], field: string) => {
 			switch (field) {
@@ -348,7 +390,10 @@ export default function MenusIndexRoute() {
 															/>
 															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
-																onClick={() => setDeleteMenuId(menu.id)}
+																onClick={() => {
+																	setDeleteError(null)
+																	setDeleteMenuId(menu.id)
+																}}
 															>
 																<Icon name="trash-2" className="mr-2 size-4" />
 																<Trans>Delete</Trans>
@@ -382,7 +427,11 @@ export default function MenusIndexRoute() {
 			{/* Delete confirmation dialog */}
 			<AlertDialog
 				open={Boolean(deleteMenuId)}
-				onOpenChange={(open) => !open && setDeleteMenuId(null)}
+				onOpenChange={(open) => {
+					if (open) return
+					setDeleteMenuId(null)
+					setDeleteError(null)
+				}}
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
@@ -395,19 +444,23 @@ export default function MenusIndexRoute() {
 								associated with it will remain intact.
 							</Trans>
 						</AlertDialogDescription>
+						{deleteError ? (
+							<p className="text-destructive text-sm">{deleteError}</p>
+						) : null}
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>
 							<Trans>Cancel</Trans>
 						</AlertDialogCancel>
 						<AlertDialogAction
+							disabled={deleteFetcher.state !== 'idle'}
 							onClick={() => {
 								if (!deleteMenuId) return
+								setDeleteError(null)
 								void deleteFetcher.submit(
 									{ intent: 'delete-menu', menuId: deleteMenuId },
 									{ method: 'POST' },
 								)
-								setDeleteMenuId(null)
 							}}
 						>
 							<Trans>Delete</Trans>

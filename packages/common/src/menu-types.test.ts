@@ -4,6 +4,7 @@ import {
 	ALLERGEN_LABELS,
 	DIETARY_FLAGS,
 	MENU_TYPES,
+	AvailabilityStatusSchema,
 	MODIFIER_SELECTION_TYPES,
 	MenuItemInputSchema,
 	MenuVariationsSchema,
@@ -448,6 +449,7 @@ describe('menu-types', () => {
 
 	it('validates DropInputSchema with defaults and pickup windows', () => {
 		const validDrop = {
+			menuId: 'menu_123',
 			title: 'Friday Night Cookie Drop',
 			slug: 'friday-night-cookie-drop',
 			status: 'scheduled',
@@ -473,6 +475,8 @@ describe('menu-types', () => {
 			expect(parsed.data.showInventoryRemaining).toBe(true)
 			expect(parsed.data.pickupWindows[0]?.slotIntervalMinutes).toBe(30)
 		}
+
+		expect(AvailabilityStatusSchema.safeParse('hidden').success).toBe(true)
 
 		// Invalid status should fail
 		const invalidStatus = DropInputSchema.safeParse({

@@ -20,7 +20,9 @@ export function MenuStatusBadge({
 	className,
 }: MenuStatusBadgeProps) {
 	const isExpired = isUnavailableUntilExpired(status, unavailableUntil)
-	const isAvailable = status === 'available' || !status || isExpired
+	const isHidden = status === 'hidden'
+	const isAvailable =
+		(status === 'available' || !status || isExpired) && !isHidden
 	const isUnavailableUntil =
 		!isExpired &&
 		(status === 'unavailable_until' || status === 'unavailable_until_tomorrow')
@@ -40,13 +42,17 @@ export function MenuStatusBadge({
 					'mr-1.5 size-1.5 rounded-full',
 					isAvailable
 						? 'bg-emerald-500'
-						: isUnavailableUntil
-							? 'bg-amber-500'
-							: 'bg-muted-foreground',
+						: isHidden
+							? 'bg-slate-400 dark:bg-slate-500'
+							: isUnavailableUntil
+								? 'bg-amber-500'
+								: 'bg-muted-foreground',
 				)}
 			/>
 			{isAvailable ? (
 				<Trans>Available</Trans>
+			) : isHidden ? (
+				<Trans>Hidden</Trans>
 			) : isUnavailableUntil ? (
 				formattedUntil ? (
 					<span>
