@@ -88,13 +88,18 @@ msgstr "{0} تصنيفات"
 #~ msgid "{0} characters"
 #~ msgstr "{0} حرف"
 
+#. placeholder {0}: filteredDrops.length
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:375
+msgid "{0} drops"
+msgstr "{0} طروحات"
+
 #. placeholder {0}: filteredItems.length
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:488
 msgid "{0} items"
 msgstr "{0} عناصر"
 
 #. placeholder {0}: filteredMenus.length
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:370
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:415
 msgid "{0} menus"
 msgstr "{0} قوائم"
 
@@ -198,8 +203,7 @@ msgstr "{formCount} نموذج"
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:185
-#: app/components/menu/drop-wizard/drop-drawers.tsx:264
+#: app/components/menu/drop-wizard/drop-drawers.tsx:288
 msgid "{int} minutes"
 msgstr "{int} دقيقة"
 
@@ -211,7 +215,7 @@ msgstr "{journeyName} (نسخة)"
 msgid "{label}, {total} unread"
 msgstr "{label}، {total} غير مقروءة"
 
-#: app/components/app-sidebar.tsx:348
+#: app/components/app-sidebar.tsx:353
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "عدد غير المقروء: {mailboxUnreadLabelCount}"
 
@@ -220,8 +224,12 @@ msgid "{memberCount, plural, one {# person} other {# people}}"
 msgstr "{memberCount, plural, zero {لا يوجد أشخاص} one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصاً} other {# شخص}}"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:770
-msgid "{min} minutes"
-msgstr "{min} دقيقة"
+#~ msgid "{min} minutes"
+#~ msgstr "{min} دقيقة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1185
+msgid "{mins} minutes hold"
+msgstr "حجز لمدة {mins} دقائق"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -246,6 +254,10 @@ msgstr "{photoCount}/5 صور"
 #: app/components/locations/delivery-zones-manager.tsx:497
 msgid "{pointsCount} points"
 msgstr "{pointsCount} نقطة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:753
+msgid "{pooledCount} pooled"
+msgstr "{pooledCount} مجمّعة"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:355
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
@@ -300,6 +312,11 @@ msgstr "{selectedRating} / 5 نجوم"
 msgid "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 msgstr "تم تحديد {selectedRoleCount} من الأدوار و{selectedMemberCount} من الأشخاص"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:298
+#: app/components/menu/drop-wizard/drop-form.tsx:963
+msgid "{slotCount} pickup slots"
+msgstr "{slotCount} مواعيد استلام"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:319
 msgid "{status}"
 msgstr "{status}"
@@ -341,6 +358,14 @@ msgstr "{unit}"
 msgid "{unread} unread"
 msgstr "{unread} غير مقروءة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:953
+msgid "{windowCapacity} orders max in this window"
+msgstr "{windowCapacity} طلبات كحد أقصى في هذه النافذة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:314
+msgid "{windowCapacityPreview} orders max in this window"
+msgstr "{windowCapacityPreview} طلبات كحد أقصى في هذه النافذة"
+
 #: app/routes/organizations+/create.tsx:935
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
@@ -363,6 +388,11 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 #: app/components/menu/modifier-form.tsx:1255
 #~ msgid "+ Add nested modifier group"
 #~ msgstr "+ Add nested modifier group"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:306
+#: app/components/menu/drop-wizard/drop-form.tsx:973
+msgid "+{moreSlots} more"
+msgstr "+{moreSlots} إضافية"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:315
 msgid "+{trend}%"
@@ -412,17 +442,25 @@ msgstr "إعلان واحد"
 msgid "1 category"
 msgstr "تصنيف واحد"
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:372
+msgid "1 drop"
+msgstr "طرح واحد"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:297
 msgid "1 form"
 msgstr "نموذج واحد"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1007
-msgid "1 hour before"
-msgstr "قبل ساعة واحدة"
+#~ msgid "1 hour before"
+#~ msgstr "قبل ساعة واحدة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:336
-msgid "1 hour before slot"
-msgstr "قبل ساعة واحدة من الموعد"
+#~ msgid "1 hour before slot"
+#~ msgstr "قبل ساعة واحدة من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:357
+msgid "1 hour prior"
+msgstr "قبل ساعة واحدة"
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:485
 msgid "1 item"
@@ -432,7 +470,7 @@ msgstr "عنصر واحد"
 msgid "1 location"
 msgstr "فرع واحد"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:367
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:412
 msgid "1 menu"
 msgstr "قائمة واحدة"
 
@@ -447,6 +485,11 @@ msgstr "مجموعة إضافات واحدة"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:637
 msgid "1 page"
 msgstr "صفحة واحدة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:297
+#: app/components/menu/drop-wizard/drop-form.tsx:962
+msgid "1 pickup slot"
+msgstr "موعد استلام واحد"
 
 #: app/components/locations/delivery-zones-manager.tsx:495
 msgid "1 point"
@@ -464,45 +507,61 @@ msgstr "1-10 أشخاص"
 msgid "11-50 people"
 msgstr "11-50 شخص"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:366
+msgid "12 hours prior"
+msgstr "قبل 12 ساعة"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1001
-msgid "15 minutes before"
-msgstr "قبل 15 دقيقة"
+#~ msgid "15 minutes before"
+#~ msgstr "قبل 15 دقيقة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:330
-msgid "15 minutes before slot"
-msgstr "قبل 15 دقيقة من الموعد"
+#~ msgid "15 minutes before slot"
+#~ msgstr "قبل 15 دقيقة من الموعد"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1010
-msgid "2 hours before"
-msgstr "قبل ساعتين"
+#~ msgid "2 hours before"
+#~ msgstr "قبل ساعتين"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:339
-msgid "2 hours before slot"
-msgstr "قبل ساعتين من الموعد"
+#~ msgid "2 hours before slot"
+#~ msgstr "قبل ساعتين من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:360
+msgid "2 hours prior"
+msgstr "قبل ساعتين"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:56
 msgid "201-500 people"
 msgstr "201-500 شخص"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:342
-msgid "24 hours before slot"
-msgstr "قبل 24 ساعة من الموعد"
+#~ msgid "24 hours before slot"
+#~ msgstr "قبل 24 ساعة من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:369
+msgid "24 hours prior"
+msgstr "قبل 24 ساعة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1004
-msgid "30 minutes before"
-msgstr "قبل 30 دقيقة"
+#~ msgid "30 minutes before"
+#~ msgstr "قبل 30 دقيقة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:333
-msgid "30 minutes before slot"
-msgstr "قبل 30 دقيقة من الموعد"
+#~ msgid "30 minutes before slot"
+#~ msgstr "قبل 30 دقيقة من الموعد"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:363
+msgid "4 hours prior"
+msgstr "قبل 4 ساعات"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:998
-msgid "5 minutes before"
-msgstr "قبل 5 دقائق"
+#~ msgid "5 minutes before"
+#~ msgstr "قبل 5 دقائق"
 
 #: app/components/settings/cards/organization/team-size-card.tsx:57
 msgid "500+ people"
@@ -603,9 +662,9 @@ msgstr "شركة Acme"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:502
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:154
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:236
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:310
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:256
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:298
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:342
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:355
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:588
@@ -641,6 +700,7 @@ msgstr "فرع نشط"
 msgid "Activity"
 msgstr "النشاط"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1321
 #: app/components/website/form-builder-sidebar.tsx:195
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:334
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1773
@@ -710,8 +770,8 @@ msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:696
-msgid "Add a section from your menu categories to start populating items for this drop."
-msgstr "أضف قسمًا من فئات القائمة لبدء ملء العناصر لهذا الطرح."
+#~ msgid "Add a section from your menu categories to start populating items for this drop."
+#~ msgstr "أضف قسمًا من فئات القائمة لبدء ملء العناصر لهذا الطرح."
 
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
@@ -772,6 +832,10 @@ msgstr "إضافة عمود"
 msgid "Add date override"
 msgstr "إضافة استثناء تاريخ"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:892
+msgid "Add dates and collection time slots when customers can pick up their orders."
+msgstr "أضف التواريخ وفترات الاستلام التي يمكن للعملاء استلام طلباتهم خلالها."
+
 #: app/components/locations/delivery-zones-manager.tsx:178
 msgid "Add delivery zone"
 msgstr "إضافة منطقة توصيل"
@@ -781,8 +845,8 @@ msgid "Add Delivery Zone"
 msgstr "إضافة منطقة توصيل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:930
-msgid "Add drop reminder"
-msgstr "إضافة تذكير بالطرح"
+#~ msgid "Add drop reminder"
+#~ msgstr "إضافة تذكير بالطرح"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3714
 msgid "Add feature"
@@ -795,8 +859,8 @@ msgid "Add field"
 msgstr "إضافة حقل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:838
-msgid "Add gift card to menu"
-msgstr "إضافة بطاقة هدايا إلى القائمة"
+#~ msgid "Add gift card to menu"
+#~ msgstr "إضافة بطاقة هدايا إلى القائمة"
 
 #: app/components/menu/item-form.tsx:546
 msgid "Add group"
@@ -824,7 +888,7 @@ msgstr "إضافة رابط"
 msgid "Add Location"
 msgstr "إضافة فرع"
 
-#: app/components/app-sidebar.tsx:565
+#: app/components/app-sidebar.tsx:570
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -895,9 +959,13 @@ msgstr "إضافة صورة"
 msgid "Add photo or video"
 msgstr "إضافة صورة أو فيديو"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:201
-#: app/components/menu/drop-wizard/drop-form.tsx:510
+#: app/components/menu/drop-wizard/drop-drawers.tsx:187
 msgid "Add pickup window"
+msgstr "إضافة نافذة استلام"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:878
+#: app/components/menu/drop-wizard/drop-form.tsx:904
+msgid "Add Pickup Window"
 msgstr "إضافة نافذة استلام"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
@@ -910,7 +978,11 @@ msgstr "إضافة تفاعل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1037
 #: app/components/menu/drop-wizard/drop-form.tsx:892
-msgid "Add reminder"
+#~ msgid "Add reminder"
+#~ msgstr "إضافة تذكير"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:922
+msgid "Add Reminder"
 msgstr "إضافة تذكير"
 
 #: app/components/team-switcher.tsx:334
@@ -927,7 +999,6 @@ msgstr "إضافة مراجعة"
 #~ msgid "Add reviewer"
 #~ msgstr "إضافة مراجع"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:681
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1698
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1704
 msgid "Add section"
@@ -938,8 +1009,8 @@ msgstr "إضافة قسم"
 #~ msgstr "إضافة قسم"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1147
-msgid "Add section to drop"
-msgstr "إضافة قسم إلى الطرح"
+#~ msgid "Add section to drop"
+#~ msgstr "إضافة قسم إلى الطرح"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4490
 msgid "Add social link"
@@ -1003,8 +1074,8 @@ msgstr "إضافة قسم"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:751
 #: app/components/menu/drop-wizard/drop-form.tsx:1012
-msgid "Additional options"
-msgstr "خيارات إضافية"
+#~ msgid "Additional options"
+#~ msgstr "خيارات إضافية"
 
 #: app/routes/organizations+/create.tsx:1824
 msgid "Additional users: {monthlyPriceLabel}/user/month"
@@ -1117,8 +1188,8 @@ msgid "All days"
 msgstr "كل الأيام"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:641
-msgid "All items in this section share from this pool."
-msgstr "تشترك جميع الأصناف في هذا القسم في هذا المخزون المجمع."
+#~ msgid "All items in this section share from this pool."
+#~ msgstr "تشترك جميع الأصناف في هذا القسم في هذا المخزون المجمع."
 
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
@@ -1146,13 +1217,17 @@ msgstr "جميع المستلمين"
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1240
+msgid "Allow browsing items before launch"
+msgstr "السماح بتصفح العناصر قبل الإطلاق"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:807
-msgid "Allow customers to preview menu items before orders open."
-msgstr "السماح للعملاء بمعاينة عناصر القائمة قبل فتح الطلبات."
+#~ msgid "Allow customers to preview menu items before orders open."
+#~ msgstr "السماح للعملاء بمعاينة عناصر القائمة قبل فتح الطلبات."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:841
-msgid "Allow customers to purchase gift cards alongside their drop order."
-msgstr "السماح للعملاء بشراء بطاقات الهدايا إلى جانب طلب الطرح."
+#~ msgid "Allow customers to purchase gift cards alongside their drop order."
+#~ msgstr "السماح للعملاء بشراء بطاقات الهدايا إلى جانب طلب الطرح."
 
 #: app/components/locations/location-form.tsx:793
 msgid "Allow customers to schedule orders for future dates."
@@ -1192,7 +1267,7 @@ msgstr "النص البديل"
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:401
+#: app/components/app-sidebar.tsx:406
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "التحليلات"
@@ -1205,7 +1280,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:417
+#: app/components/app-sidebar.tsx:422
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -1221,8 +1296,8 @@ msgid "Answer"
 msgstr "الإجابة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:975
-msgid "Anyone can view and discover this drop on your site."
-msgstr "يمكن لأي شخص عرض هذا الطرح واكتشافه على موقعك."
+#~ msgid "Anyone can view and discover this drop on your site."
+#~ msgstr "يمكن لأي شخص عرض هذا الطرح واكتشافه على موقعك."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:553
 msgid "API Key"
@@ -1236,7 +1311,7 @@ msgstr "تم إنشاء مفتاح API"
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:592
+#: app/components/app-sidebar.tsx:597
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -1352,8 +1427,8 @@ msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:666
-msgid "Assign sections and items to this drop, and set pooled or per-item limits."
-msgstr "عيّن الأقسام والعناصر لهذا الطرح، وحدد حدودًا مجمعة أو لكل عنصر."
+#~ msgid "Assign sections and items to this drop, and set pooled or per-item limits."
+#~ msgstr "عيّن الأقسام والعناصر لهذا الطرح، وحدد حدودًا مجمعة أو لكل عنصر."
 
 #: app/components/menu/item-form.tsx:670
 #: app/components/menu/menu-form.tsx:336
@@ -1376,6 +1451,10 @@ msgstr "القوائم المسندة"
 #: app/components/menu/option-form.tsx:707
 msgid "Assigned Modifier Groups"
 msgstr "مجموعات الإضافات المسندة"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:354
+msgid "At slot time"
+msgstr "عند وقت الموعد"
 
 #: app/components/menu/option-form.tsx:819
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
@@ -1427,8 +1506,8 @@ msgid "Auto"
 msgstr "تلقائي"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:878
-msgid "Automated customer notifications to create excitement and urge checkout."
-msgstr "إشعارات تلقائية للعملاء لخلق الحماس وحثهم على الدفع."
+#~ msgid "Automated customer notifications to create excitement and urge checkout."
+#~ msgstr "إشعارات تلقائية للعملاء لخلق الحماس وحثهم على الدفع."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:141
 msgid "Automated lifecycle journey created via visual builder."
@@ -1455,7 +1534,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:371
+#: app/components/app-sidebar.tsx:376
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1474,15 +1553,15 @@ msgstr "التوفر"
 msgid "Availability for {name}"
 msgstr "توفر {name}"
 
-#: app/components/menu/menu-availability-card.tsx:238
+#: app/components/menu/menu-availability-card.tsx:239
 msgid "Availability Status"
 msgstr "حالة التوفر"
 
 #: app/components/menu/item-variations.tsx:509
 #: app/components/menu/item-variations.tsx:522
 #: app/components/menu/menu-availability-card.tsx:228
-#: app/components/menu/menu-availability-card.tsx:263
-#: app/components/menu/menu-status-badge.tsx:49
+#: app/components/menu/menu-availability-card.tsx:264
+#: app/components/menu/menu-status-badge.tsx:53
 msgid "Available"
 msgstr "متوفر"
 
@@ -1529,14 +1608,18 @@ msgstr "العودة إلى القنوات"
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:384
+msgid "Back to drops"
+msgstr "العودة إلى الطروحات"
+
 #: app/components/website/form-builder-sidebar.tsx:461
 #: app/components/website/form-builder-sidebar.tsx:643
 msgid "Back to fields"
 msgstr "العودة إلى الحقول"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:842
-msgid "Back to Info"
-msgstr "العودة إلى المعلومات"
+#~ msgid "Back to Info"
+#~ msgstr "العودة إلى المعلومات"
 
 #: app/components/menu/modifier-form.tsx:1819
 msgid "Back to list"
@@ -1548,8 +1631,8 @@ msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1034
-msgid "Back to Menu"
-msgstr "العودة إلى القائمة"
+#~ msgid "Back to Menu"
+#~ msgstr "العودة إلى القائمة"
 
 #: app/components/menu/modifier-form.tsx:882
 msgid "Back to modifier groups"
@@ -1602,17 +1685,15 @@ msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "المعرّفات الأساسية والرابط والإعدادات الإقليمية."
 
 #: app/components/menu/item-variations.tsx:545
-#: app/components/menu/menu-availability-card.tsx:290
+#: app/components/menu/menu-availability-card.tsx:308
 msgid "Becomes available"
 msgstr "يصبح متوفرًا"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:963
-#: app/components/menu/drop-wizard/drop-form.tsx:927
+#: app/components/menu/drop-wizard/drop-drawers.tsx:865
 msgid "Before drop closes"
 msgstr "قبل إغلاق الطرح"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:960
-#: app/components/menu/drop-wizard/drop-form.tsx:925
+#: app/components/menu/drop-wizard/drop-drawers.tsx:862
 msgid "Before drop opens"
 msgstr "قبل فتح الطرح"
 
@@ -1624,7 +1705,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:498
+#: app/components/app-sidebar.tsx:503
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr "الفواتير"
@@ -1653,7 +1734,7 @@ msgstr "النص الأساسي"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/app-sidebar.tsx:408
+#: app/components/app-sidebar.tsx:413
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
 msgid "Branding"
@@ -1677,7 +1758,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:364
+#: app/components/app-sidebar.tsx:369
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -1785,8 +1866,10 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/components/locations/location-form.tsx:988
 #: app/components/locations/special-hours-picker.tsx:223
 #: app/components/media-library/media-library-picker.tsx:342
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1034
-#: app/components/menu/drop-wizard/drop-form.tsx:1183
+#: app/components/menu/drop-wizard/drop-drawers.tsx:384
+#: app/components/menu/drop-wizard/drop-drawers.tsx:578
+#: app/components/menu/drop-wizard/drop-drawers.tsx:765
+#: app/components/menu/drop-wizard/drop-drawers.tsx:911
 #: app/components/menu/menu-form-header.tsx:49
 #: app/components/menu/modifier-form.tsx:2171
 #: app/components/note/comment-input.tsx:261
@@ -1810,9 +1893,9 @@ msgstr "يمكنه تعديل ملاحظات الزملاء"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:470
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:286
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:406
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:519
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:401
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:453
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:514
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:610
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
@@ -1849,6 +1932,14 @@ msgstr "إلغاء الرد"
 msgid "Cancelled"
 msgstr "ملغى"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:825
+msgid "Cap"
+msgstr "حد أقصى"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:692
+msgid "Cap how many units can be sold in this drop."
+msgstr "حدّد عدد الوحدات التي يمكن بيعها في هذا الطرح."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1464
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3965
 msgid "Caption"
@@ -1867,11 +1958,15 @@ msgstr "بطاقات"
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:617
+msgid "categories"
+msgstr "تصنيفات"
+
 #: app/components/app-sidebar.tsx:318
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:37
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:29
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:225
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:300
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:246
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:288
 msgid "Categories"
 msgstr "التصنيفات"
 
@@ -1882,6 +1977,10 @@ msgstr "التصنيفات التي تنتمي إلى هذه القائمة."
 #: app/components/menu/item-form.tsx:672
 msgid "Categories that display this item on the menu."
 msgstr "التصنيفات التي تعرض هذا العنصر في القائمة."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:616
+msgid "category"
+msgstr "تصنيف"
 
 #: app/components/menu/menu-sortable-category.tsx:132
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:277
@@ -1965,7 +2064,7 @@ msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند
 msgid "Charge tax at checkout."
 msgstr "تحصيل الضريبة عند الدفع."
 
-#: app/components/app-sidebar.tsx:467
+#: app/components/app-sidebar.tsx:472
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:153
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
@@ -2008,8 +2107,12 @@ msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:758
-msgid "Checkout countdown timer"
-msgstr "مؤقت العد التنازلي للدفع"
+#~ msgid "Checkout countdown timer"
+#~ msgstr "مؤقت العد التنازلي للدفع"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1167
+msgid "Checkout Hold Timer"
+msgstr "مؤقت حجز الدفع"
 
 #: app/components/settings/cards/organization/shop-card.tsx:101
 msgid "Checkout payout not connected"
@@ -2043,6 +2146,11 @@ msgstr "اختر نقطة بداية"
 msgid "Choose a template"
 msgstr "اختر قالباً"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:645
+#: app/components/menu/drop-wizard/drop-form.tsx:663
+msgid "Choose an existing menu..."
+msgstr "اختر قائمة موجودة..."
+
 #: app/components/website/link-inspector.tsx:577
 msgid "Choose file..."
 msgstr "اختر ملفاً..."
@@ -2062,8 +2170,8 @@ msgid "Choose retention"
 msgstr "اختر مدة الاحتفاظ"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:707
-msgid "Choose section"
-msgstr "اختر القسم"
+#~ msgid "Choose section"
+#~ msgstr "اختر القسم"
 
 #: app/components/chat/chat-compose-dialog.tsx:111
 msgid "Choose someone"
@@ -2080,6 +2188,10 @@ msgstr "اختر قنوات التوصيل المدعومة وأوقات الت�
 #: app/components/settings/cards/organization/site-locales-card.tsx:162
 msgid "Choose which languages your public website supports, and which one visitors see by default."
 msgstr "اختر اللغات التي يدعمها موقعك العام، واللغة التي يراها الزوار افتراضياً."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:555
+msgid "Choose which menu this drop sells. Hidden menus are fine."
+msgstr "اختر القائمة التي يبيعها هذا الطرح. القوائم المخفية مناسبة."
 
 #: app/routes/organizations+/create.tsx:1108
 msgid "Choose your plan"
@@ -2146,8 +2258,8 @@ msgid "Click anywhere on the map to add polygon corners"
 msgstr "انقر في أي مكان على الخريطة لإضافة زوايا المضلع"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:543
-msgid "Click here or the + button above to schedule your pickup window."
-msgstr "انقر هنا أو على زر + أعلاه لجدولة نافذة الاستلام."
+#~ msgid "Click here or the + button above to schedule your pickup window."
+#~ msgstr "انقر هنا أو على زر + أعلاه لجدولة نافذة الاستلام."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:84
 msgid "Click rate"
@@ -2156,6 +2268,10 @@ msgstr "معدل النقر"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:882
 msgid "Click Save and restart Cursor"
 msgstr "انقر حفظ وأعد تشغيل Cursor"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:537
+msgid "Click to choose a cover image"
+msgstr "انقر لاختيار صورة الغلاف"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:48
@@ -2189,7 +2305,7 @@ msgstr "مغلق"
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:214
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:305
 msgid "Closes:"
 msgstr "يغلق:"
 
@@ -2347,13 +2463,17 @@ msgstr "الإعداد مطلوب"
 msgid "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 msgstr "اضبط المناطق المسموح بها والممنوعة عبر النطاق أو الرموز البريدية أو المضلعات المرسومة."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:865
+msgid "Configure collection dates, time spans, interval durations, and order slot capacity."
+msgstr "اضبط تواريخ الاستلام والمدد الزمنية وفترات المواعيد وسعة الطلبات."
+
 #: app/components/locations/delivery-zones-manager.tsx:309
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "اضبط قواعد التوصيل والأسعار ومزود الخدمة ومناطق الحدود."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:863
-msgid "Configure drop announcements, visibility, and checkout limits."
-msgstr "تكوين إعلانات الطرح والظهور وحدود الدفع."
+#~ msgid "Configure drop announcements, visibility, and checkout limits."
+#~ msgstr "تكوين إعلانات الطرح والظهور وحدود الدفع."
 
 #: app/components/menu/modifier-form.tsx:936
 msgid "Configure how guests interact with these options."
@@ -2541,16 +2661,16 @@ msgstr "متابعة إعداد المدفوعات"
 #~ msgstr "متابعة إعداد Stripe"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:651
-msgid "Continue to Menu"
-msgstr "المتابعة إلى القائمة"
+#~ msgid "Continue to Menu"
+#~ msgstr "المتابعة إلى القائمة"
 
 #: app/routes/organizations+/create.tsx:1195
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:849
-msgid "Continue to Schedule"
-msgstr "المتابعة إلى الجدول"
+#~ msgid "Continue to Schedule"
+#~ msgstr "المتابعة إلى الجدول"
 
 #: app/routes/_auth+/login.tsx:592
 msgid "Continue with"
@@ -2569,13 +2689,17 @@ msgstr "التباين"
 msgid "Control availability and custom pricing per location."
 msgstr "تحكم في التوفر والأسعار المخصصة لكل فرع."
 
-#: app/components/menu/menu-availability-card.tsx:241
+#: app/components/menu/drop-wizard/drop-form.tsx:1017
+msgid "Control lifecycle stage and storefront visibility."
+msgstr "تحكّم في مرحلة دورة الحياة وظهور المتجر."
+
+#: app/components/menu/menu-availability-card.tsx:242
 msgid "Control overall ordering availability for guests."
 msgstr "تحكم في توفر الطلبات بشكل عام للعملاء."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:599
-msgid "Control when customers can view and place orders for this drop."
-msgstr "التحكم في وقت تمكن العملاء من عرض وتقديم الطلبات لهذا الطرح."
+#~ msgid "Control when customers can view and place orders for this drop."
+#~ msgstr "التحكم في وقت تمكن العملاء من عرض وتقديم الطلبات لهذا الطرح."
 
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
@@ -2691,6 +2815,10 @@ msgstr "تعذر فتح {routeTitle}"
 msgid "Country"
 msgstr "الدولة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:496
+msgid "Cover Banner Image"
+msgstr "صورة غلاف البانر"
+
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
 msgid "Create"
@@ -2716,7 +2844,7 @@ msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة 
 #~ msgid "Create a form"
 #~ msgstr "إنشاء نموذج"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:230
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:272
 msgid "Create a menu to start organizing your dishes and drinks."
 msgstr "أنشئ قائمة لتنظيم أطباقك ومشروباتك."
 
@@ -2798,7 +2926,7 @@ msgstr "إنشاء وإدارة صفحات موقع مؤسستك."
 msgid "Create and manage your dishes, beverages, sides, and retail products."
 msgstr "أنشئ وأدر أطباقك ومشروباتك وأطباقك الجانبية ومنتجاتك."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:192
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:234
 msgid "Create and manage your menus for dine-in, online ordering, POS, and catering."
 msgstr "أنشئ وأدر قوائمك لتناول الطعام في المطعم والطلب عبر الإنترنت ونقاط البيع والتموين."
 
@@ -2858,7 +2986,12 @@ msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:123
-msgid "Create drop"
+#~ msgid "Create drop"
+#~ msgstr "إنشاء طرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:381
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:185
+msgid "Create Drop"
 msgstr "إنشاء طرح"
 
 #: app/components/website/create-form-dialog.tsx:75
@@ -2883,7 +3016,7 @@ msgstr "إنشاء رابط"
 msgid "Create Location"
 msgstr "إنشاء فرع"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:202
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:244
 msgid "Create Menu"
 msgstr "إنشاء قائمة"
 
@@ -2930,8 +3063,8 @@ msgid "Create Password"
 msgstr "إنشاء كلمة المرور"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:108
-msgid "Create pickup window"
-msgstr "إنشاء نافذة استلام"
+#~ msgid "Create pickup window"
+#~ msgstr "إنشاء نافذة استلام"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
@@ -2959,7 +3092,8 @@ msgstr "أنشئ أول بث لك"
 msgid "Create your first channel"
 msgstr "أنشئ أول قناة"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:132
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:194
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:213
 msgid "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
 msgstr "أنشئ أول طرح محدود الوقت للبيع سريعًا وبناء الترقب وإدارة نوافذ الاستلام."
 
@@ -3122,14 +3256,18 @@ msgstr "خيارات وإضافات وأطباق جانبية مخصصة تُق�
 msgid "Custom Roles"
 msgstr "الأدوار المخصصة"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:868
+msgid "Custom scheduled date/time"
+msgstr "تاريخ ووقت مجدول مخصص"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:966
 #: app/components/menu/drop-wizard/drop-drawers.tsx:975
-msgid "Custom scheduled time"
-msgstr "وقت مجدول مخصص"
+#~ msgid "Custom scheduled time"
+#~ msgstr "وقت مجدول مخصص"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:928
-msgid "Custom timing"
-msgstr "توقيت مخصص"
+#~ msgid "Custom timing"
+#~ msgstr "توقيت مخصص"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
 msgid "Custom trigger event"
@@ -3162,8 +3300,8 @@ msgstr "معرّف العميل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:501
 #: app/components/menu/drop-wizard/drop-drawers.tsx:670
-msgid "Customer limits"
-msgstr "حدود العميل"
+#~ msgid "Customer limits"
+#~ msgstr "حدود العميل"
 
 #: app/components/mailbox/reviews-tab.tsx:337
 msgid "Customer reviews"
@@ -3190,12 +3328,12 @@ msgid "Customers"
 msgstr "العملاء"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:191
-msgid "Customers choose their pickup time in intervals of this duration."
-msgstr "يختار العملاء وقت استلامهم بفترات من هذه المدة."
+#~ msgid "Customers choose their pickup time in intervals of this duration."
+#~ msgstr "يختار العملاء وقت استلامهم بفترات من هذه المدة."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:776
-msgid "Customers have this much time to finish checkout before their items are released back to inventory."
-msgstr "لدى العملاء هذا الوقت لإتمام الدفع قبل إعادة عناصرهم إلى المخزون."
+#~ msgid "Customers have this much time to finish checkout before their items are released back to inventory."
+#~ msgstr "لدى العملاء هذا الوقت لإتمام الدفع قبل إعادة عناصرهم إلى المخزون."
 
 #: app/components/settings/cards/organization/shop-card.tsx:295
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
@@ -3250,7 +3388,8 @@ msgid "Database connection error"
 msgstr "خطأ في الاتصال بقاعدة البيانات"
 
 #: app/components/locations/special-hours-picker.tsx:122
-#: app/components/menu/menu-availability-card.tsx:316
+#: app/components/menu/drop-wizard/drop-drawers.tsx:204
+#: app/components/menu/menu-availability-card.tsx:334
 msgid "Date"
 msgstr "التاريخ"
 
@@ -3314,12 +3453,12 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:423
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:482
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:255
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:300
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:360
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:418
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:472
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:531
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:354
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:413
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:399
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:466
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:466
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:529
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
@@ -3388,7 +3527,7 @@ msgstr "حذف بيانات العملاء وتبديل المنطقة؟"
 msgid "Delete data and switch"
 msgstr "حذف البيانات والتبديل"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:275
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:395
 msgid "Delete drop?"
 msgstr "حذف الطرح؟"
 
@@ -3424,7 +3563,7 @@ msgstr "حذف إدخال السجل"
 msgid "Delete Menu Option?"
 msgstr "حذف خيار القائمة؟"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:390
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:439
 msgid "Delete menu?"
 msgstr "حذف القائمة؟"
 
@@ -3730,11 +3869,23 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 msgid "Display"
 msgstr "العرض"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:824
-msgid "Display remaining badges (e.g. \"Only 3 left\") on item cards."
-msgstr "عرض شارات التوفر المتبقي (مثل \"متبقي 3 فقط\") على بطاقات العناصر."
+#: app/components/menu/drop-wizard/drop-form.tsx:1217
+msgid "Display live countdown until orders open"
+msgstr "عرض عدّ تنازلي مباشر حتى فتح الطلبات"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:308
+#: app/components/menu/drop-wizard/drop-form.tsx:1263
+msgid "Display live stock counters on items"
+msgstr "عرض عدادات المخزون المباشرة على العناصر"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1202
+msgid "Display Options"
+msgstr "خيارات العرض"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:824
+#~ msgid "Display remaining badges (e.g. \"Only 3 left\") on item cards."
+#~ msgstr "عرض شارات التوفر المتبقي (مثل \"متبقي 3 فقط\") على بطاقات العناصر."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:350
 msgid "Displayed"
 msgstr "معروض"
 
@@ -3756,8 +3907,6 @@ msgstr "ليس لديك حساب؟"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
-#: app/components/menu/drop-wizard/drop-drawers.tsx:356
-#: app/components/menu/drop-wizard/drop-drawers.tsx:857
 #: app/components/settings/backup-codes-display.tsx:108
 msgid "Done"
 msgstr "تم"
@@ -3849,28 +3998,45 @@ msgstr "رسم منطقة التوصيل على الخريطة"
 msgid "Draw Polygon"
 msgstr "رسم مضلع"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:142
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:223
 msgid "Drop"
 msgstr "طرح"
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:323
+msgid "Drop actions"
+msgstr "إجراءات الطرح"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:475
-msgid "Drop description"
-msgstr "وصف الطرح"
+#~ msgid "Drop description"
+#~ msgstr "وصف الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:429
+msgid "Drop Information"
+msgstr "معلومات الطرح"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:875
-msgid "Drop reminders"
-msgstr "تذكيرات الطرح"
+#~ msgid "Drop reminders"
+#~ msgstr "تذكيرات الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1014
+msgid "Drop Status"
+msgstr "حالة الطرح"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:461
-msgid "Drop title"
+#~ msgid "Drop title"
+#~ msgstr "عنوان الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:441
+msgid "Drop Title"
 msgstr "عنوان الطرح"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:954
-msgid "Drop visibility"
-msgstr "ظهور الطرح"
+#~ msgid "Drop visibility"
+#~ msgstr "ظهور الطرح"
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:29
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:111
+#: app/components/app-sidebar.tsx:338
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:57
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:173
 msgid "Drops"
 msgstr "الطروحات"
 
@@ -3927,9 +4093,21 @@ msgstr "مثال: وسط المدينة السريع، المنطقة 1"
 msgid "e.g. Downtown Flagship"
 msgstr "مثال: الفرع الرئيسي في وسط المدينة"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:895
+msgid "e.g. Order now before your favorites sell out."
+msgstr "مثال: اطلب الآن قبل نفاد مفضلاتك."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:880
+msgid "e.g. Orders are now open!"
+msgstr "مثال: الطلبات مفتوحة الآن!"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:284
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:449
+msgid "e.g. Sourdough Saturday Drop #12"
+msgstr "مثال: طرح خبز العجين المخمر #12"
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:280
 msgid "e.g. urgent, meeting, project"
@@ -3940,8 +4118,8 @@ msgstr "مثل: عاجل، اجتماع، مشروع"
 #~ msgstr "مثال: VIP, lead-hot, subscriber"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:941
-msgid "e.g. We are about to drop!"
-msgstr "مثال: نحن على وشك إطلاق الطرح!"
+#~ msgid "e.g. We are about to drop!"
+#~ msgstr "مثال: نحن على وشك إطلاق الطرح!"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:272
 msgid "e.g. Welcome {{firstName}}!"
@@ -3960,12 +4138,14 @@ msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr "مثل: Claude Desktop، Kiro IDE"
 
 #: app/components/favorite-notes.tsx:116
+#: app/components/menu/drop-wizard/drop-form.tsx:575
+#: app/components/menu/drop-wizard/drop-form.tsx:823
 #: app/components/note/comment-item.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:827
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:236
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:336
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:345
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:387
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
@@ -4010,6 +4190,10 @@ msgstr "تعديل التصميم"
 msgid "Edit Details"
 msgstr "تعديل التفاصيل"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:381
+msgid "Edit Drop"
+msgstr "تعديل الطرح"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1312
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
@@ -4043,13 +4227,29 @@ msgstr "تعديل الخيار"
 msgid "Edit own notes"
 msgstr "تعديل الملاحظات الخاصة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:987
+msgid "Edit pickup window"
+msgstr "تعديل نافذة الاستلام"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1357
+msgid "Edit reminder"
+msgstr "تعديل التذكير"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:835
+msgid "Edit Reminder"
+msgstr "تعديل التذكير"
+
 #: app/components/roles/tenant-role-access-manager.tsx:614
 msgid "Edit role"
 msgstr "تعديل الدور"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:768
+msgid "Edit section cap"
+msgstr "تعديل حد القسم"
 
 #: app/components/roles/tenant-role-access-manager.tsx:89
 msgid "Edit team notes"
@@ -4127,6 +4327,10 @@ msgstr "موضوع فارغ"
 msgid "Enable Custom S3 Storage"
 msgstr "تفعيل تخزين S3 مخصص"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1286
+msgid "Enable gift card redemptions on this drop"
+msgstr "تفعيل استرداد بطاقات الهدايا في هذا الطرح"
+
 #: app/components/settings/cards/organization/shop-card.tsx:194
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
@@ -4143,11 +4347,15 @@ msgstr "تفعيل إعادة التوجيه فوراً"
 msgid "Enabled"
 msgstr "مفعّل"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:160
-msgid "End Time"
-msgstr "وقت الانتهاء"
+#: app/components/menu/drop-wizard/drop-drawers.tsx:229
+msgid "End"
+msgstr "النهاية"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:84
+#: app/components/menu/drop-wizard/drop-drawers.tsx:160
+#~ msgid "End Time"
+#~ msgstr "وقت الانتهاء"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:152
 msgid "End time must be after start time"
 msgstr "يجب أن يكون وقت الانتهاء بعد وقت البدء"
 
@@ -4611,7 +4819,7 @@ msgstr "التنسيق:"
 msgid "Former member"
 msgstr "عضو سابق"
 
-#: app/components/app-sidebar.tsx:396
+#: app/components/app-sidebar.tsx:401
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:44
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
@@ -4673,11 +4881,11 @@ msgstr "الاسم الكامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:439
+#: app/components/app-sidebar.tsx:444
 msgid "General"
 msgstr "عام"
 
-#: app/components/app-sidebar.tsx:386
+#: app/components/app-sidebar.tsx:391
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -4709,12 +4917,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:557
+#: app/components/app-sidebar.tsx:562
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:158
-#: app/components/app-sidebar.tsx:572
+#: app/components/app-sidebar.tsx:577
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -4729,7 +4937,7 @@ msgstr "تواصل معنا"
 msgid "Get Started"
 msgstr "ابدأ"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:211
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:253
 msgid "Get started by creating your first menu to categorize dishes and drinks."
 msgstr "ابدأ بإنشاء أول قائمة لتصنيف الأطباق والمشروبات."
 
@@ -4738,7 +4946,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
 #: app/components/app-sidebar.tsx:166
-#: app/components/app-sidebar.tsx:580
+#: app/components/app-sidebar.tsx:585
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -4831,6 +5039,10 @@ msgstr "العلامات الغذائية للعميل ومعلومات الإف
 #: app/components/menu/modifier-guest-preview.tsx:189
 msgid "Guest Live Preview"
 msgstr "معاينة مباشرة للعميل"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1205
+msgid "Guest storefront indicators and countdowns."
+msgstr "مؤشرات المتجر والعدّ التنازلي للضيوف."
 
 #: app/components/menu/menu-form.tsx:182
 #: app/components/menu/modifier-form.tsx:899
@@ -4948,9 +5160,16 @@ msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
+#: app/components/menu/menu-availability-card.tsx:232
+#: app/components/menu/menu-availability-card.tsx:288
+#: app/components/menu/menu-status-badge.tsx:55
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:354
 msgid "Hidden"
 msgstr "مخفي"
+
+#: app/components/menu/menu-availability-card.tsx:297
+msgid "Hidden from public discovery. Ideal for exclusive drops, secret menus, and scheduled events."
+msgstr "مخفي عن الظهور العام. مناسب للطروحات الحصرية والقوائم السرية والفعاليات المجدولة."
 
 #: app/components/menu/modifier-form.tsx:1155
 #~ msgid "Hidden until a guest picks a specific option in another group (e.g. selecting \"French Fries\" reveals \"Fry Size\")."
@@ -5027,8 +5246,8 @@ msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:347
-msgid "How far in advance customers must order before a pickup slot."
-msgstr "كم يجب على العملاء الطلب مسبقًا قبل فترة الاستلام."
+#~ msgid "How far in advance customers must order before a pickup slot."
+#~ msgstr "كم يجب على العملاء الطلب مسبقًا قبل فترة الاستلام."
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:348
 #: app/routes/_auth+/onboarding.tsx:506
@@ -5141,6 +5360,10 @@ msgstr "بقشيش التوصيل الداخلي"
 msgid "Inactive"
 msgstr "غير نشط"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1283
+msgid "Include Gift Cards"
+msgstr "تضمين بطاقات الهدايا"
+
 #: app/components/settings/cards/organization/billing-card.tsx:431
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
@@ -5178,7 +5401,7 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:474
+#: app/components/app-sidebar.tsx:479
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:90
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
@@ -5216,16 +5439,20 @@ msgid "Invalid Verification Type"
 msgstr "نوع التحقق غير صالح"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:728
-msgid "inventory (pooled)"
-msgstr "المخزون (مجمّع)"
+#~ msgid "inventory (pooled)"
+#~ msgstr "المخزون (مجمّع)"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:467
-msgid "Inventory limit"
-msgstr "حد المخزون"
+#~ msgid "Inventory limit"
+#~ msgstr "حد المخزون"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:713
+msgid "Inventory limits"
+msgstr "حدود المخزون"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:821
-msgid "Inventory remaining on storefront"
-msgstr "المخزون المتبقي في المتجر"
+#~ msgid "Inventory remaining on storefront"
+#~ msgstr "المخزون المتبقي في المتجر"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4833
 msgid "Inverted"
@@ -5276,6 +5503,10 @@ msgstr "عنوان IP"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:748
+msgid "item"
+msgstr "عنصر"
+
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:294
 msgid "Item"
 msgstr "العنصر"
@@ -5296,8 +5527,13 @@ msgstr "اسم العنصر (الظاهر للعميل)"
 msgid "Item Photos"
 msgstr "صور العنصر"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:625
+#: app/components/menu/drop-wizard/drop-form.tsx:749
+msgid "items"
+msgstr "عناصر"
+
 #: app/components/app-sidebar.tsx:323
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:44
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:283
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:244
 msgid "Items"
@@ -5485,6 +5721,17 @@ msgstr "اعرف المزيد"
 msgid "Leave a reply..."
 msgstr "أضف رداً..."
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:547
+#: app/components/menu/drop-wizard/drop-drawers.tsx:565
+#: app/components/menu/drop-wizard/drop-drawers.tsx:734
+#: app/components/menu/drop-wizard/drop-drawers.tsx:752
+msgid "Leave blank for no limit."
+msgstr "اتركه فارغًا بلا حد."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:335
+msgid "Leave blank for unlimited."
+msgstr "اتركه فارغًا لعدد غير محدود."
+
 #: app/components/settings/cards/organization/s3-storage-card.tsx:308
 msgid "Leave empty to keep existing secret key, or enter a new one to update."
 msgstr "اتركه فارغاً للاحتفاظ بالمفتاح السري الحالي، أو أدخل واحداً جديداً للتحديث."
@@ -5527,6 +5774,10 @@ msgstr "اسمح للناس باختيار عدة خيارات."
 msgid "Level {0} Subcategory"
 msgstr "تصنيف فرعي من المستوى {0}"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1027
+msgid "Lifecycle State"
+msgstr "مرحلة دورة الحياة"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:776
 msgid "Light"
 msgstr "فاتح"
@@ -5542,8 +5793,8 @@ msgstr "الوضع الفاتح"
 #~ msgstr "الحد الأقصى"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:275
-msgid "Limit orders per pickup time"
-msgstr "تحديد الطلبات لكل وقت استلام"
+#~ msgid "Limit orders per pickup time"
+#~ msgstr "تحديد الطلبات لكل وقت استلام"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:491
 #~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
@@ -5630,7 +5881,7 @@ msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الص
 msgid "Loading submissions"
 msgstr "جارٍ تحميل الردود"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:115
+#: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
 msgid "Location"
@@ -5656,11 +5907,15 @@ msgstr "تجاوزات الفرع"
 msgid "Location Status"
 msgstr "حالة الفرع"
 
-#: app/components/app-sidebar.tsx:444
+#: app/components/app-sidebar.tsx:449
 #: app/components/team-switcher.tsx:183
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:519
 msgid "Locations"
 msgstr "الفروع"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1191
+msgid "Locks inventory while customer fills in checkout details."
+msgstr "يحجز المخزون أثناء إدخال العميل تفاصيل الدفع."
 
 #: app/components/nav-user.tsx:300
 #: app/components/ui/header.tsx:144
@@ -5713,7 +5968,7 @@ msgstr "متباعد"
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/components/app-sidebar.tsx:340
+#: app/components/app-sidebar.tsx:345
 msgid "Mailbox"
 msgstr "صندوق الوارد"
 
@@ -5905,15 +6160,15 @@ msgstr "تحديد كمقروء"
 msgid "Mark unread"
 msgstr "تحديد كغير مقروء"
 
-#: app/components/app-sidebar.tsx:351
+#: app/components/app-sidebar.tsx:356
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
 msgstr "التسويق"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:860
-msgid "Marketing and scheduling"
-msgstr "التسويق والجدولة"
+#~ msgid "Marketing and scheduling"
+#~ msgstr "التسويق والجدولة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:238
 msgid "Marketing manager"
@@ -5935,22 +6190,22 @@ msgstr "مدير التسويق"
 #~ msgid "Max number that can be scheduled for a single pickup slot."
 #~ msgstr "الحد الأقصى لعدد الطلبات الممكن جدولتها لفترة استلام واحدة."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:297
+#: app/components/menu/drop-wizard/drop-drawers.tsx:323
 msgid "Max orders per slot"
 msgstr "الحد الأقصى للطلبات لكل فترة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:506
 #: app/components/menu/drop-wizard/drop-drawers.tsx:675
-msgid "Max per customer order"
-msgstr "الحد الأقصى لكل طلب عميل"
+#~ msgid "Max per customer order"
+#~ msgstr "الحد الأقصى لكل طلب عميل"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:502
-#: app/components/menu/drop-wizard/drop-drawers.tsx:663
-#~ msgid "Max per order"
-#~ msgstr "الحد الأقصى لكل طلب"
+#: app/components/menu/drop-wizard/drop-drawers.tsx:535
+#: app/components/menu/drop-wizard/drop-drawers.tsx:722
+msgid "Max per order"
+msgstr "الحد الأقصى لكل طلب"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:519
-#: app/components/menu/drop-wizard/drop-drawers.tsx:688
+#: app/components/menu/drop-wizard/drop-drawers.tsx:553
+#: app/components/menu/drop-wizard/drop-drawers.tsx:740
 msgid "Max per pickup slot"
 msgstr "الحد الأقصى لكل فترة استلام"
 
@@ -5976,7 +6231,7 @@ msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات م
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
-#: app/components/app-sidebar.tsx:484
+#: app/components/app-sidebar.tsx:489
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -6029,7 +6284,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:451
+#: app/components/app-sidebar.tsx:456
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:786
@@ -6042,12 +6297,14 @@ msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
 #: app/components/app-sidebar.tsx:300
+#: app/components/menu/drop-wizard/drop-form.tsx:552
+#: app/components/menu/drop-wizard/drop-form.tsx:608
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:80
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:240
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:282
 msgid "Menu"
 msgstr "القائمة"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:329
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:371
 msgid "Menu actions"
 msgstr "إجراءات القائمة"
 
@@ -6072,16 +6329,16 @@ msgid "Menu Overview"
 msgstr "نظرة عامة على القائمة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:804
-msgid "Menu preview"
-msgstr "معاينة القائمة"
+#~ msgid "Menu preview"
+#~ msgstr "معاينة القائمة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1022
-msgid "Menu preview off"
-msgstr "معاينة القائمة معطلة"
+#~ msgid "Menu preview off"
+#~ msgstr "معاينة القائمة معطلة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1021
-msgid "Menu preview on"
-msgstr "معاينة القائمة مفعلة"
+#~ msgid "Menu preview on"
+#~ msgstr "معاينة القائمة مفعلة"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:434
 msgid "Menu Settings"
@@ -6098,7 +6355,7 @@ msgstr "نوع القائمة والإمكانات"
 #: app/components/app-sidebar.tsx:313
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:22
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:280
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:190
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:232
 msgid "Menus"
 msgstr "القوائم"
 
@@ -6153,6 +6410,10 @@ msgstr "ترحيل الوسائط الحالية"
 msgid "Migrate existing org media after saving"
 msgstr "ترحيل وسائط المؤسسة الحالية بعد الحفظ"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:933
+msgid "min intervals"
+msgstr "دقائق بين المواعيد"
+
 #: app/components/locations/delivery-zones-manager.tsx:245
 msgid "Min Order: ${minOrder}"
 msgstr "أدنى طلب: ${minOrder}"
@@ -6200,7 +6461,7 @@ msgstr "اسم مجموعة الإضافات"
 
 #: app/components/app-sidebar.tsx:328
 #: app/components/menu/item-form.tsx:539
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:274
 msgid "Modifier Groups"
 msgstr "مجموعات الإضافات"
@@ -6270,6 +6531,10 @@ msgstr "بدون صوت"
 #: app/utils/website/field-types.ts:28
 msgid "Name"
 msgstr "الاسم"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:432
+msgid "Name, slug identifier, storefront banner, and custom note to guests."
+msgstr "الاسم ومعرّف الرابط وبانر المتجر وملاحظة مخصصة للضيوف."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:868
 msgid "Navigate to Features → MCP Servers"
@@ -6400,6 +6665,10 @@ msgstr "عنصر جديد"
 #: app/components/chat/chat-group-settings-dialog.tsx:163
 msgid "New members can read earlier messages"
 msgstr "يمكن للأعضاء الجدد قراءة الرسائل السابقة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:595
+msgid "New menu"
+msgstr "قائمة جديدة"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:343
 msgid "New Menu"
@@ -6574,7 +6843,11 @@ msgstr "لم يُقدَّم وصف"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:130
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:209
+msgid "No drops match these filters"
+msgstr "لا توجد طروحات تطابق عوامل التصفية"
+
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:192
 msgid "No drops scheduled yet"
 msgstr "لا توجد طروحات مجدولة بعد"
 
@@ -6607,10 +6880,13 @@ msgstr "لم يتم العثور على فواتير"
 msgid "No items assigned yet. Add one to get started."
 msgstr "لا توجد عناصر مسندة بعد. أضف عنصرًا للبدء."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:766
 #: app/components/menu/menu-sortable-category.tsx:174
 msgid "No items in this category yet."
 msgstr "لا توجد عناصر في هذا التصنيف بعد."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:777
+msgid "No items in this section."
+msgstr "لا توجد عناصر في هذا القسم."
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:280
 msgid "No items match these filters"
@@ -6621,15 +6897,15 @@ msgid "No items yet"
 msgstr "لا توجد عناصر بعد"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:327
-msgid "No lead time (orders stay open until slot)"
-msgstr "بدون مهلة مسبقة (تظل الطلبات مفتوحة حتى وقت الاستلام)"
+#~ msgid "No lead time (orders stay open until slot)"
+#~ msgstr "بدون مهلة مسبقة (تظل الطلبات مفتوحة حتى وقت الاستلام)"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:511
 #: app/components/menu/drop-wizard/drop-drawers.tsx:524
 #: app/components/menu/drop-wizard/drop-drawers.tsx:680
 #: app/components/menu/drop-wizard/drop-drawers.tsx:693
-msgid "No limit"
-msgstr "بلا حد"
+#~ msgid "No limit"
+#~ msgstr "بلا حد"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "No locations found."
@@ -6667,6 +6943,10 @@ msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة ل�
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:846
+msgid "No menu selected"
+msgstr "لم يتم اختيار قائمة"
+
 #: app/components/menu/category-form.tsx:559
 msgid "No menus assigned yet. Add a menu to make this category visible."
 msgstr "لا توجد قوائم مسندة بعد. أضف قائمة لجعل هذا التصنيف ظاهرًا."
@@ -6675,11 +6955,15 @@ msgstr "لا توجد قوائم مسندة بعد. أضف قائمة لجعل �
 msgid "No menus created yet"
 msgstr "لم يتم إنشاء أي قوائم بعد"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:226
+#: app/components/menu/drop-wizard/drop-form.tsx:670
+msgid "No menus found. Please create a menu first."
+msgstr "لم يتم العثور على قوائم. يرجى إنشاء قائمة أولًا."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:268
 msgid "No menus match these filters"
 msgstr "لا توجد قوائم مطابقة لهذه الفلاتر"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:209
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:251
 msgid "No menus yet"
 msgstr "لا توجد قوائم بعد"
 
@@ -6809,8 +7093,12 @@ msgid "No passkeys registered yet"
 msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:540
-msgid "No pickup window added yet"
-msgstr "لم تتم إضافة نافذة استلام بعد"
+#~ msgid "No pickup window added yet"
+#~ msgstr "لم تتم إضافة نافذة استلام بعد"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:889
+msgid "No pickup windows scheduled"
+msgstr "لا توجد نوافذ استلام مجدولة"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:833
 msgid "No redirects created yet"
@@ -6819,6 +7107,10 @@ msgstr "لا توجد عمليات إعادة توجيه بعد"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1328
+msgid "No reminder notifications set."
+msgstr "لم يتم ضبط تذكيرات."
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
 msgid "No responses yet."
@@ -6845,8 +7137,8 @@ msgid "No reviews match the selected filter."
 msgstr "لا توجد تقييمات تطابق الفلتر المحدد."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:693
-msgid "No sections added to this drop yet"
-msgstr "لم تتم إضافة أقسام إلى هذا الطرح بعد"
+#~ msgid "No sections added to this drop yet"
+#~ msgstr "لم تتم إضافة أقسام إلى هذا الطرح بعد"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5638
 msgid "No sections yet"
@@ -6864,7 +7156,7 @@ msgstr "لا توجد ردود بعد"
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:200
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:291
 msgid "No windows"
 msgstr "لا توجد نوافذ"
 
@@ -6949,6 +7241,10 @@ msgstr "محتوى الملاحظة..."
 msgid "Note title..."
 msgstr "عنوان الملاحظة..."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:478
+msgid "Note to Customers"
+msgstr "ملاحظة للعملاء"
+
 #: app/routes/_auth+/waitlist.tsx:411
 msgid "Note: Discord verification is currently manual. Contact support after joining to claim your points."
 msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل بالدعم بعد الانضمام للمطالبة بنقاطك."
@@ -6990,11 +7286,15 @@ msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:889
+msgid "Notification Message"
+msgstr "رسالة الإشعار"
+
 #: app/components/settings/cards/notification-preferences-card.tsx:207
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:489
+#: app/components/app-sidebar.tsx:494
 msgid "Notifications"
 msgstr "الإشعارات"
 
@@ -7006,7 +7306,11 @@ msgstr "إشعارات عندما يعلق شخص ما على ملاحظاتك"
 msgid "Notifications when you are mentioned in a comment"
 msgstr "إشعارات عندما يتم ذكرك في تعليق"
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:249
+#: app/components/menu/drop-wizard/drop-form.tsx:1309
+msgid "Notify subscribed guests before open or close."
+msgstr "أبلغ الضيوف المشتركين قبل الفتح أو الإغلاق."
+
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:291
 msgid "Nutrition Info"
 msgstr "معلومات التغذية"
 
@@ -7027,8 +7331,8 @@ msgid "Offline"
 msgstr "غير متصل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:987
-msgid "Offset"
-msgstr "الفارق الزمني"
+#~ msgid "Offset"
+#~ msgstr "الفارق الزمني"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
 msgid "Old path (Source)"
@@ -7096,8 +7400,8 @@ msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:996
-msgid "Only people with the secret link can view and order."
-msgstr "فقط الأشخاص الذين لديهم الرابط السري يمكنهم العرض والطلب."
+#~ msgid "Only people with the secret link can view and order."
+#~ msgstr "فقط الأشخاص الذين لديهم الرابط السري يمكنهم العرض والطلب."
 
 #: app/components/note/share-note-button.tsx:195
 msgid "Only selected members can access this note"
@@ -7136,12 +7440,12 @@ msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1018
-msgid "Open countdown hidden"
-msgstr "العد التنازلي للفتح مخفي"
+#~ msgid "Open countdown hidden"
+#~ msgstr "العد التنازلي للفتح مخفي"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1017
-msgid "Open countdown visible"
-msgstr "العد التنازلي للفتح ظاهر"
+#~ msgid "Open countdown visible"
+#~ msgstr "العد التنازلي للفتح ظاهر"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:865
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
@@ -7231,7 +7535,7 @@ msgstr "فُتِح {0}"
 msgid "Opened {routeTitle}"
 msgstr "تم فتح {routeTitle}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:208
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:299
 msgid "Opens:"
 msgstr "يفتح:"
 
@@ -7297,12 +7601,24 @@ msgstr "اختياري"
 msgid "Optional • Up to {maxSelections}"
 msgstr "اختياري • حتى {maxSelections}"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:716
+msgid "Optional caps per section or item."
+msgstr "حدود اختيارية لكل قسم أو عنصر."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:676
+msgid "Optional limits for this item on this drop."
+msgstr "حدود اختيارية لهذا العنصر في هذا الطرح."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:483
+msgid "Optional limits for this section on this drop."
+msgstr "حدود اختيارية لهذا القسم في هذا الطرح."
+
 #: app/components/app-sidebar.tsx:333
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:58
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:332
 msgid "Options"
 msgstr "الخيارات"
@@ -7319,43 +7635,63 @@ msgstr "أو تابع باستخدام"
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:341
+msgid "Order cutoff"
+msgstr "موعد إيقاف الطلب"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:316
-msgid "Order lead time"
-msgstr "مهلة الطلب المسبق"
+#~ msgid "Order lead time"
+#~ msgstr "مهلة الطلب المسبق"
 
 #: app/components/locations/location-form.tsx:531
 msgid "Order Preparation Time"
 msgstr "وقت تحضير الطلب"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1124
+msgid "Ordering Window"
+msgstr "نافذة الطلب"
 
 #: app/components/locations/delivery-zones-manager.tsx:362
 msgid "Orders can be delivered inside this zone"
 msgstr "يمكن توصيل الطلبات داخل هذه المنطقة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:632
-msgid "Orders close"
-msgstr "إغلاق الطلبات"
+#~ msgid "Orders close"
+#~ msgstr "إغلاق الطلبات"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1151
+msgid "Orders Close At"
+msgstr "إغلاق الطلبات في"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1023
-msgid "Orders close time must be configured in Step 1 first."
-msgstr "يجب تحديد وقت إغلاق الطلبات في الخطوة 1 أولاً."
+#~ msgid "Orders close time must be configured in Step 1 first."
+#~ msgstr "يجب تحديد وقت إغلاق الطلبات في الخطوة 1 أولاً."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:614
-msgid "Orders open"
-msgstr "فتح الطلبات"
+#~ msgid "Orders open"
+#~ msgstr "فتح الطلبات"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1135
+msgid "Orders Open At"
+msgstr "فتح الطلبات في"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:787
-msgid "Orders open time"
-msgstr "وقت فتح الطلبات"
+#~ msgid "Orders open time"
+#~ msgstr "وقت فتح الطلبات"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1016
-msgid "Orders open time must be configured in Step 1 first."
-msgstr "يجب تحديد وقت فتح الطلبات في الخطوة 1 أولاً."
+#~ msgid "Orders open time must be configured in Step 1 first."
+#~ msgstr "يجب تحديد وقت فتح الطلبات في الخطوة 1 أولاً."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:935
+msgid "orders per slot"
+msgstr "طلبات لكل موعد"
 
 #: app/components/settings/cards/organization/shop-card.tsx:345
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:151
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:232
 msgid "Orders Schedule"
 msgstr "جدول الطلبات"
 
@@ -7417,7 +7753,7 @@ msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "تجاوز ساعات العمل المعتادة في الأعياد أو المناسبات أو الإغلاقات."
 
 #: app/components/app-sidebar.tsx:306
-#: app/components/app-sidebar.tsx:357
+#: app/components/app-sidebar.tsx:362
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:15
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
@@ -7454,7 +7790,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:391
+#: app/components/app-sidebar.tsx:396
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -7698,41 +8034,45 @@ msgid "Pickup"
 msgstr "الاستلام"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:136
-msgid "Pickup Date"
-msgstr "تاريخ الاستلام"
+#~ msgid "Pickup Date"
+#~ msgstr "تاريخ الاستلام"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:173
-msgid "Pickup interval (minutes)"
-msgstr "فترة الاستلام (بالدقائق)"
+#~ msgid "Pickup interval (minutes)"
+#~ msgstr "فترة الاستلام (بالدقائق)"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:565
-msgid "Pickup Location"
-msgstr "موقع الاستلام"
+#~ msgid "Pickup Location"
+#~ msgstr "موقع الاستلام"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:494
-msgid "Pickup schedule"
-msgstr "جدول الاستلام"
+#~ msgid "Pickup schedule"
+#~ msgstr "جدول الاستلام"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:862
+msgid "Pickup Schedule & Fulfillment"
+msgstr "جدول الاستلام والتنفيذ"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:571
-msgid "pickup slots (every"
-msgstr "فترات استلام (كل"
+#~ msgid "pickup slots (every"
+#~ msgstr "فترات استلام (كل"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:252
-msgid "Pickup times occur"
-msgstr "أوقات الاستلام تتكرر"
+#~ msgid "Pickup times occur"
+#~ msgstr "أوقات الاستلام تتكرر"
 
 #: app/components/locations/location-form.tsx:756
 msgid "Pickup Tips"
 msgstr "بقشيش الاستلام"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:148
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:229
 msgid "Pickup Window"
 msgstr "نافذة الاستلام"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:245
 #: app/components/menu/drop-wizard/drop-form.tsx:519
-msgid "Pickup window settings"
-msgstr "إعدادات نافذة الاستلام"
+#~ msgid "Pickup window settings"
+#~ msgstr "إعدادات نافذة الاستلام"
 
 #: app/components/menu/option-form.tsx:776
 msgid "Pizza Topping"
@@ -7824,12 +8164,16 @@ msgid "Polygon Area: {pointCount} points"
 msgstr "مساحة المضلع: {pointCount} نقطة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:653
-msgid "Pooled quantity available"
-msgstr "الكمية المجمعة المتاحة"
+#~ msgid "Pooled quantity available"
+#~ msgstr "الكمية المجمعة المتاحة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:638
-msgid "Pooled section limit"
-msgstr "حد القسم المجمع"
+#~ msgid "Pooled section limit"
+#~ msgstr "حد القسم المجمع"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:496
+msgid "Pooled total"
+msgstr "الإجمالي المجمّع"
 
 #: app/components/menu/item-form.tsx:732
 msgid "Popular Item"
@@ -7885,11 +8229,14 @@ msgstr "الإعدادات المسبقة"
 #~ msgid "Press Enter to send, Shift+Enter for new line"
 #~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:302
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
 msgid "Preview"
 msgstr "معاينة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1237
+msgid "Preview Menu in Advance"
+msgstr "معاينة القائمة مسبقًا"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:422
 msgid "Previous"
@@ -8012,7 +8359,7 @@ msgstr "الترويج كبيع إضافي"
 msgid "Promotions & Highlights"
 msgstr "العروض والإبرازات"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:972
+#: app/components/menu/drop-wizard/drop-form.tsx:1095
 msgid "Public"
 msgstr "عام"
 
@@ -8078,8 +8425,8 @@ msgid "Quantity"
 msgstr "الكمية"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:484
-msgid "Quantity available"
-msgstr "الكمية المتاحة"
+#~ msgid "Quantity available"
+#~ msgstr "الكمية المتاحة"
 
 #: app/components/menu/modifier-form.tsx:1017
 msgid "Quantity Counter (+/-)"
@@ -8170,6 +8517,10 @@ msgstr "مستلمين"
 msgid "Recipients"
 msgstr "المستلمون"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:540
+msgid "Recommended 16:9 banner ratio"
+msgstr "النسبة الموصى بها للبانر 16:9"
+
 #: app/routes/_auth+/login.tsx:596
 msgid "Recommended for"
 msgstr "موصى به لـ"
@@ -8194,7 +8545,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:424
+#: app/components/app-sidebar.tsx:429
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
@@ -8276,9 +8627,10 @@ msgid "Remember your password?"
 msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:937
-msgid "Reminder title"
-msgstr "عنوان التذكير"
+#~ msgid "Reminder title"
+#~ msgstr "عنوان التذكير"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:523
 #: app/components/menu/item-variations.tsx:201
 #: app/components/menu/option-form.tsx:379
 #: app/components/note/share-note-button.tsx:240
@@ -8355,9 +8707,17 @@ msgstr "إزالة الخيار"
 msgid "Remove photo"
 msgstr "إزالة الصورة"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:997
+msgid "Remove pickup window"
+msgstr "إزالة نافذة الاستلام"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1367
+msgid "Remove reminder"
+msgstr "إزالة التذكير"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:755
-msgid "Remove section from drop"
-msgstr "إزالة القسم من الطرح"
+#~ msgid "Remove section from drop"
+#~ msgstr "إزالة القسم من الطرح"
 
 #: app/components/roles/tenant-role-access-manager.tsx:122
 msgid "Remove team members"
@@ -8379,6 +8739,7 @@ msgstr "إزالة القسم"
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:512
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2608
 msgid "Replace"
@@ -8645,7 +9006,7 @@ msgstr "اسم الدور"
 msgid "Roles"
 msgstr "الأدوار"
 
-#: app/components/app-sidebar.tsx:458
+#: app/components/app-sidebar.tsx:463
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
@@ -8779,7 +9140,9 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/chat/chat-message.tsx:196
-#: app/components/menu/drop-wizard/drop-drawers.tsx:534
+#: app/components/menu/drop-wizard/drop-drawers.tsx:387
+#: app/components/menu/drop-wizard/drop-drawers.tsx:581
+#: app/components/menu/drop-wizard/drop-drawers.tsx:768
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -8804,8 +9167,6 @@ msgstr "حفظ كنسخة"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:352
-#: app/components/menu/drop-wizard/drop-form.tsx:1051
 #: app/components/roles/tenant-role-access-manager.tsx:558
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
@@ -8819,15 +9180,19 @@ msgid "Save changes"
 msgstr "حفظ التغييرات"
 
 #: app/components/locations/location-form.tsx:997
+#: app/components/menu/drop-wizard/drop-drawers.tsx:920
 #: app/components/menu/modifier-form.tsx:2174
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/menu/drop-wizard/drop-form.tsx:319
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr "حفظ المسودة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:385
+msgid "Save Drop"
+msgstr "حفظ الطرح"
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:307
 msgid "Save languages"
@@ -8850,8 +9215,8 @@ msgid "Save product"
 msgstr "حفظ المنتج"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:703
-msgid "Save section settings"
-msgstr "حفظ إعدادات القسم"
+#~ msgid "Save section settings"
+#~ msgstr "حفظ إعدادات القسم"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:808
 msgid "Save the file and restart Claude Desktop"
@@ -8899,8 +9264,6 @@ msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/menu/drop-wizard/drop-form.tsx:333
-#: app/components/menu/drop-wizard/drop-form.tsx:350
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
@@ -8920,12 +9283,16 @@ msgstr "مسح رمز QR أو إدخال مفتاح الإعداد"
 msgid "Schedule a call"
 msgstr "حدد موعد مكالمة"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:837
+msgid "Schedule Customer Reminder"
+msgstr "جدولة تذكير للعملاء"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:335
 #: app/components/menu/drop-wizard/drop-form.tsx:1049
-msgid "Schedule drop"
-msgstr "جدولة الطرح"
+#~ msgid "Schedule drop"
+#~ msgstr "جدولة الطرح"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:113
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:175
 msgid "Schedule limited-time menu drops with inventory limits and pickup slots."
 msgstr "جدولة طروحات القائمة محدودة الوقت مع حدود المخزون وفترات الاستلام."
 
@@ -8933,9 +9300,13 @@ msgstr "جدولة طروحات القائمة محدودة الوقت مع حد
 msgid "Scheduled"
 msgstr "مجدول"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1306
+msgid "Scheduled Reminders"
+msgstr "التذكيرات المجدولة"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1047
-msgid "Scheduling..."
-msgstr "جارٍ الجدولة..."
+#~ msgid "Scheduling..."
+#~ msgstr "جارٍ الجدولة..."
 
 #: app/components/app-sidebar.tsx:223
 msgid "Search"
@@ -8983,7 +9354,7 @@ msgstr "البحث في الوسائط"
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
-#: app/components/app-sidebar.tsx:625
+#: app/components/app-sidebar.tsx:630
 #: app/components/command-menu.tsx:102
 msgid "Search menu items..."
 msgstr "البحث في عناصر القائمة..."
@@ -9068,6 +9439,10 @@ msgstr "الزر الثانوي"
 msgid "Secret Access Key"
 msgstr "مفتاح الوصول السري"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:770
+msgid "Section cap"
+msgstr "حد القسم"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3394
 msgid "Section height"
 msgstr "ارتفاع القسم"
@@ -9077,8 +9452,8 @@ msgstr "ارتفاع القسم"
 #~ msgstr "مخزون القسم المجمّع"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:742
-msgid "Section settings"
-msgstr "إعدادات القسم"
+#~ msgid "Section settings"
+#~ msgstr "إعدادات القسم"
 
 #: app/components/data-table.tsx:196
 #~ msgid "Section Type"
@@ -9135,7 +9510,7 @@ msgstr "اختر تصنيفًا لعرض هذا العنصر."
 msgid "Select a form"
 msgstr "اختر نموذجًا"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:122
+#: app/components/menu/drop-wizard/drop-drawers.tsx:256
 msgid "Select a location"
 msgstr "اختر موقعًا"
 
@@ -9182,6 +9557,10 @@ msgstr "تحديد الكل"
 #: app/components/menu/option-form.tsx:710
 msgid "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 msgstr "اختر كل مجموعات الإضافات التي يجب أن يظهر فيها هذا الخيار. الإسناد إلى مجموعة إضافات بيتزا يفعّل تلقائيًا تسعير الكاملة/النصف."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:849
+msgid "Select an existing menu above to attach to this drop."
+msgstr "اختر قائمة موجودة أعلاه لربطها بهذا الطرح."
 
 #: app/components/media-library/media-library-picker.tsx:232
 msgid "Select an image from your library or upload a new one."
@@ -9255,7 +9634,7 @@ msgstr "اختر نوع المحفّز"
 msgid "Select type"
 msgstr "اختر النوع"
 
-#: app/components/menu/menu-availability-card.tsx:295
+#: app/components/menu/menu-availability-card.tsx:313
 msgid "Select when it becomes available"
 msgstr "حدّد وقت توفره"
 
@@ -9303,6 +9682,10 @@ msgstr "إرسال"
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:242
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:841
+msgid "Send automated notifications to subscribed guests before your drop opens or closes."
+msgstr "أرسل إشعارات تلقائية للضيوف المشتركين قبل فتح طرحك أو إغلاقه."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:76
 msgid "Send Email"
@@ -9384,8 +9767,8 @@ msgid "Sessions"
 msgstr "الجلسات"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:627
-msgid "Set a pooled inventory limit for all items in this section."
-msgstr "حدد حداً مجمعاً للمخزون لجميع الأصناف في هذا القسم."
+#~ msgid "Set a pooled inventory limit for all items in this section."
+#~ msgstr "حدد حداً مجمعاً للمخزون لجميع الأصناف في هذا القسم."
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:710
 msgid "Set as Default"
@@ -9412,16 +9795,16 @@ msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:470
-msgid "Set how many of this item are available for this drop."
-msgstr "حدد الكمية المتوفرة من هذا العنصر لهذا الطرح."
+#~ msgid "Set how many of this item are available for this drop."
+#~ msgstr "حدد الكمية المتوفرة من هذا العنصر لهذا الطرح."
 
 #: app/components/locations/availability-picker.tsx:440
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "حدّد ساعات العمل الفعلية التي يمكن للعملاء فيها زيارة هذا الفرع."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:497
-msgid "Set the pickup times and locations where customers will collect their orders."
-msgstr "حدد أوقات ومواقع الاستلام التي سيستلم العملاء طلباتهم منها."
+#~ msgid "Set the pickup times and locations where customers will collect their orders."
+#~ msgstr "حدد أوقات ومواقع الاستلام التي سيستلم العملاء طلباتهم منها."
 
 #: app/components/website/create-page-dialog.tsx:143
 msgid "Set the title and URL for your new page."
@@ -9436,14 +9819,14 @@ msgid "Set when online ordering, pickup, and delivery are accepted for this loca
 msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاستلام والتوصيل لهذا الفرع."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:278
-msgid "Setting a limit helps you pace preparation and avoid crowding."
-msgstr "يساعد وضع حد على تنظيم التحضير وتجنب الازدحام."
+#~ msgid "Setting a limit helps you pace preparation and avoid crowding."
+#~ msgstr "يساعد وضع حد على تنظيم التحضير وتجنب الازدحام."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:488
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "يساعد وضع حد على نفاد الكمية بالكامل"
 
-#: app/components/app-sidebar.tsx:431
+#: app/components/app-sidebar.tsx:436
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
@@ -9482,9 +9865,13 @@ msgstr "مشاركة الملاحظة"
 msgid "Share on WhatsApp"
 msgstr "شارك على واتساب"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:486
+msgid "Share pickup instructions, special reheating tips, or what makes this drop special..."
+msgstr "شارك تعليمات الاستلام أو نصائح التسخين أو ما يميز هذا الطرح..."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:480
-msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
-msgstr "شارك القصة وراء هذا الطرح أو تعليمات الاستلام أو المكونات الخاصة..."
+#~ msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
+#~ msgstr "شارك القصة وراء هذا الطرح أو تعليمات الاستلام أو المكونات الخاصة..."
 
 #: app/components/organization-invitations.tsx:167
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
@@ -9502,7 +9889,11 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/app-sidebar.tsx:479
+#: app/components/menu/drop-wizard/drop-drawers.tsx:499
+msgid "Shared cap across all items in this section."
+msgstr "حد مشترك لجميع العناصر في هذا القسم."
+
+#: app/components/app-sidebar.tsx:484
 msgid "Shop"
 msgstr "المتجر"
 
@@ -9521,6 +9912,10 @@ msgstr "إظهار شارة \"شائع\" في القوائم."
 #: app/components/menu/menu-form.tsx:301
 msgid "Show calorie counts and allergen warnings on this menu."
 msgstr "إظهار السعرات الحرارية وتنبيهات مسببات الحساسية في هذه القائمة."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1214
+msgid "Show Countdown Timer"
+msgstr "إظهار العدّ التنازلي"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4122
 msgid "Show form title"
@@ -9542,6 +9937,10 @@ msgstr "عرض المزيد"
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1260
+msgid "Show Remaining Inventory"
+msgstr "إظهار المخزون المتبقي"
+
 #: app/components/note/comment-item.tsx:312
 msgid "Show replies ({replyCount})"
 msgstr "إظهار الردود ({replyCount})"
@@ -9551,8 +9950,8 @@ msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:790
-msgid "Show the exact countdown timer until drop orders open."
-msgstr "إظهار مؤقت العد التنازلي الدقيق حتى فتح طلبات الطرح."
+#~ msgid "Show the exact countdown timer until drop orders open."
+#~ msgstr "إظهار مؤقت العد التنازلي الدقيق حتى فتح طلبات الطرح."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:376
 msgid "Show this banner on your public site"
@@ -9662,6 +10061,10 @@ msgstr "الحجم:"
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:270
+msgid "Slot interval"
+msgstr "الفاصل بين المواعيد"
+
 #: app/components/settings/cards/organization/general-settings-card.tsx:88
 #: app/routes/organizations+/create.tsx:970
 msgid "Slug"
@@ -9766,6 +10169,7 @@ msgid "Star"
 msgstr "تمييز بنجمة"
 
 #: app/components/chat/chat-compose-dialog.tsx:196
+#: app/components/menu/drop-wizard/drop-drawers.tsx:217
 msgid "Start"
 msgstr "بدء"
 
@@ -9798,8 +10202,8 @@ msgid "Start the conversation by adding the first comment."
 msgstr "ابدأ المحادثة بإضافة التعليق الأول."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:149
-msgid "Start Time"
-msgstr "وقت البدء"
+#~ msgid "Start Time"
+#~ msgstr "وقت البدء"
 
 #: app/components/locations/address-autocomplete.tsx:139
 msgid "Start typing an address, city, or zip code..."
@@ -9831,9 +10235,9 @@ msgstr "الولاية / المنطقة"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:286
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:145
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:226
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:306
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:252
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:294
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:338
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:352
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
@@ -9941,6 +10345,10 @@ msgstr "رابط النطاق الفرعي"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:525
 msgid "Subject"
 msgstr "الموضوع"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:876
+msgid "Subject / Notification Title"
+msgstr "الموضوع / عنوان الإشعار"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:268
 msgid "Subject Line"
@@ -10351,6 +10759,10 @@ msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمت
 msgid "This item has reached the 100 combination limit."
 msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:722
+msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."
+msgstr "لا توجد تصنيفات مرتبطة بهذه القائمة بعد. انتقل إلى القوائم لإضافة التصنيفات والعناصر."
+
 #: app/components/chat/chat-message.tsx:148
 msgid "This message was deleted."
 msgstr "تم حذف هذه الرسالة."
@@ -10399,7 +10811,7 @@ msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً
 msgid "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
 msgstr "سيؤدي هذا إلى حذف التصنيف نهائيًا. لن تُحذف العناصر في هذا التصنيف، لكنها ستصبح غير مسندة."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:278
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
 msgid "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
 msgstr "سيؤدي هذا إلى حذف هذا الطرح نهائيًا وإزالة جدول الاستلام وحدود المخزون الخاصة به. لا يمكن التراجع عن هذا الإجراء."
 
@@ -10407,7 +10819,7 @@ msgstr "سيؤدي هذا إلى حذف هذا الطرح نهائيًا وإز�
 msgid "This will permanently delete this menu item and remove it from all menus and categories."
 msgstr "سيؤدي هذا إلى حذف عنصر القائمة نهائيًا وإزالته من جميع القوائم والتصنيفات."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:393
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:442
 msgid "This will permanently delete this menu. Categories and items associated with it will remain intact."
 msgstr "سيؤدي هذا إلى حذف القائمة نهائيًا. ستبقى التصنيفات والعناصر المرتبطة بها كما هي."
 
@@ -10448,7 +10860,7 @@ msgstr "متقارب"
 msgid "TikTok Pixel ID"
 msgstr "معرّف بكسل TikTok"
 
-#: app/components/menu/menu-availability-card.tsx:332
+#: app/components/menu/menu-availability-card.tsx:350
 msgid "Time"
 msgstr "الوقت"
 
@@ -10534,6 +10946,10 @@ msgstr "الإجمالي"
 #~ msgid "Total Section Inventory"
 #~ msgstr "إجمالي مخزون القسم"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:689
+msgid "Total units"
+msgstr "إجمالي الوحدات"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
@@ -10598,8 +11014,12 @@ msgid "Trigger event type is required."
 msgstr "نوع حدث المحفّز مطلوب."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:949
-msgid "Trigger timing"
-msgstr "توقيت الإشعار"
+#~ msgid "Trigger timing"
+#~ msgstr "توقيت الإشعار"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:851
+msgid "Trigger Timing"
+msgstr "توقيت التشغيل"
 
 #: app/components/locations/location-form.tsx:616
 msgid "Trigger when order exceeds ({thresholdUnit})"
@@ -10647,11 +11067,15 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your filters or clear them to see all categories."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل التصنيفات."
 
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:212
+msgid "Try adjusting your filters or clear them to see all drops."
+msgstr "جرّب تعديل عوامل التصفية أو امسحها لعرض كل الطروحات."
+
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:283
 msgid "Try adjusting your filters or clear them to see all items."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل العناصر."
 
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:229
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:271
 msgid "Try adjusting your filters or clear them to see all menus."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل القوائم."
 
@@ -10700,7 +11124,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:243
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:285
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:329
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3926
@@ -10742,12 +11166,12 @@ msgstr "غير مسند"
 #: app/components/menu/item-variations.tsx:513
 #: app/components/menu/item-variations.tsx:534
 #: app/components/menu/menu-availability-card.tsx:231
-#: app/components/menu/menu-availability-card.tsx:279
-#: app/components/menu/menu-status-badge.tsx:59
+#: app/components/menu/menu-availability-card.tsx:280
+#: app/components/menu/menu-status-badge.tsx:65
 msgid "Unavailable"
 msgstr "غير متوفر"
 
-#: app/components/menu/menu-status-badge.tsx:56
+#: app/components/menu/menu-status-badge.tsx:62
 msgid "Unavailable until"
 msgstr "غير متوفر حتى"
 
@@ -10755,16 +11179,16 @@ msgstr "غير متوفر حتى"
 #: app/components/menu/item-variations.tsx:528
 #: app/components/menu/menu-availability-card.tsx:229
 #: app/components/menu/menu-availability-card.tsx:230
-#: app/components/menu/menu-availability-card.tsx:271
+#: app/components/menu/menu-availability-card.tsx:272
 msgid "Unavailable Until"
 msgstr "غير متوفر حتى"
 
-#: app/components/menu/menu-status-badge.tsx:53
+#: app/components/menu/menu-status-badge.tsx:59
 msgid "Unavailable until {formattedUntil}"
 msgstr "غير متوفر حتى {formattedUntil}"
 
 #. placeholder {0}: formatUnavailableUntil(internalDate, timezone)
-#: app/components/menu/menu-availability-card.tsx:353
+#: app/components/menu/menu-availability-card.tsx:371
 msgid "Unavailable until <0>{0}</0>"
 msgstr "غير متوفر حتى <0>{0}</0>"
 
@@ -10789,6 +11213,11 @@ msgstr "الوحدة"
 msgid "United States"
 msgstr "الولايات المتحدة"
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:511
+#: app/components/menu/drop-wizard/drop-drawers.tsx:704
+msgid "Units available"
+msgstr "الوحدات المتاحة"
+
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:442
 msgid "Unknown error"
 msgstr "خطأ غير معروف"
@@ -10803,10 +11232,10 @@ msgid "Unknown role"
 msgstr "دور غير معروف"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:818
-msgid "Unlimited"
-msgstr "غير محدود"
+#~ msgid "Unlimited"
+#~ msgstr "غير محدود"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:993
+#: app/components/menu/drop-wizard/drop-form.tsx:1109
 msgid "Unlisted"
 msgstr "غير مدرج"
 
@@ -10847,8 +11276,8 @@ msgid "Until {returnTime}"
 msgstr "حتى {returnTime}"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:268
-msgid "Untitled drop"
-msgstr "طرح بدون عنوان"
+#~ msgid "Untitled drop"
+#~ msgstr "طرح بدون عنوان"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:882
 #: app/routes/_app+/$orgSlug_+/media.tsx:1257
@@ -10868,6 +11297,10 @@ msgstr "غير المترجم فقط"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Update"
 msgstr "تحديث"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:192
+msgid "Update date, hours, and capacity."
+msgstr "حدّث التاريخ والساعات والسعة."
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:269
 msgid "Update location details, hours, and fulfillment preferences."
@@ -11005,6 +11438,7 @@ msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
 #: app/components/locations/location-form.tsx:352
+#: app/components/menu/drop-wizard/drop-form.tsx:457
 msgid "URL Slug"
 msgstr "المعرّف في الرابط"
 
@@ -11221,7 +11655,7 @@ msgstr "عرض الملاحظات الخاصة"
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:248
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:351
 msgid "View storefront"
 msgstr "عرض المتجر"
 
@@ -11248,6 +11682,10 @@ msgstr "عرض مساحة عمل الموقع"
 #: app/components/roles/tenant-role-access-manager.tsx:258
 msgid "Viewer"
 msgstr "مشاهد"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1075
+msgid "Visibility"
+msgstr "الظهور"
 
 #: app/components/settings/cards/organization/site-card.tsx:186
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
@@ -11308,7 +11746,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/app-sidebar.tsx:380
+#: app/components/app-sidebar.tsx:385
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -11406,8 +11844,8 @@ msgid "What would you like to know?"
 msgstr "ماذا تريد أن تعرف؟"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:663
-msgid "What you are selling"
-msgstr "ما تبيعه"
+#~ msgid "What you are selling"
+#~ msgstr "ما تبيعه"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:436
 msgid "What's missing?"
@@ -11422,13 +11860,21 @@ msgstr "عندما يختار العميل هذا الخيار، أظهر مجم
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
 
+#: app/components/menu/drop-wizard/drop-drawers.tsx:194
+msgid "When and where customers pick up orders."
+msgstr "متى وأين يستلم العملاء طلباتهم."
+
 #: app/components/chat/chat-group-settings-dialog.tsx:166
 msgid "When off, people only see messages from after they joined."
 msgstr "عند الإيقاف، يرى الأشخاص الرسائل من بعد انضمامهم فقط."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:596
-msgid "When orders open and close"
-msgstr "متى تفتح الطلبات وتغلق"
+#~ msgid "When orders open and close"
+#~ msgstr "متى تفتح الطلبات وتغلق"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1127
+msgid "When orders open and close for customers."
+msgstr "متى تُفتح الطلبات وتُغلق للعملاء."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "When prompted, authorize the connection in your browser"
@@ -11441,6 +11887,10 @@ msgstr "عند المطالبة، وافق على الاتصال في متصفح
 #: app/components/settings/cards/organization/verified-domain-card.tsx:75
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
 msgstr "عندما يقوم شخص ما بالتسجيل باستخدام بريد إلكتروني يطابق نطاقك المُتحقق منه، سيتم إضافته تلقائياً إلى مؤسستك كعضو."
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:524
+msgid "When this total is reached, every item in the section sells out."
+msgstr "عند بلوغ هذا الإجمالي، تُباع كل عناصر القسم."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1015
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."

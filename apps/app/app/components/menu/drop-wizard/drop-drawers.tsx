@@ -1,22 +1,21 @@
-import { Trans, t } from '@lingui/macro'
+import { Trans, t, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	type DropPickupWindowInput,
 	type DropInventoryInput,
 	type DropReminderInput,
 	DROP_SLOT_INTERVALS,
-	DROP_CHECKOUT_HOLD_OPTIONS,
+	generatePickupSlots,
 } from '@repo/common/menu-types'
 import { Button } from '@repo/ui/button'
-import { Card } from '@repo/ui/card'
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogFooter,
 } from '@repo/ui/dialog'
-import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import {
@@ -29,12 +28,14 @@ import {
 import {
 	Sheet,
 	SheetContent,
+	SheetDescription,
+	SheetFooter,
 	SheetHeader,
 	SheetTitle,
-	SheetFooter,
 } from '@repo/ui/sheet'
 import { Switch } from '@repo/ui/switch'
-import { useState } from 'react'
+import { Textarea } from '@repo/ui/textarea'
+import { useEffect, useMemo, useState } from 'react'
 
 export interface LocationOption {
 	id: string
@@ -46,12 +47,36 @@ export interface LocationOption {
 /*                        CREATE PICKUP WINDOW DRAWER                         */
 /* -------------------------------------------------------------------------- */
 
+function defaultPickupDateString(): string {
+	const nextSaturday = new Date()
+	nextSaturday.setDate(
+		nextSaturday.getDate() + ((6 - nextSaturday.getDay() + 7) % 7 || 7),
+	)
+	const pad = (n: number) => String(n).padStart(2, '0')
+	return `${nextSaturday.getFullYear()}-${pad(nextSaturday.getMonth() + 1)}-${pad(nextSaturday.getDate())}`
+}
+
+function formatPickupDateLabel(dateStr: string): string {
+	try {
+		const d = new Date(`${dateStr}T12:00:00`)
+		if (isNaN(d.getTime())) return dateStr
+		return d.toLocaleDateString(undefined, {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+		})
+	} catch {
+		return dateStr
+	}
+}
+
 interface CreatePickupWindowDrawerProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	locations: LocationOption[]
 	defaultInterval?: number
-	onAddWindow: (window: DropPickupWindowInput) => void
+	initialWindow?: DropPickupWindowInput | null
+	onSaveWindow: (window: DropPickupWindowInput) => void
 }
 
 export function CreatePickupWindowDrawer({
@@ -59,40 +84,91 @@ export function CreatePickupWindowDrawer({
 	onOpenChange,
 	locations,
 	defaultInterval = 30,
-	onAddWindow,
+	initialWindow,
+	onSaveWindow,
 }: CreatePickupWindowDrawerProps) {
 	const { _ } = useLingui()
+	const isEditing = initialWindow != null
 	const [locationId, setLocationId] = useState(locations[0]?.id || '')
 	const effectiveLocationId = locationId || locations[0]?.id || ''
-	const [date, setDate] = useState(() => {
-		const nextSaturday = new Date()
-		nextSaturday.setDate(
-			nextSaturday.getDate() + ((6 - nextSaturday.getDay() + 7) % 7 || 7),
-		)
-		const pad = (n: number) => String(n).padStart(2, '0')
-		return `${nextSaturday.getFullYear()}-${pad(nextSaturday.getMonth() + 1)}-${pad(nextSaturday.getDate())}`
-	})
+	const [date, setDate] = useState(defaultPickupDateString)
 	const [startTime, setStartTime] = useState('12:00')
 	const [endTime, setEndTime] = useState('16:00')
 	const [slotIntervalMinutes, setSlotIntervalMinutes] =
 		useState(defaultInterval)
+	const [maxOrdersPerSlot, setMaxOrdersPerSlot] = useState<string>('')
+	const [orderLeadTimeMinutes, setOrderLeadTimeMinutes] = useState<number>(0)
 	const [timeError, setTimeError] = useState<string | null>(null)
 
-	const handleAdd = () => {
+	useEffect(() => {
+		if (!open) return
+		if (initialWindow) {
+			setLocationId(initialWindow.locationId)
+			setDate(initialWindow.date)
+			setStartTime(initialWindow.startTime)
+			setEndTime(initialWindow.endTime)
+			setSlotIntervalMinutes(
+				initialWindow.slotIntervalMinutes ?? defaultInterval,
+			)
+			setMaxOrdersPerSlot(
+				initialWindow.maxOrdersPerSlot != null
+					? String(initialWindow.maxOrdersPerSlot)
+					: '',
+			)
+			setOrderLeadTimeMinutes(initialWindow.orderLeadTimeMinutes ?? 0)
+		} else {
+			setLocationId(locations[0]?.id || '')
+			setDate(defaultPickupDateString())
+			setStartTime('12:00')
+			setEndTime('16:00')
+			setSlotIntervalMinutes(defaultInterval)
+			setMaxOrdersPerSlot('')
+			setOrderLeadTimeMinutes(0)
+		}
+		setTimeError(null)
+	}, [open, initialWindow, locations, defaultInterval])
+
+	const previewSlots = useMemo(() => {
+		if (!startTime || !endTime || endTime <= startTime) return []
+		return generatePickupSlots(startTime, endTime, slotIntervalMinutes)
+	}, [startTime, endTime, slotIntervalMinutes])
+	const slotCount = previewSlots.length
+	const slotPreview = previewSlots.slice(0, 6)
+	const hiddenSlotCount = Math.max(0, slotCount - slotPreview.length)
+	const moreSlots = hiddenSlotCount
+	const parsedMaxOrdersPreview =
+		maxOrdersPerSlot.trim() !== '' ? Number(maxOrdersPerSlot) : null
+	const windowCapacityPreview =
+		parsedMaxOrdersPreview != null &&
+		!isNaN(parsedMaxOrdersPreview) &&
+		parsedMaxOrdersPreview > 0 &&
+		slotCount > 0
+			? slotCount * parsedMaxOrdersPreview
+			: null
+
+	const handleSave = () => {
 		if (!effectiveLocationId || !date || !startTime || !endTime) return
 		if (endTime <= startTime) {
-			setTimeError(t`End time must be after start time`)
+			setTimeError(_(msg`End time must be after start time`))
 			return
 		}
 		setTimeError(null)
-		onAddWindow({
+		const parsedMaxOrders =
+			maxOrdersPerSlot.trim() !== '' ? Number(maxOrdersPerSlot) : null
+		onSaveWindow({
+			...(initialWindow?.id ? { id: initialWindow.id } : {}),
 			locationId: effectiveLocationId,
 			date,
 			startTime,
 			endTime,
 			slotIntervalMinutes,
-			maxOrdersPerSlot: null,
-			orderLeadTimeMinutes: 0,
+			maxOrdersPerSlot:
+				parsedMaxOrders !== null &&
+				!isNaN(parsedMaxOrders) &&
+				parsedMaxOrders > 0
+					? parsedMaxOrders
+					: null,
+			orderLeadTimeMinutes,
 		})
 		onOpenChange(false)
 	}
@@ -101,440 +177,218 @@ export function CreatePickupWindowDrawer({
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
+				className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
 			>
-				<SheetHeader>
-					<SheetTitle className="text-xl font-semibold">
-						<Trans>Create pickup window</Trans>
+				<SheetHeader className="border-b px-6 py-4">
+					<SheetTitle className="text-base font-semibold">
+						{isEditing ? (
+							formatPickupDateLabel(date)
+						) : (
+							<Trans>Add pickup window</Trans>
+						)}
 					</SheetTitle>
+					<SheetDescription className="text-muted-foreground text-xs">
+						{isEditing ? (
+							<Trans>Update date, hours, and capacity.</Trans>
+						) : (
+							<Trans>When and where customers pick up orders.</Trans>
+						)}
+					</SheetDescription>
 				</SheetHeader>
 
-				<div className="space-y-5">
-					<div className="space-y-2">
-						<Label htmlFor="pw-location">
-							<Trans>Location</Trans>
-						</Label>
-						<Select
-							value={effectiveLocationId}
-							onValueChange={(val) => setLocationId(val || '')}
-						>
-							<SelectTrigger id="pw-location" className="w-full">
-								<SelectValue placeholder={_(t`Select a location`)} />
-							</SelectTrigger>
-							<SelectContent>
-								{locations.map((loc) => (
-									<SelectItem key={loc.id} value={loc.id}>
-										{loc.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="pw-date">
-							<Trans>Pickup Date</Trans>
-						</Label>
-						<Input
-							id="pw-date"
-							type="date"
-							value={date}
-							onChange={(e) => setDate(e.target.value)}
-						/>
-					</div>
-
-					<div className="grid grid-cols-2 gap-3">
-						<div className="space-y-2">
-							<Label htmlFor="pw-start">
-								<Trans>Start Time</Trans>
-							</Label>
-							<Input
-								id="pw-start"
-								type="time"
-								value={startTime}
-								onChange={(e) => setStartTime(e.target.value)}
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="pw-end">
-								<Trans>End Time</Trans>
-							</Label>
-							<Input
-								id="pw-end"
-								type="time"
-								value={endTime}
-								onChange={(e) => setEndTime(e.target.value)}
-							/>
-						</div>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="pw-interval">
-							<Trans>Pickup interval (minutes)</Trans>
-						</Label>
-						<Select
-							value={String(slotIntervalMinutes)}
-							onValueChange={(val) => setSlotIntervalMinutes(Number(val) || 30)}
-						>
-							<SelectTrigger id="pw-interval" className="w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{DROP_SLOT_INTERVALS.map((int) => (
-									<SelectItem key={int} value={String(int)}>
-										<Trans>{int} minutes</Trans>
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						<p className="text-muted-foreground text-xs">
-							<Trans>
-								Customers choose their pickup time in intervals of this
-								duration.
-							</Trans>
-						</p>
-					</div>
-				</div>
-
-				<SheetFooter className="mt-auto border-t pt-4">
-					<Button onClick={handleAdd} className="w-full">
-						<Trans>Add pickup window</Trans>
-					</Button>
-				</SheetFooter>
-			</SheetContent>
-		</Sheet>
-	)
-}
-
-/* -------------------------------------------------------------------------- */
-/*                       PICKUP WINDOW SETTINGS DRAWER                        */
-/* -------------------------------------------------------------------------- */
-
-interface PickupWindowSettingsDrawerProps {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-	intervalMinutes: number
-	onIntervalChange: (interval: number) => void
-	maxOrdersPerSlot: number | null
-	onMaxOrdersChange: (limit: number | null) => void
-	leadTimeMinutes: number
-	onLeadTimeChange: (lead: number) => void
-}
-
-export function PickupWindowSettingsDrawer({
-	open,
-	onOpenChange,
-	intervalMinutes,
-	onIntervalChange,
-	maxOrdersPerSlot,
-	onMaxOrdersChange,
-	leadTimeMinutes,
-	onLeadTimeChange,
-}: PickupWindowSettingsDrawerProps) {
-	const hasMaxLimit = maxOrdersPerSlot !== null
-	const [maxLimitVal, setMaxLimitVal] = useState(maxOrdersPerSlot ?? 5)
-
-	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
-				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
-			>
-				<SheetHeader>
-					<SheetTitle className="text-xl font-semibold">
-						<Trans>Pickup window settings</Trans>
-					</SheetTitle>
-				</SheetHeader>
-
-				<div className="space-y-6">
-					<div className="space-y-2">
-						<Label>
-							<Trans>Pickup times occur</Trans>
-						</Label>
-						<Select
-							value={String(intervalMinutes)}
-							onValueChange={(val) => onIntervalChange(Number(val) || 30)}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{DROP_SLOT_INTERVALS.map((int) => (
-									<SelectItem key={int} value={String(int)}>
-										<Trans>{int} minutes</Trans>
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label>
-									<Trans>Limit orders per pickup time</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Setting a limit helps you pace preparation and avoid
-										crowding.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={hasMaxLimit}
-								onCheckedChange={(checked) => {
-									onMaxOrdersChange(
-										checked ? (maxOrdersPerSlot ?? maxLimitVal ?? 5) : null,
-									)
-								}}
-							/>
-						</div>
-
-						{hasMaxLimit && (
-							<div className="space-y-1.5 pl-1">
-								<Label htmlFor="pw-max-orders">
-									<Trans>Max orders per slot</Trans>
+				<div className="flex-1 overflow-y-auto px-6 py-5">
+					<div className="divide-border/60 border-border/60 divide-y rounded-lg border">
+						<div className="space-y-3 p-4">
+							<div className="space-y-1.5">
+								<Label htmlFor="pw-date" className="text-sm font-medium">
+									<Trans>Date</Trans>
 								</Label>
 								<Input
-									id="pw-max-orders"
-									type="number"
-									min={1}
-									value={maxOrdersPerSlot ?? maxLimitVal}
-									onChange={(e) => {
-										const val = Number(e.target.value) || 1
-										setMaxLimitVal(val)
-										onMaxOrdersChange(val)
-									}}
+									id="pw-date"
+									type="date"
+									value={date}
+									onChange={(e) => setDate(e.target.value)}
+									className="text-xs"
 								/>
 							</div>
-						)}
-					</div>
+							<div className="grid grid-cols-2 gap-3">
+								<div className="space-y-1.5">
+									<Label htmlFor="pw-start" className="text-xs font-medium">
+										<Trans>Start</Trans>
+									</Label>
+									<Input
+										id="pw-start"
+										type="time"
+										value={startTime}
+										onChange={(e) => setStartTime(e.target.value)}
+										className="text-xs"
+									/>
+								</div>
+								<div className="space-y-1.5">
+									<Label htmlFor="pw-end" className="text-xs font-medium">
+										<Trans>End</Trans>
+									</Label>
+									<Input
+										id="pw-end"
+										type="time"
+										value={endTime}
+										onChange={(e) => setEndTime(e.target.value)}
+										className="text-xs"
+									/>
+								</div>
+							</div>
+							{timeError && (
+								<p className="text-destructive text-xs font-medium">
+									{timeError}
+								</p>
+							)}
+						</div>
 
-					<div className="space-y-2">
-						<Label>
-							<Trans>Order lead time</Trans>
-						</Label>
-						<Select
-							value={String(leadTimeMinutes)}
-							onValueChange={(val) => onLeadTimeChange(Number(val) || 0)}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="0">
-									<Trans>No lead time (orders stay open until slot)</Trans>
-								</SelectItem>
-								<SelectItem value="15">
-									<Trans>15 minutes before slot</Trans>
-								</SelectItem>
-								<SelectItem value="30">
-									<Trans>30 minutes before slot</Trans>
-								</SelectItem>
-								<SelectItem value="60">
-									<Trans>1 hour before slot</Trans>
-								</SelectItem>
-								<SelectItem value="120">
-									<Trans>2 hours before slot</Trans>
-								</SelectItem>
-								<SelectItem value="1440">
-									<Trans>24 hours before slot</Trans>
-								</SelectItem>
-							</SelectContent>
-						</Select>
-						<p className="text-muted-foreground text-xs">
-							<Trans>
-								How far in advance customers must order before a pickup slot.
-							</Trans>
-						</p>
+						<div className="space-y-1.5 p-4">
+							<Label htmlFor="pw-location" className="text-sm font-medium">
+								<Trans>Location</Trans>
+							</Label>
+							<Select
+								value={effectiveLocationId}
+								onValueChange={(val) => setLocationId(val || '')}
+							>
+								<SelectTrigger id="pw-location" className="w-full text-xs">
+									<SelectValue placeholder={_(t`Select a location`)} />
+								</SelectTrigger>
+								<SelectContent>
+									{locations.map((loc) => (
+										<SelectItem key={loc.id} value={loc.id} className="text-xs">
+											{loc.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="space-y-2 p-4">
+							<Label htmlFor="pw-interval" className="text-sm font-medium">
+								<Trans>Slot interval</Trans>
+							</Label>
+							<Select
+								value={String(slotIntervalMinutes)}
+								onValueChange={(val) =>
+									setSlotIntervalMinutes(Number(val) || 30)
+								}
+							>
+								<SelectTrigger id="pw-interval" className="w-full text-xs">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{DROP_SLOT_INTERVALS.map((int) => (
+										<SelectItem
+											key={int}
+											value={String(int)}
+											className="text-xs"
+										>
+											<Trans>{int} minutes</Trans>
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{slotCount > 0 && (
+								<p className="text-muted-foreground text-[11px] leading-relaxed">
+									<span>
+										{slotCount === 1
+											? _(msg`1 pickup slot`)
+											: _(msg`${slotCount} pickup slots`)}
+									</span>
+									<span className="text-foreground/90">
+										{' · '}
+										{slotPreview.map((slot) => slot.displayTime).join(', ')}
+										{hiddenSlotCount > 0 && (
+											<>
+												{', '}
+												<Trans>+{moreSlots} more</Trans>
+											</>
+										)}
+									</span>
+								</p>
+							)}
+							{windowCapacityPreview != null && (
+								<p className="text-muted-foreground text-[11px]">
+									<Trans>
+										{windowCapacityPreview} orders max in this window
+									</Trans>
+								</p>
+							)}
+						</div>
+
+						<div className="space-y-1.5 p-4">
+							<Label htmlFor="pw-max-orders" className="text-sm font-medium">
+								<Trans>Max orders per slot</Trans>
+							</Label>
+							<Input
+								id="pw-max-orders"
+								type="number"
+								min={1}
+								placeholder=""
+								value={maxOrdersPerSlot}
+								onChange={(e) => setMaxOrdersPerSlot(e.target.value)}
+								className="text-xs"
+							/>
+							<p className="text-muted-foreground text-[11px]">
+								<Trans>Leave blank for unlimited.</Trans>
+							</p>
+						</div>
+
+						<div className="space-y-1.5 p-4">
+							<Label htmlFor="pw-lead-time" className="text-sm font-medium">
+								<Trans>Order cutoff</Trans>
+							</Label>
+							<Select
+								value={String(orderLeadTimeMinutes)}
+								onValueChange={(val) =>
+									setOrderLeadTimeMinutes(Number(val) || 0)
+								}
+							>
+								<SelectTrigger id="pw-lead-time" className="w-full text-xs">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="0" className="text-xs">
+										<Trans>At slot time</Trans>
+									</SelectItem>
+									<SelectItem value="60" className="text-xs">
+										<Trans>1 hour prior</Trans>
+									</SelectItem>
+									<SelectItem value="120" className="text-xs">
+										<Trans>2 hours prior</Trans>
+									</SelectItem>
+									<SelectItem value="240" className="text-xs">
+										<Trans>4 hours prior</Trans>
+									</SelectItem>
+									<SelectItem value="720" className="text-xs">
+										<Trans>12 hours prior</Trans>
+									</SelectItem>
+									<SelectItem value="1440" className="text-xs">
+										<Trans>24 hours prior</Trans>
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</div>
 
-				<SheetFooter className="mt-auto border-t pt-4">
-					<Button onClick={() => onOpenChange(false)} className="w-full">
-						<Trans>Done</Trans>
+				<SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => onOpenChange(false)}
+						className="text-xs"
+					>
+						<Trans>Cancel</Trans>
+					</Button>
+					<Button type="button" onClick={handleSave} className="text-xs">
+						<Trans>Save</Trans>
 					</Button>
 				</SheetFooter>
 			</SheetContent>
 		</Sheet>
-	)
-}
-
-/* -------------------------------------------------------------------------- */
-/*                            ITEM INVENTORY DRAWER                           */
-/* -------------------------------------------------------------------------- */
-
-interface ItemInventoryDrawerProps {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-	item: { id: string; displayName: string; price: number } | null
-	currency?: string
-	override?: DropInventoryInput
-	onSave: (override: DropInventoryInput) => void
-}
-
-export function ItemInventoryDrawer({
-	open,
-	onOpenChange,
-	item,
-	currency,
-	override,
-	onSave,
-}: ItemInventoryDrawerProps) {
-	if (!item) return null
-
-	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
-				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
-			>
-				{open && (
-					<ItemInventoryForm
-						key={`${item.id}:${override?.id ?? (override ? 'override' : 'new')}`}
-						item={item}
-						currency={currency}
-						override={override}
-						onSave={onSave}
-						onOpenChange={onOpenChange}
-					/>
-				)}
-			</SheetContent>
-		</Sheet>
-	)
-}
-
-function ItemInventoryForm({
-	item,
-	currency,
-	override,
-	onSave,
-	onOpenChange,
-}: {
-	item: { id: string; displayName: string; price: number }
-	currency?: string
-	override?: DropInventoryInput
-	onSave: (override: DropInventoryInput) => void
-	onOpenChange: (open: boolean) => void
-}) {
-	const [hasInventoryLimit, setHasInventoryLimit] = useState(
-		override?.inventory !== null && override?.inventory !== undefined,
-	)
-	const [inventory, setInventory] = useState<number>(override?.inventory ?? 10)
-	const [maxPerOrder, setMaxPerOrder] = useState<string>(
-		override?.maxPerOrder !== null && override?.maxPerOrder !== undefined
-			? String(override.maxPerOrder)
-			: '',
-	)
-	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>(
-		override?.maxPerPickupSlot !== null &&
-			override?.maxPerPickupSlot !== undefined
-			? String(override.maxPerPickupSlot)
-			: '',
-	)
-
-	const handleSave = () => {
-		onSave({
-			entityType: 'item',
-			entityId: item.id,
-			inventory: hasInventoryLimit ? Number(inventory) : null,
-			maxPerOrder: maxPerOrder ? Number(maxPerOrder) : null,
-			maxPerPickupSlot: maxPerPickupSlot ? Number(maxPerPickupSlot) : null,
-		})
-		onOpenChange(false)
-	}
-
-	return (
-		<>
-			<SheetHeader>
-				<SheetTitle className="text-xl font-semibold">
-					{item.displayName}
-				</SheetTitle>
-				<p className="text-muted-foreground text-sm">
-					{new Intl.NumberFormat(undefined, {
-						style: 'currency',
-						currency: currency || 'USD',
-					}).format(item.price)}
-				</p>
-			</SheetHeader>
-
-			<div className="space-y-6">
-				<div className="space-y-3">
-					<div className="flex items-center justify-between">
-						<div className="space-y-0.5">
-							<Label className="text-base">
-								<Trans>Inventory limit</Trans>
-							</Label>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Set how many of this item are available for this drop.
-								</Trans>
-							</p>
-						</div>
-						<Switch
-							checked={hasInventoryLimit}
-							onCheckedChange={setHasInventoryLimit}
-						/>
-					</div>
-
-					{hasInventoryLimit && (
-						<div className="space-y-1.5 pl-1">
-							<Label htmlFor="item-inv-count">
-								<Trans>Quantity available</Trans>
-							</Label>
-							<Input
-								id="item-inv-count"
-								type="number"
-								min={1}
-								value={inventory}
-								onChange={(e) =>
-									setInventory(Math.max(1, Number(e.target.value) || 1))
-								}
-							/>
-						</div>
-					)}
-				</div>
-
-				<div className="space-y-4 border-t pt-4">
-					<h4 className="text-sm font-medium">
-						<Trans>Customer limits</Trans>
-					</h4>
-
-					<div className="space-y-1.5">
-						<Label htmlFor="item-max-order">
-							<Trans>Max per customer order</Trans>
-						</Label>
-						<Input
-							id="item-max-order"
-							type="number"
-							placeholder={t`No limit`}
-							value={maxPerOrder}
-							onChange={(e) => setMaxPerOrder(e.target.value)}
-						/>
-					</div>
-
-					<div className="space-y-1.5">
-						<Label htmlFor="item-max-slot">
-							<Trans>Max per pickup slot</Trans>
-						</Label>
-						<Input
-							id="item-max-slot"
-							type="number"
-							placeholder={t`No limit`}
-							value={maxPerPickupSlot}
-							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
-						/>
-					</div>
-				</div>
-			</div>
-
-			<SheetFooter className="mt-auto border-t pt-4">
-				<Button onClick={handleSave} className="w-full">
-					<Trans>Save</Trans>
-				</Button>
-			</SheetFooter>
-		</>
 	)
 }
 
@@ -563,7 +417,7 @@ export function SectionInventoryDrawer({
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
+				className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
 			>
 				{open && (
 					<SectionInventoryForm
@@ -608,99 +462,123 @@ function SectionInventoryForm({
 
 	const handleSave = () => {
 		onSave({
+			id: override?.id,
 			entityType: 'category',
 			entityId: category.id,
-			inventory: hasPooledInventory ? Number(inventory) : null,
-			maxPerOrder: maxPerOrder ? Number(maxPerOrder) : null,
-			maxPerPickupSlot: maxPerPickupSlot ? Number(maxPerPickupSlot) : null,
+			inventory: hasPooledInventory ? inventory : null,
+			maxPerOrder: maxPerOrder.trim() !== '' ? Number(maxPerOrder) : null,
+			maxPerPickupSlot:
+				maxPerPickupSlot.trim() !== '' ? Number(maxPerPickupSlot) : null,
 		})
 		onOpenChange(false)
 	}
 
 	return (
 		<>
-			<SheetHeader>
-				<SheetTitle className="text-xl font-semibold">
+			<SheetHeader className="border-b px-6 py-4">
+				<SheetTitle className="text-base font-semibold">
 					{category.displayName}
 				</SheetTitle>
-				<p className="text-muted-foreground text-sm">
-					<Trans>
-						Set a pooled inventory limit for all items in this section.
-					</Trans>
-				</p>
+				<SheetDescription className="text-muted-foreground text-xs">
+					<Trans>Optional limits for this section on this drop.</Trans>
+				</SheetDescription>
 			</SheetHeader>
 
-			<div className="space-y-6">
-				<div className="space-y-3">
-					<div className="flex items-center justify-between">
-						<div className="space-y-0.5">
-							<Label className="text-base">
-								<Trans>Pooled section limit</Trans>
-							</Label>
-							<p className="text-muted-foreground text-xs">
-								<Trans>All items in this section share from this pool.</Trans>
-							</p>
-						</div>
-						<Switch
-							checked={hasPooledInventory}
-							onCheckedChange={setHasPooledInventory}
-						/>
-					</div>
-
-					{hasPooledInventory && (
-						<div className="space-y-1.5 pl-1">
-							<Label htmlFor="sec-inv-count">
-								<Trans>Pooled quantity available</Trans>
-							</Label>
-							<Input
-								id="sec-inv-count"
-								type="number"
-								min={1}
-								value={inventory}
-								onChange={(e) =>
-									setInventory(Math.max(1, Number(e.target.value) || 1))
-								}
+			<div className="flex-1 overflow-y-auto px-6 py-5">
+				<div className="divide-border/60 border-border/60 divide-y rounded-lg border">
+					<div className="space-y-3 p-4">
+						<div className="flex items-start justify-between gap-3">
+							<div className="space-y-0.5">
+								<Label
+									htmlFor="sec-inv-toggle"
+									className="text-foreground text-sm font-medium"
+								>
+									<Trans>Pooled total</Trans>
+								</Label>
+								<p className="text-muted-foreground text-[11px]">
+									<Trans>Shared cap across all items in this section.</Trans>
+								</p>
+							</div>
+							<Switch
+								id="sec-inv-toggle"
+								checked={hasPooledInventory}
+								onCheckedChange={setHasPooledInventory}
 							/>
 						</div>
-					)}
-				</div>
+						{hasPooledInventory && (
+							<div className="space-y-1.5">
+								<Label htmlFor="sec-inv-count" className="text-xs font-medium">
+									<Trans>Units available</Trans>
+								</Label>
+								<Input
+									id="sec-inv-count"
+									type="number"
+									min={1}
+									value={inventory}
+									onChange={(e) =>
+										setInventory(Math.max(1, Number(e.target.value) || 1))
+									}
+									className="text-xs"
+								/>
+								<p className="text-muted-foreground text-[11px]">
+									<Trans>
+										When this total is reached, every item in the section sells
+										out.
+									</Trans>
+								</p>
+							</div>
+						)}
+					</div>
 
-				<div className="space-y-4 border-t pt-4">
-					<h4 className="text-sm font-medium">
-						<Trans>Customer limits</Trans>
-					</h4>
-
-					<div className="space-y-1.5">
-						<Label htmlFor="sec-max-order">
-							<Trans>Max per customer order</Trans>
+					<div className="space-y-1.5 p-4">
+						<Label htmlFor="sec-max-order" className="text-sm font-medium">
+							<Trans>Max per order</Trans>
 						</Label>
 						<Input
 							id="sec-max-order"
 							type="number"
-							placeholder={t`No limit`}
+							min={1}
+							placeholder=""
 							value={maxPerOrder}
 							onChange={(e) => setMaxPerOrder(e.target.value)}
+							className="text-xs"
 						/>
+						<p className="text-muted-foreground text-[11px]">
+							<Trans>Leave blank for no limit.</Trans>
+						</p>
 					</div>
 
-					<div className="space-y-1.5">
-						<Label htmlFor="sec-max-slot">
+					<div className="space-y-1.5 p-4">
+						<Label htmlFor="sec-max-slot" className="text-sm font-medium">
 							<Trans>Max per pickup slot</Trans>
 						</Label>
 						<Input
 							id="sec-max-slot"
 							type="number"
-							placeholder={t`No limit`}
+							min={1}
+							placeholder=""
 							value={maxPerPickupSlot}
 							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
+							className="text-xs"
 						/>
+						<p className="text-muted-foreground text-[11px]">
+							<Trans>Leave blank for no limit.</Trans>
+						</p>
 					</div>
 				</div>
 			</div>
 
-			<SheetFooter className="mt-auto border-t pt-4">
-				<Button onClick={handleSave} className="w-full">
-					<Trans>Save section settings</Trans>
+			<SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+				<Button
+					type="button"
+					variant="outline"
+					onClick={() => onOpenChange(false)}
+					className="text-xs"
+				>
+					<Trans>Cancel</Trans>
+				</Button>
+				<Button type="button" onClick={handleSave} className="text-xs">
+					<Trans>Save</Trans>
 				</Button>
 			</SheetFooter>
 		</>
@@ -708,157 +586,189 @@ function SectionInventoryForm({
 }
 
 /* -------------------------------------------------------------------------- */
-/*                         ADDITIONAL OPTIONS DRAWER                          */
+/*                           ITEM INVENTORY DRAWER                            */
 /* -------------------------------------------------------------------------- */
 
-interface AdditionalOptionsDrawerProps {
+interface ItemInventoryDrawerProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
-	checkoutHoldMinutes: number
-	onHoldMinutesChange: (mins: number) => void
-	showOrdersOpenTime: boolean
-	onShowOpenTimeChange: (show: boolean) => void
-	showMenuPreview: boolean
-	onShowMenuPreviewChange: (show: boolean) => void
-	showInventoryRemaining: boolean
-	onShowInventoryChange: (show: boolean) => void
-	includeGiftCard: boolean
-	onIncludeGiftCardChange: (include: boolean) => void
+	item: { id: string; displayName: string } | null
+	override?: DropInventoryInput
+	onSave: (override: DropInventoryInput) => void
 }
 
-export function AdditionalOptionsDrawer({
+export function ItemInventoryDrawer({
 	open,
 	onOpenChange,
-	checkoutHoldMinutes,
-	onHoldMinutesChange,
-	showOrdersOpenTime,
-	onShowOpenTimeChange,
-	showMenuPreview,
-	onShowMenuPreviewChange,
-	showInventoryRemaining,
-	onShowInventoryChange,
-	includeGiftCard,
-	onIncludeGiftCardChange,
-}: AdditionalOptionsDrawerProps) {
+	item,
+	override,
+	onSave,
+}: ItemInventoryDrawerProps) {
+	if (!item) return null
+
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
-				className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md"
+				className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
 			>
-				<SheetHeader>
-					<SheetTitle className="text-xl font-semibold">
-						<Trans>Additional options</Trans>
-					</SheetTitle>
-				</SheetHeader>
+				{open && (
+					<ItemInventoryForm
+						key={`${item.id}:${override?.id ?? (override ? 'override' : 'new')}`}
+						item={item}
+						override={override}
+						onSave={onSave}
+						onOpenChange={onOpenChange}
+					/>
+				)}
+			</SheetContent>
+		</Sheet>
+	)
+}
 
-				<div className="space-y-6">
-					<div className="space-y-2">
-						<Label>
-							<Trans>Checkout countdown timer</Trans>
+function ItemInventoryForm({
+	item,
+	override,
+	onSave,
+	onOpenChange,
+}: {
+	item: { id: string; displayName: string }
+	override?: DropInventoryInput
+	onSave: (override: DropInventoryInput) => void
+	onOpenChange: (open: boolean) => void
+}) {
+	const [hasInventoryLimit, setHasInventoryLimit] = useState(
+		override?.inventory !== null && override?.inventory !== undefined,
+	)
+	const [inventory, setInventory] = useState<number>(override?.inventory ?? 10)
+	const [maxPerOrder, setMaxPerOrder] = useState<string>(
+		override?.maxPerOrder !== null && override?.maxPerOrder !== undefined
+			? String(override.maxPerOrder)
+			: '',
+	)
+	const [maxPerPickupSlot, setMaxPerPickupSlot] = useState<string>(
+		override?.maxPerPickupSlot !== null &&
+			override?.maxPerPickupSlot !== undefined
+			? String(override.maxPerPickupSlot)
+			: '',
+	)
+
+	const handleSave = () => {
+		onSave({
+			id: override?.id,
+			entityType: 'item',
+			entityId: item.id,
+			inventory: hasInventoryLimit ? inventory : null,
+			maxPerOrder: maxPerOrder.trim() !== '' ? Number(maxPerOrder) : null,
+			maxPerPickupSlot:
+				maxPerPickupSlot.trim() !== '' ? Number(maxPerPickupSlot) : null,
+		})
+		onOpenChange(false)
+	}
+
+	return (
+		<>
+			<SheetHeader className="border-b px-6 py-4">
+				<SheetTitle className="text-base font-semibold">
+					{item.displayName}
+				</SheetTitle>
+				<SheetDescription className="text-muted-foreground text-xs">
+					<Trans>Optional limits for this item on this drop.</Trans>
+				</SheetDescription>
+			</SheetHeader>
+
+			<div className="flex-1 overflow-y-auto px-6 py-5">
+				<div className="divide-border/60 border-border/60 divide-y rounded-lg border">
+					<div className="space-y-3 p-4">
+						<div className="flex items-start justify-between gap-3">
+							<div className="space-y-0.5">
+								<Label
+									htmlFor="item-inv-toggle"
+									className="text-foreground text-sm font-medium"
+								>
+									<Trans>Total units</Trans>
+								</Label>
+								<p className="text-muted-foreground text-[11px]">
+									<Trans>Cap how many units can be sold in this drop.</Trans>
+								</p>
+							</div>
+							<Switch
+								id="item-inv-toggle"
+								checked={hasInventoryLimit}
+								onCheckedChange={setHasInventoryLimit}
+							/>
+						</div>
+						{hasInventoryLimit && (
+							<div className="space-y-1.5">
+								<Label htmlFor="item-inv-count" className="text-xs font-medium">
+									<Trans>Units available</Trans>
+								</Label>
+								<Input
+									id="item-inv-count"
+									type="number"
+									min={1}
+									value={inventory}
+									onChange={(e) =>
+										setInventory(Math.max(1, Number(e.target.value) || 1))
+									}
+									className="text-xs"
+								/>
+							</div>
+						)}
+					</div>
+
+					<div className="space-y-1.5 p-4">
+						<Label htmlFor="item-max-order" className="text-sm font-medium">
+							<Trans>Max per order</Trans>
 						</Label>
-						<Select
-							value={String(checkoutHoldMinutes)}
-							onValueChange={(v) => onHoldMinutesChange(Number(v) || 5)}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{DROP_CHECKOUT_HOLD_OPTIONS.map((min) => (
-									<SelectItem key={min} value={String(min)}>
-										<Trans>{min} minutes</Trans>
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						<p className="text-muted-foreground text-xs">
-							<Trans>
-								Customers have this much time to finish checkout before their
-								items are released back to inventory.
-							</Trans>
+						<Input
+							id="item-max-order"
+							type="number"
+							min={1}
+							placeholder=""
+							value={maxPerOrder}
+							onChange={(e) => setMaxPerOrder(e.target.value)}
+							className="text-xs"
+						/>
+						<p className="text-muted-foreground text-[11px]">
+							<Trans>Leave blank for no limit.</Trans>
 						</p>
 					</div>
 
-					<div className="space-y-5 border-t pt-3">
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label>
-									<Trans>Orders open time</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Show the exact countdown timer until drop orders open.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={showOrdersOpenTime}
-								onCheckedChange={onShowOpenTimeChange}
-							/>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label>
-									<Trans>Menu preview</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Allow customers to preview menu items before orders open.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={showMenuPreview}
-								onCheckedChange={onShowMenuPreviewChange}
-							/>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label>
-									<Trans>Inventory remaining on storefront</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Display remaining badges (e.g. "Only 3 left") on item cards.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={showInventoryRemaining}
-								onCheckedChange={onShowInventoryChange}
-							/>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<div className="space-y-0.5">
-								<Label>
-									<Trans>Add gift card to menu</Trans>
-								</Label>
-								<p className="text-muted-foreground text-xs">
-									<Trans>
-										Allow customers to purchase gift cards alongside their drop
-										order.
-									</Trans>
-								</p>
-							</div>
-							<Switch
-								checked={includeGiftCard}
-								onCheckedChange={onIncludeGiftCardChange}
-							/>
-						</div>
+					<div className="space-y-1.5 p-4">
+						<Label htmlFor="item-max-slot" className="text-sm font-medium">
+							<Trans>Max per pickup slot</Trans>
+						</Label>
+						<Input
+							id="item-max-slot"
+							type="number"
+							min={1}
+							placeholder=""
+							value={maxPerPickupSlot}
+							onChange={(e) => setMaxPerPickupSlot(e.target.value)}
+							className="text-xs"
+						/>
+						<p className="text-muted-foreground text-[11px]">
+							<Trans>Leave blank for no limit.</Trans>
+						</p>
 					</div>
 				</div>
+			</div>
 
-				<SheetFooter className="mt-auto border-t pt-4">
-					<Button onClick={() => onOpenChange(false)} className="w-full">
-						<Trans>Done</Trans>
-					</Button>
-				</SheetFooter>
-			</SheetContent>
-		</Sheet>
+			<SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+				<Button
+					type="button"
+					variant="outline"
+					onClick={() => onOpenChange(false)}
+					className="text-xs"
+				>
+					<Trans>Cancel</Trans>
+				</Button>
+				<Button type="button" onClick={handleSave} className="text-xs">
+					<Trans>Save</Trans>
+				</Button>
+			</SheetFooter>
+		</>
 	)
 }
 
@@ -869,172 +779,148 @@ export function AdditionalOptionsDrawer({
 interface AddReminderModalProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
-	ordersOpenAt?: string
-	ordersCloseAt?: string
-	onAddReminder: (reminder: DropReminderInput) => void
+	initialReminder?: DropReminderInput | null
+	onSaveReminder: (reminder: DropReminderInput) => void
 }
 
 export function AddReminderModal({
 	open,
 	onOpenChange,
-	ordersOpenAt,
-	ordersCloseAt,
-	onAddReminder,
+	initialReminder,
+	onSaveReminder,
 }: AddReminderModalProps) {
+	const { _ } = useLingui()
+	const isEditing = initialReminder != null
 	const [title, setTitle] = useState('')
+	const [message, setMessage] = useState('')
 	const [triggerType, setTriggerType] = useState<
 		'before_open' | 'before_close' | 'custom'
 	>('before_open')
-	const [offsetMinutes, setOffsetMinutes] = useState(15)
-	const [customDateTime, setCustomDateTime] = useState('')
 
-	const canAdd =
-		Boolean(title.trim()) &&
-		(triggerType === 'custom'
-			? Boolean(customDateTime)
-			: triggerType === 'before_open'
-				? Boolean(ordersOpenAt)
-				: Boolean(ordersCloseAt))
-
-	const handleAdd = () => {
-		if (!canAdd) return
-		let scheduledAt: Date
-		if (triggerType === 'before_open' && ordersOpenAt) {
-			scheduledAt = new Date(
-				new Date(ordersOpenAt).getTime() - offsetMinutes * 60 * 1000,
-			)
-		} else if (triggerType === 'before_close' && ordersCloseAt) {
-			scheduledAt = new Date(
-				new Date(ordersCloseAt).getTime() - offsetMinutes * 60 * 1000,
-			)
-		} else if (triggerType === 'custom' && customDateTime) {
-			scheduledAt = new Date(customDateTime)
+	useEffect(() => {
+		if (!open) return
+		if (initialReminder) {
+			setTitle(initialReminder.title)
+			setMessage(initialReminder.message ?? '')
+			setTriggerType(initialReminder.triggerType)
 		} else {
-			return
+			setTitle('')
+			setMessage('')
+			setTriggerType('before_open')
 		}
-		onAddReminder({
-			title,
+	}, [open, initialReminder])
+
+	const handleSave = () => {
+		if (!title.trim()) return
+		const existingScheduledAt = initialReminder?.scheduledAt
+		onSaveReminder({
+			...(initialReminder?.id ? { id: initialReminder.id } : {}),
+			title: title.trim(),
+			message: message.trim() || null,
 			triggerType,
-			scheduledAt,
-			status: 'pending',
+			scheduledAt: existingScheduledAt
+				? new Date(existingScheduledAt)
+				: new Date(),
+			status: initialReminder?.status ?? 'pending',
 		})
-		setTitle('')
 		onOpenChange(false)
 	}
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>
-						<Trans>Add drop reminder</Trans>
+			<DialogContent className="overflow-hidden p-0 sm:max-w-md">
+				<DialogHeader className="border-b px-6 py-4">
+					<DialogTitle className="text-base font-semibold">
+						{isEditing ? (
+							<Trans>Edit Reminder</Trans>
+						) : (
+							<Trans>Schedule Customer Reminder</Trans>
+						)}
 					</DialogTitle>
+					<DialogDescription className="text-muted-foreground text-xs">
+						<Trans>
+							Send automated notifications to subscribed guests before your drop
+							opens or closes.
+						</Trans>
+					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-4 py-2">
+				<div className="space-y-4 px-6 py-5">
 					<div className="space-y-1.5">
-						<Label htmlFor="rem-title">
-							<Trans>Reminder title</Trans>
-						</Label>
-						<Input
-							id="rem-title"
-							placeholder={t`e.g. We are about to drop!`}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-						/>
-					</div>
-
-					<div className="space-y-1.5">
-						<Label>
-							<Trans>Trigger timing</Trans>
+						<Label htmlFor="rem-type" className="text-xs font-medium">
+							<Trans>Trigger Timing</Trans>
 						</Label>
 						<Select
 							value={triggerType}
 							onValueChange={(val: any) => setTriggerType(val)}
 						>
-							<SelectTrigger className="w-full">
+							<SelectTrigger id="rem-type" className="w-full text-xs">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="before_open">
+								<SelectItem value="before_open" className="text-xs">
 									<Trans>Before drop opens</Trans>
 								</SelectItem>
-								<SelectItem value="before_close">
+								<SelectItem value="before_close" className="text-xs">
 									<Trans>Before drop closes</Trans>
 								</SelectItem>
-								<SelectItem value="custom">
-									<Trans>Custom scheduled time</Trans>
+								<SelectItem value="custom" className="text-xs">
+									<Trans>Custom scheduled date/time</Trans>
 								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 
-					{triggerType === 'custom' ? (
-						<div className="space-y-1.5">
-							<Label htmlFor="rem-custom-time">
-								<Trans>Custom scheduled time</Trans>
-							</Label>
-							<Input
-								id="rem-custom-time"
-								type="datetime-local"
-								value={customDateTime}
-								onChange={(e) => setCustomDateTime(e.target.value)}
-							/>
-						</div>
-					) : (
-						<div className="space-y-1.5">
-							<Label>
-								<Trans>Offset</Trans>
-							</Label>
-							<Select
-								value={String(offsetMinutes)}
-								onValueChange={(v) => setOffsetMinutes(Number(v) || 15)}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="5">
-										<Trans>5 minutes before</Trans>
-									</SelectItem>
-									<SelectItem value="15">
-										<Trans>15 minutes before</Trans>
-									</SelectItem>
-									<SelectItem value="30">
-										<Trans>30 minutes before</Trans>
-									</SelectItem>
-									<SelectItem value="60">
-										<Trans>1 hour before</Trans>
-									</SelectItem>
-									<SelectItem value="120">
-										<Trans>2 hours before</Trans>
-									</SelectItem>
-								</SelectContent>
-							</Select>
-							{triggerType === 'before_open' && !ordersOpenAt && (
-								<p className="text-xs text-amber-600 dark:text-amber-400">
-									<Trans>
-										Orders open time must be configured in Step 1 first.
-									</Trans>
-								</p>
+					<div className="space-y-1.5">
+						<Label htmlFor="rem-title" className="text-xs font-medium">
+							<Trans>Subject / Notification Title</Trans>
+						</Label>
+						<Input
+							id="rem-title"
+							placeholder={_(msg`e.g. Orders are now open!`)}
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							className="text-xs"
+						/>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="rem-msg" className="text-xs font-medium">
+							<Trans>Notification Message</Trans>
+						</Label>
+						<Textarea
+							id="rem-msg"
+							rows={3}
+							placeholder={_(
+								msg`e.g. Order now before your favorites sell out.`,
 							)}
-							{triggerType === 'before_close' && !ordersCloseAt && (
-								<p className="text-xs text-amber-600 dark:text-amber-400">
-									<Trans>
-										Orders close time must be configured in Step 1 first.
-									</Trans>
-								</p>
-							)}
-						</div>
-					)}
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+							className="resize-none text-xs"
+						/>
+					</div>
 				</div>
 
-				<DialogFooter>
-					<Button variant="outline" onClick={() => onOpenChange(false)}>
+				<DialogFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => onOpenChange(false)}
+						className="text-xs"
+					>
 						<Trans>Cancel</Trans>
 					</Button>
-					<Button onClick={handleAdd} disabled={!canAdd}>
-						<Trans>Add reminder</Trans>
+					<Button
+						type="button"
+						onClick={handleSave}
+						disabled={!title.trim()}
+						className="text-xs"
+					>
+						{isEditing ? (
+							<Trans>Save Changes</Trans>
+						) : (
+							<Trans>Add Reminder</Trans>
+						)}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

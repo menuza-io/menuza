@@ -229,6 +229,7 @@ export function MenuAvailabilityCard({
 		unavailable_until: <Trans>Unavailable Until</Trans>,
 		unavailable_until_tomorrow: <Trans>Unavailable Until</Trans>,
 		unavailable: <Trans>Unavailable</Trans>,
+		hidden: <Trans>Hidden</Trans>,
 	}
 
 	return (
@@ -237,7 +238,7 @@ export function MenuAvailabilityCard({
 				<FrameTitle className="text-base">
 					<Trans>Availability Status</Trans>
 				</FrameTitle>
-				<FrameDescription className="text-xs">
+				<FrameDescription>
 					<Trans>Control overall ordering availability for guests.</Trans>
 				</FrameDescription>
 			</FrameHeader>
@@ -280,8 +281,25 @@ export function MenuAvailabilityCard({
 								</span>
 							</div>
 						</SelectItem>
+						<SelectItem value="hidden">
+							<div className="flex items-center gap-2">
+								<span className="size-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+								<span>
+									<Trans>Hidden</Trans>
+								</span>
+							</div>
+						</SelectItem>
 					</SelectContent>
 				</Select>
+
+				{normalizedStatus === 'hidden' && (
+					<p className="text-muted-foreground text-xs">
+						<Trans>
+							Hidden from public discovery. Ideal for exclusive drops, secret
+							menus, and scheduled events.
+						</Trans>
+					</p>
+				)}
 
 				{isUnavailableUntil && (
 					<div className="border-border/50 space-y-3 border-t pt-2">

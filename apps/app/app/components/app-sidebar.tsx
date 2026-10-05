@@ -334,6 +334,11 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/menu/options`,
 					isActive: location.pathname.includes(`/${orgSlug}/menu/options`),
 				},
+				{
+					title: _(msg`Drops`),
+					url: `/${orgSlug}/menu/drops`,
+					isActive: location.pathname.includes(`/${orgSlug}/menu/drops`),
+				},
 			],
 		},
 		{

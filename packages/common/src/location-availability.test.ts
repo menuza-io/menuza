@@ -219,8 +219,9 @@ describe('isUnavailableUntilExpired', () => {
 		).toBe(true)
 	})
 
-	it('returns false when status is unavailable or future unavailable_until', () => {
+	it('returns false when status is unavailable, hidden, or future unavailable_until', () => {
 		expect(isUnavailableUntilExpired('unavailable')).toBe(false)
+		expect(isUnavailableUntilExpired('hidden')).toBe(false)
 		expect(
 			isUnavailableUntilExpired(
 				'unavailable_until',

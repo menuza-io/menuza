@@ -1,15 +1,14 @@
-import { getLocationCurrency } from '@repo/common/location-currency'
 import { requireUserId } from '@repo/auth'
+import { getLocationCurrency } from '@repo/common/location-currency'
 import { DropInputSchema } from '@repo/common/menu-types'
 import {
 	db,
 	eq,
-	inArray,
 	asc,
 	desc,
 	OrganizationLocation,
-	OrganizationMenuCategory,
-	OrganizationMenuItem,
+	OrganizationMenu,
+	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItemCategoryAssignment,
 } from '@repo/database'
 import {
@@ -19,11 +18,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { DropForm } from '#app/components/menu/drop-wizard/drop-form.tsx'
-import {
-	assertDropInOrganization,
-	getDropWithDetails,
-	saveDrop,
-} from '#app/utils/menu/drops.server.ts'
+import { getDropWithDetails, saveDrop } from '#app/utils/menu/drops.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -39,9 +34,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Drop not found', { status: 404 })
 	}
 
-	await assertDropInOrganization(organization.id, dropId)
-
 	const drop = await getDropWithDetails(organization.id, dropId)
+
 	if (!drop) {
 		throw new Response('Drop not found', { status: 404 })
 	}
@@ -54,52 +48,93 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
-	const categories = await db.query.OrganizationMenuCategory.findMany({
-		where: eq(OrganizationMenuCategory.organizationId, organization.id),
-		orderBy: [asc(OrganizationMenuCategory.position)],
+	const menus = await db.query.OrganizationMenu.findMany({
+		where: eq(OrganizationMenu.organizationId, organization.id),
+		orderBy: [asc(OrganizationMenu.position), asc(OrganizationMenu.createdAt)],
+		with: {
+			categoryAssignments: {
+				orderBy: [asc(OrganizationMenuCategoryAssignment.position)],
+				with: {
+					category: {
+						with: {
+							itemAssignments: {
+								orderBy: [asc(OrganizationMenuItemCategoryAssignment.position)],
+								with: {
+									item: true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	})
 
-	const categoryIds = categories.map((c) => c.id)
-	const itemAssignments = categoryIds.length
-		? await db
-				.select()
-				.from(OrganizationMenuItemCategoryAssignment)
-				.where(
-					inArray(
-						OrganizationMenuItemCategoryAssignment.categoryId,
-						categoryIds,
-					),
-				)
-				.orderBy(asc(OrganizationMenuItemCategoryAssignment.position))
-		: []
-
-	const items = await db.query.OrganizationMenuItem.findMany({
-		where: eq(OrganizationMenuItem.organizationId, organization.id),
-		orderBy: [asc(OrganizationMenuItem.position)],
-	})
-
-	const itemsMap = new Map(items.map((i) => [i.id, i]))
-
-	const formattedCategories = categories.map((cat) => {
-		const assigned = itemAssignments
-			.filter((ia) => ia.categoryId === cat.id)
-			.map((ia) => itemsMap.get(ia.itemId))
-			.filter(Boolean)
-
-		return {
-			id: cat.id,
-			displayName: cat.displayName,
-			items: assigned.map((item) => ({
-				id: item!.id,
-				displayName: item!.displayName,
-				price: item!.price,
-				imageKey: item!.imageKey,
+	const formattedMenus = menus
+		.filter((menu) => menu.menuType !== 'drop' || menu.id === drop.menuId)
+		.map((menu) => ({
+			id: menu.id,
+			displayName: menu.displayName,
+			internalName: menu.internalName,
+			availabilityStatus: menu.availabilityStatus,
+			categories: menu.categoryAssignments.map((ca) => ({
+				id: ca.category.id,
+				displayName: ca.category.displayName,
+				internalName: ca.category.internalName,
+				items: ca.category.itemAssignments.map((ia) => ({
+					id: ia.item.id,
+					displayName: ia.item.displayName,
+					price: ia.item.price,
+					imageKey: ia.item.imageKey,
+					imageUrl: ia.item.imageUrl,
+				})),
 			})),
-		}
-	})
+		}))
 
-	const assignedCategoryIds =
-		drop.menu?.categoryAssignments.map((ca) => ca.categoryId) || []
+	const initialData = {
+		id: drop.id,
+		title: drop.title,
+		slug: drop.slug,
+		description: drop.description,
+		status: drop.status as any,
+		menuId: drop.menuId,
+		ordersOpenAt: drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null,
+		ordersCloseAt: drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null,
+		visibility: drop.visibility as 'public' | 'unlisted',
+		checkoutHoldMinutes: drop.checkoutHoldMinutes,
+		showOrdersOpenTime: drop.showOrdersOpenTime,
+		showMenuPreview: drop.showMenuPreview,
+		showInventoryRemaining: drop.showInventoryRemaining,
+		includeGiftCard: drop.includeGiftCard,
+		coverImageKey: drop.coverImageKey,
+		coverImageUrl: drop.coverImageUrl,
+		pickupWindows: drop.pickupWindows.map((pw) => ({
+			id: pw.id,
+			locationId: pw.locationId,
+			date: pw.date,
+			startTime: pw.startTime,
+			endTime: pw.endTime,
+			slotIntervalMinutes: pw.slotIntervalMinutes,
+			maxOrdersPerSlot: pw.maxOrdersPerSlot,
+			orderLeadTimeMinutes: pw.orderLeadTimeMinutes,
+		})),
+		inventoryOverrides: drop.inventoryOverrides.map((inv) => ({
+			id: inv.id,
+			entityType: inv.entityType as any,
+			entityId: inv.entityId,
+			inventory: inv.inventory,
+			maxPerOrder: inv.maxPerOrder,
+			maxPerPickupSlot: inv.maxPerPickupSlot,
+		})),
+		reminders: drop.reminders.map((r) => ({
+			id: r.id,
+			title: r.title,
+			message: r.message,
+			triggerType: r.triggerType as any,
+			scheduledAt: new Date(r.scheduledAt),
+			status: r.status as any,
+		})),
+	}
 
 	return {
 		orgSlug: organization.slug,
@@ -108,82 +143,30 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			name: l.name,
 			timezone: l.timezone ?? undefined,
 		})),
-		availableCategories: formattedCategories,
+		availableMenus: formattedMenus,
+		initialData,
 		currency: getLocationCurrency(locations[0]?.address),
-		availableItems: items.map((i) => ({
-			id: i.id,
-			displayName: i.displayName,
-			price: i.price,
-			imageKey: i.imageKey,
-		})),
-		initialData: {
-			id: drop.id,
-			title: drop.title,
-			slug: drop.slug,
-			description: drop.description,
-			coverImageKey: drop.coverImageKey,
-			coverImageUrl: drop.coverImageUrl,
-			status: drop.status as any,
-			ordersOpenAt: drop.ordersOpenAt,
-			ordersCloseAt: drop.ordersCloseAt,
-			visibility: drop.visibility as any,
-			checkoutHoldMinutes: drop.checkoutHoldMinutes,
-			showOrdersOpenTime: drop.showOrdersOpenTime,
-			showMenuPreview: drop.showMenuPreview,
-			showInventoryRemaining: drop.showInventoryRemaining,
-			includeGiftCard: drop.includeGiftCard,
-			pickupWindows: drop.pickupWindows.map((pw) => ({
-				id: pw.id,
-				locationId: pw.locationId,
-				date: pw.date,
-				startTime: pw.startTime,
-				endTime: pw.endTime,
-				slotIntervalMinutes: pw.slotIntervalMinutes,
-				maxOrdersPerSlot: pw.maxOrdersPerSlot,
-				orderLeadTimeMinutes: pw.orderLeadTimeMinutes,
-			})),
-			inventoryOverrides: drop.inventoryOverrides.map((inv) => ({
-				id: inv.id,
-				entityType: inv.entityType as any,
-				entityId: inv.entityId,
-				inventory: inv.inventory,
-				maxPerOrder: inv.maxPerOrder,
-				maxPerPickupSlot: inv.maxPerPickupSlot,
-			})),
-			reminders: drop.reminders.map((rem) => ({
-				id: rem.id,
-				title: rem.title,
-				message: rem.message,
-				triggerType: rem.triggerType as any,
-				scheduledAt: rem.scheduledAt,
-				status: rem.status as any,
-			})),
-			assignedCategoryIds,
-		},
 	}
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
 	})
-
 	const dropId = params.dropId
 	if (!dropId) {
 		throw new Response('Drop not found', { status: 404 })
 	}
 
-	await assertDropInOrganization(organization.id, dropId)
-
 	const formData = await request.formData()
-	const rawData: Record<string, unknown> = {}
+	const rawData: Record<string, unknown> = {
+		id: dropId,
+	}
 
 	for (const [key, value] of formData.entries()) {
 		if (
 			key === 'pickupWindows' ||
-			key === 'assignedCategoryIds' ||
 			key === 'inventoryOverrides' ||
 			key === 'reminders'
 		) {
@@ -199,53 +182,45 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			key === 'includeGiftCard'
 		) {
 			rawData[key] = value === 'true'
+		} else if (value === '' || value === 'null') {
+			rawData[key] = null
 		} else {
 			rawData[key] = value
 		}
 	}
 
-	const parsed = DropInputSchema.safeParse({ ...rawData, id: dropId })
+	const parsed = DropInputSchema.safeParse(rawData)
+
 	if (!parsed.success) {
 		return Response.json(
-			{ error: parsed.error.flatten().fieldErrors },
+			{ errors: parsed.error.flatten().fieldErrors },
 			{ status: 400 },
 		)
 	}
 
-	const assignedCategoryIds = Array.isArray(rawData.assignedCategoryIds)
-		? (rawData.assignedCategoryIds as string[])
-		: []
-
 	await saveDrop(organization.id, {
 		...parsed.data,
 		id: dropId,
-		assignedCategoryIds,
 	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
-	return redirect(`/${organization.slug}/menu/drops`)
+	return redirect(`/${organization.slug}/menu/drops/${dropId}`)
 }
 
-export default function DropEditRoute() {
-	const {
-		orgSlug,
-		locations,
-		availableCategories,
-		availableItems,
-		initialData,
-		currency,
-	} = useLoaderData<typeof loader>()
-
+export default function EditDropRoute() {
+	const data = useLoaderData<typeof loader>()
 	return (
-		<DropForm
-			orgSlug={orgSlug}
-			currency={currency}
-			locations={locations}
-			availableCategories={availableCategories}
-			availableItems={availableItems}
-			initialData={initialData as any}
-			isEdit={true}
-		/>
+		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
+			<DropForm
+				pageTitle="Edit Drop"
+				orgSlug={data.orgSlug}
+				locations={data.locations}
+				availableMenus={data.availableMenus}
+				initialData={data.initialData}
+				isEdit
+				currency={data.currency}
+			/>
+		</div>
 	)
 }

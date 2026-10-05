@@ -146,7 +146,10 @@ export async function loadMenuForSync(
 				price: Math.round(
 					(optionRow.priceOverride ?? optionRow.option?.price ?? 0) * 100,
 				),
-				available: optionRow.option?.availabilityStatus !== 'unavailable',
+				available: isUnavailableUntilExpired(
+					optionRow.option?.availabilityStatus,
+					optionRow.option?.unavailableUntil,
+				),
 			}))
 			const max = group.maxSelections ?? Math.max(options.length, 1)
 			return [

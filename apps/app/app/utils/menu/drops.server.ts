@@ -1,4 +1,3 @@
-import slugify from '@sindresorhus/slugify'
 import { type DropInput } from '@repo/common/menu-types'
 import {
 	db,
@@ -15,9 +14,11 @@ import {
 	OrganizationMenu,
 	OrganizationMenuCategory,
 	OrganizationMenuCategoryAssignment,
+	OrganizationMenuItem,
 	OrganizationMenuItemCategoryAssignment,
 	OrganizationLocation,
 } from '@repo/database'
+import slugify from '@sindresorhus/slugify'
 
 export async function assertDropInOrganization(
 	organizationId: string,
@@ -143,7 +144,25 @@ export async function saveDrop(
 
 	return await db.transaction(async (tx) => {
 		let dropId = data.id
-		let menuId: string
+		const menuId = data.menuId
+
+		// Verify that the selected menu belongs to this organization
+		const verifiedMenu = await tx
+			.select({ id: OrganizationMenu.id })
+			.from(OrganizationMenu)
+			.where(
+				and(
+					eq(OrganizationMenu.id, menuId),
+					eq(OrganizationMenu.organizationId, organizationId),
+				),
+			)
+			.limit(1)
+
+		if (!verifiedMenu[0]) {
+			throw new Response('Selected menu not found in organization', {
+				status: 400,
+			})
+		}
 
 		// Ensure unique slug within organization
 		const existingWithSlug = await tx
@@ -164,7 +183,7 @@ export async function saveDrop(
 
 		if (dropId) {
 			const existing = await tx
-				.select({ id: OrganizationDrop.id, menuId: OrganizationDrop.menuId })
+				.select({ id: OrganizationDrop.id })
 				.from(OrganizationDrop)
 				.where(
 					and(
@@ -178,29 +197,11 @@ export async function saveDrop(
 				throw new Response('Drop not found', { status: 404 })
 			}
 
-			menuId = existing[0].menuId
-
-			// Update hidden drop menu with tenant defense-in-depth
-			await tx
-				.update(OrganizationMenu)
-				.set({
-					displayName: data.title,
-					internalName: `[Drop] ${data.title}`,
-					menuType: 'drop',
-					availabilityStatus:
-						data.status === 'live' ? 'available' : 'unavailable',
-				})
-				.where(
-					and(
-						eq(OrganizationMenu.id, menuId),
-						eq(OrganizationMenu.organizationId, organizationId),
-					),
-				)
-
 			// Update drop record with tenant defense-in-depth
 			await tx
 				.update(OrganizationDrop)
 				.set({
+					menuId,
 					title: data.title,
 					slug,
 					description: data.description ?? null,
@@ -223,25 +224,7 @@ export async function saveDrop(
 					),
 				)
 		} else {
-			// Create hidden drop menu first
-			const createdMenus = await tx
-				.insert(OrganizationMenu)
-				.values({
-					organizationId,
-					displayName: data.title,
-					internalName: `[Drop] ${data.title}`,
-					menuType: 'drop',
-					availabilityStatus:
-						data.status === 'live' ? 'available' : 'unavailable',
-				})
-				.returning({ id: OrganizationMenu.id })
-
-			if (!createdMenus[0]) {
-				throw new Error('Failed to create drop menu')
-			}
-			menuId = createdMenus[0].id
-
-			// Create drop record
+			// Create drop record referencing existing menu
 			const createdDrops = await tx
 				.insert(OrganizationDrop)
 				.values({
@@ -268,40 +251,6 @@ export async function saveDrop(
 				throw new Error('Failed to create drop')
 			}
 			dropId = createdDrops[0].id
-		}
-
-		// Verify & reassign categories belonging to this organization
-		if (data.assignedCategoryIds) {
-			await tx
-				.delete(OrganizationMenuCategoryAssignment)
-				.where(eq(OrganizationMenuCategoryAssignment.menuId, menuId))
-
-			if (data.assignedCategoryIds.length > 0) {
-				const verifiedCategories = await tx
-					.select({ id: OrganizationMenuCategory.id })
-					.from(OrganizationMenuCategory)
-					.where(
-						and(
-							eq(OrganizationMenuCategory.organizationId, organizationId),
-							inArray(OrganizationMenuCategory.id, data.assignedCategoryIds),
-						),
-					)
-
-				const verifiedCatIds = new Set(verifiedCategories.map((c) => c.id))
-				const safeCategoryIds = data.assignedCategoryIds.filter((id) =>
-					verifiedCatIds.has(id),
-				)
-
-				if (safeCategoryIds.length > 0) {
-					await tx.insert(OrganizationMenuCategoryAssignment).values(
-						safeCategoryIds.map((categoryId, position) => ({
-							menuId,
-							categoryId,
-							position,
-						})),
-					)
-				}
-			}
 		}
 
 		// Verify & replace pickup windows (verifying locations belong to this organization)
@@ -336,14 +285,59 @@ export async function saveDrop(
 			}
 		}
 
-		// Verify & replace inventory overrides
+		// Keep caps only for categories and items on the selected menu.
+		const menuCategories = await tx
+			.select({ id: OrganizationMenuCategory.id })
+			.from(OrganizationMenuCategoryAssignment)
+			.innerJoin(
+				OrganizationMenuCategory,
+				eq(
+					OrganizationMenuCategory.id,
+					OrganizationMenuCategoryAssignment.categoryId,
+				),
+			)
+			.where(
+				and(
+					eq(OrganizationMenuCategoryAssignment.menuId, menuId),
+					eq(OrganizationMenuCategory.organizationId, organizationId),
+				),
+			)
+		const categoryIds = new Set(menuCategories.map((category) => category.id))
+		const menuItems =
+			categoryIds.size > 0
+				? await tx
+						.select({ id: OrganizationMenuItem.id })
+						.from(OrganizationMenuItemCategoryAssignment)
+						.innerJoin(
+							OrganizationMenuItem,
+							eq(
+								OrganizationMenuItem.id,
+								OrganizationMenuItemCategoryAssignment.itemId,
+							),
+						)
+						.where(
+							and(
+								inArray(OrganizationMenuItemCategoryAssignment.categoryId, [
+									...categoryIds,
+								]),
+								eq(OrganizationMenuItem.organizationId, organizationId),
+							),
+						)
+				: []
+		const itemIds = new Set(menuItems.map((item) => item.id))
+		const safeOverrides = (data.inventoryOverrides ?? []).filter((override) =>
+			override.entityType === 'category'
+				? categoryIds.has(override.entityId)
+				: itemIds.has(override.entityId),
+		)
+
 		await tx
 			.delete(OrganizationDropInventory)
 			.where(eq(OrganizationDropInventory.dropId, dropId))
 
-		if (data.inventoryOverrides && data.inventoryOverrides.length > 0) {
+		if (safeOverrides.length > 0) {
 			await tx.insert(OrganizationDropInventory).values(
-				data.inventoryOverrides.map((inv) => ({
+				safeOverrides.map((inv) => ({
 					dropId,
 					entityType: inv.entityType,
 					entityId: inv.entityId,
@@ -380,6 +374,17 @@ export async function deleteDrop(organizationId: string, dropId: string) {
 	const drop = await assertDropInOrganization(organizationId, dropId)
 
 	await db.transaction(async (tx) => {
+		const [menu] = await tx
+			.select({ menuType: OrganizationMenu.menuType })
+			.from(OrganizationMenu)
+			.where(
+				and(
+					eq(OrganizationMenu.id, drop.menuId),
+					eq(OrganizationMenu.organizationId, organizationId),
+				),
+			)
+			.limit(1)
+
 		await tx
 			.delete(OrganizationDrop)
 			.where(
@@ -388,12 +393,25 @@ export async function deleteDrop(organizationId: string, dropId: string) {
 					eq(OrganizationDrop.organizationId, organizationId),
 				),
 			)
+
+		// Older drops owned a private menu. Shared menus must survive deletion,
+		// because OrganizationDrop.menuId cascades and would erase the menu's drops.
+		if (menu?.menuType !== 'drop') return
+
+		const [otherDrop] = await tx
+			.select({ id: OrganizationDrop.id })
+			.from(OrganizationDrop)
+			.where(eq(OrganizationDrop.menuId, drop.menuId))
+			.limit(1)
+		if (otherDrop) return
+
 		await tx
 			.delete(OrganizationMenu)
 			.where(
 				and(
 					eq(OrganizationMenu.id, drop.menuId),
 					eq(OrganizationMenu.organizationId, organizationId),
+					eq(OrganizationMenu.menuType, 'drop'),
 				),
 			)
 	})

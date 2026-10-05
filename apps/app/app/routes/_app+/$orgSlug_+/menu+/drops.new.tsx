@@ -1,15 +1,14 @@
-import { getLocationCurrency } from '@repo/common/location-currency'
 import { requireUserId } from '@repo/auth'
+import { getLocationCurrency } from '@repo/common/location-currency'
 import { DropInputSchema } from '@repo/common/menu-types'
 import {
 	db,
 	eq,
-	inArray,
 	asc,
 	desc,
 	OrganizationLocation,
-	OrganizationMenuCategory,
-	OrganizationMenuItem,
+	OrganizationMenu,
+	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItemCategoryAssignment,
 } from '@repo/database'
 import {
@@ -38,49 +37,48 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
-	const categories = await db.query.OrganizationMenuCategory.findMany({
-		where: eq(OrganizationMenuCategory.organizationId, organization.id),
-		orderBy: [asc(OrganizationMenuCategory.position)],
+	const menus = await db.query.OrganizationMenu.findMany({
+		where: eq(OrganizationMenu.organizationId, organization.id),
+		orderBy: [asc(OrganizationMenu.position), asc(OrganizationMenu.createdAt)],
+		with: {
+			categoryAssignments: {
+				orderBy: [asc(OrganizationMenuCategoryAssignment.position)],
+				with: {
+					category: {
+						with: {
+							itemAssignments: {
+								orderBy: [asc(OrganizationMenuItemCategoryAssignment.position)],
+								with: {
+									item: true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	})
 
-	const categoryIds = categories.map((c) => c.id)
-	const itemAssignments = categoryIds.length
-		? await db
-				.select()
-				.from(OrganizationMenuItemCategoryAssignment)
-				.where(
-					inArray(
-						OrganizationMenuItemCategoryAssignment.categoryId,
-						categoryIds,
-					),
-				)
-				.orderBy(asc(OrganizationMenuItemCategoryAssignment.position))
-		: []
-
-	const items = await db.query.OrganizationMenuItem.findMany({
-		where: eq(OrganizationMenuItem.organizationId, organization.id),
-		orderBy: [asc(OrganizationMenuItem.position)],
-	})
-
-	const itemsMap = new Map(items.map((i) => [i.id, i]))
-
-	const formattedCategories = categories.map((cat) => {
-		const assigned = itemAssignments
-			.filter((ia) => ia.categoryId === cat.id)
-			.map((ia) => itemsMap.get(ia.itemId))
-			.filter(Boolean)
-
-		return {
-			id: cat.id,
-			displayName: cat.displayName,
-			items: assigned.map((item) => ({
-				id: item!.id,
-				displayName: item!.displayName,
-				price: item!.price,
-				imageKey: item!.imageKey,
+	const formattedMenus = menus
+		.filter((menu) => menu.menuType !== 'drop')
+		.map((menu) => ({
+			id: menu.id,
+			displayName: menu.displayName,
+			internalName: menu.internalName,
+			availabilityStatus: menu.availabilityStatus,
+			categories: menu.categoryAssignments.map((ca) => ({
+				id: ca.category.id,
+				displayName: ca.category.displayName,
+				internalName: ca.category.internalName,
+				items: ca.category.itemAssignments.map((ia) => ({
+					id: ia.item.id,
+					displayName: ia.item.displayName,
+					price: ia.item.price,
+					imageKey: ia.item.imageKey,
+					imageUrl: ia.item.imageUrl,
+				})),
 			})),
-		}
-	})
+		}))
 
 	return {
 		orgSlug: organization.slug,
@@ -89,14 +87,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			name: l.name,
 			timezone: l.timezone ?? undefined,
 		})),
-		availableCategories: formattedCategories,
+		availableMenus: formattedMenus,
 		currency: getLocationCurrency(locations[0]?.address),
-		availableItems: items.map((i) => ({
-			id: i.id,
-			displayName: i.displayName,
-			price: i.price,
-			imageKey: i.imageKey,
-		})),
 	}
 }
 
@@ -113,7 +105,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	for (const [key, value] of formData.entries()) {
 		if (
 			key === 'pickupWindows' ||
-			key === 'assignedCategoryIds' ||
 			key === 'inventoryOverrides' ||
 			key === 'reminders'
 		) {
@@ -129,45 +120,41 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			key === 'includeGiftCard'
 		) {
 			rawData[key] = value === 'true'
+		} else if (value === '' || value === 'null') {
+			rawData[key] = null
 		} else {
 			rawData[key] = value
 		}
 	}
 
 	const parsed = DropInputSchema.safeParse(rawData)
+
 	if (!parsed.success) {
 		return Response.json(
-			{ error: parsed.error.flatten().fieldErrors },
+			{ errors: parsed.error.flatten().fieldErrors },
 			{ status: 400 },
 		)
 	}
 
-	const assignedCategoryIds = Array.isArray(rawData.assignedCategoryIds)
-		? (rawData.assignedCategoryIds as string[])
-		: []
-
-	const dropId = await saveDrop(organization.id, {
-		...parsed.data,
-		assignedCategoryIds,
-	})
+	const dropId = await saveDrop(organization.id, parsed.data)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return redirect(`/${organization.slug}/menu/drops/${dropId}`)
 }
 
-export default function DropNewRoute() {
-	const { orgSlug, locations, availableCategories, availableItems, currency } =
-		useLoaderData<typeof loader>()
+export default function NewDropRoute() {
+	const data = useLoaderData<typeof loader>()
 
 	return (
-		<DropForm
-			orgSlug={orgSlug}
-			currency={currency}
-			locations={locations}
-			availableCategories={availableCategories}
-			availableItems={availableItems}
-			isEdit={false}
-		/>
+		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
+			<DropForm
+				pageTitle="Create Drop"
+				orgSlug={data.orgSlug}
+				locations={data.locations}
+				availableMenus={data.availableMenus}
+				currency={data.currency}
+			/>
+		</div>
 	)
 }
