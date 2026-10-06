@@ -1,5 +1,22 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { handleDataRequest } from './entry.server.tsx'
+import { applyContentSecurity, handleDataRequest } from './entry.server.tsx'
+
+describe('entry.server content security policy', () => {
+	it('allows OAuth form redirects only to the supported providers', () => {
+		const headers = new Headers()
+		applyContentSecurity(headers, 'test-nonce', false)
+
+		const formAction = headers
+			.get('Content-Security-Policy')
+			?.split(';')
+			.find((directive) => directive.trim().startsWith('form-action '))
+			?.trim()
+
+		expect(formAction).toBe(
+			"form-action 'self' https://accounts.google.com https://github.com",
+		)
+	})
+})
 
 describe('entry.server runtime headers', () => {
 	const originalCaches = (globalThis as { caches?: unknown }).caches
