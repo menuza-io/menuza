@@ -1,3 +1,4 @@
+import { setupI18n } from '@lingui/core'
 import {
 	operatorSessionCookieDomain,
 	operatorSharedCookieDomain,
@@ -18,6 +19,14 @@ function getLocaleCookieWithDomain() {
 }
 
 export const linguiServer = createLinguiServer(config, localeCookie)
+
+export async function getRequestI18n(request: Request) {
+	const locale = await linguiServer.getLocale(request)
+	const { messages } = await import(`../../locales/${locale}.po`)
+	const requestI18n = setupI18n()
+	requestI18n.loadAndActivate({ locale, messages })
+	return requestI18n
+}
 
 export async function serializeLocaleCookie(locale: string, request: Request) {
 	const domain = operatorSharedCookieDomain(request)

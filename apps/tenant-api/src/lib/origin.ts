@@ -1,11 +1,13 @@
 import { LRUCache } from 'lru-cache'
 import { ENV } from 'varlock/env'
+import { z } from 'zod'
 
 import { getBrandDomain, getLocalDomain } from '@repo/config/brand'
 import { and, db, eq, or, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
 import { orgMatchesNodeRegion } from './region.ts'
+import { getInternalCommandToken } from './secrets.ts'
 
 const RESERVED_SUBDOMAINS = new Set([
 	'app',
@@ -222,8 +224,44 @@ export async function findActiveOrganizationById(orgId: string) {
 		return null
 	}
 
+	const token = getInternalCommandToken()
+	const appUrl = appBaseUrl()
+	if (appUrl) {
+		// App owns the current org flags. A node-local control-plane copy may be
+		// missing or stale, especially when App uses D1 or the org changes region.
+		if (token.length < 16) return null
+		try {
+			const params = new URLSearchParams({ orgId })
+			const response = await fetch(
+				`${appUrl}/resources/tenant-organization?${params}`,
+				{
+					headers: {
+						Accept: 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					redirect: 'error',
+					signal: AbortSignal.timeout(5_000),
+				},
+			)
+			if (!response.ok) return null
+			const parsed = activeOrganizationSchema.safeParse(await response.json())
+			return parsed.success && parsed.data.id === orgId ? parsed.data : null
+		} catch {
+			// Fail closed: do not authorize from stale metadata after an outage.
+			return null
+		}
+	}
+
 	return lookupOrganizationFromDatabase({ id: orgId })
 }
+
+const activeOrganizationSchema = z.object({
+	id: z.string().regex(TENANT_ORG_ID_PATTERN),
+	slug: z.string().min(1),
+	customDomain: z.string().nullable(),
+	hasProvisionedDb: z.boolean(),
+	dataRegion: z.enum(['us', 'ksa']),
+})
 
 export function organizationFromProvisionPayload(data: {
 	orgId: string

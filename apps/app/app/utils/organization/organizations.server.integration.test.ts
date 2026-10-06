@@ -1,6 +1,10 @@
 import { faker } from '@faker-js/faker'
 import { db, eq, Organization, UserOrganization } from '@repo/database'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	deprovisionTenantDatabase,
+	provisionTenantDatabase,
+} from '#app/utils/sites/tenant-api.server.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -24,7 +28,21 @@ import {
 	userHasOrgAccess,
 } from './organizations.server.ts'
 
+vi.mock('#app/utils/sites/tenant-api.server.ts', () => ({
+	provisionTenantDatabase: vi.fn(),
+	deprovisionTenantDatabase: vi.fn(),
+}))
+
 describe('organizations.server integration', () => {
+	beforeEach(() => {
+		vi.mocked(provisionTenantDatabase).mockReset().mockResolvedValue({
+			region: 'us',
+		})
+		vi.mocked(deprovisionTenantDatabase).mockReset().mockResolvedValue({
+			region: 'us',
+		})
+	})
+
 	it('creates an organization with admin membership and default home page', async () => {
 		const user = await createTestUser()
 		const slug =
@@ -52,6 +70,40 @@ describe('organizations.server integration', () => {
 		expect(membership?.userId).toBe(user.id)
 		expect(membership?.organizationRoleId).toBe('org_role_admin')
 		expect(membership?.isDefault).toBe(true)
+		const persisted = await db.query.Organization.findFirst({
+			where: eq(Organization.id, org.id),
+		})
+		expect(persisted?.hasProvisionedDb).toBe(true)
+		expect(persisted?.sitePublished).toBe(false)
+		expect(provisionTenantDatabase).toHaveBeenCalledWith({
+			orgId: org.id,
+			slug,
+			dataRegion: 'us',
+		})
+	})
+
+	it('removes failed creations and allows the same slug to be retried', async () => {
+		const user = await createTestUser()
+		const input = {
+			name: 'Retry test',
+			slug: `retry-${faker.string.alphanumeric(8).toLowerCase()}`,
+			userId: user.id,
+		}
+		vi.mocked(provisionTenantDatabase).mockRejectedValueOnce(
+			new Error('Regional API unavailable'),
+		)
+
+		await expect(createOrganization(input)).rejects.toThrow(
+			'Regional API unavailable',
+		)
+		expect(
+			await db.query.Organization.findFirst({
+				where: eq(Organization.slug, input.slug),
+			}),
+		).toBeUndefined()
+
+		const retried = await createOrganization(input)
+		expect(retried.hasProvisionedDb).toBe(true)
 	})
 
 	it('loads organization by slug and ignores inactive organizations', async () => {

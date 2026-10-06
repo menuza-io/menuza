@@ -7,7 +7,7 @@ test.describe('Integration Settings & Providers Management', () => {
 		page,
 		login,
 		navigate,
-	}) => {
+	}, testInfo) => {
 		const user = await login()
 		const org = await createTestOrganization(user.id, 'admin')
 
@@ -16,15 +16,33 @@ test.describe('Integration Settings & Providers Management', () => {
 
 		// Verify page title and header
 		await expect(
-			page.getByRole('heading', { name: /^settings$/i }),
+			page.getByRole('heading', { name: /^integrations$/i }),
 		).toBeVisible()
-		await expect(page.getByText('Integrations').first()).toBeVisible()
 
 		// Verify provider cards in the catalog
 		await expect(page.getByText('Slack').first()).toBeVisible()
 		await expect(page.getByText('Jira').first()).toBeVisible()
 		await expect(page.getByText('Linear').first()).toBeVisible()
 		await expect(page.getByText('GitLab').first()).toBeVisible()
+
+		// Verify related providers appear in named groups
+		for (const [name, providers] of [
+			['Communication', ['Slack']],
+			['Project management', ['Jira', 'Linear', 'ClickUp', 'Asana', 'Trello']],
+			['Development', ['GitLab', 'GitHub']],
+			['Knowledge management', ['Notion']],
+		] as const) {
+			const group = page.getByRole('region', { name, exact: true })
+			await expect(group).toBeVisible()
+			for (const provider of providers) {
+				await expect(
+					group.getByRole('heading', { name: provider, exact: true }),
+				).toBeVisible()
+			}
+		}
+		await expect(
+			page.getByRole('region', { name: 'Other integrations' }),
+		).toHaveCount(0)
 
 		// Verify request integration banner
 		await expect(
@@ -33,6 +51,22 @@ test.describe('Integration Settings & Providers Management', () => {
 		await expect(
 			page.getByRole('link', { name: /request integration/i }),
 		).toBeVisible()
+
+		await page.screenshot({
+			path: testInfo.outputPath('integrations-desktop.png'),
+			fullPage: true,
+		})
+		await page.setViewportSize({ width: 390, height: 844 })
+		for (const group of await page.getByRole('region').all()) {
+			const bounds = await group.boundingBox()
+			if (!bounds) continue
+			expect(bounds.x).toBeGreaterThanOrEqual(0)
+			expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
+		}
+		await page.screenshot({
+			path: testInfo.outputPath('integrations-mobile.png'),
+			fullPage: true,
+		})
 	})
 
 	test('Operators can view connected integrations and disconnect an active integration', async ({

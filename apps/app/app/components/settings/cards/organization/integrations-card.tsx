@@ -11,6 +11,33 @@ import { JiraIntegrationSettings } from './jira-integration-settings'
 export const connectIntegrationActionIntent = 'connect-integration'
 export const disconnectIntegrationActionIntent = 'disconnect-integration'
 
+const INTEGRATION_GROUPS = [
+	{
+		id: 'communication',
+		title: <Trans>Communication</Trans>,
+		providerNames: ['slack'],
+	},
+	{
+		id: 'project-management',
+		title: <Trans>Project management</Trans>,
+		providerNames: ['jira', 'linear', 'clickup', 'asana', 'trello'],
+	},
+	{
+		id: 'development',
+		title: <Trans>Development</Trans>,
+		providerNames: ['github', 'gitlab'],
+	},
+	{
+		id: 'knowledge-management',
+		title: <Trans>Knowledge management</Trans>,
+		providerNames: ['notion'],
+	},
+]
+
+const GROUPED_PROVIDER_NAMES = new Set(
+	INTEGRATION_GROUPS.flatMap((group) => group.providerNames),
+)
+
 interface Integration {
 	id: string
 	providerName: string
@@ -51,6 +78,22 @@ export function IntegrationsCard({
 		integration: integrationsMap.get(provider.name) || null,
 	}))
 
+	const providerGroups = [
+		...INTEGRATION_GROUPS.map((group) => ({
+			...group,
+			providers: allProviders.filter((provider) =>
+				group.providerNames.includes(provider.name),
+			),
+		})),
+		{
+			id: 'other',
+			title: <Trans>Other integrations</Trans>,
+			providers: allProviders.filter(
+				(provider) => !GROUPED_PROVIDER_NAMES.has(provider.name),
+			),
+		},
+	].filter((group) => group.providers.length > 0)
+
 	return (
 		<div className="space-y-6">
 			<header className="space-y-1">
@@ -59,14 +102,30 @@ export function IntegrationsCard({
 				</h2>
 			</header>
 
-			<div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{allProviders.map((provider) => (
-					<IntegrationCard
-						key={provider.name}
-						provider={provider}
-						integration={provider.integration}
-						fetcher={fetcher}
-					/>
+			<div className="space-y-8">
+				{providerGroups.map((group) => (
+					<section
+						key={group.id}
+						aria-labelledby={`integrations-${group.id}`}
+						className="space-y-3"
+					>
+						<h3
+							id={`integrations-${group.id}`}
+							className="text-base font-semibold"
+						>
+							{group.title}
+						</h3>
+						<div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
+							{group.providers.map((provider) => (
+								<IntegrationCard
+									key={provider.name}
+									provider={provider}
+									integration={provider.integration}
+									fetcher={fetcher}
+								/>
+							))}
+						</div>
+					</section>
 				))}
 			</div>
 
@@ -127,9 +186,9 @@ function IntegrationCard({
 					<Icon name={provider.icon as any} className="h-6 w-6" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col">
-					<h2 className="truncate text-sm font-medium">
+					<h4 className="truncate text-sm font-medium">
 						{provider.displayName}
-					</h2>
+					</h4>
 					<span className="text-muted-foreground text-xs">
 						{provider.name === 'jira' && 'atlassian.com'}
 						{!['jira'].includes(provider.name) && `${provider.name}.com`}

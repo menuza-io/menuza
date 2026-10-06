@@ -19,6 +19,7 @@ const CreateOrganizationSchema = z.object({
 			message: 'Slug can only contain lowercase letters, numbers, and hyphens',
 		}),
 	description: z.string().optional(),
+	dataRegion: z.enum(['us', 'ksa']).default('us'),
 })
 
 export async function action({ request }: Route.ActionArgs) {
@@ -71,12 +72,13 @@ export async function action({ request }: Route.ActionArgs) {
 			)
 		}
 
-		const { name, slug, description } = submission.value
+		const { name, slug, description, dataRegion } = submission.value
 
 		const organization = await createOrganization({
 			name,
 			slug,
 			description,
+			dataRegion,
 			userId,
 			request,
 		})

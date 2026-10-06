@@ -46,11 +46,11 @@ export function MarketingLayout({
 	extensionId = null,
 }: MarketingLayoutProps) {
 	const { pathname } = useLocation()
-	const isMailbox = /\/mailbox\/?$/.test(pathname)
+	const isConversation = /^\/[^/]+\/(?:mailbox|chat)\/?$/.test(pathname)
 	return (
 		<>
 			<SidebarProvider
-				className={cn('min-h-0 flex-1', isMailbox && 'h-dvh max-h-dvh')}
+				className={cn('min-h-0 flex-1', isConversation && 'h-dvh max-h-dvh')}
 				open={!isCollapsed}
 				style={
 					{
@@ -68,13 +68,13 @@ export function MarketingLayout({
 				{/* Main column: the inset (sidebar + header + page content). */}
 				<SidebarInset
 					role="main"
-					className={cn('min-w-0', isMailbox && 'min-h-0')}
+					className={cn('min-w-0', isConversation && 'min-h-0 overflow-hidden')}
 				>
 					<SiteHeader isCollapsed={isCollapsed} />
 					<div
 						className={cn(
 							'@container/main flex flex-1 flex-col gap-2 px-4 md:px-2',
-							isMailbox && 'min-h-0',
+							isConversation && 'min-h-0',
 						)}
 					>
 						{children}
