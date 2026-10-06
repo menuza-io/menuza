@@ -27,7 +27,7 @@ import {
 	_RoleToUser,
 } from '@repo/database'
 import { readEmail } from '#tests/mocks/utils.ts'
-import { expect, test, waitFor } from '#tests/playwright-utils.ts'
+import { createUser, expect, test, waitFor } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 const WEEK_MS = 1000 * 60 * 60 * 24 * 7
@@ -537,7 +537,7 @@ test.describe('Shareable invite links', () => {
 
 		await page
 			.getByRole('textbox', { name: /^username/i })
-			.fill(faker.internet.username())
+			.fill(createUser().username)
 		await page.getByRole('textbox', { name: /full name/i }).fill('Invitee')
 		await page
 			.getByRole('checkbox', {
