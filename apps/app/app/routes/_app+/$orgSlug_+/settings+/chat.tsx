@@ -1,10 +1,6 @@
 import { Trans, msg, plural } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	CHAT_LIMITS,
-	CHAT_RETENTION_DAY_OPTIONS,
-	type ChatChannelDetail,
-} from '@repo/common/chat'
+import { CHAT_LIMITS, type ChatChannelDetail } from '@repo/common/chat'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
@@ -16,16 +12,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
-import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@repo/ui/select'
 import {
 	Empty,
 	EmptyContent,
@@ -34,6 +20,9 @@ import {
 	EmptyTitle,
 } from '@repo/ui/empty'
 import { Icon } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
+import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Textarea } from '@repo/ui/textarea'
 import { useEffect, useState } from 'react'
 import { Link, useFetcher, useLoaderData, useParams } from 'react-router'
@@ -64,79 +53,9 @@ function AudienceSummary({
 	)
 }
 
-function RetentionSettings({
-	retentionDays,
-}: {
-	retentionDays: number | null
-}) {
-	const fetcher = useFetcher<ChatSettingsActionResult>()
-	const { _ } = useLingui()
-	const value = retentionDays === null ? 'forever' : String(retentionDays)
-	const pending = fetcher.state !== 'idle'
-
-	return (
-		<section className="flex flex-col gap-3 rounded-lg border p-4">
-			<div>
-				<h3 className="font-medium">
-					<Trans>Message retention</Trans>
-				</h3>
-				<p className="text-muted-foreground text-sm">
-					<Trans>
-						Older team chat messages are removed automatically from your
-						organization's chat room. Direct messages and groups (when enabled)
-						follow the same policy.
-					</Trans>
-				</p>
-			</div>
-			<div className="max-w-xs">
-				<Label className="sr-only">
-					<Trans>Retention period</Trans>
-				</Label>
-				<Select
-					value={value}
-					items={{
-						forever: <Trans>Keep forever</Trans>,
-						...Object.fromEntries(
-							CHAT_RETENTION_DAY_OPTIONS.map((days) => [
-								String(days),
-								<Trans key={days}>{days} days</Trans>,
-							]),
-						),
-					}}
-					disabled={pending}
-					onValueChange={(next) => {
-						if (!next) return
-						void fetcher.submit(
-							{
-								intent: 'retention',
-								days: next === 'forever' ? null : Number.parseInt(next, 10),
-							},
-							{ method: 'POST', encType: 'application/json' },
-						)
-					}}
-				>
-					<SelectTrigger>
-						<SelectValue placeholder={_(msg`Choose retention`)} />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="forever">
-							<Trans>Keep forever</Trans>
-						</SelectItem>
-						{CHAT_RETENTION_DAY_OPTIONS.map((days) => (
-							<SelectItem key={days} value={String(days)}>
-								<Trans>{days} days</Trans>
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			</div>
-		</section>
-	)
-}
-
 export default function ChatChannelsSettings() {
 	const { orgSlug = '' } = useParams()
-	const { channels, roles, members, retentionDays } =
+	const { channels, roles, members } =
 		useLoaderData<Route.ComponentProps['loaderData']>()
 	const { _ } = useLingui()
 	const [editing, setEditing] = useState<ChatChannelDetail | 'new' | null>(null)
@@ -153,8 +72,6 @@ export default function ChatChannelsSettings() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<RetentionSettings retentionDays={retentionDays} />
-
 			<section className="flex flex-col gap-4">
 				<div className="flex flex-wrap items-start justify-between gap-4">
 					<div className="min-w-0 flex-1">

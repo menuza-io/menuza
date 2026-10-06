@@ -1,22 +1,19 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { CHAT_LIMITS } from '@repo/common/chat'
-import {
-	chatMentionMarkdown,
-	normalizeChatMessageBody,
-} from '@repo/common/chat-markdown'
+import { normalizeChatMessageBody } from '@repo/common/chat-markdown'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Spinner } from '@repo/ui/spinner'
 import { Emoji, gitHubEmojis } from '@tiptap/extension-emoji'
-import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
 	useCallback,
 	useEffect,
+	useId,
 	useRef,
 	useState,
 	type FormEvent,
@@ -29,6 +26,7 @@ import { CommentImagePreview } from '#app/components/note/comment-image-preview.
 import { CommentImageUpload } from '#app/components/note/comment-image-upload.tsx'
 import { EmojiPickerButton } from '#app/components/note/emoji-picker-button.tsx'
 import getSuggestions from '#app/components/note/suggestions.tsx'
+import { CHAT_MENTION_PLUGIN_KEY, ChatMention } from './chat-mention.ts'
 
 export type ChatComposerMember = {
 	id: string
@@ -39,7 +37,7 @@ type ChatUploadActionResult =
 	{ ok: true; objectKey: string } | { ok: false; error: string }
 
 const editorChromeClassName =
-	'[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]'
+	'[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-start [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]'
 
 function mentionUsers(members: ChatComposerMember[]) {
 	return members.map((member) => ({
@@ -83,12 +81,16 @@ export function ChatComposer({
 }) {
 	const { _ } = useLingui()
 	const resolvedPlaceholder = placeholder ?? _(msg`Write a message…`)
+	const hintId = useId()
+	const errorId = useId()
+	const placeholderRef = useRef(resolvedPlaceholder)
+	placeholderRef.current = resolvedPlaceholder
 	const [pending, setPending] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [images, setImages] = useState<File[]>([])
 	const [uploading, setUploading] = useState(false)
 	const [isFocused, setIsFocused] = useState(false)
-	const [hasDraft, setHasDraft] = useState(false)
+	const [hasDraft, setHasDraft] = useState(Boolean(initialValue.trim()))
 	const uploadFetcher = useFetcher<ChatUploadActionResult>()
 	const uploadWaitRef = useRef<{
 		resolve: (objectKey: string) => void
@@ -138,16 +140,15 @@ export function ChatComposer({
 	)
 
 	const editor = useEditor({
+		immediatelyRender: false,
 		extensions: [
 			StarterKit.configure({ heading: false }),
 			Markdown.configure({ html: false }),
-			Placeholder.configure({ placeholder: resolvedPlaceholder }),
-			Mention.configure({
-				suggestion: getSuggestions(() => mentionUsers(mentionList.current)),
-				renderText({ node }) {
-					const label =
-						(node.attrs.label as string) || (node.attrs.id as string) || ''
-					return chatMentionMarkdown(label, String(node.attrs.id))
+			Placeholder.configure({ placeholder: () => placeholderRef.current }),
+			ChatMention.configure({
+				suggestion: {
+					...getSuggestions(() => mentionUsers(mentionList.current)),
+					pluginKey: CHAT_MENTION_PLUGIN_KEY,
 				},
 				HTMLAttributes: {
 					class:
@@ -159,11 +160,15 @@ export function ChatComposer({
 				enableEmoticons: true,
 			}),
 		],
-		content: initialValue,
+		content: normalizeChatMessageBody(initialValue),
 		editorProps: {
 			attributes: {
+				role: 'textbox',
+				'aria-label': resolvedPlaceholder,
+				'aria-multiline': 'true',
+				'aria-describedby': hintId,
 				class:
-					'text-sm min-h-6 max-h-40 overflow-y-auto py-0.5 focus-visible:outline-none max-w-full prose prose-sm max-w-none',
+					'text-base md:text-sm min-h-12 max-h-40 overflow-y-auto focus-visible:outline-none max-w-full prose prose-sm dark:prose-invert max-w-none caret-primary',
 			},
 		},
 		onUpdate: ({ editor: current }) => {
@@ -177,6 +182,18 @@ export function ChatComposer({
 	useEffect(() => {
 		if (autoFocus && editor) editor.commands.focus('end')
 	}, [autoFocus, editor])
+
+	useEffect(() => {
+		if (!editor) return
+		editor.setEditable(!disabled && !pending)
+		editor.view.dom.setAttribute('aria-label', resolvedPlaceholder)
+		editor.view.dom.setAttribute('aria-invalid', String(Boolean(error)))
+		editor.view.dom.setAttribute(
+			'aria-describedby',
+			error ? `${hintId} ${errorId}` : hintId,
+		)
+		editor.view.dispatch(editor.state.tr)
+	}, [editor, disabled, pending, resolvedPlaceholder, error, hintId, errorId])
 
 	async function uploadImages(): Promise<string[]> {
 		if (images.length === 0) return []
@@ -206,9 +223,12 @@ export function ChatComposer({
 		try {
 			const attachmentKeys = await uploadImages()
 			await onSend(body, attachmentKeys.length > 0 ? attachmentKeys : undefined)
-			editor.commands.clearContent()
-			setImages([])
-			setHasDraft(false)
+			if (!onCancel) {
+				editor.commands.clearContent()
+				setImages([])
+				setHasDraft(false)
+				editor.commands.focus()
+			}
 		} catch (cause) {
 			setError(
 				cause instanceof Error
@@ -221,12 +241,14 @@ export function ChatComposer({
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
+		if (editor && CHAT_MENTION_PLUGIN_KEY.getState(editor.state)?.active) return
 		if (
 			event.key === 'Enter' &&
 			!event.shiftKey &&
 			!event.nativeEvent.isComposing
 		) {
 			event.preventDefault()
+			event.stopPropagation()
 			void submit()
 		}
 		if (event.key === 'Escape' && onCancel) onCancel()
@@ -245,31 +267,28 @@ export function ChatComposer({
 
 	return (
 		<form onSubmit={submit} className="flex flex-col gap-1.5" aria-busy={busy}>
-			<p id="chat-composer-hint" className="sr-only">
-				<Trans>Enter to send. Shift+Enter for a new line.</Trans>
-			</p>
 			<div
 				role="group"
-				aria-describedby="chat-composer-hint"
+				aria-label={_(msg`Message composer`)}
 				className={cn(
-					'border-border/60 bg-muted/40 flex w-full cursor-text flex-col rounded-2xl border p-3 motion-safe:transition-[box-shadow,border-color,background-color]',
-					isFocused && 'border-border/80 bg-muted/50 ring-border/30 ring-1',
-					disabled && 'pointer-events-none opacity-60',
+					'bg-background flex w-full cursor-text flex-col rounded-xl border motion-safe:transition-colors',
+					isFocused && 'border-ring',
+					disabled && 'bg-muted/40 opacity-60',
 				)}
-				onClick={focusEditor}
-				onKeyDown={onKeyDown}
 			>
 				<div
 					className={cn(
 						editorChromeClassName,
-						'[&_.ProseMirror]:min-h-6 [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:my-0 [&_.ProseMirror_p]:leading-normal',
+						'px-4 pt-3 pb-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:my-0 [&_.ProseMirror_p]:leading-relaxed',
 					)}
+					onClick={focusEditor}
+					onKeyDownCapture={onKeyDown}
 				>
 					<EditorContent editor={editor} />
 				</div>
 
 				{images.length > 0 ? (
-					<div className="mt-2">
+					<div className="px-4 pb-3">
 						<CommentImagePreview
 							files={images}
 							onRemove={(index) =>
@@ -280,25 +299,31 @@ export function ChatComposer({
 				) : null}
 
 				<div
-					className="mt-2 flex items-center justify-between gap-2"
+					className="bg-muted/30 flex items-center justify-between gap-2 rounded-b-xl border-t px-3 py-2"
 					onMouseDown={preventToolbarBlur}
 				>
 					<div className="flex min-w-0 items-center gap-0.5">
-						<CommentImageUpload
-							onImagesSelected={(files) =>
-								setImages((current) =>
-									[...current, ...files].slice(0, CHAT_LIMITS.attachmentsMax),
-								)
-							}
-							maxImages={CHAT_LIMITS.attachmentsMax - images.length}
-							disabled={disabled || images.length >= CHAT_LIMITS.attachmentsMax}
-							className="text-muted-foreground"
-						/>
+						{!onCancel ? (
+							<CommentImageUpload
+								onImagesSelected={(files) =>
+									setImages((current) =>
+										[...current, ...files].slice(0, CHAT_LIMITS.attachmentsMax),
+									)
+								}
+								maxImages={CHAT_LIMITS.attachmentsMax - images.length}
+								disabled={
+									disabled ||
+									busy ||
+									images.length >= CHAT_LIMITS.attachmentsMax
+								}
+								className="text-muted-foreground"
+							/>
+						) : null}
 						<EmojiPickerButton
 							onEmojiSelect={(emoji) =>
 								editor?.chain().focus().insertContent(emoji).run()
 							}
-							disabled={disabled}
+							disabled={disabled || busy}
 						/>
 						{uploading ? (
 							<span
@@ -319,16 +344,15 @@ export function ChatComposer({
 								variant="ghost"
 								size="sm"
 								onClick={onCancel}
-								disabled={disabled}
+								disabled={disabled || busy}
 							>
 								<Trans>Cancel</Trans>
 							</Button>
 						) : null}
 						<Button
 							type="submit"
-							size="sm"
+							size={onCancel ? 'sm' : 'icon'}
 							disabled={!canSend}
-							className={cn(onCancel ? 'px-4' : 'size-8 rounded-full p-0')}
 							aria-label={submitLabel ?? _(msg`Send message`)}
 						>
 							{busy && !onCancel ? (
@@ -344,13 +368,20 @@ export function ChatComposer({
 
 				{error ? (
 					<p
+						id={errorId}
 						role="alert"
-						className="border-destructive/20 bg-destructive/5 text-destructive mt-2 rounded-md border px-2.5 py-2 text-xs"
+						className="bg-destructive/5 text-destructive border-t px-4 py-3 text-sm"
 					>
 						{error}
 					</p>
 				) : null}
 			</div>
+			<p
+				id={hintId}
+				className="text-muted-foreground px-1 text-xs max-sm:sr-only"
+			>
+				<Trans>Enter to send. Shift+Enter for a new line.</Trans>
+			</p>
 		</form>
 	)
 }

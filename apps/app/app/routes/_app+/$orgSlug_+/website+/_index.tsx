@@ -128,7 +128,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const published = sitePublished === 'true'
 
 		try {
-			if (published) {
+			// Compatibility repair for organizations created before eager provisioning.
+			if (published && !organization.hasProvisionedDb) {
 				await provisionTenantDatabase({
 					orgId: organization.id,
 					dataRegion: organization.dataRegion,
@@ -341,7 +342,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const { dataRegion } = submission.value
 		const currentRegion = organization.dataRegion === 'ksa' ? 'ksa' : 'us'
 
-		if (dataRegion === currentRegion) {
+		if (dataRegion === currentRegion && organization.hasProvisionedDb) {
 			return redirectWithToast(`/${organization.slug}/website`, {
 				title: 'Data region unchanged',
 				description: 'Customer data is already stored in this region.',
@@ -364,6 +365,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		try {
 			if (organization.hasProvisionedDb) {
+				// Record the database as unavailable before any irreversible deletion.
+				// Keep the old region until its wipe succeeds so retries target it.
+				await db
+					.update(Organization)
+					.set({ hasProvisionedDb: false })
+					.where(eq(Organization.id, organization.id))
+			}
+
+			if (organization.hasProvisionedDb || dataRegion !== currentRegion) {
 				await deprovisionTenantDatabase({
 					orgId: organization.id,
 					dataRegion: currentRegion,
@@ -380,18 +390,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 				.where(eq(Organization.id, organization.id))
 
-			if (organization.sitePublished) {
-				await provisionTenantDatabase({
-					orgId: organization.id,
-					dataRegion,
-					slug: organization.slug,
-					customDomain: organization.customDomain,
-				})
-				await db
-					.update(Organization)
-					.set({ hasProvisionedDb: true })
-					.where(eq(Organization.id, organization.id))
-			}
+			await provisionTenantDatabase({
+				orgId: organization.id,
+				dataRegion,
+				slug: organization.slug,
+				customDomain: organization.customDomain,
+			})
+			await db
+				.update(Organization)
+				.set({ hasProvisionedDb: true })
+				.where(eq(Organization.id, organization.id))
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -407,8 +415,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						? 'Previous customer data was deleted. New sign-ins will stay in Saudi Arabia.'
 						: 'Previous customer data was deleted. New sign-ins will be stored in the US.'
 					: dataRegion === 'ksa'
-						? 'Customer data will stay in Saudi Arabia when you publish.'
-						: 'Customer data will be stored in the US region when you publish.',
+						? 'The tenant database is ready in Saudi Arabia.'
+						: 'The tenant database is ready in the US region.',
 				type: 'success',
 			})
 		} catch (error) {

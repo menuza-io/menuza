@@ -165,5 +165,10 @@ permissions.
 - Email templates dedicated to chat (mentions reuse in-app notifications today)
 - Jump-to-message from search results (search opens the channel only)
 
-**Retention:** per-organization setting under **Settings → Chat** (30 / 90 / 365
-days or forever). The `ChatOrg` alarm prunes old rows in the DO SQLite store.
+**Retention:** a per-organization setting in the **platform admin application →
+Organizations → Organization Settings → Message retention** (30 / 90 / 365 days
+or forever). Only users with the platform `admin` role can read or update the
+policy; tenant admins manage channels but cannot change retention. Changes
+require an explicit save and are audit logged. The `ChatOrg` alarm reads the
+policy from D1 and prunes old rows in the DO SQLite store on its next daily
+cleanup, including direct messages and group chats.

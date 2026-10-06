@@ -66,8 +66,8 @@ deployment (Cloudflare Container singleton for US, or OCI VM + block volume).
 - OTP hash + expiry (`phoneVerificationCode`, `phoneVerificationExpiresAt`)
 - Refresh-token hash + expiry
 
-App never reads or writes that table. Provision/deprovision send `{ orgId }`
-only.
+App never reads or writes that table. Provision/deprovision send only routing
+metadata: `{ orgId, slug, customDomain, dataRegion }`.
 
 ## Code map
 
@@ -82,6 +82,8 @@ only.
 | Per-org SQLite + Drizzle                 | `packages/tenant-db/`                                                                      |
 | OTP SMS (Twilio blocked for KSA prod)    | `packages/sms/`                                                                            |
 | App → regional provision                 | `apps/app/app/utils/sites/tenant-api.server.ts`                                            |
+| Organization creation + provision        | `apps/app/app/utils/organization/organizations.server.ts`                                  |
+| Internal active-org metadata             | `apps/app/app/routes/resources+/tenant-organization.ts`                                    |
 | Publish + region switch UI               | `apps/app/app/routes/_app+/$orgSlug_+/website+/_index.tsx`                                 |
 | Region dropdown + wipe dialog            | `apps/app/app/components/settings/cards/organization/site-card.tsx`                        |
 | Public org JSON (`dataRegion` for Sites) | `apps/app/app/utils/sites/public-org.server.ts`                                            |
@@ -94,14 +96,36 @@ There is **no** `apps/sites/src/pages/api/auth/` BFF. Do not add one.
 
 ## Request flows
 
-### Publish a site
+### Create an organization
 
-1. Operator publishes on Website settings in App.
-2. App POSTs `{ orgId }` to the regional tenant-api (`TENANT_API_URL` or
+1. App creates the organization, operator membership, and default home page. New
+   organizations default to `dataRegion=us`; the organization creation API can
+   explicitly select `us` or `ksa`.
+2. App POSTs routing metadata to the regional tenant-api (`TENANT_API_URL` or
    `TENANT_API_URL_KSA`) with `Authorization: Bearer INTERNAL_COMMAND_TOKEN`.
 3. That node checks `org.dataRegion === DATA_REGION`, then creates
    `tenant_{orgId}.db` and runs Drizzle migrations.
-4. App sets `hasProvisionedDb = true`.
+4. App sets `hasProvisionedDb = true` before reporting creation complete. The
+   website remains unpublished. If provisioning fails, App attempts to remove
+   any partially provisioned database and removes the newly created
+   organization, allowing creation to be retried.
+
+### Publish a site
+
+Publishing changes the website's visibility, not the tenant database lifecycle.
+For compatibility, publishing an older organization with
+`hasProvisionedDb=false` provisions its database once before making the website
+public. Already-provisioned organizations do not call tenant-api on publish.
+
+### Resolve operator organization metadata
+
+When `APP_URL` is configured, tenant-api reads active organization metadata from
+App's authenticated `/resources/tenant-organization?orgId=...` endpoint using
+`INTERNAL_COMMAND_TOKEN`. The endpoint works for unpublished organizations and
+returns only routing flags, never customer data. App is authoritative even if a
+node-local control-plane SQLite copy is missing or stale. Failed lookups do not
+fall back to stale rows. A shared local control-plane database is used only when
+no App origin is configured.
 
 ### Customer login
 
@@ -123,12 +147,13 @@ migrated.
 
 1. If `hasProvisionedDb`, the UI requires an explicit confirm
    (`confirmWipe=true`).
-2. App deprovisions the **old** region (the control-plane database still has the
-   old `dataRegion`, so the old node accepts the wipe).
+2. App sets `hasProvisionedDb = false` before deprovisioning the **old** region.
+   The control-plane database keeps the old `dataRegion` until the wipe
+   succeeds, so retries still target the correct node.
 3. App updates the control-plane database: new `dataRegion`,
    `hasProvisionedDb = false`.
-4. If the site is published, App provisions an empty DB in the new region and
-   sets `hasProvisionedDb = true`.
+4. App immediately provisions an empty DB in the new region and sets
+   `hasProvisionedDb = true`, whether or not the site is published.
 5. Existing visitors must sign in again. Old tokens are useless against the new
    empty database.
 
@@ -193,7 +218,8 @@ New orgs default to `dataRegion=us`. To validate KSA:
    `"region":"ksa"`.
 3. On Website settings, set **Customer data region** to **Saudi Arabia (KSA)**
    (switching after customers exist **deletes** them; they are not migrated).
-4. Publish. App provisions against port 3009.
+4. The region change provisions an empty database against port 3009. Publish
+   when the site should become public.
 5. On the tenant site, login/profile traffic should hit port 3009 (not 3007, and
    not any Sites `/api/*` path).
 
@@ -238,9 +264,9 @@ OCI uses `linux/arm64`; Cloudflare Containers use `linux/amd64`. SQLite files
 live at `TENANT_DB_DIR=/data/tenants` (OCI block volume or container disk). Run
 a **single writer** per region. Leave LiteFS unset.
 
-App stays in the US and only sends `{ orgId, slug, dataRegion }` to the matching
-regional URL. Set `APP_URL` on each tenant-api so it can resolve org flags
-without the control-plane SQLite volume.
+App stays in the US and only sends `{ orgId, slug, customDomain, dataRegion }`
+to the matching regional URL. Set `APP_URL` on each tenant-api so it can resolve
+org flags without the control-plane SQLite volume.
 
 GitHub Actions builds both architectures and pushes to GHCR. CI always deploys
 US to Cloudflare (`deploy-tenant-api-us-cf`) and KSA to OCI when
@@ -252,24 +278,24 @@ See [Deployment](./deployment.md#regional-tenant-data-plane) and the
 
 ### Required secrets (per regional tenant-api)
 
-| Secret                   | Notes                                                                         |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `DATA_REGION`            | `us` or `ksa`. Startup fails otherwise.                                       |
-| `JWT_SECRET`             | Signs customer access tokens. No default in production. Unique per region.    |
-| `AUTH_HMAC_SECRET`       | OTP and refresh hashes. Different from `INTERNAL_COMMAND_TOKEN`.              |
-| `INTERNAL_COMMAND_TOKEN` | Same value as US App. ≥16 chars. Empty token is rejected.                     |
-| `APP_URL`                | US App origin. Used when this node cannot read control-plane org flags (KSA). |
-| `DATABASE_URL`           | Control-plane SQLite for **org flags only** when available. Not customer PII. |
-| `TENANT_DB_DIR`          | Volume mount for `tenant_{orgId}.db` (production: `/data/tenants`).           |
-| `ROOT_APP`               | Brand domain used to map `{slug}.{ROOT_APP}` origins for CORS.                |
+| Secret                   | Notes                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `DATA_REGION`            | `us` or `ksa`. Startup fails otherwise.                                              |
+| `JWT_SECRET`             | Signs customer access tokens. No default in production. Unique per region.           |
+| `AUTH_HMAC_SECRET`       | OTP and refresh hashes. Different from `INTERNAL_COMMAND_TOKEN`.                     |
+| `INTERNAL_COMMAND_TOKEN` | Same value as US App. ≥16 chars. Empty token is rejected.                            |
+| `APP_URL`                | US App origin. Authoritative active-org metadata lookup, including unpublished orgs. |
+| `DATABASE_URL`           | Control-plane SQLite for **org flags only** when available. Not customer PII.        |
+| `TENANT_DB_DIR`          | Volume mount for `tenant_{orgId}.db` (production: `/data/tenants`).                  |
+| `ROOT_APP`               | Brand domain used to map `{slug}.{ROOT_APP}` origins for CORS.                       |
 
 ### App (US)
 
-| Variable                 | Notes                                                        |
-| ------------------------ | ------------------------------------------------------------ |
-| `TENANT_API_URL`         | US tenant-api origin.                                        |
-| `TENANT_API_URL_KSA`     | KSA tenant-api origin. Required before publishing a KSA org. |
-| `INTERNAL_COMMAND_TOKEN` | Must match every regional tenant-api.                        |
+| Variable                 | Notes                                                                      |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `TENANT_API_URL`         | US tenant-api origin.                                                      |
+| `TENANT_API_URL_KSA`     | KSA tenant-api origin. Required before creating or switching to a KSA org. |
+| `INTERNAL_COMMAND_TOKEN` | Must match every regional tenant-api.                                      |
 
 ### Sites
 
@@ -302,6 +328,7 @@ safe: tenant-api returns 404/409 when `dataRegion !== DATA_REGION`.
 | CORS 403 on login                      | Origin not a published slug/custom domain for an org in that node’s region.                         |
 | `region_mismatch` on provision         | App called the wrong regional URL, or control-plane `dataRegion` does not match the node.           |
 | Empty customers after a region change  | Expected. Wipe is the product behavior; there is no PII migration.                                  |
+| Mailbox says organization not found    | Verify tenant-api `APP_URL` reaches App and both apps share `INTERNAL_COMMAND_TOKEN`.               |
 | Production tenant-api refuses to start | Placeholder `do-not-use-in-prod` secrets, missing `DATA_REGION`, or short `INTERNAL_COMMAND_TOKEN`. |
 | KSA OTP fails in production            | Twilio is blocked; configure in-kingdom SMS.                                                        |
 

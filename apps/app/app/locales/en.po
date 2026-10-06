@@ -38,11 +38,11 @@ msgstr "AI assistant"
 msgid "(${annualPrice} billed annually per user)"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:97
+#: app/components/chat/chat-message.tsx:115
 msgid "(edited)"
 msgstr "(edited)"
 
-#: app/components/chat/chat-group-settings-dialog.tsx:93
+#: app/components/chat/chat-group-settings-dialog.tsx:95
 msgid "(you)"
 msgstr "(you)"
 
@@ -127,8 +127,8 @@ msgid "{clientName} is requesting access to your organization data"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:118
-msgid "{days} days"
-msgstr "{days} days"
+#~ msgid "{days} days"
+#~ msgstr "{days} days"
 
 #: app/components/ui/notification-bell.tsx:61
 msgid "{days}d ago"
@@ -154,7 +154,7 @@ msgstr ""
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:640
+#: app/components/chat/chat-view.tsx:786
 msgid "{firstTypingName} is typing…"
 msgstr "{firstTypingName} is typing…"
 
@@ -178,7 +178,7 @@ msgstr "{label}, {total} unread"
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:59
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:48
 msgid "{memberCount, plural, one {# person} other {# people}}"
 msgstr "{memberCount, plural, one {# person} other {# people}}"
 
@@ -227,7 +227,7 @@ msgstr "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 #~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
 #~ msgstr ""
 
-#: app/components/chat/chat-message.tsx:142
+#: app/components/chat/chat-message.tsx:165
 msgid "{replyCount, plural, one {# reply} other {# replies}}"
 msgstr "{replyCount, plural, one {# reply} other {# replies}}"
 
@@ -239,7 +239,11 @@ msgstr ""
 msgid "{seconds}s ago"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:480
+#: app/components/chat/chat-compose-dialog.tsx:140
+msgid "{selectedCount, plural, one {# selected} other {# selected}}"
+msgstr "{selectedCount, plural, one {# selected} other {# selected}}"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:408
 msgid "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 msgstr "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 
@@ -255,7 +259,7 @@ msgstr ""
 #~ msgid "{threadReplyCount, plural, one {# reply} other {# replies}}"
 #~ msgstr "{threadReplyCount, plural, one {# reply} other {# replies}}"
 
-#: app/components/chat/chat-view.tsx:693
+#: app/components/chat/chat-view.tsx:847
 msgid "{threadTotalReplies, plural, one {# reply} other {# replies}}"
 msgstr "{threadTotalReplies, plural, one {# reply} other {# replies}}"
 
@@ -275,7 +279,7 @@ msgstr ""
 msgid "{unit}"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:312
+#: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
 msgstr "{unread} unread"
 
@@ -492,7 +496,7 @@ msgstr ""
 #. placeholder {0}: member.label
 #: ../../packages/marketing-workflow/src/node-palette.tsx:98
 #: ../../packages/marketing-workflow/src/node-palette.tsx:104
-#: app/components/chat/chat-group-settings-dialog.tsx:135
+#: app/components/chat/chat-group-settings-dialog.tsx:137
 msgid "Add {0}"
 msgstr ""
 
@@ -551,6 +555,10 @@ msgstr ""
 msgid "Add another invitation"
 msgstr ""
 
+#: app/components/chat/chat-compose-dialog.tsx:216
+msgid "Add another team member to start a conversation."
+msgstr "Add another team member to start a conversation."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:178
 msgid "Add at least one email block"
 msgstr "Add at least one email block"
@@ -584,8 +592,9 @@ msgstr ""
 msgid "Add field"
 msgstr "Add field"
 
-#: app/components/note/comment-image-upload.tsx:91
+#: app/components/note/comment-image-upload.tsx:78
 #: app/components/note/comment-image-upload.tsx:92
+#: app/components/note/comment-image-upload.tsx:93
 msgid "Add images"
 msgstr ""
 
@@ -628,7 +637,7 @@ msgstr "Add notes, links, or media to capture what matters."
 msgid "Add organization"
 msgstr ""
 
-#: app/components/chat/chat-group-settings-dialog.tsx:104
+#: app/components/chat/chat-group-settings-dialog.tsx:106
 msgid "Add people"
 msgstr "Add people"
 
@@ -640,7 +649,9 @@ msgstr ""
 msgid "Add question"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:266
+#: app/components/chat/chat-message.tsx:286
+#: app/components/chat/chat-message.tsx:293
+#: app/components/chat/chat-message.tsx:337
 msgid "Add reaction"
 msgstr "Add reaction"
 
@@ -783,7 +794,7 @@ msgstr ""
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:545
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:473
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "All messages in this channel are permanently deleted for everyone. This can't be undone."
 
@@ -1067,7 +1078,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:485
+#: app/components/chat/chat-view.tsx:558
 msgid "Back to channels"
 msgstr "Back to channels"
 
@@ -1079,6 +1090,10 @@ msgstr "Back to details"
 #: app/components/website/form-builder-sidebar.tsx:643
 msgid "Back to fields"
 msgstr "Back to fields"
+
+#: app/components/chat/chat-view.tsx:771
+msgid "Back to latest"
+msgstr "Back to latest"
 
 #: app/routes/_auth+/forgot-password.sent.tsx:49
 #: app/routes/_auth+/forgot-password.tsx:245
@@ -1158,6 +1173,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1830
 msgid "Brightness"
 msgstr "Brightness"
+
+#: app/components/chat/chat-compose-dialog.tsx:356
+msgid "Bring the right people together in a group."
+msgstr "Bring the right people together in a group."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:32
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:52
@@ -1256,10 +1275,9 @@ msgstr "Can edit teammate notes"
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
-#: app/components/chat/chat-compose-dialog.tsx:168
-#: app/components/chat/chat-composer.tsx:324
-#: app/components/chat/chat-message.tsx:391
-#: app/components/chat/chat-view.tsx:824
+#: app/components/chat/chat-compose-dialog.tsx:411
+#: app/components/chat/chat-composer.tsx:349
+#: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
 #: app/components/media-library/media-library-picker.tsx:342
@@ -1286,8 +1304,8 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:500
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:558
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1768
@@ -1378,13 +1396,13 @@ msgstr ""
 msgid "Channel"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:322
-#: app/components/chat/chat-view.tsx:425
+#: app/components/chat/chat-view.tsx:387
+#: app/components/chat/chat-view.tsx:490
 msgid "Channels"
 msgstr "Channels"
 
 #: app/components/app-sidebar.tsx:419
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:153
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
 
@@ -1437,7 +1455,7 @@ msgstr "Checkout processor"
 msgid "Choices"
 msgstr "Choices"
 
-#: app/components/chat/chat-view.tsx:556
+#: app/components/chat/chat-view.tsx:668
 msgid "Choose a channel, group, or direct message from the list."
 msgstr "Choose a channel, group, or direct message from the list."
 
@@ -1453,6 +1471,10 @@ msgstr ""
 msgid "Choose a starting point"
 msgstr "Choose a starting point"
 
+#: app/components/chat/chat-compose-dialog.tsx:354
+msgid "Choose a teammate to start a conversation."
+msgstr "Choose a teammate to start a conversation."
+
 #: app/components/website/create-page-dialog.tsx:99
 msgid "Choose a template"
 msgstr ""
@@ -1467,12 +1489,12 @@ msgid "Choose from library"
 msgstr "Choose from library"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:110
-msgid "Choose retention"
-msgstr "Choose retention"
+#~ msgid "Choose retention"
+#~ msgstr "Choose retention"
 
 #: app/components/chat/chat-compose-dialog.tsx:107
-msgid "Choose someone"
-msgstr "Choose someone"
+#~ msgid "Choose someone"
+#~ msgstr "Choose someone"
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:162
 msgid "Choose which languages your public website supports, and which one visitors see by default."
@@ -1508,7 +1530,8 @@ msgstr "Clear history"
 msgid "Clear History"
 msgstr "Clear History"
 
-#: app/components/chat/chat-view.tsx:370
+#: app/components/chat/chat-compose-dialog.tsx:162
+#: app/components/chat/chat-view.tsx:435
 msgid "Clear search"
 msgstr "Clear search"
 
@@ -1546,7 +1569,7 @@ msgid "Client"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
-#: app/components/chat/chat-group-settings-dialog.tsx:179
+#: app/components/chat/chat-group-settings-dialog.tsx:181
 #: app/components/onboarding-checklist.tsx:177
 msgid "Close"
 msgstr ""
@@ -1555,7 +1578,7 @@ msgstr ""
 msgid "Close email design"
 msgstr "Close email design"
 
-#: app/components/chat/chat-view.tsx:669
+#: app/components/chat/chat-view.tsx:820
 msgid "Close thread"
 msgstr "Close thread"
 
@@ -1617,6 +1640,10 @@ msgstr "Comment actions"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:672
 msgid "Comments"
 msgstr ""
+
+#: app/components/settings/cards/organization/integrations-card.tsx:17
+msgid "Communication"
+msgstr "Communication"
 
 #: app/routes/_auth+/waitlist.tsx:425
 msgid "Community"
@@ -1719,7 +1746,7 @@ msgstr ""
 msgid "Confirm your password"
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:188
+#: app/components/settings/cards/organization/integrations-card.tsx:247
 msgid "Connect"
 msgstr ""
 
@@ -1767,7 +1794,7 @@ msgstr "Connected form"
 msgid "Connected on {createdAtDate}"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:788
+#: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
 msgstr "Connecting to team chat…"
 
@@ -1775,7 +1802,7 @@ msgstr "Connecting to team chat…"
 #~ msgid "Connecting…"
 #~ msgstr "Connecting…"
 
-#: app/components/chat/chat-view.tsx:786
+#: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
 msgstr "Connection lost. Reconnecting…"
 
@@ -1850,6 +1877,10 @@ msgstr "Contrast"
 msgid "Control who can access this note"
 msgstr ""
 
+#: app/components/chat/chat-view.tsx:545
+msgid "Conversation"
+msgstr "Conversation"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:245
 #~ msgid "Conversations start here. Review and reply to your website submissions."
 #~ msgstr "Conversations start here. Review and reply to your website submissions."
@@ -1905,29 +1936,32 @@ msgstr ""
 msgid "Could not create a draft. Try again."
 msgstr "Could not create a draft. Try again."
 
-#: app/components/chat/chat-view.tsx:133
-#: app/components/chat/chat-view.tsx:179
+#: app/components/chat/chat-view.tsx:136
+#: app/components/chat/chat-view.tsx:210
 msgid "Could not load messages."
 msgstr "Could not load messages."
 
-#: app/components/chat/chat-view.tsx:275
+#: app/components/chat/chat-view.tsx:314
 msgid "Could not load replies."
 msgstr "Could not load replies."
 
-#: app/components/chat/chat-composer.tsx:216
-#: app/components/chat/chat-message.tsx:351
+#: app/components/chat/chat-composer.tsx:236
 msgid "Could not send message."
 msgstr "Could not send message."
+
+#: app/components/chat/chat-compose-dialog.tsx:400
+msgid "Could not start the conversation. Try again."
+msgstr "Could not start the conversation. Try again."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:172
 msgid "Could not update read status. Try again."
 msgstr "Could not update read status. Try again."
 
-#: app/components/chat/chat-composer.tsx:116
+#: app/components/chat/chat-composer.tsx:118
 msgid "Could not upload image."
 msgstr "Could not upload image."
 
-#: app/components/chat/chat-composer.tsx:107
+#: app/components/chat/chat-composer.tsx:109
 msgid "Could not upload image. Try again."
 msgstr "Could not upload image. Try again."
 
@@ -1944,11 +1978,11 @@ msgstr "Couldn't open {routeTitle}"
 msgid "Create"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:245
+#: app/components/chat/chat-view.tsx:284
 msgid "Create a channel"
 msgstr "Create a channel"
 
-#: app/components/chat/chat-view.tsx:230
+#: app/components/chat/chat-view.tsx:269
 msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 msgstr "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 
@@ -2040,11 +2074,11 @@ msgstr ""
 msgid "Create bullet points"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:506
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:434
 msgid "Create channel"
 msgstr "Create channel"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:156
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:82
 msgid "Create channels for your team and choose which roles or people can read and post in them."
 msgstr "Create channels for your team and choose which roles or people can read and post in them."
 
@@ -2057,6 +2091,10 @@ msgstr "Create Custom Role"
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "Create form"
+
+#: app/components/chat/chat-compose-dialog.tsx:426
+msgid "Create group"
+msgstr "Create group"
 
 #: app/components/roles/tenant-role-access-manager.tsx:213
 msgid "Create group chats"
@@ -2112,7 +2150,7 @@ msgstr ""
 msgid "Create your first broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:195
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:122
 msgid "Create your first channel"
 msgstr "Create your first channel"
 
@@ -2352,7 +2390,8 @@ msgstr ""
 msgid "Decline"
 msgstr ""
 
-#: app/components/website/link-inspector.tsx:622
+#: app/components/website/link-inspector.tsx:612
+#: app/components/website/link-inspector.tsx:628
 msgid "Default"
 msgstr ""
 
@@ -2376,7 +2415,7 @@ msgstr ""
 msgid "Delay unit is required."
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:832
+#: app/components/chat/chat-view.tsx:1029
 #: app/components/note/comment-item.tsx:239
 #: app/components/roles/tenant-role-access-manager.tsx:837
 #: app/components/roles/tenant-role-access-manager.tsx:947
@@ -2385,7 +2424,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:239
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
@@ -2396,7 +2435,7 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:542
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:470
 msgid "Delete {channelName}?"
 msgstr "Delete {channelName}?"
 
@@ -2420,7 +2459,7 @@ msgstr "Delete announcement?"
 msgid "Delete card"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:571
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:499
 msgid "Delete channel"
 msgstr "Delete channel"
 
@@ -2464,11 +2503,11 @@ msgstr ""
 msgid "Delete log entry"
 msgstr "Delete log entry"
 
-#: app/components/chat/chat-message.tsx:299
+#: app/components/chat/chat-message.tsx:372
 msgid "Delete message"
 msgstr "Delete message"
 
-#: app/components/chat/chat-view.tsx:813
+#: app/components/chat/chat-view.tsx:1010
 msgid "Delete message?"
 msgstr "Delete message?"
 
@@ -2539,7 +2578,7 @@ msgstr "Describe this image for accessibility"
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:369
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:798
@@ -2574,6 +2613,10 @@ msgstr ""
 msgid "Detected"
 msgstr ""
 
+#: app/components/settings/cards/organization/integrations-card.tsx:27
+msgid "Development"
+msgstr "Development"
+
 #: app/components/settings/cards/sessions-card.tsx:185
 #: app/components/settings/cards/sessions-card.tsx:267
 #: app/components/settings/passkey-manager.tsx:198
@@ -2592,11 +2635,12 @@ msgstr "Dimensions:"
 msgid "Direct / Unknown"
 msgstr "Direct / Unknown"
 
-#: app/components/chat/chat-compose-dialog.tsx:72
+#: app/components/chat/chat-compose-dialog.tsx:381
+#: app/components/chat/chat-view.tsx:611
 msgid "Direct message"
 msgstr "Direct message"
 
-#: app/components/chat/chat-view.tsx:426
+#: app/components/chat/chat-view.tsx:491
 msgid "Direct messages"
 msgstr "Direct messages"
 
@@ -2617,7 +2661,7 @@ msgstr "Discard"
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:166
+#: app/components/settings/cards/organization/integrations-card.tsx:225
 #: app/components/settings/connections.tsx:89
 msgid "Disconnect"
 msgstr ""
@@ -2804,7 +2848,7 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:827
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:231
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
@@ -2815,7 +2859,7 @@ msgstr ""
 msgid "Edit announcement"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:247
 msgid "Edit channel"
 msgstr "Edit channel"
 
@@ -2841,7 +2885,8 @@ msgstr "Edit design"
 msgid "Edit image"
 msgstr "Edit image"
 
-#: app/components/chat/chat-message.tsx:288
+#: app/components/chat/chat-message.tsx:220
+#: app/components/chat/chat-message.tsx:361
 msgid "Edit message"
 msgstr "Edit message"
 
@@ -2982,7 +3027,7 @@ msgstr ""
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr ""
 
-#: app/components/chat/chat-composer.tsx:249
+#: app/components/chat/chat-composer.tsx:383
 msgid "Enter to send. Shift+Enter for a new line."
 msgstr "Enter to send. Shift+Enter for a new line."
 
@@ -3044,19 +3089,19 @@ msgstr ""
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:398
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:326
 msgid "Every active member can read and post."
 msgstr "Every active member can read and post."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:211
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:139
 msgid "Everyone"
 msgstr "Everyone"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:409
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:337
 msgid "Everyone else won't see that it exists."
 msgstr "Everyone else won't see that it exists."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:395
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:323
 msgid "Everyone on the team"
 msgstr "Everyone on the team"
 
@@ -3345,7 +3390,7 @@ msgstr "Form submissions"
 msgid "Format:"
 msgstr "Format:"
 
-#: app/components/chat/chat-message.tsx:182
+#: app/components/chat/chat-message.tsx:205
 msgid "Former member"
 msgstr "Former member"
 
@@ -3455,6 +3500,10 @@ msgstr ""
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "Give visitors room to share thoughtful feedback."
 
+#: app/components/chat/chat-compose-dialog.tsx:303
+msgid "Give your group a name"
+msgstr "Give your group a name"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
 msgstr "Go there"
@@ -3492,19 +3541,23 @@ msgstr ""
 msgid "Grayscale"
 msgstr "Grayscale"
 
-#: app/components/chat/chat-compose-dialog.tsx:81
+#: app/components/chat/chat-compose-dialog.tsx:385
 msgid "Group"
 msgstr "Group"
 
-#: app/components/chat/chat-compose-dialog.tsx:119
+#: app/components/chat/chat-view.tsx:614
+msgid "Group conversation"
+msgstr "Group conversation"
+
+#: app/components/chat/chat-compose-dialog.tsx:297
 msgid "Group name"
 msgstr "Group name"
 
-#: app/components/chat/chat-view.tsx:522
+#: app/components/chat/chat-view.tsx:629
 msgid "Group settings"
 msgstr "Group settings"
 
-#: app/components/chat/chat-view.tsx:427
+#: app/components/chat/chat-view.tsx:492
 msgid "Groups"
 msgstr "Groups"
 
@@ -3766,7 +3819,7 @@ msgid "Inspect"
 msgstr "Inspect"
 
 #: app/components/app-sidebar.tsx:426
-#: app/components/settings/cards/organization/integrations-card.tsx:58
+#: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
 msgstr ""
@@ -3886,8 +3939,8 @@ msgid "Keep editing"
 msgstr "Keep editing"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
-msgid "Keep forever"
-msgstr "Keep forever"
+#~ msgid "Keep forever"
+#~ msgstr "Keep forever"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
 msgid "Keeps original indexing"
@@ -3901,6 +3954,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:822
 msgid "Kiro IDE Setup"
 msgstr ""
+
+#: app/components/settings/cards/organization/integrations-card.tsx:32
+msgid "Knowledge management"
+msgstr "Knowledge management"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 #: app/components/website/create-form-dialog.tsx:171
@@ -4021,7 +4078,7 @@ msgstr ""
 #~ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
-#: app/components/website/link-inspector.tsx:642
+#: app/components/website/link-inspector.tsx:648
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:619
 msgid "Link"
 msgstr ""
@@ -4052,11 +4109,11 @@ msgstr ""
 msgid "Live"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:708
+#: app/components/chat/chat-view.tsx:863
 msgid "Load earlier replies"
 msgstr "Load earlier replies"
 
-#: app/components/chat/chat-view.tsx:585
+#: app/components/chat/chat-view.tsx:699
 msgid "Load older messages"
 msgstr "Load older messages"
 
@@ -4080,7 +4137,7 @@ msgstr ""
 msgid "Loading media…"
 msgstr "Loading media…"
 
-#: app/components/chat/chat-view.tsx:572
+#: app/components/chat/chat-view.tsx:686
 msgid "Loading messages…"
 msgstr "Loading messages…"
 
@@ -4191,7 +4248,7 @@ msgstr "Manage automations"
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
 
-#: app/components/chat/chat-view.tsx:446
+#: app/components/chat/chat-view.tsx:517
 msgid "Manage channels"
 msgstr "Manage channels"
 
@@ -4361,7 +4418,7 @@ msgid "members"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:403
-#: app/components/chat/chat-group-settings-dialog.tsx:81
+#: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:786
 #: app/components/roles/tenant-role-access-manager.tsx:872
@@ -4378,28 +4435,39 @@ msgstr "Members & invites"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: app/components/chat/chat-message.tsx:380
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:534
 msgid "Message"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:646
+#: app/components/chat/chat-view.tsx:234
+msgid "Message {activeName}"
+msgstr "Message {activeName}"
+
+#: app/components/chat/chat-view.tsx:233
 msgid "Message #{activeName}"
 msgstr "Message #{activeName}"
+
+#: app/components/chat/chat-message.tsx:329
+msgid "Message actions"
+msgstr "Message actions"
+
+#: app/components/chat/chat-composer.tsx:272
+msgid "Message composer"
+msgstr "Message composer"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:192
 msgid "Message content is required"
 msgstr "Message content is required"
 
-#: app/components/chat/chat-composer.tsx:201
+#: app/components/chat/chat-composer.tsx:218
 msgid "Message is too long."
 msgstr "Message is too long."
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:81
-msgid "Message retention"
-msgstr "Message retention"
+#~ msgid "Message retention"
+#~ msgstr "Message retention"
 
-#: app/components/chat/chat-view.tsx:537
+#: app/components/chat/chat-view.tsx:645
 msgid "Messages"
 msgstr "Messages"
 
@@ -4476,7 +4544,7 @@ msgstr ""
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:349
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:715
@@ -4501,7 +4569,7 @@ msgstr ""
 msgid "Need a new code? Request one here."
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:80
+#: app/components/settings/cards/organization/integrations-card.tsx:139
 msgid "Need an integration but don't see it here?"
 msgstr ""
 
@@ -4531,8 +4599,8 @@ msgstr ""
 msgid "New broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:175
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:101
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:247
 msgid "New channel"
 msgstr "New channel"
 
@@ -4561,13 +4629,13 @@ msgstr "New form submissions will appear here."
 msgid "New icon preview"
 msgstr ""
 
-#: app/components/chat/chat-compose-dialog.tsx:132
-#: app/components/chat/chat-group-settings-dialog.tsx:161
+#: app/components/chat/chat-compose-dialog.tsx:320
+#: app/components/chat/chat-group-settings-dialog.tsx:163
 msgid "New members can read earlier messages"
 msgstr "New members can read earlier messages"
 
-#: app/components/chat/chat-compose-dialog.tsx:62
-#: app/components/chat/chat-view.tsx:422
+#: app/components/chat/chat-compose-dialog.tsx:350
+#: app/components/chat/chat-view.tsx:487
 msgid "New message"
 msgstr "New message"
 
@@ -4661,8 +4729,8 @@ msgstr ""
 msgid "No channels available"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:226
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:184
+#: app/components/chat/chat-view.tsx:265
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:111
 msgid "No channels yet"
 msgstr "No channels yet"
 
@@ -4734,6 +4802,10 @@ msgstr "No matching images"
 msgid "No matching submissions"
 msgstr "No matching submissions"
 
+#: app/components/chat/chat-compose-dialog.tsx:211
+msgid "No matching teammates"
+msgstr "No matching teammates"
+
 #: app/components/media-library/media-library-picker.tsx:332
 msgid "No media matches your search."
 msgstr "No media matches your search."
@@ -4746,11 +4818,11 @@ msgstr "No media yet. Upload an image to get started."
 msgid "No members found."
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:389
+#: app/components/chat/chat-view.tsx:454
 msgid "No messages matched your search."
 msgstr "No messages matched your search."
 
-#: app/components/chat/chat-view.tsx:593
+#: app/components/chat/chat-view.tsx:710
 msgid "No messages yet"
 msgstr "No messages yet"
 
@@ -4780,11 +4852,11 @@ msgstr ""
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr ""
 
-#: app/components/chat/chat-group-settings-dialog.tsx:116
+#: app/components/chat/chat-group-settings-dialog.tsx:118
 msgid "No one else to add."
 msgstr "No one else to add."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:457
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:385
 msgid "No one matches your search."
 msgstr "No one matches your search."
 
@@ -4837,6 +4909,10 @@ msgstr ""
 msgid "No submissions yet"
 msgstr "No submissions yet"
 
+#: app/components/chat/chat-compose-dialog.tsx:209
+msgid "No teammates available"
+msgstr "No teammates available"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
 msgstr ""
@@ -4852,7 +4928,8 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
-#: app/components/website/link-inspector.tsx:628
+#: app/components/website/link-inspector.tsx:615
+#: app/components/website/link-inspector.tsx:634
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3347
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3377
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3839
@@ -4975,8 +5052,8 @@ msgid "Old URL (Source)"
 msgstr "Old URL (Source)"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:84
-msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
-msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
+#~ msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
+#~ msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -5007,11 +5084,15 @@ msgstr ""
 msgid "One-time Password URI"
 msgstr ""
 
+#: app/components/chat/chat-view.tsx:609
+msgid "Online"
+msgstr "Online"
+
 #: app/components/note/share-note-button.tsx:195
 msgid "Only selected members can access this note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:406
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:334
 msgid "Only selected roles and people"
 msgstr "Only selected roles and people"
 
@@ -5054,6 +5135,10 @@ msgstr ""
 #: app/components/settings/cards/organization/shop-card.tsx:205
 msgid "Open hosted dashboard"
 msgstr "Open hosted dashboard"
+
+#: app/components/chat/chat-message-markdown.tsx:26
+msgid "Open image attachment"
+msgstr "Open image attachment"
 
 #: app/components/website/link-inspector.tsx:591
 #: app/components/website/link-inspector.tsx:593
@@ -5105,7 +5190,7 @@ msgstr "Open reference"
 #~ msgid "Open Stripe dashboard"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:169
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:95
 msgid "Open team chat"
 msgstr "Open team chat"
 
@@ -5192,6 +5277,14 @@ msgstr ""
 #: app/routes/_app+/index.tsx:35
 msgid "Organizations are used to group your projects."
 msgstr ""
+
+#: app/components/settings/cards/organization/integrations-card.tsx:90
+msgid "Other integrations"
+msgstr "Other integrations"
+
+#: app/components/chat/chat-compose-dialog.tsx:326
+msgid "Otherwise, they only see messages sent after they join."
+msgstr "Otherwise, they only see messages sent after they join."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
@@ -5317,7 +5410,8 @@ msgstr ""
 msgid "Pending Invitations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:445
+#: app/components/chat/chat-compose-dialog.tsx:135
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:373
 msgid "People"
 msgstr "People"
 
@@ -5434,7 +5528,7 @@ msgstr "Pick a block to add to your email."
 msgid "Pick a block to insert into your page."
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:553
+#: app/components/chat/chat-view.tsx:665
 msgid "Pick a conversation"
 msgstr "Pick a conversation"
 
@@ -5523,7 +5617,8 @@ msgstr ""
 msgid "Positive feedback"
 msgstr ""
 
-#: app/components/website/link-inspector.tsx:624
+#: app/components/website/link-inspector.tsx:613
+#: app/components/website/link-inspector.tsx:630
 msgid "Prefetch"
 msgstr ""
 
@@ -5531,7 +5626,8 @@ msgstr ""
 msgid "Preload"
 msgstr ""
 
-#: app/components/website/link-inspector.tsx:626
+#: app/components/website/link-inspector.tsx:614
+#: app/components/website/link-inspector.tsx:632
 msgid "Prerender"
 msgstr ""
 
@@ -5627,6 +5723,10 @@ msgstr ""
 msgid "Profile Settings"
 msgstr ""
 
+#: app/components/settings/cards/organization/integrations-card.tsx:22
+msgid "Project management"
+msgstr "Project management"
+
 #: app/components/note/share-note-button.tsx:189
 msgid "Public Access"
 msgstr ""
@@ -5708,11 +5808,12 @@ msgstr ""
 msgid "Rating"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:252
+#: app/components/chat/chat-message.tsx:302
+#: app/components/chat/chat-message.tsx:344
 msgid "React with {emoji}"
 msgstr "React with {emoji}"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:206
+#: app/components/settings/cards/organization/integrations-card.tsx:265
 msgid "Read documentation"
 msgstr ""
 
@@ -5857,6 +5958,10 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
+#: app/components/chat/chat-compose-dialog.tsx:129
+msgid "Remove {label}"
+msgstr "Remove {label}"
+
 #: app/components/settings/cards/sessions-card.tsx:375
 msgid "Remove access from all devices except this one"
 msgstr ""
@@ -5945,11 +6050,12 @@ msgstr "Replace image"
 msgid "Reply"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:277
+#: app/components/chat/chat-message.tsx:320
+#: app/components/chat/chat-message.tsx:355
 msgid "Reply in thread"
 msgstr "Reply in thread"
 
-#: app/components/chat/chat-view.tsx:738
+#: app/components/chat/chat-view.tsx:893
 msgid "Reply…"
 msgstr "Reply…"
 
@@ -5965,7 +6071,7 @@ msgstr ""
 msgid "Request deletion"
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:87
+#: app/components/settings/cards/organization/integrations-card.tsx:146
 msgid "Request integration"
 msgstr ""
 
@@ -6029,11 +6135,15 @@ msgstr "Responses"
 msgid "Responses to your website forms will arrive here."
 msgstr "Responses to your website forms will arrive here."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:212
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:140
 msgid "Restricted"
 msgstr "Restricted"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:322
+#: app/components/chat/chat-view.tsx:616
+msgid "Restricted channel"
+msgstr "Restricted channel"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:250
 msgid "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
 msgstr "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
 
@@ -6042,8 +6152,8 @@ msgid "Result"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:93
-msgid "Retention period"
-msgstr "Retention period"
+#~ msgid "Retention period"
+#~ msgstr "Retention period"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
@@ -6106,7 +6216,7 @@ msgstr "Role"
 msgid "Role name"
 msgstr "Role name"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:420
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:348
 msgid "Roles"
 msgstr "Roles"
 
@@ -6227,7 +6337,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
-#: app/components/chat/chat-message.tsx:196
+#: app/components/chat/chat-message.tsx:222
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -6259,7 +6369,7 @@ msgstr ""
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:504
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
 msgstr ""
@@ -6351,7 +6461,7 @@ msgstr ""
 msgid "Search automations..."
 msgstr ""
 
-#: app/components/chat/chat-compose-dialog.tsx:95
+#: app/components/chat/chat-compose-dialog.tsx:154
 msgid "Search by name"
 msgstr "Search by name"
 
@@ -6377,8 +6487,8 @@ msgstr "Search media"
 msgid "Search media library"
 msgstr "Search media library"
 
-#: app/components/chat/chat-view.tsx:361
-#: app/components/chat/chat-view.tsx:362
+#: app/components/chat/chat-view.tsx:426
+#: app/components/chat/chat-view.tsx:427
 msgid "Search messages"
 msgstr "Search messages"
 
@@ -6404,14 +6514,14 @@ msgstr ""
 msgid "Search pages..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:450
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:451
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:378
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:379
 msgid "Search people"
 msgstr "Search people"
 
 #: app/components/chat/chat-compose-dialog.tsx:137
-msgid "Search people to add"
-msgstr "Search people to add"
+#~ msgid "Search people to add"
+#~ msgstr "Search people to add"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2461
 msgid "Search preview"
@@ -6421,7 +6531,7 @@ msgstr ""
 msgid "Search redirects..."
 msgstr "Search redirects..."
 
-#: app/components/chat/chat-view.tsx:385
+#: app/components/chat/chat-view.tsx:450
 msgid "Search results"
 msgstr "Search results"
 
@@ -6433,7 +6543,8 @@ msgstr "Search submissions"
 msgid "Search submissions…"
 msgstr "Search submissions…"
 
-#: app/components/chat/chat-group-settings-dialog.tsx:110
+#: app/components/chat/chat-compose-dialog.tsx:155
+#: app/components/chat/chat-group-settings-dialog.tsx:112
 msgid "Search team members"
 msgstr "Search team members"
 
@@ -6624,8 +6735,7 @@ msgid "Send invitations to join the organization workspace."
 msgstr "Send invitations to join the organization workspace."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
-#: app/components/chat/chat-composer.tsx:332
-#: app/components/chat/chat-message.tsx:398
+#: app/components/chat/chat-composer.tsx:356
 msgid "Send message"
 msgstr ""
 
@@ -6641,7 +6751,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:596
+#: app/components/chat/chat-view.tsx:713
 msgid "Send the first message — your team will see it here."
 msgstr "Send the first message — your team will see it here."
 
@@ -6723,7 +6833,7 @@ msgstr ""
 msgid "Setup key"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:641
+#: app/components/chat/chat-view.tsx:787
 msgid "Several people are typing…"
 msgstr "Several people are typing…"
 
@@ -6776,7 +6886,7 @@ msgstr ""
 msgid "Show form title"
 msgstr "Show form title"
 
-#: app/components/chat/chat-message.tsx:92
+#: app/components/chat/chat-message.tsx:110
 msgid "Show less"
 msgstr "Show less"
 
@@ -6784,7 +6894,7 @@ msgstr "Show less"
 #~ msgid "Show me features"
 #~ msgstr ""
 
-#: app/components/chat/chat-message.tsx:92
+#: app/components/chat/chat-message.tsx:110
 msgid "Show more"
 msgstr "Show more"
 
@@ -6950,11 +7060,11 @@ msgstr ""
 msgid "Some fields are already translated"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:196
+#: app/components/chat/chat-view.tsx:227
 msgid "Someone"
 msgstr "Someone"
 
-#: app/components/chat/chat-view.tsx:208
+#: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
@@ -6988,12 +7098,16 @@ msgid "Star"
 msgstr "Star"
 
 #: app/components/chat/chat-compose-dialog.tsx:192
-msgid "Start"
-msgstr "Start"
+#~ msgid "Start"
+#~ msgstr "Start"
 
 #: app/components/chat/chat-view.tsx:372
 #~ msgid "Start a conversation with someone on your team."
 #~ msgstr "Start a conversation with someone on your team."
+
+#: app/components/chat/chat-compose-dialog.tsx:424
+msgid "Start conversation"
+msgstr "Start conversation"
 
 #: app/components/roles/tenant-role-access-manager.tsx:376
 msgid "Start from a template"
@@ -7034,6 +7148,10 @@ msgstr ""
 #: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
 msgstr "Starting point"
+
+#: app/components/chat/chat-compose-dialog.tsx:422
+msgid "Starting…"
+msgstr "Starting…"
 
 #: app/components/roles/tenant-role-access-manager.tsx:650
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -7244,7 +7362,12 @@ msgstr ""
 msgid "Team & Members"
 msgstr "Team & Members"
 
+#: app/components/chat/chat-view.tsx:618
+msgid "Team channel"
+msgstr "Team channel"
+
 #: app/components/chat/chat-sidebar-link.tsx:20
+#: app/components/chat/chat-view.tsx:384
 #: app/components/roles/tenant-role-access-manager.tsx:202
 msgid "Team chat"
 msgstr "Team chat"
@@ -7261,7 +7384,7 @@ msgstr "Team chat isn't running in this environment"
 msgid "Team manager"
 msgstr "Team manager"
 
-#: app/components/chat/chat-compose-dialog.tsx:88
+#: app/components/chat/chat-compose-dialog.tsx:135
 msgid "Team member"
 msgstr "Team member"
 
@@ -7320,7 +7443,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
-#: app/components/website/link-inspector.tsx:638
+#: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr ""
 
@@ -7464,11 +7587,11 @@ msgstr ""
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:148
+#: app/components/chat/chat-message.tsx:171
 msgid "This message was deleted."
 msgstr "This message was deleted."
 
-#: app/components/chat/chat-view.tsx:816
+#: app/components/chat/chat-view.tsx:1013
 msgid "This removes the message for everyone in the channel. This can't be undone."
 msgstr "This removes the message for everyone in the channel. This can't be undone."
 
@@ -7504,8 +7627,8 @@ msgstr ""
 msgid "Thought for {duration} seconds"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:659
-#: app/components/chat/chat-view.tsx:664
+#: app/components/chat/chat-view.tsx:805
+#: app/components/chat/chat-view.tsx:811
 msgid "Thread"
 msgstr "Thread"
 
@@ -7542,6 +7665,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:508
 msgid "To: {recipient}"
 msgstr "To: {recipient}"
+
+#: app/components/chat/chat-view.tsx:932
+msgid "Today"
+msgstr "Today"
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:407
 msgid "Toggle announcement visibility"
@@ -7637,6 +7764,10 @@ msgstr ""
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr ""
 
+#: app/components/chat/chat-compose-dialog.tsx:218
+msgid "Try a different name or clear your search."
+msgstr "Try a different name or clear your search."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
@@ -7653,7 +7784,7 @@ msgid "Try adjusting your search or filter."
 msgstr ""
 
 #: app/components/ai/global-ai-panel.tsx:86
-#: app/components/chat/chat-view.tsx:566
+#: app/components/chat/chat-view.tsx:680
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:326
 msgid "Try again"
 msgstr "Try again"
@@ -7719,7 +7850,7 @@ msgstr ""
 msgid "Unknown intent"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:57
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:46
 msgid "Unknown role"
 msgstr "Unknown role"
 
@@ -7833,7 +7964,7 @@ msgstr ""
 msgid "Upload a site icon"
 msgstr ""
 
-#: app/components/chat/chat-composer.tsx:124
+#: app/components/chat/chat-composer.tsx:126
 msgid "Upload already in progress."
 msgstr "Upload already in progress."
 
@@ -7877,7 +8008,7 @@ msgstr ""
 msgid "Uploaded:"
 msgstr "Uploaded:"
 
-#: app/components/chat/chat-composer.tsx:310
+#: app/components/chat/chat-composer.tsx:335
 #: app/components/website/link-inspector.tsx:542
 #: app/routes/_app+/$orgSlug_+/media.tsx:843
 msgid "Uploading…"
@@ -8250,7 +8381,7 @@ msgstr ""
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
-#: app/components/chat/chat-group-settings-dialog.tsx:164
+#: app/components/chat/chat-group-settings-dialog.tsx:166
 msgid "When off, people only see messages from after they joined."
 msgstr "When off, people only see messages from after they joined."
 
@@ -8274,7 +8405,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:382
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:310
 msgid "Who can access this channel?"
 msgstr "Who can access this channel?"
 
@@ -8304,7 +8435,7 @@ msgstr ""
 msgid "Working on it"
 msgstr "Working on it"
 
-#: app/components/chat/chat-composer.tsx:85
+#: app/components/chat/chat-composer.tsx:83
 msgid "Write a message…"
 msgstr "Write a message…"
 
@@ -8349,6 +8480,10 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
+#: app/components/chat/chat-view.tsx:934
+msgid "Yesterday"
+msgstr "Yesterday"
+
 #: app/components/organization-members.tsx:201
 msgid "You"
 msgstr ""
@@ -8385,7 +8520,7 @@ msgstr ""
 msgid "You do not have permission to view this note"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:235
+#: app/components/chat/chat-view.tsx:274
 msgid "You don't have access to any channels yet. Ask an admin to add you to one."
 msgstr "You don't have access to any channels yet. Ask an admin to add you to one."
 
@@ -8408,7 +8543,7 @@ msgstr ""
 msgid "You must agree to the terms of service and privacy policy"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:781
+#: app/components/chat/chat-view.tsx:978
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
 
@@ -8512,7 +8647,7 @@ msgstr ""
 msgid "Your setup progress"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:187
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
 msgid "Your team will see channels here once you create one. Members open chat from the sidebar next to the logo."
 msgstr "Your team will see channels here once you create one. Members open chat from the sidebar next to the logo."
 

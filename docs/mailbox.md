@@ -14,6 +14,14 @@ user ID as its subject, and the organization's regional API URL. The browser
 calls `/operator/mailbox/*` directly. App never proxies submission values or
 reply bodies. Mailbox tokens cannot authorize the other operator endpoints.
 
+Tenant-api checks active organization metadata and the node's `DATA_REGION`
+before opening the tenant database. With `APP_URL` configured, it obtains that
+metadata from App's internal `/resources/tenant-organization` endpoint, using
+`INTERNAL_COMMAND_TOKEN`, rather than relying on a node-local control-plane
+SQLite copy. The lookup works for unpublished organizations. Missing metadata
+returns `Organization not found`; a genuine region mismatch returns
+`Mailbox is not available in this region`.
+
 Unread counts are per operator, across all forms. Opening a submission writes a
 regional `mailbox_read_receipts` row keyed by submission and operator. Mark
 unread removes that operator's receipt. Counts refresh after mutations, on

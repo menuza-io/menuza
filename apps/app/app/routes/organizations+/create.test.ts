@@ -1,7 +1,11 @@
 import { faker } from '@faker-js/faker'
 import { db, eq, Organization, UserOrganization } from '@repo/database'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { __setMockLaunchStatus } from '#app/utils/env.server.ts'
+import {
+	deprovisionTenantDatabase,
+	provisionTenantDatabase,
+} from '#app/utils/sites/tenant-api.server.ts'
 import {
 	createAuthenticatedRequest,
 	createTestSession,
@@ -9,9 +13,16 @@ import {
 } from '#tests/test-utils.ts'
 import { action, loader } from './create.tsx'
 
+vi.mock('#app/utils/sites/tenant-api.server.ts', () => ({
+	provisionTenantDatabase: vi.fn(),
+	deprovisionTenantDatabase: vi.fn(),
+}))
+
 describe('organizations+/create route integration', () => {
 	beforeEach(() => {
 		__setMockLaunchStatus('LAUNCHED')
+		vi.mocked(provisionTenantDatabase).mockResolvedValue({ region: 'us' })
+		vi.mocked(deprovisionTenantDatabase).mockResolvedValue({ region: 'us' })
 	})
 
 	afterEach(() => {
