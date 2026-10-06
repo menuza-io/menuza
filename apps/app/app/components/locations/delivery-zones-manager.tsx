@@ -334,6 +334,12 @@ export function DeliveryZonesManager({
 								</Label>
 								<Select
 									value={provider}
+									items={{
+										in_house: 'In-House Fleet',
+										uber_eats: 'Uber Eats',
+										doordash: 'DoorDash',
+										restricted: 'Restricted Area',
+									}}
 									onValueChange={(val) =>
 										val && setProvider(val as DeliveryProvider)
 									}

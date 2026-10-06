@@ -1,4 +1,5 @@
 import { type DropInput } from '@repo/common/menu-types'
+import { pickLocalized } from '@repo/common/site-locales'
 import {
 	db,
 	eq,
@@ -137,7 +138,7 @@ export async function saveDrop(
 	},
 ) {
 	let slug =
-		slugify(data.slug?.trim() || data.title, {
+		slugify(data.slug?.trim() || pickLocalized(data.title, null, 'en'), {
 			lowercase: true,
 			separator: '-',
 		}) || 'drop'

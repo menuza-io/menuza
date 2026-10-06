@@ -94,6 +94,15 @@ function RetentionSettings({
 				</Label>
 				<Select
 					value={value}
+					items={{
+						forever: <Trans>Keep forever</Trans>,
+						...Object.fromEntries(
+							CHAT_RETENTION_DAY_OPTIONS.map((days) => [
+								String(days),
+								<Trans key={days}>{days} days</Trans>,
+							]),
+						),
+					}}
 					disabled={pending}
 					onValueChange={(next) => {
 						if (!next) return
@@ -178,24 +187,26 @@ export default function ChatChannelsSettings() {
 				</div>
 
 				{channels.length === 0 ? (
-					<Empty className="rounded-lg border border-dashed py-10">
-						<EmptyHeader>
-							<EmptyTitle>
-								<Trans>No channels yet</Trans>
-							</EmptyTitle>
-							<EmptyDescription>
-								<Trans>
-									Your team will see channels here once you create one. Members
-									open chat from the sidebar next to the logo.
-								</Trans>
-							</EmptyDescription>
-						</EmptyHeader>
-						<EmptyContent>
-							<Button type="button" onClick={() => setEditing('new')}>
-								<Trans>Create your first channel</Trans>
-							</Button>
-						</EmptyContent>
-					</Empty>
+					<div className="rounded-lg border border-dashed py-4">
+						<Empty>
+							<EmptyHeader>
+								<EmptyTitle>
+									<Trans>No channels yet</Trans>
+								</EmptyTitle>
+								<EmptyDescription>
+									<Trans>
+										Your team will see channels here once you create one.
+										Members open chat from the sidebar next to the logo.
+									</Trans>
+								</EmptyDescription>
+							</EmptyHeader>
+							<EmptyContent>
+								<Button type="button" onClick={() => setEditing('new')}>
+									<Trans>Create your first channel</Trans>
+								</Button>
+							</EmptyContent>
+						</Empty>
+					</div>
 				) : (
 					<ul className="divide-y rounded-lg border">
 						{channels.map((channel) => (

@@ -226,7 +226,7 @@ function SortableOptionRow({
 						</span>
 					)}
 					{option.isAlcohol && (
-						<span className="inline-flex items-center rounded border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
+						<span className="border-destructive/30 bg-destructive/10 text-destructive inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium">
 							21+
 						</span>
 					)}
@@ -242,7 +242,7 @@ function SortableOptionRow({
 					className="mt-1.5 flex flex-wrap items-center gap-1.5"
 					onClick={(e) => e.stopPropagation()}
 				>
-					<span className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+					<span className="text-primary flex items-center gap-1 text-[11px] font-medium">
 						<Icon name="route" className="size-3" />
 						<Trans>Nested Groups:</Trans>
 					</span>
@@ -262,7 +262,7 @@ function SortableOptionRow({
 							return (
 								<span
 									key={groupId}
-									className="inline-flex items-center gap-1 rounded border border-indigo-500/20 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300"
+									className="border-primary/20 bg-primary/10 text-primary inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium"
 								>
 									{name}
 									{onRemoveNestedGroup && (
@@ -294,8 +294,11 @@ function SortableOptionRow({
 									}
 								}}
 							>
-								<SelectTrigger className="border-border h-5 w-auto gap-1 border-dashed px-1.5 text-[10px] font-normal">
-									<SelectValue placeholder="+ Nested group" />
+								<SelectTrigger
+									size="sm"
+									className="w-auto text-[10px] font-normal"
+								>
+									<SelectValue>+ Nested group</SelectValue>
 								</SelectTrigger>
 								<SelectContent align="start" className="max-h-56">
 									<SelectItem value="placeholder" disabled>
@@ -951,12 +954,11 @@ export function ModifierForm({
 												className="grid grid-cols-1 gap-3 sm:grid-cols-2"
 											>
 												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														selectionType === 'single' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
+													variant={
+														selectionType === 'single' ? 'muted' : 'outline'
+													}
+													size="sm"
+													className="cursor-pointer items-start select-none"
 													onClick={() => handleSelectionTypeChange('single')}
 												>
 													<RadioGroupItem
@@ -968,19 +970,18 @@ export function ModifierForm({
 														<ItemTitle>
 															<Trans>Single Choice (Radio)</Trans>
 														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														<ItemDescription className="text-xs">
 															<Trans>Guests can pick up to 1 option.</Trans>
 														</ItemDescription>
 													</ItemContent>
 												</Item>
 
 												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														selectionType === 'multiple' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
+													variant={
+														selectionType === 'multiple' ? 'muted' : 'outline'
+													}
+													size="sm"
+													className="cursor-pointer items-start select-none"
 													onClick={() => handleSelectionTypeChange('multiple')}
 												>
 													<RadioGroupItem
@@ -992,19 +993,18 @@ export function ModifierForm({
 														<ItemTitle>
 															<Trans>Multiple Choice (Checkboxes)</Trans>
 														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														<ItemDescription className="text-xs">
 															<Trans>Guests can pick multiple options.</Trans>
 														</ItemDescription>
 													</ItemContent>
 												</Item>
 
 												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														selectionType === 'quantity' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
+													variant={
+														selectionType === 'quantity' ? 'muted' : 'outline'
+													}
+													size="sm"
+													className="cursor-pointer items-start select-none"
 													onClick={() => handleSelectionTypeChange('quantity')}
 												>
 													<RadioGroupItem
@@ -1016,19 +1016,18 @@ export function ModifierForm({
 														<ItemTitle>
 															<Trans>Quantity Counter (+/-)</Trans>
 														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														<ItemDescription className="text-xs">
 															<Trans>Guests choose counts per option.</Trans>
 														</ItemDescription>
 													</ItemContent>
 												</Item>
 
 												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														selectionType === 'pizza' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
+													variant={
+														selectionType === 'pizza' ? 'muted' : 'outline'
+													}
+													size="sm"
+													className="cursor-pointer items-start select-none"
 													onClick={() => handleSelectionTypeChange('pizza')}
 												>
 													<RadioGroupItem
@@ -1040,7 +1039,7 @@ export function ModifierForm({
 														<ItemTitle>
 															<Trans>Pizza Toppings (Whole / Halves)</Trans>
 														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														<ItemDescription className="text-xs">
 															<Trans>
 																Whole pizza, left half, or right half pricing.
 															</Trans>
@@ -1375,6 +1374,17 @@ export function ModifierForm({
 										<Select
 											key={nestedGroupIds.length}
 											disabled={addableNestedGroups.length === 0}
+											items={addableNestedGroups.map((g) => ({
+												value: g.id,
+												label:
+													getLocalizedMenuValue(
+														g.name,
+														activeLocale,
+														defaultLocale,
+													) ||
+													g.internalName ||
+													'Untitled',
+											}))}
 											onValueChange={(val: string | null) => {
 												if (val) {
 													setActiveSubGroupIds((prev) => [...prev, val])
@@ -1467,13 +1477,10 @@ export function ModifierForm({
 									<Frame className="w-full">
 										<FrameHeader>
 											<FrameTitle className="flex items-center gap-2 text-sm font-semibold">
-												<Icon
-													name="route"
-													className="size-4 text-indigo-600 dark:text-indigo-400"
-												/>
+												<Icon name="route" className="text-primary size-4" />
 												<Trans>Nested Modifier Usage</Trans>
 											</FrameTitle>
-											<FrameDescription className="text-xs">
+											<FrameDescription>
 												<Trans>
 													This modifier group is triggered when customers select
 													these modifier items:
@@ -1721,7 +1728,7 @@ export function ModifierForm({
 												className={cn(
 													'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors select-none',
 													modalIsAlcohol
-														? 'border-purple-500/50 bg-purple-500/10 font-medium text-purple-600 ring-1 ring-purple-500/20 dark:text-purple-400'
+														? 'border-destructive/50 bg-destructive/10 text-destructive ring-destructive/20 font-medium ring-1'
 														: 'border-border/70 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground',
 												)}
 											>
@@ -2076,7 +2083,7 @@ export function ModifierForm({
 											className={cn(
 												'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors select-none',
 												modalIsAlcohol
-													? 'border-purple-500/50 bg-purple-500/10 font-medium text-purple-600 ring-1 ring-purple-500/20 dark:text-purple-400'
+													? 'border-destructive/50 bg-destructive/10 text-destructive ring-destructive/20 font-medium ring-1'
 													: 'border-border/70 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground',
 											)}
 										>

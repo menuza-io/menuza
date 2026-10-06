@@ -294,6 +294,7 @@ export function AvailabilityScheduleEditor({
 										>
 											<Select
 												value={slot.start}
+												items={TIME_OPTIONS}
 												onValueChange={(val) =>
 													val && handleSlotChange(day, slotIndex, 'start', val)
 												}
@@ -314,6 +315,7 @@ export function AvailabilityScheduleEditor({
 
 											<Select
 												value={slot.end}
+												items={TIME_OPTIONS}
 												onValueChange={(val) =>
 													val && handleSlotChange(day, slotIndex, 'end', val)
 												}

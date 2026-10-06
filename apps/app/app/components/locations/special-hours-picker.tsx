@@ -168,6 +168,7 @@ export function SpecialHoursPicker({
 									<div className="flex items-center gap-2">
 										<Select
 											value={newSlots[0]?.start || '10:00'}
+											items={TIME_OPTIONS}
 											onValueChange={(val) =>
 												val &&
 												setNewSlots([
@@ -192,6 +193,7 @@ export function SpecialHoursPicker({
 										<span className="text-muted-foreground text-xs">-</span>
 										<Select
 											value={newSlots[0]?.end || '16:00'}
+											items={TIME_OPTIONS}
 											onValueChange={(val) =>
 												val &&
 												setNewSlots([

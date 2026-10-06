@@ -1,8 +1,14 @@
 import { requireUserId } from '@repo/auth'
 import { getLocationCurrency } from '@repo/common/location-currency'
-import { DropInputSchema } from '@repo/common/menu-types'
+import {
+	DropInputSchema,
+	getDropPublicationErrors,
+	hasDropDefaultTitle,
+} from '@repo/common/menu-types'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
+	and,
 	eq,
 	asc,
 	desc,
@@ -10,6 +16,7 @@ import {
 	OrganizationMenu,
 	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItemCategoryAssignment,
+	OrganizationDrop,
 } from '@repo/database'
 import {
 	type ActionFunctionArgs,
@@ -27,7 +34,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
+		siteLocales: true,
 	})
+	const localesConfig = parseSiteLocalesConfig(
+		organization.siteLocales,
+		organization.siteDefaultLocale,
+	)
 
 	const dropId = params.dropId
 	if (!dropId) {
@@ -146,6 +159,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		availableMenus: formattedMenus,
 		initialData,
 		currency: getLocationCurrency(locations[0]?.address),
+		defaultLocale: localesConfig.defaultLocale,
+		supportedLocales: localesConfig.locales,
 	}
 }
 
@@ -153,6 +168,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
 	})
 	const dropId = params.dropId
 	if (!dropId) {
@@ -160,6 +176,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+	if (intent !== 'draft' && intent !== 'publish') {
+		return Response.json(
+			{ errors: { intent: ['Choose Unpublish or Publish.'] } },
+			{ status: 400 },
+		)
+	}
 	const rawData: Record<string, unknown> = {
 		id: dropId,
 	}
@@ -188,6 +211,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			rawData[key] = value
 		}
 	}
+	rawData.status = intent === 'draft' ? 'draft' : 'scheduled'
 
 	const parsed = DropInputSchema.safeParse(rawData)
 
@@ -196,6 +220,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			{ errors: parsed.error.flatten().fieldErrors },
 			{ status: 400 },
 		)
+	}
+	if (
+		!hasDropDefaultTitle(
+			parsed.data.title,
+			organization.siteDefaultLocale ?? 'en',
+		)
+	) {
+		return Response.json(
+			{ errors: { title: ['Add a drop name in the default site language.'] } },
+			{ status: 400 },
+		)
+	}
+
+	if (intent === 'publish') {
+		const existing = await db.query.OrganizationDrop.findFirst({
+			where: and(
+				eq(OrganizationDrop.id, dropId),
+				eq(OrganizationDrop.organizationId, organization.id),
+			),
+			columns: { status: true },
+		})
+		if (!existing) {
+			throw new Response('Drop not found', { status: 404 })
+		}
+		const isPublished =
+			existing.status === 'scheduled' || existing.status === 'live'
+		const errors = getDropPublicationErrors(parsed.data, new Date(), {
+			requireFutureClose: !isPublished,
+		})
+		if (Object.keys(errors).length > 0) {
+			return Response.json({ errors }, { status: 400 })
+		}
 	}
 
 	await saveDrop(organization.id, {
@@ -220,6 +276,8 @@ export default function EditDropRoute() {
 				initialData={data.initialData}
 				isEdit
 				currency={data.currency}
+				defaultLocale={data.defaultLocale}
+				supportedLocales={data.supportedLocales}
 			/>
 		</div>
 	)

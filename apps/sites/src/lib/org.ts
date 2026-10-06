@@ -1,3 +1,4 @@
+import { type DropStatus } from '@repo/common/menu-types'
 import { type SiteFontSelection } from '@repo/common/site-fonts'
 import { edgeCache } from '~/lib/site-headers'
 import { getAppServiceBinding, getPublicAppUrl } from '~/lib/worker-env'
@@ -549,7 +550,7 @@ export type PublicDropData = {
 		description: string | null
 		coverImageKey: string | null
 		coverImageUrl: string | null
-		status: string
+		status: DropStatus
 		ordersOpenAt: string | null
 		ordersCloseAt: string | null
 		visibility: 'public' | 'unlisted'
@@ -624,4 +625,28 @@ export async function fetchPublishedDrop(options: {
 		`${getAppUrl()}/resources/sites/drop?${params.toString()}`,
 		!options.preview,
 	)
+}
+
+export type PublicDropListing = {
+	title: string
+	slug: string
+	description: string | null
+	coverImageUrl: string | null
+	status: DropStatus
+}
+
+export async function fetchPublishedDrops(options: {
+	slug?: string | null
+	host?: string | null
+}): Promise<PublicDropListing[]> {
+	const params = new URLSearchParams()
+	if (options.slug) params.set('slug', options.slug)
+	if (options.host) params.set('host', options.host)
+	if (!params.size) return []
+
+	const data = await fetchAppJson<{ drops: PublicDropListing[] }>(
+		`${getAppUrl()}/resources/sites/drops?${params.toString()}`,
+		false,
+	)
+	return data?.drops ?? []
 }

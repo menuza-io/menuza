@@ -21,6 +21,10 @@ import {
 	generatePickupSlots,
 	DropInputSchema,
 	DropPickupWindowInputSchema,
+	getDropDisplayStatus,
+	getDropPublicationErrors,
+	hasDropDefaultTitle,
+	isDropDiscoverable,
 } from './menu-types.ts'
 
 describe('menu-types', () => {
@@ -468,6 +472,9 @@ describe('menu-types', () => {
 
 		const parsed = DropInputSchema.safeParse(validDrop)
 		expect(parsed.success).toBe(true)
+		expect(
+			DropInputSchema.safeParse({ ...validDrop, menuId: '' }).success,
+		).toBe(false)
 		if (parsed.success) {
 			expect(parsed.data.checkoutHoldMinutes).toBe(5)
 			expect(parsed.data.showOrdersOpenTime).toBe(true)
@@ -484,5 +491,106 @@ describe('menu-types', () => {
 			status: 'nonexistent_status',
 		})
 		expect(invalidStatus.success).toBe(false)
+	})
+
+	it('accepts localized drop names without limiting the serialized map to 150 characters', () => {
+		const title = JSON.stringify({
+			en: 'Weekend drop'.repeat(10),
+			ar: 'مخبوزات نهاية الأسبوع',
+		})
+		const parsed = DropInputSchema.safeParse({ menuId: 'menu_123', title })
+		expect(parsed.success).toBe(true)
+		expect(hasDropDefaultTitle(title, 'en')).toBe(true)
+		expect(hasDropDefaultTitle(title, 'ar')).toBe(true)
+		expect(hasDropDefaultTitle('Legacy name', 'ar')).toBe(true)
+		expect(hasDropDefaultTitle('{"en":"English only"}', 'ar')).toBe(false)
+		expect(hasDropDefaultTitle('{"en":"  "}', 'en')).toBe(false)
+		expect(
+			DropInputSchema.safeParse({
+				menuId: 'menu_123',
+				title: JSON.stringify({ en: 'x'.repeat(151), ar: 'اسم' }),
+			}).success,
+		).toBe(false)
+		expect(
+			DropInputSchema.safeParse({
+				menuId: 'menu_123',
+				title: 'x'.repeat(151),
+			}).success,
+		).toBe(false)
+	})
+
+	it('derives published phases from order times while treating legacy completed as closed', () => {
+		const now = new Date('2026-10-05T12:00:00.000Z')
+		const future = '2026-10-05T13:00:00.000Z'
+		const past = '2026-10-05T11:00:00.000Z'
+		expect(getDropDisplayStatus('draft', past, future, now)).toBe('draft')
+		expect(getDropDisplayStatus('scheduled', future, null, now)).toBe(
+			'scheduled',
+		)
+		expect(getDropDisplayStatus('scheduled', past, future, now)).toBe('live')
+		expect(getDropDisplayStatus('scheduled', past, now, now)).toBe('closed')
+		expect(getDropDisplayStatus('live', future, null, now)).toBe('scheduled')
+		expect(getDropDisplayStatus('completed', past, future, now)).toBe('closed')
+	})
+	it('discovers only published public drops while preserving unlisted link access', () => {
+		expect(isDropDiscoverable('draft', 'public')).toBe(false)
+		expect(isDropDiscoverable('scheduled', 'public')).toBe(true)
+		expect(isDropDiscoverable('live', 'public')).toBe(true)
+		expect(isDropDiscoverable('closed', 'public')).toBe(true)
+		expect(isDropDiscoverable('completed', 'public')).toBe(true)
+		expect(isDropDiscoverable('live', 'unlisted')).toBe(false)
+	})
+
+	it('requires a valid ordering and pickup schedule to publish, but not to save a draft', () => {
+		const now = new Date('2026-10-05T12:00:00.000Z')
+		const draft = DropInputSchema.parse({
+			menuId: 'menu_123',
+			title: 'Friday Drop',
+			status: 'draft',
+		})
+		expect(draft.ordersOpenAt).toBeNull()
+		expect(getDropPublicationErrors(draft, now)).toMatchObject({
+			ordersOpenAt: expect.any(Array),
+			ordersCloseAt: expect.any(Array),
+			pickupWindows: expect.any(Array),
+		})
+
+		const scheduled = {
+			...draft,
+			status: 'scheduled' as const,
+			ordersOpenAt: new Date('2026-10-06T10:00:00.000Z'),
+			ordersCloseAt: new Date('2026-10-06T11:00:00.000Z'),
+			pickupWindows: [
+				{
+					locationId: 'loc_123',
+					date: '2026-10-07',
+					startTime: '12:00',
+					endTime: '14:00',
+					slotIntervalMinutes: 30,
+					maxOrdersPerSlot: null,
+					orderLeadTimeMinutes: 0,
+				},
+			],
+		}
+		expect(getDropPublicationErrors(scheduled, now)).toEqual({})
+		expect(
+			getDropPublicationErrors(
+				{ ...scheduled, ordersCloseAt: scheduled.ordersOpenAt },
+				now,
+			).ordersCloseAt,
+		).toEqual(['The closing time must be after the opening time.'])
+		const pastWindow = {
+			...scheduled,
+			ordersOpenAt: new Date('2026-10-04T10:00:00.000Z'),
+			ordersCloseAt: new Date('2026-10-04T11:00:00.000Z'),
+		}
+		expect(getDropPublicationErrors(pastWindow, now).ordersCloseAt).toEqual([
+			'The closing time must be in the future.',
+		])
+		expect(
+			getDropPublicationErrors(pastWindow, now, {
+				requireFutureClose: false,
+			}),
+		).toEqual({})
 	})
 })

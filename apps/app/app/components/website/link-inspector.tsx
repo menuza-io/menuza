@@ -608,6 +608,12 @@ export function LinkInspector({
 				<InspectorRow label={_(t`Preload`)}>
 					<Select
 						value={link.preload ?? 'default'}
+						items={{
+							default: <Trans>Default</Trans>,
+							prefetch: <Trans>Prefetch</Trans>,
+							prerender: <Trans>Prerender</Trans>,
+							none: <Trans>None</Trans>,
+						}}
 						onValueChange={(next) =>
 							patch({ preload: (next as SiteLinkPreload) || 'default' })
 						}

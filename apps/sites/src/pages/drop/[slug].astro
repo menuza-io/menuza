@@ -1,5 +1,7 @@
 ---
 import SitePage from '~/components/SitePage.astro'
+import { getDropDisplayStatus, getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocaleHref } from '@repo/common/site-locales'
 import { fetchPublishedDrop } from '~/lib/org'
 
 const organization = Astro.locals.organization
@@ -25,29 +27,43 @@ if (!dropData || !organization) {
 	return new Response('Drop Not Found', { status: 404 })
 }
 
-const drop = dropData.drop
+const defaultLocale = Astro.locals.defaultLocale || 'en'
+const requestedLocale = Astro.locals.requestedLocale || defaultLocale
+const localize = (value: string | null | undefined) =>
+	getLocalizedMenuValue(value, requestedLocale, defaultLocale)
+const drop = {
+	...dropData.drop,
+	title: localize(dropData.drop.title),
+	description: localize(dropData.drop.description),
+}
 const pickupWindows = dropData.pickupWindows
 const inventoryOverrides = dropData.inventoryOverrides
-const categories = dropData.categories
+const categories = dropData.categories.map((category) => ({
+	...category,
+	displayName: localize(category.displayName),
+	description: localize(category.description),
+	items: category.items.map((item) => ({
+		...item,
+		displayName: localize(item.displayName),
+		description: localize(item.description),
+	})),
+}))
 const currency = dropData.organization.currency || 'USD'
 
 const now = new Date()
 const openDate = drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null
 const closeDate = drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null
 
-let dropState: 'upcoming' | 'live' | 'closed' = 'live'
-if (drop.status === 'closed') {
-	dropState = 'closed'
-} else if (closeDate && now > closeDate) {
-	dropState = 'closed'
-} else if (openDate ? now < openDate : drop.status === 'scheduled') {
-	dropState = 'upcoming'
-} else {
-	dropState = 'live'
-}
+const phase = getDropDisplayStatus(
+	drop.status === 'draft' ? 'live' : drop.status,
+	drop.ordersOpenAt,
+	drop.ordersCloseAt,
+	now,
+)
+const dropState = phase === 'scheduled' ? 'upcoming' : phase === 'live' ? 'live' : 'closed'
 
 function formatPrice(amount: number) {
-	return new Intl.NumberFormat('en-US', {
+	return new Intl.NumberFormat(requestedLocale, {
 		style: 'currency',
 		currency,
 	}).format(amount)
@@ -69,6 +85,7 @@ inventoryOverrides.forEach((inv) => {
 		sections: [],
 	}}
 	title={`${drop.title} - ${organization.name}`}
+	noIndex={drop.visibility === 'unlisted'}
 >
 	<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
 		<!-- Cover Image & Header Banner -->
@@ -128,7 +145,7 @@ inventoryOverrides.forEach((inv) => {
 							{pickupWindows.map((pw) => (
 								<div class="rounded-lg border bg-background p-3">
 									<p class="text-sm font-semibold text-foreground">
-										{pw.location?.name || 'Pickup Point'}
+										{localize(pw.location?.name) || 'Pickup Point'}
 									</p>
 									<p class="mt-0.5 text-xs text-muted-foreground">
 										{pw.date} &bull; {pw.startTime} - {pw.endTime}
@@ -181,7 +198,7 @@ inventoryOverrides.forEach((inv) => {
 
 					{drop.showOrdersOpenTime && openDate && (
 						<p class="mt-4 text-xs text-muted-foreground">
-							Orders open on {openDate.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}
+							Orders open on {openDate.toLocaleString(requestedLocale, { dateStyle: 'full', timeStyle: 'short' })}
 						</p>
 					)}
 				</div>
@@ -238,7 +255,7 @@ inventoryOverrides.forEach((inv) => {
 
 		<!-- STATE 2: LIVE ORDERING -->
 		{dropState === 'live' && (
-			<div class="mt-8 space-y-8" id="drop-ordering-root">
+			<div class="mt-8 space-y-8" id="drop-ordering-root" data-closes-at={drop.ordersCloseAt}>
 				<!-- Hold Timer Urgency Header -->
 				<div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-foreground">
 					<div class="flex items-center gap-2">
@@ -252,7 +269,7 @@ inventoryOverrides.forEach((inv) => {
 					</div>
 					{closeDate && (
 						<span class="hidden sm:inline-block text-xs font-semibold text-red-600 dark:text-red-400">
-							Closes: {closeDate.toLocaleDateString()}
+							Closes: {closeDate.toLocaleDateString(requestedLocale)}
 						</span>
 					)}
 				</div>
@@ -394,7 +411,7 @@ inventoryOverrides.forEach((inv) => {
 				</p>
 				<div class="pt-2">
 					<a
-						href="/menu"
+						href={getLocaleHref('/menu', requestedLocale, defaultLocale)}
 						class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
 					>
 						View regular menu
@@ -410,6 +427,8 @@ inventoryOverrides.forEach((inv) => {
 		dropId: drop.id,
 		dropTitle: drop.title,
 		dropSlugValue: drop.slug,
+		dropLocale: requestedLocale,
+		checkoutHref: getLocaleHref('/menu/checkout', requestedLocale, defaultLocale),
 	}}>
 		// Countdown timer logic
 		const timerElem = document.getElementById('countdown-timer');
@@ -443,13 +462,24 @@ inventoryOverrides.forEach((inv) => {
 			}
 		}
 
+		const orderingRoot = document.getElementById('drop-ordering-root');
+		const closeTime = orderingRoot?.getAttribute('data-closes-at');
+		if (closeTime) {
+			const closesAt = new Date(closeTime).getTime();
+			const checkForClose = () => {
+				if (Date.now() >= closesAt) window.location.reload();
+			};
+			checkForClose();
+			setInterval(checkForClose, 30_000);
+		}
+
 		// Cart state and buttons
 		let cart = [];
 		const cartCountEl = document.getElementById('cart-item-count');
 		const cartTotalEl = document.getElementById('cart-total-price');
 		const checkoutBtn = document.getElementById('drop-checkout-btn');
 		// currency passed via define:vars
-		const currencyFormatter = new Intl.NumberFormat(undefined, {
+		const currencyFormatter = new Intl.NumberFormat(dropLocale, {
 			style: 'currency',
 			currency,
 		});
@@ -505,7 +535,7 @@ inventoryOverrides.forEach((inv) => {
 						items: cart,
 					}));
 				} catch (e) {}
-				window.location.href = `/menu/checkout?drop=${encodeURIComponent(dropSlugValue)}&slot=${encodeURIComponent(selectedSlot)}`;
+				window.location.href = `${checkoutHref}?drop=${encodeURIComponent(dropSlugValue)}&slot=${encodeURIComponent(selectedSlot)}`;
 			});
 		}
 	</script>

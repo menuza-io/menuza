@@ -250,6 +250,10 @@ export function CreatePickupWindowDrawer({
 							</Label>
 							<Select
 								value={effectiveLocationId}
+								items={locations.map((loc) => ({
+									value: loc.id,
+									label: loc.name,
+								}))}
 								onValueChange={(val) => setLocationId(val || '')}
 							>
 								<SelectTrigger id="pw-location" className="w-full text-xs">
@@ -257,7 +261,7 @@ export function CreatePickupWindowDrawer({
 								</SelectTrigger>
 								<SelectContent>
 									{locations.map((loc) => (
-										<SelectItem key={loc.id} value={loc.id} className="text-xs">
+										<SelectItem key={loc.id} value={loc.id}>
 											{loc.name}
 										</SelectItem>
 									))}
@@ -271,6 +275,10 @@ export function CreatePickupWindowDrawer({
 							</Label>
 							<Select
 								value={String(slotIntervalMinutes)}
+								items={DROP_SLOT_INTERVALS.map((int) => ({
+									value: String(int),
+									label: <Trans>{int} minutes</Trans>,
+								}))}
 								onValueChange={(val) =>
 									setSlotIntervalMinutes(Number(val) || 30)
 								}
@@ -280,11 +288,7 @@ export function CreatePickupWindowDrawer({
 								</SelectTrigger>
 								<SelectContent>
 									{DROP_SLOT_INTERVALS.map((int) => (
-										<SelectItem
-											key={int}
-											value={String(int)}
-											className="text-xs"
-										>
+										<SelectItem key={int} value={String(int)}>
 											<Trans>{int} minutes</Trans>
 										</SelectItem>
 									))}
@@ -342,6 +346,14 @@ export function CreatePickupWindowDrawer({
 							</Label>
 							<Select
 								value={String(orderLeadTimeMinutes)}
+								items={{
+									'0': <Trans>At slot time</Trans>,
+									'60': <Trans>1 hour prior</Trans>,
+									'120': <Trans>2 hours prior</Trans>,
+									'240': <Trans>4 hours prior</Trans>,
+									'720': <Trans>12 hours prior</Trans>,
+									'1440': <Trans>24 hours prior</Trans>,
+								}}
 								onValueChange={(val) =>
 									setOrderLeadTimeMinutes(Number(val) || 0)
 								}
@@ -350,22 +362,22 @@ export function CreatePickupWindowDrawer({
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="0" className="text-xs">
+									<SelectItem value="0">
 										<Trans>At slot time</Trans>
 									</SelectItem>
-									<SelectItem value="60" className="text-xs">
+									<SelectItem value="60">
 										<Trans>1 hour prior</Trans>
 									</SelectItem>
-									<SelectItem value="120" className="text-xs">
+									<SelectItem value="120">
 										<Trans>2 hours prior</Trans>
 									</SelectItem>
-									<SelectItem value="240" className="text-xs">
+									<SelectItem value="240">
 										<Trans>4 hours prior</Trans>
 									</SelectItem>
-									<SelectItem value="720" className="text-xs">
+									<SelectItem value="720">
 										<Trans>12 hours prior</Trans>
 									</SelectItem>
-									<SelectItem value="1440" className="text-xs">
+									<SelectItem value="1440">
 										<Trans>24 hours prior</Trans>
 									</SelectItem>
 								</SelectContent>
@@ -828,22 +840,24 @@ export function AddReminderModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="overflow-hidden p-0 sm:max-w-md">
-				<DialogHeader className="border-b px-6 py-4">
-					<DialogTitle className="text-base font-semibold">
-						{isEditing ? (
-							<Trans>Edit Reminder</Trans>
-						) : (
-							<Trans>Schedule Customer Reminder</Trans>
-						)}
-					</DialogTitle>
-					<DialogDescription className="text-muted-foreground text-xs">
-						<Trans>
-							Send automated notifications to subscribed guests before your drop
-							opens or closes.
-						</Trans>
-					</DialogDescription>
-				</DialogHeader>
+			<DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+				<div className="border-b px-6 py-4">
+					<DialogHeader>
+						<DialogTitle>
+							{isEditing ? (
+								<Trans>Edit Reminder</Trans>
+							) : (
+								<Trans>Schedule Customer Reminder</Trans>
+							)}
+						</DialogTitle>
+						<DialogDescription className="text-muted-foreground text-xs">
+							<Trans>
+								Send automated notifications to subscribed guests before your
+								drop opens or closes.
+							</Trans>
+						</DialogDescription>
+					</DialogHeader>
+				</div>
 
 				<div className="space-y-4 px-6 py-5">
 					<div className="space-y-1.5">
@@ -852,19 +866,24 @@ export function AddReminderModal({
 						</Label>
 						<Select
 							value={triggerType}
+							items={{
+								before_open: <Trans>Before drop opens</Trans>,
+								before_close: <Trans>Before drop closes</Trans>,
+								custom: <Trans>Custom scheduled date/time</Trans>,
+							}}
 							onValueChange={(val: any) => setTriggerType(val)}
 						>
 							<SelectTrigger id="rem-type" className="w-full text-xs">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="before_open" className="text-xs">
+								<SelectItem value="before_open">
 									<Trans>Before drop opens</Trans>
 								</SelectItem>
-								<SelectItem value="before_close" className="text-xs">
+								<SelectItem value="before_close">
 									<Trans>Before drop closes</Trans>
 								</SelectItem>
-								<SelectItem value="custom" className="text-xs">
+								<SelectItem value="custom">
 									<Trans>Custom scheduled date/time</Trans>
 								</SelectItem>
 							</SelectContent>
@@ -901,7 +920,7 @@ export function AddReminderModal({
 					</div>
 				</div>
 
-				<DialogFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+				<DialogFooter className="mx-0 mb-0 flex-row justify-end gap-2 px-6 py-4">
 					<Button
 						type="button"
 						variant="outline"

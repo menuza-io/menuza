@@ -1,7 +1,12 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
-import { DROP_STATUS_LABELS, type DropStatus } from '@repo/common/menu-types'
+import {
+	DROP_STATUS_LABELS,
+	type DropStatus,
+	getDropDisplayStatus,
+	getLocalizedMenuValue,
+} from '@repo/common/menu-types'
 import { getOrgSiteUrl } from '@repo/common/url'
 import { cn } from '@repo/ui'
 import {
@@ -35,7 +40,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -87,7 +92,6 @@ const DROP_FILTER_FIELDS: FilterField[] = [
 			{ value: 'scheduled', label: 'Scheduled' },
 			{ value: 'draft', label: 'Draft' },
 			{ value: 'closed', label: 'Closed' },
-			{ value: 'completed', label: 'Completed' },
 		],
 	},
 ]
@@ -117,6 +121,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
 	})
 
 	const drops = await listDropsForOrganization(organization.id)
@@ -125,7 +130,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization,
 		drops: drops.map((d) => ({
 			id: d.id,
-			title: d.title,
+			title: getLocalizedMenuValue(
+				d.title,
+				organization.siteDefaultLocale ?? 'en',
+				organization.siteDefaultLocale ?? 'en',
+			),
 			slug: d.slug,
 			status: d.status as DropStatus,
 			ordersOpenAt: d.ordersOpenAt ? d.ordersOpenAt.toISOString() : null,
@@ -143,6 +152,12 @@ export default function DropsIndexRoute() {
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteDropId, setDeleteDropId] = useState<string | null>(null)
+	const [now, setNow] = useState(() => new Date())
+
+	useEffect(() => {
+		const interval = setInterval(() => setNow(new Date()), 30_000)
+		return () => clearInterval(interval)
+	}, [])
 
 	const getFieldValue = useCallback(
 		(drop: (typeof drops)[number], field: string) => {
@@ -152,12 +167,17 @@ export default function DropsIndexRoute() {
 				case 'slug':
 					return drop.slug
 				case 'status':
-					return drop.status
+					return getDropDisplayStatus(
+						drop.status,
+						drop.ordersOpenAt,
+						drop.ordersCloseAt,
+						now,
+					)
 				default:
 					return ''
 			}
 		},
-		[],
+		[now],
 	)
 
 	const {
@@ -239,131 +259,142 @@ export default function DropsIndexRoute() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{filteredDrops.map((drop) => (
-										<TableRow key={drop.id}>
-											<TableCell>
-												<Link
-													to={`/${organization.slug}/menu/drops/${drop.id}`}
-													className="hover:text-primary text-foreground text-sm font-medium"
-												>
-													{drop.title}
-												</Link>
-												<span className="text-muted-foreground block text-xs">
-													/drop/{drop.slug}
-												</span>
-											</TableCell>
-											<TableCell>
-												<Badge
-													variant={
-														drop.status === 'live' ? 'outline' : 'secondary'
-													}
-													className="text-xs font-medium capitalize"
-												>
-													<span
-														className={cn(
-															'mr-1.5 size-1.5 rounded-full',
-															drop.status === 'live'
-																? 'bg-emerald-500'
-																: drop.status === 'scheduled'
-																	? 'bg-amber-500'
-																	: drop.status === 'completed'
-																		? 'bg-blue-500'
+									{filteredDrops.map((drop) => {
+										const displayStatus = getDropDisplayStatus(
+											drop.status,
+											drop.ordersOpenAt,
+											drop.ordersCloseAt,
+											now,
+										)
+										return (
+											<TableRow key={drop.id}>
+												<TableCell>
+													<Link
+														to={`/${organization.slug}/menu/drops/${drop.id}`}
+														className="hover:text-primary text-foreground text-sm font-medium"
+													>
+														{drop.title}
+													</Link>
+													<span className="text-muted-foreground block text-xs">
+														/drop/{drop.slug}
+													</span>
+												</TableCell>
+												<TableCell>
+													<Badge
+														variant={
+															displayStatus === 'live' ? 'outline' : 'secondary'
+														}
+														className="text-xs font-medium capitalize"
+													>
+														<span
+															className={cn(
+																'mr-1.5 size-1.5 rounded-full',
+																displayStatus === 'live'
+																	? 'bg-emerald-500'
+																	: displayStatus === 'scheduled'
+																		? 'bg-amber-500'
 																		: 'bg-muted-foreground',
-														)}
-													/>
-													{DROP_STATUS_LABELS[drop.status]}
-												</Badge>
-											</TableCell>
-											<TableCell className="hidden sm:table-cell">
-												{drop.firstPickupDate ? (
-													<div className="text-sm">
-														<p className="font-medium">
-															{drop.firstPickupDate}
-														</p>
-														{drop.firstPickupLocation && (
-															<p className="text-muted-foreground text-xs">
-																{drop.firstPickupLocation}
+															)}
+														/>
+														{DROP_STATUS_LABELS[displayStatus]}
+													</Badge>
+												</TableCell>
+												<TableCell className="hidden sm:table-cell">
+													{drop.firstPickupDate ? (
+														<div className="text-sm">
+															<p className="font-medium">
+																{drop.firstPickupDate}
+															</p>
+															{drop.firstPickupLocation && (
+																<p className="text-muted-foreground text-xs">
+																	{drop.firstPickupLocation}
+																</p>
+															)}
+														</div>
+													) : (
+														<span className="text-muted-foreground text-xs italic">
+															<Trans>No windows</Trans>
+														</span>
+													)}
+												</TableCell>
+												<TableCell className="hidden md:table-cell">
+													<div className="text-muted-foreground space-y-0.5 text-xs">
+														{drop.ordersOpenAt && (
+															<p>
+																<Trans>Opens:</Trans>{' '}
+																{new Date(
+																	drop.ordersOpenAt,
+																).toLocaleDateString()}
 															</p>
 														)}
+														{drop.ordersCloseAt && (
+															<p>
+																<Trans>Closes:</Trans>{' '}
+																{new Date(
+																	drop.ordersCloseAt,
+																).toLocaleDateString()}
+															</p>
+														)}
+														{!drop.ordersOpenAt && !drop.ordersCloseAt && (
+															<span className="italic">—</span>
+														)}
 													</div>
-												) : (
-													<span className="text-muted-foreground text-xs italic">
-														<Trans>No windows</Trans>
-													</span>
-												)}
-											</TableCell>
-											<TableCell className="hidden md:table-cell">
-												<div className="text-muted-foreground space-y-0.5 text-xs">
-													{drop.ordersOpenAt && (
-														<p>
-															<Trans>Opens:</Trans>{' '}
-															{new Date(drop.ordersOpenAt).toLocaleDateString()}
-														</p>
-													)}
-													{drop.ordersCloseAt && (
-														<p>
-															<Trans>Closes:</Trans>{' '}
-															{new Date(
-																drop.ordersCloseAt,
-															).toLocaleDateString()}
-														</p>
-													)}
-													{!drop.ordersOpenAt && !drop.ordersCloseAt && (
-														<span className="italic">—</span>
-													)}
-												</div>
-											</TableCell>
-											<TableCell className="text-right">
-												<DropdownMenu>
-													<DropdownMenuTrigger
-														render={
-															<Button
-																variant="ghost"
-																size="icon-sm"
-																aria-label={_(t`Drop actions`)}
+												</TableCell>
+												<TableCell className="text-right">
+													<DropdownMenu>
+														<DropdownMenuTrigger
+															render={
+																<Button
+																	variant="ghost"
+																	size="icon-sm"
+																	aria-label={_(t`Drop actions`)}
+																>
+																	<Icon name="ellipsis" className="size-4" />
+																</Button>
+															}
+														/>
+														<DropdownMenuContent align="end">
+															<DropdownMenuItem
+																render={
+																	<Link
+																		to={`/${organization.slug}/menu/drops/${drop.id}`}
+																	>
+																		<Icon
+																			name="pencil"
+																			className="mr-2 size-4"
+																		/>
+																		<Trans>Edit</Trans>
+																	</Link>
+																}
+															/>
+															<DropdownMenuItem
+																render={
+																	<a
+																		href={`${getOrgSiteUrl(organization.slug)}/drop/${drop.slug}`}
+																		target="_blank"
+																		rel="noreferrer"
+																	>
+																		<Icon
+																			name="external-link"
+																			className="mr-2 size-4"
+																		/>
+																		<Trans>View storefront</Trans>
+																	</a>
+																}
+															/>
+															<DropdownMenuItem
+																className="text-destructive focus:text-destructive"
+																onClick={() => setDeleteDropId(drop.id)}
 															>
-																<Icon name="ellipsis" className="size-4" />
-															</Button>
-														}
-													/>
-													<DropdownMenuContent align="end">
-														<DropdownMenuItem
-															render={
-																<Link
-																	to={`/${organization.slug}/menu/drops/${drop.id}`}
-																>
-																	<Icon name="pencil" className="mr-2 size-4" />
-																	<Trans>Edit</Trans>
-																</Link>
-															}
-														/>
-														<DropdownMenuItem
-															render={
-																<a
-																	href={`${getOrgSiteUrl(organization.slug)}/drop/${drop.slug}`}
-																	target="_blank"
-																	rel="noreferrer"
-																>
-																	<Icon
-																		name="external-link"
-																		className="mr-2 size-4"
-																	/>
-																	<Trans>View storefront</Trans>
-																</a>
-															}
-														/>
-														<DropdownMenuItem
-															className="text-destructive focus:text-destructive"
-															onClick={() => setDeleteDropId(drop.id)}
-														>
-															<Icon name="trash-2" className="mr-2 size-4" />
-															<Trans>Delete</Trans>
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</TableCell>
-										</TableRow>
-									))}
+																<Icon name="trash-2" className="mr-2 size-4" />
+																<Trans>Delete</Trans>
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</TableCell>
+											</TableRow>
+										)
+									})}
 								</TableBody>
 								<TableFooter>
 									<TableRow>

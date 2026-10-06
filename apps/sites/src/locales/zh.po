@@ -571,3 +571,23 @@ msgstr "此组合已售罄。请选择其他组合。"
 
 msgid "Some items are no longer available and were removed from your order."
 msgstr "部分商品已无法购买，已从您的订单中移除。"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Closed"
+msgstr "已关闭"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Coming soon"
+msgstr "即将推出"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Drops"
+msgstr "限量活动"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Ordering now"
+msgstr "正在接受订单"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "View drop"
+msgstr "查看活动"
