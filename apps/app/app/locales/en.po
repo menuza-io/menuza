@@ -38,7 +38,7 @@ msgstr "AI assistant"
 msgid "(${annualPrice} billed annually per user)"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:97
+#: app/components/chat/chat-message.tsx:115
 msgid "(edited)"
 msgstr "(edited)"
 
@@ -91,7 +91,7 @@ msgstr "{0} categories"
 #~ msgstr ""
 
 #. placeholder {0}: filteredDrops.length
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:375
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:406
 msgid "{0} drops"
 msgstr "{0} drops"
 
@@ -166,8 +166,8 @@ msgid "{count} locations"
 msgstr "{count} locations"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:118
-msgid "{days} days"
-msgstr "{days} days"
+#~ msgid "{days} days"
+#~ msgstr "{days} days"
 
 #: app/components/ui/notification-bell.tsx:61
 msgid "{days}d ago"
@@ -193,7 +193,7 @@ msgstr ""
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:640
+#: app/components/chat/chat-view.tsx:786
 msgid "{firstTypingName} is typing…"
 msgstr "{firstTypingName} is typing…"
 
@@ -205,7 +205,8 @@ msgstr "{formCount} forms"
 msgid "{hours}h ago"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:288
+#: app/components/menu/drop-wizard/drop-drawers.tsx:280
+#: app/components/menu/drop-wizard/drop-drawers.tsx:292
 msgid "{int} minutes"
 msgstr "{int} minutes"
 
@@ -221,7 +222,7 @@ msgstr "{label}, {total} unread"
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:59
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:48
 msgid "{memberCount, plural, one {# person} other {# people}}"
 msgstr "{memberCount, plural, one {# person} other {# people}}"
 
@@ -229,9 +230,14 @@ msgstr "{memberCount, plural, one {# person} other {# people}}"
 #~ msgid "{min} minutes"
 #~ msgstr "{min} minutes"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1328
+#: app/components/menu/drop-wizard/drop-form.tsx:1345
+msgid "{mins} mins"
+msgstr "{mins} mins"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1185
-msgid "{mins} minutes hold"
-msgstr "{mins} minutes hold"
+#~ msgid "{mins} minutes hold"
+#~ msgstr "{mins} minutes hold"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 msgid "{minutes}m {remainingSec}s"
@@ -253,11 +259,11 @@ msgstr "{pageCount} pages"
 msgid "{photoCount}/5 photos"
 msgstr "{photoCount}/5 photos"
 
-#: app/components/locations/delivery-zones-manager.tsx:497
+#: app/components/locations/delivery-zones-manager.tsx:503
 msgid "{pointsCount} points"
 msgstr "{pointsCount} points"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:753
+#: app/components/menu/drop-wizard/drop-form.tsx:891
 msgid "{pooledCount} pooled"
 msgstr "{pooledCount} pooled"
 
@@ -294,7 +300,7 @@ msgstr "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 #~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
 #~ msgstr ""
 
-#: app/components/chat/chat-message.tsx:142
+#: app/components/chat/chat-message.tsx:165
 msgid "{replyCount, plural, one {# reply} other {# replies}}"
 msgstr "{replyCount, plural, one {# reply} other {# replies}}"
 
@@ -306,16 +312,20 @@ msgstr ""
 msgid "{seconds}s ago"
 msgstr ""
 
+#: app/components/chat/chat-compose-dialog.tsx:140
+msgid "{selectedCount, plural, one {# selected} other {# selected}}"
+msgstr "{selectedCount, plural, one {# selected} other {# selected}}"
+
 #: app/components/mailbox/reviews-tab.tsx:627
 msgid "{selectedRating} / 5 stars"
 msgstr "{selectedRating} / 5 stars"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:480
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:408
 msgid "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 msgstr "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:298
-#: app/components/menu/drop-wizard/drop-form.tsx:963
+#: app/components/menu/drop-wizard/drop-drawers.tsx:302
+#: app/components/menu/drop-wizard/drop-form.tsx:1093
 msgid "{slotCount} pickup slots"
 msgstr "{slotCount} pickup slots"
 
@@ -332,7 +342,7 @@ msgstr ""
 #~ msgid "{threadReplyCount, plural, one {# reply} other {# replies}}"
 #~ msgstr "{threadReplyCount, plural, one {# reply} other {# replies}}"
 
-#: app/components/chat/chat-view.tsx:693
+#: app/components/chat/chat-view.tsx:847
 msgid "{threadTotalReplies, plural, one {# reply} other {# replies}}"
 msgstr "{threadTotalReplies, plural, one {# reply} other {# replies}}"
 
@@ -348,7 +358,7 @@ msgstr ""
 msgid "{trend}%"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1308
+#: app/components/menu/modifier-form.tsx:1307
 msgid "{triggerCount} of {optionCount}"
 msgstr "{triggerCount} of {optionCount}"
 
@@ -356,15 +366,15 @@ msgstr "{triggerCount} of {optionCount}"
 msgid "{unit}"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:312
+#: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
 msgstr "{unread} unread"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:953
+#: app/components/menu/drop-wizard/drop-form.tsx:1083
 msgid "{windowCapacity} orders max in this window"
 msgstr "{windowCapacity} orders max in this window"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:314
+#: app/components/menu/drop-wizard/drop-drawers.tsx:318
 msgid "{windowCapacityPreview} orders max in this window"
 msgstr "{windowCapacityPreview} orders max in this window"
 
@@ -391,8 +401,8 @@ msgstr ""
 #~ msgid "+ Add nested modifier group"
 #~ msgstr "+ Add nested modifier group"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:306
-#: app/components/menu/drop-wizard/drop-form.tsx:973
+#: app/components/menu/drop-wizard/drop-drawers.tsx:310
+#: app/components/menu/drop-wizard/drop-form.tsx:1103
 msgid "+{moreSlots} more"
 msgstr "+{moreSlots} more"
 
@@ -444,7 +454,7 @@ msgstr "1 announcement"
 msgid "1 category"
 msgstr "1 category"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:372
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:403
 msgid "1 drop"
 msgstr "1 drop"
 
@@ -460,7 +470,8 @@ msgstr "1 form"
 #~ msgid "1 hour before slot"
 #~ msgstr "1 hour before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:357
+#: app/components/menu/drop-wizard/drop-drawers.tsx:351
+#: app/components/menu/drop-wizard/drop-drawers.tsx:369
 msgid "1 hour prior"
 msgstr "1 hour prior"
 
@@ -488,12 +499,12 @@ msgstr "1 modifier group"
 msgid "1 page"
 msgstr "1 page"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:297
-#: app/components/menu/drop-wizard/drop-form.tsx:962
+#: app/components/menu/drop-wizard/drop-drawers.tsx:301
+#: app/components/menu/drop-wizard/drop-form.tsx:1092
 msgid "1 pickup slot"
 msgstr "1 pickup slot"
 
-#: app/components/locations/delivery-zones-manager.tsx:495
+#: app/components/locations/delivery-zones-manager.tsx:501
 msgid "1 point"
 msgstr "1 point"
 
@@ -509,7 +520,8 @@ msgstr ""
 msgid "11-50 people"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:366
+#: app/components/menu/drop-wizard/drop-drawers.tsx:354
+#: app/components/menu/drop-wizard/drop-drawers.tsx:378
 msgid "12 hours prior"
 msgstr "12 hours prior"
 
@@ -529,7 +541,8 @@ msgstr "12 hours prior"
 #~ msgid "2 hours before slot"
 #~ msgstr "2 hours before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:360
+#: app/components/menu/drop-wizard/drop-drawers.tsx:352
+#: app/components/menu/drop-wizard/drop-drawers.tsx:372
 msgid "2 hours prior"
 msgstr "2 hours prior"
 
@@ -541,7 +554,8 @@ msgstr ""
 #~ msgid "24 hours before slot"
 #~ msgstr "24 hours before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:369
+#: app/components/menu/drop-wizard/drop-drawers.tsx:355
+#: app/components/menu/drop-wizard/drop-drawers.tsx:381
 msgid "24 hours prior"
 msgstr "24 hours prior"
 
@@ -553,7 +567,8 @@ msgstr "24 hours prior"
 #~ msgid "30 minutes before slot"
 #~ msgstr "30 minutes before slot"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:363
+#: app/components/menu/drop-wizard/drop-drawers.tsx:353
+#: app/components/menu/drop-wizard/drop-drawers.tsx:375
 msgid "4 hours prior"
 msgstr "4 hours prior"
 
@@ -606,6 +621,10 @@ msgstr "A short, low-friction form for prospective customers."
 msgid "A user already exists with this username"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:520
+msgid "About drop visibility"
+msgstr "About drop visibility"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:856
 msgid "Accent color"
 msgstr ""
@@ -615,7 +634,7 @@ msgstr ""
 msgid "Accept"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:428
+#: app/components/locations/location-form.tsx:429
 msgid "Accept orders and show this location on the website."
 msgstr "Accept orders and show this location on the website."
 
@@ -664,7 +683,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:502
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:290
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:236
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:256
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:310
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:298
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:342
@@ -694,7 +713,7 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:425
+#: app/components/locations/location-form.tsx:426
 msgid "Active Location"
 msgstr "Active Location"
 
@@ -702,7 +721,6 @@ msgstr "Active Location"
 msgid "Activity"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1321
 #: app/components/website/form-builder-sidebar.tsx:195
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:334
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1773
@@ -784,11 +802,11 @@ msgid "Add an announcement to share updates, maintenance notices, or promotions 
 msgstr ""
 
 #: app/components/menu/category-form.tsx:407
-#: app/components/menu/modifier-form.tsx:1422
+#: app/components/menu/modifier-form.tsx:1432
 msgid "Add an item"
 msgstr "Add an item"
 
-#: app/components/menu/modifier-form.tsx:1562
+#: app/components/menu/modifier-form.tsx:1569
 msgid "Add an Option"
 msgstr "Add an Option"
 
@@ -801,6 +819,10 @@ msgstr ""
 #: app/routes/organizations+/create.tsx:1575
 msgid "Add another invitation"
 msgstr ""
+
+#: app/components/chat/chat-compose-dialog.tsx:216
+msgid "Add another team member to start a conversation."
+msgstr "Add another team member to start a conversation."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:178
 msgid "Add at least one email block"
@@ -834,7 +856,7 @@ msgstr ""
 msgid "Add date override"
 msgstr "Add date override"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:892
+#: app/components/menu/drop-wizard/drop-form.tsx:1022
 msgid "Add dates and collection time slots when customers can pick up their orders."
 msgstr "Add dates and collection time slots when customers can pick up their orders."
 
@@ -868,14 +890,15 @@ msgstr "Add field"
 msgid "Add group"
 msgstr "Add group"
 
-#: app/components/note/comment-image-upload.tsx:91
+#: app/components/note/comment-image-upload.tsx:78
 #: app/components/note/comment-image-upload.tsx:92
+#: app/components/note/comment-image-upload.tsx:93
 msgid "Add images"
 msgstr ""
 
 #: app/components/menu/category-form.tsx:406
 #: app/components/menu/menu-sortable-category.tsx:179
-#: app/components/menu/modifier-form.tsx:1421
+#: app/components/menu/modifier-form.tsx:1431
 msgid "Add item"
 msgstr "Add item"
 
@@ -914,7 +937,7 @@ msgstr ""
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "Add name, email, choices, and more to start collecting responses."
 
-#: app/components/menu/modifier-form.tsx:1395
+#: app/components/menu/modifier-form.tsx:1405
 msgid "Add nested modifier group"
 msgstr "Add nested modifier group"
 
@@ -931,15 +954,15 @@ msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
 #: app/components/menu/item-variations.tsx:283
-#: app/components/menu/modifier-form.tsx:1181
+#: app/components/menu/modifier-form.tsx:1180
 msgid "Add option"
 msgstr "Add option"
 
-#: app/components/menu/modifier-form.tsx:1823
+#: app/components/menu/modifier-form.tsx:1830
 msgid "Add Option"
 msgstr "Add Option"
 
-#: app/components/menu/modifier-form.tsx:1284
+#: app/components/menu/modifier-form.tsx:1283
 msgid "Add options to this group first."
 msgstr "Add options to this group first."
 
@@ -965,8 +988,8 @@ msgstr ""
 msgid "Add pickup window"
 msgstr "Add pickup window"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:878
-#: app/components/menu/drop-wizard/drop-form.tsx:904
+#: app/components/menu/drop-wizard/drop-form.tsx:1034
+#: app/components/menu/drop-wizard/drop-form.tsx:1145
 msgid "Add Pickup Window"
 msgstr "Add Pickup Window"
 
@@ -974,16 +997,18 @@ msgstr "Add Pickup Window"
 msgid "Add question"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:266
+#: app/components/chat/chat-message.tsx:286
+#: app/components/chat/chat-message.tsx:293
+#: app/components/chat/chat-message.tsx:337
 msgid "Add reaction"
 msgstr "Add reaction"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:1037
-#: app/components/menu/drop-wizard/drop-form.tsx:892
-#~ msgid "Add reminder"
-#~ msgstr "Add reminder"
+#: app/components/menu/drop-wizard/drop-form.tsx:1234
+#: app/components/menu/drop-wizard/drop-form.tsx:1290
+msgid "Add reminder"
+msgstr "Add reminder"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:922
+#: app/components/menu/drop-wizard/drop-drawers.tsx:941
 msgid "Add Reminder"
 msgstr "Add Reminder"
 
@@ -1034,7 +1059,7 @@ msgstr "Add supporting information."
 msgid "Add the following configuration to the file:"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1127
+#: app/components/menu/modifier-form.tsx:1126
 msgid "Add the individual choices, prices, and dietary tags."
 msgstr "Add the individual choices, prices, and dietary tags."
 
@@ -1115,7 +1140,7 @@ msgstr "Admin impersonation active"
 #~ msgid "Admin Impersonation Active"
 #~ msgstr ""
 
-#: app/components/locations/location-form.tsx:790
+#: app/components/locations/location-form.tsx:795
 msgid "Advance Scheduled Orders"
 msgstr "Advance Scheduled Orders"
 
@@ -1145,8 +1170,8 @@ msgstr "AI drafting hasn’t been enabled for this mailbox."
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1733
-#: app/components/menu/modifier-form.tsx:2088
+#: app/components/menu/modifier-form.tsx:1740
+#: app/components/menu/modifier-form.tsx:2095
 msgid "Alcohol (21+)"
 msgstr "Alcohol (21+)"
 
@@ -1198,7 +1223,7 @@ msgstr "All days"
 msgid "All locations"
 msgstr "All locations"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:545
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:473
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "All messages in this channel are permanently deleted for everyone. This can't be undone."
 
@@ -1219,7 +1244,7 @@ msgstr ""
 msgid "All steps complete"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1240
+#: app/components/menu/drop-wizard/drop-form.tsx:1386
 msgid "Allow browsing items before launch"
 msgstr "Allow browsing items before launch"
 
@@ -1231,7 +1256,7 @@ msgstr "Allow browsing items before launch"
 #~ msgid "Allow customers to purchase gift cards alongside their drop order."
 #~ msgstr "Allow customers to purchase gift cards alongside their drop order."
 
-#: app/components/locations/location-form.tsx:793
+#: app/components/locations/location-form.tsx:798
 msgid "Allow customers to schedule orders for future dates."
 msgstr "Allow customers to schedule orders for future dates."
 
@@ -1384,7 +1409,7 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
-#: app/components/locations/delivery-zones-manager.tsx:380
+#: app/components/locations/delivery-zones-manager.tsx:386
 msgid "Area Boundary Type"
 msgstr "Area Boundary Type"
 
@@ -1442,7 +1467,7 @@ msgid "Assigned Groups"
 msgstr "Assigned Groups"
 
 #: app/components/menu/category-form.tsx:402
-#: app/components/menu/modifier-form.tsx:1417
+#: app/components/menu/modifier-form.tsx:1427
 msgid "Assigned Items"
 msgstr "Assigned Items"
 
@@ -1454,7 +1479,8 @@ msgstr "Assigned Menus"
 msgid "Assigned Modifier Groups"
 msgstr "Assigned Modifier Groups"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:354
+#: app/components/menu/drop-wizard/drop-drawers.tsx:350
+#: app/components/menu/drop-wizard/drop-drawers.tsx:366
 msgid "At slot time"
 msgstr "At slot time"
 
@@ -1602,7 +1628,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:485
+#: app/components/chat/chat-view.tsx:558
 msgid "Back to channels"
 msgstr "Back to channels"
 
@@ -1610,7 +1636,7 @@ msgstr "Back to channels"
 msgid "Back to details"
 msgstr "Back to details"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:384
+#: app/components/menu/drop-wizard/drop-form.tsx:453
 msgid "Back to drops"
 msgstr "Back to drops"
 
@@ -1623,7 +1649,11 @@ msgstr "Back to fields"
 #~ msgid "Back to Info"
 #~ msgstr "Back to Info"
 
-#: app/components/menu/modifier-form.tsx:1819
+#: app/components/chat/chat-view.tsx:771
+msgid "Back to latest"
+msgstr "Back to latest"
+
+#: app/components/menu/modifier-form.tsx:1826
 msgid "Back to list"
 msgstr "Back to list"
 
@@ -1636,7 +1666,7 @@ msgstr ""
 #~ msgid "Back to Menu"
 #~ msgstr "Back to Menu"
 
-#: app/components/menu/modifier-form.tsx:882
+#: app/components/menu/modifier-form.tsx:885
 msgid "Back to modifier groups"
 msgstr "Back to modifier groups"
 
@@ -1670,7 +1700,7 @@ msgstr ""
 msgid "Backup codes"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:544
+#: app/components/locations/location-form.tsx:545
 msgid "Base Preparation Time (minutes)"
 msgstr "Base Preparation Time (minutes)"
 
@@ -1691,11 +1721,13 @@ msgstr "Basic identifiers, URL slug, and regional settings."
 msgid "Becomes available"
 msgstr "Becomes available"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:865
+#: app/components/menu/drop-wizard/drop-drawers.tsx:871
+#: app/components/menu/drop-wizard/drop-drawers.tsx:884
 msgid "Before drop closes"
 msgstr "Before drop closes"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:862
+#: app/components/menu/drop-wizard/drop-drawers.tsx:870
+#: app/components/menu/drop-wizard/drop-drawers.tsx:881
 msgid "Before drop opens"
 msgstr "Before drop opens"
 
@@ -1750,6 +1782,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1830
 msgid "Brightness"
 msgstr "Brightness"
+
+#: app/components/chat/chat-compose-dialog.tsx:356
+msgid "Bring the right people together in a group."
+msgstr "Bring the right people together in a group."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:32
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:52
@@ -1858,22 +1894,21 @@ msgstr "Can edit teammate notes"
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
-#: app/components/chat/chat-compose-dialog.tsx:172
-#: app/components/chat/chat-composer.tsx:324
-#: app/components/chat/chat-message.tsx:391
-#: app/components/chat/chat-view.tsx:824
+#: app/components/chat/chat-compose-dialog.tsx:411
+#: app/components/chat/chat-composer.tsx:349
+#: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/form-actions.tsx:28
-#: app/components/locations/delivery-zones-manager.tsx:558
-#: app/components/locations/location-form.tsx:988
-#: app/components/locations/special-hours-picker.tsx:223
+#: app/components/locations/delivery-zones-manager.tsx:564
+#: app/components/locations/location-form.tsx:993
+#: app/components/locations/special-hours-picker.tsx:225
 #: app/components/media-library/media-library-picker.tsx:342
-#: app/components/menu/drop-wizard/drop-drawers.tsx:384
-#: app/components/menu/drop-wizard/drop-drawers.tsx:578
-#: app/components/menu/drop-wizard/drop-drawers.tsx:765
-#: app/components/menu/drop-wizard/drop-drawers.tsx:911
-#: app/components/menu/menu-form-header.tsx:49
-#: app/components/menu/modifier-form.tsx:2171
+#: app/components/menu/drop-wizard/drop-drawers.tsx:396
+#: app/components/menu/drop-wizard/drop-drawers.tsx:590
+#: app/components/menu/drop-wizard/drop-drawers.tsx:777
+#: app/components/menu/drop-wizard/drop-drawers.tsx:930
+#: app/components/menu/menu-form-header.tsx:77
+#: app/components/menu/modifier-form.tsx:2178
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:317
@@ -1895,7 +1930,7 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:470
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:406
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:437
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:519
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:453
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:514
@@ -1903,8 +1938,8 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1079
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:500
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:558
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:792
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
@@ -1934,11 +1969,11 @@ msgstr "Cancel reply"
 msgid "Cancelled"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:825
+#: app/components/menu/drop-wizard/drop-form.tsx:967
 msgid "Cap"
 msgstr "Cap"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:692
+#: app/components/menu/drop-wizard/drop-drawers.tsx:704
 msgid "Cap how many units can be sold in this drop."
 msgstr "Cap how many units can be sold in this drop."
 
@@ -1960,7 +1995,7 @@ msgstr ""
 msgid "Cards view"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:617
+#: app/components/menu/drop-wizard/drop-form.tsx:731
 msgid "categories"
 msgstr "categories"
 
@@ -1980,7 +2015,7 @@ msgstr "Categories that belong to this menu."
 msgid "Categories that display this item on the menu."
 msgstr "Categories that display this item on the menu."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:616
+#: app/components/menu/drop-wizard/drop-form.tsx:730
 msgid "category"
 msgstr "category"
 
@@ -2053,8 +2088,8 @@ msgstr ""
 msgid "Channel"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:322
-#: app/components/chat/chat-view.tsx:425
+#: app/components/chat/chat-view.tsx:387
+#: app/components/chat/chat-view.tsx:490
 msgid "Channels"
 msgstr "Channels"
 
@@ -2067,7 +2102,7 @@ msgid "Charge tax at checkout."
 msgstr "Charge tax at checkout."
 
 #: app/components/app-sidebar.tsx:472
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:153
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
 
@@ -2095,6 +2130,10 @@ msgstr "Chat settings"
 msgid "Check out our new summer menu"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:544
+msgid "Check the drop details and try saving again."
+msgstr "Check the drop details and try saving again."
+
 #: app/routes/_auth+/verify.tsx:76
 msgid "Check your 2FA app"
 msgstr ""
@@ -2112,9 +2151,13 @@ msgstr "Checking references…"
 #~ msgid "Checkout countdown timer"
 #~ msgstr "Checkout countdown timer"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1311
+msgid "Checkout hold"
+msgstr "Checkout hold"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1167
-msgid "Checkout Hold Timer"
-msgstr "Checkout Hold Timer"
+#~ msgid "Checkout Hold Timer"
+#~ msgstr "Checkout Hold Timer"
 
 #: app/components/settings/cards/organization/shop-card.tsx:101
 msgid "Checkout payout not connected"
@@ -2128,7 +2171,7 @@ msgstr "Checkout processor"
 msgid "Choices"
 msgstr "Choices"
 
-#: app/components/chat/chat-view.tsx:556
+#: app/components/chat/chat-view.tsx:668
 msgid "Choose a channel, group, or direct message from the list."
 msgstr "Choose a channel, group, or direct message from the list."
 
@@ -2144,12 +2187,16 @@ msgstr ""
 msgid "Choose a starting point"
 msgstr "Choose a starting point"
 
+#: app/components/chat/chat-compose-dialog.tsx:354
+msgid "Choose a teammate to start a conversation."
+msgstr "Choose a teammate to start a conversation."
+
 #: app/components/website/create-page-dialog.tsx:99
 msgid "Choose a template"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:645
-#: app/components/menu/drop-wizard/drop-form.tsx:663
+#: app/components/menu/drop-wizard/drop-form.tsx:759
+#: app/components/menu/drop-wizard/drop-form.tsx:781
 msgid "Choose an existing menu..."
 msgstr "Choose an existing menu..."
 
@@ -2168,20 +2215,25 @@ msgid "Choose photo for {name}"
 msgstr "Choose photo for {name}"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:110
-msgid "Choose retention"
-msgstr "Choose retention"
+#~ msgid "Choose retention"
+#~ msgstr "Choose retention"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:707
 #~ msgid "Choose section"
 #~ msgstr "Choose section"
 
 #: app/components/chat/chat-compose-dialog.tsx:111
-msgid "Choose someone"
-msgstr "Choose someone"
+#: app/components/chat/chat-compose-dialog.tsx:107
+#~ msgid "Choose someone"
+#~ msgstr "Choose someone"
 
-#: app/components/locations/location-form.tsx:843
+#: app/components/locations/location-form.tsx:848
 msgid "Choose supported delivery channels and estimated transit times."
 msgstr "Choose supported delivery channels and estimated transit times."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1007
+msgid "Choose when and where customers can collect their orders."
+msgstr "Choose when and where customers can collect their orders."
 
 #: app/components/menu/modifier-form.tsx:1100
 #~ msgid "Choose whether this group appears directly on items or is conditionally revealed by an option in another group."
@@ -2192,8 +2244,8 @@ msgid "Choose which languages your public website supports, and which one visito
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:555
-msgid "Choose which menu this drop sells. Hidden menus are fine."
-msgstr "Choose which menu this drop sells. Hidden menus are fine."
+#~ msgid "Choose which menu this drop sells. Hidden menus are fine."
+#~ msgstr "Choose which menu this drop sells. Hidden menus are fine."
 
 #: app/routes/organizations+/create.tsx:1108
 msgid "Choose your plan"
@@ -2235,7 +2287,8 @@ msgstr "Clear history"
 msgid "Clear History"
 msgstr "Clear History"
 
-#: app/components/chat/chat-view.tsx:370
+#: app/components/chat/chat-compose-dialog.tsx:162
+#: app/components/chat/chat-view.tsx:435
 msgid "Clear search"
 msgstr "Clear search"
 
@@ -2271,7 +2324,7 @@ msgstr ""
 msgid "Click Save and restart Cursor"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:537
+#: app/components/menu/drop-wizard/drop-form.tsx:691
 msgid "Click to choose a cover image"
 msgstr "Click to choose a cover image"
 
@@ -2294,12 +2347,13 @@ msgstr ""
 msgid "Close email design"
 msgstr "Close email design"
 
-#: app/components/chat/chat-view.tsx:669
+#: app/components/chat/chat-view.tsx:820
 msgid "Close thread"
 msgstr "Close thread"
 
-#: app/components/locations/availability-picker.tsx:372
-#: app/components/locations/special-hours-picker.tsx:274
+#: app/components/locations/availability-picker.tsx:374
+#: app/components/locations/special-hours-picker.tsx:276
+#: app/components/menu/drop-wizard/drop-preview.tsx:73
 msgid "Closed"
 msgstr "Closed"
 
@@ -2307,7 +2361,7 @@ msgstr "Closed"
 msgid "Closed all day"
 msgstr "Closed all day"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:305
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:332
 msgid "Closes:"
 msgstr "Closes:"
 
@@ -2365,6 +2419,10 @@ msgstr "Combination prices are set below. Sales tax applies to every combination
 msgid "Combinations"
 msgstr "Combinations"
 
+#: app/components/menu/drop-wizard/drop-preview.tsx:71
+msgid "Coming soon"
+msgstr "Coming soon"
+
 #: app/components/note/comment-input.tsx:196
 #: app/routes/_app+/$orgSlug_+/media.tsx:1220
 msgid "Comment"
@@ -2382,6 +2440,10 @@ msgstr ""
 #: app/components/menu/menu-allergen-selector.tsx:84
 msgid "Common Allergens"
 msgstr "Common Allergens"
+
+#: app/components/settings/cards/organization/integrations-card.tsx:17
+msgid "Communication"
+msgstr "Communication"
 
 #: app/routes/_auth+/waitlist.tsx:425
 msgid "Community"
@@ -2461,13 +2523,13 @@ msgstr ""
 msgid "Configuration required"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:963
+#: app/components/locations/location-form.tsx:968
 msgid "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:865
-msgid "Configure collection dates, time spans, interval durations, and order slot capacity."
-msgstr "Configure collection dates, time spans, interval durations, and order slot capacity."
+#~ msgid "Configure collection dates, time spans, interval durations, and order slot capacity."
+#~ msgstr "Configure collection dates, time spans, interval durations, and order slot capacity."
 
 #: app/components/locations/delivery-zones-manager.tsx:309
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
@@ -2477,11 +2539,11 @@ msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 #~ msgid "Configure drop announcements, visibility, and checkout limits."
 #~ msgstr "Configure drop announcements, visibility, and checkout limits."
 
-#: app/components/menu/modifier-form.tsx:936
+#: app/components/menu/modifier-form.tsx:939
 msgid "Configure how guests interact with these options."
 msgstr "Configure how guests interact with these options."
 
-#: app/components/locations/location-form.tsx:503
+#: app/components/locations/location-form.tsx:504
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "Configure weekly opening times for dine-in store hours and online ordering."
 
@@ -2520,7 +2582,7 @@ msgstr ""
 msgid "Confirm your password"
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:188
+#: app/components/settings/cards/organization/integrations-card.tsx:247
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:364
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:387
 msgid "Connect"
@@ -2600,7 +2662,7 @@ msgstr "Connected form"
 msgid "Connected on {createdAtDate}"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:788
+#: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
 msgstr "Connecting to team chat…"
 
@@ -2608,7 +2670,7 @@ msgstr "Connecting to team chat…"
 #~ msgid "Connecting…"
 #~ msgstr "Connecting…"
 
-#: app/components/chat/chat-view.tsx:786
+#: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
 msgstr "Connection lost. Reconnecting…"
 
@@ -2691,9 +2753,13 @@ msgstr "Contrast"
 msgid "Control availability and custom pricing per location."
 msgstr "Control availability and custom pricing per location."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:1303
+msgid "Control checkout timing and what customers see."
+msgstr "Control checkout timing and what customers see."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1017
-msgid "Control lifecycle stage and storefront visibility."
-msgstr "Control lifecycle stage and storefront visibility."
+#~ msgid "Control lifecycle stage and storefront visibility."
+#~ msgstr "Control lifecycle stage and storefront visibility."
 
 #: app/components/menu/menu-availability-card.tsx:242
 msgid "Control overall ordering availability for guests."
@@ -2706,6 +2772,10 @@ msgstr "Control overall ordering availability for guests."
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
 msgstr ""
+
+#: app/components/chat/chat-view.tsx:545
+msgid "Conversation"
+msgstr "Conversation"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:245
 #~ msgid "Conversations start here. Review and reply to your website submissions."
@@ -2774,12 +2844,12 @@ msgstr "Could not create a draft. Try again."
 msgid "Could not create a reply suggestion. Try again."
 msgstr "Could not create a reply suggestion. Try again."
 
-#: app/components/chat/chat-view.tsx:133
-#: app/components/chat/chat-view.tsx:179
+#: app/components/chat/chat-view.tsx:136
+#: app/components/chat/chat-view.tsx:210
 msgid "Could not load messages."
 msgstr "Could not load messages."
 
-#: app/components/chat/chat-view.tsx:275
+#: app/components/chat/chat-view.tsx:314
 msgid "Could not load replies."
 msgstr "Could not load replies."
 
@@ -2788,20 +2858,23 @@ msgstr "Could not load replies."
 msgid "Could not post your reply."
 msgstr "Could not post your reply."
 
-#: app/components/chat/chat-composer.tsx:216
-#: app/components/chat/chat-message.tsx:351
+#: app/components/chat/chat-composer.tsx:236
 msgid "Could not send message."
 msgstr "Could not send message."
+
+#: app/components/chat/chat-compose-dialog.tsx:400
+msgid "Could not start the conversation. Try again."
+msgstr "Could not start the conversation. Try again."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:176
 msgid "Could not update read status. Try again."
 msgstr "Could not update read status. Try again."
 
-#: app/components/chat/chat-composer.tsx:116
+#: app/components/chat/chat-composer.tsx:118
 msgid "Could not upload image."
 msgstr "Could not upload image."
 
-#: app/components/chat/chat-composer.tsx:107
+#: app/components/chat/chat-composer.tsx:109
 msgid "Could not upload image. Try again."
 msgstr "Could not upload image. Try again."
 
@@ -2818,8 +2891,12 @@ msgid "Country"
 msgstr "Country"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:496
-msgid "Cover Banner Image"
-msgstr "Cover Banner Image"
+#~ msgid "Cover Banner Image"
+#~ msgstr "Cover Banner Image"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:649
+msgid "Cover image"
+msgstr "Cover image"
 
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
@@ -2830,11 +2907,11 @@ msgstr ""
 msgid "Create a category to start organizing menu items."
 msgstr "Create a category to start organizing menu items."
 
-#: app/components/chat/chat-view.tsx:245
+#: app/components/chat/chat-view.tsx:284
 msgid "Create a channel"
 msgstr "Create a channel"
 
-#: app/components/chat/chat-view.tsx:230
+#: app/components/chat/chat-view.tsx:269
 msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 msgstr "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 
@@ -2862,7 +2939,7 @@ msgstr "Create a modifier group to start offering custom choices."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1567
+#: app/components/menu/modifier-form.tsx:1574
 msgid "Create a new choice for this modifier group."
 msgstr "Create a new choice for this modifier group."
 
@@ -2971,11 +3048,11 @@ msgstr "Create categories to group menu items together for menus and ordering."
 msgid "Create Category"
 msgstr "Create Category"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:506
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:434
 msgid "Create channel"
 msgstr "Create channel"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:156
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:82
 msgid "Create channels for your team and choose which roles or people can read and post in them."
 msgstr "Create channels for your team and choose which roles or people can read and post in them."
 
@@ -2991,8 +3068,8 @@ msgstr "Create Custom Role"
 #~ msgid "Create drop"
 #~ msgstr "Create drop"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:381
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:185
+#: app/components/menu/drop-wizard/drop-form.tsx:450
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:205
 msgid "Create Drop"
 msgstr "Create Drop"
 
@@ -3001,6 +3078,10 @@ msgstr "Create Drop"
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "Create form"
+
+#: app/components/chat/chat-compose-dialog.tsx:426
+msgid "Create group"
+msgstr "Create group"
 
 #: app/components/roles/tenant-role-access-manager.tsx:213
 msgid "Create group chats"
@@ -3014,7 +3095,7 @@ msgstr "Create Item"
 msgid "Create Link"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:999
+#: app/components/locations/location-form.tsx:1004
 msgid "Create Location"
 msgstr "Create Location"
 
@@ -3038,8 +3119,8 @@ msgstr ""
 msgid "Create New Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1560
-#: app/components/menu/modifier-form.tsx:1836
+#: app/components/menu/modifier-form.tsx:1567
+#: app/components/menu/modifier-form.tsx:1843
 msgid "Create New Option"
 msgstr "Create New Option"
 
@@ -3090,12 +3171,12 @@ msgstr ""
 msgid "Create your first broadcast"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:195
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:122
 msgid "Create your first channel"
 msgstr "Create your first channel"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:194
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:213
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:214
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:233
 msgid "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
 msgstr "Create your first limited-time drop to sell out fast, build anticipation, and manage pickup windows."
 
@@ -3147,6 +3228,10 @@ msgstr ""
 msgid "Created By"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:624
+msgid "Created from the name. You can change it before saving."
+msgstr "Created from the name. You can change it before saving."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:145
 msgid "Created page"
 msgstr "Created page"
@@ -3171,7 +3256,7 @@ msgstr ""
 msgid "Curbside"
 msgstr "Curbside"
 
-#: app/components/locations/location-form.tsx:712
+#: app/components/locations/location-form.tsx:717
 msgid "Curbside Pickup"
 msgstr "Curbside Pickup"
 
@@ -3258,7 +3343,8 @@ msgstr "Custom options, toppings, sides, and choices offered with this item."
 msgid "Custom Roles"
 msgstr "Custom Roles"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:868
+#: app/components/menu/drop-wizard/drop-drawers.tsx:872
+#: app/components/menu/drop-wizard/drop-drawers.tsx:887
 msgid "Custom scheduled date/time"
 msgstr "Custom scheduled date/time"
 
@@ -3305,6 +3391,10 @@ msgstr ""
 #~ msgid "Customer limits"
 #~ msgstr "Customer limits"
 
+#: app/components/menu/drop-wizard/drop-preview.tsx:56
+msgid "Customer preview"
+msgstr "Customer preview"
+
 #: app/components/mailbox/reviews-tab.tsx:337
 msgid "Customer reviews"
 msgstr "Customer reviews"
@@ -3341,7 +3431,7 @@ msgstr ""
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr ""
 
-#: app/components/locations/location-form.tsx:659
+#: app/components/locations/location-form.tsx:664
 msgid "Customers pick up orders in-store."
 msgstr "Customers pick up orders in-store."
 
@@ -3391,7 +3481,7 @@ msgstr ""
 
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
-#: app/components/menu/menu-availability-card.tsx:334
+#: app/components/menu/menu-availability-card.tsx:341
 msgid "Date"
 msgstr "Date"
 
@@ -3413,7 +3503,8 @@ msgid "Decline"
 msgstr ""
 
 #: app/components/menu/location-overrides-card.tsx:125
-#: app/components/website/link-inspector.tsx:622
+#: app/components/website/link-inspector.tsx:612
+#: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:618
 msgid "Default"
 msgstr ""
@@ -3446,7 +3537,7 @@ msgstr ""
 msgid "Delay unit is required."
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:832
+#: app/components/chat/chat-view.tsx:1029
 #: app/components/note/comment-item.tsx:239
 #: app/components/roles/tenant-role-access-manager.tsx:837
 #: app/components/roles/tenant-role-access-manager.tsx:947
@@ -3455,8 +3546,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:423
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:482
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:360
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:390
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:449
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:472
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:531
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:399
@@ -3465,7 +3556,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:529
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:239
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:735
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
@@ -3477,7 +3568,7 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:542
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:470
 msgid "Delete {channelName}?"
 msgstr "Delete {channelName}?"
 
@@ -3505,7 +3596,7 @@ msgstr ""
 msgid "Delete category?"
 msgstr "Delete category?"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:571
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:499
 msgid "Delete channel"
 msgstr "Delete channel"
 
@@ -3529,7 +3620,7 @@ msgstr ""
 msgid "Delete data and switch"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:395
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:426
 msgid "Delete drop?"
 msgstr "Delete drop?"
 
@@ -3569,11 +3660,11 @@ msgstr "Delete Menu Option?"
 msgid "Delete menu?"
 msgstr "Delete menu?"
 
-#: app/components/chat/chat-message.tsx:299
+#: app/components/chat/chat-message.tsx:372
 msgid "Delete message"
 msgstr "Delete message"
 
-#: app/components/chat/chat-view.tsx:813
+#: app/components/chat/chat-view.tsx:1010
 msgid "Delete message?"
 msgstr "Delete message?"
 
@@ -3653,7 +3744,7 @@ msgstr "Deleting…"
 msgid "Deliveroo"
 msgstr "Deliveroo"
 
-#: app/components/locations/location-form.tsx:674
+#: app/components/locations/location-form.tsx:679
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:208
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:641
 msgid "Delivery"
@@ -3663,11 +3754,11 @@ msgstr "Delivery"
 msgid "Delivery & Zones"
 msgstr "Delivery & Zones"
 
-#: app/components/locations/delivery-zones-manager.tsx:358
+#: app/components/locations/delivery-zones-manager.tsx:364
 msgid "Delivery Allowed"
 msgstr "Delivery Allowed"
 
-#: app/components/locations/delivery-zones-manager.tsx:364
+#: app/components/locations/delivery-zones-manager.tsx:370
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "Delivery is blocked or disallowed for this specific zone"
 
@@ -3675,11 +3766,11 @@ msgstr "Delivery is blocked or disallowed for this specific zone"
 msgid "Delivery Provider"
 msgstr "Delivery Provider"
 
-#: app/components/locations/location-form.tsx:840
+#: app/components/locations/location-form.tsx:845
 msgid "Delivery Settings & Providers"
 msgstr "Delivery Settings & Providers"
 
-#: app/components/locations/location-form.tsx:768
+#: app/components/locations/location-form.tsx:773
 msgid "Delivery Tips"
 msgstr "Delivery Tips"
 
@@ -3687,7 +3778,7 @@ msgstr "Delivery Tips"
 msgid "Delivery Zones"
 msgstr "Delivery Zones"
 
-#: app/components/locations/location-form.tsx:960
+#: app/components/locations/location-form.tsx:965
 msgid "Delivery Zones & Geo-Fencing"
 msgstr "Delivery Zones & Geo-Fencing"
 
@@ -3708,7 +3799,7 @@ msgstr "Describe this image for accessibility"
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:369
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
 #: app/routes/organizations+/create.tsx:1032
@@ -3757,6 +3848,10 @@ msgstr "Details & Address"
 msgid "Detected"
 msgstr ""
 
+#: app/components/settings/cards/organization/integrations-card.tsx:27
+msgid "Development"
+msgstr "Development"
+
 #: app/components/settings/cards/sessions-card.tsx:185
 #: app/components/settings/cards/sessions-card.tsx:267
 #: app/components/settings/passkey-manager.tsx:198
@@ -3772,8 +3867,8 @@ msgstr ""
 msgid "Dietary & Allergens"
 msgstr "Dietary & Allergens"
 
-#: app/components/menu/modifier-form.tsx:1679
-#: app/components/menu/modifier-form.tsx:2034
+#: app/components/menu/modifier-form.tsx:1686
+#: app/components/menu/modifier-form.tsx:2041
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
@@ -3790,11 +3885,11 @@ msgstr "Dimensions:"
 msgid "Dine-in"
 msgstr "Dine-in"
 
-#: app/components/locations/location-form.tsx:694
+#: app/components/locations/location-form.tsx:699
 msgid "Dine-In / In-House"
 msgstr "Dine-In / In-House"
 
-#: app/components/locations/location-form.tsx:780
+#: app/components/locations/location-form.tsx:785
 msgid "Dine-In Tips"
 msgstr "Dine-In Tips"
 
@@ -3802,11 +3897,12 @@ msgstr "Dine-In Tips"
 msgid "Direct / Unknown"
 msgstr "Direct / Unknown"
 
-#: app/components/chat/chat-compose-dialog.tsx:76
+#: app/components/chat/chat-compose-dialog.tsx:381
+#: app/components/chat/chat-view.tsx:611
 msgid "Direct message"
 msgstr "Direct message"
 
-#: app/components/chat/chat-view.tsx:426
+#: app/components/chat/chat-view.tsx:491
 msgid "Direct messages"
 msgstr "Direct messages"
 
@@ -3835,7 +3931,7 @@ msgstr "Discard unsaved changes?"
 msgid "Disclose any allergens present to inform guest dietary and safety filters."
 msgstr "Disclose any allergens present to inform guest dietary and safety filters."
 
-#: app/components/settings/cards/organization/integrations-card.tsx:166
+#: app/components/settings/cards/organization/integrations-card.tsx:225
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:320
 #: app/components/settings/cards/organization/review-integrations-card.tsx:163
 #: app/components/settings/connections.tsx:89
@@ -3872,20 +3968,24 @@ msgid "Display"
 msgstr "Display"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1217
-msgid "Display live countdown until orders open"
-msgstr "Display live countdown until orders open"
+#~ msgid "Display live countdown until orders open"
+#~ msgstr "Display live countdown until orders open"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1263
+#: app/components/menu/drop-wizard/drop-form.tsx:1409
 msgid "Display live stock counters on items"
 msgstr "Display live stock counters on items"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1202
-msgid "Display Options"
-msgstr "Display Options"
+#~ msgid "Display Options"
+#~ msgstr "Display Options"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:824
 #~ msgid "Display remaining badges (e.g. \"Only 3 left\") on item cards."
 #~ msgstr "Display remaining badges (e.g. \"Only 3 left\") on item cards."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1361
+msgid "Display the opening date below the countdown"
+msgstr "Display the opening date below the countdown"
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:350
 msgid "Displayed"
@@ -3913,7 +4013,7 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:904
+#: app/components/locations/location-form.tsx:909
 msgid "DoorDash Drive"
 msgstr "DoorDash Drive"
 
@@ -3992,19 +4092,19 @@ msgstr ""
 msgid "Drag to reorder column"
 msgstr ""
 
-#: app/components/locations/delivery-zones-manager.tsx:488
+#: app/components/locations/delivery-zones-manager.tsx:494
 msgid "Draw Delivery Zone on Map"
 msgstr "Draw Delivery Zone on Map"
 
-#: app/components/locations/delivery-zones-manager.tsx:395
+#: app/components/locations/delivery-zones-manager.tsx:401
 msgid "Draw Polygon"
 msgstr "Draw Polygon"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:223
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:243
 msgid "Drop"
 msgstr "Drop"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:323
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:350
 msgid "Drop actions"
 msgstr "Drop actions"
 
@@ -4012,25 +4112,29 @@ msgstr "Drop actions"
 #~ msgid "Drop description"
 #~ msgstr "Drop description"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:429
+#: app/components/menu/drop-wizard/drop-form.tsx:585
 msgid "Drop Information"
 msgstr "Drop Information"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:596
+msgid "Drop name (customer-facing)"
+msgstr "Drop name (customer-facing)"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:875
 #~ msgid "Drop reminders"
 #~ msgstr "Drop reminders"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1014
-msgid "Drop Status"
-msgstr "Drop Status"
+#~ msgid "Drop Status"
+#~ msgstr "Drop Status"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:461
-#~ msgid "Drop title"
-#~ msgstr "Drop title"
+#: app/components/menu/drop-wizard/drop-preview.tsx:79
+msgid "Drop title"
+msgstr "Drop title"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:441
-msgid "Drop Title"
-msgstr "Drop Title"
+#~ msgid "Drop Title"
+#~ msgstr "Drop Title"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:954
 #~ msgid "Drop visibility"
@@ -4038,7 +4142,7 @@ msgstr "Drop Title"
 
 #: app/components/app-sidebar.tsx:338
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:57
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:173
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:193
 msgid "Drops"
 msgstr "Drops"
 
@@ -4095,11 +4199,11 @@ msgstr "e.g. Downtown Express, Zone 1"
 msgid "e.g. Downtown Flagship"
 msgstr "e.g. Downtown Flagship"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:895
+#: app/components/menu/drop-wizard/drop-drawers.tsx:914
 msgid "e.g. Order now before your favorites sell out."
 msgstr "e.g. Order now before your favorites sell out."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:880
+#: app/components/menu/drop-wizard/drop-drawers.tsx:899
 msgid "e.g. Orders are now open!"
 msgstr "e.g. Orders are now open!"
 
@@ -4107,7 +4211,7 @@ msgstr "e.g. Orders are now open!"
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:449
+#: app/components/menu/drop-wizard/drop-form.tsx:602
 msgid "e.g. Sourdough Saturday Drop #12"
 msgstr "e.g. Sourdough Saturday Drop #12"
 
@@ -4140,18 +4244,17 @@ msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr ""
 
 #: app/components/favorite-notes.tsx:116
-#: app/components/menu/drop-wizard/drop-form.tsx:575
-#: app/components/menu/drop-wizard/drop-form.tsx:823
+#: app/components/menu/drop-wizard/drop-form.tsx:965
 #: app/components/note/comment-item.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:827
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:414
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:336
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:366
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:387
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:457
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:976
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:231
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
@@ -4162,7 +4265,7 @@ msgstr ""
 msgid "Edit announcement"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:247
 msgid "Edit channel"
 msgstr "Edit channel"
 
@@ -4192,7 +4295,7 @@ msgstr "Edit design"
 msgid "Edit Details"
 msgstr "Edit Details"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:381
+#: app/components/menu/drop-wizard/drop-form.tsx:450
 msgid "Edit Drop"
 msgstr "Edit Drop"
 
@@ -4205,7 +4308,8 @@ msgstr "Edit image"
 msgid "Edit Location"
 msgstr "Edit Location"
 
-#: app/components/chat/chat-message.tsx:288
+#: app/components/chat/chat-message.tsx:220
+#: app/components/chat/chat-message.tsx:361
 msgid "Edit message"
 msgstr "Edit message"
 
@@ -4217,11 +4321,11 @@ msgstr "Edit note"
 msgid "Edit Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:353
+#: app/components/menu/modifier-form.tsx:356
 msgid "Edit option"
 msgstr "Edit option"
 
-#: app/components/menu/modifier-form.tsx:1925
+#: app/components/menu/modifier-form.tsx:1932
 msgid "Edit Option"
 msgstr "Edit Option"
 
@@ -4229,7 +4333,7 @@ msgstr "Edit Option"
 msgid "Edit own notes"
 msgstr "Edit own notes"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:987
+#: app/components/menu/drop-wizard/drop-form.tsx:1117
 msgid "Edit pickup window"
 msgstr "Edit pickup window"
 
@@ -4237,11 +4341,11 @@ msgstr "Edit pickup window"
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1357
+#: app/components/menu/drop-wizard/drop-form.tsx:1263
 msgid "Edit reminder"
 msgstr "Edit reminder"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:835
+#: app/components/menu/drop-wizard/drop-drawers.tsx:848
 msgid "Edit Reminder"
 msgstr "Edit Reminder"
 
@@ -4249,7 +4353,7 @@ msgstr "Edit Reminder"
 msgid "Edit role"
 msgstr "Edit role"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:768
+#: app/components/menu/drop-wizard/drop-form.tsx:906
 msgid "Edit section cap"
 msgstr "Edit section cap"
 
@@ -4329,7 +4433,7 @@ msgstr ""
 msgid "Enable Custom S3 Storage"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1286
+#: app/components/menu/drop-wizard/drop-form.tsx:1432
 msgid "Enable gift card redemptions on this drop"
 msgstr "Enable gift card redemptions on this drop"
 
@@ -4337,7 +4441,7 @@ msgstr "Enable gift card redemptions on this drop"
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/components/locations/location-form.tsx:645
+#: app/components/locations/location-form.tsx:650
 msgid "Enable or disable available fulfillment channels for this location."
 msgstr "Enable or disable available fulfillment channels for this location."
 
@@ -4390,7 +4494,7 @@ msgstr ""
 msgid "Enter one of your backup codes to verify your identity."
 msgstr ""
 
-#: app/components/locations/delivery-zones-manager.tsx:476
+#: app/components/locations/delivery-zones-manager.tsx:482
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "Enter postal or zip codes where this delivery zone applies."
 
@@ -4398,7 +4502,7 @@ msgstr "Enter postal or zip codes where this delivery zone applies."
 msgid "Enter the 6-digit one time password (OTP) token that your authentication app provides you."
 msgstr ""
 
-#: app/components/chat/chat-composer.tsx:249
+#: app/components/chat/chat-composer.tsx:383
 msgid "Enter to send. Shift+Enter for a new line."
 msgstr "Enter to send. Shift+Enter for a new line."
 
@@ -4437,6 +4541,10 @@ msgstr ""
 msgid "Enterprise Plan"
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
+#~ msgid "Epic Startup Team"
+#~ msgstr ""
+
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 #: app/components/settings/cards/organization/announcement-sheet.tsx:271
@@ -4448,15 +4556,15 @@ msgstr ""
 msgid "Errors"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:534
+#: app/components/locations/location-form.tsx:535
 msgid "Estimated kitchen lead time and extra time for high-volume orders."
 msgstr "Estimated kitchen lead time and extra time for high-volume orders."
 
-#: app/components/locations/location-form.tsx:936
+#: app/components/locations/location-form.tsx:941
 msgid "Estimated Max Delivery Time (minutes)"
 msgstr "Estimated Max Delivery Time (minutes)"
 
-#: app/components/locations/location-form.tsx:917
+#: app/components/locations/location-form.tsx:922
 msgid "Estimated Min Delivery Time (minutes)"
 msgstr "Estimated Min Delivery Time (minutes)"
 
@@ -4468,7 +4576,7 @@ msgstr ""
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:398
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:326
 msgid "Every active member can read and post."
 msgstr "Every active member can read and post."
 
@@ -4476,15 +4584,15 @@ msgstr "Every active member can read and post."
 msgid "Every review, in one place"
 msgstr "Every review, in one place"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:211
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:139
 msgid "Everyone"
 msgstr "Everyone"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:409
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:337
 msgid "Everyone else won't see that it exists."
 msgstr "Everyone else won't see that it exists."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:395
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:323
 msgid "Everyone on the team"
 msgstr "Everyone on the team"
 
@@ -4817,7 +4925,7 @@ msgstr "Form submissions"
 msgid "Format:"
 msgstr "Format:"
 
-#: app/components/chat/chat-message.tsx:182
+#: app/components/chat/chat-message.tsx:205
 msgid "Former member"
 msgstr "Former member"
 
@@ -4866,7 +4974,7 @@ msgstr "Fulfillment"
 msgid "Fulfillment & Timing"
 msgstr "Fulfillment & Timing"
 
-#: app/components/locations/location-form.tsx:642
+#: app/components/locations/location-form.tsx:647
 msgid "Fulfillment Options"
 msgstr "Fulfillment Options"
 
@@ -4961,9 +5069,13 @@ msgstr ""
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "Give visitors room to share thoughtful feedback."
 
+#: app/components/chat/chat-compose-dialog.tsx:303
+msgid "Give your group a name"
+msgstr "Give your group a name"
+
 #: app/components/menu/item-form.tsx:590
-#: app/components/menu/modifier-form.tsx:1697
-#: app/components/menu/modifier-form.tsx:2052
+#: app/components/menu/modifier-form.tsx:1704
+#: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
 msgid "Gluten-Free"
 msgstr "Gluten-Free"
@@ -5009,23 +5121,27 @@ msgstr ""
 msgid "Grayscale"
 msgstr "Grayscale"
 
-#: app/components/chat/chat-compose-dialog.tsx:85
+#: app/components/chat/chat-compose-dialog.tsx:385
 msgid "Group"
 msgstr "Group"
 
-#: app/components/chat/chat-compose-dialog.tsx:123
+#: app/components/chat/chat-view.tsx:614
+msgid "Group conversation"
+msgstr "Group conversation"
+
+#: app/components/chat/chat-compose-dialog.tsx:297
 msgid "Group name"
 msgstr "Group name"
 
-#: app/components/menu/modifier-form.tsx:905
+#: app/components/menu/modifier-form.tsx:908
 msgid "Group Name (Guest-Facing)"
 msgstr "Group Name (Guest-Facing)"
 
-#: app/components/chat/chat-view.tsx:522
+#: app/components/chat/chat-view.tsx:629
 msgid "Group settings"
 msgstr "Group settings"
 
-#: app/components/chat/chat-view.tsx:427
+#: app/components/chat/chat-view.tsx:492
 msgid "Groups"
 msgstr "Groups"
 
@@ -5043,11 +5159,11 @@ msgid "Guest Live Preview"
 msgstr "Guest Live Preview"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1205
-msgid "Guest storefront indicators and countdowns."
-msgstr "Guest storefront indicators and countdowns."
+#~ msgid "Guest storefront indicators and countdowns."
+#~ msgstr "Guest storefront indicators and countdowns."
 
 #: app/components/menu/menu-form.tsx:182
-#: app/components/menu/modifier-form.tsx:899
+#: app/components/menu/modifier-form.tsx:902
 msgid "Guest-facing name and internal identifier."
 msgstr "Guest-facing name and internal identifier."
 
@@ -5059,15 +5175,15 @@ msgstr "Guest-facing name, internal identifier, and description."
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "Guest-facing name, internal SKU, and description."
 
-#: app/components/menu/modifier-form.tsx:996
+#: app/components/menu/modifier-form.tsx:997
 msgid "Guests can pick multiple options."
 msgstr "Guests can pick multiple options."
 
-#: app/components/menu/modifier-form.tsx:972
+#: app/components/menu/modifier-form.tsx:974
 msgid "Guests can pick up to 1 option."
 msgstr "Guests can pick up to 1 option."
 
-#: app/components/menu/modifier-form.tsx:1069
+#: app/components/menu/modifier-form.tsx:1068
 msgid "Guests can skip this selection."
 msgstr "Guests can skip this selection."
 
@@ -5075,7 +5191,7 @@ msgstr "Guests can skip this selection."
 msgid "Guests choose counts per option."
 msgstr "Guests choose counts per option."
 
-#: app/components/menu/modifier-form.tsx:1065
+#: app/components/menu/modifier-form.tsx:1064
 msgid "Guests must choose one option before continuing."
 msgstr "Guests must choose one option before continuing."
 
@@ -5133,6 +5249,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:96
 msgid "Hi {{name}}, your account update is ready!"
 msgstr ""
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:105
+#~ msgid "Hi {{name}}, your Epic Startup account is ready."
+#~ msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:105
 msgid "Hi {{name}}, your Menuza account is ready."
@@ -5342,19 +5462,19 @@ msgstr ""
 msgid "In-App"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:866
+#: app/components/locations/location-form.tsx:871
 msgid "In-House Delivery"
 msgstr "In-House Delivery"
 
-#: app/components/locations/delivery-zones-manager.tsx:540
+#: app/components/locations/delivery-zones-manager.tsx:546
 msgid "In-House Delivery Fee ($)"
 msgstr "In-House Delivery Fee ($)"
 
-#: app/components/locations/location-form.tsx:677
+#: app/components/locations/location-form.tsx:682
 msgid "In-house fleet, Uber Eats, or DoorDash delivery."
 msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 
-#: app/components/locations/location-form.tsx:745
+#: app/components/locations/location-form.tsx:750
 msgid "In-House Tips"
 msgstr "In-House Tips"
 
@@ -5362,7 +5482,7 @@ msgstr "In-House Tips"
 msgid "Inactive"
 msgstr "Inactive"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1283
+#: app/components/menu/drop-wizard/drop-form.tsx:1429
 msgid "Include Gift Cards"
 msgstr "Include Gift Cards"
 
@@ -5404,7 +5524,7 @@ msgid "Inspect"
 msgstr "Inspect"
 
 #: app/components/app-sidebar.tsx:479
-#: app/components/settings/cards/organization/integrations-card.tsx:58
+#: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:90
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -5416,9 +5536,9 @@ msgstr "Internal channels for your team."
 
 #: app/components/menu/category-form.tsx:377
 #: app/components/menu/menu-form.tsx:200
-#: app/components/menu/modifier-form.tsx:917
-#: app/components/menu/modifier-form.tsx:1592
-#: app/components/menu/modifier-form.tsx:1947
+#: app/components/menu/modifier-form.tsx:920
+#: app/components/menu/modifier-form.tsx:1599
+#: app/components/menu/modifier-form.tsx:1954
 msgid "Internal Reference (Optional)"
 msgstr "Internal Reference (Optional)"
 
@@ -5448,7 +5568,7 @@ msgstr ""
 #~ msgid "Inventory limit"
 #~ msgstr "Inventory limit"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:713
+#: app/components/menu/drop-wizard/drop-form.tsx:842
 msgid "Inventory limits"
 msgstr "Inventory limits"
 
@@ -5505,7 +5625,7 @@ msgstr ""
 msgid "Is Verified (True)"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:748
+#: app/components/menu/drop-wizard/drop-form.tsx:886
 msgid "item"
 msgstr "item"
 
@@ -5529,8 +5649,8 @@ msgstr "Item Name (Guest-Facing)"
 msgid "Item Photos"
 msgstr "Item Photos"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:625
-#: app/components/menu/drop-wizard/drop-form.tsx:749
+#: app/components/menu/drop-wizard/drop-form.tsx:739
+#: app/components/menu/drop-wizard/drop-form.tsx:887
 msgid "items"
 msgstr "items"
 
@@ -5549,7 +5669,7 @@ msgstr "Items in this category will not add preparation delay to orders."
 #~ msgid "Items in this section share a total pooled inventory limit."
 #~ msgstr "Items in this section share a total pooled inventory limit."
 
-#: app/components/menu/modifier-form.tsx:1419
+#: app/components/menu/modifier-form.tsx:1429
 msgid "Items that offer this modifier group."
 msgstr "Items that offer this modifier group."
 
@@ -5614,8 +5734,8 @@ msgid "Keep editing"
 msgstr "Keep editing"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
-msgid "Keep forever"
-msgstr "Keep forever"
+#~ msgid "Keep forever"
+#~ msgstr "Keep forever"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
 msgid "Keeps original indexing"
@@ -5633,6 +5753,10 @@ msgstr ""
 #: app/components/menu/category-form.tsx:517
 msgid "Kitchen Throttling Exemption"
 msgstr "Kitchen Throttling Exemption"
+
+#: app/components/settings/cards/organization/integrations-card.tsx:32
+msgid "Knowledge management"
+msgstr "Knowledge management"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 #: app/components/website/create-form-dialog.tsx:171
@@ -5656,11 +5780,11 @@ msgstr ""
 msgid "Large"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:560
+#: app/components/locations/location-form.tsx:561
 msgid "Large Order Extra Prep Time (minutes)"
 msgstr "Large Order Extra Prep Time (minutes)"
 
-#: app/components/locations/location-form.tsx:578
+#: app/components/locations/location-form.tsx:579
 msgid "Large Order Threshold Rule"
 msgstr "Large Order Threshold Rule"
 
@@ -5723,14 +5847,14 @@ msgstr ""
 msgid "Leave a reply..."
 msgstr "Leave a reply..."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:547
-#: app/components/menu/drop-wizard/drop-drawers.tsx:565
-#: app/components/menu/drop-wizard/drop-drawers.tsx:734
-#: app/components/menu/drop-wizard/drop-drawers.tsx:752
+#: app/components/menu/drop-wizard/drop-drawers.tsx:559
+#: app/components/menu/drop-wizard/drop-drawers.tsx:577
+#: app/components/menu/drop-wizard/drop-drawers.tsx:746
+#: app/components/menu/drop-wizard/drop-drawers.tsx:764
 msgid "Leave blank for no limit."
 msgstr "Leave blank for no limit."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:335
+#: app/components/menu/drop-wizard/drop-drawers.tsx:339
 msgid "Leave blank for unlimited."
 msgstr "Leave blank for unlimited."
 
@@ -5758,8 +5882,8 @@ msgstr ""
 msgid "Left ½"
 msgstr "Left ½"
 
-#: app/components/menu/modifier-form.tsx:1622
-#: app/components/menu/modifier-form.tsx:1977
+#: app/components/menu/modifier-form.tsx:1629
+#: app/components/menu/modifier-form.tsx:1984
 msgid "Left or right ($)"
 msgstr "Left or right ($)"
 
@@ -5777,8 +5901,8 @@ msgid "Level {0} Subcategory"
 msgstr "Level {0} Subcategory"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1027
-msgid "Lifecycle State"
-msgstr "Lifecycle State"
+#~ msgid "Lifecycle State"
+#~ msgstr "Lifecycle State"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:776
 msgid "Light"
@@ -5803,7 +5927,7 @@ msgstr ""
 #~ msgstr "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
-#: app/components/website/link-inspector.tsx:642
+#: app/components/website/link-inspector.tsx:648
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:619
 msgid "Link"
 msgstr ""
@@ -5835,11 +5959,11 @@ msgstr ""
 msgid "Live"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:708
+#: app/components/chat/chat-view.tsx:863
 msgid "Load earlier replies"
 msgstr "Load earlier replies"
 
-#: app/components/chat/chat-view.tsx:585
+#: app/components/chat/chat-view.tsx:699
 msgid "Load older messages"
 msgstr "Load older messages"
 
@@ -5863,7 +5987,7 @@ msgstr ""
 msgid "Loading media…"
 msgstr "Loading media…"
 
-#: app/components/chat/chat-view.tsx:572
+#: app/components/chat/chat-view.tsx:686
 msgid "Loading messages…"
 msgstr "Loading messages…"
 
@@ -5915,7 +6039,7 @@ msgstr "Location Status"
 msgid "Locations"
 msgstr "Locations"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1191
+#: app/components/menu/drop-wizard/drop-form.tsx:1317
 msgid "Locks inventory while customer fills in checkout details."
 msgstr "Locks inventory while customer fills in checkout details."
 
@@ -5998,7 +6122,7 @@ msgstr "Make modifications to notes created by this user."
 msgid "Make Public"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:446
+#: app/components/locations/location-form.tsx:447
 msgid "Make this the primary location for your restaurant."
 msgstr "Make this the primary location for your restaurant."
 
@@ -6014,7 +6138,7 @@ msgstr "Manage automations"
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
 
-#: app/components/chat/chat-view.tsx:446
+#: app/components/chat/chat-view.tsx:517
 msgid "Manage channels"
 msgstr "Manage channels"
 
@@ -6192,7 +6316,7 @@ msgstr "Marketing manager"
 #~ msgid "Max number that can be scheduled for a single pickup slot."
 #~ msgstr "Max number that can be scheduled for a single pickup slot."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:323
+#: app/components/menu/drop-wizard/drop-drawers.tsx:327
 msgid "Max orders per slot"
 msgstr "Max orders per slot"
 
@@ -6201,13 +6325,13 @@ msgstr "Max orders per slot"
 #~ msgid "Max per customer order"
 #~ msgstr "Max per customer order"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:535
-#: app/components/menu/drop-wizard/drop-drawers.tsx:722
+#: app/components/menu/drop-wizard/drop-drawers.tsx:547
+#: app/components/menu/drop-wizard/drop-drawers.tsx:734
 msgid "Max per order"
 msgstr "Max per order"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:553
-#: app/components/menu/drop-wizard/drop-drawers.tsx:740
+#: app/components/menu/drop-wizard/drop-drawers.tsx:565
+#: app/components/menu/drop-wizard/drop-drawers.tsx:752
 msgid "Max per pickup slot"
 msgstr "Max per pickup slot"
 
@@ -6216,11 +6340,11 @@ msgstr "Max per pickup slot"
 #~ msgid "Max per pickup time"
 #~ msgstr "Max per pickup time"
 
-#: app/components/locations/location-form.tsx:813
+#: app/components/locations/location-form.tsx:818
 msgid "Maximum advance ordering window (days)"
 msgstr "Maximum advance ordering window (days)"
 
-#: app/components/menu/modifier-form.tsx:1105
+#: app/components/menu/modifier-form.tsx:1104
 #: app/components/menu/option-form.tsx:573
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
@@ -6299,8 +6423,8 @@ msgid "Members & invites"
 msgstr "Members & invites"
 
 #: app/components/app-sidebar.tsx:300
-#: app/components/menu/drop-wizard/drop-form.tsx:552
-#: app/components/menu/drop-wizard/drop-form.tsx:608
+#: app/components/menu/drop-wizard/drop-form.tsx:706
+#: app/components/menu/drop-wizard/drop-form.tsx:722
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:80
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:282
 msgid "Menu"
@@ -6375,28 +6499,39 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: app/components/chat/chat-message.tsx:380
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:538
 msgid "Message"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:646
+#: app/components/chat/chat-view.tsx:234
+msgid "Message {activeName}"
+msgstr "Message {activeName}"
+
+#: app/components/chat/chat-view.tsx:233
 msgid "Message #{activeName}"
 msgstr "Message #{activeName}"
+
+#: app/components/chat/chat-message.tsx:329
+msgid "Message actions"
+msgstr "Message actions"
+
+#: app/components/chat/chat-composer.tsx:272
+msgid "Message composer"
+msgstr "Message composer"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:192
 msgid "Message content is required"
 msgstr "Message content is required"
 
-#: app/components/chat/chat-composer.tsx:201
+#: app/components/chat/chat-composer.tsx:218
 msgid "Message is too long."
 msgstr "Message is too long."
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:81
-msgid "Message retention"
-msgstr "Message retention"
+#~ msgid "Message retention"
+#~ msgstr "Message retention"
 
-#: app/components/chat/chat-view.tsx:537
+#: app/components/chat/chat-view.tsx:645
 msgid "Messages"
 msgstr "Messages"
 
@@ -6412,7 +6547,7 @@ msgstr ""
 msgid "Migrate existing org media after saving"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:933
+#: app/components/menu/drop-wizard/drop-form.tsx:1063
 msgid "min intervals"
 msgstr "min intervals"
 
@@ -6420,11 +6555,11 @@ msgstr "min intervals"
 msgid "Min Order: ${minOrder}"
 msgstr "Min Order: ${minOrder}"
 
-#: app/components/locations/delivery-zones-manager.tsx:524
+#: app/components/locations/delivery-zones-manager.tsx:530
 msgid "Minimum Order ($)"
 msgstr "Minimum Order ($)"
 
-#: app/components/menu/modifier-form.tsx:1086
+#: app/components/menu/modifier-form.tsx:1085
 #: app/components/menu/option-form.tsx:558
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
@@ -6453,7 +6588,7 @@ msgstr "Modifier Group"
 msgid "Modifier group actions"
 msgstr "Modifier group actions"
 
-#: app/components/menu/modifier-form.tsx:896
+#: app/components/menu/modifier-form.tsx:899
 msgid "Modifier Group Information"
 msgstr "Modifier Group Information"
 
@@ -6468,7 +6603,7 @@ msgstr "Modifier Group Name"
 msgid "Modifier Groups"
 msgstr "Modifier Groups"
 
-#: app/components/menu/modifier-form.tsx:1124
+#: app/components/menu/modifier-form.tsx:1123
 msgid "Modifier Options"
 msgstr "Modifier Options"
 
@@ -6511,7 +6646,7 @@ msgstr "Multiple"
 msgid "Multiple choice"
 msgstr "Multiple choice"
 
-#: app/components/menu/modifier-form.tsx:993
+#: app/components/menu/modifier-form.tsx:994
 msgid "Multiple Choice (Checkboxes)"
 msgstr "Multiple Choice (Checkboxes)"
 
@@ -6525,7 +6660,7 @@ msgstr ""
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:349
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
 #: app/routes/organizations+/create.tsx:949
@@ -6535,8 +6670,8 @@ msgid "Name"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:432
-msgid "Name, slug identifier, storefront banner, and custom note to guests."
-msgstr "Name, slug identifier, storefront banner, and custom note to guests."
+#~ msgid "Name, slug identifier, storefront banner, and custom note to guests."
+#~ msgstr "Name, slug identifier, storefront banner, and custom note to guests."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:868
 msgid "Navigate to Features → MCP Servers"
@@ -6554,7 +6689,7 @@ msgstr ""
 msgid "Need a new code? Request one here."
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:80
+#: app/components/settings/cards/organization/integrations-card.tsx:139
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:119
 msgid "Need an integration but don't see it here?"
 msgstr ""
@@ -6583,7 +6718,7 @@ msgstr "Nested Groups:"
 msgid "Nested Modifier"
 msgstr "Nested Modifier"
 
-#: app/components/menu/modifier-form.tsx:1190
+#: app/components/menu/modifier-form.tsx:1189
 msgid "Nested Modifier Groups"
 msgstr "Nested Modifier Groups"
 
@@ -6591,7 +6726,7 @@ msgstr "Nested Modifier Groups"
 msgid "Nested modifier groups:"
 msgstr "Nested modifier groups:"
 
-#: app/components/menu/modifier-form.tsx:1474
+#: app/components/menu/modifier-form.tsx:1481
 msgid "Nested Modifier Usage"
 msgstr "Nested Modifier Usage"
 
@@ -6629,8 +6764,8 @@ msgstr ""
 msgid "New Category"
 msgstr "New Category"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:175
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:319
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:101
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:247
 msgid "New channel"
 msgstr "New channel"
 
@@ -6663,21 +6798,21 @@ msgstr ""
 msgid "New Item"
 msgstr "New Item"
 
-#: app/components/chat/chat-compose-dialog.tsx:136
+#: app/components/chat/chat-compose-dialog.tsx:320
 #: app/components/chat/chat-group-settings-dialog.tsx:163
 msgid "New members can read earlier messages"
 msgstr "New members can read earlier messages"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:595
-msgid "New menu"
-msgstr "New menu"
+#~ msgid "New menu"
+#~ msgstr "New menu"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:343
 msgid "New Menu"
 msgstr "New Menu"
 
-#: app/components/chat/chat-compose-dialog.tsx:66
-#: app/components/chat/chat-view.tsx:422
+#: app/components/chat/chat-compose-dialog.tsx:350
+#: app/components/chat/chat-view.tsx:487
 msgid "New message"
 msgstr "New message"
 
@@ -6800,8 +6935,8 @@ msgstr "No categories yet"
 msgid "No channels available"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:226
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:184
+#: app/components/chat/chat-view.tsx:265
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:111
 msgid "No channels yet"
 msgstr "No channels yet"
 
@@ -6845,11 +6980,11 @@ msgstr "No description provided"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:209
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:229
 msgid "No drops match these filters"
 msgstr "No drops match these filters"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:192
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:212
 msgid "No drops scheduled yet"
 msgstr "No drops scheduled yet"
 
@@ -6878,7 +7013,7 @@ msgid "No invoices found"
 msgstr ""
 
 #: app/components/menu/category-form.tsx:412
-#: app/components/menu/modifier-form.tsx:1427
+#: app/components/menu/modifier-form.tsx:1437
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
 
@@ -6886,7 +7021,7 @@ msgstr "No items assigned yet. Add one to get started."
 msgid "No items in this category yet."
 msgstr "No items in this category yet."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:777
+#: app/components/menu/drop-wizard/drop-form.tsx:915
 msgid "No items in this section."
 msgstr "No items in this section."
 
@@ -6925,13 +7060,17 @@ msgstr "No matching images"
 msgid "No matching locations"
 msgstr "No matching locations"
 
-#: app/components/menu/modifier-form.tsx:1857
+#: app/components/menu/modifier-form.tsx:1864
 msgid "No matching options found."
 msgstr "No matching options found."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:341
 msgid "No matching submissions"
 msgstr "No matching submissions"
+
+#: app/components/chat/chat-compose-dialog.tsx:211
+msgid "No matching teammates"
+msgstr "No matching teammates"
 
 #: app/components/media-library/media-library-picker.tsx:332
 msgid "No media matches your search."
@@ -6945,7 +7084,7 @@ msgstr "No media yet. Upload an image to get started."
 msgid "No members found."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:846
+#: app/components/menu/drop-wizard/drop-form.tsx:988
 msgid "No menu selected"
 msgstr "No menu selected"
 
@@ -6957,7 +7096,7 @@ msgstr "No menus assigned yet. Add a menu to make this category visible."
 msgid "No menus created yet"
 msgstr "No menus created yet"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:670
+#: app/components/menu/drop-wizard/drop-form.tsx:788
 msgid "No menus found. Please create a menu first."
 msgstr "No menus found. Please create a menu first."
 
@@ -6969,11 +7108,11 @@ msgstr "No menus match these filters"
 msgid "No menus yet"
 msgstr "No menus yet"
 
-#: app/components/chat/chat-view.tsx:389
+#: app/components/chat/chat-view.tsx:454
 msgid "No messages matched your search."
 msgstr "No messages matched your search."
 
-#: app/components/chat/chat-view.tsx:593
+#: app/components/chat/chat-view.tsx:710
 msgid "No messages yet"
 msgstr "No messages yet"
 
@@ -6997,7 +7136,7 @@ msgstr "No modifier groups match these filters"
 msgid "No modifier groups yet"
 msgstr "No modifier groups yet"
 
-#: app/components/menu/modifier-form.tsx:1207
+#: app/components/menu/modifier-form.tsx:1206
 msgid "No nested groups yet"
 msgstr "No nested groups yet"
 
@@ -7031,11 +7170,11 @@ msgstr ""
 msgid "No one else to add."
 msgstr "No one else to add."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:457
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:385
 msgid "No one matches your search."
 msgstr "No one matches your search."
 
-#: app/components/menu/modifier-form.tsx:1135
+#: app/components/menu/modifier-form.tsx:1134
 msgid "No options added yet. Click “Add option” to get started."
 msgstr "No options added yet. Click “Add option” to get started."
 
@@ -7059,12 +7198,12 @@ msgstr ""
 msgid "No other categories available for upsell."
 msgstr "No other categories available for upsell."
 
-#: app/components/menu/modifier-form.tsx:1394
+#: app/components/menu/modifier-form.tsx:1404
 msgid "No other modifier groups available"
 msgstr "No other modifier groups available"
 
-#: app/components/menu/modifier-form.tsx:1754
-#: app/components/menu/modifier-form.tsx:2109
+#: app/components/menu/modifier-form.tsx:1761
+#: app/components/menu/modifier-form.tsx:2116
 #: app/components/menu/option-form.tsx:831
 msgid "No other modifier groups available to nest."
 msgstr "No other modifier groups available to nest."
@@ -7098,7 +7237,7 @@ msgstr ""
 #~ msgid "No pickup window added yet"
 #~ msgstr "No pickup window added yet"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:889
+#: app/components/menu/drop-wizard/drop-form.tsx:1019
 msgid "No pickup windows scheduled"
 msgstr "No pickup windows scheduled"
 
@@ -7110,7 +7249,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1328
+#: app/components/menu/drop-wizard/drop-form.tsx:1225
 msgid "No reminder notifications set."
 msgstr "No reminder notifications set."
 
@@ -7146,7 +7285,7 @@ msgstr "No reviews match the selected filter."
 msgid "No sections yet"
 msgstr ""
 
-#: app/components/locations/special-hours-picker.tsx:236
+#: app/components/locations/special-hours-picker.tsx:238
 msgid "No special hours or holiday closures scheduled."
 msgstr "No special hours or holiday closures scheduled."
 
@@ -7154,11 +7293,15 @@ msgstr "No special hours or holiday closures scheduled."
 msgid "No submissions yet"
 msgstr "No submissions yet"
 
+#: app/components/chat/chat-compose-dialog.tsx:209
+msgid "No teammates available"
+msgstr "No teammates available"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:291
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:316
 msgid "No windows"
 msgstr "No windows"
 
@@ -7179,7 +7322,8 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/menu/modifier-form.tsx:282
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
-#: app/components/website/link-inspector.tsx:628
+#: app/components/website/link-inspector.tsx:615
+#: app/components/website/link-inspector.tsx:634
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3347
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3377
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3839
@@ -7211,7 +7355,7 @@ msgstr ""
 msgid "Not now"
 msgstr "Not now"
 
-#: app/components/menu/modifier-form.tsx:1303
+#: app/components/menu/modifier-form.tsx:1302
 msgid "Not shown yet"
 msgstr "Not shown yet"
 
@@ -7243,7 +7387,7 @@ msgstr ""
 msgid "Note title..."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:478
+#: app/components/menu/drop-wizard/drop-form.tsx:632
 msgid "Note to Customers"
 msgstr "Note to Customers"
 
@@ -7288,7 +7432,7 @@ msgstr "Notes, navigation, and your site — just ask."
 msgid "Nothing here yet!"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:889
+#: app/components/menu/drop-wizard/drop-drawers.tsx:908
 msgid "Notification Message"
 msgstr "Notification Message"
 
@@ -7308,7 +7452,7 @@ msgstr ""
 msgid "Notifications when you are mentioned in a comment"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1309
+#: app/components/menu/drop-wizard/drop-form.tsx:1217
 msgid "Notify subscribed guests before open or close."
 msgstr "Notify subscribed guests before open or close."
 
@@ -7349,8 +7493,8 @@ msgid "Older"
 msgstr "Older"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:84
-msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
-msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
+#~ msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
+#~ msgstr "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -7385,15 +7529,19 @@ msgstr ""
 msgid "One-time Password URI"
 msgstr ""
 
-#: app/components/locations/availability-picker.tsx:418
+#: app/components/chat/chat-view.tsx:609
+msgid "Online"
+msgstr "Online"
+
+#: app/components/locations/availability-picker.tsx:420
 msgid "Online Hours"
 msgstr "Online Hours"
 
-#: app/components/locations/availability-picker.tsx:472
+#: app/components/locations/availability-picker.tsx:474
 msgid "Online hours are synced with store hours"
 msgstr "Online hours are synced with store hours"
 
-#: app/components/locations/availability-picker.tsx:432
+#: app/components/locations/availability-picker.tsx:434
 msgid "Online hours match store hours"
 msgstr "Online hours match store hours"
 
@@ -7409,7 +7557,7 @@ msgstr "Online Ordering, POS & Kiosk"
 msgid "Only selected members can access this note"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:406
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:334
 msgid "Only selected roles and people"
 msgstr "Only selected roles and people"
 
@@ -7460,6 +7608,10 @@ msgstr ""
 #: app/components/settings/cards/organization/shop-card.tsx:205
 msgid "Open hosted dashboard"
 msgstr "Open hosted dashboard"
+
+#: app/components/chat/chat-message-markdown.tsx:26
+msgid "Open image attachment"
+msgstr "Open image attachment"
 
 #: app/components/website/link-inspector.tsx:591
 #: app/components/website/link-inspector.tsx:593
@@ -7516,7 +7668,7 @@ msgstr "Open reference"
 #~ msgid "Open Stripe dashboard"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:169
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:95
 msgid "Open team chat"
 msgstr "Open team chat"
 
@@ -7537,7 +7689,7 @@ msgstr ""
 msgid "Opened {routeTitle}"
 msgstr "Opened {routeTitle}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:299
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:324
 msgid "Opens:"
 msgstr "Opens:"
 
@@ -7546,7 +7698,7 @@ msgid "OpenTable"
 msgstr "OpenTable"
 
 #: app/components/locations/location-form.tsx:307
-#: app/components/locations/location-form.tsx:500
+#: app/components/locations/location-form.tsx:501
 msgid "Operating Hours"
 msgstr "Operating Hours"
 
@@ -7570,8 +7722,8 @@ msgstr "Option"
 msgid "Option actions"
 msgstr "Option actions"
 
-#: app/components/menu/modifier-form.tsx:1580
-#: app/components/menu/modifier-form.tsx:1935
+#: app/components/menu/modifier-form.tsx:1587
+#: app/components/menu/modifier-form.tsx:1942
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
@@ -7603,19 +7755,23 @@ msgstr "Optional"
 msgid "Optional • Up to {maxSelections}"
 msgstr "Optional • Up to {maxSelections}"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:845
+msgid "Optional caps per category or item"
+msgstr "Optional caps per category or item"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:716
-msgid "Optional caps per section or item."
-msgstr "Optional caps per section or item."
+#~ msgid "Optional caps per section or item."
+#~ msgstr "Optional caps per section or item."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Optional caption for display"
 msgstr "Optional caption for display"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:676
+#: app/components/menu/drop-wizard/drop-drawers.tsx:688
 msgid "Optional limits for this item on this drop."
 msgstr "Optional limits for this item on this drop."
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:483
+#: app/components/menu/drop-wizard/drop-drawers.tsx:495
 msgid "Optional limits for this section on this drop."
 msgstr "Optional limits for this section on this drop."
 
@@ -7637,7 +7793,7 @@ msgstr ""
 msgid "Or continue with email or username"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:341
+#: app/components/menu/drop-wizard/drop-drawers.tsx:345
 msgid "Order cutoff"
 msgstr "Order cutoff"
 
@@ -7645,37 +7801,41 @@ msgstr "Order cutoff"
 #~ msgid "Order lead time"
 #~ msgstr "Order lead time"
 
-#: app/components/locations/location-form.tsx:531
+#: app/components/locations/location-form.tsx:532
 msgid "Order Preparation Time"
 msgstr "Order Preparation Time"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1124
+#: app/components/menu/drop-wizard/drop-preview.tsx:75
+msgid "Ordering now"
+msgstr "Ordering now"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1176
 msgid "Ordering Window"
 msgstr "Ordering Window"
 
-#: app/components/locations/delivery-zones-manager.tsx:362
+#: app/components/locations/delivery-zones-manager.tsx:368
 msgid "Orders can be delivered inside this zone"
 msgstr "Orders can be delivered inside this zone"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:632
-#~ msgid "Orders close"
-#~ msgstr "Orders close"
+#: app/components/menu/drop-wizard/drop-form.tsx:1197
+msgid "Orders close"
+msgstr "Orders close"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1151
-msgid "Orders Close At"
-msgstr "Orders Close At"
+#~ msgid "Orders Close At"
+#~ msgstr "Orders Close At"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:1023
 #~ msgid "Orders close time must be configured in Step 1 first."
 #~ msgstr "Orders close time must be configured in Step 1 first."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:614
-#~ msgid "Orders open"
-#~ msgstr "Orders open"
+#: app/components/menu/drop-wizard/drop-form.tsx:1185
+msgid "Orders open"
+msgstr "Orders open"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1135
-msgid "Orders Open At"
-msgstr "Orders Open At"
+#~ msgid "Orders Open At"
+#~ msgstr "Orders Open At"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:787
 #~ msgid "Orders open time"
@@ -7685,7 +7845,7 @@ msgstr "Orders Open At"
 #~ msgid "Orders open time must be configured in Step 1 first."
 #~ msgstr "Orders open time must be configured in Step 1 first."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:935
+#: app/components/menu/drop-wizard/drop-form.tsx:1065
 msgid "orders per slot"
 msgstr "orders per slot"
 
@@ -7693,7 +7853,7 @@ msgstr "orders per slot"
 msgid "Orders placed on your public site."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:232
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:252
 msgid "Orders Schedule"
 msgstr "Orders Schedule"
 
@@ -7746,6 +7906,14 @@ msgstr ""
 msgid "Organize items into categories (e.g. Appetizers, Entrees, Drinks, Desserts)."
 msgstr "Organize items into categories (e.g. Appetizers, Entrees, Drinks, Desserts)."
 
+#: app/components/settings/cards/organization/integrations-card.tsx:90
+msgid "Other integrations"
+msgstr "Other integrations"
+
+#: app/components/chat/chat-compose-dialog.tsx:326
+msgid "Otherwise, they only see messages sent after they join."
+msgstr "Otherwise, they only see messages sent after they join."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
 msgstr "Outline"
@@ -7774,6 +7942,10 @@ msgstr "Page {pageNumber}"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:419
 msgid "Page actions"
 msgstr ""
+
+#: app/components/menu/drop-wizard/drop-form.tsx:609
+msgid "Page address"
+msgstr "Page address"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5864
 #~ msgid "Page settings"
@@ -7888,7 +8060,8 @@ msgstr ""
 msgid "Pending Invitations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:445
+#: app/components/chat/chat-compose-dialog.tsx:135
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:373
 msgid "People"
 msgstr "People"
 
@@ -7999,7 +8172,7 @@ msgstr ""
 msgid "Photos and videos"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:465
+#: app/components/locations/location-form.tsx:466
 msgid "Physical Address"
 msgstr "Physical Address"
 
@@ -8011,7 +8184,7 @@ msgstr "Pick a block to add to your email."
 msgid "Pick a block to insert into your page."
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:553
+#: app/components/chat/chat-view.tsx:665
 msgid "Pick a conversation"
 msgstr "Pick a conversation"
 
@@ -8019,7 +8192,7 @@ msgstr "Pick a conversation"
 msgid "Pick a field to add to your form."
 msgstr "Pick a field to add to your form."
 
-#: app/components/menu/modifier-form.tsx:1210
+#: app/components/menu/modifier-form.tsx:1209
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "Pick a group below to reveal it after a guest selects a triggering option."
 
@@ -8051,7 +8224,7 @@ msgstr "Pickup"
 #~ msgid "Pickup schedule"
 #~ msgstr "Pickup schedule"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:862
+#: app/components/menu/drop-wizard/drop-form.tsx:1004
 msgid "Pickup Schedule & Fulfillment"
 msgstr "Pickup Schedule & Fulfillment"
 
@@ -8063,11 +8236,11 @@ msgstr "Pickup Schedule & Fulfillment"
 #~ msgid "Pickup times occur"
 #~ msgstr "Pickup times occur"
 
-#: app/components/locations/location-form.tsx:756
+#: app/components/locations/location-form.tsx:761
 msgid "Pickup Tips"
 msgstr "Pickup Tips"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:229
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:249
 msgid "Pickup Window"
 msgstr "Pickup Window"
 
@@ -8080,7 +8253,7 @@ msgstr "Pickup Window"
 msgid "Pizza Topping"
 msgstr "Pizza Topping"
 
-#: app/components/menu/modifier-form.tsx:1041
+#: app/components/menu/modifier-form.tsx:1040
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
@@ -8173,7 +8346,7 @@ msgstr "Polygon Area: {pointCount} points"
 #~ msgid "Pooled section limit"
 #~ msgstr "Pooled section limit"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:496
+#: app/components/menu/drop-wizard/drop-drawers.tsx:508
 msgid "Pooled total"
 msgstr "Pooled total"
 
@@ -8197,7 +8370,8 @@ msgstr "Postal / ZIP Code"
 msgid "Posted {selectedReplyDate}"
 msgstr "Posted {selectedReplyDate}"
 
-#: app/components/website/link-inspector.tsx:624
+#: app/components/website/link-inspector.tsx:613
+#: app/components/website/link-inspector.tsx:630
 msgid "Prefetch"
 msgstr ""
 
@@ -8205,7 +8379,8 @@ msgstr ""
 msgid "Preload"
 msgstr ""
 
-#: app/components/website/link-inspector.tsx:626
+#: app/components/website/link-inspector.tsx:614
+#: app/components/website/link-inspector.tsx:632
 msgid "Prerender"
 msgstr ""
 
@@ -8218,8 +8393,8 @@ msgstr "Preselected"
 msgid "Preselected (default)"
 msgstr "Preselected (default)"
 
-#: app/components/menu/modifier-form.tsx:1671
-#: app/components/menu/modifier-form.tsx:2026
+#: app/components/menu/modifier-form.tsx:1678
+#: app/components/menu/modifier-form.tsx:2033
 msgid "Preselected (Included when guests first open this group)"
 msgstr "Preselected (Included when guests first open this group)"
 
@@ -8236,7 +8411,7 @@ msgstr "Presets"
 msgid "Preview"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1237
+#: app/components/menu/drop-wizard/drop-form.tsx:1383
 msgid "Preview Menu in Advance"
 msgstr "Preview Menu in Advance"
 
@@ -8251,8 +8426,8 @@ msgstr "Price"
 
 #: app/components/menu/item-variations.tsx:301
 #: app/components/menu/item-variations.tsx:368
-#: app/components/menu/modifier-form.tsx:1644
-#: app/components/menu/modifier-form.tsx:1999
+#: app/components/menu/modifier-form.tsx:1651
+#: app/components/menu/modifier-form.tsx:2006
 msgid "Price ($)"
 msgstr "Price ($)"
 
@@ -8291,7 +8466,7 @@ msgstr ""
 msgid "Primary"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:443
+#: app/components/locations/location-form.tsx:444
 msgid "Primary / Default Location"
 msgstr "Primary / Default Location"
 
@@ -8353,6 +8528,10 @@ msgstr ""
 msgid "Profile Settings"
 msgstr ""
 
+#: app/components/settings/cards/organization/integrations-card.tsx:22
+msgid "Project management"
+msgstr "Project management"
+
 #: app/components/menu/item-form.tsx:750
 msgid "Promote as Upsell"
 msgstr "Promote as Upsell"
@@ -8361,7 +8540,7 @@ msgstr "Promote as Upsell"
 msgid "Promotions & Highlights"
 msgstr "Promotions & Highlights"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1095
+#: app/components/menu/drop-wizard/drop-form.tsx:502
 msgid "Public"
 msgstr "Public"
 
@@ -8370,6 +8549,7 @@ msgid "Public Access"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
+#: app/components/menu/drop-wizard/drop-form.tsx:459
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
@@ -8454,11 +8634,11 @@ msgstr ""
 msgid "Quote"
 msgstr ""
 
-#: app/components/locations/delivery-zones-manager.tsx:389
+#: app/components/locations/delivery-zones-manager.tsx:395
 msgid "Radius Circle"
 msgstr "Radius Circle"
 
-#: app/components/locations/delivery-zones-manager.tsx:406
+#: app/components/locations/delivery-zones-manager.tsx:412
 msgid "Radius Distance ({radiusValue} {radiusUnit})"
 msgstr "Radius Distance ({radiusValue} {radiusUnit})"
 
@@ -8474,11 +8654,12 @@ msgstr "Rated"
 msgid "Rating"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:252
+#: app/components/chat/chat-message.tsx:302
+#: app/components/chat/chat-message.tsx:344
 msgid "React with {emoji}"
 msgstr "React with {emoji}"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:206
+#: app/components/settings/cards/organization/integrations-card.tsx:265
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:403
 msgid "Read documentation"
 msgstr ""
@@ -8520,8 +8701,8 @@ msgid "Recipients"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:540
-msgid "Recommended 16:9 banner ratio"
-msgstr "Recommended 16:9 banner ratio"
+#~ msgid "Recommended 16:9 banner ratio"
+#~ msgstr "Recommended 16:9 banner ratio"
 
 #: app/routes/_auth+/login.tsx:596
 msgid "Recommended for"
@@ -8534,6 +8715,10 @@ msgstr "Recommended for SEO"
 #: app/components/menu/category-form.tsx:437
 msgid "Recommended Upsells & Pairings"
 msgstr "Recommended Upsells & Pairings"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:694
+msgid "Recommended wide banner (21:9)"
+msgstr "Recommended wide banner (21:9)"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
 msgid "Redirect actions"
@@ -8632,7 +8817,7 @@ msgstr ""
 #~ msgid "Reminder title"
 #~ msgstr "Reminder title"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:523
+#: app/components/menu/drop-wizard/drop-form.tsx:676
 #: app/components/menu/item-variations.tsx:201
 #: app/components/menu/option-form.tsx:379
 #: app/components/note/share-note-button.tsx:240
@@ -8642,6 +8827,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2634
 msgid "Remove"
 msgstr ""
+
+#: app/components/chat/chat-compose-dialog.tsx:129
+msgid "Remove {label}"
+msgstr "Remove {label}"
 
 #: app/components/menu/item-variations.tsx:115
 msgid "Remove {optionName}? Its combinations will be removed when you save the item."
@@ -8696,11 +8885,11 @@ msgstr ""
 msgid "Remove member"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1262
+#: app/components/menu/modifier-form.tsx:1261
 msgid "Remove nested modifier group"
 msgstr "Remove nested modifier group"
 
-#: app/components/menu/modifier-form.tsx:362
+#: app/components/menu/modifier-form.tsx:365
 msgid "Remove option"
 msgstr "Remove option"
 
@@ -8709,11 +8898,11 @@ msgstr "Remove option"
 msgid "Remove photo"
 msgstr "Remove photo"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:997
+#: app/components/menu/drop-wizard/drop-form.tsx:1127
 msgid "Remove pickup window"
 msgstr "Remove pickup window"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1367
+#: app/components/menu/drop-wizard/drop-form.tsx:1273
 msgid "Remove reminder"
 msgstr "Remove reminder"
 
@@ -8741,7 +8930,7 @@ msgstr "Removing section"
 msgid "Rendering…"
 msgstr "Rendering…"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:512
+#: app/components/menu/drop-wizard/drop-form.tsx:665
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2608
 msgid "Replace"
@@ -8765,7 +8954,8 @@ msgstr "Replied"
 msgid "Reply"
 msgstr ""
 
-#: app/components/chat/chat-message.tsx:277
+#: app/components/chat/chat-message.tsx:320
+#: app/components/chat/chat-message.tsx:355
 msgid "Reply in thread"
 msgstr "Reply in thread"
 
@@ -8773,7 +8963,7 @@ msgstr "Reply in thread"
 msgid "Reply to review"
 msgstr "Reply to review"
 
-#: app/components/chat/chat-view.tsx:738
+#: app/components/chat/chat-view.tsx:893
 msgid "Reply…"
 msgstr "Reply…"
 
@@ -8785,11 +8975,15 @@ msgstr "Reply…"
 msgid "Reports"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:458
+msgid "Republish"
+msgstr "Republish"
+
 #: app/components/settings/cards/danger-card.tsx:110
 msgid "Request deletion"
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:87
+#: app/components/settings/cards/organization/integrations-card.tsx:146
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:126
 msgid "Request integration"
 msgstr ""
@@ -8823,7 +9017,7 @@ msgstr "Required • Pick {minSelections}"
 msgid "Required • Pick {minSelections}{maxSelectionsSuffix}"
 msgstr "Required • Pick {minSelections}{maxSelectionsSuffix}"
 
-#: app/components/menu/modifier-form.tsx:1061
+#: app/components/menu/modifier-form.tsx:1060
 msgid "Required selection"
 msgstr "Required selection"
 
@@ -8894,7 +9088,7 @@ msgstr "Restaurants are used to manage your locations, menus, and orders."
 msgid "Restrict when this is available to guests, such as lunch from 11:00 AM to 3:00 PM."
 msgstr "Restrict when this is available to guests, such as lunch from 11:00 AM to 3:00 PM."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:212
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:140
 msgid "Restricted"
 msgstr "Restricted"
 
@@ -8902,7 +9096,11 @@ msgstr "Restricted"
 msgid "Restricted (No Delivery)"
 msgstr "Restricted (No Delivery)"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:322
+#: app/components/chat/chat-view.tsx:616
+msgid "Restricted channel"
+msgstr "Restricted channel"
+
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:250
 msgid "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
 msgstr "Restricted channels are visible only to the roles and people you choose. Being an admin does not grant access on its own."
 
@@ -8911,14 +9109,14 @@ msgid "Result"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:93
-msgid "Retention period"
-msgstr "Retention period"
+#~ msgid "Retention period"
+#~ msgstr "Retention period"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
 msgstr ""
 
-#: app/components/menu/item-variations.tsx:565
+#: app/components/menu/item-variations.tsx:572
 msgid "Return time for {name}"
 msgstr "Return time for {name}"
 
@@ -9004,7 +9202,7 @@ msgstr "Role"
 msgid "Role name"
 msgstr "Role name"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:420
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:348
 msgid "Roles"
 msgstr "Roles"
 
@@ -9114,7 +9312,7 @@ msgstr ""
 msgid "S3 Storage Configuration"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:405
+#: app/components/locations/location-form.tsx:406
 msgid "Sales Tax Rate (%)"
 msgstr "Sales Tax Rate (%)"
 
@@ -9141,10 +9339,10 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
-#: app/components/chat/chat-message.tsx:196
-#: app/components/menu/drop-wizard/drop-drawers.tsx:387
-#: app/components/menu/drop-wizard/drop-drawers.tsx:581
-#: app/components/menu/drop-wizard/drop-drawers.tsx:768
+#: app/components/chat/chat-message.tsx:222
+#: app/components/menu/drop-wizard/drop-drawers.tsx:399
+#: app/components/menu/drop-wizard/drop-drawers.tsx:593
+#: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -9165,10 +9363,15 @@ msgstr ""
 msgid "Save as copy"
 msgstr "Save as copy"
 
+#: app/components/menu/drop-wizard/drop-form.tsx:482
+msgid "Save as draft"
+msgstr "Save as draft"
+
 #: app/components/website/branding-panel.tsx:378
 msgid "Save Branding"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:456
 #: app/components/roles/tenant-role-access-manager.tsx:558
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
@@ -9176,14 +9379,14 @@ msgstr ""
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:504
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:997
-#: app/components/menu/drop-wizard/drop-drawers.tsx:920
-#: app/components/menu/modifier-form.tsx:2174
+#: app/components/locations/location-form.tsx:1002
+#: app/components/menu/drop-wizard/drop-drawers.tsx:939
+#: app/components/menu/modifier-form.tsx:2181
 msgid "Save Changes"
 msgstr "Save Changes"
 
@@ -9193,14 +9396,14 @@ msgid "Save draft"
 msgstr ""
 
 #: app/components/menu/drop-wizard/drop-form.tsx:385
-msgid "Save Drop"
-msgstr "Save Drop"
+#~ msgid "Save Drop"
+#~ msgstr "Save Drop"
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:307
 msgid "Save languages"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:883
+#: app/components/menu/modifier-form.tsx:886
 msgid "Save Modifier Group"
 msgstr "Save Modifier Group"
 
@@ -9208,7 +9411,7 @@ msgstr "Save Modifier Group"
 msgid "Save Option"
 msgstr "Save Option"
 
-#: app/components/locations/special-hours-picker.tsx:226
+#: app/components/locations/special-hours-picker.tsx:228
 msgid "Save override"
 msgstr "Save override"
 
@@ -9236,7 +9439,7 @@ msgstr ""
 msgid "Save these codes now!"
 msgstr ""
 
-#: app/components/locations/delivery-zones-manager.tsx:561
+#: app/components/locations/delivery-zones-manager.tsx:567
 msgid "Save zone"
 msgstr "Save zone"
 
@@ -9285,7 +9488,7 @@ msgstr ""
 msgid "Schedule a call"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:837
+#: app/components/menu/drop-wizard/drop-drawers.tsx:850
 msgid "Schedule Customer Reminder"
 msgstr "Schedule Customer Reminder"
 
@@ -9294,7 +9497,7 @@ msgstr "Schedule Customer Reminder"
 #~ msgid "Schedule drop"
 #~ msgstr "Schedule drop"
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:175
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:195
 msgid "Schedule limited-time menu drops with inventory limits and pickup slots."
 msgstr "Schedule limited-time menu drops with inventory limits and pickup slots."
 
@@ -9302,7 +9505,7 @@ msgstr "Schedule limited-time menu drops with inventory limits and pickup slots.
 msgid "Scheduled"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1306
+#: app/components/menu/drop-wizard/drop-form.tsx:1214
 msgid "Scheduled Reminders"
 msgstr "Scheduled Reminders"
 
@@ -9318,7 +9521,7 @@ msgstr ""
 msgid "Search Address (Google Autocomplete)"
 msgstr "Search Address (Google Autocomplete)"
 
-#: app/components/locations/location-form.tsx:468
+#: app/components/locations/location-form.tsx:469
 msgid "Search and select location address with Google Autocomplete."
 msgstr "Search and select location address with Google Autocomplete."
 
@@ -9326,11 +9529,11 @@ msgstr "Search and select location address with Google Autocomplete."
 msgid "Search automations..."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1846
+#: app/components/menu/modifier-form.tsx:1853
 msgid "Search available options..."
 msgstr "Search available options..."
 
-#: app/components/chat/chat-compose-dialog.tsx:99
+#: app/components/chat/chat-compose-dialog.tsx:154
 msgid "Search by name"
 msgstr "Search by name"
 
@@ -9361,8 +9564,8 @@ msgstr "Search media library"
 msgid "Search menu items..."
 msgstr "Search menu items..."
 
-#: app/components/chat/chat-view.tsx:361
-#: app/components/chat/chat-view.tsx:362
+#: app/components/chat/chat-view.tsx:426
+#: app/components/chat/chat-view.tsx:427
 msgid "Search messages"
 msgstr "Search messages"
 
@@ -9387,14 +9590,15 @@ msgstr ""
 msgid "Search pages..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:450
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:451
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:378
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:379
 msgid "Search people"
 msgstr "Search people"
 
 #: app/components/chat/chat-compose-dialog.tsx:141
-msgid "Search people to add"
-msgstr "Search people to add"
+#: app/components/chat/chat-compose-dialog.tsx:137
+#~ msgid "Search people to add"
+#~ msgstr "Search people to add"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2461
 msgid "Search preview"
@@ -9404,7 +9608,7 @@ msgstr ""
 msgid "Search redirects..."
 msgstr "Search redirects..."
 
-#: app/components/chat/chat-view.tsx:385
+#: app/components/chat/chat-view.tsx:450
 msgid "Search results"
 msgstr "Search results"
 
@@ -9416,6 +9620,7 @@ msgstr "Search submissions"
 msgid "Search submissions…"
 msgstr "Search submissions…"
 
+#: app/components/chat/chat-compose-dialog.tsx:155
 #: app/components/chat/chat-group-settings-dialog.tsx:112
 msgid "Search team members"
 msgstr "Search team members"
@@ -9441,7 +9646,7 @@ msgstr ""
 msgid "Secret Access Key"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:770
+#: app/components/menu/drop-wizard/drop-form.tsx:908
 msgid "Section cap"
 msgstr "Section cap"
 
@@ -9512,7 +9717,7 @@ msgstr "Select a category to display this item."
 msgid "Select a form"
 msgstr "Select a form"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:256
+#: app/components/menu/drop-wizard/drop-drawers.tsx:260
 msgid "Select a location"
 msgstr "Select a location"
 
@@ -9524,7 +9729,7 @@ msgstr "Select a menu to display this category."
 msgid "Select a modifier group for this item."
 msgstr "Select a modifier group for this item."
 
-#: app/components/menu/item-variations.tsx:552
+#: app/components/menu/item-variations.tsx:559
 msgid "Select a return time"
 msgstr "Select a return time"
 
@@ -9560,7 +9765,7 @@ msgstr ""
 msgid "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 msgstr "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:849
+#: app/components/menu/drop-wizard/drop-form.tsx:991
 msgid "Select an existing menu above to attach to this drop."
 msgstr "Select an existing menu above to attach to this drop."
 
@@ -9572,11 +9777,11 @@ msgstr "Select an image from your library or upload a new one."
 msgid "Select an item to add to this category."
 msgstr "Select an item to add to this category."
 
-#: app/components/menu/modifier-form.tsx:1424
+#: app/components/menu/modifier-form.tsx:1434
 msgid "Select an item to offer this modifier group."
 msgstr "Select an item to offer this modifier group."
 
-#: app/components/menu/modifier-form.tsx:1569
+#: app/components/menu/modifier-form.tsx:1576
 msgid "Select an option to add to this modifier group."
 msgstr "Select an option to add to this modifier group."
 
@@ -9620,7 +9825,7 @@ msgstr "Select Photos"
 msgid "Select status"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:302
+#: app/components/menu/modifier-form.tsx:305
 msgid "Select sub-modifier group..."
 msgstr "Select sub-modifier group..."
 
@@ -9636,7 +9841,7 @@ msgstr ""
 msgid "Select type"
 msgstr ""
 
-#: app/components/menu/menu-availability-card.tsx:313
+#: app/components/menu/menu-availability-card.tsx:320
 msgid "Select when it becomes available"
 msgstr "Select when it becomes available"
 
@@ -9661,11 +9866,11 @@ msgstr "Selected Address"
 msgid "Selected Members"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:933
+#: app/components/menu/modifier-form.tsx:936
 msgid "Selection Behavior & Limits"
 msgstr "Selection Behavior & Limits"
 
-#: app/components/menu/modifier-form.tsx:944
+#: app/components/menu/modifier-form.tsx:947
 msgid "Selection Mode"
 msgstr "Selection Mode"
 
@@ -9685,7 +9890,7 @@ msgstr "Send"
 msgid "Send a one-time email or SMS to your audience."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:841
+#: app/components/menu/drop-wizard/drop-drawers.tsx:854
 msgid "Send automated notifications to subscribed guests before your drop opens or closes."
 msgstr "Send automated notifications to subscribed guests before your drop opens or closes."
 
@@ -9703,8 +9908,7 @@ msgid "Send invitations to join the organization workspace."
 msgstr "Send invitations to join the organization workspace."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
-#: app/components/chat/chat-composer.tsx:332
-#: app/components/chat/chat-message.tsx:398
+#: app/components/chat/chat-composer.tsx:356
 msgid "Send message"
 msgstr ""
 
@@ -9720,7 +9924,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:596
+#: app/components/chat/chat-view.tsx:713
 msgid "Send the first message — your team will see it here."
 msgstr "Send the first message — your team will see it here."
 
@@ -9800,7 +10004,7 @@ msgstr ""
 #~ msgid "Set how many of this item are available for this drop."
 #~ msgstr "Set how many of this item are available for this drop."
 
-#: app/components/locations/availability-picker.tsx:440
+#: app/components/locations/availability-picker.tsx:442
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "Set the physical operating hours when customers can visit this restaurant location."
 
@@ -9816,7 +10020,7 @@ msgstr ""
 msgid "Set up authenticator app"
 msgstr ""
 
-#: app/components/locations/availability-picker.tsx:462
+#: app/components/locations/availability-picker.tsx:464
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "Set when online ordering, pickup, and delivery are accepted for this location."
 
@@ -9846,7 +10050,7 @@ msgstr ""
 msgid "Setup key"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:641
+#: app/components/chat/chat-view.tsx:787
 msgid "Several people are typing…"
 msgstr "Several people are typing…"
 
@@ -9867,7 +10071,7 @@ msgstr ""
 msgid "Share on WhatsApp"
 msgstr "Share on WhatsApp"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:486
+#: app/components/menu/drop-wizard/drop-form.tsx:639
 msgid "Share pickup instructions, special reheating tips, or what makes this drop special..."
 msgstr "Share pickup instructions, special reheating tips, or what makes this drop special..."
 
@@ -9891,7 +10095,7 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:499
+#: app/components/menu/drop-wizard/drop-drawers.tsx:511
 msgid "Shared cap across all items in this section."
 msgstr "Shared cap across all items in this section."
 
@@ -9916,14 +10120,14 @@ msgid "Show calorie counts and allergen warnings on this menu."
 msgstr "Show calorie counts and allergen warnings on this menu."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1214
-msgid "Show Countdown Timer"
-msgstr "Show Countdown Timer"
+#~ msgid "Show Countdown Timer"
+#~ msgstr "Show Countdown Timer"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4122
 msgid "Show form title"
 msgstr "Show form title"
 
-#: app/components/chat/chat-message.tsx:92
+#: app/components/chat/chat-message.tsx:110
 msgid "Show less"
 msgstr "Show less"
 
@@ -9931,15 +10135,19 @@ msgstr "Show less"
 #~ msgid "Show me features"
 #~ msgstr ""
 
-#: app/components/chat/chat-message.tsx:92
+#: app/components/chat/chat-message.tsx:110
 msgid "Show more"
 msgstr "Show more"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1358
+msgid "Show opening date"
+msgstr "Show opening date"
 
 #: app/components/settings/cards/organization/shop-card.tsx:309
 msgid "Show product on your public site"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1260
+#: app/components/menu/drop-wizard/drop-form.tsx:1406
 msgid "Show Remaining Inventory"
 msgstr "Show Remaining Inventory"
 
@@ -10033,7 +10241,7 @@ msgstr "Single"
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/components/menu/modifier-form.tsx:969
+#: app/components/menu/modifier-form.tsx:971
 msgid "Single Choice (Radio)"
 msgstr "Single Choice (Radio)"
 
@@ -10063,7 +10271,7 @@ msgstr "Size:"
 msgid "Skip for now"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:270
+#: app/components/menu/drop-wizard/drop-drawers.tsx:274
 msgid "Slot interval"
 msgstr "Slot interval"
 
@@ -10121,11 +10329,11 @@ msgstr ""
 msgid "Some fields are already translated"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:196
+#: app/components/chat/chat-view.tsx:227
 msgid "Someone"
 msgstr "Someone"
 
-#: app/components/chat/chat-view.tsx:208
+#: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
@@ -10170,7 +10378,6 @@ msgstr "Standard system role."
 msgid "Star"
 msgstr "Star"
 
-#: app/components/chat/chat-compose-dialog.tsx:196
 #: app/components/menu/drop-wizard/drop-drawers.tsx:217
 msgid "Start"
 msgstr "Start"
@@ -10178,6 +10385,10 @@ msgstr "Start"
 #: app/components/chat/chat-view.tsx:372
 #~ msgid "Start a conversation with someone on your team."
 #~ msgstr "Start a conversation with someone on your team."
+
+#: app/components/chat/chat-compose-dialog.tsx:424
+msgid "Start conversation"
+msgstr "Start conversation"
 
 #: app/components/roles/tenant-role-access-manager.tsx:376
 msgid "Start from a template"
@@ -10227,6 +10438,10 @@ msgstr ""
 msgid "Starting point"
 msgstr "Starting point"
 
+#: app/components/chat/chat-compose-dialog.tsx:422
+msgid "Starting…"
+msgstr "Starting…"
+
 #: app/components/locations/address-autocomplete.tsx:244
 msgid "State / Province"
 msgstr "State / Province"
@@ -10237,7 +10452,7 @@ msgstr "State / Province"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:286
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:246
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:306
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:294
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:338
@@ -10284,13 +10499,17 @@ msgstr "Stop impersonation"
 msgid "Storage migration"
 msgstr ""
 
-#: app/components/locations/availability-picker.tsx:415
+#: app/components/locations/availability-picker.tsx:417
 msgid "Store Hours"
 msgstr "Store Hours"
 
-#: app/components/locations/location-form.tsx:656
+#: app/components/locations/location-form.tsx:661
 msgid "Store Pickup"
 msgstr "Store Pickup"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1300
+msgid "Storefront & Checkout"
+msgstr "Storefront & Checkout"
 
 #: app/components/locations/address-autocomplete.tsx:201
 msgid "Street Address"
@@ -10313,8 +10532,8 @@ msgstr ""
 msgid "Style"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1742
-#: app/components/menu/modifier-form.tsx:2097
+#: app/components/menu/modifier-form.tsx:1749
+#: app/components/menu/modifier-form.tsx:2104
 msgid "Sub / Nested Modifier Groups"
 msgstr "Sub / Nested Modifier Groups"
 
@@ -10348,7 +10567,7 @@ msgstr ""
 msgid "Subject"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:876
+#: app/components/menu/drop-wizard/drop-drawers.tsx:895
 msgid "Subject / Notification Title"
 msgstr "Subject / Notification Title"
 
@@ -10434,7 +10653,7 @@ msgstr ""
 msgid "supported"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:852
+#: app/components/locations/location-form.tsx:857
 msgid "Supported Delivery Providers"
 msgstr "Supported Delivery Providers"
 
@@ -10474,7 +10693,7 @@ msgstr "Synced {lastSync}"
 msgid "System theme"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:697
+#: app/components/locations/location-form.tsx:702
 msgid "Table ordering and in-house steps."
 msgstr "Table ordering and in-house steps."
 
@@ -10521,7 +10740,12 @@ msgstr ""
 msgid "Team & Members"
 msgstr "Team & Members"
 
+#: app/components/chat/chat-view.tsx:618
+msgid "Team channel"
+msgstr "Team channel"
+
 #: app/components/chat/chat-sidebar-link.tsx:20
+#: app/components/chat/chat-view.tsx:384
 #: app/components/roles/tenant-role-access-manager.tsx:202
 msgid "Team chat"
 msgstr "Team chat"
@@ -10538,7 +10762,7 @@ msgstr "Team chat isn't running in this environment"
 msgid "Team manager"
 msgstr "Team manager"
 
-#: app/components/chat/chat-compose-dialog.tsx:92
+#: app/components/chat/chat-compose-dialog.tsx:135
 msgid "Team member"
 msgstr "Team member"
 
@@ -10605,7 +10829,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
-#: app/components/website/link-inspector.tsx:638
+#: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr ""
 
@@ -10689,6 +10913,10 @@ msgstr ""
 msgid "The path on your old site that visitors or search engines request."
 msgstr "The path on your old site that visitors or search engines request."
 
+#: app/components/menu/drop-wizard/drop-form.tsx:588
+msgid "The title, image, and note customers will see."
+msgstr "The title, image, and note customers will see."
+
 #: app/components/nav-user.tsx:220
 msgid "Theme"
 msgstr ""
@@ -10761,15 +10989,15 @@ msgstr ""
 msgid "This item has reached the 100 combination limit."
 msgstr "This item has reached the 100 combination limit."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:722
+#: app/components/menu/drop-wizard/drop-form.tsx:856
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."
 msgstr "This menu has no categories assigned yet. Go to Menus to add categories and items."
 
-#: app/components/chat/chat-message.tsx:148
+#: app/components/chat/chat-message.tsx:171
 msgid "This message was deleted."
 msgstr "This message was deleted."
 
-#: app/components/menu/modifier-form.tsx:1477
+#: app/components/menu/modifier-form.tsx:1484
 msgid "This modifier group is triggered when customers select these modifier items:"
 msgstr "This modifier group is triggered when customers select these modifier items:"
 
@@ -10781,7 +11009,7 @@ msgstr "this option"
 msgid "This platform is import-only. Menu changes stay here."
 msgstr "This platform is import-only. Menu changes stay here."
 
-#: app/components/chat/chat-view.tsx:816
+#: app/components/chat/chat-view.tsx:1013
 msgid "This removes the message for everyone in the channel. This can't be undone."
 msgstr "This removes the message for everyone in the channel. This can't be undone."
 
@@ -10813,7 +11041,7 @@ msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</
 msgid "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
 msgstr "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:429
 msgid "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
 msgstr "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
 
@@ -10841,8 +11069,8 @@ msgstr ""
 msgid "Thought for {duration} seconds"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:659
-#: app/components/chat/chat-view.tsx:664
+#: app/components/chat/chat-view.tsx:805
+#: app/components/chat/chat-view.tsx:811
 msgid "Thread"
 msgstr "Thread"
 
@@ -10850,7 +11078,7 @@ msgstr "Thread"
 msgid "Three"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:583
+#: app/components/locations/location-form.tsx:584
 msgid "Threshold Unit"
 msgstr "Threshold Unit"
 
@@ -10862,7 +11090,7 @@ msgstr ""
 msgid "TikTok Pixel ID"
 msgstr "TikTok Pixel ID"
 
-#: app/components/menu/menu-availability-card.tsx:350
+#: app/components/menu/menu-availability-card.tsx:357
 msgid "Time"
 msgstr "Time"
 
@@ -10878,11 +11106,11 @@ msgstr ""
 msgid "Timezone"
 msgstr "Timezone"
 
-#: app/components/locations/location-form.tsx:737
+#: app/components/locations/location-form.tsx:742
 msgid "Tip prompt options and advance order scheduling rules."
 msgstr "Tip prompt options and advance order scheduling rules."
 
-#: app/components/locations/location-form.tsx:734
+#: app/components/locations/location-form.tsx:739
 msgid "Tips & Order Scheduling"
 msgstr "Tips & Order Scheduling"
 
@@ -10900,6 +11128,10 @@ msgstr ""
 msgid "To: {recipient}"
 msgstr "To: {recipient}"
 
+#: app/components/chat/chat-view.tsx:932
+msgid "Today"
+msgstr "Today"
+
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:407
 msgid "Toggle announcement visibility"
 msgstr ""
@@ -10908,7 +11140,7 @@ msgstr ""
 msgid "Toggle notifications"
 msgstr ""
 
-#: app/components/locations/availability-picker.tsx:475
+#: app/components/locations/availability-picker.tsx:477
 msgid "Toggle off \"Online hours match store hours\" above to set custom online ordering times."
 msgstr "Toggle off \"Online hours match store hours\" above to set custom online ordering times."
 
@@ -10948,7 +11180,7 @@ msgstr ""
 #~ msgid "Total Section Inventory"
 #~ msgstr "Total Section Inventory"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:689
+#: app/components/menu/drop-wizard/drop-drawers.tsx:701
 msgid "Total units"
 msgstr "Total units"
 
@@ -10987,11 +11219,11 @@ msgid "Trial period active"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:22
-#: app/components/menu/modifier-form.tsx:1526
+#: app/components/menu/modifier-form.tsx:1533
 msgid "Trigger"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1193
+#: app/components/menu/modifier-form.tsx:1192
 msgid "Trigger a child modifier group when a guest selects one of these options."
 msgstr "Trigger a child modifier group when a guest selects one of these options."
 
@@ -11019,15 +11251,15 @@ msgstr ""
 #~ msgid "Trigger timing"
 #~ msgstr "Trigger timing"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:851
+#: app/components/menu/drop-wizard/drop-drawers.tsx:865
 msgid "Trigger Timing"
 msgstr "Trigger Timing"
 
-#: app/components/locations/location-form.tsx:616
+#: app/components/locations/location-form.tsx:621
 msgid "Trigger when order exceeds ({thresholdUnit})"
 msgstr "Trigger when order exceeds ({thresholdUnit})"
 
-#: app/components/menu/modifier-form.tsx:1292
+#: app/components/menu/modifier-form.tsx:1291
 msgid "Triggered by"
 msgstr "Triggered by"
 
@@ -11055,6 +11287,10 @@ msgstr ""
 msgid "TripAdvisor"
 msgstr "TripAdvisor"
 
+#: app/components/chat/chat-compose-dialog.tsx:218
+msgid "Try a different name or clear your search."
+msgstr "Try a different name or clear your search."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
@@ -11069,7 +11305,7 @@ msgstr "Try a different search term."
 msgid "Try adjusting your filters or clear them to see all categories."
 msgstr "Try adjusting your filters or clear them to see all categories."
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:212
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:232
 msgid "Try adjusting your filters or clear them to see all drops."
 msgstr "Try adjusting your filters or clear them to see all drops."
 
@@ -11099,7 +11335,7 @@ msgid "Try adjusting your search or filter."
 msgstr ""
 
 #: app/components/ai/global-ai-panel.tsx:86
-#: app/components/chat/chat-view.tsx:566
+#: app/components/chat/chat-view.tsx:680
 #: app/components/mailbox/reviews-tab.tsx:414
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:330
 msgid "Try again"
@@ -11142,7 +11378,7 @@ msgstr ""
 msgid "Type the restaurant name \"{orgName}\" to confirm."
 msgstr "Type the restaurant name \"{orgName}\" to confirm."
 
-#: app/components/locations/location-form.tsx:885
+#: app/components/locations/location-form.tsx:890
 msgid "Uber Eats"
 msgstr "Uber Eats"
 
@@ -11190,7 +11426,7 @@ msgid "Unavailable until {formattedUntil}"
 msgstr "Unavailable until {formattedUntil}"
 
 #. placeholder {0}: formatUnavailableUntil(internalDate, timezone)
-#: app/components/menu/menu-availability-card.tsx:371
+#: app/components/menu/menu-availability-card.tsx:378
 msgid "Unavailable until <0>{0}</0>"
 msgstr "Unavailable until <0>{0}</0>"
 
@@ -11215,8 +11451,8 @@ msgstr ""
 msgid "United States"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:511
-#: app/components/menu/drop-wizard/drop-drawers.tsx:704
+#: app/components/menu/drop-wizard/drop-drawers.tsx:523
+#: app/components/menu/drop-wizard/drop-drawers.tsx:716
 msgid "Units available"
 msgstr "Units available"
 
@@ -11229,7 +11465,7 @@ msgstr ""
 msgid "Unknown intent"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:57
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:46
 msgid "Unknown role"
 msgstr "Unknown role"
 
@@ -11237,7 +11473,7 @@ msgstr "Unknown role"
 #~ msgid "Unlimited"
 #~ msgstr "Unlimited"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1109
+#: app/components/menu/drop-wizard/drop-form.tsx:505
 msgid "Unlisted"
 msgstr "Unlisted"
 
@@ -11245,6 +11481,7 @@ msgstr "Unlisted"
 msgid "Unnamed recipient"
 msgstr ""
 
+#: app/components/menu/drop-wizard/drop-form.tsx:480
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6020
@@ -11273,7 +11510,7 @@ msgstr "Unsaved changes"
 msgid "Unstar"
 msgstr ""
 
-#: app/components/menu/item-variations.tsx:590
+#: app/components/menu/item-variations.tsx:597
 msgid "Until {returnTime}"
 msgstr "Until {returnTime}"
 
@@ -11308,7 +11545,7 @@ msgstr "Update date, hours, and capacity."
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "Update location details, hours, and fulfillment preferences."
 
-#: app/components/menu/modifier-form.tsx:1928
+#: app/components/menu/modifier-form.tsx:1935
 msgid "Update option details and pricing."
 msgstr "Update option details and pricing."
 
@@ -11375,7 +11612,7 @@ msgstr ""
 msgid "Upload a site icon"
 msgstr ""
 
-#: app/components/chat/chat-composer.tsx:124
+#: app/components/chat/chat-composer.tsx:126
 msgid "Upload already in progress."
 msgstr "Upload already in progress."
 
@@ -11419,7 +11656,7 @@ msgstr ""
 msgid "Uploaded:"
 msgstr "Uploaded:"
 
-#: app/components/chat/chat-composer.tsx:310
+#: app/components/chat/chat-composer.tsx:335
 #: app/components/website/link-inspector.tsx:542
 #: app/routes/_app+/$orgSlug_+/media.tsx:843
 msgid "Uploading…"
@@ -11440,7 +11677,6 @@ msgid "URL Redirects"
 msgstr "URL Redirects"
 
 #: app/components/locations/location-form.tsx:352
-#: app/components/menu/drop-wizard/drop-form.tsx:457
 msgid "URL Slug"
 msgstr "URL Slug"
 
@@ -11468,6 +11704,10 @@ msgstr "Use a different option name."
 #: app/components/menu/item-variations.tsx:254
 msgid "Use a different value."
 msgstr "Use a different value."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:709
+msgid "Use an existing menu, then set optional inventory limits."
+msgstr "Use an existing menu, then set optional inventory limits."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2560
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
@@ -11555,13 +11795,13 @@ msgid "Variations"
 msgstr "Variations"
 
 #: app/components/menu/item-form.tsx:606
-#: app/components/menu/modifier-form.tsx:1715
-#: app/components/menu/modifier-form.tsx:2070
+#: app/components/menu/modifier-form.tsx:1722
+#: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
 msgid "Vegetarian"
 msgstr "Vegetarian"
 
-#: app/components/locations/location-form.tsx:715
+#: app/components/locations/location-form.tsx:720
 msgid "Vehicle pickup with car details."
 msgstr "Vehicle pickup with car details."
 
@@ -11633,6 +11873,10 @@ msgstr "View automations"
 msgid "View broadcasts"
 msgstr "View broadcasts"
 
+#: app/components/menu/drop-wizard/drop-preview.tsx:87
+msgid "View drop"
+msgstr "View drop"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6009
 msgid "View live site"
 msgstr ""
@@ -11657,7 +11901,7 @@ msgstr "View own notes"
 msgid "View run history"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:351
+#: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:381
 msgid "View storefront"
 msgstr "View storefront"
 
@@ -11685,7 +11929,7 @@ msgstr "View website workspace"
 msgid "Viewer"
 msgstr "Viewer"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1075
+#: app/components/menu/drop-wizard/drop-form.tsx:498
 msgid "Visibility"
 msgstr "Visibility"
 
@@ -11806,6 +12050,10 @@ msgid "Welcome back"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:99
+#~ msgid "Welcome to Epic Startup, {{organizationName}}"
+#~ msgstr ""
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:99
 msgid "Welcome to Menuza, {{organizationName}}"
 msgstr ""
 
@@ -11853,8 +12101,8 @@ msgstr ""
 msgid "What's missing?"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1746
-#: app/components/menu/modifier-form.tsx:2101
+#: app/components/menu/modifier-form.tsx:1753
+#: app/components/menu/modifier-form.tsx:2108
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 
@@ -11874,13 +12122,18 @@ msgstr "When off, people only see messages from after they joined."
 #~ msgid "When orders open and close"
 #~ msgstr "When orders open and close"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1127
+#: app/components/menu/drop-wizard/drop-form.tsx:1179
 msgid "When orders open and close for customers."
 msgstr "When orders open and close for customers."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "When prompted, authorize the connection in your browser"
 msgstr ""
+
+#: app/components/menu/drop-wizard/drop-form.tsx:509
+#: app/components/menu/drop-wizard/drop-form.tsx:527
+msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
+msgstr "When published, Public drops appear on your site. Unlisted drops are only available by link."
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
 #~ msgid "When someone does <0>{0}</0>"
@@ -11890,7 +12143,7 @@ msgstr ""
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:524
+#: app/components/menu/drop-wizard/drop-drawers.tsx:536
 msgid "When this total is reached, every item in the section sells out."
 msgstr "When this total is reached, every item in the section sells out."
 
@@ -11902,7 +12155,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:382
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:310
 msgid "Who can access this channel?"
 msgstr "Who can access this channel?"
 
@@ -11915,12 +12168,12 @@ msgstr "Whole"
 msgid "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 msgstr "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 
-#: app/components/menu/modifier-form.tsx:332
+#: app/components/menu/modifier-form.tsx:335
 msgid "Whole / Left or right"
 msgstr "Whole / Left or right"
 
-#: app/components/menu/modifier-form.tsx:1605
-#: app/components/menu/modifier-form.tsx:1960
+#: app/components/menu/modifier-form.tsx:1612
+#: app/components/menu/modifier-form.tsx:1967
 msgid "Whole pizza ($)"
 msgstr "Whole pizza ($)"
 
@@ -11928,7 +12181,7 @@ msgstr "Whole pizza ($)"
 msgid "Whole pizza price ($)"
 msgstr "Whole pizza price ($)"
 
-#: app/components/menu/modifier-form.tsx:1044
+#: app/components/menu/modifier-form.tsx:1043
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "Whole pizza, left half, or right half pricing."
 
@@ -11962,7 +12215,7 @@ msgstr ""
 msgid "Working on it"
 msgstr "Working on it"
 
-#: app/components/chat/chat-composer.tsx:85
+#: app/components/chat/chat-composer.tsx:83
 msgid "Write a message…"
 msgstr "Write a message…"
 
@@ -12015,6 +12268,10 @@ msgstr "Yelp"
 msgid "Yes"
 msgstr ""
 
+#: app/components/chat/chat-view.tsx:934
+msgid "Yesterday"
+msgstr "Yesterday"
+
 #: app/components/organization-members.tsx:201
 msgid "You"
 msgstr ""
@@ -12051,7 +12308,7 @@ msgstr ""
 msgid "You do not have permission to view this note"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:235
+#: app/components/chat/chat-view.tsx:274
 msgid "You don't have access to any channels yet. Ask an admin to add you to one."
 msgstr "You don't have access to any channels yet. Ask an admin to add you to one."
 
@@ -12078,7 +12335,7 @@ msgstr "You haven't joined any restaurants yet."
 msgid "You must agree to the terms of service and privacy policy"
 msgstr ""
 
-#: app/components/chat/chat-view.tsx:781
+#: app/components/chat/chat-view.tsx:978
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
 
@@ -12194,7 +12451,7 @@ msgstr ""
 msgid "Your setup progress"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:187
+#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
 msgid "Your team will see channels here once you create one. Members open chat from the sidebar next to the logo."
 msgstr "Your team will see channels here once you create one. Members open chat from the sidebar next to the logo."
 
@@ -12206,112 +12463,14 @@ msgstr "Zero permissions"
 msgid "Zip Code Zone"
 msgstr "Zip Code Zone"
 
-#: app/components/locations/delivery-zones-manager.tsx:392
+#: app/components/locations/delivery-zones-manager.tsx:398
 msgid "Zip Codes"
 msgstr "Zip Codes"
 
-#: app/components/locations/delivery-zones-manager.tsx:466
+#: app/components/locations/delivery-zones-manager.tsx:472
 msgid "Zip Codes (comma or space separated)"
 msgstr "Zip Codes (comma or space separated)"
 
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "Zone Name"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:520
-msgid "About drop visibility"
-msgstr "About drop visibility"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:544
-msgid "Check the drop details and try saving again."
-msgstr "Check the drop details and try saving again."
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1311
-msgid "Checkout hold"
-msgstr "Checkout hold"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1007
-msgid "Choose when and where customers can collect their orders."
-msgstr "Choose when and where customers can collect their orders."
-
-#: app/components/menu/drop-wizard/drop-preview.tsx:71
-msgid "Coming soon"
-msgstr "Coming soon"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1303
-msgid "Control checkout timing and what customers see."
-msgstr "Control checkout timing and what customers see."
-
-#: app/components/menu/drop-wizard/drop-form.tsx:649
-msgid "Cover image"
-msgstr "Cover image"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:624
-msgid "Created from the name. You can change it before saving."
-msgstr "Created from the name. You can change it before saving."
-
-#: app/components/menu/drop-wizard/drop-preview.tsx:56
-msgid "Customer preview"
-msgstr "Customer preview"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1361
-msgid "Display the opening date below the countdown"
-msgstr "Display the opening date below the countdown"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:596
-msgid "Drop name (customer-facing)"
-msgstr "Drop name (customer-facing)"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:845
-msgid "Optional caps per category or item"
-msgstr "Optional caps per category or item"
-
-#: app/components/menu/drop-wizard/drop-preview.tsx:75
-msgid "Ordering now"
-msgstr "Ordering now"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:609
-msgid "Page address"
-msgstr "Page address"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:694
-msgid "Recommended wide banner (21:9)"
-msgstr "Recommended wide banner (21:9)"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:458
-msgid "Republish"
-msgstr "Republish"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:482
-msgid "Save as draft"
-msgstr "Save as draft"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1358
-msgid "Show opening date"
-msgstr "Show opening date"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1300
-msgid "Storefront & Checkout"
-msgstr "Storefront & Checkout"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:588
-msgid "The title, image, and note customers will see."
-msgstr "The title, image, and note customers will see."
-
-#: app/components/menu/drop-wizard/drop-form.tsx:709
-msgid "Use an existing menu, then set optional inventory limits."
-msgstr "Use an existing menu, then set optional inventory limits."
-
-#: app/components/menu/drop-wizard/drop-preview.tsx:87
-msgid "View drop"
-msgstr "View drop"
-
-#: app/components/menu/drop-wizard/drop-form.tsx:509
-#: app/components/menu/drop-wizard/drop-form.tsx:527
-msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
-msgstr "When published, Public drops appear on your site. Unlisted drops are only available by link."
-
-#: app/components/menu/drop-wizard/drop-form.tsx:1328
-#: app/components/menu/drop-wizard/drop-form.tsx:1345
-msgid "{mins} mins"
-msgstr "{mins} mins"

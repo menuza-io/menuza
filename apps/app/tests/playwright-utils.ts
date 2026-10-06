@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker'
 import { test as base } from '@playwright/test'
 import {
 	authSessionStorage,
@@ -130,6 +131,14 @@ export const test = base.extend<{
 	prepareGitHubUser(): Promise<GitHubUser>
 	navigate: Navigate
 }>({
+	extraHTTPHeaders: async ({ extraHTTPHeaders }, use) => {
+		// Model a separate client per test, including retries and repeated runs.
+		// Keep production IP rate limits enabled without sharing their budgets.
+		await use({
+			...extraHTTPHeaders,
+			'cf-connecting-ip': faker.internet.ipv4(),
+		})
+	},
 	page: async ({ page }, use) => {
 		// Set cookie consent for all tests to prevent the banner from blocking interactions
 		await setCookieConsent(page)

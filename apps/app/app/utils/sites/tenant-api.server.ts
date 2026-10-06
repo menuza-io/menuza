@@ -61,6 +61,8 @@ async function callTenantCommand(options: {
 				customDomain: options.customDomain ?? null,
 				dataRegion: expectedRegion,
 			}),
+			redirect: 'error',
+			signal: AbortSignal.timeout(15_000),
 		})
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error)

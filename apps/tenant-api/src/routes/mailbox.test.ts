@@ -139,6 +139,22 @@ describe('regional mailbox', () => {
 			).status,
 		).toBe(401)
 	})
+	it('distinguishes missing organization metadata from a region mismatch', async () => {
+		vi.mocked(findActiveOrganizationById).mockResolvedValueOnce(null)
+		const missing = await call('/forms')
+		expect(missing.status).toBe(404)
+		expect(await missing.json()).toEqual({ error: 'Organization not found' })
+
+		vi.mocked(findActiveOrganizationById).mockResolvedValueOnce({
+			id: orgId,
+			dataRegion: 'ksa',
+		} as Awaited<ReturnType<typeof findActiveOrganizationById>>)
+		const mismatch = await call('/forms')
+		expect(mismatch.status).toBe(404)
+		expect(await mismatch.json()).toEqual({
+			error: 'Mailbox is not available in this region',
+		})
+	})
 	it('keeps read receipts independent and idempotent for each operator', async () => {
 		expect(await (await call('/count')).json()).toEqual({ unreadCount: 1 })
 		const read = () =>

@@ -51,7 +51,7 @@ msgstr "Active Sessions"
 msgid "Add an extra layer of security"
 msgstr "Add an extra layer of security"
 
-#: components/organization-switcher.tsx:188
+#: components/organization-switcher.tsx:185
 msgid "Add organization"
 msgstr "Add organization"
 
@@ -370,7 +370,7 @@ msgid "organization-slug"
 msgstr "organization-slug"
 
 #: app/(dashboard)/index.tsx:90
-#: components/organization-switcher.tsx:126
+#: components/organization-switcher.tsx:123
 msgid "Organizations"
 msgstr "Organizations"
 
@@ -507,7 +507,7 @@ msgstr "Slug must be at least 2 characters"
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
 #: app/(dashboard)/settings/profile.tsx:54
-#: components/ui/success-animation.tsx:59
+#: components/ui/success-animation.tsx:60
 msgid "Success"
 msgstr "Success"
 

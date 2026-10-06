@@ -34,7 +34,7 @@ import {
 	InputGroupInput,
 } from '@repo/ui/input-group'
 import { Spinner } from '@repo/ui/spinner'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import {
 	Link,
 	useNavigate,
@@ -47,9 +47,9 @@ import { typingUserIds } from '#app/modules/chat/chat-state.ts'
 import { ChatComposeDialog } from './chat-compose-dialog.tsx'
 import { ChatComposer } from './chat-composer.tsx'
 import { ChatGroupSettingsDialog } from './chat-group-settings-dialog.tsx'
-import { Composer, MessageItem } from './chat-message.tsx'
+import { MessageItem, PersonAvatar } from './chat-message.tsx'
+import { isSameMessageDay, showMessageHeader } from './chat-presentation.ts'
 
-const GROUP_GAP_MS = 5 * 60 * 1000
 const STICK_THRESHOLD_PX = 80
 
 export function ChatView({
@@ -95,6 +95,8 @@ export function ChatView({
 		channel: string
 		parent: number
 	} | null>(null)
+	const threadTrigger = useRef<HTMLElement | null>(null)
+	const threadClose = useRef<HTMLButtonElement>(null)
 	const [pendingDelete, setPendingDelete] = useState<ChatMessage | null>(null)
 	const [composing, setComposing] = useState(false)
 	const [groupSettings, setGroupSettings] = useState(false)
@@ -103,6 +105,7 @@ export function ChatView({
 		null,
 	)
 	const [searching, setSearching] = useState(false)
+	const [awayFromLatest, setAwayFromLatest] = useState(false)
 	const teamChannels = channels.filter((channel) => channel.kind === 'channel')
 	const directMessages = channels.filter((channel) => channel.kind === 'dm')
 	const groupChats = channels.filter((channel) => channel.kind === 'group')
@@ -145,21 +148,49 @@ export function ChatView({
 		)
 	}, [activeId])
 
+	useEffect(() => {
+		if (thread) {
+			threadClose.current?.focus({ preventScroll: true })
+		} else {
+			const trigger = threadTrigger.current
+			threadTrigger.current = null
+			if (trigger?.isConnected) trigger.focus({ preventScroll: true })
+		}
+	}, [thread])
+
 	// ── scrolling ──────────────────────────────────────────────────────────
 	const scroller = useRef<HTMLDivElement>(null)
+	const messageContent = useRef<HTMLDivElement>(null)
 	const stuckToBottom = useRef(true)
 	const lastMessageId = view?.messages.at(-1)?.id
 	const lastMessageMine = view?.messages.at(-1)?.author === state.me?.id
 	useEffect(() => {
 		stuckToBottom.current = true
+		setAwayFromLatest(false)
 	}, [activeId])
 	useEffect(() => {
 		const element = scroller.current
 		if (!element) return
 		if (stuckToBottom.current || lastMessageMine) {
+			stuckToBottom.current = true
 			element.scrollTop = element.scrollHeight
+			setAwayFromLatest(false)
 		}
 	}, [lastMessageId, lastMessageMine, activeId, loaded])
+
+	useEffect(() => {
+		const element = scroller.current
+		const content = messageContent.current
+		if (!element || !content) return
+		const observer = new ResizeObserver(() => {
+			if (stuckToBottom.current && element.clientHeight > 0) {
+				element.scrollTop = element.scrollHeight
+			}
+		})
+		observer.observe(element)
+		observer.observe(content)
+		return () => observer.disconnect()
+	}, [activeId, loaded])
 
 	async function loadOlder() {
 		const first = view?.messages[0]
@@ -197,6 +228,10 @@ export function ChatView({
 	)
 	const firstTypingName = typingNames[0] ?? ''
 	const activeName = active?.name ?? ''
+	const composerPlaceholder =
+		active?.kind === 'channel'
+			? _(msg`Message #${activeName}`)
+			: _(msg`Message ${activeName}`)
 	const threadLoadedReplies = thread
 		? (state.threads[thread.parent] ?? []).length
 		: 0
@@ -214,6 +249,10 @@ export function ChatView({
 		await chat.edit(message.id, body)
 	}
 	const openThread = (message: ChatMessage) => {
+		threadTrigger.current =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null
 		setThread({ channel: message.channel, parent: message.id })
 		chat.openThread(message.channel, message.id).catch(fail)
 	}
@@ -299,13 +338,36 @@ export function ChatView({
 				aria-current={isActive ? 'page' : undefined}
 				onClick={() => setThread(null)}
 				className={cn(
-					'hover:bg-muted focus-visible:ring-ring flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm outline-none focus-visible:ring-2',
-					isActive && 'bg-accent text-accent-foreground font-medium',
+					'hover:bg-muted focus-visible:ring-ring flex min-h-8 shrink-0 items-center gap-2 rounded-md px-2 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset pointer-coarse:min-h-11',
+					isActive && 'bg-accent text-accent-foreground font-semibold',
 					!isActive && unread > 0 && 'font-semibold',
 				)}
 			>
-				<Icon name={iconName} className="text-muted-foreground" />
-				<span className="min-w-0 flex-1 truncate">{channel.name}</span>
+				{channel.kind === 'dm' ? (
+					<PersonAvatar
+						person={
+							state.people[channel.peerUserId ?? ''] ?? {
+								id: channel.peerUserId ?? channel.id,
+								name: channel.name,
+								image: null,
+							}
+						}
+						size="sm"
+						online={state.online.includes(channel.peerUserId ?? '')}
+					/>
+				) : (
+					<Icon
+						name={iconName}
+						size="sm"
+						className={cn(
+							'shrink-0',
+							isActive ? 'text-foreground' : 'text-muted-foreground',
+						)}
+					/>
+				)}
+				<span className="min-w-0 flex-1 truncate" title={channel.name}>
+					{channel.name}
+				</span>
 				{unread > 0 && !isActive ? (
 					<Badge>
 						<span aria-hidden>{unread > 99 ? '99+' : unread}</span>
@@ -317,17 +379,20 @@ export function ChatView({
 	}
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col md:flex-row">
+		<div className="bg-background flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
+			<h1 className="sr-only">
+				<Trans>Team chat</Trans>
+			</h1>
 			<nav
 				aria-label={_(msg`Channels`)}
 				className={cn(
-					'bg-muted/20 flex min-h-0 flex-col gap-0.5 overflow-y-auto border-b p-2',
+					'bg-muted/20 flex min-h-0 flex-col overflow-y-auto border-b p-3',
 					active ? 'max-md:hidden' : 'max-md:min-h-0 max-md:flex-1',
-					'md:w-64 md:shrink-0 md:border-e md:border-b-0',
+					'md:w-60 md:shrink-0 md:border-e md:border-b-0 xl:w-64',
 				)}
 			>
 				<form
-					className="mb-3 w-full"
+					className="mb-3 w-full shrink-0"
 					onSubmit={(event) => {
 						event.preventDefault()
 						const query = searchQuery.trim()
@@ -415,7 +480,7 @@ export function ChatView({
 					type="button"
 					variant="outline"
 					size="sm"
-					className="mb-3 w-full justify-start"
+					className="mb-5 w-full justify-start"
 					onClick={() => setComposing(true)}
 				>
 					<Icon name="plus" />
@@ -428,9 +493,15 @@ export function ChatView({
 				]
 					.filter((section) => section.items.length > 0)
 					.map((section) => (
-						<div key={section.title} className="mb-3 w-full">
-							<p className="text-muted-foreground px-3 py-1.5 text-xs font-medium">
+						<div key={section.title} className="mb-5 w-full">
+							<p className="text-muted-foreground mb-1 flex items-center justify-between gap-2 px-2 py-1 text-xs font-medium">
 								{section.title}
+								<span
+									className="text-muted-foreground tabular-nums"
+									aria-hidden
+								>
+									{section.items.length}
+								</span>
 							</p>
 							<div className="flex flex-col gap-0.5">
 								{section.items.map((channel) => channelLink(channel))}
@@ -440,7 +511,7 @@ export function ChatView({
 				{canManage ? (
 					<Link
 						to={`/${orgSlug}/settings/chat`}
-						className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mt-auto flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm outline-none focus-visible:ring-2"
+						className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring mt-auto flex min-h-8 shrink-0 items-center gap-2 rounded-md px-2 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset pointer-coarse:min-h-11"
 					>
 						<Icon name="settings" />
 						<Trans>Manage channels</Trans>
@@ -471,17 +542,19 @@ export function ChatView({
 			) : null}
 
 			<section
+				aria-label={active?.name ?? _(msg`Conversation`)}
 				className={cn(
 					'flex min-h-0 min-w-0 flex-1 flex-col',
 					active ? 'max-md:min-h-0 max-md:flex-1' : 'max-md:hidden',
+					thread && 'max-xl:hidden',
 				)}
 			>
 				{active ? (
-					<header className="flex items-start gap-2 border-b px-3 py-2.5 sm:px-4 sm:py-3">
+					<header className="flex min-h-14 shrink-0 items-center gap-3 border-b px-3 py-2 sm:px-3">
 						<Button
 							variant="ghost"
 							size="icon-sm"
-							className="mt-0.5 shrink-0 md:hidden"
+							className="shrink-0 md:hidden"
 							aria-label={_(msg`Back to channels`)}
 							render={
 								<Link
@@ -491,27 +564,61 @@ export function ChatView({
 								/>
 							}
 						>
-							<Icon name="arrow-left" />
+							<Icon name="arrow-left" className="rtl:rotate-180" />
 						</Button>
-						<Icon
-							name={
-								active.kind === 'dm'
-									? 'user'
-									: active.kind === 'group'
-										? 'users'
-										: active.access === 'restricted'
-											? 'lock'
-											: 'message-square'
-							}
-							className="text-muted-foreground mt-0.5 hidden shrink-0 md:inline-flex"
-						/>
+						{active.kind === 'dm' ? (
+							<PersonAvatar
+								person={
+									state.people[active.peerUserId ?? ''] ?? {
+										id: active.peerUserId ?? active.id,
+										name: active.name,
+										image: null,
+									}
+								}
+								online={state.online.includes(active.peerUserId ?? '')}
+							/>
+						) : (
+							<span className="bg-muted text-muted-foreground hidden size-8 shrink-0 items-center justify-center rounded-lg md:inline-flex">
+								<Icon
+									name={
+										active.kind === 'group'
+											? 'users'
+											: active.access === 'restricted'
+												? 'lock'
+												: 'message-square'
+									}
+									size="sm"
+								/>
+							</span>
+						)}
 						<div className="min-w-0 flex-1">
-							<h2 className="truncate text-sm font-semibold">{active.name}</h2>
+							<h2
+								className="truncate text-sm font-semibold"
+								title={active.name}
+							>
+								{active.name}
+							</h2>
 							{active.description ? (
-								<p className="text-muted-foreground line-clamp-2 text-xs">
+								<p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
 									{active.description}
 								</p>
-							) : null}
+							) : (
+								<p className="text-muted-foreground mt-0.5 text-xs">
+									{active.kind === 'dm' ? (
+										state.online.includes(active.peerUserId ?? '') ? (
+											<Trans>Online</Trans>
+										) : (
+											<Trans>Direct message</Trans>
+										)
+									) : active.kind === 'group' ? (
+										<Trans>Group conversation</Trans>
+									) : active.access === 'restricted' ? (
+										<Trans>Restricted channel</Trans>
+									) : (
+										<Trans>Team channel</Trans>
+									)}
+								</p>
+							)}
 						</div>
 						{active.kind === 'group' ? (
 							<Button
@@ -530,108 +637,147 @@ export function ChatView({
 
 				<ConnectionBanner status={state.connection} />
 
-				<div
-					ref={scroller}
-					role="log"
-					aria-live="polite"
-					aria-label={_(msg`Messages`)}
-					className="min-h-0 flex-1 overflow-y-auto py-2"
-					onScroll={(event) => {
-						const element = event.currentTarget
-						stuckToBottom.current =
-							element.scrollHeight - element.scrollTop - element.clientHeight <
-							STICK_THRESHOLD_PX
-					}}
-				>
-					{!active ? (
-						<div className="flex min-h-48 flex-1 flex-col items-center justify-center p-6 text-center">
-							<EmptyHeader>
-								<EmptyMedia variant="icon">
-									<Icon name="message-square" />
-								</EmptyMedia>
-								<EmptyTitle>
-									<Trans>Pick a conversation</Trans>
-								</EmptyTitle>
-								<EmptyDescription>
-									<Trans>
-										Choose a channel, group, or direct message from the list.
-									</Trans>
-								</EmptyDescription>
-							</EmptyHeader>
-						</div>
-					) : historyError ? (
-						<div className="flex flex-col items-start gap-2 p-6">
-							<p className="text-destructive text-sm">{historyError}</p>
-							<Button variant="outline" size="sm" onClick={fetchHistory}>
-								<Trans>Try again</Trans>
+				<div className="relative flex min-h-0 flex-1 flex-col">
+					<div
+						ref={scroller}
+						role="log"
+						aria-live="polite"
+						aria-label={_(msg`Messages`)}
+						aria-busy={Boolean(active && !loaded && !historyError)}
+						className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain py-4"
+						onScroll={(event) => {
+							const element = event.currentTarget
+							stuckToBottom.current =
+								element.scrollHeight -
+									element.scrollTop -
+									element.clientHeight <
+								STICK_THRESHOLD_PX
+							setAwayFromLatest(!stuckToBottom.current)
+						}}
+					>
+						{!active ? (
+							<div className="flex h-full min-h-48 flex-col items-center justify-center p-6 text-center">
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<Icon name="message-square" />
+									</EmptyMedia>
+									<EmptyTitle>
+										<Trans>Pick a conversation</Trans>
+									</EmptyTitle>
+									<EmptyDescription>
+										<Trans>
+											Choose a channel, group, or direct message from the list.
+										</Trans>
+									</EmptyDescription>
+								</EmptyHeader>
+							</div>
+						) : historyError ? (
+							<div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+								<p role="alert" className="text-destructive text-sm">
+									{historyError}
+								</p>
+								<Button variant="outline" size="sm" onClick={fetchHistory}>
+									<Trans>Try again</Trans>
+								</Button>
+							</div>
+						) : !loaded ? (
+							<div className="text-muted-foreground flex h-full items-center justify-center gap-2 p-6 text-sm">
+								<Spinner />
+								<Trans>Loading messages…</Trans>
+							</div>
+						) : (
+							<>
+								{view?.hasMore ? (
+									<div className="flex justify-center py-2">
+										<Button
+											variant="outline"
+											size="sm"
+											disabled={loadingOlder}
+											onClick={() => void loadOlder()}
+										>
+											{loadingOlder ? <Spinner /> : null}
+											<Trans>Load older messages</Trans>
+										</Button>
+									</div>
+								) : null}
+								{messages.length === 0 ? (
+									<div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
+										<EmptyHeader>
+											<EmptyMedia variant="icon">
+												<Icon name="message-square" />
+											</EmptyMedia>
+											<EmptyTitle>
+												<Trans>No messages yet</Trans>
+											</EmptyTitle>
+											<EmptyDescription>
+												<Trans>
+													Send the first message — your team will see it here.
+												</Trans>
+											</EmptyDescription>
+										</EmptyHeader>
+									</div>
+								) : null}
+								<div ref={messageContent}>
+									{messages.map((message, index) => {
+										const previous = messages[index - 1]
+										return (
+											<Fragment key={message.id}>
+												{!previous ||
+												!isSameMessageDay(
+													previous.createdAt,
+													message.createdAt,
+												) ? (
+													<MessageDay
+														timestamp={message.createdAt}
+														locale={i18n.locale}
+													/>
+												) : null}
+												<MessageItem
+													orgSlug={orgSlug}
+													members={members}
+													message={message}
+													people={state.people}
+													meId={state.me?.id ?? ''}
+													canModerate={state.me?.canModerate ?? false}
+													online={state.online}
+													locale={i18n.locale}
+													showHeader={showMessageHeader(message, previous)}
+													onReact={onReact}
+													onReply={openThread}
+													onEdit={onEdit}
+													onDelete={setPendingDelete}
+												/>
+											</Fragment>
+										)
+									})}
+								</div>
+							</>
+						)}
+					</div>
+					{awayFromLatest ? (
+						<div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
+							<Button
+								variant="secondary"
+								size="sm"
+								className="pointer-events-auto shadow-sm"
+								onClick={() => {
+									const element = scroller.current
+									if (element) element.scrollTop = element.scrollHeight
+									stuckToBottom.current = true
+									setAwayFromLatest(false)
+								}}
+							>
+								<Icon name="chevron-down" />
+								<Trans>Back to latest</Trans>
 							</Button>
 						</div>
-					) : !loaded ? (
-						<div className="text-muted-foreground flex items-center gap-2 p-6 text-sm">
-							<Spinner />
-							<Trans>Loading messages…</Trans>
-						</div>
-					) : (
-						<>
-							{view?.hasMore ? (
-								<div className="flex justify-center py-2">
-									<Button
-										variant="outline"
-										size="sm"
-										disabled={loadingOlder}
-										onClick={() => void loadOlder()}
-									>
-										{loadingOlder ? <Spinner /> : null}
-										<Trans>Load older messages</Trans>
-									</Button>
-								</div>
-							) : null}
-							{messages.length === 0 ? (
-								<div className="flex flex-col items-center justify-center py-12 text-center">
-									<EmptyHeader>
-										<EmptyTitle>
-											<Trans>No messages yet</Trans>
-										</EmptyTitle>
-										<EmptyDescription>
-											<Trans>
-												Send the first message — your team will see it here.
-											</Trans>
-										</EmptyDescription>
-									</EmptyHeader>
-								</div>
-							) : null}
-							{messages.map((message, index) => {
-								const previous = messages[index - 1]
-								const showHeader =
-									!previous ||
-									previous.deleted ||
-									previous.author !== message.author ||
-									message.createdAt - previous.createdAt > GROUP_GAP_MS
-								return (
-									<MessageItem
-										key={message.id}
-										message={message}
-										people={state.people}
-										meId={state.me?.id ?? ''}
-										canModerate={state.me?.canModerate ?? false}
-										online={state.online}
-										locale={i18n.locale}
-										showHeader={showHeader}
-										onReact={onReact}
-										onReply={openThread}
-										onEdit={onEdit}
-										onDelete={setPendingDelete}
-									/>
-								)
-							})}
-						</>
-					)}
+					) : null}
 				</div>
 
 				{active ? (
-					<div className="border-t p-2 sm:p-3">
+					<div className="shrink-0 px-4 pt-1 pb-4 sm:px-6 sm:pb-2">
 						<p
-							className="text-muted-foreground mb-2 h-4 text-xs"
+							className="text-muted-foreground mb-2 min-h-4 px-1 text-xs"
 							aria-live="polite"
 						>
 							{typingNames.length === 0
@@ -643,7 +789,7 @@ export function ChatView({
 						<ChatComposer
 							orgSlug={orgSlug}
 							members={members}
-							placeholder={_(msg`Message #${activeName}`)}
+							placeholder={composerPlaceholder}
 							disabled={!connected}
 							onTyping={() => chat.typing(active.id)}
 							onSend={async (body, attachmentKeys) => {
@@ -657,24 +803,32 @@ export function ChatView({
 			{thread ? (
 				<aside
 					aria-label={_(msg`Thread`)}
-					className="bg-background md:bg-muted/10 fixed inset-0 z-50 flex min-h-0 flex-col md:static md:z-auto md:w-96 md:shrink-0 md:border-s md:border-t-0"
+					className="bg-background flex min-h-0 min-w-0 flex-1 flex-col xl:w-80 xl:flex-none xl:border-s 2xl:w-96"
 				>
-					<header className="flex items-center justify-between border-b px-3 py-2.5 sm:px-4">
-						<h2 className="text-sm font-semibold">
-							<Trans>Thread</Trans>
-						</h2>
+					<header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b px-4 py-2 sm:px-5">
+						<div className="min-w-0">
+							<h2 className="text-sm font-semibold">
+								<Trans>Thread</Trans>
+							</h2>
+							<p className="text-muted-foreground mt-0.5 truncate text-xs">
+								{activeName}
+							</p>
+						</div>
 						<Button
 							variant="ghost"
 							size="icon-sm"
 							aria-label={_(msg`Close thread`)}
+							ref={threadClose}
 							onClick={() => setThread(null)}
 						>
 							<Icon name="x" />
 						</Button>
 					</header>
-					<div className="min-h-0 flex-1 overflow-y-auto py-2">
+					<div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain py-4">
 						{threadParent ? (
 							<MessageItem
+								orgSlug={orgSlug}
+								members={members}
 								message={threadParent}
 								people={state.people}
 								meId={state.me?.id ?? ''}
@@ -688,13 +842,14 @@ export function ChatView({
 								onDelete={setPendingDelete}
 							/>
 						) : null}
-						<div className="text-muted-foreground px-4 py-2 text-xs">
+						<div className="text-muted-foreground mx-4 my-4 flex items-center gap-3 text-xs sm:mx-6">
 							{_(
 								plural(threadTotalReplies, {
 									one: '# reply',
 									other: '# replies',
 								}),
 							)}
+							<span className="bg-border h-px flex-1" />
 						</div>
 						{threadMore ? (
 							<div className="flex justify-center pb-2">
@@ -714,17 +869,15 @@ export function ChatView({
 							return (
 								<MessageItem
 									key={reply.id}
+									orgSlug={orgSlug}
+									members={members}
 									message={reply}
 									people={state.people}
 									meId={state.me?.id ?? ''}
 									canModerate={state.me?.canModerate ?? false}
 									online={state.online}
 									locale={i18n.locale}
-									showHeader={
-										!previous ||
-										previous.author !== reply.author ||
-										reply.createdAt - previous.createdAt > GROUP_GAP_MS
-									}
+									showHeader={showMessageHeader(reply, previous)}
 									inThread
 									onReact={onReact}
 									onEdit={onEdit}
@@ -733,12 +886,19 @@ export function ChatView({
 							)
 						})}
 					</div>
-					<div className="border-t p-2 sm:p-3">
-						<Composer
+					<div className="shrink-0 p-4 pb-2">
+						<ChatComposer
+							orgSlug={orgSlug}
+							members={members}
 							placeholder={_(msg`Reply…`)}
 							disabled={!connected || !threadParent || threadParent.deleted}
-							onSend={async (body) => {
-								await chat.send(thread.channel, body, thread.parent)
+							onSend={async (body, attachmentKeys) => {
+								await chat.send(
+									thread.channel,
+									body,
+									thread.parent,
+									attachmentKeys,
+								)
 							}}
 						/>
 					</div>
@@ -753,6 +913,43 @@ export function ChatView({
 					chat.remove(message.id).catch(fail)
 				}}
 			/>
+		</div>
+	)
+}
+
+function MessageDay({
+	timestamp,
+	locale,
+}: {
+	timestamp: number
+	locale: string
+}) {
+	const { _ } = useLingui()
+	const today = new Date()
+	const yesterday = new Date(today)
+	yesterday.setDate(today.getDate() - 1)
+	const label = isSameMessageDay(timestamp, today.getTime())
+		? _(msg`Today`)
+		: isSameMessageDay(timestamp, yesterday.getTime())
+			? _(msg`Yesterday`)
+			: new Intl.DateTimeFormat(locale, {
+					weekday: 'long',
+					month: 'short',
+					day: 'numeric',
+					...(new Date(timestamp).getFullYear() !== today.getFullYear()
+						? { year: 'numeric' }
+						: {}),
+				}).format(timestamp)
+	return (
+		<div className="mx-4 flex items-center gap-3 py-3 sm:mx-6">
+			<span className="bg-border h-px flex-1" />
+			<time
+				dateTime={new Date(timestamp).toISOString()}
+				className="text-muted-foreground shrink-0 text-xs font-medium"
+			>
+				{label}
+			</time>
+			<span className="bg-border h-px flex-1" />
 		</div>
 	)
 }

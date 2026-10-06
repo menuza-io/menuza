@@ -19,7 +19,12 @@ import {
 	WebsitePageSection,
 } from '@repo/database'
 import { type User } from '@repo/database/types'
+import { logger } from '@repo/observability'
 import { data } from 'react-router'
+import {
+	deprovisionTenantDatabase,
+	provisionTenantDatabase,
+} from '#app/utils/sites/tenant-api.server.ts'
 import { getDefaultConfig } from '#app/utils/website/block-types.ts'
 import {
 	getDefaultHomePageSections,
@@ -308,6 +313,7 @@ export async function createOrganization({
 	userId,
 	imageObjectKey,
 	request,
+	dataRegion = 'us',
 }: {
 	name: string
 	slug: string
@@ -315,6 +321,7 @@ export async function createOrganization({
 	userId: string
 	imageObjectKey?: string
 	request?: Request
+	dataRegion?: 'us' | 'ksa'
 }) {
 	const organization = await db.transaction(async (tx) => {
 		const [adminRole] = await tx
@@ -334,6 +341,7 @@ export async function createOrganization({
 				name,
 				slug,
 				description,
+				dataRegion,
 				siteHeaderConfig: JSON.stringify(getDefaultConfig('header')),
 				siteFooterConfig: JSON.stringify(getDefaultConfig('footer')),
 			})
@@ -384,6 +392,40 @@ export async function createOrganization({
 		}
 		return created
 	})
+
+	const tenant = {
+		orgId: organization.id,
+		slug: organization.slug,
+		dataRegion,
+	}
+	try {
+		await provisionTenantDatabase(tenant)
+		await db
+			.update(Organization)
+			.set({ hasProvisionedDb: true })
+			.where(eq(Organization.id, organization.id))
+	} catch (error) {
+		// The newly created organization has not been returned to its creator.
+		// Compensate for partial provisioning and roll back its control-plane rows.
+		try {
+			await deprovisionTenantDatabase(tenant)
+		} catch (cleanupError) {
+			logger.warn(
+				{ err: cleanupError, organizationId: organization.id },
+				'Failed to clean up tenant database after organization creation',
+			)
+		}
+		try {
+			await db.delete(Organization).where(eq(Organization.id, organization.id))
+		} catch (deleteError) {
+			logger.warn(
+				{ err: deleteError, organizationId: organization.id },
+				'Failed to delete organization after creation failure',
+			)
+		}
+		throw error
+	}
+
 	await auditService.log({
 		action: AuditAction.ORG_CREATED,
 		userId,
@@ -401,6 +443,8 @@ export async function createOrganization({
 	})
 	return {
 		...organization,
+		dataRegion,
+		hasProvisionedDb: true,
 		image: imageObjectKey
 			? await getOrganizationSummary(organization.id).then(
 					(row) => row?.image ?? null,

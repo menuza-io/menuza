@@ -7,7 +7,7 @@ test.describe('Integration Settings & Providers Management', () => {
 		page,
 		login,
 		navigate,
-	}) => {
+	}, testInfo) => {
 		const user = await login()
 		const org = await createTestOrganization(user.id, 'admin')
 
@@ -28,9 +28,45 @@ test.describe('Integration Settings & Providers Management', () => {
 		await expect(page.getByText('Slack').first()).toBeVisible()
 		await expect(page.getByText('Jira').first()).toBeVisible()
 
+		// Verify related providers appear in named groups
+		for (const [name, providers] of [
+			['Communication', ['Slack']],
+			['Project management', ['Jira', 'Linear', 'ClickUp', 'Asana', 'Trello']],
+			['Development', ['GitLab', 'GitHub']],
+			['Knowledge management', ['Notion']],
+		] as const) {
+			const group = page.getByRole('region', { name, exact: true })
+			await expect(group).toBeVisible()
+			for (const provider of providers) {
+				await expect(
+					group.getByRole('heading', { name: provider, exact: true }),
+				).toBeVisible()
+			}
+		}
+		await expect(
+			page.getByRole('region', { name: 'Other integrations' }),
+		).toHaveCount(0)
+
+		// Verify request integration banner
 		await expect(
 			page.getByText(/need an integration but don't see it here\?/i).first(),
 		).toBeVisible()
+
+		await page.screenshot({
+			path: testInfo.outputPath('integrations-desktop.png'),
+			fullPage: true,
+		})
+		await page.setViewportSize({ width: 390, height: 844 })
+		for (const group of await page.getByRole('region').all()) {
+			const bounds = await group.boundingBox()
+			if (!bounds) continue
+			expect(bounds.x).toBeGreaterThanOrEqual(0)
+			expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
+		}
+		await page.screenshot({
+			path: testInfo.outputPath('integrations-mobile.png'),
+			fullPage: true,
+		})
 	})
 
 	test('Operators can connect a POS platform in sandbox mode', async ({

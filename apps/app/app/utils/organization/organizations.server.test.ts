@@ -1,7 +1,12 @@
 import { auditService, AuditAction } from '@repo/audit'
 import type * as DatabaseModule from '@repo/database'
+import { logger } from '@repo/observability'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+	deprovisionTenantDatabase,
+	provisionTenantDatabase,
+} from '#app/utils/sites/tenant-api.server.ts'
 import {
 	HOME_PAGE_SLUG,
 	HOME_PAGE_TITLE,
@@ -33,6 +38,11 @@ vi.mock('@repo/auth', () => ({
 	getUserId: vi.fn(),
 }))
 
+vi.mock('#app/utils/sites/tenant-api.server.ts', () => ({
+	provisionTenantDatabase: vi.fn(),
+	deprovisionTenantDatabase: vi.fn(),
+}))
+
 vi.mock('@repo/database', async (importOriginal) => {
 	const actual = await importOriginal<typeof DatabaseModule>()
 	const { mockDb, drizzleTable, drizzleOperator } =
@@ -58,6 +68,8 @@ describe('createOrganization', () => {
 		resetMockDb()
 		mockSelectResults([{ id: 'role-admin' }])
 		vi.mocked(auditService.log).mockResolvedValue(undefined as any)
+		vi.mocked(provisionTenantDatabase).mockResolvedValue({ region: 'us' })
+		vi.mocked(deprovisionTenantDatabase).mockResolvedValue({ region: 'us' })
 	})
 
 	it('creates a published protected home page for new organizations', async () => {
@@ -74,6 +86,14 @@ describe('createOrganization', () => {
 			description: 'Custom storefronts',
 			userId: 'user-1',
 		})
+
+		expect(provisionTenantDatabase).toHaveBeenCalledWith({
+			orgId: 'org-1',
+			slug: 'acme',
+			dataRegion: 'us',
+		})
+		expect(mockDb.update).toHaveBeenCalled()
+		expect(deprovisionTenantDatabase).not.toHaveBeenCalled()
 
 		const organizationValues = insertedValues[0] as {
 			siteHeaderConfig: string
@@ -157,6 +177,114 @@ describe('createOrganization', () => {
 			}),
 		)
 	})
+
+	it('provisions in the chosen region before reporting the organization ready', async () => {
+		const { insertedValues } = captureInserts(
+			[{ id: 'org-ksa', name: 'Acme', slug: 'acme' }],
+			[],
+			[{ id: 'page-1' }],
+			[],
+		)
+		vi.mocked(provisionTenantDatabase).mockResolvedValue({ region: 'ksa' })
+
+		const result = await createOrganization({
+			name: 'Acme',
+			slug: 'acme',
+			userId: 'user-1',
+			dataRegion: 'ksa',
+		})
+
+		expect(insertedValues[0]).toMatchObject({ dataRegion: 'ksa' })
+		expect(provisionTenantDatabase).toHaveBeenCalledWith({
+			orgId: 'org-ksa',
+			slug: 'acme',
+			dataRegion: 'ksa',
+		})
+		expect(result).toMatchObject({
+			dataRegion: 'ksa',
+			hasProvisionedDb: true,
+		})
+	})
+
+	it('cleans up the new organization when regional provisioning fails', async () => {
+		captureInserts(
+			[{ id: 'org-1', name: 'Acme', slug: 'acme' }],
+			[],
+			[{ id: 'page-1' }],
+			[],
+		)
+		vi.mocked(provisionTenantDatabase).mockRejectedValueOnce(
+			new Error('Regional API unavailable'),
+		)
+
+		await expect(
+			createOrganization({ name: 'Acme', slug: 'acme', userId: 'user-1' }),
+		).rejects.toThrow('Regional API unavailable')
+
+		expect(deprovisionTenantDatabase).toHaveBeenCalledWith({
+			orgId: 'org-1',
+			slug: 'acme',
+			dataRegion: 'us',
+		})
+		expect(mockDb.delete).toHaveBeenCalledOnce()
+		expect(auditService.log).not.toHaveBeenCalled()
+	})
+
+	it('cleans up a provisioned database when recording readiness fails', async () => {
+		captureInserts(
+			[{ id: 'org-1', name: 'Acme', slug: 'acme' }],
+			[],
+			[{ id: 'page-1' }],
+			[],
+		)
+		mockDb.update.mockImplementationOnce(() => {
+			throw new Error('Could not record database readiness')
+		})
+
+		await expect(
+			createOrganization({ name: 'Acme', slug: 'acme', userId: 'user-1' }),
+		).rejects.toThrow('Could not record database readiness')
+
+		expect(provisionTenantDatabase).toHaveBeenCalledOnce()
+		expect(deprovisionTenantDatabase).toHaveBeenCalledOnce()
+		expect(mockDb.delete).toHaveBeenCalledOnce()
+		expect(auditService.log).not.toHaveBeenCalled()
+	})
+
+	it.each(['provisioning', 'readiness'] as const)(
+		'preserves the %s error when organization deletion also fails',
+		async (failure) => {
+			captureInserts(
+				[{ id: 'org-1', name: 'Acme', slug: 'acme' }],
+				[],
+				[{ id: 'page-1' }],
+				[],
+			)
+			const originalError = new Error(`Could not complete ${failure}`)
+			const deleteError = new Error('Could not delete the organization')
+			if (failure === 'provisioning') {
+				vi.mocked(provisionTenantDatabase).mockRejectedValueOnce(originalError)
+			} else {
+				mockDb.update.mockImplementationOnce(() => {
+					throw originalError
+				})
+			}
+			mockDb.delete.mockImplementationOnce(() => {
+				throw deleteError
+			})
+			const warning = vi.spyOn(logger, 'warn').mockImplementation(() => {})
+
+			await expect(
+				createOrganization({ name: 'Acme', slug: 'acme', userId: 'user-1' }),
+			).rejects.toBe(originalError)
+			expect(deprovisionTenantDatabase).toHaveBeenCalledOnce()
+			expect(warning).toHaveBeenCalledWith(
+				{ err: deleteError, organizationId: 'org-1' },
+				'Failed to delete organization after creation failure',
+			)
+			expect(auditService.log).not.toHaveBeenCalled()
+		},
+	)
 
 	it('does not create an organization without the admin role', async () => {
 		resetMockDb()

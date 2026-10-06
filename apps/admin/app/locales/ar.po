@@ -33,7 +33,7 @@ msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:121
+#: ../../packages/marketing/src/components/campaign-detail.tsx:119
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -58,6 +58,11 @@ msgstr "{count} طلب"
 #: app/routes/_admin+/cache.tsx:310
 msgid "{currentSize} / {maxSize} max"
 msgstr "{currentSize} / {maxSize} كحد أقصى"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:89
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:106
+msgid "{days} days"
+msgstr "{days} يومًا"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
@@ -357,7 +362,7 @@ msgstr "الكل"
 msgid "All caches"
 msgstr "جميع ذاكرات التخزين المؤقت"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:352
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:348
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
@@ -543,6 +548,10 @@ msgstr "العودة إلى البثّات"
 msgid "Back to nodes"
 msgstr "العودة إلى العُقد"
 
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:46
+msgid "Back to organization"
+msgstr "العودة إلى المؤسسة"
+
 #: app/components/admin-user-detail.tsx:195
 #: app/components/admin-user-detail.tsx:354
 #: app/components/admin-users-table.tsx:178
@@ -640,7 +649,7 @@ msgstr "منطقي"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:96
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -687,7 +696,7 @@ msgstr "نوع ذاكرة التخزين المؤقت:"
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:414
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:165
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
@@ -718,6 +727,10 @@ msgstr "القناة"
 #: ../../packages/marketing/src/components/campaign-form.tsx:104
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:123
+msgid "Choose a valid retention period."
+msgstr "اختر فترة احتفاظ صالحة."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:237
 msgid "Choose from library"
@@ -761,7 +774,7 @@ msgstr "معرف العميل:"
 msgid "Client Secret"
 msgstr "سر العميل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:366
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 msgid "Close"
 msgstr "إغلاق"
 
@@ -868,7 +881,7 @@ msgstr "تأكيد"
 msgid "Connected Accounts"
 msgstr "الحسابات المتصلة"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:297
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:295
 msgid "Connections"
 msgstr "الاتصالات"
 
@@ -1005,7 +1018,7 @@ msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:389
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:385
 msgid "Customer ID"
 msgstr "معرّف العميل"
 
@@ -1017,7 +1030,7 @@ msgstr "معرّف العميل"
 #~ msgid "Customer Signup (Registration)"
 #~ msgstr "تسجيل العميل (التسجيل)"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:305
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
 msgstr "دورات"
 
@@ -1123,7 +1136,7 @@ msgstr "تصميم البريد"
 msgid "Detailed information for IP {ip}"
 msgstr "معلومات تفصيلية لعنوان IP {ip}"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:316
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:312
 msgid "Detected"
 msgstr "مُكتشَف"
 
@@ -1206,7 +1219,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. create, read, approve, publish"
 msgstr "مثل: إنشاء، قراءة، موافقة، نشر"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:391
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
@@ -1410,7 +1423,7 @@ msgstr "المحو (المادة 17)"
 msgid "Error"
 msgstr "خطأ"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:327
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:323
 msgid "Errors"
 msgstr "أخطاء"
 
@@ -1747,7 +1760,7 @@ msgstr "إدراج كتلة هنا"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:86
 #~ msgid "Insert merge tag"
-#~ msgstr ""
+#~ msgstr "إدراج وسم دمج"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:384
 #~ msgid "Insert Merge Tags:"
@@ -1810,6 +1823,11 @@ msgstr "انضم"
 msgid "Keep editing"
 msgstr "متابعة التعديل"
 
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:85
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:102
+msgid "Keep forever"
+msgstr "الاحتفاظ للأبد"
+
 #: app/components/admin/feature-flags.tsx:371
 #: app/components/admin/feature-flags.tsx:476
 #: app/components/admin/feature-flags.tsx:650
@@ -1871,7 +1889,7 @@ msgstr "آخر اختبار:"
 msgid "Last User Agent"
 msgstr "آخر وكيل مستخدم"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:417
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
@@ -1957,6 +1975,10 @@ msgstr "إدارة المؤسسات"
 msgid "Manage system performance"
 msgstr "إدارة أداء النظام"
 
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:55
+msgid "Manage team chat retention for {organizationName}."
+msgstr "إدارة الاحتفاظ برسائل محادثات الفريق في {organizationName}."
+
 #: app/routes/_admin+/index.tsx:320
 msgid "Manage Users"
 msgstr "إدارة المستخدمين"
@@ -2011,9 +2033,9 @@ msgstr "الأعضاء"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
-#~ msgstr ""
+#~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:90
+#: ../../packages/marketing/src/components/campaign-detail.tsx:88
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr "الرسالة"
@@ -2021,6 +2043,15 @@ msgstr "الرسالة"
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:112
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
+
+#: app/components/admin-organization-detail.tsx:348
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:52
+msgid "Message retention"
+msgstr "الاحتفاظ بالرسائل"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.server.ts:92
+msgid "Message retention updated"
+msgstr "تم تحديث سياسة الاحتفاظ بالرسائل"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
 msgid "minutes"
@@ -2155,7 +2186,7 @@ msgstr "لا توجد حسابات متصلة"
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:129
+#: ../../packages/marketing/src/components/campaign-detail.tsx:127
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -2251,7 +2282,7 @@ msgstr "لم يتم العثور على إدخالات قائمة الانتظا
 msgid "Nodes"
 msgstr "العُقد"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:318
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/admin-users-table.tsx:138
 #: app/components/admin-users-table.tsx:148
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:465
@@ -2294,7 +2325,7 @@ msgstr "إعداد OAuth2"
 msgid "Oldest Log"
 msgstr "أقدم سجل"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:399
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإقليمي بيانات التعريف الشخصية محلياً."
 
@@ -2667,7 +2698,7 @@ msgstr "تغييرات إعداد SSO الأخيرة وأنشطة المستخد
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:117
+#: ../../packages/marketing/src/components/campaign-detail.tsx:115
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -2727,9 +2758,17 @@ msgstr "يتطلب الانتباه"
 msgid "Reset"
 msgstr "إعادة تعيين"
 
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:75
+msgid "Retention period"
+msgstr "فترة الاحتفاظ"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:368
 msgid "Retention Period (days)"
 msgstr "فترة الاحتفاظ (أيام)"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:61
+msgid "Retention policy"
+msgstr "سياسة الاحتفاظ"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:323
 msgid "Retention: {retentionDays} days ({retentionYears} years)"
@@ -2873,6 +2912,10 @@ msgstr "حفظ المسودة"
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:483
 msgid "Save Policy"
 msgstr "حفظ السياسة"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:131
+msgid "Save retention"
+msgstr "حفظ سياسة الاحتفاظ"
 
 #: app/routes/_admin+/marketing+/automations.new.tsx:181
 msgid "Save the automation first before running test triggers."
@@ -3033,8 +3076,8 @@ msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:82
-#: ../../packages/marketing/src/components/campaign-detail.tsx:145
+#: ../../packages/marketing/src/components/campaign-detail.tsx:80
+#: ../../packages/marketing/src/components/campaign-detail.tsx:143
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -3053,6 +3096,10 @@ msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 #: app/routes/_admin+/audit-logs.tsx:284
 msgid "Severity"
 msgstr "مستوى الخطورة"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:116
+msgid "Shorter retention periods permanently remove older messages on the next daily cleanup. Deleted messages cannot be recovered."
+msgstr "تؤدي فترات الاحتفاظ الأقصر إلى حذف الرسائل الأقدم نهائيًا في عملية التنظيف اليومية التالية. لا يمكن استعادة الرسائل المحذوفة."
 
 #: app/routes/_admin+/audit-logs.tsx:334
 msgid "Showing {showing} of {totalEvents} events"
@@ -3377,7 +3424,7 @@ msgid "Test Connection"
 msgstr "اختبار الاتصال"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:158
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:377
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
 msgid "Test run"
 msgstr "تشغيل اختباري"
 
@@ -3412,9 +3459,17 @@ msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانت�
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.server.ts:94
+msgid "The policy will apply on the next daily chat cleanup."
+msgstr "ستُطبّق السياسة في عملية التنظيف اليومية التالية للمحادثات."
+
 #: app/components/nav-user.tsx:121
 msgid "Theme"
 msgstr "المظهر"
+
+#: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
+msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
+msgstr "تنطبق هذه السياسة على جميع القنوات والرسائل المباشرة والمحادثات الجماعية في هذه المؤسسة. يمكن لمسؤولي المنصة فقط تغييرها."
 
 #: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:15
 msgid "Time delay"
@@ -3480,7 +3535,7 @@ msgstr "تجربة"
 msgid "Trigger"
 msgstr "محفّز"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:380
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:376
 msgid "Trigger a test execution for a specific customer ID."
 msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 
@@ -3531,7 +3586,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:140
+#: ../../packages/marketing/src/components/campaign-detail.tsx:138
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -3706,7 +3761,7 @@ msgstr "إدارة قائمة الانتظار"
 msgid "Warning"
 msgstr "تحذير"
 
-#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:340
+#: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:336
 msgid "Warnings"
 msgstr "تحذيرات"
 
