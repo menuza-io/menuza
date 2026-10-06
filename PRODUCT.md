@@ -17,11 +17,12 @@ decision must respect the split:
 
 - **Operators**: staff of each tenant organization. They sign in to the operator
   app (web, plus a mobile companion) with email and password, OAuth, SSO,
-  two-factor, or passkeys, and run the business: website, shop, customers,
-  marketing, team chat, reports, members and roles, billing.
+  two-factor, or passkeys, and run the business: website, catalog, orders,
+  customers, marketing, team chat, reports, members and roles, billing.
 - **End customers**: the customers of each tenant organization. They never use
-  the operator app. They use the organization's published website, its shop,
-  and the native customer apps, signing in with phone-number OTP only.
+  the operator app. They use the organization's published website, its shop and
+  ordering flows, and the native customer apps, signing in with phone-number OTP
+  only.
 - **Platform staff**: the operator of the deployed platform. They use the admin
   console to oversee tenants, users, SSO, audit logs, GDPR requests, feature
   flags, and platform-wide marketing.
@@ -31,8 +32,8 @@ decision must respect the split:
 A production-ready, full-stack, multi-tenant SaaS template. Its job is to take a
 startup idea from clone to launched product without rebuilding the platform
 layer: authentication, organizations and permissions, website building and
-publishing, storefronts, shop and payments, customer identity, marketing,
-scheduled jobs, and admin tooling all work out of the box,
+publishing, storefronts, scheduled drops, ordering and payments, customer
+identity, marketing, scheduled jobs, and admin tooling all work out of the box,
 so the founder only builds the vertical. Success means a branded clone deploys
 and sells, and the template stays reusable for the next idea.
 
@@ -80,7 +81,12 @@ Confirmed capability surface:
 - Website builder and publishing: per-organization pages, forms, analytics,
   branding, announcements, and redirects, published to edge-cached storefronts
   on organization subdomains and custom domains.
-- Shop: a single-product purchase with hosted or inline card checkout.
+- Catalog module: menus, categories, items, modifier groups and options,
+  per-location overrides, and point-of-sale links.
+- Scheduled drops: limited-order windows with inventory limits, checkout holds,
+  and pickup windows per location; storefront states upcoming, live, and closed.
+- Ordering and shop: storefront ordering with pickup or delivery fulfillment,
+  and a single-product shop with hosted or inline card checkout.
 - Customer identity: phone-number OTP for end customers, held only in the
   regional per-organization database.
 - Marketing: block-based email designer rendered at design time in the

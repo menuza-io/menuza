@@ -20,8 +20,8 @@ no accounts.
 The hosted documentation site: getting-started and quickstart guides, the
 application catalog, authentication (password, OAuth, SSO), database, styling,
 deployment, and markdown conventions, security guides (secure coding, data
-protection, incident response, compliance), integration guides (workspace tools), and an
-API reference.
+protection, incident response, compliance), integration guides (point-of-sale
+and delivery platforms, workspace tools), and an API reference.
 
 ## Operating Context
 

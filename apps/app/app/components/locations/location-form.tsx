@@ -385,6 +385,7 @@ export function LocationForm({
 											</Label>
 											<Select
 												value={timezone}
+												items={TIMEZONE_OPTIONS}
 												onValueChange={(val) => val && setTimezone(val)}
 											>
 												<SelectTrigger id="loc-timezone">
@@ -584,6 +585,10 @@ export function LocationForm({
 												</Label>
 												<Select
 													value={largeOrderThresholdType}
+													items={{
+														dollars: 'Order Total Amount ($)',
+														items: 'Number of Items Count',
+													}}
 													onValueChange={(val) =>
 														val &&
 														setLargeOrderThresholdType(

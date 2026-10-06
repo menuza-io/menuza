@@ -544,7 +544,14 @@ function VariationAvailabilityControl({
 					>
 						<Trans>Becomes available</Trans>
 					</Label>
-					<Select value={presetId} onValueChange={changePreset}>
+					<Select
+						value={presetId}
+						items={presets.map((preset) => ({
+							value: preset.id,
+							label: preset.label,
+						}))}
+						onValueChange={changePreset}
+					>
 						<SelectTrigger
 							id={`variation-preset-${variant.id}`}
 							className="w-full"

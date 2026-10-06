@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	asAstroResponse,
+	isDropVisibilityPage,
 	isSitesAppRoute,
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
@@ -43,11 +44,38 @@ describe('isSitesAppRoute', () => {
 })
 
 describe('shouldCachePublishedHtml', () => {
-	it('caches published GET HTML in production', () => {
-		const request = new Request('https://acme.example/', { method: 'GET' })
+	it('caches published GET HTML outside discovery pages in production', () => {
+		const request = new Request('https://acme.example/about', { method: 'GET' })
 		expect(
-			shouldCachePublishedHtml(request, new URL('https://acme.example/'), true),
+			shouldCachePublishedHtml(
+				request,
+				new URL('https://acme.example/about'),
+				true,
+			),
 		).toBe(true)
+	})
+
+	it('does not cache drop listings or direct links, including locale-prefixed paths', () => {
+		for (const path of [
+			'/',
+			'/menu',
+			'/ar',
+			'/ar/menu',
+			'/fr-CA/menu',
+			'/drop/weekend',
+			'/ar/drop/weekend',
+		]) {
+			expect(isDropVisibilityPage(path)).toBe(true)
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(false)
+		}
+		expect(isDropVisibilityPage('/menu/checkout')).toBe(false)
+		expect(isDropVisibilityPage('/about')).toBe(false)
 	})
 
 	it('skips development, preview, API, and non-GET responses', () => {

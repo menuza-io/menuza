@@ -307,7 +307,14 @@ export function MenuAvailabilityCard({
 							<Label className="text-muted-foreground text-xs font-medium">
 								<Trans>Becomes available</Trans>
 							</Label>
-							<Select value={presetId} onValueChange={handlePresetChange}>
+							<Select
+								value={presetId}
+								items={presets.map((preset: any) => ({
+									value: preset.id,
+									label: preset.label,
+								}))}
+								onValueChange={handlePresetChange}
+							>
 								<SelectTrigger className="w-full">
 									<SelectValue
 										placeholder={_(msg`Select when it becomes available`)}

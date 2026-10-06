@@ -12,8 +12,8 @@ description: Published-branding guidance for customer-facing sites and commerce
 The storefront belongs visually to the organization whose site is published.
 Preserve the root guide's accessibility and interaction rules, but resolve
 appearance from the organization's published theme and content. The site can
-show editorial pages, a shop, and a customer account without becoming several
-disconnected products.
+show editorial pages, ordering, drops, a shop, and a customer account without
+becoming several disconnected products.
 
 ## Colors
 
@@ -32,9 +32,9 @@ uploaded or fallback fonts have different metrics.
 
 `src/components/SitePage.astro` places announcements, header, published blocks,
 and footer in reading order. Blocks must compose in arbitrary published
-sequences. On shop screens, keep product details, totals, and checkout
-progression understandable on small screens. Mirror layout for right-to-left
-locales.
+sequences. On shopping screens, keep availability, selections, totals, and
+checkout progression understandable on small screens. Mirror layout for
+right-to-left locales.
 
 ## Shapes
 
@@ -43,11 +43,12 @@ related controls consistent rather than copying the operator app's silhouette.
 
 ## Components
 
-Use the block renderer for published content; keep account and shop states
-distinct from marketing blocks. Phone verification and customer profile
-interactions call the regional API directly from the browser. Show purchase
-progress and failure states in words as well as appearance. Preview should
-reflect the latest published-theme draft without changing the live site.
+Use the block renderer for published content; keep account, cart, and checkout
+states distinct from marketing blocks. Phone verification and customer profile
+interactions call the regional API directly from the browser. Show upcoming,
+live, unavailable, sold-out, and closed states in words as well as appearance.
+Preview should reflect the latest published-theme draft without changing the
+live site.
 
 ## Do's and Don'ts
 
@@ -55,7 +56,8 @@ reflect the latest published-theme draft without changing the live site.
 
 - **Do** test each new block with different organization themes and translated
   content.
-- **Do** keep checkout and authentication usable when a request fails.
+- **Do** keep the ordering and authentication journey usable when availability
+  changes.
 
 ### Don't:
 

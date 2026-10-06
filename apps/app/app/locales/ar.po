@@ -12215,3 +12215,101 @@ msgstr "الرموز البريدية (مفصولة بفواصل أو مسافا
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "اسم المنطقة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:520
+msgid "About drop visibility"
+msgstr "حول ظهور الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:544
+msgid "Check the drop details and try saving again."
+msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخرى."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1311
+msgid "Checkout hold"
+msgstr "مهلة حجز الطلب"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1007
+msgid "Choose when and where customers can collect their orders."
+msgstr "اختر موعد ومكان استلام العملاء لطلباتهم."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:71
+msgid "Coming soon"
+msgstr "قريبًا"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1303
+msgid "Control checkout timing and what customers see."
+msgstr "تحكم في توقيت إتمام الطلب وما يراه العملاء."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:649
+msgid "Cover image"
+msgstr "صورة الغلاف"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:624
+msgid "Created from the name. You can change it before saving."
+msgstr "يُنشأ من الاسم. يمكنك تغييره قبل الحفظ."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:56
+msgid "Customer preview"
+msgstr "معاينة العميل"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1361
+msgid "Display the opening date below the countdown"
+msgstr "اعرض تاريخ الفتح أسفل العد التنازلي"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:596
+msgid "Drop name (customer-facing)"
+msgstr "اسم الطرح (الظاهر للعملاء)"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:845
+msgid "Optional caps per category or item"
+msgstr "حدود اختيارية لكل فئة أو صنف"
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:75
+msgid "Ordering now"
+msgstr "الطلبات متاحة الآن"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:609
+msgid "Page address"
+msgstr "عنوان الصفحة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:694
+msgid "Recommended wide banner (21:9)"
+msgstr "يُوصى بصورة بانورامية عريضة (21:9)"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:458
+msgid "Republish"
+msgstr "إعادة النشر"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:482
+msgid "Save as draft"
+msgstr "حفظ كمسودة"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1358
+msgid "Show opening date"
+msgstr "إظهار تاريخ الفتح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1300
+msgid "Storefront & Checkout"
+msgstr "واجهة المتجر وإتمام الطلب"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:588
+msgid "The title, image, and note customers will see."
+msgstr "العنوان والصورة والملاحظة التي سيراها العملاء."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:709
+msgid "Use an existing menu, then set optional inventory limits."
+msgstr "استخدم قائمة طعام موجودة، ثم حدد حدود المخزون الاختيارية."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:87
+msgid "View drop"
+msgstr "عرض الطرح"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:509
+#: app/components/menu/drop-wizard/drop-form.tsx:527
+msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
+msgstr "عند النشر، تظهر الطروحات العامة على موقعك. لا يمكن الوصول إلى الطروحات غير المدرجة إلا عبر الرابط."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1328
+#: app/components/menu/drop-wizard/drop-form.tsx:1345
+msgid "{mins} mins"
+msgstr "{mins} دقائق"

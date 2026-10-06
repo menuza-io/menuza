@@ -54,6 +54,22 @@ export function sitesFrameSrc(options: ShopCheckoutCspOptions) {
 export function isSitesProduction() {
 	return import.meta.env.MODE === 'production'
 }
+// Visibility affects listings and no-index on direct links. Do not serve
+// previously rendered visibility decisions from the HTML edge cache.
+export function isDropVisibilityPage(pathname: string) {
+	const segments = pathname.split('/').filter(Boolean)
+	if (segments.length === 0) return true
+	if (segments.length === 1) {
+		return (
+			segments[0] === 'menu' || /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segments[0]!)
+		)
+	}
+	const offset = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segments[0]!) ? 1 : 0
+	return (
+		(segments.length === offset + 1 && segments[offset] === 'menu') ||
+		(segments.length === offset + 2 && segments[offset] === 'drop')
+	)
+}
 
 export function shouldCachePublishedHtml(
 	request: Request,
@@ -64,6 +80,7 @@ export function shouldCachePublishedHtml(
 	if (request.method !== 'GET') return false
 	if (url.searchParams.has('preview')) return false
 	if (url.pathname.startsWith('/api/')) return false
+	if (isDropVisibilityPage(url.pathname)) return false
 	return true
 }
 

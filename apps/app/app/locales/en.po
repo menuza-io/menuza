@@ -12217,3 +12217,101 @@ msgstr "Zip Codes (comma or space separated)"
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
 msgstr "Zone Name"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:520
+msgid "About drop visibility"
+msgstr "About drop visibility"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:544
+msgid "Check the drop details and try saving again."
+msgstr "Check the drop details and try saving again."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1311
+msgid "Checkout hold"
+msgstr "Checkout hold"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1007
+msgid "Choose when and where customers can collect their orders."
+msgstr "Choose when and where customers can collect their orders."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:71
+msgid "Coming soon"
+msgstr "Coming soon"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1303
+msgid "Control checkout timing and what customers see."
+msgstr "Control checkout timing and what customers see."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:649
+msgid "Cover image"
+msgstr "Cover image"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:624
+msgid "Created from the name. You can change it before saving."
+msgstr "Created from the name. You can change it before saving."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:56
+msgid "Customer preview"
+msgstr "Customer preview"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1361
+msgid "Display the opening date below the countdown"
+msgstr "Display the opening date below the countdown"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:596
+msgid "Drop name (customer-facing)"
+msgstr "Drop name (customer-facing)"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:845
+msgid "Optional caps per category or item"
+msgstr "Optional caps per category or item"
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:75
+msgid "Ordering now"
+msgstr "Ordering now"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:609
+msgid "Page address"
+msgstr "Page address"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:694
+msgid "Recommended wide banner (21:9)"
+msgstr "Recommended wide banner (21:9)"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:458
+msgid "Republish"
+msgstr "Republish"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:482
+msgid "Save as draft"
+msgstr "Save as draft"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1358
+msgid "Show opening date"
+msgstr "Show opening date"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1300
+msgid "Storefront & Checkout"
+msgstr "Storefront & Checkout"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:588
+msgid "The title, image, and note customers will see."
+msgstr "The title, image, and note customers will see."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:709
+msgid "Use an existing menu, then set optional inventory limits."
+msgstr "Use an existing menu, then set optional inventory limits."
+
+#: app/components/menu/drop-wizard/drop-preview.tsx:87
+msgid "View drop"
+msgstr "View drop"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:509
+#: app/components/menu/drop-wizard/drop-form.tsx:527
+msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
+msgstr "When published, Public drops appear on your site. Unlisted drops are only available by link."
+
+#: app/components/menu/drop-wizard/drop-form.tsx:1328
+#: app/components/menu/drop-wizard/drop-form.tsx:1345
+msgid "{mins} mins"
+msgstr "{mins} mins"

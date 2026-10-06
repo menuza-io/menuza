@@ -6,17 +6,20 @@ import {
 	type DropInventoryInput,
 	type DropReminderInput,
 	type DropStatus,
-	DROP_STATUS_LABELS,
 	DROP_CHECKOUT_HOLD_OPTIONS,
+	DROP_STATUS_LABELS,
 	generatePickupSlots,
+	getDropDisplayStatus,
+	getLocalizedMenuValue,
 } from '@repo/common/menu-types'
+import { getLocalizedEditableValue } from '@repo/common/site-locales'
 import { getOrgSiteUrl } from '@repo/common/url'
-import { cn } from '@repo/ui'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Frame,
-	FrameAction,
 	FrameDescription,
+	FrameFooter,
 	FrameHeader,
 	FramePanel,
 	FrameTitle,
@@ -30,7 +33,6 @@ import {
 	InputGroupText,
 } from '@repo/ui/input-group'
 import { Label } from '@repo/ui/label'
-import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import {
 	Select,
 	SelectContent,
@@ -39,10 +41,11 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
-import { Textarea } from '@repo/ui/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import slugify from '@sindresorhus/slugify'
-import { useState, useMemo } from 'react'
-import { Form, Link, useActionData, useNavigation } from 'react-router'
+import { useState, useMemo, useEffect } from 'react'
+import { Form, useActionData, useNavigation } from 'react-router'
 import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
@@ -50,12 +53,19 @@ import {
 import { MenuFormHeader } from '#app/components/menu/menu-form-header.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
+	LocaleContext,
+	LocalizedInput,
+	LocalizedTextarea,
+} from '#app/components/website/locale-fields.tsx'
+import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import {
 	CreatePickupWindowDrawer,
 	ItemInventoryDrawer,
 	SectionInventoryDrawer,
 	AddReminderModal,
 	type LocationOption,
 } from './drop-drawers.tsx'
+import { DropPreview } from './drop-preview.tsx'
 
 export interface AvailableMenuItem {
 	id: string
@@ -109,6 +119,8 @@ export interface DropFormProps {
 	}
 	isEdit?: boolean
 	currency?: string
+	defaultLocale?: string
+	supportedLocales?: string[]
 }
 
 function formatToLocalDateTimeInput(dateInput?: Date | string | null): string {
@@ -155,6 +167,36 @@ function formatDisplayDate(dateStr?: string | null): string {
 }
 
 export function DropForm({
+	defaultLocale = 'en',
+	supportedLocales = [defaultLocale],
+	...props
+}: DropFormProps) {
+	const [activeLocale, setActiveLocale] = useState(defaultLocale)
+
+	return (
+		<LocaleContext.Provider
+			value={{
+				activeLocale,
+				defaultLocale,
+				locales: supportedLocales,
+				setActiveLocale,
+			}}
+		>
+			<TranslateProvider
+				activeLocale={activeLocale}
+				defaultLocale={defaultLocale}
+			>
+				<DropFormContent
+					{...props}
+					activeLocale={activeLocale}
+					defaultLocale={defaultLocale}
+				/>
+			</TranslateProvider>
+		</LocaleContext.Provider>
+	)
+}
+
+function DropFormContent({
 	pageTitle,
 	orgSlug,
 	locations,
@@ -162,7 +204,9 @@ export function DropForm({
 	initialData,
 	isEdit = false,
 	currency = 'USD',
-}: DropFormProps) {
+	defaultLocale = 'en',
+	activeLocale,
+}: DropFormProps & { activeLocale: string }) {
 	const { _ } = useLingui()
 	const navigation = useNavigation()
 	const actionData = useActionData<{
@@ -190,12 +234,19 @@ export function DropForm({
 
 	// Menu Selection State (selecting existing menu)
 	const [selectedMenuId, setSelectedMenuId] = useState<string>(
-		initialData?.menuId || (availableMenus[0]?.id ?? ''),
+		initialData?.menuId ?? '',
 	)
 
 	const selectedMenu = useMemo(
 		() => availableMenus.find((m) => m.id === selectedMenuId),
 		[availableMenus, selectedMenuId],
+	)
+	const [limitsOpen, setLimitsOpen] = useState(
+		() =>
+			inventoryOverridesForMenu(
+				initialData?.inventoryOverrides ?? [],
+				selectedMenu,
+			).length > 0,
 	)
 
 	// Pickup Windows
@@ -214,10 +265,21 @@ export function DropForm({
 		DropInventoryInput[]
 	>(initialData?.inventoryOverrides || [])
 
-	// Sidebar / Schedule / Options State
-	const [status, setStatus] = useState<DropStatus>(
-		initialData?.status || 'draft',
+	// Publication is a save action; the phase follows the ordering window.
+	const status: DropStatus = initialData?.status ?? 'draft'
+	const [now, setNow] = useState(() => new Date())
+	useEffect(() => {
+		const interval = setInterval(() => setNow(new Date()), 30_000)
+		return () => clearInterval(interval)
+	}, [])
+	const displayStatus = getDropDisplayStatus(
+		status,
+		ordersOpenAt,
+		ordersCloseAt,
+		now,
 	)
+	const isPublished = status !== 'draft'
+	const isLegacyEnded = status === 'closed' || status === 'completed'
 	const [visibility, setVisibility] = useState<'public' | 'unlisted'>(
 		initialData?.visibility || 'public',
 	)
@@ -282,11 +344,18 @@ export function DropForm({
 		[locations],
 	)
 
-	const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const val = e.target.value
-		setTitle(val)
-		if (!isSlugManuallyEdited) {
-			setSlug(slugify(val, { lowercase: true, separator: '-' }))
+	const handleTitleChange = (value: string) => {
+		setTitle(value)
+		if (!isSlugManuallyEdited && activeLocale === defaultLocale) {
+			setSlug(
+				slugify(
+					getLocalizedEditableValue(value, defaultLocale, defaultLocale),
+					{
+						lowercase: true,
+						separator: '-',
+					},
+				),
+			)
 		}
 	}
 
@@ -382,13 +451,98 @@ export function DropForm({
 					}
 					backHref={`/${orgSlug}/menu/drops`}
 					backLabel={_(msg`Back to drops`)}
-					saveButtonText={_(msg`Save Drop`)}
+					saveButtonText={
+						isEdit && isPublished && !isLegacyEnded
+							? _(msg`Save changes`)
+							: isLegacyEnded
+								? _(msg`Republish`)
+								: _(msg`Publish`)
+					}
 					isSubmitting={isSubmitting}
+					titleAccessory={
+						<Badge variant="secondary" className="shrink-0">
+							{DROP_STATUS_LABELS[displayStatus]}
+						</Badge>
+					}
+					showCancel={false}
+					submitName="intent"
+					submitValue="publish"
+					secondaryAction={
+						<Button
+							type="submit"
+							name="intent"
+							value="draft"
+							variant="secondary"
+							disabled={isSubmitting}
+							className="order-1"
+						>
+							{isPublished ? (
+								<Trans>Unpublish</Trans>
+							) : (
+								<Trans>Save as draft</Trans>
+							)}
+						</Button>
+					}
+					headerControls={
+						<div className="flex items-center gap-1.5">
+							<input type="hidden" name="visibility" value={visibility} />
+							<ToggleGroup
+								variant="outline"
+								value={[visibility]}
+								onValueChange={(values) => {
+									const next = values[0]
+									if (next === 'public' || next === 'unlisted') {
+										setVisibility(next)
+									}
+								}}
+								aria-label={_(msg`Visibility`)}
+								aria-describedby="drop-visibility-help"
+							>
+								<ToggleGroupItem value="public" type="button">
+									<Trans>Public</Trans>
+								</ToggleGroupItem>
+								<ToggleGroupItem value="unlisted" type="button">
+									<Trans>Unlisted</Trans>
+								</ToggleGroupItem>
+							</ToggleGroup>
+							<p id="drop-visibility-help" className="sr-only">
+								<Trans>
+									When published, Public drops appear on your site. Unlisted
+									drops are only available by link.
+								</Trans>
+							</p>
+							<Tooltip>
+								<TooltipTrigger
+									render={
+										<button
+											type="button"
+											className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-md outline-none focus-visible:ring-2"
+											aria-label={_(msg`About drop visibility`)}
+										>
+											<Icon name="help-circle" className="size-4" />
+										</button>
+									}
+								/>
+								<TooltipContent side="bottom">
+									<Trans>
+										When published, Public drops appear on your site. Unlisted
+										drops are only available by link.
+									</Trans>
+								</TooltipContent>
+							</Tooltip>
+						</div>
+					}
 				/>
 
 				{saveErrors.length > 0 ? (
 					<div className="mx-auto w-full max-w-6xl px-4 pt-4 md:px-6 lg:px-8">
-						<div className="border-destructive/30 bg-destructive/5 text-destructive rounded-lg border px-3 py-2 text-sm">
+						<div
+							role="alert"
+							className="border-destructive/30 bg-destructive/5 text-destructive rounded-lg border px-3 py-2 text-sm"
+						>
+							<p className="font-medium">
+								<Trans>Check the drop details and try saving again.</Trans>
+							</p>
 							{saveErrors.map((message) => (
 								<p key={message}>{message}</p>
 							))}
@@ -416,6 +570,8 @@ export function DropForm({
 				/>
 				<input type="hidden" name="coverImageKey" value={coverImageKey || ''} />
 				<input type="hidden" name="coverImageUrl" value={coverImageUrl || ''} />
+				<input type="hidden" name="title" value={title} />
+				<input type="hidden" name="description" value={description} />
 
 				{/* 2-Column Shopify Layout */}
 				<div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 lg:px-8">
@@ -430,34 +586,30 @@ export function DropForm({
 									</FrameTitle>
 									<FrameDescription>
 										<Trans>
-											Name, slug identifier, storefront banner, and custom note
-											to guests.
+											The title, image, and note customers will see.
 										</Trans>
 									</FrameDescription>
 								</FrameHeader>
 								<FramePanel className="space-y-4">
 									<div className="space-y-2">
-										<Label htmlFor="drop-title" className="text-sm font-medium">
-											<Trans>Drop Title</Trans>{' '}
-											<span className="text-destructive">*</span>
+										<Label htmlFor="drop-title">
+											<Trans>Drop name (customer-facing)</Trans>
 										</Label>
-										<Input
+										<LocalizedInput
 											id="drop-title"
-											name="title"
 											value={title}
 											onChange={handleTitleChange}
 											placeholder={_(msg`e.g. Sourdough Saturday Drop #12`)}
 											required
-											className="w-full"
 										/>
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="drop-slug" className="text-sm font-medium">
-											<Trans>URL Slug</Trans>
+										<Label htmlFor="drop-slug">
+											<Trans>Page address</Trans>
 										</Label>
-										<InputGroup>
-											<InputGroupAddon>
+										<InputGroup className="min-w-0">
+											<InputGroupAddon className="max-w-1/2 overflow-hidden">
 												<InputGroupText>{dropSlugPrefix}</InputGroupText>
 											</InputGroupAddon>
 											<InputGroupInput
@@ -468,20 +620,21 @@ export function DropForm({
 												placeholder="sourdough-saturday-drop"
 											/>
 										</InputGroup>
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												Created from the name. You can change it before saving.
+											</Trans>
+										</p>
 									</div>
 
 									<div className="space-y-2">
-										<Label
-											htmlFor="drop-description"
-											className="text-sm font-medium"
-										>
+										<Label htmlFor="drop-description">
 											<Trans>Note to Customers</Trans>
 										</Label>
-										<Textarea
+										<LocalizedTextarea
 											id="drop-description"
-											name="description"
 											value={description}
-											onChange={(e) => setDescription(e.target.value)}
+											onChange={setDescription}
 											placeholder={_(
 												msg`Share pickup instructions, special reheating tips, or what makes this drop special...`,
 											)}
@@ -492,17 +645,17 @@ export function DropForm({
 
 									{/* Cover Banner Image */}
 									<div className="space-y-2 pt-2">
-										<Label className="text-sm font-medium">
-											<Trans>Cover Banner Image</Trans>
-										</Label>
+										<p className="text-sm font-medium">
+											<Trans>Cover image</Trans>
+										</p>
 										{coverImageUrl ? (
-											<div className="group bg-muted/40 relative aspect-video max-w-lg overflow-hidden rounded-lg border">
+											<div className="max-w-lg space-y-2">
 												<img
 													src={coverImageUrl}
-													alt={title}
-													className="h-full w-full object-cover"
+													alt=""
+													className="aspect-[21/9] w-full rounded-lg border object-cover"
 												/>
-												<div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+												<div className="flex gap-2">
 													<Button
 														type="button"
 														variant="secondary"
@@ -525,9 +678,10 @@ export function DropForm({
 												</div>
 											</div>
 										) : (
-											<div
+											<button
+												type="button"
 												onClick={() => setMediaPickerOpen(true)}
-												className="hover:bg-muted/40 max-w-lg cursor-pointer rounded-lg border border-dashed p-6 text-center transition-colors"
+												className="hover:bg-muted/40 focus-visible:ring-ring block w-full max-w-lg cursor-pointer rounded-lg border border-dashed p-6 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
 											>
 												<Icon
 													name="image"
@@ -537,9 +691,9 @@ export function DropForm({
 													<Trans>Click to choose a cover image</Trans>
 												</p>
 												<p className="text-muted-foreground mt-0.5 text-[11px]">
-													<Trans>Recommended 16:9 banner ratio</Trans>
+													<Trans>Recommended wide banner (21:9)</Trans>
 												</p>
-											</div>
+											</button>
 										)}
 									</div>
 								</FramePanel>
@@ -553,49 +707,9 @@ export function DropForm({
 									</FrameTitle>
 									<FrameDescription>
 										<Trans>
-											Choose which menu this drop sells. Hidden menus are fine.
+											Use an existing menu, then set optional inventory limits.
 										</Trans>
 									</FrameDescription>
-									<FrameAction>
-										<div className="flex items-center gap-1.5">
-											{selectedMenu && (
-												<Button
-													type="button"
-													variant="outline"
-													size="xs"
-													className="h-8 gap-1 text-xs"
-													render={
-														<Link
-															to={`/${orgSlug}/menu/menus/${selectedMenu.id}`}
-															target="_blank"
-														/>
-													}
-												>
-													<Icon name="pencil" className="size-3" />
-													<Trans>Edit</Trans>
-													<Icon
-														name="external-link"
-														className="text-muted-foreground ml-0.5 size-2.5"
-													/>
-												</Button>
-											)}
-											<Button
-												type="button"
-												variant={selectedMenu ? 'ghost' : 'outline'}
-												size="xs"
-												className="h-8 gap-1 text-xs"
-												render={
-													<Link
-														to={`/${orgSlug}/menu/menus/new`}
-														target="_blank"
-													/>
-												}
-											>
-												<Icon name="plus" className="size-3" />
-												<Trans>New menu</Trans>
-											</Button>
-										</div>
-									</FrameAction>
 								</FrameHeader>
 								<FramePanel className="space-y-4">
 									{/* Menu Selector Dropdown */}
@@ -647,7 +761,11 @@ export function DropForm({
 													{selectedMenu ? (
 														<div className="flex items-center gap-2">
 															<span className="font-medium">
-																{selectedMenu.displayName}
+																{getLocalizedMenuValue(
+																	selectedMenu.displayName,
+																	activeLocale,
+																	defaultLocale,
+																)}
 															</span>
 															{selectedMenu.internalName && (
 																<span className="text-muted-foreground text-xs">
@@ -676,7 +794,11 @@ export function DropForm({
 														<SelectItem key={menu.id} value={menu.id}>
 															<div className="flex w-full items-center gap-2">
 																<span className="font-medium">
-																	{menu.displayName}
+																	{getLocalizedMenuValue(
+																		menu.displayName,
+																		activeLocale,
+																		defaultLocale,
+																	)}
 																</span>
 																{menu.internalName && (
 																	<span className="text-muted-foreground text-xs">
@@ -707,25 +829,37 @@ export function DropForm({
 									</div>
 
 									{selectedMenu ? (
-										<div className="border-border/60 space-y-3 border-t pt-2">
-											<div>
-												<h4 className="text-foreground text-sm font-semibold">
-													<Trans>Inventory limits</Trans>
-												</h4>
-												<p className="text-muted-foreground text-xs">
-													<Trans>Optional caps per section or item.</Trans>
-												</p>
-											</div>
+										<details
+											open={limitsOpen}
+											onToggle={(event) =>
+												setLimitsOpen(event.currentTarget.open)
+											}
+											className="border-border/60 group border-t pt-3"
+										>
+											<summary className="focus-visible:ring-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm focus-visible:ring-2 focus-visible:outline-none">
+												<span>
+													<span className="block text-sm font-medium">
+														<Trans>Inventory limits</Trans>
+													</span>
+													<span className="text-muted-foreground text-xs">
+														<Trans>Optional caps per category or item</Trans>
+													</span>
+												</span>
+												<Icon
+													name="chevron-down"
+													className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180"
+												/>
+											</summary>
 
 											{selectedMenu.categories.length === 0 ? (
-												<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
+												<div className="text-muted-foreground mt-4 rounded-lg border border-dashed p-6 text-center text-xs">
 													<Trans>
 														This menu has no categories assigned yet. Go to
 														Menus to add categories and items.
 													</Trans>
 												</div>
 											) : (
-												<div className="divide-border/50 divide-y">
+												<div className="divide-border/50 mt-3 divide-y">
 													{selectedMenu.categories.map((cat) => {
 														const catOverride = inventoryOverrides.find(
 															(inv) =>
@@ -740,7 +874,11 @@ export function DropForm({
 																<div className="flex items-center justify-between gap-3 py-3.5">
 																	<div className="flex min-w-0 items-center gap-2.5">
 																		<span className="text-foreground truncate text-sm font-semibold">
-																			{cat.displayName}
+																			{getLocalizedMenuValue(
+																				cat.displayName,
+																				activeLocale,
+																				defaultLocale,
+																			)}
 																		</span>
 																		<span className="text-muted-foreground shrink-0 text-[11px]">
 																			{cat.items.length}{' '}
@@ -794,7 +932,11 @@ export function DropForm({
 																			>
 																				<div className="min-w-0">
 																					<p className="text-foreground truncate text-sm">
-																						{item.displayName}
+																						{getLocalizedMenuValue(
+																							item.displayName,
+																							activeLocale,
+																							defaultLocale,
+																						)}
 																					</p>
 																					<p className="text-muted-foreground text-xs">
 																						{formatCurrency(
@@ -835,7 +977,7 @@ export function DropForm({
 													})}
 												</div>
 											)}
-										</div>
+										</details>
 									) : (
 										<div className="rounded-lg border border-dashed p-8 text-center">
 											<Icon
@@ -863,21 +1005,9 @@ export function DropForm({
 									</FrameTitle>
 									<FrameDescription>
 										<Trans>
-											Configure collection dates, time spans, interval
-											durations, and order slot capacity.
+											Choose when and where customers can collect their orders.
 										</Trans>
 									</FrameDescription>
-									<FrameAction>
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={openNewPickupWindow}
-										>
-											<Icon name="plus" className="mr-1.5 size-4" />
-											<Trans>Add Pickup Window</Trans>
-										</Button>
-									</FrameAction>
 								</FrameHeader>
 								{pickupWindows.length === 0 ? (
 									<FramePanel className="p-8 text-center">
@@ -1003,119 +1133,41 @@ export function DropForm({
 										)
 									})
 								)}
+								{pickupWindows.length > 0 && (
+									<FrameFooter className="items-end">
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={openNewPickupWindow}
+										>
+											<Icon name="plus" className="mr-1.5 size-4" />
+											<Trans>Add Pickup Window</Trans>
+										</Button>
+									</FrameFooter>
+								)}
 							</Frame>
 						</div>
 
 						<div className="space-y-6 lg:col-span-4">
-							{/* Status & Visibility */}
-							<Frame className="w-full" stackedPanels>
-								<FrameHeader>
-									<FrameTitle className="text-base">
-										<Trans>Drop Status</Trans>
-									</FrameTitle>
-									<FrameDescription>
-										<Trans>
-											Control lifecycle stage and storefront visibility.
-										</Trans>
-									</FrameDescription>
-								</FrameHeader>
-								<FramePanel className="space-y-1.5 p-5">
-									<Label
-										htmlFor="drop-status-select"
-										className="text-muted-foreground text-xs font-medium"
-									>
-										<Trans>Lifecycle State</Trans>
-									</Label>
-									<Select
-										value={status}
-										onValueChange={(val) => {
-											if (val) setStatus(val as DropStatus)
-										}}
-										name="status"
-									>
-										<SelectTrigger id="drop-status-select" className="w-full">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="draft">
-												<div className="flex items-center gap-2">
-													<span className="size-2 rounded-full bg-slate-400" />
-													<span>{DROP_STATUS_LABELS.draft}</span>
-												</div>
-											</SelectItem>
-											<SelectItem value="scheduled">
-												<div className="flex items-center gap-2">
-													<span className="size-2 rounded-full bg-blue-500" />
-													<span>{DROP_STATUS_LABELS.scheduled}</span>
-												</div>
-											</SelectItem>
-											<SelectItem value="live">
-												<div className="flex items-center gap-2">
-													<span className="size-2 rounded-full bg-emerald-500" />
-													<span>{DROP_STATUS_LABELS.live}</span>
-												</div>
-											</SelectItem>
-											<SelectItem value="closed">
-												<div className="flex items-center gap-2">
-													<span className="size-2 rounded-full bg-amber-500" />
-													<span>{DROP_STATUS_LABELS.closed}</span>
-												</div>
-											</SelectItem>
-											<SelectItem value="completed">
-												<div className="flex items-center gap-2">
-													<span className="bg-muted-foreground size-2 rounded-full" />
-													<span>{DROP_STATUS_LABELS.completed}</span>
-												</div>
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</FramePanel>
-								<FramePanel className="space-y-1.5 p-5">
-									<Label className="text-muted-foreground text-xs font-medium">
-										<Trans>Visibility</Trans>
-									</Label>
-									<RadioGroup
-										value={visibility}
-										onValueChange={(val) => {
-											if (val) setVisibility(val as 'public' | 'unlisted')
-										}}
-										name="visibility"
-										className="grid grid-cols-2 gap-2"
-									>
-										<label
-											htmlFor="visibility-public"
-											className={cn(
-												'flex cursor-pointer items-center justify-between rounded-lg border p-2.5 text-xs',
-												visibility === 'public'
-													? 'border-primary bg-primary/5 font-medium'
-													: 'border-border hover:bg-muted/30',
-											)}
-										>
-											<span>
-												<Trans>Public</Trans>
-											</span>
-											<RadioGroupItem value="public" id="visibility-public" />
-										</label>
-										<label
-											htmlFor="visibility-unlisted"
-											className={cn(
-												'flex cursor-pointer items-center justify-between rounded-lg border p-2.5 text-xs',
-												visibility === 'unlisted'
-													? 'border-primary bg-primary/5 font-medium'
-													: 'border-border hover:bg-muted/30',
-											)}
-										>
-											<span>
-												<Trans>Unlisted</Trans>
-											</span>
-											<RadioGroupItem
-												value="unlisted"
-												id="visibility-unlisted"
-											/>
-										</label>
-									</RadioGroup>
-								</FramePanel>
-							</Frame>
+							<DropPreview
+								title={getLocalizedMenuValue(
+									title,
+									activeLocale,
+									defaultLocale,
+								)}
+								description={getLocalizedMenuValue(
+									description,
+									activeLocale,
+									defaultLocale,
+								)}
+								coverImageUrl={coverImageUrl}
+								ordersOpenAt={ordersOpenAt}
+								ordersCloseAt={ordersCloseAt}
+								status={status}
+								visibility={visibility}
+								now={now}
+							/>
 
 							{/* Ordering Timing & Windows */}
 							<Frame className="w-full" stackedPanels>
@@ -1127,94 +1179,188 @@ export function DropForm({
 										<Trans>When orders open and close for customers.</Trans>
 									</FrameDescription>
 								</FrameHeader>
-								<FramePanel className="space-y-1.5 p-5">
-									<Label
-										htmlFor="orders-open-at"
-										className="text-muted-foreground text-xs font-medium"
-									>
-										<Trans>Orders Open At</Trans>
-									</Label>
-									<Input
-										id="orders-open-at"
-										name="ordersOpenAt"
-										type="datetime-local"
-										value={ordersOpenAt}
-										onChange={(e) => setOrdersOpenAt(e.target.value)}
-										className="text-xs"
-									/>
-								</FramePanel>
-								<FramePanel className="space-y-1.5 p-5">
-									<Label
-										htmlFor="orders-close-at"
-										className="text-muted-foreground text-xs font-medium"
-									>
-										<Trans>Orders Close At</Trans>
-									</Label>
-									<Input
-										id="orders-close-at"
-										name="ordersCloseAt"
-										type="datetime-local"
-										value={ordersCloseAt}
-										onChange={(e) => setOrdersCloseAt(e.target.value)}
-										className="text-xs"
-									/>
-								</FramePanel>
-								<FramePanel className="space-y-1.5 p-5">
-									<Label
-										htmlFor="checkout-hold-minutes"
-										className="text-muted-foreground text-xs font-medium"
-									>
-										<Trans>Checkout Hold Timer</Trans>
-									</Label>
-									<Select
-										value={String(checkoutHoldMinutes)}
-										onValueChange={(val) => {
-											if (val) setCheckoutHoldMinutes(Number(val))
-										}}
-										name="checkoutHoldMinutes"
-									>
-										<SelectTrigger
-											id="checkout-hold-minutes"
-											className="w-full text-xs"
-										>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{DROP_CHECKOUT_HOLD_OPTIONS.map((mins) => (
-												<SelectItem key={mins} value={String(mins)}>
-													<Trans>{mins} minutes hold</Trans>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<p className="text-muted-foreground text-[11px]">
-										<Trans>
-											Locks inventory while customer fills in checkout details.
-										</Trans>
-									</p>
+								<FramePanel className="space-y-4">
+									<div className="space-y-2">
+										<Label htmlFor="orders-open-at">
+											<Trans>Orders open</Trans>
+										</Label>
+										<Input
+											id="orders-open-at"
+											name="ordersOpenAt"
+											type="datetime-local"
+											value={ordersOpenAt}
+											onChange={(e) => setOrdersOpenAt(e.target.value)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="orders-close-at">
+											<Trans>Orders close</Trans>
+										</Label>
+										<Input
+											id="orders-close-at"
+											name="ordersCloseAt"
+											type="datetime-local"
+											value={ordersCloseAt}
+											onChange={(e) => setOrdersCloseAt(e.target.value)}
+										/>
+									</div>
 								</FramePanel>
 							</Frame>
 
-							{/* Display Options */}
+							{/* Notification Reminders */}
 							<Frame className="w-full" stackedPanels>
 								<FrameHeader>
 									<FrameTitle className="text-base">
-										<Trans>Display Options</Trans>
+										<Trans>Scheduled Reminders</Trans>
 									</FrameTitle>
 									<FrameDescription>
-										<Trans>Guest storefront indicators and countdowns.</Trans>
+										<Trans>
+											Notify subscribed guests before open or close.
+										</Trans>
 									</FrameDescription>
 								</FrameHeader>
+								{reminders.length === 0 ? (
+									<FramePanel className="p-5 text-center">
+										<p className="text-muted-foreground mb-4 text-xs italic">
+											<Trans>No reminder notifications set.</Trans>
+										</p>
+										<Button
+											type="button"
+											variant="secondary"
+											size="sm"
+											onClick={openNewReminder}
+										>
+											<Icon name="plus" className="mr-1.5 size-4" />
+											<Trans>Add reminder</Trans>
+										</Button>
+									</FramePanel>
+								) : (
+									reminders.map((rem, idx) => (
+										<FramePanel
+											key={idx}
+											className="flex items-start justify-between gap-3 px-5 py-3.5"
+										>
+											<div className="min-w-0 flex-1 space-y-0.5">
+												<p className="text-muted-foreground text-[11px] font-medium capitalize">
+													{rem.triggerType.replace('_', ' ')}
+												</p>
+												<p className="text-foreground line-clamp-1 text-sm font-medium">
+													{rem.title}
+												</p>
+												{rem.message && (
+													<p className="text-muted-foreground line-clamp-2 text-xs">
+														{rem.message}
+													</p>
+												)}
+											</div>
+											<div className="mt-0.5 flex shrink-0 items-center gap-0.5">
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon-xs"
+													onClick={() => openEditReminder(idx)}
+													className="text-muted-foreground hover:text-foreground"
+													title={_(msg`Edit reminder`)}
+												>
+													<Icon name="pencil" className="size-3.5" />
+												</Button>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon-xs"
+													onClick={() => handleRemoveReminder(idx)}
+													className="text-muted-foreground hover:text-destructive"
+													title={_(msg`Remove reminder`)}
+												>
+													<Icon name="trash-2" className="size-3.5" />
+												</Button>
+											</div>
+										</FramePanel>
+									))
+								)}
+								{reminders.length > 0 && (
+									<FrameFooter className="items-end">
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={openNewReminder}
+										>
+											<Icon name="plus" className="mr-1.5 size-4" />
+											<Trans>Add reminder</Trans>
+										</Button>
+									</FrameFooter>
+								)}
+							</Frame>
+
+							{/* Storefront and checkout settings */}
+							<Frame className="w-full" stackedPanels>
+								<FrameHeader>
+									<FrameTitle className="text-base">
+										<Trans>Storefront & Checkout</Trans>
+									</FrameTitle>
+									<FrameDescription>
+										<Trans>
+											Control checkout timing and what customers see.
+										</Trans>
+									</FrameDescription>
+								</FrameHeader>
+								<FramePanel className="flex items-center justify-between gap-4 px-5 py-3.5">
+									<div className="min-w-0 space-y-0.5">
+										<Label htmlFor="checkout-hold-minutes">
+											<Trans>Checkout hold</Trans>
+										</Label>
+										<p
+											id="checkout-hold-help"
+											className="text-muted-foreground text-xs"
+										>
+											<Trans>
+												Locks inventory while customer fills in checkout
+												details.
+											</Trans>
+										</p>
+									</div>
+									<div className="w-28 shrink-0">
+										<Select
+											value={String(checkoutHoldMinutes)}
+											items={DROP_CHECKOUT_HOLD_OPTIONS.map((mins) => ({
+												value: String(mins),
+												label: <Trans>{mins} mins</Trans>,
+											}))}
+											onValueChange={(val) => {
+												if (val) setCheckoutHoldMinutes(Number(val))
+											}}
+											name="checkoutHoldMinutes"
+										>
+											<SelectTrigger
+												id="checkout-hold-minutes"
+												aria-describedby="checkout-hold-help"
+												className="w-full"
+											>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{DROP_CHECKOUT_HOLD_OPTIONS.map((mins) => (
+													<SelectItem key={mins} value={String(mins)}>
+														<Trans>{mins} mins</Trans>
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								</FramePanel>
 								<FramePanel className="flex items-center justify-between px-5 py-3.5">
 									<Label
 										htmlFor="countdown-timer-switch"
 										className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
 									>
 										<div className="text-foreground text-sm">
-											<Trans>Show Countdown Timer</Trans>
+											<Trans>Show opening date</Trans>
 										</div>
 										<p className="text-muted-foreground text-xs">
-											<Trans>Display live countdown until orders open</Trans>
+											<Trans>
+												Display the opening date below the countdown
+											</Trans>
 										</p>
 									</Label>
 									<Switch
@@ -1298,81 +1444,6 @@ export function DropForm({
 									/>
 								</FramePanel>
 							</Frame>
-
-							{/* Notification Reminders */}
-							<Frame className="w-full" stackedPanels>
-								<FrameHeader>
-									<FrameTitle className="text-base">
-										<Trans>Scheduled Reminders</Trans>
-									</FrameTitle>
-									<FrameDescription>
-										<Trans>
-											Notify subscribed guests before open or close.
-										</Trans>
-									</FrameDescription>
-									<FrameAction>
-										<Button
-											type="button"
-											variant="ghost"
-											size="xs"
-											onClick={openNewReminder}
-										>
-											<Icon name="plus" className="mr-1 size-3.5" />
-											<Trans>Add</Trans>
-										</Button>
-									</FrameAction>
-								</FrameHeader>
-								{reminders.length === 0 ? (
-									<FramePanel className="p-5 text-center">
-										<p className="text-muted-foreground text-xs italic">
-											<Trans>No reminder notifications set.</Trans>
-										</p>
-									</FramePanel>
-								) : (
-									reminders.map((rem, idx) => (
-										<FramePanel
-											key={idx}
-											className="flex items-start justify-between gap-3 px-5 py-3.5"
-										>
-											<div className="min-w-0 flex-1 space-y-0.5">
-												<p className="text-muted-foreground text-[11px] font-medium capitalize">
-													{rem.triggerType.replace('_', ' ')}
-												</p>
-												<p className="text-foreground line-clamp-1 text-sm font-medium">
-													{rem.title}
-												</p>
-												{rem.message && (
-													<p className="text-muted-foreground line-clamp-2 text-xs">
-														{rem.message}
-													</p>
-												)}
-											</div>
-											<div className="mt-0.5 flex shrink-0 items-center gap-0.5">
-												<Button
-													type="button"
-													variant="ghost"
-													size="icon-xs"
-													onClick={() => openEditReminder(idx)}
-													className="text-muted-foreground hover:text-foreground"
-													title={_(msg`Edit reminder`)}
-												>
-													<Icon name="pencil" className="size-3.5" />
-												</Button>
-												<Button
-													type="button"
-													variant="ghost"
-													size="icon-xs"
-													onClick={() => handleRemoveReminder(idx)}
-													className="text-muted-foreground hover:text-destructive"
-													title={_(msg`Remove reminder`)}
-												>
-													<Icon name="trash-2" className="size-3.5" />
-												</Button>
-											</div>
-										</FramePanel>
-									))
-								)}
-							</Frame>
 						</div>
 					</div>
 				</div>
@@ -1405,7 +1476,11 @@ export function DropForm({
 					onOpenChange={setSectionInventoryOpen}
 					category={{
 						id: selectedCategoryForInventory.id,
-						displayName: selectedCategoryForInventory.displayName,
+						displayName: getLocalizedMenuValue(
+							selectedCategoryForInventory.displayName,
+							activeLocale,
+							defaultLocale,
+						),
 					}}
 					override={inventoryOverrides.find(
 						(inv) =>
@@ -1422,7 +1497,11 @@ export function DropForm({
 					onOpenChange={setItemInventoryOpen}
 					item={{
 						id: selectedItemForInventory.id,
-						displayName: selectedItemForInventory.displayName,
+						displayName: getLocalizedMenuValue(
+							selectedItemForInventory.displayName,
+							activeLocale,
+							defaultLocale,
+						),
 					}}
 					override={inventoryOverrides.find(
 						(inv) =>

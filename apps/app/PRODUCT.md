@@ -21,10 +21,11 @@ the storefront and the native customer apps.
 ## Product Purpose
 
 The operator application: the primary product surface and the most complete UI
-in the template. An organization runs its whole business here: build and
-publish its website, run the shop, manage customers and the message mailbox,
-market with broadcasts and automations, collaborate in team chat, read reports,
-and administer members, roles, integrations, and billing.
+in the template. An organization runs its whole business here: build and publish
+its website, manage the catalog and scheduled drops, take orders and run the
+shop, manage customers and the message mailbox, market with broadcasts and
+automations, collaborate in team chat, read reports, and administer members,
+roles, integrations, and billing.
 
 ## Positioning
 
@@ -51,11 +52,14 @@ Sidebar surface (route names as shipped):
 - Customers (regional customer list) and Mailbox (review of incoming messages
   from website forms and customer feedback, with unread counts, replies, and AI
   draft assistance).
+- Menu: Overview, Menus, Categories, Items, Modifier Groups, Options, Drops
+  (scheduled order windows with inventory limits, checkout holds, and pickup
+  windows).
 - Marketing: Overview, Broadcasts, Automations (journeys with runs; the email
   designer is a full-screen overlay with an explicit save).
 - Website: General Settings, Pages, Forms, Analytics, Branding, Announcements,
   Redirects.
-- Settings: General, Members, Roles and access, Chat channels,
+- Settings: General, Locations, Members, Roles and access, Chat channels,
   Integrations, Shop, MCP Server, Notifications, Billing.
 - Account level: organization list and switcher, Profile, Security.
 - Auth surface: login, signup, email verification, two-factor (TOTP and backup

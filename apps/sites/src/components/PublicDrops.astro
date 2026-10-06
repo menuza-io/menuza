@@ -1,0 +1,61 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocaleHref } from '@repo/common/site-locales'
+import { fetchPublishedDrops } from '~/lib/org'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
+
+const drops = await fetchPublishedDrops({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+})
+const i18n = Astro.locals.i18n
+const defaultLocale = Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const heading = i18n._(msg`Drops`)
+const liveLabel = i18n._(msg`Ordering now`)
+const upcomingLabel = i18n._(msg`Coming soon`)
+const closedLabel = i18n._(msg`Closed`)
+const viewLabel = i18n._(msg`View drop`)
+
+function phaseLabel(drop: (typeof drops)[number]) {
+	if (drop.status === 'closed' || drop.status === 'completed') return closedLabel
+	if (drop.status === 'scheduled') return upcomingLabel
+	return liveLabel
+}
+---
+
+{drops.length > 0 ? (
+	<section class="border-b border-border bg-muted/20 py-10" aria-label={heading}>
+		<div class={siteContainer}>
+			<h2 class="font-heading text-2xl font-bold tracking-tight text-foreground">{heading}</h2>
+			<div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{drops.map((drop) => (
+					<a
+						href={getLocaleHref(`/drop/${encodeURIComponent(drop.slug)}`, locale, defaultLocale)}
+						class="group flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card text-card-foreground transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						{resolveMediaUrl(drop.coverImageUrl) ? (
+							<img
+								src={resolveMediaUrl(drop.coverImageUrl)}
+								alt=""
+								loading="lazy"
+								class="aspect-[16/9] w-full object-cover"
+							/>
+						) : null}
+						<div class="flex flex-1 flex-col gap-2 p-5">
+							<span class="text-xs font-medium text-muted-foreground">{phaseLabel(drop)}</span>
+							<h3 class="font-heading text-lg font-semibold text-foreground">{getLocalizedMenuValue(drop.title, locale, defaultLocale)}</h3>
+							{drop.description ? (
+								<p class="line-clamp-2 text-sm text-muted-foreground">{getLocalizedMenuValue(drop.description, locale, defaultLocale)}</p>
+							) : null}
+							<span class="mt-auto pt-2 text-sm font-semibold text-primary group-hover:underline">
+								{viewLabel}
+							</span>
+						</div>
+					</a>
+				))}
+			</div>
+		</div>
+	</section>
+) : null}

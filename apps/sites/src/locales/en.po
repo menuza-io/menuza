@@ -571,3 +571,23 @@ msgstr "This combination is sold out. Choose another combination."
 
 msgid "Some items are no longer available and were removed from your order."
 msgstr "Some items are no longer available and were removed from your order."
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Closed"
+msgstr "Closed"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Coming soon"
+msgstr "Coming soon"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Drops"
+msgstr "Drops"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "Ordering now"
+msgstr "Ordering now"
+
+#: src/components/PublicDrops.astro.ts:3
+msgid "View drop"
+msgstr "View drop"

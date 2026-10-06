@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseLocalizedString } from './site-locales.ts'
 
 export const ALLERGENS = [
 	'dairy',
@@ -97,7 +98,22 @@ export const DROP_STATUS_LABELS: Record<DropStatus, string> = {
 	scheduled: 'Scheduled',
 	live: 'Live',
 	closed: 'Closed',
-	completed: 'Completed',
+	completed: 'Closed',
+}
+
+// Publication is stored; the customer-facing phase follows the order window.
+export function getDropDisplayStatus(
+	status: DropStatus,
+	ordersOpenAt: Date | string | null | undefined,
+	ordersCloseAt: Date | string | null | undefined,
+	now: Date = new Date(),
+): DropStatus {
+	if (status === 'draft') return 'draft'
+	if (status === 'completed' || status === 'closed') return 'closed'
+	if (ordersCloseAt && new Date(ordersCloseAt) <= now) return 'closed'
+	if (ordersOpenAt && new Date(ordersOpenAt) > now) return 'scheduled'
+	if (status === 'scheduled' && !ordersOpenAt) return 'scheduled'
+	return 'live'
 }
 
 export const DROP_VISIBILITIES = ['public', 'unlisted'] as const
@@ -106,6 +122,14 @@ export type DropVisibility = (typeof DROP_VISIBILITIES)[number]
 export const DROP_VISIBILITY_LABELS: Record<DropVisibility, string> = {
 	public: 'Public',
 	unlisted: 'Unlisted',
+}
+
+// Discovery is separate from access: published unlisted drops still open by URL.
+export function isDropDiscoverable(
+	status: DropStatus,
+	visibility: DropVisibility,
+): boolean {
+	return status !== 'draft' && visibility === 'public'
 }
 
 export const DROP_SLOT_INTERVALS = [15, 30, 45, 60] as const
@@ -571,7 +595,18 @@ export type DropReminderInput = z.infer<typeof DropReminderInputSchema>
 export const DropInputSchema = z.object({
 	id: z.string().optional(),
 	menuId: z.string().min(1, 'Please select a menu for this drop'),
-	title: z.string().trim().min(1, 'Drop title is required').max(150),
+	title: z
+		.string()
+		.trim()
+		.min(1, 'Drop title is required')
+		.max(3000)
+		.refine(
+			(value) =>
+				Object.values(parseLocalizedString(value)).every(
+					(translation) => (translation?.length ?? 0) <= 150,
+				),
+			'Each drop title translation must be 150 characters or fewer',
+		),
 	slug: z.string().trim().min(1).max(150).optional(),
 	description: z.string().optional().nullable(),
 	coverImageKey: z.string().optional().nullable(),
@@ -591,6 +626,40 @@ export const DropInputSchema = z.object({
 })
 
 export type DropInput = z.infer<typeof DropInputSchema>
+
+export function hasDropDefaultTitle(
+	title: string,
+	defaultLocale: string,
+): boolean {
+	return Boolean(
+		parseLocalizedString(title, defaultLocale)[defaultLocale]?.trim(),
+	)
+}
+
+export function getDropPublicationErrors(
+	data: DropInput,
+	now: Date = new Date(),
+	options: { requireFutureClose?: boolean } = {},
+): Record<string, string[]> {
+	const errors: Record<string, string[]> = {}
+	if (!data.ordersOpenAt) {
+		errors.ordersOpenAt = ['Set when orders open before publishing.']
+	}
+	if (!data.ordersCloseAt) {
+		errors.ordersCloseAt = ['Set when orders close before publishing.']
+	} else if (
+		options.requireFutureClose !== false &&
+		data.ordersCloseAt <= now
+	) {
+		errors.ordersCloseAt = ['The closing time must be in the future.']
+	} else if (data.ordersOpenAt && data.ordersCloseAt <= data.ordersOpenAt) {
+		errors.ordersCloseAt = ['The closing time must be after the opening time.']
+	}
+	if (data.pickupWindows.length === 0) {
+		errors.pickupWindows = ['Add a pickup window before publishing.']
+	}
+	return errors
+}
 
 export interface PickupSlot {
 	time: string
