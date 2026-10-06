@@ -73,7 +73,7 @@ async function applyInstanceHeaders(responseHeaders: Headers) {
 	responseHeaders.set('cf-primary-instance', primaryInstance)
 }
 
-function applyContentSecurity(
+export function applyContentSecurity(
 	responseHeaders: Headers,
 	nonce: string,
 	builderMode: boolean,
@@ -87,7 +87,12 @@ function applyContentSecurity(
 					'base-uri': ["'self'"],
 				},
 				navigation: {
-					'form-action': ["'self'"],
+					// OAuth starts with a form POST that redirects to the provider.
+					'form-action': [
+						"'self'",
+						'https://accounts.google.com',
+						'https://github.com',
+					],
 					'frame-ancestors': ["'self'"],
 				},
 				fetch: {
