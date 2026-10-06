@@ -29,7 +29,10 @@ mailboxRoutes.use('*', async (c, next) => {
 		if (typeof auth.sub !== 'string' || !auth.sub)
 			return c.json({ error: 'Unauthorized' }, 401)
 		const organization = await findActiveOrganizationById(auth.orgId)
-		if (!organization || !orgMatchesNodeRegion(organization.dataRegion)) {
+		if (!organization) {
+			return c.json({ error: 'Organization not found' }, 404)
+		}
+		if (!orgMatchesNodeRegion(organization.dataRegion)) {
 			return c.json({ error: 'Mailbox is not available in this region' }, 404)
 		}
 		c.set('operator', { orgId: auth.orgId, sub: auth.sub })

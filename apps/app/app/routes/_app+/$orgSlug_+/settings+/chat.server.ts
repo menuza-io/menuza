@@ -14,13 +14,8 @@ import {
 	listChatAssignableMembers,
 	updateChannel,
 } from '#app/utils/chat/channels.server.ts'
-import { notifyChat } from '#app/utils/chat/namespace.server.ts'
-import { type ChatRetentionDays } from '@repo/common/chat'
 import { type ChatSettingsActionResult } from '#app/utils/chat/chat-settings.ts'
-import {
-	getChatRetentionDays,
-	setChatRetentionDays,
-} from '#app/utils/chat/retention.server.ts'
+import { notifyChat } from '#app/utils/chat/namespace.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -30,13 +25,6 @@ import { listOrganizationRoles } from './roles.server.ts'
 
 export type { ChatSettingsActionResult } from '#app/utils/chat/chat-settings.ts'
 
-const retentionDaysSchema = z.union([
-	z.null(),
-	z.literal(30),
-	z.literal(90),
-	z.literal(365),
-])
-
 const intentSchema = z.discriminatedUnion('intent', [
 	z.object({
 		intent: z.literal('save'),
@@ -45,10 +33,6 @@ const intentSchema = z.discriminatedUnion('intent', [
 	z.object({
 		intent: z.literal('delete'),
 		id: z.string().min(1).max(64),
-	}),
-	z.object({
-		intent: z.literal('retention'),
-		days: retentionDaysSchema,
 	}),
 ])
 
@@ -63,18 +47,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_CHAT_ANY,
 	)
-	const [channels, roles, members, retentionDays] = await Promise.all([
+	const [channels, roles, members] = await Promise.all([
 		listChannelsForManager(organization.id),
 		listOrganizationRoles(organization.id),
 		listChatAssignableMembers(organization.id),
-		getChatRetentionDays(organization.id),
 	])
 	return data(
 		{
 			channels,
 			roles: roles.map((role) => ({ id: role.id, name: role.name })),
 			members,
-			retentionDays,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -102,24 +84,6 @@ export async function action({
 	}
 
 	try {
-		if (parsedIntent.data.intent === 'retention') {
-			const days = parsedIntent.data.days as ChatRetentionDays
-			await setChatRetentionDays(organization.id, days)
-			await notifyChat(organization.id, async (room) => {
-				await room.runRetentionPrune()
-			})
-			await auditService.log({
-				action: AuditAction.CHAT_RETENTION_UPDATED,
-				userId,
-				organizationId: organization.id,
-				details: days
-					? `Team chat retention set to ${days} days.`
-					: 'Team chat retention set to keep messages forever.',
-				request,
-			})
-			return { ok: true }
-		}
-
 		if (parsedIntent.data.intent === 'delete') {
 			const { id } = parsedIntent.data
 			await deleteChannel(organization.id, id)

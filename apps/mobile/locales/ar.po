@@ -18,197 +18,197 @@ msgid "{orgName} is now your default organization"
 msgstr "{orgName} هي الآن مؤسستك الافتراضية"
 
 #. placeholder {0}: organizations.length - 3
-#: app/(dashboard)/index.tsx:167
+#: app/(dashboard)/index.tsx:172
 msgid "+{0} more organizations"
 msgstr "+{0} مؤسسات أخرى"
 
-#: app/(auth)/verify-code.tsx:196
+#: app/(auth)/verify-code.tsx:194
 msgid "ABC123"
 msgstr "ABC123"
 
-#: app/(dashboard)/settings/index.tsx:126
+#: app/(dashboard)/settings/index.tsx:125
 msgid "About"
 msgstr "حول"
 
-#: app/(dashboard)/settings/index.tsx:98
+#: app/(dashboard)/settings/index.tsx:97
 msgid "Account"
 msgstr "الحساب"
 
-#: app/(auth)/sign-up.tsx:294
+#: app/(auth)/sign-up.tsx:293
 msgid "Account created!"
 msgstr "تم إنشاء الحساب!"
 
-#: app/(auth)/sign-in.tsx:170
+#: app/(auth)/sign-in.tsx:169
 msgid "Account Suspended"
 msgstr "تم تعليق الحساب"
 
-#: app/(dashboard)/settings/security.tsx:51
-#: app/(dashboard)/settings/security.tsx:92
+#: app/(dashboard)/settings/security.tsx:55
+#: app/(dashboard)/settings/security.tsx:96
 msgid "Active Sessions"
 msgstr "الجلسات النشطة"
 
-#: app/(dashboard)/settings/security.tsx:77
+#: app/(dashboard)/settings/security.tsx:81
 msgid "Add an extra layer of security"
 msgstr "أضف طبقة إضافية من الأمان"
 
-#: components/organization-switcher.tsx:187
+#: components/organization-switcher.tsx:185
 msgid "Add organization"
 msgstr "إضافة مؤسسة"
 
-#: app/(dashboard)/organizations.tsx:99
+#: app/(dashboard)/organizations.tsx:102
 msgid "Add Organization"
 msgstr "إضافة مؤسسة"
 
-#: app/(auth)/sign-up.tsx:272
-#: app/(auth)/verify-code.tsx:267
+#: app/(auth)/sign-up.tsx:271
+#: app/(auth)/verify-code.tsx:265
 msgid "Already have an account?"
 msgstr "لديك حساب بالفعل؟"
 
-#: app/(auth)/sign-up.tsx:258
+#: app/(auth)/sign-up.tsx:257
 msgid "and"
 msgstr "و"
 
-#: app/(dashboard)/settings/index.tsx:120
+#: app/(dashboard)/settings/index.tsx:119
 msgid "App"
 msgstr "التطبيق"
 
-#: app/(dashboard)/settings/index.tsx:52
+#: app/(dashboard)/settings/index.tsx:51
 msgid "Are you sure you want to sign out?"
 msgstr "هل أنت متأكد من تسجيل الخروج؟"
 
-#: app/(dashboard)/settings/security.tsx:63
+#: app/(dashboard)/settings/security.tsx:67
 msgid "Authentication"
 msgstr "المصادقة"
 
-#: app/(auth)/sign-in.tsx:127
-#: app/(auth)/sign-up.tsx:130
+#: app/(auth)/sign-in.tsx:126
+#: app/(auth)/sign-up.tsx:129
 msgid "Authentication Error"
 msgstr "خطأ في المصادقة"
 
-#: app/(auth)/verify-code.tsx:259
+#: app/(auth)/verify-code.tsx:257
 msgid "Back to sign up"
 msgstr "العودة للتسجيل"
 
-#: app/(dashboard)/create-organization.tsx:174
+#: app/(dashboard)/create-organization.tsx:176
 msgid "Brief description of your organization"
 msgstr "وصف موجز لمؤسستك"
 
-#: app/(auth)/landing.tsx:41
+#: app/(auth)/landing.tsx:40
 msgid "Build amazing apps ⚡"
 msgstr "بناء تطبيقات رائعة ⚡"
 
-#: app/(auth)/sign-up.tsx:251
+#: app/(auth)/sign-up.tsx:250
 msgid "By signing up, you agree to our"
 msgstr "بالتسجيل، أنت توافق على"
 
-#: app/(dashboard)/create-organization.tsx:220
+#: app/(dashboard)/create-organization.tsx:222
 #: app/(dashboard)/organizations.tsx:35
-#: app/(dashboard)/settings/index.tsx:53
+#: app/(dashboard)/settings/index.tsx:52
 msgid "Cancel"
 msgstr "إلغاء"
 
-#: app/(dashboard)/settings/security.tsx:35
-#: app/(dashboard)/settings/security.tsx:69
+#: app/(dashboard)/settings/security.tsx:39
+#: app/(dashboard)/settings/security.tsx:73
 msgid "Change Password"
 msgstr "تغيير كلمة المرور"
 
-#: app/(auth)/sign-up.tsx:81
+#: app/(auth)/sign-up.tsx:80
 msgid "Check your email"
 msgstr "تحقق من بريدك الإلكتروني"
 
-#: app/(auth)/verify-code.tsx:128
+#: app/(auth)/verify-code.tsx:126
 msgid "Code Sent"
 msgstr "تم إرسال الرمز"
 
-#: app/(auth)/sign-up.tsx:161
+#: app/(auth)/sign-up.tsx:160
 msgid "Complete your signup to join the organization"
 msgstr "أكمل تسجيلك للانضمام إلى المؤسسة"
 
-#: app/(auth)/sign-in.tsx:183
-#: app/(auth)/sign-in.tsx:188
-#: app/(auth)/sign-in.tsx:191
+#: app/(auth)/sign-in.tsx:182
+#: app/(auth)/sign-in.tsx:187
+#: app/(auth)/sign-in.tsx:190
 msgid "Contact Support"
 msgstr "تواصل مع الدعم"
 
-#: components/ui/social-button.tsx:50
+#: components/ui/social-button.tsx:52
 msgid "Continue with GitHub"
 msgstr "المتابعة باستخدام GitHub"
 
-#: components/ui/social-button.tsx:52
+#: components/ui/social-button.tsx:54
 msgid "Continue with Google"
 msgstr "المتابعة باستخدام Google"
 
-#: app/(auth)/sign-in.tsx:336
+#: app/(auth)/sign-in.tsx:335
 msgid "Create account"
 msgstr "إنشاء حساب"
 
-#: app/(auth)/sign-up.tsx:156
+#: app/(auth)/sign-up.tsx:155
 msgid "Create an account"
 msgstr "إنشاء حساب جديد"
 
-#: app/(dashboard)/create-organization.tsx:125
-#: app/(dashboard)/create-organization.tsx:213
+#: app/(dashboard)/create-organization.tsx:124
+#: app/(dashboard)/create-organization.tsx:215
 msgid "Create Organization"
 msgstr "إنشاء مؤسسة"
 
-#: app/(dashboard)/organizations.tsx:114
+#: app/(dashboard)/organizations.tsx:118
 msgid "Create Your First Organization"
 msgstr "أنشئ مؤسستك الأولى"
 
-#: app/(auth)/sign-up.tsx:288
+#: app/(auth)/sign-up.tsx:287
 msgid "Creating your account..."
 msgstr "جاري إنشاء حسابك..."
 
-#: app/(dashboard)/index.tsx:150
+#: app/(dashboard)/index.tsx:155
 msgid "Current"
 msgstr "الحالي"
 
-#: app/(dashboard)/organizations.tsx:139
+#: app/(dashboard)/organizations.tsx:143
 msgid "Default"
 msgstr "افتراضي"
 
-#: app/(dashboard)/create-organization.tsx:171
+#: app/(dashboard)/create-organization.tsx:173
 msgid "Description (optional)"
 msgstr "الوصف (اختياري)"
 
-#: app/(auth)/verify-code.tsx:234
+#: app/(auth)/verify-code.tsx:232
 msgid "Didn't receive the code? Check your spam folder or request a new one."
 msgstr "لم تستلم الرمز؟ تحقق من مجلد البريد العشوائي أو اطلب رمزاً جديداً."
 
-#: app/(auth)/sign-in.tsx:329
+#: app/(auth)/sign-in.tsx:328
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
-#: app/(dashboard)/index.tsx:96
-#: app/(dashboard)/settings/index.tsx:104
+#: app/(dashboard)/index.tsx:99
+#: app/(dashboard)/settings/index.tsx:103
 msgid "Edit Profile"
 msgstr "تعديل الملف الشخصي"
 
-#: app/(auth)/sign-up.tsx:215
+#: app/(auth)/sign-up.tsx:214
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: app/(auth)/verify-code.tsx:177
+#: app/(auth)/verify-code.tsx:175
 msgid "Enter 6-character code:"
 msgstr "أدخل الرمز المكون من 6 أحرف:"
 
-#: app/(dashboard)/create-organization.tsx:145
+#: app/(dashboard)/create-organization.tsx:144
 msgid "Enter organization name"
 msgstr "أدخل اسم المؤسسة"
 
-#: app/(auth)/verify-code.tsx:164
+#: app/(auth)/verify-code.tsx:162
 msgid "Enter the 6-character verification code sent to your email."
 msgstr "أدخل رمز التحقق المكون من 6 أحرف المرسل إلى بريدك الإلكتروني."
 
-#: app/(auth)/verify-code.tsx:159
+#: app/(auth)/verify-code.tsx:157
 msgid "Enter verification code"
 msgstr "أدخل رمز التحقق"
 
-#: app/(auth)/sign-in.tsx:268
+#: app/(auth)/sign-in.tsx:267
 msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
 
-#: app/(auth)/sign-in.tsx:232
+#: app/(auth)/sign-in.tsx:231
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
 
@@ -216,28 +216,28 @@ msgstr "أدخل اسم المستخدم"
 msgid "Epic Stack Mobile"
 msgstr "Epic Stack Mobile"
 
-#: app/(dashboard)/index.tsx:186
+#: app/(dashboard)/index.tsx:191
 msgid "Epic Stack Mobile v1.0.0"
 msgstr "Epic Stack Mobile v1.0.0"
 
-#: app/(auth)/verify-code.tsx:75
-#: app/(auth)/verify-code.tsx:110
-#: app/(auth)/verify-code.tsx:134
-#: app/(dashboard)/create-organization.tsx:68
-#: app/(dashboard)/create-organization.tsx:75
-#: app/(dashboard)/create-organization.tsx:100
+#: app/(auth)/verify-code.tsx:74
+#: app/(auth)/verify-code.tsx:109
+#: app/(auth)/verify-code.tsx:132
+#: app/(dashboard)/create-organization.tsx:67
+#: app/(dashboard)/create-organization.tsx:74
+#: app/(dashboard)/create-organization.tsx:99
 #: app/(dashboard)/organizations.tsx:48
-#: app/(dashboard)/settings/profile.tsx:44
-#: app/(dashboard)/settings/profile.tsx:65
-#: components/organization-switcher.tsx:40
+#: app/(dashboard)/settings/profile.tsx:43
+#: app/(dashboard)/settings/profile.tsx:64
+#: components/organization-switcher.tsx:41
 msgid "Error"
 msgstr "خطأ"
 
-#: app/(dashboard)/create-organization.tsx:100
+#: app/(dashboard)/create-organization.tsx:99
 msgid "Failed to create organization"
 msgstr "فشل في إنشاء المؤسسة"
 
-#: app/(auth)/verify-code.tsx:135
+#: app/(auth)/verify-code.tsx:133
 msgid "Failed to resend verification code. Please try again later."
 msgstr "فشل في إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى لاحقاً."
 
@@ -245,40 +245,40 @@ msgstr "فشل في إعادة إرسال رمز التحقق. يرجى المح
 msgid "Failed to set default organization"
 msgstr "فشل في تعيين المؤسسة الافتراضية"
 
-#: components/organization-switcher.tsx:40
+#: components/organization-switcher.tsx:41
 msgid "Failed to switch organization"
 msgstr "فشل في تبديل المؤسسة"
 
-#: app/(dashboard)/settings/profile.tsx:65
+#: app/(dashboard)/settings/profile.tsx:64
 msgid "Failed to update profile"
 msgstr "فشل في تحديث الملف الشخصي"
 
-#: app/(auth)/sign-in.tsx:132
+#: app/(auth)/sign-in.tsx:131
 msgid "Forgot Password"
 msgstr "نسيت كلمة المرور"
 
-#: app/(auth)/sign-in.tsx:133
+#: app/(auth)/sign-in.tsx:132
 msgid "Forgot password functionality will be available soon. Please contact support for assistance."
 msgstr "ستتوفر وظيفة نسيت كلمة المرور قريباً. يرجى التواصل مع الدعم للمساعدة."
 
-#: app/(auth)/sign-in.tsx:258
+#: app/(auth)/sign-in.tsx:257
 msgid "Forgot password?"
 msgstr "نسيت كلمة المرور؟"
 
-#: app/(auth)/landing.tsx:169
-#: app/(auth)/landing.tsx:172
+#: app/(auth)/landing.tsx:171
+#: app/(auth)/landing.tsx:174
 msgid "Get Started"
 msgstr "ابدأ الآن"
 
-#: app/(auth)/sign-in.tsx:282
+#: app/(auth)/sign-in.tsx:281
 msgid "Hide password"
 msgstr "إخفاء كلمة المرور"
 
-#: app/(auth)/forgot-password.tsx:41
+#: app/(auth)/forgot-password.tsx:40
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "إذا كان هناك حساب بهذا البريد الإلكتروني، فقد أرسلنا لك رابط إعادة تعيين كلمة المرور."
 
-#: app/(auth)/sign-up.tsx:154
+#: app/(auth)/sign-up.tsx:153
 msgid "Join organization"
 msgstr "الانضمام إلى المؤسسة"
 
@@ -286,145 +286,145 @@ msgstr "الانضمام إلى المؤسسة"
 msgid "Loading"
 msgstr "جاري التحميل"
 
-#: app/(dashboard)/index.tsx:120
+#: app/(dashboard)/index.tsx:125
 msgid "Loading organizations..."
 msgstr "جاري تحميل المؤسسات..."
 
-#: app/(dashboard)/index.tsx:40
+#: app/(dashboard)/index.tsx:43
 #: app/index.tsx:25
 #: components/ui/loading-overlay.tsx:18
 msgid "Loading..."
 msgstr "جاري التحميل..."
 
-#: app/(auth)/sign-up.tsx:223
+#: app/(auth)/sign-up.tsx:222
 msgid "m@example.com"
 msgstr "m@example.com"
 
-#: app/(dashboard)/settings/security.tsx:93
+#: app/(dashboard)/settings/security.tsx:97
 msgid "Manage your logged-in devices"
 msgstr "إدارة الأجهزة المسجلة"
 
-#: app/(auth)/verify-code.tsx:110
+#: app/(auth)/verify-code.tsx:109
 msgid "No email address provided for resending code."
 msgstr "لم يتم توفير عنوان بريد إلكتروني لإعادة إرسال الرمز."
 
-#: app/(auth)/verify-code.tsx:75
+#: app/(auth)/verify-code.tsx:74
 msgid "No email address provided for verification."
 msgstr "لم يتم توفير عنوان بريد إلكتروني للتحقق."
 
-#: app/(dashboard)/index.tsx:124
-#: app/(dashboard)/organizations.tsx:108
+#: app/(dashboard)/index.tsx:129
+#: app/(dashboard)/organizations.tsx:112
 msgid "No organizations found"
 msgstr "لم يتم العثور على مؤسسات"
 
-#: app/(auth)/sign-in.tsx:134
-#: app/(auth)/sign-up.tsx:85
-#: app/(auth)/verify-code.tsx:130
-#: app/(dashboard)/create-organization.tsx:94
-#: app/(dashboard)/settings/profile.tsx:57
-#: app/(dashboard)/settings/security.tsx:37
-#: app/(dashboard)/settings/security.tsx:45
-#: app/(dashboard)/settings/security.tsx:53
+#: app/(auth)/sign-in.tsx:133
+#: app/(auth)/sign-up.tsx:84
+#: app/(auth)/verify-code.tsx:128
+#: app/(dashboard)/create-organization.tsx:93
+#: app/(dashboard)/settings/profile.tsx:56
+#: app/(dashboard)/settings/security.tsx:41
+#: app/(dashboard)/settings/security.tsx:49
+#: app/(dashboard)/settings/security.tsx:57
 msgid "OK"
 msgstr "موافق"
 
-#: components/organization-switcher.tsx:67
+#: components/organization-switcher.tsx:68
 msgid "Opens organization switcher"
 msgstr "فتح محوّل المؤسسات"
 
-#: app/(auth)/sign-up.tsx:204
+#: app/(auth)/sign-up.tsx:203
 msgid "Or continue with email"
 msgstr "أو المتابعة بالبريد الإلكتروني"
 
-#: app/(auth)/sign-in.tsx:213
+#: app/(auth)/sign-in.tsx:212
 msgid "Or continue with username"
 msgstr "أو المتابعة باسم المستخدم"
 
 #. placeholder {0}: result.organization?.name
-#: app/(dashboard)/create-organization.tsx:91
+#: app/(dashboard)/create-organization.tsx:90
 msgid "Organization \"{0}\" created successfully!"
 msgstr "تم إنشاء المؤسسة \"{0}\" بنجاح!"
 
-#: app/(dashboard)/create-organization.tsx:136
+#: app/(dashboard)/create-organization.tsx:135
 msgid "Organization Details"
 msgstr "تفاصيل المؤسسة"
 
-#: app/(auth)/sign-up.tsx:176
+#: app/(auth)/sign-up.tsx:175
 msgid "Organization Invite"
 msgstr "دعوة المؤسسة"
 
-#: app/(dashboard)/create-organization.tsx:142
+#: app/(dashboard)/create-organization.tsx:141
 msgid "Organization Name *"
 msgstr "اسم المؤسسة *"
 
-#: app/(dashboard)/create-organization.tsx:68
+#: app/(dashboard)/create-organization.tsx:67
 msgid "Organization name must be at least 2 characters"
 msgstr "يجب أن يكون اسم المؤسسة حرفين على الأقل"
 
-#: app/(dashboard)/create-organization.tsx:196
+#: app/(dashboard)/create-organization.tsx:198
 msgid "Organization URL Preview"
 msgstr "معاينة رابط المؤسسة"
 
-#: app/(dashboard)/create-organization.tsx:157
+#: app/(dashboard)/create-organization.tsx:156
 msgid "organization-slug"
 msgstr "معرّف-المؤسسة"
 
-#: app/(dashboard)/index.tsx:87
-#: components/organization-switcher.tsx:125
+#: app/(dashboard)/index.tsx:90
+#: components/organization-switcher.tsx:123
 msgid "Organizations"
 msgstr "المؤسسات"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: slides.length
-#: app/(auth)/landing.tsx:152
+#: app/(auth)/landing.tsx:154
 msgid "Page {0} of {1}"
 msgstr "صفحة {0} من {1}"
 
-#: app/(auth)/sign-in.tsx:251
+#: app/(auth)/sign-in.tsx:250
 msgid "Password"
 msgstr "كلمة المرور"
 
-#: app/(dashboard)/settings/security.tsx:36
+#: app/(dashboard)/settings/security.tsx:40
 msgid "Password change functionality will be available soon."
 msgstr "ستتوفر وظيفة تغيير كلمة المرور قريباً."
 
-#: app/(auth)/sign-in.tsx:184
+#: app/(auth)/sign-in.tsx:183
 msgid "Please email support@example.com for assistance."
 msgstr "يرجى مراسلة support@example.com للمساعدة."
 
-#: app/(auth)/sign-up.tsx:263
+#: app/(auth)/sign-up.tsx:262
 msgid "Privacy Policy"
 msgstr "سياسة الخصوصية"
 
-#: app/(dashboard)/settings/profile.tsx:55
+#: app/(dashboard)/settings/profile.tsx:54
 msgid "Profile updated successfully"
 msgstr "تم تحديث الملف الشخصي بنجاح"
 
-#: app/(dashboard)/index.tsx:76
+#: app/(dashboard)/index.tsx:79
 msgid "Quick Actions"
 msgstr "إجراءات سريعة"
 
-#: app/(auth)/sign-in.tsx:307
+#: app/(auth)/sign-in.tsx:306
 msgid "Remember me"
 msgstr "تذكرني"
 
-#: app/(auth)/verify-code.tsx:246
+#: app/(auth)/verify-code.tsx:244
 msgid "Resend code"
 msgstr "إعادة إرسال الرمز"
 
-#: app/(dashboard)/settings/index.tsx:110
+#: app/(dashboard)/settings/index.tsx:109
 msgid "Security"
 msgstr "الأمان"
 
-#: app/(auth)/verify-code.tsx:246
+#: app/(auth)/verify-code.tsx:244
 msgid "Sending..."
 msgstr "جاري الإرسال..."
 
-#: app/(dashboard)/settings/security.tsx:52
+#: app/(dashboard)/settings/security.tsx:56
 msgid "Session management will be available soon."
 msgstr "ستتوفر إدارة الجلسات قريباً."
 
-#: app/(dashboard)/settings/security.tsx:86
+#: app/(dashboard)/settings/security.tsx:90
 msgid "Sessions"
 msgstr "الجلسات"
 
@@ -440,74 +440,74 @@ msgstr "تعيين كافتراضي"
 msgid "Set Default Organization"
 msgstr "تعيين المؤسسة الافتراضية"
 
-#: app/(dashboard)/create-organization.tsx:128
+#: app/(dashboard)/create-organization.tsx:127
 msgid "Set up a new organization for your team"
 msgstr "أنشئ مؤسسة جديدة لفريقك"
 
-#: app/(auth)/landing.tsx:48
+#: app/(auth)/landing.tsx:47
 msgid "Ship faster 🚀"
 msgstr "الإطلاق بشكل أسرع 🚀"
 
-#: app/(auth)/sign-in.tsx:282
+#: app/(auth)/sign-in.tsx:281
 msgid "Show password"
 msgstr "إظهار كلمة المرور"
 
-#: app/(auth)/landing.tsx:92
-#: app/(auth)/landing.tsx:95
-#: app/(auth)/sign-up.tsx:279
+#: app/(auth)/landing.tsx:94
+#: app/(auth)/landing.tsx:97
+#: app/(auth)/sign-up.tsx:278
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: app/(auth)/sign-in.tsx:321
+#: app/(auth)/sign-in.tsx:320
 msgid "Sign In"
 msgstr "تسجيل الدخول"
 
-#: app/(auth)/sign-in.tsx:158
+#: app/(auth)/sign-in.tsx:157
 msgid "Sign in with your social account or username"
 msgstr "سجل الدخول باستخدام حسابك الاجتماعي أو اسم المستخدم"
 
-#: app/(dashboard)/settings/index.tsx:52
-#: app/(dashboard)/settings/index.tsx:55
-#: app/(dashboard)/settings/index.tsx:138
+#: app/(dashboard)/settings/index.tsx:51
+#: app/(dashboard)/settings/index.tsx:54
+#: app/(dashboard)/settings/index.tsx:139
 msgid "Sign Out"
 msgstr "تسجيل الخروج"
 
-#: app/(auth)/sign-up.tsx:245
+#: app/(auth)/sign-up.tsx:244
 msgid "Sign up"
 msgstr "إنشاء حساب"
 
-#: components/ui/social-button.tsx:50
+#: components/ui/social-button.tsx:51
 msgid "Sign up with GitHub"
 msgstr "التسجيل باستخدام GitHub"
 
-#: components/ui/social-button.tsx:52
+#: components/ui/social-button.tsx:54
 msgid "Sign up with Google"
 msgstr "التسجيل باستخدام Google"
 
-#: app/(auth)/sign-up.tsx:163
+#: app/(auth)/sign-up.tsx:162
 msgid "Sign up with your social account or email"
 msgstr "سجل باستخدام حسابك الاجتماعي أو البريد الإلكتروني"
 
-#: app/(auth)/sign-in.tsx:343
+#: app/(auth)/sign-in.tsx:342
 msgid "Signing you in..."
 msgstr "جاري تسجيل دخولك..."
 
-#: app/(dashboard)/create-organization.tsx:154
+#: app/(dashboard)/create-organization.tsx:153
 msgid "Slug *"
 msgstr "المعرف *"
 
-#: app/(dashboard)/create-organization.tsx:60
+#: app/(dashboard)/create-organization.tsx:59
 msgid "Slug can only contain lowercase letters, numbers, and hyphens"
 msgstr "يمكن أن يحتوي المعرف فقط على أحرف صغيرة وأرقام وشرطات"
 
-#: app/(dashboard)/create-organization.tsx:57
+#: app/(dashboard)/create-organization.tsx:56
 msgid "Slug must be at least 2 characters"
 msgstr "يجب أن يكون المعرف على الأقل حرفين"
 
-#: app/(dashboard)/create-organization.tsx:90
+#: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
-#: app/(dashboard)/settings/profile.tsx:55
-#: components/ui/success-animation.tsx:59
+#: app/(dashboard)/settings/profile.tsx:54
+#: components/ui/success-animation.tsx:60
 msgid "Success"
 msgstr "نجاح"
 
@@ -515,66 +515,66 @@ msgstr "نجاح"
 msgid "Success!"
 msgstr "نجاح!"
 
-#: components/organization-switcher.tsx:66
+#: components/organization-switcher.tsx:67
 msgid "Switch organization"
 msgstr "تبديل المؤسسة"
 
-#: app/(dashboard)/organizations.tsx:74
+#: app/(dashboard)/organizations.tsx:75
 msgid "Tap to retry"
 msgstr "اضغط لإعادة المحاولة"
 
-#: app/(auth)/sign-up.tsx:256
+#: app/(auth)/sign-up.tsx:255
 msgid "Terms of Service"
 msgstr "شروط الخدمة"
 
-#: app/(auth)/landing.tsx:33
-#: app/(auth)/landing.tsx:40
-#: app/(auth)/landing.tsx:47
+#: app/(auth)/landing.tsx:32
+#: app/(auth)/landing.tsx:39
+#: app/(auth)/landing.tsx:46
 msgid "The easiest way to..."
 msgstr "أسهل طريقة لـ..."
 
-#: app/(auth)/landing.tsx:34
+#: app/(auth)/landing.tsx:33
 msgid "Track what you eat 🍎"
 msgstr "تتبع ما تأكله 🍎"
 
-#: app/(dashboard)/settings/security.tsx:43
-#: app/(dashboard)/settings/security.tsx:76
+#: app/(dashboard)/settings/security.tsx:47
+#: app/(dashboard)/settings/security.tsx:80
 msgid "Two-Factor Authentication"
 msgstr "المصادقة الثنائية"
 
-#: app/(dashboard)/settings/security.tsx:44
+#: app/(dashboard)/settings/security.tsx:48
 msgid "Two-factor authentication setup will be available soon."
 msgstr "سيتوفر إعداد المصادقة الثنائية قريباً."
 
-#: app/(dashboard)/settings/security.tsx:70
+#: app/(dashboard)/settings/security.tsx:74
 msgid "Update your account password"
 msgstr "تحديث كلمة مرور حسابك"
 
-#: app/(dashboard)/create-organization.tsx:164
+#: app/(dashboard)/create-organization.tsx:163
 msgid "URL-friendly identifier (lowercase letters, numbers, hyphens only)"
 msgstr "معرف صديق للروابط (أحرف صغيرة وأرقام وشرطات فقط)"
 
-#: app/(auth)/sign-in.tsx:224
+#: app/(auth)/sign-in.tsx:223
 msgid "Username"
 msgstr "اسم المستخدم"
 
-#: app/(dashboard)/settings/profile.tsx:44
+#: app/(dashboard)/settings/profile.tsx:43
 msgid "Username is required"
 msgstr "اسم المستخدم مطلوب"
 
-#: app/(auth)/verify-code.tsx:203
+#: app/(auth)/verify-code.tsx:201
 msgid "Verification code"
 msgstr "رمز التحقق"
 
-#: app/(auth)/verify-code.tsx:230
+#: app/(auth)/verify-code.tsx:228
 msgid "Verify Code"
 msgstr "تحقق من الرمز"
 
-#: app/(auth)/verify-code.tsx:274
+#: app/(auth)/verify-code.tsx:272
 msgid "Verifying code..."
 msgstr "جاري التحقق من الرمز..."
 
-#: app/(auth)/verify-code.tsx:230
+#: app/(auth)/verify-code.tsx:228
 msgid "Verifying..."
 msgstr "جاري التحقق..."
 
@@ -582,47 +582,47 @@ msgstr "جاري التحقق..."
 msgid "Version 1.0.0"
 msgstr "الإصدار 1.0.0"
 
-#: app/(dashboard)/index.tsx:113
+#: app/(dashboard)/index.tsx:117
 msgid "View All"
 msgstr "عرض الكل"
 
-#: app/(auth)/verify-code.tsx:163
+#: app/(auth)/verify-code.tsx:161
 msgid "We've sent a 6-character code to {email}. Enter it below to verify your account."
 msgstr "لقد أرسلنا رمزاً مكوناً من 6 أحرف إلى {email}. أدخله أدناه للتحقق من حسابك."
 
-#: app/(auth)/verify-code.tsx:129
+#: app/(auth)/verify-code.tsx:127
 msgid "We've sent a new verification code to your email address."
 msgstr "لقد أرسلنا رمز تحقق جديد إلى بريدك الإلكتروني."
 
-#: app/(auth)/sign-up.tsx:82
+#: app/(auth)/sign-up.tsx:81
 msgid "We've sent you a verification link to complete your signup."
 msgstr "لقد أرسلنا لك رابط تحقق لإكمال تسجيلك."
 
-#: app/(auth)/sign-in.tsx:155
+#: app/(auth)/sign-in.tsx:154
 msgid "Welcome back"
 msgstr "مرحباً بعودتك"
 
-#: app/(dashboard)/index.tsx:60
+#: app/(dashboard)/index.tsx:63
 msgid "Welcome back,"
 msgstr "مرحباً بعودتك،"
 
-#: app/(auth)/sign-in.tsx:348
+#: app/(auth)/sign-in.tsx:347
 msgid "Welcome back!"
 msgstr "مرحباً بعودتك!"
 
 #. placeholder {0}: defaultOrg.name
-#: app/(dashboard)/index.tsx:67
+#: app/(dashboard)/index.tsx:70
 msgid "Working in {0}"
 msgstr "تعمل في {0}"
 
-#: app/(auth)/sign-up.tsx:180
+#: app/(auth)/sign-up.tsx:179
 msgid "You've been invited to join an organization. Complete your signup to get started."
 msgstr "لقد تمت دعوتك للانضمام إلى مؤسسة. أكمل تسجيلك للبدء."
 
-#: app/(auth)/sign-in.tsx:174
+#: app/(auth)/sign-in.tsx:173
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr "تم تعليق حسابك. يرجى التواصل مع الدعم إذا كنت تعتقد أن هذا خطأ."
 
-#: app/(dashboard)/index.tsx:108
+#: app/(dashboard)/index.tsx:111
 msgid "Your Organizations"
 msgstr "مؤسساتك"

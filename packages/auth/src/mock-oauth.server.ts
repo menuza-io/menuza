@@ -34,7 +34,7 @@ export function isWorkersDevMockOAuthCallback(providerName: ProviderName) {
 }
 
 /**
- * Workers dev does not run MSW (see apps/app/workers/dev-mocks.ts). Mock login
+ * Workers dev does not run Node-only MSW mocks. Mock login
  * still skips real OAuth; validate state/code/cookie here and return a stable
  * profile matching `packages/test-utils` GitHub fixtures + db seed.
  */

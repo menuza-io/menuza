@@ -36,9 +36,12 @@ export default defineConfig({
 		stderr: 'pipe',
 		timeout: 120 * 1000,
 		env: {
+			// Do not reuse the runner's pre-override Varlock snapshot.
+			__VARLOCK_ENV: '',
 			PORT,
 			NODE_ENV: 'test',
 			MOCKS: 'true',
+			AUDIT_LOG_SECRET_KEY: 'playwright-only-audit-integrity-key',
 		},
 	},
 })

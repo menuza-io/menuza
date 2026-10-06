@@ -86,6 +86,10 @@ test.describe('Website CMS & Announcements', () => {
 
 		// Status should update to Published
 		await expect(pageRow.getByText(/published/i)).toBeVisible()
+		// The status is optimistic. Wait for the save before reading the database.
+		await expect(
+			pageRow.getByRole('button', { name: /page actions/i }),
+		).toBeEnabled()
 
 		const [publishedDbPage] = await db
 			.select({ status: WebsitePage.status })
@@ -100,6 +104,9 @@ test.describe('Website CMS & Announcements', () => {
 
 		// Status should revert to Draft
 		await expect(pageRow.getByText(/draft/i)).toBeVisible()
+		await expect(
+			pageRow.getByRole('button', { name: /page actions/i }),
+		).toBeEnabled()
 
 		// Step 5: Delete the page
 		await pageRow.getByRole('button', { name: /page actions/i }).click()

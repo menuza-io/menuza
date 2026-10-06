@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/macro'
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -333,10 +334,22 @@ export function AdminOrganizationDetail({
 						<CardDescription>Manage organization configuration</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button variant="outline" size="sm">
-							<Icon name="edit" className="mr-2 h-4 w-4" />
-							Edit Organization
-						</Button>
+						<div className="flex flex-wrap gap-2">
+							<Button variant="outline" size="sm">
+								<Icon name="edit" className="mr-2 h-4 w-4" />
+								Edit Organization
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								role="link"
+								render={
+									<a href={`/organizations/${organization.id}/chat-retention`}>
+										<Trans>Message retention</Trans>
+									</a>
+								}
+							/>
+						</div>
 					</CardContent>
 				</Card>
 				<Card>

@@ -1,7 +1,5 @@
-import { Trans } from '@lingui/macro'
-import { CHAT_LIMITS } from '@repo/common/chat'
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
-import { ChatUnavailable } from '#app/components/chat/chat-unavailable.tsx'
+import { CHAT_LIMITS } from '@repo/common/chat'
 import {
 	data,
 	useLoaderData,
@@ -12,10 +10,12 @@ import {
 	type ShouldRevalidateFunctionArgs,
 } from 'react-router'
 import { z } from 'zod'
+import { ChatUnavailable } from '#app/components/chat/chat-unavailable.tsx'
 import { ChatView } from '#app/components/chat/chat-view.tsx'
 import {
 	listChannelsForUser,
 	listChatAssignableMembers,
+	ChatChannelError,
 } from '#app/utils/chat/channels.server.ts'
 import {
 	addGroupMembers,
@@ -24,9 +24,10 @@ import {
 	listGroupMemberIdsByChannel,
 	updateGroupHistorySetting,
 } from '#app/utils/chat/conversations.server.ts'
-import { ChatChannelError } from '#app/utils/chat/channels.server.ts'
-import { notifyChat } from '#app/utils/chat/namespace.server.ts'
-import { isChatAvailable } from '#app/utils/chat/namespace.server.ts'
+import {
+	notifyChat,
+	isChatAvailable,
+} from '#app/utils/chat/namespace.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 
@@ -194,7 +195,7 @@ export default function ChatRoute() {
 		: null
 
 	return (
-		<div className="-mx-4 flex min-h-0 flex-1 flex-col max-md:min-h-[calc(100dvh-3.5rem)] md:-mx-2">
+		<div className="-mx-4 flex min-h-0 flex-1 flex-col overflow-hidden md:-mx-2">
 			{available ? (
 				<ChatView
 					// A fresh socket and state per organization.

@@ -273,7 +273,7 @@ export default function MailboxRoute() {
 						<section
 							aria-label={_(msg`Form submissions`)}
 							className={cn(
-								'flex min-h-0 w-full shrink-0 flex-col border-e md:w-80 lg:w-96',
+								'bg-muted/20 flex min-h-0 w-full shrink-0 flex-col border-e md:w-80 lg:w-96',
 								selected && 'hidden md:flex',
 							)}
 						>

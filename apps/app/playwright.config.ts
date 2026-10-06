@@ -51,10 +51,14 @@ export default defineConfig({
 		stderr: 'pipe',
 		env: {
 			...process.env,
+			// Resolve the server's env again after applying the overrides below.
+			// The runner's Varlock snapshot otherwise restores MOCKS=false in CI.
+			__VARLOCK_ENV: '',
 			PORT,
 			BASE_URL: `http://localhost:${PORT}`,
 			NODE_ENV: 'test',
 			MOCKS: 'true',
+			AUDIT_LOG_SECRET_KEY: 'playwright-only-audit-integrity-key',
 			VITE_DIRECT_DEV: '1',
 			NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=6144',
 			// Local `.env` is often CLOSED_BETA for product work. CI has no such

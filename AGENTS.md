@@ -515,7 +515,8 @@ queries. Native SQL/query helpers also live on `db` from the same package.
 - Schema: `packages/tenant-db/src/schema.ts`
 - Migrations: `packages/tenant-db/drizzle/`
 - Production path: `TENANT_DB_DIR` on an OCI block volume (`/data/tenants`)
-- Provisioned lazily on site publish; destroyed on region switch
+- Provisioned when the organization is created; region switches destroy the old
+  database and immediately provision an empty one in the new region
 - `Organization.dataRegion` and `hasProvisionedDb` are flags only
 
 ## Deployment

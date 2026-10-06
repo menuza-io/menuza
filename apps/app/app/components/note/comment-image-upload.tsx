@@ -75,9 +75,10 @@ export function CommentImageUpload({
 				ref={fileInputRef}
 				type="file"
 				accept="image/*"
+				aria-label={_(t`Add images`)}
 				multiple
 				onChange={handleFileSelect}
-				className="sr-only"
+				className="hidden"
 				disabled={disabled}
 			/>
 
