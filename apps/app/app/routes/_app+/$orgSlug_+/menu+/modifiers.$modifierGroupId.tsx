@@ -30,6 +30,10 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	markMenusDirtyForModifierGroups,
+	markMenusDirtyForOptions,
+} from '#app/utils/menu/dirty.server.ts'
+import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertModifierGroupInOrganization,
@@ -336,6 +340,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			? data.unavailableUntil
 			: null
 	const overrideEntries = Object.values(data.locationOverrides ?? {})
+	// Existing options updated by this edit may be shared with other groups,
+	// so their menus count as changed too.
+	const existingOptionIds = options
+		.map((opt) => opt.id)
+		.filter((id): id is string => Boolean(id))
+
+	// Capture the group's current items before the assignments are replaced.
+	await markMenusDirtyForModifierGroups(organization.id, organization.slug, [
+		modifierGroupId,
+	])
+	await markMenusDirtyForOptions(
+		organization.id,
+		organization.slug,
+		existingOptionIds,
+	)
 
 	await db.transaction(async (tx) => {
 		await assertItemIdsInOrganization(organization.id, assignedItemIds, tx)
@@ -528,7 +547,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await markMenusDirtyForModifierGroups(organization.id, organization.slug, [
+		modifierGroupId,
+	])
 
 	return redirect(`/${organization.slug}/menu/modifiers`)
 }

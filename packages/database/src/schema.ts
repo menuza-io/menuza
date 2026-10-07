@@ -2745,6 +2745,12 @@ export const OrganizationMenu = sqliteTable(
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		position: integer().default(0).notNull(),
+		/** True when menu content changed since the last publish (master-menu flow). */
+		hasUnpublishedChanges: integer('hasUnpublishedChanges', {
+			mode: 'boolean',
+		})
+			.default(false)
+			.notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -3202,6 +3208,162 @@ export const OrganizationMenuPosLink = sqliteTable(
 			table.integrationId,
 			table.entityType,
 			table.remoteId,
+		),
+	],
+)
+
+// --- Master Menu Publishing ---
+
+/**
+ * Current published snapshot of a menu: the raw menu rows (menu, categories,
+ * items, modifier groups, options and their assignments) frozen at publish
+ * time. The public storefront serves this snapshot, so live edits stay
+ * invisible to customers until the next publish. One row per menu, upserted
+ * on each publish.
+ */
+export const OrganizationMenuPublished = sqliteTable(
+	'OrganizationMenuPublished',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		revision: integer().default(0).notNull(),
+		/** JSON snapshot of the menu's raw rows (see the public projection module). */
+		content: text().notNull(),
+		publishedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		publishedByUserId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuPublished_organizationId_idx').on(
+			table.organizationId,
+		),
+		uniqueIndex('OrganizationMenuPublished_menuId_key').on(table.menuId),
+	],
+)
+
+/**
+ * Audit trail of publish events: which targets (storefront + channels) were
+ * selected, what revision went out, and each target's outcome.
+ */
+export const OrganizationMenuPublish = sqliteTable(
+	'OrganizationMenuPublish',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		revision: integer().notNull(),
+		actorId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		// 'succeeded' | 'partial' | 'failed'
+		status: text().notNull(),
+		/** JSON summary: [{ type, name, integrationId, status, pushed, error }] */
+		targets: text().default('[]').notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuPublish_organizationId_idx').on(
+			table.organizationId,
+		),
+		index('OrganizationMenuPublish_menuId_idx').on(table.menuId),
+	],
+)
+
+/**
+ * Per menu × connected channel publish state: the outcome of the last sync and
+ * the sticky target selection remembered by the publish dialog.
+ */
+export const OrganizationMenuChannelState = sqliteTable(
+	'OrganizationMenuChannelState',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		integrationId: text()
+			.notNull()
+			.references(() => Integration.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** Sticky publish-dialog checkbox. Null = never chosen (defaults to on). */
+		selected: integer({ mode: 'boolean' }),
+		// 'success' | 'error'
+		lastStatus: text(),
+		lastError: text(),
+		pushedCount: integer(),
+		lastSyncAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuChannelState_organizationId_idx').on(
+			table.organizationId,
+		),
+		index('OrganizationMenuChannelState_integrationId_idx').on(
+			table.integrationId,
+		),
+		uniqueIndex('OrganizationMenuChannelState_menu_integration_key').on(
+			table.menuId,
+			table.integrationId,
 		),
 	],
 )

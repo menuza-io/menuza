@@ -76,6 +76,9 @@ import {
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
+	OrganizationMenuPublished,
+	OrganizationMenuPublish,
+	OrganizationMenuChannelState,
 	OrganizationDrop,
 	OrganizationDropPickupWindow,
 	OrganizationDropInventory,
@@ -918,6 +921,63 @@ export const OrganizationMenuRelations = relations(
 		}),
 		categoryAssignments: many(OrganizationMenuCategoryAssignment),
 		drops: many(OrganizationDrop),
+		published: one(OrganizationMenuPublished),
+		channelStates: many(OrganizationMenuChannelState),
+		publishEvents: many(OrganizationMenuPublish),
+	}),
+)
+
+export const OrganizationMenuPublishedRelations = relations(
+	OrganizationMenuPublished,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuPublished.organizationId],
+			references: [Organization.id],
+		}),
+		menu: one(OrganizationMenu, {
+			fields: [OrganizationMenuPublished.menuId],
+			references: [OrganizationMenu.id],
+		}),
+		publishedBy: one(User, {
+			fields: [OrganizationMenuPublished.publishedByUserId],
+			references: [User.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuPublishRelations = relations(
+	OrganizationMenuPublish,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuPublish.organizationId],
+			references: [Organization.id],
+		}),
+		menu: one(OrganizationMenu, {
+			fields: [OrganizationMenuPublish.menuId],
+			references: [OrganizationMenu.id],
+		}),
+		actor: one(User, {
+			fields: [OrganizationMenuPublish.actorId],
+			references: [User.id],
+		}),
+	}),
+)
+
+export const OrganizationMenuChannelStateRelations = relations(
+	OrganizationMenuChannelState,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [OrganizationMenuChannelState.organizationId],
+			references: [Organization.id],
+		}),
+		menu: one(OrganizationMenu, {
+			fields: [OrganizationMenuChannelState.menuId],
+			references: [OrganizationMenu.id],
+		}),
+		integration: one(Integration, {
+			fields: [OrganizationMenuChannelState.integrationId],
+			references: [Integration.id],
+		}),
 	}),
 )
 

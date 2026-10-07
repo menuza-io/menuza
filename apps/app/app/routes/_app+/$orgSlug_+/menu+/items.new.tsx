@@ -29,6 +29,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { markMenusDirtyForCategories } from '#app/utils/menu/dirty.server.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
@@ -278,7 +279,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await markMenusDirtyForCategories(
+		organization.id,
+		organization.slug,
+		data.assignedCategoryIds,
+	)
 
 	return redirect(`/${organization.slug}/menu/items`)
 }

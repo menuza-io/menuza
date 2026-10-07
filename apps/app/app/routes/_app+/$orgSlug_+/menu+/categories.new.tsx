@@ -27,6 +27,10 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	markMenusDirty,
+	markMenusDirtyForItems,
+} from '#app/utils/menu/dirty.server.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
@@ -244,7 +248,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	// Assigning existing items to the new category dirties their menus.
+	await markMenusDirtyForItems(
+		organization.id,
+		organization.slug,
+		data.assignedItemIds,
+	)
+	await markMenusDirty(organization.id, organization.slug, data.assignedMenuIds)
 
 	return redirect(`/${organization.slug}/menu/categories`)
 }

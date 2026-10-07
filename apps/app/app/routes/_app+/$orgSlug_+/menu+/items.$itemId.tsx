@@ -34,6 +34,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { markMenusDirtyForItems } from '#app/utils/menu/dirty.server.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertItemInOrganization,
@@ -304,6 +305,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	)
 	const primaryImageKey = imageKeys[0] ?? null
 
+	// Capture the menus of the item's current categories: unassigning the item
+	// from a category must mark that menu as having unpublished changes too.
+	await markMenusDirtyForItems(organization.id, organization.slug, [itemId])
+
 	await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
 			organization.id,
@@ -433,7 +438,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await markMenusDirtyForItems(organization.id, organization.slug, [itemId])
 
 	return redirect(`/${organization.slug}/menu/items`)
 }

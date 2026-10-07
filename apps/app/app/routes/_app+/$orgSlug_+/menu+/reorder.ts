@@ -10,13 +10,16 @@ import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import {
+	markMenusDirty,
+	markMenusDirtyForItems,
+} from '#app/utils/menu/dirty.server.ts'
+import {
 	assertCategoryInOrganization,
 	assertCategoryIdsInOrganization,
 	assertItemIdsInOrganization,
 	assertMenuInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const ReorderSchema = z.discriminatedUnion('entity', [
 	z.object({
@@ -73,6 +76,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					)
 			}
 		})
+
+		// Position changes are published content: mark the menu dirty (the
+		// helper keeps never-published menus live by purging the site cache).
+		await markMenusDirty(organization.id, organization.slug, [data.menuId])
 	} else if (data.entity === 'item') {
 		await db.transaction(async (tx) => {
 			await assertCategoryInOrganization(organization.id, data.categoryId, tx)
@@ -96,9 +103,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					)
 			}
 		})
-	}
 
-	await purgeOrganizationSiteCache(organization.id, organization.slug)
+		// Item order changes mark every menu containing these items as dirty.
+		await markMenusDirtyForItems(
+			organization.id,
+			organization.slug,
+			data.orderedIds,
+		)
+	}
 
 	return Response.json({ success: true })
 }

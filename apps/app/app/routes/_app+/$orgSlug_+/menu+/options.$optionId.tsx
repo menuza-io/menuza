@@ -29,6 +29,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { markMenusDirtyForOptions } from '#app/utils/menu/dirty.server.ts'
 import {
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
@@ -291,6 +292,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		isTopping = pizzaGroups.length > 0
 	}
 
+	// Capture the option's current groups before its assignments are replaced:
+	// removing it from a group marks that group's menus as changed.
+	await markMenusDirtyForOptions(organization.id, organization.slug, [optionId])
+
 	await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
 			organization.id,
@@ -402,8 +407,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
-	// Purge site KV cache
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await markMenusDirtyForOptions(organization.id, organization.slug, [optionId])
 
 	return redirect(`/${organization.slug}/menu/options`)
 }

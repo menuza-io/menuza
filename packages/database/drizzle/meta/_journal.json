@@ -148,6 +148,13 @@
 			"when": 1791317338801,
 			"tag": "0020_menu_permissions_and_legacy_cleanup",
 			"breakpoints": true
+		},
+		{
+			"idx": 21,
+			"version": "6",
+			"when": 1791404537828,
+			"tag": "0021_master_menu_publishing",
+			"breakpoints": true
 		}
 	]
 }
