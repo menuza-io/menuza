@@ -1,6 +1,6 @@
 # Multi-Platform Review Integrations
 
-Menuza unifies customer review monitoring and responses across 6 major
+Menuza unifies customer review monitoring and responses across 7 major
 platforms:
 
 - **Google Business Profile (GBP)**
@@ -9,6 +9,7 @@ platforms:
 - **Deliveroo**
 - **Just Eat**
 - **OpenTable**
+- **Resy**
 
 Operators can connect each platform per location from **Settings →
 Integrations**, link their venue listing, and view and respond to incoming
@@ -27,6 +28,7 @@ Reviews**.
 | **Deliveroo**               | Partner OAuth 2.0 / Webhook   | Deliveroo Partner Platform API (`/restaurants/{id}/reviews`)                 | Deliveroo Hub (`hub.deliveroo.net`), deep-linked & tracked in Menuza                    | [Deliveroo Developer Portal](https://developer.deliveroo.com)             |
 | **Just Eat**                | JET Connect OAuth 2.0         | Just Eat Restaurant API (`/restaurants/{id}/reviews`)                        | Just Eat Partner Hub (`partner.just-eat.co.uk`), deep-linked & tracked in Menuza        | [JET Connect Portal](https://developer.just-eat.com)                      |
 | **OpenTable**               | OAuth 2.0 / GuestCenter       | OpenTable Partner API (`/v2/restaurant/{rid}/reviews`)                       | OpenTable for Restaurants (`restaurant.opentable.com`), deep-linked & tracked in Menuza | [OpenTable Developer](https://platform.opentable.com)                     |
+| **Resy**                    | Partner OAuth 2.0 (Resy OS)   | Resy partner API (venue guest reviews; requires partner access)              | Resy OS (`os.resy.com`), deep-linked & tracked in Menuza                                | [Resy OS](https://os.resy.com)                                            |
 
 ---
 
@@ -35,7 +37,7 @@ Reviews**.
 ### 1. Location-Scoped Connections (`@repo/integrations`)
 
 - Each review provider is location-scoped (`isLocationScopedIntegration` returns
-  `true` for all 6 review providers).
+  `true` for all 7 review providers).
 - Providers implement `OAuthProvider` and are registered in
   `@repo/integrations`:
   - `GoogleBusinessProfileProvider`
@@ -44,6 +46,7 @@ Reviews**.
   - `DeliverooProvider`
   - `JustEatProvider`
   - `OpenTableProvider`
+  - `ResyProvider`
 - The `IntegrationTable` record is tied to `organizationLocationId`, and
   `config` stores the provider's listing identifier, URLs, and mock review
   replies.
@@ -53,7 +56,7 @@ Reviews**.
 - Normalizes review structures into a shared `UnifiedReview` schema:
   - `id`: Unique review ID
   - `platform`:
-    `'google-business-profile' | 'yelp' | 'tripadvisor' | 'deliveroo' | 'just-eat' | 'opentable'`
+    `'google-business-profile' | 'yelp' | 'tripadvisor' | 'deliveroo' | 'just-eat' | 'opentable' | 'resy'`
   - `locationId`: Linked Menuza location ID
   - `locationName`: Linked location title
   - `reviewer`: Name and avatar
@@ -69,7 +72,7 @@ Reviews**.
 
 ### 3. Settings UI (`apps/app/app/components/settings/cards/organization/review-integrations-card.tsx`)
 
-- Operators view all 6 review providers grouped with official SVG branding.
+- Operators view all 7 review providers grouped with official SVG branding.
 - Displays connection status per location, connection button, listing dropdown,
   and "Import Listing" action.
 - Disconnecting clears or deactivates the integration for that location while
@@ -78,7 +81,7 @@ Reviews**.
 ### 4. Mailbox Reviews Tab (`apps/app/app/components/mailbox/reviews-tab.tsx`)
 
 - Multi-platform filter chips (`All`, `Google`, `Yelp`, `TripAdvisor`,
-  `Deliveroo`, `Just Eat`, `OpenTable`) with counts and platform icons.
+  `Deliveroo`, `Just Eat`, `OpenTable`, `Resy`) with counts and platform icons.
 - Rating filter (`All ratings`, `5 stars`, `4 stars`, etc.).
 - Location selector dropdown when multiple locations exist.
 - Expandable review details with:
@@ -100,7 +103,7 @@ Reviews**.
 
 ## Offline Local Development & Mocking
 
-All 6 review integrations support 100% offline development:
+All 7 review integrations support 100% offline development:
 
 - **Global Mock Mode**: When `MOCKS=true` is set (default in `npm run dev:app`),
   all review providers operate with built-in mock listings, mock customer
@@ -139,4 +142,8 @@ JUST_EAT_CLIENT_SECRET=your_just_eat_client_secret
 # OpenTable
 OPENTABLE_CLIENT_ID=your_opentable_client_id
 OPENTABLE_CLIENT_SECRET=your_opentable_client_secret
+
+# Resy
+RESY_CLIENT_ID=your_resy_client_id
+RESY_CLIENT_SECRET=your_resy_client_secret
 ```

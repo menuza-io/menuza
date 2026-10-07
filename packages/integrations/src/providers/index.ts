@@ -19,6 +19,7 @@ import { TripAdvisorProvider } from './tripadvisor/provider'
 import { DeliverooProvider } from './deliveroo/provider'
 import { JustEatProvider } from './just-eat/provider'
 import { OpenTableProvider } from './opentable/provider'
+import { ResyProvider } from './resy/provider'
 
 /**
  * Initialize and register all available integration providers
@@ -56,6 +57,7 @@ export function initializeProviders(): void {
 	providerRegistry.register(new DeliverooProvider())
 	providerRegistry.register(new JustEatProvider())
 	providerRegistry.register(new OpenTableProvider())
+	providerRegistry.register(new ResyProvider())
 
 	// Register POS and delivery providers
 	for (const provider of createPosProviders()) {
@@ -185,6 +187,7 @@ export { TripAdvisorProvider }
 export { DeliverooProvider }
 export { JustEatProvider }
 export { OpenTableProvider }
+export { ResyProvider }
 export {
 	getAvailableReviewProviders,
 	listUnifiedReviews,

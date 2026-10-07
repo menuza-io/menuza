@@ -158,6 +158,16 @@ export {
 } from './providers/opentable/service'
 
 export {
+	listResyVenues,
+	importResyVenue,
+	listResyReviews,
+	replyToResyReview,
+	type ResyVenue,
+	type ResyReview,
+	type ResyReviewPageTokens,
+} from './providers/resy/service'
+
+export {
 	listUnifiedReviews,
 	replyToUnifiedReview,
 	getAvailableReviewProviders,

@@ -32,6 +32,7 @@ const reviewSchema = z.object({
 			'deliveroo',
 			'just-eat',
 			'opentable',
+			'resy',
 		])
 		.default('google-business-profile'),
 	providerDisplayName: z.string().default('Google'),
@@ -75,6 +76,7 @@ const PLATFORM_FILTERS = [
 	{ id: 'deliveroo', label: msg`Deliveroo`, icon: 'deliveroo' as const },
 	{ id: 'just-eat', label: msg`Just Eat`, icon: 'just-eat' as const },
 	{ id: 'opentable', label: msg`OpenTable`, icon: 'opentable' as const },
+	{ id: 'resy', label: msg`Resy`, icon: 'resy' as const },
 ] as const
 
 function ratingValue(rating?: UnifiedReviewItem['starRating']) {
@@ -95,6 +97,8 @@ function getPlatformIcon(provider: string) {
 			return 'just-eat' as const
 		case 'opentable':
 			return 'opentable' as const
+		case 'resy':
+			return 'resy' as const
 		case 'google-business-profile':
 		default:
 			return 'google' as const
@@ -427,9 +431,9 @@ export function ReviewsTab({ orgSlug }: { orgSlug: string }) {
 							<p className="text-muted-foreground mt-2 text-sm leading-relaxed">
 								{totalReviewCount === 0 ? (
 									<Trans>
-										Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, or
-										OpenTable in Settings to view and reply to customer reviews
-										here.
+										Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat,
+										OpenTable, or Resy in Settings to view and reply to customer
+										reviews here.
 									</Trans>
 								) : (
 									<Trans>No reviews match the selected filter.</Trans>

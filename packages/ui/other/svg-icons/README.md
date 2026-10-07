@@ -11,9 +11,10 @@ interface's text color. Sources:
 - Clover:
   [official favicon symbol](https://cloverstatic.com/content/icons/web/favicons/safari-pinned-tab.svg),
   with the `#228800` mask-icon color published on `clover.com`.
-- Toast and OpenTable: the symbol paths from their logo SVGs on Wikimedia
+- Toast, OpenTable, and Resy: the symbol paths from their logo SVGs on Wikimedia
   Commons ([Toast](https://commons.wikimedia.org/wiki/File:Toast_logo.svg),
-  [OpenTable](https://commons.wikimedia.org/wiki/File:OpenTable_logo.svg)).
+  [OpenTable](https://commons.wikimedia.org/wiki/File:OpenTable_logo.svg),
+  [Resy](https://commons.wikimedia.org/wiki/File:Resy_logo.svg)).
 - Yelp, TripAdvisor, Deliveroo, Just Eat, Square, Uber Eats, and DoorDash:
   [Simple Icons](https://simpleicons.org/) (CC0), using the paths and colors
   from the installed `@icons-pack/react-simple-icons` package. Square keeps a

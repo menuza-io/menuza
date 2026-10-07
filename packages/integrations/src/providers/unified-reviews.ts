@@ -17,6 +17,7 @@ import {
 	listOpenTableReviews,
 	replyToOpenTableReview,
 } from './opentable/service'
+import { listResyReviews, replyToResyReview } from './resy/service'
 import { type ReviewProviderName } from '../integration-scope'
 
 export const starRatingEnum = z.enum(['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'])
@@ -57,6 +58,7 @@ export const unifiedReviewSchema = z.object({
 		'deliveroo',
 		'just-eat',
 		'opentable',
+		'resy',
 	]),
 	providerDisplayName: z.string(),
 	reviewer: z
@@ -144,6 +146,14 @@ export function getAvailableReviewProviders(): ReviewProviderDisplayInfo[] {
 			icon: 'opentable',
 			managementUrlLabel: 'OpenTable for Restaurants',
 		},
+		{
+			name: 'resy',
+			displayName: 'Resy',
+			description: 'Manage Resy guest reviews and post-visit dining feedback',
+			logoPath: '/icons/resy.svg',
+			icon: 'resy',
+			managementUrlLabel: 'Resy OS',
+		},
 	]
 }
 
@@ -180,93 +190,112 @@ export async function listUnifiedReviews(
 		providerFilter === 'all' ||
 		providerFilter === providerName
 
-	const [googleResult, yelpResult, taResult, delResult, jetResult, otResult] =
-		await Promise.all([
-			shouldFetch('google-business-profile')
-				? listGoogleBusinessReviews(
-						organizationId,
-						extractTokensForProvider('google-business-profile'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}),
-			shouldFetch('yelp')
-				? listYelpReviews(
-						organizationId,
-						extractTokensForProvider('yelp'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}),
-			shouldFetch('tripadvisor')
-				? listTripAdvisorReviews(
-						organizationId,
-						extractTokensForProvider('tripadvisor'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
+	const [
+		googleResult,
+		yelpResult,
+		taResult,
+		delResult,
+		jetResult,
+		otResult,
+		resyResult,
+	] = await Promise.all([
+		shouldFetch('google-business-profile')
+			? listGoogleBusinessReviews(
+					organizationId,
+					extractTokensForProvider('google-business-profile'),
+				).catch(() => ({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}))
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('yelp')
+			? listYelpReviews(organizationId, extractTokensForProvider('yelp')).catch(
+					() => ({
 						reviews: [],
 						totalReviewCount: 0,
 						nextPageTokens: {},
 					}),
-			shouldFetch('deliveroo')
-				? listDeliverooReviews(
-						organizationId,
-						extractTokensForProvider('deliveroo'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
+				)
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('tripadvisor')
+			? listTripAdvisorReviews(
+					organizationId,
+					extractTokensForProvider('tripadvisor'),
+				).catch(() => ({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}))
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('deliveroo')
+			? listDeliverooReviews(
+					organizationId,
+					extractTokensForProvider('deliveroo'),
+				).catch(() => ({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}))
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('just-eat')
+			? listJustEatReviews(
+					organizationId,
+					extractTokensForProvider('just-eat'),
+				).catch(() => ({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}))
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('opentable')
+			? listOpenTableReviews(
+					organizationId,
+					extractTokensForProvider('opentable'),
+				).catch(() => ({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}))
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+		shouldFetch('resy')
+			? listResyReviews(organizationId, extractTokensForProvider('resy')).catch(
+					() => ({
 						reviews: [],
 						totalReviewCount: 0,
 						nextPageTokens: {},
 					}),
-			shouldFetch('just-eat')
-				? listJustEatReviews(
-						organizationId,
-						extractTokensForProvider('just-eat'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}),
-			shouldFetch('opentable')
-				? listOpenTableReviews(
-						organizationId,
-						extractTokensForProvider('opentable'),
-					).catch(() => ({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}))
-				: Promise.resolve({
-						reviews: [],
-						totalReviewCount: 0,
-						nextPageTokens: {},
-					}),
-		])
+				)
+			: Promise.resolve({
+					reviews: [],
+					totalReviewCount: 0,
+					nextPageTokens: {},
+				}),
+	])
 
 	const normalizedReviews: UnifiedReview[] = [
 		...googleResult.reviews.map((r) => ({
@@ -361,6 +390,21 @@ export async function listUnifiedReviews(
 			locationId: r.locationId,
 			locationName: r.locationName,
 		})),
+		...resyResult.reviews.map((r) => ({
+			name: r.id,
+			provider: 'resy' as const,
+			providerDisplayName: 'Resy',
+			reviewer: {
+				displayName: r.guest_name || 'Resy guest',
+			},
+			starRating: numberToStarRating(r.rating),
+			comment: r.comment,
+			createTime: safeIsoDate(r.created_at) || safeIsoDate(r.visit_date),
+			updateTime: safeIsoDate(r.created_at),
+			reviewReply: r.reviewReply,
+			locationId: r.locationId,
+			locationName: r.locationName,
+		})),
 	]
 
 	normalizedReviews.sort((a, b) => {
@@ -375,7 +419,8 @@ export async function listUnifiedReviews(
 		taResult.totalReviewCount +
 		delResult.totalReviewCount +
 		jetResult.totalReviewCount +
-		otResult.totalReviewCount
+		otResult.totalReviewCount +
+		resyResult.totalReviewCount
 
 	const nextPageTokens: UnifiedReviewPageTokens = {
 		...prefixTokens('google-business-profile', googleResult.nextPageTokens),
@@ -384,6 +429,7 @@ export async function listUnifiedReviews(
 		...prefixTokens('deliveroo', delResult.nextPageTokens),
 		...prefixTokens('just-eat', jetResult.nextPageTokens),
 		...prefixTokens('opentable', otResult.nextPageTokens),
+		...prefixTokens('resy', resyResult.nextPageTokens),
 	}
 
 	return {
@@ -438,6 +484,8 @@ export async function replyToUnifiedReview(
 				reviewName,
 				comment,
 			)
+		case 'resy':
+			return replyToResyReview(organizationId, locationId, reviewName, comment)
 		default:
 			throw new Error(`Unsupported review provider: ${provider}`)
 	}

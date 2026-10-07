@@ -64,8 +64,8 @@ GITHUB_CLIENT_SECRET = 'MOCK_GITHUB_CLIENT_SECRET'
 
 Mock OAuth providers are automatically used when prefixed with `MOCK_`. The
 standard `npm run dev:app` command sets `MOCKS=true`; review platforms (Google
-Business Profile, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable) then use
-their local OAuth callback, sample restaurant locations, sample reviews, and
+Business Profile, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, Resy) then
+use their local OAuth callback, sample restaurant locations, sample reviews, and
 locally persisted replies without extra credentials. If you run the app without
 `MOCKS=true`, set credentials with `MOCK_` prefix to enable the same behavior:
 

@@ -61,7 +61,7 @@ const INTEGRATION_GROUPS = [
 	{
 		id: 'reservations',
 		title: <Trans>Reservations</Trans>,
-		providerNames: ['opentable'],
+		providerNames: ['opentable', 'resy'],
 	},
 ]
 

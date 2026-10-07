@@ -17,6 +17,7 @@ const BRAND_COLORS = [
 	['deliveroo', ['#00CCBC']],
 	['just-eat', ['#FF8000']],
 	['opentable', ['#DA3743']],
+	['resy', ['#FF462D']],
 ] as const
 
 function readSvg(path: string) {

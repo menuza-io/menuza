@@ -96,8 +96,8 @@ describe('Providers Index', () => {
 		it('should register all providers', () => {
 			initializeProviders()
 
-			// Nine note providers, five POS/delivery providers, and six review providers (GBP, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable).
-			expect(providerRegistry.register).toHaveBeenCalledTimes(20)
+			// Nine note providers, five POS/delivery providers, and seven review providers (GBP, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, Resy).
+			expect(providerRegistry.register).toHaveBeenCalledTimes(21)
 
 			// Verify each provider was registered
 			const registerCalls = vi.mocked(providerRegistry.register).mock.calls
@@ -123,6 +123,7 @@ describe('Providers Index', () => {
 			expect(providerNames).toContain('deliveroo')
 			expect(providerNames).toContain('just-eat')
 			expect(providerNames).toContain('opentable')
+			expect(providerNames).toContain('resy')
 		})
 
 		it('should expose POS providers for the integrations page', () => {
@@ -155,6 +156,7 @@ describe('Providers Index', () => {
 				'deliveroo',
 				'just-eat',
 				'opentable',
+				'resy',
 			])
 		})
 	})

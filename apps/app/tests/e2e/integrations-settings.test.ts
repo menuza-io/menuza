@@ -43,7 +43,7 @@ test.describe('Integration Settings & Providers Management', () => {
 			],
 			['Point of sale', ['Clover', 'Square', 'Toast']],
 			['Marketplaces', ['Uber Eats', 'DoorDash', 'Deliveroo', 'Just Eat']],
-			['Reservations', ['OpenTable']],
+			['Reservations', ['OpenTable', 'Resy']],
 		] as const) {
 			const group = page.getByRole('region', { name, exact: true })
 			await expect(group).toBeVisible()

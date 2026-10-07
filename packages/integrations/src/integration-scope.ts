@@ -7,6 +7,7 @@ export const REVIEW_PROVIDER_NAMES = [
 	'deliveroo',
 	'just-eat',
 	'opentable',
+	'resy',
 ] as const
 
 export type ReviewProviderName = (typeof REVIEW_PROVIDER_NAMES)[number]
