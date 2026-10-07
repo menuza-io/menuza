@@ -206,6 +206,22 @@ const ORG_PERMISSIONS = [
 		description: 'Create, edit, publish, and delete marketing automations',
 	},
 	{
+		id: 'org_perm_read_menu_any',
+		action: 'read',
+		entity: 'menu',
+		access: 'any',
+		context: 'organization',
+		description: 'View menus, categories, items, and modifiers',
+	},
+	{
+		id: 'org_perm_update_menu_any',
+		action: 'update',
+		entity: 'menu',
+		access: 'any',
+		context: 'organization',
+		description: 'Create, edit, publish, and delete menus and drops',
+	},
+	{
 		id: 'org_perm_update_chat_any',
 		action: 'update',
 		entity: 'chat',
@@ -269,6 +285,7 @@ const MEMBER_PERMISSION_IDS = [
 	'org_perm_read_member_any',
 	'org_perm_read_campaign_any',
 	'org_perm_read_automation_any',
+	'org_perm_read_menu_any',
 ] as const
 
 const VIEWER_PERMISSION_IDS = [
@@ -277,6 +294,7 @@ const VIEWER_PERMISSION_IDS = [
 	'org_perm_read_member_any',
 	'org_perm_read_campaign_any',
 	'org_perm_read_automation_any',
+	'org_perm_read_menu_any',
 ] as const
 
 async function ensureRole(name: string, description: string) {

@@ -1,13 +1,7 @@
 import { Trans } from '@lingui/macro'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+import { Card, CardContent, CardHeader } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Form } from 'react-router'
 
@@ -31,167 +25,144 @@ export interface ReviewIntegrationItem {
 	error: string | null
 }
 
-interface ReviewIntegrationsCardProps {
+interface ReviewIntegrationCardProps {
 	selectedLocationId: string
-	providers: ReviewIntegrationItem[]
+	provider: ReviewIntegrationItem
 }
 
-export function ReviewIntegrationsCard({
+export function ReviewIntegrationCard({
 	selectedLocationId,
-	providers,
-}: ReviewIntegrationsCardProps) {
-	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-xl">
-					<Trans>Reviews & Listings</Trans>
-				</CardTitle>
-				<CardDescription>
-					<Trans>
-						Connect your restaurant pages across review and ordering platforms
-						to monitor diner feedback and reply to reviews directly from Menuza.
-					</Trans>
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-4">
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					{providers.map((provider) => (
-						<div
-							key={provider.name}
-							className="border-border/60 bg-card flex flex-col justify-between rounded-lg border p-4 shadow-xs"
-						>
-							<div>
-								<div className="flex items-start justify-between gap-2">
-									<div className="flex items-center gap-2.5">
-										<div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-md">
-											<Icon
-												name={provider.icon as any}
-												className="text-foreground size-5"
-											/>
-										</div>
-										<div>
-											<h3 className="text-sm leading-none font-medium">
-												{provider.displayName}
-											</h3>
-											<span className="text-muted-foreground mt-1 block text-xs">
-												{provider.isActive ? (
-													<span className="font-medium text-emerald-600 dark:text-emerald-400">
-														● <Trans>Connected</Trans>
-													</span>
-												) : (
-													<Trans>Not connected</Trans>
-												)}
-											</span>
-										</div>
-									</div>
-									<Badge
-										variant={provider.isActive ? 'default' : 'secondary'}
-										className="text-[10px]"
-									>
-										{provider.isActive ? (
-											<Trans>Active</Trans>
-										) : (
-											<Trans>Offline</Trans>
-										)}
-									</Badge>
-								</div>
-								<p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-									{provider.description}
-								</p>
-								{provider.error ? (
-									<p role="alert" className="text-destructive mt-2 text-xs">
-										{provider.error}
-									</p>
-								) : null}
-							</div>
+	provider,
+}: ReviewIntegrationCardProps) {
+	const displayName = provider.displayName
 
-							<div className="border-border/40 mt-4 space-y-2 border-t pt-3">
-								{provider.isActive ? (
-									<div className="space-y-2">
-										{provider.locations.length > 0 ? (
-											<Form method="post" className="flex items-center gap-2">
-												<input
-													type="hidden"
-													name="intent"
-													value={importReviewActionIntent}
-												/>
-												<input
-													type="hidden"
-													name="providerName"
-													value={provider.name}
-												/>
-												<input
-													type="hidden"
-													name="organizationLocationId"
-													value={selectedLocationId}
-												/>
-												<select
-													name="locationName"
-													aria-label={`${provider.displayName} location`}
-													className="border-input bg-background h-8 flex-1 rounded-md border px-2 text-xs"
-													required
-												>
-													{provider.locations.map((loc) => (
-														<option key={loc.name} value={loc.name}>
-															{loc.title}
-														</option>
-													))}
-												</select>
-												<Button type="submit" size="sm" variant="secondary">
-													<Trans>Sync details</Trans>
-												</Button>
-											</Form>
-										) : null}
-										<div className="flex justify-end">
-											<Form method="post">
-												<input
-													type="hidden"
-													name="intent"
-													value={disconnectReviewActionIntent}
-												/>
-												<input
-													type="hidden"
-													name="providerName"
-													value={provider.name}
-												/>
-												<input
-													type="hidden"
-													name="organizationLocationId"
-													value={selectedLocationId}
-												/>
-												<Button type="submit" variant="outline" size="sm">
-													<Trans>Disconnect</Trans>
-												</Button>
-											</Form>
-										</div>
-									</div>
-								) : (
-									<div className="flex justify-end">
-										<Form method="post" reloadDocument>
-											<input
-												type="hidden"
-												name="intent"
-												value={connectReviewActionIntent}
-											/>
-											<input
-												type="hidden"
-												name="providerName"
-												value={provider.name}
-											/>
-											<input
-												type="hidden"
-												name="organizationLocationId"
-												value={selectedLocationId}
-											/>
-											<Button type="submit" size="sm">
-												<Trans>Connect {provider.displayName}</Trans>
-											</Button>
-										</Form>
-									</div>
-								)}
-							</div>
-						</div>
-					))}
+	return (
+		<Card
+			className="flex h-full flex-col"
+			role="group"
+			aria-label={provider.displayName}
+		>
+			<CardHeader className="flex w-full items-start gap-3">
+				<div className="bg-muted grid size-10 shrink-0 place-items-center rounded-md">
+					<Icon name={provider.icon as any} className="size-6" />
+				</div>
+				<div className="flex min-w-0 flex-1 flex-col gap-1">
+					<div className="flex flex-wrap items-center gap-2">
+						<h4 className="text-sm font-medium">{provider.displayName}</h4>
+						{provider.isActive ? (
+							<Badge variant="secondary">
+								<Trans>Connected</Trans>
+							</Badge>
+						) : null}
+					</div>
+					{!provider.isActive ? (
+						<span className="text-muted-foreground text-xs">
+							<Trans>Not connected</Trans>
+						</span>
+					) : null}
+				</div>
+			</CardHeader>
+			<CardContent className="flex flex-1 flex-col gap-3">
+				<p className="text-muted-foreground text-sm leading-5">
+					{provider.description}
+				</p>
+				{provider.error ? (
+					<p role="alert" className="text-destructive text-xs">
+						{provider.error}
+					</p>
+				) : null}
+
+				<div className="mt-auto space-y-2 pt-2">
+					{provider.isActive ? (
+						<>
+							{provider.locations.length > 0 ? (
+								<Form method="post" className="flex flex-col gap-2">
+									<input
+										type="hidden"
+										name="intent"
+										value={importReviewActionIntent}
+									/>
+									<input
+										type="hidden"
+										name="providerName"
+										value={provider.name}
+									/>
+									<input
+										type="hidden"
+										name="organizationLocationId"
+										value={selectedLocationId}
+									/>
+									<select
+										name="locationName"
+										aria-label={`${provider.displayName} location`}
+										className="border-input bg-background h-8 w-full min-w-0 rounded-md border px-2 text-xs"
+										required
+									>
+										{provider.locations.map((loc) => (
+											<option key={loc.name} value={loc.name}>
+												{loc.title}
+											</option>
+										))}
+									</select>
+									<Button
+										type="submit"
+										size="sm"
+										variant="secondary"
+										className="w-full"
+									>
+										<Trans>Sync details</Trans>
+									</Button>
+								</Form>
+							) : null}
+							<Form method="post">
+								<input
+									type="hidden"
+									name="intent"
+									value={disconnectReviewActionIntent}
+								/>
+								<input
+									type="hidden"
+									name="providerName"
+									value={provider.name}
+								/>
+								<input
+									type="hidden"
+									name="organizationLocationId"
+									value={selectedLocationId}
+								/>
+								<Button
+									type="submit"
+									variant="outline"
+									size="sm"
+									className="w-full"
+								>
+									<Trans>Disconnect</Trans>
+								</Button>
+							</Form>
+						</>
+					) : (
+						<Form method="post" reloadDocument>
+							<input
+								type="hidden"
+								name="intent"
+								value={connectReviewActionIntent}
+							/>
+							<input type="hidden" name="providerName" value={provider.name} />
+							<input
+								type="hidden"
+								name="organizationLocationId"
+								value={selectedLocationId}
+							/>
+							<Button
+								type="submit"
+								size="sm"
+								variant="outline"
+								className="w-full"
+							>
+								<Trans>Connect {displayName}</Trans>
+							</Button>
+						</Form>
+					)}
 				</div>
 			</CardContent>
 		</Card>

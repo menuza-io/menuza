@@ -25,6 +25,10 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { DropForm } from '#app/components/menu/drop-wizard/drop-form.tsx'
+import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
 import { getDropWithDetails, saveDrop } from '#app/utils/menu/drops.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -37,6 +41,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
+	await requireMenuRead(request, organization.id)
+
 	const localesConfig = parseSiteLocalesConfig(
 		organization.siteLocales,
 		organization.siteDefaultLocale,
@@ -170,6 +176,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuWrite(request, organization.id)
 	const dropId = params.dropId
 	if (!dropId) {
 		throw new Response('Drop not found', { status: 404 })

@@ -26,6 +26,10 @@ import {
 } from 'react-router'
 import { ItemForm } from '#app/components/menu/item-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
@@ -42,6 +46,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const localesConfig = parseSiteLocalesConfig(
 		organization.siteLocales,
@@ -107,6 +113,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const rawData: Record<string, unknown> = {}
 
@@ -153,12 +161,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
-	await assertMediaKeysInOrganization(
-		organization.id,
-		data.variations.variants.flatMap((variant) =>
-			variant.imageKey ? [variant.imageKey] : [],
-		),
-	)
 
 	const imageKeys = parseMenuItemImageKeys(
 		JSON.stringify(data.imageKeys),
@@ -166,22 +168,36 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	)
 	const primaryImageKey = imageKeys[0] ?? null
 
-	await assertCategoryIdsInOrganization(
-		organization.id,
-		data.assignedCategoryIds,
-	)
-	await assertModifierGroupIdsInOrganization(
-		organization.id,
-		data.assignedModifierGroupIds,
-	)
-	await assertLocationIdsInOrganization(
-		organization.id,
-		Object.values(data.locationOverrides ?? {})
-			.map((entry) => entry.locationId)
-			.filter((id): id is string => typeof id === 'string'),
-	)
-
 	await db.transaction(async (tx) => {
+		await assertMediaKeysInOrganization(
+			organization.id,
+			[
+				...data.variations.variants.flatMap((variant) =>
+					variant.imageKey ? [variant.imageKey] : [],
+				),
+				...data.imageKeys,
+				...(data.imageKey ? [data.imageKey] : []),
+			],
+			tx,
+		)
+		await assertCategoryIdsInOrganization(
+			organization.id,
+			data.assignedCategoryIds,
+			tx,
+		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			data.assignedModifierGroupIds,
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			Object.values(data.locationOverrides ?? {})
+				.map((entry) => entry.locationId)
+				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+
 		// Create Item
 		const [newItem] = await tx
 			.insert(OrganizationMenuItem)

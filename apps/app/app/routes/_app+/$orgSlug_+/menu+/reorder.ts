@@ -8,6 +8,7 @@ import {
 } from '@repo/database'
 import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import {
 	assertCategoryInOrganization,
 	assertCategoryIdsInOrganization,
@@ -21,12 +22,12 @@ const ReorderSchema = z.discriminatedUnion('entity', [
 	z.object({
 		entity: z.literal('category'),
 		menuId: z.string().min(1),
-		orderedIds: z.array(z.string().min(1)),
+		orderedIds: z.array(z.string().min(1)).max(1000),
 	}),
 	z.object({
 		entity: z.literal('item'),
 		categoryId: z.string().min(1),
-		orderedIds: z.array(z.string().min(1)),
+		orderedIds: z.array(z.string().min(1)).max(1000),
 	}),
 ])
 
@@ -36,6 +37,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		id: true,
 		slug: true,
 	})
+
+	await requireMenuWrite(request, organization.id)
 
 	const raw = await request.json().catch(() => ({}))
 	const parsed = ReorderSchema.safeParse(raw)
@@ -47,10 +50,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const data = parsed.data
 
 	if (data.entity === 'category') {
-		await assertMenuInOrganization(organization.id, data.menuId)
-		await assertCategoryIdsInOrganization(organization.id, data.orderedIds)
-
 		await db.transaction(async (tx) => {
+			await assertMenuInOrganization(organization.id, data.menuId, tx)
+			await assertCategoryIdsInOrganization(
+				organization.id,
+				data.orderedIds,
+				tx,
+			)
+
 			// Update position in OrganizationMenuCategoryAssignment
 			for (let i = 0; i < data.orderedIds.length; i++) {
 				const categoryId = data.orderedIds[i]
@@ -67,10 +74,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		})
 	} else if (data.entity === 'item') {
-		await assertCategoryInOrganization(organization.id, data.categoryId)
-		await assertItemIdsInOrganization(organization.id, data.orderedIds)
-
 		await db.transaction(async (tx) => {
+			await assertCategoryInOrganization(organization.id, data.categoryId, tx)
+			await assertItemIdsInOrganization(organization.id, data.orderedIds, tx)
+
 			// Update position in OrganizationMenuItemCategoryAssignment
 			for (let i = 0; i < data.orderedIds.length; i++) {
 				const itemId = data.orderedIds[i]

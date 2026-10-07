@@ -88,6 +88,18 @@ export const ORGANIZATION_INVITE_RATE_LIMIT: RateLimitConfig = {
 }
 
 /**
+ * Any authenticated member with menu write access could otherwise issue an
+ * unbounded number of mutations (each of which also purges the site KV cache)
+ * or a mass-reorder request. A per-user sliding window keeps legitimate editing
+ * snappy while bounding amplification.
+ */
+export const MENU_MUTATION_RATE_LIMIT: RateLimitConfig = {
+	scope: 'menu-mutations',
+	maxRequests: isDev ? 10000 : 300,
+	windowMs: 60 * 1000, // 1 minute
+}
+
+/**
  * Serialize all rate-limit checks within this process.
  *
  * The libsql client's `concurrency` option (see packages/database/src/client.ts)

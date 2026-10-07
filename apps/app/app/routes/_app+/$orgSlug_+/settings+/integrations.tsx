@@ -1,10 +1,4 @@
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	Link,
-	useLoaderData,
-} from 'react-router'
 import { redirectWithToast } from '@repo/common/toast'
 import {
 	asc,
@@ -48,19 +42,23 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import {
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	Link,
+	useLoaderData,
+} from 'react-router'
+import {
 	IntegrationsCard,
 	connectIntegrationActionIntent,
 	disconnectIntegrationActionIntent,
 } from '#app/components/settings/cards/organization/integrations-card.tsx'
 import {
-	PosIntegrationsCard,
 	connectPosActionIntent,
 	disconnectPosActionIntent,
 	importPosMenuActionIntent,
 	syncPosMenuActionIntent,
 } from '#app/components/settings/cards/organization/pos-integrations-card.tsx'
 import {
-	ReviewIntegrationsCard,
 	connectReviewActionIntent,
 	disconnectReviewActionIntent,
 	importReviewActionIntent,
@@ -605,17 +603,11 @@ export default function IntegrationsSettings() {
 			<IntegrationsCard
 				integrations={noteIntegrations}
 				availableProviders={availableNoteProviders}
-			/>
-			<ReviewIntegrationsCard
 				selectedLocationId={selectedLocationId}
-				providers={reviewProviders}
-			/>
-			<PosIntegrationsCard
-				selectedLocationId={selectedLocationId}
-				integrations={integrations}
-				availableProviders={availablePosProviders}
+				reviewProviders={reviewProviders}
+				posIntegrations={integrations}
+				availablePosProviders={availablePosProviders}
 				menus={menus}
-				locations={locations}
 				doorDashLiveConfigured={doorDashLiveConfigured}
 			/>
 		</div>

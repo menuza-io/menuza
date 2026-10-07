@@ -46,8 +46,8 @@ wrapper in `apps/app/app/utils/organization/permissions.server.ts`).
 Built-in organization roles are seeded in `packages/database/setup-roles.ts`:
 
 - `org_role_admin` — every organization permission
-- `org_role_member` — notes, members, and read-only marketing
-- `org_role_viewer` — read-only notes, members, and marketing
+- `org_role_member` — notes, members, and read-only marketing/menus
+- `org_role_viewer` — read-only notes, members, marketing, and menus
 - `org_role_guest` — no permissions
 
 Product areas are gated with these permissions:
@@ -61,6 +61,7 @@ Product areas are gated with these permissions:
 | Website announcements    | `read/update:announcement:any`                                                    |
 | Marketing broadcasts     | `read/update:campaign:any`                                                        |
 | Marketing automations    | `read/update:automation:any`                                                      |
+| Menus and drops          | `read/update:menu:any`                                                            |
 | Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`) |
 | Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)           |
 

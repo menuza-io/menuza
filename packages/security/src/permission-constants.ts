@@ -30,6 +30,10 @@ export const PERMISSIONS = {
 
 	// Analytics permissions
 	READ_ANALYTICS_ANY: 'read:analytics:any',
+
+	// Menu permissions
+	READ_MENU_ANY: 'read:menu:any',
+	UPDATE_MENU_ANY: 'update:menu:any',
 } as const
 
 export type PermissionKey = keyof typeof PERMISSIONS

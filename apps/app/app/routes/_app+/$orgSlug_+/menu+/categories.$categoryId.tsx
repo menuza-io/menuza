@@ -24,6 +24,10 @@ import {
 } from 'react-router'
 import { CategoryForm } from '#app/components/menu/category-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertCategoryInOrganization,
 	assertItemIdsInOrganization,
@@ -42,6 +46,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const categoryId = params.categoryId
 	if (!categoryId) {
@@ -180,6 +186,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const categoryId = params.categoryId
 	if (!categoryId) {
 		throw new Response('Category not found', { status: 404 })
@@ -224,26 +232,32 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
-	if (data.parentId) {
-		await assertValidParentCategoryInOrganization(
-			organization.id,
-			categoryId,
-			data.parentId,
-		)
-	}
-	await assertCategoryIdsInOrganization(organization.id, data.upsellCategoryIds)
-	await assertItemIdsInOrganization(organization.id, data.assignedItemIds)
-	for (const menuId of data.assignedMenuIds) {
-		await assertMenuInOrganization(organization.id, menuId)
-	}
-	await assertLocationIdsInOrganization(
-		organization.id,
-		Object.values(data.locationOverrides ?? {})
-			.map((entry) => entry.locationId)
-			.filter((id): id is string => typeof id === 'string'),
-	)
-
 	await db.transaction(async (tx) => {
+		if (data.parentId) {
+			await assertValidParentCategoryInOrganization(
+				organization.id,
+				categoryId,
+				data.parentId,
+				tx,
+			)
+		}
+		await assertCategoryIdsInOrganization(
+			organization.id,
+			data.upsellCategoryIds,
+			tx,
+		)
+		await assertItemIdsInOrganization(organization.id, data.assignedItemIds, tx)
+		for (const menuId of data.assignedMenuIds) {
+			await assertMenuInOrganization(organization.id, menuId, tx)
+		}
+		await assertLocationIdsInOrganization(
+			organization.id,
+			Object.values(data.locationOverrides ?? {})
+				.map((entry) => entry.locationId)
+				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+
 		// Update Category
 		await tx
 			.update(OrganizationMenuCategory)

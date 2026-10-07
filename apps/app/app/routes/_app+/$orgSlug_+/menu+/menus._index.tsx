@@ -55,6 +55,11 @@ import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -102,6 +107,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const result = DeleteMenuSchema.safeParse(Object.fromEntries(formData))
 
@@ -130,14 +137,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		)
 	}
 
-	await db
-		.delete(OrganizationMenu)
-		.where(
-			and(
-				eq(OrganizationMenu.id, result.data.menuId),
-				eq(OrganizationMenu.organizationId, organization.id),
-			),
+	await db.transaction(async (tx) => {
+		await tx
+			.delete(OrganizationMenu)
+			.where(
+				and(
+					eq(OrganizationMenu.id, result.data.menuId),
+					eq(OrganizationMenu.organizationId, organization.id),
+				),
+			)
+
+		await deleteMenuEntityReferences(
+			organization.id,
+			'menu',
+			result.data.menuId,
+			tx,
 		)
+	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
@@ -151,6 +167,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const menus = await db.query.OrganizationMenu.findMany({

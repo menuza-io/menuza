@@ -3115,53 +3115,6 @@ export const OrganizationMenuOptionNestedModifierGroupAssignment = sqliteTable(
 	],
 )
 
-export const OrganizationMenuModifierOption = sqliteTable(
-	'OrganizationMenuModifierOption',
-	{
-		id: text()
-			.primaryKey()
-			.$defaultFn(() => createId())
-			.notNull(),
-		modifierGroupId: text()
-			.notNull()
-			.references(() => OrganizationMenuModifierGroup.id, {
-				onDelete: 'cascade',
-				onUpdate: 'cascade',
-			}),
-		displayName: text().notNull(),
-		internalName: text(),
-		description: text(),
-		imageKey: text(),
-		price: real().default(0).notNull(),
-		priceWhole: real(),
-		priceLeft: real(),
-		priceRight: real(),
-		minSelections: integer().default(0).notNull(),
-		maxSelections: integer(),
-		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
-		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
-		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
-		isTopping: integer({ mode: 'boolean' }).default(false).notNull(),
-		allergens: text().default('[]').notNull(),
-		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
-		availabilityStatus: text().default('available').notNull(),
-		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
-		position: integer().default(0).notNull(),
-		createdAt: integer({ mode: 'timestamp_ms' })
-			.$defaultFn(() => new Date())
-			.notNull(),
-		updatedAt: integer({ mode: 'timestamp_ms' })
-			.$defaultFn(() => new Date())
-			.$onUpdate(() => new Date())
-			.notNull(),
-	},
-	(table) => [
-		index('OrganizationMenuModifierOption_modifierGroupId_idx').on(
-			table.modifierGroupId,
-		),
-	],
-)
-
 export const OrganizationMenuLocationOverride = sqliteTable(
 	'OrganizationMenuLocationOverride',
 	{

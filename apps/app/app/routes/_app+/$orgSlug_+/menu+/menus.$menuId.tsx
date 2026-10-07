@@ -22,6 +22,10 @@ import {
 } from 'react-router'
 import { MenuForm } from '#app/components/menu/menu-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertMenuInOrganization,
@@ -37,6 +41,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const menuId = params.menuId
 	if (!menuId) {
@@ -140,6 +146,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const menuId = params.menuId
 	if (!menuId) {
 		throw new Response('Menu not found', { status: 404 })
@@ -180,18 +188,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
-	await assertCategoryIdsInOrganization(
-		organization.id,
-		data.assignedCategoryIds,
-	)
-	await assertLocationIdsInOrganization(
-		organization.id,
-		Object.values(data.locationOverrides ?? {})
-			.map((entry) => entry.locationId)
-			.filter((id): id is string => typeof id === 'string'),
-	)
-
 	await db.transaction(async (tx) => {
+		await assertCategoryIdsInOrganization(
+			organization.id,
+			data.assignedCategoryIds,
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			Object.values(data.locationOverrides ?? {})
+				.map((entry) => entry.locationId)
+				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+
 		// Update Menu
 		await tx
 			.update(OrganizationMenu)

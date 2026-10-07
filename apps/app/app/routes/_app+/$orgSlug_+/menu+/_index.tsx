@@ -63,6 +63,7 @@ import {
 	type OverviewCategoryData,
 } from '#app/components/menu/menu-sortable-category.tsx'
 import { makeMenuItemDragId } from '#app/components/menu/menu-sortable-item.tsx'
+import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 function collisionStrategy(args: any) {
@@ -95,6 +96,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 
