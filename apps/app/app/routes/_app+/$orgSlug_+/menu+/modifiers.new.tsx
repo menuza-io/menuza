@@ -25,6 +25,10 @@ import {
 } from 'react-router'
 import { ModifierForm } from '#app/components/menu/modifier-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
@@ -39,6 +43,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const localesConfig = parseSiteLocalesConfig(
 		organization.siteLocales,
@@ -144,6 +150,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const rawData: Record<string, unknown> = {}
 
@@ -192,15 +200,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			: null
 	const overrideEntries = Object.values(data.locationOverrides ?? {})
 
-	await assertItemIdsInOrganization(organization.id, assignedItemIds)
-	await assertLocationIdsInOrganization(
-		organization.id,
-		overrideEntries
-			.map((entry) => entry.locationId)
-			.filter((id): id is string => typeof id === 'string'),
-	)
-
 	await db.transaction(async (tx) => {
+		await assertItemIdsInOrganization(organization.id, assignedItemIds, tx)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			overrideEntries
+				.map((entry) => entry.locationId)
+				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+
 		// Create Group
 		const [newGroup] = await tx
 			.insert(OrganizationMenuModifierGroup)

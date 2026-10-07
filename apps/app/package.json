@@ -29,7 +29,7 @@
     "db:migrate:deploy": "cd ../../packages/database && npm run db:migrate:deploy",
     "db:seed": "cd ../../packages/database && npm run db:seed",
     "db:migrate:dev": "cd ../../packages/database && npm run db:migrate:dev",
-    "db:migrate:d1:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:d1:local": "cross-env CI=true wrangler d1 migrations apply DB --local",
     "start": "cross-env NODE_ENV=production node index.ts",
     "start:mocks": "cross-env NODE_ENV=production MOCKS=true node index.ts",
     "test": "vitest --run",

@@ -23,7 +23,12 @@ import {
 } from 'react-router'
 import { OptionForm } from '#app/components/menu/option-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertLocationIdsInOrganization,
+	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -37,6 +42,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteLocales: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const supportedLocales = organization.siteLocales
@@ -98,6 +105,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const rawData: Record<string, unknown> = {}
 
@@ -136,19 +145,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
-	await assertModifierGroupIdsInOrganization(
-		organization.id,
-		data.modifierGroupIds ?? [],
-	)
-	await assertModifierGroupIdsInOrganization(
-		organization.id,
-		data.nestedModifierGroupIds ?? [],
-	)
-	await assertLocationIdsInOrganization(
-		organization.id,
-		Object.keys(data.locationOverrides ?? {}),
-	)
-
 	// Automatically determine isTopping based on assigned modifier groups
 	let isTopping = data.isTopping
 	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
@@ -167,6 +163,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	let createdOptionId: string | undefined
 
 	await db.transaction(async (tx) => {
+		await assertMediaKeysInOrganization(
+			organization.id,
+			data.imageKey ? [data.imageKey] : [],
+			tx,
+		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			data.modifierGroupIds ?? [],
+			tx,
+		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			data.nestedModifierGroupIds ?? [],
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			Object.keys(data.locationOverrides ?? {}),
+			tx,
+		)
+
 		// 1. Insert into OrganizationMenuOption
 		const [createdOption] = await tx
 			.insert(OrganizationMenuOption)

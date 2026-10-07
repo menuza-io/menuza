@@ -354,6 +354,11 @@ describe('Organization Permissions', () => {
 		it('should have analytics permissions', () => {
 			expect(ORG_PERMISSIONS.READ_ANALYTICS_ANY).toBe('read:analytics:any')
 		})
+
+		it('should have menu permissions', () => {
+			expect(ORG_PERMISSIONS.READ_MENU_ANY).toBe('read:menu:any')
+			expect(ORG_PERMISSIONS.UPDATE_MENU_ANY).toBe('update:menu:any')
+		})
 	})
 
 	describe('Edge cases', () => {

@@ -26,7 +26,12 @@ import {
 import { type LocationOverrideState } from '#app/components/menu/location-overrides-card.tsx'
 import { OptionForm } from '#app/components/menu/option-form.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	assertLocationIdsInOrganization,
+	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 	assertOptionIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
@@ -41,6 +46,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteLocales: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const { optionId } = params
 	if (!optionId) {
@@ -77,9 +84,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			})
 			.from(OrganizationMediaAsset)
 			.where(
-				or(
-					eq(OrganizationMediaAsset.id, option.imageKey),
-					eq(OrganizationMediaAsset.objectKey, option.imageKey),
+				and(
+					eq(OrganizationMediaAsset.organizationId, organization.id),
+					or(
+						eq(OrganizationMediaAsset.id, option.imageKey),
+						eq(OrganizationMediaAsset.objectKey, option.imageKey),
+					),
 				),
 			)
 			.limit(1)
@@ -219,6 +229,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const { optionId } = params
 	if (!optionId) {
 		throw new Response('Not Found', { status: 404 })
@@ -264,19 +276,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
-	await assertModifierGroupIdsInOrganization(
-		organization.id,
-		data.modifierGroupIds ?? [],
-	)
-	await assertModifierGroupIdsInOrganization(
-		organization.id,
-		data.nestedModifierGroupIds ?? [],
-	)
-	await assertLocationIdsInOrganization(
-		organization.id,
-		Object.keys(data.locationOverrides ?? {}),
-	)
-
 	// Automatically determine isTopping based on assigned modifier groups
 	let isTopping = data.isTopping
 	if (data.modifierGroupIds && data.modifierGroupIds.length > 0) {
@@ -293,6 +292,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	await db.transaction(async (tx) => {
+		await assertMediaKeysInOrganization(
+			organization.id,
+			data.imageKey ? [data.imageKey] : [],
+			tx,
+		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			data.modifierGroupIds ?? [],
+			tx,
+		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			data.nestedModifierGroupIds ?? [],
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			Object.keys(data.locationOverrides ?? {}),
+			tx,
+		)
+
 		// 1. Update OrganizationMenuOption
 		await tx
 			.update(OrganizationMenuOption)

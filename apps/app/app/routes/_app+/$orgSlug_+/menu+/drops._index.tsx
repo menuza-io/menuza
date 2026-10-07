@@ -52,6 +52,10 @@ import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import {
 	deleteDrop,
 	listDropsForOrganization,
 } from '#app/utils/menu/drops.server.ts'
@@ -103,6 +107,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const result = DeleteDropSchema.safeParse(Object.fromEntries(formData))
 
@@ -123,6 +129,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const drops = await listDropsForOrganization(organization.id)
 

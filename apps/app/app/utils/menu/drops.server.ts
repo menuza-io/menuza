@@ -20,6 +20,7 @@ import {
 	OrganizationLocation,
 } from '@repo/database'
 import slugify from '@sindresorhus/slugify'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 
 export async function assertDropInOrganization(
 	organizationId: string,
@@ -415,5 +416,7 @@ export async function deleteDrop(organizationId: string, dropId: string) {
 					eq(OrganizationMenu.menuType, 'drop'),
 				),
 			)
+
+		await deleteMenuEntityReferences(organizationId, 'menu', drop.menuId, tx)
 	})
 }

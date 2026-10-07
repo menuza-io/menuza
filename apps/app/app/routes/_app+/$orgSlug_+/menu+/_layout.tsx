@@ -2,7 +2,23 @@ import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { PageTitle } from '@repo/ui/page-title'
-import { Link, Outlet, useLocation, useParams } from 'react-router'
+import {
+	type LoaderFunctionArgs,
+	Link,
+	Outlet,
+	useLocation,
+	useParams,
+} from 'react-router'
+import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+	})
+	await requireMenuRead(request, organization.id)
+	return null
+}
 
 export default function MenuLayout() {
 	const { _ } = useLingui()

@@ -1,6 +1,5 @@
 import { Trans, t } from '@lingui/macro'
 import { getCrossAppUrl } from '@repo/common/url'
-import { brand } from '@repo/config/brand'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@repo/ui/card'
@@ -38,20 +37,6 @@ export interface PosMenuOption {
 	name: string
 }
 
-export interface PosLocationOption {
-	id: string
-	name: string
-}
-
-interface PosIntegrationsCardProps {
-	selectedLocationId: string
-	integrations: PosIntegration[]
-	availableProviders: PosProviderOption[]
-	menus: PosMenuOption[]
-	locations: PosLocationOption[]
-	doorDashLiveConfigured: boolean
-}
-
 const providerDomains: Record<string, string> = {
 	clover: 'clover.com',
 	square: 'squareup.com',
@@ -71,68 +56,7 @@ function relativeTime(value: string | null) {
 	return `${Math.floor(minutes / 60)}h ago`
 }
 
-export function PosIntegrationsCard({
-	selectedLocationId,
-	integrations,
-	availableProviders,
-	menus,
-	locations,
-	doorDashLiveConfigured,
-}: PosIntegrationsCardProps) {
-	const integrationByProvider = new Map(
-		integrations.map((integration) => [integration.providerName, integration]),
-	)
-
-	return (
-		<div className="space-y-6">
-			<header className="space-y-1">
-				<h2 className="text-2xl tracking-tight">
-					<Trans>Integrations</Trans>
-				</h2>
-				<p className="text-muted-foreground text-sm">
-					<Trans>
-						Connect your point of sale and delivery platforms to sync your menu.
-					</Trans>
-				</p>
-			</header>
-
-			<div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{availableProviders.map((provider) => (
-					<PosIntegrationCard
-						key={provider.name}
-						provider={provider}
-						integration={integrationByProvider.get(provider.name) ?? null}
-						selectedLocationId={selectedLocationId}
-						menus={menus}
-						locations={locations}
-						doorDashLiveConfigured={doorDashLiveConfigured}
-					/>
-				))}
-			</div>
-
-			<div className="bg-muted relative flex w-full items-baseline gap-2 rounded-md p-2 px-6 text-sm">
-				<div className="relative w-4 shrink-0">
-					<Icon name="badge-question-mark" className="h-4 w-4" />
-				</div>
-				<div className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-2">
-					<div className="text-pretty">
-						<Trans>Need an integration but don't see it here?</Trans>
-					</div>
-					<div className="flex items-center justify-start gap-3">
-						<a
-							href={`mailto:${brand.supportEmail}?subject=Integration%20request`}
-							className="font-medium"
-						>
-							<Trans>Request integration</Trans>
-						</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	)
-}
-
-function PosIntegrationCard({
+export function PosIntegrationCard({
 	provider,
 	integration,
 	selectedLocationId,
@@ -143,7 +67,6 @@ function PosIntegrationCard({
 	integration: PosIntegration | null
 	selectedLocationId: string
 	menus: PosMenuOption[]
-	locations: PosLocationOption[]
 	doorDashLiveConfigured: boolean
 }) {
 	const fetcher = useFetcher()
@@ -171,9 +94,9 @@ function PosIntegrationCard({
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col">
 					<div className="flex items-center gap-2">
-						<h3 className="truncate text-sm font-medium">
+						<h4 className="truncate text-sm font-medium">
 							{provider.displayName}
-						</h3>
+						</h4>
 						{isConnected ? (
 							<Badge variant="secondary">
 								<Trans>Connected</Trans>

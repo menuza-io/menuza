@@ -74,7 +74,6 @@ import {
 	OrganizationMenuOption,
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOptionNestedModifierGroupAssignment,
-	OrganizationMenuModifierOption,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
 	OrganizationDrop,
@@ -989,7 +988,6 @@ export const OrganizationMenuModifierGroupRelations = relations(
 			fields: [OrganizationMenuModifierGroup.organizationId],
 			references: [Organization.id],
 		}),
-		options: many(OrganizationMenuModifierOption),
 		optionAssignments: many(OrganizationMenuModifierGroupOptionAssignment),
 		itemAssignments: many(OrganizationMenuItemModifierGroupAssignment),
 		parentOptionAssignments: many(
@@ -1037,16 +1035,6 @@ export const OrganizationMenuItemModifierGroupAssignmentRelations = relations(
 		}),
 		modifierGroup: one(OrganizationMenuModifierGroup, {
 			fields: [OrganizationMenuItemModifierGroupAssignment.modifierGroupId],
-			references: [OrganizationMenuModifierGroup.id],
-		}),
-	}),
-)
-
-export const OrganizationMenuModifierOptionRelations = relations(
-	OrganizationMenuModifierOption,
-	({ one }) => ({
-		modifierGroup: one(OrganizationMenuModifierGroup, {
-			fields: [OrganizationMenuModifierOption.modifierGroupId],
 			references: [OrganizationMenuModifierGroup.id],
 		}),
 	}),

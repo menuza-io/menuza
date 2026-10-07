@@ -14,6 +14,14 @@ import {
 	or,
 } from '@repo/database'
 
+/**
+ * Minimal database surface the ownership assertions need. Accepting this as an
+ * optional last argument lets callers run the asserts inside the same
+ * transaction as the write they guard, so a concurrent delete of a referenced
+ * entity cannot slip between the check and the write (TOCTOU).
+ */
+type MenuAssertClient = Pick<typeof db, 'select'>
+
 async function orgOwnedIds(
 	rows: { id: string }[],
 	submittedIds: string[],
@@ -30,8 +38,9 @@ async function orgOwnedIds(
 export async function assertMenuInOrganization(
 	organizationId: string,
 	menuId: string,
+	client: MenuAssertClient = db,
 ) {
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenu.id })
 		.from(OrganizationMenu)
 		.where(
@@ -50,8 +59,9 @@ export async function assertMenuInOrganization(
 export async function assertCategoryInOrganization(
 	organizationId: string,
 	categoryId: string,
+	client: MenuAssertClient = db,
 ) {
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuCategory.id })
 		.from(OrganizationMenuCategory)
 		.where(
@@ -70,8 +80,9 @@ export async function assertCategoryInOrganization(
 export async function assertItemInOrganization(
 	organizationId: string,
 	itemId: string,
+	client: MenuAssertClient = db,
 ) {
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuItem.id })
 		.from(OrganizationMenuItem)
 		.where(
@@ -90,8 +101,9 @@ export async function assertItemInOrganization(
 export async function assertModifierGroupInOrganization(
 	organizationId: string,
 	modifierGroupId: string,
+	client: MenuAssertClient = db,
 ) {
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuModifierGroup.id })
 		.from(OrganizationMenuModifierGroup)
 		.where(
@@ -110,9 +122,10 @@ export async function assertModifierGroupInOrganization(
 export async function assertCategoryIdsInOrganization(
 	organizationId: string,
 	categoryIds: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (categoryIds.length === 0) return []
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuCategory.id })
 		.from(OrganizationMenuCategory)
 		.where(
@@ -127,9 +140,10 @@ export async function assertCategoryIdsInOrganization(
 export async function assertItemIdsInOrganization(
 	organizationId: string,
 	itemIds: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (itemIds.length === 0) return []
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuItem.id })
 		.from(OrganizationMenuItem)
 		.where(
@@ -144,9 +158,10 @@ export async function assertItemIdsInOrganization(
 export async function assertModifierGroupIdsInOrganization(
 	organizationId: string,
 	modifierGroupIds: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (modifierGroupIds.length === 0) return []
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuModifierGroup.id })
 		.from(OrganizationMenuModifierGroup)
 		.where(
@@ -161,9 +176,10 @@ export async function assertModifierGroupIdsInOrganization(
 export async function assertMediaKeysInOrganization(
 	organizationId: string,
 	keys: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (keys.length === 0) return
-	const rows = await db
+	const rows = await client
 		.select({
 			id: OrganizationMediaAsset.id,
 			objectKey: OrganizationMediaAsset.objectKey,
@@ -186,9 +202,10 @@ export async function assertMediaKeysInOrganization(
 export async function assertOptionIdsInOrganization(
 	organizationId: string,
 	optionIds: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (optionIds.length === 0) return []
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationMenuOption.id })
 		.from(OrganizationMenuOption)
 		.where(
@@ -203,9 +220,10 @@ export async function assertOptionIdsInOrganization(
 export async function assertLocationIdsInOrganization(
 	organizationId: string,
 	locationIds: string[],
+	client: MenuAssertClient = db,
 ) {
 	if (locationIds.length === 0) return []
-	const rows = await db
+	const rows = await client
 		.select({ id: OrganizationLocation.id })
 		.from(OrganizationLocation)
 		.where(
@@ -221,9 +239,10 @@ export async function assertValidParentCategoryInOrganization(
 	organizationId: string,
 	categoryId: string | null | undefined,
 	parentId: string | null | undefined,
+	client: MenuAssertClient = db,
 ) {
 	if (!parentId) return null
-	const allCategories = await db
+	const allCategories = await client
 		.select({
 			id: OrganizationMenuCategory.id,
 			parentId: OrganizationMenuCategory.parentId,

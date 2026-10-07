@@ -2591,6 +2591,11 @@ msgstr "اتصال"
 msgid "Connect {0}"
 msgstr "ربط {0}"
 
+#. placeholder {displayName}: displayName
+#: app/components/settings/cards/organization/review-integrations-card.tsx:162
+msgid "Connect {displayName}"
+msgstr "ربط {displayName}"
+
 #: app/routes/organizations+/create.tsx:1455
 msgid "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
 msgstr "اربط نظام نقاط البيع أو منصة توصيل للحفاظ على تحديث قائمتك. يمكنك القيام بذلك لاحقًا من الإعدادات."
@@ -6298,6 +6303,10 @@ msgstr "التسويق"
 msgid "Marketing manager"
 msgstr "مدير التسويق"
 
+#: app/components/settings/cards/organization/integrations-card.tsx:58
+msgid "Marketplaces"
+msgstr "الأسواق الإلكترونية"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:673
 #~ msgid "Max items from this section a customer can purchase in one order."
 #~ msgstr "الحد الأقصى للعناصر من هذا القسم التي يمكن للعميل شراؤها في طلب واحد."
@@ -9018,6 +9027,10 @@ msgstr "مطلوب • اختر {minSelections}{maxSelectionsSuffix}"
 #: app/components/menu/modifier-form.tsx:1060
 msgid "Required selection"
 msgstr "اختيار مطلوب"
+
+#: app/components/settings/cards/organization/integrations-card.tsx:63
+msgid "Reservations"
+msgstr "الحجوزات"
 
 #: app/components/menu/modifier-guest-preview.tsx:229
 #: app/components/organization-invitations.tsx:237

@@ -3,6 +3,7 @@ import { action } from './drops.new.tsx'
 
 const mocks = vi.hoisted(() => ({
 	requireUserOrganization: vi.fn(),
+	requireMenuWrite: vi.fn(),
 	saveDrop: vi.fn(),
 	purgeOrganizationSiteCache: vi.fn(),
 }))
@@ -10,6 +11,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@repo/auth', () => ({ requireUserId: vi.fn() }))
 vi.mock('#app/utils/organization/loader.server.ts', () => ({
 	requireUserOrganization: mocks.requireUserOrganization,
+}))
+vi.mock('#app/utils/menu/access.server.ts', () => ({
+	requireMenuWrite: mocks.requireMenuWrite,
 }))
 vi.mock('#app/utils/menu/drops.server.ts', () => ({ saveDrop: mocks.saveDrop }))
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
@@ -39,6 +43,7 @@ describe('create drop localization', () => {
 			slug: 'cafe',
 			siteDefaultLocale: 'en',
 		})
+		mocks.requireMenuWrite.mockResolvedValue('user-1')
 		mocks.saveDrop.mockResolvedValue('drop-1')
 	})
 

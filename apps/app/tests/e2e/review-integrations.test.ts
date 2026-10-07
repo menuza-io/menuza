@@ -21,8 +21,12 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 		await navigate('/:slug/settings/integrations', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// The Review Integrations card is visible
-		await expect(page.getByText('Reviews & Listings').first()).toBeVisible()
+		// Review providers share the main catalog with marketplaces and reservations.
+		for (const name of ['Reviews & Listings', 'Marketplaces', 'Reservations']) {
+			await expect(
+				page.getByRole('region', { name, exact: true }),
+			).toBeVisible()
+		}
 
 		// All 6 review platforms are listed with their Connect action buttons
 		await expect(

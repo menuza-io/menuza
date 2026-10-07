@@ -15,8 +15,11 @@ test.describe('Integration Settings & Providers Management', () => {
 		await page.waitForLoadState('networkidle')
 
 		await expect(
-			page.getByRole('heading', { name: /^integrations$/i }).first(),
+			page.getByRole('heading', { name: /^integrations$/i }),
 		).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: /^integrations$/i }),
+		).toHaveCount(1)
 
 		// The POS/delivery platforms are shown
 		await expect(page.getByText('Clover').first()).toBeVisible()
@@ -34,6 +37,13 @@ test.describe('Integration Settings & Providers Management', () => {
 			['Project management', ['Jira', 'Linear', 'ClickUp', 'Asana', 'Trello']],
 			['Development', ['GitLab', 'GitHub']],
 			['Knowledge management', ['Notion']],
+			[
+				'Reviews & Listings',
+				['Google Business Profile', 'Yelp', 'TripAdvisor'],
+			],
+			['Point of sale', ['Clover', 'Square', 'Toast']],
+			['Marketplaces', ['Uber Eats', 'DoorDash', 'Deliveroo', 'Just Eat']],
+			['Reservations', ['OpenTable']],
 		] as const) {
 			const group = page.getByRole('region', { name, exact: true })
 			await expect(group).toBeVisible()
@@ -41,23 +51,33 @@ test.describe('Integration Settings & Providers Management', () => {
 				await expect(
 					group.getByRole('heading', { name: provider, exact: true }),
 				).toBeVisible()
+				await expect(
+					page.getByRole('heading', { name: provider, exact: true }),
+				).toHaveCount(1)
 			}
 		}
+		const integrationGroups = page.getByRole('region').filter({
+			has: page.getByRole('heading', { level: 3 }),
+		})
+		await expect(integrationGroups).toHaveCount(8)
 		await expect(
 			page.getByRole('region', { name: 'Other integrations' }),
 		).toHaveCount(0)
 
 		// Verify request integration banner
 		await expect(
-			page.getByText(/need an integration but don't see it here\?/i).first(),
+			page.getByText(/need an integration but don't see it here\?/i),
 		).toBeVisible()
+		await expect(
+			page.getByRole('link', { name: 'Request integration' }),
+		).toHaveCount(1)
 
 		await page.screenshot({
 			path: testInfo.outputPath('integrations-desktop.png'),
 			fullPage: true,
 		})
 		await page.setViewportSize({ width: 390, height: 844 })
-		for (const group of await page.getByRole('region').all()) {
+		for (const group of await integrationGroups.all()) {
 			const bounds = await group.boundingBox()
 			if (!bounds) continue
 			expect(bounds.x).toBeGreaterThanOrEqual(0)

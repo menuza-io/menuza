@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { getCrossAppUrl } from '@repo/common/url'
+import { brand } from '@repo/config/brand'
 import { Card, CardContent, CardFooter, CardHeader } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { StatusButton } from '@repo/ui/status-button'
@@ -7,6 +8,16 @@ import { useState } from 'react'
 import { useFetcher, Form } from 'react-router'
 
 import { JiraIntegrationSettings } from './jira-integration-settings'
+import {
+	PosIntegrationCard,
+	type PosIntegration,
+	type PosMenuOption,
+	type PosProviderOption,
+} from './pos-integrations-card'
+import {
+	ReviewIntegrationCard,
+	type ReviewIntegrationItem,
+} from './review-integrations-card'
 
 export const connectIntegrationActionIntent = 'connect-integration'
 export const disconnectIntegrationActionIntent = 'disconnect-integration'
@@ -32,11 +43,27 @@ const INTEGRATION_GROUPS = [
 		title: <Trans>Knowledge management</Trans>,
 		providerNames: ['notion'],
 	},
+	{
+		id: 'reviews',
+		title: <Trans>Reviews & Listings</Trans>,
+		providerNames: ['google-business-profile', 'yelp', 'tripadvisor'],
+	},
+	{
+		id: 'point-of-sale',
+		title: <Trans>Point of sale</Trans>,
+		providerNames: [],
+	},
+	{
+		id: 'delivery',
+		title: <Trans>Marketplaces</Trans>,
+		providerNames: ['deliveroo', 'just-eat'],
+	},
+	{
+		id: 'reservations',
+		title: <Trans>Reservations</Trans>,
+		providerNames: ['opentable'],
+	},
 ]
-
-const GROUPED_PROVIDER_NAMES = new Set(
-	INTEGRATION_GROUPS.flatMap((group) => group.providerNames),
-)
 
 interface Integration {
 	id: string
@@ -59,11 +86,47 @@ interface IntegrationsCardProps {
 		description: string
 		icon: string
 	}>
+	reviewProviders?: ReviewIntegrationItem[]
+	posIntegrations?: PosIntegration[]
+	availablePosProviders?: PosProviderOption[]
+	selectedLocationId?: string
+	menus?: PosMenuOption[]
+	doorDashLiveConfigured?: boolean
+}
+
+type CatalogProvider =
+	| {
+			kind: 'note'
+			provider: IntegrationsCardProps['availableProviders'][number]
+			integration: Integration | null
+	  }
+	| { kind: 'review'; provider: ReviewIntegrationItem }
+	| {
+			kind: 'pos'
+			provider: PosProviderOption
+			integration: PosIntegration | null
+	  }
+
+function getProviderGroup({ kind, provider }: CatalogProvider) {
+	if (kind === 'pos') {
+		return provider.kind === 'delivery' ? 'delivery' : 'point-of-sale'
+	}
+	return (
+		INTEGRATION_GROUPS.find((group) =>
+			group.providerNames.includes(provider.name),
+		)?.id ?? 'other'
+	)
 }
 
 export function IntegrationsCard({
 	integrations,
 	availableProviders,
+	reviewProviders = [],
+	posIntegrations = [],
+	availablePosProviders = [],
+	selectedLocationId = '',
+	menus = [],
+	doorDashLiveConfigured = false,
 }: IntegrationsCardProps) {
 	const fetcher = useFetcher()
 
@@ -72,24 +135,41 @@ export function IntegrationsCard({
 		integrations.map((integration) => [integration.providerName, integration]),
 	)
 
-	// Show all available providers, merging with connected ones
-	const allProviders = availableProviders.map((provider) => ({
-		...provider,
-		integration: integrationsMap.get(provider.name) || null,
-	}))
+	const posIntegrationsMap = new Map(
+		posIntegrations.map((integration) => [
+			integration.providerName,
+			integration,
+		]),
+	)
+	const allProviders: CatalogProvider[] = [
+		...availableProviders.map((provider) => ({
+			kind: 'note' as const,
+			provider,
+			integration: integrationsMap.get(provider.name) ?? null,
+		})),
+		...reviewProviders.map((provider) => ({
+			kind: 'review' as const,
+			provider,
+		})),
+		...availablePosProviders.map((provider) => ({
+			kind: 'pos' as const,
+			provider,
+			integration: posIntegrationsMap.get(provider.name) ?? null,
+		})),
+	]
 
 	const providerGroups = [
 		...INTEGRATION_GROUPS.map((group) => ({
 			...group,
-			providers: allProviders.filter((provider) =>
-				group.providerNames.includes(provider.name),
+			providers: allProviders.filter(
+				(provider) => getProviderGroup(provider) === group.id,
 			),
 		})),
 		{
 			id: 'other',
 			title: <Trans>Other integrations</Trans>,
 			providers: allProviders.filter(
-				(provider) => !GROUPED_PROVIDER_NAMES.has(provider.name),
+				(provider) => getProviderGroup(provider) === 'other',
 			),
 		},
 	].filter((group) => group.providers.length > 0)
@@ -116,14 +196,31 @@ export function IntegrationsCard({
 							{group.title}
 						</h3>
 						<div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-							{group.providers.map((provider) => (
-								<IntegrationCard
-									key={provider.name}
-									provider={provider}
-									integration={provider.integration}
-									fetcher={fetcher}
-								/>
-							))}
+							{group.providers.map((entry) =>
+								entry.kind === 'review' ? (
+									<ReviewIntegrationCard
+										key={entry.provider.name}
+										provider={entry.provider}
+										selectedLocationId={selectedLocationId}
+									/>
+								) : entry.kind === 'pos' ? (
+									<PosIntegrationCard
+										key={entry.provider.name}
+										provider={entry.provider}
+										integration={entry.integration}
+										selectedLocationId={selectedLocationId}
+										menus={menus}
+										doorDashLiveConfigured={doorDashLiveConfigured}
+									/>
+								) : (
+									<IntegrationCard
+										key={entry.provider.name}
+										provider={entry.provider}
+										integration={entry.integration}
+										fetcher={fetcher}
+									/>
+								),
+							)}
 						</div>
 					</section>
 				))}
@@ -140,7 +237,7 @@ export function IntegrationsCard({
 					</div>
 					<div className="flex items-center justify-start gap-3">
 						<a
-							href="mailto:support@yourcompany.com?subject=Integration%20request"
+							href={`mailto:${brand.supportEmail}?subject=Integration%20request`}
 							className="font-medium"
 						>
 							<Trans>Request integration</Trans>

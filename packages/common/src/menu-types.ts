@@ -392,7 +392,7 @@ export const ModifierOptionInputSchema = z.object({
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
-	nestedModifierGroupIds: z.array(z.string()).default([]),
+	nestedModifierGroupIds: z.array(z.string()).max(50).default([]),
 	position: z.number().default(0),
 })
 
@@ -420,8 +420,8 @@ export const MenuOptionInputSchema = z.object({
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
-	modifierGroupIds: z.array(z.string()).default([]),
-	nestedModifierGroupIds: z.array(z.string()).default([]),
+	modifierGroupIds: z.array(z.string()).max(200).default([]),
+	nestedModifierGroupIds: z.array(z.string()).max(50).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -439,9 +439,9 @@ export const ModifierGroupInputSchema = z.object({
 	maxSelections: OptionalCountInputSchema,
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
-	options: z.array(ModifierOptionInputSchema).default([]),
-	optionIds: z.array(z.string()).default([]),
-	assignedItemIds: z.array(z.string()).default([]),
+	options: z.array(ModifierOptionInputSchema).max(200).default([]),
+	optionIds: z.array(z.string()).max(500).default([]),
+	assignedItemIds: z.array(z.string()).max(2000).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -472,10 +472,10 @@ export const MenuItemInputSchema = z.object({
 	isUpsell: z.boolean().default(false),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
-	categoryIds: z.array(z.string()).default([]),
-	assignedCategoryIds: z.array(z.string()).default([]),
-	modifierGroupIds: z.array(z.string()).default([]),
-	assignedModifierGroupIds: z.array(z.string()).default([]),
+	categoryIds: z.array(z.string()).max(200).default([]),
+	assignedCategoryIds: z.array(z.string()).max(200).default([]),
+	modifierGroupIds: z.array(z.string()).max(200).default([]),
+	assignedModifierGroupIds: z.array(z.string()).max(200).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -518,15 +518,15 @@ export const MenuCategoryInputSchema = z.object({
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
 	description: z.string().optional(),
-	upsellCategoryIds: z.array(z.string()).default([]),
+	upsellCategoryIds: z.array(z.string()).max(100).default([]),
 	availabilityHours: z.string().optional().nullable(),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
 	excludeFromOverride: z.boolean().default(false),
-	itemIds: z.array(z.string()).default([]),
-	menuIds: z.array(z.string()).default([]),
-	assignedItemIds: z.array(z.string()).default([]),
-	assignedMenuIds: z.array(z.string()).default([]),
+	itemIds: z.array(z.string()).max(2000).default([]),
+	menuIds: z.array(z.string()).max(500).default([]),
+	assignedItemIds: z.array(z.string()).max(2000).default([]),
+	assignedMenuIds: z.array(z.string()).max(500).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -545,8 +545,8 @@ export const MenuInputSchema = z.object({
 	availabilityHours: z.string().optional().nullable(),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
-	categoryIds: z.array(z.string()).default([]),
-	assignedCategoryIds: z.array(z.string()).default([]),
+	categoryIds: z.array(z.string()).max(500).default([]),
+	assignedCategoryIds: z.array(z.string()).max(500).default([]),
 	locationOverrides: z
 		.record(z.string(), LocationOverrideInputSchema)
 		.optional(),
@@ -620,9 +620,9 @@ export const DropInputSchema = z.object({
 	showMenuPreview: z.boolean().default(true),
 	showInventoryRemaining: z.boolean().default(true),
 	includeGiftCard: z.boolean().default(false),
-	pickupWindows: z.array(DropPickupWindowInputSchema).default([]),
-	inventoryOverrides: z.array(DropInventoryInputSchema).default([]),
-	reminders: z.array(DropReminderInputSchema).default([]),
+	pickupWindows: z.array(DropPickupWindowInputSchema).max(200).default([]),
+	inventoryOverrides: z.array(DropInventoryInputSchema).max(5000).default([]),
+	reminders: z.array(DropReminderInputSchema).max(200).default([]),
 })
 
 export type DropInput = z.infer<typeof DropInputSchema>

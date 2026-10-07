@@ -56,6 +56,11 @@ import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -117,6 +122,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const result = DeleteModifierGroupSchema.safeParse(
 		Object.fromEntries(formData),
@@ -126,14 +133,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return Response.json({ error: 'Invalid request' }, { status: 400 })
 	}
 
-	await db
-		.delete(OrganizationMenuModifierGroup)
-		.where(
-			and(
-				eq(OrganizationMenuModifierGroup.id, result.data.modifierGroupId),
-				eq(OrganizationMenuModifierGroup.organizationId, organization.id),
-			),
+	await db.transaction(async (tx) => {
+		await tx
+			.delete(OrganizationMenuModifierGroup)
+			.where(
+				and(
+					eq(OrganizationMenuModifierGroup.id, result.data.modifierGroupId),
+					eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+				),
+			)
+
+		await deleteMenuEntityReferences(
+			organization.id,
+			'modifier_group',
+			result.data.modifierGroupId,
+			tx,
 		)
+	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
@@ -147,6 +163,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const nestedAssignments = await db

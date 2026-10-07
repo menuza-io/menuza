@@ -1,5 +1,4 @@
 import { Trans, t } from '@lingui/macro'
-import { cn } from '@repo/ui'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
@@ -11,6 +10,7 @@ import {
 	and,
 	OrganizationMenuCategory,
 } from '@repo/database'
+import { cn } from '@repo/ui'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -54,6 +54,11 @@ import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import {
+	requireMenuRead,
+	requireMenuWrite,
+} from '#app/utils/menu/access.server.ts'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -112,6 +117,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
+	await requireMenuWrite(request, organization.id)
+
 	const formData = await request.formData()
 	const result = DeleteCategorySchema.safeParse(Object.fromEntries(formData))
 
@@ -119,14 +126,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return Response.json({ error: 'Invalid request' }, { status: 400 })
 	}
 
-	await db
-		.delete(OrganizationMenuCategory)
-		.where(
-			and(
-				eq(OrganizationMenuCategory.id, result.data.categoryId),
-				eq(OrganizationMenuCategory.organizationId, organization.id),
-			),
+	await db.transaction(async (tx) => {
+		await tx
+			.delete(OrganizationMenuCategory)
+			.where(
+				and(
+					eq(OrganizationMenuCategory.id, result.data.categoryId),
+					eq(OrganizationMenuCategory.organizationId, organization.id),
+				),
+			)
+
+		await deleteMenuEntityReferences(
+			organization.id,
+			'category',
+			result.data.categoryId,
+			tx,
 		)
+	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
@@ -140,6 +156,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteDefaultLocale: true,
 	})
+
+	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const categories = await db.query.OrganizationMenuCategory.findMany({
