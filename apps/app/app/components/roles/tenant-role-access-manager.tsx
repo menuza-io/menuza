@@ -199,6 +199,40 @@ export function getPermissionGroups(): PermissionGroup[] {
 			],
 		},
 		{
+			title: t`AI phone agent`,
+			description: t`The assistant that answers restaurant calls.`,
+			permissions: [
+				{
+					id: 'org_perm_read_phone_agent_any',
+					label: t`View phone agent`,
+					description: t`See the agent's settings, phone menu, numbers, and training rules.`,
+				},
+				{
+					id: 'org_perm_update_phone_agent_any',
+					label: t`Manage phone agent`,
+					description: t`Change settings, publish phone menus, manage numbers, and edit training rules.`,
+					warning: t`Talks to customers`,
+				},
+				{
+					id: 'org_perm_read_phone_call_any',
+					label: t`View calls`,
+					description: t`See call history, caller numbers, transcripts, and recordings.`,
+					warning: t`Customer personal data`,
+				},
+				{
+					id: 'org_perm_update_phone_call_any',
+					label: t`Follow up on calls`,
+					description: t`Complete and reopen calls and requests, and tag calls. Needs View calls.`,
+				},
+				{
+					id: 'org_perm_delete_phone_call_any',
+					label: t`Delete calls`,
+					description: t`Permanently delete calls, transcripts, and recordings. Needs View calls.`,
+					warning: t`Cannot be undone`,
+				},
+			],
+		},
+		{
 			title: t`Team chat`,
 			description: t`Internal channels for your team.`,
 			permissions: [

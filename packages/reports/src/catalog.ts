@@ -256,6 +256,160 @@ const feedbackFields: ReportField[] = [
 	},
 ]
 
+const phoneCallFields: ReportField[] = [
+	{
+		id: 'startedAt',
+		label: 'Started at',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+	},
+	{
+		id: 'callerPhone',
+		label: 'Caller',
+		type: 'string',
+		filterable: true,
+	},
+	{
+		id: 'channel',
+		label: 'Channel',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		description: 'Real phone calls or browser test calls.',
+		options: [
+			{ value: 'phone', label: 'Phone' },
+			{ value: 'web_test', label: 'Test call' },
+		],
+	},
+	{
+		id: 'purpose',
+		label: 'Purpose',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		description:
+			'Why the caller rang. Purposes added by your business type show by name.',
+		options: [
+			{ value: 'business_information', label: 'Business info' },
+			{ value: 'other', label: 'Other' },
+			{ value: 'unknown', label: 'Unknown' },
+		],
+	},
+	{
+		id: 'outcome',
+		label: 'Outcome',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'resolved', label: 'Resolved' },
+			{ value: 'link_sent', label: 'Link sent' },
+			{ value: 'escalated', label: 'Transferred' },
+			{ value: 'message_taken', label: 'Message taken' },
+			{ value: 'abandoned', label: 'Hung up early' },
+			{ value: 'failed', label: 'Failed' },
+			{ value: 'unknown', label: 'Unknown' },
+		],
+	},
+	{
+		id: 'resolvedByAssistant',
+		label: 'Handled without staff',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+		description:
+			'The call ended resolved or with a link texted, with no transfer or message for staff.',
+	},
+	{
+		id: 'transferResult',
+		label: 'Transfer',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'none', label: 'No transfer' },
+			{ value: 'answered', label: 'Staff picked up' },
+			{ value: 'no_answer', label: 'Nobody answered' },
+			{ value: 'referred', label: 'Handed to the main line' },
+		],
+	},
+	{
+		id: 'calledWhileOpen',
+		label: 'Called while open',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'durationBucket',
+		label: 'Call length',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'under_1', label: 'Under 1 minute' },
+			{ value: '1_to_3', label: '1 to 3 minutes' },
+			{ value: '3_to_5', label: '3 to 5 minutes' },
+			{ value: 'over_5', label: 'Over 5 minutes' },
+		],
+	},
+	{
+		id: 'linkSent',
+		label: 'Link texted',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'repeatCaller',
+		label: 'Repeat caller',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+		description: 'The same number called earlier in the last 30 days.',
+	},
+	{
+		id: 'followUpStatus',
+		label: 'Follow-up',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'open', label: 'Needs follow-up' },
+			{ value: 'resolved', label: 'Complete' },
+		],
+	},
+	{
+		id: 'rating',
+		label: 'Caller rating',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: '1', label: '1' },
+			{ value: '2', label: '2' },
+			{ value: '3', label: '3' },
+			{ value: '4', label: '4' },
+			{ value: '5', label: '5' },
+			{ value: 'none', label: 'Not rated' },
+		],
+	},
+	{
+		id: 'sentiment',
+		label: 'Sentiment',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'positive', label: 'Positive' },
+			{ value: 'neutral', label: 'Neutral' },
+			{ value: 'negative', label: 'Negative' },
+			{ value: 'unknown', label: 'Unknown' },
+		],
+	},
+]
+
 export const organizationCatalog: ReportCatalog = {
 	scope: 'organization',
 	subjects: [
@@ -274,6 +428,14 @@ export const organizationCatalog: ReportCatalog = {
 			scope: 'organization',
 			source: 'tenant-api',
 			fields: shopOrderFields,
+		},
+		{
+			id: 'phone_calls',
+			label: 'Phone calls',
+			description: 'Calls answered by the AI phone agent (US only).',
+			scope: 'organization',
+			source: 'tenant-api',
+			fields: phoneCallFields,
 		},
 		{
 			id: 'notes',

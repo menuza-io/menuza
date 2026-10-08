@@ -156,6 +156,20 @@ const comingSoonTitle = i18n._(msg`Menu Coming Soon`)
 const comingSoonDesc = i18n._(
 	msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`,
 )
+const voiceOrderLabels = {
+	loaded: i18n._(msg`We loaded your order from your call. Review it and check out.`),
+	expired: i18n._(msg`This order link has expired. You can still order from the menu.`),
+	error: i18n._(msg`We couldn't load your phone order.`),
+	unavailable: i18n._(
+		msg`The items from your call are no longer available. You can still order from the menu.`,
+	),
+	removed: i18n._(
+		msg`Some items from your call are no longer available, so we removed them:`,
+	),
+	repriced: i18n._(
+		msg`Some prices changed since your call. Your cart shows the current prices.`,
+	),
+}
 const dietaryLabels = {
 	vegetarian: vegetarianLabel,
 	glutenFree: glutenFreeLabel,
@@ -360,6 +374,7 @@ const clientMenuData = {
 	closedReason,
 	allowedModes,
 	categories,
+	voiceOrderLabels,
 }
 
 const modeButton =
@@ -374,6 +389,8 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 	title={`${menuTitle} - ${organization.name}`}
 >
 	<div class="bg-background pb-28">
+		{/* Live region stays mounted so screen readers announce the inserted notice. */}
+		<div id="voice-order-notice" class={siteContainer} role="status" aria-live="polite"></div>
 		{/* Menu header */}
 		<div class="border-b border-border">
 			<div class:list={[siteContainer, 'py-6 sm:py-8']}>
@@ -602,10 +619,12 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 	/>
 
 	<script>
+		import { getBrowserTenantApiUrl, getOrgBinding } from '~/lib/client-auth'
 		import { indexCatalog } from '~/lib/ordering/catalog'
 		import { createCartStore, createModeStore } from '~/lib/ordering/cart-store'
 		import { mountCartUi } from '~/lib/ordering/cart-ui'
 		import { createItemModal } from '~/lib/ordering/item-modal'
+		import { el } from '~/lib/ordering/dom'
 		import { createMoneyFormatter } from '~/lib/ordering/money'
 		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
 		import {
@@ -613,6 +632,15 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			type OrderingCategory,
 			type OrderingLabels,
 		} from '~/lib/ordering/types'
+		import {
+			fetchVoiceOrderHandoff,
+			getHandoffToken,
+			handoffGuardKey,
+			hasHandoffParam,
+			repriceHandoffCart,
+			stripHandoffParam,
+			type HandoffCartItem,
+		} from '../scripts/voice-order-handoff'
 
 		type MenuData = {
 			organizationId: string
@@ -625,6 +653,10 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			closedReason: string
 			allowedModes: FulfillmentMode[]
 			categories: OrderingCategory[]
+			voiceOrderLabels: Record<
+				'loaded' | 'expired' | 'error' | 'unavailable' | 'removed' | 'repriced',
+				string
+			>
 		}
 
 		function readJson<T>(id: string): T {
@@ -763,5 +795,114 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			search.focus()
 		})
 		if (search?.value) applySearch(search.value)
+
+		// Phone-order handoff (#handoff=TOKEN from the voice agent's SMS link). The
+		// token stays in the fragment so only the browser and tenant-api see it.
+		const VOICE_NOTICE_KEY = 'menuza_voice_order_notice'
+		type VoiceNotice = 'loaded' | 'expired' | 'error' | 'unavailable'
+		type VoiceChanges = { removed: string[]; pricesChanged: boolean }
+
+		function showVoiceOrderNotice(kind: VoiceNotice, changes?: VoiceChanges) {
+			const region = document.getElementById('voice-order-notice')
+			if (!region) return
+			const voiceLabels = data.voiceOrderLabels
+			const notice = el(
+				'div',
+				`mt-4 space-y-1 rounded-[var(--radius)] border px-4 py-3 text-sm ${kind === 'error' ? 'border-destructive/40 bg-destructive/10 text-destructive' : 'border-border bg-muted text-foreground'}`,
+			)
+			notice.appendChild(el('p', undefined, voiceLabels[kind]))
+			if (changes?.removed.length) {
+				notice.appendChild(
+					el('p', 'text-muted-foreground', `${voiceLabels.removed} ${changes.removed.join(', ')}`),
+				)
+			}
+			if (changes?.pricesChanged) {
+				notice.appendChild(el('p', 'text-muted-foreground', voiceLabels.repriced))
+			}
+			region.replaceChildren(notice)
+		}
+
+		function readSession(key: string) {
+			try {
+				return sessionStorage.getItem(key)
+			} catch {
+				return null
+			}
+		}
+
+		function writeSession(key: string, value: string | null) {
+			try {
+				if (value === null) sessionStorage.removeItem(key)
+				else sessionStorage.setItem(key, value)
+			} catch {}
+		}
+
+		/**
+		 * The phone order is what the caller just agreed to, so it replaces any
+		 * existing cart, unless nothing from it can still be ordered. Prices are
+		 * never trusted from the handoff: the cart is rebuilt from this page's menu.
+		 */
+		function applyVoiceCart(lines: HandoffCartItem[], keepCartWhenEmpty: boolean) {
+			const repriced = repriceHandoffCart(lines, [{ categories: data.categories ?? [] }])
+			if (!repriced.cart.length) {
+				if (!keepCartWhenEmpty) store.clear()
+				showVoiceOrderNotice('unavailable')
+				return
+			}
+			store.save(repriced.cart)
+			showVoiceOrderNotice('loaded', repriced)
+			cartUi.open()
+		}
+
+		async function importVoiceOrder(token: string) {
+			// Drop the token from the address bar before anything else.
+			history.replaceState(history.state, '', stripHandoffParam(window.location.href))
+
+			const guardKey = await handoffGuardKey(token)
+			if (readSession(guardKey)) return
+			writeSession(guardKey, '1')
+
+			const result = await fetchVoiceOrderHandoff({
+				tenantApiUrl: getBrowserTenantApiUrl(),
+				token,
+				binding: getOrgBinding(),
+			})
+			if (result.status !== 'loaded') {
+				showVoiceOrderNotice(result.status)
+				return
+			}
+
+			if (result.fulfillmentMode) modeStore.set(result.fulfillmentMode)
+
+			const locationSelect = document.getElementById('location-select') as HTMLSelectElement | null
+			const canSwitchLocation =
+				!!result.locationId &&
+				result.locationId !== data.activeLocationId &&
+				!!locationSelect &&
+				Array.from(locationSelect.options).some((o) => o.value === result.locationId)
+			if (canSwitchLocation && result.locationId) {
+				// Tax, delivery fee, and the menu itself are resolved server-side per
+				// location, so reload with it and reprice against that location's menu.
+				store.save(result.cart)
+				writeSession(VOICE_NOTICE_KEY, 'reprice')
+				const url = new URL(window.location.href)
+				url.searchParams.set('location', result.locationId)
+				window.location.href = url.toString()
+				return
+			}
+
+			applyVoiceCart(result.cart, true)
+		}
+
+		const voiceOrderToken = getHandoffToken(window.location.href)
+		if (voiceOrderToken) {
+			void importVoiceOrder(voiceOrderToken)
+		} else if (hasHandoffParam(window.location.href)) {
+			history.replaceState(history.state, '', stripHandoffParam(window.location.href))
+			showVoiceOrderNotice('error')
+		} else if (readSession(VOICE_NOTICE_KEY) === 'reprice') {
+			writeSession(VOICE_NOTICE_KEY, null)
+			applyVoiceCart(store.lines(), false)
+		}
 	</script>
 </SitePage>

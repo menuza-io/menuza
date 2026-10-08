@@ -102,7 +102,11 @@ export default defineConfig((config) => ({
 	},
 	optimizeDeps: {
 		include: ['@repo/email', '@repo/integrations', '@repo/ai', '@repo/ui'],
-		exclude: ['@repo/marketing', '@repo/marketing-workflow'],
+		exclude: [
+			'@repo/flow-editor',
+			'@repo/marketing',
+			'@repo/marketing-workflow',
+		],
 	},
 	...(MODE !== 'test' && {
 		ssr: {

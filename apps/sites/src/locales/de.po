@@ -871,6 +871,10 @@ msgstr "Ausverkauft"
 msgid "Some items are no longer available and were removed from your order."
 msgstr "Einige Artikel sind nicht mehr verfügbar und wurden aus deiner Bestellung entfernt."
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items from your call are no longer available, so we removed them:"
+msgstr "Einige Artikel aus Ihrem Anruf sind nicht mehr verfügbar und wurden entfernt:"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items in your order changed or sold out. Please review your cart and try again."
 msgstr "Einige Artikel Ihrer Bestellung haben sich geändert oder sind ausverkauft. Bitte prüfen Sie Ihren Warenkorb und versuchen Sie es erneut."
@@ -878,6 +882,10 @@ msgstr "Einige Artikel Ihrer Bestellung haben sich geändert oder sind ausverkau
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items just sold out. Please review your order."
 msgstr "Einige Artikel sind gerade ausverkauft. Bitte prüfen Sie Ihre Bestellung."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed since your call. Your cart shows the current prices."
+msgstr "Einige Preise haben sich seit Ihrem Anruf geändert. Ihr Warenkorb zeigt die aktuellen Preise."
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -930,6 +938,10 @@ msgstr "Diese Abholzeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere
 msgid "The hold on your order was released. Please place a new order."
 msgstr "Die Reservierung Ihrer Bestellung wurde freigegeben. Bitte geben Sie eine neue Bestellung auf."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items from your call are no longer available. You can still order from the menu."
+msgstr "Die Artikel aus Ihrem Anruf sind nicht mehr verfügbar. Sie können weiterhin über die Speisekarte bestellen."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "Der Link ist möglicherweise unvollständig. Sie können über die Speisekarte eine neue Bestellung starten."
@@ -961,6 +973,10 @@ msgstr "Dieser Standort ist nicht für Bestellungen verfügbar."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "Diese Bestellung liegt unter dem Mindestbestellwert für Lieferung."
+
+#: src/pages/menu.astro.ts:3
+msgid "This order link has expired. You can still order from the menu."
+msgstr "Dieser Bestelllink ist abgelaufen. Sie können weiterhin über die Speisekarte bestellen."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1081,6 +1097,10 @@ msgstr "Wir konnten Ihre Bestellung nicht aufgeben. Bitte versuchen Sie es erneu
 msgid "We couldn't find this order"
 msgstr "Wir konnten diese Bestellung nicht finden"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't load your phone order."
+msgstr "Ihre telefonische Bestellung konnte nicht geladen werden."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "Wir konnten Ihren Beleg nicht laden"
@@ -1088,6 +1108,10 @@ msgstr "Wir konnten Ihren Beleg nicht laden"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "Wir konnten die Zahlung nicht starten. Bitte versuchen Sie es erneut."
+
+#: src/pages/menu.astro.ts:3
+msgid "We loaded your order from your call. Review it and check out."
+msgstr "Wir haben Ihre Bestellung aus Ihrem Anruf geladen. Prüfen Sie sie und gehen Sie zur Kasse."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."

@@ -871,6 +871,10 @@ msgstr "Sold out"
 msgid "Some items are no longer available and were removed from your order."
 msgstr "Some items are no longer available and were removed from your order."
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items from your call are no longer available, so we removed them:"
+msgstr "Some items from your call are no longer available, so we removed them:"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items in your order changed or sold out. Please review your cart and try again."
 msgstr "Some items in your order changed or sold out. Please review your cart and try again."
@@ -878,6 +882,10 @@ msgstr "Some items in your order changed or sold out. Please review your cart an
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items just sold out. Please review your order."
 msgstr "Some items just sold out. Please review your order."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed since your call. Your cart shows the current prices."
+msgstr "Some prices changed since your call. Your cart shows the current prices."
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -930,6 +938,10 @@ msgstr "That pickup time is no longer available. Please choose a different time.
 msgid "The hold on your order was released. Please place a new order."
 msgstr "The hold on your order was released. Please place a new order."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items from your call are no longer available. You can still order from the menu."
+msgstr "The items from your call are no longer available. You can still order from the menu."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "The link may be incomplete. You can start a new order from the menu."
@@ -961,6 +973,10 @@ msgstr "This location is not available for ordering."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "This order is below the minimum for delivery."
+
+#: src/pages/menu.astro.ts:3
+msgid "This order link has expired. You can still order from the menu."
+msgstr "This order link has expired. You can still order from the menu."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1081,6 +1097,10 @@ msgstr "We could not place your order. Please try again."
 msgid "We couldn't find this order"
 msgstr "We couldn't find this order"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't load your phone order."
+msgstr "We couldn't load your phone order."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "We couldn't load your receipt"
@@ -1088,6 +1108,10 @@ msgstr "We couldn't load your receipt"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "We couldn't start payment. Please try again."
+
+#: src/pages/menu.astro.ts:3
+msgid "We loaded your order from your call. Review it and check out."
+msgstr "We loaded your order from your call. Review it and check out."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."

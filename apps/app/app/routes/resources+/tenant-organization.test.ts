@@ -35,6 +35,7 @@ describe('internal tenant organization metadata', () => {
 		expect(await response.json()).toEqual({
 			id: organization.id,
 			slug: organization.slug,
+			name: organization.name,
 			customDomain: null,
 			dataRegion: 'ksa',
 			hasProvisionedDb: true,

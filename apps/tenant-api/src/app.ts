@@ -23,6 +23,11 @@ import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
+import {
+	publicVoiceRoutes,
+	voiceOperatorRoutes,
+	voiceSystemRoutes,
+} from './routes/voice.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
 
@@ -113,6 +118,14 @@ export function createTenantApiApp() {
 		await next()
 	})
 
+	app.use(
+		'/voice/*',
+		rateLimit('public-voice-handoffs', {
+			windowMs: 60 * 1000,
+			maxRequests: 30,
+		}),
+	)
+
 	app.get('/health', healthHandler)
 	app.get('/api/health', healthHandler)
 
@@ -126,11 +139,14 @@ export function createTenantApiApp() {
 	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
+	app.route('/api/voice', voiceSystemRoutes)
+	app.route('/voice', publicVoiceRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/orders', operatorOrderRoutes)
+	app.route('/operator/calls', voiceOperatorRoutes)
 
 	app.notFound((c) => {
 		return c.json({ error: 'Endpoint Not Found' }, 404)

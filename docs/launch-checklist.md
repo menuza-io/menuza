@@ -74,6 +74,8 @@ Set under **Settings → Secrets and variables → Actions → Secrets**.
 | `AWS_SECRET_ACCESS_KEY`       | Turbo cache in GitHub Actions           | Existing Cloudflare R2 token secret                |
 | `OCI_TENANT_SSH_KEY`          | `deploy-tenant-api-oci`                 | SSH private key for OCI VMs (KSA / optional US)    |
 | `GHCR_PULL_TOKEN`             | OCI deploy (optional)                   | PAT with `packages:read` if GHCR image is private  |
+| `LIVEKIT_API_KEY`             | `deploy-voice-agent` (optional)         | LiveKit Cloud project API key                      |
+| `LIVEKIT_API_SECRET`          | `deploy-voice-agent` (optional)         | LiveKit Cloud project API secret                   |
 
 Generate API token:
 [Cloudflare Dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens)
@@ -227,6 +229,17 @@ URLs patched from `APP_BASE_URL`, `TENANT_API_URL`, `TENANT_API_URL_KSA`.
 | `OCI_TENANT_KSA_HOST` | Riyadh VM hostname                             |
 | `OCI_TENANT_SSH_USER` | SSH user (default `ubuntu`)                    |
 
+### Voice agent (`apps/voice-agent` on LiveKit Cloud, optional)
+
+| Variable           | Purpose                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `LIVEKIT_URL`      | `wss://<project>.livekit.cloud`                                |
+| `LIVEKIT_AGENT_ID` | Printed by `npm run deploy:livekit -w voice-agent -- --create` |
+
+The `deploy-voice-agent` job skips until both variables and the two
+`LIVEKIT_API_*` secrets exist. See
+[Voice agent deployment](./voice-agent-deployment.md).
+
 ---
 
 ## Per-application Wrangler secrets
@@ -284,6 +297,16 @@ Set non-secret storage config via secrets or GitHub Variables:
 `CLOUDFLARE_API_TOKEN` (custom domains), `MEDIA_TRANSFORM_BASE_URL`,
 `GOOGLE_GENERATIVE_AI_API_KEY`, etc. — see `apps/app/.env.schema`.
 
+### App — AI phone agent (US organizations)
+
+| Secret               | Notes                                            |
+| -------------------- | ------------------------------------------------ |
+| `VOICE_AGENT_TOKEN`  | **Same as US tenant-api and the LiveKit agent**  |
+| `LIVEKIT_URL`        | LiveKit Cloud project URL (test calls, dispatch) |
+| `LIVEKIT_API_KEY`    | LiveKit Cloud project API key                    |
+| `LIVEKIT_API_SECRET` | LiveKit Cloud project API secret                 |
+| `CARTESIA_API_KEY`   | Optional: voice picker previews                  |
+
 ```bash
 cd apps/app
 npx wrangler secret put SESSION_SECRET
@@ -315,6 +338,7 @@ npx wrangler secret put SESSION_SECRET --env staging
 | `INTERNAL_COMMAND_TOKEN` | **Same as App**                                                |
 | `TENANT_OPERATOR_TOKEN`  | **Same as App**                                                |
 | `TWILIO_AUTH_TOKEN`      | US SMS only (not KSA production)                               |
+| `VOICE_AGENT_TOKEN`      | **Same as App** and the LiveKit agent (AI phone agent)         |
 
 ### Jobs cron (`apps/jobs-cron`)
 
@@ -408,6 +432,21 @@ Wrangler dev secrets: `apps/app/.dev.vars`, `apps/tenant-api/.dev.vars`
 
 - [ ] Turso + R2 credentials on Vercel — see CMS docs
 - [ ] Not managed by `patch-wrangler.mjs`
+
+### 8. Voice agent (LiveKit Cloud — optional, US only)
+
+- [ ] LiveKit Cloud project (Build plan to start; Ship before restaurants rely
+      on it, to avoid cold starts); Observability turned off (it stores call
+      transcripts and audio at LiveKit)
+- [ ] Fill provider keys in `launch.voice-agent.env` (written by
+      `npm run launch:setup`)
+- [ ] Set App LiveKit secrets and `VOICE_AGENT_TOKEN` on App + tenant-api US
+- [ ] Create the agent:
+      `npm run deploy:livekit -w voice-agent -- --create --secrets-file launch.voice-agent.env`
+- [ ] Set `LIVEKIT_URL`, `LIVEKIT_AGENT_ID` variables and `LIVEKIT_API_*`
+      secrets in GitHub
+- [ ] SIP trunk + dispatch rule to agent `phone-agent`; place a test call
+- [ ] Details: [Voice agent deployment](./voice-agent-deployment.md)
 
 ---
 

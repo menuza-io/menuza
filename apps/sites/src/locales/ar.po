@@ -871,6 +871,10 @@ msgstr "نفد المخزون"
 msgid "Some items are no longer available and were removed from your order."
 msgstr "لم تعد بعض الأصناف متوفرة وتمت إزالتها من طلبك."
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items from your call are no longer available, so we removed them:"
+msgstr "بعض الأصناف من مكالمتك لم تعد متوفرة، لذا أزلناها:"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items in your order changed or sold out. Please review your cart and try again."
 msgstr "بعض الأصناف في طلبك تغيّرت أو نفدت. راجع سلتك وحاول مرة أخرى."
@@ -878,6 +882,10 @@ msgstr "بعض الأصناف في طلبك تغيّرت أو نفدت. راجع
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items just sold out. Please review your order."
 msgstr "بعض الأصناف نفدت للتو. راجع طلبك."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed since your call. Your cart shows the current prices."
+msgstr "تغيّرت بعض الأسعار منذ مكالمتك. تعرض سلتك الأسعار الحالية."
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -930,6 +938,10 @@ msgstr "وقت الاستلام هذا لم يعد متاحًا. اختر وقت
 msgid "The hold on your order was released. Please place a new order."
 msgstr "انتهت مهلة حجز طلبك. يرجى تقديم طلب جديد."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items from your call are no longer available. You can still order from the menu."
+msgstr "الأصناف من مكالمتك لم تعد متوفرة. لا يزال بإمكانك الطلب من القائمة."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "قد يكون الرابط غير مكتمل. يمكنك بدء طلب جديد من القائمة."
@@ -961,6 +973,10 @@ msgstr "هذا الموقع غير متاح للطلب."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "هذا الطلب أقل من الحد الأدنى للتوصيل."
+
+#: src/pages/menu.astro.ts:3
+msgid "This order link has expired. You can still order from the menu."
+msgstr "انتهت صلاحية رابط الطلب هذا. لا يزال بإمكانك الطلب من القائمة."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1081,6 +1097,10 @@ msgstr "تعذّر إرسال طلبك. حاول مرة أخرى."
 msgid "We couldn't find this order"
 msgstr "تعذّر العثور على هذا الطلب"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't load your phone order."
+msgstr "تعذّر تحميل طلبك الهاتفي."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "تعذّر تحميل إيصالك"
@@ -1088,6 +1108,10 @@ msgstr "تعذّر تحميل إيصالك"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "تعذّر بدء الدفع. حاول مرة أخرى."
+
+#: src/pages/menu.astro.ts:3
+msgid "We loaded your order from your call. Review it and check out."
+msgstr "حمّلنا طلبك من مكالمتك. راجعه ثم أكمل الدفع."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."

@@ -727,7 +727,273 @@ export const restaurantOrderReservationsRelations = relations(
 )
 
 // ==========================================
-// 11. INFERRED TYPES
+// 11. AI PHONE CALLS (caller numbers and transcripts stay regional)
+// ==========================================
+export type VoiceTranscriptTurn = {
+	role: 'agent' | 'caller'
+	text: string
+	at: number
+}
+
+export const voiceCalls = sqliteTable(
+	'voice_calls',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		channel: text('channel', { enum: ['phone', 'web_test'] }).notNull(),
+		// Opaque part of the business the call was for (defined by the vertical).
+		scopeId: text('scope_id'),
+		flowVersionId: text('flow_version_id'),
+		roomName: text('room_name').notNull(),
+		callerPhone: text('caller_phone'),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		// A definition slug (`callPurposeIds(vertical)`), checked in code.
+		purpose: text('purpose'),
+		outcome: text('outcome', {
+			enum: [
+				'resolved',
+				'link_sent',
+				'escalated',
+				'message_taken',
+				'abandoned',
+				'failed',
+			],
+		}),
+		summary: text('summary'),
+		transcript: text('transcript', { mode: 'json' })
+			.$type<VoiceTranscriptTurn[]>()
+			.notNull()
+			.default(sql`'[]'`),
+		recordingKey: text('recording_key'),
+		recordingExpiresAt: integer('recording_expires_at', { mode: 'timestamp' }),
+		// Set once retention has queued the call's expected recording key for
+		// deletion. A recording that starts after the call finishes never
+		// reaches recording_key, so without this sweep the object is orphaned.
+		recordingSweptAt: integer('recording_swept_at', { mode: 'timestamp' }),
+		transcriptExpiresAt: integer('transcript_expires_at', {
+			mode: 'timestamp',
+		}),
+		startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+		endedAt: integer('ended_at', { mode: 'timestamp' }),
+		durationSeconds: integer('duration_seconds'),
+		// Calls logged before follow-up tracking existed count as resolved.
+		followUpStatus: text('follow_up_status', { enum: ['open', 'resolved'] })
+			.notNull()
+			.default('resolved'),
+		followUpResolvedAt: integer('follow_up_resolved_at', {
+			mode: 'timestamp',
+		}),
+		autoResolveAt: integer('auto_resolve_at', { mode: 'timestamp' }),
+		tags: text('tags', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default(sql`'[]'`),
+		rating: integer('rating'),
+		sentiment: text('sentiment', {
+			enum: ['positive', 'neutral', 'negative'],
+		}),
+		transferResult: text('transfer_result', {
+			enum: ['none', 'answered', 'no_answer', 'referred'],
+		})
+			.notNull()
+			.default('none'),
+		transferContactId: text('transfer_contact_id'),
+		voicemail: integer('voicemail', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		calledWhileOpen: integer('called_while_open', { mode: 'boolean' }),
+		linkSent: integer('link_sent', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_voice_calls_started').on(table.startedAt),
+		index('idx_voice_calls_purpose').on(table.purpose),
+		index('idx_voice_calls_follow_up').on(
+			table.followUpStatus,
+			table.startedAt,
+		),
+		index('idx_voice_calls_auto_resolve').on(table.autoResolveAt),
+		index('idx_voice_calls_caller_phone').on(table.callerPhone),
+		index('idx_voice_calls_customer').on(table.customerId),
+		index('idx_voice_calls_recording_expires').on(table.recordingExpiresAt),
+		index('idx_voice_calls_transcript_expires').on(table.transcriptExpiresAt),
+		uniqueIndex('voice_calls_room_name_unique').on(table.roomName),
+	],
+)
+
+// Data from a call that a texted link carries to a site page. The link token
+// is only stored hashed; the raw token exists in the SMS.
+export const voiceLinkHandoffs = sqliteTable(
+	'voice_link_handoffs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		callId: text('call_id')
+			.notNull()
+			.references(() => voiceCalls.id, { onDelete: 'cascade' }),
+		tokenHash: text('token_hash').notNull(),
+		scopeId: text('scope_id'),
+		// Site path the link opens, without the token fragment.
+		path: text('path').notNull(),
+		payload: text('payload', { mode: 'json' }).$type<unknown>().notNull(),
+		sentToPhone: text('sent_to_phone'),
+		smsSentAt: integer('sms_sent_at', { mode: 'timestamp' }),
+		expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+		openedAt: integer('opened_at', { mode: 'timestamp' }),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('voice_link_handoffs_token_hash_unique').on(table.tokenHash),
+		index('idx_voice_link_handoffs_call').on(table.callId),
+	],
+)
+
+export const voiceCallRequests = sqliteTable(
+	'voice_call_requests',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		callId: text('call_id')
+			.notNull()
+			.references(() => voiceCalls.id, { onDelete: 'cascade' }),
+		// A definition slug (`callRequestTypeIds(vertical)`), checked in code.
+		type: text('type').notNull(),
+		status: text('status', { enum: ['open', 'done'] })
+			.notNull()
+			.default('open'),
+		callerName: text('caller_name'),
+		callerPhone: text('caller_phone'),
+		details: text('details', { mode: 'json' })
+			.$type<Record<string, string>>()
+			.notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_voice_call_requests_status').on(table.status, table.createdAt),
+		index('idx_voice_call_requests_call').on(table.callId),
+		index('idx_voice_call_requests_caller_phone').on(table.callerPhone),
+	],
+)
+
+// Every SMS attempt from a call, including blocked ones, so per-call and
+// per-org caps can be enforced and abuse can be audited.
+export const voiceSmsSends = sqliteTable(
+	'voice_sms_sends',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		callId: text('call_id')
+			.notNull()
+			.references(() => voiceCalls.id, { onDelete: 'cascade' }),
+		// staff_alert rows go to the org's own team and have a separate cap.
+		kind: text('kind', {
+			enum: ['handoff_link', 'website_link', 'staff_alert'],
+		}).notNull(),
+		toPhone: text('to_phone').notNull(),
+		status: text('status', {
+			enum: ['sent', 'failed', 'blocked', 'skipped'],
+		}).notNull(),
+		reason: text('reason'),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_voice_sms_sends_created').on(table.createdAt),
+		index('idx_voice_sms_sends_call').on(table.callId),
+		index('idx_voice_sms_sends_to_phone').on(table.toPhone),
+	],
+)
+
+// Recording objects whose call row is already gone but which could not be
+// deleted from storage yet (for example, storage credentials are missing).
+// The retention purge retries them so erasure never orphans a recording.
+export const voiceRecordingDeletions = sqliteTable(
+	'voice_recording_deletions',
+	{
+		recordingKey: text('recording_key').primaryKey(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+)
+
+// Phone-line ownership codes sent for this org, so the daily cap survives
+// restarts and holds across processes.
+export const voiceLineVerifications = sqliteTable(
+	'voice_line_verifications',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		toPhone: text('to_phone').notNull(),
+		method: text('method', { enum: ['sms', 'call'] }).notNull(),
+		status: text('status', { enum: ['sent', 'failed'] }).notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_voice_line_verifications_created').on(table.createdAt),
+	],
+)
+
+export const voiceCallsRelations = relations(voiceCalls, ({ one, many }) => ({
+	customer: one(customers, {
+		fields: [voiceCalls.customerId],
+		references: [customers.id],
+	}),
+	handoffs: many(voiceLinkHandoffs),
+	requests: many(voiceCallRequests),
+	smsSends: many(voiceSmsSends),
+}))
+
+export const voiceSmsSendsRelations = relations(voiceSmsSends, ({ one }) => ({
+	call: one(voiceCalls, {
+		fields: [voiceSmsSends.callId],
+		references: [voiceCalls.id],
+	}),
+}))
+
+export const voiceLinkHandoffsRelations = relations(
+	voiceLinkHandoffs,
+	({ one }) => ({
+		call: one(voiceCalls, {
+			fields: [voiceLinkHandoffs.callId],
+			references: [voiceCalls.id],
+		}),
+	}),
+)
+
+export const voiceCallRequestsRelations = relations(
+	voiceCallRequests,
+	({ one }) => ({
+		call: one(voiceCalls, {
+			fields: [voiceCallRequests.callId],
+			references: [voiceCalls.id],
+		}),
+	}),
+)
+
+// ==========================================
+// 12. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -762,3 +1028,9 @@ export type RestaurantOrderReservation =
 	typeof restaurantOrderReservations.$inferSelect
 export type NewRestaurantOrderReservation =
 	typeof restaurantOrderReservations.$inferInsert
+export type VoiceCall = typeof voiceCalls.$inferSelect
+export type VoiceLinkHandoff = typeof voiceLinkHandoffs.$inferSelect
+export type VoiceCallRequest = typeof voiceCallRequests.$inferSelect
+export type VoiceSmsSend = typeof voiceSmsSends.$inferSelect
+export type VoiceRecordingDeletion = typeof voiceRecordingDeletions.$inferSelect
+export type VoiceLineVerification = typeof voiceLineVerifications.$inferSelect

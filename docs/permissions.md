@@ -62,6 +62,10 @@ Product areas are gated with these permissions:
 | Marketing broadcasts     | `read/update:campaign:any`                                                        |
 | Marketing automations    | `read/update:automation:any`                                                      |
 | Menus and drops          | `read/update:menu:any`                                                            |
+| AI phone agent           | `read/update:phone_agent:any`                                                     |
+| AI phone calls           | `read:phone_call:any` (caller numbers, transcripts, recordings)                   |
+| AI phone call follow-up  | `update:phone_call:any` (complete/reopen calls and requests, tags)                |
+| AI phone call deletion   | `delete:phone_call:any`                                                           |
 | Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`) |
 | Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)           |
 

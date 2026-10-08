@@ -11,6 +11,7 @@
     }
   },
   "scripts": {
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -19,6 +20,7 @@
     "@lingui/macro": "^5.3.2",
     "@lingui/react": "^5.0.1",
     "@repo/common": "*",
+    "@repo/flow-editor": "*",
     "@repo/marketing": "*",
     "@repo/tenant-db": "*",
     "@repo/ui": "*",

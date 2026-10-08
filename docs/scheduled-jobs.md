@@ -26,12 +26,22 @@ as the Admin cache route).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                       | Purpose                                                      |
-| ----------- | ------------------------------------------- | ------------------------------------------------------------ |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival`        | Archive old audit logs                                       |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`         | Remove expired MCP tokens                                    |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`              | Process pending GDPR erasures                                |
-| `0 5 * * *` | `/resources/jobs/form-submission-retention` | Delete regional website-form submissions older than 365 days |
+| Cron        | Route                                       | Purpose                                        |
+| ----------- | ------------------------------------------- | ---------------------------------------------- |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`        | Archive old audit logs                         |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`         | Remove expired MCP tokens                      |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`              | Process pending GDPR erasures                  |
+| `0 4 * * *` | `/resources/jobs/voice-retention`           | Delete expired call recordings and caller data |
+| `0 5 * * *` | `/resources/jobs/form-submission-retention` | Not scheduled (see below)                      |
+
+The hourly `0 * * * *` trigger runs the tenant engagement sync. The Workers free
+plan allows five cron triggers per Worker, so new daily jobs share an existing
+trigger (each job is still its own request with its own error logging).
+
+Form-submission retention (delete regional website-form submissions older than
+365 days) is mapped in `JOB_ROUTES`, but `0 5 * * *` is not in
+`apps/jobs-cron/wrangler.jsonc`, so it does not run. Add that trigger only when
+you want old form submissions deleted.
 
 ## Secrets and configuration
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import worker from './index'
+import worker, { JOB_ROUTES } from './index'
 import type { Env } from './index'
 
 describe('Jobs-Cron Worker Endpoints', () => {
@@ -413,6 +413,68 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					headers: { Authorization: `Bearer ${mockInternalToken}` },
 				}),
 			)
+		})
+
+		it('runs GDPR erasure and voice retention from the shared daily trigger', async () => {
+			const fetchMock = vi.fn(async (url: string) =>
+				url.endsWith('/gdpr-erasure')
+					? new Response('down', { status: 502 })
+					: new Response(JSON.stringify({ success: true }), { status: 200 }),
+			)
+			globalThis.fetch = fetchMock as unknown as typeof fetch
+			const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+			const waited: Promise<unknown>[] = []
+			const ctx = {
+				waitUntil: vi.fn().mockImplementation((p) => {
+					waited.push(p)
+				}),
+				passThroughOnException: vi.fn(),
+			} as any
+
+			await worker.scheduled({ cron: '0 4 * * *' } as any, env, ctx)
+			const results = await Promise.allSettled(waited)
+
+			expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+				'https://app.example.com/resources/jobs/gdpr-erasure',
+				'https://app.example.com/resources/jobs/voice-retention',
+			])
+			// One failing job does not stop the other from running.
+			expect(results.map((result) => result.status)).toEqual([
+				'rejected',
+				'fulfilled',
+			])
+			errorSpy.mockRestore()
+		})
+
+		it('stays within the five cron triggers of the free plan', async () => {
+			// The tsconfig only has Workers types, so reach node:fs untyped.
+			const { process: nodeProcess } = globalThis as unknown as {
+				process: {
+					cwd(): string
+					getBuiltinModule(id: 'node:fs'): {
+						readFileSync(path: string, encoding: 'utf8'): string
+					}
+				}
+			}
+			const config = nodeProcess
+				.getBuiltinModule('node:fs')
+				.readFileSync(`${nodeProcess.cwd()}/wrangler.jsonc`, 'utf8')
+			const crons = [
+				...(/"crons":\s*\[([^\]]*)\]/.exec(config)?.[1] ?? '').matchAll(
+					/"([^"]+)"/g,
+				),
+			].map((match) => match[1])
+			expect(crons.length).toBeLessThanOrEqual(5)
+			expect(crons).toContain('0 * * * *')
+			for (const [cron, paths] of Object.entries(JOB_ROUTES)) {
+				if (paths.includes('/resources/jobs/form-submission-retention')) {
+					// Deliberately unscheduled until form retention is turned on.
+					expect(crons).not.toContain(cron)
+				} else {
+					expect(crons).toContain(cron)
+				}
+			}
 		})
 
 		it('ignores unrecognized cron schedule strings', async () => {

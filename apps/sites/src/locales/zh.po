@@ -871,6 +871,10 @@ msgstr "已售罄"
 msgid "Some items are no longer available and were removed from your order."
 msgstr "部分商品已无法购买，已从您的订单中移除。"
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items from your call are no longer available, so we removed them:"
+msgstr "您通话中的部分商品已无货，我们已将其移除："
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items in your order changed or sold out. Please review your cart and try again."
 msgstr "订单中的部分商品已变更或售罄。请检查购物车后重试。"
@@ -878,6 +882,10 @@ msgstr "订单中的部分商品已变更或售罄。请检查购物车后重试
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items just sold out. Please review your order."
 msgstr "部分商品刚刚售罄。请检查您的订单。"
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed since your call. Your cart shows the current prices."
+msgstr "自您通话以来部分价格已变动。购物车显示的是当前价格。"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -930,6 +938,10 @@ msgstr "该取餐时间已不可用。请选择其他时间。"
 msgid "The hold on your order was released. Please place a new order."
 msgstr "您的订单保留已释放。请重新下单。"
 
+#: src/pages/menu.astro.ts:3
+msgid "The items from your call are no longer available. You can still order from the menu."
+msgstr "您通话中的商品已无货。您仍可从菜单中点餐。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "链接可能不完整。您可以从菜单开始新的订单。"
@@ -961,6 +973,10 @@ msgstr "该门店暂不支持下单。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "此订单未达到配送起送金额。"
+
+#: src/pages/menu.astro.ts:3
+msgid "This order link has expired. You can still order from the menu."
+msgstr "此订单链接已过期。您仍可从菜单中点餐。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1081,6 +1097,10 @@ msgstr "无法提交您的订单。请重试。"
 msgid "We couldn't find this order"
 msgstr "找不到此订单"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't load your phone order."
+msgstr "无法加载您的电话订单。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "无法加载您的收据"
@@ -1088,6 +1108,10 @@ msgstr "无法加载您的收据"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
+
+#: src/pages/menu.astro.ts:3
+msgid "We loaded your order from your call. Review it and check out."
+msgstr "我们已载入您通话中的订单。请核对后结账。"
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."

@@ -1,0 +1,34 @@
+{
+  "name": "voice-agent",
+  "version": "0.0.1",
+  "private": true,
+  "description": "LiveKit voice worker for the AI phone agent (US only)",
+  "type": "module",
+  "scripts": {
+    "dev": "../../node_modules/.bin/varlock run -- tsx src/main.ts dev",
+    "start": "../../node_modules/.bin/varlock run -- node --import=tsx src/main.ts start",
+    "download-files": "../../node_modules/.bin/varlock run -- tsx src/main.ts download-files",
+    "deploy:livekit": "node scripts/livekit-deploy.mjs",
+    "codegen": "../../node_modules/.bin/varlock codegen --path .",
+    "typecheck": "npm run codegen && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@livekit/agents": "^1.9.1",
+    "@livekit/agents-plugin-cartesia": "^1.9.1",
+    "@livekit/agents-plugin-deepgram": "^1.9.1",
+    "@livekit/agents-plugin-google": "^1.9.1",
+    "@livekit/rtc-node": "^1.1.0",
+    "@repo/phone-agent": "*",
+    "@repo/phone-agent-restaurant": "*",
+    "livekit-server-sdk": "^2.19.1",
+    "tsx": "^4.19.3",
+    "varlock": "^1.18.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.6",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
+  }
+}
