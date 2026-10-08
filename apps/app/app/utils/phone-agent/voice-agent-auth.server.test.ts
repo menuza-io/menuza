@@ -9,7 +9,7 @@ const { getUsableVoiceAgentToken, requireVoiceAgentAuth } =
 	await import('./voice-agent-auth.server.ts')
 
 const DEV_DEFAULT = 'dev-voice-agent-token-do-not-use-in-prod-32b'
-const REAL_TOKEN = 'test-voice-agent-token-not-a-secret-000'
+const CONFIGURED_TOKEN = 'x'.repeat(40)
 
 function requestWith(token: string) {
 	return new Request('http://localhost/resources/phone-agent-config', {
@@ -20,7 +20,7 @@ function requestWith(token: string) {
 describe('VOICE_AGENT_TOKEN validation', () => {
 	beforeEach(() => {
 		vi.stubEnv('NODE_ENV', 'development')
-		env.VOICE_AGENT_TOKEN = REAL_TOKEN
+		env.VOICE_AGENT_TOKEN = CONFIGURED_TOKEN
 	})
 
 	afterEach(() => {
@@ -54,13 +54,15 @@ describe('VOICE_AGENT_TOKEN validation', () => {
 
 	it('accepts a real secret in production', () => {
 		vi.stubEnv('NODE_ENV', 'production')
-		expect(() => requireVoiceAgentAuth(requestWith(REAL_TOKEN))).not.toThrow()
+		expect(() =>
+			requireVoiceAgentAuth(requestWith(CONFIGURED_TOKEN)),
+		).not.toThrow()
 	})
 
 	it('rejects a wrong bearer token', () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		try {
-			requireVoiceAgentAuth(requestWith(`${REAL_TOKEN}x`))
+			requireVoiceAgentAuth(requestWith(`${CONFIGURED_TOKEN}y`))
 			expect.unreachable()
 		} catch (error) {
 			expect((error as Response).status).toBe(401)
