@@ -1,8 +1,13 @@
+import { useLingui } from '@lingui/react'
 import {
-	Background,
-	BackgroundVariant,
-	Controls,
-	MiniMap,
+	FlowCanvasChrome,
+	FlowWorkspace,
+	onFlowDragOver,
+	readFlowDragData,
+	useFlowColorMode,
+} from '@repo/flow-editor'
+import { cn } from '@repo/ui'
+import {
 	ReactFlow,
 	ReactFlowProvider,
 	addEdge,
@@ -13,13 +18,6 @@ import {
 	type Edge,
 	type Node,
 } from '@xyflow/react'
-import { useLingui } from '@lingui/react'
-import { cn } from '@repo/ui'
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-} from '@repo/ui/resizable'
 import {
 	useCallback,
 	useMemo,
@@ -29,7 +27,6 @@ import {
 	type MouseEvent,
 	type ReactNode,
 } from 'react'
-import '@xyflow/react/dist/style.css'
 
 import { edgeTypes } from './edges/index.ts'
 import { NodeInspector } from './node-inspector.tsx'
@@ -49,16 +46,16 @@ import {
 	type RealtimeValidationState,
 } from './validation.ts'
 import {
-	useLocalizedPlatformWorkflowConfig,
-	useLocalizedTenantWorkflowConfig,
-} from './workflow-labels.ts'
-import { WorkflowToolbar } from './workflow-toolbar.tsx'
-import {
 	PLATFORM_WORKFLOW_CONFIG,
 	TENANT_WORKFLOW_CONFIG,
 	WorkflowConfigProvider,
 	type WorkflowConfig,
 } from './workflow-config.tsx'
+import {
+	useLocalizedPlatformWorkflowConfig,
+	useLocalizedTenantWorkflowConfig,
+} from './workflow-labels.ts'
+import { WorkflowToolbar } from './workflow-toolbar.tsx'
 
 interface WorkflowCanvasProps {
 	workflowConfig?: WorkflowConfig
@@ -97,6 +94,7 @@ function WorkflowCanvasInner({
 	const { _ } = useLingui()
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition, fitView } = useReactFlow()
+	const colorMode = useFlowColorMode()
 
 	const [name, setName] = useState(initialName || 'Untitled Automation')
 	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -143,24 +141,13 @@ function WorkflowCanvasInner({
 		[isValidConnection, setEdges],
 	)
 
-	const onDragOver = useCallback((event: DragEvent) => {
-		event.preventDefault()
-		event.dataTransfer.dropEffect = 'move'
-	}, [])
-
 	const onDrop = useCallback(
 		(event: DragEvent) => {
 			event.preventDefault()
 
-			const type = event.dataTransfer.getData('application/reactflow')
-			const rawData = event.dataTransfer.getData('application/reactflow-data')
-
-			if (!type) return
-
-			let data: Record<string, unknown> = {}
-			try {
-				if (rawData) data = JSON.parse(rawData) as Record<string, unknown>
-			} catch {}
+			const dropped = readFlowDragData(event)
+			if (!dropped) return
+			const { type, data } = dropped
 
 			const position = screenToFlowPosition({
 				x: event.clientX,
@@ -303,99 +290,55 @@ function WorkflowCanvasInner({
 				)}
 				ref={reactFlowWrapper}
 			>
-				<ResizablePanelGroup
-					direction="horizontal"
+				<FlowWorkspace
 					autoSaveId="marketing-automation-builder"
-					className="bg-muted min-h-0 flex-1"
+					sidebar={
+						selectedNode ? (
+							<NodeInspector
+								node={selectedNode}
+								onUpdateNodeData={handleUpdateNodeData}
+								onSaveNodeData={handleSaveNodeData}
+								onDeleteNode={handleDeleteNode}
+								onClose={() => setSelectedNodeId(null)}
+								errors={validation.nodeErrors[selectedNode.id] || []}
+								emailDesignerHeaderExtras={headerExtras}
+								emailDesignerContentClassName={
+									// Docked AI panel (420px) + the same 8px gutter the
+									// designer's own sections use.
+									reserveAiPanelWidth ? 'lg:pr-[27.25rem]' : undefined
+								}
+							/>
+						) : (
+							<NodePalette onAddNode={handleAddNodeFromPalette} />
+						)
+					}
 				>
-					<ResizablePanel
-						id="sidebar"
-						order={1}
-						defaultSize={22}
-						minSize={15}
-						maxSize={40}
-						className="m-2 mr-0 min-w-0 rounded-lg"
+					<ReactFlow
+						nodes={nodes}
+						edges={edges}
+						onNodesChange={onNodesChange}
+						onEdgesChange={onEdgesChange}
+						onConnect={onConnect}
+						isValidConnection={isValidConnection}
+						onDragOver={onFlowDragOver}
+						onDrop={onDrop}
+						onNodeClick={onNodeClick}
+						onPaneClick={onPaneClick}
+						nodeTypes={nodeTypes}
+						edgeTypes={edgeTypes}
+						defaultEdgeOptions={{ type: 'workflow' }}
+						fitView
+						defaultViewport={initialData.viewport || { x: 0, y: 0, zoom: 1 }}
+						minZoom={0.2}
+						maxZoom={2}
+						snapToGrid
+						snapGrid={[16, 16]}
+						className="bg-background"
+						colorMode={colorMode}
 					>
-						<aside className="bg-background flex h-full min-w-0 flex-col overflow-hidden rounded-xl">
-							{selectedNode ? (
-								<NodeInspector
-									node={selectedNode}
-									onUpdateNodeData={handleUpdateNodeData}
-									onSaveNodeData={handleSaveNodeData}
-									onDeleteNode={handleDeleteNode}
-									onClose={() => setSelectedNodeId(null)}
-									errors={validation.nodeErrors[selectedNode.id] || []}
-									emailDesignerHeaderExtras={headerExtras}
-									emailDesignerContentClassName={
-										// Docked AI panel (420px) + the same 8px gutter the
-										// designer's own sections use.
-										reserveAiPanelWidth ? 'lg:pr-[27.25rem]' : undefined
-									}
-								/>
-							) : (
-								<NodePalette onAddNode={handleAddNodeFromPalette} />
-							)}
-						</aside>
-					</ResizablePanel>
-
-					<ResizableHandle withHandle className="bg-transparent" />
-
-					<ResizablePanel
-						id="canvas"
-						order={2}
-						defaultSize={78}
-						minSize={40}
-						className="min-w-0"
-					>
-						<div className="bg-muted/30 h-full w-full p-2">
-							<div className="bg-background h-full w-full overflow-hidden rounded-xl border shadow-sm">
-								<ReactFlow
-									nodes={nodes}
-									edges={edges}
-									onNodesChange={onNodesChange}
-									onEdgesChange={onEdgesChange}
-									onConnect={onConnect}
-									isValidConnection={isValidConnection}
-									onDragOver={onDragOver}
-									onDrop={onDrop}
-									onNodeClick={onNodeClick}
-									onPaneClick={onPaneClick}
-									nodeTypes={nodeTypes}
-									edgeTypes={edgeTypes}
-									defaultEdgeOptions={{ type: 'workflow' }}
-									fitView
-									defaultViewport={
-										initialData.viewport || { x: 0, y: 0, zoom: 1 }
-									}
-									minZoom={0.2}
-									maxZoom={2}
-									snapToGrid
-									snapGrid={[16, 16]}
-									className="bg-background"
-									colorMode="system"
-								>
-									<Background
-										variant={BackgroundVariant.Dots}
-										gap={20}
-										size={1}
-										className="text-muted-foreground/20 opacity-20"
-									/>
-									<Controls
-										position="bottom-right"
-										className="bg-card overflow-hidden rounded-md border shadow-sm"
-									/>
-									<MiniMap
-										position="bottom-left"
-										zoomable
-										pannable
-										nodeStrokeWidth={3}
-										className="bg-card/90 [&_.react-flow__minimap-mask]:fill-background/80 [&_.react-flow__minimap-node]:fill-muted-foreground/30 !hidden overflow-hidden rounded-xl border shadow-md backdrop-blur-md sm:!block"
-									/>
-								</ReactFlow>
-							</div>
-						</div>
-					</ResizablePanel>
-				</ResizablePanelGroup>
+						<FlowCanvasChrome />
+					</ReactFlow>
+				</FlowWorkspace>
 			</div>
 		</div>
 	)

@@ -1,4 +1,6 @@
 import { Trans } from '@lingui/macro'
+import { FLOW_HANDLE_CLASS, FlowHandleLabel } from '@repo/flow-editor'
+import { cn } from '@repo/ui'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo } from 'react'
 import { type ConditionFlowNode } from '../types.ts'
@@ -44,30 +46,30 @@ function ConditionNodeComponent({
 						type="target"
 						position={Position.Top}
 						id="input"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 					/>
 
 					<Handle
 						type="source"
 						position={Position.Bottom}
 						id="true"
-						className="border-background bg-foreground size-3 border-2"
+						className={cn(FLOW_HANDLE_CLASS, 'bg-foreground')}
 						style={{ left: '25%' }}
 					/>
-					<div className="border-border bg-card text-foreground absolute -bottom-6 left-[25%] z-10 -translate-x-1/2 rounded-full border px-2 py-0.5 text-[10px] font-medium shadow-xs">
+					<FlowHandleLabel className="text-foreground left-[25%]">
 						<Trans>Yes</Trans>
-					</div>
+					</FlowHandleLabel>
 
 					<Handle
 						type="source"
 						position={Position.Bottom}
 						id="false"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 						style={{ left: '75%' }}
 					/>
-					<div className="border-border bg-card text-muted-foreground absolute -bottom-6 left-[75%] z-10 -translate-x-1/2 rounded-full border px-2 py-0.5 text-[10px] font-medium shadow-xs">
+					<FlowHandleLabel className="left-[75%]">
 						<Trans>No</Trans>
-					</div>
+					</FlowHandleLabel>
 				</>
 			}
 		/>

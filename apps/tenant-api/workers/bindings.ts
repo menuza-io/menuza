@@ -16,6 +16,12 @@ export interface TenantApiWorkerEnv {
 	AUTH_HMAC_SECRET: string
 	INTERNAL_COMMAND_TOKEN: string
 	TENANT_OPERATOR_TOKEN: string
+	VOICE_AGENT_TOKEN?: string
+	RECORDING_S3_BUCKET?: string
+	RECORDING_S3_REGION?: string
+	RECORDING_S3_ENDPOINT?: string
+	RECORDING_S3_ACCESS_KEY?: string
+	RECORDING_S3_SECRET?: string
 	TWILIO_AUTH_TOKEN?: string
 	OCI_TENANCY_OCID?: string
 	OCI_USER_OCID?: string

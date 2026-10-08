@@ -237,6 +237,48 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Create group chats and add members',
 	},
+	{
+		id: 'org_perm_read_phone_agent_any',
+		action: 'read',
+		entity: 'phone_agent',
+		access: 'any',
+		context: 'organization',
+		description: 'View the AI phone agent setup',
+	},
+	{
+		id: 'org_perm_update_phone_agent_any',
+		action: 'update',
+		entity: 'phone_agent',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Configure the AI phone agent, its call flow, numbers, and training rules',
+	},
+	{
+		id: 'org_perm_read_phone_call_any',
+		action: 'read',
+		entity: 'phone_call',
+		access: 'any',
+		context: 'organization',
+		description: 'View AI phone calls, transcripts, and recordings',
+	},
+	{
+		id: 'org_perm_update_phone_call_any',
+		action: 'update',
+		entity: 'phone_call',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Complete and reopen AI phone calls and requests, and tag calls',
+	},
+	{
+		id: 'org_perm_delete_phone_call_any',
+		action: 'delete',
+		entity: 'phone_call',
+		access: 'any',
+		context: 'organization',
+		description: 'Permanently delete AI phone calls and their recordings',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

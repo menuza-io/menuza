@@ -3,3 +3,4 @@ JWT_SECRET=dev-jwt-secret-do-not-use-in-prod-32b
 AUTH_HMAC_SECRET=dev-auth-hmac-secret-do-not-use-in-prod
 INTERNAL_COMMAND_TOKEN=dev-internal-command-token-do-not-use-in-prod
 TENANT_OPERATOR_TOKEN=dev-operator-token-do-not-use-in-prod-32b
+VOICE_AGENT_TOKEN=dev-voice-agent-token-do-not-use-in-prod-32b

@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/macro'
+import { FLOW_HANDLE_CLASS } from '@repo/flow-editor'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo } from 'react'
 import { type DelayFlowNode } from '../types.ts'
@@ -25,13 +26,13 @@ function DelayNodeComponent({ data, selected }: NodeProps<DelayFlowNode>) {
 						type="target"
 						position={Position.Top}
 						id="input"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 					/>
 					<Handle
 						type="source"
 						position={Position.Bottom}
 						id="output"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 					/>
 				</>
 			}

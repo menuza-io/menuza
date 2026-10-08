@@ -181,6 +181,17 @@ export async function resolveOrgId(
 		return orgIdFromAuthBody(request)
 	}
 
+	if (pathname.startsWith('/voice/')) {
+		const organization = await resolveOrganizationForBrowserAuth(
+			request.headers.get('Origin') ?? undefined,
+			{
+				slug: url.searchParams.get('slug') ?? undefined,
+				host: url.searchParams.get('host') ?? undefined,
+			},
+		)
+		return organization?.id ?? null
+	}
+
 	if (pathname.startsWith('/api/journeys')) {
 		const fromBody = await orgIdFromJsonBody(request)
 		if (fromBody) return fromBody

@@ -1,14 +1,36 @@
 # Mailbox
 
-The App sidebar links to `/:orgSlug/mailbox`. Forms is the first mailbox source;
-the source registry in the route supports adding other inbox sources later.
-Operators can search all submissions, filter unread entries, page through older
-submissions, and review a submission alongside the list. Mobile switches between
-the list and details with a Back button.
+The App sidebar links to `/:orgSlug/mailbox`. It has three sources, registered
+in the route: **Forms**, **Reviews**, and **Calls**. Operators can search all
+submissions, filter unread entries, page through older submissions, and review a
+submission alongside the list. Mobile switches between the list and details with
+a Back button.
+
+## Calls
+
+The Calls tab lists AI phone agent calls that still need follow-up (a callback
+or other request, voicemail, a missed transfer, a low rating, and so on; see
+`docs/ai-phone-calling-plan.md`). Selecting one shows the summary, transcript,
+requests, and follow-up controls, with a **Call back** button that opens a
+`tel:` link. A call marked complete stays in the list until the next refresh.
+The full call history stays in **Phone agent → Calls**.
+
+Calls use the phone agent's own token (`/:orgSlug/phone-agent/calls-token`,
+scope `phone_calls`) and the browser calls tenant-api `/operator/calls/*`
+directly, as on the Calls page. The tab badge is the number of open follow-ups
+for the whole team; unlike form submissions, calls have no per-operator read
+state.
 
 ## Authorization and regional data
 
-Mailbox requires `READ_WEBSITE_ANY`. App's `/:orgSlug/mailbox-token` resource
+The mailbox opens for anyone with `READ_WEBSITE_ANY` or `READ_PHONE_CALL_ANY`,
+and shows only the sources they can read. Forms and Reviews need
+`READ_WEBSITE_ANY`. Calls need `READ_PHONE_CALL_ANY` and appear only when the
+organization's data region is US, where the phone agent runs; completing,
+tagging, and deleting calls follow the phone call update and delete permissions.
+The sidebar badge counts unread form submissions only.
+
+The forms source works as follows. App's `/:orgSlug/mailbox-token` resource
 returns a 15-minute operator JWT scoped to `mailbox`, with the authenticated
 user ID as its subject, and the organization's regional API URL. The browser
 calls `/operator/mailbox/*` directly. App never proxies submission values or

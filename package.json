@@ -32,6 +32,7 @@
     "dev:sites": "turbo run dev --filter=sites",
     "dev:tenant-api": "turbo run dev --filter=tenant-api",
     "dev:tenant-api:ksa": "npm run dev:ksa -w tenant-api",
+    "dev:voice-agent": "npm run dev -w voice-agent",
     "dev:mobile": "turbo run dev --filter=mobile",
     "lint": "turbo run lint",
     "lint:oxc": "oxlint .",
@@ -152,7 +153,11 @@
     "@opentelemetry/core": "^2.8.0",
     "ws": "^8.21.1",
     "uuid": "$uuid",
-    "undici": "7.29.0",
+    "undici": "7.29.1",
+    "source-map-js": "^1.2.2",
+    "@react-email/preview-server": {
+      "source-map-js": "^1.2.2"
+    },
     "@opentelemetry/propagator-jaeger": "$@opentelemetry/propagator-jaeger",
     "@opentelemetry/sdk-node": "$@opentelemetry/sdk-node",
     "turbo-stream": "$turbo-stream",

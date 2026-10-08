@@ -426,6 +426,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   public form blocks. Empty disables the widget (local dev).
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
   siteverify secret and comma-separated allowed hostnames for form submissions.
+- `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
+  chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
+  `/resources/phone-agent-config` and tenant-api `/api/voice/*`.
+- `LIVEKIT_*` / `CARTESIA_API_KEY` - App and `apps/voice-agent` (US only). Empty
+  in App hides browser test calls and the voice picker.
 
 **CMS Storage**:
 
@@ -572,6 +577,8 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `@repo/config` - Shared configs (ESLint, TypeScript, Prettier)
 - `@repo/ai` - AI/ML integrations (Vercel AI SDK, Google AI)
 - `@repo/security` - Security utilities (encryption, rate limiting)
+- `@repo/phone-agent` - AI phone agent core: flow model, vertical contract,
+  prompts, and call reports (see `docs/phone-agent-verticals.md`)
 
 **Key Apps:**
 
@@ -581,6 +588,8 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `apps/sites` - Public CMS HTML; injects tenant-api URL; no PII proxy
 - `apps/tenant-api` - Regional customer auth + SQLite (local US :3007, KSA
   :3009; production OCI Ashburn + Riyadh)
+- `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
+  loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
   branded shell, phone-OTP sign-in, and profile, reusing the published org
   branding and the regional tenant-api. Keychain session; no PII proxy. Swift

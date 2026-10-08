@@ -106,6 +106,70 @@ export function getInternalCommandToken() {
 	return ENV.INTERNAL_COMMAND_TOKEN || ''
 }
 
+export function getVoiceAgentToken() {
+	syncEnvFromProcess()
+	return ENV.VOICE_AGENT_TOKEN || ''
+}
+
+export const VOICE_AGENT_TOKEN_MIN_LENGTH = 32
+
+/** The value committed in .env.schema and .dev.vars.example. */
+export const DEV_VOICE_AGENT_TOKEN =
+	'dev-voice-agent-token-do-not-use-in-prod-32b'
+
+const loggedVoiceAgentTokenProblems = new Set<string>()
+
+/**
+ * Why VOICE_AGENT_TOKEN cannot be used, or null when it can. A token shared
+ * with another secret would let whoever holds that secret act as the voice
+ * worker (and vice versa), so reuse disables the voice routes outright.
+ */
+export function voiceAgentTokenProblem(): string | null {
+	const token = getVoiceAgentToken()
+	if (token.length < VOICE_AGENT_TOKEN_MIN_LENGTH) {
+		return `VOICE_AGENT_TOKEN must be at least ${VOICE_AGENT_TOKEN_MIN_LENGTH} characters`
+	}
+	const others = {
+		INTERNAL_COMMAND_TOKEN: getInternalCommandToken(),
+		TENANT_OPERATOR_TOKEN: getOperatorToken(),
+		JWT_SECRET: ENV.JWT_SECRET || '',
+		AUTH_HMAC_SECRET: ENV.AUTH_HMAC_SECRET || '',
+	}
+	for (const [name, value] of Object.entries(others)) {
+		if (value && timingSafeEqualString(token, value)) {
+			return `VOICE_AGENT_TOKEN must differ from ${name}`
+		}
+	}
+	if (
+		(ENV as any).NODE_ENV === 'production' &&
+		(token === DEV_VOICE_AGENT_TOKEN || isInsecureSecret(token))
+	) {
+		return 'VOICE_AGENT_TOKEN is using a development default'
+	}
+	return null
+}
+
+/** Logs each configuration problem once per process instead of per request. */
+export function logVoiceAgentTokenProblem(problem: string) {
+	if (loggedVoiceAgentTokenProblems.has(problem)) return
+	loggedVoiceAgentTokenProblems.add(problem)
+	console.error(`Voice agent routes are disabled: ${problem}`)
+}
+
+/** Timing-safe bearer check that fails closed when the secret is too short. */
+export function bearerMatches(
+	header: string | null | undefined,
+	expected: string,
+	minLength: number,
+) {
+	const presented = getBearerToken(header)
+	if (expected.length < minLength || !presented) return false
+	if ((ENV as any).NODE_ENV === 'production' && isInsecureSecret(expected)) {
+		return false
+	}
+	return timingSafeEqualString(presented, expected)
+}
+
 export function assertTenantApiSecrets() {
 	syncEnvFromProcess()
 	const internalToken = getInternalCommandToken()

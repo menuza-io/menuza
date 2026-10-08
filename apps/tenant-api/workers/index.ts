@@ -6,6 +6,11 @@ import {
 import { createTenantApiApp } from '../src/app.ts'
 import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
 import {
+	DEPROVISION_RECORDING_BUDGET_MS,
+	deleteOrganizationRecordings,
+	type PrefixDeleteResult,
+} from '../src/lib/recording-storage.ts'
+import {
 	applyVarlockEnv,
 	assertTenantApiSecrets,
 	getBearerToken,
@@ -53,6 +58,7 @@ const provisionBodySchema = z.object({
 async function handleProvision(
 	request: Request,
 	env: TenantApiWorkerEnv,
+	ctx: ExecutionContext,
 	command: 'provision' | 'deprovision',
 ) {
 	const internalToken = env.INTERNAL_COMMAND_TOKEN || ''
@@ -97,11 +103,21 @@ async function handleProvision(
 	const stub = orgStub(env, orgId)
 	const registry = registryStub(env)
 
+	let recordings: PrefixDeleteResult['status'] | undefined
 	try {
 		if (command === 'provision') {
 			await stub.provision()
 			await registry.add(orgId)
 		} else {
+			recordings = await deleteOrganizationRecordings(orgId, {
+				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
+				runInBackground: (task) =>
+					ctx.waitUntil(
+						task.catch((error) => {
+							console.error('Background recording cleanup failed', error)
+						}),
+					),
+			})
 			await stub.deprovision()
 			await registry.remove(orgId)
 		}
@@ -124,11 +140,16 @@ async function handleProvision(
 		orgId,
 		region: 'us',
 		message: `Database ${verb} for tenant ${orgId} in us`,
+		...(recordings ? { recordings } : {}),
 	})
 }
 
 export default {
-	async fetch(request: Request, env: TenantApiWorkerEnv): Promise<Response> {
+	async fetch(
+		request: Request,
+		env: TenantApiWorkerEnv,
+		ctx: ExecutionContext,
+	): Promise<Response> {
 		applyWorkerEnv(env)
 		assertTenantApiSecrets()
 
@@ -145,11 +166,11 @@ export default {
 		}
 
 		if (url.pathname === '/api/provision' && request.method === 'POST') {
-			return handleProvision(request, env, 'provision')
+			return handleProvision(request, env, ctx, 'provision')
 		}
 
 		if (url.pathname === '/api/deprovision' && request.method === 'POST') {
-			return handleProvision(request, env, 'deprovision')
+			return handleProvision(request, env, ctx, 'deprovision')
 		}
 
 		if (

@@ -1,4 +1,4 @@
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { mintOperatorAnalyticsToken } from '@repo/reports/token'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
@@ -25,12 +25,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		ORG_PERMISSIONS.READ_SETTINGS_ANY,
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	])
+	// Call reports include caller numbers, so they also need call access.
+	const canReadPhoneCalls = await userHasOrganizationPermission(
+		userId,
+		organization.id,
+		ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
+	)
 
 	const minted = await mintOperatorAnalyticsToken({
 		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN || '',
 		userId,
 		orgId: organization.id,
 		role: 'operator',
+		subjects: canReadPhoneCalls ? ['phone_calls'] : [],
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)
