@@ -181,6 +181,7 @@ export function BusinessDetailsSection({
 								{week.map((day) => {
 									const dayLabel = _(WEEKDAY_LABELS[day.day])
 									const slot = day.slots[0] ?? DEFAULT_SLOT
+									const inverted = day.isOpen && slot.end <= slot.start
 									return (
 										<div
 											key={day.day}
@@ -220,12 +221,23 @@ export function BusinessDetailsSection({
 														type="time"
 														className="w-32"
 														aria-label={_(msg`${dayLabel} closes`)}
+														aria-invalid={inverted || undefined}
 														value={slot.end}
 														disabled={disabled}
 														onChange={(event) =>
 															setSlot(day, 'end', event.target.value)
 														}
 													/>
+													{inverted ? (
+														<span
+															role="alert"
+															className="text-destructive text-xs"
+														>
+															<Trans>
+																Closing time must be after opening time.
+															</Trans>
+														</span>
+													) : null}
 												</div>
 											) : (
 												<span className="text-muted-foreground text-sm">

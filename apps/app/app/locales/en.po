@@ -205,11 +205,11 @@ msgstr "{count} locations"
 msgid "{count} need follow-up"
 msgstr "{count} need follow-up"
 
-#: app/components/phone-agent/business-details-section.tsx:222
+#: app/components/phone-agent/business-details-section.tsx:223
 msgid "{dayLabel} closes"
 msgstr "{dayLabel} closes"
 
-#: app/components/phone-agent/business-details-section.tsx:209
+#: app/components/phone-agent/business-details-section.tsx:210
 msgid "{dayLabel} opens"
 msgstr "{dayLabel} opens"
 
@@ -2930,7 +2930,7 @@ msgstr "Clear history"
 msgid "Clear History"
 msgstr "Clear History"
 
-#: app/components/phone-agent/business-details-section.tsx:246
+#: app/components/phone-agent/business-details-section.tsx:258
 msgid "Clear hours"
 msgstr "Clear hours"
 
@@ -3002,7 +3002,7 @@ msgstr "Close thread"
 #: app/components/locations/availability-picker.tsx:374
 #: app/components/locations/special-hours-picker.tsx:276
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
-#: app/components/phone-agent/business-details-section.tsx:232
+#: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
 msgid "Closed"
 msgstr "Closed"
@@ -3019,6 +3019,11 @@ msgstr "Closes:"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:45
 msgid "Closing"
 msgstr "Closing"
+
+#: app/components/phone-agent/business-details-section.tsx:236
+#: app/components/phone-agent/settings-page.tsx:152
+msgid "Closing time must be after opening time."
+msgstr "Closing time must be after opening time."
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -10812,7 +10817,7 @@ msgstr ""
 msgid "Reject"
 msgstr ""
 
-#: app/components/phone-agent/settings-page.tsx:367
+#: app/components/phone-agent/settings-page.tsx:369
 msgid "Reload"
 msgstr "Reload"
 
@@ -11520,7 +11525,7 @@ msgstr ""
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
-#: app/components/phone-agent/settings-page.tsx:376
+#: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
@@ -11651,7 +11656,7 @@ msgid "Save zone"
 msgstr "Save zone"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
-#: app/components/phone-agent/settings-page.tsx:372
+#: app/components/phone-agent/settings-page.tsx:374
 msgid "Saved"
 msgstr "Saved"
 
@@ -11687,7 +11692,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
-#: app/components/phone-agent/settings-page.tsx:376
+#: app/components/phone-agent/settings-page.tsx:378
 #: app/components/roles/tenant-role-access-manager.tsx:590
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
@@ -13826,7 +13831,7 @@ msgstr ""
 msgid "Titles and section headings."
 msgstr ""
 
-#: app/components/phone-agent/business-details-section.tsx:217
+#: app/components/phone-agent/business-details-section.tsx:218
 msgid "to"
 msgstr "to"
 
@@ -15483,7 +15488,7 @@ msgstr ""
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr ""
 
-#: app/components/phone-agent/settings-page.tsx:353
+#: app/components/phone-agent/settings-page.tsx:355
 msgid "You can view these settings but not change them."
 msgstr "You can view these settings but not change them."
 
@@ -15523,7 +15528,7 @@ msgstr "You have unsaved changes to the call flow. Leave without saving?"
 #~ msgid "You have unsaved changes to the phone menu. Leave without saving?"
 #~ msgstr "You have unsaved changes to the phone menu. Leave without saving?"
 
-#: app/components/phone-agent/settings-page.tsx:184
+#: app/components/phone-agent/settings-page.tsx:186
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "You have unsaved changes. Leave this page and lose them?"
 

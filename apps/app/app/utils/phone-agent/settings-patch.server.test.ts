@@ -148,6 +148,31 @@ describe('patchPhoneAgentSettings', () => {
 		})
 	})
 
+	it('refuses business hours that close before they open', async () => {
+		const { orgId, versions } = await setup()
+		const result = await patch(
+			orgId,
+			{
+				business: {
+					...VALID_SETTINGS.business,
+					hours: [
+						{
+							day: 'monday',
+							isOpen: true,
+							slots: [{ start: '17:00', end: '09:00' }],
+						},
+					],
+				},
+			},
+			{ business: versions.business! },
+		)
+		expect(result).toEqual({
+			ok: false,
+			error: 'invalid_fields',
+			fieldErrors: { 'business.hours': 'closes_before_opens' },
+		})
+	})
+
 	it('refuses numbers outside the US and Canada', async () => {
 		const { orgId, versions } = await setup()
 		const result = await patch(

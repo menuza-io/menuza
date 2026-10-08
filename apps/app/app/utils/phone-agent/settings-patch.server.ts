@@ -169,6 +169,23 @@ export function validateSettingsRelations(
 		}
 		faqIds.add(entry.id)
 	})
+	// Availability has no overnight slots, so an inverted one is never open.
+	if (!changedKeys || changedKeys.includes('business')) {
+		const inverted = (slots: ReadonlyArray<{ start: string; end: string }>) =>
+			slots.some((slot) => slot.end <= slot.start)
+		if (
+			settings.business.hours.some((day) => day.isOpen && inverted(day.slots))
+		) {
+			errors['business.hours'] = settingsError('closes_before_opens')
+		}
+		if (
+			settings.business.specialHours.some(
+				(entry) => entry.isOpen && inverted(entry.slots),
+			)
+		) {
+			errors['business.specialHours'] = settingsError('closes_before_opens')
+		}
+	}
 	return errors
 }
 

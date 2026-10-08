@@ -279,3 +279,32 @@ describe('platform phone number reassignment', () => {
 		expect((await readNumber()).assignedOrganizationId).toBe(next.id)
 	})
 })
+
+describe('platform phone number assignment', () => {
+	it('refuses organizations whose data is outside the US', async () => {
+		const { next, number, post, readNumber } = await setup()
+		vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+		await post({ _action: 'unassign', id: number.id })
+		await db
+			.update(PlatformPhoneNumber)
+			.set({ releasedAt: new Date(Date.now() - NUMBER_QUARANTINE_MS - 1000) })
+			.where(eq(PlatformPhoneNumber.id, number.id))
+		await db
+			.update(Organization)
+			.set({ dataRegion: 'ksa' })
+			.where(eq(Organization.id, next.id))
+
+		const result = await post({
+			_action: 'assign',
+			id: number.id,
+			organization: next.slug,
+		})
+		expect(result).toMatchObject({
+			ok: false,
+			fieldErrors: {
+				organization: 'This organization stores customer data outside the US.',
+			},
+		})
+		expect((await readNumber()).assignedOrganizationId).toBeNull()
+	})
+})

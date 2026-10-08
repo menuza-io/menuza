@@ -34,6 +34,7 @@ export const SETTINGS_ERROR_CODES = [
 	'transfer_loop',
 	'contact_required',
 	'code_format',
+	'closes_before_opens',
 ] as const
 export type SettingsErrorCode = (typeof SETTINGS_ERROR_CODES)[number]
 

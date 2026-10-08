@@ -148,6 +148,8 @@ export function useSettingsErrorText() {
 					return _(msg`Choose a contact.`)
 				case 'code_format':
 					return _(msg`Enter the 6-digit code.`)
+				case 'closes_before_opens':
+					return _(msg`Closing time must be after opening time.`)
 			}
 		},
 		[_],

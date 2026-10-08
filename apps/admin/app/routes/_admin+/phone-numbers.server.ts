@@ -307,7 +307,7 @@ export async function action({
 			return { ok: false, error: 'Unassign the number first.' }
 		}
 		const [organization] = await db
-			.select({ id: Organization.id })
+			.select({ id: Organization.id, dataRegion: Organization.dataRegion })
 			.from(Organization)
 			.where(
 				or(
@@ -321,6 +321,17 @@ export async function action({
 				ok: false,
 				error: 'Organization not found.',
 				fieldErrors: { organization: 'No organization with that slug or ID.' },
+			}
+		}
+		// The agent runs on US infrastructure and won't answer for other regions.
+		if (organization.dataRegion !== 'us') {
+			return {
+				ok: false,
+				error: 'The phone agent only serves organizations with US data.',
+				fieldErrors: {
+					organization:
+						'This organization stores customer data outside the US.',
+				},
 			}
 		}
 		const hold = getReassignmentHold(number, organization.id, new Date())

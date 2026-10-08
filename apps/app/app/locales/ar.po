@@ -203,11 +203,11 @@ msgstr "{count} فروع"
 msgid "{count} need follow-up"
 msgstr "{count} بحاجة إلى متابعة"
 
-#: app/components/phone-agent/business-details-section.tsx:222
+#: app/components/phone-agent/business-details-section.tsx:223
 msgid "{dayLabel} closes"
 msgstr "{dayLabel} يغلق"
 
-#: app/components/phone-agent/business-details-section.tsx:209
+#: app/components/phone-agent/business-details-section.tsx:210
 msgid "{dayLabel} opens"
 msgstr "{dayLabel} يفتح"
 
@@ -2928,7 +2928,7 @@ msgstr "مسح السجل"
 msgid "Clear History"
 msgstr "مسح السجل"
 
-#: app/components/phone-agent/business-details-section.tsx:246
+#: app/components/phone-agent/business-details-section.tsx:258
 msgid "Clear hours"
 msgstr "مسح الساعات"
 
@@ -3000,7 +3000,7 @@ msgstr "إغلاق سلسلة الردود"
 #: app/components/locations/availability-picker.tsx:374
 #: app/components/locations/special-hours-picker.tsx:276
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
-#: app/components/phone-agent/business-details-section.tsx:232
+#: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
 msgid "Closed"
 msgstr "مغلق"
@@ -3017,6 +3017,11 @@ msgstr "يغلق:"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:45
 msgid "Closing"
 msgstr "الختام"
+
+#: app/components/phone-agent/business-details-section.tsx:236
+#: app/components/phone-agent/settings-page.tsx:152
+msgid "Closing time must be after opening time."
+msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
 #: app/components/settings/cards/organization/site-card.tsx:366
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
@@ -10810,7 +10815,7 @@ msgstr "عادي"
 msgid "Reject"
 msgstr "رفض"
 
-#: app/components/phone-agent/settings-page.tsx:367
+#: app/components/phone-agent/settings-page.tsx:369
 msgid "Reload"
 msgstr "إعادة التحميل"
 
@@ -11518,7 +11523,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
-#: app/components/phone-agent/settings-page.tsx:376
+#: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
@@ -11649,7 +11654,7 @@ msgid "Save zone"
 msgstr "حفظ المنطقة"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
-#: app/components/phone-agent/settings-page.tsx:372
+#: app/components/phone-agent/settings-page.tsx:374
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -11685,7 +11690,7 @@ msgstr "جارٍ الحفظ..."
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
-#: app/components/phone-agent/settings-page.tsx:376
+#: app/components/phone-agent/settings-page.tsx:378
 #: app/components/roles/tenant-role-access-manager.tsx:590
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
@@ -13824,7 +13829,7 @@ msgstr "العنوان"
 msgid "Titles and section headings."
 msgstr "العناوين وعناوين الأقسام."
 
-#: app/components/phone-agent/business-details-section.tsx:217
+#: app/components/phone-agent/business-details-section.tsx:218
 msgid "to"
 msgstr "إلى"
 
@@ -15481,7 +15486,7 @@ msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العم
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 
-#: app/components/phone-agent/settings-page.tsx:353
+#: app/components/phone-agent/settings-page.tsx:355
 msgid "You can view these settings but not change them."
 msgstr "يمكنك عرض هذه الإعدادات دون تغييرها."
 
@@ -15521,7 +15526,7 @@ msgstr "لديك تغييرات غير محفوظة على مسار المكال
 #~ msgid "You have unsaved changes to the phone menu. Leave without saving?"
 #~ msgstr "لديك تغييرات غير محفوظة على قائمة الهاتف. هل تريد المغادرة دون حفظ؟"
 
-#: app/components/phone-agent/settings-page.tsx:184
+#: app/components/phone-agent/settings-page.tsx:186
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة وفقدانها؟"
 
