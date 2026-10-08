@@ -360,4 +360,38 @@ describe('runReport', () => {
 			{ name: 'Ada', email: 'ada@example.com', phone: '+15551212' },
 		])
 	})
+
+	it('labels enum values the catalog does not list', () => {
+		const result = runReport(
+			organizationCatalog,
+			createReportDefinition({
+				subject: 'phone_calls',
+				timeframe: { field: 'startedAt', preset: 'all_time' },
+				groupBy: ['purpose'],
+				visualization: {
+					chartStyle: 'pie',
+					measure: 'count',
+					sortBy: 'value_desc',
+					hideCounts: false,
+				},
+				settings: { title: 'Why people call', notes: '', timezone: 'user' },
+			}),
+			[
+				{ startedAt: '2026-08-01T00:00:00.000Z', purpose: 'billing_question' },
+				{ startedAt: '2026-08-02T00:00:00.000Z', purpose: 'billing_question' },
+				{
+					startedAt: '2026-08-03T00:00:00.000Z',
+					purpose: 'business_information',
+				},
+			],
+			now,
+		)
+
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.segments.map((segment) => segment.label)).toEqual([
+			'Billing question',
+			'Business info',
+		])
+	})
 })

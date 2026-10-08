@@ -9,6 +9,7 @@
  * - Generates shared secrets in launch.secrets.json (gitignored)
  * - Applies generated Wrangler secrets after deploy (optional)
  * - Configures Cloudflare Workers Builds after the first deploy (optional)
+ * - Writes launch.voice-agent.env (gitignored) for the LiveKit Cloud voice agent
  * - Prints GitHub Variables/Secrets commands
  * - Opens Cloudflare / GitHub setup pages (optional)
  *
@@ -443,10 +444,14 @@ function generateSharedSecrets() {
 			JWT_SECRET: customerJwtSecret,
 			AUTH_HMAC_SECRET: randomHex(16),
 		},
+		voice_agent: {
+			VOICE_AGENT_TOKEN: randomHex(32),
+		},
 		notes: [
 			'SESSION_SECRET, HONEYPOT_SECRET, INTERNAL_COMMAND_TOKEN, TENANT_OPERATOR_TOKEN, SSO_ENCRYPTION_KEY, and AUDIT_LOG_SECRET_KEY must match on App and Admin.',
 			'INTERNAL_COMMAND_TOKEN must also match jobs-cron and tenant-api.',
 			'TENANT_CUSTOMER_JWT_SECRET (App) must equal JWT_SECRET on US tenant-api.',
+			'VOICE_AGENT_TOKEN must match on App, US tenant-api, and the LiveKit Cloud voice agent (launch.voice-agent.env).',
 			'launch:setup can apply these via wrangler secret put after deploy — never commit values to git.',
 		],
 	}
@@ -465,6 +470,48 @@ function patchEnvFile(envPath, replacements) {
 	}
 	if (changed) writeFileSync(envPath, content)
 	return changed
+}
+
+const VOICE_AGENT_SECRETS_FILE = 'launch.voice-agent.env'
+
+/**
+ * Secrets for the LiveKit Cloud voice agent. Provider keys the operator already
+ * filled in survive a re-run; the token and URLs always follow this run.
+ */
+function writeVoiceAgentSecretsFile(secrets, urls) {
+	const path = join(rootDir, VOICE_AGENT_SECRETS_FILE)
+	/** @type {Record<string, string>} */
+	const existing = {}
+	if (existsSync(path)) {
+		for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
+			const match = line.match(/^([A-Z0-9_]+)=(.*)$/)
+			if (match) existing[match[1]] = match[2]
+		}
+	}
+	const keep = (key, fallback = '') => existing[key] || fallback
+	const lines = [
+		'# LiveKit Cloud agent secrets for apps/voice-agent (production, US only).',
+		'# Written by npm run launch:setup. Gitignored: never commit this file.',
+		'# LiveKit Cloud injects LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET.',
+		'# Empty values are skipped. See docs/voice-agent-deployment.md.',
+		'DATA_REGION=us',
+		`VOICE_AGENT_TOKEN=${secrets.voice_agent.VOICE_AGENT_TOKEN}`,
+		`APP_URL=${urls.app_base_url}`,
+		`TENANT_API_URL=${urls.tenant_api_url}`,
+		`DEEPGRAM_API_KEY=${keep('DEEPGRAM_API_KEY')}`,
+		`GOOGLE_API_KEY=${keep('GOOGLE_API_KEY')}`,
+		`CARTESIA_API_KEY=${keep('CARTESIA_API_KEY')}`,
+		`CARTESIA_DEFAULT_VOICE_ID=${keep('CARTESIA_DEFAULT_VOICE_ID')}`,
+		`PHONE_AGENT_LLM_MODEL=${keep('PHONE_AGENT_LLM_MODEL', 'gemini-2.5-flash')}`,
+		`LIVEKIT_SIP_OUTBOUND_TRUNK_ID=${keep('LIVEKIT_SIP_OUTBOUND_TRUNK_ID')}`,
+		`RECORDING_S3_BUCKET=${keep('RECORDING_S3_BUCKET')}`,
+		`RECORDING_S3_REGION=${keep('RECORDING_S3_REGION')}`,
+		`RECORDING_S3_ENDPOINT=${keep('RECORDING_S3_ENDPOINT')}`,
+		`RECORDING_S3_ACCESS_KEY=${keep('RECORDING_S3_ACCESS_KEY')}`,
+		`RECORDING_S3_SECRET=${keep('RECORDING_S3_SECRET')}`,
+	]
+	writeFileSync(path, `${lines.join('\n')}\n`, { mode: 0o600 })
+	return path
 }
 
 function runWrangler(args, cwd, { env, input } = {}) {
@@ -599,6 +646,7 @@ function applyGeneratedWranglerSecrets(
 					: []),
 				['SSO_ENCRYPTION_KEY', secrets.shared.SSO_ENCRYPTION_KEY],
 				['AUDIT_LOG_SECRET_KEY', secrets.shared.AUDIT_LOG_SECRET_KEY],
+				['VOICE_AGENT_TOKEN', secrets.voice_agent.VOICE_AGENT_TOKEN],
 				['LAUNCH_STATUS', launchStatus],
 				['CREDIT_CARD_REQUIRED_FOR_TRIAL', trialCreditCardMode],
 				...(secrets.discord
@@ -640,6 +688,7 @@ function applyGeneratedWranglerSecrets(
 				['AUTH_HMAC_SECRET', secrets.tenant_api.AUTH_HMAC_SECRET],
 				['INTERNAL_COMMAND_TOKEN', secrets.shared.INTERNAL_COMMAND_TOKEN],
 				['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
+				['VOICE_AGENT_TOKEN', secrets.voice_agent.VOICE_AGENT_TOKEN],
 			],
 		},
 	]
@@ -1155,6 +1204,7 @@ function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
 						],
 						['SSO_ENCRYPTION_KEY', secrets.shared.SSO_ENCRYPTION_KEY],
 						['AUDIT_LOG_SECRET_KEY', secrets.shared.AUDIT_LOG_SECRET_KEY],
+						['VOICE_AGENT_TOKEN', secrets.voice_agent.VOICE_AGENT_TOKEN],
 						['LAUNCH_STATUS', 'CLOSED_BETA | PUBLIC_BETA | LAUNCHED'],
 						...(secrets.discord
 							? Object.entries(secrets.discord).map(([name, value]) => [
@@ -1182,6 +1232,7 @@ function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
 						['AUTH_HMAC_SECRET', secrets.tenant_api.AUTH_HMAC_SECRET],
 						['INTERNAL_COMMAND_TOKEN', secrets.shared.INTERNAL_COMMAND_TOKEN],
 						['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
+						['VOICE_AGENT_TOKEN', secrets.voice_agent.VOICE_AGENT_TOKEN],
 					],
 				},
 				{
@@ -1198,6 +1249,15 @@ function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
 			keys: [
 				['RESEND_API_KEY', '(from Resend dashboard)'],
 				['AWS_SECRET_ACCESS_KEY', '(R2 API token)'],
+			],
+		},
+		{
+			title: 'App (apps/app) — AI phone agent (optional, US)',
+			keys: [
+				['LIVEKIT_URL', '(wss://<project>.livekit.cloud)'],
+				['LIVEKIT_API_KEY', '(LiveKit Cloud project key)'],
+				['LIVEKIT_API_SECRET', '(LiveKit Cloud project secret)'],
+				['CARTESIA_API_KEY', '(voice picker on Setup)'],
 			],
 		},
 	]
@@ -1561,6 +1621,8 @@ async function main() {
 	const outputPath = join(rootDir, 'launch.config.json')
 	writeFileSync(outputPath, `${JSON.stringify(config, null, '\t')}\n`)
 	log(`\n✅ Wrote ${outputPath}`, 'green')
+	const voiceAgentSecretsPath = writeVoiceAgentSecretsFile(secrets, config.urls)
+	log(`✅ Wrote ${voiceAgentSecretsPath} (gitignored)`, 'green')
 
 	const hasD1 = Boolean(
 		config.bindings.production.app.d1_database_id ||
@@ -1770,6 +1832,22 @@ async function main() {
 	)
 	log(
 		`7. Route jobs.${apex} to the jobs-cron Worker (custom domain in Cloudflare)`,
+		'gray',
+	)
+	log(
+		`8. AI phone agent (optional, US): fill in the provider keys in ${VOICE_AGENT_SECRETS_FILE}, then follow docs/voice-agent-deployment.md`,
+		'gray',
+	)
+	log(
+		`   First time: npm run deploy:livekit -w voice-agent -- --create --secrets-file ${VOICE_AGENT_SECRETS_FILE}`,
+		'gray',
+	)
+	log(
+		`   After re-running launch:setup (new VOICE_AGENT_TOKEN): npm run deploy:livekit -w voice-agent -- --update-secrets --secrets-file ${VOICE_AGENT_SECRETS_FILE}`,
+		'gray',
+	)
+	log(
+		'   GitHub: variables LIVEKIT_URL + LIVEKIT_AGENT_ID, secrets LIVEKIT_API_KEY + LIVEKIT_API_SECRET',
 		'gray',
 	)
 }

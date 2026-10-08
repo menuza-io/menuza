@@ -1,0 +1,10 @@
+# Copied to `.dockerignore` in the staged LiveKit build context.
+**/node_modules
+**/.turbo
+**/coverage
+**/*.test.ts
+**/*.test.tsx
+**/vitest.config.ts
+**/.DS_Store
+**/.env
+**/.env.local

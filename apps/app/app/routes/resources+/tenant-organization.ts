@@ -21,6 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.select({
 			id: Organization.id,
 			slug: Organization.slug,
+			name: Organization.name,
 			customDomain: Organization.customDomain,
 			dataRegion: Organization.dataRegion,
 			hasProvisionedDb: Organization.hasProvisionedDb,

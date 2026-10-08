@@ -1,0 +1,10 @@
+{
+	"extends": ["@epic-web/config/typescript"],
+	"include": ["src/**/*", "env.d.ts"],
+	"compilerOptions": {
+		"moduleResolution": "Bundler",
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"types": ["node"]
+	}
+}

@@ -90,6 +90,12 @@ export function AdminSidebar({
 			],
 		},
 		{
+			title: _(msg`Phone numbers`),
+			url: '/phone-numbers',
+			isActive: location.pathname.startsWith('/phone-numbers'),
+			icon: GlobeIcon,
+		},
+		{
 			title: _(msg`Roles`),
 			url: '/roles',
 			isActive: location.pathname.startsWith('/roles'),

@@ -22,6 +22,7 @@
     "@repo/database": "^0.0.0",
     "@repo/email": "*",
     "@repo/observability": "*",
+    "@repo/phone-agent": "*",
     "@repo/reports": "*",
     "@repo/sms": "*",
     "@repo/tenant-db": "*",

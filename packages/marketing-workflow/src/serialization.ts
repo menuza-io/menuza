@@ -1,10 +1,10 @@
+import { emailBlockSchema } from '@repo/common/email-blocks'
 import {
 	type WorkflowGraph,
 	type WorkflowNode,
 	type WorkflowEdge,
 	workflowGraphSchema,
 } from '@repo/tenant-db/types/journey'
-import { emailBlockSchema } from '@repo/common/email-blocks'
 import { type Node, type Edge, type Viewport } from '@xyflow/react'
 
 /**

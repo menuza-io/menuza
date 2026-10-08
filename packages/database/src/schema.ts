@@ -3361,3 +3361,199 @@ export const OrganizationDropReminder = sqliteTable(
 	},
 	(table) => [index('OrganizationDropReminder_dropId_idx').on(table.dropId)],
 )
+
+// AI phone agent configuration. Holds no caller data: calls, transcripts, and
+// caller numbers live in the regional tenant database.
+export const PhoneAgent = sqliteTable(
+	'PhoneAgent',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		settings: text().notNull(), // JSON PhoneAgentSettings
+		publishedFlowVersionId: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PhoneAgent_organizationId_key').on(table.organizationId),
+	],
+)
+
+// Platform-owned phone numbers (bought from the carrier by the platform, not
+// by organizations). Assigned when `assignedOrganizationId` is set; retired
+// numbers stay for history and can't be assigned again.
+//
+// The `released*` columns quarantine a recycled number: the previous
+// organization may still forward its public line to it at the carrier, so
+// handing it to another organization too soon sends their callers to the
+// wrong agent. `releasedFromOrganizationId` deliberately has no foreign key so
+// the quarantine survives the previous organization being deleted.
+export const PlatformPhoneNumber = sqliteTable(
+	'PlatformPhoneNumber',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		e164: text().notNull(),
+		label: text(),
+		provider: text().default('twilio').notNull(), // 'twilio'
+		assignedOrganizationId: text().references(() => Organization.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		assignedAt: integer({ mode: 'timestamp_ms' }),
+		retiredAt: integer({ mode: 'timestamp_ms' }),
+		releasedAt: integer({ mode: 'timestamp_ms' }),
+		releasedFromOrganizationId: text(),
+		releasedWithVerifiedForwarding: integer({ mode: 'boolean' })
+			.default(false)
+			.notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PlatformPhoneNumber_e164_key').on(table.e164),
+		index('PlatformPhoneNumber_assignedOrganizationId_idx').on(
+			table.assignedOrganizationId,
+		),
+	],
+)
+
+export const PhoneAgentNumber = sqliteTable(
+	'PhoneAgentNumber',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// Opaque part of the business the number answers for (a vertical
+		// defines what it means). No foreign key: the core doesn't know the table.
+		scopeId: text(),
+		// The platform number this row answers on; `e164` mirrors its number.
+		platformNumberId: text().references(() => PlatformPhoneNumber.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		e164: text().notNull(),
+		mode: text().default('forwarding').notNull(), // 'forwarding' | 'dedicated'
+		forwardedFrom: text(),
+		// Forwarded rows stay inactive until the organization proves it owns
+		// `forwardedFrom`, so unverified lines never reach the agent.
+		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
+		verifiedAt: integer({ mode: 'timestamp_ms' }),
+		verificationCodeHash: text(),
+		verificationExpiresAt: integer({ mode: 'timestamp_ms' }),
+		verificationAttempts: integer().default(0).notNull(),
+		verificationSentAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('PhoneAgentNumber_organizationId_idx').on(table.organizationId),
+		uniqueIndex('PhoneAgentNumber_e164_key').on(table.e164),
+		uniqueIndex('PhoneAgentNumber_platformNumberId_key').on(
+			table.platformNumberId,
+		),
+	],
+)
+
+export const PhoneAgentFlowVersion = sqliteTable(
+	'PhoneAgentFlowVersion',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		version: integer().notNull(),
+		graph: text().notNull(), // JSON FlowGraph
+		status: text().default('draft').notNull(), // 'draft' | 'published' | 'archived'
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PhoneAgentFlowVersion_organizationId_version_key').on(
+			table.organizationId,
+			table.version,
+		),
+	],
+)
+
+export const PhoneAgentTrainingRule = sqliteTable(
+	'PhoneAgentTrainingRule',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// Limits the rule to one scope; null applies everywhere. No foreign key.
+		scopeId: text(),
+		category: text().notNull(),
+		title: text().notNull(),
+		description: text().notNull(),
+		priority: text().default('medium').notNull(), // 'high' | 'medium' | 'low'
+		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
+		sortOrder: integer().default(0).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('PhoneAgentTrainingRule_organizationId_idx').on(table.organizationId),
+	],
+)
