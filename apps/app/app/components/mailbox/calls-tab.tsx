@@ -67,6 +67,9 @@ export function CallsTab({
 	const [toggleError, setToggleError] = useState<string | null>(null)
 	const pagedRef = useRef(false)
 	const loadMoreRef = useRef<AbortController | null>(null)
+	// Bumped on each local follow-up change so a list request that started
+	// before it can't restore the old state.
+	const localEditsRef = useRef(0)
 	const selectedIdRef = useRef(selectedId)
 	useEffect(() => {
 		selectedIdRef.current = selectedId
@@ -93,9 +96,14 @@ export function CallsTab({
 		setLoading(true)
 		setError(null)
 		setLoadMoreError(null)
+		const editsAtStart = localEditsRef.current
 		void request(query(), { signal: controller.signal })
 			.then((payload) => {
 				if (controller.signal.aborted) return
+				if (localEditsRef.current !== editsAtStart) {
+					setRevision((value) => value + 1)
+					return
+				}
 				const result = callListSchema.parse(payload)
 				pagedRef.current = false
 				// A call completed from this tab stays in view, marked complete,
@@ -402,6 +410,7 @@ export function CallsTab({
 						tags={tags}
 						onBack={() => setSelectedId(null)}
 						onCallChanged={(callId, patch) => {
+							localEditsRef.current += 1
 							const before = calls.find((call) => call.id === callId)
 							setCalls((current) =>
 								current.map((call) =>

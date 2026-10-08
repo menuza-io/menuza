@@ -7,9 +7,12 @@ on:
 
   pull_request: {}
 
+# Only PR runs cancel each other. A push to main or dev waits for the running
+# deploy instead of cutting it off, since the next push only redeploys what it
+# changed itself.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   actions: write
@@ -58,8 +61,14 @@ jobs:
         id: affected
         run: |
           # Get the base ref for comparison
+          # For pushes, compare with the commit before the push so a push with
+          # several commits deploys everything it changed.
+          BEFORE="${{ github.event.before }}"
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] &&
+            git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            BASE_REF="$BEFORE"
           else
             BASE_REF="HEAD~1"
           fi

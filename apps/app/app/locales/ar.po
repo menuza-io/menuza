@@ -199,7 +199,7 @@ msgstr "{count, plural, one {أرسلت عدة رموز مؤخرًا. حاول �
 msgid "{count} locations"
 msgstr "{count} فروع"
 
-#: app/components/mailbox/calls-tab.tsx:235
+#: app/components/mailbox/calls-tab.tsx:243
 msgid "{count} need follow-up"
 msgstr "{count} بحاجة إلى متابعة"
 
@@ -342,7 +342,7 @@ msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsT
 msgid "{rating} / 5"
 msgstr "{rating} / 5"
 
-#: app/components/phone-agent/call-follow-up.tsx:168
+#: app/components/phone-agent/call-follow-up.tsx:173
 msgid "{rating} out of 5"
 msgstr "{rating} من 5"
 
@@ -662,6 +662,10 @@ msgstr "51-200 شخص"
 #: app/components/phone-agent/phone-number-dialogs.tsx:598
 msgid "6-digit verification code"
 msgstr "رمز التحقق المكوّن من 6 أرقام"
+
+#: app/components/phone-agent/call-follow-up.tsx:242
+msgid "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
+msgstr "يمكن أن تحمل المكالمة حتى {MAX_CALL_TAGS} وسوم. أزل وسمًا لإضافة آخر."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:56
 msgid "A caller asked someone to call them back."
@@ -1457,7 +1461,7 @@ msgstr "الكل"
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
 
-#: app/components/mailbox/calls-tab.tsx:256
+#: app/components/mailbox/calls-tab.tsx:264
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:299
 msgid "All calls"
 msgstr "كل المكالمات"
@@ -2356,7 +2360,7 @@ msgstr "طلبات معاودة الاتصال"
 msgid "Callbacks, complaints, and other requests your agent takes will appear here."
 msgstr "ستظهر هنا طلبات معاودة الاتصال والشكاوى والطلبات الأخرى التي يتلقاها وكيلك."
 
-#: app/components/phone-agent/call-follow-up.tsx:185
+#: app/components/phone-agent/call-follow-up.tsx:190
 msgid "Called"
 msgstr "وقت الاتصال"
 
@@ -2364,11 +2368,11 @@ msgstr "وقت الاتصال"
 msgid "Caller"
 msgstr "المتصل"
 
-#: app/components/phone-agent/call-follow-up.tsx:175
+#: app/components/phone-agent/call-follow-up.tsx:180
 msgid "Caller mood"
 msgstr "مزاج المتصل"
 
-#: app/components/phone-agent/call-follow-up.tsx:165
+#: app/components/phone-agent/call-follow-up.tsx:170
 msgid "Caller rating"
 msgstr "تقييم المتصل"
 
@@ -2395,11 +2399,11 @@ msgstr "يتصل بـ {phone}"
 msgid "Calls go straight to your business line. If no line is known, callers hear an apology."
 msgstr "تُحوَّل المكالمات مباشرة إلى خط نشاطك التجاري. إذا لم يكن هناك خط معروف، يسمع المتصلون اعتذارًا."
 
-#: app/components/mailbox/calls-tab.tsx:435
+#: app/components/mailbox/calls-tab.tsx:444
 msgid "Calls that need a person"
 msgstr "مكالمات تحتاج إلى شخص"
 
-#: app/components/mailbox/calls-tab.tsx:227
+#: app/components/mailbox/calls-tab.tsx:235
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:367
 msgid "Calls that need follow-up"
 msgstr "المكالمات التي تحتاج إلى متابعة"
@@ -3582,11 +3586,11 @@ msgstr "تعذّر بدء المحادثة. حاول مرة أخرى."
 msgid "Could not update read status. Try again."
 msgstr "تعذّر تحديث حالة القراءة. حاول مرة أخرى."
 
-#: app/components/phone-agent/call-follow-up.tsx:113
+#: app/components/phone-agent/call-follow-up.tsx:117
 msgid "Could not update this call. Try again."
 msgstr "تعذّر تحديث هذه المكالمة. حاول مرة أخرى."
 
-#: app/components/mailbox/calls-tab.tsx:202
+#: app/components/mailbox/calls-tab.tsx:210
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:283
 msgid "Could not update this request. Try again."
 msgstr "تعذّر تحديث هذا الطلب. حاول مرة أخرى."
@@ -7225,7 +7229,7 @@ msgstr "يضبط مسؤول المنصة بيانات اعتماد LiveKit."
 msgid "Load earlier replies"
 msgstr "تحميل ردود أقدم"
 
-#: app/components/mailbox/calls-tab.tsx:384
+#: app/components/mailbox/calls-tab.tsx:392
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:666
 msgid "Load more"
 msgstr "تحميل المزيد"
@@ -7258,7 +7262,7 @@ msgstr "جارٍ تحميل المكالمة"
 msgid "Loading call…"
 msgstr "جارٍ تحميل المكالمة…"
 
-#: app/components/mailbox/calls-tab.tsx:265
+#: app/components/mailbox/calls-tab.tsx:273
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:529
 msgid "Loading calls"
 msgstr "جارٍ تحميل المكالمات"
@@ -7307,7 +7311,7 @@ msgstr "جارٍ تحميل الصوت…"
 msgid "Loading voices"
 msgstr "جارٍ تحميل الأصوات"
 
-#: app/components/mailbox/calls-tab.tsx:384
+#: app/components/mailbox/calls-tab.tsx:392
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:664
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
@@ -7605,7 +7609,7 @@ msgstr "تعيين كمحدد مسبقًا"
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
-#: app/components/phone-agent/call-follow-up.tsx:146
+#: app/components/phone-agent/call-follow-up.tsx:151
 msgid "Mark complete"
 msgstr "وضع علامة مكتمل"
 
@@ -8344,7 +8348,7 @@ msgstr "لم يتم إنشاء رموز احتياطية"
 msgid "No broadcasts found"
 msgstr "لم يتم العثور على بثّات"
 
-#: app/components/mailbox/calls-tab.tsx:291
+#: app/components/mailbox/calls-tab.tsx:299
 msgid "No calls need follow-up"
 msgstr "لا توجد مكالمات تحتاج إلى متابعة"
 
@@ -8795,7 +8799,7 @@ msgstr "لم يتم تعيين رقم هاتف للفريق، لذا يمكن ت
 msgid "No submissions yet"
 msgstr "لا توجد ردود بعد"
 
-#: app/components/mailbox/calls-tab.tsx:362
+#: app/components/mailbox/calls-tab.tsx:370
 #: app/components/phone-agent/call-detail-sheet.tsx:417
 msgid "No summary for this call."
 msgstr "لا يوجد ملخص لهذه المكالمة."
@@ -10598,7 +10602,7 @@ msgstr "النطاق: {radiusValue} {radiusUnit}"
 msgid "Rated"
 msgstr "تم التقييم"
 
-#: app/components/phone-agent/call-follow-up.tsx:63
+#: app/components/phone-agent/call-follow-up.tsx:67
 msgid "Rated {rating} out of 5"
 msgstr "التقييم {rating} من 5"
 
@@ -10761,8 +10765,8 @@ msgstr "المُحيل"
 msgid "Refresh"
 msgstr "تحديث"
 
-#: app/components/mailbox/calls-tab.tsx:241
-#: app/components/mailbox/calls-tab.tsx:242
+#: app/components/mailbox/calls-tab.tsx:249
+#: app/components/mailbox/calls-tab.tsx:250
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:339
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
@@ -10990,7 +10994,7 @@ msgstr "إزالة القسم"
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
-#: app/components/phone-agent/call-follow-up.tsx:146
+#: app/components/phone-agent/call-follow-up.tsx:151
 #: app/components/phone-agent/call-request-card.tsx:79
 msgid "Reopen"
 msgstr "إعادة الفتح"
@@ -11963,7 +11967,7 @@ msgstr "عرض إعدادات الوكيل ومسار المكالمة والأ�
 #~ msgid "See the agent's settings, phone menu, numbers, and training rules."
 #~ msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
 
-#: app/components/mailbox/calls-tab.tsx:438
+#: app/components/mailbox/calls-tab.tsx:447
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 msgstr "اختر مكالمة لقراءة الملخص والنص، ومعاودة الاتصال بالعميل، ثم وضع علامة مكتملة عليها."
 
@@ -13133,7 +13137,7 @@ msgid "Tag name"
 msgstr "اسم الوسم"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:308
-#: app/components/phone-agent/call-follow-up.tsx:201
+#: app/components/phone-agent/call-follow-up.tsx:206
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:61
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:444
 msgid "Tags"
@@ -13269,7 +13273,7 @@ msgid "Test again"
 msgstr "الاختبار مرة أخرى"
 
 #: app/components/app-sidebar.tsx:454
-#: app/components/mailbox/calls-tab.tsx:218
+#: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:325
 #: app/components/phone-agent/call-detail-sheet.tsx:375
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:319
@@ -13919,7 +13923,7 @@ msgstr "قواعد التدريب ({activeRuleCount} مفعّلة)"
 msgid "Transcript"
 msgstr "النص المكتوب"
 
-#: app/components/phone-agent/call-follow-up.tsx:155
+#: app/components/phone-agent/call-follow-up.tsx:160
 msgid "Transfer"
 msgstr "تحويل"
 
@@ -14143,7 +14147,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
-#: app/components/mailbox/calls-tab.tsx:281
+#: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
 #: app/components/phone-agent/call-detail-sheet.tsx:366
 #: app/components/phone-agent/voice-picker.tsx:451
@@ -14221,12 +14225,12 @@ msgstr "أوبر إيتس"
 msgid "Unable to authorize call history. Refresh the page and try again."
 msgstr "تعذّر التحقق من صلاحية الوصول إلى سجل المكالمات. حدّث الصفحة وحاول مرة أخرى."
 
-#: app/components/mailbox/calls-tab.tsx:123
+#: app/components/mailbox/calls-tab.tsx:131
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:170
 msgid "Unable to load calls. Try again."
 msgstr "تعذّر تحميل المكالمات. حاول مرة أخرى."
 
-#: app/components/mailbox/calls-tab.tsx:176
+#: app/components/mailbox/calls-tab.tsx:184
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:252
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
@@ -14325,7 +14329,7 @@ msgstr "الوحدات المتاحة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: app/components/mailbox/calls-tab.tsx:221
+#: app/components/mailbox/calls-tab.tsx:229
 #: app/components/phone-agent/call-detail-sheet.tsx:328
 #: app/components/phone-agent/call-request-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:322
@@ -14945,7 +14949,7 @@ msgstr "تم إعداد خدمة الصوت"
 msgid "Voice type"
 msgstr "نوع الصوت"
 
-#: app/components/phone-agent/call-follow-up.tsx:48
+#: app/components/phone-agent/call-follow-up.tsx:52
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:51
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:179
 msgid "Voicemail"
@@ -15192,7 +15196,7 @@ msgstr "عندما"
 msgid "When a call connects"
 msgstr "عند اتصال المكالمة"
 
-#: app/components/mailbox/calls-tab.tsx:294
+#: app/components/mailbox/calls-tab.tsx:302
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "عندما يطلب متصل معاودة الاتصال، أو يترك رسالة، أو يحتاج إلى مساعدة لم يستطع وكيلك تقديمها، تظهر المكالمة هنا."
 
@@ -15278,12 +15282,12 @@ msgstr "عندما تكون مغلقًا"
 msgid "Where every call begins."
 msgstr "حيث تبدأ كل مكالمة."
 
-#: app/components/phone-agent/call-follow-up.tsx:191
+#: app/components/phone-agent/call-follow-up.tsx:196
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:282
 msgid "While closed"
 msgstr "أثناء الإغلاق"
 
-#: app/components/phone-agent/call-follow-up.tsx:189
+#: app/components/phone-agent/call-follow-up.tsx:194
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:281
 msgid "While open"
 msgstr "أثناء ساعات العمل"

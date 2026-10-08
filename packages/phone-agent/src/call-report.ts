@@ -32,13 +32,16 @@ const TagIdSchema = z
 	.trim()
 	.regex(/^[a-z0-9_]{1,60}$/u)
 
+/** Most tags one call can carry. */
+export const MAX_CALL_TAGS = 10
+
 /**
  * Extra fields the voice worker sends with `POST /api/voice/calls/:id/finish`.
  * Org settings travel with the call because tenant-api has no copy of them.
  * All fields default, so older workers keep working.
  */
 export const CallFinishExtrasSchema = z.object({
-	tags: z.array(TagIdSchema).max(10).default([]),
+	tags: z.array(TagIdSchema).max(MAX_CALL_TAGS).default([]),
 	rating: z.number().int().min(1).max(5).nullable().default(null),
 	sentiment: z.enum(CALL_SENTIMENTS).nullable().default(null),
 	transferResult: z.enum(CALL_TRANSFER_RESULTS).default('none'),
