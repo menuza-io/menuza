@@ -1,0 +1,261 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocaleHref } from '@repo/common/site-locales'
+import DropStatusChip from '~/components/drops/DropStatusChip.astro'
+import { getDropPhase, summarizePickup } from '~/lib/drops/format'
+import { resolveMediaUrl, siteBtnGhost, siteBtnPrimary } from '~/lib/media'
+import { buildIcsDataUrl } from '~/lib/ordering/calendar'
+import { type PublicDropListing } from '~/lib/org'
+import { translate } from '~/lib/ordering-labels'
+
+interface Props {
+	drop: PublicDropListing
+	locale: string
+	defaultLocale: string
+	variant?: 'full' | 'compact'
+	now?: Date
+}
+
+const {
+	drop,
+	locale,
+	defaultLocale,
+	variant = 'full',
+	now = new Date(),
+} = Astro.props
+
+const i18n = Astro.locals.i18n
+const phase = getDropPhase(drop, now)
+const timeZone = drop.pickupTimezone || 'UTC'
+const title = getLocalizedMenuValue(drop.title, locale, defaultLocale)
+const description = getLocalizedMenuValue(drop.description, locale, defaultLocale)
+const href = getLocaleHref(`/drop/${encodeURIComponent(drop.slug)}`, locale, locale, defaultLocale)
+const coverSrc = resolveMediaUrl(drop.coverImageUrl)
+
+const pickupLabel = i18n._(msg`Pickup`)
+const pickupLabels = {
+	dates: translate(i18n, msg`{n} dates`, { n: '{n}' }),
+	locations: translate(i18n, msg`{n} locations`, { n: '{n}' }),
+}
+// Location names may be stored as localized JSON maps like every other menu label.
+const locationNames = drop.pickupLocationNames.map((name) =>
+	getLocalizedMenuValue(name, locale, defaultLocale),
+)
+const pickupSummary = summarizePickup(
+	drop.pickupDates,
+	locationNames,
+	locale,
+	timeZone,
+	pickupLabels,
+)
+const pickupDateText = summarizePickup(drop.pickupDates, [], locale, timeZone, pickupLabels)
+const pickupLocationText = summarizePickup([], locationNames, locale, timeZone, pickupLabels)
+const orderNow = i18n._(msg`Order now`)
+const viewDrop = i18n._(msg`View drop`)
+const view = i18n._(msg`View`)
+const addToCalendar = i18n._(msg`Add to calendar`)
+const ordersOpenTitle = translate(i18n, msg`Orders open: {title}`, { title })
+
+let calendarHref: string | null = null
+if (phase === 'upcoming' && drop.ordersOpenAt) {
+	const start = new Date(drop.ordersOpenAt)
+	if (!Number.isNaN(start.getTime())) {
+		calendarHref = buildIcsDataUrl({
+			title: ordersOpenTitle,
+			start,
+			end: new Date(start.getTime() + 30 * 60 * 1000),
+			description: description || null,
+			url: new URL(href, Astro.url.origin).toString(),
+			now,
+		})
+	}
+}
+
+const calendarFileName = `${drop.slug}.ics`
+const chipClass = 'z-10'
+---
+
+{variant === 'compact' ? (
+	<article class="group relative flex items-center gap-4 rounded-[var(--radius)] border border-border bg-card p-3 text-card-foreground transition-colors hover:border-foreground/30">
+		<div class="size-16 shrink-0 overflow-hidden rounded-[calc(var(--radius)*0.7)] bg-muted">
+			{coverSrc ? (
+				<img src={coverSrc} alt="" loading="lazy" class="size-full object-cover opacity-80" />
+			) : (
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="size-full p-5 text-muted-foreground"
+					aria-hidden="true"
+				>
+					<path d="M3 11h18" />
+					<path d="M5 11V7a7 7 0 0 1 14 0v4" />
+					<path d="M4 11v2a8 8 0 0 0 16 0v-2" />
+				</svg>
+			)}
+		</div>
+		<div class="min-w-0 flex-1">
+			<h3 class="truncate font-heading text-base font-semibold text-foreground">
+				<a href={href} class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+					{title}
+				</a>
+			</h3>
+			<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+				<DropStatusChip
+					phase={phase}
+					ordersOpenAt={drop.ordersOpenAt}
+					ordersCloseAt={drop.ordersCloseAt}
+					locale={locale}
+					timeZone={drop.pickupTimezone}
+					now={now}
+				/>
+				{pickupSummary ? <span class="truncate">{pickupSummary}</span> : null}
+			</div>
+		</div>
+		<span class="shrink-0 text-sm font-medium text-muted-foreground group-hover:text-foreground">{view}</span>
+	</article>
+) : (
+	<article class="group relative flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card text-card-foreground shadow-sm transition-colors hover:border-foreground/30 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+		<div class="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+			{coverSrc ? (
+				<img
+					src={coverSrc}
+					alt=""
+					loading="lazy"
+					class:list={[
+						'size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]',
+						phase === 'ended' && 'opacity-70',
+					]}
+				/>
+			) : (
+				<div class="flex size-full items-center justify-center text-muted-foreground">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.25"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="size-12"
+						aria-hidden="true"
+					>
+						<path d="M3 11h18" />
+						<path d="M5 11V7a7 7 0 0 1 14 0v4" />
+						<path d="M4 11v2a8 8 0 0 0 16 0v-2" />
+					</svg>
+				</div>
+			)}
+			<DropStatusChip
+				phase={phase}
+				ordersOpenAt={drop.ordersOpenAt}
+				ordersCloseAt={drop.ordersCloseAt}
+				locale={locale}
+				timeZone={drop.pickupTimezone}
+				now={now}
+				class={`${chipClass} absolute start-3 top-3 shadow-sm`}
+			/>
+		</div>
+		<div class="flex flex-1 flex-col gap-3 p-5">
+			<h3 class="font-heading text-lg font-semibold leading-snug text-foreground">
+				<a href={href} class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+					{title}
+				</a>
+			</h3>
+			{pickupSummary ? (
+				<p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-foreground/80">
+					<span class="sr-only">{pickupLabel}: </span>
+					{pickupDateText ? (
+						<span class="inline-flex items-center gap-1.5">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="size-4 shrink-0 text-muted-foreground"
+								aria-hidden="true"
+							>
+								<rect x="3" y="4" width="18" height="18" rx="2" />
+								<path d="M16 2v4M8 2v4M3 10h18" />
+							</svg>
+							{pickupDateText}
+						</span>
+					) : null}
+					{pickupLocationText ? (
+						<span class="inline-flex min-w-0 items-center gap-1.5">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="size-4 shrink-0 text-muted-foreground"
+								aria-hidden="true"
+							>
+								<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+								<circle cx="12" cy="10" r="3" />
+							</svg>
+							<span class="truncate">{pickupLocationText}</span>
+						</span>
+					) : null}
+				</p>
+			) : null}
+			{description ? (
+				<p class="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+			) : null}
+			<div class="mt-auto flex flex-wrap items-center gap-3 pt-2">
+				{phase === 'live' ? (
+					<a href={href} class:list={[siteBtnPrimary, 'relative z-10']}>
+						{orderNow}
+					</a>
+				) : phase === 'upcoming' ? (
+					<>
+						<a href={href} class:list={[siteBtnGhost, 'relative z-10']}>
+							{viewDrop}
+						</a>
+						{calendarHref ? (
+							<a
+								href={calendarHref}
+								download={calendarFileName}
+								class="relative z-10 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="size-4"
+									aria-hidden="true"
+								>
+									<rect x="3" y="4" width="18" height="18" rx="2" />
+									<path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6" />
+								</svg>
+								{addToCalendar}
+							</a>
+						) : null}
+					</>
+				) : (
+					<a
+						href={href}
+						class="relative z-10 inline-flex items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+					>
+						{view}
+					</a>
+				)}
+			</div>
+		</div>
+	</article>
+)}

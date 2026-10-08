@@ -1,0 +1,93 @@
+---
+import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
+
+/**
+ * One menu line: name, two-line description, price, badges, calories and a
+ * 96px thumbnail at the inline end. The whole row opens the item modal; the
+ * name is a real button so keyboard users can reach it.
+ */
+interface Props {
+	id: string
+	name: string
+	description?: string | null
+	priceLabel: string
+	soldOut: boolean
+	imageUrl?: string | null
+	calories?: string | null
+	isVegetarian?: boolean
+	isGlutenFree?: boolean
+	isAlcohol?: boolean
+	labels: {
+		vegetarian: string
+		glutenFree: string
+		alcohol: string
+	}
+}
+
+const {
+	id,
+	name,
+	description,
+	priceLabel,
+	soldOut,
+	imageUrl,
+	calories,
+	isVegetarian,
+	isGlutenFree,
+	isAlcohol,
+	labels,
+} = Astro.props
+
+const searchText = `${name} ${description ?? ''}`.toLocaleLowerCase()
+---
+
+<li
+	class:list={[
+		'js-item-card group relative flex gap-4 border-b border-border/70 py-4 transition-colors',
+		soldOut ? 'opacity-60' : 'cursor-pointer',
+	]}
+	data-item-id={id}
+	data-sold-out={soldOut ? 'true' : 'false'}
+	data-search={searchText}
+>
+	<div class="min-w-0 flex-1">
+		<h3 class="font-heading text-[15px] leading-snug text-foreground">
+			<button
+				type="button"
+				class="js-item-open text-start after:absolute after:inset-0 after:rounded-[var(--radius)] after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring disabled:cursor-default"
+				aria-haspopup="dialog"
+				disabled={soldOut}
+			>
+				{name}
+			</button>
+		</h3>
+		{description ? (
+			<p class="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">{description}</p>
+		) : null}
+		<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+			<span class:list={['text-sm font-medium tabular-nums', soldOut ? 'text-muted-foreground' : 'text-foreground']}>
+				{priceLabel}
+			</span>
+			<DietaryBadges
+				isVegetarian={isVegetarian}
+				isGlutenFree={isGlutenFree}
+				isAlcohol={isAlcohol}
+				labels={labels}
+			/>
+			{calories ? <span class="text-xs text-muted-foreground">{calories}</span> : null}
+		</div>
+	</div>
+	{imageUrl ? (
+		<div class="ms-auto size-24 shrink-0 overflow-hidden rounded-[calc(var(--radius)*0.7)] bg-muted">
+			<img
+				src={imageUrl}
+				alt=""
+				loading="lazy"
+				decoding="async"
+				width="96"
+				height="96"
+				class="size-full object-cover"
+			/>
+		</div>
+	) : null}
+</li>

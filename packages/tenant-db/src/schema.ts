@@ -9,6 +9,12 @@ import {
 import { sql, relations } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 
+import {
+	RESTAURANT_ACTIVE_ORDER_STATUSES,
+	RESTAURANT_ORDER_STATUS_VALUES,
+	RESTAURANT_PAYMENT_STATUS_VALUES,
+} from '@repo/common/restaurant-orders'
+
 // ==========================================
 // 1. CUSTOMERS TABLE
 // ==========================================
@@ -558,7 +564,170 @@ export const mailboxReadReceipts = sqliteTable(
 )
 
 // ==========================================
-// 10. INFERRED TYPES
+// 10. RESTAURANT ORDERS (regional durable ordering)
+// ==========================================
+
+// Server-repriced restaurant orders. All money is integer cents. Contact and
+// delivery fields are customer PII and must never leave this regional DB.
+// `status` states that consume capacity: accepted | preparing | ready |
+// completed. cancelled / expired / payment_review release capacity.
+// Canonical status values live in @repo/common/restaurant-orders.
+export const RESTAURANT_ORDER_STATUSES = RESTAURANT_ORDER_STATUS_VALUES
+
+export const RESTAURANT_ORDER_ACTIVE_STATUSES = RESTAURANT_ACTIVE_ORDER_STATUSES
+
+export const RESTAURANT_PAYMENT_STATUSES = RESTAURANT_PAYMENT_STATUS_VALUES
+
+export const restaurantOrders = sqliteTable(
+	'restaurant_orders',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orgId: text('org_id').notNull(),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		number: text('number').notNull(),
+		locale: text('locale').notNull().default('en'),
+		status: text('status', {
+			enum: [...RESTAURANT_ORDER_STATUSES],
+		})
+			.notNull()
+			.default('accepted'),
+		paymentMethod: text('payment_method', {
+			enum: ['handoff', 'online'],
+		}).notNull(),
+		paymentStatus: text('payment_status', {
+			enum: [...RESTAURANT_PAYMENT_STATUSES],
+		}).notNull(),
+		paymentProcessor: text('payment_processor', {
+			enum: ['connect', 'checkout'],
+		}),
+		paymentSessionId: text('payment_session_id'),
+		paymentEventAt: integer('payment_event_at', { mode: 'timestamp' }),
+		fulfillment: text('fulfillment', {
+			enum: ['pickup', 'delivery'],
+		}).notNull(),
+		locationId: text('location_id').notNull(),
+		locationName: text('location_name').notNull(),
+		dropId: text('drop_id'),
+		dropSlug: text('drop_slug'),
+		pickupWindowId: text('pickup_window_id'),
+		pickupDate: text('pickup_date'),
+		pickupTime: text('pickup_time'),
+		pickupTimezone: text('pickup_timezone'),
+		contactName: text('contact_name').notNull(),
+		contactPhone: text('contact_phone').notNull(),
+		contactEmail: text('contact_email'),
+		deliveryAddress: text('delivery_address'),
+		deliveryCity: text('delivery_city'),
+		deliveryUnit: text('delivery_unit'),
+		deliveryNotes: text('delivery_notes'),
+		deliveryZoneId: text('delivery_zone_id'),
+		currency: text('currency').notNull(),
+		subtotalCents: integer('subtotal_cents').notNull(),
+		taxCents: integer('tax_cents').notNull(),
+		deliveryFeeCents: integer('delivery_fee_cents').notNull().default(0),
+		tipCents: integer('tip_cents').notNull().default(0),
+		tipPercent: integer('tip_percent').notNull().default(0),
+		totalCents: integer('total_cents').notNull(),
+		lines: text('lines', { mode: 'json' }).notNull(),
+		idempotencyKey: text('idempotency_key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		receiptTokenHash: text('receipt_token_hash').notNull(),
+		paymentTokenHash: text('payment_token_hash'),
+		holdExpiresAt: integer('hold_expires_at', { mode: 'timestamp' }),
+		paidAt: integer('paid_at', { mode: 'timestamp' }),
+		completedAt: integer('completed_at', { mode: 'timestamp' }),
+		cancelledAt: integer('cancelled_at', { mode: 'timestamp' }),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('restaurant_orders_number_unique').on(table.number),
+		uniqueIndex('restaurant_orders_idempotency_key_unique').on(
+			table.idempotencyKey,
+		),
+		uniqueIndex('restaurant_orders_payment_session_id_unique').on(
+			table.paymentSessionId,
+		),
+		index('idx_restaurant_orders_status_created').on(
+			table.status,
+			table.createdAt,
+		),
+		index('idx_restaurant_orders_slot').on(
+			table.pickupWindowId,
+			table.pickupTime,
+			table.status,
+		),
+		index('idx_restaurant_orders_customer').on(table.customerId),
+		index('idx_restaurant_orders_location_created').on(
+			table.locationId,
+			table.createdAt,
+		),
+	],
+)
+
+// One row per capacity-governed entity per order (drop inventory caps).
+// Live capacity is counted by joining these rows against their order's status,
+// so cancelled / expired orders stop consuming capacity automatically.
+export const restaurantOrderReservations = sqliteTable(
+	'restaurant_order_reservations',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: ['item', 'category'] }).notNull(),
+		entityId: text('entity_id').notNull(),
+		windowId: text('window_id'),
+		slotTime: text('slot_time'),
+		quantity: integer('quantity').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		index('idx_restaurant_reservations_entity').on(table.kind, table.entityId),
+		index('idx_restaurant_reservations_slot_entity').on(
+			table.entityId,
+			table.windowId,
+			table.slotTime,
+		),
+		index('idx_restaurant_reservations_order').on(table.orderId),
+	],
+)
+
+export const restaurantOrdersRelations = relations(
+	restaurantOrders,
+	({ one, many }) => ({
+		customer: one(customers, {
+			fields: [restaurantOrders.customerId],
+			references: [customers.id],
+		}),
+		reservations: many(restaurantOrderReservations),
+	}),
+)
+
+export const restaurantOrderReservationsRelations = relations(
+	restaurantOrderReservations,
+	({ one }) => ({
+		order: one(restaurantOrders, {
+			fields: [restaurantOrderReservations.orderId],
+			references: [restaurantOrders.id],
+		}),
+	}),
+)
+
+// ==========================================
+// 11. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -586,3 +755,10 @@ export type NewCustomerPaymentMethod =
 	typeof customerPaymentMethods.$inferInsert
 export type WebsiteForm = typeof websiteForms.$inferSelect
 export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
+
+export type RestaurantOrder = typeof restaurantOrders.$inferSelect
+export type NewRestaurantOrder = typeof restaurantOrders.$inferInsert
+export type RestaurantOrderReservation =
+	typeof restaurantOrderReservations.$inferSelect
+export type NewRestaurantOrderReservation =
+	typeof restaurantOrderReservations.$inferInsert

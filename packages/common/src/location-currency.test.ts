@@ -5,6 +5,11 @@ import {
 } from './location-currency.ts'
 
 describe('getLocationCurrency', () => {
+	it('resolves SAR for Saudi addresses', () => {
+		for (const country of ['SA', 'SAU', 'Saudi Arabia', 'السعودية']) {
+			expect(getLocationCurrency(JSON.stringify({ country }))).toBe('SAR')
+		}
+	})
 	it('resolves USD for US address objects and stringified JSON', () => {
 		expect(
 			getLocationCurrency({
@@ -101,6 +106,16 @@ describe('getLocationCurrency', () => {
 })
 
 describe('formatLocationPrice', () => {
+	it('formats Saudi Riyals with the requested locale', () => {
+		for (const locale of ['en', 'ar']) {
+			expect(formatLocationPrice(18, 'SAR', locale)).toBe(
+				new Intl.NumberFormat(locale, {
+					style: 'currency',
+					currency: 'SAR',
+				}).format(18),
+			)
+		}
+	})
 	it('formats prices with standard $ prefix across locales', () => {
 		expect(formatLocationPrice(18, 'USD', 'en')).toBe('$18.00')
 		expect(formatLocationPrice(18, 'USD', 'ar')).toBe('$18.00')

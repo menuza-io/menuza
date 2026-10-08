@@ -1,8 +1,12 @@
 import { type LocationAddress } from './location-types.ts'
 
-export type LocationCurrency = 'USD' | 'CAD'
+export type LocationCurrency = 'USD' | 'CAD' | 'SAR'
 
-export const SUPPORTED_LOCATION_CURRENCIES: LocationCurrency[] = ['USD', 'CAD']
+export const SUPPORTED_LOCATION_CURRENCIES: LocationCurrency[] = [
+	'USD',
+	'CAD',
+	'SAR',
+]
 
 const CANADIAN_PROVINCES = new Set([
 	'ON',
@@ -37,7 +41,7 @@ const CANADIAN_POSTAL_CODE_REGEX = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
 
 /**
  * Resolves the currency for a restaurant location based on its physical address.
- * Supports US Dollars ('USD') and Canadian Dollars ('CAD').
+ * Supports US Dollars, Canadian Dollars, and Saudi Riyals.
  * Defaults to 'USD'.
  */
 export function getLocationCurrency(
@@ -59,6 +63,17 @@ export function getLocationCurrency(
 	if (!parsed) return 'USD'
 
 	const country = (parsed.country || '').trim().toUpperCase()
+	if (
+		[
+			'SA',
+			'SAU',
+			'SAUDI ARABIA',
+			'المملكة العربية السعودية',
+			'السعودية',
+		].includes(country)
+	) {
+		return 'SAR'
+	}
 	if (
 		country === 'CA' ||
 		country === 'CAN' ||
@@ -91,10 +106,16 @@ export function getLocationCurrency(
  */
 export function formatLocationPrice(
 	amount: number,
-	ignoredCurrency: LocationCurrency = 'USD',
-	ignoredLocale: string = 'en',
+	currency: LocationCurrency = 'USD',
+	locale: string = 'en',
 ): string {
 	const validAmount = Number.isFinite(amount) ? amount : 0
+	if (currency === 'SAR') {
+		return new Intl.NumberFormat(locale, {
+			style: 'currency',
+			currency,
+		}).format(validAmount)
+	}
 	const isNegative = validAmount < 0
 	const absAmount = Math.abs(validAmount)
 

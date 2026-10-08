@@ -1,0 +1,89 @@
+---
+import { siteBtnPrimary } from '~/lib/media'
+
+/**
+ * Slide-over cart. Hidden with `translate-x-full` (`rtl:-translate-x-full`);
+ * `mountCartUi` toggles both. `#cart-drawer-header-extra` is a slot other
+ * pages can fill (for example a drop's pickup summary).
+ */
+interface Props {
+	labels: {
+		yourOrder: string
+		subtotal: string
+		tax: string
+		deliveryFee: string
+		total: string
+		checkout: string
+		close: string
+	}
+	taxRateLabel?: string
+	checkoutHref: string
+	initialTotal: string
+}
+
+const { labels, taxRateLabel, checkoutHref, initialTotal } = Astro.props
+---
+
+<div
+	id="cart-drawer-backdrop"
+	class="fixed inset-0 z-50 hidden bg-foreground/40 backdrop-blur-xs transition-opacity motion-reduce:transition-none"
+>
+	<aside
+		id="cart-drawer"
+		class="fixed inset-y-0 end-0 flex w-full max-w-md translate-x-full flex-col border-s border-border bg-card text-card-foreground shadow-2xl transition-transform duration-300 motion-reduce:transition-none rtl:-translate-x-full"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="cart-drawer-title"
+		tabindex="-1"
+	>
+		<div class="border-b border-border p-4 sm:p-5">
+			<div class="flex items-center justify-between gap-3">
+				<div class="flex items-center gap-2">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-primary" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+					<h2 id="cart-drawer-title" class="font-heading text-lg text-foreground">{labels.yourOrder}</h2>
+				</div>
+				<button
+					type="button"
+					id="close-cart-btn"
+					class="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					aria-label={labels.close}
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+				</button>
+			</div>
+			<div id="cart-drawer-header-extra" class="empty:hidden mt-3"></div>
+		</div>
+
+		<div id="cart-items-container" class="flex-1 overflow-y-auto px-4 sm:px-5"></div>
+
+		<div class="space-y-4 border-t border-border bg-muted/20 p-4 sm:p-5">
+			<dl class="space-y-1.5 text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
+				<div class="flex justify-between gap-3">
+					<dt>{labels.subtotal}</dt>
+					<dd id="drawer-subtotal" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+				</div>
+				<div class="flex justify-between gap-3">
+					<dt>{labels.tax}{taxRateLabel ? ` (${taxRateLabel})` : ''}</dt>
+					<dd id="drawer-tax" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+				</div>
+				<div id="drawer-delivery-row" class="flex hidden justify-between gap-3">
+					<dt>{labels.deliveryFee}</dt>
+					<dd id="drawer-delivery-fee" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+				</div>
+				<div class="flex justify-between gap-3 border-t border-border pt-2 text-sm font-semibold text-foreground">
+					<dt>{labels.total}</dt>
+					<dd id="drawer-total" class="tabular-nums">{initialTotal}</dd>
+				</div>
+			</dl>
+
+			<p id="drawer-checkout-reason" class="hidden text-xs text-muted-foreground" role="status"></p>
+			<a
+				href={checkoutHref}
+				id="drawer-checkout-btn"
+				class:list={[siteBtnPrimary, 'w-full py-3 text-center text-sm']}
+			>
+				{labels.checkout}
+			</a>
+		</div>
+	</aside>
+</div>

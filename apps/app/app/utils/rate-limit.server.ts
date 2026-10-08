@@ -75,6 +75,28 @@ export const PUBLIC_SITE_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 1000, // 1 minute
 }
 
+/**
+ * Browser-initiated hosted checkout creation for restaurant orders
+ * (`/resources/sites/order/checkout`). Each attempt reaches out to the regional
+ * tenant service and a payment provider, so the per-IP budget is tighter than
+ * the public read surface.
+ */
+export const RESTAURANT_ORDER_CHECKOUT_RATE_LIMIT: RateLimitConfig = {
+	scope: 'restaurant-order-checkout',
+	maxRequests: isDev ? 1000 : 10,
+	windowMs: 60 * 1000, // 1 minute
+}
+
+/**
+ * Browser polling of an order's payment status after the hosted checkout
+ * redirect. Polling loops hit this every few seconds per customer.
+ */
+export const RESTAURANT_ORDER_STATUS_RATE_LIMIT: RateLimitConfig = {
+	scope: 'restaurant-order-status',
+	maxRequests: isDev ? 1000 : 60,
+	windowMs: 60 * 1000, // 1 minute
+}
+
 export const SHOP_CONNECT_ONBOARDING_RATE_LIMIT: RateLimitConfig = {
 	scope: 'shop-connect-onboarding',
 	maxRequests: isDev ? 10 : 1,

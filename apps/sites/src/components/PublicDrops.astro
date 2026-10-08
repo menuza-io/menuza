@@ -1,9 +1,17 @@
 ---
 import { msg } from '@lingui/core/macro'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
-import { fetchPublishedDrops } from '~/lib/org'
-import { resolveMediaUrl, siteContainer } from '~/lib/media'
+import DropCard from '~/components/drops/DropCard.astro'
+import { getDropPhase } from '~/lib/drops/format'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedDrops, type PublicDropListing } from '~/lib/org'
+
+interface Props {
+	variant?: 'home' | 'menu'
+	limit?: number
+}
+
+const { variant = 'home', limit = 3 } = Astro.props
 
 const drops = await fetchPublishedDrops({
 	slug: Astro.locals.orgSlug,
@@ -12,48 +20,67 @@ const drops = await fetchPublishedDrops({
 const i18n = Astro.locals.i18n
 const defaultLocale = Astro.locals.defaultLocale || 'en'
 const locale = Astro.locals.requestedLocale || defaultLocale
-const heading = i18n._(msg`Drops`)
-const liveLabel = i18n._(msg`Ordering now`)
-const upcomingLabel = i18n._(msg`Coming soon`)
-const closedLabel = i18n._(msg`Closed`)
-const viewLabel = i18n._(msg`View drop`)
+const now = new Date()
 
-function phaseLabel(drop: (typeof drops)[number]) {
-	if (drop.status === 'closed' || drop.status === 'completed') return closedLabel
-	if (drop.status === 'scheduled') return upcomingLabel
-	return liveLabel
-}
+const heading = i18n._(msg`Drops`)
+const explainer = i18n._(msg`Limited menus you pre-order for a pickup window.`)
+const allDrops = i18n._(msg`All drops`)
+
+const toTime = (value: string | null) => (value ? new Date(value).getTime() : Infinity)
+
+const withPhase = drops.map((drop) => ({ drop, phase: getDropPhase(drop, now) }))
+const active: PublicDropListing[] = withPhase
+	.filter(({ phase }) => phase !== 'ended')
+	.sort((a, b) => {
+		if (a.phase !== b.phase) return a.phase === 'live' ? -1 : 1
+		return a.phase === 'live'
+			? toTime(a.drop.ordersCloseAt) - toTime(b.drop.ordersCloseAt)
+			: toTime(a.drop.ordersOpenAt) - toTime(b.drop.ordersOpenAt)
+	})
+	.map(({ drop }) => drop)
+const endedCount = withPhase.length - active.length
+const visible = active.slice(0, Math.max(0, limit))
+const showAllLink = active.length > visible.length || endedCount > 0
+const allDropsHref = getLocaleHref('/drops', locale, locale, defaultLocale)
+const headingId = `drops-${variant}-heading`
 ---
 
-{drops.length > 0 ? (
-	<section class="border-b border-border bg-muted/20 py-10" aria-label={heading}>
+{visible.length > 0 ? (
+	<section
+		class:list={[
+			'border-t border-border',
+			variant === 'menu' ? 'py-10 sm:py-12' : 'py-12 sm:py-16',
+		]}
+		aria-labelledby={headingId}
+		data-drops-teaser={variant}
+	>
 		<div class={siteContainer}>
-			<h2 class="font-heading text-2xl font-bold tracking-tight text-foreground">{heading}</h2>
-			<div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{drops.map((drop) => (
+			<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+				<div class="min-w-0">
+					<h2 id={headingId} class="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+						{heading}
+					</h2>
+					<p class="mt-1 text-sm text-muted-foreground sm:text-base">{explainer}</p>
+				</div>
+				{showAllLink ? (
 					<a
-						href={getLocaleHref(`/drop/${encodeURIComponent(drop.slug)}`, locale, defaultLocale)}
-						class="group flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card text-card-foreground transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						href={allDropsHref}
+						class="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
 					>
-						{resolveMediaUrl(drop.coverImageUrl) ? (
-							<img
-								src={resolveMediaUrl(drop.coverImageUrl)}
-								alt=""
-								loading="lazy"
-								class="aspect-[16/9] w-full object-cover"
-							/>
-						) : null}
-						<div class="flex flex-1 flex-col gap-2 p-5">
-							<span class="text-xs font-medium text-muted-foreground">{phaseLabel(drop)}</span>
-							<h3 class="font-heading text-lg font-semibold text-foreground">{getLocalizedMenuValue(drop.title, locale, defaultLocale)}</h3>
-							{drop.description ? (
-								<p class="line-clamp-2 text-sm text-muted-foreground">{getLocalizedMenuValue(drop.description, locale, defaultLocale)}</p>
-							) : null}
-							<span class="mt-auto pt-2 text-sm font-semibold text-primary group-hover:underline">
-								{viewLabel}
-							</span>
-						</div>
+						{allDrops}
+						<span aria-hidden="true" class="rtl:rotate-180">→</span>
 					</a>
+				) : null}
+			</div>
+			<div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+				{visible.map((drop) => (
+					<DropCard
+						drop={drop}
+						locale={locale}
+						defaultLocale={defaultLocale}
+						variant="full"
+						now={now}
+					/>
 				))}
 			</div>
 		</div>

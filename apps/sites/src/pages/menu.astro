@@ -1,23 +1,48 @@
 ---
 import { msg } from '@lingui/core/macro'
 import {
-	isLocationOpenForOrdering,
 	getLocationCurrency,
-	formatLocationPrice,
+	isLocationOpenForOrdering,
+	type LocationOrderingAvailability,
 } from '@repo/common/location-types'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import SitePage from '~/components/SitePage.astro'
+import { getLocaleHref } from '@repo/common/site-locales'
 import PublicDrops from '~/components/PublicDrops.astro'
+import SitePage from '~/components/SitePage.astro'
+import CartDrawer from '~/components/ordering/CartDrawer.astro'
+import CartTray from '~/components/ordering/CartTray.astro'
+import CategoryNav from '~/components/ordering/CategoryNav.astro'
+import ItemModal from '~/components/ordering/ItemModal.astro'
+import LocationPicker from '~/components/ordering/LocationPicker.astro'
+import MenuItemRow from '~/components/ordering/MenuItemRow.astro'
+import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
+import PopularRow from '~/components/ordering/PopularRow.astro'
+import StatusChip from '~/components/ordering/StatusChip.astro'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
+import { summarizeHours } from '~/lib/menu-hours'
+import { buildOrderingLabels, translate } from '~/lib/ordering-labels'
+import {
+	flattenItems,
+	isItemSoldOut,
+	itemPriceLabel,
+} from '~/lib/ordering/catalog'
+import { formatMoney } from '~/lib/ordering/money'
+import {
+	type FulfillmentMode,
+	type ModifierGroup,
+	type ModifierOption,
+	type OrderingCategory,
+	type OrderingItem,
+} from '~/lib/ordering/types'
 import {
 	fetchPublishedSiteMenu,
 	type PublicLocationData,
 	type PublicMenuCategoryData,
+	type PublicMenuData,
 	type PublicMenuItemData,
+	type PublicMenuOptionData,
+	type PublicModifierGroupData,
 } from '~/lib/org'
-import { resolveMediaUrl, siteBtnPrimary, siteContainer } from '~/lib/media'
-import { siteInputClass, siteFieldLabelClass } from '~/lib/form-classes'
-
-import { getLocaleHref } from '@repo/common/site-locales'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -48,189 +73,299 @@ const menuPayload = await fetchPublishedSiteMenu({
 const locations = menuPayload?.locations ?? []
 const menus = menuPayload?.menus ?? []
 
-// Resolve active location
 const activeLocation: PublicLocationData | undefined =
 	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
 	locations.find((l) => l.isDefault) ||
 	locations[0]
 
-// LocationAddress exposes streetNumber/streetName (there is no `street` field).
-// Join whichever parts are present; empty string hides the line entirely.
-const activeStreetLine = [
-	activeLocation?.address?.streetNumber,
-	activeLocation?.address?.streetName,
-]
-	.filter(Boolean)
-	.join(' ')
-
-// Tie currency to the active location's address (USD or CAD)
 const currency =
 	activeLocation?.currency ||
 	getLocationCurrency(activeLocation?.address) ||
 	menuPayload?.organization?.currency ||
 	'USD'
 
-// Real-Time Ordering Availability calculation
-const availability = activeLocation
+const availability: LocationOrderingAvailability = activeLocation
 	? isLocationOpenForOrdering(activeLocation, new Date())
 	: {
 			isOpen: true,
-			status: 'open' as const,
+			status: 'open',
 			estimatedPrepTime: 15,
 			estimatedDeliveryTime: { min: 25, max: 45 },
 			currentLocalTime: '12:00',
-			currentLocalDate: '2026-09-20',
-			dayOfWeek: 'sunday' as const,
+			currentLocalDate: new Date().toISOString().slice(0, 10),
+			dayOfWeek: 'monday',
 		}
 
-function formatPrice(amount: number) {
-	return formatLocationPrice(amount, currency as any, requestedLocale)
-}
+const hours = activeLocation
+	? summarizeHours(activeLocation, availability, requestedLocale)
+	: {}
 
+const price = (amount: number) => formatMoney(amount, currency, requestedLocale)
+const t = (val: string | null | undefined) =>
+	getLocalizedMenuValue(val, requestedLocale, defaultLocale)
+
+// ---------- strings ----------
+
+const labels = buildOrderingLabels(i18n)
 const menuTitle = i18n._(msg`Menu & Ordering`)
-const fromPriceLabel = i18n._(msg`From`)
-const soldOutLabel = i18n._(msg`Sold out`)
-const deliveryLabel = i18n._(msg`Delivery`)
+const openForOrders = i18n._(msg`Open for orders`)
+const openUntil = translate(i18n, msg`Open until {time}`, { time: hours.closesAt ?? '' })
+const closedLabel = i18n._(msg`Closed`)
+const closedOpens = translate(i18n, msg`Closed · opens {time}`, { time: hours.opensAt ?? '' })
+const closedReason = hours.opensAt
+	? translate(i18n, msg`We're closed right now. Orders reopen {time}`, { time: hours.opensAt })
+	: i18n._(msg`We're closed right now.`)
+const statusText = availability.isOpen
+	? hours.closesAt
+		? openUntil
+		: openForOrders
+	: hours.opensAt
+		? closedOpens
+		: closedLabel
 const pickupLabel = i18n._(msg`Pickup`)
-const openStatusText = i18n._(msg`Open for orders`)
-const closedStatusText = i18n._(msg`Currently Closed`)
-const customizeLabel = i18n._(msg`Customize`)
-const addLabel = i18n._(msg`Add`)
-const viewCartLabel = i18n._(msg`View Order`)
+const deliveryLabel = i18n._(msg`Delivery`)
+const fulfillmentLabel = i18n._(msg`Fulfillment`)
+const pickupEstimate = translate(i18n, msg`~{minutes} min`, {
+	minutes: availability.estimatedPrepTime,
+})
+const deliveryEstimate = translate(i18n, msg`{min}–{max} min`, {
+	min: availability.estimatedDeliveryTime?.min ?? 25,
+	max: availability.estimatedDeliveryTime?.max ?? 45,
+})
+const searchLabel = i18n._(msg`Search the menu`)
+const clearSearchLabel = i18n._(msg`Clear search`)
+const noMatchLabel = i18n._(msg`No dishes match`)
+const categoriesNavLabel = i18n._(msg`Menu categories`)
+const popularLabel = i18n._(msg`Popular`)
+const selectLocationLabel = i18n._(msg`Select location`)
+const viewOrderLabel = i18n._(msg`View Order`)
+const yourOrderLabel = i18n._(msg`Your Order`)
+const subtotalLabel = i18n._(msg`Subtotal`)
+const taxLabel = i18n._(msg`Estimated Tax`)
+const deliveryFeeLabel = i18n._(msg`Delivery Fee`)
+const totalLabel = i18n._(msg`Total`)
 const checkoutLabel = i18n._(msg`Proceed to Checkout`)
-const cartText = i18n._(msg`Your Order`)
-const subtotalText = i18n._(msg`Subtotal`)
-const taxText = i18n._(msg`Estimated Tax`)
-const deliveryFeeText = i18n._(msg`Delivery Fee`)
-const totalText = i18n._(msg`Total`)
+const specialInstructionsLabel = i18n._(msg`Special Instructions`)
+const specialInstructionsPlaceholder = i18n._(
+	msg`Any dietary preferences, sauce on the side, etc.`,
+)
 const vegetarianLabel = i18n._(msg`Vegetarian`)
 const glutenFreeLabel = i18n._(msg`Gluten-Free`)
-const customizeItemLabel = i18n._(msg`Customize Item`)
-const specialInstructionsLabel = i18n._(msg`Special Instructions`)
-const specialInstructionsPlaceholder = i18n._(msg`Any dietary preferences, sauce on the side, etc.`)
-const quantityLabel = i18n._(msg`Quantity`)
-const menuComingSoonTitle = i18n._(msg`Menu Coming Soon`)
-const menuComingSoonDesc = i18n._(msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`)
-function isItemSoldOut(item: PublicMenuItemData): boolean {
-	return item.variations.variants.length > 0 &&
-		item.variations.variants.every((variant) => variant.availabilityStatus === 'unavailable')
-}
-function itemPriceLabel(item: PublicMenuItemData): string {
-	if (!item.variations.variants.length) return formatPrice(item.price)
-	if (isItemSoldOut(item)) return soldOutLabel
-	return `${fromPriceLabel} ${formatPrice(Math.min(...item.variations.variants.filter((variant) => variant.availabilityStatus === 'available').map((variant) => variant.price)))}`
-}
-// Carry the active location into checkout so both pages resolve the same
-// tax rate / delivery fee for the same cart.
-const checkoutHref =
-	getLocaleHref('/menu/checkout', requestedLocale, defaultLocale) +
-	(activeLocation ? `?location=${encodeURIComponent(activeLocation.id)}` : '')
-
-// Helper to count total items across category and its subcategories (up to 3 levels)
-function getCategoryTotalItemCount(cat: PublicMenuCategoryData): number {
-	let count = (cat.items || []).length
-	for (const sub of cat.subcategories || []) {
-		count += getCategoryTotalItemCount(sub)
-	}
-	return count
-}
-
-// Collect categories across active menus
-const allCategories: PublicMenuCategoryData[] = []
-for (const menu of menus) {
-	if (menu.availabilityStatus !== 'unavailable') {
-		for (const cat of menu.categories) {
-			if (cat.availabilityStatus !== 'unavailable') {
-				allCategories.push(cat)
-			}
-		}
-	}
-}
-
-// Top-level categories (no parentId) with at least 1 item directly or in subcategories
-const topLevelCategories = allCategories.filter(
-	(cat) => !cat.parentId && getCategoryTotalItemCount(cat) > 0,
+const alcoholLabel = i18n._(msg`Alcohol`)
+const comingSoonTitle = i18n._(msg`Menu Coming Soon`)
+const comingSoonDesc = i18n._(
+	msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`,
 )
+const dietaryLabels = {
+	vegetarian: vegetarianLabel,
+	glutenFree: glutenFreeLabel,
+	alcohol: alcoholLabel,
+}
 
-function localizeOption(opt: any): any {
+// ---------- catalog ----------
+
+function localizeOption(option: PublicMenuOptionData): ModifierOption {
 	return {
-		...opt,
-		displayName: getLocalizedMenuValue(opt.displayName, requestedLocale, defaultLocale),
-		description: opt.description ? getLocalizedMenuValue(opt.description, requestedLocale, defaultLocale) : '',
-		nestedModifierGroups: (opt.nestedModifierGroups || []).map(localizeModifierGroup),
+		id: option.id,
+		displayName: t(option.displayName),
+		description: option.description ? t(option.description) : '',
+		imageUrl: resolveMediaUrl(option.imageUrl),
+		price: option.price ?? 0,
+		priceWhole: option.priceWhole,
+		priceLeft: option.priceLeft,
+		priceRight: option.priceRight,
+		calories: option.calories,
+		minSelections: option.minSelections,
+		maxSelections: option.maxSelections,
+		isDefault: Boolean((option as { isDefault?: boolean }).isDefault),
+		availabilityStatus: option.availabilityStatus,
+		nestedModifierGroups: (option.nestedModifierGroups ?? []).map(localizeGroup),
 	}
 }
 
-function localizeModifierGroup(grp: any): any {
+function localizeGroup(group: PublicModifierGroupData): ModifierGroup {
 	return {
-		...grp,
-		name: getLocalizedMenuValue(grp.name, requestedLocale, defaultLocale),
-		options: (grp.options || []).map(localizeOption),
+		id: group.id,
+		name: t(group.name),
+		selectionType: group.selectionType,
+		minSelections: group.minSelections ?? 0,
+		maxSelections: group.maxSelections ?? null,
+		availabilityStatus: group.availabilityStatus,
+		options: (group.options ?? []).map(localizeOption),
 	}
 }
 
-function localizeItem(item: any): any {
+function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingItem {
 	return {
-		...item,
-		displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
-		description: item.description ? getLocalizedMenuValue(item.description, requestedLocale, defaultLocale) : '',
-		modifierGroups: (item.modifierGroups || []).map(localizeModifierGroup),
-		variations: item.variations,
+		id: item.id,
+		displayName: t(item.displayName),
+		description: item.description ? t(item.description) : '',
+		price: item.price,
+		imageUrl: resolveMediaUrl(item.imageUrl),
+		variations: {
+			groups: (item.variations?.groups ?? []).map((group) => ({
+				id: group.id,
+				name: t(group.name),
+				values: group.values.map((value) => ({ id: value.id, name: t(value.name) })),
+			})),
+			variants: (item.variations?.variants ?? []).map((variant) => ({
+				...variant,
+				imageUrl: resolveMediaUrl(variant.imageUrl),
+			})),
+		},
+		modifierGroups: (item.modifierGroups ?? []).map(localizeGroup),
+		isVegetarian: item.isVegetarian,
+		isGlutenFree: item.isGlutenFree,
+		isAlcohol: item.isAlcohol,
+		allergens: item.allergens ?? [],
+		calorieMin: item.calorieMin,
+		calorieMax: item.calorieMax,
+		isPopular: item.isPopular,
+		availabilityStatus: item.availabilityStatus,
+		specialInstructions: menu.specialInstructions !== false,
 	}
 }
 
-function localizeCategory(cat: any): any {
+function localizeCategory(
+	category: PublicMenuCategoryData,
+	menu: PublicMenuData,
+): OrderingCategory {
 	return {
-		...cat,
-		displayName: getLocalizedMenuValue(cat.displayName, requestedLocale, defaultLocale),
-		description: cat.description ? getLocalizedMenuValue(cat.description, requestedLocale, defaultLocale) : '',
-		items: (cat.items || []).map(localizeItem),
-		subcategories: (cat.subcategories || []).map(localizeCategory),
+		id: category.id,
+		displayName: t(category.displayName),
+		description: category.description ? t(category.description) : '',
+		items: (category.items ?? []).map((item) => localizeItem(item, menu)),
+		subcategories: (category.subcategories ?? [])
+			.filter((sub) => sub.availabilityStatus !== 'unavailable')
+			.map((sub) => localizeCategory(sub, menu)),
 	}
 }
 
-// Structured data for client-side interactive modal & cart with localized strings
-const localizedMenus = menus.map((menu) => ({
-	...menu,
-	displayName: getLocalizedMenuValue(menu.displayName, requestedLocale, defaultLocale),
-	categories: menu.categories.map(localizeCategory),
+function categoryItemCount(category: OrderingCategory): number {
+	return (
+		category.items.length +
+		(category.subcategories ?? []).reduce((acc, sub) => acc + categoryItemCount(sub), 0)
+	)
+}
+
+function pruneEmpty(category: OrderingCategory): OrderingCategory | null {
+	const subcategories = (category.subcategories ?? [])
+		.map(pruneEmpty)
+		.filter((sub): sub is OrderingCategory => sub !== null)
+	const pruned = { ...category, subcategories }
+	return categoryItemCount(pruned) > 0 ? pruned : null
+}
+
+const categories: OrderingCategory[] = []
+for (const menu of menus) {
+	if (menu.availabilityStatus === 'unavailable') continue
+	for (const category of menu.categories) {
+		if (category.availabilityStatus === 'unavailable' || category.parentId) continue
+		const localized = pruneEmpty(localizeCategory(category, menu))
+		if (localized) categories.push(localized)
+	}
+}
+
+const allItems = flattenItems(categories)
+const popularCards = allItems
+	.filter((item) => item.isPopular)
+	.map((item) => ({
+		id: item.id,
+		name: item.displayName,
+		priceLabel: priceLabelFor(item),
+		imageUrl: item.imageUrl,
+		soldOut: isItemSoldOut(item),
+	}))
+
+function priceLabelFor(item: OrderingItem): string {
+	return itemPriceLabel(item, {
+		formatMoney: price,
+		fromLabel: labels.from,
+		soldOutLabel: labels.soldOut,
+	})
+}
+
+function caloriesFor(item: OrderingItem): string | null {
+	if (!item.calorieMin) return null
+	if (item.calorieMax && item.calorieMax !== item.calorieMin) {
+		return translate(i18n, msg`{min}–{max} Cal`, { min: item.calorieMin, max: item.calorieMax })
+	}
+	return translate(i18n, msg`{count} Cal`, { count: item.calorieMin })
+}
+
+function rowProps(item: OrderingItem) {
+	return {
+		id: item.id,
+		name: item.displayName,
+		description: item.description,
+		priceLabel: priceLabelFor(item),
+		soldOut: isItemSoldOut(item),
+		imageUrl: item.imageUrl,
+		calories: caloriesFor(item),
+		isVegetarian: item.isVegetarian,
+		isGlutenFree: item.isGlutenFree,
+		isAlcohol: item.isAlcohol,
+		labels: dietaryLabels,
+	}
+}
+
+const navItems = categories.map((category) => ({
+	id: category.id,
+	label: category.displayName,
 }))
 
-// Delivery fee lives on the DeliveryZone (DeliveryConfig has no fee field).
-// Without a geocoded customer address we can't radius/zip-match, so pick the
-// first enabled, allowed in-house zone; if none is configured we charge 0
-// rather than assuming a fee. Applied only when fulfilment mode is 'delivery'.
+// ---------- fulfilment ----------
+
+const fulfillment = (activeLocation?.fulfillmentOptions ?? {}) as {
+	pickup?: boolean
+	delivery?: boolean
+}
+const allowedModes: FulfillmentMode[] = []
+if (fulfillment.pickup !== false) allowedModes.push('pickup')
+if (fulfillment.delivery !== false) allowedModes.push('delivery')
+if (!allowedModes.length) allowedModes.push('pickup')
+
+// Delivery fee lives on the DeliveryZone. Without a geocoded customer address
+// we cannot radius/zip-match, so the first enabled in-house zone is used and a
+// missing zone charges nothing.
 function resolveDeliveryFee(location: PublicLocationData | undefined): number {
-	const zones: any[] = Array.isArray(location?.deliveryZones) ? location?.deliveryZones ?? [] : []
+	const raw: unknown = location?.deliveryZones
+	const zones: Array<Record<string, unknown>> = Array.isArray(raw) ? raw : []
+	const usable = (zone: Record<string, unknown>) =>
+		zone.enabled !== false && zone.restriction !== 'disallowed'
 	const applicable =
-		zones.find((z) => z?.provider === 'in_house' && z.enabled !== false && z.restriction !== 'disallowed') ??
-		zones.find((z) => z?.enabled !== false && z.restriction !== 'disallowed')
+		zones.find((zone) => zone.provider === 'in_house' && usable(zone)) ??
+		zones.find(usable)
 	return typeof applicable?.deliveryFee === 'number' ? applicable.deliveryFee : 0
 }
+
+const taxRate = activeLocation?.taxRate ?? 0
+const taxRateLabel = new Intl.NumberFormat(requestedLocale, {
+	style: 'percent',
+	maximumFractionDigits: 2,
+}).format(taxRate / 100)
+
+const checkoutHref =
+	getLocaleHref('/menu/checkout', requestedLocale, requestedLocale, defaultLocale) +
+	(activeLocation ? `?location=${encodeURIComponent(activeLocation.id)}` : '')
 
 const clientMenuData = {
 	organizationId: organization.id,
 	currency,
 	locale: requestedLocale,
 	activeLocationId: activeLocation?.id ?? '',
-	taxRate: activeLocation?.taxRate ?? 0,
+	taxRate,
 	deliveryFee: resolveDeliveryFee(activeLocation),
-	menus: localizedMenus,
-	labels: {
-		emptyCartTitle: i18n._(msg`Your cart is empty`),
-		emptyCartDesc: i18n._(msg`Explore our menu and add your favorite dishes.`),
-		remove: i18n._(msg`Remove`),
-		addToOrder: i18n._(msg`Add to Order`),
-		combinationUnavailable: i18n._(msg`This combination is sold out. Choose another combination.`),
-		soldOut: soldOutLabel,
-		required: i18n._(msg`Required`),
-		optional: i18n._(msg`Optional`),
-		free: i18n._(msg`Free`),
-		whole: i18n._(msg`Whole`),
-		left: i18n._(msg`Left`),
-		right: i18n._(msg`Right`),
-	},
+	isOpen: availability.isOpen,
+	closedReason,
+	allowedModes,
+	categories,
 }
+
+const modeButton =
+	'js-mode-btn inline-flex min-h-9 items-center gap-1.5 rounded-[calc(var(--radius)*0.7)] px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const modeOn = 'bg-background text-foreground shadow-xs'
+const modeOff = 'text-muted-foreground hover:text-foreground'
 ---
 
 <SitePage
@@ -238,1388 +373,395 @@ const clientMenuData = {
 	page={{ id: 'menu', title: menuTitle, slug: 'menu', isHomePage: false, sections: [] }}
 	title={`${menuTitle} - ${organization.name}`}
 >
-	<div class="min-h-screen bg-background pb-32">
-		{/* Combined Sticky Header: Ordering Controls & Category Nav */}
-		<div class="sticky top-[4.25rem] z-20 border-b border-border bg-background/95 backdrop-blur-md shadow-xs">
-			{/* Top Ordering Controls */}
-			<div class="border-b border-border/60">
-				<div class:list={[siteContainer, "py-3"]}>
-					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						{/* Location Selector & Operating Status */}
-						<div class="flex flex-wrap items-center gap-2 sm:gap-4">
-							{locations.length > 1 ? (
-								<div class="relative">
-									<label for="location-select" class="sr-only">Select Location</label>
-									<select
-										id="location-select"
-										class="appearance-none rounded-lg border border-border bg-background py-1.5 pl-3 pr-8 text-xs sm:text-sm text-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-									>
-										{locations.map((loc) => (
-											<option value={loc.id} selected={loc.id === activeLocation?.id}>
-												📍 {getLocalizedMenuValue(loc.name, requestedLocale, defaultLocale)}
-											</option>
-										))}
-									</select>
-									<div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-										<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-									</div>
-								</div>
-							) : activeLocation ? (
-								<div class="flex items-center gap-1.5 text-xs sm:text-sm text-foreground">
-									<span>📍 {getLocalizedMenuValue(activeLocation.name, requestedLocale, defaultLocale)}</span>
-									{activeStreetLine ? (
-										<span class="text-xs text-muted-foreground hidden md:inline">({activeStreetLine})</span>
-									) : null}
-								</div>
+	<div class="bg-background pb-28">
+		{/* Menu header */}
+		<div class="border-b border-border">
+			<div class:list={[siteContainer, 'py-6 sm:py-8']}>
+				<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+					<div class="min-w-0 space-y-3">
+						<h1 class="font-heading text-3xl tracking-tight text-foreground sm:text-4xl">{menuTitle}</h1>
+						<div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+							<StatusChip open={availability.isOpen} text={statusText} />
+							{activeLocation ? (
+								<LocationPicker
+									locations={locations}
+									activeId={activeLocation.id}
+									locale={requestedLocale}
+									defaultLocale={defaultLocale}
+									labels={{ selectLocation: selectLocationLabel }}
+								/>
 							) : null}
+						</div>
+					</div>
 
-							{/* Live Availability Pill */}
-							<div class="flex items-center gap-2">
-								{availability.isOpen ? (
-									<div class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-										<span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-										<span>{openStatusText}</span>
-										<span class="text-emerald-600/60 dark:text-emerald-400/60">•</span>
-										<span>Prep: ~{availability.estimatedPrepTime} min</span>
-									</div>
-								) : (
-									<div class="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-										<span class="size-1.5 rounded-full bg-amber-500"></span>
-										<span>{closedStatusText}</span>
-										{availability.nextOpen ? (
-											<span class="hidden sm:inline">• Opens {availability.nextOpen}</span>
-										) : null}
-									</div>
-								)}
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+						<div
+							role="radiogroup"
+							aria-label={fulfillmentLabel}
+							class="inline-flex self-start rounded-[var(--radius)] border border-border bg-muted/40 p-1"
+						>
+							{allowedModes.includes('pickup') ? (
+								<button
+									type="button"
+									id="mode-pickup-btn"
+									role="radio"
+									aria-checked="true"
+									data-mode="pickup"
+									class:list={[modeButton, modeOn]}
+								>
+									<span>{pickupLabel}</span>
+									<span class="text-xs text-muted-foreground">{pickupEstimate}</span>
+								</button>
+							) : null}
+							{allowedModes.includes('delivery') ? (
+								<button
+									type="button"
+									id="mode-delivery-btn"
+									role="radio"
+									aria-checked="false"
+									data-mode="delivery"
+									class:list={[modeButton, allowedModes.includes('pickup') ? modeOff : modeOn]}
+								>
+									<span>{deliveryLabel}</span>
+									<span class="text-xs text-muted-foreground">{deliveryEstimate}</span>
+								</button>
+							) : null}
+						</div>
+
+						{categories.length > 0 ? (
+							<div class="relative sm:w-64">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+								<input
+									type="search"
+									id="menu-search"
+									placeholder={searchLabel}
+									aria-label={searchLabel}
+									autocomplete="off"
+									class="h-10 w-full rounded-[var(--radius)] border border-input bg-background ps-9 pe-16 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:hidden"
+								/>
+								<button
+									type="button"
+									id="menu-search-clear"
+									class="absolute end-2 top-1/2 hidden -translate-y-1/2 rounded-[calc(var(--radius)*0.7)] px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								>
+									{clearSearchLabel}
+								</button>
 							</div>
-						</div>
-
-						{/* Fulfillment Mode Toggle: Delivery vs Pickup */}
-						<div class="flex items-center self-start sm:self-auto rounded-lg border border-border bg-muted/40 p-1 text-xs font-medium">
-							<button
-								type="button"
-								id="mode-pickup-btn"
-								class="mode-toggle-btn rounded-md px-3 py-1 transition-all bg-background text-foreground shadow-sm"
-								data-mode="pickup"
-							>
-								🥡 {pickupLabel}
-							</button>
-							<button
-								type="button"
-								id="mode-delivery-btn"
-								class="mode-toggle-btn rounded-md px-3 py-1 transition-all text-muted-foreground hover:text-foreground"
-								data-mode="delivery"
-							>
-								🚗 {deliveryLabel}
-							</button>
-						</div>
+						) : null}
 					</div>
 				</div>
 			</div>
-
-			{/* Sticky Category Quick Nav Bar */}
-			{topLevelCategories.length > 0 ? (
-				<div class:list={[siteContainer, "py-2.5"]}>
-					<nav class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth" aria-label="Menu categories">
-						{topLevelCategories.map((cat, idx) => {
-							const catName = getLocalizedMenuValue(cat.displayName, requestedLocale, defaultLocale)
-							return (
-								<a
-									href={`#category-${cat.id}`}
-									class:list={[
-										"whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors border",
-										idx === 0
-											? "border-primary bg-primary text-primary-foreground shadow-xs"
-											: "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-									]}
-								>
-									{catName}
-								</a>
-							)
-						})}
-					</nav>
-				</div>
-			) : null}
 		</div>
 
-		{/* Main Food Items Section */}
-		<PublicDrops />
-		<main class:list={[siteContainer, "py-8"]}>
-			{topLevelCategories.length === 0 ? (
+		{/* Sticky category chips (wide screens use the rail instead) */}
+		{navItems.length > 0 ? (
+			<div
+				id="menu-sticky-nav"
+				class="sticky top-[4.25rem] z-20 border-b border-border bg-background/95 backdrop-blur-md lg:hidden"
+			>
+				<div class:list={[siteContainer, 'py-2.5']}>
+					<CategoryNav items={navItems} label={categoriesNavLabel} />
+				</div>
+			</div>
+		) : null}
+
+		<PopularRow heading={popularLabel} cards={popularCards} />
+
+		<div data-search-hide>
+			<PublicDrops />
+		</div>
+
+		<div class:list={[siteContainer, 'py-8 sm:py-10']}>
+			{categories.length === 0 ? (
 				<div class="flex flex-col items-center justify-center py-24 text-center">
-					<div class="size-16 rounded-full border border-border bg-muted/40 flex items-center justify-center text-muted-foreground mb-4">
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+					<div class="mb-4 flex size-14 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="size-7" aria-hidden="true"><path d="M3 11h18"/><path d="M12 4a8 8 0 0 1 8 7H4a8 8 0 0 1 8-7Z"/><path d="M5 15h14"/><path d="M7 19h10"/></svg>
 					</div>
-					<h2 class="font-heading text-xl text-foreground">{menuComingSoonTitle}</h2>
-					<p class="text-sm text-muted-foreground max-w-sm mt-1">{menuComingSoonDesc}</p>
+					<h2 class="font-heading text-xl text-foreground">{comingSoonTitle}</h2>
+					<p class="mt-1 max-w-sm text-sm text-muted-foreground">{comingSoonDesc}</p>
 				</div>
 			) : (
-				<div class="space-y-16">
-					{topLevelCategories.map((category) => {
-						const catTitle = getLocalizedMenuValue(category.displayName, requestedLocale, defaultLocale)
-						const catDesc = category.description ? getLocalizedMenuValue(category.description, requestedLocale, defaultLocale) : ''
+				<div class="lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-12">
+					<div class="hidden lg:block">
+						<div class="sticky top-24">
+							<CategoryNav items={navItems} label={categoriesNavLabel} rail />
+						</div>
+					</div>
 
-						return (
-							<section id={`category-${category.id}`} class="scroll-mt-36">
-								<div class="mb-5">
-									<h2 class="font-heading text-2xl font-bold tracking-tight text-foreground">{catTitle}</h2>
-									{catDesc ? (
-										<p class="text-sm text-muted-foreground mt-0.5">{catDesc}</p>
+					<div class="min-w-0">
+						<p id="menu-search-empty" class="hidden rounded-[var(--radius)] border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground" role="status">
+							{noMatchLabel}
+						</p>
+
+						<div class="space-y-14">
+							{categories.map((category) => (
+								<section
+									id={`category-${category.id}`}
+									data-category-section
+									class="scroll-mt-32 lg:scroll-mt-24"
+									aria-labelledby={`category-${category.id}-title`}
+								>
+									<header class="mb-2">
+										<h2 id={`category-${category.id}-title`} class="font-heading text-2xl tracking-tight text-foreground">
+											{category.displayName}
+										</h2>
+										{category.description ? (
+											<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
+										) : null}
+									</header>
+
+									{category.items.length > 0 ? (
+										<ul class="grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
+											{category.items.map((item) => (
+												<MenuItemRow {...rowProps(item)} />
+											))}
+										</ul>
 									) : null}
-								</div>
 
-								{/* Direct Items in Level 1 Category */}
-								{category.items.length > 0 && (
-									<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-										{category.items.map((item) => (
-											<div
-												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(item) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
-												data-item-id={item.id}
-												data-sold-out={isItemSoldOut(item)}
-											>
-												<div class="space-y-2">
-													{/* Item Image */}
-													{resolveMediaUrl(item.imageUrl) ? (
-														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
-															<img
-																src={resolveMediaUrl(item.imageUrl)}
-																alt={getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)}
-																loading="lazy"
-																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-															/>
+									{(category.subcategories ?? []).length > 0 ? (
+										<div class="mt-8 space-y-10">
+											{(category.subcategories ?? []).map((sub) => (
+												<div id={`category-${sub.id}`} data-category-group class="scroll-mt-32 lg:scroll-mt-24">
+													<h3 class="font-heading text-xl text-foreground">{sub.displayName}</h3>
+													{sub.description ? (
+														<p class="mt-1 text-sm text-muted-foreground">{sub.description}</p>
+													) : null}
+													{sub.items.length > 0 ? (
+														<ul class="mt-2 grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
+															{sub.items.map((item) => (
+																<MenuItemRow {...rowProps(item)} />
+															))}
+														</ul>
+													) : null}
+													{(sub.subcategories ?? []).length > 0 ? (
+														<div class="mt-6 space-y-8">
+															{(sub.subcategories ?? []).map((subSub) => (
+																<div id={`category-${subSub.id}`} data-category-group class="scroll-mt-32 lg:scroll-mt-24">
+																	<h4 class="font-heading text-base text-foreground">{subSub.displayName}</h4>
+																	{subSub.description ? (
+																		<p class="mt-1 text-sm text-muted-foreground">{subSub.description}</p>
+																	) : null}
+																	{subSub.items.length > 0 ? (
+																		<ul class="mt-2 grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
+																			{subSub.items.map((item) => (
+																				<MenuItemRow {...rowProps(item)} />
+																			))}
+																		</ul>
+																	) : null}
+																</div>
+															))}
 														</div>
 													) : null}
-
-													{/* Title, Badges & Price */}
-													<div>
-														<div class="flex items-start justify-between gap-2">
-															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
-																{getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale)}
-															</h3>
-															<span class="shrink-0 text-foreground text-sm font-medium">
-														{itemPriceLabel(item)}
-															</span>
-														</div>
-
-														{/* Dietary Tags & Calories */}
-														<div class="flex flex-wrap items-center gap-1.5 mt-1">
-															{item.isVegetarian ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-																	🌱 {vegetarianLabel}
-																</span>
-															) : null}
-															{item.isGlutenFree ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-																	🌾 {glutenFreeLabel}
-																</span>
-															) : null}
-															{item.isAlcohol ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
-																	🔞 21+
-																</span>
-															) : null}
-															{item.calorieMin ? (
-																<span class="text-[11px] text-muted-foreground">
-																	{item.calorieMax && item.calorieMax !== item.calorieMin
-																		? `${item.calorieMin}-${item.calorieMax} Cal`
-																		: `${item.calorieMin} Cal`}
-																</span>
-															) : null}
-														</div>
-
-														{/* Description */}
-														{item.description ? (
-															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
-																{getLocalizedMenuValue(item.description, requestedLocale, defaultLocale)}
-															</p>
-														) : null}
-													</div>
 												</div>
-
-												{/* Action Button */}
-												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-													<div class="text-[11px] text-muted-foreground">
-														{item.modifierGroups && item.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${item.modifierGroups.length}` : `${item.modifierGroups.length} options`) : ''}
-													</div>
-											<button
-												type="button"
-												disabled={isItemSoldOut(item)}
-												class:list={[
-															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-															isItemSoldOut(item) || item.modifierGroups.length > 0 || item.variations.variants.length > 0
-																? "border border-border bg-background text-foreground hover:bg-muted"
-																: "bg-primary text-primary-foreground hover:bg-primary/90"
-														]}
-													>
-														{isItemSoldOut(item) ? soldOutLabel : item.modifierGroups.length > 0 || item.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
-													</button>
-												</div>
-											</div>
-))}
-									</div>
-								)}
-
-								{/* Level 2 Subcategories */}
-								{category.subcategories && category.subcategories.length > 0 && (
-									<div class="space-y-8 pl-0 sm:pl-1">
-										{category.subcategories.map((subcat) => {
-											const subTitle = getLocalizedMenuValue(subcat.displayName, requestedLocale, defaultLocale)
-											const subDesc = subcat.description ? getLocalizedMenuValue(subcat.description, requestedLocale, defaultLocale) : ''
-
-											return (
-												<div id={`category-${subcat.id}`} class="rounded-2xl border border-border/70 bg-card/60 p-4 sm:p-6 space-y-5 shadow-xs">
-													<div class="border-b border-border/60 pb-3">
-														<div class="flex items-center gap-2">
-															<span class="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">Subcategory</span>
-															<span class="text-xs text-muted-foreground">•</span>
-															<span class="text-xs text-muted-foreground">{subcat.items.length} items</span>
-														</div>
-														<h3 class="font-heading text-xl font-bold text-foreground mt-1.5">{subTitle}</h3>
-														{subDesc ? <p class="text-xs text-muted-foreground mt-0.5">{subDesc}</p> : null}
-													</div>
-
-													{/* Subcategory direct items */}
-													{subcat.items.length > 0 && (
-														<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-															{subcat.items.map((subItem) => (
-											<div
-												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(subItem) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
-												data-item-id={subItem.id}
-												data-sold-out={isItemSoldOut(subItem)}
-											>
-												<div class="space-y-2">
-													{/* Item Image */}
-													{resolveMediaUrl(subItem.imageUrl) ? (
-														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
-															<img
-																src={resolveMediaUrl(subItem.imageUrl)}
-																alt={getLocalizedMenuValue(subItem.displayName, requestedLocale, defaultLocale)}
-																loading="lazy"
-																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-															/>
-														</div>
-													) : null}
-
-													{/* Title, Badges & Price */}
-													<div>
-														<div class="flex items-start justify-between gap-2">
-															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
-																{getLocalizedMenuValue(subItem.displayName, requestedLocale, defaultLocale)}
-															</h3>
-															<span class="shrink-0 text-foreground text-sm font-medium">
-														{itemPriceLabel(subItem)}
-															</span>
-														</div>
-
-														{/* Dietary Tags & Calories */}
-														<div class="flex flex-wrap items-center gap-1.5 mt-1">
-															{subItem.isVegetarian ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-																	🌱 {vegetarianLabel}
-																</span>
-															) : null}
-															{subItem.isGlutenFree ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-																	🌾 {glutenFreeLabel}
-																</span>
-															) : null}
-															{subItem.isAlcohol ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
-																	🔞 21+
-																</span>
-															) : null}
-															{subItem.calorieMin ? (
-																<span class="text-[11px] text-muted-foreground">
-																	{subItem.calorieMax && subItem.calorieMax !== subItem.calorieMin
-																		? `${subItem.calorieMin}-${subItem.calorieMax} Cal`
-																		: `${subItem.calorieMin} Cal`}
-																</span>
-															) : null}
-														</div>
-
-														{/* Description */}
-														{subItem.description ? (
-															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
-																{getLocalizedMenuValue(subItem.description, requestedLocale, defaultLocale)}
-															</p>
-														) : null}
-													</div>
-												</div>
-
-												{/* Action Button */}
-												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-													<div class="text-[11px] text-muted-foreground">
-														{subItem.modifierGroups && subItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subItem.modifierGroups.length}` : `${subItem.modifierGroups.length} options`) : ''}
-													</div>
-											<button
-												type="button"
-												disabled={isItemSoldOut(subItem)}
-												class:list={[
-															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-														isItemSoldOut(subItem) || subItem.modifierGroups.length > 0 || subItem.variations.variants.length > 0
-																? "border border-border bg-background text-foreground hover:bg-muted"
-																: "bg-primary text-primary-foreground hover:bg-primary/90"
-														]}
-													>
-													{isItemSoldOut(subItem) ? soldOutLabel : subItem.modifierGroups.length > 0 || subItem.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
-													</button>
-												</div>
-											</div>
-))}
-														</div>
-													)}
-
-													{/* Level 3 Sub-subcategories */}
-													{subcat.subcategories && subcat.subcategories.length > 0 && (
-														<div class="space-y-6 pt-2">
-															{subcat.subcategories.map((subSub) => {
-																const subSubTitle = getLocalizedMenuValue(subSub.displayName, requestedLocale, defaultLocale)
-																const subSubDesc = subSub.description ? getLocalizedMenuValue(subSub.description, requestedLocale, defaultLocale) : ''
-
-																return (
-																	<div id={`category-${subSub.id}`} class="rounded-xl border border-border/50 bg-background/80 p-4 space-y-4">
-																		<div class="border-b border-border/40 pb-2">
-																			<h4 class="font-heading text-base font-semibold text-foreground flex items-center gap-2">
-																				<span class="text-primary font-bold">↳</span>
-																				<span>{subSubTitle}</span>
-																				<span class="text-xs font-normal text-muted-foreground">({subSub.items.length})</span>
-																			</h4>
-																			{subSubDesc ? <p class="text-xs text-muted-foreground mt-0.5">{subSubDesc}</p> : null}
-																		</div>
-
-																		{subSub.items.length > 0 && (
-																			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-																				{subSub.items.map((subSubItem) => (
-											<div
-												class:list={["group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs transition-all js-item-card", isItemSoldOut(subSubItem) ? "opacity-70" : "hover:border-primary/40 hover:shadow-md cursor-pointer"]}
-												data-item-id={subSubItem.id}
-												data-sold-out={isItemSoldOut(subSubItem)}
-											>
-												<div class="space-y-2">
-													{/* Item Image */}
-													{resolveMediaUrl(subSubItem.imageUrl) ? (
-														<div class="aspect-16/10 w-full overflow-hidden rounded-lg bg-muted">
-															<img
-																src={resolveMediaUrl(subSubItem.imageUrl)}
-																alt={getLocalizedMenuValue(subSubItem.displayName, requestedLocale, defaultLocale)}
-																loading="lazy"
-																class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-															/>
-														</div>
-													) : null}
-
-													{/* Title, Badges & Price */}
-													<div>
-														<div class="flex items-start justify-between gap-2">
-															<h3 class="font-heading text-base text-foreground group-hover:text-primary transition-colors">
-																{getLocalizedMenuValue(subSubItem.displayName, requestedLocale, defaultLocale)}
-															</h3>
-															<span class="shrink-0 text-foreground text-sm font-medium">
-														{itemPriceLabel(subSubItem)}
-															</span>
-														</div>
-
-														{/* Dietary Tags & Calories */}
-														<div class="flex flex-wrap items-center gap-1.5 mt-1">
-															{subSubItem.isVegetarian ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-																	🌱 {vegetarianLabel}
-																</span>
-															) : null}
-															{subSubItem.isGlutenFree ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-																	🌾 {glutenFreeLabel}
-																</span>
-															) : null}
-															{subSubItem.isAlcohol ? (
-																<span class="inline-flex items-center gap-0.5 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400">
-																	🔞 21+
-																</span>
-															) : null}
-															{subSubItem.calorieMin ? (
-																<span class="text-[11px] text-muted-foreground">
-																	{subSubItem.calorieMax && subSubItem.calorieMax !== subSubItem.calorieMin
-																		? `${subSubItem.calorieMin}-${subSubItem.calorieMax} Cal`
-																		: `${subSubItem.calorieMin} Cal`}
-																</span>
-															) : null}
-														</div>
-
-														{/* Description */}
-														{subSubItem.description ? (
-															<p class="text-xs text-muted-foreground line-clamp-2 mt-1.5">
-																{getLocalizedMenuValue(subSubItem.description, requestedLocale, defaultLocale)}
-															</p>
-														) : null}
-													</div>
-												</div>
-
-												{/* Action Button */}
-												<div class="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-													<div class="text-[11px] text-muted-foreground">
-														{subSubItem.modifierGroups && subSubItem.modifierGroups.length > 0 ? (requestedLocale === 'ar' ? `خيارات ${subSubItem.modifierGroups.length}` : `${subSubItem.modifierGroups.length} options`) : ''}
-													</div>
-											<button
-												type="button"
-												disabled={isItemSoldOut(subSubItem)}
-												class:list={[
-															"inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs shadow-xs transition-colors",
-														isItemSoldOut(subSubItem) || subSubItem.modifierGroups.length > 0 || subSubItem.variations.variants.length > 0
-																? "border border-border bg-background text-foreground hover:bg-muted"
-																: "bg-primary text-primary-foreground hover:bg-primary/90"
-														]}
-													>
-													{isItemSoldOut(subSubItem) ? soldOutLabel : subSubItem.modifierGroups.length > 0 || subSubItem.variations.variants.length > 0 ? customizeLabel : `+ ${addLabel}`}
-													</button>
-												</div>
-											</div>
-))}
-																			</div>
-																		)}
-																	</div>
-																)
-															})}
-														</div>
-													)}
-												</div>
-											)
-										})}
-									</div>
-								)}
-							</section>
-						)
-					})}
+											))}
+										</div>
+									) : null}
+								</section>
+							))}
+						</div>
+					</div>
 				</div>
 			)}
-		</main>
-
-		{/* Floating Bottom Cart Tray */}
-		<div id="cart-tray" class="fixed bottom-0 inset-x-0 z-40 p-4 transition-transform duration-300 translate-y-full">
-			<div class:list={[siteContainer, "max-w-2xl"]}>
-				<button
-					type="button"
-					id="open-cart-btn"
-					class="w-full flex items-center justify-between rounded-xl bg-primary px-5 py-3.5 text-primary-foreground shadow-xl hover:bg-primary/95 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-				>
-					<div class="flex items-center gap-2.5">
-						<div class="flex size-7 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-bold" id="cart-badge-count">
-							0
-						</div>
-						<span class="text-sm">{viewCartLabel}</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<span id="cart-tray-total" class="text-base font-bold">$0.00</span>
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-					</div>
-				</button>
-			</div>
 		</div>
 
-		{/* Interactive Item Customization Modal */}
-		<div id="item-modal-backdrop" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-			<div
-				id="item-modal-dialog"
-				class="relative w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col"
-			>
-				{/* Modal Header */}
-				<div class="flex items-center justify-between border-b border-border p-4">
-					<h3 id="modal-item-name" class="font-heading text-lg font-bold text-foreground truncate">{customizeItemLabel}</h3>
-					<button
-						type="button"
-						id="close-item-modal"
-						class="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-						aria-label="Close modal"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-					</button>
-				</div>
+		<CartTray labels={{ viewOrder: viewOrderLabel }} initialTotal={price(0)} />
 
-				{/* Modal Scrollable Body */}
-				<div class="overflow-y-auto p-4 sm:p-6 space-y-6 flex-1">
-					{/* Item preview */}
-					<div class="flex gap-4">
-						<div id="modal-item-img-container" class="size-20 shrink-0 rounded-lg bg-muted overflow-hidden hidden">
-						</div>
-						<div>
-							<p id="modal-item-desc" class="text-xs text-muted-foreground"></p>
-							<p id="modal-item-price" class="text-sm text-foreground mt-1"></p>
-						</div>
-					</div>
+		<ItemModal
+			labels={{
+				customizeItem: labels.customizeItem,
+				specialInstructions: specialInstructionsLabel,
+				specialInstructionsPlaceholder,
+				quantity: labels.quantity,
+				addToOrder: labels.addToOrder,
+				close: labels.closeDialog,
+			}}
+		/>
 
-					{/* Dynamic Modifier Groups Container */}
-				<div id="modal-variation-groups" class="space-y-4"></div>
-				<p id="modal-variation-unavailable" class="hidden text-sm text-destructive" role="status"></p>
-				<div id="modal-modifier-groups" class="space-y-6"></div>
-
-					{/* Special Instructions */}
-					<div class="space-y-2">
-						<label for="modal-special-instructions" class={siteFieldLabelClass}>
-							{specialInstructionsLabel}
-						</label>
-						<textarea
-							id="modal-special-instructions"
-							rows="2"
-							placeholder={specialInstructionsPlaceholder}
-							class={siteInputClass}
-						></textarea>
-					</div>
-
-					{/* Quantity Selector */}
-					<div class="flex items-center justify-between border-t border-border pt-4">
-						<span class="text-sm font-medium text-foreground">{quantityLabel}</span>
-						<div class="flex items-center gap-3">
-							<button
-								type="button"
-								id="modal-qty-minus"
-								class="size-8 rounded-md border border-border bg-background flex items-center justify-center font-bold text-foreground hover:bg-muted"
-							>
-								-
-							</button>
-							<span id="modal-qty-value" class="text-sm text-foreground min-w-4 text-center">1</span>
-							<button
-								type="button"
-								id="modal-qty-plus"
-								class="size-8 rounded-md border border-border bg-background flex items-center justify-center font-bold text-foreground hover:bg-muted"
-							>
-								+
-							</button>
-						</div>
-					</div>
-				</div>
-
-				{/* Modal Footer */}
-				<div class="border-t border-border p-4 bg-muted/20 flex items-center justify-between gap-4">
-					<button
-						type="button"
-						id="modal-add-btn"
-						class:list={[siteBtnPrimary, "w-full py-3 text-sm"]}
-					>
-						{i18n._(msg`Add to Order`)} • {formatPrice(0)}
-					</button>
-				</div>
-			</div>
-		</div>
-
-		{/* Slide-over Cart Drawer */}
-		<div id="cart-drawer-backdrop" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs transition-opacity">
-			<div
-				id="cart-drawer"
-				class="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 translate-x-full"
-			>
-				{/* Drawer Header */}
-				<div class="flex items-center justify-between border-b border-border p-4 sm:p-5">
-					<div class="flex items-center gap-2">
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-						<h3 class="font-heading text-lg font-bold text-foreground">{cartText}</h3>
-					</div>
-					<button
-						type="button"
-						id="close-cart-btn"
-						class="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-					</button>
-				</div>
-
-				{/* Drawer Cart Items */}
-				<div id="cart-items-container" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-					{/* Rendered via client script */}
-				</div>
-
-				{/* Drawer Summary & Checkout */}
-				<div class="border-t border-border bg-muted/20 p-4 sm:p-5 space-y-4">
-					<div class="space-y-1.5 text-xs text-muted-foreground">
-						<div class="flex justify-between">
-							<span>{subtotalText}</span>
-							<span id="drawer-subtotal" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div class="flex justify-between">
-							<span>{taxText} ({(activeLocation?.taxRate ?? 0).toFixed(2)}%)</span>
-							<span id="drawer-tax" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div id="drawer-delivery-row" class="flex justify-between hidden">
-							<span>{deliveryFeeText}</span>
-							<span id="drawer-delivery-fee" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div class="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
-							<span>{totalText}</span>
-							<span id="drawer-total">$0.00</span>
-						</div>
-					</div>
-
-					<a
-						href={checkoutHref}
-						id="drawer-checkout-btn"
-						class:list={[siteBtnPrimary, "w-full py-3 text-center text-sm"]}
-					>
-						{checkoutLabel}
-					</a>
-				</div>
-			</div>
-		</div>
+		<CartDrawer
+			labels={{
+				yourOrder: yourOrderLabel,
+				subtotal: subtotalLabel,
+				tax: taxLabel,
+				deliveryFee: deliveryFeeLabel,
+				total: totalLabel,
+				checkout: checkoutLabel,
+				close: labels.closeDialog,
+			}}
+			taxRateLabel={taxRateLabel}
+			checkoutHref={checkoutHref}
+			initialTotal={price(0)}
+		/>
 	</div>
 
-	{/* Client Menu Data for Scripts */}
-	<script id="menu-data" type="application/json" is:inline set:html={JSON.stringify(clientMenuData).replace(/</g, '\\u003c')} />
+	<OrderingLabels labels={labels} />
+	<script
+		id="menu-data"
+		type="application/json"
+		is:inline
+		set:html={JSON.stringify(clientMenuData).replace(/</g, '\\u003c')}
+	/>
 
 	<script>
-		type CartItem = {
-			id: string
-			itemId: string
-			variantId?: string
-			name: string
-			basePrice: number
-			unitPrice: number
-			quantity: number
-			options: Array<{
-				groupId: string
-				groupName: string
-				optionId: string
-				optionName: string
-				priceDelta: number
-				half?: 'whole' | 'left' | 'right'
-			}>
-			instructions: string
-		}
+		import { indexCatalog } from '~/lib/ordering/catalog'
+		import { createCartStore, createModeStore } from '~/lib/ordering/cart-store'
+		import { mountCartUi } from '~/lib/ordering/cart-ui'
+		import { createItemModal } from '~/lib/ordering/item-modal'
+		import { createMoneyFormatter } from '~/lib/ordering/money'
+		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
+		import {
+			type FulfillmentMode,
+			type OrderingCategory,
+			type OrderingLabels,
+		} from '~/lib/ordering/types'
 
 		type MenuData = {
 			organizationId: string
 			currency: string
+			locale: string
 			activeLocationId: string
 			taxRate: number
 			deliveryFee: number
-			menus: any[]
+			isOpen: boolean
+			closedReason: string
+			allowedModes: FulfillmentMode[]
+			categories: OrderingCategory[]
 		}
 
-		const dataEl = document.getElementById('menu-data')
-		const menuData: MenuData = dataEl ? JSON.parse(dataEl.textContent || '{}') : {}
-		const orgId = menuData.organizationId || 'default'
-		const storageKey = `menuza_cart_${orgId}`
-		const modeStorageKey = `menuza_mode_${orgId}`
-
-		let cart: CartItem[] = []
-		try {
-			const saved = localStorage.getItem(storageKey)
-			if (saved) cart = JSON.parse(saved)
-		} catch {}
-
-		let fulfillmentMode: 'pickup' | 'delivery' = (localStorage.getItem(modeStorageKey) as any) || 'pickup'
-
-		function saveCart() {
-			try {
-				localStorage.setItem(storageKey, JSON.stringify(cart))
-			} catch {}
-			renderCartUI()
+		function readJson<T>(id: string): T {
+			return JSON.parse(document.getElementById(id)?.textContent || '{}') as T
 		}
 
-		function formatCurrency(num: number) {
-			const valid = Number.isFinite(num) ? num : 0
-			const sign = valid < 0 ? '-' : ''
-			return `${sign}$${Math.abs(valid).toLocaleString('en-US', {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-			})}`
-		}
+		const data = readJson<MenuData>('menu-data')
+		const labels = readJson<OrderingLabels>('ordering-labels')
+		const orgId = data.organizationId || 'default'
+		const money = createMoneyFormatter(data.currency, data.locale)
+		const catalog = indexCatalog(data.categories ?? [])
 
-		// Build nodes with textContent so operator/guest text is never parsed as HTML.
-		function createEl(tag: string, className?: string, text?: string) {
-			const node = document.createElement(tag)
-			if (className) node.className = className
-			if (text !== undefined) node.textContent = text
-			return node
-		}
+		const store = createCartStore({ key: `menuza_cart_${orgId}` })
+		const modeStore = createModeStore({
+			key: `menuza_mode_${orgId}`,
+			allowed: data.allowedModes,
+		})
 
-		// Escape values interpolated into trusted HTML templates (modifier markup).
-		function escapeHtml(value: unknown) {
-			return String(value ?? '').replace(/[&<>"']/g, (ch) => {
-				switch (ch) {
-					case '&':
-						return '&amp;'
-					case '<':
-						return '&lt;'
-					case '>':
-						return '&gt;'
-					case '"':
-						return '&quot;'
-					default:
-						return '&#39;'
-				}
-			})
-		}
-
-		// Calculate Totals
-		function getCartTotals() {
-			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const tax = subtotal * ((menuData.taxRate || 0) / 100)
-			const deliveryFee = fulfillmentMode === 'delivery' && subtotal > 0 ? (menuData.deliveryFee || 0) : 0
-			const total = subtotal + tax + deliveryFee
-			const count = cart.reduce((acc, it) => acc + it.quantity, 0)
-			return { subtotal, tax, deliveryFee, total, count }
-		}
-
-		// Render Tray & Drawer UI
-		function renderCartUI() {
-			const { subtotal, tax, deliveryFee, total, count } = getCartTotals()
-			const tray = document.getElementById('cart-tray')
-			const badge = document.getElementById('cart-badge-count')
-			const trayTotal = document.getElementById('cart-tray-total')
-
-			if (tray && badge && trayTotal) {
-				badge.textContent = String(count)
-				trayTotal.textContent = formatCurrency(total)
-				if (count > 0) {
-					tray.classList.remove('translate-y-full')
-				} else {
-					tray.classList.add('translate-y-full')
-				}
-			}
-
-			// Update Drawer Summary
-			const drawerSubtotal = document.getElementById('drawer-subtotal')
-			const drawerTax = document.getElementById('drawer-tax')
-			const drawerDeliveryRow = document.getElementById('drawer-delivery-row')
-			const drawerDeliveryFee = document.getElementById('drawer-delivery-fee')
-			const drawerTotal = document.getElementById('drawer-total')
-			const checkoutBtn = document.getElementById('drawer-checkout-btn')
-
-			if (drawerSubtotal) drawerSubtotal.textContent = formatCurrency(subtotal)
-			if (drawerTax) drawerTax.textContent = formatCurrency(tax)
-			if (drawerDeliveryRow && drawerDeliveryFee) {
-				if (fulfillmentMode === 'delivery' && subtotal > 0) {
-					drawerDeliveryRow.classList.remove('hidden')
-					drawerDeliveryFee.textContent = formatCurrency(deliveryFee)
-				} else {
-					drawerDeliveryRow.classList.add('hidden')
-				}
-			}
-			if (drawerTotal) drawerTotal.textContent = formatCurrency(total)
-			if (checkoutBtn) {
-				if (count === 0) {
-					checkoutBtn.classList.add('pointer-events-none', 'opacity-50')
-				} else {
-					checkoutBtn.classList.remove('pointer-events-none', 'opacity-50')
-				}
-			}
-
-			// Render items inside drawer
-			const container = document.getElementById('cart-items-container')
-			if (!container) return
-
-			if (cart.length === 0) {
-				const empty = createEl(
-					'div',
-					'flex flex-col items-center justify-center py-12 text-center text-muted-foreground',
-				)
-				// Static, trusted icon; text nodes below are set via textContent.
-				empty.innerHTML =
-					'<svg xmlns="http://www.w3.org/2000/svg" class="size-10 mb-2 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
-				empty.appendChild(
-					createEl('p', 'text-sm font-medium', (menuData as any).labels?.emptyCartTitle || 'Your cart is empty'),
-				)
-				empty.appendChild(
-					createEl('p', 'text-xs mt-0.5', (menuData as any).labels?.emptyCartDesc || 'Explore our menu and add your favorite dishes.'),
-				)
-				container.replaceChildren(empty)
-				return
-			}
-
-			// Build rows as DOM nodes; item/option/instruction text is set with
-			// textContent so operator-authored menu text is never parsed as HTML.
-			const rows = cart.map((item, idx) => {
-				const row = createEl('div', 'flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-xs')
-				const col = createEl('div', 'space-y-1 flex-1')
-				const header = createEl('div', 'flex items-center justify-between')
-				header.appendChild(createEl('h4', 'text-sm text-foreground', item.name))
-				header.appendChild(createEl('span', 'text-xs text-foreground', formatCurrency(item.unitPrice * item.quantity)))
-				col.appendChild(header)
-
-				if (item.options && item.options.length > 0) {
-					const ul = createEl('ul', 'text-[11px] text-muted-foreground space-y-0.5')
-					for (const o of item.options) {
-						const halfPrefix = o.half && o.half !== 'whole' ? `[${o.half.toUpperCase()}] ` : ''
-						const priceSuffix = o.priceDelta > 0 ? ` (+${formatCurrency(o.priceDelta)})` : ''
-						ul.appendChild(createEl('li', undefined, `• ${halfPrefix}${o.optionName}${priceSuffix}`))
-					}
-					col.appendChild(ul)
-				}
-
-				if (item.instructions) {
-					col.appendChild(createEl('p', 'text-[11px] italic text-muted-foreground', `"${item.instructions}"`))
-				}
-
-				const actions = createEl('div', 'flex items-center gap-2 pt-2')
-				const makeBtn = (className: string, label: string) => {
-					const btn = createEl('button', className, label)
-					btn.setAttribute('type', 'button')
-					btn.setAttribute('data-idx', String(idx))
-					return btn
-				}
-				actions.appendChild(makeBtn('js-cart-minus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted', '-'))
-				actions.appendChild(createEl('span', 'text-xs text-foreground min-w-4 text-center', String(item.quantity)))
-				actions.appendChild(makeBtn('js-cart-plus size-6 rounded border border-border bg-background flex items-center justify-center text-xs font-bold hover:bg-muted', '+'))
-				actions.appendChild(makeBtn('js-cart-remove text-[11px] text-destructive hover:underline ml-auto', (menuData as any).labels?.remove || 'Remove'))
-				col.appendChild(actions)
-
-				row.appendChild(col)
-				return row
-			})
-			container.replaceChildren(...rows)
-
-			// Wire item stepper buttons
-			container.querySelectorAll('.js-cart-minus').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					const idx = Number(btn.getAttribute('data-idx'))
-					if (cart[idx].quantity > 1) {
-						cart[idx].quantity -= 1
-					} else {
-						cart.splice(idx, 1)
-					}
-					saveCart()
+		const modalRoot = document.getElementById('item-modal-backdrop')
+		const modal = modalRoot
+			? createItemModal({
+					root: modalRoot,
+					getItem: (id) => catalog.items.get(id),
+					labels,
+					formatMoney: money,
+					cartLines: () => store.lines(),
+					onAdd: (line) => store.add(line),
 				})
+			: null
+
+		const cartUi = mountCartUi({
+			store,
+			labels,
+			formatMoney: money,
+			totals: {
+				taxRate: data.taxRate || 0,
+				deliveryFee: data.deliveryFee || 0,
+				mode: () => modeStore.get(),
+			},
+			gate: () =>
+				data.isOpen ? { allowed: true } : { allowed: false, reason: data.closedReason },
+		})
+
+		// Pickup / delivery segmented control
+		const MODE_ON = ['bg-background', 'text-foreground', 'shadow-xs']
+		const MODE_OFF = ['text-muted-foreground', 'hover:text-foreground']
+		const modeButtons = Array.from(
+			document.querySelectorAll<HTMLButtonElement>('.js-mode-btn'),
+		)
+		function paintMode(mode: FulfillmentMode) {
+			for (const button of modeButtons) {
+				const on = button.dataset.mode === mode
+				button.classList.remove(...(on ? MODE_OFF : MODE_ON))
+				button.classList.add(...(on ? MODE_ON : MODE_OFF))
+				button.setAttribute('aria-checked', on ? 'true' : 'false')
+			}
+		}
+		for (const button of modeButtons) {
+			button.addEventListener('click', () => {
+				modeStore.set(button.dataset.mode as FulfillmentMode)
 			})
-			container.querySelectorAll('.js-cart-plus').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					const idx = Number(btn.getAttribute('data-idx'))
-					cart[idx].quantity += 1
-					saveCart()
-				})
+		}
+		modeStore.subscribe((mode) => {
+			paintMode(mode)
+			cartUi.refresh()
+		})
+		paintMode(modeStore.get())
+		cartUi.refresh()
+
+		// Item rows and popular cards open the modal
+		document.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement | null
+			const card = target?.closest<HTMLElement>('.js-item-card, .js-popular-card')
+			if (!card || !modal) return
+			if (card.dataset.soldOut === 'true') return
+			if (card instanceof HTMLButtonElement && card.disabled) return
+			const itemId = card.dataset.itemId
+			if (!itemId) return
+			const opener = card.querySelector<HTMLElement>('button') ?? card
+			modal.open(itemId, opener)
+		})
+		modal?.openFromUrl()
+
+		// Category navigation
+		const navs = Array.from(document.querySelectorAll<HTMLElement>('[data-category-nav]'))
+		const sections = Array.from(
+			document.querySelectorAll<HTMLElement>('[data-category-section]'),
+		)
+		const siteHeader = document.querySelector<HTMLElement>('header')
+		const stickyNav = document.getElementById('menu-sticky-nav')
+		if (navs.length && sections.length) {
+			mountScrollSpy({
+				nav: navs,
+				sections,
+				offset: () =>
+					(siteHeader?.offsetHeight ?? 0) +
+					(stickyNav && stickyNav.offsetParent !== null ? stickyNav.offsetHeight : 16),
 			})
-			container.querySelectorAll('.js-cart-remove').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					const idx = Number(btn.getAttribute('data-idx'))
-					cart.splice(idx, 1)
-					saveCart()
-				})
+		}
+
+		// In-menu search
+		const search = document.getElementById('menu-search') as HTMLInputElement | null
+		const clearBtn = document.getElementById('menu-search-clear')
+		const emptyState = document.getElementById('menu-search-empty')
+		function applySearch(raw: string) {
+			const query = raw.trim().toLocaleLowerCase()
+			let anyVisible = false
+			document.querySelectorAll<HTMLElement>('.js-item-card').forEach((row) => {
+				const hit = !query || (row.dataset.search ?? '').includes(query)
+				row.classList.toggle('hidden', !hit)
+				if (hit) anyVisible = true
 			})
-		}
-
-		// Mode toggle handlers
-		function updateModeUI() {
-			const pickupBtn = document.getElementById('mode-pickup-btn')
-			const deliveryBtn = document.getElementById('mode-delivery-btn')
-			if (fulfillmentMode === 'pickup') {
-				pickupBtn?.classList.add('bg-background', 'text-foreground', 'shadow-sm', 'font-semibold')
-				pickupBtn?.classList.remove('text-muted-foreground')
-				deliveryBtn?.classList.remove('bg-background', 'text-foreground', 'shadow-sm', 'font-semibold')
-				deliveryBtn?.classList.add('text-muted-foreground')
-			} else {
-				deliveryBtn?.classList.add('bg-background', 'text-foreground', 'shadow-sm', 'font-semibold')
-				deliveryBtn?.classList.remove('text-muted-foreground')
-				pickupBtn?.classList.remove('bg-background', 'text-foreground', 'shadow-sm', 'font-semibold')
-				pickupBtn?.classList.add('text-muted-foreground')
-			}
-			localStorage.setItem(modeStorageKey, fulfillmentMode)
-			renderCartUI()
-		}
-
-		document.getElementById('mode-pickup-btn')?.addEventListener('click', () => {
-			fulfillmentMode = 'pickup'
-			updateModeUI()
-		})
-		document.getElementById('mode-delivery-btn')?.addEventListener('click', () => {
-			fulfillmentMode = 'delivery'
-			updateModeUI()
-		})
-
-		// Location change handler
-		document.getElementById('location-select')?.addEventListener('change', (e) => {
-			const locId = (e.target as HTMLSelectElement).value
-			const url = new URL(window.location.href)
-			url.searchParams.set('location', locId)
-			window.location.href = url.toString()
-		})
-
-		// Drawer open / close handlers
-		const drawerBackdrop = document.getElementById('cart-drawer-backdrop')
-		const drawer = document.getElementById('cart-drawer')
-		document.getElementById('open-cart-btn')?.addEventListener('click', () => {
-			drawerBackdrop?.classList.remove('hidden')
-			setTimeout(() => drawer?.classList.remove('translate-x-full'), 10)
-		})
-		const closeDrawer = () => {
-			drawer?.classList.add('translate-x-full')
-			setTimeout(() => drawerBackdrop?.classList.add('hidden'), 300)
-		}
-		document.getElementById('close-cart-btn')?.addEventListener('click', closeDrawer)
-		drawerBackdrop?.addEventListener('click', (e) => {
-			if (e.target === drawerBackdrop) closeDrawer()
-		})
-
-		// Item Customization Modal State
-		let activeModalItem: any = null
-		let selectedVariant: any = null
-		let selectedVariationValues: string[] = []
-		let modalQuantity = 1
-		let selectedOptionsMap: Record<
-			string,
-			{
-				optionId: string
-				optionName: string
-				priceDelta: number
-				groupId?: string
-				groupName?: string
-				half?: string
-			}[]
-		> = {}
-
-		function findItemById(itemId: string) {
-			for (const menu of menuData.menus || []) {
-				for (const cat of menu.categories || []) {
-					const checkCategory = (c: any): any => {
-						for (const it of c.items || []) {
-							if (it.id === itemId) return it
-						}
-						for (const sub of c.subcategories || []) {
-							const found = checkCategory(sub)
-							if (found) return found
-						}
-						return null
-					}
-					const found = checkCategory(cat)
-					if (found) return found
-				}
-			}
-			return null
-		}
-
-		function calculateModalPrice() {
-			if (!activeModalItem) return 0
-			let unit = selectedVariant?.price ?? activeModalItem.price
-			for (const list of Object.values(selectedOptionsMap)) {
-				for (const opt of list) {
-					unit += opt.priceDelta || 0
-				}
-			}
-			return unit * modalQuantity
-		}
-
-		function updateModalAddButton() {
-			const btn = document.getElementById('modal-add-btn') as HTMLButtonElement | null
-			if (!btn) return
-			const unavailable = Boolean(
-				activeModalItem?.variations?.groups?.length &&
-				(!selectedVariant || selectedVariant.availabilityStatus === 'unavailable'),
-			)
-			btn.disabled = unavailable
-			btn.classList.toggle('opacity-50', unavailable)
-			btn.classList.toggle('cursor-not-allowed', unavailable)
-			if (unavailable) {
-				btn.textContent = (menuData as any).labels?.soldOut || 'Sold out'
-				return
-			}
-			const total = calculateModalPrice()
-			const addPrefix = (menuData as any).labels?.addToOrder || 'Add to Order'
-			btn.textContent = `${addPrefix} • ${formatCurrency(total)}`
-		}
-
-		function openItemModal(itemId: string) {
-			const item = findItemById(itemId)
-			if (!item) return
-
-			activeModalItem = item
-			const firstAvailableVariant = (item.variations?.variants || []).find((variant: any) => variant.availabilityStatus !== 'unavailable')
-			selectedVariationValues = firstAvailableVariant ? [...firstAvailableVariant.valueIds] : (item.variations?.groups || []).map((group: any) => group.values?.[0]?.id || '')
-			selectedVariant = null
-			function refreshVariation() {
-				selectedVariant = (item.variations?.variants || []).find((variant: any) => variant.valueIds.every((id: string, index: number) => id === selectedVariationValues[index])) || null
-				const unavailable = Boolean(item.variations?.groups?.length && (!selectedVariant || selectedVariant.availabilityStatus === 'unavailable'))
-				const unavailableMessage = document.getElementById('modal-variation-unavailable')
-				if (unavailableMessage) {
-					unavailableMessage.textContent = (menuData as any).labels?.combinationUnavailable || 'This combination is sold out. Choose another combination.'
-					unavailableMessage.classList.toggle('hidden', !unavailable)
-				}
-				const currentPrice = selectedVariant?.price ?? item.price
-				const priceEl = document.getElementById('modal-item-price')
-				if (priceEl) priceEl.textContent = formatCurrency(currentPrice)
-				const imgContainer = document.getElementById('modal-item-img-container')
-				const imageUrl = selectedVariant?.imageUrl || item.imageUrl
-				if (imgContainer) {
-					imgContainer.innerHTML = ''
-					if (imageUrl) {
-						const img = document.createElement('img')
-						img.id = 'modal-item-img'
-						img.src = imageUrl
-						img.alt = item.displayName
-						img.className = 'size-full object-cover'
-						imgContainer.appendChild(img)
-						imgContainer.classList.remove('hidden')
-					} else imgContainer.classList.add('hidden')
-				}
-				updateModalAddButton()
-			}
-			modalQuantity = 1
-			selectedOptionsMap = {}
-
-			// Populate base details
-			const nameEl = document.getElementById('modal-item-name')
-			const descEl = document.getElementById('modal-item-desc')
-			const priceEl = document.getElementById('modal-item-price')
-			const instructionsEl = document.getElementById('modal-special-instructions') as HTMLTextAreaElement
-			const qtyValueEl = document.getElementById('modal-qty-value')
-
-			if (nameEl) nameEl.textContent = item.displayName
-			if (descEl) descEl.textContent = item.description || ''
-			if (priceEl) priceEl.textContent = formatCurrency(item.price)
-			if (instructionsEl) instructionsEl.value = ''
-			if (qtyValueEl) qtyValueEl.textContent = '1'
-
-			refreshVariation()
-			const variationsContainer = document.getElementById('modal-variation-groups')
-			if (variationsContainer) {
-				variationsContainer.innerHTML = (item.variations?.groups || []).map((group: any, index: number) => `
-					<div class="space-y-2">
-						<label class="block text-sm font-medium text-foreground" for="modal-variation-${index}">${escapeHtml(group.name)}</label>
-						<select id="modal-variation-${index}" class="js-variation-select w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" data-index="${index}">
-							${(group.values || []).map((option: any) => `<option value="${escapeHtml(option.id)}" ${option.id === selectedVariationValues[index] ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}
-						</select>
-					</div>
-				`).join('')
-				variationsContainer.querySelectorAll<HTMLSelectElement>('.js-variation-select').forEach((select) => select.addEventListener('change', () => {
-					selectedVariationValues[Number(select.dataset.index)] = select.value
-					refreshVariation()
-				}))
-			}
-
-			// Render modifier groups
-			const groupsContainer = document.getElementById('modal-modifier-groups')
-			if (groupsContainer) {
-				if (!item.modifierGroups || item.modifierGroups.length === 0) {
-					groupsContainer.innerHTML = ''
-				} else {
-					groupsContainer.innerHTML = item.modifierGroups
-						.map((grp: any) => {
-							const isRadio = grp.selectionType === 'single'
-							const isPizza = grp.selectionType === 'pizza'
-							return `
-								<div class="rounded-xl border border-border bg-card p-4 space-y-3" data-group-id="${grp.id}">
-									<div class="flex items-center justify-between">
-										<h4 class="font-heading text-sm text-foreground">${escapeHtml(grp.name)}</h4>
-										<span class="text-[11px] font-medium text-muted-foreground">
-											${grp.minSelections > 0
-												? ((menuData as any).locale === 'ar' ? `مطلوب (اختر ${grp.minSelections})` : `Required (choose ${grp.minSelections})`)
-												: ((menuData as any).labels?.optional || 'Optional')}
-										</span>
-									</div>
-									<div class="space-y-2">
-										${(grp.options || [])
-											.map((opt: any) => {
-												let optHtml = ''
-												if (isPizza) {
-													optHtml = `
-														<div class="flex items-center justify-between p-2 rounded-lg border border-border/70 text-xs">
-															<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
-															<div class="flex items-center gap-1.5">
-																<label class="flex items-center gap-1 cursor-pointer">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="whole" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.priceWhole || opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-																	<span>${(menuData as any).labels?.whole || 'Whole'} (+${formatCurrency(opt.priceWhole || opt.price || 0)})</span>
-																</label>
-																<label class="flex items-center gap-1 cursor-pointer ml-2">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="left" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)} (${escapeHtml((menuData as any).labels?.left || 'Left')})" data-price="${opt.priceLeft || (opt.price ? opt.price / 2 : 0)}">
-																	<span>${(menuData as any).labels?.left || 'Left'}</span>
-																</label>
-																<label class="flex items-center gap-1 cursor-pointer ml-2">
-																	<input type="radio" name="pizza_${grp.id}_${opt.id}" value="right" class="size-3 text-primary js-pizza-opt" data-group-id="${grp.id}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)} (${escapeHtml((menuData as any).labels?.right || 'Right')})" data-price="${opt.priceRight || (opt.price ? opt.price / 2 : 0)}">
-																	<span>${(menuData as any).labels?.right || 'Right'}</span>
-																</label>
-															</div>
-														</div>
-													`
-												} else if (isRadio) {
-													optHtml = `
-														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
-															<div class="flex items-center gap-2">
-																<input type="radio" name="grp_${grp.id}" value="${opt.id}" class="size-4 text-primary js-modifier-radio" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-																<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
-															</div>
-															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-														</label>
-													`
-												} else {
-													optHtml = `
-														<label class="flex items-center justify-between p-2.5 rounded-lg border border-border/70 hover:bg-muted/40 cursor-pointer text-xs">
-															<div class="flex items-center gap-2">
-																<input type="checkbox" class="size-4 rounded text-primary js-modifier-checkbox" data-group-id="${grp.id}" data-group-name="${escapeHtml(grp.name)}" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.displayName)}" data-price="${opt.price || 0}"${opt.isDefault ? ' checked' : ''}>
-																<span class="font-medium text-foreground">${escapeHtml(opt.displayName)}</span>
-															</div>
-															<span class="text-muted-foreground">${opt.price > 0 ? `+${formatCurrency(opt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-														</label>
-													`
-												}
-
-												let nestedHtml = ''
-												if (opt.nestedModifierGroups && opt.nestedModifierGroups.length > 0) {
-													nestedHtml = `
-														<div class="js-nested-groups-container hidden ml-4 mt-2 pl-3 border-l-2 border-primary/30 space-y-2.5" data-parent-option-id="${opt.id}">
-															${opt.nestedModifierGroups.map((nestedGrp: any) => {
-																const isNestedRadio = nestedGrp.selectionType === 'single'
-																return `
-																	<div class="rounded-lg border border-border/70 bg-muted/20 p-3 space-y-2" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-min-selections="${nestedGrp.minSelections || 0}">
-																		<div class="flex items-center justify-between">
-																			<h5 class="text-xs font-semibold text-foreground">${escapeHtml(nestedGrp.name)}</h5>
-																			<span class="text-[10px] text-muted-foreground font-medium">
-																				${nestedGrp.minSelections > 0
-																					? ((menuData as any).locale === 'ar' ? `مطلوب (اختر ${nestedGrp.minSelections})` : `Required (choose ${nestedGrp.minSelections})`)
-																	: ((menuData as any).labels?.optional || 'Optional')}
-																			</span>
-																		</div>
-																		<div class="space-y-1.5">
-																			${(nestedGrp.options || []).map((nestedOpt: any) => {
-																				if (isNestedRadio) {
-																					return `
-																						<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
-																							<div class="flex items-center gap-2">
-																								<input type="radio" name="grp_${nestedGrp.id}" value="${nestedOpt.id}" class="size-3.5 text-primary js-modifier-radio" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
-																								<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
-																							</div>
-																							<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-																						</label>
-																					`
-																				}
-																				return `
-																					<label class="flex items-center justify-between p-2 rounded-md border border-border/60 hover:bg-muted/40 cursor-pointer text-xs bg-background">
-																						<div class="flex items-center gap-2">
-																							<input type="checkbox" class="size-3.5 rounded text-primary js-modifier-checkbox" data-group-id="${nestedGrp.id}" data-group-name="${escapeHtml(nestedGrp.name)}" data-opt-id="${nestedOpt.id}" data-opt-name="${escapeHtml(nestedOpt.displayName)}" data-price="${nestedOpt.price || 0}"${nestedOpt.isDefault ? ' checked' : ''}>
-																							<span class="font-medium text-foreground">${escapeHtml(nestedOpt.displayName)}</span>
-																						</div>
-																						<span class="text-muted-foreground text-[11px]">${nestedOpt.price > 0 ? `+${formatCurrency(nestedOpt.price)}` : ((menuData as any).labels?.free || 'Free')}</span>
-																					</label>
-																				`
-																			}).join('')}
-																		</div>
-																	</div>
-																`
-															}).join('')}
-														</div>
-													`
-												}
-
-												return `<div>${optHtml}${nestedHtml}</div>`
-											})
-											.join('')}
-									</div>
-								</div>
-							`
-						})
-						.join('')
-
-					// Helpers to activate / deactivate nested conditional modifier groups
-					function hideNestedForOption(optId: string) {
-						const nestedContainer = groupsContainer?.querySelector(
-							`.js-nested-groups-container[data-parent-option-id="${optId}"]`
-						)
-						if (nestedContainer) {
-							nestedContainer.classList.add('hidden')
-							nestedContainer.querySelectorAll<HTMLInputElement>('input').forEach((input) => {
-								const nGId = input.getAttribute('data-group-id')
-								if (nGId) delete selectedOptionsMap[nGId]
-								input.checked = false
-							})
-						}
-					}
-
-					function showNestedForOption(optId: string) {
-						const nestedContainer = groupsContainer?.querySelector(
-							`.js-nested-groups-container[data-parent-option-id="${optId}"]`
-						)
-						if (nestedContainer) {
-							nestedContainer.classList.remove('hidden')
-							nestedContainer
-								.querySelectorAll<HTMLInputElement>(
-									'.js-modifier-radio:checked, .js-modifier-checkbox:checked, .js-pizza-opt:checked'
-								)
-								.forEach((input) => input.dispatchEvent(new Event('change', { bubbles: true })))
-						}
-					}
-
-					// Attach radio listeners
-					groupsContainer.querySelectorAll('.js-modifier-radio').forEach((radio) => {
-						radio.addEventListener('change', (e) => {
-							const target = e.target as HTMLInputElement
-							const gId = target.getAttribute('data-group-id') || ''
-							const gName = target.getAttribute('data-group-name') || ''
-							const optId = target.getAttribute('data-opt-id') || ''
-							const optName = target.getAttribute('data-opt-name') || ''
-							const price = Number(target.getAttribute('data-price') || 0)
-
-							// Deactivate nested groups for all other options in this radio group
-							groupsContainer
-								?.querySelectorAll<HTMLInputElement>(`input[name="${target.name}"]:not([value="${optId}"])`)
-								?.forEach((sibling) => {
-									const sibOptId = sibling.getAttribute('data-opt-id') || sibling.value
-									if (sibOptId) hideNestedForOption(sibOptId)
-								})
-
-							selectedOptionsMap[gId] = [{ optionId: optId, optionName: optName, priceDelta: price, groupId: gId, groupName: gName }]
-							showNestedForOption(optId)
-							updateModalAddButton()
-						})
-					})
-
-					// Attach checkbox listeners
-					groupsContainer.querySelectorAll('.js-modifier-checkbox').forEach((box) => {
-						box.addEventListener('change', (e) => {
-							const target = e.target as HTMLInputElement
-							const gId = target.getAttribute('data-group-id') || ''
-							const gName = target.getAttribute('data-group-name') || ''
-							const optId = target.getAttribute('data-opt-id') || ''
-							const optName = target.getAttribute('data-opt-name') || ''
-							const price = Number(target.getAttribute('data-price') || 0)
-
-							selectedOptionsMap[gId] = selectedOptionsMap[gId] || []
-							if (target.checked) {
-								selectedOptionsMap[gId].push({ optionId: optId, optionName: optName, priceDelta: price, groupId: gId, groupName: gName })
-								showNestedForOption(optId)
-							} else {
-								selectedOptionsMap[gId] = selectedOptionsMap[gId].filter((o) => o.optionId !== optId)
-								hideNestedForOption(optId)
-							}
-							updateModalAddButton()
-						})
-					})
-
-					// Attach pizza listeners
-					groupsContainer.querySelectorAll('.js-pizza-opt').forEach((pizza) => {
-						pizza.addEventListener('change', (e) => {
-							const target = e.target as HTMLInputElement
-							const gId = target.getAttribute('data-group-id') || ''
-							const optId = target.getAttribute('data-opt-id') || ''
-							const optName = target.getAttribute('data-opt-name') || ''
-							const price = Number(target.getAttribute('data-price') || 0)
-							const half = target.value
-
-							selectedOptionsMap[gId] = selectedOptionsMap[gId] || []
-							selectedOptionsMap[gId] = selectedOptionsMap[gId].filter((o) => o.optionId !== optId)
-							if (target.checked) {
-								selectedOptionsMap[gId].push({ optionId: optId, optionName: optName, priceDelta: price, groupId: gId, groupName: 'Toppings', half })
-							}
-							updateModalAddButton()
-						})
-					})
-
-					// Populate the order state from any defaults rendered by the modifier
-					// group. Checked inputs alone are visual; dispatching the same event a
-					// guest would create keeps pricing and cart state in sync.
-					groupsContainer
-						.querySelectorAll<HTMLInputElement>(
-							'.js-modifier-radio:checked, .js-modifier-checkbox:checked, .js-pizza-opt:checked',
-						)
-						.forEach((input) => input.dispatchEvent(new Event('change', { bubbles: true })))
-				}
-			}
-
-			updateModalAddButton()
-			const modalBackdrop = document.getElementById('item-modal-backdrop')
-			modalBackdrop?.classList.remove('hidden')
-		}
-
-		function closeItemModal() {
-			const modalBackdrop = document.getElementById('item-modal-backdrop')
-			modalBackdrop?.classList.add('hidden')
-			activeModalItem = null
-		}
-
-		document.getElementById('close-item-modal')?.addEventListener('click', closeItemModal)
-		document.getElementById('item-modal-backdrop')?.addEventListener('click', (e) => {
-			if (e.target === document.getElementById('item-modal-backdrop')) closeItemModal()
-		})
-
-		// Modal Quantity Controls
-		document.getElementById('modal-qty-minus')?.addEventListener('click', () => {
-			if (modalQuantity > 1) {
-				modalQuantity -= 1
-				const q = document.getElementById('modal-qty-value')
-				if (q) q.textContent = String(modalQuantity)
-				updateModalAddButton()
-			}
-		})
-		document.getElementById('modal-qty-plus')?.addEventListener('click', () => {
-			modalQuantity += 1
-			const q = document.getElementById('modal-qty-value')
-			if (q) q.textContent = String(modalQuantity)
-			updateModalAddButton()
-		})
-
-		// Add to order button
-		document.getElementById('modal-add-btn')?.addEventListener('click', () => {
-			if (!activeModalItem) return
-			if (
-				activeModalItem.variations?.groups?.length &&
-				(!selectedVariant || selectedVariant.availabilityStatus === 'unavailable')
-			) return
-
-			// Validate required modifier groups
-			for (const grp of activeModalItem.modifierGroups || []) {
-				if (grp.minSelections > 0) {
-					const chosen = selectedOptionsMap[grp.id] || []
-					if (chosen.length < grp.minSelections) {
-						alert(`Please make at least ${grp.minSelections} selection for "${grp.name}".`)
-						return
-					}
-				}
-			}
-
-			// Validate required sub/nested modifier groups that are currently active
-			let nestedValidationFailed = false
-			const modalGroupsEl = document.getElementById('modal-modifier-groups')
-			modalGroupsEl
-				?.querySelectorAll('.js-nested-groups-container:not(.hidden)')
-				.forEach((container: Element) => {
-					if (nestedValidationFailed) return
-					container.querySelectorAll('[data-group-id]').forEach((grpEl: Element) => {
-						if (nestedValidationFailed) return
-						const nGId = grpEl.getAttribute('data-group-id')
-						const nMin = Number(grpEl.getAttribute('data-min-selections') || 0)
-						const nName = grpEl.getAttribute('data-group-name') || 'Option'
-						if (nMin > 0 && nGId) {
-							const chosen = selectedOptionsMap[nGId] || []
-							if (chosen.length < nMin) {
-								alert(`Please make at least ${nMin} selection for "${nName}".`)
-								nestedValidationFailed = true
-							}
-						}
-					})
-				})
-			if (nestedValidationFailed) return
-
-			// Flatten options
-			const flatOptions: any[] = []
-			for (const list of Object.values(selectedOptionsMap)) {
-				flatOptions.push(...list)
-			}
-
-			const optionsDelta = flatOptions.reduce((acc, o) => acc + (o.priceDelta || 0), 0)
-			if (activeModalItem.variations?.groups?.length && !selectedVariant) return
-			const variationPrice = selectedVariant?.price ?? activeModalItem.price
-			const unitPrice = variationPrice + optionsDelta
-			const instructions = (document.getElementById('modal-special-instructions') as HTMLTextAreaElement)?.value || ''
-
-			cart.push({
-				id: `cart_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-				itemId: activeModalItem.id,
-				variantId: selectedVariant?.id,
-				name: activeModalItem.displayName,
-				basePrice: variationPrice,
-				unitPrice,
-				quantity: modalQuantity,
-				options: [...(activeModalItem.variations?.groups || []).map((group: any, index: number) => ({ groupId: group.id, groupName: group.name, optionId: selectedVariationValues[index], optionName: group.values.find((option: any) => option.id === selectedVariationValues[index])?.name || '', priceDelta: 0 })), ...flatOptions],
-				instructions,
+			document.querySelectorAll<HTMLElement>('[data-category-group]').forEach((group) => {
+				group.classList.toggle('hidden', !group.querySelector('.js-item-card:not(.hidden)'))
 			})
-
-			saveCart()
-			closeItemModal()
+			for (const section of sections) {
+				const visible = Boolean(section.querySelector('.js-item-card:not(.hidden)'))
+				section.classList.toggle('hidden', !visible)
+				for (const nav of navs) {
+					nav
+						.querySelector<HTMLElement>(`a[href="#${section.id}"]`)
+						?.classList.toggle('hidden', !visible)
+				}
+			}
+			document
+				.querySelectorAll<HTMLElement>('[data-search-hide]')
+				.forEach((node) => node.classList.toggle('hidden', Boolean(query)))
+			emptyState?.classList.toggle('hidden', anyVisible || !query)
+			clearBtn?.classList.toggle('hidden', !query)
+		}
+		search?.addEventListener('input', () => applySearch(search.value))
+		clearBtn?.addEventListener('click', () => {
+			if (!search) return
+			search.value = ''
+			applySearch('')
+			search.focus()
 		})
-
-		// Item Card Click Handlers
-		document.querySelectorAll('.js-item-card').forEach((card) => {
-			card.addEventListener('click', () => {
-				if (card.getAttribute('data-sold-out') === 'true') return
-				const itemId = card.getAttribute('data-item-id')
-				if (itemId) openItemModal(itemId)
-			})
-		})
-
-		// Initial load
-		updateModeUI()
-		renderCartUI()
+		if (search?.value) applySearch(search.value)
 	</script>
 </SitePage>

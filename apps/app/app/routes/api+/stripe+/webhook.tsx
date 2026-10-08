@@ -6,6 +6,10 @@ import {
 	handleTrialEnd,
 } from '#app/utils/payments.server.ts'
 import {
+	handleRestaurantOrderStripeSessionEvent,
+	isRestaurantStripeMetadata,
+} from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
+import {
 	handleConnectAccountUpdated,
 	recordShopOrderFromConnectWebhook,
 } from '#app/utils/shop.server.ts'
@@ -99,14 +103,32 @@ export async function action({ request }: ActionFunctionArgs) {
 				break
 			}
 
-			case 'checkout.session.completed': {
+			case 'checkout.session.completed':
+			case 'checkout.session.async_payment_succeeded':
+			case 'checkout.session.async_payment_failed':
+			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session
-				await recordShopOrderFromConnectWebhook(session, event.type)
+				if (isRestaurantStripeMetadata(session.metadata)) {
+					// Restaurant orders: forward the non-PII payment facts to the
+					// org's regional tenant service. A regional failure throws so
+					// this handler returns non-2xx and Stripe retries.
+					await handleRestaurantOrderStripeSessionEvent(session, event.type)
+					break
+				}
+				if (event.type === 'checkout.session.completed') {
+					await recordShopOrderFromConnectWebhook(session, event.type)
+				}
 				break
 			}
 
 			case 'payment_intent.succeeded': {
 				const paymentIntent = event.data.object as Stripe.PaymentIntent
+				if (isRestaurantStripeMetadata(paymentIntent.metadata)) {
+					// Restaurant order payment intents carry no checkout session
+					// reference, so they cannot be verified against the regionally
+					// bound session. Session-level events are authoritative instead.
+					break
+				}
 				await recordShopOrderFromConnectWebhook(paymentIntent, event.type)
 				break
 			}

@@ -26,6 +26,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:seed": "../../node_modules/.bin/varlock run -- tsx seed.ts",
+    "db:seed:drops": "../../node_modules/.bin/varlock run -- tsx seed-drops.ts",
     "db:migrate:dev": "drizzle-kit generate",
     "db:migrate:deploy": "../../node_modules/.bin/varlock run -- tsx src/migrate.ts",
     "db:reset": "rm -f db/data.db db/data.db-wal db/data.db-shm && npm run db:migrate:deploy && npm run db:seed",

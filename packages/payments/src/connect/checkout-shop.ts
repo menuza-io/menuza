@@ -135,6 +135,10 @@ export async function createCheckoutShopPaymentSession(
 		failureUrl: string
 		metadata: Record<string, string>
 		customerEmail?: string | null
+		/** Merchant reference; defaults to the metadata orgId (shop behavior). */
+		reference?: string | null
+		/** Billing country for the hosted session; defaults to 'US'. */
+		billingCountry?: string | null
 	},
 ): Promise<CheckoutShopPaymentSession> {
 	const { platformFeeCents, orgPayoutCents } = calculateShopFees(
@@ -144,14 +148,14 @@ export async function createCheckoutShopPaymentSession(
 	const body = {
 		amount: options.amountCents,
 		currency: (options.currency || 'usd').toUpperCase(),
-		reference: options.metadata.orgId || 'shop_order',
+		reference: options.reference || options.metadata.orgId || 'shop_order',
 		description: options.productName.slice(0, 100),
 		processing_channel_id: options.processingChannelId,
 		success_url: options.successUrl,
 		failure_url: options.failureUrl,
 		billing: {
 			address: {
-				country: 'US',
+				country: options.billingCountry || 'US',
 			},
 		},
 		customer: options.customerEmail

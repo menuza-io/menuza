@@ -7,6 +7,7 @@ export {
 	retrieveConnectAccountStatus,
 	createShopCheckoutSession,
 	createShopPaymentIntent,
+	expireShopCheckoutSession,
 	type ConnectAccountStatus,
 } from './stripe-connect'
 

@@ -1,0 +1,18 @@
+---
+/**
+ * Emits the translated interface strings for the ordering client modules.
+ * Read it with `JSON.parse(document.getElementById('ordering-labels').textContent)`.
+ */
+interface Props {
+	labels: Record<string, string>
+}
+
+const { labels } = Astro.props
+---
+
+<script
+	id="ordering-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

@@ -86,37 +86,64 @@ export async function createShopCheckoutSession(
 		cancelUrl: string
 		metadata: Record<string, string>
 		customerEmail?: string | null
+		/**
+		 * Optional session expiry. Stripe enforces a minimum of 30 minutes from
+		 * creation; callers must not pass anything sooner (pass null/undefined to
+		 * keep the provider default).
+		 */
+		expiresAt?: Date | null
+		/** Optional deterministic idempotency key for retried creates. */
+		idempotencyKey?: string | null
 	},
 ): Promise<Stripe.Checkout.Session> {
 	const { platformFeeCents } = calculateShopFees(options.amountCents)
 
-	return stripe.checkout.sessions.create({
-		mode: 'payment',
-		line_items: [
-			{
-				price_data: {
-					currency: options.currency || 'usd',
-					product_data: {
-						name: options.productName,
-						description: options.productDescription || undefined,
+	return stripe.checkout.sessions.create(
+		{
+			mode: 'payment',
+			line_items: [
+				{
+					price_data: {
+						currency: options.currency || 'usd',
+						product_data: {
+							name: options.productName,
+							description: options.productDescription || undefined,
+						},
+						unit_amount: options.amountCents,
 					},
-					unit_amount: options.amountCents,
+					quantity: 1,
 				},
-				quantity: 1,
+			],
+			payment_intent_data: {
+				application_fee_amount: platformFeeCents,
+				transfer_data: {
+					destination: options.connectedAccountId,
+				},
+				metadata: options.metadata,
 			},
-		],
-		payment_intent_data: {
-			application_fee_amount: platformFeeCents,
-			transfer_data: {
-				destination: options.connectedAccountId,
-			},
+			success_url: options.successUrl,
+			cancel_url: options.cancelUrl,
 			metadata: options.metadata,
+			customer_email: options.customerEmail || undefined,
+			...(options.expiresAt
+				? { expires_at: Math.floor(options.expiresAt.getTime() / 1000) }
+				: {}),
 		},
-		success_url: options.successUrl,
-		cancel_url: options.cancelUrl,
-		metadata: options.metadata,
-		customer_email: options.customerEmail || undefined,
-	})
+		options.idempotencyKey
+			? { idempotencyKey: options.idempotencyKey }
+			: undefined,
+	)
+}
+
+/**
+ * Expire an open Stripe Checkout session. Used to close a session that could
+ * not be bound to its regional order so it can never be paid orphaned.
+ */
+export async function expireShopCheckoutSession(
+	stripe: Stripe,
+	sessionId: string,
+): Promise<Stripe.Checkout.Session> {
+	return stripe.checkout.sessions.expire(sessionId)
 }
 
 export async function createShopPaymentIntent(

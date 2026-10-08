@@ -1,0 +1,68 @@
+---
+import { msg } from '@lingui/core/macro'
+import { formatDropDateTime, type DropPhase } from '~/lib/drops/format'
+import { translate } from '~/lib/ordering-labels'
+
+interface Props {
+	phase: DropPhase
+	ordersOpenAt: string | null
+	ordersCloseAt: string | null
+	locale: string
+	timeZone: string | null
+	now?: Date
+	class?: string
+}
+
+const {
+	phase,
+	ordersOpenAt,
+	ordersCloseAt,
+	locale,
+	timeZone,
+	now = new Date(),
+	class: className,
+} = Astro.props
+
+const i18n = Astro.locals.i18n
+const tz = timeZone || 'UTC'
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+let text: string
+if (phase === 'live') {
+	text = i18n._(msg`Ordering now`)
+} else if (phase === 'upcoming') {
+	if (ordersOpenAt) {
+		const openAt = new Date(ordersOpenAt)
+		const soon = openAt.getTime() - now.getTime() < WEEK_MS
+		const when = formatDropDateTime(openAt, locale, tz, { month: !soon })
+		text = translate(i18n, msg`Opens {when}`, { when })
+	} else {
+		text = i18n._(msg`Coming soon`)
+	}
+} else if (ordersCloseAt) {
+	const closedAt = new Date(ordersCloseAt)
+	const sameYear = closedAt.getUTCFullYear() === now.getUTCFullYear()
+	const when = new Intl.DateTimeFormat(locale, {
+		timeZone: tz,
+		month: 'short',
+		day: 'numeric',
+		year: sameYear ? undefined : 'numeric',
+	}).format(closedAt)
+	text = translate(i18n, msg`Ended {when}`, { when })
+} else {
+	text = i18n._(msg`Ended`)
+}
+
+const dotClass = phase === 'live' ? 'bg-primary' : 'bg-muted-foreground'
+---
+
+<span
+	class:list={[
+		'inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground',
+		className,
+	]}
+	data-drop-phase={phase}
+>
+	<span class:list={['size-1.5 shrink-0 rounded-full', dotClass]} aria-hidden="true"></span>
+	{text}
+</span>

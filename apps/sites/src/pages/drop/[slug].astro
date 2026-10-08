@@ -1,10 +1,52 @@
 ---
-import SitePage from '~/components/SitePage.astro'
-import { getDropDisplayStatus, getLocalizedMenuValue } from '@repo/common/menu-types'
+import { msg } from '@lingui/core/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
-import { fetchPublishedDrop } from '~/lib/org'
+import SitePage from '~/components/SitePage.astro'
+import DropCard from '~/components/drops/DropCard.astro'
+import DropItemCard from '~/components/drops/DropItemCard.astro'
+import DropSummaryCard from '~/components/drops/DropSummaryCard.astro'
+import PickupPicker from '~/components/drops/PickupPicker.astro'
+import CartDrawer from '~/components/ordering/CartDrawer.astro'
+import CartTray from '~/components/ordering/CartTray.astro'
+import CategoryNav from '~/components/ordering/CategoryNav.astro'
+import ItemModal from '~/components/ordering/ItemModal.astro'
+import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
+import {
+	formatDropDateTime,
+	formatRemaining,
+	getDropPhase,
+} from '~/lib/drops/format'
+import { resolveMediaUrl, siteBtnPrimary, siteContainer } from '~/lib/media'
+import { buildOrderingLabels, translate } from '~/lib/ordering-labels'
+import { buildIcsDataUrl } from '~/lib/ordering/calendar'
+import { indexCatalog, isItemSoldOut, itemPriceLabel } from '~/lib/ordering/catalog'
+import { remainingFor } from '~/lib/ordering/constraints'
+import { fillTemplate, formatMoney } from '~/lib/ordering/money'
+import {
+	formatPickupAddress,
+	formatWindow,
+	pickupMapHref,
+	pickupPhoneHref,
+} from '~/lib/ordering/pickup'
+import {
+	type Constraints,
+	type ModifierGroup,
+	type ModifierOption,
+	type OrderingCategory,
+	type OrderingItem,
+} from '~/lib/ordering/types'
+import {
+	fetchPublishedDrop,
+	fetchPublishedDrops,
+	fetchPublishedSiteMenu,
+	type PublicMenuItemData,
+	type PublicMenuOptionData,
+	type PublicModifierGroupData,
+} from '~/lib/org'
 
 const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
 const orgSlug = Astro.locals.orgSlug
 const customHost = Astro.locals.customHost
 const dropSlug = Astro.params.slug
@@ -27,516 +69,1059 @@ if (!dropData || !organization) {
 	return new Response('Drop Not Found', { status: 404 })
 }
 
-const defaultLocale = Astro.locals.defaultLocale || 'en'
-const requestedLocale = Astro.locals.requestedLocale || defaultLocale
+const drop = dropData.drop
+const defaultLocale = Astro.locals.defaultLocale || organization.defaultLocale || 'en'
+const requestedLocale = Astro.locals.requestedLocale || organization.locale || defaultLocale
 const localize = (value: string | null | undefined) =>
 	getLocalizedMenuValue(value, requestedLocale, defaultLocale)
-const drop = {
-	...dropData.drop,
-	title: localize(dropData.drop.title),
-	description: localize(dropData.drop.description),
-}
-const pickupWindows = dropData.pickupWindows
-const inventoryOverrides = dropData.inventoryOverrides
-const categories = dropData.categories.map((category) => ({
-	...category,
-	displayName: localize(category.displayName),
-	description: localize(category.description),
-	items: category.items.map((item) => ({
-		...item,
-		displayName: localize(item.displayName),
-		description: localize(item.description),
-	})),
-}))
-const currency = dropData.organization.currency || 'USD'
-
 const now = new Date()
-const openDate = drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null
-const closeDate = drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null
+const currency = dropData.organization.currency || 'USD'
+const phase = getDropPhase(drop, now)
 
-const phase = getDropDisplayStatus(
-	drop.status === 'draft' ? 'live' : drop.status,
-	drop.ordersOpenAt,
-	drop.ordersCloseAt,
-	now,
+// ---------- strings ----------
+
+const labels = buildOrderingLabels(i18n)
+const allDropsLabel = i18n._(msg`All drops`)
+const orderWindowLabel = i18n._(msg`Order window`)
+const pickupLabel = i18n._(msg`Pickup`)
+const whereLabel = i18n._(msg`Where`)
+const addToCalendarLabel = i18n._(msg`Add to calendar`)
+const ordersOpenBlockLabel = i18n._(msg`Orders open`)
+const endedTitle = i18n._(msg`This drop has ended`)
+const endedBody = i18n._(
+	msg`Orders have closed for this drop and every pickup has gone out. Thanks for the support — see what's next below.`,
 )
-const dropState = phase === 'scheduled' ? 'upcoming' : phase === 'live' ? 'live' : 'closed'
-
-function formatPrice(amount: number) {
-	return new Intl.NumberFormat(requestedLocale, {
-		style: 'currency',
-		currency,
-	}).format(amount)
+const moreDropsLabel = i18n._(msg`More drops`)
+const viewMenuLabel = i18n._(msg`View menu`)
+const viewOrderLabel = i18n._(msg`View Order`)
+const yourOrderLabel = i18n._(msg`Your Order`)
+const subtotalLabel = i18n._(msg`Subtotal`)
+const taxLabel = i18n._(msg`Estimated Tax`)
+const deliveryFeeLabel = i18n._(msg`Delivery Fee`)
+const totalLabel = i18n._(msg`Total`)
+const checkoutLabel = i18n._(msg`Proceed to Checkout`)
+const specialInstructionsLabel = i18n._(msg`Special Instructions`)
+const specialInstructionsPlaceholder = i18n._(
+	msg`Any dietary preferences, sauce on the side, etc.`,
+)
+const categoriesNavLabel = i18n._(msg`Menu categories`)
+const choosePickupTimeLabel = i18n._(msg`Choose a pickup time to continue`)
+const noPickupTimesLabel = i18n._(
+	msg`No pickup times are available right now.`,
+)
+const noLongerAvailableLabel = i18n._(msg`No longer available`)
+const changeLabel = i18n._(msg`Change`)
+const vegetarianLabel = i18n._(msg`Vegetarian`)
+const glutenFreeLabel = i18n._(msg`Gluten-Free`)
+const alcoholLabel = i18n._(msg`Alcohol`)
+const dietaryLabels = {
+	vegetarian: vegetarianLabel,
+	glutenFree: glutenFreeLabel,
+	alcohol: alcoholLabel,
+}
+/** Live countdown templates; filled client-side from the same JSON. */
+const remainingLabels = {
+	in: translate(i18n, msg`in {t}`, { t: '{t}' }),
+	days: translate(i18n, msg`{n} days`, { n: '{n}' }),
+	oneDay: i18n._(msg`1 day`),
+	hoursMinutes: translate(i18n, msg`{h}h {m}m`, { h: '{h}', m: '{m}' }),
+	minutes: translate(i18n, msg`{n} min`, { n: '{n}' }),
+	lessThanMinute: i18n._(msg`less than a minute`),
 }
 
-const inventoryMap = new Map<string, number | null>()
-inventoryOverrides.forEach((inv) => {
-	inventoryMap.set(`${inv.entityType}:${inv.entityId}`, inv.inventory)
+const price = (amount: number) => formatMoney(amount, currency, requestedLocale)
+
+// ---------- catalog ----------
+
+function localizeOption(option: PublicMenuOptionData): ModifierOption {
+	return {
+		id: option.id,
+		displayName: localize(option.displayName),
+		description: option.description ? localize(option.description) : '',
+		imageUrl: option.imageUrl ? resolveMediaUrl(option.imageUrl) : null,
+		price: option.price ?? 0,
+		priceWhole: option.priceWhole,
+		priceLeft: option.priceLeft,
+		priceRight: option.priceRight,
+		calories: option.calories,
+		minSelections: option.minSelections,
+		maxSelections: option.maxSelections,
+		isDefault: option.isDefault,
+		availabilityStatus: option.availabilityStatus,
+		nestedModifierGroups: (option.nestedModifierGroups ?? []).map(localizeGroup),
+	}
+}
+
+function localizeGroup(group: PublicModifierGroupData): ModifierGroup {
+	return {
+		id: group.id,
+		name: localize(group.name),
+		selectionType: group.selectionType,
+		minSelections: group.minSelections ?? 0,
+		maxSelections: group.maxSelections ?? null,
+		availabilityStatus: group.availabilityStatus,
+		options: (group.options ?? []).map(localizeOption),
+	}
+}
+
+function localizeItem(item: PublicMenuItemData): OrderingItem {
+	return {
+		id: item.id,
+		displayName: localize(item.displayName),
+		description: item.description ? localize(item.description) : '',
+		price: item.price,
+		imageUrl: item.imageUrl ? resolveMediaUrl(item.imageUrl) : null,
+		variations: {
+			groups: (item.variations?.groups ?? []).map((group) => ({
+				id: group.id,
+				name: localize(group.name),
+				values: group.values.map((value) => ({
+					id: value.id,
+					name: localize(value.name),
+				})),
+			})),
+			variants: (item.variations?.variants ?? []).map((variant) => ({
+				...variant,
+				imageUrl: variant.imageUrl ? resolveMediaUrl(variant.imageUrl) : null,
+			})),
+		},
+		modifierGroups: (item.modifierGroups ?? []).map(localizeGroup),
+		isVegetarian: item.isVegetarian,
+		isGlutenFree: item.isGlutenFree,
+		isAlcohol: item.isAlcohol,
+		allergens: item.allergens ?? [],
+		calorieMin: item.calorieMin,
+		calorieMax: item.calorieMax,
+		isPopular: item.isPopular,
+		availabilityStatus: item.availabilityStatus,
+		specialInstructions: drop.menu.specialInstructions !== false,
+	}
+}
+
+const categories: OrderingCategory[] = dropData.categories
+	.filter((category) => category.items.length > 0)
+	.map((category) => ({
+		id: category.id,
+		displayName: localize(category.displayName),
+		description: category.description ? localize(category.description) : '',
+		items: category.items.map(localizeItem),
+		subcategories: [],
+	}))
+
+const catalog = indexCatalog(categories)
+
+// ---------- constraints (drop inventory) ----------
+
+const categoryNames = new Map(
+	dropData.categories.map((category) => [category.id, localize(category.displayName)]),
+)
+const itemRules: NonNullable<Constraints['items']> = {}
+const categoryRules: NonNullable<Constraints['categories']> = {}
+for (const override of dropData.inventoryOverrides) {
+	if (override.entityType === 'item') {
+		itemRules[override.entityId] = {
+			inventory: override.inventory,
+			maxPerOrder: override.maxPerOrder,
+		}
+	} else {
+		categoryRules[override.entityId] = {
+			inventory: override.inventory,
+			maxPerOrder: override.maxPerOrder,
+			name: categoryNames.get(override.entityId) ?? '',
+		}
+	}
+}
+const constraints: Constraints = {
+	items: itemRules,
+	categories: categoryRules,
+	itemCategoryIds: Object.fromEntries(catalog.itemCategoryIds),
+	showInventory: drop.showInventoryRemaining !== false,
+}
+
+/** Card tag wording: "Only 3 left", "Limit 2 per order" — the tightest rule wins. */
+const LOW_STOCK_THRESHOLD = 5
+function cardProps(item: OrderingItem) {
+	const cap = remainingFor(item.id, [], constraints)
+	const max = cap.max ?? 0
+	const soldOut = isItemSoldOut(item) || max === 0
+	const priceLabel = itemPriceLabel(item, {
+		formatMoney: price,
+		fromLabel: labels.from,
+		soldOutLabel: labels.soldOut,
+	})
+	let note: string | null = null
+	if (!soldOut && cap.reason) {
+		if (cap.reason === 'limit') {
+			note = fillTemplate(labels.limitNPerOrder, { count: cap.limit ?? max })
+		} else if (constraints.showInventory !== false) {
+			if (
+				cap.reason === 'inventory' &&
+				(cap.remaining ?? 0) > 0 &&
+				(cap.remaining ?? 0) <= LOW_STOCK_THRESHOLD
+			) {
+				note = fillTemplate(labels.onlyNLeft, { count: cap.remaining ?? 0 })
+			} else if (
+				cap.reason === 'category-inventory' &&
+				max > 0 &&
+				max <= LOW_STOCK_THRESHOLD
+			) {
+				note = fillTemplate(labels.onlyNLeftIn, {
+					count: max,
+					category: cap.categoryName ?? '',
+				})
+			}
+		}
+	}
+	return {
+		id: item.id,
+		name: item.displayName,
+		description: item.description,
+		priceLabel: soldOut ? labels.soldOut : priceLabel,
+		soldOut,
+		imageUrl: item.imageUrl,
+		note,
+		calories: caloriesFor(item),
+		isVegetarian: item.isVegetarian,
+		isGlutenFree: item.isGlutenFree,
+		isAlcohol: item.isAlcohol,
+		labels: dietaryLabels,
+	}
+}
+
+function caloriesFor(item: OrderingItem): string | null {
+	if (!item.calorieMin) return null
+	if (item.calorieMax && item.calorieMax !== item.calorieMin) {
+		return translate(i18n, msg`{min}–{max} Cal`, {
+			min: item.calorieMin,
+			max: item.calorieMax,
+		})
+	}
+	return translate(i18n, msg`{count} Cal`, { count: item.calorieMin })
+}
+
+const navItems = categories.map((category) => ({
+	id: category.id,
+	label: category.displayName,
+}))
+
+// ---------- pickup windows ----------
+
+const pickupWindows = dropData.pickupWindows.map((window) => ({
+	...window,
+	location: window.location
+		? {
+				...window.location,
+				name: localize(window.location.name),
+			}
+		: null,
+}))
+const windowsWithLocation = pickupWindows.filter((window) => window.location)
+const primaryTimeZone = windowsWithLocation.find(
+	(window) => window.location?.timezone,
+)?.location?.timezone ?? null
+const factsTimeZone = primaryTimeZone ?? 'UTC'
+const hasPickupWindows = windowsWithLocation.length > 0
+
+// Locations for the "Where" disclosure, each with its window times.
+const whereLocations: Array<{
+	id: string
+	name: string
+	addressLine: string
+	mapHref: string
+	phone: string | null
+	phoneHref: string | null
+	windows: string[]
+}> = []
+for (const window of windowsWithLocation) {
+	const location = window.location!
+	const existing = whereLocations.find((entry) => entry.id === window.locationId)
+	if (existing) {
+		existing.windows.push(formatWindow(window, requestedLocale))
+		continue
+	}
+	const name = location.name
+	whereLocations.push({
+		id: window.locationId,
+		name,
+		addressLine: formatPickupAddress(location.address),
+		mapHref: pickupMapHref({ name, address: location.address }),
+		phone: location.phone,
+		phoneHref: pickupPhoneHref(location.phone),
+		windows: [formatWindow(window, requestedLocale)],
+	})
+}
+const whereSummary =
+	whereLocations.length === 0
+		? null
+		: whereLocations.length === 1
+			? whereLocations[0]!.name
+			: `${whereLocations[0]!.name} ${translate(i18n, msg`+{n} more`, {
+					n: whereLocations.length - 1,
+				})}`
+
+const uniqueDates = Array.from(new Set(pickupWindows.map((w) => w.date))).sort()
+const pickupFactText =
+	uniqueDates.length === 0
+		? null
+		: uniqueDates.length === 1 && windowsWithLocation[0]
+			? formatWindow(windowsWithLocation[0], requestedLocale)
+			: translate(i18n, msg`{n} dates`, { n: uniqueDates.length })
+
+// Tax rates per pickup location (the menu payload is the only public source).
+const menuPayload = await fetchPublishedSiteMenu({
+	slug: orgSlug,
+	host: customHost,
+	lng: requestedLocale,
 })
+const locationTaxRates: Record<string, number> = {}
+for (const location of menuPayload?.locations ?? []) {
+	locationTaxRates[location.id] = location.taxRate ?? 0
+}
+
+// ---------- order window facts ----------
+
+const DAY_MS = 24 * 60 * 60 * 1000
+const openAt = drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null
+const closeAt = drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null
+const sameYear = (instant: Date | null) =>
+	Boolean(instant && instant.getUTCFullYear() === now.getUTCFullYear())
+const formatWhen = (instant: Date | null) =>
+	instant
+		? formatDropDateTime(instant, requestedLocale, factsTimeZone, {
+				year: !sameYear(instant),
+			})
+		: ''
+const openWhen = formatWhen(openAt)
+const closeWhen = formatWhen(closeAt)
+const openMsLeft = openAt ? openAt.getTime() - now.getTime() : 0
+const closeMsLeft = closeAt ? closeAt.getTime() - now.getTime() : 0
+const countdownSuffix = (ms: number) =>
+	ms > 0 ? ` (${formatRemaining(ms, remainingLabels, requestedLocale)})` : ''
+const openCountdownInitial =
+	phase === 'upcoming' && openMsLeft > 0 && openMsLeft < DAY_MS
+		? countdownSuffix(openMsLeft)
+		: ''
+const closeCountdownInitial =
+	phase === 'live' && closeMsLeft > 0 && closeMsLeft < DAY_MS
+		? countdownSuffix(closeMsLeft)
+		: ''
+
+const dropHref = getLocaleHref(
+	`/drop/${encodeURIComponent(drop.slug)}`,
+	requestedLocale,
+	requestedLocale,
+	defaultLocale,
+)
+const dropsHref = getLocaleHref('/drops', requestedLocale, requestedLocale, defaultLocale)
+const menuHref = getLocaleHref('/menu', requestedLocale, requestedLocale, defaultLocale)
+const checkoutHref =
+	getLocaleHref('/menu/checkout', requestedLocale, requestedLocale, defaultLocale) +
+	`?drop=${encodeURIComponent(drop.slug)}`
+
+const openCalendarHref =
+	phase === 'upcoming' && openAt
+		? buildIcsDataUrl({
+				title: translate(i18n, msg`Orders open: {title}`, {
+					title: localize(drop.title),
+				}),
+				start: openAt,
+				end: new Date(openAt.getTime() + 30 * 60_000),
+				description: drop.description ? localize(drop.description) : null,
+				url: new URL(dropHref, Astro.url.origin).toString(),
+				now,
+			})
+		: null
+
+const facts: Array<{
+	id: string
+	label: string
+	text: string
+	countdown?: { kind: 'open' | 'close'; initial: string } | null
+	calendar?: { href: string; fileName: string } | null
+}> = []
+if (phase === 'live' && closeWhen) {
+	facts.push({
+		id: 'drop-fact-order-window',
+		label: orderWindowLabel,
+		text: translate(i18n, msg`Orders close {when}`, { when: closeWhen }),
+		countdown: { kind: 'close', initial: closeCountdownInitial },
+	})
+}
+if (phase === 'upcoming' && openWhen) {
+	facts.push({
+		id: 'drop-fact-order-window',
+		label: orderWindowLabel,
+		text: translate(i18n, msg`Orders open {when}`, { when: openWhen }),
+		countdown: { kind: 'open', initial: openCountdownInitial },
+		calendar: openCalendarHref
+			? { href: openCalendarHref, fileName: `${drop.slug}-orders-open.ics` }
+			: null,
+	})
+}
+if (pickupFactText) {
+	facts.push({ id: 'drop-fact-pickup', label: pickupLabel, text: pickupFactText })
+}
+
+// Ended drops point at the other live/upcoming drops instead.
+const otherDrops =
+	phase === 'ended'
+		? (await fetchPublishedDrops({ slug: orgSlug, host: customHost }))
+				.filter((listing) => listing.slug !== drop.slug)
+				.filter((listing) => getDropPhase(listing, now) !== 'ended')
+				.slice(0, 3)
+		: []
+
+const previewHeader = translate(i18n, msg`Preview · ordering opens {when}`, {
+	when: openWhen,
+})
+const openBlockCountdown =
+	openMsLeft > 0 ? formatRemaining(openMsLeft, remainingLabels, requestedLocale) : ''
+
+const clientData = {
+	organizationId: organization.id,
+	dropId: drop.id,
+	dropSlug: drop.slug,
+	currency,
+	locale: requestedLocale,
+	phase,
+	ordersOpenAt: drop.ordersOpenAt,
+	ordersCloseAt: drop.ordersCloseAt,
+	checkoutHref,
+	categories,
+	constraints,
+	pickupWindows,
+	locationTaxRates,
+	labels: {
+		remaining: remainingLabels,
+		choosePickupTime: choosePickupTimeLabel,
+		noPickupTimes: noPickupTimesLabel,
+		noLongerAvailable: noLongerAvailableLabel,
+		change: changeLabel,
+		pickup: pickupLabel,
+	},
+}
 ---
 
 <SitePage
 	organization={organization}
 	page={{
 		id: `drop-${drop.id}`,
-		title: drop.title,
+		title: localize(drop.title),
 		slug: `drop/${drop.slug}`,
 		isHomePage: false,
 		sections: [],
 	}}
-	title={`${drop.title} - ${organization.name}`}
+	title={`${localize(drop.title)} - ${organization.name}`}
+	description={drop.description ? localize(drop.description) : undefined}
 	noIndex={drop.visibility === 'unlisted'}
 >
-	<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-		<!-- Cover Image & Header Banner -->
-		<div class="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
-			{drop.coverImageUrl && (
-				<div class="aspect-[21/9] w-full overflow-hidden bg-muted">
-					<img
-						src={drop.coverImageUrl}
-						alt={drop.title}
-						class="h-full w-full object-cover"
-					/>
-				</div>
-			)}
+	<div class="bg-background pb-32">
+		<div class:list={[siteContainer, 'py-6 sm:py-8']}>
+			<a
+				href={dropsHref}
+				class="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 rtl:rotate-180" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+				{allDropsLabel}
+			</a>
 
-			<div class="p-6 sm:p-8">
-				<div class="flex flex-wrap items-center justify-between gap-3">
-					<span
-						class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-							dropState === 'live'
-								? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-								: dropState === 'upcoming'
-									? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-									: 'bg-muted text-muted-foreground'
-						}`}
+			<div class="lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+				<div class="lg:sticky lg:top-24">
+					<DropSummaryCard
+						coverUrl={drop.coverImageUrl ? resolveMediaUrl(drop.coverImageUrl) : null}
+						title={localize(drop.title)}
+						description={drop.description ? localize(drop.description) : null}
+						phase={phase}
+						ordersOpenAt={drop.ordersOpenAt}
+						ordersCloseAt={drop.ordersCloseAt}
+						locale={requestedLocale}
+						timeZone={primaryTimeZone}
+						facts={facts}
+						where={
+							whereSummary && whereLocations.length > 0
+								? { label: whereLabel, summary: whereSummary, locations: whereLocations }
+								: null
+						}
 					>
-						{dropState === 'live'
-							? '🔥 Limited Time Drop: Live'
-							: dropState === 'upcoming'
-								? '⏰ Drop Scheduled'
-								: 'Drop Ended'}
-					</span>
-
-					{pickupWindows[0] && (
-						<div class="text-xs font-medium text-muted-foreground">
-							Pickup: {pickupWindows[0].date} ({pickupWindows[0].startTime} - {pickupWindows[0].endTime})
-						</div>
-					)}
+						{phase === 'live' && hasPickupWindows ? <PickupPicker /> : null}
+					</DropSummaryCard>
 				</div>
 
-				<h1 class="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl">
-					{drop.title}
-				</h1>
+				<div class="mt-8 min-w-0 lg:mt-0">
+					{phase === 'live' && navItems.length > 0 ? (
+						<div
+							id="drop-sticky-nav"
+							class="sticky top-[4.25rem] z-20 -mx-5 border-b border-border bg-background/95 px-5 backdrop-blur-md sm:-mx-8 sm:px-8 lg:mx-0 lg:rounded-[var(--radius)] lg:border"
+						>
+							<CategoryNav items={navItems} label={categoriesNavLabel} class="py-2.5" />
+						</div>
+					) : null}
 
-				{drop.description && (
-					<p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-						{drop.description}
-					</p>
-				)}
-
-				<!-- Pickup Locations Card -->
-				{pickupWindows.length > 0 && (
-					<div class="mt-6 rounded-xl border bg-muted/30 p-4">
-						<h2 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-							Pickup Details
-						</h2>
-						<div class="mt-2 grid gap-3 sm:grid-cols-2">
-							{pickupWindows.map((pw) => (
-								<div class="rounded-lg border bg-background p-3">
-									<p class="text-sm font-semibold text-foreground">
-										{localize(pw.location?.name) || 'Pickup Point'}
-									</p>
-									<p class="mt-0.5 text-xs text-muted-foreground">
-										{pw.date} &bull; {pw.startTime} - {pw.endTime}
-									</p>
-									{pw.location?.address && (
-										<p class="mt-1 text-xs text-muted-foreground/80">
-											{pw.location.address.formattedAddress ||
-												[pw.location.address.address1, pw.location.address.city]
-													.filter(Boolean)
-													.join(', ')}
-										</p>
-									)}
-								</div>
+					{phase === 'live' ? (
+						<div class:list={[navItems.length > 0 && 'pt-8', 'space-y-12']}>
+							{categories.map((category) => (
+								<section
+									id={`category-${category.id}`}
+									data-category-section
+									class="scroll-mt-32 lg:scroll-mt-24"
+									aria-labelledby={`category-${category.id}-title`}
+								>
+									<header class="mb-3">
+										<h2
+											id={`category-${category.id}-title`}
+											class="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+										>
+											{category.displayName}
+										</h2>
+										{category.description ? (
+											<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
+										) : null}
+									</header>
+									<ul class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+										{category.items.map((item) => (
+											<DropItemCard {...cardProps(item)} />
+										))}
+									</ul>
+								</section>
 							))}
 						</div>
-					</div>
-				)}
+					) : null}
+
+					{phase === 'upcoming' ? (
+						drop.showMenuPreview && categories.length > 0 ? (
+							<div class="space-y-8">
+								<p class="rounded-[var(--radius)] border border-dashed border-border px-4 py-2.5 text-sm text-muted-foreground">
+									{previewHeader}
+								</p>
+								{categories.map((category) => (
+									<section aria-labelledby={`preview-${category.id}-title`}>
+										<header class="mb-3">
+											<h2
+												id={`preview-${category.id}-title`}
+												class="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+											>
+												{category.displayName}
+											</h2>
+											{category.description ? (
+												<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
+											) : null}
+										</header>
+										<ul class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+											{category.items.map((item) => (
+												<DropItemCard {...cardProps(item)} readonly />
+											))}
+										</ul>
+									</section>
+								))}
+							</div>
+						) : (
+							<div class="rounded-[var(--radius)] border border-border bg-card p-8 text-center text-card-foreground shadow-sm sm:p-10">
+								<p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+									{ordersOpenBlockLabel}
+								</p>
+								<p class="mt-2 font-heading text-2xl font-bold text-foreground sm:text-3xl">
+									{openWhen}
+								</p>
+								<p
+									data-drop-countdown-always="open"
+									class="mt-3 text-xl font-semibold tabular-nums text-foreground"
+								>
+									{openBlockCountdown}
+								</p>
+								{openCalendarHref ? (
+									<a
+										href={openCalendarHref}
+										download={`${drop.slug}-orders-open.ics`}
+										class:list={[siteBtnPrimary, 'mt-6 inline-flex items-center gap-1.5']}
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
+										{addToCalendarLabel}
+									</a>
+								) : null}
+							</div>
+						)
+					) : null}
+
+					{phase === 'ended' ? (
+						<div class="space-y-10">
+							<div class="rounded-[var(--radius)] border border-border bg-card p-8 text-center text-card-foreground shadow-sm sm:p-10">
+								<h2 class="font-heading text-xl font-bold text-foreground sm:text-2xl">
+									{endedTitle}
+								</h2>
+								<p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{endedBody}</p>
+								<a href={menuHref} class:list={[siteBtnPrimary, 'mt-6']}>{viewMenuLabel}</a>
+							</div>
+
+							{otherDrops.length > 0 ? (
+								<section aria-labelledby="other-drops-heading">
+									<h2 id="other-drops-heading" class="font-heading text-xl font-semibold text-foreground sm:text-2xl">
+										{moreDropsLabel}
+									</h2>
+									<div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+										{otherDrops.map((listing) => (
+											<DropCard
+												drop={listing}
+												locale={requestedLocale}
+												defaultLocale={defaultLocale}
+												variant="full"
+												now={now}
+											/>
+										))}
+									</div>
+								</section>
+							) : null}
+						</div>
+					) : null}
+				</div>
 			</div>
 		</div>
 
-		<!-- STATE 1: UPCOMING TEASER & COUNTDOWN -->
-		{dropState === 'upcoming' && (
-			<div class="mt-8 space-y-8">
-				<div class="rounded-2xl border bg-card p-6 text-center shadow-sm sm:p-10">
-					<h2 class="text-base font-semibold text-foreground sm:text-lg">
-						Orders Open In
-					</h2>
-					<div
-						id="countdown-timer"
-						data-target-time={drop.ordersOpenAt}
-						class="mt-4 flex justify-center gap-3 sm:gap-6 text-center"
-					>
-						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
-							<span id="countdown-days" class="text-2xl font-bold sm:text-4xl">--</span>
-							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Days</span>
-						</div>
-						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
-							<span id="countdown-hours" class="text-2xl font-bold sm:text-4xl">--</span>
-							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Hours</span>
-						</div>
-						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
-							<span id="countdown-mins" class="text-2xl font-bold sm:text-4xl">--</span>
-							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Mins</span>
-						</div>
-						<div class="flex flex-col rounded-xl border bg-muted/30 px-3 py-2 sm:px-5 sm:py-3 min-w-[64px]">
-							<span id="countdown-secs" class="text-2xl font-bold sm:text-4xl">--</span>
-							<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Secs</span>
-						</div>
-					</div>
+		{phase === 'live' ? (
+			<>
+				<CartTray labels={{ viewOrder: viewOrderLabel }} initialTotal={price(0)} />
 
-					{drop.showOrdersOpenTime && openDate && (
-						<p class="mt-4 text-xs text-muted-foreground">
-							Orders open on {openDate.toLocaleString(requestedLocale, { dateStyle: 'full', timeStyle: 'short' })}
-						</p>
-					)}
-				</div>
+				<ItemModal
+					labels={{
+						customizeItem: labels.customizeItem,
+						specialInstructions: specialInstructionsLabel,
+						specialInstructionsPlaceholder,
+						quantity: labels.quantity,
+						addToOrder: labels.addToOrder,
+						close: labels.closeDialog,
+					}}
+				/>
 
-				<!-- Menu Preview if allowed -->
-				{drop.showMenuPreview && categories.length > 0 && (
-					<div class="space-y-6">
-						<div class="flex items-center justify-between border-b pb-3">
-							<h3 class="text-lg font-semibold tracking-tight text-foreground">
-								Drop Preview
-							</h3>
-							<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-								Ordering opens soon
-							</span>
-						</div>
+				<CartDrawer
+					labels={{
+						yourOrder: yourOrderLabel,
+						subtotal: subtotalLabel,
+						tax: taxLabel,
+						deliveryFee: deliveryFeeLabel,
+						total: totalLabel,
+						checkout: checkoutLabel,
+						close: labels.closeDialog,
+					}}
+					checkoutHref={checkoutHref}
+					initialTotal={price(0)}
+				/>
 
-						{categories.map((category) => (
-							<div class="space-y-4">
-								<h4 class="text-base font-semibold text-foreground">
-									{category.displayName}
-								</h4>
-								<div class="grid gap-4 sm:grid-cols-2">
-									{category.items.map((item) => (
-										<div class="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-sm">
-											{item.imageUrl && (
-												<img
-													src={item.imageUrl}
-													alt={item.displayName}
-													class="size-16 rounded-lg object-cover bg-muted"
-												/>
-											)}
-											<div class="flex-1 min-w-0">
-												<p class="font-medium text-foreground truncate">
-													{item.displayName}
-												</p>
-												{item.description && (
-													<p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-														{item.description}
-													</p>
-												)}
-												<p class="mt-2 text-sm font-semibold text-foreground">
-													{formatPrice(item.price)}
-												</p>
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</div>
-		)}
-
-		<!-- STATE 2: LIVE ORDERING -->
-		{dropState === 'live' && (
-			<div class="mt-8 space-y-8" id="drop-ordering-root" data-closes-at={drop.ordersCloseAt}>
-				<!-- Hold Timer Urgency Header -->
-				<div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-foreground">
-					<div class="flex items-center gap-2">
-						<span class="relative flex size-2.5">
-							<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-							<span class="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
-						</span>
-						<span class="font-medium">
-							Drop is live! Items in cart are held for {drop.checkoutHoldMinutes} minutes during checkout.
-						</span>
-					</div>
-					{closeDate && (
-						<span class="hidden sm:inline-block text-xs font-semibold text-red-600 dark:text-red-400">
-							Closes: {closeDate.toLocaleDateString(requestedLocale)}
-						</span>
-					)}
-				</div>
-
-				<!-- Pickup Slot Selection -->
-				{pickupWindows[0]?.slots && pickupWindows[0].slots.length > 0 ? (
-					<div class="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-						<label for="pickup-slot-select" class="text-sm font-semibold text-foreground block">
-							Select your pickup slot:
-						</label>
-						<select
-							id="pickup-slot-select"
-							class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-						>
-							{pickupWindows[0].slots.map((slot) => (
-								<option value={slot.time}>
-									{pickupWindows[0].date} at {slot.displayTime}
-								</option>
-							))}
-						</select>
-					</div>
-				) : (
-					<div class="rounded-xl border border-dashed bg-muted/30 p-5 text-center text-sm text-muted-foreground">
-						No pickup time slots are currently available for this drop.
-					</div>
-				)}
-
-				<!-- Menu Categories & Items List -->
-				<div class="space-y-8">
-					{categories.map((category) => (
-						<div class="space-y-4">
-							<div class="flex items-center justify-between border-b pb-2">
-								<h3 class="text-lg font-bold text-foreground">
-									{category.displayName}
-								</h3>
-							</div>
-
-							<div class="grid gap-4 sm:grid-cols-2">
-								{category.items.map((item) => {
-									const itemInv = inventoryMap.get(`item:${item.id}`)
-									const isSoldOut = itemInv !== null && itemInv !== undefined && itemInv <= 0
-									const showRemaining =
-										drop.showInventoryRemaining &&
-										itemInv !== null &&
-										itemInv !== undefined &&
-										itemInv > 0 &&
-										itemInv <= 5
-
-									return (
-										<div class="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-sm transition hover:shadow-md">
-											<div class="flex gap-4">
-												{item.imageUrl && (
-													<img
-														src={item.imageUrl}
-														alt={item.displayName}
-														class="size-20 rounded-lg object-cover bg-muted shrink-0"
-													/>
-												)}
-												<div class="flex-1 min-w-0">
-													<p class="font-semibold text-foreground truncate">
-														{item.displayName}
-													</p>
-													{item.description && (
-														<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
-															{item.description}
-														</p>
-													)}
-													<p class="mt-2 font-bold text-foreground">
-														{formatPrice(item.price)}
-													</p>
-
-													{showRemaining && (
-														<span class="mt-1 inline-block text-[11px] font-semibold text-orange-600 dark:text-orange-400">
-															Only {itemInv} left!
-														</span>
-													)}
-												</div>
-											</div>
-
-											<div class="mt-4 pt-3 border-t flex items-center justify-between">
-												{isSoldOut ? (
-													<span class="text-xs font-semibold uppercase text-muted-foreground">
-														Sold Out
-													</span>
-												) : (
-													<button
-														type="button"
-														data-item-id={item.id}
-														data-item-name={item.displayName}
-														data-item-price={item.price}
-														class="drop-add-to-cart inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-													>
-														Add to order
-													</button>
-												)}
-											</div>
-										</div>
-									)
-								})}
-							</div>
-						</div>
-					))}
-				</div>
-
-				<!-- Floating Sticky Cart Hold Bar -->
-				<div
-					id="drop-cart-bar"
-					class="sticky bottom-6 z-20 flex items-center justify-between rounded-2xl border bg-background/95 p-4 shadow-xl backdrop-blur-md transition-all"
-				>
-					<div class="space-y-0.5">
-						<p class="text-xs font-semibold text-muted-foreground">
-							Your Drop Order &bull; <span id="cart-item-count">0 items</span>
-						</p>
-						<p class="text-base font-bold text-foreground" id="cart-total-price">
-							$0.00
-						</p>
-					</div>
-
-					<button
-						id="drop-checkout-btn"
-						type="button"
-						class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
-						disabled
-					>
-						Checkout Now
-					</button>
-				</div>
-			</div>
-		)}
-
-		<!-- STATE 3: CLOSED -->
-		{dropState === 'closed' && (
-			<div class="mt-8 rounded-2xl border bg-card p-10 text-center shadow-sm space-y-4">
-				<h2 class="text-xl font-bold text-foreground">
-					This Drop is Now Closed
-				</h2>
-				<p class="text-sm text-muted-foreground max-w-md mx-auto">
-					All pickup orders have closed for this drop. Thank you for supporting our kitchen! Stay tuned for our next announcement.
-				</p>
-				<div class="pt-2">
-					<a
-						href={getLocaleHref('/menu', requestedLocale, defaultLocale)}
-						class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-					>
-						View regular menu
-					</a>
-				</div>
-			</div>
-		)}
+				<OrderingLabels labels={labels} />
+			</>
+		) : null}
 	</div>
 
-	<!-- Client Script for Countdowns and Cart State -->
-	<script is:inline define:vars={{
-		currency: dropData?.organization?.currency || 'USD',
-		dropId: drop.id,
-		dropTitle: drop.title,
-		dropSlugValue: drop.slug,
-		dropLocale: requestedLocale,
-		checkoutHref: getLocaleHref('/menu/checkout', requestedLocale, defaultLocale),
-	}}>
-		// Countdown timer logic
-		const timerElem = document.getElementById('countdown-timer');
-		if (timerElem) {
-			const targetStr = timerElem.getAttribute('data-target-time');
-			if (targetStr) {
-				const target = new Date(targetStr).getTime();
-				const daysEl = document.getElementById('countdown-days');
-				const hoursEl = document.getElementById('countdown-hours');
-				const minsEl = document.getElementById('countdown-mins');
-				const secsEl = document.getElementById('countdown-secs');
+	<script
+		id="drop-data"
+		type="application/json"
+		is:inline
+		set:html={JSON.stringify(clientData).replace(/</g, '\\u003c')}
+	/>
 
-				function updateTimer() {
-					const diff = target - Date.now();
-					if (diff <= 0) {
-						window.location.reload();
-						return;
-					}
-					const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-					const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-					const m = Math.floor((diff / (1000 * 60)) % 60);
-					const s = Math.floor((diff / 1000) % 60);
+	<script>
+		import {
+			formatDropDate,
+			formatDropTime,
+			formatRemaining as formatRemainingWith,
+			type DropPhase,
+		} from '~/lib/drops/format'
+		import { indexCatalog } from '~/lib/ordering/catalog'
+		import { createCartStore } from '~/lib/ordering/cart-store'
+		import { mountCartUi } from '~/lib/ordering/cart-ui'
+		import { startCountdown } from '~/lib/ordering/countdown'
+		import { el, prefersReducedMotion } from '~/lib/ordering/dom'
+		import { createItemModal } from '~/lib/ordering/item-modal'
+		import { createMoneyFormatter } from '~/lib/ordering/money'
+		import {
+			buildPickupOptions,
+			formatSlot,
+			loadPickupSelection,
+			resolvePickup,
+			savePickupSelection,
+			type PickupWindowData,
+			type ResolvedPickup,
+		} from '~/lib/ordering/pickup'
+		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
+		import {
+			type Constraints,
+			type OrderingCategory,
+			type OrderingLabels,
+		} from '~/lib/ordering/types'
 
-					if (daysEl) daysEl.textContent = String(d).padStart(2, '0');
-					if (hoursEl) hoursEl.textContent = String(h).padStart(2, '0');
-					if (minsEl) minsEl.textContent = String(m).padStart(2, '0');
-					if (secsEl) secsEl.textContent = String(s).padStart(2, '0');
+		type DropData = {
+			organizationId: string
+			dropId: string
+			dropSlug: string
+			currency: string
+			locale: string
+			phase: DropPhase
+			ordersOpenAt: string | null
+			ordersCloseAt: string | null
+			checkoutHref: string
+			categories: OrderingCategory[]
+			constraints: Constraints | null
+			pickupWindows: PickupWindowData[]
+			locationTaxRates: Record<string, number>
+			labels: {
+				remaining: {
+					in: string
+					days: string
+					oneDay: string
+					hoursMinutes: string
+					minutes: string
+					lessThanMinute: string
 				}
-				updateTimer();
-				setInterval(updateTimer, 1000);
+				choosePickupTime: string
+				noPickupTimes: string
+				noLongerAvailable: string
+				change: string
+				pickup: string
 			}
 		}
 
-		const orderingRoot = document.getElementById('drop-ordering-root');
-		const closeTime = orderingRoot?.getAttribute('data-closes-at');
-		if (closeTime) {
-			const closesAt = new Date(closeTime).getTime();
-			const checkForClose = () => {
-				if (Date.now() >= closesAt) window.location.reload();
-			};
-			checkForClose();
-			setInterval(checkForClose, 30_000);
+		function readJson<T>(id: string): T {
+			return JSON.parse(document.getElementById(id)?.textContent || '{}') as T
 		}
 
-		// Cart state and buttons
-		let cart = [];
-		const cartCountEl = document.getElementById('cart-item-count');
-		const cartTotalEl = document.getElementById('cart-total-price');
-		const checkoutBtn = document.getElementById('drop-checkout-btn');
-		// currency passed via define:vars
-		const currencyFormatter = new Intl.NumberFormat(dropLocale, {
-			style: 'currency',
-			currency,
-		});
+		const data = readJson<DropData>('drop-data')
+		const labels = readJson<OrderingLabels>('ordering-labels')
+		const DAY_MS = 24 * 60 * 60 * 1000
 
-		function updateCartUi() {
-			const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
-			const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+		// ---------- order-window countdowns ----------
 
-			if (cartCountEl) cartCountEl.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
-			if (cartTotalEl) cartTotalEl.textContent = currencyFormatter.format(totalPrice);
-			const hasSlotSelect = Boolean(document.getElementById('pickup-slot-select'));
-			if (checkoutBtn) {
-				checkoutBtn.disabled = totalQty === 0 || !hasSlotSelect;
+		function paintCountdown(kind: 'open' | 'close', ms: number) {
+			const text = formatRemainingWith(ms, data.labels.remaining, data.locale)
+			document
+				.querySelectorAll<HTMLElement>(`[data-drop-countdown="${kind}"]`)
+				.forEach((node) => {
+					// The fact countdown appears only inside the last day.
+					const withinDay = ms > 0 && ms < DAY_MS
+					node.classList.toggle('hidden', !withinDay)
+					if (withinDay) node.textContent = ` (${text})`
+				})
+			document
+				.querySelectorAll<HTMLElement>(`[data-drop-countdown-always="${kind}"]`)
+				.forEach((node) => {
+					node.textContent = text
+				})
+		}
+
+		if (data.phase === 'live' && data.ordersCloseAt) {
+			startCountdown(
+				new Date(data.ordersCloseAt),
+				(ms) => paintCountdown('close', ms),
+				() => window.location.reload(),
+			)
+		} else if (data.phase === 'upcoming' && data.ordersOpenAt) {
+			startCountdown(
+				new Date(data.ordersOpenAt),
+				(ms) => paintCountdown('open', ms),
+				() => window.location.reload(),
+			)
+		}
+
+		// ---------- ordering engine (live drops) ----------
+
+		if (data.phase === 'live') mountOrdering()
+
+		function mountOrdering() {
+			const catalog = indexCatalog(data.categories ?? [])
+			const store = createCartStore({
+				key: `menuza_drop_cart_${data.organizationId}_${data.dropId}`,
+			})
+			const money = createMoneyFormatter(data.currency, data.locale)
+
+			const modalRoot = document.getElementById('item-modal-backdrop')
+			const modal = modalRoot
+				? createItemModal({
+						root: modalRoot,
+						getItem: (id) => catalog.items.get(id),
+						labels,
+						formatMoney: money,
+						constraints: data.constraints,
+						cartLines: () => store.lines(),
+						onAdd: (line) => store.add(line),
+					})
+				: null
+
+			// ---------- pickup picker ----------
+
+			const options = buildPickupOptions(data.pickupWindows ?? [])
+			const picker = {
+				locationStep: document.getElementById('pickup-location-step'),
+				locationChips: document.getElementById('pickup-location-chips'),
+				dateStep: document.getElementById('pickup-date-step'),
+				dateChips: document.getElementById('pickup-date-chips'),
+				slotStep: document.getElementById('pickup-slot-step'),
+				slotChips: document.getElementById('pickup-slot-chips'),
+				summary: document.getElementById('pickup-selected-summary'),
 			}
-		}
 
-		document.querySelectorAll('.drop-add-to-cart').forEach((btn) => {
-			btn.addEventListener('click', (e) => {
-				const target = e.currentTarget;
-				const id = target.getAttribute('data-item-id');
-				const name = target.getAttribute('data-item-name');
-				const price = parseFloat(target.getAttribute('data-item-price') || '0');
+			const restored = resolvePickup(options, loadPickupSelection(data.dropId))
+			let selectedLocationId: string | null =
+				restored?.location.locationId ??
+				(options.length === 1 ? options[0]!.locationId : null)
+			let selectedDate: string | null = restored?.date.date ?? null
+			if (!selectedDate) {
+				const single = options.find((o) => o.locationId === selectedLocationId)
+				if (single && single.dates.length === 1) selectedDate = single.dates[0]!.date
+			}
+			let selectedSlotStart: string | null = restored?.slot.start ?? null
+			let resolved: ResolvedPickup | null = null
+			let anySlotAvailable = options.some((location) =>
+				location.dates.some((date) => date.slots.some((slot) => slot.available)),
+			)
 
-				const existing = cart.find((i) => i.id === id);
-				if (existing) {
-					existing.quantity += 1;
+			// Cart totals read this object on every refresh, so moving the pickup
+			// moves the tax with it.
+			const totals = {
+				taxRate: 0,
+				deliveryFee: 0,
+				mode: () => 'pickup' as const,
+			}
+
+			const CHIP_BASE =
+				'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+			const CHIP_ON = 'border-primary bg-primary text-primary-foreground'
+			const CHIP_OFF = 'border-border bg-background text-foreground hover:bg-muted'
+			const CHIP_DISABLED = 'border-border bg-muted/40 text-muted-foreground'
+
+			function chip(
+				label: string,
+				on: boolean,
+				disabled: boolean,
+				onSelect: () => void,
+				note?: string,
+			) {
+				const button = el(
+					'button',
+					`${CHIP_BASE} ${disabled ? CHIP_DISABLED : on ? CHIP_ON : CHIP_OFF}`,
+				)
+				button.type = 'button'
+				button.setAttribute('role', 'radio')
+				button.setAttribute('aria-checked', on ? 'true' : 'false')
+				if (note) {
+					button.classList.add('flex-col', 'gap-0.5', 'py-1')
+					button.appendChild(el('span', undefined, label))
+					button.appendChild(el('span', 'text-[10px] font-normal leading-tight', note))
 				} else {
-					cart.push({ id, name, price, quantity: 1 });
+					button.textContent = label
+				}
+				button.disabled = disabled
+				button.addEventListener('click', () => {
+					if (disabled) return
+					onSelect()
+				})
+				return button
+			}
+
+			function renderPicker() {
+				const location =
+					options.find((o) => o.locationId === selectedLocationId) ?? null
+				const dates = location?.dates ?? []
+				const date = dates.find((d) => d.date === selectedDate) ?? null
+
+				if (picker.locationStep && picker.locationChips) {
+					// A single location needs no choice; it is pre-selected.
+					picker.locationStep.classList.toggle('hidden', options.length <= 1)
+					picker.locationChips.replaceChildren(
+						...options.map((option) =>
+							chip(option.name, option.locationId === selectedLocationId, false, () => {
+								selectedLocationId = option.locationId
+								selectedDate =
+									option.dates.length === 1 ? option.dates[0]!.date : null
+								selectedSlotStart = null
+								refreshPickup()
+							}),
+						),
+					)
 				}
 
-				updateCartUi();
-			});
-		});
+				if (picker.dateStep && picker.dateChips) {
+					picker.dateStep.classList.toggle('hidden', !location || dates.length <= 1)
+					if (location && dates.length > 1) {
+						picker.dateChips.replaceChildren(
+							...dates.map((option) =>
+								chip(
+									formatDropDate(option.date, data.locale, location.timezone),
+									option.date === selectedDate,
+									false,
+									() => {
+										selectedDate = option.date
+										selectedSlotStart = null
+										refreshPickup()
+									},
+								),
+							),
+						)
+					}
+				}
 
-		if (checkoutBtn) {
-			checkoutBtn.addEventListener('click', () => {
-				const slotSelect = document.getElementById('pickup-slot-select');
-				if (!slotSelect) {
-					alert('No pickup time slots are currently available for this drop.');
-					return;
+				if (picker.slotStep && picker.slotChips) {
+					picker.slotStep.classList.toggle('hidden', !date)
+					if (date && location) {
+						picker.slotChips.replaceChildren(
+							...date.slots.map((slot) =>
+								chip(
+									slot.startInstant
+										? formatDropTime(slot.startInstant, data.locale, location.timezone)
+										: slot.start,
+									slot.start === selectedSlotStart,
+									!slot.available,
+									() => {
+										selectedSlotStart = slot.start
+										refreshPickup()
+									},
+									!slot.available ? data.labels.noLongerAvailable : undefined,
+								),
+							),
+						)
+					}
 				}
-				const selectedSlot = slotSelect.value;
-				if (!selectedSlot) {
-					alert('Please select a pickup time slot first.');
-					slotSelect?.focus();
-					return;
+
+				if (picker.summary) {
+					if (resolved) {
+						picker.summary.textContent = `${data.labels.pickup}: ${
+							resolved.location.name
+						} · ${formatSlot(
+							resolved.date.date,
+							resolved.slot.start,
+							data.locale,
+							resolved.location.timezone,
+						)}`
+						picker.summary.classList.remove('hidden')
+					} else {
+						picker.summary.textContent = ''
+						picker.summary.classList.add('hidden')
+					}
 				}
-				try {
-					sessionStorage.setItem('drop_cart', JSON.stringify({
-						dropId,
-						dropTitle,
-						slot: selectedSlot,
-						items: cart,
-					}));
-				} catch (e) {}
-				window.location.href = `${checkoutHref}?drop=${encodeURIComponent(dropSlugValue)}&slot=${encodeURIComponent(selectedSlot)}`;
-			});
+			}
+
+			function refreshPickup() {
+				const location =
+					options.find((o) => o.locationId === selectedLocationId) ?? null
+				const date = location?.dates.find((d) => d.date === selectedDate) ?? null
+				const slot =
+					date?.slots.find((s) => s.start === selectedSlotStart && s.available) ?? null
+				resolved =
+					location && date && slot
+						? resolvePickup(options, {
+								locationId: location.locationId,
+								date: date.date,
+								slotStart: slot.start,
+								slotEnd: slot.end,
+							})
+						: null
+				if (resolved) savePickupSelection(data.dropId, resolved.selection)
+				else if (selectedSlotStart && !slot) selectedSlotStart = null
+				// Lead time can pass while the page sits open; re-check so the
+				// gate's reason stays honest.
+				anySlotAvailable = options.some((candidate) =>
+					candidate.dates.some((d) => d.slots.some((s) => s.available)),
+				)
+				totals.taxRate = resolved
+					? (data.locationTaxRates[resolved.location.locationId] ?? 0)
+					: 0
+				renderPicker()
+				cartUi.refresh()
+			}
+
+			function renderDrawerPickup(slot: HTMLElement) {
+				slot.replaceChildren()
+				if (!resolved) return
+				const card = el(
+					'div',
+					'rounded-[calc(var(--radius)*0.7)] bg-muted/50 p-2.5 text-xs',
+				)
+				card.appendChild(
+					el(
+						'p',
+						'font-medium text-foreground',
+						`${data.labels.pickup}: ${resolved!.location.name}`,
+					),
+				)
+				card.appendChild(
+					el(
+						'p',
+						'text-muted-foreground',
+						formatSlot(
+							resolved!.date.date,
+							resolved!.slot.start,
+							data.locale,
+							resolved!.location.timezone,
+						),
+					),
+				)
+				const change = el(
+					'button',
+					'mt-0.5 font-medium text-foreground underline underline-offset-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+					data.labels.change,
+				)
+				change.type = 'button'
+				change.addEventListener('click', () => {
+					cartUi.close()
+					document.getElementById('pickup-picker')?.scrollIntoView({
+						behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+						block: 'center',
+					})
+				})
+				card.appendChild(change)
+				slot.appendChild(card)
+			}
+
+			const cartUi = mountCartUi({
+				store,
+				labels,
+				formatMoney: money,
+				totals,
+				gate: () =>
+					resolved
+						? { allowed: true }
+						: {
+								allowed: false,
+								reason: anySlotAvailable
+									? data.labels.choosePickupTime
+									: data.labels.noPickupTimes,
+							},
+				constraints: data.constraints,
+				renderHeaderExtra: (slot) => renderDrawerPickup(slot),
+			})
+
+			refreshPickup()
+
+			// Item cards open the shared item modal.
+			document.addEventListener('click', (event) => {
+				const target = event.target as HTMLElement | null
+				const card = target?.closest<HTMLElement>('.js-item-card')
+				if (!card || !modal) return
+				if (card.dataset.soldOut === 'true') return
+				if (card instanceof HTMLButtonElement && card.disabled) return
+				const itemId = card.dataset.itemId
+				if (!itemId) return
+				const opener = card.querySelector<HTMLElement>('button') ?? card
+				modal.open(itemId, opener)
+			})
+			modal?.openFromUrl()
+
+			// Category navigation with scroll-spy.
+			const navs = Array.from(
+				document.querySelectorAll<HTMLElement>('[data-category-nav]'),
+			)
+			const sections = Array.from(
+				document.querySelectorAll<HTMLElement>('[data-category-section]'),
+			)
+			const siteHeader = document.querySelector<HTMLElement>('header')
+			const stickyNav = document.getElementById('drop-sticky-nav')
+			if (navs.length && sections.length) {
+				mountScrollSpy({
+					nav: navs,
+					sections,
+					offset: () =>
+						(siteHeader?.offsetHeight ?? 0) +
+						(stickyNav && stickyNav.offsetParent !== null
+							? stickyNav.offsetHeight
+							: 16),
+				})
+			}
 		}
 	</script>
 </SitePage>
