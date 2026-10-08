@@ -162,7 +162,7 @@ msgstr "{count, plural, one {Use at most # item.} other {Use at most # items.}}"
 msgid "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 msgstr "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 
-#: app/components/mailbox/calls-tab.tsx:235
+#: app/components/mailbox/calls-tab.tsx:243
 msgid "{count} need follow-up"
 msgstr "{count} need follow-up"
 
@@ -271,7 +271,7 @@ msgstr "{pageCount} pages"
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr ""
 
-#: app/components/phone-agent/call-follow-up.tsx:168
+#: app/components/phone-agent/call-follow-up.tsx:173
 msgid "{rating} out of 5"
 msgstr "{rating} out of 5"
 
@@ -461,6 +461,10 @@ msgstr ""
 #: app/components/phone-agent/phone-number-dialogs.tsx:598
 msgid "6-digit verification code"
 msgstr "6-digit verification code"
+
+#: app/components/phone-agent/call-follow-up.tsx:242
+msgid "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
+msgstr "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:56
 msgid "A caller asked someone to call them back."
@@ -1042,7 +1046,7 @@ msgstr ""
 #~ msgid "All assigned"
 #~ msgstr ""
 
-#: app/components/mailbox/calls-tab.tsx:256
+#: app/components/mailbox/calls-tab.tsx:264
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:299
 msgid "All calls"
 msgstr "All calls"
@@ -1734,7 +1738,7 @@ msgstr "Callback requests"
 msgid "Callbacks, complaints, and other requests your agent takes will appear here."
 msgstr "Callbacks, complaints, and other requests your agent takes will appear here."
 
-#: app/components/phone-agent/call-follow-up.tsx:185
+#: app/components/phone-agent/call-follow-up.tsx:190
 msgid "Called"
 msgstr "Called"
 
@@ -1742,11 +1746,11 @@ msgstr "Called"
 msgid "Caller"
 msgstr "Caller"
 
-#: app/components/phone-agent/call-follow-up.tsx:175
+#: app/components/phone-agent/call-follow-up.tsx:180
 msgid "Caller mood"
 msgstr "Caller mood"
 
-#: app/components/phone-agent/call-follow-up.tsx:165
+#: app/components/phone-agent/call-follow-up.tsx:170
 msgid "Caller rating"
 msgstr "Caller rating"
 
@@ -1773,11 +1777,11 @@ msgstr "Calls {phone}"
 msgid "Calls go straight to your business line. If no line is known, callers hear an apology."
 msgstr "Calls go straight to your business line. If no line is known, callers hear an apology."
 
-#: app/components/mailbox/calls-tab.tsx:435
+#: app/components/mailbox/calls-tab.tsx:444
 msgid "Calls that need a person"
 msgstr "Calls that need a person"
 
-#: app/components/mailbox/calls-tab.tsx:227
+#: app/components/mailbox/calls-tab.tsx:235
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:367
 msgid "Calls that need follow-up"
 msgstr "Calls that need follow-up"
@@ -2638,11 +2642,11 @@ msgstr "Could not start the conversation. Try again."
 msgid "Could not update read status. Try again."
 msgstr "Could not update read status. Try again."
 
-#: app/components/phone-agent/call-follow-up.tsx:113
+#: app/components/phone-agent/call-follow-up.tsx:117
 msgid "Could not update this call. Try again."
 msgstr "Could not update this call. Try again."
 
-#: app/components/mailbox/calls-tab.tsx:202
+#: app/components/mailbox/calls-tab.tsx:210
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:283
 msgid "Could not update this request. Try again."
 msgstr "Could not update this request. Try again."
@@ -5314,7 +5318,7 @@ msgstr "LiveKit credentials are set by your platform administrator."
 msgid "Load earlier replies"
 msgstr "Load earlier replies"
 
-#: app/components/mailbox/calls-tab.tsx:384
+#: app/components/mailbox/calls-tab.tsx:392
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:666
 msgid "Load more"
 msgstr "Load more"
@@ -5347,7 +5351,7 @@ msgstr "Loading call"
 msgid "Loading call…"
 msgstr "Loading call…"
 
-#: app/components/mailbox/calls-tab.tsx:265
+#: app/components/mailbox/calls-tab.tsx:273
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:529
 msgid "Loading calls"
 msgstr "Loading calls"
@@ -5388,7 +5392,7 @@ msgstr "Loading voice…"
 msgid "Loading voices"
 msgstr "Loading voices"
 
-#: app/components/mailbox/calls-tab.tsx:384
+#: app/components/mailbox/calls-tab.tsx:392
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:664
 msgid "Loading…"
 msgstr "Loading…"
@@ -5600,7 +5604,7 @@ msgstr ""
 msgid "Mark as read"
 msgstr ""
 
-#: app/components/phone-agent/call-follow-up.tsx:146
+#: app/components/phone-agent/call-follow-up.tsx:151
 msgid "Mark complete"
 msgstr "Mark complete"
 
@@ -6068,7 +6072,7 @@ msgstr ""
 msgid "No broadcasts found"
 msgstr ""
 
-#: app/components/mailbox/calls-tab.tsx:291
+#: app/components/mailbox/calls-tab.tsx:299
 msgid "No calls need follow-up"
 msgstr "No calls need follow-up"
 
@@ -6320,7 +6324,7 @@ msgstr "No staff phone is set, so only the transfer cases below can transfer cal
 msgid "No submissions yet"
 msgstr "No submissions yet"
 
-#: app/components/mailbox/calls-tab.tsx:362
+#: app/components/mailbox/calls-tab.tsx:370
 #: app/components/phone-agent/call-detail-sheet.tsx:417
 msgid "No summary for this call."
 msgstr "No summary for this call."
@@ -7588,7 +7592,7 @@ msgstr ""
 msgid "Quote"
 msgstr ""
 
-#: app/components/phone-agent/call-follow-up.tsx:63
+#: app/components/phone-agent/call-follow-up.tsx:67
 msgid "Rated {rating} out of 5"
 msgstr "Rated {rating} out of 5"
 
@@ -7727,8 +7731,8 @@ msgstr "Referrer"
 msgid "Refresh"
 msgstr "Refresh"
 
-#: app/components/mailbox/calls-tab.tsx:241
-#: app/components/mailbox/calls-tab.tsx:242
+#: app/components/mailbox/calls-tab.tsx:249
+#: app/components/mailbox/calls-tab.tsx:250
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:339
 msgid "Refresh calls"
 msgstr "Refresh calls"
@@ -7919,7 +7923,7 @@ msgstr "Removing section"
 msgid "Rendering…"
 msgstr "Rendering…"
 
-#: app/components/phone-agent/call-follow-up.tsx:146
+#: app/components/phone-agent/call-follow-up.tsx:151
 #: app/components/phone-agent/call-request-card.tsx:79
 msgid "Reopen"
 msgstr "Reopen"
@@ -8677,7 +8681,7 @@ msgstr "See the agent's settings, call flow, numbers, and training rules."
 #~ msgid "See the agent's settings, phone menu, numbers, and training rules."
 #~ msgstr "See the agent's settings, phone menu, numbers, and training rules."
 
-#: app/components/mailbox/calls-tab.tsx:438
+#: app/components/mailbox/calls-tab.tsx:447
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 msgstr "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 
@@ -9530,7 +9534,7 @@ msgid "Tag name"
 msgstr "Tag name"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:308
-#: app/components/phone-agent/call-follow-up.tsx:201
+#: app/components/phone-agent/call-follow-up.tsx:206
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:61
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:444
 msgid "Tags"
@@ -9654,7 +9658,7 @@ msgid "Test again"
 msgstr "Test again"
 
 #: app/components/app-sidebar.tsx:407
-#: app/components/mailbox/calls-tab.tsx:218
+#: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:325
 #: app/components/phone-agent/call-detail-sheet.tsx:375
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:319
@@ -10187,7 +10191,7 @@ msgstr "Training rules ({activeRuleCount} active)"
 msgid "Transcript"
 msgstr "Transcript"
 
-#: app/components/phone-agent/call-follow-up.tsx:155
+#: app/components/phone-agent/call-follow-up.tsx:160
 msgid "Transfer"
 msgstr "Transfer"
 
@@ -10346,7 +10350,7 @@ msgstr ""
 
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
-#: app/components/mailbox/calls-tab.tsx:281
+#: app/components/mailbox/calls-tab.tsx:289
 #: app/components/phone-agent/call-detail-sheet.tsx:366
 #: app/components/phone-agent/voice-picker.tsx:451
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
@@ -10413,12 +10417,12 @@ msgstr ""
 msgid "Unable to authorize call history. Refresh the page and try again."
 msgstr "Unable to authorize call history. Refresh the page and try again."
 
-#: app/components/mailbox/calls-tab.tsx:123
+#: app/components/mailbox/calls-tab.tsx:131
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:170
 msgid "Unable to load calls. Try again."
 msgstr "Unable to load calls. Try again."
 
-#: app/components/mailbox/calls-tab.tsx:176
+#: app/components/mailbox/calls-tab.tsx:184
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:252
 msgid "Unable to load more calls. Try again."
 msgstr "Unable to load more calls. Try again."
@@ -10456,7 +10460,7 @@ msgstr ""
 msgid "Unknown"
 msgstr "Unknown"
 
-#: app/components/mailbox/calls-tab.tsx:221
+#: app/components/mailbox/calls-tab.tsx:229
 #: app/components/phone-agent/call-detail-sheet.tsx:328
 #: app/components/phone-agent/call-request-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:322
@@ -10972,7 +10976,7 @@ msgstr "Voice service configured"
 msgid "Voice type"
 msgstr "Voice type"
 
-#: app/components/phone-agent/call-follow-up.tsx:48
+#: app/components/phone-agent/call-follow-up.tsx:52
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:51
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:179
 msgid "Voicemail"
@@ -11194,7 +11198,7 @@ msgstr "When"
 msgid "When a call connects"
 msgstr "When a call connects"
 
-#: app/components/mailbox/calls-tab.tsx:294
+#: app/components/mailbox/calls-tab.tsx:302
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 
@@ -11250,12 +11254,12 @@ msgstr "When you're closed"
 msgid "Where every call begins."
 msgstr "Where every call begins."
 
-#: app/components/phone-agent/call-follow-up.tsx:191
+#: app/components/phone-agent/call-follow-up.tsx:196
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:282
 msgid "While closed"
 msgstr "While closed"
 
-#: app/components/phone-agent/call-follow-up.tsx:189
+#: app/components/phone-agent/call-follow-up.tsx:194
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:281
 msgid "While open"
 msgstr "While open"

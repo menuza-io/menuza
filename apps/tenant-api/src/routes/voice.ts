@@ -38,6 +38,7 @@ import {
 	LINK_HANDOFF_TTL_HOURS,
 	LinkHandoffSchema,
 	matchedNotificationEvents,
+	MAX_CALL_TAGS,
 	SitePathSchema,
 } from '@repo/phone-agent'
 import { sendSms } from '@repo/sms'
@@ -1582,7 +1583,7 @@ const updateCallSchema = z
 					.trim()
 					.regex(/^[a-z0-9_]{1,60}$/u),
 			)
-			.max(10)
+			.max(MAX_CALL_TAGS)
 			.transform((tags) => [...new Set(tags)])
 			.optional(),
 	})

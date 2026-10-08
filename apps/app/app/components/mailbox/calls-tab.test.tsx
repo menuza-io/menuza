@@ -144,6 +144,31 @@ describe('mailbox calls tab', () => {
 		expect(screen.getByText('Complete')).toBeTruthy()
 	})
 
+	it('ignores a refresh that started before a call was completed', async () => {
+		let resolveStale: (value: unknown) => void = () => {}
+		mocks.request
+			.mockResolvedValueOnce(list([call('call_1'), call('call_2')]))
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveStale = resolve
+				}),
+			)
+			.mockResolvedValue(list([call('call_2')], 1))
+		const user = userEvent.setup()
+		const { onOpenCountChange } = renderTab()
+
+		await user.click(await screen.findByText('Summary for call_1'))
+		window.dispatchEvent(new Event('focus'))
+		await waitFor(() => expect(mocks.request).toHaveBeenCalledTimes(2))
+		await user.click(screen.getByText('Mark call_1 complete'))
+		resolveStale(list([call('call_1'), call('call_2')], 2))
+
+		await waitFor(() => expect(mocks.request).toHaveBeenCalledTimes(3))
+		await waitFor(() => expect(onOpenCountChange).toHaveBeenLastCalledWith(1))
+		expect(screen.getByText('Complete')).toBeTruthy()
+		expect(onOpenCountChange).not.toHaveBeenLastCalledWith(2)
+	})
+
 	it('shows an error with a retry', async () => {
 		mocks.request
 			.mockRejectedValueOnce(new Error('boom'))

@@ -1,6 +1,10 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type CallFollowUpStatus, LOW_RATING_MAX } from '@repo/phone-agent'
+import {
+	type CallFollowUpStatus,
+	LOW_RATING_MAX,
+	MAX_CALL_TAGS,
+} from '@repo/phone-agent'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -123,6 +127,7 @@ export function CallFollowUpPanel({
 	const unknownTags = call.tags.filter(
 		(id) => !tags.some((tag) => tag.id === id),
 	)
+	const tagsFull = call.tags.length >= MAX_CALL_TAGS
 
 	return (
 		<section className="flex flex-col gap-3 rounded-lg border p-4">
@@ -217,12 +222,12 @@ export function CallFollowUpPanel({
 									size="sm"
 									variant={active ? 'secondary' : 'outline'}
 									aria-pressed={active}
-									disabled={!canUpdate || pending}
+									disabled={!canUpdate || pending || (!active && tagsFull)}
 									onClick={() =>
 										void update({
 											tags: active
 												? call.tags.filter((id) => id !== tag.id)
-												: [...call.tags, tag.id].slice(0, 10),
+												: [...call.tags, tag.id],
 										})
 									}
 								>
@@ -232,6 +237,14 @@ export function CallFollowUpPanel({
 							)
 						})}
 					</div>
+					{canUpdate && tagsFull ? (
+						<p className="text-muted-foreground text-xs">
+							<Trans>
+								A call can have up to {MAX_CALL_TAGS} tags. Remove one to add
+								another.
+							</Trans>
+						</p>
+					) : null}
 				</div>
 			) : null}
 			{error ? (
