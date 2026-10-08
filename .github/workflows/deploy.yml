@@ -38,6 +38,7 @@ jobs:
       sites: ${{ steps.affected.outputs.sites }}
       tenant_api: ${{ steps.affected.outputs.tenant_api }}
       jobs_cron: ${{ steps.affected.outputs.jobs_cron }}
+      voice_agent: ${{ steps.affected.outputs.voice_agent }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -70,7 +71,7 @@ jobs:
               '.packages.items | any(.name == $package)' > /dev/null
           }
 
-          for package in app admin web sites tenant-api jobs-cron; do
+          for package in app admin web sites tenant-api jobs-cron voice-agent; do
             if is_affected "$package"; then
               value=true
             else
@@ -421,6 +422,72 @@ jobs:
         run: node scripts/trigger-cf-builds.mjs
 
   # CMS is deployed to Cloudflare Workers (no container needed)
+
+  # The voice worker runs on LiveKit Cloud agent hosting (US only), not on
+  # Cloudflare or OCI. Runtime secrets live on the LiveKit agent and are set
+  # with `npm run deploy:livekit -w voice-agent -- --update-secrets`; this job
+  # only ships new code. LiveKit rolls it out and keeps the old version serving
+  # until the new one passes its health check.
+  deploy-voice-agent:
+    name: 🎙️ Deploy Voice Agent (LiveKit Cloud)
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck, vitest, affected]
+    if:
+      ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.affected.outputs.voice_agent == 'true' }}
+    concurrency:
+      group: deploy-voice-agent
+      cancel-in-progress: false
+    env:
+      LIVEKIT_URL: ${{ vars.LIVEKIT_URL }}
+      LIVEKIT_AGENT_ID: ${{ vars.LIVEKIT_AGENT_ID }}
+      LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+      LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+      LK_CLI_VERSION: 2.18.8
+    steps:
+      - name: 🔎 Check LiveKit configuration
+        id: config
+        run: |
+          if [ -z "$LIVEKIT_URL" ] || [ -z "$LIVEKIT_AGENT_ID" ] ||
+            [ -z "$LIVEKIT_API_KEY" ] || [ -z "$LIVEKIT_API_SECRET" ]; then
+            echo "::notice::Voice agent deploy skipped: set the LIVEKIT_URL and LIVEKIT_AGENT_ID variables and the LIVEKIT_API_KEY and LIVEKIT_API_SECRET secrets."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: ⬇️ Checkout repo
+        if: steps.config.outputs.enabled == 'true'
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: ⎔ Setup node
+        if: steps.config.outputs.enabled == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 📥 Download deps
+        if: steps.config.outputs.enabled == 'true'
+        run: npm ci --ignore-scripts
+
+      - name: 🧰 Install LiveKit CLI
+        if: steps.config.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          base="https://github.com/livekit/livekit-cli/releases/download/v${LK_CLI_VERSION}"
+          archive="lk_${LK_CLI_VERSION}_linux_amd64.tar.gz"
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 5 -o "$archive" "$base/$archive"
+          curl -fsSL --retry 5 -o checksums.txt "$base/checksums.txt"
+          grep " ${archive}\$" checksums.txt | sha256sum -c -
+          tar -xzf "$archive" lk
+          sudo install -m 755 lk /usr/local/bin/lk
+          lk --version
+
+      - name: 🚀 Deploy to LiveKit Cloud
+        if: steps.config.outputs.enabled == 'true'
+        run: npm run deploy:livekit -w voice-agent
 
   container-tenant-api:
     name: 📦 Build Tenant API Image

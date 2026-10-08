@@ -124,6 +124,7 @@ export default defineConfig((config) => ({
 		exclude: [
 			'@repo/ai',
 			'@repo/ui',
+			'@repo/flow-editor',
 			'@repo/marketing',
 			'@repo/marketing-workflow',
 		],

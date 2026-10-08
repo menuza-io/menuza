@@ -10,6 +10,11 @@ import {
 	findActiveOrganizationById,
 	organizationFromProvisionPayload,
 } from '../lib/origin.ts'
+import {
+	DEPROVISION_RECORDING_BUDGET_MS,
+	deleteOrganizationRecordings,
+	type PrefixDeleteResult,
+} from '../lib/recording-storage.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import { rateLimit } from '../lib/rate-limit.ts'
 import {
@@ -37,6 +42,18 @@ const orgIdSchema = z.object({
 	customDomain: z.string().nullable().optional(),
 	dataRegion: z.enum(['us', 'ksa']).optional(),
 })
+
+function runInBackground(c: Context, task: Promise<void>) {
+	const safeTask = task.catch((error) => {
+		console.error('Background recording cleanup failed', error)
+	})
+	try {
+		c.executionCtx.waitUntil(safeTask)
+	} catch {
+		// Hono throws when there is no execution context (Node), where the
+		// long-lived process simply keeps running the task.
+	}
+}
 
 function unauthorized(c: Context) {
 	const internalToken = getInternalCommandToken()
@@ -92,9 +109,16 @@ async function runTenantDbCommand(
 	}
 
 	try {
+		let recordings: PrefixDeleteResult['status'] | undefined
 		if (command === 'provision') {
 			await provisionTenantDb(orgId)
 		} else {
+			// Recordings go first: if destroying the database then fails, the
+			// command can be retried, but recordings are never left without an org.
+			recordings = await deleteOrganizationRecordings(orgId, {
+				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
+				runInBackground: (task) => runInBackground(c, task),
+			})
 			await destroyTenantDb(orgId)
 		}
 		const verb = command === 'provision' ? 'provisioned' : 'deleted'
@@ -103,6 +127,7 @@ async function runTenantDbCommand(
 			orgId,
 			region: nodeRegion,
 			message: `Database ${verb} for tenant ${orgId} in ${nodeRegion}`,
+			...(recordings ? { recordings } : {}),
 		})
 	} catch (error) {
 		console.error(`Failed to ${command} DB for ${orgId}:`, error)

@@ -41,6 +41,8 @@ export type PublishedOrganization = {
 	customDomain: string | null
 	hasProvisionedDb: boolean
 	dataRegion: string
+	/** Display name; older App versions do not send it. */
+	name?: string | null
 }
 
 const corsCache = new LRUCache<string, boolean>({
@@ -84,6 +86,7 @@ async function lookupOrganizationFromDatabase(where: {
 				customDomain: Organization.customDomain,
 				hasProvisionedDb: Organization.hasProvisionedDb,
 				dataRegion: Organization.dataRegion,
+				name: Organization.name,
 			})
 			.from(Organization)
 			.where(
@@ -261,6 +264,7 @@ const activeOrganizationSchema = z.object({
 	customDomain: z.string().nullable(),
 	hasProvisionedDb: z.boolean(),
 	dataRegion: z.enum(['us', 'ksa']),
+	name: z.string().nullable().optional(),
 })
 
 export function organizationFromProvisionPayload(data: {

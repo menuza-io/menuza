@@ -3,8 +3,8 @@ import {
 	type JourneyTriggerType,
 } from '@repo/tenant-db/types/journey'
 import React, { createContext, useContext, type ReactNode } from 'react'
-import { type PaletteItem } from './types.ts'
 import { createDefaultTenantJourneyGraph } from './serialization.ts'
+import { type PaletteItem } from './types.ts'
 
 export type WorkflowAudience = 'tenant' | 'platform'
 

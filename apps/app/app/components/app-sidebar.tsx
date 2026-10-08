@@ -47,6 +47,7 @@ import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
+import { PhoneIcon } from './icons/phone-icon'
 import { SendIcon } from './icons/send-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
 import { NavSecondary } from './nav-secondary'
@@ -240,6 +241,8 @@ function OrganizationSidebar({
 	const canReadAnnouncements = hasOrgPermission('read', 'announcement')
 	const canReadCampaigns = hasOrgPermission('read', 'campaign')
 	const canReadAutomations = hasOrgPermission('read', 'automation')
+	const canReadPhoneAgent = hasOrgPermission('read', 'phone_agent')
+	const canReadPhoneCalls = hasOrgPermission('read', 'phone_call')
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -332,6 +335,78 @@ function OrganizationSidebar({
 					isActive: location.pathname.includes(
 						`/${orgSlug}/marketing/automations`,
 					),
+				},
+			],
+		},
+		{
+			title: _(msg`Phone agent`),
+			url: `/${orgSlug}/phone-agent`,
+			isActive: location.pathname.includes(`/${orgSlug}/phone-agent`),
+			icon: PhoneIcon,
+			items: [
+				{
+					title: _(msg`Setup`),
+					url: `/${orgSlug}/phone-agent`,
+					isActive:
+						location.pathname === `/${orgSlug}/phone-agent` ||
+						location.pathname === `/${orgSlug}/phone-agent/`,
+				},
+				{
+					title: _(msg`Calls`),
+					url: `/${orgSlug}/phone-agent/calls`,
+					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/calls`),
+				},
+				{
+					title: _(msg`Knowledge`),
+					url: `/${orgSlug}/phone-agent/knowledge`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/knowledge`,
+					),
+				},
+				{
+					title: _(msg`Training rules`),
+					url: `/${orgSlug}/phone-agent/training`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/training`,
+					),
+				},
+				{
+					title: _(msg`Call flow`),
+					url: `/${orgSlug}/phone-agent/flow`,
+					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/flow`),
+				},
+				{
+					title: _(msg`Transfers`),
+					url: `/${orgSlug}/phone-agent/transfers`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/transfers`,
+					),
+				},
+				{
+					title: _(msg`Follow-up`),
+					url: `/${orgSlug}/phone-agent/follow-up`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/follow-up`,
+					),
+				},
+				{
+					title: _(msg`Phrases`),
+					url: `/${orgSlug}/phone-agent/phrases`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/phrases`,
+					),
+				},
+				{
+					title: _(msg`Advanced`),
+					url: `/${orgSlug}/phone-agent/advanced`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/phone-agent/advanced`,
+					),
+				},
+				{
+					title: _(msg`Test call`),
+					url: `/${orgSlug}/phone-agent/test`,
+					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/test`),
 				},
 			],
 		},
@@ -461,12 +536,17 @@ function OrganizationSidebar({
 	// enforced server-side.
 	const visibleNavMain = navMain
 		.filter((item) => {
-			if (item.url === `/${orgSlug}/mailbox`) return canReadWebsite
+			if (item.url === `/${orgSlug}/mailbox`) {
+				return canReadWebsite || canReadPhoneCalls
+			}
 			if (item.url === `/${orgSlug}/marketing`) {
 				return canReadCampaigns || canReadAutomations
 			}
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
+			}
+			if (item.url === `/${orgSlug}/phone-agent`) {
+				return canReadPhoneAgent || canReadPhoneCalls
 			}
 			return true
 		})
@@ -484,6 +564,17 @@ function OrganizationSidebar({
 						}
 						return true
 					}),
+				}
+			}
+			if (item.url === `/${orgSlug}/phone-agent`) {
+				const callsUrl = `/${orgSlug}/phone-agent/calls`
+				return {
+					...item,
+					// People who can only see calls land on Calls, not Setup.
+					url: canReadPhoneAgent ? item.url : callsUrl,
+					items: item.items.filter((subItem) =>
+						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,
+					),
 				}
 			}
 			if (item.url === `/${orgSlug}/website`) {

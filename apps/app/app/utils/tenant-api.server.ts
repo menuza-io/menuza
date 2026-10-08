@@ -64,7 +64,13 @@ export function resolveRegionalTenantApiUrls(
 export async function getOperatorTenantClient(
 	request: Request,
 	orgSlug: string,
-	options: { scope?: 'mailbox' } = {},
+	options: {
+		scope?: 'mailbox' | 'phone_calls'
+		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
+		canUpdate?: boolean
+		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */
+		canDelete?: boolean
+	} = {},
 ): Promise<OperatorTenantClient> {
 	const userId = await requireUserId(request)
 	invariant(orgSlug, 'orgSlug is required')
@@ -108,6 +114,8 @@ export async function getOperatorTenantClient(
 		orgId: organization.id,
 		role: 'operator',
 		scope: options.scope,
+		...(options.canUpdate ? { canUpdate: true } : {}),
+		...(options.canDelete ? { canDelete: true } : {}),
 	})
 		.setSubject(userId)
 		.setProtectedHeader({ alg: 'HS256' })
@@ -143,5 +151,57 @@ export async function getOperatorTenantClient(
 		jwt,
 		tenantApiUrl,
 		fetchTenant,
+	}
+}
+
+/**
+ * Sends a platform phone-line ownership code. Always targets the US
+ * tenant-api, the only node allowed to use Twilio.
+ */
+export class PhoneLineVerificationError extends Error {
+	constructor(
+		readonly status: number,
+		readonly code: string | null,
+	) {
+		super(`Phone line verification failed with status ${status}`)
+		this.name = 'PhoneLineVerificationError'
+	}
+}
+
+export async function sendPhoneLineVerification(input: {
+	/** tenant-api enforces its own per-org daily cap on verification sends. */
+	orgId: string
+	phone: string
+	code: string
+	method: 'sms' | 'call'
+}): Promise<void> {
+	const token = ENV.INTERNAL_COMMAND_TOKEN
+	invariant(
+		token && token.length >= 16,
+		'INTERNAL_COMMAND_TOKEN must be configured with >= 16 chars',
+	)
+	const { tenantApiUrl } = resolveRegionalTenantApiUrls('us')
+	const boundService = getBoundTenantApiService()
+	const fetchImpl = boundService ? boundService.fetch.bind(boundService) : fetch
+	const response = await fetchImpl(
+		`${tenantApiUrl}/api/voice/line-verifications`,
+		{
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(input),
+			signal: AbortSignal.timeout(15_000),
+		},
+	)
+	if (!response.ok) {
+		const body = (await response.json().catch(() => null)) as {
+			error?: unknown
+		} | null
+		throw new PhoneLineVerificationError(
+			response.status,
+			typeof body?.error === 'string' ? body.error : null,
+		)
 	}
 }

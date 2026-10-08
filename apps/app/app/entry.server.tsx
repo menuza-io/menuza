@@ -21,6 +21,7 @@ import {
 	sitePreviewFrameSrc,
 	tenantApiConnectSrc,
 } from '#app/utils/csp-frame-src.server.ts'
+import { liveKitConnectSrc } from '#app/utils/phone-agent/livekit-csp.ts'
 import { loadCatalog } from './modules/lingui/lingui'
 import { linguiServer } from './modules/lingui/lingui.server'
 import { capturePostHogServerException } from './utils/posthog.server.ts'
@@ -117,6 +118,7 @@ export function applyContentSecurity(
 						'https://cdn.jsdelivr.net',
 						"'self'",
 						...tenantApiConnectSrc(ENV),
+						...liveKitConnectSrc(ENV.LIVEKIT_URL),
 					],
 					'font-src': ["'self'"],
 					'frame-src': sitePreviewFrameSrc(ENV, requestHost),

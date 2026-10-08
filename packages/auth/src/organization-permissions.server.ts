@@ -191,6 +191,13 @@ export const ORG_PERMISSIONS = {
 	READ_AUTOMATION_ANY: 'read:automation:any' as const,
 	UPDATE_AUTOMATION_ANY: 'update:automation:any' as const,
 
+	// AI phone agent permissions
+	READ_PHONE_AGENT_ANY: 'read:phone_agent:any' as const,
+	UPDATE_PHONE_AGENT_ANY: 'update:phone_agent:any' as const,
+	READ_PHONE_CALL_ANY: 'read:phone_call:any' as const,
+	UPDATE_PHONE_CALL_ANY: 'update:phone_call:any' as const,
+	DELETE_PHONE_CALL_ANY: 'delete:phone_call:any' as const,
+
 	// Analytics permissions
 	READ_ANALYTICS_ANY: 'read:analytics:any' as const,
 

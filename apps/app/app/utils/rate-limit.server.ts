@@ -29,7 +29,7 @@ export interface RateLimitConfig {
 }
 
 export interface RateLimitKey {
-	type: 'user' | 'ip' | 'token'
+	type: 'user' | 'ip' | 'token' | 'org'
 	value: string
 }
 
@@ -83,6 +83,26 @@ export const SHOP_CONNECT_ONBOARDING_RATE_LIMIT: RateLimitConfig = {
 
 export const ORGANIZATION_INVITE_RATE_LIMIT: RateLimitConfig = {
 	scope: 'org-send-invitations',
+	maxRequests: isDev ? 1000 : 20,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+// Each browser test call bills speech and LLM minutes.
+export const PHONE_AGENT_TEST_CALL_RATE_LIMIT: RateLimitConfig = {
+	scope: 'phone-agent-test-call',
+	maxRequests: isDev ? 100 : 10,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+// Each send costs an SMS or a voice call; tenant-api also caps 5/hour per phone.
+export const PHONE_LINE_VERIFICATION_SEND_RATE_LIMIT: RateLimitConfig = {
+	scope: 'phone-agent-line-verification-send',
+	maxRequests: isDev ? 100 : 5,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+export const PHONE_LINE_VERIFICATION_CHECK_RATE_LIMIT: RateLimitConfig = {
+	scope: 'phone-agent-line-verification-check',
 	maxRequests: isDev ? 1000 : 20,
 	windowMs: 60 * 60 * 1000, // 1 hour
 }

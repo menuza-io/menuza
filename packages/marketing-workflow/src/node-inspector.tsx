@@ -19,8 +19,8 @@ import { Textarea } from '@repo/ui/textarea'
 import { type Node } from '@xyflow/react'
 import { useState, type ReactNode } from 'react'
 import { type DelayUnit } from './types.ts'
-import { useWorkflowUiLabels } from './workflow-labels.ts'
 import { useWorkflowConfig } from './workflow-config.tsx'
+import { useWorkflowUiLabels } from './workflow-labels.ts'
 
 interface NodeInspectorProps {
 	node: Node | null
@@ -377,6 +377,7 @@ export function NodeInspector({
 								title={_(msg`Email design`)}
 								subject={data.subject ?? ''}
 								headerExtras={emailDesignerHeaderExtras}
+								// eslint-disable-next-line shadcn/require-static-classes -- callers forward a static content inset
 								contentClassName={emailDesignerContentClassName}
 								onSave={(blocks) => onSaveNodeData(node.id, { blocks })}
 							/>
@@ -567,7 +568,7 @@ export function NodeInspector({
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>
 										• Otherwise &rarr;{' '}
-										<span className="font-semibold text-rose-600 dark:text-rose-400">
+										<span className="text-destructive font-semibold">
 											False branch
 										</span>
 									</Trans>
