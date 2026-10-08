@@ -388,8 +388,8 @@ function HistorySection({ history }: { history: HistoryEntry[] }) {
 		if (entry.kind === 'flow') {
 			const version = entry.version
 			return version != null
-				? _(msg`Published phone menu version ${version}`)
-				: _(msg`Published the phone menu`)
+				? _(msg`Published call flow version ${version}`)
+				: _(msg`Published the call flow`)
 		}
 		if (entry.kind === 'training') {
 			const title = entry.title ?? ''
@@ -429,7 +429,7 @@ function HistorySection({ history }: { history: HistoryEntry[] }) {
 									<div className="flex flex-wrap items-center gap-2 text-sm">
 										<Badge variant="outline">
 											{entry.kind === 'flow' ? (
-												<Trans>Phone menu</Trans>
+												<Trans>Call flow</Trans>
 											) : entry.kind === 'training' ? (
 												<Trans>Training</Trans>
 											) : (

@@ -418,7 +418,7 @@ function OrganizationSidebar({
 					),
 				},
 				{
-					title: _(msg`Phone menu`),
+					title: _(msg`Call flow`),
 					url: `/${orgSlug}/phone-agent/flow`,
 					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/flow`),
 				},

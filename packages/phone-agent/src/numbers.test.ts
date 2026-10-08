@@ -155,7 +155,7 @@ describe('findLineTransferLoop', () => {
 			[{ e164: '+15550000009', forwardedFrom: '+15551112222' }],
 		)
 		expect(loop).toMatchObject({ kind: 'flow', nodeId: 'staff' })
-		expect(describeLineTransferLoop(loop!)).toContain('published phone menu')
+		expect(describeLineTransferLoop(loop!)).toContain('published call flow')
 	})
 
 	it('flags the staff phone before the flow', () => {

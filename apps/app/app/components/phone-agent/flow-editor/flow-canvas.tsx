@@ -212,7 +212,7 @@ export function FlowEditor({
 	useConfirmBlocker(
 		({ currentLocation, nextLocation }) =>
 			dirty && currentLocation.pathname !== nextLocation.pathname,
-		_(msg`You have unsaved changes to the phone menu. Leave without saving?`),
+		_(msg`You have unsaved changes to the call flow. Leave without saving?`),
 	)
 
 	useEffect(() => {
@@ -429,7 +429,7 @@ export function FlowEditor({
 		const result = FlowGraphSchema.safeParse(graph)
 		if (result.success) return result.data
 		const first = result.error.issues[0]
-		toast.error(_(msg`This phone menu can't be saved yet`), {
+		toast.error(_(msg`This call flow can't be saved yet`), {
 			description: first
 				? `${first.path.join('.')}: ${first.message}`
 				: undefined,
@@ -450,7 +450,7 @@ export function FlowEditor({
 	const handlePublish = () => {
 		if (issues.length) {
 			setIssuesOpen(true)
-			toast.error(_(msg`Fix the issues in the phone menu before publishing.`))
+			toast.error(_(msg`Fix the issues in the call flow before publishing.`))
 			return
 		}
 		const parsed = checkSchema()
@@ -489,7 +489,7 @@ export function FlowEditor({
 					</Button>
 					<div className="min-w-0 flex-1">
 						<h1 className="text-foreground truncate text-sm font-semibold">
-							<Trans>Phone menu</Trans>
+							<Trans>Call flow</Trans>
 						</h1>
 						<p
 							className="text-muted-foreground truncate text-xs"
@@ -542,7 +542,7 @@ export function FlowEditor({
 									{listedIssues.length ? (
 										<Trans>Select an issue to jump to its step.</Trans>
 									) : (
-										<Trans>This phone menu is ready to publish.</Trans>
+										<Trans>This call flow is ready to publish.</Trans>
 									)}
 								</PopoverDescription>
 							</PopoverHeader>
@@ -676,9 +676,9 @@ export function FlowEditor({
 					<AlertDialogHeader>
 						<AlertDialogTitle>
 							{published ? (
-								<Trans>Reset to the published phone menu?</Trans>
+								<Trans>Reset to the published call flow?</Trans>
 							) : (
-								<Trans>Reset to the default phone menu?</Trans>
+								<Trans>Reset to the default call flow?</Trans>
 							)}
 						</AlertDialogTitle>
 						<AlertDialogDescription>

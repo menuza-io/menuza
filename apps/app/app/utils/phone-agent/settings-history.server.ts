@@ -83,7 +83,7 @@ export async function recordFlowPublished(
 		action: AuditAction.PHONE_AGENT_FLOW_PUBLISHED,
 		userId: input.userId,
 		organizationId: input.organizationId,
-		details: `Phone menu version ${input.version} published`,
+		details: `Call flow version ${input.version} published`,
 		metadata: { versionId: input.versionId, version: input.version },
 		request: input.request,
 		resourceType: 'phone_agent',

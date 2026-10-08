@@ -154,6 +154,6 @@ export function findLineTransferLoop(
 
 export function describeLineTransferLoop(loop: LineTransferLoop) {
 	return loop.kind === 'flow'
-		? `The published phone menu step "${loop.label}" transfers to ${loop.phone}, which would reach the AI agent through this line, so calls would loop back to it. Change that step's number and publish the phone menu first.`
+		? `The published call flow step "${loop.label}" transfers to ${loop.phone}, which would reach the AI agent through this line, so calls would loop back to it. Change that step's number and publish the call flow first.`
 		: describeTransferLoop(loop)
 }

@@ -2309,6 +2309,12 @@ msgstr "تفاصيل المكالمة"
 msgid "Call ended"
 msgstr "انتهت المكالمة"
 
+#: app/components/app-sidebar.tsx:421
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
+msgid "Call flow"
+msgstr "مسار المكالمة"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:541
 msgid "Call handling"
 msgstr "التعامل مع المكالمات"
@@ -2335,8 +2341,8 @@ msgid "Call views"
 msgstr "طرق عرض المكالمات"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
-msgid "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
-msgstr "اتصل بقائمة الهاتف من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار قائمة الهاتف والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
+#~ msgid "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
+#~ msgstr "اتصل بقائمة الهاتف من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار قائمة الهاتف والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
 
 #: app/components/phone-agent/vertical-labels.ts:22
 msgid "Callback"
@@ -2647,8 +2653,12 @@ msgid "Change Photo"
 msgstr "تغيير الصورة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:213
-msgid "Change settings, publish phone menus, manage numbers, and edit training rules."
-msgstr "تغيير الإعدادات، ونشر قوائم الهاتف، وإدارة الأرقام، وتعديل قواعد التدريب."
+msgid "Change settings, publish call flows, manage numbers, and edit training rules."
+msgstr "تغيير الإعدادات، ونشر مسارات المكالمات، وإدارة الأرقام، وتعديل قواعد التدريب."
+
+#: app/components/roles/tenant-role-access-manager.tsx:213
+#~ msgid "Change settings, publish phone menus, manage numbers, and edit training rules."
+#~ msgstr "تغيير الإعدادات، ونشر قوائم الهاتف، وإدارة الأرقام، وتعديل قواعد التدريب."
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:697
 msgid "Change specific colors here. They start from Accent, Gray, and Appearance above, and work in both light and dark."
@@ -5876,8 +5886,12 @@ msgid "Fix before publishing"
 msgstr "أصلح قبل النشر"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:453
-msgid "Fix the issues in the phone menu before publishing."
-msgstr "أصلح المشكلات في قائمة الهاتف قبل النشر."
+msgid "Fix the issues in the call flow before publishing."
+msgstr "أصلح المشكلات في مسار المكالمة قبل النشر."
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:453
+#~ msgid "Fix the issues in the phone menu before publishing."
+#~ msgstr "أصلح المشكلات في قائمة الهاتف قبل النشر."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 msgid "Fix validation errors before publishing"
@@ -6486,8 +6500,12 @@ msgstr "كيف يمكنني تنفيذ هذا؟"
 #~ msgstr "كم يجب على العملاء الطلب مسبقًا قبل فترة الاستلام."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:24
-msgid "How the phone menu works"
-msgstr "كيف تعمل قائمة الهاتف"
+msgid "How the call flow works"
+msgstr "كيف يعمل مسار المكالمة"
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:24
+#~ msgid "How the phone menu works"
+#~ msgstr "كيف تعمل قائمة الهاتف"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:522
 msgid "How to send the code"
@@ -6926,6 +6944,8 @@ msgstr "المصطلحات الأساسية"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:34
 #: app/components/phone-agent/flow-editor/flow-meta.ts:36
+#: app/components/phone-agent/flow-editor/node-palette.tsx:101
+#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
 msgid "Keypad menu"
 msgstr "قائمة لوحة المفاتيح"
 
@@ -9800,8 +9820,8 @@ msgstr "تعمل روابط الهاتف فقط على الأجهزة القاد
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
-msgid "Phone menu"
-msgstr "قائمة الهاتف"
+#~ msgid "Phone menu"
+#~ msgstr "قائمة الهاتف"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:509
 #: app/utils/website/field-types.ts:49
@@ -10436,13 +10456,17 @@ msgstr "الوصول العام"
 msgid "Publish"
 msgstr "نشر"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
+msgid "Publish a call flow"
+msgstr "انشر مسار المكالمة"
+
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:143
 msgid "Publish a menu to choose categories."
 msgstr "انشر قائمة لاختيار الفئات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
-msgid "Publish a phone menu"
-msgstr "انشر قائمة الهاتف"
+#~ msgid "Publish a phone menu"
+#~ msgstr "انشر قائمة الهاتف"
 
 #: app/components/settings/cards/organization/site-card.tsx:165
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
@@ -10472,12 +10496,20 @@ msgid "Published"
 msgstr "منشور"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
-msgid "Published phone menu version {version}"
-msgstr "تم نشر الإصدار {version} من قائمة الهاتف"
+msgid "Published call flow version {version}"
+msgstr "تم نشر الإصدار {version} من مسار المكالمة"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
+#~ msgid "Published phone menu version {version}"
+#~ msgstr "تم نشر الإصدار {version} من قائمة الهاتف"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
-msgid "Published the phone menu"
-msgstr "تم نشر قائمة الهاتف"
+msgid "Published the call flow"
+msgstr "تم نشر مسار المكالمة"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
+#~ msgid "Published the phone menu"
+#~ msgstr "تم نشر قائمة الهاتف"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:471
 msgid "Published v{publishedVersion}"
@@ -11123,12 +11155,20 @@ msgid "Reset to published"
 msgstr "إعادة التعيين إلى المنشور"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
-msgid "Reset to the default phone menu?"
-msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف الافتراضية؟"
+msgid "Reset to the default call flow?"
+msgstr "هل تريد إعادة التعيين إلى مسار المكالمة الافتراضي؟"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
+#~ msgid "Reset to the default phone menu?"
+#~ msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف الافتراضية؟"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
-msgid "Reset to the published phone menu?"
-msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف المنشورة؟"
+msgid "Reset to the published call flow?"
+msgstr "هل تريد إعادة التعيين إلى مسار المكالمة المنشور؟"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
+#~ msgid "Reset to the published phone menu?"
+#~ msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف المنشورة؟"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:468
 msgid "Resetting…"
@@ -11911,8 +11951,12 @@ msgid "See teammate names, emails, and assigned roles."
 msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة."
 
 #: app/components/roles/tenant-role-access-manager.tsx:208
-msgid "See the agent's settings, phone menu, numbers, and training rules."
-msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
+msgid "See the agent's settings, call flow, numbers, and training rules."
+msgstr "عرض إعدادات الوكيل ومسار المكالمة والأرقام وقواعد التدريب."
+
+#: app/components/roles/tenant-role-access-manager.tsx:208
+#~ msgid "See the agent's settings, phone menu, numbers, and training rules."
+#~ msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
 
 #: app/components/mailbox/calls-tab.tsx:438
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
@@ -13265,6 +13309,10 @@ msgstr "اختبار الوكيل"
 msgid "Test this draft"
 msgstr "اختبار هذه المسودة"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
+msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
+msgstr "اختبر مسار المكالمة من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار مسار المكالمة والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
 #: app/components/website/link-inspector.tsx:644
@@ -13559,6 +13607,14 @@ msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت م�
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الملاحظة وتعليقاتها نهائياً."
 
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
+msgid "This call flow can't be saved yet"
+msgstr "لا يمكن حفظ مسار المكالمة هذا بعد"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:545
+msgid "This call flow is ready to publish."
+msgstr "مسار المكالمة هذا جاهز للنشر."
+
 #: app/hooks/use-phone-calls.ts:38
 msgid "This call or request no longer exists."
 msgstr "هذه المكالمة أو الطلب لم يعد موجودًا."
@@ -13624,12 +13680,12 @@ msgid "this option"
 msgstr "هذا الخيار"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
-msgid "This phone menu can't be saved yet"
-msgstr "لا يمكن حفظ قائمة الهاتف هذه بعد"
+#~ msgid "This phone menu can't be saved yet"
+#~ msgstr "لا يمكن حفظ قائمة الهاتف هذه بعد"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:545
-msgid "This phone menu is ready to publish."
-msgstr "قائمة الهاتف هذه جاهزة للنشر."
+#~ msgid "This phone menu is ready to publish."
+#~ msgstr "قائمة الهاتف هذه جاهزة للنشر."
 
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:175
 msgid "This platform is import-only. Menu changes stay here."
@@ -15430,8 +15486,12 @@ msgid "You can view these settings but not change them."
 msgstr "يمكنك عرض هذه الإعدادات دون تغييرها."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:86
-msgid "You can view this phone menu, but you don't have permission to change it."
-msgstr "يمكنك عرض قائمة الهاتف هذه، لكن ليست لديك صلاحية لتغييرها."
+msgid "You can view this call flow, but you don't have permission to change it."
+msgstr "يمكنك عرض مسار المكالمة هذا، لكن ليست لديك صلاحية لتغييره."
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:86
+#~ msgid "You can view this phone menu, but you don't have permission to change it."
+#~ msgstr "يمكنك عرض قائمة الهاتف هذه، لكن ليست لديك صلاحية لتغييرها."
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1170
 msgid "You do not have permission to view this note"
@@ -15454,8 +15514,12 @@ msgid "You have been invited to join the following organizations. Choose to acce
 msgstr "تمت دعوتك للانضمام إلى المنظمات التالية. اختر قبول أو رفض كل دعوة."
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:215
-msgid "You have unsaved changes to the phone menu. Leave without saving?"
-msgstr "لديك تغييرات غير محفوظة على قائمة الهاتف. هل تريد المغادرة دون حفظ؟"
+msgid "You have unsaved changes to the call flow. Leave without saving?"
+msgstr "لديك تغييرات غير محفوظة على مسار المكالمة. هل تريد المغادرة دون حفظ؟"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:215
+#~ msgid "You have unsaved changes to the phone menu. Leave without saving?"
+#~ msgstr "لديك تغييرات غير محفوظة على قائمة الهاتف. هل تريد المغادرة دون حفظ؟"
 
 #: app/components/phone-agent/settings-page.tsx:184
 msgid "You have unsaved changes. Leave this page and lose them?"

@@ -153,7 +153,7 @@ const PHRASE_GROUPS: {
 		keys: ['disclosure', 'recording_notice', 'calling_disabled', 'trouble'],
 	},
 	{
-		title: msg`Phone menu`,
+		title: msg`Keypad menu`,
 		description: msg`Said while callers choose an option.`,
 		keys: ['menu_retry', 'menu_invalid'],
 	},

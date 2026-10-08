@@ -21,7 +21,7 @@ export function FlowHelp() {
 				<CollapsibleTrigger className="group flex w-full items-center gap-2 px-3 py-2">
 					<Icon name="info" size="sm" className="text-muted-foreground" />
 					<span className="text-foreground flex-1 text-start text-sm font-medium">
-						<Trans>How the phone menu works</Trans>
+						<Trans>How the call flow works</Trans>
 					</span>
 					<Icon
 						name="chevron-down"
@@ -84,7 +84,7 @@ export function NodePalette({
 					{readOnly ? (
 						<p className="text-muted-foreground px-1 text-xs">
 							<Trans>
-								You can view this phone menu, but you don't have permission to
+								You can view this call flow, but you don't have permission to
 								change it.
 							</Trans>
 						</p>
@@ -98,7 +98,7 @@ export function NodePalette({
 			groups={[
 				{
 					id: 'menu',
-					title: <Trans>Phone menu</Trans>,
+					title: <Trans>Keypad menu</Trans>,
 					items: toItems(MENU_STEP_TYPES),
 				},
 				{

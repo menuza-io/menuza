@@ -204,7 +204,7 @@ describe('addPhoneNumber', () => {
 			forwardedFrom: input.businessLine,
 		})
 		expect(result.ok).toBe(false)
-		expect(!result.ok && result.error).toContain('published phone menu')
+		expect(!result.ok && result.error).toContain('published call flow')
 	})
 })
 

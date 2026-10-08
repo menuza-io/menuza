@@ -37,8 +37,8 @@ export default function PhoneAgentTestRoute() {
 				title={<Trans>Test call</Trans>}
 				description={
 					<Trans>
-						Call your phone menu from this browser and use the dial pad to press
-						keys. Test calls use the same phone menu, rules, and business
+						Test your call flow from this browser and use the dial pad to press
+						keys. Test calls use the same call flow, rules, and business
 						details as real calls and appear in Calls marked as tests.
 					</Trans>
 				}

@@ -217,7 +217,7 @@ function GoLiveChecklist({
 							to={`${base}/flow`}
 							className="underline-offset-4 hover:underline"
 						>
-							<Trans>Publish a phone menu</Trans>
+							<Trans>Publish a call flow</Trans>
 						</Link>
 					</ChecklistItem>
 					<ChecklistItem done={liveKitConfigured}>

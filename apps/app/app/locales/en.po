@@ -2311,6 +2311,12 @@ msgstr "Call details"
 msgid "Call ended"
 msgstr "Call ended"
 
+#: app/components/app-sidebar.tsx:421
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
+msgid "Call flow"
+msgstr "Call flow"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:541
 msgid "Call handling"
 msgstr "Call handling"
@@ -2337,8 +2343,8 @@ msgid "Call views"
 msgstr "Call views"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
-msgid "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
-msgstr "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
+#~ msgid "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
+#~ msgstr "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
 
 #: app/components/phone-agent/vertical-labels.ts:22
 msgid "Callback"
@@ -2649,8 +2655,12 @@ msgid "Change Photo"
 msgstr "Change Photo"
 
 #: app/components/roles/tenant-role-access-manager.tsx:213
-msgid "Change settings, publish phone menus, manage numbers, and edit training rules."
-msgstr "Change settings, publish phone menus, manage numbers, and edit training rules."
+msgid "Change settings, publish call flows, manage numbers, and edit training rules."
+msgstr "Change settings, publish call flows, manage numbers, and edit training rules."
+
+#: app/components/roles/tenant-role-access-manager.tsx:213
+#~ msgid "Change settings, publish phone menus, manage numbers, and edit training rules."
+#~ msgstr "Change settings, publish phone menus, manage numbers, and edit training rules."
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:697
 msgid "Change specific colors here. They start from Accent, Gray, and Appearance above, and work in both light and dark."
@@ -5878,8 +5888,12 @@ msgid "Fix before publishing"
 msgstr "Fix before publishing"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:453
-msgid "Fix the issues in the phone menu before publishing."
-msgstr "Fix the issues in the phone menu before publishing."
+msgid "Fix the issues in the call flow before publishing."
+msgstr "Fix the issues in the call flow before publishing."
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:453
+#~ msgid "Fix the issues in the phone menu before publishing."
+#~ msgstr "Fix the issues in the phone menu before publishing."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 msgid "Fix validation errors before publishing"
@@ -6488,8 +6502,12 @@ msgstr ""
 #~ msgstr "How far in advance customers must order before a pickup slot."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:24
-msgid "How the phone menu works"
-msgstr "How the phone menu works"
+msgid "How the call flow works"
+msgstr "How the call flow works"
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:24
+#~ msgid "How the phone menu works"
+#~ msgstr "How the phone menu works"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:522
 msgid "How to send the code"
@@ -6928,6 +6946,8 @@ msgstr "Key terms"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:34
 #: app/components/phone-agent/flow-editor/flow-meta.ts:36
+#: app/components/phone-agent/flow-editor/node-palette.tsx:101
+#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
 msgid "Keypad menu"
 msgstr "Keypad menu"
 
@@ -9802,8 +9822,8 @@ msgstr ""
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
-msgid "Phone menu"
-msgstr "Phone menu"
+#~ msgid "Phone menu"
+#~ msgstr "Phone menu"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:509
 #: app/utils/website/field-types.ts:49
@@ -10438,13 +10458,17 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
+msgid "Publish a call flow"
+msgstr "Publish a call flow"
+
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:143
 msgid "Publish a menu to choose categories."
 msgstr "Publish a menu to choose categories."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
-msgid "Publish a phone menu"
-msgstr "Publish a phone menu"
+#~ msgid "Publish a phone menu"
+#~ msgstr "Publish a phone menu"
 
 #: app/components/settings/cards/organization/site-card.tsx:165
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
@@ -10474,12 +10498,20 @@ msgid "Published"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
-msgid "Published phone menu version {version}"
-msgstr "Published phone menu version {version}"
+msgid "Published call flow version {version}"
+msgstr "Published call flow version {version}"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
+#~ msgid "Published phone menu version {version}"
+#~ msgstr "Published phone menu version {version}"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
-msgid "Published the phone menu"
-msgstr "Published the phone menu"
+msgid "Published the call flow"
+msgstr "Published the call flow"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
+#~ msgid "Published the phone menu"
+#~ msgstr "Published the phone menu"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:471
 msgid "Published v{publishedVersion}"
@@ -11125,12 +11157,20 @@ msgid "Reset to published"
 msgstr "Reset to published"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
-msgid "Reset to the default phone menu?"
-msgstr "Reset to the default phone menu?"
+msgid "Reset to the default call flow?"
+msgstr "Reset to the default call flow?"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
+#~ msgid "Reset to the default phone menu?"
+#~ msgstr "Reset to the default phone menu?"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
-msgid "Reset to the published phone menu?"
-msgstr "Reset to the published phone menu?"
+msgid "Reset to the published call flow?"
+msgstr "Reset to the published call flow?"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
+#~ msgid "Reset to the published phone menu?"
+#~ msgstr "Reset to the published phone menu?"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:468
 msgid "Resetting…"
@@ -11913,8 +11953,12 @@ msgid "See teammate names, emails, and assigned roles."
 msgstr "See teammate names, emails, and assigned roles."
 
 #: app/components/roles/tenant-role-access-manager.tsx:208
-msgid "See the agent's settings, phone menu, numbers, and training rules."
-msgstr "See the agent's settings, phone menu, numbers, and training rules."
+msgid "See the agent's settings, call flow, numbers, and training rules."
+msgstr "See the agent's settings, call flow, numbers, and training rules."
+
+#: app/components/roles/tenant-role-access-manager.tsx:208
+#~ msgid "See the agent's settings, phone menu, numbers, and training rules."
+#~ msgstr "See the agent's settings, phone menu, numbers, and training rules."
 
 #: app/components/mailbox/calls-tab.tsx:438
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
@@ -13267,6 +13311,10 @@ msgstr "Test the agent"
 msgid "Test this draft"
 msgstr "Test this draft"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
+msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
+msgstr "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
 #: app/components/website/link-inspector.tsx:644
@@ -13561,6 +13609,14 @@ msgstr "This action cannot be undone. Are you sure you want to delete this annou
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "This action cannot be undone. The note and its comments will be permanently removed."
 
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
+msgid "This call flow can't be saved yet"
+msgstr "This call flow can't be saved yet"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:545
+msgid "This call flow is ready to publish."
+msgstr "This call flow is ready to publish."
+
 #: app/hooks/use-phone-calls.ts:38
 msgid "This call or request no longer exists."
 msgstr "This call or request no longer exists."
@@ -13626,12 +13682,12 @@ msgid "this option"
 msgstr "this option"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
-msgid "This phone menu can't be saved yet"
-msgstr "This phone menu can't be saved yet"
+#~ msgid "This phone menu can't be saved yet"
+#~ msgstr "This phone menu can't be saved yet"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:545
-msgid "This phone menu is ready to publish."
-msgstr "This phone menu is ready to publish."
+#~ msgid "This phone menu is ready to publish."
+#~ msgstr "This phone menu is ready to publish."
 
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:175
 msgid "This platform is import-only. Menu changes stay here."
@@ -15432,8 +15488,12 @@ msgid "You can view these settings but not change them."
 msgstr "You can view these settings but not change them."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:86
-msgid "You can view this phone menu, but you don't have permission to change it."
-msgstr "You can view this phone menu, but you don't have permission to change it."
+msgid "You can view this call flow, but you don't have permission to change it."
+msgstr "You can view this call flow, but you don't have permission to change it."
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:86
+#~ msgid "You can view this phone menu, but you don't have permission to change it."
+#~ msgstr "You can view this phone menu, but you don't have permission to change it."
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1170
 msgid "You do not have permission to view this note"
@@ -15456,8 +15516,12 @@ msgid "You have been invited to join the following organizations. Choose to acce
 msgstr ""
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:215
-msgid "You have unsaved changes to the phone menu. Leave without saving?"
-msgstr "You have unsaved changes to the phone menu. Leave without saving?"
+msgid "You have unsaved changes to the call flow. Leave without saving?"
+msgstr "You have unsaved changes to the call flow. Leave without saving?"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:215
+#~ msgid "You have unsaved changes to the phone menu. Leave without saving?"
+#~ msgstr "You have unsaved changes to the phone menu. Leave without saving?"
 
 #: app/components/phone-agent/settings-page.tsx:184
 msgid "You have unsaved changes. Leave this page and lose them?"

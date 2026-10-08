@@ -205,12 +205,12 @@ export function getPermissionGroups(): PermissionGroup[] {
 				{
 					id: 'org_perm_read_phone_agent_any',
 					label: t`View phone agent`,
-					description: t`See the agent's settings, phone menu, numbers, and training rules.`,
+					description: t`See the agent's settings, call flow, numbers, and training rules.`,
 				},
 				{
 					id: 'org_perm_update_phone_agent_any',
 					label: t`Manage phone agent`,
-					description: t`Change settings, publish phone menus, manage numbers, and edit training rules.`,
+					description: t`Change settings, publish call flows, manage numbers, and edit training rules.`,
 					warning: t`Talks to customers`,
 				},
 				{
