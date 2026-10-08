@@ -28,6 +28,10 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	markMenusDirtyForCategories,
+	markMenusDirtyForItems,
+} from '#app/utils/menu/dirty.server.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertCategoryInOrganization,
 	assertItemIdsInOrganization,
@@ -232,6 +236,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	// Capture the category's current menus (and ancestors): removing the
+	// category from a menu must mark that menu as having unpublished changes.
+	await markMenusDirtyForCategories(organization.id, organization.slug, [
+		categoryId,
+	])
+	// Items about to be unassigned from this category dirty their menus too.
+	const currentItems = await db
+		.select({
+			itemId: OrganizationMenuItemCategoryAssignment.itemId,
+		})
+		.from(OrganizationMenuItemCategoryAssignment)
+		.where(eq(OrganizationMenuItemCategoryAssignment.categoryId, categoryId))
+	await markMenusDirtyForItems(
+		organization.id,
+		organization.slug,
+		currentItems.map((row) => row.itemId),
+	)
+
 	await db.transaction(async (tx) => {
 		if (data.parentId) {
 			await assertValidParentCategoryInOrganization(
@@ -341,7 +363,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await markMenusDirtyForCategories(organization.id, organization.slug, [
+		categoryId,
+	])
 
 	return redirect(`/${organization.slug}/menu/categories`)
 }

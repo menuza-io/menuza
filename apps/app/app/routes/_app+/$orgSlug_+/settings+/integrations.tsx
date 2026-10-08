@@ -69,6 +69,7 @@ import {
 import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
 import { connectReviewProvider } from '#app/utils/integrations/review-providers.server.ts'
 import { getLocationDisplayName } from '#app/utils/location/locations.ts'
+import { recordChannelSync } from '#app/utils/menu/publish.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
 
@@ -551,12 +552,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		invariantResponse(menuId, 'Menu ID is required', { status: 400 })
 		try {
 			const result = await pushMenu(integrationId, organization.id, menuId)
+			await recordChannelSync({
+				organizationId: organization.id,
+				menuId,
+				integrationId,
+				status: 'success',
+				pushedCount: result.pushed,
+			})
 			return redirectWithToast(redirectTo, {
 				title: 'Menu synced',
 				description: `${result.pushed} item${result.pushed === 1 ? '' : 's'} pushed to the platform.`,
 				type: 'success',
 			})
 		} catch (error) {
+			await recordChannelSync({
+				organizationId: organization.id,
+				menuId,
+				integrationId,
+				status: 'error',
+				error: error instanceof Error ? error.message : 'Unknown error',
+			})
 			return redirectWithToast(redirectTo, {
 				title: 'Sync failed',
 				description: error instanceof Error ? error.message : 'Unknown error',

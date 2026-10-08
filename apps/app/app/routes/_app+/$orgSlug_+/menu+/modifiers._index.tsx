@@ -61,6 +61,7 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { markMenusDirtyForModifierGroups } from '#app/utils/menu/dirty.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -132,6 +133,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (!result.success) {
 		return Response.json({ error: 'Invalid request' }, { status: 400 })
 	}
+
+	// Resolve the group's items before the delete cascades its assignments.
+	await markMenusDirtyForModifierGroups(organization.id, organization.slug, [
+		result.data.modifierGroupId,
+	])
 
 	await db.transaction(async (tx) => {
 		await tx

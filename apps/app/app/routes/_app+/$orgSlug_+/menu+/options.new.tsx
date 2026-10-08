@@ -26,6 +26,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { markMenusDirtyForModifierGroups } from '#app/utils/menu/dirty.server.ts'
 import {
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
@@ -279,8 +280,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		)
 	}
 
-	// Purge site KV cache
+	// Location overrides stay live, so the site cache must refresh. Published
+	// menus keep serving their snapshot until the next publish.
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	// Adding an option to existing groups dirties those groups' item menus.
+	await markMenusDirtyForModifierGroups(
+		organization.id,
+		organization.slug,
+		data.modifierGroupIds ?? [],
+	)
 
 	return redirect(`/${organization.slug}/menu/options`)
 }

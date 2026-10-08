@@ -25,6 +25,9 @@ in the coming weeks. Stay tuned!
   OTP on tenant Sites.
 - [Tenant data residency](./tenant-data-residency.md) - Regional tenant-api,
   browser-direct customer auth, wipe-on-region-change, and KSA PII isolation.
+- [Master menu publishing](./master-menu-publishing.md) - Edit the menu in one
+  place, then publish it to the storefront and connected POS / delivery
+  channels.
 - [Scheduled jobs](./scheduled-jobs.md) - Cloudflare cron worker, App job
   routes, on-demand video media transforms, and ops scripts.
 - [Decisions](./decisions/README.md) - The reasoning behind various decisions

@@ -11,6 +11,7 @@ import {
 	and,
 	OrganizationDrop,
 	OrganizationMenu,
+	OrganizationMenuChannelState,
 } from '@repo/database'
 import {
 	AlertDialog,
@@ -56,10 +57,19 @@ import { EmptyState } from '#app/components/empty-state.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
+	PublishMenuDialog,
+	type PublishChannelOption,
+} from '#app/components/menu/publish-menu-dialog.tsx'
+import {
+	MenuPublishStatusBadge,
+	menuPublishState,
+} from '#app/components/menu/publish-status-badge.tsx'
+import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { listPublishChannels } from '#app/utils/menu/publish.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -178,9 +188,40 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		),
 		with: {
 			categoryAssignments: true,
+			published: true,
 		},
 		orderBy: [asc(OrganizationMenu.position), desc(OrganizationMenu.createdAt)],
 	})
+
+	const publishChannels = await listPublishChannels(organization.id)
+	const channelStates = await db
+		.select()
+		.from(OrganizationMenuChannelState)
+		.where(eq(OrganizationMenuChannelState.organizationId, organization.id))
+	type ChannelStateRow = (typeof channelStates)[number]
+	const channelStatesByMenu: Map<
+		string,
+		Map<string, ChannelStateRow>
+	> = new Map()
+	for (const state of channelStates) {
+		const byIntegration = channelStatesByMenu.get(state.menuId) ?? new Map()
+		byIntegration.set(state.integrationId, state)
+		channelStatesByMenu.set(state.menuId, byIntegration)
+	}
+
+	const serializeChannels = (menuId: string): PublishChannelOption[] =>
+		publishChannels.map((channel) => {
+			const state = channelStatesByMenu.get(menuId)?.get(channel.integrationId)
+			return {
+				integrationId: channel.integrationId,
+				displayName: channel.displayName,
+				selected: state?.selected ?? null,
+				lastStatus: (state?.lastStatus as 'success' | 'error' | null) ?? null,
+				lastError: state?.lastError ?? null,
+				pushedCount: state?.pushedCount ?? null,
+				lastSyncAt: state?.lastSyncAt ? state.lastSyncAt.toISOString() : null,
+			}
+		})
 
 	return {
 		organization,
@@ -198,6 +239,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				: null,
 			categoriesCount: m.categoryAssignments.length,
 			updatedAt: m.updatedAt.toISOString(),
+			publish: {
+				state: menuPublishState(Boolean(m.published), m.hasUnpublishedChanges),
+				revision: m.published?.revision ?? null,
+				publishedAt: m.published?.publishedAt.toISOString() ?? null,
+			},
+			channels: serializeChannels(m.id),
 		})),
 	}
 }
@@ -208,6 +255,12 @@ export default function MenusIndexRoute() {
 	const deleteFetcher = useFetcher<{ success?: boolean; error?: string }>()
 	const [deleteMenuId, setDeleteMenuId] = useState<string | null>(null)
 	const [deleteError, setDeleteError] = useState<string | null>(null)
+	const [publishMenu, setPublishMenu] = useState<{
+		id: string
+		name: string
+		publishState: (typeof menus)[number]['publish']['state']
+		channels: PublishChannelOption[]
+	} | null>(null)
 
 	useEffect(() => {
 		if (deleteFetcher.state !== 'idle' || !deleteFetcher.data) return
@@ -311,6 +364,9 @@ export default function MenusIndexRoute() {
 										<TableHead>
 											<Trans>Status</Trans>
 										</TableHead>
+										<TableHead>
+											<Trans>Publish</Trans>
+										</TableHead>
 										<TableHead className="w-16">
 											<span className="sr-only">
 												<Trans>Actions</Trans>
@@ -379,6 +435,9 @@ export default function MenusIndexRoute() {
 														unavailableUntil={menu.unavailableUntil}
 													/>
 												</TableCell>
+												<TableCell>
+													<MenuPublishStatusBadge state={menu.publish.state} />
+												</TableCell>
 												<TableCell className="text-right">
 													<DropdownMenu>
 														<DropdownMenuTrigger
@@ -407,6 +466,22 @@ export default function MenusIndexRoute() {
 																}
 															/>
 															<DropdownMenuItem
+																onClick={() => {
+																	setPublishMenu({
+																		id: menu.id,
+																		name: menuTitle,
+																		publishState: menu.publish.state,
+																		channels: menu.channels,
+																	})
+																}}
+															>
+																<Icon
+																	name="paper-plane"
+																	className="mr-2 size-4"
+																/>
+																<Trans>Publish…</Trans>
+															</DropdownMenuItem>
+															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
 																onClick={() => {
 																	setDeleteError(null)
@@ -425,7 +500,7 @@ export default function MenusIndexRoute() {
 								</TableBody>
 								<TableFooter>
 									<TableRow>
-										<TableCell colSpan={5}>
+										<TableCell colSpan={6}>
 											{filteredMenus.length === 1 ? (
 												<Trans>1 menu</Trans>
 											) : (
@@ -486,6 +561,20 @@ export default function MenusIndexRoute() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			{/* Publish dialog */}
+			{publishMenu ? (
+				<PublishMenuDialog
+					open={Boolean(publishMenu)}
+					onOpenChange={(open) => {
+						if (!open) setPublishMenu(null)
+					}}
+					organizationSlug={organization.slug}
+					menu={{ id: publishMenu.id, name: publishMenu.name }}
+					publishState={publishMenu.publishState}
+					channels={publishMenu.channels}
+				/>
+			) : null}
 		</div>
 	)
 }
