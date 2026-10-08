@@ -1,0 +1,43 @@
+---
+import { siteContainer } from '~/lib/media'
+
+/** Fixed bottom bar that appears when the cart has items. Driven by `mountCartUi`. */
+interface Props {
+	labels: { viewOrder: string }
+	initialTotal: string
+}
+
+const { labels, initialTotal } = Astro.props
+---
+
+<div
+	id="cart-tray"
+	class="fixed inset-x-0 bottom-0 z-40 translate-y-full p-4 transition-transform duration-300 motion-reduce:transition-none"
+	aria-hidden="true"
+>
+	<div class:list={[siteContainer, 'max-w-2xl']}>
+		<button
+			type="button"
+			id="open-cart-btn"
+			class="flex w-full items-center justify-between gap-3 rounded-[var(--radius)] bg-primary px-5 py-3.5 text-primary-foreground shadow-lg transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+			aria-haspopup="dialog"
+			aria-controls="cart-drawer"
+		>
+			<span class="flex items-center gap-2.5">
+				<span
+					id="cart-badge-count"
+					class="flex size-7 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-semibold tabular-nums"
+					aria-live="polite"
+					aria-atomic="true"
+				>
+					0
+				</span>
+				<span class="text-sm font-medium">{labels.viewOrder}</span>
+			</span>
+			<span class="flex items-center gap-2">
+				<span id="cart-tray-total" class="text-base font-semibold tabular-nums">{initialTotal}</span>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 rtl:-scale-x-100" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+			</span>
+		</button>
+	</div>
+</div>

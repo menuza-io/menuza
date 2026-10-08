@@ -1,0 +1,65 @@
+---
+import { msg } from '@lingui/core/macro'
+
+/**
+ * Location → date → time slot chooser for a live drop. This is the labeled
+ * shell; the chips are rendered client-side by the drop page script because
+ * slot availability depends on the live clock and on the stored selection.
+ *
+ * Steps with a single option are collapsed (auto-selected) by the client
+ * script, mirroring the "hidden when 1" rule.
+ */
+const i18n = Astro.locals.i18n
+const heading = i18n._(msg`Choose your pickup`)
+const chooseLocation = i18n._(msg`Choose a location`)
+const chooseDay = i18n._(msg`Choose a day`)
+const chooseTime = i18n._(msg`Choose a time`)
+---
+
+<div id="pickup-picker" class="rounded-[var(--radius)] border border-border bg-background p-4">
+	<h3 class="font-heading text-sm font-semibold text-foreground">{heading}</h3>
+	<div class="mt-3 space-y-4">
+		<fieldset id="pickup-location-step">
+			<legend id="pickup-location-label" class="text-xs font-medium text-muted-foreground">
+				{chooseLocation}
+			</legend>
+			<div
+				id="pickup-location-chips"
+				class="mt-1.5 flex flex-wrap gap-1.5"
+				role="radiogroup"
+				aria-labelledby="pickup-location-label"
+			></div>
+		</fieldset>
+
+		<fieldset id="pickup-date-step" class="hidden">
+			<legend id="pickup-date-label" class="text-xs font-medium text-muted-foreground">
+				{chooseDay}
+			</legend>
+			<div
+				id="pickup-date-chips"
+				class="mt-1.5 flex flex-wrap gap-1.5"
+				role="radiogroup"
+				aria-labelledby="pickup-date-label"
+			></div>
+		</fieldset>
+
+		<fieldset id="pickup-slot-step" class="hidden">
+			<legend id="pickup-slot-label" class="text-xs font-medium text-muted-foreground">
+				{chooseTime}
+			</legend>
+			<div
+				id="pickup-slot-chips"
+				class="mt-1.5 flex flex-wrap gap-1.5"
+				role="radiogroup"
+				aria-labelledby="pickup-slot-label"
+			></div>
+		</fieldset>
+	</div>
+
+	<p
+		id="pickup-selected-summary"
+		class="hidden"
+		role="status"
+		aria-live="polite"
+	></p>
+</div>

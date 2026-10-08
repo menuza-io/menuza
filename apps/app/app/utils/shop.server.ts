@@ -46,6 +46,12 @@ function getShopCommerce() {
 	return shopCommerce
 }
 
+/**
+ * The App-wide ShopCommerce instance (Stripe Connect / Polar / Checkout.com).
+ * Restaurant order payments reuse the same configured providers.
+ */
+export { getShopCommerce }
+
 export function configureShopCommerceForTests(
 	config: Parameters<typeof createShopCommerceConfigFromEnv>[0],
 ) {

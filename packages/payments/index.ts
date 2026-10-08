@@ -141,3 +141,22 @@ export {
 	type ShopCheckoutCspOptions,
 	SHOP_ORDER_METADATA_TYPE,
 } from './src/shop'
+
+// Restaurant order payments (dynamic carts, non-PII metadata)
+export {
+	RESTAURANT_ORDER_METADATA_TYPE,
+	RESTAURANT_ORDER_PRODUCT_NAME,
+	RESTAURANT_ORDER_PROCESSORS,
+	RESTAURANT_TERMINAL_PAYMENT_STATUSES,
+	buildRestaurantOrderMetadata,
+	buildRestaurantOrderSessionIdempotencyKey,
+	isRestaurantOrderMetadata,
+	isRestaurantOrderProcessor,
+	isTerminalRestaurantPaymentStatus,
+	mapConnectSessionToRestaurantOrder,
+	mapCheckoutWebhookToRestaurantOrder,
+	type RestaurantOrderProcessor,
+	type RestaurantOrderPaymentEvent,
+	type RestaurantOrderPaymentStatus,
+	type RestaurantTerminalPaymentStatus,
+} from './src/shop'

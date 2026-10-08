@@ -389,7 +389,7 @@ export type PublicLocationData = {
 	timezone: string
 	taxRate: number
 	address: any
-	currency?: 'USD' | 'CAD'
+	currency?: 'USD' | 'CAD' | 'SAR'
 	storeHours: any
 	onlineHours: any
 	specialHours: any
@@ -420,6 +420,7 @@ export type PublicMenuOptionData = {
 	isGlutenFree: boolean
 	isVegetarian: boolean
 	isTopping: boolean
+	isDefault: boolean
 	allergens: string[]
 	applySalesTax: boolean
 	availabilityStatus: string
@@ -559,6 +560,11 @@ export type PublicDropData = {
 		showMenuPreview: boolean
 		showInventoryRemaining: boolean
 		includeGiftCard: boolean
+		menu: {
+			id: string
+			displayName: string
+			specialInstructions: boolean
+		}
 	}
 	pickupWindows: Array<{
 		id: string
@@ -591,19 +597,7 @@ export type PublicDropData = {
 		displayName: string
 		internalName: string | null
 		description: string | null
-		items: Array<{
-			id: string
-			displayName: string
-			internalName: string | null
-			description: string | null
-			price: number
-			imageKey: string | null
-			imageUrl: string | null
-			imageKeys: string[]
-			imageUrls: string[]
-			variations: any
-			modifierGroups: any[]
-		}>
+		items: PublicMenuItemData[]
 	}>
 }
 
@@ -632,7 +626,16 @@ export type PublicDropListing = {
 	slug: string
 	description: string | null
 	coverImageUrl: string | null
+	/** Customer-facing phase derived from the order window, never `draft`. */
 	status: DropStatus
+	ordersOpenAt: string | null
+	ordersCloseAt: string | null
+	/** Sorted unique `YYYY-MM-DD` pickup dates across all windows. */
+	pickupDates: string[]
+	/** Unique location names in pickup window order. */
+	pickupLocationNames: string[]
+	/** IANA timezone of the first pickup window's location. */
+	pickupTimezone: string | null
 }
 
 export async function fetchPublishedDrops(options: {

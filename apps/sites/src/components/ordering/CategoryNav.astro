@@ -1,0 +1,55 @@
+---
+/**
+ * Category navigation driven by `mountScrollSpy`. Horizontal chips by default;
+ * `rail` renders a vertical list for wide layouts. Class sets for the active
+ * and inactive states are exposed as data attributes for the scroll-spy.
+ */
+interface Props {
+	items: Array<{ id: string; label: string }>
+	label: string
+	rail?: boolean
+	class?: string
+}
+
+const { items, label, rail = false, class: className } = Astro.props
+
+const chipBase =
+	'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+const chipActive = 'border-primary bg-primary text-primary-foreground'
+const chipInactive = 'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
+
+const railBase =
+	'block truncate rounded-[calc(var(--radius)*0.7)] border-s-2 px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const railActive = 'border-primary text-foreground font-medium'
+const railInactive = 'border-transparent text-muted-foreground hover:text-foreground'
+---
+
+{items.length > 0 ? (
+	<nav
+		aria-label={label}
+		data-category-nav={rail ? 'rail' : 'chips'}
+		data-scroll-spy-scroller
+		data-active-class={rail ? railActive : chipActive}
+		data-inactive-class={rail ? railInactive : chipInactive}
+		class:list={[
+			rail
+				? 'flex max-h-[calc(100vh-8rem)] flex-col gap-0.5 overflow-y-auto no-scrollbar'
+				: 'flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5',
+			className,
+		]}
+	>
+		{items.map((item, index) => (
+			<a
+				href={`#category-${item.id}`}
+				data-category-id={item.id}
+				aria-current={index === 0 ? 'true' : undefined}
+				class:list={[
+					rail ? railBase : chipBase,
+					index === 0 ? (rail ? railActive : chipActive) : rail ? railInactive : chipInactive,
+				]}
+			>
+				{item.label}
+			</a>
+		))}
+	</nav>
+) : null}

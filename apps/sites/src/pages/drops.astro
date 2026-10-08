@@ -1,0 +1,121 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import SitePage from '~/components/SitePage.astro'
+import DropCard from '~/components/drops/DropCard.astro'
+import { getDropPhase, type DropPhase } from '~/lib/drops/format'
+import { siteBtnGhost, siteContainer } from '~/lib/media'
+import { fetchPublishedDrops, type PublicDropListing } from '~/lib/org'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+
+const heading = i18n._(msg`Drops`)
+const explainer = i18n._(msg`Limited menus you pre-order for a pickup window.`)
+const liveHeading = i18n._(msg`Ordering now`)
+const upcomingHeading = i18n._(msg`Coming up`)
+const pastHeading = i18n._(msg`Past drops`)
+const emptyTitle = i18n._(msg`No drops right now.`)
+const emptyBody = i18n._(msg`Check the menu for what we are serving today.`)
+const viewMenu = i18n._(msg`View menu`)
+
+const drops = await fetchPublishedDrops({ slug: orgSlug, host: customHost })
+const now = new Date()
+const toTime = (value: string | null, fallback: number) =>
+	value ? new Date(value).getTime() : fallback
+
+const grouped: Record<DropPhase, PublicDropListing[]> = { live: [], upcoming: [], ended: [] }
+for (const drop of drops) grouped[getDropPhase(drop, now)].push(drop)
+grouped.live.sort(
+	(a, b) => toTime(a.ordersCloseAt, Infinity) - toTime(b.ordersCloseAt, Infinity),
+)
+grouped.upcoming.sort(
+	(a, b) => toTime(a.ordersOpenAt, Infinity) - toTime(b.ordersOpenAt, Infinity),
+)
+grouped.ended.sort(
+	(a, b) => toTime(b.ordersCloseAt, -Infinity) - toTime(a.ordersCloseAt, -Infinity),
+)
+
+const hasActive = grouped.live.length > 0 || grouped.upcoming.length > 0
+const menuHref = getLocaleHref('/menu', locale, locale, defaultLocale)
+const pageTitle = `${heading} - ${organization.name}`
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'drops', title: heading, slug: 'drops', isHomePage: false, sections: [] }}
+	title={pageTitle}
+	description={explainer}
+>
+	<div class:list={[siteContainer, 'py-10 sm:py-14']}>
+		<header class="max-w-2xl">
+			<h1 class="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+				{heading}
+			</h1>
+			<p class="mt-2 text-base text-muted-foreground">{explainer}</p>
+		</header>
+
+		{hasActive ? (
+			<div class="mt-10 space-y-12 sm:mt-12 sm:space-y-16">
+				{grouped.live.length > 0 ? (
+					<section aria-labelledby="drops-live-heading">
+						<h2 id="drops-live-heading" class="font-heading text-xl font-semibold text-foreground sm:text-2xl">
+							{liveHeading}
+						</h2>
+						<div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+							{grouped.live.map((drop) => (
+								<DropCard drop={drop} locale={locale} defaultLocale={defaultLocale} variant="full" now={now} />
+							))}
+						</div>
+					</section>
+				) : null}
+
+				{grouped.upcoming.length > 0 ? (
+					<section aria-labelledby="drops-upcoming-heading">
+						<h2 id="drops-upcoming-heading" class="font-heading text-xl font-semibold text-foreground sm:text-2xl">
+							{upcomingHeading}
+						</h2>
+						<div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+							{grouped.upcoming.map((drop) => (
+								<DropCard drop={drop} locale={locale} defaultLocale={defaultLocale} variant="full" now={now} />
+							))}
+						</div>
+					</section>
+				) : null}
+			</div>
+		) : (
+			<div class="mt-10 rounded-[var(--radius)] border border-border bg-card p-8 text-center text-card-foreground sm:p-12">
+				<p class="font-heading text-lg font-semibold text-foreground">{emptyTitle}</p>
+				<p class="mt-2 text-sm text-muted-foreground">{emptyBody}</p>
+				<a href={menuHref} class:list={[siteBtnGhost, 'mt-6']}>
+					{viewMenu}
+				</a>
+			</div>
+		)}
+
+		{grouped.ended.length > 0 ? (
+			<section
+				aria-labelledby="drops-past-heading"
+				class:list={['mt-12 border-t border-border pt-10 sm:mt-16 sm:pt-12']}
+			>
+				<h2 id="drops-past-heading" class="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">
+					{pastHeading}
+				</h2>
+				<div class="mt-5 grid gap-3 sm:grid-cols-2">
+					{grouped.ended.map((drop) => (
+						<DropCard drop={drop} locale={locale} defaultLocale={defaultLocale} variant="compact" now={now} />
+					))}
+				</div>
+			</section>
+		) : null}
+	</div>
+</SitePage>

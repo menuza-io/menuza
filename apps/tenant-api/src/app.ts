@@ -20,6 +20,9 @@ import {
 import { operatorRoutes } from './routes/operator.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { provisionRoutes } from './routes/provision.ts'
+import { publicOrderRoutes } from './routes/orders.ts'
+import { orderSystemRoutes } from './routes/order-system.ts'
+import { operatorOrderRoutes } from './routes/operator-orders.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
 
@@ -73,6 +76,27 @@ export function createTenantApiApp() {
 		'/operator/*',
 		rateLimit('operator', { windowMs: 60 * 1000, maxRequests: 120 }),
 	)
+	// Order placement is the money path: throttle hard per IP, and never let a
+	// receipt lookup become an enumeration vector.
+	const orderCreateRateLimit = rateLimit('public-order-create', {
+		windowMs: 60 * 1000,
+		maxRequests: 12,
+	})
+	const orderReadRateLimit = rateLimit('public-order-reads', {
+		windowMs: 60 * 1000,
+		maxRequests: 240,
+	})
+	const orderRateLimitGate = async (c: Context, next: () => Promise<void>) => {
+		if (c.req.method === 'POST' && c.req.path === '/orders') {
+			return orderCreateRateLimit(c, next)
+		}
+		if (c.req.method === 'GET') {
+			return orderReadRateLimit(c, next)
+		}
+		await next()
+	}
+	app.use('/orders', orderRateLimitGate)
+	app.use('/orders/*', orderRateLimitGate)
 	const publicFormReadRateLimit = rateLimit('public-form-reads', {
 		windowMs: 60 * 1000,
 		maxRequests: 120,
@@ -95,15 +119,18 @@ export function createTenantApiApp() {
 	app.route('/auth', authRoutes)
 	app.route('/shop', shopRoutes)
 	app.route('/forms', publicFormRoutes)
+	app.route('/orders', publicOrderRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)
 	app.route('/api/forms', formSystemRoutes)
+	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
+	app.route('/operator/orders', operatorOrderRoutes)
 
 	app.notFound((c) => {
 		return c.json({ error: 'Endpoint Not Found' }, 404)

@@ -7,6 +7,7 @@
   "module": "./index.ts",
   "types": "./index.ts",
   "exports": {
+    "./order-receipt": "./src/order-receipt.ts",
     "./mailbox": "./src/mailbox.ts",
     "./chat": "./src/chat.ts",
     "./chat-markdown": "./src/chat-markdown.ts",
@@ -154,6 +155,11 @@
       "types": "./src/location-availability.ts",
       "import": "./src/location-availability.ts",
       "default": "./src/location-availability.ts"
+    },
+    "./restaurant-orders": {
+      "types": "./src/restaurant-orders.ts",
+      "import": "./src/restaurant-orders.ts",
+      "default": "./src/restaurant-orders.ts"
     }
   },
   "scripts": {

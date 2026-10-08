@@ -13,6 +13,65 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "{count} Cal"
+msgstr "{count} kcal"
+
+#: src/lib/ordering-labels.ts:72
+msgid "{count} items"
+msgstr "{count} Artikel"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "{h}h {m}m"
+msgstr "{h}h {m}m"
+
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "{min}–{max} Cal"
+msgstr "{min}–{max} kcal"
+
+#: src/pages/menu.astro.ts:3
+msgid "{min}–{max} min"
+msgstr "{min}–{max} Min."
+
+#: src/components/drops/DropCard.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
+msgid "{n} dates"
+msgstr "{n} Termine"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "{n} days"
+msgstr "{n} Tage"
+
+#: src/components/drops/DropCard.astro.ts:3
+msgid "{n} locations"
+msgstr "{n} Standorte"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "{n} min"
+msgstr "{n} Min."
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "+{n} more"
+msgstr "+{n} weitere"
+
+#: src/pages/menu.astro.ts:3
+msgid "~{minutes} min"
+msgstr "~{minutes} Min."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "~15-25 minutes"
+msgstr "~15-25 Minuten"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "~35-45 minutes"
+msgstr "~35-45 Minuten"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "1 day"
+msgstr "1 Tag"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "1. Fulfillment Mode"
 msgstr "1. Erfüllungsart"
@@ -25,6 +84,10 @@ msgstr "2. Kontaktinformationen"
 msgid "3. Delivery Address"
 msgstr "3. Lieferadresse"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Accepted"
+msgstr "Angenommen"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "Konto"
@@ -33,19 +96,32 @@ msgstr "Konto"
 msgid "Account settings"
 msgstr "Kontoeinstellungen"
 
-#: src/pages/menu.astro.ts:3
-msgid "Add"
-msgstr "Hinzufügen"
-
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add a Tip for the Team"
 msgstr "Trinkgeld für das Team hinzufügen"
 
-#: src/pages/menu.astro.ts:3
-#: src/pages/menu.astro.ts:3
+#: src/components/drops/DropCard.astro.ts:3
+#: src/components/drops/DropSummaryCard.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Add to calendar"
+msgstr "Zum Kalender hinzufügen"
+
+#: src/lib/ordering-labels.ts:31
 msgid "Add to Order"
 msgstr "Zur Bestellung hinzufügen"
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "Alcohol"
+msgstr "Alkohol"
+
+#: src/components/PublicDrops.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
+msgid "All drops"
+msgstr "Alle Aktionen"
+
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "Ernährungswünsche, Sauce separat, usw."
@@ -53,6 +129,11 @@ msgstr "Ernährungswünsche, Sauce separat, usw."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Apt / Suite / Unit"
 msgstr "Wohnung / Suite / Einheit"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Back to drop"
+msgstr "Zurück zur Aktion"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Back to Menu"
@@ -71,6 +152,14 @@ msgstr "Shop durchsuchen"
 msgid "Buy now"
 msgstr "Jetzt kaufen"
 
+#: src/components/drops/LocationList.astro.ts:3
+msgid "Call"
+msgstr "Anrufen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancelled"
+msgstr "Storniert"
+
 #: src/pages/shop.astro.ts:3
 msgid "Card number"
 msgstr "Kartennummer"
@@ -78,6 +167,19 @@ msgstr "Kartennummer"
 #: src/pages/profile.astro.ts:3
 msgid "Cards used on past shop purchases on this account."
 msgstr "Karten, die bei früheren Shop-Käufen mit diesem Konto verwendet wurden."
+
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Change"
+msgstr "Ändern"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Check again"
+msgstr "Erneut prüfen"
+
+#: src/pages/drops.astro.ts:3
+msgid "Check the menu for what we are serving today."
+msgstr "Schau in die Speisekarte, was wir heute servieren."
 
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
@@ -87,27 +189,92 @@ msgstr "Prüfen Sie Ihr Telefon"
 msgid "Checkout"
 msgstr "Zur Kasse"
 
+#: src/lib/ordering-labels.ts:38
+msgid "Choose {count}"
+msgstr "Wähle {count}"
+
+#: src/lib/ordering-labels.ts:40
+msgid "Choose {min}–{max}"
+msgstr "Wähle {min}–{max}"
+
+#: src/lib/ordering-labels.ts:37
+msgid "Choose 1"
+msgstr "Wähle 1"
+
+#: src/components/drops/PickupPicker.astro.ts:3
+msgid "Choose a day"
+msgstr "Wähle einen Tag"
+
+#: src/components/drops/PickupPicker.astro.ts:3
+msgid "Choose a location"
+msgstr "Wähle einen Standort"
+
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Choose a pickup time to continue"
+msgstr "Wähle eine Abholzeit, um fortzufahren"
+
+#: src/components/drops/PickupPicker.astro.ts:3
+msgid "Choose a time"
+msgstr "Wähle eine Uhrzeit"
+
+#: src/lib/ordering-labels.ts:39
+msgid "Choose at least {count}"
+msgstr "Wähle mindestens {count}"
+
+#: src/lib/ordering-labels.ts:45
+msgid "Choose at least {count} options"
+msgstr "Wähle mindestens {count} Optionen"
+
+#: src/lib/ordering-labels.ts:42
+msgid "Choose at least 1 option"
+msgstr "Wähle mindestens 1 Option"
+
+#: src/components/drops/PickupPicker.astro.ts:3
+msgid "Choose your pickup"
+msgstr "Wähle deine Abholung"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "City / Region"
 msgstr "Stadt / Region"
+
+#: src/pages/menu.astro.ts:3
+msgid "Clear search"
+msgstr "Suche löschen"
+
+#: src/lib/ordering-labels.ts:70
+msgid "Close"
+msgstr "Schließen"
+
+#: src/pages/menu.astro.ts:3
+msgid "Closed"
+msgstr "Geschlossen"
+
+#: src/pages/menu.astro.ts:3
+msgid "Closed · opens {time}"
+msgstr "Geschlossen · öffnet {time}"
+
+#: src/components/drops/DropStatusChip.astro.ts:3
+msgid "Coming soon"
+msgstr "Demnächst"
+
+#: src/pages/drops.astro.ts:3
+msgid "Coming up"
+msgstr "Demnächst"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "Schließen Sie die Verifizierung ab, bevor Sie absenden."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Completed"
+msgstr "Abgeschlossen"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Weiter"
 
-#: src/pages/menu.astro.ts:3
-msgid "Currently Closed"
-msgstr "Derzeit geschlossen"
-
-#: src/pages/menu.astro.ts:3
-msgid "Customize"
-msgstr "Anpassen"
-
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:71
 msgid "Customize Item"
 msgstr "Artikel anpassen"
 
@@ -115,11 +282,20 @@ msgstr "Artikel anpassen"
 msgid "CVC"
 msgstr "CVC"
 
+#: src/lib/ordering-labels.ts:57
+msgid "Decrease quantity"
+msgstr "Menge verringern"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Deliver to: {address}"
+msgstr "Liefern an: {address}"
+
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery"
 msgstr "Lieferung"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -130,9 +306,26 @@ msgstr "Liefergebühr"
 msgid "Delivery Instructions"
 msgstr "Lieferhinweise"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery is not available for this order."
+msgstr "Lieferung ist für diese Bestellung nicht verfügbar."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Delivery Order"
 msgstr "Lieferbestellung"
+
+#: src/components/drops/LocationList.astro.ts:3
+msgid "Directions"
+msgstr "Route"
+
+#: src/lib/ordering-labels.ts:36
+msgid "Done"
+msgstr "Fertig"
+
+#: src/components/PublicDrops.astro.ts:3
+#: src/pages/drops.astro.ts:3
+msgid "Drops"
+msgstr "Aktionen"
 
 #: src/pages/profile.astro.ts:3
 msgid "Email"
@@ -142,10 +335,19 @@ msgstr "E-Mail"
 msgid "Email Address *"
 msgstr "E-Mail-Adresse *"
 
+#: src/components/drops/DropStatusChip.astro.ts:3
+msgid "Ended"
+msgstr "Beendet"
+
+#: src/components/drops/DropStatusChip.astro.ts:3
+msgid "Ended {when}"
+msgstr "Beendet {when}"
+
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "Geben Sie Ihre Telefonnummer ein. Wir senden einen Code."
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Estimated Tax"
 msgstr "Geschätzte Steuer"
@@ -166,14 +368,21 @@ msgstr "Ablaufdatum"
 msgid "Explore Menu"
 msgstr "Menü entdecken"
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:69
 msgid "Explore our menu and add your favorite dishes."
 msgstr "Entdecken Sie unser Menü und fügen Sie Ihre Lieblingsgerichte hinzu."
 
-#: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
 msgstr "Kostenlos"
+
+#: src/lib/ordering-labels.ts:33
+msgid "From"
+msgstr "Ab"
+
+#: src/pages/menu.astro.ts:3
+msgid "Fulfillment"
+msgstr "Lieferart"
 
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
@@ -183,21 +392,55 @@ msgstr "Vollständiger Name"
 msgid "Full Name *"
 msgstr "Vollständiger Name *"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Gluten-Free"
 msgstr "Glutenfrei"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "in {t}"
+msgstr "in {t}"
+
+#: src/lib/ordering-labels.ts:56
+msgid "Increase quantity"
+msgstr "Menge erhöhen"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
 msgstr "Ungültiger Bestätigungscode."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Keep this page open — we'll confirm your order as soon as your payment completes."
+msgstr "Lassen Sie diese Seite geöffnet — wir bestätigen Ihre Bestellung, sobald die Zahlung abgeschlossen ist."
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Language"
 msgstr "Sprache"
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "Links"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "less than a minute"
+msgstr "weniger als eine Minute"
+
+#: src/lib/ordering-labels.ts:66
+msgid "Limit {count} per order"
+msgstr "Maximal {count} pro Bestellung"
+
+#: src/lib/ordering-labels.ts:67
+msgid "Limit reached"
+msgstr "Limit erreicht"
+
+#: src/components/PublicDrops.astro.ts:3
+#: src/pages/drops.astro.ts:3
+msgid "Limited menus you pre-order for a pickup window."
+msgstr "Limitierte Menüs, die du für ein Abholfenster vorbestellst."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Loading your receipt…"
+msgstr "Ihr Beleg wird geladen…"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
@@ -211,6 +454,11 @@ msgstr "Sie haben Ihrer Bestellung noch keine Gerichte hinzugefügt."
 msgid "Menu & Ordering"
 msgstr "Menü & Bestellung"
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+msgid "Menu categories"
+msgstr "Menükategorien"
+
 #: src/pages/menu.astro.ts:3
 msgid "Menu Coming Soon"
 msgstr "Menü bald verfügbar"
@@ -218,6 +466,10 @@ msgstr "Menü bald verfügbar"
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "Mobil"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "More drops"
+msgstr "Weitere Aktionen"
 
 #: src/pages/profile.astro.ts:3
 msgid "Name"
@@ -230,10 +482,26 @@ msgstr "Name"
 msgid "Network error. Please try again."
 msgstr "Netzwerkfehler. Bitte erneut versuchen."
 
+#: src/pages/menu.astro.ts:3
+msgid "No dishes match"
+msgstr "Keine passenden Gerichte"
+
+#: src/pages/drops.astro.ts:3
+msgid "No drops right now."
+msgstr "Derzeit keine Aktionen."
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "No longer available"
+msgstr "Nicht mehr verfügbar"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "No orders yet."
 msgstr "Noch keine Bestellungen."
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "No pickup times are available right now."
+msgstr "Im Moment sind keine Abholzeiten verfügbar."
 
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
@@ -242,6 +510,18 @@ msgstr "Noch keine gespeicherten Zahlungsmethoden."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "No Tip"
 msgstr "Kein Trinkgeld"
+
+#: src/lib/ordering-labels.ts:54
+msgid "None"
+msgstr "Keine"
+
+#: src/lib/ordering-labels.ts:59
+msgid "Only {count} left"
+msgstr "Nur noch {count} übrig"
+
+#: src/lib/ordering-labels.ts:62
+msgid "Only {count} left in {category}"
+msgstr "Nur noch {count} in {category} übrig"
 
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
@@ -252,6 +532,14 @@ msgid "Open menu"
 msgstr "Menü öffnen"
 
 #: src/pages/menu.astro.ts:3
+msgid "Open until {time}"
+msgstr "Geöffnet bis {time}"
+
+#: src/components/drops/DropStatusChip.astro.ts:3
+msgid "Opens {when}"
+msgstr "Öffnet {when}"
+
+#: src/lib/ordering-labels.ts:35
 msgid "Optional"
 msgstr "Optional"
 
@@ -272,29 +560,96 @@ msgstr "Bestellverlauf"
 msgid "Order More Food"
 msgstr "Mehr bestellen"
 
+#: src/components/drops/DropCard.astro.ts:3
+msgid "Order now"
+msgstr "Jetzt bestellen"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Order Number"
 msgstr "Bestellnummer"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Order received"
+msgstr "Bestellung eingegangen"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Order Summary"
 msgstr "Bestellübersicht"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Order window"
+msgstr "Bestellfenster"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Ordering is currently closed."
+msgstr "Bestellungen sind derzeit geschlossen."
+
+#: src/components/drops/DropStatusChip.astro.ts:3
+#: src/pages/drops.astro.ts:3
+msgid "Ordering now"
+msgstr "Jetzt bestellen"
 
 #: src/components/AccountShell.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "Bestellungen"
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Orders close {when}"
+msgstr "Bestellungen schließen {when}"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Orders have closed for this drop and every pickup has gone out. Thanks for the support — see what's next below."
+msgstr "Die Bestellungen für diese Aktion sind geschlossen und alle Abholungen sind raus. Danke für die Unterstützung – sieh unten, was als Nächstes kommt."
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Orders open"
+msgstr "Bestellstart"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Orders open {when}"
+msgstr "Bestellungen öffnen {when}"
+
+#: src/components/drops/DropCard.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Orders open: {title}"
+msgstr "Bestellungen offen: {title}"
+
 #: src/pages/menu.astro.ts:3
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "Unsere Küche bereitet köstliche Gerichte zu. Schauen Sie bald wieder vorbei für unser vollständiges Online-Menü."
+
+#: src/pages/drops.astro.ts:3
+msgid "Past drops"
+msgstr "Vergangene Aktionen"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pay at pickup"
+msgstr "Bei Abholung zahlen"
 
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "Jetzt bezahlen"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pay on delivery"
+msgstr "Bei Lieferung zahlen"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pay online"
+msgstr "Online zahlen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Payment failed"
+msgstr "Zahlung fehlgeschlagen"
+
 #: src/pages/shop.astro.ts:3
 msgid "Payment method"
+msgstr "Zahlungsmethode"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Payment Method"
 msgstr "Zahlungsmethode"
 
 #: src/pages/profile.astro.ts:3
@@ -314,23 +669,82 @@ msgstr "Telefonnummer *"
 msgid "Phone number cannot be changed at this time."
 msgstr "Die Telefonnummer kann derzeit nicht geändert werden."
 
+#: src/components/drops/DropCard.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup"
 msgstr "Abholung"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pickup is not available for this order."
+msgstr "Abholung ist für diese Bestellung nicht verfügbar."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Pickup Order"
 msgstr "Abholbestellung"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup time"
+msgstr "Abholzeit"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup: {title}"
+msgstr "Abholung: {title}"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Place Order"
 msgstr "Bestellung aufgeben"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Placing your order…"
+msgstr "Ihre Bestellung wird aufgegeben…"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Please check your connection and try again."
+msgstr "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please enter your delivery address."
+msgstr "Bitte geben Sie Ihre Lieferadresse ein."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please enter your delivery street address."
+msgstr "Bitte geben Sie Ihre Lieferadresse (Straße) ein."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please enter your email address."
+msgstr "Bitte geben Sie Ihre E-Mail-Adresse ein."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please enter your full name."
+msgstr "Bitte geben Sie Ihren vollständigen Namen ein."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please enter your phone number."
+msgstr "Bitte geben Sie Ihre Telefonnummer ein."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please review your order details and try again."
+msgstr "Bitte überprüfen Sie Ihre Bestelldaten und versuchen Sie es erneut."
+
+#: src/pages/menu.astro.ts:3
+msgid "Popular"
+msgstr "Beliebt"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Preparing"
+msgstr "In Zubereitung"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Preview · ordering opens {when}"
+msgstr "Vorschau · Bestellungen öffnen {when}"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
 msgstr "Primär"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Proceed to Checkout"
 msgstr "Zur Kasse gehen"
@@ -355,23 +769,35 @@ msgstr "Einkäufe im Shop, während Sie in diesem Konto angemeldet sind."
 msgid "Purchases from the shop while signed in."
 msgstr "Käufe im Shop während Sie angemeldet sind."
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:55
 msgid "Quantity"
 msgstr "Menge"
+
+#: src/components/drops/DropSummaryCard.astro.ts:3
+msgid "Read more"
+msgstr "Mehr anzeigen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready"
+msgstr "Bereit"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Receipt"
 msgstr "Beleg"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Receipt unavailable on this device"
+msgstr "Beleg auf diesem Gerät nicht verfügbar"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "Quittungen für abgeschlossene Einkäufe werden hier mit Status und Betrag angezeigt."
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:58
 msgid "Remove"
 msgstr "Entfernen"
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:34
 msgid "Required"
 msgstr "Erforderlich"
 
@@ -383,7 +809,7 @@ msgstr "Zurück zur Startseite"
 msgid "Review your order details and enter your contact information to complete your order."
 msgstr "Überprüfen Sie Ihre Bestelldetails und geben Sie Ihre Kontaktdaten ein, um die Bestellung abzuschließen."
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:53
 msgid "Right"
 msgstr "Rechts"
 
@@ -396,6 +822,10 @@ msgstr "Änderungen speichern"
 msgid "Saving..."
 msgstr "Speichern..."
 
+#: src/pages/menu.astro.ts:3
+msgid "Search the menu"
+msgstr "Speisekarte durchsuchen"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
 msgstr "Sichere Zahlung. Mit Ihrer Bestellung akzeptieren Sie die Bedingungen des Restaurants."
@@ -403,6 +833,10 @@ msgstr "Sichere Zahlung. Mit Ihrer Bestellung akzeptieren Sie die Bedingungen de
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
 msgstr "Wählen Sie im Seiteneditor ein veröffentlichtes Formular aus."
+
+#: src/pages/menu.astro.ts:3
+msgid "Select location"
+msgstr "Standort wählen"
 
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
@@ -416,10 +850,34 @@ msgstr "Senden..."
 msgid "Shop"
 msgstr "Shop"
 
+#: src/components/drops/DropSummaryCard.astro.ts:3
+msgid "Show less"
+msgstr "Weniger anzeigen"
+
+#: src/components/drops/DropSummaryCard.astro.ts:3
+msgid "Show pickup locations"
+msgstr "Abholorte anzeigen"
+
 #: src/components/SiteHeader.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "Anmelden"
+
+#: src/lib/ordering-labels.ts:32
+msgid "Sold out"
+msgstr "Ausverkauft"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Some items are no longer available and were removed from your order."
+msgstr "Einige Artikel sind nicht mehr verfügbar und wurden aus deiner Bestellung entfernt."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Some items in your order changed or sold out. Please review your cart and try again."
+msgstr "Einige Artikel Ihrer Bestellung haben sich geändert oder sind ausverkauft. Bitte prüfen Sie Ihren Warenkorb und versuchen Sie es erneut."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Some items just sold out. Please review your order."
+msgstr "Einige Artikel sind gerade ausverkauft. Bitte prüfen Sie Ihre Bestellung."
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -427,6 +885,7 @@ msgstr "Anmelden"
 msgid "Something went wrong."
 msgstr "Etwas ist schiefgelaufen."
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Special Instructions"
 msgstr "Besondere Hinweise"
@@ -439,6 +898,7 @@ msgstr "Straße *"
 msgid "Submitting..."
 msgstr "Wird gesendet..."
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -458,27 +918,93 @@ msgstr "Vielen Dank für Ihre Bestellung!"
 msgid "Thank you for your purchase!"
 msgstr "Vielen Dank für Ihren Einkauf!"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "That pickup slot just filled up. Please choose a different time."
+msgstr "Dieses Abholfenster ist gerade voll geworden. Bitte wählen Sie eine andere Zeit."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "That pickup time is no longer available. Please choose a different time."
+msgstr "Diese Abholzeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere Zeit."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The hold on your order was released. Please place a new order."
+msgstr "Die Reservierung Ihrer Bestellung wurde freigegeben. Bitte geben Sie eine neue Bestellung auf."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The link may be incomplete. You can start a new order from the menu."
+msgstr "Der Link ist möglicherweise unvollständig. Sie können über die Speisekarte eine neue Bestellung starten."
+
+#: src/lib/ordering-labels.ts:49
+msgid "This combination is sold out. Choose another combination."
+msgstr "Diese Kombination ist ausverkauft. Wähle eine andere Kombination."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This drop could not be found. It may have ended."
+msgstr "Dieser Drop wurde nicht gefunden. Er ist möglicherweise beendet."
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "This drop has ended"
+msgstr "Diese Aktion ist beendet"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This drop is no longer accepting orders."
+msgstr "Dieser Drop nimmt keine Bestellungen mehr an."
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "Dieses Formular ist derzeit nicht verfügbar."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This location is not available for ordering."
+msgstr "Dieser Standort ist nicht für Bestellungen verfügbar."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This order is below the minimum for delivery."
+msgstr "Diese Bestellung liegt unter dem Mindestbestellwert für Lieferung."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This receipt is only available on the device used to place the order."
+msgstr "Dieser Beleg ist nur auf dem Gerät verfügbar, auf dem die Bestellung aufgegeben wurde."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "Dieser Shop ist derzeit nicht verfügbar."
 
 #: src/pages/menu/checkout.astro.ts:3
+msgid "Time remaining"
+msgstr "Verbleibende Zeit"
+
+#: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tip"
 msgstr "Trinkgeld"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Tips are not available for this order."
+msgstr "Trinkgeld ist für diese Bestellung nicht verfügbar."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Too many attempts. Please try again later."
+msgstr "Zu viele Versuche. Bitte versuchen Sie es später erneut."
+
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
 msgid "Total"
 msgstr "Gesamt"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Total Paid"
 msgstr "Bezahlter Betrag"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Try payment again"
+msgstr "Zahlung erneut versuchen"
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -488,6 +1014,10 @@ msgstr "Checkout konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 msgid "Unable to submit the form. Please try again."
 msgstr "Das Formular konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
 
+#: src/lib/ordering-labels.ts:41
+msgid "Up to {count}"
+msgstr "Bis zu {count}"
+
 #: src/pages/profile.astro.ts:3
 msgid "Update your basic details below."
 msgstr "Aktualisieren Sie unten Ihre Angaben."
@@ -496,6 +1026,7 @@ msgstr "Aktualisieren Sie unten Ihre Angaben."
 msgid "Use a new card"
 msgstr "Neue Karte verwenden"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Vegetarian"
 msgstr "Vegetarisch"
@@ -512,17 +1043,69 @@ msgstr "Bestätigen"
 msgid "Verifying..."
 msgstr "Wird bestätigt..."
 
+#: src/components/drops/DropCard.astro.ts:3
+msgid "View"
+msgstr "Ansehen"
+
+#: src/components/drops/DropCard.astro.ts:3
+msgid "View drop"
+msgstr "Aktion ansehen"
+
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/drops.astro.ts:3
+msgid "View menu"
+msgstr "Speisekarte ansehen"
+
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "View Order"
 msgstr "Bestellung ansehen"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "View your receipt"
+msgstr "Beleg ansehen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for payment confirmation"
+msgstr "Warten auf Zahlungsbestätigung"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "Diese Bestellung konnte nicht bestätigt werden."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "We could not place your order. Please try again."
+msgstr "Wir konnten Ihre Bestellung nicht aufgeben. Bitte versuchen Sie es erneut."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't find this order"
+msgstr "Wir konnten diese Bestellung nicht finden"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't load your receipt"
+msgstr "Wir konnten Ihren Beleg nicht laden"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't start payment. Please try again."
+msgstr "Wir konnten die Zahlung nicht starten. Bitte versuchen Sie es erneut."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "Wir verwenden das in Ihrem Profil. Sie können es später ändern."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "We're closed right now."
+msgstr "Wir haben gerade geschlossen."
+
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "We're closed right now. Orders reopen {time}"
+msgstr "Wir haben gerade geschlossen. Bestellungen sind wieder möglich {time}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We're still waiting for confirmation. Check again in a moment."
+msgstr "Wir warten noch auf die Bestätigung. Prüfen Sie es gleich erneut."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We've received your order and our kitchen is preparing your meal."
@@ -540,54 +1123,47 @@ msgstr "Wie heißen Sie?"
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "Wenn Sie etwas im Shop kaufen, werden Ihre Quittungen hier angezeigt."
 
-#: src/pages/menu.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Where"
+msgstr "Wo"
+
+#: src/lib/ordering-labels.ts:51
 msgid "Whole"
 msgstr "Ganz"
 
-#: src/pages/menu.astro.ts:3
+#: src/lib/ordering-labels.ts:68
 msgid "Your cart is empty"
 msgstr "Ihr Warenkorb ist leer"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Your Order"
 msgstr "Ihre Bestellung"
 
 #: src/pages/menu/checkout.astro.ts:3
+msgid "Your order changed while it was being placed. Please review it and try again."
+msgstr "Ihre Bestellung hat sich während der Aufgabe geändert. Bitte prüfen Sie sie und versuchen Sie es erneut."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Your order exceeds the allowed quantity. Please review your cart."
+msgstr "Ihre Bestellung überschreitet die zulässige Menge. Bitte prüfen Sie Ihren Warenkorb."
+
+#: src/pages/menu/checkout.astro.ts:3
 msgid "Your Order is Empty"
 msgstr "Ihre Bestellung ist leer"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."
+msgstr "Ihre Bestellung wurde aufgegeben, aber die Online-Zahlung konnte nicht gestartet werden. Sie können auf der Belegseite zahlen."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your payment didn't go through. Your order is held for a short time — you can try again."
+msgstr "Ihre Zahlung ist fehlgeschlagen. Ihre Bestellung wird kurz gehalten — Sie können es erneut versuchen."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your payment window expired"
+msgstr "Ihr Zahlungszeitfenster ist abgelaufen"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
 msgstr "Ihr Profil"
-
-msgid "From"
-msgstr "Ab"
-
-msgid "Sold out"
-msgstr "Ausverkauft"
-
-msgid "This combination is sold out. Choose another combination."
-msgstr "Diese Kombination ist ausverkauft. Wähle eine andere Kombination."
-
-msgid "Some items are no longer available and were removed from your order."
-msgstr "Einige Artikel sind nicht mehr verfügbar und wurden aus deiner Bestellung entfernt."
-
-#: src/components/PublicDrops.astro.ts:3
-msgid "Closed"
-msgstr "Geschlossen"
-
-#: src/components/PublicDrops.astro.ts:3
-msgid "Coming soon"
-msgstr "Demnächst"
-
-#: src/components/PublicDrops.astro.ts:3
-msgid "Drops"
-msgstr "Aktionen"
-
-#: src/components/PublicDrops.astro.ts:3
-msgid "Ordering now"
-msgstr "Jetzt bestellen"
-
-#: src/components/PublicDrops.astro.ts:3
-msgid "View drop"
-msgstr "Aktion ansehen"

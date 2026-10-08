@@ -20,6 +20,92 @@ test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 			'Requires the seeded "acme" demo organization (slug "acme", en/ar locales and its Arabic menu). Nothing in the repo creates it: seed it locally (npm run db:seed plus the demo/restaurant seed) before running this audit.',
 		)
 
+		// The regional tenant-api is not part of this test environment, so stub
+		// its public ordering endpoints. Checkout still runs the real client-side
+		// flow (options fetch → POST /orders → receipt fetch on the success page).
+		const ORDER_ID = 'ord_e2e_arabic'
+		const orderSummary = {
+			id: ORDER_ID,
+			number: 'ORD-1001',
+			status: 'pending',
+			paymentStatus: 'unpaid',
+			currency: 'USD',
+			subtotalCents: 2650,
+			taxCents: 219,
+			deliveryFeeCents: 0,
+			tipCents: 398,
+			totalCents: 3267,
+			holdExpiresAt: null,
+		}
+		await page.route('**/orders/options**', (route) =>
+			route.fulfill({
+				contentType: 'application/json',
+				body: JSON.stringify({
+					slug: 'acme',
+					locationId: 'loc-e2e',
+					dropSlug: null,
+					onlinePayment: { enabled: false, processor: null },
+					ordering: {
+						open: true,
+						status: 'open',
+						reason: null,
+						nextOpen: null,
+					},
+					fulfillment: { pickup: true, delivery: true },
+					tips: { pickup: true, delivery: true },
+					delivery: { available: true },
+					drop: null,
+				}),
+			}),
+		)
+		await page.route(`**/orders/${ORDER_ID}**`, (route) =>
+			route.fulfill({
+				contentType: 'application/json',
+				body: JSON.stringify({
+					order: {
+						...orderSummary,
+						tipPercent: 15,
+						fulfillment: 'pickup',
+						locale: 'ar',
+						createdAt: new Date().toISOString(),
+						location: { id: 'loc-e2e', name: 'Downtown' },
+						pickup: null,
+						drop: null,
+						lines: [
+							{
+								itemId: 'item-e2e',
+								itemName: 'مارغريتا د.أو.بي',
+								variantId: null,
+								quantity: 1,
+								unitPriceCents: 2650,
+								taxableUnitCents: 2650,
+								totalCents: 2650,
+								taxableCents: 2650,
+								instructions: null,
+								options: [],
+							},
+						],
+						contact: {
+							name: 'سارة أحمد',
+							phone: '+966501234567',
+							email: 'sarah@example.com',
+						},
+						delivery: null,
+					},
+				}),
+			}),
+		)
+		await page.route('**/orders', (route) => {
+			if (route.request().method() !== 'POST') return route.fallback()
+			return route.fulfill({
+				contentType: 'application/json',
+				body: JSON.stringify({
+					order: orderSummary,
+					receiptToken: 'e2e-receipt-token-0123456789abcdef',
+				}),
+			})
+		})
+
 		// 1. Visit Arabic Menu Page
 		await page.setViewportSize({ width: 1280, height: 800 })
 		await page.goto('http://acme.menuza.test:3008/ar/menu')
@@ -98,10 +184,14 @@ test.describe('Customer-Facing Site Arabic Localization & RTL Audit', () => {
 		await expect(page.locator('#modal-item-name')).toContainText(
 			'مارغريتا د.أو.بي',
 		)
-		await expect(page.getByText('اختيار العجينة')).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: 'اختيار العجينة' }),
+		).toBeVisible()
 		await expect(page.getByText('عجينة نابولية رقيقة')).toBeVisible()
 		await expect(page.getByText('عجينة خالية من الغلوتين')).toBeVisible()
-		await expect(page.getByText('إضافات مميزة')).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: 'إضافات مميزة' }),
+		).toBeVisible()
 		await expect(page.getByText('موزاريلا بوفالو طازجة')).toBeVisible()
 		await expect(page.getByText('بروشوتو دي بارما معتق')).toBeVisible()
 		await expect(page.getByText('تعليمات خاصة')).toBeVisible()

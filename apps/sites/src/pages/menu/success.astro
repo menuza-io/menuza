@@ -1,12 +1,17 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import { siteBtnPrimary, siteBtnGhost, siteContainer } from '~/lib/media'
 import { siteCardClass } from '~/lib/form-classes'
+import { translate } from '~/lib/ordering-labels'
+import { fetchPublishedDrops, fetchPublishedSiteMenu } from '~/lib/org'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
 const requestedLocale =
 	Astro.locals.requestedLocale ||
 	organization?.locale ||
@@ -18,24 +23,117 @@ if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
 }
 
-const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
-const homeHref = getLocaleHref('/', requestedLocale, defaultLocale)
+const menuHref = getLocaleHref('/menu', requestedLocale, requestedLocale, defaultLocale)
+const homeHref = getLocaleHref('/', requestedLocale, requestedLocale, defaultLocale)
+const dropBaseHref = getLocaleHref('/drop', requestedLocale, requestedLocale, defaultLocale)
+
+// Locations (name/address/timezone) let the client render the receipt's
+// pickup block without any customer data crossing Sites SSR.
+const menuPayload = await fetchPublishedSiteMenu({
+	slug: orgSlug,
+	host: customHost,
+	lng: requestedLocale,
+})
+const receiptLocations = (menuPayload?.locations ?? []).map((location) => ({
+	id: location.id,
+	name: getLocalizedMenuValue(location.name, requestedLocale, defaultLocale),
+	address: location.address,
+	timezone: location.timezone ?? 'UTC',
+}))
+
+// Receipts carry only the drop slug; titles come from the public drop listing.
+const publishedDrops = await fetchPublishedDrops({
+	slug: orgSlug,
+	host: customHost,
+}).catch(() => [])
+const dropTitles = Object.fromEntries(
+	publishedDrops.map((drop) => [
+		drop.slug,
+		getLocalizedMenuValue(drop.title, requestedLocale, defaultLocale),
+	]),
+)
+
+const hasOrderParam = Boolean(Astro.url.searchParams.get('order'))
 
 const successTitle = i18n._(msg`Order Confirmed`)
 const thankYouTitle = i18n._(msg`Thank you for your order!`)
 const thankYouDesc = i18n._(msg`We've received your order and our kitchen is preparing your meal.`)
 const orderNumLabel = i18n._(msg`Order Number`)
 const estTimeLabel = i18n._(msg`Estimated Time`)
+const pickupTimeLabel = i18n._(msg`Pickup time`)
 const receiptTitle = i18n._(msg`Receipt`)
 const subtotalText = i18n._(msg`Subtotal`)
 const taxText = i18n._(msg`Tax`)
 const deliveryFeeText = i18n._(msg`Delivery Fee`)
 const tipText = i18n._(msg`Tip`)
+const totalText = i18n._(msg`Total`)
 const totalPaidText = i18n._(msg`Total Paid`)
 const orderMoreLabel = i18n._(msg`Order More Food`)
 const returnHomeLabel = i18n._(msg`Return to Homepage`)
 const pickupOrderText = i18n._(msg`Pickup Order`)
 const deliveryOrderText = i18n._(msg`Delivery Order`)
+const addToCalendarLabel = i18n._(msg`Add to calendar`)
+/** Kept as a template so the client can fill in the drop title. */
+const pickupCalendarTitle = translate(i18n, msg`Pickup: {title}`, { title: '{title}' })
+
+// ---------- regional receipt states ----------
+
+const loadingText = i18n._(msg`Loading your receipt…`)
+const missingTitle = i18n._(msg`We couldn't find this order`)
+const missingDesc = i18n._(msg`The link may be incomplete. You can start a new order from the menu.`)
+const deviceTitle = i18n._(msg`Receipt unavailable on this device`)
+const deviceDesc = i18n._(msg`This receipt is only available on the device used to place the order.`)
+const loadErrorTitle = i18n._(msg`We couldn't load your receipt`)
+const loadErrorDesc = i18n._(msg`Please check your connection and try again.`)
+const retryLabel = i18n._(msg`Try again`)
+const pendingTitle = i18n._(msg`Waiting for payment confirmation`)
+const pendingDesc = i18n._(msg`Keep this page open — we'll confirm your order as soon as your payment completes.`)
+const pendingTimeoutDesc = i18n._(msg`We're still waiting for confirmation. Check again in a moment.`)
+const checkAgainLabel = i18n._(msg`Check again`)
+const paymentFailedTitle = i18n._(msg`Payment failed`)
+const paymentFailedDesc = i18n._(msg`Your payment didn't go through. Your order is held for a short time — you can try again.`)
+const tryPaymentAgainLabel = i18n._(msg`Try payment again`)
+const paymentExpiredTitle = i18n._(msg`Your payment window expired`)
+const paymentExpiredDesc = i18n._(msg`The hold on your order was released. Please place a new order.`)
+
+const successLabels = {
+	locale: requestedLocale,
+	organizationId: organization.id,
+	currency: menuPayload?.organization?.currency || 'USD',
+	menuHref,
+	dropBaseHref,
+	dropTitles,
+	pickupOrder: pickupOrderText,
+	deliveryOrder: deliveryOrderText,
+	pickupTime: pickupTimeLabel,
+	estTime: estTimeLabel,
+	estPickup: i18n._(msg`~15-25 minutes`),
+	estDelivery: i18n._(msg`~35-45 minutes`),
+	pickupCalendarTitle,
+	deliverTo: translate(i18n, msg`Deliver to: {address}`, { address: '{address}' }),
+	confirmedBadge: successTitle,
+	confirmedTitle: thankYouTitle,
+	confirmedDesc: thankYouDesc,
+	pendingTitle,
+	pendingDesc,
+	pendingTimeoutDesc,
+	failedTitle: paymentFailedTitle,
+	failedDesc: paymentFailedDesc,
+	expiredTitle: paymentExpiredTitle,
+	expiredDesc: paymentExpiredDesc,
+	paymentStartFailed: i18n._(msg`We couldn't start payment. Please try again.`),
+	total: totalText,
+	totalPaid: totalPaidText,
+	statuses: {
+		pending: i18n._(msg`Order received`),
+		accepted: i18n._(msg`Accepted`),
+		preparing: i18n._(msg`Preparing`),
+		ready: i18n._(msg`Ready`),
+		completed: i18n._(msg`Completed`),
+		cancelled: i18n._(msg`Cancelled`),
+	},
+	locations: receiptLocations,
+}
 ---
 
 <SitePage
@@ -45,167 +143,626 @@ const deliveryOrderText = i18n._(msg`Delivery Order`)
 >
 	<div class="min-h-screen bg-background py-12 sm:py-20">
 		<div class:list={[siteContainer, "max-w-xl text-center space-y-8"]}>
-			{/* Celebration Badge */}
-			<div class="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-md">
-				<svg xmlns="http://www.w3.org/2000/svg" class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+			{/* Loading state (only while a receipt fetch is in flight) */}
+			<div id="success-loading" class:list={["py-16 space-y-4", hasOrderParam ? '' : 'hidden']}>
+				<div class="mx-auto size-10 animate-spin rounded-full border-2 border-muted border-t-primary" role="status"></div>
+				<p class="text-sm text-muted-foreground">{loadingText}</p>
 			</div>
 
-			<div class="space-y-2">
-				<span class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-					{successTitle}
-				</span>
-				<h1 class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-					{thankYouTitle}
-				</h1>
-				<p class="text-sm text-muted-foreground">
-					{thankYouDesc}
-				</p>
+			{/* No order reference in the URL */}
+			<div id="success-missing" class:list={["py-16 space-y-4", hasOrderParam ? 'hidden' : '']}>
+				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{missingTitle}</h1>
+				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{missingDesc}</p>
+				<a href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{orderMoreLabel}</a>
 			</div>
 
-			{/* Order Details Card */}
-			<div id="order-summary-card" class:list={[siteCardClass, "text-start space-y-6"]}>
-				<div class="flex items-center justify-between border-b border-border pb-4">
-					<div>
-						<p class="text-xs text-muted-foreground uppercase">{orderNumLabel}</p>
-						<p id="order-num" class="font-heading text-lg font-bold text-foreground">#ORD-XXXXX</p>
-					</div>
-					<div class="text-end">
-						<p class="text-xs text-muted-foreground uppercase">{estTimeLabel}</p>
-						<p id="order-est-time" class="font-heading text-sm text-emerald-600 dark:text-emerald-400">~25-35 minutes</p>
-					</div>
+			{/* Receipt capability lives only in this device's sessionStorage */}
+			<div id="success-device" class="hidden py-16 space-y-4">
+				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{deviceTitle}</h1>
+				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{deviceDesc}</p>
+				<a href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{orderMoreLabel}</a>
+			</div>
+
+			{/* Receipt fetch failed (network/region) */}
+			<div id="success-error" class="hidden py-16 space-y-4">
+				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{loadErrorTitle}</h1>
+				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{loadErrorDesc}</p>
+				<button type="button" id="success-retry" class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{retryLabel}</button>
+			</div>
+
+			{/* Receipt view */}
+			<div id="order-view" class="hidden space-y-8">
+				{/* Celebration / attention badge */}
+				<div id="success-icon" class="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-md">
+					<svg id="icon-confirmed" xmlns="http://www.w3.org/2000/svg" class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+					<svg id="icon-attention" xmlns="http://www.w3.org/2000/svg" class="hidden size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9.25"/></svg>
 				</div>
 
-				{/* Fulfillment Info */}
-				<div class="rounded-lg bg-muted/40 p-3 text-xs space-y-1">
-					<p class="font-semibold text-foreground flex items-center gap-1.5" id="order-mode-text">
-						🥡 {pickupOrderText}
+				<div class="space-y-2">
+					<span id="success-badge-text" class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+						{successTitle}
+					</span>
+					<h1 id="success-heading" class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+						{thankYouTitle}
+					</h1>
+					<p id="success-subtext" class="text-sm text-muted-foreground">
+						{thankYouDesc}
 					</p>
-					<p class="text-muted-foreground" id="order-recipient-text">
-						Guest
+				</div>
+
+				{/* Online payment states */}
+				<div id="payment-pending" class="hidden rounded-lg border border-border bg-muted/40 p-4 text-start space-y-2" role="status">
+					<p class="flex items-center gap-2 text-sm font-semibold text-foreground">
+						<span id="payment-pending-spinner" class="size-4 animate-spin rounded-full border-2 border-muted border-t-primary"></span>
+						<span id="payment-pending-title">{pendingTitle}</span>
 					</p>
+					<p id="payment-pending-desc" class="text-xs text-muted-foreground">{pendingDesc}</p>
+					<button type="button" id="payment-check-again" class="hidden text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80">{checkAgainLabel}</button>
+				</div>
+				<div id="payment-failed" class="hidden rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-start space-y-3" role="alert">
+					<p class="text-sm font-semibold text-destructive">{paymentFailedTitle}</p>
+					<p class="text-xs text-destructive/80">{paymentFailedDesc}</p>
+					<button type="button" id="retry-payment-btn" class:list={[siteBtnPrimary, "px-5 py-2 text-sm"]}>{tryPaymentAgainLabel}</button>
+					<p id="retry-payment-error" class="hidden text-xs text-destructive"></p>
+				</div>
+				<div id="payment-expired" class="hidden rounded-lg border border-border bg-muted/40 p-4 text-start space-y-3" role="alert">
+					<p class="text-sm font-semibold text-foreground">{paymentExpiredTitle}</p>
+					<p class="text-xs text-muted-foreground">{paymentExpiredDesc}</p>
+					<a id="payment-expired-link" href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-5 py-2 text-sm"]}>{orderMoreLabel}</a>
 				</div>
 
-				{/* Receipt Breakdown */}
-				<div class="space-y-3">
-					<h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">{receiptTitle}</h3>
-					<div id="order-items-list" class="space-y-2 divide-y divide-border/60 text-xs">
-						<!-- Injected via client script -->
+				{/* Order Details Card */}
+				<div id="order-summary-card" class:list={[siteCardClass, "text-start space-y-6"]}>
+					<div class="flex items-center justify-between border-b border-border pb-4">
+						<div>
+							<p class="text-xs text-muted-foreground uppercase">{orderNumLabel}</p>
+							<p id="order-num" class="font-heading text-lg font-bold text-foreground">#—</p>
+							<span id="order-status-badge" class="mt-1 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"></span>
+						</div>
+						<div class="text-end">
+							<p id="order-est-time-label" class="text-xs text-muted-foreground uppercase">{estTimeLabel}</p>
+							<p id="order-est-time" class="font-heading text-sm text-emerald-600 dark:text-emerald-400"></p>
+						</div>
 					</div>
-					<div class="border-t border-border pt-3 space-y-1.5 text-xs text-muted-foreground">
-						<div class="flex justify-between">
-							<span>{subtotalText}</span>
-							<span id="order-subtotal" class="font-medium text-foreground">$0.00</span>
+
+					{/* Fulfillment Info */}
+					<div class="rounded-lg bg-muted/40 p-3 text-xs space-y-1">
+						<p class="font-semibold text-foreground flex items-center gap-1.5" id="order-mode-text">
+							🥡 {pickupOrderText}
+						</p>
+						<p class="text-muted-foreground" id="order-recipient-text"></p>
+					</div>
+
+					{/* Pickup details (pre-orders): location, address, slot, calendar */}
+					<div id="drop-pickup-details" class="hidden rounded-lg border border-border bg-background p-3 text-start space-y-1">
+						<p class="text-xs font-medium uppercase tracking-wide text-muted-foreground" id="drop-pickup-when-label">
+							{pickupTimeLabel}
+						</p>
+						<p id="drop-pickup-when" class="text-sm font-semibold text-foreground"></p>
+						<p id="drop-pickup-location" class="text-sm text-foreground"></p>
+						<p id="drop-pickup-address" class="text-xs text-muted-foreground"></p>
+						<p id="drop-pickup-title" class="text-xs text-muted-foreground"></p>
+						<a
+							id="drop-pickup-calendar"
+							download="pickup.ics"
+							class="hidden mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
+							{addToCalendarLabel}
+						</a>
+					</div>
+
+					{/* Receipt Breakdown (authoritative, from the regional order) */}
+					<div class="space-y-3">
+						<h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">{receiptTitle}</h3>
+						<div id="order-items-list" class="space-y-2 divide-y divide-border/60 text-xs">
+							<!-- Injected via client script -->
 						</div>
-						<div class="flex justify-between">
-							<span>{taxText}</span>
-							<span id="order-tax" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div id="order-deliv-row" class="flex justify-between hidden">
-							<span>{deliveryFeeText}</span>
-							<span id="order-delivery-fee" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div class="flex justify-between">
-							<span>{tipText}</span>
-							<span id="order-tip" class="font-medium text-foreground">$0.00</span>
-						</div>
-						<div class="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
-							<span>{totalPaidText}</span>
-							<span id="order-total">$0.00</span>
+						<div class="border-t border-border pt-3 space-y-1.5 text-xs text-muted-foreground">
+							<div class="flex justify-between">
+								<span>{subtotalText}</span>
+								<span id="order-subtotal" class="font-medium text-foreground">$0.00</span>
+							</div>
+							<div class="flex justify-between">
+								<span>{taxText}</span>
+								<span id="order-tax" class="font-medium text-foreground">$0.00</span>
+							</div>
+							<div id="order-deliv-row" class="flex justify-between hidden">
+								<span>{deliveryFeeText}</span>
+								<span id="order-delivery-fee" class="font-medium text-foreground">$0.00</span>
+							</div>
+							<div class="flex justify-between">
+								<span>{tipText}</span>
+								<span id="order-tip" class="font-medium text-foreground">$0.00</span>
+							</div>
+							<div class="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
+								<span id="order-total-label">{totalPaidText}</span>
+								<span id="order-total">$0.00</span>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-				<a href={menuHref} class:list={[siteBtnPrimary, "w-full sm:w-auto px-6 py-2.5"]}>
-					{orderMoreLabel}
-				</a>
-				<a href={homeHref} class:list={[siteBtnGhost, "w-full sm:w-auto px-6 py-2.5"]}>
-					{returnHomeLabel}
-				</a>
+				<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+					<a href={menuHref} class:list={[siteBtnPrimary, "w-full sm:w-auto px-6 py-2.5"]}>
+						{orderMoreLabel}
+					</a>
+					<a href={homeHref} class:list={[siteBtnGhost, "w-full sm:w-auto px-6 py-2.5"]}>
+						{returnHomeLabel}
+					</a>
+				</div>
 			</div>
 		</div>
 	</div>
 
-	<script id="success-labels" type="application/json" is:inline set:html={JSON.stringify({ locale: requestedLocale, pickupOrder: pickupOrderText, deliveryOrder: deliveryOrderText }).replace(/</g, '\\u003c')} />
+	<script
+		id="success-labels"
+		type="application/json"
+		is:inline
+		set:html={JSON.stringify(successLabels).replace(/</g, '\\u003c')}
+	/>
 
 	<script>
-		try {
-			const labelsEl = document.getElementById('success-labels')
-			const labels = labelsEl ? JSON.parse(labelsEl.textContent || '{}') : {}
-			const saved = localStorage.getItem('menuza_recent_order')
-			if (saved) {
-				const order = JSON.parse(saved)
-				const formatCurrency = (num: number) => {
-					const valid = Number.isFinite(num) ? num : 0
-					const sign = valid < 0 ? '-' : ''
-					return `${sign}$${Math.abs(valid).toLocaleString('en-US', {
-						minimumFractionDigits: 2,
-						maximumFractionDigits: 2,
-					})}`
-				}
+		import { buildIcsDataUrl } from '~/lib/ordering/calendar'
+		import { getLocalizedMenuValue } from '@repo/common/menu-types'
+		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
+		import {
+			OrderRequestError,
+			fetchOrderReceipt,
+			loadOrderCapability,
+			startOrderPayment,
+		} from '~/lib/ordering/order-client'
+		import {
+			interpretPaymentStatus,
+			shouldContinuePolling,
+			PAYMENT_POLL_INTERVAL_MS,
+		} from '~/lib/ordering/payment-poll'
+		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
+		import { zonedTimeToUtc } from '~/lib/drops/format'
+		import { getOrgBinding } from '~/lib/client-auth'
 
-				// Build nodes with textContent so operator/guest text is never parsed as HTML.
-				const createEl = (tag: string, className?: string, text?: string) => {
-					const node = document.createElement(tag)
-					if (className) node.className = className
-					if (text !== undefined) node.textContent = text
-					return node
-				}
+		type ReceiptLine = {
+			itemId: string
+			itemName: string
+			variantId: string | null
+			quantity: number
+			unitPriceCents: number
+			totalCents: number
+			instructions: string | null
+			options: Array<{
+				groupId: string
+				groupName: string
+				optionId: string
+				optionName: string
+				half: 'whole' | 'left' | 'right' | null
+				quantity: number
+				priceCents: number
+				totalCents: number
+			}>
+		}
 
-				const orderNumEl = document.getElementById('order-num')
-				const estTimeEl = document.getElementById('order-est-time')
-				const modeTextEl = document.getElementById('order-mode-text')
-				const recipientTextEl = document.getElementById('order-recipient-text')
-				const itemsListEl = document.getElementById('order-items-list')
-				const subtotalEl = document.getElementById('order-subtotal')
-				const taxEl = document.getElementById('order-tax')
-				const delivRow = document.getElementById('order-deliv-row')
-				const delivFeeEl = document.getElementById('order-delivery-fee')
-				const tipEl = document.getElementById('order-tip')
-				const totalEl = document.getElementById('order-total')
+		type ReceiptOrder = {
+			id: string
+			number: string
+			status: string
+			paymentStatus: string
+			currency: string
+			subtotalCents: number
+			taxCents: number
+			deliveryFeeCents: number
+			tipCents: number
+			totalCents: number
+			holdExpiresAt: string | null
+			tipPercent: number
+			fulfillment: string
+			locale: string
+			createdAt: string | null
+			location: { id: string; name: string } | null
+			pickup: {
+				windowId: string
+				date: string
+				time: string
+				timezone: string
+			} | null
+			drop: { slug: string } | null
+			lines: ReceiptLine[]
+			contact: { name: string; phone: string; email: string | null }
+			delivery: {
+				address: string
+				city: string | null
+				unit: string | null
+				notes: string | null
+				feeCents: number
+				zoneId: string | null
+			} | null
+		}
 
-				if (orderNumEl) orderNumEl.textContent = `#${order.orderNumber}`
-				if (estTimeEl) {
-					estTimeEl.textContent = order.mode === 'delivery' ? '~35-45 minutes' : '~15-25 minutes'
-				}
-				if (modeTextEl) {
-					modeTextEl.textContent = order.mode === 'delivery' ? `🚗 ${labels.deliveryOrder || 'Delivery Order'}` : `🥡 ${labels.pickupOrder || 'Pickup Order'}`
-				}
-				if (recipientTextEl) {
-					recipientTextEl.textContent = `${order.customerName} • ${order.customerPhone}${
-						order.deliveryAddress ? ` • Deliver to: ${order.deliveryAddress}` : ''
-					}`
-				}
+		const labelsEl = document.getElementById('success-labels')
+		const labels = labelsEl ? JSON.parse(labelsEl.textContent || '{}') : {}
+		const orgId: string = labels.organizationId || 'default'
+		const orderId = new URLSearchParams(window.location.search).get('order')
+		const defaultLocale =
+			document.documentElement.dataset.defaultLocale || 'en'
 
-				if (itemsListEl && order.items) {
-					const rows = order.items.map((it: any) => {
-						const row = createEl('div', 'pt-2 first:pt-0 flex justify-between items-start')
-						const info = createEl('div')
-						info.appendChild(createEl('span', 'font-medium text-foreground', `${it.quantity}x ${it.name}`))
-						if (it.options && it.options.length > 0) {
-							info.appendChild(
-								createEl('p', 'text-[11px] text-muted-foreground', it.options.map((o: any) => o.optionName).join(', ')),
-							)
-						}
-						row.appendChild(info)
-						row.appendChild(createEl('span', 'font-semibold text-foreground', formatCurrency(it.unitPrice * it.quantity)))
-						return row
-					})
-					itemsListEl.replaceChildren(...rows)
-				}
+		// Catalog names arrive as locale maps ({"en":…,"ar":…}); pick the page locale.
+		const localize = (value: string | null | undefined): string =>
+			getLocalizedMenuValue(value, labels.locale || 'en', defaultLocale)
 
-				if (subtotalEl) subtotalEl.textContent = formatCurrency(order.subtotal || 0)
-				if (taxEl) taxEl.textContent = formatCurrency(order.tax || 0)
-				if (delivRow && delivFeeEl) {
-					if (order.mode === 'delivery') {
-						delivRow.classList.remove('hidden')
-						delivFeeEl.textContent = formatCurrency(order.deliveryFee || 0)
+		function show(id: string) {
+			document.getElementById(id)?.classList.remove('hidden')
+		}
+		function hide(id: string) {
+			document.getElementById(id)?.classList.add('hidden')
+		}
+
+		// Build nodes with textContent so operator/guest text is never parsed as HTML.
+		function createEl(tag: string, className?: string, text?: string) {
+			const node = document.createElement(tag)
+			if (className) node.className = className
+			if (text !== undefined) node.textContent = text
+			return node
+		}
+
+		function setHeading(badge: string, title: string, subtext: string, attention = false) {
+			const badgeEl = document.getElementById('success-badge-text')
+			const titleEl = document.getElementById('success-heading')
+			const subtextEl = document.getElementById('success-subtext')
+			if (badgeEl) badgeEl.textContent = badge
+			if (titleEl) titleEl.textContent = title
+			if (subtextEl) subtextEl.textContent = subtext
+			document.getElementById('icon-confirmed')?.classList.toggle('hidden', attention)
+			document.getElementById('icon-attention')?.classList.toggle('hidden', !attention)
+			const iconWrap = document.getElementById('success-icon')
+			iconWrap?.classList.toggle('bg-emerald-500/10', !attention)
+			iconWrap?.classList.toggle('text-emerald-600', !attention)
+			iconWrap?.classList.toggle('dark:text-emerald-400', !attention)
+			iconWrap?.classList.toggle('border-emerald-500/20', !attention)
+			iconWrap?.classList.toggle('bg-destructive/10', attention)
+			iconWrap?.classList.toggle('text-destructive', attention)
+			iconWrap?.classList.toggle('border-destructive/30', attention)
+		}
+
+		function renderReceipt(order: ReceiptOrder) {
+			const money = createMoneyFormatter(order.currency || labels.currency || 'USD', labels.locale)
+			const formatCents = (cents: number) => money((Number.isFinite(cents) ? cents : 0) / 100)
+
+			const orderNumEl = document.getElementById('order-num')
+			const estTimeEl = document.getElementById('order-est-time')
+			const estLabelEl = document.getElementById('order-est-time-label')
+			const modeTextEl = document.getElementById('order-mode-text')
+			const recipientTextEl = document.getElementById('order-recipient-text')
+			const itemsListEl = document.getElementById('order-items-list')
+			const subtotalEl = document.getElementById('order-subtotal')
+			const taxEl = document.getElementById('order-tax')
+			const delivRow = document.getElementById('order-deliv-row')
+			const delivFeeEl = document.getElementById('order-delivery-fee')
+			const tipEl = document.getElementById('order-tip')
+			const totalEl = document.getElementById('order-total')
+			const totalLabelEl = document.getElementById('order-total-label')
+			const statusEl = document.getElementById('order-status-badge')
+
+			if (orderNumEl) orderNumEl.textContent = `#${order.number}`
+			if (statusEl) {
+				statusEl.textContent =
+					(labels.statuses as Record<string, string>)[order.status] ??
+					(labels.statuses as Record<string, string>).pending
+			}
+			if (totalLabelEl) {
+				totalLabelEl.textContent =
+					order.paymentStatus === 'paid' ? labels.totalPaid : labels.total
+			}
+
+			const isDelivery = order.fulfillment === 'delivery'
+			if (modeTextEl) {
+				modeTextEl.textContent = isDelivery
+					? `🚗 ${labels.deliveryOrder || 'Delivery Order'}`
+					: `🥡 ${labels.pickupOrder || 'Pickup Order'}`
+			}
+			if (recipientTextEl) {
+				let text = [order.contact?.name, order.contact?.phone]
+					.filter(Boolean)
+					.join(' • ')
+				if (isDelivery && order.delivery) {
+					const address = [
+						order.delivery.address,
+						order.delivery.unit,
+						order.delivery.city,
+					]
+						.filter(Boolean)
+						.join(', ')
+					if (address) {
+						text += ` • ${fillTemplate(labels.deliverTo || 'Deliver to: {address}', { address })}`
 					}
 				}
-				if (tipEl) tipEl.textContent = formatCurrency(order.tip || 0)
-				if (totalEl) totalEl.textContent = formatCurrency(order.total || 0)
+				recipientTextEl.textContent = text
 			}
-		} catch {}
+
+			// Pickup orders (all drop orders): show the slot, not an estimate.
+			const pickup = order.pickup
+			if (pickup) {
+				const timezone = pickup.timezone || 'UTC'
+				const when = formatSlot(pickup.date, pickup.time, labels.locale || 'en', timezone)
+				show('drop-pickup-details')
+				const whenEl = document.getElementById('drop-pickup-when')
+				const locationEl = document.getElementById('drop-pickup-location')
+				const addressEl = document.getElementById('drop-pickup-address')
+				const titleEl = document.getElementById('drop-pickup-title')
+				const locationMeta = (labels.locations as Array<{ id: string; name: string; address: unknown }>).find(
+					(l) => l.id === order.location?.id,
+				)
+				if (whenEl) whenEl.textContent = when
+				if (locationEl) locationEl.textContent = locationMeta?.name || localize(order.location?.name) || ''
+				if (addressEl) addressEl.textContent = formatPickupAddress(locationMeta?.address)
+				const dropTitle =
+					(order.drop?.slug
+						? (labels.dropTitles as Record<string, string>)[order.drop.slug]
+						: null) ?? order.drop?.slug ?? ''
+				if (titleEl) titleEl.textContent = dropTitle
+				if (estLabelEl) estLabelEl.textContent = labels.pickupTime || 'Pickup time'
+				if (estTimeEl) estTimeEl.textContent = when
+
+				const calendarEl = document.getElementById(
+					'drop-pickup-calendar',
+				) as HTMLAnchorElement | null
+				const start = zonedTimeToUtc(pickup.date, pickup.time, timezone)
+				if (calendarEl && start) {
+					// The receipt carries the slot start; calendar entries span a
+					// sensible half hour when the window interval is unknown.
+					const end = new Date(start.getTime() + 30 * 60_000)
+					const dropSlug = order.drop?.slug ?? null
+					calendarEl.href = buildIcsDataUrl({
+						title: fillTemplate(labels.pickupCalendarTitle || 'Pickup: {title}', {
+							title:
+								(dropSlug
+									? (labels.dropTitles as Record<string, string>)[dropSlug]
+									: null) ??
+								dropSlug ??
+								order.number,
+						}),
+						start,
+						end,
+						location: [locationMeta?.name || localize(order.location?.name), formatPickupAddress(locationMeta?.address)]
+							.filter(Boolean)
+							.join(', '),
+						description: `#${order.number}`,
+						url: dropSlug
+							? new URL(
+									`${labels.dropBaseHref || '/drop'}/${encodeURIComponent(dropSlug)}`,
+									window.location.origin,
+								).toString()
+							: null,
+					})
+					calendarEl.classList.remove('hidden')
+				}
+			} else {
+				// Handoff menu orders keep a plain-language prep estimate.
+				if (estLabelEl) estLabelEl.textContent = labels.estTime || 'Estimated Time'
+				if (estTimeEl) {
+					estTimeEl.textContent = isDelivery
+						? labels.estDelivery || '~35-45 minutes'
+						: labels.estPickup || '~15-25 minutes'
+				}
+			}
+
+			if (itemsListEl) {
+				const rows = (order.lines ?? []).map((line) => {
+					const row = createEl('div', 'pt-2 first:pt-0 flex justify-between items-start gap-3')
+					const info = createEl('div')
+					info.appendChild(
+						createEl('span', 'font-medium text-foreground', `${line.quantity}x ${localize(line.itemName)}`),
+					)
+					if (line.options && line.options.length > 0) {
+						info.appendChild(
+							createEl(
+								'p',
+								'text-[11px] text-muted-foreground',
+								line.options
+									.map((o) => {
+										const name = localize(o.optionName)
+										return o.quantity > 1 ? `${o.quantity}x ${name}` : name
+									})
+									.join(', '),
+							),
+						)
+					}
+					if (line.instructions) {
+						info.appendChild(
+							createEl('p', 'text-[11px] italic text-muted-foreground', `Note: ${line.instructions}`),
+						)
+					}
+					row.appendChild(info)
+					row.appendChild(
+						createEl('span', 'font-semibold text-foreground', formatCents(line.totalCents)),
+					)
+					return row
+				})
+				itemsListEl.replaceChildren(...rows)
+			}
+
+			if (subtotalEl) subtotalEl.textContent = formatCents(order.subtotalCents)
+			if (taxEl) taxEl.textContent = formatCents(order.taxCents)
+			if (delivRow && delivFeeEl) {
+				if (isDelivery) {
+					delivRow.classList.remove('hidden')
+					delivFeeEl.textContent = formatCents(order.deliveryFeeCents)
+				} else {
+					delivRow.classList.add('hidden')
+				}
+			}
+			if (tipEl) tipEl.textContent = formatCents(order.tipCents)
+			if (totalEl) totalEl.textContent = formatCents(order.totalCents)
+		}
+
+		function showConfirmed() {
+			hide('payment-pending')
+			hide('payment-failed')
+			hide('payment-expired')
+			setHeading(labels.confirmedBadge, labels.confirmedTitle, labels.confirmedDesc)
+		}
+
+		function showPending() {
+			hide('payment-failed')
+			hide('payment-expired')
+			setHeading(labels.confirmedBadge, labels.pendingTitle, labels.pendingDesc)
+			document.getElementById('payment-pending-spinner')?.classList.remove('hidden')
+			const desc = document.getElementById('payment-pending-desc')
+			if (desc) desc.textContent = labels.pendingDesc
+			hide('payment-check-again')
+			show('payment-pending')
+		}
+
+		function showPendingTimeout() {
+			document.getElementById('payment-pending-spinner')?.classList.add('hidden')
+			const desc = document.getElementById('payment-pending-desc')
+			if (desc) desc.textContent = labels.pendingTimeoutDesc
+			show('payment-check-again')
+		}
+
+		function showFailed(canRetry: boolean) {
+			hide('payment-pending')
+			hide('payment-expired')
+			setHeading(labels.failedTitle, labels.failedTitle, labels.failedDesc, true)
+			const retryBtn = document.getElementById('retry-payment-btn')
+			retryBtn?.classList.toggle('hidden', !canRetry)
+			show('payment-failed')
+		}
+
+		function showExpired(order: ReceiptOrder) {
+			hide('payment-pending')
+			hide('payment-failed')
+			setHeading(labels.expiredTitle, labels.expiredTitle, labels.expiredDesc, true)
+			const link = document.getElementById('payment-expired-link') as HTMLAnchorElement | null
+			if (link && order.drop?.slug) {
+				link.href = `${labels.dropBaseHref || '/drop'}/${encodeURIComponent(order.drop.slug)}`
+			}
+			show('payment-expired')
+		}
+
+		// Poll the App-brokered status proxy. A hosted-payment redirect alone
+		// never marks the order paid; only this endpoint and the receipt do.
+		async function pollPaymentStatus(order: ReceiptOrder) {
+			const capability = loadOrderCapability(orgId, order.id)
+			if (!capability?.paymentToken) return
+			const startedAt = Date.now()
+			const tick = async (): Promise<void> => {
+				try {
+					const response = await fetch('/api/orders/payment-status', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							...getOrgBinding(),
+							orderId: order.id,
+							paymentToken: capability.paymentToken,
+							locale: labels.locale,
+						}),
+					})
+					const value: any = await response.json().catch(() => null)
+					if (!response.ok) throw new OrderRequestError('payment_unavailable', response.status)
+					const outcome = interpretPaymentStatus({
+						status: value?.status,
+						orderStatus: value?.orderStatus,
+						holdExpiresAt: value?.holdExpiresAt,
+					})
+					if (outcome.kind === 'paid') {
+						await loadReceipt()
+						showConfirmed()
+						return
+					}
+					if (outcome.kind === 'failed') {
+						showFailed(outcome.canRetry)
+						return
+					}
+					if (outcome.kind === 'expired') {
+						showExpired(order)
+						return
+					}
+				} catch {
+					// Transient proxy/network failure: keep polling until the cap.
+				}
+				if (shouldContinuePolling(Date.now() - startedAt)) {
+					setTimeout(() => void tick(), PAYMENT_POLL_INTERVAL_MS)
+				} else {
+					showPendingTimeout()
+				}
+			}
+			await tick()
+		}
+
+		async function loadReceipt(): Promise<ReceiptOrder | null> {
+			if (!orderId) return null
+			try {
+				const value: any = await fetchOrderReceipt(orgId, orderId)
+				const order = (value?.order ?? null) as ReceiptOrder | null
+				if (order) renderReceipt(order)
+				return order
+			} catch {
+				return null
+			}
+		}
+
+		async function init() {
+			if (!orderId) {
+				hide('success-loading')
+				show('success-missing')
+				return
+			}
+			// The receipt capability never leaves this device's sessionStorage.
+			if (!loadOrderCapability(orgId, orderId)) {
+				hide('success-loading')
+				show('success-device')
+				return
+			}
+			const order = await loadReceipt()
+			hide('success-loading')
+			if (!order) {
+				show('success-error')
+				return
+			}
+			show('order-view')
+
+			const retryBtn = document.getElementById('retry-payment-btn')
+			retryBtn?.addEventListener('click', () => {
+				void (async () => {
+					const errorEl = document.getElementById('retry-payment-error')
+					errorEl?.classList.add('hidden')
+					;(retryBtn as HTMLButtonElement).disabled = true
+					try {
+						const url = await startOrderPayment(orgId, order.id, labels.locale)
+						window.location.assign(url)
+					} catch {
+						if (errorEl) {
+							errorEl.textContent = labels.paymentStartFailed
+							errorEl.classList.remove('hidden')
+						}
+						;(retryBtn as HTMLButtonElement).disabled = false
+					}
+				})()
+			})
+			document.getElementById('payment-check-again')?.addEventListener('click', () => {
+				showPending()
+				void pollPaymentStatus(order)
+			})
+
+			if (order.paymentStatus === 'pending') {
+				showPending()
+				void pollPaymentStatus(order)
+			} else if (order.paymentStatus === 'failed') {
+				const live =
+					!order.holdExpiresAt || Date.parse(order.holdExpiresAt) > Date.now()
+				showFailed(live)
+			} else if (order.paymentStatus === 'expired' || order.status === 'expired') {
+				showExpired(order)
+			} else {
+				showConfirmed()
+			}
+		}
+
+		document.getElementById('success-retry')?.addEventListener('click', () => {
+			hide('success-error')
+			show('success-loading')
+			void init()
+		})
+
+		void init()
 	</script>
 </SitePage>

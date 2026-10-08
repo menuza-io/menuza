@@ -65,3 +65,11 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Horizontal chip rails scroll without showing a scrollbar. */
+@utility no-scrollbar {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}

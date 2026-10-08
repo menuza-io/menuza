@@ -64,7 +64,7 @@ export function resolveRegionalTenantApiUrls(
 export async function getOperatorTenantClient(
 	request: Request,
 	orgSlug: string,
-	options: { scope?: 'mailbox' } = {},
+	options: { scope?: 'mailbox' | 'orders:read' | 'orders:write' } = {},
 ): Promise<OperatorTenantClient> {
 	const userId = await requireUserId(request)
 	invariant(orgSlug, 'orgSlug is required')

@@ -85,6 +85,43 @@ async function orgIdFromJsonBody(request: Request): Promise<string | null> {
 		: null
 }
 
+const orderIdentitySchema = z.object({
+	slug: z.string().optional(),
+	host: z.string().optional(),
+})
+
+/**
+ * Browser order endpoints are origin-bound: the client never chooses an
+ * orgId. Identity comes from the Origin header plus slug/host carried in the
+ * query string (GET) or JSON body (POST), matching the route handler's own
+ * resolution. Fail-closed: unresolvable identity routes nowhere.
+ */
+async function orgIdFromOrderIdentity(
+	request: Request,
+	url: URL,
+): Promise<string | null> {
+	let identity: { slug?: string; host?: string }
+	if (request.method === 'GET' || request.method === 'HEAD') {
+		identity = {
+			slug: url.searchParams.get('slug') ?? undefined,
+			host: url.searchParams.get('host') ?? undefined,
+		}
+	} else {
+		const body = await request
+			.clone()
+			.json()
+			.catch(() => ({}))
+		const parsed = orderIdentitySchema.safeParse(body)
+		if (!parsed.success) return null
+		identity = parsed.data
+	}
+	const organization = await resolveOrganizationForBrowserAuth(
+		request.headers.get('Origin') ?? undefined,
+		identity,
+	)
+	return organization?.id ?? null
+}
+
 /**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
@@ -113,6 +150,21 @@ export async function resolveOrgId(
 
 	if (pathname.startsWith('/operator')) {
 		return orgIdFromOperatorJwt(request, env)
+	}
+
+	if (pathname === '/orders' || pathname.startsWith('/orders/')) {
+		// Browser order placement: never route on a client-supplied orgId. A
+		// customer access token is a valid signal (the handler re-checks it
+		// against the origin-bound org); otherwise resolve origin + slug/host.
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
+	}
+
+	if (pathname.startsWith('/api/orders')) {
+		// App → regional internal order broker: body orgId, authenticated by
+		// INTERNAL_COMMAND_TOKEN inside the route handler.
+		return orgIdFromJsonBody(request)
 	}
 
 	if (

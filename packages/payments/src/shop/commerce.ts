@@ -10,6 +10,7 @@ import {
 	createShopPaymentIntent,
 	createCheckoutShopClient,
 	createCheckoutShopPaymentSession,
+	expireShopCheckoutSession,
 	getCheckoutDashboardUrl,
 	getPolarDashboardUrl,
 	inviteCheckoutSubEntity,
@@ -406,6 +407,11 @@ export class ShopCommerce {
 		productName: string
 		productDescription?: string | null
 		amountCents: number
+		/**
+		 * ISO currency (lowercase for Stripe, any case for Checkout.com which
+		 * uppercases internally). Omit to keep the existing shop default ('usd').
+		 */
+		currency?: string | null
 		connectAccountId?: string | null
 		checkoutSubEntityId?: string | null
 		hostedProductId?: string | null
@@ -416,6 +422,14 @@ export class ShopCommerce {
 		customerEmail?: string | null
 		externalCustomerId?: string | null
 		embedOrigin?: string | null
+		/** Stripe Checkout session expiry (minimum 30 minutes from now). */
+		expiresAt?: Date | null
+		/** Deterministic Stripe idempotency key for retried creates. */
+		idempotencyKey?: string | null
+		/** Checkout.com merchant reference (defaults to metadata orgId). */
+		reference?: string | null
+		/** Checkout.com billing country (defaults to 'US'). */
+		billingCountry?: string | null
 	}): Promise<ShopCheckoutSession> {
 		if (options.processor === 'mor') {
 			if (!options.hostedProductId) {
@@ -453,11 +467,14 @@ export class ShopCommerce {
 					subEntityId: options.checkoutSubEntityId!,
 					productName: options.productName,
 					amountCents: options.amountCents,
+					currency: options.currency ?? undefined,
 					processingChannelId: this.config.checkoutProcessingChannelId!,
 					successUrl: options.successUrl,
 					failureUrl: options.cancelUrl,
 					metadata: options.metadata,
 					customerEmail: options.customerEmail,
+					reference: options.reference,
+					billingCountry: options.billingCountry,
 				}),
 			)
 
@@ -478,10 +495,13 @@ export class ShopCommerce {
 				productName: options.productName,
 				productDescription: options.productDescription,
 				amountCents: options.amountCents,
+				currency: options.currency ?? undefined,
 				successUrl: options.successUrl,
 				cancelUrl: options.cancelUrl,
 				metadata: options.metadata,
 				customerEmail: options.customerEmail,
+				expiresAt: options.expiresAt,
+				idempotencyKey: options.idempotencyKey,
 			}),
 		)
 
@@ -494,6 +514,16 @@ export class ShopCommerce {
 			url: session.url,
 			processor: 'connect',
 		}
+	}
+
+	/**
+	 * Expire an open Connect checkout session. Best-effort cleanup for sessions
+	 * that could not be bound to their regional order.
+	 */
+	async expireConnectCheckoutSession(sessionId: string) {
+		return this.withConnect(() =>
+			expireShopCheckoutSession(this.getStripe(), sessionId),
+		)
 	}
 
 	async createInlineCardPayment(options: {

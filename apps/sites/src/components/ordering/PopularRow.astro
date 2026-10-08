@@ -1,0 +1,53 @@
+---
+import { siteContainer } from '~/lib/media'
+
+/** Horizontal scroll of image cards for items flagged `isPopular`. */
+interface Props {
+	heading: string
+	cards: Array<{
+		id: string
+		name: string
+		priceLabel: string
+		imageUrl?: string | null
+		soldOut: boolean
+	}>
+}
+
+const { heading, cards } = Astro.props
+---
+
+{cards.length >= 3 ? (
+	<section class="py-8" aria-labelledby="popular-heading" data-search-hide>
+		<div class={siteContainer}>
+			<h2 id="popular-heading" class="font-heading text-xl text-foreground">{heading}</h2>
+		</div>
+		<div class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 no-scrollbar sm:px-8 lg:mx-auto lg:max-w-6xl">
+			{cards.map((card) => (
+				<button
+					type="button"
+					class:list={[
+						'js-popular-card group w-40 shrink-0 snap-start text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-48',
+						card.soldOut && 'opacity-60',
+					]}
+					data-item-id={card.id}
+					disabled={card.soldOut}
+					aria-haspopup="dialog"
+				>
+					<div class="aspect-square w-full overflow-hidden rounded-[var(--radius)] bg-muted">
+						{card.imageUrl ? (
+							<img
+								src={card.imageUrl}
+								alt=""
+								loading="lazy"
+								decoding="async"
+								class="size-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
+							/>
+						) : null}
+					</div>
+					<p class="mt-2 line-clamp-2 text-sm text-foreground">{card.name}</p>
+					<p class="mt-0.5 text-sm tabular-nums text-muted-foreground">{card.priceLabel}</p>
+				</button>
+			))}
+		</div>
+	</section>
+) : null}

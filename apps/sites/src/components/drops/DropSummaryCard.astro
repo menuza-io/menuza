@@ -1,0 +1,219 @@
+---
+import { msg } from '@lingui/core/macro'
+import DropStatusChip from '~/components/drops/DropStatusChip.astro'
+import LocationList from '~/components/drops/LocationList.astro'
+import { type DropPhase } from '~/lib/drops/format'
+
+/**
+ * Sticky summary card for the drop page: cover, status, title, clamped
+ * description with a "Read more" toggle, the order-window / pickup / where
+ * facts, and (via the default slot) the `PickupPicker` on live drops.
+ */
+interface Props {
+	coverUrl: string | null
+	title: string
+	description: string | null
+	phase: DropPhase
+	ordersOpenAt: string | null
+	ordersCloseAt: string | null
+	locale: string
+	timeZone: string | null
+	/** Fact rows rendered under the description. */
+	facts: Array<{
+		id: string
+		label: string
+		text: string
+		/**
+		 * Live countdown next to the fact text. `kind` picks the boundary
+		 * ("open" / "close"); the initial text is rendered server-side and the
+		 * drop page script keeps it ticking (`data-drop-countdown`).
+		 */
+		countdown?: { kind: 'open' | 'close'; initial: string } | null
+		/** `.ics` download for the orders-open reminder (upcoming drops). */
+		calendar?: { href: string; fileName: string } | null
+	}>
+	where: {
+		label: string
+		summary: string
+		locations: Array<{
+			id: string
+			name: string
+			addressLine: string
+			mapHref: string
+			phone: string | null
+			phoneHref: string | null
+			windows: string[]
+		}>
+	} | null
+}
+
+const {
+	coverUrl,
+	title,
+	description,
+	phase,
+	ordersOpenAt,
+	ordersCloseAt,
+	locale,
+	timeZone,
+	facts,
+	where,
+} = Astro.props
+
+const i18n = Astro.locals.i18n
+const readMoreLabel = i18n._(msg`Read more`)
+const showLessLabel = i18n._(msg`Show less`)
+const addToCalendarLabel = i18n._(msg`Add to calendar`)
+const whereToggleLabel = i18n._(msg`Show pickup locations`)
+---
+
+<div id="drop-summary-card" class="rounded-[var(--radius)] border border-border bg-card text-card-foreground shadow-sm">
+	<div class="relative aspect-[4/3] w-full overflow-hidden rounded-t-[var(--radius)] bg-muted">
+		{coverUrl ? (
+			<img
+				src={coverUrl}
+				alt=""
+				loading={phase === 'live' ? 'eager' : 'lazy'}
+				decoding="async"
+				class="size-full object-cover"
+			/>
+		) : (
+			<div class="flex size-full items-center justify-center text-muted-foreground" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="size-16">
+					<path d="M3 11h18"/><path d="M5 11V7a7 7 0 0 1 14 0v4"/><path d="M4 11v2a8 8 0 0 0 16 0v-2"/>
+				</svg>
+			</div>
+		)}
+		<DropStatusChip
+			phase={phase}
+			ordersOpenAt={ordersOpenAt}
+			ordersCloseAt={ordersCloseAt}
+			locale={locale}
+			timeZone={timeZone}
+			class="absolute start-3 top-3 shadow-sm"
+		/>
+	</div>
+
+	<div class="space-y-4 p-4 sm:p-5">
+		<h1 class="font-heading text-2xl font-bold leading-tight tracking-tight text-foreground">
+			{title}
+		</h1>
+
+		{description ? (
+			<div>
+				<p id="drop-description" class="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+					{description}
+				</p>
+				<button
+					type="button"
+					id="drop-read-more"
+					class="hidden text-xs font-medium text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+					aria-expanded="false"
+					aria-controls="drop-description"
+					data-more={readMoreLabel}
+					data-less={showLessLabel}
+				>
+					{readMoreLabel}
+				</button>
+			</div>
+		) : null}
+
+		{facts.length > 0 ? (
+			<dl class="space-y-3 border-t border-border pt-4">
+				{facts.map((fact) => (
+					<div class="space-y-0.5" id={fact.id}>
+						<dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							{fact.label}
+						</dt>
+						<dd class="text-sm font-medium text-foreground">
+							{fact.text}
+							{fact.countdown ? (
+								<span
+									data-drop-countdown={fact.countdown.kind}
+									class:list={[
+										'font-normal text-muted-foreground',
+										!fact.countdown.initial && 'hidden',
+									]}
+								>
+									{fact.countdown.initial}
+								</span>
+							) : null}
+						</dd>
+						{fact.calendar ? (
+							<dd>
+								<a
+									href={fact.calendar.href}
+									download={fact.calendar.fileName}
+									class="inline-flex items-center gap-1.5 text-xs font-medium text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true">
+										<rect x="3" y="4" width="18" height="18" rx="2"/>
+										<path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/>
+									</svg>
+									{addToCalendarLabel}
+								</a>
+							</dd>
+						) : null}
+					</div>
+				))}
+			</dl>
+		) : null}
+
+		{where && where.locations.length > 0 ? (
+			<div class="border-t border-border pt-4">
+				<p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{where.label}</p>
+				<button
+					type="button"
+					id="where-toggle"
+					class="mt-0.5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+					aria-expanded="false"
+					aria-controls="where-locations"
+				>
+					{where.summary}
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-muted-foreground transition-transform duration-200" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+					<span class="sr-only">{whereToggleLabel}</span>
+				</button>
+				<div id="where-locations" class="mt-2.5 hidden">
+					<LocationList locations={where.locations} />
+				</div>
+			</div>
+		) : null}
+
+		<slot />
+	</div>
+</div>
+
+<script>
+	// "Read more" toggle: only shown when the description is actually clamped.
+	const description = document.getElementById('drop-description')
+	const readMore = document.getElementById('drop-read-more')
+	if (description && readMore) {
+		const more = readMore.dataset.more ?? 'Read more'
+		const less = readMore.dataset.less ?? 'Show less'
+		const updateVisibility = () => {
+			// Once expanded the text stays open until collapsed again.
+			if (readMore.getAttribute('aria-expanded') === 'true') return
+			readMore.classList.toggle(
+				'hidden',
+				description.scrollHeight <= description.clientHeight + 4,
+			)
+		}
+		updateVisibility()
+		document.fonts?.ready.then(updateVisibility)
+		readMore.addEventListener('click', () => {
+			const clamped = description.classList.toggle('line-clamp-3')
+			readMore.setAttribute('aria-expanded', String(!clamped))
+			readMore.textContent = clamped ? more : less
+		})
+	}
+
+	// "Where" disclosure.
+	const whereToggle = document.getElementById('where-toggle')
+	const whereLocations = document.getElementById('where-locations')
+	if (whereToggle && whereLocations) {
+		whereToggle.addEventListener('click', () => {
+			const expanded = !whereLocations.classList.contains('hidden')
+			whereToggle.setAttribute('aria-expanded', String(expanded))
+		})
+	}
+</script>

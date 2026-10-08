@@ -1,6 +1,24 @@
 export { SHOP_ORDER_METADATA_TYPE } from './types'
 
 export {
+	RESTAURANT_ORDER_METADATA_TYPE,
+	RESTAURANT_ORDER_PRODUCT_NAME,
+	RESTAURANT_ORDER_PROCESSORS,
+	RESTAURANT_TERMINAL_PAYMENT_STATUSES,
+	buildRestaurantOrderMetadata,
+	buildRestaurantOrderSessionIdempotencyKey,
+	isRestaurantOrderMetadata,
+	isRestaurantOrderProcessor,
+	isTerminalRestaurantPaymentStatus,
+	mapConnectSessionToRestaurantOrder,
+	mapCheckoutWebhookToRestaurantOrder,
+	type RestaurantOrderProcessor,
+	type RestaurantOrderPaymentEvent,
+	type RestaurantOrderPaymentStatus,
+	type RestaurantTerminalPaymentStatus,
+} from './restaurant'
+
+export {
 	SHOP_PLATFORM_FEE_PERCENT,
 	calculateShopFees,
 } from '../connect/shop-fees'

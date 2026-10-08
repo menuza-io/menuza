@@ -6,10 +6,8 @@ import {
 	parseHostedShopWebhook,
 } from '@repo/payments'
 import { type ActionFunctionArgs } from 'react-router'
-import {
-	recordShopOrder,
-	recordShopOrderFromCheckoutWebhook,
-} from '#app/utils/shop.server.ts'
+import { handleRestaurantOrderCheckoutWebhookEvent } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
+import { recordShopOrder } from '#app/utils/shop.server.ts'
 
 const shopCommerce = createShopCommerce(
 	createShopCommerceConfigFromEnv(process.env),
@@ -31,9 +29,12 @@ export async function action({ request }: ActionFunctionArgs) {
 			})
 		}
 
+		let verifiedEvent: { type: string; data: unknown }
 		try {
-			await recordShopOrderFromCheckoutWebhook(payload, checkoutSignature)
-			return new Response('Webhook processed successfully', { status: 200 })
+			verifiedEvent = shopCommerce.verifyCheckoutWebhook(
+				payload,
+				checkoutSignature,
+			)
 		} catch (error) {
 			console.error('Checkout.com shop webhook processing failed:', error)
 			const status =
@@ -44,6 +45,23 @@ export async function action({ request }: ActionFunctionArgs) {
 				status === 400 ? 'Invalid signature' : 'Webhook processing failed',
 				{ status },
 			)
+		}
+
+		try {
+			// Restaurant orders first: forward the non-PII payment facts to the
+			// org's regional tenant service. A regional failure throws so this
+			// handler returns non-2xx and Checkout.com retries.
+			await handleRestaurantOrderCheckoutWebhookEvent(verifiedEvent)
+
+			const event = shopCommerce.parseCheckoutWebhookEvent(verifiedEvent)
+			if (event) {
+				await recordShopOrder(event.order)
+			}
+
+			return new Response('Webhook processed successfully', { status: 200 })
+		} catch (error) {
+			console.error('Checkout.com shop webhook processing failed:', error)
+			return new Response('Webhook processing failed', { status: 500 })
 		}
 	}
 
