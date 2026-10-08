@@ -18,6 +18,7 @@ import {
 	importGoogleBusinessLocation,
 	importJustEatLocation,
 	importOpenTableLocation,
+	importResyVenue,
 	importTripAdvisorLocation,
 	importYelpLocation,
 	integrationManager,
@@ -27,6 +28,7 @@ import {
 	listGoogleBusinessLocations,
 	listJustEatLocations,
 	listOpenTableLocations,
+	listResyVenues,
 	listTripAdvisorLocations,
 	listYelpLocations,
 	localizedText,
@@ -168,6 +170,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						locations = (
 							await listOpenTableLocations(organization.id, selectedLocationId)
 						).map(({ rid, name }) => ({ name: rid, title: name }))
+					} else if (provider.name === 'resy') {
+						locations = (
+							await listResyVenues(organization.id, selectedLocationId)
+						).map(({ venue_id, name }) => ({ name: venue_id, title: name }))
 					}
 				} catch (err) {
 					error =
@@ -394,6 +400,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				)
 			} else if (providerName === 'opentable') {
 				await importOpenTableLocation(
+					organization.id,
+					locationName,
+					locationFromForm || undefined,
+				)
+			} else if (providerName === 'resy') {
+				await importResyVenue(
 					organization.id,
 					locationName,
 					locationFromForm || undefined,

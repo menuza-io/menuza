@@ -4,6 +4,7 @@ import { TripAdvisorProvider } from '../../src/providers/tripadvisor/provider'
 import { DeliverooProvider } from '../../src/providers/deliveroo/provider'
 import { JustEatProvider } from '../../src/providers/just-eat/provider'
 import { OpenTableProvider } from '../../src/providers/opentable/provider'
+import { ResyProvider } from '../../src/providers/resy/provider'
 import {
 	getAvailableReviewProviders,
 	numberToStarRating,
@@ -21,6 +22,8 @@ describe('Review Providers Unit Tests', () => {
 		vi.stubEnv('JUST_EAT_CLIENT_SECRET', 'test-jet-secret')
 		vi.stubEnv('OPENTABLE_CLIENT_ID', 'test-ot-client')
 		vi.stubEnv('OPENTABLE_CLIENT_SECRET', 'test-ot-secret')
+		vi.stubEnv('RESY_CLIENT_ID', 'test-resy-client')
+		vi.stubEnv('RESY_CLIENT_SECRET', 'test-resy-secret')
 	})
 
 	afterEach(() => {
@@ -66,6 +69,60 @@ describe('Review Providers Unit Tests', () => {
 		)
 		expect(otUrl.origin).toBe('https://auth.opentable.com')
 		expect(otUrl.searchParams.get('client_id')).toBe('test-ot-client')
+
+		const resy = new ResyProvider()
+		const resyUrl = new URL(
+			await resy.getAuthUrl('org-1', redirectUri, { state: 's6' }),
+		)
+		expect(resyUrl.origin).toBe('https://os.resy.com')
+		expect(resyUrl.pathname).toBe('/oauth/authorize')
+		expect(resyUrl.searchParams.get('client_id')).toBe('test-resy-client')
+		expect(resyUrl.searchParams.get('scope')).toBe('venue.reviews')
+		expect(resyUrl.searchParams.get('state')).toBe('s6')
+	})
+
+	it('completes the Resy mock OAuth flow with MOCK_ credentials', async () => {
+		vi.stubEnv('RESY_CLIENT_ID', 'MOCK_RESY_CLIENT_ID')
+		vi.stubEnv('RESY_CLIENT_SECRET', 'MOCK_RESY_CLIENT_SECRET')
+		const redirectUri = 'https://menuza.test/api/integrations/oauth/callback'
+
+		const resy = new ResyProvider()
+		const parsed = new URL(
+			await resy.getAuthUrl('org-1', redirectUri, { state: 'resy-state' }),
+		)
+		expect(parsed.origin).toBe('https://menuza.test')
+		expect(parsed.searchParams.get('code')).toBe('mock-resy-code')
+		expect(parsed.searchParams.get('state')).toBe('resy-state')
+
+		const tokens = await resy.handleCallback({
+			organizationId: 'org-1',
+			code: 'mock-resy-code',
+			state: 'resy-state',
+			redirectUri,
+		})
+		expect(tokens.accessToken).toBe('mock-resy-access-token')
+		await expect(
+			resy.handleCallback({
+				organizationId: 'org-1',
+				code: 'wrong-code',
+				state: 'resy-state',
+				redirectUri,
+			}),
+		).rejects.toThrow('Invalid mock Resy authorization code')
+
+		const refreshed = await resy.refreshToken('mock-resy-refresh-token')
+		expect(refreshed.accessToken).toBe('mock-resy-access-token')
+	})
+
+	it('rejects mismatched Resy mock credentials', async () => {
+		vi.stubEnv('RESY_CLIENT_ID', 'MOCK_RESY_CLIENT_ID')
+		vi.stubEnv('RESY_CLIENT_SECRET', 'real-resy-secret')
+		const resy = new ResyProvider()
+		await expect(
+			resy.getAuthUrl('org-1', 'https://menuza.test/callback', {
+				state: 's',
+			}),
+		).rejects.toThrow(/MOCK_ for both RESY_CLIENT_ID and RESY_CLIENT_SECRET/)
 	})
 
 	it('returns mock redirect URL when configured with MOCK_ credentials', async () => {
@@ -100,9 +157,9 @@ describe('Review Providers Unit Tests', () => {
 		expect(numberToStarRating(undefined)).toBeUndefined()
 	})
 
-	it('returns all 6 review providers in getAvailableReviewProviders', () => {
+	it('returns all 7 review providers in getAvailableReviewProviders', () => {
 		const providers = getAvailableReviewProviders()
-		expect(providers).toHaveLength(6)
+		expect(providers).toHaveLength(7)
 		const names = providers.map((p) => p.name)
 		expect(names).toEqual([
 			'google-business-profile',
@@ -111,6 +168,7 @@ describe('Review Providers Unit Tests', () => {
 			'deliveroo',
 			'just-eat',
 			'opentable',
+			'resy',
 		])
 	})
 })

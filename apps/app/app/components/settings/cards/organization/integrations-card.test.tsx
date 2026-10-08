@@ -37,6 +37,7 @@ const reviewProviders: ReviewIntegrationItem[] = (
 		['deliveroo', 'Deliveroo'],
 		['just-eat', 'Just Eat'],
 		['opentable', 'OpenTable'],
+		['resy', 'Resy'],
 	] satisfies Array<[string, string]>
 ).map(([name, displayName]) => ({
 	name,
@@ -126,7 +127,7 @@ describe('integration groups', () => {
 			],
 			['Point of sale', ['Clover', 'Square', 'Toast']],
 			['Marketplaces', ['Deliveroo', 'Just Eat', 'Uber Eats', 'DoorDash']],
-			['Reservations', ['OpenTable']],
+			['Reservations', ['OpenTable', 'Resy']],
 		] as const
 
 		expect(screen.getAllByRole('region')).toHaveLength(8)

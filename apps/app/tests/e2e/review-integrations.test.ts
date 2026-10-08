@@ -3,7 +3,7 @@ import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Customer Review Integrations & Mailbox Management', () => {
-	test('Operators can view all 6 review platforms in the Settings catalog', async ({
+	test('Operators can view all 7 review platforms in the Settings catalog', async ({
 		page,
 		login,
 		navigate,
@@ -28,7 +28,7 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 			).toBeVisible()
 		}
 
-		// All 6 review platforms are listed with their Connect action buttons
+		// All 7 review platforms are listed with their Connect action buttons
 		await expect(
 			page.getByText('Google Business Profile').first(),
 		).toBeVisible()
@@ -59,6 +59,11 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 		await expect(page.getByText('OpenTable').first()).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: /^connect opentable$/i }),
+		).toBeVisible()
+
+		await expect(page.getByText('Resy').first()).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: /^connect resy$/i }),
 		).toBeVisible()
 	})
 
@@ -124,7 +129,7 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 		).toBeVisible()
 	})
 
-	test('Operators can connect TripAdvisor, Deliveroo, Just Eat, and OpenTable', async ({
+	test('Operators can connect TripAdvisor, Deliveroo, Just Eat, OpenTable, and Resy', async ({
 		page,
 		login,
 		navigate,
@@ -170,7 +175,14 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 			page.getByRole('button', { name: /^connect opentable$/i }),
 		).toHaveCount(0)
 
-		// Verify all 4 are active in database
+		// Connect Resy
+		await page.getByRole('button', { name: /^connect resy$/i }).click()
+		await page.waitForLoadState('networkidle')
+		await expect(
+			page.getByRole('button', { name: /^connect resy$/i }),
+		).toHaveCount(0)
+
+		// Verify all 5 are active in database
 		const integrations = await db
 			.select()
 			.from(Integration)
@@ -183,6 +195,7 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 		expect(providerNames).toContain('deliveroo')
 		expect(providerNames).toContain('just-eat')
 		expect(providerNames).toContain('opentable')
+		expect(providerNames).toContain('resy')
 	})
 
 	test('Operators see empty state when no review platforms are connected', async ({
@@ -203,7 +216,7 @@ test.describe('Customer Review Integrations & Mailbox Management', () => {
 		await expect(page.getByText('No reviews connected yet')).toBeVisible()
 		await expect(
 			page.getByText(
-				/Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, or OpenTable/i,
+				/Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy/i,
 			),
 		).toBeVisible()
 		await expect(

@@ -2607,8 +2607,8 @@ msgid "Connect domain"
 msgstr ""
 
 #: app/components/mailbox/reviews-tab.tsx:429
-msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, or OpenTable in Settings to view and reply to customer reviews here."
-msgstr "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, or OpenTable in Settings to view and reply to customer reviews here."
+msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
+msgstr "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
 
 #: app/components/settings/cards/organization/shop-card.tsx:130
 msgid "Connect payout account"
@@ -9120,6 +9120,10 @@ msgstr "Restricted channels are visible only to the roles and people you choose.
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 msgid "Result"
 msgstr ""
+
+#: app/components/mailbox/reviews-tab.tsx:79
+msgid "Resy"
+msgstr "Resy"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:93
 #~ msgid "Retention period"
