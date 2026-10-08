@@ -11,12 +11,19 @@ export interface Env {
 	MARKETING_JOURNEY_WORKFLOW: Workflow<MarketingJourneyWorkflowParams>
 }
 
-const JOB_ROUTES = {
-	'0 2 * * *': '/resources/jobs/audit-log-archival',
-	'0 3 * * *': '/resources/jobs/mcp-token-cleanup',
-	'0 4 * * *': '/resources/jobs/gdpr-erasure',
-	'0 5 * * *': '/resources/jobs/form-submission-retention',
-} as const
+// The Workers free plan allows five cron triggers per Worker, so daily jobs
+// share a trigger instead of each getting its own.
+export const JOB_ROUTES: Record<string, readonly string[]> = {
+	'0 2 * * *': ['/resources/jobs/audit-log-archival'],
+	'0 3 * * *': ['/resources/jobs/mcp-token-cleanup'],
+	'0 4 * * *': [
+		'/resources/jobs/gdpr-erasure',
+		'/resources/jobs/voice-retention',
+	],
+	// Not in wrangler.jsonc triggers: form retention has never been enabled in
+	// production, and turning it on deletes submissions, so it stays opt-in.
+	'0 5 * * *': ['/resources/jobs/form-submission-retention'],
+}
 
 const TENANT_ENGAGEMENT_SYNC_CRON = '0 * * * *'
 
@@ -326,22 +333,24 @@ export default {
 			return
 		}
 
-		const path = JOB_ROUTES[event.cron as keyof typeof JOB_ROUTES]
-		if (!path) {
+		const paths = JOB_ROUTES[event.cron]
+		if (!paths) {
 			console.error('Unknown cron schedule', { cron: event.cron })
 			return
 		}
 
-		ctx.waitUntil(
-			invokeJob(env, path).catch((error) => {
-				console.error('Scheduled job failed', {
-					cron: event.cron,
-					path,
-					error: error instanceof Error ? error.message : String(error),
-				})
-				throw error
-			}),
-		)
+		for (const path of paths) {
+			ctx.waitUntil(
+				invokeJob(env, path).catch((error) => {
+					console.error('Scheduled job failed', {
+						cron: event.cron,
+						path,
+						error: error instanceof Error ? error.message : String(error),
+					})
+					throw error
+				}),
+			)
+		}
 	},
 }
 

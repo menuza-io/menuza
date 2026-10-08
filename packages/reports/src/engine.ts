@@ -227,6 +227,18 @@ function datetimeBucket(
 	return { key: monthKey(date), label: formatMonthLabel(date) }
 }
 
+/**
+ * Enum values the catalog doesn't list (for example call purposes a business
+ * type adds) read as words instead of raw slugs.
+ */
+function optionLabel(field: ReportField, key: string) {
+	const option = field.options?.find((item) => item.value === key)
+	if (option) return option.label
+	if (field.type !== 'enum' || !/^[a-z][a-z0-9_]*$/u.test(key)) return key
+	const words = key.replaceAll('_', ' ')
+	return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 function segmentValue(
 	record: ReportRecord,
 	field: ReportField,
@@ -244,8 +256,7 @@ function segmentValue(
 		return { key: 'unspecified', label: 'Unspecified' }
 	}
 	const key = asString(raw)
-	const option = field.options?.find((item) => item.value === key)
-	return { key, label: option?.label ?? key }
+	return { key, label: optionLabel(field, key) }
 }
 
 function formatListCell(record: ReportRecord, field: ReportField): string {
@@ -264,9 +275,7 @@ function formatListCell(record: ReportRecord, field: ReportField): string {
 	if (raw === null || raw === undefined || asString(raw).length === 0) {
 		return '—'
 	}
-	const key = asString(raw)
-	const option = field.options?.find((item) => item.value === key)
-	return option?.label ?? key
+	return optionLabel(field, asString(raw))
 }
 
 function sortSegments(

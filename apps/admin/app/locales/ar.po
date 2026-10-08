@@ -22,7 +22,7 @@ msgid "(Expired)"
 msgstr "(منتهي الصلاحية)"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:403
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:404
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
@@ -108,11 +108,11 @@ msgstr "{userCount} مستخدم"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:542
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:568
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:569
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -135,7 +135,7 @@ msgstr "+{recentUsers} جديد هذا الأسبوع"
 #. placeholder {0}: conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.operator === 'equals' ? 'is' : data.operator === 'not_equals' ? 'is not' : 'contains'
 #. placeholder {2}: data.value
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:27
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:29
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 
@@ -213,6 +213,7 @@ msgstr "فشل الإجراء"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:251
 #: app/routes/_admin+/ip-addresses+/index.tsx:227
 #: app/routes/_admin+/marketing+/automations._index.tsx:223
+#: app/routes/_admin+/phone-numbers.tsx:350
 #: app/routes/_admin+/roles+/index.tsx:417
 #: app/routes/_admin+/roles+/index.tsx:461
 #: app/routes/_admin+/waitlist.tsx:385
@@ -261,11 +262,14 @@ msgstr "النشاط"
 msgid "Activity Information"
 msgstr "معلومات النشاط"
 
-#. placeholder {0}: item.label
 #: ../../packages/marketing-workflow/src/node-palette.tsx:98
 #: ../../packages/marketing-workflow/src/node-palette.tsx:104
-msgid "Add {0}"
-msgstr "إضافة {0}"
+#~ msgid "Add {0}"
+#~ msgstr "إضافة {0}"
+
+#: ../../packages/marketing-workflow/src/node-palette.tsx:52
+msgid "Add {label}"
+msgstr "إضافة {label}"
 
 #: ../../packages/marketing/src/components/email/email-preview.tsx:138
 msgid "Add a block to see your email come to life."
@@ -274,6 +278,10 @@ msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:166
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
+
+#: app/routes/_admin+/phone-numbers.tsx:60
+msgid "Add a number"
+msgstr "إضافة رقم"
 
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:99
 msgid "Add at least one email block"
@@ -293,6 +301,14 @@ msgstr "إضافة ميزة"
 #: app/components/admin/feature-flags.tsx:757
 msgid "Add Flag"
 msgstr "إضافة مؤشر"
+
+#: app/routes/_admin+/phone-numbers.tsx:105
+msgid "Add number"
+msgstr "إضافة الرقم"
+
+#: app/routes/_admin+/phone-numbers.tsx:63
+msgid "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
+msgstr "أضف الأرقام المشتراة من Twilio والموجَّهة إلى خط SIP الخاص بـ LiveKit."
 
 #: app/components/admin/feature-flags.tsx:540
 #: app/components/admin/feature-flags.tsx:719
@@ -320,8 +336,8 @@ msgstr "أضف نقاطاً إلى إجمالي {0} الحالي البالغ {1
 msgid "Add waitlist points"
 msgstr "إضافة نقاط قائمة الانتظار"
 
-#: app/components/admin-sidebar.tsx:139
-#: app/components/admin-sidebar.tsx:147
+#: app/components/admin-sidebar.tsx:145
+#: app/components/admin-sidebar.tsx:153
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -329,7 +345,7 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:165
+#: app/components/admin-sidebar.tsx:171
 #: app/routes/_admin+/index.tsx:126
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
@@ -412,6 +428,10 @@ msgstr "السماح للمستخدمين بتصدير سجلات المراجع
 msgid "Alt text"
 msgstr "النص البديل"
 
+#: app/routes/_admin+/phone-numbers.tsx:163
+msgid "Answering"
+msgstr "يرد على المكالمات"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:897
 msgid "any - Any resources"
 msgstr "أي - أي موارد"
@@ -456,6 +476,14 @@ msgstr "تم استيفاء المادة 17"
 msgid "Article 20 requests"
 msgstr "طلبات المادة 20"
 
+#: app/routes/_admin+/phone-numbers.tsx:278
+msgid "Assign"
+msgstr "تعيين"
+
+#: app/routes/_admin+/phone-numbers.tsx:157
+msgid "Assigned, not connected"
+msgstr "معيَّن، غير متصل"
+
 #: app/components/sso-configuration-form.tsx:409
 msgid "Attribute Mapping (JSON)"
 msgstr "تعيين الخصائص (JSON)"
@@ -464,7 +492,7 @@ msgstr "تعيين الخصائص (JSON)"
 msgid "Audit Log Retention Policy"
 msgstr "سياسة الاحتفاظ بسجل المراجعة"
 
-#: app/components/admin-sidebar.tsx:111
+#: app/components/admin-sidebar.tsx:117
 #: app/routes/_admin+/audit-logs.tsx:159
 msgid "Audit Logs"
 msgstr "سجلات المراجعة"
@@ -524,9 +552,17 @@ msgstr "تم حفظ الأتمتة"
 msgid "Automations"
 msgstr "الأتمتة"
 
+#: app/routes/_admin+/phone-numbers.tsx:150
+msgid "Available"
+msgstr "متوفر"
+
 #: app/routes/_admin+/cache.tsx:319
 msgid "Average Size"
 msgstr "الحجم المتوسط"
+
+#: app/routes/_admin+/phone-numbers.tsx:167
+msgid "Awaiting line verification"
+msgstr "بانتظار التحقق من الخط"
 
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:158
 msgid "Back"
@@ -678,7 +714,7 @@ msgstr "زر"
 msgid "Button label"
 msgstr "نص الزر"
 
-#: app/components/admin-sidebar.tsx:105
+#: app/components/admin-sidebar.tsx:111
 #: app/routes/_admin+/index.tsx:373
 msgid "Cache"
 msgstr "ذاكرة التخزين المؤقت"
@@ -825,7 +861,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:498
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -833,7 +869,7 @@ msgstr "منطق الشرط"
 msgid "Condition operator is required."
 msgstr "عامل الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:18
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:20
 msgid "Conditional split"
 msgstr "تفرّع شرطي"
 
@@ -885,7 +921,7 @@ msgstr "الحسابات المتصلة"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:517
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -1001,7 +1037,7 @@ msgstr "اسم الحدث المخصص"
 msgid "Custom Retention Policy"
 msgstr "سياسة احتفاظ مخصصة"
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:15
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:16
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
@@ -1010,11 +1046,11 @@ msgid "customer"
 msgstr "عميل"
 
 #. placeholder {0}: data.value === 'true' ? '' : 'not '
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:21
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:23
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:436
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:437
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -1103,6 +1139,10 @@ msgstr "حذف مفتاح ذاكرة التخزين المؤقت"
 msgid "Delete Cache Key"
 msgstr "حذف مفتاح ذاكرة التخزين المؤقت"
 
+#: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:31
+msgid "Delete connection"
+msgstr "حذف الاتصال"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:119
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:120
 msgid "Delete node"
@@ -1174,7 +1214,7 @@ msgstr "إرسال بريد إلكتروني مخصص مع وسوم الدمج"
 msgid "Dispatch text message with merge tags"
 msgstr "إرسال رسالة نصية مع وسوم الدمج"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:513
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -1203,7 +1243,7 @@ msgstr "تكرار"
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:528
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:529
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -1280,14 +1320,14 @@ msgstr "تحرير تفاصيل مؤشر الميزة."
 msgid "Effective Value"
 msgstr "القيمة الفعالة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:20
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:236
 #: app/routes/_admin+/waitlist.tsx:367
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:456
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:304
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -1328,11 +1368,11 @@ msgstr "البريد الإلكتروني أو اسم المستخدم أو ال
 msgid "Emails sent"
 msgstr "رسائل البريد المُرسَلة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:20
 msgid "Empty message"
 msgstr "رسالة فارغة"
 
-#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
+#: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:22
 msgid "Empty subject"
 msgstr "موضوع فارغ"
 
@@ -1431,7 +1471,7 @@ msgstr "أخطاء"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr "سير عمل قائم على الأحداث لدورة حياة مشغّل المستأجر."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:510
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -1498,7 +1538,11 @@ msgstr "فشل نشر الأتمتة"
 msgid "Fallback"
 msgstr "القيمة الاحتياطية"
 
-#: app/components/admin-sidebar.tsx:129
+#: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:21
+msgid "False"
+msgstr "خطأ"
+
+#: app/components/admin-sidebar.tsx:135
 msgid "Feature Flags"
 msgstr "مؤشرات الميزات"
 
@@ -1511,7 +1555,7 @@ msgstr "صلاحيات الميزات"
 msgid "Feature: {selectedEntity}"
 msgstr "الميزة: {selectedEntity}"
 
-#: app/components/admin-sidebar.tsx:123
+#: app/components/admin-sidebar.tsx:129
 msgid "Feedback"
 msgstr "التعليقات"
 
@@ -1589,7 +1633,7 @@ msgstr "عرض كامل"
 msgid "GDPR Data Requests"
 msgstr "طلبات بيانات GDPR"
 
-#: app/components/admin-sidebar.tsx:117
+#: app/components/admin-sidebar.tsx:123
 msgid "GDPR Requests"
 msgstr "طلبات GDPR"
 
@@ -1637,6 +1681,14 @@ msgstr "ضيف"
 msgid "Heading"
 msgstr "عنوان"
 
+#: app/routes/_admin+/phone-numbers.tsx:137
+msgid "Held for the previous organization until {until}"
+msgstr "محجوز للمؤسسة السابقة حتى {until}"
+
+#: app/routes/_admin+/phone-numbers.tsx:139
+msgid "Held: the previous organization was deleted while it had this number"
+msgstr "محجوز: حُذفت المؤسسة السابقة بينما كان هذا الرقم لديها"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:92
 msgid "Hi {{name}}, Check out our latest update."
 msgstr "مرحباً {{name}}، اطّلع على آخر تحديثاتنا."
@@ -1653,7 +1705,7 @@ msgstr "مرحباً {{name}}، تحديث حسابك جاهز!"
 msgid "Hi {{name}}, your Epic Startup account is ready."
 msgstr "مرحباً {{name}}، حسابك في Epic Startup جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:412
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr "مرحباً {{name}}، تم تأكيد طلبك!"
 
@@ -1788,7 +1840,7 @@ msgstr "عنوان IP"
 msgid "IP Address Details"
 msgstr "تفاصيل عنوان IP"
 
-#: app/components/admin-sidebar.tsx:99
+#: app/components/admin-sidebar.tsx:105
 #: app/components/admin-user-detail.tsx:333
 #: app/components/admin-user-detail.tsx:782
 #: app/routes/_admin+/ip-addresses+/index.tsx:152
@@ -1803,7 +1855,7 @@ msgstr "عناوين IP المستخدمة من قبل هذا المستخدم"
 msgid "IP Information"
 msgstr "معلومات IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:485
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:486
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -1847,6 +1899,10 @@ msgstr "المفاتيح المراد حذفها:"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 msgid "Label"
 msgstr "التسمية"
+
+#: app/routes/_admin+/phone-numbers.tsx:95
+msgid "Label (optional)"
+msgstr "التسمية (اختياري)"
 
 #: app/components/sso-user-management.tsx:455
 msgid "Last 30 days"
@@ -2090,7 +2146,7 @@ msgstr "المزيد من الإجراءات"
 msgid "N/A"
 msgstr "غير متاح"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:465
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/routes/_admin+/roles+/$roleId.tsx:530
 #: app/routes/_admin+/roles+/$roleId.tsx:763
@@ -2141,7 +2197,7 @@ msgstr "أتمتة منصة جديدة"
 msgid "Next"
 msgstr "التالي"
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:69
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:71
 msgid "No"
 msgstr "لا"
 
@@ -2216,6 +2272,10 @@ msgstr "لم يتم تسجيل عناوين IP لهذا المستخدم"
 msgid "No notes created"
 msgstr "لم يتم إنشاء ملاحظات"
 
+#: app/routes/_admin+/phone-numbers.tsx:334
+msgid "No numbers in the inventory yet."
+msgstr "لا توجد أرقام في المخزون بعد."
+
 #: app/routes/_admin+/roles+/index.tsx:425
 msgid "No organization roles found"
 msgstr "لم يتم العثور على أدوار المؤسسة"
@@ -2277,7 +2337,7 @@ msgstr "لم يتم تتبع أي مستخدمين لعنوان IP هذا"
 msgid "No waitlist entries found"
 msgstr "لم يتم العثور على إدخالات قائمة الانتظار"
 
-#: ../../packages/marketing-workflow/src/node-palette.tsx:58
+#: ../../packages/marketing-workflow/src/node-palette.tsx:50
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
 msgstr "العُقد"
@@ -2293,7 +2353,7 @@ msgstr "بلا"
 msgid "Not Set"
 msgstr "غير محدد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:488
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -2306,6 +2366,7 @@ msgid "Notes Created"
 msgstr "الملاحظات المنشأة"
 
 #: app/components/admin/feature-flags.tsx:140
+#: app/routes/_admin+/phone-numbers.tsx:341
 msgid "Number"
 msgstr "رقم"
 
@@ -2362,6 +2423,7 @@ msgstr "org - موارد المؤسسة"
 
 #: app/components/admin-organizations-table.tsx:147
 #: app/components/admin/feature-flags.tsx:749
+#: app/routes/_admin+/phone-numbers.tsx:347
 msgid "Organization"
 msgstr "المؤسسة"
 
@@ -2389,6 +2451,14 @@ msgstr "أدوار المؤسسة"
 #: app/routes/_admin+/roles+/index.tsx:287
 msgid "Organization roles apply within specific organizations, while system roles are global."
 msgstr "تنطبق أدوار المؤسسة على مؤسسات محددة، بينما الأدوار النظامية عامة."
+
+#: app/routes/_admin+/phone-numbers.tsx:272
+msgid "Organization slug or ID"
+msgstr "المعرّف المختصر للمؤسسة أو معرّفها"
+
+#: app/routes/_admin+/phone-numbers.tsx:273
+msgid "Organization slug or ID for {e164}"
+msgstr "المعرّف المختصر للمؤسسة أو معرّفها للرقم {e164}"
 
 #: app/components/admin-sidebar.tsx:62
 #: app/components/admin-user-detail.tsx:255
@@ -2500,12 +2570,21 @@ msgstr "ذاكرة التخزين المؤقت الدائمة المخزنة ف�
 msgid "Personal + Organization notes"
 msgstr "الملاحظات الشخصية + المؤسسة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
+#: app/routes/_admin+/phone-numbers.tsx:77
+msgid "Phone number"
+msgstr "رقم الهاتف"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:462
+#: app/components/admin-sidebar.tsx:93
+#: app/routes/_admin+/phone-numbers.tsx:320
+msgid "Phone numbers"
+msgstr "أرقام الهاتف"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:463
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -2563,6 +2642,10 @@ msgstr "تسويق المنصة"
 msgid "Platform test runs are not yet wired to execution."
 msgstr "تشغيلات اختبار المنصة غير موصولة بالتنفيذ بعد."
 
+#: app/routes/_admin+/phone-numbers.tsx:323
+msgid "Platform-owned numbers for the AI phone agent. Organizations can only connect numbers assigned to them here."
+msgstr "أرقام تملكها المنصة لوكيل الهاتف بالذكاء الاصطناعي. لا يمكن للمؤسسات ربط إلا الأرقام المخصصة لها هنا."
+
 #: app/routes/_admin+/waitlist.tsx:370
 msgid "Points"
 msgstr "النقاط"
@@ -2577,7 +2660,7 @@ msgstr "النقاط المُضافة"
 msgid "Previous"
 msgstr "السابق"
 
-#: ../../packages/marketing-workflow/src/node-palette.tsx:86
+#: ../../packages/marketing-workflow/src/node-palette.tsx:40
 #: ../../packages/marketing/src/components/campaign-form.tsx:77
 msgid "Pro"
 msgstr "احترافي"
@@ -2661,6 +2744,10 @@ msgstr "سبب الإدراج في القائمة السوداء"
 msgid "Reason:"
 msgstr "السبب:"
 
+#: app/routes/_admin+/phone-numbers.tsx:221
+msgid "Reassign anyway"
+msgstr "إعادة التعيين على أي حال"
+
 #: app/components/admin-user-detail.tsx:604
 msgid "Recent Activity"
 msgstr "النشاط الأخير"
@@ -2692,6 +2779,10 @@ msgstr "الملاحظات الأخيرة المعروضة"
 #: app/components/sso-user-management.tsx:335
 msgid "Recent SSO configuration changes and user activities"
 msgstr "تغييرات إعداد SSO الأخيرة وأنشطة المستخدم"
+
+#: app/routes/_admin+/phone-numbers.tsx:133
+msgid "Recently released"
+msgstr "أُعيد مؤخرًا"
 
 #: ../../packages/marketing/src/components/campaign-list.tsx:81
 #: app/routes/_admin+/marketing+/_index.tsx:218
@@ -2774,6 +2865,18 @@ msgstr "سياسة الاحتفاظ"
 msgid "Retention: {retentionDays} days ({retentionYears} years)"
 msgstr "الاحتفاظ: {retentionDays} يوم ({retentionYears} سنة)"
 
+#: app/routes/_admin+/phone-numbers.tsx:305
+msgid "Retire"
+msgstr "إيقاف نهائي"
+
+#: app/routes/_admin+/phone-numbers.tsx:298
+msgid "Retire {e164}? It can't be assigned again, and any agent using it stops answering."
+msgstr "إيقاف {e164} نهائيًا؟ لن يمكن تعيينه مرة أخرى، وسيتوقف أي وكيل يستخدمه عن الرد."
+
+#: app/routes/_admin+/phone-numbers.tsx:121
+msgid "Retired"
+msgstr "موقوف نهائيًا"
+
 #: app/routes/_admin+/_layout.tsx:103
 #: app/routes/_admin+/cache.tsx:950
 msgid "Return to Admin Dashboard"
@@ -2815,7 +2918,7 @@ msgstr "اسم الدور"
 msgid "Role Type"
 msgstr "نوع الدور"
 
-#: app/components/admin-sidebar.tsx:93
+#: app/components/admin-sidebar.tsx:99
 #: app/routes/_admin+/roles+/$roleId.tsx:473
 #: app/routes/_admin+/roles+/index.tsx:378
 #: app/routes/_admin+/roles+/system.$roleId.tsx:236
@@ -2826,7 +2929,7 @@ msgstr "الأدوار"
 msgid "Roles that apply within specific organizations"
 msgstr "الأدوار التي تنطبق على مؤسسات محددة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:540
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -3017,7 +3120,7 @@ msgstr "أحداث الأمان"
 msgid "Select access level"
 msgstr "اختر مستوى الوصول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:452
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:453
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -3029,7 +3132,7 @@ msgstr "اختر الجمهور"
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:506
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:507
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -3038,7 +3141,7 @@ msgstr "اختر العامل"
 msgid "Select role type"
 msgstr "اختر نوع الدور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:481
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:482
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -3152,7 +3255,7 @@ msgstr "الحجم"
 msgid "Smaller, muted supporting copy."
 msgstr "نص داعم أصغر وأهدأ."
 
-#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:18
+#: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:15
 msgid "SMS"
 msgstr "رسالة نصية"
@@ -3161,7 +3264,7 @@ msgstr "رسالة نصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:391
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -3169,7 +3272,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:423
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:424
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -3260,6 +3363,7 @@ msgstr "ابدأ بقالب"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:209
+#: app/routes/_admin+/phone-numbers.tsx:344
 #: app/routes/_admin+/waitlist.tsx:382
 msgid "Status"
 msgstr "الحالة"
@@ -3359,7 +3463,7 @@ msgstr "الافتراضي للنظام"
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:168
+#: app/components/admin-sidebar.tsx:174
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -3410,7 +3514,7 @@ msgstr "الجمهور المستهدف"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:524
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -3436,6 +3540,10 @@ msgstr "جاري الاختبار..."
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
 msgid "Text"
 msgstr "نص"
+
+#: app/routes/_admin+/phone-numbers.tsx:206
+msgid "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
+msgstr "كانت تلك المؤسسة قد تحققت من تحويل المكالمات إلى هذا الرقم. من المرجح جدًا أن يصل متصلوها إلى وكيل المؤسسة الجديدة حتى توقف التحويل لدى مشغل الاتصالات."
 
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
@@ -3463,15 +3571,31 @@ msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 msgid "The policy will apply on the next daily chat cleanup."
 msgstr "ستُطبّق السياسة في عملية التنظيف اليومية التالية للمحادثات."
 
+#: app/routes/_admin+/phone-numbers.tsx:212
+msgid "The previous organization may still forward its line to this number, so its callers could reach the new organization's agent."
+msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى هذا الرقم، لذا قد يصل متصلوها إلى وكيل المؤسسة الجديدة."
+
 #: app/components/nav-user.tsx:121
 msgid "Theme"
 msgstr "المظهر"
+
+#: app/routes/_admin+/phone-numbers.tsx:201
+msgid "This number belonged to an organization that was deleted."
+msgstr "كان هذا الرقم تابعًا لمؤسسة حُذفت."
+
+#: app/routes/_admin+/phone-numbers.tsx:192
+msgid "This number was released by {previousName} on {releasedOn}."
+msgstr "أُعيد هذا الرقم من {previousName} في {releasedOn}."
+
+#: app/routes/_admin+/phone-numbers.tsx:196
+msgid "This number was released on {releasedOn} by an organization that no longer exists."
+msgstr "أُعيد هذا الرقم في {releasedOn} من مؤسسة لم تعد موجودة."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
 msgstr "تنطبق هذه السياسة على جميع القنوات والرسائل المباشرة والمحادثات الجماعية في هذه المؤسسة. يمكن لمسؤولي المنصة فقط تغييرها."
 
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:15
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:16
 msgid "Time delay"
 msgstr "تأخير زمني"
 
@@ -3531,7 +3655,7 @@ msgstr "إجمالي المستخدمين:"
 msgid "Trial"
 msgstr "تجربة"
 
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:22
+#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:23
 msgid "Trigger"
 msgstr "محفّز"
 
@@ -3559,6 +3683,10 @@ msgstr "يُفعَّل عبر اختبار المسؤول أو API"
 msgid "Triggered via operator test or API"
 msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 
+#: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:21
+msgid "True"
+msgstr "صحيح"
+
 #: app/routes/_admin+/cache.tsx:623
 msgid "TTL"
 msgstr "TTL"
@@ -3566,6 +3694,14 @@ msgstr "TTL"
 #: app/components/admin/feature-flags.tsx:133
 msgid "Type"
 msgstr "النوع"
+
+#: app/routes/_admin+/phone-numbers.tsx:261
+msgid "Unassign"
+msgstr "إلغاء التعيين"
+
+#: app/routes/_admin+/phone-numbers.tsx:254
+msgid "Unassign {e164}? The organization's agent stops answering it right away."
+msgstr "إلغاء تخصيص {e164}؟ سيتوقف وكيل المؤسسة عن الرد عليه فورًا."
 
 #: app/routes/_admin+/ip-addresses+/index.tsx:337
 msgid "Unblacklist"
@@ -3695,7 +3831,7 @@ msgstr "القيمة"
 msgid "Variables"
 msgstr "المتغيرات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:475
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -3737,7 +3873,7 @@ msgstr "عارض"
 
 #. placeholder {0}: data.duration
 #. placeholder {1}: delayUnitLabel(data.unit)
-#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:17
+#: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:18
 msgid "Wait {0} {1}"
 msgstr "انتظر {0} {1}"
 
@@ -3815,7 +3951,7 @@ msgstr "اكتب رسالتك النصية"
 #~ msgid "Write your text message. Max 160 characters."
 #~ msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
 
-#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:58
+#: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:60
 msgid "Yes"
 msgstr "نعم"
 

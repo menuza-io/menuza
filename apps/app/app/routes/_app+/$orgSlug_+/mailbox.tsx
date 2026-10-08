@@ -24,29 +24,48 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router'
+import { useLoaderData, useParams } from 'react-router'
 import { z } from 'zod'
 import { MailboxIcon } from '#app/components/icons/mailbox-icon.tsx'
+import { CallsTab } from '#app/components/mailbox/calls-tab.tsx'
 import {
 	notifyMailboxChanged,
 	useMailboxClient,
 } from '#app/hooks/use-mailbox.ts'
+import { useOpenCallFollowUps } from '#app/hooks/use-phone-calls.ts'
 import {
 	useConfirmBlocker,
 	useDirtyBeforeUnload,
 } from '#app/utils/navigation-guards.ts'
+import { type loader } from './mailbox.server.ts'
 
-export { loader } from './mailbox-token.ts'
+export { loader } from './mailbox.server.ts'
 
 // Add future inbox sources here, with a corresponding content panel and API.
-const MAILBOX_SOURCES = [{ id: 'forms', label: msg`Forms` }] as const
+const MAILBOX_SOURCES = [
+	{ id: 'forms', label: msg`Forms`, icon: 'file-text' },
+	{ id: 'calls', label: msg`Calls`, icon: 'phone' },
+] as const
+type MailboxSource = (typeof MAILBOX_SOURCES)[number]['id']
 const PAGE_SIZE = 50
 
 type ReplyDraft = { subject: string; message: string; notes: string }
 
 export default function MailboxRoute() {
+	const { canReadWebsite, calls } = useLoaderData<typeof loader>()
 	const { orgSlug = '' } = useParams()
 	const { _, i18n } = useLingui()
+	const sources = MAILBOX_SOURCES.filter((source) =>
+		source.id === 'calls' ? Boolean(calls) : canReadWebsite,
+	)
+	const [tab, setTab] = useState<MailboxSource>(() => sources[0]?.id ?? 'forms')
+	const [openCallFollowUps, setOpenCallFollowUps] = useState(0)
+	// The Calls tab reports its own count while open.
+	useOpenCallFollowUps(
+		orgSlug,
+		Boolean(calls) && tab !== 'calls',
+		setOpenCallFollowUps,
+	)
 	const request = useMailboxClient(orgSlug)
 	const [items, setItems] = useState<MailboxItem[]>([])
 	const [selected, setSelected] = useState<MailboxItem | null>(null)
@@ -89,6 +108,7 @@ export default function MailboxRoute() {
 	}, [search])
 
 	useEffect(() => {
+		if (!canReadWebsite) return
 		const controller = new AbortController()
 		setLoading(true)
 		setError(null)
@@ -119,7 +139,7 @@ export default function MailboxRoute() {
 				if (!controller.signal.aborted) setLoading(false)
 			})
 		return () => controller.abort()
-	}, [request, page, query, unreadOnly, revision, _])
+	}, [canReadWebsite, request, page, query, unreadOnly, revision, _])
 
 	useEffect(() => {
 		const refresh = () => setRevision((value) => value + 1)
@@ -245,20 +265,46 @@ export default function MailboxRoute() {
 				}).format(new Date(value))
 			: '—'
 
+	if (sources.length === 0) {
+		return (
+			<div className="flex flex-1 flex-col items-center justify-center px-8 py-20 text-center">
+				<MailboxIcon size={36} className="text-muted-foreground mb-5" />
+				<h2 className="text-lg font-medium">
+					<Trans>Nothing to show here</Trans>
+				</h2>
+				<p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
+					<Trans>
+						AI phone calls are only available for organizations that keep
+						customer data in the US.
+					</Trans>
+				</p>
+			</div>
+		)
+	}
+
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			<Tabs
-				defaultValue="forms"
+				value={tab}
+				onValueChange={(value) => setTab(value as MailboxSource)}
 				className="-mx-4 min-h-0 flex-1 gap-0 md:-mx-2"
 			>
 				<div className="border-b">
 					<TabsList variant="line" aria-label={_(msg`Mailbox sources`)}>
-						{MAILBOX_SOURCES.map((source) => (
+						{sources.map((source) => (
 							<TabsTrigger key={source.id} value={source.id}>
-								<Icon name="file-text" />
+								<Icon name={source.icon} />
 								{_(source.label)}
-								{unreadCount > 0 ? (
+								{source.id === 'forms' && unreadCount > 0 ? (
 									<Badge variant="secondary">{unreadCount}</Badge>
+								) : null}
+								{source.id === 'calls' && openCallFollowUps > 0 ? (
+									<Badge
+										variant="secondary"
+										aria-label={_(msg`${openCallFollowUps} need follow-up`)}
+									>
+										{openCallFollowUps}
+									</Badge>
 								) : null}
 							</TabsTrigger>
 						))}
@@ -654,6 +700,18 @@ export default function MailboxRoute() {
 						)}
 					</div>
 				</TabsContent>
+				{calls ? (
+					<TabsContent value="calls" className="flex min-h-0 flex-1">
+						<CallsTab
+							orgSlug={orgSlug}
+							scopeNames={calls.scopeNames}
+							canUpdate={calls.canUpdate}
+							canDelete={calls.canDelete}
+							tags={calls.tags}
+							onOpenCountChange={setOpenCallFollowUps}
+						/>
+					</TabsContent>
+				) : null}
 			</Tabs>
 		</div>
 	)

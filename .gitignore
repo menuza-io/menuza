@@ -31,6 +31,7 @@ env.d.ts
 # Launch / deploy-generated Wrangler configs (never commit)
 launch.config.json
 launch.secrets.json
+launch.voice-agent.env
 launch.workers-builds.json
 **/wrangler.deploy.jsonc
 **/wrangler.deploy.toml

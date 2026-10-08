@@ -7,11 +7,21 @@ See the full guide: [docs/scheduled-jobs.md](../../docs/scheduled-jobs.md).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                |
-| ----------- | ------------------------------------ |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival` |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`  |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`       |
+| Cron        | Route                                    |
+| ----------- | ---------------------------------------- |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`     |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`      |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`           |
+| `0 4 * * *` | `/resources/jobs/voice-retention`        |
+| `0 * * * *` | Tenant engagement sync (each tenant-api) |
+
+`/resources/jobs/form-submission-retention` is mapped to `0 5 * * *` in
+`JOB_ROUTES` but that trigger is not in `wrangler.jsonc`, so it does not run.
+Add the trigger only when form retention should start deleting submissions.
+
+The Workers free plan allows five cron triggers per Worker. Daily jobs share a
+trigger (see `JOB_ROUTES` in `src/index.ts`) rather than adding a sixth; each
+job is still a separate request with its own error logging.
 
 ## Storage migration workflow
 

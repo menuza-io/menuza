@@ -4,6 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 @source './../../../../packages/ui/**/*.{js,jsx,ts,tsx}';
+@source './../../../../packages/flow-editor/**/*.{js,jsx,ts,tsx}';
 @source './../../../../packages/marketing-workflow/**/*.{js,jsx,ts,tsx}';
 @source './../../../../packages/marketing/**/*.{js,jsx,ts,tsx}';
 @source './../../../../packages/reports/**/*.{js,jsx,ts,tsx}';

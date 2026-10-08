@@ -1,5 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { FLOW_HANDLE_CLASS } from '@repo/flow-editor'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo } from 'react'
 import { type ActionSmsFlowNode } from '../types.ts'
@@ -24,13 +25,13 @@ function ActionSmsNodeComponent({
 						type="target"
 						position={Position.Top}
 						id="input"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 					/>
 					<Handle
 						type="source"
 						position={Position.Bottom}
 						id="output"
-						className="border-background bg-muted-foreground size-3 border-2"
+						className={FLOW_HANDLE_CLASS}
 					/>
 				</>
 			}
