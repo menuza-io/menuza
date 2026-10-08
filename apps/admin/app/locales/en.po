@@ -2646,6 +2646,10 @@ msgstr ""
 msgid "Platform-owned numbers for the AI phone agent. Organizations can only connect numbers assigned to them here."
 msgstr "Platform-owned numbers for the AI phone agent. Organizations can only connect numbers assigned to them here."
 
+#: app/routes/_admin+/phone-numbers.tsx:323
+#~ msgid "Platform-owned numbers for the AI phone agent. Restaurants can only connect numbers assigned to them here."
+#~ msgstr "Platform-owned numbers for the AI phone agent. Restaurants can only connect numbers assigned to them here."
+
 #: app/routes/_admin+/waitlist.tsx:370
 msgid "Points"
 msgstr ""
@@ -3545,6 +3549,10 @@ msgstr "Text"
 msgid "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 msgstr "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 
+#: app/routes/_admin+/phone-numbers.tsx:206
+#~ msgid "That restaurant had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
+#~ msgstr "That restaurant had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
+
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
 msgstr ""
@@ -3574,6 +3582,10 @@ msgstr "The policy will apply on the next daily chat cleanup."
 #: app/routes/_admin+/phone-numbers.tsx:212
 msgid "The previous organization may still forward its line to this number, so its callers could reach the new organization's agent."
 msgstr "The previous organization may still forward its line to this number, so its callers could reach the new organization's agent."
+
+#: app/routes/_admin+/phone-numbers.tsx:212
+#~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
+#~ msgstr "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -3702,6 +3714,10 @@ msgstr "Unassign"
 #: app/routes/_admin+/phone-numbers.tsx:254
 msgid "Unassign {e164}? The organization's agent stops answering it right away."
 msgstr "Unassign {e164}? The organization's agent stops answering it right away."
+
+#: app/routes/_admin+/phone-numbers.tsx:254
+#~ msgid "Unassign {e164}? The restaurant's agent stops answering it right away."
+#~ msgstr "Unassign {e164}? The restaurant's agent stops answering it right away."
 
 #: app/routes/_admin+/ip-addresses+/index.tsx:337
 msgid "Unblacklist"

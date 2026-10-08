@@ -871,6 +871,10 @@ msgstr "Agotado"
 msgid "Some items are no longer available and were removed from your order."
 msgstr "Algunos artículos ya no están disponibles y se han eliminado de tu pedido."
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items from your call are no longer available, so we removed them:"
+msgstr "Algunos artículos de su llamada ya no están disponibles, así que los quitamos:"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items in your order changed or sold out. Please review your cart and try again."
 msgstr "Algunos artículos de tu pedido cambiaron o se agotaron. Revisa tu carrito e inténtalo de nuevo."
@@ -878,6 +882,10 @@ msgstr "Algunos artículos de tu pedido cambiaron o se agotaron. Revisa tu carri
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items just sold out. Please review your order."
 msgstr "Algunos artículos se acaban de agotar. Revisa tu pedido."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed since your call. Your cart shows the current prices."
+msgstr "Algunos precios cambiaron desde su llamada. Su carrito muestra los precios actuales."
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -930,6 +938,10 @@ msgstr "Esa hora de recogida ya no está disponible. Elige otra hora."
 msgid "The hold on your order was released. Please place a new order."
 msgstr "La reserva de tu pedido se liberó. Realiza un nuevo pedido."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items from your call are no longer available. You can still order from the menu."
+msgstr "Los artículos de su llamada ya no están disponibles. Aún puede ordenar desde el menú."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "El enlace puede estar incompleto. Puedes iniciar un nuevo pedido desde el menú."
@@ -961,6 +973,10 @@ msgstr "Esta ubicación no está disponible para pedidos."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "Este pedido está por debajo del mínimo para entrega a domicilio."
+
+#: src/pages/menu.astro.ts:3
+msgid "This order link has expired. You can still order from the menu."
+msgstr "Este enlace de pedido ha caducado. Aún puede ordenar desde el menú."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1081,6 +1097,10 @@ msgstr "No pudimos realizar tu pedido. Inténtalo de nuevo."
 msgid "We couldn't find this order"
 msgstr "No pudimos encontrar este pedido"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't load your phone order."
+msgstr "No pudimos cargar su pedido telefónico."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "No pudimos cargar tu recibo"
@@ -1088,6 +1108,10 @@ msgstr "No pudimos cargar tu recibo"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "No pudimos iniciar el pago. Inténtalo de nuevo."
+
+#: src/pages/menu.astro.ts:3
+msgid "We loaded your order from your call. Review it and check out."
+msgstr "Cargamos su pedido de la llamada. Revíselo y complete la compra."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."

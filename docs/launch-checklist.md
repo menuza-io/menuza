@@ -435,8 +435,8 @@ Wrangler dev secrets: `apps/app/.dev.vars`, `apps/tenant-api/.dev.vars`
 
 ### 8. Voice agent (LiveKit Cloud — optional, US only)
 
-- [ ] LiveKit Cloud project (Build plan to start; Ship before businesses rely on
-      it, to avoid cold starts); Observability turned off (it stores call
+- [ ] LiveKit Cloud project (Build plan to start; Ship before restaurants rely
+      on it, to avoid cold starts); Observability turned off (it stores call
       transcripts and audio at LiveKit)
 - [ ] Fill provider keys in `launch.voice-agent.env` (written by
       `npm run launch:setup`)

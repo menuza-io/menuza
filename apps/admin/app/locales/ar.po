@@ -2646,6 +2646,10 @@ msgstr "تشغيلات اختبار المنصة غير موصولة بالتن�
 msgid "Platform-owned numbers for the AI phone agent. Organizations can only connect numbers assigned to them here."
 msgstr "أرقام تملكها المنصة لوكيل الهاتف بالذكاء الاصطناعي. لا يمكن للمؤسسات ربط إلا الأرقام المخصصة لها هنا."
 
+#: app/routes/_admin+/phone-numbers.tsx:323
+#~ msgid "Platform-owned numbers for the AI phone agent. Restaurants can only connect numbers assigned to them here."
+#~ msgstr "أرقام مملوكة للمنصة لوكيل الهاتف بالذكاء الاصطناعي. لا يمكن للمطاعم ربط إلا الأرقام المعيَّنة لها هنا."
+
 #: app/routes/_admin+/waitlist.tsx:370
 msgid "Points"
 msgstr "النقاط"
@@ -3545,6 +3549,10 @@ msgstr "نص"
 msgid "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 msgstr "كانت تلك المؤسسة قد تحققت من تحويل المكالمات إلى هذا الرقم. من المرجح جدًا أن يصل متصلوها إلى وكيل المؤسسة الجديدة حتى توقف التحويل لدى مشغل الاتصالات."
 
+#: app/routes/_admin+/phone-numbers.tsx:206
+#~ msgid "That restaurant had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
+#~ msgstr "كان لدى ذلك المطعم تحويل مكالمات موثَّق إلى هذا الرقم. من المرجح جدًا أن يصل المتصلون به إلى وكيل المؤسسة الجديدة إلى أن يوقف التحويل لدى مشغّل الاتصالات."
+
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
 msgstr "صفحة المدير التي تبحث عنها غير موجودة."
@@ -3574,6 +3582,10 @@ msgstr "ستُطبّق السياسة في عملية التنظيف اليوم�
 #: app/routes/_admin+/phone-numbers.tsx:212
 msgid "The previous organization may still forward its line to this number, so its callers could reach the new organization's agent."
 msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى هذا الرقم، لذا قد يصل متصلوها إلى وكيل المؤسسة الجديدة."
+
+#: app/routes/_admin+/phone-numbers.tsx:212
+#~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
+#~ msgstr "قد يظل المطعم السابق يحوّل خطه إلى هذا الرقم، لذا قد يصل المتصلون به إلى وكيل المؤسسة الجديدة."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -3702,6 +3714,10 @@ msgstr "إلغاء التعيين"
 #: app/routes/_admin+/phone-numbers.tsx:254
 msgid "Unassign {e164}? The organization's agent stops answering it right away."
 msgstr "إلغاء تخصيص {e164}؟ سيتوقف وكيل المؤسسة عن الرد عليه فورًا."
+
+#: app/routes/_admin+/phone-numbers.tsx:254
+#~ msgid "Unassign {e164}? The restaurant's agent stops answering it right away."
+#~ msgstr "إلغاء تعيين {e164}؟ سيتوقف وكيل المطعم عن الرد عليه فورًا."
 
 #: app/routes/_admin+/ip-addresses+/index.tsx:337
 msgid "Unblacklist"

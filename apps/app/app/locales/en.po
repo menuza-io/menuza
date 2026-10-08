@@ -197,7 +197,7 @@ msgstr "{count, plural, one {Use at most # item.} other {Use at most # items.}}"
 msgid "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 msgstr "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:754
 msgid "{count} locations"
 msgstr "{count} locations"
 
@@ -552,7 +552,7 @@ msgstr "1 hour prior"
 msgid "1 item"
 msgstr "1 item"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:750
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
 msgid "1 location"
 msgstr "1 location"
 
@@ -802,8 +802,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:316
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:360
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:588
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:690
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:692
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -823,7 +823,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:668
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:670
 msgid "Active"
 msgstr ""
 
@@ -936,8 +936,8 @@ msgid "Add a title between fields."
 msgstr "Add a title between fields."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:46
-#~ msgid "Add an active location to your restaurant first."
-#~ msgstr "Add an active location to your restaurant first."
+msgid "Add an active location to your restaurant first."
+msgstr "Add an active location to your restaurant first."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
@@ -1057,8 +1057,8 @@ msgstr "Add item"
 msgid "Add link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:532
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:534
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:553
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:193
 msgid "Add Location"
 msgstr "Add Location"
@@ -1266,7 +1266,7 @@ msgstr "Add your business details to see what the assistant is told."
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:550
 msgid "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 msgstr "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 
@@ -1275,8 +1275,8 @@ msgid "Add your team members to get started. You can always invite more people l
 msgstr ""
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:78
-#~ msgid "Add-on suggestions are off in Advanced, so the agent skips these rules."
-#~ msgstr "Add-on suggestions are off in Advanced, so the agent skips these rules."
+msgid "Add-on suggestions are off in Advanced, so the agent skips these rules."
+msgstr "Add-on suggestions are off in Advanced, so the agent skips these rules."
 
 #: app/components/website/create-form-dialog.tsx:141
 msgid "Add, name, and order each field."
@@ -1308,7 +1308,7 @@ msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr ""
 
 #: app/components/phone-agent/business-details-section.tsx:137
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:575
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:577
 msgid "Address"
 msgstr "Address"
 
@@ -1488,6 +1488,7 @@ msgstr "All days"
 #~ msgid "All items in this section share from this pool."
 #~ msgstr "All items in this section share from this pool."
 
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
 msgid "All locations"
@@ -1718,7 +1719,7 @@ msgstr "Are you open right now?"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:781
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:783
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
@@ -2131,8 +2132,8 @@ msgid "Billing & Subscription"
 msgstr ""
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:34
-#~ msgid "Birthdays, large groups, catering, and holidays."
-#~ msgstr "Birthdays, large groups, catering, and holidays."
+msgid "Birthdays, large groups, catering, and holidays."
+msgstr "Birthdays, large groups, catering, and holidays."
 
 #: app/components/roles/tenant-role-access-manager.tsx:304
 msgid "Blank"
@@ -2496,7 +2497,7 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:792
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:794
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1768
@@ -2611,16 +2612,16 @@ msgid "Category Name (Guest-Facing)"
 msgstr "Category Name (Guest-Facing)"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:20
-#~ msgid "Catering"
-#~ msgstr "Catering"
+msgid "Catering"
+msgstr "Catering"
 
 #: app/components/menu/menu-form.tsx:279
 msgid "Catering & Large Events"
 msgstr "Catering & Large Events"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:61
-#~ msgid "Catering goes to the manager"
-#~ msgstr "Catering goes to the manager"
+msgid "Catering goes to the manager"
+msgstr "Catering goes to the manager"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3364
@@ -4014,7 +4015,7 @@ msgstr "Creating…"
 msgid "Critical"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:651
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:653
 msgid "Curbside"
 msgstr "Curbside"
 
@@ -4279,7 +4280,7 @@ msgstr "Dedicated"
 #: app/components/menu/location-overrides-card.tsx:125
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:618
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Default"
 msgstr ""
 
@@ -4339,7 +4340,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:735
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:737
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
@@ -4448,7 +4449,7 @@ msgstr "Delete item?"
 msgid "Delete link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:795
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:797
 msgid "Delete Location"
 msgstr "Delete Location"
 
@@ -4520,7 +4521,7 @@ msgstr "Delete redirect rule?"
 msgid "Delete restaurant"
 msgstr "Delete restaurant"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:775
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:777
 msgid "Delete restaurant location?"
 msgstr "Delete restaurant location?"
 
@@ -4566,9 +4567,10 @@ msgid "Deliveroo"
 msgstr "Deliveroo"
 
 #: app/components/locations/location-form.tsx:679
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:307
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:641
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:643
 msgid "Delivery"
 msgstr "Delivery"
 
@@ -4581,8 +4583,8 @@ msgid "Delivery Allowed"
 msgstr "Delivery Allowed"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:33
-#~ msgid "Delivery areas, fees, and pickup alternatives."
-#~ msgstr "Delivery areas, fees, and pickup alternatives."
+msgid "Delivery areas, fees, and pickup alternatives."
+msgstr "Delivery areas, fees, and pickup alternatives."
 
 #: app/components/locations/delivery-zones-manager.tsx:370
 msgid "Delivery is blocked or disallowed for this specific zone"
@@ -4593,8 +4595,8 @@ msgid "Delivery Provider"
 msgstr "Delivery Provider"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:66
-#~ msgid "Delivery radius"
-#~ msgstr "Delivery radius"
+msgid "Delivery radius"
+msgstr "Delivery radius"
 
 #: app/components/locations/location-form.tsx:845
 msgid "Delivery Settings & Providers"
@@ -4723,7 +4725,7 @@ msgstr "Dietary, Allergens & Calories"
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:646
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:648
 msgid "Dine-in"
 msgstr "Dine-in"
 
@@ -4859,8 +4861,8 @@ msgid "Don't retry"
 msgstr "Don't retry"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:113
-#~ msgid "Don't take phone orders for"
-#~ msgstr "Don't take phone orders for"
+msgid "Don't take phone orders for"
+msgstr "Don't take phone orders for"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
@@ -5200,7 +5202,7 @@ msgid "Edit design"
 msgstr "Edit design"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:578
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:702
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
 msgid "Edit Details"
 msgstr "Edit Details"
 
@@ -5941,8 +5943,8 @@ msgid "For example, add Size with Small and Medium, then Color with Black and Bl
 msgstr "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:62
-#~ msgid "For orders over 20 people, take a message for the catering manager."
-#~ msgstr "For orders over 20 people, take a message for the catering manager."
+msgid "For orders over 20 people, take a message for the catering manager."
+msgstr "For orders over 20 people, take a message for the catering manager."
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:407
 msgid "For our hours, press 1. To speak with our team, press 2."
@@ -6047,7 +6049,7 @@ msgstr "From here the AI handles the rest of the call: questions, texted links, 
 msgid "From Name (Optional)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:581
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:583
 msgid "Fulfillment"
 msgstr "Fulfillment"
 
@@ -6149,8 +6151,8 @@ msgid "Give me examples"
 msgstr ""
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:94
-#~ msgid "Give the usual pickup or delivery time."
-#~ msgstr "Give the usual pickup or delivery time."
+msgid "Give the usual pickup or delivery time."
+msgstr "Give the usual pickup or delivery time."
 
 #: app/utils/website/form-templates.ts:51
 msgid "Give visitors room to share thoughtful feedback."
@@ -6651,7 +6653,7 @@ msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 msgid "In-House Tips"
 msgstr "In-House Tips"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:670
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:672
 msgid "Inactive"
 msgstr "Inactive"
 
@@ -7317,8 +7319,10 @@ msgid "Loading…"
 msgstr "Loading…"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:37
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:574
 msgid "Location"
 msgstr "Location"
 
@@ -7344,7 +7348,7 @@ msgstr "Location Status"
 
 #: app/components/app-sidebar.tsx:525
 #: app/components/team-switcher.tsx:183
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:519
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:521
 msgid "Locations"
 msgstr "Locations"
 
@@ -7492,7 +7496,7 @@ msgstr ""
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:522
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:524
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 
@@ -7591,7 +7595,7 @@ msgstr "manager@example.com"
 msgid "Manual Trigger"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:724
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:726
 msgid "Mark Active"
 msgstr "Mark Active"
 
@@ -7619,7 +7623,7 @@ msgstr "Mark complete automatically"
 msgid "Mark done"
 msgstr "Mark done"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:722
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:724
 msgid "Mark Inactive"
 msgstr "Mark Inactive"
 
@@ -7791,22 +7795,23 @@ msgstr "Members & invites"
 #: app/components/app-sidebar.tsx:304
 #: app/components/menu/drop-wizard/drop-form.tsx:706
 #: app/components/menu/drop-wizard/drop-form.tsx:722
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:38
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:101
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:300
 msgid "Menu"
 msgstr "Menu"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:23
-#~ msgid "Menu & sizing"
-#~ msgstr "Menu & sizing"
+msgid "Menu & sizing"
+msgstr "Menu & sizing"
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:389
 msgid "Menu actions"
 msgstr "Menu actions"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:15
-#~ msgid "Menu info"
-#~ msgstr "Menu info"
+msgid "Menu info"
+msgstr "Menu info"
 
 #: app/components/menu/menu-form.tsx:179
 msgid "Menu Information"
@@ -8511,11 +8516,11 @@ msgstr "No items yet"
 #~ msgid "No limit"
 #~ msgstr "No limit"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:565
 msgid "No locations found."
 msgstr "No locations found."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:546
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
 msgid "No locations yet"
 msgstr "No locations yet"
 
@@ -8527,7 +8532,7 @@ msgstr "No matching calls"
 msgid "No matching images"
 msgstr "No matching images"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:557
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:559
 msgid "No matching locations"
 msgstr "No matching locations"
 
@@ -9047,8 +9052,8 @@ msgid "Offer a text if nobody answers"
 msgstr "Offer a text if nobody answers"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:56
-#~ msgid "Offer garlic knots"
-#~ msgstr "Offer garlic knots"
+msgid "Offer garlic knots"
+msgstr "Offer garlic knots"
 
 #: app/components/settings/cards/organization/review-integrations-card.tsx:94
 #~ msgid "Offline"
@@ -9428,16 +9433,16 @@ msgid "Order details"
 msgstr "Order details"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:25
-#~ msgid "Order flow"
-#~ msgstr "Order flow"
+msgid "Order flow"
+msgstr "Order flow"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:316
 #~ msgid "Order lead time"
 #~ msgstr "Order lead time"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:93
-#~ msgid "Order links"
-#~ msgstr "Order links"
+msgid "Order links"
+msgstr "Order links"
 
 #: app/components/locations/location-form.tsx:532
 msgid "Order Preparation Time"
@@ -9445,12 +9450,12 @@ msgstr "Order Preparation Time"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:14
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:39
-#~ msgid "Ordering"
-#~ msgstr "Ordering"
+msgid "Ordering"
+msgstr "Ordering"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:85
-#~ msgid "Ordering link sent"
-#~ msgstr "Ordering link sent"
+msgid "Ordering link sent"
+msgstr "Ordering link sent"
 
 #: app/components/menu/drop-wizard/drop-preview.tsx:75
 msgid "Ordering now"
@@ -9571,8 +9576,8 @@ msgid "Otherwise, they only see messages sent after they join."
 msgstr "Otherwise, they only see messages sent after they join."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:52
-#~ msgid "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
-#~ msgstr "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
+msgid "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
+msgstr "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
@@ -9804,7 +9809,7 @@ msgstr ""
 #: app/components/website/link-inspector.tsx:489
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:300
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:371
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:580
 msgid "Phone"
 msgstr ""
 
@@ -9846,8 +9851,8 @@ msgid "Phone numbers"
 msgstr "Phone numbers"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:51
-#~ msgid "Phone ordering"
-#~ msgstr "Phone ordering"
+msgid "Phone ordering"
+msgstr "Phone ordering"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:463
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
@@ -9932,7 +9937,7 @@ msgid "Pick a template, then customize every field in the builder."
 msgstr "Pick a template, then customize every field in the builder."
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:308
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:636
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:638
 msgid "Pickup"
 msgstr "Pickup"
 
@@ -9978,8 +9983,8 @@ msgstr "Pickup Window"
 #~ msgstr "Pickup window settings"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:51
-#~ msgid "Pizza sizes"
-#~ msgstr "Pizza sizes"
+msgid "Pizza sizes"
+msgstr "Pizza sizes"
 
 #: app/components/menu/option-form.tsx:776
 msgid "Pizza Topping"
@@ -10054,8 +10059,8 @@ msgid "Played after the link is texted."
 msgstr "Played after the link is texted."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:86
-#~ msgid "Played after the ordering link is texted."
-#~ msgstr "Played after the ordering link is texted."
+msgid "Played after the ordering link is texted."
+msgstr "Played after the ordering link is texted."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:48
 msgid "Played at the start of every call. It tells callers they're speaking with an automated assistant."
@@ -10078,8 +10083,8 @@ msgid "Played before passing the call to your business line while the assistant 
 msgstr "Played before passing the call to your business line while the assistant is paused."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:82
-#~ msgid "Played before passing the call to your restaurant line while the assistant is paused."
-#~ msgstr "Played before passing the call to your restaurant line while the assistant is paused."
+msgid "Played before passing the call to your restaurant line while the assistant is paused."
+msgstr "Played before passing the call to your restaurant line while the assistant is paused."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:100
 msgid "Played before the goodbye when a call reaches its maximum length."
@@ -10118,8 +10123,8 @@ msgid "Played when the link can't be texted to the caller."
 msgstr "Played when the link can't be texted to the caller."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:89
-#~ msgid "Played when the ordering link can't be texted to the caller."
-#~ msgstr "Played when the ordering link can't be texted to the caller."
+msgid "Played when the ordering link can't be texted to the caller."
+msgstr "Played when the ordering link can't be texted to the caller."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:96
 msgid "Played when the phone system can't answer the call."
@@ -10467,8 +10472,8 @@ msgid "Publish a call flow"
 msgstr "Publish a call flow"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:143
-#~ msgid "Publish a menu to choose categories."
-#~ msgstr "Publish a menu to choose categories."
+msgid "Publish a menu to choose categories."
+msgstr "Publish a menu to choose categories."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
 #~ msgid "Publish a phone menu"
@@ -10646,8 +10651,8 @@ msgid "Read the announcement banners shown on the public site."
 msgstr "Read the announcement banners shown on the public site."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:83
-#~ msgid "Read the order back"
-#~ msgstr "Read the order back"
+msgid "Read the order back"
+msgstr "Read the order back"
 
 #: app/components/roles/tenant-role-access-manager.tsx:293
 msgid "Read-only"
@@ -10997,8 +11002,8 @@ msgid "Reopen"
 msgstr "Reopen"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:84
-#~ msgid "Repeat each item before sending the link."
-#~ msgstr "Repeat each item before sending the link."
+msgid "Repeat each item before sending the link."
+msgstr "Repeat each item before sending the link."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:665
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
@@ -11110,9 +11115,10 @@ msgstr "Required."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:13
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:19
-#~ msgid "Reservation"
-#~ msgstr "Reservation"
+msgid "Reservation"
+msgstr "Reservation"
 
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 msgid "Reservations"
 msgstr "Reservations"
@@ -11718,12 +11724,12 @@ msgid "Say it as, e.g. win"
 msgstr "Say it as, e.g. win"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:88
-#~ msgid "Say the total"
-#~ msgstr "Say the total"
+msgid "Say the total"
+msgstr "Say the total"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:93
-#~ msgid "Say when it will be ready"
-#~ msgstr "Say when it will be ready"
+msgid "Say when it will be ready"
+msgstr "Say when it will be ready"
 
 #: app/components/settings/two-factor-form.tsx:162
 msgid "Scan QR Code or Enter Setup Key"
@@ -12279,7 +12285,7 @@ msgstr ""
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "Set a pooled inventory limit for all items in this section."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:710
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:712
 msgid "Set as Default"
 msgstr "Set as Default"
 
@@ -12580,8 +12586,8 @@ msgid "Size:"
 msgstr "Size:"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:30
-#~ msgid "Sizes, portions, and how to describe your dishes."
-#~ msgstr "Sizes, portions, and how to describe your dishes."
+msgid "Sizes, portions, and how to describe your dishes."
+msgstr "Sizes, portions, and how to describe your dishes."
 
 #: app/routes/organizations+/create.tsx:1232
 msgid "Skip for now"
@@ -12685,8 +12691,8 @@ msgid "Special Hours & Holiday Overrides"
 msgstr "Special Hours & Holiday Overrides"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:27
-#~ msgid "Special occasions"
-#~ msgstr "Special occasions"
+msgid "Special occasions"
+msgstr "Special occasions"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
@@ -12850,7 +12856,7 @@ msgstr "State / Province"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:586
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -12909,8 +12915,8 @@ msgid "Store Hours"
 msgstr "Store Hours"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:16
-#~ msgid "Store info"
-#~ msgstr "Store info"
+msgid "Store info"
+msgstr "Store info"
 
 #: app/components/locations/location-form.tsx:661
 msgid "Store Pickup"
@@ -13031,8 +13037,8 @@ msgid "Success message"
 msgstr "Success message"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:64
-#~ msgid "Suggest add-ons"
-#~ msgstr "Suggest add-ons"
+msgid "Suggest add-ons"
+msgstr "Suggest add-ons"
 
 #: app/components/menu/item-form.tsx:753
 msgid "Suggest as an add-on at checkout."
@@ -13233,8 +13239,8 @@ msgid "Tell me more"
 msgstr ""
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:89
-#~ msgid "Tell the caller the estimated total before tax and fees."
-#~ msgstr "Tell the caller the estimated total before tax and fees."
+msgid "Tell the caller the estimated total before tax and fees."
+msgstr "Tell the caller the estimated total before tax and fees."
 
 #: app/routes/organizations+/create.tsx:803
 #~ msgid "Tell us about your organization..."
@@ -13407,12 +13413,12 @@ msgid "The agent answers calls once every step is done."
 msgstr "The agent answers calls once every step is done."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:116
-#~ msgid "The agent can still describe these items, but callers are asked to order them online or speak with staff."
-#~ msgstr "The agent can still describe these items, but callers are asked to order them online or speak with staff."
+msgid "The agent can still describe these items, but callers are asked to order them online or speak with staff."
+msgstr "The agent can still describe these items, but callers are asked to order them online or speak with staff."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:67
-#~ msgid "The agent follows your Upsells and add-ons training rules."
-#~ msgstr "The agent follows your Upsells and add-ons training rules."
+msgid "The agent follows your Upsells and add-ons training rules."
+msgstr "The agent follows your Upsells and add-ons training rules."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:199
 msgid "The agent is off, so these have no effect yet."
@@ -13459,12 +13465,8 @@ msgid "The API key will expire on this date. Leave unchecked for no expiration."
 msgstr ""
 
 #: app/components/roles/tenant-role-access-manager.tsx:203
-#~ msgid "The assistant that answers restaurant calls."
-#~ msgstr "The assistant that answers restaurant calls."
-
-#: app/components/roles/tenant-role-access-manager.tsx:203
-msgid "The assistant that answers your business calls."
-msgstr "The assistant that answers your business calls."
+msgid "The assistant that answers restaurant calls."
+msgstr "The assistant that answers restaurant calls."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:850
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
@@ -13533,8 +13535,8 @@ msgid "The number customers dial today, in international format. You'll verify i
 msgstr "The number customers dial today, in international format. You'll verify it with a code before the agent answers."
 
 #: app/components/phone-agent/restaurant/order-handoff-details.tsx:11
-#~ msgid "The order on this link can't be shown."
-#~ msgstr "The order on this link can't be shown."
+msgid "The order on this link can't be shown."
+msgstr "The order on this link can't be shown."
 
 #: app/components/settings/password-form.tsx:33
 msgid "The passwords must match"
@@ -13549,8 +13551,8 @@ msgid "The standard voice for your agent's language."
 msgstr "The standard voice for your agent's language."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:32
-#~ msgid "The steps to follow while taking an order."
-#~ msgstr "The steps to follow while taking an order."
+msgid "The steps to follow while taking an order."
+msgstr "The steps to follow while taking an order."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 msgid "The time-limit notice, the rating question, and the goodbye."
@@ -14136,7 +14138,7 @@ msgstr "Try adjusting your filters or clear them to see all modifier groups."
 msgid "Try adjusting your filters or clear them to see all options."
 msgstr "Try adjusting your filters or clear them to see all options."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:561
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "Try adjusting your filters or clear them to see all restaurant locations."
 msgstr "Try adjusting your filters or clear them to see all restaurant locations."
 
@@ -14346,8 +14348,8 @@ msgid "Unknown intent"
 msgstr ""
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:45
-#~ msgid "Unknown location"
-#~ msgstr "Unknown location"
+msgid "Unknown location"
+msgstr "Unknown location"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:46
 msgid "Unknown role"
@@ -14568,8 +14570,8 @@ msgid "Uploading…"
 msgstr ""
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:24
-#~ msgid "Upsells & add-ons"
-#~ msgstr "Upsells & add-ons"
+msgid "Upsells & add-ons"
+msgstr "Upsells & add-ons"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
@@ -15016,8 +15018,8 @@ msgid "We just sent you a text with a link to our website."
 msgstr "We just sent you a text with a link to our website."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:67
-#~ msgid "We only deliver within 5 miles. Offer pickup otherwise."
-#~ msgstr "We only deliver within 5 miles. Offer pickup otherwise."
+msgid "We only deliver within 5 miles. Offer pickup otherwise."
+msgstr "We only deliver within 5 miles. Offer pickup otherwise."
 
 #: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content. <0>Read our Cookie Policy</0>."
@@ -15141,8 +15143,8 @@ msgid "What should your reply include? (optional)"
 msgstr "What should your reply include? (optional)"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
-#~ msgid "What the agent does when it takes an order before texting the ordering link."
-#~ msgstr "What the agent does when it takes an order before texting the ordering link."
+msgid "What the agent does when it takes an order before texting the ordering link."
+msgstr "What the agent does when it takes an order before texting the ordering link."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:494
 msgid "What the agent says"
@@ -15165,8 +15167,8 @@ msgid "What to do when the agent mishears or can't help."
 msgstr "What to do when the agent mishears or can't help."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:31
-#~ msgid "What to suggest alongside an order, and when."
-#~ msgstr "What to suggest alongside an order, and when."
+msgid "What to suggest alongside an order, and when."
+msgstr "What to suggest alongside an order, and when."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:459
 msgid "What tools can help?"
@@ -15239,8 +15241,8 @@ msgstr "When published, Public drops appear on your site. Unlisted drops are onl
 #~ msgstr ""
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:57
-#~ msgid "When someone orders a pizza, offer garlic knots once."
-#~ msgstr "When someone orders a pizza, offer garlic knots once."
+msgid "When someone orders a pizza, offer garlic knots once."
+msgstr "When someone orders a pizza, offer garlic knots once."
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:75
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."

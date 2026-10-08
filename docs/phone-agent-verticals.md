@@ -1,14 +1,12 @@
 # Phone agent verticals
 
 The AI phone agent is split into a generic core and one package per business
-type ("vertical"). This repository ships the core with `generalVertical`; the
-restaurant vertical below lives in a downstream fork and is the running example
-in this document:
+type ("vertical"):
 
 | Package                        | What it holds                                                                                                                                                                          |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@repo/phone-agent`            | The engine: settings, phone menu (IVR) flow, phrases, prompt builder, training rules, FAQ, transfers, call reports, speech terms, availability, and the `PhoneAgentVertical` contract. |
-| `@repo/phone-agent-restaurant` | Example (fork only). The restaurant vertical: menus, the order cart, order-link handoff, store hours and delivery details, restaurant wording, and the restaurant call labels.         |
+| `@repo/phone-agent-restaurant` | The restaurant vertical: menus, the order cart, order-link handoff, store hours and delivery details, restaurant wording, and the restaurant call labels.                              |
 
 The core has no business-type vocabulary. A test
 (`packages/phone-agent/src/vocabulary.test.ts`) fails if words such as
@@ -99,8 +97,7 @@ tools, and honors `rejectDuplicates` and `blockedDuringTransfer`.
 
 ## How a call uses the vertical
 
-1. App builds the runtime config. With `generalVertical` it sets `business` from
-   settings and `vertical: { id: 'general', data: {} }`. A restaurant spreads
+1. App builds the runtime config. For a restaurant it spreads
    `restaurantConfigParts({ businessName, location, menus })` into the config,
    which sets `scopeId`, `business`, `availability`, and
    `vertical: { id: 'restaurant', data }`.

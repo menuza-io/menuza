@@ -20,6 +20,7 @@
     "@livekit/agents-plugin-google": "^1.9.1",
     "@livekit/rtc-node": "^1.1.0",
     "@repo/phone-agent": "*",
+    "@repo/phone-agent-restaurant": "*",
     "livekit-server-sdk": "^2.19.1",
     "tsx": "^4.19.3",
     "varlock": "^1.18.0",

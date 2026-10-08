@@ -200,7 +200,7 @@ export function getPermissionGroups(): PermissionGroup[] {
 		},
 		{
 			title: t`AI phone agent`,
-			description: t`The assistant that answers your business calls.`,
+			description: t`The assistant that answers restaurant calls.`,
 			permissions: [
 				{
 					id: 'org_perm_read_phone_agent_any',

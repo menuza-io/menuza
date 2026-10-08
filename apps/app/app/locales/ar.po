@@ -195,7 +195,7 @@ msgstr "{count, plural, one {استخدم عنصرًا واحدًا كحد أق�
 msgid "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 msgstr "{count, plural, one {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد دقيقة.} two {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد دقيقتين.} few {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقائق.} many {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقيقة.} other {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقيقة.}}"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:754
 msgid "{count} locations"
 msgstr "{count} فروع"
 
@@ -550,7 +550,7 @@ msgstr "قبل ساعة واحدة"
 msgid "1 item"
 msgstr "عنصر واحد"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:750
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
 msgid "1 location"
 msgstr "فرع واحد"
 
@@ -800,8 +800,8 @@ msgstr "شركة Acme"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:316
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:360
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:588
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:690
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:692
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -821,7 +821,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:668
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:670
 msgid "Active"
 msgstr "نشط"
 
@@ -934,8 +934,8 @@ msgid "Add a title between fields."
 msgstr "أضف عنوانًا بين الحقول."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:46
-#~ msgid "Add an active location to your restaurant first."
-#~ msgstr "أضف موقعًا نشطًا لمطعمك أولًا."
+msgid "Add an active location to your restaurant first."
+msgstr "أضف موقعًا نشطًا لمطعمك أولًا."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
@@ -1055,8 +1055,8 @@ msgstr "إضافة عنصر"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:532
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:534
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:553
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:193
 msgid "Add Location"
 msgstr "إضافة فرع"
@@ -1264,7 +1264,7 @@ msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال �
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "أضف أطباقك ومشروباتك وإبداعاتك لبناء قائمة مطعمك."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:550
 msgid "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 msgstr "أضف أول فرع لمطعمك لضبط ساعات العمل وتوفر القائمة ومناطق التوصيل."
 
@@ -1273,8 +1273,8 @@ msgid "Add your team members to get started. You can always invite more people l
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:78
-#~ msgid "Add-on suggestions are off in Advanced, so the agent skips these rules."
-#~ msgstr "اقتراحات الإضافات متوقفة في الإعدادات المتقدمة، لذا يتجاوز الوكيل هذه القواعد."
+msgid "Add-on suggestions are off in Advanced, so the agent skips these rules."
+msgstr "اقتراحات الإضافات متوقفة في الإعدادات المتقدمة، لذا يتجاوز الوكيل هذه القواعد."
 
 #: app/components/website/create-form-dialog.tsx:141
 msgid "Add, name, and order each field."
@@ -1306,7 +1306,7 @@ msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 
 #: app/components/phone-agent/business-details-section.tsx:137
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:575
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:577
 msgid "Address"
 msgstr "العنوان"
 
@@ -1486,6 +1486,7 @@ msgstr "كل الأيام"
 #~ msgid "All items in this section share from this pool."
 #~ msgstr "تشترك جميع الأصناف في هذا القسم في هذا المخزون المجمع."
 
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
 msgid "All locations"
@@ -1716,7 +1717,7 @@ msgstr "هل أنت مفتوح الآن؟"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:781
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:783
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد من حذف \"{locToDeleteName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف ساعات العمل ومناطق التوصيل."
 
@@ -2129,8 +2130,8 @@ msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:34
-#~ msgid "Birthdays, large groups, catering, and holidays."
-#~ msgstr "أعياد الميلاد والمجموعات الكبيرة وخدمات تقديم الطعام والعطلات."
+msgid "Birthdays, large groups, catering, and holidays."
+msgstr "أعياد الميلاد والمجموعات الكبيرة وخدمات تقديم الطعام والعطلات."
 
 #: app/components/roles/tenant-role-access-manager.tsx:304
 msgid "Blank"
@@ -2494,7 +2495,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:792
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:794
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1768
@@ -2609,16 +2610,16 @@ msgid "Category Name (Guest-Facing)"
 msgstr "اسم التصنيف (الظاهر للعميل)"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:20
-#~ msgid "Catering"
-#~ msgstr "خدمات التموين"
+msgid "Catering"
+msgstr "خدمات التموين"
 
 #: app/components/menu/menu-form.tsx:279
 msgid "Catering & Large Events"
 msgstr "التموين والمناسبات الكبيرة"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:61
-#~ msgid "Catering goes to the manager"
-#~ msgstr "طلبات التموين تُحوَّل إلى المدير"
+msgid "Catering goes to the manager"
+msgstr "طلبات التموين تُحوَّل إلى المدير"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3364
@@ -4012,7 +4013,7 @@ msgstr "جارٍ الإنشاء…"
 msgid "Critical"
 msgstr "حرجة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:651
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:653
 msgid "Curbside"
 msgstr "عند الرصيف"
 
@@ -4277,7 +4278,7 @@ msgstr "مخصص"
 #: app/components/menu/location-overrides-card.tsx:125
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:618
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Default"
 msgstr "افتراضي"
 
@@ -4337,7 +4338,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:735
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:737
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
@@ -4446,7 +4447,7 @@ msgstr "حذف العنصر؟"
 msgid "Delete link"
 msgstr "حذف الرابط"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:795
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:797
 msgid "Delete Location"
 msgstr "حذف الفرع"
 
@@ -4518,7 +4519,7 @@ msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 msgid "Delete restaurant"
 msgstr "حذف المطعم"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:775
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:777
 msgid "Delete restaurant location?"
 msgstr "حذف فرع المطعم؟"
 
@@ -4564,9 +4565,10 @@ msgid "Deliveroo"
 msgstr "Deliveroo"
 
 #: app/components/locations/location-form.tsx:679
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:307
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:641
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:643
 msgid "Delivery"
 msgstr "التوصيل"
 
@@ -4579,8 +4581,8 @@ msgid "Delivery Allowed"
 msgstr "التوصيل مسموح"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:33
-#~ msgid "Delivery areas, fees, and pickup alternatives."
-#~ msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
+msgid "Delivery areas, fees, and pickup alternatives."
+msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
 
 #: app/components/locations/delivery-zones-manager.tsx:370
 msgid "Delivery is blocked or disallowed for this specific zone"
@@ -4591,8 +4593,8 @@ msgid "Delivery Provider"
 msgstr "مزود التوصيل"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:66
-#~ msgid "Delivery radius"
-#~ msgstr "نطاق التوصيل"
+msgid "Delivery radius"
+msgstr "نطاق التوصيل"
 
 #: app/components/locations/location-form.tsx:845
 msgid "Delivery Settings & Providers"
@@ -4721,7 +4723,7 @@ msgstr "النظام الغذائي ومسببات الحساسية والسعر
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:646
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:648
 msgid "Dine-in"
 msgstr "تناول في المطعم"
 
@@ -4857,8 +4859,8 @@ msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:113
-#~ msgid "Don't take phone orders for"
-#~ msgstr "عدم قبول الطلبات الهاتفية لـ"
+msgid "Don't take phone orders for"
+msgstr "عدم قبول الطلبات الهاتفية لـ"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
@@ -5198,7 +5200,7 @@ msgid "Edit design"
 msgstr "تعديل التصميم"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:578
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:702
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
 msgid "Edit Details"
 msgstr "تعديل التفاصيل"
 
@@ -5939,8 +5941,8 @@ msgid "For example, add Size with Small and Medium, then Color with Black and Bl
 msgstr "مثلًا، أضف الحجم بقيمتي صغير ومتوسط، ثم اللون بقيمتي أسود وأزرق. تظهر التركيبات تلقائيًا."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:62
-#~ msgid "For orders over 20 people, take a message for the catering manager."
-#~ msgstr "للطلبات التي تزيد عن 20 شخصًا، سجّل رسالة لمدير التموين."
+msgid "For orders over 20 people, take a message for the catering manager."
+msgstr "للطلبات التي تزيد عن 20 شخصًا، سجّل رسالة لمدير التموين."
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:407
 msgid "For our hours, press 1. To speak with our team, press 2."
@@ -6045,7 +6047,7 @@ msgstr "من هنا يتولى الذكاء الاصطناعي بقية المك
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:581
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:583
 msgid "Fulfillment"
 msgstr "التنفيذ"
 
@@ -6147,8 +6149,8 @@ msgid "Give me examples"
 msgstr "أعطني أمثلة"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:94
-#~ msgid "Give the usual pickup or delivery time."
-#~ msgstr "اذكر الوقت المعتاد للاستلام أو التوصيل."
+msgid "Give the usual pickup or delivery time."
+msgstr "اذكر الوقت المعتاد للاستلام أو التوصيل."
 
 #: app/utils/website/form-templates.ts:51
 msgid "Give visitors room to share thoughtful feedback."
@@ -6649,7 +6651,7 @@ msgstr "أسطول داخلي أو أوبر إيتس أو دوورداش للت�
 msgid "In-House Tips"
 msgstr "بقشيش التوصيل الداخلي"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:670
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:672
 msgid "Inactive"
 msgstr "غير نشط"
 
@@ -7315,8 +7317,10 @@ msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:37
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:572
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:574
 msgid "Location"
 msgstr "الموقع"
 
@@ -7342,7 +7346,7 @@ msgstr "حالة الفرع"
 
 #: app/components/app-sidebar.tsx:525
 #: app/components/team-switcher.tsx:183
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:519
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:521
 msgid "Locations"
 msgstr "الفروع"
 
@@ -7490,7 +7494,7 @@ msgstr "إدارة مفاتيح المرور"
 msgid "Manage phone agent"
 msgstr "إدارة وكيل الهاتف"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:522
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:524
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "أدر فروع المطعم وساعات العمل وطرق التنفيذ ومناطق التوصيل."
 
@@ -7589,7 +7593,7 @@ msgstr "manager@example.com"
 msgid "Manual Trigger"
 msgstr "تشغيل يدوي"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:724
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:726
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
@@ -7617,7 +7621,7 @@ msgstr "وضع علامة مكتمل تلقائيًا"
 msgid "Mark done"
 msgstr "وضع علامة منجز"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:722
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:724
 msgid "Mark Inactive"
 msgstr "تعيين كغير نشط"
 
@@ -7789,22 +7793,23 @@ msgstr "الأعضاء والدعوات"
 #: app/components/app-sidebar.tsx:304
 #: app/components/menu/drop-wizard/drop-form.tsx:706
 #: app/components/menu/drop-wizard/drop-form.tsx:722
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:38
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:101
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:300
 msgid "Menu"
 msgstr "القائمة"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:23
-#~ msgid "Menu & sizing"
-#~ msgstr "القائمة والأحجام"
+msgid "Menu & sizing"
+msgstr "القائمة والأحجام"
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:389
 msgid "Menu actions"
 msgstr "إجراءات القائمة"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:15
-#~ msgid "Menu info"
-#~ msgstr "معلومات القائمة"
+msgid "Menu info"
+msgstr "معلومات القائمة"
 
 #: app/components/menu/menu-form.tsx:179
 msgid "Menu Information"
@@ -8509,11 +8514,11 @@ msgstr "لا توجد عناصر بعد"
 #~ msgid "No limit"
 #~ msgstr "بلا حد"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:565
 msgid "No locations found."
 msgstr "لم يتم العثور على أي فروع."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:546
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
 msgid "No locations yet"
 msgstr "لا توجد فروع بعد"
 
@@ -8525,7 +8530,7 @@ msgstr "لا توجد مكالمات مطابقة"
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:557
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:559
 msgid "No matching locations"
 msgstr "لا توجد فروع مطابقة"
 
@@ -9045,8 +9050,8 @@ msgid "Offer a text if nobody answers"
 msgstr "عرض إرسال رسالة نصية إذا لم يرد أحد"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:56
-#~ msgid "Offer garlic knots"
-#~ msgstr "اعرض خبز الثوم"
+msgid "Offer garlic knots"
+msgstr "اعرض خبز الثوم"
 
 #: app/components/settings/cards/organization/review-integrations-card.tsx:94
 #~ msgid "Offline"
@@ -9426,16 +9431,16 @@ msgid "Order details"
 msgstr "تفاصيل الطلب"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:25
-#~ msgid "Order flow"
-#~ msgstr "مسار الطلب"
+msgid "Order flow"
+msgstr "مسار الطلب"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:316
 #~ msgid "Order lead time"
 #~ msgstr "مهلة الطلب المسبق"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:93
-#~ msgid "Order links"
-#~ msgstr "روابط الطلب"
+msgid "Order links"
+msgstr "روابط الطلب"
 
 #: app/components/locations/location-form.tsx:532
 msgid "Order Preparation Time"
@@ -9443,12 +9448,12 @@ msgstr "وقت تحضير الطلب"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:14
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:39
-#~ msgid "Ordering"
-#~ msgstr "الطلبات"
+msgid "Ordering"
+msgstr "الطلبات"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:85
-#~ msgid "Ordering link sent"
-#~ msgstr "تم إرسال رابط الطلب"
+msgid "Ordering link sent"
+msgstr "تم إرسال رابط الطلب"
 
 #: app/components/menu/drop-wizard/drop-preview.tsx:75
 msgid "Ordering now"
@@ -9569,8 +9574,8 @@ msgid "Otherwise, they only see messages sent after they join."
 msgstr "بخلاف ذلك، لن يروا سوى الرسائل المرسلة بعد انضمامهم."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:52
-#~ msgid "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
-#~ msgstr "تتوفر البيتزا لدينا بمقاسات 10 و14 و18 بوصة. اسأل دائمًا عن المقاس."
+msgid "Our pizzas come in 10, 14, and 18 inch. Always ask which size."
+msgstr "تتوفر البيتزا لدينا بمقاسات 10 و14 و18 بوصة. اسأل دائمًا عن المقاس."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 msgid "Outline"
@@ -9802,7 +9807,7 @@ msgstr "رابط الدعوة الشخصي"
 #: app/components/website/link-inspector.tsx:489
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:300
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:371
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:580
 msgid "Phone"
 msgstr "الهاتف"
 
@@ -9844,8 +9849,8 @@ msgid "Phone numbers"
 msgstr "أرقام الهاتف"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:51
-#~ msgid "Phone ordering"
-#~ msgstr "الطلب عبر الهاتف"
+msgid "Phone ordering"
+msgstr "الطلب عبر الهاتف"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:463
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:306
@@ -9930,7 +9935,7 @@ msgid "Pick a template, then customize every field in the builder."
 msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:308
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:636
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:638
 msgid "Pickup"
 msgstr "الاستلام"
 
@@ -9976,8 +9981,8 @@ msgstr "نافذة الاستلام"
 #~ msgstr "إعدادات نافذة الاستلام"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:51
-#~ msgid "Pizza sizes"
-#~ msgstr "أحجام البيتزا"
+msgid "Pizza sizes"
+msgstr "أحجام البيتزا"
 
 #: app/components/menu/option-form.tsx:776
 msgid "Pizza Topping"
@@ -10052,8 +10057,8 @@ msgid "Played after the link is texted."
 msgstr "يُشغَّل بعد إرسال الرابط برسالة نصية."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:86
-#~ msgid "Played after the ordering link is texted."
-#~ msgstr "تُشغَّل بعد إرسال رابط الطلب في رسالة نصية."
+msgid "Played after the ordering link is texted."
+msgstr "تُشغَّل بعد إرسال رابط الطلب في رسالة نصية."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:48
 msgid "Played at the start of every call. It tells callers they're speaking with an automated assistant."
@@ -10076,8 +10081,8 @@ msgid "Played before passing the call to your business line while the assistant 
 msgstr "يُشغَّل قبل تحويل المكالمة إلى خط نشاطك التجاري أثناء إيقاف المساعد مؤقتًا."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:82
-#~ msgid "Played before passing the call to your restaurant line while the assistant is paused."
-#~ msgstr "تُشغَّل قبل تحويل المكالمة إلى خط مطعمك أثناء إيقاف المساعد مؤقتًا."
+msgid "Played before passing the call to your restaurant line while the assistant is paused."
+msgstr "تُشغَّل قبل تحويل المكالمة إلى خط مطعمك أثناء إيقاف المساعد مؤقتًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:100
 msgid "Played before the goodbye when a call reaches its maximum length."
@@ -10116,8 +10121,8 @@ msgid "Played when the link can't be texted to the caller."
 msgstr "تُشغَّل عند تعذّر إرسال الرابط إلى المتصل في رسالة نصية."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:89
-#~ msgid "Played when the ordering link can't be texted to the caller."
-#~ msgstr "يُشغَّل عندما يتعذر إرسال رابط الطلب إلى المتصل برسالة نصية."
+msgid "Played when the ordering link can't be texted to the caller."
+msgstr "يُشغَّل عندما يتعذر إرسال رابط الطلب إلى المتصل برسالة نصية."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:96
 msgid "Played when the phone system can't answer the call."
@@ -10465,8 +10470,8 @@ msgid "Publish a call flow"
 msgstr "انشر مسار المكالمة"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:143
-#~ msgid "Publish a menu to choose categories."
-#~ msgstr "انشر قائمة لاختيار الفئات."
+msgid "Publish a menu to choose categories."
+msgstr "انشر قائمة لاختيار الفئات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
 #~ msgid "Publish a phone menu"
@@ -10644,8 +10649,8 @@ msgid "Read the announcement banners shown on the public site."
 msgstr "قراءة لافتات الإعلانات المعروضة على الموقع العام."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:83
-#~ msgid "Read the order back"
-#~ msgstr "إعادة قراءة الطلب"
+msgid "Read the order back"
+msgstr "إعادة قراءة الطلب"
 
 #: app/components/roles/tenant-role-access-manager.tsx:293
 msgid "Read-only"
@@ -10995,8 +11000,8 @@ msgid "Reopen"
 msgstr "إعادة الفتح"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:84
-#~ msgid "Repeat each item before sending the link."
-#~ msgstr "كرّر كل صنف قبل إرسال الرابط."
+msgid "Repeat each item before sending the link."
+msgstr "كرّر كل صنف قبل إرسال الرابط."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:665
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
@@ -11108,9 +11113,10 @@ msgstr "مطلوب."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:13
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:19
-#~ msgid "Reservation"
-#~ msgstr "حجز"
+msgid "Reservation"
+msgstr "حجز"
 
+#: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 msgid "Reservations"
 msgstr "الحجوزات"
@@ -11716,12 +11722,12 @@ msgid "Say it as, e.g. win"
 msgstr "انطقها هكذا، مثل win"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:88
-#~ msgid "Say the total"
-#~ msgstr "ذكر الإجمالي"
+msgid "Say the total"
+msgstr "ذكر الإجمالي"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:93
-#~ msgid "Say when it will be ready"
-#~ msgstr "ذكر موعد جاهزية الطلب"
+msgid "Say when it will be ready"
+msgstr "ذكر موعد جاهزية الطلب"
 
 #: app/components/settings/two-factor-form.tsx:162
 msgid "Scan QR Code or Enter Setup Key"
@@ -12277,7 +12283,7 @@ msgstr "الجلسات"
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "حدد حداً مجمعاً للمخزون لجميع الأصناف في هذا القسم."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:710
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:712
 msgid "Set as Default"
 msgstr "تعيين كافتراضي"
 
@@ -12578,8 +12584,8 @@ msgid "Size:"
 msgstr "الحجم:"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:30
-#~ msgid "Sizes, portions, and how to describe your dishes."
-#~ msgstr "الأحجام والحصص وطريقة وصف أطباقك."
+msgid "Sizes, portions, and how to describe your dishes."
+msgstr "الأحجام والحصص وطريقة وصف أطباقك."
 
 #: app/routes/organizations+/create.tsx:1232
 msgid "Skip for now"
@@ -12683,8 +12689,8 @@ msgid "Special Hours & Holiday Overrides"
 msgstr "الساعات الخاصة وتجاوزات الأعياد"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:27
-#~ msgid "Special occasions"
-#~ msgstr "المناسبات الخاصة"
+msgid "Special occasions"
+msgstr "المناسبات الخاصة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
@@ -12848,7 +12854,7 @@ msgstr "الولاية / المنطقة"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:586
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -12907,8 +12913,8 @@ msgid "Store Hours"
 msgstr "ساعات المطعم"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:16
-#~ msgid "Store info"
-#~ msgstr "معلومات المتجر"
+msgid "Store info"
+msgstr "معلومات المتجر"
 
 #: app/components/locations/location-form.tsx:661
 msgid "Store Pickup"
@@ -13029,8 +13035,8 @@ msgid "Success message"
 msgstr "رسالة النجاح"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:64
-#~ msgid "Suggest add-ons"
-#~ msgstr "اقتراح الإضافات"
+msgid "Suggest add-ons"
+msgstr "اقتراح الإضافات"
 
 #: app/components/menu/item-form.tsx:753
 msgid "Suggest as an add-on at checkout."
@@ -13231,8 +13237,8 @@ msgid "Tell me more"
 msgstr "أخبرني المزيد"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:89
-#~ msgid "Tell the caller the estimated total before tax and fees."
-#~ msgstr "أخبر المتصل بالإجمالي التقديري قبل الضريبة والرسوم."
+msgid "Tell the caller the estimated total before tax and fees."
+msgstr "أخبر المتصل بالإجمالي التقديري قبل الضريبة والرسوم."
 
 #: app/routes/organizations+/create.tsx:803
 #~ msgid "Tell us about your organization..."
@@ -13405,12 +13411,12 @@ msgid "The agent answers calls once every step is done."
 msgstr "يرد الوكيل على المكالمات بعد إكمال جميع الخطوات."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:116
-#~ msgid "The agent can still describe these items, but callers are asked to order them online or speak with staff."
-#~ msgstr "لا يزال بإمكان الوكيل وصف هذه الأصناف، لكن يُطلب من المتصلين طلبها عبر الإنترنت أو التحدث مع الفريق."
+msgid "The agent can still describe these items, but callers are asked to order them online or speak with staff."
+msgstr "لا يزال بإمكان الوكيل وصف هذه الأصناف، لكن يُطلب من المتصلين طلبها عبر الإنترنت أو التحدث مع الفريق."
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:67
-#~ msgid "The agent follows your Upsells and add-ons training rules."
-#~ msgstr "يتّبع الوكيل قواعد التدريب الخاصة بالبيع الإضافي والإضافات."
+msgid "The agent follows your Upsells and add-ons training rules."
+msgstr "يتّبع الوكيل قواعد التدريب الخاصة بالبيع الإضافي والإضافات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:199
 msgid "The agent is off, so these have no effect yet."
@@ -13457,12 +13463,8 @@ msgid "The API key will expire on this date. Leave unchecked for no expiration."
 msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. اترك بدون تحديد لعدم انتهاء الصلاحية."
 
 #: app/components/roles/tenant-role-access-manager.tsx:203
-#~ msgid "The assistant that answers restaurant calls."
-#~ msgstr "المساعد الذي يرد على مكالمات المطعم."
-
-#: app/components/roles/tenant-role-access-manager.tsx:203
-msgid "The assistant that answers your business calls."
-msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
+msgid "The assistant that answers restaurant calls."
+msgstr "المساعد الذي يرد على مكالمات المطعم."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:850
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
@@ -13531,8 +13533,8 @@ msgid "The number customers dial today, in international format. You'll verify i
 msgstr "الرقم الذي يتصل به العملاء حاليًا، بالصيغة الدولية. ستتحقق منه برمز قبل أن يبدأ الوكيل بالرد."
 
 #: app/components/phone-agent/restaurant/order-handoff-details.tsx:11
-#~ msgid "The order on this link can't be shown."
-#~ msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط."
+msgid "The order on this link can't be shown."
+msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط."
 
 #: app/components/settings/password-form.tsx:33
 msgid "The passwords must match"
@@ -13547,8 +13549,8 @@ msgid "The standard voice for your agent's language."
 msgstr "الصوت القياسي للغة مساعدك الذكي."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:32
-#~ msgid "The steps to follow while taking an order."
-#~ msgstr "الخطوات الواجب اتباعها أثناء تلقي الطلب."
+msgid "The steps to follow while taking an order."
+msgstr "الخطوات الواجب اتباعها أثناء تلقي الطلب."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 msgid "The time-limit notice, the rating question, and the goodbye."
@@ -14134,7 +14136,7 @@ msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل مجم�
 msgid "Try adjusting your filters or clear them to see all options."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل الخيارات."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:561
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "Try adjusting your filters or clear them to see all restaurant locations."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل فروع المطعم."
 
@@ -14344,8 +14346,8 @@ msgid "Unknown intent"
 msgstr "نية غير معروفة"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:45
-#~ msgid "Unknown location"
-#~ msgstr "فرع غير معروف"
+msgid "Unknown location"
+msgstr "فرع غير معروف"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:46
 msgid "Unknown role"
@@ -14566,8 +14568,8 @@ msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:24
-#~ msgid "Upsells & add-ons"
-#~ msgstr "البيع الإضافي والإضافات"
+msgid "Upsells & add-ons"
+msgstr "البيع الإضافي والإضافات"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
@@ -15014,8 +15016,8 @@ msgid "We just sent you a text with a link to our website."
 msgstr "أرسلنا لك للتو رسالة نصية تحتوي على رابط إلى موقعنا الإلكتروني."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:67
-#~ msgid "We only deliver within 5 miles. Offer pickup otherwise."
-#~ msgstr "نوصّل فقط ضمن مسافة 5 أميال. اعرض الاستلام بخلاف ذلك."
+msgid "We only deliver within 5 miles. Offer pickup otherwise."
+msgstr "نوصّل فقط ضمن مسافة 5 أميال. اعرض الاستلام بخلاف ذلك."
 
 #: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content. <0>Read our Cookie Policy</0>."
@@ -15139,8 +15141,8 @@ msgid "What should your reply include? (optional)"
 msgstr "ما الذي تريد تضمينه في ردك؟ (اختياري)"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
-#~ msgid "What the agent does when it takes an order before texting the ordering link."
-#~ msgstr "ما يفعله الوكيل عند استلام طلب قبل إرسال رابط الطلب برسالة نصية."
+msgid "What the agent does when it takes an order before texting the ordering link."
+msgstr "ما يفعله الوكيل عند استلام طلب قبل إرسال رابط الطلب برسالة نصية."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:494
 msgid "What the agent says"
@@ -15163,8 +15165,8 @@ msgid "What to do when the agent mishears or can't help."
 msgstr "ما يجب فعله عندما يسيء الوكيل فهم المتصل أو لا يستطيع المساعدة."
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:31
-#~ msgid "What to suggest alongside an order, and when."
-#~ msgstr "ما يُقترح مع الطلب، ومتى."
+msgid "What to suggest alongside an order, and when."
+msgstr "ما يُقترح مع الطلب، ومتى."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:459
 msgid "What tools can help?"
@@ -15237,8 +15239,8 @@ msgstr "عند النشر، تظهر الطروحات العامة على موق
 #~ msgstr "عندما يقوم شخص بـ <0>{0}</0>"
 
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:57
-#~ msgid "When someone orders a pizza, offer garlic knots once."
-#~ msgstr "عندما يطلب أحدهم بيتزا، اعرض عليه خبز الثوم مرة واحدة."
+msgid "When someone orders a pizza, offer garlic knots once."
+msgstr "عندما يطلب أحدهم بيتزا، اعرض عليه خبز الثوم مرة واحدة."
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:75
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."

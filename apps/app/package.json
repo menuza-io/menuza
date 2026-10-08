@@ -96,6 +96,7 @@
     "@repo/observability": "*",
     "@repo/payments": "*",
     "@repo/phone-agent": "*",
+    "@repo/phone-agent-restaurant": "*",
     "@repo/reports": "*",
     "@repo/seo": "*",
     "@repo/storage": "*",

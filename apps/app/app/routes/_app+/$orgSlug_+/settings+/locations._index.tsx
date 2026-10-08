@@ -61,6 +61,7 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { deleteScopeData } from '#app/utils/phone-agent/phone-agent.server.ts'
 
 interface LocationListItem {
 	id: string
@@ -350,7 +351,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -444,6 +445,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					eq(OrganizationLocation.organizationId, organization.id),
 				),
 			)
+		await deleteScopeData(organization.id, locationId, { userId, request })
 
 		return { success: true }
 	}

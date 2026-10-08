@@ -3,7 +3,7 @@ import {
 	type PhoneAgentSettings,
 	type PhoneAgentVertical,
 } from '@repo/phone-agent'
-import { generalServerVertical } from './vertical-general.server.ts'
+import { restaurantServerVertical } from './restaurant/vertical.server.ts'
 
 /** Something owners narrow numbers, rules, and saved answers to. */
 export type PhoneAgentScope = {
@@ -84,4 +84,4 @@ export type PhoneAgentServerVertical = {
  * in its own here.
  */
 export const phoneAgentServerVertical: PhoneAgentServerVertical =
-	generalServerVertical
+	restaurantServerVertical
