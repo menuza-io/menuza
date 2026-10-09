@@ -3,21 +3,24 @@ import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
+import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import DropCard from '~/components/drops/DropCard.astro'
+import DropHero from '~/components/drops/DropHero.astro'
 import DropItemCard from '~/components/drops/DropItemCard.astro'
 import DropSummaryCard from '~/components/drops/DropSummaryCard.astro'
 import PickupPicker from '~/components/drops/PickupPicker.astro'
 import CartDrawer from '~/components/ordering/CartDrawer.astro'
 import CartTray from '~/components/ordering/CartTray.astro'
-import CategoryNav from '~/components/ordering/CategoryNav.astro'
 import ItemModal from '~/components/ordering/ItemModal.astro'
 import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
+import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
 import {
+	formatDropDate,
 	formatDropDateTime,
 	formatRemaining,
 	getDropPhase,
 } from '~/lib/drops/format'
-import { resolveMediaUrl, siteBtnPrimary, siteContainer } from '~/lib/media'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderingLabels, translate } from '~/lib/ordering-labels'
 import { buildIcsDataUrl } from '~/lib/ordering/calendar'
 import { indexCatalog, isItemSoldOut, itemPriceLabel } from '~/lib/ordering/catalog'
@@ -82,6 +85,10 @@ const phase = getDropPhase(drop, now)
 
 const labels = buildOrderingLabels(i18n)
 const allDropsLabel = i18n._(msg`All drops`)
+const dropAlertsUpcomingTitle = i18n._(msg`Get a text when orders open`)
+const dropAlertsUpcomingBody = i18n._(msg`We'll text you when this drop and future ones open.`)
+const dropAlertsEndedTitle = i18n._(msg`Missed this one?`)
+const dropAlertsEndedBody = i18n._(msg`Get a text when the next drop opens, before it sells out.`)
 const orderWindowLabel = i18n._(msg`Order window`)
 const pickupLabel = i18n._(msg`Pickup`)
 const whereLabel = i18n._(msg`Where`)
@@ -93,7 +100,7 @@ const endedBody = i18n._(
 )
 const moreDropsLabel = i18n._(msg`More drops`)
 const viewMenuLabel = i18n._(msg`View menu`)
-const viewOrderLabel = i18n._(msg`View Order`)
+const viewOrderLabel = i18n._(msg`View order`)
 const yourOrderLabel = i18n._(msg`Your Order`)
 const subtotalLabel = i18n._(msg`Subtotal`)
 const taxLabel = i18n._(msg`Estimated Tax`)
@@ -111,6 +118,7 @@ const noPickupTimesLabel = i18n._(
 )
 const noLongerAvailableLabel = i18n._(msg`No longer available`)
 const changeLabel = i18n._(msg`Change`)
+const timeRemainingLabel = i18n._(msg`Time remaining`)
 const vegetarianLabel = i18n._(msg`Vegetarian`)
 const glutenFreeLabel = i18n._(msg`Gluten-Free`)
 const alcoholLabel = i18n._(msg`Alcohol`)
@@ -243,16 +251,20 @@ const LOW_STOCK_THRESHOLD = 5
 function cardProps(item: OrderingItem) {
 	const cap = remainingFor(item.id, [], constraints)
 	const max = cap.max ?? 0
-	const soldOut = isItemSoldOut(item) || max === 0
+	// `max` is null when no inventory/limit rule applies (unlimited), so only an
+	// explicit 0 means the drop inventory is exhausted.
+	const soldOut = isItemSoldOut(item) || cap.max === 0
 	const priceLabel = itemPriceLabel(item, {
 		formatMoney: price,
 		fromLabel: labels.from,
 		soldOutLabel: labels.soldOut,
 	})
 	let note: string | null = null
+	let noteTone: 'warning' | 'neutral' = 'warning'
 	if (!soldOut && cap.reason) {
 		if (cap.reason === 'limit') {
 			note = fillTemplate(labels.limitNPerOrder, { count: cap.limit ?? max })
+			noteTone = 'neutral'
 		} else if (constraints.showInventory !== false) {
 			if (
 				cap.reason === 'inventory' &&
@@ -280,6 +292,8 @@ function cardProps(item: OrderingItem) {
 		soldOut,
 		imageUrl: item.imageUrl,
 		note,
+		noteTone,
+		soldOutLabel: labels.soldOut,
 		calories: caloriesFor(item),
 		isVegetarian: item.isVegetarian,
 		isGlutenFree: item.isGlutenFree,
@@ -365,7 +379,11 @@ const pickupFactText =
 		? null
 		: uniqueDates.length === 1 && windowsWithLocation[0]
 			? formatWindow(windowsWithLocation[0], requestedLocale)
-			: translate(i18n, msg`{n} dates`, { n: uniqueDates.length })
+			: `${formatDropDate(uniqueDates[0]!, requestedLocale, factsTimeZone)} ${translate(
+					i18n,
+					msg`+{n} more`,
+					{ n: uniqueDates.length - 1 },
+				)}`
 
 // Tax rates per pickup location (the menu payload is the only public source).
 const menuPayload = await fetchPublishedSiteMenu({
@@ -380,7 +398,6 @@ for (const location of menuPayload?.locations ?? []) {
 
 // ---------- order window facts ----------
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const openAt = drop.ordersOpenAt ? new Date(drop.ordersOpenAt) : null
 const closeAt = drop.ordersCloseAt ? new Date(drop.ordersCloseAt) : null
 const sameYear = (instant: Date | null) =>
@@ -395,16 +412,8 @@ const openWhen = formatWhen(openAt)
 const closeWhen = formatWhen(closeAt)
 const openMsLeft = openAt ? openAt.getTime() - now.getTime() : 0
 const closeMsLeft = closeAt ? closeAt.getTime() - now.getTime() : 0
-const countdownSuffix = (ms: number) =>
-	ms > 0 ? ` (${formatRemaining(ms, remainingLabels, requestedLocale)})` : ''
-const openCountdownInitial =
-	phase === 'upcoming' && openMsLeft > 0 && openMsLeft < DAY_MS
-		? countdownSuffix(openMsLeft)
-		: ''
-const closeCountdownInitial =
-	phase === 'live' && closeMsLeft > 0 && closeMsLeft < DAY_MS
-		? countdownSuffix(closeMsLeft)
-		: ''
+const remainingText = (ms: number) =>
+	ms > 0 ? formatRemaining(ms, remainingLabels, requestedLocale) : ''
 
 const dropHref = getLocaleHref(
 	`/drop/${encodeURIComponent(drop.slug)}`,
@@ -436,15 +445,22 @@ const facts: Array<{
 	id: string
 	label: string
 	text: string
-	countdown?: { kind: 'open' | 'close'; initial: string } | null
+	countdown?: { kind: 'open' | 'close'; initial: string; label: string } | null
 	calendar?: { href: string; fileName: string } | null
 }> = []
+// Without a menu preview the main column shows its own "Orders open" card with
+// the calendar button, so the fact skips it.
+const showUpcomingCard =
+	phase === 'upcoming' && !(drop.showMenuPreview && categories.length > 0)
 if (phase === 'live' && closeWhen) {
 	facts.push({
 		id: 'drop-fact-order-window',
 		label: orderWindowLabel,
 		text: translate(i18n, msg`Orders close {when}`, { when: closeWhen }),
-		countdown: { kind: 'close', initial: closeCountdownInitial },
+		countdown:
+			closeMsLeft > 0
+				? { kind: 'close', initial: remainingText(closeMsLeft), label: timeRemainingLabel }
+				: null,
 	})
 }
 if (phase === 'upcoming' && openWhen) {
@@ -452,8 +468,11 @@ if (phase === 'upcoming' && openWhen) {
 		id: 'drop-fact-order-window',
 		label: orderWindowLabel,
 		text: translate(i18n, msg`Orders open {when}`, { when: openWhen }),
-		countdown: { kind: 'open', initial: openCountdownInitial },
-		calendar: openCalendarHref
+		countdown:
+			openMsLeft > 0
+				? { kind: 'open', initial: remainingText(openMsLeft), label: ordersOpenBlockLabel }
+				: null,
+		calendar: openCalendarHref && !showUpcomingCard
 			? { href: openCalendarHref, fileName: `${drop.slug}-orders-open.ics` }
 			: null,
 	})
@@ -474,8 +493,6 @@ const otherDrops =
 const previewHeader = translate(i18n, msg`Preview · ordering opens {when}`, {
 	when: openWhen,
 })
-const openBlockCountdown =
-	openMsLeft > 0 ? formatRemaining(openMsLeft, remainingLabels, requestedLocale) : ''
 
 const clientData = {
 	organizationId: organization.id,
@@ -515,19 +532,19 @@ const clientData = {
 	description={drop.description ? localize(drop.description) : undefined}
 	noIndex={drop.visibility === 'unlisted'}
 >
-	<div class="bg-background pb-32">
-		<div class:list={[siteContainer, 'py-6 sm:py-8']}>
+	<div class="bg-background pb-32 lg:pb-28">
+		<div class:list={[siteContainer, 'pt-4 sm:pt-6']}>
 			<a
 				href={dropsHref}
-				class="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+				class="focus-ring -ms-1 mb-4 inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-sm font-semibold text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 rtl:rotate-180" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 rtl:-scale-x-100" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
 				{allDropsLabel}
 			</a>
 
-			<div class="lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10">
-				<div class="lg:sticky lg:top-24">
-					<DropSummaryCard
+			<div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-10 lg:gap-y-8">
+				<div class="min-w-0 lg:col-start-1 lg:row-start-1">
+					<DropHero
 						coverUrl={drop.coverImageUrl ? resolveMediaUrl(drop.coverImageUrl) : null}
 						title={localize(drop.title)}
 						description={drop.description ? localize(drop.description) : null}
@@ -536,6 +553,11 @@ const clientData = {
 						ordersCloseAt={drop.ordersCloseAt}
 						locale={requestedLocale}
 						timeZone={primaryTimeZone}
+					/>
+				</div>
+
+				<aside class="min-w-0 lg:sticky lg:top-[5.75rem] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+					<DropSummaryCard
 						facts={facts}
 						where={
 							whereSummary && whereLocations.length > 0
@@ -545,39 +567,39 @@ const clientData = {
 					>
 						{phase === 'live' && hasPickupWindows ? <PickupPicker /> : null}
 					</DropSummaryCard>
-				</div>
+				</aside>
 
-				<div class="mt-8 min-w-0 lg:mt-0">
-					{phase === 'live' && navItems.length > 0 ? (
-						<div
+				<div class="min-w-0 lg:col-start-1 lg:row-start-2">
+					{phase === 'live' ? (
+						<StickyCategoryNav
 							id="drop-sticky-nav"
-							class="sticky top-[4.25rem] z-20 -mx-5 border-b border-border bg-background/95 px-5 backdrop-blur-md sm:-mx-8 sm:px-8 lg:mx-0 lg:rounded-[var(--radius)] lg:border"
-						>
-							<CategoryNav items={navItems} label={categoriesNavLabel} class="py-2.5" />
-						</div>
+							items={navItems}
+							label={categoriesNavLabel}
+							layout="column"
+						/>
 					) : null}
 
 					{phase === 'live' ? (
-						<div class:list={[navItems.length > 0 && 'pt-8', 'space-y-12']}>
+						<div class:list={[navItems.length > 0 && 'pt-6', 'space-y-10 sm:space-y-12']}>
 							{categories.map((category) => (
 								<section
 									id={`category-${category.id}`}
 									data-category-section
-									class="scroll-mt-32 lg:scroll-mt-24"
+									class="scroll-mt-32"
 									aria-labelledby={`category-${category.id}-title`}
 								>
-									<header class="mb-3">
+									<header class="mb-4">
 										<h2
 											id={`category-${category.id}-title`}
-											class="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+											class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
 										>
 											{category.displayName}
 										</h2>
 										{category.description ? (
-											<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
+											<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{category.description}</p>
 										) : null}
 									</header>
-									<ul class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+									<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
 										{category.items.map((item) => (
 											<DropItemCard {...cardProps(item)} />
 										))}
@@ -589,24 +611,25 @@ const clientData = {
 
 					{phase === 'upcoming' ? (
 						drop.showMenuPreview && categories.length > 0 ? (
-							<div class="space-y-8">
-								<p class="rounded-[var(--radius)] border border-dashed border-border px-4 py-2.5 text-sm text-muted-foreground">
-									{previewHeader}
-								</p>
+							<div class="space-y-10 sm:space-y-12">
+								<div class="tone-warning flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+									<p class="bidi-isolate font-semibold text-foreground">{previewHeader}</p>
+								</div>
 								{categories.map((category) => (
 									<section aria-labelledby={`preview-${category.id}-title`}>
-										<header class="mb-3">
+										<header class="mb-4">
 											<h2
 												id={`preview-${category.id}-title`}
-												class="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl"
+												class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
 											>
 												{category.displayName}
 											</h2>
 											{category.description ? (
-												<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
+												<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{category.description}</p>
 											) : null}
 										</header>
-										<ul class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+										<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
 											{category.items.map((item) => (
 												<DropItemCard {...cardProps(item)} readonly />
 											))}
@@ -615,24 +638,19 @@ const clientData = {
 								))}
 							</div>
 						) : (
-							<div class="rounded-[var(--radius)] border border-border bg-card p-8 text-center text-card-foreground shadow-sm sm:p-10">
-								<p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-									{ordersOpenBlockLabel}
-								</p>
-								<p class="mt-2 font-heading text-2xl font-bold text-foreground sm:text-3xl">
+							<div class="surface flex flex-col items-center gap-3 px-6 py-10 text-center sm:p-10">
+								<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+								</span>
+								<p class="eyebrow">{ordersOpenBlockLabel}</p>
+								<p class="bidi-isolate font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
 									{openWhen}
-								</p>
-								<p
-									data-drop-countdown-always="open"
-									class="mt-3 text-xl font-semibold tabular-nums text-foreground"
-								>
-									{openBlockCountdown}
 								</p>
 								{openCalendarHref ? (
 									<a
 										href={openCalendarHref}
 										download={`${drop.slug}-orders-open.ics`}
-										class:list={[siteBtnPrimary, 'mt-6 inline-flex items-center gap-1.5']}
+										class="btn-cta mt-3"
 									>
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
 										{addToCalendarLabel}
@@ -642,22 +660,38 @@ const clientData = {
 						)
 					) : null}
 
+					{phase === 'upcoming' ? (
+						<DropAlertsSignup
+							source="drop_page"
+							title={dropAlertsUpcomingTitle}
+							body={dropAlertsUpcomingBody}
+							class="mt-6"
+						/>
+					) : null}
+
 					{phase === 'ended' ? (
-						<div class="space-y-10">
-							<div class="rounded-[var(--radius)] border border-border bg-card p-8 text-center text-card-foreground shadow-sm sm:p-10">
-								<h2 class="font-heading text-xl font-bold text-foreground sm:text-2xl">
-									{endedTitle}
-								</h2>
-								<p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{endedBody}</p>
-								<a href={menuHref} class:list={[siteBtnPrimary, 'mt-6']}>{viewMenuLabel}</a>
+						<div class="space-y-10 sm:space-y-12">
+							<div class="surface flex flex-col items-center gap-3 px-6 py-12 text-center">
+								<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9.5 14.5l5 5M14.5 14.5l-5 5" /></svg>
+								</span>
+								<h2 class="text-base font-semibold text-foreground">{endedTitle}</h2>
+								<p class="max-w-sm text-sm text-muted-foreground">{endedBody}</p>
+								<a href={menuHref} class="btn-secondary mt-2">{viewMenuLabel}</a>
 							</div>
+
+							<DropAlertsSignup
+								source="drop_page"
+								title={dropAlertsEndedTitle}
+								body={dropAlertsEndedBody}
+							/>
 
 							{otherDrops.length > 0 ? (
 								<section aria-labelledby="other-drops-heading">
-									<h2 id="other-drops-heading" class="font-heading text-xl font-semibold text-foreground sm:text-2xl">
+									<h2 id="other-drops-heading" class="mb-4 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
 										{moreDropsLabel}
 									</h2>
-									<div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+									<div class="grid gap-4 sm:grid-cols-2">
 										{otherDrops.map((listing) => (
 											<DropCard
 												drop={listing}
@@ -879,11 +913,12 @@ const clientData = {
 				mode: () => 'pickup' as const,
 			}
 
-			const CHIP_BASE =
-				'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed'
-			const CHIP_ON = 'border-primary bg-primary text-primary-foreground'
-			const CHIP_OFF = 'border-border bg-background text-foreground hover:bg-muted'
-			const CHIP_DISABLED = 'border-border bg-muted/40 text-muted-foreground'
+			// `chip` styles its own active (aria-checked) and :disabled states, so
+			// the swapped sets stay minimal.
+			const CHIP_BASE = 'chip min-h-11 max-w-full focus-ring'
+			const CHIP_ON = 'is-active'
+			const CHIP_OFF = ''
+			const CHIP_DISABLED = ''
 
 			function chip(
 				label: string,
@@ -901,10 +936,10 @@ const clientData = {
 				button.setAttribute('aria-checked', on ? 'true' : 'false')
 				if (note) {
 					button.classList.add('flex-col', 'gap-0.5', 'py-1')
-					button.appendChild(el('span', undefined, label))
-					button.appendChild(el('span', 'text-[10px] font-normal leading-tight', note))
+					button.appendChild(el('span', 'price', label))
+					button.appendChild(el('span', 'text-xs font-normal leading-tight opacity-80', note))
 				} else {
-					button.textContent = label
+					button.appendChild(el('span', 'bidi-isolate truncate', label))
 				}
 				button.disabled = disabled
 				button.addEventListener('click', () => {
@@ -912,6 +947,23 @@ const clientData = {
 					onSelect()
 				})
 				return button
+			}
+
+			function checkIcon() {
+				const ns = 'http://www.w3.org/2000/svg'
+				const svg = document.createElementNS(ns, 'svg')
+				svg.setAttribute('viewBox', '0 0 24 24')
+				svg.setAttribute('fill', 'none')
+				svg.setAttribute('stroke', 'currentColor')
+				svg.setAttribute('stroke-width', '2.25')
+				svg.setAttribute('stroke-linecap', 'round')
+				svg.setAttribute('stroke-linejoin', 'round')
+				svg.setAttribute('aria-hidden', 'true')
+				svg.setAttribute('class', 'mt-0.5 size-4 shrink-0')
+				const path = document.createElementNS(ns, 'path')
+				path.setAttribute('d', 'M20 6 9 17l-5-5')
+				svg.appendChild(path)
+				return svg
 			}
 
 			function renderPicker() {
@@ -980,14 +1032,21 @@ const clientData = {
 
 				if (picker.summary) {
 					if (resolved) {
-						picker.summary.textContent = `${data.labels.pickup}: ${
-							resolved.location.name
-						} · ${formatSlot(
-							resolved.date.date,
-							resolved.slot.start,
-							data.locale,
-							resolved.location.timezone,
-						)}`
+						const text = el('span', 'min-w-0 font-semibold text-foreground')
+						text.append(
+							`${data.labels.pickup}: ${resolved.location.name} · `,
+							el(
+								'bdi',
+								undefined,
+								formatSlot(
+									resolved.date.date,
+									resolved.slot.start,
+									data.locale,
+									resolved.location.timezone,
+								),
+							),
+						)
+						picker.summary.replaceChildren(checkIcon(), text)
 						picker.summary.classList.remove('hidden')
 					} else {
 						picker.summary.textContent = ''
@@ -1028,21 +1087,18 @@ const clientData = {
 			function renderDrawerPickup(slot: HTMLElement) {
 				slot.replaceChildren()
 				if (!resolved) return
-				const card = el(
-					'div',
-					'rounded-[calc(var(--radius)*0.7)] bg-muted/50 p-2.5 text-xs',
-				)
+				const card = el('div', 'mt-2 rounded-md bg-muted px-3 py-2.5 text-sm')
 				card.appendChild(
 					el(
 						'p',
-						'font-medium text-foreground',
+						'font-semibold text-foreground',
 						`${data.labels.pickup}: ${resolved!.location.name}`,
 					),
 				)
 				card.appendChild(
 					el(
 						'p',
-						'text-muted-foreground',
+						'bidi-isolate text-muted-foreground',
 						formatSlot(
 							resolved!.date.date,
 							resolved!.slot.start,
@@ -1053,7 +1109,7 @@ const clientData = {
 				)
 				const change = el(
 					'button',
-					'mt-0.5 font-medium text-foreground underline underline-offset-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+					'focus-ring mt-1 rounded-sm font-semibold text-foreground underline underline-offset-4',
 					data.labels.change,
 				)
 				change.type = 'button'

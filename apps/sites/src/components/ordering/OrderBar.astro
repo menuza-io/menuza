@@ -1,0 +1,176 @@
+---
+import { type FulfillmentMode } from '~/lib/ordering/types'
+
+/**
+ * The menu's hero control: Pickup | Delivery, where (store or delivery
+ * address) and when (ASAP or a scheduled slot). The controls sit directly on
+ * the page (no card around them): the segmented control and the bordered
+ * chips carry their own shape. The two chips open the order details sheet
+ * (`data-open-order-details`); the menu script repaints them from the stored
+ * order details. Mode buttons keep the legacy ids, classes and `data-mode`
+ * the menu script and voice handoff rely on.
+ */
+interface Props {
+	allowedModes: FulfillmentMode[]
+	initialMode: FulfillmentMode
+	locationName: string
+	pickupEstimate: string
+	deliveryEstimate: string
+	scheduling: boolean
+	labels: {
+		fulfillment: string
+		pickup: string
+		delivery: string
+		pickupFrom: string
+		deliverTo: string
+		addAddress: string
+		pickupTime: string
+		deliveryTime: string
+		asap: string
+	}
+}
+
+const {
+	allowedModes,
+	initialMode,
+	locationName,
+	pickupEstimate,
+	deliveryEstimate,
+	scheduling,
+	labels,
+} = Astro.props
+
+const isDelivery = initialMode === 'delivery'
+const modeButton = 'js-mode-btn segmented-item min-h-11 focus-ring'
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const icons = {
+	pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+	clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+	chevron: '<path d="m6 9 6 6 6-6"/>',
+	bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+	truck: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+}
+const chipLabel = 'block truncate text-xs leading-4 text-muted-foreground'
+const chipValue = 'block truncate text-sm leading-5 font-semibold text-foreground'
+---
+
+<div
+	id="order-bar"
+	data-order-bar
+	class="relative"
+	data-label-pickup-from={labels.pickupFrom}
+	data-label-deliver-to={labels.deliverTo}
+	data-label-add-address={labels.addAddress}
+	data-label-pickup-time={labels.pickupTime}
+	data-label-delivery-time={labels.deliveryTime}
+	data-label-asap={labels.asap}
+	data-pickup-estimate={pickupEstimate}
+	data-delivery-estimate={deliveryEstimate}
+	data-location-name={locationName}
+>
+	<div class="flex flex-col gap-2.5 lg:flex-row lg:items-stretch lg:gap-3">
+		<div
+			role="radiogroup"
+			aria-label={labels.fulfillment}
+			class="segmented w-full lg:w-68 lg:shrink-0"
+		>
+			{allowedModes.includes('pickup') ? (
+				<button
+					type="button"
+					id="mode-pickup-btn"
+					role="radio"
+					aria-checked={isDelivery ? 'false' : 'true'}
+					data-mode="pickup"
+					class={modeButton}
+				>
+					<svg {...iconAttrs} class="size-4 shrink-0" set:html={icons.bag} />
+					{labels.pickup}
+				</button>
+			) : null}
+			{allowedModes.includes('delivery') ? (
+				<button
+					type="button"
+					id="mode-delivery-btn"
+					role="radio"
+					aria-checked={isDelivery ? 'true' : 'false'}
+					data-mode="delivery"
+					class={modeButton}
+				>
+					<svg {...iconAttrs} class="size-4 shrink-0 rtl:-scale-x-100" set:html={icons.truck} />
+					{labels.delivery}
+				</button>
+			) : null}
+		</div>
+
+		<div class="grid min-w-0 grid-cols-1 gap-2.5 min-[25rem]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:flex-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-3">
+			<button
+				type="button"
+				id="order-place-chip"
+				class="order-chip"
+				data-open-order-details
+				data-order-details-tab={isDelivery ? 'delivery' : 'pickup'}
+				aria-haspopup="dialog"
+			>
+				<svg {...iconAttrs} class="size-5 shrink-0 text-brand" set:html={icons.pin} />
+				<span class="min-w-0 flex-1">
+					<span class={chipLabel} data-order-place-label>
+						{isDelivery ? labels.deliverTo : labels.pickupFrom}
+					</span>
+					<span class={chipValue} data-order-place-value>
+						{isDelivery ? labels.addAddress : locationName}
+					</span>
+				</span>
+				<svg {...iconAttrs} class="size-4 shrink-0 text-muted-foreground" set:html={icons.chevron} />
+			</button>
+
+			{scheduling ? (
+				<button
+					type="button"
+					id="order-time-chip"
+					class="order-chip"
+					data-open-order-details
+					data-order-details-tab="time"
+					aria-haspopup="dialog"
+				>
+					<svg {...iconAttrs} class="size-5 shrink-0 text-brand" set:html={icons.clock} />
+					<span class="min-w-0 flex-1">
+						<span class={chipLabel} data-order-time-label>
+							{isDelivery ? labels.deliveryTime : labels.pickupTime}
+						</span>
+						<span class={chipValue} data-order-time-value>
+							{labels.asap}
+							<span class="font-normal text-muted-foreground">
+								· <bdi class="tabular-nums">{isDelivery ? deliveryEstimate : pickupEstimate}</bdi>
+							</span>
+						</span>
+					</span>
+					<svg {...iconAttrs} class="size-4 shrink-0 text-muted-foreground" set:html={icons.chevron} />
+				</button>
+			) : (
+				<div id="order-time-chip" class="order-chip">
+					<svg {...iconAttrs} class="size-5 shrink-0 text-brand" set:html={icons.clock} />
+					<span class="min-w-0 flex-1">
+						<span class={chipLabel} data-order-time-label>
+							{isDelivery ? labels.deliveryTime : labels.pickupTime}
+						</span>
+						<span class={chipValue} data-order-time-value>
+							{labels.asap}
+							<span class="font-normal text-muted-foreground">
+								· <bdi class="tabular-nums">{isDelivery ? deliveryEstimate : pickupEstimate}</bdi>
+							</span>
+						</span>
+					</span>
+				</div>
+			)}
+		</div>
+	</div>
+</div>

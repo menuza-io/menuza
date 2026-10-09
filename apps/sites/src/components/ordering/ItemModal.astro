@@ -1,7 +1,4 @@
 ---
-import { siteBtnPrimary } from '~/lib/media'
-import { siteFieldLabelClass, siteInputClass } from '~/lib/form-classes'
-
 /**
  * Item customization dialog shell: bottom sheet below `sm`, centered dialog
  * above. Content is rendered by `createItemModal`; this file only provides
@@ -19,85 +16,100 @@ interface Props {
 }
 
 const { labels } = Astro.props
-const stepButton =
-	'inline-flex size-9 items-center justify-center rounded-[calc(var(--radius)*0.7)] border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40'
+const stepButton = 'icon-btn size-9 border-0'
 ---
 
 <div
 	id="item-modal-backdrop"
-	class="fixed inset-0 z-50 flex hidden items-end justify-center bg-foreground/40 backdrop-blur-xs sm:items-center sm:p-6"
+	class="fixed inset-0 z-50 flex hidden items-end justify-center bg-foreground/40 backdrop-blur-xs dark:bg-background/80 sm:items-center sm:p-6"
 >
 	<div
 		id="item-modal-dialog"
-		class="relative flex max-h-[92dvh] w-full flex-col rounded-t-[var(--radius)] border border-border bg-card text-card-foreground shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 motion-reduce:animate-none sm:max-w-lg sm:rounded-[var(--radius)] sm:zoom-in-95"
+		class="surface-overlay relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 ease-out motion-reduce:animate-none sm:max-w-xl sm:rounded-2xl sm:zoom-in-95 sm:slide-in-from-bottom-2"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="modal-item-name"
 		tabindex="-1"
 	>
+		{/* In flow (not overlaid) so scrolled content never slides under the handle. */}
+		<div class="mx-auto mt-2 mb-1 h-1 w-9 shrink-0 rounded-full bg-muted-foreground/30 sm:hidden" aria-hidden="true"></div>
+
 		<button
 			type="button"
 			id="close-item-modal"
-			class="absolute end-3 top-3 z-10 rounded-full bg-background/90 p-1.5 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+			class="icon-btn absolute end-3 top-3 z-10 size-9 bg-background/90 shadow-elev-1 backdrop-blur-sm"
 			aria-label={labels.close}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 		</button>
 
-		<div class="min-h-0 flex-1 overflow-y-auto" data-modal-body>
+		<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-modal-body>
 			<div
 				id="modal-item-media"
-				class="hidden aspect-[16/9] max-h-64 w-full overflow-hidden rounded-t-[var(--radius)] bg-muted"
+				class="hidden aspect-[16/9] w-full overflow-hidden bg-placeholder sm:aspect-[2/1]"
 			></div>
 
-			<div class="space-y-6 p-4 pt-5 sm:p-6">
-				<div class="space-y-2 pe-8">
-					<h2 id="modal-item-name" class="font-heading text-xl leading-tight text-foreground">
-						{labels.customizeItem}
-					</h2>
-					<p id="modal-item-desc" class="text-sm text-muted-foreground"></p>
-					<p id="modal-item-price" class="text-sm font-medium tabular-nums text-foreground"></p>
-				</div>
+			<div class="space-y-2 p-5 sm:p-6 [#modal-item-media.hidden+&]:pe-14">
+				<h2 id="modal-item-name" class="text-2xl leading-tight font-bold tracking-tight text-balance text-foreground">
+					{labels.customizeItem}
+				</h2>
+				<p id="modal-item-desc" class="text-sm leading-relaxed text-muted-foreground"></p>
+				<p id="modal-item-price" class="price font-heading text-lg text-foreground"></p>
+			</div>
 
-				<div id="modal-variation-groups" class="space-y-5"></div>
-				<p id="modal-variation-unavailable" class="hidden text-sm text-destructive" role="status"></p>
-				<div id="modal-modifier-groups" class="space-y-6"></div>
+			<div
+				id="modal-variation-groups"
+				class="space-y-5 border-t border-border px-5 py-4 empty:hidden sm:px-6"
+			></div>
+			<p
+				id="modal-variation-unavailable"
+				class="tone-warning mx-5 mb-4 hidden rounded-lg border p-3 text-sm font-medium sm:mx-6 sm:p-4"
+				role="status"
+			></p>
+			<div id="modal-modifier-groups"></div>
 
-				<div id="modal-special-instructions-field" class="space-y-2">
-					<label for="modal-special-instructions" class={siteFieldLabelClass}>
-						{labels.specialInstructions}
-					</label>
-					<textarea
-						id="modal-special-instructions"
-						rows="2"
-						maxlength="300"
-						placeholder={labels.specialInstructionsPlaceholder}
-						class:list={[siteInputClass, 'h-auto min-h-16 resize-y']}
-					></textarea>
-				</div>
-
-				<div class="flex items-center justify-between gap-4 border-t border-border pt-4">
-					<span class="text-sm font-medium text-foreground" id="modal-qty-label">{labels.quantity}</span>
-					<div class="flex flex-col items-end gap-1">
-						<div class="flex items-center gap-3" role="group" aria-labelledby="modal-qty-label">
-							<button type="button" id="modal-qty-minus" class={stepButton}>
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14"/></svg>
-							</button>
-							<span id="modal-qty-value" class="min-w-5 text-center text-sm tabular-nums text-foreground" aria-live="polite">1</span>
-							<button type="button" id="modal-qty-plus" class={stepButton}>
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-							</button>
-						</div>
-						<p id="modal-qty-note" class="hidden text-xs text-muted-foreground" role="status"></p>
-					</div>
-				</div>
+			<div
+				id="modal-special-instructions-field"
+				class="space-y-2 border-t border-border px-5 py-4 sm:px-6"
+			>
+				<label for="modal-special-instructions" class="block text-sm font-semibold text-foreground">
+					{labels.specialInstructions}
+				</label>
+				<textarea
+					id="modal-special-instructions"
+					rows="3"
+					maxlength="300"
+					placeholder={labels.specialInstructionsPlaceholder}
+					class="field min-h-24 resize-none py-3"
+				></textarea>
 			</div>
 		</div>
 
-		<div class="border-t border-border bg-muted/20 p-4">
-			<button type="button" id="modal-add-btn" class:list={[siteBtnPrimary, 'w-full py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50']}>
-				{labels.addToOrder}
-			</button>
+		<div class="border-t border-border bg-card px-5 pt-3 pb-safe sm:px-6">
+			<p id="modal-qty-note" class="mb-2 hidden text-xs text-muted-foreground" role="status"></p>
+			<div class="flex items-center gap-3">
+				<span class="sr-only" id="modal-qty-label">{labels.quantity}</span>
+				<div
+					class="inline-flex h-12 shrink-0 items-center gap-1 rounded-lg border border-border bg-background p-1"
+					role="group"
+					aria-labelledby="modal-qty-label"
+				>
+					<button type="button" id="modal-qty-minus" class={stepButton}>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14"/></svg>
+					</button>
+					<span id="modal-qty-value" class="price min-w-8 text-center text-sm text-foreground" aria-live="polite">1</span>
+					<button type="button" id="modal-qty-plus" class={stepButton}>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+					</button>
+				</div>
+				<button
+					type="button"
+					id="modal-add-btn"
+					class="btn-cta min-w-0 flex-1 px-4 py-2 text-center leading-tight tabular-nums"
+				>
+					{labels.addToOrder}
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

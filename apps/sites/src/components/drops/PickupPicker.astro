@@ -16,40 +16,40 @@ const chooseDay = i18n._(msg`Choose a day`)
 const chooseTime = i18n._(msg`Choose a time`)
 ---
 
-<div id="pickup-picker" class="rounded-[var(--radius)] border border-border bg-background p-4">
-	<h3 class="font-heading text-sm font-semibold text-foreground">{heading}</h3>
-	<div class="mt-3 space-y-4">
-		<fieldset id="pickup-location-step">
-			<legend id="pickup-location-label" class="text-xs font-medium text-muted-foreground">
+<section id="pickup-picker" class="scroll-mt-28 border-t border-border pt-4 sm:pt-5" aria-labelledby="pickup-picker-heading">
+	<h2 id="pickup-picker-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
+	<div class="mt-3 space-y-4 sm:mt-4 sm:space-y-5">
+		<fieldset id="pickup-location-step" class="min-w-0">
+			<legend id="pickup-location-label" class="mb-2 text-sm font-semibold text-foreground">
 				{chooseLocation}
 			</legend>
 			<div
 				id="pickup-location-chips"
-				class="mt-1.5 flex flex-wrap gap-1.5"
+				class="flex flex-wrap gap-2"
 				role="radiogroup"
 				aria-labelledby="pickup-location-label"
 			></div>
 		</fieldset>
 
-		<fieldset id="pickup-date-step" class="hidden">
-			<legend id="pickup-date-label" class="text-xs font-medium text-muted-foreground">
+		<fieldset id="pickup-date-step" class="hidden min-w-0">
+			<legend id="pickup-date-label" class="mb-2 text-sm font-semibold text-foreground">
 				{chooseDay}
 			</legend>
 			<div
 				id="pickup-date-chips"
-				class="mt-1.5 flex flex-wrap gap-1.5"
+				class="flex flex-wrap gap-2"
 				role="radiogroup"
 				aria-labelledby="pickup-date-label"
 			></div>
 		</fieldset>
 
-		<fieldset id="pickup-slot-step" class="hidden">
-			<legend id="pickup-slot-label" class="text-xs font-medium text-muted-foreground">
+		<fieldset id="pickup-slot-step" class="hidden min-w-0">
+			<legend id="pickup-slot-label" class="mb-2 text-sm font-semibold text-foreground">
 				{chooseTime}
 			</legend>
 			<div
 				id="pickup-slot-chips"
-				class="mt-1.5 flex flex-wrap gap-1.5"
+				class="flex flex-wrap gap-2"
 				role="radiogroup"
 				aria-labelledby="pickup-slot-label"
 			></div>
@@ -58,8 +58,8 @@ const chooseTime = i18n._(msg`Choose a time`)
 
 	<p
 		id="pickup-selected-summary"
-		class="hidden"
+		class="tone-success mt-5 hidden items-start gap-3 rounded-lg border p-3 text-sm [&:not(.hidden)]:flex"
 		role="status"
 		aria-live="polite"
 	></p>
-</div>
+</section>

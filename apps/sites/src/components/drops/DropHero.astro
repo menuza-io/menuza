@@ -1,0 +1,109 @@
+---
+import { msg } from '@lingui/core/macro'
+import DropStatusChip from '~/components/drops/DropStatusChip.astro'
+import { type DropPhase } from '~/lib/drops/format'
+
+/**
+ * Top of the drop page: cover photo (or an org-tinted initial tile), status,
+ * title and the clamped description with its "Read more" toggle.
+ */
+interface Props {
+	coverUrl: string | null
+	title: string
+	description: string | null
+	phase: DropPhase
+	ordersOpenAt: string | null
+	ordersCloseAt: string | null
+	locale: string
+	timeZone: string | null
+}
+
+const { coverUrl, title, description, phase, ordersOpenAt, ordersCloseAt, locale, timeZone } =
+	Astro.props
+
+const i18n = Astro.locals.i18n
+const readMoreLabel = i18n._(msg`Read more`)
+const showLessLabel = i18n._(msg`Show less`)
+const initial = Array.from(title.trim())[0]?.toLocaleUpperCase(locale) ?? ''
+---
+
+<div>
+	{coverUrl ? (
+		<div class="relative aspect-[16/9] overflow-hidden rounded-2xl bg-placeholder lg:aspect-[21/9]">
+			<img
+				src={coverUrl}
+				alt=""
+				loading="eager"
+				fetchpriority="high"
+				decoding="async"
+				class:list={['size-full object-cover', phase === 'ended' && 'opacity-70 grayscale']}
+			/>
+		</div>
+	) : (
+		<div
+			class="media-placeholder aspect-[3/1] overflow-hidden rounded-2xl font-heading text-6xl font-bold sm:text-7xl"
+			aria-hidden="true"
+		>
+			{initial}
+		</div>
+	)}
+
+	<div class="mt-5">
+		<DropStatusChip
+			phase={phase}
+			ordersOpenAt={ordersOpenAt}
+			ordersCloseAt={ordersCloseAt}
+			locale={locale}
+			timeZone={timeZone}
+		/>
+		<h1 class="mt-3 text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+			{title}
+		</h1>
+		{description ? (
+			<div class="mt-2 max-w-2xl">
+				<p
+					id="drop-description"
+					class="line-clamp-3 text-sm leading-relaxed text-pretty text-muted-foreground sm:text-base"
+				>
+					{description}
+				</p>
+				<button
+					type="button"
+					id="drop-read-more"
+					class="focus-ring mt-1 hidden rounded-sm text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+					aria-expanded="false"
+					aria-controls="drop-description"
+					data-more={readMoreLabel}
+					data-less={showLessLabel}
+				>
+					{readMoreLabel}
+				</button>
+			</div>
+		) : null}
+	</div>
+</div>
+
+<script>
+	// "Read more" toggle: only shown when the description is actually clamped.
+	const description = document.getElementById('drop-description')
+	const readMore = document.getElementById('drop-read-more')
+	if (description && readMore) {
+		const more = readMore.dataset.more ?? ''
+		const less = readMore.dataset.less ?? ''
+		const updateVisibility = () => {
+			// Once expanded the text stays open until collapsed again.
+			if (readMore.getAttribute('aria-expanded') === 'true') return
+			readMore.classList.toggle(
+				'hidden',
+				description.scrollHeight <= description.clientHeight + 4,
+			)
+		}
+		updateVisibility()
+		document.fonts?.ready.then(updateVisibility)
+		readMore.addEventListener('click', () => {
+			const clamped = description.classList.toggle('line-clamp-3')
+			readMore.setAttribute('aria-expanded', String(!clamped))
+			readMore.textContent = clamped ? more : less
+		})
+	}
+</script>

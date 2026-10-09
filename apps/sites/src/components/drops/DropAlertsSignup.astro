@@ -1,0 +1,208 @@
+---
+import { msg } from '@lingui/core/macro'
+import { translate } from '~/lib/ordering-labels'
+
+/**
+ * "Never miss a drop" SMS opt-in, shared by every surface that wants to grow
+ * the drop-alert list. Signed out: phone → 6-digit code (the regular phone
+ * sign-in, so the customer lands in the system verified) → subscribed.
+ * Signed in: one tap. Already subscribed: hidden, except `layout="toggle"`
+ * (profile), which shows an on/off switch. The browser talks to tenant-api
+ * directly; Sites never sees the phone number.
+ *
+ * `banner`: horizontal brand-tinted row. `panel`: left-aligned brand-tinted
+ * stack for a sidebar. `card`: centered stack for empty states. `toggle`:
+ * settings row.
+ */
+interface Props {
+	source: 'menu' | 'drops_page' | 'drop_page' | 'order_success' | 'profile'
+	layout?: 'banner' | 'panel' | 'card' | 'toggle'
+	title?: string
+	body?: string
+	class?: string
+}
+
+const { source, layout = 'banner', title, body, class: className } = Astro.props
+const i18n = Astro.locals.i18n
+const orgName = Astro.locals.organization?.name ?? ''
+
+const labels = {
+	title: title ?? i18n._(msg`Never miss a drop`),
+	body: body ?? i18n._(msg`Get a text when new drops open, before they sell out.`),
+	phone: i18n._(msg`Phone Number`),
+	code: i18n._(msg`Verification code`),
+	join: i18n._(msg`Text me`),
+	joinSignedIn: i18n._(msg`Text me new drops`),
+	verify: i18n._(msg`Confirm`),
+	sending: i18n._(msg`Sending...`),
+	codeSent: translate(i18n, msg`We texted a 6-digit code to {phone}.`, { phone: '{phone}' }),
+	changeNumber: i18n._(msg`Change number`),
+	done: i18n._(msg`You're on the list. We'll text you when the next drop opens.`),
+	toggleOn: i18n._(msg`Drop alerts are on`),
+	toggleOff: i18n._(msg`Drop alerts are off`),
+	network: i18n._(msg`Network error. Please try again.`),
+	error: i18n._(msg`Something went wrong.`),
+	consent: translate(
+		i18n,
+		msg`By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out.`,
+		{ org: orgName },
+	),
+}
+
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const bell = '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>'
+const check = '<path d="M20 6 9 17l-5-5"/>'
+const fieldClass = 'field min-h-11 sm:text-sm'
+const stacked = layout === 'card'
+const panel = layout === 'panel'
+---
+
+<section
+	data-drop-alerts
+	data-layout={layout}
+	data-source={source}
+	data-state="phone"
+	data-label-sending={labels.sending}
+	data-label-code-sent={labels.codeSent}
+	data-label-network={labels.network}
+	data-label-error={labels.error}
+	aria-label={labels.title}
+	class:list={[
+		'drop-alerts',
+		layout === 'toggle'
+			? 'surface flex items-center gap-4 p-4 sm:p-5'
+			: stacked
+				? 'border-t border-border pt-8'
+				: panel
+					? 'brand-tint p-5'
+					: 'brand-tint p-4 sm:p-5',
+		stacked && 'text-center',
+		className,
+	]}
+>
+	{layout === 'toggle' ? (
+		<>
+			<span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+				<svg {...iconAttrs} class="size-5" set:html={bell} />
+			</span>
+			<div class="min-w-0 flex-1">
+				<p class="text-sm font-semibold text-foreground">{labels.title}</p>
+				<p class="text-sm text-muted-foreground" data-toggle-status data-on={labels.toggleOn} data-off={labels.toggleOff}>
+					{labels.body}
+				</p>
+			</div>
+			<button
+				type="button"
+				role="switch"
+				aria-checked="false"
+				aria-label={labels.title}
+				data-toggle
+				disabled
+				class="group focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-muted transition-colors duration-150 ease-out aria-checked:bg-primary disabled:opacity-50 motion-reduce:transition-none"
+			>
+				<span class="ms-0.5 size-5 rounded-full bg-background shadow-elev-1 transition-transform duration-150 ease-out group-aria-checked:translate-x-5 rtl:group-aria-checked:-translate-x-5 motion-reduce:transition-none"></span>
+			</button>
+		</>
+	) : (
+		<div class:list={['flex gap-4', stacked ? 'flex-col items-center' : panel ? 'flex-col' : 'flex-col sm:flex-row sm:items-center sm:gap-6']}>
+			<div class:list={['flex min-w-0 gap-3', stacked ? 'flex-col items-center' : panel ? 'flex-col' : 'items-start sm:flex-1']}>
+				<span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background text-brand shadow-elev-1">
+					<svg {...iconAttrs} class="size-5" set:html={bell} />
+				</span>
+				<div class="min-w-0">
+					<h2 class="text-base font-semibold leading-snug text-foreground">{labels.title}</h2>
+					<p class="mt-0.5 text-sm text-pretty text-muted-foreground" data-when="phone code signed-in">{labels.body}</p>
+					<p class="mt-0.5 text-sm text-pretty text-muted-foreground" data-when="done" role="status" aria-live="polite" hidden>
+						{labels.done}
+					</p>
+				</div>
+			</div>
+
+			<div class:list={['min-w-0', stacked ? 'w-full max-w-sm' : panel ? 'w-full' : 'w-full sm:w-96 sm:shrink-0']}>
+				<form data-step="phone" data-when="phone" class="flex gap-2" novalidate>
+					<label class="sr-only" for={`drop-alerts-phone-${source}`}>{labels.phone}</label>
+					<input
+						id={`drop-alerts-phone-${source}`}
+						name="phone"
+						type="tel"
+						inputmode="tel"
+						autocomplete="tel"
+						placeholder="+1 (555) 000-0000"
+						required
+						class:list={[fieldClass, 'min-w-0 flex-1']}
+					/>
+					<button type="submit" class="btn-cta min-h-11 shrink-0 px-4 text-sm" data-label={labels.join}>
+						{labels.join}
+					</button>
+				</form>
+
+				<form data-step="code" data-when="code" class="space-y-2" novalidate hidden>
+					<p class="text-sm text-muted-foreground" data-code-hint></p>
+					<div class="flex gap-2">
+						<label class="sr-only" for={`drop-alerts-code-${source}`}>{labels.code}</label>
+						<input
+							id={`drop-alerts-code-${source}`}
+							name="code"
+							type="text"
+							inputmode="numeric"
+							autocomplete="one-time-code"
+							pattern="[0-9]{6}"
+							maxlength="6"
+							placeholder="000000"
+							required
+							class:list={[fieldClass, 'min-w-0 flex-1 tracking-[0.3em] tabular-nums']}
+						/>
+						<button type="submit" class="btn-cta min-h-11 shrink-0 px-4 text-sm" data-label={labels.verify}>
+							{labels.verify}
+						</button>
+					</div>
+					<button type="button" data-change-number class="focus-ring rounded-sm text-sm font-semibold text-foreground underline-offset-4 hover:underline">
+						{labels.changeNumber}
+					</button>
+				</form>
+
+				<button type="button" data-step="signed-in" data-when="signed-in" class:list={['btn-cta min-h-11 px-4 text-sm', stacked || panel ? 'w-full' : 'w-full sm:w-auto']} data-label={labels.joinSignedIn} hidden>
+					{labels.joinSignedIn}
+				</button>
+
+				<p data-when="done" class:list={['inline-flex items-center gap-1.5 text-sm font-semibold text-success', stacked && 'justify-center']} hidden>
+					<svg {...iconAttrs} class="size-4" set:html={check} />
+					{labels.title}
+				</p>
+
+				<p data-error role="alert" class="mt-2 text-sm font-medium text-destructive" hidden></p>
+				<p data-when="phone code signed-in" class="mt-2 text-xs leading-relaxed text-pretty text-muted-foreground">
+					{labels.consent}
+				</p>
+			</div>
+		</div>
+	)}
+</section>
+
+<style is:global>
+	/* Signed in: wait for the subscription check instead of flashing the form
+	 * at someone who is already on the list. */
+	html[data-customer-session] .drop-alerts:not([data-ready]) {
+		display: none;
+	}
+	.drop-alerts[data-hidden] {
+		display: none;
+	}
+</style>
+
+<script>
+	import { mountDropAlerts } from '~/lib/drop-alerts-client'
+
+	for (const root of document.querySelectorAll<HTMLElement>('[data-drop-alerts]')) {
+		mountDropAlerts(root)
+	}
+</script>

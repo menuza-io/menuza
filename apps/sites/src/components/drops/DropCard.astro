@@ -3,8 +3,13 @@ import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import DropStatusChip from '~/components/drops/DropStatusChip.astro'
-import { getDropPhase, summarizePickup } from '~/lib/drops/format'
-import { resolveMediaUrl, siteBtnGhost, siteBtnPrimary } from '~/lib/media'
+import {
+	formatDropDate,
+	formatDropDateTime,
+	formatRemaining,
+	getDropPhase,
+} from '~/lib/drops/format'
+import { resolveMediaUrl } from '~/lib/media'
 import { buildIcsDataUrl } from '~/lib/ordering/calendar'
 import { type PublicDropListing } from '~/lib/org'
 import { translate } from '~/lib/ordering-labels'
@@ -13,7 +18,12 @@ interface Props {
 	drop: PublicDropListing
 	locale: string
 	defaultLocale: string
-	variant?: 'full' | 'compact'
+	/**
+	 * `full`: image-top card. `featured`: wide horizontal card for a lone live
+	 * drop. `banner`: wide card with a short cover banner and the details and
+	 * CTA side by side. `compact`: dense `<li>` row for the past-drops list.
+	 */
+	variant?: 'full' | 'featured' | 'banner' | 'compact'
 	now?: Date
 }
 
@@ -33,24 +43,67 @@ const description = getLocalizedMenuValue(drop.description, locale, defaultLocal
 const href = getLocaleHref(`/drop/${encodeURIComponent(drop.slug)}`, locale, locale, defaultLocale)
 const coverSrc = resolveMediaUrl(drop.coverImageUrl)
 
-const pickupLabel = i18n._(msg`Pickup`)
-const pickupLabels = {
-	dates: translate(i18n, msg`{n} dates`, { n: '{n}' }),
-	locations: translate(i18n, msg`{n} locations`, { n: '{n}' }),
-}
 // Location names may be stored as localized JSON maps like every other menu label.
-const locationNames = drop.pickupLocationNames.map((name) =>
-	getLocalizedMenuValue(name, locale, defaultLocale),
+const locationNames = Array.from(
+	new Set(
+		drop.pickupLocationNames
+			.map((name) => getLocalizedMenuValue(name, locale, defaultLocale))
+			.filter(Boolean),
+	),
 )
-const pickupSummary = summarizePickup(
-	drop.pickupDates,
-	locationNames,
-	locale,
-	timeZone,
-	pickupLabels,
-)
-const pickupDateText = summarizePickup(drop.pickupDates, [], locale, timeZone, pickupLabels)
-const pickupLocationText = summarizePickup([], locationNames, locale, timeZone, pickupLabels)
+const moreText = (n: number) => translate(i18n, msg`+{n} more`, { n })
+const withMore = (first: string, total: number) =>
+	total > 1 ? `${first} ${moreText(total - 1)}` : first
+
+// Concrete timing instead of counts: when ordering closes/opens, then the
+// first pickup day ("Pickup Fri, Oct 16 +1 more").
+const DAY_MS = 24 * 60 * 60 * 1000
+const sameYear = (iso: string) => new Date(iso).getUTCFullYear() === now.getUTCFullYear()
+const formatWhen = (iso: string | null) =>
+	iso ? formatDropDateTime(iso, locale, timeZone, { year: !sameYear(iso) }) : ''
+let windowText = ''
+let countdownText = ''
+if (phase === 'live' && drop.ordersCloseAt) {
+	windowText = translate(i18n, msg`Orders close {when}`, { when: formatWhen(drop.ordersCloseAt) })
+	const msLeft = new Date(drop.ordersCloseAt).getTime() - now.getTime()
+	if (msLeft > 0 && msLeft < DAY_MS) {
+		countdownText = formatRemaining(
+			msLeft,
+			{
+				in: translate(i18n, msg`in {t}`, { t: '{t}' }),
+				days: translate(i18n, msg`{n} days`, { n: '{n}' }),
+				oneDay: i18n._(msg`1 day`),
+				hoursMinutes: translate(i18n, msg`{h}h {m}m`, { h: '{h}', m: '{m}' }),
+				minutes: translate(i18n, msg`{n} min`, { n: '{n}' }),
+				lessThanMinute: i18n._(msg`less than a minute`),
+			},
+			locale,
+		)
+	}
+} else if (phase === 'upcoming' && drop.ordersOpenAt) {
+	windowText = translate(i18n, msg`Orders open {when}`, { when: formatWhen(drop.ordersOpenAt) })
+}
+const firstPickupDate = drop.pickupDates[0]
+const pickupText = firstPickupDate
+	? translate(i18n, msg`Pickup {when}`, {
+			when: withMore(formatDropDate(firstPickupDate, locale, timeZone), drop.pickupDates.length),
+		})
+	: ''
+const locationText = locationNames[0] ? withMore(locationNames[0], locationNames.length) : ''
+const pastWhen = drop.ordersCloseAt
+	? new Intl.DateTimeFormat(locale, {
+			timeZone,
+			month: 'short',
+			day: 'numeric',
+			year: sameYear(drop.ordersCloseAt) ? undefined : 'numeric',
+		}).format(new Date(drop.ordersCloseAt))
+	: firstPickupDate
+		? formatDropDate(firstPickupDate, locale, timeZone, { weekday: false })
+		: ''
+const endedLabel = i18n._(msg`Ended`)
+const initial = Array.from(title.trim())[0]?.toLocaleUpperCase(locale) ?? ''
+const featured = variant === 'featured'
+const banner = variant === 'banner'
 const orderNow = i18n._(msg`Order now`)
 const viewDrop = i18n._(msg`View drop`)
 const view = i18n._(msg`View`)
@@ -72,84 +125,89 @@ if (phase === 'upcoming' && drop.ordersOpenAt) {
 	}
 }
 
+
 const calendarFileName = `${drop.slug}.ics`
-const chipClass = 'z-10'
+const iconProps = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
 ---
 
 {variant === 'compact' ? (
-	<article class="group relative flex items-center gap-4 rounded-[var(--radius)] border border-border bg-card p-3 text-card-foreground transition-colors hover:border-foreground/30">
-		<div class="size-16 shrink-0 overflow-hidden rounded-[calc(var(--radius)*0.7)] bg-muted">
+	<li class="group relative flex items-center gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50 has-[.drop-card-link:focus-visible]:bg-muted/50 sm:gap-4 sm:px-4">
+		<div class="size-12 shrink-0 overflow-hidden rounded-md bg-placeholder">
 			{coverSrc ? (
-				<img src={coverSrc} alt="" loading="lazy" class="size-full object-cover opacity-80" />
+				<img src={coverSrc} alt="" loading="lazy" decoding="async" class="size-full object-cover grayscale" />
 			) : (
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="size-full p-5 text-muted-foreground"
-					aria-hidden="true"
-				>
-					<path d="M3 11h18" />
-					<path d="M5 11V7a7 7 0 0 1 14 0v4" />
-					<path d="M4 11v2a8 8 0 0 0 16 0v-2" />
-				</svg>
+				<span class="media-placeholder size-full font-heading text-lg font-bold" aria-hidden="true">
+					{initial}
+				</span>
 			)}
 		</div>
 		<div class="min-w-0 flex-1">
-			<h3 class="truncate font-heading text-base font-semibold text-foreground">
-				<a href={href} class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+			<h3 class="truncate text-sm font-semibold text-foreground">
+				<a
+					href={href}
+					class="drop-card-link after:absolute after:inset-0 after:content-[''] focus-visible:outline-none group-hover:underline underline-offset-4"
+				>
 					{title}
 				</a>
 			</h3>
-			<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-				<DropStatusChip
-					phase={phase}
-					ordersOpenAt={drop.ordersOpenAt}
-					ordersCloseAt={drop.ordersCloseAt}
-					locale={locale}
-					timeZone={drop.pickupTimezone}
-					now={now}
-				/>
-				{pickupSummary ? <span class="truncate">{pickupSummary}</span> : null}
-			</div>
+			{pastWhen ? (
+				<p class="mt-0.5 truncate text-xs text-muted-foreground">
+					<span class="bidi-isolate">{pastWhen}</span>
+					{locationText ? (
+						<>
+							<span aria-hidden="true" class="mx-1 text-muted-foreground/50">·</span>
+							<span>{locationText}</span>
+						</>
+					) : null}
+				</p>
+			) : null}
 		</div>
-		<span class="shrink-0 text-sm font-medium text-muted-foreground group-hover:text-foreground">{view}</span>
-	</article>
+		<span class="badge tone-neutral shrink-0">{endedLabel}</span>
+		<svg {...iconProps} stroke-width="1.75" class="size-4 shrink-0 text-muted-foreground rtl:-scale-x-100"><path d="m9 18 6-6-6-6" /></svg>
+	</li>
 ) : (
-	<article class="group relative flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card text-card-foreground shadow-sm transition-colors hover:border-foreground/30 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-		<div class="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+	<article
+		class:list={[
+			'group relative flex flex-col overflow-hidden surface surface-interactive',
+			'has-[.drop-card-link:focus-visible]:outline-2 has-[.drop-card-link:focus-visible]:outline-offset-2 has-[.drop-card-link:focus-visible]:outline-ring',
+			featured && 'md:col-span-full md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]',
+		]}
+	>
+		<div
+			class:list={[
+				'relative overflow-hidden bg-placeholder',
+				featured ? 'aspect-[4/3] md:aspect-auto md:min-h-80' : banner ? 'aspect-[16/7] md:aspect-auto md:h-44' : 'aspect-[4/3]',
+			]}
+		>
 			{coverSrc ? (
 				<img
 					src={coverSrc}
 					alt=""
-					loading="lazy"
+					loading={featured ? 'eager' : 'lazy'}
+					decoding="async"
 					class:list={[
-						'size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]',
-						phase === 'ended' && 'opacity-70',
+						'absolute inset-0 size-full object-cover transition-transform duration-300 ease-out group-hover:scale-103 motion-reduce:transition-none motion-reduce:group-hover:scale-100',
+						phase === 'ended' && 'opacity-70 grayscale',
 					]}
 				/>
 			) : (
-				<div class="flex size-full items-center justify-center text-muted-foreground">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.25"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="size-12"
-						aria-hidden="true"
-					>
-						<path d="M3 11h18" />
-						<path d="M5 11V7a7 7 0 0 1 14 0v4" />
-						<path d="M4 11v2a8 8 0 0 0 16 0v-2" />
-					</svg>
-				</div>
+				<span
+					class:list={[
+						'media-placeholder absolute inset-0 font-heading font-bold',
+						featured || banner ? 'text-7xl' : 'text-5xl',
+					]}
+					aria-hidden="true"
+				>
+					{initial}
+				</span>
 			)}
 			<DropStatusChip
 				phase={phase}
@@ -158,91 +216,73 @@ const chipClass = 'z-10'
 				locale={locale}
 				timeZone={drop.pickupTimezone}
 				now={now}
-				class={`${chipClass} absolute start-3 top-3 shadow-sm`}
+				overlay
+				class="absolute start-3 top-3 z-10"
 			/>
 		</div>
-		<div class="flex flex-1 flex-col gap-3 p-5">
-			<h3 class="font-heading text-lg font-semibold leading-snug text-foreground">
-				<a href={href} class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+		<div class:list={['flex flex-1 flex-col gap-2', featured ? 'p-5 sm:p-6 md:justify-center lg:p-8' : banner ? 'p-5 sm:p-6 md:flex-row md:items-center md:gap-6' : 'p-4 sm:p-5']}>
+			<div class:list={['flex min-w-0 flex-col gap-2', banner && 'md:flex-1']}>
+			<h3
+				class:list={[
+					'line-clamp-2 leading-snug text-foreground',
+					featured || banner ? 'text-xl font-bold tracking-tight sm:text-2xl' : 'text-lg font-semibold',
+				]}
+			>
+				<a href={href} class="drop-card-link after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
 					{title}
 				</a>
 			</h3>
-			{pickupSummary ? (
-				<p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-foreground/80">
-					<span class="sr-only">{pickupLabel}: </span>
-					{pickupDateText ? (
-						<span class="inline-flex items-center gap-1.5">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="1.75"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="size-4 shrink-0 text-muted-foreground"
-								aria-hidden="true"
-							>
-								<rect x="3" y="4" width="18" height="18" rx="2" />
-								<path d="M16 2v4M8 2v4M3 10h18" />
-							</svg>
-							{pickupDateText}
-						</span>
-					) : null}
-					{pickupLocationText ? (
-						<span class="inline-flex min-w-0 items-center gap-1.5">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="1.75"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="size-4 shrink-0 text-muted-foreground"
-								aria-hidden="true"
-							>
-								<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-								<circle cx="12" cy="10" r="3" />
-							</svg>
-							<span class="truncate">{pickupLocationText}</span>
-						</span>
-					) : null}
-				</p>
+			{(featured || banner) && description ? (
+				<p class="line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:text-base">{description}</p>
 			) : null}
-			{description ? (
-				<p class="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+			{windowText || pickupText || locationText ? (
+				<ul class:list={['space-y-1.5 text-sm text-muted-foreground', (featured || banner) && 'mt-2']}>
+					{windowText ? (
+						<li class="flex items-start gap-2">
+							<svg {...iconProps} stroke-width="1.75" class="mt-0.5 size-4 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+							<span class="min-w-0">
+								<span class="bidi-isolate font-medium text-foreground">{windowText}</span>
+								{countdownText ? (
+									<span class="badge tone-warning ms-1.5 align-middle">
+										<span class="bidi-isolate">{countdownText}</span>
+									</span>
+								) : null}
+							</span>
+						</li>
+					) : null}
+					{pickupText ? (
+						<li class="flex items-start gap-2">
+							<svg {...iconProps} stroke-width="1.75" class="mt-0.5 size-4 shrink-0"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+							<span class="bidi-isolate min-w-0">{pickupText}</span>
+						</li>
+					) : null}
+					{locationText ? (
+						<li class="flex items-start gap-2">
+							<svg {...iconProps} stroke-width="1.75" class="mt-0.5 size-4 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+							<span class="min-w-0 truncate">{locationText}</span>
+						</li>
+					) : null}
+				</ul>
 			) : null}
-			<div class="mt-auto flex flex-wrap items-center gap-3 pt-2">
+			</div>
+			<div class:list={['flex flex-wrap items-center gap-x-4 gap-y-2 pt-3', featured ? 'mt-auto sm:pt-5 md:mt-0' : banner ? 'mt-auto md:mt-0 md:shrink-0 md:pt-0' : 'mt-auto']}>
 				{phase === 'live' ? (
-					<a href={href} class:list={[siteBtnPrimary, 'relative z-10']}>
+					<a href={href} class:list={['btn-cta relative z-10', featured ? 'w-full sm:w-auto sm:min-w-48' : banner ? 'w-full md:w-auto' : 'w-full']}>
 						{orderNow}
+						<svg {...iconProps} stroke-width="2" class="size-4 rtl:-scale-x-100"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
 					</a>
 				) : phase === 'upcoming' ? (
 					<>
-						<a href={href} class:list={[siteBtnGhost, 'relative z-10']}>
+						<a href={href} class:list={['btn-secondary relative z-10', calendarHref ? 'flex-1' : 'w-full']}>
 							{viewDrop}
 						</a>
 						{calendarHref ? (
 							<a
 								href={calendarHref}
 								download={calendarFileName}
-								class="relative z-10 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+								class="focus-ring relative z-10 inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-semibold text-foreground underline-offset-4 hover:underline"
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="1.75"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									class="size-4"
-									aria-hidden="true"
-								>
-									<rect x="3" y="4" width="18" height="18" rx="2" />
-									<path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6" />
-								</svg>
+								<svg {...iconProps} stroke-width="1.75" class="size-4"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6" /></svg>
 								{addToCalendar}
 							</a>
 						) : null}
@@ -250,9 +290,10 @@ const chipClass = 'z-10'
 				) : (
 					<a
 						href={href}
-						class="relative z-10 inline-flex items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+						class="focus-ring relative z-10 inline-flex items-center gap-1 rounded-md text-sm font-semibold text-foreground underline-offset-4 hover:underline"
 					>
 						{view}
+						<svg {...iconProps} stroke-width="2" class="size-4 rtl:-scale-x-100"><path d="m9 18 6-6-6-6" /></svg>
 					</a>
 				)}
 			</div>

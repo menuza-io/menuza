@@ -426,6 +426,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   public form blocks. Empty disables the widget (local dev).
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
   siteverify secret and comma-separated allowed hostnames for form submissions.
+- `GOOGLE_MAPS_API_KEY` - Tenant-api (customer delivery address search +
+  coverage quotes, `/delivery/*`) and App (store address search/geocoding).
+  Optional; empty uses dev fixtures outside production. See
+  `docs/delivery-coverage.md`.
 - `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
   chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.

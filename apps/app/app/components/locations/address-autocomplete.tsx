@@ -13,23 +13,26 @@ import { Label } from '@repo/ui/label'
 import { Spinner } from '@repo/ui/spinner'
 import React, { useState, useEffect, useRef } from 'react'
 
+interface PlaceDetails {
+	formattedAddress: string
+	streetNumber?: string
+	streetName?: string
+	unit?: string
+	city: string
+	state: string
+	postalCode: string
+	country: string
+	lat: number
+	lng: number
+}
+
 interface AutocompletePrediction {
 	placeId: string
 	description: string
 	mainText: string
 	secondaryText: string
-	details: {
-		formattedAddress: string
-		streetNumber?: string
-		streetName?: string
-		unit?: string
-		city: string
-		state: string
-		postalCode: string
-		country: string
-		lat: number
-		lng: number
-	}
+	/** Inline for mock results; fetched by placeId for Google results. */
+	details?: PlaceDetails
 }
 
 interface AddressAutocompleteProps {
@@ -49,6 +52,8 @@ export function AddressAutocomplete({
 	const [isLoading, setIsLoading] = useState(false)
 	const [isOpen, setIsOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
+	// Google bills a typed search + its details lookup as one session.
+	const sessionTokenRef = useRef<string>(crypto.randomUUID())
 
 	// Debounced search query
 	useEffect(() => {
@@ -62,7 +67,7 @@ export function AddressAutocomplete({
 			setIsLoading(true)
 			try {
 				const res = await fetch(
-					`/resources/places/autocomplete?query=${encodeURIComponent(searchTerm)}`,
+					`/resources/places/autocomplete?query=${encodeURIComponent(searchTerm)}&sessionToken=${sessionTokenRef.current}`,
 				)
 				if (res.ok) {
 					const data = (await res.json()) as {
@@ -96,8 +101,25 @@ export function AddressAutocomplete({
 		return () => document.removeEventListener('mousedown', handleClickOutside)
 	}, [])
 
-	const handleSelectPrediction = (prediction: AutocompletePrediction) => {
-		const { details } = prediction
+	const handleSelectPrediction = async (prediction: AutocompletePrediction) => {
+		let details: PlaceDetails | undefined = prediction.details
+		if (!details) {
+			setIsLoading(true)
+			try {
+				const res = await fetch(
+					`/resources/places/autocomplete?placeId=${encodeURIComponent(prediction.placeId)}&sessionToken=${sessionTokenRef.current}`,
+				)
+				if (res.ok) {
+					details = ((await res.json()) as { place?: PlaceDetails }).place
+				}
+			} catch {
+				details = undefined
+			} finally {
+				setIsLoading(false)
+				sessionTokenRef.current = crypto.randomUUID()
+			}
+		}
+		if (!details) return
 		onChange({
 			formattedAddress: details.formattedAddress,
 			streetNumber: details.streetNumber,
@@ -158,7 +180,7 @@ export function AddressAutocomplete({
 							<button
 								key={p.placeId}
 								type="button"
-								onClick={() => handleSelectPrediction(p)}
+								onClick={() => void handleSelectPrediction(p)}
 								className="hover:bg-accent hover:text-accent-foreground flex w-full items-start gap-2.5 rounded-sm px-3 py-2 text-left text-sm transition-colors"
 							>
 								<Icon

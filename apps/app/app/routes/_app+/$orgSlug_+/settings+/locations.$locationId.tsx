@@ -21,11 +21,13 @@ import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
+import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
 	name: z.string().min(1, 'Location name is required'),
@@ -198,6 +200,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: 'Another location already uses this URL slug.' }
 	}
 
+	// Radius delivery zones are centred on the store: make sure it has real
+	// coordinates (missing or 0,0 → geocode server-side; best effort).
+	const geocoded = await ensureLocationCoordinates(data.address)
+
 	await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
@@ -216,7 +222,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				taxRate: data.taxRate,
 				isActive: data.isActive,
 				isDefault: data.isDefault,
-				address: data.address || null,
+				address: geocoded.address || null,
 				storeHours: data.storeHours || null,
 				onlineHours: data.onlineHours || null,
 				specialHours: data.specialHours || null,
@@ -237,6 +243,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				),
 			)
 	})
+
+	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 	return redirectWithToast(`/${organization.slug}/settings/locations`, {
 		type: 'success',

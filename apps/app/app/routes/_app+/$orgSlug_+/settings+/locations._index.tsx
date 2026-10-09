@@ -62,6 +62,7 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { deleteScopeData } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 interface LocationListItem {
 	id: string
@@ -383,6 +384,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					eq(OrganizationLocation.organizationId, organization.id),
 				),
 			)
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 		return { success: true }
 	}
@@ -409,6 +411,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					),
 				)
 		})
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 		return { success: true }
 	}
@@ -446,6 +449,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				),
 			)
 		await deleteScopeData(organization.id, locationId, { userId, request })
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
 
 		return { success: true }
 	}

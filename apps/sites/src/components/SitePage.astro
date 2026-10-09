@@ -9,7 +9,12 @@ import SiteFooter from '~/components/SiteFooter.astro'
 import SiteHeader from '~/components/SiteHeader.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
 import SiteLayout from '~/layouts/SiteLayout.astro'
-import type { PublicOrganization, PublicWebsitePage } from '~/lib/org'
+import {
+	fetchPublishedSitePage,
+	type PublicOrganization,
+	type PublicWebsitePage,
+	type PublicWebsitePageSection,
+} from '~/lib/org'
 import type { SiteLocaleLink } from '~/lib/media'
 import { getTenantApiUrl } from '~/lib/tenant-api'
 import { ENV } from 'varlock/env'
@@ -49,9 +54,28 @@ const activeLocale =
 	'en'
 const localeDirection = getSiteLocaleDirection(activeLocale)
 const sections = page?.sections ?? []
-const header = sections.find((section) => section.type === 'header')
-const footer = sections.find((section) => section.type === 'footer')
 const isPreview = Astro.url.searchParams.get('preview') === 'true'
+const findChrome = (list: PublicWebsitePageSection[]) => ({
+	header: list.find((section) => section.type === 'header'),
+	footer: list.find((section) => section.type === 'footer'),
+})
+let { header, footer } = findChrome(sections)
+// App routes (menu, drops, checkout, profile…) have no CMS sections of their
+// own; they wear the site chrome the org designed on its home page.
+if (!header || !footer) {
+	const home = page?.isHomePage
+		? null
+		: await fetchPublishedSitePage({
+				slug: Astro.locals.orgSlug,
+				host: Astro.locals.customHost,
+				home: true,
+				preview: isPreview,
+				lng: Astro.locals.requestedLocale,
+			})
+	const homeChrome = findChrome(home?.sections ?? [])
+	header ??= homeChrome.header
+	footer ??= homeChrome.footer
+}
 const defaultLocale =
 	organization.defaultLocale ?? Astro.locals.defaultLocale ?? 'en'
 const localeLinks: SiteLocaleLink[] = locales.map((locale) => ({

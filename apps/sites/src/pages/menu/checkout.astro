@@ -2,20 +2,18 @@
 import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
+import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import SitePage from '~/components/SitePage.astro'
-import { siteBtnPrimary, siteContainer } from '~/lib/media'
-import { translate } from '~/lib/ordering-labels'
+import { siteContainer } from '~/lib/media'
+import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
+import { formatMoney } from '~/lib/ordering/money'
+import { type FulfillmentMode } from '~/lib/ordering/types'
 import {
 	fetchPublishedDrop,
 	fetchPublishedSiteMenu,
 	type PublicLocationData,
 	type PublicMenuCategoryData,
 } from '~/lib/org'
-import {
-	siteCardClass,
-	siteInputClass,
-	siteFieldLabelClass,
-} from '~/lib/form-classes'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -88,57 +86,62 @@ const activeLocation: PublicLocationData | undefined =
 	locations.find((l) => l.isDefault) ||
 	locations[0]
 
-// Delivery fee lives on the DeliveryZone (DeliveryConfig has no fee field).
-// Without a geocoded customer address we can't radius/zip-match, so pick the
-// first enabled, allowed in-house zone; if none is configured we charge 0
-// rather than assuming a fee. The fee only applies when mode is 'delivery'.
-function resolveDeliveryFee(location: PublicLocationData | undefined): number {
-	const zones: any[] = Array.isArray(location?.deliveryZones) ? location?.deliveryZones ?? [] : []
-	const applicable =
-		zones.find((z) => z?.provider === 'in_house' && z.enabled !== false && z.restriction !== 'disallowed') ??
-		zones.find((z) => z?.enabled !== false && z.restriction !== 'disallowed')
-	return typeof applicable?.deliveryFee === 'number' ? applicable.deliveryFee : 0
-}
-
 // Sales tax is stored as a percent (e.g. 8.25), never a fraction.
+// The delivery fee and minimum come from the verified address quote (the
+// regional tenant-api resolves the zone), never from a guessed zone here.
 const taxRate = activeLocation?.taxRate ?? 0
-const deliveryFee = resolveDeliveryFee(activeLocation)
+
+// Same fulfillment rule as the menu page.
+const fulfillmentOptions = (activeLocation?.fulfillmentOptions ?? {}) as {
+	pickup?: boolean
+	delivery?: boolean
+}
+const allowedModes: FulfillmentMode[] = []
+if (fulfillmentOptions.pickup !== false) allowedModes.push('pickup')
+if (fulfillmentOptions.delivery !== false) allowedModes.push('delivery')
+if (!allowedModes.length) allowedModes.push('pickup')
+const odLabels = buildOrderDetailsLabels(i18n)
 
 const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
 const successHref = getLocaleHref('/menu/success', requestedLocale, defaultLocale)
 
+const price = (amount: number) => formatMoney(amount, currency, requestedLocale)
+
 const checkoutTitle = i18n._(msg`Checkout`)
-const backToMenuLabel = i18n._(msg`Back to Menu`)
+const backToMenuLabel = i18n._(msg`Back to menu`)
 const checkoutSubtitle = i18n._(msg`Review your order details and enter your contact information to complete your order.`)
-const emptyCartTitle = i18n._(msg`Your Order is Empty`)
+const emptyCartTitle = i18n._(msg`Your order is empty`)
 const emptyCartDesc = i18n._(msg`Looks like you haven't added any dishes to your order yet.`)
-const exploreMenuLabel = i18n._(msg`Explore Menu`)
-const fulfillmentTitle = i18n._(msg`1. Fulfillment Mode`)
+const exploreMenuLabel = i18n._(msg`Explore menu`)
+const fulfillmentTitle = i18n._(msg`Fulfillment`)
 const pickupLabel = i18n._(msg`Pickup`)
 const deliveryLabel = i18n._(msg`Delivery`)
 const freeLabel = i18n._(msg`Free`)
-const contactTitle = i18n._(msg`2. Contact Information`)
-const fullNameLabel = i18n._(msg`Full Name *`)
-const phoneLabel = i18n._(msg`Phone Number *`)
-const emailLabel = i18n._(msg`Email Address *`)
-const deliveryTitle = i18n._(msg`3. Delivery Address`)
-const streetLabel = i18n._(msg`Street Address *`)
-const aptLabel = i18n._(msg`Apt / Suite / Unit`)
-const cityLabel = i18n._(msg`City / Region`)
-const deliveryNotesLabel = i18n._(msg`Delivery Instructions`)
-const tipTitle = i18n._(msg`Add a Tip for the Team`)
-const noTipLabel = i18n._(msg`No Tip`)
-const paymentTitle = i18n._(msg`Payment Method`)
+const toYourDoorLabel = i18n._(msg`To your door`)
+const contactTitle = i18n._(msg`Contact details`)
+const fullNameLabel = i18n._(msg`Full name`)
+const phoneLabel = i18n._(msg`Phone number`)
+const phonePlaceholder = i18n._(msg`+1 555 000 0000`)
+const emailLabel = i18n._(msg`Email address`)
+const emailPlaceholder = i18n._(msg`name@example.com`)
+const deliveryTitle = i18n._(msg`Delivery address`)
+const deliveryNotesLabel = i18n._(msg`Delivery instructions`)
+const deliveryNotesPlaceholder = i18n._(msg`Gate code, buzzer, or where to leave it`)
+const tipTitle = i18n._(msg`Tip`)
+const noTipLabel = i18n._(msg`No tip`)
+const paymentTitle = i18n._(msg`Payment`)
 const payOnlineLabel = i18n._(msg`Pay online`)
+const payOnlineHint = i18n._(msg`Pay securely now`)
 const payAtPickupLabel = i18n._(msg`Pay at pickup`)
 const payOnDeliveryLabel = i18n._(msg`Pay on delivery`)
-const summaryTitle = i18n._(msg`Order Summary`)
+const payHandoffHint = i18n._(msg`Pay when you receive your order`)
+const summaryTitle = i18n._(msg`Order summary`)
 const subtotalText = i18n._(msg`Subtotal`)
 const taxText = i18n._(msg`Tax`)
-const deliveryFeeText = i18n._(msg`Delivery Fee`)
-const tipText = i18n._(msg`Tip`)
+const deliveryFeeText = i18n._(msg`Delivery fee`)
+const tipText = tipTitle
 const totalText = i18n._(msg`Total`)
-const placeOrderLabel = i18n._(msg`Place Order`)
+const placeOrderLabel = i18n._(msg`Place order`)
 const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree to the restaurant's terms.`)
 const cartAvailabilityNotice = i18n._(msg`Some items are no longer available and were removed from your order.`)
 
@@ -158,6 +161,27 @@ const emptyActionLabel = dropMode ? i18n._(msg`Back to drop`) : exploreMenuLabel
 const changePickupLabel = i18n._(msg`Change`)
 const timeRemainingLabel = i18n._(msg`Time remaining`)
 const choosePickupNotice = i18n._(msg`Choose a pickup time to continue`)
+
+// The hold starts only once `POST /orders` succeeds for an online payment;
+// tell drop customers up front how long they will have to pay. `Intl` spells
+// the duration so plurals are correct in every locale.
+const checkoutHoldMinutes = dropData?.drop.checkoutHoldMinutes ?? 0
+let holdDurationText = `${checkoutHoldMinutes} min`
+try {
+	holdDurationText = new Intl.NumberFormat(requestedLocale, {
+		style: 'unit',
+		unit: 'minute',
+		unitDisplay: 'long',
+	}).format(checkoutHoldMinutes)
+} catch {}
+const holdNoteText =
+	dropMode && checkoutHoldMinutes > 0
+		? translate(
+				i18n,
+				msg`After you place your order, we'll hold your items for {duration} while you pay.`,
+				{ duration: holdDurationText },
+			)
+		: ''
 
 // ---------- client-side label bag (regional ordering flow) ----------
 
@@ -244,6 +268,29 @@ const dropWindows = dropData
 			slots: window.slots,
 		}))
 	: []
+
+const pickupHint = activeLocation
+	? getLocalizedMenuValue(activeLocation.name, requestedLocale, defaultLocale)
+	: ''
+
+// Shared class recipes (spec §3). Rows that scripts toggle use plain `flex`
+// so `.hidden` always wins over a custom utility's `display`.
+const sectionClass = 'surface p-4 sm:p-6 [counter-increment:step]'
+const sectionHeadClass = 'mb-4 flex items-center gap-3'
+const stepMarkerClass =
+	'price flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-foreground before:content-[counter(step)]'
+const sectionTitleClass = 'text-lg font-semibold text-foreground'
+const labelClass = 'mb-1.5 block text-sm font-semibold text-foreground'
+const noticeClass = 'flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4'
+const iconTileClass =
+	'flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground'
+const rowClass =
+	'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
+const valueClass = 'price font-medium text-foreground'
+const tipBtnClass =
+	'tip-btn focus-ring flex min-h-12 flex-col items-center justify-center rounded-lg border px-2 text-sm font-semibold transition-colors duration-150 hover:border-foreground/40 motion-reduce:transition-none'
+const tipOn = 'border-foreground bg-foreground text-background'
+const tipOff = 'border-border bg-background text-foreground'
 ---
 
 <SitePage
@@ -251,216 +298,317 @@ const dropWindows = dropData
 	page={{ id: 'checkout', title: checkoutTitle, slug: 'menu/checkout', isHomePage: false, sections: [] }}
 	title={`${checkoutTitle} - ${organization.name}`}
 >
-	<div class="min-h-screen bg-background py-10 sm:py-16">
-		<div class:list={[siteContainer, "max-w-4xl"]}>
-			<p id="cart-availability-notice" class="hidden mb-6 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground" role="status">{cartAvailabilityNotice}</p>
-			<p id="ordering-closed-notice" class="hidden mb-6 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground" role="alert"></p>
-			<div class="mb-8">
-				<a href={dropMode ? dropHref : menuHref} class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2">
-					<svg xmlns="http://www.w3.org/2000/svg" class="size-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+	<div class="min-h-screen bg-background pt-6 pb-32 sm:pt-10 lg:pb-16">
+		<div class={siteContainer}>
+			<header class="mb-6 sm:mb-8">
+				<a
+					href={dropMode ? dropHref : menuHref}
+					class="focus-ring -ms-1 inline-flex items-center gap-1 rounded-md px-1 py-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-4 rtl:-scale-x-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
 					{backLabel}
 				</a>
-				<h1 class="font-heading text-3xl font-bold tracking-tight text-foreground">{checkoutTitle}</h1>
-				<p class="text-sm text-muted-foreground mt-1">{checkoutSubtitle}</p>
+				<h1 class="mt-2 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">{checkoutTitle}</h1>
+				<p class="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{checkoutSubtitle}</p>
+			</header>
+
+			<div id="cart-availability-notice" class:list={[noticeClass, 'tone-warning hidden mb-6']} role="status">
+				<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+				<p class="font-semibold">{cartAvailabilityNotice}</p>
+			</div>
+			<div id="ordering-closed-notice" class:list={[noticeClass, 'tone-warning hidden mb-6']} role="alert">
+				<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+				<p id="ordering-closed-text" class="min-w-0 flex-1 font-semibold"></p>
 			</div>
 
-			{/* Empty Cart State */}
-			<div id="empty-cart-state" class="hidden text-center py-16 space-y-4">
-				<div class="mx-auto flex size-16 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground">
-					<svg xmlns="http://www.w3.org/2000/svg" class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-				</div>
-				<h2 class="font-heading text-xl text-foreground">{emptyCartTitle}</h2>
-				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{emptyCartDesc}</p>
-				<a href={emptyHref} class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{emptyActionLabel}</a>
+			{/* Empty cart state */}
+			<div id="empty-cart-state" class="surface hidden flex-col items-center gap-3 px-6 py-12 text-center [&:not(.hidden)]:flex">
+				<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+				</span>
+				<h2 class="text-base font-semibold text-foreground">{emptyCartTitle}</h2>
+				<p class="max-w-sm text-sm text-muted-foreground">{emptyCartDesc}</p>
+				<a href={emptyHref} class="btn-cta mt-2">{emptyActionLabel}</a>
 			</div>
 
-			<div id="checkout-root" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-				{/* Left Column: Contact & Fulfillment Details Form */}
-				<div class="lg:col-span-7 space-y-6">
+			<div id="checkout-root" class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
+				{/* Form column: sections are numbered by CSS counters, so a hidden
+				    section (delivery address, tip) never leaves a gap. */}
+				<div class="min-w-0 space-y-4 [counter-reset:step] sm:space-y-5">
 					{/* Drop order window countdown (real closing time, not a hold) */}
-					<div id="drop-close-banner" class="hidden rounded-lg border border-border bg-muted px-4 py-3" role="status">
-						<div class="flex flex-wrap items-center justify-between gap-2">
-							<span id="drop-close-text" class="text-sm text-foreground"></span>
-							<span class="flex items-center gap-1.5 text-sm font-semibold tabular-nums text-foreground">
-								<span class="text-xs font-normal text-muted-foreground">{timeRemainingLabel}</span>
-								<span id="drop-close-countdown" role="timer">--:--</span>
+					<div id="drop-close-banner" class:list={[noticeClass, 'tone-warning hidden']} role="status">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+						<div class="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+							<span id="drop-close-text" class="bidi-isolate font-semibold text-foreground"></span>
+							<span class="flex items-baseline gap-2">
+								<span class="text-xs text-muted-foreground">{timeRemainingLabel}</span>
+								<span id="drop-close-countdown" class="price text-base text-foreground" role="timer">--:--</span>
 							</span>
 						</div>
 					</div>
 
 					{dropMode ? (
 						/* Drop pickup summary (drops are pickup only) */
-						<div class={siteCardClass}>
-							<h2 class="font-heading text-base text-foreground mb-3">{pickupLabel}</h2>
-							<div id="drop-pickup-summary" class="space-y-1 text-sm hidden">
-								<p id="drop-pickup-location" class="font-medium text-foreground"></p>
-								<p id="drop-pickup-address" class="text-muted-foreground"></p>
-								<p id="drop-pickup-time" class="text-muted-foreground"></p>
+						<section class={sectionClass} aria-labelledby="co-step-pickup">
+							<div class={sectionHeadClass}>
+								<span class={stepMarkerClass} aria-hidden="true"></span>
+								<h2 id="co-step-pickup" class={sectionTitleClass}>{pickupLabel}</h2>
 							</div>
-							<a id="drop-pickup-change" href={dropHref} class="mt-3 inline-flex text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
+							<div id="drop-pickup-summary" class:list={[noticeClass, 'tone-success hidden']}>
+								<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+								<div class="min-w-0 flex-1 space-y-0.5">
+									<p id="drop-pickup-time" class="bidi-isolate font-semibold text-foreground"></p>
+									<p id="drop-pickup-location" class="text-foreground"></p>
+									<p id="drop-pickup-address" class="text-muted-foreground"></p>
+								</div>
+							</div>
+							<div id="drop-pickup-missing" class:list={[noticeClass, 'tone-warning hidden outline-none']} role="status" tabindex="-1">
+								<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								<p class="min-w-0 flex-1 font-semibold">{choosePickupNotice}</p>
+							</div>
+							<a id="drop-pickup-change" href={dropHref} class="focus-ring mt-3 inline-flex rounded-sm text-sm font-semibold text-foreground underline-offset-4 hover:underline">
 								{changePickupLabel}
 							</a>
-							<p id="drop-pickup-missing" class="hidden mt-0 text-sm text-destructive" role="status" tabindex="-1">
-								{choosePickupNotice}
-							</p>
-						</div>
+						</section>
 					) : (
-						/* Fulfillment Card */
-						<div class={siteCardClass}>
-							<h2 class="font-heading text-base text-foreground mb-3">{fulfillmentTitle}</h2>
-							<div class="grid grid-cols-2 gap-3">
-								<label class="flex items-center justify-between p-3 rounded-lg border border-border bg-background cursor-pointer hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
-									<div class="flex items-center gap-2">
-										<input type="radio" name="fulfillment_mode" value="pickup" id="radio-pickup" class="size-4 text-primary" checked>
-										<span class="text-xs sm:text-sm text-foreground">🥡 {pickupLabel}</span>
-									</div>
-									<span class="text-xs text-muted-foreground">{freeLabel}</span>
-								</label>
-								<label class="flex items-center justify-between p-3 rounded-lg border border-border bg-background cursor-pointer hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
-									<div class="flex items-center gap-2">
-										<input type="radio" name="fulfillment_mode" value="delivery" id="radio-delivery" class="size-4 text-primary">
-										<span class="text-xs sm:text-sm text-foreground">🚗 {deliveryLabel}</span>
-									</div>
-									<span id="delivery-fee-badge" class="text-xs text-muted-foreground">{deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : freeLabel}</span>
-								</label>
+						/* Fulfillment */
+						<section class={sectionClass} aria-labelledby="co-step-fulfillment">
+							<div class={sectionHeadClass}>
+								<span class={stepMarkerClass} aria-hidden="true"></span>
+								<h2 id="co-step-fulfillment" class={sectionTitleClass}>{fulfillmentTitle}</h2>
 							</div>
+						<div class:list={['grid grid-cols-1 gap-3', allowedModes.length > 1 && 'sm:grid-cols-2']}>
+							<label class:list={['choice-card', !allowedModes.includes('pickup') && 'hidden']}>
+								<input type="radio" name="fulfillment_mode" value="pickup" id="radio-pickup" checked />
+									<span class={iconTileClass} aria-hidden="true">
+										<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+									</span>
+									<span class="min-w-0 flex-1">
+										<span class="flex items-center justify-between gap-2">
+											<span class="text-sm font-semibold text-foreground">{pickupLabel}</span>
+											<span class="badge tone-neutral">{freeLabel}</span>
+										</span>
+										{pickupHint ? <span class="mt-0.5 block truncate text-xs text-muted-foreground">{pickupHint}</span> : null}
+									</span>
+								</label>
+							<label class:list={['choice-card', !allowedModes.includes('delivery') && 'hidden']}>
+								<input type="radio" name="fulfillment_mode" value="delivery" id="radio-delivery" disabled={!allowedModes.includes('delivery')} />
+									<span class={iconTileClass} aria-hidden="true">
+										<svg xmlns="http://www.w3.org/2000/svg" class="size-5 rtl:-scale-x-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+									</span>
+									<span class="min-w-0 flex-1">
+										<span class="flex items-center justify-between gap-2">
+											<span class="text-sm font-semibold text-foreground">{deliveryLabel}</span>
+										<span id="delivery-fee-badge" class="badge tone-neutral price hidden" dir="ltr"></span>
+									</span>
+									<span id="delivery-hint" class="mt-0.5 block truncate text-xs text-muted-foreground">{toYourDoorLabel}</span>
+								</span>
+							</label>
 						</div>
+						<div id="co-when-row" class="mt-4 hidden items-center gap-3 border-t border-border pt-4 [&:not(.hidden)]:flex">
+							<span class={iconTileClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+							</span>
+							<span class="min-w-0 flex-1">
+								<span class="block text-xs text-muted-foreground">{odLabels.when}</span>
+								<span id="co-when-value" class="bidi-isolate block truncate text-sm font-semibold text-foreground"></span>
+							</span>
+							<button type="button" class="btn-secondary min-h-10 shrink-0 px-4" data-open-order-details data-order-details-tab="time">{odLabels.change}</button>
+						</div>
+					</section>
 					)}
 
-					{/* Payment Method Card */}
-					<div class={siteCardClass} id="payment-method-card">
-						<h2 class="font-heading text-base text-foreground mb-3">{paymentTitle}</h2>
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-							<label id="pay-online-row" class="hidden flex items-center p-3 rounded-lg border border-border bg-background cursor-pointer hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
-								<div class="flex items-center gap-2">
-									<input type="radio" name="payment_method" value="online" id="pay-online" class="size-4 text-primary">
-									<span class="text-xs sm:text-sm text-foreground">💳 {payOnlineLabel}</span>
+					{/* Contact details */}
+					<section class={sectionClass} aria-labelledby="co-step-contact">
+						<div class={sectionHeadClass}>
+							<span class={stepMarkerClass} aria-hidden="true"></span>
+							<h2 id="co-step-contact" class={sectionTitleClass}>{contactTitle}</h2>
+						</div>
+						<div class="grid gap-4 sm:grid-cols-2">
+							<div class="sm:col-span-2">
+								<label for="cust-name" class={labelClass}>{fullNameLabel}<span class="ms-0.5 text-destructive" aria-hidden="true">*</span></label>
+								<input type="text" id="cust-name" autocomplete="name" required class="field" />
+							</div>
+							<div>
+								<label for="cust-phone" class={labelClass}>{phoneLabel}<span class="ms-0.5 text-destructive" aria-hidden="true">*</span></label>
+								<input type="tel" id="cust-phone" autocomplete="tel" inputmode="tel" dir="ltr" placeholder={phonePlaceholder} required class="field text-start rtl:text-end" />
+							</div>
+							<div>
+								<label for="cust-email" class={labelClass}>{emailLabel}<span class="ms-0.5 text-destructive" aria-hidden="true">*</span></label>
+								<input type="email" id="cust-email" autocomplete="email" inputmode="email" dir="ltr" placeholder={emailPlaceholder} required class="field text-start rtl:text-end" />
+							</div>
+						</div>
+					</section>
+
+					{/* Delivery address (shown when delivery is selected) */}
+					<section id="delivery-address-card" class:list={[sectionClass, 'hidden']} aria-labelledby="co-step-address">
+						<div class={sectionHeadClass}>
+							<span class={stepMarkerClass} aria-hidden="true"></span>
+							<h2 id="co-step-address" class={sectionTitleClass}>{deliveryTitle}</h2>
+						</div>
+						{/* Verified address from the order-details sheet (quote from the
+						    regional tenant-api). Read-only here; "Change" reopens the sheet. */}
+						<div id="delivery-verified" class="hidden">
+							<div class="flex items-start gap-3 rounded-lg border border-border bg-background p-3 sm:p-4">
+								<span class:list={[iconTileClass, 'tone-success border']} aria-hidden="true">
+									<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+								</span>
+								<div class="min-w-0 flex-1">
+									<p id="delivery-verified-address" dir="auto" class="[text-align:match-parent] text-sm font-semibold leading-snug text-foreground"></p>
+									<p id="delivery-verified-meta" class="bidi-isolate mt-1 text-xs text-muted-foreground"></p>
 								</div>
+								<button type="button" class="btn-secondary min-h-10 shrink-0 px-4" data-open-order-details data-order-details-tab="delivery">{odLabels.change}</button>
+							</div>
+							<div class="mt-4">
+								<label for="cust-delivery-notes" class={labelClass}>{deliveryNotesLabel}</label>
+								<input type="text" id="cust-delivery-notes" maxlength="200" placeholder={deliveryNotesPlaceholder} class="field" />
+							</div>
+						</div>
+						<div id="delivery-missing" class="hidden flex-col items-start gap-3 rounded-lg border border-dashed border-border p-4 [&:not(.hidden)]:flex sm:flex-row sm:items-center">
+							<div class="min-w-0 flex-1">
+								<p class="text-sm font-semibold text-foreground">{odLabels.addressMissingTitle}</p>
+								<p class="mt-0.5 text-sm text-muted-foreground">{odLabels.addressMissingBody}</p>
+							</div>
+							<button type="button" id="delivery-add-address" class="btn-secondary shrink-0" data-open-order-details data-order-details-tab="delivery">{odLabels.addAddress}</button>
+						</div>
+					</section>
+
+					{/* Tip */}
+					<section class={sectionClass} id="tip-card" aria-labelledby="co-step-tip">
+						<div class={sectionHeadClass}>
+							<span class={stepMarkerClass} aria-hidden="true"></span>
+							<h2 id="co-step-tip" class={sectionTitleClass}>{tipTitle}</h2>
+						</div>
+						<div class="grid grid-cols-4 gap-2 sm:grid-cols-5" id="tip-buttons">
+							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="10"><span class="price">10%</span></button>
+							<button type="button" class:list={[tipBtnClass, tipOn]} aria-pressed="true" data-tip="15"><span class="price">15%</span></button>
+							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="18"><span class="price">18%</span></button>
+							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="20"><span class="price">20%</span></button>
+							<button type="button" class:list={[tipBtnClass, tipOff, 'col-span-4 sm:col-span-1']} aria-pressed="false" data-tip="0">{noTipLabel}</button>
+						</div>
+					</section>
+
+					{/* Payment */}
+					<section class={sectionClass} id="payment-method-card" aria-labelledby="co-step-payment">
+						<div class={sectionHeadClass}>
+							<span class={stepMarkerClass} aria-hidden="true"></span>
+							<h2 id="co-step-payment" class={sectionTitleClass}>{paymentTitle}</h2>
+						</div>
+						<div class="grid grid-cols-1 gap-3">
+							<div id="pay-online-row" class="hidden">
+								<label class="choice-card">
+									<input type="radio" name="payment_method" value="online" id="pay-online" />
+									<span class={iconTileClass} aria-hidden="true">
+										<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+									</span>
+									<span class="min-w-0 flex-1">
+										<span class="block text-sm font-semibold text-foreground">{payOnlineLabel}</span>
+										<span class="block text-xs text-muted-foreground">{payOnlineHint}</span>
+									</span>
+								</label>
+							</div>
+							<label class="choice-card">
+								<input type="radio" name="payment_method" value="handoff" id="pay-handoff" checked />
+								<span class={iconTileClass} aria-hidden="true">
+									<svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 16 6 6"/><circle cx="16" cy="9" r="2.9"/><circle cx="6" cy="5" r="3"/></svg>
+								</span>
+								<span class="min-w-0 flex-1">
+									<span id="pay-handoff-label" class="block text-sm font-semibold text-foreground">{payAtPickupLabel}</span>
+									<span class="block text-xs text-muted-foreground">{payHandoffHint}</span>
+								</span>
 							</label>
-							<label class="flex items-center p-3 rounded-lg border border-border bg-background cursor-pointer hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
-								<div class="flex items-center gap-2">
-									<input type="radio" name="payment_method" value="handoff" id="pay-handoff" class="size-4 text-primary" checked>
-									<span id="pay-handoff-label" class="text-xs sm:text-sm text-foreground">🤝 {payAtPickupLabel}</span>
-								</div>
-							</label>
 						</div>
-					</div>
-
-					{/* Customer Details Card */}
-					<div class={siteCardClass}>
-						<h2 class="font-heading text-base text-foreground mb-4">{contactTitle}</h2>
-						<div class="space-y-4">
-							<div>
-								<label for="cust-name" class={siteFieldLabelClass}>{fullNameLabel}</label>
-								<input type="text" id="cust-name" placeholder="Jane Doe" required class:list={[siteInputClass, "mt-1.5"]}>
-							</div>
-							<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<div>
-									<label for="cust-phone" class={siteFieldLabelClass}>{phoneLabel}</label>
-									<input type="tel" id="cust-phone" placeholder="+1 (555) 000-0000" required class:list={[siteInputClass, "mt-1.5"]}>
-								</div>
-								<div>
-									<label for="cust-email" class={siteFieldLabelClass}>{emailLabel}</label>
-									<input type="email" id="cust-email" placeholder="jane@example.com" required class:list={[siteInputClass, "mt-1.5"]}>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					{/* Delivery Address Card (shown if delivery selected) */}
-					<div id="delivery-address-card" class:list={[siteCardClass, "hidden space-y-4"]}>
-						<h2 class="font-heading text-base text-foreground">{deliveryTitle}</h2>
-						<div class="space-y-4">
-							<div>
-								<label for="cust-address" class={siteFieldLabelClass}>{streetLabel}</label>
-								<input type="text" id="cust-address" placeholder="123 Main Street" class:list={[siteInputClass, "mt-1.5"]}>
-							</div>
-							<div class="grid grid-cols-2 gap-4">
-								<div>
-									<label for="cust-apt" class={siteFieldLabelClass}>{aptLabel}</label>
-									<input type="text" id="cust-apt" placeholder="Apt 4B" class:list={[siteInputClass, "mt-1.5"]}>
-								</div>
-								<div>
-									<label for="cust-city" class={siteFieldLabelClass}>{cityLabel}</label>
-									<input type="text" id="cust-city" placeholder="City" class:list={[siteInputClass, "mt-1.5"]}>
-								</div>
-							</div>
-							<div>
-								<label for="cust-delivery-notes" class={siteFieldLabelClass}>{deliveryNotesLabel}</label>
-								<input type="text" id="cust-delivery-notes" placeholder="Drop off at reception, ring doorbell, gate code, etc." class:list={[siteInputClass, "mt-1.5"]}>
-							</div>
-						</div>
-					</div>
-
-					{/* Tip Selection Card */}
-					<div class={siteCardClass} id="tip-card">
-						<h2 class="font-heading text-base text-foreground mb-3">{tipTitle}</h2>
-						<div class="grid grid-cols-5 gap-2" id="tip-buttons">
-							<button type="button" class="tip-btn rounded-lg border border-border bg-background py-2 text-xs text-foreground hover:bg-muted" data-tip="10">10%</button>
-							<button type="button" class="tip-btn rounded-lg border border-primary bg-primary text-primary-foreground py-2 text-xs" data-tip="15">15%</button>
-							<button type="button" class="tip-btn rounded-lg border border-border bg-background py-2 text-xs text-foreground hover:bg-muted" data-tip="18">18%</button>
-							<button type="button" class="tip-btn rounded-lg border border-border bg-background py-2 text-xs text-foreground hover:bg-muted" data-tip="20">20%</button>
-							<button type="button" class="tip-btn rounded-lg border border-border bg-background py-2 text-xs text-foreground hover:bg-muted" data-tip="0">{noTipLabel}</button>
-						</div>
-					</div>
+					</section>
 				</div>
 
-				{/* Right Column: Order Review & Submit */}
-				<div class="lg:col-span-5">
-					<div class:list={[siteCardClass, "sticky top-20 space-y-6"]}>
-						<h2 class="font-heading text-base text-foreground border-b border-border pb-3">{summaryTitle}</h2>
+				{/* Summary column */}
+				<aside class="surface p-5 sm:p-6 lg:sticky lg:top-24" aria-labelledby="co-summary-title">
+					<h2 id="co-summary-title" class="text-lg font-bold tracking-tight text-foreground">{summaryTitle}</h2>
 
-						{/* Items list */}
-						<div id="checkout-items-list" class="space-y-3 max-h-72 overflow-y-auto divide-y divide-border/60">
-							{/* Injected dynamically from cart */}
+					{/* Items list */}
+					<ul id="checkout-items-list" class="mt-2 divide-y divide-border lg:max-h-80 lg:overflow-y-auto lg:overscroll-contain">
+						{/* Injected dynamically from cart */}
+					</ul>
+
+					{/* Breakdown (estimate — the receipt is authoritative) */}
+					<dl class="mt-2 space-y-2 border-t border-border pt-4">
+						<div class={rowClass}>
+							<dt>{subtotalText}</dt>
+							<dd id="co-subtotal" class={valueClass}>{price(0)}</dd>
 						</div>
-
-						{/* Calculations breakdown (estimate — the receipt is authoritative) */}
-						<div class="border-t border-border pt-4 space-y-2 text-xs text-muted-foreground">
-							<div class="flex justify-between">
-								<span>{subtotalText}</span>
-								<span id="co-subtotal" class="font-medium text-foreground">$0.00</span>
-							</div>
-							<div class="flex justify-between">
-								<span>{taxText}</span>
-								<span id="co-tax" class="font-medium text-foreground">$0.00</span>
-							</div>
-							<div id="co-delivery-row" class="flex justify-between hidden">
-								<span>{deliveryFeeText}</span>
-								<span id="co-delivery-fee" class="font-medium text-foreground">$0.00</span>
-							</div>
-							<div class="flex justify-between">
-								<span>{tipText}</span>
-								<span id="co-tip" class="font-medium text-foreground">$0.00</span>
-							</div>
-							<div class="flex justify-between text-base font-bold text-foreground border-t border-border pt-3">
-								<span>{totalText}</span>
-								<span id="co-total">$0.00</span>
-							</div>
+						<div class={rowClass}>
+							<dt>{taxText}</dt>
+							<dd id="co-tax" class={valueClass}>{price(0)}</dd>
 						</div>
+						<div id="co-delivery-row" class:list={[rowClass, 'hidden']}>
+							<dt>{deliveryFeeText}</dt>
+							<dd id="co-delivery-fee" class={valueClass}>{price(0)}</dd>
+						</div>
+						<div class={rowClass}>
+							<dt>{tipText}</dt>
+							<dd id="co-tip" class={valueClass}>{price(0)}</dd>
+						</div>
+						<div class="mt-3 flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground">
+							<dt>{totalText}</dt>
+							<dd id="co-total" class="price font-heading text-xl">{price(0)}</dd>
+						</div>
+					</dl>
 
-						<div id="checkout-error" class="hidden rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
+					<div id="place-order-block" class:list={[noticeClass, 'tone-warning hidden mt-5']} role="status">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+						<p id="place-order-block-text" class="min-w-0 flex-1 font-medium"></p>
+					</div>
+
+					{holdNoteText ? (
+						/* Shown only for drop orders paying online (see updateHoldNote). */
+						<p id="checkout-hold-note" class="mt-5 flex hidden items-start gap-2 text-sm text-muted-foreground [&.hidden]:hidden">
+							<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+							<span class="min-w-0 flex-1 text-pretty">{holdNoteText}</span>
+						</p>
+					) : null}
+
+					<div id="checkout-error" class:list={[noticeClass, 'tone-danger hidden mt-5']} role="alert">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+						<p class="min-w-0 flex-1">
 							<span id="checkout-error-text"></span>
-							{' '}<a id="checkout-error-link" href="#" class="hidden font-medium underline underline-offset-4">{checkoutLabels.viewReceipt}</a>
-						</div>
-
-						{/* Submit button */}
-						<button
-							type="button"
-							id="place-order-btn"
-							class:list={[siteBtnPrimary, "w-full py-3.5 text-base font-bold shadow-md hover:bg-primary/95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"]}
-						>
-							{placeOrderLabel}
-						</button>
-
-						<p class="text-[11px] text-center text-muted-foreground">
-							🔒 {termsNotice}
+							{' '}<a id="checkout-error-link" href="#" class="hidden font-semibold underline underline-offset-4">{checkoutLabels.viewReceipt}</a>
 						</p>
 					</div>
-				</div>
+
+					{/* Submit: a fixed bottom bar on phones, inline in the card from lg. */}
+					<div class="mt-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:flex max-lg:items-center max-lg:gap-4 max-lg:px-4 max-lg:pt-3 max-lg:glass-bar max-lg:shadow-bar-up max-lg:pb-safe max-lg:flex-wrap">
+						<p id="place-order-block-bar" class="hidden w-full text-xs font-medium text-muted-foreground lg:hidden" aria-hidden="true"></p>
+						<div class="min-w-0 lg:hidden">
+							<p class="text-xs text-muted-foreground">{totalText}</p>
+							<p id="co-bar-total" class="price font-heading text-lg text-foreground" aria-hidden="true">{price(0)}</p>
+						</div>
+						<button type="button" id="place-order-btn" class="btn-cta min-w-0 flex-1 lg:w-full">
+							<svg id="place-order-spinner" xmlns="http://www.w3.org/2000/svg" class="hidden size-4 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+							<span id="place-order-label" class="truncate">{placeOrderLabel}</span>
+						</button>
+					</div>
+
+					<p class="mt-4 flex items-start justify-center gap-1.5 text-center text-xs text-muted-foreground">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-px size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+						<span>{termsNotice}</span>
+					</p>
+				</aside>
 			</div>
 		</div>
 	</div>
+
+	{!dropMode && locations.length ? (
+		<OrderDetailsSheet
+			locations={locations}
+			activeLocationId={activeLocation?.id}
+			allowedModes={allowedModes}
+			orgId={organization.id}
+			currency={currency}
+			locale={requestedLocale}
+			defaultLocale={defaultLocale}
+			labels={odLabels}
+		/>
+	) : null}
 
 	<script
 		id="checkout-meta"
@@ -474,7 +622,8 @@ const dropWindows = dropData
 			locationId: activeLocation?.id ?? null,
 			locations,
 			taxRate,
-			deliveryFee,
+			allowedModes,
+			orderDetailsLabels: odLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
 			labels: checkoutLabels,
 			drop: dropData && {
@@ -515,7 +664,24 @@ const dropWindows = dropData
 			loadPickupSelection,
 			resolvePickup,
 		} from '~/lib/ordering/pickup'
-		import { fillTemplate } from '~/lib/ordering/money'
+		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
+		import {
+			hasValidDeliveryQuote,
+			isQuoteValid,
+			loadOrderDetails,
+			openOrderDetails,
+			subscribeOrderDetails,
+			updateOrderDetails,
+			type OrderDetails,
+		} from '~/lib/ordering/order-details'
+		import {
+			buildScheduleDays,
+			findSlot,
+			formatScheduledFor,
+			schedulingSettings,
+		} from '~/lib/ordering/schedule'
+		import { type OrderDetailsLabels } from '~/lib/ordering-labels'
+		import { type FulfillmentMode } from '~/lib/ordering/types'
 		import { type CartItem } from '~/lib/ordering/types'
 		import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
 		import { type OrderErrorLabels } from '~/lib/ordering/order-errors'
@@ -574,7 +740,9 @@ const dropWindows = dropData
 		const storageKey = isDrop
 			? `menuza_drop_cart_${orgId}_${drop!.id}`
 			: `menuza_cart_${orgId}`
-		const modeKey = `menuza_mode_${orgId}`
+		const odLabels = (meta.orderDetailsLabels ?? {}) as OrderDetailsLabels
+		const allowedModes = (meta.allowedModes ?? ['pickup', 'delivery']) as FulfillmentMode[]
+		const activeLocation = (meta.locations ?? []).find((l: any) => l.id === meta.locationId) ?? null
 
 		let cart: CartItem[] = []
 		try {
@@ -600,9 +768,14 @@ const dropWindows = dropData
 			}
 		}
 
-		const storedMode = localStorage.getItem(modeKey)
-		let mode: 'pickup' | 'delivery' =
-			!isDrop && storedMode === 'delivery' ? 'delivery' : 'pickup'
+		// Order details (mode, verified delivery quote, schedule) live in the
+		// browser only; the address goes from here to the regional tenant-api.
+		let details: OrderDetails = loadOrderDetails(orgId, {
+			locationId: meta.locationId ?? '',
+			allowedModes,
+		})
+		let mode: 'pickup' | 'delivery' = !isDrop && details.mode === 'delivery' ? 'delivery' : 'pickup'
+		let deliveryAvailable = allowedModes.includes('delivery')
 		let tipPercent = 15
 		let paymentMethod: 'handoff' | 'online' = 'handoff'
 		let orderingOpen = true
@@ -610,7 +783,7 @@ const dropWindows = dropData
 		// Location-derived values resolved server-side (same source as the menu page).
 		// Drop orders tax at the pickup location chosen on the drop page.
 		const menuTaxRate = typeof meta.taxRate === 'number' ? meta.taxRate : 0
-		const locationDeliveryFee = typeof meta.deliveryFee === 'number' ? meta.deliveryFee : 0
+		const validDelivery = () => (isQuoteValid(details.delivery) ? details.delivery : null)
 
 		const pickupSelection = isDrop ? loadPickupSelection(drop!.id) : null
 		const pickupLocation = isDrop
@@ -624,14 +797,8 @@ const dropWindows = dropData
 			return isDrop ? (pickupLocation ? pickupTaxRate : 0) : menuTaxRate
 		}
 
-		function formatCurrency(num: number) {
-			const valid = Number.isFinite(num) ? num : 0
-			const sign = valid < 0 ? '-' : ''
-			return `${sign}$${Math.abs(valid).toLocaleString('en-US', {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-			})}`
-		}
+		// Display only: the org currency and locale, same formatter as the menu.
+		const formatCurrency = createMoneyFormatter(meta.currency || 'USD', meta.locale || 'en')
 
 		// Build nodes with textContent so operator/guest text is never parsed as HTML.
 		function createEl(tag: string, className?: string, text?: string) {
@@ -646,7 +813,7 @@ const dropWindows = dropData
 		function computeTotals() {
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
 			const tax = subtotal * (taxRate() / 100)
-			const fee = mode === 'delivery' ? locationDeliveryFee : 0
+			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
 			const tip = (subtotal * tipPercent) / 100
 			const total = subtotal + tax + fee + tip
 			return { subtotal, tax, deliveryFee: fee, tip, total }
@@ -659,20 +826,33 @@ const dropWindows = dropData
 			const list = document.getElementById('checkout-items-list')
 			if (list) {
 				const rows = cart.map((it) => {
-					const row = createEl('div', 'pt-3 first:pt-0')
-					const head = createEl('div', 'flex justify-between items-start text-xs text-foreground')
-					head.appendChild(createEl('span', undefined, `${it.quantity}x ${it.name}`))
-					head.appendChild(createEl('span', undefined, formatCurrency(it.unitPrice * it.quantity)))
-					row.appendChild(head)
-
-					if (it.options && it.options.length > 0) {
-						row.appendChild(
-							createEl('p', 'text-[11px] text-muted-foreground mt-0.5', it.options.map((o: any) => o.optionName).join(', ')),
+					const row = createEl('li', 'flex gap-3 py-3')
+					row.appendChild(
+						createEl(
+							'span',
+							'price flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-muted px-1.5 text-xs text-foreground',
+							String(it.quantity),
+						),
+					)
+					const body = createEl('div', 'min-w-0 flex-1')
+					body.appendChild(createEl('p', 'text-sm font-semibold leading-snug text-foreground', it.name))
+					const optionNames = (it.options ?? [])
+						.map((o: any) => o.optionName)
+						.filter(Boolean)
+					if (optionNames.length > 0) {
+						body.appendChild(
+							createEl('p', 'mt-0.5 text-xs leading-relaxed text-muted-foreground', optionNames.join(', ')),
 						)
 					}
 					if (it.instructions) {
-						row.appendChild(createEl('p', 'text-[11px] italic text-muted-foreground', `Note: ${it.instructions}`))
+						body.appendChild(
+							createEl('p', 'mt-0.5 text-xs italic leading-relaxed text-muted-foreground', `“${it.instructions}”`),
+						)
 					}
+					row.appendChild(body)
+					row.appendChild(
+						createEl('span', 'price shrink-0 text-sm text-foreground', formatCurrency(it.unitPrice * it.quantity)),
+					)
 					return row
 				})
 				list.replaceChildren(...rows)
@@ -691,13 +871,19 @@ const dropWindows = dropData
 			if (coDeliveryRow && coDeliveryFee) {
 				if (mode === 'delivery') {
 					coDeliveryRow.classList.remove('hidden')
-					coDeliveryFee.textContent = formatCurrency(deliveryFee)
+					coDeliveryFee.textContent = validDelivery()
+						? deliveryFee > 0
+							? formatCurrency(deliveryFee)
+							: odLabels.free
+						: odLabels.feeAfterAddress
 				} else {
 					coDeliveryRow.classList.add('hidden')
 				}
 			}
 			if (coTip) coTip.textContent = formatCurrency(tip)
 			if (coTotal) coTotal.textContent = formatCurrency(total)
+			const barTotal = document.getElementById('co-bar-total')
+			if (barTotal) barTotal.textContent = formatCurrency(total)
 
 			// Delivery address section visibility
 			const addrCard = document.getElementById('delivery-address-card')
@@ -708,6 +894,125 @@ const dropWindows = dropData
 					addrCard.classList.add('hidden')
 				}
 			}
+			renderDeliveryDetails()
+			renderWhen()
+			renderBlockReason()
+		}
+
+		const minutesRange = (eta: { min: number; max: number }) =>
+			eta.min === eta.max
+				? fillTemplate(odLabels.minutes, { count: eta.min })
+				: fillTemplate(odLabels.minutesRange, { min: `\u2066${eta.min}`, max: `${eta.max}\u2069` })
+
+		function renderDeliveryDetails() {
+			const delivery = validDelivery()
+			document.getElementById('delivery-verified')?.classList.toggle('hidden', !delivery)
+			document.getElementById('delivery-missing')?.classList.toggle('hidden', Boolean(delivery))
+			const badge = document.getElementById('delivery-fee-badge')
+			if (badge) {
+				badge.classList.toggle('hidden', !delivery)
+				if (delivery) {
+					badge.textContent =
+						delivery.deliveryFee > 0 ? `+${formatCurrency(delivery.deliveryFee)}` : odLabels.free
+				}
+			}
+			if (!delivery) return
+			const address = document.getElementById('delivery-verified-address')
+			if (address) {
+				address.textContent = [delivery.formatted, delivery.unit].filter(Boolean).join(' · ')
+			}
+			const metaLine = document.getElementById('delivery-verified-meta')
+			if (metaLine) {
+				metaLine.textContent = [
+					delivery.zoneName,
+					minutesRange(delivery.eta),
+					delivery.minimumOrder > 0
+						? `${odLabels.minimumOrder} ${formatCurrency(delivery.minimumOrder)}`
+						: odLabels.noMinimum,
+				]
+					.filter(Boolean)
+					.join(' · ')
+			}
+		}
+
+		function schedulingEnabled() {
+			return Boolean(!isDrop && activeLocation && schedulingSettings(activeLocation).enabled)
+		}
+
+		/** The chosen time if it is still offered, `null` for ASAP, `false` if stale. */
+		function currentSchedule(): string | null | false {
+			if (!details.scheduledFor) return null
+			if (!schedulingEnabled()) return false
+			const days = buildScheduleDays(activeLocation, {
+				locale: meta.locale,
+				mode,
+				deliveryEtaMin: validDelivery()?.eta.min ?? 0,
+			})
+			return findSlot(days, details.scheduledFor) ? details.scheduledFor : false
+		}
+
+		function renderWhen() {
+			const row = document.getElementById('co-when-row')
+			const value = document.getElementById('co-when-value')
+			const enabled = schedulingEnabled()
+			row?.classList.toggle('hidden', !enabled)
+			if (!enabled || !value) return
+			const scheduled = currentSchedule()
+			if (scheduled) {
+				const parts = formatScheduledFor(scheduled, meta.locale, activeLocation?.timezone || 'UTC')
+				const day = !parts
+					? ''
+					: parts.offset === 0
+						? odLabels.today
+						: parts.offset === 1
+							? odLabels.tomorrow
+							: parts.weekday
+				value.textContent = parts ? `${day} · ${parts.time}` : scheduled
+				return
+			}
+			if (scheduled === false) {
+				value.textContent = odLabels.scheduleExpired
+				return
+			}
+			const delivery = validDelivery()
+			value.textContent =
+				mode === 'delivery'
+					? `${odLabels.asap} · ${minutesRange(delivery?.eta ?? { min: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMin || 25, max: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMax || 45 })}`
+					: `${odLabels.asap} · ${fillTemplate(odLabels.minutes, { count: activeLocation?.prepTime || 15 })}`
+		}
+
+		/** Why the order cannot be placed yet (delivery address / minimum / time). */
+		function blockReason(): string | null {
+			if (isDrop || cart.length === 0) return null
+			if (mode === 'delivery') {
+				const delivery = validDelivery()
+				if (!delivery) return odLabels.blockNoQuote
+				const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
+				if (delivery.minimumOrder > 0 && subtotal + 1e-9 < delivery.minimumOrder) {
+					return fillTemplate(odLabels.blockMinimum, {
+						amount: formatCurrency(delivery.minimumOrder - subtotal),
+						minimum: formatCurrency(delivery.minimumOrder),
+					})
+				}
+			}
+			if (currentSchedule() === false) return odLabels.scheduleExpired
+			return null
+		}
+
+		function renderBlockReason() {
+			const reason = blockReason()
+			const box = document.getElementById('place-order-block')
+			const text = document.getElementById('place-order-block-text')
+			if (text) text.textContent = reason ?? ''
+			const bar = document.getElementById('place-order-block-bar')
+			if (bar) {
+				bar.textContent = reason ?? ''
+				bar.classList.toggle('hidden', !reason)
+			}
+			box?.classList.toggle('hidden', !reason)
+			const button = document.getElementById('place-order-btn')
+			if (reason) button?.setAttribute('aria-disabled', 'true')
+			else button?.removeAttribute('aria-disabled')
 		}
 
 		function renderDropPickup() {
@@ -770,11 +1075,37 @@ const dropWindows = dropData
 			document.getElementById('checkout-error')?.classList.add('hidden')
 		}
 
+		// Display only: flag the field and say why right under it, so the
+		// message is visible on phones where the summary card sits far below.
+		function markInvalid(input: HTMLInputElement | null, message: string) {
+			if (!input) return
+			const errorId = `${input.id}-error`
+			let hint = document.getElementById(errorId)
+			if (!hint) {
+				hint = createEl('p', 'mt-1.5 flex items-center gap-1.5 text-sm font-medium text-destructive')
+				hint.id = errorId
+				input.insertAdjacentElement('afterend', hint)
+			}
+			hint.textContent = message
+			input.setAttribute('aria-invalid', 'true')
+			input.setAttribute('aria-describedby', errorId)
+			input.addEventListener(
+				'input',
+				() => {
+					input.removeAttribute('aria-invalid')
+					input.removeAttribute('aria-describedby')
+					hint?.remove()
+				},
+				{ once: true },
+			)
+		}
+
 		function showOrderingClosedNotice(text: string) {
 			orderingOpen = false
 			const notice = document.getElementById('ordering-closed-notice')
 			if (notice) {
-				notice.textContent = text
+				const target = document.getElementById('ordering-closed-text') ?? notice
+				target.textContent = text
 				notice.classList.remove('hidden')
 			}
 			const placeBtn = document.getElementById('place-order-btn') as HTMLButtonElement | null
@@ -795,7 +1126,7 @@ const dropWindows = dropData
 		function updateHandoffLabel() {
 			const el = document.getElementById('pay-handoff-label')
 			if (el) {
-				el.textContent = `🤝 ${mode === 'delivery' ? labels.payOnDelivery : labels.payAtPickup}`
+				el.textContent = mode === 'delivery' ? labels.payOnDelivery : labels.payAtPickup
 			}
 		}
 
@@ -819,20 +1150,47 @@ const dropWindows = dropData
 			radioPickup.checked = true
 		}
 
-		radioPickup?.addEventListener('change', () => {
-			mode = 'pickup'
-			localStorage.setItem(modeKey, mode)
+		function setMode(next: 'pickup' | 'delivery') {
+			mode = next
+			if (radioPickup) radioPickup.checked = next === 'pickup'
+			if (radioDelivery) radioDelivery.checked = next === 'delivery'
 			updateHandoffLabel()
 			updateTipAvailability(orderingOptions)
 			renderCheckout()
+		}
+
+		radioPickup?.addEventListener('change', () => {
+			if (!isDrop) details = updateOrderDetails(orgId, details, { mode: 'pickup' })
+			setMode('pickup')
 		})
 		radioDelivery?.addEventListener('change', () => {
-			mode = 'delivery'
-			localStorage.setItem(modeKey, mode)
-			updateHandoffLabel()
-			updateTipAvailability(orderingOptions)
-			renderCheckout()
+			if (!isDrop) details = updateOrderDetails(orgId, details, { mode: 'delivery' })
+			setMode('delivery')
+			// No verified address yet: open the sheet on the delivery tab.
+			if (!hasValidDeliveryQuote(details)) openOrderDetails('delivery')
 		})
+
+		// The sheet saved new details (or another tab did): re-read and re-render.
+		if (!isDrop) {
+			subscribeOrderDetails(orgId, () => {
+				details = loadOrderDetails(orgId, { locationId: meta.locationId ?? '', allowedModes })
+				const next = details.mode === 'delivery' && deliveryAvailable ? 'delivery' : 'pickup'
+				hideCheckoutError()
+				setMode(next)
+			})
+		}
+
+		// Drop orders paying online: say how long the hold lasts before the
+		// customer commits. The note also describes the Place order button.
+		function updateHoldNote() {
+			const note = document.getElementById('checkout-hold-note')
+			if (!note) return
+			const visible = isDrop && paymentMethod === 'online'
+			note.classList.toggle('hidden', !visible)
+			const placeBtn = document.getElementById('place-order-btn')
+			if (visible) placeBtn?.setAttribute('aria-describedby', 'checkout-hold-note')
+			else placeBtn?.removeAttribute('aria-describedby')
+		}
 
 		// Wire payment method radios
 		document
@@ -842,6 +1200,7 @@ const dropWindows = dropData
 					if (radio.checked) {
 						paymentMethod = radio.value === 'online' ? 'online' : 'handoff'
 					}
+					updateHoldNote()
 				})
 			})
 
@@ -849,11 +1208,13 @@ const dropWindows = dropData
 		document.querySelectorAll('.tip-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {
 				document.querySelectorAll('.tip-btn').forEach((b) => {
-					b.classList.remove('border-primary', 'bg-primary', 'text-primary-foreground')
+					b.classList.remove('border-foreground', 'bg-foreground', 'text-background')
 					b.classList.add('border-border', 'bg-background', 'text-foreground')
+					b.setAttribute('aria-pressed', 'false')
 				})
-				btn.classList.add('border-primary', 'bg-primary', 'text-primary-foreground')
+				btn.classList.add('border-foreground', 'bg-foreground', 'text-background')
 				btn.classList.remove('border-border', 'bg-background', 'text-foreground')
+				btn.setAttribute('aria-pressed', 'true')
 				tipPercent = Number(btn.getAttribute('data-tip') || 0)
 				renderCheckout()
 			})
@@ -875,6 +1236,20 @@ const dropWindows = dropData
 				onlineRow?.classList.add('hidden')
 				if (onlineRadio?.checked && handoffRadio) handoffRadio.checked = true
 				paymentMethod = 'handoff'
+			}
+			updateHoldNote()
+			if (!isDrop && (options.delivery?.available === false || options.fulfillment?.delivery === false)) {
+				deliveryAvailable = false
+				if (radioDelivery) radioDelivery.disabled = true
+				const hint = document.getElementById('delivery-hint')
+				if (hint) hint.textContent = odLabels.deliveryNotAvailable
+				if (mode === 'delivery' && allowedModes.includes('pickup')) {
+					details = updateOrderDetails(orgId, details, { mode: 'pickup' })
+					mode = 'pickup'
+					if (radioPickup) radioPickup.checked = true
+					updateHandoffLabel()
+					renderCheckout()
+				}
 			}
 			updateTipAvailability(options)
 			if (options.ordering?.open === false) {
@@ -922,7 +1297,11 @@ const dropWindows = dropData
 		function setBusy(busy: boolean) {
 			if (!placeBtn) return
 			placeBtn.disabled = busy || !orderingOpen
-			placeBtn.textContent = busy ? labels.placingOrder : labels.placeOrder
+			placeBtn.setAttribute('aria-busy', busy ? 'true' : 'false')
+			const label = document.getElementById('place-order-label')
+			if (label) label.textContent = busy ? labels.placingOrder : labels.placeOrder
+			else placeBtn.textContent = busy ? labels.placingOrder : labels.placeOrder
+			document.getElementById('place-order-spinner')?.classList.toggle('hidden', !busy)
 		}
 
 		placeBtn?.addEventListener('click', () => {
@@ -961,40 +1340,53 @@ const dropWindows = dropData
 			const nameInput = document.getElementById('cust-name') as HTMLInputElement
 			const phoneInput = document.getElementById('cust-phone') as HTMLInputElement
 			const emailInput = document.getElementById('cust-email') as HTMLInputElement
-			const addrInput = document.getElementById('cust-address') as HTMLInputElement
-			const aptInput = document.getElementById('cust-apt') as HTMLInputElement
-			const cityInput = document.getElementById('cust-city') as HTMLInputElement
 			const notesInput = document.getElementById('cust-delivery-notes') as HTMLInputElement
 
 			if (!nameInput?.value.trim()) {
 				showCheckoutError(labels.validation.name)
+				markInvalid(nameInput, labels.validation.name)
 				nameInput?.focus()
 				return
 			}
 			if (!phoneInput?.value.trim()) {
 				showCheckoutError(labels.validation.phone)
+				markInvalid(phoneInput, labels.validation.phone)
 				phoneInput?.focus()
 				return
 			}
 			if (!emailInput?.value.trim()) {
 				showCheckoutError(labels.validation.email)
+				markInvalid(emailInput, labels.validation.email)
 				emailInput?.focus()
 				return
 			}
 
 			const fulfillment: 'pickup' | 'delivery' = isDrop ? 'pickup' : mode
+			// Re-read: the quote may have expired while checkout sat open.
+			if (!isDrop) details = loadOrderDetails(orgId, { locationId: meta.locationId ?? '', allowedModes })
+			const blocked = blockReason()
+			if (blocked) {
+				renderCheckout()
+				showCheckoutError(blocked)
+				if (fulfillment === 'delivery' && !validDelivery()) openOrderDetails('delivery')
+				else if (currentSchedule() === false) openOrderDetails('time')
+				return
+			}
 			let delivery: Record<string, string> | undefined
 			if (fulfillment === 'delivery') {
-				if (!addrInput?.value.trim()) {
-					showCheckoutError(labels.validation.address)
-					addrInput?.focus()
-					return
+				const verified = validDelivery()!
+				// The address, city and unit are signed into the quote token; the
+				// region re-resolves the zone from it. City is only sent when the
+				// geocoder returned one (an empty city used to fail validation).
+				delivery = {
+					address: verified.line1.trim().length >= 5 ? verified.line1.trim() : verified.formatted,
+					quoteToken: verified.quoteToken,
 				}
-				delivery = { address: addrInput.value.trim() }
-				if (cityInput?.value.trim()) delivery.city = cityInput.value.trim()
-				if (aptInput?.value.trim()) delivery.unit = aptInput.value.trim()
+				if (verified.city.trim()) delivery.city = verified.city.trim()
+				if (verified.unit?.trim()) delivery.unit = verified.unit.trim()
 				if (notesInput?.value.trim()) delivery.notes = notesInput.value.trim()
 			}
+			const scheduledFor = isDrop ? null : currentSchedule() || null
 
 			const successUrl = `${meta.successUrl || '/menu/success'}?order=`
 
@@ -1012,6 +1404,7 @@ const dropWindows = dropData
 						email: emailInput.value.trim(),
 					},
 					...(delivery ? { delivery } : {}),
+					...(scheduledFor ? { scheduledFor } : {}),
 					tipPercent,
 					lines: orderLines(cart),
 				}
@@ -1055,7 +1448,19 @@ const dropWindows = dropData
 					error instanceof OrderRequestError ? error.code : 'order_failed'
 				// Same key, different payload: the next attempt must mint a new key.
 				if (code === 'idempotency_conflict') clearCheckoutAttempt(orgId)
-				showCheckoutError(orderErrorMessage(code, labels.errors))
+				if (code === 'delivery_quote_expired') {
+					details = updateOrderDetails(orgId, details, { delivery: undefined })
+					renderCheckout()
+					showCheckoutError(odLabels.quoteExpired)
+					openOrderDetails('delivery')
+				} else if (code === 'schedule_unavailable') {
+					details = updateOrderDetails(orgId, details, { scheduledFor: null })
+					renderCheckout()
+					showCheckoutError(odLabels.scheduleExpired)
+					openOrderDetails('time')
+				} else {
+					showCheckoutError(orderErrorMessage(code, labels.errors))
+				}
 				setBusy(false)
 			}
 		}

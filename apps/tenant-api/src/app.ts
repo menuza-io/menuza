@@ -21,7 +21,9 @@ import { operatorRoutes } from './routes/operator.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
+import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
+import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import {
 	publicVoiceRoutes,
@@ -102,6 +104,21 @@ export function createTenantApiApp() {
 	}
 	app.use('/orders', orderRateLimitGate)
 	app.use('/orders/*', orderRateLimitGate)
+	// Address search + quotes hit a billable geocoder: per-IP limits here,
+	// plus per-org hourly caps inside the routes.
+	const deliveryPlacesRateLimit = rateLimit('public-delivery-places', {
+		windowMs: 60 * 1000,
+		maxRequests: 60,
+	})
+	const deliveryQuoteRateLimit = rateLimit('public-delivery-quote', {
+		windowMs: 60 * 1000,
+		maxRequests: 20,
+	})
+	app.use('/delivery/*', async (c, next) => {
+		if (c.req.method === 'GET') return deliveryPlacesRateLimit(c, next)
+		if (c.req.method === 'POST') return deliveryQuoteRateLimit(c, next)
+		await next()
+	})
 	const publicFormReadRateLimit = rateLimit('public-form-reads', {
 		windowMs: 60 * 1000,
 		maxRequests: 120,
@@ -130,9 +147,11 @@ export function createTenantApiApp() {
 	app.get('/api/health', healthHandler)
 
 	app.route('/auth', authRoutes)
+	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/shop', shopRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/orders', publicOrderRoutes)
+	app.route('/delivery', publicDeliveryRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)
 	app.route('/api/forms', formSystemRoutes)

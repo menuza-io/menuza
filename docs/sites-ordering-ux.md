@@ -73,13 +73,16 @@ Where we go further:
 
 ```
 [Site header]
-[Menu header]          H1 "Menu" · status "Open until 10:00 PM" / "Closed · opens Thu 11:00 AM"
-                       location button (if >1): "Downtown Flagship ▾" → LocationPicker
-                       segmented Pickup / Delivery with estimates ("~15 min", "25–45 min")
-                       search field "Search the menu"
-[Sticky CategoryNav]   horizontal chips (all sizes); on lg+ also a left vertical rail
+[OrderBar]             sr-only H1; segmented Pickup / Delivery, "Pick up from ▾" and
+                       "Pickup time ▾" chips → OrderDetailsSheet. No card or band around it.
+[Closed notice]        only when closed: "We're closed right now. Orders reopen Thu 11:00 AM"
+[MenuMeta]             one muted line: "● Open until 10:00 PM" (open only) · "Pickup ~15 min" ·
+                       "Delivery 25–45 min" · "Downtown Flagship · Chicago"
+[DropNudge]            only when a drop is live/upcoming: stacked covers, "2 drops ordering
+                       now · 1 drop coming up", explainer, "View drops →" (whole row → /drops)
+                       search field "Search the menu" (below lg; on lg+ it tops the rail)
+[StickyCategoryNav]    horizontal tabs on a hairline (below lg); on lg+ a left vertical rail
 [Popular]              horizontal scroll of image cards, only if ≥3 items have isPopular
-[Drops teaser]         PublicDrops variant="menu" (live + upcoming only, max 3, "All drops →")
 [Categories]           H2 + optional description; MenuItemRow list (1 col, 2 cols on xl)
                        Subcategories as H3 groups inside; sub-subcategories as H4 groups.
                        No "Subcategory" badges, no arrows.
@@ -107,12 +110,13 @@ Section "Past drops"     compact cards, muted, "Ended Oct 5"
 Empty: "No drops right now. Check the menu." → /menu
 ```
 
-### 4.3 `PublicDrops` (home + menu teaser)
+### 4.3 `DropNudge` (menu only)
 
-Live and upcoming only, max 3, sorted live first then by open time. Card shows
-cover, status chip, title, "Pickup Fri, Oct 9 · 4 locations", one-line
-description, CTA "Order now" / "View drop". Footer link "All drops →" when the
-org has more than 3 or any past drops.
+Drops are not listed on the home page or inside the menu; `/drops` is the one
+listing. The menu carries a single compact row under its meta line that counts
+live and upcoming drops ("2 drops ordering now · 1 drop coming up"), shows up to
+three stacked covers, and links to `/drops`. Hidden when nothing is live or
+scheduled.
 
 ### 4.4 `/drop/[slug]`
 
@@ -123,7 +127,7 @@ content.
 ```
 Back link "← All drops"
 DropSummaryCard
-  cover (aspect 4/3), StatusChip
+  cover (aspect 4/3), DropStatusChip
   H1 title, description (3-line clamp + "Read more" toggle)
   Facts list:
     Order window   "Orders close Fri, Oct 9 · 9:15 AM"  (+ countdown "in 3h 12m" when < 24h)
@@ -242,7 +246,8 @@ All under `apps/sites/src`.
   `items: {id, label}[]`, `rail?: boolean`.
 - `MenuItemRow.astro`: `.js-item-card` with `data-item-id`, `data-sold-out`.
 - `DropItemCard.astro`: same data attributes plus `data-remaining`.
-- `DietaryBadges.astro`, `StatusChip.astro`, `LocationPicker.astro`,
+- `DietaryBadges.astro`, `OrderBar.astro`, `OrderDetailsSheet.astro`,
+  `StickyCategoryNav.astro`, `MenuMeta.astro`, `DropStatusChip.astro`,
   `LocationList.astro`, `PickupPicker.astro`, `DropSummaryCard.astro`,
   `DropCard.astro`, `OrderingLabels.astro` (emits
   `<script id="ordering-labels" type="application/json">`).
@@ -251,8 +256,9 @@ All under `apps/sites/src`.
 
 - `pages/menu.astro` (rewrite), `pages/drops.astro` (new),
   `pages/drop/[slug].astro` (rewrite), `pages/menu/checkout.astro` and
-  `pages/menu/success.astro` (drop mode), `components/PublicDrops.astro`
-  (redesign, `variant`, `limit`).
+  `pages/menu/success.astro` (drop mode), `components/drops/DropNudge.astro`
+  (menu → `/drops` count row; replaces the old `PublicDrops` teaser, since
+  removed).
 
 ### App API changes (`apps/app/app/routes/resources+/`)
 
@@ -282,9 +288,11 @@ checkout. Keep:
   `Thank you for your order!`, `Order Number`, `Estimated Time`, `Receipt`,
   `Order More Food`, `Return to Homepage`.
 - `#menu-data` JSON with `currency`.
-- `#location-select` as a `<select>` (the audit selects an option by value). The
-  LocationPicker may wrap it visually but the select must exist and navigate on
-  change.
+- Location switching is now a radio group in the order-details sheet
+  (`[data-od-locations]`), which navigates with `?location=`. The old
+  `#location-select` is gone; `customer-site-arabic.test.ts` still probes it
+  behind an `isVisible()` guard, so its multi-location currency check is a
+  silent no-op until it is ported to the sheet (TODO).
 - `#cust-name`, `#cust-phone`, `#cust-email`, `#place-order-btn`, and the
   `/menu/success` redirect.
 

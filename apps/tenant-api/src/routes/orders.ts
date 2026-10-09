@@ -73,7 +73,7 @@ async function verifyOrderTurnstile(c: Context, token: unknown) {
  * slug/host identity — the same rule auth uses. A client-chosen orgId is never
  * accepted, and the org must be served by this node's region.
  */
-async function resolveOrderingOrganization(
+export async function resolveOrderingOrganization(
 	c: Context,
 	identity: { slug?: string; host?: string },
 ): Promise<{ organization: PublishedOrganization } | { error: Response }> {

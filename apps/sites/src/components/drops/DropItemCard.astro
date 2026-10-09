@@ -2,9 +2,10 @@
 import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
 
 /**
- * Image-top item card for the drop menu grid. In the live phase the whole
- * card opens the shared item modal (`data-item-id`, `data-sold-out`); preview
- * cards are read-only. `note` carries the limit/inventory wording
+ * Item card for the drop menu, laid out like the menu page's `MenuItemRow`
+ * (text at the start, square photo at the inline end). In the live phase the
+ * whole card opens the shared item modal (`data-item-id`, `data-sold-out`);
+ * preview cards are read-only. `note` carries the limit/inventory wording
  * ("Only 3 left", "Limit 2 per order", "Sold out").
  */
 interface Props {
@@ -15,6 +16,10 @@ interface Props {
 	soldOut: boolean
 	imageUrl?: string | null
 	note?: string | null
+	/** `warning` for low stock ("Only 3 left"), `neutral` for order limits. */
+	noteTone?: 'warning' | 'neutral'
+	/** Translated "Sold out" badge text. */
+	soldOutLabel: string
 	calories?: string | null
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
@@ -35,6 +40,8 @@ const {
 	soldOut,
 	imageUrl,
 	note,
+	noteTone = 'warning',
+	soldOutLabel,
 	calories,
 	isVegetarian,
 	isGlutenFree,
@@ -42,71 +49,93 @@ const {
 	readonly = false,
 	labels,
 } = Astro.props
+const interactive = !readonly && !soldOut
+const plusIcon = '<path d="M5 12h14"/><path d="M12 5v14"/>'
+const hasMeta = Boolean(calories || isVegetarian || isGlutenFree || isAlcohol || (note && !soldOut))
 ---
 
 <li
 	class:list={[
-		'group relative flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card text-card-foreground shadow-xs transition-colors',
+		'group relative flex min-h-36 gap-4 rounded-xl border p-4',
 		!readonly && 'js-item-card',
-		!readonly && (soldOut ? 'opacity-70' : 'cursor-pointer hover:border-foreground/25'),
+		soldOut ? 'border-dashed border-border bg-muted/40' : 'surface',
+		interactive && 'surface-interactive cursor-pointer',
+		'has-[.js-item-open:focus-visible]:outline-2 has-[.js-item-open:focus-visible]:outline-offset-2 has-[.js-item-open:focus-visible]:outline-ring',
 	]}
 	data-item-id={id}
 	data-sold-out={soldOut ? 'true' : 'false'}
 	data-remaining={note ?? undefined}
+	aria-disabled={soldOut ? 'true' : undefined}
 >
-	<div class="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-		{imageUrl ? (
+	<div class="flex min-w-0 flex-1 flex-col">
+		<h3
+			class:list={[
+				'text-base leading-snug font-semibold text-pretty sm:text-lg sm:leading-snug',
+				soldOut ? 'text-muted-foreground' : 'text-foreground',
+			]}
+		>
+			{!readonly ? (
+				<button
+					type="button"
+					class="js-item-open block w-full text-start after:absolute after:inset-0 after:rounded-xl after:content-[''] focus-visible:outline-none disabled:cursor-default"
+					aria-haspopup="dialog"
+					disabled={soldOut}
+				>
+					<span class="line-clamp-2">{name}</span>
+				</button>
+			) : (
+				<span class="line-clamp-2">{name}</span>
+			)}
+		</h3>
+		{description ? (
+			<p class="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+		) : null}
+		{hasMeta ? (
+			<div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+				{note && !soldOut ? (
+					<span class:list={['badge', noteTone === 'warning' ? 'tone-warning' : 'tone-neutral']}>{note}</span>
+				) : null}
+				<DietaryBadges
+					isVegetarian={isVegetarian}
+					isGlutenFree={isGlutenFree}
+					isAlcohol={isAlcohol}
+					labels={labels}
+				/>
+				{calories ? <span class="bidi-isolate text-xs text-muted-foreground">{calories}</span> : null}
+			</div>
+		) : null}
+		<div class="mt-auto flex items-end justify-between gap-3 pt-3">
+			{soldOut ? (
+				<span class="badge tone-solid">{soldOutLabel}</span>
+			) : (
+				<span class="price font-heading text-lg leading-none text-foreground">{priceLabel}</span>
+			)}
+			{!imageUrl && interactive ? (
+				<span class="add-btn" aria-hidden="true">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="size-5" set:html={plusIcon} />
+				</span>
+			) : null}
+		</div>
+	</div>
+	{imageUrl ? (
+		<div class="relative size-28 shrink-0 self-start overflow-hidden rounded-lg bg-placeholder sm:size-32">
 			<img
 				src={imageUrl}
 				alt=""
 				loading="lazy"
 				decoding="async"
-				class="size-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.02]"
+				width="128"
+				height="128"
+				class:list={[
+					'size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none',
+					soldOut ? 'opacity-50 grayscale' : 'group-hover:scale-103',
+				]}
 			/>
-		) : (
-			<div class="flex size-full items-center justify-center text-muted-foreground" aria-hidden="true">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="size-10">
-					<path d="M3 11h18"/><path d="M5 11V7a7 7 0 0 1 14 0v4"/><path d="M4 11v2a8 8 0 0 0 16 0v-2"/>
-				</svg>
-			</div>
-		)}
-	</div>
-
-	<div class="flex flex-1 flex-col gap-1 p-3">
-		<h4 class="font-heading text-sm font-semibold leading-snug text-foreground">
-			{!readonly ? (
-				<button
-					type="button"
-					class="js-item-open text-start after:absolute after:inset-0 after:content-[''] focus-visible:outline-none after:focus-visible:ring-2 after:focus-visible:ring-ring after:focus-visible:ring-inset disabled:cursor-default"
-					aria-haspopup="dialog"
-					disabled={soldOut}
-				>
-					{name}
-				</button>
-			) : (
-				<span>{name}</span>
-			)}
-		</h4>
-		{description ? (
-			<p class="line-clamp-2 text-xs leading-snug text-muted-foreground">{description}</p>
-		) : null}
-		<div class="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
-			<span class:list={['text-sm font-medium tabular-nums', soldOut ? 'text-muted-foreground' : 'text-foreground']}>
-				{priceLabel}
-			</span>
-			{calories ? <span class="text-xs text-muted-foreground">{calories}</span> : null}
+			{interactive ? (
+				<span class="add-btn absolute end-2 bottom-2 shadow-elev-2" aria-hidden="true">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="size-5" set:html={plusIcon} />
+				</span>
+			) : null}
 		</div>
-		{note ? (
-			<p class:list={['text-xs font-medium', soldOut ? 'text-foreground' : 'text-muted-foreground']}>
-				{note}
-			</p>
-		) : null}
-		<DietaryBadges
-			isVegetarian={isVegetarian}
-			isGlutenFree={isGlutenFree}
-			isAlcohol={isAlcohol}
-			labels={labels}
-			class="mt-0.5"
-		/>
-	</div>
+	) : null}
 </li>

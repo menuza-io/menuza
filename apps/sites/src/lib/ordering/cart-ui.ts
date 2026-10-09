@@ -18,7 +18,8 @@ export type CartUiOptions = {
 	totals: {
 		/** Percentage, e.g. `8.25`. */
 		taxRate: number
-		deliveryFee: number
+		/** A number, or a getter when the fee comes from a live delivery quote. */
+		deliveryFee: number | (() => number)
 		mode: () => FulfillmentMode
 	}
 	/** Decides whether the checkout button is usable right now. */
@@ -36,8 +37,7 @@ export type CartUi = {
 	isOpen(): boolean
 }
 
-const STEP_BTN =
-	'inline-flex size-7 items-center justify-center rounded-[calc(var(--radius)*0.7)] border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40'
+const STEP_BTN = 'icon-btn size-8 border-0'
 
 const DRAWER_HIDDEN = ['translate-x-full', 'rtl:-translate-x-full']
 
@@ -79,10 +79,12 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const itemsEl = q<HTMLElement>('cart-items-container')
 	const subtotalEl = q<HTMLElement>('drawer-subtotal')
 	const taxEl = q<HTMLElement>('drawer-tax')
+	const taxRow = q<HTMLElement>('drawer-tax-row')
 	const deliveryRow = q<HTMLElement>('drawer-delivery-row')
 	const deliveryFeeEl = q<HTMLElement>('drawer-delivery-fee')
 	const totalEl = q<HTMLElement>('drawer-total')
 	const checkoutBtn = q<HTMLElement>('drawer-checkout-btn')
+	const checkoutTotal = q<HTMLElement>('drawer-checkout-total')
 	const checkoutReason = q<HTMLElement>('drawer-checkout-reason')
 	const headerExtra = q<HTMLElement>('cart-drawer-header-extra')
 
@@ -93,15 +95,26 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	function renderEmpty(): HTMLElement {
 		const empty = el(
 			'div',
-			'flex flex-col items-center justify-center gap-2 py-16 text-center',
+			'flex flex-col items-center gap-3 px-6 py-16 text-center',
 		)
-		empty.appendChild(icon('bag', 'size-9 text-muted-foreground/60'))
+		const tile = el(
+			'span',
+			'flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground',
+		)
+		tile.appendChild(icon('bag', 'size-6'))
+		empty.appendChild(tile)
 		empty.appendChild(
-			el('p', 'text-sm font-medium text-foreground', labels.emptyCartTitle),
+			el('p', 'text-base font-semibold text-foreground', labels.emptyCartTitle),
 		)
 		empty.appendChild(
-			el('p', 'text-xs text-muted-foreground', labels.emptyCartDesc),
+			el('p', 'max-w-sm text-sm text-muted-foreground', labels.emptyCartDesc),
 		)
+		if (labels.exploreMenu) {
+			const action = el('button', 'btn-secondary mt-1', labels.exploreMenu)
+			action.type = 'button'
+			action.addEventListener('click', () => close())
+			empty.appendChild(action)
+		}
 		return empty
 	}
 
@@ -149,13 +162,19 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 
 	function renderLine(line: CartItem, lines: CartItem[]): HTMLElement {
 		const row = el('li', 'flex gap-3 py-4')
-		const body = el('div', 'min-w-0 flex-1 space-y-1')
+		const body = el('div', 'min-w-0 flex-1')
 		const head = el('div', 'flex items-start justify-between gap-3')
-		head.appendChild(el('p', 'text-sm text-foreground', line.name))
+		head.appendChild(
+			el(
+				'p',
+				'min-w-0 text-sm font-semibold leading-snug text-foreground',
+				line.name,
+			),
+		)
 		head.appendChild(
 			el(
 				'span',
-				'shrink-0 text-sm tabular-nums text-foreground',
+				'price shrink-0 text-sm text-foreground',
 				formatMoney(line.unitPrice * line.quantity),
 			),
 		)
@@ -163,50 +182,57 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 
 		const visibleOptions = line.options.filter((option) => option.optionName)
 		if (visibleOptions.length) {
-			const list = el('ul', 'space-y-0.5 text-xs text-muted-foreground')
-			for (const option of visibleOptions) {
-				list.appendChild(el('li', undefined, optionLabel(option)))
-			}
-			body.appendChild(list)
+			body.appendChild(
+				el(
+					'p',
+					'mt-1 text-xs leading-relaxed text-muted-foreground',
+					visibleOptions.map(optionLabel).join(', '),
+				),
+			)
 		}
 		if (line.instructions) {
 			body.appendChild(
 				el(
 					'p',
-					'text-xs italic text-muted-foreground',
+					'mt-1 text-xs italic leading-relaxed text-muted-foreground',
 					`“${line.instructions}”`,
 				),
 			)
 		}
 
-		const controls = el('div', 'flex items-center gap-2 pt-2')
+		const controls = el('div', 'mt-2 flex items-center gap-3')
+		const stepper = el(
+			'div',
+			'inline-flex items-center gap-1 rounded-lg border border-border bg-background p-0.5',
+		)
 		const minus = el('button', STEP_BTN)
 		minus.type = 'button'
 		minus.setAttribute('aria-label', `${labels.decrease}: ${line.name}`)
 		minus.appendChild(icon('minus', 'size-3.5'))
 		const qty = el(
 			'span',
-			'min-w-5 text-center text-sm tabular-nums text-foreground',
+			'price min-w-6 text-center text-sm text-foreground',
 			String(line.quantity),
 		)
 		const plus = el('button', STEP_BTN)
 		plus.type = 'button'
 		plus.setAttribute('aria-label', `${labels.increase}: ${line.name}`)
 		plus.appendChild(icon('plus', 'size-3.5'))
+		stepper.append(minus, qty, plus)
 		const remove = el(
 			'button',
-			'ms-auto text-xs text-muted-foreground underline-offset-4 hover:text-destructive hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+			'focus-ring ms-auto rounded-sm text-xs font-semibold text-muted-foreground underline-offset-4 hover:text-destructive hover:underline',
 			labels.remove,
 		)
 		remove.type = 'button'
 		remove.setAttribute('aria-label', `${labels.remove}: ${line.name}`)
-		controls.append(minus, qty, plus, remove)
+		controls.append(stepper, remove)
 		body.appendChild(controls)
 
 		const note = capNoteFor(line, lines)
 		if (note) {
 			plus.disabled = true
-			body.appendChild(el('p', 'text-xs text-muted-foreground', note))
+			body.appendChild(el('p', 'mt-2 text-xs text-muted-foreground', note))
 		}
 
 		minus.addEventListener('click', () =>
@@ -225,7 +251,10 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 		const lines = store.lines()
 		const totals = computeTotals(lines, {
 			taxRate: options.totals.taxRate,
-			deliveryFee: options.totals.deliveryFee,
+			deliveryFee:
+				typeof options.totals.deliveryFee === 'function'
+					? options.totals.deliveryFee()
+					: options.totals.deliveryFee,
 			mode: options.totals.mode(),
 		})
 
@@ -243,11 +272,14 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 
 		if (subtotalEl) subtotalEl.textContent = formatMoney(totals.subtotal)
 		if (taxEl) taxEl.textContent = formatMoney(totals.tax)
+		// Display only: a zero tax line is noise in the drawer.
+		if (taxRow) taxRow.classList.toggle('hidden', totals.tax <= 0)
 		if (deliveryRow)
 			deliveryRow.classList.toggle('hidden', totals.deliveryFee <= 0)
 		if (deliveryFeeEl)
 			deliveryFeeEl.textContent = formatMoney(totals.deliveryFee)
 		if (totalEl) totalEl.textContent = formatMoney(totals.total)
+		if (checkoutTotal) checkoutTotal.textContent = formatMoney(totals.total)
 
 		if (itemsEl) {
 			if (!lines.length) {
