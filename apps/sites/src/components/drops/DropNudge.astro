@@ -1,0 +1,135 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocaleHref } from '@repo/common/site-locales'
+import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
+import { getDropPhase } from '~/lib/drops/format'
+import { resolveMediaUrl } from '~/lib/media'
+import { fetchPublishedDrops } from '~/lib/org'
+import { translate } from '~/lib/ordering-labels'
+
+/**
+ * Compact row in the menu's top block that says how many drops are open for
+ * pre-order (and how many are coming up) and links to the drops page. Stacked
+ * covers of the first few drops give it a face without committing to one.
+ * Between drops (the org runs them, none is live or upcoming) the slot asks
+ * for the drop-alert SMS opt-in instead; orgs that never ran one see nothing.
+ */
+interface Props {
+	class?: string
+}
+
+const { class: className } = Astro.props
+
+const drops = await fetchPublishedDrops({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+})
+const i18n = Astro.locals.i18n
+const defaultLocale = Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const now = new Date()
+
+const toTime = (value: string | null) => (value ? new Date(value).getTime() : Infinity)
+const active = drops
+	.map((drop) => ({ drop, phase: getDropPhase(drop, now) }))
+	.filter(({ phase }) => phase !== 'ended')
+	.sort((a, b) => {
+		if (a.phase !== b.phase) return a.phase === 'live' ? -1 : 1
+		return a.phase === 'live'
+			? toTime(a.drop.ordersCloseAt) - toTime(b.drop.ordersCloseAt)
+			: toTime(a.drop.ordersOpenAt) - toTime(b.drop.ordersOpenAt)
+	})
+const liveCount = active.filter(({ phase }) => phase === 'live').length
+const upcomingCount = active.length - liveCount
+
+const liveText =
+	liveCount === 1
+		? i18n._(msg`1 drop ordering now`)
+		: translate(i18n, msg`{n} drops ordering now`, { n: liveCount })
+const upcomingText =
+	upcomingCount === 1
+		? i18n._(msg`1 drop coming up`)
+		: translate(i18n, msg`{n} drops coming up`, { n: upcomingCount })
+const headline = liveCount > 0 ? liveText : upcomingText
+const aside = liveCount > 0 && upcomingCount > 0 ? upcomingText : ''
+const explainer = i18n._(msg`Limited menus you pre-order for a pickup window.`)
+const cta = i18n._(msg`View drops`)
+const href = getLocaleHref('/drops', locale, locale, defaultLocale)
+
+const covers = active.slice(0, 3).map(({ drop }) => {
+	const title = getLocalizedMenuValue(drop.title, locale, defaultLocale)
+	return {
+		src: resolveMediaUrl(drop.coverImageUrl),
+		initial: Array.from(title.trim())[0]?.toLocaleUpperCase(locale) ?? '',
+	}
+})
+
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const icons = {
+	arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+	chevron: '<path d="m9 18 6-6-6-6"/>',
+	clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+}
+---
+
+{active.length > 0 ? (
+	<a
+		href={href}
+		class:list={[
+			'brand-tint surface-interactive focus-ring group flex min-h-14 items-center gap-3 px-3 py-2 sm:gap-3.5 sm:px-3.5',
+			className,
+		]}
+		data-drop-nudge
+	>
+		<span class="flex shrink-0 -space-x-3 rtl:space-x-reverse" aria-hidden="true">
+			{covers.map((cover) => (
+				<span class="size-9 overflow-hidden rounded-md border-2 border-card bg-placeholder">
+					{cover.src ? (
+						<img src={cover.src} alt="" loading="eager" decoding="async" class="size-full object-cover" />
+					) : (
+						<span class="media-placeholder size-full font-heading text-sm font-bold">{cover.initial}</span>
+					)}
+				</span>
+			))}
+		</span>
+		<span class="min-w-0 flex-1">
+			<span class="flex min-w-0 items-center gap-2 text-sm leading-5 font-semibold text-foreground">
+				{liveCount > 0 ? (
+					<span class="relative flex size-2 shrink-0" aria-hidden="true">
+						<span class="absolute inset-0 rounded-full bg-success opacity-60 motion-safe:animate-ping"></span>
+						<span class="relative size-2 rounded-full bg-success"></span>
+					</span>
+				) : (
+					<svg {...iconAttrs} class="size-4 shrink-0 text-muted-foreground" set:html={icons.clock} />
+				)}
+				<span class="truncate">
+					<span class="bidi-isolate">{headline}</span>
+					{aside ? (
+						<span class="font-normal text-muted-foreground">
+							<span aria-hidden="true"> · </span>
+							<span class="bidi-isolate">{aside}</span>
+						</span>
+					) : null}
+				</span>
+			</span>
+			<span class="block truncate text-sm leading-5 text-muted-foreground">{explainer}</span>
+		</span>
+		<span class="hidden shrink-0 items-center gap-1 text-sm font-semibold text-foreground underline-offset-4 group-hover:underline sm:inline-flex">
+			{cta}
+			<svg {...iconAttrs} class="size-4 rtl:-scale-x-100" set:html={icons.arrow} />
+		</span>
+		<svg {...iconAttrs} class="size-5 shrink-0 text-muted-foreground sm:hidden rtl:-scale-x-100" set:html={icons.chevron} />
+	</a>
+) : drops.length > 0 ? (
+	<DropAlertsSignup source="menu" class={className} />
+) : null}

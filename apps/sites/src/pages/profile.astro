@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
 import SitePage from '~/components/SitePage.astro'
+import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -119,6 +120,8 @@ if (!organization) {
 				</button>
 			</form>
 		</div>
+
+		<DropAlertsSignup source="profile" layout="toggle" class="w-full" />
 
 		<div class="w-full rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
 			<div class="mb-4 space-y-1">

@@ -1,0 +1,1223 @@
+---
+/**
+ * Order details sheet: Pickup / Delivery, verified delivery address, pickup
+ * location, and ASAP vs scheduled time. Bottom sheet below `sm`, centered
+ * dialog above. Native `<dialog>` (focus containment, Esc, top layer).
+ *
+ * Open it with any element carrying `data-open-order-details` (optional
+ * `data-order-details-tab="delivery" | "pickup" | "time"`), or from a script
+ * with `openOrderDetails(tab)` from `~/lib/ordering/order-details`.
+ * Saving writes `menuza_order_details_${orgId}` and dispatches
+ * `menuza:order-details-change` on `window`.
+ *
+ * Data residency: the address is typed here and sent only from the browser
+ * to the regional tenant-api; this component never posts it to Sites.
+ */
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { buildOrderDetailsLabels, type OrderDetailsLabels } from '~/lib/ordering-labels'
+import { formatPickupAddress } from '~/lib/ordering/pickup'
+import { type FulfillmentMode } from '~/lib/ordering/types'
+import { type PublicLocationData } from '~/lib/org'
+
+interface Props {
+	locations: PublicLocationData[]
+	activeLocationId: string | null | undefined
+	allowedModes: FulfillmentMode[]
+	orgId: string
+	currency: string
+	locale: string
+	defaultLocale?: string
+	labels?: OrderDetailsLabels
+	/** Navigate with `?location=` when the customer picks another location. */
+	navigateOnLocationChange?: boolean
+}
+
+const {
+	locations,
+	activeLocationId,
+	allowedModes,
+	orgId,
+	currency,
+	locale,
+	defaultLocale = 'en',
+	labels = buildOrderDetailsLabels(Astro.locals.i18n),
+	navigateOnLocationChange = true,
+} = Astro.props
+
+function asJson(value: unknown): unknown {
+	if (typeof value !== 'string') return value ?? null
+	try {
+		return JSON.parse(value)
+	} catch {
+		return null
+	}
+}
+
+const sheetLocations = locations.map((location) => {
+	const config = (asJson(location.deliveryConfig) ?? {}) as {
+		estimatedDeliveryTimeMin?: number
+		estimatedDeliveryTimeMax?: number
+	}
+	return {
+		id: location.id,
+		name: getLocalizedMenuValue(location.name, locale, defaultLocale),
+		address: formatPickupAddress(asJson(location.address)),
+		timezone: location.timezone || 'UTC',
+		onlineHours: asJson(location.onlineHours),
+		storeHours: asJson(location.storeHours),
+		specialHours: asJson(location.specialHours),
+		prepTime: location.prepTime,
+		scheduling: asJson(location.scheduling),
+		fulfillmentOptions: asJson(location.fulfillmentOptions),
+		deliveryEta: {
+			min: config.estimatedDeliveryTimeMin || 25,
+			max: config.estimatedDeliveryTimeMax || 45,
+		},
+	}
+})
+
+const modes = allowedModes.length ? allowedModes : (['pickup'] as FulfillmentMode[])
+const showModeSwitch = modes.length > 1
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const bagIcon =
+	'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>'
+const truckIcon =
+	'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>'
+---
+
+<dialog
+	id="order-details-sheet"
+	class="od-sheet surface-overlay p-0 text-foreground"
+	aria-labelledby="od-title"
+>
+	<div class="flex min-h-0 flex-1 flex-col">
+		<div data-od-drag class="flex shrink-0 touch-none justify-center pt-2 pb-1 sm:hidden" aria-hidden="true">
+			<span class="h-1 w-10 rounded-sm bg-muted-foreground/30"></span>
+		</div>
+		<header data-od-drag-zone class="flex shrink-0 items-center justify-between gap-3 px-5 pt-2 pb-4 sm:px-6 sm:pt-6">
+			<h2 id="od-title" class="text-xl font-bold tracking-tight text-balance text-foreground">{labels.title}</h2>
+			<button type="button" class="icon-btn size-9" data-od-close aria-label={labels.close}>
+				<svg {...iconAttrs} class="size-5"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+			</button>
+		</header>
+
+		<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 sm:px-6" data-od-body>
+			{showModeSwitch ? (
+				<div class="segmented flex w-full" role="group" aria-label={labels.orderType}>
+					{modes.map((mode) => (
+						<button type="button" class="segmented-item focus-ring min-h-11" data-od-mode={mode} aria-pressed="false">
+							<svg {...iconAttrs} class:list={['size-4', mode === 'delivery' && 'rtl:-scale-x-100']} set:html={mode === 'delivery' ? truckIcon : bagIcon} />
+							{mode === 'delivery' ? labels.delivery : labels.pickup}
+						</button>
+					))}
+				</div>
+			) : null}
+
+			{/* Delivery */}
+			<section data-od-panel="delivery" class="hidden pt-5" aria-label={labels.delivery}>
+				<div data-od-address-block>
+					<label for="od-address" class="mb-1.5 block text-sm font-semibold text-foreground">{labels.addressLabel}</label>
+					<div class="relative">
+						<svg {...iconAttrs} class="pointer-events-none absolute start-3.5 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
+						<input
+							id="od-address"
+							type="text"
+							dir="auto"
+							class="field ps-10 pe-12"
+							role="combobox"
+							aria-autocomplete="list"
+							aria-expanded="false"
+							aria-controls="od-suggestions"
+							aria-describedby="od-suggest-status"
+							autocomplete="off"
+							autocapitalize="words"
+							spellcheck="false"
+							enterkeyhint="search"
+							placeholder={labels.addressPlaceholder}
+						/>
+						<button type="button" data-od-clear class="icon-btn absolute end-1.5 top-1/2 hidden size-9 -translate-y-1/2 border-0 bg-transparent text-muted-foreground" aria-label={labels.clearAddress}>
+							<svg {...iconAttrs} class="size-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+						</button>
+					</div>
+					<div data-od-suggest-panel class="od-suggest mt-2 hidden overflow-hidden rounded-lg border border-border bg-card">
+						<div data-od-suggest-note></div>
+						<ul id="od-suggestions" role="listbox" aria-label={labels.suggestions} class="py-1"></ul>
+						<div data-od-suggest-extra></div>
+					</div>
+					<p id="od-suggest-status" class="sr-only" aria-live="polite"></p>
+
+					<div class="mt-4">
+						<label for="od-unit" class="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-semibold text-foreground">
+							{labels.unitLabel}
+							<span class="text-xs font-normal text-muted-foreground">{labels.optional}</span>
+						</label>
+						<input id="od-unit" type="text" dir="auto" class="field" autocomplete="address-line2" maxlength="50" />
+					</div>
+				</div>
+				<div data-od-result class="mt-5 empty:hidden" aria-live="polite"></div>
+			</section>
+
+			{/* Pickup */}
+			<section data-od-panel="pickup" class="hidden pt-5" aria-labelledby="od-pickup-title">
+				<h3 id="od-pickup-title" class="mb-3 text-sm font-semibold text-foreground">{labels.pickupFrom}</h3>
+				<div data-od-locations role="radiogroup" aria-labelledby="od-pickup-title" class="grid gap-2"></div>
+			</section>
+
+			{/* Time */}
+			<section id="od-time" data-od-time class="mt-6 hidden border-t border-border pt-5" aria-labelledby="od-when">
+				<h3 id="od-when" class="mb-3 text-sm font-semibold text-foreground">{labels.when}</h3>
+				<div class="segmented flex w-full" role="group" aria-labelledby="od-when">
+					<button type="button" class="segmented-item focus-ring min-h-11" data-od-when="asap" aria-pressed="true">{labels.asap}</button>
+					<button type="button" class="segmented-item focus-ring min-h-11" data-od-when="schedule" aria-pressed="false">{labels.schedule}</button>
+				</div>
+				<p data-od-asap-hint class="bidi-isolate mt-3 text-sm text-muted-foreground"></p>
+				<div data-od-schedule class="mt-4 hidden">
+					<div data-od-days role="group" aria-label={labels.chooseDay} class="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6"></div>
+					<div data-od-slots role="group" aria-label={labels.chooseTime} class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4"></div>
+				</div>
+			</section>
+		</div>
+
+		<footer class="shrink-0 border-t border-border bg-card px-5 pt-3 pb-safe sm:px-6 sm:pb-5">
+			<p data-od-footer-hint class="mb-2 hidden text-center text-sm text-muted-foreground" role="status"></p>
+			<button type="button" data-od-save class="btn-cta w-full">
+				<svg data-od-save-spinner {...iconAttrs} class="hidden size-4 animate-spin motion-reduce:animate-none" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.22-8.56" /></svg>
+				<span data-od-save-label>{labels.save}</span>
+			</button>
+		</footer>
+	</div>
+</dialog>
+
+<script
+	id="order-details-sheet-data"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify({
+		orgId,
+		currency,
+		locale,
+		activeLocationId: activeLocationId ?? sheetLocations[0]?.id ?? null,
+		allowedModes: modes,
+		navigateOnLocationChange,
+		locations: sheetLocations,
+		labels,
+	}).replace(/</g, '\\u003c')}
+/>
+
+<style is:global>
+	/* Bottom sheet below sm, centered dialog above. Tokens only. */
+	.od-sheet {
+		width: 100%;
+		max-width: 100%;
+		max-height: min(92dvh, 100%);
+		margin: auto 0 0;
+		border-radius: calc(var(--radius) + 12px) calc(var(--radius) + 12px) 0 0;
+		overflow: hidden;
+		transform: translateY(0);
+		transition:
+			transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+			opacity 200ms ease-out,
+			overlay 320ms allow-discrete,
+			display 320ms allow-discrete;
+	}
+	.od-sheet[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	.od-sheet:not([open]) {
+		transform: translateY(100%);
+	}
+	@starting-style {
+		.od-sheet[open] {
+			transform: translateY(100%);
+		}
+	}
+	.od-sheet::backdrop {
+		background-color: color-mix(in oklch, var(--foreground) 40%, transparent);
+		opacity: 1;
+		transition:
+			opacity 240ms ease-out,
+			overlay 320ms allow-discrete,
+			display 320ms allow-discrete;
+	}
+	.dark .od-sheet::backdrop {
+		background-color: color-mix(in oklch, var(--background) 80%, transparent);
+	}
+	.od-sheet:not([open])::backdrop {
+		opacity: 0;
+	}
+	@starting-style {
+		.od-sheet[open]::backdrop {
+			opacity: 0;
+		}
+	}
+	.od-sheet.is-dragging {
+		transition: none;
+	}
+	@media (min-width: 40rem) {
+		.od-sheet {
+			max-width: 32rem;
+			max-height: min(85dvh, 46rem);
+			margin: auto;
+			border-radius: calc(var(--radius) + 8px);
+		}
+		.od-sheet:not([open]) {
+			transform: translateY(0.5rem) scale(0.98);
+			opacity: 0;
+		}
+		@starting-style {
+			.od-sheet[open] {
+				transform: translateY(0.5rem) scale(0.98);
+				opacity: 0;
+			}
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.od-sheet,
+		.od-sheet::backdrop {
+			transition: none;
+		}
+	}
+	.od-sheet [role='option'][aria-selected='true'] {
+		background-color: var(--muted);
+	}
+	.od-sheet ::selection {
+		background-color: color-mix(in oklch, var(--primary) 25%, transparent);
+	}
+	/* Addresses carry their own direction but align with the sheet. */
+	.od-sheet :not(input)[dir='auto'] {
+		text-align: match-parent;
+	}
+	.od-sheet input {
+		caret-color: var(--primary);
+	}
+	.od-sheet [data-od-body] {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in oklch, var(--foreground) 20%, transparent) transparent;
+	}
+</style>
+
+<script>
+	import { isLocationOpenForOrdering } from '@repo/common/location-availability'
+	import { summarizeHours } from '~/lib/menu-hours'
+	import {
+		createPlacesSearch,
+		createSessionToken,
+		fetchPlacePredictions,
+		requestDeliveryQuote,
+		type DeliveryQuoteResult,
+		type PlacePrediction,
+		type PlacesSearchState,
+	} from '~/lib/ordering/delivery-client'
+	import { el, lockScroll } from '~/lib/ordering/dom'
+	import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
+	import { fetchOrderingOptions } from '~/lib/ordering/order-client'
+	import {
+		OPEN_ORDER_DETAILS_EVENT,
+		isQuoteValid,
+		loadOrderDetails,
+		saveOrderDetails,
+		type OrderDetails,
+		type OrderDetailsDelivery,
+		type OrderDetailsTab,
+	} from '~/lib/ordering/order-details'
+	import {
+		buildScheduleDays,
+		findSlot,
+		schedulingSettings,
+		type ScheduleDay,
+	} from '~/lib/ordering/schedule'
+	import { type OrderDetailsLabels } from '~/lib/ordering-labels'
+	import { type FulfillmentMode } from '~/lib/ordering/types'
+
+	type SheetLocation = {
+		id: string
+		name: string
+		address: string
+		timezone: string
+		onlineHours: any
+		storeHours: any
+		specialHours: any
+		prepTime: number | null
+		scheduling: unknown
+		fulfillmentOptions: { pickup?: boolean; delivery?: boolean } | null
+		deliveryEta: { min: number; max: number }
+	}
+
+	type SheetData = {
+		orgId: string
+		currency: string
+		locale: string
+		activeLocationId: string | null
+		allowedModes: FulfillmentMode[]
+		navigateOnLocationChange: boolean
+		locations: SheetLocation[]
+		labels: OrderDetailsLabels
+	}
+
+	type QuoteView =
+		| { status: 'idle' }
+		| { status: 'loading' }
+		| { status: 'error' }
+		| { status: 'unavailable_options' }
+		| DeliveryQuoteResult
+
+	const dialog = document.getElementById('order-details-sheet') as HTMLDialogElement | null
+	const dataEl = document.getElementById('order-details-sheet-data')
+	if (dialog && dataEl && !dialog.dataset.bound) {
+		dialog.dataset.bound = 'true'
+		setupSheet(dialog, JSON.parse(dataEl.textContent || '{}') as SheetData)
+	}
+
+	function setupSheet(dialog: HTMLDialogElement, data: SheetData) {
+		const L = data.labels
+		const money = createMoneyFormatter(data.currency, data.locale)
+		const pageLocationId = data.activeLocationId ?? data.locations[0]?.id ?? ''
+		const q = <T extends Element = HTMLElement>(selector: string) =>
+			dialog.querySelector<T>(selector)
+
+		const addressInput = q<HTMLInputElement>('#od-address')!
+		const unitInput = q<HTMLInputElement>('#od-unit')!
+		const clearBtn = q<HTMLButtonElement>('[data-od-clear]')!
+		const suggestPanel = q('[data-od-suggest-panel]')!
+		const listbox = q('#od-suggestions')!
+		const suggestExtra = q('[data-od-suggest-extra]')!
+		const suggestNote = q('[data-od-suggest-note]')!
+		const suggestStatus = q('#od-suggest-status')!
+		const resultEl = q('[data-od-result]')!
+		const addressBlock = q('[data-od-address-block]')!
+		const locationsEl = q('[data-od-locations]')!
+		const timeSection = q('[data-od-time]')!
+		const asapHint = q('[data-od-asap-hint]')!
+		const scheduleEl = q('[data-od-schedule]')!
+		const daysEl = q('[data-od-days]')!
+		const slotsEl = q('[data-od-slots]')!
+		const saveBtn = q<HTMLButtonElement>('[data-od-save]')!
+		const saveLabel = q('[data-od-save-label]')!
+		const saveSpinner = q('[data-od-save-spinner]')!
+		const footerHint = q('[data-od-footer-hint]')!
+
+		// ---------- draft state (committed only on Save) ----------
+		let mode: FulfillmentMode = 'pickup'
+		let locationId = pageLocationId
+		let whenMode: 'asap' | 'schedule' = 'asap'
+		let scheduledFor: string | null = null
+		let selectedDay: string | null = null
+		let quote: QuoteView = { status: 'idle' }
+		let quotedUnit = ''
+		let lastPlaceId: string | null = null
+		let lastAddressText = ''
+		let sessionToken = createSessionToken()
+		let predictions: PlacePrediction[] = []
+		let searchState: PlacesSearchState = { status: 'idle', query: '' }
+		let activeIndex = -1
+		let quoteController: AbortController | null = null
+		let deliveryAvailable = true
+		let optionsLoadedFor: string | null = null
+		let saving = false
+		let releaseScroll: (() => void) | null = null
+		let returnFocus: HTMLElement | null = null
+
+		const location = () =>
+			data.locations.find((l) => l.id === locationId) ?? data.locations[0]
+
+		// ---------- helpers ----------
+		/** Addresses keep their own direction inside RTL chrome. */
+		const autoDir = <T extends HTMLElement>(node: T) => {
+			node.dir = 'auto'
+			return node
+		}
+		const svg = (paths: string, className = 'size-4') => {
+			const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+			for (const [k, v] of Object.entries({
+				viewBox: '0 0 24 24',
+				fill: 'none',
+				stroke: 'currentColor',
+				'stroke-width': '2',
+				'stroke-linecap': 'round',
+				'stroke-linejoin': 'round',
+				'aria-hidden': 'true',
+				class: className,
+			}))
+				node.setAttribute(k, v)
+			node.innerHTML = paths
+			return node
+		}
+		const ICON = {
+			pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+			check: '<path d="M20 6 9 17l-5-5"/>',
+			alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+			mapOff: '<path d="M12.75 7.09a3 3 0 0 1 2.16 2.16"/><path d="M17.072 17.072c-1.634 2.17-3.527 3.912-4.471 4.727a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 1.432-4.568"/><path d="m2 2 20 20"/><path d="M8.475 2.818A8 8 0 0 1 20 10c0 1.183-.31 2.377-.81 3.533"/><path d="M9.13 9.13a3 3 0 0 0 3.74 3.74"/>',
+			search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+			refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+			clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+		}
+		// Keep "25–40" in order inside RTL text (LRI … PDI around the range).
+		const ltrRange = (min: number, max: number) => ({ min: `\u2066${min}`, max: `${max}\u2069` })
+		const minutesRange = (min: number, max: number) =>
+			min === max ? fillTemplate(L.minutes, { count: min }) : fillTemplate(L.minutesRange, ltrRange(min, max))
+
+		function deliveryEta() {
+			return quote.status === 'deliverable' ? quote.quote.eta : location()?.deliveryEta ?? { min: 25, max: 45 }
+		}
+
+		function schedulingEnabled() {
+			const loc = location()
+			return loc ? schedulingSettings(loc).enabled : false
+		}
+
+		function scheduleDays(): ScheduleDay[] {
+			const loc = location()
+			if (!loc) return []
+			return buildScheduleDays(loc, {
+				locale: data.locale,
+				mode,
+				deliveryEtaMin: mode === 'delivery' ? deliveryEta().min : 0,
+			})
+		}
+
+		function openNow() {
+			const loc = location()
+			if (!loc) return true
+			return isLocationOpenForOrdering(loc as any, new Date()).isOpen
+		}
+
+		// ---------- rendering ----------
+		function renderModes() {
+			for (const button of dialog.querySelectorAll<HTMLElement>('[data-od-mode]')) {
+				button.setAttribute('aria-pressed', String(button.dataset.odMode === mode))
+			}
+			q('[data-od-panel="delivery"]')!.classList.toggle('hidden', mode !== 'delivery')
+			q('[data-od-panel="pickup"]')!.classList.toggle('hidden', mode !== 'pickup')
+		}
+
+		function renderLocations() {
+			const nodes = data.locations.map((loc) => {
+				const label = el('label', 'choice-card items-start')
+				const input = el('input')
+				input.type = 'radio'
+				input.name = 'od-location'
+				input.value = loc.id
+				input.checked = loc.id === locationId
+				input.className = 'mt-0.5'
+				input.addEventListener('change', () => {
+					if (!input.checked || loc.id === locationId) return
+					locationId = loc.id
+					// A quote is only valid for the location that issued it.
+					resetQuote()
+					optionsLoadedFor = null
+					void loadOptions()
+					render()
+				})
+				const body = el('span', 'min-w-0 flex-1')
+				const head = el('span', 'flex flex-wrap items-center justify-between gap-x-3 gap-y-1')
+				head.append(el('span', 'text-sm font-semibold text-foreground', loc.name))
+				const availability = isLocationOpenForOrdering(loc as any, new Date())
+				const hours = summarizeHours(loc, availability, data.locale)
+				const status = availability.isOpen
+					? hours.closesAt
+						? fillTemplate(L.openUntil, { time: hours.closesAt })
+						: L.openNow
+					: hours.opensAt
+						? fillTemplate(L.opensAt, { time: hours.opensAt })
+						: L.closed
+				head.append(el('span', `badge bidi-isolate ${availability.isOpen ? 'tone-success' : 'tone-neutral'}`, status))
+				body.append(head)
+				if (loc.address) body.append(autoDir(el('span', 'mt-0.5 block text-sm text-muted-foreground', loc.address)))
+				body.append(
+					el('span', 'bidi-isolate mt-1 block text-xs text-muted-foreground', fillTemplate(L.readyIn, { count: loc.prepTime || 15 })),
+				)
+				label.append(input, body)
+				return label
+			})
+			locationsEl.replaceChildren(...nodes)
+		}
+
+		function card(tone: 'success' | 'warning' | 'danger' | 'neutral', icon: string, title: string, body?: string) {
+			const wrap = el('div', 'surface overflow-hidden')
+			const head = el('div', 'flex items-start gap-3 p-4')
+			const badgeTone = tone === 'neutral' ? 'tone-neutral' : `tone-${tone}`
+			const iconTile = el('span', `${badgeTone} flex size-9 shrink-0 items-center justify-center rounded-lg border`)
+			iconTile.append(svg(icon, 'size-4.5'))
+			const text = el('div', 'min-w-0 flex-1 pt-1')
+			text.append(el('p', 'text-base font-semibold leading-snug text-foreground', title))
+			if (body) text.append(el('p', 'mt-1 text-sm leading-relaxed text-muted-foreground', body))
+			head.append(iconTile, text)
+			wrap.append(head)
+			return { wrap, text }
+		}
+
+		function actions(...buttons: HTMLElement[]) {
+			const row = el('div', 'flex flex-col gap-2 border-t border-border p-4 sm:flex-row-reverse')
+			row.append(...buttons)
+			return row
+		}
+
+		function button(className: string, text: string, onClick: () => void, icon?: string) {
+			const node = el('button', className)
+			node.type = 'button'
+			if (icon) node.append(svg(icon))
+			node.append(document.createTextNode(text))
+			node.addEventListener('click', onClick)
+			return node
+		}
+
+		function renderResult() {
+			if (mode !== 'delivery') return
+			addressBlock.classList.toggle('hidden', quote.status === 'unavailable_options')
+			let node: HTMLElement | null = null
+			switch (quote.status) {
+				case 'idle':
+					node = null
+					break
+				case 'loading': {
+					node = el('div', 'surface flex items-center gap-3 p-4')
+					node.setAttribute('role', 'status')
+					node.append(el('span', 'skeleton size-9 shrink-0'))
+					const lines = el('div', 'min-w-0 flex-1 space-y-2')
+					lines.append(el('span', 'sr-only', L.checking), el('span', 'skeleton block h-4 w-2/3'), el('span', 'skeleton block h-3 w-1/2'))
+					node.append(lines)
+					break
+				}
+				case 'deliverable': {
+					const { quote: dq } = quote
+					const { wrap, text } = card('success', ICON.check, L.deliverableTitle)
+					const unit = dq.address.unit || unitInput.value.trim()
+					text.append(autoDir(el('p', 'mt-1 text-sm text-muted-foreground', [dq.address.formatted, unit].filter(Boolean).join(' · '))))
+					const dl = el('dl', 'grid grid-cols-3 divide-x divide-border border-t border-border rtl:divide-x-reverse')
+					const stat = (label: string, value: string) => {
+						const cell = el('div', 'min-w-0 px-3 py-3 text-center sm:px-4')
+						cell.append(el('dt', 'text-xs text-muted-foreground', label), el('dd', 'price mt-0.5 text-sm text-foreground', value))
+						return cell
+					}
+					dl.append(
+						stat(L.deliveryFee, dq.deliveryFee > 0 ? money(dq.deliveryFee) : L.free),
+						stat(L.minimumOrder, dq.minimumOrder > 0 ? money(dq.minimumOrder) : L.noMinimum),
+						stat(L.estimatedTime, minutesRange(dq.eta.min, dq.eta.max)),
+					)
+					wrap.append(dl)
+					node = wrap
+					break
+				}
+				case 'out_of_range': {
+					const { wrap, text } = card(
+						'warning',
+						ICON.mapOff,
+						L.outOfRangeTitle,
+						fillTemplate(L.outOfRangeBody, { location: location()?.name ?? '' }),
+					)
+					if (quote.address?.formatted) text.insertBefore(autoDir(el('p', 'mt-1 text-sm font-medium text-foreground', quote.address.formatted)), text.lastChild)
+					wrap.append(actions(...pickupActions(), button('btn-secondary w-full sm:w-auto', L.tryAnotherAddress, tryAnother)))
+					node = wrap
+					break
+				}
+				case 'not_found': {
+					const { wrap } = card('warning', ICON.search, L.notFoundTitle, L.notFoundBody)
+					wrap.append(actions(button('btn-secondary w-full sm:w-auto', L.tryAnotherAddress, tryAnother)))
+					node = wrap
+					break
+				}
+				case 'unavailable':
+				case 'unavailable_options': {
+					const { wrap } = card('neutral', ICON.mapOff, L.unavailableTitle, data.allowedModes.includes('pickup') ? L.unavailableBody : undefined)
+					const pickup = pickupActions()
+					if (pickup.length) wrap.append(actions(...pickup))
+					node = wrap
+					break
+				}
+				case 'error': {
+					const { wrap } = card('danger', ICON.alert, L.quoteErrorTitle, L.quoteErrorBody)
+					wrap.append(actions(button('btn-secondary w-full sm:w-auto', L.retry, () => void runQuote(), ICON.refresh)))
+					node = wrap
+					break
+				}
+			}
+			resultEl.replaceChildren(...(node ? [node] : []))
+		}
+
+		function pickupActions() {
+			if (!data.allowedModes.includes('pickup')) return []
+			return [
+				button('btn-cta w-full sm:w-auto', L.switchToPickup, () => {
+					setMode('pickup')
+					dialog.querySelector<HTMLElement>('[data-od-mode="pickup"]')?.focus()
+				}),
+			]
+		}
+
+		function renderTime() {
+			const enabled = schedulingEnabled()
+			const days = enabled ? scheduleDays() : []
+			const open = openNow()
+			timeSection.classList.toggle('hidden', !enabled)
+			if (!enabled) {
+				whenMode = 'asap'
+				scheduledFor = null
+				return
+			}
+			if (scheduledFor && !findSlot(days, scheduledFor)) scheduledFor = null
+			if (!open && whenMode === 'asap' && days.length) whenMode = 'schedule'
+			const asapBtn = q<HTMLButtonElement>('[data-od-when="asap"]')!
+			asapBtn.disabled = !open
+			asapBtn.classList.toggle('opacity-50', !open)
+			for (const b of dialog.querySelectorAll<HTMLElement>('[data-od-when]')) {
+				b.setAttribute('aria-pressed', String(b.dataset.odWhen === whenMode))
+			}
+			const eta = deliveryEta()
+			asapHint.textContent = !open
+				? L.asapClosed
+				: mode === 'delivery'
+					? fillTemplate(L.asapDelivery, ltrRange(eta.min, eta.max))
+					: fillTemplate(L.asapPickup, { count: location()?.prepTime || 15 })
+			asapHint.classList.toggle('hidden', whenMode !== 'asap' && open)
+			scheduleEl.classList.toggle('hidden', whenMode !== 'schedule')
+			if (whenMode !== 'schedule') return
+
+			if (!days.length) {
+				daysEl.replaceChildren()
+				slotsEl.replaceChildren(el('p', 'col-span-full text-sm text-muted-foreground', L.noScheduleTimes))
+				return
+			}
+			const chosen = findSlot(days, scheduledFor)
+			// Follow the saved time only until the customer picks a day themselves.
+			if (chosen && !selectedDay) selectedDay = chosen.day.date
+			if (!selectedDay || !days.some((d) => d.date === selectedDay)) selectedDay = days[0]!.date
+			daysEl.replaceChildren(
+				...days.map((day) => {
+					const chip = el('button', 'chip focus-ring min-h-14 shrink-0 flex-col gap-0 px-4 leading-tight')
+					chip.type = 'button'
+					chip.setAttribute('aria-pressed', String(day.date === selectedDay))
+					const name = day.offset === 0 ? L.today : day.offset === 1 ? L.tomorrow : day.weekday
+					chip.append(el('span', 'text-sm font-semibold', name), el('span', 'text-xs opacity-75', day.dayMonth))
+					chip.addEventListener('click', () => {
+						selectedDay = day.date
+						// A time on another day no longer applies; ask for a new one.
+						if (chosen && chosen.day.date !== day.date) scheduledFor = null
+						renderTime()
+						updateFooter()
+					})
+					return chip
+				}),
+			)
+			const day = days.find((d) => d.date === selectedDay)!
+			slotsEl.replaceChildren(
+				...day.slots.map((slot) => {
+					const chip = el('button', 'chip focus-ring bidi-isolate tabular-nums', slot.label)
+					chip.type = 'button'
+					chip.setAttribute('aria-pressed', String(slot.iso === scheduledFor))
+					chip.addEventListener('click', () => {
+						scheduledFor = slot.iso
+						renderTime()
+						updateFooter()
+					})
+					return chip
+				}),
+			)
+		}
+
+		function updateFooter() {
+			let hint = ''
+			let ready = true
+			if (mode === 'delivery' && quote.status !== 'deliverable') {
+				ready = false
+				hint = quote.status === 'idle' || quote.status === 'loading' ? L.needAddress : ''
+			}
+			if (ready && schedulingEnabled() && whenMode === 'schedule' && !scheduledFor) {
+				ready = false
+				hint = L.needTime
+			}
+			saveBtn.disabled = !ready || saving
+			footerHint.textContent = hint
+			footerHint.classList.toggle('hidden', !hint)
+			saveLabel.textContent = mode === 'delivery' && quote.status === 'deliverable' ? L.deliverHere : L.save
+		}
+
+		function render() {
+			renderModes()
+			renderLocations()
+			renderResult()
+			renderTime()
+			updateFooter()
+		}
+
+		// ---------- autocomplete ----------
+		function setExpanded(expanded: boolean) {
+			addressInput.setAttribute('aria-expanded', String(expanded))
+			suggestPanel.classList.toggle('hidden', !expanded)
+			if (!expanded) {
+				activeIndex = -1
+				addressInput.removeAttribute('aria-activedescendant')
+			}
+		}
+
+		function optionNodes() {
+			return Array.from(listbox.querySelectorAll<HTMLElement>('[role="option"]'))
+		}
+
+		function setActive(index: number) {
+			const nodes = optionNodes()
+			if (!nodes.length) return
+			activeIndex = (index + nodes.length) % nodes.length
+			nodes.forEach((node, i) => node.setAttribute('aria-selected', String(i === activeIndex)))
+			const active = nodes[activeIndex]!
+			addressInput.setAttribute('aria-activedescendant', active.id)
+			active.scrollIntoView({ block: 'nearest' })
+		}
+
+		function renderSuggestions() {
+			const query = searchState.query
+			suggestExtra.replaceChildren()
+			suggestNote.replaceChildren()
+			listbox.replaceChildren()
+			activeIndex = -1
+			addressInput.removeAttribute('aria-activedescendant')
+			if (searchState.status === 'idle') {
+				setExpanded(false)
+				suggestStatus.textContent = ''
+				return
+			}
+			setExpanded(true)
+			if (searchState.status === 'loading') {
+				suggestStatus.textContent = ''
+				for (let i = 0; i < 3; i += 1) {
+					const row = el('li', 'flex items-center gap-3 px-3 py-2.5')
+					row.setAttribute('aria-hidden', 'true')
+					row.append(el('span', 'skeleton size-8 shrink-0'))
+					const lines = el('span', 'flex-1 space-y-1.5')
+					lines.append(el('span', `skeleton block h-3.5 ${['w-3/5', 'w-1/2', 'w-2/3'][i]}`), el('span', 'skeleton block h-3 w-2/5'))
+					row.append(lines)
+					listbox.append(row)
+				}
+				return
+			}
+			if (searchState.status === 'error') {
+				const box = el('div', 'flex items-center gap-3 px-3 py-3')
+				box.setAttribute('role', 'alert')
+				const icon = el('span', 'text-destructive')
+				icon.append(svg(ICON.alert))
+				box.append(icon, el('p', 'min-w-0 flex-1 text-sm text-foreground', L.suggestionsError))
+				box.append(button('btn-secondary min-h-9 px-3', L.retry, () => {
+					search.retry(addressInput.value)
+					addressInput.focus()
+				}))
+				suggestExtra.append(box)
+				suggestStatus.textContent = L.suggestionsError
+				return
+			}
+			predictions = searchState.predictions
+			const option = (id: string, main: string, secondary: string, icon: string, onPick: () => void) => {
+				const li = el('li', 'flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors duration-100 hover:bg-muted')
+				li.id = id
+				li.setAttribute('role', 'option')
+				li.setAttribute('aria-selected', 'false')
+				const tile = el('span', 'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground')
+				tile.append(svg(icon))
+				const text = el('span', 'min-w-0 flex-1')
+				text.append(autoDir(el('span', 'block truncate text-sm font-medium text-foreground', main)))
+				if (secondary) text.append(autoDir(el('span', 'block truncate text-xs text-muted-foreground', secondary)))
+				li.append(tile, text)
+				li.addEventListener('mousedown', (event) => event.preventDefault())
+				li.addEventListener('click', onPick)
+				return li
+			}
+			if (!predictions.length) {
+				const empty = el('div', 'border-b border-border px-3 py-3')
+				empty.append(el('p', 'text-sm font-semibold text-foreground', L.noMatches), el('p', 'mt-0.5 text-xs text-muted-foreground', L.noMatchesHint))
+				suggestNote.append(empty)
+			}
+			predictions.forEach((p, i) => {
+				listbox.append(option(`od-opt-${i}`, p.mainText, p.secondaryText, ICON.pin, () => pickPrediction(p)))
+			})
+			listbox.append(
+				option('od-opt-typed', fillTemplate(L.useTyped, { query }), '', ICON.search, () => pickTyped()),
+			)
+			suggestStatus.textContent = predictions.length ? `${L.suggestions}: ${predictions.length}` : L.noMatches
+		}
+
+		const search = createPlacesSearch({
+			fetchPredictions: (query, signal) =>
+				fetchPlacePredictions({ locationId, query, sessionToken, locale: data.locale, signal }),
+			onState: (state) => {
+				searchState = state
+				renderSuggestions()
+			},
+		})
+
+		function pickPrediction(p: PlacePrediction) {
+			addressInput.value = [p.mainText, p.secondaryText].filter(Boolean).join(', ')
+			lastPlaceId = p.placeId
+			lastAddressText = ''
+			closeSuggestions()
+			void runQuote()
+		}
+
+		function pickTyped() {
+			const text = addressInput.value.trim()
+			if (text.length < 3) return
+			lastPlaceId = null
+			lastAddressText = text
+			closeSuggestions()
+			void runQuote()
+		}
+
+		function closeSuggestions() {
+			search.cancel()
+			searchState = { status: 'idle', query: addressInput.value }
+			renderSuggestions()
+		}
+
+		function resetQuote() {
+			quoteController?.abort()
+			quote = deliveryAvailable ? { status: 'idle' } : { status: 'unavailable_options' }
+		}
+
+		function tryAnother() {
+			addressInput.value = ''
+			lastPlaceId = null
+			lastAddressText = ''
+			clearBtn.classList.add('hidden')
+			resetQuote()
+			sessionToken = createSessionToken()
+			render()
+			addressInput.focus()
+		}
+
+		async function runQuote(): Promise<DeliveryQuoteResult | null> {
+			if (!lastPlaceId && !lastAddressText) return null
+			quoteController?.abort()
+			const controller = new AbortController()
+			quoteController = controller
+			quote = { status: 'loading' }
+			renderResult()
+			updateFooter()
+			const unit = unitInput.value.trim()
+			try {
+				const result = await requestDeliveryQuote({
+					locationId,
+					placeId: lastPlaceId ?? undefined,
+					address: lastPlaceId ? undefined : lastAddressText,
+					unit,
+					sessionToken,
+					locale: data.locale,
+					signal: controller.signal,
+				})
+				if (controller.signal.aborted) return null
+				// The details call ends the Places session; start a fresh one.
+				sessionToken = createSessionToken()
+				quote = result
+				quotedUnit = unit
+				if (result.status === 'deliverable' && !addressInput.matches(':focus')) {
+					addressInput.value = result.quote.address.formatted
+				}
+				return result
+			} catch (error) {
+				if ((error as { name?: string })?.name === 'AbortError') return null
+				quote = { status: 'error' }
+				return null
+			} finally {
+				if (quoteController === controller) {
+					quoteController = null
+					renderResult()
+					renderTime()
+					updateFooter()
+				}
+			}
+		}
+
+		addressInput.addEventListener('input', () => {
+			clearBtn.classList.toggle('hidden', !addressInput.value)
+			if (quote.status !== 'idle' && quote.status !== 'unavailable_options') {
+				resetQuote()
+				renderResult()
+				updateFooter()
+			}
+			lastPlaceId = null
+			lastAddressText = ''
+			search.search(addressInput.value)
+		})
+
+		addressInput.addEventListener('keydown', (event) => {
+			const expanded = addressInput.getAttribute('aria-expanded') === 'true'
+			if (event.key === 'ArrowDown') {
+				event.preventDefault()
+				if (!expanded && addressInput.value.trim().length >= 3) search.retry(addressInput.value)
+				else setActive(activeIndex + 1)
+			} else if (event.key === 'ArrowUp') {
+				event.preventDefault()
+				if (expanded) setActive(activeIndex - 1)
+			} else if (event.key === 'Enter') {
+				event.preventDefault()
+				const active = optionNodes()[activeIndex]
+				if (expanded && active) active.click()
+				else if (predictions.length && expanded && searchState.status === 'ready') pickPrediction(predictions[0]!)
+				else pickTyped()
+			} else if (event.key === 'Escape' && expanded) {
+				event.preventDefault()
+				event.stopPropagation()
+				closeSuggestions()
+			} else if (event.key === 'Tab' && expanded) {
+				closeSuggestions()
+			}
+		})
+		addressInput.addEventListener('blur', () => {
+			// Let an option click land before the list closes.
+			setTimeout(() => {
+				if (!dialog.contains(document.activeElement) || document.activeElement !== addressInput) {
+					if (searchState.status !== 'error') closeSuggestions()
+				}
+			}, 120)
+		})
+
+		clearBtn.addEventListener('click', () => tryAnother())
+
+		// ---------- mode / time controls ----------
+		function setMode(next: FulfillmentMode) {
+			if (!data.allowedModes.includes(next)) return
+			mode = next
+			if (next === 'delivery') void loadOptions()
+			render()
+		}
+
+		for (const b of dialog.querySelectorAll<HTMLElement>('[data-od-mode]')) {
+			b.addEventListener('click', () => {
+				setMode(b.dataset.odMode === 'delivery' ? 'delivery' : 'pickup')
+				if (mode === 'delivery' && quote.status === 'idle') addressInput.focus()
+			})
+		}
+		for (const b of dialog.querySelectorAll<HTMLElement>('[data-od-when]')) {
+			b.addEventListener('click', () => {
+				whenMode = b.dataset.odWhen === 'schedule' ? 'schedule' : 'asap'
+				if (whenMode === 'asap') scheduledFor = null
+				renderTime()
+				updateFooter()
+			})
+		}
+
+		async function loadOptions() {
+			if (optionsLoadedFor === locationId) return
+			optionsLoadedFor = locationId
+			const requested = locationId
+			try {
+				const options = await fetchOrderingOptions({ locationId: requested })
+				if (requested !== locationId) return
+				deliveryAvailable = options.delivery?.available !== false && options.fulfillment?.delivery !== false
+			} catch {
+				// Unknown: let the quote endpoint decide.
+				deliveryAvailable = true
+			}
+			if (!deliveryAvailable) quote = { status: 'unavailable_options' }
+			else if (quote.status === 'unavailable_options') quote = { status: 'idle' }
+			renderResult()
+			updateFooter()
+		}
+
+		// ---------- save ----------
+		function toDelivery(result: Extract<DeliveryQuoteResult, { status: 'deliverable' }>): OrderDetailsDelivery {
+			const { quote: dq } = result
+			const unit = dq.address.unit || quotedUnit
+			return {
+				quoteToken: dq.token,
+				expiresAt: dq.expiresAt,
+				formatted: dq.address.formatted,
+				line1: dq.address.line1,
+				...(unit ? { unit } : {}),
+				city: dq.address.city,
+				...(dq.address.postalCode ? { postalCode: dq.address.postalCode } : {}),
+				deliveryFee: dq.deliveryFee,
+				minimumOrder: dq.minimumOrder,
+				zoneName: dq.zoneName,
+				eta: dq.eta,
+			}
+		}
+
+		function setSaving(value: boolean) {
+			saving = value
+			saveSpinner.classList.toggle('hidden', !value)
+			saveBtn.setAttribute('aria-busy', String(value))
+			updateFooter()
+		}
+
+		saveBtn.addEventListener('click', async () => {
+			if (saving) return
+			let delivery: OrderDetailsDelivery | undefined
+			if (mode === 'delivery') {
+				if (quote.status !== 'deliverable') return
+				// The unit is signed into the quote; re-check when it changed.
+				if (unitInput.value.trim() !== quotedUnit && (lastPlaceId || lastAddressText || quote.quote.address.formatted)) {
+					if (!lastPlaceId && !lastAddressText) lastAddressText = quote.quote.address.formatted
+					setSaving(true)
+					const result = await runQuote()
+					setSaving(false)
+					if (!result || result.status !== 'deliverable') return
+				}
+				if (quote.status !== 'deliverable') return
+				delivery = toDelivery(quote)
+			}
+			const details: OrderDetails = {
+				v: 1,
+				mode,
+				locationId,
+				...(mode === 'delivery' && delivery ? { delivery } : {}),
+				scheduledFor: whenMode === 'schedule' ? scheduledFor : null,
+			}
+			// Keep a valid delivery address when switching to pickup so the
+			// customer can switch back without re-entering it.
+			if (mode === 'pickup' && quote.status === 'deliverable' && isQuoteValid(toDelivery(quote))) {
+				details.delivery = toDelivery(quote)
+			}
+			saveOrderDetails(data.orgId, details)
+			close()
+			if (data.navigateOnLocationChange && locationId !== pageLocationId) {
+				const url = new URL(window.location.href)
+				url.searchParams.set('location', locationId)
+				url.searchParams.delete('item')
+				window.location.assign(url.toString())
+			}
+		})
+
+		// ---------- open / close ----------
+		function hydrate() {
+			const saved = loadOrderDetails(data.orgId, {
+				locationId: pageLocationId,
+				allowedModes: data.allowedModes,
+			})
+			mode = saved.mode
+			locationId = saved.locationId
+			scheduledFor = saved.scheduledFor
+			whenMode = saved.scheduledFor ? 'schedule' : 'asap'
+			selectedDay = null
+			predictions = []
+			searchState = { status: 'idle', query: '' }
+			lastPlaceId = null
+			lastAddressText = ''
+			if (saved.delivery) {
+				const d = saved.delivery
+				quote = {
+					status: 'deliverable',
+					quote: {
+						token: d.quoteToken,
+						expiresAt: d.expiresAt,
+						address: { formatted: d.formatted, line1: d.line1, unit: d.unit, city: d.city, postalCode: d.postalCode, lat: 0, lng: 0 },
+						zoneId: '',
+						zoneName: d.zoneName,
+						deliveryFee: d.deliveryFee,
+						minimumOrder: d.minimumOrder,
+						eta: d.eta,
+					},
+				}
+				quotedUnit = d.unit ?? ''
+				lastAddressText = d.formatted
+				addressInput.value = d.formatted
+				unitInput.value = d.unit ?? ''
+			} else {
+				quote = deliveryAvailable ? { status: 'idle' } : { status: 'unavailable_options' }
+				quotedUnit = ''
+				addressInput.value = ''
+				unitInput.value = ''
+			}
+			clearBtn.classList.toggle('hidden', !addressInput.value)
+			renderSuggestions()
+		}
+
+		function open(tab?: OrderDetailsTab | null) {
+			if (dialog.open) return
+			returnFocus = document.activeElement as HTMLElement | null
+			hydrate()
+			if (tab === 'delivery' || tab === 'pickup') {
+				if (data.allowedModes.includes(tab)) mode = tab
+			}
+			if (mode === 'delivery') void loadOptions()
+			render()
+			dialog.showModal()
+			releaseScroll = lockScroll()
+			q('[data-od-body]')!.scrollTop = 0
+			if (tab === 'time' && !timeSection.classList.contains('hidden')) {
+				timeSection.scrollIntoView({ block: 'start' })
+				q<HTMLElement>('[data-od-when][aria-pressed="true"]')?.focus()
+			} else if (mode === 'delivery' && quote.status !== 'deliverable') {
+				addressInput.focus()
+			} else {
+				q<HTMLElement>('[data-od-mode][aria-pressed="true"]')?.focus() ?? q<HTMLElement>('[data-od-close]')?.focus()
+			}
+		}
+
+		function close() {
+			if (!dialog.open) return
+			search.cancel()
+			quoteController?.abort()
+			dialog.close()
+		}
+
+		dialog.addEventListener('close', () => {
+			releaseScroll?.()
+			releaseScroll = null
+			dialog.style.transform = ''
+			const target = returnFocus
+			returnFocus = null
+			if (target?.isConnected) target.focus({ preventScroll: true })
+		})
+		dialog.addEventListener('cancel', (event) => {
+			// Esc closes the suggestion list first, then the sheet.
+			if (addressInput.getAttribute('aria-expanded') === 'true') {
+				event.preventDefault()
+				closeSuggestions()
+				return
+			}
+			event.preventDefault()
+			close()
+		})
+		dialog.addEventListener('click', (event) => {
+			if (event.target === dialog) close()
+		})
+		q('[data-od-close]')!.addEventListener('click', close)
+
+		// Drag the handle/header down to dismiss (touch).
+		const dragZones = dialog.querySelectorAll<HTMLElement>('[data-od-drag], [data-od-drag-zone]')
+		let dragStart: number | null = null
+		let dragDelta = 0
+		for (const zone of dragZones) {
+			zone.addEventListener('pointerdown', (event) => {
+				if (event.pointerType === 'mouse' || window.matchMedia('(min-width: 40rem)').matches) return
+				if ((event.target as HTMLElement).closest('button')) return
+				dragStart = event.clientY
+				dragDelta = 0
+				zone.setPointerCapture(event.pointerId)
+				dialog.classList.add('is-dragging')
+			})
+			zone.addEventListener('pointermove', (event) => {
+				if (dragStart === null) return
+				dragDelta = Math.max(0, event.clientY - dragStart)
+				dialog.style.transform = `translateY(${dragDelta}px)`
+			})
+			const end = () => {
+				if (dragStart === null) return
+				dragStart = null
+				dialog.classList.remove('is-dragging')
+				dialog.style.transform = ''
+				if (dragDelta > 110) close()
+			}
+			zone.addEventListener('pointerup', end)
+			zone.addEventListener('pointercancel', end)
+		}
+
+		document.addEventListener('click', (event) => {
+			const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-open-order-details]')
+			if (!trigger || dialog.contains(trigger)) return
+			event.preventDefault()
+			open((trigger.dataset.orderDetailsTab as OrderDetailsTab | undefined) ?? null)
+		})
+		window.addEventListener(OPEN_ORDER_DETAILS_EVENT, (event) => {
+			open((event as CustomEvent<{ tab?: OrderDetailsTab }>).detail?.tab ?? null)
+		})
+		dialog.dataset.ready = 'true'
+	}
+</script>

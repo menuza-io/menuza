@@ -14,6 +14,7 @@ import {
 	type RestaurantOrderContext,
 	type RestaurantOrderError,
 	type RestaurantOrderRequest,
+	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
 import {
 	getTenantDb,
@@ -23,6 +24,8 @@ import {
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
+import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
+import { isGeocodingAvailable } from '../lib/geocoder.ts'
 import type { PublishedOrganization } from '../lib/origin.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import {
@@ -419,7 +422,34 @@ export async function placeOrder(input: {
 		)
 	}
 
-	const priced = priceRestaurantOrder(context, request, { now })
+	let deliveryQuote: VerifiedDeliveryQuote | null = null
+	const quoteToken =
+		request.fulfillment === 'delivery' ? request.delivery?.quoteToken : null
+	if (quoteToken) {
+		const verified = await verifyDeliveryQuote(quoteToken, {
+			orgId,
+			locationId: request.locationId,
+			now,
+		})
+		if (!verified.ok) {
+			return orderFailure(
+				422,
+				'delivery_quote_expired',
+				'Your delivery address check has expired. Please confirm your address again.',
+			)
+		}
+		deliveryQuote = {
+			lat: verified.payload.lat,
+			lng: verified.payload.lng,
+			formatted: verified.payload.formatted,
+			line1: verified.payload.line1,
+			city: verified.payload.city,
+			postalCode: verified.payload.postalCode,
+			unit: verified.payload.unit,
+		}
+	}
+
+	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
 	if (!priced.ok) {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}
@@ -525,6 +555,12 @@ export async function placeOrder(input: {
 								deliveryUnit: result.delivery?.unit ?? null,
 								deliveryNotes: result.delivery?.notes ?? null,
 								deliveryZoneId: result.delivery?.zoneId ?? null,
+								deliveryPostalCode: result.delivery?.postalCode ?? null,
+								deliveryLat: result.delivery?.lat ?? null,
+								deliveryLng: result.delivery?.lng ?? null,
+								scheduledFor: result.scheduledFor
+									? new Date(result.scheduledFor)
+									: null,
 								currency: result.currency,
 								subtotalCents: result.subtotalCents,
 								taxCents: result.taxCents,
@@ -1244,6 +1280,7 @@ export async function buildOrderingOptions(
 		dropSlug: input.dropSlug,
 		counts: { slotOrders, entityUsed },
 		now,
+		geocoderAvailable: isGeocodingAvailable(),
 	})
 	if (!built.ok) return { ok: false, failure: fromEngineError(built.error) }
 	return { ok: true, data: built.options }
@@ -1278,6 +1315,7 @@ export function receiptOrder(order: RestaurantOrder) {
 		fulfillment: order.fulfillment,
 		locale: order.locale,
 		createdAt: order.createdAt ? order.createdAt.toISOString() : null,
+		scheduledFor: order.scheduledFor ? order.scheduledFor.toISOString() : null,
 		location: { id: order.locationId, name: order.locationName },
 		pickup:
 			order.pickupWindowId && order.pickupDate && order.pickupTime
@@ -1300,6 +1338,7 @@ export function receiptOrder(order: RestaurantOrder) {
 					address: order.deliveryAddress,
 					city: order.deliveryCity,
 					unit: order.deliveryUnit,
+					postalCode: order.deliveryPostalCode,
 					notes: order.deliveryNotes,
 					feeCents: order.deliveryFeeCents,
 					zoneId: order.deliveryZoneId,
@@ -1319,6 +1358,10 @@ export function operatorOrder(order: RestaurantOrder) {
 		paymentSessionId: order.paymentSessionId,
 		dropId: order.dropId,
 		deliveryZoneId: order.deliveryZoneId,
+		deliveryPoint:
+			order.deliveryLat != null && order.deliveryLng != null
+				? { lat: order.deliveryLat, lng: order.deliveryLng }
+				: null,
 		paidAt: order.paidAt ? order.paidAt.toISOString() : null,
 		completedAt: order.completedAt ? order.completedAt.toISOString() : null,
 		cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,

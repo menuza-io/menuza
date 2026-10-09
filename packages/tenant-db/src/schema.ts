@@ -5,6 +5,7 @@ import {
 	index,
 	uniqueIndex,
 	primaryKey,
+	real,
 } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
@@ -67,6 +68,53 @@ export const customerRefreshTokens = sqliteTable(
 			table.tokenHash,
 		),
 		index('idx_customer_refresh_tokens_customer').on(table.customerId),
+	],
+)
+
+export const CUSTOMER_SUBSCRIPTION_TOPICS = ['drops'] as const
+export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms'] as const
+export const CUSTOMER_SUBSCRIPTION_SOURCES = [
+	'menu',
+	'drops_page',
+	'drop_page',
+	'order_success',
+	'profile',
+] as const
+
+// Explicit marketing consent, one row per customer + topic + channel. Opting
+// out keeps the row (unsubscribedAt set) as the record of the opt-out; a later
+// opt-in clears it and restamps subscribedAt/source.
+export const customerSubscriptions = sqliteTable(
+	'customer_subscriptions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		topic: text('topic', { enum: CUSTOMER_SUBSCRIPTION_TOPICS }).notNull(),
+		channel: text('channel', {
+			enum: CUSTOMER_SUBSCRIPTION_CHANNELS,
+		}).notNull(),
+		source: text('source', { enum: CUSTOMER_SUBSCRIPTION_SOURCES }).notNull(),
+		subscribedAt: integer('subscribed_at', { mode: 'timestamp' }).notNull(),
+		unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('uniq_customer_subscriptions_customer_topic_channel').on(
+			table.customerId,
+			table.topic,
+			table.channel,
+		),
+		index('idx_customer_subscriptions_topic_channel').on(
+			table.topic,
+			table.channel,
+			table.unsubscribedAt,
+		),
 	],
 )
 
@@ -625,6 +673,13 @@ export const restaurantOrders = sqliteTable(
 		deliveryUnit: text('delivery_unit'),
 		deliveryNotes: text('delivery_notes'),
 		deliveryZoneId: text('delivery_zone_id'),
+		// Geocoded delivery point from a signed delivery quote (null for
+		// zip-verified orders).
+		deliveryPostalCode: text('delivery_postal_code'),
+		deliveryLat: real('delivery_lat'),
+		deliveryLng: real('delivery_lng'),
+		// Customer-chosen fulfilment time; null = ASAP.
+		scheduledFor: integer('scheduled_for', { mode: 'timestamp' }),
 		currency: text('currency').notNull(),
 		subtotalCents: integer('subtotal_cents').notNull(),
 		taxCents: integer('tax_cents').notNull(),

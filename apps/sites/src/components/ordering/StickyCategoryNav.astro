@@ -1,0 +1,46 @@
+---
+import CategoryNav from '~/components/ordering/CategoryNav.astro'
+import { siteContainer } from '~/lib/media'
+
+/**
+ * Sticky tab strip of category links under the site header, shared by the
+ * menu and drop pages. Glass background, a hairline rule the active tab's bar
+ * sits on, and tabs that bleed to the viewport edge for scrolling while the
+ * first label still lands on the content edge (8px/20px inset minus the tab's
+ * own 12px padding). Hides itself when search has hidden every tab.
+ *
+ * `page`: the bar spans the full page width and centers its tabs in the site
+ * container (menu; pass `lg:hidden` when a rail takes over on wide screens).
+ * `column`: the bar lives inside a content column and bleeds out of it on
+ * small screens only; on `lg` the bar (glass + rule) hugs the column and only
+ * the tabs overhang by their own padding, so the first label and the rule both
+ * start on the column edge. The edge fade goes too: it would eat the label.
+ */
+interface Props {
+	id: string
+	items: Array<{ id: string; label: string }>
+	label: string
+	layout: 'page' | 'column'
+	class?: string
+}
+
+const { id, items, label, layout, class: className } = Astro.props
+
+const bar =
+	'glass-bar hairline-b sticky top-[4.25rem] z-20 [&:not(:has(a:not(.hidden)))]:hidden'
+const tabs = 'fade-x px-2 sm:px-5'
+---
+
+{items.length > 0 ? (
+	layout === 'page' ? (
+		<div id={id} class:list={[bar, className]}>
+			<div class={siteContainer}>
+				<CategoryNav items={items} label={label} class={`${tabs} -mx-5 sm:-mx-8`} />
+			</div>
+		</div>
+	) : (
+		<div id={id} class:list={[bar, '-mx-5 sm:-mx-8 lg:mx-0', className]}>
+			<CategoryNav items={items} label={label} class={`${tabs} lg:-mx-3 lg:px-0 lg:mask-none`} />
+		</div>
+	)
+) : null}

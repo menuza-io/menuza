@@ -1,7 +1,15 @@
 ---
-import { siteContainer } from '~/lib/media'
-
-/** Fixed bottom bar that appears when the cart has items. Driven by `mountCartUi`. */
+/**
+ * Cart bar that appears when the cart has items. Driven by `mountCartUi`,
+ * which toggles `translate-y-full` on `#cart-tray`.
+ *
+ * Phones get a full-width bar pinned to the bottom edge. From `lg` up it
+ * becomes a compact floating button at the bottom end, so it never covers
+ * the content column. The wrapper keeps its padding inside the translated
+ * box (the button sits in it), so `translate-y-full` hides it completely at
+ * every size; the wrapper ignores pointer events so its padding never blocks
+ * clicks on the page beneath it.
+ */
 interface Props {
 	labels: { viewOrder: string }
 	initialTotal: string
@@ -12,32 +20,41 @@ const { labels, initialTotal } = Astro.props
 
 <div
 	id="cart-tray"
-	class="fixed inset-x-0 bottom-0 z-40 translate-y-full p-4 transition-transform duration-300 motion-reduce:transition-none"
+	class="pointer-events-none fixed inset-x-0 bottom-0 z-40 translate-y-full px-4 pt-2 pb-safe transition-transform duration-200 ease-out motion-reduce:transition-none lg:inset-x-auto lg:end-0 lg:p-6"
 	aria-hidden="true"
 >
-	<div class:list={[siteContainer, 'max-w-2xl']}>
-		<button
-			type="button"
-			id="open-cart-btn"
-			class="flex w-full items-center justify-between gap-3 rounded-[var(--radius)] bg-primary px-5 py-3.5 text-primary-foreground shadow-lg transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-			aria-haspopup="dialog"
-			aria-controls="cart-drawer"
+	<button
+		type="button"
+		id="open-cart-btn"
+		class="btn-cta pointer-events-auto min-h-14 w-full justify-between gap-3 px-4 shadow-elev-3 lg:w-auto lg:min-w-80"
+		aria-haspopup="dialog"
+		aria-controls="cart-drawer"
+	>
+		<span
+			id="cart-badge-count"
+			class="price flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-bold"
+			aria-live="polite"
+			aria-atomic="true"
 		>
-			<span class="flex items-center gap-2.5">
-				<span
-					id="cart-badge-count"
-					class="flex size-7 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-semibold tabular-nums"
-					aria-live="polite"
-					aria-atomic="true"
-				>
-					0
-				</span>
-				<span class="text-sm font-medium">{labels.viewOrder}</span>
-			</span>
-			<span class="flex items-center gap-2">
-				<span id="cart-tray-total" class="text-base font-semibold tabular-nums">{initialTotal}</span>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 rtl:-scale-x-100" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-			</span>
-		</button>
-	</div>
+			0
+		</span>
+		<span class="min-w-0 flex-1 truncate text-start text-base font-semibold">
+			{labels.viewOrder}
+			<span id="cart-tray-count" class="sr-only"></span>
+		</span>
+		<span class="flex shrink-0 items-center gap-1.5">
+			<span id="cart-tray-total" class="price text-base">{initialTotal}</span>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="size-4 rtl:-scale-x-100"
+				aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg
+			>
+		</span>
+	</button>
 </div>

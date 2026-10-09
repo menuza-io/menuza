@@ -3,9 +3,9 @@ import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
-import { siteBtnPrimary, siteBtnGhost, siteContainer } from '~/lib/media'
-import { siteCardClass } from '~/lib/form-classes'
+import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import { translate } from '~/lib/ordering-labels'
+import { formatMoney } from '~/lib/ordering/money'
 import { fetchPublishedDrops, fetchPublishedSiteMenu } from '~/lib/org'
 
 const organization = Astro.locals.organization
@@ -55,23 +55,24 @@ const dropTitles = Object.fromEntries(
 
 const hasOrderParam = Boolean(Astro.url.searchParams.get('order'))
 
-const successTitle = i18n._(msg`Order Confirmed`)
+const successTitle = i18n._(msg`Order confirmed`)
+const dropAlertsTitle = i18n._(msg`Want first dibs next time?`)
 const thankYouTitle = i18n._(msg`Thank you for your order!`)
 const thankYouDesc = i18n._(msg`We've received your order and our kitchen is preparing your meal.`)
-const orderNumLabel = i18n._(msg`Order Number`)
-const estTimeLabel = i18n._(msg`Estimated Time`)
+const orderNumLabel = i18n._(msg`Order number`)
+const estTimeLabel = i18n._(msg`Estimated time`)
 const pickupTimeLabel = i18n._(msg`Pickup time`)
 const receiptTitle = i18n._(msg`Receipt`)
 const subtotalText = i18n._(msg`Subtotal`)
 const taxText = i18n._(msg`Tax`)
-const deliveryFeeText = i18n._(msg`Delivery Fee`)
+const deliveryFeeText = i18n._(msg`Delivery fee`)
 const tipText = i18n._(msg`Tip`)
 const totalText = i18n._(msg`Total`)
-const totalPaidText = i18n._(msg`Total Paid`)
-const orderMoreLabel = i18n._(msg`Order More Food`)
-const returnHomeLabel = i18n._(msg`Return to Homepage`)
-const pickupOrderText = i18n._(msg`Pickup Order`)
-const deliveryOrderText = i18n._(msg`Delivery Order`)
+const totalPaidText = i18n._(msg`Total paid`)
+const backToMenuLabel = i18n._(msg`Back to menu`)
+const returnHomeLabel = i18n._(msg`Return to homepage`)
+const pickupOrderText = i18n._(msg`Pickup order`)
+const deliveryOrderText = i18n._(msg`Delivery order`)
 const addToCalendarLabel = i18n._(msg`Add to calendar`)
 /** Kept as a template so the client can fill in the drop title. */
 const pickupCalendarTitle = translate(i18n, msg`Pickup: {title}`, { title: '{title}' })
@@ -95,6 +96,14 @@ const paymentFailedDesc = i18n._(msg`Your payment didn't go through. Your order 
 const tryPaymentAgainLabel = i18n._(msg`Try payment again`)
 const paymentExpiredTitle = i18n._(msg`Your payment window expired`)
 const paymentExpiredDesc = i18n._(msg`The hold on your order was released. Please place a new order.`)
+
+// ---------- checkout hold (pending online payment) ----------
+
+/** Kept as a template; the countdown is spliced in at `{time}`. */
+const holdTitleTemplate = translate(i18n, msg`We're holding your order for {time}.`, { time: '{time}' })
+const [holdTitleBefore = '', holdTitleAfter = ''] = holdTitleTemplate.split('{time}')
+const holdDesc = i18n._(msg`Complete payment to keep it.`)
+const completePaymentLabel = i18n._(msg`Complete payment`)
 
 const successLabels = {
 	locale: requestedLocale,
@@ -122,6 +131,9 @@ const successLabels = {
 	expiredTitle: paymentExpiredTitle,
 	expiredDesc: paymentExpiredDesc,
 	paymentStartFailed: i18n._(msg`We couldn't start payment. Please try again.`),
+	holdTitle: holdTitleTemplate,
+	holdDesc,
+	holdAnnounce: translate(i18n, msg`{time} left to complete payment.`, { time: '{time}' }),
 	total: totalText,
 	totalPaid: totalPaidText,
 	statuses: {
@@ -134,6 +146,28 @@ const successLabels = {
 	},
 	locations: receiptLocations,
 }
+
+const price = (amount: number) =>
+	formatMoney(amount, successLabels.currency, requestedLocale)
+
+/** Visual progress only; the script marks reached steps from the receipt. */
+const timelineSteps = [
+	{ key: 'received', label: successLabels.statuses.pending },
+	{ key: 'preparing', label: successLabels.statuses.preparing },
+	{ key: 'ready', label: successLabels.statuses.ready },
+]
+
+// Shared class recipes (spec §3). Elements the script shows and hides keep
+// core display utilities so `.hidden` always wins.
+const emptyClass = 'surface flex flex-col items-center gap-3 px-6 py-12 text-center'
+const emptyIconClass =
+	'flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground'
+const noticeClass = 'flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4'
+const factIconClass =
+	'flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground'
+const rowClass =
+	'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
+const valueClass = 'price font-medium text-foreground'
 ---
 
 <SitePage
@@ -141,157 +175,238 @@ const successLabels = {
 	page={{ id: 'success', title: successTitle, slug: 'menu/success', isHomePage: false, sections: [] }}
 	title={`${successTitle} - ${organization.name}`}
 >
-	<div class="min-h-screen bg-background py-12 sm:py-20">
-		<div class:list={[siteContainer, "max-w-xl text-center space-y-8"]}>
+	<div class="min-h-screen bg-background pt-8 pb-16 sm:pt-12 sm:pb-24">
+		<div class="mx-auto w-full max-w-2xl px-5 sm:px-8">
 			{/* Loading state (only while a receipt fetch is in flight) */}
-			<div id="success-loading" class:list={["py-16 space-y-4", hasOrderParam ? '' : 'hidden']}>
-				<div class="mx-auto size-10 animate-spin rounded-full border-2 border-muted border-t-primary" role="status"></div>
-				<p class="text-sm text-muted-foreground">{loadingText}</p>
+			<div id="success-loading" class:list={['surface p-6 sm:p-8', hasOrderParam ? '' : 'hidden']} role="status">
+				<div class="flex flex-col items-center gap-3" aria-hidden="true">
+					<div class="skeleton size-16 rounded-full"></div>
+					<div class="skeleton mt-2 h-5 w-28"></div>
+					<div class="skeleton h-8 w-64 max-w-full"></div>
+					<div class="skeleton h-4 w-80 max-w-full"></div>
+				</div>
+				<div class="mt-8 space-y-3 border-t border-border pt-6" aria-hidden="true">
+					<div class="skeleton h-4 w-full"></div>
+					<div class="skeleton h-4 w-5/6"></div>
+					<div class="skeleton h-4 w-2/3"></div>
+				</div>
+				<p class="mt-6 text-center text-sm text-muted-foreground">{loadingText}</p>
 			</div>
 
 			{/* No order reference in the URL */}
-			<div id="success-missing" class:list={["py-16 space-y-4", hasOrderParam ? 'hidden' : '']}>
-				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{missingTitle}</h1>
-				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{missingDesc}</p>
-				<a href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{orderMoreLabel}</a>
+			<div id="success-missing" class:list={[emptyClass, hasOrderParam ? 'hidden' : '']}>
+				<span class={emptyIconClass}>
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9.5 12.5 5 5"/><path d="m14.5 12.5-5 5"/></svg>
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-foreground">{missingTitle}</h1>
+				<p class="max-w-sm text-sm text-muted-foreground">{missingDesc}</p>
+				<a href={menuHref} class="btn-cta mt-2">{backToMenuLabel}</a>
 			</div>
 
 			{/* Receipt capability lives only in this device's sessionStorage */}
-			<div id="success-device" class="hidden py-16 space-y-4">
-				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{deviceTitle}</h1>
-				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{deviceDesc}</p>
-				<a href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{orderMoreLabel}</a>
+			<div id="success-device" class:list={[emptyClass, 'hidden']}>
+				<span class={emptyIconClass}>
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-foreground">{deviceTitle}</h1>
+				<p class="max-w-sm text-sm text-muted-foreground">{deviceDesc}</p>
+				<a href={menuHref} class="btn-cta mt-2">{backToMenuLabel}</a>
 			</div>
 
 			{/* Receipt fetch failed (network/region) */}
-			<div id="success-error" class="hidden py-16 space-y-4">
-				<h1 class="font-heading text-2xl font-bold tracking-tight text-foreground">{loadErrorTitle}</h1>
-				<p class="text-sm text-muted-foreground max-w-sm mx-auto">{loadErrorDesc}</p>
-				<button type="button" id="success-retry" class:list={[siteBtnPrimary, "inline-flex px-6 py-2.5"]}>{retryLabel}</button>
+			<div id="success-error" class:list={[emptyClass, 'hidden']}>
+				<span class="flex size-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-foreground">{loadErrorTitle}</h1>
+				<p class="max-w-sm text-sm text-muted-foreground">{loadErrorDesc}</p>
+				<button type="button" id="success-retry" class="btn-cta mt-2">{retryLabel}</button>
 			</div>
 
 			{/* Receipt view */}
-			<div id="order-view" class="hidden space-y-8">
-				{/* Celebration / attention badge */}
-				<div id="success-icon" class="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-md">
-					<svg id="icon-confirmed" xmlns="http://www.w3.org/2000/svg" class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-					<svg id="icon-attention" xmlns="http://www.w3.org/2000/svg" class="hidden size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9.25"/></svg>
-				</div>
+			<div id="order-view" class="hidden space-y-4 sm:space-y-5">
+				<section class="surface px-5 py-8 text-center sm:p-10">
+					{/* Celebration / attention mark. The script swaps the success and
+					    destructive tints together with the two icons. */}
+					<div id="success-icon" class="mx-auto flex size-16 items-center justify-center rounded-full border border-success/25 bg-success/10 text-success">
+						<svg id="icon-confirmed" xmlns="http://www.w3.org/2000/svg" class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+						<svg id="icon-pending" xmlns="http://www.w3.org/2000/svg" class="hidden size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.25"/><path d="M12 7v5l3 2"/></svg>
+						<svg id="icon-attention" xmlns="http://www.w3.org/2000/svg" class="hidden size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9.25"/></svg>
+					</div>
 
-				<div class="space-y-2">
-					<span id="success-badge-text" class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-						{successTitle}
-					</span>
-					<h1 id="success-heading" class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+					<span id="success-badge-text" class="badge tone-success mt-5">{successTitle}</span>
+					<h1 id="success-heading" class="mt-3 text-2xl font-bold tracking-tight text-balance text-foreground sm:text-3xl">
 						{thankYouTitle}
 					</h1>
-					<p id="success-subtext" class="text-sm text-muted-foreground">
+					<p id="success-subtext" class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
 						{thankYouDesc}
 					</p>
-				</div>
+
+					<div class="mt-6 inline-flex flex-col items-center gap-1 rounded-lg bg-muted px-5 py-3">
+						<span class="text-xs text-muted-foreground">{orderNumLabel}</span>
+						<span id="order-num" class="price font-heading text-xl text-foreground" dir="ltr">#—</span>
+					</div>
+
+					{/* Status timeline: visual only, filled from the receipt's status. */}
+					<ol id="order-timeline" class="mx-auto mt-6 hidden max-w-sm items-center gap-2 [&:not(.hidden)]:flex" aria-describedby="order-status-badge">
+						{timelineSteps.map((step, index) => (
+							<>
+								{index > 0 ? <li class="h-px flex-1 bg-border" aria-hidden="true" data-step-line /> : null}
+								<li class="group flex items-center gap-1.5 text-xs text-muted-foreground data-reached:font-semibold data-reached:text-foreground" data-step={step.key}>
+									<span class="size-2 shrink-0 rounded-full border border-muted-foreground/50 group-data-reached:border-success group-data-reached:bg-success" aria-hidden="true"></span>
+									{step.label}
+								</li>
+							</>
+						))}
+					</ol>
+					<span id="order-status-badge" class="badge tone-neutral mt-4"></span>
+				</section>
 
 				{/* Online payment states */}
-				<div id="payment-pending" class="hidden rounded-lg border border-border bg-muted/40 p-4 text-start space-y-2" role="status">
-					<p class="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<span id="payment-pending-spinner" class="size-4 animate-spin rounded-full border-2 border-muted border-t-primary"></span>
-						<span id="payment-pending-title">{pendingTitle}</span>
-					</p>
-					<p id="payment-pending-desc" class="text-xs text-muted-foreground">{pendingDesc}</p>
-					<button type="button" id="payment-check-again" class="hidden text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80">{checkAgainLabel}</button>
+				<div id="payment-pending" class:list={[noticeClass, 'tone-warning hidden']} role="status">
+					<svg id="payment-pending-spinner" xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+					<div class="min-w-0 flex-1 space-y-1">
+						<p id="payment-pending-title" class="sr-only">{pendingTitle}</p>
+						<p id="payment-pending-desc" class="text-foreground/80">{pendingDesc}</p>
+						<button type="button" id="payment-check-again" class="btn-secondary mt-2 hidden [&.hidden]:hidden">{checkAgainLabel}</button>
+					</div>
 				</div>
-				<div id="payment-failed" class="hidden rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-start space-y-3" role="alert">
-					<p class="text-sm font-semibold text-destructive">{paymentFailedTitle}</p>
-					<p class="text-xs text-destructive/80">{paymentFailedDesc}</p>
-					<button type="button" id="retry-payment-btn" class:list={[siteBtnPrimary, "px-5 py-2 text-sm"]}>{tryPaymentAgainLabel}</button>
-					<p id="retry-payment-error" class="hidden text-xs text-destructive"></p>
-				</div>
-				<div id="payment-expired" class="hidden rounded-lg border border-border bg-muted/40 p-4 text-start space-y-3" role="alert">
-					<p class="text-sm font-semibold text-foreground">{paymentExpiredTitle}</p>
-					<p class="text-xs text-muted-foreground">{paymentExpiredDesc}</p>
-					<a id="payment-expired-link" href={menuHref} class:list={[siteBtnPrimary, "inline-flex px-5 py-2 text-sm"]}>{orderMoreLabel}</a>
-				</div>
-
-				{/* Order Details Card */}
-				<div id="order-summary-card" class:list={[siteCardClass, "text-start space-y-6"]}>
-					<div class="flex items-center justify-between border-b border-border pb-4">
-						<div>
-							<p class="text-xs text-muted-foreground uppercase">{orderNumLabel}</p>
-							<p id="order-num" class="font-heading text-lg font-bold text-foreground">#—</p>
-							<span id="order-status-badge" class="mt-1 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"></span>
+				{/* Checkout hold: replaces the pending notice while the hold is live.
+				    Turns from warning to danger in the final minute; at zero the
+				    script swaps in the released state without a reload. Speech is
+				    throttled through #payment-hold-live, not this timer. */}
+				<section
+					id="payment-hold"
+					class="tone-warning hidden rounded-lg border p-4 text-sm transition-colors duration-300 ease-out motion-reduce:transition-none sm:p-5"
+					aria-labelledby="payment-hold-title"
+				>
+					<div class="flex items-start gap-3">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+						<div class="min-w-0 flex-1">
+							{/* The sentence is ink; the clock keeps the tone color so it reads
+							    first and turns with the banner in the final minute. */}
+							<p id="payment-hold-title" class="text-base leading-snug font-semibold text-balance sm:text-lg">
+								<span class="text-foreground">{holdTitleBefore}</span><span id="payment-hold-timer" role="timer" dir="ltr" class="price bidi-isolate text-lg sm:text-xl">--:--</span><span class="text-foreground">{holdTitleAfter}</span>
+							</p>
+							<p class="mt-1 text-foreground/80">{holdDesc}</p>
+							<div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+								<button type="button" id="hold-pay-btn" class="btn-cta w-full sm:w-auto">{completePaymentLabel}</button>
+								<button type="button" id="hold-check-again" class="btn-secondary hidden w-full sm:w-auto [&.hidden]:hidden">{checkAgainLabel}</button>
+							</div>
+							<p id="hold-pay-error" class="hidden pt-2 font-semibold" role="alert"></p>
 						</div>
-						<div class="text-end">
-							<p id="order-est-time-label" class="text-xs text-muted-foreground uppercase">{estTimeLabel}</p>
-							<p id="order-est-time" class="font-heading text-sm text-emerald-600 dark:text-emerald-400"></p>
+					</div>
+				</section>
+				<div id="payment-failed" class:list={[noticeClass, 'tone-danger hidden']} role="alert">
+					<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+					<div class="min-w-0 flex-1 space-y-1">
+						<p class="font-semibold">{paymentFailedTitle}</p>
+						<p class="sr-only">{paymentFailedDesc}</p>
+						<button type="button" id="retry-payment-btn" class="btn-cta mt-2 [&.hidden]:hidden">{tryPaymentAgainLabel}</button>
+						<p id="retry-payment-error" class="hidden pt-1 font-semibold"></p>
+					</div>
+				</div>
+				<div id="payment-expired" class:list={[noticeClass, 'tone-warning hidden']} role="alert">
+					<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+					<div class="min-w-0 flex-1 space-y-1">
+						<p class="font-semibold">{paymentExpiredTitle}</p>
+						<p class="sr-only">{paymentExpiredDesc}</p>
+						<a id="payment-expired-link" href={menuHref} class="btn-cta mt-2">{backToMenuLabel}</a>
+					</div>
+				</div>
+
+				{/* Order details */}
+				<section id="order-summary-card" class="surface p-5 sm:p-6">
+					<dl class="grid gap-4 sm:grid-cols-2">
+						<div class="flex gap-3">
+							<span class={factIconClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+							</span>
+							<div class="min-w-0">
+								<dt id="order-est-time-label" class="text-xs text-muted-foreground">{estTimeLabel}</dt>
+								<dd id="order-est-time" dir="auto" class="bidi-isolate text-start mt-0.5 text-sm font-semibold text-foreground"></dd>
+							</div>
 						</div>
-					</div>
+						<div class="flex gap-3">
+							<span class={factIconClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+							</span>
+							<div class="min-w-0">
+								<dt id="order-mode-text" class="text-xs text-muted-foreground">{pickupOrderText}</dt>
+								<dd id="order-recipient-text" class="mt-0.5 text-sm font-semibold break-words text-foreground"></dd>
+							</div>
+						</div>
 
-					{/* Fulfillment Info */}
-					<div class="rounded-lg bg-muted/40 p-3 text-xs space-y-1">
-						<p class="font-semibold text-foreground flex items-center gap-1.5" id="order-mode-text">
-							🥡 {pickupOrderText}
-						</p>
-						<p class="text-muted-foreground" id="order-recipient-text"></p>
-					</div>
+						{/* Pickup details (pre-orders): location, address, slot, calendar */}
+						<div id="drop-pickup-details" class="hidden gap-3 sm:col-span-2 [&:not(.hidden)]:flex">
+							<span class={factIconClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+							</span>
+							<div class="min-w-0 flex-1">
+								<dt id="drop-pickup-when-label" class="text-xs text-muted-foreground">{pickupTimeLabel}</dt>
+								<dd class="mt-0.5 space-y-0.5 text-sm">
+									<p id="drop-pickup-when" dir="auto" class="bidi-isolate text-start font-semibold text-foreground"></p>
+									<p id="drop-pickup-location" class="text-foreground"></p>
+									<p id="drop-pickup-address" class="text-muted-foreground"></p>
+									<p id="drop-pickup-title" class="text-muted-foreground"></p>
+								</dd>
+								<a
+									id="drop-pickup-calendar"
+									download="pickup.ics"
+									class="btn-secondary mt-3 hidden [&.hidden]:hidden"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
+									{addToCalendarLabel}
+								</a>
+							</div>
+						</div>
+					</dl>
 
-					{/* Pickup details (pre-orders): location, address, slot, calendar */}
-					<div id="drop-pickup-details" class="hidden rounded-lg border border-border bg-background p-3 text-start space-y-1">
-						<p class="text-xs font-medium uppercase tracking-wide text-muted-foreground" id="drop-pickup-when-label">
-							{pickupTimeLabel}
-						</p>
-						<p id="drop-pickup-when" class="text-sm font-semibold text-foreground"></p>
-						<p id="drop-pickup-location" class="text-sm text-foreground"></p>
-						<p id="drop-pickup-address" class="text-xs text-muted-foreground"></p>
-						<p id="drop-pickup-title" class="text-xs text-muted-foreground"></p>
-						<a
-							id="drop-pickup-calendar"
-							download="pickup.ics"
-							class="hidden mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
-							{addToCalendarLabel}
-						</a>
-					</div>
-
-					{/* Receipt Breakdown (authoritative, from the regional order) */}
-					<div class="space-y-3">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">{receiptTitle}</h3>
-						<div id="order-items-list" class="space-y-2 divide-y divide-border/60 text-xs">
+					{/* Receipt breakdown (authoritative, from the regional order) */}
+					<div class="mt-6 border-t border-border pt-5">
+						<h2 class="text-lg font-semibold text-foreground">{receiptTitle}</h2>
+						<ul id="order-items-list" class="mt-1 divide-y divide-border">
 							<!-- Injected via client script -->
-						</div>
-						<div class="border-t border-border pt-3 space-y-1.5 text-xs text-muted-foreground">
-							<div class="flex justify-between">
-								<span>{subtotalText}</span>
-								<span id="order-subtotal" class="font-medium text-foreground">$0.00</span>
+						</ul>
+						<dl class="mt-1 space-y-2 border-t border-border pt-4">
+							<div class={rowClass}>
+								<dt>{subtotalText}</dt>
+								<dd id="order-subtotal" class={valueClass}>{price(0)}</dd>
 							</div>
-							<div class="flex justify-between">
-								<span>{taxText}</span>
-								<span id="order-tax" class="font-medium text-foreground">$0.00</span>
+							<div class={rowClass}>
+								<dt>{taxText}</dt>
+								<dd id="order-tax" class={valueClass}>{price(0)}</dd>
 							</div>
-							<div id="order-deliv-row" class="flex justify-between hidden">
-								<span>{deliveryFeeText}</span>
-								<span id="order-delivery-fee" class="font-medium text-foreground">$0.00</span>
+							<div id="order-deliv-row" class:list={[rowClass, 'hidden']}>
+								<dt>{deliveryFeeText}</dt>
+								<dd id="order-delivery-fee" class={valueClass}>{price(0)}</dd>
 							</div>
-							<div class="flex justify-between">
-								<span>{tipText}</span>
-								<span id="order-tip" class="font-medium text-foreground">$0.00</span>
+							<div class={rowClass}>
+								<dt>{tipText}</dt>
+								<dd id="order-tip" class={valueClass}>{price(0)}</dd>
 							</div>
-							<div class="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
-								<span id="order-total-label">{totalPaidText}</span>
-								<span id="order-total">$0.00</span>
+							<div class="mt-3 flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground">
+								<dt id="order-total-label">{totalPaidText}</dt>
+								<dd id="order-total" class="price font-heading text-xl">{price(0)}</dd>
 							</div>
-						</div>
+						</dl>
 					</div>
-				</div>
+				</section>
 
-				<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-					<a href={menuHref} class:list={[siteBtnPrimary, "w-full sm:w-auto px-6 py-2.5"]}>
-						{orderMoreLabel}
+				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
+
+				<div class="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
+					<a href={menuHref} class="btn-secondary w-full sm:w-auto">
+						{backToMenuLabel}
 					</a>
-					<a href={homeHref} class:list={[siteBtnGhost, "w-full sm:w-auto px-6 py-2.5"]}>
+					<a href={homeHref} class="focus-ring inline-flex min-h-11 items-center rounded-md px-3 text-sm font-semibold text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
 						{returnHomeLabel}
 					</a>
 				</div>
 			</div>
+			{/* Throttled hold announcements (minute marks), kept outside hidden
+			    containers so the live region is registered before it speaks. */}
+			<p id="payment-hold-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 		</div>
 	</div>
 
@@ -317,6 +432,15 @@ const successLabels = {
 			shouldContinuePolling,
 			PAYMENT_POLL_INTERVAL_MS,
 		} from '~/lib/ordering/payment-poll'
+		import { startCountdown } from '~/lib/ordering/countdown'
+		import {
+			formatHoldClock,
+			formatMinutesLong,
+			holdAnnouncement,
+			isFinalMinute,
+			liveHoldRemainingMs,
+			minutesLeft,
+		} from '~/lib/ordering/hold-timer'
 		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
 		import { zonedTimeToUtc } from '~/lib/drops/format'
 		import { getOrgBinding } from '~/lib/client-auth'
@@ -403,20 +527,32 @@ const successLabels = {
 			return node
 		}
 
-		function setHeading(badge: string, title: string, subtext: string, attention = false) {
+		type HeadingTone = 'success' | 'warning' | 'danger'
+
+		function setHeading(badge: string, title: string, subtext: string, tone: HeadingTone = 'success') {
+			const attention = tone === 'danger'
+			const pending = tone === 'warning'
 			const badgeEl = document.getElementById('success-badge-text')
 			const titleEl = document.getElementById('success-heading')
 			const subtextEl = document.getElementById('success-subtext')
-			if (badgeEl) badgeEl.textContent = badge
+			if (badgeEl) {
+				badgeEl.textContent = badge
+				badgeEl.classList.toggle('tone-success', tone === 'success')
+				badgeEl.classList.toggle('tone-warning', pending)
+				badgeEl.classList.toggle('tone-danger', attention)
+			}
 			if (titleEl) titleEl.textContent = title
 			if (subtextEl) subtextEl.textContent = subtext
-			document.getElementById('icon-confirmed')?.classList.toggle('hidden', attention)
+			document.getElementById('icon-confirmed')?.classList.toggle('hidden', tone !== 'success')
+			document.getElementById('icon-pending')?.classList.toggle('hidden', !pending)
 			document.getElementById('icon-attention')?.classList.toggle('hidden', !attention)
 			const iconWrap = document.getElementById('success-icon')
-			iconWrap?.classList.toggle('bg-emerald-500/10', !attention)
-			iconWrap?.classList.toggle('text-emerald-600', !attention)
-			iconWrap?.classList.toggle('dark:text-emerald-400', !attention)
-			iconWrap?.classList.toggle('border-emerald-500/20', !attention)
+			iconWrap?.classList.toggle('bg-success/10', tone === 'success')
+			iconWrap?.classList.toggle('text-success', tone === 'success')
+			iconWrap?.classList.toggle('border-success/25', tone === 'success')
+			iconWrap?.classList.toggle('bg-warning/15', pending)
+			iconWrap?.classList.toggle('text-warning', pending)
+			iconWrap?.classList.toggle('border-warning/30', pending)
 			iconWrap?.classList.toggle('bg-destructive/10', attention)
 			iconWrap?.classList.toggle('text-destructive', attention)
 			iconWrap?.classList.toggle('border-destructive/30', attention)
@@ -442,10 +578,26 @@ const successLabels = {
 			const statusEl = document.getElementById('order-status-badge')
 
 			if (orderNumEl) orderNumEl.textContent = `#${order.number}`
+			// Visual progress: received → preparing → ready. Statuses outside
+			// that path (cancelled, expired) hide the timeline and keep the badge.
+			const stepIndex = (
+				{ pending: 0, accepted: 0, preparing: 1, ready: 2, completed: 2 } as Record<string, number>
+			)[order.status]
+			const timeline = document.getElementById('order-timeline')
+			if (timeline) {
+				timeline.classList.toggle('hidden', stepIndex === undefined)
+				timeline.querySelectorAll<HTMLElement>('[data-step]').forEach((node, index) => {
+					const reached = stepIndex !== undefined && index <= stepIndex
+					node.toggleAttribute('data-reached', reached)
+					if (index === stepIndex) node.setAttribute('aria-current', 'step')
+					else node.removeAttribute('aria-current')
+				})
+			}
 			if (statusEl) {
 				statusEl.textContent =
 					(labels.statuses as Record<string, string>)[order.status] ??
 					(labels.statuses as Record<string, string>).pending
+				statusEl.classList.toggle('sr-only', stepIndex !== undefined)
 			}
 			if (totalLabelEl) {
 				totalLabelEl.textContent =
@@ -455,8 +607,8 @@ const successLabels = {
 			const isDelivery = order.fulfillment === 'delivery'
 			if (modeTextEl) {
 				modeTextEl.textContent = isDelivery
-					? `🚗 ${labels.deliveryOrder || 'Delivery Order'}`
-					: `🥡 ${labels.pickupOrder || 'Pickup Order'}`
+					? labels.deliveryOrder || 'Delivery order'
+					: labels.pickupOrder || 'Pickup order'
 			}
 			if (recipientTextEl) {
 				let text = [order.contact?.name, order.contact?.phone]
@@ -546,16 +698,23 @@ const successLabels = {
 
 			if (itemsListEl) {
 				const rows = (order.lines ?? []).map((line) => {
-					const row = createEl('div', 'pt-2 first:pt-0 flex justify-between items-start gap-3')
-					const info = createEl('div')
+					const row = createEl('li', 'flex gap-3 py-3')
+					row.appendChild(
+						createEl(
+							'span',
+							'price flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-muted px-1.5 text-xs text-foreground',
+							String(line.quantity),
+						),
+					)
+					const info = createEl('div', 'min-w-0 flex-1')
 					info.appendChild(
-						createEl('span', 'font-medium text-foreground', `${line.quantity}x ${localize(line.itemName)}`),
+						createEl('p', 'text-sm font-semibold leading-snug text-foreground', localize(line.itemName)),
 					)
 					if (line.options && line.options.length > 0) {
 						info.appendChild(
 							createEl(
 								'p',
-								'text-[11px] text-muted-foreground',
+								'mt-0.5 text-xs leading-relaxed text-muted-foreground',
 								line.options
 									.map((o) => {
 										const name = localize(o.optionName)
@@ -567,12 +726,12 @@ const successLabels = {
 					}
 					if (line.instructions) {
 						info.appendChild(
-							createEl('p', 'text-[11px] italic text-muted-foreground', `Note: ${line.instructions}`),
+							createEl('p', 'mt-0.5 text-xs italic leading-relaxed text-muted-foreground', `“${line.instructions}”`),
 						)
 					}
 					row.appendChild(info)
 					row.appendChild(
-						createEl('span', 'font-semibold text-foreground', formatCents(line.totalCents)),
+						createEl('span', 'price shrink-0 text-sm text-foreground', formatCents(line.totalCents)),
 					)
 					return row
 				})
@@ -593,17 +752,86 @@ const successLabels = {
 			if (totalEl) totalEl.textContent = formatCents(order.totalCents)
 		}
 
+		// ---------- checkout hold countdown ----------
+
+		let stopHold: (() => void) | null = null
+
+		function announceHold(text: string) {
+			const live = document.getElementById('payment-hold-live')
+			if (!live) return
+			// Clear first so a repeated sentence is still spoken.
+			live.textContent = ''
+			window.setTimeout(() => {
+				live.textContent = text
+			}, 100)
+		}
+
+		function stopHoldCountdown() {
+			stopHold?.()
+			stopHold = null
+			hide('payment-hold')
+		}
+
+		/** Starts the hold banner when the order is pending with a live hold. */
+		function startHoldCountdown(order: ReceiptOrder): boolean {
+			if (stopHold) return true
+			const remaining = liveHoldRemainingMs(order, Date.now())
+			if (remaining === null || !order.holdExpiresAt) return false
+			const section = document.getElementById('payment-hold')
+			const timerEl = document.getElementById('payment-hold-timer')
+			const locale: string = labels.locale || 'en'
+			hide('hold-check-again')
+			section?.classList.remove('hidden')
+			announceHold(
+				`${fillTemplate(labels.holdTitle, {
+					time: formatMinutesLong(minutesLeft(remaining), locale),
+				})} ${labels.holdDesc}`,
+			)
+			let previous: number | null = null
+			stopHold = startCountdown(
+				Date.parse(order.holdExpiresAt),
+				(ms) => {
+					if (timerEl) timerEl.textContent = formatHoldClock(ms, locale)
+					const urgent = isFinalMinute(ms)
+					section?.classList.toggle('tone-warning', !urgent)
+					section?.classList.toggle('tone-danger', urgent)
+					const mark = holdAnnouncement(previous, ms)
+					previous = ms
+					if (mark !== null) {
+						announceHold(
+							fillTemplate(labels.holdAnnounce, {
+								time: formatMinutesLong(mark, locale),
+							}),
+						)
+					}
+				},
+				() => {
+					// Released: switch states in place; the expired alert speaks.
+					stopHold = null
+					showExpired(order)
+				},
+			)
+			return true
+		}
+
 		function showConfirmed() {
+			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-failed')
 			hide('payment-expired')
 			setHeading(labels.confirmedBadge, labels.confirmedTitle, labels.confirmedDesc)
 		}
 
-		function showPending() {
+		function showPending(order: ReceiptOrder) {
 			hide('payment-failed')
 			hide('payment-expired')
-			setHeading(labels.confirmedBadge, labels.pendingTitle, labels.pendingDesc)
+			setHeading(labels.statuses.pending, labels.pendingTitle, labels.pendingDesc, 'warning')
+			// A live hold gets the countdown banner (with its own pay action)
+			// in place of the generic pending notice; polling continues.
+			if (startHoldCountdown(order)) {
+				hide('payment-pending')
+				return
+			}
 			document.getElementById('payment-pending-spinner')?.classList.remove('hidden')
 			const desc = document.getElementById('payment-pending-desc')
 			if (desc) desc.textContent = labels.pendingDesc
@@ -612,6 +840,10 @@ const successLabels = {
 		}
 
 		function showPendingTimeout() {
+			if (stopHold) {
+				show('hold-check-again')
+				return
+			}
 			document.getElementById('payment-pending-spinner')?.classList.add('hidden')
 			const desc = document.getElementById('payment-pending-desc')
 			if (desc) desc.textContent = labels.pendingTimeoutDesc
@@ -619,18 +851,20 @@ const successLabels = {
 		}
 
 		function showFailed(canRetry: boolean) {
+			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-expired')
-			setHeading(labels.failedTitle, labels.failedTitle, labels.failedDesc, true)
+			setHeading(labels.failedTitle, labels.failedTitle, labels.failedDesc, 'danger')
 			const retryBtn = document.getElementById('retry-payment-btn')
 			retryBtn?.classList.toggle('hidden', !canRetry)
 			show('payment-failed')
 		}
 
 		function showExpired(order: ReceiptOrder) {
+			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-failed')
-			setHeading(labels.expiredTitle, labels.expiredTitle, labels.expiredDesc, true)
+			setHeading(labels.expiredTitle, labels.expiredTitle, labels.expiredDesc, 'danger')
 			const link = document.getElementById('payment-expired-link') as HTMLAnchorElement | null
 			if (link && order.drop?.slug) {
 				link.href = `${labels.dropBaseHref || '/drop'}/${encodeURIComponent(order.drop.slug)}`
@@ -720,31 +954,42 @@ const successLabels = {
 			}
 			show('order-view')
 
-			const retryBtn = document.getElementById('retry-payment-btn')
-			retryBtn?.addEventListener('click', () => {
-				void (async () => {
-					const errorEl = document.getElementById('retry-payment-error')
-					errorEl?.classList.add('hidden')
-					;(retryBtn as HTMLButtonElement).disabled = true
-					try {
-						const url = await startOrderPayment(orgId, order.id, labels.locale)
-						window.location.assign(url)
-					} catch {
-						if (errorEl) {
-							errorEl.textContent = labels.paymentStartFailed
-							errorEl.classList.remove('hidden')
+			// Retry after a failure and "Complete payment" during a hold share
+			// one action: start a hosted payment session for this order.
+			const wirePayButton = (buttonId: string, errorId: string) => {
+				const button = document.getElementById(buttonId) as HTMLButtonElement | null
+				button?.addEventListener('click', () => {
+					void (async () => {
+						const errorEl = document.getElementById(errorId)
+						errorEl?.classList.add('hidden')
+						button.disabled = true
+						try {
+							const url = await startOrderPayment(orgId, order.id, labels.locale)
+							window.location.assign(url)
+						} catch {
+							if (errorEl) {
+								errorEl.textContent = labels.paymentStartFailed
+								errorEl.classList.remove('hidden')
+							}
+							button.disabled = false
 						}
-						;(retryBtn as HTMLButtonElement).disabled = false
-					}
-				})()
-			})
-			document.getElementById('payment-check-again')?.addEventListener('click', () => {
-				showPending()
+					})()
+				})
+			}
+			wirePayButton('retry-payment-btn', 'retry-payment-error')
+			wirePayButton('hold-pay-btn', 'hold-pay-error')
+			const checkAgain = () => {
+				showPending(order)
+				void pollPaymentStatus(order)
+			}
+			document.getElementById('payment-check-again')?.addEventListener('click', checkAgain)
+			document.getElementById('hold-check-again')?.addEventListener('click', () => {
+				hide('hold-check-again')
 				void pollPaymentStatus(order)
 			})
 
 			if (order.paymentStatus === 'pending') {
-				showPending()
+				showPending(order)
 				void pollPaymentStatus(order)
 			} else if (order.paymentStatus === 'failed') {
 				const live =

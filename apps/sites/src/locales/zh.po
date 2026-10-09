@@ -22,6 +22,11 @@ msgstr "{count} 卡"
 msgid "{count} items"
 msgstr "{count} 件商品"
 
+#: src/lib/ordering-labels.ts:107
+msgid "{count} min"
+msgstr "{count} 分钟"
+
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{h}h {m}m"
 msgstr "{h}小时{m}分"
@@ -31,30 +36,42 @@ msgstr "{h}小时{m}分"
 msgid "{min}–{max} Cal"
 msgstr "{min}–{max} 卡"
 
+#: src/lib/ordering-labels.ts:106
 #: src/pages/menu.astro.ts:3
 msgid "{min}–{max} min"
 msgstr "{min}–{max} 分钟"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
-msgid "{n} dates"
-msgstr "{n} 个日期"
-
-#: src/pages/drop/[slug].astro.ts:3
 msgid "{n} days"
 msgstr "{n}天"
 
-#: src/components/drops/DropCard.astro.ts:3
-msgid "{n} locations"
-msgstr "{n} 个门店"
+#: src/components/drops/DropNudge.astro.ts:3
+msgid "{n} drops coming up"
+msgstr "{n} 个限量活动即将开始"
 
+#: src/components/drops/DropNudge.astro.ts:3
+msgid "{n} drops ordering now"
+msgstr "{n} 个限量活动正在接受下单"
+
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} min"
 msgstr "{n}分钟"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "{time} left to complete payment."
+msgstr "完成付款的剩余时间：{time}。"
+
+#: src/components/drops/DropCard.astro.ts:3
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "+{n} more"
 msgstr "+{n}个更多"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "+1 555 000 0000"
+msgstr "138 0000 0000"
 
 #: src/pages/menu.astro.ts:3
 msgid "~{minutes} min"
@@ -68,21 +85,18 @@ msgstr "约 15-25 分钟"
 msgid "~35-45 minutes"
 msgstr "约 35-45 分钟"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "1 day"
 msgstr "1天"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "1. Fulfillment Mode"
-msgstr "1. 配送方式"
+#: src/components/drops/DropNudge.astro.ts:3
+msgid "1 drop coming up"
+msgstr "1 个限量活动即将开始"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "2. Contact Information"
-msgstr "2. 联系信息"
-
-#: src/pages/menu/checkout.astro.ts:3
-msgid "3. Delivery Address"
-msgstr "3. 配送地址"
+#: src/components/drops/DropNudge.astro.ts:3
+msgid "1 drop ordering now"
+msgstr "1 个限量活动正在接受下单"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Accepted"
@@ -96,9 +110,17 @@ msgstr "账户"
 msgid "Account settings"
 msgstr "账户设置"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "Add a Tip for the Team"
-msgstr "为团队添加小费"
+#: src/lib/ordering-labels.ts:156
+msgid "Add {amount} more to reach the {minimum} delivery minimum."
+msgstr "再添加 {amount} 即可达到 {minimum} 的配送起送额。"
+
+#: src/lib/ordering-labels.ts:152
+msgid "Add a delivery address we deliver to before placing your order."
+msgstr "请先添加我们可配送的地址，再提交订单。"
+
+#: src/lib/ordering-labels.ts:146
+msgid "Add delivery address"
+msgstr "添加配送地址"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropSummaryCard.astro.ts:3
@@ -108,15 +130,26 @@ msgid "Add to calendar"
 msgstr "添加到日历"
 
 #: src/lib/ordering-labels.ts:31
-msgid "Add to Order"
+msgid "Add to order"
 msgstr "加入订单"
+
+#: src/lib/ordering-labels.ts:88
+msgid "Address suggestions"
+msgstr "地址建议"
+
+#: src/lib/ordering-labels.ts:160
+msgid "After address"
+msgstr "填写地址后计算"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "After you place your order, we'll hold your items for {duration} while you pay."
+msgstr "下单后，我们会为您保留商品 {duration}，以便您完成付款。"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Alcohol"
 msgstr "含酒精"
 
-#: src/components/PublicDrops.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "All drops"
 msgstr "全部限量活动"
@@ -126,9 +159,17 @@ msgstr "全部限量活动"
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "任何饮食偏好、酱料另放等"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "Apt / Suite / Unit"
-msgstr "公寓 / 套房 / 单元"
+#: src/lib/ordering-labels.ts:97
+msgid "Apt, suite or floor"
+msgstr "公寓、单元或楼层"
+
+#: src/lib/ordering-labels.ts:134
+msgid "Arrives in {min}–{max} min"
+msgstr "{min}–{max} 分钟送达"
+
+#: src/lib/ordering-labels.ts:131
+msgid "ASAP"
+msgstr "尽快"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -136,12 +177,17 @@ msgid "Back to drop"
 msgstr "返回活动"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Back to Menu"
+#: src/pages/menu/success.astro.ts:3
+msgid "Back to menu"
 msgstr "返回菜单"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
 msgstr "返回商店"
+
+#: src/pages/drops.astro.ts:3
+msgid "Be first when the next drop opens"
+msgstr "下一场限量活动开始时抢先知道"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -151,6 +197,10 @@ msgstr "浏览商店"
 #: src/pages/shop.astro.ts:3
 msgid "Buy now"
 msgstr "立即购买"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
+msgstr "注册即表示您同意 {org} 向此号码定期发送自动营销短信。同意并非购买的条件。可能产生短信和数据费用。回复 STOP 即可退订。"
 
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Call"
@@ -168,10 +218,15 @@ msgstr "卡号"
 msgid "Cards used on past shop purchases on this account."
 msgstr "此账户在商店过往购买中使用的银行卡。"
 
+#: src/lib/ordering-labels.ts:145
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Change"
 msgstr "更改"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Change number"
+msgstr "更换号码"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -181,9 +236,25 @@ msgstr "再次检查"
 msgid "Check the menu for what we are serving today."
 msgstr "查看菜单，了解我们今天供应的菜品。"
 
+#: src/lib/ordering-labels.ts:92
+msgid "Check the spelling, or try just the street number and name."
+msgstr "请检查拼写，或只输入门牌号和街道名。"
+
+#: src/lib/ordering-labels.ts:118
+msgid "Check the street number and spelling, or choose a suggestion from the list."
+msgstr "请检查门牌号和拼写，或从列表中选择一个建议地址。"
+
+#: src/lib/ordering-labels.ts:123
+msgid "Check your connection and try again."
+msgstr "请检查网络连接后重试。"
+
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
 msgstr "请查看手机"
+
+#: src/lib/ordering-labels.ts:99
+msgid "Checking delivery to this address…"
+msgstr "正在确认是否可配送至此地址…"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Checkout"
@@ -202,6 +273,7 @@ msgid "Choose 1"
 msgstr "选择 1 项"
 
 #: src/components/drops/PickupPicker.astro.ts:3
+#: src/lib/ordering-labels.ts:138
 msgid "Choose a day"
 msgstr "选择日期"
 
@@ -215,8 +287,13 @@ msgid "Choose a pickup time to continue"
 msgstr "请选择取货时间以继续"
 
 #: src/components/drops/PickupPicker.astro.ts:3
+#: src/lib/ordering-labels.ts:139
 msgid "Choose a time"
 msgstr "选择时间"
+
+#: src/lib/ordering-labels.ts:144
+msgid "Choose a time to continue."
+msgstr "请选择时间以继续。"
 
 #: src/lib/ordering-labels.ts:39
 msgid "Choose at least {count}"
@@ -234,18 +311,20 @@ msgstr "至少选择 1 个选项"
 msgid "Choose your pickup"
 msgstr "选择取货安排"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "City / Region"
-msgstr "城市 / 地区"
+#: src/lib/ordering-labels.ts:87
+msgid "Clear address"
+msgstr "清除地址"
 
 #: src/pages/menu.astro.ts:3
 msgid "Clear search"
 msgstr "清除搜索"
 
 #: src/lib/ordering-labels.ts:70
+#: src/lib/ordering-labels.ts:81
 msgid "Close"
 msgstr "关闭"
 
+#: src/lib/ordering-labels.ts:127
 #: src/pages/menu.astro.ts:3
 msgid "Closed"
 msgstr "已关闭"
@@ -253,6 +332,10 @@ msgstr "已关闭"
 #: src/pages/menu.astro.ts:3
 msgid "Closed · opens {time}"
 msgstr "已关闭 · {time}开放"
+
+#: src/lib/ordering-labels.ts:135
+msgid "Closed now. Schedule your order for later."
+msgstr "当前已打烊，请预约稍后的时间。"
 
 #: src/components/drops/DropStatusChip.astro.ts:3
 msgid "Coming soon"
@@ -262,6 +345,14 @@ msgstr "即将推出"
 msgid "Coming up"
 msgstr "即将开始"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Complete payment"
+msgstr "完成付款"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Complete payment to keep it."
+msgstr "请完成付款以保留订单。"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "提交前请完成验证。"
@@ -270,12 +361,20 @@ msgstr "提交前请完成验证。"
 msgid "Completed"
 msgstr "已完成"
 
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Confirm"
+msgstr "确认"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Contact details"
+msgstr "联系方式"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "继续"
 
 #: src/lib/ordering-labels.ts:71
-msgid "Customize Item"
+msgid "Customize item"
 msgstr "自定义菜品"
 
 #: src/pages/shop.astro.ts:3
@@ -286,33 +385,59 @@ msgstr "CVC"
 msgid "Decrease quantity"
 msgstr "减少数量"
 
+#: src/lib/ordering-labels.ts:142
+msgid "Deliver here"
+msgstr "配送到这里"
+
+#: src/pages/menu.astro.ts:3
+msgid "Deliver to"
+msgstr "配送至"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Deliver to: {address}"
 msgstr "配送至：{address}"
 
+#: src/lib/ordering-labels.ts:84
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery"
 msgstr "配送"
 
-#: src/pages/drop/[slug].astro.ts:3
+#: src/lib/ordering-labels.ts:85
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Delivery address"
+msgstr "配送地址"
+
+#: src/lib/ordering-labels.ts:101
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+msgid "Delivery fee"
+msgstr "配送费"
+
+#: src/pages/drop/[slug].astro.ts:3
 msgid "Delivery Fee"
 msgstr "配送费"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Delivery Instructions"
+msgid "Delivery instructions"
 msgstr "配送说明"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery is not available for this order."
 msgstr "此订单不支持配送。"
 
+#: src/lib/ordering-labels.ts:120
+msgid "Delivery isn't available right now"
+msgstr "目前暂不提供配送"
+
 #: src/pages/menu/success.astro.ts:3
-msgid "Delivery Order"
-msgstr "配送订单"
+msgid "Delivery order"
+msgstr "外送订单"
+
+#: src/pages/menu.astro.ts:3
+msgid "Delivery time"
+msgstr "配送时间"
 
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
@@ -322,7 +447,14 @@ msgstr "路线"
 msgid "Done"
 msgstr "完成"
 
-#: src/components/PublicDrops.astro.ts:3
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Drop alerts are off"
+msgstr "活动提醒已关闭"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Drop alerts are on"
+msgstr "活动提醒已开启"
+
 #: src/pages/drops.astro.ts:3
 msgid "Drops"
 msgstr "限量活动"
@@ -332,9 +464,10 @@ msgid "Email"
 msgstr "电子邮件"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Email Address *"
-msgstr "电子邮箱 *"
+msgid "Email address"
+msgstr "电子邮箱"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
 msgid "Ended"
 msgstr "已结束"
@@ -343,17 +476,25 @@ msgstr "已结束"
 msgid "Ended {when}"
 msgstr "已于{when}结束"
 
+#: src/lib/ordering-labels.ts:143
+msgid "Enter a delivery address to continue."
+msgstr "请输入配送地址以继续。"
+
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "请输入手机号，我们将发送验证码。"
 
-#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+msgid "Estimated tax"
+msgstr "预估税费"
+
+#: src/pages/drop/[slug].astro.ts:3
 msgid "Estimated Tax"
 msgstr "预估税费"
 
+#: src/lib/ordering-labels.ts:105
 #: src/pages/menu/success.astro.ts:3
-msgid "Estimated Time"
+msgid "Estimated time"
 msgstr "预计时间"
 
 #: src/pages/profile.astro.ts:3
@@ -364,14 +505,16 @@ msgstr "到期"
 msgid "Expiry"
 msgstr "有效期"
 
+#: src/lib/ordering-labels.ts:73
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Explore Menu"
+msgid "Explore menu"
 msgstr "浏览菜单"
 
 #: src/lib/ordering-labels.ts:69
 msgid "Explore our menu and add your favorite dishes."
 msgstr "浏览我们的菜单，添加您喜爱的菜品。"
 
+#: src/lib/ordering-labels.ts:104
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
 msgstr "免费"
@@ -381,22 +524,40 @@ msgid "From"
 msgstr "起价"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
 msgid "Fulfillment"
 msgstr "取餐方式"
 
 #: src/pages/complete-name.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
 msgid "Full name"
 msgstr "全名"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Full Name *"
-msgstr "姓名 *"
+msgid "Gate code, buzzer, or where to leave it"
+msgstr "门禁密码、门铃或放置位置"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Get a text when new drops open, before they sell out."
+msgstr "新限量活动开始时短信通知您，抢在售罄之前。"
 
 #: src/pages/drop/[slug].astro.ts:3
+msgid "Get a text when orders open"
+msgstr "订单开放时短信通知我"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Get a text when the next drop opens, before it sells out."
+msgstr "下一场限量活动开始时短信通知您，抢在售罄之前。"
+
 #: src/pages/menu.astro.ts:3
+msgid "Gluten-free"
+msgstr "无麸质"
+
+#: src/pages/drop/[slug].astro.ts:3
 msgid "Gluten-Free"
 msgstr "无麸质"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "{t}后"
@@ -409,9 +570,17 @@ msgstr "增加数量"
 msgid "Invalid verification code."
 msgstr "验证码无效。"
 
+#: src/lib/ordering-labels.ts:111
+msgid "It's outside the delivery area for {location}. You can still order for pickup."
+msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Keep this page open — we'll confirm your order as soon as your payment completes."
 msgstr "请保持此页面打开——付款完成后我们会立即确认您的订单。"
+
+#: src/lib/ordering-labels.ts:89
+msgid "Keep typing to see matching addresses."
+msgstr "继续输入以查看匹配的地址。"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Language"
@@ -421,6 +590,7 @@ msgstr "语言"
 msgid "Left"
 msgstr "左半"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "less than a minute"
 msgstr "不到一分钟"
@@ -433,7 +603,7 @@ msgstr "每单限购 {count} 件"
 msgid "Limit reached"
 msgstr "已达上限"
 
-#: src/components/PublicDrops.astro.ts:3
+#: src/components/drops/DropNudge.astro.ts:3
 #: src/pages/drops.astro.ts:3
 msgid "Limited menus you pre-order for a pickup window."
 msgstr "限量菜单，预订后在指定时段自取。"
@@ -451,7 +621,7 @@ msgid "Looks like you haven't added any dishes to your order yet."
 msgstr "看起来您还没有在订单中添加任何菜品。"
 
 #: src/pages/menu.astro.ts:3
-msgid "Menu & Ordering"
+msgid "Menu & ordering"
 msgstr "菜单与点餐"
 
 #: src/pages/drop/[slug].astro.ts:3
@@ -460,8 +630,16 @@ msgid "Menu categories"
 msgstr "菜单分类"
 
 #: src/pages/menu.astro.ts:3
-msgid "Menu Coming Soon"
+msgid "Menu coming soon"
 msgstr "菜单即将上线"
+
+#: src/lib/ordering-labels.ts:102
+msgid "Minimum order"
+msgstr "起送金额"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Missed this one?"
+msgstr "错过了这一场？"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
@@ -471,16 +649,33 @@ msgstr "移动端"
 msgid "More drops"
 msgstr "更多活动"
 
+#: src/pages/menu.astro.ts:3
+msgid "Most ordered"
+msgstr "最受欢迎"
+
 #: src/pages/profile.astro.ts:3
 msgid "Name"
 msgstr "姓名"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "name@example.com"
+msgstr "name@example.com"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
 #: src/pages/profile.astro.ts:3
 #: src/pages/verify.astro.ts:3
 msgid "Network error. Please try again."
 msgstr "网络错误，请重试。"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Never miss a drop"
+msgstr "不再错过任何限量活动"
+
+#: src/pages/menu.astro.ts:3
+msgid "Next"
+msgstr "下一个"
 
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
@@ -493,6 +688,14 @@ msgstr "目前没有限量活动。"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "No longer available"
 msgstr "不再可用"
+
+#: src/lib/ordering-labels.ts:90
+msgid "No matching addresses"
+msgstr "没有匹配的地址"
+
+#: src/lib/ordering-labels.ts:103
+msgid "No minimum"
+msgstr "无起送金额"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -507,13 +710,21 @@ msgstr "目前没有可用的取货时间。"
 msgid "No saved payment methods yet."
 msgstr "暂无已保存的支付方式。"
 
+#: src/lib/ordering-labels.ts:140
+msgid "No scheduled times are available right now."
+msgstr "目前没有可预约的时间。"
+
 #: src/pages/menu/checkout.astro.ts:3
-msgid "No Tip"
-msgstr "不给小费"
+msgid "No tip"
+msgstr "不付小费"
 
 #: src/lib/ordering-labels.ts:54
 msgid "None"
 msgstr "无"
+
+#: src/lib/ordering-labels.ts:164
+msgid "Not available right now"
+msgstr "目前不可用"
 
 #: src/lib/ordering-labels.ts:59
 msgid "Only {count} left"
@@ -531,41 +742,48 @@ msgstr "接受订单中"
 msgid "Open menu"
 msgstr "打开菜单"
 
+#: src/lib/ordering-labels.ts:125
+msgid "Open now"
+msgstr "营业中"
+
+#: src/lib/ordering-labels.ts:126
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "营业至 {time}"
+
+#: src/lib/ordering-labels.ts:128
+msgid "Opens {time}"
+msgstr "{time} 开始营业"
 
 #: src/components/drops/DropStatusChip.astro.ts:3
 msgid "Opens {when}"
 msgstr "{when}开放"
 
 #: src/lib/ordering-labels.ts:35
+#: src/lib/ordering-labels.ts:98
 msgid "Optional"
 msgstr "可选"
 
+#: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
 msgstr "订单已确认"
 
-#: src/pages/menu/success.astro.ts:3
-msgid "Order Confirmed"
-msgstr "订单已确认"
+#: src/lib/ordering-labels.ts:80
+msgid "Order details"
+msgstr "订单详情"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order history"
 msgstr "订单历史"
 
-#: src/pages/menu/success.astro.ts:3
-msgid "Order More Food"
-msgstr "继续点餐"
-
 #: src/components/drops/DropCard.astro.ts:3
 msgid "Order now"
 msgstr "立即下单"
 
 #: src/pages/menu/success.astro.ts:3
-msgid "Order Number"
+msgid "Order number"
 msgstr "订单号"
 
 #: src/pages/menu/success.astro.ts:3
@@ -573,8 +791,12 @@ msgid "Order received"
 msgstr "已收到订单"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Order Summary"
+msgid "Order summary"
 msgstr "订单摘要"
+
+#: src/lib/ordering-labels.ts:82
+msgid "Order type"
+msgstr "订单类型"
 
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
@@ -594,6 +816,7 @@ msgstr "正在接受订单"
 msgid "Orders"
 msgstr "订单"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Orders close {when}"
@@ -607,6 +830,7 @@ msgstr "本次活动的订单已关闭，所有取货均已完成。感谢您的
 msgid "Orders open"
 msgstr "订单开放"
 
+#: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Orders open {when}"
 msgstr "订单于{when}开放"
@@ -640,6 +864,18 @@ msgstr "送达时付款"
 msgid "Pay online"
 msgstr "在线支付"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pay securely now"
+msgstr "立即安全支付"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Pay when you receive your order"
+msgstr "收到订单时付款"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Payment"
+msgstr "支付"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Payment failed"
 msgstr "支付失败"
@@ -648,42 +884,48 @@ msgstr "支付失败"
 msgid "Payment method"
 msgstr "支付方式"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "Payment Method"
-msgstr "支付方式"
-
 #: src/pages/profile.astro.ts:3
 msgid "Payment methods"
 msgstr "支付方式"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Phone number"
+msgstr "电话号码"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Phone Number"
 msgstr "电话号码"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "Phone Number *"
-msgstr "电话号码 *"
-
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "目前无法更改电话号码。"
 
-#: src/components/drops/DropCard.astro.ts:3
+#: src/lib/ordering-labels.ts:124
+msgid "Pick up from"
+msgstr "自取门店"
+
+#: src/lib/ordering-labels.ts:83
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup"
 msgstr "自取"
 
+#: src/components/drops/DropCard.astro.ts:3
+msgid "Pickup {when}"
+msgstr "自取 {when}"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup is not available for this order."
 msgstr "此订单不支持自取。"
 
 #: src/pages/menu/success.astro.ts:3
-msgid "Pickup Order"
+msgid "Pickup order"
 msgstr "自取订单"
 
+#: src/pages/menu.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Pickup time"
 msgstr "自取时间"
@@ -693,7 +935,7 @@ msgid "Pickup: {title}"
 msgstr "取货：{title}"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Place Order"
+msgid "Place order"
 msgstr "提交订单"
 
 #: src/pages/menu/checkout.astro.ts:3
@@ -740,12 +982,19 @@ msgstr "制作中"
 msgid "Preview · ordering opens {when}"
 msgstr "预览 · 订单于{when}开放"
 
+#: src/pages/menu.astro.ts:3
+msgid "Previous"
+msgstr "上一个"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
 msgstr "主导航"
 
-#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+msgid "Proceed to checkout"
+msgstr "去结账"
+
+#: src/pages/drop/[slug].astro.ts:3
 msgid "Proceed to Checkout"
 msgstr "去结账"
 
@@ -773,13 +1022,18 @@ msgstr "登录后在商店的购买记录。"
 msgid "Quantity"
 msgstr "数量"
 
-#: src/components/drops/DropSummaryCard.astro.ts:3
+#: src/components/drops/DropHero.astro.ts:3
 msgid "Read more"
 msgstr "阅读更多"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Ready"
 msgstr "已备好"
+
+#: src/lib/ordering-labels.ts:129
+#: src/lib/ordering-labels.ts:133
+msgid "Ready in about {count} min"
+msgstr "约 {count} 分钟后可取"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Receipt"
@@ -802,7 +1056,7 @@ msgid "Required"
 msgstr "必填"
 
 #: src/pages/menu/success.astro.ts:3
-msgid "Return to Homepage"
+msgid "Return to homepage"
 msgstr "返回首页"
 
 #: src/pages/menu/checkout.astro.ts:3
@@ -813,6 +1067,10 @@ msgstr "请核对订单详情并填写联系信息以完成订单。"
 msgid "Right"
 msgstr "右半"
 
+#: src/lib/ordering-labels.ts:141
+msgid "Save"
+msgstr "保存"
+
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
 msgstr "保存更改"
@@ -821,6 +1079,14 @@ msgstr "保存更改"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "保存中..."
+
+#: src/lib/ordering-labels.ts:132
+msgid "Schedule"
+msgstr "预约"
+
+#: src/lib/ordering-labels.ts:86
+msgid "Search street address"
+msgstr "搜索街道地址"
 
 #: src/pages/menu.astro.ts:3
 msgid "Search the menu"
@@ -834,14 +1100,11 @@ msgstr "安全结账。提交订单即表示您同意餐厅的条款。"
 msgid "Select a published form in the page editor."
 msgstr "请在页面编辑器中选择已发布的表单。"
 
-#: src/pages/menu.astro.ts:3
-msgid "Select location"
-msgstr "选择门店"
-
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
 
+#: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "发送中..."
@@ -850,7 +1113,7 @@ msgstr "发送中..."
 msgid "Shop"
 msgstr "商店"
 
-#: src/components/drops/DropSummaryCard.astro.ts:3
+#: src/components/drops/DropHero.astro.ts:3
 msgid "Show less"
 msgstr "收起"
 
@@ -887,20 +1150,20 @@ msgstr "部分商品刚刚售罄。请检查您的订单。"
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "自您通话以来部分价格已变动。购物车显示的是当前价格。"
 
+#: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Something went wrong."
 msgstr "出了点问题。"
 
-#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
-msgid "Special Instructions"
+msgid "Special instructions"
 msgstr "特别说明"
 
-#: src/pages/menu/checkout.astro.ts:3
-msgid "Street Address *"
-msgstr "街道地址 *"
+#: src/pages/drop/[slug].astro.ts:3
+msgid "Special Instructions"
+msgstr "特别说明"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -913,10 +1176,22 @@ msgstr "正在提交..."
 msgid "Subtotal"
 msgstr "小计"
 
+#: src/lib/ordering-labels.ts:114
+msgid "Switch to pickup"
+msgstr "改为自取"
+
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
 msgstr "税费"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Text me"
+msgstr "短信通知我"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Text me new drops"
+msgstr "短信通知新活动"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -986,6 +1261,7 @@ msgstr "此收据仅在下单时使用的设备上可用。"
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
 
+#: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Time remaining"
 msgstr "剩余时间"
@@ -1000,6 +1276,18 @@ msgid "Tips are not available for this order."
 msgstr "此订单不支持小费。"
 
 #: src/pages/menu/checkout.astro.ts:3
+msgid "To your door"
+msgstr "送货上门"
+
+#: src/lib/ordering-labels.ts:136
+msgid "Today"
+msgstr "今天"
+
+#: src/lib/ordering-labels.ts:137
+msgid "Tomorrow"
+msgstr "明天"
+
+#: src/pages/menu/checkout.astro.ts:3
 msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多。请稍后重试。"
 
@@ -1011,12 +1299,17 @@ msgid "Total"
 msgstr "总计"
 
 #: src/pages/menu/success.astro.ts:3
-msgid "Total Paid"
-msgstr "已付总额"
+msgid "Total paid"
+msgstr "实付总额"
 
+#: src/lib/ordering-labels.ts:96
 #: src/pages/menu/success.astro.ts:3
 msgid "Try again"
 msgstr "重试"
+
+#: src/lib/ordering-labels.ts:115
+msgid "Try another address"
+msgstr "换一个地址"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Try payment again"
@@ -1038,6 +1331,10 @@ msgstr "最多 {count} 项"
 msgid "Update your basic details below."
 msgstr "请在下方更新您的基本信息。"
 
+#: src/lib/ordering-labels.ts:94
+msgid "Use “{query}”"
+msgstr "使用“{query}”"
+
 #: src/pages/shop.astro.ts:3
 msgid "Use a new card"
 msgstr "使用新卡"
@@ -1046,6 +1343,10 @@ msgstr "使用新卡"
 #: src/pages/menu.astro.ts:3
 msgid "Vegetarian"
 msgstr "素食"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "Verification code"
+msgstr "验证码"
 
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
@@ -1067,6 +1368,10 @@ msgstr "查看"
 msgid "View drop"
 msgstr "查看活动"
 
+#: src/components/drops/DropNudge.astro.ts:3
+msgid "View drops"
+msgstr "查看限量活动"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/drops.astro.ts:3
 msgid "View menu"
@@ -1074,7 +1379,7 @@ msgstr "查看菜单"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
-msgid "View Order"
+msgid "View order"
 msgstr "查看订单"
 
 #: src/pages/menu/checkout.astro.ts:3
@@ -1085,6 +1390,10 @@ msgstr "查看您的收据"
 msgid "Waiting for payment confirmation"
 msgstr "等待支付确认"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Want first dibs next time?"
+msgstr "下次想抢先一步？"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "我们无法确认此订单。"
@@ -1093,9 +1402,21 @@ msgstr "我们无法确认此订单。"
 msgid "We could not place your order. Please try again."
 msgstr "无法提交您的订单。请重试。"
 
+#: src/lib/ordering-labels.ts:122
+msgid "We couldn't check this address"
+msgstr "无法核实此地址"
+
+#: src/lib/ordering-labels.ts:116
+msgid "We couldn't find that address"
+msgstr "找不到该地址"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't find this order"
 msgstr "找不到此订单"
+
+#: src/lib/ordering-labels.ts:95
+msgid "We couldn't load address suggestions."
+msgstr "无法加载地址建议。"
 
 #: src/pages/menu.astro.ts:3
 msgid "We couldn't load your phone order."
@@ -1109,9 +1430,29 @@ msgstr "无法加载您的收据"
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
 
+#: src/lib/ordering-labels.ts:100
+msgid "We deliver here"
+msgstr "此地址可配送"
+
+#: src/lib/ordering-labels.ts:108
+msgid "We don't deliver to this address yet"
+msgstr "暂不支持配送至此地址"
+
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "我们已载入您通话中的订单。请核对后结账。"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "We texted a 6-digit code to {phone}."
+msgstr "我们已向 {phone} 发送了 6 位验证码。"
+
+#: src/lib/ordering-labels.ts:149
+msgid "We'll check that your address is in our delivery area before you order."
+msgstr "下单前，我们会确认您的地址是否在配送范围内。"
+
+#: src/pages/drop/[slug].astro.ts:3
+msgid "We'll text you when this drop and future ones open."
+msgstr "本场及以后的限量活动开始时，我们会短信通知您。"
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
@@ -1126,6 +1467,10 @@ msgstr "我们目前已打烊。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We're closed right now. Orders reopen {time}"
 msgstr "我们目前已打烊。{time}恢复接单"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We're holding your order for {time}."
+msgstr "我们正在为您保留订单 {time}。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We're still waiting for confirmation. Check again in a moment."
@@ -1143,6 +1488,10 @@ msgstr "我们已将6位验证码发送至"
 msgid "What's your name?"
 msgstr "您叫什么名字？"
 
+#: src/lib/ordering-labels.ts:130
+msgid "When"
+msgstr "时间"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "当您在商店购买商品时，您的收据将显示在这里。"
@@ -1151,16 +1500,35 @@ msgstr "当您在商店购买商品时，您的收据将显示在这里。"
 msgid "Where"
 msgstr "地点"
 
+#: src/lib/ordering-labels.ts:147
+msgid "Where should we deliver?"
+msgstr "配送到哪里？"
+
 #: src/lib/ordering-labels.ts:51
 msgid "Whole"
 msgstr "整份"
+
+#: src/lib/ordering-labels.ts:121
+msgid "You can still order for pickup."
+msgstr "您仍可下单自取。"
+
+#: src/components/drops/DropAlertsSignup.astro.ts:3
+msgid "You're on the list. We'll text you when the next drop opens."
+msgstr "您已加入名单。下一场限量活动开始时，我们会短信通知您。"
 
 #: src/lib/ordering-labels.ts:68
 msgid "Your cart is empty"
 msgstr "您的购物车是空的"
 
-#: src/pages/drop/[slug].astro.ts:3
+#: src/lib/ordering-labels.ts:166
+msgid "Your delivery check expired. Confirm your address again."
+msgstr "配送核验已过期，请重新确认地址。"
+
 #: src/pages/menu.astro.ts:3
+msgid "Your order"
+msgstr "您的订单"
+
+#: src/pages/drop/[slug].astro.ts:3
 msgid "Your Order"
 msgstr "您的订单"
 
@@ -1173,7 +1541,7 @@ msgid "Your order exceeds the allowed quantity. Please review your cart."
 msgstr "您的订单超出允许的数量。请检查购物车。"
 
 #: src/pages/menu/checkout.astro.ts:3
-msgid "Your Order is Empty"
+msgid "Your order is empty"
 msgstr "您的订单是空的"
 
 #: src/pages/menu/checkout.astro.ts:3
@@ -1191,3 +1559,7 @@ msgstr "支付时限已过期"
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
 msgstr "您的资料"
+
+#: src/lib/ordering-labels.ts:162
+msgid "Your scheduled time is no longer available. Choose a new time."
+msgstr "您预约的时间已不可用，请重新选择。"

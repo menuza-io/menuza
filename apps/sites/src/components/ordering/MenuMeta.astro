@@ -1,0 +1,69 @@
+---
+/**
+ * Quiet caption under the order bar: live ordering status, pickup/delivery
+ * estimates and the store meta on one muted line, every item in the same
+ * icon + text rhythm. The status is only rendered while open: when closed the
+ * warning notice above this line already says so, and saying it twice reads
+ * as noise. The page has no visible title; the site header carries the org
+ * name and logo.
+ */
+interface Props {
+	open: boolean
+	statusText: string
+	estimates: Array<{ label: string; value: string }>
+	locationName?: string | null
+	addressLine?: string | null
+	class?: string
+}
+
+const { open, statusText, estimates, locationName, addressLine, class: className } = Astro.props
+const icons = {
+	clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+	pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+}
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const item = 'inline-flex items-center gap-1.5 whitespace-nowrap'
+---
+
+<p
+	class:list={[
+		'flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm leading-6 text-muted-foreground',
+		className,
+	]}
+>
+	{open ? (
+		<span class={item}>
+			<span class="relative flex size-3.5 shrink-0 items-center justify-center" aria-hidden="true">
+				<span class="absolute size-2 rounded-full bg-success opacity-30"></span>
+				<span class="size-1.5 rounded-full bg-success"></span>
+			</span>
+			<span class="bidi-isolate font-medium text-foreground">{statusText}</span>
+		</span>
+	) : null}
+	{estimates.map((entry) => (
+		<span class={item}>
+			<svg {...iconAttrs} class="size-3.5 shrink-0" set:html={icons.clock} />
+			<span>{entry.label}</span>
+			<bdi class="font-medium text-foreground tabular-nums">{entry.value}</bdi>
+		</span>
+	))}
+	{locationName || addressLine ? (
+		<span class="inline-flex min-w-0 items-center gap-1.5">
+			<svg {...iconAttrs} class="size-3.5 shrink-0" set:html={icons.pin} />
+			<span class="min-w-0 truncate">
+				{locationName ? <span class="font-medium text-foreground">{locationName}</span> : null}
+				{locationName && addressLine ? <span aria-hidden="true"> · </span> : null}
+				{addressLine ? <span class="bidi-isolate">{addressLine}</span> : null}
+			</span>
+		</span>
+	) : null}
+</p>

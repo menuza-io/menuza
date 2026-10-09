@@ -1,8 +1,10 @@
 ---
 /**
- * Category navigation driven by `mountScrollSpy`. Horizontal chips by default;
- * `rail` renders a vertical list for wide layouts. Class sets for the active
- * and inactive states are exposed as data attributes for the scroll-spy.
+ * Category navigation driven by `mountScrollSpy`. Horizontal tabs by default
+ * (the active one carries a bar in the org primary); `rail` renders a
+ * vertical list for wide layouts. The scroll-spy toggles
+ * `aria-current` and the `is-active` marker; both styles key off those, so the
+ * swapped class sets stay minimal.
  */
 interface Props {
 	items: Array<{ id: string; label: string }>
@@ -13,15 +15,13 @@ interface Props {
 
 const { items, label, rail = false, class: className } = Astro.props
 
+// Tabs set their own display, so `.hidden` (search filtering) needs the
+// higher-specificity guard to win.
 const chipBase =
-	'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-const chipActive = 'border-primary bg-primary text-primary-foreground'
-const chipInactive = 'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
-
+	"relative inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors duration-150 ease-out after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity after:content-[''] hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none motion-reduce:after:transition-none aria-[current=true]:text-foreground aria-[current=true]:after:opacity-100 [&.hidden]:hidden"
 const railBase =
-	'block truncate rounded-[calc(var(--radius)*0.7)] border-s-2 px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const railActive = 'border-primary text-foreground font-medium'
-const railInactive = 'border-transparent text-muted-foreground hover:text-foreground'
+	'block truncate rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-ring motion-reduce:transition-none aria-[current=true]:bg-muted aria-[current=true]:font-semibold aria-[current=true]:text-foreground'
+const activeClass = 'is-active'
 ---
 
 {items.length > 0 ? (
@@ -29,12 +29,12 @@ const railInactive = 'border-transparent text-muted-foreground hover:text-foregr
 		aria-label={label}
 		data-category-nav={rail ? 'rail' : 'chips'}
 		data-scroll-spy-scroller
-		data-active-class={rail ? railActive : chipActive}
-		data-inactive-class={rail ? railInactive : chipInactive}
+		data-active-class={activeClass}
+		data-inactive-class=""
 		class:list={[
 			rail
-				? 'flex max-h-[calc(100vh-8rem)] flex-col gap-0.5 overflow-y-auto no-scrollbar'
-				: 'flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5',
+				? 'flex max-h-[calc(100dvh-9rem)] flex-col gap-0.5 overflow-y-auto no-scrollbar'
+				: 'flex items-stretch overflow-x-auto no-scrollbar',
 			className,
 		]}
 	>
@@ -43,10 +43,7 @@ const railInactive = 'border-transparent text-muted-foreground hover:text-foregr
 				href={`#category-${item.id}`}
 				data-category-id={item.id}
 				aria-current={index === 0 ? 'true' : undefined}
-				class:list={[
-					rail ? railBase : chipBase,
-					index === 0 ? (rail ? railActive : chipActive) : rail ? railInactive : chipInactive,
-				]}
+				class:list={[rail ? railBase : chipBase, index === 0 && activeClass]}
 			>
 				{item.label}
 			</a>

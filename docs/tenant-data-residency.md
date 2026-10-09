@@ -289,6 +289,10 @@ See [Deployment](./deployment.md#regional-tenant-data-plane) and the
 | `TENANT_DB_DIR`          | Volume mount for `tenant_{orgId}.db` (production: `/data/tenants`).                  |
 | `ROOT_APP`               | Brand domain used to map `{slug}.{ROOT_APP}` origins for CORS.                       |
 
+Delivery address search and coverage quotes (`/delivery/places`,
+`/delivery/quote`) also run on the regional tenant-api, with an optional
+`GOOGLE_MAPS_API_KEY`: see [delivery-coverage.md](./delivery-coverage.md).
+
 ### App (US)
 
 | Variable                 | Notes                                                                      |

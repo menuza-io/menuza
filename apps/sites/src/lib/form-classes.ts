@@ -35,7 +35,7 @@ export const siteFormActionsClass =
 	'flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between'
 
 export const siteStatusSuccessClass =
-	'rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400'
+	'rounded-md border border-success/25 bg-success/10 px-3 py-2 text-sm font-medium text-success'
 
 export const siteStatusErrorClass =
 	'rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive'

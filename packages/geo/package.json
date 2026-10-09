@@ -1,0 +1,26 @@
+{
+  "name": "@repo/geo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only geocoding (Google Maps Platform) and delivery-zone coverage math.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@repo/config": "*",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
+  }
+}

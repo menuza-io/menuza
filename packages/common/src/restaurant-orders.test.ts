@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import {
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
+	deliveryCoverageVerifiable,
 	extractPostalCode,
+	resolveDeliveryZoneForPoint,
 	priceRestaurantOrder,
 	restaurantOrderContextSchema,
 	restaurantOrderRequestSchema,
@@ -1295,5 +1297,424 @@ describe('extractPostalCode', () => {
 		expect(extractPostalCode('100 Congress Ave, Austin TX 78701')).toBe('78701')
 		expect(extractPostalCode('1 Yonge St, Toronto, ON M5E 1E5')).toBe('M5E1E5')
 		expect(extractPostalCode('No postal code here')).toBeNull()
+	})
+
+	it('reads Saudi postcodes (incl. Arabic-Indic digits) for SA locations', () => {
+		expect(
+			extractPostalCode(
+				'8228 King Fahd Rd, Al Olaya, Riyadh 12214 - 3392',
+				'SA',
+			),
+		).toBe('12214')
+		expect(extractPostalCode('حي العليا، الرياض ١٢٢١٤', 'SA')).toBe('12214')
+		// Building / additional numbers are 4 digits and never a postcode.
+		expect(extractPostalCode('Building 8228, additional 3392', 'SA')).toBeNull()
+		expect(extractPostalCode('1 Yonge St, Toronto 12345', 'CA')).toBeNull()
+		expect(extractPostalCode('100 Congress Ave M5E 1E5', 'US')).toBeNull()
+	})
+})
+
+// ---------------------------------------------------------------------------
+// Geocoded delivery quotes, radius/polygon zones, truthful availability
+// ---------------------------------------------------------------------------
+
+const STORE_POINT = { lat: 41.8853, lng: -87.6229 }
+const NEAR_QUOTE = {
+	lat: 41.8789,
+	lng: -87.6359,
+	formatted: '233 S Wacker Dr, Chicago, IL 60606, USA',
+	line1: '233 S Wacker Dr',
+	city: 'Chicago',
+	postalCode: '60606',
+	unit: 'Floor 12',
+}
+const FAR_QUOTE = {
+	...NEAR_QUOTE,
+	lat: 42.0473,
+	lng: -87.6815,
+	formatted: '1603 Orrington Ave, Evanston, IL 60201, USA',
+	line1: '1603 Orrington Ave',
+	city: 'Evanston',
+	postalCode: '60201',
+	unit: null,
+}
+
+function radiusZone(overrides: Record<string, unknown> = {}) {
+	return {
+		id: 'zone-radius',
+		name: 'Standard Delivery Area',
+		provider: 'in_house',
+		restriction: 'allowed',
+		type: 'radius',
+		radius: { value: 5, unit: 'miles' },
+		zipCodes: [],
+		polygon: [],
+		minimumOrder: 15,
+		deliveryFee: 3.99,
+		enabled: true,
+		...overrides,
+	}
+}
+
+function radiusContext(
+	locationOverrides: Record<string, unknown> = {},
+): RestaurantOrderContext {
+	const menu = makeMenu()
+	menu.locations = [
+		makeLocation({
+			address: {
+				formattedAddress: '123 Demo Street, Chicago, IL, 60601, US',
+				city: 'Chicago',
+				state: 'IL',
+				postalCode: '60601',
+				country: 'US',
+				...STORE_POINT,
+			},
+			deliveryZones: [radiusZone()],
+			...locationOverrides,
+		}),
+	]
+	return makeContext({ menu })
+}
+
+describe('priceRestaurantOrder: geocoded delivery quotes', () => {
+	const quotedRequest = (overrides: Record<string, unknown> = {}) =>
+		makeRequest({
+			fulfillment: 'delivery',
+			delivery: { quoteToken: 'signed-token-placeholder-123', notes: 'Ring' },
+			...overrides,
+		})
+
+	it('accepts a quote-backed delivery without city/address text', () => {
+		const parsed = restaurantOrderRequestSchema.safeParse(
+			rawRequest({
+				fulfillment: 'delivery',
+				delivery: { quoteToken: 'signed-token-placeholder-123', city: '' },
+			}),
+		)
+		expect(parsed.success).toBe(true)
+		const withoutToken = restaurantOrderRequestSchema.safeParse(
+			rawRequest({
+				fulfillment: 'delivery',
+				delivery: { address: '100 Congress Ave 78701', city: '' },
+			}),
+		)
+		expect(withoutToken.success).toBe(false)
+	})
+
+	it('re-resolves the zone from signed coordinates and persists the signed address', () => {
+		const result = priceRestaurantOrder(radiusContext(), quotedRequest(), {
+			now: NOW,
+			deliveryQuote: NEAR_QUOTE,
+		})
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.deliveryFeeCents).toBe(399)
+		expect(result.result.delivery).toEqual({
+			address: NEAR_QUOTE.formatted,
+			city: 'Chicago',
+			unit: 'Floor 12',
+			notes: 'Ring',
+			zoneId: 'zone-radius',
+			postalCode: '60606',
+			lat: NEAR_QUOTE.lat,
+			lng: NEAR_QUOTE.lng,
+		})
+	})
+
+	it('uses current zone fees, not the fee at quote time', () => {
+		const context = radiusContext({
+			deliveryZones: [radiusZone({ deliveryFee: 7.5, minimumOrder: 0 })],
+		})
+		const result = priceRestaurantOrder(context, quotedRequest(), {
+			now: NOW,
+			deliveryQuote: NEAR_QUOTE,
+		})
+		expect(result.ok && result.result.deliveryFeeCents).toBe(750)
+	})
+
+	it('rejects signed coordinates that are now out of range', () => {
+		const result = priceRestaurantOrder(radiusContext(), quotedRequest(), {
+			now: NOW,
+			deliveryQuote: FAR_QUOTE,
+		})
+		expect(result.ok).toBe(false)
+		if (!result.ok) {
+			expect(result.error.code).toBe('delivery_coverage_unverified')
+		}
+	})
+
+	it('rejects a quote token the caller could not verify', () => {
+		const result = priceRestaurantOrder(radiusContext(), quotedRequest(), {
+			now: NOW,
+		})
+		expect(result.ok).toBe(false)
+		if (!result.ok) expect(result.error.code).toBe('delivery_quote_expired')
+	})
+
+	it('reports delivery_unavailable when the store has no coordinates', () => {
+		const context = radiusContext({
+			address: { formattedAddress: 'x', country: 'US', lat: 0, lng: 0 },
+		})
+		const result = priceRestaurantOrder(context, quotedRequest(), {
+			now: NOW,
+			deliveryQuote: NEAR_QUOTE,
+		})
+		expect(result.ok).toBe(false)
+		if (!result.ok) expect(result.error.code).toBe('delivery_unavailable')
+	})
+
+	it('honours disallowed zones as exclusions', () => {
+		const context = radiusContext({
+			deliveryZones: [
+				radiusZone(),
+				radiusZone({
+					id: 'zone-blocked',
+					restriction: 'disallowed',
+					type: 'zip_code',
+					radius: undefined,
+					zipCodes: ['60606'],
+				}),
+			],
+		})
+		const result = priceRestaurantOrder(context, quotedRequest(), {
+			now: NOW,
+			deliveryQuote: NEAR_QUOTE,
+		})
+		expect(result.ok).toBe(false)
+		const zipOnly = priceRestaurantOrder(
+			context,
+			makeRequest({
+				fulfillment: 'delivery',
+				delivery: { address: '233 S Wacker Dr 60606', city: 'Chicago' },
+			}),
+			{ now: NOW },
+		)
+		expect(zipOnly.ok).toBe(false)
+	})
+
+	it('without a token, radius-only locations fail closed', () => {
+		const result = priceRestaurantOrder(
+			radiusContext(),
+			makeRequest({
+				fulfillment: 'delivery',
+				delivery: { address: '233 S Wacker Dr 60606', city: 'Chicago' },
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(false)
+		if (!result.ok) {
+			expect(result.error.code).toBe('delivery_coverage_unverified')
+		}
+	})
+
+	it('verifies Saudi zip zones using the location country', () => {
+		const menu = makeMenu()
+		menu.locations = [
+			makeLocation({
+				currency: 'SAR',
+				address: { country: 'SA', lat: 24.7113, lng: 46.6744 },
+				deliveryZones: [
+					radiusZone({
+						id: 'zone-olaya',
+						type: 'zip_code',
+						zipCodes: ['12214'],
+						minimumOrder: 0,
+						deliveryFee: 10,
+					}),
+				],
+			}),
+		]
+		const result = priceRestaurantOrder(
+			makeContext({ menu }),
+			makeRequest({
+				fulfillment: 'delivery',
+				delivery: {
+					address: 'مبنى ٨٢٢٨ طريق الملك فهد ١٢٢١٤',
+					city: 'الرياض',
+				},
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (result.ok) expect(result.result.delivery?.zoneId).toBe('zone-olaya')
+	})
+})
+
+describe('resolveDeliveryZoneForPoint', () => {
+	it('ignores allowed zones from third-party providers', () => {
+		const location = radiusContext({
+			deliveryZones: [radiusZone({ provider: 'doordash' })],
+		}).menu.locations[0]!
+		expect(resolveDeliveryZoneForPoint(location, NEAR_QUOTE)).toEqual({
+			ok: false,
+			reason: 'no_zones',
+		})
+	})
+})
+
+describe('deliveryCoverageVerifiable / delivery.available', () => {
+	it('requires a geocoder and store coordinates for radius zones', () => {
+		const location = radiusContext().menu.locations[0]!
+		expect(deliveryCoverageVerifiable(location)).toBe(false)
+		expect(
+			deliveryCoverageVerifiable(location, { geocoderAvailable: true }),
+		).toBe(true)
+		const missing = radiusContext({
+			address: { country: 'US', lat: 0, lng: 0 },
+		}).menu.locations[0]!
+		expect(
+			deliveryCoverageVerifiable(missing, { geocoderAvailable: true }),
+		).toBe(false)
+	})
+
+	it('is not fooled by an in_house provider with no checkable zone', () => {
+		const location = makeContext().menu.locations[0]!
+		location.deliveryZones = []
+		expect(location.deliveryConfig?.providers).toContain('in_house')
+		expect(
+			deliveryCoverageVerifiable(location, { geocoderAvailable: true }),
+		).toBe(false)
+	})
+
+	it('flows through buildPublicOrderingOptions', () => {
+		const build = (geocoderAvailable: boolean) =>
+			buildPublicOrderingOptions(radiusContext(), {
+				slug: null,
+				locationId: LOCATION_ID,
+				dropSlug: null,
+				counts: { slotOrders: new Map(), entityUsed: new Map() },
+				now: NOW,
+				geocoderAvailable,
+			})
+		const withGeocoder = build(true)
+		const withoutGeocoder = build(false)
+		expect(withGeocoder.ok && withGeocoder.options.delivery.available).toBe(
+			true,
+		)
+		expect(
+			withoutGeocoder.ok && withoutGeocoder.options.delivery.available,
+		).toBe(false)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// Scheduled orders
+// ---------------------------------------------------------------------------
+
+describe('priceRestaurantOrder: scheduledFor', () => {
+	// NOW = Sunday 2025-06-15 16:00 UTC; location timezone UTC.
+	const LUNCH_HOURS = [
+		'sunday',
+		'monday',
+		'tuesday',
+		'wednesday',
+		'thursday',
+		'friday',
+		'saturday',
+	].map((day) => ({
+		day,
+		isOpen: day !== 'tuesday',
+		slots: day === 'tuesday' ? [] : [{ start: '11:00', end: '14:00' }],
+	}))
+
+	function scheduledContext(overrides: Record<string, unknown> = {}) {
+		const menu = makeMenu()
+		menu.locations = [
+			makeLocation({
+				onlineHours: LUNCH_HOURS,
+				scheduling: { scheduledOrdersEnabled: true, advanceOrderDays: 3 },
+				...overrides,
+			}),
+		]
+		return makeContext({ menu })
+	}
+
+	const at = (iso: string) => makeRequest({ scheduledFor: iso })
+
+	it('accepts a time inside online hours even while currently closed', () => {
+		const result = priceRestaurantOrder(
+			scheduledContext(),
+			at('2025-06-16T12:30:00.000Z'),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (result.ok) {
+			expect(result.result.scheduledFor).toBe('2025-06-16T12:30:00.000Z')
+		}
+		// ASAP while closed is still rejected.
+		const asap = priceRestaurantOrder(scheduledContext(), makeRequest(), {
+			now: NOW,
+		})
+		expect(!asap.ok && asap.error.code).toBe('ordering_closed')
+	})
+
+	it('accepts offsets and normalizes to UTC', () => {
+		const result = priceRestaurantOrder(
+			scheduledContext(),
+			at('2025-06-16T07:30:00-05:00'),
+			{ now: NOW },
+		)
+		expect(result.ok && result.result.scheduledFor).toBe(
+			'2025-06-16T12:30:00.000Z',
+		)
+	})
+
+	it.each([
+		['outside online hours', '2025-06-16T18:00:00.000Z'],
+		['on a closed day', '2025-06-17T12:00:00.000Z'],
+		['beyond advanceOrderDays', '2025-06-19T12:00:00.000Z'],
+		['in the past', '2025-06-15T12:00:00.000Z'],
+	])('rejects a time %s', (_label, iso) => {
+		const result = priceRestaurantOrder(scheduledContext(), at(iso), {
+			now: NOW,
+		})
+		expect(result.ok).toBe(false)
+		if (!result.ok) expect(result.error.code).toBe('schedule_unavailable')
+	})
+
+	it('rejects times sooner than prep time', () => {
+		const context = scheduledContext({
+			onlineHours: EVERY_DAY_HOURS,
+			prepTime: 30,
+		})
+		const tooSoon = priceRestaurantOrder(
+			context,
+			at('2025-06-15T16:10:00.000Z'),
+			{ now: NOW },
+		)
+		expect(!tooSoon.ok && tooSoon.error.code).toBe('schedule_unavailable')
+		const ok = priceRestaurantOrder(context, at('2025-06-15T16:30:00.000Z'), {
+			now: NOW,
+		})
+		expect(ok.ok).toBe(true)
+	})
+
+	it('rejects scheduling when the location disables it', () => {
+		const result = priceRestaurantOrder(
+			scheduledContext({
+				scheduling: { scheduledOrdersEnabled: false, advanceOrderDays: 3 },
+			}),
+			at('2025-06-16T12:30:00.000Z'),
+			{ now: NOW },
+		)
+		expect(!result.ok && result.error.code).toBe('schedule_unavailable')
+	})
+
+	it('rejects scheduledFor on drop orders at the schema level', () => {
+		const parsed = restaurantOrderRequestSchema.safeParse(
+			rawRequest({
+				dropSlug: 'friday-bbq',
+				pickup: { windowId: 'win-1', time: '17:30' },
+				scheduledFor: '2025-06-16T12:30:00.000Z',
+			}),
+		)
+		expect(parsed.success).toBe(false)
+	})
+
+	it('includes scheduledFor in the idempotency fingerprint', () => {
+		expect(canonicalOrderRequest(at('2025-06-16T12:30:00.000Z'))).not.toBe(
+			canonicalOrderRequest(at('2025-06-16T13:00:00.000Z')),
+		)
 	})
 })

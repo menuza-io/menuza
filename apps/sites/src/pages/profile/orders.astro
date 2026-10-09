@@ -2,6 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import AccountShell from '~/components/AccountShell.astro'
+import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import SitePage from '~/components/SitePage.astro'
 import {
 	siteBtnPrimaryClass,
@@ -52,6 +53,7 @@ if (!organization) {
 			data-browse-shop={browseShop}
 			data-shop-href={shopHref}
 		>
+		<DropAlertsSignup source="profile" />
 		<section class={siteCardClass}>
 			<div class={siteSectionHeaderClass}>
 				<h2 class="font-heading text-lg text-foreground">{orderHistory}</h2>

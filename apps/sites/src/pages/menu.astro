@@ -7,26 +7,34 @@ import {
 } from '@repo/common/location-types'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
-import PublicDrops from '~/components/PublicDrops.astro'
 import SitePage from '~/components/SitePage.astro'
+import DropNudge from '~/components/drops/DropNudge.astro'
 import CartDrawer from '~/components/ordering/CartDrawer.astro'
 import CartTray from '~/components/ordering/CartTray.astro'
 import CategoryNav from '~/components/ordering/CategoryNav.astro'
 import ItemModal from '~/components/ordering/ItemModal.astro'
-import LocationPicker from '~/components/ordering/LocationPicker.astro'
+import MenuMeta from '~/components/ordering/MenuMeta.astro'
 import MenuItemRow from '~/components/ordering/MenuItemRow.astro'
+import OrderBar from '~/components/ordering/OrderBar.astro'
+import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
 import PopularRow from '~/components/ordering/PopularRow.astro'
-import StatusChip from '~/components/ordering/StatusChip.astro'
+import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { summarizeHours } from '~/lib/menu-hours'
-import { buildOrderingLabels, translate } from '~/lib/ordering-labels'
+import {
+	buildOrderDetailsLabels,
+	buildOrderingLabels,
+	translate,
+} from '~/lib/ordering-labels'
 import {
 	flattenItems,
 	isItemSoldOut,
-	itemPriceLabel,
+	itemHasPriceRange,
+	lowestAvailablePrice,
 } from '~/lib/ordering/catalog'
 import { formatMoney } from '~/lib/ordering/money'
+import { schedulingSettings } from '~/lib/ordering/schedule'
 import {
 	type FulfillmentMode,
 	type ModifierGroup,
@@ -107,7 +115,7 @@ const t = (val: string | null | undefined) =>
 // ---------- strings ----------
 
 const labels = buildOrderingLabels(i18n)
-const menuTitle = i18n._(msg`Menu & Ordering`)
+const menuTitle = i18n._(msg`Menu & ordering`)
 const openForOrders = i18n._(msg`Open for orders`)
 const openUntil = translate(i18n, msg`Open until {time}`, { time: hours.closesAt ?? '' })
 const closedLabel = i18n._(msg`Closed`)
@@ -137,22 +145,26 @@ const clearSearchLabel = i18n._(msg`Clear search`)
 const noMatchLabel = i18n._(msg`No dishes match`)
 const categoriesNavLabel = i18n._(msg`Menu categories`)
 const popularLabel = i18n._(msg`Popular`)
-const selectLocationLabel = i18n._(msg`Select location`)
-const viewOrderLabel = i18n._(msg`View Order`)
-const yourOrderLabel = i18n._(msg`Your Order`)
+const mostOrderedLabel = i18n._(msg`Most ordered`)
+const carouselLabels = {
+	previous: i18n._(msg`Previous`),
+	next: i18n._(msg`Next`),
+}
+const viewOrderLabel = i18n._(msg`View order`)
+const yourOrderLabel = i18n._(msg`Your order`)
 const subtotalLabel = i18n._(msg`Subtotal`)
-const taxLabel = i18n._(msg`Estimated Tax`)
-const deliveryFeeLabel = i18n._(msg`Delivery Fee`)
+const taxLabel = i18n._(msg`Estimated tax`)
+const deliveryFeeLabel = i18n._(msg`Delivery fee`)
 const totalLabel = i18n._(msg`Total`)
-const checkoutLabel = i18n._(msg`Proceed to Checkout`)
-const specialInstructionsLabel = i18n._(msg`Special Instructions`)
+const checkoutLabel = i18n._(msg`Proceed to checkout`)
+const specialInstructionsLabel = i18n._(msg`Special instructions`)
 const specialInstructionsPlaceholder = i18n._(
 	msg`Any dietary preferences, sauce on the side, etc.`,
 )
 const vegetarianLabel = i18n._(msg`Vegetarian`)
-const glutenFreeLabel = i18n._(msg`Gluten-Free`)
+const glutenFreeLabel = i18n._(msg`Gluten-free`)
 const alcoholLabel = i18n._(msg`Alcohol`)
-const comingSoonTitle = i18n._(msg`Menu Coming Soon`)
+const comingSoonTitle = i18n._(msg`Menu coming soon`)
 const comingSoonDesc = i18n._(
 	msg`Our kitchen is preparing delicious dishes. Check back soon for our full online menu.`,
 )
@@ -286,17 +298,22 @@ const popularCards = allItems
 	.map((item) => ({
 		id: item.id,
 		name: item.displayName,
-		priceLabel: priceLabelFor(item),
+		description: item.description,
+		...priceParts(item),
 		imageUrl: item.imageUrl,
 		soldOut: isItemSoldOut(item),
 	}))
 
-function priceLabelFor(item: OrderingItem): string {
-	return itemPriceLabel(item, {
-		formatMoney: price,
-		fromLabel: labels.from,
-		soldOutLabel: labels.soldOut,
-	})
+/**
+ * Price split for display: the amount (or the sold-out label) plus a muted
+ * "From" prefix when the item has a price range.
+ */
+function priceParts(item: OrderingItem): { priceLabel: string; fromLabel: string | null } {
+	if (isItemSoldOut(item)) return { priceLabel: labels.soldOut, fromLabel: null }
+	return {
+		priceLabel: price(lowestAvailablePrice(item)),
+		fromLabel: itemHasPriceRange(item) ? labels.from : null,
+	}
 }
 
 function caloriesFor(item: OrderingItem): string | null {
@@ -312,8 +329,9 @@ function rowProps(item: OrderingItem) {
 		id: item.id,
 		name: item.displayName,
 		description: item.description,
-		priceLabel: priceLabelFor(item),
+		...priceParts(item),
 		soldOut: isItemSoldOut(item),
+		popularLabel: item.isPopular ? popularLabel : null,
 		imageUrl: item.imageUrl,
 		calories: caloriesFor(item),
 		isVegetarian: item.isVegetarian,
@@ -339,9 +357,9 @@ if (fulfillment.pickup !== false) allowedModes.push('pickup')
 if (fulfillment.delivery !== false) allowedModes.push('delivery')
 if (!allowedModes.length) allowedModes.push('pickup')
 
-// Delivery fee lives on the DeliveryZone. Without a geocoded customer address
-// we cannot radius/zip-match, so the first enabled in-house zone is used and a
-// missing zone charges nothing.
+// Fallback fee before the customer has a verified address. Once the order
+// details hold a delivery quote, the cart uses the quote's zone fee instead
+// (and the server re-prices from the signed quote either way).
 function resolveDeliveryFee(location: PublicLocationData | undefined): number {
 	const raw: unknown = location?.deliveryZones
 	const zones: Array<Record<string, unknown>> = Array.isArray(raw) ? raw : []
@@ -363,11 +381,46 @@ const checkoutHref =
 	getLocaleHref('/menu/checkout', requestedLocale, requestedLocale, defaultLocale) +
 	(activeLocation ? `?location=${encodeURIComponent(activeLocation.id)}` : '')
 
+// ---------- header + order bar ----------
+
+const orderDetailsLabels = buildOrderDetailsLabels(i18n)
+const scheduling = activeLocation
+	? schedulingSettings(activeLocation)
+	: { enabled: false, advanceOrderDays: 0 }
+const orgName = menuPayload?.organization?.name || organization.name
+const locationName = activeLocation?.name ? t(activeLocation.name) : orgName
+const addressLine = [
+	[activeLocation?.address?.streetNumber, activeLocation?.address?.streetName]
+		.filter(Boolean)
+		.join(' '),
+	activeLocation?.address?.city,
+]
+	.filter(Boolean)
+	.join(', ')
+const estimates = [
+	allowedModes.includes('pickup') ? { label: pickupLabel, value: pickupEstimate } : null,
+	allowedModes.includes('delivery') ? { label: deliveryLabel, value: deliveryEstimate } : null,
+].filter((entry): entry is { label: string; value: string } => entry !== null)
+
+const orderBarLabels = {
+	fulfillment: fulfillmentLabel,
+	pickup: pickupLabel,
+	delivery: deliveryLabel,
+	pickupFrom: orderDetailsLabels.pickupFrom,
+	deliverTo: i18n._(msg`Deliver to`),
+	addAddress: orderDetailsLabels.addAddress,
+	pickupTime: i18n._(msg`Pickup time`),
+	deliveryTime: i18n._(msg`Delivery time`),
+	asap: orderDetailsLabels.asap,
+}
+
 const clientMenuData = {
 	organizationId: organization.id,
 	currency,
 	locale: requestedLocale,
 	activeLocationId: activeLocation?.id ?? '',
+	locationIds: locations.map((location) => location.id),
+	timezone: activeLocation?.timezone || 'UTC',
 	taxRate,
 	deliveryFee: resolveDeliveryFee(activeLocation),
 	isOpen: availability.isOpen,
@@ -375,12 +428,20 @@ const clientMenuData = {
 	allowedModes,
 	categories,
 	voiceOrderLabels,
+	timeLabels: {
+		today: orderDetailsLabels.today,
+		tomorrow: orderDetailsLabels.tomorrow,
+		minutesRange: orderDetailsLabels.minutesRange,
+	},
 }
 
-const modeButton =
-	'js-mode-btn inline-flex min-h-9 items-center gap-1.5 rounded-[calc(var(--radius)*0.7)] px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const modeOn = 'bg-background text-foreground shadow-xs'
-const modeOff = 'text-muted-foreground hover:text-foreground'
+const icons = {
+	clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+	search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+	close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+	bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+}
+const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 ---
 
 <SitePage
@@ -388,194 +449,185 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 	page={{ id: 'menu', title: menuTitle, slug: 'menu', isHomePage: false, sections: [] }}
 	title={`${menuTitle} - ${organization.name}`}
 >
-	<div class="bg-background pb-28">
-		{/* Live region stays mounted so screen readers announce the inserted notice. */}
-		<div id="voice-order-notice" class={siteContainer} role="status" aria-live="polite"></div>
-		{/* Menu header */}
-		<div class="border-b border-border">
-			<div class:list={[siteContainer, 'py-6 sm:py-8']}>
-				<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-					<div class="min-w-0 space-y-3">
-						<h1 class="font-heading text-3xl tracking-tight text-foreground sm:text-4xl">{menuTitle}</h1>
-						<div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-							<StatusChip open={availability.isOpen} text={statusText} />
-							{activeLocation ? (
-								<LocationPicker
-									locations={locations}
-									activeId={activeLocation.id}
-									locale={requestedLocale}
-									defaultLocale={defaultLocale}
-									labels={{ selectLocation: selectLocationLabel }}
-								/>
-							) : null}
-						</div>
-					</div>
+	<div class="bg-background pb-32 lg:pb-28">
+		<div class:list={[siteContainer, 'relative z-10 pt-6 sm:pt-8']}>
+			<h1 class="sr-only">{orgName} · {menuTitle}</h1>
 
-					<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-						<div
-							role="radiogroup"
-							aria-label={fulfillmentLabel}
-							class="inline-flex self-start rounded-[var(--radius)] border border-border bg-muted/40 p-1"
-						>
-							{allowedModes.includes('pickup') ? (
-								<button
-									type="button"
-									id="mode-pickup-btn"
-									role="radio"
-									aria-checked="true"
-									data-mode="pickup"
-									class:list={[modeButton, modeOn]}
-								>
-									<span>{pickupLabel}</span>
-									<span class="text-xs text-muted-foreground">{pickupEstimate}</span>
-								</button>
-							) : null}
-							{allowedModes.includes('delivery') ? (
-								<button
-									type="button"
-									id="mode-delivery-btn"
-									role="radio"
-									aria-checked="false"
-									data-mode="delivery"
-									class:list={[modeButton, allowedModes.includes('pickup') ? modeOff : modeOn]}
-								>
-									<span>{deliveryLabel}</span>
-									<span class="text-xs text-muted-foreground">{deliveryEstimate}</span>
-								</button>
-							) : null}
-						</div>
+			<OrderBar
+				allowedModes={allowedModes}
+				initialMode={allowedModes[0] ?? 'pickup'}
+				locationName={locationName}
+				pickupEstimate={pickupEstimate}
+				deliveryEstimate={deliveryEstimate}
+				scheduling={scheduling.enabled}
+				labels={orderBarLabels}
+			/>
 
-						{categories.length > 0 ? (
-							<div class="relative sm:w-64">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-								<input
-									type="search"
-									id="menu-search"
-									placeholder={searchLabel}
-									aria-label={searchLabel}
-									autocomplete="off"
-									class="h-10 w-full rounded-[var(--radius)] border border-input bg-background ps-9 pe-16 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:hidden"
-								/>
-								<button
-									type="button"
-									id="menu-search-clear"
-									class="absolute end-2 top-1/2 hidden -translate-y-1/2 rounded-[calc(var(--radius)*0.7)] px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-								>
-									{clearSearchLabel}
-								</button>
-							</div>
+			{!availability.isOpen ? (
+				<div class="tone-warning mt-4 flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm leading-6" role="status">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-1 size-4 shrink-0" aria-hidden="true" set:html={icons.clock} />
+					<p class="min-w-0">
+						<span class="font-semibold text-foreground">{closedReason}</span>
+						{scheduling.enabled ? (
+							<span class="block text-muted-foreground sm:inline">
+								<span class="hidden sm:inline" aria-hidden="true"> · </span>
+								{orderDetailsLabels.asapClosed}
+							</span>
 						) : null}
-					</div>
+					</p>
 				</div>
-			</div>
+			) : null}
+
+			<MenuMeta
+				open={availability.isOpen}
+				statusText={statusText}
+				estimates={estimates}
+				locationName={locations.length > 1 ? locationName : null}
+				addressLine={addressLine}
+				class="mt-3 px-0.5"
+			/>
+
+			{/* Active drops live on /drops; the menu only nudges toward them. */}
+			<DropNudge class="mt-5" />
+
+			{/* Live region stays mounted so screen readers announce the inserted notice. */}
+			<div id="voice-order-notice" role="status" aria-live="polite"></div>
+
+			{/* Search sits here below lg; on lg+ it lives at the top of the
+			    category rail (moved by the inline script after the rail). */}
+			{categories.length > 0 ? (
+				<div id="menu-search-slot-top" class="mt-6 w-full sm:ms-auto sm:w-80 lg:hidden"></div>
+			) : null}
 		</div>
 
-		{/* Sticky category chips (wide screens use the rail instead) */}
-		{navItems.length > 0 ? (
-			<div
-				id="menu-sticky-nav"
-				class="sticky top-[4.25rem] z-20 border-b border-border bg-background/95 backdrop-blur-md lg:hidden"
-			>
-				<div class:list={[siteContainer, 'py-2.5']}>
-					<CategoryNav items={navItems} label={categoriesNavLabel} />
-				</div>
-			</div>
-		) : null}
+		{/* Sticky category tabs (wide screens use the rail instead) */}
+		<StickyCategoryNav
+			id="menu-sticky-nav"
+			items={navItems}
+			label={categoriesNavLabel}
+			layout="page"
+			class="mt-6 lg:hidden"
+		/>
 
-		<PopularRow heading={popularLabel} cards={popularCards} />
+		<PopularRow heading={mostOrderedLabel} labels={carouselLabels} cards={popularCards} />
 
-		<div data-search-hide>
-			<PublicDrops />
-		</div>
-
-		<div class:list={[siteContainer, 'py-8 sm:py-10']}>
+		<div class:list={[siteContainer, 'pt-8 sm:pt-10']}>
 			{categories.length === 0 ? (
-				<div class="flex flex-col items-center justify-center py-24 text-center">
-					<div class="mb-4 flex size-14 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="size-7" aria-hidden="true"><path d="M3 11h18"/><path d="M12 4a8 8 0 0 1 8 7H4a8 8 0 0 1 8-7Z"/><path d="M5 15h14"/><path d="M7 19h10"/></svg>
-					</div>
-					<h2 class="font-heading text-xl text-foreground">{comingSoonTitle}</h2>
-					<p class="mt-1 max-w-sm text-sm text-muted-foreground">{comingSoonDesc}</p>
+				<div class="surface flex flex-col items-center gap-3 px-6 py-12 text-center">
+					<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true" set:html={icons.bag} />
+					</span>
+					<h2 class="text-base font-semibold text-foreground">{comingSoonTitle}</h2>
+					<p class="max-w-sm text-sm text-muted-foreground">{comingSoonDesc}</p>
 				</div>
 			) : (
-				<div class="lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-12">
+				<div class="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12">
 					<div class="hidden lg:block">
-						<div class="sticky top-24">
-							<CategoryNav items={navItems} label={categoriesNavLabel} rail />
+						<div class="sticky top-[calc(4.25rem+1.5rem)]">
+							<div id="menu-search-slot-rail" class="mb-5">
+								<div id="menu-search-box" class="relative w-full">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" set:html={icons.search} />
+									<input
+										type="search"
+										id="menu-search"
+										placeholder={searchLabel}
+										aria-label={searchLabel}
+										autocomplete="off"
+										enterkeyhint="search"
+										class="field ps-9 pe-10 sm:min-h-11 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+									/>
+									<button
+										type="button"
+										id="menu-search-clear"
+										class="icon-btn absolute end-1.5 top-1/2 hidden size-8 -translate-y-1/2 border-0 text-muted-foreground [&.hidden]:hidden"
+										aria-label={clearSearchLabel}
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true" set:html={icons.close} />
+									</button>
+								</div>
+							</div>
+							<div class="[&:not(:has(a:not(.hidden)))]:hidden">
+								<CategoryNav items={navItems} label={categoriesNavLabel} rail />
+							</div>
 						</div>
 					</div>
+					{/* Before first paint, put search in the top slot below lg so phones
+					    and tablets keep it under the order bar. */}
+					<script is:inline>
+						;(() => {
+							const box = document.getElementById('menu-search-box')
+							const top = document.getElementById('menu-search-slot-top')
+							if (box && top && !window.matchMedia('(min-width: 64rem)').matches) top.appendChild(box)
+						})()
+					</script>
 
 					<div class="min-w-0">
-						<p id="menu-search-empty" class="hidden rounded-[var(--radius)] border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground" role="status">
-							{noMatchLabel}
-						</p>
-
-						<div class="space-y-14">
-							{categories.map((category) => (
-								<section
-									id={`category-${category.id}`}
-									data-category-section
-									class="scroll-mt-32 lg:scroll-mt-24"
-									aria-labelledby={`category-${category.id}-title`}
-								>
-									<header class="mb-2">
-										<h2 id={`category-${category.id}-title`} class="font-heading text-2xl tracking-tight text-foreground">
-											{category.displayName}
-										</h2>
-										{category.description ? (
-											<p class="mt-1 text-sm text-muted-foreground">{category.description}</p>
-										) : null}
-									</header>
-
-									{category.items.length > 0 ? (
-										<ul class="grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
-											{category.items.map((item) => (
-												<MenuItemRow {...rowProps(item)} />
-											))}
-										</ul>
-									) : null}
-
-									{(category.subcategories ?? []).length > 0 ? (
-										<div class="mt-8 space-y-10">
-											{(category.subcategories ?? []).map((sub) => (
-												<div id={`category-${sub.id}`} data-category-group class="scroll-mt-32 lg:scroll-mt-24">
-													<h3 class="font-heading text-xl text-foreground">{sub.displayName}</h3>
-													{sub.description ? (
-														<p class="mt-1 text-sm text-muted-foreground">{sub.description}</p>
-													) : null}
-													{sub.items.length > 0 ? (
-														<ul class="mt-2 grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
-															{sub.items.map((item) => (
-																<MenuItemRow {...rowProps(item)} />
-															))}
-														</ul>
-													) : null}
-													{(sub.subcategories ?? []).length > 0 ? (
-														<div class="mt-6 space-y-8">
-															{(sub.subcategories ?? []).map((subSub) => (
-																<div id={`category-${subSub.id}`} data-category-group class="scroll-mt-32 lg:scroll-mt-24">
-																	<h4 class="font-heading text-base text-foreground">{subSub.displayName}</h4>
-																	{subSub.description ? (
-																		<p class="mt-1 text-sm text-muted-foreground">{subSub.description}</p>
-																	) : null}
-																	{subSub.items.length > 0 ? (
-																		<ul class="mt-2 grid grid-cols-1 border-t border-border/70 xl:grid-cols-2 xl:gap-x-10">
-																			{subSub.items.map((item) => (
-																				<MenuItemRow {...rowProps(item)} />
-																			))}
-																		</ul>
-																	) : null}
-																</div>
-															))}
-														</div>
-													) : null}
-												</div>
-											))}
-										</div>
-									) : null}
-								</section>
-							))}
+						<div id="menu-search-empty" class="surface mb-6 flex hidden flex-col items-center gap-3 px-6 py-12 text-center" role="status">
+							<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true" set:html={icons.search} />
+							</span>
+							<p class="text-base font-semibold text-foreground">{noMatchLabel}</p>
+							<button type="button" id="menu-search-reset" class="btn-secondary focus-ring mt-1">
+								{clearSearchLabel}
+							</button>
 						</div>
+
+						{categories.map((category) => (
+							<section
+								id={`category-${category.id}`}
+								data-category-section
+								class:list={['mt-12 first-of-type:mt-0 sm:mt-14', sectionScroll]}
+								aria-labelledby={`category-${category.id}-title`}
+							>
+								<header class="mb-4 sm:mb-5">
+									<h2 id={`category-${category.id}-title`} class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+										{category.displayName}
+									</h2>
+									{category.description ? (
+										<p class="mt-1.5 line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{category.description}</p>
+									) : null}
+								</header>
+
+								{category.items.length > 0 ? (
+									<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+										{category.items.map((item) => (
+											<MenuItemRow {...rowProps(item)} />
+										))}
+									</ul>
+								) : null}
+
+								{(category.subcategories ?? []).map((sub) => (
+									<div id={`category-${sub.id}`} data-category-group class:list={['mt-8', sectionScroll]}>
+										<h3 class="mb-3 text-base font-semibold text-foreground">{sub.displayName}</h3>
+										{sub.description ? (
+											<p class="-mt-2 mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{sub.description}</p>
+										) : null}
+										{sub.items.length > 0 ? (
+											<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+												{sub.items.map((item) => (
+													<MenuItemRow {...rowProps(item)} />
+												))}
+											</ul>
+										) : null}
+										{(sub.subcategories ?? []).map((subSub) => (
+											<div id={`category-${subSub.id}`} data-category-group class:list={['mt-6', sectionScroll]}>
+												<h4 class="mb-2 text-sm font-semibold text-foreground">{subSub.displayName}</h4>
+												{subSub.description ? (
+													<p class="mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{subSub.description}</p>
+												) : null}
+												{subSub.items.length > 0 ? (
+													<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+														{subSub.items.map((item) => (
+															<MenuItemRow {...rowProps(item)} />
+														))}
+													</ul>
+												) : null}
+											</div>
+										))}
+									</div>
+								))}
+							</section>
+						))}
 					</div>
 				</div>
 			)}
@@ -610,6 +662,20 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 		/>
 	</div>
 
+	{activeLocation ? (
+		<OrderDetailsSheet
+			locations={locations}
+			activeLocationId={activeLocation.id}
+			allowedModes={allowedModes}
+			orgId={organization.id}
+			currency={currency}
+			locale={requestedLocale}
+			defaultLocale={defaultLocale}
+			labels={orderDetailsLabels}
+			navigateOnLocationChange
+		/>
+	) : null}
+
 	<OrderingLabels labels={labels} />
 	<script
 		id="menu-data"
@@ -621,11 +687,20 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 	<script>
 		import { getBrowserTenantApiUrl, getOrgBinding } from '~/lib/client-auth'
 		import { indexCatalog } from '~/lib/ordering/catalog'
-		import { createCartStore, createModeStore } from '~/lib/ordering/cart-store'
+		import { createCartStore } from '~/lib/ordering/cart-store'
 		import { mountCartUi } from '~/lib/ordering/cart-ui'
 		import { createItemModal } from '~/lib/ordering/item-modal'
 		import { el } from '~/lib/ordering/dom'
 		import { createMoneyFormatter } from '~/lib/ordering/money'
+		import {
+			hasValidDeliveryQuote,
+			loadOrderDetails,
+			openOrderDetails,
+			subscribeOrderDetails,
+			updateOrderDetails,
+			type OrderDetails,
+		} from '~/lib/ordering/order-details'
+		import { formatScheduledFor } from '~/lib/ordering/schedule'
 		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
 		import {
 			type FulfillmentMode,
@@ -647,6 +722,8 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			currency: string
 			locale: string
 			activeLocationId: string
+			locationIds: string[]
+			timezone: string
 			taxRate: number
 			deliveryFee: number
 			isOpen: boolean
@@ -657,6 +734,7 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 				'loaded' | 'expired' | 'error' | 'unavailable' | 'removed' | 'repriced',
 				string
 			>
+			timeLabels: { today: string; tomorrow: string; minutesRange: string }
 		}
 
 		function readJson<T>(id: string): T {
@@ -670,9 +748,11 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 		const catalog = indexCatalog(data.categories ?? [])
 
 		const store = createCartStore({ key: `menuza_cart_${orgId}` })
-		const modeStore = createModeStore({
-			key: `menuza_mode_${orgId}`,
-			allowed: data.allowedModes,
+		// Pickup/delivery, address and time live in the order details (browser
+		// only); the legacy mode key is kept in sync by `saveOrderDetails`.
+		let details: OrderDetails = loadOrderDetails(orgId, {
+			locationId: data.activeLocationId,
+			allowedModes: data.allowedModes,
 		})
 
 		const modalRoot = document.getElementById('item-modal-backdrop')
@@ -693,37 +773,134 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			formatMoney: money,
 			totals: {
 				taxRate: data.taxRate || 0,
-				deliveryFee: data.deliveryFee || 0,
-				mode: () => modeStore.get(),
+				deliveryFee: () => details.delivery?.deliveryFee ?? (data.deliveryFee || 0),
+				mode: () => details.mode,
 			},
+			// A scheduled order can be placed while the store is closed; the
+			// server re-validates the slot.
 			gate: () =>
-				data.isOpen ? { allowed: true } : { allowed: false, reason: data.closedReason },
+				data.isOpen || details.scheduledFor
+					? { allowed: true }
+					: { allowed: false, reason: data.closedReason },
 		})
 
-		// Pickup / delivery segmented control
-		const MODE_ON = ['bg-background', 'text-foreground', 'shadow-xs']
-		const MODE_OFF = ['text-muted-foreground', 'hover:text-foreground']
+		// Order bar: Pickup | Delivery, where, and when. The chips open the order
+		// details sheet; everything repaints from the stored details.
+		const orderBar = document.getElementById('order-bar')
+		const barLabels = orderBar?.dataset ?? {}
 		const modeButtons = Array.from(
 			document.querySelectorAll<HTMLButtonElement>('.js-mode-btn'),
 		)
-		function paintMode(mode: FulfillmentMode) {
+		const placeChip = document.getElementById('order-place-chip')
+		const placeLabel = orderBar?.querySelector<HTMLElement>('[data-order-place-label]')
+		const placeValue = orderBar?.querySelector<HTMLElement>('[data-order-place-value]')
+		const timeLabel = orderBar?.querySelector<HTMLElement>('[data-order-time-label]')
+		const timeValue = orderBar?.querySelector<HTMLElement>('[data-order-time-value]')
+
+		function fillTemplate(template: string, values: Record<string, string | number>) {
+			return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+				key in values ? String(values[key]) : match,
+			)
+		}
+
+		function scheduledText(iso: string): string | null {
+			const parts = formatScheduledFor(iso, data.locale, data.timezone)
+			if (!parts) return null
+			const day =
+				parts.offset === 0
+					? data.timeLabels.today
+					: parts.offset === 1
+						? data.timeLabels.tomorrow
+						: parts.weekday
+			return `${day} ${parts.time}`
+		}
+
+		/** Sets text and replays the reveal only when the value really changed. */
+		function setValue(node: HTMLElement | null | undefined, build: () => Node[], key: string, animate: boolean) {
+			if (!node || node.dataset.key === key) return
+			node.dataset.key = key
+			node.replaceChildren(...build())
+			if (!animate) return
+			node.classList.remove('order-value-in')
+			void node.offsetWidth
+			node.classList.add('order-value-in')
+		}
+
+		function paintOrderBar(animate: boolean) {
+			const delivery = details.mode === 'delivery'
 			for (const button of modeButtons) {
-				const on = button.dataset.mode === mode
-				button.classList.remove(...(on ? MODE_OFF : MODE_ON))
-				button.classList.add(...(on ? MODE_ON : MODE_OFF))
-				button.setAttribute('aria-checked', on ? 'true' : 'false')
+				button.setAttribute('aria-checked', button.dataset.mode === details.mode ? 'true' : 'false')
+			}
+
+			const quoted = delivery && hasValidDeliveryQuote(details)
+			if (placeChip) {
+				placeChip.dataset.orderDetailsTab = delivery ? 'delivery' : 'pickup'
+				placeChip.toggleAttribute('data-needs-attention', delivery && !quoted)
+			}
+			if (placeLabel) {
+				placeLabel.textContent = delivery
+					? (barLabels.labelDeliverTo ?? '')
+					: (barLabels.labelPickupFrom ?? '')
+			}
+			const place = delivery
+				? quoted && details.delivery
+					? [details.delivery.line1, details.delivery.unit].filter(Boolean).join(', ')
+					: (barLabels.labelAddAddress ?? '')
+				: (barLabels.locationName ?? '')
+			setValue(placeValue, () => [document.createTextNode(place)], `${details.mode}|${place}`, animate)
+
+			if (timeLabel) {
+				timeLabel.textContent = delivery
+					? (barLabels.labelDeliveryTime ?? '')
+					: (barLabels.labelPickupTime ?? '')
+			}
+			const scheduled = details.scheduledFor ? scheduledText(details.scheduledFor) : null
+			const eta =
+				delivery && quoted && details.delivery
+					? fillTemplate(data.timeLabels.minutesRange, details.delivery.eta)
+					: delivery
+						? (barLabels.deliveryEstimate ?? '')
+						: (barLabels.pickupEstimate ?? '')
+			setValue(
+				timeValue,
+				() => {
+					if (scheduled) return [document.createTextNode(scheduled)]
+					const muted = el('span', 'font-normal text-muted-foreground', ' · ')
+					const bdi = document.createElement('bdi')
+					bdi.className = 'tabular-nums'
+					bdi.textContent = eta
+					muted.appendChild(bdi)
+					return [document.createTextNode(barLabels.labelAsap ?? ''), muted]
+				},
+				scheduled ? `s|${scheduled}` : `a|${eta}`,
+				animate,
+			)
+		}
+
+		function setMode(mode: FulfillmentMode, options: { prompt?: boolean } = {}) {
+			if (!data.allowedModes.includes(mode)) return
+			details = updateOrderDetails(orgId, details, { mode })
+			// Delivery needs a verified address first (owner.com behavior).
+			if (options.prompt !== false && mode === 'delivery' && !hasValidDeliveryQuote(details)) {
+				openOrderDetails('delivery')
 			}
 		}
+
 		for (const button of modeButtons) {
 			button.addEventListener('click', () => {
-				modeStore.set(button.dataset.mode as FulfillmentMode)
+				setMode(button.dataset.mode as FulfillmentMode)
 			})
 		}
-		modeStore.subscribe((mode) => {
-			paintMode(mode)
+
+		subscribeOrderDetails(orgId, (next) => {
+			// Another store was picked: the sheet navigates to it (its menu, tax and
+			// fees are resolved server-side), so this page keeps its own location.
+			if (!next || next.locationId !== data.activeLocationId) return
+			details = next
+			paintOrderBar(true)
 			cartUi.refresh()
 		})
-		paintMode(modeStore.get())
+		paintOrderBar(false)
 		cartUi.refresh()
 
 		// Item rows and popular cards open the modal
@@ -757,6 +934,20 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			})
 		}
 
+		// Search lives under the order bar below lg and atop the rail on lg+.
+		const searchBox = document.getElementById('menu-search-box')
+		const searchSlots = {
+			top: document.getElementById('menu-search-slot-top'),
+			rail: document.getElementById('menu-search-slot-rail'),
+		}
+		const wide = window.matchMedia('(min-width: 64rem)')
+		function placeSearch() {
+			const slot = wide.matches ? searchSlots.rail : searchSlots.top
+			if (searchBox && slot && searchBox.parentElement !== slot) slot.appendChild(searchBox)
+		}
+		wide.addEventListener('change', placeSearch)
+		placeSearch()
+
 		// In-menu search
 		const search = document.getElementById('menu-search') as HTMLInputElement | null
 		const clearBtn = document.getElementById('menu-search-clear')
@@ -788,6 +979,9 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			clearBtn?.classList.toggle('hidden', !query)
 		}
 		search?.addEventListener('input', () => applySearch(search.value))
+		document
+			.getElementById('menu-search-reset')
+			?.addEventListener('click', () => clearBtn?.click())
 		clearBtn?.addEventListener('click', () => {
 			if (!search) return
 			search.value = ''
@@ -799,6 +993,36 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 		// Phone-order handoff (#handoff=TOKEN from the voice agent's SMS link). The
 		// token stays in the fragment so only the browser and tenant-api see it.
 		const VOICE_NOTICE_KEY = 'menuza_voice_order_notice'
+		// Static lucide paths: a phone for call handoffs, an alert for errors, so
+		// the notice state is not carried by colour alone.
+		const VOICE_ICON_PATHS = {
+			phone: [
+				'M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384',
+			],
+			alert: ['M12 8v4', 'M12 16h.01', 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0'],
+		}
+		function voiceIcon(name: keyof typeof VOICE_ICON_PATHS): SVGSVGElement {
+			const ns = 'http://www.w3.org/2000/svg'
+			const svg = document.createElementNS(ns, 'svg')
+			for (const [key, value] of Object.entries({
+				viewBox: '0 0 24 24',
+				fill: 'none',
+				stroke: 'currentColor',
+				'stroke-width': '2',
+				'stroke-linecap': 'round',
+				'stroke-linejoin': 'round',
+				'aria-hidden': 'true',
+				class: 'mt-0.5 size-5 shrink-0',
+			})) {
+				svg.setAttribute(key, value)
+			}
+			for (const d of VOICE_ICON_PATHS[name]) {
+				const path = document.createElementNS(ns, 'path')
+				path.setAttribute('d', d)
+				svg.appendChild(path)
+			}
+			return svg
+		}
 		type VoiceNotice = 'loaded' | 'expired' | 'error' | 'unavailable'
 		type VoiceChanges = { removed: string[]; pricesChanged: boolean }
 
@@ -808,17 +1032,20 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 			const voiceLabels = data.voiceOrderLabels
 			const notice = el(
 				'div',
-				`mt-4 space-y-1 rounded-[var(--radius)] border px-4 py-3 text-sm ${kind === 'error' ? 'border-destructive/40 bg-destructive/10 text-destructive' : 'border-border bg-muted text-foreground'}`,
+				`mt-4 flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4 ${kind === 'error' ? 'tone-danger' : 'tone-neutral'}`,
 			)
-			notice.appendChild(el('p', undefined, voiceLabels[kind]))
+			const icon = voiceIcon(kind === 'error' ? 'alert' : 'phone')
+			const body = el('div', 'min-w-0 space-y-1')
+			body.appendChild(el('p', 'font-semibold text-foreground', voiceLabels[kind]))
 			if (changes?.removed.length) {
-				notice.appendChild(
+				body.appendChild(
 					el('p', 'text-muted-foreground', `${voiceLabels.removed} ${changes.removed.join(', ')}`),
 				)
 			}
 			if (changes?.pricesChanged) {
-				notice.appendChild(el('p', 'text-muted-foreground', voiceLabels.repriced))
+				body.appendChild(el('p', 'text-muted-foreground', voiceLabels.repriced))
 			}
+			notice.append(icon, body)
 			region.replaceChildren(notice)
 		}
 
@@ -872,14 +1099,12 @@ const modeOff = 'text-muted-foreground hover:text-foreground'
 				return
 			}
 
-			if (result.fulfillmentMode) modeStore.set(result.fulfillmentMode)
+			if (result.fulfillmentMode) setMode(result.fulfillmentMode, { prompt: false })
 
-			const locationSelect = document.getElementById('location-select') as HTMLSelectElement | null
 			const canSwitchLocation =
 				!!result.locationId &&
 				result.locationId !== data.activeLocationId &&
-				!!locationSelect &&
-				Array.from(locationSelect.options).some((o) => o.value === result.locationId)
+				data.locationIds.includes(result.locationId)
 			if (canSwitchLocation && result.locationId) {
 				// Tax, delivery fee, and the menu itself are resolved server-side per
 				// location, so reload with it and reprice against that location's menu.

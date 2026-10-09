@@ -21,6 +21,7 @@
     "@repo/config": "*",
     "@repo/database": "^0.0.0",
     "@repo/email": "*",
+    "@repo/geo": "*",
     "@repo/observability": "*",
     "@repo/phone-agent": "*",
     "@repo/reports": "*",

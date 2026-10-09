@@ -1,53 +1,149 @@
 ---
 import { siteContainer } from '~/lib/media'
 
-/** Horizontal scroll of image cards for items flagged `isPopular`. */
+/**
+ * "Most ordered" carousel of the items flagged `isPopular`. With a photo the
+ * card leads with a 4:3 image; without one it becomes a brand-tinted
+ * typographic card (large name, short description), so the rail reads as
+ * intentional with or without photography. Hidden below two items. Arrow
+ * buttons page the rail on pointer devices; touch users swipe.
+ */
 interface Props {
 	heading: string
+	labels: { previous: string; next: string }
 	cards: Array<{
 		id: string
 		name: string
+		description?: string | null
 		priceLabel: string
+		fromLabel?: string | null
 		imageUrl?: string | null
 		soldOut: boolean
 	}>
 }
 
-const { heading, cards } = Astro.props
+const { heading, labels, cards } = Astro.props
+const plusIcon = '<path d="M5 12h14"/><path d="M12 5v14"/>'
+const chevron = '<path d="m9 18 6-6-6-6"/>'
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '2',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+const cardBase =
+	'js-popular-card group relative flex w-64 shrink-0 snap-start flex-col overflow-hidden text-start focus-ring disabled:cursor-default sm:w-72'
 ---
 
-{cards.length >= 3 ? (
-	<section class="py-8" aria-labelledby="popular-heading" data-search-hide>
+{cards.length >= 2 ? (
+	<section class="pt-8 sm:pt-12" aria-labelledby="popular-heading" data-search-hide data-popular-rail>
 		<div class={siteContainer}>
-			<h2 id="popular-heading" class="font-heading text-xl text-foreground">{heading}</h2>
-		</div>
-		<div class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 no-scrollbar sm:px-8 lg:mx-auto lg:max-w-6xl">
-			{cards.map((card) => (
-				<button
-					type="button"
-					class:list={[
-						'js-popular-card group w-40 shrink-0 snap-start text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-48',
-						card.soldOut && 'opacity-60',
-					]}
-					data-item-id={card.id}
-					disabled={card.soldOut}
-					aria-haspopup="dialog"
-				>
-					<div class="aspect-square w-full overflow-hidden rounded-[var(--radius)] bg-muted">
+			<div class="mb-4 flex items-end justify-between gap-4">
+				<h2 id="popular-heading" class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{heading}</h2>
+				<div class="hidden gap-2 pointer-fine:flex">
+					<button type="button" class="icon-btn" data-rail-step="-1" aria-label={labels.previous}>
+						<svg {...iconAttrs} class="size-4 -scale-x-100 rtl:scale-x-100" set:html={chevron} />
+					</button>
+					<button type="button" class="icon-btn" data-rail-step="1" aria-label={labels.next}>
+						<svg {...iconAttrs} class="size-4 rtl:-scale-x-100" set:html={chevron} />
+					</button>
+				</div>
+			</div>
+			<div
+				data-rail
+				class="fade-x -mx-5 flex snap-x snap-mandatory scroll-px-5 items-stretch gap-3 overflow-x-auto px-5 pt-1 pb-3 no-scrollbar sm:-mx-8 sm:scroll-px-8 sm:gap-4 sm:px-8"
+			>
+				{cards.map((card) => (
+					<button
+						type="button"
+						class:list={[
+							cardBase,
+							card.imageUrl ? 'surface surface-interactive' : 'brand-tint surface-interactive p-5',
+							card.soldOut && 'opacity-70',
+						]}
+						data-item-id={card.id}
+						disabled={card.soldOut}
+						aria-haspopup="dialog"
+					>
 						{card.imageUrl ? (
-							<img
-								src={card.imageUrl}
-								alt=""
-								loading="lazy"
-								decoding="async"
-								class="size-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
-							/>
+							<span class="relative block aspect-[4/3] overflow-hidden bg-placeholder">
+								<img
+									src={card.imageUrl}
+									alt=""
+									loading="lazy"
+									decoding="async"
+									width="288"
+									height="216"
+									class:list={[
+										'size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none',
+										card.soldOut ? 'grayscale' : 'group-hover:scale-103',
+									]}
+								/>
+							</span>
 						) : null}
-					</div>
-					<p class="mt-2 line-clamp-2 text-sm text-foreground">{card.name}</p>
-					<p class="mt-0.5 text-sm tabular-nums text-muted-foreground">{card.priceLabel}</p>
-				</button>
-			))}
+						<span class:list={['flex flex-1 flex-col', card.imageUrl && 'p-4']}>
+							<span
+								class:list={[
+									'font-heading leading-tight font-bold text-balance text-foreground',
+									card.imageUrl ? 'line-clamp-2 text-base sm:text-lg' : 'line-clamp-3 text-xl sm:text-2xl',
+								]}
+							>
+								{card.name}
+							</span>
+							{!card.imageUrl && card.description ? (
+								<span class="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{card.description}</span>
+							) : null}
+							<span class:list={['mt-auto flex items-end justify-between gap-3', card.imageUrl ? 'pt-3' : 'pt-6']}>
+								{card.soldOut ? (
+									<span class="badge tone-solid">{card.priceLabel}</span>
+								) : (
+									<span class="inline-flex items-baseline gap-1.5">
+										{card.fromLabel ? <span class="text-sm text-muted-foreground">{card.fromLabel}</span> : null}
+										<span class="price font-heading text-lg leading-none text-foreground">{card.priceLabel}</span>
+									</span>
+								)}
+								{card.soldOut ? null : (
+									<span class="add-btn" aria-hidden="true">
+										<svg {...iconAttrs} stroke-width="2.25" class="size-5" set:html={plusIcon} />
+									</span>
+								)}
+							</span>
+						</span>
+					</button>
+				))}
+			</div>
 		</div>
 	</section>
 ) : null}
+
+<script>
+	for (const section of document.querySelectorAll<HTMLElement>('[data-popular-rail]')) {
+		const rail = section.querySelector<HTMLElement>('[data-rail]')
+		if (!rail) continue
+		const steps = Array.from(section.querySelectorAll<HTMLButtonElement>('[data-rail-step]'))
+		const sync = () => {
+			const max = rail.scrollWidth - rail.clientWidth
+			// scrollLeft runs negative in RTL; compare magnitudes.
+			const at = Math.abs(rail.scrollLeft)
+			for (const step of steps) {
+				step.disabled = step.dataset.railStep === '-1' ? at <= 2 : at >= max - 2
+			}
+		}
+		for (const step of steps) {
+			step.addEventListener('click', () => {
+				const rtl = getComputedStyle(rail).direction === 'rtl'
+				const distance = Math.max(rail.clientWidth * 0.8, 240)
+				const sign = Number(step.dataset.railStep) * (rtl ? -1 : 1)
+				const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+				rail.scrollBy({ left: sign * distance, behavior: reduce ? 'auto' : 'smooth' })
+			})
+		}
+		rail.addEventListener('scroll', sync, { passive: true })
+		window.addEventListener('resize', sync)
+		sync()
+	}
+</script>

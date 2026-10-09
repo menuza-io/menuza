@@ -2,7 +2,6 @@
 import { ENV } from 'varlock/env'
 import { getPageTitle } from '@repo/config/brand'
 import SitePage from '~/components/SitePage.astro'
-import PublicDrops from '~/components/PublicDrops.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
 import { fetchPublishedSitePage } from '~/lib/org'
 import { buildSiteThemeCss } from '@repo/common/site-theme'
@@ -134,5 +133,4 @@ const seoNoIndex = page?.seo?.noIndex ?? false
 			</section>
 		)
 	}
-	<PublicDrops />
 </SitePage>

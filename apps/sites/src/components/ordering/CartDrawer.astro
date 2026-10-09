@@ -1,10 +1,11 @@
 ---
-import { siteBtnPrimary } from '~/lib/media'
-
 /**
  * Slide-over cart. Hidden with `translate-x-full` (`rtl:-translate-x-full`);
  * `mountCartUi` toggles both. `#cart-drawer-header-extra` is a slot other
  * pages can fill (for example a drop's pickup summary).
+ *
+ * Rows that scripts show and hide (`#drawer-tax-row`, `#drawer-delivery-row`)
+ * use plain `flex` rather than `summary-row`, so `.hidden` always wins.
  */
 interface Props {
 	labels: {
@@ -22,6 +23,10 @@ interface Props {
 }
 
 const { labels, taxRateLabel, checkoutHref, initialTotal } = Astro.props
+
+const rowClass =
+	'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
+const valueClass = 'price font-medium text-foreground'
 ---
 
 <div
@@ -30,60 +35,119 @@ const { labels, taxRateLabel, checkoutHref, initialTotal } = Astro.props
 >
 	<aside
 		id="cart-drawer"
-		class="fixed inset-y-0 end-0 flex w-full max-w-md translate-x-full flex-col border-s border-border bg-card text-card-foreground shadow-2xl transition-transform duration-300 motion-reduce:transition-none rtl:-translate-x-full"
+		class="surface-overlay fixed inset-y-0 end-0 flex w-full translate-x-full flex-col rounded-none transition-transform duration-250 ease-out outline-none motion-reduce:transition-none sm:max-w-md sm:rounded-s-2xl rtl:-translate-x-full"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="cart-drawer-title"
 		tabindex="-1"
 	>
-		<div class="border-b border-border p-4 sm:p-5">
+		<header class="border-b border-border px-5 py-4">
 			<div class="flex items-center justify-between gap-3">
-				<div class="flex items-center gap-2">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-primary" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-					<h2 id="cart-drawer-title" class="font-heading text-lg text-foreground">{labels.yourOrder}</h2>
-				</div>
+				<h2
+					id="cart-drawer-title"
+					class="text-lg font-bold tracking-tight text-foreground"
+				>
+					{labels.yourOrder}
+				</h2>
 				<button
 					type="button"
 					id="close-cart-btn"
-					class="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					class="icon-btn size-9"
 					aria-label={labels.close}
 				>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="size-4"
+						aria-hidden="true"
+						><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+					>
 				</button>
 			</div>
-			<div id="cart-drawer-header-extra" class="empty:hidden mt-3"></div>
+			<div
+				id="cart-drawer-header-extra"
+				class="mt-3 text-sm text-muted-foreground empty:hidden"
+			>
+			</div>
+		</header>
+
+		<div
+			id="cart-items-container"
+			class="flex-1 overflow-y-auto overscroll-contain px-5"
+		>
 		</div>
 
-		<div id="cart-items-container" class="flex-1 overflow-y-auto px-4 sm:px-5"></div>
-
-		<div class="space-y-4 border-t border-border bg-muted/20 p-4 sm:p-5">
-			<dl class="space-y-1.5 text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
-				<div class="flex justify-between gap-3">
+		<footer class="space-y-3 border-t border-border bg-card px-5 pt-4 pb-safe">
+			<dl class="space-y-2" aria-live="polite" aria-atomic="true">
+				<div class={rowClass}>
 					<dt>{labels.subtotal}</dt>
-					<dd id="drawer-subtotal" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+					<dd id="drawer-subtotal" class={valueClass}>{initialTotal}</dd>
 				</div>
-				<div class="flex justify-between gap-3">
-					<dt>{labels.tax}{taxRateLabel ? ` (${taxRateLabel})` : ''}</dt>
-					<dd id="drawer-tax" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+				<div id="drawer-tax-row" class={rowClass}>
+					<dt>
+						{labels.tax}
+						{
+							taxRateLabel ? (
+								<span class="price font-normal">({taxRateLabel})</span>
+							) : null
+						}
+					</dt>
+					<dd id="drawer-tax" class={valueClass}>{initialTotal}</dd>
 				</div>
-				<div id="drawer-delivery-row" class="flex hidden justify-between gap-3">
+				<div id="drawer-delivery-row" class:list={[rowClass, 'hidden']}>
 					<dt>{labels.deliveryFee}</dt>
-					<dd id="drawer-delivery-fee" class="font-medium tabular-nums text-foreground">{initialTotal}</dd>
+					<dd id="drawer-delivery-fee" class={valueClass}>{initialTotal}</dd>
 				</div>
-				<div class="flex justify-between gap-3 border-t border-border pt-2 text-sm font-semibold text-foreground">
+				<div
+					class="mt-3 flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground"
+				>
 					<dt>{labels.total}</dt>
-					<dd id="drawer-total" class="tabular-nums">{initialTotal}</dd>
+					<dd id="drawer-total" class="price font-heading text-xl">
+						{initialTotal}
+					</dd>
 				</div>
 			</dl>
 
-			<p id="drawer-checkout-reason" class="hidden text-xs text-muted-foreground" role="status"></p>
+			{/* `mountCartUi` writes the reason text and toggles `.hidden` on the
+			    inner paragraph; the wrapper (with its icon) follows it. */}
+			<div
+				class="flex items-start gap-2 rounded-lg border tone-warning px-3 py-2 text-sm has-[>#drawer-checkout-reason.hidden]:hidden"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="mt-0.5 size-4 shrink-0"
+					aria-hidden="true"
+					><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"
+					></path></svg
+				>
+				<p
+					id="drawer-checkout-reason"
+					class="hidden min-w-0 flex-1 font-medium"
+					role="status"
+				>
+				</p>
+			</div>
 			<a
 				href={checkoutHref}
 				id="drawer-checkout-btn"
-				class:list={[siteBtnPrimary, 'w-full py-3 text-center text-sm']}
+				class="btn-cta w-full justify-between px-5"
 			>
-				{labels.checkout}
+				<span>{labels.checkout}</span>
+				<span id="drawer-checkout-total" class="price" aria-hidden="true"
+					>{initialTotal}</span
+				>
 			</a>
-		</div>
+		</footer>
 	</aside>
 </div>

@@ -73,3 +73,632 @@
 		display: none;
 	}
 }
+
+/* ---------------------------------------------------------------------------
+ * Ordering foundation (menu, drops, checkout).
+ * Everything below is derived from the org theme tokens. Nothing here sets a
+ * brand hue: status colors are a universal hue pulled toward the org primary,
+ * and shadows are neutral alpha so they work on every palette.
+ * ------------------------------------------------------------------------- */
+
+:root {
+	/* Status roles. Use as tints (`bg-success/10 text-success`), never alone:
+	 * always pair with words and an icon. */
+	--success: color-mix(in oklch, oklch(0.55 0.13 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.62 0.14 65) 85%, var(--foreground));
+	--info: color-mix(in oklch, oklch(0.55 0.12 250) 70%, var(--primary));
+
+	/* Media placeholder tint: a whisper of the org primary over muted. */
+	--placeholder: color-mix(in oklch, var(--primary) 9%, var(--muted));
+
+	/* Neutral elevation. */
+	--elev-1: 0 1px 2px oklch(0 0 0 / 0.05), 0 1px 3px oklch(0 0 0 / 0.04);
+	--elev-2: 0 2px 4px oklch(0 0 0 / 0.04), 0 8px 20px -4px oklch(0 0 0 / 0.1);
+	--elev-3: 0 12px 32px -8px oklch(0 0 0 / 0.22), 0 4px 8px oklch(0 0 0 / 0.06);
+	--elev-bar-up: 0 -1px 0 var(--border), 0 -8px 24px -12px oklch(0 0 0 / 0.14);
+	--elev-bar-down: 0 1px 0 var(--border), 0 8px 24px -16px oklch(0 0 0 / 0.16);
+}
+
+.dark {
+	--success: color-mix(in oklch, oklch(0.74 0.14 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.8 0.13 75) 85%, var(--foreground));
+	--info: color-mix(in oklch, oklch(0.74 0.11 250) 70%, var(--primary));
+	--placeholder: color-mix(in oklch, var(--primary) 12%, var(--muted));
+	--elev-1: 0 1px 2px oklch(0 0 0 / 0.3);
+	--elev-2: 0 8px 20px -4px oklch(0 0 0 / 0.45);
+	--elev-3: 0 16px 40px -8px oklch(0 0 0 / 0.6);
+	--elev-bar-up: 0 -1px 0 var(--border), 0 -8px 24px -12px oklch(0 0 0 / 0.5);
+	--elev-bar-down: 0 1px 0 var(--border), 0 8px 24px -16px oklch(0 0 0 / 0.5);
+}
+
+@theme inline {
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-info: var(--info);
+	--color-placeholder: var(--placeholder);
+	--shadow-elev-1: var(--elev-1);
+	--shadow-elev-2: var(--elev-2);
+	--shadow-elev-3: var(--elev-3);
+	--shadow-bar-up: var(--elev-bar-up);
+	--shadow-bar-down: var(--elev-bar-down);
+}
+
+/* Money and counts: steady digits, never split, isolated from RTL text. */
+@utility price {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	white-space: nowrap;
+	unicode-bidi: isolate;
+}
+
+/* Isolates a run (estimates, dates, "~15 min") from surrounding bidi text. */
+@utility bidi-isolate {
+	unicode-bidi: isolate;
+}
+
+/* Small label above a value. Uppercase only where the script has case. */
+@utility eyebrow {
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+	&:is(:lang(ar), :lang(fa), :lang(he), :lang(zh), :lang(ja), :lang(ko)) {
+		letter-spacing: 0;
+		text-transform: none;
+	}
+}
+
+/* One focus treatment for every interactive element in ordering. */
+@utility focus-ring {
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* Flat surface at rest: the default container for cards and sections. */
+@utility surface {
+	background-color: var(--card);
+	color: var(--card-foreground);
+	border: 1px solid var(--border);
+	border-radius: calc(var(--radius) + 4px);
+}
+
+/* Interactive surface (item cards, drop cards): lifts on hover. */
+@utility surface-interactive {
+	transition:
+		box-shadow 160ms ease-out,
+		border-color 160ms ease-out,
+		background-color 160ms ease-out;
+	@media (hover: hover) {
+		&:hover {
+			box-shadow: var(--elev-2);
+			border-color: color-mix(in oklch, var(--foreground) 18%, var(--border));
+		}
+	}
+}
+
+/* Floating layers: modal, drawer, popovers. */
+@utility surface-overlay {
+	background-color: var(--card);
+	color: var(--card-foreground);
+	box-shadow: var(--elev-3);
+	outline: 1px solid color-mix(in oklch, var(--foreground) 6%, transparent);
+	outline-offset: -1px;
+}
+
+/* Translucent sticky chrome (category nav, sticky CTA bars). */
+@utility glass-bar {
+	background-color: color-mix(in oklch, var(--background) 92%, transparent);
+	backdrop-filter: saturate(1.4) blur(12px);
+}
+
+/* Bottom hairline drawn as an inset shadow rather than a border: it spans the
+ * full bar, and children paint over it, so an active tab's bar can sit on top
+ * of the rule even though the tab strip itself clips overflow. */
+@utility hairline-b {
+	box-shadow: inset 0 -1px 0 var(--border);
+}
+
+/* Shapes: every control derives its corner from the org `--radius`
+ * (DESIGN.md "Shapes"), so a "full" theme gets pills and "none" gets squares.
+ * Do not hardcode rounded-full on buttons, chips, or fields. */
+
+/* Segmented control: track + items. Active by aria-pressed/checked/selected,
+ * `.is-active`, or a checked input inside the item. */
+@utility segmented {
+	display: inline-flex;
+	align-items: stretch;
+	gap: 0.25rem;
+	padding: 0.25rem;
+	border-radius: calc(var(--radius) + 4px);
+	background-color: var(--muted);
+}
+@utility segmented-item {
+	display: inline-flex;
+	flex: 1 1 0%;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 2.25rem;
+	padding-inline: 1rem;
+	border-radius: var(--radius);
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		background-color 160ms ease-out,
+		color 160ms ease-out,
+		box-shadow 160ms ease-out;
+	&:hover {
+		color: var(--foreground);
+	}
+	&:is(
+		[aria-pressed='true'],
+		[aria-checked='true'],
+		[aria-selected='true'],
+		.is-active
+	),
+	&:has(input:checked) {
+		background-color: var(--background);
+		color: var(--foreground);
+		box-shadow: var(--elev-1);
+	}
+	&:has(input:focus-visible) {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* Chip (category nav, filters, pickup dates/slots). Active state is
+ * ink-first (foreground on background) so primary stays reserved for CTAs. */
+@utility chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	min-height: 2.25rem;
+	padding-inline: 0.875rem;
+	border-radius: calc(var(--radius) + 4px);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 0.875rem;
+	font-weight: 500;
+	white-space: nowrap;
+	transition:
+		background-color 160ms ease-out,
+		color 160ms ease-out,
+		border-color 160ms ease-out;
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--muted);
+		}
+	}
+	&:is(
+		[aria-current='true'],
+		[aria-pressed='true'],
+		[aria-checked='true'],
+		.is-active
+	) {
+		background-color: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
+	}
+	&:is(:disabled, [aria-disabled='true']) {
+		background-color: transparent;
+		color: var(--muted-foreground);
+		border-style: dashed;
+		cursor: not-allowed;
+	}
+}
+
+/* Tiny label on cards: Popular, Sold out, Live, Ends soon. Pair with a tone. */
+@utility badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	min-height: 1.375rem;
+	padding-inline: 0.5rem;
+	border-radius: max(4px, calc(var(--radius) - 4px));
+	border: 1px solid transparent;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+@utility tone-neutral {
+	background-color: var(--muted);
+	color: var(--muted-foreground);
+	border-color: var(--border);
+}
+@utility tone-brand {
+	background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+	color: color-mix(in oklch, var(--primary) 75%, var(--foreground));
+	border-color: color-mix(in oklch, var(--primary) 24%, transparent);
+}
+@utility tone-success {
+	background-color: color-mix(in oklch, var(--success) 12%, transparent);
+	color: var(--success);
+	border-color: color-mix(in oklch, var(--success) 25%, transparent);
+}
+@utility tone-warning {
+	background-color: color-mix(in oklch, var(--warning) 14%, transparent);
+	color: color-mix(in oklch, var(--warning) 55%, var(--foreground));
+	border-color: color-mix(in oklch, var(--warning) 30%, transparent);
+}
+@utility tone-danger {
+	background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	border-color: color-mix(in oklch, var(--destructive) 25%, transparent);
+}
+@utility tone-solid {
+	background-color: var(--foreground);
+	color: var(--background);
+	border-color: var(--foreground);
+}
+
+/* Round icon button: close, steppers, quick-add "+". 40px (36px with size-9). */
+@utility icon-btn {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	color: var(--foreground);
+	transition:
+		background-color 160ms ease-out,
+		transform 120ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled) {
+			background-color: var(--muted);
+		}
+	}
+	&:active:not(:disabled) {
+		transform: scale(0.94);
+	}
+	&:disabled {
+		color: var(--muted-foreground);
+		background-color: transparent;
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+		&:active:not(:disabled) {
+			transform: none;
+		}
+	}
+}
+
+/* Primary CTA: 48px, org radius, used once per view. */
+@utility btn-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 3rem;
+	padding-inline: 1.5rem;
+	border-radius: var(--radius);
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+	font-size: 1rem;
+	font-weight: 600;
+	transition:
+		background-color 160ms ease-out,
+		transform 120ms ease-out,
+		opacity 160ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled, [aria-disabled='true']) {
+			background-color: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				var(--foreground)
+			);
+		}
+	}
+	&:active:not(:disabled, [aria-disabled='true']) {
+		transform: scale(0.985);
+	}
+	&:is(:disabled, [aria-disabled='true']) {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		&:active:not(:disabled, [aria-disabled='true']) {
+			transform: none;
+		}
+	}
+}
+
+/* Secondary button: outline, org radius. */
+@utility btn-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 2.75rem;
+	padding-inline: 1.25rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 0.875rem;
+	font-weight: 600;
+	transition: background-color 160ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled) {
+			background-color: var(--muted);
+		}
+	}
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* 48px form field; 16px text so iOS does not zoom. */
+@utility field {
+	display: block;
+	width: 100%;
+	min-height: 3rem;
+	padding: 0.625rem 0.875rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--input);
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 1rem;
+	line-height: 1.5rem;
+	transition:
+		border-color 160ms ease-out,
+		box-shadow 160ms ease-out;
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+	&:focus-visible {
+		outline: none;
+		border-color: var(--ring);
+		box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 35%, transparent);
+	}
+	&[aria-invalid='true'] {
+		border-color: var(--destructive);
+	}
+	&:disabled {
+		background-color: var(--muted);
+		color: var(--muted-foreground);
+		cursor: not-allowed;
+	}
+}
+
+/* Selectable card wrapping a native radio/checkbox (fulfillment, payment). */
+@utility choice-card {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-height: 3.5rem;
+	padding: 0.75rem 1rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	cursor: pointer;
+	transition:
+		border-color 160ms ease-out,
+		background-color 160ms ease-out,
+		box-shadow 160ms ease-out;
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(
+				in oklch,
+				var(--muted) 50%,
+				var(--background)
+			);
+		}
+	}
+	& :is(input[type='radio'], input[type='checkbox']) {
+		accent-color: var(--primary);
+		width: 1.125rem;
+		height: 1.125rem;
+		flex-shrink: 0;
+	}
+	&:has(input:checked) {
+		border-color: var(--foreground);
+		box-shadow: inset 0 0 0 1px var(--foreground);
+	}
+	&:has(input:focus-visible) {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	&:has(input:disabled) {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+}
+
+/* Image placeholder: org-tinted tile. Put the item initial inside in
+ * `font-heading text-primary/50`. Never a generic stock icon grid. */
+@utility media-placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--placeholder);
+	background-image: radial-gradient(
+		circle at 30% 20%,
+		color-mix(in oklch, var(--primary) 10%, transparent),
+		transparent 60%
+	);
+	color: color-mix(in oklch, var(--primary) 45%, var(--muted-foreground));
+}
+
+/* Loading shimmer block. Static under reduced motion. */
+@utility skeleton {
+	border-radius: calc(var(--radius) - 2px);
+	background-color: var(--muted);
+	animation: ordering-pulse 1.6s ease-in-out infinite;
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
+}
+@keyframes ordering-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.55;
+	}
+}
+
+/* Edge fade on horizontal rails; symmetric, so it is direction-safe. */
+@utility fade-x {
+	mask-image: linear-gradient(
+		to right,
+		transparent,
+		currentcolor 1rem,
+		currentcolor calc(100% - 1rem),
+		transparent
+	);
+}
+
+/* Bottom padding that clears the iOS home indicator. */
+@utility pb-safe {
+	padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Dotted leader-free price row: label at start, value at end. */
+@utility summary-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: var(--muted-foreground);
+	& > :last-child {
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+		unicode-bidi: isolate;
+		white-space: nowrap;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+ * Menu storefront (order bar, item cards).
+ * ------------------------------------------------------------------------- */
+
+/* Brand-tinted surface for typographic cards (no photo). */
+@utility brand-tint {
+	background-color: color-mix(in oklch, var(--primary) 7%, var(--card));
+	color: var(--card-foreground);
+	border: 1px solid color-mix(in oklch, var(--primary) 16%, var(--border));
+	border-radius: calc(var(--radius) + 4px);
+}
+
+/* Text in the brand hue that still reads on card and background. */
+@utility text-brand {
+	color: color-mix(in oklch, var(--primary) 78%, var(--foreground));
+}
+
+/* Quick-add "+": brand tint at rest, filled brand when its card is hovered
+ * or the button is pressed. Sized by the caller (`size-10`). */
+@utility add-btn {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius);
+	background-color: color-mix(in oklch, var(--primary) 12%, var(--card));
+	color: color-mix(in oklch, var(--primary) 78%, var(--foreground));
+	transition:
+		background-color 160ms ease-out,
+		color 160ms ease-out,
+		transform 120ms ease-out;
+	@media (hover: hover) {
+		.group:hover & {
+			background-color: var(--primary);
+			color: var(--primary-foreground);
+		}
+	}
+	.group:active & {
+		transform: scale(0.94);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+		.group:active & {
+			transform: none;
+		}
+	}
+}
+
+/* Order bar trigger (location / time): a field-shaped button. */
+@utility order-chip {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-width: 0;
+	min-height: 3.5rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	color: var(--foreground);
+	text-align: start;
+	transition:
+		background-color 160ms ease-out,
+		border-color 160ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in oklch, var(--foreground) 24%, var(--border));
+			background-color: color-mix(
+				in oklch,
+				var(--muted) 45%,
+				var(--background)
+			);
+		}
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	&[data-needs-attention] {
+		border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+		border-style: dashed;
+	}
+}
+
+/* The one authored moment: when the order details change, the new value
+ * resolves from a soft blur instead of popping. */
+@keyframes order-value-in {
+	from {
+		opacity: 0;
+		filter: blur(6px);
+		transform: translateY(3px);
+	}
+}
+@utility order-value-in {
+	animation: order-value-in 420ms cubic-bezier(0.16, 1, 0.3, 1);
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
+}

@@ -177,4 +177,6 @@ export type OrderingLabels = {
 	closeDialog: string
 	customizeItem: string
 	itemsCount: string
+	/** Empty-cart action in the drawer; closes it so the guest keeps browsing. */
+	exploreMenu?: string
 }

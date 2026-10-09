@@ -49,24 +49,24 @@ type GroupView = {
 	reset: () => void
 }
 
-const PILL_BASE =
-	'inline-flex min-h-9 items-center gap-1.5 rounded-[var(--radius)] border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed'
-const PILL_ON = 'border-primary bg-primary text-primary-foreground'
-const PILL_OFF = 'border-border bg-background text-foreground hover:bg-muted'
-const PILL_DISABLED = 'border-border bg-muted/40 text-muted-foreground'
+// `chip` and `segmented-item` style their active state from `aria-checked`
+// (set below) and `.is-active`, so the swapped sets are just the marker.
+const PILL_BASE = 'chip min-h-10 focus-ring disabled:cursor-not-allowed'
+const PILL_ON = 'is-active'
+const PILL_OFF = ''
+const PILL_DISABLED = ''
 
 const SEGMENT_BASE =
-	'min-h-8 rounded-[calc(var(--radius)*0.7)] px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-const SEGMENT_ON = 'bg-primary text-primary-foreground shadow-xs'
-const SEGMENT_OFF = 'text-muted-foreground hover:text-foreground'
+	'segmented-item min-h-8 px-2.5 text-xs focus-ring disabled:cursor-not-allowed disabled:opacity-50'
+const SEGMENT_ON = 'is-active'
+const SEGMENT_OFF = ''
 
-const STEP_BTN =
-	'inline-flex size-8 items-center justify-center rounded-[calc(var(--radius)*0.7)] border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40'
+const STEP_BTN = 'icon-btn size-8'
 
-const STATUS_BASE = 'shrink-0 text-xs font-medium'
-const STATUS_IDLE = 'text-muted-foreground'
-const STATUS_DONE = 'inline-flex items-center gap-1 text-primary'
-const STATUS_ERROR = 'text-destructive'
+const STATUS_BASE = 'badge shrink-0'
+const STATUS_IDLE = 'tone-neutral'
+const STATUS_DONE = 'tone-success'
+const STATUS_ERROR = 'tone-danger'
 
 function setPill(button: HTMLButtonElement, on: boolean, disabled = false) {
 	button.className = `${PILL_BASE} ${disabled ? PILL_DISABLED : on ? PILL_ON : PILL_OFF}`
@@ -246,11 +246,11 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		const singleGroup = groups.length === 1
 
 		groups.forEach((group, groupIndex) => {
-			const fieldset = el('fieldset', 'space-y-2')
+			const fieldset = el('fieldset', 'space-y-3')
 			const legendId = `modal-variation-${groupIndex}-label`
 			const legend = el(
 				'legend',
-				'text-sm font-medium text-foreground',
+				'text-base font-semibold text-foreground',
 				group.name,
 			)
 			legend.id = legendId
@@ -418,7 +418,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		if (!(amount > 0)) return null
 		return el(
 			'span',
-			'shrink-0 text-sm text-muted-foreground',
+			// plaintext keeps a leading "+" before the amount in RTL.
+			'price shrink-0 text-sm font-medium text-muted-foreground [unicode-bidi:plaintext]',
 			`+${formatMoney(amount)}`,
 		)
 	}
@@ -444,7 +445,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		if (!nestedGroups.length) return null
 		const nested = el(
 			'div',
-			'js-nested hidden ms-7 space-y-4 border-s-2 border-primary/30 ps-4 pb-2',
+			'js-nested hidden ms-7 mb-2 space-y-1 rounded-lg bg-muted/60 px-3 pb-1',
 		)
 		for (const group of nestedGroups)
 			nested.appendChild(renderGroup(group, depth + 1))
@@ -468,19 +469,22 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 
 		for (const option of group.options) {
 			const row = el('div')
-			const label = el('label', 'flex cursor-pointer items-start gap-3 py-2.5')
+			const label = el(
+				'label',
+				'flex min-h-12 cursor-pointer items-center gap-3 py-2',
+			)
 			const input = document.createElement('input')
 			input.type = single ? 'radio' : 'checkbox'
 			input.name = inputName
 			input.value = option.id
-			input.className = 'mt-0.5 size-4 shrink-0 accent-primary'
+			input.className = 'size-4.5 shrink-0 accent-primary focus-ring'
 			const unavailable = isUnavailable(option)
 			input.disabled = unavailable
 			if (unavailable) label.classList.add('cursor-not-allowed', 'opacity-60')
 			label.appendChild(input)
 			label.appendChild(optionText(option))
 			const suffix = unavailable
-				? el('span', 'shrink-0 text-sm text-muted-foreground', labels.soldOut)
+				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(option.price)
 			if (suffix) label.appendChild(suffix)
 			row.appendChild(label)
@@ -606,11 +610,11 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		}
 
 		for (const option of group.options) {
-			const row = el('div', 'flex items-center gap-3 py-2.5')
+			const row = el('div', 'flex min-h-12 items-center gap-3 py-2')
 			const unavailable = isUnavailable(option)
 			row.appendChild(optionText(option))
 			const suffix = unavailable
-				? el('span', 'shrink-0 text-sm text-muted-foreground', labels.soldOut)
+				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(option.price)
 			if (suffix) row.appendChild(suffix)
 			const stepper = el('div', 'flex shrink-0 items-center gap-2')
@@ -625,7 +629,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 			minus.appendChild(icon('minus'))
 			const value = el(
 				'span',
-				'min-w-4 text-center text-sm tabular-nums text-foreground',
+				'price min-w-5 text-center text-sm text-foreground',
 				'0',
 			)
 			value.setAttribute('aria-live', 'polite')
@@ -727,18 +731,15 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		for (const option of group.options) {
 			const row = el(
 				'div',
-				'flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5',
+				'flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 py-2',
 			)
 			const unavailable = isUnavailable(option)
 			row.appendChild(optionText(option))
 			const suffix = unavailable
-				? el('span', 'shrink-0 text-sm text-muted-foreground', labels.soldOut)
+				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(halfPrice(option, 'whole'))
 			if (suffix) row.appendChild(suffix)
-			const segmented = el(
-				'div',
-				'inline-flex shrink-0 rounded-[var(--radius)] border border-border bg-muted/40 p-0.5',
-			)
+			const segmented = el('div', 'segmented shrink-0 gap-0.5 p-0.5')
 			segmented.setAttribute('role', 'radiogroup')
 			segmented.setAttribute('aria-label', option.displayName)
 			const entry: {
@@ -789,13 +790,18 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 	}
 
 	function renderGroup(group: ModifierGroup, depth = 0): HTMLElement {
-		const section = el('fieldset', 'space-y-1')
+		const section = el(
+			'fieldset',
+			depth === 0 ? 'border-t border-border px-5 py-4 sm:px-6' : 'pt-2',
+		)
 		section.dataset.groupId = group.id
-		const header = el('div', 'flex items-baseline justify-between gap-3')
+		const header = el('div', 'flex items-center justify-between gap-3')
 		const titleTag = depth === 0 ? 'h3' : 'h4'
 		const title = el(
 			titleTag,
-			'font-heading text-base text-foreground',
+			depth === 0
+				? 'min-w-0 text-base font-semibold text-foreground'
+				: 'min-w-0 text-sm font-semibold text-foreground',
 			group.name,
 		)
 		const legend = el('legend', 'sr-only', group.name)
@@ -804,7 +810,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		const status = el('span', `${STATUS_BASE} ${STATUS_IDLE}`)
 		header.appendChild(status)
 		section.appendChild(header)
-		const body = el('div', 'divide-y divide-border/60')
+		const body = el('div', 'mt-1 divide-y divide-border/60')
 		section.appendChild(body)
 
 		// Register the view before rendering options so default selections can

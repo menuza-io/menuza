@@ -1,5 +1,12 @@
+import {
+	hasRealCoordinates,
+	normalizePostalCode,
+	resolveZoneForPoint,
+	toAsciiDigits,
+	type CoverageFailureReason,
+} from '@repo/geo'
 import { z } from 'zod'
-import { DAYS_OF_WEEK } from './location-types.ts'
+import { DAYS_OF_WEEK, DEFAULT_SCHEDULING } from './location-types.ts'
 import {
 	isLocationOpenForOrdering,
 	localDateAndTimeToUtc,
@@ -113,6 +120,8 @@ export type RestaurantOrderErrorCode =
 	| 'delivery_disabled'
 	| 'delivery_unavailable'
 	| 'delivery_coverage_unverified'
+	| 'delivery_quote_expired'
+	| 'schedule_unavailable'
 	| 'minimum_order'
 	| 'delivery_address_required'
 	| 'delivery_not_allowed'
@@ -210,11 +219,21 @@ export const restaurantOrderRequestSchema = z
 		}),
 		delivery: z
 			.strictObject({
-				address: z.string().trim().min(5).max(200),
-				city: z.string().trim().min(1).max(100),
+				// Free-text address + city are required only without a quote
+				// token; with one, the signed coordinates/address are authoritative.
+				address: z.string().trim().max(200).optional(),
+				city: z.string().trim().max(100).optional(),
 				unit: z.string().trim().max(50).optional(),
 				notes: z.string().trim().max(200).optional(),
+				quoteToken: z.string().min(16).max(4096).optional(),
 			})
+			.optional(),
+		/** ISO-8601 instant; null/absent = ASAP. */
+		scheduledFor: z
+			.string()
+			.datetime({ offset: true })
+			.max(40)
+			.nullable()
 			.optional(),
 		tipPercent: z
 			.number()
@@ -231,6 +250,29 @@ export const restaurantOrderRequestSchema = z
 				code: z.ZodIssueCode.custom,
 				path: ['delivery'],
 				message: 'A delivery address is required',
+			})
+		}
+		if (value.delivery && !value.delivery.quoteToken) {
+			if ((value.delivery.address ?? '').length < 5) {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['delivery', 'address'],
+					message: 'Enter a delivery address',
+				})
+			}
+			if (!value.delivery.city) {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['delivery', 'city'],
+					message: 'Enter a delivery city',
+				})
+			}
+		}
+		if (value.dropSlug && value.scheduledFor) {
+			context.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['scheduledFor'],
+				message: 'Drops use pickup windows instead of scheduled times',
 			})
 		}
 		if (value.fulfillment !== 'delivery' && value.delivery) {
@@ -339,11 +381,15 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		},
 		delivery: request.delivery
 			? {
-					address: request.delivery.address,
-					city: request.delivery.city,
+					address: request.delivery.address ?? null,
+					city: request.delivery.city ?? null,
 					unit: request.delivery.unit ?? null,
 					notes: request.delivery.notes ?? null,
+					quoteToken: request.delivery.quoteToken ?? null,
 				}
+			: null,
+		scheduledFor: request.scheduledFor
+			? new Date(request.scheduledFor).toISOString()
 			: null,
 		lines: request.lines.map((line) => ({
 			itemId: line.itemId,
@@ -653,6 +699,19 @@ export const publicLocationContextSchema = z
 			.passthrough()
 			.optional(),
 		deliveryZones: z.array(deliveryZoneContextSchema).default([]),
+		address: z
+			.object({
+				formattedAddress: z.string().optional(),
+				city: z.string().optional(),
+				state: z.string().optional(),
+				postalCode: z.string().optional(),
+				country: z.string().optional(),
+				lat: z.number().nullable().optional(),
+				lng: z.number().nullable().optional(),
+			})
+			.passthrough()
+			.nullable()
+			.optional(),
 		onlineHours: weeklyScheduleContextSchema.nullable().optional(),
 		storeHours: weeklyScheduleContextSchema.nullable().optional(),
 		specialHours: specialHoursContextSchema.optional(),
@@ -853,7 +912,13 @@ export type PricedRestaurantOrder = {
 		unit: string | null
 		notes: string | null
 		zoneId: string
+		/** Set when coverage was verified from a signed delivery quote. */
+		postalCode: string | null
+		lat: number | null
+		lng: number | null
 	} | null
+	/** Validated scheduled time (ISO UTC), null for ASAP. */
+	scheduledFor: string | null
 	holdMinutes: number
 	capacity: OrderCapacitySpec | null
 }
@@ -866,69 +931,194 @@ export type DeliveryCoverageResult =
 	| { ok: true; zone: DeliveryZoneLike }
 	| { ok: false; error: RestaurantOrderError }
 
-type DeliveryZoneLike = {
-	id: string
-	name: string
-	minimumOrder: number
-	deliveryFee: number
-	zipCodes: string[]
-	type: 'radius' | 'zip_code' | 'polygon'
-	provider: string
-	restriction: string
-	enabled: boolean
+type DeliveryZoneContext = PublicLocationContext['deliveryZones'][number]
+type DeliveryZoneLike = DeliveryZoneContext
+
+/**
+ * Coordinates + address the regional tenant-api signed into a delivery quote
+ * token and has already verified (signature, expiry, org, location). The
+ * pricing engine re-resolves the zone from these coordinates against the
+ * fresh catalog context, so fee and minimum always reflect current zones.
+ */
+export type VerifiedDeliveryQuote = {
+	lat: number
+	lng: number
+	formatted: string
+	line1: string
+	city: string
+	postalCode: string | null
+	unit: string | null
 }
 
 const US_ZIP_REGEX = /\b(\d{5})(?:-\d{4})?\b/g
 const CA_POSTAL_REGEX = /\b([A-Za-z]\d[A-Za-z])[ -]?(\d[A-Za-z]\d)\b/g
+const FIVE_DIGIT_REGEX = /(?<!\d)(\d{5})(?!\d)/g
+
+function lastMatch(regex: RegExp, text: string): RegExpExecArray | null {
+	let found: RegExpExecArray | null = null
+	let match: RegExpExecArray | null
+	regex.lastIndex = 0
+	while ((match = regex.exec(text)) !== null) found = match
+	return found
+}
 
 /**
- * Extracts a verifiable postal code from freeform delivery text. Radius and
- * polygon zones need coordinates the order payload does not carry, so only
- * zip-code zones can be verified server-side; anything else fails closed.
+ * ISO country for a location: the address country when present, otherwise
+ * inferred from the location currency (SAR → SA, CAD → CA, USD → US).
  */
-export function extractPostalCode(text: string): string | null {
-	let usMatch: RegExpExecArray | null = null
-	let match: RegExpExecArray | null
-	US_ZIP_REGEX.lastIndex = 0
-	while ((match = US_ZIP_REGEX.exec(text)) !== null) usMatch = match
-	if (usMatch) return usMatch[1]!
+export function locationCountryCode(
+	location: Pick<PublicLocationContext, 'currency' | 'address'>,
+): string {
+	const raw = (location.address?.country ?? '').trim().toUpperCase()
+	if (['SA', 'SAU', 'SAUDI ARABIA', 'KSA'].includes(raw)) return 'SA'
+	if (['CA', 'CAN', 'CANADA'].includes(raw)) return 'CA'
+	if (
+		['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'].includes(raw)
+	) {
+		return 'US'
+	}
+	if (/^[A-Z]{2}$/.test(raw)) return raw
+	if (location.currency === 'SAR') return 'SA'
+	if (location.currency === 'CAD') return 'CA'
+	return 'US'
+}
 
-	let caMatch: RegExpExecArray | null = null
-	CA_POSTAL_REGEX.lastIndex = 0
-	while ((match = CA_POSTAL_REGEX.exec(text)) !== null) caMatch = match
+/**
+ * Extracts a verifiable postal code from freeform delivery text. Country
+ * aware: Saudi postcodes are 5 digits (Arabic-Indic digits accepted; 4-digit
+ * building / additional numbers are ignored), Canada uses A1A 1A1, and the US
+ * uses ZIP / ZIP+4. Without a country, US then Canadian formats are tried.
+ */
+export function extractPostalCode(
+	text: string,
+	country?: string | null,
+): string | null {
+	const normalized = toAsciiDigits(text)
+	const code = (country ?? '').toUpperCase()
+	if (code === 'SA') {
+		const match = lastMatch(FIVE_DIGIT_REGEX, normalized)
+		return match ? match[1]! : null
+	}
+	if (code === 'CA') {
+		const match = lastMatch(CA_POSTAL_REGEX, normalized)
+		return match ? `${match[1]!}${match[2]!}`.toUpperCase() : null
+	}
+	const usMatch = lastMatch(US_ZIP_REGEX, normalized)
+	if (usMatch) return usMatch[1]!
+	if (code === 'US') return null
+	const caMatch = lastMatch(CA_POSTAL_REGEX, normalized)
 	if (caMatch) return `${caMatch[1]!}${caMatch[2]!}`.toUpperCase()
 	return null
 }
 
-function normalizeZip(value: string): string {
-	return value.trim().toUpperCase().replace(/\s+/g, '')
+/**
+ * Zones that participate in coverage: allowed zones must be in-house (the
+ * only provider this engine can fulfil and price); disallowed zones of any
+ * provider act as exclusions.
+ */
+function coverageZones(
+	location: Pick<PublicLocationContext, 'deliveryZones'>,
+): DeliveryZoneContext[] {
+	return (location.deliveryZones ?? []).filter(
+		(zone) =>
+			zone.enabled &&
+			(zone.restriction === 'disallowed' || zone.provider === 'in_house'),
+	)
+}
+
+function isCheckableZone(
+	zone: DeliveryZoneContext,
+	location: Pick<PublicLocationContext, 'address'>,
+	options: { geocoderAvailable: boolean },
+): boolean {
+	if (zone.type === 'zip_code') return zone.zipCodes.length > 0
+	if (!options.geocoderAvailable) return false
+	if (zone.type === 'polygon') return zone.polygon.length >= 3
+	return (zone.radius?.value ?? 0) > 0 && hasRealCoordinates(location.address)
 }
 
 /**
- * True when at least one enabled, allowed, in-house zip-code zone exists, i.e.
- * delivery coverage is verifiable server-side for some addresses.
+ * True only when some enabled, allowed, in-house zone can actually be checked
+ * server-side: zip-code zones always; radius zones need a geocoder and real
+ * store coordinates; polygon zones need a geocoder.
  */
 export function deliveryCoverageVerifiable(
-	location: Pick<PublicLocationContext, 'deliveryZones' | 'deliveryConfig'>,
+	location: Pick<PublicLocationContext, 'deliveryZones' | 'address'>,
+	options: { geocoderAvailable?: boolean } = {},
 ): boolean {
-	const providers = location.deliveryConfig?.providers ?? []
-	const zones = location.deliveryZones ?? []
-	const eligible = zones.filter(
+	const geocoderAvailable = options.geocoderAvailable ?? false
+	return (location.deliveryZones ?? []).some(
 		(zone) =>
 			zone.enabled &&
 			zone.restriction === 'allowed' &&
 			zone.provider === 'in_house' &&
-			zone.type === 'zip_code',
+			isCheckableZone(zone, location, { geocoderAvailable }),
 	)
-	return providers.includes('in_house') || eligible.length > 0
 }
 
+export type DeliveryZoneForPointResult =
+	| { ok: true; zone: DeliveryZoneContext }
+	| { ok: false; reason: CoverageFailureReason }
+
+/**
+ * Resolves the in-house zone covering a geocoded point (radius from the store
+ * address, polygon, zip; disallowed zones exclude; cheapest match wins).
+ */
+export function resolveDeliveryZoneForPoint(
+	location: Pick<PublicLocationContext, 'deliveryZones' | 'address'>,
+	point: { lat: number; lng: number; postalCode?: string | null },
+): DeliveryZoneForPointResult {
+	return resolveZoneForPoint(
+		{
+			address: location.address ?? null,
+			deliveryZones: coverageZones(location),
+		},
+		point,
+	)
+}
+
+function coverageFailure(reason: CoverageFailureReason): {
+	ok: false
+	error: RestaurantOrderError
+} {
+	if (reason === 'out_of_range' || reason === 'excluded') {
+		return {
+			ok: false,
+			error: {
+				status: 422,
+				code: 'delivery_coverage_unverified',
+				message:
+					'Delivery is not available for this address. Please choose pickup instead.',
+			},
+		}
+	}
+	return {
+		ok: false,
+		error: {
+			status: 422,
+			code: 'delivery_unavailable',
+			message: 'Delivery is not available at this location.',
+		},
+	}
+}
+
+/**
+ * Coverage for an order. With a verified quote the zone is re-resolved from
+ * the signed coordinates against the current zones. Without one only
+ * zip-code zones can be checked (from the postal code in the free text,
+ * parsed for the location's country); anything else fails closed.
+ */
 export function resolveDeliveryCoverage(
 	location: Pick<
 		PublicLocationContext,
-		'fulfillmentOptions' | 'deliveryZones' | 'deliveryConfig'
+		| 'fulfillmentOptions'
+		| 'deliveryZones'
+		| 'deliveryConfig'
+		| 'address'
+		| 'currency'
 	>,
-	delivery: { address: string; city: string },
+	delivery: { address?: string | null; city?: string | null },
+	quote: VerifiedDeliveryQuote | null = null,
 ): DeliveryCoverageResult {
 	if (!location.fulfillmentOptions.delivery) {
 		return {
@@ -940,15 +1130,8 @@ export function resolveDeliveryCoverage(
 			},
 		}
 	}
-	const providers = location.deliveryConfig?.providers ?? []
-	const zones = location.deliveryZones ?? []
-	const eligible = zones.filter(
-		(zone) =>
-			zone.enabled &&
-			zone.restriction === 'allowed' &&
-			zone.provider === 'in_house',
-	)
-	if (!providers.includes('in_house') && eligible.length === 0) {
+	const zones = coverageZones(location)
+	if (!zones.some((zone) => zone.restriction === 'allowed')) {
 		return {
 			ok: false,
 			error: {
@@ -958,7 +1141,16 @@ export function resolveDeliveryCoverage(
 			},
 		}
 	}
-	const postal = extractPostalCode(`${delivery.address} ${delivery.city}`)
+
+	if (quote) {
+		const resolved = resolveDeliveryZoneForPoint(location, quote)
+		return resolved.ok ? resolved : coverageFailure(resolved.reason)
+	}
+
+	const postal = extractPostalCode(
+		`${delivery.address ?? ''} ${delivery.city ?? ''}`,
+		locationCountryCode(location),
+	)
 	if (!postal) {
 		return {
 			ok: false,
@@ -966,28 +1158,87 @@ export function resolveDeliveryCoverage(
 				status: 422,
 				code: 'delivery_coverage_unverified',
 				message:
-					'We could not verify delivery coverage for this address. Include a postal code or choose pickup.',
+					'We could not verify delivery coverage for this address. Confirm your address or choose pickup.',
 			},
 		}
 	}
-	const normalized = normalizeZip(postal)
-	const zone = eligible.find(
-		(candidate) =>
-			candidate.type === 'zip_code' &&
-			candidate.zipCodes.some((code) => normalizeZip(code) === normalized),
-	)
-	if (!zone) {
-		return {
-			ok: false,
-			error: {
-				status: 422,
-				code: 'delivery_coverage_unverified',
-				message:
-					'Delivery is not available for this address. Please choose pickup instead.',
-			},
+	const normalized = normalizePostalCode(postal)
+	const zipZones = zones.filter((zone) => zone.type === 'zip_code')
+	const inZip = (zone: DeliveryZoneContext) =>
+		zone.zipCodes.some((code) => normalizePostalCode(code) === normalized)
+	if (
+		zipZones.some((zone) => zone.restriction === 'disallowed' && inZip(zone))
+	) {
+		return coverageFailure('excluded')
+	}
+	let best: DeliveryZoneContext | null = null
+	for (const zone of zipZones) {
+		if (zone.restriction !== 'allowed' || !inZip(zone)) continue
+		if (
+			!best ||
+			zone.deliveryFee < best.deliveryFee ||
+			(zone.deliveryFee === best.deliveryFee &&
+				zone.minimumOrder < best.minimumOrder)
+		) {
+			best = zone
 		}
 	}
-	return { ok: true, zone }
+	if (!best) return coverageFailure('out_of_range')
+	return { ok: true, zone: best }
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled orders (ASAP when absent). Validated in the location timezone.
+// ---------------------------------------------------------------------------
+
+/** Clock skew / time-in-checkout allowance below now + prep time. */
+export const SCHEDULE_GRACE_MINUTES = 5
+
+export function validateScheduledFor(
+	location: Pick<
+		PublicLocationContext,
+		| 'scheduling'
+		| 'prepTime'
+		| 'timezone'
+		| 'onlineHours'
+		| 'storeHours'
+		| 'specialHours'
+	>,
+	scheduledFor: string,
+	now: Date,
+):
+	| { ok: true; scheduledFor: Date }
+	| { ok: false; error: RestaurantOrderError } {
+	const fail = (message: string) => ({
+		ok: false as const,
+		error: {
+			status: 422 as const,
+			code: 'schedule_unavailable' as const,
+			message,
+		},
+	})
+	const scheduling = location.scheduling ?? DEFAULT_SCHEDULING
+	if (!scheduling.scheduledOrdersEnabled) {
+		return fail('Scheduled orders are not available at this location.')
+	}
+	const when = new Date(scheduledFor)
+	if (Number.isNaN(when.getTime())) return fail('Choose a valid time.')
+	const prepMinutes = Math.max(0, location.prepTime ?? 15)
+	const earliest =
+		now.getTime() + (prepMinutes - SCHEDULE_GRACE_MINUTES) * 60 * 1000
+	if (when.getTime() < earliest) {
+		return fail('That time is too soon. Please choose a later time.')
+	}
+	const advanceDays =
+		scheduling.advanceOrderDays ?? DEFAULT_SCHEDULING.advanceOrderDays
+	if (when.getTime() > now.getTime() + advanceDays * 24 * 60 * 60 * 1000) {
+		return fail(`Orders can be scheduled up to ${advanceDays} days in advance.`)
+	}
+	const availability = isLocationOpenForOrdering(location, when)
+	if (!availability.isOpen) {
+		return fail('The restaurant is not taking orders at that time.')
+	}
+	return { ok: true, scheduledFor: when }
 }
 
 // ---------------------------------------------------------------------------
@@ -1482,9 +1733,14 @@ function orderError(
 export function priceRestaurantOrder(
 	context: RestaurantOrderContext,
 	request: RestaurantOrderRequest,
-	options: { now: Date },
+	options: {
+		now: Date
+		/** Verified signed delivery quote (tenant-api checks signature/expiry). */
+		deliveryQuote?: VerifiedDeliveryQuote | null
+	},
 ): PriceRestaurantOrderResult {
 	const { now } = options
+	const deliveryQuote = options.deliveryQuote ?? null
 
 	const location = context.menu.locations.find(
 		(candidate) => candidate.id === request.locationId,
@@ -1588,6 +1844,17 @@ export function priceRestaurantOrder(
 	const itemRules = new Map<string, DropInventoryOverride>()
 	const categoryRules = new Map<string, DropInventoryOverride>()
 	let currency: string = location.currency || context.menu.organization.currency
+	let scheduledFor: string | null = null
+	if (dropSlug && request.scheduledFor) {
+		return {
+			ok: false,
+			error: orderError(
+				422,
+				'schedule_unavailable',
+				'Drops use pickup windows instead of scheduled times.',
+			),
+		}
+	}
 
 	if (dropSlug) {
 		const dropData = context.drop
@@ -1708,15 +1975,23 @@ export function priceRestaurantOrder(
 		}
 		currency = dropData.organization.currency || currency
 	} else {
-		const availability = isLocationOpenForOrdering(location, now)
-		if (!availability.isOpen) {
-			return {
-				ok: false,
-				error: orderError(
-					422,
-					'ordering_closed',
-					availability.reason || 'Ordering is currently closed.',
-				),
+		if (request.scheduledFor) {
+			// Scheduled orders may be placed while closed; the chosen time must
+			// fall inside online hours (validated in the location timezone).
+			const schedule = validateScheduledFor(location, request.scheduledFor, now)
+			if (!schedule.ok) return { ok: false, error: schedule.error }
+			scheduledFor = schedule.scheduledFor.toISOString()
+		} else {
+			const availability = isLocationOpenForOrdering(location, now)
+			if (!availability.isOpen) {
+				return {
+					ok: false,
+					error: orderError(
+						422,
+						'ordering_closed',
+						availability.reason || 'Ordering is currently closed.',
+					),
+				}
 			}
 		}
 		for (const menu of context.menu.menus) {
@@ -1971,17 +2246,47 @@ export function priceRestaurantOrder(
 	let deliveryInfo: PricedRestaurantOrder['delivery'] = null
 	let deliveryFeeCents = 0
 	if (request.fulfillment === 'delivery' && request.delivery) {
-		const coverage = resolveDeliveryCoverage(location, request.delivery)
+		if (request.delivery.quoteToken && !deliveryQuote) {
+			return {
+				ok: false,
+				error: orderError(
+					422,
+					'delivery_quote_expired',
+					'Your delivery address check has expired. Please confirm your address again.',
+				),
+			}
+		}
+		const coverage = resolveDeliveryCoverage(
+			location,
+			request.delivery,
+			deliveryQuote,
+		)
 		if (!coverage.ok) return { ok: false, error: coverage.error }
 		const zone = coverage.zone
 		deliveryFeeCents = dollarsToCents(zone.deliveryFee)
-		deliveryInfo = {
-			address: request.delivery.address,
-			city: request.delivery.city,
-			unit: request.delivery.unit ?? null,
-			notes: request.delivery.notes ?? null,
-			zoneId: zone.id,
-		}
+		// With a quote, the persisted address comes from the signed payload,
+		// never from client text.
+		deliveryInfo = deliveryQuote
+			? {
+					address: deliveryQuote.formatted || deliveryQuote.line1,
+					city: deliveryQuote.city,
+					unit: deliveryQuote.unit || request.delivery.unit || null,
+					notes: request.delivery.notes ?? null,
+					zoneId: zone.id,
+					postalCode: deliveryQuote.postalCode,
+					lat: deliveryQuote.lat,
+					lng: deliveryQuote.lng,
+				}
+			: {
+					address: request.delivery.address ?? '',
+					city: request.delivery.city ?? '',
+					unit: request.delivery.unit ?? null,
+					notes: request.delivery.notes ?? null,
+					zoneId: zone.id,
+					postalCode: null,
+					lat: null,
+					lng: null,
+				}
 	}
 
 	// ---- Totals --------------------------------------------------------------
@@ -2033,6 +2338,7 @@ export function priceRestaurantOrder(
 			pickup: pickupInfo,
 			drop: dropInfo,
 			delivery: deliveryInfo,
+			scheduledFor,
 			holdMinutes,
 			capacity,
 		},
@@ -2126,6 +2432,8 @@ export function buildPublicOrderingOptions(
 		dropSlug: string | null
 		counts: OrderingOptionsCounts
 		now: Date
+		/** Whether this node can geocode addresses (radius/polygon zones). */
+		geocoderAvailable?: boolean
 	},
 ):
 	| { ok: true; options: PublicOrderingOptions }
@@ -2169,7 +2477,9 @@ export function buildPublicOrderingOptions(
 		delivery: {
 			available:
 				Boolean(location.fulfillmentOptions.delivery) &&
-				deliveryCoverageVerifiable(location),
+				deliveryCoverageVerifiable(location, {
+					geocoderAvailable: input.geocoderAvailable ?? false,
+				}),
 		},
 		drop: null,
 	}
