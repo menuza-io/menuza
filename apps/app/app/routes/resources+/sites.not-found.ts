@@ -16,6 +16,8 @@ import {
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
 
+const MAX_NOT_FOUND_PATHS_PER_ORG = 5000
+
 const NotFoundPayloadSchema = z.object({
 	slug: z.string().trim().toLowerCase().optional(),
 	host: z.string().trim().toLowerCase().optional(),
@@ -86,6 +88,26 @@ export async function action({ request }: ActionFunctionArgs) {
 	let normalizedPath = path.startsWith('/') ? path : `/${path}`
 	if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
 		normalizedPath = normalizedPath.slice(0, -1)
+	}
+
+	// This endpoint is unauthenticated, so an attacker could mint unbounded
+	// distinct paths. Cap distinct rows per org; known paths still count hits.
+	const [{ total } = { total: 0 }] = await db
+		.select({ total: sql<number>`count(*)` })
+		.from(WebsiteNotFoundLog)
+		.where(eq(WebsiteNotFoundLog.organizationId, organization.id))
+	if (total >= MAX_NOT_FOUND_PATHS_PER_ORG) {
+		const [known] = await db
+			.select({ id: WebsiteNotFoundLog.id })
+			.from(WebsiteNotFoundLog)
+			.where(
+				and(
+					eq(WebsiteNotFoundLog.organizationId, organization.id),
+					eq(WebsiteNotFoundLog.path, normalizedPath),
+				),
+			)
+			.limit(1)
+		if (!known) return Response.json({ ok: true })
 	}
 
 	const now = new Date()

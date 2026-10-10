@@ -103,7 +103,19 @@ export function getCustomerIdFromAccessToken(): string | undefined {
 	return getAccessTokenClaims()?.customerId
 }
 
-async function refreshSession(): Promise<boolean> {
+// Refresh tokens are single-use: two tabs (or two parallel requests) that
+// refresh at once would present the same token, trip the server's reuse
+// detection, and sign the customer out everywhere. Share one in-flight call.
+let inflightRefresh: Promise<boolean> | null = null
+
+function refreshSession(): Promise<boolean> {
+	inflightRefresh ??= doRefreshSession().finally(() => {
+		inflightRefresh = null
+	})
+	return inflightRefresh
+}
+
+async function doRefreshSession(): Promise<boolean> {
 	const refreshToken = getRefreshToken()
 	const orgId = getAccessTokenClaims()?.orgId
 	if (!refreshToken || !orgId) {

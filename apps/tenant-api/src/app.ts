@@ -1,4 +1,5 @@
 import { type Context, Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { logger as honoLogger } from 'hono/logger'
 import { logger } from '@repo/observability'
 import { isAllowedAnalyticsOrigin } from './lib/origin.ts'
@@ -45,6 +46,34 @@ export function createTenantApiApp() {
 
 	app.use('*', requestLoggingMiddleware())
 	app.use('*', honoLogger())
+
+	// Reject oversized bodies before any handler buffers them with c.req.json().
+	// Service-to-service routes under /api carry transcripts, so get more room.
+	const publicBodyLimit = bodyLimit({
+		maxSize: 1024 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
+	const serviceBodyLimit = bodyLimit({
+		maxSize: 8 * 1024 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
+	app.use('*', (c, next) =>
+		c.req.path.startsWith('/api/')
+			? serviceBodyLimit(c, next)
+			: publicBodyLimit(c, next),
+	)
+
+	app.use('*', async (c, next) => {
+		await next()
+		c.res.headers.set('X-Content-Type-Options', 'nosniff')
+		c.res.headers.set('Referrer-Policy', 'no-referrer')
+		c.res.headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
+		// Responses here carry PII and bearer tokens; never let a shared cache
+		// or the browser disk cache keep them.
+		if (!c.res.headers.has('Cache-Control')) {
+			c.res.headers.set('Cache-Control', 'no-store')
+		}
+	})
 
 	app.use('*', async (c, next) => {
 		const origin = c.req.header('Origin')

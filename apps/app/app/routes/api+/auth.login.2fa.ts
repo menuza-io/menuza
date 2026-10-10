@@ -9,6 +9,11 @@ import {
 	createAuthenticatedSessionResponse,
 	verify2FAToken,
 } from '#app/utils/jwt.server.ts'
+import {
+	checkRateLimit,
+	createRateLimitResponse,
+	VERIFICATION_CODE_ATTEMPT_RATE_LIMIT,
+} from '#app/utils/rate-limit.server.ts'
 
 const Login2FASchema = z.object({
 	userId: z.string(),
@@ -64,6 +69,14 @@ export async function action({ request }: ActionFunctionArgs) {
 				{ status: 403 },
 			)
 		}
+
+		// The per-IP limiter alone lets a distributed attacker keep guessing the
+		// 6-digit code for the 5 minutes the login token lives; cap per account.
+		const attempts = await checkRateLimit(
+			{ type: 'user', value: `2fa-login:${userId}` },
+			VERIFICATION_CODE_ATTEMPT_RATE_LIMIT,
+		)
+		if (!attempts.allowed) return createRateLimitResponse(attempts.resetAt)
 
 		const [user] = await db
 			.select({ id: User.id })

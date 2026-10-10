@@ -54,6 +54,7 @@ export function verifyAccessToken(token: string): JWTPayload | null {
 		const decoded = jwt.verify(token, JWT_SECRET, {
 			issuer: JWT_ISSUER,
 			audience: JWT_AUDIENCE,
+			algorithms: ['HS256'],
 		}) as JWTPayload
 		return decoded
 	} catch {
@@ -82,6 +83,7 @@ export function verify2FAToken(
 		const decoded = jwt.verify(token, JWT_SECRET, {
 			issuer: JWT_ISSUER,
 			audience: 'api-2fa',
+			algorithms: ['HS256'],
 		}) as { sub: string; sid: string }
 		return { userId: decoded.sub, sessionId: decoded.sid }
 	} catch {
@@ -147,11 +149,14 @@ export async function rotateRefreshToken(
 
 	const isMatch = (await bcrypt.compare(oldToken, row.tokenHash)) === true
 	if (isMatch) {
-		// Revoke the old token
-		await db
+		// Claim the old token atomically: two concurrent rotations of the same
+		// token must not both mint a successor.
+		const claimed = await db
 			.update(RefreshToken)
 			.set({ revoked: true })
-			.where(eq(RefreshToken.id, row.id))
+			.where(and(eq(RefreshToken.id, row.id), eq(RefreshToken.revoked, false)))
+			.returning({ id: RefreshToken.id })
+		if (claimed.length === 0) return null
 
 		// Create new token
 		const { token, expiresAt } = await createRefreshToken(userId, meta)

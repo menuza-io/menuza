@@ -36,6 +36,7 @@ function verifyTenantCustomerAccessToken(token: string) {
 		const payload = jwt.verify(token, getTenantCustomerJwtSecret(), {
 			issuer: brand.slug,
 			audience: 'tenant-api',
+			algorithms: ['HS256'],
 		}) as TenantCustomerAccessPayload
 
 		if (payload.type !== 'access') return null

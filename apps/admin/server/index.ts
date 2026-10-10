@@ -14,13 +14,17 @@ import { ENV } from 'varlock/env'
 const MODE = ENV.NODE_ENV ?? 'development'
 const IS_PROD = MODE === 'production'
 const IS_DEV = MODE === 'development'
-const ALLOW_INDEXING = ENV.ALLOW_INDEXING
 const BUILD_PATH = '../build/server/index.js'
 
 const app = express()
 
-const getHost = (req: { get: (key: string) => string | undefined }) =>
-	req.get('X-Forwarded-Host') ?? req.get('host') ?? ''
+// Only the Host header is trusted for the HTTPS redirect target:
+// X-Forwarded-Host is client-controllable and would make the redirect open.
+const HOST_PATTERN = /^[a-z0-9.-]+(:\d{1,5})?$/i
+const getHost = (req: { get: (key: string) => string | undefined }) => {
+	const host = req.get('host') ?? ''
+	return HOST_PATTERN.test(host) ? host : ''
+}
 
 // Cloudflare is our proxy
 app.set('trust proxy', true)
@@ -30,7 +34,7 @@ app.use((req, res, next) => {
 	if (req.method !== 'GET') return next()
 	const proto = req.get('X-Forwarded-Proto')
 	const host = getHost(req)
-	if (proto === 'http') {
+	if (proto === 'http' && host) {
 		res.set('X-Forwarded-Proto', 'https')
 		res.redirect(`https://${host}${req.originalUrl}`)
 		return
@@ -229,12 +233,12 @@ app.use((req, res, next) => {
 	return generalRateLimit(req, res, next)
 })
 
-if (!ALLOW_INDEXING) {
-	app.use((_, res, next) => {
-		res.set('X-Robots-Tag', 'noindex, nofollow')
-		next()
-	})
-}
+// The admin console is operator-only: it must never be indexed, whatever
+// ALLOW_INDEXING says (its default is true for the public apps).
+app.use((_, res, next) => {
+	res.set('X-Robots-Tag', 'noindex, nofollow')
+	next()
+})
 
 if (IS_DEV) {
 	console.log('Starting development server')

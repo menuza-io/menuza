@@ -4,6 +4,9 @@ import bcrypt from 'bcryptjs'
 
 const BACKUP_CODE_LENGTH = 8
 const BACKUP_CODE_COUNT = 10
+// Project-wide floor for bcrypt cost (see AGENTS.md). Existing hashes keep
+// verifying: bcrypt reads the cost from the stored hash.
+const BACKUP_CODE_BCRYPT_COST = 12
 const BACKUP_CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // No ambiguous chars (0, O, I, 1)
 
 /**
@@ -30,7 +33,7 @@ function generateSingleCode(): string {
  */
 export async function hashBackupCode(code: string): Promise<string> {
 	const normalizedCode = code.replace(/-/g, '').toUpperCase()
-	return bcrypt.hash(normalizedCode, 10)
+	return bcrypt.hash(normalizedCode, BACKUP_CODE_BCRYPT_COST)
 }
 
 /**
@@ -115,11 +118,14 @@ export async function validateAndConsumeBackupCode(
 	for (const backupCode of unusedCodes) {
 		const isValid = await verifyBackupCode(code, backupCode.codeHash)
 		if (isValid) {
-			await db
+			// Consume with a conditional update so a code replayed concurrently
+			// across two requests only succeeds once.
+			const consumed = await db
 				.update(BackupCode)
 				.set({ usedAt: new Date() })
-				.where(eq(BackupCode.id, backupCode.id))
-			return true
+				.where(and(eq(BackupCode.id, backupCode.id), isNull(BackupCode.usedAt)))
+				.returning({ id: BackupCode.id })
+			return consumed.length > 0
 		}
 	}
 

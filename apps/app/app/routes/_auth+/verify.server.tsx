@@ -16,6 +16,11 @@ import { EmailChangeNoticeEmail, sendEmail } from '@repo/email'
 import { data } from 'react-router'
 import { z } from 'zod'
 import {
+	checkRateLimit,
+	createRateLimitResponse,
+	VERIFICATION_CODE_ATTEMPT_RATE_LIMIT,
+} from '#app/utils/rate-limit.server.ts'
+import {
 	newEmailAddressSessionKey,
 	twoFAVerificationType,
 	type twoFAVerifyVerificationType,
@@ -241,6 +246,19 @@ export async function validateRequest(
 	request: Request,
 	body: URLSearchParams | FormData,
 ) {
+	const attemptTarget = body.get(targetQueryParam)
+	const attemptType = body.get(typeQueryParam)
+	if (typeof attemptTarget === 'string' && typeof attemptType === 'string') {
+		const attempts = await checkRateLimit(
+			{
+				type: 'token',
+				value: `${attemptType}:${attemptTarget.toLowerCase()}`.slice(0, 320),
+			},
+			VERIFICATION_CODE_ATTEMPT_RATE_LIMIT,
+		)
+		if (!attempts.allowed) return createRateLimitResponse(attempts.resetAt)
+	}
+
 	const submission = await parseWithZod(body, {
 		schema: VerifySchema.superRefine(async (data, ctx) => {
 			const status = await checkCodeValidity({
