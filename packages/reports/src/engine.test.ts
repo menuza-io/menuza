@@ -558,7 +558,7 @@ describe('value measures', () => {
 		expect(result.total).toBe(2)
 		expect(result).not.toHaveProperty('value')
 		expect(result.segments).toEqual([
-			{ key: 'total', label: 'Shop orders', count: 2, percent: 100 },
+			{ key: 'total', label: 'Orders', count: 2, percent: 100 },
 		])
 		expect(result.valueInfo?.mixedCurrencies).toBe(true)
 		expect(result.valueInfo?.currency).toBeUndefined()
