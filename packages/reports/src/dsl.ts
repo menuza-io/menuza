@@ -5,8 +5,14 @@ export const REPORT_DSL_VERSION = 1 as const
 export const chartStyleSchema = z.enum(['pie', 'single_number', 'table', 'bar'])
 export type ChartStyle = z.infer<typeof chartStyleSchema>
 
-export const measureSchema = z.enum(['count', 'percent'])
+export const measureSchema = z.enum(['count', 'percent', 'sum', 'average'])
 export type Measure = z.infer<typeof measureSchema>
+export type ValueMeasure = Extract<Measure, 'sum' | 'average'>
+
+/** Sum and average read a numeric field instead of counting records. */
+export function isValueMeasure(measure: Measure): measure is ValueMeasure {
+	return measure === 'sum' || measure === 'average'
+}
 
 export const sortBySchema = z.enum(['none', 'label', 'value_asc', 'value_desc'])
 export type SortBy = z.infer<typeof sortBySchema>
@@ -71,6 +77,8 @@ export type TimeBucket = z.infer<typeof timeBucketSchema>
 export const visualizationSchema = z.object({
 	chartStyle: chartStyleSchema,
 	measure: measureSchema.default('count'),
+	/** Number or currency field that sum and average read. */
+	valueField: z.string().min(1).optional(),
 	sortBy: sortBySchema.default('none'),
 	hideCounts: z.boolean().default(false),
 })
@@ -162,6 +170,8 @@ export type ReportSegment = {
 	label: string
 	count: number
 	percent: number
+	/** Sum or average of the value field, set when the report measures one. */
+	value?: number
 }
 
 export type ReportColumn = {
@@ -169,12 +179,33 @@ export type ReportColumn = {
 	label: string
 }
 
+export type ReportValueInfo = {
+	measure: ValueMeasure
+	field: string
+	/** Display name for the measured value, for example "Average sales". */
+	label: string
+	type: 'number' | 'currency'
+	/** Currency every measured amount shares. */
+	currency?: string
+	/** The measured amounts are in more than one currency. */
+	mixedCurrencies?: boolean
+}
+
 export type ReportResult = {
 	total: number
+	/** Sum or average of the value field over every matched record. */
+	value?: number
+	valueInfo?: ReportValueInfo
 	segments: ReportSegment[]
 	columns?: ReportColumn[]
 	rows?: Array<Record<string, string>>
 	truncated?: boolean
+	/**
+	 * The source held more records than a report reads, so results only cover
+	 * the most recent `sourceRowLimit` of them.
+	 */
+	sourceTruncated?: boolean
+	sourceRowLimit?: number
 	refreshedAt: string
 }
 

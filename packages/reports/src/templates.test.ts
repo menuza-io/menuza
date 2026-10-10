@@ -1,5 +1,67 @@
 import { describe, expect, it } from 'vitest'
-import { definitionForNewReport } from './templates.ts'
+import { getCatalog, getField, getSubject } from './catalog.ts'
+import { flattenFilterConditions } from './dsl.ts'
+import { validateReportDefinition } from './engine.ts'
+import {
+	definitionForNewReport,
+	organizationTemplates,
+	platformTemplates,
+} from './templates.ts'
+
+describe('report templates', () => {
+	const templates = [...organizationTemplates(), ...platformTemplates()]
+
+	it('all run against their catalog', () => {
+		for (const template of templates) {
+			expect(
+				validateReportDefinition(
+					getCatalog(template.scope),
+					template.definition,
+				),
+				template.id,
+			).toBeNull()
+		}
+	})
+
+	it('have unique ids', () => {
+		const ids = templates.map((template) => template.id)
+		expect(new Set(ids).size).toBe(ids.length)
+	})
+
+	it('only filter and group on fields the subject offers that way', () => {
+		for (const template of templates) {
+			const subject = getSubject(
+				getCatalog(template.scope),
+				template.definition.subject,
+			)!
+			for (const condition of flattenFilterConditions(
+				template.definition.filters,
+			)) {
+				expect(
+					getField(subject, condition.field)?.filterable,
+					`${template.id}: ${condition.field}`,
+				).toBe(true)
+			}
+		}
+	})
+
+	it('add up paid shop sales', () => {
+		const shopSales = organizationTemplates().find(
+			(template) => template.id === 'shop-sales',
+		)!
+		expect(shopSales.definition).toMatchObject({
+			subject: 'shop_orders',
+			visualization: {
+				chartStyle: 'single_number',
+				measure: 'sum',
+				valueField: 'amount',
+			},
+		})
+		expect(flattenFilterConditions(shopSales.definition.filters)).toEqual([
+			{ field: 'status', operator: 'eq', value: 'paid' },
+		])
+	})
+})
 
 describe('definitionForNewReport', () => {
 	it('uses the matching template when an id is provided', () => {

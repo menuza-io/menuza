@@ -194,13 +194,6 @@ export async function loadPhoneCallRecords(
 	return { records: mapPhoneCalls(rows, priorCalls), truncated }
 }
 
-function formatMoney(cents: number, currency = 'usd') {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: currency.toUpperCase(),
-	}).format(cents / 100)
-}
-
 function mapCustomer(row: {
 	createdAt: Date | null
 	phoneVerified: boolean | null
@@ -229,14 +222,13 @@ function mapShopOrder(row: {
 	customerPhone: string | null
 	customerEmail: string | null
 }): ReportRecord {
-	const currency = row.currency || 'usd'
 	return {
 		createdAt: row.createdAt,
 		status: row.status,
 		productName: row.productName,
-		amount: formatMoney(row.amountCents, currency),
-		orgPayout: formatMoney(row.orgPayoutCents, currency),
-		currency,
+		amount: row.amountCents / 100,
+		orgPayout: row.orgPayoutCents / 100,
+		currency: row.currency || 'usd',
 		customerName: row.customerName ?? '',
 		customerPhone: row.customerPhone ?? '',
 		customerEmail: row.customerEmail ?? '',

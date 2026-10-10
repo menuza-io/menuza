@@ -1,5 +1,5 @@
 import { requireUserId } from '@repo/auth'
-import { definitionForNewReport, getCatalog, getSubject } from '@repo/reports'
+import { definitionForNewReport, getCatalog } from '@repo/reports'
 import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
@@ -54,7 +54,6 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function NewReportRoute() {
 	const data = useLoaderData<typeof loader>()
-	const subject = getSubject(data.catalog, data.definition.subject)
 
 	return (
 		<AppReportWorkspace
@@ -62,11 +61,8 @@ export default function NewReportRoute() {
 			scope="organization"
 			initialDefinition={data.definition}
 			controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
-			tenantTokenUrl={
-				subject?.source === 'tenant-api'
-					? `/${data.orgSlug}/reports/token`
-					: null
-			}
+			// The builder can switch to a regional subject at any time.
+			tenantTokenUrl={`/${data.orgSlug}/reports/token`}
 			tenantApiUrl={data.tenantApiUrl}
 			backHref={`/${data.orgSlug}/reports`}
 			hasTenantDb={data.hasProvisionedDb}

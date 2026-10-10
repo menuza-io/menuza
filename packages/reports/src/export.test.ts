@@ -11,7 +11,7 @@ import {
 	slugFilename,
 	TITLE_BAR_HEIGHT,
 } from './export.ts'
-import { createReportDefinition } from './dsl.ts'
+import { type ReportResult, createReportDefinition } from './dsl.ts'
 
 function tableDefinition() {
 	return createReportDefinition({
@@ -79,6 +79,57 @@ describe('reportToCsv', () => {
 		})
 		expect(csv).toBe('Segment,Count,Percent\nTodo,2,66.7%\nDone,1,33.3%\n')
 	})
+
+	function salesDefinition(measure: 'sum' | 'average', hideCounts = false) {
+		return createReportDefinition({
+			subject: 'shop_orders',
+			timeframe: { field: 'createdAt', preset: 'all_time' },
+			groupBy: ['productName'],
+			visualization: {
+				chartStyle: 'table',
+				measure,
+				valueField: 'amount',
+				sortBy: 'none',
+				hideCounts,
+			},
+			settings: { title: 'Shop sales', notes: '', timezone: 'UTC' },
+		})
+	}
+
+	const salesResult = (measure: 'sum' | 'average'): ReportResult => ({
+		total: 4,
+		value: measure === 'sum' ? 40 : 10,
+		valueInfo: {
+			measure,
+			field: 'amount',
+			label: measure === 'sum' ? 'Shop sales' : 'Average shop order',
+			type: 'currency',
+			currency: 'USD',
+		},
+		segments: [
+			{ key: 'h', label: 'Hoodie', count: 1, percent: 25, value: 30 },
+			{ key: 'm', label: 'Mug', count: 3, percent: 75, value: 10 },
+		],
+		refreshedAt: '2026-08-24T18:00:00.000Z',
+	})
+
+	it('writes sums as plain amounts with their share of the total', () => {
+		expect(reportToCsv(salesDefinition('sum'), salesResult('sum'))).toBe(
+			'Segment,Count,Shop sales (USD),Percent\nHoodie,1,30.00,75.0%\nMug,3,10.00,25.0%\n',
+		)
+		expect(reportToCsv(salesDefinition('sum', true), salesResult('sum'))).toBe(
+			'Segment,Shop sales (USD),Percent\nHoodie,30.00,75.0%\nMug,10.00,25.0%\n',
+		)
+	})
+
+	it('writes averages without a percent column', () => {
+		const result = salesResult('average')
+		// No order in this segment had an amount to average.
+		result.segments[1] = { key: 'm', label: 'Mug', count: 3, percent: 75 }
+		expect(reportToCsv(salesDefinition('average'), result)).toBe(
+			'Segment,Count,Average shop order (USD)\nHoodie,1,30.00\nMug,3,\n',
+		)
+	})
 })
 
 describe('canExportReport', () => {
@@ -128,13 +179,24 @@ describe('canExportReport', () => {
 describe('buildSingleNumberSvg', () => {
 	it('embeds the total without a title', () => {
 		const svg = buildSingleNumberSvg({
-			total: 12,
+			text: '12',
 			background: '#ffffff',
 			foreground: '#0f172a',
 		})
-		expect(svg).toContain('12')
+		expect(svg).toContain('>12</text>')
+		expect(svg).toContain('font-size="88"')
 		expect(svg).not.toContain('Customer count')
 		expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"')
+	})
+
+	it('shrinks long amounts to fit and escapes them', () => {
+		const svg = buildSingleNumberSvg({
+			text: 'SAR 12,345,678,901.25 <x>',
+			background: '#ffffff',
+			foreground: '#0f172a',
+		})
+		expect(svg).not.toContain('font-size="88"')
+		expect(svg).toContain('SAR 12,345,678,901.25 &lt;x&gt;')
 	})
 })
 

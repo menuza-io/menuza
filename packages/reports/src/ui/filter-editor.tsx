@@ -32,6 +32,24 @@ const FILTER_OPERATORS: Array<{
 	{ value: 'is_not_empty', label: 'is not empty' },
 ]
 
+/**
+ * Values an exact match can pick from. Filters compare raw values, so a
+ * boolean matches "true" or "false" and an enum matches its option value.
+ */
+function valueChoices(
+	field: ReportField | undefined,
+	operator: FilterCondition['operator'],
+) {
+	if (!field || (operator !== 'eq' && operator !== 'neq')) return null
+	if (field.type === 'boolean') {
+		return [
+			{ value: 'true', label: 'Yes' },
+			{ value: 'false', label: 'No' },
+		]
+	}
+	return field.options?.length ? field.options : null
+}
+
 function emptyCondition(fields: ReportField[]): FilterCondition | null {
 	const field = fields[0]
 	if (!field) return null
@@ -334,6 +352,12 @@ function FilterConditionRow({
 }) {
 	const needsValue =
 		condition.operator !== 'is_empty' && condition.operator !== 'is_not_empty'
+	const field = fields.find((item) => item.id === condition.field)
+	const operatorLabel = FILTER_OPERATORS.find(
+		(operator) => operator.value === condition.operator,
+	)?.label
+	const choices = valueChoices(field, condition.operator)
+	const value = String(condition.value ?? '')
 
 	return (
 		<div
@@ -346,13 +370,26 @@ function FilterConditionRow({
 				<div className="min-w-0 flex-1 space-y-2">
 					<Select
 						value={condition.field}
-						onValueChange={(value) => {
-							if (!value) return
-							onChange({ ...condition, field: value })
+						onValueChange={(next) => {
+							if (!next || next === condition.field) return
+							const nextChoices = valueChoices(
+								fields.find((item) => item.id === next),
+								condition.operator,
+							)
+							// Free text carries over between text fields; a picked choice
+							// only carries over when the new field offers it too.
+							const keep = nextChoices
+								? nextChoices.some((choice) => choice.value === value)
+								: !choices
+							onChange({
+								...condition,
+								field: next,
+								value: keep ? condition.value : '',
+							})
 						}}
 					>
 						<SelectTrigger className="w-full" aria-label="Field">
-							<SelectValue />
+							<SelectValue>{field?.label ?? condition.field}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
 							{fields.map((field) => (
@@ -364,16 +401,16 @@ function FilterConditionRow({
 					</Select>
 					<Select
 						value={condition.operator}
-						onValueChange={(value) => {
-							if (!value) return
+						onValueChange={(next) => {
+							if (!next) return
 							onChange({
 								...condition,
-								operator: value as FilterCondition['operator'],
+								operator: next as FilterCondition['operator'],
 							})
 						}}
 					>
 						<SelectTrigger className="w-full" aria-label="Operator">
-							<SelectValue />
+							<SelectValue>{operatorLabel ?? condition.operator}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
 							{FILTER_OPERATORS.map((operator) => (
@@ -383,9 +420,33 @@ function FilterConditionRow({
 							))}
 						</SelectContent>
 					</Select>
-					{needsValue ? (
+					{needsValue && choices ? (
+						<Select
+							value={value || null}
+							onValueChange={(next) => {
+								if (next === null) return
+								onChange({ ...condition, value: next })
+							}}
+						>
+							<SelectTrigger className="w-full" aria-label="Value">
+								<SelectValue placeholder="Choose a value…">
+									{value
+										? (choices.find((choice) => choice.value === value)
+												?.label ?? value)
+										: undefined}
+								</SelectValue>
+							</SelectTrigger>
+							<SelectContent>
+								{choices.map((choice) => (
+									<SelectItem key={choice.value} value={choice.value}>
+										{choice.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					) : needsValue ? (
 						<Input
-							value={String(condition.value ?? '')}
+							value={value}
 							placeholder="Value"
 							aria-label="Value"
 							onChange={(event) =>

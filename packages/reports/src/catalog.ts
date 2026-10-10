@@ -1,6 +1,9 @@
+import { type Measure, type ValueMeasure } from './dsl.ts'
+
 export type ReportScope = 'organization' | 'platform'
 export type ReportSource = 'control-plane' | 'tenant-api'
-export type ReportFieldType = 'datetime' | 'boolean' | 'enum' | 'string'
+export type ReportFieldType =
+	'datetime' | 'boolean' | 'enum' | 'string' | 'number' | 'currency'
 
 export type ReportField = {
 	id: string
@@ -13,6 +16,12 @@ export type ReportField = {
 	options?: Array<{ value: string; label: string }>
 	/** Include this field as a list-table column. Defaults to true. */
 	listable?: boolean
+	/**
+	 * Number and currency fields: what the sum or average is called. `false`
+	 * hides that measure where it means nothing (a sum of star ratings).
+	 */
+	sumLabel?: string | false
+	averageLabel?: string | false
 }
 
 export type ReportSubject = {
@@ -22,6 +31,8 @@ export type ReportSubject = {
 	scope: ReportScope
 	source: ReportSource
 	fields: ReportField[]
+	/** Record field holding the ISO currency code of currency fields. */
+	currencyField?: string
 }
 
 export type ReportCatalog = {
@@ -69,6 +80,7 @@ const customerFields: ReportField[] = [
 		type: 'boolean',
 		filterable: true,
 		groupable: true,
+		description: 'Email marketing reaches customers who added an email.',
 	},
 ]
 
@@ -196,16 +208,15 @@ const shopOrderFields: ReportField[] = [
 	{
 		id: 'amount',
 		label: 'Amount',
-		type: 'string',
-		filterable: false,
-		groupable: false,
+		type: 'currency',
+		sumLabel: 'Shop sales',
+		averageLabel: 'Average shop order',
 	},
 	{
 		id: 'orgPayout',
 		label: 'Org payout',
-		type: 'string',
-		filterable: false,
-		groupable: false,
+		type: 'currency',
+		averageLabel: 'Average payout',
 	},
 	{
 		id: 'currency',
@@ -428,6 +439,7 @@ export const organizationCatalog: ReportCatalog = {
 			scope: 'organization',
 			source: 'tenant-api',
 			fields: shopOrderFields,
+			currencyField: 'currency',
 		},
 		{
 			id: 'phone_calls',
@@ -718,6 +730,37 @@ export function defaultListColumns(subject: ReportSubject) {
 	)
 	const rest = fields.filter((field) => !identity.includes(field))
 	return [...identity, ...rest].slice(0, 4).map((field) => field.id)
+}
+
+export function isValueFieldType(type: ReportFieldType) {
+	return type === 'number' || type === 'currency'
+}
+
+/**
+ * What summing or averaging `field` is called, or null when that measure
+ * doesn't apply to it.
+ */
+export function valueMeasureLabel(
+	measure: ValueMeasure,
+	field: ReportField,
+): string | null {
+	if (!isValueFieldType(field.type)) return null
+	const custom = measure === 'sum' ? field.sumLabel : field.averageLabel
+	if (custom === false) return null
+	if (custom) return custom
+	if (measure === 'sum') return field.label
+	return `Average ${field.label.charAt(0).toLowerCase()}${field.label.slice(1)}`
+}
+
+/** Number and currency fields `measure` can read; all of them without one. */
+export function valueFields(subject: ReportSubject, measure?: Measure) {
+	return subject.fields.filter((field) => {
+		if (!isValueFieldType(field.type)) return false
+		if (measure === 'sum' || measure === 'average') {
+			return valueMeasureLabel(measure, field) !== null
+		}
+		return true
+	})
 }
 
 export function defaultTimeframeField(subject: ReportSubject) {

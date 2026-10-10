@@ -5,10 +5,13 @@ import {
 	type ReportResult,
 	type ReportRunError,
 	type ReportSegment,
+	type ReportValueInfo,
 	type TimeBucket,
 	type TimeframePreset,
+	type ValueMeasure,
 	isFilterGroup,
 	isListReport,
+	isValueMeasure,
 } from './dsl.ts'
 import {
 	type ReportCatalog,
@@ -17,11 +20,22 @@ import {
 	defaultListColumns,
 	getField,
 	getSubject,
+	valueMeasureLabel,
 } from './catalog.ts'
+import { formatCurrency, formatNumber } from './format.ts'
 
 export type ReportRecord = Record<string, unknown>
 
 const MAX_LIST_ROWS = 200
+
+function asNumber(value: unknown): number | null {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null
+	if (typeof value === 'string' && value.trim().length > 0) {
+		const parsed = Number(value)
+		return Number.isFinite(parsed) ? parsed : null
+	}
+	return null
+}
 
 function asDate(value: unknown): Date | null {
 	if (value instanceof Date && !Number.isNaN(value.getTime())) return value
@@ -259,8 +273,26 @@ function segmentValue(
 	return { key, label: optionLabel(field, key) }
 }
 
-function formatListCell(record: ReportRecord, field: ReportField): string {
+function recordCurrency(record: ReportRecord, subject: ReportSubject) {
+	if (!subject.currencyField) return ''
+	return asString(record[subject.currencyField]).trim().toUpperCase()
+}
+
+function formatListCell(
+	record: ReportRecord,
+	field: ReportField,
+	subject: ReportSubject,
+): string {
 	const raw = record[field.id]
+	if (field.type === 'number' || field.type === 'currency') {
+		const amount = asNumber(raw)
+		if (amount === null) return '—'
+		const currency = recordCurrency(record, subject)
+		if (field.type === 'currency' && currency) {
+			return formatCurrency(amount, currency, { locale: 'en-US' })
+		}
+		return formatNumber(amount, { locale: 'en-US' })
+	}
 	if (field.type === 'datetime') {
 		const date = asDate(raw)
 		if (!date) return '—'
@@ -282,18 +314,21 @@ function sortSegments(
 	segments: ReportSegment[],
 	sortBy: ReportDefinition['visualization']['sortBy'],
 	chronological: boolean,
+	byValue: boolean,
 ): ReportSegment[] {
 	const copy = [...segments]
 	if (chronological && (sortBy === 'none' || sortBy === 'label')) {
 		copy.sort((a, b) => a.key.localeCompare(b.key))
 		return copy
 	}
+	const metric = (segment: ReportSegment) =>
+		byValue ? (segment.value ?? 0) : segment.count
 	if (sortBy === 'label') {
 		copy.sort((a, b) => a.label.localeCompare(b.label))
 	} else if (sortBy === 'value_asc') {
-		copy.sort((a, b) => a.count - b.count)
+		copy.sort((a, b) => metric(a) - metric(b))
 	} else if (sortBy === 'value_desc') {
-		copy.sort((a, b) => b.count - a.count)
+		copy.sort((a, b) => metric(b) - metric(a))
 	}
 	return copy
 }
@@ -370,6 +405,29 @@ export function validateReportDefinition(
 			}
 		}
 	}
+	const { measure, valueField } = definition.visualization
+	if (isValueMeasure(measure) && !isListReport(definition)) {
+		const field = valueField ? getField(subject, valueField) : null
+		if (!field || valueMeasureLabel(measure, field) === null) {
+			return {
+				error: 'invalid_definition',
+				message:
+					measure === 'sum'
+						? 'Choose a number to add up.'
+						: 'Choose a number to average.',
+			}
+		}
+		if (
+			measure === 'average' &&
+			definition.visualization.chartStyle === 'pie'
+		) {
+			return {
+				error: 'invalid_definition',
+				message:
+					'Averages don’t add up to a whole, so they can’t be a pie chart. Choose a bar chart or table.',
+			}
+		}
+	}
 	if (needsGroupBy(definition) && definition.groupBy.length === 0) {
 		return {
 			error: 'missing_group_by',
@@ -405,7 +463,7 @@ function listResult(
 		const row: Record<string, string> = {}
 		for (const column of columns) {
 			const field = getField(subject, column.id)
-			row[column.id] = field ? formatListCell(record, field) : '—'
+			row[column.id] = field ? formatListCell(record, field, subject) : '—'
 		}
 		return row
 	})
@@ -440,18 +498,27 @@ export function runReport(
 		return listResult(subject, definition, matched, now)
 	}
 
+	const measured = measuredValue(subject, definition, matched)
+	const valueOf = (tally: ValueTally) =>
+		measured ? tallyValue(tally, measured.measure, measured.field) : undefined
+
 	if (
 		definition.visualization.chartStyle === 'single_number' ||
 		definition.groupBy.length === 0
 	) {
+		const tally = emptyTally()
+		for (const record of matched) addToTally(tally, record, measured?.field)
+		const value = valueOf(tally)
 		return {
 			total: matched.length,
+			...(measured ? { value, valueInfo: measured.info } : {}),
 			segments: [
 				{
 					key: 'total',
 					label: subject.label,
 					count: matched.length,
 					percent: 100,
+					...(measured ? { value } : {}),
 				},
 			],
 			refreshedAt: now.toISOString(),
@@ -464,16 +531,21 @@ export function runReport(
 	const timeGrouped =
 		groupFields.length === 1 && groupFields[0]?.type === 'datetime'
 
-	const buckets = new Map<string, { label: string; count: number }>()
+	const overall = emptyTally()
+	const buckets = new Map<string, { label: string; tally: ValueTally }>()
 	for (const record of matched) {
 		const parts = groupFields.map((field) =>
 			segmentValue(record, field, definition.timeBucket),
 		)
 		const key = parts.map((part) => part.key).join(' / ')
 		const label = parts.map((part) => part.label).join(' / ')
-		const existing = buckets.get(key)
-		if (existing) existing.count += 1
-		else buckets.set(key, { label, count: 1 })
+		let bucket = buckets.get(key)
+		if (!bucket) {
+			bucket = { label, tally: emptyTally() }
+			buckets.set(key, bucket)
+		}
+		addToTally(bucket.tally, record, measured?.field)
+		addToTally(overall, record, measured?.field)
 	}
 
 	if (timeGrouped && matched.length > 0) {
@@ -494,7 +566,7 @@ export function runReport(
 			definition.timeBucket,
 		)) {
 			if (!buckets.has(slot.key)) {
-				buckets.set(slot.key, { label: slot.label, count: 0 })
+				buckets.set(slot.key, { label: slot.label, tally: emptyTally() })
 			}
 		}
 	}
@@ -504,18 +576,88 @@ export function runReport(
 		[...buckets.entries()].map(([key, bucket]) => ({
 			key,
 			label: bucket.label,
-			count: bucket.count,
-			percent: total === 0 ? 0 : (bucket.count / total) * 100,
+			count: bucket.tally.count,
+			percent: total === 0 ? 0 : (bucket.tally.count / total) * 100,
+			...(measured ? { value: valueOf(bucket.tally) } : {}),
 		})),
 		definition.visualization.sortBy,
 		timeGrouped,
+		Boolean(measured),
 	)
 
 	return {
 		total,
+		...(measured ? { value: valueOf(overall), valueInfo: measured.info } : {}),
 		segments,
 		refreshedAt: now.toISOString(),
 	}
+}
+
+type ValueTally = {
+	count: number
+	/** Records with a numeric value; averages divide by this, not `count`. */
+	valued: number
+	sum: number
+}
+
+function emptyTally(): ValueTally {
+	return { count: 0, valued: 0, sum: 0 }
+}
+
+function addToTally(
+	tally: ValueTally,
+	record: ReportRecord,
+	field: ReportField | undefined,
+) {
+	tally.count += 1
+	if (!field) return
+	const amount = asNumber(record[field.id])
+	if (amount === null) return
+	tally.valued += 1
+	// Money adds up in minor units so sums don't pick up float drift.
+	tally.sum += field.type === 'currency' ? Math.round(amount * 100) : amount
+}
+
+function tallyValue(
+	tally: ValueTally,
+	measure: ValueMeasure,
+	field: ReportField,
+): number | undefined {
+	const sum = field.type === 'currency' ? tally.sum / 100 : tally.sum
+	if (measure === 'sum') return sum
+	// An average of no amounts is unknown rather than zero, so empty time
+	// buckets don't chart as a drop to nothing.
+	return tally.valued === 0 ? undefined : sum / tally.valued
+}
+
+function measuredValue(
+	subject: ReportSubject,
+	definition: ReportDefinition,
+	matched: ReportRecord[],
+): { measure: ValueMeasure; field: ReportField; info: ReportValueInfo } | null {
+	const { measure, valueField } = definition.visualization
+	if (!isValueMeasure(measure) || !valueField) return null
+	const field = getField(subject, valueField)
+	const label = field ? valueMeasureLabel(measure, field) : null
+	if (!field || label === null) return null
+
+	const info: ReportValueInfo = {
+		measure,
+		field: field.id,
+		label,
+		type: field.type === 'currency' ? 'currency' : 'number',
+	}
+	if (field.type === 'currency') {
+		const currencies = new Set<string>()
+		for (const record of matched) {
+			if (asNumber(record[field.id]) === null) continue
+			const currency = recordCurrency(record, subject)
+			if (currency) currencies.add(currency)
+		}
+		if (currencies.size === 1) info.currency = [...currencies][0]
+		else if (currencies.size > 1) info.mixedCurrencies = true
+	}
+	return { measure, field, info }
 }
 
 export function isReportRunError(
