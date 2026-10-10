@@ -17,6 +17,7 @@ import { useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router'
 import {
 	type ReportCatalog,
+	type ReportSubject,
 	defaultListColumns,
 	filterableFields,
 	getField,
@@ -24,8 +25,10 @@ import {
 	groupableFields,
 	listableFields,
 	timeframeFields,
+	valueFields,
 } from '../catalog.ts'
 import {
+	type Measure,
 	type ReportDefinition,
 	type ReportResult,
 	type ReportRunError,
@@ -33,11 +36,53 @@ import {
 	emptyFilterGroup,
 	flattenFilterConditions,
 	isListReport,
+	isValueMeasure,
 } from '../dsl.ts'
 import { timeBucketLabel, timeframePresetLabel } from '../engine.ts'
 import { FilterEditor } from './filter-editor.tsx'
-import { ReportVisualization } from './report-chart.tsx'
+import { ReportNotices, ReportVisualization } from './report-chart.tsx'
 import { ReportExportMenu } from './report-export.tsx'
+
+const MEASURE_LABELS: Record<Measure, string> = {
+	count: 'Count',
+	percent: 'Percent',
+	sum: 'Sum',
+	average: 'Average',
+}
+
+/**
+ * The visualization after switching to `measure` on `subject`: sum and
+ * average keep the current value field when it still applies and otherwise
+ * read the subject's first one; anything else drops the value field.
+ */
+function visualizationForMeasure(
+	visualization: ReportDefinition['visualization'],
+	measure: Measure,
+	subject: ReportSubject | null,
+): ReportDefinition['visualization'] {
+	if (!isValueMeasure(measure)) {
+		return { ...visualization, measure, valueField: undefined }
+	}
+	const fields = subject ? valueFields(subject, measure) : []
+	if (fields.length === 0) {
+		return { ...visualization, measure: 'count', valueField: undefined }
+	}
+	const valueField = fields.some(
+		(field) => field.id === visualization.valueField,
+	)
+		? visualization.valueField
+		: fields[0]?.id
+	return {
+		...visualization,
+		measure,
+		valueField,
+		// Averages don't add up to a whole, so they can't be pie slices.
+		chartStyle:
+			measure === 'average' && visualization.chartStyle === 'pie'
+				? 'bar'
+				: visualization.chartStyle,
+	}
+}
 
 type BuilderPanel =
 	'subject' | 'visualization' | 'filters' | 'group' | 'settings'
@@ -224,6 +269,19 @@ export function ReportBuilder({
 	}, [definition.columns, subject])
 	const groupedField = selectedGroup[0]
 	const datetimeGrouped = groupedField?.type === 'datetime'
+	const { measure } = definition.visualization
+	const valueMeasure = isValueMeasure(measure) ? measure : null
+	const measureFields =
+		subject && valueMeasure ? valueFields(subject, valueMeasure) : []
+	const canSum = subject ? valueFields(subject, 'sum').length > 0 : false
+	const canAverage = subject
+		? valueFields(subject, 'average').length > 0
+		: false
+	const measuredField = definition.visualization.valueField
+		? measureFields.find(
+				(field) => field.id === definition.visualization.valueField,
+			)
+		: undefined
 
 	function update(patch: Partial<ReportDefinition>) {
 		onChange({ ...definition, ...patch })
@@ -363,6 +421,7 @@ export function ReportBuilder({
 							)}
 						</ConfigCard>
 					</div>
+					<ReportNotices result={error ? null : result} />
 					<div className="relative flex min-h-0 flex-1">
 						<ReportVisualization
 							definition={definition}
@@ -488,11 +547,20 @@ export function ReportBuilder({
 														columns:
 															nextList && next ? defaultListColumns(next) : [],
 														filters: emptyFilterGroup(),
+														visualization: valueMeasure
+															? visualizationForMeasure(
+																	definition.visualization,
+																	valueMeasure,
+																	next,
+																)
+															: definition.visualization,
 													})
 												}}
 											>
 												<SelectTrigger className="w-full">
-													<SelectValue />
+													<SelectValue>
+														{subject?.label ?? 'Select a subject'}
+													</SelectValue>
 												</SelectTrigger>
 												<SelectContent>
 													{catalog.subjects.map((item) => (
@@ -518,7 +586,7 @@ export function ReportBuilder({
 												}}
 											>
 												<SelectTrigger className="w-full">
-													<SelectValue />
+													<SelectValue>{timeframeFieldLabel}</SelectValue>
 												</SelectTrigger>
 												<SelectContent>
 													{timeFields.map((field) => (
@@ -603,7 +671,9 @@ export function ReportBuilder({
 															? getField(subject, nextGroupBy[0])?.type
 															: undefined
 													const nextStyle =
-														chartStyle === 'pie' && groupedType === 'datetime'
+														chartStyle === 'pie' &&
+														(groupedType === 'datetime' ||
+															measure === 'average')
 															? 'bar'
 															: chartStyle
 													update({
@@ -643,33 +713,90 @@ export function ReportBuilder({
 										{listMode ? null : (
 											<>
 												<div className="space-y-2">
-													<Label>Measure</Label>
+													<Label className="flex items-center gap-1">
+														Measure
+														<HelpTip
+															label="Measure help"
+															text="Count records, show each segment's percent of them, or add up or average a number such as order totals."
+														/>
+													</Label>
 													<Select
-														value={definition.visualization.measure}
+														value={measure}
 														onValueChange={(value) => {
 															if (!value) return
 															update({
-																visualization: {
-																	...definition.visualization,
-																	measure:
-																		value as ReportDefinition['visualization']['measure'],
-																},
+																visualization: visualizationForMeasure(
+																	definition.visualization,
+																	value as Measure,
+																	subject,
+																),
 															})
 														}}
 													>
 														<SelectTrigger className="w-full">
 															<SelectValue>
-																{definition.visualization.measure === 'percent'
-																	? 'Percent'
-																	: 'Count'}
+																{MEASURE_LABELS[measure]}
 															</SelectValue>
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="count">Count</SelectItem>
-															<SelectItem value="percent">Percent</SelectItem>
+															<SelectItem value="count">
+																{MEASURE_LABELS.count}
+															</SelectItem>
+															<SelectItem value="percent">
+																{MEASURE_LABELS.percent}
+															</SelectItem>
+															{canSum || measure === 'sum' ? (
+																<SelectItem value="sum">
+																	{MEASURE_LABELS.sum}
+																</SelectItem>
+															) : null}
+															{canAverage || measure === 'average' ? (
+																<SelectItem value="average">
+																	{MEASURE_LABELS.average}
+																</SelectItem>
+															) : null}
 														</SelectContent>
 													</Select>
 												</div>
+												{valueMeasure ? (
+													<div className="space-y-2">
+														<Label>
+															{valueMeasure === 'sum' ? 'Add up' : 'Average of'}
+														</Label>
+														<Select
+															value={
+																definition.visualization.valueField ?? null
+															}
+															onValueChange={(value) => {
+																if (!value) return
+																update({
+																	visualization: {
+																		...definition.visualization,
+																		valueField: value,
+																	},
+																})
+															}}
+														>
+															<SelectTrigger className="w-full">
+																<SelectValue placeholder="Select a number…">
+																	{measuredField?.label}
+																</SelectValue>
+															</SelectTrigger>
+															<SelectContent>
+																{measureFields.map((field) => (
+																	<SelectItem key={field.id} value={field.id}>
+																		{field.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+														{measuredField?.description ? (
+															<p className="text-muted-foreground text-xs leading-relaxed">
+																{measuredField.description}
+															</p>
+														) : null}
+													</div>
+												) : null}
 												<div className="space-y-2">
 													<Label>Sort By</Label>
 													<Select
@@ -714,7 +841,11 @@ export function ReportBuilder({
 														Hide Counts
 														<HelpTip
 															label="Hide counts help"
-															text="Hide raw counts and show only percentages."
+															text={
+																valueMeasure
+																	? 'Hide record counts. Pie charts also hide amounts and show only percentages.'
+																	: 'Hide raw counts and show only percentages.'
+															}
 														/>
 													</Label>
 													<Checkbox
@@ -934,7 +1065,11 @@ export function ReportBuilder({
 												}}
 											>
 												<SelectTrigger className="w-full">
-													<SelectValue />
+													<SelectValue>
+														{definition.settings.timezone === 'user'
+															? 'User Timezone'
+															: definition.settings.timezone}
+													</SelectValue>
 												</SelectTrigger>
 												<SelectContent>
 													<SelectItem value="user">User Timezone</SelectItem>

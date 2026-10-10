@@ -1,5 +1,7 @@
 import { type ReportScope, getCatalog } from './catalog.ts'
 import {
+	type FilterCondition,
+	type Measure,
 	type ReportDefinition,
 	createReportDefinition,
 	emptyFilterGroup,
@@ -25,6 +27,11 @@ function template(
 		timeBucket?: ReportDefinition['timeBucket']
 		columns?: string[]
 		sortBy?: ReportDefinition['visualization']['sortBy']
+		measure?: Measure
+		/** Number or currency field a sum or average reads. */
+		valueField?: string
+		/** Conditions that must all match. */
+		filters?: FilterCondition[]
 		title?: string
 	},
 ): ReportTemplate {
@@ -53,10 +60,13 @@ function template(
 			groupBy: input.groupBy,
 			timeBucket: input.timeBucket ?? 'month',
 			columns: input.columns ?? [],
-			filters: emptyFilterGroup(),
+			filters: input.filters?.length
+				? { combinator: 'and', conditions: input.filters }
+				: emptyFilterGroup(),
 			visualization: {
 				chartStyle: input.chartStyle,
-				measure: 'count',
+				measure: input.measure ?? 'count',
+				...(input.valueField ? { valueField: input.valueField } : {}),
 				sortBy: input.sortBy ?? 'value_desc',
 				hideCounts: false,
 			},
@@ -69,154 +79,93 @@ function template(
 	}
 }
 
-export function organizationTemplates(): ReportTemplate[] {
+function customerTemplates(): ReportTemplate[] {
+	const customers = { category: 'Customers', subject: 'customers' } as const
 	return [
 		template('organization', {
+			...customers,
+			id: 'customer-count',
+			title: 'Customer count',
+			description:
+				'A single number of site customers in the selected timeframe.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			...customers,
 			id: 'customers-by-month',
-			category: 'Customers',
 			title: 'Customers by month',
 			description: 'Count new site customers over the last 3 months.',
-			subject: 'customers',
 			groupBy: ['createdAt'],
 			chartStyle: 'bar',
 			timeBucket: 'month',
 			sortBy: 'none',
 		}),
 		template('organization', {
+			...customers,
 			id: 'customers-by-week',
-			category: 'Customers',
 			title: 'Customers by week',
 			description: 'Count new site customers week by week.',
-			subject: 'customers',
 			groupBy: ['createdAt'],
 			chartStyle: 'bar',
 			timeBucket: 'week',
 			sortBy: 'none',
 		}),
 		template('organization', {
+			...customers,
+			id: 'customers-verified',
+			title: 'Phone verification',
+			description: 'Segment customers by whether their phone is verified.',
+			groupBy: ['phoneVerified'],
+			chartStyle: 'pie',
+		}),
+		template('organization', {
+			...customers,
 			id: 'customer-list',
-			category: 'Customers',
 			title: 'Customer list',
 			description:
 				'A table of site customers with name, email, phone, and created date.',
-			subject: 'customers',
 			groupBy: [],
 			chartStyle: 'table',
 			columns: ['name', 'email', 'phone', 'createdAt'],
 			timeframePreset: 'all_time',
 			sortBy: 'none',
 		}),
+	]
+}
+
+function marketingTemplates(): ReportTemplate[] {
+	return [
 		template('organization', {
-			id: 'customers-verified',
-			category: 'Customers',
-			title: 'Phone verification',
-			description: 'Segment customers by whether their phone is verified.',
-			subject: 'customers',
-			groupBy: ['phoneVerified'],
-			chartStyle: 'pie',
-		}),
-		template('organization', {
-			id: 'notes-by-status',
-			category: 'Notes',
-			title: 'Notes by status',
-			description: 'See how notes are distributed across board columns.',
-			subject: 'notes',
-			groupBy: ['status'],
-			chartStyle: 'pie',
-			timeframePreset: 'all_time',
-		}),
-		template('organization', {
-			id: 'notes-by-priority',
-			category: 'Notes',
-			title: 'Notes by priority',
-			description: 'Count notes grouped by priority.',
-			subject: 'notes',
-			groupBy: ['priority'],
-			chartStyle: 'bar',
-			timeframePreset: 'all_time',
-		}),
-		template('organization', {
-			id: 'members-by-role',
-			category: 'Team',
-			title: 'Members by role',
-			description: 'Count operators in this organization by role.',
-			subject: 'members',
-			groupBy: ['role'],
-			chartStyle: 'pie',
-			timeframePreset: 'all_time',
-		}),
-		template('organization', {
-			id: 'feedback-by-type',
-			category: 'Feedback',
-			title: 'Feedback by type',
-			description: 'Count in-app feedback submissions by type.',
-			subject: 'feedback',
-			groupBy: ['type'],
-			chartStyle: 'pie',
-			timeframePreset: 'all_time',
-		}),
-		template('organization', {
-			id: 'customer-count',
-			category: 'Customers',
-			title: 'Customer count',
+			id: 'email-audience',
+			category: 'Marketing',
+			title: 'Email audience',
 			description:
-				'A single number of site customers in the selected timeframe.',
+				'Customers with an email address, who your marketing emails can reach.',
 			subject: 'customers',
 			groupBy: [],
 			chartStyle: 'single_number',
+			filters: [{ field: 'hasEmail', operator: 'eq', value: 'true' }],
 			timeframePreset: 'all_time',
 		}),
 		template('organization', {
-			id: 'shop-orders-by-month',
-			category: 'Shop',
-			title: 'Orders by month',
-			description: 'Count shop orders over the last 3 months.',
-			subject: 'shop_orders',
-			groupBy: ['createdAt'],
-			chartStyle: 'bar',
-			timeBucket: 'month',
-			sortBy: 'none',
-		}),
-		template('organization', {
-			id: 'shop-orders-by-status',
-			category: 'Shop',
-			title: 'Orders by status',
-			description: 'See how shop orders are distributed by payment status.',
-			subject: 'shop_orders',
-			groupBy: ['status'],
+			id: 'email-audience-share',
+			category: 'Marketing',
+			title: 'Customers with email',
+			description: 'Share of customers your marketing emails can reach.',
+			subject: 'customers',
+			groupBy: ['hasEmail'],
 			chartStyle: 'pie',
 			timeframePreset: 'all_time',
 		}),
-		template('organization', {
-			id: 'shop-order-list',
-			category: 'Shop',
-			title: 'Order list',
-			description:
-				'A table of shop orders with customer, product, amount, status, and date.',
-			subject: 'shop_orders',
-			groupBy: [],
-			chartStyle: 'table',
-			columns: [
-				'customerName',
-				'customerPhone',
-				'productName',
-				'amount',
-				'status',
-				'createdAt',
-			],
-			timeframePreset: 'all_time',
-			sortBy: 'none',
-		}),
-		template('organization', {
-			id: 'shop-order-count',
-			category: 'Shop',
-			title: 'Order count',
-			description: 'A single number of shop orders in the selected timeframe.',
-			subject: 'shop_orders',
-			groupBy: [],
-			chartStyle: 'single_number',
-			timeframePreset: 'all_time',
-		}),
+	]
+}
+
+export function organizationTemplates(): ReportTemplate[] {
+	return [
+		...customerTemplates(),
+		...marketingTemplates(),
 		template('organization', {
 			id: 'phone-calls-by-week',
 			category: 'Phone calls',
@@ -330,6 +279,110 @@ export function organizationTemplates(): ReportTemplate[] {
 			],
 			timeframePreset: 'all_time',
 			sortBy: 'none',
+		}),
+		template('organization', {
+			id: 'shop-sales',
+			category: 'Shop',
+			title: 'Shop sales',
+			description: 'Paid purchases from your public site shop.',
+			subject: 'shop_orders',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'amount',
+			filters: [{ field: 'status', operator: 'eq', value: 'paid' }],
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'shop-orders-by-month',
+			category: 'Shop',
+			title: 'Orders by month',
+			description: 'Count shop orders over the last 3 months.',
+			subject: 'shop_orders',
+			groupBy: ['createdAt'],
+			chartStyle: 'bar',
+			timeBucket: 'month',
+			sortBy: 'none',
+		}),
+		template('organization', {
+			id: 'shop-orders-by-status',
+			category: 'Shop',
+			title: 'Orders by status',
+			description: 'See how shop orders are distributed by payment status.',
+			subject: 'shop_orders',
+			groupBy: ['status'],
+			chartStyle: 'pie',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			id: 'shop-order-list',
+			category: 'Shop',
+			title: 'Order list',
+			description:
+				'A table of shop orders with customer, product, amount, status, and date.',
+			subject: 'shop_orders',
+			groupBy: [],
+			chartStyle: 'table',
+			columns: [
+				'customerName',
+				'customerPhone',
+				'productName',
+				'amount',
+				'status',
+				'createdAt',
+			],
+			timeframePreset: 'all_time',
+			sortBy: 'none',
+		}),
+		template('organization', {
+			id: 'shop-order-count',
+			category: 'Shop',
+			title: 'Order count',
+			description: 'A single number of shop orders in the selected timeframe.',
+			subject: 'shop_orders',
+			groupBy: [],
+			chartStyle: 'single_number',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			id: 'notes-by-status',
+			category: 'Notes',
+			title: 'Notes by status',
+			description: 'See how notes are distributed across board columns.',
+			subject: 'notes',
+			groupBy: ['status'],
+			chartStyle: 'pie',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			id: 'notes-by-priority',
+			category: 'Notes',
+			title: 'Notes by priority',
+			description: 'Count notes grouped by priority.',
+			subject: 'notes',
+			groupBy: ['priority'],
+			chartStyle: 'bar',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			id: 'members-by-role',
+			category: 'Team',
+			title: 'Members by role',
+			description: 'Count operators in this organization by role.',
+			subject: 'members',
+			groupBy: ['role'],
+			chartStyle: 'pie',
+			timeframePreset: 'all_time',
+		}),
+		template('organization', {
+			id: 'feedback-by-type',
+			category: 'Feedback',
+			title: 'Feedback by type',
+			description: 'Count in-app feedback submissions by type.',
+			subject: 'feedback',
+			groupBy: ['type'],
+			chartStyle: 'pie',
+			timeframePreset: 'all_time',
 		}),
 	]
 }

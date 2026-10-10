@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { organizationCatalog } from './catalog.ts'
+import { type ReportCatalog, organizationCatalog } from './catalog.ts'
 import {
+	type ReportDefinition,
 	createReportDefinition,
 	emptyFilterGroup,
 	countFilterConditions,
 	flattenFilterConditions,
 	reportDefinitionSchema,
 } from './dsl.ts'
-import { isReportRunError, runReport } from './engine.ts'
+import {
+	isReportRunError,
+	runReport,
+	validateReportDefinition,
+} from './engine.ts'
 
 const now = new Date('2026-08-24T18:00:00.000Z')
 
@@ -393,5 +398,305 @@ describe('runReport', () => {
 			'Billing question',
 			'Business info',
 		])
+	})
+})
+
+function measuredDefinition(
+	subject: string,
+	visualization: Partial<ReportDefinition['visualization']>,
+	partial: Partial<ReportDefinition> = {},
+) {
+	return createReportDefinition({
+		subject,
+		timeframe: { field: 'createdAt', preset: 'all_time' },
+		visualization: {
+			chartStyle: 'bar',
+			measure: 'sum',
+			sortBy: 'none',
+			hideCounts: false,
+			...visualization,
+		},
+		settings: { title: 'Measured', notes: '', timezone: 'UTC' },
+		...partial,
+	})
+}
+
+/** A plain number field, which the built-in catalogs don't have. */
+const ratingCatalog: ReportCatalog = {
+	scope: 'organization',
+	subjects: [
+		{
+			id: 'ratings',
+			label: 'Ratings',
+			description: 'Star ratings from customers.',
+			scope: 'organization',
+			source: 'tenant-api',
+			fields: [
+				{
+					id: 'createdAt',
+					label: 'Rated at',
+					type: 'datetime',
+					timeframe: true,
+					groupable: true,
+				},
+				{
+					id: 'channel',
+					label: 'Channel',
+					type: 'enum',
+					filterable: true,
+					groupable: true,
+					options: [
+						{ value: 'web', label: 'Website' },
+						{ value: 'app', label: 'App' },
+					],
+				},
+				{
+					id: 'stars',
+					label: 'Stars',
+					type: 'number',
+					sumLabel: false,
+					averageLabel: 'Average rating',
+				},
+			],
+		},
+	],
+}
+
+describe('value measures', () => {
+	it('adds money up in cents per segment and sorts by the amount', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition(
+				'shop_orders',
+				{ valueField: 'amount', sortBy: 'value_desc' },
+				{ groupBy: ['productName'] },
+			),
+			[
+				{
+					createdAt: '2026-08-01',
+					productName: 'Mug',
+					amount: 0.1,
+					currency: 'USD',
+				},
+				{
+					createdAt: '2026-08-01',
+					productName: 'Mug',
+					amount: 0.2,
+					currency: 'USD',
+				},
+				{
+					createdAt: '2026-08-02',
+					productName: 'Hoodie',
+					amount: 10,
+					currency: 'usd',
+				},
+				{
+					createdAt: '2026-08-03',
+					productName: 'Hoodie',
+					amount: null,
+					currency: 'USD',
+				},
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.total).toBe(4)
+		expect(result.value).toBe(10.3)
+		expect(result.valueInfo).toEqual({
+			measure: 'sum',
+			field: 'amount',
+			label: 'Shop sales',
+			type: 'currency',
+			currency: 'USD',
+		})
+		expect(result.segments).toEqual([
+			{ key: 'Hoodie', label: 'Hoodie', count: 2, percent: 50, value: 10 },
+			{ key: 'Mug', label: 'Mug', count: 2, percent: 50, value: 0.3 },
+		])
+	})
+
+	it('averages only the records that have an amount', () => {
+		const result = runReport(
+			ratingCatalog,
+			measuredDefinition(
+				'ratings',
+				{ chartStyle: 'table', measure: 'average', valueField: 'stars' },
+				{ groupBy: ['channel'] },
+			),
+			[
+				{ createdAt: '2026-08-01', channel: 'web', stars: 5 },
+				{ createdAt: '2026-08-02', channel: 'web', stars: 3 },
+				{ createdAt: '2026-08-03', channel: 'web', stars: null },
+				{ createdAt: '2026-08-04', channel: 'app', stars: 4 },
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.value).toBe(4)
+		expect(result.valueInfo).toEqual({
+			measure: 'average',
+			field: 'stars',
+			label: 'Average rating',
+			type: 'number',
+		})
+		expect(
+			result.segments.map((segment) => [
+				segment.label,
+				segment.count,
+				segment.value,
+			]),
+		).toEqual([
+			['Website', 3, 4],
+			['App', 1, 4],
+		])
+	})
+
+	it('leaves months without orders without an average', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition(
+				'shop_orders',
+				{ measure: 'average', valueField: 'amount' },
+				{
+					groupBy: ['createdAt'],
+					timeframe: { field: 'createdAt', preset: 'last_3_months' },
+				},
+			),
+			[{ createdAt: '2026-08-01T00:00:00.000Z', amount: 20, currency: 'USD' }],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		const august = result.segments.find((segment) => segment.key === '2026-08')
+		expect(august).toMatchObject({ count: 1, value: 20 })
+		const empty = result.segments.filter((segment) => segment.count === 0)
+		expect(empty.length).toBeGreaterThan(0)
+		expect(empty.every((segment) => segment.value === undefined)).toBe(true)
+	})
+
+	it('flags amounts in more than one currency', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition('shop_orders', {
+				chartStyle: 'single_number',
+				valueField: 'amount',
+			}),
+			[
+				{ createdAt: '2026-08-01', amount: 10, currency: 'USD' },
+				{ createdAt: '2026-08-02', amount: 20, currency: 'SAR' },
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.value).toBe(30)
+		expect(result.segments[0]?.value).toBe(30)
+		expect(result.valueInfo?.mixedCurrencies).toBe(true)
+		expect(result.valueInfo?.currency).toBeUndefined()
+	})
+
+	it('rejects sums and averages without a number that fits', () => {
+		const shopOrder = (
+			visualization: Partial<ReportDefinition['visualization']>,
+		) =>
+			validateReportDefinition(
+				organizationCatalog,
+				measuredDefinition('shop_orders', visualization, {
+					groupBy: ['productName'],
+				}),
+			)
+		expect(shopOrder({})).toMatchObject({
+			error: 'invalid_definition',
+			message: 'Choose a number to add up.',
+		})
+		expect(
+			shopOrder({ measure: 'average', valueField: 'status' }),
+		).toMatchObject({
+			message: 'Choose a number to average.',
+		})
+		expect(
+			shopOrder({
+				measure: 'average',
+				valueField: 'amount',
+				chartStyle: 'pie',
+			}),
+		).toMatchObject({ error: 'invalid_definition' })
+		expect(shopOrder({ valueField: 'amount', chartStyle: 'pie' })).toBeNull()
+
+		const rating = (
+			visualization: Partial<ReportDefinition['visualization']>,
+		) =>
+			validateReportDefinition(
+				ratingCatalog,
+				measuredDefinition('ratings', visualization, { groupBy: ['channel'] }),
+			)
+		// A sum of star ratings means nothing.
+		expect(rating({ valueField: 'stars' })).toMatchObject({
+			error: 'invalid_definition',
+		})
+		expect(rating({ measure: 'average', valueField: 'stars' })).toBeNull()
+	})
+
+	it('ignores the measure on list tables', () => {
+		const definition = measuredDefinition('shop_orders', {
+			chartStyle: 'table',
+		})
+		expect(validateReportDefinition(organizationCatalog, definition)).toBeNull()
+	})
+
+	it('formats money in list rows with each record’s currency', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition(
+				'shop_orders',
+				{ chartStyle: 'table' },
+				{ columns: ['productName', 'amount'] },
+			),
+			[
+				{
+					createdAt: '2026-08-02',
+					productName: 'Hoodie',
+					amount: 1234.5,
+					currency: 'SAR',
+				},
+				{
+					createdAt: '2026-08-01',
+					productName: 'Mug',
+					amount: 12.5,
+					currency: 'usd',
+				},
+				{ createdAt: '2026-07-01', productName: 'Sticker', amount: null },
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.rows?.map((row) => row.amount)).toEqual([
+			expect.stringMatching(/^SAR\s1,234\.50$/u),
+			'$12.50',
+			'—',
+		])
+	})
+
+	it('formats plain numbers in list rows', () => {
+		const result = runReport(
+			ratingCatalog,
+			measuredDefinition(
+				'ratings',
+				{ chartStyle: 'table' },
+				{ columns: ['channel', 'stars'] },
+			),
+			[
+				{ createdAt: '2026-08-02', channel: 'web', stars: 4.5 },
+				{ createdAt: '2026-08-01', channel: 'app', stars: 0 },
+				{ createdAt: '2026-07-01', channel: 'app', stars: null },
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result.rows?.map((row) => row.stars)).toEqual(['4.5', '0', '—'])
 	})
 })

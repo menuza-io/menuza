@@ -1,5 +1,5 @@
 import { requireUserId } from '@repo/auth'
-import { templatesFor } from '@repo/reports'
+import { getCatalog, getSubject, templatesFor } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
@@ -18,15 +18,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		scope: 'organization',
 		organizationId: organization.id,
 	})
+	const catalog = getCatalog('organization')
 	return {
 		orgSlug: organization.slug,
 		organizationName: organization.name,
-		savedReports: saved.map((report) => ({
-			id: report.id,
-			title: report.title,
-			updatedAt: report.updatedAt.toISOString(),
-			subject: parseDefinition(report.definition).subject,
-		})),
+		savedReports: saved.map((report) => {
+			const subject = parseDefinition(report.definition).subject
+			return {
+				id: report.id,
+				title: report.title,
+				updatedAt: report.updatedAt.toISOString(),
+				subject: getSubject(catalog, subject)?.label ?? subject,
+			}
+		}),
 		templates: templatesFor('organization'),
 	}
 }

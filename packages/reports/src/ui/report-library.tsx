@@ -212,7 +212,7 @@ export function ReportStart({
 											{report.title}
 										</span>
 										<span className="text-muted-foreground mt-0.5 block text-xs capitalize">
-											{report.subject.replaceAll('-', ' ')}
+											{report.subject.replaceAll(/[-_]/gu, ' ')}
 										</span>
 									</span>
 									<time

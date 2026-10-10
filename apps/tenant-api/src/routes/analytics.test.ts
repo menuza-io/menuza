@@ -12,6 +12,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
+	shopOrders,
 	voiceCalls,
 } from '@repo/tenant-db'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -315,5 +316,115 @@ describe('POST /query', () => {
 		})
 		expect(res.status).toBe(403)
 		expect(await res.json()).toMatchObject({ error: 'forbidden_subject' })
+	})
+})
+
+describe('POST /query shop reports', () => {
+	const internalCommandToken = 'analytics-internal-token-1234567890'
+	const orgId = 'clw9x0a12000008l00report03'
+	const now = new Date('2026-03-20T12:00:00Z')
+	const previousToken = process.env.INTERNAL_COMMAND_TOKEN
+	let tempDir: string
+
+	beforeEach(async () => {
+		process.env.INTERNAL_COMMAND_TOKEN = internalCommandToken
+		process.env.DATA_REGION = 'us'
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-shop-report-'))
+		process.env.TENANT_DB_DIR = tempDir
+		await provisionTenantDb(orgId)
+		vi.mocked(findActiveOrganizationById).mockResolvedValue({
+			id: orgId,
+			slug: 'shop',
+			name: 'Shop',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+		} as Awaited<ReturnType<typeof findActiveOrganizationById>>)
+		vi.useFakeTimers({ now, toFake: ['Date'] })
+	})
+
+	afterEach(async () => {
+		vi.useRealTimers()
+		process.env.INTERNAL_COMMAND_TOKEN = previousToken ?? ''
+		await destroyTenantDb(orgId).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	async function queryTemplate(id: string) {
+		const { definition } = organizationTemplates().find(
+			(template) => template.id === id,
+		)!
+		const { token } = await mintOperatorAnalyticsToken({
+			internalCommandToken,
+			userId: 'user_1',
+			orgId,
+			role: 'operator',
+		})
+		const res = await analyticsRoutes.request('/query', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ definition }),
+		})
+		return {
+			status: res.status,
+			body: (await res.json()) as Record<string, unknown>,
+		}
+	}
+
+	async function insertShopOrders() {
+		const db = await getTenantDb(orgId)
+		const order = (
+			productName: string,
+			amountCents: number,
+			status: 'pending' | 'paid',
+			daysAgo: number,
+		): typeof shopOrders.$inferInsert => ({
+			productName,
+			amountCents,
+			platformFeeCents: amountCents / 10,
+			orgPayoutCents: amountCents - amountCents / 10,
+			status,
+			createdAt: new Date(now.getTime() - daysAgo * day),
+		})
+		await db.insert(shopOrders).values([
+			order('Mug', 650, 'paid', 1),
+			order('Hoodie', 2500, 'paid', 2),
+			order('Mug', 650, 'pending', 3),
+			// Paid, but outside the last 30 days.
+			order('Hoodie', 2500, 'paid', 45),
+		])
+	}
+
+	it('adds up paid shop sales as amounts', async () => {
+		await insertShopOrders()
+		const { status, body } = await queryTemplate('shop-sales')
+		expect(status).toBe(200)
+		expect(body).toMatchObject({
+			total: 2,
+			value: 31.5,
+			valueInfo: {
+				measure: 'sum',
+				field: 'amount',
+				label: 'Shop sales',
+				type: 'currency',
+				currency: 'USD',
+			},
+		})
+	})
+
+	it('lists shop order amounts as money', async () => {
+		await insertShopOrders()
+		const { status, body } = await queryTemplate('shop-order-list')
+		expect(status).toBe(200)
+		const rows = body.rows as Array<Record<string, string>>
+		expect(rows.map((row) => [row.productName, row.amount])).toEqual([
+			['Mug', '$6.50'],
+			['Hoodie', '$25.00'],
+			['Mug', '$6.50'],
+			['Hoodie', '$25.00'],
+		])
 	})
 })
