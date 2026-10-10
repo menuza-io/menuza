@@ -147,6 +147,7 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
 	uploadSiteFont,
 	uploadSiteIcon,
@@ -588,6 +589,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		organization,
+		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
 		themeConfig,
 		sitePages,
@@ -5179,6 +5181,7 @@ export default function PageBuilderRoute() {
 	const {
 		organization,
 		page,
+		previewToken,
 		themeConfig: initialTheme,
 		sitePages,
 	} = useLoaderData<typeof loader>()
@@ -5259,10 +5262,11 @@ export default function PageBuilderRoute() {
 					activeLocale,
 					activeLocale,
 					defaultLocale,
-				)}?preview=true`,
+				)}?preview=true&pt=${encodeURIComponent(previewToken)}`,
 			)
 		}
 	}, [
+		previewToken,
 		organization.customDomain,
 		organization.slug,
 		page.isHomePage,
@@ -5537,7 +5541,7 @@ export default function PageBuilderRoute() {
 		pickLocalized(page.title, defaultLocale, defaultLocale) ||
 		page.title
 
-	const liveUrl = previewUrl.replace(/\?preview=true$/, '')
+	const liveUrl = previewUrl.replace(/\?preview=true.*$/, '')
 	const previewHost = useMemo(() => {
 		if (!previewUrl) return ''
 		try {

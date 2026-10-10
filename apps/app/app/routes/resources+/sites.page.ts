@@ -12,6 +12,7 @@ import {
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
+import { verifySitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
 	findPublishedSitePage,
 	toPublicPagePayload,
@@ -47,7 +48,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		return createRateLimitResponse(rateLimitCheck.resetAt)
 	}
 
-	const isPreview = url.searchParams.get('preview') === 'true'
+	const wantsPreview = url.searchParams.get('preview') === 'true'
+	const previewToken = url.searchParams.get('pt')
 	const acceptLocales = getClientLocales(request)
 
 	// We will generate the cache key after getting orgId
@@ -105,6 +107,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	if (!orgId) {
 		throw new Response('Not Found', { status: 404 })
 	}
+
+	// Drafts are only served to editors holding a signed, org-bound token.
+	const isPreview = wantsPreview && verifySitePreviewToken(orgId, previewToken)
 
 	const localeKey = Array.isArray(acceptLocales)
 		? acceptLocales.join(',')
@@ -164,7 +169,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	return Response.json(payload, {
 		headers: {
-			'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+			// Draft content must never sit in a shared cache, even keyed by token.
+			'Cache-Control': isPreview
+				? 'private, no-store'
+				: 'public, max-age=60, stale-while-revalidate=300',
 			Vary: 'Accept-Language',
 		},
 	})

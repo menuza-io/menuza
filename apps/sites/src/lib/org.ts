@@ -216,6 +216,7 @@ export async function fetchPublishedSitePage(options: {
 	pageSlug?: string
 	home?: boolean
 	preview?: boolean
+	previewToken?: string | null
 	lng?: string | null
 }): Promise<PublicWebsitePage | null> {
 	const params = new URLSearchParams()
@@ -223,7 +224,10 @@ export async function fetchPublishedSitePage(options: {
 	if (options.host) params.set('host', options.host)
 	if (options.home) params.set('home', 'true')
 	if (options.pageSlug) params.set('page', options.pageSlug)
-	if (options.preview) params.set('preview', 'true')
+	if (options.preview) {
+		params.set('preview', 'true')
+		if (options.previewToken) params.set('pt', options.previewToken)
+	}
 	if (options.lng) params.set('lng', options.lng)
 
 	return fetchAppJson<PublicWebsitePage>(

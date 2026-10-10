@@ -73,6 +73,8 @@ function securityHeadersFor(env: SiteHostEnv) {
 
 	return {
 		'X-Content-Type-Options': 'nosniff',
+		'Referrer-Policy': 'strict-origin-when-cross-origin',
+		'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), usb=()',
 		'Content-Security-Policy': [
 			"default-src 'self'",
 			connectSrc,
@@ -84,7 +86,7 @@ function securityHeadersFor(env: SiteHostEnv) {
 			"base-uri 'self'",
 			"form-action 'self'",
 			sitesFrameSrc(shopCheckoutCsp),
-			`frame-ancestors 'self' ${frameAncestors} localhost:*`,
+			`frame-ancestors 'self' ${frameAncestors}${isProduction ? '' : ' localhost:*'}`,
 		]
 			.filter(Boolean)
 			.join('; '),
@@ -256,8 +258,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			let destination = matchedRedirect.toPath.trim()
 
 			// Reject scheme-relative or invalid destinations
-			const isExternal =
-				destination.startsWith('http://') || destination.startsWith('https://')
+			// External targets must be https: an http:// redirect would downgrade
+			// visitors of an HTTPS-only site onto cleartext.
+			const isExternal = destination.startsWith('https://')
 			const isInternal =
 				destination.startsWith('/') &&
 				!destination.startsWith('//') &&
@@ -307,6 +310,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			home: pageSlug === '',
 			pageSlug: pageSlug || undefined,
 			preview: url.searchParams.get('preview') === 'true',
+			previewToken: url.searchParams.get('pt'),
 			lng: localeResult.locale,
 		})
 	}

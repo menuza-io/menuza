@@ -50,6 +50,18 @@ vi.mock('#app/routes/_auth+/verify.server.tsx', () => ({
 	isCodeValid: vi.fn(),
 }))
 
+vi.mock('#app/utils/rate-limit.server.ts', () => ({
+	checkRateLimit: vi
+		.fn()
+		.mockResolvedValue({ allowed: true, remaining: 9, resetAt: new Date() }),
+	createRateLimitResponse: vi.fn(),
+	VERIFICATION_CODE_ATTEMPT_RATE_LIMIT: {
+		scope: 'verification-code-attempts',
+		maxRequests: 10,
+		windowMs: 900000,
+	},
+}))
+
 vi.mock('#app/utils/jwt.server.ts', () => ({
 	createAuthenticatedSessionResponse: vi.fn(),
 	verify2FAToken: vi.fn(),

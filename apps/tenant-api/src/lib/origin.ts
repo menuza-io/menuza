@@ -348,7 +348,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 			url.hostname === `admin.${brandDomain()}` ||
 			(!isProd && url.hostname === `app.${getLocalDomain()}`) ||
 			(!isProd && url.hostname === `admin.${getLocalDomain()}`) ||
-			url.hostname === 'localhost' ||
+			(!isProd && url.hostname === 'localhost') ||
 			(appUrl && url.origin === appUrl.origin)),
 	)
 
