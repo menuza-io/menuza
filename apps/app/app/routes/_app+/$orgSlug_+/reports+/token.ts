@@ -1,5 +1,9 @@
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
-import { mintOperatorAnalyticsToken } from '@repo/reports/token'
+import {
+	mintOperatorAnalyticsToken,
+	ORDER_REPORT_SUBJECTS,
+	type RestrictedReportSubject,
+} from '@repo/reports/token'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -26,18 +30,30 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	])
 	// Call reports include caller numbers, so they also need call access.
-	const canReadPhoneCalls = await userHasOrganizationPermission(
-		userId,
-		organization.id,
-		ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
-	)
+	// Order reports follow the orders page, which menu access covers.
+	const [canReadPhoneCalls, canReadOrders] = await Promise.all([
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
+		),
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.READ_MENU_ANY,
+		),
+	])
+	const subjects: RestrictedReportSubject[] = [
+		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
+		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
+	]
 
 	const minted = await mintOperatorAnalyticsToken({
 		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN || '',
 		userId,
 		orgId: organization.id,
 		role: 'operator',
-		subjects: canReadPhoneCalls ? ['phone_calls'] : [],
+		subjects,
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)

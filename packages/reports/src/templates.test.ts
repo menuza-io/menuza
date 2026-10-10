@@ -45,21 +45,45 @@ describe('report templates', () => {
 		}
 	})
 
-	it('add up paid shop sales', () => {
-		const shopSales = organizationTemplates().find(
-			(template) => template.id === 'shop-sales',
-		)!
-		expect(shopSales.definition).toMatchObject({
-			subject: 'shop_orders',
-			visualization: {
-				chartStyle: 'single_number',
-				measure: 'sum',
-				valueField: 'amount',
-			},
+	it('count only orders that count toward sales in money reports', () => {
+		const money = organizationTemplates().filter(
+			(template) =>
+				template.definition.subject === 'orders' &&
+				template.definition.visualization.valueField !== undefined,
+		)
+		expect(money.length).toBeGreaterThan(5)
+		for (const template of money) {
+			expect(
+				flattenFilterConditions(template.definition.filters),
+				template.id,
+			).toContainEqual({
+				field: 'countsTowardSales',
+				operator: 'eq',
+				value: 'true',
+			})
+		}
+	})
+
+	it('measure sales, order value, items, and ratings', () => {
+		const byId = new Map(
+			organizationTemplates().map((template) => [template.id, template]),
+		)
+		expect(byId.get('sales-total')?.definition.visualization).toMatchObject({
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'total',
 		})
-		expect(flattenFilterConditions(shopSales.definition.filters)).toEqual([
-			{ field: 'status', operator: 'eq', value: 'paid' },
-		])
+		expect(
+			byId.get('average-order-value')?.definition.visualization,
+		).toMatchObject({ measure: 'average', valueField: 'total' })
+		expect(byId.get('items-top-sellers')?.definition).toMatchObject({
+			subject: 'order_items',
+			groupBy: ['itemName'],
+			visualization: { measure: 'sum', valueField: 'quantity' },
+		})
+		expect(
+			byId.get('reviews-average-rating')?.definition.visualization,
+		).toMatchObject({ measure: 'average', valueField: 'stars' })
 	})
 })
 

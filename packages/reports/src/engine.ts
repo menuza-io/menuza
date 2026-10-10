@@ -9,6 +9,7 @@ import {
 	type TimeBucket,
 	type TimeframePreset,
 	type ValueMeasure,
+	flattenFilterConditions,
 	isFilterGroup,
 	isListReport,
 	isValueMeasure,
@@ -435,6 +436,37 @@ export function validateReportDefinition(
 		}
 	}
 	return null
+}
+
+/**
+ * Every field a definition reads: timeframe, groups, filters, list columns
+ * (including the defaults an empty column list falls back to), and the
+ * measured value.
+ */
+export function referencedFieldIds(
+	subject: ReportSubject,
+	definition: ReportDefinition,
+): Set<string> {
+	const ids = new Set<string>([
+		definition.timeframe.field,
+		...definition.groupBy,
+	])
+	for (const condition of flattenFilterConditions(definition.filters)) {
+		ids.add(condition.field)
+	}
+	if (isListReport(definition)) {
+		const columns =
+			definition.columns.length > 0
+				? definition.columns
+				: defaultListColumns(subject)
+		for (const id of columns) ids.add(id)
+	} else if (
+		isValueMeasure(definition.visualization.measure) &&
+		definition.visualization.valueField
+	) {
+		ids.add(definition.visualization.valueField)
+	}
+	return ids
 }
 
 function listResult(

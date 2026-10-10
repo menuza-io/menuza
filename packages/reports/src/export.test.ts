@@ -82,17 +82,17 @@ describe('reportToCsv', () => {
 
 	function salesDefinition(measure: 'sum' | 'average', hideCounts = false) {
 		return createReportDefinition({
-			subject: 'shop_orders',
+			subject: 'orders',
 			timeframe: { field: 'createdAt', preset: 'all_time' },
-			groupBy: ['productName'],
+			groupBy: ['location'],
 			visualization: {
 				chartStyle: 'table',
 				measure,
-				valueField: 'amount',
+				valueField: 'total',
 				sortBy: 'none',
 				hideCounts,
 			},
-			settings: { title: 'Shop sales', notes: '', timezone: 'UTC' },
+			settings: { title: 'Sales', notes: '', timezone: 'UTC' },
 		})
 	}
 
@@ -101,33 +101,33 @@ describe('reportToCsv', () => {
 		value: measure === 'sum' ? 40 : 10,
 		valueInfo: {
 			measure,
-			field: 'amount',
-			label: measure === 'sum' ? 'Shop sales' : 'Average shop order',
+			field: 'total',
+			label: measure === 'sum' ? 'Sales' : 'Average order value',
 			type: 'currency',
 			currency: 'USD',
 		},
 		segments: [
-			{ key: 'h', label: 'Hoodie', count: 1, percent: 25, value: 30 },
-			{ key: 'm', label: 'Mug', count: 3, percent: 75, value: 10 },
+			{ key: 'a', label: 'Airport', count: 1, percent: 25, value: 30 },
+			{ key: 'd', label: 'Downtown', count: 3, percent: 75, value: 10 },
 		],
 		refreshedAt: '2026-08-24T18:00:00.000Z',
 	})
 
 	it('writes sums as plain amounts with their share of the total', () => {
 		expect(reportToCsv(salesDefinition('sum'), salesResult('sum'))).toBe(
-			'Segment,Count,Shop sales (USD),Percent\nHoodie,1,30.00,75.0%\nMug,3,10.00,25.0%\n',
+			'Segment,Count,Sales (USD),Percent\nAirport,1,30.00,75.0%\nDowntown,3,10.00,25.0%\n',
 		)
 		expect(reportToCsv(salesDefinition('sum', true), salesResult('sum'))).toBe(
-			'Segment,Shop sales (USD),Percent\nHoodie,30.00,75.0%\nMug,10.00,25.0%\n',
+			'Segment,Sales (USD),Percent\nAirport,30.00,75.0%\nDowntown,10.00,25.0%\n',
 		)
 	})
 
 	it('writes averages without a percent column', () => {
 		const result = salesResult('average')
-		// No order in this segment had an amount to average.
-		result.segments[1] = { key: 'm', label: 'Mug', count: 3, percent: 75 }
+		// No order in this segment had a total to average.
+		result.segments[1] = { key: 'd', label: 'Downtown', count: 3, percent: 75 }
 		expect(reportToCsv(salesDefinition('average'), result)).toBe(
-			'Segment,Count,Average shop order (USD)\nHoodie,1,30.00\nMug,3,\n',
+			'Segment,Count,Average order value (USD)\nAirport,1,30.00\nDowntown,3,\n',
 		)
 	})
 })

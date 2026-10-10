@@ -42,7 +42,7 @@ export default function ReportsIndex() {
 	return (
 		<ReportStart
 			heading="Analytics & Reports"
-			description={`Build a segmentation report for ${data.organizationName}. Customer and shop order counts run in the org data region from the browser and never pass through the US control plane.`}
+			description={`Track sales, orders, customers, marketing, and reviews for ${data.organizationName}. Order and customer reports run in your data region, straight from the browser, and never pass through the US control plane.`}
 			templates={data.templates}
 			savedReports={data.savedReports}
 			basePath={basePath}

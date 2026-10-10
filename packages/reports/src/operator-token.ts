@@ -11,9 +11,22 @@ export type OperatorAnalyticsRole = 'operator' | 'admin'
 /**
  * Report subjects that need their own permission on top of analytics access,
  * because their rows hold data the analytics permissions don't cover (call
- * logs include caller phone numbers). The token lists the ones granted.
+ * logs include caller phone numbers; orders are gated by menu access). The
+ * token lists the ones granted.
  */
-export const RESTRICTED_REPORT_SUBJECTS = ['phone_calls'] as const
+export const RESTRICTED_REPORT_SUBJECTS = [
+	'phone_calls',
+	'orders',
+	'order_items',
+	'order_options',
+] as const
+
+/** Restricted subjects that menu access (which covers orders) grants. */
+export const ORDER_REPORT_SUBJECTS = [
+	'orders',
+	'order_items',
+	'order_options',
+] as const satisfies readonly RestrictedReportSubject[]
 export type RestrictedReportSubject =
 	(typeof RESTRICTED_REPORT_SUBJECTS)[number]
 

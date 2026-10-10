@@ -1,18 +1,21 @@
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import {
 	getCatalog,
 	getSubject,
 	isReportRunError,
+	type ReportRecord,
 	reportDefinitionSchema,
 	runReport,
 } from '@repo/reports'
 import { fetchControlPlaneRecords } from '@repo/reports/server'
 import { data } from 'react-router'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import { loadCachedReviewRecords } from '#app/utils/reports/review-records.server.ts'
 import { type Route } from './+types/run.ts'
 
 export async function action({ request, params }: Route.ActionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
@@ -52,16 +55,44 @@ export async function action({ request, params }: Route.ActionArgs) {
 		)
 	}
 
-	const records = await fetchControlPlaneRecords({
-		subject: parsed.data.subject,
-		scope: 'organization',
-		organizationId: organization.id,
-	})
+	let records: ReportRecord[]
+	let sourceTruncated = false
+	if (subject.id === 'reviews') {
+		// Reviews come from the same connections as the mailbox reviews tab.
+		const canReadReviews = await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.READ_WEBSITE_ANY,
+		)
+		if (!canReadReviews) {
+			return data(
+				{
+					error: 'unauthorized' as const,
+					message: 'You need website access to report on reviews.',
+				},
+				{ status: 403 },
+			)
+		}
+		const loaded = await loadCachedReviewRecords(organization.id)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+	} else {
+		records = await fetchControlPlaneRecords({
+			subject: parsed.data.subject,
+			scope: 'organization',
+			organizationId: organization.id,
+		})
+	}
+
 	const result = runReport(catalog, parsed.data, records)
 	if (isReportRunError(result)) {
 		return data(result, {
 			status: result.error === 'missing_group_by' ? 422 : 400,
 		})
 	}
-	return data(result)
+	return data(
+		sourceTruncated
+			? { ...result, sourceTruncated: true, sourceRowLimit: records.length }
+			: result,
+	)
 }

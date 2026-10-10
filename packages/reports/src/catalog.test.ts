@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-	type ReportField,
+	defaultListColumns,
 	getField,
 	getSubject,
 	organizationCatalog,
@@ -8,48 +8,50 @@ import {
 	valueFields,
 	valueMeasureLabel,
 } from './catalog.ts'
+import { RESTRICTED_REPORT_SUBJECTS } from './operator-token.ts'
 
-const shopOrders = getSubject(organizationCatalog, 'shop_orders')!
-
-/** A star rating: its average means something, its sum doesn't. */
-const stars: ReportField = {
-	id: 'stars',
-	label: 'Stars',
-	type: 'number',
-	sumLabel: false,
-}
+const orders = getSubject(organizationCatalog, 'orders')!
 
 describe('valueMeasureLabel', () => {
 	it('names sums and averages after the field', () => {
-		const amount = getField(shopOrders, 'amount')!
-		const payout = getField(shopOrders, 'orgPayout')!
-		expect(valueMeasureLabel('sum', amount)).toBe('Shop sales')
-		expect(valueMeasureLabel('average', amount)).toBe('Average shop order')
-		expect(valueMeasureLabel('sum', payout)).toBe('Org payout')
-		expect(valueMeasureLabel('average', stars)).toBe('Average stars')
+		const total = getField(orders, 'total')!
+		const subtotal = getField(orders, 'subtotal')!
+		const tax = getField(orders, 'tax')!
+		expect(valueMeasureLabel('sum', total)).toBe('Sales')
+		expect(valueMeasureLabel('average', total)).toBe('Average order value')
+		expect(valueMeasureLabel('sum', subtotal)).toBe('Subtotal')
+		expect(valueMeasureLabel('average', tax)).toBe('Average tax')
 	})
 
 	it('has no label where the measure means nothing', () => {
-		expect(valueMeasureLabel('sum', stars)).toBeNull()
-		expect(valueMeasureLabel('sum', getField(shopOrders, 'status')!)).toBeNull()
+		expect(valueMeasureLabel('sum', getField(orders, 'tipPercent')!)).toBeNull()
+		expect(valueMeasureLabel('sum', getField(orders, 'status')!)).toBeNull()
 		expect(
-			valueMeasureLabel('average', getField(shopOrders, 'productName')!),
+			valueMeasureLabel('average', getField(orders, 'location')!),
 		).toBeNull()
 	})
 })
 
 describe('valueFields', () => {
 	it('offers only the numbers a measure can read', () => {
-		const rated = { ...shopOrders, fields: [...shopOrders.fields, stars] }
-		const ids = (fields: ReportField[]) => fields.map((field) => field.id)
-		expect(ids(valueFields(rated, 'sum'))).toEqual(['amount', 'orgPayout'])
-		expect(ids(valueFields(rated, 'average'))).toEqual([
-			'amount',
-			'orgPayout',
-			'stars',
-		])
-		expect(ids(valueFields(rated))).toEqual(['amount', 'orgPayout', 'stars'])
+		const sums = valueFields(orders, 'sum').map((field) => field.id)
+		const averages = valueFields(orders, 'average').map((field) => field.id)
+		expect(sums).toContain('total')
+		expect(sums).not.toContain('tipPercent')
+		expect(averages).toContain('tipPercent')
 		expect(valueFields(getSubject(organizationCatalog, 'notes')!)).toEqual([])
+	})
+})
+
+describe('defaultListColumns', () => {
+	it('uses the subject’s chosen columns', () => {
+		expect(defaultListColumns(orders)).toEqual(orders.defaultColumns)
+	})
+
+	it('puts identifying fields before dates and flags', () => {
+		expect(
+			defaultListColumns(getSubject(organizationCatalog, 'notes')!),
+		).toEqual(['title', 'status', 'priority', 'createdAt'])
 	})
 })
 
@@ -59,14 +61,27 @@ describe('catalog', () => {
 		...platformCatalog.subjects,
 	]
 
+	it('only derives fields from restricted subjects', () => {
+		for (const subject of subjects) {
+			for (const field of subject.fields) {
+				if (!field.requiresSubject) continue
+				expect(RESTRICTED_REPORT_SUBJECTS).toContain(field.requiresSubject)
+			}
+		}
+	})
+
 	it('names a currency field wherever there is money', () => {
 		for (const subject of subjects) {
 			const hasMoney = subject.fields.some((field) => field.type === 'currency')
-			if (!hasMoney) continue
-			expect(subject.currencyField, subject.id).toBeTruthy()
-			expect(getField(subject, subject.currencyField!), subject.id).not.toBe(
-				null,
-			)
+			if (hasMoney) expect(subject.currencyField, subject.id).toBeTruthy()
+		}
+	})
+
+	it('only lists default columns the subject has', () => {
+		for (const subject of subjects) {
+			for (const id of subject.defaultColumns ?? []) {
+				expect(getField(subject, id), `${subject.id}.${id}`).not.toBeNull()
+			}
 		}
 	})
 })

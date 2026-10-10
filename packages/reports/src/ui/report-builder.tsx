@@ -368,9 +368,9 @@ export function ReportBuilder({
 						<div className="bg-muted/50 text-muted-foreground m-4 rounded-lg border px-3 py-2 text-sm leading-relaxed">
 							This organization has not provisioned a regional customer database
 							yet. Publish the public site to collect data, then rerun this
-							report. Customer and shop records are queried from the regional
-							tenant API in the browser and are never copied to the US control
-							plane.
+							report. Customer, order, and shop records are queried from the
+							regional tenant API in the browser and are never copied to the US
+							control plane.
 						</div>
 					) : null}
 					<div className="flex snap-x [scrollbar-width:none] gap-3 overflow-x-auto border-b p-3 [&::-webkit-scrollbar]:hidden">

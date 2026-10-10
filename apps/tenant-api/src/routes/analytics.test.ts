@@ -5,14 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	createReportDefinition,
 	organizationTemplates,
+	type ReportDefinition,
 	type TimeframePreset,
 } from '@repo/reports'
-import { mintOperatorAnalyticsToken } from '@repo/reports/token'
 import {
+	mintOperatorAnalyticsToken,
+	ORDER_REPORT_SUBJECTS,
+	type RestrictedReportSubject,
+} from '@repo/reports/token'
+import {
+	customers,
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
-	shopOrders,
+	restaurantOrders,
 	voiceCalls,
 } from '@repo/tenant-db'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -319,9 +325,9 @@ describe('POST /query', () => {
 	})
 })
 
-describe('POST /query shop reports', () => {
+describe('POST /query order reports', () => {
 	const internalCommandToken = 'analytics-internal-token-1234567890'
-	const orgId = 'clw9x0a12000008l00report03'
+	const orgId = 'clw9x0a12000008l00report02'
 	const now = new Date('2026-03-20T12:00:00Z')
 	const previousToken = process.env.INTERNAL_COMMAND_TOKEN
 	let tempDir: string
@@ -329,13 +335,13 @@ describe('POST /query shop reports', () => {
 	beforeEach(async () => {
 		process.env.INTERNAL_COMMAND_TOKEN = internalCommandToken
 		process.env.DATA_REGION = 'us'
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-shop-report-'))
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-order-report-'))
 		process.env.TENANT_DB_DIR = tempDir
 		await provisionTenantDb(orgId)
 		vi.mocked(findActiveOrganizationById).mockResolvedValue({
 			id: orgId,
-			slug: 'shop',
-			name: 'Shop',
+			slug: 'orders',
+			name: 'Orders',
 			customDomain: null,
 			hasProvisionedDb: true,
 			dataRegion: 'us',
@@ -350,15 +356,21 @@ describe('POST /query shop reports', () => {
 		fs.rmSync(tempDir, { recursive: true, force: true })
 	})
 
-	async function queryTemplate(id: string) {
-		const { definition } = organizationTemplates().find(
-			(template) => template.id === id,
-		)!
+	function templateDefinition(id: string) {
+		return organizationTemplates().find((template) => template.id === id)!
+			.definition
+	}
+
+	async function query(
+		definition: ReportDefinition,
+		subjects: readonly RestrictedReportSubject[] = [],
+	) {
 		const { token } = await mintOperatorAnalyticsToken({
 			internalCommandToken,
 			userId: 'user_1',
 			orgId,
 			role: 'operator',
+			subjects,
 		})
 		const res = await analyticsRoutes.request('/query', {
 			method: 'POST',
@@ -374,57 +386,121 @@ describe('POST /query shop reports', () => {
 		}
 	}
 
-	async function insertShopOrders() {
+	async function insertAda() {
 		const db = await getTenantDb(orgId)
-		const order = (
-			productName: string,
-			amountCents: number,
-			status: 'pending' | 'paid',
-			daysAgo: number,
-		): typeof shopOrders.$inferInsert => ({
-			productName,
-			amountCents,
-			platformFeeCents: amountCents / 10,
-			orgPayoutCents: amountCents - amountCents / 10,
-			status,
-			createdAt: new Date(now.getTime() - daysAgo * day),
-		})
-		await db.insert(shopOrders).values([
-			order('Mug', 650, 'paid', 1),
-			order('Hoodie', 2500, 'paid', 2),
-			order('Mug', 650, 'pending', 3),
-			// Paid, but outside the last 30 days.
-			order('Hoodie', 2500, 'paid', 45),
-		])
+		const [ada] = await db
+			.insert(customers)
+			.values({
+				name: 'Ada',
+				phone: '+15550000001',
+				createdAt: new Date(now.getTime() - 30 * day),
+			})
+			.returning({ id: customers.id })
+		return { db, adaId: ada!.id }
 	}
 
-	it('adds up paid shop sales as amounts', async () => {
-		await insertShopOrders()
-		const { status, body } = await queryTemplate('shop-sales')
+	it.each(['sales-total', 'items-top-sellers', 'option-group-sales'])(
+		'refuses the %s report without menu access',
+		async (id) => {
+			const { status, body } = await query(templateDefinition(id))
+			expect(status).toBe(403)
+			expect(body).toMatchObject({ error: 'forbidden_subject' })
+		},
+	)
+
+	it.each([
+		'customers-average-spend',
+		'customers-first-order-by-month',
+		'customers-recent',
+	])(
+		'refuses the %s report, which reads order history, without menu access',
+		async (id) => {
+			const { status, body } = await query(templateDefinition(id))
+			expect(status).toBe(403)
+			expect(body).toMatchObject({
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on order data.',
+			})
+		},
+	)
+
+	it('serves customer reports that skip order history without menu access', async () => {
+		await insertAda()
+		const { status, body } = await query(templateDefinition('customer-count'))
 		expect(status).toBe(200)
-		expect(body).toMatchObject({
+		expect(body).toMatchObject({ total: 1 })
+	})
+
+	it('serves sales and customer spend from orders that count toward sales', async () => {
+		const { db, adaId } = await insertAda()
+		const order = (
+			number: string,
+			daysAgo: number,
+			values: Partial<typeof restaurantOrders.$inferInsert>,
+		): typeof restaurantOrders.$inferInsert => ({
+			orgId,
+			number,
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: 'loc_1',
+			locationName: 'Downtown',
+			contactName: 'Ada',
+			contactPhone: '+15550000001',
+			currency: 'usd',
+			subtotalCents: 1000,
+			taxCents: 100,
+			totalCents: 1100,
+			lines: [],
+			idempotencyKey: `idempotency-${number}`,
+			requestHash: 'request-hash',
+			receiptTokenHash: `receipt-${number}`,
+			createdAt: new Date(now.getTime() - daysAgo * day),
+			...values,
+		})
+		await db.insert(restaurantOrders).values([
+			order('A1', 2, { customerId: adaId }),
+			// A paid guest checkout with Ada's number.
+			order('A2', 1, {
+				status: 'preparing',
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				contactPhone: '(555) 000-0001',
+				totalCents: 2000,
+			}),
+			order('A3', 1, {
+				status: 'accepted',
+				paymentMethod: 'online',
+				paymentStatus: 'pending',
+				holdExpiresAt: new Date(now.getTime() + 600_000),
+				totalCents: 5000,
+			}),
+			order('A4', 1, { status: 'cancelled', totalCents: 7000 }),
+		])
+
+		const sales = await query(
+			templateDefinition('sales-total'),
+			ORDER_REPORT_SUBJECTS,
+		)
+		expect(sales.status).toBe(200)
+		expect(sales.body).toMatchObject({
 			total: 2,
-			value: 31.5,
+			value: 31,
 			valueInfo: {
 				measure: 'sum',
-				field: 'amount',
-				label: 'Shop sales',
+				field: 'total',
 				type: 'currency',
 				currency: 'USD',
 			},
 		})
-	})
+		expect(sales.body).not.toHaveProperty('sourceTruncated')
 
-	it('lists shop order amounts as money', async () => {
-		await insertShopOrders()
-		const { status, body } = await queryTemplate('shop-order-list')
-		expect(status).toBe(200)
-		const rows = body.rows as Array<Record<string, string>>
-		expect(rows.map((row) => [row.productName, row.amount])).toEqual([
-			['Mug', '$6.50'],
-			['Hoodie', '$25.00'],
-			['Mug', '$6.50'],
-			['Hoodie', '$25.00'],
-		])
+		const spend = await query(
+			templateDefinition('customers-average-spend'),
+			ORDER_REPORT_SUBJECTS,
+		)
+		expect(spend.status).toBe(200)
+		expect(spend.body).toMatchObject({ total: 1, value: 31 })
 	})
 })
