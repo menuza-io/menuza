@@ -25,8 +25,14 @@ export function UrlFilters({
 }) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const idCounter = useRef(0)
-	const [query, setQuery] = useState<FilterQuery>(() =>
-		createFilterQuery(
+
+	// Only the params this bar owns matter for syncing.
+	const urlKey = fields
+		.map((field) => `${field.id}=${searchParams.get(field.id) ?? ''}`)
+		.join('&')
+
+	function queryFromUrl() {
+		return createFilterQuery(
 			fields.flatMap((field) => {
 				const value = searchParams.get(field.id)
 				return value
@@ -40,8 +46,19 @@ export function UrlFilters({
 						]
 					: []
 			}),
-		),
-	)
+		)
+	}
+
+	const [query, setQuery] = useState<FilterQuery>(queryFromUrl)
+	const [syncedKey, setSyncedKey] = useState(urlKey)
+
+	// Back/forward or any external param change: re-derive the chips from the
+	// URL. Edits made here update `syncedKey` first, so in-progress rules (no
+	// value yet) are not discarded.
+	if (syncedKey !== urlKey) {
+		setSyncedKey(urlKey)
+		setQuery(queryFromUrl())
+	}
 
 	function handleQueryChange(next: FilterQuery) {
 		setQuery(next)
@@ -54,6 +71,11 @@ export function UrlFilters({
 			if (key && value) params.set(key, value)
 		}
 		params.set('page', '1')
+		setSyncedKey(
+			fields
+				.map((field) => `${field.id}=${params.get(field.id) ?? ''}`)
+				.join('&'),
+		)
 		setSearchParams(params, { preventScrollReset: true })
 	}
 

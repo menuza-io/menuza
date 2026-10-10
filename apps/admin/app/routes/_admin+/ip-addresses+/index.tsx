@@ -196,216 +196,222 @@ export default function AdminIpAddressesPage() {
 			</div>
 
 			{/* IP Addresses Table */}
-			<Frame className="w-full">
-				<Table variant="card">
-					<TableHeader>
-						<TableRow>
-							<TableHead>
-								<Trans>IP Address</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Location</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Status</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Requests</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Last Request</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Suspicious Score</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Users</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>First Seen</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Actions</Trans>
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{data.ipAddresses.map((ip) => {
-							const moreCount = ip.ipAddressUsers.length - 3
-							const ipAddress = ip.ip
-							return (
-								<TableRow key={ip.id}>
-									<TableCell className="font-mono">
-										<Link
-											to={`/ip-addresses/${ip.ip}`}
-											className="text-blue-600 hover:text-blue-800 hover:underline"
-										>
-											{ip.ip}
-										</Link>
-									</TableCell>
-									<TableCell>
-										{ip.country && ip.city ? (
-											<span>
-												{ip.city}, {ip.country}
-											</span>
-										) : ip.country ? (
-											<span>{ip.country}</span>
-										) : (
-											<span className="text-muted-foreground">
-												<Trans>Unknown</Trans>
-											</span>
-										)}
-									</TableCell>
-									<TableCell>
-										{ip.isBlacklisted ? (
-											<Badge variant="destructive">
-												<Trans>Blacklisted</Trans>
-											</Badge>
-										) : ip.suspiciousScore > 0 ? (
-											<Badge variant="secondary">
-												<Trans>Suspicious</Trans>
-											</Badge>
-										) : (
-											<Badge variant="outline">
-												<Trans>Active</Trans>
-											</Badge>
-										)}
-									</TableCell>
-									<TableCell>{ip.requestCount}</TableCell>
-									<TableCell>
-										{ip.lastRequestAt ? (
-											<span className="text-sm">
-												{formatDate(ip.lastRequestAt)}
-											</span>
-										) : (
-											<span className="text-muted-foreground">-</span>
-										)}
-									</TableCell>
-									<TableCell>
-										{ip.suspiciousScore > 0 ? (
-											<Badge variant="destructive">{ip.suspiciousScore}</Badge>
-										) : (
-											<span className="text-muted-foreground">0</span>
-										)}
-									</TableCell>
-									<TableCell>
-										{ip.ipAddressUsers && ip.ipAddressUsers.length > 0 ? (
-											<div className="space-y-1">
-												{ip.ipAddressUsers.slice(0, 3).map((userConnection) => {
-													const count = userConnection.requestCount
-
-													return (
-														<div
-															key={userConnection.user.id}
-															className="text-sm"
-														>
-															<span className="font-medium">
-																{userConnection.user.name ||
-																	userConnection.user.username}
-															</span>
-															<div className="text-muted-foreground text-xs">
-																<Trans>{count} requests</Trans>
-															</div>
-														</div>
-													)
-												})}
-												{ip.ipAddressUsers.length > 3 && (
-													<div className="text-muted-foreground text-xs">
-														<Trans>+{moreCount} more users</Trans>
-													</div>
-												)}
-											</div>
-										) : (
-											<span className="text-muted-foreground text-sm">
-												<Trans>No users</Trans>
-											</span>
-										)}
-									</TableCell>
-									<TableCell>
-										<span className="text-sm">{formatDate(ip.createdAt)}</span>
-									</TableCell>
-									<TableCell>
-										<div className="flex gap-2">
-											{ip.isBlacklisted ? (
-												<Form method="post">
-													<input
-														type="hidden"
-														name="intent"
-														value="unblacklist"
-													/>
-													<input type="hidden" name="ip" value={ip.ip} />
-													<Button variant="outline" size="sm" type="submit">
-														<Trans>Unblacklist</Trans>
-													</Button>
-												</Form>
-											) : (
-												<Dialog>
-													<DialogTrigger
-														render={
-															<Button variant="destructive" size="sm">
-																<Trans>Blacklist</Trans>
-															</Button>
-														}
-													></DialogTrigger>
-													<DialogContent>
-														<DialogHeader>
-															<DialogTitle>
-																<Trans>Blacklist IP Address</Trans>
-															</DialogTitle>
-															<DialogDescription>
-																<Trans>
-																	Are you sure you want to blacklist {ipAddress}
-																	? This will prevent all future requests from
-																	this IP address.
-																</Trans>
-															</DialogDescription>
-														</DialogHeader>
-														<Form method="post">
-															<div className="space-y-4">
-																<div className="space-y-2">
-																	<Label htmlFor="reason">
-																		<Trans>Reason for blacklisting</Trans>
-																	</Label>
-																	<Textarea
-																		id="reason"
-																		name="reason"
-																		placeholder={_(
-																			msg`Enter reason for blacklisting this IP address...`,
-																		)}
-																		required
-																	/>
-																</div>
-															</div>
-															<input
-																type="hidden"
-																name="intent"
-																value="blacklist"
-															/>
-															<input type="hidden" name="ip" value={ip.ip} />
-															<DialogFooter className="mt-4">
-																<Button type="submit" variant="destructive">
-																	<Trans>Blacklist IP</Trans>
-																</Button>
-															</DialogFooter>
-														</Form>
-													</DialogContent>
-												</Dialog>
-											)}
-										</div>
-									</TableCell>
-								</TableRow>
-							)
-						})}
-					</TableBody>
-				</Table>
-			</Frame>
-
-			{data.ipAddresses.length === 0 && (
+			{data.ipAddresses.length === 0 ? (
 				<EmptyState
 					title={_(msg`No IP addresses found`)}
 					description={_(msg`Visitor IP addresses will appear here.`)}
 					icons={['shield']}
 				/>
+			) : (
+				<Frame className="w-full">
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>
+									<Trans>IP Address</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Location</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Status</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Requests</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Last Request</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Suspicious Score</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Users</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>First Seen</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Actions</Trans>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{data.ipAddresses.map((ip) => {
+								const moreCount = ip.ipAddressUsers.length - 3
+								const ipAddress = ip.ip
+								return (
+									<TableRow key={ip.id}>
+										<TableCell className="font-mono">
+											<Link
+												to={`/ip-addresses/${ip.ip}`}
+												className="text-blue-600 hover:text-blue-800 hover:underline"
+											>
+												{ip.ip}
+											</Link>
+										</TableCell>
+										<TableCell>
+											{ip.country && ip.city ? (
+												<span>
+													{ip.city}, {ip.country}
+												</span>
+											) : ip.country ? (
+												<span>{ip.country}</span>
+											) : (
+												<span className="text-muted-foreground">
+													<Trans>Unknown</Trans>
+												</span>
+											)}
+										</TableCell>
+										<TableCell>
+											{ip.isBlacklisted ? (
+												<Badge variant="destructive">
+													<Trans>Blacklisted</Trans>
+												</Badge>
+											) : ip.suspiciousScore > 0 ? (
+												<Badge variant="secondary">
+													<Trans>Suspicious</Trans>
+												</Badge>
+											) : (
+												<Badge variant="outline">
+													<Trans>Active</Trans>
+												</Badge>
+											)}
+										</TableCell>
+										<TableCell>{ip.requestCount}</TableCell>
+										<TableCell>
+											{ip.lastRequestAt ? (
+												<span className="text-sm">
+													{formatDate(ip.lastRequestAt)}
+												</span>
+											) : (
+												<span className="text-muted-foreground">-</span>
+											)}
+										</TableCell>
+										<TableCell>
+											{ip.suspiciousScore > 0 ? (
+												<Badge variant="destructive">
+													{ip.suspiciousScore}
+												</Badge>
+											) : (
+												<span className="text-muted-foreground">0</span>
+											)}
+										</TableCell>
+										<TableCell>
+											{ip.ipAddressUsers && ip.ipAddressUsers.length > 0 ? (
+												<div className="space-y-1">
+													{ip.ipAddressUsers
+														.slice(0, 3)
+														.map((userConnection) => {
+															const count = userConnection.requestCount
+
+															return (
+																<div
+																	key={userConnection.user.id}
+																	className="text-sm"
+																>
+																	<span className="font-medium">
+																		{userConnection.user.name ||
+																			userConnection.user.username}
+																	</span>
+																	<div className="text-muted-foreground text-xs">
+																		<Trans>{count} requests</Trans>
+																	</div>
+																</div>
+															)
+														})}
+													{ip.ipAddressUsers.length > 3 && (
+														<div className="text-muted-foreground text-xs">
+															<Trans>+{moreCount} more users</Trans>
+														</div>
+													)}
+												</div>
+											) : (
+												<span className="text-muted-foreground text-sm">
+													<Trans>No users</Trans>
+												</span>
+											)}
+										</TableCell>
+										<TableCell>
+											<span className="text-sm">
+												{formatDate(ip.createdAt)}
+											</span>
+										</TableCell>
+										<TableCell>
+											<div className="flex gap-2">
+												{ip.isBlacklisted ? (
+													<Form method="post">
+														<input
+															type="hidden"
+															name="intent"
+															value="unblacklist"
+														/>
+														<input type="hidden" name="ip" value={ip.ip} />
+														<Button variant="outline" size="sm" type="submit">
+															<Trans>Unblacklist</Trans>
+														</Button>
+													</Form>
+												) : (
+													<Dialog>
+														<DialogTrigger
+															render={
+																<Button variant="destructive" size="sm">
+																	<Trans>Blacklist</Trans>
+																</Button>
+															}
+														></DialogTrigger>
+														<DialogContent>
+															<DialogHeader>
+																<DialogTitle>
+																	<Trans>Blacklist IP Address</Trans>
+																</DialogTitle>
+																<DialogDescription>
+																	<Trans>
+																		Are you sure you want to blacklist{' '}
+																		{ipAddress}? This will prevent all future
+																		requests from this IP address.
+																	</Trans>
+																</DialogDescription>
+															</DialogHeader>
+															<Form method="post">
+																<div className="space-y-4">
+																	<div className="space-y-2">
+																		<Label htmlFor="reason">
+																			<Trans>Reason for blacklisting</Trans>
+																		</Label>
+																		<Textarea
+																			id="reason"
+																			name="reason"
+																			placeholder={_(
+																				msg`Enter reason for blacklisting this IP address...`,
+																			)}
+																			required
+																		/>
+																	</div>
+																</div>
+																<input
+																	type="hidden"
+																	name="intent"
+																	value="blacklist"
+																/>
+																<input type="hidden" name="ip" value={ip.ip} />
+																<DialogFooter className="mt-4">
+																	<Button type="submit" variant="destructive">
+																		<Trans>Blacklist IP</Trans>
+																	</Button>
+																</DialogFooter>
+															</Form>
+														</DialogContent>
+													</Dialog>
+												)}
+											</div>
+										</TableCell>
+									</TableRow>
+								)
+							})}
+						</TableBody>
+					</Table>
+				</Frame>
 			)}
 		</div>
 	)

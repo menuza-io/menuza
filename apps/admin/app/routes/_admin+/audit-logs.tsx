@@ -38,7 +38,10 @@ export async function loader({ request }: { request: Request }) {
 	const search = url.searchParams.get('search') || undefined
 	const startDateStr = url.searchParams.get('startDate')
 	const endDateStr = url.searchParams.get('endDate')
-	const severityFilter = url.searchParams.get('severity') || undefined
+	const severityParam = url.searchParams.get('severity')
+	const severityFilter = (
+		['info', 'warning', 'error', 'critical'] as const
+	).find((level) => level === severityParam)
 
 	const startDate = startDateStr ? new Date(startDateStr) : undefined
 	const endDate = endDateStr ? new Date(endDateStr) : undefined
@@ -49,6 +52,7 @@ export async function loader({ request }: { request: Request }) {
 			organizationId,
 			userId,
 			search,
+			severity: severityFilter,
 			startDate,
 			endDate,
 			limit,
