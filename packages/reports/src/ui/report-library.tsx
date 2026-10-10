@@ -78,7 +78,7 @@ export function ReportLibrary({
 				<p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
 					{scope === 'platform'
 						? 'Platform counts for operators, orgs, and waitlist.'
-						: 'Segment customers, shop orders, notes, members, and feedback.'}
+						: 'Report on sales, orders, customers, marketing, and reviews.'}
 				</p>
 			</div>
 			<Button
@@ -212,7 +212,7 @@ export function ReportStart({
 											{report.title}
 										</span>
 										<span className="text-muted-foreground mt-0.5 block text-xs capitalize">
-											{report.subject.replaceAll('-', ' ')}
+											{report.subject.replaceAll(/[-_]/gu, ' ')}
 										</span>
 									</span>
 									<time

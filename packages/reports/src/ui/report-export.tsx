@@ -36,6 +36,7 @@ import {
 	reportToCsv,
 	slugFilename,
 } from '../export.ts'
+import { formatResultHeadline } from '../format.ts'
 
 function downloadBlob(blob: Blob, filename: string) {
 	const url = URL.createObjectURL(blob)
@@ -149,7 +150,7 @@ function chartSvg(
 	if (definition.visualization.chartStyle === 'single_number') {
 		const colors = readThemeColors(root)
 		return buildSingleNumberSvg({
-			total: result.total,
+			text: formatResultHeadline(result),
 			background: colors.background,
 			foreground: colors.foreground,
 		})

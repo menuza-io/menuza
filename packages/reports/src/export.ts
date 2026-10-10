@@ -2,8 +2,10 @@ import {
 	type ReportDefinition,
 	type ReportResult,
 	type ReportRunError,
+	type ReportSegment,
 	isListReport,
 } from './dsl.ts'
+import { segmentPercent, segmentTableColumns } from './format.ts'
 
 export function slugFilename(title: string, extension: string): string {
 	const slug = title
@@ -41,28 +43,49 @@ export function reportToCsv(
 		])
 	}
 
-	const showCounts = !definition.visualization.hideCounts
-	const header = showCounts
-		? ['Segment', 'Count', 'Percent']
-		: ['Segment', 'Percent']
-	const body =
+	const columns = segmentTableColumns(
+		definition.visualization.hideCounts,
+		result,
+	)
+	const info = columns.value
+	const header = [
+		'Segment',
+		...(columns.count ? ['Count'] : []),
+		...(info
+			? [info.currency ? `${info.label} (${info.currency})` : info.label]
+			: []),
+		...(columns.percent ? ['Percent'] : []),
+	]
+	const segments: ReportSegment[] =
 		result.segments.length > 0
-			? result.segments.map((segment) => {
-					const percent = `${segment.percent.toFixed(1)}%`
-					return showCounts
-						? [segment.label, String(segment.count), percent]
-						: [segment.label, percent]
-				})
+			? result.segments
 			: [
-					showCounts
-						? [
-								definition.settings.title || 'Total',
-								String(result.total),
-								'100.0%',
-							]
-						: [definition.settings.title || 'Total', '100.0%'],
+					{
+						key: 'total',
+						label: definition.settings.title || 'Total',
+						count: result.total,
+						percent: 100,
+						value: result.value,
+					},
 				]
+	const body = segments.map((segment) => [
+		segment.label,
+		...(columns.count ? [String(segment.count)] : []),
+		...(info ? [csvAmount(segment.value, info.type === 'currency')] : []),
+		...(columns.percent
+			? [`${segmentPercent(segment, result).toFixed(1)}%`]
+			: []),
+	])
 	return csvLines([header, ...body])
+}
+
+/**
+ * Plain digits a spreadsheet reads as a number. The currency code goes in
+ * the column header instead of each cell.
+ */
+function csvAmount(value: number | undefined, currency: boolean) {
+	if (value === undefined) return ''
+	return currency ? value.toFixed(2) : String(Math.round(value * 100) / 100)
 }
 
 export function canExportReport(
@@ -201,16 +224,22 @@ export function jpegToPdf(
 }
 
 export function buildSingleNumberSvg(options: {
-	total: number
+	/** The formatted headline, for example "1,204" or "$8,312.50". */
+	text: string
 	background: string
 	foreground: string
 }): string {
 	const width = 960
 	const height = 540
+	// Long amounts shrink so they stay inside the canvas.
+	const fontSize = Math.min(
+		88,
+		Math.floor((width - 96) / (0.6 * options.text.length)),
+	)
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <rect width="100%" height="100%" fill="${escapeXml(options.background)}"/>
-  <text x="${width / 2}" y="${height / 2 + 28}" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="88" font-weight="600" fill="${escapeXml(options.foreground)}">${escapeXml(options.total.toLocaleString())}</text>
+  <text x="${width / 2}" y="${height / 2 + Math.round(fontSize / 3)}" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${fontSize}" font-weight="600" fill="${escapeXml(options.foreground)}">${escapeXml(options.text)}</text>
 </svg>
 `
 }

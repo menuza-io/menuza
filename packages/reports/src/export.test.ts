@@ -11,7 +11,7 @@ import {
 	slugFilename,
 	TITLE_BAR_HEIGHT,
 } from './export.ts'
-import { createReportDefinition } from './dsl.ts'
+import { type ReportResult, createReportDefinition } from './dsl.ts'
 
 function tableDefinition() {
 	return createReportDefinition({
@@ -79,6 +79,78 @@ describe('reportToCsv', () => {
 		})
 		expect(csv).toBe('Segment,Count,Percent\nTodo,2,66.7%\nDone,1,33.3%\n')
 	})
+
+	function salesDefinition(measure: 'sum' | 'average', hideCounts = false) {
+		return createReportDefinition({
+			subject: 'orders',
+			timeframe: { field: 'createdAt', preset: 'all_time' },
+			groupBy: ['location'],
+			visualization: {
+				chartStyle: 'table',
+				measure,
+				valueField: 'total',
+				sortBy: 'none',
+				hideCounts,
+			},
+			settings: { title: 'Sales', notes: '', timezone: 'UTC' },
+		})
+	}
+
+	const salesResult = (measure: 'sum' | 'average'): ReportResult => ({
+		total: 4,
+		value: measure === 'sum' ? 40 : 10,
+		valueInfo: {
+			measure,
+			field: 'total',
+			label: measure === 'sum' ? 'Sales' : 'Average order value',
+			type: 'currency',
+			currency: 'USD',
+		},
+		segments: [
+			{ key: 'a', label: 'Airport', count: 1, percent: 25, value: 30 },
+			{ key: 'd', label: 'Downtown', count: 3, percent: 75, value: 10 },
+		],
+		refreshedAt: '2026-08-24T18:00:00.000Z',
+	})
+
+	it('writes sums as plain amounts with their share of the total', () => {
+		expect(reportToCsv(salesDefinition('sum'), salesResult('sum'))).toBe(
+			'Segment,Count,Sales (USD),Percent\nAirport,1,30.00,75.0%\nDowntown,3,10.00,25.0%\n',
+		)
+		expect(reportToCsv(salesDefinition('sum', true), salesResult('sum'))).toBe(
+			'Segment,Sales (USD),Percent\nAirport,30.00,75.0%\nDowntown,10.00,25.0%\n',
+		)
+	})
+
+	it('writes averages without a percent column', () => {
+		const result = salesResult('average')
+		// No order in this segment had a total to average.
+		result.segments[1] = { key: 'd', label: 'Downtown', count: 3, percent: 75 }
+		expect(reportToCsv(salesDefinition('average'), result)).toBe(
+			'Segment,Count,Average order value (USD)\nAirport,1,30.00\nDowntown,3,\n',
+		)
+	})
+
+	it('writes counts when amounts are in more than one currency', () => {
+		const result: ReportResult = {
+			total: 4,
+			valueInfo: {
+				measure: 'sum',
+				field: 'amount',
+				label: 'Shop sales',
+				type: 'currency',
+				mixedCurrencies: true,
+			},
+			segments: [
+				{ key: 'h', label: 'Hoodie', count: 1, percent: 25 },
+				{ key: 'm', label: 'Mug', count: 3, percent: 75 },
+			],
+			refreshedAt: '2026-08-24T18:00:00.000Z',
+		}
+		expect(reportToCsv(salesDefinition('sum'), result)).toBe(
+			'Segment,Count,Percent\nHoodie,1,25.0%\nMug,3,75.0%\n',
+		)
+	})
 })
 
 describe('canExportReport', () => {
@@ -128,13 +200,24 @@ describe('canExportReport', () => {
 describe('buildSingleNumberSvg', () => {
 	it('embeds the total without a title', () => {
 		const svg = buildSingleNumberSvg({
-			total: 12,
+			text: '12',
 			background: '#ffffff',
 			foreground: '#0f172a',
 		})
-		expect(svg).toContain('12')
+		expect(svg).toContain('>12</text>')
+		expect(svg).toContain('font-size="88"')
 		expect(svg).not.toContain('Customer count')
 		expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"')
+	})
+
+	it('shrinks long amounts to fit and escapes them', () => {
+		const svg = buildSingleNumberSvg({
+			text: 'SAR 12,345,678,901.25 <x>',
+			background: '#ffffff',
+			foreground: '#0f172a',
+		})
+		expect(svg).not.toContain('font-size="88"')
+		expect(svg).toContain('SAR 12,345,678,901.25 &lt;x&gt;')
 	})
 })
 

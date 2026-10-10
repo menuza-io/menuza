@@ -1,5 +1,5 @@
 import { requireUserId } from '@repo/auth'
-import { getCatalog, getSubject } from '@repo/reports'
+import { getCatalog } from '@repo/reports'
 import {
 	getSavedReport,
 	parseDefinition,
@@ -59,7 +59,6 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function SavedReportRoute() {
 	const data = useLoaderData<typeof loader>()
-	const subject = getSubject(data.catalog, data.definition.subject)
 
 	return (
 		<AppReportWorkspace
@@ -67,11 +66,8 @@ export default function SavedReportRoute() {
 			scope="organization"
 			initialDefinition={data.definition}
 			controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
-			tenantTokenUrl={
-				subject?.source === 'tenant-api'
-					? `/${data.orgSlug}/reports/token`
-					: null
-			}
+			// The builder can switch to a regional subject at any time.
+			tenantTokenUrl={`/${data.orgSlug}/reports/token`}
 			tenantApiUrl={data.tenantApiUrl}
 			backHref={`/${data.orgSlug}/reports`}
 			hasTenantDb={data.hasProvisionedDb}

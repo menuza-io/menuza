@@ -10,10 +10,13 @@ import {
 	voiceCalls,
 } from '@repo/tenant-db'
 import {
+	getField,
+	getSubject,
 	isReportRunError,
 	organizationCatalog,
 	type ReportDefinition,
 	reportDefinitionSchema,
+	referencedFieldIds,
 	resolveTimeframeRange,
 	runReport,
 	type ReportRecord,
@@ -25,6 +28,14 @@ import {
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, getInternalCommandToken } from '../lib/secrets.ts'
+import {
+	loadCustomerRecords,
+	loadOrderItemRecords,
+	loadOrderOptionRecords,
+	loadOrderRecords,
+	loadTextSubscriberRecords,
+	ORDER_REPORT_MAX_ROWS,
+} from '../services/report-records.ts'
 
 export const analyticsRoutes = new Hono()
 
@@ -33,7 +44,11 @@ const querySchema = z.object({
 })
 
 const TENANT_ANALYTICS_SUBJECTS = new Set([
+	'orders',
+	'order_items',
+	'order_options',
 	'customers',
+	'text_subscribers',
 	'shop_orders',
 	'phone_calls',
 ])
@@ -194,30 +209,6 @@ export async function loadPhoneCallRecords(
 	return { records: mapPhoneCalls(rows, priorCalls), truncated }
 }
 
-function formatMoney(cents: number, currency = 'usd') {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: currency.toUpperCase(),
-	}).format(cents / 100)
-}
-
-function mapCustomer(row: {
-	createdAt: Date | null
-	phoneVerified: boolean | null
-	email: string | null
-	name: string | null
-	phone: string | null
-}): ReportRecord {
-	return {
-		createdAt: row.createdAt,
-		phoneVerified: Boolean(row.phoneVerified),
-		hasEmail: Boolean(row.email && row.email.length > 0),
-		email: row.email ?? '',
-		name: row.name ?? '',
-		phone: row.phone ?? '',
-	}
-}
-
 function mapShopOrder(row: {
 	createdAt: Date | null
 	status: string
@@ -229,14 +220,13 @@ function mapShopOrder(row: {
 	customerPhone: string | null
 	customerEmail: string | null
 }): ReportRecord {
-	const currency = row.currency || 'usd'
 	return {
 		createdAt: row.createdAt,
 		status: row.status,
 		productName: row.productName,
-		amount: formatMoney(row.amountCents, currency),
-		orgPayout: formatMoney(row.orgPayoutCents, currency),
-		currency,
+		amount: row.amountCents / 100,
+		orgPayout: row.orgPayoutCents / 100,
+		currency: row.currency || 'usd',
 		customerName: row.customerName ?? '',
 		customerPhone: row.customerPhone ?? '',
 		customerEmail: row.customerEmail ?? '',
@@ -301,6 +291,19 @@ analyticsRoutes.post('/query', async (c) => {
 			403,
 		)
 	}
+	const subject = getSubject(organizationCatalog, definition.subject)!
+	for (const fieldId of referencedFieldIds(subject, definition)) {
+		const requires = getField(subject, fieldId)?.requiresSubject
+		if (requires && !operatorTokenAllowsSubject(claims, requires)) {
+			return c.json(
+				{
+					error: 'forbidden_subject',
+					message: 'You do not have permission to report on order data.',
+				},
+				403,
+			)
+		}
+	}
 
 	const organization = await findActiveOrganizationById(claims.orgId)
 	if (!organization) {
@@ -357,21 +360,30 @@ analyticsRoutes.post('/query', async (c) => {
 	const now = new Date()
 	let records: ReportRecord[]
 	let sourceTruncated = false
+	let sourceRowLimit = 0
 	if (definition.subject === 'customers') {
-		const rows = await db
-			.select({
-				createdAt: customers.createdAt,
-				phoneVerified: customers.phoneVerified,
-				email: customers.email,
-				name: customers.name,
-				phone: customers.phone,
-			})
-			.from(customers)
-		records = rows.map(mapCustomer)
+		records = await loadCustomerRecords(db, claims.orgId, subject, definition)
+	} else if (definition.subject === 'text_subscribers') {
+		records = await loadTextSubscriberRecords(db)
+	} else if (
+		definition.subject === 'orders' ||
+		definition.subject === 'order_items' ||
+		definition.subject === 'order_options'
+	) {
+		const loaded =
+			definition.subject === 'orders'
+				? await loadOrderRecords(db, claims.orgId, subject, definition, now)
+				: definition.subject === 'order_items'
+					? await loadOrderItemRecords(db, claims.orgId, definition, now)
+					: await loadOrderOptionRecords(db, claims.orgId, definition, now)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = ORDER_REPORT_MAX_ROWS
 	} else if (definition.subject === 'phone_calls') {
 		const loaded = await loadPhoneCallRecords(db, definition, now)
 		records = loaded.records
 		sourceTruncated = loaded.truncated
+		sourceRowLimit = PHONE_CALL_REPORT_MAX_ROWS
 	} else {
 		const rows = await db
 			.select({
@@ -397,14 +409,10 @@ analyticsRoutes.post('/query', async (c) => {
 	}
 
 	// `truncated` is the list view's row cap; this says the counts themselves
-	// only cover the most recent PHONE_CALL_REPORT_MAX_ROWS calls.
+	// only cover the most recent `sourceRowLimit` calls or orders.
 	return c.json(
 		sourceTruncated
-			? {
-					...result,
-					sourceTruncated: true,
-					sourceRowLimit: PHONE_CALL_REPORT_MAX_ROWS,
-				}
+			? { ...result, sourceTruncated: true, sourceRowLimit }
 			: result,
 	)
 })
