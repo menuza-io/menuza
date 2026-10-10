@@ -28,6 +28,7 @@ async function orgIdFromCustomerJwt(
 		const { payload } = await jwtVerify(token, secret, {
 			issuer: brand.slug,
 			audience: 'tenant-api',
+			algorithms: ['HS256'],
 		})
 		if (payload.type !== 'access') return null
 		return typeof payload.orgId === 'string' ? payload.orgId : null
@@ -48,6 +49,7 @@ async function orgIdFromOperatorJwt(
 		const { payload } = await jwtVerify(token, secret, {
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
+			algorithms: ['HS256'],
 		})
 		if (payload.role !== 'operator') return null
 		return typeof payload.orgId === 'string' ? payload.orgId : null

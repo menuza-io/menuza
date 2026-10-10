@@ -24,50 +24,80 @@ import {
 	rateLimit,
 	rateLimitByKey,
 } from '../lib/rate-limit.ts'
-import { orgMatchesNodeRegion, getNodeRegion } from '../lib/region.ts'
+import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
 
 export const authRoutes = new Hono()
 
+// Free-form but bounded: the digits-only shape is enforced after normalization
+// so SMS cannot be pointed at arbitrary strings (SMS-pumping / injection).
+const phoneInputSchema = z
+	.string()
+	.min(5, 'Phone number is required')
+	.max(32, 'Invalid phone number')
+
 const sendCodeSchema = z.object({
-	slug: z.string().optional(),
-	host: z.string().optional(),
-	phone: z.string().min(5, 'Phone number is required'),
+	slug: z.string().max(253).optional(),
+	host: z.string().max(253).optional(),
+	phone: phoneInputSchema,
 })
 
 const verifyCodeSchema = z.object({
-	slug: z.string().optional(),
-	host: z.string().optional(),
-	phone: z.string().min(5, 'Phone number is required'),
-	code: z.string().length(6, 'Verification code must be 6 digits'),
+	slug: z.string().max(253).optional(),
+	host: z.string().max(253).optional(),
+	phone: phoneInputSchema,
+	code: z.string().regex(/^\d{6}$/, 'Verification code must be 6 digits'),
 })
 
 const refreshSchema = z.object({
-	refreshToken: z.string().min(1, 'refreshToken is required'),
+	refreshToken: z.string().min(1, 'refreshToken is required').max(256),
 	orgId: z.string().regex(TENANT_ORG_ID_PATTERN, 'Invalid orgId format'),
 })
 
 const logoutSchema = z.object({
-	refreshToken: z.string().min(1).optional(),
+	refreshToken: z.string().min(1).max(256).optional(),
 	orgId: z.string().regex(TENANT_ORG_ID_PATTERN).optional(),
 })
 
 const profileSchema = z.object({
-	name: z.string().min(2, 'Name is required'),
-	email: z.string().email('Invalid email address').or(z.literal('')).optional(),
+	name: z
+		.string()
+		.trim()
+		.min(2, 'Name is required')
+		.max(100, 'Name is too long'),
+	email: z
+		.string()
+		.max(254)
+		.email('Invalid email address')
+		.or(z.literal(''))
+		.optional(),
 })
 
+const MIN_JWT_SECRET_LENGTH = 16
+
 function getJwtSecret(): string {
-	return ENV.JWT_SECRET || ''
+	const secret = ENV.JWT_SECRET || ''
+	// Never sign or verify with an empty/short key: HS256 over a blank secret is
+	// forgeable by anyone.
+	if (secret.length < MIN_JWT_SECRET_LENGTH) {
+		throw new Error('JWT_SECRET is not configured')
+	}
+	return secret
 }
 
 const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY_DAYS = 30
 const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
 
+const NORMALIZED_PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
+
 function normalizePhone(phone: string) {
-	return phone.replace(/[\s\-()]/g, '')
+	return phone.replace(/[\s\-().]/g, '')
+}
+
+function isValidPhone(phone: string) {
+	return NORMALIZED_PHONE_PATTERN.test(phone)
 }
 
 function customerNeedsName(name: string | null | undefined) {
@@ -267,6 +297,7 @@ export async function authenticateCustomer(c: Context) {
 		const { payload } = await jwtVerify(token, secret, {
 			issuer: brand.slug,
 			audience: 'tenant-api',
+			algorithms: ['HS256'],
 		})
 		decoded = payload as typeof decoded
 	} catch {
@@ -290,23 +321,9 @@ export async function authenticateCustomer(c: Context) {
 		}
 	}
 
+	// Fail closed: a deactivated org, an org that moved regions, or an outage of
+	// the control plane must never keep customer tokens alive from stale claims.
 	if (!organization || !orgMatchesNodeRegion(organization.dataRegion)) {
-		const db = await openTenantDb(orgId)
-		if (db && typeof decoded.orgSlug === 'string' && decoded.orgSlug) {
-			return {
-				decoded,
-				db,
-				customerId,
-				orgId,
-				organization: {
-					id: orgId,
-					slug: decoded.orgSlug,
-					customDomain: decoded.customDomain ?? null,
-					hasProvisionedDb: true,
-					dataRegion: getNodeRegion(),
-				},
-			}
-		}
 		throw c.json({ error: 'Organization is no longer active' }, 403)
 	}
 
@@ -334,18 +351,24 @@ authRoutes.post(
 
 		let { phone } = parsed.data
 		phone = normalizePhone(phone)
-		if (!phone) {
+		if (!isValidPhone(phone)) {
 			return c.json({ error: 'Invalid phone number' }, 400)
 		}
 
 		const loaded = await loadProvisionedOrgDb(c, parsed.data)
 		if ('error' in loaded) return loaded.error
-		const { db } = loaded
+		const { db, organization } = loaded
 
-		const phoneLimit = rateLimitByKey('send-code-phone', phone, {
-			maxRequests: 3,
-			windowMs: 10 * 60 * 1000,
-		})
+		// Scoped per org so one tenant's customer cannot lock the same number
+		// out of another tenant's sign-in.
+		const phoneLimit = rateLimitByKey(
+			'send-code-phone',
+			JSON.stringify([organization.id, phone]),
+			{
+				maxRequests: 3,
+				windowMs: 10 * 60 * 1000,
+			},
+		)
 		if (phoneLimit.limited) {
 			return c.json(
 				{
@@ -377,7 +400,7 @@ authRoutes.post(
 			.where(eq(customers.phone, phone))
 			.get()
 
-		const code = crypto.randomInt(100000, 999999).toString()
+		const code = crypto.randomInt(100000, 1_000_000).toString()
 		const hashedCode = hmacHash(code)
 		const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
@@ -432,6 +455,9 @@ authRoutes.post(
 
 		let { phone, code } = parsed.data
 		phone = normalizePhone(phone)
+		if (!isValidPhone(phone)) {
+			return c.json({ error: 'Invalid or expired code' }, 400)
+		}
 
 		const loaded = await loadProvisionedOrgDb(c, parsed.data)
 		if ('error' in loaded) return loaded.error
@@ -482,15 +508,25 @@ authRoutes.post(
 			return c.json({ error: 'Invalid or expired code' }, 400)
 		}
 
-		await db
+		// Consume the code atomically so two concurrent requests presenting the
+		// same OTP cannot both mint a session.
+		const [consumed] = await db
 			.update(customers)
 			.set({
 				phoneVerified: true,
 				phoneVerificationCode: null,
 				phoneVerificationExpiresAt: null,
 			})
-			.where(eq(customers.id, customer.id))
-			.run()
+			.where(
+				and(
+					eq(customers.id, customer.id),
+					eq(customers.phoneVerificationCode, customer.phoneVerificationCode),
+				),
+			)
+			.returning({ id: customers.id })
+		if (!consumed) {
+			return c.json({ error: 'Invalid or expired code' }, 400)
+		}
 
 		const { accessToken, refreshToken } = await issueSessionTokens(
 			db,
@@ -586,15 +622,21 @@ authRoutes.post(
 						.get()
 					if (!customer) return { kind: 'invalid' as const, reason: 'invalid' }
 
+					// Merely expired (never rotated or revoked) is not a replay: reject it
+					// without signing the customer out of every other device.
 					if (
-						tokenRecord.rotatedAt ||
-						tokenRecord.revokedAt ||
+						!tokenRecord.rotatedAt &&
+						!tokenRecord.revokedAt &&
 						new Date() > tokenRecord.expiresAt
 					) {
+						return { kind: 'invalid' as const, reason: 'expired' as const }
+					}
+
+					if (tokenRecord.rotatedAt || tokenRecord.revokedAt) {
 						await revokeAll(customer.id)
 						return {
 							kind: 'invalid' as const,
-							reason: tokenRecord.expiresAt < new Date() ? 'expired' : 'reused',
+							reason: 'reused' as const,
 							customerId: customer.id,
 						}
 					}
@@ -716,107 +758,119 @@ authRoutes.post(
 	},
 )
 
-authRoutes.post('/logout', async (c) => {
-	const body = await c.req.json().catch(() => ({}))
-	const parsed = logoutSchema.safeParse(body)
+authRoutes.post(
+	'/logout',
+	rateLimit('logout', { maxRequests: 20, windowMs: 60 * 1000 }),
+	async (c) => {
+		const body = await c.req.json().catch(() => ({}))
+		const parsed = logoutSchema.safeParse(body)
 
-	if (parsed.success && parsed.data.refreshToken && parsed.data.orgId) {
-		try {
-			const db = await openTenantDb(parsed.data.orgId)
-			if (!db) {
-				return c.json({ success: true })
-			}
-			const tokenHash = hmacHash(parsed.data.refreshToken)
+		if (parsed.success && parsed.data.refreshToken && parsed.data.orgId) {
+			try {
+				const db = await openTenantDb(parsed.data.orgId)
+				if (!db) {
+					return c.json({ success: true })
+				}
+				const tokenHash = hmacHash(parsed.data.refreshToken)
 
-			const token = await db
-				.select({ customerId: customerRefreshTokens.customerId })
-				.from(customerRefreshTokens)
-				.where(eq(customerRefreshTokens.tokenHash, tokenHash))
-				.get()
-			if (token) {
-				await revokeCustomerRefreshTokens(db, token.customerId)
-			} else {
-				const customer = await db
-					.select({ id: customers.id })
-					.from(customers)
-					.where(eq(customers.refreshTokenHash, tokenHash))
+				const token = await db
+					.select({ customerId: customerRefreshTokens.customerId })
+					.from(customerRefreshTokens)
+					.where(eq(customerRefreshTokens.tokenHash, tokenHash))
 					.get()
-				if (customer) await revokeCustomerRefreshTokens(db, customer.id)
+				if (token) {
+					await revokeCustomerRefreshTokens(db, token.customerId)
+				} else {
+					const customer = await db
+						.select({ id: customers.id })
+						.from(customers)
+						.where(eq(customers.refreshTokenHash, tokenHash))
+						.get()
+					if (customer) await revokeCustomerRefreshTokens(db, customer.id)
+				}
+			} catch (error) {
+				console.error('Error invalidating refresh token:', error)
 			}
-		} catch (error) {
-			console.error('Error invalidating refresh token:', error)
-		}
-	}
-
-	return c.json({ success: true })
-})
-
-authRoutes.post('/profile', async (c) => {
-	let auth
-	try {
-		auth = await authenticateCustomer(c)
-	} catch (response) {
-		return response as Response
-	}
-
-	const { db, customerId } = auth
-	const body = await c.req.json().catch(() => ({}))
-	const parsed = profileSchema.safeParse(body)
-
-	if (!parsed.success) {
-		return c.json(
-			{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
-			400,
-		)
-	}
-
-	const { name, email } = parsed.data
-
-	try {
-		const existing = await db
-			.select()
-			.from(customers)
-			.where(eq(customers.id, customerId))
-			.get()
-
-		if (!existing) {
-			return c.json({ error: 'Customer not found' }, 404)
 		}
 
-		await db
-			.update(customers)
-			.set({
-				name,
-				...(email !== undefined ? { email: email || null } : {}),
-				updatedAt: new Date(),
-			})
-			.where(eq(customers.id, customerId))
-			.run()
+		return c.json({ success: true })
+	},
+)
 
-		const { accessToken, refreshToken } = await issueSessionTokens(
-			db,
-			{ id: customerId, name },
-			auth.organization,
-		)
+authRoutes.post(
+	'/profile',
+	rateLimit('profile', { maxRequests: 20, windowMs: 60 * 1000 }),
+	async (c) => {
+		let auth
+		try {
+			auth = await authenticateCustomer(c)
+		} catch (response) {
+			return response as Response
+		}
 
-		// Fire-and-forget: evaluate active marketing journey triggers
-		void evaluateAndSpawnTriggers(
-			auth.orgId,
-			'profile_completed',
-			customerId,
-		).catch((err) => {
-			console.error(
-				'Failed to evaluate profile_completed journey triggers:',
-				err,
+		const { db, customerId } = auth
+		const body = await c.req.json().catch(() => ({}))
+		const parsed = profileSchema.safeParse(body)
+
+		if (!parsed.success) {
+			return c.json(
+				{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+				400,
 			)
-		})
+		}
 
-		return c.json({ success: true, accessToken, refreshToken })
-	} catch (error) {
-		console.error('Error updating customer profile:', error)
-		return c.json({ error: 'Internal Server Error' }, 500)
-	}
-})
+		const { name, email } = parsed.data
+
+		try {
+			const existing = await db
+				.select()
+				.from(customers)
+				.where(eq(customers.id, customerId))
+				.get()
+
+			if (!existing) {
+				return c.json({ error: 'Customer not found' }, 404)
+			}
+
+			await db
+				.update(customers)
+				.set({
+					name,
+					...(email !== undefined ? { email: email || null } : {}),
+					updatedAt: new Date(),
+				})
+				.where(eq(customers.id, customerId))
+				.run()
+
+			// Re-issue only an access token (its `name` claim changed). Rotating the
+			// refresh token here would sign the customer out of every other device.
+			const accessToken = await issueAccessToken({
+				customerId,
+				orgId: auth.orgId,
+				name,
+				orgSlug: auth.organization.slug,
+				customDomain: auth.organization.customDomain,
+			})
+
+			// Fire-and-forget: evaluate active marketing journey triggers
+			void evaluateAndSpawnTriggers(
+				auth.orgId,
+				'profile_completed',
+				customerId,
+			).catch((err) => {
+				console.error(
+					'Failed to evaluate profile_completed journey triggers:',
+					err,
+				)
+			})
+
+			return c.json({ success: true, accessToken })
+		} catch (error) {
+			console.error('Error updating customer profile:', error)
+			return c.json({ error: 'Internal Server Error' }, 500)
+		}
+	},
+)
 
 authRoutes.get('/me', async (c) => {
 	let auth

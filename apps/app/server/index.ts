@@ -51,8 +51,13 @@ app.use((req, res, next) => {
 	next()
 })
 
-const getHost = (req: { get: (key: string) => string | undefined }) =>
-	req.get('X-Forwarded-Host') ?? req.get('host') ?? ''
+// Only the Host header is trusted for the HTTPS redirect target:
+// X-Forwarded-Host is client-controllable and would make the redirect open.
+const HOST_PATTERN = /^[a-z0-9.-]+(:\d{1,5})?$/i
+const getHost = (req: { get: (key: string) => string | undefined }) => {
+	const host = req.get('host') ?? ''
+	return HOST_PATTERN.test(host) ? host : ''
+}
 
 // Cloudflare is our proxy
 app.set('trust proxy', true)
@@ -62,7 +67,7 @@ app.use((req, res, next) => {
 	if (req.method !== 'GET') return next()
 	const proto = req.get('X-Forwarded-Proto')
 	const host = getHost(req)
-	if (proto === 'http') {
+	if (proto === 'http' && host) {
 		res.set('X-Forwarded-Proto', 'https')
 		res.redirect(`https://${host}${req.originalUrl}`)
 		return

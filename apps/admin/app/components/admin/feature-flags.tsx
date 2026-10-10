@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@repo/ui/dialog'
+import { Frame, FrameHeader, FrameTitle } from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
 import {
 	Select,
@@ -357,65 +358,63 @@ function SystemTab({ flags }: { flags: ConfigFlag[] }) {
 
 	return (
 		<div className="space-y-4">
-			<Card>
-				<CardHeader>
-					<CardTitle>
+			<Frame className="w-full">
+				<FrameHeader>
+					<FrameTitle className="font-medium">
 						<Trans>System Flags</Trans>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<Table>
-						<TableHeader>
+					</FrameTitle>
+				</FrameHeader>
+				<Table variant="card">
+					<TableHeader>
+						<TableRow>
+							<TableHead>
+								<Trans>Key</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Value</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Actions</Trans>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{systemFlags.length === 0 ? (
 							<TableRow>
-								<TableHead>
-									<Trans>Key</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Value</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Actions</Trans>
-								</TableHead>
+								<TableCell
+									colSpan={3}
+									className="text-muted-foreground text-center"
+								>
+									<Trans>No system flags configured</Trans>
+								</TableCell>
 							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{systemFlags.length === 0 ? (
-								<TableRow>
-									<TableCell
-										colSpan={3}
-										className="text-muted-foreground text-center"
-									>
-										<Trans>No system flags configured</Trans>
+						) : (
+							systemFlags.map((flag) => (
+								<TableRow key={flag.id}>
+									<TableCell className="font-mono">{flag.key}</TableCell>
+									<TableCell className="font-mono">
+										{JSON.stringify(flag.value)}
+									</TableCell>
+									<TableCell>
+										<FeatureFlagDialog flag={flag}>
+											<Button variant="outline" size="sm" className="mr-2">
+												<Trans>Edit</Trans>
+											</Button>
+										</FeatureFlagDialog>
+										<Form method="post" className="inline-block">
+											<input type="hidden" name="_action" value="delete" />
+											<input type="hidden" name="id" value={flag.id} />
+											<Button type="submit" variant="destructive" size="sm">
+												<Trans>Delete</Trans>
+											</Button>
+										</Form>
 									</TableCell>
 								</TableRow>
-							) : (
-								systemFlags.map((flag) => (
-									<TableRow key={flag.id}>
-										<TableCell className="font-mono">{flag.key}</TableCell>
-										<TableCell className="font-mono">
-											{JSON.stringify(flag.value)}
-										</TableCell>
-										<TableCell>
-											<FeatureFlagDialog flag={flag}>
-												<Button variant="outline" size="sm" className="mr-2">
-													<Trans>Edit</Trans>
-												</Button>
-											</FeatureFlagDialog>
-											<Form method="post" className="inline-block">
-												<input type="hidden" name="_action" value="delete" />
-												<input type="hidden" name="id" value={flag.id} />
-												<Button type="submit" variant="destructive" size="sm">
-													<Trans>Delete</Trans>
-												</Button>
-											</Form>
-										</TableCell>
-									</TableRow>
-								))
-							)}
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</Frame>
 		</div>
 	)
 }
@@ -462,94 +461,90 @@ function OrganizationTab({ flags }: { flags: ConfigFlag[] }) {
 			</Card>
 
 			{searchedOrgId && (
-				<Card>
-					<CardHeader>
-						<CardTitle>
+				<Frame className="w-full">
+					<FrameHeader>
+						<FrameTitle className="font-medium">
 							<Trans>Flags for Organization: {searchedOrgId}</Trans>
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<Table>
-							<TableHeader>
+						</FrameTitle>
+					</FrameHeader>
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>
+									<Trans>Key</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Effective Value</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Source</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Actions</Trans>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{systemFlags.length === 0 ? (
 								<TableRow>
-									<TableHead>
-										<Trans>Key</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Effective Value</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Source</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Actions</Trans>
-									</TableHead>
+									<TableCell
+										colSpan={4}
+										className="text-muted-foreground text-center"
+									>
+										<Trans>No flags configured</Trans>
+									</TableCell>
 								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{systemFlags.length === 0 ? (
-									<TableRow>
-										<TableCell
-											colSpan={4}
-											className="text-muted-foreground text-center"
-										>
-											<Trans>No flags configured</Trans>
-										</TableCell>
-									</TableRow>
-								) : (
-									systemFlags.map((systemFlag) => {
-										const override = orgOverrides.find(
-											(o) => o.key === systemFlag.key,
-										)
-										const effectiveValue = override?.value ?? systemFlag.value
+							) : (
+								systemFlags.map((systemFlag) => {
+									const override = orgOverrides.find(
+										(o) => o.key === systemFlag.key,
+									)
+									const effectiveValue = override?.value ?? systemFlag.value
 
-										return (
-											<TableRow key={systemFlag.id}>
-												<TableCell className="font-mono">
-													{systemFlag.key}
-												</TableCell>
-												<TableCell className="font-mono">
-													{JSON.stringify(effectiveValue)}
-												</TableCell>
-												<TableCell>
-													<span
-														className={
-															override
-																? 'text-blue-500'
-																: 'text-muted-foreground'
-														}
-													>
+									return (
+										<TableRow key={systemFlag.id}>
+											<TableCell className="font-mono">
+												{systemFlag.key}
+											</TableCell>
+											<TableCell className="font-mono">
+												{JSON.stringify(effectiveValue)}
+											</TableCell>
+											<TableCell>
+												<span
+													className={
+														override ? 'text-blue-500' : 'text-muted-foreground'
+													}
+												>
+													{override ? (
+														<Trans>Organization Override</Trans>
+													) : (
+														<Trans>System Default</Trans>
+													)}
+												</span>
+											</TableCell>
+											<TableCell>
+												<OverrideDialog
+													systemFlag={systemFlag}
+													existingOverride={override}
+													level="organization"
+													organizationId={searchedOrgId}
+												>
+													<Button variant="outline" size="sm">
 														{override ? (
-															<Trans>Organization Override</Trans>
+															<Trans>Edit Override</Trans>
 														) : (
-															<Trans>System Default</Trans>
+															<Trans>Add Override</Trans>
 														)}
-													</span>
-												</TableCell>
-												<TableCell>
-													<OverrideDialog
-														systemFlag={systemFlag}
-														existingOverride={override}
-														level="organization"
-														organizationId={searchedOrgId}
-													>
-														<Button variant="outline" size="sm">
-															{override ? (
-																<Trans>Edit Override</Trans>
-															) : (
-																<Trans>Add Override</Trans>
-															)}
-														</Button>
-													</OverrideDialog>
-												</TableCell>
-											</TableRow>
-										)
-									})
-								)}
-							</TableBody>
-						</Table>
-					</CardContent>
-				</Card>
+													</Button>
+												</OverrideDialog>
+											</TableCell>
+										</TableRow>
+									)
+								})
+							)}
+						</TableBody>
+					</Table>
+				</Frame>
 			)}
 		</div>
 	)

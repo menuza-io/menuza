@@ -42,6 +42,11 @@ function setSecurityHeaders(responseHeaders: Headers) {
 	responseHeaders.set('X-Content-Type-Options', 'nosniff')
 	responseHeaders.set('X-Frame-Options', 'SAMEORIGIN')
 	responseHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+	responseHeaders.set(
+		'Permissions-Policy',
+		'camera=(), microphone=(), geolocation=(), usb=()',
+	)
+	responseHeaders.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
 
 	if (ENV.NODE_ENV === 'production') {
 		responseHeaders.set(

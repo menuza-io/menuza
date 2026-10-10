@@ -20,6 +20,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from '@repo/ui/item'
+import { PageHeader } from '@repo/ui/page-header'
 import { Link, type LoaderFunctionArgs, useLoaderData } from 'react-router'
 
 const QUICK_LINKS: Array<{
@@ -128,14 +129,12 @@ export default function MarketingOverviewRoute() {
 
 	return (
 		<div className="space-y-8">
-			<header className="space-y-1">
-				<h1 className="text-2xl tracking-tight">
-					<Trans>Platform marketing</Trans>
-				</h1>
-				<p className="text-muted-foreground text-sm">
+			<PageHeader
+				title={<Trans>Platform marketing</Trans>}
+				description={
 					<Trans>Broadcasts and automations for tenant operators.</Trans>
-				</p>
-			</header>
+				}
+			/>
 
 			<ItemGroup className="grid gap-3 sm:grid-cols-2">
 				{quickLinks.map((item) => (

@@ -3,6 +3,7 @@ import {
 	getGlobalSendMax,
 	rateLimitByKey,
 	resetRateLimits,
+	resolveClientIp,
 } from './rate-limit.ts'
 
 describe('getGlobalSendMax', () => {
@@ -76,5 +77,35 @@ describe('rateLimitByKey', () => {
 		} finally {
 			process.env.NODE_ENV = originalNodeEnv
 		}
+	})
+})
+
+describe('resolveClientIp', () => {
+	const ctx = (headers: Record<string, string>) =>
+		({
+			req: {
+				header: (name: string) => headers[name.toLowerCase()],
+			},
+		}) as unknown as import('hono').Context
+
+	it('prefers cf-connecting-ip', () => {
+		expect(
+			resolveClientIp(
+				ctx({
+					'cf-connecting-ip': '203.0.113.9',
+					'x-forwarded-for': '1.1.1.1',
+				}),
+			),
+		).toBe('203.0.113.9')
+	})
+
+	it('uses the proxy-appended (last) x-forwarded-for entry, not the spoofable first', () => {
+		expect(
+			resolveClientIp(ctx({ 'x-forwarded-for': '6.6.6.6, 198.51.100.4' })),
+		).toBe('198.51.100.4')
+	})
+
+	it('falls back to unknown', () => {
+		expect(resolveClientIp(ctx({}))).toBe('unknown')
 	})
 })

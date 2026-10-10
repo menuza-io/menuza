@@ -19,6 +19,14 @@ const ThemeFormSchema = z.object({
 	redirectTo: z.string().optional(),
 })
 
+// Only same-site relative paths: "//evil.com" and "/\\evil.com" are
+// scheme-relative and would turn this action into an open redirect.
+function isSafeRedirectPath(path: string) {
+	return (
+		path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\')
+	)
+}
+
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, {
@@ -32,7 +40,7 @@ export async function action({ request }: Route.ActionArgs) {
 	const responseInit = {
 		headers: { 'set-cookie': setTheme(theme, request) },
 	}
-	if (redirectTo) {
+	if (redirectTo && isSafeRedirectPath(redirectTo)) {
 		return redirect(redirectTo, responseInit)
 	} else {
 		return data({ result: submission.reply() }, responseInit)

@@ -243,6 +243,7 @@ export async function authenticateOperator(c: Context) {
 		const { payload } = await jwtVerify(token, secret, {
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
+			algorithms: ['HS256'],
 		})
 		decoded = payload as typeof decoded
 	} catch {

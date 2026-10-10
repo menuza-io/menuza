@@ -21,6 +21,7 @@ const page = await (Astro.locals.publishedPagePromise ??
 		host: customHost,
 		home: true,
 		preview: Astro.url.searchParams.get('preview') === 'true',
+		previewToken: Astro.url.searchParams.get('pt'),
 		lng: requestedLocale,
 	}))
 

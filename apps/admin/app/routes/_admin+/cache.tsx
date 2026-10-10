@@ -21,13 +21,7 @@ import {
 import { getToast, redirectWithToast } from '@repo/common/toast'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -35,8 +29,16 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
+import {
+	Frame,
+	FrameAction,
+	FrameDescription,
+	FrameHeader,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -268,16 +270,11 @@ export default function CacheAdminRoute() {
 	const totalSize = formatBytes(data.stats.sqlite.totalSize)
 
 	return (
-		<div className="space-y-6">
-			{/* Header */}
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>Cache Management</Trans>
-				</h1>
-				<p className="text-muted-foreground">
-					<Trans>Monitor and manage system cache performance</Trans>
-				</p>
-			</div>
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Cache Management</Trans>}
+				description={<Trans>Monitor and manage system cache performance</Trans>}
+			/>
 
 			{/* Cache Statistics */}
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -575,74 +572,68 @@ function CacheTable({
 	)
 
 	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-center justify-between">
-					<div>
-						<CardTitle className="flex items-center gap-2">
-							{title}
-							<Badge variant="secondary">{keys.length}</Badge>
-						</CardTitle>
-						<CardDescription>
-							{type === 'sqlite' ? (
-								<Trans>Persistent cache stored in SQLite database</Trans>
-							) : (
-								<Trans>In-memory LRU cache</Trans>
-							)}
-						</CardDescription>
-					</div>
+		<Frame className="w-full">
+			<FrameHeader>
+				<FrameTitle className="flex items-center gap-2 font-medium">
+					{title}
+					<Badge variant="secondary">{keys.length}</Badge>
+				</FrameTitle>
+				<FrameDescription>
+					{type === 'sqlite' ? (
+						<Trans>Persistent cache stored in SQLite database</Trans>
+					) : (
+						<Trans>In-memory LRU cache</Trans>
+					)}
+				</FrameDescription>
+				<FrameAction>
 					<CacheClearButton type={type} />
-				</div>
-			</CardHeader>
-			<CardContent className="p-0">
-				<div>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-12">
-									<input
-										type="checkbox"
-										checked={allSelected}
-										ref={(el) => {
-											if (el) el.indeterminate = someSelected && !allSelected
-										}}
-										onChange={(e) => handleSelectAll(e.target.checked)}
-										className="rounded border-gray-300"
-									/>
-								</TableHead>
-								<TableHead>
-									<Trans>Key</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Size</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Created</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>TTL</Trans>
-								</TableHead>
-								<TableHead className="w-24">
-									<Trans>Actions</Trans>
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{keys.map((keyInfo) => (
-								<CacheKeyRow
-									key={keyInfo.key}
-									keyInfo={keyInfo}
-									type={type}
-									instance={instance}
-									isSelected={selectedKeys.has(`${type}:${keyInfo.key}`)}
-									onSelect={(checked) => handleSelectKey(keyInfo.key, checked)}
-								/>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-			</CardContent>
-		</Card>
+				</FrameAction>
+			</FrameHeader>
+			<Table variant="card">
+				<TableHeader>
+					<TableRow>
+						<TableHead className="w-12">
+							<input
+								type="checkbox"
+								checked={allSelected}
+								ref={(el) => {
+									if (el) el.indeterminate = someSelected && !allSelected
+								}}
+								onChange={(e) => handleSelectAll(e.target.checked)}
+								className="rounded border-gray-300"
+							/>
+						</TableHead>
+						<TableHead>
+							<Trans>Key</Trans>
+						</TableHead>
+						<TableHead>
+							<Trans>Size</Trans>
+						</TableHead>
+						<TableHead>
+							<Trans>Created</Trans>
+						</TableHead>
+						<TableHead>
+							<Trans>TTL</Trans>
+						</TableHead>
+						<TableHead className="w-24">
+							<Trans>Actions</Trans>
+						</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{keys.map((keyInfo) => (
+						<CacheKeyRow
+							key={keyInfo.key}
+							keyInfo={keyInfo}
+							type={type}
+							instance={instance}
+							isSelected={selectedKeys.has(`${type}:${keyInfo.key}`)}
+							onSelect={(checked) => handleSelectKey(keyInfo.key, checked)}
+						/>
+					))}
+				</TableBody>
+			</Table>
+		</Frame>
 	)
 }
 

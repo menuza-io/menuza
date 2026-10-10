@@ -11,6 +11,7 @@ import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import { Link, type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
@@ -54,25 +55,18 @@ export default function AdminCampaignsIndexRoute() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between border-b pb-4">
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						<Trans>Platform Broadcasts</Trans>
-					</h1>
-					<p className="text-muted-foreground mt-1 text-sm">
-						<Trans>Send one-time emails to tenant operators.</Trans>
-					</p>
-				</div>
-				{canManage ? (
-					<Button
-						render={<Link to="/marketing/campaigns/new" />}
-						className="gap-2"
-					>
-						<Icon name="plus" className="size-4" />
-						<Trans>New Broadcast</Trans>
-					</Button>
-				) : null}
-			</div>
+			<PageHeader
+				title={<Trans>Platform Broadcasts</Trans>}
+				description={<Trans>Send one-time emails to tenant operators.</Trans>}
+				actions={
+					canManage ? (
+						<Button render={<Link to="/marketing/campaigns/new" />}>
+							<Icon name="plus" className="size-4" />
+							<Trans>New Broadcast</Trans>
+						</Button>
+					) : null
+				}
+			/>
 
 			<div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
 				<Input

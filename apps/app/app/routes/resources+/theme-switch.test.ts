@@ -102,6 +102,29 @@ describe('theme-switch action', () => {
 		expect(response.headers.get('set-cookie')).toContain('theme=dark')
 	})
 
+	it.each(['//evil.com', '/\\evil.com', 'https://evil.com'])(
+		'does not redirect to external target %s',
+		async (target) => {
+			const formData = new FormData()
+			formData.append('theme', 'dark')
+			formData.append('redirectTo', target)
+			const response = (await action({
+				request: new Request('http://localhost:3000/resources/theme-switch', {
+					method: 'POST',
+					body: formData,
+				}),
+				params: {},
+				context: {},
+			} as any)) as unknown as {
+				init?: { headers?: Record<string, string> }
+				status?: number
+			}
+			// Falls back to a data() response (no Location header) with the cookie set.
+			expect(response.status).not.toBe(302)
+			expect(response.init?.headers?.['set-cookie']).toContain('theme=dark')
+		},
+	)
+
 	it('throws 400 when theme is invalid', async () => {
 		const formData = new FormData()
 		formData.append('theme', 'neon-purple')

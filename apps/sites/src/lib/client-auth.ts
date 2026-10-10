@@ -103,7 +103,33 @@ export function getCustomerIdFromAccessToken(): string | undefined {
 	return getAccessTokenClaims()?.customerId
 }
 
-async function refreshSession(): Promise<boolean> {
+// Refresh tokens are single-use: two tabs (or two parallel requests) that
+// refresh at once would present the same token, trip the server's reuse
+// detection, and sign the customer out everywhere. Share one in-flight call.
+let inflightRefresh: Promise<boolean> | null = null
+
+// Across tabs the same rule needs a lock: the Web Locks API serializes refreshes
+// so a second tab re-reads the already-rotated token from localStorage instead
+// of replaying the old one. Browsers without it fall back to per-tab sharing.
+function refreshSession(): Promise<boolean> {
+	if (inflightRefresh) return inflightRefresh
+	const run: Promise<boolean> = (async () => {
+		if (typeof navigator !== 'undefined' && navigator.locks) {
+			// `await` flattens the lock API's nested promise type.
+			return await navigator.locks.request('tenant-session-refresh', () =>
+				doRefreshSession(),
+			)
+		}
+		return doRefreshSession()
+	})()
+	const tracked: Promise<boolean> = run.finally(() => {
+		inflightRefresh = null
+	})
+	inflightRefresh = tracked
+	return tracked
+}
+
+async function doRefreshSession(): Promise<boolean> {
 	const refreshToken = getRefreshToken()
 	const orgId = getAccessTokenClaims()?.orgId
 	if (!refreshToken || !orgId) {

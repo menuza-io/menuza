@@ -1,8 +1,5 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLoaderData, useParams } from 'react-router'
-import { z } from 'zod'
 import {
 	mailboxListSchema,
 	mailboxRecipient,
@@ -26,6 +23,9 @@ import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLoaderData, useParams } from 'react-router'
+import { z } from 'zod'
 import { MailboxIcon } from '#app/components/icons/mailbox-icon.tsx'
 import { CallsTab } from '#app/components/mailbox/calls-tab.tsx'
 import { ReviewsTab } from '#app/components/mailbox/reviews-tab.tsx'
@@ -705,6 +705,7 @@ export default function MailboxRoute() {
 				<TabsContent value="reviews" className="flex min-h-0 flex-1">
 					<ReviewsTab orgSlug={orgSlug} />
 				</TabsContent>
+
 				{calls ? (
 					<TabsContent value="calls" className="flex min-h-0 flex-1">
 						<CallsTab

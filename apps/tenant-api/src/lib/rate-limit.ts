@@ -37,6 +37,22 @@ export function resetRateLimits() {
 	globalSendTimestamps = []
 }
 
+/**
+ * IP resolution priority for rate limiting:
+ * 1. cf-connecting-ip: set by the Cloudflare edge proxy
+ * 2. x-forwarded-for, **last** entry: the address our own reverse proxy
+ *    appended. The first entry is client-supplied and trivially spoofed, which
+ *    would let one client mint unlimited rate-limit buckets.
+ * 3. Fallback: 'unknown'
+ */
+export function resolveClientIp(c: Context): string {
+	const cfIp = c.req.header('cf-connecting-ip')?.trim()
+	if (cfIp) return cfIp
+	const forwarded = c.req.header('x-forwarded-for')
+	const last = forwarded?.split(',').at(-1)?.trim()
+	return last || 'unknown'
+}
+
 export function rateLimit(name: string, config: RateLimitConfig) {
 	const cache = getLimiter(name, config)
 
@@ -45,18 +61,7 @@ export function rateLimit(name: string, config: RateLimitConfig) {
 			return await next()
 		}
 
-		// IP resolution priority for rate limiting:
-		// 1. cf-connecting-ip: Set by Cloudflare edge proxy (verified)
-		// 2. x-forwarded-for: First client IP if behind trusted reverse proxy
-		// 3. Fallback: 'unknown'
-		const forwardedFor = c.req.header('x-forwarded-for')
-		const clientIpFromForwarded = forwardedFor
-			? forwardedFor.split(',')[0]?.trim()
-			: null
-		const ip =
-			c.req.header('cf-connecting-ip')?.trim() ||
-			clientIpFromForwarded ||
-			'unknown'
+		const ip = resolveClientIp(c)
 
 		const now = Date.now()
 		const windowStart = now - config.windowMs
