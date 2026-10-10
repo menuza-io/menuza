@@ -41,6 +41,7 @@ import {
 	formatResultHeadline,
 	segmentPercent,
 	segmentTableColumns,
+	shownValueInfo,
 } from '../format.ts'
 
 export const SEGMENT_COLORS = [
@@ -69,7 +70,7 @@ function chartMeasure(
 	definition: ReportDefinition,
 	result: ReportResult,
 ): ChartMeasure {
-	const info = result.valueInfo
+	const info = shownValueInfo(result)
 	if (info) {
 		return {
 			dataKey: 'value',
@@ -134,7 +135,7 @@ export function ReportNotices({ result }: { result: ReportResult | null }) {
 	const notices: string[] = []
 	if (result.valueInfo?.mixedCurrencies) {
 		notices.push(
-			'These amounts are in more than one currency and are added together as they are. Filter by currency to see each one on its own.',
+			"These amounts are in more than one currency, so they aren't added together. Charts and tables show record counts instead. Filter by currency to see the amounts.",
 		)
 	}
 	if (result.sourceTruncated) {
@@ -504,8 +505,9 @@ export function ReportVisualization({
 							const slice = payload as ReportSegment
 							const pct = formatPercent(segmentPercent(slice, result))
 							if (definition.visualization.hideCounts) return `${name} ${pct}`
-							const amount = result.valueInfo
-								? formatOptionalValue(slice.value, result.valueInfo)
+							const info = shownValueInfo(result)
+							const amount = info
+								? formatOptionalValue(slice.value, info)
 								: slice.count.toLocaleString()
 							return `${name} ${pct} (${amount})`
 						}}

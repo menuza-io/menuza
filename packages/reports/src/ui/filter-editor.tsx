@@ -403,9 +403,16 @@ function FilterConditionRow({
 						value={condition.operator}
 						onValueChange={(next) => {
 							if (!next) return
+							const operator = next as FilterCondition['operator']
+							const nextChoices = valueChoices(field, operator)
+							// Typed text can't stay once the value is picked from a list.
+							const keep =
+								!nextChoices ||
+								nextChoices.some((choice) => choice.value === value)
 							onChange({
 								...condition,
-								operator: next as FilterCondition['operator'],
+								operator,
+								value: keep ? condition.value : '',
 							})
 						}}
 					>
