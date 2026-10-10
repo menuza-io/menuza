@@ -73,7 +73,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		// The per-IP limiter alone lets a distributed attacker keep guessing the
 		// 6-digit code for the 5 minutes the login token lives; cap per account.
 		const attempts = await checkRateLimit(
-			{ type: 'user', value: `2fa-login:${userId}` },
+			// Same key shape as validateRequest in _auth+/verify.server.tsx so the
+			// web and API 2FA paths draw from one budget per account.
+			{ type: 'token', value: `2fa:${userId.toLowerCase()}`.slice(0, 320) },
 			VERIFICATION_CODE_ATTEMPT_RATE_LIMIT,
 		)
 		if (!attempts.allowed) return createRateLimitResponse(attempts.resetAt)

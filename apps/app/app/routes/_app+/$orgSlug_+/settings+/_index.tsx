@@ -575,7 +575,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			s3Region,
 		} = submission.value
 
-		const unsafeEndpoint = await rejectUnsafeS3Endpoint(s3Endpoint)
+		// Disabling must always work, even for a config saved before this check.
+		const unsafeEndpoint = s3Enabled
+			? await rejectUnsafeS3Endpoint(s3Endpoint)
+			: null
 		if (unsafeEndpoint) {
 			return Response.json({
 				result: submission.reply({

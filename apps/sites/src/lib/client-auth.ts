@@ -108,8 +108,17 @@ export function getCustomerIdFromAccessToken(): string | undefined {
 // detection, and sign the customer out everywhere. Share one in-flight call.
 let inflightRefresh: Promise<boolean> | null = null
 
+// Across tabs the same rule needs a lock: the Web Locks API serializes refreshes
+// so a second tab re-reads the already-rotated token from localStorage instead
+// of replaying the old one. Browsers without it fall back to per-tab sharing.
 function refreshSession(): Promise<boolean> {
-	inflightRefresh ??= doRefreshSession().finally(() => {
+	inflightRefresh ??= (
+		typeof navigator !== 'undefined' && navigator.locks
+			? navigator.locks.request('tenant-session-refresh', () =>
+					doRefreshSession(),
+				)
+			: doRefreshSession()
+	).finally(() => {
 		inflightRefresh = null
 	})
 	return inflightRefresh

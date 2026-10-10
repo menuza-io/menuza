@@ -123,7 +123,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		if (cached) {
 			return Response.json(cached, {
 				headers: {
-					'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+					// Draft content must never sit in a shared cache, even keyed by token.
+					'Cache-Control': isPreview
+						? 'private, no-store'
+						: 'public, max-age=60, stale-while-revalidate=300',
 					Vary: 'Accept-Language',
 				},
 			})

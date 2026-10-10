@@ -432,6 +432,12 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 	}
 
 	const { name, channel, audience, subject, content, scheduledAt } = body
+	if (channel === 'sms' && audience === 'unverified') {
+		return c.json(
+			{ error: 'SMS campaigns can only target verified customers' },
+			400,
+		)
+	}
 
 	try {
 		const db = await getTenantDb(orgId)
