@@ -27,6 +27,17 @@ export const operatorRoutes = new Hono()
 
 const OPERATOR_LIST_LIMIT = 100
 
+// The fallback email body wraps plain text that contains customer-controlled
+// merge-tag values (names), so it must be escaped before becoming HTML.
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+}
+
 export async function authenticateOperator(
 	c: Context,
 	scope?: 'mailbox' | 'phone_calls',
@@ -54,6 +65,7 @@ export async function authenticateOperator(
 		const { payload } = await jwtVerify(token, secret, {
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
+			algorithms: ['HS256'],
 		})
 		decoded = payload as typeof decoded
 	} catch (error) {
@@ -61,7 +73,11 @@ export async function authenticateOperator(
 		throw c.json({ error: 'Unauthorized' }, 401)
 	}
 
-	if (!decoded.orgId || decoded.scope !== scope) {
+	if (
+		!decoded.orgId ||
+		decoded.role !== 'operator' ||
+		decoded.scope !== scope
+	) {
 		throw c.json({ error: 'Unauthorized' }, 401)
 	}
 
@@ -89,10 +105,13 @@ operatorRoutes.get('/customers', async (c) => {
 	const { orgId } = auth
 	try {
 		const db = await getTenantDb(orgId)
-		const page = Math.max(1, parseInt(c.req.query('page') || '1', 10))
+		const page = Math.max(
+			1,
+			Number.parseInt(c.req.query('page') || '1', 10) || 1,
+		)
 		const limit = Math.min(
 			500,
-			Math.max(1, parseInt(c.req.query('limit') || '100', 10)),
+			Math.max(1, Number.parseInt(c.req.query('limit') || '100', 10) || 100),
 		)
 		const offset = (page - 1) * limit
 
@@ -110,6 +129,7 @@ operatorRoutes.get('/customers', async (c) => {
 				updatedAt: customers.updatedAt,
 			})
 			.from(customers)
+			.orderBy(desc(customers.createdAt), desc(customers.id))
 			.limit(limit)
 			.offset(offset)
 			.all()
@@ -363,11 +383,11 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 })
 
 const createCampaignSchema = z.object({
-	name: z.string().min(1, 'Name is required'),
+	name: z.string().trim().min(1, 'Name is required').max(200),
 	channel: z.enum(['email', 'sms']),
 	audience: z.enum(['all', 'verified', 'unverified']).default('all'),
-	subject: z.string().optional(),
-	content: z.string().min(1, 'Content is required'),
+	subject: z.string().max(300).optional(),
+	content: z.string().min(1, 'Content is required').max(20_000),
 	/** JSON array of email designer blocks (source of truth for re-editing). */
 	contentBlocks: z
 		.string()
@@ -385,7 +405,7 @@ const createCampaignSchema = z.object({
 		.optional()
 		.nullable(),
 	/** Design-time rendered HTML for email broadcasts. */
-	contentHtml: z.string().optional().nullable(),
+	contentHtml: z.string().max(500_000).optional().nullable(),
 	scheduledAt: z.string().datetime().optional().nullable(),
 })
 
@@ -412,6 +432,12 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 	}
 
 	const { name, channel, audience, subject, content, scheduledAt } = body
+	if (channel === 'sms' && audience === 'unverified') {
+		return c.json(
+			{ error: 'SMS campaigns can only target verified customers' },
+			400,
+		)
+	}
 
 	try {
 		const db = await getTenantDb(orgId)
@@ -459,6 +485,12 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		// 1. Fetch audience and evaluate segmentation rules
 		const allCustomers = await db.select().from(customers).all()
 		let targetCustomers = allCustomers
+		// A phone number is only trusted once its owner proved control of it via
+		// OTP; texting unverified numbers is unsolicited messaging to whoever
+		// typed them into a sign-in form.
+		if (campaign.channel === 'sms') {
+			targetCustomers = targetCustomers.filter((c) => Boolean(c.phoneVerified))
+		}
 		if (campaign.segmentationRules) {
 			try {
 				const rules =
@@ -468,9 +500,11 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 							})
 						: (campaign.segmentationRules as { audience?: string })
 				if (rules?.audience === 'verified') {
-					targetCustomers = allCustomers.filter((c) => Boolean(c.phoneVerified))
+					targetCustomers = targetCustomers.filter((c) =>
+						Boolean(c.phoneVerified),
+					)
 				} else if (rules?.audience === 'unverified') {
-					targetCustomers = allCustomers.filter((c) => !c.phoneVerified)
+					targetCustomers = targetCustomers.filter((c) => !c.phoneVerified)
 				}
 			} catch {
 				// Fallback to all
@@ -537,7 +571,7 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 							text: parsedContent,
 							html: campaign.contentHtml
 								? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
-								: `<p>${parsedContent}</p>`,
+								: `<p>${escapeHtml(parsedContent)}</p>`,
 							context: {
 								orgId,
 								campaignId,

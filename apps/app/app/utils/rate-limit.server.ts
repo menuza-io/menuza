@@ -97,6 +97,14 @@ export const RESTAURANT_ORDER_STATUS_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 1000, // 1 minute
 }
 
+// Caps guesses against a single emailed/2FA code regardless of source IP, so a
+// botnet cannot spread guesses across addresses to dodge the per-IP limiter.
+export const VERIFICATION_CODE_ATTEMPT_RATE_LIMIT: RateLimitConfig = {
+	scope: 'verification-code-attempts',
+	maxRequests: isDev ? 1000 : 10,
+	windowMs: 15 * 60 * 1000,
+}
+
 export const SHOP_CONNECT_ONBOARDING_RATE_LIMIT: RateLimitConfig = {
 	scope: 'shop-connect-onboarding',
 	maxRequests: isDev ? 10 : 1,

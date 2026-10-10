@@ -64,6 +64,25 @@ test.describe('Integration Settings & Providers Management', () => {
 			page.getByRole('region', { name: 'Other integrations' }),
 		).toHaveCount(0)
 
+		// Verify related providers appear in named groups
+		for (const [name, providers] of [
+			['Communication', ['Slack']],
+			['Project management', ['Jira', 'Linear', 'ClickUp', 'Asana', 'Trello']],
+			['Development', ['GitLab', 'GitHub']],
+			['Knowledge management', ['Notion']],
+		] as const) {
+			const group = page.getByRole('region', { name, exact: true })
+			await expect(group).toBeVisible()
+			for (const provider of providers) {
+				await expect(
+					group.getByRole('heading', { name: provider, exact: true }),
+				).toBeVisible()
+			}
+		}
+		await expect(
+			page.getByRole('region', { name: 'Other integrations' }),
+		).toHaveCount(0)
+
 		// Verify request integration banner
 		await expect(
 			page.getByText(/need an integration but don't see it here\?/i),

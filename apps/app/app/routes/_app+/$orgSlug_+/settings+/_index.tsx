@@ -17,7 +17,12 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
-import { decrypt, encrypt, getSSOMasterKey } from '@repo/security'
+import {
+	decrypt,
+	encrypt,
+	getSSOMasterKey,
+	validateInstanceUrlWithDns,
+} from '@repo/security'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -127,6 +132,17 @@ const SettingsSchema = z.object({
 	name: z.string().min(1, 'Name is required'),
 	slug: z.string().min(1, 'Slug is required'),
 })
+
+/**
+ * Org admins supply the S3 endpoint, and the server later fetches it (connection
+ * test, uploads, migrations). Without this check it is an SSRF primitive into
+ * the internal network / cloud metadata service. Dev keeps local MinIO usable.
+ */
+async function rejectUnsafeS3Endpoint(endpoint: string | null | undefined) {
+	if (!endpoint || process.env.NODE_ENV !== 'production') return null
+	const result = await validateInstanceUrlWithDns(endpoint)
+	return result.valid ? null : (result.reason ?? 'Invalid S3 endpoint')
+}
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -559,6 +575,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			s3Region,
 		} = submission.value
 
+		// Disabling must always work, even for a config saved before this check.
+		const unsafeEndpoint = s3Enabled
+			? await rejectUnsafeS3Endpoint(s3Endpoint)
+			: null
+		if (unsafeEndpoint) {
+			return Response.json({
+				result: submission.reply({
+					fieldErrors: { s3Endpoint: [unsafeEndpoint] },
+				}),
+			})
+		}
+
 		try {
 			const [existingConfig] = await db
 				.select()
@@ -724,6 +752,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					success: false,
 					message: 'All S3 configuration fields are required for testing.',
 				},
+			})
+		}
+
+		const unsafeEndpoint = await rejectUnsafeS3Endpoint(s3Endpoint)
+		if (unsafeEndpoint) {
+			return Response.json({
+				connectionTest: { success: false, message: unsafeEndpoint },
 			})
 		}
 

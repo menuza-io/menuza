@@ -46,11 +46,11 @@ msgstr ""
 msgid "(edited)"
 msgstr "(edited)"
 
-#: app/components/locations/address-autocomplete.tsx:322
+#: app/components/locations/address-autocomplete.tsx:344
 msgid "(Tied to Canada address)"
 msgstr "(Tied to Canada address)"
 
-#: app/components/locations/address-autocomplete.tsx:324
+#: app/components/locations/address-autocomplete.tsx:346
 msgid "(Tied to US address)"
 msgstr "(Tied to US address)"
 
@@ -197,7 +197,7 @@ msgstr "{count, plural, one {Use at most # item.} other {Use at most # items.}}"
 msgid "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 msgstr "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:754
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:758
 msgid "{count} locations"
 msgstr "{count} locations"
 
@@ -552,7 +552,7 @@ msgstr "1 hour prior"
 msgid "1 item"
 msgstr "1 item"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:752
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:756
 msgid "1 location"
 msgstr "1 location"
 
@@ -802,8 +802,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:316
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:360
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:692
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:594
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:696
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -823,7 +823,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:131
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:670
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:674
 msgid "Active"
 msgstr ""
 
@@ -839,7 +839,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:337
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:140
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:721
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1773
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1775
 msgid "Add"
 msgstr ""
 
@@ -895,7 +895,7 @@ msgstr "Add a delivery zone to specify radius distance, zip codes, or draw custo
 msgid "Add a heading"
 msgstr "Add a heading"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5641
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5645
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr ""
 
@@ -919,7 +919,7 @@ msgstr "Add a number or email to start sending alerts."
 msgid "Add a question"
 msgstr "Add a question"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5749
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5753
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
@@ -976,7 +976,7 @@ msgstr "Add at least one email block"
 msgid "Add block"
 msgstr "Add block"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4024
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4026
 msgid "Add card"
 msgstr ""
 
@@ -990,7 +990,7 @@ msgid "Add choice"
 msgstr "Add choice"
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:931
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4393
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4395
 msgid "Add column"
 msgstr ""
 
@@ -1018,7 +1018,7 @@ msgstr "Add Delivery Zone"
 #~ msgid "Add drop reminder"
 #~ msgstr "Add drop reminder"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3714
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3716
 msgid "Add feature"
 msgstr ""
 
@@ -1052,14 +1052,14 @@ msgstr "Add it in Phone numbers below."
 msgid "Add item"
 msgstr "Add item"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3218
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4456
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3220
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4458
 msgid "Add link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:534
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:553
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:193
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:538
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:557
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:201
 msgid "Add Location"
 msgstr "Add Location"
 
@@ -1091,7 +1091,7 @@ msgstr "Add name, email, choices, and more to start collecting responses."
 msgid "Add nested modifier group"
 msgstr "Add nested modifier group"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5899
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5903
 msgid "Add new page"
 msgstr ""
 
@@ -1144,7 +1144,7 @@ msgstr "Add phone number"
 msgid "Add Photo"
 msgstr "Add Photo"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3882
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3884
 msgid "Add photo or video"
 msgstr ""
 
@@ -1161,7 +1161,7 @@ msgstr "Add Pickup Window"
 msgid "Add pronunciation"
 msgstr "Add pronunciation"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3645
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3647
 msgid "Add question"
 msgstr ""
 
@@ -1186,7 +1186,7 @@ msgstr "Add Reminder"
 msgid "Add restaurant"
 msgstr "Add restaurant"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4321
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4323
 msgid "Add review"
 msgstr ""
 
@@ -1201,8 +1201,8 @@ msgstr ""
 msgid "Add rule"
 msgstr "Add rule"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1698
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1704
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1700
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1706
 msgid "Add section"
 msgstr ""
 
@@ -1214,7 +1214,7 @@ msgstr ""
 #~ msgid "Add section to drop"
 #~ msgstr "Add section to drop"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4490
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4492
 msgid "Add social link"
 msgstr ""
 
@@ -1254,7 +1254,7 @@ msgstr "Add transfer case"
 msgid "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 msgstr "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2667
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2669
 msgid "Add URL"
 msgstr ""
 
@@ -1266,7 +1266,7 @@ msgstr "Add your business details to see what the assistant is told."
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:550
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:554
 msgid "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 msgstr "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 
@@ -1308,11 +1308,11 @@ msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr ""
 
 #: app/components/phone-agent/business-details-section.tsx:137
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:577
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:581
 msgid "Address"
 msgstr "Address"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2705
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2707
 msgid "Adds a noindex tag so this page stays off Google and Bing."
 msgstr ""
 
@@ -1427,7 +1427,7 @@ msgstr "AI phone agent"
 msgid "AI phone calls are only available for organizations that keep customer data in the US."
 msgstr "AI phone calls are only available for organizations that keep customer data in the US."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2548
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2550
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
@@ -1565,7 +1565,7 @@ msgid "Already read"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3955
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3957
 msgid "Alt text"
 msgstr ""
 
@@ -1577,6 +1577,7 @@ msgstr "Alt Text"
 msgid "An AI agent that answers your business's calls, answers common questions, and texts callers helpful links."
 msgstr "An AI agent that answers your business's calls, answers common questions, and texts callers helpful links."
 
+#: app/components/app-sidebar.tsx:482
 #: app/routes/organizations+/create.tsx:625
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr ""
@@ -1606,7 +1607,7 @@ msgid "Anonymous diner"
 msgstr "Anonymous diner"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:495
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3661
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3663
 msgid "Answer"
 msgstr ""
 
@@ -1719,7 +1720,7 @@ msgstr "Are you open right now?"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:783
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:787
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
@@ -1748,7 +1749,7 @@ msgstr ""
 msgid "Area Boundary Type"
 msgstr "Area Boundary Type"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3500
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3502
 msgid "Arrangement"
 msgstr ""
 
@@ -1931,7 +1932,7 @@ msgstr ""
 msgid "Automations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4156
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4158
 msgid "Autoplay"
 msgstr ""
 
@@ -1978,8 +1979,8 @@ msgstr "B&W"
 
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:261
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:188
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:269
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:196
 msgid "Back"
 msgstr ""
 
@@ -2065,8 +2066,8 @@ msgstr "Back to steps"
 msgid "Back to submissions"
 msgstr "Back to submissions"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3340
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4817
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3342
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4819
 msgid "Background"
 msgstr ""
 
@@ -2161,7 +2162,7 @@ msgstr "Branch on whether you're open right now."
 
 #: app/components/app-sidebar.tsx:489
 #: app/components/website/branding-panel.tsx:244
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5130
 msgid "Branding"
 msgstr ""
 
@@ -2205,7 +2206,7 @@ msgstr ""
 msgid "Browse the voices your agent can use."
 msgstr "Browse the voices your agent can use."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3463
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3465
 msgid "Browsers only autoplay video when it is muted."
 msgstr ""
 
@@ -2214,7 +2215,7 @@ msgid "Bucket Name"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:539
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5934
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5938
 msgid "Build"
 msgstr ""
 
@@ -2256,7 +2257,7 @@ msgid "Business type settings"
 msgstr "Business type settings"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3595
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3597
 msgid "Button"
 msgstr ""
 
@@ -2266,8 +2267,8 @@ msgstr ""
 msgid "Button label"
 msgstr "Button label"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3303
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4251
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3305
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4253
 msgid "Buttons"
 msgstr ""
 
@@ -2497,10 +2498,10 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:794
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:798
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1768
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
@@ -2548,16 +2549,16 @@ msgid "Cap how many units can be sold in this drop."
 msgstr "Cap how many units can be sold in this drop."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1464
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3965
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3967
 msgid "Caption"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4226
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4228
 msgid "Card position"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:320
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4008
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4010
 msgid "Cards"
 msgstr ""
 
@@ -2624,8 +2625,8 @@ msgid "Catering goes to the manager"
 msgstr "Catering goes to the manager"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3364
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4237
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3366
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4239
 msgid "Center"
 msgstr ""
 
@@ -2686,7 +2687,7 @@ msgstr "Changed {sections}"
 msgid "Changes to this note will show up here as your team works on it."
 msgstr "Changes to this note will show up here as your team works on it."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2451
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2453
 msgid "Changing this URL will break existing links to the page."
 msgstr ""
 
@@ -2894,12 +2895,12 @@ msgstr ""
 msgid "Choose your plan"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3582
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3822
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3584
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3824
 msgid "Circle"
 msgstr ""
 
-#: app/components/locations/address-autocomplete.tsx:231
+#: app/components/locations/address-autocomplete.tsx:253
 msgid "City"
 msgstr "City"
 
@@ -3075,7 +3076,7 @@ msgstr "Collect a valid email address."
 msgid "Column name"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3789
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3791
 msgid "Columns"
 msgstr ""
 
@@ -3237,7 +3238,7 @@ msgstr "Configure how guests interact with these options."
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "Configure weekly opening times for dine-in store hours and online ordering."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:196
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:204
 msgid "Configure your new restaurant location details, operating hours, and delivery settings."
 msgstr "Configure your new restaurant location details, operating hours, and delivery settings."
 
@@ -3359,7 +3360,7 @@ msgstr ""
 msgid "Connected domain"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4087
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4089
 msgid "Connected form"
 msgstr "Connected form"
 
@@ -3409,10 +3410,10 @@ msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:425
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3288
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3478
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3774
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4173
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3776
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4175
 msgid "Content"
 msgstr ""
 
@@ -3494,7 +3495,7 @@ msgstr "Conversation"
 msgid "Cool"
 msgstr "Cool"
 
-#: app/components/locations/address-autocomplete.tsx:283
+#: app/components/locations/address-autocomplete.tsx:305
 msgid "Coordinates (Lat, Lng)"
 msgstr "Coordinates (Lat, Lng)"
 
@@ -3649,7 +3650,7 @@ msgstr "Couldn't send that key press. Try again."
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "Couldn't start your microphone. Check it and try again."
 
-#: app/components/locations/address-autocomplete.tsx:270
+#: app/components/locations/address-autocomplete.tsx:292
 msgid "Country"
 msgstr "Country"
 
@@ -3772,7 +3773,7 @@ msgstr "Create and manage your dishes, beverages, sides, and retail products."
 msgid "Create and manage your menus for dine-in, online ordering, POS, and catering."
 msgstr "Create and manage your menus for dine-in, online ordering, POS, and catering."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4112
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4114
 msgid "Create and publish a form from Website → Forms first."
 msgstr "Create and publish a form from Website → Forms first."
 
@@ -4015,7 +4016,7 @@ msgstr "Creating…"
 msgid "Critical"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:653
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:657
 msgid "Curbside"
 msgstr "Curbside"
 
@@ -4224,7 +4225,7 @@ msgid "Danger"
 msgstr ""
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:777
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3382
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3384
 msgid "Dark"
 msgstr ""
 
@@ -4280,7 +4281,7 @@ msgstr "Dedicated"
 #: app/components/menu/location-overrides-card.tsx:125
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:624
 msgid "Default"
 msgstr ""
 
@@ -4340,7 +4341,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:737
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:741
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
@@ -4388,7 +4389,7 @@ msgstr "Delete call"
 msgid "Delete calls"
 msgstr "Delete calls"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4025
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4027
 msgid "Delete card"
 msgstr ""
 
@@ -4400,7 +4401,7 @@ msgstr "Delete category?"
 msgid "Delete channel"
 msgstr "Delete channel"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4394
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4396
 msgid "Delete column"
 msgstr ""
 
@@ -4429,7 +4430,7 @@ msgstr ""
 msgid "Delete drop?"
 msgstr "Delete drop?"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3715
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3717
 msgid "Delete feature"
 msgstr ""
 
@@ -4437,7 +4438,7 @@ msgstr ""
 msgid "Delete invitation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3883
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3885
 msgid "Delete item"
 msgstr ""
 
@@ -4445,11 +4446,11 @@ msgstr ""
 msgid "Delete item?"
 msgstr "Delete item?"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3219
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3221
 msgid "Delete link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:797
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:801
 msgid "Delete Location"
 msgstr "Delete Location"
 
@@ -4508,7 +4509,7 @@ msgstr "Delete own notes"
 msgid "Delete page?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3646
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3648
 msgid "Delete question"
 msgstr ""
 
@@ -4521,7 +4522,7 @@ msgstr "Delete redirect rule?"
 msgid "Delete restaurant"
 msgstr "Delete restaurant"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:777
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:781
 msgid "Delete restaurant location?"
 msgstr "Delete restaurant location?"
 
@@ -4529,7 +4530,7 @@ msgstr "Delete restaurant location?"
 msgid "Delete restaurant?"
 msgstr "Delete restaurant?"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4322
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4324
 msgid "Delete review"
 msgstr ""
 
@@ -4537,7 +4538,7 @@ msgstr ""
 msgid "Delete rule"
 msgstr "Delete rule"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4491
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4493
 msgid "Delete social link"
 msgstr ""
 
@@ -4570,7 +4571,7 @@ msgstr "Deliveroo"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:307
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:643
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:647
 msgid "Delivery"
 msgstr "Delivery"
 
@@ -4636,8 +4637,8 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3730
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4040
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4042
 #: app/routes/organizations+/create.tsx:1032
 msgid "Description"
 msgstr ""
@@ -4656,7 +4657,7 @@ msgstr "Deselect all"
 msgid "Design email"
 msgstr "Design email"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5690
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5694
 msgid "Desktop"
 msgstr ""
 
@@ -4725,7 +4726,7 @@ msgstr "Dietary, Allergens & Calories"
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:648
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:652
 msgid "Dine-in"
 msgstr "Dine-in"
 
@@ -4807,7 +4808,7 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4119
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4121
 msgid "Display"
 msgstr "Display"
 
@@ -4882,7 +4883,7 @@ msgid "DoorDash store ID"
 msgstr "DoorDash store ID"
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1764
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1766
 msgid "Double-click a block to add it instantly"
 msgstr ""
 
@@ -4919,7 +4920,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5851
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5855
 msgid "Draft"
 msgstr ""
 
@@ -5202,7 +5203,7 @@ msgid "Edit design"
 msgstr "Edit design"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:578
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:708
 msgid "Edit Details"
 msgstr "Edit Details"
 
@@ -5215,7 +5216,7 @@ msgstr "Edit Drop"
 msgid "Edit image"
 msgstr "Edit image"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:266
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:274
 msgid "Edit Location"
 msgstr "Edit Location"
 
@@ -5660,7 +5661,7 @@ msgstr "Extra charge when this topping is added to the whole pizza."
 msgid "Facebook Pixel ID"
 msgstr "Facebook Pixel ID"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3387
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3389
 msgid "Fade up"
 msgstr ""
 
@@ -5811,7 +5812,7 @@ msgstr ""
 msgid "Feature this item prominently in ordering flows."
 msgstr "Feature this item prominently in ordering flows."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3703
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3705
 msgid "Features"
 msgstr ""
 
@@ -5958,7 +5959,7 @@ msgstr ""
 msgid "Forgot your password?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4084
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4086
 msgid "Form"
 msgstr "Form"
 
@@ -6011,7 +6012,7 @@ msgstr "Forwarded from <0>{forwardedFrom}</0>"
 msgid "Forwarding"
 msgstr "Forwarding"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3805
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3807
 msgid "Four"
 msgstr ""
 
@@ -6049,7 +6050,7 @@ msgstr "From here the AI handles the rest of the call: questions, texted links, 
 msgid "From Name (Optional)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:583
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:587
 msgid "Fulfillment"
 msgstr "Fulfillment"
 
@@ -6420,7 +6421,7 @@ msgstr "Hidden from public discovery. Ideal for exclusive drops, secret menus, a
 #~ msgid "Hidden until a guest picks a specific option in another group (e.g. selecting \"French Fries\" reveals \"Fry Size\")."
 #~ msgstr "Hidden until a guest picks a specific option in another group (e.g. selecting \"French Fries\" reveals \"Fry Size\")."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2702
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2704
 msgid "Hide from search engines"
 msgstr ""
 
@@ -6469,8 +6470,8 @@ msgstr "Hold message"
 
 #: app/components/website/link-inspector.tsx:455
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5886
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5908
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Home"
 msgstr ""
 
@@ -6597,7 +6598,7 @@ msgid "Image to crop"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4051
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4053
 msgid "Image URL"
 msgstr ""
 
@@ -6653,7 +6654,7 @@ msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 msgid "In-House Tips"
 msgstr "In-House Tips"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:672
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:676
 msgid "Inactive"
 msgstr "Inactive"
 
@@ -6758,7 +6759,7 @@ msgstr "Inventory limits"
 #~ msgid "Inventory remaining on storefront"
 #~ msgstr "Inventory remaining on storefront"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4833
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4835
 msgid "Inverted"
 msgstr ""
 
@@ -7056,9 +7057,9 @@ msgstr ""
 msgid "Launch Test Run in Builder"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3338
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3498
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3787
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3340
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3500
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3789
 msgid "Layout"
 msgstr ""
 
@@ -7092,7 +7093,7 @@ msgstr "Leave blank for unlimited."
 msgid "Leave empty to keep existing secret key, or enter a new one to update."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2447
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2449
 msgid "Leave empty to keep this page at the root of your site."
 msgstr ""
 
@@ -7114,9 +7115,9 @@ msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "Leave the mailbox and discard your reply drafts?"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:93
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3359
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3555
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4232
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3361
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3557
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4234
 msgid "Left"
 msgstr ""
 
@@ -7178,7 +7179,7 @@ msgstr ""
 msgid "Link (optional)"
 msgstr "Link (optional)"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4379
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4381
 msgid "Link columns"
 msgstr ""
 
@@ -7322,11 +7323,11 @@ msgstr "Loading…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:574
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
 msgid "Location"
 msgstr "Location"
 
-#: app/components/locations/address-autocomplete.tsx:317
+#: app/components/locations/address-autocomplete.tsx:339
 msgid "Location Currency:"
 msgstr "Location Currency:"
 
@@ -7348,7 +7349,7 @@ msgstr "Location Status"
 
 #: app/components/app-sidebar.tsx:525
 #: app/components/team-switcher.tsx:183
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:521
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:525
 msgid "Locations"
 msgstr "Locations"
 
@@ -7374,11 +7375,11 @@ msgstr ""
 msgid "Logo"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3179
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3181
 msgid "Logo & colors"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3516
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3518
 msgid "Logo panel"
 msgstr ""
 
@@ -7395,11 +7396,11 @@ msgstr ""
 msgid "Long text"
 msgstr "Long text"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4191
 msgid "Look"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3854
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3856
 msgid "Loose"
 msgstr ""
 
@@ -7496,7 +7497,7 @@ msgstr ""
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:524
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:528
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 
@@ -7595,7 +7596,7 @@ msgstr "manager@example.com"
 msgid "Manual Trigger"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:726
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:730
 msgid "Mark Active"
 msgstr "Mark Active"
 
@@ -7623,7 +7624,7 @@ msgstr "Mark complete automatically"
 msgid "Mark done"
 msgstr "Mark done"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:724
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:728
 msgid "Mark Inactive"
 msgstr "Mark Inactive"
 
@@ -7735,7 +7736,7 @@ msgstr ""
 #~ msgid "Measurement ID"
 #~ msgstr "Measurement ID"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3406
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3408
 msgid "Media"
 msgstr ""
 
@@ -7753,14 +7754,14 @@ msgstr "Media details saved"
 msgid "Media library"
 msgstr "Media library"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3912
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3914
 msgid "Media URL"
 msgstr ""
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:786
 #: app/components/settings/cards/organization/site-theme-card.tsx:789
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:69
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4942
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4944
 msgid "Medium"
 msgstr ""
 
@@ -7919,7 +7920,7 @@ msgstr "Message taken"
 msgid "Messages"
 msgstr "Messages"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2520
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2522
 msgid "Meta description"
 msgstr ""
 
@@ -7968,7 +7969,7 @@ msgstr "Missed transfers"
 msgid "Missing Path"
 msgstr "Missing Path"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5713
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5717
 msgid "Mobile"
 msgstr ""
 
@@ -8054,7 +8055,7 @@ msgstr "Mute"
 msgid "Mute microphone"
 msgstr "Mute microphone"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4828
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4830
 msgid "Muted"
 msgstr ""
 
@@ -8068,7 +8069,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
 #: app/routes/organizations+/create.tsx:949
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
@@ -8087,7 +8088,7 @@ msgstr ""
 msgid "Navigate to MCP Servers configuration"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3207
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3209
 msgid "Navigation links"
 msgstr ""
 
@@ -8452,7 +8453,7 @@ msgstr "No drops match these filters"
 msgid "No drops scheduled yet"
 msgstr "No drops scheduled yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2840
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2842
 msgid "No editor available for this block type."
 msgstr ""
 
@@ -8516,11 +8517,11 @@ msgstr "No items yet"
 #~ msgid "No limit"
 #~ msgstr "No limit"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:565
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:569
 msgid "No locations found."
 msgstr "No locations found."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:552
 msgid "No locations yet"
 msgstr "No locations yet"
 
@@ -8532,7 +8533,7 @@ msgstr "No matching calls"
 msgid "No matching images"
 msgstr "No matching images"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:559
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
 msgid "No matching locations"
 msgstr "No matching locations"
 
@@ -8785,7 +8786,7 @@ msgstr "No rules yet."
 #~ msgid "No sections added to this drop yet"
 #~ msgstr "No sections added to this drop yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5638
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5642
 msgid "No sections yet"
 msgstr ""
 
@@ -8862,9 +8863,9 @@ msgstr ""
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/website/link-inspector.tsx:615
 #: app/components/website/link-inspector.tsx:634
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3347
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3377
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3839
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3349
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3379
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3841
 msgid "None"
 msgstr ""
 
@@ -9203,7 +9204,7 @@ msgstr ""
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2557
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2559
 msgid "Open Graph image"
 msgstr ""
 
@@ -9262,7 +9263,7 @@ msgstr "Open pages, forms, and themes in the site builder."
 msgid "Open payout dashboard"
 msgstr "Open payout dashboard"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6000
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6004
 msgid "Open preview"
 msgstr ""
 
@@ -9549,6 +9550,7 @@ msgstr ""
 #: app/components/app-sidebar.tsx:142
 #: app/components/app-sidebar.tsx:144
 #: app/components/app-sidebar.tsx:146
+#: app/components/app-sidebar.tsx:147
 #: app/components/nav-user.tsx:189
 #: app/components/team-switcher.tsx:155
 #: app/routes/_app+/organizations.tsx:192
@@ -9620,7 +9622,7 @@ msgstr "Page address"
 #~ msgid "Page settings"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2402
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2404
 msgid "Page Settings"
 msgstr ""
 
@@ -9629,7 +9631,7 @@ msgid "Page Title"
 msgstr ""
 
 #: app/components/website/create-page-dialog.tsx:171
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2413
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2415
 msgid "Page URL"
 msgstr ""
 
@@ -9809,7 +9811,7 @@ msgstr ""
 #: app/components/website/link-inspector.tsx:489
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:300
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:371
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:580
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:584
 msgid "Phone"
 msgstr ""
 
@@ -9827,6 +9829,7 @@ msgid "Phone links only work on devices that can place phone calls."
 msgstr ""
 
 #: app/components/app-sidebar.tsx:421
+#: app/components/app-sidebar.tsx:374
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
@@ -9867,34 +9870,34 @@ msgstr ""
 msgid "Phone Verified (OTP Success)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3348
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3528
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3930
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3350
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3530
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3932
 msgid "Photo"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4195
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4197
 msgid "Photo + card"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3511
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3513
 msgid "Photo + text"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3371
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3373
 msgid "Photo overlay"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3571
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3811
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3573
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3813
 msgid "Photo shape"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3549
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3551
 msgid "Photo side"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3865
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3867
 msgid "Photos and videos"
 msgstr ""
 
@@ -9912,7 +9915,7 @@ msgstr "Physical Address"
 msgid "Pick a block to add to your email."
 msgstr "Pick a block to add to your email."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1707
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1709
 msgid "Pick a block to insert into your page."
 msgstr ""
 
@@ -9937,7 +9940,7 @@ msgid "Pick a template, then customize every field in the builder."
 msgstr "Pick a template, then customize every field in the builder."
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:308
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:638
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:642
 msgid "Pickup"
 msgstr "Pickup"
 
@@ -9994,7 +9997,7 @@ msgstr "Pizza Topping"
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4823
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4825
 msgid "Plain"
 msgstr ""
 
@@ -10010,7 +10013,7 @@ msgstr ""
 msgid "Plan not available"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4496
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4498
 msgid "Platform"
 msgstr ""
 
@@ -10237,7 +10240,7 @@ msgstr ""
 msgid "Post reply"
 msgstr "Post reply"
 
-#: app/components/locations/address-autocomplete.tsx:257
+#: app/components/locations/address-autocomplete.tsx:279
 msgid "Postal / ZIP Code"
 msgstr "Postal / ZIP Code"
 
@@ -10302,7 +10305,7 @@ msgid "Pressed {key}"
 msgstr "Pressed {key}"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5953
 msgid "Preview"
 msgstr ""
 
@@ -10365,8 +10368,8 @@ msgstr ""
 msgid "Primary / Default Location"
 msgstr "Primary / Default Location"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3306
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4254
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3308
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4256
 msgid "Primary button"
 msgstr ""
 
@@ -10463,7 +10466,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5963
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Publish"
 msgstr ""
 
@@ -10488,7 +10491,7 @@ msgid "Publish and activate automation"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5970
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5974
 msgid "Publish updates"
 msgstr ""
 
@@ -10502,7 +10505,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:410
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5853
 msgid "Published"
 msgstr ""
 
@@ -10568,11 +10571,11 @@ msgstr "Quantity Counter (+/-)"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:464
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:465
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3651
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3653
 msgid "Question"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3634
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3636
 msgid "Questions"
 msgstr ""
 
@@ -10584,7 +10587,7 @@ msgstr ""
 msgid "Quick edit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4327
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4329
 msgid "Quote"
 msgstr ""
 
@@ -10608,7 +10611,7 @@ msgstr "Rated"
 msgid "Rated {rating} out of 5"
 msgstr "Rated {rating} out of 5"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4347
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4349
 msgid "Rating"
 msgstr ""
 
@@ -10777,7 +10780,7 @@ msgstr "Refresh calls"
 msgid "Refresh Checkout setup"
 msgstr "Refresh Checkout setup"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5991
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5995
 msgid "Refresh preview"
 msgstr ""
 
@@ -10813,7 +10816,7 @@ msgstr ""
 msgid "Registered {timeAgo} ago"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3849
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3851
 msgid "Regular"
 msgstr ""
 
@@ -10853,7 +10856,7 @@ msgstr ""
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
 #: app/components/website/branding-panel.tsx:314
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2634
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2636
 msgid "Remove"
 msgstr ""
 
@@ -10918,7 +10921,7 @@ msgstr ""
 msgid "Remove invite"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4443
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4445
 msgid "Remove link"
 msgstr ""
 
@@ -11007,7 +11010,7 @@ msgstr "Repeat each item before sending the link."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:665
 #: app/components/settings/cards/organization/site-theme-card.tsx:328
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2608
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2610
 msgid "Replace"
 msgstr ""
 
@@ -11288,7 +11291,7 @@ msgid "reviews"
 msgstr "reviews"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:48
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4309
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4311
 msgid "Reviews"
 msgstr ""
 
@@ -11326,8 +11329,8 @@ msgid "Revoking..."
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:95
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3560
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4242
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3562
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4244
 msgid "Right"
 msgstr ""
 
@@ -11369,8 +11372,8 @@ msgstr "Rotate left"
 msgid "Rotate right"
 msgstr "Rotate right"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3577
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3817
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3579
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3819
 msgid "Rounded"
 msgstr ""
 
@@ -11768,7 +11771,7 @@ msgstr "Scheduled Reminders"
 msgid "Search"
 msgstr ""
 
-#: app/components/locations/address-autocomplete.tsx:129
+#: app/components/locations/address-autocomplete.tsx:151
 msgid "Search Address (Google Autocomplete)"
 msgstr "Search Address (Google Autocomplete)"
 
@@ -11832,7 +11835,7 @@ msgstr ""
 msgid "Search notes by title or content..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:577
+#: app/components/app-sidebar.tsx:668
 #: app/components/command-menu.tsx:102
 #~ msgid "Search notes..."
 #~ msgstr ""
@@ -11851,7 +11854,7 @@ msgstr "Search people"
 #~ msgid "Search people to add"
 #~ msgstr "Search people to add"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2461
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2463
 msgid "Search preview"
 msgstr ""
 
@@ -11893,8 +11896,8 @@ msgstr ""
 msgid "Secondary"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3322
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4267
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3324
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4269
 msgid "Secondary button"
 msgstr ""
 
@@ -11906,7 +11909,7 @@ msgstr ""
 msgid "Section cap"
 msgstr "Section cap"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3394
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3396
 msgid "Section height"
 msgstr ""
 
@@ -11922,8 +11925,8 @@ msgstr ""
 #~ msgid "Section Type"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5122
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5621
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5124
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5625
 msgid "Sections"
 msgstr ""
 
@@ -11985,7 +11988,7 @@ msgstr "Select a category to display this item."
 #~ msgid "Select a channel to start."
 #~ msgstr "Select a channel to start."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4102
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4104
 msgid "Select a form"
 msgstr "Select a form"
 
@@ -12077,7 +12080,7 @@ msgstr ""
 msgid "Select default language"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2659
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2661
 msgid "Select image"
 msgstr ""
 
@@ -12143,7 +12146,7 @@ msgstr ""
 msgid "Selected"
 msgstr ""
 
-#: app/components/locations/address-autocomplete.tsx:185
+#: app/components/locations/address-autocomplete.tsx:207
 msgid "Selected Address"
 msgstr "Selected Address"
 
@@ -12252,7 +12255,7 @@ msgstr ""
 msgid "Sent to {formatted}"
 msgstr "Sent to {formatted}"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2480
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2482
 msgid "SEO title"
 msgstr ""
 
@@ -12285,7 +12288,7 @@ msgstr ""
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "Set a pooled inventory limit for all items in this section."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:712
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:716
 msgid "Set as Default"
 msgstr "Set as Default"
 
@@ -12350,7 +12353,7 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5134
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr ""
 
@@ -12409,7 +12412,7 @@ msgstr "Share this link to let people join your organization. They'll see you in
 msgid "Share with others"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3182
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3184
 msgid "Shared across every page"
 msgstr ""
 
@@ -12425,7 +12428,7 @@ msgstr ""
 msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4941
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4943
 msgid "Short"
 msgstr ""
 
@@ -12441,7 +12444,7 @@ msgstr "Show calorie counts and allergen warnings on this menu."
 #~ msgid "Show Countdown Timer"
 #~ msgstr "Show Countdown Timer"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4122
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4124
 msgid "Show form title"
 msgstr "Show form title"
 
@@ -12493,7 +12496,7 @@ msgstr "Showing {filteredOptionsCount} of {totalCount} options"
 #~ msgid "Showing total visitors for the last 6 months"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2510
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2512
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
 msgstr ""
 
@@ -12631,7 +12634,7 @@ msgstr ""
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4478
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4480
 msgid "Social links"
 msgstr ""
 
@@ -12639,7 +12642,7 @@ msgstr ""
 msgid "Solid"
 msgstr "Solid"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4200
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4202
 msgid "Solid banner"
 msgstr ""
 
@@ -12672,7 +12675,7 @@ msgstr "Something went wrong. Reload the page and try again."
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3833
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3835
 msgid "Spacing"
 msgstr ""
 
@@ -12702,8 +12705,8 @@ msgstr "Spell out how the agent should say words it gets wrong, like product nam
 msgid "Split path based on rules (True / False)"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3587
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3827
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3589
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3829
 msgid "Square"
 msgstr ""
 
@@ -12813,7 +12816,7 @@ msgstr ""
 #~ msgid "Start Time"
 #~ msgstr "Start Time"
 
-#: app/components/locations/address-autocomplete.tsx:139
+#: app/components/locations/address-autocomplete.tsx:161
 msgid "Start typing an address, city, or zip code..."
 msgstr "Start typing an address, city, or zip code..."
 
@@ -12841,7 +12844,7 @@ msgstr "Starting point"
 msgid "Starting…"
 msgstr "Starting…"
 
-#: app/components/locations/address-autocomplete.tsx:244
+#: app/components/locations/address-autocomplete.tsx:266
 msgid "State / Province"
 msgstr "State / Province"
 
@@ -12856,7 +12859,7 @@ msgstr "State / Province"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:586
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -12926,7 +12929,7 @@ msgstr "Store Pickup"
 msgid "Storefront & Checkout"
 msgstr "Storefront & Checkout"
 
-#: app/components/locations/address-autocomplete.tsx:201
+#: app/components/locations/address-autocomplete.tsx:223
 msgid "Street Address"
 msgstr "Street Address"
 
@@ -12938,12 +12941,12 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3626
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3695
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4000
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4148
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4187
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4301
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3628
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3697
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4002
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4150
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4303
 msgid "Style"
 msgstr ""
 
@@ -13056,7 +13059,7 @@ msgstr "Suggest other categories as add-ons when guests browse this section (e.g
 #~ msgid "Suggested questions"
 #~ msgstr ""
 
-#: app/components/locations/address-autocomplete.tsx:219
+#: app/components/locations/address-autocomplete.tsx:241
 msgid "Suite / Unit / Floor (Optional)"
 msgstr "Suite / Unit / Floor (Optional)"
 
@@ -13166,7 +13169,7 @@ msgstr "Take me to settings"
 msgid "Talks to customers"
 msgstr "Talks to customers"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4943
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4945
 msgid "Tall"
 msgstr ""
 
@@ -13343,11 +13346,11 @@ msgstr "Text field"
 msgid "Text message"
 msgstr "Text message"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3506
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3508
 msgid "Text only"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3353
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3355
 msgid "Text position"
 msgstr ""
 
@@ -13468,6 +13471,9 @@ msgstr ""
 msgid "The assistant that answers restaurant calls."
 msgstr "The assistant that answers restaurant calls."
 
+#~ msgid "The assistant that answers your business calls."
+#~ msgstr "The assistant that answers your business calls."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:850
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
 msgstr ""
@@ -13490,7 +13496,7 @@ msgstr ""
 msgid "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
 msgstr "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4372
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4374
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr ""
 
@@ -13498,7 +13504,7 @@ msgstr ""
 msgid "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 msgstr "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3192
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3194
 msgid "The header is shared across every page."
 msgstr ""
 
@@ -13776,7 +13782,7 @@ msgstr ""
 msgid "Thread"
 msgstr "Thread"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3800
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3802
 msgid "Three"
 msgstr ""
 
@@ -13788,7 +13794,7 @@ msgstr "Threshold Unit"
 msgid "Thursday"
 msgstr "Thursday"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3844
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3846
 msgid "Tight"
 msgstr ""
 
@@ -13825,9 +13831,9 @@ msgid "Tips & Order Scheduling"
 msgstr "Tips & Order Scheduling"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:501
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3720
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4030
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4399
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
 msgid "Title"
 msgstr ""
 
@@ -13996,7 +14002,7 @@ msgstr "Transfers unavailable"
 msgid "Transform"
 msgstr "Transform"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2203
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2205
 msgid "Translate"
 msgstr ""
 
@@ -14138,7 +14144,7 @@ msgstr "Try adjusting your filters or clear them to see all modifier groups."
 msgid "Try adjusting your filters or clear them to see all options."
 msgstr "Try adjusting your filters or clear them to see all options."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:563
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:567
 msgid "Try adjusting your filters or clear them to see all restaurant locations."
 msgstr "Try adjusting your filters or clear them to see all restaurant locations."
 
@@ -14191,7 +14197,7 @@ msgstr "Turned off training rule \"{title}\""
 msgid "Turned on training rule \"{title}\""
 msgstr "Turned on training rule \"{title}\""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3795
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3797
 msgid "Two"
 msgstr ""
 
@@ -14206,7 +14212,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:303
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:347
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3926
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3928
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
 msgid "Type"
 msgstr ""
@@ -14378,7 +14384,7 @@ msgstr ""
 #: app/components/menu/drop-wizard/drop-form.tsx:480
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6020
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6024
 msgid "Unpublish"
 msgstr ""
 
@@ -14440,7 +14446,7 @@ msgid "Up to 5 addresses."
 msgstr "Up to 5 addresses."
 
 #: app/components/settings/cards/organization/team-size-card.tsx:108
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5971
 msgid "Update"
 msgstr ""
 
@@ -14448,7 +14454,7 @@ msgstr ""
 msgid "Update date, hours, and capacity."
 msgstr "Update date, hours, and capacity."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:269
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:277
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "Update location details, hours, and fulfillment preferences."
 
@@ -14535,7 +14541,7 @@ msgstr "Upload failed."
 msgid "Upload failed. Please try again."
 msgstr "Upload failed. Please try again."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5090
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5092
 msgid "Upload file"
 msgstr ""
 
@@ -14575,7 +14581,7 @@ msgstr "Upsells & add-ons"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2616
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2618
 msgid "URL"
 msgstr ""
 
@@ -14636,7 +14642,7 @@ msgstr "Use a US or Canada phone number."
 msgid "Use an existing menu, then set optional inventory limits."
 msgstr "Use an existing menu, then set optional inventory limits."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2560
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2562
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
 msgstr ""
 
@@ -14811,8 +14817,8 @@ msgstr "Verify your business line"
 msgid "Verifying your passkey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3349
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3931
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3351
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3933
 msgid "Video"
 msgstr ""
 
@@ -14862,7 +14868,7 @@ msgstr "View calls"
 msgid "View drop"
 msgstr "View drop"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6009
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6013
 msgid "View live site"
 msgstr ""
 
@@ -15667,7 +15673,7 @@ msgstr ""
 #~ msgid "Your organizations"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5746
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5750
 msgid "Your page will appear here"
 msgstr ""
 

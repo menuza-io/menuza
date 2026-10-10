@@ -14,6 +14,7 @@ import {
 	gt,
 } from '@repo/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import { PageHeader } from '@repo/ui/page-header'
 import { Link } from 'react-router'
 import { type Route } from './+types/index.ts'
 
@@ -120,15 +121,13 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
 	const recent = metrics.recentOrganizations
 
 	return (
-		<div className="space-y-6">
-			<div className="mb-8">
-				<h1 className="text-foreground text-3xl font-bold">
-					<Trans>Admin Dashboard</Trans>
-				</h1>
-				<p className="text-muted-foreground mt-2">
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Admin Dashboard</Trans>}
+				description={
 					<Trans>Manage users, organizations, and system settings</Trans>
-				</p>
-			</div>
+				}
+			/>
 
 			{/* Key Metrics Section */}
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
