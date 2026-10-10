@@ -6,7 +6,7 @@ import {
 	type FilterField,
 	type FilterQuery,
 } from '@repo/ui/filters'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 
 /**
@@ -27,38 +27,50 @@ export function UrlFilters({
 	const idCounter = useRef(0)
 
 	// Only the params this bar owns matter for syncing.
-	const urlKey = fields
-		.map((field) => `${field.id}=${searchParams.get(field.id) ?? ''}`)
-		.join('&')
+	const keyFor = (params: URLSearchParams) =>
+		fields.map((field) => `${field.id}=${params.get(field.id) ?? ''}`).join('&')
+	const urlKey = keyFor(searchParams)
 
-	function queryFromUrl() {
-		return createFilterQuery(
-			fields.flatMap((field) => {
-				const value = searchParams.get(field.id)
-				return value
-					? [
-							createFilterRule({
-								id: `url-${idCounter.current++}`,
-								path: [field.id],
-								operator: field.defaultOperator ?? 'is',
-								value,
-							}),
-						]
-					: []
-			}),
-		)
-	}
+	const queryFromUrl = useCallback(
+		() =>
+			createFilterQuery(
+				fields.flatMap((field) => {
+					const value = searchParams.get(field.id)
+					return value
+						? [
+								createFilterRule({
+									id: `url-${idCounter.current++}`,
+									path: [field.id],
+									operator: field.defaultOperator ?? 'is',
+									value,
+								}),
+							]
+						: []
+				}),
+			),
+		[fields, searchParams],
+	)
 
 	const [query, setQuery] = useState<FilterQuery>(queryFromUrl)
-	const [syncedKey, setSyncedKey] = useState(urlKey)
 
-	// Back/forward or any external param change: re-derive the chips from the
-	// URL. Edits made here update `syncedKey` first, so in-progress rules (no
-	// value yet) are not discarded.
-	if (syncedKey !== urlKey) {
-		setSyncedKey(urlKey)
+	// The URL key this bar last wrote and is still waiting to see arrive. The
+	// router applies `setSearchParams` asynchronously, so until it lands the
+	// params are stale and must not be mistaken for an external change.
+	const pendingKey = useRef<string | null>(null)
+	const seenKey = useRef(urlKey)
+
+	useEffect(() => {
+		if (urlKey === seenKey.current) return
+		seenKey.current = urlKey
+		if (pendingKey.current === urlKey) {
+			// Our own write landed: keep local state, including value-less drafts.
+			pendingKey.current = null
+			return
+		}
+		// Back/forward or any other external change: re-derive from the URL.
+		pendingKey.current = null
 		setQuery(queryFromUrl())
-	}
+	}, [urlKey, queryFromUrl])
 
 	function handleQueryChange(next: FilterQuery) {
 		setQuery(next)
@@ -71,11 +83,9 @@ export function UrlFilters({
 			if (key && value) params.set(key, value)
 		}
 		params.set('page', '1')
-		setSyncedKey(
-			fields
-				.map((field) => `${field.id}=${params.get(field.id) ?? ''}`)
-				.join('&'),
-		)
+		const nextKey = keyFor(params)
+		// A draft edit that doesn't change the URL never produces a URL change.
+		pendingKey.current = nextKey === urlKey ? null : nextKey
 		setSearchParams(params, { preventScrollReset: true })
 	}
 
