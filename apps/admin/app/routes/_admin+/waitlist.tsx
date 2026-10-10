@@ -20,7 +20,7 @@ import {
 } from '@repo/database/types'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import { Card, CardContent } from '@repo/ui/card'
 import {
 	Dialog,
 	DialogClose,
@@ -31,25 +31,27 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@repo/ui/dialog'
+import { type FilterField } from '@repo/ui/filters'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
 import { Img } from 'openimg/react'
-import { useCallback, useEffect, useState } from 'react'
-import {
-	useLoaderData,
-	Form,
-	useNavigation,
-	useSearchParams,
-} from 'react-router'
+import { useMemo } from 'react'
+import { useLoaderData, Form, useNavigation } from 'react-router'
+import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
+import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import {
 	addWaitlistPoints,
@@ -233,59 +235,62 @@ export default function AdminWaitlistPage() {
 	const { _ } = useLingui()
 	const data = useLoaderData() as LoaderData
 	const navigation = useNavigation()
-	const [searchParams, setSearchParams] = useSearchParams()
-	const [searchValue, setSearchValue] = useState(data.filters.search)
 
 	const isProcessing = navigation.state === 'submitting'
 
-	const handleFilterChange = useCallback(
-		(key: string, value: string) => {
-			const newParams = new URLSearchParams(searchParams)
-			if (value) {
-				newParams.set(key, value)
-			} else {
-				newParams.delete(key)
-			}
-			newParams.set('page', '1') // Reset to first page when filtering
-			setSearchParams(newParams)
-		},
-		[searchParams, setSearchParams],
+	const filterFields = useMemo<FilterField[]>(
+		() => [
+			{
+				id: 'search',
+				label: _(t`Search`),
+				type: 'text',
+				defaultOperator: 'contains',
+				operators: [{ value: 'contains', label: _(t`contains`) }],
+				placeholder: _(t`Name, email, or username`),
+				icon: <Icon name="search" className="size-3.5" />,
+			},
+			{
+				id: 'status',
+				label: _(t`Access`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(t`is`) }],
+				searchable: false,
+				icon: <Icon name="circle-check" className="size-3.5" />,
+				options: [
+					{ value: 'pending', label: _(t`Pending Access`) },
+					{ value: 'granted', label: _(t`Access Granted`) },
+				],
+			},
+			{
+				id: 'sortBy',
+				label: _(t`Sort by`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(t`is`) }],
+				searchable: false,
+				icon: <Icon name="height" className="size-3.5" />,
+				options: [
+					{ value: 'rank', label: _(t`Rank`) },
+					{ value: 'points', label: _(t`Points`) },
+					{ value: 'date', label: _(t`Date`) },
+				],
+			},
+		],
+		[_],
 	)
-
-	// Debounce search input
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			if (searchValue !== data.filters.search) {
-				handleFilterChange('search', searchValue)
-			}
-		}, 300)
-		return () => clearTimeout(timer)
-	}, [searchValue, data.filters.search, handleFilterChange])
-
-	const handlePageChange = (newPage: number) => {
-		const newParams = new URLSearchParams(searchParams)
-		newParams.set('page', String(newPage))
-		setSearchParams(newParams)
-	}
 
 	const launchStatus = data.launchStatus
 	const totalCount = data.pagination.totalCount
-	const startEntry = (data.pagination.page - 1) * data.pagination.pageSize + 1
-	const endEntry = Math.min(
-		data.pagination.page * data.pagination.pageSize,
-		data.pagination.totalCount,
-	)
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>Waitlist Management</Trans>
-				</h1>
-				<p className="text-muted-foreground">
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Waitlist Management</Trans>}
+				description={
 					<Trans>Manage waitlist users and grant early access</Trans>
-				</p>
-			</div>
+				}
+			/>
 
 			{launchStatus !== 'CLOSED_BETA' && (
 				<Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10">
@@ -307,97 +312,51 @@ export default function AdminWaitlistPage() {
 				</Card>
 			)}
 
-			<Card>
-				<CardHeader>
-					<CardTitle>
-						<Trans>Filters</Trans>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="flex flex-wrap gap-4">
-						<div className="min-w-[200px] flex-1">
-							<Input
-								type="search"
-								placeholder={_(t`Search by name, email, or username...`)}
-								value={searchValue}
-								onChange={(e) => setSearchValue(e.target.value)}
-							/>
-						</div>
+			<div className="space-y-4">
+				<UrlFilters fields={filterFields} />
 
-						<select
-							className="rounded-md border px-3 py-2"
-							value={data.filters.status}
-							onChange={(e) => handleFilterChange('status', e.target.value)}
-						>
-							<option value="all">{_(t`All Users`)}</option>
-							<option value="pending">{_(t`Pending Access`)}</option>
-							<option value="granted">{_(t`Access Granted`)}</option>
-						</select>
-
-						<select
-							className="rounded-md border px-3 py-2"
-							value={data.filters.sortBy}
-							onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-						>
-							<option value="rank">{_(t`Sort by Rank`)}</option>
-							<option value="points">{_(t`Sort by Points`)}</option>
-							<option value="date">{_(t`Sort by Date`)}</option>
-						</select>
-					</div>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>
-						<Trans>Waitlist Entries ({totalCount})</Trans>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>
-									<Trans>Rank</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>User</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Email</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Points</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Referrals</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Discord</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Joined</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Status</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Actions</Trans>
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{data.entries.length === 0 ? (
+				{data.entries.length === 0 ? (
+					<EmptyState
+						title={_(t`No waitlist entries found`)}
+						description={_(t`Try different filters or clear them.`)}
+						icons={['users']}
+					/>
+				) : (
+					<Frame className="w-full">
+						<Table variant="card">
+							<TableHeader>
 								<TableRow>
-									<TableCell
-										colSpan={9}
-										className="text-muted-foreground text-center"
-									>
-										<Trans>No waitlist entries found</Trans>
-									</TableCell>
+									<TableHead>
+										<Trans>Rank</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>User</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Email</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Points</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Referrals</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Discord</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Joined</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Status</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Actions</Trans>
+									</TableHead>
 								</TableRow>
-							) : (
-								data.entries.map((entry) => (
+							</TableHeader>
+							<TableBody>
+								{data.entries.map((entry) => (
 									<TableRow key={entry.id}>
 										<TableCell className="font-medium">#{entry.rank}</TableCell>
 										<TableCell>
@@ -557,79 +516,25 @@ export default function AdminWaitlistPage() {
 											</div>
 										</TableCell>
 									</TableRow>
-								))
-							)}
-						</TableBody>
-					</Table>
+								))}
+							</TableBody>
+							<TableFooter>
+								<TableRow>
+									<TableCell colSpan={9}>
+										{totalCount === 1 ? (
+											<Trans>1 entry</Trans>
+										) : (
+											<Trans>{totalCount} entries</Trans>
+										)}
+									</TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</Frame>
+				)}
 
-					{/* Pagination */}
-					{data.pagination.totalPages > 1 && (
-						<div className="mt-4 flex items-center justify-between">
-							<div className="text-muted-foreground text-sm">
-								<Trans>
-									Showing {startEntry} to {endEntry} of {totalCount} entries
-								</Trans>
-							</div>
-							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={data.pagination.page === 1}
-									onClick={() => handlePageChange(data.pagination.page - 1)}
-								>
-									<Trans>Previous</Trans>
-								</Button>
-								<div className="flex items-center gap-1">
-									{Array.from(
-										{ length: data.pagination.totalPages },
-										(_, i) => i + 1,
-									)
-										.filter((page) => {
-											const currentPage = data.pagination.page
-											return (
-												page === 1 ||
-												page === data.pagination.totalPages ||
-												(page >= currentPage - 1 && page <= currentPage + 1)
-											)
-										})
-										.map((page, index, array) => {
-											const prevPage = array[index - 1]
-											if (index > 0 && prevPage && page - prevPage > 1) {
-												return (
-													<span key={`ellipsis-${page}`} className="px-2">
-														...
-													</span>
-												)
-											}
-											return (
-												<Button
-													key={page}
-													variant={
-														page === data.pagination.page
-															? 'default'
-															: 'outline'
-													}
-													size="sm"
-													onClick={() => handlePageChange(page)}
-												>
-													{page}
-												</Button>
-											)
-										})}
-								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={data.pagination.page === data.pagination.totalPages}
-									onClick={() => handlePageChange(data.pagination.page + 1)}
-								>
-									<Trans>Next</Trans>
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+				<TablePagination pagination={data.pagination} />
+			</div>
 		</div>
 	)
 }

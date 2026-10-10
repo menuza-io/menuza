@@ -4,31 +4,25 @@ import { auditService } from '@repo/audit'
 import { requireUserWithRole } from '@repo/auth'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+import { Card, CardHeader, CardContent, CardTitle } from '@repo/ui/card'
+import { type FilterField } from '@repo/ui/filters'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
-	Item,
-	ItemContent,
-	ItemDescription,
-	ItemGroup,
-	ItemHeader,
-	ItemTitle,
-} from '@repo/ui/item'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@repo/ui/select'
-import { useState } from 'react'
-import { useLoaderData, useSearchParams } from 'react-router'
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@repo/ui/table'
+import { useMemo, useState } from 'react'
+import { useLoaderData } from 'react-router'
+import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
+import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
+import { EmptyState } from '#app/components/empty-state.tsx'
 
 export async function loader({ request }: { request: Request }) {
 	await requireUserWithRole(request, 'admin')
@@ -97,7 +91,6 @@ export default function EnhancedAuditLogsPage() {
 	const { _ } = useLingui()
 	const { logs, total, page, totalPages, statistics, filters } =
 		useLoaderData<typeof loader>()
-	const [searchParams, setSearchParams] = useSearchParams()
 	const [isExporting, setIsExporting] = useState(false)
 
 	const handleExport = async (format: 'csv' | 'json') => {
@@ -118,20 +111,53 @@ export default function EnhancedAuditLogsPage() {
 		}
 	}
 
-	const updateFilter = (key: string, value: string) => {
-		const newParams = new URLSearchParams(searchParams)
-		if (value) {
-			newParams.set(key, value)
-		} else {
-			newParams.delete(key)
-		}
-		newParams.delete('page') // Reset to first page when filtering
-		setSearchParams(newParams)
-	}
-
-	const clearFilters = () => {
-		setSearchParams(new URLSearchParams())
-	}
+	const filterFields = useMemo<FilterField[]>(
+		() => [
+			{
+				id: 'search',
+				label: _(msg`Search`),
+				type: 'text',
+				defaultOperator: 'contains',
+				operators: [{ value: 'contains', label: _(msg`contains`) }],
+				placeholder: _(msg`Details or action`),
+				icon: <Icon name="search" className="size-3.5" />,
+			},
+			{
+				id: 'startDate',
+				label: _(msg`Start date`),
+				type: 'text',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`from`) }],
+				placeholder: 'YYYY-MM-DD',
+				icon: <Icon name="calendar" className="size-3.5" />,
+			},
+			{
+				id: 'endDate',
+				label: _(msg`End date`),
+				type: 'text',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`until`) }],
+				placeholder: 'YYYY-MM-DD',
+				icon: <Icon name="calendar" className="size-3.5" />,
+			},
+			{
+				id: 'severity',
+				label: _(msg`Severity`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				searchable: false,
+				icon: <Icon name="alert-triangle" className="size-3.5" />,
+				options: [
+					{ value: 'info', label: _(msg`Info`) },
+					{ value: 'warning', label: _(msg`Warning`) },
+					{ value: 'error', label: _(msg`Error`) },
+					{ value: 'critical', label: _(msg`Critical`) },
+				],
+			},
+		],
+		[_],
+	)
 
 	const getSeverityBadgeVariant = (severity: string) => {
 		switch (severity) {
@@ -151,38 +177,35 @@ export default function EnhancedAuditLogsPage() {
 	const totalEvents = total.toLocaleString()
 
 	return (
-		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold">
-						<Trans>Audit Logs</Trans>
-					</h1>
-					<p className="text-muted-foreground">
-						<Trans>
-							Comprehensive activity tracking and compliance audit trail
-						</Trans>
-					</p>
-				</div>
-				<div className="flex gap-2">
-					<Button
-						variant="outline"
-						onClick={() => handleExport('csv')}
-						disabled={isExporting}
-					>
-						<Icon name="download" className="mr-2 h-4 w-4" />
-						<Trans>Export CSV</Trans>
-					</Button>
-					<Button
-						variant="outline"
-						onClick={() => handleExport('json')}
-						disabled={isExporting}
-					>
-						<Icon name="download" className="mr-2 h-4 w-4" />
-						<Trans>Export JSON</Trans>
-					</Button>
-				</div>
-			</div>
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Audit Logs</Trans>}
+				description={
+					<Trans>
+						Comprehensive activity tracking and compliance audit trail
+					</Trans>
+				}
+				actions={
+					<>
+						<Button
+							variant="outline"
+							onClick={() => handleExport('csv')}
+							disabled={isExporting}
+						>
+							<Icon name="download" className="size-4" />
+							<Trans>Export CSV</Trans>
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => handleExport('json')}
+							disabled={isExporting}
+						>
+							<Icon name="download" className="size-4" />
+							<Trans>Export JSON</Trans>
+						</Button>
+					</>
+				}
+			/>
 
 			{/* Statistics Cards */}
 			<div className="grid gap-4 md:grid-cols-3">
@@ -238,218 +261,100 @@ export default function EnhancedAuditLogsPage() {
 				</Card>
 			</div>
 
-			{/* Filters */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Icon name="search" className="h-5 w-5" />
-						<Trans>Filters</Trans>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Search</Trans>
-							</label>
-							<Input
-								type="text"
-								placeholder={_(msg`Search details or action...`)}
-								defaultValue={filters.search || ''}
-								onChange={(e) => updateFilter('search', e.target.value)}
-							/>
-						</div>
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Start Date</Trans>
-							</label>
-							<Input
-								type="date"
-								defaultValue={filters.startDate || ''}
-								onChange={(e) => updateFilter('startDate', e.target.value)}
-							/>
-						</div>
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>End Date</Trans>
-							</label>
-							<Input
-								type="date"
-								defaultValue={filters.endDate || ''}
-								onChange={(e) => updateFilter('endDate', e.target.value)}
-							/>
-						</div>
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Severity</Trans>
-							</label>
-							<Select
-								value={filters.severity || 'all'}
-								onValueChange={(value) =>
-									updateFilter(
-										'severity',
-										value === 'all' ? '' : (value as string),
-									)
-								}
-							>
-								<SelectTrigger>
-									<Trans>All severities</Trans>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">
-										<Trans>All</Trans>
-									</SelectItem>
-									<SelectItem value="info">
-										<Trans>Info</Trans>
-									</SelectItem>
-									<SelectItem value="warning">
-										<Trans>Warning</Trans>
-									</SelectItem>
-									<SelectItem value="error">
-										<Trans>Error</Trans>
-									</SelectItem>
-									<SelectItem value="critical">
-										<Trans>Critical</Trans>
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-					<div className="mt-4 flex gap-2">
-						<Button variant="outline" size="sm" onClick={clearFilters}>
-							<Icon name="x" className="mr-2 h-4 w-4" />
-							<Trans>Clear Filters</Trans>
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
+			<div className="space-y-4">
+				<UrlFilters fields={filterFields} />
 
-			{/* Audit Log List */}
-			<Card>
-				<CardHeader>
-					<CardTitle>
-						<Trans>Audit Trail</Trans>
-					</CardTitle>
-					<CardDescription>
-						<Trans>
-							Showing {showing} of {totalEvents} events
-						</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					{logs.length > 0 ? (
-						<ItemGroup>
-							{logs.map((log) => {
-								const metadata = log.parsedMetadata
-								return (
-									<Item key={log.id} variant="outline">
-										<ItemContent>
-											<ItemHeader>
-												<div className="flex items-center gap-2">
-													<Badge
-														variant={getSeverityBadgeVariant(
-															String(metadata.severity || 'info'),
-														)}
-													>
-														{String(metadata.severity || 'info')}
-													</Badge>
-													<span className="text-muted-foreground font-mono text-sm">
-														{log.action}
-													</span>
+				{logs.length > 0 ? (
+					<Frame className="w-full">
+						<Table variant="card">
+							<TableHeader>
+								<TableRow>
+									<TableHead>
+										<Trans>Severity</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Event</Trans>
+									</TableHead>
+									<TableHead className="hidden md:table-cell">
+										<Trans>User</Trans>
+									</TableHead>
+									<TableHead className="hidden lg:table-cell">
+										<Trans>Resource</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Time</Trans>
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{logs.map((log) => {
+									const metadata = log.parsedMetadata
+									return (
+										<TableRow key={log.id}>
+											<TableCell>
+												<Badge
+													variant={getSeverityBadgeVariant(
+														String(metadata.severity || 'info'),
+													)}
+												>
+													{String(metadata.severity || 'info')}
+												</Badge>
+											</TableCell>
+											<TableCell className="max-w-md whitespace-normal">
+												<div className="text-muted-foreground font-mono text-xs">
+													{log.action}
 												</div>
-												<div className="text-muted-foreground flex items-center gap-1 text-sm">
-													<Icon name="clock" className="h-4 w-4" />
-													<span>
-														{new Date(log.createdAt).toLocaleString()}
-													</span>
-												</div>
-											</ItemHeader>
-											<ItemTitle>{log.details}</ItemTitle>
-											<ItemDescription className="flex flex-wrap gap-4">
-												{log.user && (
-													<span>
-														<Icon name="user" className="mr-1 inline h-3 w-3" />
-														{log.user.name || log.user.username}
-													</span>
-												)}
-												{log.organizationId && (
-													<span>
-														<Icon
-															name="building"
-															className="mr-1 inline h-3 w-3"
-														/>
-														{log.organizationId}
-													</span>
-												)}
-												{metadata.ipAddress && (
-													<span>
-														<Icon
-															name="external-link"
-															className="mr-1 inline h-3 w-3"
-														/>
+												<div className="text-sm">{log.details}</div>
+											</TableCell>
+											<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+												{log.user ? log.user.name || log.user.username : '—'}
+												{metadata.ipAddress ? (
+													<div className="font-mono text-xs">
 														{metadata.ipAddress as string}
-													</span>
-												)}
-												{log.resourceType && (
-													<span>
-														<Icon
-															name="folder"
-															className="mr-1 inline h-3 w-3"
-														/>
-														{log.resourceType}:{' '}
-														{log.resourceId?.substring(0, 8)}
-													</span>
-												)}
-											</ItemDescription>
-										</ItemContent>
-									</Item>
-								)
-							})}
-						</ItemGroup>
-					) : (
-						<div className="py-12 text-center">
-							<Icon
-								name="file-text"
-								className="text-muted-foreground mx-auto mb-4 h-12 w-12"
-							/>
-							<p className="text-muted-foreground">
-								<Trans>No audit logs found</Trans>
-							</p>
-						</div>
-					)}
+													</div>
+												) : null}
+											</TableCell>
+											<TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
+												{log.resourceType
+													? `${log.resourceType}: ${log.resourceId?.substring(0, 8) ?? ''}`
+													: '—'}
+											</TableCell>
+											<TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+												{new Date(log.createdAt).toLocaleString()}
+											</TableCell>
+										</TableRow>
+									)
+								})}
+							</TableBody>
+							<TableFooter>
+								<TableRow>
+									<TableCell colSpan={5}>
+										<Trans>
+											Showing {showing} of {totalEvents} events
+										</Trans>
+									</TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</Frame>
+				) : (
+					<EmptyState
+						title={_(msg`No audit logs found`)}
+						description={_(msg`Try different filters or clear them.`)}
+						icons={['file-text']}
+					/>
+				)}
 
-					{/* Pagination */}
-					{totalPages > 1 && (
-						<div className="mt-6 flex items-center justify-between">
-							<p className="text-muted-foreground text-sm">
-								<Trans>
-									Page {page} of {totalPages}
-								</Trans>
-							</p>
-							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={page === 1}
-									onClick={() => updateFilter('page', String(page - 1))}
-								>
-									<Icon name="chevron-left" className="h-4 w-4" />
-									<Trans>Previous</Trans>
-								</Button>
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={page === totalPages}
-									onClick={() => updateFilter('page', String(page + 1))}
-								>
-									<Trans>Next</Trans>
-									<Icon name="chevron-right" className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+				<TablePagination
+					showPageSize={false}
+					pagination={{
+						page,
+						pageSize: 50,
+						totalCount: total,
+						totalPages,
+					}}
+				/>
+			</div>
 		</div>
 	)
 }

@@ -23,8 +23,10 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@repo/ui/dialog'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Table,
 	TableBody,
@@ -41,6 +43,7 @@ import {
 	type ActionFunctionArgs,
 	Link,
 } from 'react-router'
+import { EmptyState } from '#app/components/empty-state.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -146,15 +149,13 @@ export default function AdminIpAddressesPage() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>IP Addresses</Trans>
-				</h1>
-				<p className="text-muted-foreground">
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>IP Addresses</Trans>}
+				description={
 					<Trans>Monitor and manage IP addresses accessing your website</Trans>
-				</p>
-			</div>
+				}
+			/>
 
 			{/* Stats */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -195,8 +196,8 @@ export default function AdminIpAddressesPage() {
 			</div>
 
 			{/* IP Addresses Table */}
-			<div>
-				<Table>
+			<Frame className="w-full">
+				<Table variant="card">
 					<TableHeader>
 						<TableRow>
 							<TableHead>
@@ -397,14 +398,14 @@ export default function AdminIpAddressesPage() {
 						})}
 					</TableBody>
 				</Table>
-			</div>
+			</Frame>
 
 			{data.ipAddresses.length === 0 && (
-				<div className="py-8 text-center">
-					<p className="text-muted-foreground">
-						<Trans>No IP addresses found</Trans>
-					</p>
-				</div>
+				<EmptyState
+					title={_(msg`No IP addresses found`)}
+					description={_(msg`Visitor IP addresses will appear here.`)}
+					icons={['shield']}
+				/>
 			)}
 		</div>
 	)

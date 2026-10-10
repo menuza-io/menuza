@@ -24,6 +24,7 @@ import {
 } from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Item,
 	ItemActions,
@@ -128,25 +129,20 @@ export default function AdminAutomationsIndexRoute() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between border-b pb-4">
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						<Trans>Platform Automations</Trans>
-					</h1>
-					<p className="text-muted-foreground mt-1 text-sm">
-						<Trans>Event-driven workflows for tenant operator lifecycle.</Trans>
-					</p>
-				</div>
-				{canManage ? (
-					<Button
-						render={<Link to="/marketing/automations/new" />}
-						className="gap-2"
-					>
-						<Icon name="plus" className="size-4" />
-						<Trans>New Automation</Trans>
-					</Button>
-				) : null}
-			</div>
+			<PageHeader
+				title={<Trans>Platform Automations</Trans>}
+				description={
+					<Trans>Event-driven workflows for tenant operator lifecycle.</Trans>
+				}
+				actions={
+					canManage ? (
+						<Button render={<Link to="/marketing/automations/new" />}>
+							<Icon name="plus" className="size-4" />
+							<Trans>New Automation</Trans>
+						</Button>
+					) : null
+				}
+			/>
 
 			<Input
 				placeholder={_(msg`Search automations...`)}
