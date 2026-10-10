@@ -531,26 +531,30 @@ export function runReport(
 	}
 
 	const measured = measuredValue(subject, definition, matched)
+	// Amounts in different currencies can't be added together, so a mixed
+	// result keeps its value info for the notice but measures nothing.
+	const valued = measured?.info.mixedCurrencies ? null : measured
 	const valueOf = (tally: ValueTally) =>
-		measured ? tallyValue(tally, measured.measure, measured.field) : undefined
+		valued ? tallyValue(tally, valued.measure, valued.field) : undefined
 
 	if (
 		definition.visualization.chartStyle === 'single_number' ||
 		definition.groupBy.length === 0
 	) {
 		const tally = emptyTally()
-		for (const record of matched) addToTally(tally, record, measured?.field)
+		for (const record of matched) addToTally(tally, record, valued?.field)
 		const value = valueOf(tally)
 		return {
 			total: matched.length,
-			...(measured ? { value, valueInfo: measured.info } : {}),
+			...(measured ? { valueInfo: measured.info } : {}),
+			...(valued ? { value } : {}),
 			segments: [
 				{
 					key: 'total',
 					label: subject.label,
 					count: matched.length,
 					percent: 100,
-					...(measured ? { value } : {}),
+					...(valued ? { value } : {}),
 				},
 			],
 			refreshedAt: now.toISOString(),
@@ -576,8 +580,8 @@ export function runReport(
 			bucket = { label, tally: emptyTally() }
 			buckets.set(key, bucket)
 		}
-		addToTally(bucket.tally, record, measured?.field)
-		addToTally(overall, record, measured?.field)
+		addToTally(bucket.tally, record, valued?.field)
+		addToTally(overall, record, valued?.field)
 	}
 
 	if (timeGrouped && matched.length > 0) {
@@ -610,16 +614,17 @@ export function runReport(
 			label: bucket.label,
 			count: bucket.tally.count,
 			percent: total === 0 ? 0 : (bucket.tally.count / total) * 100,
-			...(measured ? { value: valueOf(bucket.tally) } : {}),
+			...(valued ? { value: valueOf(bucket.tally) } : {}),
 		})),
 		definition.visualization.sortBy,
 		timeGrouped,
-		Boolean(measured),
+		Boolean(valued),
 	)
 
 	return {
 		total,
-		...(measured ? { value: valueOf(overall), valueInfo: measured.info } : {}),
+		...(measured ? { valueInfo: measured.info } : {}),
+		...(valued ? { value: valueOf(overall) } : {}),
 		segments,
 		refreshedAt: now.toISOString(),
 	}

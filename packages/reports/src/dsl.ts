@@ -187,7 +187,10 @@ export type ReportValueInfo = {
 	type: 'number' | 'currency'
 	/** Currency every measured amount shares. */
 	currency?: string
-	/** The measured amounts are in more than one currency. */
+	/**
+	 * The amounts are in more than one currency. They can't be added together,
+	 * so the result and its segments carry no value.
+	 */
 	mixedCurrencies?: boolean
 }
 

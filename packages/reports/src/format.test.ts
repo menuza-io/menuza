@@ -6,6 +6,7 @@ import {
 	formatResultHeadline,
 	segmentPercent,
 	segmentTableColumns,
+	shownValueInfo,
 } from './format.ts'
 
 const en = { locale: 'en-US' }
@@ -16,6 +17,14 @@ const sales: ReportValueInfo = {
 	label: 'Sales',
 	type: 'currency',
 	currency: 'USD',
+}
+
+const mixedSales: ReportValueInfo = {
+	measure: 'sum',
+	field: 'total',
+	label: 'Sales',
+	type: 'currency',
+	mixedCurrencies: true,
 }
 
 const averageRating: ReportValueInfo = {
@@ -41,7 +50,7 @@ describe('formatMeasuredValue', () => {
 	it('reads like the measured field', () => {
 		expect(formatMeasuredValue(12, sales, en)).toBe('$12.00')
 		expect(formatMeasuredValue(4.3333, averageRating, en)).toBe('4.33')
-		// Mixed currencies have no symbol but still read as money.
+		// Amounts without a currency code have no symbol but still read as money.
 		expect(
 			formatMeasuredValue(2.5, { ...sales, currency: undefined }, en),
 		).toBe('2.50')
@@ -61,6 +70,20 @@ describe('formatResultHeadline', () => {
 			formatResultHeadline({ total: 0, valueInfo: averageRating }, en),
 		).toBe('—')
 	})
+
+	it('shows a dash for amounts in more than one currency', () => {
+		expect(formatResultHeadline({ total: 2, valueInfo: mixedSales }, en)).toBe(
+			'—',
+		)
+	})
+})
+
+describe('shownValueInfo', () => {
+	it('drops value info for amounts in more than one currency', () => {
+		expect(shownValueInfo({ valueInfo: sales })).toBe(sales)
+		expect(shownValueInfo({ valueInfo: mixedSales })).toBeNull()
+		expect(shownValueInfo({})).toBeNull()
+	})
 })
 
 describe('segmentPercent', () => {
@@ -75,6 +98,9 @@ describe('segmentPercent', () => {
 		expect(segmentPercent({ ...segment, percent: 60 }, {})).toBe(60)
 		expect(
 			segmentPercent({ ...segment, percent: 60 }, { valueInfo: averageRating }),
+		).toBe(60)
+		expect(
+			segmentPercent({ ...segment, percent: 60 }, { valueInfo: mixedSales }),
 		).toBe(60)
 	})
 })
@@ -95,6 +121,14 @@ describe('segmentTableColumns', () => {
 			count: true,
 			value: averageRating,
 			percent: false,
+		})
+	})
+
+	it('leaves the amount out when it is in more than one currency', () => {
+		expect(segmentTableColumns(false, { valueInfo: mixedSales })).toEqual({
+			count: true,
+			value: null,
+			percent: true,
 		})
 	})
 })

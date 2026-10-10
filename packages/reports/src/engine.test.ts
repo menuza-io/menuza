@@ -540,7 +540,7 @@ describe('value measures', () => {
 		expect(empty.every((segment) => segment.value === undefined)).toBe(true)
 	})
 
-	it('flags amounts in more than one currency', () => {
+	it("doesn't add up amounts in more than one currency", () => {
 		const result = runReport(
 			organizationCatalog,
 			measuredDefinition('orders', {
@@ -555,10 +555,53 @@ describe('value measures', () => {
 		)
 		expect(isReportRunError(result)).toBe(false)
 		if (isReportRunError(result)) return
-		expect(result.value).toBe(30)
-		expect(result.segments[0]?.value).toBe(30)
+		expect(result.total).toBe(2)
+		expect(result).not.toHaveProperty('value')
+		expect(result.segments).toEqual([
+			{ key: 'total', label: 'Shop orders', count: 2, percent: 100 },
+		])
 		expect(result.valueInfo?.mixedCurrencies).toBe(true)
 		expect(result.valueInfo?.currency).toBeUndefined()
+	})
+
+	it('sorts by count when grouped amounts are in more than one currency', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition(
+				'shop_orders',
+				{ valueField: 'amount', sortBy: 'value_desc' },
+				{ groupBy: ['productName'] },
+			),
+			[
+				{
+					createdAt: '2026-08-01',
+					productName: 'Hoodie',
+					amount: 500,
+					currency: 'SAR',
+				},
+				{
+					createdAt: '2026-08-02',
+					productName: 'Mug',
+					amount: 5,
+					currency: 'USD',
+				},
+				{
+					createdAt: '2026-08-03',
+					productName: 'Mug',
+					amount: 5,
+					currency: 'USD',
+				},
+			],
+			now,
+		)
+		expect(isReportRunError(result)).toBe(false)
+		if (isReportRunError(result)) return
+		expect(result).not.toHaveProperty('value')
+		expect(result.valueInfo?.mixedCurrencies).toBe(true)
+		expect(result.segments).toEqual([
+			{ key: 'Mug', label: 'Mug', count: 2, percent: (2 / 3) * 100 },
+			{ key: 'Hoodie', label: 'Hoodie', count: 1, percent: (1 / 3) * 100 },
+		])
 	})
 
 	it('rejects sums and averages without a number that fits', () => {

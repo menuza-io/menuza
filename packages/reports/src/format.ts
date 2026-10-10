@@ -63,7 +63,8 @@ export function formatMeasuredValue(
 
 /**
  * A segment's or result's measured value for display. Averages over no
- * amounts have no value and read as a dash.
+ * amounts, and amounts in more than one currency, have no value and read as a
+ * dash.
  */
 export function formatOptionalValue(
 	value: number | undefined,
@@ -85,6 +86,16 @@ export function formatResultHeadline(
 }
 
 /**
+ * The value info of a result whose values can be shown. Amounts in more than
+ * one currency aren't added together, so charts, tables, and exports of those
+ * results fall back to record counts.
+ */
+export function shownValueInfo(result: Pick<ReportResult, 'valueInfo'>) {
+	const info = result.valueInfo
+	return info && !info.mixedCurrencies ? info : null
+}
+
+/**
  * A segment's percent. Sums show the segment's share of the report-wide sum;
  * counts and averages show its share of the matched records.
  */
@@ -92,7 +103,7 @@ export function segmentPercent(
 	segment: ReportSegment,
 	result: Pick<ReportResult, 'value' | 'valueInfo'>,
 ) {
-	if (result.valueInfo?.measure !== 'sum') return segment.percent
+	if (shownValueInfo(result)?.measure !== 'sum') return segment.percent
 	if (!result.value || segment.value === undefined) return 0
 	return (segment.value / result.value) * 100
 }
@@ -106,9 +117,10 @@ export function segmentTableColumns(
 	hideCounts: boolean,
 	result: Pick<ReportResult, 'valueInfo'>,
 ) {
+	const info = shownValueInfo(result)
 	return {
 		count: !hideCounts,
-		value: result.valueInfo ?? null,
-		percent: result.valueInfo?.measure !== 'average',
+		value: info,
+		percent: info?.measure !== 'average',
 	}
 }

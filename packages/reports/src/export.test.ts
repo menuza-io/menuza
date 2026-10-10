@@ -130,6 +130,27 @@ describe('reportToCsv', () => {
 			'Segment,Count,Average order value (USD)\nAirport,1,30.00\nDowntown,3,\n',
 		)
 	})
+
+	it('writes counts when amounts are in more than one currency', () => {
+		const result: ReportResult = {
+			total: 4,
+			valueInfo: {
+				measure: 'sum',
+				field: 'amount',
+				label: 'Shop sales',
+				type: 'currency',
+				mixedCurrencies: true,
+			},
+			segments: [
+				{ key: 'h', label: 'Hoodie', count: 1, percent: 25 },
+				{ key: 'm', label: 'Mug', count: 3, percent: 75 },
+			],
+			refreshedAt: '2026-08-24T18:00:00.000Z',
+		}
+		expect(reportToCsv(salesDefinition('sum'), result)).toBe(
+			'Segment,Count,Percent\nHoodie,1,25.0%\nMug,3,75.0%\n',
+		)
+	})
 })
 
 describe('canExportReport', () => {
