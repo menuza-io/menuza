@@ -10,18 +10,22 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
+import { Frame } from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import {
 	type ActionResult,
 	action,
@@ -311,81 +315,95 @@ function NumberActions({ number }: { number: PlatformNumber }) {
 }
 
 export default function AdminPhoneNumbersPage() {
+	const { _ } = useLingui()
 	const { numbers } = useLoaderData<typeof loader>()
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>Phone numbers</Trans>
-				</h1>
-				<p className="text-muted-foreground">
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>Phone numbers</Trans>}
+				description={
 					<Trans>
 						Platform-owned numbers for the AI phone agent. Organizations can
 						only connect numbers assigned to them here.
 					</Trans>
-				</p>
-			</div>
+				}
+			/>
 
 			<AddNumberForm />
 
 			{numbers.length === 0 ? (
-				<p className="text-muted-foreground text-sm">
-					<Trans>No numbers in the inventory yet.</Trans>
-				</p>
+				<EmptyState
+					title={_(msg`No numbers yet`)}
+					description={_(msg`Add a number above to start the inventory.`)}
+					icons={['phone']}
+				/>
 			) : (
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>
-								<Trans>Number</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Status</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Organization</Trans>
-							</TableHead>
-							<TableHead className="text-end">
-								<Trans>Actions</Trans>
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{numbers.map((number) => (
-							<TableRow key={number.id}>
-								<TableCell>
-									<div className="font-medium tabular-nums" dir="ltr">
-										{number.e164}
-									</div>
-									{number.label ? (
-										<div className="text-muted-foreground text-sm">
-											{number.label}
+				<Frame className="w-full">
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>
+									<Trans>Number</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Status</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Organization</Trans>
+								</TableHead>
+								<TableHead className="text-end">
+									<Trans>Actions</Trans>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{numbers.map((number) => (
+								<TableRow key={number.id}>
+									<TableCell>
+										<div className="font-medium tabular-nums" dir="ltr">
+											{number.e164}
 										</div>
-									) : null}
-								</TableCell>
-								<TableCell>
-									<NumberStatus number={number} />
-								</TableCell>
-								<TableCell>
-									{number.organization?.id ? (
-										<div>
-											<div>{number.organization.name}</div>
+										{number.label ? (
 											<div className="text-muted-foreground text-sm">
-												{number.organization.slug}
+												{number.label}
 											</div>
-										</div>
+										) : null}
+									</TableCell>
+									<TableCell>
+										<NumberStatus number={number} />
+									</TableCell>
+									<TableCell>
+										{number.organization?.id ? (
+											<div>
+												<div>{number.organization.name}</div>
+												<div className="text-muted-foreground text-sm">
+													{number.organization.slug}
+												</div>
+											</div>
+										) : (
+											<span className="text-muted-foreground">—</span>
+										)}
+									</TableCell>
+									<TableCell className="text-end">
+										<NumberActions number={number} />
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+						<TableFooter>
+							<TableRow>
+								<TableCell colSpan={4}>
+									{numbers.length === 1 ? (
+										<Trans>1 number</Trans>
 									) : (
-										<span className="text-muted-foreground">—</span>
+										<Trans>{numbers.length} numbers</Trans>
 									)}
 								</TableCell>
-								<TableCell className="text-end">
-									<NumberActions number={number} />
-								</TableCell>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+						</TableFooter>
+					</Table>
+				</Frame>
 			)}
 		</div>
 	)

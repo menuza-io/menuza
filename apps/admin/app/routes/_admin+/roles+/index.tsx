@@ -14,13 +14,6 @@ import {
 } from '@repo/database'
 import { Button } from '@repo/ui/button'
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
-import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -29,8 +22,15 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@repo/ui/dialog'
+import {
+	Frame,
+	FrameDescription,
+	FrameHeader,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -372,107 +372,99 @@ export default function AdminRolesPage() {
 	return (
 		<div className="space-y-8">
 			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold">
-						<Trans>Roles</Trans>
-					</h1>
-					<p className="text-muted-foreground mt-2">
-						<Trans>Manage organization and system roles and permissions</Trans>
-					</p>
-				</div>
-				<CreateRoleDialog />
-			</div>
+			<PageHeader
+				title={<Trans>Roles</Trans>}
+				description={
+					<Trans>Manage organization and system roles and permissions</Trans>
+				}
+				actions={<CreateRoleDialog />}
+			/>
 
 			{/* Organization Roles */}
-			<Card>
-				<CardHeader>
-					<CardTitle>
+			<Frame className="w-full">
+				<FrameHeader>
+					<FrameTitle className="font-medium">
 						<Trans>Organization Roles</Trans>
-					</CardTitle>
-					<CardDescription>
+					</FrameTitle>
+					<FrameDescription>
 						<Trans>Roles that apply within specific organizations</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="p-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>
-									<Trans>Role</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Level</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Users</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Permissions</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Description</Trans>
-								</TableHead>
-								<TableHead className="text-right">
-									<Trans>Actions</Trans>
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<RolesTableRows
-								roles={organizationRoles}
-								baseUrl="/roles"
-								emptyMessage={_(msg`No organization roles found`)}
-								emptyColSpan={6}
-								showLevel
-							/>
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+					</FrameDescription>
+				</FrameHeader>
+				<Table variant="card">
+					<TableHeader>
+						<TableRow>
+							<TableHead>
+								<Trans>Role</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Level</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Users</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Permissions</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Description</Trans>
+							</TableHead>
+							<TableHead className="text-right">
+								<Trans>Actions</Trans>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						<RolesTableRows
+							roles={organizationRoles}
+							baseUrl="/roles"
+							emptyMessage={_(msg`No organization roles found`)}
+							emptyColSpan={6}
+							showLevel
+						/>
+					</TableBody>
+				</Table>
+			</Frame>
 
 			{/* System Roles */}
-			<Card>
-				<CardHeader>
-					<CardTitle>
+			<Frame className="w-full">
+				<FrameHeader>
+					<FrameTitle className="font-medium">
 						<Trans>System Roles</Trans>
-					</CardTitle>
-					<CardDescription>
+					</FrameTitle>
+					<FrameDescription>
 						<Trans>Global roles that apply across the entire system</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="p-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>
-									<Trans>Role</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Users</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Permissions</Trans>
-								</TableHead>
-								<TableHead>
-									<Trans>Description</Trans>
-								</TableHead>
-								<TableHead className="text-right">
-									<Trans>Actions</Trans>
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<RolesTableRows
-								roles={systemRoles}
-								baseUrl="/roles/system"
-								emptyMessage={_(msg`No system roles found`)}
-								emptyColSpan={5}
-							/>
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+					</FrameDescription>
+				</FrameHeader>
+				<Table variant="card">
+					<TableHeader>
+						<TableRow>
+							<TableHead>
+								<Trans>Role</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Users</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Permissions</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Description</Trans>
+							</TableHead>
+							<TableHead className="text-right">
+								<Trans>Actions</Trans>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						<RolesTableRows
+							roles={systemRoles}
+							baseUrl="/roles/system"
+							emptyMessage={_(msg`No system roles found`)}
+							emptyColSpan={5}
+						/>
+					</TableBody>
+				</Table>
+			</Frame>
 		</div>
 	)
 }

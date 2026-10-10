@@ -19,6 +19,7 @@ import {
 	type User,
 	type UserImage,
 } from '@repo/database/types'
+import { PageHeader } from '@repo/ui/page-header'
 import { useLoaderData } from 'react-router'
 import { AdminUsersTable } from '#app/components/admin-users-table.tsx'
 import { type Route } from './+types/index.ts'
@@ -144,14 +145,10 @@ export default function AdminUsersPage() {
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>Users</Trans>
-				</h1>
-				<p className="text-muted-foreground">
-					<Trans>Manage all users in the system</Trans>
-				</p>
-			</div>
+			<PageHeader
+				title={<Trans>Users</Trans>}
+				description={<Trans>Manage all users in the system</Trans>}
+			/>
 
 			<AdminUsersTable
 				users={data.users}

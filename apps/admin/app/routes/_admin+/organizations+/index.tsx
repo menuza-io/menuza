@@ -11,6 +11,7 @@ import {
 	or,
 	eq,
 } from '@repo/database'
+import { PageHeader } from '@repo/ui/page-header'
 import { useLoaderData } from 'react-router'
 import { AdminOrganizationsTable } from '#app/components/admin-organizations-table.tsx'
 import { type Route } from './+types/index.ts'
@@ -110,14 +111,10 @@ export default function AdminOrganizationsPage() {
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">
-					<Trans>Organizations</Trans>
-				</h1>
-				<p className="text-muted-foreground">
-					<Trans>Manage all organizations in the system</Trans>
-				</p>
-			</div>
+			<PageHeader
+				title={<Trans>Organizations</Trans>}
+				description={<Trans>Manage all organizations in the system</Trans>}
+			/>
 
 			<AdminOrganizationsTable
 				organizations={data.organizations}

@@ -10,38 +10,30 @@ import {
 	DropdownMenuContent,
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
+import { type FilterField } from '@repo/ui/filters'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@repo/ui/select'
 import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
 import {
 	type ColumnDef,
-	type ColumnFiltersState,
 	flexRender,
 	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type SortingState,
 	useReactTable,
 	type VisibilityState,
 } from '@tanstack/react-table'
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
+import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
+import { EmptyState } from '#app/components/empty-state.tsx'
 
 export interface AdminUser {
 	id: string
@@ -224,187 +216,104 @@ export function AdminUsersTable({
 }: AdminUsersTableProps) {
 	const { _ } = useLingui()
 	const navigate = useNavigate()
-	const [searchParams, setSearchParams] = useSearchParams()
-	const [sorting, setSorting] = useState<SortingState>([])
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-	const [searchQuery, setSearchQuery] = useState(filters.search)
-	const [organizationFilter, setOrganizationFilter] = useState(
-		filters.organization,
-	)
 	const columns = getColumns(_)
+
+	const filterFields = useMemo<FilterField[]>(
+		() => [
+			{
+				id: 'search',
+				label: _(msg`Search`),
+				type: 'text',
+				defaultOperator: 'contains',
+				operators: [{ value: 'contains', label: _(msg`contains`) }],
+				placeholder: _(msg`Name, email or username`),
+				icon: <Icon name="search" className="size-3.5" />,
+			},
+			{
+				id: 'organization',
+				label: _(msg`Organization`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				icon: <Icon name="building" className="size-3.5" />,
+				options: organizations.map((org) => ({
+					value: org.name,
+					label: org.name,
+				})),
+			},
+		],
+		[_, organizations],
+	)
 
 	const table = useReactTable({
 		data: users,
 		columns,
-		state: {
-			sorting,
-			columnFilters,
-			columnVisibility,
-		},
-		onSortingChange: setSorting,
-		onColumnFiltersChange: setColumnFilters,
+		state: { columnVisibility },
 		onColumnVisibilityChange: setColumnVisibility,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		manualPagination: true,
 		pageCount: pagination.totalPages,
 	})
 
-	const handleSearch = (value: string) => {
-		setSearchQuery(value)
-		const newSearchParams = new URLSearchParams(searchParams)
-		if (value) {
-			newSearchParams.set('search', value)
-		} else {
-			newSearchParams.delete('search')
-		}
-		newSearchParams.set('page', '1') // Reset to first page
-		setSearchParams(newSearchParams)
-	}
-
-	const handleOrganizationFilter = (value: string) => {
-		setOrganizationFilter(value)
-		const newSearchParams = new URLSearchParams(searchParams)
-		if (value && value !== 'all') {
-			newSearchParams.set('organization', value)
-		} else {
-			newSearchParams.delete('organization')
-		}
-		newSearchParams.set('page', '1') // Reset to first page
-		setSearchParams(newSearchParams)
-	}
-
-	const handlePageChange = (page: number) => {
-		const newSearchParams = new URLSearchParams(searchParams)
-		newSearchParams.set('page', page.toString())
-		setSearchParams(newSearchParams)
-	}
-
-	const handlePageSizeChange = (pageSize: string) => {
-		const newSearchParams = new URLSearchParams(searchParams)
-		newSearchParams.set('pageSize', pageSize)
-		newSearchParams.set('page', '1') // Reset to first page
-		setSearchParams(newSearchParams)
-	}
-
-	const clearFilters = () => {
-		setSearchQuery('')
-		setOrganizationFilter('')
-		setSearchParams({})
-	}
-
-	const hasActiveFilters = filters.search || filters.organization
-	const startItem = (pagination.page - 1) * pagination.pageSize + 1
-	const endItem = Math.min(
-		pagination.page * pagination.pageSize,
-		pagination.totalCount,
-	)
+	const hasActiveFilters = Boolean(filters.search || filters.organization)
+	const rows = table.getRowModel().rows
 	const totalCount = pagination.totalCount
-	const currentPage = pagination.page
-	const totalPages = pagination.totalPages
 
 	return (
 		<div className="space-y-4">
-			{/* Search and Filters */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex flex-1 items-center gap-2">
-					<div className="relative max-w-sm flex-1">
-						<Icon
-							name="search"
-							className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
-						/>
-						<Input
-							placeholder={_(msg`Search users...`)}
-							value={searchQuery}
-							onChange={(e) => handleSearch(e.target.value)}
-							className="pl-9"
-						/>
-					</div>
-					<Select
-						value={organizationFilter || 'all'}
-						onValueChange={(value) => handleOrganizationFilter(value as string)}
-					>
-						<SelectTrigger className="w-48">
-							<Trans>Filter by organization</Trans>
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">
-								<Trans>All organizations</Trans>
-							</SelectItem>
-							{organizations.map((org) => (
-								<SelectItem key={org.id} value={org.name}>
-									{org.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-					{hasActiveFilters && (
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={clearFilters}
-							className="h-8 px-2 lg:px-3"
-						>
-							<Trans>Reset</Trans>
-							<Icon name="x" className="ml-2 h-4 w-4" />
-						</Button>
-					)}
-				</div>
-				<div className="flex items-center gap-2">
-					<DropdownMenu>
-						<DropdownMenuTrigger>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<UrlFilters fields={filterFields} className="flex-1" />
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						render={
 							<Button variant="outline" size="sm">
 								<Trans>Columns</Trans>
-								<Icon name="chevron-down" className="ml-2 h-4 w-4" />
+								<Icon name="chevron-down" className="size-4" />
 							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-48">
-							{table
-								.getAllColumns()
-								.filter(
-									(column) =>
-										typeof column.accessorFn !== 'undefined' &&
-										column.getCanHide(),
-								)
-								.map((column) => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={column.id}
-											className="capitalize"
-											checked={column.getIsVisible()}
-											onCheckedChange={(value) =>
-												column.toggleVisibility(!!value)
-											}
-										>
-											{column.id}
-										</DropdownMenuCheckboxItem>
-									)
-								})}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
+						}
+					/>
+					<DropdownMenuContent align="end" className="w-48">
+						{table
+							.getAllColumns()
+							.filter(
+								(column) =>
+									typeof column.accessorFn !== 'undefined' &&
+									column.getCanHide(),
+							)
+							.map((column) => (
+								<DropdownMenuCheckboxItem
+									key={column.id}
+									className="capitalize"
+									checked={column.getIsVisible()}
+									onCheckedChange={(value) => column.toggleVisibility(!!value)}
+								>
+									{column.id}
+								</DropdownMenuCheckboxItem>
+							))}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
-			{/* Results Summary */}
-			<div className="text-muted-foreground flex items-center justify-between text-sm">
-				<div>
-					<Trans>
-						Showing {startItem} to {endItem} of {totalCount} users
-					</Trans>
-				</div>
-			</div>
-
-			{/* Table */}
-			<div>
-				<Table>
-					<TableHeader>
-						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map((header) => {
-									return (
+			{rows.length === 0 ? (
+				<EmptyState
+					title={
+						hasActiveFilters ? _(msg`No users match`) : _(msg`No users yet`)
+					}
+					description={
+						hasActiveFilters
+							? _(msg`Try different filters or clear them.`)
+							: _(msg`Users will appear here once they sign up.`)
+					}
+					icons={['users']}
+				/>
+			) : (
+				<Frame className="w-full">
+					<Table variant="card">
+						<TableHeader>
+							{table.getHeaderGroups().map((headerGroup) => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map((header) => (
 										<TableHead key={header.id}>
 											{header.isPlaceholder
 												? null
@@ -413,19 +322,16 @@ export function AdminUsersTable({
 														header.getContext(),
 													)}
 										</TableHead>
-									)
-								})}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map((row) => (
+									))}
+								</TableRow>
+							))}
+						</TableHeader>
+						<TableBody>
+							{rows.map((row) => (
 								<TableRow
 									key={row.id}
-									data-state={row.getIsSelected() && 'selected'}
-									className="hover:bg-muted/50 cursor-pointer"
-									onClick={() => navigate(`/users/${row.original.id}`)}
+									className="cursor-pointer"
+									onClick={() => void navigate(`/users/${row.original.id}`)}
 									onKeyDown={(e) => {
 										if (e.key === 'Enter' || e.key === ' ') {
 											e.preventDefault()
@@ -444,97 +350,24 @@ export function AdminUsersTable({
 										</TableCell>
 									))}
 								</TableRow>
-							))
-						) : (
+							))}
+						</TableBody>
+						<TableFooter>
 							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-24 text-center"
-								>
-									<Trans>No users found.</Trans>
+								<TableCell colSpan={table.getVisibleLeafColumns().length}>
+									{totalCount === 1 ? (
+										<Trans>1 user</Trans>
+									) : (
+										<Trans>{totalCount} users</Trans>
+									)}
 								</TableCell>
 							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
+						</TableFooter>
+					</Table>
+				</Frame>
+			)}
 
-			{/* Pagination */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-2">
-					<Label htmlFor="rows-per-page" className="text-sm font-medium">
-						<Trans>Rows per page</Trans>
-					</Label>
-					<Select
-						value={pagination.pageSize.toString()}
-						onValueChange={(value) => handlePageSizeChange(value as string)}
-					>
-						<SelectTrigger className="w-20" id="rows-per-page">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent side="top">
-							{[10, 20, 30, 40, 50].map((pageSize) => (
-								<SelectItem key={pageSize} value={pageSize.toString()}>
-									{pageSize}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
-				<div className="flex items-center gap-2">
-					<div className="text-sm font-medium">
-						<Trans>
-							Page {currentPage} of {totalPages}
-						</Trans>
-					</div>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							className="hidden h-8 w-8 p-0 lg:flex"
-							onClick={() => handlePageChange(1)}
-							disabled={pagination.page === 1}
-						>
-							<span className="sr-only">
-								<Trans>Go to first page</Trans>
-							</span>
-							<Icon name="chevrons-left" className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							className="h-8 w-8 p-0"
-							onClick={() => handlePageChange(pagination.page - 1)}
-							disabled={pagination.page === 1}
-						>
-							<span className="sr-only">
-								<Trans>Go to previous page</Trans>
-							</span>
-							<Icon name="chevron-left" className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							className="h-8 w-8 p-0"
-							onClick={() => handlePageChange(pagination.page + 1)}
-							disabled={pagination.page === pagination.totalPages}
-						>
-							<span className="sr-only">
-								<Trans>Go to next page</Trans>
-							</span>
-							<Icon name="chevron-right" className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							className="hidden h-8 w-8 p-0 lg:flex"
-							onClick={() => handlePageChange(pagination.totalPages)}
-							disabled={pagination.page === pagination.totalPages}
-						>
-							<span className="sr-only">
-								<Trans>Go to last page</Trans>
-							</span>
-							<Icon name="chevrons-right" className="h-4 w-4" />
-						</Button>
-					</div>
-				</div>
-			</div>
+			<TablePagination pagination={pagination} />
 		</div>
 	)
 }

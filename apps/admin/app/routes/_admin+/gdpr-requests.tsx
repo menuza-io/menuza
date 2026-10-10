@@ -16,36 +16,30 @@ import {
 } from '@repo/database'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import { type FilterField } from '@repo/ui/filters'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
-	Item,
-	ItemContent,
-	ItemDescription,
-	ItemGroup,
-	ItemHeader,
-	ItemTitle,
-} from '@repo/ui/item'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@repo/ui/select'
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@repo/ui/table'
+import { useMemo } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	useLoaderData,
-	useSearchParams,
 	useFetcher,
 } from 'react-router'
+import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
+import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
+import { EmptyState } from '#app/components/empty-state.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const adminId = await requireUserWithRole(request, 'admin')
@@ -328,25 +322,53 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function GDPRRequestsPage() {
 	const { _ } = useLingui()
-	const { requests, pagination, statistics, filters } =
-		useLoaderData<typeof loader>()
-	const [searchParams, setSearchParams] = useSearchParams()
+	const { requests, pagination, statistics } = useLoaderData<typeof loader>()
 	const fetcher = useFetcher()
 
-	const updateFilter = (key: string, value: string) => {
-		const newParams = new URLSearchParams(searchParams)
-		if (value && value !== 'all') {
-			newParams.set(key, value)
-		} else {
-			newParams.delete(key)
-		}
-		newParams.delete('page')
-		setSearchParams(newParams)
-	}
-
-	const clearFilters = () => {
-		setSearchParams(new URLSearchParams())
-	}
+	const filterFields = useMemo<FilterField[]>(
+		() => [
+			{
+				id: 'search',
+				label: _(msg`User`),
+				type: 'text',
+				defaultOperator: 'contains',
+				operators: [{ value: 'contains', label: _(msg`contains`) }],
+				placeholder: _(msg`Email, username, or name`),
+				icon: <Icon name="user" className="size-3.5" />,
+			},
+			{
+				id: 'type',
+				label: _(msg`Request type`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				searchable: false,
+				icon: <Icon name="file-text" className="size-3.5" />,
+				options: [
+					{ value: 'export', label: _(msg`Export (Article 20)`) },
+					{ value: 'erasure', label: _(msg`Erasure (Article 17)`) },
+				],
+			},
+			{
+				id: 'status',
+				label: _(msg`Status`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				searchable: false,
+				icon: <Icon name="circle-check" className="size-3.5" />,
+				options: [
+					{ value: 'requested', label: _(msg`Requested`) },
+					{ value: 'processing', label: _(msg`Processing`) },
+					{ value: 'scheduled', label: _(msg`Scheduled`) },
+					{ value: 'completed', label: _(msg`Completed`) },
+					{ value: 'cancelled', label: _(msg`Cancelled`) },
+					{ value: 'failed', label: _(msg`Failed`) },
+				],
+			},
+		],
+		[_],
+	)
 
 	const getStatusBadgeVariant = (status: string) => {
 		switch (status) {
@@ -379,23 +401,15 @@ export default function GDPRRequestsPage() {
 
 	const showing = requests.length
 	const totalRequests = pagination.totalCount.toLocaleString()
-	const page = pagination.page
-	const totalPages = pagination.totalPages
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold">
-						<Trans>GDPR Data Requests</Trans>
-					</h1>
-					<p className="text-muted-foreground">
-						<Trans>
-							Manage data export and deletion requests for compliance
-						</Trans>
-					</p>
-				</div>
-			</div>
+		<div className="space-y-8">
+			<PageHeader
+				title={<Trans>GDPR Data Requests</Trans>}
+				description={
+					<Trans>Manage data export and deletion requests for compliance</Trans>
+				}
+			/>
 
 			<div className="grid gap-4 md:grid-cols-4">
 				<Card>
@@ -467,270 +481,166 @@ export default function GDPRRequestsPage() {
 				</Card>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Icon name="search" className="h-5 w-5" />
-						<Trans>Filters</Trans>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid gap-4 md:grid-cols-3">
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Search User</Trans>
-							</label>
-							<Input
-								type="text"
-								placeholder={_(msg`Email, username, or name...`)}
-								defaultValue={filters.search || ''}
-								onChange={(e) => updateFilter('search', e.target.value)}
-							/>
-						</div>
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Request Type</Trans>
-							</label>
-							<Select
-								value={filters.type || 'all'}
-								onValueChange={(value) => updateFilter('type', value as string)}
-							>
-								<SelectTrigger>
-									<Trans>All types</Trans>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">
-										<Trans>All</Trans>
-									</SelectItem>
-									<SelectItem value="export">
-										<Trans>Export (Article 20)</Trans>
-									</SelectItem>
-									<SelectItem value="erasure">
-										<Trans>Erasure (Article 17)</Trans>
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<div>
-							<label className="text-sm font-medium">
-								<Trans>Status</Trans>
-							</label>
-							<Select
-								value={filters.status || 'all'}
-								onValueChange={(value) =>
-									updateFilter('status', value as string)
-								}
-							>
-								<SelectTrigger>
-									<Trans>All statuses</Trans>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">
-										<Trans>All</Trans>
-									</SelectItem>
-									<SelectItem value="requested">
-										<Trans>Requested</Trans>
-									</SelectItem>
-									<SelectItem value="processing">
-										<Trans>Processing</Trans>
-									</SelectItem>
-									<SelectItem value="scheduled">
-										<Trans>Scheduled</Trans>
-									</SelectItem>
-									<SelectItem value="completed">
-										<Trans>Completed</Trans>
-									</SelectItem>
-									<SelectItem value="cancelled">
-										<Trans>Cancelled</Trans>
-									</SelectItem>
-									<SelectItem value="failed">
-										<Trans>Failed</Trans>
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-					<div className="mt-4">
-						<Button variant="outline" size="sm" onClick={clearFilters}>
-							<Icon name="x" className="mr-2 h-4 w-4" />
-							<Trans>Clear Filters</Trans>
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
+			<div className="space-y-4">
+				<UrlFilters fields={filterFields} />
 
-			<Card>
-				<CardHeader>
-					<CardTitle>
-						<Trans>Data Subject Requests</Trans>
-					</CardTitle>
-					<CardDescription>
-						<Trans>
-							Showing {showing} of {totalRequests} requests
-						</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					{requests.length > 0 ? (
-						<ItemGroup>
-							{requests.map((req) => {
-								const scheduledFor = req.scheduledFor
-									? formatDate(req.scheduledFor)
-									: null
-								const completedAt = req.completedAt
-									? formatDate(req.completedAt)
-									: null
-								return (
-									<Item key={req.id} variant="outline">
-										<ItemContent>
-											<ItemHeader>
-												<div className="flex items-center gap-2">
-													<Badge variant={getTypeBadgeVariant(req.type)}>
-														{req.type === 'export' ? (
-															<Trans>Export</Trans>
-														) : (
-															<Trans>Erasure</Trans>
-														)}
-													</Badge>
-													<Badge variant={getStatusBadgeVariant(req.status)}>
-														{req.status}
-													</Badge>
+				{requests.length > 0 ? (
+					<Frame className="w-full">
+						<Table variant="card">
+							<TableHeader>
+								<TableRow>
+									<TableHead>
+										<Trans>User</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Type</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Status</Trans>
+									</TableHead>
+									<TableHead className="hidden md:table-cell">
+										<Trans>Requested</Trans>
+									</TableHead>
+									<TableHead className="hidden lg:table-cell">
+										<Trans>Details</Trans>
+									</TableHead>
+									<TableHead className="text-end">
+										<Trans>Actions</Trans>
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{requests.map((req) => {
+									const scheduledFor = req.scheduledFor
+										? formatDate(req.scheduledFor)
+										: null
+									const completedAt = req.completedAt
+										? formatDate(req.completedAt)
+										: null
+									return (
+										<TableRow key={req.id}>
+											<TableCell>
+												<div className="text-sm font-medium">
+													{req.user?.email || req.userId}
 												</div>
 												<div className="text-muted-foreground text-sm">
-													{formatDate(req.requestedAt)}
+													{[
+														req.user?.name,
+														req.user?.username ? `@${req.user.username}` : null,
+													]
+														.filter(Boolean)
+														.join(' · ')}
 												</div>
-											</ItemHeader>
-											<ItemTitle>{req.user?.email || req.userId}</ItemTitle>
-											<ItemDescription className="flex flex-wrap gap-4">
-												{req.user?.name && <span>{req.user.name}</span>}
-												{req.user?.username && (
-													<span className="text-muted-foreground">
-														@{req.user.username}
-													</span>
-												)}
+											</TableCell>
+											<TableCell>
+												<Badge variant={getTypeBadgeVariant(req.type)}>
+													{req.type === 'export' ? (
+														<Trans>Export</Trans>
+													) : (
+														<Trans>Erasure</Trans>
+													)}
+												</Badge>
+											</TableCell>
+											<TableCell>
+												<Badge variant={getStatusBadgeVariant(req.status)}>
+													{req.status}
+												</Badge>
+											</TableCell>
+											<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+												{formatDate(req.requestedAt)}
+											</TableCell>
+											<TableCell className="hidden text-sm lg:table-cell">
 												{scheduledFor && (
-													<span className="text-destructive">
-														<Icon
-															name="clock"
-															className="mr-1 inline h-3 w-3"
-														/>
+													<div className="text-destructive">
 														{_(msg`Scheduled: ${scheduledFor}`)}
-													</span>
+													</div>
 												)}
 												{completedAt && (
-													<span className="text-green-600">
-														<Icon
-															name="check"
-															className="mr-1 inline h-3 w-3"
-														/>
+													<div className="text-green-600">
 														{_(msg`Completed: ${completedAt}`)}
-													</span>
+													</div>
 												)}
 												{req.failureReason && (
-													<span className="text-destructive">
-														<Icon
-															name="alert-triangle"
-															className="mr-1 inline h-3 w-3"
-														/>
+													<div className="text-destructive">
 														{req.failureReason}
-													</span>
+													</div>
 												)}
-											</ItemDescription>
-											{(req.status === 'scheduled' ||
-												req.status === 'failed') && (
-												<div className="mt-3 flex gap-2">
-													{req.status === 'scheduled' && (
-														<>
-															<fetcher.Form method="POST">
-																<input
-																	type="hidden"
-																	name="requestId"
-																	value={req.id}
-																/>
-																<Button
-																	type="submit"
-																	name="intent"
-																	value="cancel"
-																	variant="outline"
-																	size="sm"
-																	disabled={fetcher.state !== 'idle'}
-																>
-																	<Icon name="x" className="mr-1 h-3 w-3" />
-																	<Trans>Cancel</Trans>
-																</Button>
-															</fetcher.Form>
-															<fetcher.Form method="POST">
-																<input
-																	type="hidden"
-																	name="requestId"
-																	value={req.id}
-																/>
-																<Button
-																	type="submit"
-																	name="intent"
-																	value="expedite"
-																	variant="destructive"
-																	size="sm"
-																	disabled={fetcher.state !== 'idle'}
-																>
-																	<Icon name="play" className="mr-1 h-3 w-3" />
-																	<Trans>Expedite Now</Trans>
-																</Button>
-															</fetcher.Form>
-														</>
-													)}
-												</div>
-											)}
-										</ItemContent>
-									</Item>
-								)
-							})}
-						</ItemGroup>
-					) : (
-						<div className="py-12 text-center">
-							<Icon
-								name="file-text"
-								className="text-muted-foreground mx-auto mb-4 h-12 w-12"
-							/>
-							<p className="text-muted-foreground">
-								<Trans>No GDPR requests found</Trans>
-							</p>
-						</div>
-					)}
+											</TableCell>
+											<TableCell className="text-end">
+												{req.status === 'scheduled' && (
+													<div className="flex justify-end gap-2">
+														<fetcher.Form method="POST">
+															<input
+																type="hidden"
+																name="requestId"
+																value={req.id}
+															/>
+															<Button
+																type="submit"
+																name="intent"
+																value="cancel"
+																variant="outline"
+																size="sm"
+																disabled={fetcher.state !== 'idle'}
+															>
+																<Icon name="x" className="size-3" />
+																<Trans>Cancel</Trans>
+															</Button>
+														</fetcher.Form>
+														<fetcher.Form method="POST">
+															<input
+																type="hidden"
+																name="requestId"
+																value={req.id}
+															/>
+															<Button
+																type="submit"
+																name="intent"
+																value="expedite"
+																variant="destructive"
+																size="sm"
+																disabled={fetcher.state !== 'idle'}
+															>
+																<Icon name="play" className="size-3" />
+																<Trans>Expedite Now</Trans>
+															</Button>
+														</fetcher.Form>
+													</div>
+												)}
+											</TableCell>
+										</TableRow>
+									)
+								})}
+							</TableBody>
+							<TableFooter>
+								<TableRow>
+									<TableCell colSpan={6}>
+										<Trans>
+											Showing {showing} of {totalRequests} requests
+										</Trans>
+									</TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</Frame>
+				) : (
+					<EmptyState
+						title={_(msg`No GDPR requests found`)}
+						description={_(msg`Try different filters or clear them.`)}
+						icons={['file-text']}
+					/>
+				)}
 
-					{pagination.totalPages > 1 && (
-						<div className="mt-6 flex items-center justify-between">
-							<p className="text-muted-foreground text-sm">
-								{_(msg`Page ${page} of ${totalPages}`)}
-							</p>
-							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={pagination.page === 1}
-									onClick={() =>
-										updateFilter('page', String(pagination.page - 1))
-									}
-								>
-									<Icon name="chevron-left" className="h-4 w-4" />
-									<Trans>Previous</Trans>
-								</Button>
-								<Button
-									variant="outline"
-									size="sm"
-									disabled={pagination.page === pagination.totalPages}
-									onClick={() =>
-										updateFilter('page', String(pagination.page + 1))
-									}
-								>
-									<Trans>Next</Trans>
-									<Icon name="chevron-right" className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+				<TablePagination
+					showPageSize={false}
+					pagination={{
+						page: pagination.page,
+						pageSize: 20,
+						totalCount: pagination.totalCount,
+						totalPages: pagination.totalPages,
+					}}
+				/>
+			</div>
 		</div>
 	)
 }
