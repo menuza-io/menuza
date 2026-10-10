@@ -112,16 +112,21 @@ let inflightRefresh: Promise<boolean> | null = null
 // so a second tab re-reads the already-rotated token from localStorage instead
 // of replaying the old one. Browsers without it fall back to per-tab sharing.
 function refreshSession(): Promise<boolean> {
-	inflightRefresh ??= (
-		typeof navigator !== 'undefined' && navigator.locks
-			? navigator.locks.request('tenant-session-refresh', () =>
-					doRefreshSession(),
-				)
-			: doRefreshSession()
-	).finally(() => {
+	if (inflightRefresh) return inflightRefresh
+	const run: Promise<boolean> = (async () => {
+		if (typeof navigator !== 'undefined' && navigator.locks) {
+			// `await` flattens the lock API's nested promise type.
+			return await navigator.locks.request('tenant-session-refresh', () =>
+				doRefreshSession(),
+			)
+		}
+		return doRefreshSession()
+	})()
+	const tracked: Promise<boolean> = run.finally(() => {
 		inflightRefresh = null
 	})
-	return inflightRefresh
+	inflightRefresh = tracked
+	return tracked
 }
 
 async function doRefreshSession(): Promise<boolean> {
