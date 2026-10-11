@@ -2,6 +2,7 @@ import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, count, db, eq, OrganizationLocation } from '@repo/database'
+import { timeZoneSchema } from '@repo/staffing'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import {
@@ -30,7 +31,7 @@ const LocationInputSchema = z.object({
 			'Slug must contain only lowercase letters, numbers, and hyphens',
 		),
 	phone: z.string().optional(),
-	timezone: z.string().default('America/New_York'),
+	timezone: timeZoneSchema.default('America/New_York'),
 	taxRate: z.coerce.number().min(0).default(0),
 	isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
 	isDefault: z.preprocess((val) => val === 'true' || val === true, z.boolean()),

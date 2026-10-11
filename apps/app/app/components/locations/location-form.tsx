@@ -56,13 +56,30 @@ import { SpecialHoursPicker } from './special-hours-picker'
 
 const TIMEZONE_OPTIONS = [
 	{ value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
+	{ value: 'America/Toronto', label: 'Toronto (Eastern)' },
+	{ value: 'America/Halifax', label: 'Atlantic Time (Halifax)' },
+	{ value: 'America/St_Johns', label: 'Newfoundland (St. John’s)' },
 	{ value: 'America/Chicago', label: 'Central Time (US & Canada)' },
+	{ value: 'America/Winnipeg', label: 'Winnipeg (Central)' },
+	{ value: 'America/Regina', label: 'Saskatchewan (no DST)' },
 	{ value: 'America/Denver', label: 'Mountain Time (US & Canada)' },
+	{ value: 'America/Edmonton', label: 'Edmonton (Mountain)' },
+	{ value: 'America/Phoenix', label: 'Arizona (no DST)' },
 	{ value: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
+	{ value: 'America/Vancouver', label: 'Vancouver (Pacific)' },
+	{ value: 'America/Anchorage', label: 'Alaska' },
+	{ value: 'Pacific/Honolulu', label: 'Hawaii' },
+	{ value: 'America/Puerto_Rico', label: 'Puerto Rico (AST)' },
+	{ value: 'America/Mexico_City', label: 'Mexico City' },
 	{ value: 'Europe/London', label: 'London (GMT / BST)' },
 	{ value: 'Europe/Paris', label: 'Paris (CET)' },
 	{ value: 'Asia/Riyadh', label: 'Riyadh (AST)' },
+	{ value: 'Asia/Kuwait', label: 'Kuwait (AST)' },
+	{ value: 'Asia/Qatar', label: 'Qatar (AST)' },
+	{ value: 'Asia/Bahrain', label: 'Bahrain (AST)' },
 	{ value: 'Asia/Dubai', label: 'Dubai (GST)' },
+	{ value: 'Asia/Muscat', label: 'Muscat (GST)' },
+	{ value: 'Africa/Cairo', label: 'Cairo' },
 	{ value: 'Asia/Singapore', label: 'Singapore (SGT)' },
 	{ value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
 ]
@@ -126,6 +143,17 @@ export function LocationForm({
 	const [timezone, setTimezone] = useState(
 		initialData?.timezone || 'America/New_York',
 	)
+	// Keep a previously saved zone selectable even if it is not in the short list.
+	const timezoneOptions = TIMEZONE_OPTIONS.some(
+		(option) => option.value === initialData?.timezone,
+	)
+		? TIMEZONE_OPTIONS
+		: initialData?.timezone
+			? [
+					{ value: initialData.timezone, label: initialData.timezone },
+					...TIMEZONE_OPTIONS,
+				]
+			: TIMEZONE_OPTIONS
 	const [taxRate, setTaxRate] = useState(initialData?.taxRate ?? 8.25)
 	const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
 	const [isDefault, setIsDefault] = useState(initialData?.isDefault ?? false)
@@ -385,14 +413,14 @@ export function LocationForm({
 											</Label>
 											<Select
 												value={timezone}
-												items={TIMEZONE_OPTIONS}
+												items={timezoneOptions}
 												onValueChange={(val) => val && setTimezone(val)}
 											>
 												<SelectTrigger id="loc-timezone">
 													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>
-													{TIMEZONE_OPTIONS.map((tz) => (
+													{timezoneOptions.map((tz) => (
 														<SelectItem key={tz.value} value={tz.value}>
 															{tz.label}
 														</SelectItem>

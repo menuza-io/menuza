@@ -589,6 +589,9 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `@repo/security` - Security utilities (encryption, rate limiting)
 - `@repo/phone-agent` - AI phone agent core: flow model, vertical contract,
   prompts, and call reports (see `docs/phone-agent-verticals.md`)
+- `@repo/staffing` - Staffing domain shared by App and tenant-api: flags,
+  staffing token claims, timezone-safe shift math, PIN rules, roster paste, and
+  CSV export. No UI strings (see `docs/staffing.md`)
 
 **Key Apps:**
 

@@ -68,6 +68,11 @@ Product areas are gated with these permissions:
 | AI phone call deletion   | `delete:phone_call:any`                                                           |
 | Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`) |
 | Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)           |
+| Staff roster             | `read/update:staff:any` (admin only by default; see `docs/staffing.md`)           |
+| Staff schedules          | `read/update:schedule:any` (admin only by default)                                |
+| Timesheets & time clocks | `read/update:timeclock:any` (admin only by default)                               |
+| Hiring                   | `read/update:hiring:any` (admin only by default; structured hiring is later)      |
+| Staff pay & labor cost   | `read:staff_pay:any` (admin only; setting rates also needs `update:staff:any`)    |
 
 Organization admins can create custom roles from `/{orgSlug}/settings/roles`;
 only the permission IDs allow-listed in

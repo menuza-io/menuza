@@ -33,6 +33,15 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_read_phone_call_any',
 	'org_perm_update_phone_call_any',
 	'org_perm_delete_phone_call_any',
+	'org_perm_read_staff_any',
+	'org_perm_update_staff_any',
+	'org_perm_read_schedule_any',
+	'org_perm_update_schedule_any',
+	'org_perm_read_timeclock_any',
+	'org_perm_update_timeclock_any',
+	'org_perm_read_hiring_any',
+	'org_perm_update_hiring_any',
+	'org_perm_read_staff_pay_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]

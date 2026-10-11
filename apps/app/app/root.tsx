@@ -379,7 +379,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 	const currentOrgSlug =
 		userOrganizations?.currentOrganization?.organization.slug
-	const [locations, selectedLocationId] = await Promise.all([
+	const [locations, selectedLocationId, staffingFlags] = await Promise.all([
 		currentOrgId
 			? db
 					.select({
@@ -401,6 +401,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					await import('./utils/location/location-cookie.server.ts')
 				).getSelectedLocation(request, currentOrgSlug)
 			: 'all',
+		// Navigation hint only; staffing routes and token minting re-check flags.
+		currentOrgId
+			? (await import('./utils/staffing/access.server.ts'))
+					.getStaffingFlags(currentOrgId)
+					.catch(() => null)
+			: null,
 	])
 
 	const utmHeaders = utmResponse?.headers || {}
@@ -455,6 +461,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
+			staffingFlags,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

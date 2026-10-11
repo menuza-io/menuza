@@ -25,6 +25,7 @@
     "@repo/observability": "*",
     "@repo/phone-agent": "*",
     "@repo/reports": "*",
+    "@repo/staffing": "*",
     "@repo/sms": "*",
     "@repo/tenant-db": "*",
     "@varlock/cloudflare-integration": "^1.5.1",

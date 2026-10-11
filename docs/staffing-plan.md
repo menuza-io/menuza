@@ -1,9 +1,11 @@
 # Staffing: MVP-first plan
 
-Status: phased implementation. The first slice adds the job-application form
-preset and removes the form builder's server-side submission read. Roster,
-scheduling, kiosk, timesheets, labor reporting, and structured hiring are **not
-implemented** by this slice.
+Status: phased implementation. Shipped so far: the job-application form preset
+(browser-direct responses) and foundations (admin-only staffing permissions,
+default-off `staffing.*` flags, `requireStaffingFeature`, the `@repo/staffing`
+domain package, and the expanded location timezone list). Later slices are
+tracked in the PR sequence below; [staffing guide](./staffing.md) describes what
+operators can use today.
 
 Baseline: `main` at `ed54ca1a`, refreshed 2026-10-11. This plan consolidates the
 supplied MVP, architecture, competitive-parity, live walkthrough, mock, and

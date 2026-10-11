@@ -245,6 +245,19 @@ function OrganizationSidebar({
 	const canReadMenu = hasOrgPermission('read', 'menu')
 	const canReadPhoneAgent = hasOrgPermission('read', 'phone_agent')
 	const canReadPhoneCalls = hasOrgPermission('read', 'phone_call')
+	const staffingFlags = rootData?.staffingFlags as
+		| { enabled: boolean; scheduling: boolean; timeclock: boolean }
+		| null
+		| undefined
+	const canSeeStaff = Boolean(
+		staffingFlags?.enabled && hasOrgPermission('read', 'staff'),
+	)
+	const canSeeSchedule = Boolean(
+		staffingFlags?.scheduling && hasOrgPermission('read', 'schedule'),
+	)
+	const canSeeTimeclock = Boolean(
+		staffingFlags?.timeclock && hasOrgPermission('read', 'timeclock'),
+	)
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -299,6 +312,31 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/customers`,
 			isActive: location.pathname.includes(`/${orgSlug}/customers`),
 			icon: UsersRoundIcon,
+		},
+		{
+			title: _(msg`Staff`),
+			url: `/${orgSlug}/staffing`,
+			isActive: location.pathname.includes(`/${orgSlug}/staffing`),
+			icon: UserIcon,
+			items: [
+				{
+					title: _(msg`Team`),
+					url: `/${orgSlug}/staffing/team`,
+					isActive: location.pathname.includes(`/${orgSlug}/staffing/team`),
+				},
+				{
+					title: _(msg`Schedule`),
+					url: `/${orgSlug}/staffing/schedule`,
+					isActive: location.pathname.includes(`/${orgSlug}/staffing/schedule`),
+				},
+				{
+					title: _(msg`Time clock`),
+					url: `/${orgSlug}/staffing/timesheets`,
+					isActive:
+						location.pathname.includes(`/${orgSlug}/staffing/timesheets`) ||
+						location.pathname.includes(`/${orgSlug}/staffing/kiosks`),
+				},
+			],
 		},
 		{
 			title: _(msg`Menu`),
@@ -605,6 +643,9 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/phone-agent`) {
 				return canReadPhoneAgent || canReadPhoneCalls
 			}
+			if (item.url === `/${orgSlug}/staffing`) {
+				return canSeeStaff
+			}
 			return true
 		})
 		.map((item) => {
@@ -632,6 +673,21 @@ function OrganizationSidebar({
 					items: item.items.filter((subItem) =>
 						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,
 					),
+				}
+			}
+			if (item.url === `/${orgSlug}/staffing`) {
+				return {
+					...item,
+					url: `/${orgSlug}/staffing/team`,
+					items: item.items.filter((subItem) => {
+						if (subItem.url.endsWith('/staffing/schedule')) {
+							return canSeeSchedule
+						}
+						if (subItem.url.endsWith('/staffing/timesheets')) {
+							return canSeeTimeclock
+						}
+						return true
+					}),
 				}
 			}
 			if (item.url === `/${orgSlug}/website`) {

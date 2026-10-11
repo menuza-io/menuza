@@ -1,11 +1,46 @@
-# Careers form: first staffing slice
+# Staffing
 
-Implemented surface: a **Job application** Website Forms template. There is no
-staff directory, scheduling, time clock, structured applicant pipeline, or
-employee onboarding yet. See [staffing plan](./staffing-plan.md) for those
-phases and [ADR 047](./decisions/047-staffing-data-placement.md) for placement.
+Staffing gives an organization a workforce roster, weekly schedule, kiosk time
+clock, timesheets, and labor estimates, plus a careers form for hiring. See
+[staffing plan](./staffing-plan.md) for phases and cut lines and
+[ADR 047](./decisions/047-staffing-data-placement.md) for data placement.
 
-## Publish an application form
+## Enable staffing for an organization
+
+Staffing is off by default. Every route, the sidebar **Staff** group, and the
+staffing token mint check both an org feature flag and a permission.
+
+| Flag (`ConfigFlag`, org level) | Gates                                                       |
+| ------------------------------ | ----------------------------------------------------------- |
+| `staffing.enabled`             | Master switch. All other staffing flags require it.         |
+| `staffing.scheduling`          | Schedule grid and publish.                                  |
+| `staffing.timeclock`           | Kiosk pairing, kiosk punches, and timesheets.               |
+| `staffing.pay`                 | Pay rates, labor cost, and the pay claim on staffing tokens |
+| `staffing.hiring`              | Reserved for structured postings (not the careers form).    |
+| `staffing.onboarding`          | Reserved for onboarding checklists.                         |
+
+Set flags per organization in **Admin → Feature flags** with value `true`. A
+missing flag is off. A user-level override is ignored for staffing because the
+module is organization-wide.
+
+| Permission                             | Grants                                     |
+| -------------------------------------- | ------------------------------------------ |
+| `read:staff:any` / `update:staff:any`  | View / change the roster, positions, PINs  |
+| `read:schedule:any` / `update:...`     | View / edit and publish shifts             |
+| `read:timeclock:any` / `update:...`    | View / correct, approve, lock, pair kiosks |
+| `read:hiring:any` / `update:hiring...` | Reserved for structured hiring             |
+
+Only the built-in **admin** role receives these permissions. Grant them to a
+custom role in **Settings → Roles** when a manager needs access. Writes require
+both the read and update permission. Staff records are not organization members
+and never change billed seats.
+
+Disabling a flag stops new tokens and hides routes. It does not stop an
+already-paired kiosk: revoke kiosk devices first (see the kiosk runbook below).
+
+## Careers form
+
+### Publish an application form
 
 1. Open **Website → Forms → Create form** at `/{orgSlug}/website/forms/new`.
    Choose **Job application**, name the form, and select **Create and
@@ -38,7 +73,7 @@ Configure `PUBLIC_TURNSTILE_SITE_KEY` on Sites and matching
 launch. Empty configuration disables the widget/verification for development.
 The existing honeypot, validation, and request limits still apply.
 
-## Share and print a QR sign
+### Share and print a QR sign
 
 Copy the **published page URL**, including the site's locale prefix. Do not link
 to the App builder URL or the regional API endpoint.
@@ -54,7 +89,7 @@ Place the PNG and the human-readable page URL on your hiring sign and print it.
 Scan the QR on a phone before posting. The QR contains a public page link, not
 credentials or applicant data.
 
-## Review applications
+### Review applications
 
 - Open **Mailbox → Forms**, search for the application form name, and review the
   response. The existing per-operator read state and pagination apply.
@@ -74,7 +109,7 @@ Published form definitions can be cached for SSR. Applicant names, email, phone,
 and answers stay in the regional tenant database and travel only to the
 authorized browser.
 
-## Retention and deletion
+### Retention and deletion
 
 **Automatic deletion is not enabled by the checked-in cron configuration.** The
 existing `form-submission-retention` handler can delete submissions older than

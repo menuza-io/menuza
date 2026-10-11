@@ -209,6 +209,18 @@ export const ORG_PERMISSIONS = {
 	// requires access to a channel, not a permission.
 	UPDATE_CHAT_ANY: 'update:chat:any' as const,
 	CREATE_CHAT_GROUP: 'create:chat:group' as const,
+
+	// Staffing permissions. Staff records are regional; these only gate which
+	// operators App will mint staffing credentials for.
+	READ_STAFF_ANY: 'read:staff:any' as const,
+	UPDATE_STAFF_ANY: 'update:staff:any' as const,
+	READ_SCHEDULE_ANY: 'read:schedule:any' as const,
+	UPDATE_SCHEDULE_ANY: 'update:schedule:any' as const,
+	READ_TIMECLOCK_ANY: 'read:timeclock:any' as const,
+	UPDATE_TIMECLOCK_ANY: 'update:timeclock:any' as const,
+	READ_HIRING_ANY: 'read:hiring:any' as const,
+	UPDATE_HIRING_ANY: 'update:hiring:any' as const,
+	READ_STAFF_PAY_ANY: 'read:staff_pay:any' as const,
 } as const
 
 /**

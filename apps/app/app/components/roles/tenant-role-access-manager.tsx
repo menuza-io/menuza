@@ -249,6 +249,63 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Staffing`,
+			description: t`Roster, schedules, time clock, and hiring. Staff do not need a login or a seat.`,
+			permissions: [
+				{
+					id: 'org_perm_read_staff_any',
+					label: t`View staff`,
+					description: t`See staff names, contact details, positions, and locations.`,
+					warning: t`Staff personal data`,
+				},
+				{
+					id: 'org_perm_update_staff_any',
+					label: t`Manage staff`,
+					description: t`Add, edit, terminate, and rehire staff, and reset time clock PINs. Needs View staff.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_read_schedule_any',
+					label: t`View schedules`,
+					description: t`See draft and published shifts and publish history.`,
+				},
+				{
+					id: 'org_perm_update_schedule_any',
+					label: t`Manage schedules`,
+					description: t`Create, copy, and publish shifts. Publishing emails staff. Needs View schedules.`,
+					warning: t`Notifies staff`,
+				},
+				{
+					id: 'org_perm_read_timeclock_any',
+					label: t`View timesheets`,
+					description: t`See clock-ins, time cards, and paired time clocks.`,
+				},
+				{
+					id: 'org_perm_update_timeclock_any',
+					label: t`Manage timesheets`,
+					description: t`Edit, approve, and lock time cards, and pair or revoke time clocks. Needs View timesheets.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_read_hiring_any',
+					label: t`View hiring`,
+					description: t`See job postings and applicants.`,
+					warning: t`Applicant personal data`,
+				},
+				{
+					id: 'org_perm_update_hiring_any',
+					label: t`Manage hiring`,
+					description: t`Manage job postings and applicants, and add hires to the team. Needs View hiring.`,
+				},
+				{
+					id: 'org_perm_read_staff_pay_any',
+					label: t`Staff pay`,
+					description: t`See and set hourly rates and estimated labor cost. Rate changes also need Manage staff.`,
+					warning: t`Pay data`,
+				},
+			],
+		},
 	]
 }
 
