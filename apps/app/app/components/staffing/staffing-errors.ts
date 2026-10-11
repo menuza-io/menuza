@@ -38,6 +38,22 @@ export function staffingErrorMessage(i18n: I18n, error: unknown) {
 			msg`Time clocks are paused in your data region. Try again later.`,
 		),
 		already_revoked: i18n._(msg`That time clock was already removed.`),
+		entry_overlap: i18n._(
+			msg`This overlaps another time card for the same person.`,
+		),
+		entry_locked: i18n._(
+			msg`This time card is approved. Reopen it before making changes.`,
+		),
+		not_approved: i18n._(msg`This time card is not approved.`),
+		already_clocked_in: i18n._(
+			msg`This person already has an open time card. Close it first.`,
+		),
+		in_future: i18n._(msg`Times can’t be in the future.`),
+		invalid_times: i18n._(msg`Clock-out must be after clock-in.`),
+		break_too_long: i18n._(msg`The break is longer than the time worked.`),
+		break_needs_clock_out: i18n._(
+			msg`Add a clock-out time before recording a break.`,
+		),
 		region_mismatch: i18n._(
 			msg`Your organization’s data region is changing. Try again shortly.`,
 		),

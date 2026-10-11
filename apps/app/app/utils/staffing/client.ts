@@ -177,6 +177,133 @@ export const pinResultSchema = z.object({
 	result: z.object({ pin: z.string(), generated: z.boolean() }),
 })
 
+export const timeEntrySchema = z.object({
+	id: z.string(),
+	staffId: z.string(),
+	locationId: z.string(),
+	positionId: z.string().nullable(),
+	shiftId: z.string().nullable(),
+	localDate: z.string(),
+	timeZone: z.string(),
+	clockInAt: z.string(),
+	clockOutAt: z.string().nullable(),
+	source: z.enum(['kiosk', 'manager']),
+	deviceId: z.string().nullable(),
+	unpaidBreakMinutes: z.number(),
+	note: z.string(),
+	approvedAt: z.string().nullable(),
+	approvedBy: z.string().nullable(),
+	paidMinutes: z.number(),
+	issues: z.array(z.enum(['missing_clock_out', 'unscheduled', 'late'])),
+	scheduled: z
+		.object({
+			startAt: z.string(),
+			endAt: z.string(),
+			positionId: z.string().nullable(),
+		})
+		.nullable(),
+	edited: z.boolean(),
+})
+export type TimeEntry = z.infer<typeof timeEntrySchema>
+
+export const weekTotalSchema = z.object({
+	staffId: z.string(),
+	weekStart: z.string(),
+	paidMinutes: z.number(),
+	regularMinutes: z.number(),
+	overThresholdMinutes: z.number(),
+})
+export type WeekTotal = z.infer<typeof weekTotalSchema>
+
+export const timesheetSchema = z.object({
+	locationId: z.string(),
+	timeZone: z.string(),
+	from: z.string(),
+	to: z.string(),
+	settings: settingsSchema,
+	positions: z.array(positionSchema.omit({ sortOrder: true })),
+	staff: z.array(
+		z.object({
+			id: z.string(),
+			firstName: z.string(),
+			lastName: z.string(),
+			status: z.enum(['active', 'terminated']),
+			positionIds: z.array(z.string()),
+			assignedHere: z.boolean(),
+		}),
+	),
+	entries: z.array(timeEntrySchema),
+	weeks: z.array(weekTotalSchema),
+	devices: z.record(z.string(), z.string()),
+})
+export type Timesheet = z.infer<typeof timesheetSchema>
+export type TimesheetStaff = Timesheet['staff'][number]
+
+// Kiosk punches record a subset of these fields.
+const entrySnapshotSchema = z.object({
+	positionId: z.string().nullable().optional(),
+	localDate: z.string().optional(),
+	clockInAt: z.string().optional(),
+	clockOutAt: z.string().nullable().optional(),
+	unpaidBreakMinutes: z.number().optional(),
+	note: z.string().optional(),
+})
+export type EntrySnapshot = z.infer<typeof entrySnapshotSchema>
+
+export const entryHistorySchema = z.object({
+	history: z.object({
+		events: z.array(
+			z.object({
+				id: z.string(),
+				kind: z.string(),
+				actorType: z.enum(['operator', 'kiosk']),
+				actorRef: z.string(),
+				before: entrySnapshotSchema.nullable(),
+				after: entrySnapshotSchema.nullable(),
+				reason: z.string().nullable(),
+				at: z.string(),
+			}),
+		),
+		devices: z.record(z.string(), z.string()),
+	}),
+})
+export type EntryHistory = z.infer<typeof entryHistorySchema>['history']
+
+export const approveResultSchema = z.object({
+	result: z.object({
+		approved: z.number(),
+		skipped: z.array(
+			z.object({
+				id: z.string(),
+				reason: z.enum(['not_found', 'open', 'already_approved']),
+			}),
+		),
+	}),
+})
+
+/** A UTC instant shown on the location's clock, not the viewer's. */
+export function formatZonedTime(locale: string, iso: string, timeZone: string) {
+	return new Intl.DateTimeFormat(locale, {
+		hour: 'numeric',
+		minute: '2-digit',
+		timeZone,
+	}).format(new Date(iso))
+}
+
+export function formatZonedDateTime(
+	locale: string,
+	iso: string,
+	timeZone: string,
+) {
+	return new Intl.DateTimeFormat(locale, {
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+		timeZone,
+	}).format(new Date(iso))
+}
+
 /** Control-plane location metadata App passes to staffing pages. */
 export type StaffingLocation = {
 	id: string

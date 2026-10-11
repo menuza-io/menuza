@@ -179,6 +179,37 @@ several. **Clock out** closes their open time card.
 - Pairing and removal also write App audit events
   (`staff_kiosk_pairing_started`, `staff_kiosk_revoked`) with opaque ids only.
 
+## Timesheets
+
+**Staff → Timesheets** (`/{orgSlug}/staffing/timesheets`) lists time cards for
+one location by day or week, on the location's clock. Viewing needs
+`read:timeclock:any`; changes need `update:timeclock:any`.
+
+- **Flags.** A card is flagged **Missing clock-out** after 12 hours open, **Not
+  scheduled** when no published shift matches, and **Late** when the clock-in is
+  after the shift start plus the schedule's late grace minutes. **Needs
+  attention** filters to flagged cards.
+- **Corrections.** **Add time card** records a shift someone forgot to punch.
+  **Edit** changes the times, position, break, or note; it needs a reason. A
+  clock-out at or before the clock-in means the next day. Times can't be in the
+  future, a break must be shorter than the time worked, and one person's cards
+  can't overlap. **Delete card** also needs a reason and keeps the row hidden
+  rather than erased.
+- **History.** Every punch, edit, deletion, approval, and reopen is an
+  append-only `time_entry_events` row with before and after values, so the
+  original kiosk punch survives any correction. **History** shows them with the
+  manager or time clock that made each change.
+- **Approve and lock.** **Approve selected** or **Approve all** approves closed
+  cards; open cards are skipped. Approved cards can't be edited or deleted until
+  someone **Reopens** them with a reason, which clears the approval.
+- **Weekly totals** add up each person's paid hours across every location they
+  worked that week. With a weekly hours threshold set, hours over it are shown
+  separately. These are hours only, not an overtime pay calculation.
+- **Export CSV** builds the file in the browser from the regional response, so
+  payroll data never passes through App. Times are the location's wall clock,
+  and cells that start with a formula character are neutralized for
+  spreadsheets.
+
 ## Careers form
 
 ### Publish an application form
