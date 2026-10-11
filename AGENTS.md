@@ -37,6 +37,12 @@ per-org SQLite on a block volume.
   cross-region PII migration.
 - Canonical doc: `docs/tenant-data-residency.md`. ADR:
   `docs/decisions/045-tenant-data-residency.md`.
+- Staffing records and rules (employees, applicants, shifts, punches, pay,
+  onboarding, and authoritative audit) follow the same regional boundary. Staff
+  are separate from operator members and must not create billing seats. See
+  `docs/decisions/047-staffing-data-placement.md` and `docs/staffing-plan.md`.
+  The careers-form preset uses regional submissions; App loaders must never read
+  applicant answers.
 
 ## Setup Commands
 

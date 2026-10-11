@@ -7,6 +7,7 @@ export const FORM_TEMPLATE_IDS = [
 	'contact',
 	'lead',
 	'feedback',
+	'job-application',
 ] as const
 
 export type FormTemplateId = (typeof FORM_TEMPLATE_IDS)[number]
@@ -16,6 +17,8 @@ export type FormTemplate = {
 	name: MessageDescriptor
 	description: MessageDescriptor
 	fields: PublicFormField[]
+	submitLabel?: string
+	successMessage?: string
 }
 
 export const FORM_TEMPLATES: FormTemplate[] = [
@@ -56,6 +59,37 @@ export const FORM_TEMPLATES: FormTemplate[] = [
 				label: 'Your feedback',
 				type: 'textarea',
 				required: true,
+			},
+		],
+	},
+	{
+		id: 'job-application',
+		name: msg`Job application`,
+		description: msg`Collect contact details, the role, availability, and experience. Review applications in Mailbox.`,
+		submitLabel: 'Send application',
+		successMessage:
+			'Thank you. Your application has been received. We will contact you if there is a suitable opening.',
+		fields: [
+			{ id: 'name', label: 'Full name', type: 'name', required: true },
+			{ id: 'email', label: 'Email', type: 'email', required: true },
+			{ id: 'phone', label: 'Phone', type: 'tel', required: false },
+			{
+				id: 'role',
+				label: 'Role interested in',
+				type: 'text',
+				required: true,
+			},
+			{
+				id: 'availability',
+				label: 'When are you available to work?',
+				type: 'textarea',
+				required: true,
+			},
+			{
+				id: 'experience',
+				label: 'Tell us about your relevant experience',
+				type: 'textarea',
+				required: false,
 			},
 		],
 	},

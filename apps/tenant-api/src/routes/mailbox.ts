@@ -104,6 +104,32 @@ mailboxRoutes.get('/count', async (c) => {
 	return c.json({ unreadCount: result?.value ?? 0 })
 })
 
+/** Form-builder responses use the same browser-direct, read-only credentials. */
+mailboxRoutes.get('/form-responses/:formId', async (c) => {
+	const auth = c.get('operator')
+	const db = await getTenantDb(auth.orgId)
+	const [form] = await db
+		.select({ id: websiteForms.id })
+		.from(websiteForms)
+		.where(eq(websiteForms.id, c.req.param('formId')))
+		.limit(1)
+	if (!form) return c.json({ error: 'Form not found' }, 404)
+	const submissions = await db
+		.select({
+			id: websiteFormSubmissions.id,
+			values: websiteFormSubmissions.values,
+			createdAt: websiteFormSubmissions.createdAt,
+		})
+		.from(websiteFormSubmissions)
+		.where(eq(websiteFormSubmissions.formId, form.id))
+		.orderBy(
+			desc(websiteFormSubmissions.createdAt),
+			desc(websiteFormSubmissions.id),
+		)
+		.limit(500)
+	return c.json({ submissions })
+})
+
 const listQuerySchema = z.object({
 	page: z.coerce.number().int().min(1).max(100000).default(1),
 	search: z.string().trim().max(200).default(''),

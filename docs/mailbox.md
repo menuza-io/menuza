@@ -30,11 +30,22 @@ organization's data region is US, where the phone agent runs; completing,
 tagging, and deleting calls follow the phone call update and delete permissions.
 The sidebar badge counts unread form submissions only.
 
+The job-application Website Forms preset uses this same Forms source, not a
+separate hiring pipeline. See [careers form](./staffing.md) for publishing and
+retention guidance. Website-read access includes these applications.
+
 The forms source works as follows. App's `/:orgSlug/mailbox-token` resource
 returns a 15-minute operator JWT scoped to `mailbox`, with the authenticated
 user ID as its subject, and the organization's regional API URL. The browser
 calls `/operator/mailbox/*` directly. App never proxies submission values or
 reply bodies. Mailbox tokens cannot authorize the other operator endpoints.
+
+The form builder's Responses view uses the same credentials for the
+browser-direct `/operator/mailbox/form-responses/:formId` endpoint. It reads up
+to 500 recent responses without passing submission values through an App loader.
+The builder's server-side request reads only the form definition and an
+aggregate response count from `/operator/forms/:formId`, never submission
+values.
 
 Tenant-api checks active organization metadata and the node's `DATA_REGION`
 before opening the tenant database. With `APP_URL` configured, it obtains that

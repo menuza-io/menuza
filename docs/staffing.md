@@ -1,0 +1,93 @@
+# Careers form: first staffing slice
+
+Implemented surface: a **Job application** Website Forms template. There is no
+staff directory, scheduling, time clock, structured applicant pipeline, or
+employee onboarding yet. See [staffing plan](./staffing-plan.md) for those
+phases and [ADR 047](./decisions/047-staffing-data-placement.md) for placement.
+
+## Publish an application form
+
+1. Open **Website → Forms → Create form** at `/{orgSlug}/website/forms/new`.
+   Choose **Job application**, name the form, and select **Create and
+   customize**.
+2. Review the six fields: full name, email, phone, role, availability, and
+   experience. Email is required by default so Mailbox can offer replies; phone
+   and experience are optional. Adjust labels and requirements for the opening.
+   Do not add tax IDs, bank details, health records, or resume uploads.
+3. Add your organization-specific privacy notice to the form description or the
+   surrounding page. Explain purpose, retention, and how applicants can request
+   deletion. This preset does not record legal consent acceptance.
+4. Review the button and confirmation copy. The form starts as **Draft**;
+   **Publish** makes it available for page selection.
+5. In **Website → Pages**, create a page with a slug such as `careers`. Add job
+   details using existing content blocks, then add a **Form** block. Select the
+   published application form under **Connected form**.
+6. Save/publish the page and publish the website if necessary. Forms and pages
+   have separate publish steps. Add the page to site navigation or share its
+   public, locale-prefixed URL.
+7. If your site supports Arabic, use the form/page locale controls to translate
+   the content. Template labels are editable website content, not automatic
+   translations of applicant answers.
+8. Submit a synthetic test application from the public page. The builder's
+   **Test mode** validates the preview but deliberately saves no responses.
+   Check that the real submission request targets the organization's regional
+   tenant-api, not an App or Sites API proxy.
+
+Configure `PUBLIC_TURNSTILE_SITE_KEY` on Sites and matching
+`TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` on tenant-api before public
+launch. Empty configuration disables the widget/verification for development.
+The existing honeypot, validation, and request limits still apply.
+
+## Share and print a QR sign
+
+Copy the **published page URL**, including the site's locale prefix. Do not link
+to the App builder URL or the regional API endpoint.
+
+The repository already includes the `qrcode` CLI. To generate a local PNG
+without sending the URL to an external QR provider:
+
+```sh
+npx --no-install qrcode -o careers-qr.png 'https://your-site.example/en/careers'
+```
+
+Place the PNG and the human-readable page URL on your hiring sign and print it.
+Scan the QR on a phone before posting. The QR contains a public page link, not
+credentials or applicant data.
+
+## Review applications
+
+- Open **Mailbox → Forms**, search for the application form name, and review the
+  response. The existing per-operator read state and pagination apply.
+- **Open in email app** prepares a reply; it does not send email. The operator
+  reviews and sends it in their configured email client. Do not describe this as
+  an automated candidate-notification service.
+- The form builder's **Responses** view also loads responses directly from
+  tenant-api in the browser, after obtaining mailbox-scoped credentials. It
+  displays at most 500 recent responses. Use Mailbox to page through older
+  entries. Changing a form does not migrate previous answers.
+- Access follows existing website permissions, not a new hiring permission.
+  Anyone granted website-read access can read applications through Mailbox. Use
+  this only where those recipients are appropriate; hiring-specific access
+  restrictions arrive with the structured pipeline.
+
+Published form definitions can be cached for SSR. Applicant names, email, phone,
+and answers stay in the regional tenant database and travel only to the
+authorized browser.
+
+## Retention and deletion
+
+**Automatic deletion is not enabled by the checked-in cron configuration.** The
+existing `form-submission-retention` handler can delete submissions older than
+365 days, but the `0 5 * * *` trigger is absent from
+`apps/jobs-cron/wrangler.jsonc`. Verify actual deployment configuration and the
+legally appropriate retention period before collecting real applications. Do not
+enable that destructive job silently as part of adopting the preset.
+
+An authorized operator can delete a response through the existing regional
+submission-deletion flow. Deleting the form cascades to **all** responses.
+Changing the organization's data region destroys its old tenant database,
+including applications, with no cross-region migration.
+
+The preset is available without a new staffing flag, secret, migration, or
+billing seat. It does not hire a person, invite them to App, or create a
+workforce record.

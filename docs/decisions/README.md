@@ -8,6 +8,8 @@ way for someone to come up to speed on why certain decisions were made.
 
 Recent additions:
 
+- [047 - Staffing data placement](./047-staffing-data-placement.md) — regional
+  workforce records, separate staff identity, and browser-direct access.
 - [046 - Staging hostnames and cookies](./046-staging-hostnames-and-cookies.md)
   — flat `app-staging.{apex}` URLs for free Universal SSL and staging-suffixed
   operator cookie names.

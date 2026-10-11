@@ -67,8 +67,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			name: parsed.data.name,
 			description: '',
 			fields: template.fields,
-			submitLabel: 'Submit',
-			successMessage: 'Thank you. Your response has been received.',
+			submitLabel: template.submitLabel ?? 'Submit',
+			successMessage:
+				template.successMessage ??
+				'Thank you. Your response has been received.',
 			status: 'draft',
 		}),
 	})

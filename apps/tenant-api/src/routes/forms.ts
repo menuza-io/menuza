@@ -331,7 +331,7 @@ formOperatorRoutes.put('/:formId', async (c) => {
 	return form ? c.json({ form }) : c.json({ error: 'Form not found' }, 404)
 })
 
-formOperatorRoutes.get('/:formId/submissions', async (c) => {
+formOperatorRoutes.get('/:formId', async (c) => {
 	let orgId: string
 	try {
 		orgId = (await authenticateOperator(c)).orgId
@@ -345,13 +345,13 @@ formOperatorRoutes.get('/:formId/submissions', async (c) => {
 		.where(eq(websiteForms.id, c.req.param('formId')))
 		.limit(1)
 	if (!form) return c.json({ error: 'Form not found' }, 404)
-	const submissions = await db
-		.select()
+	const [result] = await db
+		.select({ value: count() })
 		.from(websiteFormSubmissions)
 		.where(eq(websiteFormSubmissions.formId, form.id))
-		.orderBy(desc(websiteFormSubmissions.createdAt))
-		.limit(500)
-	return c.json({ form, submissions })
+	return c.json({ form, submissionCount: result?.value ?? 0 }, 200, {
+		'Cache-Control': 'private, no-store',
+	})
 })
 
 formOperatorRoutes.delete('/:formId/submissions/:submissionId', async (c) => {

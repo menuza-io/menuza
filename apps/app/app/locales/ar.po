@@ -683,7 +683,7 @@ msgstr "قيّم متصل المكالمة بـ 1 أو 2 من 5."
 msgid "A caller was unhappy or reported a problem."
 msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 
-#: app/utils/website/form-templates.ts:25
+#: app/utils/website/form-templates.ts:28
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
 
@@ -711,7 +711,7 @@ msgstr "مكان لكل استفسار"
 msgid "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
 msgstr "المطعم هو مساحة عملك لإدارة الفروع وقوائم الطعام والطلب عبر الإنترنت والتوصيل."
 
-#: app/utils/website/form-templates.ts:41
+#: app/utils/website/form-templates.ts:44
 msgid "A short, low-friction form for prospective customers."
 msgstr "نموذج قصير وسهل لجمع بيانات العملاء المحتملين."
 
@@ -1020,7 +1020,7 @@ msgstr "إضافة منطقة توصيل"
 msgid "Add feature"
 msgstr "إضافة ميزة"
 
-#: app/components/website/create-form-dialog.tsx:161
+#: app/components/website/create-form-dialog.tsx:166
 #: app/components/website/form-builder-sidebar.tsx:127
 #: app/components/website/form-builder-sidebar.tsx:133
 msgid "Add field"
@@ -1276,7 +1276,7 @@ msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعو�
 msgid "Add-on suggestions are off in Advanced, so the agent skips these rules."
 msgstr "اقتراحات الإضافات متوقفة في الإعدادات المتقدمة، لذا يتجاوز الوكيل هذه القواعد."
 
-#: app/components/website/create-form-dialog.tsx:141
+#: app/components/website/create-form-dialog.tsx:146
 msgid "Add, name, and order each field."
 msgstr "أضف كل حقل وسمّه ورتّبه."
 
@@ -2212,7 +2212,7 @@ msgstr "تقوم المتصفحات بتشغيل الفيديو تلقائياً
 msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:539
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:556
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5938
 msgid "Build"
 msgstr "البناء"
@@ -2221,7 +2221,7 @@ msgstr "البناء"
 msgid "Build a branded HTML email with blocks."
 msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:456
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:473
 msgid "Builder"
 msgstr "المنشئ"
 
@@ -2260,7 +2260,7 @@ msgid "Button"
 msgstr "الزر"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
-#: app/components/website/create-form-dialog.tsx:258
+#: app/components/website/create-form-dialog.tsx:263
 #: app/components/website/form-builder-sidebar.tsx:696
 msgid "Button label"
 msgstr "نص الزر"
@@ -2477,7 +2477,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
 #: app/components/ui/photo-crop-form.tsx:229
-#: app/components/website/create-form-dialog.tsx:292
+#: app/components/website/create-form-dialog.tsx:302
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:467
@@ -2801,7 +2801,7 @@ msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVI
 msgid "Choose a page..."
 msgstr "اختر صفحة..."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:117
 msgid "Choose a starting point"
 msgstr "اختر نقطة بداية"
 
@@ -3048,7 +3048,7 @@ msgstr "اجمع تاريخًا ووقتًا."
 msgid "Collect a longer written answer."
 msgstr "اجمع إجابة مكتوبة أطول."
 
-#: app/utils/website/form-templates.ts:31
+#: app/utils/website/form-templates.ts:34
 msgid "Collect a name, email address, and a detailed message."
 msgstr "اجمع الاسم والبريد الإلكتروني ورسالة مفصلة."
 
@@ -3067,6 +3067,10 @@ msgstr "اجمع إجابة مكتوبة قصيرة."
 #: app/utils/website/field-types.ts:39
 msgid "Collect a valid email address."
 msgstr "اجمع بريدًا إلكترونيًا صالحًا."
+
+#: app/utils/website/form-templates.ts:68
+msgid "Collect contact details, the role, availability, and experience. Review applications in Mailbox."
+msgstr "اجمع بيانات التواصل والوظيفة المطلوبة وأوقات التفرغ والخبرة. راجع الطلبات في صندوق البريد."
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:855
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:898
@@ -3382,11 +3386,11 @@ msgstr "انقطع الاتصال. جارٍ إعادة الاتصال…"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: app/components/website/create-form-dialog.tsx:111
+#: app/components/website/create-form-dialog.tsx:113
 msgid "Contact"
 msgstr "اتصل"
 
-#: app/utils/website/form-templates.ts:30
+#: app/utils/website/form-templates.ts:33
 msgid "Contact form"
 msgstr "نموذج اتصال"
 
@@ -3751,7 +3755,7 @@ msgstr "أنشئ عنصرًا لبدء بناء قائمتك."
 #~ msgid "Create an organization"
 #~ msgstr "إنشاء منظمة"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:196
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:198
 msgid "Create and customize"
 msgstr "إنشاء وتخصيص"
 
@@ -3835,8 +3839,8 @@ msgstr "إنشاء دور مخصص"
 msgid "Create Drop"
 msgstr "إنشاء طرح"
 
-#: app/components/website/create-form-dialog.tsx:75
-#: app/components/website/create-form-dialog.tsx:303
+#: app/components/website/create-form-dialog.tsx:77
+#: app/components/website/create-form-dialog.tsx:313
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
 msgid "Create form"
 msgstr "إنشاء النموذج"
@@ -4006,7 +4010,7 @@ msgstr "إنشاء الصفحة"
 msgid "Creating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/website/create-form-dialog.tsx:305
+#: app/components/website/create-form-dialog.tsx:315
 msgid "Creating…"
 msgstr "جارٍ الإنشاء…"
 
@@ -4089,7 +4093,7 @@ msgstr "حدث مخصص"
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
 
-#: app/components/website/create-form-dialog.tsx:108
+#: app/components/website/create-form-dialog.tsx:110
 msgid "Custom form"
 msgstr "نموذج مخصص"
 
@@ -4632,7 +4636,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/roles/tenant-role-access-manager.tsx:817
 #: app/components/roles/tenant-role-access-manager.tsx:903
 #: app/components/settings/cards/organization/shop-card.tsx:268
-#: app/components/website/create-form-dialog.tsx:124
+#: app/components/website/create-form-dialog.tsx:129
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
@@ -4915,7 +4919,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:130
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:429
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5855
@@ -5818,8 +5822,8 @@ msgstr "الميزات"
 msgid "Fee: ${deliveryFee}"
 msgstr "الرسوم: ${deliveryFee}"
 
-#: app/components/website/create-form-dialog.tsx:117
-#: app/utils/website/form-templates.ts:50
+#: app/components/website/create-form-dialog.tsx:119
+#: app/utils/website/form-templates.ts:53
 msgid "Feedback"
 msgstr "تعليقات"
 
@@ -5835,7 +5839,7 @@ msgstr "إعدادات الحقل"
 msgid "Field types"
 msgstr "أنواع الحقول"
 
-#: app/components/website/create-form-dialog.tsx:138
+#: app/components/website/create-form-dialog.tsx:143
 #: app/components/website/form-builder-sidebar.tsx:841
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:200
 msgid "Fields"
@@ -5965,7 +5969,7 @@ msgstr "النموذج"
 #~ msgid "Form Identifier / Slug"
 #~ msgstr "معرّف النموذج / المسار"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:178
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:180
 msgid "Form name"
 msgstr "اسم النموذج"
 
@@ -6153,7 +6157,7 @@ msgstr "أعطني أمثلة"
 msgid "Give the usual pickup or delivery time."
 msgstr "اذكر الوقت المعتاد للاستلام أو التوصيل."
 
-#: app/utils/website/form-templates.ts:51
+#: app/utils/website/form-templates.ts:54
 msgid "Give visitors room to share thoughtful feedback."
 msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 
@@ -6854,6 +6858,11 @@ msgstr "لن تضيف عناصر هذا التصنيف تأخيرًا في ال�
 msgid "Items that offer this modifier group."
 msgstr "العناصر التي تقدّم مجموعة الإضافات هذه."
 
+#: app/components/website/create-form-dialog.tsx:122
+#: app/utils/website/form-templates.ts:67
+msgid "Job application"
+msgstr "طلب توظيف"
+
 #: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
 msgstr "انضم إلى خادم Discord"
@@ -6977,7 +6986,7 @@ msgid "Knowledge management"
 msgstr "إدارة المعرفة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
-#: app/components/website/create-form-dialog.tsx:171
+#: app/components/website/create-form-dialog.tsx:176
 #: app/components/website/form-builder-sidebar.tsx:511
 msgid "Label"
 msgstr "التسمية"
@@ -7061,8 +7070,8 @@ msgstr "بدء تشغيل اختباري في المُنشئ"
 msgid "Layout"
 msgstr "التخطيط"
 
-#: app/components/website/create-form-dialog.tsx:114
-#: app/utils/website/form-templates.ts:40
+#: app/components/website/create-form-dialog.tsx:116
+#: app/utils/website/form-templates.ts:43
 msgid "Lead capture"
 msgstr "جمع العملاء المحتملين"
 
@@ -7291,6 +7300,10 @@ msgstr "جارٍ تحميل الطلبات…"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:684
 msgid "Loading requests"
 msgstr "جارٍ تحميل الطلبات"
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:678
+msgid "Loading responses…"
+msgstr "جارٍ تحميل الردود…"
 
 #: app/components/mailbox/reviews-tab.tsx:398
 msgid "Loading reviews"
@@ -8061,7 +8074,7 @@ msgstr "بدون صوت"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/settings/cards/organization/general-settings-card.tsx:80
 #: app/components/settings/cards/profile-card.tsx:97
-#: app/components/website/create-form-dialog.tsx:85
+#: app/components/website/create-form-dialog.tsx:87
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:342
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
@@ -8205,7 +8218,7 @@ msgstr "الوجهة الجديدة"
 msgid "New Email"
 msgstr "البريد الإلكتروني الجديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:108
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:110
 msgid "New form"
 msgstr "نموذج جديد"
 
@@ -8752,7 +8765,7 @@ msgstr "لا توجد عمليات إعادة توجيه تطابق هذا ال�
 msgid "No reminder notifications set."
 msgstr "لم يتم ضبط تذكيرات."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:702
 msgid "No responses yet."
 msgstr "لا توجد ردود بعد."
 
@@ -9933,7 +9946,7 @@ msgstr "اختر مجموعة أدناه لعرضها بعد أن يختار ا�
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:121
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:123
 msgid "Pick a template, then customize every field in the builder."
 msgstr "اختر قالبًا، ثم خصّص كل حقل في المنشئ."
 
@@ -10302,7 +10315,7 @@ msgstr "اضغط تشغيل لتسمع كل صوت يقرأ تحيتك، ثم ا
 msgid "Pressed {key}"
 msgstr "تم الضغط على {key}"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:565
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5953
 msgid "Preview"
 msgstr "معاينة"
@@ -10462,7 +10475,7 @@ msgstr "الوصول العام"
 #: app/components/menu/drop-wizard/drop-form.tsx:459
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:619
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:507
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Publish"
@@ -10488,7 +10501,7 @@ msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار �
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:509
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5974
 msgid "Publish updates"
 msgstr "نشر التحديثات"
@@ -10500,7 +10513,7 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 #: app/components/phone-agent/test-call-panel.tsx:448
 #: app/components/phone-agent/test-call-panel.tsx:506
 #: app/components/website/form-builder-sidebar.tsx:721
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:410
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:427
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5853
@@ -11092,7 +11105,7 @@ msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 msgid "required"
 msgstr "مطلوب"
 
-#: app/components/website/create-form-dialog.tsx:235
+#: app/components/website/create-form-dialog.tsx:240
 #: app/components/website/form-builder-sidebar.tsx:604
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:395
 msgid "Required"
@@ -11190,8 +11203,8 @@ msgstr "جارٍ إعادة التعيين…"
 msgid "Resolved"
 msgstr "تم الحل"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:610
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:475
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:651
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:209
 msgid "Responses"
 msgstr "الردود"
@@ -11256,6 +11269,7 @@ msgstr "Resy"
 #~ msgstr "مدة الاحتفاظ"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:669
 msgid "Retry"
 msgstr "إعادة المحاولة"
 
@@ -11588,7 +11602,7 @@ msgstr "حفظ التغييرات"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:615
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:495
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
@@ -11700,7 +11714,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/roles/tenant-role-access-manager.tsx:590
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:493
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
@@ -12782,11 +12796,11 @@ msgstr "بدء محادثة"
 msgid "Start from a template"
 msgstr "البدء من قالب"
 
-#: app/components/website/create-form-dialog.tsx:78
+#: app/components/website/create-form-dialog.tsx:80
 msgid "Start from a template or build your own field set."
 msgstr "ابدأ من قالب أو أنشئ مجموعة حقول مخصصة."
 
-#: app/utils/website/form-templates.ts:24
+#: app/utils/website/form-templates.ts:27
 msgid "Start from scratch"
 msgstr "ابدأ من الصفر"
 
@@ -12834,7 +12848,7 @@ msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري.
 msgid "Started At"
 msgstr "بدأ في"
 
-#: app/components/website/create-form-dialog.tsx:97
+#: app/components/website/create-form-dialog.tsx:99
 msgid "Starting point"
 msgstr "نقطة البداية"
 
@@ -12995,7 +13009,7 @@ msgstr "سطر الموضوع"
 msgid "Submission details"
 msgstr "تفاصيل الرد"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:613
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:654
 msgid "Submissions are stored in this organization’s regional tenant database."
 msgstr "تُحفظ المشاركات في قاعدة بيانات المستأجر الإقليمية لهذه المؤسسة."
 
@@ -13003,7 +13017,7 @@ msgstr "تُحفظ المشاركات في قاعدة بيانات المستأ�
 msgid "Submit"
 msgstr "إرسال"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:624
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:686
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
@@ -13032,7 +13046,7 @@ msgstr "بدأ الاشتراك"
 msgid "Success"
 msgstr "نجاح"
 
-#: app/components/website/create-form-dialog.tsx:270
+#: app/components/website/create-form-dialog.tsx:276
 #: app/components/website/form-builder-sidebar.tsx:708
 msgid "Success message"
 msgstr "رسالة النجاح"
@@ -13271,7 +13285,7 @@ msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهر�
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:346
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:363
 msgid "Test again"
 msgstr "الاختبار مرة أخرى"
 
@@ -13296,7 +13310,7 @@ msgstr "المكالمات التجريبية غير متاحة بعد"
 msgid "Test calls never send alerts."
 msgstr "المكالمات التجريبية لا ترسل تنبيهات أبدًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:364
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:381
 msgid "Test mode — responses are not saved"
 msgstr "وضع الاختبار — لا يتم حفظ الردود"
 
@@ -14204,7 +14218,7 @@ msgid "Two-factor authentication is currently enabled. Disabling it will make yo
 msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيلها سيجعل حسابك أقل أماناً. يرجى إدخال رمز المصادقة أو رمز احتياطي للتأكيد."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
-#: app/components/website/create-form-dialog.tsx:198
+#: app/components/website/create-form-dialog.tsx:203
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:303
@@ -14252,6 +14266,10 @@ msgstr "تعذر تحميل معلومات الأسعار"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:196
 msgid "Unable to load requests. Try again."
 msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
+
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:663
+msgid "Unable to load responses. Try again."
+msgstr "تعذّر تحميل الردود. حاول مرة أخرى."
 
 #: app/components/mailbox/reviews-tab.tsx:196
 #: app/components/mailbox/reviews-tab.tsx:218
@@ -14380,7 +14398,7 @@ msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:480
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
+#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:531
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6024
 msgid "Unpublish"
@@ -15178,7 +15196,7 @@ msgstr "ما يُقترح مع الطلب، ومتى."
 msgid "What tools can help?"
 msgstr "ما الأدوات التي يمكن أن تساعد؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:118
+#: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:120
 msgid "What would you like to collect?"
 msgstr "ما الذي ترغب في جمعه؟"
 

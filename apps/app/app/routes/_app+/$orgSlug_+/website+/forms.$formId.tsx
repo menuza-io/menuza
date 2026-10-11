@@ -23,7 +23,14 @@ import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Spinner } from '@repo/ui/spinner'
 import { Textarea } from '@repo/ui/textarea'
-import { useCallback, useContext, useMemo, useRef, useState } from 'react'
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import {
 	Link,
 	type ActionFunctionArgs,
@@ -41,6 +48,7 @@ import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { FormBuilderSidebar } from '#app/components/website/form-builder-sidebar.tsx'
 import { LocaleContext } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { useMailboxClient } from '#app/hooks/use-mailbox.ts'
 import {
 	useConfirmBlocker,
 	useDirtyBeforeUnload,
@@ -69,11 +77,16 @@ type WebsiteForm = {
 	submitLabel: string
 	successMessage: string
 }
-type FormSubmission = {
-	id: string
-	values: Record<string, string>
-	createdAt: string | null
-}
+const submissionsSchema = z.object({
+	submissions: z.array(
+		z.object({
+			id: z.string(),
+			values: z.record(z.string()),
+			createdAt: z.string().nullable(),
+		}),
+	),
+})
+type FormSubmission = z.infer<typeof submissionsSchema>['submissions'][number]
 
 const updateSchema = z.object({
 	name: z.string().trim().min(1).max(120),
@@ -99,7 +112,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 	})
 	const response = await fetchTenant(
-		`/operator/forms/${encodeURIComponent(params.formId || '')}/submissions`,
+		`/operator/forms/${encodeURIComponent(params.formId || '')}`,
 		{ signal: AbortSignal.timeout(3000) },
 	)
 	if (!response.ok) {
@@ -112,12 +125,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.siteLocales,
 		organization.siteDefaultLocale,
 	)
-	const payload = (await response.json()) as {
-		form: WebsiteForm
-		submissions: FormSubmission[]
-	}
+	const payload: unknown = await response.json()
+	const form = parseTenantFormResponse(payload)
+	if (!form) throw new Response('Invalid regional form', { status: 502 })
+	const count = z
+		.object({ submissionCount: z.number().int().nonnegative() })
+		.safeParse(payload)
 	return {
-		...payload,
+		form,
+		submissionCount: count.success ? count.data.submissionCount : null,
+		orgSlug: params.orgSlug || '',
 		locales,
 		defaultLocale: organization.siteDefaultLocale ?? 'en',
 	}
@@ -458,9 +475,9 @@ export default function WebsiteFormBuilderRoute() {
 										<Trans>Responses</Trans>
 									)}
 								</span>
-								{mode !== 'responses' ? (
+								{mode !== 'responses' && initial.submissionCount !== null ? (
 									<Badge variant="secondary" className="ml-1">
-										{initial.submissions.length}
+										{initial.submissionCount}
 									</Badge>
 								) : null}
 							</Button>
@@ -553,7 +570,7 @@ export default function WebsiteFormBuilderRoute() {
 					{mode === 'responses' ? (
 						<Responses
 							form={form}
-							submissions={initial.submissions}
+							orgSlug={initial.orgSlug}
 							defaultLocale={initial.defaultLocale}
 						/>
 					) : (
@@ -591,14 +608,38 @@ export default function WebsiteFormBuilderRoute() {
 
 function Responses({
 	form,
-	submissions,
+	orgSlug,
 	defaultLocale,
 }: {
 	form: WebsiteForm
-	submissions: FormSubmission[]
+	orgSlug: string
 	defaultLocale: string
 }) {
 	const { activeLocale } = useContext(LocaleContext)
+	const request = useMailboxClient(orgSlug)
+	const [submissions, setSubmissions] = useState<FormSubmission[] | null>(null)
+	const [error, setError] = useState(false)
+	const [attempt, setAttempt] = useState(0)
+	useEffect(() => {
+		let active = true
+		const controller = new AbortController()
+		setSubmissions(null)
+		setError(false)
+		void request(`/form-responses/${encodeURIComponent(form.id)}`, {
+			signal: controller.signal,
+		})
+			.then((payload) => {
+				const result = submissionsSchema.parse(payload)
+				if (active) setSubmissions(result.submissions)
+			})
+			.catch(() => {
+				if (active) setError(true)
+			})
+		return () => {
+			active = false
+			controller.abort()
+		}
+	}, [form.id, request, attempt])
 	const responseFields = form.fields.filter(
 		(field) => field.type !== 'heading' && field.type !== 'paragraph',
 	)
@@ -616,52 +657,74 @@ function Responses({
 						</Trans>
 					</p>
 				</div>
-				<div className="border-border overflow-x-auto rounded-xl border">
-					<table className="w-full text-left text-sm">
-						<thead className="bg-muted/50 border-b">
-							<tr>
-								<th className="px-4 py-3 font-medium">
-									<Trans>Submitted</Trans>
-								</th>
-								{responseFields.map((field) => (
-									<th key={field.id} className="px-4 py-3 font-medium">
-										{pickLocalized(field.label, activeLocale, defaultLocale)}
-									</th>
-								))}
-							</tr>
-						</thead>
-						<tbody className="divide-y">
-							{submissions.length === 0 ? (
+				{error ? (
+					<div className="space-y-3" role="alert">
+						<p className="text-destructive text-sm">
+							<Trans>Unable to load responses. Try again.</Trans>
+						</p>
+						<Button
+							variant="outline"
+							onClick={() => setAttempt((value) => value + 1)}
+						>
+							<Trans>Retry</Trans>
+						</Button>
+					</div>
+				) : submissions === null ? (
+					<p
+						className="text-muted-foreground flex items-center gap-2 text-sm"
+						role="status"
+					>
+						<Spinner />
+						<Trans>Loading responses…</Trans>
+					</p>
+				) : (
+					<div className="border-border overflow-x-auto rounded-xl border">
+						<table className="w-full text-left text-sm">
+							<thead className="bg-muted/50 border-b">
 								<tr>
-									<td
-										colSpan={responseFields.length + 1}
-										className="text-muted-foreground px-4 py-16 text-center"
-									>
-										<Trans>No responses yet.</Trans>
-									</td>
+									<th className="px-4 py-3 font-medium">
+										<Trans>Submitted</Trans>
+									</th>
+									{responseFields.map((field) => (
+										<th key={field.id} className="px-4 py-3 font-medium">
+											{pickLocalized(field.label, activeLocale, defaultLocale)}
+										</th>
+									))}
 								</tr>
-							) : (
-								submissions.map((submission) => (
-									<tr key={submission.id}>
-										<td className="px-4 py-3 whitespace-nowrap">
-											{submission.createdAt
-												? new Date(submission.createdAt).toLocaleString()
-												: '—'}
+							</thead>
+							<tbody className="divide-y">
+								{submissions.length === 0 ? (
+									<tr>
+										<td
+											colSpan={responseFields.length + 1}
+											className="text-muted-foreground px-4 py-16 text-center"
+										>
+											<Trans>No responses yet.</Trans>
 										</td>
-										{responseFields.map((field) => (
-											<td
-												key={field.id}
-												className="max-w-sm px-4 py-3 whitespace-pre-wrap"
-											>
-												{submission.values[field.id] || '—'}
-											</td>
-										))}
 									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
+								) : (
+									submissions.map((submission) => (
+										<tr key={submission.id}>
+											<td className="px-4 py-3 whitespace-nowrap">
+												{submission.createdAt
+													? new Date(submission.createdAt).toLocaleString()
+													: '—'}
+											</td>
+											{responseFields.map((field) => (
+												<td
+													key={field.id}
+													className="max-w-sm px-4 py-3 whitespace-pre-wrap"
+												>
+													{submission.values[field.id] || '—'}
+												</td>
+											))}
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
+				)}
 			</div>
 		</ScrollArea>
 	)

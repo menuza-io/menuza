@@ -17,6 +17,7 @@ import { useCallback, useState } from 'react'
 import { useFetcher } from 'react-router'
 
 import {
+	getFormTemplate,
 	getFormTemplateFields,
 	type FormTemplateId,
 } from '#app/utils/website/form-templates.ts'
@@ -48,6 +49,7 @@ export function CreateFormDialog({
 	const [fields, setFields] = useState<FormField[]>(
 		getFormTemplateFields('blank') ?? [],
 	)
+	const selectedTemplate = getFormTemplate(template)
 
 	const closeAfterSuccess = useCallback(
 		(node: HTMLSpanElement | null) => {
@@ -115,6 +117,9 @@ export function CreateFormDialog({
 								</option>
 								<option value="feedback">
 									<Trans>Feedback</Trans>
+								</option>
+								<option value="job-application">
+									<Trans>Job application</Trans>
 								</option>
 							</select>
 						</div>
@@ -258,9 +263,10 @@ export function CreateFormDialog({
 								<Trans>Button label</Trans>
 							</Label>
 							<Input
+								key={`submit-${template}`}
 								id="submit-label"
 								name="submitLabel"
-								defaultValue="Submit"
+								defaultValue={selectedTemplate?.submitLabel ?? 'Submit'}
 								required
 								maxLength={50}
 							/>
@@ -270,9 +276,13 @@ export function CreateFormDialog({
 								<Trans>Success message</Trans>
 							</Label>
 							<Input
+								key={`success-${template}`}
 								id="success-message"
 								name="successMessage"
-								defaultValue="Thank you. Your response has been received."
+								defaultValue={
+									selectedTemplate?.successMessage ??
+									'Thank you. Your response has been received.'
+								}
 								required
 								maxLength={300}
 							/>

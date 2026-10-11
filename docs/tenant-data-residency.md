@@ -5,6 +5,7 @@ This is the canonical guide for **customer** data on organization public sites
 fields that touch phone, name, or email collected on a tenant site.
 
 Related: [ADR 045](./decisions/045-tenant-data-residency.md),
+[ADR 047: staffing placement](./decisions/047-staffing-data-placement.md),
 [Authentication](./authentication.md#tenant-sites-phone-authentication),
 [Deployment](./deployment.md#regional-tenant-data-plane),
 [Database](./database.md), [Secrets](./secrets.md).
@@ -20,6 +21,20 @@ Do not mix these up.
 
 Customer PII must never land in the US control-plane database, App session
 cookies, Admin, or a Sites server-side auth proxy.
+
+### Workforce and applicant data
+
+[ADR 047](./decisions/047-staffing-data-placement.md) extends the regional
+boundary to all staffing records and rules: employee profiles, positions and
+pay, schedules, punches, applicants, onboarding, and authoritative audit.
+Operator identity, membership, permissions, and billing stay in the control
+plane. A staff record does not require an operator account or billed seat. Staff
+and kiosk credentials must not reuse customer auth.
+
+The initial [careers form preset](./staffing.md) uses existing regional website
+form submissions and browser-direct Mailbox access. The form builder loads only
+definitions and aggregate response counts on the server; its Responses view
+reads submission values browser-direct through mailbox-scoped credentials.
 
 ## Why this shape exists
 
@@ -347,9 +362,11 @@ deleted and populated from tenant-api on a cache miss. It never contains form
 responses or submitted customer values.
 
 Website form submissions remain in the organization's regional tenant database.
-The daily `form-submission-retention` job asks the matching regional tenant-api
-to delete submissions older than 365 days; submission values never pass through
-the US control plane. For a data-subject deletion request, an authorized
-operator can delete one response with
+The `form-submission-retention` handler asks the matching regional tenant-api to
+delete submissions older than 365 days; submission values never pass through the
+US control plane. It is **not scheduled by the checked-in cron config**; verify
+actual deployment configuration before relying on automatic retention. See
+[scheduled jobs](./scheduled-jobs.md). For a data-subject deletion request, an
+authorized operator can delete one response with
 `DELETE /operator/forms/:formId/submissions/:submissionId`. Deleting a form
 still cascades to all of its submissions.

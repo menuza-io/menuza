@@ -14,12 +14,19 @@ import { count, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { findActiveOrganizationById } from '../lib/origin.ts'
+import {
+	findActiveOrganizationById,
+	resolveOrganizationForBrowserAuth,
+} from '../lib/origin.ts'
 import { draftMailboxReply, isMailboxAIConfigured } from '../lib/mailbox-ai.ts'
 import { mailboxRoutes } from './mailbox.ts'
+import { formOperatorRoutes, publicFormRoutes } from './forms.ts'
 import { operatorRoutes } from './operator.ts'
 
-vi.mock('../lib/origin.ts', () => ({ findActiveOrganizationById: vi.fn() }))
+vi.mock('../lib/origin.ts', () => ({
+	findActiveOrganizationById: vi.fn(),
+	resolveOrganizationForBrowserAuth: vi.fn(),
+}))
 vi.mock('../lib/mailbox-ai.ts', () => ({
 	isMailboxAIConfigured: vi.fn(() => false),
 	draftMailboxReply: vi.fn(),
@@ -37,6 +44,7 @@ describe('regional mailbox', () => {
 	let directory: string
 	let app: Hono
 	let submissionId: string
+	let formId: string
 	async function token(
 		operatorId = 'operator-a',
 		scope: string | null = 'mailbox',
@@ -95,8 +103,11 @@ describe('regional mailbox', () => {
 			})
 			.returning()
 		submissionId = submission!.id
+		formId = form!.id
 		app = new Hono()
 			.route('/operator/mailbox', mailboxRoutes)
+			.route('/operator/forms', formOperatorRoutes)
+			.route('/forms', publicFormRoutes)
 			.route('/operator', operatorRoutes)
 	})
 	afterEach(async () => {
@@ -138,6 +149,161 @@ describe('regional mailbox', () => {
 				})
 			).status,
 		).toBe(401)
+	})
+	it('returns form definitions without submission values', async () => {
+		const response = await app.request(`/operator/forms/${formId}`, {
+			headers: { Authorization: `Bearer ${await token('operator-a', null)}` },
+		})
+		expect(response.status).toBe(200)
+		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+		const payload = await response.json()
+		expect(payload.form.id).toBe(formId)
+		expect(payload.submissionCount).toBe(1)
+		expect(payload).not.toHaveProperty('submissions')
+		expect(JSON.stringify(payload)).not.toContain('rana@example.com')
+		expect((await app.request(`/operator/forms/${formId}`)).status).toBe(401)
+	})
+	it('reads only the selected form responses through mailbox credentials', async () => {
+		const db = await getTenantDb(orgId)
+		const [otherForm] = await db
+			.insert(websiteForms)
+			.values({ name: 'Other form', fields })
+			.returning()
+		await db.insert(websiteFormSubmissions).values({
+			formId: otherForm!.id,
+			values: { message: 'Unrelated response' },
+		})
+		const response = await call(`/form-responses/${formId}`)
+		expect(response.status).toBe(200)
+		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+		const payload = await response.json()
+		expect(payload.submissions).toHaveLength(1)
+		expect(payload.submissions[0].id).toBe(submissionId)
+		expect(JSON.stringify(payload)).not.toContain('Unrelated response')
+		expect((await call('/form-responses/missing')).status).toBe(404)
+	})
+	it('keeps another organization from reading this form', async () => {
+		const otherOrgId = 'clw9x0a12000008l00mailbox2'
+		await provisionTenantDb(otherOrgId)
+		try {
+			vi.mocked(findActiveOrganizationById).mockResolvedValue({
+				id: otherOrgId,
+				dataRegion: 'us',
+			} as Awaited<ReturnType<typeof findActiveOrganizationById>>)
+			const response = await app.request(
+				`/operator/mailbox/form-responses/${formId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${await token('operator-b', 'mailbox', otherOrgId)}`,
+					},
+				},
+			)
+			expect(response.status).toBe(404)
+			expect(JSON.stringify(await response.json())).not.toContain('Rana')
+		} finally {
+			await destroyTenantDb(otherOrgId)
+		}
+	})
+	it('accepts a published application into the regional mailbox, not a draft', async () => {
+		const db = await getTenantDb(orgId)
+		const applicationFields = [
+			{ id: 'name', label: 'Full name', type: 'name', required: true },
+			{ id: 'email', label: 'Email', type: 'email', required: true },
+			{ id: 'phone', label: 'Phone', type: 'tel', required: false },
+			{ id: 'role', label: 'Role interested in', type: 'text', required: true },
+			{
+				id: 'availability',
+				label: 'Availability',
+				type: 'textarea',
+				required: true,
+			},
+			{
+				id: 'experience',
+				label: 'Experience',
+				type: 'textarea',
+				required: false,
+			},
+		] as const
+		const [applicationForm] = await db
+			.insert(websiteForms)
+			.values({
+				name: 'Join our team',
+				fields: applicationFields,
+				status: 'draft',
+				submitLabel: 'Send application',
+				successMessage: 'Application received',
+			})
+			.returning()
+		vi.mocked(resolveOrganizationForBrowserAuth).mockResolvedValue({
+			id: orgId,
+			dataRegion: 'us',
+		} as Awaited<ReturnType<typeof resolveOrganizationForBrowserAuth>>)
+		const submit = (values: Record<string, string>) =>
+			app.request(`/forms/${applicationForm!.id}/submissions`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://cafe.example',
+				},
+				body: JSON.stringify({ values }),
+			})
+		const answers = {
+			name: 'Example Applicant',
+			email: 'applicant@example.com',
+			role: 'Cook',
+			availability: 'Weekday evenings',
+		}
+		expect((await submit(answers)).status).toBe(404)
+		await db
+			.update(websiteForms)
+			.set({ status: 'published' })
+			.where(eq(websiteForms.id, applicationForm!.id))
+		expect((await submit({ ...answers, email: 'invalid' })).status).toBe(400)
+		expect((await submit(answers)).status).toBe(201)
+		expect(resolveOrganizationForBrowserAuth).toHaveBeenCalledWith(
+			'https://cafe.example',
+			{},
+		)
+		const response = await call(`/form-responses/${applicationForm!.id}`)
+		expect((await response.json()).submissions[0].values).toMatchObject(answers)
+		const mailbox = await call('/forms?search=Join%20our%20team')
+		expect((await mailbox.json()).items).toHaveLength(1)
+	})
+	it('refuses unscoped, customer, and wrong-region form-response requests', async () => {
+		expect(
+			(await app.request(`/operator/mailbox/form-responses/${formId}`)).status,
+		).toBe(401)
+		const unscoped = await token('operator-a', null)
+		expect(
+			(
+				await app.request(`/operator/mailbox/form-responses/${formId}`, {
+					headers: { Authorization: `Bearer ${unscoped}` },
+				})
+			).status,
+		).toBe(401)
+		const customer = await new SignJWT({
+			orgId,
+			role: 'customer',
+			scope: 'mailbox',
+		})
+			.setSubject('customer-a')
+			.setProtectedHeader({ alg: 'HS256' })
+			.setAudience('tenant-api')
+			.setIssuer(brand.shortName)
+			.setExpirationTime('15m')
+			.sign(new TextEncoder().encode(secret))
+		expect(
+			(
+				await app.request(`/operator/mailbox/form-responses/${formId}`, {
+					headers: { Authorization: `Bearer ${customer}` },
+				})
+			).status,
+		).toBe(401)
+		vi.mocked(findActiveOrganizationById).mockResolvedValue({
+			id: orgId,
+			dataRegion: 'ksa',
+		} as Awaited<ReturnType<typeof findActiveOrganizationById>>)
+		expect((await call(`/form-responses/${formId}`)).status).toBe(404)
 	})
 	it('distinguishes missing organization metadata from a region mismatch', async () => {
 		vi.mocked(findActiveOrganizationById).mockResolvedValueOnce(null)

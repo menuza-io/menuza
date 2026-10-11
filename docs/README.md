@@ -27,6 +27,10 @@ in the coming weeks. Stay tuned!
   browser-direct customer auth, wipe-on-region-change, and KSA PII isolation.
 - [Scheduled jobs](./scheduled-jobs.md) - Cloudflare cron worker, App job
   routes, on-demand video media transforms, and ops scripts.
+- [Staffing plan](./staffing-plan.md) - MVP phases, regional workforce
+  architecture, cut lines, and pilot release gates.
+- [Careers form](./staffing.md) - Publish the job-application preset, review
+  applications in Mailbox, and verify retention before collecting real data.
 - [Decisions](./decisions/README.md) - The reasoning behind various decisions
   made for the Epic Stack. A good historical record.
 - [Guiding Principles](./guiding-principles.md) - The guiding principles behind
