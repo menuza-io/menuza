@@ -65,7 +65,13 @@ export async function getOperatorTenantClient(
 	request: Request,
 	orgSlug: string,
 	options: {
-		scope?: 'mailbox' | 'phone_calls' | 'orders:read' | 'orders:write'
+		scope?:
+			'mailbox' | 'phone_calls' | 'orders:read' | 'orders:write' | 'staffing'
+		/**
+		 * Extra signed claims for scopes that carry structured grants (staffing
+		 * areas and locations). They cannot override the core claims.
+		 */
+		claims?: Record<string, unknown>
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */
@@ -111,6 +117,7 @@ export async function getOperatorTenantClient(
 
 	const secret = new TextEncoder().encode(operatorToken)
 	const jwt = await new SignJWT({
+		...options.claims,
 		orgId: organization.id,
 		role: 'operator',
 		scope: options.scope,

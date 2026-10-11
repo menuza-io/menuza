@@ -20,6 +20,7 @@ import {
 	staffingTokenAllows,
 	staffingTokenAllowsLocation,
 	staffingTokenClaimsSchema,
+	staffingTokenLocationZone,
 } from './token.ts'
 
 const at = (iso: string) => new Date(iso)
@@ -60,6 +61,10 @@ describe('token claims', () => {
 		scope: 'staffing',
 		areas: { staff: 'read', schedule: 'write' },
 		locationIds: null,
+		locations: [
+			{ id: 'loc-a', tz: 'America/New_York' },
+			{ id: 'loc-b', tz: 'Asia/Riyadh' },
+		],
 	})
 
 	it('separates read and write per area', () => {
@@ -71,9 +76,33 @@ describe('token claims', () => {
 
 	it('treats null locations as all and an empty list as none', () => {
 		expect(staffingTokenAllowsLocation(claims, 'loc-a')).toBe(true)
-		expect(staffingTokenAllowsLocation({ locationIds: [] }, 'loc-a')).toBe(
-			false,
-		)
+		expect(
+			staffingTokenAllowsLocation({ ...claims, locationIds: [] }, 'loc-a'),
+		).toBe(false)
+		expect(
+			staffingTokenAllowsLocation(
+				{ ...claims, locationIds: ['loc-b'] },
+				'loc-a',
+			),
+		).toBe(false)
+	})
+	it('never allows a location the signed list does not contain', () => {
+		expect(staffingTokenAllowsLocation(claims, 'loc-z')).toBe(false)
+		expect(
+			staffingTokenAllowsLocation(
+				{ ...claims, locationIds: ['loc-z'] },
+				'loc-z',
+			),
+		).toBe(false)
+		expect(staffingTokenLocationZone(claims, 'loc-b')).toBe('Asia/Riyadh')
+	})
+	it('rejects invalid location time zones', () => {
+		expect(
+			staffingTokenClaimsSchema.safeParse({
+				...claims,
+				locations: [{ id: 'loc-a', tz: 'Mars/Base' }],
+			}).success,
+		).toBe(false)
 	})
 
 	it('rejects unknown areas and other scopes', () => {
@@ -82,6 +111,7 @@ describe('token claims', () => {
 				scope: 'staffing',
 				areas: { payroll: 'write' },
 				locationIds: null,
+				locations: [],
 			}).success,
 		).toBe(false)
 		expect(
@@ -89,6 +119,7 @@ describe('token claims', () => {
 				scope: 'mailbox',
 				areas: {},
 				locationIds: null,
+				locations: [],
 			}).success,
 		).toBe(false)
 	})

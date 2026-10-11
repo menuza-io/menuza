@@ -36,6 +36,13 @@ form submissions and browser-direct Mailbox access. The form builder loads only
 definitions and aggregate response counts on the server; its Responses view
 reads submission values browser-direct through mailbox-scoped credentials.
 
+The staff roster (`staff_members`, `staff_positions`, `staff_assignments`,
+`staff_events`, `staffing_settings`) lives in the per-org tenant database. App
+mints a 15-minute `staffing` operator JWT at `/{orgSlug}/staffing/token` with
+per-area grants and the organization's location ids and time zones; the browser
+calls `/operator/staffing/*` on the regional node directly. App SSR renders only
+control-plane data (locations, member emails for the "has login" hint).
+
 ## Why this shape exists
 
 App and Admin run in the US. KSA organizations require that customer PII is
@@ -171,6 +178,8 @@ migrated.
    `hasProvisionedDb = true`, whether or not the site is published.
 5. Existing visitors must sign in again. Old tokens are useless against the new
    empty database.
+6. Staff records, schedules, time cards, and paired kiosks are deleted with the
+   old database. The confirm dialog says so. Export timesheets first.
 
 ## Tenant-api surface
 

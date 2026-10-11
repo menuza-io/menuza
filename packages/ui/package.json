@@ -77,6 +77,7 @@
     "./status-button": "./components/status-button.tsx",
     "./square-pen-icon": "./components/square-pen-icon.tsx",
     "./priority-signal": "./components/priority-signal.tsx",
+    "./position-color": "./components/position-color.tsx",
     "./image-cropper": "./components/image-cropper.tsx",
     "./nav-main": "./components/nav-main.tsx",
     "./not-found-page": "./components/not-found-page.tsx",

@@ -29,6 +29,7 @@ module is organization-wide.
 | `read:schedule:any` / `update:...`     | View / edit and publish shifts             |
 | `read:timeclock:any` / `update:...`    | View / correct, approve, lock, pair kiosks |
 | `read:hiring:any` / `update:hiring...` | Reserved for structured hiring             |
+| `read:staff_pay:any`                   | Pay rates and labor cost (with the flag)   |
 
 Only the built-in **admin** role receives these permissions. Grant them to a
 custom role in **Settings → Roles** when a manager needs access. Writes require
@@ -37,6 +38,49 @@ and never change billed seats.
 
 Disabling a flag stops new tokens and hides routes. It does not stop an
 already-paired kiosk: revoke kiosk devices first (see the kiosk runbook below).
+
+During support impersonation every staffing grant is read-only.
+
+## How staffing data moves
+
+App never reads staff names, phones, shifts, or punches. Pages load
+control-plane data (locations, permissions) on the server, then the browser:
+
+1. calls `GET /{orgSlug}/staffing/token`, which re-checks flags and permissions
+   and returns a 15-minute `staffing` JWT plus the regional tenant-api URL;
+2. calls `/operator/staffing/*` on that regional node directly.
+
+The token carries `areas` (`staff`, `schedule`, `timeclock`: `read` or `write`),
+`locationIds` (`null` = all; location-scoped managers are not built yet), the
+organization's `locations` with time zones, and `canViewPay`. tenant-api accepts
+a location only if it is in that signed list, and a read claim never writes.
+Code: `apps/tenant-api/src/lib/staffing-auth.ts`,
+`apps/app/app/hooks/use-staffing-client.ts`.
+
+## Team
+
+**Staff → Team** (`/{orgSlug}/staffing/team`) lists active and terminated team
+members with search.
+
+- **Add team member**: name, optional email (used to send schedules), phone,
+  hire date, manager note, and one or more location + position pairs with one
+  primary position per location.
+- **Add in bulk**: paste up to 200 lines of `name, email, phone, position`
+  (commas or tabs). The dialog previews row errors before anything is saved; the
+  import runs in one transaction, skips emails already on the team, and creates
+  missing positions.
+- **Positions**: name and color. Archive instead of deleting so history keeps
+  its labels.
+- **Terminate** records the last day and an optional manager-only reason, and
+  releases that person's shifts after the last day to open shifts. **Rehire**
+  restores them. History is never deleted.
+- **Settings**: week start (Monday or Sunday), weekly hours warning, and late
+  clock-in grace. These drive warnings only.
+- "Has an App login" compares the staff email with organization member emails in
+  the browser. It is a hint, not a link; staff never need a login.
+
+Every change writes a regional `staff_events` row with the operator's opaque
+user id.
 
 ## Careers form
 

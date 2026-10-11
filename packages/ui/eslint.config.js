@@ -14,6 +14,12 @@ export default [
 		},
 	},
 	{
+		// Staff positions need a fixed categorical palette wider than the
+		// status colors; callers pick a key, never a color class.
+		files: ['components/position-color.tsx'],
+		rules: { 'shadcn/no-raw-colors': 'off' },
+	},
+	{
 		// The chart component injects chart color CSS variables through a <style> element.
 		files: ['components/ui/chart.tsx'],
 		rules: { 'shadcn/no-inline-styles': 'off' },

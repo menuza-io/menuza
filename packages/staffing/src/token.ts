@@ -1,6 +1,8 @@
 import { z } from 'zod'
+import { timeZoneSchema } from './time.ts'
 
 export const STAFFING_SCOPE = 'staffing'
+export const STAFFING_TOKEN_MAX_LOCATIONS = 100
 
 export const STAFFING_AREAS = ['staff', 'schedule', 'timeclock'] as const
 export type StaffingArea = (typeof STAFFING_AREAS)[number]
@@ -23,6 +25,14 @@ export const staffingTokenClaimsSchema = z.object({
 		})
 		.strict(),
 	locationIds: z.array(z.string().min(1).max(64)).max(200).nullable(),
+	/**
+	 * The organization's active locations with their IANA time zone. The
+	 * control plane owns locations; tenant-api trusts this signed list to
+	 * validate location ids and snapshot time zones without a cross-plane call.
+	 */
+	locations: z
+		.array(z.object({ id: z.string().min(1).max(64), tz: timeZoneSchema }))
+		.max(STAFFING_TOKEN_MAX_LOCATIONS),
 	canViewPay: z.boolean().optional(),
 })
 export type StaffingTokenClaims = z.infer<typeof staffingTokenClaimsSchema>
@@ -38,8 +48,18 @@ export function staffingTokenAllows(
 }
 
 export function staffingTokenAllowsLocation(
-	claims: Pick<StaffingTokenClaims, 'locationIds'>,
+	claims: Pick<StaffingTokenClaims, 'locationIds' | 'locations'>,
 	locationId: string,
 ) {
+	if (!claims.locations.some((location) => location.id === locationId)) {
+		return false
+	}
 	return claims.locationIds === null || claims.locationIds.includes(locationId)
+}
+
+export function staffingTokenLocationZone(
+	claims: Pick<StaffingTokenClaims, 'locations'>,
+	locationId: string,
+) {
+	return claims.locations.find((location) => location.id === locationId)?.tz
 }

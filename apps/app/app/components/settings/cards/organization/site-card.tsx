@@ -184,9 +184,9 @@ export function SiteCard({
 						</label>
 						<p className="text-muted-foreground mt-1 text-sm">
 							<Trans>
-								Visitor names, phone numbers, and emails are stored in this
-								region. Changing it after customers have signed in permanently
-								deletes that data — it is not moved.
+								Visitor names, phone numbers, and emails, plus staff records and
+								time cards, are stored in this region. Changing it after data
+								exists permanently deletes that data — it is not moved.
 							</Trans>
 						</p>
 					</div>
@@ -245,6 +245,11 @@ export function SiteCard({
 										region — names, phone numbers, emails, and login sessions.
 										This cannot be undone. New sign-ins will start from an empty
 										database in the new region.
+									</Trans>{' '}
+									<Trans>
+										It also deletes staff records, schedules, time cards, and
+										paired time clocks. Export timesheets you need to keep
+										before switching.
 									</Trans>
 								</AlertDialogDescription>
 							</AlertDialogHeader>

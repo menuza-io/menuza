@@ -1048,7 +1048,128 @@ export const voiceCallRequestsRelations = relations(
 )
 
 // ==========================================
-// 12. INFERRED TYPES
+// 12. STAFFING (workforce records stay regional; see ADR 047)
+// ==========================================
+// Staff are not operator accounts. `user_id` is an optional opaque link to a
+// control-plane user and is never used for authorization. The per-org database
+// file is the tenancy boundary, like `customers`.
+export const staffMembers = sqliteTable(
+	'staff_members',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		userId: text('user_id'),
+		firstName: text('first_name').notNull(),
+		lastName: text('last_name').notNull().default(''),
+		email: text('email'),
+		phone: text('phone'),
+		status: text('status', { enum: ['active', 'terminated'] })
+			.notNull()
+			.default('active'),
+		hiredOn: text('hired_on'),
+		terminatedOn: text('terminated_on'),
+		terminationReason: text('termination_reason'),
+		note: text('note').notNull().default(''),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+		updatedAt: integer('updated_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_staff_members_status').on(table.status, table.lastName),
+		index('idx_staff_members_email').on(table.email),
+	],
+)
+
+export const staffPositions = sqliteTable(
+	'staff_positions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		colorKey: text('color_key').notNull().default('gray'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		archivedAt: integer('archived_at', { mode: 'timestamp' }),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		uniqueIndex('staff_positions_name_unique').on(sql`lower(${table.name})`),
+	],
+)
+
+// `location_id` is an opaque control-plane location id, like
+// `restaurant_orders.location_id`.
+export const staffAssignments = sqliteTable(
+	'staff_assignments',
+	{
+		staffId: text('staff_id')
+			.notNull()
+			.references(() => staffMembers.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
+		positionId: text('position_id')
+			.notNull()
+			.references(() => staffPositions.id, { onDelete: 'restrict' }),
+		isPrimary: integer('is_primary', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.staffId, table.locationId, table.positionId],
+		}),
+		index('idx_staff_assignments_location').on(table.locationId),
+		index('idx_staff_assignments_position').on(table.positionId),
+	],
+)
+
+// Regional audit trail for workforce changes. `actor_ref` is the operator
+// token subject (opaque control-plane user id) or `kiosk:<deviceId>`.
+export const staffEvents = sqliteTable(
+	'staff_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		staffId: text('staff_id'),
+		kind: text('kind').notNull(),
+		actorRef: text('actor_ref').notNull(),
+		detail: text('detail', { mode: 'json' }),
+		at: integer('at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_staff_events_staff').on(table.staffId, table.at),
+		index('idx_staff_events_at').on(table.at),
+	],
+)
+
+export const staffingSettings = sqliteTable('staffing_settings', {
+	id: text('id').primaryKey().default('default'),
+	weekStart: text('week_start', { enum: ['monday', 'sunday'] })
+		.notNull()
+		.default('monday'),
+	weeklyHoursThreshold: real('weekly_hours_threshold').default(40),
+	lateGraceMinutes: integer('late_grace_minutes').notNull().default(5),
+	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now'))`),
+})
+
+export type StaffMember = typeof staffMembers.$inferSelect
+export type StaffPosition = typeof staffPositions.$inferSelect
+export type StaffAssignment = typeof staffAssignments.$inferSelect
+export type StaffEvent = typeof staffEvents.$inferSelect
+export type StaffingSettingsRow = typeof staffingSettings.$inferSelect
+
+// ==========================================
+// 13. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
