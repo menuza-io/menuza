@@ -1,4 +1,5 @@
 import { getLocationCurrency } from '@repo/common/location-currency'
+import { pickLocalized } from '@repo/common/site-locales'
 import {
 	and,
 	asc,
@@ -36,8 +37,10 @@ export async function loadStaffingLocations(
 		)
 		.where(eq(OrganizationLocation.organizationId, organizationId))
 		.orderBy(asc(OrganizationLocation.createdAt))
-	return rows.map(({ address, dataRegion, ...location }) => ({
+	return rows.map(({ address, dataRegion, name, ...location }) => ({
 		...location,
+		// Location names are stored as a JSON locale map.
+		name: pickLocalized(name, 'en', 'en') || name,
 		currency:
 			dataRegion.toLowerCase() === 'ksa' ? 'SAR' : getLocationCurrency(address),
 	}))
