@@ -41,7 +41,9 @@ The staff roster (`staff_members`, `staff_positions`, `staff_assignments`,
 mints a 15-minute `staffing` operator JWT at `/{orgSlug}/staffing/token` with
 per-area grants and the organization's location ids and time zones; the browser
 calls `/operator/staffing/*` on the regional node directly. App SSR renders only
-control-plane data (locations, member emails for the "has login" hint).
+control-plane data (locations, member emails for the "has login" hint). Shifts
+and publish history (`shifts`, `schedule_publications`) are regional too, and
+schedule emails are sent by the regional node, not App.
 
 ## Why this shape exists
 

@@ -82,6 +82,45 @@ members with search.
 Every change writes a regional `staff_events` row with the operator's opaque
 user id.
 
+## Schedule
+
+**Staff → Schedule** (`/{orgSlug}/staffing/schedule`) is a week grid per
+location: one row per person assigned to the location plus an **Open shifts**
+row. The week starts on the day set in Team → Settings.
+
+- Click **+** in a cell to add a shift: person (or open), position, start, end,
+  unpaid break, and a note staff see. **Also add on** repeats it on other days
+  of the same week. An end at or before the start ends the next day.
+- Shifts store the location's wall-clock times, its time zone, and UTC instants,
+  so copies across a DST change keep their local times.
+- Warnings, not blocks: overlapping shifts for the same person (including at
+  another location) are outlined, and weekly totals above the hours setting are
+  flagged. The footer shows paid hours and headcount per day.
+- **Copy week** copies shifts from an earlier week (all, or one position) as
+  drafts. People who were terminated or no longer work at the location become
+  open shifts. **Replace** first removes this week's matching shifts.
+- **Print** prints the grid without controls.
+
+### Publish
+
+Edits are drafts. Staff, the kiosk, and emails only see the published copy of a
+shift. Deleting a published shift marks it **Removed** until the next publish;
+unpublished shifts are deleted at once.
+
+**Publish** (with the count of unpublished changes) applies every change for
+that location-week in one transaction, records the publication (who, when,
+changes, notified), and emails each affected person **their own** shifts for the
+week, including shifts they no longer have. Emails go from the regional
+tenant-api through OCI Email Delivery in the publisher's language (English or
+Arabic). People without an email, or whose email failed, are listed as **Not
+notified** so the manager can tell them another way.
+
+Terminating someone turns their draft shifts after the last day into open
+shifts; publish to tell the team.
+
+Kill switch: set `STAFFING_EMAIL_ENABLED=false` on a tenant-api node to publish
+without sending email (everyone is listed as not notified).
+
 ## Careers form
 
 ### Publish an application form

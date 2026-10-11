@@ -1162,11 +1162,93 @@ export const staffingSettings = sqliteTable('staffing_settings', {
 		.default(sql`(strftime('%s', 'now'))`),
 })
 
+/** What staff were last told about a shift; null until its first publish. */
+export type PublishedShift = {
+	staffId: string | null
+	positionId: string | null
+	localDate: string
+	startTime: string
+	endTime: string
+	unpaidBreakMinutes: number
+	note: string
+}
+
+// Managers edit the draft columns. Publishing copies them into `published`,
+// which is the only version kiosks and notifications read. Deleting a
+// published shift sets `deleted_at` so the next publish can tell the person;
+// unpublished shifts are removed outright. Wall-clock times are kept next to
+// the UTC instants so copying a week across a DST change keeps local times.
+export const shifts = sqliteTable(
+	'shifts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		staffId: text('staff_id').references(() => staffMembers.id, {
+			onDelete: 'set null',
+		}),
+		positionId: text('position_id').references(() => staffPositions.id, {
+			onDelete: 'set null',
+		}),
+		localDate: text('local_date').notNull(),
+		startTime: text('start_time').notNull(),
+		endTime: text('end_time').notNull(),
+		startAt: integer('start_at', { mode: 'timestamp' }).notNull(),
+		endAt: integer('end_at', { mode: 'timestamp' }).notNull(),
+		timeZone: text('tz').notNull(),
+		unpaidBreakMinutes: integer('unpaid_break_min').notNull().default(0),
+		note: text('note').notNull().default(''),
+		published: text('published', { mode: 'json' }).$type<PublishedShift>(),
+		publishedAt: integer('published_at', { mode: 'timestamp' }),
+		deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+		createdBy: text('created_by').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+		updatedAt: integer('updated_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_shifts_location_date').on(table.locationId, table.localDate),
+		index('idx_shifts_staff_start').on(table.staffId, table.startAt),
+	],
+)
+
+export const schedulePublications = sqliteTable(
+	'schedule_publications',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		weekStart: text('week_start').notNull(),
+		publishedBy: text('published_by').notNull(),
+		shiftCount: integer('shift_count').notNull(),
+		changedCount: integer('changed_count').notNull(),
+		notifiedCount: integer('notified_count').notNull().default(0),
+		notNotifiedCount: integer('not_notified_count').notNull().default(0),
+		publishedAt: integer('published_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_schedule_publications_week').on(
+			table.locationId,
+			table.weekStart,
+			table.publishedAt,
+		),
+	],
+)
+
 export type StaffMember = typeof staffMembers.$inferSelect
 export type StaffPosition = typeof staffPositions.$inferSelect
 export type StaffAssignment = typeof staffAssignments.$inferSelect
 export type StaffEvent = typeof staffEvents.$inferSelect
 export type StaffingSettingsRow = typeof staffingSettings.$inferSelect
+export type Shift = typeof shifts.$inferSelect
+export type SchedulePublication = typeof schedulePublications.$inferSelect
 
 // ==========================================
 // 13. INFERRED TYPES

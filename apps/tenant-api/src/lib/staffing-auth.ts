@@ -1,5 +1,7 @@
 import { type Context } from 'hono'
 import { jwtVerify } from 'jose'
+import { ENV } from 'varlock/env'
+import { type z } from 'zod'
 import { brand } from '@repo/config/brand'
 import {
 	type StaffingAccessLevel,
@@ -102,10 +104,44 @@ export async function authenticateStaffing(
 	return { auth: { orgId, actorRef: subject, claims: claims.data } }
 }
 
+export type StaffingKillSwitch =
+	'STAFFING_KIOSK_ENABLED' | 'STAFFING_EMAIL_ENABLED'
+
+/** Node-level kill switches. Unset means on; only an explicit off disables. */
+export function staffingSwitchEnabled(name: StaffingKillSwitch) {
+	const raw =
+		process.env[name] ?? (ENV as Record<string, unknown> | undefined)?.[name]
+	if (raw === undefined || raw === null || raw === '') return true
+	if (raw === false) return false
+	return !['false', '0', 'off', 'no'].includes(String(raw).trim().toLowerCase())
+}
+
 export function databaseUnavailable(c: Context, orgId: string, error: unknown) {
 	console.error(
 		`Staffing request failed for org ${orgId}:`,
 		error instanceof Error ? error.message : error,
 	)
 	return c.json({ error: 'Tenant Database unavailable' }, 500, noStoreHeaders)
+}
+
+export type StaffingResult<T> =
+	{ ok: true; data: T } | { ok: false; status: 400 | 404 | 409; code: string }
+
+export async function readJson(c: Context) {
+	return c.req.json().catch(() => null) as Promise<unknown>
+}
+
+export function invalid(c: Context, error: z.ZodError) {
+	return c.json(
+		{ error: 'invalid_input', issues: error.issues.slice(0, 5) },
+		400,
+		noStoreHeaders,
+	)
+}
+
+export function respond<T>(c: Context, result: StaffingResult<T>, key: string) {
+	if (!result.ok) {
+		return c.json({ error: result.code }, result.status, noStoreHeaders)
+	}
+	return c.json({ [key]: result.data }, 200, noStoreHeaders)
 }

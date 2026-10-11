@@ -26,6 +26,40 @@ export const shiftInputSchema = z
 	})
 export type ShiftInput = z.infer<typeof shiftInputSchema>
 
+/** One shift plus the other days of the week it repeats on. */
+export const shiftCreateSchema = z.object({
+	shift: shiftInputSchema,
+	alsoOn: z.array(localDateSchema).max(6).default([]),
+})
+
+export const scheduleWeekSchema = z.object({
+	locationId: id,
+	weekStart: localDateSchema,
+})
+
+export const copyWeekSchema = z
+	.object({
+		locationId: id,
+		fromWeekStart: localDateSchema,
+		toWeekStart: localDateSchema,
+		positionId: id.nullable().default(null),
+		replace: z.boolean().default(false),
+	})
+	.refine((input) => input.fromWeekStart !== input.toWeekStart, {
+		message: 'same_week',
+		path: ['toWeekStart'],
+	})
+
+export const SCHEDULE_EMAIL_LOCALES = ['en', 'ar'] as const
+
+export const publishScheduleSchema = scheduleWeekSchema.extend({
+	/** Control-plane location name for the email; not personal data. */
+	locationName: z.string().trim().min(1).max(120),
+	emailLocale: z.enum(SCHEDULE_EMAIL_LOCALES).default('en'),
+})
+
+export type ShiftState = 'draft' | 'published' | 'changed' | 'removed'
+
 type Interval = {
 	id: string
 	staffId: string | null

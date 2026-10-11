@@ -5,8 +5,10 @@ Status: phased implementation. Shipped so far: the job-application form preset
 default-off `staffing.*` flags, `requireStaffingFeature`, the `@repo/staffing`
 domain package, and the expanded location timezone list), and the regional
 roster (team, positions, bulk paste, terminate/rehire, settings, audit, and
-region-switch warning). Later slices are tracked in the PR sequence below;
-[staffing guide](./staffing.md) describes what operators can use today.
+region-switch warning), and the schedule (week grid, copy week, warnings, print,
+and publish with per-person regional email). Later slices are tracked in the PR
+sequence below; [staffing guide](./staffing.md) describes what operators can use
+today.
 
 Baseline: `main` at `ed54ca1a`, refreshed 2026-10-11. This plan consolidates the
 supplied MVP, architecture, competitive-parity, live walkthrough, mock, and
@@ -115,8 +117,8 @@ Regional tables arrive per vertical slice:
 
 | Slice    | Tables                                                                                                                      |
 | -------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Roster   | `staff_members`, `staff_positions`, `staff_location_assignments`, `staff_jobs`, `staffing_settings`, regional audit         |
-| Schedule | `shifts`, `schedule_weeks`, `schedule_publications`                                                                         |
+| Roster   | `staff_members`, `staff_positions`, `staff_assignments`, `staffing_settings`, `staff_events` (regional audit)               |
+| Schedule | `shifts` (draft columns plus a published copy), `schedule_publications`                                                     |
 | Clock    | kiosk devices/pairing codes, per-assignment credentials, append-only `time_punches`, `time_entries`, edit log, period locks |
 | Labor    | effective-dated rates, entry rate snapshots                                                                                 |
 | Hiring   | applications, notes, onboarding templates/tasks                                                                             |

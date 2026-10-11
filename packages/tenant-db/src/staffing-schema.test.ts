@@ -9,6 +9,7 @@ import { migrate } from 'drizzle-orm/libsql/migrator'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import * as schema from './schema.ts'
 import {
+	shifts,
 	staffAssignments,
 	staffingSettings,
 	staffMembers,
@@ -45,6 +46,8 @@ describe('staffing tables', () => {
 			'staff_assignments',
 			'staff_events',
 			'staffing_settings',
+			'shifts',
+			'schedule_publications',
 		]) {
 			expect(names).toContain(name)
 		}
@@ -87,5 +90,36 @@ describe('staffing tables', () => {
 			weekStart: 'monday',
 			lateGraceMinutes: 5,
 		})
+	})
+
+	it('keeps a shift as an open shift when its person is deleted', async () => {
+		const [member] = await db
+			.insert(staffMembers)
+			.values({ firstName: 'Ana' })
+			.returning()
+		await db.insert(shifts).values({
+			locationId: 'loc_1',
+			staffId: member!.id,
+			localDate: '2026-10-12',
+			startTime: '09:00',
+			endTime: '17:00',
+			startAt: new Date('2026-10-12T13:00:00Z'),
+			endAt: new Date('2026-10-12T21:00:00Z'),
+			timeZone: 'America/New_York',
+			createdBy: 'user_1',
+			published: {
+				staffId: member!.id,
+				positionId: null,
+				localDate: '2026-10-12',
+				startTime: '09:00',
+				endTime: '17:00',
+				unpaidBreakMinutes: 0,
+				note: '',
+			},
+		})
+		await db.delete(staffMembers).where(eq(staffMembers.id, member!.id))
+		const [row] = await db.select().from(shifts)
+		expect(row?.staffId).toBeNull()
+		expect(row?.published?.startTime).toBe('09:00')
 	})
 })

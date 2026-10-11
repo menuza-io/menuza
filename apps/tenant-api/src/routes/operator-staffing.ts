@@ -1,4 +1,4 @@
-import { type Context, Hono } from 'hono'
+import { Hono } from 'hono'
 import { z } from 'zod'
 import {
 	POSITION_COLOR_KEYS,
@@ -12,7 +12,10 @@ import {
 import {
 	authenticateStaffing,
 	databaseUnavailable,
+	invalid,
 	noStoreHeaders,
+	readJson,
+	respond,
 } from '../lib/staffing-auth.ts'
 import {
 	createPosition,
@@ -23,34 +26,15 @@ import {
 	listStaffEvents,
 	rehireStaff,
 	saveStaffingSettings,
-	type ServiceResult,
 	terminateStaff,
 	updatePosition,
 	updateStaff,
 } from '../services/staffing-roster.ts'
+import { operatorScheduleRoutes } from './operator-schedule.ts'
 
 export const operatorStaffingRoutes = new Hono()
 
 const idParam = z.string().trim().min(1).max(64)
-
-async function readJson(c: Context) {
-	return c.req.json().catch(() => null) as Promise<unknown>
-}
-
-function invalid(c: Context, error: z.ZodError) {
-	return c.json(
-		{ error: 'invalid_input', issues: error.issues.slice(0, 5) },
-		400,
-		noStoreHeaders,
-	)
-}
-
-function respond<T>(c: Context, result: ServiceResult<T>, key: string) {
-	if (!result.ok) {
-		return c.json({ error: result.code }, result.status, noStoreHeaders)
-	}
-	return c.json({ [key]: result.data }, 200, noStoreHeaders)
-}
 
 operatorStaffingRoutes.get('/context', async (c) => {
 	const auth = await authenticateStaffing(c, 'staff', 'read')
@@ -258,3 +242,5 @@ operatorStaffingRoutes.put('/settings', async (c) => {
 		return databaseUnavailable(c, auth.auth.orgId, error)
 	}
 })
+
+operatorStaffingRoutes.route('/', operatorScheduleRoutes)

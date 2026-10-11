@@ -426,6 +426,9 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   Same name, **must not share values**.
 - `AUTH_HMAC_SECRET` - Tenant-api only (OTP / refresh hashes). Sites must not
   have this.
+- `STAFFING_KIOSK_ENABLED` / `STAFFING_EMAIL_ENABLED` - Tenant-api only. Node
+  kill switches for paired staff kiosks and schedule emails; unset means on,
+  `false` disables. See `docs/staffing.md`.
 - `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` - Tenant-api
   US node only (`@repo/sms`). Do not set on App or KSA.
 - `PUBLIC_TURNSTILE_SITE_KEY` - Sites only: Cloudflare Turnstile site key for

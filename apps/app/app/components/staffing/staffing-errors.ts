@@ -16,6 +16,17 @@ export function staffingErrorMessage(i18n: I18n, error: unknown) {
 		invalid_rows: i18n._(msg`Fix the highlighted rows and try again.`),
 		no_rows: i18n._(msg`Paste at least one person.`),
 		not_found: i18n._(msg`This record no longer exists. Refresh the page.`),
+		unknown_staff: i18n._(msg`That person is no longer on the team.`),
+		staff_inactive: i18n._(msg`That person is terminated.`),
+		staff_not_assigned: i18n._(
+			msg`That person is not assigned to this location. Add the location on the Team page.`,
+		),
+		invalid_dates: i18n._(msg`Repeat days must be in the same week.`),
+		location_change: i18n._(
+			msg`A shift cannot move to another location. Delete it and add a new one.`,
+		),
+		nothing_to_copy: i18n._(msg`That week has no shifts to copy.`),
+		nothing_to_publish: i18n._(msg`There are no changes to publish.`),
 		region_mismatch: i18n._(
 			msg`Your organization’s data region is changing. Try again shortly.`,
 		),

@@ -27,6 +27,21 @@ export async function loadStaffingLocations(
 }
 
 /**
+ * Display names for operator ids that appear as actors in regional history
+ * (who published, who edited a time card). Operators only, never staff.
+ */
+export async function loadMemberNames(organizationId: string) {
+	const rows = await db
+		.select({ id: User.id, name: User.name, username: User.username })
+		.from(UserOrganization)
+		.innerJoin(User, eq(User.id, UserOrganization.userId))
+		.where(eq(UserOrganization.organizationId, organizationId))
+	return Object.fromEntries(
+		rows.map((row) => [row.id, row.name || row.username]),
+	) as Record<string, string>
+}
+
+/**
  * Lower-cased operator emails, used only for a client-side "has login" hint
  * next to staff rows. Staff emails are never sent to App to do this match.
  */
