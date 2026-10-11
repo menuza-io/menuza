@@ -49,6 +49,13 @@ export function staffingErrorMessage(i18n: I18n, error: unknown) {
 			msg`This person already has an open time card. Close it first.`,
 		),
 		in_future: i18n._(msg`Times can’t be in the future.`),
+		pay_required: i18n._(msg`You don’t have access to pay rates.`),
+		unknown_assignment: i18n._(
+			msg`That position is no longer assigned. Refresh the page.`,
+		),
+		unknown_currency: i18n._(
+			msg`This location has no currency yet. Add its address in Settings → Locations.`,
+		),
 		invalid_times: i18n._(msg`Clock-out must be after clock-in.`),
 		break_too_long: i18n._(msg`The break is longer than the time worked.`),
 		break_needs_clock_out: i18n._(

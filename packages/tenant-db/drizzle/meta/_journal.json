@@ -120,6 +120,13 @@
 			"when": 1791697502231,
 			"tag": "0016_staffing_timeclock",
 			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "6",
+			"when": 1791700694777,
+			"tag": "0017_staffing_rates",
+			"breakpoints": true
 		}
 	]
 }

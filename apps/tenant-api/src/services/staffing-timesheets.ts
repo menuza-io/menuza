@@ -38,6 +38,7 @@ import {
 } from '@repo/tenant-db'
 
 import { type StaffingAuth } from '../lib/staffing-auth.ts'
+import { assignmentRate, locationRatePicker } from './staffing-pay.ts'
 import {
 	loadVisibleStaff,
 	readStaffingSettings,
@@ -492,12 +493,19 @@ export async function createTimeEntry(
 		if (await findOverlap(tx, input.staffId, times, null)) {
 			return failure(409, 'entry_overlap')
 		}
+		const rate = await assignmentRate(
+			tx,
+			input.staffId,
+			input.locationId,
+			position.data,
+		)
 		const [entry] = await tx
 			.insert(timeEntries)
 			.values({
 				staffId: input.staffId,
 				locationId: input.locationId,
 				positionId: position.data,
+				...rate,
 				clockInAt: times.clockInAt,
 				clockOutAt: times.clockOutAt,
 				timeZone,
@@ -563,10 +571,20 @@ export async function updateTimeEntry(
 		if (await findOverlap(tx, before.staffId, times, before.id)) {
 			return failure(409, 'entry_overlap')
 		}
+		const rate =
+			position.data === before.positionId
+				? {}
+				: await assignmentRate(
+						tx,
+						before.staffId,
+						before.locationId,
+						position.data,
+					)
 		const [after] = await tx
 			.update(timeEntries)
 			.set({
 				positionId: position.data,
+				...rate,
 				localDate: input.localDate,
 				clockInAt: times.clockInAt,
 				clockOutAt: times.clockOutAt,
@@ -666,6 +684,19 @@ export async function approveTimeEntries(
 						approvable.map((row) => row.id),
 					),
 				)
+			// Lock in today's rate for cards made before a rate existed.
+			const unrated = approvable.filter((row) => row.rateCents === null)
+			if (unrated.length) {
+				const rateFor = await locationRatePicker(tx, input.locationId)
+				for (const row of unrated) {
+					const rate = rateFor(row.staffId, row.positionId)
+					if (rate.rateCents === null) continue
+					await tx
+						.update(timeEntries)
+						.set(rate)
+						.where(eq(timeEntries.id, row.id))
+				}
+			}
 			await tx.insert(timeEntryEvents).values(
 				approvable.map((row) => ({
 					entryId: row.id,

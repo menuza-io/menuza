@@ -1123,6 +1123,10 @@ export const staffAssignments = sqliteTable(
 		isPrimary: integer('is_primary', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// Hourly pay for this position at this location, in the location's
+		// currency. Visible only to tokens with `canViewPay`.
+		rateCents: integer('rate_cents'),
+		currency: text('currency'),
 	},
 	(table) => [
 		primaryKey({
@@ -1317,6 +1321,10 @@ export const timeEntries = sqliteTable(
 		note: text('note').notNull().default(''),
 		approvedAt: integer('approved_at', { mode: 'timestamp' }),
 		approvedBy: text('approved_by'),
+		// The assignment rate when the card was made, so later raises do not
+		// rewrite past labor cost. Filled at approval if it was unset.
+		rateCents: integer('rate_cents'),
+		currency: text('currency'),
 		deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 		clientRequestId: text('client_request_id'),
 		clockOutRequestId: text('clock_out_request_id'),

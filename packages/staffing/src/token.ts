@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { currencySchema } from './pay.ts'
 import { timeZoneSchema } from './time.ts'
 
 export const STAFFING_SCOPE = 'staffing'
@@ -31,7 +32,14 @@ export const staffingTokenClaimsSchema = z.object({
 	 * validate location ids and snapshot time zones without a cross-plane call.
 	 */
 	locations: z
-		.array(z.object({ id: z.string().min(1).max(64), tz: timeZoneSchema }))
+		.array(
+			z.object({
+				id: z.string().min(1).max(64),
+				tz: timeZoneSchema,
+				/** ISO 4217 code that rates and sales at this location use. */
+				currency: currencySchema.optional(),
+			}),
+		)
 		.max(STAFFING_TOKEN_MAX_LOCATIONS),
 	canViewPay: z.boolean().optional(),
 })
@@ -62,4 +70,12 @@ export function staffingTokenLocationZone(
 	locationId: string,
 ) {
 	return claims.locations.find((location) => location.id === locationId)?.tz
+}
+
+export function staffingTokenLocationCurrency(
+	claims: Pick<StaffingTokenClaims, 'locations'>,
+	locationId: string,
+) {
+	return claims.locations.find((location) => location.id === locationId)
+		?.currency
 }

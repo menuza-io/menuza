@@ -47,7 +47,10 @@ schedule emails are sent by the regional node, not App. The time clock tablet
 page (`/kiosk/<orgSlug>`) is an App shell that renders only public organization
 metadata; the tablet sends PINs and punches to the regional `/kiosk/*` routes
 with its own device token, and `kiosk_devices`, `time_entries`, and
-`time_entry_events` live in the per-org tenant database.
+`time_entry_events` live in the per-org tenant database. Pay rates
+(`staff_assignments.rate_cents`, with a per-card snapshot on `time_entries`) and
+the labor-versus-online-sales summary stay regional as well; the token's
+`canViewPay` claim decides whether the node returns them at all.
 
 ## Why this shape exists
 

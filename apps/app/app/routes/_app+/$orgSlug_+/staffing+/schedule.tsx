@@ -36,9 +36,12 @@ import { staffingErrorMessage } from '#app/components/staffing/staffing-errors.t
 import { useStaffingClient } from '#app/hooks/use-staffing-client.ts'
 import { requireStaffingFeature } from '#app/utils/staffing/access.server.ts'
 import {
+	formatCents,
 	formatHours,
 	formatWallDate,
 	formatWallTime,
+	type LaborSummary,
+	laborSummarySchema,
 	publishResultSchema,
 	type Schedule,
 	scheduleSchema,
@@ -65,6 +68,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{
 			orgSlug: params.orgSlug || '',
 			canWrite: access.grants.schedule === 'write',
+			canViewPay: access.canViewPay,
 			locations: locations.filter((location) => location.isActive),
 			memberNames,
 		},
@@ -75,7 +79,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 export default function StaffSchedule() {
-	const { orgSlug, canWrite, locations, memberNames } =
+	const { orgSlug, canWrite, canViewPay, locations, memberNames } =
 		useLoaderData<typeof loader>()
 	const { _, i18n } = useLingui()
 	const request = useStaffingClient(orgSlug)
@@ -140,6 +144,28 @@ export default function StaffSchedule() {
 		void refresh(controller.signal)
 		return () => controller.abort()
 	}, [refresh])
+
+	const [labor, setLabor] = useState<LaborSummary | null>(null)
+	// Refetch after shift edits so scheduled labor tracks the grid.
+	const scheduleVersion = schedule?.shifts
+	useEffect(() => {
+		if (!canViewPay || !location || !weekStart) return
+		const controller = new AbortController()
+		const query = new URLSearchParams({
+			locationId: location.id,
+			from: weekStart,
+			to: addDays(weekStart, 6),
+		})
+		request(`/labor-summary?${query}`, { signal: controller.signal })
+			.then((body) => {
+				if (!controller.signal.aborted) {
+					setLabor(laborSummarySchema.parse(body).summary)
+				}
+			})
+			// Labor is a footer extra; the schedule works without it.
+			.catch(() => {})
+		return () => controller.abort()
+	}, [canViewPay, request, location, weekStart, scheduleVersion])
 
 	const navigate = (next: { location?: string; date?: string }) => {
 		const params = new URLSearchParams(searchParams)
@@ -241,6 +267,14 @@ export default function StaffSchedule() {
 	const unpublishedCount = current?.unpublishedCount ?? 0
 	const today = localDateOf(new Date(), location.timezone)
 	const locationName = location.name
+	const currentLabor =
+		labor && labor.from === weekStart && labor.locationId === location.id
+			? labor
+			: null
+	const money = (cents: number | null) =>
+		cents === null || !currentLabor?.currency
+			? '—'
+			: formatCents(i18n.locale, cents, currentLabor.currency)
 
 	const renderShift = (shift: Shift) => {
 		const position = shift.positionId
@@ -528,6 +562,36 @@ export default function StaffSchedule() {
 									{formatHours(i18n.locale, weekMinutes)}
 								</td>
 							</tr>
+							{currentLabor ? (
+								<>
+									<tr>
+										<th scope="row" className="p-2 text-start font-medium">
+											<Trans>Scheduled labor</Trans>
+										</th>
+										{currentLabor.days.map((day) => (
+											<td key={day.date} className="border-s p-2 tabular-nums">
+												{money(day.scheduledLaborCents)}
+											</td>
+										))}
+										<td className="border-s p-2 text-end font-medium tabular-nums">
+											{money(currentLabor.totals.scheduledLaborCents)}
+										</td>
+									</tr>
+									<tr>
+										<th scope="row" className="p-2 text-start font-medium">
+											<Trans>Online sales only</Trans>
+										</th>
+										{currentLabor.days.map((day) => (
+											<td key={day.date} className="border-s p-2 tabular-nums">
+												{money(day.salesCents)}
+											</td>
+										))}
+										<td className="border-s p-2 text-end font-medium tabular-nums">
+											{money(currentLabor.totals.salesCents)}
+										</td>
+									</tr>
+								</>
+							) : null}
 						</tfoot>
 					</table>
 				</div>

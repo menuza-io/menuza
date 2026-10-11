@@ -52,9 +52,9 @@ control-plane data (locations, permissions) on the server, then the browser:
 
 The token carries `areas` (`staff`, `schedule`, `timeclock`: `read` or `write`),
 `locationIds` (`null` = all; location-scoped managers are not built yet), the
-organization's `locations` with time zones, and `canViewPay`. tenant-api accepts
-a location only if it is in that signed list, and a read claim never writes.
-Code: `apps/tenant-api/src/lib/staffing-auth.ts`,
+organization's `locations` with time zones and currencies, and `canViewPay`.
+tenant-api accepts a location only if it is in that signed list, and a read
+claim never writes. Code: `apps/tenant-api/src/lib/staffing-auth.ts`,
 `apps/app/app/hooks/use-staffing-client.ts`.
 
 ## Team
@@ -209,6 +209,47 @@ one location by day or week, on the location's clock. Viewing needs
   payroll data never passes through App. Times are the location's wall clock,
   and cells that start with a formula character are neutralized for
   spreadsheets.
+
+## Labor
+
+Labor needs the `staffing.pay` flag and `read:staff_pay:any` (plus roster read).
+Without both, tenant-api leaves rate fields out of every response and refuses
+`GET /labor-summary` and `PUT /staff/:id/rates` with `pay_required`.
+
+### Pay rates
+
+On **Team**, **Pay** sets an hourly rate for each of a person's location and
+position assignments (it also needs `update:staff:any`). A rate takes its
+location's currency: SAR for organizations in the KSA region, otherwise USD or
+CAD from the location address, the same rule storefront prices use. Roster edits
+keep existing rates, and the staff event log records that rates changed, never
+the amounts.
+
+Each time card stores the rate it was made with (kiosk clock-in, manual add, or
+a position change). Approving a card that has no rate yet fills in the current
+one, so approved cost stays fixed when someone gets a raise.
+
+### Overview
+
+**Staff → Overview** (`/{orgSlug}/staffing`) shows one location for one week:
+hours worked and scheduled, labor cost, online sales, and labor as a percent of
+online sales, with a row per day. The schedule footer adds scheduled labor and
+online sales rows.
+
+- **Online sales only.** Sales are order subtotals (before tax, delivery, and
+  tips) from orders that count toward sales, as in reports: handoff orders once
+  accepted, online orders once paid, excluding cancelled, expired, and
+  payment-review orders. They are bucketed by the location-local day the order
+  was placed. Dine-in and POS sales are not in tenant-db, so the percentage
+  overstates true labor percentage.
+- **Cost** is paid minutes times the card's rate snapshot, or the current rate
+  for cards made before a rate existed. Scheduled cost uses current rates. Open
+  cards and hours without a rate are left out and called out on the page. This
+  is an estimate without taxes, benefits, or overtime premiums.
+- **One currency.** If rates or orders at the location use more than one
+  currency, amounts are not added up and the page says so.
+
+All of this is computed on the regional node; App never receives pay data.
 
 ## Careers form
 

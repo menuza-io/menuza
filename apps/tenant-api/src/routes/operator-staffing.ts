@@ -6,6 +6,7 @@ import {
 	ROSTER_IMPORT_MAX_ROWS,
 	staffingSettingsSchema,
 	staffMemberInputSchema,
+	staffRatesInputSchema,
 	staffTerminationSchema,
 } from '@repo/staffing'
 
@@ -26,10 +27,12 @@ import {
 	listStaffEvents,
 	rehireStaff,
 	saveStaffingSettings,
+	setStaffRates,
 	terminateStaff,
 	updatePosition,
 	updateStaff,
 } from '../services/staffing-roster.ts'
+import { operatorLaborRoutes } from './operator-labor.ts'
 import { operatorScheduleRoutes } from './operator-schedule.ts'
 import { operatorTimeclockRoutes } from './operator-timeclock.ts'
 
@@ -129,6 +132,28 @@ operatorStaffingRoutes.patch('/staff/:id', async (c) => {
 		return respond(
 			c,
 			await updateStaff(auth.auth.orgId, auth.auth, id.data, parsed.data),
+			'staff',
+		)
+	} catch (error) {
+		return databaseUnavailable(c, auth.auth.orgId, error)
+	}
+})
+
+// Rates are pay: roster write alone is not enough.
+operatorStaffingRoutes.put('/staff/:id/rates', async (c) => {
+	const auth = await authenticateStaffing(c, 'staff', 'write')
+	if ('error' in auth) return auth.error
+	if (auth.auth.claims.canViewPay !== true) {
+		return c.json({ error: 'pay_required' }, 403, noStoreHeaders)
+	}
+	const id = idParam.safeParse(c.req.param('id'))
+	const parsed = staffRatesInputSchema.safeParse(await readJson(c))
+	if (!id.success) return invalid(c, id.error)
+	if (!parsed.success) return invalid(c, parsed.error)
+	try {
+		return respond(
+			c,
+			await setStaffRates(auth.auth.orgId, auth.auth, id.data, parsed.data),
 			'staff',
 		)
 	} catch (error) {
@@ -246,3 +271,4 @@ operatorStaffingRoutes.put('/settings', async (c) => {
 
 operatorStaffingRoutes.route('/', operatorScheduleRoutes)
 operatorStaffingRoutes.route('/', operatorTimeclockRoutes)
+operatorStaffingRoutes.route('/', operatorLaborRoutes)

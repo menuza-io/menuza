@@ -14,6 +14,9 @@ export const assignmentSchema = z.object({
 	locationId: z.string(),
 	positionId: z.string(),
 	isPrimary: z.boolean(),
+	// Present only when the credential carries `canViewPay`.
+	rateCents: z.number().nullable().optional(),
+	currency: z.string().nullable().optional(),
 })
 
 export const staffSchema = z.object({
@@ -281,6 +284,55 @@ export const approveResultSchema = z.object({
 	}),
 })
 
+const laborDaySchema = z.object({
+	date: z.string(),
+	workedMinutes: z.number(),
+	scheduledMinutes: z.number(),
+	laborCents: z.number().nullable(),
+	scheduledLaborCents: z.number().nullable(),
+	salesCents: z.number().nullable(),
+	orderCount: z.number(),
+	laborPercent: z.number().nullable(),
+})
+
+export const laborSummarySchema = z.object({
+	summary: z.object({
+		locationId: z.string(),
+		timeZone: z.string(),
+		from: z.string(),
+		to: z.string(),
+		currency: z.string().nullable(),
+		mixedCurrency: z.boolean(),
+		days: z.array(laborDaySchema),
+		totals: laborDaySchema.omit({ date: true }).extend({
+			scheduledLaborPercent: z.number().nullable(),
+		}),
+		openEntries: z.number(),
+		unratedWorkedMinutes: z.number(),
+		unratedScheduledMinutes: z.number(),
+		generatedAt: z.string(),
+	}),
+})
+export type LaborSummary = z.infer<typeof laborSummarySchema>['summary']
+
+export function formatCents(locale: string, cents: number, currency: string) {
+	try {
+		return new Intl.NumberFormat(locale, {
+			style: 'currency',
+			currency,
+		}).format(cents / 100)
+	} catch {
+		return `${(cents / 100).toFixed(2)} ${currency}`
+	}
+}
+
+export function formatPercent(locale: string, percent: number) {
+	return new Intl.NumberFormat(locale, {
+		style: 'percent',
+		maximumFractionDigits: 1,
+	}).format(percent / 100)
+}
+
 /** A UTC instant shown on the location's clock, not the viewer's. */
 export function formatZonedTime(locale: string, iso: string, timeZone: string) {
 	return new Intl.DateTimeFormat(locale, {
@@ -310,6 +362,7 @@ export type StaffingLocation = {
 	name: string
 	timezone: string
 	isActive: boolean
+	currency: string
 }
 
 /**

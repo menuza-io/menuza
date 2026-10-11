@@ -4,7 +4,9 @@ import {
 	parseRosterPaste,
 	type StaffingTokenClaims,
 	staffingTokenAllowsLocation,
+	staffingTokenLocationCurrency,
 	type StaffMemberInput,
+	type StaffRatesInput,
 	type StaffingSettings,
 } from '@repo/staffing'
 import {
@@ -99,6 +101,7 @@ export type StaffView = ReturnType<typeof serializeStaff>
 function serializeStaff(
 	member: StaffMember & { pinSetAt?: Date | null },
 	assignments: StaffAssignment[],
+	canViewPay = false,
 ) {
 	return {
 		id: member.id,
@@ -117,6 +120,9 @@ function serializeStaff(
 			locationId: assignment.locationId,
 			positionId: assignment.positionId,
 			isPrimary: assignment.isPrimary,
+			...(canViewPay
+				? { rateCents: assignment.rateCents, currency: assignment.currency }
+				: {}),
 		})),
 		createdAt: member.createdAt.toISOString(),
 		updatedAt: member.updatedAt.toISOString(),
@@ -189,7 +195,9 @@ export async function listStaff(
 			assignments: assignments.get(member.id) ?? [],
 		}))
 		.filter(({ assignments: list }) => staffVisibleTo(claims, list))
-		.map(({ member, assignments: list }) => serializeStaff(member, list))
+		.map(({ member, assignments: list }) =>
+			serializeStaff(member, list, claims.canViewPay === true),
+		)
 }
 
 export async function loadVisibleStaff(
@@ -296,7 +304,10 @@ export async function createStaff(
 			.select()
 			.from(staffAssignments)
 			.where(eq(staffAssignments.staffId, member!.id))
-		return { ok: true as const, data: serializeStaff(member!, saved) }
+		return {
+			ok: true as const,
+			data: serializeStaff(member!, saved, auth.claims.canViewPay === true),
+		}
 	})
 }
 
@@ -338,11 +349,24 @@ export async function updateStaff(
 		await tx
 			.delete(staffAssignments)
 			.where(eq(staffAssignments.staffId, staffId))
+		// The roster form never carries pay, so rates follow their assignment.
+		const rateByKey = new Map(
+			existing.assignments.map((item) => [
+				assignmentKey(item),
+				{ rateCents: item.rateCents, currency: item.currency },
+			]),
+		)
 		const next = normalizeAssignments([...hidden, ...assignments.data])
 		if (next.length) {
-			await tx
-				.insert(staffAssignments)
-				.values(next.map((item) => ({ ...item, staffId })))
+			await tx.insert(staffAssignments).values(
+				next.map((item) => ({
+					locationId: item.locationId,
+					positionId: item.positionId,
+					isPrimary: item.isPrimary,
+					...rateByKey.get(assignmentKey(item)),
+					staffId,
+				})),
+			)
 		}
 		const assignmentsChanged =
 			JSON.stringify(
@@ -363,8 +387,85 @@ export async function updateStaff(
 			.select()
 			.from(staffAssignments)
 			.where(eq(staffAssignments.staffId, staffId))
-		return { ok: true as const, data: serializeStaff(member!, saved) }
+		return {
+			ok: true as const,
+			data: serializeStaff(member!, saved, auth.claims.canViewPay === true),
+		}
 	})
+}
+
+function assignmentKey(item: { locationId: string; positionId: string }) {
+	return `${item.locationId}\u0000${item.positionId}`
+}
+
+/**
+ * Sets hourly rates on existing assignments. Each rate takes the currency of
+ * its location from the signed token, so a location's rates never mix.
+ */
+export async function setStaffRates(
+	orgId: string,
+	auth: StaffingAuth,
+	staffId: string,
+	input: StaffRatesInput,
+): Promise<ServiceResult<StaffView>> {
+	const db = await getTenantDb(orgId)
+	return withAbort(() =>
+		db.transaction(async (tx) => {
+			const existing = await loadVisibleStaff(tx, auth.claims, staffId)
+			if (!existing) return failure(404, 'not_found')
+			const keys = new Set(existing.assignments.map(assignmentKey))
+			let changed = 0
+			for (const rate of input.rates) {
+				if (!staffingTokenAllowsLocation(auth.claims, rate.locationId)) {
+					throw new StaffingAbort(failure(400, 'unknown_location'))
+				}
+				if (!keys.has(assignmentKey(rate))) {
+					throw new StaffingAbort(failure(400, 'unknown_assignment'))
+				}
+				const currency =
+					rate.rateCents === null
+						? null
+						: staffingTokenLocationCurrency(auth.claims, rate.locationId)
+				if (currency === undefined) {
+					throw new StaffingAbort(failure(400, 'unknown_currency'))
+				}
+				const before = existing.assignments.find(
+					(item) => assignmentKey(item) === assignmentKey(rate),
+				)!
+				if (
+					before.rateCents === rate.rateCents &&
+					before.currency === currency
+				) {
+					continue
+				}
+				changed += 1
+				await tx
+					.update(staffAssignments)
+					.set({ rateCents: rate.rateCents, currency })
+					.where(
+						and(
+							eq(staffAssignments.staffId, staffId),
+							eq(staffAssignments.locationId, rate.locationId),
+							eq(staffAssignments.positionId, rate.positionId),
+						),
+					)
+			}
+			// Amounts stay out of the event log, which roster readers can see.
+			if (changed) {
+				await recordStaffEvent(tx, auth, 'staff.rates_updated', staffId, {
+					count: changed,
+				})
+			}
+			const saved = await tx
+				.select()
+				.from(staffAssignments)
+				.where(eq(staffAssignments.staffId, staffId))
+			return {
+				ok: true as const,
+				data: serializeStaff(existing.member, saved, true),
+			}
+		}),
+	)
 }
 
 /** Hooks the schedule slice uses to release a terminated person's shifts. */
@@ -413,7 +514,11 @@ export async function terminateStaff(
 		return {
 			ok: true as const,
 			data: {
-				...serializeStaff(member!, existing.assignments),
+				...serializeStaff(
+					member!,
+					existing.assignments,
+					auth.claims.canViewPay === true,
+				),
 				releasedShifts,
 			},
 		}
@@ -444,7 +549,11 @@ export async function rehireStaff(
 		await recordStaffEvent(tx, auth, 'staff.rehired', staffId)
 		return {
 			ok: true as const,
-			data: serializeStaff(member!, existing.assignments),
+			data: serializeStaff(
+				member!,
+				existing.assignments,
+				auth.claims.canViewPay === true,
+			),
 		}
 	})
 }

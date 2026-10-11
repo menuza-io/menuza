@@ -27,7 +27,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 	const locations = (await loadStaffingLocations(access.orgId))
 		.slice(0, STAFFING_TOKEN_MAX_LOCATIONS)
-		.map((location) => ({ id: location.id, tz: location.timezone }))
+		.map((location) => ({
+			id: location.id,
+			tz: location.timezone,
+			currency: location.currency,
+		}))
 	const claims = {
 		areas,
 		// Location-scoped managers are not modeled yet: every grant is org-wide.

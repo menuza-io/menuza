@@ -9,8 +9,10 @@ region-switch warning), the schedule (week grid, copy week, warnings, print, and
 publish with per-person regional email), the PIN time clock (pairing, revoke,
 lockout, idempotent punches, and a node kill switch), and timesheets (day/week
 review, manager corrections with reasons, edit history, approve/lock/reopen,
-issue flags, and browser-built CSV). Later slices are tracked in the PR sequence
-below; [staffing guide](./staffing.md) describes what operators can use today.
+issue flags, and browser-built CSV), and labor (per-assignment rates with
+per-card snapshots, pay-gated responses, and labor versus online sales by
+location-local day). Later slices are tracked in the PR sequence below;
+[staffing guide](./staffing.md) describes what operators can use today.
 
 Baseline: `main` at `ed54ca1a`, refreshed 2026-10-11. This plan consolidates the
 supplied MVP, architecture, competitive-parity, live walkthrough, mock, and

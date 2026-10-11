@@ -173,7 +173,7 @@ msgstr "{basePriceLabel} يُفوتر سنوياً"
 msgid "{breakMinutes} min"
 msgstr "{breakMinutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:557
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:621
 msgid "{changed} changes · {notified} emailed · {missed} not notified"
 msgstr "{changed} تغييرات · {notified} تم إرسال بريد · {missed} لم يتم إبلاغهم"
 
@@ -229,7 +229,11 @@ msgstr "{count} بحاجة إلى متابعة"
 msgid "{created, plural, one {Copied # shift as a draft.} other {Copied # shifts as drafts.}}"
 msgstr "{created, plural, zero {لم يتم نسخ أي مناوبة.} one {تم نسخ مناوبة واحدة كمسودة.} two {تم نسخ مناوبتين كمسودات.} few {تم نسخ # مناوبات كمسودات.} many {تم نسخ # مناوبة كمسودات.} other {تم نسخ # مناوبة كمسودات.}}"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:521
+#: app/components/staffing/pay-rates-dialog.tsx:154
+msgid "{currency} per hour"
+msgstr "{currency} في الساعة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:555
 msgid "{dayHours} h · {people}"
 msgstr "{dayHours} س · {people}"
 
@@ -311,7 +315,7 @@ msgstr "{journeyName} (نسخة)"
 msgid "{label}, {total} unread"
 msgstr "{label}، {total} غير مقروءة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:334
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:368
 msgid "{locationName}: week of {weekLabel}"
 msgstr "{locationName}: أسبوع {weekLabel}"
 
@@ -364,9 +368,17 @@ msgstr "{openCount, plural, zero {لا يوجد أحد مسجّل دخوله ح�
 msgid "{opened, plural, one {# became an open shift.} other {# became open shifts.}}"
 msgstr "{opened, plural, zero {لم تصبح أي مناوبة مفتوحة.} one {أصبحت مناوبة واحدة مفتوحة.} two {أصبحت مناوبتان مفتوحتين.} few {أصبحت # مناوبات مفتوحة.} many {أصبحت # مناوبة مفتوحة.} other {أصبحت # مناوبة مفتوحة.}}"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:299
+msgid "{openEntries, plural, one {# open time card is not counted until it is clocked out.} other {# open time cards are not counted until they are clocked out.}}"
+msgstr "{openEntries, plural, zero {لا توجد بطاقات دوام مفتوحة.} one {بطاقة دوام مفتوحة واحدة لا تُحتسب حتى يُسجَّل الخروج.} two {بطاقتا دوام مفتوحتان لا تُحتسبان حتى يُسجَّل الخروج.} few {# بطاقات دوام مفتوحة لا تُحتسب حتى يُسجَّل الخروج.} many {# بطاقة دوام مفتوحة لا تُحتسب حتى يُسجَّل الخروج.} other {# بطاقة دوام مفتوحة لا تُحتسب حتى يُسجَّل الخروج.}}"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:400
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} بحاجة إلى متابعة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:258
+msgid "{orderCount, plural, one {# order, before tax, delivery, and tips} other {# orders, before tax, delivery, and tips}}"
+msgstr "{orderCount, plural, zero {لا توجد طلبات} one {طلب واحد، قبل الضريبة والتوصيل والإكراميات} two {طلبان، قبل الضريبة والتوصيل والإكراميات} few {# طلبات، قبل الضريبة والتوصيل والإكراميات} many {# طلبًا، قبل الضريبة والتوصيل والإكراميات} other {# طلب، قبل الضريبة والتوصيل والإكراميات}}"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:639
 msgid "{pageCount} pages"
@@ -429,6 +441,18 @@ msgstr "{replyCount, plural, zero {لا توجد ردود} one {رد واحد} t
 msgid "{runsCount} runs"
 msgstr "{runsCount} تشغيل"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:252
+msgid "{scheduledCost} scheduled"
+msgstr "{scheduledCost} مجدولة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:247
+msgid "{scheduledHours} scheduled"
+msgstr "{scheduledHours} مجدولة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:268
+msgid "{scheduledPercent} scheduled"
+msgstr "{scheduledPercent} مجدولة"
+
 #: app/components/ui/notification-bell.tsx:49
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
@@ -490,6 +514,10 @@ msgstr "{unit}"
 #: app/components/staffing/publish-dialog.tsx:71
 msgid "{unpublishedCount, plural, one {# change goes live.} other {# changes go live.}}"
 msgstr "{unpublishedCount, plural, zero {لا توجد تغييرات للنشر.} one {سيتم نشر تغيير واحد.} two {سيتم نشر تغييرين.} few {سيتم نشر # تغييرات.} many {سيتم نشر # تغييرًا.} other {سيتم نشر # تغيير.}}"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:291
+msgid "{unratedHours} worked hours have no pay rate and are not in labor cost. Set rates with Pay on the Team page."
+msgstr "{unratedHours} من ساعات العمل بلا أجر محدد ولا تدخل في تكلفة العمالة. حدّد الأجور من زر الأجر في صفحة الفريق."
 
 #: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
@@ -747,7 +775,7 @@ msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما ت�
 
 #: app/components/staffing/entry-history-dialog.tsx:120
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:234
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:548
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:612
 msgid "A former member"
 msgstr "عضو سابق"
 
@@ -896,7 +924,7 @@ msgstr "شركة Acme"
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:594
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:696
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:204
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:294
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:309
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:688
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
@@ -918,11 +946,11 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:674
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:349
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:364
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:197
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:212
 msgid "Active ({activeCount})"
 msgstr "نشط ({activeCount})"
 
@@ -966,7 +994,7 @@ msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 msgid "Add a category"
 msgstr "إضافة تصنيف"
 
-#: app/components/staffing/staffing-errors.ts:55
+#: app/components/staffing/staffing-errors.ts:62
 msgid "Add a clock-out time before recording a break."
 msgstr "أضف وقت الخروج قبل تسجيل الاستراحة."
 
@@ -1007,7 +1035,7 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:246
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:261
 msgid "Add a location in Settings → Locations before assigning staff."
 msgstr "أضف فرعًا من الإعدادات ← الفروع قبل تعيين الموظفين."
 
@@ -1048,9 +1076,13 @@ msgstr "إضافة جهاز تسجيل حضور"
 msgid "Add a title between fields."
 msgstr "أضف عنوانًا بين الحقول."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:227
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:253
 msgid "Add an active location in Settings → Locations to build a schedule."
 msgstr "أضف فرعًا نشطًا من الإعدادات ← الفروع لإنشاء جدول."
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:137
+msgid "Add an active location in Settings → Locations to see labor."
+msgstr "أضف موقعًا نشطًا من الإعدادات ← المواقع لعرض العمالة."
 
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:357
 msgid "Add an active location in Settings → Locations to track time."
@@ -1163,7 +1195,7 @@ msgstr "إضافة مجموعة"
 msgid "Add images"
 msgstr "إضافة صور"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:223
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:238
 msgid "Add in bulk"
 msgstr "إضافة مجمّعة"
 
@@ -1270,7 +1302,7 @@ msgstr "إضافة أشخاص"
 msgid "Add people in bulk"
 msgstr "إضافة أشخاص دفعة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:269
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
 msgid "Add people one at a time, or paste a list with Add in bulk."
 msgstr "أضف الأشخاص واحدًا تلو الآخر، أو الصق قائمة عبر الإضافة المجمّعة."
 
@@ -1357,7 +1389,7 @@ msgstr "إضافة قسم"
 #~ msgstr "إضافة قسم إلى الطرح"
 
 #: app/components/staffing/shift-dialog.tsx:145
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:321
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:355
 msgid "Add shift"
 msgstr "إضافة مناوبة"
 
@@ -1382,7 +1414,7 @@ msgid "Add tag"
 msgstr "إضافة وسم"
 
 #: app/components/staffing/staff-dialog.tsx:149
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:232
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:247
 msgid "Add team member"
 msgstr "إضافة عضو فريق"
 
@@ -2012,6 +2044,10 @@ msgstr "يُطرح قبل التحويل عند تفعيل إرسال رسالة
 #: app/components/website/link-inspector.tsx:510
 msgid "Asset"
 msgstr "الملف"
+
+#: app/components/staffing/pay-rates-dialog.tsx:118
+msgid "Assign a location and position first."
+msgstr "عيّن موقعًا ومنصبًا أولًا."
 
 #: app/components/staffing/staffing-errors.ts:12
 msgid "Assign at least one location."
@@ -2729,6 +2765,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/staffing/copy-week-dialog.tsx:182
 #: app/components/staffing/import-dialog.tsx:180
 #: app/components/staffing/pair-kiosk-dialog.tsx:241
+#: app/components/staffing/pay-rates-dialog.tsx:178
 #: app/components/staffing/pin-dialog.tsx:162
 #: app/components/staffing/publish-dialog.tsx:115
 #: app/components/staffing/settings-dialog.tsx:142
@@ -2757,7 +2794,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:798
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:319
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:602
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:646
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:182
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
@@ -3014,7 +3051,7 @@ msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخ�
 msgid "Check the format of this value."
 msgstr "تحقق من تنسيق هذه القيمة."
 
-#: app/components/staffing/staffing-errors.ts:60
+#: app/components/staffing/staffing-errors.ts:67
 msgid "Check the highlighted fields and try again."
 msgstr "تحقق من الحقول المحددة وحاول مرة أخرى."
 
@@ -3295,7 +3332,7 @@ msgstr "تسجيل الحضور بصفة"
 msgid "Clock out"
 msgstr "تسجيل الانصراف"
 
-#: app/components/staffing/staffing-errors.ts:52
+#: app/components/staffing/staffing-errors.ts:59
 msgid "Clock-out must be after clock-in."
 msgstr "يجب أن يكون وقت الخروج بعد وقت الدخول."
 
@@ -3733,7 +3770,7 @@ msgid "Connections"
 msgstr "الاتصالات"
 
 #: app/components/website/create-form-dialog.tsx:113
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:287
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:302
 msgid "Contact"
 msgstr "اتصل"
 
@@ -3909,7 +3946,7 @@ msgstr "نسخ المناوبات إلى هذا الأسبوع"
 msgid "Copy URL"
 msgstr "نسخ الرابط"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:395
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:429
 msgid "Copy week"
 msgstr "نسخ الأسبوع"
 
@@ -4648,6 +4685,7 @@ msgid "Date & time"
 msgstr "التاريخ والوقت"
 
 #: app/components/staffing/shift-dialog.tsx:225
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:313
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:475
 msgid "Day"
 msgstr "اليوم"
@@ -5139,6 +5177,10 @@ msgstr "تناول في المطعم"
 msgid "Dine-In / In-House"
 msgstr "تناول في المطعم / داخلي"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:274
+msgid "Dine-in and in-store POS sales are not recorded here, so the labor percentage is higher than your true labor cost percentage. Labor cost is an estimate from hourly rates without taxes, benefits, or overtime premiums."
+msgstr "لا تُسجَّل هنا مبيعات تناول الطعام في المطعم أو نقاط البيع داخل المتجر، لذا تظهر نسبة العمالة أعلى من نسبتها الفعلية. تكلفة العمالة تقدير من أجور الساعة دون الضرائب أو المزايا أو بدلات العمل الإضافي."
+
 #: app/components/locations/location-form.tsx:813
 msgid "Dine-In Tips"
 msgstr "بقشيش تناول الطعام في المطعم"
@@ -5328,7 +5370,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:130
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:276
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:310
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:429
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
@@ -5711,7 +5753,7 @@ msgid "Edit, approve, and lock time cards, and pair or revoke time clocks. Needs
 msgstr "تعديل بطاقات الدوام واعتمادها وقفلها، وربط أجهزة ساعة الدوام أو إلغاؤها. يتطلب عرض سجلات الدوام."
 
 #: app/components/staffing/entry-history-dialog.tsx:32
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:281
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:315
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:774
 msgid "Edited"
 msgstr "معدّلة"
@@ -5873,6 +5915,10 @@ msgstr "أدخل رمز OTP المكون من 6 أرقام"
 #: app/components/phone-agent/settings-page.tsx:130
 msgid "Enter a valid email address."
 msgstr "أدخل عنوان بريد إلكتروني صالحًا."
+
+#: app/components/staffing/pay-rates-dialog.tsx:164
+msgid "Enter an amount like 18.50."
+msgstr "أدخل مبلغًا مثل 18.50."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
@@ -6821,7 +6867,7 @@ msgstr "حُوّلت إلى خط النشاط التجاري"
 msgid "Hang up"
 msgstr "إنهاء المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:317
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:332
 msgid "Has an App login"
 msgstr "لديه حساب دخول للتطبيق"
 
@@ -6999,22 +7045,31 @@ msgstr "يصبح الدفع المستضاف متاحاً بمجرد قيام ا
 msgid "Hosted checkout not connected"
 msgstr "الدفع المستضاف غير متصل"
 
+#: app/components/staffing/pay-rates-dialog.tsx:109
+msgid "Hourly pay for each position, used for labor cost estimates. Time cards keep the rate they were made with. Leave blank for no rate."
+msgstr "أجر الساعة لكل منصب، ويُستخدم لتقدير تكلفة العمالة. تحتفظ بطاقات الدوام بالأجر الذي أُنشئت به. اتركه فارغًا لعدم تحديد أجر."
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:291
 msgid "hours"
 msgstr "ساعات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:241
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:449
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:483
 msgid "Hours"
 msgstr "ساعات"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:513
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:547
 msgid "Hours · people"
 msgstr "الساعات · الأشخاص"
 
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:427
 msgid "Hours over weekly threshold"
 msgstr "الساعات فوق الحد الأسبوعي"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:245
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:319
+msgid "Hours worked"
+msgstr "ساعات العمل"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:375
 msgid "How calls reach the agent"
@@ -7534,6 +7589,19 @@ msgstr "التسمية / السبب (اختياري)"
 msgid "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند تفعيل الوسم التلقائي، يطبّق الوكيل الوسم عندما يتطابق الوصف مع المكالمة."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:331
+msgid "Labor %"
+msgstr "نسبة العمالة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:266
+msgid "Labor as % of online sales"
+msgstr "العمالة كنسبة من المبيعات عبر الإنترنت"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:250
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:322
+msgid "Labor cost"
+msgstr "تكلفة العمالة"
+
 #: app/components/nav-user.tsx:260
 #: app/components/phone-agent/voice-picker.tsx:390
 msgid "Language"
@@ -7574,7 +7642,7 @@ msgstr "آخر نشاط"
 msgid "Last active {lastActiveValue}"
 msgstr "آخر نشاط {lastActiveValue}"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:575
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:619
 msgid "Last day"
 msgstr "آخر يوم عمل"
 
@@ -7844,6 +7912,10 @@ msgstr "جاري تحميل القنوات..."
 msgid "Loading history…"
 msgstr "جارٍ تحميل السجل…"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:238
+msgid "Loading labor…"
+msgstr "جارٍ تحميل بيانات العمالة…"
+
 #: app/components/media-library/media-library-picker.tsx:288
 msgid "Loading media…"
 msgstr "جارٍ تحميل الوسائط…"
@@ -7872,7 +7944,7 @@ msgstr "جارٍ تحميل الردود…"
 msgid "Loading reviews"
 msgstr "جارٍ تحميل التقييمات"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:426
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:460
 msgid "Loading schedule…"
 msgstr "جارٍ تحميل الجدول…"
 
@@ -7884,7 +7956,7 @@ msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الص
 msgid "Loading submissions"
 msgstr "جارٍ تحميل الردود"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:254
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:269
 msgid "Loading team…"
 msgstr "جارٍ تحميل الفريق…"
 
@@ -7918,8 +7990,9 @@ msgstr "جارٍ التحميل…"
 #: app/components/staffing/staff-dialog.tsx:275
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:186
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:194
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:343
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:377
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:452
 msgid "Location"
 msgstr "الموقع"
@@ -8706,7 +8779,7 @@ msgstr "بدون صوت"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:342
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:281
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:296
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
 #: app/routes/organizations+/create.tsx:949
@@ -8961,7 +9034,8 @@ msgstr "التالي"
 msgid "Next day"
 msgstr "اليوم التالي"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:376
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:217
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:410
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:507
 msgid "Next week"
 msgstr "الأسبوع التالي"
@@ -9128,7 +9202,7 @@ msgstr "لا توجد طروحات مجدولة بعد"
 msgid "No editor available for this block type."
 msgstr "لا يوجد محرر متاح لهذا النوع من الكتل."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:488
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:522
 msgid "No email"
 msgstr "لا يوجد بريد"
 
@@ -9204,7 +9278,7 @@ msgstr "لم يتم العثور على أي فروع."
 msgid "No locations yet"
 msgstr "لا توجد فروع بعد"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:260
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:275
 msgid "No matches"
 msgstr "لا توجد نتائج"
 
@@ -9500,7 +9574,7 @@ msgstr "لا توجد ردود بعد"
 msgid "No summary for this call."
 msgstr "لا يوجد ملخص لهذه المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:262
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:277
 msgid "No team members yet"
 msgstr "لا يوجد أعضاء فريق بعد"
 
@@ -9508,7 +9582,7 @@ msgstr "لا يوجد أعضاء فريق بعد"
 msgid "No teammates available"
 msgstr "لا يوجد زملاء متاحون"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:264
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:279
 msgid "No terminated team members"
 msgstr "لا يوجد أعضاء منتهية خدمتهم"
 
@@ -9880,6 +9954,16 @@ msgstr "ساعات الطلب عبر الإنترنت مطابقة لساعات 
 msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:255
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:325
+msgid "Online sales"
+msgstr "المبيعات عبر الإنترنت"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:225
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:582
+msgid "Online sales only"
+msgstr "المبيعات عبر الإنترنت فقط"
+
 #: app/components/phone-agent/test-call-panel.tsx:670
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "لا يمكن بدء المكالمات التجريبية إلا لمن يملكون صلاحية تعديل وكيل الهاتف."
@@ -10026,7 +10110,7 @@ msgstr "مفتوح الآن؟"
 msgid "Open shift"
 msgstr "مناوبة مفتوحة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:459
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:493
 msgid "Open shifts"
 msgstr "المناوبات المفتوحة"
 
@@ -10227,6 +10311,7 @@ msgstr "نافذة الطلب"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:31
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:211
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:328
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -10356,11 +10441,11 @@ msgstr "خارج هذه الأوقات، يأخذ الوكيل رسالة بدل
 msgid "Over threshold"
 msgstr "فوق الحد"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:502
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:536
 msgid "Over weekly hours"
 msgstr "تجاوز الساعات الأسبوعية"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:291
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:325
 msgid "Overlaps"
 msgstr "متداخلة"
 
@@ -10530,9 +10615,17 @@ msgstr "متوقف مؤقتاً"
 msgid "Pausing automation..."
 msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:400
+msgid "Pay"
+msgstr "الأجر"
+
 #: app/components/roles/tenant-role-access-manager.tsx:305
 msgid "Pay data"
 msgstr "بيانات الأجور"
+
+#: app/components/staffing/pay-rates-dialog.tsx:106
+msgid "Pay rates for {name}"
+msgstr "أجور {name}"
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:141
 msgid "Payment needs review"
@@ -11068,8 +11161,8 @@ msgstr "المنصب {name}"
 
 #: app/components/staffing/copy-week-dialog.tsx:136
 #: app/components/staffing/positions-dialog.tsx:78
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:214
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:229
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:299
 msgid "Positions"
 msgstr "المناصب"
 
@@ -11170,7 +11263,8 @@ msgstr "السابق"
 msgid "Previous day"
 msgstr "اليوم السابق"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:359
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:202
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:393
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:491
 msgid "Previous week"
 msgstr "الأسبوع السابق"
@@ -11232,7 +11326,7 @@ msgstr "الفرع الرئيسي / الافتراضي"
 msgid "Primary button"
 msgstr "الزر الأساسي"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:390
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:424
 msgid "Print"
 msgstr "طباعة"
 
@@ -11328,7 +11422,7 @@ msgstr "الوصول العام"
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:619
 #: app/components/staffing/publish-dialog.tsx:129
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:401
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:435
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:507
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
@@ -11355,7 +11449,7 @@ msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار �
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:539
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:603
 msgid "Publish history"
 msgstr "سجل النشر"
 
@@ -11492,6 +11586,10 @@ msgstr "تم التقييم"
 msgid "Rated {rating} out of 5"
 msgstr "التقييم {rating} من 5"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:283
+msgid "Rates or orders at this location use more than one currency, so amounts are not added up."
+msgstr "تستخدم الأجور أو الطلبات في هذا الموقع أكثر من عملة، لذا لا تُجمع المبالغ."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4349
 msgid "Rating"
 msgstr "التقييم"
@@ -11559,7 +11657,7 @@ msgstr "جاهز للاتصال"
 msgid "Reason"
 msgstr "السبب"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:587
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:631
 msgid "Reason (optional, managers only)"
 msgstr "السبب (اختياري، للمديرين فقط)"
 
@@ -11730,7 +11828,7 @@ msgstr "عادي"
 msgid "Regular hours"
 msgstr "الساعات العادية"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:407
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:434
 msgid "Rehire"
 msgstr "إعادة التوظيف"
 
@@ -11915,7 +12013,7 @@ msgstr "إزالة حالة التحويل"
 msgid "Remove variable"
 msgstr "إزالة المتغير"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:286
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:320
 msgid "Removed"
 msgstr "محذوفة"
 
@@ -12118,7 +12216,7 @@ msgstr "إعادة تعيين كلمة المرور"
 msgid "Reset Password"
 msgstr "إعادة تعيين كلمة المرور"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:370
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:385
 msgid "Reset PIN"
 msgstr "إعادة تعيين الرمز السري"
 
@@ -12614,6 +12712,10 @@ msgstr "حفظ المنتج"
 msgid "Save pronunciations and key terms"
 msgstr "حفظ طرق النطق والمصطلحات الرئيسية"
 
+#: app/components/staffing/pay-rates-dialog.tsx:184
+msgid "Save rates"
+msgstr "حفظ الأجور"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:703
 #~ msgid "Save section settings"
 #~ msgstr "حفظ إعدادات القسم"
@@ -12762,6 +12864,14 @@ msgstr "تم نشر الجدول"
 msgid "Scheduled"
 msgstr "مجدول"
 
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:316
+msgid "Scheduled hours"
+msgstr "الساعات المجدولة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:569
+msgid "Scheduled labor"
+msgstr "العمالة المجدولة"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1214
 msgid "Scheduled Reminders"
 msgstr "التذكيرات المجدولة"
@@ -12830,7 +12940,7 @@ msgstr "ابحث في الرسائل"
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:185
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:200
 msgid "Search name, email, or phone"
 msgstr "ابحث بالاسم أو البريد الإلكتروني أو الهاتف"
 
@@ -12881,7 +12991,7 @@ msgstr "البحث في الردود"
 msgid "Search submissions…"
 msgstr "البحث في الردود…"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:186
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:201
 msgid "Search team"
 msgstr "البحث في الفريق"
 
@@ -13360,7 +13470,7 @@ msgstr "تحديد الساعات"
 #~ msgstr "حدد الكمية المتوفرة من هذا العنصر لهذا الطرح."
 
 #: app/components/staffing/pin-dialog.tsx:142
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:372
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:387
 msgid "Set PIN"
 msgstr "تعيين رمز سري"
 
@@ -13401,7 +13511,7 @@ msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاست
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:211
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:226
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr "الإعدادات"
@@ -13715,7 +13825,7 @@ msgstr "بعض الحقول تختلف بالفعل عن اللغة الافتر
 msgid "Some fields are already translated"
 msgstr "بعض الحقول مترجمة بالفعل"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:418
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:452
 msgid "Some people are double-booked. Overlapping shifts are outlined."
 msgstr "بعض الأشخاص لديهم حجز مزدوج. المناوبات المتداخلة محددة بإطار."
 
@@ -13732,7 +13842,7 @@ msgstr "هذا الرمز السري مستخدم من شخص آخر. اختر �
 msgid "Something went wrong"
 msgstr "حدث خطأ ما"
 
-#: app/components/staffing/staffing-errors.ts:68
+#: app/components/staffing/staffing-errors.ts:75
 msgid "Something went wrong reaching staffing data. Try again."
 msgstr "حدث خطأ أثناء الوصول إلى بيانات الموظفين. حاول مرة أخرى."
 
@@ -13965,8 +14075,8 @@ msgstr "الولاية / المنطقة"
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:190
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:290
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:205
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:305
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:420
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:684
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
@@ -14312,7 +14422,7 @@ msgstr "أزرق مخضر"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
 #: app/components/app-sidebar.tsx:323
 #: app/routes/_app+/$orgSlug_+/staffing+/_layout.tsx:41
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:434
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:468
 msgid "Team"
 msgstr "الفريق"
 
@@ -14402,24 +14512,24 @@ msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهر�
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:387
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:605
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:414
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:649
 msgid "Terminate"
 msgstr "إنهاء الخدمة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:563
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:607
 msgid "Terminate {terminatingName}?"
 msgstr "إنهاء خدمة {terminatingName}؟"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:484
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:518
 msgid "Terminated"
 msgstr "منتهية خدمته"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:205
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:220
 msgid "Terminated ({terminatedCount})"
 msgstr "منتهية خدمتهم ({terminatedCount})"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:353
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:368
 msgid "Terminated {lastDay}"
 msgstr "انتهت الخدمة {lastDay}"
 
@@ -14593,6 +14703,10 @@ msgstr "لم يعمل الرمز السري. حاول مرة أخرى."
 msgid "That position is archived."
 msgstr "هذا المنصب مؤرشف."
 
+#: app/components/staffing/staffing-errors.ts:54
+msgid "That position is no longer assigned. Refresh the page."
+msgstr "لم يعد هذا المنصب معيّنًا. حدّث الصفحة."
+
 #: app/components/staffing/staffing-errors.ts:40
 msgid "That time clock was already removed."
 msgstr "تمت إزالة جهاز تسجيل الحضور هذا من قبل."
@@ -14672,7 +14786,7 @@ msgstr "المساعد الذي يرد على مكالمات المطعم."
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
 msgstr "يسمح إعداد autoApprove بالموافقة التلقائية على هذه الأدوات دون مطالبة"
 
-#: app/components/staffing/staffing-errors.ts:53
+#: app/components/staffing/staffing-errors.ts:60
 msgid "The break is longer than the time worked."
 msgstr "الاستراحة أطول من وقت العمل."
 
@@ -14822,7 +14936,7 @@ msgstr "تم تغيير هذه الإعدادات في علامة تبويب أ�
 msgid "These settings shape the schedule and timesheet warnings. They are warnings only, not payroll or labor-law calculations."
 msgstr "تحدد هذه الإعدادات تنبيهات الجدول وسجلات الدوام. إنها تنبيهات فقط، وليست حسابات رواتب أو قوانين عمل."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:566
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:610
 msgid "They can no longer clock in. Their shifts after the last day become open shifts. Time cards and history are kept, and you can rehire them later."
 msgstr "لن يتمكن من تسجيل الحضور بعد الآن. تصبح مناوباته بعد آخر يوم مناوبات مفتوحة. يتم الاحتفاظ ببطاقات الدوام والسجل، ويمكنك إعادة توظيفه لاحقًا."
 
@@ -14905,6 +15019,10 @@ msgstr "هذا العنصر مكرر لعنصر آخر. أزله ثم أضفه �
 #: app/components/menu/item-variations.tsx:262
 msgid "This item has reached the 100 combination limit."
 msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
+
+#: app/components/staffing/staffing-errors.ts:57
+msgid "This location has no currency yet. Add its address in Settings → Locations."
+msgstr "لا توجد عملة لهذا الموقع بعد. أضف عنوانه من الإعدادات ← المواقع."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:856
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."
@@ -14999,7 +15117,8 @@ msgstr "بطاقة الدوام هذه معتمدة. أعد فتحها قبل إ
 msgid "This time card is not approved."
 msgstr "بطاقة الدوام هذه غير معتمدة."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:371
+#: app/routes/_app+/$orgSlug_+/staffing+/_index.tsx:212
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:405
 #: app/routes/_app+/$orgSlug_+/staffing+/timesheets.tsx:502
 msgid "This week"
 msgstr "هذا الأسبوع"
@@ -15679,9 +15798,10 @@ msgid "Units available"
 msgstr "الوحدات المتاحة"
 
 #: app/components/phone-agent/vertical-labels.ts:107
+#: app/components/staffing/pay-rates-dialog.tsx:125
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:228
 #: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:264
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:333
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:348
 msgid "Unknown"
 msgstr "غير معروف"
 
@@ -16473,7 +16593,7 @@ msgstr "الأربعاء"
 msgid "Week"
 msgstr "أسبوع"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:385
+#: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:419
 msgid "Week of {weekLabel}"
 msgstr "أسبوع {weekLabel}"
 
@@ -16927,7 +17047,7 @@ msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العم
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 
-#: app/components/staffing/staffing-errors.ts:62
+#: app/components/staffing/staffing-errors.ts:69
 msgid "You can view staffing data but not change it."
 msgstr "يمكنك عرض بيانات الموظفين دون تعديلها."
 
@@ -16950,6 +17070,10 @@ msgstr "ليس لديك إذن لعرض هذه الملاحظة"
 #: app/components/chat/chat-view.tsx:274
 msgid "You don't have access to any channels yet. Ask an admin to add you to one."
 msgstr "ليس لديك حق الوصول إلى أي قناة بعد. اطلب من أحد المسؤولين إضافتك إلى قناة."
+
+#: app/components/staffing/staffing-errors.ts:52
+msgid "You don’t have access to pay rates."
+msgstr "ليست لديك صلاحية الوصول إلى الأجور."
 
 #: app/hooks/use-phone-calls.ts:37
 msgid "You don't have permission to do that."
@@ -17114,7 +17238,7 @@ msgstr "لوحة تحكم مؤسستك"
 #~ msgid "Your organization's current plan and billing status"
 #~ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 
-#: app/components/staffing/staffing-errors.ts:58
+#: app/components/staffing/staffing-errors.ts:65
 msgid "Your organization’s data region is changing. Try again shortly."
 msgstr "منطقة بيانات مؤسستك قيد التغيير. حاول مرة أخرى بعد قليل."
 
@@ -17158,7 +17282,7 @@ msgstr "مطاعمك"
 msgid "Your S3 credentials will be encrypted and stored securely. However, we recommend using IAM credentials with minimal required permissions (read/write access to the specific bucket only)."
 msgstr "سيتم تشفير بيانات اعتماد S3 الخاصة بك وتخزينها بشكل آمن. ومع ذلك، نوصي باستخدام بيانات اعتماد IAM بأقل الأذونات المطلوبة (الوصول للقراءة/الكتابة إلى الحاوية المحددة فقط)."
 
-#: app/components/staffing/staffing-errors.ts:64
+#: app/components/staffing/staffing-errors.ts:71
 msgid "Your session expired. Refresh the page."
 msgstr "انتهت جلستك. حدّث الصفحة."
 

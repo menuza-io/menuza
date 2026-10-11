@@ -1,8 +1,10 @@
+import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	and,
 	asc,
 	db,
 	eq,
+	Organization,
 	OrganizationLocation,
 	User,
 	UserOrganization,
@@ -10,20 +12,35 @@ import {
 
 import { type StaffingLocation } from './client.ts'
 
-/** Control-plane location metadata only; no staff data. */
+/**
+ * Control-plane location metadata only; no staff data. The currency follows
+ * the same rule as storefront prices, so pay rates and online sales at a
+ * location share one currency.
+ */
 export async function loadStaffingLocations(
 	organizationId: string,
 ): Promise<StaffingLocation[]> {
-	return db
+	const rows = await db
 		.select({
 			id: OrganizationLocation.id,
 			name: OrganizationLocation.name,
 			timezone: OrganizationLocation.timezone,
 			isActive: OrganizationLocation.isActive,
+			address: OrganizationLocation.address,
+			dataRegion: Organization.dataRegion,
 		})
 		.from(OrganizationLocation)
+		.innerJoin(
+			Organization,
+			eq(Organization.id, OrganizationLocation.organizationId),
+		)
 		.where(eq(OrganizationLocation.organizationId, organizationId))
 		.orderBy(asc(OrganizationLocation.createdAt))
+	return rows.map(({ address, dataRegion, ...location }) => ({
+		...location,
+		currency:
+			dataRegion.toLowerCase() === 'ksa' ? 'SAR' : getLocationCurrency(address),
+	}))
 }
 
 /**

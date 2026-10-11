@@ -21,6 +21,7 @@ import {
 	ImportDialog,
 	type ImportResult,
 } from '#app/components/staffing/import-dialog.tsx'
+import { PayRatesDialog } from '#app/components/staffing/pay-rates-dialog.tsx'
 import { PinDialog } from '#app/components/staffing/pin-dialog.tsx'
 import { PositionsDialog } from '#app/components/staffing/positions-dialog.tsx'
 import { StaffingSettingsDialog } from '#app/components/staffing/settings-dialog.tsx'
@@ -66,6 +67,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			memberEmails,
 			dataRegion: access.dataRegion,
 			timeclockEnabled: access.flags.timeclock,
+			canSetPay: access.canViewPay && access.grants.staff === 'write',
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -91,8 +93,14 @@ function toInput(value: StaffFormValue) {
 }
 
 export default function StaffTeam() {
-	const { orgSlug, canWrite, locations, memberEmails, timeclockEnabled } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		canWrite,
+		locations,
+		memberEmails,
+		timeclockEnabled,
+		canSetPay,
+	} = useLoaderData<typeof loader>()
 	const { _, i18n } = useLingui()
 	const request = useStaffingClient(orgSlug)
 	const [staff, setStaff] = useState<Staff[]>([])
@@ -104,7 +112,14 @@ export default function StaffTeam() {
 	const [status, setStatus] = useState<'active' | 'terminated'>('active')
 	const [editing, setEditing] = useState<Staff | null>(null)
 	const [dialog, setDialog] = useState<
-		'staff' | 'positions' | 'import' | 'settings' | 'terminate' | 'pin' | null
+		| 'staff'
+		| 'positions'
+		| 'import'
+		| 'settings'
+		| 'terminate'
+		| 'pin'
+		| 'pay'
+		| null
 	>(null)
 	const [terminateOn, setTerminateOn] = useState(todayLocal)
 	const [terminateReason, setTerminateReason] = useState('')
@@ -373,6 +388,18 @@ export default function StaffTeam() {
 													)}
 												</Button>
 											) : null}
+											{canSetPay && member.status === 'active' ? (
+												<Button
+													size="sm"
+													variant="ghost"
+													onClick={() => {
+														setEditing(member)
+														setDialog('pay')
+													}}
+												>
+													<Trans>Pay</Trans>
+												</Button>
+											) : null}
 											{canWrite && member.status === 'active' ? (
 												<Button
 													size="sm"
@@ -498,6 +525,23 @@ export default function StaffTeam() {
 							),
 						)
 					}
+				/>
+			) : null}
+			{canSetPay ? (
+				<PayRatesDialog
+					staff={dialog === 'pay' ? editing : null}
+					onOpenChange={(open) => setDialog(open ? 'pay' : null)}
+					positions={positions}
+					locations={locations}
+					onSave={async (rates) => {
+						if (!editing) return null
+						return attempt(() =>
+							request(`/staff/${encodeURIComponent(editing.id)}/rates`, {
+								method: 'PUT',
+								body: JSON.stringify({ rates }),
+							}),
+						)
+					}}
 				/>
 			) : null}
 			<PinDialog

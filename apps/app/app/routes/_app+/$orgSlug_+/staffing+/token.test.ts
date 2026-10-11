@@ -51,6 +51,7 @@ describe('staffing credentials', () => {
 				name: 'Main',
 				timezone: 'America/New_York',
 				isActive: true,
+				currency: 'USD',
 			},
 		])
 		mocks.client.mockResolvedValue({
@@ -66,7 +67,7 @@ describe('staffing credentials', () => {
 			claims: {
 				areas: { staff: 'write', schedule: 'read' },
 				locationIds: null,
-				locations: [{ id: 'loc_1', tz: 'America/New_York' }],
+				locations: [{ id: 'loc_1', tz: 'America/New_York', currency: 'USD' }],
 				canViewPay: false,
 			},
 		})

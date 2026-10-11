@@ -41,6 +41,7 @@ import {
 	recordStaffEvent,
 	type ServiceResult,
 } from './staffing-roster.ts'
+import { assignmentRate } from './staffing-pay.ts'
 import { upcomingPublishedShifts } from './staffing-schedule.ts'
 
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
@@ -607,12 +608,19 @@ export async function punchAtKiosk(
 						? shift.positionId
 						: null) ?? positions[0]!.id
 			}
+			const rate = await assignmentRate(
+				tx,
+				member.id,
+				context.device.locationId,
+				positionId,
+			)
 			const [entry] = await tx
 				.insert(timeEntries)
 				.values({
 					staffId: member.id,
 					locationId: context.device.locationId,
 					positionId,
+					...rate,
 					shiftId: shift?.id ?? null,
 					clockInAt: now,
 					timeZone: context.device.timeZone,
