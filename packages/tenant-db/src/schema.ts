@@ -1071,6 +1071,10 @@ export const staffMembers = sqliteTable(
 		terminatedOn: text('terminated_on'),
 		terminationReason: text('termination_reason'),
 		note: text('note').notNull().default(''),
+		// HMAC of the kiosk PIN keyed by AUTH_HMAC_SECRET. Unique so a PIN alone
+		// identifies one person at the kiosk.
+		pinHash: text('pin_hash'),
+		pinSetAt: integer('pin_set_at', { mode: 'timestamp' }),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.notNull()
 			.default(sql`(strftime('%s', 'now'))`),
@@ -1081,6 +1085,7 @@ export const staffMembers = sqliteTable(
 	(table) => [
 		index('idx_staff_members_status').on(table.status, table.lastName),
 		index('idx_staff_members_email').on(table.email),
+		uniqueIndex('staff_members_pin_hash_unique').on(table.pinHash),
 	],
 )
 
@@ -1242,6 +1247,126 @@ export const schedulePublications = sqliteTable(
 	],
 )
 
+// A shared tablet paired to one location. The device token is shown once at
+// pairing; only its hash is stored. Wrong PINs lock the device, not a person,
+// because a PIN alone identifies who is punching.
+export const kioskDevices = sqliteTable(
+	'kiosk_devices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		locationName: text('location_name').notNull().default(''),
+		timeZone: text('tz').notNull(),
+		name: text('name').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		createdBy: text('created_by').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+		lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
+		failedPinCount: integer('failed_pin_count').notNull().default(0),
+		lockedUntil: integer('locked_until', { mode: 'timestamp' }),
+		revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+		revokedBy: text('revoked_by'),
+	},
+	(table) => [
+		uniqueIndex('kiosk_devices_token_hash_unique').on(table.tokenHash),
+		index('idx_kiosk_devices_location').on(table.locationId),
+	],
+)
+
+export const kioskPairingCodes = sqliteTable('kiosk_pairing_codes', {
+	codeHash: text('code_hash').primaryKey(),
+	locationId: text('location_id').notNull(),
+	locationName: text('location_name').notNull().default(''),
+	timeZone: text('tz').notNull(),
+	name: text('name').notNull(),
+	createdBy: text('created_by').notNull(),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+	usedAt: integer('used_at', { mode: 'timestamp' }),
+	deviceId: text('device_id'),
+})
+
+// One row per worked stretch. Approval locks the row against edits until a
+// manager reopens it. Every change writes a `time_entry_events` row.
+export const timeEntries = sqliteTable(
+	'time_entries',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		staffId: text('staff_id')
+			.notNull()
+			.references(() => staffMembers.id),
+		locationId: text('location_id').notNull(),
+		positionId: text('position_id').references(() => staffPositions.id, {
+			onDelete: 'set null',
+		}),
+		shiftId: text('shift_id').references(() => shifts.id, {
+			onDelete: 'set null',
+		}),
+		clockInAt: integer('clock_in_at', { mode: 'timestamp' }).notNull(),
+		clockOutAt: integer('clock_out_at', { mode: 'timestamp' }),
+		timeZone: text('tz').notNull(),
+		localDate: text('local_date').notNull(),
+		source: text('source', { enum: ['kiosk', 'manager'] }).notNull(),
+		deviceId: text('device_id'),
+		unpaidBreakMinutes: integer('unpaid_break_min').notNull().default(0),
+		note: text('note').notNull().default(''),
+		approvedAt: integer('approved_at', { mode: 'timestamp' }),
+		approvedBy: text('approved_by'),
+		deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+		clientRequestId: text('client_request_id'),
+		clockOutRequestId: text('clock_out_request_id'),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+		updatedAt: integer('updated_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		uniqueIndex('time_entries_client_request_unique').on(table.clientRequestId),
+		uniqueIndex('time_entries_clock_out_request_unique').on(
+			table.clockOutRequestId,
+		),
+		// At most one open entry per person, so a double tap cannot clock in twice.
+		uniqueIndex('time_entries_one_open_per_staff')
+			.on(table.staffId)
+			.where(sql`clock_out_at IS NULL AND deleted_at IS NULL`),
+		index('idx_time_entries_location_date').on(
+			table.locationId,
+			table.localDate,
+		),
+		index('idx_time_entries_staff_in').on(table.staffId, table.clockInAt),
+	],
+)
+
+// Append-only. `actor_ref` is an operator user id or `kiosk:<deviceId>`.
+export const timeEntryEvents = sqliteTable(
+	'time_entry_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		entryId: text('entry_id')
+			.notNull()
+			.references(() => timeEntries.id),
+		kind: text('kind').notNull(),
+		actorType: text('actor_type', { enum: ['operator', 'kiosk'] }).notNull(),
+		actorRef: text('actor_ref').notNull(),
+		before: text('before_json', { mode: 'json' }),
+		after: text('after_json', { mode: 'json' }),
+		reason: text('reason'),
+		at: integer('at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [index('idx_time_entry_events_entry').on(table.entryId, table.at)],
+)
+
 export type StaffMember = typeof staffMembers.$inferSelect
 export type StaffPosition = typeof staffPositions.$inferSelect
 export type StaffAssignment = typeof staffAssignments.$inferSelect
@@ -1249,6 +1374,9 @@ export type StaffEvent = typeof staffEvents.$inferSelect
 export type StaffingSettingsRow = typeof staffingSettings.$inferSelect
 export type Shift = typeof shifts.$inferSelect
 export type SchedulePublication = typeof schedulePublications.$inferSelect
+export type KioskDevice = typeof kioskDevices.$inferSelect
+export type TimeEntry = typeof timeEntries.$inferSelect
+export type TimeEntryEvent = typeof timeEntryEvents.$inferSelect
 
 // ==========================================
 // 13. INFERRED TYPES

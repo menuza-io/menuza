@@ -43,7 +43,11 @@ per-area grants and the organization's location ids and time zones; the browser
 calls `/operator/staffing/*` on the regional node directly. App SSR renders only
 control-plane data (locations, member emails for the "has login" hint). Shifts
 and publish history (`shifts`, `schedule_publications`) are regional too, and
-schedule emails are sent by the regional node, not App.
+schedule emails are sent by the regional node, not App. The time clock tablet
+page (`/kiosk/<orgSlug>`) is an App shell that renders only public organization
+metadata; the tablet sends PINs and punches to the regional `/kiosk/*` routes
+with its own device token, and `kiosk_devices`, `time_entries`, and
+`time_entry_events` live in the per-org tenant database.
 
 ## Why this shape exists
 

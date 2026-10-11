@@ -187,6 +187,10 @@ msgstr "{choiceCount, plural, one {# choice} other {# choices}}"
 msgid "{clientName} is requesting access to your organization data"
 msgstr ""
 
+#: app/components/staffing/kiosk-terminal.tsx:678
+msgid "{count, plural, =0 {No upcoming shifts here} one {Your next shift} other {Your next # shifts}}"
+msgstr "{count, plural, =0 {No upcoming shifts here} one {Your next shift} other {Your next # shifts}}"
+
 #: app/components/phone-agent/settings-page.tsx:113
 msgid "{count, plural, one {Add at least # item.} other {Add at least # items.}}"
 msgstr "{count, plural, one {Add at least # item.} other {Add at least # items.}}"
@@ -255,6 +259,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
+
+#: app/components/staffing/pin-pad.tsx:53
+msgid "{entered} digits entered"
+msgstr "{entered} digits entered"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
@@ -683,6 +691,10 @@ msgstr "24 hours prior"
 msgid "4 hours prior"
 msgstr "4 hours prior"
 
+#: app/components/staffing/pin-dialog.tsx:131
+msgid "4–6 digits"
+msgstr "4–6 digits"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
 msgid "404 Error History"
 msgstr "404 Error History"
@@ -727,6 +739,7 @@ msgstr "A caller was unhappy or reported a problem."
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:234
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:548
 msgid "A former member"
 msgstr "A former member"
@@ -739,6 +752,10 @@ msgstr "A large title that opens a section."
 msgid "A link styled as a call to action."
 msgstr "A link styled as a call to action."
 
+#: app/components/staffing/kiosk-terminal.tsx:470
+msgid "A manager can create a pairing code under Staff → Time clocks."
+msgstr "A manager can create a pairing code under Staff → Time clocks."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:402
 msgid "A new number only the agent answers."
 msgstr "A new number only the agent answers."
@@ -746,6 +763,15 @@ msgstr "A new number only the agent answers."
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "A picture, logo, or product shot."
+
+#: app/components/staffing/staffing-errors.ts:35
+#: app/components/staffing/staffing-errors.ts:36
+msgid "A PIN is 4 to 6 digits."
+msgstr "A PIN is 4 to 6 digits."
+
+#: app/components/staffing/pin-dialog.tsx:74
+msgid "A PIN is set. Setting a new one replaces it right away."
+msgstr "A PIN is set. Setting a new one replaces it right away."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:694
 msgid "A place for every inquiry"
@@ -774,6 +800,10 @@ msgstr "A staff or transfer number reaches the AI agent, so transfers would loop
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:48
 msgid "A summary after each call. Can be a lot of texts on busy days."
 msgstr "A summary after each call. Can be a lot of texts on busy days."
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:139
+msgid "A time clock is a shared tablet at a location. Staff enter their PIN to clock in and out. Set PINs on the Team page."
+msgstr "A time clock is a shared tablet at a location. Staff enter their PIN to clock in and out. Set PINs on the Team page."
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:132
 #: app/routes/_auth+/onboarding.tsx:119
@@ -854,7 +884,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:594
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:696
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:291
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:204
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:294
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -875,11 +906,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:674
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:346
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:349
 msgid "Active"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:194
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:197
 msgid "Active ({activeCount})"
 msgstr "Active ({activeCount})"
 
@@ -960,7 +991,7 @@ msgstr ""
 msgid "Add a link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:243
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:246
 msgid "Add a location in Settings → Locations before assigning staff."
 msgstr "Add a location in Settings → Locations before assigning staff."
 
@@ -991,6 +1022,11 @@ msgstr ""
 #: app/components/phone-agent/settings-page.tsx:60
 msgid "Add a staff phone number to turn on automatic transfers."
 msgstr "Add a staff phone number to turn on automatic transfers."
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:191
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:150
+msgid "Add a time clock"
+msgstr "Add a time clock"
 
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
@@ -1107,7 +1143,7 @@ msgstr "Add group"
 msgid "Add images"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:220
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:223
 msgid "Add in bulk"
 msgstr "Add in bulk"
 
@@ -1181,6 +1217,10 @@ msgstr "Add number"
 msgid "Add one in your business settings first."
 msgstr "Add one in your business settings first."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:179
+msgid "Add one, then open the link on the tablet that stays at the location."
+msgstr "Add one, then open the link on the tablet that stays at the location."
+
 #: app/components/menu/item-variations.tsx:283
 #: app/components/menu/modifier-form.tsx:1180
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:279
@@ -1210,7 +1250,7 @@ msgstr "Add people"
 msgid "Add people in bulk"
 msgstr "Add people in bulk"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:266
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:269
 msgid "Add people one at a time, or paste a list with Add in bulk."
 msgstr "Add people one at a time, or paste a list with Add in bulk."
 
@@ -1322,7 +1362,7 @@ msgid "Add tag"
 msgstr "Add tag"
 
 #: app/components/staffing/staff-dialog.tsx:149
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:229
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:232
 msgid "Add team member"
 msgstr "Add team member"
 
@@ -1378,6 +1418,10 @@ msgstr "Add, edit, terminate, and rehire staff, and reset time clock PINs. Needs
 msgid "Add, name, and order each field."
 msgstr "Add, name, and order each field."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:200
+msgid "Added by"
+msgstr "Added by"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:149
 msgid "Added section"
 msgstr "Added section"
@@ -1408,6 +1452,7 @@ msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr ""
 
 #: app/components/phone-agent/business-details-section.tsx:137
+#: app/components/staffing/pair-kiosk-dialog.tsx:126
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:581
 msgid "Address"
 msgstr "Address"
@@ -2090,6 +2135,14 @@ msgstr ""
 msgid "Avg/day"
 msgstr ""
 
+#: app/components/staffing/staffing-errors.ts:34
+msgid "Avoid a PIN that counts up or down."
+msgstr "Avoid a PIN that counts up or down."
+
+#: app/components/staffing/staffing-errors.ts:33
+msgid "Avoid a PIN that repeats one digit."
+msgstr "Avoid a PIN that repeats one digit."
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:132
 msgid "Awaiting payment"
 msgstr "Awaiting payment"
@@ -2104,6 +2157,10 @@ msgstr "B&W"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:197
 msgid "Back"
 msgstr ""
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:225
+msgid "Back office tablet"
+msgstr "Back office tablet"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
@@ -2561,6 +2618,10 @@ msgstr ""
 msgid "Can edit teammate notes"
 msgstr "Can edit teammate notes"
 
+#: app/components/staffing/kiosk-terminal.tsx:160
+msgid "Can’t reach the time clock service. Check the internet connection and try again."
+msgstr "Can’t reach the time clock service. Check the internet connection and try again."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:107
 msgid "Can't text that number"
 msgstr "Can't text that number"
@@ -2605,6 +2666,8 @@ msgstr "Can't text that number"
 #: app/components/settings/two-factor-form.tsx:261
 #: app/components/staffing/copy-week-dialog.tsx:182
 #: app/components/staffing/import-dialog.tsx:180
+#: app/components/staffing/pair-kiosk-dialog.tsx:241
+#: app/components/staffing/pin-dialog.tsx:162
 #: app/components/staffing/publish-dialog.tsx:115
 #: app/components/staffing/settings-dialog.tsx:142
 #: app/components/staffing/shift-dialog.tsx:385
@@ -2630,7 +2693,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:798
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:548
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:319
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:602
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
@@ -2874,6 +2938,10 @@ msgstr "Chat settings"
 msgid "Check out our new summer menu"
 msgstr ""
 
+#: app/components/staffing/kiosk-terminal.tsx:504
+msgid "Check the address with your manager. The time clock may not be turned on for this business."
+msgstr "Check the address with your manager. The time clock may not be turned on for this business."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:544
 msgid "Check the drop details and try saving again."
 msgstr "Check the drop details and try saving again."
@@ -2882,7 +2950,7 @@ msgstr "Check the drop details and try saving again."
 msgid "Check the format of this value."
 msgstr "Check the format of this value."
 
-#: app/components/staffing/staffing-errors.ts:33
+#: app/components/staffing/staffing-errors.ts:44
 msgid "Check the highlighted fields and try again."
 msgstr "Check the highlighted fields and try again."
 
@@ -3000,6 +3068,10 @@ msgstr "Choose one of the agent numbers assigned to your business."
 #: app/components/phone-agent/settings-page.tsx:90
 msgid "Choose one of the listed options."
 msgstr "Choose one of the listed options."
+
+#: app/components/staffing/kiosk-terminal.tsx:189
+msgid "Choose one of your positions."
+msgstr "Choose one of your positions."
 
 #: app/components/menu/item-variations.tsx:330
 #: app/components/menu/item-variations.tsx:331
@@ -3140,6 +3212,30 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:954
 msgid "Client"
 msgstr ""
+
+#: app/components/staffing/kiosk-terminal.tsx:660
+msgid "Clock in"
+msgstr "Clock in"
+
+#: app/components/staffing/kiosk-terminal.tsx:639
+msgid "Clock in as"
+msgstr "Clock in as"
+
+#: app/components/staffing/kiosk-terminal.tsx:634
+msgid "Clock out"
+msgstr "Clock out"
+
+#: app/components/staffing/kiosk-terminal.tsx:583
+msgid "Clocked in at {time}. Have a good shift, {firstName}!"
+msgstr "Clocked in at {time}. Have a good shift, {firstName}!"
+
+#: app/components/staffing/kiosk-terminal.tsx:620
+msgid "Clocked in since {since}"
+msgstr "Clocked in since {since}"
+
+#: app/components/staffing/kiosk-terminal.tsx:587
+msgid "Clocked out at {time}. Thanks, {firstName}!"
+msgstr "Clocked out at {time}. Thanks, {firstName}!"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
@@ -3550,7 +3646,7 @@ msgid "Connections"
 msgstr ""
 
 #: app/components/website/create-form-dialog.tsx:113
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:287
 msgid "Contact"
 msgstr "Contact"
 
@@ -3707,6 +3803,7 @@ msgstr ""
 msgid "Copy from the week of"
 msgstr "Copy from the week of"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:160
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:363
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:374
@@ -4091,6 +4188,10 @@ msgstr "Create notes"
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:349
 msgid "Create Option"
 msgstr "Create Option"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:244
+msgid "Create pairing code"
+msgstr "Create pairing code"
 
 #: app/components/settings/cards/security-card.tsx:95
 #: app/components/settings/cards/security-card.tsx:133
@@ -4645,6 +4746,10 @@ msgstr ""
 msgid "Delete item?"
 msgstr "Delete item?"
 
+#: app/components/staffing/pin-pad.tsx:86
+msgid "Delete last digit"
+msgstr "Delete last digit"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3221
 msgid "Delete link"
 msgstr ""
@@ -4891,8 +4996,13 @@ msgstr "Development"
 #: app/components/settings/cards/sessions-card.tsx:185
 #: app/components/settings/cards/sessions-card.tsx:267
 #: app/components/settings/passkey-manager.tsx:198
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:191
 msgid "Device"
 msgstr ""
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:219
+msgid "Device name"
+msgstr "Device name"
 
 #: app/components/phone-agent/test-call-panel.tsx:572
 msgid "Dial pad"
@@ -5070,6 +5180,9 @@ msgstr "Don't take phone orders for"
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staffing/copy-week-dialog.tsx:182
 #: app/components/staffing/import-dialog.tsx:180
+#: app/components/staffing/kiosk-terminal.tsx:563
+#: app/components/staffing/pair-kiosk-dialog.tsx:163
+#: app/components/staffing/pin-dialog.tsx:100
 #: app/components/staffing/publish-dialog.tsx:115
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:175
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:518
@@ -5641,6 +5754,10 @@ msgstr "Ends the next day."
 msgid "English"
 msgstr ""
 
+#: app/components/staffing/pin-pad.tsx:106
+msgid "Enter"
+msgstr "Enter"
+
 #: app/components/menu/option-form.tsx:494
 msgid "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgstr "Enter 0.00 for no extra charge (e.g. Free choice)."
@@ -5707,6 +5824,10 @@ msgstr ""
 #: app/routes/_auth+/login.tsx:814
 msgid "Enter your password"
 msgstr ""
+
+#: app/components/staffing/kiosk-terminal.tsx:516
+msgid "Enter your PIN"
+msgstr "Enter your PIN"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:303
 #: app/routes/_auth+/onboarding.tsx:427
@@ -6340,6 +6461,10 @@ msgstr ""
 msgid "General Settings"
 msgstr ""
 
+#: app/components/staffing/pin-dialog.tsx:111
+msgid "Generate a PIN"
+msgstr "Generate a PIN"
+
 #: app/components/settings/backup-codes-display.tsx:172
 msgid "Generate Backup Codes"
 msgstr ""
@@ -6584,7 +6709,7 @@ msgstr "Handed to the business line"
 msgid "Hang up"
 msgstr "Hang up"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:314
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:317
 msgid "Has an App login"
 msgstr "Has an App login"
 
@@ -6666,6 +6791,10 @@ msgstr ""
 #: app/routes/_auth+/onboarding.tsx:410
 msgid "Hi {email}, please complete your profile."
 msgstr ""
+
+#: app/components/staffing/kiosk-terminal.tsx:616
+msgid "Hi, {name}"
+msgstr "Hi, {name}"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:675
 msgid "Hi, {userName}"
@@ -7317,7 +7446,7 @@ msgstr ""
 msgid "Last active {lastActiveValue}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:521
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:575
 msgid "Last day"
 msgstr "Last day"
 
@@ -7332,6 +7461,10 @@ msgstr ""
 #: app/components/staffing/staff-dialog.tsx:175
 msgid "Last name"
 msgstr "Last name"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:197
+msgid "Last seen"
+msgstr "Last seen"
 
 #: app/routes/_auth+/login.tsx:483
 #: app/routes/_auth+/login.tsx:494
@@ -7615,9 +7748,13 @@ msgstr ""
 msgid "Loading submissions"
 msgstr "Loading submissions"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:251
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:254
 msgid "Loading team…"
 msgstr "Loading team…"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:171
+msgid "Loading time clocks…"
+msgstr "Loading time clocks…"
 
 #: app/components/phone-agent/voice-picker.tsx:617
 msgid "Loading voice…"
@@ -7628,6 +7765,7 @@ msgid "Loading voices"
 msgstr "Loading voices"
 
 #: app/components/mailbox/calls-tab.tsx:392
+#: app/components/staffing/kiosk-terminal.tsx:452
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:664
 msgid "Loading…"
 msgstr "Loading…"
@@ -7636,9 +7774,11 @@ msgstr "Loading…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/components/staffing/import-dialog.tsx:112
+#: app/components/staffing/pair-kiosk-dialog.tsx:202
 #: app/components/staffing/staff-dialog.tsx:275
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:194
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:343
 msgid "Location"
 msgstr "Location"
@@ -7672,6 +7812,10 @@ msgstr "Locations"
 #: app/components/staffing/staff-dialog.tsx:231
 msgid "Locations and positions"
 msgstr "Locations and positions"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:222
+msgid "Locked after wrong PINs"
+msgstr "Locked after wrong PINs"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1317
 msgid "Locks inventory while customer fills in checkout details."
@@ -8413,7 +8557,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:342
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:278
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:281
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
 #: app/routes/organizations+/create.tsx:949
@@ -8895,7 +9039,7 @@ msgstr "No locations found."
 msgid "No locations yet"
 msgstr "No locations yet"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:257
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:260
 msgid "No matches"
 msgstr "No matches"
 
@@ -9189,7 +9333,7 @@ msgstr "No submissions yet"
 msgid "No summary for this call."
 msgstr "No summary for this call."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:259
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:262
 msgid "No team members yet"
 msgstr "No team members yet"
 
@@ -9197,9 +9341,13 @@ msgstr "No team members yet"
 msgid "No teammates available"
 msgstr "No teammates available"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:261
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:264
 msgid "No terminated team members"
 msgstr "No terminated team members"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:176
+msgid "No time clocks yet"
+msgstr "No time clocks yet"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
@@ -9319,6 +9467,10 @@ msgstr "Not used in any notes, comments, or pages"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Not Verified (False)"
 msgstr ""
+
+#: app/components/staffing/kiosk-terminal.tsx:665
+msgid "Not you? Cancel"
+msgstr "Not you? Cancel"
 
 #: app/components/leadership-card.tsx:106
 msgid "note"
@@ -9831,6 +9983,10 @@ msgstr "Options"
 msgid "Options like size or color. Price and availability per combination."
 msgstr "Options like size or color. Price and availability per combination."
 
+#: app/components/staffing/pin-dialog.tsx:121
+msgid "Or choose one"
+msgstr "Or choose one"
+
 #: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
 msgstr ""
@@ -10071,6 +10227,19 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:366
 msgid "Paid online or at handoff"
 msgstr "Paid online or at handoff"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:103
+msgid "Pair the tablet"
+msgstr "Pair the tablet"
+
+#: app/components/staffing/kiosk-terminal.tsx:495
+msgid "Pair this tablet"
+msgstr "Pair this tablet"
+
+#: app/components/staffing/kiosk-terminal.tsx:477
+#: app/components/staffing/pair-kiosk-dialog.tsx:134
+msgid "Pairing code"
+msgstr "Pairing code"
 
 #: app/utils/website/field-types.ts:73
 #: app/utils/website/field-types.ts:76
@@ -10688,8 +10857,8 @@ msgstr "Position"
 
 #: app/components/staffing/copy-week-dialog.tsx:136
 #: app/components/staffing/positions-dialog.tsx:78
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:211
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:281
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:214
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
 msgid "Positions"
 msgstr "Positions"
 
@@ -11049,6 +11218,10 @@ msgstr ""
 msgid "QR code for two-factor authentication setup. Scan this code with your authenticator app."
 msgstr ""
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:116
+msgid "QR code that opens the time clock"
+msgstr "QR code that opens the time clock"
+
 #: app/components/menu/option-form.tsx:788
 msgid "Quantity"
 msgstr "Quantity"
@@ -11166,7 +11339,7 @@ msgstr "Ready"
 msgid "Ready to call"
 msgstr "Ready to call"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:533
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:587
 msgid "Reason (optional, managers only)"
 msgstr "Reason (optional, managers only)"
 
@@ -11320,7 +11493,7 @@ msgstr ""
 msgid "Regular"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:386
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:407
 msgid "Rehire"
 msgstr "Rehire"
 
@@ -11360,6 +11533,8 @@ msgstr ""
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
 #: app/components/website/branding-panel.tsx:314
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:243
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:347
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2636
 msgid "Remove"
 msgstr ""
@@ -11375,6 +11550,10 @@ msgstr "Remove {label}"
 #: app/components/menu/item-variations.tsx:115
 msgid "Remove {optionName}? Its combinations will be removed when you save the item."
 msgstr "Remove {optionName}? Its combinations will be removed when you save the item."
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:307
+msgid "Remove {revokingName}?"
+msgstr "Remove {revokingName}?"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:737
 msgid "Remove {term}"
@@ -11459,6 +11638,10 @@ msgstr "Remove photo"
 msgid "Remove pickup window"
 msgstr "Remove pickup window"
 
+#: app/components/staffing/pin-dialog.tsx:158
+msgid "Remove PIN"
+msgstr "Remove PIN"
+
 #: app/components/staffing/staff-dialog.tsx:328
 msgid "Remove position"
 msgstr "Remove position"
@@ -11502,6 +11685,10 @@ msgstr "Removed"
 #: ../../packages/ai/src/components/ai-chat.tsx:157
 msgid "Removed section"
 msgstr "Removed section"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:258
+msgid "Removed time clocks ({revokedCount})"
+msgstr "Removed time clocks ({revokedCount})"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:156
 msgid "Removing section"
@@ -11671,6 +11858,10 @@ msgstr ""
 #: app/routes/_auth+/reset-password.tsx:128
 msgid "Reset Password"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:370
+msgid "Reset PIN"
+msgstr "Reset PIN"
 
 #: app/routes/organizations+/create.tsx:1016
 msgid "Reset to auto-generated"
@@ -12272,6 +12463,10 @@ msgstr "Say when it will be ready"
 msgid "Scan QR Code or Enter Setup Key"
 msgstr ""
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:106
+msgid "Scan the code with the tablet’s camera, or open the address below on the tablet and type the pairing code."
+msgstr "Scan the code with the tablet’s camera, or open the address below on the tablet and type the pairing code."
+
 #: app/components/app-sidebar.tsx:328
 #: app/routes/_app+/$orgSlug_+/staffing+/_layout.tsx:43
 msgid "Schedule"
@@ -12374,7 +12569,7 @@ msgstr "Search messages"
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:182
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:185
 msgid "Search name, email, or phone"
 msgstr "Search name, email, or phone"
 
@@ -12425,7 +12620,7 @@ msgstr "Search submissions"
 msgid "Search submissions…"
 msgstr "Search submissions…"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:183
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:186
 msgid "Search team"
 msgstr "Search team"
 
@@ -12895,6 +13090,11 @@ msgstr "Set hours"
 #~ msgid "Set how many of this item are available for this drop."
 #~ msgstr "Set how many of this item are available for this drop."
 
+#: app/components/staffing/pin-dialog.tsx:142
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:372
+msgid "Set PIN"
+msgstr "Set PIN"
+
 #: app/components/locations/availability-picker.tsx:442
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "Set the physical operating hours when customers can visit this restaurant location."
@@ -12906,6 +13106,10 @@ msgstr "Set the physical operating hours when customers can visit this restauran
 #: app/components/website/create-page-dialog.tsx:143
 msgid "Set the title and URL for your new page."
 msgstr ""
+
+#: app/components/staffing/kiosk-terminal.tsx:467
+msgid "Set up a time clock for {organizationName}"
+msgstr "Set up a time clock for {organizationName}"
 
 #: app/components/settings/cards/security-card.tsx:187
 msgid "Set up authenticator app"
@@ -12928,7 +13132,7 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:208
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:211
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr ""
@@ -12983,6 +13187,10 @@ msgstr "Share pickup instructions, special reheating tips, or what makes this dr
 #: app/components/organization-invitations.tsx:170
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "Share this link to let people join your organization. They'll see you invited them."
+
+#: app/components/staffing/pin-dialog.tsx:94
+msgid "Share this PIN with them privately. It won’t be shown again."
+msgstr "Share this PIN with them privately. It won’t be shown again."
 
 #: app/routes/_auth+/waitlist.tsx:295
 msgid "Share with others"
@@ -13243,11 +13451,15 @@ msgstr "Some people are double-booked. Overlapping shifts are outlined."
 msgid "Someone"
 msgstr "Someone"
 
+#: app/components/staffing/staffing-errors.ts:31
+msgid "Someone else already uses that PIN. Choose another, or generate one."
+msgstr "Someone else already uses that PIN. Choose another, or generate one."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:95
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: app/components/staffing/staffing-errors.ts:41
+#: app/components/staffing/staffing-errors.ts:52
 msgid "Something went wrong reaching staffing data. Try again."
 msgstr "Something went wrong reaching staffing data. Try again."
 
@@ -13260,6 +13472,8 @@ msgid "Something went wrong. Reload the page and try again."
 msgstr "Something went wrong. Reload the page and try again."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:205
+#: app/components/staffing/kiosk-terminal.tsx:151
+#: app/components/staffing/kiosk-terminal.tsx:192
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
@@ -13474,8 +13688,8 @@ msgstr "State / Province"
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:187
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:287
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:190
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:290
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -13901,12 +14115,12 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:366
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:551
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:387
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:605
 msgid "Terminate"
 msgstr "Terminate"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:509
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:563
 msgid "Terminate {terminatingName}?"
 msgstr "Terminate {terminatingName}?"
 
@@ -13914,11 +14128,11 @@ msgstr "Terminate {terminatingName}?"
 msgid "Terminated"
 msgstr "Terminated"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:202
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:205
 msgid "Terminated ({terminatedCount})"
 msgstr "Terminated ({terminatedCount})"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:350
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:353
 msgid "Terminated {lastDay}"
 msgstr "Terminated {lastDay}"
 
@@ -14064,6 +14278,10 @@ msgstr "That change couldn't be saved. Refresh the page and try again."
 msgid "That location is not available."
 msgstr "That location is not available."
 
+#: app/components/staffing/kiosk-terminal.tsx:166
+msgid "That pairing code didn’t work. It may have expired or already been used."
+msgstr "That pairing code didn’t work. It may have expired or already been used."
+
 #: app/components/staffing/staffing-errors.ts:19
 msgid "That person is no longer on the team."
 msgstr "That person is no longer on the team."
@@ -14076,9 +14294,25 @@ msgstr "That person is not assigned to this location. Add the location on the Te
 msgid "That person is terminated."
 msgstr "That person is terminated."
 
+#: app/components/staffing/kiosk-terminal.tsx:170
+msgid "That PIN didn’t work. One more wrong PIN locks the time clock for a few minutes."
+msgstr "That PIN didn’t work. One more wrong PIN locks the time clock for a few minutes."
+
+#: app/components/staffing/kiosk-terminal.tsx:171
+msgid "That PIN didn’t work. Try again."
+msgstr "That PIN didn’t work. Try again."
+
 #: app/components/staffing/staffing-errors.ts:11
 msgid "That position is archived."
 msgstr "That position is archived."
+
+#: app/components/staffing/staffing-errors.ts:40
+msgid "That time clock was already removed."
+msgstr "That time clock was already removed."
+
+#: app/components/staffing/kiosk-terminal.tsx:176
+msgid "That took too long. Enter your PIN again."
+msgstr "That took too long. Enter your PIN again."
 
 #: app/components/staffing/staffing-errors.ts:28
 msgid "That week has no shifts to copy."
@@ -14237,6 +14471,14 @@ msgstr "The standard voice for your agent's language."
 msgid "The steps to follow while taking an order."
 msgstr "The steps to follow while taking an order."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:310
+msgid "The tablet stops working as a time clock right away. Anyone still clocked in can be clocked out from Timesheets. To use it again, pair it with a new code."
+msgstr "The tablet stops working as a time clock right away. Anyone still clocked in can be clocked out from Timesheets. To use it again, pair it with a new code."
+
+#: app/components/staffing/kiosk-terminal.tsx:163
+msgid "The time clock is paused. Ask a manager to record your time."
+msgstr "The time clock is paused. Ask a manager to record your time."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 msgid "The time-limit notice, the rating question, and the goodbye."
 msgstr "The time-limit notice, the rating question, and the goodbye."
@@ -14289,9 +14531,13 @@ msgstr "These settings changed in another tab or by someone else. Reload to see 
 msgid "These settings shape the schedule and timesheet warnings. They are warnings only, not payroll or labor-law calculations."
 msgstr "These settings shape the schedule and timesheet warnings. They are warnings only, not payroll or labor-law calculations."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:512
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:566
 msgid "They can no longer clock in. Their shifts after the last day become open shifts. Time cards and history are kept, and you can rehire them later."
 msgstr "They can no longer clock in. Their shifts after the last day become open shifts. Time cards and history are kept, and you can rehire them later."
+
+#: app/components/staffing/pin-dialog.tsx:78
+msgid "They need a PIN to clock in and out on a time clock tablet."
+msgstr "They need a PIN to clock in and out on a time clock tablet."
 
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
 msgid "Thinking..."
@@ -14332,6 +14578,10 @@ msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 #: app/routes/mcp+/authorize.tsx:374
 msgid "This client will have access to:"
 msgstr ""
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:151
+msgid "This code expired. Close and create a new one."
+msgstr "This code expired. Close and create a new one."
 
 #: app/components/settings/cards/sessions-card.tsx:183
 msgid "This device"
@@ -14434,6 +14684,14 @@ msgstr "This submission doesn’t include an email address. You can review its d
 msgid "This tab"
 msgstr ""
 
+#: app/components/staffing/kiosk-terminal.tsx:229
+msgid "This tablet was removed as a time clock. Pair it again to keep using it."
+msgstr "This tablet was removed as a time clock. Pair it again to keep using it."
+
+#: app/components/staffing/kiosk-terminal.tsx:184
+msgid "This time card is already approved. Ask a manager to clock you out."
+msgstr "This time card is already approved. Ask a manager to clock you out."
+
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:371
 msgid "This week"
 msgstr "This week"
@@ -14519,9 +14777,25 @@ msgstr "Time"
 msgid "Time clock"
 msgstr "Time clock"
 
+#: app/components/staffing/kiosk-terminal.tsx:501
+msgid "Time clock not available"
+msgstr "Time clock not available"
+
+#: app/components/staffing/pin-dialog.tsx:70
+msgid "Time clock PIN for {name}"
+msgstr "Time clock PIN for {name}"
+
 #: app/routes/_app+/$orgSlug_+/staffing+/_layout.tsx:49
 msgid "Time clocks"
 msgstr "Time clocks"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:157
+msgid "Time clocks are paused in your data region. Paired tablets will not accept punches until they are turned back on."
+msgstr "Time clocks are paused in your data region. Paired tablets will not accept punches until they are turned back on."
+
+#: app/components/staffing/staffing-errors.ts:38
+msgid "Time clocks are paused in your data region. Try again later."
+msgstr "Time clocks are paused in your data region. Try again later."
 
 #: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:16
 msgid "Time delay"
@@ -14609,6 +14883,14 @@ msgstr "Too many requests. Wait a moment and try again."
 #: app/components/staffing/import-dialog.tsx:67
 msgid "Too many rows; import in batches"
 msgstr "Too many rows; import in batches"
+
+#: app/components/staffing/kiosk-terminal.tsx:190
+msgid "Too many tries. Wait a minute and try again."
+msgstr "Too many tries. Wait a minute and try again."
+
+#: app/components/staffing/kiosk-terminal.tsx:174
+msgid "Too many wrong PINs. Try again in {minutes} min, or ask a manager."
+msgstr "Too many wrong PINs. Try again in {minutes} min, or ask a manager."
 
 #: app/components/leadership-card.tsx:52
 msgid "Top Contributors"
@@ -14910,6 +15192,10 @@ msgstr "Try different filters."
 msgid "Tuesday"
 msgstr "Tuesday"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:194
+msgid "Turn a shared tablet at the location into a time clock. Staff clock in and out with their PIN."
+msgstr "Turn a shared tablet at the location into a time clock. Staff clock in and out with their PIN."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:232
 msgid "Turn on the agent"
 msgstr "Turn on the agent"
@@ -15063,7 +15349,9 @@ msgid "Units available"
 msgstr "Units available"
 
 #: app/components/phone-agent/vertical-labels.ts:107
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:330
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:228
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:264
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:333
 msgid "Unknown"
 msgstr "Unknown"
 
@@ -16166,6 +16454,10 @@ msgstr ""
 msgid "Working on it"
 msgstr "Working on it"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:147
+msgid "Works once. Expires in {minutes}:{seconds}."
+msgstr "Works once. Expires in {minutes}:{seconds}."
+
 #: app/components/phone-agent/flow-editor/node-palette.tsx:48
 msgid "Write {business} in a message to say your business's name."
 msgstr "Write {business} in a message to say your business's name."
@@ -16260,6 +16552,10 @@ msgstr ""
 msgid "You are impersonating this user. Staff data is read-only during support sessions."
 msgstr "You are impersonating this user. Staff data is read-only during support sessions."
 
+#: app/components/staffing/kiosk-terminal.tsx:187
+msgid "You aren’t set up to work at this location. Ask a manager."
+msgstr "You aren’t set up to work at this location. Ask a manager."
+
 #: app/components/phone-agent/test-call-panel.tsx:590
 msgid "You can also type keys on your keyboard."
 msgstr "You can also type keys on your keyboard."
@@ -16284,7 +16580,7 @@ msgstr ""
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr ""
 
-#: app/components/staffing/staffing-errors.ts:35
+#: app/components/staffing/staffing-errors.ts:46
 msgid "You can view staffing data but not change it."
 msgstr "You can view staffing data but not change it."
 
@@ -16362,6 +16658,18 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
 msgid "You’re all caught up"
 msgstr "You’re all caught up"
+
+#: app/components/staffing/kiosk-terminal.tsx:178
+msgid "You’re already clocked in. Enter your PIN again to clock out."
+msgstr "You’re already clocked in. Enter your PIN again to clock out."
+
+#: app/components/staffing/kiosk-terminal.tsx:181
+msgid "You’re already clocked out. Enter your PIN again to clock in."
+msgstr "You’re already clocked out. Enter your PIN again to clock in."
+
+#: app/components/staffing/kiosk-terminal.tsx:622
+msgid "You’re clocked out"
+msgstr "You’re clocked out"
 
 #: app/routes/_auth+/login.tsx:437
 msgid "You're logged in! Navigating..."
@@ -16459,7 +16767,7 @@ msgstr ""
 #~ msgid "Your organization's current plan and billing status"
 #~ msgstr ""
 
-#: app/components/staffing/staffing-errors.ts:31
+#: app/components/staffing/staffing-errors.ts:42
 msgid "Your organization’s data region is changing. Try again shortly."
 msgstr "Your organization’s data region is changing. Try again shortly."
 
@@ -16503,7 +16811,7 @@ msgstr "Your restaurants"
 msgid "Your S3 credentials will be encrypted and stored securely. However, we recommend using IAM credentials with minimal required permissions (read/write access to the specific bucket only)."
 msgstr ""
 
-#: app/components/staffing/staffing-errors.ts:37
+#: app/components/staffing/staffing-errors.ts:48
 msgid "Your session expired. Refresh the page."
 msgstr "Your session expired. Refresh the page."
 

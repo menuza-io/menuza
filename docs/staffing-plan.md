@@ -5,10 +5,11 @@ Status: phased implementation. Shipped so far: the job-application form preset
 default-off `staffing.*` flags, `requireStaffingFeature`, the `@repo/staffing`
 domain package, and the expanded location timezone list), and the regional
 roster (team, positions, bulk paste, terminate/rehire, settings, audit, and
-region-switch warning), and the schedule (week grid, copy week, warnings, print,
-and publish with per-person regional email). Later slices are tracked in the PR
-sequence below; [staffing guide](./staffing.md) describes what operators can use
-today.
+region-switch warning), the schedule (week grid, copy week, warnings, print, and
+publish with per-person regional email), and the PIN time clock (pairing,
+revoke, lockout, idempotent punches, and a node kill switch). Later slices are
+tracked in the PR sequence below; [staffing guide](./staffing.md) describes what
+operators can use today.
 
 Baseline: `main` at `ed54ca1a`, refreshed 2026-10-11. This plan consolidates the
 supplied MVP, architecture, competitive-parity, live walkthrough, mock, and

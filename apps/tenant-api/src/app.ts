@@ -27,6 +27,7 @@ import { orderSystemRoutes } from './routes/order-system.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorStaffingRoutes } from './routes/operator-staffing.ts'
+import { kioskRoutes } from './routes/kiosk.ts'
 import {
 	publicVoiceRoutes,
 	voiceOperatorRoutes,
@@ -190,6 +191,7 @@ export function createTenantApiApp() {
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
 	app.route('/voice', publicVoiceRoutes)
+	app.route('/kiosk', kioskRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)

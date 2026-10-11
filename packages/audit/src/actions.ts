@@ -54,6 +54,8 @@ export enum AuditAction {
 	PHONE_AGENT_LINE_VERIFIED = 'phone_agent_line_verified',
 	PHONE_AGENT_CALL_DELETED = 'phone_agent_call_deleted',
 	PHONE_AGENT_CALLER_ERASED = 'phone_agent_caller_erased',
+	STAFF_KIOSK_PAIRING_STARTED = 'staff_kiosk_pairing_started',
+	STAFF_KIOSK_REVOKED = 'staff_kiosk_revoked',
 	ORG_MEMBER_ADDED = 'org_member_added',
 	ORG_MEMBER_REMOVED = 'org_member_removed',
 	ORG_MEMBER_ROLE_CHANGED = 'org_member_role_changed',

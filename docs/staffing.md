@@ -121,6 +121,64 @@ shifts; publish to tell the team.
 Kill switch: set `STAFFING_EMAIL_ENABLED=false` on a tenant-api node to publish
 without sending email (everyone is listed as not notified).
 
+## Time clock
+
+Staff clock in and out on a shared tablet at the location (a **time clock**)
+with a personal PIN. They never need an App login.
+
+### Set PINs
+
+On **Team**, use **Set PIN** (or **Reset PIN**) on an active person. Generate a
+PIN or choose one (4 to 6 digits). The PIN is shown once; tenant-api stores only
+a keyed HMAC, so nobody can look it up later. PINs are unique within the
+organization, and PINs that repeat one digit or count up or down are rejected.
+Terminating someone clears their PIN. Setting PINs needs `update:staff:any`.
+
+### Pair a tablet
+
+1. **Staff → Time clocks** (`/{orgSlug}/staffing/kiosks`) → **Add a time
+   clock**. Choose the location and name the device.
+2. On the tablet, scan the QR code, or open `https://<app>/kiosk/<orgSlug>` and
+   type the pairing code. The code works once and expires after 15 minutes. It
+   travels in the URL fragment, so App never receives it.
+3. The tablet stores a device token in `localStorage` and keeps working if the
+   organization slug changes. Bookmark it or add it to the home screen.
+
+The kiosk page is served by App, but App only renders the shell and public
+organization metadata. PINs, names, punches, and shifts go from the tablet to
+the organization's regional tenant-api (`/kiosk/*`).
+
+### Clock in and out
+
+The tablet shows the location's local time and a PIN pad. After a PIN, the
+person sees their first name and last initial, whether they are clocked in, and
+their next three published shifts at this location. **Clock in** picks the
+position from a nearby published shift, or the person chooses one when they have
+several. **Clock out** closes their open time card.
+
+- A PIN works only for active people assigned to the tablet's location.
+- Each tap carries a request id, so a retry after a network error never punches
+  twice. Two tablets cannot clock the same person in at once.
+- Five wrong PINs lock the tablet for 5 minutes, doubling up to an hour. A good
+  PIN resets the count. Managers see **Locked after wrong PINs** on the Time
+  clocks page.
+- The person screen returns to the PIN pad after 40 seconds; the one-time punch
+  token behind it expires after 60.
+- Every clock-in and clock-out writes an append-only `time_entry_events` row.
+
+### Kiosk runbook
+
+- **Lost or stolen tablet:** **Time clocks → Remove**. The device token stops
+  working on the next request and the tablet shows the pairing screen.
+- **Pause every time clock on a node:** set `STAFFING_KIOSK_ENABLED=false` on
+  that tenant-api node and restart. `/kiosk/*` returns `503 kiosk_disabled`, new
+  pairing codes are refused, and tablets show that the clock is paused.
+- **Turning off `staffing.timeclock`** hides the pages and stops new tokens and
+  pairing, but an already-paired tablet keeps punching until you remove it or
+  use the kill switch. Remove devices first.
+- Pairing and removal also write App audit events
+  (`staff_kiosk_pairing_started`, `staff_kiosk_revoked`) with opaque ids only.
+
 ## Careers form
 
 ### Publish an application form

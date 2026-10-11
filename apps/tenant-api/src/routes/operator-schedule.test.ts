@@ -135,7 +135,7 @@ describe('operator staffing schedule', () => {
 		process.env.DATA_REGION = 'us'
 		process.env.NODE_ENV = 'test'
 		process.env.TENANT_OPERATOR_TOKEN = operatorSecret
-		delete process.env.STAFFING_EMAIL_ENABLED
+		process.env.STAFFING_EMAIL_ENABLED = 'true'
 		vi.mocked(sendTenantEmail).mockClear()
 		await provisionTenantDb(orgA)
 		await provisionTenantDb(orgB)

@@ -27,6 +27,17 @@ export function staffingErrorMessage(i18n: I18n, error: unknown) {
 		),
 		nothing_to_copy: i18n._(msg`That week has no shifts to copy.`),
 		nothing_to_publish: i18n._(msg`There are no changes to publish.`),
+		pin_taken: i18n._(
+			msg`Someone else already uses that PIN. Choose another, or generate one.`,
+		),
+		pin_repeated: i18n._(msg`Avoid a PIN that repeats one digit.`),
+		pin_sequence: i18n._(msg`Avoid a PIN that counts up or down.`),
+		pin_format: i18n._(msg`A PIN is 4 to 6 digits.`),
+		invalid_pin: i18n._(msg`A PIN is 4 to 6 digits.`),
+		kiosk_disabled: i18n._(
+			msg`Time clocks are paused in your data region. Try again later.`,
+		),
+		already_revoked: i18n._(msg`That time clock was already removed.`),
 		region_mismatch: i18n._(
 			msg`Your organization’s data region is changing. Try again shortly.`,
 		),

@@ -185,6 +185,10 @@ msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار و
 msgid "{clientName} is requesting access to your organization data"
 msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
 
+#: app/components/staffing/kiosk-terminal.tsx:678
+msgid "{count, plural, =0 {No upcoming shifts here} one {Your next shift} other {Your next # shifts}}"
+msgstr "{count, plural, =0 {لا توجد مناوبات قادمة هنا} one {مناوبتك القادمة} two {مناوبتاك القادمتان} few {مناوباتك الـ# القادمة} many {مناوباتك الـ# القادمة} other {مناوباتك الـ# القادمة}}"
+
 #: app/components/phone-agent/settings-page.tsx:113
 msgid "{count, plural, one {Add at least # item.} other {Add at least # items.}}"
 msgstr "{count, plural, one {أضف عنصرًا واحدًا على الأقل.} two {أضف عنصرين على الأقل.} few {أضف # عناصر على الأقل.} many {أضف # عنصرًا على الأقل.} other {أضف # عنصر على الأقل.}}"
@@ -253,6 +257,10 @@ msgstr "{diffSec} ث (قيد التشغيل)"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, zero {لم تُستبعد أي قاعدة.} one {تم استبعاد قاعدة واحدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} two {تم استبعاد قاعدتين لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} few {تم استبعاد # قواعد لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} many {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} other {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.}}"
+
+#: app/components/staffing/pin-pad.tsx:53
+msgid "{entered} digits entered"
+msgstr "تم إدخال {entered} أرقام"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
@@ -681,6 +689,10 @@ msgstr "قبل 24 ساعة"
 msgid "4 hours prior"
 msgstr "قبل 4 ساعات"
 
+#: app/components/staffing/pin-dialog.tsx:131
+msgid "4–6 digits"
+msgstr "من 4 إلى 6 أرقام"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
@@ -725,6 +737,7 @@ msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:234
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:548
 msgid "A former member"
 msgstr "عضو سابق"
@@ -737,6 +750,10 @@ msgstr "عنوان كبير يفتح قسمًا."
 msgid "A link styled as a call to action."
 msgstr "رابط مُنسَّق كدعوة لاتخاذ إجراء."
 
+#: app/components/staffing/kiosk-terminal.tsx:470
+msgid "A manager can create a pairing code under Staff → Time clocks."
+msgstr "يمكن للمدير إنشاء رمز اقتران من الموظفون ← أجهزة تسجيل الحضور."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:402
 msgid "A new number only the agent answers."
 msgstr "رقم جديد يجيب عليه الوكيل فقط."
@@ -744,6 +761,15 @@ msgstr "رقم جديد يجيب عليه الوكيل فقط."
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
+
+#: app/components/staffing/staffing-errors.ts:35
+#: app/components/staffing/staffing-errors.ts:36
+msgid "A PIN is 4 to 6 digits."
+msgstr "يتكون الرمز السري من 4 إلى 6 أرقام."
+
+#: app/components/staffing/pin-dialog.tsx:74
+msgid "A PIN is set. Setting a new one replaces it right away."
+msgstr "تم تعيين رمز سري. تعيين رمز جديد يستبدله فورًا."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:694
 msgid "A place for every inquiry"
@@ -772,6 +798,10 @@ msgstr "أحد أرقام الفريق أو أرقام التحويل يصل إ�
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:48
 msgid "A summary after each call. Can be a lot of texts on busy days."
 msgstr "ملخص بعد كل مكالمة. قد يعني ذلك رسائل نصية كثيرة في الأيام المزدحمة."
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:139
+msgid "A time clock is a shared tablet at a location. Staff enter their PIN to clock in and out. Set PINs on the Team page."
+msgstr "جهاز تسجيل الحضور هو جهاز لوحي مشترك في الموقع. يُدخل الموظفون رمزهم السري لتسجيل الحضور والانصراف. عيّن الرموز السرية من صفحة الفريق."
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:132
 #: app/routes/_auth+/onboarding.tsx:119
@@ -852,7 +882,8 @@ msgstr "شركة Acme"
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:594
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:696
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:291
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:204
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:294
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -873,11 +904,11 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:993
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:606
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:674
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:346
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:349
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:194
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:197
 msgid "Active ({activeCount})"
 msgstr "نشط ({activeCount})"
 
@@ -958,7 +989,7 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:243
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:246
 msgid "Add a location in Settings → Locations before assigning staff."
 msgstr "أضف فرعًا من الإعدادات ← الفروع قبل تعيين الموظفين."
 
@@ -989,6 +1020,11 @@ msgstr "أضف قسماً من القائمة على اليسار لرؤية م�
 #: app/components/phone-agent/settings-page.tsx:60
 msgid "Add a staff phone number to turn on automatic transfers."
 msgstr "أضف رقم هاتف للفريق لتفعيل التحويلات التلقائية."
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:191
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:150
+msgid "Add a time clock"
+msgstr "إضافة جهاز تسجيل حضور"
 
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
@@ -1105,7 +1141,7 @@ msgstr "إضافة مجموعة"
 msgid "Add images"
 msgstr "إضافة صور"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:220
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:223
 msgid "Add in bulk"
 msgstr "إضافة مجمّعة"
 
@@ -1179,6 +1215,10 @@ msgstr "إضافة رقم"
 msgid "Add one in your business settings first."
 msgstr "أضف واحدًا في إعدادات نشاطك التجاري أولًا."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:179
+msgid "Add one, then open the link on the tablet that stays at the location."
+msgstr "أضف جهازًا، ثم افتح الرابط على الجهاز اللوحي الموجود في الموقع."
+
 #: app/components/menu/item-variations.tsx:283
 #: app/components/menu/modifier-form.tsx:1180
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:279
@@ -1208,7 +1248,7 @@ msgstr "إضافة أشخاص"
 msgid "Add people in bulk"
 msgstr "إضافة أشخاص دفعة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:266
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:269
 msgid "Add people one at a time, or paste a list with Add in bulk."
 msgstr "أضف الأشخاص واحدًا تلو الآخر، أو الصق قائمة عبر الإضافة المجمّعة."
 
@@ -1320,7 +1360,7 @@ msgid "Add tag"
 msgstr "إضافة وسم"
 
 #: app/components/staffing/staff-dialog.tsx:149
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:229
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:232
 msgid "Add team member"
 msgstr "إضافة عضو فريق"
 
@@ -1376,6 +1416,10 @@ msgstr "إضافة الموظفين وتعديلهم وإنهاء خدمتهم �
 msgid "Add, name, and order each field."
 msgstr "أضف كل حقل وسمّه ورتّبه."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:200
+msgid "Added by"
+msgstr "أضافه"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:149
 msgid "Added section"
 msgstr "تمت إضافة القسم"
@@ -1406,6 +1450,7 @@ msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 
 #: app/components/phone-agent/business-details-section.tsx:137
+#: app/components/staffing/pair-kiosk-dialog.tsx:126
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:581
 msgid "Address"
 msgstr "العنوان"
@@ -2088,6 +2133,14 @@ msgstr "الأدوات المتاحة"
 msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
+#: app/components/staffing/staffing-errors.ts:34
+msgid "Avoid a PIN that counts up or down."
+msgstr "تجنّب رمزًا سريًا بأرقام متسلسلة تصاعديًا أو تنازليًا."
+
+#: app/components/staffing/staffing-errors.ts:33
+msgid "Avoid a PIN that repeats one digit."
+msgstr "تجنّب رمزًا سريًا يكرر رقمًا واحدًا."
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:132
 msgid "Awaiting payment"
 msgstr "بانتظار الدفع"
@@ -2102,6 +2155,10 @@ msgstr "أبيض وأسود"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:197
 msgid "Back"
 msgstr "رجوع"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:225
+msgid "Back office tablet"
+msgstr "الجهاز اللوحي في المكتب الخلفي"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
@@ -2559,6 +2616,10 @@ msgstr "اسم الحملة"
 msgid "Can edit teammate notes"
 msgstr "يمكنه تعديل ملاحظات الزملاء"
 
+#: app/components/staffing/kiosk-terminal.tsx:160
+msgid "Can’t reach the time clock service. Check the internet connection and try again."
+msgstr "تعذّر الوصول إلى خدمة تسجيل الحضور. تحقق من اتصال الإنترنت وحاول مرة أخرى."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:107
 msgid "Can't text that number"
 msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
@@ -2603,6 +2664,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/settings/two-factor-form.tsx:261
 #: app/components/staffing/copy-week-dialog.tsx:182
 #: app/components/staffing/import-dialog.tsx:180
+#: app/components/staffing/pair-kiosk-dialog.tsx:241
+#: app/components/staffing/pin-dialog.tsx:162
 #: app/components/staffing/publish-dialog.tsx:115
 #: app/components/staffing/settings-dialog.tsx:142
 #: app/components/staffing/shift-dialog.tsx:385
@@ -2628,7 +2691,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:798
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:548
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:319
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:602
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
@@ -2872,6 +2936,10 @@ msgstr "إعدادات الدردشة"
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
+#: app/components/staffing/kiosk-terminal.tsx:504
+msgid "Check the address with your manager. The time clock may not be turned on for this business."
+msgstr "تحقق من العنوان مع مديرك. قد لا يكون تسجيل الحضور مفعّلًا لهذا النشاط."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:544
 msgid "Check the drop details and try saving again."
 msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخرى."
@@ -2880,7 +2948,7 @@ msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخ�
 msgid "Check the format of this value."
 msgstr "تحقق من تنسيق هذه القيمة."
 
-#: app/components/staffing/staffing-errors.ts:33
+#: app/components/staffing/staffing-errors.ts:44
 msgid "Check the highlighted fields and try again."
 msgstr "تحقق من الحقول المحددة وحاول مرة أخرى."
 
@@ -2998,6 +3066,10 @@ msgstr "اختر أحد أرقام الوكيل المخصصة لنشاطك ال
 #: app/components/phone-agent/settings-page.tsx:90
 msgid "Choose one of the listed options."
 msgstr "اختر أحد الخيارات المدرجة."
+
+#: app/components/staffing/kiosk-terminal.tsx:189
+msgid "Choose one of your positions."
+msgstr "اختر أحد مناصبك."
 
 #: app/components/menu/item-variations.tsx:330
 #: app/components/menu/item-variations.tsx:331
@@ -3138,6 +3210,30 @@ msgstr "نُقِر {0}"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:954
 msgid "Client"
 msgstr "العميل"
+
+#: app/components/staffing/kiosk-terminal.tsx:660
+msgid "Clock in"
+msgstr "تسجيل الحضور"
+
+#: app/components/staffing/kiosk-terminal.tsx:639
+msgid "Clock in as"
+msgstr "تسجيل الحضور بصفة"
+
+#: app/components/staffing/kiosk-terminal.tsx:634
+msgid "Clock out"
+msgstr "تسجيل الانصراف"
+
+#: app/components/staffing/kiosk-terminal.tsx:583
+msgid "Clocked in at {time}. Have a good shift, {firstName}!"
+msgstr "تم تسجيل الحضور الساعة {time}. مناوبة موفقة يا {firstName}!"
+
+#: app/components/staffing/kiosk-terminal.tsx:620
+msgid "Clocked in since {since}"
+msgstr "مسجّل الحضور منذ {since}"
+
+#: app/components/staffing/kiosk-terminal.tsx:587
+msgid "Clocked out at {time}. Thanks, {firstName}!"
+msgstr "تم تسجيل الانصراف الساعة {time}. شكرًا يا {firstName}!"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
@@ -3548,7 +3644,7 @@ msgid "Connections"
 msgstr "الاتصالات"
 
 #: app/components/website/create-form-dialog.tsx:113
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:287
 msgid "Contact"
 msgstr "اتصل"
 
@@ -3705,6 +3801,7 @@ msgstr "نسخ الكود"
 msgid "Copy from the week of"
 msgstr "النسخ من أسبوع"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:160
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:363
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:374
@@ -4089,6 +4186,10 @@ msgstr "إنشاء ملاحظات"
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:349
 msgid "Create Option"
 msgstr "إنشاء خيار"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:244
+msgid "Create pairing code"
+msgstr "إنشاء رمز الاقتران"
 
 #: app/components/settings/cards/security-card.tsx:95
 #: app/components/settings/cards/security-card.tsx:133
@@ -4643,6 +4744,10 @@ msgstr "حذف العنصر"
 msgid "Delete item?"
 msgstr "حذف العنصر؟"
 
+#: app/components/staffing/pin-pad.tsx:86
+msgid "Delete last digit"
+msgstr "حذف آخر رقم"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3221
 msgid "Delete link"
 msgstr "حذف الرابط"
@@ -4889,8 +4994,13 @@ msgstr "التطوير"
 #: app/components/settings/cards/sessions-card.tsx:185
 #: app/components/settings/cards/sessions-card.tsx:267
 #: app/components/settings/passkey-manager.tsx:198
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:191
 msgid "Device"
 msgstr "جهاز"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:219
+msgid "Device name"
+msgstr "اسم الجهاز"
 
 #: app/components/phone-agent/test-call-panel.tsx:572
 msgid "Dial pad"
@@ -5068,6 +5178,9 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staffing/copy-week-dialog.tsx:182
 #: app/components/staffing/import-dialog.tsx:180
+#: app/components/staffing/kiosk-terminal.tsx:563
+#: app/components/staffing/pair-kiosk-dialog.tsx:163
+#: app/components/staffing/pin-dialog.tsx:100
 #: app/components/staffing/publish-dialog.tsx:115
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:175
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:518
@@ -5639,6 +5752,10 @@ msgstr "تنتهي في اليوم التالي."
 msgid "English"
 msgstr "الإنجليزية"
 
+#: app/components/staffing/pin-pad.tsx:106
+msgid "Enter"
+msgstr "إدخال"
+
 #: app/components/menu/option-form.tsx:494
 msgid "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgstr "أدخل 0.00 لعدم وجود رسوم إضافية (مثل خيار مجاني)."
@@ -5705,6 +5822,10 @@ msgstr "أدخل كلمة المرور الجديدة أدناه."
 #: app/routes/_auth+/login.tsx:814
 msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
+
+#: app/components/staffing/kiosk-terminal.tsx:516
+msgid "Enter your PIN"
+msgstr "أدخل رمزك السري"
 
 #: app/routes/_auth+/onboarding_.$provider.tsx:303
 #: app/routes/_auth+/onboarding.tsx:427
@@ -6338,6 +6459,10 @@ msgstr "عام"
 msgid "General Settings"
 msgstr "الإعدادات العامة"
 
+#: app/components/staffing/pin-dialog.tsx:111
+msgid "Generate a PIN"
+msgstr "إنشاء رمز سري"
+
 #: app/components/settings/backup-codes-display.tsx:172
 msgid "Generate Backup Codes"
 msgstr "إنشاء رموز احتياطية"
@@ -6582,7 +6707,7 @@ msgstr "حُوّلت إلى خط النشاط التجاري"
 msgid "Hang up"
 msgstr "إنهاء المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:314
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:317
 msgid "Has an App login"
 msgstr "لديه حساب دخول للتطبيق"
 
@@ -6664,6 +6789,10 @@ msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي للا�
 #: app/routes/_auth+/onboarding.tsx:410
 msgid "Hi {email}, please complete your profile."
 msgstr "مرحباً {email}، يرجى إكمال ملفك الشخصي."
+
+#: app/components/staffing/kiosk-terminal.tsx:616
+msgid "Hi, {name}"
+msgstr "مرحبًا يا {name}"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:675
 msgid "Hi, {userName}"
@@ -7315,7 +7444,7 @@ msgstr "آخر نشاط"
 msgid "Last active {lastActiveValue}"
 msgstr "آخر نشاط {lastActiveValue}"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:521
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:575
 msgid "Last day"
 msgstr "آخر يوم عمل"
 
@@ -7330,6 +7459,10 @@ msgstr "آخر تصدير: {lastExportDateFormatted}"
 #: app/components/staffing/staff-dialog.tsx:175
 msgid "Last name"
 msgstr "اسم العائلة"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:197
+msgid "Last seen"
+msgstr "آخر ظهور"
 
 #: app/routes/_auth+/login.tsx:483
 #: app/routes/_auth+/login.tsx:494
@@ -7613,9 +7746,13 @@ msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الص
 msgid "Loading submissions"
 msgstr "جارٍ تحميل الردود"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:251
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:254
 msgid "Loading team…"
 msgstr "جارٍ تحميل الفريق…"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:171
+msgid "Loading time clocks…"
+msgstr "جارٍ تحميل أجهزة تسجيل الحضور…"
 
 #: app/components/phone-agent/voice-picker.tsx:617
 msgid "Loading voice…"
@@ -7626,6 +7763,7 @@ msgid "Loading voices"
 msgstr "جارٍ تحميل الأصوات"
 
 #: app/components/mailbox/calls-tab.tsx:392
+#: app/components/staffing/kiosk-terminal.tsx:452
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:664
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
@@ -7634,9 +7772,11 @@ msgstr "جارٍ التحميل…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/components/staffing/import-dialog.tsx:112
+#: app/components/staffing/pair-kiosk-dialog.tsx:202
 #: app/components/staffing/staff-dialog.tsx:275
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:194
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:343
 msgid "Location"
 msgstr "الموقع"
@@ -7670,6 +7810,10 @@ msgstr "الفروع"
 #: app/components/staffing/staff-dialog.tsx:231
 msgid "Locations and positions"
 msgstr "الفروع والمناصب"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:222
+msgid "Locked after wrong PINs"
+msgstr "مقفل بعد إدخال رموز خاطئة"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1317
 msgid "Locks inventory while customer fills in checkout details."
@@ -8411,7 +8555,7 @@ msgstr "بدون صوت"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:342
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:278
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:281
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
 #: app/routes/organizations+/create.tsx:949
@@ -8893,7 +9037,7 @@ msgstr "لم يتم العثور على أي فروع."
 msgid "No locations yet"
 msgstr "لا توجد فروع بعد"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:257
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:260
 msgid "No matches"
 msgstr "لا توجد نتائج"
 
@@ -9187,7 +9331,7 @@ msgstr "لا توجد ردود بعد"
 msgid "No summary for this call."
 msgstr "لا يوجد ملخص لهذه المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:259
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:262
 msgid "No team members yet"
 msgstr "لا يوجد أعضاء فريق بعد"
 
@@ -9195,9 +9339,13 @@ msgstr "لا يوجد أعضاء فريق بعد"
 msgid "No teammates available"
 msgstr "لا يوجد زملاء متاحون"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:261
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:264
 msgid "No terminated team members"
 msgstr "لا يوجد أعضاء منتهية خدمتهم"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:176
+msgid "No time clocks yet"
+msgstr "لا توجد أجهزة تسجيل حضور بعد"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "No tools available."
@@ -9317,6 +9465,10 @@ msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو ص
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
+
+#: app/components/staffing/kiosk-terminal.tsx:665
+msgid "Not you? Cancel"
+msgstr "لست أنت؟ إلغاء"
 
 #: app/components/leadership-card.tsx:106
 msgid "note"
@@ -9829,6 +9981,10 @@ msgstr "الخيارات"
 msgid "Options like size or color. Price and availability per combination."
 msgstr "خيارات مثل الحجم أو اللون. سعر وتوفر لكل تركيبة."
 
+#: app/components/staffing/pin-dialog.tsx:121
+msgid "Or choose one"
+msgstr "أو اختر رمزًا"
+
 #: app/routes/_auth+/signup.tsx:211
 msgid "Or continue with"
 msgstr "أو تابع باستخدام"
@@ -10069,6 +10225,19 @@ msgstr "الصفحات"
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:366
 msgid "Paid online or at handoff"
 msgstr "مدفوع إلكترونيًا أو عند التسليم"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:103
+msgid "Pair the tablet"
+msgstr "اقتران الجهاز اللوحي"
+
+#: app/components/staffing/kiosk-terminal.tsx:495
+msgid "Pair this tablet"
+msgstr "اقتران هذا الجهاز اللوحي"
+
+#: app/components/staffing/kiosk-terminal.tsx:477
+#: app/components/staffing/pair-kiosk-dialog.tsx:134
+msgid "Pairing code"
+msgstr "رمز الاقتران"
 
 #: app/utils/website/field-types.ts:73
 #: app/utils/website/field-types.ts:76
@@ -10686,8 +10855,8 @@ msgstr "المنصب"
 
 #: app/components/staffing/copy-week-dialog.tsx:136
 #: app/components/staffing/positions-dialog.tsx:78
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:211
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:281
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:214
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:284
 msgid "Positions"
 msgstr "المناصب"
 
@@ -11047,6 +11216,10 @@ msgstr "رمز QR"
 msgid "QR code for two-factor authentication setup. Scan this code with your authenticator app."
 msgstr "رمز QR لإعداد المصادقة الثنائية. امسح هذا الرمز باستخدام تطبيق المصادقة الخاص بك."
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:116
+msgid "QR code that opens the time clock"
+msgstr "رمز QR يفتح جهاز تسجيل الحضور"
+
 #: app/components/menu/option-form.tsx:788
 msgid "Quantity"
 msgstr "الكمية"
@@ -11164,7 +11337,7 @@ msgstr "جاهز"
 msgid "Ready to call"
 msgstr "جاهز للاتصال"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:533
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:587
 msgid "Reason (optional, managers only)"
 msgstr "السبب (اختياري، للمديرين فقط)"
 
@@ -11318,7 +11491,7 @@ msgstr "تم التسجيل منذ {timeAgo}"
 msgid "Regular"
 msgstr "عادي"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:386
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:407
 msgid "Rehire"
 msgstr "إعادة التوظيف"
 
@@ -11358,6 +11531,8 @@ msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:338
 #: app/components/website/branding-panel.tsx:314
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:243
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:347
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2636
 msgid "Remove"
 msgstr "إزالة"
@@ -11373,6 +11548,10 @@ msgstr "إزالة {label}"
 #: app/components/menu/item-variations.tsx:115
 msgid "Remove {optionName}? Its combinations will be removed when you save the item."
 msgstr "هل تريد إزالة {optionName}؟ ستُحذف تركيباته عند حفظ الصنف."
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:307
+msgid "Remove {revokingName}?"
+msgstr "إزالة {revokingName}؟"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:737
 msgid "Remove {term}"
@@ -11457,6 +11636,10 @@ msgstr "إزالة الصورة"
 msgid "Remove pickup window"
 msgstr "إزالة نافذة الاستلام"
 
+#: app/components/staffing/pin-dialog.tsx:158
+msgid "Remove PIN"
+msgstr "إزالة الرمز السري"
+
 #: app/components/staffing/staff-dialog.tsx:328
 msgid "Remove position"
 msgstr "إزالة المنصب"
@@ -11500,6 +11683,10 @@ msgstr "محذوفة"
 #: ../../packages/ai/src/components/ai-chat.tsx:157
 msgid "Removed section"
 msgstr "تمت إزالة القسم"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:258
+msgid "Removed time clocks ({revokedCount})"
+msgstr "أجهزة تسجيل الحضور المُزالة ({revokedCount})"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:156
 msgid "Removing section"
@@ -11669,6 +11856,10 @@ msgstr "إعادة تعيين كلمة المرور"
 #: app/routes/_auth+/reset-password.tsx:128
 msgid "Reset Password"
 msgstr "إعادة تعيين كلمة المرور"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:370
+msgid "Reset PIN"
+msgstr "إعادة تعيين الرمز السري"
 
 #: app/routes/organizations+/create.tsx:1016
 msgid "Reset to auto-generated"
@@ -12270,6 +12461,10 @@ msgstr "ذكر موعد جاهزية الطلب"
 msgid "Scan QR Code or Enter Setup Key"
 msgstr "مسح رمز QR أو إدخال مفتاح الإعداد"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:106
+msgid "Scan the code with the tablet’s camera, or open the address below on the tablet and type the pairing code."
+msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو افتح العنوان أدناه على الجهاز واكتب رمز الاقتران."
+
 #: app/components/app-sidebar.tsx:328
 #: app/routes/_app+/$orgSlug_+/staffing+/_layout.tsx:43
 msgid "Schedule"
@@ -12372,7 +12567,7 @@ msgstr "ابحث في الرسائل"
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:182
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:185
 msgid "Search name, email, or phone"
 msgstr "ابحث بالاسم أو البريد الإلكتروني أو الهاتف"
 
@@ -12423,7 +12618,7 @@ msgstr "البحث في الردود"
 msgid "Search submissions…"
 msgstr "البحث في الردود…"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:183
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:186
 msgid "Search team"
 msgstr "البحث في الفريق"
 
@@ -12893,6 +13088,11 @@ msgstr "تحديد الساعات"
 #~ msgid "Set how many of this item are available for this drop."
 #~ msgstr "حدد الكمية المتوفرة من هذا العنصر لهذا الطرح."
 
+#: app/components/staffing/pin-dialog.tsx:142
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:372
+msgid "Set PIN"
+msgstr "تعيين رمز سري"
+
 #: app/components/locations/availability-picker.tsx:442
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "حدّد ساعات العمل الفعلية التي يمكن للعملاء فيها زيارة هذا الفرع."
@@ -12904,6 +13104,10 @@ msgstr "حدّد ساعات العمل الفعلية التي يمكن للعم
 #: app/components/website/create-page-dialog.tsx:143
 msgid "Set the title and URL for your new page."
 msgstr "حدد العنوان والرابط لصفحتك الجديدة."
+
+#: app/components/staffing/kiosk-terminal.tsx:467
+msgid "Set up a time clock for {organizationName}"
+msgstr "إعداد جهاز تسجيل حضور لـ {organizationName}"
 
 #: app/components/settings/cards/security-card.tsx:187
 msgid "Set up authenticator app"
@@ -12926,7 +13130,7 @@ msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاست
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:208
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:211
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr "الإعدادات"
@@ -12981,6 +13185,10 @@ msgstr "شارك تعليمات الاستلام أو نصائح التسخين 
 #: app/components/organization-invitations.tsx:170
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
+
+#: app/components/staffing/pin-dialog.tsx:94
+msgid "Share this PIN with them privately. It won’t be shown again."
+msgstr "شارك هذا الرمز السري معه بشكل خاص. لن يظهر مرة أخرى."
 
 #: app/routes/_auth+/waitlist.tsx:295
 msgid "Share with others"
@@ -13241,11 +13449,15 @@ msgstr "بعض الأشخاص لديهم حجز مزدوج. المناوبات �
 msgid "Someone"
 msgstr "شخص ما"
 
+#: app/components/staffing/staffing-errors.ts:31
+msgid "Someone else already uses that PIN. Choose another, or generate one."
+msgstr "هذا الرمز السري مستخدم من شخص آخر. اختر رمزًا آخر أو أنشئ واحدًا."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:95
 msgid "Something went wrong"
 msgstr "حدث خطأ ما"
 
-#: app/components/staffing/staffing-errors.ts:41
+#: app/components/staffing/staffing-errors.ts:52
 msgid "Something went wrong reaching staffing data. Try again."
 msgstr "حدث خطأ أثناء الوصول إلى بيانات الموظفين. حاول مرة أخرى."
 
@@ -13258,6 +13470,8 @@ msgid "Something went wrong. Reload the page and try again."
 msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أخرى."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:205
+#: app/components/staffing/kiosk-terminal.tsx:151
+#: app/components/staffing/kiosk-terminal.tsx:192
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
 
@@ -13472,8 +13686,8 @@ msgstr "الولاية / المنطقة"
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:187
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:287
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:190
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:290
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
@@ -13899,12 +14113,12 @@ msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهر�
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:366
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:551
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:387
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:605
 msgid "Terminate"
 msgstr "إنهاء الخدمة"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:509
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:563
 msgid "Terminate {terminatingName}?"
 msgstr "إنهاء خدمة {terminatingName}؟"
 
@@ -13912,11 +14126,11 @@ msgstr "إنهاء خدمة {terminatingName}؟"
 msgid "Terminated"
 msgstr "منتهية خدمته"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:202
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:205
 msgid "Terminated ({terminatedCount})"
 msgstr "منتهية خدمتهم ({terminatedCount})"
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:350
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:353
 msgid "Terminated {lastDay}"
 msgstr "انتهت الخدمة {lastDay}"
 
@@ -14062,6 +14276,10 @@ msgstr "تعذّر حفظ هذا التغيير. حدّث الصفحة وحاو�
 msgid "That location is not available."
 msgstr "هذا الفرع غير متاح."
 
+#: app/components/staffing/kiosk-terminal.tsx:166
+msgid "That pairing code didn’t work. It may have expired or already been used."
+msgstr "لم يعمل رمز الاقتران. ربما انتهت صلاحيته أو استُخدم من قبل."
+
 #: app/components/staffing/staffing-errors.ts:19
 msgid "That person is no longer on the team."
 msgstr "هذا الشخص لم يعد في الفريق."
@@ -14074,9 +14292,25 @@ msgstr "هذا الشخص غير معيّن في هذا الفرع. أضف ال�
 msgid "That person is terminated."
 msgstr "انتهت خدمة هذا الشخص."
 
+#: app/components/staffing/kiosk-terminal.tsx:170
+msgid "That PIN didn’t work. One more wrong PIN locks the time clock for a few minutes."
+msgstr "لم يعمل الرمز السري. إدخال رمز خاطئ آخر سيقفل جهاز تسجيل الحضور لبضع دقائق."
+
+#: app/components/staffing/kiosk-terminal.tsx:171
+msgid "That PIN didn’t work. Try again."
+msgstr "لم يعمل الرمز السري. حاول مرة أخرى."
+
 #: app/components/staffing/staffing-errors.ts:11
 msgid "That position is archived."
 msgstr "هذا المنصب مؤرشف."
+
+#: app/components/staffing/staffing-errors.ts:40
+msgid "That time clock was already removed."
+msgstr "تمت إزالة جهاز تسجيل الحضور هذا من قبل."
+
+#: app/components/staffing/kiosk-terminal.tsx:176
+msgid "That took too long. Enter your PIN again."
+msgstr "استغرق ذلك وقتًا طويلًا. أدخل رمزك السري مرة أخرى."
 
 #: app/components/staffing/staffing-errors.ts:28
 msgid "That week has no shifts to copy."
@@ -14235,6 +14469,14 @@ msgstr "الصوت القياسي للغة مساعدك الذكي."
 msgid "The steps to follow while taking an order."
 msgstr "الخطوات الواجب اتباعها أثناء تلقي الطلب."
 
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:310
+msgid "The tablet stops working as a time clock right away. Anyone still clocked in can be clocked out from Timesheets. To use it again, pair it with a new code."
+msgstr "يتوقف الجهاز اللوحي عن العمل كجهاز تسجيل حضور فورًا. يمكن تسجيل انصراف من لا يزال حاضرًا من صفحة سجلات الدوام. لاستخدامه مجددًا، اقرنه برمز جديد."
+
+#: app/components/staffing/kiosk-terminal.tsx:163
+msgid "The time clock is paused. Ask a manager to record your time."
+msgstr "تسجيل الحضور متوقف مؤقتًا. اطلب من المدير تسجيل وقتك."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 msgid "The time-limit notice, the rating question, and the goodbye."
 msgstr "تنبيه المهلة الزمنية وسؤال التقييم وعبارة الوداع."
@@ -14287,9 +14529,13 @@ msgstr "تم تغيير هذه الإعدادات في علامة تبويب أ�
 msgid "These settings shape the schedule and timesheet warnings. They are warnings only, not payroll or labor-law calculations."
 msgstr "تحدد هذه الإعدادات تنبيهات الجدول وسجلات الدوام. إنها تنبيهات فقط، وليست حسابات رواتب أو قوانين عمل."
 
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:512
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:566
 msgid "They can no longer clock in. Their shifts after the last day become open shifts. Time cards and history are kept, and you can rehire them later."
 msgstr "لن يتمكن من تسجيل الحضور بعد الآن. تصبح مناوباته بعد آخر يوم مناوبات مفتوحة. يتم الاحتفاظ ببطاقات الدوام والسجل، ويمكنك إعادة توظيفه لاحقًا."
+
+#: app/components/staffing/pin-dialog.tsx:78
+msgid "They need a PIN to clock in and out on a time clock tablet."
+msgstr "يحتاج إلى رمز سري لتسجيل الحضور والانصراف على جهاز تسجيل الحضور."
 
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
 msgid "Thinking..."
@@ -14330,6 +14576,10 @@ msgstr "ستظهر هذه المكالمة في <0>المكالمات</0> قري
 #: app/routes/mcp+/authorize.tsx:374
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
+
+#: app/components/staffing/pair-kiosk-dialog.tsx:151
+msgid "This code expired. Close and create a new one."
+msgstr "انتهت صلاحية هذا الرمز. أغلق وأنشئ رمزًا جديدًا."
 
 #: app/components/settings/cards/sessions-card.tsx:183
 msgid "This device"
@@ -14432,6 +14682,14 @@ msgstr "لا يتضمن هذا الرد عنوان بريد إلكتروني. ي
 msgid "This tab"
 msgstr "علامة التبويب هذه"
 
+#: app/components/staffing/kiosk-terminal.tsx:229
+msgid "This tablet was removed as a time clock. Pair it again to keep using it."
+msgstr "تمت إزالة هذا الجهاز اللوحي كجهاز تسجيل حضور. اقرنه مجددًا لمواصلة استخدامه."
+
+#: app/components/staffing/kiosk-terminal.tsx:184
+msgid "This time card is already approved. Ask a manager to clock you out."
+msgstr "تمت الموافقة على بطاقة الدوام هذه. اطلب من المدير تسجيل انصرافك."
+
 #: app/routes/_app+/$orgSlug_+/staffing+/schedule.tsx:371
 msgid "This week"
 msgstr "هذا الأسبوع"
@@ -14517,9 +14775,25 @@ msgstr "الوقت"
 msgid "Time clock"
 msgstr "ساعة الدوام"
 
+#: app/components/staffing/kiosk-terminal.tsx:501
+msgid "Time clock not available"
+msgstr "جهاز تسجيل الحضور غير متاح"
+
+#: app/components/staffing/pin-dialog.tsx:70
+msgid "Time clock PIN for {name}"
+msgstr "الرمز السري لتسجيل الحضور لـ {name}"
+
 #: app/routes/_app+/$orgSlug_+/staffing+/_layout.tsx:49
 msgid "Time clocks"
 msgstr "أجهزة ساعة الدوام"
+
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:157
+msgid "Time clocks are paused in your data region. Paired tablets will not accept punches until they are turned back on."
+msgstr "أجهزة تسجيل الحضور متوقفة مؤقتًا في منطقة بياناتك. لن تقبل الأجهزة المقترنة التسجيل حتى تُعاد تشغيلها."
+
+#: app/components/staffing/staffing-errors.ts:38
+msgid "Time clocks are paused in your data region. Try again later."
+msgstr "أجهزة تسجيل الحضور متوقفة مؤقتًا في منطقة بياناتك. حاول لاحقًا."
 
 #: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:16
 msgid "Time delay"
@@ -14607,6 +14881,14 @@ msgstr "طلبات كثيرة جدًا. انتظر لحظة وحاول مرة أ
 #: app/components/staffing/import-dialog.tsx:67
 msgid "Too many rows; import in batches"
 msgstr "عدد الأسطر كبير جدًا؛ استورد على دفعات"
+
+#: app/components/staffing/kiosk-terminal.tsx:190
+msgid "Too many tries. Wait a minute and try again."
+msgstr "محاولات كثيرة جدًا. انتظر دقيقة وحاول مرة أخرى."
+
+#: app/components/staffing/kiosk-terminal.tsx:174
+msgid "Too many wrong PINs. Try again in {minutes} min, or ask a manager."
+msgstr "رموز سرية خاطئة كثيرة. حاول مرة أخرى بعد {minutes} دقيقة، أو اطلب المساعدة من المدير."
 
 #: app/components/leadership-card.tsx:52
 msgid "Top Contributors"
@@ -14908,6 +15190,10 @@ msgstr "جرّب عوامل تصفية مختلفة."
 msgid "Tuesday"
 msgstr "الثلاثاء"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:194
+msgid "Turn a shared tablet at the location into a time clock. Staff clock in and out with their PIN."
+msgstr "حوّل جهازًا لوحيًا مشتركًا في الموقع إلى جهاز تسجيل حضور. يسجّل الموظفون حضورهم وانصرافهم برمزهم السري."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:232
 msgid "Turn on the agent"
 msgstr "شغّل الوكيل"
@@ -15061,7 +15347,9 @@ msgid "Units available"
 msgstr "الوحدات المتاحة"
 
 #: app/components/phone-agent/vertical-labels.ts:107
-#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:330
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:228
+#: app/routes/_app+/$orgSlug_+/staffing+/kiosks.tsx:264
+#: app/routes/_app+/$orgSlug_+/staffing+/team.tsx:333
 msgid "Unknown"
 msgstr "غير معروف"
 
@@ -16164,6 +16452,10 @@ msgstr "التحقق من سير العمل"
 msgid "Working on it"
 msgstr "جارٍ العمل على ذلك"
 
+#: app/components/staffing/pair-kiosk-dialog.tsx:147
+msgid "Works once. Expires in {minutes}:{seconds}."
+msgstr "يعمل مرة واحدة. تنتهي صلاحيته خلال {minutes}:{seconds}."
+
 #: app/components/phone-agent/flow-editor/node-palette.tsx:48
 msgid "Write {business} in a message to say your business's name."
 msgstr "اكتب {business} في الرسالة لنطق اسم نشاطك التجاري."
@@ -16258,6 +16550,10 @@ msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا تو�
 msgid "You are impersonating this user. Staff data is read-only during support sessions."
 msgstr "أنت تنتحل صفة هذا المستخدم. بيانات الموظفين للقراءة فقط أثناء جلسات الدعم."
 
+#: app/components/staffing/kiosk-terminal.tsx:187
+msgid "You aren’t set up to work at this location. Ask a manager."
+msgstr "لست مُعدًّا للعمل في هذا الموقع. اسأل المدير."
+
 #: app/components/phone-agent/test-call-panel.tsx:590
 msgid "You can also type keys on your keyboard."
 msgstr "يمكنك أيضًا كتابة المفاتيح على لوحة المفاتيح."
@@ -16282,7 +16578,7 @@ msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العم
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 
-#: app/components/staffing/staffing-errors.ts:35
+#: app/components/staffing/staffing-errors.ts:46
 msgid "You can view staffing data but not change it."
 msgstr "يمكنك عرض بيانات الموظفين دون تعديلها."
 
@@ -16360,6 +16656,18 @@ msgstr "تستلم"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
+
+#: app/components/staffing/kiosk-terminal.tsx:178
+msgid "You’re already clocked in. Enter your PIN again to clock out."
+msgstr "أنت مسجّل الحضور بالفعل. أدخل رمزك السري مرة أخرى لتسجيل الانصراف."
+
+#: app/components/staffing/kiosk-terminal.tsx:181
+msgid "You’re already clocked out. Enter your PIN again to clock in."
+msgstr "أنت مسجّل الانصراف بالفعل. أدخل رمزك السري مرة أخرى لتسجيل الحضور."
+
+#: app/components/staffing/kiosk-terminal.tsx:622
+msgid "You’re clocked out"
+msgstr "أنت مسجّل الانصراف"
 
 #: app/routes/_auth+/login.tsx:437
 msgid "You're logged in! Navigating..."
@@ -16457,7 +16765,7 @@ msgstr "لوحة تحكم مؤسستك"
 #~ msgid "Your organization's current plan and billing status"
 #~ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 
-#: app/components/staffing/staffing-errors.ts:31
+#: app/components/staffing/staffing-errors.ts:42
 msgid "Your organization’s data region is changing. Try again shortly."
 msgstr "منطقة بيانات مؤسستك قيد التغيير. حاول مرة أخرى بعد قليل."
 
@@ -16501,7 +16809,7 @@ msgstr "مطاعمك"
 msgid "Your S3 credentials will be encrypted and stored securely. However, we recommend using IAM credentials with minimal required permissions (read/write access to the specific bucket only)."
 msgstr "سيتم تشفير بيانات اعتماد S3 الخاصة بك وتخزينها بشكل آمن. ومع ذلك، نوصي باستخدام بيانات اعتماد IAM بأقل الأذونات المطلوبة (الوصول للقراءة/الكتابة إلى الحاوية المحددة فقط)."
 
-#: app/components/staffing/staffing-errors.ts:37
+#: app/components/staffing/staffing-errors.ts:48
 msgid "Your session expired. Refresh the page."
 msgstr "انتهت جلستك. حدّث الصفحة."
 

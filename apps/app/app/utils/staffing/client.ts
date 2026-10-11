@@ -152,6 +152,31 @@ export const publishResultSchema = z.object({
 })
 export type PublishResult = z.infer<typeof publishResultSchema>
 
+export const kioskSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	locationId: z.string(),
+	createdAt: z.string(),
+	createdBy: z.string(),
+	lastSeenAt: z.string().nullable(),
+	lockedUntil: z.string().nullable(),
+	revokedAt: z.string().nullable(),
+})
+export type Kiosk = z.infer<typeof kioskSchema>
+
+export const kioskListSchema = z.object({
+	kiosks: z.array(kioskSchema),
+	kioskEnabled: z.boolean(),
+})
+
+export const pairingSchema = z.object({
+	pairing: z.object({ code: z.string(), expiresAt: z.string() }),
+})
+
+export const pinResultSchema = z.object({
+	result: z.object({ pin: z.string(), generated: z.boolean() }),
+})
+
 /** Control-plane location metadata App passes to staffing pages. */
 export type StaffingLocation = {
 	id: string

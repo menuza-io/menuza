@@ -31,6 +31,7 @@ import {
 	updateStaff,
 } from '../services/staffing-roster.ts'
 import { operatorScheduleRoutes } from './operator-schedule.ts'
+import { operatorTimeclockRoutes } from './operator-timeclock.ts'
 
 export const operatorStaffingRoutes = new Hono()
 
@@ -244,3 +245,4 @@ operatorStaffingRoutes.put('/settings', async (c) => {
 })
 
 operatorStaffingRoutes.route('/', operatorScheduleRoutes)
+operatorStaffingRoutes.route('/', operatorTimeclockRoutes)

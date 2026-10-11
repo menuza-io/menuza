@@ -21,6 +21,7 @@ import {
 	ImportDialog,
 	type ImportResult,
 } from '#app/components/staffing/import-dialog.tsx'
+import { PinDialog } from '#app/components/staffing/pin-dialog.tsx'
 import { PositionsDialog } from '#app/components/staffing/positions-dialog.tsx'
 import { StaffingSettingsDialog } from '#app/components/staffing/settings-dialog.tsx'
 import {
@@ -32,6 +33,7 @@ import { useStaffingClient } from '#app/hooks/use-staffing-client.ts'
 import { requireStaffingFeature } from '#app/utils/staffing/access.server.ts'
 import {
 	contextSchema,
+	pinResultSchema,
 	type Position,
 	positionSchema,
 	type Settings,
@@ -63,6 +65,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			locations,
 			memberEmails,
 			dataRegion: access.dataRegion,
+			timeclockEnabled: access.flags.timeclock,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -88,7 +91,7 @@ function toInput(value: StaffFormValue) {
 }
 
 export default function StaffTeam() {
-	const { orgSlug, canWrite, locations, memberEmails } =
+	const { orgSlug, canWrite, locations, memberEmails, timeclockEnabled } =
 		useLoaderData<typeof loader>()
 	const { _, i18n } = useLingui()
 	const request = useStaffingClient(orgSlug)
@@ -101,7 +104,7 @@ export default function StaffTeam() {
 	const [status, setStatus] = useState<'active' | 'terminated'>('active')
 	const [editing, setEditing] = useState<Staff | null>(null)
 	const [dialog, setDialog] = useState<
-		'staff' | 'positions' | 'import' | 'settings' | 'terminate' | null
+		'staff' | 'positions' | 'import' | 'settings' | 'terminate' | 'pin' | null
 	>(null)
 	const [terminateOn, setTerminateOn] = useState(todayLocal)
 	const [terminateReason, setTerminateReason] = useState('')
@@ -352,6 +355,24 @@ export default function StaffTeam() {
 											)}
 										</td>
 										<td className="p-3 text-end">
+											{canWrite &&
+											timeclockEnabled &&
+											member.status === 'active' ? (
+												<Button
+													size="sm"
+													variant="ghost"
+													onClick={() => {
+														setEditing(member)
+														setDialog('pin')
+													}}
+												>
+													{member.hasPin ? (
+														<Trans>Reset PIN</Trans>
+													) : (
+														<Trans>Set PIN</Trans>
+													)}
+												</Button>
+											) : null}
 											{canWrite && member.status === 'active' ? (
 												<Button
 													size="sm"
@@ -479,6 +500,39 @@ export default function StaffTeam() {
 					}
 				/>
 			) : null}
+			<PinDialog
+				open={dialog === 'pin'}
+				onOpenChange={(open) => setDialog(open ? 'pin' : null)}
+				name={terminatingName}
+				hasPin={editing?.hasPin ?? false}
+				onSet={async (pin) => {
+					if (!editing) return { error: '' }
+					try {
+						const body = pinResultSchema.parse(
+							await request(`/staff/${encodeURIComponent(editing.id)}/pin`, {
+								method: 'POST',
+								body: JSON.stringify(pin === undefined ? {} : { pin }),
+							}),
+						)
+						await refresh()
+						return { pin: body.result.pin }
+					} catch (caught) {
+						return { error: staffingErrorMessage(i18n, caught) }
+					}
+				}}
+				onClear={async () => {
+					if (!editing) return { error: '' }
+					try {
+						await request(`/staff/${encodeURIComponent(editing.id)}/pin`, {
+							method: 'DELETE',
+						})
+						await refresh()
+						return { cleared: true }
+					} catch (caught) {
+						return { error: staffingErrorMessage(i18n, caught) }
+					}
+				}}
+			/>
 			<Dialog
 				open={dialog === 'terminate'}
 				onOpenChange={(open) => setDialog(open ? 'terminate' : null)}
