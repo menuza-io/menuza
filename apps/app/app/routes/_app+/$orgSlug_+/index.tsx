@@ -3,16 +3,21 @@ import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { PageTitle } from '@repo/ui/page-title'
 import confetti from 'canvas-confetti'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router'
 import { DashboardBlockContent } from '#app/components/dashboard/dashboard-block-content.tsx'
-import { DashboardGrid } from '#app/components/dashboard/dashboard-grid.tsx'
-import { DashboardHeader } from '#app/components/dashboard/dashboard-header.tsx'
+import { DashboardEditor } from '#app/components/dashboard/dashboard-editor.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { loadBuiltInBlockData } from '#app/utils/dashboards/block-data.server.ts'
-import { type DashboardBlock } from '#app/utils/dashboards/config.ts'
+import { handleHomeAction } from '#app/utils/dashboards/actions.server.ts'
+import {
+	loadBlockPicker,
+	loadBuiltInBlockData,
+} from '#app/utils/dashboards/block-data.server.ts'
+import {
+	defaultHomeConfig,
+	type DashboardBlock,
+} from '#app/utils/dashboards/config.ts'
 import { getHomeDashboard } from '#app/utils/dashboards/queries.server.ts'
-import { hiddenBlockIds } from '#app/utils/dashboards/visibility.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { setUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { type Route } from './+types/index.ts'
@@ -35,6 +40,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organization: { id: organization.id, createdAt },
 		blocks: home.config.blocks,
 	})
+	const picker = await loadBlockPicker({
+		userId,
+		organizationId: organization.id,
+		blockData,
+	})
 
 	return {
 		organization,
@@ -45,7 +55,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			config: home.config,
 		},
 		blockData,
+		picker,
 	}
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+	const userId = await requireUserId(request)
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+	})
+	return handleHomeAction({ request, userId, organizationId: organization.id })
 }
 
 /** Plays confetti for `?celebrate=true`, then drops the parameter. */
@@ -86,16 +105,11 @@ function useCelebration() {
 
 export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	const { _ } = useLingui()
-	const { organization, dashboard, blockData } = loaderData
+	const { organization, dashboard, blockData, picker } = loaderData
 	const rootData = useRouteLoaderData<typeof rootLoader>('root')
 	const userName = rootData?.user?.name || _(msg`User`)
 	useCelebration()
 
-	const { blocks, layouts } = dashboard.config
-	const hidden = useMemo(
-		() => hiddenBlockIds(blocks, blockData),
-		[blocks, blockData],
-	)
 	const renderBlock = useCallback(
 		(block: DashboardBlock) => (
 			<DashboardBlockContent
@@ -113,12 +127,15 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				title={_(msg`Welcome ${userName}!`)}
 				description={_(msg`Your organization dashboard`)}
 			/>
-			<DashboardHeader name={<Trans>Home</Trans>} />
-			<DashboardGrid
-				blocks={blocks}
-				layouts={layouts}
-				hiddenBlockIds={hidden}
+			<DashboardEditor
+				// Unsaved edits belong to the Home of one organization.
+				key={organization.id}
+				name={<Trans>Home</Trans>}
+				config={dashboard.config}
+				blockData={blockData}
+				picker={picker}
 				renderBlock={renderBlock}
+				resetConfig={defaultHomeConfig}
 			/>
 		</div>
 	)

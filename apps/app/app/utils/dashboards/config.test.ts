@@ -7,6 +7,7 @@ import {
 	MAX_BLOCK_ROWS,
 	MAX_DASHBOARD_BLOCKS,
 	PERSISTED_BREAKPOINTS,
+	addableBuiltInBlockTypes,
 	blockSizeLimits,
 	canAddBlockType,
 	dashboardNameSchema,
@@ -151,6 +152,41 @@ describe('block registry', () => {
 		)
 		expect(canAddBlockType(full, 'report')).toBe(false)
 		expect(canAddBlockType(full, 'stats')).toBe(false)
+	})
+})
+
+describe('addableBuiltInBlockTypes', () => {
+	const without = (...types: string[]) =>
+		defaultHomeConfig().blocks.filter((block) => !types.includes(block.type))
+
+	it('offers only the built-in blocks that are not on the dashboard', () => {
+		const options = { onboardingAvailable: true }
+		expect(
+			addableBuiltInBlockTypes(defaultHomeConfig().blocks, options),
+		).toEqual([])
+		expect(addableBuiltInBlockTypes(without('leaderboard'), options)).toEqual([
+			'leaderboard',
+		])
+		expect(addableBuiltInBlockTypes([], options)).toEqual(BUILT_IN_BLOCK_TYPES)
+	})
+
+	it('offers onboarding only while the viewer would see it', () => {
+		const blocks = without('onboarding', 'stats')
+		expect(
+			addableBuiltInBlockTypes(blocks, { onboardingAvailable: true }),
+		).toEqual(['stats', 'onboarding'])
+		expect(
+			addableBuiltInBlockTypes(blocks, { onboardingAvailable: false }),
+		).toEqual(['stats'])
+	})
+
+	it('offers nothing once the dashboard is full', () => {
+		const full = Array.from({ length: MAX_DASHBOARD_BLOCKS }, (_, index) =>
+			reportBlock(`report-${index}`),
+		)
+		expect(
+			addableBuiltInBlockTypes(full, { onboardingAvailable: true }),
+		).toEqual([])
 	})
 })
 

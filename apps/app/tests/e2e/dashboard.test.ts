@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { type Locator, type Page } from '@playwright/test'
+import { type Locator, type Page, type Request } from '@playwright/test'
 import {
 	and,
 	count,
@@ -56,19 +56,86 @@ async function boxOf(locator: Locator) {
 	return box
 }
 
+function isHomePost(request: Request, orgSlug: string) {
+	const { pathname } = new URL(request.url())
+	return (
+		request.method() === 'POST' &&
+		pathname.replace(/\.data$/, '') === `/${orgSlug}`
+	)
+}
+
 /** Records POSTs to the Home route itself, i.e. dashboard saves. */
 function recordHomePosts(page: Page, orgSlug: string) {
 	const posts: string[] = []
 	page.on('request', (request) => {
-		const { pathname } = new URL(request.url())
-		if (
-			request.method() === 'POST' &&
-			pathname.replace(/\.data$/, '') === `/${orgSlug}`
-		) {
-			posts.push(request.url())
-		}
+		if (isHomePost(request, orgSlug)) posts.push(request.postData() ?? '')
 	})
 	return posts
+}
+
+function nextHomePost(page: Page, orgSlug: string) {
+	return page.waitForResponse((response) =>
+		isHomePost(response.request(), orgSlug),
+	)
+}
+
+/**
+ * Where the grid puts each block. Inline styles hold the target position, so
+ * they neither depend on scrolling nor on running move animations.
+ */
+function homeLayoutStyles(page: Page) {
+	// eslint-disable-next-line playwright/no-raw-locators -- grid items have no role of their own
+	return page.locator('[data-block-id]').evaluateAll((items) =>
+		Object.fromEntries(
+			items.map((item) => {
+				const { transform, width, height } = (item as HTMLElement).style
+				return [
+					item.getAttribute('data-block-id'),
+					{ transform, width, height },
+				]
+			}),
+		),
+	)
+}
+
+function resizeHandle(page: Page, blockId: string) {
+	return page.locator(`[data-block-id="${blockId}"] > .react-resizable-handle`)
+}
+
+/** Presses the middle of `from`, moves the pointer by `offset` and releases. */
+async function dragBy(
+	page: Page,
+	from: Locator,
+	offset: { x: number; y: number },
+) {
+	await from.scrollIntoViewIfNeeded()
+	const box = await boxOf(from)
+	const x = box.x + box.width / 2
+	const y = box.y + box.height / 2
+	await page.mouse.move(x, y)
+	await page.mouse.down()
+	await page.mouse.move(x + offset.x, y + offset.y, { steps: 15 })
+	await page.mouse.up()
+}
+
+async function savedHomeConfig(userId: string, organizationId: string) {
+	const rows = await db
+		.select({ config: Dashboard.config })
+		.from(Dashboard)
+		.where(
+			and(
+				eq(Dashboard.ownerId, userId),
+				eq(Dashboard.organizationId, organizationId),
+				eq(Dashboard.kind, 'home'),
+			),
+		)
+	return rows.map(
+		(row) =>
+			JSON.parse(row.config) as {
+				blocks: Array<{ id: string }>
+				layouts: Record<'lg' | 'md', Array<{ i: string; y: number }>>
+			},
+	)
 }
 
 test.describe('Dashboard', () => {
@@ -526,6 +593,187 @@ test.describe('Dashboard', () => {
 				}
 			})
 			.toEqual({ columns: 1, widths: 1, topToBottom: true })
+		await expect(page.getByRole('button', { name: 'Edit layout' })).toHaveCount(
+			0,
+		)
+		await expect(
+			page.getByRole('button', { name: 'Move block', exact: true }),
+		).toHaveCount(0)
+	})
+
+	test('Home layout edits are saved once per change and survive a reload', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+		const homePosts = recordHomePosts(page, org.slug)
+
+		// Tall enough to drag the leaderboard up to the stats strip without
+		// scrolling in between.
+		await page.setViewportSize({ width: 1440, height: 1100 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: 'Move block', exact: true }),
+		).toHaveCount(0)
+		await expect(resizeHandle(page, 'stats')).toBeHidden()
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		for (const name of DEFAULT_HOME_BLOCKS) {
+			const block = homeBlock(page, name)
+			await expect(
+				block.getByRole('button', { name: 'Move block', exact: true }),
+			).toBeVisible()
+			await expect(
+				block.getByRole('button', { name: 'Remove block' }),
+			).toBeVisible()
+		}
+		for (const blockId of [
+			'stats',
+			'notes-chart',
+			'onboarding',
+			'leaderboard',
+		]) {
+			await expect(resizeHandle(page, blockId)).toBeVisible()
+		}
+		await expect(page.getByRole('button', { name: 'Add block' })).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: 'Reset to default' }),
+		).toBeVisible()
+
+		// Dragging a block by its body does not move it.
+		const initialLayout = await homeLayoutStyles(page)
+		await dragBy(page, homeBlock(page, 'Stats'), { x: 0, y: 600 })
+		expect(await homeLayoutStyles(page)).toEqual(initialLayout)
+
+		// Drag the leaderboard by its handle above the stats strip.
+		const moved = nextHomePost(page, org.slug)
+		const leaderboardHandle = homeBlock(page, 'Top contributors').getByRole(
+			'button',
+			{ name: 'Move block', exact: true },
+		)
+		await leaderboardHandle.scrollIntoViewIfNeeded()
+		const handleBox = await boxOf(leaderboardHandle)
+		const statsBox = await boxOf(homeBlock(page, 'Stats'))
+		await dragBy(page, leaderboardHandle, {
+			x: 0,
+			y: statsBox.y + 4 - (handleBox.y + handleBox.height / 2),
+		})
+		expect((await moved).status()).toBe(200)
+		expect(await homeBlockOrder(page)).toEqual([
+			'Top contributors',
+			'Stats',
+			'Notes chart',
+			'Onboarding checklist',
+		])
+
+		// Make the notes chart narrower and taller with its resize handle.
+		const chartBefore = await boxOf(homeBlock(page, 'Notes chart'))
+		const resized = nextHomePost(page, org.slug)
+		await dragBy(page, resizeHandle(page, 'notes-chart'), { x: -360, y: 110 })
+		expect((await resized).status()).toBe(200)
+		await expect
+			.poll(async () => {
+				const chart = await boxOf(homeBlock(page, 'Notes chart'))
+				return {
+					narrower: chart.width < chartBefore.width - 200,
+					taller: chart.height > chartBefore.height + 50,
+				}
+			})
+			.toEqual({ narrower: true, taller: true })
+
+		await expect(page.getByText('Saved', { exact: true })).toBeVisible()
+		expect(homePosts).toHaveLength(2)
+		expect(homePosts.every((body) => body.includes('intent=save-config'))).toBe(
+			true,
+		)
+
+		const editedLayout = await homeLayoutStyles(page)
+		expect(editedLayout).not.toEqual(initialLayout)
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
+		await expect.poll(() => homeLayoutStyles(page)).toEqual(editedLayout)
+		expect(homePosts).toHaveLength(2)
+
+		const [saved] = await savedHomeConfig(user.id, org.id)
+		expect(saved?.layouts.lg).toContainEqual(
+			expect.objectContaining({ i: 'leaderboard', y: 0 }),
+		)
+		// Only the desktop layout was edited.
+		expect(saved?.layouts.md).toContainEqual(
+			expect.objectContaining({ i: 'stats', y: 0 }),
+		)
+	})
+
+	test('Home blocks can be removed, added back and reset to the default', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+
+		const leaderboard = homeBlock(page, 'Top contributors')
+		const removed = nextHomePost(page, org.slug)
+		await leaderboard.getByRole('button', { name: 'Remove block' }).click()
+		await expect(leaderboard).toHaveCount(0)
+		expect((await removed).status()).toBe(200)
+
+		const dialog = page.getByRole('dialog', { name: 'Add block' })
+		const builtIns = dialog.getByRole('group', { name: 'Built-in blocks' })
+		await page.getByRole('button', { name: 'Add block' }).click()
+		await expect(builtIns.getByRole('button')).toHaveCount(1)
+		const added = nextHomePost(page, org.slug)
+		await builtIns.getByRole('button', { name: /^Top contributors/ }).click()
+		await expect(dialog).toHaveCount(0)
+		expect((await added).status()).toBe(200)
+
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(leaderboard).toBeVisible()
+		const onboardingBox = await boxOf(homeBlock(page, 'Onboarding checklist'))
+		// Added blocks go to the bottom of the grid.
+		expect((await boxOf(leaderboard)).y).toBeGreaterThanOrEqual(
+			onboardingBox.y + onboardingBox.height,
+		)
+
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		await page.getByRole('button', { name: 'Add block' }).click()
+		await expect(
+			dialog.getByText('All built-in blocks are already on this dashboard.'),
+		).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(dialog).toHaveCount(0)
+
+		await page.getByRole('button', { name: 'Reset to default' }).click()
+		const confirm = page.getByRole('alertdialog')
+		const reset = nextHomePost(page, org.slug)
+		await confirm.getByRole('button', { name: 'Reset', exact: true }).click()
+		const resetResponse = await reset
+		expect(resetResponse.status()).toBe(200)
+		expect(resetResponse.request().postData()).toContain('intent=reset')
+
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(leaderboard).toBeVisible()
+		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
+		const [onboarding, contributors] = await Promise.all([
+			boxOf(homeBlock(page, 'Onboarding checklist')),
+			boxOf(leaderboard),
+		])
+		expect(Math.round(onboarding.y)).toBe(Math.round(contributors.y))
+		expect(await savedHomeConfig(user.id, org.id)).toEqual([])
 	})
 
 	test('Home hides a dismissed onboarding checklist and closes the gap', async ({

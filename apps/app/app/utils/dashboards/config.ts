@@ -53,6 +53,7 @@ export type BlockSize = { w: number; h: number }
 export type BlockDefinition<T extends BlockType = BlockType> = {
 	type: T
 	title: MessageDescriptor
+	description: MessageDescriptor
 	defaultSize: Record<PersistedBreakpoint, BlockSize>
 	minSize: Record<PersistedBreakpoint, BlockSize>
 	maxInstances: number
@@ -62,6 +63,7 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 	stats: {
 		type: 'stats',
 		title: msg`Stats`,
+		description: msg`Total notes, the daily average and the trend.`,
 		defaultSize: { lg: { w: 12, h: 2 }, md: { w: 8, h: 2 } },
 		minSize: { lg: { w: 4, h: 2 }, md: { w: 4, h: 2 } },
 		maxInstances: 1,
@@ -69,6 +71,7 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 	'notes-chart': {
 		type: 'notes-chart',
 		title: msg`Notes chart`,
+		description: msg`Notes created each day.`,
 		defaultSize: { lg: { w: 12, h: 8 }, md: { w: 8, h: 8 } },
 		minSize: { lg: { w: 4, h: 6 }, md: { w: 4, h: 6 } },
 		maxInstances: 1,
@@ -76,6 +79,7 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 	onboarding: {
 		type: 'onboarding',
 		title: msg`Onboarding checklist`,
+		description: msg`Your remaining setup steps.`,
 		defaultSize: { lg: { w: 6, h: 10 }, md: { w: 4, h: 10 } },
 		minSize: { lg: { w: 4, h: 8 }, md: { w: 4, h: 8 } },
 		maxInstances: 1,
@@ -83,6 +87,7 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 	leaderboard: {
 		type: 'leaderboard',
 		title: msg`Top contributors`,
+		description: msg`Members who created the most notes.`,
 		defaultSize: { lg: { w: 6, h: 10 }, md: { w: 4, h: 10 } },
 		minSize: { lg: { w: 3, h: 6 }, md: { w: 3, h: 6 } },
 		maxInstances: 1,
@@ -90,6 +95,7 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 	report: {
 		type: 'report',
 		title: msg`Report`,
+		description: msg`A saved report or a report template.`,
 		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
 		minSize: { lg: { w: 3, h: 4 }, md: { w: 3, h: 4 } },
 		maxInstances: Number.POSITIVE_INFINITY,
@@ -142,6 +148,9 @@ export type BuiltInDashboardBlock = Extract<
 	{ type: BuiltInBlockType }
 >
 export type ReportDashboardBlock = Extract<DashboardBlock, { type: 'report' }>
+/** A block picked to be added, before it gets an id on the dashboard. */
+export type NewDashboardBlock =
+	{ type: BuiltInBlockType } | { type: 'report'; config: ReportBlockConfig }
 
 export type DashboardConfig = {
 	version: typeof DASHBOARD_CONFIG_VERSION
@@ -386,6 +395,22 @@ export function canAddBlockType(
 	if (blocks.length >= MAX_DASHBOARD_BLOCKS) return false
 	const count = blocks.filter((block) => block.type === type).length
 	return count < BLOCK_DEFINITIONS[type].maxInstances
+}
+
+/**
+ * The built-in blocks a dashboard can still take. Onboarding is only offered
+ * while the viewer would see it, since a completed or dismissed checklist is
+ * not shown at all.
+ */
+export function addableBuiltInBlockTypes(
+	blocks: readonly DashboardBlock[],
+	{ onboardingAvailable }: { onboardingAvailable: boolean },
+): BuiltInBlockType[] {
+	return BUILT_IN_BLOCK_TYPES.filter(
+		(type) =>
+			canAddBlockType(blocks, type) &&
+			(type !== 'onboarding' || onboardingAvailable),
+	)
 }
 
 export const dashboardNameSchema = z

@@ -17,6 +17,7 @@ import {
 	UserImage,
 } from '@repo/database'
 import { type BlockType, type DashboardBlock } from './config.ts'
+import { isOnboardingVisible } from './visibility.ts'
 
 const MIN_CHART_DAYS = 7
 const MAX_CHART_DAYS = 30
@@ -52,6 +53,12 @@ export type BuiltInBlockData = {
 	notes: NotesSeries | null
 	onboarding: OnboardingProgressData | null
 	leaderboard: LeaderboardEntry[] | null
+}
+
+/** What the Add block dialog may offer besides the built-in blocks. */
+export type DashboardBlockPicker = {
+	/** Onboarding is only offered while the viewer would see the checklist. */
+	onboardingAvailable: boolean
 }
 
 type BlockOrganization = { id: string; createdAt: Date }
@@ -209,4 +216,22 @@ export async function loadBuiltInBlockData({
 		types.has('leaderboard') ? loadLeaderboard(organization.id) : null,
 	])
 	return { notes, onboarding, leaderboard }
+}
+
+/**
+ * Loads the Add block dialog data. The onboarding progress of an onboarding
+ * block already on the dashboard is reused.
+ */
+export async function loadBlockPicker({
+	userId,
+	organizationId,
+	blockData,
+}: {
+	userId: string
+	organizationId: string
+	blockData: BuiltInBlockData
+}): Promise<DashboardBlockPicker> {
+	const onboarding =
+		blockData.onboarding ?? (await loadOnboarding(userId, organizationId))
+	return { onboardingAvailable: isOnboardingVisible(onboarding) }
 }

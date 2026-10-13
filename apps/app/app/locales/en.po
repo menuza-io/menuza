@@ -486,6 +486,10 @@ msgstr "A caller was unhappy or reported a problem."
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
 
+#: app/components/dashboard/use-dashboard-editor.ts:36
+msgid "A dashboard can have at most {MAX_DASHBOARD_BLOCKS} blocks."
+msgstr "A dashboard can have at most {MAX_DASHBOARD_BLOCKS} blocks."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:19
 msgid "A large title that opens a section."
 msgstr "A large title that opens a section."
@@ -505,6 +509,10 @@ msgstr "A picture, logo, or product shot."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:692
 msgid "A place for every inquiry"
 msgstr "A place for every inquiry"
+
+#: app/utils/dashboards/config.ts:98
+msgid "A saved report or a report template."
+msgstr "A saved report or a report template."
 
 #: app/utils/website/form-templates.ts:41
 msgid "A short, low-friction form for prospective customers."
@@ -705,6 +713,8 @@ msgstr "Add at least one email block"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
+#: app/components/dashboard/add-block-dialog.tsx:112
+#: app/components/dashboard/add-block-dialog.tsx:117
 msgid "Add block"
 msgstr "Add block"
 
@@ -1045,6 +1055,10 @@ msgstr ""
 #: app/components/data-table.tsx:351
 #~ msgid "All assigned"
 #~ msgstr ""
+
+#: app/components/dashboard/add-block-dialog.tsx:149
+msgid "All built-in blocks are already on this dashboard."
+msgstr "All built-in blocks are already on this dashboard."
 
 #: app/components/mailbox/calls-tab.tsx:264
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:299
@@ -1611,6 +1625,10 @@ msgstr "Builder"
 msgid "Built-in"
 msgstr "Built-in"
 
+#: app/components/dashboard/add-block-dialog.tsx:134
+msgid "Built-in blocks"
+msgstr "Built-in blocks"
+
 #: app/components/roles/tenant-role-access-manager.tsx:886
 msgid "Built-in Roles"
 msgstr "Built-in Roles"
@@ -1818,6 +1836,7 @@ msgstr "Can't text that number"
 #: app/components/chat/chat-composer.tsx:349
 #: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/form-actions.tsx:28
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/note/comment-input.tsx:261
@@ -3515,6 +3534,7 @@ msgstr "Don't retry"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:175
@@ -3612,6 +3632,10 @@ msgstr "Drafting…"
 #: app/components/phone-agent/flow-editor/node-palette.tsx:93
 msgid "Drag a step onto the canvas, or select + to add it."
 msgstr "Drag a step onto the canvas, or select + to add it."
+
+#: app/components/dashboard/dashboard-block-frame.tsx:41
+msgid "Drag to move"
+msgstr "Drag to move"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 #: app/components/website/form-builder-sidebar.tsx:335
@@ -3748,6 +3772,10 @@ msgstr "Edit design"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
 msgstr "Edit image"
+
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:88
+msgid "Edit layout"
+msgstr "Edit layout"
 
 #: app/components/chat/chat-message.tsx:220
 #: app/components/chat/chat-message.tsx:361
@@ -4743,7 +4771,7 @@ msgid "Hold message"
 msgstr "Hold message"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:113
+#: app/routes/_app+/$orgSlug_+/index.tsx:133
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5723,6 +5751,10 @@ msgstr ""
 msgid "Members & invites"
 msgstr "Members & invites"
 
+#: app/utils/dashboards/config.ts:90
+msgid "Members who created the most notes."
+msgstr "Members who created the most notes."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
@@ -5836,6 +5868,10 @@ msgstr ""
 msgid "More actions"
 msgstr ""
 
+#: app/components/dashboard/dashboard-block-frame.tsx:40
+msgid "Move block"
+msgstr "Move block"
+
 #: app/components/settings/cards/security-card.tsx:160
 msgid "Multi-factor authentication"
 msgstr ""
@@ -5933,6 +5969,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:290
 msgid "New automation"
 msgstr ""
+
+#: app/components/dashboard/add-block-dialog.tsx:126
+msgid "New blocks are added at the bottom of the dashboard."
+msgstr "New blocks are added at the bottom of the dashboard."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:240
@@ -6464,9 +6504,13 @@ msgstr "Notes & Documents"
 msgid "Notes & website"
 msgstr "Notes & website"
 
-#: app/utils/dashboards/config.ts:71
+#: app/utils/dashboards/config.ts:73
 msgid "Notes chart"
 msgstr "Notes chart"
+
+#: app/utils/dashboards/config.ts:74
+msgid "Notes created each day."
+msgstr "Notes created each day."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:653
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:656
@@ -6550,7 +6594,7 @@ msgstr "Old URL (Source)"
 msgid "On"
 msgstr "On"
 
-#: app/utils/dashboards/config.ts:78
+#: app/utils/dashboards/config.ts:81
 msgid "Onboarding checklist"
 msgstr "Onboarding checklist"
 
@@ -7841,6 +7885,8 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+#: app/components/dashboard/dashboard-block-frame.tsx:51
+#: app/components/dashboard/dashboard-block-frame.tsx:52
 msgid "Remove block"
 msgstr "Remove block"
 
@@ -7977,8 +8023,8 @@ msgstr "Reply…"
 #~ msgid "Replying to comment"
 #~ msgstr ""
 
-#: app/components/dashboard/dashboard-block-content.tsx:42
-#: app/utils/dashboards/config.ts:92
+#: app/components/dashboard/dashboard-block-content.tsx:58
+#: app/utils/dashboards/config.ts:97
 msgid "Report"
 msgstr "Report"
 
@@ -8025,6 +8071,7 @@ msgstr "Required"
 msgid "Required."
 msgstr "Required."
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/organization-invitations.tsx:237
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
@@ -8054,6 +8101,7 @@ msgstr ""
 msgid "Reset to auto-generated"
 msgstr ""
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:25
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:606
 msgid "Reset to default"
 msgstr "Reset to default"
@@ -8069,6 +8117,10 @@ msgstr "Reset to published"
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
 msgid "Reset to the default call flow?"
 msgstr "Reset to the default call flow?"
+
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:30
+msgid "Reset to the default layout?"
+msgstr "Reset to the default layout?"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
 #~ msgid "Reset to the default phone menu?"
@@ -8443,6 +8495,7 @@ msgid "Save transfers"
 msgstr "Save transfers"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/settings-page.tsx:374
 msgid "Saved"
 msgstr "Saved"
@@ -8477,6 +8530,7 @@ msgid "Saving..."
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/roles/tenant-role-access-manager.tsx:590
@@ -9351,7 +9405,7 @@ msgstr "Starting point"
 msgid "Starting…"
 msgstr "Starting…"
 
-#: app/utils/dashboards/config.ts:64
+#: app/utils/dashboards/config.ts:65
 msgid "Stats"
 msgstr "Stats"
 
@@ -9805,9 +9859,17 @@ msgstr ""
 msgid "Thanks for signing up! You've been automatically added to {orgNames} based on your email domain."
 msgstr ""
 
+#: app/components/dashboard/use-dashboard-editor.ts:38
+msgid "That block is already on the dashboard."
+msgstr "That block is already on the dashboard."
+
 #: app/hooks/use-phone-calls.ts:42
 msgid "That change couldn't be saved. Refresh the page and try again."
 msgstr "That change couldn't be saved. Refresh the page and try again."
+
+#: app/components/dashboard/use-dashboard-editor.ts:41
+msgid "That report is not available in this organization."
+msgstr "That report is not available in this organization."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:205
 msgid "The agent answers calls once every step is done."
@@ -10015,6 +10077,10 @@ msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgid "This client will have access to:"
 msgstr ""
 
+#: app/components/dashboard/add-block-dialog.tsx:121
+msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
+msgstr "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
+
 #: app/components/settings/cards/sessions-card.tsx:183
 msgid "This device"
 msgstr ""
@@ -10184,7 +10250,7 @@ msgstr "Too Many Requests"
 msgid "Too many requests. Wait a moment and try again."
 msgstr "Too many requests. Wait a moment and try again."
 
-#: app/utils/dashboards/config.ts:85
+#: app/utils/dashboards/config.ts:89
 msgid "Top contributors"
 msgstr "Top contributors"
 
@@ -10195,6 +10261,10 @@ msgstr ""
 #: app/components/notes-chart.tsx:69
 msgid "Total"
 msgstr ""
+
+#: app/utils/dashboards/config.ts:66
+msgid "Total notes, the daily average and the trend."
+msgstr "Total notes, the daily average and the trend."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:434
 msgid "Training"
@@ -10799,7 +10869,7 @@ msgstr "Used when the value is empty"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "Useful if staff should log what happened after a transfer."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:88
+#: app/routes/_app+/$orgSlug_+/index.tsx:110
 msgid "User"
 msgstr "User"
 
@@ -11136,7 +11206,7 @@ msgstr ""
 msgid "Welcome"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:110
+#: app/routes/_app+/$orgSlug_+/index.tsx:127
 msgid "Welcome {userName}!"
 msgstr ""
 
@@ -11560,6 +11630,10 @@ msgstr "Your agent didn't join the call. Make sure the voice agent is running an
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr ""
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:33
+msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
+msgstr "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:412
 msgid "Your business line"
 msgstr "Your business line"
@@ -11567,6 +11641,10 @@ msgstr "Your business line"
 #: app/components/settings/cards/organization/shop-card.tsx:319
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr ""
+
+#: app/components/dashboard/use-dashboard-editor.ts:43
+msgid "Your dashboard changes could not be saved."
+msgstr "Your dashboard changes could not be saved."
 
 #: app/routes/organizations+/create.tsx:1080
 msgid "Your department"
@@ -11608,7 +11686,7 @@ msgstr "Your media library is empty"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "Your microphone is being used by another app. Close it and try again."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:111
+#: app/routes/_app+/$orgSlug_+/index.tsx:128
 msgid "Your organization dashboard"
 msgstr ""
 
@@ -11639,6 +11717,10 @@ msgstr ""
 #: app/routes/_auth+/waitlist.tsx:307
 msgid "Your referral link"
 msgstr ""
+
+#: app/utils/dashboards/config.ts:82
+msgid "Your remaining setup steps."
+msgstr "Your remaining setup steps."
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:225
 msgid "Your S3 credentials will be encrypted and stored securely. However, we recommend using IAM credentials with minimal required permissions (read/write access to the specific bucket only)."

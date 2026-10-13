@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { Card, CardHeader, CardTitle } from '@repo/ui/card'
+import { Skeleton } from '@repo/ui/skeleton'
 import { LeadershipCard } from '#app/components/leadership-card.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { type BuiltInBlockData } from '#app/utils/dashboards/block-data.server.ts'
@@ -8,6 +9,11 @@ import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { StatsBlock } from './blocks/stats-block.tsx'
 
 export type DashboardBlockOrganization = { id: string; slug: string }
+
+/** A block that was just added has no data until the page data reloads. */
+function BlockLoading() {
+	return <Skeleton aria-hidden="true" className="h-full rounded-xl" />
+}
 
 export function DashboardBlockContent({
 	block,
@@ -20,9 +26,13 @@ export function DashboardBlockContent({
 }) {
 	switch (block.type) {
 		case 'stats':
-			return data.notes ? <StatsBlock notes={data.notes} /> : null
+			return data.notes ? <StatsBlock notes={data.notes} /> : <BlockLoading />
 		case 'notes-chart':
-			return data.notes ? <NotesChartBlock notes={data.notes} /> : null
+			return data.notes ? (
+				<NotesChartBlock notes={data.notes} />
+			) : (
+				<BlockLoading />
+			)
 		case 'onboarding':
 			return data.onboarding ? (
 				<OnboardingChecklist
@@ -31,9 +41,15 @@ export function DashboardBlockContent({
 					organizationId={organization.id}
 					variant="dashboard"
 				/>
-			) : null
+			) : (
+				<BlockLoading />
+			)
 		case 'leaderboard':
-			return <LeadershipCard leaders={data.leaderboard ?? []} />
+			return data.leaderboard ? (
+				<LeadershipCard leaders={data.leaderboard} />
+			) : (
+				<BlockLoading />
+			)
 		case 'report':
 			return (
 				<Card className="h-full">

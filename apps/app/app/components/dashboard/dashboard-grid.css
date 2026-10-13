@@ -13,6 +13,28 @@
 	border-color: var(--muted-foreground);
 }
 
+/* While editing, the resize handle is always shown (touch has no hover) and
+   large enough to grab. */
+[data-slot='dashboard-grid'][data-editing]
+	.react-grid-item
+	> .react-resizable-handle {
+	width: 24px;
+	height: 24px;
+	opacity: 1;
+	touch-action: none;
+}
+
+[data-slot='dashboard-grid'][data-editing]
+	.react-grid-item
+	> .react-resizable-handle::after {
+	right: 5px;
+	bottom: 5px;
+	width: 10px;
+	height: 10px;
+	border-right-width: 3px;
+	border-bottom-width: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	[data-slot='dashboard-grid'] .react-grid-layout,
 	[data-slot='dashboard-grid'] .react-grid-item {

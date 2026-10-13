@@ -1,6 +1,7 @@
 import { verticalCompactor } from 'react-grid-layout/core'
 import {
 	BLOCK_DEFINITIONS,
+	blockSizeLimits,
 	DASHBOARD_BREAKPOINTS,
 	DASHBOARD_COLS,
 	type BlockType,
@@ -151,6 +152,71 @@ export function mergeHiddenLayoutEntries<T extends GridItem>(
 			(item) => hidden.has(item.i) && !reportedIds.has(item.i),
 		)
 		return [...items, ...toGridItems(hiddenItems)]
+	})
+}
+
+/**
+ * Puts the layout the grid reported for one breakpoint into the config.
+ * Hidden blocks are not rendered, so the grid compacts other blocks into
+ * their space; their saved entries move below the reported layout so they do
+ * not overlap anything once they are shown again.
+ */
+export function applyGridLayout<T extends GridItem>(
+	config: DashboardConfig,
+	breakpoint: PersistedBreakpoint,
+	reported: readonly T[],
+	hiddenIds: Iterable<string>,
+): DashboardConfig {
+	const blockIds = new Set(config.blocks.map((block) => block.id))
+	const hidden = new Set(hiddenIds)
+	const items = toGridItems(reported.filter((item) => blockIds.has(item.i)))
+	const reportedIds = new Set(items.map((item) => item.i))
+	let bottom = layoutBottom(items)
+	const hiddenItems = sortLayoutItems(
+		config.layouts[breakpoint].filter(
+			(item) =>
+				hidden.has(item.i) && blockIds.has(item.i) && !reportedIds.has(item.i),
+		),
+	).map(({ i, x, w, h }) => {
+		const item = { i, x, y: bottom, w, h }
+		bottom += h
+		return item
+	})
+	return {
+		...config,
+		layouts: { ...config.layouts, [breakpoint]: [...items, ...hiddenItems] },
+	}
+}
+
+/** Whether two layouts place the same blocks at the same positions and sizes. */
+export function sameLayout(
+	a: readonly GridItem[],
+	b: readonly GridItem[],
+): boolean {
+	if (a.length !== b.length) return false
+	const byId = new Map(b.map((item) => [item.i, item]))
+	return a.every((item) => {
+		const other = byId.get(item.i)
+		return (
+			other !== undefined &&
+			other.x === item.x &&
+			other.y === item.y &&
+			other.w === item.w &&
+			other.h === item.h
+		)
+	})
+}
+
+/** Adds each block type's size limits so the grid enforces them on resize. */
+export function withBlockSizeLimits<T extends GridItem>(
+	layout: readonly T[],
+	blocks: readonly DashboardBlock[],
+	breakpoint: PersistedBreakpoint,
+) {
+	const typeById = new Map(blocks.map((block) => [block.id, block.type]))
+	return layout.map((item) => {
+		const type = typeById.get(item.i)
+		return type ? { ...item, ...blockSizeLimits(type, breakpoint) } : item
 	})
 }
 

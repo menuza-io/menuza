@@ -9,6 +9,7 @@ import {
 } from './config.ts'
 import {
 	appendBlock,
+	applyGridLayout,
 	breakpointForWidth,
 	createBlockId,
 	layoutBottom,
@@ -17,6 +18,7 @@ import {
 	mirrorLayout,
 	mirrorLayouts,
 	removeBlock,
+	sameLayout,
 	sortBlocksByLayout,
 	sortLayoutItems,
 	stackLayout,
@@ -24,6 +26,7 @@ import {
 	unmirrorLayout,
 	unmirrorLayouts,
 	visibleGridLayouts,
+	withBlockSizeLimits,
 	withoutHiddenBlocks,
 } from './layout.ts'
 
@@ -186,6 +189,96 @@ describe('mergeHiddenLayoutEntries', () => {
 			lg: [{ i: 'stats', x: 0, y: 0, w: 12, h: 2 }],
 			md: [{ i: 'stats', x: 0, y: 0, w: 8, h: 2 }],
 		})
+	})
+})
+
+describe('applyGridLayout', () => {
+	it('replaces the layout of the reported breakpoint only', () => {
+		const config = defaultHomeConfig()
+		const reported = [
+			{ i: 'leaderboard', x: 0, y: 0, w: 6, h: 10, moved: false },
+			{ i: 'stats', x: 0, y: 10, w: 12, h: 2, static: false },
+			{ i: 'notes-chart', x: 0, y: 12, w: 8, h: 9 },
+			{ i: 'onboarding', x: 6, y: 0, w: 6, h: 10 },
+		]
+		const next = applyGridLayout(config, 'lg', reported, [])
+		expect(next.blocks).toEqual(config.blocks)
+		expect(next.layouts.lg).toEqual(toGridItems(reported))
+		expect(next.layouts.md).toEqual(config.layouts.md)
+		expect(config).toEqual(defaultHomeConfig())
+	})
+
+	it('keeps hidden blocks and moves them below the reported layout', () => {
+		const config = defaultHomeConfig()
+		// The grid does not render the hidden onboarding block, so it reports
+		// the leaderboard in the space onboarding would take.
+		const reported = [
+			{ i: 'stats', x: 0, y: 0, w: 8, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 8, h: 8 },
+			{ i: 'leaderboard', x: 0, y: 10, w: 4, h: 10 },
+		]
+		const next = applyGridLayout(config, 'md', reported, ['onboarding'])
+		expect(next.blocks).toEqual(config.blocks)
+		expect(next.layouts.md).toEqual([
+			...reported,
+			{ i: 'onboarding', x: 0, y: 20, w: 4, h: 10 },
+		])
+		expect(next.layouts.lg).toEqual(config.layouts.lg)
+		const normalized = normalizeDashboardConfig(next)
+		expect(normalized).toEqual({ success: true, config: next })
+	})
+
+	it('ignores entries for blocks that are not on the dashboard', () => {
+		const config = removeBlock(defaultHomeConfig(), 'leaderboard')
+		const next = applyGridLayout(
+			config,
+			'lg',
+			[
+				{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+				{ i: 'leaderboard', x: 0, y: 2, w: 6, h: 10 },
+			],
+			['onboarding'],
+		)
+		expect(next.layouts.lg.map((item) => item.i)).toEqual([
+			'stats',
+			'onboarding',
+		])
+	})
+})
+
+describe('sameLayout', () => {
+	it('compares positions and sizes regardless of order', () => {
+		const { lg } = defaultHomeConfig().layouts
+		expect(sameLayout(lg, [...lg].reverse())).toBe(true)
+		expect(sameLayout(lg, toGridItems(lg.map((item) => ({ ...item }))))).toBe(
+			true,
+		)
+		expect(
+			sameLayout(
+				lg,
+				lg.map((item) => (item.i === 'stats' ? { ...item, h: 3 } : item)),
+			),
+		).toBe(false)
+		expect(sameLayout(lg, lg.slice(1))).toBe(false)
+	})
+})
+
+describe('withBlockSizeLimits', () => {
+	it('adds the size limits of each block type for the breakpoint', () => {
+		const config = defaultHomeConfig()
+		const layout = withBlockSizeLimits(config.layouts.md, config.blocks, 'md')
+		expect(layout.find((item) => item.i === 'notes-chart')).toEqual({
+			i: 'notes-chart',
+			x: 0,
+			y: 2,
+			w: 8,
+			h: 8,
+			minW: BLOCK_DEFINITIONS['notes-chart'].minSize.md.w,
+			minH: BLOCK_DEFINITIONS['notes-chart'].minSize.md.h,
+			maxW: 8,
+			maxH: 30,
+		})
+		expect(layout).toHaveLength(config.layouts.md.length)
 	})
 })
 

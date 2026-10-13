@@ -484,6 +484,10 @@ msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
 
+#: app/components/dashboard/use-dashboard-editor.ts:36
+msgid "A dashboard can have at most {MAX_DASHBOARD_BLOCKS} blocks."
+msgstr "يمكن أن تحتوي لوحة التحكم على {MAX_DASHBOARD_BLOCKS} كتلة كحد أقصى."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:19
 msgid "A large title that opens a section."
 msgstr "عنوان كبير يفتح قسمًا."
@@ -503,6 +507,10 @@ msgstr "صورة أو شعار أو لقطة منتج."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:692
 msgid "A place for every inquiry"
 msgstr "مكان لكل استفسار"
+
+#: app/utils/dashboards/config.ts:98
+msgid "A saved report or a report template."
+msgstr "تقرير محفوظ أو قالب تقرير."
 
 #: app/utils/website/form-templates.ts:41
 msgid "A short, low-friction form for prospective customers."
@@ -703,6 +711,8 @@ msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
+#: app/components/dashboard/add-block-dialog.tsx:112
+#: app/components/dashboard/add-block-dialog.tsx:117
 msgid "Add block"
 msgstr "إضافة كتلة"
 
@@ -1043,6 +1053,10 @@ msgstr "الكل"
 #: app/components/data-table.tsx:351
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
+
+#: app/components/dashboard/add-block-dialog.tsx:149
+msgid "All built-in blocks are already on this dashboard."
+msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
 
 #: app/components/mailbox/calls-tab.tsx:264
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:299
@@ -1609,6 +1623,10 @@ msgstr "المنشئ"
 msgid "Built-in"
 msgstr "مدمج"
 
+#: app/components/dashboard/add-block-dialog.tsx:134
+msgid "Built-in blocks"
+msgstr "الكتل المدمجة"
+
 #: app/components/roles/tenant-role-access-manager.tsx:886
 msgid "Built-in Roles"
 msgstr "الأدوار المدمجة"
@@ -1816,6 +1834,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/chat/chat-composer.tsx:349
 #: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/form-actions.tsx:28
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/note/comment-input.tsx:261
@@ -3513,6 +3532,7 @@ msgstr "عدم إعادة المحاولة"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:163
 #: ../../packages/ai/src/components/ai-chat.tsx:210
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:175
@@ -3610,6 +3630,10 @@ msgstr "جارٍ إعداد المسودة…"
 #: app/components/phone-agent/flow-editor/node-palette.tsx:93
 msgid "Drag a step onto the canvas, or select + to add it."
 msgstr "اسحب خطوة إلى اللوحة، أو اختر + لإضافتها."
+
+#: app/components/dashboard/dashboard-block-frame.tsx:41
+msgid "Drag to move"
+msgstr "اسحب للنقل"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 #: app/components/website/form-builder-sidebar.tsx:335
@@ -3746,6 +3770,10 @@ msgstr "تعديل التصميم"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
 msgid "Edit image"
 msgstr "تعديل الصورة"
+
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:88
+msgid "Edit layout"
+msgstr "تعديل التخطيط"
 
 #: app/components/chat/chat-message.tsx:220
 #: app/components/chat/chat-message.tsx:361
@@ -4741,7 +4769,7 @@ msgid "Hold message"
 msgstr "رسالة الانتظار"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:113
+#: app/routes/_app+/$orgSlug_+/index.tsx:133
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5721,6 +5749,10 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
+#: app/utils/dashboards/config.ts:90
+msgid "Members who created the most notes."
+msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
@@ -5834,6 +5866,10 @@ msgstr "المزيد"
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
+#: app/components/dashboard/dashboard-block-frame.tsx:40
+msgid "Move block"
+msgstr "نقل الكتلة"
+
 #: app/components/settings/cards/security-card.tsx:160
 msgid "Multi-factor authentication"
 msgstr "المصادقة متعددة العوامل"
@@ -5931,6 +5967,10 @@ msgstr "إعلان جديد"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:290
 msgid "New automation"
 msgstr "أتمتة جديدة"
+
+#: app/components/dashboard/add-block-dialog.tsx:126
+msgid "New blocks are added at the bottom of the dashboard."
+msgstr "تُضاف الكتل الجديدة في أسفل لوحة التحكم."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:240
@@ -6462,9 +6502,13 @@ msgstr "الملاحظات والمستندات"
 msgid "Notes & website"
 msgstr "الملاحظات والموقع"
 
-#: app/utils/dashboards/config.ts:71
+#: app/utils/dashboards/config.ts:73
 msgid "Notes chart"
 msgstr "مخطط الملاحظات"
+
+#: app/utils/dashboards/config.ts:74
+msgid "Notes created each day."
+msgstr "الملاحظات المنشأة كل يوم."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:653
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:656
@@ -6548,7 +6592,7 @@ msgstr "عنوان URL القديم (المصدر)"
 msgid "On"
 msgstr "تشغيل"
 
-#: app/utils/dashboards/config.ts:78
+#: app/utils/dashboards/config.ts:81
 msgid "Onboarding checklist"
 msgstr "قائمة خطوات البدء"
 
@@ -7839,6 +7883,8 @@ msgstr "إزالة الوصول من جميع الأجهزة عدا هذا ال�
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+#: app/components/dashboard/dashboard-block-frame.tsx:51
+#: app/components/dashboard/dashboard-block-frame.tsx:52
 msgid "Remove block"
 msgstr "إزالة الكتلة"
 
@@ -7975,8 +8021,8 @@ msgstr "رد…"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/dashboard/dashboard-block-content.tsx:42
-#: app/utils/dashboards/config.ts:92
+#: app/components/dashboard/dashboard-block-content.tsx:58
+#: app/utils/dashboards/config.ts:97
 msgid "Report"
 msgstr "تقرير"
 
@@ -8023,6 +8069,7 @@ msgstr "مطلوب"
 msgid "Required."
 msgstr "مطلوب."
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/organization-invitations.tsx:237
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
@@ -8052,6 +8099,7 @@ msgstr "إعادة تعيين كلمة المرور"
 msgid "Reset to auto-generated"
 msgstr "إعادة تعيين إلى التلقائي"
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:25
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:606
 msgid "Reset to default"
 msgstr "إعادة التعيين إلى الافتراضي"
@@ -8067,6 +8115,10 @@ msgstr "إعادة التعيين إلى المنشور"
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
 msgid "Reset to the default call flow?"
 msgstr "هل تريد إعادة التعيين إلى مسار المكالمة الافتراضي؟"
+
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:30
+msgid "Reset to the default layout?"
+msgstr "إعادة التعيين إلى التخطيط الافتراضي؟"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
 #~ msgid "Reset to the default phone menu?"
@@ -8441,6 +8493,7 @@ msgid "Save transfers"
 msgstr "حفظ التحويلات"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/settings-page.tsx:374
 msgid "Saved"
 msgstr "تم الحفظ"
@@ -8475,6 +8528,7 @@ msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/roles/tenant-role-access-manager.tsx:590
@@ -9349,7 +9403,7 @@ msgstr "نقطة البداية"
 msgid "Starting…"
 msgstr "جارٍ البدء…"
 
-#: app/utils/dashboards/config.ts:64
+#: app/utils/dashboards/config.ts:65
 msgid "Stats"
 msgstr "الإحصائيات"
 
@@ -9803,9 +9857,17 @@ msgstr "شكراً لتسجيلك! لديك دعوات منظمة معلقة."
 msgid "Thanks for signing up! You've been automatically added to {orgNames} based on your email domain."
 msgstr "شكراً لتسجيلك! تمت إضافتك تلقائياً إلى {orgNames} بناءً على نطاق بريدك الإلكتروني."
 
+#: app/components/dashboard/use-dashboard-editor.ts:38
+msgid "That block is already on the dashboard."
+msgstr "هذه الكتلة موجودة بالفعل في لوحة التحكم."
+
 #: app/hooks/use-phone-calls.ts:42
 msgid "That change couldn't be saved. Refresh the page and try again."
 msgstr "تعذّر حفظ هذا التغيير. حدّث الصفحة وحاول مرة أخرى."
+
+#: app/components/dashboard/use-dashboard-editor.ts:41
+msgid "That report is not available in this organization."
+msgstr "هذا التقرير غير متاح في هذه المؤسسة."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:205
 msgid "The agent answers calls once every step is done."
@@ -10013,6 +10075,10 @@ msgstr "ستظهر هذه المكالمة في <0>المكالمات</0> قري
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
+#: app/components/dashboard/add-block-dialog.tsx:121
+msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
+msgstr "تحتوي لوحة التحكم هذه على {MAX_DASHBOARD_BLOCKS} كتلة، وهو الحد الأقصى. أزل كتلة لإضافة كتلة أخرى."
+
 #: app/components/settings/cards/sessions-card.tsx:183
 msgid "This device"
 msgstr "هذا الجهاز"
@@ -10182,7 +10248,7 @@ msgstr "طلبات كثيرة جداً"
 msgid "Too many requests. Wait a moment and try again."
 msgstr "طلبات كثيرة جدًا. انتظر لحظة وحاول مرة أخرى."
 
-#: app/utils/dashboards/config.ts:85
+#: app/utils/dashboards/config.ts:89
 msgid "Top contributors"
 msgstr "أفضل المساهمين"
 
@@ -10193,6 +10259,10 @@ msgstr "أفضل المساهمين"
 #: app/components/notes-chart.tsx:69
 msgid "Total"
 msgstr "الإجمالي"
+
+#: app/utils/dashboards/config.ts:66
+msgid "Total notes, the daily average and the trend."
+msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:434
 msgid "Training"
@@ -10797,7 +10867,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:88
+#: app/routes/_app+/$orgSlug_+/index.tsx:110
 msgid "User"
 msgstr "مستخدم"
 
@@ -11134,7 +11204,7 @@ msgstr "أسابيع"
 msgid "Welcome"
 msgstr "مرحباً"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:110
+#: app/routes/_app+/$orgSlug_+/index.tsx:127
 msgid "Welcome {userName}!"
 msgstr "مرحباً {userName}!"
 
@@ -11558,6 +11628,10 @@ msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن �
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن تتمكن من رؤيته مرة أخرى."
 
+#: app/components/dashboard/dashboard-edit-toolbar.tsx:33
+msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
+msgstr "ستُستبدل كتلك وترتيبها بالكتل الافتراضية. لا يمكن التراجع عن ذلك."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:412
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
@@ -11565,6 +11639,10 @@ msgstr "خط نشاطك التجاري"
 #: app/components/settings/cards/organization/shop-card.tsx:319
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
+
+#: app/components/dashboard/use-dashboard-editor.ts:43
+msgid "Your dashboard changes could not be saved."
+msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 
 #: app/routes/organizations+/create.tsx:1080
 msgid "Your department"
@@ -11606,7 +11684,7 @@ msgstr "مكتبة الوسائط فارغة"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "الميكروفون قيد الاستخدام في تطبيق آخر. أغلقه وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:111
+#: app/routes/_app+/$orgSlug_+/index.tsx:128
 msgid "Your organization dashboard"
 msgstr "لوحة تحكم مؤسستك"
 
@@ -11637,6 +11715,10 @@ msgstr "ترتيبك"
 #: app/routes/_auth+/waitlist.tsx:307
 msgid "Your referral link"
 msgstr "رابط الإحالة الخاص بك"
+
+#: app/utils/dashboards/config.ts:82
+msgid "Your remaining setup steps."
+msgstr "خطوات الإعداد المتبقية."
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:225
 msgid "Your S3 credentials will be encrypted and stored securely. However, we recommend using IAM credentials with minimal required permissions (read/write access to the specific bucket only)."

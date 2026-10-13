@@ -1,14 +1,31 @@
-import { and, Dashboard, db, eq, UserOrganization } from '@repo/database'
+import {
+	and,
+	Dashboard,
+	db,
+	eq,
+	OnboardingProgress,
+	OnboardingStep,
+	SavedReport,
+	UserOrganization,
+} from '@repo/database'
+import { organizationTemplates } from '@repo/reports'
 import { describe, expect, it } from 'vitest'
-import { defaultHomeConfig } from '#app/utils/dashboards/config.ts'
-import { removeBlock } from '#app/utils/dashboards/layout.ts'
+import {
+	defaultHomeConfig,
+	MAX_DASHBOARD_BLOCKS,
+	serializeDashboardConfig,
+	type DashboardBlock,
+	type DashboardConfig,
+} from '#app/utils/dashboards/config.ts'
+import { appendBlock, removeBlock } from '#app/utils/dashboards/layout.ts'
 import { insertTestDashboard } from '#tests/dashboard-utils.ts'
 import {
 	createAuthenticatedRequest,
 	createTestOrganization,
+	getResponseStatus,
 	setupTestOrgWithUser,
 } from '#tests/test-utils.ts'
-import { loader } from './index.tsx'
+import { action, loader } from './index.tsx'
 
 function loadHome(slug: string, cookie: string) {
 	const request = createAuthenticatedRequest(
@@ -17,6 +34,55 @@ function loadHome(slug: string, cookie: string) {
 		cookie,
 	)
 	return loader({ request, params: { orgSlug: slug }, context: {} } as any)
+}
+
+function postHome(
+	slug: string,
+	cookie: string,
+	body: Record<string, string> | BodyInit,
+) {
+	const request = createAuthenticatedRequest(
+		`http://localhost:3000/${slug}?index`,
+		{
+			method: 'POST',
+			body:
+				typeof body === 'string' || body instanceof FormData
+					? body
+					: new URLSearchParams(body as Record<string, string>),
+		},
+		cookie,
+	)
+	return action({ request, params: { orgSlug: slug }, context: {} } as any)
+}
+
+function saveConfig(slug: string, cookie: string, config: unknown) {
+	return postHome(slug, cookie, {
+		intent: 'save-config',
+		config: typeof config === 'string' ? config : JSON.stringify(config),
+	})
+}
+
+/** The status and body of an action result, whether it is plain data or not. */
+function unwrap(result: unknown) {
+	const body =
+		result && typeof result === 'object' && 'data' in result
+			? (result as { data: unknown }).data
+			: result
+	return { status: getResponseStatus(result), body }
+}
+
+async function savedHomeConfig(userId: string, organizationId: string) {
+	const [row] = await db
+		.select({ config: Dashboard.config })
+		.from(Dashboard)
+		.where(
+			and(
+				eq(Dashboard.ownerId, userId),
+				eq(Dashboard.organizationId, organizationId),
+				eq(Dashboard.kind, 'home'),
+			),
+		)
+	return row ? (JSON.parse(row.config) as DashboardConfig) : null
 }
 
 async function homeRowCount(userId: string, organizationId: string) {
@@ -31,6 +97,57 @@ async function homeRowCount(userId: string, organizationId: string) {
 			),
 		)
 	return rows.length
+}
+
+async function insertSavedReport(input: {
+	organizationId: string
+	createdById: string
+	title: string
+}) {
+	const [report] = await db
+		.insert(SavedReport)
+		.values({
+			scope: 'organization',
+			organizationId: input.organizationId,
+			createdById: input.createdById,
+			title: input.title,
+			definition: JSON.stringify({ settings: { title: input.title } }),
+		})
+		.returning({ id: SavedReport.id })
+	if (!report) throw new Error('Failed to create saved report')
+	return report
+}
+
+function reportBlock(
+	id: string,
+	config: Extract<DashboardBlock, { type: 'report' }>['config'],
+): DashboardBlock {
+	return { id, type: 'report', config }
+}
+
+async function seedOnboardingSteps() {
+	await db
+		.insert(OnboardingStep)
+		.values([
+			{
+				key: 'explore_command_menu',
+				title: 'Explore the command menu',
+				description: 'Use Cmd/Ctrl + K to quickly navigate',
+				autoDetect: false,
+				sortOrder: 1,
+			},
+		])
+		.onConflictDoNothing()
+}
+
+function expectBadRequest(result: unknown) {
+	const { status, body } = unwrap(result)
+	expect(status).toBe(400)
+	expect(body).toEqual({
+		ok: false,
+		error: { code: expect.any(String), message: expect.any(String) },
+	})
+	return (body as { error: { code: string; message: string } }).error
 }
 
 describe('Home dashboard loader', () => {
@@ -113,6 +230,36 @@ describe('Home dashboard loader', () => {
 		expect(data.blockData.onboarding).toBeNull()
 	})
 
+	it('tells the block picker whether onboarding could be added back', async () => {
+		await seedOnboardingSteps()
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+
+		const onDefaultHome = await loadHome(organization.slug, cookie)
+		expect(onDefaultHome.picker).toEqual({ onboardingAvailable: true })
+
+		await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+			config: removeBlock(defaultHomeConfig(), 'onboarding'),
+		})
+		const withoutOnboarding = await loadHome(organization.slug, cookie)
+		expect(withoutOnboarding.blockData.onboarding).toBeNull()
+		expect(withoutOnboarding.picker).toEqual({ onboardingAvailable: true })
+
+		await db
+			.update(OnboardingProgress)
+			.set({ isVisible: false })
+			.where(
+				and(
+					eq(OnboardingProgress.userId, user.id),
+					eq(OnboardingProgress.organizationId, organization.id),
+				),
+			)
+		const dismissed = await loadHome(organization.slug, cookie)
+		expect(dismissed.picker).toEqual({ onboardingAvailable: false })
+	})
+
 	it("ignores other members' Home dashboards", async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 		const { user: otherUser } = await setupTestOrgWithUser('admin')
@@ -142,6 +289,316 @@ describe('Home dashboard loader', () => {
 		const error = await loadHome(otherOrganization.slug, cookie).catch(
 			(caught: unknown) => caught,
 		)
+
+		expect(error).toBeInstanceOf(Response)
+		expect((error as Response).status).toBe(404)
+	})
+})
+
+describe('Home dashboard action', () => {
+	it('saves the normalized config on the first save and replaces it later', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('member')
+		const config = removeBlock(defaultHomeConfig(), 'leaderboard')
+		const withRglFields = {
+			...config,
+			layouts: {
+				lg: config.layouts.lg.map((item) => ({ ...item, moved: false })),
+				md: config.layouts.md,
+			},
+		}
+
+		const first = unwrap(
+			await saveConfig(organization.slug, cookie, withRglFields),
+		)
+		expect(first).toEqual({ status: 200, body: { ok: true } })
+		expect(await savedHomeConfig(user.id, organization.id)).toEqual(config)
+
+		const moved = {
+			...config,
+			layouts: {
+				...config.layouts,
+				md: config.layouts.md.map((item) =>
+					item.i === 'stats' ? { ...item, y: 20 } : item,
+				),
+			},
+		}
+		await saveConfig(organization.slug, cookie, moved)
+		expect(await homeRowCount(user.id, organization.id)).toBe(1)
+		const saved = await savedHomeConfig(user.id, organization.id)
+		expect(saved?.layouts.md.find((item) => item.i === 'stats')?.y).toBe(20)
+		expect(saved?.layouts.lg).toEqual(config.layouts.lg)
+
+		const data = await loadHome(organization.slug, cookie)
+		expect(data.dashboard.config).toEqual(saved)
+		expect(data.blockData.leaderboard).toBeNull()
+	})
+
+	it("keeps each member's Home separate in each organization", async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const otherOrganization = await createTestOrganization(user.id, 'admin')
+		const { user: colleague, cookie: colleagueCookie } =
+			await setupTestOrgWithUser('member')
+		await db.insert(UserOrganization).values({
+			userId: colleague.id,
+			organizationId: organization.id,
+			organizationRoleId: 'org_role_member',
+		})
+
+		await saveConfig(
+			organization.slug,
+			cookie,
+			removeBlock(defaultHomeConfig(), 'stats'),
+		)
+
+		const colleagueHome = await loadHome(organization.slug, colleagueCookie)
+		expect(colleagueHome.dashboard.config).toEqual(defaultHomeConfig())
+		const otherHome = await loadHome(otherOrganization.slug, cookie)
+		expect(otherHome.dashboard.config).toEqual(defaultHomeConfig())
+		const ownHome = await loadHome(organization.slug, cookie)
+		expect(ownHome.dashboard.config.blocks.map((block) => block.id)).toEqual([
+			'notes-chart',
+			'onboarding',
+			'leaderboard',
+		])
+	})
+
+	it('rejects a built-in block that appears twice', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const config = defaultHomeConfig()
+
+		const error = expectBadRequest(
+			await saveConfig(organization.slug, cookie, {
+				...config,
+				blocks: [...config.blocks, { id: 'stats-2', type: 'stats' }],
+			}),
+		)
+
+		expect(error.code).toBe('duplicate-built-in')
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+	})
+
+	it('rejects more than 30 blocks', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const templateId = organizationTemplates()[0]!.id
+		let config = defaultHomeConfig()
+		for (
+			let index = config.blocks.length;
+			index <= MAX_DASHBOARD_BLOCKS;
+			index++
+		) {
+			config = appendBlock(
+				config,
+				reportBlock(`report-${index}`, { source: 'template', templateId }),
+			)
+		}
+		expect(config.blocks).toHaveLength(MAX_DASHBOARD_BLOCKS + 1)
+
+		const error = expectBadRequest(
+			await saveConfig(organization.slug, cookie, config),
+		)
+
+		expect(error.code).toBe('too-many-blocks')
+		expect(error.message).toContain('30')
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+
+		const full = { ...config, blocks: config.blocks.slice(0, -1) }
+		expect(unwrap(await saveConfig(organization.slug, cookie, full))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		const saved = await savedHomeConfig(user.id, organization.id)
+		expect(saved?.blocks).toHaveLength(MAX_DASHBOARD_BLOCKS)
+	})
+
+	it('accepts organization templates and rejects unknown template ids', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const templateId = organizationTemplates()[0]!.id
+
+		const error = expectBadRequest(
+			await saveConfig(
+				organization.slug,
+				cookie,
+				appendBlock(
+					defaultHomeConfig(),
+					reportBlock('report-1', {
+						source: 'template',
+						templateId: 'does-not-exist',
+					}),
+				),
+			),
+		)
+		expect(error.code).toBe('unknown-template')
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+
+		const valid = appendBlock(
+			defaultHomeConfig(),
+			reportBlock('report-1', { source: 'template', templateId }),
+		)
+		expect(unwrap(await saveConfig(organization.slug, cookie, valid))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect(await savedHomeConfig(user.id, organization.id)).toEqual(valid)
+	})
+
+	it('rejects a saved report of another organization without revealing it', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const otherOrganization = await createTestOrganization(user.id, 'admin')
+		const foreign = await insertSavedReport({
+			organizationId: otherOrganization.id,
+			createdById: user.id,
+			title: 'Secret revenue report',
+		})
+		const own = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: user.id,
+			title: 'Our report',
+		})
+
+		const result = await saveConfig(
+			organization.slug,
+			cookie,
+			appendBlock(
+				defaultHomeConfig(),
+				reportBlock('report-1', { source: 'saved', reportId: foreign.id }),
+			),
+		)
+		const error = expectBadRequest(result)
+		expect(error.code).toBe('unknown-report')
+		expect(JSON.stringify(unwrap(result).body)).not.toContain('Secret')
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+
+		const valid = appendBlock(
+			appendBlock(
+				defaultHomeConfig(),
+				reportBlock('report-1', { source: 'saved', reportId: own.id }),
+			),
+			reportBlock('report-2', { source: 'saved', reportId: own.id }),
+		)
+		expect(unwrap(await saveConfig(organization.slug, cookie, valid))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect(await savedHomeConfig(user.id, organization.id)).toEqual(valid)
+	})
+
+	it('still saves layout changes when a saved report on Home was deleted', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const report = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: user.id,
+			title: 'Weekly report',
+		})
+		const withReport = appendBlock(
+			defaultHomeConfig(),
+			reportBlock('report-1', { source: 'saved', reportId: report.id }),
+		)
+		expect(
+			unwrap(await saveConfig(organization.slug, cookie, withReport)),
+		).toEqual({ status: 200, body: { ok: true } })
+		await db.delete(SavedReport).where(eq(SavedReport.id, report.id))
+
+		const moved = {
+			...withReport,
+			layouts: {
+				...withReport.layouts,
+				lg: withReport.layouts.lg.map((item) =>
+					item.i === 'stats' ? { ...item, y: 40 } : item,
+				),
+			},
+		}
+		expect(unwrap(await saveConfig(organization.slug, cookie, moved))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect(await savedHomeConfig(user.id, organization.id)).toEqual(moved)
+
+		const error = expectBadRequest(
+			await saveConfig(
+				organization.slug,
+				cookie,
+				appendBlock(
+					moved,
+					reportBlock('report-2', { source: 'saved', reportId: 'missing' }),
+				),
+			),
+		)
+		expect(error.code).toBe('unknown-report')
+	})
+
+	it('rejects malformed configs and requests with a 400', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+
+		expect(
+			expectBadRequest(await saveConfig(organization.slug, cookie, '{not json'))
+				.code,
+		).toBe('invalid-json')
+		expect(
+			expectBadRequest(
+				await saveConfig(organization.slug, cookie, {
+					version: 1,
+					blocks: 'stats',
+				}),
+			).code,
+		).toBe('invalid-shape')
+		expect(
+			expectBadRequest(
+				await postHome(organization.slug, cookie, { intent: 'save-config' }),
+			).code,
+		).toBe('invalid-request')
+		expect(
+			expectBadRequest(
+				await postHome(organization.slug, cookie, { intent: 'share' }),
+			).code,
+		).toBe('invalid-request')
+		expect(
+			expectBadRequest(
+				await postHome(
+					organization.slug,
+					cookie,
+					JSON.stringify({ intent: 'reset' }),
+				),
+			).code,
+		).toBe('invalid-request')
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+
+		const data = await loadHome(organization.slug, cookie)
+		expect(data.dashboard.config).toEqual(defaultHomeConfig())
+	})
+
+	it('resets Home to the default layout by removing the saved row', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+			config: serializeDashboardConfig(
+				removeBlock(defaultHomeConfig(), 'leaderboard'),
+			),
+		})
+
+		expect(
+			unwrap(await postHome(organization.slug, cookie, { intent: 'reset' })),
+		).toEqual({ status: 200, body: { ok: true } })
+
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+		const data = await loadHome(organization.slug, cookie)
+		expect(data.dashboard).toMatchObject({
+			id: null,
+			config: defaultHomeConfig(),
+		})
+	})
+
+	it('returns 404 for an organization the user is not a member of', async () => {
+		const { cookie } = await setupTestOrgWithUser('admin')
+		const { organization: otherOrganization } =
+			await setupTestOrgWithUser('admin')
+
+		const error = await saveConfig(
+			otherOrganization.slug,
+			cookie,
+			defaultHomeConfig(),
+		).catch((caught: unknown) => caught)
 
 		expect(error).toBeInstanceOf(Response)
 		expect((error as Response).status).toBe(404)
