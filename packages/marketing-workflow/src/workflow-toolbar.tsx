@@ -118,7 +118,7 @@ export function WorkflowToolbar({
 									setEditingTitle(false)
 								}
 							}}
-							className="h-7 max-w-56 text-sm font-medium"
+							className="h-9 max-w-56 text-sm font-medium"
 							autoFocus
 						/>
 					) : (

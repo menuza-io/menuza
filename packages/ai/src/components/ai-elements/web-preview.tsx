@@ -153,7 +153,7 @@ export const WebPreviewUrl = ({
 
 	return (
 		<Input
-			className="h-8 flex-1 text-sm"
+			className="h-10 flex-1 text-sm"
 			placeholder="Enter URL..."
 			value={value ?? url}
 			onChange={onChange}

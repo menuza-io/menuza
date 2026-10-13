@@ -505,7 +505,7 @@ export function GlobalAIToggle() {
 			onClick={toggle}
 			aria-pressed={isOpen}
 			aria-label={isOpen ? 'Close assistant' : 'Open assistant'}
-			className="h-8 gap-1.5 rounded-lg px-2.5 text-sm font-normal"
+			className="h-10 gap-1.5 rounded-lg px-2.5 text-sm font-normal"
 		>
 			<svg
 				fill="none"
