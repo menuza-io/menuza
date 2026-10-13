@@ -403,7 +403,7 @@ export const NoteCard = ({
 									value={editTitle}
 									onChange={(e) => setEditTitle(e.target.value)}
 									onKeyDown={handleKeyDown}
-									className="h-8 flex-1 px-2"
+									className="h-10 flex-1 px-2"
 									placeholder={_(t`Note title...`)}
 								/>
 								<div className="flex items-center gap-1">

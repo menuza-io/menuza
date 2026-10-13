@@ -559,7 +559,7 @@ function NewApiKeyModal({
 								<Button
 									variant="outline"
 									size="sm"
-									className="absolute top-2 right-2 h-8 px-3"
+									className="absolute top-2 right-2 h-10 px-3"
 									onClick={handleCopy}
 								>
 									<Icon

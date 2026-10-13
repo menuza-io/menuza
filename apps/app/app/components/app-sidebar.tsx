@@ -657,7 +657,7 @@ function OrganizationSidebar({
 				<SidebarMenuButton
 					variant="outline"
 					tooltip={searchNotesLabel}
-					className="text-muted-foreground bg-background relative rounded-md border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
+					className="text-muted-foreground bg-background rounded-md border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
 					onClick={() => setCommandOpen(true)}
 					aria-haspopup="dialog"
 					aria-expanded={commandOpen}
@@ -667,9 +667,7 @@ function OrganizationSidebar({
 					<span className="min-w-0 flex-1 truncate group-data-[collapsible=icon]:hidden">
 						<Trans>Search notes...</Trans>
 					</span>
-					<Kbd className="absolute top-[0.3rem] right-[0.3rem] group-data-[collapsible=icon]:hidden">
-						F
-					</Kbd>
+					<Kbd className="shrink-0 group-data-[collapsible=icon]:hidden">F</Kbd>
 				</SidebarMenuButton>
 				<TeamSwitcher />
 			</SidebarHeader>

@@ -303,7 +303,7 @@ export default function JourneysList() {
 						placeholder={_(msg`Search automations...`)}
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="h-9 pl-9"
+						className="h-11 pl-10"
 					/>
 				</div>
 				<div className="flex flex-wrap items-center gap-1">
