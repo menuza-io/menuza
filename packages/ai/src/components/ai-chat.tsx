@@ -273,7 +273,7 @@ function NavigationConfirmCard({
 					type="button"
 					size="sm"
 					onClick={onConfirm}
-					className="h-8 flex-1 text-xs font-medium"
+					className="h-10 flex-1 text-xs font-medium"
 				>
 					<Trans>Go there</Trans>
 				</Button>
@@ -282,7 +282,7 @@ function NavigationConfirmCard({
 					variant="outline"
 					size="sm"
 					onClick={onCancel}
-					className="h-8 flex-1 text-xs font-medium"
+					className="h-10 flex-1 text-xs font-medium"
 				>
 					<Trans>Not now</Trans>
 				</Button>

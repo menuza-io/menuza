@@ -9,6 +9,7 @@ import {
 	eq,
 	like,
 	or,
+	sql,
 	NoteComment,
 	NoteCommentImage,
 	Organization,
@@ -175,17 +176,19 @@ function getSourceLabel(source: string) {
 	}
 }
 
+// D1 rejects LIKE patterns over 50 bytes; object keys exceed that, so use instr().
+function configContains(value: string) {
+	return sql`instr(${WebsitePageSection.config}, ${value}) > 0`
+}
+
 async function hasMediaObjectReferences(
 	organizationId: string,
 	objectKey: string,
 	assetId?: string,
 ) {
 	const pageReferenceCondition = assetId
-		? or(
-				like(WebsitePageSection.config, `%${objectKey}%`),
-				like(WebsitePageSection.config, `%${assetId}%`),
-			)
-		: like(WebsitePageSection.config, `%${objectKey}%`)
+		? or(configContains(objectKey), configContains(assetId))
+		: configContains(objectKey)
 	const [asset, note, comment, logo, siteIcon, page] = await Promise.all([
 		db
 			.select({ id: OrganizationMediaAsset.id })
@@ -587,10 +590,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 			.where(
 				and(
 					eq(WebsitePage.organizationId, organization.id),
-					or(
-						like(WebsitePageSection.config, `%${asset.objectKey}%`),
-						like(WebsitePageSection.config, `%${asset.id}%`),
-					),
+					or(configContains(asset.objectKey), configContains(asset.id)),
 				),
 			)
 
@@ -1768,7 +1768,7 @@ function MediaDetailsDialog({
 														size="sm"
 														onClick={() => applyPreset(preset)}
 														className={cn(
-															'h-7 rounded-lg px-3 text-xs font-medium transition-colors',
+															'h-9 rounded-lg px-3 text-xs font-medium transition-colors',
 															isActive
 																? 'bg-foreground text-background hover:bg-foreground/90 shadow-xs'
 																: 'text-muted-foreground hover:text-foreground',
@@ -1784,7 +1784,7 @@ function MediaDetailsDialog({
 											variant="ghost"
 											size="sm"
 											onClick={resetEditor}
-											className="text-destructive/80 hover:text-destructive hover:bg-destructive/10 h-7 rounded-lg px-2.5 text-xs font-medium transition-colors"
+											className="text-destructive/80 hover:text-destructive hover:bg-destructive/10 h-9 rounded-lg px-2.5 text-xs font-medium transition-colors"
 										>
 											<Trans>Reset</Trans>
 										</Button>

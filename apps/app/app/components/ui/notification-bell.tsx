@@ -365,14 +365,19 @@ export default function NotificationBell() {
 		<Popover open={isOpen} onOpenChange={setIsOpen}>
 			<PopoverTrigger
 				render={
-					<motion.button
-						className="relative flex h-8 w-8 items-center justify-center rounded-full border p-0.5 after:absolute after:-inset-2 md:after:hidden"
-						whileHover={{ scale: 1.05 }}
-						whileTap={{ scale: 0.95 }}
+					<button
+						type="button"
+						className="relative flex h-10 w-10 items-center justify-center rounded-full after:absolute after:-inset-2 md:after:hidden"
 					/>
 				}
 			>
-				<BellIcon size={16} />
+				<motion.span
+					className="flex size-full items-center justify-center rounded-full border p-0.5"
+					whileHover={{ scale: 1.05 }}
+					whileTap={{ scale: 0.95 }}
+				>
+					<BellIcon size={20} />
+				</motion.span>
 				<AnimatePresence>
 					{unreadCount > 0 && (
 						<motion.div
@@ -448,7 +453,7 @@ export default function NotificationBell() {
 								</div>
 								<DropdownMenu>
 									<DropdownMenuTrigger>
-										<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+										<Button variant="ghost" size="sm" className="h-10 w-10 p-0">
 											<Icon name="ellipsis" className="h-4 w-4" />
 											<span className="sr-only">
 												<Trans>Open menu</Trans>

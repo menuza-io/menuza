@@ -102,7 +102,7 @@ export function CreateFormDialog({
 								onChange={(event) =>
 									chooseTemplate(event.target.value as FormTemplateId)
 								}
-								className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+								className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
 							>
 								<option value="blank">
 									<Trans>Custom form</Trans>
@@ -209,7 +209,7 @@ export function CreateFormDialog({
 												),
 											)
 										}
-										className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
+										className="border-input bg-background h-11 w-full rounded-md border px-2 text-base"
 									>
 										<option value="text">Text</option>
 										<option value="email">Email</option>
@@ -217,7 +217,7 @@ export function CreateFormDialog({
 										<option value="textarea">Long text</option>
 									</select>
 								</div>
-								<div className="flex h-9 items-center gap-2">
+								<div className="flex h-11 items-center gap-2">
 									<Switch
 										checked={field.required}
 										onCheckedChange={(checked) =>

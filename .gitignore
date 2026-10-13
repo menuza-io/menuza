@@ -102,3 +102,6 @@ apps/app/tests/fixtures/openimg/**/mock-bucket/orgs/
 # Local verification artifacts
 /other/screenshots-sites/
 /other/videos/
+
+# Bugpatrol: local data and screenshots of the real app
+.bugpatrol/runs/
