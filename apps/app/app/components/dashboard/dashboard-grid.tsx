@@ -63,6 +63,8 @@ type DashboardGridProps<Block extends DashboardBlock> = {
 	/** Blocks that stay in the config but are not shown; their space is reused. */
 	hiddenBlockIds?: readonly string[]
 	renderBlock: (block: Block) => ReactNode
+	/** Names a block, such as a report block after its report; defaults to its type. */
+	blockTitle?: (block: Block) => string | null
 	/** Lets blocks be moved, resized and removed. Mobile mode ignores it. */
 	editing?: boolean
 	/**
@@ -83,6 +85,7 @@ export function DashboardGrid<Block extends DashboardBlock>({
 	layouts,
 	hiddenBlockIds = NO_HIDDEN_BLOCKS,
 	renderBlock,
+	blockTitle,
 	editing = false,
 	onLayoutCommit,
 	onRemoveBlock,
@@ -153,7 +156,7 @@ export function DashboardGrid<Block extends DashboardBlock>({
 				dir={direction}
 			>
 				<DashboardBlockFrame
-					title={_(BLOCK_DEFINITIONS[block.type].title)}
+					title={blockTitle?.(block) ?? _(BLOCK_DEFINITIONS[block.type].title)}
 					editing={isEditing}
 					onRemove={onRemoveBlock ? () => onRemoveBlock(block.id) : undefined}
 				>
@@ -164,6 +167,7 @@ export function DashboardGrid<Block extends DashboardBlock>({
 	}, [
 		_,
 		activeLayout,
+		blockTitle,
 		blocks,
 		direction,
 		isEditing,

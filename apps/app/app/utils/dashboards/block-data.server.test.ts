@@ -1,4 +1,5 @@
 import {
+	_OrganizationPermissionToRole,
 	and,
 	db,
 	eq,
@@ -6,19 +7,31 @@ import {
 	OnboardingStep,
 	Organization,
 	OrganizationNote,
+	OrganizationRole,
+	SavedReport,
+	UserOrganization,
 } from '@repo/database'
+import { organizationTemplates, type ReportDefinition } from '@repo/reports'
 import { describe, expect, it } from 'vitest'
+import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import {
 	addOrganizationMember,
 	createTestOrganization,
 } from '#tests/test-utils.ts'
 import {
+	loadBlockPicker,
 	loadBuiltInBlockData,
+	loadReportBlockData,
 	summarizeNotes,
 	type NotesChartPoint,
 } from './block-data.server.ts'
-import { defaultHomeConfig, type DashboardBlock } from './config.ts'
+import {
+	defaultHomeConfig,
+	type DashboardBlock,
+	type ReportBlockConfig,
+} from './config.ts'
+import { reportTemplateGroups } from './reports.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -112,6 +125,73 @@ async function onboardingProgressRows(userId: string, organizationId: string) {
 
 const onlyBlocks = (...types: DashboardBlock['type'][]) =>
 	defaultHomeConfig().blocks.filter((block) => types.includes(block.type))
+
+function templateDefinition(templateId: string, title: string) {
+	const template = organizationTemplates().find(
+		(item) => item.id === templateId,
+	)
+	if (!template) throw new Error(`Unknown template ${templateId}`)
+	return {
+		...template.definition,
+		settings: { ...template.definition.settings, title },
+	} satisfies ReportDefinition
+}
+
+async function insertSavedReport(input: {
+	organizationId: string
+	createdById: string
+	title: string
+	definition: ReportDefinition | string
+	updatedAt?: Date
+}) {
+	const [report] = await db
+		.insert(SavedReport)
+		.values({
+			scope: 'organization',
+			organizationId: input.organizationId,
+			createdById: input.createdById,
+			title: input.title,
+			definition:
+				typeof input.definition === 'string'
+					? input.definition
+					: JSON.stringify(input.definition),
+			updatedAt: input.updatedAt,
+		})
+		.returning({ id: SavedReport.id })
+	if (!report) throw new Error('Failed to create saved report')
+	return report
+}
+
+function reportBlock(id: string, config: ReportBlockConfig): DashboardBlock {
+	return { id, type: 'report', config }
+}
+
+async function insertCustomRole(organizationId: string, permissions: string[]) {
+	const [role] = await db
+		.insert(OrganizationRole)
+		.values({ name: `Analyst ${Date.now()}`, level: 3, organizationId })
+		.returning({ id: OrganizationRole.id })
+	if (!role) throw new Error('Failed to create role')
+	await db
+		.insert(_OrganizationPermissionToRole)
+		.values(
+			permissions.map((permissionId) => ({ A: role.id, B: permissionId })),
+		)
+	return role.id
+}
+
+async function setupReportOrg() {
+	const viewer = await insertTestUser({ name: 'Rita Reports' })
+	const organization = await createTestOrganization(viewer.id, 'admin')
+	return {
+		viewer,
+		organization: {
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion,
+		},
+	}
+}
 
 describe('summarizeNotes', () => {
 	it('totals the notes and averages them per day', () => {
@@ -321,5 +401,231 @@ describe('loadBuiltInBlockData', () => {
 			],
 		})
 		expect(data).toEqual({ notes: null, onboarding: null, leaderboard: null })
+	})
+})
+
+describe('loadReportBlockData', () => {
+	it('does nothing when the dashboard has no report blocks', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		expect(
+			await loadReportBlockData({
+				userId: viewer.id,
+				organization,
+				blocks: defaultHomeConfig().blocks,
+			}),
+		).toBeNull()
+	})
+
+	it('loads the saved reports of the report blocks from the organization only', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const other = await createTestOrganization(viewer.id, 'admin')
+		const notesDefinition = templateDefinition(
+			'notes-by-status',
+			'Notes by status',
+		)
+		const notes = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Notes by status',
+			definition: notesDefinition,
+		})
+		const invalid = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Invalid definition',
+			definition: { settings: { title: 'Invalid definition' } } as never,
+		})
+		const notJson = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Not JSON',
+			definition: 'not json',
+		})
+		const foreign = await insertSavedReport({
+			organizationId: other.id,
+			createdById: viewer.id,
+			title: 'Another organization',
+			definition: notesDefinition,
+		})
+
+		const data = await loadReportBlockData({
+			userId: viewer.id,
+			organization,
+			blocks: [
+				...defaultHomeConfig().blocks,
+				reportBlock('report-a', { source: 'saved', reportId: notes.id }),
+				reportBlock('report-b', { source: 'saved', reportId: notes.id }),
+				reportBlock('report-c', { source: 'saved', reportId: invalid.id }),
+				reportBlock('report-d', { source: 'saved', reportId: notJson.id }),
+				reportBlock('report-e', { source: 'saved', reportId: foreign.id }),
+				reportBlock('report-f', { source: 'saved', reportId: 'missing' }),
+				reportBlock('report-g', {
+					source: 'template',
+					templateId: 'customer-count',
+				}),
+			],
+		})
+
+		expect(data?.savedReports).toEqual({
+			[notes.id]: { title: 'Notes by status', definition: notesDefinition },
+			[invalid.id]: { title: 'Invalid definition', definition: null },
+			[notJson.id]: { title: 'Not JSON', definition: null },
+			[foreign.id]: null,
+			missing: null,
+		})
+	})
+
+	it('gives template blocks the URLs the reports page runs reports with', async () => {
+		const { viewer, organization } = await setupReportOrg()
+
+		const data = await loadReportBlockData({
+			userId: viewer.id,
+			organization,
+			blocks: [
+				reportBlock('report-a', {
+					source: 'template',
+					templateId: 'customer-count',
+				}),
+			],
+		})
+
+		expect(data).toEqual({
+			savedReports: {},
+			access: { tenant: true, phoneCalls: true },
+			runUrl: `/${organization.slug}/reports/run`,
+			tokenUrl: `/${organization.slug}/reports/token`,
+			tenantApiUrl: resolveRegionalTenantApiUrls('us').tenantApiUrl,
+		})
+	})
+
+	it('uses the tenant-api of the organization data region', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const data = await loadReportBlockData({
+			userId: viewer.id,
+			organization: { ...organization, dataRegion: 'ksa' },
+			blocks: [
+				reportBlock('report-a', {
+					source: 'template',
+					templateId: 'customer-count',
+				}),
+			],
+		})
+		expect(data?.tenantApiUrl).toBe(
+			resolveRegionalTenantApiUrls('ksa').tenantApiUrl,
+		)
+	})
+
+	it("works out which reports the viewer's permissions let them read", async () => {
+		const { organization } = await setupReportOrg()
+		const blocks = [
+			reportBlock('report-a', {
+				source: 'template',
+				templateId: 'phone-calls-by-week',
+			}),
+		]
+		const accessOf = async (userId: string) =>
+			(await loadReportBlockData({ userId, organization, blocks }))?.access
+
+		const admin = await insertTestUser()
+		await addOrganizationMember(admin.id, organization.id, 'org_role_admin')
+		const member = await insertTestUser()
+		await addOrganizationMember(member.id, organization.id, 'org_role_member')
+		const analyst = await insertTestUser()
+		await addOrganizationMember(
+			analyst.id,
+			organization.id,
+			await insertCustomRole(organization.id, ['org_perm_read_settings_any']),
+		)
+		const callAgent = await insertTestUser()
+		await addOrganizationMember(
+			callAgent.id,
+			organization.id,
+			await insertCustomRole(organization.id, [
+				'org_perm_read_website_any',
+				'org_perm_read_phone_call_any',
+			]),
+		)
+		const former = await insertTestUser()
+		await addOrganizationMember(former.id, organization.id, 'org_role_admin')
+		await db
+			.update(UserOrganization)
+			.set({ active: false })
+			.where(eq(UserOrganization.userId, former.id))
+
+		expect(await accessOf(admin.id)).toEqual({ tenant: true, phoneCalls: true })
+		expect(await accessOf(member.id)).toEqual({
+			tenant: false,
+			phoneCalls: false,
+		})
+		expect(await accessOf(analyst.id)).toEqual({
+			tenant: true,
+			phoneCalls: false,
+		})
+		expect(await accessOf(callAgent.id)).toEqual({
+			tenant: true,
+			phoneCalls: true,
+		})
+		expect(await accessOf(former.id)).toEqual({
+			tenant: false,
+			phoneCalls: false,
+		})
+	})
+})
+
+describe('loadBlockPicker', () => {
+	const noBlockData = { notes: null, onboarding: null, leaderboard: null }
+
+	it("offers the organization's saved reports, newest first, with their subject", async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const other = await createTestOrganization(viewer.id, 'admin')
+		const now = Date.now()
+		const older = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Members by role',
+			definition: templateDefinition('members-by-role', 'Members by role'),
+			updatedAt: new Date(now - 60_000),
+		})
+		const newer = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Shop orders',
+			definition: templateDefinition('shop-order-count', 'Shop orders'),
+			updatedAt: new Date(now),
+		})
+		await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Unreadable',
+			definition: 'not json',
+		})
+		await insertSavedReport({
+			organizationId: other.id,
+			createdById: viewer.id,
+			title: 'Another organization',
+			definition: templateDefinition('notes-by-status', 'Elsewhere'),
+		})
+
+		const picker = await loadBlockPicker({
+			userId: viewer.id,
+			organizationId: organization.id,
+			blockData: noBlockData,
+		})
+
+		expect(picker.savedReports).toEqual([
+			{ id: newer.id, title: 'Shop orders', subjectLabel: 'Shop orders' },
+			{ id: older.id, title: 'Members by role', subjectLabel: 'Members' },
+		])
+	})
+
+	it('offers the organization templates by category', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const picker = await loadBlockPicker({
+			userId: viewer.id,
+			organizationId: organization.id,
+			blockData: noBlockData,
+		})
+		expect(picker.savedReports).toEqual([])
+		expect(picker.templateGroups).toEqual(reportTemplateGroups())
 	})
 })

@@ -1,11 +1,14 @@
-import { Trans } from '@lingui/macro'
-import { Card, CardHeader, CardTitle } from '@repo/ui/card'
 import { Skeleton } from '@repo/ui/skeleton'
 import { LeadershipCard } from '#app/components/leadership-card.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { type BuiltInBlockData } from '#app/utils/dashboards/block-data.server.ts'
 import { type DashboardBlock } from '#app/utils/dashboards/config.ts'
+import {
+	type ReportBlockData,
+	type SavedReportOption,
+} from '#app/utils/dashboards/reports.ts'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
+import { ReportBlock } from './blocks/report-block.tsx'
 import { StatsBlock } from './blocks/stats-block.tsx'
 
 export type DashboardBlockOrganization = { id: string; slug: string }
@@ -18,10 +21,14 @@ function BlockLoading() {
 export function DashboardBlockContent({
 	block,
 	data,
+	reports,
+	savedReportOptions,
 	organization,
 }: {
 	block: DashboardBlock
 	data: BuiltInBlockData
+	reports: ReportBlockData | null
+	savedReportOptions?: readonly SavedReportOption[]
 	organization: DashboardBlockOrganization
 }) {
 	switch (block.type) {
@@ -52,13 +59,12 @@ export function DashboardBlockContent({
 			)
 		case 'report':
 			return (
-				<Card className="h-full">
-					<CardHeader>
-						<CardTitle>
-							<Trans>Report</Trans>
-						</CardTitle>
-					</CardHeader>
-				</Card>
+				<ReportBlock
+					config={block.config}
+					orgSlug={organization.slug}
+					reports={reports}
+					savedReportOptions={savedReportOptions}
+				/>
 			)
 	}
 }

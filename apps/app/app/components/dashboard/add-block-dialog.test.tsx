@@ -11,6 +11,7 @@ import {
 } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { type DashboardBlockPicker } from '#app/utils/dashboards/block-data.server.ts'
 import {
 	defaultHomeConfig,
 	MAX_DASHBOARD_BLOCKS,
@@ -23,6 +24,11 @@ import {
 } from './add-block-dialog.tsx'
 
 const defaultBlocks = defaultHomeConfig().blocks
+const picker: DashboardBlockPicker = {
+	onboardingAvailable: true,
+	savedReports: [],
+	templateGroups: [],
+}
 
 function without(type: DashboardBlock['type']) {
 	return defaultBlocks.filter((block) => block.type !== type)
@@ -36,7 +42,7 @@ async function openDialog(
 		<I18nProvider i18n={i18n}>
 			<AddBlockDialog
 				blocks={defaultBlocks}
-				picker={{ onboardingAvailable: true }}
+				picker={picker}
 				onAdd={onAdd}
 				{...props}
 			/>
@@ -77,7 +83,7 @@ describe('AddBlockDialog', () => {
 	it('offers onboarding only while the viewer would see it', async () => {
 		const hidden = await openDialog({
 			blocks: without('onboarding'),
-			picker: { onboardingAvailable: false },
+			picker: { ...picker, onboardingAvailable: false },
 		})
 		expect(builtInOptions(hidden.dialog)).toEqual([])
 		cleanup()

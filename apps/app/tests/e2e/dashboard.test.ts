@@ -10,10 +10,13 @@ import {
 	Organization,
 	OrganizationNote,
 	Role,
+	SavedReport,
 	User,
 	UserOrganization,
 	_RoleToUser,
 } from '@repo/database'
+import { organizationTemplates } from '@repo/reports'
+import { saveReport } from '@repo/reports/server'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 // Removed db import - using test utilities instead
@@ -118,6 +121,52 @@ async function dragBy(
 	await page.mouse.up()
 }
 
+/** Saves a retitled copy of an organization template, as the reports page does. */
+async function saveReportFromTemplate(input: {
+	organizationId: string
+	createdById: string
+	templateId: string
+	title: string
+}) {
+	const template = organizationTemplates().find(
+		(item) => item.id === input.templateId,
+	)
+	if (!template) throw new Error(`Unknown report template ${input.templateId}`)
+	const report = await saveReport({
+		scope: 'organization',
+		organizationId: input.organizationId,
+		createdById: input.createdById,
+		definition: {
+			...template.definition,
+			settings: { ...template.definition.settings, title: input.title },
+		},
+	})
+	if (!report) throw new Error('Failed to save the report')
+	return report
+}
+
+function isReportRun(request: Request, orgSlug: string) {
+	return (
+		request.method() === 'POST' &&
+		new URL(request.url()).pathname === `/${orgSlug}/reports/run`
+	)
+}
+
+/** Records requests for customer data: analytics tokens and tenant-api queries. */
+function recordTenantRequests(page: Page) {
+	const requests: string[] = []
+	page.on('request', (request) => {
+		const { pathname } = new URL(request.url())
+		if (
+			pathname.endsWith('/reports/token') ||
+			pathname.endsWith('/analytics/query')
+		) {
+			requests.push(request.url())
+		}
+	})
+	return requests
+}
+
 async function savedHomeConfig(userId: string, organizationId: string) {
 	const rows = await db
 		.select({ config: Dashboard.config })
@@ -132,7 +181,7 @@ async function savedHomeConfig(userId: string, organizationId: string) {
 	return rows.map(
 		(row) =>
 			JSON.parse(row.config) as {
-				blocks: Array<{ id: string }>
+				blocks: Array<{ id: string; type: string; config?: unknown }>
 				layouts: Record<'lg' | 'md', Array<{ i: string; y: number }>>
 			},
 	)
@@ -774,6 +823,173 @@ test.describe('Dashboard', () => {
 		])
 		expect(Math.round(onboarding.y)).toBe(Math.round(contributors.y))
 		expect(await savedHomeConfig(user.id, org.id)).toEqual([])
+	})
+
+	test('Home adds saved reports and templates as report blocks that run on the App', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+		await db.insert(OrganizationNote).values(
+			(['high', 'high', 'low'] as const).map((priority, index) => ({
+				title: `Report note ${index + 1}`,
+				content: 'Content',
+				organizationId: org.id,
+				createdById: user.id,
+				priority,
+			})),
+		)
+		const title = 'Team notes by priority'
+		const report = await saveReportFromTemplate({
+			organizationId: org.id,
+			createdById: user.id,
+			templateId: 'notes-by-priority',
+			title,
+		})
+		const tenantRequests = recordTenantRequests(page)
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+
+		const dialog = page.getByRole('dialog', { name: 'Add block' })
+		const savedReports = dialog.getByRole('group', { name: 'Saved reports' })
+		const templates = dialog.getByRole('group', { name: 'Report templates' })
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const savedOption = savedReports.getByRole('button', {
+			name: new RegExp(`^${title}`),
+		})
+		await expect(savedOption).toContainText('Notes')
+		await expect(
+			templates
+				.getByRole('group', { name: 'Notes', exact: true })
+				.getByRole('button', { name: /^Notes by status/ }),
+		).toBeVisible()
+		const added = nextHomePost(page, org.slug)
+		const ran = page.waitForResponse((response) =>
+			isReportRun(response.request(), org.slug),
+		)
+		await savedOption.click()
+		await expect(dialog).toHaveCount(0)
+		expect((await added).status()).toBe(200)
+		expect((await ran).status()).toBe(200)
+
+		const savedBlocks = homeBlock(page, title)
+		await expect(savedBlocks.getByText('High', { exact: true })).toBeVisible()
+		await expect(
+			savedBlocks.getByRole('link', { name: 'Open report' }),
+		).toHaveAttribute('href', `/${org.slug}/reports/${report.id}`)
+
+		// The same report can be added again, and templates as well.
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const addedAgain = nextHomePost(page, org.slug)
+		await savedOption.click()
+		expect((await addedAgain).status()).toBe(200)
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const addedTemplate = nextHomePost(page, org.slug)
+		await templates.getByRole('button', { name: /^Notes by status/ }).click()
+		expect((await addedTemplate).status()).toBe(200)
+		await page.getByRole('button', { name: 'Done', exact: true }).click()
+
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		expect(await homeBlockOrder(page)).toEqual([
+			...DEFAULT_HOME_BLOCKS,
+			title,
+			title,
+			'Notes by status',
+		])
+		await expect(savedBlocks).toHaveCount(2)
+		for (const block of await savedBlocks.all()) {
+			await expect(block.getByText('Low', { exact: true })).toBeVisible()
+		}
+		const templateBlock = homeBlock(page, 'Notes by status')
+		await expect(
+			templateBlock.getByRole('link', { name: 'Open report' }),
+		).toHaveAttribute(
+			'href',
+			`/${org.slug}/reports/new?template=notes-by-status`,
+		)
+		const [config] = await savedHomeConfig(user.id, org.id)
+		expect(config?.blocks.filter((block) => block.type === 'report')).toEqual([
+			expect.objectContaining({
+				config: { source: 'saved', reportId: report.id },
+			}),
+			expect.objectContaining({
+				config: { source: 'saved', reportId: report.id },
+			}),
+			expect.objectContaining({
+				config: { source: 'template', templateId: 'notes-by-status' },
+			}),
+		])
+
+		// Opening the report and coming back leaves the dashboard as it was.
+		const posts = recordHomePosts(page, org.slug)
+		await savedBlocks.first().getByRole('link', { name: 'Open report' }).click()
+		await expect(page).toHaveURL(
+			new RegExp(`/${org.slug}/reports/${report.id}$`),
+		)
+		await expect(page.getByRole('heading', { name: title })).toBeVisible()
+		await page.goBack()
+		await expect(page).toHaveURL(new RegExp(`/${org.slug}$`))
+		await expect(savedBlocks).toHaveCount(2)
+		await expect(
+			savedBlocks.first().getByText('High', { exact: true }),
+		).toBeVisible()
+		expect(posts).toEqual([])
+		// Notes are control-plane data: no analytics token or tenant-api query.
+		expect(tenantRequests).toEqual([])
+	})
+
+	test('Home shows "Report not found" for a deleted saved report', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+		const title = 'Report about to be deleted'
+		const report = await saveReportFromTemplate({
+			organizationId: org.id,
+			createdById: user.id,
+			templateId: 'members-by-role',
+			title,
+		})
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const added = nextHomePost(page, org.slug)
+		await page
+			.getByRole('dialog', { name: 'Add block' })
+			.getByRole('button', { name: new RegExp(`^${title}`) })
+			.click()
+		expect((await added).status()).toBe(200)
+		await expect(homeBlock(page, title)).toBeVisible()
+
+		await db.delete(SavedReport).where(eq(SavedReport.id, report.id))
+		const response = await page.reload()
+		expect(response?.status()).toBe(200)
+		const deleted = homeBlock(page, 'Report')
+		await expect(deleted.getByText('Report not found')).toBeVisible()
+		await expect(
+			deleted.getByRole('link', { name: 'Open report' }),
+		).toHaveCount(0)
+		await expect(homeBlock(page, 'Stats')).toBeVisible()
+
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		const removed = nextHomePost(page, org.slug)
+		await deleted.getByRole('button', { name: 'Remove block' }).click()
+		expect((await removed).status()).toBe(200)
+		await expect(deleted).toHaveCount(0)
+		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
 	})
 
 	test('Home hides a dismissed onboarding checklist and closes the gap', async ({

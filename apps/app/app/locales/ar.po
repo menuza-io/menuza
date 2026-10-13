@@ -1902,6 +1902,11 @@ msgstr "ملغى"
 msgid "Cannot be undone"
 msgstr "لا يمكن التراجع عن ذلك"
 
+#: app/components/dashboard/blocks/report-block.tsx:63
+#: app/components/dashboard/blocks/report-block.tsx:151
+msgid "Cannot show this report"
+msgstr "تعذّر عرض هذا التقرير"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1464
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3967
 msgid "Caption"
@@ -4769,7 +4774,7 @@ msgid "Hold message"
 msgstr "رسالة الانتظار"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:133
+#: app/routes/_app+/$orgSlug_+/index.tsx:160
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5039,6 +5044,10 @@ msgstr "عنوان IP"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:486
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
+
+#: app/components/dashboard/blocks/report-block.tsx:153
+msgid "Its saved settings could not be read."
+msgstr "تعذّرت قراءة إعداداته المحفوظة."
 
 #: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
@@ -6067,6 +6076,10 @@ msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
+#: app/components/dashboard/blocks/report-block-result.tsx:47
+msgid "No access"
+msgstr "لا تملك صلاحية الوصول"
+
 #: app/components/organization-invitations.tsx:189
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
@@ -6749,6 +6762,10 @@ msgstr "معدل الفتح"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1564
 msgid "Open reference"
 msgstr "فتح المرجع"
+
+#: app/components/dashboard/blocks/report-block.tsx:132
+msgid "Open report"
+msgstr "فتح التقرير"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:43
 msgid "Open right now?"
@@ -7841,6 +7858,10 @@ msgstr "إعادة التحميل"
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
 
+#: app/components/dashboard/blocks/report-block.tsx:65
+msgid "Reload the page to try again."
+msgstr "أعد تحميل الصفحة للمحاولة مرة أخرى."
+
 #: app/routes/_auth+/login.tsx:836
 #: app/routes/_auth+/onboarding_.$provider.tsx:368
 #: app/routes/_auth+/onboarding.tsx:523
@@ -8021,14 +8042,25 @@ msgstr "رد…"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
-#: app/components/dashboard/dashboard-block-content.tsx:58
 #: app/utils/dashboards/config.ts:97
 msgid "Report"
 msgstr "تقرير"
 
+#: app/components/dashboard/blocks/report-block.tsx:101
+msgid "Report not found"
+msgstr "التقرير غير موجود"
+
+#: app/components/dashboard/report-block-options.tsx:74
+msgid "Report templates"
+msgstr "قوالب التقارير"
+
 #: app/components/app-sidebar.tsx:278
 msgid "Reports"
 msgstr "التقارير"
+
+#: app/components/dashboard/report-block-options.tsx:70
+msgid "Reports you save on the Reports page appear here."
+msgstr "تظهر هنا التقارير التي تحفظها في صفحة التقارير."
 
 #: app/components/settings/cards/danger-card.tsx:110
 msgid "Request deletion"
@@ -8497,6 +8529,10 @@ msgstr "حفظ التحويلات"
 #: app/components/phone-agent/settings-page.tsx:374
 msgid "Saved"
 msgstr "تم الحفظ"
+
+#: app/components/dashboard/report-block-options.tsx:50
+msgid "Saved reports"
+msgstr "التقارير المحفوظة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:404
 msgid "Saved training rule \"{title}\""
@@ -10132,6 +10168,10 @@ msgstr "سيؤدي هذا إلى إزالة الرسالة للجميع في ا�
 msgid "This replaces your draft, including unsaved changes. It can't be undone."
 msgstr "سيحل هذا محل مسودتك، بما في ذلك التغييرات غير المحفوظة. لا يمكن التراجع عن ذلك."
 
+#: app/components/dashboard/blocks/report-block.tsx:103
+msgid "This report was deleted. Remove the block or add another report."
+msgstr "حُذف هذا التقرير. أزل الكتلة أو أضف تقريرًا آخر."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:679
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 msgstr "لا يتضمن هذا الرد عنوان بريد إلكتروني. يمكنك مراجعة تفاصيله، لكن لا يمكن الإجابة عليه بالبريد الإلكتروني."
@@ -10867,7 +10907,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:110
+#: app/routes/_app+/$orgSlug_+/index.tsx:124
 msgid "User"
 msgstr "مستخدم"
 
@@ -11204,7 +11244,7 @@ msgstr "أسابيع"
 msgid "Welcome"
 msgstr "مرحباً"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:127
+#: app/routes/_app+/$orgSlug_+/index.tsx:154
 msgid "Welcome {userName}!"
 msgstr "مرحباً {userName}!"
 
@@ -11541,6 +11581,10 @@ msgstr "ليس لديك حق الوصول إلى أي قناة بعد. اطلب 
 msgid "You don't have permission to do that."
 msgstr "ليست لديك صلاحية للقيام بذلك."
 
+#: app/components/dashboard/blocks/report-block-result.tsx:48
+msgid "You don't have permission to see this report's data."
+msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:162
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
@@ -11684,7 +11728,7 @@ msgstr "مكتبة الوسائط فارغة"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "الميكروفون قيد الاستخدام في تطبيق آخر. أغلقه وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:128
+#: app/routes/_app+/$orgSlug_+/index.tsx:155
 msgid "Your organization dashboard"
 msgstr "لوحة تحكم مؤسستك"
 

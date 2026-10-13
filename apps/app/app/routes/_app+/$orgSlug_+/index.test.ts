@@ -8,7 +8,7 @@ import {
 	SavedReport,
 	UserOrganization,
 } from '@repo/database'
-import { organizationTemplates } from '@repo/reports'
+import { organizationTemplates, type ReportDefinition } from '@repo/reports'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
@@ -103,6 +103,7 @@ async function insertSavedReport(input: {
 	organizationId: string
 	createdById: string
 	title: string
+	definition?: ReportDefinition
 }) {
 	const [report] = await db
 		.insert(SavedReport)
@@ -111,11 +112,23 @@ async function insertSavedReport(input: {
 			organizationId: input.organizationId,
 			createdById: input.createdById,
 			title: input.title,
-			definition: JSON.stringify({ settings: { title: input.title } }),
+			definition: JSON.stringify(
+				input.definition ?? { settings: { title: input.title } },
+			),
 		})
 		.returning({ id: SavedReport.id })
 	if (!report) throw new Error('Failed to create saved report')
 	return report
+}
+
+function notesReportDefinition(title: string): ReportDefinition {
+	const template = organizationTemplates().find(
+		(item) => item.id === 'notes-by-status',
+	)!
+	return {
+		...template.definition,
+		settings: { ...template.definition.settings, title },
+	}
 }
 
 function reportBlock(
@@ -235,7 +248,7 @@ describe('Home dashboard loader', () => {
 		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
 
 		const onDefaultHome = await loadHome(organization.slug, cookie)
-		expect(onDefaultHome.picker).toEqual({ onboardingAvailable: true })
+		expect(onDefaultHome.picker).toMatchObject({ onboardingAvailable: true })
 
 		await insertTestDashboard({
 			organizationId: organization.id,
@@ -245,7 +258,9 @@ describe('Home dashboard loader', () => {
 		})
 		const withoutOnboarding = await loadHome(organization.slug, cookie)
 		expect(withoutOnboarding.blockData.onboarding).toBeNull()
-		expect(withoutOnboarding.picker).toEqual({ onboardingAvailable: true })
+		expect(withoutOnboarding.picker).toMatchObject({
+			onboardingAvailable: true,
+		})
 
 		await db
 			.update(OnboardingProgress)
@@ -257,7 +272,105 @@ describe('Home dashboard loader', () => {
 				),
 			)
 		const dismissed = await loadHome(organization.slug, cookie)
-		expect(dismissed.picker).toEqual({ onboardingAvailable: false })
+		expect(dismissed.picker).toMatchObject({ onboardingAvailable: false })
+	})
+
+	it('offers saved reports and templates to the block picker', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const otherOrganization = await createTestOrganization(user.id, 'admin')
+		const own = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: user.id,
+			title: 'Our notes',
+			definition: notesReportDefinition('Our notes'),
+		})
+		await insertSavedReport({
+			organizationId: otherOrganization.id,
+			createdById: user.id,
+			title: 'Secret revenue report',
+			definition: notesReportDefinition('Secret revenue report'),
+		})
+
+		const data = await loadHome(organization.slug, cookie)
+
+		expect(data.picker.savedReports).toEqual([
+			{ id: own.id, title: 'Our notes', subjectLabel: 'Notes' },
+		])
+		expect(
+			data.picker.templateGroups.flatMap((group) =>
+				group.templates.map((template) => template.id),
+			),
+		).toEqual(organizationTemplates().map((template) => template.id))
+	})
+
+	it('only loads report data when Home has report blocks', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		const report = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: user.id,
+			title: 'Weekly notes',
+			definition: notesReportDefinition('Weekly notes'),
+		})
+
+		expect((await loadHome(organization.slug, cookie)).reports).toBeNull()
+
+		await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+			config: appendBlock(
+				appendBlock(
+					defaultHomeConfig(),
+					reportBlock('report-1', { source: 'saved', reportId: report.id }),
+				),
+				reportBlock('report-2', {
+					source: 'template',
+					templateId: 'customer-count',
+				}),
+			),
+		})
+		const data = await loadHome(organization.slug, cookie)
+
+		expect(data.reports).toEqual({
+			savedReports: {
+				[report.id]: {
+					title: 'Weekly notes',
+					definition: notesReportDefinition('Weekly notes'),
+				},
+			},
+			access: { tenant: true, phoneCalls: true },
+			runUrl: `/${organization.slug}/reports/run`,
+			tokenUrl: `/${organization.slug}/reports/token`,
+			tenantApiUrl: expect.stringMatching(/^https?:\/\//),
+		})
+	})
+
+	it('still loads Home after a saved report on it was deleted', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('member')
+		const report = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: user.id,
+			title: 'Weekly notes',
+			definition: notesReportDefinition('Weekly notes'),
+		})
+		await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+			config: appendBlock(
+				defaultHomeConfig(),
+				reportBlock('report-1', { source: 'saved', reportId: report.id }),
+			),
+		})
+		await db.delete(SavedReport).where(eq(SavedReport.id, report.id))
+
+		const data = await loadHome(organization.slug, cookie)
+
+		expect(data.reports).toMatchObject({
+			savedReports: { [report.id]: null },
+			access: { tenant: false, phoneCalls: false },
+		})
+		expect(data.blockData.notes).not.toBeNull()
 	})
 
 	it("ignores other members' Home dashboards", async () => {

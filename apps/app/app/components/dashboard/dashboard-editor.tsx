@@ -20,6 +20,7 @@ import { AddBlockDialog } from './add-block-dialog.tsx'
 import { DashboardEditToolbar } from './dashboard-edit-toolbar.tsx'
 import { DashboardGrid } from './dashboard-grid.tsx'
 import { DashboardHeader } from './dashboard-header.tsx'
+import { ReportBlockOptions } from './report-block-options.tsx'
 import { useDashboardEditor } from './use-dashboard-editor.ts'
 
 /**
@@ -32,6 +33,7 @@ export function DashboardEditor({
 	blockData,
 	picker,
 	renderBlock,
+	blockTitle,
 	resetConfig,
 }: {
 	name: ReactNode
@@ -39,6 +41,7 @@ export function DashboardEditor({
 	blockData: BuiltInBlockData
 	picker: DashboardBlockPicker
 	renderBlock: (block: DashboardBlock) => ReactNode
+	blockTitle?: (block: DashboardBlock) => string | null
 	/** What "Reset to default" restores; without it there is no reset. */
 	resetConfig?: () => DashboardConfig
 }) {
@@ -81,6 +84,13 @@ export function DashboardEditor({
 									blocks={blocks}
 									picker={picker}
 									onAdd={addBlock}
+									renderSections={(select) => (
+										<ReportBlockOptions
+											savedReports={picker.savedReports}
+											templateGroups={picker.templateGroups}
+											onSelect={select}
+										/>
+									)}
 								/>
 							}
 							onStartEditing={editor.startEditing}
@@ -95,6 +105,7 @@ export function DashboardEditor({
 				layouts={layouts}
 				hiddenBlockIds={hidden}
 				renderBlock={renderBlock}
+				blockTitle={blockTitle}
 				editing={editing}
 				onLayoutCommit={handleLayoutCommit}
 				onRemoveBlock={removeBlock}

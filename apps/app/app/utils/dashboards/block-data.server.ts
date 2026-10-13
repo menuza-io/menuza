@@ -1,3 +1,9 @@
+import {
+	getUserOrganizationPermissions,
+	ORG_PERMISSIONS,
+	userHasOrganizationPermissionClient,
+	type OrganizationPermissionString,
+} from '@repo/auth'
 import { getUserImgSrc } from '@repo/common'
 import {
 	autoDetectCompletedSteps,
@@ -13,10 +19,23 @@ import {
 	gte,
 	inArray,
 	OrganizationNote,
+	SavedReport,
 	User,
 	UserImage,
 } from '@repo/database'
+import { type ReportDefinition } from '@repo/reports'
+import { listSavedReports, parseDefinition } from '@repo/reports/server'
+import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type BlockType, type DashboardBlock } from './config.ts'
+import {
+	reportSubjectLabel,
+	reportTemplateGroups,
+	type ReportBlockData,
+	type ReportTemplateGroup,
+	type ReportViewerAccess,
+	type SavedReportBlockData,
+	type SavedReportOption,
+} from './reports.ts'
 import { isOnboardingVisible } from './visibility.ts'
 
 const MIN_CHART_DAYS = 7
@@ -59,9 +78,20 @@ export type BuiltInBlockData = {
 export type DashboardBlockPicker = {
 	/** Onboarding is only offered while the viewer would see the checklist. */
 	onboardingAvailable: boolean
+	savedReports: SavedReportOption[]
+	templateGroups: ReportTemplateGroup[]
 }
 
 type BlockOrganization = { id: string; createdAt: Date }
+
+type ReportOrganization = { id: string; slug: string; dataRegion: string }
+
+/** Any of these lets the reports token route mint a regional analytics token. */
+const TENANT_TOKEN_PERMISSIONS: OrganizationPermissionString[] = [
+	ORG_PERMISSIONS.READ_ANALYTICS_ANY,
+	ORG_PERMISSIONS.READ_SETTINGS_ANY,
+	ORG_PERMISSIONS.READ_WEBSITE_ANY,
+]
 
 function sumNotes(points: readonly NotesChartPoint[]) {
 	return points.reduce((sum, point) => sum + point.notes, 0)
@@ -218,6 +248,120 @@ export async function loadBuiltInBlockData({
 	return { notes, onboarding, leaderboard }
 }
 
+/** A saved definition that no longer parses must not break the dashboard. */
+function readSavedDefinition(raw: string): ReportDefinition | null {
+	try {
+		return parseDefinition(raw)
+	} catch {
+		return null
+	}
+}
+
+async function loadSavedReportsById(
+	organizationId: string,
+	reportIds: string[],
+) {
+	const savedReports: Record<string, SavedReportBlockData | null> =
+		Object.fromEntries(reportIds.map((id) => [id, null]))
+	if (reportIds.length === 0) return savedReports
+
+	const rows = await db
+		.select({
+			id: SavedReport.id,
+			title: SavedReport.title,
+			definition: SavedReport.definition,
+		})
+		.from(SavedReport)
+		.where(
+			and(
+				eq(SavedReport.organizationId, organizationId),
+				inArray(SavedReport.id, reportIds),
+			),
+		)
+	for (const row of rows) {
+		savedReports[row.id] = {
+			title: row.title,
+			definition: readSavedDefinition(row.definition),
+		}
+	}
+	return savedReports
+}
+
+async function loadReportViewerAccess(
+	userId: string,
+	organizationId: string,
+): Promise<ReportViewerAccess> {
+	const permissions = await getUserOrganizationPermissions(
+		userId,
+		organizationId,
+	)
+	const has = (permission: OrganizationPermissionString) =>
+		userHasOrganizationPermissionClient(permissions, permission)
+	return {
+		tenant: TENANT_TOKEN_PERMISSIONS.some(has),
+		phoneCalls: has(ORG_PERMISSIONS.READ_PHONE_CALL_ANY),
+	}
+}
+
+/**
+ * Loads what report blocks need from the server: their saved reports (null
+ * once the organization no longer has one), what the viewer may read, and
+ * the URLs reports run with. Customer data is only ever queried by the
+ * browser. Returns null without any work when there are no report blocks.
+ */
+export async function loadReportBlockData({
+	userId,
+	organization,
+	blocks,
+}: {
+	userId: string
+	organization: ReportOrganization
+	blocks: readonly DashboardBlock[]
+}): Promise<ReportBlockData | null> {
+	const reportBlocks = blocks.flatMap((block) =>
+		block.type === 'report' ? [block.config] : [],
+	)
+	if (reportBlocks.length === 0) return null
+
+	const reportIds = new Set(
+		reportBlocks.flatMap((config) =>
+			config.source === 'saved' ? [config.reportId] : [],
+		),
+	)
+	const [savedReports, access] = await Promise.all([
+		loadSavedReportsById(organization.id, [...reportIds]),
+		loadReportViewerAccess(userId, organization.id),
+	])
+	return {
+		savedReports,
+		access,
+		runUrl: `/${organization.slug}/reports/run`,
+		tokenUrl: `/${organization.slug}/reports/token`,
+		tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
+			.tenantApiUrl,
+	}
+}
+
+async function loadSavedReportOptions(
+	organizationId: string,
+): Promise<SavedReportOption[]> {
+	const reports = await listSavedReports({
+		scope: 'organization',
+		organizationId,
+	})
+	return reports.flatMap((report) => {
+		const definition = readSavedDefinition(report.definition)
+		if (!definition) return []
+		return [
+			{
+				id: report.id,
+				title: report.title,
+				subjectLabel: reportSubjectLabel(definition.subject),
+			},
+		]
+	})
+}
+
 /**
  * Loads the Add block dialog data. The onboarding progress of an onboarding
  * block already on the dashboard is reused.
@@ -231,7 +375,13 @@ export async function loadBlockPicker({
 	organizationId: string
 	blockData: BuiltInBlockData
 }): Promise<DashboardBlockPicker> {
-	const onboarding =
-		blockData.onboarding ?? (await loadOnboarding(userId, organizationId))
-	return { onboardingAvailable: isOnboardingVisible(onboarding) }
+	const [onboarding, savedReports] = await Promise.all([
+		blockData.onboarding ?? loadOnboarding(userId, organizationId),
+		loadSavedReportOptions(organizationId),
+	])
+	return {
+		onboardingAvailable: isOnboardingVisible(onboarding),
+		savedReports,
+		templateGroups: reportTemplateGroups(),
+	}
 }

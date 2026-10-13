@@ -12,6 +12,7 @@ import {
 	defaultHomeConfig,
 	type DashboardBlock,
 } from '#app/utils/dashboards/config.ts'
+import { appendBlock } from '#app/utils/dashboards/layout.ts'
 import { DashboardGrid } from './dashboard-grid.tsx'
 
 const config = defaultHomeConfig()
@@ -141,6 +142,34 @@ describe('DashboardGrid', () => {
 			return Number(match?.[1])
 		})
 		expect(tops).toEqual([...tops].sort((a, b) => a - b))
+	})
+
+	it('names blocks with their own title when there is one', () => {
+		setContainerWidth(1200)
+		const withReport = appendBlock(defaultHomeConfig(), {
+			id: 'report-1',
+			type: 'report',
+			config: { source: 'saved', reportId: 'r1' },
+		})
+		render(
+			<I18nProvider i18n={i18n}>
+				<DashboardGrid
+					blocks={withReport.blocks}
+					layouts={withReport.layouts}
+					renderBlock={renderBlock}
+					blockTitle={(block) =>
+						block.type === 'report' ? 'Weekly notes' : null
+					}
+				/>
+			</I18nProvider>,
+		)
+		expect(renderedBlocks().map((block) => block.title)).toEqual([
+			'Stats',
+			'Notes chart',
+			'Onboarding checklist',
+			'Top contributors',
+			'Weekly notes',
+		])
 	})
 
 	it('mirrors the layout in right-to-left locales but keeps the reading order', () => {

@@ -12,12 +12,14 @@ import { handleHomeAction } from '#app/utils/dashboards/actions.server.ts'
 import {
 	loadBlockPicker,
 	loadBuiltInBlockData,
+	loadReportBlockData,
 } from '#app/utils/dashboards/block-data.server.ts'
 import {
 	defaultHomeConfig,
 	type DashboardBlock,
 } from '#app/utils/dashboards/config.ts'
 import { getHomeDashboard } from '#app/utils/dashboards/queries.server.ts'
+import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { setUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { type Route } from './+types/index.ts'
@@ -26,20 +28,31 @@ const CELEBRATION_MS = 3000
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
-	const { createdAt, ...organization } = await requireUserOrganization(
-		request,
-		params.orgSlug,
-		{ id: true, name: true, slug: true, createdAt: true },
-	)
+	const { createdAt, dataRegion, ...organization } =
+		await requireUserOrganization(request, params.orgSlug, {
+			id: true,
+			name: true,
+			slug: true,
+			createdAt: true,
+			dataRegion: true,
+		})
 	const [home] = await Promise.all([
 		getHomeDashboard(userId, organization.id),
 		setUserDefaultOrganization(userId, organization.id),
 	])
-	const blockData = await loadBuiltInBlockData({
-		userId,
-		organization: { id: organization.id, createdAt },
-		blocks: home.config.blocks,
-	})
+	const blocks = home.config.blocks
+	const [blockData, reports] = await Promise.all([
+		loadBuiltInBlockData({
+			userId,
+			organization: { id: organization.id, createdAt },
+			blocks,
+		}),
+		loadReportBlockData({
+			userId,
+			organization: { ...organization, dataRegion },
+			blocks,
+		}),
+	])
 	const picker = await loadBlockPicker({
 		userId,
 		organizationId: organization.id,
@@ -55,6 +68,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			config: home.config,
 		},
 		blockData,
+		reports,
 		picker,
 	}
 }
@@ -105,7 +119,7 @@ function useCelebration() {
 
 export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	const { _ } = useLingui()
-	const { organization, dashboard, blockData, picker } = loaderData
+	const { organization, dashboard, blockData, reports, picker } = loaderData
 	const rootData = useRouteLoaderData<typeof rootLoader>('root')
 	const userName = rootData?.user?.name || _(msg`User`)
 	useCelebration()
@@ -115,10 +129,23 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 			<DashboardBlockContent
 				block={block}
 				data={blockData}
+				reports={reports}
+				savedReportOptions={picker.savedReports}
 				organization={organization}
 			/>
 		),
-		[blockData, organization],
+		[blockData, organization, picker.savedReports, reports],
+	)
+	const blockTitle = useCallback(
+		(block: DashboardBlock) =>
+			block.type === 'report'
+				? resolveReportBlock(block.config, {
+						orgSlug: organization.slug,
+						reports,
+						savedReportOptions: picker.savedReports,
+					}).title
+				: null,
+		[organization.slug, picker.savedReports, reports],
 	)
 
 	return (
@@ -135,6 +162,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				blockData={blockData}
 				picker={picker}
 				renderBlock={renderBlock}
+				blockTitle={blockTitle}
 				resetConfig={defaultHomeConfig}
 			/>
 		</div>
