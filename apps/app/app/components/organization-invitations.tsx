@@ -201,16 +201,16 @@ export function OrganizationInvitations({
 										variant="ghost"
 										size="sm"
 										onClick={copyInviteLink}
-										className="h-7 px-2.5 text-xs"
+										className="h-9 px-3 text-sm"
 									>
 										{linkCopied ? (
 											<>
-												<Icon name="check" className="h-3.5 w-3.5" />
+												<Icon name="check" className="h-4 w-4" />
 												<Trans>Copied</Trans>
 											</>
 										) : (
 											<>
-												<Icon name="copy" className="h-3.5 w-3.5" />
+												<Icon name="copy" className="h-4 w-4" />
 												<Trans>Copy</Trans>
 											</>
 										)}
@@ -221,7 +221,7 @@ export function OrganizationInvitations({
 						{!inviteLink?.isActive && (
 							<Form method="POST" className="shrink-0">
 								<input type="hidden" name="intent" value="create-invite-link" />
-								<Button type="submit" size="sm">
+								<Button type="submit">
 									<Icon name="plus" className="h-4 w-4" />
 									<Trans>Create Link</Trans>
 								</Button>

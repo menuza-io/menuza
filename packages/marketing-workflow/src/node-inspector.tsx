@@ -151,7 +151,7 @@ export function NodeInspector({
 									}
 									onValueChange={(val) => handleChange('triggerType', val)}
 								>
-									<SelectTrigger id="triggerType" className="h-9">
+									<SelectTrigger id="triggerType" className="h-11">
 										<SelectValue placeholder={_(msg`Select trigger type`)}>
 											{
 												triggerOptions.find(
@@ -191,7 +191,7 @@ export function NodeInspector({
 										onChange={(e) =>
 											handleConfigChange('eventName', e.target.value)
 										}
-										className="h-9"
+										className="h-11"
 									/>
 								</div>
 							)}
@@ -216,7 +216,7 @@ export function NodeInspector({
 												Math.max(1, parseInt(e.target.value) || 1),
 											)
 										}
-										className="h-9"
+										className="h-11"
 									/>
 								</div>
 
@@ -230,7 +230,7 @@ export function NodeInspector({
 											handleChange('unit', val)
 										}
 									>
-										<SelectTrigger id="unit" className="h-9">
+										<SelectTrigger id="unit" className="h-11">
 											<SelectValue placeholder={_(msg`Unit`)} />
 										</SelectTrigger>
 										<SelectContent>
@@ -284,7 +284,7 @@ export function NodeInspector({
 									placeholder={_(msg`e.g. Sarah from Marketing`)}
 									value={data.fromName || ''}
 									onChange={(e) => handleChange('fromName', e.target.value)}
-									className="h-9"
+									className="h-11"
 								/>
 							</div>
 
@@ -449,7 +449,7 @@ export function NodeInspector({
 										}
 									}}
 								>
-									<SelectTrigger id="field" className="h-9">
+									<SelectTrigger id="field" className="h-11">
 										<SelectValue placeholder={_(msg`Select attribute`)} />
 									</SelectTrigger>
 									<SelectContent>
@@ -478,7 +478,7 @@ export function NodeInspector({
 										value={data.value || 'true'}
 										onValueChange={(val: string) => handleChange('value', val)}
 									>
-										<SelectTrigger id="booleanValue" className="h-9">
+										<SelectTrigger id="booleanValue" className="h-11">
 											<SelectValue placeholder={_(msg`Select status`)} />
 										</SelectTrigger>
 										<SelectContent>
@@ -503,7 +503,7 @@ export function NodeInspector({
 												handleChange('operator', val)
 											}
 										>
-											<SelectTrigger id="operator" className="h-9">
+											<SelectTrigger id="operator" className="h-11">
 												<SelectValue placeholder={_(msg`Select operator`)} />
 											</SelectTrigger>
 											<SelectContent>
@@ -529,7 +529,7 @@ export function NodeInspector({
 											placeholder={_(msg`e.g. @gmail.com`)}
 											value={data.value ?? ''}
 											onChange={(e) => handleChange('value', e.target.value)}
-											className="h-9"
+											className="h-11"
 										/>
 									</div>
 								</>

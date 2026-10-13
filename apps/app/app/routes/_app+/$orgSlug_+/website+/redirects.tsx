@@ -1089,7 +1089,7 @@ export default function WebsiteRedirectsRoute() {
 															<Button
 																size="sm"
 																variant="secondary"
-																className="h-8 gap-1 text-xs"
+																className="h-10 gap-1 text-xs"
 																onClick={() => openCreateDrawer(log.path)}
 															>
 																<Icon name="route" className="size-3.5" />

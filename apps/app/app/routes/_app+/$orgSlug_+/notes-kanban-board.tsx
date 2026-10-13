@@ -850,7 +850,7 @@ function EditColumnForm({
 					name="name"
 					defaultValue={column.name}
 					autoFocus
-					className="h-8 flex-1 px-2"
+					className="h-10 flex-1 px-2"
 					onKeyDown={(e) => e.key === 'Escape' && onCancel()}
 					aria-label={t`Column name`}
 				/>

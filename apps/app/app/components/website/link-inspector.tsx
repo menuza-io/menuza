@@ -565,7 +565,7 @@ export function LinkInspector({
 									type="button"
 									variant="ghost"
 									size="sm"
-									className="h-9 w-full justify-start rounded-lg px-2.5"
+									className="h-11 w-full justify-start rounded-lg px-2.5"
 									disabled={builder.isUploadingAsset}
 									onClick={() => fileInputRef.current?.click()}
 								>

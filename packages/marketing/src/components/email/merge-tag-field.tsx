@@ -335,13 +335,13 @@ export function MergeTagField({
 										updateActiveChip({ fallback: fallbackDraft })
 									}
 								}}
-								className="h-8"
+								className="h-11"
 							/>
 							<Button
 								type="button"
 								size="sm"
 								variant="outline"
-								className="h-8 shrink-0"
+								className="h-11 shrink-0"
 								onClick={() => updateActiveChip({ fallback: fallbackDraft })}
 							>
 								<Trans>Save</Trans>

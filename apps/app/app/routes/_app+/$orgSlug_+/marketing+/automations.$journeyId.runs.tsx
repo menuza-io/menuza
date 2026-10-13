@@ -340,7 +340,7 @@ export default function JourneyRunsRoute() {
 													type="button"
 													variant="ghost"
 													size="sm"
-													className="text-primary hover:text-primary hover:bg-primary/10 h-7 text-xs font-medium"
+													className="text-primary hover:text-primary hover:bg-primary/10 h-9 text-xs font-medium"
 													onClick={() => openTimeline(run)}
 												>
 													{_(msg`View Timeline →`)}

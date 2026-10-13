@@ -3128,7 +3128,7 @@ function SortableAccordionRow<T>({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="text-destructive hover:text-destructive -ml-2 h-8 px-2"
+							className="text-destructive hover:text-destructive -ml-2 h-10 px-2"
 							onClick={onRemove}
 						>
 							<Icon name="trash-2" className="size-3.5" />
@@ -4098,7 +4098,7 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 							updateField('formId', event.target.value)
 							updateField('formName', selected?.name ?? '')
 						}}
-						className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+						className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
 					>
 						<option value="">
 							<Trans>Select a form</Trans>
@@ -4433,7 +4433,7 @@ function FooterEditor({ config, updateField, listKey }: ListEditorProps) {
 									<Button
 										variant="ghost"
 										size="sm"
-										className="h-7 px-2"
+										className="h-9 px-2"
 										onClick={() =>
 											update({
 												links: (item.links ?? []).filter(
@@ -5827,7 +5827,7 @@ export default function PageBuilderRoute() {
 												setEditingTitle(false)
 											}
 										}}
-										className="h-7 max-w-56 text-sm font-medium"
+										className="h-9 max-w-56 text-sm font-medium"
 										autoFocus
 									/>
 								) : (
