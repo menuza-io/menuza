@@ -127,6 +127,13 @@
       "when": 1791476603082,
       "tag": "0017_phone_agent",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1791902822124,
+      "tag": "0018_dashboards",
+      "breakpoints": true
     }
   ]
 }
