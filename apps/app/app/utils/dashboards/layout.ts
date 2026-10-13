@@ -1,8 +1,11 @@
+import { verticalCompactor } from 'react-grid-layout/core'
 import {
 	BLOCK_DEFINITIONS,
+	DASHBOARD_BREAKPOINTS,
 	DASHBOARD_COLS,
 	type BlockType,
 	type DashboardBlock,
+	type DashboardBreakpoint,
 	type DashboardConfig,
 	type DashboardLayouts,
 	type GridItem,
@@ -11,8 +14,18 @@ import {
 
 type Position = { x: number; y: number }
 
+export type GridLayouts = Record<DashboardBreakpoint, GridItem[]>
+
 function compareByPosition(a: Position, b: Position) {
 	return a.y - b.y || a.x - b.x
+}
+
+function overlapsRows(a: GridItem, b: GridItem) {
+	return a.y < b.y + b.h && b.y < a.y + a.h
+}
+
+function collides(a: GridItem, b: GridItem) {
+	return a.i !== b.i && a.x < b.x + b.w && b.x < a.x + a.w && overlapsRows(a, b)
 }
 
 function mapLayouts(
@@ -99,6 +112,25 @@ export function unmirrorLayouts(layouts: DashboardLayouts): DashboardLayouts {
 	return mirrorLayouts(layouts)
 }
 
+export function mirrorGridLayouts(layouts: GridLayouts): GridLayouts {
+	return {
+		lg: mirrorLayout(layouts.lg, DASHBOARD_COLS.lg),
+		md: mirrorLayout(layouts.md, DASHBOARD_COLS.md),
+		sm: mirrorLayout(layouts.sm, DASHBOARD_COLS.sm),
+	}
+}
+
+/**
+ * The breakpoint for a grid container width. Unlike react-grid-layout's own
+ * lookup (which needs the width to exceed a breakpoint), a container exactly
+ * as wide as a breakpoint already gets it.
+ */
+export function breakpointForWidth(width: number): DashboardBreakpoint {
+	if (width >= DASHBOARD_BREAKPOINTS.lg) return 'lg'
+	if (width >= DASHBOARD_BREAKPOINTS.md) return 'md'
+	return 'sm'
+}
+
 /**
  * Builds the layouts to save from what the grid reports. Hidden blocks are not
  * rendered, so their saved entries are carried over from `previous`, and a
@@ -149,6 +181,58 @@ export function stackLayout(layout: readonly GridItem[]): GridItem[] {
 		y += item.h
 		return stacked
 	})
+}
+
+/**
+ * Drops hidden blocks and closes the space they leave. Vertical compaction
+ * alone would leave a hole next to a hidden block, so blocks first slide
+ * toward the start into the columns it freed in their rows.
+ */
+export function withoutHiddenBlocks(
+	layout: readonly GridItem[],
+	hiddenIds: Iterable<string>,
+	cols: number,
+): GridItem[] {
+	const hidden = new Set(hiddenIds)
+	const removed = layout.filter((item) => hidden.has(item.i))
+	const placed = toGridItems(layout.filter((item) => !hidden.has(item.i)))
+	const byColumn = [...placed].sort((a, b) => a.x - b.x || a.y - b.y)
+	for (const item of byColumn) {
+		const freedColumns = new Set<number>()
+		for (const gone of removed) {
+			if (!overlapsRows(gone, item)) continue
+			const end = Math.min(gone.x + gone.w, item.x)
+			for (let column = gone.x; column < end; column++) {
+				freedColumns.add(column)
+			}
+		}
+		let shift = freedColumns.size
+		while (
+			shift > 0 &&
+			placed.some((other) => collides({ ...item, x: item.x - shift }, other))
+		) {
+			shift--
+		}
+		item.x -= shift
+	}
+	return toGridItems(verticalCompactor.compact(placed, cols))
+}
+
+/**
+ * The layouts the grid renders: hidden blocks removed and `sm` stacked in the
+ * lg reading order.
+ */
+export function visibleGridLayouts(
+	layouts: DashboardLayouts,
+	hiddenIds: Iterable<string> = [],
+): GridLayouts {
+	const hidden = [...hiddenIds]
+	const lg = withoutHiddenBlocks(layouts.lg, hidden, DASHBOARD_COLS.lg)
+	return {
+		lg,
+		md: withoutHiddenBlocks(layouts.md, hidden, DASHBOARD_COLS.md),
+		sm: stackLayout(lg),
+	}
 }
 
 const ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'

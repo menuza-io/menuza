@@ -1,0 +1,21 @@
+/* Theme overrides for react-grid-layout; its defaults use fixed colors. */
+[data-slot='dashboard-grid'] .react-grid-item.react-grid-placeholder {
+	background: var(--primary);
+	opacity: 0.15;
+	border-radius: var(--radius);
+}
+
+[data-slot='dashboard-grid'] .react-grid-item > .react-resizable-handle {
+	background-image: none;
+}
+
+[data-slot='dashboard-grid'] .react-grid-item > .react-resizable-handle::after {
+	border-color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-slot='dashboard-grid'] .react-grid-layout,
+	[data-slot='dashboard-grid'] .react-grid-item {
+		transition: none;
+	}
+}

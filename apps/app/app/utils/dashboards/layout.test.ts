@@ -9,9 +9,11 @@ import {
 } from './config.ts'
 import {
 	appendBlock,
+	breakpointForWidth,
 	createBlockId,
 	layoutBottom,
 	mergeHiddenLayoutEntries,
+	mirrorGridLayouts,
 	mirrorLayout,
 	mirrorLayouts,
 	removeBlock,
@@ -21,6 +23,8 @@ import {
 	toGridItems,
 	unmirrorLayout,
 	unmirrorLayouts,
+	visibleGridLayouts,
+	withoutHiddenBlocks,
 } from './layout.ts'
 
 const report: DashboardBlock = {
@@ -245,6 +249,140 @@ describe('stackLayout', () => {
 			{ i: 'onboarding', x: 0, y: 10, w: 1, h: 10 },
 			{ i: 'leaderboard', x: 0, y: 20, w: 1, h: 10 },
 		])
+	})
+})
+
+describe('withoutHiddenBlocks', () => {
+	it('keeps the layout when nothing is hidden', () => {
+		const { lg } = defaultHomeConfig().layouts
+		expect(withoutHiddenBlocks(lg, [], 12)).toEqual(lg)
+	})
+
+	it('moves a side-by-side neighbour into the space of a hidden block', () => {
+		const { lg, md } = defaultHomeConfig().layouts
+		expect(withoutHiddenBlocks(lg, ['onboarding'], 12)).toEqual([
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 12, h: 8 },
+			{ i: 'leaderboard', x: 0, y: 10, w: 6, h: 10 },
+		])
+		expect(withoutHiddenBlocks(md, ['onboarding'], 8)).toEqual([
+			{ i: 'stats', x: 0, y: 0, w: 8, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 8, h: 8 },
+			{ i: 'leaderboard', x: 0, y: 10, w: 4, h: 10 },
+		])
+	})
+
+	it('moves blocks below a hidden block up', () => {
+		const layout: GridItem[] = [
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+			{ i: 'onboarding', x: 0, y: 2, w: 12, h: 10 },
+			{ i: 'leaderboard', x: 0, y: 12, w: 12, h: 10 },
+		]
+		expect(withoutHiddenBlocks(layout, ['onboarding'], 12)).toEqual([
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+			{ i: 'leaderboard', x: 0, y: 2, w: 12, h: 10 },
+		])
+	})
+
+	it('only closes the columns of the hidden block and keeps other gaps', () => {
+		const layout: GridItem[] = [
+			{ i: 'a', x: 3, y: 0, w: 3, h: 4 },
+			{ i: 'hidden', x: 6, y: 0, w: 3, h: 4 },
+			{ i: 'b', x: 9, y: 0, w: 3, h: 4 },
+		]
+		expect(withoutHiddenBlocks(layout, ['hidden'], 12)).toEqual([
+			{ i: 'a', x: 3, y: 0, w: 3, h: 4 },
+			{ i: 'b', x: 6, y: 0, w: 3, h: 4 },
+		])
+	})
+
+	it('does not move a block onto another block', () => {
+		const layout: GridItem[] = [
+			{ i: 'hidden', x: 0, y: 0, w: 6, h: 4 },
+			{ i: 'tall', x: 6, y: 0, w: 6, h: 8 },
+			{ i: 'below', x: 0, y: 4, w: 6, h: 4 },
+		]
+		expect(withoutHiddenBlocks(layout, ['hidden'], 12)).toEqual([
+			{ i: 'tall', x: 6, y: 0, w: 6, h: 8 },
+			{ i: 'below', x: 0, y: 0, w: 6, h: 4 },
+		])
+	})
+
+	it('returns only the persisted grid fields', () => {
+		const layout = [
+			{ i: 'stats', x: 0, y: 3, w: 12, h: 2, moved: true, static: false },
+		]
+		expect(withoutHiddenBlocks(layout, [], 12)).toEqual([
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+		])
+	})
+})
+
+describe('visibleGridLayouts', () => {
+	it('derives the stacked sm layout from the visible lg layout', () => {
+		const layouts = visibleGridLayouts(defaultHomeConfig().layouts, [
+			'onboarding',
+		])
+		expect(layouts.lg.map((item) => item.i)).toEqual([
+			'stats',
+			'notes-chart',
+			'leaderboard',
+		])
+		expect(layouts.md.map((item) => item.i)).toEqual([
+			'stats',
+			'notes-chart',
+			'leaderboard',
+		])
+		expect(layouts.sm).toEqual([
+			{ i: 'stats', x: 0, y: 0, w: 1, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 1, h: 8 },
+			{ i: 'leaderboard', x: 0, y: 10, w: 1, h: 10 },
+		])
+	})
+
+	it('stacks sm in the lg reading order even when md differs', () => {
+		const { lg } = defaultHomeConfig().layouts
+		const md: GridItem[] = [
+			{ i: 'leaderboard', x: 0, y: 0, w: 8, h: 10 },
+			{ i: 'stats', x: 0, y: 10, w: 8, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 12, w: 8, h: 8 },
+			{ i: 'onboarding', x: 0, y: 20, w: 8, h: 10 },
+		]
+		const layouts = visibleGridLayouts({ lg, md })
+		expect(layouts.sm.map((item) => item.i)).toEqual([
+			'stats',
+			'notes-chart',
+			'onboarding',
+			'leaderboard',
+		])
+		expect(layouts.md).toEqual(md)
+	})
+})
+
+describe('breakpointForWidth', () => {
+	it('treats the container breakpoints as minimum widths', () => {
+		expect(breakpointForWidth(1280)).toBe('lg')
+		expect(breakpointForWidth(960)).toBe('lg')
+		expect(breakpointForWidth(959)).toBe('md')
+		expect(breakpointForWidth(600)).toBe('md')
+		expect(breakpointForWidth(599)).toBe('sm')
+		expect(breakpointForWidth(0)).toBe('sm')
+	})
+})
+
+describe('mirrorGridLayouts', () => {
+	it('mirrors each breakpoint with its own column count', () => {
+		const layouts = mirrorGridLayouts(
+			visibleGridLayouts(defaultHomeConfig().layouts),
+		)
+		const position = (layout: GridItem[], id: string) =>
+			layout.find((item) => item.i === id)?.x
+		expect(position(layouts.lg, 'onboarding')).toBe(6)
+		expect(position(layouts.lg, 'leaderboard')).toBe(0)
+		expect(position(layouts.lg, 'stats')).toBe(0)
+		expect(position(layouts.md, 'onboarding')).toBe(4)
+		expect(position(layouts.md, 'leaderboard')).toBe(0)
+		expect(layouts.sm.every((item) => item.x === 0)).toBe(true)
 	})
 })
 

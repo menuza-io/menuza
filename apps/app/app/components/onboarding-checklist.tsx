@@ -201,7 +201,7 @@ export function OnboardingChecklist({
 				/>
 			</div>
 
-			<CardContent className="p-0">
+			<CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
 				<div className="divide-y">
 					{progress.steps.map((step) => (
 						<div

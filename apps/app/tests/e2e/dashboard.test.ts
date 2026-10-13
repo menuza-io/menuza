@@ -1,6 +1,9 @@
 import { faker } from '@faker-js/faker'
+import { type Locator, type Page } from '@playwright/test'
 import {
+	and,
 	count,
+	Dashboard,
 	db,
 	eq,
 	OnboardingStep,
@@ -24,6 +27,48 @@ async function ensureOnboardingStepsExist() {
 		console.log('Seeding onboarding steps for tests...')
 		await initializeOnboardingSteps()
 	}
+}
+
+const DEFAULT_HOME_BLOCKS = [
+	'Stats',
+	'Notes chart',
+	'Onboarding checklist',
+	'Top contributors',
+]
+
+function homeBlock(page: Page, name: string) {
+	return page.getByRole('main').getByRole('region', { name, exact: true })
+}
+
+/** Accessible names of the Home blocks in DOM (and so tab) order. */
+function homeBlockOrder(page: Page) {
+	return page
+		.getByRole('main')
+		.getByRole('region')
+		.evaluateAll((regions) =>
+			regions.map((region) => region.getAttribute('aria-label')),
+		)
+}
+
+async function boxOf(locator: Locator) {
+	const box = await locator.boundingBox()
+	if (!box) throw new Error(`${locator} is not visible`)
+	return box
+}
+
+/** Records POSTs to the Home route itself, i.e. dashboard saves. */
+function recordHomePosts(page: Page, orgSlug: string) {
+	const posts: string[] = []
+	page.on('request', (request) => {
+		const { pathname } = new URL(request.url())
+		if (
+			request.method() === 'POST' &&
+			pathname.replace(/\.data$/, '') === `/${orgSlug}`
+		) {
+			posts.push(request.url())
+		}
+	})
+	return posts
 }
 
 test.describe('Dashboard', () => {
@@ -398,5 +443,152 @@ test.describe('Dashboard', () => {
 		await expect(page.getByRole('document')).toBeVisible()
 		// Alternative check: verify we're on the right URL
 		await expect(page).toHaveURL(new RegExp(`/${org.slug}`))
+	})
+
+	test('Home shows the default blocks in reading order without saving', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+		const homePosts = recordHomePosts(page, org.slug)
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
+		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
+
+		const title = await boxOf(
+			page.getByRole('heading', { level: 1, name: /welcome/i }),
+		)
+		const stats = await boxOf(homeBlock(page, 'Stats'))
+		expect(title.y + title.height).toBeLessThanOrEqual(stats.y)
+
+		const onboarding = await boxOf(homeBlock(page, 'Onboarding checklist'))
+		const leaderboard = await boxOf(homeBlock(page, 'Top contributors'))
+		expect(Math.round(onboarding.y)).toBe(Math.round(leaderboard.y))
+		expect(onboarding.x).toBeLessThan(leaderboard.x)
+
+		// Crossing the lg/md breakpoint and reloading must not save a layout.
+		await page.setViewportSize({ width: 1024, height: 900 })
+		await expect
+			.poll(async () => (await boxOf(homeBlock(page, 'Stats'))).width)
+			.toBeLessThan(stats.width)
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(homeBlock(page, 'Stats')).toBeVisible()
+
+		expect(homePosts).toEqual([])
+		const [homeRows] = await db
+			.select({ count: count() })
+			.from(Dashboard)
+			.where(
+				and(
+					eq(Dashboard.ownerId, user.id),
+					eq(Dashboard.organizationId, org.id),
+				),
+			)
+		expect(homeRows?.count).toBe(0)
+	})
+
+	test('Home stacks the blocks in one column on phones', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await page.setViewportSize({ width: 390, height: 844 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
+		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
+		await expect
+			.poll(async () => {
+				const boxes = await Promise.all(
+					DEFAULT_HOME_BLOCKS.map((name) => boxOf(homeBlock(page, name))),
+				)
+				const tops = boxes.map((box) => Math.round(box.y))
+				const sortedTops = [...tops].sort((a, b) => a - b)
+				return {
+					columns: new Set(boxes.map((box) => Math.round(box.x))).size,
+					widths: new Set(boxes.map((box) => Math.round(box.width))).size,
+					topToBottom:
+						new Set(tops).size === tops.length &&
+						tops.join() === sortedTops.join(),
+				}
+			})
+			.toEqual({ columns: 1, widths: 1, topToBottom: true })
+	})
+
+	test('Home hides a dismissed onboarding checklist and closes the gap', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		const onboarding = homeBlock(page, 'Onboarding checklist')
+		await onboarding.getByRole('button', { name: 'Close' }).click()
+		await expect(onboarding).toHaveCount(0)
+		expect(await homeBlockOrder(page)).toEqual([
+			'Stats',
+			'Notes chart',
+			'Top contributors',
+		])
+
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
+		await expect(onboarding).toHaveCount(0)
+
+		// The leaderboard takes the onboarding block's place at the start of
+		// the row, right below the chart.
+		await expect
+			.poll(async () => {
+				const [stats, chart, leaderboard] = await Promise.all([
+					boxOf(homeBlock(page, 'Stats')),
+					boxOf(homeBlock(page, 'Notes chart')),
+					boxOf(homeBlock(page, 'Top contributors')),
+				])
+				return {
+					startAligned: Math.round(leaderboard.x) === Math.round(stats.x),
+					belowChart:
+						Math.round(leaderboard.y - (chart.y + chart.height)) ===
+						Math.round(chart.y - (stats.y + stats.height)),
+				}
+			})
+			.toEqual({ startAligned: true, belowChart: true })
+	})
+
+	test('Home plays confetti for ?celebrate=true and then drops the parameter', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await navigate('/:slug?celebrate=true', { slug: org.slug })
+		await expect
+			.poll(() =>
+				page.evaluate(() => document.querySelectorAll('body > canvas').length),
+			)
+			.toBeGreaterThan(0)
+		await expect(page).not.toHaveURL(/celebrate=true/, { timeout: 10_000 })
+		await expect(homeBlock(page, 'Stats')).toBeVisible()
 	})
 })

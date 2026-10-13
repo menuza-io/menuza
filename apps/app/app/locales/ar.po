@@ -112,7 +112,7 @@ msgstr "تمت الإجابة عن {answered}"
 msgid "{answered} answered, {draftCount} drafted and not saved"
 msgstr "تمت الإجابة عن {answered}، و{draftCount} مسودة لم تُحفظ"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:308
+#: app/components/dashboard/blocks/stats-block.tsx:19
 msgid "{avgPerDay} avg per day"
 msgstr "{avgPerDay} متوسط يومي"
 
@@ -338,11 +338,11 @@ msgstr "{threadTotalReplies, plural, zero {لا توجد ردود} one {رد و�
 msgid "{total} submissions"
 msgstr "عدد الردود: {total}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:304
+#: app/components/dashboard/blocks/stats-block.tsx:15
 msgid "{totalNotes} total notes"
 msgstr "{totalNotes} ملاحظة إجمالية"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:324
+#: app/components/dashboard/blocks/stats-block.tsx:29
 msgid "{trend}%"
 msgstr "{trend}٪"
 
@@ -373,7 +373,7 @@ msgstr "• وإلا → <0>فرع خاطئ</0>"
 msgid "← Back to SSO login"
 msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:315
+#: app/components/dashboard/blocks/stats-block.tsx:25
 msgid "+{trend}%"
 msgstr "+{trend}٪"
 
@@ -1412,7 +1412,7 @@ msgstr "التشغيل التلقائي"
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/components/notes-chart.tsx:72
+#: app/components/notes-chart.tsx:75
 msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
@@ -3073,7 +3073,7 @@ msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent
 msgid "Cycles"
 msgstr "دورات"
 
-#: app/components/notes-chart.tsx:57
+#: app/components/notes-chart.tsx:60
 msgid "Daily Notes Created"
 msgstr "الملاحظات اليومية المنشأة"
 
@@ -3529,7 +3529,7 @@ msgstr "انقر نقراً مزدوجاً على الكتلة لإضافتها 
 msgid "Double-click a field to add it instantly"
 msgstr "انقر نقراً مزدوجاً على الحقل لإضافته فوراً"
 
-#: app/components/notes-chart.tsx:123
+#: app/components/notes-chart.tsx:126
 msgid "Down by {absTrend}% this period"
 msgstr "انخفض بنسبة {absTrend}٪ في هذه الفترة"
 
@@ -4741,6 +4741,7 @@ msgid "Hold message"
 msgstr "رسالة الانتظار"
 
 #: app/components/website/link-inspector.tsx:455
+#: app/routes/_app+/$orgSlug_+/index.tsx:113
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5138,7 +5139,7 @@ msgstr "اللغات"
 msgid "Large"
 msgstr "كبير"
 
-#: app/components/notes-chart.tsx:60
+#: app/components/notes-chart.tsx:63
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -6463,7 +6464,7 @@ msgstr "الملاحظات والموقع"
 
 #: app/utils/dashboards/config.ts:71
 msgid "Notes chart"
-msgstr ""
+msgstr "مخطط الملاحظات"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:653
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:656
@@ -6549,7 +6550,7 @@ msgstr "تشغيل"
 
 #: app/utils/dashboards/config.ts:78
 msgid "Onboarding checklist"
-msgstr ""
+msgstr "قائمة خطوات البدء"
 
 #: app/components/onboarding-checklist.tsx:139
 #: app/components/onboarding-checklist.tsx:199
@@ -7974,9 +7975,10 @@ msgstr "رد…"
 #~ msgid "Replying to comment"
 #~ msgstr "الرد على التعليق"
 
+#: app/components/dashboard/dashboard-block-content.tsx:42
 #: app/utils/dashboards/config.ts:92
 msgid "Report"
-msgstr ""
+msgstr "تقرير"
 
 #: app/components/app-sidebar.tsx:278
 msgid "Reports"
@@ -9349,7 +9351,7 @@ msgstr "جارٍ البدء…"
 
 #: app/utils/dashboards/config.ts:64
 msgid "Stats"
-msgstr ""
+msgstr "الإحصائيات"
 
 #: app/components/roles/tenant-role-access-manager.tsx:684
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -10182,13 +10184,13 @@ msgstr "طلبات كثيرة جدًا. انتظر لحظة وحاول مرة أ
 
 #: app/utils/dashboards/config.ts:85
 msgid "Top contributors"
-msgstr ""
+msgstr "أفضل المساهمين"
 
 #: app/components/leadership-card.tsx:52
 msgid "Top Contributors"
 msgstr "أفضل المساهمين"
 
-#: app/components/notes-chart.tsx:66
+#: app/components/notes-chart.tsx:69
 msgid "Total"
 msgstr "الإجمالي"
 
@@ -10293,12 +10295,11 @@ msgstr "ترجمة الكل"
 msgid "Translate All"
 msgstr "ترجمة الكل"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:318
-#: app/routes/_app+/$orgSlug_+/index.tsx:327
+#: app/components/dashboard/blocks/stats-block.tsx:33
 msgid "trending"
 msgstr "الاتجاه"
 
-#: app/components/notes-chart.tsx:115
+#: app/components/notes-chart.tsx:118
 msgid "Trending up by {trend}% this period"
 msgstr "ارتفع بنسبة {trend}٪ في هذه الفترة"
 
@@ -10796,6 +10797,10 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
+#: app/routes/_app+/$orgSlug_+/index.tsx:88
+msgid "User"
+msgstr "مستخدم"
+
 #: app/components/settings/cards/profile-card.tsx:114
 #: app/routes/_auth+/login.tsx:775
 #: app/routes/_auth+/onboarding_.$provider.tsx:297
@@ -11129,7 +11134,7 @@ msgstr "أسابيع"
 msgid "Welcome"
 msgstr "مرحباً"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:298
+#: app/routes/_app+/$orgSlug_+/index.tsx:110
 msgid "Welcome {userName}!"
 msgstr "مرحباً {userName}!"
 
@@ -11601,7 +11606,7 @@ msgstr "مكتبة الوسائط فارغة"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "الميكروفون قيد الاستخدام في تطبيق آخر. أغلقه وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:299
+#: app/routes/_app+/$orgSlug_+/index.tsx:111
 msgid "Your organization dashboard"
 msgstr "لوحة تحكم مؤسستك"
 

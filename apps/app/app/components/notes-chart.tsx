@@ -36,20 +36,23 @@ interface NotesChartProps {
 	totalNotes: number
 	avgPerDay: number
 	trend: number
+	className?: string
 }
 
+/** Fills the height it is given; the chart takes the space left by the text. */
 export const NotesChart = memo(function NotesChart({
 	data,
 	daysShown,
 	totalNotes,
 	avgPerDay,
 	trend,
+	className,
 }: NotesChartProps) {
 	const { _: ignored_ } = useLingui()
 	const absTrend = Math.abs(trend)
 
 	return (
-		<Card>
+		<Card className={className}>
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<div>
@@ -76,10 +79,10 @@ export const NotesChart = memo(function NotesChart({
 					</div>
 				</div>
 			</CardHeader>
-			<CardContent>
+			<CardContent className="min-h-0 flex-1">
 				<ChartContainer
 					config={chartConfig}
-					className="aspect-auto h-80 w-full"
+					className="aspect-auto h-full min-h-40 w-full"
 				>
 					<AreaChart
 						accessibilityLayer
