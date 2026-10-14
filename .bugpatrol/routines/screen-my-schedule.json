@@ -1,0 +1,34 @@
+{
+	"version": 1,
+	"id": "screen-my-schedule",
+	"description": "Staff schedule page opened via a private email link; without a token it tells the user to use the email.",
+	"platform": "web",
+	"requires": ["screen-kiosk-setup"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "English",
+				"text": "English",
+				"selector": "header > button",
+				"point": {
+					"x": 78.6015625,
+					"y": 30
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/kiosk|Time clock|aa2bd781124f"
+		},
+		{
+			"kind": "open",
+			"url": "https://app.epic-startup.test:2999/my-schedule",
+			"at": "https://app.epic-startup.test:2999/my-schedule|My schedule|d49fe6c24729"
+		}
+	],
+	"screenId": "my-schedule",
+	"expect": {
+		"elements": ["العربية", "Open your schedule from your email"]
+	},
+	"createdAt": "2026-10-14T17:45:36.691Z",
+	"updatedAt": "2026-10-14T17:45:36.691Z"
+}

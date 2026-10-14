@@ -1,0 +1,36 @@
+{
+	"version": 1,
+	"id": "screen-mailbox-calls",
+	"description": "Phone-agent calls that need follow-up, with refresh and an All calls toggle.",
+	"platform": "web",
+	"requires": ["screen-mailbox-forms"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "tab",
+				"name": "Calls",
+				"text": "Calls",
+				"selector": "#base-ui-_r_2b_",
+				"point": {
+					"x": 378.171875,
+					"y": 78
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/mailbox|Epic Startup|89145119c412"
+		}
+	],
+	"screenId": "mailbox-calls",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:54:55.484Z",
+	"updatedAt": "2026-10-14T17:54:55.484Z"
+}

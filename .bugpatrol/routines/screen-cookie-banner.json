@@ -1,0 +1,21 @@
+{
+	"version": 1,
+	"id": "screen-cookie-banner",
+	"description": "Bottom-left banner to accept or reject cookies.",
+	"platform": "web",
+	"requires": ["screen-signup"],
+	"steps": [],
+	"screenId": "cookie-banner",
+	"expect": {
+		"elements": [
+			"Signup with GitHub",
+			"Email",
+			"Sign up",
+			"Sign in",
+			"Terms of Service",
+			"Privacy Policy"
+		]
+	},
+	"createdAt": "2026-10-14T17:35:01.378Z",
+	"updatedAt": "2026-10-14T17:35:01.378Z"
+}

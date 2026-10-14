@@ -1,0 +1,60 @@
+{
+	"version": 1,
+	"id": "screen-kiosk-pair",
+	"description": "Shared-tablet time clock pairing: paste a pairing link or code to pair the device.",
+	"platform": "web",
+	"requires": ["screen-verify"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Verify",
+				"text": "Verify",
+				"selector": "div:nth-of-type(2) > button",
+				"point": {
+					"x": 720,
+					"y": 505.625
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/verify|Epic Startup|4313a3092baf"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Verification Code",
+				"text": "",
+				"selector": "#verify-form-code",
+				"point": {
+					"x": 740,
+					"y": 429.625
+				}
+			},
+			"value": "123456",
+			"submit": true,
+			"at": "https://app.epic-startup.test:2999/verify|Epic Startup|010267f5f86a"
+		},
+		{
+			"kind": "open",
+			"url": "https://app.epic-startup.test:2999/reset-password",
+			"at": "https://app.epic-startup.test:2999/login|Login | Epic Startup|53b20fa5b0e5"
+		},
+		{
+			"kind": "open",
+			"url": "https://app.epic-startup.test:2999/waitlist",
+			"at": "https://app.epic-startup.test:2999/login?redirectTo=%2Fwaitlist|Login | Epic Startup|53b20fa5b0e5"
+		},
+		{
+			"kind": "open",
+			"url": "https://app.epic-startup.test:2999/kiosk/pair",
+			"at": "https://app.epic-startup.test:2999/kiosk/pair|Time clock|0cf9d8a3758a"
+		}
+	],
+	"screenId": "kiosk-pair",
+	"expect": {
+		"elements": ["العربية", "Pairing link or code", "Pair this tablet"]
+	},
+	"createdAt": "2026-10-14T17:44:56.853Z",
+	"updatedAt": "2026-10-14T17:44:56.853Z"
+}

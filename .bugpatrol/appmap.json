@@ -1,0 +1,1359 @@
+{
+	"version": 1,
+	"platform": "web",
+	"screens": [
+		{
+			"name": "Sign up",
+			"description": "Create an account with GitHub or email; shown at the app root when signed out.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:35:00.767Z",
+			"id": "signup",
+			"location": "http://localhost:3001/signup",
+			"screenKey": "http://localhost:3001/signup|Sign Up | Epic Startup",
+			"routineId": "screen-signup",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/002-signup.png",
+			"links": ["cookie-banner"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:35:01.379Z"
+		},
+		{
+			"name": "Cookie consent banner",
+			"description": "Bottom-left banner to accept or reject cookies.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:35:01.378Z",
+			"id": "cookie-banner",
+			"location": "http://localhost:3001/signup",
+			"screenKey": "http://localhost:3001/signup|Sign Up | Epic Startup",
+			"routineId": "screen-cookie-banner",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/003-cookie-banner.png",
+			"links": ["login"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:35:10.678Z",
+			"transitions": [
+				{
+					"to": "login",
+					"kind": "tap",
+					"via": "Terms of Service",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:35:10.678Z"
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"description": "Sign in with GitHub, a passkey, or email/username.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:35:10.677Z",
+			"id": "login",
+			"location": "http://localhost:3001/login?redirectTo=%2Ftos",
+			"screenKey": "http://localhost:3001/login?redirectTo=%2Ftos|Login | Epic Startup",
+			"routineId": "screen-login",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/007-login.png",
+			"links": ["not-found"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:35:34.589Z",
+			"transitions": [
+				{
+					"to": "not-found",
+					"kind": "open",
+					"via": "window cookie-policy",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:35:34.589Z"
+				}
+			]
+		},
+		{
+			"name": "Page not found",
+			"description": "404 page with Go back and Take me home buttons.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:35:34.588Z",
+			"id": "not-found",
+			"location": "http://localhost:3001/legal/cookie-policy/",
+			"screenKey": "http://localhost:3001/legal/cookie-policy/|Epic Startup",
+			"routineId": "screen-not-found",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/012-not-found.png",
+			"links": ["login-password"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:36:00.236Z",
+			"transitions": [
+				{
+					"to": "login-password",
+					"kind": "tap",
+					"via": "Email or Username",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:36:00.236Z"
+				}
+			]
+		},
+		{
+			"name": "Forgot Password",
+			"description": "Request password reset instructions by username or email.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:36:28.152Z",
+			"id": "forgot-password",
+			"location": "http://localhost:3001/forgot-password",
+			"screenKey": "http://localhost:3001/forgot-password|Password Recovery | Epic Startup",
+			"routineId": "screen-forgot-password",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/022-forgot-password.png",
+			"links": [],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:36:28.152Z"
+		},
+		{
+			"name": "Login – password step",
+			"description": "Second login step: enter the password for the chosen username, with Remember me and Forgot password.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:36:00.235Z",
+			"id": "login-password",
+			"location": "http://localhost:3001/login?redirectTo=%2F_.data",
+			"screenKey": "http://localhost:3001/login?redirectTo=%2F_.data|Login | Epic Startup",
+			"routineId": "screen-login-password",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014173428_008c/016-login-password.png",
+			"links": ["forgot-password"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:36:28.153Z",
+			"transitions": [
+				{
+					"to": "forgot-password",
+					"kind": "open",
+					"via": "open http://localhost:3001/forgot-password",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:36:28.153Z"
+				}
+			]
+		},
+		{
+			"name": "Forgot Password – sent",
+			"description": "Confirmation page after requesting a password reset (should say \"Check your email\").",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:44:15.461Z",
+			"id": "forgot-password-sent",
+			"location": "https://app.epic-startup.test:2999/forgot-password/sent",
+			"screenKey": "https://app.epic-startup.test:2999/forgot-password/sent|Password Recovery | Epic Startup",
+			"routineId": "screen-forgot-password-sent",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/003-forgot-password-sent.png",
+			"links": ["verify"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:44:30.076Z",
+			"transitions": [
+				{
+					"to": "verify",
+					"kind": "open",
+					"via": "open https://app.epic-startup.test:2999/verify",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:44:30.076Z"
+				}
+			]
+		},
+		{
+			"name": "Verify code",
+			"description": "Enter a 6-digit verification code from an email link (onboarding, reset password, 2FA).",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:44:30.075Z",
+			"id": "verify",
+			"location": "https://app.epic-startup.test:2999/verify",
+			"screenKey": "https://app.epic-startup.test:2999/verify|Epic Startup",
+			"routineId": "screen-verify",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/005-verify.png",
+			"links": ["kiosk-pair"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:44:56.855Z"
+		},
+		{
+			"name": "Kiosk – Pair this tablet",
+			"description": "Shared-tablet time clock pairing: paste a pairing link or code to pair the device.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:44:56.854Z",
+			"id": "kiosk-pair",
+			"location": "https://app.epic-startup.test:2999/kiosk/pair",
+			"screenKey": "https://app.epic-startup.test:2999/kiosk/pair|Time clock",
+			"routineId": "screen-kiosk-pair",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/011-kiosk-pair.png",
+			"links": ["kiosk-setup"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:45:22.563Z"
+		},
+		{
+			"name": "Kiosk – Set up this tablet",
+			"description": "Time-clock kiosk landing for an unpaired tablet: setup steps plus the pairing link/code field.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:45:22.562Z",
+			"id": "kiosk-setup",
+			"location": "https://app.epic-startup.test:2999/kiosk",
+			"screenKey": "https://app.epic-startup.test:2999/kiosk|Time clock",
+			"routineId": "screen-kiosk-setup",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/018-kiosk-setup.png",
+			"links": ["my-schedule"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:45:36.692Z",
+			"transitions": [
+				{
+					"to": "my-schedule",
+					"kind": "open",
+					"via": "open https://app.epic-startup.test:2999/my-schedule",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:45:36.692Z"
+				}
+			]
+		},
+		{
+			"name": "My schedule (no link)",
+			"description": "Staff schedule page opened via a private email link; without a token it tells the user to use the email.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:45:36.691Z",
+			"id": "my-schedule",
+			"location": "https://app.epic-startup.test:2999/my-schedule",
+			"screenKey": "https://app.epic-startup.test:2999/my-schedule|My schedule",
+			"routineId": "screen-my-schedule",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/021-my-schedule.png",
+			"links": ["signup-join"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:46:01.518Z",
+			"transitions": [
+				{
+					"to": "signup-join",
+					"kind": "open",
+					"via": "open https://app.epic-startup.test:2999/join/bogus-token",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:46:01.518Z"
+				}
+			]
+		},
+		{
+			"name": "Join organization (signup)",
+			"description": "Signup variant shown when following an organization invite link while signed out.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:46:01.517Z",
+			"id": "signup-join",
+			"location": "https://app.epic-startup.test:2999/signup?redirectTo=%2Fjoin%2Fbogus-token",
+			"screenKey": "https://app.epic-startup.test:2999/signup?redirectTo=%2Fjoin%2Fbogus-token|Sign Up | Epic Startup",
+			"routineId": "screen-signup-join",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014174336_ae8d/025-signup-join.png",
+			"links": ["my-schedule"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:47:08.540Z"
+		},
+		{
+			"name": "Organization dashboard",
+			"description": "Org home with note stats, daily notes chart and layout editing.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:51:47.161Z",
+			"id": "dashboard",
+			"location": "https://app.epic-startup.test:2999/acme4",
+			"screenKey": "https://app.epic-startup.test:2999/acme4|Epic Startup",
+			"routineId": "screen-dashboard",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/003-dashboard.png",
+			"links": ["dashboard-switcher-menu"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:51:59.224Z",
+			"transitions": [
+				{
+					"to": "dashboard-switcher-menu",
+					"kind": "tap",
+					"via": "Home",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:51:59.224Z"
+				}
+			]
+		},
+		{
+			"name": "Dashboard switcher menu",
+			"description": "Dropdown to pick a dashboard or create a new one.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:51:59.224Z",
+			"id": "dashboard-switcher-menu",
+			"location": "https://app.epic-startup.test:2999/acme4",
+			"screenKey": "https://app.epic-startup.test:2999/acme4|Epic Startup",
+			"routineId": "screen-dashboard-switcher-menu",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/008-dashboard-switcher-menu.png",
+			"links": ["new-dashboard-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:02.689Z",
+			"transitions": [
+				{
+					"to": "new-dashboard-dialog",
+					"kind": "tap",
+					"via": "New dashboard",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:52:02.689Z"
+				}
+			]
+		},
+		{
+			"name": "New dashboard dialog",
+			"description": "Modal to name and create a new custom dashboard.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:02.688Z",
+			"id": "new-dashboard-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4",
+			"screenKey": "https://app.epic-startup.test:2999/acme4|Epic Startup",
+			"routineId": "screen-new-dashboard-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/010-new-dashboard-dialog.png",
+			"links": ["custom-dashboard"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:08.792Z",
+			"transitions": [
+				{
+					"to": "custom-dashboard",
+					"kind": "tap",
+					"via": "Name",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:52:08.792Z"
+				}
+			]
+		},
+		{
+			"name": "Custom dashboard",
+			"description": "A user-created dashboard with blocks, edit layout, share and options.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:08.791Z",
+			"id": "custom-dashboard",
+			"location": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup",
+			"routineId": "screen-custom-dashboard",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/013-custom-dashboard.png",
+			"links": ["add-block-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:12.154Z",
+			"transitions": [
+				{
+					"to": "add-block-dialog",
+					"kind": "tap",
+					"via": "Add block",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:52:12.154Z"
+				}
+			]
+		},
+		{
+			"name": "Add block dialog",
+			"description": "Pick a built-in block, saved report or report template to add to a dashboard.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:12.154Z",
+			"id": "add-block-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup",
+			"routineId": "screen-add-block-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/015-add-block-dialog.png",
+			"links": ["report-builder"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:32.311Z"
+		},
+		{
+			"name": "Report builder",
+			"description": "Full-screen editor for a report: subject, timeframe, grouping, visualization, filters, save and export.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:32.311Z",
+			"id": "report-builder",
+			"location": "https://app.epic-startup.test:2999/acme4/reports/new?template=customers-by-week",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/reports/new?template=customers-by-week|Epic Startup",
+			"routineId": "screen-report-builder",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/023-report-builder.png",
+			"links": ["reports"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:40.951Z",
+			"transitions": [
+				{
+					"to": "reports",
+					"kind": "tap",
+					"via": "Back to reports",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:52:40.951Z"
+				}
+			]
+		},
+		{
+			"name": "Analytics & Reports",
+			"description": "Report templates by area (customers, marketing, calls, shop) and a New report button.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:40.951Z",
+			"id": "reports",
+			"location": "https://app.epic-startup.test:2999/acme4/reports",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/reports|Epic Startup",
+			"routineId": "screen-reports",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/027-reports.png",
+			"links": ["notes"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:52:56.819Z"
+		},
+		{
+			"name": "Note detail sheet",
+			"description": "Side sheet for a note with Overview, Comments, Activity and AI Assistant tabs plus Edit and actions.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:53:03.783Z",
+			"id": "note-detail",
+			"location": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581|Epic Startup",
+			"routineId": "screen-note-detail",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/035-note-detail.png",
+			"links": ["share-note-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:53:22.663Z",
+			"transitions": [
+				{
+					"to": "share-note-dialog",
+					"kind": "tap",
+					"via": "Share",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:53:22.663Z"
+				}
+			]
+		},
+		{
+			"name": "Share Note dialog",
+			"description": "Toggle whether all organization members can view a note.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:53:22.663Z",
+			"id": "share-note-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581|Epic Startup",
+			"routineId": "screen-share-note-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/040-share-note-dialog.png",
+			"links": ["edit-note"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:53:54.186Z",
+			"transitions": [
+				{
+					"to": "edit-note",
+					"kind": "tap",
+					"via": "Edit",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:53:54.186Z"
+				}
+			]
+		},
+		{
+			"name": "Edit Note sheet",
+			"description": "Edit a note's title, priority, tags, content and media, with Generate with AI.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:53:54.185Z",
+			"id": "edit-note",
+			"location": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581/edit",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/notes/qq0th6v3hxzqdyxpxxjam581/edit|Epic Startup",
+			"routineId": "screen-edit-note",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/046-edit-note.png",
+			"links": ["notes"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:53:57.197Z",
+			"transitions": [
+				{
+					"to": "notes",
+					"kind": "tap",
+					"via": "Close",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:53:57.197Z"
+				}
+			]
+		},
+		{
+			"name": "Notes",
+			"description": "Organization notes list with cards/kanban views, search and New Note.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:52:56.818Z",
+			"id": "notes",
+			"location": "https://app.epic-startup.test:2999/acme4/notes",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup",
+			"routineId": "screen-notes",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/033-notes.png",
+			"links": ["note-detail", "notes-kanban"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:02.671Z",
+			"transitions": [
+				{
+					"to": "note-detail",
+					"kind": "tap",
+					"via": "dsfg Test 1 day ago",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:53:03.783Z"
+				},
+				{
+					"to": "notes-kanban",
+					"kind": "tap",
+					"via": "Kanban board",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:02.671Z"
+				}
+			]
+		},
+		{
+			"name": "Notes – Kanban board",
+			"description": "Kanban view of notes in draggable columns with Add column.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:02.670Z",
+			"id": "notes-kanban",
+			"location": "https://app.epic-startup.test:2999/acme4/notes",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup",
+			"routineId": "screen-notes-kanban",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/049-notes-kanban.png",
+			"links": ["media-library"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:07.065Z",
+			"transitions": [
+				{
+					"to": "media-library",
+					"kind": "tap",
+					"via": "Media library",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:07.065Z"
+				}
+			]
+		},
+		{
+			"name": "Media library",
+			"description": "Grid of uploaded images across notes, website and settings, with search and upload.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:07.065Z",
+			"id": "media-library",
+			"location": "https://app.epic-startup.test:2999/acme4/media",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/media|Epic Startup",
+			"routineId": "screen-media-library",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/051-media-library.png",
+			"links": ["customers"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:44.651Z",
+			"transitions": [
+				{
+					"to": "customers",
+					"kind": "tap",
+					"via": "Customers",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:44.651Z"
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"description": "List of site customers with filters; empty state when none have signed up.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:44.651Z",
+			"id": "customers",
+			"location": "https://app.epic-startup.test:2999/acme4/customers",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/customers|Epic Startup",
+			"routineId": "screen-customers",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/054-customers.png",
+			"links": ["mailbox-forms"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:52.353Z",
+			"transitions": [
+				{
+					"to": "mailbox-forms",
+					"kind": "tap",
+					"via": "Mailbox",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:52.353Z"
+				}
+			]
+		},
+		{
+			"name": "Mailbox – Forms",
+			"description": "Inbox of website form submissions with search, unread filter and a reading pane.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:52.352Z",
+			"id": "mailbox-forms",
+			"location": "https://app.epic-startup.test:2999/acme4/mailbox",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/mailbox|Epic Startup",
+			"routineId": "screen-mailbox-forms",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/058-mailbox-forms.png",
+			"links": ["mailbox-calls"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:55.485Z",
+			"transitions": [
+				{
+					"to": "mailbox-calls",
+					"kind": "tap",
+					"via": "Calls",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:55.485Z"
+				}
+			]
+		},
+		{
+			"name": "Mailbox – Calls",
+			"description": "Phone-agent calls that need follow-up, with refresh and an All calls toggle.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:55.484Z",
+			"id": "mailbox-calls",
+			"location": "https://app.epic-startup.test:2999/acme4/mailbox",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/mailbox|Epic Startup",
+			"routineId": "screen-mailbox-calls",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/060-mailbox-calls.png",
+			"links": ["phone-agent-calls"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:54:59.449Z",
+			"transitions": [
+				{
+					"to": "phone-agent-calls",
+					"kind": "tap",
+					"via": "All calls",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:54:59.449Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Calls",
+			"description": "All calls the phone agent answered, with purpose counts, filters and a Requests tab.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:54:59.447Z",
+			"id": "phone-agent-calls",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/calls",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/calls|Epic Startup",
+			"routineId": "screen-phone-agent-calls",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/062-phone-agent-calls.png",
+			"links": ["call-detail-sheet"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:55:06.265Z",
+			"transitions": [
+				{
+					"to": "call-detail-sheet",
+					"kind": "tap",
+					"via": "Test call 0:20 30 minutes ago Other Link sent Link sent. The",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:55:06.265Z"
+				}
+			]
+		},
+		{
+			"name": "Call detail sheet",
+			"description": "Side sheet for one phone-agent call with tags, summary, transcript and Delete call.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:55:06.265Z",
+			"id": "call-detail-sheet",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/calls",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/calls|Epic Startup",
+			"routineId": "screen-call-detail-sheet",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/064-call-detail-sheet.png",
+			"links": ["phone-agent-setup"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:55:21.444Z",
+			"transitions": [
+				{
+					"to": "phone-agent-setup",
+					"kind": "tap",
+					"via": "Setup",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:55:21.444Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Test call",
+			"description": "Browser test call with a phone dial pad, flow picker and live transcript.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:55:29.554Z",
+			"id": "phone-agent-test-call",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/test",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/test|Epic Startup",
+			"routineId": "screen-phone-agent-test-call",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/070-phone-agent-test-call.png",
+			"links": ["phone-agent-knowledge"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:55:55.318Z",
+			"transitions": [
+				{
+					"to": "phone-agent-knowledge",
+					"kind": "tap",
+					"via": "Knowledge",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:55:55.318Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Knowledge",
+			"description": "FAQ answers for the phone agent by category, with Draft answers with AI.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:55:55.318Z",
+			"id": "phone-agent-knowledge",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/knowledge",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/knowledge|Epic Startup",
+			"routineId": "screen-phone-agent-knowledge",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/075-phone-agent-knowledge.png",
+			"links": ["phone-agent-training"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:55:58.835Z",
+			"transitions": [
+				{
+					"to": "phone-agent-training",
+					"kind": "tap",
+					"via": "Training rules",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:55:58.835Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Training rules",
+			"description": "List of training rules for the phone agent with Add rule.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:55:58.834Z",
+			"id": "phone-agent-training",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/training",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/training|Epic Startup",
+			"routineId": "screen-phone-agent-training",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/077-phone-agent-training.png",
+			"links": ["add-training-rule-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:06.896Z",
+			"transitions": [
+				{
+					"to": "add-training-rule-dialog",
+					"kind": "tap",
+					"via": "Add rule",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:06.896Z"
+				}
+			]
+		},
+		{
+			"name": "Add training rule dialog",
+			"description": "Form to add a phone-agent training rule: category, title, instructions, priority, enabled.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:06.895Z",
+			"id": "add-training-rule-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/training",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/training|Epic Startup",
+			"routineId": "screen-add-training-rule-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/079-add-training-rule-dialog.png",
+			"links": ["phone-agent-call-flow"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:11.972Z",
+			"transitions": [
+				{
+					"to": "phone-agent-call-flow",
+					"kind": "tap",
+					"via": "Call flow",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:11.972Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Call flow editor",
+			"description": "Full-screen React Flow editor of the call flow with step palette, test, reset, save and publish.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:11.971Z",
+			"id": "phone-agent-call-flow",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/flow",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/flow|Epic Startup",
+			"routineId": "screen-phone-agent-call-flow",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/082-phone-agent-call-flow.png",
+			"links": ["phone-agent-transfers"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:30.240Z",
+			"transitions": [
+				{
+					"to": "phone-agent-transfers",
+					"kind": "open",
+					"via": "open https://app.epic-startup.test:2999/acme4/phone-agent/tr",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:30.240Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Transfers",
+			"description": "Staff transfer settings, transfer contacts and transfer cases for the phone agent.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:30.240Z",
+			"id": "phone-agent-transfers",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/transfers",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/transfers|Epic Startup",
+			"routineId": "screen-phone-agent-transfers",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/087-phone-agent-transfers.png",
+			"links": ["phone-agent-follow-up"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:39.411Z",
+			"transitions": [
+				{
+					"to": "phone-agent-follow-up",
+					"kind": "tap",
+					"via": "Follow-up",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:39.411Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Follow-up",
+			"description": "Staff alert recipients (SMS/email), alert triggers, call tags and auto-close settings.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:39.410Z",
+			"id": "phone-agent-follow-up",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/follow-up",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/follow-up|Epic Startup",
+			"routineId": "screen-phone-agent-follow-up",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/089-phone-agent-follow-up.png",
+			"links": ["phone-agent-phrases"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:51.177Z",
+			"transitions": [
+				{
+					"to": "phone-agent-phrases",
+					"kind": "tap",
+					"via": "Phrases",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:51.177Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Phrases",
+			"description": "Fixed lines the phone system says (notices, hold, errors, keypad prompts), editable with defaults.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:51.176Z",
+			"id": "phone-agent-phrases",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/phrases",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/phrases|Epic Startup",
+			"routineId": "screen-phone-agent-phrases",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/093-phone-agent-phrases.png",
+			"links": ["phone-agent-advanced"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:56:55.024Z",
+			"transitions": [
+				{
+					"to": "phone-agent-advanced",
+					"kind": "tap",
+					"via": "Advanced",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:56:55.024Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Advanced",
+			"description": "Safety switches, business details (phone, time zone, address, hours), call ratings and the assistant's prompt.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:56:55.024Z",
+			"id": "phone-agent-advanced",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent/advanced",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent/advanced|Epic Startup",
+			"routineId": "screen-phone-agent-advanced",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/095-phone-agent-advanced.png",
+			"links": ["phone-agent-setup"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:57:04.149Z",
+			"transitions": [
+				{
+					"to": "phone-agent-setup",
+					"kind": "tap",
+					"via": "Setup",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:57:04.149Z"
+				}
+			]
+		},
+		{
+			"name": "Phone agent – Setup",
+			"description": "Go-live checklist, phone numbers and agent settings (name, languages, voice) for the AI phone agent.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:55:21.443Z",
+			"id": "phone-agent-setup",
+			"location": "https://app.epic-startup.test:2999/acme4/phone-agent",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/phone-agent|Epic Startup",
+			"routineId": "screen-phone-agent-setup",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/068-phone-agent-setup.png",
+			"links": ["phone-agent-test-call", "marketing-overview"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:58:31.712Z",
+			"transitions": [
+				{
+					"to": "phone-agent-test-call",
+					"kind": "tap",
+					"via": "Test the agent",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:55:29.555Z"
+				},
+				{
+					"to": "marketing-overview",
+					"kind": "tap",
+					"via": "Overview",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:58:31.712Z"
+				}
+			]
+		},
+		{
+			"name": "Marketing – Overview",
+			"description": "Marketing summary: links to broadcasts and automations, email stats and recent campaigns.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:58:31.711Z",
+			"id": "marketing-overview",
+			"location": "https://app.epic-startup.test:2999/acme4/marketing",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/marketing|Epic Startup",
+			"routineId": "screen-marketing-overview",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/101-marketing-overview.png",
+			"links": ["marketing-broadcasts"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:58:35.727Z",
+			"transitions": [
+				{
+					"to": "marketing-broadcasts",
+					"kind": "tap",
+					"via": "Broadcasts",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:58:35.727Z"
+				}
+			]
+		},
+		{
+			"name": "Marketing – Broadcasts",
+			"description": "List of one-time email/SMS campaigns with search, status filters and New broadcast.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:58:35.727Z",
+			"id": "marketing-broadcasts",
+			"location": "https://app.epic-startup.test:2999/acme4/marketing/campaigns",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/marketing/campaigns|Epic Startup",
+			"routineId": "screen-marketing-broadcasts",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/103-marketing-broadcasts.png",
+			"links": ["new-broadcast"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:58:40.630Z",
+			"transitions": [
+				{
+					"to": "new-broadcast",
+					"kind": "tap",
+					"via": "New broadcast",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:58:40.630Z"
+				}
+			]
+		},
+		{
+			"name": "New broadcast",
+			"description": "Compose a one-time email or SMS campaign with a block-based email designer and live preview.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:58:40.629Z",
+			"id": "new-broadcast",
+			"location": "https://app.epic-startup.test:2999/acme4/marketing/campaigns/new",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/marketing/campaigns/new|Epic Startup",
+			"routineId": "screen-new-broadcast",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/105-new-broadcast.png",
+			"links": ["marketing-automations"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:58:52.910Z",
+			"transitions": [
+				{
+					"to": "marketing-automations",
+					"kind": "tap",
+					"via": "Automations",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:58:52.910Z"
+				}
+			]
+		},
+		{
+			"name": "Automation editor",
+			"description": "Full-screen journey builder with a node palette (trigger, delay, email, SMS, branch), Save draft and Publish.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:58:57.862Z",
+			"id": "automation-editor",
+			"location": "https://app.epic-startup.test:2999/acme4/marketing/automations/new",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/marketing/automations/new|Epic Startup",
+			"routineId": "screen-automation-editor",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/109-automation-editor.png",
+			"links": ["marketing-automations"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:59:03.527Z",
+			"transitions": [
+				{
+					"to": "marketing-automations",
+					"kind": "tap",
+					"via": "Back to automations",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:59:03.527Z"
+				}
+			]
+		},
+		{
+			"name": "Marketing – Automations",
+			"description": "List of event-driven marketing automations with status filters and New automation.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:58:52.910Z",
+			"id": "marketing-automations",
+			"location": "https://app.epic-startup.test:2999/acme4/marketing/automations",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/marketing/automations|Epic Startup",
+			"routineId": "screen-marketing-automations",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/107-marketing-automations.png",
+			"links": ["automation-editor", "website-general"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T17:59:19.171Z",
+			"transitions": [
+				{
+					"to": "automation-editor",
+					"kind": "tap",
+					"via": "New automation",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:58:57.862Z"
+				},
+				{
+					"to": "website-general",
+					"kind": "tap",
+					"via": "General Settings",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T17:59:19.171Z"
+				}
+			]
+		},
+		{
+			"name": "Website page editor",
+			"description": "Full-screen site page editor with Sections, Branding and Page Settings tabs, a live preview and Publish updates.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:00:02.259Z",
+			"id": "website-page-editor",
+			"location": "https://app.epic-startup.test:2999/acme4/website/pages/zz4vnmo189zmvs28s1jyqifp?panel=branding",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/website/pages/zz4vnmo189zmvs28s1jyqifp?panel=branding|Epic Startup",
+			"routineId": "screen-website-page-editor",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/118-website-page-editor.png",
+			"links": [],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:00:02.259Z"
+		},
+		{
+			"name": "Website – General Settings",
+			"description": "Organization site toggle, customer data region, subdomain URL, custom domain and languages.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T17:59:19.171Z",
+			"id": "website-general",
+			"location": "https://app.epic-startup.test:2999/acme4/website",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/website|Epic Startup",
+			"routineId": "screen-website-general",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014175100_d2a2/114-website-general.png",
+			"links": ["website-page-editor"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:00:02.260Z",
+			"transitions": [
+				{
+					"to": "website-page-editor",
+					"kind": "tap",
+					"via": "Branding",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:00:02.260Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – General",
+			"description": "Organization name, slug, logo, team size, verified domain and other org settings.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:06:31.418Z",
+			"id": "settings-general",
+			"location": "https://app.epic-startup.test:2999/acme4/settings",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup",
+			"routineId": "screen-settings-general",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/004-settings-general.png",
+			"links": ["delete-org-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:07:37.390Z"
+		},
+		{
+			"name": "Delete organization dialog",
+			"description": "Confirmation modal to delete the org: type the org name and tick the acknowledgement checkbox.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:07:37.390Z",
+			"id": "delete-org-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4/settings?index",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup",
+			"routineId": "screen-delete-org-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/027-delete-org-dialog.png",
+			"links": ["settings-members"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:07:46.443Z",
+			"transitions": [
+				{
+					"to": "settings-members",
+					"kind": "tap",
+					"via": "Members",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:07:46.443Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – Members",
+			"description": "Org member list, personal invite link creation, and invite-by-email with roles.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:07:46.443Z",
+			"id": "settings-members",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/members",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/members|Epic Startup",
+			"routineId": "screen-settings-members",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/030-settings-members.png",
+			"links": ["settings-roles"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:08:12.861Z"
+		},
+		{
+			"name": "Role detail (permissions)",
+			"description": "Read-only permission list for one role, grouped by area with Allowed/Denied status.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:08:18.762Z",
+			"id": "role-detail",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/roles/org_role_admin",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/roles/org_role_admin|Epic Startup",
+			"routineId": "screen-role-detail",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/044-role-detail.png",
+			"links": ["settings-roles"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:08:19.307Z",
+			"transitions": [
+				{
+					"to": "settings-roles",
+					"kind": "tap",
+					"via": "Roles & access",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:08:19.307Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – Roles & access",
+			"description": "Custom roles (create) and built-in roles table with member counts and Inspect.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:08:12.860Z",
+			"id": "settings-roles",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/roles",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/roles|Epic Startup",
+			"routineId": "screen-settings-roles",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/042-settings-roles.png",
+			"links": ["role-detail", "create-role"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:08:25.107Z",
+			"transitions": [
+				{
+					"to": "role-detail",
+					"kind": "tap",
+					"via": "Inspect",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:08:18.763Z"
+				},
+				{
+					"to": "create-role",
+					"kind": "tap",
+					"via": "Create role",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:08:25.107Z"
+				}
+			]
+		},
+		{
+			"name": "Create custom role",
+			"description": "Form to create a custom role: name, description, template chips and per-area permission checkboxes.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:08:25.107Z",
+			"id": "create-role",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/roles/new",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/roles/new|Epic Startup",
+			"routineId": "screen-create-role",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/047-create-role.png",
+			"links": ["settings-chat-channels"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:08:43.039Z",
+			"transitions": [
+				{
+					"to": "settings-chat-channels",
+					"kind": "tap",
+					"via": "Chat channels",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:08:43.039Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – Chat channels",
+			"description": "List of team chat channels with access badges, Edit/Delete, New channel and Open team chat.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:08:43.038Z",
+			"id": "settings-chat-channels",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/chat",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/chat|Epic Startup",
+			"routineId": "screen-settings-chat-channels",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/052-settings-chat-channels.png",
+			"links": ["new-channel-dialog"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:08:46.668Z",
+			"transitions": [
+				{
+					"to": "new-channel-dialog",
+					"kind": "tap",
+					"via": "New channel",
+					"steps": 1,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:08:46.668Z"
+				}
+			]
+		},
+		{
+			"name": "New channel dialog",
+			"description": "Modal to create a team chat channel with name, description and access (everyone or selected roles/people).",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:08:46.666Z",
+			"id": "new-channel-dialog",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/chat",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/chat|Epic Startup",
+			"routineId": "screen-new-channel-dialog",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/054-new-channel-dialog.png",
+			"links": ["settings-integrations"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:09:38.208Z"
+		},
+		{
+			"name": "Settings – Integrations",
+			"description": "Cards to connect Slack, Jira, Linear, ClickUp, Asana, Trello and more, with documentation links.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:09:38.208Z",
+			"id": "settings-integrations",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/integrations",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/integrations|Epic Startup",
+			"routineId": "screen-settings-integrations",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/063-settings-integrations.png",
+			"links": ["settings-shop"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:09:58.477Z",
+			"transitions": [
+				{
+					"to": "settings-shop",
+					"kind": "tap",
+					"via": "Shop",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:09:58.477Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – Shop",
+			"description": "Organization shop settings page (currently crashes with a raw database error).",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:09:58.476Z",
+			"id": "settings-shop",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/shop",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/shop|Epic Startup",
+			"routineId": "screen-settings-shop",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/070-settings-shop.png",
+			"links": ["mcp-server"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:10:28.638Z",
+			"transitions": [
+				{
+					"to": "mcp-server",
+					"kind": "tap",
+					"via": "MCP Server",
+					"steps": 2,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:10:28.638Z"
+				}
+			]
+		},
+		{
+			"name": "MCP Server",
+			"description": "MCP server URL and OAuth setup instructions per AI client (Claude Desktop, Kiro, Cursor).",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:10:28.637Z",
+			"id": "mcp-server",
+			"location": "https://app.epic-startup.test:2999/acme4/mcp",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/mcp|Epic Startup",
+			"routineId": "screen-mcp-server",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/076-mcp-server.png",
+			"links": ["settings-notifications"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:10:40.824Z",
+			"transitions": [
+				{
+					"to": "settings-notifications",
+					"kind": "tap",
+					"via": "Notifications",
+					"steps": 3,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:10:40.824Z"
+				}
+			]
+		},
+		{
+			"name": "Settings – Billing",
+			"description": "Organization billing/subscription page (currently loads a blank page with a 500).",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:10:55.938Z",
+			"id": "settings-billing",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/billing",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/billing|Epic Startup",
+			"routineId": "screen-settings-billing",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/086-settings-billing.png",
+			"links": [],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:10:55.938Z"
+		},
+		{
+			"name": "Settings – Notifications",
+			"description": "Notification preference toggles (email / in-app) for mentions and comments on your notes.",
+			"platform": "web",
+			"firstSeenAt": "2026-10-14T18:10:40.824Z",
+			"id": "settings-notifications",
+			"location": "https://app.epic-startup.test:2999/acme4/settings/notifications",
+			"screenKey": "https://app.epic-startup.test:2999/acme4/settings/notifications|Epic Startup",
+			"routineId": "screen-settings-notifications",
+			"lastScreenshot": ".bugpatrol/runs/sessions/ses_20261014180548_00ab/080-settings-notifications.png",
+			"links": ["settings-billing"],
+			"visits": 1,
+			"lastSeenAt": "2026-10-14T18:10:55.938Z",
+			"transitions": [
+				{
+					"to": "settings-billing",
+					"kind": "open",
+					"via": "open https://app.epic-startup.test:2999/acme4/settings/billi",
+					"steps": 4,
+					"count": 1,
+					"lastSeenAt": "2026-10-14T18:10:55.938Z"
+				}
+			]
+		}
+	],
+	"updatedAt": "2026-10-14T18:10:55.938Z"
+}

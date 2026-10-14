@@ -1,0 +1,27 @@
+{
+	"version": 1,
+	"id": "screen-signup",
+	"description": "Create an account with GitHub or email; shown at the app root when signed out.",
+	"platform": "web",
+	"requires": [],
+	"steps": [
+		{
+			"kind": "open",
+			"url": "http://localhost:3001",
+			"at": "http://localhost:3001/signup|Sign Up | Epic Startup|affb49d13a35"
+		}
+	],
+	"screenId": "signup",
+	"expect": {
+		"elements": [
+			"Signup with GitHub",
+			"Email",
+			"Sign up",
+			"Sign in",
+			"Terms of Service",
+			"Privacy Policy"
+		]
+	},
+	"createdAt": "2026-10-14T17:35:00.766Z",
+	"updatedAt": "2026-10-14T17:35:00.766Z"
+}

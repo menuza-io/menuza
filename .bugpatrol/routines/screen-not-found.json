@@ -1,0 +1,98 @@
+{
+	"version": 1,
+	"id": "screen-not-found",
+	"description": "404 page with Go back and Take me home buttons.",
+	"platform": "web",
+	"requires": ["screen-signup"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Sign up",
+				"text": "Sign up",
+				"selector": "div:nth-of-type(2) > button",
+				"point": {
+					"x": 720,
+					"y": 539.125
+				}
+			},
+			"at": "http://localhost:3001/signup|Sign Up | Epic Startup|854764b9cabf"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Email",
+				"text": "",
+				"selector": "#signup-form-email",
+				"point": {
+					"x": 720,
+					"y": 461.125
+				}
+			},
+			"value": "not-an-email",
+			"submit": true,
+			"at": "http://localhost:3001/signup|Sign Up | Epic Startup|5d0309b2b09f"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Terms of Service",
+				"text": "Terms of Service",
+				"selector": "div:nth-of-type(2) > a:nth-of-type(1)",
+				"point": {
+					"x": 752.734375,
+					"y": 676.125
+				}
+			},
+			"at": "http://localhost:3001/login?redirectTo=%2Ftos|Login | Epic Startup|53b20fa5b0e5"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Privacy Policy",
+				"text": "Privacy Policy",
+				"selector": "a:nth-of-type(2)",
+				"point": {
+					"x": 861.1875,
+					"y": 694.125
+				}
+			},
+			"at": "http://localhost:3001/login?redirectTo=%2Fprivacy|Login | Epic Startup|53b20fa5b0e5"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Read our Cookie Policy",
+				"text": "Read our Cookie Policy",
+				"selector": "p > a",
+				"point": {
+					"x": 167.8515625,
+					"y": 787
+				}
+			},
+			"at": "http://localhost:3001/login?redirectTo=%2Fprivacy|Login | Epic Startup|53b20fa5b0e5"
+		},
+		{
+			"kind": "window",
+			"match": "cookie-policy",
+			"at": "http://localhost:3001/legal/cookie-policy/|Epic Startup|b6569f64f8c3"
+		}
+	],
+	"screenId": "not-found",
+	"expect": {
+		"elements": [
+			"Go back",
+			"Take me home",
+			"Read our Cookie Policy",
+			"Reject",
+			"Accept"
+		]
+	},
+	"createdAt": "2026-10-14T17:35:34.587Z",
+	"updatedAt": "2026-10-14T17:35:34.587Z"
+}

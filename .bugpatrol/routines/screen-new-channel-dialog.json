@@ -1,0 +1,36 @@
+{
+	"version": 1,
+	"id": "screen-new-channel-dialog",
+	"description": "Modal to create a team chat channel with name, description and access (everyone or selected roles/people).",
+	"platform": "web",
+	"requires": ["screen-settings-chat-channels"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "New channel",
+				"text": "New channel",
+				"selector": "div > div:nth-of-type(2) > button",
+				"point": {
+					"x": 1319.640625,
+					"y": 198
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/chat|Epic Startup|8ad3452016e5"
+		}
+	],
+	"screenId": "new-channel-dialog",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Reports"
+		]
+	},
+	"createdAt": "2026-10-14T18:08:46.664Z",
+	"updatedAt": "2026-10-14T18:08:46.664Z"
+}

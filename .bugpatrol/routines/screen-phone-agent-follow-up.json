@@ -1,0 +1,36 @@
+{
+	"version": 1,
+	"id": "screen-phone-agent-follow-up",
+	"description": "Staff alert recipients (SMS/email), alert triggers, call tags and auto-close settings.",
+	"platform": "web",
+	"requires": ["screen-phone-agent-transfers"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Follow-up",
+				"text": "Follow-up",
+				"selector": "li:nth-of-type(7) > a",
+				"point": {
+					"x": 120.5,
+					"y": 806
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/phone-agent/follow-up|Epic Startup|53264c383216"
+		}
+	],
+	"screenId": "phone-agent-follow-up",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:56:39.409Z",
+	"updatedAt": "2026-10-14T17:56:39.409Z"
+}

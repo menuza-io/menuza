@@ -1,0 +1,300 @@
+{
+	"version": 1,
+	"id": "screen-media-library",
+	"description": "Grid of uploaded images across notes, website and settings, with search and upload.",
+	"platform": "web",
+	"requires": ["enter-app"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Accept",
+				"text": "Accept",
+				"selector": "aside > div > button:nth-of-type(2)",
+				"point": {
+					"x": 262,
+					"y": 837
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|5ca5ea95fcca"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Home",
+				"text": "Home",
+				"selector": "#base-ui-_R_1lbl6j55_",
+				"point": {
+					"x": 347.6796875,
+					"y": 186
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|f61193238023"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "menuitem",
+				"name": "New dashboard",
+				"text": "New dashboard",
+				"selector": "#base-ui-_r_7_",
+				"point": {
+					"x": 420,
+					"y": 320.25
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|9d689d79180a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Create dashboard",
+				"text": "Create dashboard",
+				"selector": "div:nth-of-type(3) > button:nth-of-type(2)",
+				"point": {
+					"x": 850.953125,
+					"y": 538.125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|e107d4ea1fb5"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Name",
+				"text": "",
+				"selector": "#_r_a_",
+				"point": {
+					"x": 720,
+					"y": 447.125
+				}
+			},
+			"value": "QA Test Board",
+			"submit": true,
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|7bc6838fa3c8"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Add block",
+				"text": "Add block",
+				"selector": "#base-ui-_r_12_",
+				"point": {
+					"x": 836,
+					"y": 389.75
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|99d2b524b79e"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Stats Total notes, the daily average and the trend.",
+				"text": "Stats Total notes, the daily average and the trend.",
+				"selector": "div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(1) > button",
+				"point": {
+					"x": 720,
+					"y": 274.7109375
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|f9d5b725c60c"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Add block",
+				"text": "Add block",
+				"selector": "#base-ui-_r_30_",
+				"point": {
+					"x": 1088.4296875,
+					"y": 162
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|76f1d261a9ee"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "group",
+				"name": "Customers",
+				"text": "Customers Customer count A single number of site customers in the selected timef",
+				"selector": "div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1)",
+				"point": {
+					"x": 720,
+					"y": 674.3984375
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|c3cc61450f1a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Done",
+				"text": "Done",
+				"selector": "div:nth-of-type(2) > div:nth-of-type(2) > div > button:nth-of-type(2)",
+				"point": {
+					"x": 1195.90625,
+					"y": 162
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/dashboards/pveuvid7m6fosngtzvm2df6n|Epic Startup|e15f32db7bf9"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Open report",
+				"text": "Open report",
+				"selector": "div:nth-of-type(3) > a",
+				"point": {
+					"x": 750.9765625,
+					"y": 344
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=customers-by-week|Epic Startup|a2bf0ed37cc8"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "combobox",
+				"name": "Bar Chart",
+				"text": "Bar Chart",
+				"selector": "#base-ui-_r_5o_",
+				"point": {
+					"x": 192,
+					"y": 162
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=customers-by-week|Epic Startup|1b5d8245faf0"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "option",
+				"name": "Single Number",
+				"text": "Single Number",
+				"selector": "div:nth-of-type(2) > div > div > div:nth-of-type(3)",
+				"point": {
+					"x": 191,
+					"y": 204.5
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=customers-by-week|Epic Startup|06222f32e6a4"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Back to reports",
+				"text": "",
+				"selector": "header > div > div:nth-of-type(1) > a",
+				"point": {
+					"x": 26,
+					"y": 23.5
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports|Epic Startup|067224911be7"
+		},
+		{
+			"kind": "scroll",
+			"direction": "down",
+			"at": "https://app.epic-startup.test:2999/acme4/reports|Epic Startup|bf978c33da5a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Call length Calls grouped by how long they lasted.",
+				"text": "Call length Calls grouped by how long they lasted.",
+				"selector": "li:nth-of-type(7) > a",
+				"point": {
+					"x": 558,
+					"y": 659.625
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=phone-calls-length|Epic Startup|8618261b6373"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Timeframe Started at · Last 3 months",
+				"text": "Timeframe Started at · Last 3 months",
+				"selector": "div > div:nth-of-type(1) > div:nth-of-type(2) > button",
+				"point": {
+					"x": 884.0078125,
+					"y": 104
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=phone-calls-length|Epic Startup|59c38f766a8a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Filters",
+				"text": "",
+				"selector": "#base-ui-_r_70_",
+				"point": {
+					"x": 32.5,
+					"y": 177
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/reports/new?template=phone-calls-length|Epic Startup|0d1e770d0959"
+		},
+		{
+			"kind": "open",
+			"url": "https://app.epic-startup.test:2999/acme4/notes",
+			"at": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup|58b2d07004ba"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "tab",
+				"name": "Kanban board",
+				"text": "",
+				"selector": "#base-ui-_R_4ot6j55_",
+				"point": {
+					"x": 1224.140625,
+					"y": 110
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup|96be8688ead8"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Media library",
+				"text": "Media library",
+				"selector": "div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(4) > a",
+				"point": {
+					"x": 120,
+					"y": 340
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/media|Epic Startup|a7e8ea69f99c"
+		}
+	],
+	"screenId": "media-library",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:54:07.064Z",
+	"updatedAt": "2026-10-14T17:54:07.064Z"
+}

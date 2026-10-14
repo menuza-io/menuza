@@ -1,0 +1,64 @@
+{
+	"version": 1,
+	"id": "screen-new-dashboard-dialog",
+	"description": "Modal to name and create a new custom dashboard.",
+	"platform": "web",
+	"requires": ["enter-app"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Accept",
+				"text": "Accept",
+				"selector": "aside > div > button:nth-of-type(2)",
+				"point": {
+					"x": 262,
+					"y": 837
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|5ca5ea95fcca"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Home",
+				"text": "Home",
+				"selector": "#base-ui-_R_1lbl6j55_",
+				"point": {
+					"x": 347.6796875,
+					"y": 186
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|f61193238023"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "menuitem",
+				"name": "New dashboard",
+				"text": "New dashboard",
+				"selector": "#base-ui-_r_7_",
+				"point": {
+					"x": 420,
+					"y": 320.25
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|9d689d79180a"
+		}
+	],
+	"screenId": "new-dashboard-dialog",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:52:02.688Z",
+	"updatedAt": "2026-10-14T17:52:02.688Z"
+}

@@ -1,0 +1,50 @@
+{
+	"version": 1,
+	"id": "screen-phone-agent-call-flow",
+	"description": "Full-screen React Flow editor of the call flow with step palette, test, reset, save and publish.",
+	"platform": "web",
+	"requires": ["screen-add-training-rule-dialog"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Close",
+				"text": "Close",
+				"selector": "div:nth-of-type(3) > button",
+				"point": {
+					"x": 950,
+					"y": 179.3046875
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/phone-agent/training|Epic Startup|50cee9660cb9"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Call flow",
+				"text": "Call flow",
+				"selector": "li:nth-of-type(8) > ul > li:nth-of-type(5) > a",
+				"point": {
+					"x": 120.5,
+					"y": 726
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/phone-agent/flow|Epic Startup|38e79dac0644"
+		}
+	],
+	"screenId": "phone-agent-call-flow",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"rf__wrapper",
+			"rf__edge-edge_start_hours",
+			"rf__edge-edge_hours_main_menu_open",
+			"rf__edge-edge_hours_closed_menu_closed",
+			"rf__edge-edge_main_menu_ai_key_1"
+		]
+	},
+	"createdAt": "2026-10-14T17:56:11.971Z",
+	"updatedAt": "2026-10-14T17:56:11.971Z"
+}

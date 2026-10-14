@@ -99,5 +99,6 @@ apps/app/tests/database/
 .impeccable/
 apps/app/tests/fixtures/openimg/**/mock-bucket/orgs/
 
-# Bugpatrol: local data and screenshots of the real app
+# Bugpatrol: local session output and one-off repro routines from runs/issues
 .bugpatrol/runs/
+.bugpatrol/routines/repro-*.json

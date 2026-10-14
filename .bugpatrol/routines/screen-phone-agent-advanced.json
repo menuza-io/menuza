@@ -1,0 +1,36 @@
+{
+	"version": 1,
+	"id": "screen-phone-agent-advanced",
+	"description": "Safety switches, business details (phone, time zone, address, hours), call ratings and the assistant's prompt.",
+	"platform": "web",
+	"requires": ["screen-phone-agent-phrases"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Advanced",
+				"text": "Advanced",
+				"selector": "li:nth-of-type(9) > a",
+				"point": {
+					"x": 120.5,
+					"y": 554
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/phone-agent/advanced|Epic Startup|04642b906e7e"
+		}
+	],
+	"screenId": "phone-agent-advanced",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Media library"
+		]
+	},
+	"createdAt": "2026-10-14T17:56:55.023Z",
+	"updatedAt": "2026-10-14T17:56:55.023Z"
+}

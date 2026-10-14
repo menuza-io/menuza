@@ -1,0 +1,187 @@
+{
+	"version": 1,
+	"id": "screen-delete-org-dialog",
+	"description": "Confirmation modal to delete the org: type the org name and tick the acknowledgement checkbox.",
+	"platform": "web",
+	"requires": ["screen-settings-general"],
+	"steps": [
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Name",
+				"text": "",
+				"selector": "#organization-settings-form-name",
+				"point": {
+					"x": 912,
+					"y": 327.25
+				}
+			},
+			"value": "",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|c693cde6bc3d"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save changes",
+				"text": "Save changes",
+				"selector": "div > div > div:nth-of-type(3) > button",
+				"point": {
+					"x": 1304.6328125,
+					"y": 515.5
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|4de81ca09e20"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Slug",
+				"text": "",
+				"selector": "#organization-settings-form-slug",
+				"point": {
+					"x": 912,
+					"y": 418.5
+				}
+			},
+			"value": "Bad Slug!!",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|e1f84d016d6e"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "",
+				"text": "",
+				"selector": "#base-ui-_r_h_",
+				"point": {
+					"x": 324,
+					"y": 809.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|9f33f8ccdb2a"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Verified domain",
+				"text": "",
+				"selector": "#verified-domain-verifiedDomain",
+				"point": {
+					"x": 836,
+					"y": 561
+				}
+			},
+			"value": "not a domain",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|b23925afb63a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save",
+				"text": "Save",
+				"selector": "form > div:nth-of-type(2) > button",
+				"point": {
+					"x": 1329.8984375,
+					"y": 638
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|eb23fd254d3a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "",
+				"text": "",
+				"selector": "#base-ui-_r_h_",
+				"point": {
+					"x": 324,
+					"y": 450.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|b23925afb63a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "Enable Custom S3 Storage",
+				"text": "",
+				"selector": "#base-ui-_r_q_",
+				"point": {
+					"x": 324,
+					"y": 606.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|e6c1e3427384"
+		},
+		{
+			"kind": "scroll",
+			"direction": "down",
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|12080a6599bb"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save",
+				"text": "Save",
+				"selector": "section:nth-of-type(3) > div > div:nth-of-type(3) > button",
+				"point": {
+					"x": 1322.0390625,
+					"y": 621.890625
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|12080a6599bb"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "Enable Custom S3 Storage",
+				"text": "",
+				"selector": "#base-ui-_r_q_",
+				"point": {
+					"x": 324,
+					"y": 56.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|e6cea2e3121e"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Delete organization",
+				"text": "Delete organization",
+				"selector": "#base-ui-_r_u_",
+				"point": {
+					"x": 1260.3671875,
+					"y": 785.140625
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|b35242b0d0ad"
+		}
+	],
+	"screenId": "delete-org-dialog",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T18:07:37.389Z",
+	"updatedAt": "2026-10-14T18:07:37.389Z"
+}

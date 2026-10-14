@@ -1,0 +1,77 @@
+{
+	"version": 1,
+	"id": "screen-settings-shop",
+	"description": "Organization shop settings page (currently crashes with a raw database error).",
+	"platform": "web",
+	"requires": ["screen-settings-integrations"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Connect",
+				"text": "Connect",
+				"selector": "section:nth-of-type(1) > div > div > div:nth-of-type(2) > div > form > button",
+				"point": {
+					"x": 468,
+					"y": 406
+				}
+			},
+			"at": "https://slack.com/workspace-signin?redir=%2Foauth%3Fclient_id%3Ddemo-slack-client-id%26scope%3Dchannels%253Aread%252Cchat%253Awrite%252Cchannels%253Ahistory%252Cgroups%253Aread%26user_scope%3D%26redirect_uri%3Dhttps%253A%252F%252Flocalhost%253A3001%252Fapi%252Fintegrations%252Foauth%252Fcallback%253Fprovider%253Dslack%26state%3DeyJvcmdhbml6YXRpb25JZCI6Ind5cm01NHpqc2ZwcmVpYjBzbGthc21uaiIsInByb3ZpZGVyTmFtZSI6InNsYWNrIiwidGltZXN0YW1wIjoxNzkyMDAxMzc4Mjg5LCJub25jZSI6ImZiNzc3NzRmMDU3N2VjODRlMjk5OWFjNWIwODUzYTcyIiwicmVkaXJlY3RVcmkiOiJodHRwczovL2xvY2FsaG9zdDozMDAxL2FwaS9pbnRlZ3JhdGlvbnMvb2F1dGgvY2FsbGJhY2s%252FcHJvdmlkZXI9c2xhY2siLCJzdGF0ZSI6ImV5SnZjbWRoYm1sNllYUnBiMjVKWkNJNkluZDVjbTAxTkhwcWMyWndjbVZwWWpCemJHdGhjMjF1YWlJc0luQnliM1pwWkdWeVRtRnRaU0k2SW5Oc1lXTnJJaXdpZEdsdFpYTjBZVzF3SWpveE56a3lNREF4TXpjNE1qZzRMQ0p1YjI1alpTSTZJams0TkRrNE9UVXlaams0WmpRNU4ySTFaamt6TXpBNU5URXpPR1F6TVRjekluMD0uY2FhNTgxZTUzNDIzNWZjN2U2ODQ2YTdjN2U0NzZlMDM3ZThhZGFkMWYxMTU0NGY1NGE1YTBlYzllZGQ2ZjczMCJ9.9ea657ad6e4425673c1b43c69246167303154d08310ad9e6ed18b4039fc25935%26granular_bot_scope%3D1%26single_channel%3D0%26install_redirect%3D%26tracked%3D1%26user_default%3D0%26team%3D%26original_team%3D%26response_type%3Dcode|Find your workspace | Slack|e3b0c44298fc"
+		},
+		{
+			"kind": "back",
+			"at": "https://app.epic-startup.test:2999/acme4/settings/integrations|Epic Startup|cbfa391c5fe7"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Read documentation",
+				"text": "Read documentation",
+				"selector": "section:nth-of-type(1) > div > div > div:nth-of-type(3) > a",
+				"point": {
+					"x": 468,
+					"y": 457
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/integrations|Epic Startup|cbfa391c5fe7"
+		},
+		{
+			"kind": "press",
+			"key": "End",
+			"at": "https://app.epic-startup.test:2999/acme4/settings/integrations|Epic Startup|168ad7e285b8"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Request integration",
+				"text": "Request integration",
+				"selector": "div:nth-of-type(2) > a",
+				"point": {
+					"x": 1295.2890625,
+					"y": 842
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/integrations|Epic Startup|168ad7e285b8"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Shop",
+				"text": "Shop",
+				"selector": "li:nth-of-type(10) > ul > li:nth-of-type(6) > a",
+				"point": {
+					"x": 120.5,
+					"y": 858
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/shop|Epic Startup|e3b0c44298fc"
+		}
+	],
+	"screenId": "settings-shop",
+	"createdAt": "2026-10-14T18:09:58.475Z",
+	"updatedAt": "2026-10-14T18:09:58.475Z"
+}

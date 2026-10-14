@@ -1,0 +1,21 @@
+{
+	"version": 1,
+	"id": "screen-dashboard",
+	"description": "Org home with note stats, daily notes chart and layout editing.",
+	"platform": "web",
+	"requires": ["enter-app"],
+	"steps": [],
+	"screenId": "dashboard",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:51:47.160Z",
+	"updatedAt": "2026-10-14T17:51:47.160Z"
+}

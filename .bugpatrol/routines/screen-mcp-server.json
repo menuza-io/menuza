@@ -1,0 +1,50 @@
+{
+	"version": 1,
+	"id": "screen-mcp-server",
+	"description": "MCP server URL and OAuth setup instructions per AI client (Claude Desktop, Kiro, Cursor).",
+	"platform": "web",
+	"requires": ["enter-app"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Settings",
+				"text": "Settings",
+				"selector": "#base-ui-_R_7lklaimj55_",
+				"point": {
+					"x": 120,
+					"y": 616
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|32f53a227f11"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "MCP Server",
+				"text": "MCP Server",
+				"selector": "li:nth-of-type(7) > a",
+				"point": {
+					"x": 120.5,
+					"y": 898
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/mcp|Epic Startup|61b1695972d6"
+		}
+	],
+	"screenId": "mcp-server",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Notes"
+		]
+	},
+	"createdAt": "2026-10-14T18:10:28.637Z",
+	"updatedAt": "2026-10-14T18:10:28.637Z"
+}

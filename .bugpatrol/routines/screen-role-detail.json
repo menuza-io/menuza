@@ -1,0 +1,257 @@
+{
+	"version": 1,
+	"id": "screen-role-detail",
+	"description": "Read-only permission list for one role, grouped by area with Allowed/Denied status.",
+	"platform": "web",
+	"requires": ["enter-app"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Settings",
+				"text": "Settings",
+				"selector": "#base-ui-_R_7lklaimj55_",
+				"point": {
+					"x": 120,
+					"y": 616
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4|Epic Startup|32f53a227f11"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "General",
+				"text": "General",
+				"selector": "li:nth-of-type(10) > ul > li:nth-of-type(1) > a",
+				"point": {
+					"x": 120.5,
+					"y": 658
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|c693cde6bc3d"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Name",
+				"text": "",
+				"selector": "#organization-settings-form-name",
+				"point": {
+					"x": 912,
+					"y": 327.25
+				}
+			},
+			"value": "",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|c693cde6bc3d"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save changes",
+				"text": "Save changes",
+				"selector": "div > div > div:nth-of-type(3) > button",
+				"point": {
+					"x": 1304.6328125,
+					"y": 515.5
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|4de81ca09e20"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Slug",
+				"text": "",
+				"selector": "#organization-settings-form-slug",
+				"point": {
+					"x": 912,
+					"y": 418.5
+				}
+			},
+			"value": "Bad Slug!!",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|e1f84d016d6e"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "",
+				"text": "",
+				"selector": "#base-ui-_r_h_",
+				"point": {
+					"x": 324,
+					"y": 809.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|9f33f8ccdb2a"
+		},
+		{
+			"kind": "type",
+			"target": {
+				"role": "textbox",
+				"name": "Verified domain",
+				"text": "",
+				"selector": "#verified-domain-verifiedDomain",
+				"point": {
+					"x": 836,
+					"y": 561
+				}
+			},
+			"value": "not a domain",
+			"submit": false,
+			"at": "https://app.epic-startup.test:2999/acme4/settings|Epic Startup|b23925afb63a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save",
+				"text": "Save",
+				"selector": "form > div:nth-of-type(2) > button",
+				"point": {
+					"x": 1329.8984375,
+					"y": 638
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|eb23fd254d3a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "",
+				"text": "",
+				"selector": "#base-ui-_r_h_",
+				"point": {
+					"x": 324,
+					"y": 450.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|b23925afb63a"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "Enable Custom S3 Storage",
+				"text": "",
+				"selector": "#base-ui-_r_q_",
+				"point": {
+					"x": 324,
+					"y": 606.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|e6c1e3427384"
+		},
+		{
+			"kind": "scroll",
+			"direction": "down",
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|12080a6599bb"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Save",
+				"text": "Save",
+				"selector": "section:nth-of-type(3) > div > div:nth-of-type(3) > button",
+				"point": {
+					"x": 1322.0390625,
+					"y": 621.890625
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|12080a6599bb"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "switch",
+				"name": "Enable Custom S3 Storage",
+				"text": "",
+				"selector": "#base-ui-_r_q_",
+				"point": {
+					"x": 324,
+					"y": 56.9453125
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings?index|Epic Startup|e6cea2e3121e"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Members",
+				"text": "Members",
+				"selector": "li:nth-of-type(10) > ul > li:nth-of-type(2) > a",
+				"point": {
+					"x": 120.5,
+					"y": 698
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/members|Epic Startup|5a3e427abb74"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Send Invitations",
+				"text": "Send Invitations",
+				"selector": "form > div:nth-of-type(2) > button",
+				"point": {
+					"x": 836,
+					"y": 751
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/members|Epic Startup|5a3e427abb74"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "link",
+				"name": "Roles & access",
+				"text": "Roles & access",
+				"selector": "li:nth-of-type(10) > ul > li:nth-of-type(3) > a",
+				"point": {
+					"x": 120.5,
+					"y": 738
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/roles|Epic Startup|994a62a9f91d"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Inspect",
+				"text": "Inspect",
+				"selector": "tr:nth-of-type(1) > td:nth-of-type(4) > a",
+				"point": {
+					"x": 1322.6484375,
+					"y": 571
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/settings/roles/org_role_admin|Epic Startup|843bffebb468"
+		}
+	],
+	"screenId": "role-detail",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Reports"
+		]
+	},
+	"createdAt": "2026-10-14T18:08:18.762Z",
+	"updatedAt": "2026-10-14T18:08:18.762Z"
+}

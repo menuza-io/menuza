@@ -1,0 +1,50 @@
+{
+	"version": 1,
+	"id": "screen-notes-kanban",
+	"description": "Kanban view of notes in draggable columns with Add column.",
+	"platform": "web",
+	"requires": ["screen-edit-note"],
+	"steps": [
+		{
+			"kind": "tap",
+			"target": {
+				"role": "button",
+				"name": "Close",
+				"text": "Close",
+				"selector": "div:nth-of-type(3) > button",
+				"point": {
+					"x": 1410,
+					"y": 30
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup|58b2d07004ba"
+		},
+		{
+			"kind": "tap",
+			"target": {
+				"role": "tab",
+				"name": "Kanban board",
+				"text": "",
+				"selector": "#base-ui-_R_4ot6j55_",
+				"point": {
+					"x": 1224.140625,
+					"y": 110
+				}
+			},
+			"at": "https://app.epic-startup.test:2999/acme4/notes|Epic Startup|96be8688ead8"
+		}
+	],
+	"screenId": "notes-kanban",
+	"expect": {
+		"elements": [
+			"sidebar-team-chat",
+			"App header",
+			"Go to homepage",
+			"Team chat",
+			"Search notes",
+			"Dashboard"
+		]
+	},
+	"createdAt": "2026-10-14T17:54:02.670Z",
+	"updatedAt": "2026-10-14T17:54:02.670Z"
+}
