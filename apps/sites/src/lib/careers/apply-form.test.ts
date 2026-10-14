@@ -9,6 +9,7 @@ const MESSAGES = {
 	success: 'Thank you.',
 	checkAnswers: 'Check the answers.',
 	required: 'Required.',
+	chooseLocation: 'Pick a place.',
 	badEmail: 'Bad email.',
 	badPhone: 'Bad phone.',
 	contact: 'Need contact.',
@@ -21,7 +22,7 @@ const MESSAGES = {
 	network: 'Offline.',
 }
 
-function mount(options: { turnstile?: boolean } = {}) {
+function mount(options: { turnstile?: boolean; picker?: boolean } = {}) {
 	document.body.innerHTML = `
 	<form data-apply-form data-tenant-api-url="https://us.tenant.test"
 		data-posting-slug="line-cook" data-org-slug="acme" data-locale="en"
@@ -29,6 +30,11 @@ function mount(options: { turnstile?: boolean } = {}) {
 		${options.turnstile ? 'data-turnstile="on"' : ''}
 		data-messages='${JSON.stringify(MESSAGES)}' novalidate>
 		<input name="website" />
+		${
+			options.picker
+				? '<fieldset data-locations><input type="checkbox" name="scopeIds" value="loc1" /><input type="checkbox" name="scopeIds" value="loc2" /><p class="hidden" data-error-for="scopeIds"></p></fieldset>'
+				: ''
+		}
 		<input name="firstName" /><p class="hidden" data-error-for="firstName"></p>
 		<input name="lastName" /><p class="hidden" data-error-for="lastName"></p>
 		<input name="email" /><p class="hidden" data-error-for="email"></p>
@@ -290,5 +296,39 @@ describe('the application form', () => {
 		fill(form, { ...GOOD, firstName: '<img src=x onerror=alert(1)>' })
 		await submit(form)
 		expect(document.querySelector('img')).toBeNull()
+	})
+
+	it('needs at least one location when the job is at several, and sends every one chosen', async () => {
+		const form = mount({ picker: true })
+		initApplyForm(form, { fetchImpl: fetchMock as never })
+		fill(form, GOOD)
+		await submit(form)
+		// Nothing leaves the browser without a place.
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(form.querySelector('[data-error-for="scopeIds"]')?.textContent).toBe(
+			'Pick a place.',
+		)
+
+		form
+			.querySelectorAll<HTMLInputElement>('[name="scopeIds"]')
+			.forEach((box) => (box.checked = true))
+		await submit(form)
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+		const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+		expect(JSON.parse(String(init.body)).scopeIds).toEqual(['loc1', 'loc2'])
+	})
+
+	it("marks the locations when the server says one is not the job's", async () => {
+		fetchMock.mockResolvedValueOnce(
+			Response.json({ error: 'invalid_scope' }, { status: 400 }),
+		)
+		const form = mount({ picker: true })
+		initApplyForm(form, { fetchImpl: fetchMock as never })
+		fill(form, GOOD)
+		form.querySelector<HTMLInputElement>('[value="loc1"]')!.checked = true
+		await submit(form)
+		expect(form.querySelector('[data-error-for="scopeIds"]')?.textContent).toBe(
+			'Pick a place.',
+		)
 	})
 })

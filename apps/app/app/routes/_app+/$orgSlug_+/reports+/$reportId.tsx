@@ -7,8 +7,10 @@ import {
 } from '@repo/reports/server'
 import { useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
+import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/$reportId.ts'
 
@@ -35,12 +37,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organization.id,
 	)
-	const fullCatalog = getCatalog('organization')
+	const { catalog: fullCatalog, scopeWording } =
+		await organizationReportCatalog(organization.id)
 	const definition = parseDefinition(report.definition)
 	if (!definitionAllowed(fullCatalog, definition, staff.subjects)) {
 		throw new Response('Not Found', { status: 404 })
 	}
 	return {
+		scopeWording,
 		catalog: catalogForGrants(fullCatalog, staff.subjects),
 		definition,
 		orgSlug: organization.slug,
@@ -84,16 +88,18 @@ export default function SavedReportRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<AppReportWorkspace
-			catalog={data.catalog}
-			scope="organization"
-			initialDefinition={data.definition}
-			controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
-			// The builder can switch to a regional subject at any time.
-			tenantTokenUrl={`/${data.orgSlug}/reports/token`}
-			tenantApiUrl={data.tenantApiUrl}
-			backHref={`/${data.orgSlug}/reports`}
-			hasTenantDb={data.hasProvisionedDb}
-		/>
+		<ScopeWordingProvider wording={data.scopeWording}>
+			<AppReportWorkspace
+				catalog={data.catalog}
+				scope="organization"
+				initialDefinition={data.definition}
+				controlPlaneRunUrl={`/${data.orgSlug}/reports/run`}
+				// The builder can switch to a regional subject at any time.
+				tenantTokenUrl={`/${data.orgSlug}/reports/token`}
+				tenantApiUrl={data.tenantApiUrl}
+				backHref={`/${data.orgSlug}/reports`}
+				hasTenantDb={data.hasProvisionedDb}
+			/>
+		</ScopeWordingProvider>
 	)
 }

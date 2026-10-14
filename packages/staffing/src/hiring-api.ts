@@ -301,6 +301,8 @@ export type HiringApplicationSummary = {
 	postingId: string
 	postingTitle: string
 	scopeId: string | null
+	/** Every place the applicant chose, when the posting covers several. */
+	interestedScopeIds: string[]
 	firstName: string
 	lastName: string
 	source: HiringSource

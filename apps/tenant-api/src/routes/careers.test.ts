@@ -770,9 +770,12 @@ describe('POST /careers/apply', () => {
 			const [row] = await rows()
 			// The first chosen scope in the posting's own order is the one kept.
 			expect(row?.scopeId).toBe(LOC_2)
-			// That scope's managers are told.
+			// Every scope the person named is stored, the primary first.
+			expect(row?.interestedScopeIds).toEqual([LOC_2, 'loc-3'])
+			// Each chosen scope's managers are told, once.
 			const alerts = await (await h.db()).select().from(notificationOutbox)
-			expect(alerts.map((a) => a.scopeId)).toEqual([LOC_2])
+			expect(alerts.map((a) => a.scopeId).sort()).toEqual([LOC_2, 'loc-3'])
+			expect(new Set(alerts.map((a) => a.dedupeKey)).size).toBe(2)
 		})
 
 		it("makes the applicant pick among a posting's several scopes, and checks it", async () => {

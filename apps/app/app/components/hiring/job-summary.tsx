@@ -15,7 +15,16 @@ import { useJobLabels } from './job-labels.ts'
  * The description shown here is either the editor's own output (a rich-text
  * schema that cannot carry a script) or the copy the server sanitized.
  */
-export function JobSummary({ form }: { form: PostingForm }) {
+export function JobSummary({
+	form,
+	locationName,
+	hasLocations = true,
+}: {
+	form: PostingForm
+	locationName: string | null
+	/** False for an organization without locations: there is no "where" to show. */
+	hasLocations?: boolean
+}) {
 	const { _, i18n } = useLingui()
 	const labels = useJobLabels()
 	const payload = toPayload(form)
@@ -38,6 +47,16 @@ export function JobSummary({ form }: { form: PostingForm }) {
 
 	const rows: Array<[string, string]> = [
 		[_(t`Position`), form.positionName || '-'],
+		...(hasLocations
+			? ([
+					[
+						_(t`Where`),
+						form.locationScope === 'all'
+							? _(t`All locations`)
+							: (locationName ?? '-'),
+					],
+				] as Array<[string, string]>)
+			: []),
 		[_(t`Type`), labels.employment[form.employmentType]],
 		[_(t`Pay`), pay ?? _(t`Not shown`)],
 		[_(t`Closes`), closes ?? _(t`When you close it`)],

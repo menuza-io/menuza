@@ -35,6 +35,9 @@ export type PostingForm = {
 	payMin: string
 	payMax: string
 	currency: string
+	/** `all`: every location, including ones added later. `selected`: `locationIds`. */
+	locationScope: 'all' | 'selected'
+	locationIds: string[]
 	closesOn: string
 	questions: ScreenerQuestion[]
 	/** Other-language copy; the default language lives in the fields above. */
@@ -45,6 +48,7 @@ export type PostingFormError =
 	| 'title_required'
 	| 'title_short'
 	| 'position_required'
+	| 'locations_required'
 	| 'pay_required'
 	| 'pay_invalid'
 	| 'pay_range'
@@ -54,7 +58,10 @@ export type PostingFormError =
 
 export type PostingFormErrors = Partial<Record<string, PostingFormError>>
 
-export function emptyPostingForm(defaults: { currency: string }): PostingForm {
+export function emptyPostingForm(defaults: {
+	currency: string
+	locationId?: string | null
+}): PostingForm {
 	return {
 		title: '',
 		positionName: '',
@@ -64,6 +71,8 @@ export function emptyPostingForm(defaults: { currency: string }): PostingForm {
 		payMin: '',
 		payMax: '',
 		currency: defaults.currency,
+		locationScope: defaults.locationId ? 'selected' : 'all',
+		locationIds: defaults.locationId ? [defaults.locationId] : [],
 		closesOn: '',
 		questions: [],
 		translations: {},
@@ -79,6 +88,7 @@ export function formFromPosting(posting: {
 	payMinMinor: number | null
 	payMaxMinor: number | null
 	currency: string
+	locationIds: string[]
 	closesOn: string | null
 	questions: ScreenerQuestion[]
 	translations?: JobPostingTranslations
@@ -92,6 +102,8 @@ export function formFromPosting(posting: {
 		payMin: minorToInput(posting.payMinMinor),
 		payMax: minorToInput(posting.payMaxMinor),
 		currency: posting.currency,
+		locationScope: posting.locationIds.length > 0 ? 'selected' : 'all',
+		locationIds: posting.locationIds,
 		closesOn: posting.closesOn ?? '',
 		questions: posting.questions,
 		translations: posting.translations ?? {},
@@ -109,6 +121,7 @@ export function toPayload(form: PostingForm) {
 		payMinMinor: showsPay ? parseMoneyToMinor(form.payMin) : null,
 		payMaxMinor: showsPay ? parseMoneyToMinor(form.payMax) : null,
 		currency: form.currency,
+		locationIds: form.locationScope === 'all' ? [] : form.locationIds,
 		descriptionHtml: form.descriptionHtml,
 		questions: form.questions,
 		translations: form.translations,
@@ -132,6 +145,9 @@ export function validateStep(
 		if (!title) errors.title = 'title_required'
 		else if (title.length < 3) errors.title = 'title_short'
 		if (!form.positionName.trim()) errors.positionName = 'position_required'
+		if (form.locationScope === 'selected' && form.locationIds.length === 0) {
+			errors.locations = 'locations_required'
+		}
 	}
 	if (step === 'pay') {
 		if (form.payType !== 'none') {

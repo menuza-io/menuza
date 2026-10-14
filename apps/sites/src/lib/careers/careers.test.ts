@@ -1,7 +1,7 @@
 import { setupI18n } from '@lingui/core'
 import { describe, expect, it } from 'vitest'
 import { sanitizeJobDescription } from '../sanitize.ts'
-import { employmentLabel, payLine } from './labels.ts'
+import { employmentLabel, payLine, placeLine } from './labels.ts'
 import { renderQrSvg } from './qr.ts'
 import { jobPostingStructuredData } from './seo.ts'
 
@@ -44,6 +44,33 @@ describe('labels', () => {
 		expect(employmentLabel(i18n, 'full_time')).toBe('Full time')
 		expect(employmentLabel(i18n, 'internship')).toBe('Internship')
 	})
+
+	it('joins a location name and city without repeating it', () => {
+		const one = (place: { name: string; city: string | null }) =>
+			placeLine({ locations: [place], allLocations: false })
+		expect(placeLine({ locations: [], allLocations: true })).toBeNull()
+		expect(one({ name: 'Downtown', city: 'Austin' })).toBe('Downtown, Austin')
+		expect(one({ name: 'Austin Downtown', city: 'Austin' })).toBe(
+			'Austin Downtown',
+		)
+		expect(one({ name: 'Downtown', city: null })).toBe('Downtown')
+	})
+
+	it('lists a few named places, and says nothing for "everywhere"', () => {
+		const places = [
+			{ name: 'Downtown', city: 'Austin' },
+			{ name: 'Airport', city: null },
+		]
+		expect(placeLine({ locations: places, allLocations: false })).toBe(
+			'Downtown, Austin · Airport',
+		)
+		// Open everywhere with several places to pick from: the page says "All locations".
+		expect(placeLine({ locations: places, allLocations: true })).toBeNull()
+		// A business with one location names it, even when the job is open everywhere.
+		expect(placeLine({ locations: [places[1]!], allLocations: true })).toBe(
+			'Airport',
+		)
+	})
 })
 
 describe('sanitizeJobDescription', () => {
@@ -83,6 +110,8 @@ describe('jobPostingStructuredData', () => {
 		currency: 'USD',
 		descriptionHtml: '<p>Cook.</p><script>alert(1)</script>',
 		questions: [],
+		locations: [],
+		allLocations: true,
 		isGeneral: false,
 		datePosted: '2026-10-01T00:00:00.000Z',
 		validThrough: null,

@@ -528,6 +528,14 @@ msgstr "تم إنجاز {complete} من {total}"
 msgid "{count, plural, one {# answer to check} other {# answers to check}}"
 msgstr "{count, plural, one {إجابة واحدة تستحق المراجعة} two {إجابتان تستحقان المراجعة} few {# إجابات تستحق المراجعة} many {# إجابة تستحق المراجعة} other {# إجابة تستحق المراجعة}}"
 
+#: app/components/hiring/location-picker.tsx:104
+msgid "{count, plural, one {# location chosen} other {# locations chosen}}"
+msgstr "{count, plural, one {تم اختيار فرع واحد} two {تم اختيار فرعين} few {تم اختيار # فروع} many {تم اختيار # فرعًا} other {تم اختيار # فرع}}"
+
+#: app/components/member-location-scope.tsx:89
+msgid "{count, plural, one {# location} other {# locations}}"
+msgstr "{count, plural, one {فرع واحد} two {فرعان} few {# فروع} many {# فرعًا} other {# فرع}}"
+
 #: app/components/staff/staff-profile-page.tsx:42
 msgid "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 msgstr "{count, plural, one {أمر واحد يحتاج إلى معالجة} two {أمران يحتاجان إلى معالجة} few {# أمور تحتاج إلى معالجة} many {# أمرًا يحتاج إلى معالجة} other {# أمر يحتاج إلى معالجة}}"
@@ -682,6 +690,10 @@ msgstr "{field}"
 #: app/components/settings/cards/organization/site-locales-card.tsx:133
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr "{first}، {second}، +{remainingCount} أخرى"
+
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:169
+msgid "{firstPlace} and {more} more"
+msgstr "{firstPlace} و{more} أخرى"
 
 #: app/components/chat/chat-view.tsx:786
 msgid "{firstTypingName} is typing…"
@@ -960,7 +972,7 @@ msgstr "تمت استعادة {positionName}."
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsText}"
 
-#: app/components/hiring/job-summary.tsx:49
+#: app/components/hiring/job-summary.tsx:68
 msgid "{questionCount} ({dealbreakers} dealbreaker)"
 msgstr "{questionCount} ({dealbreakers} شرط أساسي)"
 
@@ -1414,6 +1426,10 @@ msgstr "قيّم متصل المكالمة بـ 1 أو 2 من 5."
 msgid "A caller was unhappy or reported a problem."
 msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 
+#: app/components/member-location-scope.tsx:197
+msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
+msgstr "يسري التغيير عند تحديث جلسة الموظفين الخاصة بهم في المرة القادمة، خلال 15 دقيقة."
+
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
@@ -1426,7 +1442,7 @@ msgstr "عضو سابق في الفريق"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "يوجد عضو سابق في الفريق بهذا البريد الإلكتروني أو رقم الهاتف. أعد توظيفه من قائمة الفريق بدلًا من ذلك."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:179
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:203
 msgid "A general application stays open all the time, so people can apply even when no job is posted."
 msgstr "يبقى الطلب العام مفتوحًا دائمًا، فيستطيع الناس التقديم حتى عندما لا تكون هناك وظيفة معلنة."
 
@@ -1809,7 +1825,7 @@ msgstr "أضف منطقة توصيل لتحديد مسافة النطاق أو �
 msgid "Add a first name."
 msgstr "أضف الاسم الأول."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:76
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:87
 msgid "Add a general application"
 msgstr "إضافة طلب توظيف عام"
 
@@ -1829,7 +1845,7 @@ msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة 
 msgid "Add a holiday date"
 msgstr "إضافة تاريخ عطلة"
 
-#: app/components/hiring/job-editor.tsx:821
+#: app/components/hiring/job-editor.tsx:868
 msgid "Add a job title."
 msgstr "أضف مسمى الوظيفة."
 
@@ -2714,9 +2730,14 @@ msgstr "كل الأيام"
 msgid "All jobs"
 msgstr "كل الوظائف"
 
+#: app/components/hiring/job-summary.tsx:55
+#: app/components/hiring/location-picker.tsx:85
+#: app/components/member-location-scope.tsx:86
+#: app/components/member-location-scope.tsx:133
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
 msgid "All locations"
 msgstr "كل الفروع"
 
@@ -3043,7 +3064,7 @@ msgstr "المتقدّمون"
 msgid "Applicants must answer before they can apply."
 msgstr "يجب على المتقدمين الإجابة قبل أن يتمكنوا من التقديم."
 
-#: app/components/hiring/candidate-sheet.tsx:502
+#: app/components/hiring/candidate-sheet.tsx:512
 msgid "Application deleted."
 msgstr "تم حذف الطلب."
 
@@ -3058,7 +3079,7 @@ msgstr "الطلبات حسب المصدر"
 #: app/components/hiring/applicant-labels.ts:92
 #: app/components/hiring/applicant-list.tsx:73
 #: app/components/hiring/candidate-parts.tsx:414
-#: app/components/hiring/candidate-sheet.tsx:375
+#: app/components/hiring/candidate-sheet.tsx:385
 msgid "Applied"
 msgstr "تاريخ التقديم"
 
@@ -3118,7 +3139,7 @@ msgstr "تمت الموافقة."
 msgid "Approving a swap or cover changes the schedule as a draft. Publish the week to tell your team."
 msgstr "الموافقة على التبديل أو التغطية تعدّل الجدول كمسودة. انشر الأسبوع لإخبار فريقك."
 
-#: app/components/hiring/candidate-sheet.tsx:381
+#: app/components/hiring/candidate-sheet.tsx:391
 #: app/components/nav-user.tsx:102
 #: app/components/phone-agent/voice-picker.tsx:60
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:55
@@ -3473,7 +3494,7 @@ msgstr "بانتظار الدفع"
 msgid "B&W"
 msgstr "أبيض وأسود"
 
-#: app/components/hiring/job-editor.tsx:385
+#: app/components/hiring/job-editor.tsx:411
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
@@ -3638,7 +3659,7 @@ msgstr "قبل فتح الطرح"
 msgid "Before transferring, the agent asks if it may text the caller a link they can use should nobody pick up."
 msgstr "قبل التحويل، يسأل الوكيل المتصل إن كان يمكنه أن يرسل إليه رابطًا يستخدمه إذا لم يرد أحد."
 
-#: app/components/hiring/job-editor.tsx:833
+#: app/components/hiring/job-editor.tsx:880
 msgid "Before you can publish"
 msgstr "قبل أن تتمكن من النشر"
 
@@ -4098,12 +4119,13 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/hiring/decline-dialog.tsx:167
 #: app/components/hiring/hire-dialog.tsx:311
 #: app/components/hiring/interview-dialog.tsx:279
-#: app/components/hiring/job-editor.tsx:940
+#: app/components/hiring/job-editor.tsx:991
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/locations/delivery-zones-manager.tsx:564
 #: app/components/locations/location-form.tsx:993
 #: app/components/locations/special-hours-picker.tsx:225
 #: app/components/media-library/media-library-picker.tsx:342
+#: app/components/member-location-scope.tsx:215
 #: app/components/menu/drop-wizard/drop-drawers.tsx:396
 #: app/components/menu/drop-wizard/drop-drawers.tsx:590
 #: app/components/menu/drop-wizard/drop-drawers.tsx:777
@@ -4548,7 +4570,7 @@ msgstr "إعدادات الدردشة"
 #~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 #~ msgstr "تستخدم الدردشة Cloudflare Durable Objects. شغّل المشروع بـ <0>npm run dev</0> (وليس <1>npm run dev:node -w app</1> لخادم Node فقط). إن لم تُحمَّل الدردشة، طبّق ترحيلات D1 المحلية — راجع docs/team-chat.md."
 
-#: app/components/hiring/job-editor.tsx:320
+#: app/components/hiring/job-editor.tsx:342
 msgid "Check it over"
 msgstr "راجع الإعلان"
 
@@ -4658,7 +4680,7 @@ msgstr "اختيار ملف CSV"
 msgid "Choose a date"
 msgstr "اختر تاريخًا"
 
-#: app/components/hiring/job-editor.tsx:483
+#: app/components/hiring/job-editor.tsx:510
 msgid "Choose a date that is not in the past."
 msgstr "اختر تاريخًا غير سابق."
 
@@ -4667,7 +4689,7 @@ msgstr "اختر تاريخًا غير سابق."
 msgid "Choose a date: {label}"
 msgstr "اختر تاريخًا: {label}"
 
-#: app/components/hiring/job-editor.tsx:482
+#: app/components/hiring/job-editor.tsx:509
 #: app/components/staff/schedule/availability-sheet.tsx:159
 msgid "Choose a date."
 msgstr "اختر تاريخًا."
@@ -4750,6 +4772,10 @@ msgstr "اختر قائمة موجودة..."
 msgid "Choose at least one day."
 msgstr "اختر يومًا واحدًا على الأقل."
 
+#: app/components/hiring/job-editor.tsx:505
+msgid "Choose at least one location."
+msgstr "اختر فرعًا واحدًا على الأقل."
+
 #: app/components/staff/schedule/copy-week-dialog.tsx:212
 msgid "Choose at least one to copy."
 msgstr "اختر ما تريد نسخه على الأقل."
@@ -4786,6 +4812,10 @@ msgstr "اختر أحد أرقام الوكيل المخصصة لنشاطك ال
 #: app/components/phone-agent/settings-page.tsx:90
 msgid "Choose one of the listed options."
 msgstr "اختر أحد الخيارات المدرجة."
+
+#: app/components/hiring/location-picker.tsx:108
+msgid "Choose one or more."
+msgstr "اختر فرعًا واحدًا أو أكثر."
 
 #: app/components/kiosk/kiosk-pair.tsx:54
 msgid "Choose Pair a tablet and create a code."
@@ -4862,6 +4892,10 @@ msgstr "اختر مكان عملهم."
 msgid "Choose which languages your public website supports, and which one visitors see by default."
 msgstr "اختر اللغات التي يدعمها موقعك العام، واللغة التي يراها الزوار افتراضياً."
 
+#: app/components/member-location-scope.tsx:111
+msgid "Choose which locations {memberName} can see and manage in Staff: the roster, schedules, and time cards. Their other permissions do not change."
+msgstr "اختر الفروع التي يمكن لـ {memberName} عرضها وإدارتها في الموظفين: قائمة الفريق والجداول وبطاقات الوقت. لا تتغير صلاحياته الأخرى."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:555
 #~ msgid "Choose which menu this drop sells. Hidden menus are fine."
 #~ msgstr "اختر القائمة التي يبيعها هذا الطرح. القوائم المخفية مناسبة."
@@ -4894,6 +4928,10 @@ msgstr "اختر خطتك"
 #: app/components/staff/labor-policy-editor.tsx:1436
 msgid "Choose…"
 msgstr "اختر…"
+
+#: app/components/member-location-scope.tsx:149
+msgid "Choosing none gives no access to Staff."
+msgstr "عدم اختيار أي فرع يعني عدم الوصول إلى الموظفين."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3584
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3824
@@ -5102,7 +5140,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
-#: app/components/hiring/job-editor.tsx:953
+#: app/components/hiring/job-editor.tsx:1004
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:554
@@ -5111,7 +5149,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 msgid "Close"
 msgstr "إغلاق"
 
-#: app/components/hiring/job-editor.tsx:506
+#: app/components/hiring/job-editor.tsx:535
 msgid "Close a live job before deleting it."
 msgstr "أغلق الوظيفة المنشورة قبل حذفها."
 
@@ -5119,11 +5157,11 @@ msgstr "أغلق الوظيفة المنشورة قبل حذفها."
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
-#: app/components/hiring/job-editor.tsx:890
+#: app/components/hiring/job-editor.tsx:941
 msgid "Close this job"
 msgstr "إغلاق هذه الوظيفة"
 
-#: app/components/hiring/job-editor.tsx:921
+#: app/components/hiring/job-editor.tsx:972
 msgid "Close this job?"
 msgstr "إغلاق هذه الوظيفة؟"
 
@@ -5149,7 +5187,7 @@ msgstr "مغلق"
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
 
-#: app/components/hiring/job-summary.tsx:43
+#: app/components/hiring/job-summary.tsx:62
 msgid "Closes"
 msgstr "تُغلق"
 
@@ -5157,7 +5195,7 @@ msgstr "تُغلق"
 msgid "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 msgstr "يغلق وردية نُسي إنهاؤها ويعلّمها لكي يصلحها مدير. معطّل افتراضيًا."
 
-#: app/components/hiring/job-editor.tsx:771
+#: app/components/hiring/job-editor.tsx:814
 msgid "Closes on"
 msgstr "تُغلق في"
 
@@ -5556,7 +5594,7 @@ msgstr "انقطع الاتصال. جارٍ إعادة الاتصال…"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: app/components/hiring/candidate-sheet.tsx:371
+#: app/components/hiring/candidate-sheet.tsx:381
 #: app/components/website/create-form-dialog.tsx:111
 msgid "Contact"
 msgstr "اتصل"
@@ -6372,7 +6410,7 @@ msgstr "عند الرصيف"
 msgid "Curbside Pickup"
 msgstr "استلام عند الرصيف"
 
-#: app/components/hiring/job-editor.tsx:747
+#: app/components/hiring/job-editor.tsx:790
 #: app/components/staff/timesheets/payroll-summary.tsx:175
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:431
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:246
@@ -6713,7 +6751,7 @@ msgstr "الفاصلة العشرية"
 msgid "Declared cash tips"
 msgstr "الإكراميات النقدية المصرّح بها"
 
-#: app/components/hiring/candidate-sheet.tsx:263
+#: app/components/hiring/candidate-sheet.tsx:273
 #: app/components/hiring/decline-dialog.tsx:177
 #: app/components/staff/schedule/availability-page.tsx:315
 #: app/components/staff/schedule/availability-page.tsx:376
@@ -6749,11 +6787,11 @@ msgstr "رفض هذا الطلب؟"
 msgid "Declined"
 msgstr "مرفوض"
 
-#: app/components/hiring/candidate-sheet.tsx:169
+#: app/components/hiring/candidate-sheet.tsx:179
 msgid "Declined, but the message could not be sent."
 msgstr "تم الرفض، لكن تعذّر إرسال الرسالة."
 
-#: app/components/hiring/candidate-sheet.tsx:297
+#: app/components/hiring/candidate-sheet.tsx:307
 msgid "Declined: {declineReasonLabel}."
 msgstr "مرفوض: {declineReasonLabel}."
 
@@ -6761,20 +6799,20 @@ msgstr "مرفوض: {declineReasonLabel}."
 msgid "Declined: {label}"
 msgstr "مرفوض: {label}"
 
-#: app/components/hiring/candidate-sheet.tsx:174
-#: app/components/hiring/candidate-sheet.tsx:299
+#: app/components/hiring/candidate-sheet.tsx:184
+#: app/components/hiring/candidate-sheet.tsx:309
 msgid "Declined."
 msgstr "مرفوض."
 
-#: app/components/hiring/candidate-sheet.tsx:173
+#: app/components/hiring/candidate-sheet.tsx:183
 msgid "Declined. Email is turned off, so nothing was sent."
 msgstr "تم الرفض. البريد الإلكتروني متوقف، لذا لم يُرسل شيء."
 
-#: app/components/hiring/candidate-sheet.tsx:171
+#: app/components/hiring/candidate-sheet.tsx:181
 msgid "Declined. There is no email on file, so nothing was sent."
 msgstr "تم الرفض. لا يوجد بريد إلكتروني مسجّل، لذا لم يُرسل شيء."
 
-#: app/components/hiring/candidate-sheet.tsx:167
+#: app/components/hiring/candidate-sheet.tsx:177
 msgid "Declined. They were sent your message."
 msgstr "تم الرفض. وصلتهم رسالتك."
 
@@ -6848,7 +6886,7 @@ msgstr "وحدة التأخير مطلوبة."
 
 #: app/components/chat/chat-view.tsx:1029
 #: app/components/hiring/erase-dialog.tsx:89
-#: app/components/hiring/job-editor.tsx:951
+#: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
 #: app/components/roles/tenant-role-access-manager.tsx:1101
 #: app/components/roles/tenant-role-access-manager.tsx:1259
@@ -6914,7 +6952,7 @@ msgstr "حذف الحساب"
 msgid "Delete announcement?"
 msgstr "هل تريد حذف الإعلان؟"
 
-#: app/components/hiring/candidate-sheet.tsx:221
+#: app/components/hiring/candidate-sheet.tsx:231
 msgid "Delete application…"
 msgstr "حذف الطلب…"
 
@@ -7102,11 +7140,11 @@ msgstr "حذف القالب {templateName}"
 msgid "Delete this call?"
 msgstr "حذف هذه المكالمة؟"
 
-#: app/components/hiring/job-editor.tsx:900
+#: app/components/hiring/job-editor.tsx:951
 msgid "Delete this job"
 msgstr "حذف هذه الوظيفة"
 
-#: app/components/hiring/job-editor.tsx:919
+#: app/components/hiring/job-editor.tsx:970
 msgid "Delete this job?"
 msgstr "حذف هذه الوظيفة؟"
 
@@ -7198,7 +7236,7 @@ msgstr "مناطق التوصيل والنطاق الجغرافي"
 msgid "Deny"
 msgstr "رفض"
 
-#: app/components/hiring/job-editor.tsx:268
+#: app/components/hiring/job-editor.tsx:290
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
 
@@ -7211,7 +7249,7 @@ msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 msgid "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 msgstr "صف متى يجب على الوكيل التحويل إلى جهة اتصال معينة. على سبيل المثال: \"أسئلة حول حجوزات المجموعات الكبيرة\"."
 
-#: app/components/hiring/job-editor.tsx:657
+#: app/components/hiring/job-editor.tsx:700
 #: app/components/roles/tenant-role-access-manager.tsx:593
 #: app/components/roles/tenant-role-access-manager.tsx:707
 #: app/components/roles/tenant-role-access-manager.tsx:900
@@ -7257,7 +7295,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها."
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيتم إزالة جميع بياناتك بشكل دائم من خوادمنا."
 
-#: app/components/hiring/candidate-sheet.tsx:333
+#: app/components/hiring/candidate-sheet.tsx:343
 #: app/components/staff/details-tab.tsx:123
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
@@ -7595,7 +7633,7 @@ msgstr "مسودة"
 msgid "Draft"
 msgstr "مسودة"
 
-#: app/components/hiring/job-editor.tsx:170
+#: app/components/hiring/job-editor.tsx:187
 msgid "Draft added. Read it through before you publish."
 msgstr "تمت إضافة المسودة. اقرأها جيدًا قبل النشر."
 
@@ -7640,7 +7678,7 @@ msgstr "صياغة بالذكاء الاصطناعي"
 msgid "Drafting answers is unavailable right now. Try again later."
 msgstr "صياغة الإجابات غير متاحة حاليًا. حاول مرة أخرى لاحقًا."
 
-#: app/components/hiring/job-editor.tsx:588
+#: app/components/hiring/job-editor.tsx:621
 msgid "Drafting..."
 msgstr "جارٍ كتابة المسودة..."
 
@@ -8301,7 +8339,7 @@ msgstr "تنتهي في اليوم التالي"
 msgid "Ends the next day."
 msgstr "تنتهي في اليوم التالي."
 
-#: app/components/hiring/candidate-sheet.tsx:381
+#: app/components/hiring/candidate-sheet.tsx:391
 #: app/components/nav-user.tsx:101
 #: app/components/phone-agent/voice-picker.tsx:58
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:53
@@ -8350,7 +8388,7 @@ msgstr "أدخل اسمًا."
 msgid "Enter a number."
 msgstr "أدخل رقمًا."
 
-#: app/components/hiring/job-editor.tsx:479
+#: app/components/hiring/job-editor.tsx:506
 msgid "Enter a pay amount, or choose not to show pay."
 msgstr "أدخل مبلغ الأجر، أو اختر عدم إظهاره."
 
@@ -8440,7 +8478,7 @@ msgstr "أدخل الاستراحة بالدقائق الكاملة، حتى 720
 msgid "Enter the end time."
 msgstr "أدخل وقت الانتهاء."
 
-#: app/components/hiring/job-editor.tsx:823
+#: app/components/hiring/job-editor.tsx:870
 msgid "Enter the pay, or choose not to show it."
 msgstr "أدخل الأجر، أو اختر عدم إظهاره."
 
@@ -8586,7 +8624,7 @@ msgstr "أدنى وقت توصيل متوقع (دقائق)"
 msgid "Estimated wages by position over the last 30 days. Needs permission to see pay."
 msgstr "الأجور التقديرية حسب الوظيفة خلال آخر 30 يومًا. تتطلب صلاحية عرض الأجور."
 
-#: app/components/hiring/job-editor.tsx:565
+#: app/components/hiring/job-editor.tsx:598
 msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "طاهٍ مسائي على الخط، ثلاث ليالٍ في الأسبوع، يجيد العمل على الشواية"
 
@@ -9280,7 +9318,7 @@ msgstr "الأسئلة الشائعة"
 msgid "Friday"
 msgstr "الجمعة"
 
-#: app/components/hiring/job-editor.tsx:730
+#: app/components/hiring/job-editor.tsx:773
 #: app/components/my-schedule/availability-sheet.tsx:162
 #: app/components/my-schedule/time-off-sheet.tsx:193
 #: app/components/staff/schedule/availability-sheet.tsx:313
@@ -9426,7 +9464,7 @@ msgstr "إرسال ملاحظات"
 msgid "Give me examples"
 msgstr "أعطني أمثلة"
 
-#: app/components/hiring/job-editor.tsx:476
+#: app/components/hiring/job-editor.tsx:502
 msgid "Give the job a title."
 msgstr "أعطِ الوظيفة مسمى."
 
@@ -9808,7 +9846,7 @@ msgstr "تأثير كبير"
 msgid "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 msgstr "الصور عالية الدقة تزيد معدل تحويل الطلبات بأكثر من 30%. تُحفظ في مكتبة الوسائط الخاصة بمؤسستك."
 
-#: app/components/hiring/candidate-sheet.tsx:250
+#: app/components/hiring/candidate-sheet.tsx:260
 #: app/components/hiring/hire-dialog.tsx:314
 msgid "Hire"
 msgstr "توظيف"
@@ -9832,11 +9870,11 @@ msgstr "تم التوظيف"
 msgid "Hired {hired}"
 msgstr "تم التوظيف {hired}"
 
-#: app/components/hiring/candidate-sheet.tsx:273
+#: app/components/hiring/candidate-sheet.tsx:283
 msgid "Hired on {hiredOn}."
 msgstr "تم التوظيف في {hiredOn}."
 
-#: app/components/hiring/candidate-sheet.tsx:275
+#: app/components/hiring/candidate-sheet.tsx:285
 msgid "Hired."
 msgstr "تم التوظيف."
 
@@ -9863,7 +9901,7 @@ msgstr "التوظيف: تقدّم شخص إلى وظيفة"
 msgid "Hiring…"
 msgstr "جارٍ التوظيف…"
 
-#: app/components/hiring/candidate-sheet.tsx:361
+#: app/components/hiring/candidate-sheet.tsx:371
 #: app/components/staff/timesheets/card-history.tsx:132
 msgid "History"
 msgstr "السجل"
@@ -10276,6 +10314,14 @@ msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
+#: app/components/member-location-scope.tsx:136
+msgid "Including locations you add later."
+msgstr "بما في ذلك الفروع التي تضيفها لاحقًا."
+
+#: app/components/hiring/location-picker.tsx:88
+msgid "Including locations you add later. Applicants choose where."
+msgstr "يشمل الفروع التي تضيفها لاحقًا. يختار المتقدمون المكان."
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:269
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Info"
@@ -10338,7 +10384,7 @@ msgstr "تدريب"
 
 #: app/components/hiring/applicant-labels.ts:24
 #: app/components/hiring/applicant-list.tsx:76
-#: app/components/hiring/candidate-sheet.tsx:257
+#: app/components/hiring/candidate-sheet.tsx:267
 msgid "Interview"
 msgstr "مقابلة"
 
@@ -10362,7 +10408,7 @@ msgstr "تمت جدولة المقابلة"
 msgid "Interview updated"
 msgstr "تم تحديث المقابلة"
 
-#: app/components/hiring/candidate-sheet.tsx:339
+#: app/components/hiring/candidate-sheet.tsx:349
 msgid "Interviews"
 msgstr "المقابلات"
 
@@ -10589,18 +10635,18 @@ msgstr "الوظائف والمتقدمون"
 msgid "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 msgstr "الوظائف والمتقدمون. تنطبق فقط عند تفعيل التوظيف لمؤسستك."
 
-#: app/components/hiring/job-editor.tsx:609
+#: app/components/hiring/job-editor.tsx:642
 msgid "Job title"
 msgstr "مسمى الوظيفة"
 
-#: app/components/hiring/job-editor.tsx:254
-#: app/components/hiring/job-read-only.tsx:21
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:84
+#: app/components/hiring/job-editor.tsx:276
+#: app/components/hiring/job-read-only.tsx:23
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:50
 msgid "Jobs"
 msgstr "الوظائف"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:87
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:98
 msgid "Jobs people can see and apply to on your website."
 msgstr "وظائف يمكن للناس رؤيتها والتقديم عليها من موقعك."
 
@@ -10665,7 +10711,7 @@ msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
-#: app/components/hiring/job-editor.tsx:451
+#: app/components/hiring/job-editor.tsx:477
 #: app/components/staff/labor-policy-editor.tsx:289
 msgid "Keep editing"
 msgstr "متابعة التعديل"
@@ -10841,7 +10887,7 @@ msgstr "نسبة العمالة من المبيعات المعتادة"
 msgid "Labor view"
 msgstr "عرض العمالة"
 
-#: app/components/hiring/candidate-sheet.tsx:380
+#: app/components/hiring/candidate-sheet.tsx:390
 #: app/components/hiring/job-labels.ts:45
 #: app/components/nav-user.tsx:260
 #: app/components/phone-agent/voice-picker.tsx:390
@@ -10971,7 +11017,7 @@ msgstr "جمع العملاء المحتملين"
 msgid "Learn more"
 msgstr "اعرف المزيد"
 
-#: app/components/hiring/job-editor.tsx:459
+#: app/components/hiring/job-editor.tsx:485
 msgid "Leave"
 msgstr "مغادرة"
 
@@ -10991,7 +11037,7 @@ msgstr "اتركه فارغًا بلا حد."
 msgid "Leave blank for unlimited."
 msgstr "اتركه فارغًا لعدد غير محدود."
 
-#: app/components/hiring/job-editor.tsx:739
+#: app/components/hiring/job-editor.tsx:782
 msgid "Leave empty for one rate."
 msgstr "اتركه فارغًا لأجر واحد."
 
@@ -11037,7 +11083,7 @@ msgstr "لا تستخدم الرمزين < و >."
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "هل تريد مغادرة صندوق الوارد وتجاهل مسودات الردود؟"
 
-#: app/components/hiring/job-editor.tsx:443
+#: app/components/hiring/job-editor.tsx:469
 msgid "Leave without saving?"
 msgstr "المغادرة دون حفظ؟"
 
@@ -11388,6 +11434,10 @@ msgstr "جارٍ التحميل…"
 msgid "Location"
 msgstr "الموقع"
 
+#: app/components/member-location-scope.tsx:127
+msgid "Location access"
+msgstr "الوصول إلى الفروع"
+
 #: app/components/locations/address-autocomplete.tsx:339
 msgid "Location Currency:"
 msgstr "عملة الفرع:"
@@ -11409,6 +11459,7 @@ msgid "Location Status"
 msgstr "حالة الفرع"
 
 #: app/components/app-sidebar.tsx:567
+#: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:183
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:525
 msgid "Locations"
@@ -11653,7 +11704,7 @@ msgid "Manage restaurant locations, store hours, fulfillment methods, and delive
 msgstr "أدر فروع المطعم وساعات العمل وطرق التنفيذ ومناطق التوصيل."
 
 #: app/components/organization-invitations.tsx:266
-#: app/components/organization-members.tsx:173
+#: app/components/organization-members.tsx:186
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
 
@@ -11733,7 +11784,7 @@ msgstr "إدارة موقع مؤسستك العام ومظهره."
 msgid "Manage your restaurant settings and preferences."
 msgstr "أدر إعدادات مطعمك وتفضيلاتك."
 
-#: app/components/organization-members.tsx:167
+#: app/components/organization-members.tsx:180
 msgid "Manage your restaurant's members."
 msgstr "أدر أعضاء مطعمك."
 
@@ -11995,7 +12046,7 @@ msgstr "أعضاء"
 
 #: app/components/app-sidebar.tsx:574
 #: app/components/chat/chat-group-settings-dialog.tsx:83
-#: app/components/organization-members.tsx:164
+#: app/components/organization-members.tsx:177
 #: app/components/roles/tenant-role-access-manager.tsx:1050
 #: app/components/roles/tenant-role-access-manager.tsx:1184
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:286
@@ -12284,7 +12335,7 @@ msgstr "المزيد"
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
-#: app/components/hiring/candidate-sheet.tsx:212
+#: app/components/hiring/candidate-sheet.tsx:222
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:318
 msgid "More actions for {name}"
 msgstr "مزيد من الإجراءات لـ {name}"
@@ -12310,7 +12361,7 @@ msgstr "نقل {name}"
 msgid "Move {name} to another stage"
 msgstr "نقل {name} إلى مرحلة أخرى"
 
-#: app/components/hiring/candidate-sheet.tsx:314
+#: app/components/hiring/candidate-sheet.tsx:324
 msgid "Move back into the pipeline"
 msgstr "إعادته إلى مسار التقديم"
 
@@ -12625,7 +12676,7 @@ msgstr "معاينة الأيقونة الجديدة"
 msgid "New Item"
 msgstr "عنصر جديد"
 
-#: app/components/hiring/job-editor.tsx:238
+#: app/components/hiring/job-editor.tsx:260
 msgid "New job"
 msgstr "وظيفة جديدة"
 
@@ -12721,7 +12772,7 @@ msgstr "ورديات جديدة ونُقلت وعُدّلت وحُذفت."
 msgid "Newer"
 msgstr "الأحدث"
 
-#: app/components/hiring/job-editor.tsx:404
+#: app/components/hiring/job-editor.tsx:430
 #: app/components/kiosk/kiosk-screens.tsx:276
 #: app/components/website/create-page-dialog.tsx:132
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:477
@@ -12947,7 +12998,7 @@ msgstr "لم يتم ضبط أي مناطق توصيل"
 msgid "No description provided"
 msgstr "لم يُقدَّم وصف"
 
-#: app/components/hiring/job-summary.tsx:76
+#: app/components/hiring/job-summary.tsx:95
 msgid "No description yet."
 msgstr "لا يوجد وصف بعد."
 
@@ -13052,7 +13103,7 @@ msgstr "لا توجد عناصر مطابقة لهذه الفلاتر"
 msgid "No items yet"
 msgstr "لا توجد عناصر بعد"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:117
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:128
 msgid "No jobs yet"
 msgstr "لا توجد وظائف بعد"
 
@@ -13070,6 +13121,10 @@ msgstr "لا توجد وظائف بعد"
 #: app/components/staff/schedule-link-section.tsx:94
 msgid "No link is active. They get one in the next schedule email, as long as they have an email address."
 msgstr "لا يوجد رابط فعّال. سيصلهم رابط في رسالة الجدول القادمة ما دام لديهم عنوان بريد إلكتروني."
+
+#: app/components/member-location-scope.tsx:88
+msgid "No locations"
+msgstr "لا فروع"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:569
 msgid "No locations found."
@@ -13132,7 +13187,7 @@ msgstr "لا توجد وسائط تطابق بحثك."
 msgid "No media yet. Upload an image to get started."
 msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة للبدء."
 
-#: app/components/organization-members.tsx:153
+#: app/components/organization-members.tsx:166
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
 
@@ -13673,7 +13728,7 @@ msgid "none"
 msgstr "لا شيء"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
-#: app/components/hiring/job-summary.tsx:47
+#: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/staff/empty-value.tsx:14
@@ -13790,7 +13845,7 @@ msgstr "لم يُرسل"
 msgid "Not set up for this position here"
 msgstr "غير مهيأ لهذا المنصب هنا"
 
-#: app/components/hiring/job-summary.tsx:42
+#: app/components/hiring/job-summary.tsx:61
 msgid "Not shown"
 msgstr "غير معروض"
 
@@ -13879,7 +13934,7 @@ msgstr "ملاحظات"
 
 #: app/components/app-sidebar.tsx:295
 #: app/components/command-menu.tsx:137
-#: app/components/hiring/candidate-sheet.tsx:350
+#: app/components/hiring/candidate-sheet.tsx:360
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
 #: app/components/staff/staff-profile-page.tsx:93
@@ -14315,7 +14370,7 @@ msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإ�
 msgid "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 msgstr "تمت قراءة أول {IMPORT_MAX_ROWS} صف فقط. أضف الباقي في دفعة ثانية."
 
-#: app/components/hiring/job-editor.tsx:569
+#: app/components/hiring/job-editor.tsx:602
 msgid "Only what you type here and your business name are used. Nothing is saved until you save."
 msgstr "يُستخدم فقط ما تكتبه هنا واسم نشاطك التجاري. لا يُحفظ شيء حتى تحفظ."
 
@@ -14443,7 +14498,7 @@ msgstr "فتح لوحة تحكم المدفوعات"
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
-#: app/components/hiring/candidate-sheet.tsx:287
+#: app/components/hiring/candidate-sheet.tsx:297
 #: app/components/hiring/hire-dialog.tsx:161
 msgid "Open profile"
 msgstr "فتح الملف"
@@ -15187,9 +15242,9 @@ msgstr "متوقف مؤقتاً"
 msgid "Pausing automation..."
 msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 
-#: app/components/hiring/job-editor.tsx:188
-#: app/components/hiring/job-editor.tsx:720
-#: app/components/hiring/job-summary.tsx:42
+#: app/components/hiring/job-editor.tsx:205
+#: app/components/hiring/job-editor.tsx:763
+#: app/components/hiring/job-summary.tsx:61
 #: app/components/staff/staff-roster.tsx:147
 msgid "Pay"
 msgstr "الأجر"
@@ -15946,8 +16001,8 @@ msgid "Popular Item"
 msgstr "عنصر شائع"
 
 #: app/components/hiring/hire-dialog.tsx:226
-#: app/components/hiring/job-editor.tsx:630
-#: app/components/hiring/job-summary.tsx:40
+#: app/components/hiring/job-editor.tsx:663
+#: app/components/hiring/job-summary.tsx:49
 #: app/components/staff/positions-tab.tsx:528
 #: app/components/staff/schedule/shift-editor-sheet.tsx:457
 #: app/components/staff/timesheets/card-fields.tsx:241
@@ -15999,12 +16054,12 @@ msgstr "إيجابي"
 msgid "Positive feedback"
 msgstr "ملاحظات إيجابية"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:92
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:135
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:103
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:146
 msgid "Post a job"
 msgstr "نشر وظيفة"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:122
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:133
 msgid "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 msgstr "انشر وظيفة لتحصل على صفحة توظيف يمكنك مشاركتها، أو أبقِ طلبًا عامًا مفتوحًا لكل من يرغب في العمل معك."
 
@@ -16199,7 +16254,7 @@ msgstr "الأولوية"
 msgid "Priority support"
 msgstr "دعم الأولوية"
 
-#: app/components/hiring/candidate-sheet.tsx:399
+#: app/components/hiring/candidate-sheet.tsx:409
 msgid "Privacy"
 msgstr "الخصوصية"
 
@@ -16280,7 +16335,7 @@ msgid "Public Access"
 msgstr "الوصول العام"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
-#: app/components/hiring/job-editor.tsx:424
+#: app/components/hiring/job-editor.tsx:450
 #: app/components/menu/drop-wizard/drop-form.tsx:459
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:619
 #: app/components/staff/schedule/publish-dialog.tsx:273
@@ -16390,7 +16445,7 @@ msgid "Publishing new journey..."
 msgstr "جارٍ نشر الرحلة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
-#: app/components/hiring/job-editor.tsx:422
+#: app/components/hiring/job-editor.tsx:448
 msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
@@ -16447,8 +16502,8 @@ msgstr "السؤال"
 msgid "Question {number}"
 msgstr "السؤال {number}"
 
-#: app/components/hiring/job-editor.tsx:189
-#: app/components/hiring/job-summary.tsx:45
+#: app/components/hiring/job-editor.tsx:206
+#: app/components/hiring/job-summary.tsx:64
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3636
 msgid "Questions"
 msgstr "الأسئلة"
@@ -16948,7 +17003,7 @@ msgstr "إزالة الرابط"
 msgid "Remove media"
 msgstr "إزالة الوسائط"
 
-#: app/components/organization-members.tsx:225
+#: app/components/organization-members.tsx:251
 msgid "Remove member"
 msgstr "إزالة العضو"
 
@@ -17093,7 +17148,7 @@ msgstr "إعادة فتح ({reopenCount})"
 msgid "Reopen card"
 msgstr "إعادة فتح البطاقة"
 
-#: app/components/hiring/job-editor.tsx:426
+#: app/components/hiring/job-editor.tsx:452
 msgid "Reopen job"
 msgstr "إعادة فتح الوظيفة"
 
@@ -17440,7 +17495,7 @@ msgstr "خيارات قابلة لإعادة الاستخدام مع صور وأ
 msgid "Reuse a pattern of shifts week after week."
 msgstr "أعد استخدام نمط من الورديات أسبوعًا بعد أسبوع."
 
-#: app/components/hiring/job-editor.tsx:190
+#: app/components/hiring/job-editor.tsx:207
 #: app/components/mailbox/reviews-tab.tsx:638
 #: app/hooks/use-staff-attention.ts:117
 msgid "Review"
@@ -17540,7 +17595,7 @@ msgstr "النصف الأيمن"
 msgid "Ring for (seconds)"
 msgstr "مدة الرنين (بالثواني)"
 
-#: app/components/hiring/job-editor.tsx:187
+#: app/components/hiring/job-editor.tsx:204
 #: app/components/roles/tenant-role-access-manager.tsx:1044
 #: app/components/roles/tenant-role-access-manager.tsx:1178
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:356
@@ -17803,11 +17858,12 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/chat/chat-message.tsx:222
+#: app/components/member-location-scope.tsx:219
 #: app/components/menu/drop-wizard/drop-drawers.tsx:399
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
-#: app/components/organization-members.tsx:129
+#: app/components/organization-members.tsx:140
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
@@ -17856,7 +17912,7 @@ msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
 #: app/components/hiring/interview-dialog.tsx:285
-#: app/components/hiring/job-editor.tsx:416
+#: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
 #: app/components/roles/tenant-role-access-manager.tsx:801
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
@@ -17882,7 +17938,7 @@ msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/hiring/job-editor.tsx:398
+#: app/components/hiring/job-editor.tsx:424
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:615
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
@@ -17969,7 +18025,7 @@ msgstr "حفظ هذا الأسبوع"
 msgid "Save transfers"
 msgstr "حفظ التحويلات"
 
-#: app/components/hiring/job-editor.tsx:905
+#: app/components/hiring/job-editor.tsx:956
 msgid "Save your changes before closing."
 msgstr "احفظ تغييراتك قبل الإغلاق."
 
@@ -17990,7 +18046,7 @@ msgstr "تم الحفظ على هذا الجهاز. سيُسجَّل عند عو
 msgid "Saved training rule \"{title}\""
 msgstr "تم حفظ قاعدة التدريب \"{title}\""
 
-#: app/components/hiring/job-editor.tsx:149
+#: app/components/hiring/job-editor.tsx:166
 msgid "Saved."
 msgstr "تم الحفظ."
 
@@ -18016,8 +18072,8 @@ msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/hiring/job-editor.tsx:396
-#: app/components/hiring/job-editor.tsx:414
+#: app/components/hiring/job-editor.tsx:422
+#: app/components/hiring/job-editor.tsx:440
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
@@ -18087,7 +18143,7 @@ msgstr "حدد نوع هذه الشهادة."
 msgid "Say when it will be ready"
 msgstr "ذكر موعد جاهزية الطلب"
 
-#: app/components/hiring/job-editor.tsx:478
+#: app/components/hiring/job-editor.tsx:504
 msgid "Say which position this is."
 msgstr "حدّد المنصب."
 
@@ -18127,12 +18183,12 @@ msgstr "الجدول وساعة الدوام"
 msgid "Schedule a call"
 msgstr "حدد موعد مكالمة"
 
-#: app/components/hiring/candidate-sheet.tsx:434
+#: app/components/hiring/candidate-sheet.tsx:444
 #: app/components/hiring/interview-dialog.tsx:156
 msgid "Schedule an interview"
 msgstr "جدولة مقابلة"
 
-#: app/components/hiring/candidate-sheet.tsx:432
+#: app/components/hiring/candidate-sheet.tsx:442
 msgid "Schedule another"
 msgstr "جدولة أخرى"
 
@@ -18701,6 +18757,11 @@ msgstr "العنوان المحدد"
 msgid "Selected cards"
 msgstr "البطاقات المحددة"
 
+#: app/components/hiring/location-picker.tsx:100
+#: app/components/member-location-scope.tsx:146
+msgid "Selected locations"
+msgstr "فروع محددة"
+
 #: app/components/note/share-note-button.tsx:216
 msgid "Selected Members"
 msgstr "الأعضاء المحددون"
@@ -19039,7 +19100,7 @@ msgstr "مشاركة قواعد المطعم"
 #~ msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
 #~ msgstr "شارك القصة وراء هذا الطرح أو تعليمات الاستلام أو المكونات الخاصة..."
 
-#: app/components/hiring/job-editor.tsx:873
+#: app/components/hiring/job-editor.tsx:920
 msgid "Share this job"
 msgstr "مشاركة هذه الوظيفة"
 
@@ -19444,7 +19505,7 @@ msgstr "شريط صلب"
 msgid "Some answers differ"
 msgstr "بعض الإجابات مختلفة"
 
-#: app/components/hiring/job-editor.tsx:496
+#: app/components/hiring/job-editor.tsx:523
 msgid "Some details need fixing. Check each step."
 msgstr "بعض التفاصيل تحتاج إلى تصحيح. راجع كل خطوة."
 
@@ -19514,7 +19575,7 @@ msgid "Something went wrong. Reload the page and try again."
 msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أخرى."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:205
-#: app/components/hiring/job-editor.tsx:516
+#: app/components/hiring/job-editor.tsx:545
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
@@ -19593,6 +19654,14 @@ msgstr "بريد الموظفين متوقف، لذا لا يمكن إرسال �
 msgid "Staff email is switched off, so nothing can be sent."
 msgstr "بريد الموظفين متوقف، لذا لا يمكن إرسال شيء."
 
+#: app/components/member-location-scope.tsx:108
+msgid "Staff locations"
+msgstr "فروع الموظفين"
+
+#: app/components/member-location-scope.tsx:99
+msgid "Staff locations for {memberName}: {summary}"
+msgstr "فروع الموظفين لدى {memberName}: {summary}"
+
 #: app/components/staff/region-staff-guard.tsx:89
 msgid "Staff members: {staffCount}"
 msgstr "الموظفون: {staffCount}"
@@ -19635,7 +19704,7 @@ msgid "Staff, pay & labor"
 msgstr "الموظفون والأجور والعمالة"
 
 #: app/components/hiring/applicant-list.tsx:67
-#: app/components/hiring/candidate-sheet.tsx:238
+#: app/components/hiring/candidate-sheet.tsx:248
 msgid "Stage"
 msgstr "المرحلة"
 
@@ -19663,8 +19732,8 @@ msgstr "بداية قياسية"
 msgid "Standard system role."
 msgstr "دور نظام قياسي."
 
-#: app/components/hiring/job-editor.tsx:263
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:160
+#: app/components/hiring/job-editor.tsx:285
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:183
 msgid "Standing application"
 msgstr "طلب توظيف دائم"
 
@@ -19708,7 +19777,7 @@ msgstr "بدء المكالمة"
 msgid "Start conversation"
 msgstr "بدء محادثة"
 
-#: app/components/hiring/job-editor.tsx:556
+#: app/components/hiring/job-editor.tsx:589
 msgid "Start from a few words"
 msgstr "ابدأ ببضع كلمات"
 
@@ -19863,7 +19932,7 @@ msgstr "تنفيذات الخطوات ({timelineCount})"
 msgid "Step name"
 msgstr "اسم الخطوة"
 
-#: app/components/hiring/job-editor.tsx:281
+#: app/components/hiring/job-editor.tsx:303
 #: app/components/phone-agent/flow-editor/node-palette.tsx:77
 msgid "Steps"
 msgstr "الخطوات"
@@ -20634,7 +20703,7 @@ msgstr "هذا الملف كبير جدًا. قسّمه إلى ملفات أصغ
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "هذا الملف كبير جدًا. استخدم ملفًا أقل من 1 ميغابايت."
 
-#: app/components/hiring/job-editor.tsx:503
+#: app/components/hiring/job-editor.tsx:532
 msgid "That is not possible for a job in this state. Reload the page."
 msgstr "هذا غير ممكن لوظيفة في هذه الحالة. أعد تحميل الصفحة."
 
@@ -20852,7 +20921,7 @@ msgstr "حصلت المكالمة على وسم حددته كمهم."
 msgid "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 msgstr "تُزال البطاقة من الساعات. تبقى في السجل مع سببك، ولا يُدفع لـ {name} مقابلها."
 
-#: app/components/hiring/job-editor.tsx:824
+#: app/components/hiring/job-editor.tsx:871
 msgid "The closing date has passed. Choose a new one."
 msgstr "انقضى تاريخ الإغلاق. اختر تاريخًا جديدًا."
 
@@ -20880,11 +20949,11 @@ msgstr "تعذّر إرسال رسالة الرفض"
 msgid "The deducted break must be shorter than the shift it applies after."
 msgstr "يجب أن تكون الاستراحة المخصومة أقصر من الوردية التي تنطبق بعدها."
 
-#: app/components/hiring/job-editor.tsx:498
+#: app/components/hiring/job-editor.tsx:525
 msgid "The description is too long. Shorten it and try again."
 msgstr "الوصف طويل جدًا. اختصره وحاول مرة أخرى."
 
-#: app/components/hiring/job-editor.tsx:513
+#: app/components/hiring/job-editor.tsx:542
 msgid "The drafting tool could not help right now. Write it yourself or try again."
 msgstr "تعذّرت مساعدة أداة الكتابة الآن. اكتب الوصف بنفسك أو حاول مرة أخرى."
 
@@ -20942,7 +21011,7 @@ msgstr "العبارات الثابتة التي يقولها نظام الها�
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr "التذييل مشترك عبر كل صفحة. اترك حقوق النشر فارغة لاستخدام اسم المؤسسة والسنة الحالية."
 
-#: app/components/hiring/job-editor.tsx:767
+#: app/components/hiring/job-editor.tsx:810
 msgid "The general application stays open until you close it."
 msgstr "يبقى الطلب العام مفتوحًا حتى تغلقه."
 
@@ -20967,19 +21036,19 @@ msgstr "تعذّر إرسال دعوة المقابلة"
 msgid "The invitation was not sent. Try again."
 msgstr "لم يتم إرسال الدعوة. حاول مرة أخرى."
 
-#: app/components/hiring/job-editor.tsx:926
+#: app/components/hiring/job-editor.tsx:977
 msgid "The job and its link are removed for good. Applications you already received are kept."
 msgstr "تُحذف الوظيفة ورابطها نهائيًا. أما الطلبات التي استلمتها بالفعل فتبقى محفوظة."
 
-#: app/components/hiring/job-editor.tsx:775
+#: app/components/hiring/job-editor.tsx:818
 msgid "The job closes by itself at the end of this day. Leave it empty to keep it open until you close it."
 msgstr "تُغلق الوظيفة تلقائيًا في نهاية هذا اليوم. اتركه فارغًا لإبقائها مفتوحة حتى تغلقها."
 
-#: app/components/hiring/job-editor.tsx:931
+#: app/components/hiring/job-editor.tsx:982
 msgid "The job disappears from your careers page and its link stops accepting applications. You can reopen it later."
 msgstr "تختفي الوظيفة من صفحة التوظيف ويتوقف رابطها عن قبول الطلبات. يمكنك إعادة فتحها لاحقًا."
 
-#: app/components/hiring/job-editor.tsx:148
+#: app/components/hiring/job-editor.tsx:165
 msgid "The job is closed."
 msgstr "تم إغلاق الوظيفة."
 
@@ -20987,7 +21056,7 @@ msgstr "تم إغلاق الوظيفة."
 msgid "The job is filled"
 msgstr "تم شغل الوظيفة"
 
-#: app/components/hiring/job-editor.tsx:146
+#: app/components/hiring/job-editor.tsx:163
 msgid "The job is live."
 msgstr "تم نشر الوظيفة."
 
@@ -21047,7 +21116,7 @@ msgstr "الرقم الذي يتصل به العملاء حاليًا، بالص
 msgid "The order on this link can't be shown."
 msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط."
 
-#: app/components/hiring/job-editor.tsx:758
+#: app/components/hiring/job-editor.tsx:801
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "لن تذكر الصفحة الأجر. إظهار نطاق للأجر يجلب عادةً طلبات أكثر."
 
@@ -21083,7 +21152,7 @@ msgstr "يجب أن يأتي التذكير قبل تسجيل الانصراف �
 msgid "The right answer is"
 msgstr "الإجابة المطلوبة هي"
 
-#: app/components/hiring/job-editor.tsx:632
+#: app/components/hiring/job-editor.tsx:665
 msgid "The role on your team, like \"Line cook\". Used when you hire."
 msgstr "الدور في فريقك، مثل \"طاهٍ على الخط\". يُستخدم عند التوظيف."
 
@@ -21155,7 +21224,7 @@ msgstr "الأوقات غير منطقية. صحّح البدء أو الانت�
 msgid "The title, image, and note customers will see."
 msgstr "العنوان والصورة والملاحظة التي سيراها العملاء."
 
-#: app/components/hiring/job-editor.tsx:481
+#: app/components/hiring/job-editor.tsx:508
 msgid "The top of the range must be at least the bottom."
 msgstr "يجب ألا يقل الحد الأعلى للنطاق عن الحد الأدنى."
 
@@ -21175,7 +21244,7 @@ msgstr "لم يتم إعداد خدمة الصوت لحسابك بعد. تواص
 msgid "The whole date range together"
 msgstr "الفترة كاملة معًا"
 
-#: app/components/hiring/candidate-sheet.tsx:390
+#: app/components/hiring/candidate-sheet.tsx:400
 msgid "Their answers"
 msgstr "إجاباتهم"
 
@@ -21183,7 +21252,7 @@ msgstr "إجاباتهم"
 msgid "Their current availability stays as it is. You can leave a note."
 msgstr "يبقى توفره الحالي كما هو. يمكنك ترك ملاحظة."
 
-#: app/components/hiring/candidate-sheet.tsx:304
+#: app/components/hiring/candidate-sheet.tsx:314
 msgid "Their details are removed on {retentionDate}."
 msgstr "تُحذف بياناتهم في {retentionDate}."
 
@@ -21288,7 +21357,7 @@ msgstr "تم تغيير هذه الإعدادات في علامة تبويب أ�
 msgid "These were saved while the tablet was offline, but the time clock could not accept them. They were not recorded."
 msgstr "حُفظت هذه أثناء عدم اتصال الجهاز، لكن ساعة الدوام لم تقبلها. لم يتم تسجيلها."
 
-#: app/components/hiring/candidate-sheet.tsx:402
+#: app/components/hiring/candidate-sheet.tsx:412
 msgid "They agreed to your privacy notice (version {consentVersion}) on {consentOn}. Declined applicants are removed after {keepDays} days."
 msgstr "وافقوا على إشعار الخصوصية الخاص بك (الإصدار {consentVersion}) في {consentOn}. تُحذف بيانات المتقدّمين المرفوضين بعد {keepDays} يومًا."
 
@@ -21388,7 +21457,7 @@ msgstr "جاري التفكير..."
 msgid "Thinking…"
 msgstr "جارٍ التفكير…"
 
-#: app/components/hiring/job-editor.tsx:508
+#: app/components/hiring/job-editor.tsx:537
 msgid "This account can look but not change jobs."
 msgstr "يمكن لهذا الحساب الاطلاع على الوظائف دون تغييرها."
 
@@ -21548,11 +21617,11 @@ msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 �
 msgid "This job had no screening questions."
 msgstr "لم تكن لهذه الوظيفة أسئلة فرز."
 
-#: app/components/hiring/job-editor.tsx:500
+#: app/components/hiring/job-editor.tsx:529
 msgid "This job is not ready to go live yet. See the Review step."
 msgstr "هذه الوظيفة ليست جاهزة للنشر بعد. راجع خطوة المراجعة."
 
-#: app/components/hiring/job-editor.tsx:494
+#: app/components/hiring/job-editor.tsx:521
 msgid "This job no longer exists. Go back to the list."
 msgstr "هذه الوظيفة لم تعد موجودة. ارجع إلى القائمة."
 
@@ -21713,6 +21782,10 @@ msgstr "سيحل هذا محل مسودتك، بما في ذلك التغيير�
 #: app/utils/staffing/schedule-errors.ts:32
 msgid "This request was already decided."
 msgstr "تم البتّ في هذا الطلب مسبقًا."
+
+#: app/components/member-location-scope.tsx:164
+msgid "This restaurant has no active locations yet."
+msgstr "لا توجد فروع نشطة لهذا المطعم بعد."
 
 #: app/utils/staffing/labor-errors.ts:45
 msgid "This row has a different number of columns than the header."
@@ -22072,7 +22145,7 @@ msgstr "العناوين وعناوين الأقسام."
 msgid "to"
 msgstr "إلى"
 
-#: app/components/hiring/job-editor.tsx:738
+#: app/components/hiring/job-editor.tsx:781
 msgid "To"
 msgstr "إلى"
 
@@ -22578,8 +22651,8 @@ msgstr "استراحتان متداخلتان. صحّح أوقاتهما."
 msgid "Two-factor authentication is currently enabled. Disabling it will make your account less secure. Please enter your authenticator code or a backup code to confirm."
 msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيلها سيجعل حسابك أقل أماناً. يرجى إدخال رمز المصادقة أو رمز احتياطي للتأكيد."
 
-#: app/components/hiring/job-editor.tsx:642
-#: app/components/hiring/job-summary.tsx:41
+#: app/components/hiring/job-editor.tsx:685
+#: app/components/hiring/job-summary.tsx:60
 #: app/components/my-schedule/time-off-sheet.tsx:153
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
 #: app/components/staff/schedule/time-off-sheet.tsx:194
@@ -22726,7 +22799,7 @@ msgstr "تراجع"
 msgid "Undo changes"
 msgstr "التراجع عن التغييرات"
 
-#: app/components/hiring/job-editor.tsx:596
+#: app/components/hiring/job-editor.tsx:629
 msgid "Undo draft"
 msgstr "التراجع عن المسودة"
 
@@ -23170,7 +23243,7 @@ msgstr "استخدم قيمة مختلفة."
 msgid "Use a full link that starts with https://"
 msgstr "استخدم رابطًا كاملًا يبدأ بـ https://"
 
-#: app/components/hiring/job-editor.tsx:480
+#: app/components/hiring/job-editor.tsx:507
 msgid "Use a number like 18 or 18.50."
 msgstr "استخدم رقمًا مثل 18 أو 18.50."
 
@@ -23195,7 +23268,7 @@ msgstr "استخدم صورة بحجم 1200×630 بكسل على الأقل (1.9
 msgid "Use any authenticator app on your mobile device to scan the QR code, or enter the Setup Key manually."
 msgstr "استخدم أي تطبيق مصادقة على جهازك المحمول لمسح رمز QR، أو أدخل مفتاح الإعداد يدوياً."
 
-#: app/components/hiring/job-editor.tsx:477
+#: app/components/hiring/job-editor.tsx:503
 msgid "Use at least 3 letters."
 msgstr "استخدم 3 أحرف على الأقل."
 
@@ -23992,11 +24065,11 @@ msgstr "مرحباً بك في Menuza، {{organizationName}}"
 msgid "Welcome!"
 msgstr "مرحباً!"
 
-#: app/components/hiring/job-summary.tsx:66
+#: app/components/hiring/job-summary.tsx:85
 msgid "What applicants read"
 msgstr "ما يقرؤه المتقدمون"
 
-#: app/components/hiring/job-editor.tsx:610
+#: app/components/hiring/job-editor.tsx:643
 msgid "What applicants see, like \"Evening line cook\"."
 msgstr "ما يراه المتقدمون، مثل \"طاهٍ مسائي\"."
 
@@ -24017,11 +24090,11 @@ msgstr "بماذا يمكنك مساعدتي؟"
 msgid "What do you need?"
 msgstr "ماذا تحتاج؟"
 
-#: app/components/hiring/job-editor.tsx:319
+#: app/components/hiring/job-editor.tsx:341
 msgid "What do you want to ask?"
 msgstr "ماذا تريد أن تسأل؟"
 
-#: app/components/hiring/job-editor.tsx:318
+#: app/components/hiring/job-editor.tsx:340
 msgid "What does it pay?"
 msgstr "كم الأجر؟"
 
@@ -24033,7 +24106,7 @@ msgstr "ماذا يجب أن أعرف أيضاً؟"
 msgid "What is it called"
 msgstr "ما اسمها"
 
-#: app/components/hiring/job-editor.tsx:317
+#: app/components/hiring/job-editor.tsx:339
 msgid "What is the job?"
 msgstr "ما هي الوظيفة؟"
 
@@ -24208,7 +24281,7 @@ msgstr "متى يتم تحويل المكالمة أو تسجيل رسالة ل�
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "عندما يطلب الزوار أو محركات البحث عنوان URL غير موجود، سيظهر هنا لتتمكن من إعداد عمليات إعادة توجيه."
 
-#: app/components/hiring/job-summary.tsx:43
+#: app/components/hiring/job-summary.tsx:62
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
@@ -24221,6 +24294,8 @@ msgid "When you're closed"
 msgstr "عندما تكون مغلقًا"
 
 #: app/components/hiring/interview-dialog.tsx:168
+#: app/components/hiring/job-summary.tsx:53
+#: app/components/hiring/location-picker.tsx:68
 msgid "Where"
 msgstr "المكان"
 
@@ -24240,6 +24315,10 @@ msgstr "أين تنتهي فترة وتبدأ التالية. تُقسَّم س�
 #: app/components/staff/labor/labor-settings.tsx:118
 msgid "Where sales come from"
 msgstr "من أين تأتي المبيعات"
+
+#: app/components/hiring/location-picker.tsx:79
+msgid "Where the job is"
+msgstr "مكان الوظيفة"
 
 #: app/components/hiring/interview-dialog.tsx:239
 msgid "Where to go, who to ask for, or the call-in details or meeting link."
@@ -24471,11 +24550,11 @@ msgstr "يعمل بصفة"
 msgid "Write {business} in a message to say your business's name."
 msgstr "اكتب {business} في الرسالة لنطق اسم نشاطك التجاري."
 
-#: app/components/hiring/job-editor.tsx:822
+#: app/components/hiring/job-editor.tsx:869
 msgid "Write a description of at least a couple of sentences."
 msgstr "اكتب وصفًا من جملتين على الأقل."
 
-#: app/components/hiring/job-editor.tsx:590
+#: app/components/hiring/job-editor.tsx:623
 msgid "Write a draft"
 msgstr "كتابة مسودة"
 
@@ -24509,7 +24588,7 @@ msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل 
 msgid "Write the policy they are acknowledging."
 msgstr "اكتب السياسة التي سيقرّون بها."
 
-#: app/components/hiring/job-editor.tsx:484
+#: app/components/hiring/job-editor.tsx:511
 #: app/components/hiring/screener-editor.tsx:164
 msgid "Write the question."
 msgstr "اكتب السؤال."
@@ -24588,7 +24667,7 @@ msgid "Yesterday"
 msgstr "أمس"
 
 #: app/components/hiring/candidate-parts.tsx:374
-#: app/components/organization-members.tsx:201
+#: app/components/organization-members.tsx:214
 #: app/components/phone-agent/test-call-panel.tsx:724
 msgid "You"
 msgstr "أنت"
@@ -24701,6 +24780,10 @@ msgstr "يمكنك عرض مسار المكالمة هذا، لكن ليست ل�
 msgid "You cannot clock in or out on this tablet right now. Ask a manager."
 msgstr "لا يمكنك تسجيل الحضور أو الانصراف على هذا الجهاز الآن. اسأل مديرًا."
 
+#: app/components/hiring/job-editor.tsx:527
+msgid "You cannot post for that location."
+msgstr "لا يمكنك النشر لهذا الموقع."
+
 #: app/components/staff/labor-policy-editor.tsx:281
 msgid "You changed some rules and have not saved them. Switching now throws those changes away."
 msgstr "غيّرت بعض القواعد ولم تحفظها. التبديل الآن سيتجاهل هذه التغييرات."
@@ -24762,7 +24845,7 @@ msgstr "لديك تغييرات غير محفوظة."
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة وفقدانها؟"
 
-#: app/components/hiring/job-editor.tsx:511
+#: app/components/hiring/job-editor.tsx:540
 msgid "You have used the drafting tool a lot. Try again in an hour."
 msgstr "استخدمت أداة الكتابة كثيرًا. حاول مجددًا بعد ساعة."
 
@@ -24849,7 +24932,7 @@ msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن ت
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
 
-#: app/components/hiring/job-editor.tsx:446
+#: app/components/hiring/job-editor.tsx:472
 msgid "Your changes to this job will be lost."
 msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
@@ -24981,11 +25064,11 @@ msgstr "ستظهر القنوات هنا بعد إنشاء أول قناة. يف
 msgid "Your team, time clock, schedule, and hiring tools will appear here as they become available."
 msgstr "ستظهر هنا أدوات الفريق وساعة الدوام والجدول والتوظيف عند توفرها."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:100
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:111
 msgid "Your website is not published yet, so people cannot see these jobs. <0>Publish your website</0>."
 msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الناس رؤية هذه الوظائف. <0>انشر موقعك</0>."
 
-#: app/components/hiring/job-editor.tsx:854
+#: app/components/hiring/job-editor.tsx:901
 msgid "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الناس رؤية هذه الوظيفة. <0>انشر موقعك</0>."
 

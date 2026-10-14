@@ -10,7 +10,7 @@ const featureState = vi.hoisted(() => vi.fn())
 const orgScope = vi.hoisted(() => vi.fn())
 
 vi.mock('#app/utils/staffing/scope.server.ts', () => ({
-	loadOrganizationScope: orgScope,
+	loadOrganizationScopes: orgScope,
 }))
 
 vi.mock('#app/utils/staffing/access.server.ts', () => ({
@@ -60,11 +60,15 @@ describe('staffing workplace context', () => {
 			labor: false,
 			hiring: false,
 		})
-		orgScope.mockReset().mockResolvedValue({
-			id: 'main',
-			name: 'Acme',
-			timeZone: 'America/Chicago',
-		})
+		orgScope.mockReset().mockResolvedValue([
+			{
+				id: 'main',
+				name: 'Acme',
+				timeZone: 'America/Chicago',
+				currency: 'USD',
+				isActive: true,
+			},
+		])
 	})
 
 	it('requires internal command authentication (403, not a redirect)', async () => {
@@ -110,6 +114,44 @@ describe('staffing workplace context', () => {
 			'dataRegion',
 			'scopes',
 		])
+	})
+
+	it('returns one scope per location, with its own time zone and activity, and nothing else', async () => {
+		orgScope.mockResolvedValue([
+			{
+				id: 'loc_a',
+				name: 'Downtown',
+				timeZone: 'America/New_York',
+				currency: 'USD',
+				isActive: true,
+			},
+			{
+				id: 'loc_b',
+				name: 'Riyadh',
+				timeZone: 'Asia/Riyadh',
+				currency: 'SAR',
+				isActive: false,
+			},
+		])
+		const body = (await (await loader(args())).json()) as {
+			scopes: Array<Record<string, unknown>>
+		}
+		expect(body.scopes).toEqual([
+			{
+				id: 'loc_a',
+				name: 'Downtown',
+				timeZone: 'America/New_York',
+				isActive: true,
+			},
+			{
+				id: 'loc_b',
+				name: 'Riyadh',
+				timeZone: 'Asia/Riyadh',
+				isActive: false,
+			},
+		])
+		// Inactive locations are reported too (their data stays readable).
+		expect(orgScope).toHaveBeenCalledWith(ORG_ID, { includeInactive: true })
 	})
 
 	it('reports every staffing flag as off by default', async () => {

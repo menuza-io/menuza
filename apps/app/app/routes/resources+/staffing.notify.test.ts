@@ -6,6 +6,7 @@ import {
 	Notification,
 	NotificationPreference,
 	Organization,
+	OrganizationLocation,
 	OrganizationRole,
 	_OrganizationPermissionToRole,
 } from '@repo/database'
@@ -45,6 +46,7 @@ vi.mock('#app/utils/staffing/email-switch.server.ts', () => ({
 	isStaffingEmailEnabled: () => emailSwitch.on,
 }))
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	addOrganizationMember,
 	createTestUser,
@@ -111,6 +113,15 @@ async function memberWith(organizationId: string, permissionIds: string[]) {
 		await roleWith(organizationId, permissionIds),
 	)
 	return user
+}
+
+async function createLocation(organizationId: string, name = 'Downtown') {
+	const slug = `loc-${crypto.randomUUID().slice(0, 8)}`
+	const [row] = await db
+		.insert(OrganizationLocation)
+		.values({ organizationId, name, slug })
+		.returning({ id: OrganizationLocation.id })
+	return row!.id
 }
 
 const READ_TIMESHEET = 'org_perm_read_timesheet_any'
@@ -334,6 +345,78 @@ describe('who is told', () => {
 		await call(eventFor(a.organization.id, null))
 		expect(await notificationsFor(a.user.id)).toHaveLength(1)
 		expect(await notificationsFor(b.user.id)).toHaveLength(0)
+	})
+})
+
+describe('who is told, with locations', () => {
+	it('names the location in the copy when the organization has locations', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id, 'Downtown')
+		await call(eventFor(organization.id, location, { count: 2 }))
+		const [{ subject }] = sendEmailMock.mock.calls[0]!
+		expect(subject).toBe('2 people have not clocked in at Downtown')
+	})
+
+	it('never tells a member whose location scope excludes the location', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const a = await createLocation(organization.id, 'A')
+		const b = await createLocation(organization.id, 'B')
+		const scoped = await memberWith(organization.id, [READ_TIMESHEET])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: scoped.id,
+			value: { scope: 'selected', locationIds: [a] },
+		})
+		await call(eventFor(organization.id, b))
+		expect(await notificationsFor(scoped.id)).toHaveLength(0)
+		await call(eventFor(organization.id, a))
+		expect(await notificationsFor(scoped.id)).toHaveLength(1)
+	})
+
+	it('sends an alert that is not about one location only to members with every location', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const a = await createLocation(organization.id)
+		const scoped = await memberWith(organization.id, [READ_TIMESHEET])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: scoped.id,
+			value: { scope: 'selected', locationIds: [a] },
+		})
+		const unscoped = await memberWith(organization.id, [READ_TIMESHEET])
+		await call(eventFor(organization.id, null))
+		expect(await notificationsFor(scoped.id)).toHaveLength(0)
+		expect(await notificationsFor(unscoped.id)).toHaveLength(1)
+	})
+
+	it("answers a skipped reason for a location that is not this organization's", async () => {
+		const mine = await setupTestOrgWithUser('admin')
+		const theirs = await setupTestOrgWithUser('admin')
+		await turnOn(mine.organization.id)
+		await createLocation(mine.organization.id)
+		const foreign = await createLocation(theirs.organization.id)
+		const response = await call(eventFor(mine.organization.id, foreign))
+		expect(((await response.json()) as { skipped?: string }).skipped).toBe(
+			'unknown_scope',
+		)
+		expect(await notificationsFor(mine.user.id)).toHaveLength(0)
+	})
+
+	it('answers a skipped reason when nobody is entitled to hear it', async () => {
+		const { organization, user } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: user.id,
+			value: { scope: 'selected', locationIds: [] },
+		})
+		const response = await call(eventFor(organization.id, location))
+		expect(((await response.json()) as { skipped?: string }).skipped).toBe(
+			'no_recipients',
+		)
 	})
 })
 

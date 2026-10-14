@@ -530,6 +530,14 @@ msgstr "{complete} of {total} done"
 msgid "{count, plural, one {# answer to check} other {# answers to check}}"
 msgstr "{count, plural, one {# answer to check} other {# answers to check}}"
 
+#: app/components/hiring/location-picker.tsx:104
+msgid "{count, plural, one {# location chosen} other {# locations chosen}}"
+msgstr "{count, plural, one {# location chosen} other {# locations chosen}}"
+
+#: app/components/member-location-scope.tsx:89
+msgid "{count, plural, one {# location} other {# locations}}"
+msgstr "{count, plural, one {# location} other {# locations}}"
+
 #: app/components/staff/staff-profile-page.tsx:42
 msgid "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 msgstr "{count, plural, one {# thing to sort out} other {# things to sort out}}"
@@ -684,6 +692,10 @@ msgstr ""
 #: app/components/settings/cards/organization/site-locales-card.tsx:133
 msgid "{first}, {second}, +{remainingCount} more"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:169
+msgid "{firstPlace} and {more} more"
+msgstr "{firstPlace} and {more} more"
 
 #: app/components/chat/chat-view.tsx:786
 msgid "{firstTypingName} is typing…"
@@ -962,7 +974,7 @@ msgstr "{positionName} restored."
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr ""
 
-#: app/components/hiring/job-summary.tsx:49
+#: app/components/hiring/job-summary.tsx:68
 msgid "{questionCount} ({dealbreakers} dealbreaker)"
 msgstr "{questionCount} ({dealbreakers} dealbreaker)"
 
@@ -1416,6 +1428,10 @@ msgstr "A caller rated the call 1 or 2 out of 5."
 msgid "A caller was unhappy or reported a problem."
 msgstr "A caller was unhappy or reported a problem."
 
+#: app/components/member-location-scope.tsx:197
+msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
+msgstr "A change applies the next time their Staff session refreshes, within 15 minutes."
+
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
@@ -1428,7 +1444,7 @@ msgstr "A former team member"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "A former team member has this email or phone number. Rehire them from the team list instead."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:179
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:203
 msgid "A general application stays open all the time, so people can apply even when no job is posted."
 msgstr "A general application stays open all the time, so people can apply even when no job is posted."
 
@@ -1811,7 +1827,7 @@ msgstr "Add a delivery zone to specify radius distance, zip codes, or draw custo
 msgid "Add a first name."
 msgstr "Add a first name."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:76
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:87
 msgid "Add a general application"
 msgstr "Add a general application"
 
@@ -1831,7 +1847,7 @@ msgstr ""
 msgid "Add a holiday date"
 msgstr "Add a holiday date"
 
-#: app/components/hiring/job-editor.tsx:821
+#: app/components/hiring/job-editor.tsx:868
 msgid "Add a job title."
 msgstr "Add a job title."
 
@@ -2716,9 +2732,14 @@ msgstr "All days"
 msgid "All jobs"
 msgstr "All jobs"
 
+#: app/components/hiring/job-summary.tsx:55
+#: app/components/hiring/location-picker.tsx:85
+#: app/components/member-location-scope.tsx:86
+#: app/components/member-location-scope.tsx:133
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:199
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
 msgid "All locations"
 msgstr "All locations"
 
@@ -3045,7 +3066,7 @@ msgstr "Applicants"
 msgid "Applicants must answer before they can apply."
 msgstr "Applicants must answer before they can apply."
 
-#: app/components/hiring/candidate-sheet.tsx:502
+#: app/components/hiring/candidate-sheet.tsx:512
 msgid "Application deleted."
 msgstr "Application deleted."
 
@@ -3060,7 +3081,7 @@ msgstr "Applications by source"
 #: app/components/hiring/applicant-labels.ts:92
 #: app/components/hiring/applicant-list.tsx:73
 #: app/components/hiring/candidate-parts.tsx:414
-#: app/components/hiring/candidate-sheet.tsx:375
+#: app/components/hiring/candidate-sheet.tsx:385
 msgid "Applied"
 msgstr "Applied"
 
@@ -3120,7 +3141,7 @@ msgstr "Approved."
 msgid "Approving a swap or cover changes the schedule as a draft. Publish the week to tell your team."
 msgstr "Approving a swap or cover changes the schedule as a draft. Publish the week to tell your team."
 
-#: app/components/hiring/candidate-sheet.tsx:381
+#: app/components/hiring/candidate-sheet.tsx:391
 #: app/components/nav-user.tsx:102
 #: app/components/phone-agent/voice-picker.tsx:60
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:55
@@ -3475,7 +3496,7 @@ msgstr "Awaiting payment"
 msgid "B&W"
 msgstr "B&W"
 
-#: app/components/hiring/job-editor.tsx:385
+#: app/components/hiring/job-editor.tsx:411
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
@@ -3640,7 +3661,7 @@ msgstr "Before drop opens"
 msgid "Before transferring, the agent asks if it may text the caller a link they can use should nobody pick up."
 msgstr "Before transferring, the agent asks if it may text the caller a link they can use should nobody pick up."
 
-#: app/components/hiring/job-editor.tsx:833
+#: app/components/hiring/job-editor.tsx:880
 msgid "Before you can publish"
 msgstr "Before you can publish"
 
@@ -4100,12 +4121,13 @@ msgstr "Can't text that number"
 #: app/components/hiring/decline-dialog.tsx:167
 #: app/components/hiring/hire-dialog.tsx:311
 #: app/components/hiring/interview-dialog.tsx:279
-#: app/components/hiring/job-editor.tsx:940
+#: app/components/hiring/job-editor.tsx:991
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/locations/delivery-zones-manager.tsx:564
 #: app/components/locations/location-form.tsx:993
 #: app/components/locations/special-hours-picker.tsx:225
 #: app/components/media-library/media-library-picker.tsx:342
+#: app/components/member-location-scope.tsx:215
 #: app/components/menu/drop-wizard/drop-drawers.tsx:396
 #: app/components/menu/drop-wizard/drop-drawers.tsx:590
 #: app/components/menu/drop-wizard/drop-drawers.tsx:777
@@ -4550,7 +4572,7 @@ msgstr "Chat settings"
 #~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 #~ msgstr "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 
-#: app/components/hiring/job-editor.tsx:320
+#: app/components/hiring/job-editor.tsx:342
 msgid "Check it over"
 msgstr "Check it over"
 
@@ -4660,7 +4682,7 @@ msgstr "Choose a CSV file"
 msgid "Choose a date"
 msgstr "Choose a date"
 
-#: app/components/hiring/job-editor.tsx:483
+#: app/components/hiring/job-editor.tsx:510
 msgid "Choose a date that is not in the past."
 msgstr "Choose a date that is not in the past."
 
@@ -4669,7 +4691,7 @@ msgstr "Choose a date that is not in the past."
 msgid "Choose a date: {label}"
 msgstr "Choose a date: {label}"
 
-#: app/components/hiring/job-editor.tsx:482
+#: app/components/hiring/job-editor.tsx:509
 #: app/components/staff/schedule/availability-sheet.tsx:159
 msgid "Choose a date."
 msgstr "Choose a date."
@@ -4752,6 +4774,10 @@ msgstr "Choose an existing menu..."
 msgid "Choose at least one day."
 msgstr "Choose at least one day."
 
+#: app/components/hiring/job-editor.tsx:505
+msgid "Choose at least one location."
+msgstr "Choose at least one location."
+
 #: app/components/staff/schedule/copy-week-dialog.tsx:212
 msgid "Choose at least one to copy."
 msgstr "Choose at least one to copy."
@@ -4788,6 +4814,10 @@ msgstr "Choose one of the agent numbers assigned to your business."
 #: app/components/phone-agent/settings-page.tsx:90
 msgid "Choose one of the listed options."
 msgstr "Choose one of the listed options."
+
+#: app/components/hiring/location-picker.tsx:108
+msgid "Choose one or more."
+msgstr "Choose one or more."
 
 #: app/components/kiosk/kiosk-pair.tsx:54
 msgid "Choose Pair a tablet and create a code."
@@ -4864,6 +4894,10 @@ msgstr "Choose where they will work."
 msgid "Choose which languages your public website supports, and which one visitors see by default."
 msgstr ""
 
+#: app/components/member-location-scope.tsx:111
+msgid "Choose which locations {memberName} can see and manage in Staff: the roster, schedules, and time cards. Their other permissions do not change."
+msgstr "Choose which locations {memberName} can see and manage in Staff: the roster, schedules, and time cards. Their other permissions do not change."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:555
 #~ msgid "Choose which menu this drop sells. Hidden menus are fine."
 #~ msgstr "Choose which menu this drop sells. Hidden menus are fine."
@@ -4896,6 +4930,10 @@ msgstr ""
 #: app/components/staff/labor-policy-editor.tsx:1436
 msgid "Choose…"
 msgstr "Choose…"
+
+#: app/components/member-location-scope.tsx:149
+msgid "Choosing none gives no access to Staff."
+msgstr "Choosing none gives no access to Staff."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3584
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3824
@@ -5104,7 +5142,7 @@ msgstr "Clocked out, {firstName}"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
-#: app/components/hiring/job-editor.tsx:953
+#: app/components/hiring/job-editor.tsx:1004
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:554
@@ -5113,7 +5151,7 @@ msgstr "Clocked out, {firstName}"
 msgid "Close"
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:506
+#: app/components/hiring/job-editor.tsx:535
 msgid "Close a live job before deleting it."
 msgstr "Close a live job before deleting it."
 
@@ -5121,11 +5159,11 @@ msgstr "Close a live job before deleting it."
 msgid "Close email design"
 msgstr "Close email design"
 
-#: app/components/hiring/job-editor.tsx:890
+#: app/components/hiring/job-editor.tsx:941
 msgid "Close this job"
 msgstr "Close this job"
 
-#: app/components/hiring/job-editor.tsx:921
+#: app/components/hiring/job-editor.tsx:972
 msgid "Close this job?"
 msgstr "Close this job?"
 
@@ -5151,7 +5189,7 @@ msgstr "Closed"
 msgid "Closed all day"
 msgstr "Closed all day"
 
-#: app/components/hiring/job-summary.tsx:43
+#: app/components/hiring/job-summary.tsx:62
 msgid "Closes"
 msgstr "Closes"
 
@@ -5159,7 +5197,7 @@ msgstr "Closes"
 msgid "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 msgstr "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 
-#: app/components/hiring/job-editor.tsx:771
+#: app/components/hiring/job-editor.tsx:814
 msgid "Closes on"
 msgstr "Closes on"
 
@@ -5558,7 +5596,7 @@ msgstr "Connection lost. Reconnecting…"
 msgid "Connections"
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:371
+#: app/components/hiring/candidate-sheet.tsx:381
 #: app/components/website/create-form-dialog.tsx:111
 msgid "Contact"
 msgstr "Contact"
@@ -6374,7 +6412,7 @@ msgstr "Curbside"
 msgid "Curbside Pickup"
 msgstr "Curbside Pickup"
 
-#: app/components/hiring/job-editor.tsx:747
+#: app/components/hiring/job-editor.tsx:790
 #: app/components/staff/timesheets/payroll-summary.tsx:175
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:431
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:246
@@ -6715,7 +6753,7 @@ msgstr "Decimal point"
 msgid "Declared cash tips"
 msgstr "Declared cash tips"
 
-#: app/components/hiring/candidate-sheet.tsx:263
+#: app/components/hiring/candidate-sheet.tsx:273
 #: app/components/hiring/decline-dialog.tsx:177
 #: app/components/staff/schedule/availability-page.tsx:315
 #: app/components/staff/schedule/availability-page.tsx:376
@@ -6751,11 +6789,11 @@ msgstr "Decline this request?"
 msgid "Declined"
 msgstr "Declined"
 
-#: app/components/hiring/candidate-sheet.tsx:169
+#: app/components/hiring/candidate-sheet.tsx:179
 msgid "Declined, but the message could not be sent."
 msgstr "Declined, but the message could not be sent."
 
-#: app/components/hiring/candidate-sheet.tsx:297
+#: app/components/hiring/candidate-sheet.tsx:307
 msgid "Declined: {declineReasonLabel}."
 msgstr "Declined: {declineReasonLabel}."
 
@@ -6763,20 +6801,20 @@ msgstr "Declined: {declineReasonLabel}."
 msgid "Declined: {label}"
 msgstr "Declined: {label}"
 
-#: app/components/hiring/candidate-sheet.tsx:174
-#: app/components/hiring/candidate-sheet.tsx:299
+#: app/components/hiring/candidate-sheet.tsx:184
+#: app/components/hiring/candidate-sheet.tsx:309
 msgid "Declined."
 msgstr "Declined."
 
-#: app/components/hiring/candidate-sheet.tsx:173
+#: app/components/hiring/candidate-sheet.tsx:183
 msgid "Declined. Email is turned off, so nothing was sent."
 msgstr "Declined. Email is turned off, so nothing was sent."
 
-#: app/components/hiring/candidate-sheet.tsx:171
+#: app/components/hiring/candidate-sheet.tsx:181
 msgid "Declined. There is no email on file, so nothing was sent."
 msgstr "Declined. There is no email on file, so nothing was sent."
 
-#: app/components/hiring/candidate-sheet.tsx:167
+#: app/components/hiring/candidate-sheet.tsx:177
 msgid "Declined. They were sent your message."
 msgstr "Declined. They were sent your message."
 
@@ -6850,7 +6888,7 @@ msgstr ""
 
 #: app/components/chat/chat-view.tsx:1029
 #: app/components/hiring/erase-dialog.tsx:89
-#: app/components/hiring/job-editor.tsx:951
+#: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
 #: app/components/roles/tenant-role-access-manager.tsx:1101
 #: app/components/roles/tenant-role-access-manager.tsx:1259
@@ -6916,7 +6954,7 @@ msgstr ""
 msgid "Delete announcement?"
 msgstr "Delete announcement?"
 
-#: app/components/hiring/candidate-sheet.tsx:221
+#: app/components/hiring/candidate-sheet.tsx:231
 msgid "Delete application…"
 msgstr "Delete application…"
 
@@ -7104,11 +7142,11 @@ msgstr "Delete template {templateName}"
 msgid "Delete this call?"
 msgstr "Delete this call?"
 
-#: app/components/hiring/job-editor.tsx:900
+#: app/components/hiring/job-editor.tsx:951
 msgid "Delete this job"
 msgstr "Delete this job"
 
-#: app/components/hiring/job-editor.tsx:919
+#: app/components/hiring/job-editor.tsx:970
 msgid "Delete this job?"
 msgstr "Delete this job?"
 
@@ -7200,7 +7238,7 @@ msgstr "Delivery Zones & Geo-Fencing"
 msgid "Deny"
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:268
+#: app/components/hiring/job-editor.tsx:290
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "Describe the role, the pay and what you want to ask."
 
@@ -7213,7 +7251,7 @@ msgstr "Describe this image for accessibility"
 msgid "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 msgstr "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 
-#: app/components/hiring/job-editor.tsx:657
+#: app/components/hiring/job-editor.tsx:700
 #: app/components/roles/tenant-role-access-manager.tsx:593
 #: app/components/roles/tenant-role-access-manager.tsx:707
 #: app/components/roles/tenant-role-access-manager.tsx:900
@@ -7259,7 +7297,7 @@ msgstr ""
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:333
+#: app/components/hiring/candidate-sheet.tsx:343
 #: app/components/staff/details-tab.tsx:123
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
@@ -7597,7 +7635,7 @@ msgstr ""
 msgid "Draft"
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:170
+#: app/components/hiring/job-editor.tsx:187
 msgid "Draft added. Read it through before you publish."
 msgstr "Draft added. Read it through before you publish."
 
@@ -7642,7 +7680,7 @@ msgstr "Draft with AI"
 msgid "Drafting answers is unavailable right now. Try again later."
 msgstr "Drafting answers is unavailable right now. Try again later."
 
-#: app/components/hiring/job-editor.tsx:588
+#: app/components/hiring/job-editor.tsx:621
 msgid "Drafting..."
 msgstr "Drafting..."
 
@@ -8303,7 +8341,7 @@ msgstr "Ends the next day"
 msgid "Ends the next day."
 msgstr "Ends the next day."
 
-#: app/components/hiring/candidate-sheet.tsx:381
+#: app/components/hiring/candidate-sheet.tsx:391
 #: app/components/nav-user.tsx:101
 #: app/components/phone-agent/voice-picker.tsx:58
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:53
@@ -8352,7 +8390,7 @@ msgstr "Enter a name."
 msgid "Enter a number."
 msgstr "Enter a number."
 
-#: app/components/hiring/job-editor.tsx:479
+#: app/components/hiring/job-editor.tsx:506
 msgid "Enter a pay amount, or choose not to show pay."
 msgstr "Enter a pay amount, or choose not to show pay."
 
@@ -8442,7 +8480,7 @@ msgstr "Enter the break in whole minutes, up to 720."
 msgid "Enter the end time."
 msgstr "Enter the end time."
 
-#: app/components/hiring/job-editor.tsx:823
+#: app/components/hiring/job-editor.tsx:870
 msgid "Enter the pay, or choose not to show it."
 msgstr "Enter the pay, or choose not to show it."
 
@@ -8588,7 +8626,7 @@ msgstr "Estimated Min Delivery Time (minutes)"
 msgid "Estimated wages by position over the last 30 days. Needs permission to see pay."
 msgstr "Estimated wages by position over the last 30 days. Needs permission to see pay."
 
-#: app/components/hiring/job-editor.tsx:565
+#: app/components/hiring/job-editor.tsx:598
 msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "Evening line cook, three nights a week, must be comfortable on grill"
 
@@ -9282,7 +9320,7 @@ msgstr "Frequently asked questions"
 msgid "Friday"
 msgstr "Friday"
 
-#: app/components/hiring/job-editor.tsx:730
+#: app/components/hiring/job-editor.tsx:773
 #: app/components/my-schedule/availability-sheet.tsx:162
 #: app/components/my-schedule/time-off-sheet.tsx:193
 #: app/components/staff/schedule/availability-sheet.tsx:313
@@ -9428,7 +9466,7 @@ msgstr ""
 msgid "Give me examples"
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:476
+#: app/components/hiring/job-editor.tsx:502
 msgid "Give the job a title."
 msgstr "Give the job a title."
 
@@ -9810,7 +9848,7 @@ msgstr "High impact"
 msgid "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 msgstr "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 
-#: app/components/hiring/candidate-sheet.tsx:250
+#: app/components/hiring/candidate-sheet.tsx:260
 #: app/components/hiring/hire-dialog.tsx:314
 msgid "Hire"
 msgstr "Hire"
@@ -9834,11 +9872,11 @@ msgstr "Hired"
 msgid "Hired {hired}"
 msgstr "Hired {hired}"
 
-#: app/components/hiring/candidate-sheet.tsx:273
+#: app/components/hiring/candidate-sheet.tsx:283
 msgid "Hired on {hiredOn}."
 msgstr "Hired on {hiredOn}."
 
-#: app/components/hiring/candidate-sheet.tsx:275
+#: app/components/hiring/candidate-sheet.tsx:285
 msgid "Hired."
 msgstr "Hired."
 
@@ -9865,7 +9903,7 @@ msgstr "Hiring: someone applied for a job"
 msgid "Hiring…"
 msgstr "Hiring…"
 
-#: app/components/hiring/candidate-sheet.tsx:361
+#: app/components/hiring/candidate-sheet.tsx:371
 #: app/components/staff/timesheets/card-history.tsx:132
 msgid "History"
 msgstr "History"
@@ -10278,6 +10316,14 @@ msgstr ""
 msgid "Includes {seats} user seats"
 msgstr ""
 
+#: app/components/member-location-scope.tsx:136
+msgid "Including locations you add later."
+msgstr "Including locations you add later."
+
+#: app/components/hiring/location-picker.tsx:88
+msgid "Including locations you add later. Applicants choose where."
+msgstr "Including locations you add later. Applicants choose where."
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:269
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Info"
@@ -10340,7 +10386,7 @@ msgstr "Internship"
 
 #: app/components/hiring/applicant-labels.ts:24
 #: app/components/hiring/applicant-list.tsx:76
-#: app/components/hiring/candidate-sheet.tsx:257
+#: app/components/hiring/candidate-sheet.tsx:267
 msgid "Interview"
 msgstr "Interview"
 
@@ -10364,7 +10410,7 @@ msgstr "Interview scheduled"
 msgid "Interview updated"
 msgstr "Interview updated"
 
-#: app/components/hiring/candidate-sheet.tsx:339
+#: app/components/hiring/candidate-sheet.tsx:349
 msgid "Interviews"
 msgstr "Interviews"
 
@@ -10591,18 +10637,18 @@ msgstr "Job posts & applicants"
 msgid "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 msgstr "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 
-#: app/components/hiring/job-editor.tsx:609
+#: app/components/hiring/job-editor.tsx:642
 msgid "Job title"
 msgstr "Job title"
 
-#: app/components/hiring/job-editor.tsx:254
-#: app/components/hiring/job-read-only.tsx:21
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:84
+#: app/components/hiring/job-editor.tsx:276
+#: app/components/hiring/job-read-only.tsx:23
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:50
 msgid "Jobs"
 msgstr "Jobs"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:87
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:98
 msgid "Jobs people can see and apply to on your website."
 msgstr "Jobs people can see and apply to on your website."
 
@@ -10667,7 +10713,7 @@ msgid "Keep current region"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
-#: app/components/hiring/job-editor.tsx:451
+#: app/components/hiring/job-editor.tsx:477
 #: app/components/staff/labor-policy-editor.tsx:289
 msgid "Keep editing"
 msgstr "Keep editing"
@@ -10843,7 +10889,7 @@ msgstr "Labor share of typical sales"
 msgid "Labor view"
 msgstr "Labor view"
 
-#: app/components/hiring/candidate-sheet.tsx:380
+#: app/components/hiring/candidate-sheet.tsx:390
 #: app/components/hiring/job-labels.ts:45
 #: app/components/nav-user.tsx:260
 #: app/components/phone-agent/voice-picker.tsx:390
@@ -10973,7 +11019,7 @@ msgstr "Lead capture"
 msgid "Learn more"
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:459
+#: app/components/hiring/job-editor.tsx:485
 msgid "Leave"
 msgstr "Leave"
 
@@ -10993,7 +11039,7 @@ msgstr "Leave blank for no limit."
 msgid "Leave blank for unlimited."
 msgstr "Leave blank for unlimited."
 
-#: app/components/hiring/job-editor.tsx:739
+#: app/components/hiring/job-editor.tsx:782
 msgid "Leave empty for one rate."
 msgstr "Leave empty for one rate."
 
@@ -11039,7 +11085,7 @@ msgstr "Leave out the < and > characters."
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "Leave the mailbox and discard your reply drafts?"
 
-#: app/components/hiring/job-editor.tsx:443
+#: app/components/hiring/job-editor.tsx:469
 msgid "Leave without saving?"
 msgstr "Leave without saving?"
 
@@ -11390,6 +11436,10 @@ msgstr "Loading…"
 msgid "Location"
 msgstr "Location"
 
+#: app/components/member-location-scope.tsx:127
+msgid "Location access"
+msgstr "Location access"
+
 #: app/components/locations/address-autocomplete.tsx:339
 msgid "Location Currency:"
 msgstr "Location Currency:"
@@ -11411,6 +11461,7 @@ msgid "Location Status"
 msgstr "Location Status"
 
 #: app/components/app-sidebar.tsx:567
+#: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:183
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:525
 msgid "Locations"
@@ -11655,7 +11706,7 @@ msgid "Manage restaurant locations, store hours, fulfillment methods, and delive
 msgstr "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 
 #: app/components/organization-invitations.tsx:266
-#: app/components/organization-members.tsx:173
+#: app/components/organization-members.tsx:186
 msgid "Manage roles"
 msgstr "Manage roles"
 
@@ -11735,7 +11786,7 @@ msgstr ""
 msgid "Manage your restaurant settings and preferences."
 msgstr "Manage your restaurant settings and preferences."
 
-#: app/components/organization-members.tsx:167
+#: app/components/organization-members.tsx:180
 msgid "Manage your restaurant's members."
 msgstr "Manage your restaurant's members."
 
@@ -11997,7 +12048,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:574
 #: app/components/chat/chat-group-settings-dialog.tsx:83
-#: app/components/organization-members.tsx:164
+#: app/components/organization-members.tsx:177
 #: app/components/roles/tenant-role-access-manager.tsx:1050
 #: app/components/roles/tenant-role-access-manager.tsx:1184
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:286
@@ -12286,7 +12337,7 @@ msgstr ""
 msgid "More actions"
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:212
+#: app/components/hiring/candidate-sheet.tsx:222
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:318
 msgid "More actions for {name}"
 msgstr "More actions for {name}"
@@ -12312,7 +12363,7 @@ msgstr "Move {name}"
 msgid "Move {name} to another stage"
 msgstr "Move {name} to another stage"
 
-#: app/components/hiring/candidate-sheet.tsx:314
+#: app/components/hiring/candidate-sheet.tsx:324
 msgid "Move back into the pipeline"
 msgstr "Move back into the pipeline"
 
@@ -12627,7 +12678,7 @@ msgstr ""
 msgid "New Item"
 msgstr "New Item"
 
-#: app/components/hiring/job-editor.tsx:238
+#: app/components/hiring/job-editor.tsx:260
 msgid "New job"
 msgstr "New job"
 
@@ -12723,7 +12774,7 @@ msgstr "New, moved, edited and removed shifts."
 msgid "Newer"
 msgstr "Newer"
 
-#: app/components/hiring/job-editor.tsx:404
+#: app/components/hiring/job-editor.tsx:430
 #: app/components/kiosk/kiosk-screens.tsx:276
 #: app/components/website/create-page-dialog.tsx:132
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:477
@@ -12949,7 +13000,7 @@ msgstr "No delivery zones configured"
 msgid "No description provided"
 msgstr "No description provided"
 
-#: app/components/hiring/job-summary.tsx:76
+#: app/components/hiring/job-summary.tsx:95
 msgid "No description yet."
 msgstr "No description yet."
 
@@ -13054,7 +13105,7 @@ msgstr "No items match these filters"
 msgid "No items yet"
 msgstr "No items yet"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:117
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:128
 msgid "No jobs yet"
 msgstr "No jobs yet"
 
@@ -13072,6 +13123,10 @@ msgstr "No jobs yet"
 #: app/components/staff/schedule-link-section.tsx:94
 msgid "No link is active. They get one in the next schedule email, as long as they have an email address."
 msgstr "No link is active. They get one in the next schedule email, as long as they have an email address."
+
+#: app/components/member-location-scope.tsx:88
+msgid "No locations"
+msgstr "No locations"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:569
 msgid "No locations found."
@@ -13134,7 +13189,7 @@ msgstr "No media matches your search."
 msgid "No media yet. Upload an image to get started."
 msgstr "No media yet. Upload an image to get started."
 
-#: app/components/organization-members.tsx:153
+#: app/components/organization-members.tsx:166
 msgid "No members found."
 msgstr ""
 
@@ -13675,7 +13730,7 @@ msgid "none"
 msgstr "none"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
-#: app/components/hiring/job-summary.tsx:47
+#: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
 #: app/components/settings/cards/organization/site-theme-card.tsx:787
 #: app/components/staff/empty-value.tsx:14
@@ -13792,7 +13847,7 @@ msgstr "Not sent"
 msgid "Not set up for this position here"
 msgstr "Not set up for this position here"
 
-#: app/components/hiring/job-summary.tsx:42
+#: app/components/hiring/job-summary.tsx:61
 msgid "Not shown"
 msgstr "Not shown"
 
@@ -13881,7 +13936,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:295
 #: app/components/command-menu.tsx:137
-#: app/components/hiring/candidate-sheet.tsx:350
+#: app/components/hiring/candidate-sheet.tsx:360
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
 #: app/components/staff/staff-profile-page.tsx:93
@@ -14317,7 +14372,7 @@ msgstr ""
 msgid "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 msgstr "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 
-#: app/components/hiring/job-editor.tsx:569
+#: app/components/hiring/job-editor.tsx:602
 msgid "Only what you type here and your business name are used. Nothing is saved until you save."
 msgstr "Only what you type here and your business name are used. Nothing is saved until you save."
 
@@ -14445,7 +14500,7 @@ msgstr "Open payout dashboard"
 msgid "Open preview"
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:287
+#: app/components/hiring/candidate-sheet.tsx:297
 #: app/components/hiring/hire-dialog.tsx:161
 msgid "Open profile"
 msgstr "Open profile"
@@ -15189,9 +15244,9 @@ msgstr ""
 msgid "Pausing automation..."
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:188
-#: app/components/hiring/job-editor.tsx:720
-#: app/components/hiring/job-summary.tsx:42
+#: app/components/hiring/job-editor.tsx:205
+#: app/components/hiring/job-editor.tsx:763
+#: app/components/hiring/job-summary.tsx:61
 #: app/components/staff/staff-roster.tsx:147
 msgid "Pay"
 msgstr "Pay"
@@ -15948,8 +16003,8 @@ msgid "Popular Item"
 msgstr "Popular Item"
 
 #: app/components/hiring/hire-dialog.tsx:226
-#: app/components/hiring/job-editor.tsx:630
-#: app/components/hiring/job-summary.tsx:40
+#: app/components/hiring/job-editor.tsx:663
+#: app/components/hiring/job-summary.tsx:49
 #: app/components/staff/positions-tab.tsx:528
 #: app/components/staff/schedule/shift-editor-sheet.tsx:457
 #: app/components/staff/timesheets/card-fields.tsx:241
@@ -16001,12 +16056,12 @@ msgstr "Positive"
 msgid "Positive feedback"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:92
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:135
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:103
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:146
 msgid "Post a job"
 msgstr "Post a job"
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:122
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:133
 msgid "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 msgstr "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 
@@ -16201,7 +16256,7 @@ msgstr "Priority"
 msgid "Priority support"
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:399
+#: app/components/hiring/candidate-sheet.tsx:409
 msgid "Privacy"
 msgstr "Privacy"
 
@@ -16282,7 +16337,7 @@ msgid "Public Access"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
-#: app/components/hiring/job-editor.tsx:424
+#: app/components/hiring/job-editor.tsx:450
 #: app/components/menu/drop-wizard/drop-form.tsx:459
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:619
 #: app/components/staff/schedule/publish-dialog.tsx:273
@@ -16392,7 +16447,7 @@ msgid "Publishing new journey..."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
-#: app/components/hiring/job-editor.tsx:422
+#: app/components/hiring/job-editor.tsx:448
 msgid "Publishing..."
 msgstr ""
 
@@ -16449,8 +16504,8 @@ msgstr ""
 msgid "Question {number}"
 msgstr "Question {number}"
 
-#: app/components/hiring/job-editor.tsx:189
-#: app/components/hiring/job-summary.tsx:45
+#: app/components/hiring/job-editor.tsx:206
+#: app/components/hiring/job-summary.tsx:64
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3636
 msgid "Questions"
 msgstr ""
@@ -16950,7 +17005,7 @@ msgstr ""
 msgid "Remove media"
 msgstr ""
 
-#: app/components/organization-members.tsx:225
+#: app/components/organization-members.tsx:251
 msgid "Remove member"
 msgstr ""
 
@@ -17095,7 +17150,7 @@ msgstr "Reopen ({reopenCount})"
 msgid "Reopen card"
 msgstr "Reopen card"
 
-#: app/components/hiring/job-editor.tsx:426
+#: app/components/hiring/job-editor.tsx:452
 msgid "Reopen job"
 msgstr "Reopen job"
 
@@ -17442,7 +17497,7 @@ msgstr "Reusable options with images, pricing, allergens, and dietary profiles a
 msgid "Reuse a pattern of shifts week after week."
 msgstr "Reuse a pattern of shifts week after week."
 
-#: app/components/hiring/job-editor.tsx:190
+#: app/components/hiring/job-editor.tsx:207
 #: app/components/mailbox/reviews-tab.tsx:638
 #: app/hooks/use-staff-attention.ts:117
 msgid "Review"
@@ -17542,7 +17597,7 @@ msgstr "Right ½"
 msgid "Ring for (seconds)"
 msgstr "Ring for (seconds)"
 
-#: app/components/hiring/job-editor.tsx:187
+#: app/components/hiring/job-editor.tsx:204
 #: app/components/roles/tenant-role-access-manager.tsx:1044
 #: app/components/roles/tenant-role-access-manager.tsx:1178
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:356
@@ -17805,11 +17860,12 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/chat/chat-message.tsx:222
+#: app/components/member-location-scope.tsx:219
 #: app/components/menu/drop-wizard/drop-drawers.tsx:399
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
-#: app/components/organization-members.tsx:129
+#: app/components/organization-members.tsx:140
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
@@ -17858,7 +17914,7 @@ msgid "Save Branding"
 msgstr ""
 
 #: app/components/hiring/interview-dialog.tsx:285
-#: app/components/hiring/job-editor.tsx:416
+#: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
 #: app/components/roles/tenant-role-access-manager.tsx:801
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
@@ -17884,7 +17940,7 @@ msgid "Save Changes"
 msgstr "Save Changes"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/hiring/job-editor.tsx:398
+#: app/components/hiring/job-editor.tsx:424
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:615
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
@@ -17971,7 +18027,7 @@ msgstr "Save this week"
 msgid "Save transfers"
 msgstr "Save transfers"
 
-#: app/components/hiring/job-editor.tsx:905
+#: app/components/hiring/job-editor.tsx:956
 msgid "Save your changes before closing."
 msgstr "Save your changes before closing."
 
@@ -17992,7 +18048,7 @@ msgstr "Saved on this tablet. It will be recorded when the connection is back."
 msgid "Saved training rule \"{title}\""
 msgstr "Saved training rule \"{title}\""
 
-#: app/components/hiring/job-editor.tsx:149
+#: app/components/hiring/job-editor.tsx:166
 msgid "Saved."
 msgstr "Saved."
 
@@ -18018,8 +18074,8 @@ msgid "Saving new journey draft..."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/hiring/job-editor.tsx:396
-#: app/components/hiring/job-editor.tsx:414
+#: app/components/hiring/job-editor.tsx:422
+#: app/components/hiring/job-editor.tsx:440
 msgid "Saving..."
 msgstr ""
 
@@ -18089,7 +18145,7 @@ msgstr "Say what kind of certificate this is."
 msgid "Say when it will be ready"
 msgstr "Say when it will be ready"
 
-#: app/components/hiring/job-editor.tsx:478
+#: app/components/hiring/job-editor.tsx:504
 msgid "Say which position this is."
 msgstr "Say which position this is."
 
@@ -18129,12 +18185,12 @@ msgstr "Schedule & time clock"
 msgid "Schedule a call"
 msgstr ""
 
-#: app/components/hiring/candidate-sheet.tsx:434
+#: app/components/hiring/candidate-sheet.tsx:444
 #: app/components/hiring/interview-dialog.tsx:156
 msgid "Schedule an interview"
 msgstr "Schedule an interview"
 
-#: app/components/hiring/candidate-sheet.tsx:432
+#: app/components/hiring/candidate-sheet.tsx:442
 msgid "Schedule another"
 msgstr "Schedule another"
 
@@ -18703,6 +18759,11 @@ msgstr "Selected Address"
 msgid "Selected cards"
 msgstr "Selected cards"
 
+#: app/components/hiring/location-picker.tsx:100
+#: app/components/member-location-scope.tsx:146
+msgid "Selected locations"
+msgstr "Selected locations"
+
 #: app/components/note/share-note-button.tsx:216
 msgid "Selected Members"
 msgstr ""
@@ -19041,7 +19102,7 @@ msgstr "Share the house rules"
 #~ msgid "Share the story behind this drop, pickup instructions, or special ingredients..."
 #~ msgstr "Share the story behind this drop, pickup instructions, or special ingredients..."
 
-#: app/components/hiring/job-editor.tsx:873
+#: app/components/hiring/job-editor.tsx:920
 msgid "Share this job"
 msgstr "Share this job"
 
@@ -19446,7 +19507,7 @@ msgstr ""
 msgid "Some answers differ"
 msgstr "Some answers differ"
 
-#: app/components/hiring/job-editor.tsx:496
+#: app/components/hiring/job-editor.tsx:523
 msgid "Some details need fixing. Check each step."
 msgstr "Some details need fixing. Check each step."
 
@@ -19516,7 +19577,7 @@ msgid "Something went wrong. Reload the page and try again."
 msgstr "Something went wrong. Reload the page and try again."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:205
-#: app/components/hiring/job-editor.tsx:516
+#: app/components/hiring/job-editor.tsx:545
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
@@ -19595,6 +19656,14 @@ msgstr "Staff email is switched off, so nothing can be sent right now."
 msgid "Staff email is switched off, so nothing can be sent."
 msgstr "Staff email is switched off, so nothing can be sent."
 
+#: app/components/member-location-scope.tsx:108
+msgid "Staff locations"
+msgstr "Staff locations"
+
+#: app/components/member-location-scope.tsx:99
+msgid "Staff locations for {memberName}: {summary}"
+msgstr "Staff locations for {memberName}: {summary}"
+
 #: app/components/staff/region-staff-guard.tsx:89
 msgid "Staff members: {staffCount}"
 msgstr "Staff members: {staffCount}"
@@ -19637,7 +19706,7 @@ msgid "Staff, pay & labor"
 msgstr "Staff, pay & labor"
 
 #: app/components/hiring/applicant-list.tsx:67
-#: app/components/hiring/candidate-sheet.tsx:238
+#: app/components/hiring/candidate-sheet.tsx:248
 msgid "Stage"
 msgstr "Stage"
 
@@ -19665,8 +19734,8 @@ msgstr "Standard starter"
 msgid "Standard system role."
 msgstr "Standard system role."
 
-#: app/components/hiring/job-editor.tsx:263
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:160
+#: app/components/hiring/job-editor.tsx:285
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:183
 msgid "Standing application"
 msgstr "Standing application"
 
@@ -19710,7 +19779,7 @@ msgstr "Start call"
 msgid "Start conversation"
 msgstr "Start conversation"
 
-#: app/components/hiring/job-editor.tsx:556
+#: app/components/hiring/job-editor.tsx:589
 msgid "Start from a few words"
 msgstr "Start from a few words"
 
@@ -19865,7 +19934,7 @@ msgstr ""
 msgid "Step name"
 msgstr "Step name"
 
-#: app/components/hiring/job-editor.tsx:281
+#: app/components/hiring/job-editor.tsx:303
 #: app/components/phone-agent/flow-editor/node-palette.tsx:77
 msgid "Steps"
 msgstr "Steps"
@@ -20636,7 +20705,7 @@ msgstr "That file is too large. Split it into smaller files."
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "That file is too large. Use a file under 1 MB."
 
-#: app/components/hiring/job-editor.tsx:503
+#: app/components/hiring/job-editor.tsx:532
 msgid "That is not possible for a job in this state. Reload the page."
 msgstr "That is not possible for a job in this state. Reload the page."
 
@@ -20854,7 +20923,7 @@ msgstr "The call got a tag you marked important."
 msgid "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 msgstr "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 
-#: app/components/hiring/job-editor.tsx:824
+#: app/components/hiring/job-editor.tsx:871
 msgid "The closing date has passed. Choose a new one."
 msgstr "The closing date has passed. Choose a new one."
 
@@ -20882,11 +20951,11 @@ msgstr "The decline message could not be sent"
 msgid "The deducted break must be shorter than the shift it applies after."
 msgstr "The deducted break must be shorter than the shift it applies after."
 
-#: app/components/hiring/job-editor.tsx:498
+#: app/components/hiring/job-editor.tsx:525
 msgid "The description is too long. Shorten it and try again."
 msgstr "The description is too long. Shorten it and try again."
 
-#: app/components/hiring/job-editor.tsx:513
+#: app/components/hiring/job-editor.tsx:542
 msgid "The drafting tool could not help right now. Write it yourself or try again."
 msgstr "The drafting tool could not help right now. Write it yourself or try again."
 
@@ -20944,7 +21013,7 @@ msgstr "The fixed lines the phone system says outside of conversation with the A
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:767
+#: app/components/hiring/job-editor.tsx:810
 msgid "The general application stays open until you close it."
 msgstr "The general application stays open until you close it."
 
@@ -20969,19 +21038,19 @@ msgstr "The interview invitation could not be sent"
 msgid "The invitation was not sent. Try again."
 msgstr "The invitation was not sent. Try again."
 
-#: app/components/hiring/job-editor.tsx:926
+#: app/components/hiring/job-editor.tsx:977
 msgid "The job and its link are removed for good. Applications you already received are kept."
 msgstr "The job and its link are removed for good. Applications you already received are kept."
 
-#: app/components/hiring/job-editor.tsx:775
+#: app/components/hiring/job-editor.tsx:818
 msgid "The job closes by itself at the end of this day. Leave it empty to keep it open until you close it."
 msgstr "The job closes by itself at the end of this day. Leave it empty to keep it open until you close it."
 
-#: app/components/hiring/job-editor.tsx:931
+#: app/components/hiring/job-editor.tsx:982
 msgid "The job disappears from your careers page and its link stops accepting applications. You can reopen it later."
 msgstr "The job disappears from your careers page and its link stops accepting applications. You can reopen it later."
 
-#: app/components/hiring/job-editor.tsx:148
+#: app/components/hiring/job-editor.tsx:165
 msgid "The job is closed."
 msgstr "The job is closed."
 
@@ -20989,7 +21058,7 @@ msgstr "The job is closed."
 msgid "The job is filled"
 msgstr "The job is filled"
 
-#: app/components/hiring/job-editor.tsx:146
+#: app/components/hiring/job-editor.tsx:163
 msgid "The job is live."
 msgstr "The job is live."
 
@@ -21049,7 +21118,7 @@ msgstr "The number customers dial today, in international format. You'll verify 
 msgid "The order on this link can't be shown."
 msgstr "The order on this link can't be shown."
 
-#: app/components/hiring/job-editor.tsx:758
+#: app/components/hiring/job-editor.tsx:801
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "The page will not mention pay. Showing a range tends to bring more applications."
 
@@ -21085,7 +21154,7 @@ msgstr "The reminder must come before the automatic clock-out."
 msgid "The right answer is"
 msgstr "The right answer is"
 
-#: app/components/hiring/job-editor.tsx:632
+#: app/components/hiring/job-editor.tsx:665
 msgid "The role on your team, like \"Line cook\". Used when you hire."
 msgstr "The role on your team, like \"Line cook\". Used when you hire."
 
@@ -21157,7 +21226,7 @@ msgstr "The times do not add up. Fix the start or the end."
 msgid "The title, image, and note customers will see."
 msgstr "The title, image, and note customers will see."
 
-#: app/components/hiring/job-editor.tsx:481
+#: app/components/hiring/job-editor.tsx:508
 msgid "The top of the range must be at least the bottom."
 msgstr "The top of the range must be at least the bottom."
 
@@ -21177,7 +21246,7 @@ msgstr "The voice service for your account hasn't been set up. Contact support a
 msgid "The whole date range together"
 msgstr "The whole date range together"
 
-#: app/components/hiring/candidate-sheet.tsx:390
+#: app/components/hiring/candidate-sheet.tsx:400
 msgid "Their answers"
 msgstr "Their answers"
 
@@ -21185,7 +21254,7 @@ msgstr "Their answers"
 msgid "Their current availability stays as it is. You can leave a note."
 msgstr "Their current availability stays as it is. You can leave a note."
 
-#: app/components/hiring/candidate-sheet.tsx:304
+#: app/components/hiring/candidate-sheet.tsx:314
 msgid "Their details are removed on {retentionDate}."
 msgstr "Their details are removed on {retentionDate}."
 
@@ -21290,7 +21359,7 @@ msgstr "These settings changed in another tab or by someone else. Reload to see 
 msgid "These were saved while the tablet was offline, but the time clock could not accept them. They were not recorded."
 msgstr "These were saved while the tablet was offline, but the time clock could not accept them. They were not recorded."
 
-#: app/components/hiring/candidate-sheet.tsx:402
+#: app/components/hiring/candidate-sheet.tsx:412
 msgid "They agreed to your privacy notice (version {consentVersion}) on {consentOn}. Declined applicants are removed after {keepDays} days."
 msgstr "They agreed to your privacy notice (version {consentVersion}) on {consentOn}. Declined applicants are removed after {keepDays} days."
 
@@ -21390,7 +21459,7 @@ msgstr ""
 msgid "Thinking…"
 msgstr "Thinking…"
 
-#: app/components/hiring/job-editor.tsx:508
+#: app/components/hiring/job-editor.tsx:537
 msgid "This account can look but not change jobs."
 msgstr "This account can look but not change jobs."
 
@@ -21550,11 +21619,11 @@ msgstr "This item has reached the 100 combination limit."
 msgid "This job had no screening questions."
 msgstr "This job had no screening questions."
 
-#: app/components/hiring/job-editor.tsx:500
+#: app/components/hiring/job-editor.tsx:529
 msgid "This job is not ready to go live yet. See the Review step."
 msgstr "This job is not ready to go live yet. See the Review step."
 
-#: app/components/hiring/job-editor.tsx:494
+#: app/components/hiring/job-editor.tsx:521
 msgid "This job no longer exists. Go back to the list."
 msgstr "This job no longer exists. Go back to the list."
 
@@ -21715,6 +21784,10 @@ msgstr "This replaces your draft, including unsaved changes. It can't be undone.
 #: app/utils/staffing/schedule-errors.ts:32
 msgid "This request was already decided."
 msgstr "This request was already decided."
+
+#: app/components/member-location-scope.tsx:164
+msgid "This restaurant has no active locations yet."
+msgstr "This restaurant has no active locations yet."
 
 #: app/utils/staffing/labor-errors.ts:45
 msgid "This row has a different number of columns than the header."
@@ -22074,7 +22147,7 @@ msgstr ""
 msgid "to"
 msgstr "to"
 
-#: app/components/hiring/job-editor.tsx:738
+#: app/components/hiring/job-editor.tsx:781
 msgid "To"
 msgstr "To"
 
@@ -22580,8 +22653,8 @@ msgstr "Two breaks overlap. Fix their times."
 msgid "Two-factor authentication is currently enabled. Disabling it will make your account less secure. Please enter your authenticator code or a backup code to confirm."
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:642
-#: app/components/hiring/job-summary.tsx:41
+#: app/components/hiring/job-editor.tsx:685
+#: app/components/hiring/job-summary.tsx:60
 #: app/components/my-schedule/time-off-sheet.tsx:153
 #: app/components/settings/cards/organization/announcement-sheet.tsx:388
 #: app/components/staff/schedule/time-off-sheet.tsx:194
@@ -22728,7 +22801,7 @@ msgstr "Undo"
 msgid "Undo changes"
 msgstr "Undo changes"
 
-#: app/components/hiring/job-editor.tsx:596
+#: app/components/hiring/job-editor.tsx:629
 msgid "Undo draft"
 msgstr "Undo draft"
 
@@ -23172,7 +23245,7 @@ msgstr "Use a different value."
 msgid "Use a full link that starts with https://"
 msgstr "Use a full link that starts with https://"
 
-#: app/components/hiring/job-editor.tsx:480
+#: app/components/hiring/job-editor.tsx:507
 msgid "Use a number like 18 or 18.50."
 msgstr "Use a number like 18 or 18.50."
 
@@ -23197,7 +23270,7 @@ msgstr ""
 msgid "Use any authenticator app on your mobile device to scan the QR code, or enter the Setup Key manually."
 msgstr ""
 
-#: app/components/hiring/job-editor.tsx:477
+#: app/components/hiring/job-editor.tsx:503
 msgid "Use at least 3 letters."
 msgstr "Use at least 3 letters."
 
@@ -23994,11 +24067,11 @@ msgstr ""
 msgid "Welcome!"
 msgstr ""
 
-#: app/components/hiring/job-summary.tsx:66
+#: app/components/hiring/job-summary.tsx:85
 msgid "What applicants read"
 msgstr "What applicants read"
 
-#: app/components/hiring/job-editor.tsx:610
+#: app/components/hiring/job-editor.tsx:643
 msgid "What applicants see, like \"Evening line cook\"."
 msgstr "What applicants see, like \"Evening line cook\"."
 
@@ -24019,11 +24092,11 @@ msgstr ""
 msgid "What do you need?"
 msgstr "What do you need?"
 
-#: app/components/hiring/job-editor.tsx:319
+#: app/components/hiring/job-editor.tsx:341
 msgid "What do you want to ask?"
 msgstr "What do you want to ask?"
 
-#: app/components/hiring/job-editor.tsx:318
+#: app/components/hiring/job-editor.tsx:340
 msgid "What does it pay?"
 msgstr "What does it pay?"
 
@@ -24035,7 +24108,7 @@ msgstr ""
 msgid "What is it called"
 msgstr "What is it called"
 
-#: app/components/hiring/job-editor.tsx:317
+#: app/components/hiring/job-editor.tsx:339
 msgid "What is the job?"
 msgstr "What is the job?"
 
@@ -24210,7 +24283,7 @@ msgstr "When to transfer a call or take a message for staff."
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 
-#: app/components/hiring/job-summary.tsx:43
+#: app/components/hiring/job-summary.tsx:62
 msgid "When you close it"
 msgstr "When you close it"
 
@@ -24223,6 +24296,8 @@ msgid "When you're closed"
 msgstr "When you're closed"
 
 #: app/components/hiring/interview-dialog.tsx:168
+#: app/components/hiring/job-summary.tsx:53
+#: app/components/hiring/location-picker.tsx:68
 msgid "Where"
 msgstr "Where"
 
@@ -24242,6 +24317,10 @@ msgstr "Where one period ends and the next begins. Timesheets and the payroll su
 #: app/components/staff/labor/labor-settings.tsx:118
 msgid "Where sales come from"
 msgstr "Where sales come from"
+
+#: app/components/hiring/location-picker.tsx:79
+msgid "Where the job is"
+msgstr "Where the job is"
 
 #: app/components/hiring/interview-dialog.tsx:239
 msgid "Where to go, who to ask for, or the call-in details or meeting link."
@@ -24473,11 +24552,11 @@ msgstr "Works as"
 msgid "Write {business} in a message to say your business's name."
 msgstr "Write {business} in a message to say your business's name."
 
-#: app/components/hiring/job-editor.tsx:822
+#: app/components/hiring/job-editor.tsx:869
 msgid "Write a description of at least a couple of sentences."
 msgstr "Write a description of at least a couple of sentences."
 
-#: app/components/hiring/job-editor.tsx:590
+#: app/components/hiring/job-editor.tsx:623
 msgid "Write a draft"
 msgstr "Write a draft"
 
@@ -24511,7 +24590,7 @@ msgstr ""
 msgid "Write the policy they are acknowledging."
 msgstr "Write the policy they are acknowledging."
 
-#: app/components/hiring/job-editor.tsx:484
+#: app/components/hiring/job-editor.tsx:511
 #: app/components/hiring/screener-editor.tsx:164
 msgid "Write the question."
 msgstr "Write the question."
@@ -24590,7 +24669,7 @@ msgid "Yesterday"
 msgstr "Yesterday"
 
 #: app/components/hiring/candidate-parts.tsx:374
-#: app/components/organization-members.tsx:201
+#: app/components/organization-members.tsx:214
 #: app/components/phone-agent/test-call-panel.tsx:724
 msgid "You"
 msgstr ""
@@ -24703,6 +24782,10 @@ msgstr "You can view this call flow, but you don't have permission to change it.
 msgid "You cannot clock in or out on this tablet right now. Ask a manager."
 msgstr "You cannot clock in or out on this tablet right now. Ask a manager."
 
+#: app/components/hiring/job-editor.tsx:527
+msgid "You cannot post for that location."
+msgstr "You cannot post for that location."
+
 #: app/components/staff/labor-policy-editor.tsx:281
 msgid "You changed some rules and have not saved them. Switching now throws those changes away."
 msgstr "You changed some rules and have not saved them. Switching now throws those changes away."
@@ -24764,7 +24847,7 @@ msgstr "You have unsaved changes."
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "You have unsaved changes. Leave this page and lose them?"
 
-#: app/components/hiring/job-editor.tsx:511
+#: app/components/hiring/job-editor.tsx:540
 msgid "You have used the drafting tool a lot. Try again in an hour."
 msgstr "You have used the drafting tool a lot. Try again in an hour."
 
@@ -24851,7 +24934,7 @@ msgstr ""
 msgid "Your business line"
 msgstr "Your business line"
 
-#: app/components/hiring/job-editor.tsx:446
+#: app/components/hiring/job-editor.tsx:472
 msgid "Your changes to this job will be lost."
 msgstr "Your changes to this job will be lost."
 
@@ -24983,11 +25066,11 @@ msgstr "Your team will see channels here once you create one. Members open chat 
 msgid "Your team, time clock, schedule, and hiring tools will appear here as they become available."
 msgstr "Your team, time clock, schedule, and hiring tools will appear here as they become available."
 
-#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:100
+#: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:111
 msgid "Your website is not published yet, so people cannot see these jobs. <0>Publish your website</0>."
 msgstr "Your website is not published yet, so people cannot see these jobs. <0>Publish your website</0>."
 
-#: app/components/hiring/job-editor.tsx:854
+#: app/components/hiring/job-editor.tsx:901
 msgid "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 msgstr "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 

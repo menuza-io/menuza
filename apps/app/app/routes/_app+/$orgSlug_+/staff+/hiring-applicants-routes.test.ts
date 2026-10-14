@@ -3,6 +3,7 @@ import {
 	db,
 	inArray,
 	Organization,
+	OrganizationLocation,
 	eq,
 	OrganizationRole,
 	_OrganizationPermissionToRole,
@@ -154,6 +155,42 @@ describe('applicants page loader', () => {
 			}),
 		])
 		expect(JSON.stringify(result.data)).not.toMatch(/email|phone|applicant/i)
+	})
+
+	it('names the active locations when the organization has them, with time zone and currency', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		await enable(organization.id, ['enabled', 'hiring'])
+		const [downtown] = await db
+			.insert(OrganizationLocation)
+			.values({
+				organizationId: organization.id,
+				name: 'Downtown',
+				slug: `downtown-${crypto.randomUUID().slice(0, 6)}`,
+				timezone: 'America/Chicago',
+				address: '1 Main Street, Chicago, IL 60601, United States',
+				isActive: true,
+			})
+			.returning({ id: OrganizationLocation.id })
+		await db.insert(OrganizationLocation).values({
+			organizationId: organization.id,
+			name: 'Closed',
+			slug: `closed-${crypto.randomUUID().slice(0, 6)}`,
+			isActive: false,
+		})
+		const result = await outcome(() =>
+			pageLoader({
+				request: createAuthenticatedRequest(url(organization.slug), {}, cookie),
+				params: { orgSlug: organization.slug },
+			} as any),
+		)
+		expect(result.data.scopes).toEqual([
+			{
+				id: downtown!.id,
+				name: 'Downtown',
+				timeZone: 'America/Chicago',
+				currency: 'USD',
+			},
+		])
 	})
 
 	it('is read-only for a member who can only read hiring, and cannot invite', async () => {

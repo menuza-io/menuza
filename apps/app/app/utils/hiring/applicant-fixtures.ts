@@ -15,6 +15,7 @@ export function applicant(
 		postingId: 'p1',
 		postingTitle: 'Line cook',
 		scopeId: 'main',
+		interestedScopeIds: ['main'],
 		firstName: 'Sara',
 		lastName: 'Ali',
 		source: 'careers_page',

@@ -166,6 +166,10 @@ msgstr "全部限量活动"
 msgid "All jobs"
 msgstr "所有职位"
 
+#: src/pages/careers/index.astro.ts:3
+msgid "All locations"
+msgstr "所有门店"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
@@ -339,6 +343,14 @@ msgstr "至少选择 {count} 个选项"
 #: src/lib/ordering-labels.ts:42
 msgid "Choose at least 1 option"
 msgstr "至少选择 1 个选项"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose at least one location."
+msgstr "请至少选择一家门店。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose every location that suits you."
+msgstr "请选择所有适合你的门店。"
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
@@ -1710,6 +1722,10 @@ msgstr "地点"
 #: src/lib/ordering-labels.ts:147
 msgid "Where should we deliver?"
 msgstr "配送到哪里？"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Where would you like to work?"
+msgstr "你想在哪里工作?"
 
 #: src/lib/ordering-labels.ts:51
 msgid "Whole"

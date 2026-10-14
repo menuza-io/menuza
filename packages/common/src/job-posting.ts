@@ -54,6 +54,7 @@ export const JOB_POSTING_LIMITS = {
 	/** Smallest description (plain text) that can be published. */
 	descriptionMinText: 30,
 	questions: 10,
+	locations: 100,
 	prompt: 200,
 	openAnswerDefault: 500,
 	openAnswerMax: 2_000,
@@ -274,6 +275,16 @@ export const jobPostingContentSchema = z
 		payType: z.enum(JOB_PAY_TYPES).default('none'),
 		payMinMinor: payAmount.nullable().default(null),
 		payMaxMinor: payAmount.nullable().default(null),
+		/** Legacy single location; folded into `locationIds` when saved. */
+		locationId: z.string().trim().min(1).max(64).nullable().default(null),
+		/**
+		 * Where the job is. Empty means every location, including ones added
+		 * later; otherwise the applicant picks among these.
+		 */
+		locationIds: z
+			.array(z.string().trim().min(1).max(64))
+			.max(JOB_POSTING_LIMITS.locations)
+			.default([]),
 		currency: currencySchema.default('USD'),
 		descriptionHtml: z.string().max(JOB_POSTING_LIMITS.descriptionHtml * 2),
 		questions: screenerQuestionsSchema.default([]),
@@ -582,6 +593,17 @@ export function stripMarkup(value: string): string {
 // Public projection (what the careers pages and the public JSON route carry)
 // ---------------------------------------------------------------------------
 
+export type PublicJobLocation = {
+	/** Opaque id the application form sends back to say where the person applies. */
+	id: string
+	name: string
+	city: string | null
+	region: string | null
+	postalCode: string | null
+	country: string | null
+	streetAddress: string | null
+}
+
 export type PublicJobPosting = {
 	slug: string
 	title: string
@@ -594,6 +616,13 @@ export type PublicJobPosting = {
 	descriptionHtml: string
 	questions: PublicScreenerQuestion[]
 	isGeneral: boolean
+	/**
+	 * Where the job is. For a posting open to every location this lists them all
+	 * (a person applying picks one); empty when the business has none.
+	 */
+	locations: PublicJobLocation[]
+	/** The job is open to every location, including ones added later. */
+	allLocations: boolean
 	datePosted: string
 	validThrough: string | null
 }
@@ -658,11 +687,40 @@ const SCHEMA_PAY_UNIT: Record<Exclude<JobPayType, 'none'>, string> = {
 	yearly: 'YEAR',
 }
 
+/** Two-letter country codes for the countries an address can name. */
+const COUNTRY_CODES: Record<string, string> = {
+	US: 'US',
+	USA: 'US',
+	'UNITED STATES': 'US',
+	CA: 'CA',
+	CAN: 'CA',
+	CANADA: 'CA',
+	SA: 'SA',
+	SAU: 'SA',
+	'SAUDI ARABIA': 'SA',
+	السعودية: 'SA',
+	'المملكة العربية السعودية': 'SA',
+}
+
+function countryCode(value: string | null, currency: string): string | null {
+	if (value) {
+		const mapped = COUNTRY_CODES[value.trim().toUpperCase()]
+		if (mapped) return mapped
+		if (/^[A-Za-z]{2}$/.test(value.trim())) return value.trim().toUpperCase()
+	}
+	// Posting currency is the best remaining hint; it is derived from the
+	// location's own country when the posting is saved.
+	if (currency === 'SAR') return 'SA'
+	if (currency === 'CAD') return 'CA'
+	if (currency === 'USD') return 'US'
+	return null
+}
+
 /**
  * schema.org `JobPosting` for search engines. Everything here is already
  * public on the page. The description is the sanitized HTML. Pay is included
- * only when the posting shows it. A vertical that knows where the job is can
- * add the schema.org place of the job to the returned object.
+ * only when the posting shows it, and the places the job is at (one Place, or a list when
+ * it is open at several; nothing when there are none).
  */
 export function buildJobPostingJsonLd(input: {
 	posting: PublicJobPosting
@@ -715,6 +773,24 @@ export function buildJobPostingJsonLd(input: {
 			},
 		}
 	}
+
+	const places = posting.locations.map((place) => {
+		const country = countryCode(place.country, posting.currency)
+		return {
+			'@type': 'Place',
+			name: place.name,
+			address: {
+				'@type': 'PostalAddress',
+				...(place.streetAddress ? { streetAddress: place.streetAddress } : {}),
+				...(place.city ? { addressLocality: place.city } : {}),
+				...(place.region ? { addressRegion: place.region } : {}),
+				...(place.postalCode ? { postalCode: place.postalCode } : {}),
+				...(country ? { addressCountry: country } : {}),
+			},
+		}
+	})
+	if (places.length === 1) data.jobLocation = places[0]
+	else if (places.length > 1) data.jobLocation = places
 
 	return data
 }

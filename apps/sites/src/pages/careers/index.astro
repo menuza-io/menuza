@@ -3,7 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
 import SitePage from '~/components/SitePage.astro'
-import { employmentLabel, payLine } from '~/lib/careers/labels'
+import { employmentLabel, payLine, placeLine } from '~/lib/careers/labels'
 import { siteContainer } from '~/lib/media'
 import { fetchPublishedCareers, fetchPublishedSitePage } from '~/lib/org'
 import { translate } from '~/lib/translate'
@@ -44,6 +44,7 @@ const heading = i18n._(msg`Careers`)
 const subtitle = translate(i18n, msg`Open positions at {name}`, { name: organization.name })
 const emptyTitle = i18n._(msg`No openings right now.`)
 const emptyBody = i18n._(msg`Check back soon.`)
+const allLocations = i18n._(msg`All locations`)
 
 const postings = (careers?.postings ?? []).map((posting) => ({
 	...posting,
@@ -53,7 +54,7 @@ const postings = (careers?.postings ?? []).map((posting) => ({
 		locale,
 		defaultLocale,
 	),
-	meta: employmentLabel(i18n, posting.employmentType),
+	meta: [placeLine(posting) ?? allLocations, employmentLabel(i18n, posting.employmentType)].join(' · '),
 	pay: payLine(i18n, locale, posting),
 }))
 ---

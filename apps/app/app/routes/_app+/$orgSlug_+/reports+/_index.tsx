@@ -2,7 +2,6 @@ import { requireUserId } from '@repo/auth'
 import {
 	catalogForGrants,
 	definitionAllowed,
-	getCatalog,
 	getSubject,
 	templatesFor,
 	templatesForGrants,
@@ -10,8 +9,10 @@ import {
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
+import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { type Route } from './+types/_index.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -32,9 +33,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organization.id,
 	)
-	const fullCatalog = getCatalog('organization')
+	const { catalog: fullCatalog, scopeWording } =
+		await organizationReportCatalog(organization.id)
 	const catalog = catalogForGrants(fullCatalog, staff.subjects)
 	return {
+		scopeWording,
 		orgSlug: organization.slug,
 		organizationName: organization.name,
 		savedReports: saved
@@ -67,12 +70,14 @@ export default function ReportsIndex() {
 	const basePath = `/${data.orgSlug}/reports`
 
 	return (
-		<ReportStart
-			heading="Analytics & Reports"
-			description={`Track sales, orders, customers, marketing, and reviews for ${data.organizationName}. Order and customer reports run in your data region, straight from the browser, and never pass through the US control plane.`}
-			templates={data.templates}
-			savedReports={data.savedReports}
-			basePath={basePath}
-		/>
+		<ScopeWordingProvider wording={data.scopeWording}>
+			<ReportStart
+				heading="Analytics & Reports"
+				description={`Track sales, orders, customers, marketing, and reviews for ${data.organizationName}. Order and customer reports run in your data region, straight from the browser, and never pass through the US control plane.`}
+				templates={data.templates}
+				savedReports={data.savedReports}
+				basePath={basePath}
+			/>
+		</ScopeWordingProvider>
 	)
 }

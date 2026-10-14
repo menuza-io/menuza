@@ -3,6 +3,7 @@ import {
 	db,
 	eq,
 	inArray,
+	OrganizationLocation,
 	OrganizationInvitation,
 	UserOrganization,
 } from '@repo/database'
@@ -28,6 +29,7 @@ vi.mock(
 	},
 )
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	createAuthenticatedRequest,
 	getResponseStatus,
@@ -137,6 +139,36 @@ describe('invite from a staff profile', () => {
 		}
 		expect(await invitationFor(email)).toBeUndefined()
 		expect(sendEmail).not.toHaveBeenCalled()
+	})
+
+	it('a location-scoped manager can send a plain invite but cannot attach a staff id', async () => {
+		const { organization, user, cookie } = await setupTestOrgWithUser('admin')
+		await enableStaffing(organization.id)
+		sendEmail.mockResolvedValue({ status: 'success' })
+		const slug = `loc-${crypto.randomUUID().slice(0, 8)}`
+		const [location] = await db
+			.insert(OrganizationLocation)
+			.values({ organizationId: organization.id, name: slug, slug })
+			.returning({ id: OrganizationLocation.id })
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: user.id,
+			value: { scope: 'selected', locationIds: [location!.id] },
+		})
+
+		const linked = `staff-${crypto.randomUUID().slice(0, 8)}@example.com`
+		expect(
+			await invite(organization.slug, cookie, {
+				email: linked,
+				staffId: 'staff_abc',
+			}),
+		).toBe(403)
+		expect(await invitationFor(linked)).toBeUndefined()
+		expect(sendEmail).not.toHaveBeenCalled()
+
+		const plain = `staff-${crypto.randomUUID().slice(0, 8)}@example.com`
+		expect(await invite(organization.slug, cookie, { email: plain })).toBe(200)
+		expect((await invitationFor(plain))?.staffMemberId).toBeNull()
 	})
 
 	it('cannot attach a staff id while staffing is off', async () => {

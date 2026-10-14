@@ -1,0 +1,1 @@
+ALTER TABLE `hiring_applications` ADD `interested_scope_ids` text DEFAULT '[]' NOT NULL;

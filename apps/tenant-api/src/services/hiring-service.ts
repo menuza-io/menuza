@@ -180,6 +180,11 @@ function toSummary(
 		postingId: row.postingId,
 		postingTitle: row.postingTitle,
 		scopeId: row.scopeId,
+		interestedScopeIds: Array.isArray(row.interestedScopeIds)
+			? row.interestedScopeIds.filter(
+					(id): id is string => typeof id === 'string' && id !== '',
+				)
+			: [],
 		firstName: row.firstName,
 		lastName: row.lastName,
 		source: row.source as HiringSource,
@@ -240,13 +245,32 @@ function toEvent(row: HiringEventRow): HiringTimelineEvent {
 // Loading and visibility
 // ---------------------------------------------------------------------------
 
-/** A manager sees an application when its scope is theirs. */
+/** Where an application belongs: its primary scope and any others the person chose. */
+function applicationScopeIds(
+	row: Pick<HiringApplicationRow, 'scopeId' | 'interestedScopeIds'>,
+): string[] {
+	const others = Array.isArray(row.interestedScopeIds)
+		? row.interestedScopeIds
+		: []
+	return [
+		...new Set(
+			[row.scopeId, ...others].filter(
+				(id): id is string => typeof id === 'string' && id !== '',
+			),
+		),
+	]
+}
+
+/**
+ * A manager sees an application when any scope it names is theirs, so a
+ * person interested in two places reaches both places' managers.
+ */
 function canSeeApplication(
 	ctx: Pick<StaffContext, 'scope'>,
-	row: Pick<HiringApplicationRow, 'scopeId'>,
+	row: Pick<HiringApplicationRow, 'scopeId' | 'interestedScopeIds'>,
 ): boolean {
 	if (ctx.scope.unrestricted) return true
-	return ctx.scope.allowsAny(row.scopeId ? [row.scopeId] : [])
+	return ctx.scope.allowsAny(applicationScopeIds(row))
 }
 
 async function loadVisible(
@@ -364,11 +388,19 @@ export async function listApplications(
 	const base: SQL[] = []
 	const scopeWhere = scope.unrestricted
 		? undefined
-		: scope.where(hiringApplications.scopeId)
+		: scope.whereAnyOf(
+				hiringApplications.scopeId,
+				hiringApplications.interestedScopeIds,
+			)
 	if (scopeWhere) base.push(scopeWhere)
 	if (query.scopeId) {
 		if (!scope.allows(query.scopeId)) return fail(403, 'scope_out_of_scope')
-		base.push(eq(hiringApplications.scopeId, query.scopeId))
+		base.push(
+			or(
+				eq(hiringApplications.scopeId, query.scopeId),
+				sql`exists (select 1 from json_each(${hiringApplications.interestedScopeIds}) where json_each.value = ${query.scopeId})`,
+			)!,
+		)
 	}
 	if (query.q) {
 		const pattern = likePattern(query.q)

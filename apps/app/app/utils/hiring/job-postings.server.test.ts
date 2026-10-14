@@ -1,5 +1,12 @@
 import { faker } from '@faker-js/faker'
-import { db, JobPosting, Organization, User, eq } from '@repo/database'
+import {
+	db,
+	JobPosting,
+	Organization,
+	OrganizationLocation,
+	User,
+	eq,
+} from '@repo/database'
 import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -16,6 +23,7 @@ vi.mock('@repo/audit', () => ({
 }))
 
 import {
+	canAccessPostingLocation,
 	changeJobPostingStatus,
 	createJobPosting,
 	deleteJobPosting,
@@ -54,6 +62,33 @@ async function makeOrg() {
 	return org!.id
 }
 
+async function makeLocation(
+	organizationId: string,
+	overrides: Partial<typeof OrganizationLocation.$inferInsert> = {},
+) {
+	const [location] = await db
+		.insert(OrganizationLocation)
+		.values({
+			organizationId,
+			name: 'Downtown',
+			slug: `loc-${faker.string.alphanumeric(8).toLowerCase()}`,
+			address: JSON.stringify({
+				formattedAddress: '1 Main St, Austin, TX',
+				streetNumber: '1',
+				streetName: 'Main St',
+				city: 'Austin',
+				state: 'TX',
+				postalCode: '78701',
+				country: 'US',
+				lat: 0,
+				lng: 0,
+			}),
+			...overrides,
+		})
+		.returning()
+	return location!.id
+}
+
 const content = {
 	title: 'Line cook',
 	positionName: 'Cook',
@@ -69,7 +104,7 @@ beforeEach(async () => {
 	audit.log.mockReset()
 	organizationId = await makeOrg()
 	userId = await makeUser()
-	scope = { organizationId, userId }
+	scope = { organizationId, userId, scopeIds: null }
 })
 
 async function create(input: Record<string, unknown> = {}, who = scope) {
@@ -77,6 +112,17 @@ async function create(input: Record<string, unknown> = {}, who = scope) {
 	if (!result.ok) throw new Error(`create failed: ${result.error}`)
 	return result.value
 }
+
+describe('canAccessPostingLocation', () => {
+	it('lets an all-locations member through and fails closed otherwise', () => {
+		expect(canAccessPostingLocation(null, null)).toBe(true)
+		expect(canAccessPostingLocation(null, 'a')).toBe(true)
+		expect(canAccessPostingLocation(['a'], 'a')).toBe(true)
+		expect(canAccessPostingLocation(['a'], 'b')).toBe(false)
+		expect(canAccessPostingLocation(['a'], null)).toBe(false)
+		expect(canAccessPostingLocation([], 'a')).toBe(false)
+	})
+})
 
 describe('createJobPosting', () => {
 	it('creates a draft with a slug, sanitized text and an audit row', async () => {
@@ -106,7 +152,10 @@ describe('createJobPosting', () => {
 		const second = await create()
 		expect([first.slug, second.slug]).toEqual(['line-cook', 'line-cook-2'])
 		const otherOrg = await makeOrg()
-		const other = await create({}, { organizationId: otherOrg, userId })
+		const other = await create(
+			{},
+			{ organizationId: otherOrg, userId, scopeIds: null },
+		)
 		expect(other.slug).toBe('line-cook')
 	})
 
@@ -120,6 +169,41 @@ describe('createJobPosting', () => {
 		expect((result as { fields: string[] }).fields).toEqual(
 			expect.arrayContaining(['title', 'payMinMinor']),
 		)
+	})
+
+	it('refuses a location from another organization', async () => {
+		const otherOrg = await makeOrg()
+		const foreign = await makeLocation(otherOrg)
+		expect(
+			await createJobPosting(scope, { ...content, locationId: foreign }),
+		).toEqual({ ok: false, error: 'location_not_allowed' })
+		const rows = await db
+			.select()
+			.from(JobPosting)
+			.where(eq(JobPosting.organizationId, organizationId))
+		expect(rows).toHaveLength(0)
+	})
+
+	it('refuses an inactive location', async () => {
+		const location = await makeLocation(organizationId, { isActive: false })
+		expect(
+			await createJobPosting(scope, { ...content, locationId: location }),
+		).toEqual({ ok: false, error: 'location_not_allowed' })
+	})
+
+	it('limits a scoped member to their own locations', async () => {
+		const mine = await makeLocation(organizationId)
+		const theirs = await makeLocation(organizationId, { name: 'Airport' })
+		const scoped = { organizationId, userId, scopeIds: [mine] }
+		expect(await createJobPosting(scoped, content)).toEqual({
+			ok: false,
+			error: 'location_not_allowed',
+		})
+		expect(
+			await createJobPosting(scoped, { ...content, locationId: theirs }),
+		).toEqual({ ok: false, error: 'location_not_allowed' })
+		const ok = await createJobPosting(scoped, { ...content, locationId: mine })
+		expect(ok.ok).toBe(true)
 	})
 
 	it('stores no pay amounts when pay is not shown', async () => {
@@ -160,7 +244,7 @@ describe('reading', () => {
 	it('never returns another organization’s posting by id', async () => {
 		const posting = await create()
 		const otherOrg = await makeOrg()
-		const other = { organizationId: otherOrg, userId }
+		const other = { organizationId: otherOrg, userId, scopeIds: null }
 		expect(await getJobPosting(other, posting.id)).toBeNull()
 		expect(await updateJobPosting(other, posting.id, content)).toEqual({
 			ok: false,
@@ -178,6 +262,23 @@ describe('reading', () => {
 		})
 		expect(await listJobPostings(other)).toEqual([])
 		expect(await getJobPosting(scope, posting.id)).not.toBeNull()
+	})
+
+	it('hides postings outside a scoped member’s locations', async () => {
+		const mine = await makeLocation(organizationId)
+		const theirs = await makeLocation(organizationId, { name: 'Airport' })
+		const a = await create({ locationId: mine })
+		const b = await create({ locationId: theirs })
+		const orgWide = await create()
+		const scoped = { organizationId, userId, scopeIds: [mine] }
+		const ids = (await listJobPostings(scoped)).map((p) => p.id)
+		expect(ids).toEqual([a.id])
+		expect(await getJobPosting(scoped, b.id)).toBeNull()
+		expect(await getJobPosting(scoped, orgWide.id)).toBeNull()
+		expect(await deleteJobPosting(scoped, b.id)).toEqual({
+			ok: false,
+			error: 'not_found',
+		})
 	})
 
 	it('treats an oversized or empty id as missing', async () => {
@@ -352,8 +453,10 @@ describe('expireJobPostings', () => {
 })
 
 describe('public postings', () => {
-	it('serves only live postings, without dealbreakers', async () => {
+	it('serves only live postings, without dealbreakers, with the location', async () => {
+		const location = await makeLocation(organizationId)
 		const posting = await create({
+			locationId: location,
 			payType: 'hourly',
 			payMinMinor: 1800,
 			payMaxMinor: 2200,
@@ -379,7 +482,13 @@ describe('public postings', () => {
 		const list = await listPublicJobPostings(organizationId, NOW)
 		expect(list.map((item) => item.slug)).toEqual([posting.slug])
 		expect(list[0]).not.toHaveProperty('descriptionHtml')
-		expect(list[0]).not.toHaveProperty('locations')
+		expect(list[0]!.allLocations).toBe(false)
+		expect(list[0]!.locations[0]).toMatchObject({
+			id: location,
+			name: 'Downtown',
+			city: 'Austin',
+			streetAddress: '1 Main St',
+		})
 
 		const detail = await getPublicJobPosting(organizationId, posting.slug, NOW)
 		expect(detail?.questions).toEqual([
@@ -411,6 +520,19 @@ describe('public postings', () => {
 			await getPublicJobPosting(organizationId, posting.slug, later),
 		).toBeNull()
 		expect(await listPublicJobPostings(organizationId, later)).toEqual([])
+	})
+
+	it('hides a posting whose location was turned off', async () => {
+		const location = await makeLocation(organizationId)
+		const posting = await create({ locationId: location })
+		await changeJobPostingStatus(scope, posting.id, 'published', { now: NOW })
+		await db
+			.update(OrganizationLocation)
+			.set({ isActive: false })
+			.where(eq(OrganizationLocation.id, location))
+		expect(
+			await getPublicJobPosting(organizationId, posting.slug, NOW),
+		).toBeNull()
 	})
 
 	it('re-sanitizes a description that was edited out of band', async () => {
@@ -528,10 +650,158 @@ describe('public postings', () => {
 		})
 	})
 
-	it('lets the intake accept the one implicit scope', async () => {
+	it('lets the intake accept the one implicit scope when there are no locations', async () => {
 		const posting = await create({})
 		await changeJobPostingStatus(scope, posting.id, 'published', { now: NOW })
 		const intake = await getIntakePosting(organizationId, posting.slug, NOW)
 		expect(intake?.scopeIds).toEqual([DEFAULT_SCOPE_ID])
+		const detail = await getPublicJobPosting(organizationId, posting.slug, NOW)
+		expect(detail?.locations).toEqual([])
+		expect(detail?.allLocations).toBe(true)
+	})
+
+	describe('several locations', () => {
+		it('keeps every chosen location, and mirrors a lone one', async () => {
+			const a = await makeLocation(organizationId, { name: 'Downtown' })
+			const b = await makeLocation(organizationId, { name: 'Airport' })
+			const two = await create({ locationIds: [a, b] })
+			expect(two.locationIds).toEqual([a, b])
+			expect(two.locationNames).toEqual(['Downtown', 'Airport'])
+			const [row] = await db
+				.select()
+				.from(JobPosting)
+				.where(eq(JobPosting.id, two.id))
+			// More than one location has no single legacy mirror.
+			expect(row?.locationId).toBeNull()
+
+			const one = await create({ locationIds: [a] })
+			const [oneRow] = await db
+				.select()
+				.from(JobPosting)
+				.where(eq(JobPosting.id, one.id))
+			expect(oneRow?.locationId).toBe(a)
+		})
+
+		it('refuses a location from another organization or one turned off', async () => {
+			const mine = await makeLocation(organizationId)
+			const foreign = await makeLocation(await makeOrg())
+			const off = await makeLocation(organizationId, { isActive: false })
+			for (const ids of [[mine, foreign], [off]]) {
+				expect(
+					await createJobPosting(scope, { ...content, locationIds: ids }),
+				).toEqual({ ok: false, error: 'location_not_allowed' })
+			}
+		})
+
+		it('limits a scoped member to postings entirely within their locations', async () => {
+			const mine = await makeLocation(organizationId)
+			const theirs = await makeLocation(organizationId)
+			const scoped = { organizationId, userId, scopeIds: [mine] }
+			// Not every location, and not one that is also someone else's.
+			for (const locationIds of [[], [mine, theirs]]) {
+				expect(
+					await createJobPosting(scoped, { ...content, locationIds }),
+				).toEqual({ ok: false, error: 'location_not_allowed' })
+			}
+			const ok = await createJobPosting(scoped, {
+				...content,
+				locationIds: [mine],
+			})
+			expect(ok.ok).toBe(true)
+
+			const both = await create({ locationIds: [mine, theirs] })
+			expect(await getJobPosting(scoped, both.id)).toBeNull()
+			expect((await listJobPostings(scoped)).map((p) => p.id)).not.toContain(
+				both.id,
+			)
+		})
+
+		it('shows a localized location name in the visitor’s language, never as raw JSON', async () => {
+			const a = await makeLocation(organizationId, {
+				name: JSON.stringify({ en: 'Downtown', ar: 'وسط المدينة' }),
+			})
+			const posting = await create({ locationIds: [a] })
+			// Staff read it in the organization's default language.
+			expect(posting.locationNames).toEqual(['Downtown'])
+			await changeJobPostingStatus(scope, posting.id, 'published', { now: NOW })
+			const arabic = await getPublicJobPosting(
+				organizationId,
+				posting.slug,
+				NOW,
+				{
+					locale: 'ar',
+					defaultLocale: 'en',
+				},
+			)
+			expect(arabic?.locations[0]?.name).toBe('وسط المدينة')
+			const french = await getPublicJobPosting(
+				organizationId,
+				posting.slug,
+				NOW,
+				{
+					locale: 'fr',
+					defaultLocale: 'en',
+				},
+			)
+			expect(french?.locations[0]?.name).toBe('Downtown')
+		})
+
+		describe('public', () => {
+			it('lists every active location for a job open everywhere', async () => {
+				const a = await makeLocation(organizationId, { name: 'Downtown' })
+				const b = await makeLocation(organizationId, { name: 'Airport' })
+				await makeLocation(organizationId, { name: 'Closed', isActive: false })
+				const posting = await create({})
+				await changeJobPostingStatus(scope, posting.id, 'published', {
+					now: NOW,
+				})
+				const detail = await getPublicJobPosting(
+					organizationId,
+					posting.slug,
+					NOW,
+				)
+				expect(detail?.allLocations).toBe(true)
+				expect(detail?.locations.map((place) => place.id).sort()).toEqual(
+					[a, b].sort(),
+				)
+				// What the intake may accept is the same list.
+				const intake = await getIntakePosting(organizationId, posting.slug, NOW)
+				expect([...(intake?.scopeIds ?? [])].sort()).toEqual([a, b].sort())
+			})
+
+			it('lists only the named, active locations, and hides a job with none left', async () => {
+				const a = await makeLocation(organizationId, { name: 'Downtown' })
+				const b = await makeLocation(organizationId, { name: 'Airport' })
+				const posting = await create({ locationIds: [a, b] })
+				await changeJobPostingStatus(scope, posting.id, 'published', {
+					now: NOW,
+				})
+				let detail = await getPublicJobPosting(
+					organizationId,
+					posting.slug,
+					NOW,
+				)
+				expect(detail?.allLocations).toBe(false)
+				expect(detail?.locations.map((place) => place.name).sort()).toEqual([
+					'Airport',
+					'Downtown',
+				])
+
+				await db
+					.update(OrganizationLocation)
+					.set({ isActive: false })
+					.where(eq(OrganizationLocation.id, b))
+				detail = await getPublicJobPosting(organizationId, posting.slug, NOW)
+				expect(detail?.locations.map((place) => place.id)).toEqual([a])
+
+				await db
+					.update(OrganizationLocation)
+					.set({ isActive: false })
+					.where(eq(OrganizationLocation.id, a))
+				expect(
+					await getPublicJobPosting(organizationId, posting.slug, NOW),
+				).toBeNull()
+			})
+		})
 	})
 })

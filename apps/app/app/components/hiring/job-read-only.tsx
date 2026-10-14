@@ -11,9 +11,11 @@ import { JobSummary } from './job-summary.tsx'
 export function JobReadOnly({
 	orgSlug,
 	posting,
+	hasLocations = true,
 }: {
 	orgSlug: string
 	posting: PostingDetail
+	hasLocations?: boolean
 }) {
 	const { _ } = useLingui()
 	return (
@@ -24,7 +26,11 @@ export function JobReadOnly({
 					description={<JobStatus status={posting.status} />}
 				/>
 			</PageWithBack>
-			<JobSummary form={formFromPosting(posting)} />
+			<JobSummary
+				form={formFromPosting(posting)}
+				locationName={posting.locationNames.join(', ')}
+				hasLocations={hasLocations}
+			/>
 		</div>
 	)
 }

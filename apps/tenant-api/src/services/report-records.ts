@@ -67,7 +67,7 @@ export function orderCountsTowardSales(order: OrderSalesState) {
 }
 
 /** The same rule as {@link orderCountsTowardSales}, as a WHERE clause. */
-function countedOrderCondition(): SQL {
+export function countedOrderCondition(): SQL {
 	return and(
 		inArray(restaurantOrders.status, [...RESTAURANT_ACTIVE_ORDER_STATUSES]),
 		or(

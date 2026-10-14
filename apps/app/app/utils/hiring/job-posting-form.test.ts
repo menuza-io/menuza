@@ -19,7 +19,7 @@ const base = () => ({
 })
 
 describe('toPayload', () => {
-	it('turns money into minor units', () => {
+	it('turns money into minor units and the "all" scope into no locations', () => {
 		const payload = toPayload({
 			...base(),
 			payType: 'hourly',
@@ -27,6 +27,7 @@ describe('toPayload', () => {
 			payMax: '22',
 		})
 		expect(payload).toMatchObject({
+			locationIds: [],
 			payMinMinor: 1850,
 			payMaxMinor: 2200,
 		})
@@ -38,8 +39,14 @@ describe('toPayload', () => {
 		expect(payload.payMaxMinor).toBeNull()
 	})
 
-	it('keeps an empty closing date as null', () => {
-		expect(toPayload(base()).closesOn).toBeNull()
+	it('keeps a chosen location and an empty closing date as null', () => {
+		const payload = toPayload({
+			...base(),
+			locationScope: 'selected',
+			locationIds: ['loc1', 'loc2'],
+		})
+		expect(payload.locationIds).toEqual(['loc1', 'loc2'])
+		expect(payload.closesOn).toBeNull()
 	})
 })
 
@@ -51,6 +58,8 @@ describe('formFromPosting', () => {
 			payMin: '4000.00',
 			payMax: '5000.00',
 			closesOn: '2026-12-01',
+			locationScope: 'selected' as const,
+			locationIds: ['loc1', 'loc2'],
 		}
 		const payload = toPayload(form)
 		expect(
@@ -58,8 +67,14 @@ describe('formFromPosting', () => {
 				...payload,
 				employmentType: payload.employmentType,
 				payType: payload.payType,
+				locationIds: payload.locationIds,
 			}),
 		).toEqual(form)
+		// No locations named means every location.
+		expect(formFromPosting({ ...payload, locationIds: [] }).locationScope).toBe(
+			'all',
+		)
+		expect(toPayload({ ...form, locationScope: 'all' }).locationIds).toEqual([])
 	})
 })
 

@@ -102,6 +102,7 @@
     "@repo/reports": "*",
     "@repo/seo": "*",
     "@repo/staffing": "*",
+    "@repo/staffing-restaurant": "*",
     "@repo/storage": "*",
     "@repo/tenant-db": "*",
     "@repo/ui": "*",

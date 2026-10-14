@@ -24,9 +24,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		STAFF_SECTION_REQUIREMENTS.hiring,
 	)
 	const posting = await getJobPosting(access, params.postingId)
-	// Another organization's id looks like a job that does not exist.
+	// Another organization's id, or a location outside the member's scope, looks
+	// like a job that does not exist.
 	if (!posting) throw new Response('Not Found', { status: 404 })
-	const context = await loadHiringContext(access.organizationId)
+	const context = await loadHiringContext(
+		access.organizationId,
+		access.scopeIds,
+	)
 	const step = new URL(request.url).searchParams.get('step')
 	return {
 		orgSlug: params.orgSlug,
@@ -53,27 +57,37 @@ export default function EditJobRoute() {
 		posting,
 		canWrite,
 		initialStep,
+		locations,
 		defaultCurrency,
 		sitePublished,
 		customDomain,
 		defaultLocale,
 		supportedLocales,
+		canPostEverywhere,
 	} = useLoaderData<typeof loader>()
 	const siteOrigin = useSiteOrigin(orgSlug, customDomain)
 	if (!canWrite) {
-		return <JobReadOnly orgSlug={orgSlug} posting={posting} />
+		return (
+			<JobReadOnly
+				orgSlug={orgSlug}
+				posting={posting}
+				hasLocations={locations.length > 0}
+			/>
+		)
 	}
 	return (
 		<JobEditor
 			key={posting.id}
 			orgSlug={orgSlug}
 			posting={posting}
+			locations={locations}
 			defaultCurrency={defaultCurrency}
 			siteOrigin={siteOrigin}
 			sitePublished={sitePublished}
 			initialStep={initialStep}
 			defaultLocale={defaultLocale}
 			supportedLocales={supportedLocales}
+			canPostEverywhere={canPostEverywhere}
 		/>
 	)
 }

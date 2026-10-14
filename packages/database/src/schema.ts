@@ -1296,6 +1296,10 @@ export const UserOrganization = sqliteTable(
 			.$onUpdate(() => new Date())
 			.notNull(),
 		department: text(),
+		// Which locations this member's staffing access covers: 'all' (every
+		// location, the default) or 'selected' (only the UserOrganizationLocation
+		// rows; none means no staffing access). Permissions elsewhere stay org-wide.
+		locationScope: text().default('all').notNull(),
 	},
 	(table) => [
 		index('UserOrganization_organizationRoleId_idx').on(
@@ -2509,6 +2513,46 @@ export const OrganizationLocation = sqliteTable(
 	],
 )
 
+/**
+ * Locations a member's staffing access is limited to while
+ * `UserOrganization.locationScope` is 'selected'. The ids are opaque to the
+ * regional tenant databases: staff records only ever carry the same ids, never
+ * a foreign key. Removing a member or a location removes its grants.
+ */
+export const UserOrganizationLocation = sqliteTable(
+	'UserOrganizationLocation',
+	{
+		userId: text().notNull(),
+		organizationId: text().notNull(),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.userId, table.organizationId, table.locationId],
+			name: 'UserOrganizationLocation_userId_organizationId_locationId_pk',
+		}),
+		foreignKey({
+			columns: [table.userId, table.organizationId],
+			foreignColumns: [
+				UserOrganization.userId,
+				UserOrganization.organizationId,
+			],
+			name: 'UserOrganizationLocation_member_fk',
+		})
+			.onUpdate('cascade')
+			.onDelete('cascade'),
+		index('UserOrganizationLocation_locationId_idx').on(table.locationId),
+	],
+)
+
 export const PlatformMarketingCampaign = sqliteTable(
 	'PlatformMarketingCampaign',
 	{
@@ -3633,6 +3677,15 @@ export const JobPosting = sqliteTable(
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		// Legacy single location, mirrored from `locationIds` when exactly one is
+		// chosen. Reads use `locationIds`.
+		locationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		// Where the job is: location ids, or empty for every location (including
+		// ones added later). The applicant picks when there is more than one.
+		locationIds: text({ mode: 'json' }).default([]).notNull(),
 		slug: text().notNull(),
 		title: text().notNull(),
 		positionName: text().notNull(),
@@ -3673,5 +3726,6 @@ export const JobPosting = sqliteTable(
 			table.status,
 		),
 		index('JobPosting_status_expiresAt_idx').on(table.status, table.expiresAt),
+		index('JobPosting_locationId_idx').on(table.locationId),
 	],
 )

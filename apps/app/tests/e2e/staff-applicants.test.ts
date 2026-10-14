@@ -1,5 +1,5 @@
 import { type Page } from '@playwright/test'
-import { ConfigFlag, db, eq } from '@repo/database'
+import { ConfigFlag, db, eq, OrganizationLocation } from '@repo/database'
 import { STAFFING_FLAG_KEYS } from '@repo/staffing'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
@@ -176,9 +176,18 @@ async function stubHiringApi(page: Page, scopeId: string) {
 	return { requests, applicants }
 }
 
-async function createOrgWithScope(userId: string) {
+async function createOrgWithLocation(userId: string) {
 	const org = await createTestOrganization(userId, 'admin')
-	return { org, scopeId: 'main' }
+	const [location] = await db
+		.insert(OrganizationLocation)
+		.values({
+			organizationId: org.id,
+			name: 'Downtown',
+			slug: `downtown-${Date.now()}`,
+			timezone: 'America/Chicago',
+		})
+		.returning({ id: OrganizationLocation.id })
+	return { org, scopeId: location!.id }
 }
 
 test.describe('Applicants (manager)', () => {
@@ -198,7 +207,7 @@ test.describe('Applicants (manager)', () => {
 	}) => {
 		test.setTimeout(120_000)
 		const user = await login()
-		const { org, scopeId } = await createOrgWithScope(user.id)
+		const { org, scopeId } = await createOrgWithLocation(user.id)
 		const flags = await enableHiring(org.id)
 		const { requests } = await stubHiringApi(page, scopeId)
 		try {
@@ -250,7 +259,7 @@ test.describe('Applicants (manager)', () => {
 	}) => {
 		test.setTimeout(120_000)
 		const user = await login()
-		const { org, scopeId } = await createOrgWithScope(user.id)
+		const { org, scopeId } = await createOrgWithLocation(user.id)
 		const flags = await enableHiring(org.id)
 		const { requests } = await stubHiringApi(page, scopeId)
 		try {

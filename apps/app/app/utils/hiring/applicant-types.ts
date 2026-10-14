@@ -25,6 +25,8 @@ export const applicantSummarySchema = z.object({
 	postingId: z.string(),
 	postingTitle: z.string(),
 	scopeId: z.string().nullable(),
+	/** Every scope (location) the person is interested in, the primary one included. */
+	interestedScopeIds: z.array(z.string()).default([]),
 	firstName: z.string(),
 	lastName: z.string(),
 	source,

@@ -58,10 +58,27 @@ describe('hiring schema', () => {
 			stage: 'new',
 			source: 'careers_page',
 			answers: [],
+			interestedScopeIds: [],
 			screenerFlags: [],
 			screenerScore: null,
 			hiredStaffId: null,
 			retentionExpiresAt: null,
+		})
+	})
+
+	it('keeps every scope an applicant is interested in', async () => {
+		const [row] = await db
+			.insert(hiringApplications)
+			.values({
+				...base,
+				emailHash: 'h2',
+				scopeId: 'loc1',
+				interestedScopeIds: ['loc1', 'loc2'],
+			})
+			.returning()
+		expect(row).toMatchObject({
+			scopeId: 'loc1',
+			interestedScopeIds: ['loc1', 'loc2'],
 		})
 	})
 

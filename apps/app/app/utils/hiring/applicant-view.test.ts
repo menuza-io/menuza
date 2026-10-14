@@ -18,6 +18,7 @@ function person(overrides: Partial<ApplicantSummary> = {}): ApplicantSummary {
 		postingId: 'p',
 		postingTitle: 'Line cook',
 		scopeId: 'main',
+		interestedScopeIds: ['main'],
 		firstName: 'Sara',
 		lastName: 'Ali',
 		source: 'careers_page',

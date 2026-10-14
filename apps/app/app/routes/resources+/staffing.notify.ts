@@ -17,7 +17,10 @@ import {
 	loadNotifiedUserIds,
 	resolveAlertRecipients,
 } from '#app/utils/staffing/manager-alerts.server.ts'
-import { loadOrganizationScope } from '#app/utils/staffing/scope.server.ts'
+import {
+	hasLocationScopes,
+	loadOrganizationScopes,
+} from '#app/utils/staffing/scope.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
@@ -108,11 +111,18 @@ export async function action({ request }: ActionFunctionArgs) {
 				: features.timeclock
 	if (!features.enabled || !featureOn) return skipped('feature_off')
 
-	// An alert may name the organization's one scope. The name stays out of the
-	// copy: with a single scope "at <name>" would only repeat the organization.
+	// An alert may name one of the organization's scopes (a location, or the one
+	// implicit scope). The location's name goes into the copy ("at Downtown");
+	// the implicit scope's name stays out of it, since "at <name>" would only
+	// repeat the organization.
+	let scopeName: string | null = null
 	if (event.scopeId) {
-		const scope = await loadOrganizationScope(organization.id)
-		if (event.scopeId !== scope.id) return skipped('unknown_scope')
+		const scopes = await loadOrganizationScopes(organization.id, {
+			includeInactive: true,
+		})
+		const scope = scopes.find((candidate) => candidate.id === event.scopeId)
+		if (!scope) return skipped('unknown_scope')
+		if (hasLocationScopes(scopes)) scopeName = scope.name
 	}
 
 	// Whoever raised it (for a published schedule, the person who published) is
@@ -145,7 +155,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const copy = describeManagerAlert({
 		kind: event.kind,
 		count: event.count,
-		scopeName: null,
+		scopeName,
 	})
 	const baseUrl = String(ENV.BASE_URL ?? '').replace(/\/$/, '')
 	const actionUrl = `${baseUrl}/${organization.slug}${managerAlertPath(event.kind, event.scopeId)}`

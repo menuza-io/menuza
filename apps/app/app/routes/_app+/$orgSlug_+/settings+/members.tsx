@@ -16,6 +16,7 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
+import { memberLocationScopeInputSchema } from '@repo/staffing-restaurant'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -44,6 +45,7 @@ import { requireUserOrganization } from '#app/utils/organization/loader.server.t
 import {
 	auditInvitationRevoked,
 	auditInviteLinkDisabled,
+	auditMemberLocationsChanged,
 	auditMemberRemoved,
 } from '#app/utils/organization/membership-audit.server.ts'
 import {
@@ -57,10 +59,16 @@ import {
 	createRateLimitResponse,
 	ORGANIZATION_INVITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	enqueueStaffingOutbox,
 	flushStaffingOutboxFor,
 } from '#app/utils/staffing/outbox.server.ts'
+import {
+	listMemberLocationAccess,
+	listScopableLocations,
+	setMemberLocationScope,
+} from '#app/utils/staffing/restaurant/location-scope.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -119,11 +127,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			member.organizationRole.id === 'org_role_admin',
 	)
 
+	// The Locations control exists only while the Staff module is on, only for
+	// built-in admins (the same people who can change roles), and only for
+	// organizations that have restaurant locations.
+	const staffingLocations =
+		canManageRoles && (await isStaffingFeatureEnabled(organization.id))
+			? await loadStaffingLocationControl(organization.id)
+			: null
+
 	return {
 		organization,
 		pendingInvitations,
 		members,
 		inviteLink,
+		staffingLocations,
 		availableRoles: canManageRoles
 			? availableRoles
 			: availableRoles.filter((role) => role.id !== 'org_role_admin'),
@@ -131,6 +148,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		userPermissions,
 		canManageRoles,
 	}
+}
+
+async function loadStaffingLocationControl(organizationId: string) {
+	const [locations, access] = await Promise.all([
+		listScopableLocations(organizationId),
+		listMemberLocationAccess(organizationId),
+	])
+	if (locations.length === 0) return null
+	return { locations, access: Object.fromEntries(access) }
 }
 
 // Get available roles from the database
@@ -601,6 +627,92 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	// --- update-member-locations intent ---
+	if (intent === 'update-member-locations') {
+		// Narrowing someone's staffing access is as sensitive as changing their
+		// role, so it is limited to the same built-in admins.
+		const [adminMembership] = await db
+			.select({ userId: UserOrganization.userId })
+			.from(UserOrganization)
+			.where(
+				and(
+					eq(UserOrganization.userId, userId),
+					eq(UserOrganization.organizationId, organization.id),
+					eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+					eq(UserOrganization.active, true),
+				),
+			)
+			.limit(1)
+		if (!adminMembership) {
+			return Response.json(
+				{ error: 'Only organization admins can change staff locations' },
+				{ status: 403 },
+			)
+		}
+		// A module that is off should look like it does not exist.
+		if (!(await isStaffingFeatureEnabled(organization.id))) {
+			return Response.json({ error: 'Not found' }, { status: 404 })
+		}
+
+		const memberUserId = formData.get('userId')
+		if (!memberUserId || typeof memberUserId !== 'string') {
+			return Response.json({ error: 'Missing userId' }, { status: 400 })
+		}
+		if (memberUserId === userId) {
+			return Response.json(
+				{ error: 'You cannot change your own staff locations' },
+				{ status: 400 },
+			)
+		}
+		const parsed = memberLocationScopeInputSchema.safeParse({
+			scope: formData.get('scope'),
+			locationIds: formData.getAll('locationIds'),
+		})
+		if (!parsed.success) {
+			return Response.json(
+				{ error: 'Choose all locations or a list of locations' },
+				{ status: 400 },
+			)
+		}
+
+		try {
+			const result = await setMemberLocationScope({
+				organizationId: organization.id,
+				userId: memberUserId,
+				value: parsed.data,
+			})
+			if (!result.ok) {
+				return Response.json(
+					{
+						error:
+							result.reason === 'member_not_found'
+								? 'Member not found'
+								: 'One or more locations were not found',
+					},
+					{ status: result.reason === 'member_not_found' ? 404 : 400 },
+				)
+			}
+			await auditMemberLocationsChanged({
+				organizationId: organization.id,
+				memberUserId,
+				actorId: userId,
+				previous: result.previous,
+				next: result.next,
+				request,
+			})
+			return Response.json({ success: true })
+		} catch (error) {
+			console.error(
+				'Error updating member staff locations:',
+				error instanceof Error ? error.name : 'unknown',
+			)
+			return Response.json(
+				{ error: 'Failed to update staff locations' },
+				{ status: 500 },
+			)
+		}
+	}
+
 	if (intent === 'create-invite-link') {
 		await requireUserWithOrganizationPermission(
 			request,
@@ -690,6 +802,7 @@ export default function MembersSettings() {
 		availableRoles,
 		currentUserId,
 		canManageRoles,
+		staffingLocations,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
@@ -702,6 +815,7 @@ export default function MembersSettings() {
 					availableRoles={availableRoles}
 					organizationSlug={organization.slug}
 					canManageRoles={canManageRoles}
+					staffingLocations={staffingLocations}
 				/>
 			</AnnotatedSection>
 

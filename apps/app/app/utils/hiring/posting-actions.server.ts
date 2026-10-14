@@ -73,6 +73,7 @@ export async function requirePostingWriter(
 	const scope: PostingActorScope = {
 		organizationId: access.organizationId,
 		userId: access.userId,
+		scopeIds: access.scopeIds,
 		request,
 	}
 	return { access, scope }

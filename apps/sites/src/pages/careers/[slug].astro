@@ -5,7 +5,7 @@ import { getLocaleHref } from '@repo/common/site-locales'
 import ApplyPanel from '~/components/careers/ApplyPanel.astro'
 import ShareJob from '~/components/careers/ShareJob.astro'
 import SitePage from '~/components/SitePage.astro'
-import { employmentLabel, payLine } from '~/lib/careers/labels'
+import { employmentLabel, payLine, placeLine } from '~/lib/careers/labels'
 import { jobPostingStructuredData } from '~/lib/careers/seo'
 import { siteContainer } from '~/lib/media'
 import { fetchPublishedJobPosting } from '~/lib/org'
@@ -56,7 +56,7 @@ const canonicalPath = posting
 const canonicalUrl = `${origin}${canonicalPath}`
 const pay = posting ? payLine(i18n, locale, posting) : null
 const meta = posting
-	? [employmentLabel(i18n, posting.employmentType)]
+	? [placeLine(posting), employmentLabel(i18n, posting.employmentType)].filter(Boolean)
 	: []
 const postedLabel = posting
 	? translate(i18n, msg`Posted {date}`, { date: formatDate(posting.datePosted) })
@@ -136,7 +136,7 @@ const applyNow = i18n._(msg`Apply now`)
 						set:html={descriptionHtml}
 					/>
 					<div class="mt-10">
-						<ApplyPanel posting={posting} />
+						<ApplyPanel posting={posting} locations={posting.locations} />
 					</div>
 				</article>
 

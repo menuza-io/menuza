@@ -41,7 +41,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId: access.userId,
 		canWrite: holdsStaffingGrant(access.grants, P.UPDATE_HIRING),
 		canInvite,
-		scopes: await loadApplicantScopes(access.organizationId),
+		scopes: await loadApplicantScopes(access.organizationId, access.scopeIds),
 	}
 }
 

@@ -3,6 +3,7 @@ import {
 	ConfigFlag,
 	db,
 	inArray,
+	OrganizationLocation,
 	OrganizationRole,
 } from '@repo/database'
 import { verifyOperatorAnalyticsToken } from '@repo/reports/token'
@@ -29,6 +30,7 @@ vi.mock('@repo/auth', async (importOriginal) => ({
 	isImpersonating: vi.fn(async () => impersonating.value),
 }))
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -67,6 +69,15 @@ afterEach(async () => {
 		flagIds.length = 0
 	}
 })
+
+async function createLocation(organizationId: string) {
+	const slug = `loc-${crypto.randomUUID().slice(0, 8)}`
+	const [row] = await db
+		.insert(OrganizationLocation)
+		.values({ organizationId, name: `Location ${slug}`, slug })
+		.returning({ id: OrganizationLocation.id })
+	return row!.id
+}
 
 async function manager(organizationId: string, permissions: string[]) {
 	const [role] = await db
@@ -192,6 +203,47 @@ describe('reports token for staff subjects', () => {
 		expect(claims.scopeIds).toBeNull()
 	})
 
+	it('carries the member’s selected locations (as scope ids) and the pay permission', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await setFlags(organization.id, ['enabled', 'timeclock', 'labor'])
+		const a = await createLocation(organization.id)
+		const b = await createLocation(organization.id)
+		const { user, cookie } = await manager(organization.id, [
+			ANALYTICS,
+			P.READ_STAFF,
+			P.READ_TIMESHEET,
+			P.READ_STAFF_PAY,
+		])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: user.id,
+			value: { scope: 'selected', locationIds: [b, a] },
+		})
+		const { subjects, claims } = await mint(organization.slug, cookie)
+		expect(subjects).toEqual(
+			expect.arrayContaining(['time_entries', 'staff_pay']),
+		)
+		expect(claims.scopeIds).toEqual([a, b].sort())
+	})
+
+	it('gives a member limited to no locations no staff subject', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await setFlags(organization.id, ['enabled', 'timeclock'])
+		const { user, cookie } = await manager(organization.id, [
+			ANALYTICS,
+			P.READ_STAFF,
+			P.READ_TIMESHEET,
+		])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: user.id,
+			value: { scope: 'selected', locationIds: [] },
+		})
+		const { subjects, claims } = await mint(organization.slug, cookie)
+		expect(subjects).not.toContain('time_entries')
+		expect(claims.scopeIds).toEqual([])
+	})
+
 	it('gives an impersonated session no staff subject', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await setFlags(organization.id, ['enabled', 'timeclock', 'labor'])
@@ -246,5 +298,37 @@ describe('reports screens hide staff reports', () => {
 			args(organization.slug, 'reports/new?template=hours-by-employee', cookie),
 		)) as { definition: any }
 		expect(onNew.definition.subject).toBe('time_entries')
+	})
+	it('words the staff subjects with "Location" for an organization that has locations, and "Workplace" otherwise', async () => {
+		const plain = await setupTestOrgWithUser('admin')
+		const withLocations = await setupTestOrgWithUser('admin')
+		await createLocation(withLocations.organization.id)
+		for (const [org, expected] of [
+			[plain.organization, 'workplace'],
+			[withLocations.organization, 'location'],
+		] as const) {
+			await setFlags(org.id, ['enabled', 'timeclock'])
+			const { cookie } = await manager(org.id, [
+				ANALYTICS,
+				P.READ_STAFF,
+				P.READ_TIMESHEET,
+			])
+			const result = (await newLoader(
+				args(org.slug, 'reports/new', cookie),
+			)) as {
+				scopeWording: string
+				catalog: {
+					subjects: Array<{
+						id: string
+						fields: Array<{ id: string; label: string }>
+					}>
+				}
+			}
+			expect(result.scopeWording).toBe(expected)
+			const scopeField = result.catalog.subjects
+				.find((subject) => subject.id === 'time_entries')!
+				.fields.find((field) => field.id === 'scope')!
+			expect(scopeField.label.toLowerCase()).toBe(expected)
+		}
 	})
 })

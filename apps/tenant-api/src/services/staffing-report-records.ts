@@ -736,7 +736,12 @@ export async function loadApplicationRecords(
 					? gte(hiringApplications.createdAt, dates.startMs)
 					: undefined,
 				lte(hiringApplications.createdAt, dates.endMs),
-				scope.where(hiringApplications.scopeId),
+				scope.unrestricted
+					? undefined
+					: scope.whereAnyOf(
+							hiringApplications.scopeId,
+							hiringApplications.interestedScopeIds,
+						),
 			),
 		)
 		.orderBy(desc(hiringApplications.createdAt))

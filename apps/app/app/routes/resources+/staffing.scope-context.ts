@@ -4,7 +4,7 @@ import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import { getStaffingFeatureState } from '#app/utils/staffing/access.server.ts'
-import { loadOrganizationScope } from '#app/utils/staffing/scope.server.ts'
+import { loadOrganizationScopes } from '#app/utils/staffing/scope.server.ts'
 
 /**
  * Internal scope facts for the regional time clock.
@@ -73,7 +73,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		return Response.json({ error: 'Organization not found' }, { status: 404 })
 	}
 
-	const scope = await loadOrganizationScope(org.id)
+	const scopes = await loadOrganizationScopes(org.id, {
+		includeInactive: true,
+	})
 
 	const features = await getStaffingFeatureState(org.id)
 	const response: StaffingScopeContextResponse = {
@@ -85,7 +87,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			hiring: features.hiring,
 		},
 		dataRegion: org.dataRegion,
-		scopes: [{ ...scope, isActive: true }],
+		scopes: scopes.map(({ id, name, timeZone, isActive }) => ({
+			id,
+			name,
+			timeZone,
+			isActive,
+		})),
 	}
 	return Response.json(response, {
 		headers: { 'Cache-Control': 'private, no-store' },

@@ -37,6 +37,11 @@ vi.mock('./job-share-panel.tsx', () => ({
 	JobSharePanel: ({ url }: { url: string }) => <p>share:{url}</p>,
 }))
 
+const locations = [
+	{ id: 'loc1', name: 'Downtown', currency: 'USD' },
+	{ id: 'loc2', name: 'Airport', currency: 'USD' },
+]
+
 const posting: PostingDetail = {
 	id: 'p1',
 	slug: 'line-cook',
@@ -49,6 +54,8 @@ const posting: PostingDetail = {
 	payMinMinor: null,
 	payMaxMinor: null,
 	currency: 'USD',
+	locationIds: [],
+	locationNames: [],
 	publishedAt: null,
 	expiresAt: null,
 	updatedAt: '2026-10-13T00:00:00.000Z',
@@ -82,12 +89,14 @@ function renderEditor(
 					<JobEditor
 						orgSlug="acme"
 						posting={null}
+						locations={locations}
 						defaultCurrency="USD"
 						siteOrigin="https://acme.example"
 						sitePublished
 						initialStep="role"
 						defaultLocale="en"
 						supportedLocales={['en']}
+						canPostEverywhere
 						{...props}
 					/>
 				),
@@ -208,6 +217,7 @@ describe('JobEditor', () => {
 				payType: 'none',
 				payMinMinor: null,
 				employmentType: 'part_time',
+				locationIds: [],
 			},
 		})
 	})
@@ -364,5 +374,46 @@ describe('JobEditor', () => {
 		expect(
 			screen.queryByRole('radiogroup', { name: 'Content language' }),
 		).toBeNull()
+	})
+
+	it('lets a job be at several locations, and asks for at least one', async () => {
+		const { submits } = renderEditor({
+			posting: { ...posting, locationIds: [], locationNames: [] },
+		})
+		// Open everywhere by default; the checklist appears for "Selected".
+		expect(screen.queryByRole('checkbox', { name: 'Downtown' })).toBeNull()
+		fireEvent.click(screen.getByRole('radio', { name: /Selected locations/ }))
+		fireEvent.click(screen.getByRole('button', { name: /^Next/ }))
+		expect(
+			await screen.findByText('Choose at least one location.'),
+		).toBeTruthy()
+
+		fireEvent.click(screen.getByRole('checkbox', { name: 'Downtown' }))
+		fireEvent.click(screen.getByRole('checkbox', { name: 'Airport' }))
+		fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+		await waitFor(() => expect(submits).toHaveLength(1))
+		expect(submits[0]?.payload.locationIds).toEqual(['loc1', 'loc2'])
+	})
+
+	it('hides the location choice when the business has one location', () => {
+		renderEditor({ posting, locations: [locations[0]!] })
+		expect(
+			screen.queryByRole('radio', { name: /Selected locations/ }),
+		).toBeNull()
+	})
+
+	it('offers a limited member only their own locations', () => {
+		renderEditor({ posting, canPostEverywhere: false })
+		expect(screen.queryByRole('radio', { name: /All locations/ })).toBeNull()
+		expect(screen.getByRole('checkbox', { name: 'Downtown' })).toBeTruthy()
+	})
+
+	it('shows no location choice or "where" row for a business without locations', async () => {
+		renderEditor({ posting, locations: [] })
+		expect(
+			screen.queryByRole('radio', { name: /Selected locations/ }),
+		).toBeNull()
+		fireEvent.click(screen.getByRole('tab', { name: /Review/ }))
+		expect(screen.queryByText('Where')).toBeNull()
 	})
 })

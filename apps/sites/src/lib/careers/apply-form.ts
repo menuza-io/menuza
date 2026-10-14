@@ -14,6 +14,7 @@ export type ApplyMessages = {
 	success: string
 	checkAnswers: string
 	required: string
+	chooseLocation: string
 	badEmail: string
 	badPhone: string
 	contact: string
@@ -102,6 +103,7 @@ export function initApplyForm(
 			if (value !== '') answers[id] = value
 		})
 		const text = (key: string) => String(data.get(key) || '').trim()
+		const chosenLocations = data.getAll('scopeIds').map(String).filter(Boolean)
 		return {
 			slug: form.dataset.orgSlug || undefined,
 			host: form.dataset.customHost || undefined,
@@ -110,6 +112,7 @@ export function initApplyForm(
 			lastName: text('lastName'),
 			email: text('email') || undefined,
 			phone: text('phone') || undefined,
+			scopeIds: chosenLocations.length > 0 ? chosenLocations : undefined,
 			locale: form.dataset.locale || 'en',
 			answers,
 			source,
@@ -126,6 +129,10 @@ export function initApplyForm(
 		const fail = (name: string, message: string) => {
 			fieldError(name, message)
 			ok = false
+		}
+		// A job at several places needs at least one chosen; a single place is implied.
+		if (form.querySelector('[data-locations]') && !body.scopeIds) {
+			fail('scopeIds', messages.chooseLocation)
 		}
 		if (!body.firstName) fail('firstName', messages.required)
 		if (!body.lastName) fail('lastName', messages.required)
@@ -196,6 +203,9 @@ export function initApplyForm(
 			}
 			if (response.status === 400) {
 				let marked = false
+				if (result.error === 'invalid_scope') {
+					marked = fieldError('scopeIds', messages.chooseLocation) || marked
+				}
 				for (const problem of result.problems ?? []) {
 					if (problem.questionId) {
 						marked =

@@ -68,3 +68,32 @@ export function payLine(
 		unit: perLabel(i18n, range.period),
 	})
 }
+
+function placeName(place: { name: string; city: string | null }): string {
+	return place.city && !place.name.includes(place.city)
+		? `${place.name}, ${place.city}`
+		: place.name
+}
+
+/**
+ * Where a posting is, or `null` for "all locations" (a job open everywhere that
+ * has several places to pick from, or a business with none). One place reads as
+ * its name and city; a job at a few named places lists them.
+ */
+export function placeLine(posting: {
+	locations: { name: string; city: string | null }[]
+	allLocations: boolean
+}): string | null {
+	const { locations } = posting
+	if (locations.length === 0) return null
+	if (posting.allLocations && locations.length > 1) return null
+	return locations.map(placeName).join(' · ')
+}
+
+/** How one location reads in the application form's picker. */
+export function locationOption(place: {
+	name: string
+	city: string | null
+}): string {
+	return placeName(place)
+}

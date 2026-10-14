@@ -21,6 +21,9 @@ export type PostingSummary = {
 	payMinMinor: number | null
 	payMaxMinor: number | null
 	currency: string
+	/** The locations the job is at; empty means every location. */
+	locationIds: string[]
+	locationNames: string[]
 	publishedAt: string | null
 	expiresAt: string | null
 	updatedAt: string
@@ -40,6 +43,7 @@ export type PostingFailure =
 	| { ok: false; error: 'cannot_publish'; reasons: JobPostingPublishError[] }
 	| { ok: false; error: 'invalid_transition' }
 	| { ok: false; error: 'not_deletable' }
+	| { ok: false; error: 'location_not_allowed' }
 
 export type JobDraft = {
 	title: string

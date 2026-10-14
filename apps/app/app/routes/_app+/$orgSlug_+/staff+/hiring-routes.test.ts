@@ -243,6 +243,7 @@ describe('hiring routes with the flag on', () => {
 		const listed = list.data as any
 		expect(listed.postings.map((p: any) => p.id)).toEqual([id])
 		expect(listed.canWrite).toBe(true)
+		expect(listed.canOfferGeneral).toBe(true)
 
 		const params = { orgSlug: slug, postingId: id }
 		const detail = await outcome(() =>

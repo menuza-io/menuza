@@ -1,4 +1,4 @@
-import { type AnyColumn, inArray, type SQL, sql } from 'drizzle-orm'
+import { type AnyColumn, inArray, or, type SQL, sql } from 'drizzle-orm'
 import { type Context } from 'hono'
 import { jwtVerify } from 'jose'
 import { brand } from '@repo/config/brand'
@@ -220,6 +220,12 @@ export type ScopeAccess = {
 	filter<T extends { scopeId: string }>(rows: readonly T[]): T[]
 	/** Drizzle predicate for a `scope_id` column; `undefined` when unrestricted. */
 	where(column: AnyColumn): SQL | undefined
+	/**
+	 * Like `where`, but a row also matches when any id in a JSON array column
+	 * (a list of scope ids) is allowed. For records that belong to one scope
+	 * and are open to others.
+	 */
+	whereAnyOf(column: AnyColumn, jsonIds: AnyColumn): SQL | undefined
 }
 
 /**
@@ -248,6 +254,18 @@ export function scopeToScopes(auth: Pick<StaffAuth, 'scopeIds'>): ScopeAccess {
 			if (ids === null) return undefined
 			if (ids.size === 0) return sql`0 = 1`
 			return inArray(column, [...ids])
+		},
+		whereAnyOf(column, jsonIds) {
+			if (ids === null) return undefined
+			if (ids.size === 0) return sql`0 = 1`
+			const list = sql.join(
+				[...ids].map((id) => sql`${id}`),
+				sql`, `,
+			)
+			return or(
+				inArray(column, [...ids]),
+				sql`exists (select 1 from json_each(${jsonIds}) where json_each.value in (${list}))`,
+			)
 		},
 	}
 }

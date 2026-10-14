@@ -1,7 +1,7 @@
-import { loadOrganizationScope } from '#app/utils/staffing/scope.server.ts'
+import { loadOrganizationScopes } from '#app/utils/staffing/scope.server.ts'
 
 /**
- * Control-plane facts the Time clock screens need about each workplace: its
+ * Control-plane facts the Time clock screens need about each scope: its
  * name and time zone. Nothing here is staff data. The browser forwards the time
  * zone and name when it creates a pairing code, so pairing works even if the
  * regional node cannot reach this app at that moment.
@@ -16,7 +16,9 @@ export async function loadTimeclockScopes(
 	organizationId: string,
 	scopeIds: readonly string[] | null,
 ): Promise<TimeclockScope[]> {
-	const scope = await loadOrganizationScope(organizationId)
-	if (scopeIds !== null && !scopeIds.includes(scope.id)) return []
-	return [scope]
+	const scopes = await loadOrganizationScopes(organizationId)
+	const allowed = scopeIds ? new Set(scopeIds) : null
+	return scopes
+		.filter((scope) => allowed === null || allowed.has(scope.id))
+		.map(({ id, name, timeZone }) => ({ id, name, timeZone }))
 }

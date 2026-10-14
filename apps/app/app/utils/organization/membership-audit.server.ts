@@ -197,3 +197,37 @@ export async function auditInviteLinkDisabled({
 		request,
 	})
 }
+
+export async function auditMemberLocationsChanged({
+	organizationId,
+	memberUserId,
+	actorId,
+	previous,
+	next,
+	request,
+}: {
+	organizationId: string
+	memberUserId: string
+	actorId: string
+	previous: { scope: string; locationIds: readonly string[] }
+	next: { scope: string; locationIds: readonly string[] }
+	request?: Request
+}) {
+	// Ids only: location ids are control-plane identifiers, never staff data.
+	await safeLog({
+		action: AuditAction.ORG_MEMBER_LOCATIONS_CHANGED,
+		userId: actorId,
+		targetUserId: memberUserId,
+		organizationId,
+		resourceType: 'organization_member',
+		resourceId: memberUserId,
+		details: 'Organization member staffing locations changed',
+		metadata: {
+			oldScope: previous.scope,
+			oldLocationIds: previous.locationIds.join(','),
+			newScope: next.scope,
+			newLocationIds: next.locationIds.join(','),
+		},
+		request,
+	})
+}

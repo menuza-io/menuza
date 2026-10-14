@@ -38,6 +38,8 @@ describe('jobPostingContentSchema', () => {
 		expect(parsed.payType).toBe('none')
 		expect(parsed.questions).toEqual([])
 		expect(parsed.closesOn).toBeNull()
+		expect(parsed.locationId).toBeNull()
+		expect(parsed.locationIds).toEqual([])
 	})
 
 	it('rejects a short title, an unknown employment type and a bad date', () => {
@@ -301,17 +303,29 @@ describe('structured data', () => {
 		currency: 'USD',
 		descriptionHtml: '<p>Cook.</p>',
 		questions: [],
+		allLocations: false,
+		locations: [
+			{
+				id: 'loc1',
+				name: 'Downtown',
+				city: 'Austin',
+				region: 'TX',
+				postalCode: '78701',
+				country: 'United States',
+				streetAddress: '1 Main St',
+			},
+		],
 		isGeneral: false,
 		datePosted: '2026-10-01T00:00:00.000Z',
 		validThrough: '2026-11-01T23:59:59.999Z',
 	}
 	const input = {
 		posting,
-		organization: { name: 'Acme', url: 'https://acme.example' },
+		organization: { name: 'Acme Diner', url: 'https://acme.example' },
 		url: 'https://acme.example/careers/line-cook',
 	}
 
-	it('marks up pay and validity', () => {
+	it('marks up pay, place and validity', () => {
 		const data = buildJobPostingJsonLd(input) as any
 		expect(data['@type']).toBe('JobPosting')
 		expect(data.employmentType).toBe('TEMPORARY')
@@ -322,7 +336,10 @@ describe('structured data', () => {
 			maxValue: 22,
 			unitText: 'HOUR',
 		})
-		expect(data.jobLocation).toBeUndefined()
+		expect(data.jobLocation.address).toMatchObject({
+			addressLocality: 'Austin',
+			addressCountry: 'US',
+		})
 	})
 
 	it('claims direct apply only when the page has an application form', () => {
@@ -333,7 +350,7 @@ describe('structured data', () => {
 		).toBe(true)
 	})
 
-	it('omits pay and expiry the posting does not have', () => {
+	it('omits pay, place and expiry the posting does not have', () => {
 		const data = buildJobPostingJsonLd({
 			...input,
 			posting: {
@@ -341,11 +358,31 @@ describe('structured data', () => {
 				payType: 'none',
 				payMinMinor: null,
 				payMaxMinor: null,
+				locations: [],
+				allLocations: true,
 				validThrough: null,
 			},
 		}) as any
 		expect(data.baseSalary).toBeUndefined()
+		expect(data.jobLocation).toBeUndefined()
 		expect(data.validThrough).toBeUndefined()
+	})
+
+	it('lists every place when the job is open at several', () => {
+		const data = buildJobPostingJsonLd({
+			...input,
+			posting: {
+				...posting,
+				locations: [
+					posting.locations[0]!,
+					{ ...posting.locations[0]!, id: 'loc2', name: 'Airport' },
+				],
+			},
+		}) as any
+		expect(data.jobLocation.map((place: any) => place.name)).toEqual([
+			'Downtown',
+			'Airport',
+		])
 	})
 
 	it('uses one value for a fixed rate', () => {
@@ -369,9 +406,11 @@ describe('structured data', () => {
 				payMinMinor: 500000,
 				payMaxMinor: 500000,
 				currency: 'SAR',
+				locations: [{ ...posting.locations[0]!, country: null }],
 			},
 		}) as any
 		expect(data.baseSalary.value.value).toBe(5000)
+		expect(data.jobLocation.address.addressCountry).toBe('SA')
 	})
 
 	it('cannot be broken out of a script tag', () => {

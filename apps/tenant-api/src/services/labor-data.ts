@@ -33,6 +33,9 @@ import { type StaffDb } from './staff-audit.ts'
 // Settings
 // ---------------------------------------------------------------------------
 
+/** The sales source a scope starts with when a vertical registered an order source. */
+const ORDER_SOURCE_SALES_SOURCE = 'online_orders' as const
+
 export async function loadLaborSettings(
 	db: StaffDb,
 	scopeId: string,
@@ -46,7 +49,8 @@ export async function loadLaborSettings(
 		scopeId,
 		// Without an order source (the generic module has none) sales are manual.
 		salesSource:
-			row?.salesSource ?? (getOrderSource() ? DEFAULT_SALES_SOURCE : 'manual'),
+			row?.salesSource ??
+			(getOrderSource() ? ORDER_SOURCE_SALES_SOURCE : DEFAULT_SALES_SOURCE),
 		ordersPerLaborHour: row?.ordersPerLaborHour ?? {},
 		configured: row !== undefined,
 		updatedAt: row?.updatedAt ?? null,

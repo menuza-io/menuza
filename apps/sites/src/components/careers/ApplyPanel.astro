@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
-import { type PublicJobPosting } from '@repo/common/job-posting'
+import { type PublicJobLocation, type PublicJobPosting } from '@repo/common/job-posting'
+import { locationOption } from '~/lib/careers/labels'
 import {
 	siteBtnPrimaryClass,
 	siteFieldLabelClass,
@@ -13,6 +14,8 @@ import { getTenantApiUrl } from '~/lib/tenant-api'
 
 interface Props {
 	posting: Pick<PublicJobPosting, 'slug' | 'title' | 'questions'>
+	/** Where the job is. With more than one, the applicant chooses; with one it is implied. */
+	locations?: PublicJobLocation[]
 }
 
 /**
@@ -24,7 +27,7 @@ interface Props {
  * Which questions are asked comes from the live posting, and the server checks
  * the answers against it again.
  */
-const { posting } = Astro.props
+const { posting, locations = [] } = Astro.props
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
 const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : ''
@@ -44,6 +47,8 @@ const phoneHint = i18n._(
 	msg`Include your country code, for example +1 415 555 0123.`,
 )
 const contactHint = i18n._(msg`Give us an email, a phone number, or both.`)
+const locationLabel = i18n._(msg`Where would you like to work?`)
+const locationHint = i18n._(msg`Choose every location that suits you.`)
 const yes = i18n._(msg`Yes`)
 const no = i18n._(msg`No`)
 const optional = i18n._(msg`(optional)`)
@@ -61,6 +66,7 @@ const messages = {
 	),
 	checkAnswers: i18n._(msg`Please check the answers marked below and try again.`),
 	required: i18n._(msg`This is required.`),
+	chooseLocation: i18n._(msg`Choose at least one location.`),
 	badEmail: i18n._(msg`Enter a valid email address.`),
 	badPhone: i18n._(msg`Enter a phone number with its country code, like +1 415 555 0123.`),
 	contact: i18n._(msg`Give us an email or a phone number.`),
@@ -131,6 +137,26 @@ const questions = posting.questions ?? []
 						<p class="hidden text-sm text-destructive" data-error-for="lastName"></p>
 					</div>
 				</div>
+
+				{
+					locations.length > 1 ? (
+						<fieldset class="flex flex-col gap-2" data-locations>
+							<legend class={siteFieldLabelClass}>{locationLabel}</legend>
+							<p class="text-sm text-muted-foreground">{locationHint}</p>
+							<div class="flex flex-col gap-2">
+								{locations.map((place) => (
+									<label class="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-input px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+										<input type="checkbox" class="size-4 accent-primary" name="scopeIds" value={place.id} />
+										{locationOption(place)}
+									</label>
+								))}
+							</div>
+							<p class="hidden text-sm text-destructive" data-error-for="scopeIds"></p>
+						</fieldset>
+					) : locations.length === 1 ? (
+						<input type="hidden" name="scopeIds" value={locations[0]!.id} />
+					) : null
+				}
 
 				<p class="-mb-2 text-sm text-muted-foreground">{contactHint}</p>
 				<div class="grid gap-4 sm:grid-cols-2">

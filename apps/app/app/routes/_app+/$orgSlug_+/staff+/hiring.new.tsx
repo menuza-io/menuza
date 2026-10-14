@@ -13,7 +13,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		params.orgSlug,
 		HIRING_WRITE_REQUIREMENT,
 	)
-	const context = await loadHiringContext(access.organizationId)
+	const context = await loadHiringContext(
+		access.organizationId,
+		access.scopeIds,
+	)
 	return { orgSlug: params.orgSlug, ...context }
 }
 
@@ -28,23 +31,27 @@ export async function action({ request, params }: Route.ActionArgs) {
 export default function NewJobRoute() {
 	const {
 		orgSlug,
+		locations,
 		defaultCurrency,
 		sitePublished,
 		customDomain,
 		defaultLocale,
 		supportedLocales,
+		canPostEverywhere,
 	} = useLoaderData<typeof loader>()
 	const siteOrigin = useSiteOrigin(orgSlug, customDomain)
 	return (
 		<JobEditor
 			orgSlug={orgSlug}
 			posting={null}
+			locations={locations}
 			defaultCurrency={defaultCurrency}
 			siteOrigin={siteOrigin}
 			sitePublished={sitePublished}
 			initialStep="role"
 			defaultLocale={defaultLocale}
 			supportedLocales={supportedLocales}
+			canPostEverywhere={canPostEverywhere}
 		/>
 	)
 }

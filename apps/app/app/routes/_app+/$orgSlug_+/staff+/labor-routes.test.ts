@@ -3,6 +3,7 @@ import {
 	ConfigFlag,
 	db,
 	inArray,
+	OrganizationLocation,
 	OrganizationRole,
 } from '@repo/database'
 import {
@@ -26,6 +27,7 @@ vi.hoisted(() => {
 	process.env.BUCKET_NAME = 'test'
 })
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -36,6 +38,27 @@ import {
 import { loader } from './labor.tsx'
 
 const flagIds: string[] = []
+
+const locationIds: string[] = []
+
+async function location(
+	organizationId: string,
+	name: string,
+	address?: { country: string },
+) {
+	const [row] = await db
+		.insert(OrganizationLocation)
+		.values({
+			organizationId,
+			name,
+			slug: `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 6)}`,
+			timezone: 'America/Chicago',
+			address: address ? JSON.stringify(address) : null,
+		})
+		.returning({ id: OrganizationLocation.id })
+	locationIds.push(row!.id)
+	return row!.id
+}
 
 async function setFlag(feature: StaffingFeature, organizationId: string) {
 	const [row] = await db
@@ -104,6 +127,12 @@ async function load(
 }
 
 afterEach(async () => {
+	if (locationIds.length) {
+		await db
+			.delete(OrganizationLocation)
+			.where(inArray(OrganizationLocation.id, locationIds))
+		locationIds.length = 0
+	}
 	if (flagIds.length) {
 		await db.delete(ConfigFlag).where(inArray(ConfigFlag.id, flagIds))
 		flagIds.length = 0
@@ -137,6 +166,34 @@ describe('labor route loader', () => {
 				currency: 'USD',
 			}),
 		])
+	})
+
+	it('lists only the scopes the member is limited to', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableLabor(organization.id)
+		const a = await location(organization.id, 'Alpha')
+		await location(organization.id, 'Beta')
+		const scoped = await memberWith(organization.id, [P.READ_LABOR])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: scoped.user.id,
+			value: { scope: 'selected', locationIds: [a] },
+		})
+		const result = await load(organization.slug, scoped.cookie)
+		expect(result.data?.scopes.map((s) => s.id)).toEqual([a])
+	})
+
+	it('shows each location in the currency of its address', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		await enableLabor(organization.id)
+		const us = await location(organization.id, 'Alpha', { country: 'US' })
+		const sa = await location(organization.id, 'Beta', { country: 'SA' })
+		const result = await load(organization.slug, cookie)
+		const currency = Object.fromEntries(
+			(result.data?.scopes ?? []).map((s) => [s.id, s.currency]),
+		)
+		expect(currency[us]).toBe('USD')
+		expect(currency[sa]).toBe('SAR')
 	})
 
 	it('is 403 for a member without the labor grant, and a pay grant alone is not enough', async () => {

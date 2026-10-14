@@ -5,7 +5,7 @@ import {
 	templatesForGrants,
 } from './access.ts'
 import { getField, getSubject, organizationCatalog } from './catalog.ts'
-import { staffingSubjects } from './catalog-staffing.ts'
+import { staffingSubjects, withScopeWording } from './catalog-staffing.ts'
 import { referencedFieldIds, validateReportDefinition } from './engine.ts'
 import {
 	isStaffingReportSubject,
@@ -237,6 +237,18 @@ describe('what a person is offered', () => {
 		).toBe(true)
 		expect(definitionAllowed(organizationCatalog, labor.definition, [])).toBe(
 			false,
+		)
+	})
+})
+
+describe('withScopeWording', () => {
+	it('re-words workplace to the vertical name without touching ids', () => {
+		const reworded = withScopeWording(staffingSubjects, 'location')
+		const labor = reworded.find((subject) => subject.id === 'labor_daily')!
+		expect(getField(labor, 'scope')?.label).toBe('Location')
+		expect(JSON.stringify(reworded)).not.toMatch(/workplace/i)
+		expect(reworded.map((subject) => subject.id)).toEqual(
+			staffingSubjects.map((subject) => subject.id),
 		)
 	})
 })

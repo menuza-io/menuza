@@ -4,6 +4,7 @@ import {
 	db,
 	eq,
 	inArray,
+	OrganizationLocation,
 	Organization,
 	OrganizationRole,
 } from '@repo/database'
@@ -28,6 +29,7 @@ vi.hoisted(() => {
 	process.env.BUCKET_NAME = 'test'
 })
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -41,6 +43,27 @@ import { loader as timeOffLoader } from './schedule.time-off.tsx'
 import { loader as layoutLoader } from './schedule.tsx'
 
 const flagIds: string[] = []
+
+const locationIds: string[] = []
+
+async function location(
+	organizationId: string,
+	name: string,
+	address?: { country: string },
+) {
+	const [row] = await db
+		.insert(OrganizationLocation)
+		.values({
+			organizationId,
+			name,
+			slug: `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 6)}`,
+			timezone: 'America/Chicago',
+			address: address ? JSON.stringify(address) : null,
+		})
+		.returning({ id: OrganizationLocation.id })
+	locationIds.push(row!.id)
+	return row!.id
+}
 
 async function setFlag(feature: StaffingFeature, organizationId: string) {
 	const [row] = await db
@@ -119,6 +142,12 @@ const status = async (...args: Parameters<typeof call>) => {
 const names = Object.keys(loaders) as Name[]
 
 afterEach(async () => {
+	if (locationIds.length) {
+		await db
+			.delete(OrganizationLocation)
+			.where(inArray(OrganizationLocation.id, locationIds))
+		locationIds.length = 0
+	}
 	if (flagIds.length) {
 		await db.delete(ConfigFlag).where(inArray(ConfigFlag.id, flagIds))
 		flagIds.length = 0
@@ -211,6 +240,42 @@ describe('schedule route loaders', () => {
 			},
 		])
 		expect(Object.keys(result.data).sort()).toEqual(['orgSlug', 'scopes'])
+	})
+
+	it('limit a scoped manager to their locations', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableScheduling(organization.id)
+		const a = await location(organization.id, 'Alpha')
+		await location(organization.id, 'Beta')
+		const manager = await memberWith(organization.id, [
+			P.UPDATE_SCHEDULE,
+			P.READ_STAFF,
+		])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: manager.user.id,
+			value: { scope: 'selected', locationIds: [a] },
+		})
+		for (const name of names) {
+			const result = (await call(name, organization.slug, manager.cookie)) as {
+				data: { scopes: Array<{ id: string }> }
+			}
+			expect(result.data.scopes.map((s) => s.id)).toEqual([a])
+		}
+	})
+
+	it('give an organization with locations one scope per location, with its own time zone', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		await enableScheduling(organization.id)
+		const a = await location(organization.id, 'Alpha')
+		const b = await location(organization.id, 'Beta')
+		const result = (await call('grid', organization.slug, cookie)) as {
+			data: { scopes: Array<{ id: string; timeZone: string }> }
+		}
+		expect(result.data.scopes.map((s) => s.id).sort()).toEqual([a, b].sort())
+		expect(
+			result.data.scopes.every((s) => s.timeZone === 'America/Chicago'),
+		).toBe(true)
 	})
 
 	it('the layout offers tabs only to someone who can read names', async () => {

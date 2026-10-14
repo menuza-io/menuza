@@ -1,10 +1,6 @@
 import { and, asc, db, eq, User, UserOrganization } from '@repo/database'
-import { loadOrganizationScope } from '#app/utils/staffing/scope.server.ts'
-import {
-	DEFAULT_SCOPE_CURRENCY,
-	type ImportableMember,
-	type StaffScope,
-} from './staff-scopes.ts'
+import { loadOrganizationScopes } from '#app/utils/staffing/scope.server.ts'
+import { type ImportableMember, type StaffScope } from './staff-scopes.ts'
 
 /**
  * Control-plane facts the Team screens need. Nothing here is customer or staff
@@ -15,8 +11,12 @@ import {
 export async function loadStaffScopes(
 	organizationId: string,
 ): Promise<StaffScope[]> {
-	const scope = await loadOrganizationScope(organizationId)
-	return [{ id: scope.id, name: scope.name, currency: DEFAULT_SCOPE_CURRENCY }]
+	const scopes = await loadOrganizationScopes(organizationId)
+	return scopes.map((scope) => ({
+		id: scope.id,
+		name: scope.name,
+		currency: scope.currency,
+	}))
 }
 
 /** Active members of the organization, for the "Import current members" step. */

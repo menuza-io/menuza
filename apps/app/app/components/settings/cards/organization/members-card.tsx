@@ -1,6 +1,7 @@
 import {
 	OrganizationMembers,
 	type OrganizationRoleOption,
+	type StaffingLocationControl,
 } from '#app/components/organization-members.tsx'
 
 interface OrganizationMember {
@@ -29,12 +30,14 @@ export function MembersCard({
 	availableRoles,
 	organizationSlug,
 	canManageRoles,
+	staffingLocations,
 }: {
 	members: OrganizationMember[]
 	currentUserId: string
 	availableRoles?: OrganizationRoleOption[]
 	organizationSlug?: string
 	canManageRoles?: boolean
+	staffingLocations?: StaffingLocationControl | null
 }) {
 	return (
 		<OrganizationMembers
@@ -43,6 +46,7 @@ export function MembersCard({
 			availableRoles={availableRoles}
 			organizationSlug={organizationSlug}
 			canManageRoles={canManageRoles}
+			staffingLocations={staffingLocations}
 		/>
 	)
 }

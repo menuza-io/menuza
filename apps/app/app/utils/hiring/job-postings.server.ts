@@ -17,6 +17,7 @@ import {
 	type JobEmploymentType,
 	type JobPayType,
 	type JobPostingContent,
+	type PublicJobLocation,
 	type PublicJobPosting,
 	type PublicJobPostingListItem,
 	type ScreenerQuestion,
@@ -24,8 +25,23 @@ import {
 	parseJobPostingTranslations,
 	type JobPostingTranslations,
 } from '@repo/common/job-posting'
-import { and, asc, db, desc, eq, JobPosting, lte } from '@repo/database'
+import { getLocationCurrency } from '@repo/common/location-currency'
+import {
+	and,
+	asc,
+	db,
+	desc,
+	eq,
+	inArray,
+	JobPosting,
+	lte,
+	OrganizationLocation,
+} from '@repo/database'
 import { DEFAULT_SCOPE_ID } from '@repo/staffing'
+import {
+	displayLocationName,
+	orgDefaultLocale,
+} from '#app/utils/location-name.server.ts'
 import { sanitizeJobDescription } from './job-description-sanitize.server.ts'
 import {
 	type PostingDetail,
@@ -42,14 +58,20 @@ export type { PostingDetail, PostingFailure, PostingSummary }
  * is filtered by it, so one organization can never read or change another's
  * postings by guessing an id.
  *
- * A posting belongs to the organization, not to a scope: every job is open at
- * the organization's one implicit scope (`DEFAULT_SCOPE_ID`), so there is no
- * per-scope access to check here.
+ * `scopeIds` is the member's staffing scope, a location for a restaurant
+ * (`null` is every location). A member limited to some locations sees and manages only the
+ * postings for those locations; organization-wide postings stay with members
+ * who hold every location.
  */
 
 export type PostingActorScope = {
 	organizationId: string
 	userId: string
+	/**
+	 * The member's scopes (locations for a restaurant); `null` is every scope,
+	 * like the staffing token claim.
+	 */
+	scopeIds: string[] | null
 	request?: Request
 }
 
@@ -57,7 +79,45 @@ export type PostingResult<T> = { ok: true; value: T } | PostingFailure
 
 type PostingRow = typeof JobPosting.$inferSelect
 
-function toSummary(row: PostingRow, now: Date): PostingSummary {
+/** Whether a member with this scope may touch a posting at `locationId`. */
+export function canAccessPostingLocation(
+	locationIds: string[] | null,
+	locationId: string | null,
+): boolean {
+	if (locationIds === null) return true
+	if (locationId === null) return false
+	return locationIds.includes(locationId)
+}
+
+/** Whether a member may touch a posting open at `postingLocationIds` (empty = every location). */
+export function canAccessPostingLocations(
+	scopeLocationIds: string[] | null,
+	postingLocationIds: string[],
+): boolean {
+	if (scopeLocationIds === null) return true
+	// A posting for every location, or for one the member does not manage, is
+	// outside a scoped member's reach.
+	if (postingLocationIds.length === 0) return false
+	return postingLocationIds.every((id) => scopeLocationIds.includes(id))
+}
+
+/** The ids a posting names, defensively read (empty means every location). */
+export function locationIdsOf(row: Pick<PostingRow, 'locationIds'>): string[] {
+	const value: unknown = row.locationIds
+	if (!Array.isArray(value)) return []
+	return [
+		...new Set(
+			value.filter((id): id is string => typeof id === 'string' && id !== ''),
+		),
+	]
+}
+
+function toSummary(
+	row: PostingRow,
+	names: Map<string, string>,
+	now: Date,
+): PostingSummary {
+	const ids = locationIdsOf(row)
 	return {
 		id: row.id,
 		slug: row.slug,
@@ -65,6 +125,8 @@ function toSummary(row: PostingRow, now: Date): PostingSummary {
 		positionName: row.positionName,
 		status: effectiveJobPostingStatus(row, now),
 		employmentType: row.employmentType as JobEmploymentType,
+		locationIds: ids,
+		locationNames: ids.flatMap((id) => names.get(id) ?? []),
 		isGeneral: row.isGeneral,
 		payType: row.payType as JobPayType,
 		payMinMinor: row.payMinMinor,
@@ -76,14 +138,34 @@ function toSummary(row: PostingRow, now: Date): PostingSummary {
 	}
 }
 
-function toDetail(row: PostingRow, now: Date): PostingDetail {
+function toDetail(
+	row: PostingRow,
+	names: Map<string, string>,
+	now: Date,
+): PostingDetail {
 	return {
-		...toSummary(row, now),
+		...toSummary(row, names, now),
 		descriptionHtml: row.descriptionHtml,
 		questions: parseScreenerQuestions(row.questions),
 		translations: parseJobPostingTranslations(row.translations),
 		closesOn: dateToClosesOn(row.expiresAt),
 	}
+}
+
+async function locationNames(organizationId: string) {
+	const [rows, defaultLocale] = await Promise.all([
+		db
+			.select({ id: OrganizationLocation.id, name: OrganizationLocation.name })
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.organizationId, organizationId)),
+		orgDefaultLocale(organizationId),
+	])
+	return new Map(
+		rows.map((row) => [
+			row.id,
+			displayLocationName(row.name, defaultLocale, defaultLocale),
+		]),
+	)
 }
 
 async function safeAudit(
@@ -113,23 +195,30 @@ async function safeAudit(
 }
 
 export async function listJobPostings(
-	scope: Pick<PostingActorScope, 'organizationId'>,
+	scope: Pick<PostingActorScope, 'organizationId' | 'scopeIds'>,
 	now: Date = new Date(),
 ): Promise<PostingSummary[]> {
-	const rows = await db
-		.select()
-		.from(JobPosting)
-		.where(eq(JobPosting.organizationId, scope.organizationId))
-		.orderBy(
-			desc(JobPosting.isGeneral),
-			desc(JobPosting.updatedAt),
-			asc(JobPosting.title),
+	const [rows, names] = await Promise.all([
+		db
+			.select()
+			.from(JobPosting)
+			.where(eq(JobPosting.organizationId, scope.organizationId))
+			.orderBy(
+				desc(JobPosting.isGeneral),
+				desc(JobPosting.updatedAt),
+				asc(JobPosting.title),
+			),
+		locationNames(scope.organizationId),
+	])
+	return rows
+		.filter((row) =>
+			canAccessPostingLocations(scope.scopeIds, locationIdsOf(row)),
 		)
-	return rows.map((row) => toSummary(row, now))
+		.map((row) => toSummary(row, names, now))
 }
 
 async function findRow(
-	scope: Pick<PostingActorScope, 'organizationId'>,
+	scope: Pick<PostingActorScope, 'organizationId' | 'scopeIds'>,
 	id: string,
 ): Promise<PostingRow | null> {
 	if (!id || id.length > 64) return null
@@ -143,22 +232,46 @@ async function findRow(
 			),
 		)
 		.limit(1)
-	return row ?? null
+	if (!row) return null
+	// A posting outside the member's locations looks like it does not exist.
+	if (!canAccessPostingLocations(scope.scopeIds, locationIdsOf(row))) {
+		return null
+	}
+	return row
 }
 
 export async function getJobPosting(
-	scope: Pick<PostingActorScope, 'organizationId'>,
+	scope: Pick<PostingActorScope, 'organizationId' | 'scopeIds'>,
 	id: string,
 	now: Date = new Date(),
 ): Promise<PostingDetail | null> {
 	const row = await findRow(scope, id)
 	if (!row) return null
-	return toDetail(row, now)
+	return toDetail(row, await locationNames(scope.organizationId), now)
+}
+
+/** Which of these ids are locations the organization owns and still uses. */
+async function activeLocationIds(organizationId: string, ids: string[]) {
+	if (ids.length === 0) return new Set<string>()
+	const rows = await db
+		.select({ id: OrganizationLocation.id })
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.organizationId, organizationId),
+				eq(OrganizationLocation.isActive, true),
+				inArray(OrganizationLocation.id, ids),
+			),
+		)
+	return new Set(rows.map((row) => row.id))
 }
 
 type PreparedContent = {
 	title: string
 	positionName: string
+	locationIds: string[]
+	/** Mirror of `locationIds` when exactly one is chosen. */
+	locationId: string | null
 	employmentType: JobEmploymentType
 	payType: JobPayType
 	payMinMinor: number | null
@@ -203,11 +316,12 @@ function cleanTranslations(
 	return cleaned
 }
 
-/** Validates and cleans a content payload from the editor. */
-function prepareContent(
+/** Validates, cleans and checks scope for a content payload from the editor. */
+async function prepareContent(
+	scope: PostingActorScope,
 	input: unknown,
 	options: { isGeneral: boolean },
-): PostingResult<PreparedContent> {
+): Promise<PostingResult<PreparedContent>> {
 	const parsed = jobPostingContentSchema.safeParse(input)
 	if (!parsed.success) {
 		return {
@@ -221,6 +335,24 @@ function prepareContent(
 		}
 	}
 	const content: JobPostingContent = normalizePay(parsed.data)
+
+	// The legacy single `locationId` folds into the list.
+	const locationIds = [
+		...new Set([
+			...content.locationIds,
+			...(content.locationId ? [content.locationId] : []),
+		]),
+	]
+	if (!canAccessPostingLocations(scope.scopeIds, locationIds)) {
+		return { ok: false, error: 'location_not_allowed' }
+	}
+	if (locationIds.length > 0) {
+		const owned = await activeLocationIds(scope.organizationId, locationIds)
+		// An id from another organization is refused, not stored.
+		if (locationIds.some((id) => !owned.has(id))) {
+			return { ok: false, error: 'location_not_allowed' }
+		}
+	}
 
 	const descriptionHtml = sanitizeJobDescription(content.descriptionHtml)
 	if (descriptionHtml.length > JOB_POSTING_LIMITS.descriptionHtml) {
@@ -237,6 +369,8 @@ function prepareContent(
 		value: {
 			title: stripMarkup(content.title),
 			positionName: stripMarkup(content.positionName),
+			locationIds,
+			locationId: locationIds.length === 1 ? locationIds[0]! : null,
 			employmentType: content.employmentType,
 			payType: content.payType,
 			payMinMinor: content.payMinMinor,
@@ -275,7 +409,7 @@ export async function createJobPosting(
 	options: { general?: boolean } = {},
 ): Promise<PostingResult<PostingDetail>> {
 	const isGeneral = options.general === true
-	const prepared = prepareContent(input, { isGeneral })
+	const prepared = await prepareContent(scope, input, { isGeneral })
 	if (!prepared.ok) return prepared
 
 	if (isGeneral) {
@@ -354,7 +488,7 @@ export async function updateJobPosting(
 	const row = await findRow(scope, id)
 	if (!row) return { ok: false, error: 'not_found' }
 
-	const prepared = prepareContent(input, {
+	const prepared = await prepareContent(scope, input, {
 		isGeneral: row.isGeneral,
 	})
 	if (!prepared.ok) return prepared
@@ -521,7 +655,47 @@ export async function expireJobPostings(now: Date = new Date()) {
 // Public projection
 // ---------------------------------------------------------------------------
 
-type PublicRow = { posting: PostingRow }
+function parseLocation(
+	name: string,
+	address: string | null,
+): Omit<PublicJobLocation, 'id'> {
+	let parsed: Record<string, unknown> = {}
+	if (address) {
+		try {
+			const value = JSON.parse(address) as unknown
+			if (value && typeof value === 'object') {
+				parsed = value as Record<string, unknown>
+			}
+		} catch {
+			// An address stored as plain text carries no structured parts.
+		}
+	}
+	const text = (key: string) => {
+		const value = parsed[key]
+		return typeof value === 'string' && value.trim() ? value.trim() : null
+	}
+	const street = [text('streetNumber'), text('streetName')]
+		.filter(Boolean)
+		.join(' ')
+	return {
+		name,
+		city: text('city'),
+		region: text('state'),
+		postalCode: text('postalCode'),
+		country: text('country'),
+		streetAddress: street || null,
+	}
+}
+
+type PublicRow = {
+	posting: PostingRow
+	/**
+	 * Where the job is, active locations only. For a posting open to every
+	 * location this is all of them, so an applicant can pick one.
+	 */
+	locations: { id: string; name: string; address: string | null }[]
+	allLocations: boolean
+}
 
 /** The language a visitor reads, and the organization's default fallback. */
 export type PublicLocale = { locale?: string | null; defaultLocale?: string }
@@ -530,7 +704,7 @@ function toPublic(
 	entry: PublicRow,
 	language: PublicLocale = {},
 ): PublicJobPosting {
-	const { posting } = entry
+	const { posting, locations, allLocations } = entry
 	const localized = localizeJobPosting(
 		{
 			title: posting.title,
@@ -553,6 +727,18 @@ function toPublic(
 		// Sanitized on write and again by every renderer; never trusted raw.
 		descriptionHtml: sanitizeJobDescription(localized.descriptionHtml),
 		questions: localized.questions.map(toPublicQuestion),
+		locations: locations.map((place) => ({
+			id: place.id,
+			...parseLocation(
+				displayLocationName(
+					place.name,
+					language.locale,
+					language.defaultLocale ?? 'en',
+				),
+				place.address,
+			),
+		})),
+		allLocations,
 		isGeneral: posting.isGeneral,
 		datePosted: (posting.publishedAt ?? posting.createdAt).toISOString(),
 		validThrough: posting.expiresAt?.toISOString() ?? null,
@@ -564,25 +750,50 @@ async function publicRows(
 	now: Date,
 	slug?: string,
 ): Promise<PublicRow[]> {
-	const postings = await db
-		.select()
-		.from(JobPosting)
-		.where(
-			and(
-				eq(JobPosting.organizationId, organizationId),
-				eq(JobPosting.status, 'published'),
-				...(slug ? [eq(JobPosting.slug, slug)] : []),
-			),
-		)
-		.orderBy(desc(JobPosting.isGeneral), desc(JobPosting.publishedAt))
-		.limit(slug ? 1 : 100)
-	// The job may not have run yet: an ended posting is never served.
-	return postings
-		.filter(
-			(posting) =>
-				!posting.expiresAt || posting.expiresAt.getTime() > now.getTime(),
-		)
-		.map((posting) => ({ posting }))
+	const [postings, active] = await Promise.all([
+		db
+			.select()
+			.from(JobPosting)
+			.where(
+				and(
+					eq(JobPosting.organizationId, organizationId),
+					eq(JobPosting.status, 'published'),
+					...(slug ? [eq(JobPosting.slug, slug)] : []),
+				),
+			)
+			.orderBy(desc(JobPosting.isGeneral), desc(JobPosting.publishedAt))
+			.limit(slug ? 1 : 100),
+		db
+			.select({
+				id: OrganizationLocation.id,
+				name: OrganizationLocation.name,
+				address: OrganizationLocation.address,
+			})
+			.from(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.organizationId, organizationId),
+					eq(OrganizationLocation.isActive, true),
+				),
+			)
+			.orderBy(asc(OrganizationLocation.name)),
+	])
+	const rows: PublicRow[] = []
+	for (const posting of postings) {
+		// The job may not have run yet: an ended posting is never served.
+		if (posting.expiresAt && posting.expiresAt.getTime() <= now.getTime()) {
+			continue
+		}
+		const named = locationIdsOf(posting)
+		const allLocations = named.length === 0
+		const locations = allLocations
+			? active
+			: active.filter((place) => named.includes(place.id))
+		// A posting whose every named location has been turned off is hidden.
+		if (!allLocations && locations.length === 0) continue
+		rows.push({ posting, locations, allLocations })
+	}
+	return rows
 }
 
 /** Published, unexpired postings for the careers listing (no description). */
@@ -615,7 +826,8 @@ export async function getPublicJobPosting(
 
 /**
  * What tenant-api needs to accept an application for a live posting: its opaque
- * id, the title to snapshot, the scope an applicant belongs to, and the full questions including which
+ * id, the title to snapshot, the location (an applicant is visible only to
+ * managers who can see that location), and the full questions including which
  * answer is a dealbreaker. Server to server only: the public page never gets
  * the dealbreaker settings. A posting that is not live is `null`.
  */
@@ -633,8 +845,40 @@ export async function getIntakePosting(
 		slug: posting.slug,
 		title: posting.title,
 		positionName: posting.positionName,
-		// Every job is open at the organization's one implicit scope.
-		scopeIds: [DEFAULT_SCOPE_ID],
+		// Where an applicant may say they are applying (a location is a scope for
+		// a restaurant): the named locations, or every active one for a posting
+		// open everywhere. A business without locations has one implicit scope.
+		scopeIds: entry.locations.length
+			? entry.locations.map((place) => place.id)
+			: [DEFAULT_SCOPE_ID],
 		questions: parseScreenerQuestions(posting.questions),
 	}
+}
+
+/** Locations for the editor's picker, limited to what the member may use. */
+export async function listPostingLocations(
+	organizationId: string,
+	locationIds: string[] | null,
+) {
+	const defaultLocale = await orgDefaultLocale(organizationId)
+	const rows = await db
+		.select({
+			id: OrganizationLocation.id,
+			name: OrganizationLocation.name,
+			address: OrganizationLocation.address,
+		})
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.organizationId, organizationId),
+				eq(OrganizationLocation.isActive, true),
+				...(locationIds ? [inArray(OrganizationLocation.id, locationIds)] : []),
+			),
+		)
+		.orderBy(asc(OrganizationLocation.name))
+	return rows.map((row) => ({
+		id: row.id,
+		name: displayLocationName(row.name, defaultLocale, defaultLocale),
+		currency: getLocationCurrency(row.address),
+	}))
 }

@@ -166,6 +166,10 @@ msgstr "Todos los lanzamientos"
 msgid "All jobs"
 msgstr "Todos los empleos"
 
+#: src/pages/careers/index.astro.ts:3
+msgid "All locations"
+msgstr "Todas las sedes"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
@@ -339,6 +343,14 @@ msgstr "Elige al menos {count} opciones"
 #: src/lib/ordering-labels.ts:42
 msgid "Choose at least 1 option"
 msgstr "Elige al menos 1 opción"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose at least one location."
+msgstr "Elige al menos una sede."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose every location that suits you."
+msgstr "Elige todas las sedes que te convengan."
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
@@ -1710,6 +1722,10 @@ msgstr "Dónde"
 #: src/lib/ordering-labels.ts:147
 msgid "Where should we deliver?"
 msgstr "¿Dónde lo entregamos?"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Where would you like to work?"
+msgstr "¿Dónde te gustaría trabajar?"
 
 #: src/lib/ordering-labels.ts:51
 msgid "Whole"

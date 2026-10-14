@@ -57,6 +57,7 @@ export enum AuditAction {
 	ORG_MEMBER_ADDED = 'org_member_added',
 	ORG_MEMBER_REMOVED = 'org_member_removed',
 	ORG_MEMBER_ROLE_CHANGED = 'org_member_role_changed',
+	ORG_MEMBER_LOCATIONS_CHANGED = 'org_member_locations_changed',
 	ORG_INVITATION_SENT = 'org_invitation_sent',
 	ORG_INVITATION_ACCEPTED = 'org_invitation_accepted',
 	ORG_INVITATION_REVOKED = 'org_invitation_revoked',

@@ -60,6 +60,7 @@ import { useJobLabels } from './job-labels.ts'
 import { JobSharePanel } from './job-share-panel.tsx'
 import { JobStatus } from './job-status.tsx'
 import { JobSummary } from './job-summary.tsx'
+import { LocationPicker } from './location-picker.tsx'
 import {
 	LocalizedTextField,
 	TranslatingNotice,
@@ -67,10 +68,14 @@ import {
 } from './localized-fields.tsx'
 import { ScreenerEditor } from './screener-editor.tsx'
 
+export type EditorLocation = { id: string; name: string; currency: string }
+
 type Props = {
 	orgSlug: string
 	/** `null` while writing a new job. */
 	posting: PostingDetail | null
+	/** The locations a job can be at; empty for an organization without any. */
+	locations: EditorLocation[]
 	defaultCurrency: string
 	/** Where this organization's public site lives, with no trailing slash. */
 	siteOrigin: string
@@ -79,6 +84,8 @@ type Props = {
 	/** The organization's site languages; job copy is written in each. */
 	defaultLocale: string
 	supportedLocales: string[]
+	/** False for a member limited to some locations: they post only for theirs. */
+	canPostEverywhere: boolean
 }
 
 /**
@@ -90,12 +97,14 @@ type Props = {
 export function JobEditor({
 	orgSlug,
 	posting,
+	locations,
 	defaultCurrency,
 	siteOrigin,
 	sitePublished,
 	initialStep,
 	defaultLocale,
 	supportedLocales,
+	canPostEverywhere,
 }: Props) {
 	const { _ } = useLingui()
 	const labels = useJobLabels()
@@ -107,7 +116,10 @@ export function JobEditor({
 	const [form, setForm] = useState<PostingForm>(() =>
 		saved
 			? formFromPosting(saved)
-			: emptyPostingForm({ currency: defaultCurrency }),
+			: emptyPostingForm({
+					currency: defaultCurrency,
+					locationId: locations.length === 1 ? locations[0]!.id : null,
+				}),
 	)
 	const [step, setStep] = useState<PostingStep>(initialStep)
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
@@ -121,7 +133,12 @@ export function JobEditor({
 	const savedKey = JSON.stringify(
 		saved
 			? toPayload(formFromPosting(saved))
-			: toPayload(emptyPostingForm({ currency: defaultCurrency })),
+			: toPayload(
+					emptyPostingForm({
+						currency: defaultCurrency,
+						locationId: locations.length === 1 ? locations[0]!.id : null,
+					}),
+				),
 	)
 	const dirty = JSON.stringify(toPayload(form)) !== savedKey
 	const busyIntent =
@@ -233,6 +250,11 @@ export function JobEditor({
 		submit('publish')
 	}
 
+	const locationName = form.locationIds
+		.flatMap(
+			(id) => locations.find((location) => location.id === id)?.name ?? [],
+		)
+		.join(', ')
 	const shareUrl = saved ? `${siteOrigin}/careers/${saved.slug}` : null
 	const live = status === 'published'
 	const title = form.title.trim() || _(t`New job`)
@@ -328,6 +350,8 @@ export function JobEditor({
 								errors={errors}
 								patch={patch}
 								update={update}
+								locations={locations}
+								canPostEverywhere={canPostEverywhere}
 								employmentOptions={labels.employmentOptions}
 								aiFetcher={aiFetcher}
 								canUndoDraft={beforeDraft !== null}
@@ -360,6 +384,8 @@ export function JobEditor({
 							<ReviewStep
 								form={form}
 								blockers={blockers}
+								locationName={locationName}
+								hasLocations={locations.length > 0}
 								status={status}
 								saved={saved !== null}
 								dirty={dirty}
@@ -476,6 +502,7 @@ function errorText(
 		title_required: _(t`Give the job a title.`),
 		title_short: _(t`Use at least 3 letters.`),
 		position_required: _(t`Say which position this is.`),
+		locations_required: _(t`Choose at least one location.`),
 		pay_required: _(t`Enter a pay amount, or choose not to show pay.`),
 		pay_invalid: _(t`Use a number like 18 or 18.50.`),
 		pay_range: _(t`The top of the range must be at least the bottom.`),
@@ -496,6 +523,8 @@ function describeFailure(
 			return _(t`Some details need fixing. Check each step.`)
 		case 'description_too_long':
 			return _(t`The description is too long. Shorten it and try again.`)
+		case 'location_not_allowed':
+			return _(t`You cannot post for that location.`)
 		case 'cannot_publish':
 			return _(t`This job is not ready to go live yet. See the Review step.`)
 		case 'invalid_transition':
@@ -522,6 +551,8 @@ function RoleStep({
 	errors,
 	patch,
 	update,
+	locations,
+	canPostEverywhere,
 	employmentOptions,
 	aiFetcher,
 	canUndoDraft,
@@ -531,6 +562,8 @@ function RoleStep({
 	errors: PostingFormErrors
 	patch: (changes: Partial<PostingForm>) => void
 	update: (change: (current: PostingForm) => PostingForm) => void
+	locations: EditorLocation[]
+	canPostEverywhere: boolean
 	employmentOptions: Option[]
 	aiFetcher: ReturnType<typeof useFetcher<PostingActionData>>
 	canUndoDraft: boolean
@@ -638,6 +671,16 @@ function RoleStep({
 						error={errorText(errors.positionName, _)}
 						onChange={(event) => patch({ positionName: event.target.value })}
 					/>
+					{locations.length > 1 ? (
+						<LocationPicker
+							scope={form.locationScope}
+							locationIds={form.locationIds}
+							locations={locations}
+							canPostEverywhere={canPostEverywhere}
+							error={errorText(errors.locations, _)}
+							onChange={patch}
+						/>
+					) : null}
 					<SelectField
 						label={<Trans>Type</Trans>}
 						options={employmentOptions}
@@ -789,6 +832,8 @@ function PayStep({
 function ReviewStep({
 	form,
 	blockers,
+	locationName,
+	hasLocations,
 	status,
 	saved,
 	dirty,
@@ -803,6 +848,8 @@ function ReviewStep({
 }: {
 	form: PostingForm
 	blockers: ReturnType<typeof publishBlockers>
+	locationName: string | null
+	hasLocations: boolean
 	status: JobPostingStatus
 	saved: boolean
 	dirty: boolean
@@ -876,7 +923,11 @@ function ReviewStep({
 				</section>
 			) : null}
 
-			<JobSummary form={form} />
+			<JobSummary
+				form={form}
+				locationName={locationName}
+				hasLocations={hasLocations}
+			/>
 
 			{saved ? (
 				<div className="flex flex-wrap gap-2 border-t pt-6">

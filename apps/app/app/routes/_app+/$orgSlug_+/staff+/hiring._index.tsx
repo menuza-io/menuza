@@ -34,13 +34,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	)
 	const [postings, context] = await Promise.all([
 		listJobPostings(access),
-		loadHiringContext(access.organizationId),
+		loadHiringContext(access.organizationId, access.scopeIds),
 	])
 	return {
 		orgSlug: params.orgSlug,
 		postings,
 		canWrite: holdsStaffingGrant(access.grants, P.UPDATE_HIRING),
+		// A member limited to some locations cannot create the organization-wide
+		// standing application, so it is only offered to the rest.
+		canOfferGeneral: access.scopeIds === null,
 		sitePublished: context.sitePublished,
+		hasLocations: context.locations.length > 0,
 		defaultCurrency: context.defaultCurrency,
 	}
 }
@@ -54,13 +58,20 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function StaffHiringIndexRoute() {
-	const { orgSlug, postings, canWrite, sitePublished, defaultCurrency } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		postings,
+		canWrite,
+		canOfferGeneral,
+		hasLocations,
+		sitePublished,
+		defaultCurrency,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const labels = useJobLabels()
 	const fetcher = useFetcher()
 	const hasGeneral = postings.some((posting) => posting.isGeneral)
-	const offerGeneral = canWrite && !hasGeneral
+	const offerGeneral = canWrite && canOfferGeneral && !hasGeneral
 	const live = postings.filter((posting) => posting.status === 'published')
 
 	const addGeneral = (
@@ -144,6 +155,18 @@ export default function StaffHiringIndexRoute() {
 					<ItemGroup>
 						{postings.map((posting) => {
 							const pay = labels.payLine(posting)
+							const [firstPlace, ...otherPlaces] = posting.locationNames
+							const more = otherPlaces.length
+							// An organization without locations has no "where" to show.
+							const where = !hasLocations
+								? null
+								: !firstPlace
+									? _(t`All locations`)
+									: more === 0
+										? firstPlace
+										: more === 1
+											? `${firstPlace}, ${otherPlaces[0]}`
+											: _(t`${firstPlace} and ${more} more`)
 							return (
 								<Item
 									key={posting.id}
@@ -159,6 +182,7 @@ export default function StaffHiringIndexRoute() {
 												posting.isGeneral
 													? _(t`Standing application`)
 													: posting.positionName,
+												where,
 												labels.employment[posting.employmentType],
 												pay,
 											]

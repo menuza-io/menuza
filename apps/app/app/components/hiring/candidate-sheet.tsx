@@ -142,10 +142,20 @@ export function CandidateSheet({ applicationId }: { applicationId: string }) {
 	const name = applicantName(detail)
 	const stage = detail.stage
 	const open = isOpenStage(stage)
-	// With one workplace there is nothing to tell apart, so no name is shown.
+	// Everywhere the person would work, the main scope first. With one scope
+	// there is nothing to tell apart, so no name is shown.
+	const placeIds = [
+		...new Set(
+			[detail.scopeId, ...detail.interestedScopeIds].filter(
+				(id): id is string => Boolean(id),
+			),
+		),
+	]
 	const place =
 		ctx.scopes.length > 1
-			? (ctx.scopes.find((s) => s.id === detail.scopeId)?.name ?? null)
+			? placeIds
+					.flatMap((id) => ctx.scopes.find((s) => s.id === id)?.name ?? [])
+					.join(', ') || null
 			: null
 	const timeZoneOf = (scopeId: string | null) =>
 		(scopeId ? ctx.scopes.find((s) => s.id === scopeId)?.timeZone : null) ??

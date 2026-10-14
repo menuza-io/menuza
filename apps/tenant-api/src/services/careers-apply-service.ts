@@ -177,6 +177,7 @@ export async function submitApplication(
 						postingTitle: posting.title,
 						positionName: posting.positionName || null,
 						scopeId: place.scopeId,
+						interestedScopeIds: place.scopeIds,
 						source: body.source,
 						firstName: body.firstName,
 						lastName: body.lastName,
@@ -207,18 +208,28 @@ export async function submitApplication(
 				})
 				// The generic "new applicant" event for managers: an id and a count,
 				// never a name. The tick delivers it to the App.
-				await tx
-					.insert(notificationOutbox)
-					.values({
-						kind: managerOutboxKind('new_applicant'),
-						staffId: 'system',
-						scopeId: place.scopeId,
-						dedupeKey: dedupeKeys.newApplicant(applicationId),
-						payload: {},
-						nextAttemptAt: now,
-						createdAt: now,
-					})
-					.onConflictDoNothing()
+				// One alert per scope the person is interested in, so each scope's
+				// managers hear about them. No scope: one organization-wide alert.
+				const alertScopes: Array<string | null> =
+					place.scopeIds.length > 0 ? place.scopeIds : [null]
+				for (const [index, alertScopeId] of alertScopes.entries()) {
+					await tx
+						.insert(notificationOutbox)
+						.values({
+							kind: managerOutboxKind('new_applicant'),
+							staffId: 'system',
+							scopeId: alertScopeId,
+							// The first alert keeps the long-standing key.
+							dedupeKey:
+								index === 0
+									? dedupeKeys.newApplicant(applicationId)
+									: `${dedupeKeys.newApplicant(applicationId)}:${alertScopeId}`,
+							payload: {},
+							nextAttemptAt: now,
+							createdAt: now,
+						})
+						.onConflictDoNothing()
+				}
 			}),
 		)
 	} catch (error) {

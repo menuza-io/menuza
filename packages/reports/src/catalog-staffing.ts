@@ -511,3 +511,31 @@ export const staffingSubjects: ReportSubject[] = [
 		defaultColumns: ['appliedAt', 'position', 'scope', 'stage'],
 	},
 ]
+
+/**
+ * Re-words the staffing subjects for a vertical whose scope has a proper name
+ * (restaurants: "Location"). The generic catalog says "workplace"; every
+ * mention in a label or description is swapped, keeping capitalization.
+ * Field ids (`scope`) are untouched so saved reports keep working.
+ */
+export function withScopeWording<T extends ReportSubject>(
+	subjects: readonly T[],
+	singular: string,
+): T[] {
+	const reword = (text: string) =>
+		text.replace(/workplace/gi, (match) =>
+			match[0] === match[0]!.toUpperCase()
+				? singular.charAt(0).toUpperCase() + singular.slice(1)
+				: singular.toLowerCase(),
+		)
+	return subjects.map((subject) => ({
+		...subject,
+		label: reword(subject.label),
+		description: reword(subject.description),
+		fields: subject.fields.map((field) => ({
+			...field,
+			label: reword(field.label),
+			...(field.description ? { description: reword(field.description) } : {}),
+		})),
+	}))
+}

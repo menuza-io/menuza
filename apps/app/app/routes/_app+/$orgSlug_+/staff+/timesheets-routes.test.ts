@@ -4,6 +4,7 @@ import {
 	db,
 	eq,
 	inArray,
+	OrganizationLocation,
 	Organization,
 	OrganizationRole,
 } from '@repo/database'
@@ -28,6 +29,7 @@ vi.hoisted(() => {
 	process.env.BUCKET_NAME = 'test'
 })
 
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -41,6 +43,27 @@ import { loader as listLoader } from './timeclock.timesheets.tsx'
 import { loader as layoutLoader } from './timeclock.tsx'
 
 const flagIds: string[] = []
+
+const locationIds: string[] = []
+
+async function location(
+	organizationId: string,
+	name: string,
+	address?: { country: string },
+) {
+	const [row] = await db
+		.insert(OrganizationLocation)
+		.values({
+			organizationId,
+			name,
+			slug: `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 6)}`,
+			timezone: 'America/Chicago',
+			address: address ? JSON.stringify(address) : null,
+		})
+		.returning({ id: OrganizationLocation.id })
+	locationIds.push(row!.id)
+	return row!.id
+}
 
 async function setFlag(feature: StaffingFeature, organizationId: string) {
 	const [row] = await db
@@ -116,6 +139,12 @@ const status = async (...args: Parameters<typeof call>) => {
 }
 
 afterEach(async () => {
+	if (locationIds.length) {
+		await db
+			.delete(OrganizationLocation)
+			.where(inArray(OrganizationLocation.id, locationIds))
+		locationIds.length = 0
+	}
 	if (flagIds.length) {
 		await db.delete(ConfigFlag).where(inArray(ConfigFlag.id, flagIds))
 		flagIds.length = 0
@@ -215,6 +244,29 @@ describe('timesheet route loaders', () => {
 			'orgSlug',
 			'scopes',
 		])
+	})
+
+	it('limit a scoped manager to their locations and keep the pay period from them', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableTimeclock(organization.id)
+		const a = await location(organization.id, 'Alpha')
+		await location(organization.id, 'Beta')
+		const manager = await memberWith(organization.id, [
+			P.READ_TIMESHEET,
+			P.READ_STAFF,
+			P.UPDATE_LABOR_POLICY,
+		])
+		await setMemberLocationScope({
+			organizationId: organization.id,
+			userId: manager.user.id,
+			value: { scope: 'selected', locationIds: [a] },
+		})
+		const result = (await call('list', organization.slug, manager.cookie)) as {
+			data: { scopes: Array<{ id: string }>; canChangePayPeriod: boolean }
+		}
+		expect(result.data.scopes.map((s) => s.id)).toEqual([a])
+		// The pay period is organization-wide: not theirs to change.
+		expect(result.data.canChangePayPeriod).toBe(false)
 	})
 
 	it('only offer the pay period to someone who may change labor rules', async () => {

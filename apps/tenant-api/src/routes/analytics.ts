@@ -13,7 +13,6 @@ import {
 	getField,
 	getSubject,
 	isReportRunError,
-	organizationCatalog,
 	type ReportDefinition,
 	reportDefinitionSchema,
 	referencedFieldIds,
@@ -29,6 +28,7 @@ import {
 	STAFF_PAY_REPORT_PERMISSION,
 	verifyOperatorAnalyticsToken,
 } from '@repo/reports/token'
+import { activeReportCatalog } from '../restaurant/staffing-report-catalog.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { describeStaffError } from '../services/staff-audit.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -311,7 +311,7 @@ analyticsRoutes.post('/query', async (c) => {
 			403,
 		)
 	}
-	const subject = getSubject(organizationCatalog, definition.subject)!
+	const subject = getSubject(activeReportCatalog(), definition.subject)!
 	for (const fieldId of referencedFieldIds(subject, definition)) {
 		const requires = getField(subject, fieldId)?.requiresSubject
 		if (requires && !operatorTokenAllowsSubject(claims, requires)) {
@@ -471,7 +471,7 @@ analyticsRoutes.post('/query', async (c) => {
 		records = rows.map(mapShopOrder)
 	}
 
-	const result = runReport(organizationCatalog, definition, records, now, {
+	const result = runReport(activeReportCatalog(), definition, records, now, {
 		timeZone,
 	})
 	if (isReportRunError(result)) {

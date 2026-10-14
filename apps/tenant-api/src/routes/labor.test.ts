@@ -411,11 +411,11 @@ describe('/operator/labor', () => {
 	})
 
 	describe('settings', () => {
-		it('starts on manual sales with no standards, then saves and audits a change', async () => {
+		it('starts on online orders (an order source is registered) with no standards, then saves and audits a change', async () => {
 			const before = await l.get(`/settings?scopeId=${LOC_1}`)
 			expect(before.body).toEqual({
 				scopeId: LOC_1,
-				salesSource: 'manual',
+				salesSource: 'online_orders',
 				ordersPerLaborHour: {},
 				configured: false,
 				updatedAt: null,
@@ -423,22 +423,22 @@ describe('/operator/labor', () => {
 			const cook = await l.staff()
 			const saved = await l.send('PUT', '/settings', {
 				scopeId: LOC_1,
-				salesSource: 'online_orders',
+				salesSource: 'online_only',
 				ordersPerLaborHour: { [cook.positionId]: 12.5 },
 			})
 			expect(saved.status).toBe(200)
 			expect(saved.body).toMatchObject({
-				salesSource: 'online_orders',
+				salesSource: 'online_only',
 				ordersPerLaborHour: { [cook.positionId]: 12.5 },
 				configured: true,
 			})
 			const after = await l.get(`/settings?scopeId=${LOC_1}`)
-			expect(after.body.salesSource).toBe('online_orders')
+			expect(after.body.salesSource).toBe('online_only')
 			const audit = await (await h.db(ORG_A)).select().from(staffAuditLog)
 			const row = audit.find((r) => r.action === 'labor.settings.updated')
 			expect(row).toMatchObject({ scopeId: LOC_1, entityId: LOC_1 })
 			expect(row!.changes).toMatchObject({
-				salesSource: { before: 'manual', after: 'online_orders' },
+				salesSource: { before: 'online_orders', after: 'online_only' },
 			})
 		})
 
@@ -811,7 +811,7 @@ describe('/operator/labor', () => {
 			const other = await l.get(`/summary?${WEEK}`, { orgId: ORG_B })
 			expect(other.status).toBe(200)
 			expect(other.body.totals).toMatchObject({ cards: 0, paidMinutes: 0 })
-			expect(other.body.salesSource).toBe('manual')
+			expect(other.body.salesSource).toBe('online_orders')
 			const sales = await l.get(`/sales?${WEEK}`, { orgId: ORG_B })
 			expect(sales.body.entries).toEqual([])
 		})

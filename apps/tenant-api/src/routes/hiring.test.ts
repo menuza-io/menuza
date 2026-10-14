@@ -350,6 +350,42 @@ describe('/operator/hiring', () => {
 			expect(unchanged.every((row) => row.stage === 'new')).toBe(true)
 		})
 
+		it('shows an applicant to every scope they are interested in, and filters by it', async () => {
+			const d = await db()
+			const both = await seedApplication(d, {
+				firstName: 'Both',
+				scopeId: LOC_1,
+				interestedScopeIds: [LOC_1, LOC_2],
+			})
+			await seedApplication(d, { firstName: 'Only1', scopeId: LOC_1 })
+			await seedApplication(d, { firstName: 'Only2', scopeId: LOC_2 })
+
+			const second = await h.operator('GET', '/applications', {
+				scopeIds: [LOC_2],
+			})
+			expect(
+				second.body.applications.map((a: any) => a.firstName).sort(),
+			).toEqual(['Both', 'Only2'])
+			const detail = await h.operator('GET', `/applications/${both.id}`, {
+				scopeIds: [LOC_2],
+			})
+			expect(detail.status).toBe(200)
+
+			const filtered = await h.operator(
+				'GET',
+				`/applications?scopeId=${LOC_2}`,
+				{ scopeIds: [LOC_1, LOC_2] },
+			)
+			expect(
+				filtered.body.applications.map((a: any) => a.firstName).sort(),
+			).toEqual(['Both', 'Only2'])
+
+			const other = await h.operator('GET', `/applications/${both.id}`, {
+				scopeIds: ['elsewhere'],
+			})
+			expect(other.status).toBe(404)
+		})
+
 		it('refuses a scope filter outside the scope', async () => {
 			const reply = await h.operator('GET', `/applications?scopeId=${LOC_2}`, {
 				scopeIds: [LOC_1],

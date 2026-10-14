@@ -2461,6 +2461,12 @@ export const hiringApplications = sqliteTable(
 		// The scope the person is applying at (opaque id, no foreign key). Null is
 		// organization-wide.
 		scopeId: text('scope_id'),
+		// Every scope they said they would work at, the primary included. Empty for
+		// an application that named only one.
+		interestedScopeIds: text('interested_scope_ids', { mode: 'json' })
+			.$type<string[]>()
+			.notNull()
+			.default(sql`'[]'`),
 		source: text('source', { enum: [...HIRING_SOURCE_VALUES] })
 			.notNull()
 			.default('careers_page'),

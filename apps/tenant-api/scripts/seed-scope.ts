@@ -1,12 +1,38 @@
-import { db, eq, Organization } from '@repo/database'
+import {
+	and,
+	db,
+	desc,
+	eq,
+	Organization,
+	OrganizationLocation,
+} from '@repo/database'
 import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 
 /**
- * The one scope every organization has: id `main`, the organization's name and
- * its staffing time zone from the control plane. The seeds read it directly, so
- * they do not need the App running.
+ * The scope the seeds work in. A restaurant organization works by location, so
+ * its default (else first active) location is the scope: the id is the location
+ * id and the time zone is the location's. Any other organization has the one
+ * implicit scope: id `main`, the organization's name and its staffing time zone.
+ * The seeds read the control plane directly, so they do not need the App running.
  */
 export async function loadSeedScope(organizationId: string) {
+	const [location] = await db
+		.select({
+			id: OrganizationLocation.id,
+			name: OrganizationLocation.name,
+			timeZone: OrganizationLocation.timezone,
+		})
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.organizationId, organizationId),
+				eq(OrganizationLocation.isActive, true),
+			),
+		)
+		.orderBy(desc(OrganizationLocation.isDefault), OrganizationLocation.name)
+		.limit(1)
+	if (location) return location
+
 	const [org] = await db
 		.select({
 			name: Organization.name,
