@@ -137,6 +137,72 @@ function signedRequest(
 	}
 }
 
+/** How long a playback link works; the player asks for a new one after. */
+export const RECORDING_URL_TTL_SECONDS = 300
+
+/**
+ * A query-signed GET for one recording, so the operator's browser streams it
+ * straight from the bucket and the audio never passes through App or Sites.
+ * Anyone holding the URL can fetch the object until it expires.
+ */
+export function presignRecordingUrl(
+	key: string,
+	expiresInSeconds = RECORDING_URL_TTL_SECONDS,
+	now = new Date(),
+) {
+	const config = getRecordingStorageConfig()
+	if (!config) return null
+	const encodedKey = encodeKey(key)
+	const base = config.endpoint
+		? `${config.endpoint}/${config.bucket}/${encodedKey}`
+		: `https://${config.bucket}.s3.${config.region}.amazonaws.com/${encodedKey}`
+	const target = new URL(base)
+	const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '')
+	const dateStamp = amzDate.slice(0, 8)
+	const scope = `${dateStamp}/${config.region}/s3/aws4_request`
+	const query: Record<string, string> = {
+		'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+		'X-Amz-Credential': `${config.accessKey}/${scope}`,
+		'X-Amz-Date': amzDate,
+		'X-Amz-Expires': String(expiresInSeconds),
+		'X-Amz-SignedHeaders': 'host',
+		// Egress may store the object with a generic type; players need this.
+		'response-content-type': 'audio/ogg',
+		'response-cache-control': 'private, no-store',
+	}
+	const canonicalQuery = Object.keys(query)
+		.sort()
+		.map(
+			(name) => `${encodeQueryValue(name)}=${encodeQueryValue(query[name]!)}`,
+		)
+		.join('&')
+	const canonicalRequest = [
+		'GET',
+		target.pathname,
+		canonicalQuery,
+		`host:${target.host}\n`,
+		'host',
+		'UNSIGNED-PAYLOAD',
+	].join('\n')
+	const stringToSign = [
+		'AWS4-HMAC-SHA256',
+		amzDate,
+		scope,
+		createHash('sha256').update(canonicalRequest).digest('hex'),
+	].join('\n')
+	const signingKey = hmac(
+		hmac(hmac(hmac(`AWS4${config.secretKey}`, dateStamp), config.region), 's3'),
+		'aws4_request',
+	)
+	const signature = createHmac('sha256', signingKey)
+		.update(stringToSign)
+		.digest('hex')
+	return {
+		url: `${base}?${canonicalQuery}&X-Amz-Signature=${signature}`,
+		expiresAt: new Date(now.getTime() + expiresInSeconds * 1000),
+	}
+}
+
 export type RecordingDeleteResult = 'deleted' | 'not_configured' | 'failed'
 
 /** Deletes a call recording object. A missing object counts as deleted. */

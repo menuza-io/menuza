@@ -22,6 +22,7 @@ import {
 	tenantApiConnectSrc,
 } from '#app/utils/csp-frame-src.server.ts'
 import { liveKitConnectSrc } from '#app/utils/phone-agent/livekit-csp.ts'
+import { recordingMediaSrc } from '#app/utils/phone-agent/recording-csp.ts'
 import { loadCatalog } from './modules/lingui/lingui'
 import { linguiServer } from './modules/lingui/lingui.server'
 import { capturePostHogServerException } from './utils/posthog.server.ts'
@@ -128,6 +129,8 @@ export function applyContentSecurity(
 					'font-src': ["'self'"],
 					'frame-src': sitePreviewFrameSrc(ENV, requestHost),
 					'img-src': ["'self'", 'data:'],
+					// Voice previews are same-origin; call recordings play from the bucket.
+					'media-src': ["'self'", ...recordingMediaSrc(ENV)],
 					'script-src': builderMode
 						? [
 								"'unsafe-inline'",

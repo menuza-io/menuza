@@ -211,6 +211,7 @@ describe('voice routes', () => {
 				await call('/operator/calls', reader),
 				await call('/operator/calls/requests', reader),
 				await call(`/operator/calls/${callId}`, reader),
+				await call(`/operator/calls/${callId}/recording`, reader),
 				await call(`/operator/calls/${callId}`, editor, {
 					method: 'PATCH',
 					body: JSON.stringify({ followUpStatus: 'resolved' }),
@@ -1329,6 +1330,161 @@ describe('voice routes', () => {
 			})
 			expect(dueRow.followUpResolvedAt).toBeInstanceOf(Date)
 			expect((await callRow(later)).followUpStatus).toBe('open')
+		})
+	})
+
+	describe('recording playback', () => {
+		const recordingEnv = {
+			RECORDING_S3_BUCKET: 'recordings',
+			RECORDING_S3_ENDPOINT: 'https://s3.example.test',
+			RECORDING_S3_ACCESS_KEY: 'access',
+			RECORDING_S3_SECRET: 'secret',
+		}
+		const finish = {
+			orgId,
+			outcome: 'resolved',
+			transcript: [{ role: 'caller', text: 'Hi', at: 0 }],
+			durationSeconds: 10,
+		}
+
+		beforeEach(() => {
+			Object.assign(process.env, recordingEnv)
+		})
+
+		afterEach(() => {
+			for (const key of Object.keys(recordingEnv)) process.env[key] = ''
+		})
+
+		async function recordedCall(roomName: string) {
+			const callId = await startCall(roomName)
+			const res = await internal(`/api/voice/calls/${callId}/finish`, {
+				...finish,
+				recordingKey: `voice-recordings/${orgId}/${callId}.ogg`,
+			})
+			expect(res.status).toBe(200)
+			return callId
+		}
+
+		const getRecording = (callId: string, jwt?: string) =>
+			app.request(`/operator/calls/${callId}/recording`, {
+				headers: jwt ? { Authorization: `Bearer ${jwt}` } : {},
+			})
+
+		it("signs a short-lived link to this call's recording", async () => {
+			const callId = await recordedCall('recorded')
+			const res = await getRecording(callId, await operatorJwt('phone_calls'))
+			expect(res.status).toBe(200)
+			expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+			const body = (await res.json()) as { url: string; expiresAt: string }
+			const url = new URL(body.url)
+			expect(`${url.origin}${url.pathname}`).toBe(
+				`https://s3.example.test/recordings/voice-recordings/${orgId}/${callId}.ogg`,
+			)
+			expect(url.searchParams.get('X-Amz-Expires')).toBe('300')
+			expect(url.searchParams.get('X-Amz-SignedHeaders')).toBe('host')
+			expect(url.searchParams.get('X-Amz-Signature')).toMatch(/^[0-9a-f]{64}$/)
+			expect(url.searchParams.get('response-content-type')).toBe('audio/ogg')
+			expect(body.url).not.toContain('secret')
+			const ttl = new Date(body.expiresAt).getTime() - Date.now()
+			expect(ttl).toBeGreaterThan(250_000)
+			expect(ttl).toBeLessThanOrEqual(300_000)
+		})
+
+		it('refuses a missing, forged, or wrong-scope token', async () => {
+			const callId = await recordedCall('recorded-auth')
+			expect((await getRecording(callId)).status).toBe(401)
+			const forged = await new SignJWT({
+				orgId,
+				role: 'operator',
+				scope: 'phone_calls',
+			})
+				.setProtectedHeader({ alg: 'HS256' })
+				.setAudience('tenant-api-operator')
+				.setIssuer(brand.shortName)
+				.setExpirationTime('1h')
+				.sign(new TextEncoder().encode('a-different-operator-secret-value'))
+			expect((await getRecording(callId, forged)).status).toBe(401)
+			const staffToken = await operatorJwt('staff')
+			expect([401, 403]).toContain(
+				(await getRecording(callId, staffToken)).status,
+			)
+		})
+
+		it("never signs another organization's recording", async () => {
+			const callId = await recordedCall('recorded-cross-org')
+			const otherOrgId = 'otherorg00000000000000000'
+			vi.mocked(findActiveOrganizationById).mockImplementation(
+				async (id: string) =>
+					({ ...org!, id }) as Awaited<
+						ReturnType<typeof findActiveOrganizationById>
+					>,
+			)
+			await provisionTenantDb(otherOrgId)
+			try {
+				const otherToken = await new SignJWT({
+					orgId: otherOrgId,
+					role: 'operator',
+					scope: 'phone_calls',
+				})
+					.setProtectedHeader({ alg: 'HS256' })
+					.setAudience('tenant-api-operator')
+					.setIssuer(brand.shortName)
+					.setExpirationTime('1h')
+					.sign(new TextEncoder().encode(operatorSecret))
+				const res = await getRecording(callId, otherToken)
+				expect(res.status).toBe(404)
+				expect(await res.json()).toEqual({ error: 'Recording not found' })
+			} finally {
+				await destroyTenantDb(otherOrgId).catch(() => {})
+			}
+		})
+
+		it('treats unknown, unrecorded, expired, queued, and foreign keys as gone', async () => {
+			const reader = await operatorJwt('phone_calls')
+			const db = await getTenantDb(orgId)
+			const notFound = async (callId: string) => {
+				const res = await getRecording(callId, reader)
+				expect(res.status).toBe(404)
+				expect(await res.json()).toEqual({ error: 'Recording not found' })
+			}
+
+			await notFound('00000000-0000-4000-8000-000000000000')
+
+			const unrecorded = await startCall('unrecorded')
+			await internal(`/api/voice/calls/${unrecorded}/finish`, finish)
+			await notFound(unrecorded)
+
+			const expired = await recordedCall('recorded-expired')
+			await db
+				.update(voiceCalls)
+				.set({ recordingExpiresAt: new Date(Date.now() - 1000) })
+				.where(eq(voiceCalls.id, expired))
+			await notFound(expired)
+
+			const queued = await recordedCall('recorded-queued')
+			await db
+				.insert(voiceRecordingDeletions)
+				.values({ recordingKey: `voice-recordings/${orgId}/${queued}.ogg` })
+			await notFound(queued)
+
+			// A key that isn't the one the worker writes for this call is never
+			// signed, even if one were stored.
+			const foreign = await recordedCall('recorded-foreign')
+			await db
+				.update(voiceCalls)
+				.set({ recordingKey: `voice-recordings/other-org/${foreign}.ogg` })
+				.where(eq(voiceCalls.id, foreign))
+			await notFound(foreign)
+		})
+
+		it('says so when recording storage is not configured', async () => {
+			const callId = await recordedCall('recorded-unconfigured')
+			process.env.RECORDING_S3_BUCKET = ''
+			const res = await getRecording(callId, await operatorJwt('phone_calls'))
+			expect(res.status).toBe(503)
+			expect(await res.json()).toEqual({
+				error: 'recording_storage_not_configured',
+			})
 		})
 	})
 

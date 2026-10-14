@@ -38,6 +38,7 @@ import {
 	outcomeVariant,
 } from './call-data.ts'
 import { CallFollowUpPanel, type CallTagOption } from './call-follow-up.tsx'
+import { CallRecordingPlayer } from './call-recording-player.tsx'
 import { CallRequestCard } from './call-request-card.tsx'
 import { useVerticalLabels } from './vertical-labels.ts'
 import { phoneAgentVerticalUi } from './vertical-ui.tsx'
@@ -419,15 +420,7 @@ function CallDetailView({
 					</section>
 
 					{call.hasRecording ? (
-						<section className="flex items-center gap-2 text-sm">
-							<Badge variant="outline">
-								<Icon name="mic" />
-								<Trans>Recorded</Trans>
-							</Badge>
-							<span className="text-muted-foreground">
-								<Trans>Playback coming soon.</Trans>
-							</span>
-						</section>
+						<CallRecordingPlayer callId={call.id} request={request} />
 					) : null}
 
 					<section className="flex flex-col gap-2">
