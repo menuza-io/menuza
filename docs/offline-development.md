@@ -124,12 +124,14 @@ All data is stored locally and persists between sessions:
 To reset data:
 
 ```bash
-# Delete, migrate and re-seed LibSQL. Local D1 is not touched.
+# Destructive: deletes, migrates and re-seeds LibSQL, which Admin dev and local
+# tenant-api read. Local D1 is not touched.
 npm run db:reset -w @repo/database
 ```
 
 To reset App dev data, delete `apps/app/.wrangler/state` and run
-`npm run db:migrate:d1:local -w app`.
+`npm run db:migrate:d1:local -w app`. This is destructive: it erases all local
+App data (D1, Durable Objects, KV and the rest of the local Worker storage).
 
 ## CI/CD Considerations
 

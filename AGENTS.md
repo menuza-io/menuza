@@ -45,27 +45,90 @@ Run commands from the repo root. Before you work in `apps/app`, read
 `apps/app/AGENTS.md` (code map, local data, browser testing, single fetch, UI
 kit, i18n, tests).
 
-**1. Bootstrap once (Linux).** Run `.agents/setup`. It is non-interactive and
-safe to re-run, but it needs sudo (apt packages, mkcert, `/etc/hosts`). It
-installs the pinned Node, the Linux native bindings and dependencies, writes
-`apps/app/.env` and `apps/admin/.env` with placeholder secrets when either is
-missing, runs `SKIP_BRAND_SETUP=true npm run setup`, seeds LibSQL when it
-creates the database, installs Playwright Chromium, and builds once. Without
-sudo, do the essential steps by hand:
+**Developer machine or sandbox? Decide first.**
+
+- A _developer machine_ is a person's own computer, usually macOS, where they
+  run root `npm run dev` and use App at `https://app.epic-startup.test:2999`
+  through the HTTPS proxy. Treat the machine as one if you are on macOS, if
+  `curl -sk -o /dev/null -w '%{http_code}\n' https://app.epic-startup.test:2999/login`
+  prints anything but `000`, or if root `npm run dev` is running. A _headless
+  Linux sandbox_ is a disposable VM or container made for an agent, with no
+  proxy. A proxy or root dev that you, or an earlier agent session, started
+  inside a disposable sandbox does not make it a developer machine. If you
+  cannot tell who started it and no user is available, treat it as a developer
+  machine and change nothing. If unsure, ask the user.
+- On a developer machine:
+  - If root dev is running, use it, and do not stop or restart it. If it is not
+    running, ask the user before you start any dev server, and start only what
+    they agree to, normally root `npm run dev` (it first kills whatever listens
+    on the dev ports). Builds, Vitest, lint and typecheck need no permission.
+  - Do not edit `apps/app/.env`, `apps/admin/.env` or `apps/app/.dev.vars`, and
+    never add a `BASE_URL` override. App dev rewrites `.dev.vars` from `.env`
+    and restarts when either changes, and a localhost `BASE_URL` makes the
+    session cookie host-only (not shared with Admin) and moves SSO callbacks,
+    email links and the JWT issuer to localhost.
+  - Never run `npm run dev -w app` or `npm run dev:tenant-api` beside root dev;
+    root dev holds 3001 and 3007. App fails on 3001 only after it has rewritten
+    `.dev.vars` (restarting the running App) and migrated the shared local D1.
+  - Never run `.agents/setup`, the `npm_config_os=linux` install or
+    `write-ci-app-env.mjs`. They replace macOS native binaries and overwrite
+    both `.env` files, losing the real keys.
+  - Ask before `db:reset` (deletes the LibSQL database that Admin dev and local
+    tenant-api read), deleting `apps/app/.wrangler/state` (erases all local App
+    data), importing seed SQL into local D1 (adds demo users), or Playwright
+    E2E, including `npm run test:e2e:run` and `npm run validate` (they write
+    test data to LibSQL and start their own servers).
+  - Stop only processes you started. Never kill by port or with broad `pkill`
+    patterns.
+  - Note `git status` before you start, and at the end revert only generated
+    changes you caused.
+
+**Which database a command uses.**
+
+| Used by                                                     | Database                                                                                              |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| App dev (root `npm run dev` or `npm run dev -w app`)        | local D1 in `apps/app/.wrangler/state` (binding `DB`)                                                 |
+| `db:seed`, `db:migrate:deploy`, `db:studio`, Playwright E2E | LibSQL `packages/database/db/data.db`                                                                 |
+| App Vitest                                                  | `apps/app/tests/database/base.db`, copied per worker and rebuilt when the schema or migrations change |
+| tenant-api (local)                                          | `packages/database/db/tenant_<orgId>.db`                                                              |
+
+`npm run db:seed` does not seed local D1. `apps/app/AGENTS.md` has a recipe that
+copies seed data into local D1.
+
+**Check your work.**
+
+- Types and lint: `npm run typecheck -w app`, `npm run lint -w app`, and
+  `npx oxlint <paths>`. Run ESLint from inside a workspace; from the repo root
+  it ignores every file.
+- Unit tests: `cd apps/app && npx vitest run <paths>`.
+- E2E: `npm run build -w app`, then
+  `cd apps/app && PORT=3101 CI=true npx playwright test <spec> --workers=1`. On
+  a developer machine, ask first: it writes to LibSQL.
+- Pre-commit runs `node scripts/check-lingui.mjs`. Run it before you commit.
+- Tests, builds and dev servers can rewrite tracked files (Varlock `env.ts`
+  files, icon sprites). Compare `git status` with what you noted at the start
+  and revert only generated changes you caused.
+
+### Headless Linux sandbox setup
+
+Use this only in a headless Linux sandbox. Never use it on a developer machine.
+
+**1. Bootstrap once.** Run `.agents/setup` (Linux-only, needs sudo). It installs
+Node and dependencies, overwrites both `.env` files with placeholder secrets
+when either is missing, runs `npm run setup`, seeds a new LibSQL database,
+installs Playwright Chromium, and builds. Without sudo, run by hand:
 
 ```bash
+# Linux only, never on macOS: installs the Linux native bindings
 npm_config_os=linux npm_config_cpu=x64 npm_config_libc=glibc PUPPETEER_SKIP_DOWNLOAD=true npm install
-node scripts/write-ci-app-env.mjs --for-cloudflare-build # overwrites both .env files
+node scripts/write-ci-app-env.mjs --for-cloudflare-build # only when neither .env file exists; it overwrites both
 npm run db:migrate:deploy && npm run db:seed
 npm run build
 ```
 
-`npm run build` is required. App code imports `@repo/observability` and the root
-of `@repo/security` from their gitignored `dist` builds, and
-`apps/app/app/root.tsx` imports the gitignored icon sprite that
-`npm run generate:icons` creates. No install hook builds these, and
-`npm run dev -w app` does neither, so App dev, Vitest and typecheck fail without
-the build.
+`npm run build` is required: App imports gitignored `dist` builds
+(`@repo/observability`, `@repo/security`) and the icon sprite, and neither an
+install hook nor `npm run dev -w app` creates them.
 
 **2. Run App on localhost.**
 
@@ -76,44 +139,22 @@ the build.
 - Start: `VITE_DIRECT_DEV=1 VITE_HMR_PORT=3001 npm run dev -w app`. Without
   `VITE_DIRECT_DEV=1` the HMR client connects to the proxy on 2999 and logs
   WebSocket errors. `npm run dev:app` goes through Turbo, which drops these
-  variables. `npm run dev -w app` does not build packages or generate icons, so
-  run step 1's `npm run build` first.
+  variables.
 - The script writes `apps/app/.dev.vars`, migrates local D1, and serves
   `http://localhost:3001` (health check: `/resources/healthcheck`). Reports and
   staffing also need `npm run dev:tenant-api` (port 3007).
 - Root `npm run dev` first kills whatever listens on the dev ports (2999,
-  3001-3005, 3007-3009, 8787, 24678, 24679). Do not use it while other servers
-  must keep running. Stop one server by port: `lsof -ti :3001 | xargs -r kill`.
-  Broad `pkill -f` patterns can match your own shell.
-
-**3. Know which database a command uses.**
-
-| Used by                                                     | Database                                                                                              |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `npm run dev -w app` (Workers dev)                          | local D1 in `apps/app/.wrangler/state` (binding `DB`)                                                 |
-| `db:seed`, `db:migrate:deploy`, `db:studio`, Playwright E2E | LibSQL `packages/database/db/data.db`                                                                 |
-| App Vitest                                                  | `apps/app/tests/database/base.db`, copied per worker and rebuilt when the schema or migrations change |
-| tenant-api (local)                                          | `packages/database/db/tenant_<orgId>.db`                                                              |
-
-`npm run db:seed` does not seed local D1. `apps/app/AGENTS.md` has a recipe that
-copies seed data into local D1.
-
-**4. Check your work.**
-
-- Types and lint: `npm run typecheck -w app`, `npm run lint -w app`, and
-  `npx oxlint <paths>`. Run ESLint from inside a workspace; from the repo root
-  it ignores every file.
-- Unit tests: `cd apps/app && npx vitest run <paths>`.
-- E2E: `npm run build -w app`, then
-  `cd apps/app && PORT=3101 CI=true npx playwright test <spec> --workers=1`.
-- Pre-commit runs `node scripts/check-lingui.mjs`. Run it before you commit.
-- Tests, builds and dev servers can rewrite tracked files (Varlock `env.ts`
-  files, icon sprites). Check `git status` and revert what you did not mean to
-  change.
+  3001-3005, 3007-3009, 8787, 24678, 24679). Stop the server you started by its
+  listening port: `lsof -nP -tiTCP:3001 -sTCP:LISTEN | xargs -r kill`. Without
+  `-sTCP:LISTEN`, `lsof` also matches client connections such as the dev
+  proxy's. Without `lsof`, use
+  `ss -Htlnp 'sport = :3001' | grep -o 'pid=[0-9]*' | cut -d= -f2 | xargs -r kill`
+  (`-l` lists listeners only).
 
 ## Setup Commands
 
-Agents on Linux: run `.agents/setup` (see Agent quickstart). On macOS:
+A person runs these on a developer machine; agents ask first. Sandboxes: see
+"Headless Linux sandbox setup".
 
 ```bash
 # Initial setup (one-time)
@@ -141,7 +182,7 @@ npm run dev
 
 # Start specific apps
 npm run dev:app             # Main React Router app (port 3001, Cloudflare Workers dev)
-npm run dev -w app          # Same, without Turbo; use it to pass env overrides
+npm run dev -w app          # Same, without Turbo (sandbox only, never beside root dev)
 npm run dev -w admin        # Admin (port 3005)
 npm run dev:web             # Astro marketing site (port 3002)
 npm run dev:sites           # Tenant public sites (port 3008)
@@ -156,7 +197,7 @@ npm run db:studio      # Drizzle Studio UI (port 5555)
 npm run db:migrate:deploy # Apply control-plane SQL migrations (LibSQL / tests)
 npm run db:migrate:d1:local -w app # Same migrations on Workers local D1 (app dev)
 npm run db:seed        # Seed LibSQL (packages/database/db/data.db), not local D1
-npm run db:reset -w @repo/database # Delete, migrate and re-seed LibSQL (destructive)
+npm run db:reset -w @repo/database # Delete, migrate and re-seed LibSQL (destructive; agents ask first)
 ```
 
 ## Build & Test
@@ -188,6 +229,11 @@ npm run test:e2e:run   # Headless CI mode: builds, then runs the App and Admin s
 # Full validation (run before commits)
 npm run validate       # lint + typecheck + test + e2e
 ```
+
+On a developer machine, ask first: `npm run test:e2e:run` and the E2E step of
+`npm run validate` set `CI=true`, build App, start their own App and Admin
+servers on 3001 and 3005 (or fail when root dev holds those ports), and write
+test data to LibSQL.
 
 ## Code Style & Conventions
 
@@ -395,7 +441,7 @@ import { useActionData } from 'react-router'
 - The lint-staged ESLint step checks nothing today (see Known issues). Run
   `npm run lint -w <workspace>` yourself
 - Typecheck and tests are not part of pre-commit; run `npm run validate` before
-  pushing
+  pushing (on a developer machine, ask first; see "Build & Test")
 - If the hook fails, read its output. A Lingui failure means an unextracted
   string, an empty `msgstr` in a non-source catalog, or an unstaged `.po` file:
   extract, translate, stage, and commit again
@@ -576,13 +622,18 @@ in the org's website branding.
 - Husky runs `lint-staged` on commit (Prettier, Oxlint, and an ESLint step that
   checks nothing today; see Known issues), then `node scripts/check-lingui.mjs`
 - Typecheck and full test suites are **not** run in pre-commit; use
-  `npm run validate` before pushing
+  `npm run validate` before pushing (on a developer machine, ask first; see
+  below)
 
 **Before Submitting PR**:
 
 ```bash
 npm run validate  # Must pass: lint + typecheck + test + e2e
 ```
+
+On a developer machine, ask first: its E2E step sets `CI=true`, builds App,
+starts its own App and Admin servers on 3001 and 3005 (or fails when root dev
+holds those ports), and writes test data to LibSQL.
 
 **Branch Naming**: Use `pr/your-feature-name` format
 
@@ -607,7 +658,9 @@ npm run validate  # Must pass: lint + typecheck + test + e2e
 cd packages/database
 npx drizzle-kit generate --name your_migration_name
 # Review the SQL, then from the repo root apply it to both local databases.
-# (Vitest rebuilds its own database.)
+# (Vitest rebuilds its own database.) On a developer machine, tell the user
+# before applying it: this migrates the local databases their running App and
+# Admin use, and it cannot be undone.
 npm run db:migrate:deploy          # LibSQL, runs src/migrate.ts through Varlock
 npm run db:migrate:d1:local -w app # Workers local D1
 
@@ -804,7 +857,7 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 
 - **Agent guide for `apps/app`**: `apps/app/AGENTS.md` (code map, local data,
   browser testing, single fetch, UI kit, i18n, tests)
-- **Linux bootstrap**: `.agents/setup`
+- **Sandbox bootstrap**: `.agents/setup` (headless Linux sandbox only)
 - **Dashboards architecture**: `apps/app/README.md`
 - **Local databases (D1 versus LibSQL)**: `docs/database.md` and
   `docs/getting-started.md`

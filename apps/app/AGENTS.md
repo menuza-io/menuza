@@ -1,10 +1,11 @@
 # apps/app AGENTS.md
 
 The operator App: React Router 8 on Cloudflare Workers (D1). Read the root
-`AGENTS.md` first. Its "Agent quickstart" covers bootstrap, `BASE_URL`, the
-start command, which database each command uses, and how to check your work.
-Paths below are relative to `apps/app` unless they start with `packages/`. Run
-commands from the repo root unless a line starts with `cd apps/app`.
+`AGENTS.md` first, starting with "Developer machine or sandbox? Decide first" in
+its Agent quickstart. The quickstart also covers which database each command
+uses, how to check your work, and the headless Linux sandbox setup. Paths below
+are relative to `apps/app` unless they start with `packages/`. Run commands from
+the repo root unless a line starts with `cd apps/app`.
 
 ## App map
 
@@ -27,16 +28,24 @@ commands from the repo root unless a line starts with `cd apps/app`.
 
 ## Running locally
 
-- `BASE_URL`, the start command and the database table are in the root Agent
-  quickstart.
+- Developer machine: use the root `npm run dev` that is already running, at
+  `https://app.epic-startup.test:2999`, and do not stop or restart it. If it is
+  not running, ask the user before you start any dev server, and start only what
+  they agree to, normally root `npm run dev`. Builds, Vitest, lint and typecheck
+  need no permission. Leave `.env` and `.dev.vars` alone. The reasons are in the
+  root "Developer machine or sandbox" block.
+- Headless Linux sandbox: follow "Headless Linux sandbox setup" in the root
+  `AGENTS.md` (localhost `BASE_URL`,
+  `VITE_DIRECT_DEV=1 VITE_HMR_PORT=3001 npm run dev -w app`,
+  `http://localhost:3001`).
 - MSW mocks load only in the Node server (`index.ts`), not in Workers dev. In
-  `npm run dev -w app`, `sendEmail` calls the real Resend API, so test signup
-  and email invites with Playwright instead.
-- Run `npm run build` once before the first `npm run dev -w app`, Vitest run or
-  typecheck (root Agent quickstart, step 1). `@repo/observability` and the root
-  export of `@repo/security` resolve to their gitignored `dist` builds, and
-  `app/root.tsx` imports the gitignored icon sprite. `npm run dev -w app` builds
-  neither. Other workspace packages are read from source.
+  App dev, `sendEmail` calls the real Resend API, so test signup and email
+  invites with Playwright instead.
+- Vitest, typecheck and a sandbox's `npm run dev -w app` need one
+  `npm run build` first (root sandbox setup, step 1). `@repo/observability` and
+  the root export of `@repo/security` resolve to their gitignored `dist` builds,
+  and `app/root.tsx` imports the gitignored icon sprite. `npm run dev -w app`
+  builds neither. Other workspace packages are read from source.
 - After changing `@repo/observability` or `@repo/security`, run
   `npm run build -w <package>`. After adding or changing SVG icons, run
   `npm run generate:icons`.
@@ -51,25 +60,28 @@ commands from the repo root unless a line starts with `cd apps/app`.
   `PRAGMA table_info(<Table>)` before you write SQL.
 - New migration: follow "Database Operations" in the root `AGENTS.md` (generate
   in `packages/database`, then `npm run db:migrate:deploy` and
-  `npm run db:migrate:d1:local -w app`).
+  `npm run db:migrate:d1:local -w app`). On a developer machine, tell the user
+  before applying it: this migrates the local databases their running App and
+  Admin use, and it cannot be undone.
 - Migration numbers can collide after a merge from `main`. Delete your
   migration, merge, and generate it again so it gets the next number. Then fix
-  your local ledgers:
+  your local ledgers (in a sandbox; on a developer machine, ask first):
   - Drizzle (LibSQL) applies only migrations newer than the newest `created_at`
     in `__drizzle_migrations`, so recreate LibSQL with
     `npm run db:reset -w @repo/database` (destructive).
   - Local D1 records applied files by name in `d1_migrations`. Rename the row to
-    match your new file, or delete `apps/app/.wrangler/state` (destructive) and
-    migrate again.
+    match your new file. Deleting `apps/app/.wrangler/state` and migrating again
+    also works, but it erases all local App data.
 
 ## Test data and several users
 
 - `npm run db:seed` fills LibSQL only. It creates five faker users and the admin
   demo user `kody`; their passwords are set in `packages/database/seed.ts`. It
   creates no organizations.
-- Copy seed data into the local D1 that `npm run dev -w app` uses. This needs
-  the `sqlite3` CLI. Run it once, while local D1 has no users: a second run with
-  a new seed fails with a foreign-key error and changes nothing.
+- Copy seed data into the local D1 that App dev uses (in a sandbox; on a
+  developer machine, ask first, because it adds demo users). This needs the
+  `sqlite3` CLI. Run it once, while local D1 has no users: a second run with a
+  new seed fails with a foreign-key error and changes nothing.
 
   ```bash
   npm run db:migrate:d1:local -w app
@@ -101,8 +113,11 @@ commands from the repo root unless a line starts with `cd apps/app`.
 
 ## Login and browser testing
 
-- Use a fresh browser context per user, open `/login` directly, and accept the
-  cookie banner.
+- These steps apply on both kinds of machine. Login URL: on a developer machine
+  `https://app.epic-startup.test:2999/login`, in a sandbox
+  `http://localhost:3001/login`.
+- Use a fresh browser context per user, open the login URL directly, and accept
+  the cookie banner.
 - Login has two steps: fill "Email or Username" and click Continue, then fill
   the password input (`input[type=password]`; the text "Password" also matches
   "Forgot your password?") and click Sign In. Wait for the URL to change.
@@ -218,7 +233,8 @@ commands from the repo root unless a line starts with `cd apps/app`.
   `createTestOrganization`, `addOrganizationMember`) and
   `tests/dashboard-utils.ts` (`insertTestUser`, `insertTestMember`, fast).
 - Oxlint ignores test files. ESLint and typecheck still check them.
-- E2E writes to LibSQL, so it cannot use the Workers dev server:
+- E2E writes to LibSQL, so it cannot use the Workers dev server. On a developer
+  machine, ask first (see the root `AGENTS.md`):
 
   ```bash
   npm run build -w app
@@ -237,12 +253,13 @@ commands from the repo root unless a line starts with `cd apps/app`.
 
 ## Commands that rewrite files
 
-Check `git status` after these and revert what you did not mean to change:
+Note `git status` before you start. After these, revert only generated changes
+you caused:
 
 - Vitest, builds and dev servers: Varlock regenerates tracked `env.ts` files,
   for example `packages/security/src/env.ts`.
 - `npm run generate:icons`: `packages/ui/components/icons/` (tracked).
 - `npm run lingui:extract -w app`: `app/locales/*.po` (meant to be committed).
-- `node scripts/write-ci-app-env.mjs`: overwrites `apps/app/.env` and
-  `apps/admin/.env` (gitignored, but your `BASE_URL` line is lost).
+- `node scripts/write-ci-app-env.mjs` (sandbox only): overwrites `apps/app/.env`
+  and `apps/admin/.env` (gitignored, but your `BASE_URL` line is lost).
 - Root `npm run dev`: kills every dev port first.
