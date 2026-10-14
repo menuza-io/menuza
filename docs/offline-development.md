@@ -116,16 +116,20 @@ If ports are already in use:
 
 All data is stored locally and persists between sessions:
 
-- **SQLite (App/Admin)**: `packages/database/data.db`
+- **LibSQL (Admin dev, seed, E2E)**: `packages/database/db/data.db`
+- **Local D1 (App dev, `npm run dev -w app`)**: `apps/app/.wrangler/state`
 - **SQLite (CMS)**: `apps/web/.emdash/data.db`
 - **Cache**: `other/cache.db`
 
 To reset data:
 
 ```bash
-# Reset App/Admin SQLite
-npm run db:reset
+# Delete, migrate and re-seed LibSQL. Local D1 is not touched.
+npm run db:reset -w @repo/database
 ```
+
+To reset App dev data, delete `apps/app/.wrangler/state` and run
+`npm run db:migrate:d1:local -w app`.
 
 ## CI/CD Considerations
 

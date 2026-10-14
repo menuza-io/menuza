@@ -39,7 +39,81 @@ runs on OCI Ampere in Riyadh with per-org SQLite on a block volume.
 - Canonical doc: `docs/tenant-data-residency.md`. ADR:
   `docs/decisions/045-tenant-data-residency.md`.
 
+## Agent quickstart
+
+Run commands from the repo root. Before you work in `apps/app`, read
+`apps/app/AGENTS.md` (code map, local data, browser testing, single fetch, UI
+kit, i18n, tests).
+
+**1. Bootstrap once (Linux).** Run `.agents/setup`. It is non-interactive and
+safe to re-run, but it needs sudo (apt packages, mkcert, `/etc/hosts`). It
+installs the pinned Node, the Linux native bindings and dependencies, writes
+`apps/app/.env` and `apps/admin/.env` with placeholder secrets when either is
+missing, runs `SKIP_BRAND_SETUP=true npm run setup`, seeds LibSQL when it
+creates the database, installs Playwright Chromium, and builds once. Without
+sudo, do the essential steps by hand:
+
+```bash
+npm_config_os=linux npm_config_cpu=x64 npm_config_libc=glibc PUPPETEER_SKIP_DOWNLOAD=true npm install
+node scripts/write-ci-app-env.mjs --for-cloudflare-build # overwrites both .env files
+npm run db:migrate:deploy && npm run db:seed
+npm run build
+```
+
+`npm run build` is required. App code imports `@repo/observability` and the root
+of `@repo/security` from their gitignored `dist` builds, and
+`apps/app/app/root.tsx` imports the gitignored icon sprite that
+`npm run generate:icons` creates. No install hook builds these, and
+`npm run dev -w app` does neither, so App dev, Vitest and typecheck fail without
+the build.
+
+**2. Run App on localhost.**
+
+- Add `BASE_URL=http://localhost:3001` to `apps/app/.env`. The default
+  `BASE_URL` is the HTTPS proxy (`https://app.epic-startup.test:2999`), which
+  gives the session cookie `Domain=.epic-startup.test`, so sign-in on localhost
+  fails without an error.
+- Start: `VITE_DIRECT_DEV=1 VITE_HMR_PORT=3001 npm run dev -w app`. Without
+  `VITE_DIRECT_DEV=1` the HMR client connects to the proxy on 2999 and logs
+  WebSocket errors. `npm run dev:app` goes through Turbo, which drops these
+  variables. `npm run dev -w app` does not build packages or generate icons, so
+  run step 1's `npm run build` first.
+- The script writes `apps/app/.dev.vars`, migrates local D1, and serves
+  `http://localhost:3001` (health check: `/resources/healthcheck`). Reports and
+  staffing also need `npm run dev:tenant-api` (port 3007).
+- Root `npm run dev` first kills whatever listens on the dev ports (2999,
+  3001-3005, 3007-3009, 8787, 24678, 24679). Do not use it while other servers
+  must keep running. Stop one server by port: `lsof -ti :3001 | xargs -r kill`.
+  Broad `pkill -f` patterns can match your own shell.
+
+**3. Know which database a command uses.**
+
+| Used by                                                     | Database                                                                                              |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `npm run dev -w app` (Workers dev)                          | local D1 in `apps/app/.wrangler/state` (binding `DB`)                                                 |
+| `db:seed`, `db:migrate:deploy`, `db:studio`, Playwright E2E | LibSQL `packages/database/db/data.db`                                                                 |
+| App Vitest                                                  | `apps/app/tests/database/base.db`, copied per worker and rebuilt when the schema or migrations change |
+| tenant-api (local)                                          | `packages/database/db/tenant_<orgId>.db`                                                              |
+
+`npm run db:seed` does not seed local D1. `apps/app/AGENTS.md` has a recipe that
+copies seed data into local D1.
+
+**4. Check your work.**
+
+- Types and lint: `npm run typecheck -w app`, `npm run lint -w app`, and
+  `npx oxlint <paths>`. Run ESLint from inside a workspace; from the repo root
+  it ignores every file.
+- Unit tests: `cd apps/app && npx vitest run <paths>`.
+- E2E: `npm run build -w app`, then
+  `cd apps/app && PORT=3101 CI=true npx playwright test <spec> --workers=1`.
+- Pre-commit runs `node scripts/check-lingui.mjs`. Run it before you commit.
+- Tests, builds and dev servers can rewrite tracked files (Varlock `env.ts`
+  files, icon sprites). Check `git status` and revert what you did not mean to
+  change.
+
 ## Setup Commands
+
+Agents on Linux: run `.agents/setup` (see Agent quickstart). On macOS:
 
 ```bash
 # Initial setup (one-time)
@@ -47,22 +121,28 @@ git clone <your-fork>
 cd epic-startup
 PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run setup -s
 
-# Install Playwright browsers for E2E tests
-npm run test:e2e:install
+# Install Playwright Chromium for App E2E tests. `--with-deps` uses sudo;
+# without sudo run `cd apps/app && npx playwright install chromium`.
+npm run test:e2e:install -w app
 ```
 
 **Requirements**:
 
-- Node.js 22.18.0, npm 10.9.0 (pinned with Volta)
+- Node.js 22.18.0, npm 10.9.0 (pinned with Volta). React Router 8.3 declares
+  Node >=22.22.0, so its CLI prints "Oops, Node v22.18.0 detected". The commands
+  still succeed.
 
 ## Development
 
 ```bash
-# Start all apps in parallel
+# Start all apps in parallel through the HTTPS proxy on 2999.
+# Frees the dev ports first (see Agent quickstart).
 npm run dev
 
 # Start specific apps
 npm run dev:app             # Main React Router app (port 3001, Cloudflare Workers dev)
+npm run dev -w app          # Same, without Turbo; use it to pass env overrides
+npm run dev -w admin        # Admin (port 3005)
 npm run dev:web             # Astro marketing site (port 3002)
 npm run dev:sites           # Tenant public sites (port 3008)
 npm run dev:tenant-api      # US tenant-api (port 3007, DATA_REGION=us)
@@ -75,8 +155,8 @@ npm run dev:mobile          # Expo mobile app
 npm run db:studio      # Drizzle Studio UI (port 5555)
 npm run db:migrate:deploy # Apply control-plane SQL migrations (LibSQL / tests)
 npm run db:migrate:d1:local -w app # Same migrations on Workers local D1 (app dev)
-npm run db:seed        # Seed database with test data
-npm run db:reset       # Reset database (destructive)
+npm run db:seed        # Seed LibSQL (packages/database/db/data.db), not local D1
+npm run db:reset -w @repo/database # Delete, migrate and re-seed LibSQL (destructive)
 ```
 
 ## Build & Test
@@ -97,12 +177,13 @@ npm run lint:all       # Both linters
 npm run format         # Prettier with Tailwind plugin
 
 # Unit tests (Vitest)
-npm run test           # Watch mode
-npm run test -- --coverage
+npm run test           # Every workspace once, after building dependencies
+cd apps/app && npx vitest # Watch mode for one workspace
+npm run coverage -w app # Coverage (Turbo rejects `npm run test -- --coverage`)
 
 # E2E tests (Playwright)
-npm run test:e2e       # UI mode (interactive)
-npm run test:e2e:run   # Headless CI mode
+npm run test:e2e -w app # Playwright UI mode (interactive, not for agents)
+npm run test:e2e:run   # Headless CI mode: builds, then runs the App and Admin suites
 
 # Full validation (run before commits)
 npm run validate       # lint + typecheck + test + e2e
@@ -115,7 +196,8 @@ npm run validate       # lint + typecheck + test + e2e
 - Strict mode enabled
 - Path aliases: `#app/*` (app code), `#tests/*` (tests), `@repo/*` (packages)
 - Use Zod for all validation schemas
-- React Router v8 conventions (loaders/actions)
+- React Router 8 loaders and actions with single fetch: client data requests go
+  to `<path>.data` (see `apps/app/AGENTS.md`)
 
 **Imports**:
 
@@ -126,7 +208,8 @@ npm run validate       # lint + typecheck + test + e2e
 **Components**:
 
 - PascalCase for component files and names
-- Use Radix UI primitives from `@repo/ui` package
+- Use the Base UI based components from `@repo/ui` (`render` prop, not
+  `asChild`)
 - Tailwind CSS with class-variance-authority for variants
 - Use `cn()` utility for className merging
 
@@ -168,9 +251,12 @@ When encountering many ESLint warnings, follow this systematic approach:
 1. **Run ESLint with auto-fix first**:
 
    ```bash
-   cd apps/<app-name>
-   npx eslint . --ext .js,.jsx,.ts,.tsx --fix
+   cd <workspace>   # for example apps/app or apps/admin
+   npx eslint . --fix
    ```
+
+   `npm run lint:fix -w <workspace>` does the same, but only `app`, `sites`,
+   `web` and `@repo/ui` define `lint:fix`.
 
    This typically fixes 80-90% of warnings automatically (import order,
    formatting, etc.)
@@ -220,24 +306,22 @@ import { useState } from 'react' // External should come first
 
 **2. Unused Variables (`@typescript-eslint/no-unused-vars`)**:
 
-The project convention requires unused variables to have an `ignored` prefix:
+The shared config (`@epic-web/config`) warns on an unused variable or argument
+unless its name starts with `_` or `ignored`: `varsIgnorePattern` and
+`argsIgnorePattern` are both `^(_|ignored)`, and `ignoreRestSiblings` is on.
+Both prefixes pass; `ignored` is the preferred style because it reads as intent:
 
 ```typescript
-// ✅ Correct - prefix with 'ignored'
-const { data, ignoredMetadata } = response
-const [ignoredSearchParams] = useSearchParams()
+// ✅ Preferred
+const [ignoredSearchParams, setSearchParams] = useSearchParams()
 const ignoredActionData = useActionData()
 
-// ❌ Wrong - underscore prefix not allowed
-const { data, _metadata } = response
-const [_searchParams] = useSearchParams()
+// ✅ Also accepted
+const [_searchParams, setSearchParams] = useSearchParams()
 
-// ❌ Wrong - generic underscore not allowed
-const { data, _ } = response
+// ✅ Rest siblings: `id` may stay unused
+const { id, ...rest } = record
 ```
-
-**ESLint config**: Variables must match `/^ignored/u` pattern to be allowed as
-unused.
 
 **3. React Hooks Exhaustive Dependencies (`react-hooks/exhaustive-deps`)**:
 
@@ -305,22 +389,26 @@ import { useActionData } from 'react-router'
 
 **Pre-commit Hook Considerations**:
 
-- Pre-commit hooks run Prettier, Oxlint, and ESLint via Husky + lint-staged on
-  staged files
+- The Husky pre-commit hook runs lint-staged (Prettier on staged
+  js/jsx/ts/tsx/json/css/md files, then Oxlint and an ESLint step on
+  js/jsx/ts/tsx files), then `node scripts/check-lingui.mjs`
+- The lint-staged ESLint step checks nothing today (see Known issues). Run
+  `npm run lint -w <workspace>` yourself
 - Typecheck and tests are not part of pre-commit; run `npm run validate` before
   pushing
-- Large changesets may timeout during pre-commit checks
-- If pre-commit fails due to timeout (not errors):
-  1. Verify changes pass individually: `npm run lint`, `npm run typecheck`
-  2. Use `git commit --no-verify` only if you've verified the changes are
-     correct
-  3. Note this in commit message for transparency
+- If the hook fails, read its output. A Lingui failure means an unextracted
+  string, an empty `msgstr` in a non-source catalog, or an unstaged `.po` file:
+  extract, translate, stage, and commit again
+- Use `git commit --no-verify` only when the hook cannot pass for a reason
+  outside your change (for example a timeout on a large changeset), after you
+  ran lint, typecheck and `node scripts/check-lingui.mjs` yourself. Say why in
+  the commit message
 
 **Workflow for Clean Commits**:
 
 ```bash
-# 1. Auto-fix what you can
-npx eslint . --ext .js,.jsx,.ts,.tsx --fix
+# 1. Auto-fix what you can, in each workspace you changed
+(cd <workspace> && npx eslint . --fix)
 
 # 2. Run full linting suite
 npm run lint:all
@@ -332,7 +420,8 @@ npm run typecheck
 git add -A
 git commit -m "fix: resolve ESLint warnings"
 
-# 5. If pre-commit times out but checks passed above
+# 5. Only if the hook cannot pass for a reason outside your change, and steps
+#    2-3 and `node scripts/check-lingui.mjs` passed
 git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 ```
 
@@ -343,14 +432,19 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - Place tests alongside source files (`*.test.ts`, `*.test.tsx`)
 - Use Vitest + Testing Library
 - Mock external services with MSW (Mock Service Worker)
-- Fixtures in `/tests/fixtures` with auto-cleanup
+- App helpers: Vitest database helpers in `apps/app/tests/test-utils.ts` and
+  `apps/app/tests/dashboard-utils.ts`; static mock data in
+  `apps/app/tests/fixtures/`
 
 **E2E Tests**:
 
-- Located in `/tests/e2e`
+- Located in `apps/app/tests/e2e` and `apps/admin/tests/e2e`
 - Use authenticated fixtures for logged-in scenarios
+  (`apps/app/tests/playwright-utils.ts`)
 - Clean up test data automatically
-- 60-second timeout per test
+- 60-second timeout per test and 15 seconds per `expect`. With `CI=true`,
+  Playwright adds 2 retries and uses 1 worker, so check new tests with
+  `--retries=0 --repeat-each=3`
 - Must pass before merging
 
 **Coverage**: Aim for >80% coverage on critical paths (auth, payments, security)
@@ -479,8 +573,8 @@ in the org's website branding.
 
 **Pre-commit Checks**:
 
-- Husky runs `lint-staged` on commit (Prettier, Oxlint, and ESLint on staged
-  `*.{js,jsx,ts,tsx}` files)
+- Husky runs `lint-staged` on commit (Prettier, Oxlint, and an ESLint step that
+  checks nothing today; see Known issues), then `node scripts/check-lingui.mjs`
 - Typecheck and full test suites are **not** run in pre-commit; use
   `npm run validate` before pushing
 
@@ -512,7 +606,10 @@ npm run validate  # Must pass: lint + typecheck + test + e2e
 # After schema changes in packages/database/src/schema.ts
 cd packages/database
 npx drizzle-kit generate --name your_migration_name
-npx tsx src/migrate.ts
+# Review the SQL, then from the repo root apply it to both local databases.
+# (Vitest rebuilds its own database.)
+npm run db:migrate:deploy          # LibSQL, runs src/migrate.ts through Varlock
+npm run db:migrate:d1:local -w app # Workers local D1
 
 # View data
 npm run db:studio    # Opens Drizzle Studio on localhost:5555
@@ -524,13 +621,13 @@ queries. Native SQL/query helpers also live on `db` from the same package.
 **Database Notes**:
 
 - Control-plane SQLite with D1 on Cloudflare Workers
-- Database at `/tmp/sqlite.db` in production (Cloudflare Workers ephemeral
-  filesystem)
-- Local: `./packages/database/data.db`
+- Production and staging use the D1 binding `DB` (`apps/app/wrangler.jsonc`)
+- Local: see the database table in Agent quickstart
 - Use "widen then narrow" migration strategy for zero-downtime
-- App/Admin D1 is the **US control plane**. Customer PII uses a **separate** OCI
-  VM + block volume per `dataRegion` (`us` | `ksa`). Never put KSA SQLite on the
-  US App D1 cluster.
+- App/Admin D1 is the **US control plane**. Customer PII lives in a **separate**
+  regional tenant data plane per `dataRegion` (`us` | `ksa`): by default a
+  Cloudflare Worker with Durable Objects in the US, and OCI Riyadh for KSA.
+  Never put KSA SQLite on the US App D1 cluster.
 
 **Tenant SQLite (regional customer data plane):**
 
@@ -572,24 +669,29 @@ web)
 **LinguiJS** for translations:
 
 ```bash
-npm run lingui:extract  # Extract translatable strings
+npm run lingui:extract -w <app>  # Extract strings (the root alias covers App only)
+node scripts/check-lingui.mjs    # Check every Lingui app (pre-commit runs it)
 ```
 
-- RTL support enabled (Arabic, Hebrew, etc.)
-- Translation files in locale directories
+- After extracting, fill every new `msgstr` in each non-source catalog
+- Locales: `en` (source) and `ar` (RTL) in App, Admin and mobile; Sites also has
+  `es`, `fr`, `de` and `zh`. Preview App in Arabic with `?lng=ar`
+- Catalogs: `apps/app/app/locales/`, `apps/admin/app/locales/`,
+  `apps/mobile/locales/`, `apps/sites/src/locales/`
 
 ## Monorepo Navigation
 
 **Package Structure**:
 
 ```bash
-pnpm dlx turbo run <command> --filter=<package_name>  # Run command in package
-npm install --prefix packages/<name>                   # Install deps in package
+npm run <script> -w <workspace>              # Run a script in one workspace
+npx turbo run <task> --filter=<workspace>    # Same through Turbo (with task deps)
+npm install <pkg> -w <workspace>             # Add a dependency, then review package-lock.json
 ```
 
 **Key Packages**:
 
-- `@repo/ui` - Shared components (Radix UI + Tailwind)
+- `@repo/ui` - Shared components (Base UI + Tailwind)
 - `@repo/auth` - Operator authentication & RBAC (App/Admin, not Sites customers)
 - `@repo/database` - Control-plane SQLite schema & Drizzle client (no customer
   PII)
@@ -679,14 +781,43 @@ npm install --prefix packages/<name>                   # Install deps in package
 - Canonical docs: `docs/staffing.md` (operator guide and runbook),
   `docs/decisions/047-staffing-data-residency.md` and `docs/staffing-plan.md`.
 
+## Known issues
+
+- **Logging out and back in lands on `/_.data` (404 "Organization not found").**
+  Logout redirects to `/`, the client loads `/_.data`, and `requireUserId` in
+  `packages/auth/src/auth.server.ts` builds `redirectTo` from that raw
+  single-fetch URL. To switch users, use a new browser context and open `/login`
+  directly. Remove when fixed.
+- **No role grants `read:analytics:any`.** The report token route checks it, but
+  no migration or `packages/database/setup-roles.ts` seeds it. Only roles with
+  `read:settings:any` or `read:website:any` (the built-in admin role) can run
+  reports. Remove when fixed.
+- **The pre-commit ESLint step checks nothing.** lint-staged runs from the repo
+  root, and the root `eslint.config.js` ignores every file. Run
+  `npm run lint -w <workspace>` before committing. Remove when fixed.
+- **The lockfile lacks the Linux `unrs` binding.** `package-lock.json` lists
+  only `@unrs/resolver-binding-darwin-arm64` (used by ESLint's `import-x`
+  plugin). On Linux, install with the `npm_config_*` flags from Agent
+  quickstart. Remove when fixed.
+
 ## Additional Resources
 
-- **Docs**: `/docs` directory (84 files covering all aspects)
+- **Agent guide for `apps/app`**: `apps/app/AGENTS.md` (code map, local data,
+  browser testing, single fetch, UI kit, i18n, tests)
+- **Linux bootstrap**: `.agents/setup`
+- **Dashboards architecture**: `apps/app/README.md`
+- **Local databases (D1 versus LibSQL)**: `docs/database.md` and
+  `docs/getting-started.md`
+- **Design-system lint policy**: the header of
+  `packages/config/eslint-preset.js`
+- **Project skills**: `docs/skills/` (`project-*` guides by area)
+- **Docs**: `/docs` directory
 - **Contributing**: See `CONTRIBUTING.md`
-- **Security**: See `SECURITY_AUDIT_REPORT.md`
+- **Security**: See `docs/security.md`
 - **Getting Started**: See `docs/getting-started.md`
 - **Tenant data residency**: See `docs/tenant-data-residency.md`
 - **Staff module (operator guide, flags, runbook)**: See `docs/staffing.md`
   (design in `docs/staffing-plan.md`)
 - **Scheduled jobs & video transforms**: See `docs/scheduled-jobs.md`
-- **Testing Guide**: See `docs/testing.md`
+- **Testing Guide**: See `docs/testing.md` (including E2E against the production
+  build)

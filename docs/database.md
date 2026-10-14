@@ -40,10 +40,11 @@ cd packages/database
 npx drizzle-kit generate --name your_migration_name
 ```
 
-To apply it to your local database:
+To apply it to your local databases, run from the repo root:
 
 ```sh
-npx tsx src/migrate.ts
+npm run db:migrate:deploy          # LibSQL (packages/database/db/data.db)
+npm run db:migrate:d1:local -w app # Workers local D1 used by App dev
 ```
 
 To deploy migrations to production on Cloudflare D1:
