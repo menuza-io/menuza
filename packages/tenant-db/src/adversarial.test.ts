@@ -174,10 +174,15 @@ describe('Adversarial SQLite Schema Testing (Milestone 1)', () => {
 			const origDir = process.env.TENANT_DB_DIR
 			process.env.TENANT_DB_DIR = orgDir
 
+			// A unique id per run: under varlock the tenant directory is resolved once
+			// from the frozen env, so this test can land in the shared dev directory,
+			// where a fixed id would collide with a stale file from an older schema.
+			const orgId = `testfk${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+			let destroy: ((id: string) => Promise<void>) | undefined
 			try {
-				const { getTenantDb } = await import('./db.server.ts')
+				const { destroyTenantDb, getTenantDb } = await import('./db.server.ts')
+				destroy = destroyTenantDb
 				const { provisionTenantDb } = await import('./migrate.server.ts')
-				const orgId = 'clw9x0a12000008l00testfk'
 				await provisionTenantDb(orgId)
 				const tenantDb = await getTenantDb(orgId)
 
@@ -209,6 +214,7 @@ describe('Adversarial SQLite Schema Testing (Milestone 1)', () => {
 				// Record whether foreign_keys is 0 by default in LibSQL client
 				expect(rows[0]).toBeDefined()
 			} finally {
+				await destroy?.(orgId)
 				if (origDir) process.env.TENANT_DB_DIR = origDir
 				else delete process.env.TENANT_DB_DIR
 				fs.rmSync(orgDir, { recursive: true, force: true })

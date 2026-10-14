@@ -7,11 +7,17 @@ import {
 	eq,
 	Organization,
 	Notification,
+	like,
+	not,
 } from '@repo/database'
 import { checkHoneypot } from '@repo/security'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import {
+	filterVisibleNotifications,
+	countVisibleStaffingAlerts,
+} from '#app/utils/staffing/notification-visibility.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -39,20 +45,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			? eq(Notification.organizationId, organizationId)
 			: undefined,
 	)
-	const [notifications, unread] = await Promise.all([
+	const staffingType = like(Notification.type, 'staffing-%')
+	const [rows, unread, unreadStaffing] = await Promise.all([
 		db
 			.select()
 			.from(Notification)
 			.where(whereClause)
 			.orderBy(desc(Notification.createdAt))
 			.limit(take),
+		// Time clock alerts are counted below, once it is known which the member
+		// can still open.
 		db
 			.select({ value: count() })
 			.from(Notification)
-			.where(and(whereClause, eq(Notification.isRead, false))),
+			.where(
+				and(whereClause, eq(Notification.isRead, false), not(staffingType)),
+			),
+		db
+			.select({
+				organizationId: Notification.organizationId,
+				type: Notification.type,
+			})
+			.from(Notification)
+			.where(and(whereClause, eq(Notification.isRead, false), staffingType)),
 	])
+	const notifications = await filterVisibleNotifications(userId, rows)
+	let unreadCount = unread[0]?.value ?? 0
+	if (unreadStaffing.length > 0) {
+		unreadCount += await countVisibleStaffingAlerts(userId, unreadStaffing)
+	}
 
-	return Response.json({ notifications, unreadCount: unread[0]?.value ?? 0 })
+	return Response.json({ notifications, unreadCount })
 }
 
 const actionSchema = z.discriminatedUnion('intent', [

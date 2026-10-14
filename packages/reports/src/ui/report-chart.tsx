@@ -4,6 +4,8 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from '@repo/ui/chart'
+import { plural, t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { type Ref } from 'react'
@@ -26,6 +28,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
+import { LABOR_SHARE_CAVEAT } from '../catalog-staffing.ts'
 import {
 	type ReportDefinition,
 	type ReportResult,
@@ -131,11 +134,32 @@ function tooltipFormatter(measure: ChartMeasure, rowLabel?: string) {
  * they stay out of exported images.
  */
 export function ReportNotices({ result }: { result: ReportResult | null }) {
+	// Re-render when the language changes; `t` reads the active catalog.
+	useLingui()
 	if (!result) return null
 	const notices: string[] = []
 	if (result.valueInfo?.mixedCurrencies) {
 		notices.push(
 			"These amounts are in more than one currency, so they aren't added together. Charts and tables show record counts instead. Filter by currency to see the amounts.",
+		)
+	}
+	const excluded = result.valueInfo?.excluded ?? 0
+	if (result.valueInfo?.measure === 'ratio' && excluded > 0) {
+		notices.push(
+			plural(excluded, {
+				one: '# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.',
+				other:
+					'# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.',
+			}),
+		)
+	}
+	if (result.valueInfo?.note) {
+		// The caveat is English data from the catalog; the labor one has a
+		// translation, so the figure always travels with what it rests on.
+		notices.push(
+			result.valueInfo.note === LABOR_SHARE_CAVEAT
+				? t`Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share.`
+				: result.valueInfo.note,
 		)
 	}
 	if (result.sourceTruncated) {

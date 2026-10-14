@@ -46,7 +46,8 @@ wrapper in `apps/app/app/utils/organization/permissions.server.ts`).
 Built-in organization roles are seeded in `packages/database/setup-roles.ts`:
 
 - `org_role_admin` — every organization permission
-- `org_role_member` — notes, members, and read-only marketing
+- `org_role_member` — notes, members, read-only marketing, and the inert
+  staffing own-scope grants (see [Staffing permissions](#staffing-permissions))
 - `org_role_viewer` — read-only notes, members, and marketing
 - `org_role_guest` — no permissions
 
@@ -67,11 +68,118 @@ Product areas are gated with these permissions:
 | AI phone call deletion   | `delete:phone_call:any`                                                           |
 | Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`) |
 | Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)           |
+| Staff                    | 18 `staff`, `schedule`, `timeclock`, `timesheet`, `labor`, `hiring` permissions   |
 
 Organization admins can create custom roles from `/{orgSlug}/settings/roles`;
 only the permission IDs allow-listed in
 `apps/app/app/utils/organization/tenant-role-permissions.ts` may be assigned to
 a tenant-owned role.
+
+### Staffing permissions
+
+The Staff module (team roster, time clock, schedule, labor cost, hiring) uses
+its own permissions. They are added by control-plane migration
+`0018_staffing_foundation` and mirrored in `ORG_PERMISSIONS`
+(`packages/auth/src/organization-permissions.server.ts`), `@repo/staffing`
+(`STAFFING_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`, the role editor groups,
+and `packages/database/setup-roles.ts`. A unit test fails if the lists drift.
+
+| Permission                                           | Covers                                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `read:staff:any`, `update:staff:any`                 | Roster, profiles (non-sensitive), positions, assignments, PIN reset, terminate, rehire |
+| `read:staff_pay:any`, `update:staff_pay:any`         | Individual pay rates and wage history, and any money figure per person                 |
+| `read:staff_private:any`, `update:staff_private:any` | Date of birth, address, emergency contact                                              |
+| `read:schedule:any`, `update:schedule:any`           | View and edit shifts, publish, templates, availability and time-off decisions          |
+| `read:timesheet:any`, `update:timesheet:any`         | View and edit time cards; hours export                                                 |
+| `approve:timesheet:any`                              | Approve, lock, and unlock time cards (off by default even for managers)                |
+| `read:labor:any`                                     | Aggregate labor cost and labor percentage                                              |
+| `read:labor_policy:any`, `update:labor_policy:any`   | Labor policy, time clock devices, pay periods                                          |
+| `read:hiring:any`, `update:hiring:any`               | Job posts, applicants, stages, interviews, hire                                        |
+| `read:schedule:own`, `create:timeclock:own`          | Own published shifts and own clock. **Inert** until a login is linked to a staff row   |
+
+Rules:
+
+- **Seeding.** The built-in admin gets all of them. The built-in member gets
+  only the two `own` permissions, which do nothing until a staff link exists.
+  Viewer and guest get none.
+- **Existing custom roles get no staffing grants.** Staffing has no safe
+  analogue to copy from (even `read:member:any` must not imply wage or schedule
+  access), so an organization admin grants staffing permissions to each custom
+  role explicitly.
+- **Update implies read.** The role editor ticks the matching read grant for you
+  (and clears dependent grants when you clear a read grant). The role save
+  actions re-apply the rule on the server so a crafted form cannot store an
+  update grant without its read grant. `approve:timesheet:any` implies
+  `read:timesheet:any`. Pay, private details, and labor cost never imply each
+  other or the roster. At runtime a stronger grant also satisfies the matching
+  read requirement (`grantsSatisfying` in `@repo/staffing`).
+- **Wage and money fields are omitted from responses** (not hidden in the UI)
+  without `staff_pay` or `labor`. That is enforced where the data lives, in the
+  regional tenant API.
+- **Scope.** Staffing access is organization-wide: the generic module has one
+  implicit scope per organization and no member scope grants. The staffing token
+  still carries `scopeIds` (`null` = every scope) and tenant-api applies
+  `scopeToScopes` on every staff route, so a vertical that has several places
+  can store its own member grants and mint a narrower list. See ADR 047,
+  decision 13.
+- **Token lag.** Tokens are stateless, so narrowing access (scope ids, role
+  grants, removing the member, turning a flag off) applies when the current
+  token expires: up to **15 minutes**, or **5 minutes** for tokens carrying pay
+  or private grants. Widening applies on the next mint.
+- **Wages in timesheets.** The `timeclock` token carries `read:staff_pay:any`
+  and `read:labor:any` only while `staffing.labor` is on (and only if the user
+  holds them). Without them the timesheet API leaves every rate, pay and tip
+  figure out of its responses, edit-log snapshots and exports. Impersonated
+  sessions never see them. Setting tips needs `read:staff_pay:any`.
+- **Preset creation.** The Roles page lists a "Staff role presets" panel with a
+  "Create role" button per preset (admins only, and only while Staff is on).
+  Each creates one editable custom role; a name that already exists is refused,
+  never overwritten.
+- **Presets.** The role editor's "Start from a template" list includes editable
+  _Shift manager_, _General manager_, and _Hiring manager_ presets. They are
+  ordinary custom roles, not a new built-in level.
+- **Hidden while Staff is off.** The role editor, the role view page, and the
+  template list show the Staff groups and presets only when `staffing.enabled`
+  is on for the organization. Saving a role while they are hidden keeps any
+  staffing grants the role already holds.
+
+#### Feature flags
+
+Permissions alone never open the Staff module. Every staffing surface is behind
+org-level feature flags that **default to off** (a missing flag is off, and only
+the stored JSON value `true` turns one on):
+
+| Flag                  | Gates                                                                  |
+| --------------------- | ---------------------------------------------------------------------- |
+| `staffing.enabled`    | Master: sidebar group, every staff route, the Team section, token mint |
+| `staffing.timeclock`  | Time clock section: kiosk pairing, timesheets                          |
+| `staffing.scheduling` | Schedule section and publishing                                        |
+| `staffing.labor`      | Rates in reports, labor summary, minting the `labor` grant             |
+| `staffing.hiring`     | Job posts, applicants, onboarding                                      |
+
+A child flag counts only while the master flag is also on. Flags are read with
+`getFeatureFlag` (`@repo/common/feature-flags`), so a system-level flag can turn
+a feature on for every organization and an organization-level flag (including an
+explicit `false`) overrides it. Set them from the admin app's Feature flags page
+(type boolean, level organization); keys do not need to be registered.
+
+Enforcement lives in `apps/app/app/utils/staffing/access.server.ts`:
+
+```ts
+// Every staffing loader and action calls this first. Parent loaders can be
+// skipped on data requests, so the layout is not enough.
+await requireStaffingAccess(request, params.orgSlug, {
+	feature: 'timeclock', // flag (404 when off)
+	anyOf: ['read:timesheet:any', 'read:labor_policy:any'], // permission (403)
+})
+```
+
+A flag that is off returns **404** (the module looks like it does not exist); a
+missing permission returns **403**. The same helper decides which Staff links
+the sidebar shows. The operator tokens for the regional tenant API are minted
+only after the same flag and permission checks, and the regional node honors
+only tokens the App minted. A flag cannot stop an already paired kiosk (its
+device secret lives on the tablet), so revoke kiosks before turning a flag off.
 
 ## Platform (system) permissions
 

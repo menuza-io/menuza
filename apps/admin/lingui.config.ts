@@ -12,6 +12,9 @@ const config: LinguiConfig = {
 			include: [
 				'app',
 				'../../packages/marketing',
+				// Only the UI holds messages; the package's ambient .d.ts files are not
+				// source Lingui can parse.
+				'../../packages/reports/src/ui',
 				'../../packages/marketing-workflow',
 			],
 		},

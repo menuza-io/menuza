@@ -10,6 +10,8 @@ export interface TenantApiWorkerEnv {
 	APP_URL: string
 	ROOT_APP: string
 	GLOBAL_SMS_CAP?: string
+	STAFFING_KIOSK_ENABLED?: string
+	STAFFING_EMAIL_ENABLED?: string
 	TWILIO_ACCOUNT_SID?: string
 	TWILIO_FROM_NUMBER?: string
 	JWT_SECRET: string

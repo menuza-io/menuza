@@ -34,3 +34,25 @@ export async function forEachWithBudget<T>(
 	await Promise.all(Array.from({ length: workers }, worker))
 	return { started, skipped: items.length - started }
 }
+
+const orgLocks = new Map<string, Promise<unknown>>()
+
+/**
+ * Serializes write operations for one org inside this process. Durable Object
+ * orgs are single-threaded already; on the Node/OCI runtime this keeps punches
+ * on one card from racing each other, and SQLite busy handling covers any
+ * cross-process writer.
+ */
+export async function runExclusive<T>(
+	orgId: string,
+	operation: () => Promise<T>,
+): Promise<T> {
+	const previous = orgLocks.get(orgId) ?? Promise.resolve()
+	const run = previous.then(operation, operation)
+	const tail = run.catch(() => {})
+	orgLocks.set(orgId, tail)
+	void tail.then(() => {
+		if (orgLocks.get(orgId) === tail) orgLocks.delete(orgId)
+	})
+	return run
+}

@@ -1,5 +1,9 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	managerAlertKindFromNotificationType,
+	managerAlertPath,
+} from '@repo/staffing'
 import { Avatar, AvatarFallback } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -26,6 +30,7 @@ import { useNavigate, useFetcher, useParams } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
+import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
 
 interface Notification {
 	id: string
@@ -85,17 +90,29 @@ function NotificationItem({
 		console.error('Failed to parse notification payload', e)
 	}
 
+	const staffingKind = managerAlertKindFromNotificationType(notification.type)
+	const staffing = staffingKind
+		? staffingAlertCopy(staffingKind, Number(payload?.count), _)
+		: null
+
 	const subject =
-		notification.type === 'mention'
+		staffing?.subject ??
+		(notification.type === 'mention'
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
-			: `**${payload?.commenterName || 'Someone'}** commented on your note`
-	const body = payload?.commentContent || ''
+			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
+	const body = staffing?.body ?? payload?.commentContent ?? ''
 
 	const handlePress = () => {
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (payload.noteUrl) {
+		if (staffingKind && typeof payload?.orgSlug === 'string') {
+			const scopeId =
+				typeof payload.scopeId === 'string' ? payload.scopeId : null
+			void navigate(
+				`/${payload.orgSlug}${managerAlertPath(staffingKind, scopeId)}`,
+			)
+		} else if (payload.noteUrl) {
 			void navigate(payload.noteUrl)
 		}
 	}
@@ -124,7 +141,13 @@ function NotificationItem({
 		>
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
-					<AvatarFallback>{payload.commenterName?.[0] || 'N'}</AvatarFallback>
+					<AvatarFallback>
+						{staffingKind ? (
+							<Icon name="clock" className="h-4 w-4" />
+						) : (
+							payload.commenterName?.[0] || 'N'
+						)}
+					</AvatarFallback>
 				</Avatar>
 				<div className="flex-1">
 					<div className="mb-1 flex items-start justify-between">

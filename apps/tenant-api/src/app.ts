@@ -18,6 +18,16 @@ import {
 	journeyOperatorRoutes,
 	journeySystemRoutes,
 } from './routes/journeys.ts'
+import { staffOperatorRoutes } from './routes/staff.ts'
+import { careersRoutes } from './routes/careers.ts'
+import { hiringOperatorRoutes } from './routes/hiring.ts'
+import { staffInternalRoutes } from './routes/staff-internal.ts'
+import { staffTickRoutes } from './routes/staff-tick.ts'
+import { scheduleLinkRoutes } from './routes/schedule-link.ts'
+import { scheduleOperatorRoutes } from './routes/schedule.ts'
+import { timeclockOperatorRoutes } from './routes/timeclock.ts'
+import { kioskRoutes } from './routes/kiosk.ts'
+import { laborRoutes } from './routes/labor.ts'
 import { operatorRoutes } from './routes/operator.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { provisionRoutes } from './routes/provision.ts'
@@ -123,6 +133,34 @@ export function createTenantApiApp() {
 		await next()
 	})
 
+	// Kiosks sit behind a workplace's shared NAT, so the per-IP ceilings are
+	// high; PIN guessing is limited per device by persisted backoff counters.
+	// Pairing codes are single use and long, so only bulk probing is throttled.
+	app.use(
+		'/kiosk/pair',
+		rateLimit('kiosk-pair', { windowMs: 60 * 1000, maxRequests: 20 }),
+	)
+	app.use(
+		'/kiosk/*',
+		rateLimit('kiosk', { windowMs: 60 * 1000, maxRequests: 600 }),
+	)
+
+	// The public application form: a person applies a few times at most. The
+	// organization also enforces durable per-address and per-organization limits
+	// in its own database (see `submitApplication`); this is the burst ceiling.
+	app.use(
+		'/careers/*',
+		rateLimit('careers', { windowMs: 60 * 60 * 1000, maxRequests: 30 }),
+	)
+
+	// "My schedule" links are bearer credentials in a person's inbox: the secret
+	// is 256 bits, so only bulk probing needs a ceiling. Staff share a
+	// workplace's NAT, so the per-IP limit is generous.
+	app.use(
+		'/schedule-link/*',
+		rateLimit('schedule-link', { windowMs: 60 * 1000, maxRequests: 240 }),
+	)
+
 	app.use(
 		'/voice/*',
 		rateLimit('public-voice-handoffs', {
@@ -141,6 +179,7 @@ export function createTenantApiApp() {
 	app.route('/api', provisionRoutes)
 	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
+	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
 	app.route('/voice', publicVoiceRoutes)
@@ -149,6 +188,15 @@ export function createTenantApiApp() {
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/calls', voiceOperatorRoutes)
+	app.route('/operator/staff', staffOperatorRoutes)
+	app.route('/operator/timeclock', timeclockOperatorRoutes)
+	app.route('/operator/schedule', scheduleOperatorRoutes)
+	app.route('/operator/labor', laborRoutes)
+	app.route('/operator/hiring', hiringOperatorRoutes)
+	app.route('/careers', careersRoutes)
+	app.route('/internal/staff', staffInternalRoutes)
+	app.route('/kiosk', kioskRoutes)
+	app.route('/schedule-link', scheduleLinkRoutes)
 
 	app.notFound((c) => {
 		return c.json({ error: 'Endpoint Not Found' }, 404)

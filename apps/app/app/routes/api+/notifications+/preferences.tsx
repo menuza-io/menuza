@@ -1,6 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import { and, db, eq, NotificationPreference } from '@repo/database'
 import { checkHoneypot } from '@repo/security'
+import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
@@ -30,7 +31,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 const preferenceSchema = z.object({
 	organizationId: z.string().min(1),
-	workflow: z.enum(['comment-mention-workflow', 'note-comment-workflow']),
+	workflow: z.enum([
+		'comment-mention-workflow',
+		'note-comment-workflow',
+		...STAFFING_NOTIFICATION_WORKFLOWS,
+	]),
 	channel: z.enum(['email', 'inApp']),
 	enabled: z.string().transform((val) => val === 'true'),
 })

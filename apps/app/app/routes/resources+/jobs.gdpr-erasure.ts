@@ -1,6 +1,10 @@
 import { auditService, AuditAction } from '@repo/audit'
 import { and, DataSubjectRequest, db, eq, lte, User } from '@repo/database'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import {
+	enqueueStaffErasureForUser,
+	flushStaffErasure,
+} from '#app/utils/staffing/dsar.server.ts'
 import { type Route } from './+types/jobs.gdpr-erasure.ts'
 
 export async function action({ request }: Route.ActionArgs) {
@@ -38,8 +42,13 @@ export async function action({ request }: Route.ActionArgs) {
 				})
 				.where(eq(DataSubjectRequest.id, dsr.id))
 
+			let staffErasureOrgs: string[] = []
 			if (dsr.userId) {
+				// Queue the regional staff anonymization first: if it cannot be
+				// recorded, the request fails and the account is not deleted.
+				staffErasureOrgs = await enqueueStaffErasureForUser(dsr.userId)
 				await db.delete(User).where(eq(User.id, dsr.userId))
+				await flushStaffErasure(dsr.userId, staffErasureOrgs)
 			}
 
 			await db
