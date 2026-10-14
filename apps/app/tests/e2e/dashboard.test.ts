@@ -992,6 +992,56 @@ test.describe('Dashboard', () => {
 		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
 	})
 
+	test('Home shows "No access" when the analytics token is refused after permissions change', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+		const tenantRequests = recordTenantRequests(page)
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+
+		// Home was loaded as an admin; as a member the viewer may no longer
+		// get an analytics token.
+		await db
+			.update(UserOrganization)
+			.set({ organizationRoleId: 'org_role_member' })
+			.where(
+				and(
+					eq(UserOrganization.userId, user.id),
+					eq(UserOrganization.organizationId, org.id),
+				),
+			)
+
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const token = page.waitForResponse(
+			(response) =>
+				new URL(response.url()).pathname === `/${org.slug}/reports/token`,
+		)
+		await page
+			.getByRole('dialog', { name: 'Add block' })
+			.getByRole('group', { name: 'Report templates' })
+			.getByRole('button', { name: /^Customer count/ })
+			.click()
+		expect((await token).status()).toBe(403)
+
+		const block = homeBlock(page, 'Customer count')
+		await expect(block.getByText('No access', { exact: true })).toBeVisible()
+		await expect(
+			block.getByText("You don't have permission to see this report's data."),
+		).toBeVisible()
+		await expect(homeBlock(page, 'Stats')).toBeVisible()
+		expect(
+			tenantRequests.filter((url) => url.endsWith('/analytics/query')),
+		).toEqual([])
+	})
+
 	test('Home hides a dismissed onboarding checklist and closes the gap', async ({
 		page,
 		login,
@@ -1054,5 +1104,69 @@ test.describe('Dashboard', () => {
 			.toBeGreaterThan(0)
 		await expect(page).not.toHaveURL(/celebrate=true/, { timeout: 10_000 })
 		await expect(homeBlock(page, 'Stats')).toBeVisible()
+	})
+
+	test('Home saves a block added just before ?celebrate=true is dropped', async ({
+		page,
+		login,
+		navigate,
+	}) => {
+		await ensureOnboardingStepsExist()
+		const user = await login()
+		const org = await createTestOrganization(user.id, 'admin')
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await navigate('/:slug', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		const leaderboard = homeBlock(page, 'Top contributors')
+		const removed = nextHomePost(page, org.slug)
+		await leaderboard.getByRole('button', { name: 'Remove block' }).click()
+		expect((await removed).status()).toBe(200)
+
+		// The confetti canvas appears 250ms into the 3s celebration.
+		await page.addInitScript(() => {
+			new MutationObserver((ignoredRecords, observer) => {
+				if (!document.querySelector('body > canvas')) return
+				observer.disconnect()
+				document.documentElement.dataset.confettiAt = String(Date.now())
+			}).observe(document, { childList: true, subtree: true })
+		})
+		const saveUrls: string[] = []
+		page.on('request', (request) => {
+			if (isHomePost(request, org.slug)) saveUrls.push(request.url())
+		})
+		await navigate('/:slug?celebrate=true', { slug: org.slug })
+		await page.getByRole('button', { name: 'Edit layout' }).click()
+		await page.getByRole('button', { name: 'Add block' }).click()
+		const option = page
+			.getByRole('dialog', { name: 'Add block' })
+			.getByRole('group', { name: 'Built-in blocks' })
+			.getByRole('button', { name: /^Top contributors/ })
+		// Picked about 350ms before the parameter is dropped, so the save is
+		// still waiting out its delay when the URL changes.
+		await option.evaluate(async (button: HTMLElement) => {
+			const sleep = (ms: number) =>
+				new Promise((resolve) => setTimeout(resolve, ms))
+			const { dataset } = document.documentElement
+			while (!dataset.confettiAt) await sleep(10)
+			await sleep(Number(dataset.confettiAt) + 2400 - Date.now())
+			button.click()
+		})
+
+		await expect(page).not.toHaveURL(/celebrate=true/, { timeout: 10_000 })
+		await expect(page.getByText('Saved', { exact: true })).toBeVisible()
+		await expect(
+			leaderboard.getByText('Top Contributors', { exact: true }),
+		).toBeVisible()
+		// Saved by the page's own fetcher, not by a request sent on leaving.
+		expect(saveUrls.map((url) => new URL(url).pathname)).toEqual([
+			`/${org.slug}.data`,
+		])
+
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+		await expect(leaderboard).toBeVisible()
+		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
 	})
 })

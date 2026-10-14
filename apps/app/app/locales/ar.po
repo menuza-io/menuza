@@ -1902,6 +1902,10 @@ msgstr "ملغى"
 msgid "Cannot be undone"
 msgstr "لا يمكن التراجع عن ذلك"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:29
+msgid "Cannot run this report"
+msgstr "تعذّر تشغيل هذا التقرير"
+
 #: app/components/dashboard/blocks/report-block.tsx:63
 #: app/components/dashboard/blocks/report-block.tsx:151
 msgid "Cannot show this report"
@@ -2087,6 +2091,10 @@ msgstr "اختر صفحة..."
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "Choose a starting point"
 msgstr "اختر نقطة بداية"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:37
+msgid "Choose a subject and timeframe to see a live visualization."
+msgstr "اختر موضوعًا وإطارًا زمنيًا لرؤية عرض مرئي مباشر."
 
 #: app/components/chat/chat-compose-dialog.tsx:354
 msgid "Choose a teammate to start a conversation."
@@ -2400,6 +2408,10 @@ msgstr "تفرّع شرطي"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:130
 msgid "Configuration required"
 msgstr "الإعداد مطلوب"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:35
+msgid "Configure the report"
+msgstr "اضبط إعدادات التقرير"
 
 #: app/components/settings/cards/organization/danger-zone-card.tsx:144
 #: app/components/settings/two-factor-form.tsx:269
@@ -4774,7 +4786,7 @@ msgid "Hold message"
 msgstr "رسالة الانتظار"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:159
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5045,9 +5057,17 @@ msgstr "عنوان IP"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:20
+msgid "Its results could not be loaded. Try again later."
+msgstr "تعذّر تحميل نتائجه. حاول مرة أخرى لاحقًا."
+
 #: app/components/dashboard/blocks/report-block.tsx:153
 msgid "Its saved settings could not be read."
 msgstr "تعذّرت قراءة إعداداته المحفوظة."
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:14
+msgid "Its settings are not valid. Open the report to check them."
+msgstr "إعداداته غير صالحة. افتح التقرير للتحقق منها."
 
 #: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
@@ -5411,6 +5431,10 @@ msgstr "جاري تحميل الملاحظات..."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:684
 msgid "Loading requests"
 msgstr "جارٍ تحميل الطلبات"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:28
+msgid "Loading results…"
+msgstr "جارٍ تحميل النتائج…"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 msgid "Loading step executions from regional SQLite outbox..."
@@ -5841,6 +5865,10 @@ msgstr "التحويلات الفائتة"
 msgid "Missing Path"
 msgstr "المسار المفقود"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:31
+msgid "Missing required segmentation field"
+msgstr "لم يُحدَّد حقل التجميع المطلوب"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5717
 msgid "Mobile"
 msgstr "الجوال"
@@ -6076,7 +6104,7 @@ msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
-#: app/components/dashboard/blocks/report-block-result.tsx:47
+#: app/components/dashboard/blocks/report-block-result.tsx:43
 msgid "No access"
 msgstr "لا تملك صلاحية الوصول"
 
@@ -6236,6 +6264,10 @@ msgstr "لا توجد مكالمات مطابقة"
 #: app/routes/_app+/$orgSlug_+/media.tsx:945
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:39
+msgid "No matching records"
+msgstr "لا توجد سجلات مطابقة"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:383
 msgid "No matching submissions"
@@ -6544,6 +6576,10 @@ msgstr "تعذرت الإجابة عن أي شيء من تفاصيل نشاطك 
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:41
+msgid "Nothing in this timeframe matches the report's filters."
+msgstr "لا يوجد في هذا الإطار الزمني ما يطابق عوامل تصفية التقرير."
+
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:71
 msgid "Nothing to say yet"
 msgstr "لا يوجد ما يُقال بعد"
@@ -6778,6 +6814,10 @@ msgstr "مفتوح الآن؟"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:95
 msgid "Open team chat"
 msgstr "افتح دردشة الفريق"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:33
+msgid "Open the report and choose a field to group its results by."
+msgstr "افتح التقرير واختر حقلًا لتجميع نتائجه حسبه."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:254
 msgid "Open Visual Builder"
@@ -9091,6 +9131,10 @@ msgstr "مشترك عبر كل صفحة"
 msgid "Shop"
 msgstr "المتجر"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:18
+msgid "Shop order reports are only available for US organizations."
+msgstr "تقارير طلبات المتجر متاحة للمؤسسات الأمريكية فقط."
+
 #: app/components/settings/cards/organization/shop-card.tsx:80
 msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكية فقط. سيتم دعم الدفع في السعودية بشكل منفصل."
@@ -10147,6 +10191,10 @@ msgstr "تم حذف هذه الرسالة."
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "هذا الرقم يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. استخدم رقمًا يرد عليه الفريق مباشرة."
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:16
+msgid "This organization does not have a customer database yet."
+msgstr "لا تملك هذه المؤسسة قاعدة بيانات للعملاء بعد."
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
 #~ msgid "This phone menu can't be saved yet"
 #~ msgstr "لا يمكن حفظ قائمة الهاتف هذه بعد"
@@ -10907,7 +10955,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:124
+#: app/routes/_app+/$orgSlug_+/index.tsx:123
 msgid "User"
 msgstr "مستخدم"
 
@@ -11244,7 +11292,7 @@ msgstr "أسابيع"
 msgid "Welcome"
 msgstr "مرحباً"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:153
 msgid "Welcome {userName}!"
 msgstr "مرحباً {userName}!"
 
@@ -11581,7 +11629,7 @@ msgstr "ليس لديك حق الوصول إلى أي قناة بعد. اطلب 
 msgid "You don't have permission to do that."
 msgstr "ليست لديك صلاحية للقيام بذلك."
 
-#: app/components/dashboard/blocks/report-block-result.tsx:48
+#: app/components/dashboard/blocks/report-block-result.tsx:44
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
@@ -11728,7 +11776,7 @@ msgstr "مكتبة الوسائط فارغة"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "الميكروفون قيد الاستخدام في تطبيق آخر. أغلقه وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:154
 msgid "Your organization dashboard"
 msgstr "لوحة تحكم مؤسستك"
 

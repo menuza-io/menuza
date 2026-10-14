@@ -13,12 +13,7 @@ import {
 	reportTemplateGroups,
 	resolveReportBlock,
 	type ReportBlockData,
-	type ReportViewerAccess,
 } from './reports.ts'
-
-const FULL_ACCESS: ReportViewerAccess = { tenant: true, phoneCalls: true }
-const NO_TOKEN: ReportViewerAccess = { tenant: false, phoneCalls: false }
-const NO_PHONE_CALLS: ReportViewerAccess = { tenant: true, phoneCalls: false }
 
 function definition(title: string): ReportDefinition {
 	return createReportDefinition({
@@ -43,7 +38,6 @@ function reportData(
 ): ReportBlockData {
 	return {
 		savedReports,
-		access: FULL_ACCESS,
 		runUrl: '/acme/reports/run',
 		tokenUrl: '/acme/reports/token',
 		tenantApiUrl: 'http://localhost:3007',
@@ -227,88 +221,50 @@ describe('resolveReportBlock', () => {
 })
 
 describe('isReportAccessDenied', () => {
-	const tokenRefused = 'Could not authorize regional analytics.'
-
 	it('is false without an error', () => {
-		expect(
-			isReportAccessDenied({
-				subject: 'customers',
-				error: null,
-				access: NO_TOKEN,
-			}),
-		).toBe(false)
+		expect(isReportAccessDenied(null)).toBe(false)
 	})
 
-	it('treats a failed customer data report as no access when no token can be minted', () => {
-		for (const subject of ['customers', 'shop_orders', 'phone_calls']) {
-			expect(
-				isReportAccessDenied({
-					subject,
-					error: tokenRefused,
-					access: NO_TOKEN,
-				}),
-			).toBe(true)
+	it('treats refused tokens and unauthorized responses as no access', () => {
+		expect(
+			isReportAccessDenied({
+				error: 'unauthorized',
+				message: 'Could not authorize regional analytics.',
+			}),
+		).toBe(true)
+		expect(
+			isReportAccessDenied({
+				error: 'unauthorized',
+				message: 'Invalid operator token',
+			}),
+		).toBe(true)
+	})
+
+	it('treats a subject the token does not cover as no access', () => {
+		expect(
+			isReportAccessDenied({
+				error: 'forbidden_subject' as never,
+				message: 'You do not have permission to report on this data.',
+			}),
+		).toBe(true)
+	})
+
+	it('keeps every other failure an error', () => {
+		for (const error of [
+			'Failed to run report.',
+			'Could not authorize regional analytics.',
+			'Failed to fetch',
+			{ error: 'invalid_definition' as const, message: 'Bad report' },
+			{
+				error: 'tenant_not_provisioned' as const,
+				message: 'This organization has not provisioned a customer database.',
+			},
+			{
+				error: 'shop_not_available' as never,
+				message: 'Shop order reports are only available for US organizations.',
+			},
+		]) {
+			expect(isReportAccessDenied(error)).toBe(false)
 		}
-		expect(
-			isReportAccessDenied({
-				subject: 'customers',
-				error: tokenRefused,
-				access: FULL_ACCESS,
-			}),
-		).toBe(false)
-	})
-
-	it('treats call reports as no access without phone call permission', () => {
-		expect(
-			isReportAccessDenied({
-				subject: 'phone_calls',
-				error: {
-					error: 'forbidden_subject' as never,
-					message: 'You do not have permission to report on this data.',
-				},
-				access: NO_PHONE_CALLS,
-			}),
-		).toBe(true)
-		expect(
-			isReportAccessDenied({
-				subject: 'phone_calls',
-				error: 'Failed to run report.',
-				access: NO_PHONE_CALLS,
-			}),
-		).toBe(true)
-		expect(
-			isReportAccessDenied({
-				subject: 'customers',
-				error: 'Failed to run report.',
-				access: NO_PHONE_CALLS,
-			}),
-		).toBe(false)
-	})
-
-	it('treats unauthorized responses as no access for any subject', () => {
-		expect(
-			isReportAccessDenied({
-				subject: 'customers',
-				error: { error: 'unauthorized', message: 'Invalid operator token' },
-				access: FULL_ACCESS,
-			}),
-		).toBe(true)
-	})
-
-	it('keeps other errors of control-plane reports as errors', () => {
-		expect(
-			isReportAccessDenied({
-				subject: 'notes',
-				error: 'Failed to run report.',
-				access: NO_TOKEN,
-			}),
-		).toBe(false)
-		expect(
-			isReportAccessDenied({
-				subject: 'notes',
-				error: { error: 'invalid_definition', message: 'Bad report' },
-				access: NO_TOKEN,
-			}),
-		).toBe(false)
 	})
 })

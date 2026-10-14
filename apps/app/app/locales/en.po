@@ -1904,6 +1904,10 @@ msgstr ""
 msgid "Cannot be undone"
 msgstr "Cannot be undone"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:29
+msgid "Cannot run this report"
+msgstr "Cannot run this report"
+
 #: app/components/dashboard/blocks/report-block.tsx:63
 #: app/components/dashboard/blocks/report-block.tsx:151
 msgid "Cannot show this report"
@@ -2089,6 +2093,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:115
 msgid "Choose a starting point"
 msgstr "Choose a starting point"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:37
+msgid "Choose a subject and timeframe to see a live visualization."
+msgstr "Choose a subject and timeframe to see a live visualization."
 
 #: app/components/chat/chat-compose-dialog.tsx:354
 msgid "Choose a teammate to start a conversation."
@@ -2402,6 +2410,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:130
 msgid "Configuration required"
 msgstr ""
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:35
+msgid "Configure the report"
+msgstr "Configure the report"
 
 #: app/components/settings/cards/organization/danger-zone-card.tsx:144
 #: app/components/settings/two-factor-form.tsx:269
@@ -4776,7 +4788,7 @@ msgid "Hold message"
 msgstr "Hold message"
 
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:159
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -5047,9 +5059,17 @@ msgstr ""
 msgid "Is Verified (True)"
 msgstr ""
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:20
+msgid "Its results could not be loaded. Try again later."
+msgstr "Its results could not be loaded. Try again later."
+
 #: app/components/dashboard/blocks/report-block.tsx:153
 msgid "Its saved settings could not be read."
 msgstr "Its saved settings could not be read."
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:14
+msgid "Its settings are not valid. Open the report to check them."
+msgstr "Its settings are not valid. Open the report to check them."
 
 #: app/routes/_auth+/waitlist.tsx:390
 msgid "Join Discord server"
@@ -5413,6 +5433,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:684
 msgid "Loading requests"
 msgstr "Loading requests"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:28
+msgid "Loading results…"
+msgstr "Loading results…"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 msgid "Loading step executions from regional SQLite outbox..."
@@ -5843,6 +5867,10 @@ msgstr "Missed transfers"
 msgid "Missing Path"
 msgstr "Missing Path"
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:31
+msgid "Missing required segmentation field"
+msgstr "Missing required segmentation field"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5717
 msgid "Mobile"
 msgstr ""
@@ -6078,7 +6106,7 @@ msgstr "No 404 errors match that search"
 msgid "No 404 errors recorded"
 msgstr "No 404 errors recorded"
 
-#: app/components/dashboard/blocks/report-block-result.tsx:47
+#: app/components/dashboard/blocks/report-block-result.tsx:43
 msgid "No access"
 msgstr "No access"
 
@@ -6238,6 +6266,10 @@ msgstr "No matching calls"
 #: app/routes/_app+/$orgSlug_+/media.tsx:945
 msgid "No matching images"
 msgstr "No matching images"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:39
+msgid "No matching records"
+msgstr "No matching records"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:383
 msgid "No matching submissions"
@@ -6546,6 +6578,10 @@ msgstr "Nothing could be answered from your business details. Add the answers yo
 msgid "Nothing here yet!"
 msgstr ""
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:41
+msgid "Nothing in this timeframe matches the report's filters."
+msgstr "Nothing in this timeframe matches the report's filters."
+
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:71
 msgid "Nothing to say yet"
 msgstr "Nothing to say yet"
@@ -6780,6 +6816,10 @@ msgstr "Open right now?"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:95
 msgid "Open team chat"
 msgstr "Open team chat"
+
+#: app/components/dashboard/blocks/use-report-state-messages.ts:33
+msgid "Open the report and choose a field to group its results by."
+msgstr "Open the report and choose a field to group its results by."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:254
 msgid "Open Visual Builder"
@@ -9093,6 +9133,10 @@ msgstr ""
 msgid "Shop"
 msgstr ""
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:18
+msgid "Shop order reports are only available for US organizations."
+msgstr "Shop order reports are only available for US organizations."
+
 #: app/components/settings/cards/organization/shop-card.tsx:80
 msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 msgstr ""
@@ -10149,6 +10193,10 @@ msgstr "This message was deleted."
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 
+#: app/components/dashboard/blocks/use-report-state-messages.ts:16
+msgid "This organization does not have a customer database yet."
+msgstr "This organization does not have a customer database yet."
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
 #~ msgid "This phone menu can't be saved yet"
 #~ msgstr "This phone menu can't be saved yet"
@@ -10909,7 +10957,7 @@ msgstr "Used when the value is empty"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "Useful if staff should log what happened after a transfer."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:124
+#: app/routes/_app+/$orgSlug_+/index.tsx:123
 msgid "User"
 msgstr "User"
 
@@ -11246,7 +11294,7 @@ msgstr ""
 msgid "Welcome"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:153
 msgid "Welcome {userName}!"
 msgstr ""
 
@@ -11583,7 +11631,7 @@ msgstr "You don't have access to any channels yet. Ask an admin to add you to on
 msgid "You don't have permission to do that."
 msgstr "You don't have permission to do that."
 
-#: app/components/dashboard/blocks/report-block-result.tsx:48
+#: app/components/dashboard/blocks/report-block-result.tsx:44
 msgid "You don't have permission to see this report's data."
 msgstr "You don't have permission to see this report's data."
 
@@ -11730,7 +11778,7 @@ msgstr "Your media library is empty"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "Your microphone is being used by another app. Close it and try again."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:154
 msgid "Your organization dashboard"
 msgstr ""
 

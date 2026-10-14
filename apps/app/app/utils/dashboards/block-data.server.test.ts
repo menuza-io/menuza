@@ -1,5 +1,4 @@
 import {
-	_OrganizationPermissionToRole,
 	and,
 	db,
 	eq,
@@ -7,9 +6,7 @@ import {
 	OnboardingStep,
 	Organization,
 	OrganizationNote,
-	OrganizationRole,
 	SavedReport,
-	UserOrganization,
 } from '@repo/database'
 import { organizationTemplates, type ReportDefinition } from '@repo/reports'
 import { describe, expect, it } from 'vitest'
@@ -164,20 +161,6 @@ async function insertSavedReport(input: {
 
 function reportBlock(id: string, config: ReportBlockConfig): DashboardBlock {
 	return { id, type: 'report', config }
-}
-
-async function insertCustomRole(organizationId: string, permissions: string[]) {
-	const [role] = await db
-		.insert(OrganizationRole)
-		.values({ name: `Analyst ${Date.now()}`, level: 3, organizationId })
-		.returning({ id: OrganizationRole.id })
-	if (!role) throw new Error('Failed to create role')
-	await db
-		.insert(_OrganizationPermissionToRole)
-		.values(
-			permissions.map((permissionId) => ({ A: role.id, B: permissionId })),
-		)
-	return role.id
 }
 
 async function setupReportOrg() {
@@ -406,10 +389,9 @@ describe('loadBuiltInBlockData', () => {
 
 describe('loadReportBlockData', () => {
 	it('does nothing when the dashboard has no report blocks', async () => {
-		const { viewer, organization } = await setupReportOrg()
+		const { organization } = await setupReportOrg()
 		expect(
 			await loadReportBlockData({
-				userId: viewer.id,
 				organization,
 				blocks: defaultHomeConfig().blocks,
 			}),
@@ -449,7 +431,6 @@ describe('loadReportBlockData', () => {
 		})
 
 		const data = await loadReportBlockData({
-			userId: viewer.id,
 			organization,
 			blocks: [
 				...defaultHomeConfig().blocks,
@@ -476,10 +457,9 @@ describe('loadReportBlockData', () => {
 	})
 
 	it('gives template blocks the URLs the reports page runs reports with', async () => {
-		const { viewer, organization } = await setupReportOrg()
+		const { organization } = await setupReportOrg()
 
 		const data = await loadReportBlockData({
-			userId: viewer.id,
 			organization,
 			blocks: [
 				reportBlock('report-a', {
@@ -491,7 +471,6 @@ describe('loadReportBlockData', () => {
 
 		expect(data).toEqual({
 			savedReports: {},
-			access: { tenant: true, phoneCalls: true },
 			runUrl: `/${organization.slug}/reports/run`,
 			tokenUrl: `/${organization.slug}/reports/token`,
 			tenantApiUrl: resolveRegionalTenantApiUrls('us').tenantApiUrl,
@@ -499,9 +478,8 @@ describe('loadReportBlockData', () => {
 	})
 
 	it('uses the tenant-api of the organization data region', async () => {
-		const { viewer, organization } = await setupReportOrg()
+		const { organization } = await setupReportOrg()
 		const data = await loadReportBlockData({
-			userId: viewer.id,
 			organization: { ...organization, dataRegion: 'ksa' },
 			blocks: [
 				reportBlock('report-a', {
@@ -513,62 +491,6 @@ describe('loadReportBlockData', () => {
 		expect(data?.tenantApiUrl).toBe(
 			resolveRegionalTenantApiUrls('ksa').tenantApiUrl,
 		)
-	})
-
-	it("works out which reports the viewer's permissions let them read", async () => {
-		const { organization } = await setupReportOrg()
-		const blocks = [
-			reportBlock('report-a', {
-				source: 'template',
-				templateId: 'phone-calls-by-week',
-			}),
-		]
-		const accessOf = async (userId: string) =>
-			(await loadReportBlockData({ userId, organization, blocks }))?.access
-
-		const admin = await insertTestUser()
-		await addOrganizationMember(admin.id, organization.id, 'org_role_admin')
-		const member = await insertTestUser()
-		await addOrganizationMember(member.id, organization.id, 'org_role_member')
-		const analyst = await insertTestUser()
-		await addOrganizationMember(
-			analyst.id,
-			organization.id,
-			await insertCustomRole(organization.id, ['org_perm_read_settings_any']),
-		)
-		const callAgent = await insertTestUser()
-		await addOrganizationMember(
-			callAgent.id,
-			organization.id,
-			await insertCustomRole(organization.id, [
-				'org_perm_read_website_any',
-				'org_perm_read_phone_call_any',
-			]),
-		)
-		const former = await insertTestUser()
-		await addOrganizationMember(former.id, organization.id, 'org_role_admin')
-		await db
-			.update(UserOrganization)
-			.set({ active: false })
-			.where(eq(UserOrganization.userId, former.id))
-
-		expect(await accessOf(admin.id)).toEqual({ tenant: true, phoneCalls: true })
-		expect(await accessOf(member.id)).toEqual({
-			tenant: false,
-			phoneCalls: false,
-		})
-		expect(await accessOf(analyst.id)).toEqual({
-			tenant: true,
-			phoneCalls: false,
-		})
-		expect(await accessOf(callAgent.id)).toEqual({
-			tenant: true,
-			phoneCalls: true,
-		})
-		expect(await accessOf(former.id)).toEqual({
-			tenant: false,
-			phoneCalls: false,
-		})
 	})
 })
 

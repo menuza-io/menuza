@@ -68,7 +68,10 @@ export function useDashboardEditor({
 	const { _ } = useLingui()
 	const fetcher = useFetcher<SaveResult>()
 	const { submit } = fetcher
-	const actionUrl = useFormAction()
+	// '.' leaves out the query string, so a change of it in place, such as
+	// Home dropping ?celebrate=true, is not mistaken for leaving the page and
+	// waiting saves still go through the fetcher.
+	const actionUrl = useFormAction('.')
 	const [draft, setDraft] = useState<DashboardConfig | null>(null)
 	const [editing, setEditing] = useState(false)
 	const [hasPendingSave, setHasPendingSave] = useState(false)
@@ -126,14 +129,14 @@ export function useDashboardEditor({
 		toast.error(_(saveErrorMessage(result.error.code)))
 	}, [_, cancelPendingSave, fetcher.data])
 
-	// A change still waiting for its save is sent when the page goes away;
-	// keepalive lets the request finish while the page unloads.
+	// A change still waiting for its save is sent when the page goes away or
+	// the dashboard is left for another route; keepalive lets the request
+	// finish while the page unloads.
 	useEffect(() => {
 		const sendBeforeLeaving = () => {
 			const pending = pendingRef.current
 			if (!pending) return
-			clearTimeout(timerRef.current)
-			pendingRef.current = null
+			cancelPendingSave()
 			void fetch(actionUrl, {
 				method: 'POST',
 				body: saveFormData(pending),
@@ -145,7 +148,7 @@ export function useDashboardEditor({
 			window.removeEventListener('pagehide', sendBeforeLeaving)
 			sendBeforeLeaving()
 		}
-	}, [actionUrl])
+	}, [actionUrl, cancelPendingSave])
 
 	const startEditing = useCallback(() => setEditing(true), [])
 	const stopEditing = useCallback(() => {

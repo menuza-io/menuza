@@ -340,6 +340,38 @@ function SegmentTable({
 	)
 }
 
+/**
+ * What the visualization says when it has no result to show. The defaults
+ * are the reports page's own texts; a caller that translates its interface
+ * passes its own.
+ */
+export type ReportStateMessages = {
+	loading: string
+	errorTitle: string
+	/** Explains a failed run; by default the error's own message. */
+	errorBody: (error: ReportRunError | string) => string
+	missingGroupTitle: string
+	missingGroupBody: string
+	configureTitle: string
+	configureBody: string
+	noMatchesTitle: string
+	noMatchesBody: string
+}
+
+const DEFAULT_STATE_MESSAGES: ReportStateMessages = {
+	loading: 'Loading results…',
+	errorTitle: 'Cannot run this report',
+	errorBody: (error) => (typeof error === 'string' ? error : error.message),
+	missingGroupTitle: 'Missing required segmentation field',
+	missingGroupBody:
+		'Select at least one Group Results By field to see results.',
+	configureTitle: 'Configure the report',
+	configureBody: 'Choose a subject and timeframe to see a live visualization.',
+	noMatchesTitle: 'No matching records',
+	noMatchesBody:
+		'Nothing in this timeframe matches the current filters. Widen the range or clear a filter to see results.',
+}
+
 /** Estimates a count axis width, so a tile does not spend the default 60px on it. */
 function countAxisWidth(measure: ChartMeasure, data: ReportSegment[]) {
 	const widest = Math.max(
@@ -358,6 +390,7 @@ export function ReportVisualization({
 	loading,
 	containerRef,
 	compact = false,
+	messages,
 }: {
 	definition: ReportDefinition
 	result: ReportResult | null
@@ -369,7 +402,13 @@ export function ReportVisualization({
 	 * itself, such as a dashboard block, instead of a full page.
 	 */
 	compact?: boolean
+	/** Replaces the default texts of the states without a result. */
+	messages?: Partial<ReportStateMessages>
 }) {
+	const text = messages
+		? { ...DEFAULT_STATE_MESSAGES, ...messages }
+		: DEFAULT_STATE_MESSAGES
+
 	if (loading && !result) {
 		return (
 			<Frame compact={compact}>
@@ -381,7 +420,7 @@ export function ReportVisualization({
 							<Skeleton className="h-2 flex-1" />
 							<Skeleton className="h-2 flex-1" />
 						</div>
-						<p className="text-muted-foreground text-xs">Loading results…</p>
+						<p className="text-muted-foreground text-xs">{text.loading}</p>
 					</div>
 				) : (
 					<div className="flex w-full max-w-xl flex-col items-center gap-4">
@@ -391,7 +430,7 @@ export function ReportVisualization({
 							<Skeleton className="h-3 flex-1" />
 							<Skeleton className="h-3 flex-1" />
 						</div>
-						<p className="text-muted-foreground text-sm">Loading results…</p>
+						<p className="text-muted-foreground text-sm">{text.loading}</p>
 					</div>
 				)}
 			</Frame>
@@ -399,7 +438,6 @@ export function ReportVisualization({
 	}
 
 	if (error) {
-		const message = typeof error === 'string' ? error : error.message
 		const missingGroup =
 			typeof error === 'object' && error.error === 'missing_group_by'
 		return (
@@ -407,16 +445,8 @@ export function ReportVisualization({
 				<Message
 					compact={compact}
 					icon={missingGroup ? 'layout-grid' : 'alert-triangle'}
-					title={
-						missingGroup
-							? 'Missing required segmentation field'
-							: 'Cannot run this report'
-					}
-					body={
-						missingGroup
-							? 'Select at least one Group Results By field to see results.'
-							: message
-					}
+					title={missingGroup ? text.missingGroupTitle : text.errorTitle}
+					body={missingGroup ? text.missingGroupBody : text.errorBody(error)}
 				/>
 			</Frame>
 		)
@@ -428,8 +458,8 @@ export function ReportVisualization({
 				<Message
 					compact={compact}
 					icon="layout-grid"
-					title="Configure the report"
-					body="Choose a subject and timeframe to see a live visualization."
+					title={text.configureTitle}
+					body={text.configureBody}
 				/>
 			</Frame>
 		)
@@ -476,8 +506,8 @@ export function ReportVisualization({
 		<Frame compact={compact}>
 			<Message
 				compact={compact}
-				title="No matching records"
-				body="Nothing in this timeframe matches the current filters. Widen the range or clear a filter to see results."
+				title={text.noMatchesTitle}
+				body={text.noMatchesBody}
 			/>
 		</Frame>
 	)

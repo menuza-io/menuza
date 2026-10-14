@@ -48,7 +48,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			blocks,
 		}),
 		loadReportBlockData({
-			userId,
 			organization: { ...organization, dataRegion },
 			blocks,
 		}),

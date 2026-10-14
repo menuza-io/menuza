@@ -1,9 +1,3 @@
-import {
-	getUserOrganizationPermissions,
-	ORG_PERMISSIONS,
-	userHasOrganizationPermissionClient,
-	type OrganizationPermissionString,
-} from '@repo/auth'
 import { getUserImgSrc } from '@repo/common'
 import {
 	autoDetectCompletedSteps,
@@ -32,7 +26,6 @@ import {
 	reportTemplateGroups,
 	type ReportBlockData,
 	type ReportTemplateGroup,
-	type ReportViewerAccess,
 	type SavedReportBlockData,
 	type SavedReportOption,
 } from './reports.ts'
@@ -85,13 +78,6 @@ export type DashboardBlockPicker = {
 type BlockOrganization = { id: string; createdAt: Date }
 
 type ReportOrganization = { id: string; slug: string; dataRegion: string }
-
-/** Any of these lets the reports token route mint a regional analytics token. */
-const TENANT_TOKEN_PERMISSIONS: OrganizationPermissionString[] = [
-	ORG_PERMISSIONS.READ_ANALYTICS_ANY,
-	ORG_PERMISSIONS.READ_SETTINGS_ANY,
-	ORG_PERMISSIONS.READ_WEBSITE_ANY,
-]
 
 function sumNotes(points: readonly NotesChartPoint[]) {
 	return points.reduce((sum, point) => sum + point.notes, 0)
@@ -287,34 +273,17 @@ async function loadSavedReportsById(
 	return savedReports
 }
 
-async function loadReportViewerAccess(
-	userId: string,
-	organizationId: string,
-): Promise<ReportViewerAccess> {
-	const permissions = await getUserOrganizationPermissions(
-		userId,
-		organizationId,
-	)
-	const has = (permission: OrganizationPermissionString) =>
-		userHasOrganizationPermissionClient(permissions, permission)
-	return {
-		tenant: TENANT_TOKEN_PERMISSIONS.some(has),
-		phoneCalls: has(ORG_PERMISSIONS.READ_PHONE_CALL_ANY),
-	}
-}
-
 /**
  * Loads what report blocks need from the server: their saved reports (null
- * once the organization no longer has one), what the viewer may read, and
- * the URLs reports run with. Customer data is only ever queried by the
- * browser. Returns null without any work when there are no report blocks.
+ * once the organization no longer has one) and the URLs reports run with.
+ * Customer data is only ever queried by the browser, and whether the viewer
+ * may read it is up to the responses it gets. Returns null without any work
+ * when there are no report blocks.
  */
 export async function loadReportBlockData({
-	userId,
 	organization,
 	blocks,
 }: {
-	userId: string
 	organization: ReportOrganization
 	blocks: readonly DashboardBlock[]
 }): Promise<ReportBlockData | null> {
@@ -328,13 +297,8 @@ export async function loadReportBlockData({
 			config.source === 'saved' ? [config.reportId] : [],
 		),
 	)
-	const [savedReports, access] = await Promise.all([
-		loadSavedReportsById(organization.id, [...reportIds]),
-		loadReportViewerAccess(userId, organization.id),
-	])
 	return {
-		savedReports,
-		access,
+		savedReports: await loadSavedReportsById(organization.id, [...reportIds]),
 		runUrl: `/${organization.slug}/reports/run`,
 		tokenUrl: `/${organization.slug}/reports/token`,
 		tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)

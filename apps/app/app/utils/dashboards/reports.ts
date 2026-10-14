@@ -31,14 +31,6 @@ export type ReportTemplateGroup = {
 	templates: ReportTemplateOption[]
 }
 
-/** What the viewer's own permissions let report blocks read. */
-export type ReportViewerAccess = {
-	/** A regional analytics token can be minted for customer data subjects. */
-	tenant: boolean
-	/** The token also covers phone call reports. */
-	phoneCalls: boolean
-}
-
 /** A saved report shown by report blocks; `definition` is null if unreadable. */
 export type SavedReportBlockData = {
 	title: string
@@ -49,7 +41,6 @@ export type SavedReportBlockData = {
 export type ReportBlockData = {
 	/** By report id; null when the organization no longer has the report. */
 	savedReports: Record<string, SavedReportBlockData | null>
-	access: ReportViewerAccess
 	runUrl: string
 	tokenUrl: string
 	tenantApiUrl: string
@@ -67,12 +58,6 @@ export function findOrganizationTemplate(templateId: string) {
 
 export function reportSubjectLabel(subjectId: string) {
 	return getSubject(ORGANIZATION_REPORT_CATALOG, subjectId)?.label ?? subjectId
-}
-
-export function isTenantReportSubject(subjectId: string) {
-	return (
-		getSubject(ORGANIZATION_REPORT_CATALOG, subjectId)?.source === 'tenant-api'
-	)
 }
 
 let templateGroups: ReportTemplateGroup[] | undefined
@@ -198,23 +183,14 @@ const ACCESS_DENIED_CODES: ReadonlySet<string> = new Set([
 
 /**
  * Whether a report failed because the viewer may not read its data: the
- * tenant-api or the run route refused them, or the report needs a regional
- * analytics token their permissions cannot mint. Token refusals only reach
- * the runner as a generic message, hence the permission check.
+ * regional analytics token was refused, or the tenant-api or run route
+ * turned the query down. Only the responses decide, as permissions can
+ * change while the page stays open.
  */
-export function isReportAccessDenied({
-	subject,
-	error,
-	access,
-}: {
-	subject: string
-	error: ReportRunError | string | null
-	access: ReportViewerAccess
-}) {
-	if (!error) return false
-	if (typeof error === 'object' && ACCESS_DENIED_CODES.has(error.error)) {
-		return true
-	}
-	if (!isTenantReportSubject(subject)) return false
-	return !access.tenant || (subject === 'phone_calls' && !access.phoneCalls)
+export function isReportAccessDenied(error: ReportRunError | string | null) {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		ACCESS_DENIED_CODES.has(error.error)
+	)
 }

@@ -338,7 +338,6 @@ describe('Home dashboard loader', () => {
 					definition: notesReportDefinition('Weekly notes'),
 				},
 			},
-			access: { tenant: true, phoneCalls: true },
 			runUrl: `/${organization.slug}/reports/run`,
 			tokenUrl: `/${organization.slug}/reports/token`,
 			tenantApiUrl: expect.stringMatching(/^https?:\/\//),
@@ -368,7 +367,6 @@ describe('Home dashboard loader', () => {
 
 		expect(data.reports).toMatchObject({
 			savedReports: { [report.id]: null },
-			access: { tenant: false, phoneCalls: false },
 		})
 		expect(data.blockData.notes).not.toBeNull()
 	})

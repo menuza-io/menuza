@@ -8,6 +8,7 @@ import {
 	type ReportBlockData,
 } from '#app/utils/dashboards/reports.ts'
 import { ReportBlockMessage } from './report-block-message.tsx'
+import { useReportStateMessages } from './use-report-state-messages.ts'
 
 /**
  * Runs a report the way the reports page does: control-plane subjects
@@ -35,14 +36,9 @@ export function ReportBlockResult({
 		tenantTokenUrl: reports.tokenUrl,
 		tenantApiUrl: reports.tenantApiUrl,
 	})
+	const messages = useReportStateMessages()
 
-	if (
-		isReportAccessDenied({
-			subject: stableDefinition.subject,
-			error,
-			access: reports.access,
-		})
-	) {
+	if (isReportAccessDenied(error)) {
 		return (
 			<ReportBlockMessage icon="lock" title={<Trans>No access</Trans>}>
 				<Trans>You don't have permission to see this report's data.</Trans>
@@ -58,6 +54,7 @@ export function ReportBlockResult({
 			error={error}
 			// The report only starts after mounting; until then it is loading too.
 			loading={loading || (!result && !error)}
+			messages={messages}
 		/>
 	)
 }

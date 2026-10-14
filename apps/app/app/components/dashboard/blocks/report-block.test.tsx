@@ -11,11 +11,9 @@ import {
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { loadCatalog } from '#app/modules/lingui/lingui.ts'
 import { type ReportBlockConfig } from '#app/utils/dashboards/config.ts'
-import {
-	type ReportBlockData,
-	type ReportViewerAccess,
-} from '#app/utils/dashboards/reports.ts'
+import { type ReportBlockData } from '#app/utils/dashboards/reports.ts'
 import { ReportBlock } from './report-block.tsx'
 
 const RUN_URL = '/acme/reports/run'
@@ -42,14 +40,11 @@ function notesCount(title: string): ReportDefinition {
 
 function reportData({
 	savedReports = {},
-	access = { tenant: true, phoneCalls: true },
 }: {
 	savedReports?: ReportBlockData['savedReports']
-	access?: ReportViewerAccess
 } = {}): ReportBlockData {
 	return {
 		savedReports,
-		access,
 		runUrl: RUN_URL,
 		tokenUrl: TOKEN_URL,
 		tenantApiUrl: TENANT_API_URL,
@@ -59,6 +54,12 @@ function reportData({
 const countResult: ReportResult = {
 	total: 42,
 	segments: [{ key: 'all', label: 'Notes', count: 42, percent: 100 }],
+	refreshedAt: new Date(0).toISOString(),
+}
+
+const emptyResult: ReportResult = {
+	total: 0,
+	segments: [],
 	refreshedAt: new Date(0).toISOString(),
 }
 
@@ -169,21 +170,68 @@ describe('ReportBlock', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
-	it('shows no access when the viewer cannot get a regional analytics token', async () => {
-		const fetchMock = mockFetch((url) =>
-			url === TOKEN_URL
-				? new Response('Unauthorized: required permissions', { status: 403 })
-				: json(countResult),
-		)
-		renderBlock(
-			{ source: 'template', templateId: 'customer-count' },
-			reportData({ access: { tenant: false, phoneCalls: false } }),
-		)
+	it.each([403, 401])(
+		'shows no access when the regional analytics token is refused with %i',
+		async (status) => {
+			const fetchMock = mockFetch((url) =>
+				url === TOKEN_URL
+					? new Response('Unauthorized: required permissions', { status })
+					: json(countResult),
+			)
+			renderBlock(
+				{ source: 'template', templateId: 'customer-count' },
+				reportData(),
+			)
+
+			expect(await findResult('No access')).toBeInTheDocument()
+			expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+				TOKEN_URL,
+			])
+		},
+	)
+
+	it('shows no access once permissions are revoked while the page stays open', async () => {
+		let canGetToken = true
+		const fetchMock = mockFetch((url) => {
+			if (url !== TOKEN_URL) return json(countResult)
+			return canGetToken
+				? json({ token: 'token', tenantApiUrl: TENANT_API_URL })
+				: new Response('Unauthorized: required permissions', { status: 403 })
+		})
+		const reports = reportData()
+		const block: ReportBlockConfig = {
+			source: 'template',
+			templateId: 'customer-count',
+		}
+		const { unmount } = renderBlock(block, reports)
+		expect(await findResult('42')).toBeInTheDocument()
+
+		// The page data still comes from before the change; a block that
+		// mounts again, as across a grid breakpoint, asks for a new token.
+		canGetToken = false
+		unmount()
+		renderBlock(block, reports)
 
 		expect(await findResult('No access')).toBeInTheDocument()
 		expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
 			TOKEN_URL,
+			`${TENANT_API_URL}/analytics/query`,
+			TOKEN_URL,
 		])
+	})
+
+	it('shows the report error when the token fails for another reason', async () => {
+		mockFetch((url) =>
+			url === TOKEN_URL
+				? new Response('Internal Server Error', { status: 500 })
+				: json(countResult),
+		)
+		renderBlock(
+			{ source: 'template', templateId: 'customer-count' },
+			reportData(),
+		)
+		expect(await findResult('Cannot run this report')).toBeInTheDocument()
+		expect(screen.queryByText('No access')).not.toBeInTheDocument()
 	})
 
 	it('shows no access when tenant-api refuses call reports', async () => {
@@ -200,7 +248,7 @@ describe('ReportBlock', () => {
 		)
 		renderBlock(
 			{ source: 'template', templateId: 'phone-calls-by-week' },
-			reportData({ access: { tenant: true, phoneCalls: false } }),
+			reportData(),
 		)
 		expect(await findResult('No access')).toBeInTheDocument()
 	})
@@ -216,6 +264,72 @@ describe('ReportBlock', () => {
 			}),
 		)
 		expect(await findResult('Cannot run this report')).toBeInTheDocument()
-		expect(within(container).getByText('Failed to fetch')).toBeInTheDocument()
+		expect(
+			within(container).getByText(
+				'Its results could not be loaded. Try again later.',
+			),
+		).toBeInTheDocument()
+		expect(within(container).queryByText('Failed to fetch')).toBeNull()
+	})
+
+	it('explains run errors by their code, as their messages are English only', async () => {
+		mockFetch((url) =>
+			url === TOKEN_URL
+				? json({ token: 'token', tenantApiUrl: TENANT_API_URL })
+				: json(
+						{
+							error: 'tenant_not_provisioned',
+							message:
+								'This organization has not provisioned a customer database.',
+						},
+						409,
+					),
+		)
+		renderBlock(
+			{ source: 'template', templateId: 'customer-count' },
+			reportData(),
+		)
+		expect(await findResult('Cannot run this report')).toBeInTheDocument()
+		expect(
+			screen.getByText(
+				'This organization does not have a customer database yet.',
+			),
+		).toBeInTheDocument()
+	})
+
+	it('shows the loading, empty and error states in the language of the page', async () => {
+		await loadCatalog('ar')
+		const savedNotes: ReportBlockConfig = { source: 'saved', reportId: 'r1' }
+		const reports = reportData({
+			savedReports: {
+				r1: { title: 'All notes', definition: notesCount('All notes') },
+			},
+		})
+
+		mockFetch(() => new Promise<Response>(() => {}))
+		const loading = renderBlock(savedNotes, reports)
+		expect(await findResult('جارٍ تحميل النتائج…')).toBeInTheDocument()
+		loading.unmount()
+
+		mockFetch(() => json(emptyResult))
+		const empty = renderBlock(
+			{ source: 'template', templateId: 'notes-by-status' },
+			reportData(),
+		)
+		expect(await findResult('لا توجد سجلات مطابقة')).toBeInTheDocument()
+		expect(
+			screen.getByText(
+				'لا يوجد في هذا الإطار الزمني ما يطابق عوامل تصفية التقرير.',
+			),
+		).toBeInTheDocument()
+		empty.unmount()
+
+		mockFetch(() => Promise.reject(new TypeError('Failed to fetch')))
+		renderBlock(savedNotes, reports)
+		expect(await findResult('تعذّر تشغيل هذا التقرير')).toBeInTheDocument()
+		expect(
+			screen.getByText('تعذّر تحميل نتائجه. حاول مرة أخرى لاحقًا.'),
+		).toBeInTheDocument()
+		expect(screen.queryByText('Cannot run this report')).toBeNull()
 	})
 })
