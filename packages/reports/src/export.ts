@@ -3,6 +3,7 @@ import {
 	type ReportResult,
 	type ReportRunError,
 	type ReportSegment,
+	type ReportValueInfo,
 	isListReport,
 } from './dsl.ts'
 import { segmentPercent, segmentTableColumns } from './format.ts'
@@ -51,9 +52,7 @@ export function reportToCsv(
 	const header = [
 		'Segment',
 		...(columns.count ? ['Count'] : []),
-		...(info
-			? [info.currency ? `${info.label} (${info.currency})` : info.label]
-			: []),
+		...(info ? [valueHeader(info)] : []),
 		...(columns.percent ? ['Percent'] : []),
 	]
 	const segments: ReportSegment[] =
@@ -71,12 +70,32 @@ export function reportToCsv(
 	const body = segments.map((segment) => [
 		segment.label,
 		...(columns.count ? [String(segment.count)] : []),
-		...(info ? [csvAmount(segment.value, info.type === 'currency')] : []),
+		...(info ? [csvValue(segment.value, info)] : []),
 		...(columns.percent
 			? [`${segmentPercent(segment, result).toFixed(1)}%`]
 			: []),
 	])
 	return csvLines([header, ...body])
+}
+
+/** The value column's header, naming the unit its plain digits are in. */
+function valueHeader(info: ReportValueInfo) {
+	if (info.type === 'duration') return `${info.label} (hours)`
+	if (info.type === 'percent') return `${info.label} (%)`
+	if (info.currency) {
+		return info.perHour
+			? `${info.label} (${info.currency} per hour)`
+			: `${info.label} (${info.currency})`
+	}
+	return info.label
+}
+
+function csvValue(value: number | undefined, info: ReportValueInfo) {
+	if (value === undefined) return ''
+	// Durations are minutes in a result and hours in a spreadsheet.
+	if (info.type === 'duration') return (value / 60).toFixed(2)
+	if (info.type === 'percent') return value.toFixed(2)
+	return csvAmount(value, info.type === 'currency')
 }
 
 /**

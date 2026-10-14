@@ -61,7 +61,10 @@ async function callTenantCommand(options: {
 				customDomain: options.customDomain ?? null,
 				dataRegion: expectedRegion,
 			}),
-			redirect: 'error',
+			// Workers fetch accepts only 'follow' and 'manual' ('error' throws a
+			// TypeError there). 'manual' still never follows: a redirect comes back
+			// as a non-ok response and is reported as an error below.
+			redirect: 'manual',
 			signal: AbortSignal.timeout(15_000),
 		})
 	} catch (error) {

@@ -5,13 +5,33 @@ export const REPORT_DSL_VERSION = 1 as const
 export const chartStyleSchema = z.enum(['pie', 'single_number', 'table', 'bar'])
 export type ChartStyle = z.infer<typeof chartStyleSchema>
 
-export const measureSchema = z.enum(['count', 'percent', 'sum', 'average'])
+export const measureSchema = z.enum([
+	'count',
+	'percent',
+	'sum',
+	'average',
+	'ratio',
+])
 export type Measure = z.infer<typeof measureSchema>
 export type ValueMeasure = Extract<Measure, 'sum' | 'average'>
 
 /** Sum and average read a numeric field instead of counting records. */
 export function isValueMeasure(measure: Measure): measure is ValueMeasure {
 	return measure === 'sum' || measure === 'average'
+}
+
+/**
+ * A ratio divides one sum by another (labor cost over sales). It reads a
+ * ratio field the subject defines and is always the ratio of the two sums over
+ * the whole group, never an average of per-record ratios.
+ */
+export function isRatioMeasure(measure: Measure): measure is 'ratio' {
+	return measure === 'ratio'
+}
+
+/** Measures that read `visualization.valueField` instead of counting. */
+export function measuresAValueField(measure: Measure) {
+	return isValueMeasure(measure) || isRatioMeasure(measure)
 }
 
 export const sortBySchema = z.enum(['none', 'label', 'value_asc', 'value_desc'])
@@ -71,13 +91,13 @@ export const timeframeSchema = z.object({
 })
 export type ReportTimeframe = z.infer<typeof timeframeSchema>
 
-export const timeBucketSchema = z.enum(['week', 'month'])
+export const timeBucketSchema = z.enum(['day', 'week', 'month'])
 export type TimeBucket = z.infer<typeof timeBucketSchema>
 
 export const visualizationSchema = z.object({
 	chartStyle: chartStyleSchema,
 	measure: measureSchema.default('count'),
-	/** Number or currency field that sum and average read. */
+	/** Number, currency or duration field that sum and average read; a ratio field for the ratio measure. */
 	valueField: z.string().min(1).optional(),
 	sortBy: sortBySchema.default('none'),
 	hideCounts: z.boolean().default(false),
@@ -180,11 +200,15 @@ export type ReportColumn = {
 }
 
 export type ReportValueInfo = {
-	measure: ValueMeasure
+	measure: ValueMeasure | 'ratio'
 	field: string
 	/** Display name for the measured value, for example "Average sales". */
 	label: string
-	type: 'number' | 'currency'
+	/**
+	 * `duration` values are minutes. `percent` is a ratio shown as a percentage
+	 * (12.5 means 12.5%).
+	 */
+	type: 'number' | 'currency' | 'duration' | 'percent'
 	/** Currency every measured amount shares. */
 	currency?: string
 	/**
@@ -192,11 +216,20 @@ export type ReportValueInfo = {
 	 * so the result and its segments carry no value.
 	 */
 	mixedCurrencies?: boolean
+	/** The ratio is per hour (for example sales per labor hour). */
+	perHour?: boolean
+	/**
+	 * Ratio only: matched records left out because they lacked the numerator
+	 * or the denominator (a day with wages and no sales).
+	 */
+	excluded?: number
+	/** Ratio only: what the figure rests on (sales source, estimates), shown with it. */
+	note?: string
 }
 
 export type ReportResult = {
 	total: number
-	/** Sum or average of the value field over every matched record. */
+	/** Sum, average or ratio of the value field over every matched record. */
 	value?: number
 	valueInfo?: ReportValueInfo
 	segments: ReportSegment[]
@@ -210,6 +243,8 @@ export type ReportResult = {
 	sourceTruncated?: boolean
 	sourceRowLimit?: number
 	refreshedAt: string
+	/** The time zone days, weeks and months were cut in (IANA name). */
+	timeZone?: string
 }
 
 export type ReportRunErrorCode =

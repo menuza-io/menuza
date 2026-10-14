@@ -40,7 +40,7 @@ members of the organization.
 
 ### Data model
 
-Migration `packages/database/drizzle/0018_dashboards.sql` adds two control-plane
+Migration `packages/database/drizzle/0019_dashboards.sql` adds two control-plane
 tables:
 
 - `Dashboard`: `organizationId`, `ownerId`, `kind` (`home` or `custom`), `name`,

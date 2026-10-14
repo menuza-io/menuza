@@ -36,6 +36,15 @@
 	--chart-3: oklch(0.7 0.15 162);
 	--chart-4: oklch(0.6 0.13 163);
 	--chart-5: oklch(0.51 0.1 166);
+	--position-neutral: oklch(0.556 0 0);
+	--position-red: oklch(0.62 0.21 27);
+	--position-orange: oklch(0.7 0.17 55);
+	--position-amber: oklch(0.78 0.16 85);
+	--position-green: oklch(0.65 0.17 150);
+	--position-teal: oklch(0.63 0.11 195);
+	--position-blue: oklch(0.6 0.17 255);
+	--position-violet: oklch(0.58 0.2 295);
+	--position-pink: oklch(0.66 0.2 350);
 	--radius: 0.75rem;
 	--sidebar: oklch(0.985 0 0);
 	--sidebar-foreground: oklch(0.145 0 0);
@@ -73,6 +82,15 @@
 	--chart-3: oklch(0.7 0.15 162);
 	--chart-4: oklch(0.6 0.13 163);
 	--chart-5: oklch(0.51 0.1 166);
+	--position-neutral: oklch(0.708 0 0);
+	--position-red: oklch(0.7 0.19 25);
+	--position-orange: oklch(0.76 0.16 55);
+	--position-amber: oklch(0.82 0.15 85);
+	--position-green: oklch(0.74 0.17 150);
+	--position-teal: oklch(0.73 0.11 195);
+	--position-blue: oklch(0.7 0.15 255);
+	--position-violet: oklch(0.7 0.17 295);
+	--position-pink: oklch(0.74 0.17 350);
 	--sidebar: oklch(0.205 0 0);
 	--sidebar-foreground: oklch(0.985 0 0);
 	--sidebar-primary: oklch(0.77 0.15 163);
@@ -94,6 +112,15 @@
 	--color-sidebar-foreground: var(--sidebar-foreground);
 	--color-sidebar: var(--sidebar);
 	--color-chart-5: var(--chart-5);
+	--color-position-neutral: var(--position-neutral);
+	--color-position-red: var(--position-red);
+	--color-position-orange: var(--position-orange);
+	--color-position-amber: var(--position-amber);
+	--color-position-green: var(--position-green);
+	--color-position-teal: var(--position-teal);
+	--color-position-blue: var(--position-blue);
+	--color-position-violet: var(--position-violet);
+	--color-position-pink: var(--position-pink);
 	--color-chart-4: var(--chart-4);
 	--color-chart-3: var(--chart-3);
 	--color-chart-2: var(--chart-2);
@@ -237,5 +264,40 @@
 		to {
 			opacity: 1;
 		}
+	}
+}
+
+/*
+ * Printing the schedule. A page that marks a region with `data-print-root`
+ * prints only that region, on a landscape page, without the app shell. Other
+ * pages print as usual.
+ */
+@media print {
+	@page {
+		size: landscape;
+		margin: 10mm;
+	}
+	html:has([data-print-root]),
+	body:has([data-print-root]) {
+		height: auto !important;
+		overflow: visible !important;
+		background: white !important;
+	}
+	body:has([data-print-root]) * {
+		visibility: hidden;
+	}
+	body:has([data-print-root]) [data-print-root],
+	body:has([data-print-root]) [data-print-root] * {
+		visibility: visible;
+	}
+	body:has([data-print-root]) [data-print-root] {
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline: 0;
+		width: 100%;
+		overflow: visible !important;
+	}
+	body:has([data-print-root]) [data-print-root] [class*='sticky'] {
+		position: static !important;
 	}
 }

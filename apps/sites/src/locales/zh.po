@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "(optional)"
+msgstr "（选填）"
+
+#: src/lib/careers/labels.ts:66
+msgid "{amount} per {unit}"
+msgstr "每{unit} {amount}"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "账户"
@@ -20,6 +28,22 @@ msgstr "账户"
 #: src/components/AccountShell.astro.ts:3
 msgid "Account settings"
 msgstr "账户设置"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "All jobs"
+msgstr "所有职位"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Apply"
+msgstr "申请"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply by {date}"
+msgstr "申请截止 {date}"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply now"
+msgstr "立即申请"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
@@ -42,9 +66,22 @@ msgstr "卡号"
 msgid "Cards used on past shop purchases on this account."
 msgstr "此账户在商店过往购买中使用的银行卡。"
 
+#: src/pages/careers/[slug].astro.ts:3
+#: src/pages/careers/index.astro.ts:3
+msgid "Careers"
+msgstr "招聘"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Check back soon."
+msgstr "请稍后再来看看。"
+
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
 msgstr "请查看手机"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Complete the verification check before sending."
+msgstr "请在发送前完成验证。"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
@@ -54,13 +91,30 @@ msgstr "提交前请完成验证。"
 msgid "Continue"
 msgstr "继续"
 
+#: src/lib/careers/labels.ts:22
+msgid "Contract"
+msgstr "合同工"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Copy link"
+msgstr "复制链接"
+
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "电子邮件"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a phone number with its country code, like +1 415 555 0123."
+msgstr "请输入带国家区号的电话号码，例如 +1 415 555 0123。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a valid email address."
+msgstr "请输入有效的电子邮箱地址。"
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -74,9 +128,41 @@ msgstr "到期"
 msgid "Expiry"
 msgstr "有效期"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "First name"
+msgstr "名"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
 msgstr "全名"
+
+#: src/lib/careers/labels.ts:14
+msgid "Full time"
+msgstr "全职"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email or a phone number."
+msgstr "请提供电子邮箱或电话号码。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email, a phone number, or both."
+msgstr "请提供电子邮箱、电话号码，或两者都提供。"
+
+#: src/lib/careers/labels.ts:31
+msgid "hour"
+msgstr "小时"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
+msgstr "我同意 {organization} 保留我的资料和回答，用于考虑我的申请并就此联系我。如我提出要求，他们将予以删除。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Include your country code, for example +1 415 555 0123."
+msgstr "请包含国家区号，例如 +1 415 555 0123。"
+
+#: src/lib/careers/labels.ts:24
+msgid "Internship"
+msgstr "实习"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -86,6 +172,14 @@ msgstr "验证码无效。"
 msgid "Language"
 msgstr "语言"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Last name"
+msgstr "姓"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Link copied"
+msgstr "链接已复制"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "退出"
@@ -93,6 +187,10 @@ msgstr "退出"
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "移动端"
+
+#: src/lib/careers/labels.ts:35
+msgid "month"
+msgstr "月"
 
 #: src/pages/profile.astro.ts:3
 msgid "Name"
@@ -105,6 +203,14 @@ msgstr "姓名"
 msgid "Network error. Please try again."
 msgstr "网络错误，请重试。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "No"
+msgstr "否"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "No openings right now."
+msgstr "目前没有空缺职位。"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "No orders yet."
@@ -114,9 +220,17 @@ msgstr "暂无订单。"
 msgid "No saved payment methods yet."
 msgstr "暂无已保存的支付方式。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Online applications are not available right now. Ask a team member."
+msgstr "目前无法在线申请。请询问店内的团队成员。"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "打开菜单"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Open positions at {name}"
+msgstr "{name} 的在招职位"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
@@ -132,6 +246,10 @@ msgstr "订单历史"
 msgid "Orders"
 msgstr "订单"
 
+#: src/lib/careers/labels.ts:16
+msgid "Part time"
+msgstr "兼职"
+
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "立即支付"
@@ -144,6 +262,10 @@ msgstr "支付方式"
 msgid "Payment methods"
 msgstr "支付方式"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Phone"
+msgstr "电话"
+
 #: src/pages/login.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Phone Number"
@@ -152,6 +274,18 @@ msgstr "电话号码"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "目前无法更改电话号码。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please agree so we can keep your application."
+msgstr "请表示同意，以便我们保存您的申请。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please check the answers marked below and try again."
+msgstr "请检查下方标记的回答后重试。"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Posted {date}"
+msgstr "发布于 {date}"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
@@ -177,6 +311,10 @@ msgstr "登录此账户后在商店的购买记录。"
 msgid "Purchases from the shop while signed in."
 msgstr "登录后在商店的购买记录。"
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "QR code for {title}"
+msgstr "{title} 的二维码"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "已完成购买的收据将在此显示状态和金额。"
@@ -190,17 +328,38 @@ msgstr "保存更改"
 msgid "Saving..."
 msgstr "保存中..."
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Scan to open this job on your phone."
+msgstr "扫码在手机上查看此职位。"
+
+#: src/lib/careers/labels.ts:18
+msgid "Seasonal"
+msgstr "季节性"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "See all open jobs"
+msgstr "查看所有在招职位"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
 msgstr "请在页面编辑器中选择已发布的表单。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Send application"
+msgstr "提交申请"
 
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "发送中..."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Share this job"
+msgstr "分享此职位"
 
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
@@ -221,17 +380,53 @@ msgstr "出了点问题。"
 msgid "Submitting..."
 msgstr "正在提交..."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Tell us a little about yourself. It takes a couple of minutes."
+msgstr "请简单介绍一下自己，只需几分钟。"
+
+#: src/lib/careers/labels.ts:20
+msgid "Temporary"
+msgstr "临时工"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
+msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "The verification check did not pass. Please try again."
+msgstr "验证未通过，请重试。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "this business"
+msgstr "该商家"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "此表单当前不可用。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This is required."
+msgstr "此项为必填。"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "This job is no longer open."
+msgstr "此职位已不再招聘。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This job is no longer taking applications."
+msgstr "该职位已不再接受申请。"
+
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Too many applications were sent from here. Please try again later."
+msgstr "从此处提交的申请过多，请稍后再试。"
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -265,6 +460,14 @@ msgstr "验证中..."
 msgid "We could not confirm this order."
 msgstr "我们无法确认此订单。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not reach the server. Check your connection and try again."
+msgstr "无法连接服务器。请检查网络后重试。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not send your application right now. Please try again in a moment."
+msgstr "暂时无法提交您的申请，请稍后重试。"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "我们将在您的资料中使用此姓名，之后可以更改。"
@@ -273,6 +476,10 @@ msgstr "我们将在您的资料中使用此姓名，之后可以更改。"
 msgid "We've sent a 6-digit code to"
 msgstr "我们已将6位验证码发送至"
 
+#: src/lib/careers/labels.ts:33
+msgid "week"
+msgstr "周"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "您叫什么名字？"
@@ -280,6 +487,14 @@ msgstr "您叫什么名字？"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "当您在商店购买商品时，您的收据将显示在这里。"
+
+#: src/lib/careers/labels.ts:37
+msgid "year"
+msgstr "年"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Yes"
+msgstr "是"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

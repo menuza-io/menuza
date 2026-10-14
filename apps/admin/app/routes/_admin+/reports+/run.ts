@@ -4,6 +4,7 @@ import {
 	getSubject,
 	isReportRunError,
 	reportDefinitionSchema,
+	reportTimeZoneForRequest,
 	runReport,
 } from '@repo/reports'
 import { fetchControlPlaneRecords } from '@repo/reports/server'
@@ -41,7 +42,9 @@ export async function action({ request }: Route.ActionArgs) {
 		subject: parsed.data.subject,
 		scope: 'platform',
 	})
-	const result = runReport(catalog, parsed.data, records)
+	const result = runReport(catalog, parsed.data, records, new Date(), {
+		timeZone: reportTimeZoneForRequest(parsed.data, body),
+	})
 	if (isReportRunError(result)) {
 		return data(result, {
 			status: result.error === 'missing_group_by' ? 422 : 400,

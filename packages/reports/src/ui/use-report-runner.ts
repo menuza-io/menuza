@@ -7,6 +7,15 @@ import {
 } from '../dsl.ts'
 import { isReportRunError, validateReportDefinition } from '../engine.ts'
 
+/** The viewer's own IANA zone, which a report set to "user timezone" follows. */
+function viewerTimeZone() {
+	try {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone
+	} catch {
+		return undefined
+	}
+}
+
 async function readJson(response: Response) {
 	return (await response.json().catch(() => ({}))) as Record<string, unknown>
 }
@@ -83,14 +92,20 @@ export function useReportRunner(options: {
 								Authorization: `Bearer ${tokenPayload.token}`,
 								'Content-Type': 'application/json',
 							},
-							body: JSON.stringify({ definition: options.definition }),
+							body: JSON.stringify({
+								definition: options.definition,
+								timeZone: viewerTimeZone(),
+							}),
 							signal: controller.signal,
 						})
 					} else {
 						response = await fetch(options.controlPlaneRunUrl, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ definition: options.definition }),
+							body: JSON.stringify({
+								definition: options.definition,
+								timeZone: viewerTimeZone(),
+							}),
 							signal: controller.signal,
 						})
 					}

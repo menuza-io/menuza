@@ -1,0 +1,61 @@
+---
+import { msg } from '@lingui/core/macro'
+import { renderQrSvg } from '~/lib/careers/qr'
+import { translate } from '~/lib/translate'
+
+interface Props {
+	url: string
+	title: string
+}
+
+const { url, title } = Astro.props
+const i18n = Astro.locals.i18n
+const heading = i18n._(msg`Share this job`)
+const copyLabel = i18n._(msg`Copy link`)
+const copiedLabel = i18n._(msg`Link copied`)
+const qrHint = i18n._(msg`Scan to open this job on your phone.`)
+const qrAlt = translate(i18n, msg`QR code for {title}`, { title })
+// `src` tells the application form where a visitor came from.
+const withSource = (value: string) => `${url}${url.includes('?') ? '&' : '?'}src=${value}`
+const qrSvg = await renderQrSvg(withSource('qr'))
+---
+
+<section aria-labelledby="share-job-heading" class="flex flex-col gap-4">
+	<h2 id="share-job-heading" class="text-base font-semibold text-foreground">{heading}</h2>
+	<div class="flex items-center gap-4">
+		{qrSvg ? (
+			<div
+				role="img"
+				aria-label={qrAlt}
+				class="size-28 shrink-0 overflow-hidden rounded-lg border border-border bg-white [&>svg]:size-full"
+				set:html={qrSvg}
+			/>
+		) : null}
+		<div class="flex min-w-0 flex-col items-start gap-2">
+			<p class="text-sm text-muted-foreground">{qrHint}</p>
+			<button
+				type="button"
+				class="btn-secondary"
+				data-copy-link={withSource('share')}
+				data-copied-label={copiedLabel}
+			>
+				{copyLabel}
+			</button>
+			<p class="text-sm text-muted-foreground" role="status" aria-live="polite" data-copy-status></p>
+		</div>
+	</div>
+</section>
+
+<script>
+	document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((button) => {
+		button.addEventListener('click', async () => {
+			const status = button.parentElement?.querySelector<HTMLElement>('[data-copy-status]')
+			try {
+				await navigator.clipboard.writeText(button.dataset.copyLink ?? '')
+				if (status) status.textContent = button.dataset.copiedLabel ?? ''
+			} catch {
+				// The link is a real anchor elsewhere on the page; nothing else to do.
+			}
+		})
+	})
+</script>

@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker'
+import { AuditAction, auditService } from '@repo/audit'
 import {
 	and,
 	db,
@@ -8,7 +9,7 @@ import {
 	UserOrganization,
 	_OrganizationPermissionToRole,
 } from '@repo/database'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type * as invitation from '#app/utils/organization/invitation.server.ts'
 import {
 	createAuthenticatedRequest,
@@ -429,6 +430,249 @@ describe('settings/members route integration', () => {
 				.limit(1)
 
 			expect(dbInvite).toBeUndefined()
+		})
+	})
+	describe('audit trail', () => {
+		afterEach(() => {
+			vi.restoreAllMocks()
+		})
+
+		async function post(
+			organization: { slug: string },
+			cookie: string,
+			fields: Record<string, string>,
+		) {
+			const formData = new FormData()
+			for (const [key, value] of Object.entries(fields))
+				formData.append(key, value)
+			return (await action({
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/settings/members`,
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: { orgSlug: organization.slug },
+				context: {},
+			} as any)) as Response
+		}
+
+		function loggedActions(spy: { mock: { calls: unknown[][] } }) {
+			return spy.mock.calls.map(
+				(call) => (call[0] as { action: AuditAction }).action,
+			)
+		}
+
+		it('logs ORG_INVITATION_SENT with the actor and organization', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+			const email = `audit-invite-${faker.string.alphanumeric(8)}@example.com`
+
+			const response = await post(organization, cookie, {
+				intent: 'send-invitations',
+				'invites[0].email': email,
+				'invites[0].role': 'member',
+			})
+
+			expect(getResponseStatus(response)).toBe(200)
+			expect(spy).toHaveBeenCalledTimes(1)
+			expect(spy.mock.calls[0]![0]).toMatchObject({
+				action: AuditAction.ORG_INVITATION_SENT,
+				userId: user.id,
+				organizationId: organization.id,
+				resourceType: 'organization_invitation',
+				metadata: {
+					invitedEmail: email.toLowerCase(),
+					roleId: 'org_role_member',
+					isResend: false,
+				},
+			})
+		})
+
+		it('marks a repeat invitation to the same email as a resend', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const email = `audit-resend-${faker.string.alphanumeric(8)}@example.com`
+			const fields = {
+				intent: 'send-invitations',
+				'invites[0].email': email,
+				'invites[0].role': 'member',
+			}
+
+			await post(organization, cookie, fields)
+			await post(organization, cookie, fields)
+
+			expect(spy).toHaveBeenCalledTimes(2)
+			expect(spy.mock.calls[1]![0].metadata).toMatchObject({ isResend: true })
+		})
+
+		it('logs ORG_INVITATION_REVOKED only when an invitation was removed', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+			const [invitation] = await db
+				.insert(OrganizationInvitation)
+				.values({
+					organizationId: organization.id,
+					email: `audit-revoke-${faker.string.alphanumeric(8)}@example.com`,
+					organizationRoleId: 'org_role_member',
+					token: `token-${faker.string.uuid()}`,
+					inviterId: user.id,
+					expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+				})
+				.returning()
+
+			await post(organization, cookie, {
+				intent: 'remove-invitation',
+				invitationId: invitation!.id,
+			})
+			expect(loggedActions(spy)).toEqual([AuditAction.ORG_INVITATION_REVOKED])
+			expect(spy.mock.calls[0]![0]).toMatchObject({
+				userId: user.id,
+				organizationId: organization.id,
+				resourceId: invitation!.id,
+			})
+
+			// Revoking it again, or one that belongs to another organization, is a no-op.
+			spy.mockClear()
+			await post(organization, cookie, {
+				intent: 'remove-invitation',
+				invitationId: invitation!.id,
+			})
+			expect(spy).not.toHaveBeenCalled()
+		})
+
+		it('does not log a revoke for an invitation in another organization', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const other = await setupTestOrgWithUser('admin')
+			const [foreign] = await db
+				.insert(OrganizationInvitation)
+				.values({
+					organizationId: other.organization.id,
+					email: `audit-foreign-${faker.string.alphanumeric(8)}@example.com`,
+					organizationRoleId: 'org_role_member',
+					token: `token-${faker.string.uuid()}`,
+					inviterId: other.user.id,
+					expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+				})
+				.returning()
+
+			await post(organization, cookie, {
+				intent: 'remove-invitation',
+				invitationId: foreign!.id,
+			})
+
+			expect(spy).not.toHaveBeenCalled()
+			const [stillThere] = await db
+				.select()
+				.from(OrganizationInvitation)
+				.where(eq(OrganizationInvitation.id, foreign!.id))
+			expect(stillThere).toBeDefined()
+		})
+
+		it('logs ORG_MEMBER_REMOVED for a removed member and nothing for rejected removals', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+			const target = await createTestUser()
+			await db.insert(UserOrganization).values({
+				userId: target.id,
+				organizationId: organization.id,
+				organizationRoleId: 'org_role_member',
+				active: true,
+			})
+
+			// Rejected: removing yourself, and removing a non-member.
+			await post(organization, cookie, {
+				intent: 'remove-member',
+				userId: user.id,
+			})
+			await post(organization, cookie, {
+				intent: 'remove-member',
+				userId: 'user-that-is-not-a-member',
+			})
+			expect(spy).not.toHaveBeenCalled()
+
+			const response = await post(organization, cookie, {
+				intent: 'remove-member',
+				userId: target.id,
+			})
+			expect(getResponseStatus(response)).toBe(200)
+			expect(spy).toHaveBeenCalledTimes(1)
+			expect(spy.mock.calls[0]![0]).toMatchObject({
+				action: AuditAction.ORG_MEMBER_REMOVED,
+				userId: user.id,
+				targetUserId: target.id,
+				organizationId: organization.id,
+			})
+		})
+
+		it('does not log a second removal for an already inactive member', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+			const target = await createTestUser()
+			await db.insert(UserOrganization).values({
+				userId: target.id,
+				organizationId: organization.id,
+				organizationRoleId: 'org_role_member',
+				active: false,
+			})
+
+			await post(organization, cookie, {
+				intent: 'remove-member',
+				userId: target.id,
+			})
+
+			expect(spy).not.toHaveBeenCalled()
+		})
+
+		it('logs invite link create, regenerate and disable', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+
+			await post(organization, cookie, { intent: 'create-invite-link' })
+			await post(organization, cookie, { intent: 'reset-invite-link' })
+			await post(organization, cookie, { intent: 'deactivate-invite-link' })
+			// A second disable has nothing active left to disable.
+			await post(organization, cookie, { intent: 'deactivate-invite-link' })
+
+			expect(loggedActions(spy)).toEqual([
+				AuditAction.ORG_INVITE_LINK_CREATED,
+				AuditAction.ORG_INVITE_LINK_CREATED,
+				AuditAction.ORG_INVITE_LINK_DISABLED,
+			])
+			expect(spy.mock.calls[0]![0]).toMatchObject({
+				userId: user.id,
+				organizationId: organization.id,
+				metadata: { regenerated: false },
+			})
+			expect(spy.mock.calls[1]![0].metadata).toMatchObject({
+				regenerated: true,
+			})
+		})
+
+		it('never puts the invite token in the audit metadata', async () => {
+			const spy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+
+			const response = await post(organization, cookie, {
+				intent: 'create-invite-link',
+			})
+			const { inviteLink } = (await response.json()) as {
+				inviteLink: { token: string }
+			}
+
+			expect(JSON.stringify(spy.mock.calls)).not.toContain(inviteLink.token)
+		})
+
+		it('does not fail the request when the audit write throws', async () => {
+			vi.spyOn(auditService, 'log').mockRejectedValue(new Error('db down'))
+			vi.spyOn(console, 'error').mockImplementation(() => {})
+			const { organization, cookie } = await setupTestOrgWithUser('admin')
+
+			const response = await post(organization, cookie, {
+				intent: 'create-invite-link',
+			})
+
+			expect(getResponseStatus(response)).toBe(200)
 		})
 	})
 })

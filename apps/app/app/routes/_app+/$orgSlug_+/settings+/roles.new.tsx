@@ -17,7 +17,11 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
-import { hasOnlyTenantRolePermissions } from '#app/utils/organization/tenant-role-permissions.ts'
+import {
+	hasOnlyTenantRolePermissions,
+	withImpliedStaffingPermissions,
+} from '#app/utils/organization/tenant-role-permissions.ts'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	requireBuiltInOrganizationAdmin,
 	roleInputSchema,
@@ -35,6 +39,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			name: organization.organizationName,
 			slug: organization.organizationSlug,
 		},
+		staffingEnabled: await isStaffingFeatureEnabled(
+			organization.organizationId,
+		),
 	}
 }
 
@@ -57,13 +64,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				'Check the role details and try again.',
 		}
 	}
-	const permissionIds = [...new Set(submission.data.permissionIds)]
-	if (!hasOnlyTenantRolePermissions(permissionIds)) {
+	const requestedPermissionIds = [...new Set(submission.data.permissionIds)]
+	if (!hasOnlyTenantRolePermissions(requestedPermissionIds)) {
 		return {
 			error:
 				'One or more selected access options are not available for custom roles.',
 		}
 	}
+	const permissionIds = withImpliedStaffingPermissions(requestedPermissionIds)
 
 	const { name, description } = submission.data
 	const [duplicate] = await db
@@ -139,6 +147,7 @@ export default function CreateRoleRoute() {
 			orgSlug={data.organization.slug}
 			cancelHref={rolesPath}
 			error={actionData?.error}
+			staffingEnabled={data.staffingEnabled}
 		/>
 	)
 }

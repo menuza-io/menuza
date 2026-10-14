@@ -18,9 +18,20 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { OrganizationInviteEmail, sendEmail } from '@repo/email'
+import { opaqueIdSchema } from '@repo/staffing'
 import { type SQL } from 'drizzle-orm'
 import { updateSeatQuantity } from '#app/utils/payments.server.ts'
+import {
+	enqueueStaffingOutbox,
+	flushStaffingOutboxFor,
+} from '#app/utils/staffing/outbox.server.ts'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from './invitation.ts'
+import {
+	auditInvitationAccepted,
+	auditInvitationSent,
+	auditInviteLinkCreated,
+	auditMemberAdded,
+} from './membership-audit.server.ts'
 import { type OrganizationRoleName } from './organizations.server'
 
 export { MAX_ORGANIZATION_INVITES_PER_REQUEST }
@@ -119,13 +130,28 @@ export async function createOrganizationInvitation({
 	role = 'member',
 	roleId,
 	inviterId,
+	staffMemberId,
+	request,
 }: {
 	organizationId: string
 	email: string
 	role?: OrganizationRoleName
 	roleId?: string
 	inviterId: string
+	/**
+	 * Opaque id of the regional staff record this invitation is for. When the
+	 * invitee accepts, their login is linked to that record (see
+	 * `acceptInvitation`). Omitted on a re-invite, an existing link is kept.
+	 */
+	staffMemberId?: string
+	request?: Request
 }) {
+	invariantResponse(
+		staffMemberId === undefined ||
+			opaqueIdSchema.safeParse(staffMemberId).success,
+		'Invalid staff member id',
+		{ status: 400 },
+	)
 	const email = rawEmail.toLowerCase().trim()
 	const token = crypto.randomUUID()
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
@@ -160,13 +186,20 @@ export async function createOrganizationInvitation({
 			organizationRoleId,
 			expiresAt,
 			inviterId,
+			...(staffMemberId ? { staffMemberId } : {}),
 		})
 		.onConflictDoUpdate({
 			target: [
 				OrganizationInvitation.email,
 				OrganizationInvitation.organizationId,
 			],
-			set: { token, organizationRoleId, expiresAt, inviterId },
+			set: {
+				token,
+				organizationRoleId,
+				expiresAt,
+				inviterId,
+				...(staffMemberId ? { staffMemberId } : {}),
+			},
 		})
 	const invitation = await getInvitationByToken(token)
 	if (!invitation) throw new Error('Failed to create invitation')
@@ -177,6 +210,15 @@ export async function createOrganizationInvitation({
 			role: invitation.organizationRole.name,
 		})
 	}
+	await auditInvitationSent({
+		organizationId,
+		actorId: inviterId,
+		invitationId: invitation.id,
+		invitedEmail: email,
+		roleId: organizationRoleId,
+		isResend: !!existing,
+		request,
+	})
 	return { invitation, isNewInvitation: !existing }
 }
 
@@ -241,6 +283,7 @@ export async function deleteOrganizationInvitation(
 				eq(OrganizationInvitation.organizationId, organizationId),
 			),
 		)
+		.returning({ id: OrganizationInvitation.id })
 }
 
 export async function getPendingInvitationsByEmail(email: string) {
@@ -294,13 +337,22 @@ async function assertInvitationOwnedByUser(
 async function acceptInvitation(
 	invitation: Pick<
 		PendingInvitation,
-		'id' | 'email' | 'organizationId' | 'organizationRoleId' | 'organization'
+		| 'id'
+		| 'email'
+		| 'organizationId'
+		| 'organizationRoleId'
+		| 'organization'
+		| 'inviterId'
+		| 'staffMemberId'
 	>,
 	userId: string,
 ) {
 	await assertInvitationOwnedByUser(invitation, userId)
 	const [member] = await db
-		.select({ userId: UserOrganization.userId })
+		.select({
+			userId: UserOrganization.userId,
+			active: UserOrganization.active,
+		})
 		.from(UserOrganization)
 		.where(
 			and(
@@ -324,6 +376,44 @@ async function acceptInvitation(
 		.where(eq(OrganizationInvitation.id, invitation.id))
 	if (!member)
 		await updateSeatQuantity(invitation.organizationId).catch(() => {})
+	await auditInvitationAccepted({
+		organizationId: invitation.organizationId,
+		userId,
+		invitationId: invitation.id,
+		roleId: invitation.organizationRoleId,
+		inviterId: invitation.inviterId,
+		alreadyMember: !!member,
+	})
+	if (!member)
+		await auditMemberAdded({
+			organizationId: invitation.organizationId,
+			memberUserId: userId,
+			via: 'invitation',
+			roleId: invitation.organizationRoleId,
+			metadata: { invitationId: invitation.id },
+		})
+	// An invitation sent from a staff profile carries the staff record's id.
+	// Linking is a staff-data event, so it goes through the outbox to the
+	// regional database (ids only), never inline. A member who was removed
+	// earlier and is still inactive gets no link.
+	if (invitation.staffMemberId && (!member || member.active)) {
+		try {
+			const queued = await enqueueStaffingOutbox({
+				organizationId: invitation.organizationId,
+				kind: 'link_user',
+				payload: { staffMemberId: invitation.staffMemberId, userId },
+			})
+			if (queued) {
+				await flushStaffingOutboxFor(invitation.organizationId, userId)
+			}
+		} catch (error) {
+			// Accepting the invitation already succeeded; never fail it over a link.
+			console.error(
+				'Failed to queue staff link after accepting invitation:',
+				error instanceof Error ? error.name : 'unknown',
+			)
+		}
+	}
 	return { organization: invitation.organization, alreadyMember: !!member }
 }
 
@@ -362,11 +452,13 @@ export async function createOrganizationInviteLink({
 	role = 'member',
 	roleId,
 	createdById,
+	request,
 }: {
 	organizationId: string
 	role?: OrganizationRoleName
 	roleId?: string
 	createdById: string
+	request?: Request
 }) {
 	const token = crypto.randomUUID()
 	const organizationRoleId = (
@@ -376,6 +468,16 @@ export async function createOrganizationInviteLink({
 			roleName: role,
 		})
 	).id
+	const [existingLink] = await db
+		.select({ id: OrganizationInviteLink.id })
+		.from(OrganizationInviteLink)
+		.where(
+			and(
+				eq(OrganizationInviteLink.organizationId, organizationId),
+				eq(OrganizationInviteLink.createdById, createdById),
+			),
+		)
+		.limit(1)
 	await db
 		.insert(OrganizationInviteLink)
 		.values({ organizationId, token, organizationRoleId, createdById })
@@ -398,6 +500,15 @@ export async function createOrganizationInviteLink({
 		)
 		.where(eq(OrganizationInviteLink.token, token))
 		.limit(1)
+	if (link)
+		await auditInviteLinkCreated({
+			organizationId,
+			actorId: createdById,
+			linkId: link.link.id,
+			roleId: organizationRoleId,
+			regenerated: !!existingLink,
+			request,
+		})
 	return link ? { ...link.link, organizationRole: link.organizationRole } : null
 }
 
@@ -462,8 +573,10 @@ export async function deactivateOrganizationInviteLink(
 			and(
 				eq(OrganizationInviteLink.organizationId, organizationId),
 				eq(OrganizationInviteLink.createdById, createdById),
+				eq(OrganizationInviteLink.isActive, true),
 			),
 		)
+		.returning({ id: OrganizationInviteLink.id })
 }
 
 export async function validateInviteLink(token: string) {
@@ -524,6 +637,9 @@ export async function createInvitationFromLink(
 				token: invitationToken,
 				expiresAt,
 				inviterId: link.createdById,
+				// A shareable link must never inherit a staff link from the expired
+				// invitation it replaces: that would attach a stranger to a record.
+				staffMemberId: null,
 			},
 			where: or(
 				isNull(OrganizationInvitation.expiresAt),
@@ -559,6 +675,13 @@ export async function validateAndAcceptInviteLink(
 			})
 			.onConflictDoNothing()
 		await updateSeatQuantity(link.organizationId).catch(() => {})
+		await auditMemberAdded({
+			organizationId: link.organizationId,
+			memberUserId: userId,
+			via: 'invite_link',
+			roleId: link.organizationRoleId,
+			metadata: { inviteLinkId: link.id, linkCreatedById: link.createdById },
+		})
 	}
 	return { organization: link.organization, alreadyMember: !!member }
 }

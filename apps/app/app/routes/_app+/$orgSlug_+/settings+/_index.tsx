@@ -52,6 +52,7 @@ import VerifiedDomainCard, {
 } from '#app/components/settings/cards/organization/verified-domain-card.tsx'
 
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { auditMemberAdded } from '#app/utils/organization/membership-audit.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
@@ -381,6 +382,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		const { verifiedDomain } = submission.value
 
+		const autoAddedMembers: Array<{ userId: string; roleId: string }> = []
 		try {
 			await db.transaction(async (tx) => {
 				// Update the organization with the verified domain
@@ -432,6 +434,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							organizationRoleId: memberRole.id,
 						})),
 					)
+					for (const user of usersWithMatchingDomain)
+						autoAddedMembers.push({ userId: user.id, roleId: memberRole.id })
 				}
 
 				// Update seat quantity for billing if users were added
@@ -443,6 +447,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					}
 				}
 			})
+
+			for (const member of autoAddedMembers) {
+				await auditMemberAdded({
+					organizationId: organization.id,
+					memberUserId: member.userId,
+					actorId: userId,
+					via: 'verified_domain',
+					roleId: member.roleId,
+					request,
+				})
+			}
 
 			await invalidateUserOrganizationsCache(userId)
 
