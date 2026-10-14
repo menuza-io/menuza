@@ -1,18 +1,20 @@
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon, type IconName } from '@repo/ui/icon'
-import * as React from 'react'
+import { type ReactNode } from 'react'
 
 import { Link } from 'react-router'
 
 interface EmptyStateProps {
-	title: string
-	description: string
+	title: ReactNode
+	description?: ReactNode
 	icons?: IconName[]
 	action?: {
 		label: string
 		href: string
 	}
+	/** Extra actions (buttons, forms) rendered under the description. */
+	children?: ReactNode
 	className?: string
 }
 
@@ -21,6 +23,7 @@ export function EmptyState({
 	description,
 	icons = [],
 	action,
+	children,
 	className,
 }: EmptyStateProps) {
 	return (
@@ -73,14 +76,21 @@ export function EmptyState({
 					)}
 				</div>
 				<h2 className="text-foreground mt-6 text-lg font-medium">{title}</h2>
-				<p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
-					{description}
-				</p>
+				{description ? (
+					<p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
+						{description}
+					</p>
+				) : null}
 				{action && (
 					<Button className={cn('mt-4')}>
 						<Link to={action.href}>{action.label}</Link>
 					</Button>
 				)}
+				{children ? (
+					<div className="mt-4 flex flex-wrap justify-center gap-2">
+						{children}
+					</div>
+				) : null}
 			</div>
 		</div>
 	)

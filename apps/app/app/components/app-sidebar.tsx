@@ -38,6 +38,10 @@ import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
 import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
+import {
+	HIDDEN_STAFFING_NAV,
+	type StaffingNavAccess,
+} from '#app/utils/staffing/nav.ts'
 import { ChatSidebarLink } from './chat/chat-sidebar-link.tsx'
 import { CommandMenu } from './command-menu'
 import FeedbackModal from './core/feedback-modal'
@@ -49,6 +53,7 @@ import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
 import { PhoneIcon } from './icons/phone-icon'
 import { SendIcon } from './icons/send-icon'
+import { UserRoundGroupIcon } from './icons/user-round-group-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
 import { NavSecondary } from './nav-secondary'
 
@@ -243,6 +248,10 @@ function OrganizationSidebar({
 	const canReadAutomations = hasOrgPermission('read', 'automation')
 	const canReadPhoneAgent = hasOrgPermission('read', 'phone_agent')
 	const canReadPhoneCalls = hasOrgPermission('read', 'phone_call')
+	// Computed on the server from the org's staffing flags plus the member's
+	// permissions; the Staff group does not exist until both allow it.
+	const staffingNav: StaffingNavAccess =
+		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -411,6 +420,39 @@ function OrganizationSidebar({
 			],
 		},
 		{
+			title: _(msg`Staff`),
+			url: `/${orgSlug}/staff`,
+			isActive: location.pathname.includes(`/${orgSlug}/staff`),
+			icon: UserRoundGroupIcon,
+			items: [
+				{
+					title: _(msg`Team`),
+					url: `/${orgSlug}/staff/team`,
+					isActive: location.pathname.includes(`/${orgSlug}/staff/team`),
+				},
+				{
+					title: _(msg`Time clock`),
+					url: `/${orgSlug}/staff/timeclock`,
+					isActive: location.pathname.includes(`/${orgSlug}/staff/timeclock`),
+				},
+				{
+					title: _(msg`Schedule`),
+					url: `/${orgSlug}/staff/schedule`,
+					isActive: location.pathname.includes(`/${orgSlug}/staff/schedule`),
+				},
+				{
+					title: _(msg`Labor`),
+					url: `/${orgSlug}/staff/labor`,
+					isActive: location.pathname.includes(`/${orgSlug}/staff/labor`),
+				},
+				{
+					title: _(msg`Hiring`),
+					url: `/${orgSlug}/staff/hiring`,
+					isActive: location.pathname.includes(`/${orgSlug}/staff/hiring`),
+				},
+			],
+		},
+		{
 			title: _(msg`Website`),
 			url: `/${orgSlug}/website`,
 			isActive: location.pathname.includes(`/${orgSlug}/website`),
@@ -548,6 +590,9 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/phone-agent`) {
 				return canReadPhoneAgent || canReadPhoneCalls
 			}
+			if (item.url === `/${orgSlug}/staff`) {
+				return staffingNav.visible
+			}
 			return true
 		})
 		.map((item) => {
@@ -575,6 +620,24 @@ function OrganizationSidebar({
 					items: item.items.filter((subItem) =>
 						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,
 					),
+				}
+			}
+			if (item.url === `/${orgSlug}/staff`) {
+				const allowedByUrl: Record<string, boolean> = {
+					[`/${orgSlug}/staff/team`]: staffingNav.team,
+					[`/${orgSlug}/staff/timeclock`]: staffingNav.timeclock,
+					[`/${orgSlug}/staff/schedule`]: staffingNav.schedule,
+					[`/${orgSlug}/staff/labor`]: staffingNav.labor,
+					[`/${orgSlug}/staff/hiring`]: staffingNav.hiring,
+				}
+				const visibleItems = item.items.filter(
+					(subItem) => allowedByUrl[subItem.url] === true,
+				)
+				return {
+					...item,
+					// Land on the first section the member can actually open.
+					url: visibleItems[0]?.url ?? item.url,
+					items: visibleItems,
 				}
 			}
 			if (item.url === `/${orgSlug}/website`) {

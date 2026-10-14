@@ -1,0 +1,124 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import SitePage from '~/components/SitePage.astro'
+import { employmentLabel, payLine } from '~/lib/careers/labels'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedCareers, fetchPublishedSitePage } from '~/lib/org'
+import { translate } from '~/lib/translate'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+
+const careers = await fetchPublishedCareers({
+	slug: orgSlug,
+	host: customHost,
+	locale,
+})
+
+// Careers pages only exist while the organization has hiring turned on. Until
+// then `/careers` stays whatever the organization published there, if anything.
+const cmsPage = careers
+	? null
+	: await fetchPublishedSitePage({
+			slug: orgSlug,
+			host: customHost,
+			pageSlug: 'careers',
+			lng: Astro.locals.requestedLocale,
+		})
+if (!careers && !cmsPage) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const heading = i18n._(msg`Careers`)
+const subtitle = translate(i18n, msg`Open positions at {name}`, { name: organization.name })
+const emptyTitle = i18n._(msg`No openings right now.`)
+const emptyBody = i18n._(msg`Check back soon.`)
+
+const postings = (careers?.postings ?? []).map((posting) => ({
+	...posting,
+	href: getLocaleHref(
+		`/careers/${encodeURIComponent(posting.slug)}`,
+		locale,
+		locale,
+		defaultLocale,
+	),
+	meta: employmentLabel(i18n, posting.employmentType),
+	pay: payLine(i18n, locale, posting),
+}))
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		description={cmsPage.seo?.description || undefined}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : (
+<SitePage
+	organization={organization}
+	page={{ id: 'careers', title: heading, slug: 'careers', isHomePage: false, sections: [] }}
+	title={`${heading} - ${organization.name}`}
+	description={subtitle}
+>
+	<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+		<header class="pt-6 pb-6 sm:pt-10 sm:pb-8">
+			<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+				{heading}
+			</h1>
+			<p class="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{subtitle}</p>
+		</header>
+
+		{postings.length > 0 ? (
+			<ul class="surface divide-y divide-border overflow-hidden">
+				{postings.map((posting) => (
+					<li>
+						<a
+							href={posting.href}
+							class="focus-ring flex min-h-16 items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/50"
+						>
+							<span class="flex min-w-0 flex-1 flex-col gap-0.5">
+								<span class="text-base font-semibold text-foreground text-balance">{posting.title}</span>
+								<span class="text-sm text-muted-foreground">{posting.meta}</span>
+								{posting.pay ? <span class="price text-sm text-foreground">{posting.pay}</span> : null}
+							</span>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="size-5 shrink-0 text-muted-foreground rtl:rotate-180"
+								aria-hidden="true"
+							>
+								<path d="m9 18 6-6-6-6" />
+							</svg>
+						</a>
+					</li>
+				))}
+			</ul>
+		) : (
+			<div class="surface flex flex-col gap-1 px-6 py-10">
+				<p class="text-base font-semibold text-foreground">{emptyTitle}</p>
+				<p class="text-sm text-muted-foreground">{emptyBody}</p>
+			</div>
+		)}
+	</div>
+</SitePage>
+)}

@@ -1,5 +1,5 @@
 import { requireUserId } from '@repo/auth'
-import { getCatalog } from '@repo/reports'
+import { catalogForGrants, definitionAllowed, getCatalog } from '@repo/reports'
 import {
 	getSavedReport,
 	parseDefinition,
@@ -8,11 +8,12 @@ import {
 import { useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/$reportId.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -27,9 +28,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	if (!report) {
 		throw new Response('Not Found', { status: 404 })
 	}
+	// A report on staff data looks like it does not exist to someone without
+	// the flag or permission.
+	const staff = await resolveStaffReportAccessForRequest(
+		request,
+		userId,
+		organization.id,
+	)
+	const fullCatalog = getCatalog('organization')
+	const definition = parseDefinition(report.definition)
+	if (!definitionAllowed(fullCatalog, definition, staff.subjects)) {
+		throw new Response('Not Found', { status: 404 })
+	}
 	return {
-		catalog: getCatalog('organization'),
-		definition: parseDefinition(report.definition),
+		catalog: catalogForGrants(fullCatalog, staff.subjects),
+		definition,
 		orgSlug: organization.slug,
 		hasProvisionedDb: organization.hasProvisionedDb,
 		tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
@@ -44,6 +57,16 @@ export async function action({ request, params }: Route.ActionArgs) {
 	})
 	const form = await request.formData()
 	const definition = parseDefinition(form.get('definition'))
+	const staff = await resolveStaffReportAccessForRequest(
+		request,
+		userId,
+		organization.id,
+	)
+	if (
+		!definitionAllowed(getCatalog('organization'), definition, staff.subjects)
+	) {
+		throw new Response('Forbidden', { status: 403 })
+	}
 	const saved = await saveReport({
 		id: params.reportId,
 		scope: 'organization',

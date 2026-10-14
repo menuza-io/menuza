@@ -85,6 +85,11 @@
       "import": "./src/site-fonts.ts",
       "default": "./src/site-fonts.ts"
     },
+    "./job-posting": {
+      "types": "./src/job-posting.ts",
+      "import": "./src/job-posting.ts",
+      "default": "./src/job-posting.ts"
+    },
     "./site-locales": {
       "types": "./src/site-locales.ts",
       "import": "./src/site-locales.ts",

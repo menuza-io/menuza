@@ -354,6 +354,25 @@ describe('Organization Permissions', () => {
 		it('should have analytics permissions', () => {
 			expect(ORG_PERMISSIONS.READ_ANALYTICS_ANY).toBe('read:analytics:any')
 		})
+
+		it('should have staffing permissions', () => {
+			expect(ORG_PERMISSIONS.READ_STAFF_ANY).toBe('read:staff:any')
+			expect(ORG_PERMISSIONS.UPDATE_STAFF_PAY_ANY).toBe('update:staff_pay:any')
+			expect(ORG_PERMISSIONS.READ_STAFF_PRIVATE_ANY).toBe(
+				'read:staff_private:any',
+			)
+			expect(ORG_PERMISSIONS.UPDATE_SCHEDULE_ANY).toBe('update:schedule:any')
+			expect(ORG_PERMISSIONS.READ_SCHEDULE_OWN).toBe('read:schedule:own')
+			expect(ORG_PERMISSIONS.CREATE_TIMECLOCK_OWN).toBe('create:timeclock:own')
+			expect(ORG_PERMISSIONS.APPROVE_TIMESHEET_ANY).toBe(
+				'approve:timesheet:any',
+			)
+			expect(ORG_PERMISSIONS.READ_LABOR_ANY).toBe('read:labor:any')
+			expect(ORG_PERMISSIONS.UPDATE_LABOR_POLICY_ANY).toBe(
+				'update:labor_policy:any',
+			)
+			expect(ORG_PERMISSIONS.UPDATE_HIRING_ANY).toBe('update:hiring:any')
+		})
 	})
 
 	describe('Edge cases', () => {

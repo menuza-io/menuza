@@ -52,6 +52,11 @@ import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
 } from '#app/utils/sites/tenant-api.server.ts'
+import { cancelPendingStaffingOutbox } from '#app/utils/staffing/outbox.server.ts'
+import {
+	evaluateRegionGuard,
+	fetchStaffSummary,
+} from '#app/utils/staffing/region-guard.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -363,6 +368,33 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
+		if (organization.hasProvisionedDb) {
+			// Staff records live in the old region's database and are destroyed by
+			// the wipe. Ask that region what it holds (counts only), and when there
+			// is anything to lose (or the answer is unknown) require the admin to
+			// have typed the organization's slug.
+			const summary = await fetchStaffSummary({
+				organizationId: organization.id,
+				dataRegion: currentRegion,
+			})
+			const guard = evaluateRegionGuard({
+				summary,
+				typedConfirmation: submission.value.confirmText,
+				slug: organization.slug,
+			})
+			if (!guard.allowed) {
+				return Response.json(
+					{
+						error:
+							'This organization has staff records in the current region that would be deleted. Type the organization slug to confirm.',
+						staffConfirmationRequired: true,
+						summary: guard.summary,
+					},
+					{ status: 400 },
+				)
+			}
+		}
+
 		try {
 			if (organization.hasProvisionedDb) {
 				// Record the database as unavailable before any irreversible deletion.
@@ -400,6 +432,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.update(Organization)
 				.set({ hasProvisionedDb: true })
 				.where(eq(Organization.id, organization.id))
+
+			// Queued staffing events were addressed to the old region's database,
+			// which no longer exists; the new region starts empty.
+			if (organization.hasProvisionedDb) {
+				await cancelPendingStaffingOutbox(organization.id, 'region_changed')
+			}
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(

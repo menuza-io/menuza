@@ -43,12 +43,48 @@ export function formatPercent(value: number) {
 	return `${value.toFixed(1)}%`
 }
 
-/** Formats a sum or average the way its value field reads. */
+/**
+ * Minutes as hours and minutes ("12h 30m"), in the viewer's language when a
+ * locale is given. Whole hours drop the minutes, and a duration under an hour
+ * shows minutes only. Negative durations (a variance) keep their sign.
+ */
+export function formatDuration(minutes: number, options: FormatOptions = {}) {
+	if (!Number.isFinite(minutes)) return '—'
+	const total = Math.round(Math.abs(minutes))
+	const hours = Math.floor(total / 60)
+	const rest = total % 60
+	const unit = (value: number, name: 'hour' | 'minute') =>
+		new Intl.NumberFormat(options.locale, {
+			style: 'unit',
+			unit: name,
+			unitDisplay: 'narrow',
+		}).format(value)
+	const parts: string[] = []
+	if (hours > 0) parts.push(unit(hours, 'hour'))
+	if (rest > 0 || hours === 0) parts.push(unit(rest, 'minute'))
+	const text = parts.join(' ')
+	return minutes < 0 && total > 0 ? `-${text}` : text
+}
+
+/** Formats a sum, average or ratio the way its value field reads. */
 export function formatMeasuredValue(
 	value: number,
 	info: ReportValueInfo | undefined,
 	options: FormatOptions = {},
 ) {
+	if (info?.type === 'duration') return formatDuration(value, options)
+	if (info?.type === 'percent') {
+		return `${new Intl.NumberFormat(options.locale, {
+			maximumFractionDigits: 1,
+		}).format(value)}%`
+	}
+	if (info?.perHour) {
+		const amount =
+			info.type === 'currency' && info.currency
+				? formatCurrency(value, info.currency, options)
+				: formatNumber(value, options)
+		return `${amount}/h`
+	}
 	if (info?.type === 'currency' && info.currency) {
 		return formatCurrency(value, info.currency, options)
 	}
@@ -109,9 +145,9 @@ export function segmentPercent(
 }
 
 /**
- * Columns a grouped table shows, on screen and in CSV. An average's percent
- * column would be a share of records next to a per-record amount, so it is
- * left out.
+ * Columns a grouped table shows, on screen and in CSV. An average's or a
+ * ratio's percent column would be a share of records next to a per-record
+ * amount, so it is left out.
  */
 export function segmentTableColumns(
 	hideCounts: boolean,
@@ -121,6 +157,6 @@ export function segmentTableColumns(
 	return {
 		count: !hideCounts,
 		value: info,
-		percent: info?.measure !== 'average',
+		percent: info?.measure !== 'average' && info?.measure !== 'ratio',
 	}
 }

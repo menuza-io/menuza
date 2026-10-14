@@ -2,6 +2,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { t, Trans } from '@lingui/macro'
 import { getOrgSiteUrl } from '@repo/common/url'
+import { staffSummarySchema, type StaffSummary } from '@repo/staffing'
 import { cn } from '@repo/ui'
 import {
 	AlertDialog,
@@ -32,11 +33,19 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Form, useFetcher } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.tsx'
+import {
+	RegionStaffGuard,
+	type RegionStaffGuardState,
+} from '#app/components/staff/region-staff-guard.tsx'
+import {
+	requiresStaffConfirmation,
+	staffConfirmationMatches,
+} from '#app/utils/staffing/region-confirmation.ts'
 
 export const SitePublishSchema = z.object({
 	sitePublished: z.enum(['true', 'false']),
@@ -47,6 +56,8 @@ export const SiteDataRegionSchema = z.object({
 	dataRegion: z.enum(['us', 'ksa']),
 	organizationId: z.string(),
 	confirmWipe: z.enum(['true']).optional(),
+	// Typed organization slug; required when the old region holds staff records.
+	confirmText: z.string().max(200).optional(),
 })
 
 export const CustomDomainSchema = z.object({
@@ -113,17 +124,59 @@ export function SiteCard({
 		(option) => option.value === dataRegion,
 	)?.label
 
-	const submitDataRegion = (nextRegion: 'us' | 'ksa', confirmWipe = false) => {
+	const submitDataRegion = (
+		nextRegion: 'us' | 'ksa',
+		confirmWipe = false,
+		confirmText = '',
+	) => {
 		void regionFetcher.submit(
 			{
 				intent: siteDataRegionActionIntent,
 				organizationId: organization.id,
 				dataRegion: nextRegion,
 				...(confirmWipe ? { confirmWipe: 'true' } : {}),
+				...(confirmText ? { confirmText } : {}),
 			},
 			{ method: 'POST' },
 		)
 	}
+
+	// Staff records live in the same regional database and are deleted with it:
+	// ask the current region how much there is while the dialog is open.
+	const guardFetcher = useFetcher<{
+		summary: unknown
+		requiresConfirmation: boolean
+	}>()
+	const [typedConfirmation, setTypedConfirmation] = useState('')
+	const guardLoad = guardFetcher.load
+	useEffect(() => {
+		if (pendingRegion === null) {
+			setTypedConfirmation('')
+			return
+		}
+		void guardLoad(
+			`/resources/staffing/region-summary?orgSlug=${encodeURIComponent(organization.slug)}`,
+		)
+	}, [pendingRegion, guardLoad, organization.slug])
+	const guardState = useMemo<RegionStaffGuardState>(() => {
+		if (guardFetcher.data === undefined) {
+			return { status: 'loading', summary: null, requiresConfirmation: false }
+		}
+		const parsed = staffSummarySchema.safeParse(guardFetcher.data.summary)
+		const summary: StaffSummary | null = parsed.success ? parsed.data : null
+		return {
+			status: 'ready',
+			summary,
+			// The server decides too; this only keeps the button honest.
+			requiresConfirmation:
+				guardFetcher.data.requiresConfirmation ||
+				requiresStaffConfirmation(summary),
+		}
+	}, [guardFetcher.data])
+	const staffGuardBlocks =
+		guardState.status === 'loading' ||
+		(guardState.requiresConfirmation &&
+			!staffConfirmationMatches(typedConfirmation, organization.slug))
 
 	const [form, fields] = useForm({
 		id: 'custom-domain',
@@ -248,17 +301,25 @@ export function SiteCard({
 									</Trans>
 								</AlertDialogDescription>
 							</AlertDialogHeader>
+							<RegionStaffGuard
+								orgSlug={organization.slug}
+								state={guardState}
+								typed={typedConfirmation}
+								onTypedChange={setTypedConfirmation}
+							/>
 							<AlertDialogFooter>
 								<AlertDialogCancel>
 									<Trans>Keep current region</Trans>
 								</AlertDialogCancel>
 								<AlertDialogAction
 									variant="destructive"
+									disabled={staffGuardBlocks}
 									onClick={() => {
-										if (!pendingRegion) return
+										if (!pendingRegion || staffGuardBlocks) return
 										const nextRegion = pendingRegion
+										const typed = typedConfirmation
 										setPendingRegion(null)
-										submitDataRegion(nextRegion, true)
+										submitDataRegion(nextRegion, true, typed)
 									}}
 								>
 									<Trans>Delete data and switch</Trans>

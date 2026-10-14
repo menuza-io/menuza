@@ -30,6 +30,8 @@ vi.mock('@repo/database', async (importOriginal) => {
 		count: drizzleOperator,
 		desc: drizzleOperator,
 		eq: drizzleOperator,
+		like: drizzleOperator,
+		not: drizzleOperator,
 	}
 })
 
@@ -40,7 +42,7 @@ describe('Notifications API Routes', () => {
 
 	describe('loader', () => {
 		it('returns notifications for user', async () => {
-			mockSelectResults([], [{ value: 0 }])
+			mockSelectResults([], [{ value: 0 }], [])
 
 			const request = new Request('http://localhost/api/notifications')
 			const response = await loader({ request, params: {} } as any)
@@ -51,18 +53,18 @@ describe('Notifications API Routes', () => {
 				unreadCount: 0,
 			})
 			expect(requireUserId).toHaveBeenCalledWith(request)
-			expect(mockDb.select).toHaveBeenCalledTimes(2)
+			expect(mockDb.select).toHaveBeenCalledTimes(3)
 		})
 
 		it('applies orgSlug filter if provided', async () => {
-			mockSelectResults([{ id: 'org1' }], [], [{ value: 0 }])
+			mockSelectResults([{ id: 'org1' }], [], [{ value: 0 }], [])
 
 			const request = new Request(
 				'http://localhost/api/notifications?orgSlug=acme',
 			)
 			await loader({ request, params: {} } as any)
 
-			expect(mockDb.select).toHaveBeenCalledTimes(3)
+			expect(mockDb.select).toHaveBeenCalledTimes(4)
 		})
 	})
 

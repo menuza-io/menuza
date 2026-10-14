@@ -18,6 +18,7 @@ import MentionEmail from './mention-email'
 import NewDeviceSigninEmail from './new-device-signin'
 import OrganizationInviteEmail from './organization-invite'
 import SignupEmail from './signup'
+import StaffingAlertEmail from './staffing-alert-email'
 import TrialEndingEmail from './trial-ending'
 
 const cases = [
@@ -82,6 +83,11 @@ const cases = [
 		name: 'CommentEmail',
 		element: createElement(CommentEmail, CommentEmail.PreviewProps),
 		cta: CommentEmail.PreviewProps.noteUrl,
+	},
+	{
+		name: 'StaffingAlertEmail',
+		element: createElement(StaffingAlertEmail, StaffingAlertEmail.PreviewProps),
+		cta: StaffingAlertEmail.PreviewProps.actionUrl,
 	},
 	{
 		name: 'MentionEmail',
