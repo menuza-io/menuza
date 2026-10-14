@@ -36,7 +36,11 @@ describe('usePhoneCallsClient', () => {
 	function apiUrls() {
 		return fetchMock.mock.calls
 			.map(([input]) => String(input))
-			.filter((url) => url.startsWith(TENANT_API_URL))
+			.filter(
+				(url) =>
+					new URL(url, 'http://localhost').origin ===
+					new URL(TENANT_API_URL).origin,
+			)
 	}
 
 	// tenant-api has no trailing-slash routes: `/operator/calls/` is a 404.
