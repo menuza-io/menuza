@@ -129,6 +129,7 @@ const alternateLinks = [
 	googleAnalyticsId={organization.googleAnalyticsId ?? null}
 	tiktokPixelId={organization.tiktokPixelId ?? null}
 >
+	<slot name="head" slot="head" />
 	<div class="bg-background text-foreground flex min-h-dvh flex-col">
 		<AnnouncementBanners announcements={announcements} />
 		<SiteHeader

@@ -57,11 +57,17 @@ export enum AuditAction {
 	ORG_MEMBER_ADDED = 'org_member_added',
 	ORG_MEMBER_REMOVED = 'org_member_removed',
 	ORG_MEMBER_ROLE_CHANGED = 'org_member_role_changed',
+	ORG_MEMBER_LOCATIONS_CHANGED = 'org_member_locations_changed',
 	ORG_INVITATION_SENT = 'org_invitation_sent',
 	ORG_INVITATION_ACCEPTED = 'org_invitation_accepted',
 	ORG_INVITATION_REVOKED = 'org_invitation_revoked',
 	ORG_INVITE_LINK_CREATED = 'org_invite_link_created',
 	ORG_INVITE_LINK_DISABLED = 'org_invite_link_disabled',
+	JOB_POSTING_CREATED = 'job_posting_created',
+	JOB_POSTING_UPDATED = 'job_posting_updated',
+	JOB_POSTING_PUBLISHED = 'job_posting_published',
+	JOB_POSTING_CLOSED = 'job_posting_closed',
+	JOB_POSTING_DELETED = 'job_posting_deleted',
 
 	// Data Operations - Notes
 	NOTE_CREATED = 'note_created',

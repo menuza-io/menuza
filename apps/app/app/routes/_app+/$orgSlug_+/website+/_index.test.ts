@@ -5,6 +5,7 @@ import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
 } from '#app/utils/sites/tenant-api.server.ts'
+import type * as regionGuard from '#app/utils/staffing/region-guard.server.ts'
 import {
 	createAuthenticatedRequest,
 	createTestOrganization,
@@ -37,6 +38,28 @@ vi.mock('#app/utils/sites/tenant-api.server.ts', () => ({
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 	purgeOrganizationSiteCache: vi.fn(),
 }))
+// These tests are about the tenant database lifecycle. The region's staff
+// summary is its own concern (see `_index.staff-guard.test.ts`), so here the old
+// region reports that it holds no staff records.
+vi.mock(
+	'#app/utils/staffing/region-guard.server.ts',
+	async (importOriginal) => {
+		const actual = await importOriginal<typeof regionGuard>()
+		return {
+			...actual,
+			fetchStaffSummary: vi.fn().mockResolvedValue({
+				staff: 0,
+				byStatus: { invited: 0, active: 0, on_leave: 0, terminated: 0 },
+				linkedLogins: 0,
+				scopeAssignments: 0,
+				positions: 0,
+				payRecords: 0,
+				notes: 0,
+				auditEntries: 0,
+			}),
+		}
+	},
+)
 
 beforeEach(() => {
 	databaseMocks.update.mockClear()

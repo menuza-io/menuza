@@ -15,17 +15,23 @@ export interface Env {
 // share a trigger instead of each getting its own.
 export const JOB_ROUTES: Record<string, readonly string[]> = {
 	'0 2 * * *': ['/resources/jobs/audit-log-archival'],
-	'0 3 * * *': ['/resources/jobs/mcp-token-cleanup'],
+	'0 3 * * *': [
+		'/resources/jobs/mcp-token-cleanup',
+		'/resources/jobs/job-postings-expiry',
+	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',
 		'/resources/jobs/voice-retention',
+		'/resources/jobs/staffing-outbox',
 	],
 	// Not in wrangler.jsonc triggers: form retention has never been enabled in
 	// production, and turning it on deletes submissions, so it stays opt-in.
 	'0 5 * * *': ['/resources/jobs/form-submission-retention'],
 }
 
-const TENANT_ENGAGEMENT_SYNC_CRON = '0 * * * *'
+// The hourly trigger fans out to the regional nodes: engagement sync and the
+// staff tick. They are independent, so one failing never blocks the other.
+const TENANT_HOURLY_CRON = '0 * * * *'
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -62,7 +68,14 @@ async function requireInternalAuth(request: Request, env: Env) {
 	return null
 }
 
-async function invokeTenantEngagementSync(env: Env) {
+/**
+ * POSTs to every configured regional tenant-api node in parallel and fails if
+ * any node fails. Shared by the hourly jobs that fan out to the regions.
+ */
+async function invokeTenantNodes(
+	env: Env,
+	options: { path: string; body: Record<string, unknown>; label: string },
+) {
 	const targets = [env.TENANT_API_URL, env.TENANT_API_URL_KSA].filter(
 		(url): url is string => Boolean(url),
 	)
@@ -70,21 +83,21 @@ async function invokeTenantEngagementSync(env: Env) {
 	const results = await Promise.allSettled(
 		targets.map(async (baseUrl) => {
 			const response = await fetch(
-				`${baseUrl.replace(/\/$/, '')}/api/marketing/sync-engagement`,
+				`${baseUrl.replace(/\/$/, '')}${options.path}`,
 				{
 					method: 'POST',
 					headers: {
 						Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN}`,
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ lookbackHours: 48 }),
+					body: JSON.stringify(options.body),
 				},
 			)
 
 			if (!response.ok) {
 				const body = await response.text().catch(() => '')
 				throw new Error(
-					`Tenant engagement sync failed for ${baseUrl}: ${response.status} ${response.statusText}${body ? `\n${body}` : ''}`,
+					`${options.label} failed for ${baseUrl}: ${response.status} ${response.statusText}${body ? `\n${body}` : ''}`,
 				)
 			}
 
@@ -105,6 +118,31 @@ async function invokeTenantEngagementSync(env: Env) {
 	}
 
 	return results
+}
+
+async function invokeTenantEngagementSync(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/marketing/sync-engagement',
+		body: { lookbackHours: 48 },
+		label: 'Tenant engagement sync',
+	})
+}
+
+/**
+ * The staff tick: reminders, alerts and automatic clock-outs for every
+ * organization on each regional node. It rides this hourly trigger (the Worker
+ * has no spare cron slot), so on its own it runs at hourly granularity. The US
+ * Workers node also wakes per-organization Durable Object alarms, and the OCI
+ * node runs an in-process interval, which make it sub-hourly where staff are
+ * clocked in; this call is the safety net for both. Every task is idempotent.
+ * The response is counts only.
+ */
+async function invokeTenantStaffTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/staff/tick',
+		body: {},
+		label: 'Tenant staff tick',
+	})
 }
 
 async function invokeJob(env: Env, path: string) {
@@ -320,16 +358,21 @@ export default {
 	},
 
 	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-		if (event.cron === TENANT_ENGAGEMENT_SYNC_CRON) {
-			ctx.waitUntil(
-				invokeTenantEngagementSync(env).catch((error) => {
-					console.error('Tenant engagement sync failed', {
-						cron: event.cron,
-						error: error instanceof Error ? error.message : String(error),
-					})
-					throw error
-				}),
-			)
+		if (event.cron === TENANT_HOURLY_CRON) {
+			for (const [name, run] of [
+				['Tenant engagement sync', invokeTenantEngagementSync],
+				['Tenant staff tick', invokeTenantStaffTick],
+			] as const) {
+				ctx.waitUntil(
+					run(env).catch((error) => {
+						console.error(`${name} failed`, {
+							cron: event.cron,
+							error: error instanceof Error ? error.message : String(error),
+						})
+						throw error
+					}),
+				)
+			}
 			return
 		}
 

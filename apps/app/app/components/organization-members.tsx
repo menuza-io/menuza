@@ -28,12 +28,23 @@ import {
 } from '@repo/ui/select'
 import { useState } from 'react'
 import { Form, Link } from 'react-router'
+import {
+	MemberLocationScopeEditor,
+	type MemberLocationAccess,
+	type MemberLocationOption,
+} from '#app/components/member-location-scope.tsx'
 
 export interface OrganizationRoleOption {
 	id: string
 	name: string
 	description: string
 	isBuiltIn: boolean
+}
+
+/** Present only for admins while the Staff module is on and the org has locations. */
+export interface StaffingLocationControl {
+	locations: MemberLocationOption[]
+	access: Record<string, MemberLocationAccess>
 }
 
 interface OrganizationMember {
@@ -138,12 +149,14 @@ export function OrganizationMembers({
 	availableRoles = [],
 	organizationSlug,
 	canManageRoles = false,
+	staffingLocations = null,
 }: {
 	members?: OrganizationMember[]
 	currentUserId: string
 	availableRoles?: OrganizationRoleOption[]
 	organizationSlug?: string
 	canManageRoles?: boolean
+	staffingLocations?: StaffingLocationControl | null
 }) {
 	if (members.length === 0) {
 		return (
@@ -207,6 +220,19 @@ export function OrganizationMembers({
 								)}
 							</ItemContent>
 							<ItemActions>
+								{staffingLocations && member.userId !== currentUserId ? (
+									<MemberLocationScopeEditor
+										userId={member.userId}
+										memberName={member.user.name || member.user.email}
+										access={
+											staffingLocations.access[member.userId] ?? {
+												scope: 'all',
+												locationIds: [],
+											}
+										}
+										locations={staffingLocations.locations}
+									/>
+								) : null}
 								<OrganizationMemberRoleEditor
 									member={member}
 									currentUserId={currentUserId}

@@ -7,8 +7,30 @@ import {
 } from '../dsl.ts'
 import { isReportRunError, validateReportDefinition } from '../engine.ts'
 
+/** The viewer's own IANA zone, which a report set to "user timezone" follows. */
+function viewerTimeZone() {
+	try {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone
+	} catch {
+		return undefined
+	}
+}
+
 async function readJson(response: Response) {
 	return (await response.json().catch(() => ({}))) as Record<string, unknown>
+}
+
+/**
+ * A 401 or 403 as the `unauthorized` run error, so callers can tell a
+ * refusal from other failures even when its body is plain text.
+ */
+function refusalError(
+	response: Response,
+	message: string,
+): ReportRunError | null {
+	return response.status === 401 || response.status === 403
+		? { error: 'unauthorized', message }
+		: null
 }
 
 export function useReportRunner(options: {
@@ -52,11 +74,17 @@ export function useReportRunner(options: {
 						})
 						const tokenPayload = await readJson(tokenResponse)
 						if (!tokenResponse.ok || typeof tokenPayload.token !== 'string') {
-							throw new Error(
+							const message =
 								typeof tokenPayload.message === 'string'
 									? tokenPayload.message
-									: 'Could not authorize regional analytics.',
-							)
+									: 'Could not authorize regional analytics.'
+							const refusal = refusalError(tokenResponse, message)
+							if (refusal) {
+								setError(refusal)
+								setResult(null)
+								return
+							}
+							throw new Error(message)
 						}
 						response = await fetch(`${options.tenantApiUrl}/analytics/query`, {
 							method: 'POST',
@@ -64,31 +92,41 @@ export function useReportRunner(options: {
 								Authorization: `Bearer ${tokenPayload.token}`,
 								'Content-Type': 'application/json',
 							},
-							body: JSON.stringify({ definition: options.definition }),
+							body: JSON.stringify({
+								definition: options.definition,
+								timeZone: viewerTimeZone(),
+							}),
 							signal: controller.signal,
 						})
 					} else {
 						response = await fetch(options.controlPlaneRunUrl, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ definition: options.definition }),
+							body: JSON.stringify({
+								definition: options.definition,
+								timeZone: viewerTimeZone(),
+							}),
 							signal: controller.signal,
 						})
 					}
 
 					const payload = await readJson(response)
 					if (!response.ok) {
+						const message =
+							typeof payload.message === 'string'
+								? payload.message
+								: 'Failed to run report.'
 						const runError = payload as ReportRunError
-						if (runError.error && runError.message) {
-							setError(runError)
+						const failure =
+							runError.error && runError.message
+								? runError
+								: refusalError(response, message)
+						if (failure) {
+							setError(failure)
 							setResult(null)
 							return
 						}
-						throw new Error(
-							typeof payload.message === 'string'
-								? payload.message
-								: 'Failed to run report.',
-						)
+						throw new Error(message)
 					}
 					if (isReportRunError(payload as ReportResult | ReportRunError)) {
 						setError(payload as ReportRunError)

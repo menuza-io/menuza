@@ -415,7 +415,39 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			)
 		})
 
-		it('runs GDPR erasure and voice retention from the shared daily trigger', async () => {
+		it('runs MCP token cleanup and job postings expiry from the shared 0 3 trigger', async () => {
+			const fetchMock = vi.fn(async (url: string) =>
+				url.endsWith('/mcp-token-cleanup')
+					? new Response('down', { status: 502 })
+					: new Response(JSON.stringify({ success: true }), { status: 200 }),
+			)
+			globalThis.fetch = fetchMock as unknown as typeof fetch
+			const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+			const waited: Promise<unknown>[] = []
+			const ctx = {
+				waitUntil: vi.fn().mockImplementation((p) => {
+					waited.push(p)
+				}),
+				passThroughOnException: vi.fn(),
+			} as any
+
+			await worker.scheduled({ cron: '0 3 * * *' } as any, env, ctx)
+			const results = await Promise.allSettled(waited)
+
+			expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+				'https://app.example.com/resources/jobs/mcp-token-cleanup',
+				'https://app.example.com/resources/jobs/job-postings-expiry',
+			])
+			// One failing job does not stop the other from running.
+			expect(results.map((result) => result.status)).toEqual([
+				'rejected',
+				'fulfilled',
+			])
+			errorSpy.mockRestore()
+		})
+
+		it('runs GDPR erasure, voice retention and the staffing outbox from the shared daily trigger', async () => {
 			const fetchMock = vi.fn(async (url: string) =>
 				url.endsWith('/gdpr-erasure')
 					? new Response('down', { status: 502 })
@@ -438,13 +470,123 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
 				'https://app.example.com/resources/jobs/gdpr-erasure',
 				'https://app.example.com/resources/jobs/voice-retention',
+				'https://app.example.com/resources/jobs/staffing-outbox',
 			])
-			// One failing job does not stop the other from running.
+			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
 				'fulfilled',
+				'fulfilled',
 			])
 			errorSpy.mockRestore()
+		})
+
+		describe('hourly regional fan-out', () => {
+			const regionalEnv = () => ({
+				...env,
+				TENANT_API_URL: 'https://tenant-us.example.com/',
+				TENANT_API_URL_KSA: 'https://tenant-ksa.example.com',
+			})
+
+			function waited() {
+				const promises: Promise<unknown>[] = []
+				const ctx = {
+					waitUntil: vi.fn().mockImplementation((p) => {
+						promises.push(p)
+					}),
+					passThroughOnException: vi.fn(),
+				} as any
+				return { ctx, promises }
+			}
+
+			it('runs the engagement sync and the staff tick on every regional node', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+
+				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'fulfilled'])
+				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
+					url,
+					init.method,
+					init.headers.Authorization,
+				])
+				const token = `Bearer ${mockInternalToken}`
+				expect(calls).toEqual(
+					expect.arrayContaining([
+						['https://tenant-us.example.com/api/staff/tick', 'POST', token],
+						['https://tenant-ksa.example.com/api/staff/tick', 'POST', token],
+						[
+							'https://tenant-us.example.com/api/marketing/sync-engagement',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-ksa.example.com/api/marketing/sync-engagement',
+							'POST',
+							token,
+						],
+					]),
+				)
+				expect(calls).toHaveLength(4)
+			})
+
+			it('sends the staff tick an empty body so each node runs every organization', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				await Promise.allSettled(promises)
+				const tick = fetchMock.mock.calls.find(([url]: any) =>
+					String(url).endsWith('/api/staff/tick'),
+				) as any
+				expect(JSON.parse(tick[1].body)).toEqual({})
+			})
+
+			it('keeps going when one job or one node fails, and reports which', async () => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-ksa') &&
+					url.endsWith('/api/staff/tick')
+						? new Response('down', { status: 503, statusText: 'Unavailable' })
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+
+				// Engagement sync fulfilled; the staff tick failed on one node.
+				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected'])
+				// The healthy node still ran its tick.
+				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
+					'https://tenant-us.example.com/api/staff/tick',
+				)
+				expect(String((results[1] as PromiseRejectedResult).reason)).toContain(
+					'Tenant staff tick failed for https://tenant-ksa.example.com',
+				)
+				errorSpy.mockRestore()
+			})
+
+			it('does nothing for a node that is not configured', async () => {
+				const fetchMock = vi.fn()
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled(
+					{ cron: '0 * * * *' } as any,
+					{ ...env, TENANT_API_URL: undefined, TENANT_API_URL_KSA: undefined },
+					ctx,
+				)
+				await Promise.allSettled(promises)
+				expect(fetchMock).not.toHaveBeenCalled()
+			})
 		})
 
 		it('stays within the five cron triggers of the free plan', async () => {

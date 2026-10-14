@@ -1174,6 +1174,10 @@ export const OrganizationInvitation = sqliteTable(
 			onDelete: 'set null',
 			onUpdate: 'cascade',
 		}),
+		// Opaque id of a regional staff row this invitation will link to once
+		// accepted. Deliberately no foreign key: staff records live in the
+		// regional tenant database, never in the control plane.
+		staffMemberId: text(),
 	},
 	(table) => [
 		uniqueIndex('OrganizationInvitation_email_organizationId_key').on(
@@ -1292,6 +1296,10 @@ export const UserOrganization = sqliteTable(
 			.$onUpdate(() => new Date())
 			.notNull(),
 		department: text(),
+		// Which locations this member's staffing access covers: 'all' (every
+		// location, the default) or 'selected' (only the UserOrganizationLocation
+		// rows; none means no staffing access). Permissions elsewhere stay org-wide.
+		locationScope: text().default('all').notNull(),
 	},
 	(table) => [
 		index('UserOrganization_organizationRoleId_idx').on(
@@ -2442,6 +2450,12 @@ export const Organization = sqliteTable(
 		tiktokPixelId: text(),
 		/** Team chat message retention in days; null keeps messages forever. */
 		chatRetentionDays: integer(),
+		/**
+		 * IANA time zone of the organization's single staffing scope: the zone
+		 * shifts, time cards and labor days are computed in. Edited in the staff
+		 * settings.
+		 */
+		staffingTimeZone: text().default('UTC').notNull(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -2496,6 +2510,46 @@ export const OrganizationLocation = sqliteTable(
 			table.organizationId,
 			table.slug,
 		),
+	],
+)
+
+/**
+ * Locations a member's staffing access is limited to while
+ * `UserOrganization.locationScope` is 'selected'. The ids are opaque to the
+ * regional tenant databases: staff records only ever carry the same ids, never
+ * a foreign key. Removing a member or a location removes its grants.
+ */
+export const UserOrganizationLocation = sqliteTable(
+	'UserOrganizationLocation',
+	{
+		userId: text().notNull(),
+		organizationId: text().notNull(),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.userId, table.organizationId, table.locationId],
+			name: 'UserOrganizationLocation_userId_organizationId_locationId_pk',
+		}),
+		foreignKey({
+			columns: [table.userId, table.organizationId],
+			foreignColumns: [
+				UserOrganization.userId,
+				UserOrganization.organizationId,
+			],
+			name: 'UserOrganizationLocation_member_fk',
+		})
+			.onUpdate('cascade')
+			.onDelete('cascade'),
+		index('UserOrganizationLocation_locationId_idx').on(table.locationId),
 	],
 )
 
@@ -3362,6 +3416,82 @@ export const OrganizationDropReminder = sqliteTable(
 	(table) => [index('OrganizationDropReminder_dropId_idx').on(table.dropId)],
 )
 
+// Per-user org dashboards. `config` holds only block types, report/template
+// ids and grid positions, never customer data. A user's `home` dashboard is
+// created lazily on their first change, and each user has at most one per org.
+export const Dashboard = sqliteTable(
+	'Dashboard',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		ownerId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		kind: text({ enum: ['home', 'custom'] }).notNull(),
+		name: text().notNull(),
+		config: text().notNull(), // JSON DashboardConfig
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('Dashboard_organizationId_ownerId_idx').on(
+			table.organizationId,
+			table.ownerId,
+		),
+		uniqueIndex('Dashboard_organizationId_ownerId_home_key')
+			.on(table.organizationId, table.ownerId)
+			.where(sql`${table.kind} = 'home'`),
+	],
+)
+
+// Custom dashboards shared with other org members. Only the owner shares, and
+// a recipient also needs an active membership in the dashboard's org.
+export const DashboardShare = sqliteTable(
+	'DashboardShare',
+	{
+		dashboardId: text()
+			.notNull()
+			.references(() => Dashboard.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		access: text({ enum: ['view', 'edit'] }).notNull(),
+		sharedById: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.dashboardId, table.userId],
+			name: 'DashboardShare_dashboardId_userId_pk',
+		}),
+		index('DashboardShare_userId_idx').on(table.userId),
+	],
+)
+
 // AI phone agent configuration. Holds no caller data: calls, transcripts, and
 // caller numbers live in the regional tenant database.
 export const PhoneAgent = sqliteTable(
@@ -3555,5 +3685,123 @@ export const PhoneAgentTrainingRule = sqliteTable(
 	},
 	(table) => [
 		index('PhoneAgentTrainingRule_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * Control-plane outbox for staffing events that must reach the regional
+ * tenant database (link a login to a staff row, unlink, erase). Rows carry ids
+ * only: never names, contact details, pay, or times. A job drains the table and
+ * retries with backoff until the regional node acknowledges.
+ */
+export const StaffingOutbox = sqliteTable(
+	'StaffingOutbox',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		kind: text().notNull(), // 'link_user' | 'unlink_user' | 'erase_user'
+		payload: text({ mode: 'json' }).notNull(), // ids only
+		status: text().default('pending').notNull(), // 'pending' | 'done' | 'failed'
+		attempts: integer().default(0).notNull(),
+		nextAttemptAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		lastError: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('StaffingOutbox_status_nextAttemptAt_idx').on(
+			table.status,
+			table.nextAttemptAt,
+		),
+		index('StaffingOutbox_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * A public job posting (staffing.hiring). Public content only: a role, its
+ * description and pay range, and the questions an applicant answers. No person
+ * data is ever stored here. Applicants live in the regional tenant database and
+ * refer to a posting by this id (ADR 047, decision 8). The careers pages on
+ * Sites render published rows server side, and the sanitized description is
+ * sanitized again when it is rendered.
+ */
+export const JobPosting = sqliteTable(
+	'JobPosting',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// Legacy single location, mirrored from `locationIds` when exactly one is
+		// chosen. Reads use `locationIds`.
+		locationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		// Where the job is: location ids, or empty for every location (including
+		// ones added later). The applicant picks when there is more than one.
+		locationIds: text({ mode: 'json' }).default([]).notNull(),
+		slug: text().notNull(),
+		title: text().notNull(),
+		positionName: text().notNull(),
+		employmentType: text().default('part_time').notNull(),
+		payType: text().default('none').notNull(), // none | hourly | weekly | monthly | yearly
+		payMinMinor: integer(),
+		payMaxMinor: integer(),
+		currency: text().default('USD').notNull(),
+		descriptionHtml: text().default('').notNull(), // sanitized HTML
+		questions: text({ mode: 'json' }).default([]).notNull(), // screener questions
+		// Other-language copy: { [locale]: { title, descriptionHtml, prompts } }.
+		translations: text({ mode: 'json' }).default({}).notNull(),
+		// The evergreen "General application": offered by default, never expires.
+		isGeneral: integer({ mode: 'boolean' }).default(false).notNull(),
+		status: text().default('draft').notNull(), // draft | published | closed | expired
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		closedAt: integer({ mode: 'timestamp_ms' }),
+		expiresAt: integer({ mode: 'timestamp_ms' }),
+		createdByUserId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('JobPosting_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+		index('JobPosting_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+		index('JobPosting_status_expiresAt_idx').on(table.status, table.expiresAt),
+		index('JobPosting_locationId_idx').on(table.locationId),
 	],
 )

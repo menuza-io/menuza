@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	isLocationOpenForOrdering,
 	getAvailabilityPresets,
 	formatUnavailableUntil,
 	isUnavailableUntilExpired,
 	localDateAndTimeToUtc,
+	addLocalDays,
 } from './location-availability.ts'
 import { type WeeklySchedule } from './location-types.ts'
 
@@ -229,5 +230,168 @@ describe('isUnavailableUntilExpired', () => {
 				new Date('2026-09-21T12:00:00Z'),
 			),
 		).toBe(false)
+	})
+})
+
+describe('overnight hours', () => {
+	// Overnight service is modelled by splitting at midnight: Friday evening
+	// ends at 23:59 and Saturday starts again at 00:00.
+	const lateNightSchedule: WeeklySchedule = [
+		{ day: 'friday', isOpen: true, slots: [{ start: '18:00', end: '23:59' }] },
+		{
+			day: 'saturday',
+			isOpen: true,
+			slots: [{ start: '00:00', end: '02:00' }],
+		},
+		{ day: 'sunday', isOpen: true, slots: [{ start: '12:00', end: '23:59' }] },
+		{ day: 'monday', isOpen: false, slots: [] },
+	]
+	const at = (iso: string, extra: Record<string, unknown> = {}) =>
+		isLocationOpenForOrdering(
+			{ timezone: 'UTC', onlineHours: lateNightSchedule, ...extra },
+			new Date(iso),
+		)
+
+	it('is open before midnight and again after midnight on the split day', () => {
+		// 2026-09-25 is a Friday
+		expect(at('2026-09-25T23:30:00Z').isOpen).toBe(true)
+		expect(at('2026-09-26T00:00:00Z').isOpen).toBe(true)
+		expect(at('2026-09-26T01:15:00Z').isOpen).toBe(true)
+		expect(at('2026-09-26T02:00:00Z').isOpen).toBe(true)
+		expect(at('2026-09-26T02:01:00Z').isOpen).toBe(false)
+	})
+
+	it('reads midnight as 00:00 and never as 24:00', () => {
+		const result = at('2026-09-26T00:00:00Z')
+		expect(result.currentLocalTime).toBe('00:00')
+		expect(result.currentLocalDate).toBe('2026-09-26')
+		expect(result.dayOfWeek).toBe('saturday')
+	})
+
+	it('does not report closing soon while the evening continues past midnight', () => {
+		expect(at('2026-09-25T23:45:00Z').status).toBe('open')
+		// Saturday 01:45 is within 30 minutes of the real closing time.
+		expect(at('2026-09-26T01:45:00Z').status).toBe('closing_soon')
+	})
+
+	it('reports closing soon when the day end is not continued', () => {
+		// Sunday 23:45; Monday is closed, so the location really closes.
+		expect(at('2026-09-27T23:45:00Z').status).toBe('closing_soon')
+	})
+
+	it('does not continue past midnight into a special-hours closure', () => {
+		const result = at('2026-09-25T23:45:00Z', {
+			specialHours: [
+				{ id: 's1', date: '2026-09-26', isOpen: false, slots: [] },
+			],
+		})
+		expect(result.status).toBe('closing_soon')
+	})
+
+	it('respects the location timezone around midnight', () => {
+		// 2026-09-26T04:30Z is Saturday 00:30 in New York (EDT, UTC-4).
+		const result = isLocationOpenForOrdering(
+			{ timezone: 'America/New_York', onlineHours: lateNightSchedule },
+			new Date('2026-09-26T04:30:00Z'),
+		)
+		expect(result.currentLocalTime).toBe('00:30')
+		expect(result.dayOfWeek).toBe('saturday')
+		expect(result.isOpen).toBe(true)
+	})
+
+	it('treats a slot that ends before it starts as never open', () => {
+		// 22:00-02:00 written as one slot is not an overnight slot. It must split
+		// at midnight; the phone agent settings reject it for the same reason.
+		const inverted: WeeklySchedule = [
+			{
+				day: 'friday',
+				isOpen: true,
+				slots: [{ start: '22:00', end: '02:00' }],
+			},
+		]
+		for (const iso of [
+			'2026-09-25T23:00:00Z',
+			'2026-09-25T22:00:00Z',
+			'2026-09-25T01:00:00Z',
+		]) {
+			const result = isLocationOpenForOrdering(
+				{ timezone: 'UTC', onlineHours: inverted },
+				new Date(iso),
+			)
+			expect(result.isOpen).toBe(false)
+		}
+	})
+})
+
+describe('calendar day math across DST', () => {
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('adds calendar days and derives the weekday', () => {
+		expect(addLocalDays('2026-09-25', 1)).toEqual({
+			date: '2026-09-26',
+			day: 'saturday',
+		})
+		expect(addLocalDays('2026-12-31', 1)).toEqual({
+			date: '2027-01-01',
+			day: 'friday',
+		})
+		expect(addLocalDays('2028-02-28', 2).date).toBe('2028-03-01')
+	})
+
+	it('offers tomorrow opening on the next local date the night before spring forward', () => {
+		// America/New_York springs forward on 2027-03-14. Saturday 2027-03-13
+		// 23:30 EST + 24h lands on Monday 00:30 EDT, skipping Sunday entirely.
+		const schedule: WeeklySchedule = [
+			{
+				day: 'saturday',
+				isOpen: true,
+				slots: [{ start: '10:00', end: '23:59' }],
+			},
+			{
+				day: 'sunday',
+				isOpen: true,
+				slots: [{ start: '11:00', end: '20:00' }],
+			},
+			{
+				day: 'monday',
+				isOpen: true,
+				slots: [{ start: '09:00', end: '21:00' }],
+			},
+		]
+		const presets = getAvailabilityPresets(
+			{ timezone: 'America/New_York', onlineHours: schedule },
+			new Date('2027-03-14T04:30:00Z'), // Saturday 23:30 EST
+		)
+		const opening = presets.find((p) => p.id === 'tomorrow_opening')
+		expect(opening?.label).toBe('Tomorrow at 11:00 AM')
+		// 11:00 EDT on Sunday 2027-03-14 is 15:00Z.
+		expect(opening?.date?.toISOString()).toBe('2027-03-14T15:00:00.000Z')
+	})
+
+	it('offers no closing time preset on a day the location is closed', () => {
+		const schedule: WeeklySchedule = [
+			{
+				day: 'saturday',
+				isOpen: true,
+				slots: [{ start: '10:00', end: '23:59' }],
+			},
+		]
+		const presets = getAvailabilityPresets(
+			{ timezone: 'America/Chicago', onlineHours: schedule },
+			new Date('2026-09-26T03:00:00Z'), // Friday 22:00 CDT, closed Friday
+		)
+		expect(presets.some((p) => p.id === 'today_closing')).toBe(false)
+	})
+
+	it('labels tomorrow correctly in formatUnavailableUntil near a DST change', () => {
+		vi.useFakeTimers()
+		// Saturday 2027-03-13 23:30 EST.
+		vi.setSystemTime(new Date('2027-03-14T04:30:00Z'))
+		const sundayNoon = new Date('2027-03-14T16:00:00Z') // 12:00 EDT Sunday
+		expect(formatUnavailableUntil(sundayNoon, 'America/New_York')).toBe(
+			'Tomorrow at 12:00 PM',
+		)
 	})
 })

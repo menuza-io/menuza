@@ -1,0 +1,249 @@
+---
+import { msg } from '@lingui/core/macro'
+import { type PublicJobLocation, type PublicJobPosting } from '@repo/common/job-posting'
+import { locationOption } from '~/lib/careers/labels'
+import {
+	siteBtnPrimaryClass,
+	siteFieldLabelClass,
+	siteInputClass,
+	siteStatusErrorClass,
+	siteStatusSuccessClass,
+} from '~/lib/form-classes'
+import { translate } from '~/lib/translate'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+interface Props {
+	posting: Pick<PublicJobPosting, 'slug' | 'title' | 'questions'>
+	/** Where the job is. With more than one, the applicant chooses; with one it is implied. */
+	locations?: PublicJobLocation[]
+}
+
+/**
+ * The application form. It posts straight from the visitor's browser to the
+ * organization's regional tenant-api (`data-tenant-api-url`), so a name, phone
+ * number or email never passes through this server. The organization is not
+ * named by the form: tenant-api works it out from the page's own address
+ * (Origin), and the slug/host sent along are used only by local development.
+ * Which questions are asked comes from the live posting, and the server checks
+ * the answers against it again.
+ */
+const { posting, locations = [] } = Astro.props
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : ''
+const orgName = organization?.name ?? ''
+const locale = Astro.locals.requestedLocale || organization?.locale || 'en'
+
+const heading = i18n._(msg`Apply`)
+const unavailable = i18n._(
+	msg`Online applications are not available right now. Ask a team member.`,
+)
+const intro = i18n._(msg`Tell us a little about yourself. It takes a couple of minutes.`)
+const firstNameLabel = i18n._(msg`First name`)
+const lastNameLabel = i18n._(msg`Last name`)
+const emailLabel = i18n._(msg`Email`)
+const phoneLabel = i18n._(msg`Phone`)
+const phoneHint = i18n._(
+	msg`Include your country code, for example +1 415 555 0123.`,
+)
+const contactHint = i18n._(msg`Give us an email, a phone number, or both.`)
+const locationLabel = i18n._(msg`Where would you like to work?`)
+const locationHint = i18n._(msg`Choose every location that suits you.`)
+const yes = i18n._(msg`Yes`)
+const no = i18n._(msg`No`)
+const optional = i18n._(msg`(optional)`)
+const submit = i18n._(msg`Send application`)
+const consentText = translate(
+	i18n,
+	msg`I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask.`,
+	{ organization: orgName || i18n._(msg`this business`) },
+)
+const messages = {
+	sending: i18n._(msg`Sending...`),
+	submit,
+	success: i18n._(
+		msg`Thank you. Your application has been sent. If it looks like a good fit, they will be in touch.`,
+	),
+	checkAnswers: i18n._(msg`Please check the answers marked below and try again.`),
+	required: i18n._(msg`This is required.`),
+	chooseLocation: i18n._(msg`Choose at least one location.`),
+	badEmail: i18n._(msg`Enter a valid email address.`),
+	badPhone: i18n._(msg`Enter a phone number with its country code, like +1 415 555 0123.`),
+	contact: i18n._(msg`Give us an email or a phone number.`),
+	consent: i18n._(msg`Please agree so we can keep your application.`),
+	verify: i18n._(msg`Complete the verification check before sending.`),
+	verifyFailed: i18n._(msg`The verification check did not pass. Please try again.`),
+	closed: i18n._(msg`This job is no longer taking applications.`),
+	tooMany: i18n._(
+		msg`Too many applications were sent from here. Please try again later.`,
+	),
+	unavailable: i18n._(
+		msg`We could not send your application right now. Please try again in a moment.`,
+	),
+	network: i18n._(msg`We could not reach the server. Check your connection and try again.`),
+}
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+const questions = posting.questions ?? []
+---
+
+{
+	turnstileSiteKey && tenantApiUrl ? (
+		<script
+			is:inline
+			src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+			async
+			defer
+		/>
+	) : null
+}
+
+<section id="apply" aria-labelledby="apply-heading" class="surface flex scroll-mt-24 flex-col gap-4 p-5 sm:p-6">
+	<h2 id="apply-heading" class="text-xl font-semibold text-foreground">{heading}</h2>
+	{
+		!tenantApiUrl ? (
+			<p class="text-sm text-muted-foreground">{unavailable}</p>
+		) : (
+			<form
+				data-apply-form
+				data-tenant-api-url={tenantApiUrl}
+				data-posting-slug={posting.slug}
+				data-org-slug={Astro.locals.orgSlug || undefined}
+				data-custom-host={Astro.locals.customHost || undefined}
+				data-locale={locale.startsWith('ar') ? 'ar' : 'en'}
+				data-consent-version="2026-10"
+				data-turnstile={turnstileSiteKey ? 'on' : undefined}
+				data-messages={JSON.stringify(messages)}
+				data-success-class={siteStatusSuccessClass}
+				data-error-class={siteStatusErrorClass}
+				novalidate
+				class="flex flex-col gap-5"
+			>
+				<p class="text-sm text-muted-foreground">{intro}</p>
+
+				<div class="hidden" aria-hidden="true">
+					<label for="apply-website">Website</label>
+					<input id="apply-website" name="website" tabindex="-1" autocomplete="off" />
+				</div>
+
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div class="flex flex-col gap-2">
+						<label class={siteFieldLabelClass} for="apply-first-name">{firstNameLabel}</label>
+						<input id="apply-first-name" name="firstName" class={siteInputClass} autocomplete="given-name" maxlength="80" required />
+						<p class="hidden text-sm text-destructive" data-error-for="firstName"></p>
+					</div>
+					<div class="flex flex-col gap-2">
+						<label class={siteFieldLabelClass} for="apply-last-name">{lastNameLabel}</label>
+						<input id="apply-last-name" name="lastName" class={siteInputClass} autocomplete="family-name" maxlength="80" required />
+						<p class="hidden text-sm text-destructive" data-error-for="lastName"></p>
+					</div>
+				</div>
+
+				{
+					locations.length > 1 ? (
+						<fieldset class="flex flex-col gap-2" data-locations>
+							<legend class={siteFieldLabelClass}>{locationLabel}</legend>
+							<p class="text-sm text-muted-foreground">{locationHint}</p>
+							<div class="flex flex-col gap-2">
+								{locations.map((place) => (
+									<label class="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-input px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+										<input type="checkbox" class="size-4 accent-primary" name="scopeIds" value={place.id} />
+										{locationOption(place)}
+									</label>
+								))}
+							</div>
+							<p class="hidden text-sm text-destructive" data-error-for="scopeIds"></p>
+						</fieldset>
+					) : locations.length === 1 ? (
+						<input type="hidden" name="scopeIds" value={locations[0]!.id} />
+					) : null
+				}
+
+				<p class="-mb-2 text-sm text-muted-foreground">{contactHint}</p>
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div class="flex flex-col gap-2">
+						<label class={siteFieldLabelClass} for="apply-email">{emailLabel}</label>
+						<input id="apply-email" name="email" type="email" class={siteInputClass} autocomplete="email" maxlength="254" dir="ltr" />
+						<p class="hidden text-sm text-destructive" data-error-for="email"></p>
+					</div>
+					<div class="flex flex-col gap-2">
+						<label class={siteFieldLabelClass} for="apply-phone">{phoneLabel}</label>
+						<input id="apply-phone" name="phone" type="tel" class={siteInputClass} autocomplete="tel" maxlength="40" dir="ltr" aria-describedby="apply-phone-hint" />
+						<p id="apply-phone-hint" class="text-xs text-muted-foreground">{phoneHint}</p>
+						<p class="hidden text-sm text-destructive" data-error-for="phone"></p>
+					</div>
+				</div>
+
+				{
+					questions.map((question) =>
+						question.kind === 'yes_no' ? (
+							<fieldset class="flex flex-col gap-2" data-question={question.id} data-kind="yes_no">
+								<legend class={siteFieldLabelClass} dir="auto">{question.prompt}</legend>
+								<div class="flex gap-3">
+									<label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-input px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+										<input type="radio" class="size-4 accent-primary" name={`q:${question.id}`} value="yes" required />
+										{yes}
+									</label>
+									<label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-input px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+										<input type="radio" class="size-4 accent-primary" name={`q:${question.id}`} value="no" required />
+										{no}
+									</label>
+								</div>
+								<p class="hidden text-sm text-destructive" data-error-for={`q:${question.id}`}></p>
+							</fieldset>
+						) : (
+							<div class="flex flex-col gap-2" data-question={question.id} data-kind="open">
+								<label class={siteFieldLabelClass} for={`apply-q-${question.id}`} dir="auto">
+									{question.prompt}
+									{question.required ? null : <span class="font-normal text-muted-foreground"> {optional}</span>}
+								</label>
+								<textarea
+									id={`apply-q-${question.id}`}
+									name={`q:${question.id}`}
+									rows="4"
+									maxlength={question.maxLength}
+									required={question.required}
+									class:list={[siteInputClass, 'h-auto resize-y']}
+									dir="auto"
+								/>
+								<p class="hidden text-sm text-destructive" data-error-for={`q:${question.id}`}></p>
+							</div>
+						),
+					)
+				}
+
+				<div class="flex flex-col gap-2">
+					<label class="flex cursor-pointer items-start gap-3 text-sm text-foreground">
+						<input type="checkbox" name="consent" class="mt-0.5 size-5 shrink-0 accent-primary" required />
+						<span>{consentText}</span>
+					</label>
+					<p class="hidden text-sm text-destructive" data-error-for="consent"></p>
+				</div>
+
+				{
+					turnstileSiteKey ? (
+						<div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="careers-apply" />
+					) : null
+				}
+
+				<p data-apply-status class="hidden" role="status" tabindex="-1"></p>
+				<button type="submit" class={siteBtnPrimaryClass}>{submit}</button>
+			</form>
+		)
+	}
+</section>
+
+<script>
+	import { initApplyForm } from '~/lib/careers/apply-form'
+
+	const form = document.querySelector('[data-apply-form]')
+	if (form instanceof HTMLFormElement) {
+		initApplyForm(form, {
+			search: location.search,
+			resetChallenge: () => {
+				const turnstile = (globalThis as { turnstile?: { reset?: () => void } })
+					.turnstile
+				turnstile?.reset?.()
+			},
+		})
+	}
+</script>

@@ -17,6 +17,12 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { TenantRoleAccessManager } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
+import {
+	createStaffingRolePreset,
+	listStaffingRolePresets,
+} from '#app/utils/staffing/role-presets.server.ts'
+import { isStaffingRolePresetKey } from '#app/utils/staffing/role-presets.ts'
 import {
 	getCustomRole,
 	invalidateAssignedActiveMembers,
@@ -30,8 +36,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		params.orgSlug,
 	)
 	const roles = await listOrganizationRoles(organization.organizationId)
+	// Presets exist only while the Staff module is on for this organization.
+	const staffingPresets = (await isStaffingFeatureEnabled(
+		organization.organizationId,
+	))
+		? await listStaffingRolePresets(organization.organizationId)
+		: undefined
 
 	return {
+		staffingPresets,
 		organization: {
 			id: organization.organizationId,
 			name: organization.organizationName,
@@ -137,6 +150,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { message: 'Role deleted.' }
 	}
 
+	if (intent === 'create-staffing-preset') {
+		// A module that is off should look like it does not exist.
+		if (!(await isStaffingFeatureEnabled(organization.organizationId))) {
+			throw new Response('Not Found', { status: 404 })
+		}
+		const presetKey = formData.get('presetKey')
+		if (!isStaffingRolePresetKey(presetKey)) {
+			return { error: 'Choose one of the staff role presets.' }
+		}
+		const created = await createStaffingRolePreset(
+			organization.organizationId,
+			presetKey,
+		)
+		if (!created.ok) {
+			return {
+				error:
+					'A role with this name already exists in your organization or as a built-in role.',
+			}
+		}
+		await auditService.log({
+			action: AuditAction.ROLE_CREATED,
+			userId,
+			organizationId: organization.organizationId,
+			details: 'Custom organization role created from a staff preset.',
+			resourceType: 'organization_role',
+			resourceId: created.roleId,
+			metadata: { preset: presetKey },
+			request,
+		})
+		return { message: `The role "${created.name}" has been created.` }
+	}
+
 	return { error: 'Unsupported action.' }
 }
 
@@ -150,6 +195,7 @@ export default function RolesIndexRoute() {
 			orgSlug={data.organization.slug}
 			message={actionData?.message}
 			error={actionData?.error}
+			staffingPresets={data.staffingPresets}
 		/>
 	)
 }

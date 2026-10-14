@@ -13,19 +13,24 @@ import {
 	getField,
 	getSubject,
 	isReportRunError,
-	organizationCatalog,
 	type ReportDefinition,
 	reportDefinitionSchema,
 	referencedFieldIds,
 	resolveTimeframeRange,
+	resolveReportTimeZone,
+	timeframeLoadWindow,
 	runReport,
 	type ReportRecord,
 } from '@repo/reports'
 import {
+	isStaffingReportSubject,
 	operatorTokenAllowsSubject,
+	STAFF_PAY_REPORT_PERMISSION,
 	verifyOperatorAnalyticsToken,
 } from '@repo/reports/token'
+import { activeReportCatalog } from '../restaurant/staffing-report-catalog.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
+import { describeStaffError } from '../services/staff-audit.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, getInternalCommandToken } from '../lib/secrets.ts'
 import {
@@ -36,11 +41,22 @@ import {
 	loadTextSubscriberRecords,
 	ORDER_REPORT_MAX_ROWS,
 } from '../services/report-records.ts'
+import {
+	auditStaffReportRun,
+	loadApplicationRecords,
+	loadLaborDailyRecords,
+	loadShiftRecords,
+	loadTimeEntryRecords,
+	staffAuthFromSubjects,
+	type StaffReportContext,
+} from '../services/staffing-report-records.ts'
 
 export const analyticsRoutes = new Hono()
 
 const querySchema = z.object({
 	definition: reportDefinitionSchema,
+	/** The viewer's IANA zone, used when the report follows the user's zone. */
+	timeZone: z.string().max(64).optional(),
 })
 
 const TENANT_ANALYTICS_SUBJECTS = new Set([
@@ -51,6 +67,10 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'text_subscribers',
 	'shop_orders',
 	'phone_calls',
+	'time_entries',
+	'shifts',
+	'labor_daily',
+	'applications',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -151,7 +171,7 @@ export async function loadPhoneCallRecords(
 	// validation in runReport, so there is nothing to narrow.
 	const range =
 		definition.timeframe.field === 'startedAt'
-			? resolveTimeframeRange(
+			? timeframeLoadWindow(
 					definition.timeframe.preset,
 					now,
 					definition.timeframe,
@@ -291,14 +311,21 @@ analyticsRoutes.post('/query', async (c) => {
 			403,
 		)
 	}
-	const subject = getSubject(organizationCatalog, definition.subject)!
+	const subject = getSubject(activeReportCatalog(), definition.subject)!
 	for (const fieldId of referencedFieldIds(subject, definition)) {
 		const requires = getField(subject, fieldId)?.requiresSubject
 		if (requires && !operatorTokenAllowsSubject(claims, requires)) {
 			return c.json(
 				{
 					error: 'forbidden_subject',
-					message: 'You do not have permission to report on order data.',
+					message:
+						requires === STAFF_PAY_REPORT_PERMISSION
+							? 'You do not have permission to report on pay data.'
+							: requires === 'orders' ||
+								  requires === 'order_items' ||
+								  requires === 'order_options'
+								? 'You do not have permission to report on order data.'
+								: 'You do not have permission to report on this data.',
 				},
 				403,
 			)
@@ -358,10 +385,52 @@ analyticsRoutes.post('/query', async (c) => {
 	}
 
 	const now = new Date()
+	const timeZone = resolveReportTimeZone(
+		definition.settings.timezone,
+		parsed.data.timeZone,
+	)
 	let records: ReportRecord[]
 	let sourceTruncated = false
 	let sourceRowLimit = 0
-	if (definition.subject === 'customers') {
+	if (isStaffingReportSubject(definition.subject)) {
+		const staffCtx: StaffReportContext = {
+			db,
+			auth: staffAuthFromSubjects({
+				orgId: claims.orgId,
+				userId: claims.userId,
+				subjects: claims.subjects,
+				scopeIds: claims.scopeIds,
+			}),
+			now: now.getTime(),
+		}
+		let loaded
+		try {
+			loaded =
+				definition.subject === 'time_entries'
+					? await loadTimeEntryRecords(staffCtx, definition)
+					: definition.subject === 'shifts'
+						? await loadShiftRecords(staffCtx, definition)
+						: definition.subject === 'labor_daily'
+							? await loadLaborDailyRecords(staffCtx, subject, definition)
+							: await loadApplicationRecords(staffCtx, definition)
+			await auditStaffReportRun(staffCtx, {
+				subject: definition.subject,
+				rows: loaded.records.length,
+				readsPay: claims.subjects.includes(STAFF_PAY_REPORT_PERMISSION),
+			})
+		} catch (error) {
+			// A Drizzle error message quotes every bound value, which for staff
+			// data means names and wages: never log or return it.
+			console.error('Staff report failed', describeStaffError(error))
+			return c.json(
+				{ error: 'report_failed', message: 'The report could not be run.' },
+				500,
+			)
+		}
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = records.length
+	} else if (definition.subject === 'customers') {
 		records = await loadCustomerRecords(db, claims.orgId, subject, definition)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
@@ -402,14 +471,16 @@ analyticsRoutes.post('/query', async (c) => {
 		records = rows.map(mapShopOrder)
 	}
 
-	const result = runReport(organizationCatalog, definition, records, now)
+	const result = runReport(activeReportCatalog(), definition, records, now, {
+		timeZone,
+	})
 	if (isReportRunError(result)) {
 		const status = result.error === 'missing_group_by' ? 422 : 400
 		return c.json(result, status)
 	}
 
 	// `truncated` is the list view's row cap; this says the counts themselves
-	// only cover the most recent `sourceRowLimit` calls or orders.
+	// only cover the most recent `sourceRowLimit` calls, orders or rows.
 	return c.json(
 		sourceTruncated
 			? { ...result, sourceTruncated: true, sourceRowLimit }

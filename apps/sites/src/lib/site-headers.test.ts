@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	asAstroResponse,
+	isCareersPage,
 	isDropVisibilityPage,
 	isSitesAppRoute,
 	publishedHtmlCacheUrl,
@@ -38,6 +39,9 @@ describe('isSitesAppRoute', () => {
 		expect(isSitesAppRoute('/profile')).toBe(true)
 		expect(isSitesAppRoute('/menu')).toBe(true)
 		expect(isSitesAppRoute('/menu/checkout')).toBe(true)
+		expect(isSitesAppRoute('/careers')).toBe(true)
+		expect(isSitesAppRoute('/careers/line-cook')).toBe(true)
+		expect(isSitesAppRoute('/careers-and-more')).toBe(false)
 		expect(isSitesAppRoute('/')).toBe(false)
 		expect(isSitesAppRoute('/about')).toBe(false)
 	})
@@ -137,5 +141,34 @@ describe('publishedHtmlCacheUrl', () => {
 			publishedHtmlCacheUrl(requestUrl, '  ACME12.Preview.Example.Dev:443  ')
 				.href,
 		).toBe('https://acme12.preview.example.dev/page')
+	})
+})
+
+describe('careers pages', () => {
+	it('are recognized with and without a locale prefix', () => {
+		for (const path of [
+			'/careers',
+			'/careers/line-cook',
+			'/ar/careers',
+			'/ar/careers/line-cook',
+			'/pt-br/careers',
+		]) {
+			expect(isCareersPage(path)).toBe(true)
+		}
+		for (const path of ['/', '/about', '/blog', '/ar', '/blog/careers']) {
+			expect(isCareersPage(path)).toBe(false)
+		}
+	})
+
+	it('are never served from the HTML edge cache', () => {
+		for (const path of ['/careers', '/careers/line-cook', '/ar/careers/x']) {
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`, { method: 'GET' }),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(false)
+		}
 	})
 })

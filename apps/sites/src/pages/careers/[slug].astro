@@ -1,0 +1,154 @@
+---
+import { msg } from '@lingui/core/macro'
+import { isValidJobPostingSlug } from '@repo/common/job-posting'
+import { getLocaleHref } from '@repo/common/site-locales'
+import ApplyPanel from '~/components/careers/ApplyPanel.astro'
+import ShareJob from '~/components/careers/ShareJob.astro'
+import SitePage from '~/components/SitePage.astro'
+import { employmentLabel, payLine, placeLine } from '~/lib/careers/labels'
+import { jobPostingStructuredData } from '~/lib/careers/seo'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedJobPosting } from '~/lib/org'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+import { siteBtnPrimaryClass } from '~/lib/form-classes'
+import { translate } from '~/lib/translate'
+import { sanitizeJobDescription } from '~/lib/sanitize'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const postingSlug = Astro.params.slug
+
+if (!organization || !postingSlug || !isValidJobPostingSlug(postingSlug)) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+const careersHref = getLocaleHref('/careers', locale, locale, defaultLocale)
+const allJobs = i18n._(msg`All jobs`)
+
+const data = await fetchPublishedJobPosting({
+	slug: orgSlug,
+	host: customHost,
+	locale,
+	posting: postingSlug,
+})
+
+// A closed, ended or unknown job is a clear page, not a blank 404, and it is
+// kept out of search results.
+if (!data) {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+
+const posting = data?.posting ?? null
+const pageTitle = posting ? `${posting.title} - ${organization.name}` : `${i18n._(msg`Careers`)} - ${organization.name}`
+const formatDate = (iso: string) =>
+	new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(iso))
+
+const descriptionHtml = posting ? sanitizeJobDescription(posting.descriptionHtml) : ''
+const origin = Astro.url.origin
+const canonicalPath = posting
+	? getLocaleHref(`/careers/${encodeURIComponent(posting.slug)}`, locale, locale, defaultLocale)
+	: careersHref
+const canonicalUrl = `${origin}${canonicalPath}`
+const pay = posting ? payLine(i18n, locale, posting) : null
+const meta = posting
+	? [placeLine(posting), employmentLabel(i18n, posting.employmentType)].filter(Boolean)
+	: []
+const postedLabel = posting
+	? translate(i18n, msg`Posted {date}`, { date: formatDate(posting.datePosted) })
+	: ''
+const applyByLabel =
+	posting?.validThrough
+		? translate(i18n, msg`Apply by {date}`, { date: formatDate(posting.validThrough) })
+		: ''
+const structuredData = posting
+	? jobPostingStructuredData({
+			posting,
+			organizationName: organization.name,
+			siteUrl: origin,
+			url: canonicalUrl,
+			locale,
+			logoUrl: organization.siteIcon?.original ?? null,
+			// Only claimed when the page really has the form (it needs the regional
+			// node's address).
+			directApply: getTenantApiUrl(organization.dataRegion) !== '',
+		})
+	: null
+const closedTitle = i18n._(msg`This job is no longer open.`)
+const seeAll = i18n._(msg`See all open jobs`)
+const applyNow = i18n._(msg`Apply now`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'careers-job', title: posting?.title ?? closedTitle, slug: 'careers', isHomePage: false, sections: [] }}
+	title={pageTitle}
+	description={posting ? [meta.join(' · '), pay].filter(Boolean).join(' · ') : undefined}
+	canonicalUrl={canonicalUrl}
+	noIndex={!posting}
+>
+	{structuredData ? (
+		<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />
+	) : null}
+
+	<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+		<a
+			href={careersHref}
+			class="focus-ring mt-6 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground sm:mt-10"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.75"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="size-4 rtl:rotate-180"
+				aria-hidden="true"
+			>
+				<path d="m15 18-6-6 6-6" />
+			</svg>
+			{allJobs}
+		</a>
+
+		{posting ? (
+			<div class="mt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-16">
+				<article>
+					<header class="pb-6">
+						<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl" dir="auto">
+							{posting.title}
+						</h1>
+						<p class="mt-3 text-base text-muted-foreground">{meta.join(' · ')}</p>
+						{pay ? <p class="price mt-1 text-base font-semibold text-foreground">{pay}</p> : null}
+						<p class="mt-3 text-sm text-muted-foreground">
+							{postedLabel}{applyByLabel ? ` · ${applyByLabel}` : ''}
+						</p>
+						<a href="#apply" class:list={[siteBtnPrimaryClass, 'focus-ring mt-5']}>{applyNow}</a>
+					</header>
+					<div
+						class="max-w-prose text-base leading-relaxed text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:mt-1 [&_ol]:ms-5 [&_ol]:list-decimal [&_p]:mt-3 [&_ul]:ms-5 [&_ul]:list-disc"
+						dir="auto"
+						set:html={descriptionHtml}
+					/>
+					<div class="mt-10">
+						<ApplyPanel posting={posting} locations={posting.locations} />
+					</div>
+				</article>
+
+				<aside class="mt-10 flex flex-col gap-8 lg:sticky lg:top-24 lg:mt-0">
+					<ShareJob url={canonicalUrl} title={posting.title} />
+				</aside>
+			</div>
+		) : (
+			<div class="surface mt-6 flex flex-col items-start gap-3 px-6 py-10">
+				<p class="text-base font-semibold text-foreground">{closedTitle}</p>
+				<a href={careersHref} class="btn-secondary">{seeAll}</a>
+			</div>
+		)}
+	</div>
+</SitePage>

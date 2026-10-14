@@ -36,7 +36,7 @@ import {
 	emptyFilterGroup,
 	flattenFilterConditions,
 	isListReport,
-	isValueMeasure,
+	measuresAValueField,
 } from '../dsl.ts'
 import { timeBucketLabel, timeframePresetLabel } from '../engine.ts'
 import { FilterEditor } from './filter-editor.tsx'
@@ -48,6 +48,7 @@ const MEASURE_LABELS: Record<Measure, string> = {
 	percent: 'Percent',
 	sum: 'Sum',
 	average: 'Average',
+	ratio: 'Ratio',
 }
 
 /**
@@ -60,7 +61,7 @@ function visualizationForMeasure(
 	measure: Measure,
 	subject: ReportSubject | null,
 ): ReportDefinition['visualization'] {
-	if (!isValueMeasure(measure)) {
+	if (!measuresAValueField(measure)) {
 		return { ...visualization, measure, valueField: undefined }
 	}
 	const fields = subject ? valueFields(subject, measure) : []
@@ -76,9 +77,10 @@ function visualizationForMeasure(
 		...visualization,
 		measure,
 		valueField,
-		// Averages don't add up to a whole, so they can't be pie slices.
+		// Averages and ratios don't add up to a whole, so they can't be pie slices.
 		chartStyle:
-			measure === 'average' && visualization.chartStyle === 'pie'
+			(measure === 'average' || measure === 'ratio') &&
+			visualization.chartStyle === 'pie'
 				? 'bar'
 				: visualization.chartStyle,
 	}
@@ -270,13 +272,14 @@ export function ReportBuilder({
 	const groupedField = selectedGroup[0]
 	const datetimeGrouped = groupedField?.type === 'datetime'
 	const { measure } = definition.visualization
-	const valueMeasure = isValueMeasure(measure) ? measure : null
+	const valueMeasure = measuresAValueField(measure) ? measure : null
 	const measureFields =
 		subject && valueMeasure ? valueFields(subject, valueMeasure) : []
 	const canSum = subject ? valueFields(subject, 'sum').length > 0 : false
 	const canAverage = subject
 		? valueFields(subject, 'average').length > 0
 		: false
+	const canRatio = subject ? valueFields(subject, 'ratio').length > 0 : false
 	const measuredField = definition.visualization.valueField
 		? measureFields.find(
 				(field) => field.id === definition.visualization.valueField,
@@ -673,7 +676,8 @@ export function ReportBuilder({
 													const nextStyle =
 														chartStyle === 'pie' &&
 														(groupedType === 'datetime' ||
-															measure === 'average')
+															measure === 'average' ||
+															measure === 'ratio')
 															? 'bar'
 															: chartStyle
 													update({
@@ -717,7 +721,7 @@ export function ReportBuilder({
 														Measure
 														<HelpTip
 															label="Measure help"
-															text="Count records, show each segment's percent of them, or add up or average a number such as order totals."
+															text="Count records, show each segment's percent of them, add up or average a number such as order totals, or divide one total by another, such as wages by sales."
 														/>
 													</Label>
 													<Select
@@ -755,13 +759,22 @@ export function ReportBuilder({
 																	{MEASURE_LABELS.average}
 																</SelectItem>
 															) : null}
+															{canRatio || measure === 'ratio' ? (
+																<SelectItem value="ratio">
+																	{MEASURE_LABELS.ratio}
+																</SelectItem>
+															) : null}
 														</SelectContent>
 													</Select>
 												</div>
 												{valueMeasure ? (
 													<div className="space-y-2">
 														<Label>
-															{valueMeasure === 'sum' ? 'Add up' : 'Average of'}
+															{valueMeasure === 'sum'
+																? 'Add up'
+																: valueMeasure === 'ratio'
+																	? 'Ratio of'
+																	: 'Average of'}
 														</Label>
 														<Select
 															value={
@@ -778,7 +791,13 @@ export function ReportBuilder({
 															}}
 														>
 															<SelectTrigger className="w-full">
-																<SelectValue placeholder="Select a number…">
+																<SelectValue
+																	placeholder={
+																		valueMeasure === 'ratio'
+																			? 'Select a ratio…'
+																			: 'Select a number…'
+																	}
+																>
 																	{measuredField?.label}
 																</SelectValue>
 															</SelectTrigger>
@@ -1003,13 +1022,15 @@ export function ReportBuilder({
 															</SelectValue>
 														</SelectTrigger>
 														<SelectContent>
+															<SelectItem value="day">Daily</SelectItem>
 															<SelectItem value="week">Weekly</SelectItem>
 															<SelectItem value="month">Monthly</SelectItem>
 														</SelectContent>
 													</Select>
 													<p className="text-muted-foreground text-xs leading-relaxed">
-														Bucket dates into calendar weeks (Monday–Sunday,
-														UTC) or calendar months.
+														Bucket dates into calendar days, weeks
+														(Monday–Sunday) or months, in the report&apos;s time
+														zone.
 													</p>
 												</div>
 											) : null}
@@ -1081,6 +1102,13 @@ export function ReportBuilder({
 													? Intl.DateTimeFormat().resolvedOptions().timeZone
 													: 'UTC'}
 											</p>
+											{subject?.timeZoneField ? (
+												<p className="text-muted-foreground text-xs leading-relaxed">
+													Days for this subject follow each workplace&apos;s own
+													time zone, so a day is the workplace&apos;s business
+													day.
+												</p>
+											) : null}
 										</div>
 									</>
 								) : null}

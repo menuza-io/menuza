@@ -6,6 +6,28 @@ import {
 	DEFAULT_WEEKLY_SCHEDULE,
 } from './location-types.ts'
 
+/**
+ * Overnight hours are modelled by splitting at midnight: Friday 18:00-23:59 and
+ * Saturday 00:00-02:00. A slot whose end is not after its start (for example
+ * 22:00-02:00) is not an overnight slot; it is never open, the same rule the
+ * phone agent settings enforce. Slot times are minute-granular and the end is
+ * inclusive, so 23:59 covers the whole last minute of the day.
+ */
+export const END_OF_DAY = '23:59'
+export const START_OF_DAY = '00:00'
+
+/** Adds calendar days to a `YYYY-MM-DD` date. Calendar math, so DST-safe. */
+export function addLocalDays(dateStr: string, days: number) {
+	const [y = 1970, m = 1, d = 1] = dateStr.split('-').map(Number)
+	const date = new Date(Date.UTC(y, m - 1, d + days))
+	const weekday = DAYS_ORDER[date.getUTCDay()] ?? 'monday'
+	const pad = (n: number) => String(n).padStart(2, '0')
+	return {
+		date: `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`,
+		day: weekday,
+	}
+}
+
 export interface LocationOrderingAvailability {
 	isOpen: boolean
 	status: 'open' | 'closed' | 'closing_soon'
@@ -49,7 +71,7 @@ export function isLocationOpenForOrdering(
 			day: '2-digit',
 			hour: '2-digit',
 			minute: '2-digit',
-			hour12: false,
+			hourCycle: 'h23',
 			weekday: 'long',
 		})
 		for (const p of formatter.formatToParts(currentTime)) {
@@ -64,7 +86,7 @@ export function isLocationOpenForOrdering(
 			day: '2-digit',
 			hour: '2-digit',
 			minute: '2-digit',
-			hour12: false,
+			hourCycle: 'h23',
 			weekday: 'long',
 		})
 		for (const p of formatter.formatToParts(currentTime)) {
@@ -113,7 +135,9 @@ export function isLocationOpenForOrdering(
 					slot.start <= currentLocalTime && currentLocalTime <= slot.end,
 			)
 			if (activeSlot) {
-				const isClosingSoon = checkClosingSoon(currentLocalTime, activeSlot.end)
+				const isClosingSoon =
+					checkClosingSoon(currentLocalTime, activeSlot.end) &&
+					!continuesPastMidnight(location, currentLocalDate, activeSlot.end)
 				return {
 					...baseResult,
 					isOpen: true,
@@ -157,7 +181,9 @@ export function isLocationOpenForOrdering(
 	)
 
 	if (matchingSlot) {
-		const isClosingSoon = checkClosingSoon(currentLocalTime, matchingSlot.end)
+		const isClosingSoon =
+			checkClosingSoon(currentLocalTime, matchingSlot.end) &&
+			!continuesPastMidnight(location, currentLocalDate, matchingSlot.end)
 		return {
 			...baseResult,
 			isOpen: true,
@@ -191,6 +217,40 @@ export function isLocationOpenForOrdering(
 	}
 }
 
+type HoursSource = {
+	onlineHours?: WeeklySchedule | null
+	storeHours?: WeeklySchedule | null
+	specialHours?: SpecialHour[] | null
+}
+
+/**
+ * True when a slot ending at the very end of the day is followed by a slot that
+ * starts at midnight on the next local date, i.e. an overnight stretch that was
+ * split at midnight. Such a location is not about to close.
+ */
+function continuesPastMidnight(
+	location: HoursSource,
+	localDate: string,
+	slotEnd: string,
+): boolean {
+	if (slotEnd !== END_OF_DAY) return false
+	const next = addLocalDays(localDate, 1)
+	const special = Array.isArray(location.specialHours)
+		? location.specialHours.find((entry) => entry.date === next.date)
+		: undefined
+	let slots: SpecialHour['slots'] = []
+	if (special) {
+		slots = special.isOpen ? (special.slots ?? []) : []
+	} else {
+		const schedule = location.onlineHours || location.storeHours
+		const daySchedule = Array.isArray(schedule)
+			? schedule.find((entry) => entry.day === next.day)
+			: undefined
+		slots = daySchedule?.isOpen ? (daySchedule.slots ?? []) : []
+	}
+	return slots.some((slot) => slot.start === START_OF_DAY)
+}
+
 function checkClosingSoon(currentTime: string, endTime: string): boolean {
 	const [currH = 0, currM = 0] = currentTime.split(':').map(Number)
 	const [endH = 0, endM = 0] = endTime.split(':').map(Number)
@@ -220,7 +280,7 @@ export function localDateAndTimeToUtc(
 			hour: '2-digit',
 			minute: '2-digit',
 			second: '2-digit',
-			hour12: false,
+			hourCycle: 'h23',
 		}).formatToParts(approx)
 
 		const p: Record<string, string> = {}
@@ -283,7 +343,7 @@ export function getAvailabilityPresets(
 			day: '2-digit',
 			hour: '2-digit',
 			minute: '2-digit',
-			hour12: false,
+			hourCycle: 'h23',
 			weekday: 'long',
 		})
 		for (const p of formatter.formatToParts(now)) {
@@ -297,7 +357,7 @@ export function getAvailabilityPresets(
 			day: '2-digit',
 			hour: '2-digit',
 			minute: '2-digit',
-			hour12: false,
+			hourCycle: 'h23',
 			weekday: 'long',
 		})
 		for (const p of formatter.formatToParts(now)) {
@@ -307,7 +367,6 @@ export function getAvailabilityPresets(
 
 	const todayDayOfWeek = (parts.weekday?.toLowerCase() ?? 'monday') as DayOfWeek
 	const todayDateStr = `${parts.year}-${parts.month}-${parts.day}`
-	const currentLocalTime = `${parts.hour}:${parts.minute}`
 
 	const schedule =
 		parseSchedule(location?.onlineHours) ||
@@ -372,32 +431,11 @@ export function getAvailabilityPresets(
 		}
 	}
 
-	// 4. Tomorrow at opening time
-	const tomorrowApprox = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-	let tomorrowParts: Record<string, string> = {}
-	try {
-		const tomorrowFormatter = new Intl.DateTimeFormat('en-US', {
-			timeZone: timezone,
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false,
-			weekday: 'long',
-		})
-		for (const p of tomorrowFormatter.formatToParts(tomorrowApprox)) {
-			tomorrowParts[p.type] = p.value
-		}
-	} catch {
-		tomorrowParts = parts
-	}
-
-	const tomorrowDayOfWeek = (tomorrowParts.weekday?.toLowerCase() ??
-		'tuesday') as DayOfWeek
-	const tomorrowDateStr = `${tomorrowParts.year}-${tomorrowParts.month}-${tomorrowParts.day}`
-
-	const tomorrowDaySchedule = schedule.find((d) => d.day === tomorrowDayOfWeek)
+	// 4. Tomorrow at opening time. Walk calendar dates from the local date, not
+	// `now + 24h`: a day is 23 or 25 hours long across a DST change, so adding
+	// 24 hours near midnight can land on the wrong date or weekday.
+	const tomorrow = addLocalDays(todayDateStr, 1)
+	const tomorrowDaySchedule = schedule.find((d) => d.day === tomorrow.day)
 	if (tomorrowDaySchedule?.isOpen && tomorrowDaySchedule.slots?.length) {
 		const sortedSlots = [...tomorrowDaySchedule.slots].sort((a, b) =>
 			a.start.localeCompare(b.start),
@@ -405,7 +443,7 @@ export function getAvailabilityPresets(
 		const openingTimeStr = sortedSlots[0]?.start
 		if (openingTimeStr) {
 			const openingDate = localDateAndTimeToUtc(
-				tomorrowDateStr,
+				tomorrow.date,
 				openingTimeStr,
 				timezone,
 			)
@@ -421,52 +459,36 @@ export function getAvailabilityPresets(
 		// If tomorrow is closed, check next days in schedule
 		let foundNextDay = false
 		for (let offset = 2; offset <= 7; offset++) {
-			const nextApprox = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000)
-			const nextParts: Record<string, string> = {}
-			try {
-				const nextFormatter = new Intl.DateTimeFormat('en-US', {
-					timeZone: timezone,
-					year: 'numeric',
-					month: '2-digit',
-					day: '2-digit',
-					weekday: 'long',
-				})
-				for (const p of nextFormatter.formatToParts(nextApprox)) {
-					nextParts[p.type] = p.value
+			const next = addLocalDays(todayDateStr, offset)
+			const nextSchedule = schedule.find((d) => d.day === next.day)
+			if (nextSchedule?.isOpen && nextSchedule.slots?.length) {
+				const openingStr = [...nextSchedule.slots].sort((a, b) =>
+					a.start.localeCompare(b.start),
+				)[0]?.start
+				if (openingStr) {
+					const nextDate = localDateAndTimeToUtc(
+						next.date,
+						openingStr,
+						timezone,
+					)
+					const openDisplay = formatTimeDisplay(openingStr)
+					const dayCapitalized =
+						next.day.charAt(0).toUpperCase() + next.day.slice(1)
+					presets.push({
+						id: 'tomorrow_opening',
+						label: `${dayCapitalized} at ${openDisplay}`,
+						timeDisplay: openDisplay,
+						date: nextDate,
+					})
+					foundNextDay = true
+					break
 				}
-				const nextDayOfWeek = nextParts.weekday?.toLowerCase() as DayOfWeek
-				const nextSchedule = schedule.find((d) => d.day === nextDayOfWeek)
-				if (nextSchedule?.isOpen && nextSchedule.slots?.length) {
-					const openingStr = [...nextSchedule.slots].sort((a, b) =>
-						a.start.localeCompare(b.start),
-					)[0]?.start
-					if (openingStr) {
-						const nextDateStr = `${nextParts.year}-${nextParts.month}-${nextParts.day}`
-						const nextDate = localDateAndTimeToUtc(
-							nextDateStr,
-							openingStr,
-							timezone,
-						)
-						const openDisplay = formatTimeDisplay(openingStr)
-						const dayCapitalized =
-							(nextParts.weekday?.charAt(0).toUpperCase() ?? '') +
-							(nextParts.weekday?.slice(1) ?? '')
-						presets.push({
-							id: 'tomorrow_opening',
-							label: `${dayCapitalized} at ${openDisplay}`,
-							timeDisplay: openDisplay,
-							date: nextDate,
-						})
-						foundNextDay = true
-						break
-					}
-				}
-			} catch {}
+			}
 		}
 		if (!foundNextDay) {
 			// Fallback: tomorrow at 9:00 AM
 			const fallbackDate = localDateAndTimeToUtc(
-				tomorrowDateStr,
+				tomorrow.date,
 				'09:00',
 				timezone,
 			)
@@ -532,16 +554,13 @@ export function formatUnavailableUntil(
 		return `Today at ${timeStr}`
 	}
 
-	// Check tomorrow
-	const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-	const tomorrowParts: Record<string, string> = {}
-	for (const p of formatter.formatToParts(tomorrow)) {
-		tomorrowParts[p.type] = p.value
-	}
+	// Check tomorrow (calendar math: `now + 24h` is wrong across DST changes)
+	const tomorrow = addLocalDays(
+		`${nowParts.year}-${nowParts.month}-${nowParts.day}`,
+		1,
+	)
 	const isTomorrow =
-		tomorrowParts.year === dateParts.year &&
-		tomorrowParts.month === dateParts.month &&
-		tomorrowParts.day === dateParts.day
+		`${dateParts.year}-${dateParts.month}-${dateParts.day}` === tomorrow.date
 
 	if (isTomorrow) {
 		return `Tomorrow at ${timeStr}`

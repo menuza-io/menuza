@@ -13,7 +13,12 @@
     "build": "npm run codegen && npm run generate:do-migrations && tsc",
     "typecheck": "npm run codegen && npm run generate:do-migrations && tsc --noEmit",
     "test": "../../node_modules/.bin/varlock run -- vitest run",
-    "deploy:cf": "npm run generate:do-migrations && wrangler deploy"
+    "deploy:cf": "npm run generate:do-migrations && wrangler deploy",
+    "seed:staff": "../../node_modules/.bin/varlock run -- tsx scripts/seed-staff.ts",
+    "seed:timeclock": "../../node_modules/.bin/varlock run -- tsx scripts/seed-timeclock.ts",
+    "seed:schedule": "../../node_modules/.bin/varlock run -- tsx scripts/seed-schedule.ts",
+    "seed:staffing-history": "../../node_modules/.bin/varlock run -- tsx scripts/seed-staffing-history.ts",
+    "seed:staffing": "node scripts/seed-staffing.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
@@ -26,6 +31,7 @@
     "@repo/phone-agent": "*",
     "@repo/reports": "*",
     "@repo/sms": "*",
+    "@repo/staffing": "*",
     "@repo/tenant-db": "*",
     "@varlock/cloudflare-integration": "^1.5.1",
     "drizzle-orm": "^0.45.2",

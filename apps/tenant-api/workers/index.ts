@@ -4,6 +4,7 @@ import {
 	TENANT_ORG_ID_PATTERN,
 } from '@repo/tenant-db'
 import { createTenantApiApp } from '../src/app.ts'
+import { registerRestaurantOrderSource } from '../src/restaurant/staffing-order-source.ts'
 import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
@@ -16,12 +17,21 @@ import {
 	getBearerToken,
 	timingSafeEqualString,
 } from '../src/lib/secrets.ts'
-import { assertOrgOnUsNode, resolveOrgId } from './org-router.ts'
+import {
+	assertKioskOrgOnUsNode,
+	assertOrgOnUsNode,
+	resolveOrgId,
+} from './org-router.ts'
+import { fanOutStaffTick } from '../src/services/staff-tick-fanout.ts'
+import type { TickResult } from '../src/services/staff-tick-service.ts'
 import { TENANT_ORG_HEADER, TenantOrg } from './tenant-org.ts'
 import { TenantRegistry } from './tenant-registry.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
 
 export { TenantOrg, TenantRegistry }
+
+// Restaurant orders feed the demand guide, forecast, labor sales and tip pools.
+registerRestaurantOrderSource()
 
 const edgeApp = createTenantApiApp()
 
@@ -144,6 +154,71 @@ async function handleProvision(
 	})
 }
 
+const tickBodySchema = z.object({ orgId: z.unknown().optional() })
+
+/**
+ * The hourly staff tick on the Workers runtime. The cron posts here without an
+ * organization; each organization's data lives in its own Durable Object, so
+ * the edge asks every one of them to run its own tick (which lands back in the
+ * `/api/staff/tick` route inside the object, behind the same token check) and
+ * folds the answers into counts. Organizations without staff cost the object one
+ * local query and no outbound call.
+ */
+async function handleStaffTickFanOut(
+	request: Request,
+	env: TenantApiWorkerEnv,
+) {
+	const internalToken = env.INTERNAL_COMMAND_TOKEN || ''
+	if (internalToken.length < 16) {
+		return Response.json(
+			{ error: 'Staff tick is not configured' },
+			{ status: 503 },
+		)
+	}
+	const presented = getBearerToken(request.headers.get('Authorization'))
+	if (!presented || !timingSafeEqualString(presented, internalToken)) {
+		return Response.json({ error: 'Unauthorized' }, { status: 401 })
+	}
+
+	const body = await request
+		.clone()
+		.json()
+		.catch(() => ({}))
+	const parsed = tickBodySchema.safeParse(body ?? {})
+	// An orgId that is present but malformed is a mistake, not "run everyone".
+	if (!parsed.success || parsed.data.orgId !== undefined) {
+		return Response.json({ error: 'Invalid payload' }, { status: 400 })
+	}
+
+	const orgIds = await registryStub(env).list()
+	const tickUrl = new URL('/api/staff/tick', request.url)
+	const totals = await fanOutStaffTick({
+		orgIds,
+		run: async (orgId) => {
+			try {
+				const forwarded = new Request(tickUrl, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${internalToken}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ orgId }),
+				})
+				const response = await forwardToOrg(forwarded, env, orgId)
+				if (!response.ok) return null
+				const answer = (await response.json().catch(() => null)) as {
+					result?: TickResult
+				} | null
+				return answer?.result ?? null
+			} catch (error) {
+				console.error('Staff tick fan-out failed for an organization', error)
+				return null
+			}
+		},
+	})
+	return Response.json({ success: totals.errors === 0, ...totals })
+}
+
 export default {
 	async fetch(
 		request: Request,
@@ -186,12 +261,39 @@ export default {
 			return edgeApp.fetch(request, env)
 		}
 
+		if (url.pathname === '/api/staff/tick' && request.method === 'POST') {
+			const tickOrgId = await resolveOrgId(request, env)
+			if (tickOrgId) {
+				const regionDenied = await assertOrgOnUsNode(tickOrgId, env)
+				if (regionDenied) return regionDenied
+				return forwardToOrg(request, env, tickOrgId)
+			}
+			return handleStaffTickFanOut(request, env)
+		}
+
 		const orgId = await resolveOrgId(request, env)
+		if (!orgId && url.pathname.startsWith('/kiosk/')) {
+			return Response.json(
+				{
+					error:
+						url.pathname === '/kiosk/pair'
+							? 'invalid_pairing_code'
+							: 'invalid_device',
+				},
+				{ status: 401 },
+			)
+		}
 		if (!orgId) {
 			return Response.json(
 				{ error: 'Could not resolve tenant organization for this request' },
 				{ status: 400 },
 			)
+		}
+
+		if (url.pathname.startsWith('/kiosk/')) {
+			const kioskDenied = await assertKioskOrgOnUsNode(orgId, url.pathname)
+			if (kioskDenied) return kioskDenied
+			return forwardToOrg(request, env, orgId)
 		}
 
 		const regionDenied = await assertOrgOnUsNode(orgId, env)

@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "(optional)"
+msgstr "(optional)"
+
+#: src/lib/careers/labels.ts:66
+msgid "{amount} per {unit}"
+msgstr "{amount} pro {unit}"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "{count} Cal"
@@ -154,10 +162,30 @@ msgstr "Alkohol"
 msgid "All drops"
 msgstr "Alle Aktionen"
 
+#: src/pages/careers/[slug].astro.ts:3
+msgid "All jobs"
+msgstr "Alle Stellen"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "All locations"
+msgstr "Alle Standorte"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "Ernährungswünsche, Sauce separat, usw."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Apply"
+msgstr "Bewerben"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply by {date}"
+msgstr "Bewerbung bis {date}"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply now"
+msgstr "Jetzt bewerben"
 
 #: src/lib/ordering-labels.ts:97
 msgid "Apt, suite or floor"
@@ -218,6 +246,11 @@ msgstr "Kartennummer"
 msgid "Cards used on past shop purchases on this account."
 msgstr "Karten, die bei früheren Shop-Käufen mit diesem Konto verwendet wurden."
 
+#: src/pages/careers/[slug].astro.ts:3
+#: src/pages/careers/index.astro.ts:3
+msgid "Careers"
+msgstr "Karriere"
+
 #: src/lib/ordering-labels.ts:145
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -231,6 +264,10 @@ msgstr "Nummer ändern"
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
 msgstr "Erneut prüfen"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Check back soon."
+msgstr "Schau bald wieder vorbei."
 
 #: src/pages/drops.astro.ts:3
 msgid "Check the menu for what we are serving today."
@@ -307,6 +344,14 @@ msgstr "Wähle mindestens {count} Optionen"
 msgid "Choose at least 1 option"
 msgstr "Wähle mindestens 1 Option"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose at least one location."
+msgstr "Wähle mindestens einen Standort."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Choose every location that suits you."
+msgstr "Wähle jeden Standort, der zu dir passt."
+
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
 msgstr "Wähle deine Abholung"
@@ -353,6 +398,10 @@ msgstr "Zahlung abschließen"
 msgid "Complete payment to keep it."
 msgstr "Schließen Sie die Zahlung ab, um sie zu behalten."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Complete the verification check before sending."
+msgstr "Schließen Sie die Überprüfung vor dem Senden ab."
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "Schließen Sie die Verifizierung ab, bevor Sie absenden."
@@ -372,6 +421,14 @@ msgstr "Kontaktdaten"
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Weiter"
+
+#: src/lib/careers/labels.ts:22
+msgid "Contract"
+msgstr "Vertrag"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Copy link"
+msgstr "Link kopieren"
 
 #: src/lib/ordering-labels.ts:71
 msgid "Customize item"
@@ -459,6 +516,7 @@ msgstr "Aktions-Benachrichtigungen sind an"
 msgid "Drops"
 msgstr "Aktionen"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "E-Mail"
@@ -479,6 +537,14 @@ msgstr "Beendet {when}"
 #: src/lib/ordering-labels.ts:143
 msgid "Enter a delivery address to continue."
 msgstr "Gib eine Lieferadresse ein, um fortzufahren."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a phone number with its country code, like +1 415 555 0123."
+msgstr "Geben Sie eine Telefonnummer mit Ländervorwahl ein, z. B. +1 415 555 0123."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a valid email address."
+msgstr "Geben Sie eine gültige E-Mail-Adresse ein."
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -514,6 +580,10 @@ msgstr "Speisekarte ansehen"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "Entdecken Sie unser Menü und fügen Sie Ihre Lieblingsgerichte hinzu."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "First name"
+msgstr "Vorname"
+
 #: src/lib/ordering-labels.ts:104
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
@@ -533,6 +603,10 @@ msgstr "Lieferart"
 msgid "Full name"
 msgstr "Vollständiger Name"
 
+#: src/lib/careers/labels.ts:14
+msgid "Full time"
+msgstr "Vollzeit"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Gate code, buzzer, or where to leave it"
 msgstr "Torcode, Klingel oder Ablageort"
@@ -549,6 +623,14 @@ msgstr "Per SMS benachrichtigen, wenn Bestellungen öffnen"
 msgid "Get a text when the next drop opens, before it sells out."
 msgstr "Erhalte eine SMS, wenn die nächste Aktion startet – bevor sie ausverkauft ist."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email or a phone number."
+msgstr "Geben Sie eine E-Mail-Adresse oder eine Telefonnummer an."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email, a phone number, or both."
+msgstr "Geben Sie eine E-Mail-Adresse, eine Telefonnummer oder beides an."
+
 #: src/pages/menu.astro.ts:3
 msgid "Gluten-free"
 msgstr "Glutenfrei"
@@ -557,14 +639,30 @@ msgstr "Glutenfrei"
 msgid "Gluten-Free"
 msgstr "Glutenfrei"
 
+#: src/lib/careers/labels.ts:31
+msgid "hour"
+msgstr "Stunde"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
+msgstr "Ich bin damit einverstanden, dass {organization} meine Angaben und Antworten speichert, um meine Bewerbung zu prüfen und mich dazu zu kontaktieren. Auf Wunsch werden sie gelöscht."
+
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "in {t}"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Include your country code, for example +1 415 555 0123."
+msgstr "Mit Ländervorwahl, z. B. +1 415 555 0123."
+
 #: src/lib/ordering-labels.ts:56
 msgid "Increase quantity"
 msgstr "Menge erhöhen"
+
+#: src/lib/careers/labels.ts:24
+msgid "Internship"
+msgstr "Praktikum"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -585,6 +683,10 @@ msgstr "Tippe weiter, um passende Adressen zu sehen."
 #: src/components/SiteHeader.astro.ts:3
 msgid "Language"
 msgstr "Sprache"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Last name"
+msgstr "Nachname"
 
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
@@ -607,6 +709,10 @@ msgstr "Limit erreicht"
 #: src/pages/drops.astro.ts:3
 msgid "Limited menus you pre-order for a pickup window."
 msgstr "Limitierte Menüs, die du für ein Abholfenster vorbestellst."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Link copied"
+msgstr "Link kopiert"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Loading your receipt…"
@@ -645,6 +751,10 @@ msgstr "Diese verpasst?"
 msgid "Mobile"
 msgstr "Mobil"
 
+#: src/lib/careers/labels.ts:35
+msgid "month"
+msgstr "Monat"
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "More drops"
 msgstr "Weitere Aktionen"
@@ -677,6 +787,10 @@ msgstr "Keine Aktion mehr verpassen"
 msgid "Next"
 msgstr "Weiter"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "No"
+msgstr "Nein"
+
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
 msgstr "Keine passenden Gerichte"
@@ -696,6 +810,10 @@ msgstr "Keine passenden Adressen"
 #: src/lib/ordering-labels.ts:103
 msgid "No minimum"
 msgstr "Kein Mindestwert"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "No openings right now."
+msgstr "Derzeit keine offenen Stellen."
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -726,6 +844,10 @@ msgstr "Keine"
 msgid "Not available right now"
 msgstr "Gerade nicht verfügbar"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Online applications are not available right now. Ask a team member."
+msgstr "Online-Bewerbungen sind derzeit nicht möglich. Fragen Sie ein Teammitglied."
+
 #: src/lib/ordering-labels.ts:59
 msgid "Only {count} left"
 msgstr "Nur noch {count} übrig"
@@ -745,6 +867,10 @@ msgstr "Menü öffnen"
 #: src/lib/ordering-labels.ts:125
 msgid "Open now"
 msgstr "Jetzt geöffnet"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Open positions at {name}"
+msgstr "Offene Stellen bei {name}"
 
 #: src/lib/ordering-labels.ts:126
 #: src/pages/menu.astro.ts:3
@@ -844,6 +970,10 @@ msgstr "Bestellungen offen: {title}"
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "Unsere Küche bereitet köstliche Gerichte zu. Schauen Sie bald wieder vorbei für unser vollständiges Online-Menü."
 
+#: src/lib/careers/labels.ts:16
+msgid "Part time"
+msgstr "Teilzeit"
+
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
 msgstr "Vergangene Aktionen"
@@ -887,6 +1017,10 @@ msgstr "Zahlungsmethode"
 #: src/pages/profile.astro.ts:3
 msgid "Payment methods"
 msgstr "Zahlungsmethoden"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Phone"
+msgstr "Telefon"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
@@ -942,6 +1076,14 @@ msgstr "Bestellung aufgeben"
 msgid "Placing your order…"
 msgstr "Ihre Bestellung wird aufgegeben…"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please agree so we can keep your application."
+msgstr "Bitte stimmen Sie zu, damit wir Ihre Bewerbung speichern können."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please check the answers marked below and try again."
+msgstr "Bitte prüfen Sie die unten markierten Antworten und versuchen Sie es erneut."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Please check your connection and try again."
 msgstr "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
@@ -973,6 +1115,10 @@ msgstr "Bitte überprüfen Sie Ihre Bestelldaten und versuchen Sie es erneut."
 #: src/pages/menu.astro.ts:3
 msgid "Popular"
 msgstr "Beliebt"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Posted {date}"
+msgstr "Veröffentlicht am {date}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Preparing"
@@ -1017,6 +1163,10 @@ msgstr "Einkäufe im Shop, während Sie in diesem Konto angemeldet sind."
 #: src/pages/profile.astro.ts:3
 msgid "Purchases from the shop while signed in."
 msgstr "Käufe im Shop während Sie angemeldet sind."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "QR code for {title}"
+msgstr "QR-Code für {title}"
 
 #: src/lib/ordering-labels.ts:55
 msgid "Quantity"
@@ -1080,6 +1230,10 @@ msgstr "Änderungen speichern"
 msgid "Saving..."
 msgstr "Speichern..."
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Scan to open this job on your phone."
+msgstr "Scannen, um diese Stelle auf dem Handy zu öffnen."
+
 #: src/lib/ordering-labels.ts:132
 msgid "Schedule"
 msgstr "Vorbestellen"
@@ -1092,22 +1246,39 @@ msgstr "Adresse suchen"
 msgid "Search the menu"
 msgstr "Speisekarte durchsuchen"
 
+#: src/lib/careers/labels.ts:18
+msgid "Seasonal"
+msgstr "Saisonal"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
 msgstr "Sichere Zahlung. Mit Ihrer Bestellung akzeptieren Sie die Bedingungen des Restaurants."
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "See all open jobs"
+msgstr "Alle offenen Stellen ansehen"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
 msgstr "Wählen Sie im Seiteneditor ein veröffentlichtes Formular aus."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Send application"
+msgstr "Bewerbung senden"
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "Code senden"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "Senden..."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Share this job"
+msgstr "Diese Stelle teilen"
 
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
@@ -1185,6 +1356,14 @@ msgstr "Zur Abholung wechseln"
 msgid "Tax"
 msgstr "Steuer"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Tell us a little about yourself. It takes a couple of minutes."
+msgstr "Erzählen Sie uns ein wenig über sich. Das dauert nur ein paar Minuten."
+
+#: src/lib/careers/labels.ts:20
+msgid "Temporary"
+msgstr "Befristet"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Text me"
 msgstr "SMS an mich"
@@ -1200,6 +1379,10 @@ msgstr "Vielen Dank für Ihre Bestellung!"
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Vielen Dank für Ihren Einkauf!"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
+msgstr "Vielen Dank. Ihre Bewerbung wurde gesendet. Wenn sie passt, melden wir uns bei Ihnen."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
@@ -1221,6 +1404,14 @@ msgstr "Die Artikel aus Ihrem Anruf sind nicht mehr verfügbar. Sie können weit
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "Der Link ist möglicherweise unvollständig. Sie können über die Speisekarte eine neue Bestellung starten."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "The verification check did not pass. Please try again."
+msgstr "Die Überprüfung war nicht erfolgreich. Bitte versuchen Sie es erneut."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "this business"
+msgstr "dieses Unternehmen"
+
 #: src/lib/ordering-labels.ts:49
 msgid "This combination is sold out. Choose another combination."
 msgstr "Diese Kombination ist ausverkauft. Wähle eine andere Kombination."
@@ -1240,6 +1431,18 @@ msgstr "Dieser Drop nimmt keine Bestellungen mehr an."
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "Dieses Formular ist derzeit nicht verfügbar."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This is required."
+msgstr "Dies ist erforderlich."
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "This job is no longer open."
+msgstr "Diese Stelle ist nicht mehr offen."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This job is no longer taking applications."
+msgstr "Für diese Stelle werden keine Bewerbungen mehr angenommen."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
@@ -1286,6 +1489,10 @@ msgstr "Heute"
 #: src/lib/ordering-labels.ts:137
 msgid "Tomorrow"
 msgstr "Morgen"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Too many applications were sent from here. Please try again later."
+msgstr "Von hier wurden zu viele Bewerbungen gesendet. Bitte versuchen Sie es später erneut."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Too many attempts. Please try again later."
@@ -1402,6 +1609,14 @@ msgstr "Diese Bestellung konnte nicht bestätigt werden."
 msgid "We could not place your order. Please try again."
 msgstr "Wir konnten Ihre Bestellung nicht aufgeben. Bitte versuchen Sie es erneut."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not reach the server. Check your connection and try again."
+msgstr "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not send your application right now. Please try again in a moment."
+msgstr "Ihre Bewerbung konnte gerade nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
+
 #: src/lib/ordering-labels.ts:122
 msgid "We couldn't check this address"
 msgstr "Wir konnten diese Adresse nicht prüfen"
@@ -1484,6 +1699,10 @@ msgstr "Wir haben Ihre Bestellung erhalten und unsere Küche bereitet Ihr Essen 
 msgid "We've sent a 6-digit code to"
 msgstr "Wir haben einen 6-stelligen Code gesendet an"
 
+#: src/lib/careers/labels.ts:33
+msgid "week"
+msgstr "Woche"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "Wie heißen Sie?"
@@ -1504,9 +1723,21 @@ msgstr "Wo"
 msgid "Where should we deliver?"
 msgstr "Wohin sollen wir liefern?"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Where would you like to work?"
+msgstr "Wo möchtest du arbeiten?"
+
 #: src/lib/ordering-labels.ts:51
 msgid "Whole"
 msgstr "Ganz"
+
+#: src/lib/careers/labels.ts:37
+msgid "year"
+msgstr "Jahr"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Yes"
+msgstr "Ja"
 
 #: src/lib/ordering-labels.ts:121
 msgid "You can still order for pickup."

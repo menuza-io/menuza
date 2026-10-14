@@ -1,4 +1,6 @@
 import {
+	and,
+	ConfigFlag,
 	db,
 	eq,
 	Organization,
@@ -399,6 +401,49 @@ async function main() {
 		console.log('Created items and assignments successfully!')
 	} else {
 		console.log('Items already exist:', existingItems.length)
+	}
+
+	// Opt-in: SEED_STAFFING=1 turns the whole Staff module on for this
+	// organization (the master flag and the four feature flags). The flags are
+	// off everywhere else. The demo people live in the regional tenant database,
+	// so they are seeded separately:
+	//   npm run seed:staffing -w tenant-api -- <org-slug>
+	if (process.env.SEED_STAFFING === '1') {
+		for (const key of [
+			'staffing.enabled',
+			'staffing.timeclock',
+			'staffing.scheduling',
+			'staffing.labor',
+			'staffing.hiring',
+		]) {
+			const [existing] = await db
+				.select({ id: ConfigFlag.id })
+				.from(ConfigFlag)
+				.where(
+					and(
+						eq(ConfigFlag.key, key),
+						eq(ConfigFlag.level, 'organization'),
+						eq(ConfigFlag.organizationId, org.id),
+					),
+				)
+				.limit(1)
+			if (existing) {
+				await db
+					.update(ConfigFlag)
+					.set({ value: true })
+					.where(eq(ConfigFlag.id, existing.id))
+			} else {
+				await db.insert(ConfigFlag).values({
+					key,
+					level: 'organization',
+					organizationId: org.id,
+					value: true,
+				})
+			}
+		}
+		console.log(
+			`Staff module is on for ${org.slug}. Seed the demo restaurant with: npm run seed:staffing -w tenant-api -- ${org.slug}`,
+		)
 	}
 
 	console.log('✅ Menu and location seeding finished successfully!')

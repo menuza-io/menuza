@@ -73,6 +73,10 @@ msgstr "{days} يومًا"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء تحقق}}"
 
+#: ../../packages/reports/src/ui/report-chart.tsx:149
+msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
+msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:321
 msgid "{field}"
 msgstr "{field}"
@@ -474,6 +478,18 @@ msgstr "يرد على المكالمات"
 msgid "any - Any resources"
 msgstr "أي - أي موارد"
 
+#: ../../packages/reports/src/ui/report-labels.ts:72
+msgid "Applicant funnel"
+msgstr "مسار المتقدمين"
+
+#: ../../packages/reports/src/ui/report-labels.ts:73
+msgid "Applications at each stage, from new to hired, over the last 3 months."
+msgstr "الطلبات في كل مرحلة، من الجديد إلى التعيين، خلال آخر 3 أشهر."
+
+#: ../../packages/reports/src/ui/report-labels.ts:76
+msgid "Applications by source"
+msgstr "الطلبات حسب المصدر"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:339
 msgid "Apply Preset"
 msgstr "تطبيق الإعداد المسبق"
@@ -860,6 +876,10 @@ msgstr "إغلاق تصميم البريد"
 #: app/components/admin-users-table.tsx:271
 msgid "Columns"
 msgstr "الأعمدة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:29
+msgid "Compare wages as a share of sales across your workplaces."
+msgstr "قارن الأجور كنسبة من المبيعات بين أماكن العمل."
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/routes/_admin+/gdpr-requests.tsx:364
@@ -1342,6 +1362,10 @@ msgstr "مثل: محرر، مشرف، مساهم"
 msgid "e.g., Okta, Azure AD, Auth0"
 msgstr "مثل: Okta، Azure AD، Auth0"
 
+#: ../../packages/reports/src/ui/report-labels.ts:53
+msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
+msgstr "ساعات ومناوبات كل يوم المنشورة بجانب الساعات المعمول بها وبطاقات الوقت التي بدأت، مع الفرق."
+
 #: app/components/admin/feature-flags.tsx:401
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -1525,6 +1549,10 @@ msgstr "خطأ"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:323
 msgid "Errors"
 msgstr "أخطاء"
+
+#: ../../packages/reports/src/ui/report-labels.ts:65
+msgid "Estimated wages by position over the last 30 days. Needs permission to see pay."
+msgstr "الأجور التقديرية حسب الوظيفة خلال آخر 30 يومًا. تتطلب صلاحية عرض الأجور."
 
 #: app/routes/_admin+/audit-logs.tsx:280
 msgid "Event"
@@ -1780,6 +1808,10 @@ msgstr "مرحباً {{name}}، منظمتك {{organizationName}} جاهزة."
 msgid "Higher level roles can manage lower level roles"
 msgstr "الأدوار ذات المستوى الأعلى يمكنها إدارة الأدوار ذات المستوى الأقل"
 
+#: ../../packages/reports/src/ui/report-labels.ts:83
+msgid "Hiring"
+msgstr "التوظيف"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:386
 msgid "Hot Storage Period (days)"
 msgstr "فترة التخزين الساخن (أيام)"
@@ -1796,6 +1828,14 @@ msgstr "ساعات"
 msgid "Hours"
 msgstr "ساعات"
 
+#: ../../packages/reports/src/ui/report-labels.ts:36
+msgid "Hours by employee"
+msgstr "الساعات حسب الموظف"
+
+#: ../../packages/reports/src/ui/report-labels.ts:40
+msgid "Hours worked by day"
+msgstr "ساعات العمل حسب اليوم"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:380
 msgid "How long to keep logs before permanent deletion"
 msgstr "المدة المراد الاحتفاظ بالسجلات قبل الحذف الدائم"
@@ -1803,6 +1843,10 @@ msgstr "المدة المراد الاحتفاظ بالسجلات قبل الح�
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:398
 msgid "How long to keep logs readily searchable"
 msgstr "المدة المراد الاحتفاظ بالسجلات قابلة للبحث بسهولة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:57
+msgid "How often people clock in on time for the shifts they were scheduled on."
+msgstr "عدد مرات تسجيل الحضور في الوقت المحدد للمناوبات المجدولة."
 
 #: app/components/sso-configuration-form.tsx:168
 msgid "https://your-domain.okta.com"
@@ -1978,6 +2022,26 @@ msgstr "التسمية"
 msgid "Label (optional)"
 msgstr "التسمية (اختياري)"
 
+#: ../../packages/reports/src/ui/report-labels.ts:82
+msgid "Labor"
+msgstr "العمالة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:64
+msgid "Labor by position"
+msgstr "العمالة حسب الوظيفة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:20
+msgid "Labor cost percent"
+msgstr "نسبة تكلفة العمالة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:24
+msgid "Labor cost percent by day"
+msgstr "نسبة تكلفة العمالة حسب اليوم"
+
+#: ../../packages/reports/src/ui/report-labels.ts:28
+msgid "Labor cost percent by workplace"
+msgstr "نسبة تكلفة العمالة حسب مكان العمل"
+
 #: app/components/sso-user-management.tsx:455
 msgid "Last 30 days"
 msgstr "آخر 30 يوم"
@@ -2018,6 +2082,10 @@ msgstr "آخر اختبار:"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:180
 msgid "Last User Agent"
 msgstr "آخر وكيل مستخدم"
+
+#: ../../packages/reports/src/ui/report-labels.ts:60
+msgid "Late arrivals by employee"
+msgstr "حالات التأخر حسب الموظف"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -2496,6 +2564,10 @@ msgstr "إعداد OAuth2"
 msgid "Oldest Log"
 msgstr "أقدم سجل"
 
+#: ../../packages/reports/src/ui/report-labels.ts:56
+msgid "On-time arrival"
+msgstr "الحضور في الوقت المحدد"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإقليمي بيانات التعريف الشخصية محلياً."
@@ -2594,6 +2666,18 @@ msgstr "محدد"
 msgid "Override Value"
 msgstr "قيمة التجاوز"
 
+#: ../../packages/reports/src/ui/report-labels.ts:45
+msgid "Overtime and double time worked each week, from each workplace’s labor rules."
+msgstr "الساعات الإضافية والأجر المضاعف المنجزة كل أسبوع، وفق قواعد العمل في كل مكان عمل."
+
+#: ../../packages/reports/src/ui/report-labels.ts:48
+msgid "Overtime hours by employee"
+msgstr "ساعات العمل الإضافي حسب الموظف"
+
+#: ../../packages/reports/src/ui/report-labels.ts:44
+msgid "Overtime hours by week"
+msgstr "ساعات العمل الإضافي حسب الأسبوع"
+
 #: app/components/admin-sidebar.tsx:74
 #: app/components/admin-user-detail.tsx:321
 msgid "Overview"
@@ -2624,6 +2708,14 @@ msgstr "صفحة {page} من {lastPage}"
 #: app/routes/_admin+/_layout.tsx:92
 msgid "Page Not Found"
 msgstr "الصفحة غير موجودة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:37
+msgid "Paid hours worked by each person over the last 30 days."
+msgstr "الساعات المدفوعة لكل شخص خلال آخر 30 يومًا."
+
+#: ../../packages/reports/src/ui/report-labels.ts:41
+msgid "Paid hours worked each day across your team."
+msgstr "الساعات المدفوعة كل يوم لفريقك بالكامل."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:28
 msgid "Paragraph text"
@@ -2665,6 +2757,10 @@ msgstr "الوصول قيد الانتظار"
 #: app/routes/_admin+/gdpr-requests.tsx:435
 msgid "Pending Deletions"
 msgstr "عمليات الحذف قيد الانتظار"
+
+#: ../../packages/reports/src/ui/report-labels.ts:61
+msgid "People who clocked in late for a scheduled shift, and how often."
+msgstr "من تأخروا في تسجيل الحضور لمناوبة مجدولة، وعدد مرات ذلك."
 
 #: app/routes/_admin+/cache.tsx:325
 msgid "per SQLite entry"
@@ -3129,6 +3225,14 @@ msgstr "يُشغَّل عند تحديث العميل للاسم/البريد"
 msgid "Runs when customer verifies phone OTP"
 msgstr "يُشغَّل عند توثيق العميل لهاتفه عبر OTP"
 
+#: ../../packages/reports/src/ui/report-labels.ts:33
+msgid "Sales divided by the hours worked, day by day, on the days that have sales."
+msgstr "المبيعات مقسومة على ساعات العمل، يومًا بيوم، في الأيام التي فيها مبيعات."
+
+#: ../../packages/reports/src/ui/report-labels.ts:32
+msgid "Sales per labor hour"
+msgstr "المبيعات لكل ساعة عمل"
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 msgid "Save"
@@ -3181,6 +3285,10 @@ msgstr "جارٍ الحفظ…"
 #: app/routes/_admin+/gdpr-requests.tsx:363
 msgid "Scheduled"
 msgstr "مجدول"
+
+#: ../../packages/reports/src/ui/report-labels.ts:52
+msgid "Scheduled vs actual hours and clock-ins"
+msgstr "الساعات المجدولة مقابل الفعلية وتسجيلات الحضور"
 
 #: app/routes/_admin+/gdpr-requests.tsx:555
 msgid "Scheduled: {scheduledFor}"
@@ -3763,6 +3871,14 @@ msgstr "تأخير زمني"
 msgid "Time Delay"
 msgstr "تأخير زمني"
 
+#: ../../packages/reports/src/ui/report-labels.ts:68
+msgid "Tip pool: tips by day"
+msgstr "صندوق البقشيش: البقشيش حسب اليوم"
+
+#: ../../packages/reports/src/ui/report-labels.ts:69
+msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
+msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
+
 #: app/routes/resources+/theme-switch.tsx:102
 msgid "Toggle theme"
 msgstr "تبديل المظهر"
@@ -4059,6 +4175,18 @@ msgstr "عارض"
 msgid "Visitor IP addresses will appear here."
 msgstr "ستظهر عناوين IP للزوار هنا."
 
+#: ../../packages/reports/src/ui/report-chart.tsx:161
+msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
+msgstr "الأجور تقديرات مبنية على معدلات الأجر وليست كشف رواتب. المبيعات هي الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، أو المبيعات التي أدخلها فريقك، بحسب مصدر المبيعات في كل مكان عمل. مكان العمل الذي يحتسب الطلبات عبر الإنترنت فقط ستظهر نسبته أعلى من حصة العمالة الفعلية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:25
+msgid "Wages as a share of sales for each business day. The share for a longer range divides the totals; it is never an average of the daily percentages."
+msgstr "الأجور كنسبة من المبيعات لكل يوم عمل. نسبة المدة الأطول تقسم الإجماليات ولا تكون أبدًا متوسطًا للنسب اليومية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:21
+msgid "Wages as a share of sales over the last 30 days: total wages divided by total sales across the days that have sales."
+msgstr "الأجور كنسبة من المبيعات خلال آخر 30 يومًا: إجمالي الأجور مقسومًا على إجمالي المبيعات في الأيام التي فيها مبيعات."
+
 #. placeholder {0}: data.duration
 #. placeholder {1}: delayUnitLabel(data.unit)
 #: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:18
@@ -4108,6 +4236,14 @@ msgstr "مرحباً بك في Menuza، {{organizationName}}"
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
 #~ msgid "When someone does <0>{0}</0>"
 #~ msgstr "عندما يقوم شخص بـ <0>{0}</0>"
+
+#: ../../packages/reports/src/ui/report-labels.ts:77
+msgid "Where applicants found the job."
+msgstr "أين عثر المتقدمون على الوظيفة."
+
+#: ../../packages/reports/src/ui/report-labels.ts:49
+msgid "Who worked overtime over the last 30 days, and how much."
+msgstr "من عمل ساعات إضافية خلال آخر 30 يومًا، وكم عمل."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322

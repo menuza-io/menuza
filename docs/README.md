@@ -25,6 +25,8 @@ in the coming weeks. Stay tuned!
   OTP on tenant Sites.
 - [Tenant data residency](./tenant-data-residency.md) - Regional tenant-api,
   browser-direct customer auth, wipe-on-region-change, and KSA PII isolation.
+- [Dashboards](../apps/app/README.md#dashboards) - Customizable Home and shared
+  custom dashboards in the App: blocks, data model, permissions, and tests.
 - [Scheduled jobs](./scheduled-jobs.md) - Cloudflare cron worker, App job
   routes, on-demand video media transforms, and ops scripts.
 - [Decisions](./decisions/README.md) - The reasoning behind various decisions

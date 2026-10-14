@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { SlackProvider } from '../../../src/providers/slack/provider'
 
 describe('SlackProvider - Token Refresh', () => {
@@ -34,21 +34,15 @@ describe('SlackProvider - Token Refresh', () => {
 		})
 
 		it('should throw error immediately without making API calls', async () => {
-			// This test ensures no network requests are made
-			const startTime = Date.now()
+			const fetchSpy = vi.spyOn(globalThis, 'fetch')
 
 			try {
-				await provider.refreshToken('test-token')
-			} catch (error) {
-				const endTime = Date.now()
-				const duration = endTime - startTime
-
-				// Should fail immediately (within 10ms) without network delay
-				expect(duration).toBeLessThan(10)
-				expect(error).toBeInstanceOf(Error)
-				expect((error as Error).message).toBe(
+				await expect(provider.refreshToken('test-token')).rejects.toThrow(
 					'Slack bot tokens do not require refresh',
 				)
+				expect(fetchSpy).not.toHaveBeenCalled()
+			} finally {
+				fetchSpy.mockRestore()
 			}
 		})
 	})

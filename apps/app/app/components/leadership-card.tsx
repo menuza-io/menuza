@@ -55,7 +55,7 @@ export function LeadershipCard({ leaders, className }: LeadershipCardProps) {
 					<Trans>Team members who have created the most notes</Trans>
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="min-h-0 flex-1">
+			<CardContent className="min-h-0 flex-1 overflow-y-auto">
 				{leaders.length === 0 ? (
 					<div className="text-muted-foreground flex flex-col items-center gap-2 py-10 text-center">
 						<Icon name="users" className="h-8 w-8 opacity-30" />
