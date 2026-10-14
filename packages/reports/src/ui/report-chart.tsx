@@ -1,3 +1,4 @@
+import { cn } from '@repo/ui'
 import {
 	ChartContainer,
 	ChartTooltip,
@@ -97,6 +98,12 @@ function chartMeasure(
 	}
 }
 
+/**
+ * Recharts' own Y axis width. It must be passed explicitly: Recharts 2
+ * merges axis props over its defaults, so `width={undefined}` gives NaN.
+ */
+const DEFAULT_Y_AXIS_WIDTH = 60
+
 /** Recharts 2 can't size a Y axis to its ticks, so estimate from the data. */
 function yAxisWidth(measure: ChartMeasure, data: ReportSegment[]) {
 	if (!measure.tick) return undefined
@@ -194,7 +201,22 @@ function chartConfigFor(result: ReportResult): ChartConfig {
 	return config
 }
 
-function Frame({ children }: { children: React.ReactNode }) {
+function Frame({
+	compact,
+	children,
+}: {
+	compact: boolean
+	children: React.ReactNode
+}) {
+	if (compact) {
+		// Auto margins center the content but, unlike centering the flex
+		// container, still let content taller than a small tile scroll.
+		return (
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
+				<div className="my-auto flex w-full justify-center">{children}</div>
+			</div>
+		)
+	}
 	return (
 		<div className="flex min-h-80 flex-1 items-center justify-center p-6">
 			{children}
@@ -206,17 +228,63 @@ function Message({
 	title,
 	body,
 	icon = 'alert-triangle',
+	compact,
 }: {
 	title: string
 	body: string
 	icon?: 'alert-triangle' | 'layout-grid'
+	compact: boolean
 }) {
 	return (
-		<div className="max-w-md space-y-2 text-center">
-			<Icon name={icon} className="text-muted-foreground mx-auto size-6" />
+		<div
+			className={cn(
+				'max-w-md text-center',
+				compact ? 'space-y-1' : 'space-y-2',
+			)}
+		>
+			<Icon
+				name={icon}
+				className={cn(
+					'text-muted-foreground mx-auto',
+					compact ? 'size-5' : 'size-6',
+				)}
+			/>
 			<p className="text-foreground font-medium">{title}</p>
-			<p className="text-muted-foreground text-sm leading-relaxed">{body}</p>
+			<p
+				className={cn(
+					'text-muted-foreground leading-relaxed',
+					compact ? 'text-xs' : 'text-sm',
+				)}
+			>
+				{body}
+			</p>
 		</div>
+	)
+}
+
+/** Names the pie slices of a compact chart, which has no room for labels. */
+function PieLegend({
+	data,
+	result,
+}: {
+	data: Array<ReportSegment & { fill: string | undefined }>
+	result: ReportResult
+}) {
+	return (
+		<ul className="flex max-h-16 shrink-0 flex-wrap justify-center gap-x-3 gap-y-1 overflow-y-auto text-xs">
+			{data.map((entry) => (
+				<li key={entry.key} className="flex min-w-0 items-center gap-1.5">
+					<span
+						className="size-2.5 shrink-0 rounded-xs"
+						style={{ backgroundColor: entry.fill }}
+					/>
+					<span className="truncate">{entry.label}</span>
+					<span className="text-muted-foreground tabular-nums">
+						{formatPercent(segmentPercent(entry, result))}
+					</span>
+				</li>
+			))}
+		</ul>
 	)
 }
 
@@ -296,53 +364,113 @@ function SegmentTable({
 	)
 }
 
+/**
+ * What the visualization says when it has no result to show. The defaults
+ * are the reports page's own texts; a caller that translates its interface
+ * passes its own.
+ */
+export type ReportStateMessages = {
+	loading: string
+	errorTitle: string
+	/** Explains a failed run; by default the error's own message. */
+	errorBody: (error: ReportRunError | string) => string
+	missingGroupTitle: string
+	missingGroupBody: string
+	configureTitle: string
+	configureBody: string
+	noMatchesTitle: string
+	noMatchesBody: string
+}
+
+const DEFAULT_STATE_MESSAGES: ReportStateMessages = {
+	loading: 'Loading results…',
+	errorTitle: 'Cannot run this report',
+	errorBody: (error) => (typeof error === 'string' ? error : error.message),
+	missingGroupTitle: 'Missing required segmentation field',
+	missingGroupBody:
+		'Select at least one Group Results By field to see results.',
+	configureTitle: 'Configure the report',
+	configureBody: 'Choose a subject and timeframe to see a live visualization.',
+	noMatchesTitle: 'No matching records',
+	noMatchesBody:
+		'Nothing in this timeframe matches the current filters. Widen the range or clear a filter to see results.',
+}
+
+/** Estimates a count axis width, so a tile does not spend the default 60px on it. */
+function countAxisWidth(measure: ChartMeasure, data: ReportSegment[]) {
+	const widest = Math.max(
+		1,
+		...data.map(
+			(segment) => String(Math.round(segment[measure.dataKey] ?? 0)).length,
+		),
+	)
+	return Math.max(24, widest * 7 + 8)
+}
+
 export function ReportVisualization({
 	definition,
 	result,
 	error,
 	loading,
 	containerRef,
+	compact = false,
+	messages,
 }: {
 	definition: ReportDefinition
 	result: ReportResult | null
 	error: ReportRunError | string | null
 	loading: boolean
 	containerRef?: Ref<HTMLDivElement>
+	/**
+	 * Fits the visualization into a small tile that shows the report title
+	 * itself, such as a dashboard block, instead of a full page.
+	 */
+	compact?: boolean
+	/** Replaces the default texts of the states without a result. */
+	messages?: Partial<ReportStateMessages>
 }) {
+	const text = messages
+		? { ...DEFAULT_STATE_MESSAGES, ...messages }
+		: DEFAULT_STATE_MESSAGES
+
 	if (loading && !result) {
 		return (
-			<Frame>
-				<div className="flex w-full max-w-xl flex-col items-center gap-4">
-					<Skeleton className="size-56 rounded-full" />
-					<div className="flex w-full max-w-sm gap-2">
-						<Skeleton className="h-3 flex-1" />
-						<Skeleton className="h-3 flex-1" />
-						<Skeleton className="h-3 flex-1" />
+			<Frame compact={compact}>
+				{compact ? (
+					<div className="flex w-full flex-col items-center gap-2">
+						<Skeleton className="size-16 rounded-full" />
+						<div className="flex w-full max-w-40 gap-2">
+							<Skeleton className="h-2 flex-1" />
+							<Skeleton className="h-2 flex-1" />
+							<Skeleton className="h-2 flex-1" />
+						</div>
+						<p className="text-muted-foreground text-xs">{text.loading}</p>
 					</div>
-					<p className="text-muted-foreground text-sm">Loading results…</p>
-				</div>
+				) : (
+					<div className="flex w-full max-w-xl flex-col items-center gap-4">
+						<Skeleton className="size-56 rounded-full" />
+						<div className="flex w-full max-w-sm gap-2">
+							<Skeleton className="h-3 flex-1" />
+							<Skeleton className="h-3 flex-1" />
+							<Skeleton className="h-3 flex-1" />
+						</div>
+						<p className="text-muted-foreground text-sm">{text.loading}</p>
+					</div>
+				)}
 			</Frame>
 		)
 	}
 
 	if (error) {
-		const message = typeof error === 'string' ? error : error.message
 		const missingGroup =
 			typeof error === 'object' && error.error === 'missing_group_by'
 		return (
-			<Frame>
+			<Frame compact={compact}>
 				<Message
+					compact={compact}
 					icon={missingGroup ? 'layout-grid' : 'alert-triangle'}
-					title={
-						missingGroup
-							? 'Missing required segmentation field'
-							: 'Cannot run this report'
-					}
-					body={
-						missingGroup
-							? 'Select at least one Group Results By field to see results.'
-							: message
-					}
+					title={missingGroup ? text.missingGroupTitle : text.errorTitle}
+					body={missingGroup ? text.missingGroupBody : text.errorBody(error)}
 				/>
 			</Frame>
 		)
@@ -350,17 +478,39 @@ export function ReportVisualization({
 
 	if (!result) {
 		return (
-			<Frame>
+			<Frame compact={compact}>
 				<Message
+					compact={compact}
 					icon="layout-grid"
-					title="Configure the report"
-					body="Choose a subject and timeframe to see a live visualization."
+					title={text.configureTitle}
+					body={text.configureBody}
 				/>
 			</Frame>
 		)
 	}
 
 	if (definition.visualization.chartStyle === 'single_number') {
+		if (compact) {
+			// The tile names the report, so the number is labelled with what it
+			// measures instead of repeating the title.
+			const label =
+				shownValueInfo(result)?.label ??
+				result.segments[0]?.label ??
+				definition.settings.title
+			return (
+				<div
+					ref={containerRef}
+					className="@container flex min-h-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden text-center"
+				>
+					<p className="text-foreground max-w-full truncate text-3xl tabular-nums @2xs:text-4xl @sm:text-5xl">
+						{formatResultHeadline(result)}
+					</p>
+					<p className="text-muted-foreground max-w-full truncate text-xs">
+						{label}
+					</p>
+				</div>
+			)
+		}
 		return (
 			<div
 				ref={containerRef}
@@ -376,31 +526,45 @@ export function ReportVisualization({
 		)
 	}
 
+	const noMatches = (
+		<Frame compact={compact}>
+			<Message
+				compact={compact}
+				title={text.noMatchesTitle}
+				body={text.noMatchesBody}
+			/>
+		</Frame>
+	)
+
 	if (isListReport(definition)) {
 		const columns = result.columns ?? []
 		const rows = result.rows ?? []
-		if (rows.length === 0) {
-			return (
-				<Frame>
-					<Message
-						title="No matching records"
-						body="Nothing in this timeframe matches the current filters. Widen the range or clear a filter to see results."
-					/>
-				</Frame>
-			)
-		}
+		if (rows.length === 0) return noMatches
 		return (
 			<div
 				ref={containerRef}
-				className="flex min-h-80 flex-1 flex-col overflow-hidden"
+				className={cn(
+					'flex flex-1 flex-col overflow-hidden',
+					compact ? 'min-h-0' : 'min-h-80',
+				)}
 			>
 				{result.truncated ? (
-					<p className="text-muted-foreground border-b px-4 py-2 text-sm">
+					<p
+						className={cn(
+							'text-muted-foreground border-b',
+							compact ? 'px-1 pb-1.5 text-xs' : 'px-4 py-2 text-sm',
+						)}
+					>
 						Showing the first {rows.length.toLocaleString()} of{' '}
 						{result.total.toLocaleString()} rows.
 					</p>
 				) : null}
-				<div className="flex-1 overflow-auto p-4">
+				<div
+					className={cn(
+						'overflow-auto',
+						compact ? 'min-h-0 flex-1' : 'flex-1 p-4',
+					)}
+				>
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -428,20 +592,17 @@ export function ReportVisualization({
 		)
 	}
 
-	if (result.segments.length === 0) {
-		return (
-			<Frame>
-				<Message
-					title="No matching records"
-					body="Nothing in this timeframe matches the current filters. Widen the range or clear a filter to see results."
-				/>
-			</Frame>
-		)
-	}
+	if (result.segments.length === 0) return noMatches
 
 	if (definition.visualization.chartStyle === 'table') {
 		return (
-			<div ref={containerRef} className="min-h-80 flex-1 overflow-auto p-4">
+			<div
+				ref={containerRef}
+				className={cn(
+					'flex-1 overflow-auto',
+					compact ? 'min-h-0' : 'min-h-80 p-4',
+				)}
+			>
 				<SegmentTable definition={definition} result={result} />
 			</div>
 		)
@@ -455,6 +616,49 @@ export function ReportVisualization({
 	const measure = chartMeasure(definition, result)
 
 	if (definition.visualization.chartStyle === 'bar') {
+		if (compact) {
+			return (
+				<div ref={containerRef} className="flex min-h-0 flex-1 flex-col">
+					<ChartContainer
+						config={config}
+						className="aspect-auto min-h-0 w-full flex-1"
+					>
+						<BarChart data={data} margin={{ left: 0, right: 4, top: 4 }}>
+							<CartesianGrid vertical={false} />
+							<XAxis
+								dataKey="label"
+								tickLine={false}
+								axisLine={false}
+								interval="preserveStartEnd"
+								minTickGap={8}
+								height={24}
+							/>
+							<YAxis
+								tickLine={false}
+								axisLine={false}
+								allowDecimals={measure.dataKey !== 'count'}
+								tickFormatter={measure.tick}
+								width={
+									yAxisWidth(measure, data) ?? countAxisWidth(measure, data)
+								}
+							/>
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										formatter={tooltipFormatter(measure, measure.label)}
+									/>
+								}
+							/>
+							<Bar dataKey={measure.dataKey} name={measure.label} radius={4}>
+								{data.map((entry) => (
+									<Cell key={entry.key} fill={entry.fill} />
+								))}
+							</Bar>
+						</BarChart>
+					</ChartContainer>
+				</div>
+			)
+		}
 		return (
 			<div ref={containerRef} className="min-h-0 flex-1 p-4">
 				<ChartContainer
@@ -478,7 +682,7 @@ export function ReportVisualization({
 							axisLine={false}
 							allowDecimals={measure.dataKey !== 'count'}
 							tickFormatter={measure.tick}
-							width={yAxisWidth(measure, data)}
+							width={yAxisWidth(measure, data) ?? DEFAULT_Y_AXIS_WIDTH}
 						/>
 						<ChartTooltip
 							content={
@@ -494,6 +698,43 @@ export function ReportVisualization({
 						</Bar>
 					</BarChart>
 				</ChartContainer>
+			</div>
+		)
+	}
+
+	if (compact) {
+		return (
+			<div ref={containerRef} className="flex min-h-0 flex-1 flex-col gap-2">
+				<ChartContainer
+					config={config}
+					className="aspect-auto min-h-0 w-full flex-1"
+				>
+					<PieChart>
+						<ChartTooltip
+							content={
+								<ChartTooltipContent
+									hideLabel
+									formatter={tooltipFormatter(measure)}
+								/>
+							}
+						/>
+						<Pie
+							data={data}
+							dataKey={measure.dataKey}
+							nameKey="label"
+							cx="50%"
+							cy="50%"
+							innerRadius={0}
+							outerRadius="90%"
+							paddingAngle={1}
+						>
+							{data.map((entry) => (
+								<Cell key={entry.key} fill={entry.fill} />
+							))}
+						</Pie>
+					</PieChart>
+				</ChartContainer>
+				<PieLegend data={data} result={result} />
 			</div>
 		)
 	}

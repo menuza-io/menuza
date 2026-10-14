@@ -1,174 +1,181 @@
 {
-	"version": "7",
-	"dialect": "sqlite",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "6",
-			"when": 1787234689924,
-			"tag": "0000_initial",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "6",
-			"when": 1787263448673,
-			"tag": "0001_storage_migration_and_s3_previous_bucket",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "6",
-			"when": 1787627200000,
-			"tag": "0002_platform_marketing",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "6",
-			"when": 1787673679247,
-			"tag": "0003_saved_reports",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "6",
-			"when": 1788000000000,
-			"tag": "0004_organization_shop",
-			"breakpoints": true
-		},
-		{
-			"idx": 5,
-			"version": "6",
-			"when": 1788000000001,
-			"tag": "0005_organization_polar_shop",
-			"breakpoints": true
-		},
-		{
-			"idx": 6,
-			"version": "6",
-			"when": 1788000000002,
-			"tag": "0006_organization_checkout_shop",
-			"breakpoints": true
-		},
-		{
-			"idx": 7,
-			"version": "6",
-			"when": 1788700291449,
-			"tag": "0007_organization_google_analytics",
-			"breakpoints": true
-		},
-		{
-			"idx": 8,
-			"version": "6",
-			"when": 1788709638509,
-			"tag": "0008_website_redirects",
-			"breakpoints": true
-		},
-		{
-			"idx": 9,
-			"version": "6",
-			"when": 1788721685225,
-			"tag": "0009_notification_sse_polling_indexes",
-			"breakpoints": true
-		},
-		{
-			"idx": 10,
-			"version": "6",
-			"when": 1788877782555,
-			"tag": "0010_organization_analytics_integrations",
-			"breakpoints": true
-		},
-		{
-			"idx": 11,
-			"version": "6",
-			"when": 1789060048538,
-			"tag": "0011_platform_marketing_email_blocks",
-			"breakpoints": true
-		},
-		{
-			"idx": 12,
-			"version": "6",
-			"when": 1789324210760,
-			"tag": "0012_tenant_organization_roles",
-			"breakpoints": true
-		},
-		{
-			"idx": 13,
-			"version": "6",
-			"when": 1789343643704,
-			"tag": "0013_website_announcement_marketing_permissions",
-			"breakpoints": true
-		},
-		{
-			"idx": 14,
-			"version": "6",
-			"when": 1789486525061,
-			"tag": "0014_furry_jack_power",
-			"breakpoints": true
-		},
-		{
-			"idx": 15,
-			"version": "6",
-			"when": 1790036915081,
-			"tag": "0015_restaurant_menu_system",
-			"breakpoints": true
-		},
-		{
-			"idx": 16,
-			"version": "6",
-			"when": 1790303762927,
-			"tag": "0016_nested_categories_and_modifiers",
-			"breakpoints": true
-		},
-		{
-			"idx": 17,
-			"version": "6",
-			"when": 1790477935868,
-			"tag": "0017_pos_integrations_and_variations",
-			"breakpoints": true
-		},
-		{
-			"idx": 18,
-			"version": "6",
-			"when": 1790600000000,
-			"tag": "0018_menu_drops_system",
-			"breakpoints": true
-		},
-		{
-			"idx": 19,
-			"version": "6",
-			"when": 1791125924019,
-			"tag": "0019_team_chat",
-			"breakpoints": true
-		},
-		{
-			"idx": 20,
-			"version": "6",
-			"when": 1791317338801,
-			"tag": "0020_menu_permissions_and_legacy_cleanup",
-			"breakpoints": true
-		},
-		{
-			"idx": 21,
-			"version": "6",
-			"when": 1791431831780,
-			"tag": "0021_phone_agent",
-			"breakpoints": true
-		},
-		{
-			"idx": 22,
-			"version": "6",
-			"when": 1791956177889,
-			"tag": "0022_staffing_foundation",
-			"breakpoints": true
-		},
-		{
-			"idx": 23,
-			"version": "6",
-			"when": 1791960342373,
-			"tag": "0023_staffing_restaurant_locations",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1787234689924,
+      "tag": "0000_initial",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787263448673,
+      "tag": "0001_storage_migration_and_s3_previous_bucket",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787627200000,
+      "tag": "0002_platform_marketing",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787673679247,
+      "tag": "0003_saved_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788000000000,
+      "tag": "0004_organization_shop",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788000000001,
+      "tag": "0005_organization_polar_shop",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788000000002,
+      "tag": "0006_organization_checkout_shop",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788700291449,
+      "tag": "0007_organization_google_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788709638509,
+      "tag": "0008_website_redirects",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788721685225,
+      "tag": "0009_notification_sse_polling_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1788877782555,
+      "tag": "0010_organization_analytics_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1789060048538,
+      "tag": "0011_platform_marketing_email_blocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789324210760,
+      "tag": "0012_tenant_organization_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789343643704,
+      "tag": "0013_website_announcement_marketing_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1789486525061,
+      "tag": "0014_furry_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1790036915081,
+      "tag": "0015_restaurant_menu_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1790303762927,
+      "tag": "0016_nested_categories_and_modifiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1790477935868,
+      "tag": "0017_pos_integrations_and_variations",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1790600000000,
+      "tag": "0018_menu_drops_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1791125924019,
+      "tag": "0019_team_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1791317338801,
+      "tag": "0020_menu_permissions_and_legacy_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1791431831780,
+      "tag": "0021_phone_agent",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1791956177889,
+      "tag": "0022_staffing_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1791960342373,
+      "tag": "0023_staffing_restaurant_locations",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1791987385684,
+      "tag": "0024_dashboards",
+      "breakpoints": true
+    }
+  ]
 }

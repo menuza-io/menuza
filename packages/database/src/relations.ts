@@ -63,6 +63,8 @@ import {
 	NotificationPreference,
 	Notification,
 	SavedReport,
+	Dashboard,
+	DashboardShare,
 	OrganizationLocation,
 	OrganizationMenu,
 	OrganizationMenuCategory,
@@ -152,6 +154,13 @@ export const UserRelations = relations(User, ({ one, many }) => ({
 	notifications: many(Notification),
 	savedReports: many(SavedReport),
 	createdMediaAssets: many(OrganizationMediaAsset),
+	dashboards: many(Dashboard),
+	dashboardShares: many(DashboardShare, {
+		relationName: 'DashboardShare_userId_User_id',
+	}),
+	grantedDashboardShares: many(DashboardShare, {
+		relationName: 'DashboardShare_sharedById_User_id',
+	}),
 }))
 
 export const NoteImageRelations = relations(NoteImage, ({ one }) => ({
@@ -279,6 +288,7 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	menuOptions: many(OrganizationMenuOption),
 	menuLocationOverrides: many(OrganizationMenuLocationOverride),
 	drops: many(OrganizationDrop),
+	dashboards: many(Dashboard),
 }))
 
 export const OrganizationLocationRelations = relations(
@@ -886,6 +896,35 @@ export const SavedReportRelations = relations(SavedReport, ({ one }) => ({
 	createdBy: one(User, {
 		fields: [SavedReport.createdById],
 		references: [User.id],
+	}),
+}))
+
+export const DashboardRelations = relations(Dashboard, ({ one, many }) => ({
+	organization: one(Organization, {
+		fields: [Dashboard.organizationId],
+		references: [Organization.id],
+	}),
+	owner: one(User, {
+		fields: [Dashboard.ownerId],
+		references: [User.id],
+	}),
+	shares: many(DashboardShare),
+}))
+
+export const DashboardShareRelations = relations(DashboardShare, ({ one }) => ({
+	dashboard: one(Dashboard, {
+		fields: [DashboardShare.dashboardId],
+		references: [Dashboard.id],
+	}),
+	user: one(User, {
+		fields: [DashboardShare.userId],
+		references: [User.id],
+		relationName: 'DashboardShare_userId_User_id',
+	}),
+	sharedBy: one(User, {
+		fields: [DashboardShare.sharedById],
+		references: [User.id],
+		relationName: 'DashboardShare_sharedById_User_id',
 	}),
 }))
 
