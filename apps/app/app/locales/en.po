@@ -235,7 +235,7 @@ msgstr ""
 msgid "{label}, {total} unread"
 msgstr "{label}, {total} unread"
 
-#: app/components/app-sidebar.tsx:310
+#: app/components/app-sidebar.tsx:312
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
 
@@ -262,6 +262,10 @@ msgstr "{openCallFollowUps} need follow-up"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:400
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} need follow-up"
+
+#: app/components/dashboard/dashboard-switcher.tsx:130
+msgid "{ownerName} · {access}"
+msgstr "{ownerName} · {access}"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:639
 msgid "{pageCount} pages"
@@ -510,7 +514,7 @@ msgstr "A picture, logo, or product shot."
 msgid "A place for every inquiry"
 msgstr "A place for every inquiry"
 
-#: app/utils/dashboards/config.ts:98
+#: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
 
@@ -713,8 +717,8 @@ msgstr "Add at least one email block"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
-#: app/components/dashboard/add-block-dialog.tsx:112
-#: app/components/dashboard/add-block-dialog.tsx:117
+#: app/components/dashboard/add-block-dialog.tsx:115
+#: app/components/dashboard/add-block-dialog.tsx:120
 msgid "Add block"
 msgstr "Add block"
 
@@ -760,7 +764,7 @@ msgstr "Add it in Phone numbers below."
 msgid "Add link"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:608
+#: app/components/app-sidebar.tsx:610
 msgid "Add members"
 msgstr ""
 
@@ -861,6 +865,10 @@ msgstr ""
 msgid "Add social link"
 msgstr ""
 
+#: app/components/dashboard/dashboard-empty-state.tsx:41
+msgid "Add stats, charts and reports to build it."
+msgstr "Add stats, charts and reports to build it."
+
 #: app/utils/website/field-types.ts:75
 msgid "Add supporting information."
 msgstr "Add supporting information."
@@ -941,7 +949,7 @@ msgstr "Admin impersonation active"
 #~ msgid "Admin Impersonation Active"
 #~ msgstr ""
 
-#: app/components/app-sidebar.tsx:400
+#: app/components/app-sidebar.tsx:402
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:117
 msgid "Advanced"
 msgstr "Advanced"
@@ -1056,7 +1064,7 @@ msgstr ""
 #~ msgid "All assigned"
 #~ msgstr ""
 
-#: app/components/dashboard/add-block-dialog.tsx:149
+#: app/components/dashboard/add-block-dialog.tsx:152
 msgid "All built-in blocks are already on this dashboard."
 msgstr "All built-in blocks are already on this dashboard."
 
@@ -1139,7 +1147,7 @@ msgstr "An AI agent that answers your business's calls, answers common questions
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:435
+#: app/components/app-sidebar.tsx:437
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
 msgstr "Analytics"
@@ -1152,7 +1160,7 @@ msgstr "Analytics and tracking"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:451
+#: app/components/app-sidebar.tsx:453
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
 msgid "Announcements"
@@ -1211,7 +1219,7 @@ msgstr ""
 msgid "API Keys"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:635
+#: app/components/app-sidebar.tsx:637
 msgid "App header"
 msgstr "App header"
 
@@ -1414,7 +1422,7 @@ msgstr ""
 msgid "Automation saved successfully"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:333
+#: app/components/app-sidebar.tsx:335
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
 msgid "Automations"
@@ -1521,7 +1529,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:525
+#: app/components/app-sidebar.tsx:527
 #: app/components/command-menu.tsx:181
 msgid "Billing"
 msgstr ""
@@ -1542,6 +1550,10 @@ msgstr "Block types"
 msgid "Blocks"
 msgstr "Blocks"
 
+#: app/components/dashboard/dashboard-empty-state.tsx:43
+msgid "Blocks added to this dashboard show up here."
+msgstr "Blocks added to this dashboard show up here."
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:828
 msgid "Body"
 msgstr ""
@@ -1554,7 +1566,7 @@ msgstr "Body text"
 msgid "Branch on whether you're open right now."
 msgstr "Branch on whether you're open right now."
 
-#: app/components/app-sidebar.tsx:442
+#: app/components/app-sidebar.tsx:444
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5130
 msgid "Branding"
@@ -1582,7 +1594,7 @@ msgstr ""
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
-#: app/components/app-sidebar.tsx:326
+#: app/components/app-sidebar.tsx:328
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
@@ -1625,7 +1637,7 @@ msgstr "Builder"
 msgid "Built-in"
 msgstr "Built-in"
 
-#: app/components/dashboard/add-block-dialog.tsx:134
+#: app/components/dashboard/add-block-dialog.tsx:137
 msgid "Built-in blocks"
 msgstr "Built-in blocks"
 
@@ -1709,7 +1721,7 @@ msgstr "Call details"
 msgid "Call ended"
 msgstr "Call ended"
 
-#: app/components/app-sidebar.tsx:374
+#: app/components/app-sidebar.tsx:376
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
 msgid "Call flow"
@@ -1780,7 +1792,7 @@ msgstr "Callers can press 0 at any time to be transferred."
 msgid "Callers hear each step in order. A keypad menu waits for them to press a key or say their choice, then follows that option."
 msgstr "Callers hear each step in order. A keypad menu waits for them to press a key or say their choice, then follows that option."
 
-#: app/components/app-sidebar.tsx:355
+#: app/components/app-sidebar.tsx:357
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:396
@@ -1820,6 +1832,10 @@ msgstr "Calls your agent answers will appear here. Try a test call from your bro
 msgid "Campaign name"
 msgstr ""
 
+#: app/components/dashboard/dashboard-switcher.tsx:23
+msgid "Can edit"
+msgstr "Can edit"
+
 #: app/components/roles/tenant-role-access-manager.tsx:91
 msgid "Can edit teammate notes"
 msgstr "Can edit teammate notes"
@@ -1837,6 +1853,8 @@ msgstr "Can't text that number"
 #: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:41
+#: app/components/dashboard/dashboard-name-dialog.tsx:149
+#: app/components/dashboard/dashboard-options-menu.tsx:78
 #: app/components/form-actions.tsx:28
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/note/comment-input.tsx:261
@@ -2012,7 +2030,7 @@ msgstr ""
 msgid "Channels"
 msgstr "Channels"
 
-#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:496
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
@@ -2852,6 +2870,10 @@ msgstr "Create channels for your team and choose which roles or people can read 
 msgid "Create Custom Role"
 msgstr "Create Custom Role"
 
+#: app/components/dashboard/dashboard-switcher.tsx:155
+msgid "Create dashboard"
+msgstr "Create dashboard"
+
 #: app/components/website/create-form-dialog.tsx:75
 #: app/components/website/create-form-dialog.tsx:303
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:165
@@ -3095,7 +3117,7 @@ msgstr ""
 msgid "customerId is required"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:296
+#: app/components/app-sidebar.tsx:298
 msgid "Customers"
 msgstr ""
 
@@ -3134,6 +3156,10 @@ msgstr ""
 #: app/components/user-dropdown.tsx:61
 msgid "Dashboard"
 msgstr ""
+
+#: app/components/dashboard/dashboard-options-menu.tsx:123
+msgid "Dashboard options"
+msgstr "Dashboard options"
 
 #: app/components/data-table.tsx:494
 #~ msgid "Data Table"
@@ -3202,6 +3228,7 @@ msgid "Delay unit is required."
 msgstr ""
 
 #: app/components/chat/chat-view.tsx:1029
+#: app/components/dashboard/dashboard-options-menu.tsx:140
 #: app/components/note/comment-item.tsx:239
 #: app/components/roles/tenant-role-access-manager.tsx:871
 #: app/components/roles/tenant-role-access-manager.tsx:981
@@ -3220,6 +3247,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
 msgid "Delete"
 msgstr ""
+
+#: app/components/dashboard/dashboard-options-menu.tsx:66
+msgid "Delete “{name}”?"
+msgstr "Delete “{name}”?"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:381
 msgid "Delete \"{ruleTitle}\""
@@ -3286,6 +3317,10 @@ msgstr "Delete custom role"
 #: app/components/settings/cards/organization/site-card.tsx:239
 msgid "Delete customer data and switch region?"
 msgstr ""
+
+#: app/components/dashboard/dashboard-options-menu.tsx:91
+msgid "Delete dashboard"
+msgstr "Delete dashboard"
 
 #: app/components/settings/cards/organization/site-card.tsx:264
 msgid "Delete data and switch"
@@ -3938,6 +3973,14 @@ msgstr ""
 msgid "Enter 6-digit OTP token"
 msgstr ""
 
+#: app/components/dashboard/dashboard-name-dialog.tsx:45
+msgid "Enter a dashboard name."
+msgstr "Enter a dashboard name."
+
+#: app/components/dashboard/dashboard-options-menu.tsx:152
+msgid "Enter a new name for this dashboard."
+msgstr "Enter a new name for this dashboard."
+
 #: app/components/phone-agent/settings-page.tsx:130
 msgid "Enter a valid email address."
 msgstr "Enter a valid email address."
@@ -4390,7 +4433,7 @@ msgstr "Flow"
 msgid "Follow up on calls"
 msgstr "Follow up on calls"
 
-#: app/components/app-sidebar.tsx:386
+#: app/components/app-sidebar.tsx:388
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:62
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:219
 msgid "Follow-up"
@@ -4450,7 +4493,7 @@ msgstr "Format:"
 msgid "Former member"
 msgstr "Former member"
 
-#: app/components/app-sidebar.tsx:430
+#: app/components/app-sidebar.tsx:432
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
@@ -4502,13 +4545,13 @@ msgstr ""
 msgid "Full width"
 msgstr "Full width"
 
-#: app/components/app-sidebar.tsx:473
+#: app/components/app-sidebar.tsx:475
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 msgid "General"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:420
+#: app/components/app-sidebar.tsx:422
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -4540,12 +4583,12 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:600
+#: app/components/app-sidebar.tsx:602
 msgid "Get chrome extension"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:158
-#: app/components/app-sidebar.tsx:615
+#: app/components/app-sidebar.tsx:617
 msgid "Get help"
 msgstr ""
 
@@ -4565,7 +4608,7 @@ msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:166
-#: app/components/app-sidebar.tsx:623
+#: app/components/app-sidebar.tsx:625
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -4585,6 +4628,10 @@ msgstr "Give your group a name"
 #: ../../packages/ai/src/components/ai-chat.tsx:278
 msgid "Go there"
 msgstr "Go there"
+
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:169
+msgid "Go to Home"
+msgstr "Go to Home"
 
 #: app/components/app-sidebar.tsx:222
 msgid "Go to homepage"
@@ -4787,8 +4834,9 @@ msgstr "Hits"
 msgid "Hold message"
 msgstr "Hold message"
 
+#: app/components/dashboard/dashboard-switcher.tsx:63
+#: app/components/dashboard/dashboard-switcher.tsx:87
 #: app/components/website/link-inspector.tsx:455
-#: app/routes/_app+/$orgSlug_+/index.tsx:159
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -4983,7 +5031,7 @@ msgstr "Insert field here"
 msgid "Inspect"
 msgstr "Inspect"
 
-#: app/components/app-sidebar.tsx:501
+#: app/components/app-sidebar.tsx:503
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
 msgid "Integrations"
@@ -5164,7 +5212,7 @@ msgstr "Keypad menu"
 msgid "Kiro IDE Setup"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:360
+#: app/components/app-sidebar.tsx:362
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
 msgstr "Knowledge"
@@ -5526,7 +5574,7 @@ msgstr "Low ratings"
 msgid "m@example.com"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:302
+#: app/components/app-sidebar.tsx:304
 msgid "Mailbox"
 msgstr "Mailbox"
 
@@ -5686,7 +5734,7 @@ msgstr "Mark read"
 msgid "Mark unread"
 msgstr "Mark unread"
 
-#: app/components/app-sidebar.tsx:313
+#: app/components/app-sidebar.tsx:315
 #: app/components/roles/tenant-role-access-manager.tsx:174
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -5716,7 +5764,7 @@ msgstr ""
 msgid "MCP OAuth Setup Instructions"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:511
+#: app/components/app-sidebar.tsx:513
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr ""
@@ -5737,7 +5785,7 @@ msgstr "Media details"
 msgid "Media details saved"
 msgstr "Media details saved"
 
-#: app/components/app-sidebar.tsx:290
+#: app/components/app-sidebar.tsx:292
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
 msgid "Media library"
@@ -5772,7 +5820,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:478
+#: app/components/app-sidebar.tsx:480
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:164
 #: app/components/roles/tenant-role-access-manager.tsx:820
@@ -5784,7 +5832,7 @@ msgstr ""
 msgid "Members & invites"
 msgstr "Members & invites"
 
-#: app/utils/dashboards/config.ts:90
+#: app/utils/dashboards/config.ts:100
 msgid "Members who created the most notes."
 msgstr "Members who created the most notes."
 
@@ -5930,8 +5978,13 @@ msgstr "Mute microphone"
 msgid "Muted"
 msgstr ""
 
+#: app/components/dashboard/dashboard-switcher.tsx:98
+msgid "My dashboards"
+msgstr "My dashboards"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
+#: app/components/dashboard/dashboard-name-dialog.tsx:124
 #: app/components/settings/cards/organization/general-settings-card.tsx:82
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/website/create-form-dialog.tsx:85
@@ -5946,6 +5999,10 @@ msgstr ""
 #: app/utils/website/field-types.ts:28
 msgid "Name"
 msgstr ""
+
+#: app/components/dashboard/dashboard-switcher.tsx:153
+msgid "Name your dashboard. You can add blocks to it next."
+msgstr "Name your dashboard. You can add blocks to it next."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:868
 msgid "Navigate to Features → MCP Servers"
@@ -6007,7 +6064,7 @@ msgstr ""
 msgid "New automation"
 msgstr ""
 
-#: app/components/dashboard/add-block-dialog.tsx:126
+#: app/components/dashboard/add-block-dialog.tsx:129
 msgid "New blocks are added at the bottom of the dashboard."
 msgstr "New blocks are added at the bottom of the dashboard."
 
@@ -6025,6 +6082,11 @@ msgstr "New channel"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:211
 msgid "New Customer Journey"
 msgstr ""
+
+#: app/components/dashboard/dashboard-switcher.tsx:141
+#: app/components/dashboard/dashboard-switcher.tsx:151
+msgid "New dashboard"
+msgstr "New dashboard"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:859
 msgid "New Destination"
@@ -6535,7 +6597,7 @@ msgstr ""
 msgid "notes"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:284
+#: app/components/app-sidebar.tsx:286
 #: app/components/command-menu.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes.tsx:297
 msgid "Notes"
@@ -6549,11 +6611,11 @@ msgstr "Notes & Documents"
 msgid "Notes & website"
 msgstr "Notes & website"
 
-#: app/utils/dashboards/config.ts:73
+#: app/utils/dashboards/config.ts:83
 msgid "Notes chart"
 msgstr "Notes chart"
 
-#: app/utils/dashboards/config.ts:74
+#: app/utils/dashboards/config.ts:84
 msgid "Notes created each day."
 msgstr "Notes created each day."
 
@@ -6594,7 +6656,7 @@ msgstr "Nothing to show here"
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:516
+#: app/components/app-sidebar.tsx:518
 msgid "Notifications"
 msgstr ""
 
@@ -6643,7 +6705,7 @@ msgstr "Old URL (Source)"
 msgid "On"
 msgstr "On"
 
-#: app/utils/dashboards/config.ts:81
+#: app/utils/dashboards/config.ts:91
 msgid "Onboarding checklist"
 msgstr "Onboarding checklist"
 
@@ -6700,6 +6762,10 @@ msgstr "Only selected roles and people"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
+
+#: app/components/dashboard/dashboard-name-dialog.tsx:51
+msgid "Only the owner can rename this dashboard."
+msgstr "Only the owner can rename this dashboard."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
 msgid "Only while you're open"
@@ -6945,7 +7011,7 @@ msgstr "Outline"
 msgid "Outside these times the agent takes a message instead."
 msgstr "Outside these times the agent takes a message instead."
 
-#: app/components/app-sidebar.tsx:319
+#: app/components/app-sidebar.tsx:321
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
 msgid "Overview"
 msgstr ""
@@ -6977,7 +7043,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:425
+#: app/components/app-sidebar.tsx:427
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
 msgid "Pages"
@@ -7136,7 +7202,7 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:342
+#: app/components/app-sidebar.tsx:344
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:118
 msgid "Phone agent"
 msgstr "Phone agent"
@@ -7216,7 +7282,7 @@ msgstr ""
 msgid "Photos and videos"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:393
+#: app/components/app-sidebar.tsx:395
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:55
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:292
 msgid "Phrases"
@@ -7824,7 +7890,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:458
+#: app/components/app-sidebar.tsx:460
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
 msgstr "Redirects"
@@ -8035,6 +8101,14 @@ msgstr "Removed section"
 msgid "Removing section"
 msgstr "Removing section"
 
+#: app/components/dashboard/dashboard-options-menu.tsx:132
+msgid "Rename"
+msgstr "Rename"
+
+#: app/components/dashboard/dashboard-options-menu.tsx:151
+msgid "Rename dashboard"
+msgstr "Rename dashboard"
+
 #: ../../packages/marketing/src/components/email/email-preview.tsx:111
 msgid "Rendering…"
 msgstr "Rendering…"
@@ -8084,7 +8158,7 @@ msgstr "Reply…"
 #~ msgid "Replying to comment"
 #~ msgstr ""
 
-#: app/utils/dashboards/config.ts:97
+#: app/utils/dashboards/config.ts:107
 msgid "Report"
 msgstr "Report"
 
@@ -8096,7 +8170,7 @@ msgstr "Report not found"
 msgid "Report templates"
 msgstr "Report templates"
 
-#: app/components/app-sidebar.tsx:278
+#: app/components/app-sidebar.tsx:280
 msgid "Reports"
 msgstr ""
 
@@ -8318,7 +8392,7 @@ msgstr "Role name"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/components/app-sidebar.tsx:485
+#: app/components/app-sidebar.tsx:487
 msgid "Roles & access"
 msgstr "Roles & access"
 
@@ -8469,6 +8543,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 #: app/components/chat/chat-message.tsx:222
+#: app/components/dashboard/dashboard-options-menu.tsx:153
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:129
 #: app/components/phone-agent/settings-page.tsx:378
@@ -8701,7 +8776,7 @@ msgstr ""
 msgid "Search notes by title or content..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:668
+#: app/components/app-sidebar.tsx:670
 #: app/components/command-menu.tsx:102
 msgid "Search notes..."
 msgstr ""
@@ -9069,7 +9144,7 @@ msgstr ""
 msgid "Set up authenticator app"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:465
+#: app/components/app-sidebar.tsx:467
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
@@ -9078,7 +9153,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:348
+#: app/components/app-sidebar.tsx:350
 msgid "Setup"
 msgstr "Setup"
 
@@ -9129,7 +9204,11 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:506
+#: app/components/dashboard/dashboard-switcher.tsx:117
+msgid "Shared with me"
+msgstr "Shared with me"
+
+#: app/components/app-sidebar.tsx:508
 msgid "Shop"
 msgstr ""
 
@@ -9485,7 +9564,7 @@ msgstr "Starting point"
 msgid "Starting…"
 msgstr "Starting…"
 
-#: app/utils/dashboards/config.ts:65
+#: app/utils/dashboards/config.ts:75
 msgid "Stats"
 msgstr "Stats"
 
@@ -9809,7 +9888,7 @@ msgstr "Temporary forward"
 msgid "Test again"
 msgstr "Test again"
 
-#: app/components/app-sidebar.tsx:407
+#: app/components/app-sidebar.tsx:409
 #: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:325
 #: app/components/phone-agent/call-detail-sheet.tsx:375
@@ -10015,6 +10094,14 @@ msgstr "The call got a tag you marked important."
 msgid "The conversation and your key presses will appear here."
 msgstr "The conversation and your key presses will appear here."
 
+#: app/components/dashboard/dashboard-options-menu.tsx:56
+msgid "The dashboard could not be deleted."
+msgstr "The dashboard could not be deleted."
+
+#: app/components/dashboard/dashboard-name-dialog.tsx:53
+msgid "The dashboard could not be saved. Please try again."
+msgstr "The dashboard could not be saved. Please try again."
+
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:255
@@ -10157,9 +10244,21 @@ msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgid "This client will have access to:"
 msgstr ""
 
-#: app/components/dashboard/add-block-dialog.tsx:121
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:161
+msgid "This dashboard does not exist or you do not have access to it."
+msgstr "This dashboard does not exist or you do not have access to it."
+
+#: app/components/dashboard/add-block-dialog.tsx:124
 msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 msgstr "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
+
+#: app/components/dashboard/dashboard-empty-state.tsx:33
+msgid "This dashboard has no blocks yet"
+msgstr "This dashboard has no blocks yet"
+
+#: app/components/dashboard/dashboard-options-menu.tsx:70
+msgid "This deletes the dashboard and its blocks for you and everyone it is shared with. This cannot be undone."
+msgstr "This deletes the dashboard and its blocks for you and everyone it is shared with. This cannot be undone."
 
 #: app/components/settings/cards/sessions-card.tsx:183
 msgid "This device"
@@ -10338,7 +10437,7 @@ msgstr "Too Many Requests"
 msgid "Too many requests. Wait a moment and try again."
 msgstr "Too many requests. Wait a moment and try again."
 
-#: app/utils/dashboards/config.ts:89
+#: app/utils/dashboards/config.ts:99
 msgid "Top contributors"
 msgstr "Top contributors"
 
@@ -10350,7 +10449,7 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: app/utils/dashboards/config.ts:66
+#: app/utils/dashboards/config.ts:76
 msgid "Total notes, the daily average and the trend."
 msgstr "Total notes, the daily average and the trend."
 
@@ -10358,7 +10457,7 @@ msgstr "Total notes, the daily average and the trend."
 msgid "Training"
 msgstr "Training"
 
-#: app/components/app-sidebar.tsx:367
+#: app/components/app-sidebar.tsx:369
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
 msgid "Training rules"
 msgstr "Training rules"
@@ -10420,7 +10519,7 @@ msgstr "Transfer to the team"
 msgid "Transfer when"
 msgstr "Transfer when"
 
-#: app/components/app-sidebar.tsx:379
+#: app/components/app-sidebar.tsx:381
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:143
 msgid "Transfers"
@@ -10874,6 +10973,10 @@ msgstr "Use {count} or less."
 msgid "Use {count} or more."
 msgstr "Use {count} or more."
 
+#: app/components/dashboard/dashboard-name-dialog.tsx:47
+msgid "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
+msgstr "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
+
 #: app/components/note/comment-input.tsx:152
 #~ msgid "Use @ to mention someone • Cmd+Enter to submit"
 #~ msgstr ""
@@ -10886,6 +10989,10 @@ msgstr ""
 #: app/components/phone-agent/settings-page.tsx:134
 msgid "Use a US or Canada phone number."
 msgstr "Use a US or Canada phone number."
+
+#: app/components/dashboard/dashboard-empty-state.tsx:37
+msgid "Use Add block to put stats, charts and reports on it."
+msgstr "Use Add block to put stats, charts and reports on it."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2562
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
@@ -10957,7 +11064,7 @@ msgstr "Used when the value is empty"
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "Useful if staff should log what happened after a transfer."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:123
+#: app/routes/_app+/$orgSlug_+/index.tsx:131
 msgid "User"
 msgstr "User"
 
@@ -11086,6 +11193,7 @@ msgstr ""
 msgid "View notes from users you have access to"
 msgstr ""
 
+#: app/components/dashboard/dashboard-switcher.tsx:22
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:512
 msgid "View only"
 msgstr "View only"
@@ -11249,7 +11357,7 @@ msgstr ""
 msgid "We've sent you a code to verify your email address."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:414
+#: app/components/app-sidebar.tsx:416
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:83
 msgid "Website"
@@ -11294,7 +11402,7 @@ msgstr ""
 msgid "Welcome"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:153
+#: app/routes/_app+/$orgSlug_+/index.tsx:161
 msgid "Welcome {userName}!"
 msgstr ""
 
@@ -11571,6 +11679,10 @@ msgstr "Yesterday"
 msgid "You"
 msgstr ""
 
+#: app/components/dashboard/dashboard-name-dialog.tsx:49
+msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
+msgstr "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:616
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
@@ -11778,7 +11890,7 @@ msgstr "Your media library is empty"
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "Your microphone is being used by another app. Close it and try again."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:162
 msgid "Your organization dashboard"
 msgstr ""
 
@@ -11810,7 +11922,7 @@ msgstr ""
 msgid "Your referral link"
 msgstr ""
 
-#: app/utils/dashboards/config.ts:82
+#: app/utils/dashboards/config.ts:92
 msgid "Your remaining setup steps."
 msgstr "Your remaining setup steps."
 

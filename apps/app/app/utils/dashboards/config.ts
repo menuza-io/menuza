@@ -26,6 +26,16 @@ export type DashboardShareAccess = (typeof DASHBOARD_SHARE_ACCESS)[number]
 export type DashboardAccess = 'owner' | DashboardShareAccess
 export const dashboardShareAccessSchema = z.enum(DASHBOARD_SHARE_ACCESS)
 
+/** Owners and edit recipients may change a dashboard's blocks and layout. */
+export function canEdit(access: DashboardAccess) {
+	return access === 'owner' || access === 'edit'
+}
+
+/** Only owners may rename, delete or share a dashboard. */
+export function isOwner(access: DashboardAccess) {
+	return access === 'owner'
+}
+
 /** Breakpoints whose layouts are stored. `sm` is derived (one stacked column). */
 export const PERSISTED_BREAKPOINTS = ['lg', 'md'] as const
 export type PersistedBreakpoint = (typeof PERSISTED_BREAKPOINTS)[number]
@@ -413,11 +423,31 @@ export function addableBuiltInBlockTypes(
 	)
 }
 
+export type DashboardNameErrorCode = 'name-required' | 'name-too-long'
+
+const DASHBOARD_NAME_ERRORS: Record<DashboardNameErrorCode, string> = {
+	'name-required': 'Enter a dashboard name.',
+	'name-too-long': `Use ${DASHBOARD_NAME_MAX_LENGTH} characters or fewer.`,
+}
+
 export const dashboardNameSchema = z
-	.string({ required_error: 'Enter a dashboard name.' })
+	.string({ required_error: DASHBOARD_NAME_ERRORS['name-required'] })
 	.trim()
-	.min(1, 'Enter a dashboard name.')
-	.max(
-		DASHBOARD_NAME_MAX_LENGTH,
-		`Use ${DASHBOARD_NAME_MAX_LENGTH} characters or fewer.`,
+	.min(1, DASHBOARD_NAME_ERRORS['name-required'])
+	.max(DASHBOARD_NAME_MAX_LENGTH, DASHBOARD_NAME_ERRORS['name-too-long'])
+
+export type DashboardNameResult =
+	| { success: true; name: string }
+	| { success: false; code: DashboardNameErrorCode; message: string }
+
+/** Trims a submitted dashboard name and checks that it has 1 to 60 characters. */
+export function validateDashboardName(value: unknown): DashboardNameResult {
+	const result = dashboardNameSchema.safeParse(value ?? '')
+	if (result.success) return { success: true, name: result.data }
+	const code: DashboardNameErrorCode = result.error.issues.some(
+		(issue) => issue.code === 'too_big',
 	)
+		? 'name-too-long'
+		: 'name-required'
+	return { success: false, code, message: DASHBOARD_NAME_ERRORS[code] }
+}

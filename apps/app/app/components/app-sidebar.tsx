@@ -271,7 +271,9 @@ function OrganizationSidebar({
 		{
 			title: _(msg`Dashboard`),
 			url: `/${orgSlug}`,
-			isActive: location.pathname === `/${orgSlug}`,
+			isActive:
+				location.pathname === `/${orgSlug}` ||
+				location.pathname.startsWith(`/${orgSlug}/dashboards/`),
 			icon: HomeIcon,
 		},
 		{

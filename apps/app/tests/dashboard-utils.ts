@@ -7,6 +7,7 @@ import {
 	type DashboardConfig,
 } from '#app/utils/dashboards/config.ts'
 import { createUser } from './db-utils.ts'
+import { addOrganizationMember, createTestSession } from './test-utils.ts'
 
 /**
  * Inserts a user without a password or roles. Dashboard queries only need the
@@ -28,6 +29,17 @@ export async function insertTestUser(
 		.returning()
 	if (!user) throw new Error('Failed to create test user')
 	return user
+}
+
+/** A fast test user who is an active member of the organization and signed in. */
+export async function insertTestMember(
+	organizationId: string,
+	overrides: { name?: string | null } = {},
+) {
+	const user = await insertTestUser(overrides)
+	await addOrganizationMember(user.id, organizationId)
+	const { cookie } = await createTestSession(user.id)
+	return { user, cookie }
 }
 
 export async function insertTestDashboard(input: {

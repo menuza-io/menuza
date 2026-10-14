@@ -1,24 +1,22 @@
-import { Icon } from '@repo/ui/icon'
 import { type ReactNode } from 'react'
 
-/** The bar above a dashboard grid that names the open dashboard. */
+/**
+ * The bar above a dashboard grid: what the open dashboard is (the dashboard
+ * switcher) on one side, what can be done with it on the other.
+ */
 export function DashboardHeader({
-	name,
+	title,
 	actions,
 }: {
-	name: ReactNode
+	title: ReactNode
 	actions?: ReactNode
 }) {
 	return (
 		<div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
-			<div className="flex min-w-0 items-center gap-2 text-sm font-medium">
-				<Icon
-					name="layout-grid"
-					className="text-muted-foreground size-4 shrink-0"
-				/>
-				<span className="truncate">{name}</span>
+			<div className="flex min-w-0 items-center">{title}</div>
+			<div className="flex flex-wrap items-center justify-end gap-2">
+				{actions}
 			</div>
-			{actions}
 		</div>
 	)
 }

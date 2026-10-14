@@ -1,6 +1,7 @@
 import {
 	and,
 	Dashboard,
+	DashboardShare,
 	db,
 	eq,
 	OnboardingProgress,
@@ -18,8 +19,13 @@ import {
 	type DashboardConfig,
 } from '#app/utils/dashboards/config.ts'
 import { appendBlock, removeBlock } from '#app/utils/dashboards/layout.ts'
-import { insertTestDashboard } from '#tests/dashboard-utils.ts'
 import {
+	insertTestDashboard,
+	insertTestMember,
+	insertTestShare,
+} from '#tests/dashboard-utils.ts'
+import {
+	addOrganizationMember,
 	createAuthenticatedRequest,
 	createTestOrganization,
 	getResponseStatus,
@@ -392,6 +398,63 @@ describe('Home dashboard loader', () => {
 		expect(data.dashboard.config).toEqual(defaultHomeConfig())
 	})
 
+	it('lists the custom dashboards of this organization for the switcher', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('member')
+		const otherOrganization = await createTestOrganization(user.id, 'member')
+		const colleague = await insertTestMember(organization.id, {
+			name: 'Bea Builder',
+		})
+		await addOrganizationMember(colleague.user.id, otherOrganization.id)
+		const mine = await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			name: 'Sales overview',
+		})
+		await insertTestDashboard({
+			organizationId: otherOrganization.id,
+			ownerId: user.id,
+			name: 'Other organization board',
+		})
+		const shared = await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: colleague.user.id,
+			name: 'Team board',
+		})
+		const sharedElsewhere = await insertTestDashboard({
+			organizationId: otherOrganization.id,
+			ownerId: colleague.user.id,
+			name: 'Shared in the other organization',
+		})
+		const unshared = await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: colleague.user.id,
+			name: 'Private board',
+		})
+		for (const dashboard of [shared, sharedElsewhere]) {
+			await insertTestShare({
+				dashboardId: dashboard.id,
+				userId: user.id,
+				sharedById: colleague.user.id,
+				access: 'edit',
+			})
+		}
+
+		const data = await loadHome(organization.slug, cookie)
+
+		expect(data.switcher).toEqual({
+			mine: [{ id: mine.id, name: 'Sales overview' }],
+			sharedWithMe: [
+				{
+					id: shared.id,
+					name: 'Team board',
+					ownerName: 'Bea Builder',
+					access: 'edit',
+				},
+			],
+		})
+		expect(JSON.stringify(data.switcher)).not.toContain(unshared.id)
+	})
+
 	it('returns 404 for an organization the user is not a member of', async () => {
 		const { cookie } = await setupTestOrgWithUser('admin')
 		const { organization: otherOrganization } =
@@ -659,7 +722,7 @@ describe('Home dashboard action', () => {
 		).toBe('invalid-request')
 		expect(
 			expectBadRequest(
-				await postHome(organization.slug, cookie, { intent: 'share' }),
+				await postHome(organization.slug, cookie, { intent: 'unknown' }),
 			).code,
 		).toBe('invalid-request')
 		expect(
@@ -698,6 +761,89 @@ describe('Home dashboard action', () => {
 			id: null,
 			config: defaultHomeConfig(),
 		})
+	})
+
+	it('refuses to rename, delete or share Home with a 403', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('member')
+		const colleague = await insertTestMember(organization.id)
+		const bodies: Array<Record<string, string>> = [
+			{ intent: 'rename', name: 'Not Home' },
+			{ intent: 'delete' },
+			{ intent: 'share', userId: colleague.user.id, access: 'view' },
+			{ intent: 'unshare', userId: colleague.user.id },
+		]
+
+		// Without a saved Home row and with one.
+		for (const body of bodies) {
+			const { status, body: result } = unwrap(
+				await postHome(organization.slug, cookie, body),
+			)
+			expect(status).toBe(403)
+			expect(result).toEqual({
+				ok: false,
+				error: { code: 'forbidden', message: expect.any(String) },
+			})
+		}
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+
+		const home = await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+		})
+		for (const body of bodies) {
+			expect(
+				unwrap(await postHome(organization.slug, cookie, body)).status,
+			).toBe(403)
+		}
+		const [row] = await db
+			.select({ name: Dashboard.name, config: Dashboard.config })
+			.from(Dashboard)
+			.where(eq(Dashboard.id, home.id))
+		expect(row).toEqual({
+			name: 'Home',
+			config: serializeDashboardConfig(defaultHomeConfig()),
+		})
+		expect(
+			await db
+				.select({ userId: DashboardShare.userId })
+				.from(DashboardShare)
+				.where(eq(DashboardShare.dashboardId, home.id)),
+		).toEqual([])
+	})
+
+	it('creates a custom dashboard without touching Home', async () => {
+		const { user, organization, cookie } = await setupTestOrgWithUser('member')
+
+		const response = await postHome(organization.slug, cookie, {
+			intent: 'create',
+			name: ' Sales overview ',
+		})
+
+		const [created] = await db
+			.select({ id: Dashboard.id, name: Dashboard.name })
+			.from(Dashboard)
+			.where(
+				and(
+					eq(Dashboard.ownerId, user.id),
+					eq(Dashboard.organizationId, organization.id),
+					eq(Dashboard.kind, 'custom'),
+				),
+			)
+		expect(created?.name).toBe('Sales overview')
+		expect(response).toBeInstanceOf(Response)
+		expect((response as Response).headers.get('Location')).toBe(
+			`/${organization.slug}/dashboards/${created!.id}`,
+		)
+		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+		expect(
+			unwrap(
+				await postHome(organization.slug, cookie, {
+					intent: 'create',
+					name: 'a'.repeat(61),
+				}),
+			).status,
+		).toBe(400)
 	})
 
 	it('returns 404 for an organization the user is not a member of', async () => {

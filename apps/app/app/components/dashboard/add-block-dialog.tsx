@@ -10,7 +10,7 @@ import {
 	DialogTrigger,
 } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type ReactElement, type ReactNode } from 'react'
 import { type DashboardBlockPicker } from '#app/utils/dashboards/block-data.server.ts'
 import {
 	addableBuiltInBlockTypes,
@@ -19,6 +19,8 @@ import {
 	type DashboardBlock,
 	type NewDashboardBlock,
 } from '#app/utils/dashboards/config.ts'
+
+const DEFAULT_TRIGGER = <Button type="button" variant="outline" size="sm" />
 
 /** A titled list of blocks in the Add block dialog. */
 export function AddBlockSection({
@@ -86,12 +88,15 @@ export function AddBlockDialog({
 	picker,
 	onAdd,
 	renderSections,
+	trigger = DEFAULT_TRIGGER,
 }: {
 	blocks: readonly DashboardBlock[]
 	picker: DashboardBlockPicker
 	onAdd: (block: NewDashboardBlock) => void
 	/** Further sections; `select` adds a block and closes the dialog. */
 	renderSections?: (select: (block: NewDashboardBlock) => void) => ReactNode
+	/** The button that opens the dialog; it is labelled "Add block". */
+	trigger?: ReactElement
 }) {
 	const { _ } = useLingui()
 	const [open, setOpen] = useState(false)
@@ -105,9 +110,7 @@ export function AddBlockDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger
-				render={<Button type="button" variant="outline" size="sm" />}
-			>
+			<DialogTrigger render={trigger}>
 				<Icon name="plus" />
 				<Trans>Add block</Trans>
 			</DialogTrigger>

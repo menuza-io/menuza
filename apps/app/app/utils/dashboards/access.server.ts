@@ -14,6 +14,8 @@ import {
 	type DashboardKind,
 } from './config.ts'
 
+export { canEdit, isOwner } from './config.ts'
+
 export type AccessibleDashboard = {
 	id: string
 	organizationId: string
@@ -22,14 +24,6 @@ export type AccessibleDashboard = {
 	kind: DashboardKind
 	name: string
 	config: DashboardConfig
-}
-
-export function canEdit(access: DashboardAccess) {
-	return access === 'owner' || access === 'edit'
-}
-
-export function isOwner(access: DashboardAccess) {
-	return access === 'owner'
 }
 
 /**
@@ -100,4 +94,20 @@ export async function requireDashboardAccess({
 			config: parseStoredDashboardConfig(row.config, row.kind),
 		},
 	}
+}
+
+/**
+ * Like `requireDashboardAccess`, for the custom dashboard pages. Home is only
+ * ever served at the organization's root, so its id is a 404 here too.
+ */
+export async function requireCustomDashboardAccess(target: {
+	userId: string
+	organizationId: string
+	dashboardId: string
+}) {
+	const result = await requireDashboardAccess(target)
+	if (result.dashboard.kind !== 'custom') {
+		throw new Response('Not Found', { status: 404 })
+	}
+	return result
 }

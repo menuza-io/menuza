@@ -10,13 +10,16 @@ import {
 	addableBuiltInBlockTypes,
 	blockSizeLimits,
 	canAddBlockType,
+	canEdit,
 	dashboardNameSchema,
 	defaultHomeConfig,
 	emptyDashboardConfig,
+	isOwner,
 	normalizeDashboardConfig,
 	parseDashboardConfig,
 	parseStoredDashboardConfig,
 	serializeDashboardConfig,
+	validateDashboardName,
 	type DashboardBlock,
 	type DashboardConfig,
 } from './config.ts'
@@ -534,5 +537,44 @@ describe('dashboardNameSchema', () => {
 		expect(dashboardNameSchema.safeParse('').success).toBe(false)
 		expect(dashboardNameSchema.safeParse('    ').success).toBe(false)
 		expect(dashboardNameSchema.safeParse('a'.repeat(61)).success).toBe(false)
+	})
+})
+
+describe('validateDashboardName', () => {
+	it('returns the trimmed name', () => {
+		expect(validateDashboardName('  Sales overview  ')).toEqual({
+			success: true,
+			name: 'Sales overview',
+		})
+		expect(validateDashboardName(` ${'a'.repeat(60)} `)).toEqual({
+			success: true,
+			name: 'a'.repeat(60),
+		})
+	})
+
+	it('tells a missing name from a too long one', () => {
+		for (const value of ['', '   ', undefined, null]) {
+			expect(validateDashboardName(value)).toEqual({
+				success: false,
+				code: 'name-required',
+				message: 'Enter a dashboard name.',
+			})
+		}
+		expect(validateDashboardName('a'.repeat(61))).toEqual({
+			success: false,
+			code: 'name-too-long',
+			message: 'Use 60 characters or fewer.',
+		})
+	})
+})
+
+describe('access helpers', () => {
+	it('lets owners and editors edit and only owners manage', () => {
+		expect(canEdit('owner')).toBe(true)
+		expect(canEdit('edit')).toBe(true)
+		expect(canEdit('view')).toBe(false)
+		expect(isOwner('owner')).toBe(true)
+		expect(isOwner('edit')).toBe(false)
+		expect(isOwner('view')).toBe(false)
 	})
 })
