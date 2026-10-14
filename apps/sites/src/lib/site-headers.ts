@@ -71,6 +71,18 @@ export function isDropVisibilityPage(pathname: string) {
 	)
 }
 
+/**
+ * Careers pages list and show jobs that open, close and expire on their own,
+ * so a cached copy could advertise a role that has ended. They are never
+ * served from the HTML edge cache. Handles locale-prefixed paths like
+ * `/ar/careers/line-cook`.
+ */
+export function isCareersPage(pathname: string) {
+	const segments = pathname.split('/').filter(Boolean)
+	const offset = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segments[0] ?? '') ? 1 : 0
+	return segments[offset] === 'careers'
+}
+
 export function shouldCachePublishedHtml(
 	request: Request,
 	url: URL,
@@ -81,6 +93,7 @@ export function shouldCachePublishedHtml(
 	if (url.searchParams.has('preview')) return false
 	if (url.pathname.startsWith('/api/')) return false
 	if (isDropVisibilityPage(url.pathname)) return false
+	if (isCareersPage(url.pathname)) return false
 	return true
 }
 
@@ -101,10 +114,19 @@ export function isSitesMenuRoute(pathname: string) {
 	return pathname.replace(/^\/+|\/+$/g, '').startsWith('menu')
 }
 
+export function isSitesCareersRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return slug === 'careers' || slug.startsWith('careers/')
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
-	return isSitesShopRoute(pathname) || isSitesMenuRoute(pathname)
+	return (
+		isSitesShopRoute(pathname) ||
+		isSitesMenuRoute(pathname) ||
+		isSitesCareersRoute(pathname)
+	)
 }
 
 export function publishedHtmlCacheUrl(requestUrl: URL, host: string | null) {

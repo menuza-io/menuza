@@ -9,6 +9,7 @@ import {
 	Notification,
 } from '@repo/database'
 import { type LoaderFunctionArgs } from 'react-router'
+import { filterVisibleNotifications } from '#app/utils/staffing/notification-visibility.server.ts'
 
 const POLL_INTERVAL_MS = 3000
 const KEEP_ALIVE_INTERVAL_MS = 30000
@@ -112,9 +113,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 					if (unseen.length > 0) {
 						lastCheckedAt = unseen[unseen.length - 1]!.updatedAt
+						const visible = new Set(
+							(await filterVisibleNotifications(userId, unseen)).map(
+								(n) => n.id,
+							),
+						)
 						for (const notification of unseen) {
 							seenIds.add(notification.id)
-							send('notification', notification)
+							if (visible.has(notification.id)) {
+								send('notification', notification)
+							}
 						}
 
 						// Rebuild seenIds to contain only IDs that can be returned by the next gte query

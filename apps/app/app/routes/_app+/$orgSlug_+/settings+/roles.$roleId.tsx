@@ -1,5 +1,6 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getRoleWithPermissions,
 	requireOrganizationMember,
@@ -25,11 +26,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		role,
 		canEdit: isAdmin && !role.isBuiltIn,
+		staffingEnabled: await isStaffingFeatureEnabled(
+			organization.organizationId,
+		),
 	}
 }
 
 export default function ViewRoleRoute() {
-	const { organization, role, canEdit } = useLoaderData<typeof loader>()
+	const { organization, role, canEdit, staffingEnabled } =
+		useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
 	return (
@@ -37,6 +42,7 @@ export default function ViewRoleRoute() {
 			orgSlug={organization.slug}
 			role={role}
 			editHref={canEdit ? `${basePath}/${role.id}/edit` : undefined}
+			staffingEnabled={staffingEnabled}
 		/>
 	)
 }

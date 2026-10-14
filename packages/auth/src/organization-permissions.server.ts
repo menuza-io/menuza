@@ -209,6 +209,28 @@ export const ORG_PERMISSIONS = {
 	// requires access to a channel, not a permission.
 	UPDATE_CHAT_ANY: 'update:chat:any' as const,
 	CREATE_CHAT_GROUP: 'create:chat:group' as const,
+
+	// Staffing: roster, pay, private details, schedule, time clock, labor,
+	// hiring. Every staffing surface is also behind the org-level staffing.*
+	// feature flags (see apps/app utils/staffing/access.server.ts).
+	READ_STAFF_ANY: 'read:staff:any' as const,
+	UPDATE_STAFF_ANY: 'update:staff:any' as const,
+	READ_STAFF_PAY_ANY: 'read:staff_pay:any' as const,
+	UPDATE_STAFF_PAY_ANY: 'update:staff_pay:any' as const,
+	READ_STAFF_PRIVATE_ANY: 'read:staff_private:any' as const,
+	UPDATE_STAFF_PRIVATE_ANY: 'update:staff_private:any' as const,
+	READ_SCHEDULE_ANY: 'read:schedule:any' as const,
+	UPDATE_SCHEDULE_ANY: 'update:schedule:any' as const,
+	READ_SCHEDULE_OWN: 'read:schedule:own' as const,
+	CREATE_TIMECLOCK_OWN: 'create:timeclock:own' as const,
+	READ_TIMESHEET_ANY: 'read:timesheet:any' as const,
+	UPDATE_TIMESHEET_ANY: 'update:timesheet:any' as const,
+	APPROVE_TIMESHEET_ANY: 'approve:timesheet:any' as const,
+	READ_LABOR_ANY: 'read:labor:any' as const,
+	READ_LABOR_POLICY_ANY: 'read:labor_policy:any' as const,
+	UPDATE_LABOR_POLICY_ANY: 'update:labor_policy:any' as const,
+	READ_HIRING_ANY: 'read:hiring:any' as const,
+	UPDATE_HIRING_ANY: 'update:hiring:any' as const,
 } as const
 
 /**

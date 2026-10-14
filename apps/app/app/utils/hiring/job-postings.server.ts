@@ -1,0 +1,640 @@
+import { AuditAction, auditService } from '@repo/audit'
+import {
+	canTransitionJobPosting,
+	closesOnToDate,
+	dateToClosesOn,
+	effectiveJobPostingStatus,
+	GENERAL_APPLICATION_DEFAULTS,
+	GENERAL_APPLICATION_SLUG,
+	getJobPostingPublishErrors,
+	JOB_POSTING_LIMITS,
+	jobPostingContentSchema,
+	normalizePay,
+	parseScreenerQuestions,
+	stripMarkup,
+	toPublicQuestion,
+	uniqueJobPostingSlug,
+	type JobEmploymentType,
+	type JobPayType,
+	type JobPostingContent,
+	type PublicJobPosting,
+	type PublicJobPostingListItem,
+	type ScreenerQuestion,
+	localizeJobPosting,
+	parseJobPostingTranslations,
+	type JobPostingTranslations,
+} from '@repo/common/job-posting'
+import { and, asc, db, desc, eq, JobPosting, lte } from '@repo/database'
+import { DEFAULT_SCOPE_ID } from '@repo/staffing'
+import { sanitizeJobDescription } from './job-description-sanitize.server.ts'
+import {
+	type PostingDetail,
+	type PostingFailure,
+	type PostingSummary,
+} from './job-posting-types.ts'
+
+export type { PostingDetail, PostingFailure, PostingSummary }
+
+/**
+ * Job postings (staffing.hiring), control plane. Public content only: nothing
+ * in here is a person. Every function takes the organization id from the
+ * caller's verified membership, never from the request, and every row lookup
+ * is filtered by it, so one organization can never read or change another's
+ * postings by guessing an id.
+ *
+ * A posting belongs to the organization, not to a scope: every job is open at
+ * the organization's one implicit scope (`DEFAULT_SCOPE_ID`), so there is no
+ * per-scope access to check here.
+ */
+
+export type PostingActorScope = {
+	organizationId: string
+	userId: string
+	request?: Request
+}
+
+export type PostingResult<T> = { ok: true; value: T } | PostingFailure
+
+type PostingRow = typeof JobPosting.$inferSelect
+
+function toSummary(row: PostingRow, now: Date): PostingSummary {
+	return {
+		id: row.id,
+		slug: row.slug,
+		title: row.title,
+		positionName: row.positionName,
+		status: effectiveJobPostingStatus(row, now),
+		employmentType: row.employmentType as JobEmploymentType,
+		isGeneral: row.isGeneral,
+		payType: row.payType as JobPayType,
+		payMinMinor: row.payMinMinor,
+		payMaxMinor: row.payMaxMinor,
+		currency: row.currency,
+		publishedAt: row.publishedAt?.toISOString() ?? null,
+		expiresAt: row.expiresAt?.toISOString() ?? null,
+		updatedAt: row.updatedAt.toISOString(),
+	}
+}
+
+function toDetail(row: PostingRow, now: Date): PostingDetail {
+	return {
+		...toSummary(row, now),
+		descriptionHtml: row.descriptionHtml,
+		questions: parseScreenerQuestions(row.questions),
+		translations: parseJobPostingTranslations(row.translations),
+		closesOn: dateToClosesOn(row.expiresAt),
+	}
+}
+
+async function safeAudit(
+	action: AuditAction,
+	scope: PostingActorScope,
+	posting: { id: string; slug: string },
+	details: string,
+	metadata: Record<string, string | number | boolean | null> = {},
+) {
+	try {
+		await auditService.log({
+			action,
+			userId: scope.userId,
+			organizationId: scope.organizationId,
+			resourceType: 'job_posting',
+			resourceId: posting.id,
+			details,
+			// Ids and states only: the title and text are public content, but an
+			// audit row never needs them.
+			metadata: { slug: posting.slug, ...metadata },
+			request: scope.request,
+		})
+	} catch (error) {
+		// Auditing must never undo a posting change that already happened.
+		console.error(`Failed to write audit log ${action}:`, error)
+	}
+}
+
+export async function listJobPostings(
+	scope: Pick<PostingActorScope, 'organizationId'>,
+	now: Date = new Date(),
+): Promise<PostingSummary[]> {
+	const rows = await db
+		.select()
+		.from(JobPosting)
+		.where(eq(JobPosting.organizationId, scope.organizationId))
+		.orderBy(
+			desc(JobPosting.isGeneral),
+			desc(JobPosting.updatedAt),
+			asc(JobPosting.title),
+		)
+	return rows.map((row) => toSummary(row, now))
+}
+
+async function findRow(
+	scope: Pick<PostingActorScope, 'organizationId'>,
+	id: string,
+): Promise<PostingRow | null> {
+	if (!id || id.length > 64) return null
+	const [row] = await db
+		.select()
+		.from(JobPosting)
+		.where(
+			and(
+				eq(JobPosting.id, id),
+				eq(JobPosting.organizationId, scope.organizationId),
+			),
+		)
+		.limit(1)
+	return row ?? null
+}
+
+export async function getJobPosting(
+	scope: Pick<PostingActorScope, 'organizationId'>,
+	id: string,
+	now: Date = new Date(),
+): Promise<PostingDetail | null> {
+	const row = await findRow(scope, id)
+	if (!row) return null
+	return toDetail(row, now)
+}
+
+type PreparedContent = {
+	title: string
+	positionName: string
+	employmentType: JobEmploymentType
+	payType: JobPayType
+	payMinMinor: number | null
+	payMaxMinor: number | null
+	currency: string
+	descriptionHtml: string
+	questions: ScreenerQuestion[]
+	translations: JobPostingTranslations
+	expiresAt: Date | null
+}
+
+/**
+ * The same cleaning the default copy gets, for every other language: markup
+ * stripped from titles and prompts, descriptions sanitized, prompts kept only
+ * for questions that exist, and anything left empty dropped.
+ */
+function cleanTranslations(
+	content: JobPostingContent,
+): JobPostingTranslations | 'too_long' {
+	const questionIds = new Set(content.questions.map((question) => question.id))
+	const cleaned: JobPostingTranslations = {}
+	for (const [locale, entry] of Object.entries(content.translations)) {
+		const title = entry.title ? stripMarkup(entry.title) : ''
+		const descriptionHtml = entry.descriptionHtml
+			? sanitizeJobDescription(entry.descriptionHtml)
+			: ''
+		if (descriptionHtml.length > JOB_POSTING_LIMITS.descriptionHtml) {
+			return 'too_long'
+		}
+		const prompts: Record<string, string> = {}
+		for (const [id, text] of Object.entries(entry.prompts ?? {})) {
+			const value = stripMarkup(text)
+			if (value && questionIds.has(id)) prompts[id] = value
+		}
+		const translation = {
+			...(title ? { title } : {}),
+			...(descriptionHtml ? { descriptionHtml } : {}),
+			...(Object.keys(prompts).length > 0 ? { prompts } : {}),
+		}
+		if (Object.keys(translation).length > 0) cleaned[locale] = translation
+	}
+	return cleaned
+}
+
+/** Validates and cleans a content payload from the editor. */
+function prepareContent(
+	input: unknown,
+	options: { isGeneral: boolean },
+): PostingResult<PreparedContent> {
+	const parsed = jobPostingContentSchema.safeParse(input)
+	if (!parsed.success) {
+		return {
+			ok: false,
+			error: 'invalid_input',
+			fields: [
+				...new Set(
+					parsed.error.issues.map((issue) => String(issue.path[0] ?? '')),
+				),
+			].filter(Boolean),
+		}
+	}
+	const content: JobPostingContent = normalizePay(parsed.data)
+
+	const descriptionHtml = sanitizeJobDescription(content.descriptionHtml)
+	if (descriptionHtml.length > JOB_POSTING_LIMITS.descriptionHtml) {
+		return { ok: false, error: 'description_too_long' }
+	}
+
+	const translations = cleanTranslations(content)
+	if (translations === 'too_long') {
+		return { ok: false, error: 'description_too_long' }
+	}
+
+	return {
+		ok: true,
+		value: {
+			title: stripMarkup(content.title),
+			positionName: stripMarkup(content.positionName),
+			employmentType: content.employmentType,
+			payType: content.payType,
+			payMinMinor: content.payMinMinor,
+			payMaxMinor: content.payMaxMinor,
+			currency: content.currency,
+			descriptionHtml,
+			questions: content.questions.map((question) => ({
+				...question,
+				prompt: stripMarkup(question.prompt),
+			})),
+			translations,
+			// The standing application never ends on its own.
+			expiresAt: options.isGeneral ? null : closesOnToDate(content.closesOn),
+		},
+	}
+}
+
+async function takenSlugs(organizationId: string, exceptId?: string) {
+	const rows = await db
+		.select({ id: JobPosting.id, slug: JobPosting.slug })
+		.from(JobPosting)
+		.where(eq(JobPosting.organizationId, organizationId))
+	return new Set(
+		rows.filter((row) => row.id !== exceptId).map((row) => row.slug),
+	)
+}
+
+function isUniqueViolation(error: unknown) {
+	const text = `${(error as Error)?.message ?? ''} ${(error as { cause?: Error })?.cause?.message ?? ''}`
+	return /UNIQUE constraint|SQLITE_CONSTRAINT/i.test(text)
+}
+
+export async function createJobPosting(
+	scope: PostingActorScope,
+	input: unknown,
+	options: { general?: boolean } = {},
+): Promise<PostingResult<PostingDetail>> {
+	const isGeneral = options.general === true
+	const prepared = prepareContent(input, { isGeneral })
+	if (!prepared.ok) return prepared
+
+	if (isGeneral) {
+		const [existing] = await db
+			.select({ id: JobPosting.id })
+			.from(JobPosting)
+			.where(
+				and(
+					eq(JobPosting.organizationId, scope.organizationId),
+					eq(JobPosting.isGeneral, true),
+				),
+			)
+			.limit(1)
+		if (existing) return { ok: false, error: 'invalid_transition' }
+	}
+
+	let slugBase = isGeneral ? GENERAL_APPLICATION_SLUG : prepared.value.title
+	let row: PostingRow | undefined
+	for (let attempt = 0; attempt < 3 && !row; attempt += 1) {
+		const slug = uniqueJobPostingSlug(
+			slugBase,
+			await takenSlugs(scope.organizationId),
+		)
+		try {
+			;[row] = await db
+				.insert(JobPosting)
+				.values({
+					organizationId: scope.organizationId,
+					createdByUserId: scope.userId,
+					slug,
+					isGeneral,
+					status: 'draft',
+					...prepared.value,
+				})
+				.returning()
+		} catch (error) {
+			if (!isUniqueViolation(error)) throw error
+			// A concurrent create took the slug: try the next free one.
+			slugBase = `${slugBase}-${attempt + 2}`
+		}
+	}
+	if (!row) return { ok: false, error: 'invalid_input', fields: ['title'] }
+
+	await safeAudit(
+		AuditAction.JOB_POSTING_CREATED,
+		scope,
+		row,
+		'Job posting created',
+		{ general: isGeneral },
+	)
+	const detail = await getJobPosting(scope, row.id)
+	return detail
+		? { ok: true, value: detail }
+		: { ok: false, error: 'not_found' }
+}
+
+/** Fields shaping the General application, the evergreen starting point. */
+export function generalApplicationInput(
+	currency: string,
+): Record<string, unknown> {
+	return {
+		title: GENERAL_APPLICATION_DEFAULTS.title,
+		positionName: GENERAL_APPLICATION_DEFAULTS.positionName,
+		employmentType: GENERAL_APPLICATION_DEFAULTS.employmentType,
+		descriptionHtml: GENERAL_APPLICATION_DEFAULTS.descriptionHtml,
+		questions: GENERAL_APPLICATION_DEFAULTS.questions,
+		currency,
+	}
+}
+
+export async function updateJobPosting(
+	scope: PostingActorScope,
+	id: string,
+	input: unknown,
+): Promise<PostingResult<PostingDetail>> {
+	const row = await findRow(scope, id)
+	if (!row) return { ok: false, error: 'not_found' }
+
+	const prepared = prepareContent(input, {
+		isGeneral: row.isGeneral,
+	})
+	if (!prepared.ok) return prepared
+
+	// Editing a live posting must leave it publishable.
+	if (row.status === 'published') {
+		const reasons = getJobPostingPublishErrors(prepared.value)
+		if (reasons.length > 0)
+			return { ok: false, error: 'cannot_publish', reasons }
+	}
+
+	// A posting that was never live may still change its address; once it has
+	// been shared, the link stays put.
+	const slug =
+		row.publishedAt || row.isGeneral
+			? row.slug
+			: uniqueJobPostingSlug(
+					prepared.value.title,
+					await takenSlugs(scope.organizationId, row.id),
+				)
+
+	const [updated] = await db
+		.update(JobPosting)
+		.set({ ...prepared.value, slug })
+		.where(
+			and(
+				eq(JobPosting.id, row.id),
+				eq(JobPosting.organizationId, scope.organizationId),
+			),
+		)
+		.returning()
+	if (!updated) return { ok: false, error: 'not_found' }
+
+	await safeAudit(
+		AuditAction.JOB_POSTING_UPDATED,
+		scope,
+		updated,
+		'Job posting updated',
+		{ status: updated.status },
+	)
+	const detail = await getJobPosting(scope, updated.id)
+	return detail
+		? { ok: true, value: detail }
+		: { ok: false, error: 'not_found' }
+}
+
+/**
+ * Moves a posting through its lifecycle. `closesOn` replaces the closing date
+ * when reopening a posting whose old date has passed.
+ */
+export async function changeJobPostingStatus(
+	scope: PostingActorScope,
+	id: string,
+	to: 'published' | 'closed',
+	options: { closesOn?: string | null; now?: Date } = {},
+): Promise<PostingResult<PostingDetail>> {
+	const now = options.now ?? new Date()
+	const row = await findRow(scope, id)
+	if (!row) return { ok: false, error: 'not_found' }
+
+	const from = effectiveJobPostingStatus(row, now)
+	if (!canTransitionJobPosting(from, to)) {
+		return { ok: false, error: 'invalid_transition' }
+	}
+
+	let expiresAt = row.expiresAt
+	if (to === 'published' && options.closesOn !== undefined) {
+		expiresAt = row.isGeneral ? null : closesOnToDate(options.closesOn)
+	}
+
+	if (to === 'published') {
+		const reasons = getJobPostingPublishErrors(
+			{
+				title: row.title,
+				descriptionHtml: row.descriptionHtml,
+				payType: row.payType as JobPayType,
+				payMinMinor: row.payMinMinor,
+				payMaxMinor: row.payMaxMinor,
+				expiresAt,
+			},
+			now,
+		)
+		if (reasons.length > 0)
+			return { ok: false, error: 'cannot_publish', reasons }
+	}
+
+	const [updated] = await db
+		.update(JobPosting)
+		.set(
+			to === 'published'
+				? { status: 'published', publishedAt: now, closedAt: null, expiresAt }
+				: { status: 'closed', closedAt: now },
+		)
+		.where(
+			and(
+				eq(JobPosting.id, row.id),
+				eq(JobPosting.organizationId, scope.organizationId),
+			),
+		)
+		.returning()
+	if (!updated) return { ok: false, error: 'not_found' }
+
+	await safeAudit(
+		to === 'published'
+			? AuditAction.JOB_POSTING_PUBLISHED
+			: AuditAction.JOB_POSTING_CLOSED,
+		scope,
+		updated,
+		to === 'published' ? 'Job posting published' : 'Job posting closed',
+		{ from },
+	)
+	const detail = await getJobPosting(scope, updated.id, now)
+	return detail
+		? { ok: true, value: detail }
+		: { ok: false, error: 'not_found' }
+}
+
+/** A live posting must be closed first: its link may already be shared. */
+export async function deleteJobPosting(
+	scope: PostingActorScope,
+	id: string,
+	now: Date = new Date(),
+): Promise<PostingResult<{ id: string }>> {
+	const row = await findRow(scope, id)
+	if (!row) return { ok: false, error: 'not_found' }
+	if (effectiveJobPostingStatus(row, now) === 'published') {
+		return { ok: false, error: 'not_deletable' }
+	}
+	await db
+		.delete(JobPosting)
+		.where(
+			and(
+				eq(JobPosting.id, row.id),
+				eq(JobPosting.organizationId, scope.organizationId),
+			),
+		)
+	await safeAudit(
+		AuditAction.JOB_POSTING_DELETED,
+		scope,
+		row,
+		'Job posting deleted',
+		{ status: row.status },
+	)
+	return { ok: true, value: { id: row.id } }
+}
+
+/**
+ * Flips every published posting whose closing date has passed to `expired`.
+ * Runs daily on the existing `0 3` trigger. Idempotent, and it returns a count
+ * only: a retry or an overlapping run changes nothing.
+ */
+export async function expireJobPostings(now: Date = new Date()) {
+	const expired = await db
+		.update(JobPosting)
+		.set({ status: 'expired', closedAt: now })
+		.where(
+			and(eq(JobPosting.status, 'published'), lte(JobPosting.expiresAt, now)),
+		)
+		.returning({ id: JobPosting.id })
+	return { expired: expired.length }
+}
+
+// ---------------------------------------------------------------------------
+// Public projection
+// ---------------------------------------------------------------------------
+
+type PublicRow = { posting: PostingRow }
+
+/** The language a visitor reads, and the organization's default fallback. */
+export type PublicLocale = { locale?: string | null; defaultLocale?: string }
+
+function toPublic(
+	entry: PublicRow,
+	language: PublicLocale = {},
+): PublicJobPosting {
+	const { posting } = entry
+	const localized = localizeJobPosting(
+		{
+			title: posting.title,
+			descriptionHtml: posting.descriptionHtml,
+			questions: parseScreenerQuestions(posting.questions),
+		},
+		parseJobPostingTranslations(posting.translations),
+		language.locale,
+		language.defaultLocale ?? 'en',
+	)
+	return {
+		slug: posting.slug,
+		title: localized.title,
+		positionName: posting.positionName,
+		employmentType: posting.employmentType as JobEmploymentType,
+		payType: posting.payType as JobPayType,
+		payMinMinor: posting.payMinMinor,
+		payMaxMinor: posting.payMaxMinor,
+		currency: posting.currency,
+		// Sanitized on write and again by every renderer; never trusted raw.
+		descriptionHtml: sanitizeJobDescription(localized.descriptionHtml),
+		questions: localized.questions.map(toPublicQuestion),
+		isGeneral: posting.isGeneral,
+		datePosted: (posting.publishedAt ?? posting.createdAt).toISOString(),
+		validThrough: posting.expiresAt?.toISOString() ?? null,
+	}
+}
+
+async function publicRows(
+	organizationId: string,
+	now: Date,
+	slug?: string,
+): Promise<PublicRow[]> {
+	const postings = await db
+		.select()
+		.from(JobPosting)
+		.where(
+			and(
+				eq(JobPosting.organizationId, organizationId),
+				eq(JobPosting.status, 'published'),
+				...(slug ? [eq(JobPosting.slug, slug)] : []),
+			),
+		)
+		.orderBy(desc(JobPosting.isGeneral), desc(JobPosting.publishedAt))
+		.limit(slug ? 1 : 100)
+	// The job may not have run yet: an ended posting is never served.
+	return postings
+		.filter(
+			(posting) =>
+				!posting.expiresAt || posting.expiresAt.getTime() > now.getTime(),
+		)
+		.map((posting) => ({ posting }))
+}
+
+/** Published, unexpired postings for the careers listing (no description). */
+export async function listPublicJobPostings(
+	organizationId: string,
+	now: Date = new Date(),
+	language: PublicLocale = {},
+): Promise<PublicJobPostingListItem[]> {
+	const rows = await publicRows(organizationId, now)
+	return rows.map((entry) => {
+		const {
+			descriptionHtml: ignoredDescription,
+			questions: ignoredQuestions,
+			...item
+		} = toPublic(entry, language)
+		return item
+	})
+}
+
+export async function getPublicJobPosting(
+	organizationId: string,
+	slug: string,
+	now: Date = new Date(),
+	language: PublicLocale = {},
+): Promise<PublicJobPosting | null> {
+	if (!slug || slug.length > JOB_POSTING_LIMITS.slug) return null
+	const [entry] = await publicRows(organizationId, now, slug)
+	return entry ? toPublic(entry, language) : null
+}
+
+/**
+ * What tenant-api needs to accept an application for a live posting: its opaque
+ * id, the title to snapshot, the scope an applicant belongs to, and the full questions including which
+ * answer is a dealbreaker. Server to server only: the public page never gets
+ * the dealbreaker settings. A posting that is not live is `null`.
+ */
+export async function getIntakePosting(
+	organizationId: string,
+	slug: string,
+	now: Date = new Date(),
+) {
+	if (!slug || slug.length > JOB_POSTING_LIMITS.slug) return null
+	const [entry] = await publicRows(organizationId, now, slug)
+	if (!entry) return null
+	const { posting } = entry
+	return {
+		id: posting.id,
+		slug: posting.slug,
+		title: posting.title,
+		positionName: posting.positionName,
+		// Every job is open at the organization's one implicit scope.
+		scopeIds: [DEFAULT_SCOPE_ID],
+		questions: parseScreenerQuestions(posting.questions),
+	}
+}

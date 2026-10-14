@@ -10,6 +10,7 @@ export { default as TrialEndingEmail } from './templates/trial-ending'
 export { default as NewDeviceSigninEmail } from './templates/new-device-signin'
 export { default as MentionEmail } from './templates/mention-email'
 export { default as CommentEmail } from './templates/comment-email'
+export { default as StaffingAlertEmail } from './templates/staffing-alert-email'
 
 // Export types
 export type { OrganizationInviteEmailProps } from './templates/organization-invite'
@@ -23,6 +24,7 @@ export type { TrialEndingEmailProps } from './templates/trial-ending'
 export type { NewDeviceSigninEmailProps } from './templates/new-device-signin'
 export type { MentionEmailProps } from './templates/mention-email'
 export type { CommentEmailProps } from './templates/comment-email'
+export type { StaffingAlertEmailProps } from './templates/staffing-alert-email'
 
 // Email theme tokens (mirror the app's shadcn design tokens)
 export {

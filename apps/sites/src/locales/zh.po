@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "(optional)"
+msgstr "（选填）"
+
+#: src/lib/careers/labels.ts:66
+msgid "{amount} per {unit}"
+msgstr "每{unit} {amount}"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "{count} Cal"
@@ -154,10 +162,26 @@ msgstr "含酒精"
 msgid "All drops"
 msgstr "全部限量活动"
 
+#: src/pages/careers/[slug].astro.ts:3
+msgid "All jobs"
+msgstr "所有职位"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "任何饮食偏好、酱料另放等"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Apply"
+msgstr "申请"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply by {date}"
+msgstr "申请截止 {date}"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply now"
+msgstr "立即申请"
 
 #: src/lib/ordering-labels.ts:97
 msgid "Apt, suite or floor"
@@ -218,6 +242,11 @@ msgstr "卡号"
 msgid "Cards used on past shop purchases on this account."
 msgstr "此账户在商店过往购买中使用的银行卡。"
 
+#: src/pages/careers/[slug].astro.ts:3
+#: src/pages/careers/index.astro.ts:3
+msgid "Careers"
+msgstr "招聘"
+
 #: src/lib/ordering-labels.ts:145
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -231,6 +260,10 @@ msgstr "更换号码"
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
 msgstr "再次检查"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Check back soon."
+msgstr "请稍后再来看看。"
 
 #: src/pages/drops.astro.ts:3
 msgid "Check the menu for what we are serving today."
@@ -353,6 +386,10 @@ msgstr "完成付款"
 msgid "Complete payment to keep it."
 msgstr "请完成付款以保留订单。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Complete the verification check before sending."
+msgstr "请在发送前完成验证。"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "提交前请完成验证。"
@@ -372,6 +409,14 @@ msgstr "联系方式"
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "继续"
+
+#: src/lib/careers/labels.ts:22
+msgid "Contract"
+msgstr "合同工"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Copy link"
+msgstr "复制链接"
 
 #: src/lib/ordering-labels.ts:71
 msgid "Customize item"
@@ -459,6 +504,7 @@ msgstr "活动提醒已开启"
 msgid "Drops"
 msgstr "限量活动"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "电子邮件"
@@ -479,6 +525,14 @@ msgstr "已于{when}结束"
 #: src/lib/ordering-labels.ts:143
 msgid "Enter a delivery address to continue."
 msgstr "请输入配送地址以继续。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a phone number with its country code, like +1 415 555 0123."
+msgstr "请输入带国家区号的电话号码，例如 +1 415 555 0123。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a valid email address."
+msgstr "请输入有效的电子邮箱地址。"
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -514,6 +568,10 @@ msgstr "浏览菜单"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "浏览我们的菜单，添加您喜爱的菜品。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "First name"
+msgstr "名"
+
 #: src/lib/ordering-labels.ts:104
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
@@ -533,6 +591,10 @@ msgstr "取餐方式"
 msgid "Full name"
 msgstr "全名"
 
+#: src/lib/careers/labels.ts:14
+msgid "Full time"
+msgstr "全职"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Gate code, buzzer, or where to leave it"
 msgstr "门禁密码、门铃或放置位置"
@@ -549,6 +611,14 @@ msgstr "订单开放时短信通知我"
 msgid "Get a text when the next drop opens, before it sells out."
 msgstr "下一场限量活动开始时短信通知您，抢在售罄之前。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email or a phone number."
+msgstr "请提供电子邮箱或电话号码。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email, a phone number, or both."
+msgstr "请提供电子邮箱、电话号码，或两者都提供。"
+
 #: src/pages/menu.astro.ts:3
 msgid "Gluten-free"
 msgstr "无麸质"
@@ -557,14 +627,30 @@ msgstr "无麸质"
 msgid "Gluten-Free"
 msgstr "无麸质"
 
+#: src/lib/careers/labels.ts:31
+msgid "hour"
+msgstr "小时"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
+msgstr "我同意 {organization} 保留我的资料和回答，用于考虑我的申请并就此联系我。如我提出要求，他们将予以删除。"
+
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "{t}后"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Include your country code, for example +1 415 555 0123."
+msgstr "请包含国家区号，例如 +1 415 555 0123。"
+
 #: src/lib/ordering-labels.ts:56
 msgid "Increase quantity"
 msgstr "增加数量"
+
+#: src/lib/careers/labels.ts:24
+msgid "Internship"
+msgstr "实习"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -585,6 +671,10 @@ msgstr "继续输入以查看匹配的地址。"
 #: src/components/SiteHeader.astro.ts:3
 msgid "Language"
 msgstr "语言"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Last name"
+msgstr "姓"
 
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
@@ -607,6 +697,10 @@ msgstr "已达上限"
 #: src/pages/drops.astro.ts:3
 msgid "Limited menus you pre-order for a pickup window."
 msgstr "限量菜单，预订后在指定时段自取。"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Link copied"
+msgstr "链接已复制"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Loading your receipt…"
@@ -645,6 +739,10 @@ msgstr "错过了这一场？"
 msgid "Mobile"
 msgstr "移动端"
 
+#: src/lib/careers/labels.ts:35
+msgid "month"
+msgstr "月"
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "More drops"
 msgstr "更多活动"
@@ -677,6 +775,10 @@ msgstr "不再错过任何限量活动"
 msgid "Next"
 msgstr "下一个"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "No"
+msgstr "否"
+
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
 msgstr "没有匹配的菜品"
@@ -696,6 +798,10 @@ msgstr "没有匹配的地址"
 #: src/lib/ordering-labels.ts:103
 msgid "No minimum"
 msgstr "无起送金额"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "No openings right now."
+msgstr "目前没有空缺职位。"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -726,6 +832,10 @@ msgstr "无"
 msgid "Not available right now"
 msgstr "目前不可用"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Online applications are not available right now. Ask a team member."
+msgstr "目前无法在线申请。请询问店内的团队成员。"
+
 #: src/lib/ordering-labels.ts:59
 msgid "Only {count} left"
 msgstr "仅剩 {count} 件"
@@ -745,6 +855,10 @@ msgstr "打开菜单"
 #: src/lib/ordering-labels.ts:125
 msgid "Open now"
 msgstr "营业中"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Open positions at {name}"
+msgstr "{name} 的在招职位"
 
 #: src/lib/ordering-labels.ts:126
 #: src/pages/menu.astro.ts:3
@@ -844,6 +958,10 @@ msgstr "开放订购：{title}"
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "我们的厨房正在准备美味佳肴。请稍后回来查看完整的在线菜单。"
 
+#: src/lib/careers/labels.ts:16
+msgid "Part time"
+msgstr "兼职"
+
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
 msgstr "往期活动"
@@ -887,6 +1005,10 @@ msgstr "支付方式"
 #: src/pages/profile.astro.ts:3
 msgid "Payment methods"
 msgstr "支付方式"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Phone"
+msgstr "电话"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
@@ -942,6 +1064,14 @@ msgstr "提交订单"
 msgid "Placing your order…"
 msgstr "正在提交您的订单…"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please agree so we can keep your application."
+msgstr "请表示同意，以便我们保存您的申请。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please check the answers marked below and try again."
+msgstr "请检查下方标记的回答后重试。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Please check your connection and try again."
 msgstr "请检查网络连接后重试。"
@@ -973,6 +1103,10 @@ msgstr "请核对订单详情后重试。"
 #: src/pages/menu.astro.ts:3
 msgid "Popular"
 msgstr "人气推荐"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Posted {date}"
+msgstr "发布于 {date}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Preparing"
@@ -1017,6 +1151,10 @@ msgstr "登录此账户后在商店的购买记录。"
 #: src/pages/profile.astro.ts:3
 msgid "Purchases from the shop while signed in."
 msgstr "登录后在商店的购买记录。"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "QR code for {title}"
+msgstr "{title} 的二维码"
 
 #: src/lib/ordering-labels.ts:55
 msgid "Quantity"
@@ -1080,6 +1218,10 @@ msgstr "保存更改"
 msgid "Saving..."
 msgstr "保存中..."
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Scan to open this job on your phone."
+msgstr "扫码在手机上查看此职位。"
+
 #: src/lib/ordering-labels.ts:132
 msgid "Schedule"
 msgstr "预约"
@@ -1092,22 +1234,39 @@ msgstr "搜索街道地址"
 msgid "Search the menu"
 msgstr "搜索菜单"
 
+#: src/lib/careers/labels.ts:18
+msgid "Seasonal"
+msgstr "季节性"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
 msgstr "安全结账。提交订单即表示您同意餐厅的条款。"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "See all open jobs"
+msgstr "查看所有在招职位"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
 msgstr "请在页面编辑器中选择已发布的表单。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Send application"
+msgstr "提交申请"
+
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "发送中..."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Share this job"
+msgstr "分享此职位"
 
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
@@ -1185,6 +1344,14 @@ msgstr "改为自取"
 msgid "Tax"
 msgstr "税费"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Tell us a little about yourself. It takes a couple of minutes."
+msgstr "请简单介绍一下自己，只需几分钟。"
+
+#: src/lib/careers/labels.ts:20
+msgid "Temporary"
+msgstr "临时工"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Text me"
 msgstr "短信通知我"
@@ -1200,6 +1367,10 @@ msgstr "感谢您的订单！"
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
+msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
@@ -1221,6 +1392,14 @@ msgstr "您通话中的商品已无货。您仍可从菜单中点餐。"
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "链接可能不完整。您可以从菜单开始新的订单。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "The verification check did not pass. Please try again."
+msgstr "验证未通过，请重试。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "this business"
+msgstr "该商家"
+
 #: src/lib/ordering-labels.ts:49
 msgid "This combination is sold out. Choose another combination."
 msgstr "此组合已售罄。请选择其他组合。"
@@ -1240,6 +1419,18 @@ msgstr "该限时活动已停止接单。"
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "此表单当前不可用。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This is required."
+msgstr "此项为必填。"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "This job is no longer open."
+msgstr "此职位已不再招聘。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This job is no longer taking applications."
+msgstr "该职位已不再接受申请。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
@@ -1286,6 +1477,10 @@ msgstr "今天"
 #: src/lib/ordering-labels.ts:137
 msgid "Tomorrow"
 msgstr "明天"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Too many applications were sent from here. Please try again later."
+msgstr "从此处提交的申请过多，请稍后再试。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Too many attempts. Please try again later."
@@ -1402,6 +1597,14 @@ msgstr "我们无法确认此订单。"
 msgid "We could not place your order. Please try again."
 msgstr "无法提交您的订单。请重试。"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not reach the server. Check your connection and try again."
+msgstr "无法连接服务器。请检查网络后重试。"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not send your application right now. Please try again in a moment."
+msgstr "暂时无法提交您的申请，请稍后重试。"
+
 #: src/lib/ordering-labels.ts:122
 msgid "We couldn't check this address"
 msgstr "无法核实此地址"
@@ -1484,6 +1687,10 @@ msgstr "我们已收到您的订单，厨房正在准备您的餐点。"
 msgid "We've sent a 6-digit code to"
 msgstr "我们已将6位验证码发送至"
 
+#: src/lib/careers/labels.ts:33
+msgid "week"
+msgstr "周"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "您叫什么名字？"
@@ -1507,6 +1714,14 @@ msgstr "配送到哪里？"
 #: src/lib/ordering-labels.ts:51
 msgid "Whole"
 msgstr "整份"
+
+#: src/lib/careers/labels.ts:37
+msgid "year"
+msgstr "年"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Yes"
+msgstr "是"
 
 #: src/lib/ordering-labels.ts:121
 msgid "You can still order for pickup."

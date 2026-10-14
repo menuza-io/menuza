@@ -57,6 +57,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	useLoaderData,
+	useMatches,
 	useRouteLoaderData,
 } from 'react-router'
 import { HoneypotProvider } from 'remix-utils/honeypot/react'
@@ -79,6 +80,10 @@ import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
 import { seoConfig } from './utils/seo.ts'
+import {
+	HIDDEN_STAFFING_NAV,
+	type StaffingNavAccess,
+} from './utils/staffing/nav.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
 
 export const links: Route.LinksFunction = () => {
@@ -403,6 +408,31 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			: 'all',
 	])
 
+	// Staff nav links: shown only when the org-level staffing flags and the
+	// member's permissions both allow it. Best-effort and briefly cached; every
+	// staffing route enforces the same checks itself, so a stale or failed
+	// lookup can only hide links, never grant access.
+	let staffingNav: StaffingNavAccess = HIDDEN_STAFFING_NAV
+	if (currentOrgId && userId) {
+		const staffingAccess = await import('./utils/staffing/access.server.ts')
+		staffingNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `staffing-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							staffingAccess.getStaffingNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_STAFFING_NAV
+				}
+			},
+			{ timings, type: 'staffing nav', desc: 'staffing nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -455,6 +485,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
+			staffingNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,
@@ -577,14 +608,21 @@ function AppWithProviders() {
 	useToast(data.toast)
 	const organizationId =
 		data.userOrganizations?.currentOrganization?.organization.id
+	// The shared-tablet time clock is a counter appliance: no cookie banner, no
+	// toasts and no analytics on it (see `routes/kiosk.tsx`).
+	const isKiosk = useMatches().some(
+		(match) => (match.handle as { kiosk?: boolean } | undefined)?.kiosk,
+	)
 
 	return (
 		<HoneypotProvider {...data.honeyProps}>
-			<PostHogAnalytics
-				consent={data.cookieConsent}
-				userId={data.user?.id}
-				organizationId={organizationId}
-			/>
+			{isKiosk ? null : (
+				<PostHogAnalytics
+					consent={data.cookieConsent}
+					userId={data.user?.id}
+					organizationId={organizationId}
+				/>
+			)}
 			<OpenImgContextProvider
 				optimizerEndpoint="/resources/images"
 				getSrc={getImgSrc}
@@ -599,8 +637,8 @@ function AppWithProviders() {
 						</TooltipProvider>
 					</div>
 				</div>
-				<EpicToaster />
-				<CookieConsentBanner consent={data.cookieConsent} />
+				{isKiosk ? null : <EpicToaster />}
+				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
 			</OpenImgContextProvider>
 		</HoneypotProvider>
 	)

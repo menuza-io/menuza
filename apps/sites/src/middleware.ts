@@ -15,6 +15,7 @@ import { isInlineShopCheckoutEnabled } from '~/lib/shop'
 import {
 	asAstroResponse,
 	edgeCache,
+	isCareersPage,
 	isDropVisibilityPage,
 	isSitesAppRoute,
 	isSitesProduction,
@@ -325,7 +326,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	const htmlCacheControl = cacheHtml
 		? 'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
-		: isDropVisibilityPage(url.pathname)
+		: isDropVisibilityPage(url.pathname) || isCareersPage(url.pathname)
 			? 'no-store'
 			: undefined
 	const secured = withSecurityHeaders(

@@ -34,6 +34,26 @@ export const PERMISSIONS = {
 	// Menu permissions
 	READ_MENU_ANY: 'read:menu:any',
 	UPDATE_MENU_ANY: 'update:menu:any',
+
+	// Staffing permissions
+	READ_STAFF_ANY: 'read:staff:any',
+	UPDATE_STAFF_ANY: 'update:staff:any',
+	READ_STAFF_PAY_ANY: 'read:staff_pay:any',
+	UPDATE_STAFF_PAY_ANY: 'update:staff_pay:any',
+	READ_STAFF_PRIVATE_ANY: 'read:staff_private:any',
+	UPDATE_STAFF_PRIVATE_ANY: 'update:staff_private:any',
+	READ_SCHEDULE_ANY: 'read:schedule:any',
+	UPDATE_SCHEDULE_ANY: 'update:schedule:any',
+	READ_SCHEDULE_OWN: 'read:schedule:own',
+	CREATE_TIMECLOCK_OWN: 'create:timeclock:own',
+	READ_TIMESHEET_ANY: 'read:timesheet:any',
+	UPDATE_TIMESHEET_ANY: 'update:timesheet:any',
+	APPROVE_TIMESHEET_ANY: 'approve:timesheet:any',
+	READ_LABOR_ANY: 'read:labor:any',
+	READ_LABOR_POLICY_ANY: 'read:labor_policy:any',
+	UPDATE_LABOR_POLICY_ANY: 'update:labor_policy:any',
+	READ_HIRING_ANY: 'read:hiring:any',
+	UPDATE_HIRING_ANY: 'update:hiring:any',
 } as const
 
 export type PermissionKey = keyof typeof PERMISSIONS

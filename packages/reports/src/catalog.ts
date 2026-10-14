@@ -1,4 +1,5 @@
-import { type Measure, type ValueMeasure } from './dsl.ts'
+import { staffingSubjects } from './catalog-staffing.ts'
+import { type Measure, type ValueMeasure, isRatioMeasure } from './dsl.ts'
 
 export type ReportScope = 'organization' | 'platform'
 /**
@@ -6,8 +7,33 @@ export type ReportScope = 'organization' | 'platform'
  * (from the browser), or connected third-party integrations (on the App).
  */
 export type ReportSource = 'control-plane' | 'tenant-api' | 'integrations'
+/**
+ * `duration` fields hold minutes. `ratio` fields hold nothing: they are the
+ * ratio of two other fields' sums (see {@link ReportRatio}) and only the ratio
+ * measure reads them.
+ */
 export type ReportFieldType =
-	'datetime' | 'boolean' | 'enum' | 'string' | 'number' | 'currency'
+	| 'datetime'
+	| 'boolean'
+	| 'enum'
+	| 'string'
+	| 'number'
+	| 'currency'
+	| 'duration'
+	| 'ratio'
+
+/**
+ * What a ratio field divides. The measure sums `numerator` and `denominator`
+ * over the whole group and divides the sums, so a share over a week is never an
+ * average of daily shares. `percent` shows the quotient as a percentage;
+ * `per_hour` divides a number or amount by a duration field (sales per labor
+ * hour).
+ */
+export type ReportRatio = {
+	numerator: string
+	denominator: string
+	unit: 'percent' | 'per_hour'
+}
 
 export type ReportField = {
 	id: string
@@ -31,6 +57,10 @@ export type ReportField = {
 	 */
 	sumLabel?: string | false
 	averageLabel?: string | false
+	/** Ratio fields only: the two fields whose sums are divided. */
+	ratio?: ReportRatio
+	/** Datetime fields: list tables show the time of day as well as the date. */
+	showTime?: boolean
 }
 
 export type ReportSubject = {
@@ -42,6 +72,13 @@ export type ReportSubject = {
 	fields: ReportField[]
 	/** Record field holding the ISO currency code of currency fields. */
 	currencyField?: string
+	/**
+	 * Record field holding the IANA time zone the record happened in (the
+	 * scope's). Days, weeks and months, and the edges of timeframes like
+	 * "today", are cut in that zone instead of the report's, so a labor day
+	 * is the scope's day.
+	 */
+	timeZoneField?: string
 	/** List columns used when a list report picks none. */
 	defaultColumns?: string[]
 }
@@ -1062,6 +1099,7 @@ export const organizationCatalog: ReportCatalog = {
 			source: 'tenant-api',
 			fields: phoneCallFields,
 		},
+		...staffingSubjects,
 		{
 			id: 'notes',
 			label: 'Notes',
@@ -1349,7 +1387,7 @@ export function defaultListColumns(subject: ReportSubject) {
 }
 
 export function isValueFieldType(type: ReportFieldType) {
-	return type === 'number' || type === 'currency'
+	return type === 'number' || type === 'currency' || type === 'duration'
 }
 
 /**
@@ -1357,9 +1395,10 @@ export function isValueFieldType(type: ReportFieldType) {
  * doesn't apply to it.
  */
 export function valueMeasureLabel(
-	measure: ValueMeasure,
+	measure: ValueMeasure | 'ratio',
 	field: ReportField,
 ): string | null {
+	if (measure === 'ratio') return field.type === 'ratio' ? field.label : null
 	if (!isValueFieldType(field.type)) return null
 	const custom = measure === 'sum' ? field.sumLabel : field.averageLabel
 	if (custom === false) return null
@@ -1368,9 +1407,13 @@ export function valueMeasureLabel(
 	return `Average ${field.label.charAt(0).toLowerCase()}${field.label.slice(1)}`
 }
 
-/** Number and currency fields `measure` can read; all of them without one. */
+/**
+ * Fields `measure` can read: ratio fields for the ratio measure, number,
+ * currency and duration fields for the rest (all of them without a measure).
+ */
 export function valueFields(subject: ReportSubject, measure?: Measure) {
 	return subject.fields.filter((field) => {
+		if (measure && isRatioMeasure(measure)) return field.type === 'ratio'
 		if (!isValueFieldType(field.type)) return false
 		if (measure === 'sum' || measure === 'average') {
 			return valueMeasureLabel(measure, field) !== null

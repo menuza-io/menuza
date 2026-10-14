@@ -274,3 +274,81 @@ describe('clampExportSize', () => {
 		expect(clampExportSize(800)).toBe(800)
 	})
 })
+
+describe('reportToCsv for hours and ratios', () => {
+	const definition = createReportDefinition({
+		subject: 'time_entries',
+		timeframe: { field: 'clockInAt', preset: 'all_time' },
+		groupBy: ['employee'],
+		visualization: {
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'paidMinutes',
+			sortBy: 'none',
+		},
+		settings: { title: 'Hours', notes: '', timezone: 'UTC' },
+	})
+	const base = {
+		total: 2,
+		refreshedAt: '2026-03-10T00:00:00.000Z',
+		segments: [
+			{ key: 'a', label: 'Ana', count: 1, percent: 50, value: 450 },
+			{ key: 'b', label: 'Ben', count: 1, percent: 50, value: 90 },
+		],
+	}
+
+	it('writes durations as hours', () => {
+		const csv = reportToCsv(definition, {
+			...base,
+			value: 540,
+			valueInfo: {
+				measure: 'sum',
+				field: 'paidMinutes',
+				label: 'Paid hours',
+				type: 'duration',
+			},
+		})
+		expect(csv.split('\n')[0]).toBe('Segment,Count,Paid hours (hours),Percent')
+		expect(csv).toContain('Ana,1,7.50,83.3%')
+		expect(csv).toContain('Ben,1,1.50,16.7%')
+	})
+
+	it('names the unit of a share and of money per hour, and drops their percent column', () => {
+		const share = reportToCsv(definition, {
+			...base,
+			value: 20,
+			segments: [
+				{ key: 'a', label: 'Mon', count: 1, percent: 100, value: 20.0948 },
+			],
+			valueInfo: {
+				measure: 'ratio',
+				field: 'laborCostPercent',
+				label: 'Labor cost as a share of sales',
+				type: 'percent',
+			},
+		})
+		expect(share.split('\n')[0]).toBe(
+			'Segment,Count,Labor cost as a share of sales (%)',
+		)
+		expect(share).toContain('Mon,1,20.09')
+		const perHour = reportToCsv(definition, {
+			...base,
+			value: 87.9,
+			segments: [
+				{ key: 'a', label: 'Mon', count: 1, percent: 100, value: 87.9167 },
+			],
+			valueInfo: {
+				measure: 'ratio',
+				field: 'salesPerLaborHour',
+				label: 'Sales per labor hour',
+				type: 'currency',
+				currency: 'USD',
+				perHour: true,
+			},
+		})
+		expect(perHour.split('\n')[0]).toBe(
+			'Segment,Count,Sales per labor hour (USD per hour)',
+		)
+		expect(perHour).toContain('Mon,1,87.92')
+	})
+})

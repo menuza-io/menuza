@@ -73,6 +73,10 @@ msgstr "{days} days"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-chart.tsx:149
+msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
+msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:321
 msgid "{field}"
 msgstr ""
@@ -474,6 +478,18 @@ msgstr "Answering"
 msgid "any - Any resources"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:72
+msgid "Applicant funnel"
+msgstr "Applicant funnel"
+
+#: ../../packages/reports/src/ui/report-labels.ts:73
+msgid "Applications at each stage, from new to hired, over the last 3 months."
+msgstr "Applications at each stage, from new to hired, over the last 3 months."
+
+#: ../../packages/reports/src/ui/report-labels.ts:76
+msgid "Applications by source"
+msgstr "Applications by source"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:339
 msgid "Apply Preset"
 msgstr ""
@@ -860,6 +876,10 @@ msgstr "Close email design"
 #: app/components/admin-users-table.tsx:271
 msgid "Columns"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:29
+msgid "Compare wages as a share of sales across your workplaces."
+msgstr "Compare wages as a share of sales across your workplaces."
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/routes/_admin+/gdpr-requests.tsx:364
@@ -1342,6 +1362,10 @@ msgstr ""
 msgid "e.g., Okta, Azure AD, Auth0"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:53
+msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
+msgstr "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
+
 #: app/components/admin/feature-flags.tsx:401
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -1525,6 +1549,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:323
 msgid "Errors"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:65
+msgid "Estimated wages by position over the last 30 days. Needs permission to see pay."
+msgstr "Estimated wages by position over the last 30 days. Needs permission to see pay."
 
 #: app/routes/_admin+/audit-logs.tsx:280
 msgid "Event"
@@ -1780,6 +1808,10 @@ msgstr ""
 msgid "Higher level roles can manage lower level roles"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:83
+msgid "Hiring"
+msgstr "Hiring"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:386
 msgid "Hot Storage Period (days)"
 msgstr ""
@@ -1796,6 +1828,14 @@ msgstr ""
 msgid "Hours"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:36
+msgid "Hours by employee"
+msgstr "Hours by employee"
+
+#: ../../packages/reports/src/ui/report-labels.ts:40
+msgid "Hours worked by day"
+msgstr "Hours worked by day"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:380
 msgid "How long to keep logs before permanent deletion"
 msgstr ""
@@ -1803,6 +1843,10 @@ msgstr ""
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:398
 msgid "How long to keep logs readily searchable"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:57
+msgid "How often people clock in on time for the shifts they were scheduled on."
+msgstr "How often people clock in on time for the shifts they were scheduled on."
 
 #: app/components/sso-configuration-form.tsx:168
 msgid "https://your-domain.okta.com"
@@ -1978,6 +2022,26 @@ msgstr "Label"
 msgid "Label (optional)"
 msgstr "Label (optional)"
 
+#: ../../packages/reports/src/ui/report-labels.ts:82
+msgid "Labor"
+msgstr "Labor"
+
+#: ../../packages/reports/src/ui/report-labels.ts:64
+msgid "Labor by position"
+msgstr "Labor by position"
+
+#: ../../packages/reports/src/ui/report-labels.ts:20
+msgid "Labor cost percent"
+msgstr "Labor cost percent"
+
+#: ../../packages/reports/src/ui/report-labels.ts:24
+msgid "Labor cost percent by day"
+msgstr "Labor cost percent by day"
+
+#: ../../packages/reports/src/ui/report-labels.ts:28
+msgid "Labor cost percent by workplace"
+msgstr "Labor cost percent by workplace"
+
 #: app/components/sso-user-management.tsx:455
 msgid "Last 30 days"
 msgstr ""
@@ -2018,6 +2082,10 @@ msgstr ""
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:180
 msgid "Last User Agent"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:60
+msgid "Late arrivals by employee"
+msgstr "Late arrivals by employee"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -2496,6 +2564,10 @@ msgstr ""
 msgid "Oldest Log"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:56
+msgid "On-time arrival"
+msgstr "On-time arrival"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr ""
@@ -2594,6 +2666,18 @@ msgstr "Outline"
 msgid "Override Value"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:45
+msgid "Overtime and double time worked each week, from each workplace’s labor rules."
+msgstr "Overtime and double time worked each week, from each workplace’s labor rules."
+
+#: ../../packages/reports/src/ui/report-labels.ts:48
+msgid "Overtime hours by employee"
+msgstr "Overtime hours by employee"
+
+#: ../../packages/reports/src/ui/report-labels.ts:44
+msgid "Overtime hours by week"
+msgstr "Overtime hours by week"
+
 #: app/components/admin-sidebar.tsx:74
 #: app/components/admin-user-detail.tsx:321
 msgid "Overview"
@@ -2624,6 +2708,14 @@ msgstr "Page {page} of {lastPage}"
 #: app/routes/_admin+/_layout.tsx:92
 msgid "Page Not Found"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:37
+msgid "Paid hours worked by each person over the last 30 days."
+msgstr "Paid hours worked by each person over the last 30 days."
+
+#: ../../packages/reports/src/ui/report-labels.ts:41
+msgid "Paid hours worked each day across your team."
+msgstr "Paid hours worked each day across your team."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:28
 msgid "Paragraph text"
@@ -2665,6 +2757,10 @@ msgstr ""
 #: app/routes/_admin+/gdpr-requests.tsx:435
 msgid "Pending Deletions"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:61
+msgid "People who clocked in late for a scheduled shift, and how often."
+msgstr "People who clocked in late for a scheduled shift, and how often."
 
 #: app/routes/_admin+/cache.tsx:325
 msgid "per SQLite entry"
@@ -3129,6 +3225,14 @@ msgstr ""
 msgid "Runs when customer verifies phone OTP"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:33
+msgid "Sales divided by the hours worked, day by day, on the days that have sales."
+msgstr "Sales divided by the hours worked, day by day, on the days that have sales."
+
+#: ../../packages/reports/src/ui/report-labels.ts:32
+msgid "Sales per labor hour"
+msgstr "Sales per labor hour"
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
 msgid "Save"
@@ -3181,6 +3285,10 @@ msgstr "Saving…"
 #: app/routes/_admin+/gdpr-requests.tsx:363
 msgid "Scheduled"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:52
+msgid "Scheduled vs actual hours and clock-ins"
+msgstr "Scheduled vs actual hours and clock-ins"
 
 #: app/routes/_admin+/gdpr-requests.tsx:555
 msgid "Scheduled: {scheduledFor}"
@@ -3763,6 +3871,14 @@ msgstr ""
 msgid "Time Delay"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:68
+msgid "Tip pool: tips by day"
+msgstr "Tip pool: tips by day"
+
+#: ../../packages/reports/src/ui/report-labels.ts:69
+msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
+msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
+
 #: app/routes/resources+/theme-switch.tsx:102
 msgid "Toggle theme"
 msgstr ""
@@ -4059,6 +4175,18 @@ msgstr ""
 msgid "Visitor IP addresses will appear here."
 msgstr "Visitor IP addresses will appear here."
 
+#: ../../packages/reports/src/ui/report-chart.tsx:161
+msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
+msgstr "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
+
+#: ../../packages/reports/src/ui/report-labels.ts:25
+msgid "Wages as a share of sales for each business day. The share for a longer range divides the totals; it is never an average of the daily percentages."
+msgstr "Wages as a share of sales for each business day. The share for a longer range divides the totals; it is never an average of the daily percentages."
+
+#: ../../packages/reports/src/ui/report-labels.ts:21
+msgid "Wages as a share of sales over the last 30 days: total wages divided by total sales across the days that have sales."
+msgstr "Wages as a share of sales over the last 30 days: total wages divided by total sales across the days that have sales."
+
 #. placeholder {0}: data.duration
 #. placeholder {1}: delayUnitLabel(data.unit)
 #: ../../packages/marketing-workflow/src/nodes/delay-node.tsx:18
@@ -4108,6 +4236,14 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
 #~ msgid "When someone does <0>{0}</0>"
 #~ msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:77
+msgid "Where applicants found the job."
+msgstr "Where applicants found the job."
+
+#: ../../packages/reports/src/ui/report-labels.ts:49
+msgid "Who worked overtime over the last 30 days, and how much."
+msgstr "Who worked overtime over the last 30 days, and how much."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322

@@ -35,6 +35,10 @@ import {
 } from '@repo/ui/table'
 import { useState } from 'react'
 import { Form, Link, useNavigation } from 'react-router'
+import {
+	STAFFING_IMPLIED_PERMISSION_IDS,
+	withImpliedStaffingPermissions,
+} from '#app/utils/organization/tenant-role-permissions.ts'
 
 export type TenantRole = {
 	id: string
@@ -56,6 +60,8 @@ export type PermissionGroup = {
 	title: string
 	description: string
 	permissions: PermissionOption[]
+	/** Staff module group: shown only when the organization has Staff turned on. */
+	staffing?: boolean
 }
 
 export function getPermissionGroups(): PermissionGroup[] {
@@ -249,10 +255,140 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Staff`,
+			staffing: true,
+			description: t`The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_staff_any',
+					label: t`View staff`,
+					description: t`See the staff roster, profiles, and positions. Does not include pay or private details.`,
+				},
+				{
+					id: 'org_perm_update_staff_any',
+					label: t`Manage staff`,
+					description: t`Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_read_staff_pay_any',
+					label: t`View pay rates`,
+					description: t`See individual pay rates and wage history.`,
+					warning: t`Sensitive pay data`,
+				},
+				{
+					id: 'org_perm_update_staff_pay_any',
+					label: t`Change pay rates`,
+					description: t`Change individual pay rates and salary details. Includes View pay rates.`,
+					warning: t`Sensitive pay data`,
+				},
+				{
+					id: 'org_perm_read_staff_private_any',
+					label: t`View private details`,
+					description: t`See dates of birth, home addresses, and emergency contacts.`,
+					warning: t`Personal data`,
+				},
+				{
+					id: 'org_perm_update_staff_private_any',
+					label: t`Edit private details`,
+					description: t`Edit dates of birth, home addresses, and emergency contacts. Includes View private details.`,
+					warning: t`Personal data`,
+				},
+			],
+		},
+		{
+			title: t`Schedule & time clock`,
+			staffing: true,
+			description: t`Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on.`,
+			permissions: [
+				{
+					id: 'org_perm_read_schedule_any',
+					label: t`View team schedule`,
+					description: t`See everyone's shifts, availability, and time-off requests.`,
+				},
+				{
+					id: 'org_perm_update_schedule_any',
+					label: t`Manage schedule`,
+					description: t`Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule.`,
+				},
+				{
+					id: 'org_perm_read_schedule_own',
+					label: t`View own shifts`,
+					description: t`See your own published shifts. Only useful for people who also work shifts.`,
+				},
+				{
+					id: 'org_perm_create_timeclock_own',
+					label: t`Use own time clock`,
+					description: t`Clock yourself in and out. Only useful for people who also work shifts.`,
+				},
+				{
+					id: 'org_perm_read_timesheet_any',
+					label: t`View time cards`,
+					description: t`See everyone's time cards and hours.`,
+				},
+				{
+					id: 'org_perm_update_timesheet_any',
+					label: t`Edit time cards`,
+					description: t`Add and edit time cards and export hours. Includes View time cards.`,
+					warning: t`Affects pay`,
+				},
+				{
+					id: 'org_perm_approve_timesheet_any',
+					label: t`Approve time cards`,
+					description: t`Approve, lock, and unlock time cards. Includes View time cards.`,
+					warning: t`Affects pay`,
+				},
+				{
+					id: 'org_perm_read_labor_any',
+					label: t`View labor cost`,
+					description: t`See labor cost and labor percentage.`,
+					warning: t`Sensitive pay data`,
+				},
+				{
+					id: 'org_perm_read_labor_policy_any',
+					label: t`View labor policy`,
+					description: t`See labor rules, time clock devices, and pay periods.`,
+				},
+				{
+					id: 'org_perm_update_labor_policy_any',
+					label: t`Manage labor policy`,
+					description: t`Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy.`,
+					warning: t`High impact`,
+				},
+			],
+		},
+		{
+			title: t`Hiring`,
+			staffing: true,
+			description: t`Job posts and applicants. Only applies when Hiring is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_hiring_any',
+					label: t`View hiring`,
+					description: t`See job posts and applicants.`,
+					warning: t`Applicant personal data`,
+				},
+				{
+					id: 'org_perm_update_hiring_any',
+					label: t`Manage hiring`,
+					description: t`Manage job posts, move applicants between stages, and hire. Includes View hiring.`,
+					warning: t`Applicant personal data`,
+				},
+			],
+		},
 	]
 }
 
-export function getPresets() {
+export type RolePreset = {
+	name: string
+	description: string
+	permissionIds: string[]
+	/** Staff module template: offered only when Staff is turned on. */
+	staffing?: boolean
+}
+
+export function getPresets(): RolePreset[] {
 	return [
 		{
 			name: t`Content editor`,
@@ -289,6 +425,48 @@ export function getPresets() {
 			],
 		},
 		{
+			name: t`Shift manager`,
+			staffing: true,
+			description: t`Schedule & time cards`,
+			permissionIds: [
+				'org_perm_read_staff_any',
+				'org_perm_read_schedule_any',
+				'org_perm_update_schedule_any',
+				'org_perm_read_timesheet_any',
+				'org_perm_update_timesheet_any',
+			],
+		},
+		{
+			name: t`General manager`,
+			staffing: true,
+			description: t`Staff, pay & labor`,
+			permissionIds: [
+				'org_perm_read_staff_any',
+				'org_perm_update_staff_any',
+				'org_perm_read_staff_pay_any',
+				'org_perm_update_staff_pay_any',
+				'org_perm_read_schedule_any',
+				'org_perm_update_schedule_any',
+				'org_perm_read_timesheet_any',
+				'org_perm_update_timesheet_any',
+				'org_perm_approve_timesheet_any',
+				'org_perm_read_labor_any',
+				'org_perm_read_labor_policy_any',
+				'org_perm_read_hiring_any',
+				'org_perm_update_hiring_any',
+			],
+		},
+		{
+			name: t`Hiring manager`,
+			staffing: true,
+			description: t`Job posts & applicants`,
+			permissionIds: [
+				'org_perm_read_staff_any',
+				'org_perm_read_hiring_any',
+				'org_perm_update_hiring_any',
+			],
+		},
+		{
 			name: t`Viewer`,
 			description: t`Read-only`,
 			permissionIds: [
@@ -312,16 +490,32 @@ export function RoleAccessForm({
 	role,
 	cancelHref,
 	error,
+	staffingEnabled = false,
 }: {
 	role?: TenantRole
 	cancelHref: string
 	error?: string
 	orgSlug?: string
+	/** Whether the Staff module is turned on for this organization. */
+	staffingEnabled?: boolean
 }) {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
-	const permissionGroups = getPermissionGroups()
-	const presets = getPresets()
+	const permissionGroups = getPermissionGroups().filter(
+		(group) => staffingEnabled || !group.staffing,
+	)
+	const presets = getPresets().filter(
+		(preset) => staffingEnabled || !preset.staffing,
+	)
+	// Staff grants a role already holds stay on it while the Staff groups are
+	// hidden, so saving a role with Staff off never silently strips them.
+	const hiddenStaffingIds = new Set(
+		staffingEnabled
+			? []
+			: getPermissionGroups()
+					.filter((group) => group.staffing)
+					.flatMap((group) => group.permissions.map((p) => p.id)),
+	)
 
 	const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
 		role ? role.permissionIds : (presets[0]?.permissionIds ?? []),
@@ -332,9 +526,15 @@ export function RoleAccessForm({
 
 	const togglePermission = (id: string, checked: boolean) => {
 		setActivePreset(null)
-		setSelectedPermissionIds((prev) =>
-			checked ? [...prev, id] : prev.filter((p) => p !== id),
-		)
+		setSelectedPermissionIds((prev) => {
+			if (checked) return withImpliedStaffingPermissions([...prev, id])
+			// Clearing a read grant also clears the update/approve grants that
+			// depend on it, so the saved role never holds an orphaned write.
+			const dependents = Object.entries(STAFFING_IMPLIED_PERMISSION_IDS)
+				.filter(([, implied]) => implied.includes(id))
+				.map(([dependent]) => dependent)
+			return prev.filter((p) => p !== id && !dependents.includes(p))
+		})
 	}
 
 	const applyPreset = (preset: (typeof presets)[number]) => {
@@ -453,7 +653,10 @@ export function RoleAccessForm({
 								)
 							} else {
 								setSelectedPermissionIds((prev) =>
-									Array.from(new Set([...prev, ...groupPermissionIds])),
+									withImpliedStaffingPermissions([
+										...prev,
+										...groupPermissionIds,
+									]),
 								)
 							}
 						}
@@ -568,6 +771,12 @@ export function RoleAccessForm({
 					})}
 				</div>
 
+				{selectedPermissionIds
+					.filter((id) => hiddenStaffingIds.has(id))
+					.map((id) => (
+						<input key={id} type="hidden" name="permissionIds" value={id} />
+					))}
+
 				{/* Sticky/Bottom Actions Frame */}
 				<Frame className="w-full">
 					<FrameFooter className="flex flex-row items-center justify-between p-4">
@@ -605,13 +814,23 @@ export function RoleAccessForm({
 export function ReadOnlyRoleView({
 	role,
 	editHref,
+	staffingEnabled = false,
 }: {
 	role: TenantRole
 	editHref?: string
 	orgSlug?: string
+	/** Whether the Staff module is turned on for this organization. */
+	staffingEnabled?: boolean
 }) {
-	const permissionGroups = getPermissionGroups()
-	const grantedCount = role.permissionIds.length
+	const permissionGroups = getPermissionGroups().filter(
+		(group) => staffingEnabled || !group.staffing,
+	)
+	const visibleIds = new Set(
+		permissionGroups.flatMap((group) => group.permissions.map((p) => p.id)),
+	)
+	const grantedCount = role.permissionIds.filter((id) =>
+		visibleIds.has(id),
+	).length
 	const totalCount = permissionGroups.reduce(
 		(sum, g) => sum + g.permissions.length,
 		0,
@@ -733,16 +952,27 @@ export function ReadOnlyRoleView({
 	)
 }
 
+export type StaffingRolePresetOption = {
+	key: string
+	name: string
+	description: string
+	/** A role with this name already exists in the organization. */
+	exists: boolean
+}
+
 export function TenantRoleAccessManager({
 	roles,
 	orgSlug,
 	message,
 	error,
+	staffingPresets,
 }: {
 	roles: TenantRole[]
 	orgSlug: string
 	message?: string
 	error?: string
+	/** Present only while the Staff module is on for the organization. */
+	staffingPresets?: StaffingRolePresetOption[]
 }) {
 	const navigation = useNavigation()
 	const [roleToDelete, setRoleToDelete] = useState<TenantRole | null>(null)
@@ -878,6 +1108,54 @@ export function TenantRoleAccessManager({
 					</Table>
 				)}
 			</Frame>
+
+			{/* Staff role presets: one-click starting points, created as ordinary custom roles */}
+			{staffingPresets && staffingPresets.length > 0 ? (
+				<Frame className="w-full">
+					<FrameHeader>
+						<FrameTitle className="text-base">
+							<Trans>Staff role presets</Trans>
+						</FrameTitle>
+						<FrameDescription>
+							<Trans>
+								Create a ready-made role for the people who run your team. Each
+								one becomes a normal custom role that you can rename, edit, or
+								delete.
+							</Trans>
+						</FrameDescription>
+					</FrameHeader>
+					{staffingPresets.map((preset) => (
+						<FramePanel key={preset.key}>
+							<Form
+								method="POST"
+								className="flex flex-wrap items-center justify-between gap-3"
+							>
+								<input
+									type="hidden"
+									name="intent"
+									value="create-staffing-preset"
+								/>
+								<input type="hidden" name="presetKey" value={preset.key} />
+								<div className="min-w-0 flex-1 basis-64">
+									<p className="text-sm font-medium">{preset.name}</p>
+									<p className="text-muted-foreground text-xs">
+										{preset.description}
+									</p>
+								</div>
+								{preset.exists ? (
+									<Badge variant="secondary">
+										<Trans>Created</Trans>
+									</Badge>
+								) : (
+									<Button type="submit" variant="outline" size="sm">
+										<Trans>Create role</Trans>
+									</Button>
+								)}
+							</Form>
+						</FramePanel>
+					))}
+				</Frame>
+			) : null}
 
 			{/* Built-in Roles Framed Table */}
 			<Frame className="w-full">

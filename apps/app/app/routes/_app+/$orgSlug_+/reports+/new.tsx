@@ -1,14 +1,21 @@
 import { requireUserId } from '@repo/auth'
-import { definitionForNewReport, getCatalog } from '@repo/reports'
+import {
+	blankReportDefinition,
+	catalogForGrants,
+	definitionAllowed,
+	definitionForNewReport,
+	getCatalog,
+} from '@repo/reports'
 import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/new.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -16,11 +23,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		dataRegion: true,
 	})
 	const url = new URL(request.url)
-	const catalog = getCatalog('organization')
-	const definition = definitionForNewReport(
+	const staff = await resolveStaffReportAccessForRequest(
+		request,
+		userId,
+		organization.id,
+	)
+	const fullCatalog = getCatalog('organization')
+	const catalog = catalogForGrants(fullCatalog, staff.subjects)
+	const requested = definitionForNewReport(
 		'organization',
 		url.searchParams.get('template'),
 	)
+	// A template the person has no access to opens a blank report instead.
+	const definition = definitionAllowed(fullCatalog, requested, staff.subjects)
+		? requested
+		: blankReportDefinition('organization')
 
 	return {
 		catalog,
@@ -40,6 +57,16 @@ export async function action({ request, params }: Route.ActionArgs) {
 	})
 	const form = await request.formData()
 	const definition = parseDefinition(form.get('definition'))
+	const staff = await resolveStaffReportAccessForRequest(
+		request,
+		userId,
+		organization.id,
+	)
+	if (
+		!definitionAllowed(getCatalog('organization'), definition, staff.subjects)
+	) {
+		throw new Response('Forbidden', { status: 403 })
+	}
 	const saved = await saveReport({
 		scope: 'organization',
 		organizationId: organization.id,

@@ -14,8 +14,9 @@ auth, tenant-db, AI, payments, storage, security, i18n, etc.).
 **Tech Stack**: React 19 + React Router 8, Node.js 22, SQLite + Drizzle,
 Tailwind CSS 4, TypeScript, Expo (mobile), Astro (marketing + tenant sites).
 App/Admin deploy on Cloudflare Workers with D1. CMS deploys on Vercel (Turso +
-R2 via S3). Regional tenant-api deploys on OCI Ampere (Riyadh + Ashburn) with
-per-org SQLite on a block volume.
+R2 via S3). Regional tenant-api: the US node is a Cloudflare Worker with one
+SQLite Durable Object per org by default (OCI Ashburn is optional); the KSA node
+runs on OCI Ampere in Riyadh with per-org SQLite on a block volume.
 
 **Monorepo Structure**:
 
@@ -425,7 +426,8 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `PUBLIC_TURNSTILE_SITE_KEY` - Sites only: Cloudflare Turnstile site key for
   public form blocks. Empty disables the widget (local dev).
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
-  siteverify secret and comma-separated allowed hostnames for form submissions.
+  siteverify secret and comma-separated allowed hostnames for form submissions
+  and careers applications (action `careers-apply`).
 - `GOOGLE_MAPS_API_KEY` - Tenant-api (customer delivery address search +
   coverage quotes, `/delivery/*`) and App (store address search/geocoding).
   Optional; empty uses dev fixtures outside production. See
@@ -435,6 +437,21 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.
 - `LIVEKIT_*` / `CARTESIA_API_KEY` - App and `apps/voice-agent` (US only). Empty
   in App hides browser test calls and the voice picker.
+- `STAFFING_KIOSK_ENABLED` - Tenant-api only, optional (unset or `true` is on).
+  Kill switch for the shared-tablet time clock: `false` (also `0`, `off`, `no`,
+  `disabled`) answers 503 on every `/kiosk` route and refuses new pairing codes
+  on that node; revoking a device always still works. A paired tablet keeps its
+  device secret locally, so no organization flag can stop it. Runbook: revoke
+  devices first, then use the switch. See `docs/staffing.md`.
+- `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
+  on). Kill switch for staffing email: on tenant-api it drops staff reminders
+  and notices (dropped, not held, so re-enabling sends no backlog); in the App
+  it stops manager alert emails (in-app notifications are unaffected). `false`
+  (also `0`, `off`, `no`, `disabled`).
+- `STAFFING_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
+  off). The hourly cron fan-out always runs; the Workers runtime uses Durable
+  Object alarms instead. See `docs/scheduled-jobs.md#staff-tick`.
 
 **CMS Storage**:
 
@@ -531,7 +548,9 @@ queries. Native SQL/query helpers also live on `db` from the same package.
 ## Deployment
 
 **Platform**: Cloudflare Workers (App/Admin) + Vercel (CMS) + Cloudflare Workers
-(jobs-cron) + OCI Ampere (tenant-api) + Cloudflare Pages (Sites / marketing web)
+(jobs-cron) + tenant-api (US: Cloudflare Worker + Durable Objects by default,
+optional OCI Ashburn; KSA: OCI Riyadh) + Cloudflare Pages (Sites / marketing
+web)
 
 **Deployment Trigger**: Push to `main` (production) or `dev` (staging)
 
@@ -543,7 +562,9 @@ queries. Native SQL/query helpers also live on `db` from the same package.
 4. E2E tests (Playwright, 60min timeout)
 5. Deploy App/Admin to Cloudflare Workers; CMS to Vercel; jobs-cron to
    Cloudflare Workers; Sites and marketing web to Cloudflare Pages
-6. Tenant-api: build `linux/arm64`, push GHCR, SSH to OCI Ashburn + Riyadh VMs
+6. Tenant-api: US node deploys as a Cloudflare Worker; KSA builds `linux/arm64`,
+   pushes GHCR, and SSHes to the OCI Riyadh VM (an optional OCI Ashburn VM
+   follows the same path)
 
 **Zero-Downtime Deployments**:
 
@@ -583,6 +604,12 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `@repo/security` - Security utilities (encryption, rate limiting)
 - `@repo/phone-agent` - AI phone agent core: flow model, vertical contract,
   prompts, and call reports (see `docs/phone-agent-verticals.md`)
+- `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
+  schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
+  export, time math (`computeTimecard` / `computeWeek`), clock state machine,
+  and rule packs as data. No UI strings, no I/O. Neutral vocabulary: workplaces
+  are opaque **scopes** (`DEFAULT_SCOPE_ID`), never "locations" (see
+  `docs/staffing-plan.md`)
 
 **Key Apps:**
 
@@ -591,7 +618,8 @@ npm install --prefix packages/<name>                   # Install deps in package
 - `apps/jobs-cron` - Cloudflare Worker cron → authenticated App job routes
 - `apps/sites` - Public CMS HTML; injects tenant-api URL; no PII proxy
 - `apps/tenant-api` - Regional customer auth + SQLite (local US :3007, KSA
-  :3009; production OCI Ashburn + Riyadh)
+  :3009; production: US Cloudflare Worker + Durable Objects by default, KSA OCI
+  Riyadh)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
@@ -604,6 +632,57 @@ npm install --prefix packages/<name>                   # Install deps in package
   Keystore. Opt-in via `npm run android:* -w android`; the Android toolchain is
   installed by `.agents/setup`
 
+**Staff module (hiring, scheduling, staff management, time clock):**
+
+- Staff, pay, punch, schedule, and applicant data lives in the **regional**
+  tenant DB and is reached browser-direct with short-lived operator tokens. The
+  US control plane keeps only permissions, flags, the organization's staff time
+  zone (`Organization.staffingTimeZone`), opaque link ids, outbox rows, and
+  public job postings. No staff PII in cross-plane events.
+- Staff are not members: never write staff as `UserOrganization` rows, and
+  removing a member only unlinks the login.
+- Workplaces are opaque **scopes**. The generic module has one implicit scope
+  per organization (`DEFAULT_SCOPE_ID = 'main'` in `@repo/staffing`); its time
+  zone is edited at Staff, Time clock, Rules. Scope pickers hide while there is
+  one. A vertical with several places maps its own ids onto scopes (scope-facts
+  route, the token's `scopeIds` claim, `registerOrderSource` in
+  `apps/tenant-api/src/services/order-source.ts`), like
+  `docs/phone-agent-verticals.md`. Keep place, food and retail words out of
+  generic staffing code (`packages/staffing/src/vocabulary.test.ts`).
+- Everything user-visible is behind org-level feature flags read with
+  `getFeatureFlag` (`staffing.enabled` master, plus `staffing.timeclock`,
+  `staffing.scheduling`, `staffing.labor`, `staffing.hiring`), default off.
+  Enforce at token mint and in every child loader and action.
+- Time clock: tenant-api `/kiosk/*` (public, paired-device secret, PIN lookup by
+  HMAC, persisted per-device backoff, first-name-only responses) and
+  `/operator/timeclock/*` (labor policy, kiosk devices, pairing codes). The
+  single time-math implementation is `computeTimecard` / `computeWeek` in
+  `@repo/staffing`; punches and edit logs are append-only (triggers).
+- Hiring: the public apply route is tenant-api `POST /careers/apply`, called
+  from the careers page in the visitor's browser (never proxied by Sites). The
+  organization comes from the browser `Origin`, never from a client-sent id; it
+  needs Turnstile, a honeypot, durable per-address and per-organization limits,
+  and recorded consent. Managers use `/operator/hiring/*`; the hire is one
+  regional transaction (staff, assignment, position, checklist, application).
+  Declined applicants are purged by the regional tick; the audit log is never
+  purged. A new applicant reaches managers only as a generic event (id and
+  count).
+- Scheduling, labor and onboarding follow the same split: shifts, availability,
+  labor figures and checklists live in the regional tenant DB; the control plane
+  keeps the flags and a public job posting. The "my schedule" page uses a
+  private link token, never a login. Sales are entered by hand unless a vertical
+  registers an order source.
+- Demo data: `npm run seed:staffing -w tenant-api -- <org-slug>` (local only;
+  idempotent; goes through the same services as the API).
+- Security gates in CI: `apps/tenant-api/src/routes/staffing-security.test.ts`
+  (every staffing route refuses a missing, forged or grantless token and has
+  cross-organization and cross-scope tests) and
+  `apps/app/app/utils/staffing/staffing-guards.test.ts` (every staff loader and
+  action awaits `requireStaffingAccess` first). A new staffing route must pass
+  both.
+- Canonical docs: `docs/staffing.md` (operator guide and runbook),
+  `docs/decisions/047-staffing-data-residency.md` and `docs/staffing-plan.md`.
+
 ## Additional Resources
 
 - **Docs**: `/docs` directory (84 files covering all aspects)
@@ -611,5 +690,7 @@ npm install --prefix packages/<name>                   # Install deps in package
 - **Security**: See `SECURITY_AUDIT_REPORT.md`
 - **Getting Started**: See `docs/getting-started.md`
 - **Tenant data residency**: See `docs/tenant-data-residency.md`
+- **Staff module (operator guide, flags, runbook)**: See `docs/staffing.md`
+  (design in `docs/staffing-plan.md`)
 - **Scheduled jobs & video transforms**: See `docs/scheduled-jobs.md`
 - **Testing Guide**: See `docs/testing.md`

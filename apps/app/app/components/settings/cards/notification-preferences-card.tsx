@@ -1,5 +1,6 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 import { Badge } from '@repo/ui/badge'
 import {
 	Card,
@@ -35,6 +36,10 @@ function getWorkflowLabel(
 	const labels: Record<string, any> = {
 		'comment-mention-workflow': msg`Notifications when you are mentioned in a comment`,
 		'note-comment-workflow': msg`Notifications when someone comments on your notes`,
+		'staffing-attendance-workflow': msg`Time clock: someone has not clocked in or forgot to clock out`,
+		'staffing-overtime-workflow': msg`Time clock: someone is close to overtime or has reached it`,
+		'staffing-schedule-workflow': msg`Schedule: a week was published`,
+		'staffing-hiring-workflow': msg`Hiring: someone applied for a job`,
 	}
 	return _(labels[workflowName]) || workflowName
 }
@@ -59,6 +64,37 @@ const workflows = [
 	{
 		id: 'note-comment-workflow',
 		name: 'note-comment-workflow',
+		critical: false,
+	},
+]
+
+// Time clock alerts: only offered to members who can actually receive them
+// (staffing time clock is on and they can read timesheets), so nobody sees a
+// switch that does nothing.
+const staffingWorkflows = STAFFING_NOTIFICATION_WORKFLOWS.filter(
+	(id) =>
+		id !== 'staffing-schedule-workflow' && id !== 'staffing-hiring-workflow',
+).map((id) => ({
+	id,
+	name: id,
+	critical: false,
+}))
+// Schedule alerts are offered on their own: scheduling is on and the member can
+// read the schedule.
+const scheduleWorkflows = [
+	{
+		id: 'staffing-schedule-workflow',
+		name: 'staffing-schedule-workflow',
+		critical: false,
+	},
+]
+
+// Applicant alerts are offered where hiring is on and the member can read the
+// applicants they open.
+const hiringWorkflows = [
+	{
+		id: 'staffing-hiring-workflow',
+		name: 'staffing-hiring-workflow',
 		critical: false,
 	},
 ]
@@ -180,8 +216,14 @@ function WorkflowPreferenceRow({
 
 export function NotificationPreferencesCard({
 	organizationId,
+	showStaffingAlerts = false,
+	showScheduleAlerts = false,
+	showHiringAlerts = false,
 }: {
 	organizationId: string
+	showStaffingAlerts?: boolean
+	showScheduleAlerts?: boolean
+	showHiringAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -194,6 +236,12 @@ export function NotificationPreferencesCard({
 	}, [fetcher, organizationId])
 
 	const preferences = fetcher.data?.preferences || []
+	const visibleWorkflows = [
+		...workflows,
+		...(showStaffingAlerts ? staffingWorkflows : []),
+		...(showScheduleAlerts ? scheduleWorkflows : []),
+		...(showHiringAlerts ? hiringWorkflows : []),
+	]
 
 	const getPreference = (workflowId: string): Preference => {
 		const pref = preferences.find((p) => p.workflow === workflowId)
@@ -214,7 +262,7 @@ export function NotificationPreferencesCard({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-6">
-				{workflows.map((workflow, index) => {
+				{visibleWorkflows.map((workflow, index) => {
 					const serverPref = getPreference(workflow.id)
 
 					return (
@@ -223,7 +271,7 @@ export function NotificationPreferencesCard({
 							organizationId={organizationId}
 							workflow={workflow}
 							serverPref={serverPref}
-							isLast={index === workflows.length - 1}
+							isLast={index === visibleWorkflows.length - 1}
 						/>
 					)
 				})}

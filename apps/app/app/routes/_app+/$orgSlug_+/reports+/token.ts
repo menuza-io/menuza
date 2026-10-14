@@ -1,4 +1,8 @@
-import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import {
+	isImpersonating,
+	requireUserId,
+	userHasOrganizationPermission,
+} from '@repo/auth'
 import {
 	mintOperatorAnalyticsToken,
 	ORDER_REPORT_SUBJECTS,
@@ -11,6 +15,7 @@ import {
 	ORG_PERMISSIONS,
 	requireAnyUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/token.ts'
 
@@ -43,9 +48,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			ORG_PERMISSIONS.READ_MENU_ANY,
 		),
 	])
+	// Staff reports (time cards, shifts, daily labor, applications) follow the
+	// staffing flags, the staffing permissions, and the person's scope grants.
+	const staff = await resolveStaffReportAccess({
+		userId,
+		organizationId: organization.id,
+		impersonated: await isImpersonating(request),
+	})
 	const subjects: RestrictedReportSubject[] = [
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
+		...staff.subjects,
 	]
 
 	const minted = await mintOperatorAnalyticsToken({
@@ -54,14 +67,22 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		orgId: organization.id,
 		role: 'operator',
 		subjects,
+		scopeIds: staff.scopeIds,
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)
 
-	return data({
-		...minted,
-		tenantApiUrl,
-		orgId: organization.id,
-		hasProvisionedDb: organization.hasProvisionedDb,
-	})
+	return data(
+		{
+			...minted,
+			// Which regional subjects this person may run, so the screen can offer
+			// only reports that will answer. tenant-api checks the token itself.
+			subjects,
+			tenantApiUrl,
+			orgId: organization.id,
+			hasProvisionedDb: organization.hasProvisionedDb,
+		},
+		// The token can unlock staff data and wages: never store or share it.
+		{ headers: { 'Cache-Control': 'private, no-store' } },
+	)
 }

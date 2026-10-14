@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { type ReportScope } from '../catalog.ts'
 import { type ReportTemplate, templateCategories } from '../templates.ts'
+import { useReportLabels } from './report-labels.ts'
 
 export type SavedReportSummary = {
 	id: string
@@ -42,17 +43,17 @@ export function ReportLibrary({
 	compact?: boolean
 }) {
 	const [query, setQuery] = useState('')
+	const labels = useReportLabels()
 	const categories = templateCategories(templates)
-	const filteredTemplates = useMemo(
-		() =>
-			templates.filter((template) =>
-				matchesQuery(query, [
-					template.title,
-					template.description,
-					template.category,
-				]),
-			),
-		[query, templates],
+	const filteredTemplates = templates.filter((template) =>
+		matchesQuery(query, [
+			template.title,
+			template.description,
+			template.category,
+			labels.templateTitle(template),
+			labels.templateDescription(template),
+			labels.categoryLabel(template.category),
+		]),
 	)
 	const filteredSaved = useMemo(
 		() =>
@@ -131,7 +132,7 @@ export function ReportLibrary({
 					return (
 						<Collapsible key={category} defaultOpen className="group mb-1">
 							<CollapsibleTrigger className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs font-medium outline-none focus-visible:ring-2">
-								{category}
+								{labels.categoryLabel(category)}
 								<Icon
 									name="chevron-down"
 									className="size-3.5 transition-transform group-data-open:rotate-180"
@@ -151,7 +152,7 @@ export function ReportLibrary({
 													: 'text-foreground/90',
 											)}
 										>
-											{template.title}
+											{labels.templateTitle(template)}
 										</Link>
 									)
 								})}
@@ -177,6 +178,7 @@ export function ReportStart({
 	savedReports: SavedReportSummary[]
 	basePath: string
 }) {
+	const labels = useReportLabels()
 	const categories = templateCategories(templates)
 
 	return (
@@ -246,7 +248,7 @@ export function ReportStart({
 						return (
 							<div key={category} className="space-y-3">
 								<h3 className="text-muted-foreground text-sm font-medium">
-									{category}
+									{labels.categoryLabel(category)}
 								</h3>
 								<ul className="bg-background divide-y overflow-hidden rounded-xl border">
 									{categoryTemplates.map((template) => (
@@ -257,10 +259,10 @@ export function ReportStart({
 											>
 												<span className="min-w-0 flex-1">
 													<span className="block text-sm font-medium">
-														{template.title}
+														{labels.templateTitle(template)}
 													</span>
 													<span className="text-muted-foreground mt-0.5 block text-sm leading-relaxed">
-														{template.description}
+														{labels.templateDescription(template)}
 													</span>
 												</span>
 												<Icon
