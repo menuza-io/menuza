@@ -27,8 +27,12 @@ import { buildFinishInput, CallState } from './call-state.ts'
 import { CallController } from './controller.ts'
 import { normalizeE164, priceFormatter } from './job-metadata.ts'
 import { callPhrase } from './messages.ts'
+import { describeModelProviders, modelProviders } from './model-providers.ts'
 import { assertUsDataRegion, createModels, createTts } from './models.ts'
-import { assertProductionConfig } from './production-config.ts'
+import {
+	assertProductionConfig,
+	liveKitInferenceProblem,
+} from './production-config.ts'
 import { createCallRecording } from './recording.ts'
 import {
 	createRuntimeConfigLoader,
@@ -41,6 +45,12 @@ import { phoneAgentVertical } from './vertical.ts'
 
 assertUsDataRegion(ENV.DATA_REGION)
 assertProductionConfig(ENV)
+console.info(`Voice models: ${describeModelProviders(modelProviders(ENV))}`)
+const inferenceProblem = liveKitInferenceProblem(ENV)
+if (inferenceProblem) {
+	// Production refuses to start (above); in development, say why calls fail.
+	console.warn(`Calls will fail: ${inferenceProblem}.`)
+}
 
 const DATA_TOPIC = 'phone-agent'
 const loadRuntimeConfig = createRuntimeConfigLoader()

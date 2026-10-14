@@ -24,8 +24,15 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function PhoneAgentTestRoute() {
-	const { scopes, hasPublishedFlow, defaultFlow, liveKitConfigured, canStart } =
-		useLoaderData<typeof loader>()
+	const {
+		scopes,
+		hasPublishedFlow,
+		defaultFlow,
+		liveKitConfigured,
+		canStart,
+		agentName,
+		agentNumbers,
+	} = useLoaderData<typeof loader>()
 	const layout = useRouteLoaderData<typeof layoutLoader>(
 		'routes/_app+/$orgSlug_+/phone-agent+/_layout',
 	)
@@ -38,8 +45,8 @@ export default function PhoneAgentTestRoute() {
 				description={
 					<Trans>
 						Test your call flow from this browser and use the dial pad to press
-						keys. Test calls use the same call flow, rules, and business
-						details as real calls and appear in Calls marked as tests.
+						keys. Test calls use the same call flow, rules, and business details
+						as real calls and appear in Calls marked as tests.
 					</Trans>
 				}
 			/>
@@ -50,6 +57,8 @@ export default function PhoneAgentTestRoute() {
 					hasPublishedFlow={hasPublishedFlow}
 					defaultFlow={defaultFlow}
 					canStart={canStart}
+					agentName={agentName}
+					agentNumbers={agentNumbers}
 					regionSupported={layout?.regionSupported ?? true}
 				/>
 			) : (

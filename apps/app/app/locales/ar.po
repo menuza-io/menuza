@@ -2184,12 +2184,12 @@ msgstr "بعد انتهاء التكرارات، تتبع المكالمة وص�
 msgid "After-hours calls"
 msgstr "المكالمات خارج ساعات العمل"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:451
-#: app/components/phone-agent/test-call-panel.tsx:722
+#: app/components/phone-agent/call-detail-sheet.tsx:444
+#: app/components/phone-agent/test-call-panel.tsx:675
 msgid "Agent"
 msgstr "الوكيل"
 
-#: app/components/phone-agent/test-call-panel.tsx:437
+#: app/components/phone-agent/test-call-panel.tsx:475
 msgid "Agent is getting ready…"
 msgstr "الوكيل يستعد…"
 
@@ -2210,7 +2210,7 @@ msgstr "رقم هاتف الوكيل"
 msgid "Agent settings"
 msgstr "إعدادات الوكيل"
 
-#: app/components/phone-agent/test-call-panel.tsx:433
+#: app/components/phone-agent/test-call-panel.tsx:471
 msgid "Agent speaking"
 msgstr "الوكيل يتحدث"
 
@@ -2394,6 +2394,10 @@ msgstr "جميع أماكن العمل (افتراضي)"
 #: app/components/staff/labor-policy-editor.tsx:615
 msgid "Allow clock-in without a scheduled shift"
 msgstr "السماح بتسجيل الحضور دون وردية مجدولة"
+
+#: app/components/phone-agent/test-call-panel.tsx:468
+msgid "Allow microphone access"
+msgstr "اسمح بالوصول إلى الميكروفون"
 
 #: app/components/roles/tenant-role-access-manager.tsx:934
 msgid "Allowed"
@@ -2999,7 +3003,7 @@ msgstr "العودة إلى الكتل"
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:175
+#: app/components/phone-agent/call-detail-sheet.tsx:176
 msgid "Back to calls"
 msgstr "العودة إلى المكالمات"
 
@@ -3372,7 +3376,11 @@ msgstr "حسب نسبة كل وظيفة"
 msgid "by the time clock"
 msgstr "بواسطة ساعة الدوام"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:190
+#: app/components/phone-agent/test-call-phone.tsx:186
+msgid "Call {number}"
+msgstr "اتصل بـ {number}"
+
+#: app/components/phone-agent/call-detail-sheet.tsx:191
 msgid "Call back"
 msgstr "معاودة الاتصال"
 
@@ -3381,16 +3389,16 @@ msgstr "معاودة الاتصال"
 msgid "Call comes in"
 msgstr "ورود مكالمة"
 
-#: app/components/phone-agent/test-call-panel.tsx:461
+#: app/components/phone-agent/test-call-panel.tsx:502
 msgid "Call controls"
 msgstr "أدوات التحكم في المكالمة"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:166
-#: app/components/phone-agent/call-detail-sheet.tsx:330
+#: app/components/phone-agent/call-detail-sheet.tsx:167
+#: app/components/phone-agent/call-detail-sheet.tsx:331
 msgid "Call details"
 msgstr "تفاصيل المكالمة"
 
-#: app/components/phone-agent/test-call-panel.tsx:440
+#: app/components/phone-agent/test-call-phone.tsx:166
 msgid "Call ended"
 msgstr "انتهت المكالمة"
 
@@ -3413,6 +3421,7 @@ msgstr "سجل المكالمات غير متاح حاليًا. حاول مرة 
 msgid "Call ratings"
 msgstr "تقييمات المكالمات"
 
+#: app/components/phone-agent/call-recording-player.tsx:127
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:46
 msgid "Call recording"
 msgstr "تسجيل المكالمات"
@@ -3445,7 +3454,7 @@ msgstr "ستظهر هنا طلبات معاودة الاتصال والشكاو�
 msgid "Called"
 msgstr "وقت الاتصال"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:453
+#: app/components/phone-agent/call-detail-sheet.tsx:446
 msgid "Caller"
 msgstr "المتصل"
 
@@ -3464,6 +3473,10 @@ msgstr "يمكن للمتصلين الضغط على 0 في أي وقت لتحو�
 #: app/components/phone-agent/flow-editor/node-palette.tsx:35
 msgid "Callers hear each step in order. A keypad menu waits for them to press a key or say their choice, then follows that option."
 msgstr "يسمع المتصلون كل خطوة بالترتيب. تنتظر قائمة لوحة المفاتيح أن يضغطوا مفتاحًا أو ينطقوا اختيارهم، ثم تتبع ذلك الخيار."
+
+#: app/components/phone-agent/test-call-phone.tsx:224
+msgid "Calling…"
+msgstr "جارٍ الاتصال…"
 
 #: app/components/app-sidebar.tsx:366
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -3542,7 +3555,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:317
-#: app/components/phone-agent/call-detail-sheet.tsx:595
+#: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:693
 #: app/components/phone-agent/phone-number-dialogs.tsx:445
 #: app/components/phone-agent/phone-number-dialogs.tsx:615
@@ -4114,7 +4127,7 @@ msgstr "اختر طريقة احتساب العمل الإضافي قبل الح
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "اختر طريقة احتساب الساعات الإضافية لمن يعمل في أكثر من مكان عمل."
 
-#: app/components/phone-agent/test-call-panel.tsx:477
+#: app/components/phone-agent/test-call-panel.tsx:518
 msgid "Choose one"
 msgstr "اختر واحدًا"
 
@@ -4745,8 +4758,8 @@ msgid "Connecting to team chat…"
 msgstr "جارٍ الاتصال بدردشة الفريق…"
 
 #: app/components/phone-agent/test-call-panel.tsx:428
-msgid "Connecting…"
-msgstr "جارٍ الاتصال…"
+#~ msgid "Connecting…"
+#~ msgstr "جارٍ الاتصال…"
 
 #: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
@@ -4978,11 +4991,11 @@ msgstr "تعذّر النسخ. حدّد الرمز وانسخه بنفسك."
 msgid "Could not create a draft. Try again."
 msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:274
+#: app/components/phone-agent/call-detail-sheet.tsx:275
 msgid "Could not delete this call. Try again."
 msgstr "تعذّر حذف هذه المكالمة. حاول مرة أخرى."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:315
+#: app/components/phone-agent/call-detail-sheet.tsx:316
 msgid "Could not erase this caller's data. Try again."
 msgstr "تعذّر مسح بيانات هذا المتصل. حاول مرة أخرى."
 
@@ -5037,7 +5050,7 @@ msgstr "تعذر رفع الصورة."
 msgid "Could not upload image. Try again."
 msgstr "تعذّر رفع الصورة. حاول مرة أخرى."
 
-#: app/components/phone-agent/test-call-panel.tsx:283
+#: app/components/phone-agent/test-call-panel.tsx:286
 msgid "Couldn't connect to the test call. Make sure the voice agent is running and try again."
 msgstr "تعذّر الاتصال بالمكالمة التجريبية. تأكد من أن الوكيل الصوتي قيد التشغيل وحاول مرة أخرى."
 
@@ -5057,11 +5070,15 @@ msgstr "تعذّر تحميل الطلبات"
 msgid "Couldn't load the assistant."
 msgstr "تعذر تحميل المساعد."
 
+#: app/components/phone-agent/call-recording-player.tsx:73
+msgid "Couldn't load the recording. Try again."
+msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
+
 #: app/components/phone-agent/voice-picker.tsx:442
 msgid "Couldn't load voices"
 msgstr "تعذّر تحميل الأصوات"
 
-#: app/components/phone-agent/test-call-panel.tsx:403
+#: app/components/phone-agent/test-call-panel.tsx:411
 msgid "Couldn't mute your microphone. Try again."
 msgstr "تعذّر كتم الميكروفون. حاول مرة أخرى."
 
@@ -5069,11 +5086,11 @@ msgstr "تعذّر كتم الميكروفون. حاول مرة أخرى."
 msgid "Couldn't open {routeTitle}"
 msgstr "تعذر فتح {routeTitle}"
 
-#: app/hooks/use-phone-calls.ts:114
+#: app/hooks/use-phone-calls.ts:118
 msgid "Couldn't reach call history. Check your connection and try again."
 msgstr "تعذّر الوصول إلى سجل المكالمات. تحقق من اتصالك وحاول مرة أخرى."
 
-#: app/components/phone-agent/test-call-panel.tsx:357
+#: app/components/phone-agent/test-call-panel.tsx:364
 msgid "Couldn't send that key press. Try again."
 msgstr "تعذّر إرسال ضغطة المفتاح. حاول مرة أخرى."
 
@@ -5869,8 +5886,8 @@ msgstr "هل تريد حذف الإعلان؟"
 msgid "Delete application…"
 msgstr "حذف الطلب…"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:529
-#: app/components/phone-agent/call-detail-sheet.tsx:609
+#: app/components/phone-agent/call-detail-sheet.tsx:522
+#: app/components/phone-agent/call-detail-sheet.tsx:602
 msgid "Delete call"
 msgstr "حذف المكالمة"
 
@@ -6007,7 +6024,7 @@ msgstr "حذف ملاحظات الفريق"
 msgid "Delete template {templateName}"
 msgstr "حذف القالب {templateName}"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:578
+#: app/components/phone-agent/call-detail-sheet.tsx:571
 msgid "Delete this call?"
 msgstr "حذف هذه المكالمة؟"
 
@@ -6036,7 +6053,7 @@ msgid "Deleted training rule \"{title}\""
 msgstr "تم حذف قاعدة التدريب \"{title}\""
 
 #: app/components/hiring/erase-dialog.tsx:89
-#: app/components/phone-agent/call-detail-sheet.tsx:605
+#: app/components/phone-agent/call-detail-sheet.tsx:598
 #: app/components/roles/tenant-role-access-manager.tsx:1259
 #: app/components/staff/notes-tab.tsx:205
 #: app/components/staff/timesheets/card-sheet.tsx:437
@@ -6138,7 +6155,7 @@ msgstr "التطوير"
 msgid "Device"
 msgstr "جهاز"
 
-#: app/components/phone-agent/test-call-panel.tsx:572
+#: app/components/phone-agent/test-call-phone.tsx:292
 msgid "Dial pad"
 msgstr "لوحة الاتصال"
 
@@ -6348,8 +6365,8 @@ msgstr "مسودة"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
 #: app/components/hiring/job-labels.ts:49
-#: app/components/phone-agent/test-call-panel.tsx:449
-#: app/components/phone-agent/test-call-panel.tsx:509
+#: app/components/phone-agent/test-call-panel.tsx:490
+#: app/components/phone-agent/test-call-panel.tsx:550
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6858,8 +6875,8 @@ msgid "Empty subject"
 msgstr "موضوع فارغ"
 
 #: app/components/phone-agent/test-call-panel.tsx:613
-msgid "Enable audio"
-msgstr "تفعيل الصوت"
+#~ msgid "Enable audio"
+#~ msgstr "تفعيل الصوت"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:200
 msgid "Enable Custom S3 Storage"
@@ -6887,7 +6904,7 @@ msgstr "النهاية"
 msgid "End break"
 msgstr "إنهاء الاستراحة"
 
-#: app/components/phone-agent/test-call-panel.tsx:635
+#: app/components/phone-agent/test-call-phone.tsx:400
 msgid "End call"
 msgstr "إنهاء المكالمة"
 
@@ -7151,15 +7168,15 @@ msgstr "الخطة المؤسسية"
 msgid "Epic Startup Team"
 msgstr "فريق Epic Startup"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:564
+#: app/components/phone-agent/call-detail-sheet.tsx:557
 msgid "Erase all data for this caller?"
 msgstr "مسح جميع بيانات هذا المتصل؟"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:538
+#: app/components/phone-agent/call-detail-sheet.tsx:531
 msgid "Erase caller's data"
 msgstr "مسح بيانات المتصل"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:607
+#: app/components/phone-agent/call-detail-sheet.tsx:600
 msgid "Erase data"
 msgstr "مسح البيانات"
 
@@ -7228,7 +7245,7 @@ msgstr "يمكن لكل عضو نشط القراءة والنشر."
 msgid "Every call"
 msgstr "كل مكالمة"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:567
+#: app/components/phone-agent/call-detail-sheet.tsx:560
 msgid "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 msgstr "تُحذف كل مكالمة من {erasePhoneLabel} نهائيًا، مع نصوصها وتسجيلاتها والروابط المرسلة والطلبات وسجل الرسائل النصية. استخدم هذا عندما يطلب منك متصل حذف بياناته. لا يمكن التراجع عن هذا."
 
@@ -7710,7 +7727,7 @@ msgstr "قلب أفقيًا"
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
-#: app/components/phone-agent/test-call-panel.tsx:491
+#: app/components/phone-agent/test-call-panel.tsx:532
 msgid "Flow"
 msgstr "مسار المكالمة"
 
@@ -8211,6 +8228,7 @@ msgstr "مرحبًا {personName}، أدخل رقمك السري"
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
+#: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/staff/reveal-gate.tsx:46
 msgid "Hide"
 msgstr "إخفاء"
@@ -9062,6 +9080,10 @@ msgstr "المصطلحات الأساسية"
 msgid "Keyboard shortcuts"
 msgstr "اختصارات لوحة المفاتيح"
 
+#: app/components/phone-agent/test-call-phone.tsx:243
+msgid "Keypad"
+msgstr "لوحة المفاتيح"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:34
 #: app/components/phone-agent/flow-editor/flow-meta.ts:36
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
@@ -9420,7 +9442,7 @@ msgstr "تم نسخ الرابط!"
 msgid "Link copied."
 msgstr "تم نسخ الرابط."
 
-#: app/components/phone-agent/test-call-panel.tsx:742
+#: app/components/phone-agent/test-call-panel.tsx:695
 msgid "Link created"
 msgstr "تم إنشاء الرابط"
 
@@ -9446,7 +9468,7 @@ msgstr "رابط النموذج"
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:82
+#: app/components/phone-agent/call-detail-sheet.tsx:83
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:59
 msgid "Links sent"
 msgstr "الروابط المرسلة"
@@ -9455,7 +9477,7 @@ msgstr "الروابط المرسلة"
 msgid "List"
 msgstr "قائمة"
 
-#: app/components/phone-agent/test-call-panel.tsx:438
+#: app/components/phone-agent/test-call-panel.tsx:476
 msgid "Listening"
 msgstr "يستمع"
 
@@ -9465,7 +9487,7 @@ msgstr "يستمع"
 msgid "Live"
 msgstr "مباشر"
 
-#: app/components/phone-agent/test-call-panel.tsx:688
+#: app/components/phone-agent/test-call-panel.tsx:641
 msgid "Live transcript"
 msgstr "النص المكتوب المباشر"
 
@@ -9507,11 +9529,11 @@ msgstr "جارٍ تحميل المتقدّم"
 msgid "Loading assistant…"
 msgstr "جارٍ تحميل المساعد…"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:349
+#: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
 msgstr "جارٍ تحميل المكالمة"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:341
+#: app/components/phone-agent/call-detail-sheet.tsx:342
 msgid "Loading call…"
 msgstr "جارٍ تحميل المكالمة…"
 
@@ -10371,11 +10393,11 @@ msgstr "المصادقة متعددة العوامل"
 msgid "Multiple choice"
 msgstr "اختيار متعدد"
 
-#: app/components/phone-agent/test-call-panel.tsx:631
+#: app/components/phone-agent/test-call-phone.tsx:233
 msgid "Mute"
 msgstr "كتم الصوت"
 
-#: app/components/phone-agent/test-call-panel.tsx:626
+#: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Mute microphone"
 msgstr "كتم الميكروفون"
 
@@ -11263,7 +11285,7 @@ msgid "No submissions yet"
 msgstr "لا توجد ردود بعد"
 
 #: app/components/mailbox/calls-tab.tsx:370
-#: app/components/phone-agent/call-detail-sheet.tsx:417
+#: app/components/phone-agent/call-detail-sheet.tsx:418
 msgid "No summary for this call."
 msgstr "لا يوجد ملخص لهذه المكالمة."
 
@@ -11319,7 +11341,7 @@ msgstr "لا توجد أدوات متاحة."
 msgid "No training rules yet"
 msgstr "لا توجد قواعد تدريب بعد"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:465
+#: app/components/phone-agent/call-detail-sheet.tsx:458
 msgid "No transcript was saved for this call."
 msgstr "لم يُحفظ نص مكتوب لهذه المكالمة."
 
@@ -11505,7 +11527,7 @@ msgstr "لم يُبلَّغوا"
 msgid "Not now"
 msgstr "ليس الآن"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:495
+#: app/components/phone-agent/call-detail-sheet.tsx:488
 msgid "Not opened yet"
 msgstr "لم يُفتح بعد"
 
@@ -11975,7 +11997,7 @@ msgstr "يمكن أن يكون مكان عمل واحد فقط هو الرئيس
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "تُحتسب الطلبات عبر الإنترنت فقط، أما المبيعات الحضورية وغيرها فلا تُحتسب، لذا تبدو النسبة أعلى من حقيقتها."
 
-#: app/components/phone-agent/test-call-panel.tsx:670
+#: app/components/phone-agent/test-call-panel.tsx:623
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "لا يمكن بدء المكالمات التجريبية إلا لمن يملكون صلاحية تعديل وكيل الهاتف."
 
@@ -12103,7 +12125,7 @@ msgstr "فتح في علامة تبويب جديدة"
 msgid "Open Kiro IDE Settings"
 msgstr "افتح إعدادات Kiro IDE"
 
-#: app/components/phone-agent/test-call-panel.tsx:751
+#: app/components/phone-agent/test-call-panel.tsx:704
 msgid "Open link"
 msgstr "فتح الرابط"
 
@@ -12241,7 +12263,7 @@ msgstr "افتح جدولك من بريدك الإلكتروني"
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:94
+#: app/components/phone-agent/call-detail-sheet.tsx:95
 msgid "Opened {openedAt}"
 msgstr "فُتح في {openedAt}"
 
@@ -13158,8 +13180,8 @@ msgid "Play preview of {voiceName}"
 msgstr "تشغيل معاينة {voiceName}"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:428
-msgid "Playback coming soon."
-msgstr "التشغيل متاح قريبًا."
+#~ msgid "Playback coming soon."
+#~ msgstr "التشغيل متاح قريبًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:136
 msgid "Played after a rating of 1 or 2."
@@ -13417,7 +13439,7 @@ msgstr "التصيير المسبق"
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
 
-#: app/components/phone-agent/test-call-panel.tsx:582
+#: app/components/phone-agent/test-call-phone.tsx:301
 msgid "Press {key}"
 msgstr "اضغط {key}"
 
@@ -13433,7 +13455,7 @@ msgstr "اضغط 0 للتحدث مع الموظفين"
 msgid "Press play to hear each voice read your greeting, then pick the one you like."
 msgstr "اضغط تشغيل لتسمع كل صوت يقرأ تحيتك، ثم اختر الصوت الذي يعجبك."
 
-#: app/components/phone-agent/test-call-panel.tsx:363
+#: app/components/phone-agent/test-call-panel.tsx:371
 msgid "Pressed {key}"
 msgstr "تم الضغط على {key}"
 
@@ -13635,8 +13657,8 @@ msgstr "نشر التحديثات"
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
-#: app/components/phone-agent/test-call-panel.tsx:448
-#: app/components/phone-agent/test-call-panel.tsx:506
+#: app/components/phone-agent/test-call-panel.tsx:489
+#: app/components/phone-agent/test-call-panel.tsx:547
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -13821,8 +13843,8 @@ msgid "Ready"
 msgstr "جاهز"
 
 #: app/components/phone-agent/test-call-panel.tsx:441
-msgid "Ready to call"
-msgstr "جاهز للاتصال"
+#~ msgid "Ready to call"
+#~ msgstr "جاهز للاتصال"
 
 #: app/components/staff/positions-tab.tsx:840
 #: app/components/staff/timesheets/reason-field.tsx:36
@@ -13889,7 +13911,7 @@ msgstr "تسجيل المكالمات"
 msgid "Record the decision quietly."
 msgstr "تسجيل القرار بهدوء."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:425
+#: app/components/phone-agent/call-recording-player.tsx:113
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:633
 msgid "Recorded"
 msgstr "مُسجَّلة"
@@ -13899,9 +13921,17 @@ msgstr "مُسجَّلة"
 msgid "Recorded by you, so it is approved right away."
 msgstr "سجّلته أنت، لذا تتم الموافقة عليه فورًا."
 
+#: app/components/phone-agent/call-recording-player.tsx:110
+msgid "Recording"
+msgstr "التسجيل"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:51
 msgid "Recording notice"
 msgstr "إشعار التسجيل"
+
+#: app/components/phone-agent/call-recording-player.tsx:67
+msgid "Recording playback isn't set up for your account yet."
+msgstr "لم يتم إعداد تشغيل التسجيلات لحسابك بعد."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:47
 msgid "Recording retention"
@@ -14434,7 +14464,7 @@ msgid "Requesting your authorization"
 msgstr "جاري طلب التفويض"
 
 #: app/components/my-schedule/my-schedule-page.tsx:193
-#: app/components/phone-agent/call-detail-sheet.tsx:508
+#: app/components/phone-agent/call-detail-sheet.tsx:501
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:407
 msgid "Requests"
 msgstr "الطلبات"
@@ -15799,7 +15829,7 @@ msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم ع
 msgid "sent later"
 msgstr "أُرسل لاحقًا"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:88
+#: app/components/phone-agent/call-detail-sheet.tsx:89
 msgid "Sent to {formatted}"
 msgstr "أُرسل إلى {formatted}"
 
@@ -16093,6 +16123,10 @@ msgstr "عرض التفاصيل"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4124
 msgid "Show form title"
 msgstr "إظهار عنوان النموذج"
+
+#: app/components/phone-agent/test-call-phone.tsx:247
+msgid "Show keypad"
+msgstr "إظهار لوحة المفاتيح"
 
 #: app/components/chat/chat-message.tsx:110
 msgid "Show less"
@@ -16403,6 +16437,10 @@ msgstr "الإسبانية"
 msgid "Speak with our team"
 msgstr "التحدث مع فريقنا"
 
+#: app/components/phone-agent/test-call-phone.tsx:251
+msgid "Speaker"
+msgstr "مكبر الصوت"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
 msgstr "اكتب كيف يجب أن ينطق الوكيل الكلمات التي يخطئ فيها، مثل أسماء المنتجات أو اسم شارعك. اكتبها كما تُنطق."
@@ -16530,7 +16568,7 @@ msgstr "تمييز بنجمة"
 msgid "Start"
 msgstr "بدء"
 
-#: app/components/phone-agent/test-call-panel.tsx:703
+#: app/components/phone-agent/test-call-panel.tsx:656
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "ابدأ مكالمة لترى ما تقوله أنت والوكيل في الوقت الفعلي."
 
@@ -16539,8 +16577,8 @@ msgstr "ابدأ مكالمة لترى ما تقوله أنت والوكيل ف�
 #~ msgstr "ابدأ محادثة مع شخص في فريقك."
 
 #: app/components/phone-agent/test-call-panel.tsx:646
-msgid "Start another call"
-msgstr "بدء مكالمة أخرى"
+#~ msgid "Start another call"
+#~ msgstr "بدء مكالمة أخرى"
 
 #: app/components/staff/onboarding/templates-page.tsx:174
 #: app/components/staff/schedule/schedule-page.tsx:463
@@ -16554,8 +16592,8 @@ msgid "Start break"
 msgstr "بدء الاستراحة"
 
 #: app/components/phone-agent/test-call-panel.tsx:648
-msgid "Start call"
-msgstr "بدء المكالمة"
+#~ msgid "Start call"
+#~ msgstr "بدء المكالمة"
 
 #: app/components/chat/chat-compose-dialog.tsx:424
 msgid "Start conversation"
@@ -16830,7 +16868,7 @@ msgstr "اقتراح تحسينات"
 msgid "Summarize this note"
 msgstr "تلخيص هذه الملاحظة"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:414
+#: app/components/phone-agent/call-detail-sheet.tsx:415
 #: app/components/staff/timesheets/timesheets-page.tsx:538
 msgid "Summary"
 msgstr "الملخص"
@@ -17182,10 +17220,10 @@ msgstr "الاختبار مرة أخرى"
 
 #: app/components/app-sidebar.tsx:418
 #: app/components/mailbox/calls-tab.tsx:226
-#: app/components/phone-agent/call-detail-sheet.tsx:325
-#: app/components/phone-agent/call-detail-sheet.tsx:375
+#: app/components/phone-agent/call-detail-sheet.tsx:326
+#: app/components/phone-agent/call-detail-sheet.tsx:376
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:319
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:37
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:44
 msgid "Test call"
 msgstr "مكالمة تجريبية"
 
@@ -17193,7 +17231,7 @@ msgstr "مكالمة تجريبية"
 msgid "Test calls"
 msgstr "المكالمات التجريبية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:63
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:72
 msgid "Test calls aren't available yet"
 msgstr "المكالمات التجريبية غير متاحة بعد"
 
@@ -17226,7 +17264,7 @@ msgstr "اختبار الوكيل"
 msgid "Test this draft"
 msgstr "اختبار هذه المسودة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:46
 msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 msgstr "اختبر مسار المكالمة من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار مسار المكالمة والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
 
@@ -17601,7 +17639,7 @@ msgstr "انقضى تاريخ الإغلاق. اختر تاريخًا جديدً
 msgid "The code works once and expires after ten minutes."
 msgstr "يعمل الرمز مرة واحدة وتنتهي صلاحيته بعد عشر دقائق."
 
-#: app/components/phone-agent/test-call-panel.tsx:699
+#: app/components/phone-agent/test-call-panel.tsx:652
 msgid "The conversation and your key presses will appear here."
 msgstr "ستظهر المحادثة وضغطات المفاتيح هنا."
 
@@ -17900,7 +17938,7 @@ msgstr "الأوقات غير منطقية. صحّح البدء أو الانت�
 msgid "The top of the range must be at least the bottom."
 msgstr "يجب ألا يقل الحد الأعلى للنطاق عن الحد الأدنى."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:581
+#: app/components/phone-agent/call-detail-sheet.tsx:574
 msgid "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 msgstr "يُحذف نص هذه المكالمة وملخصها وتسجيلها والروابط المرسلة والطلبات نهائيًا. لا يمكن التراجع عن هذا."
 
@@ -17908,7 +17946,7 @@ msgstr "يُحذف نص هذه المكالمة وملخصها وتسجيلها 
 msgid "The unpaid break is longer than the shift."
 msgstr "الاستراحة غير المدفوعة أطول من الوردية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:66
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:75
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 msgstr "لم يتم إعداد خدمة الصوت لحسابك بعد. تواصل مع الدعم وسنفعّلها لك."
 
@@ -18137,7 +18175,7 @@ msgstr "لن يتمكنوا من تسجيل الحضور في مكان العم�
 msgid "Thinking..."
 msgstr "جاري التفكير..."
 
-#: app/components/phone-agent/test-call-panel.tsx:435
+#: app/components/phone-agent/test-call-panel.tsx:473
 msgid "Thinking…"
 msgstr "جارٍ التفكير…"
 
@@ -18189,7 +18227,7 @@ msgstr "مسار المكالمة هذا جاهز للنشر."
 msgid "This call or request no longer exists."
 msgstr "هذه المكالمة أو الطلب لم يعد موجودًا."
 
-#: app/components/phone-agent/test-call-panel.tsx:656
+#: app/components/phone-agent/test-call-panel.tsx:609
 msgid "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgstr "ستظهر هذه المكالمة في <0>المكالمات</0> قريبًا، مع تمييزها كتجريبية."
 
@@ -18450,6 +18488,14 @@ msgstr "في هذه الفترة بطاقات أكثر من أن تُجمع هن
 #: app/components/staff/timesheets/timesheets-page.tsx:784
 msgid "This range has more cards than we can show. Narrow it with the filters or pick a shorter range."
 msgstr "في هذا النطاق بطاقات أكثر مما يمكننا عرضه. ضيّقه بعوامل التصفية أو اختر نطاقًا أقصر."
+
+#: app/components/phone-agent/call-recording-player.tsx:91
+msgid "This recording couldn't be played."
+msgstr "تعذّر تشغيل هذا التسجيل."
+
+#: app/components/phone-agent/call-recording-player.tsx:60
+msgid "This recording is no longer available."
+msgstr "هذا التسجيل لم يعد متاحًا."
 
 #: app/components/chat/chat-view.tsx:1013
 msgid "This removes the message for everyone in the channel. This can't be undone."
@@ -18930,7 +18976,7 @@ msgstr "قواعد التدريب"
 msgid "Training rules ({activeRuleCount} active)"
 msgstr "قواعد التدريب ({activeRuleCount} مفعّلة)"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:435
+#: app/components/phone-agent/call-detail-sheet.tsx:428
 msgid "Transcript"
 msgstr "النص المكتوب"
 
@@ -19109,7 +19155,8 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/hiring/applicants-page.tsx:399
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
-#: app/components/phone-agent/call-detail-sheet.tsx:366
+#: app/components/phone-agent/call-detail-sheet.tsx:367
+#: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:451
 #: app/components/staff/kiosk-manager.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:243
@@ -19158,6 +19205,10 @@ msgstr "الثلاثاء"
 msgid "Turn off"
 msgstr "إيقاف"
 
+#: app/components/phone-agent/test-call-phone.tsx:257
+msgid "Turn off agent audio"
+msgstr "إيقاف صوت الوكيل"
+
 #: app/components/staff/schedule-link-section.tsx:107
 msgid "Turn off the link"
 msgstr "إيقاف الرابط"
@@ -19173,6 +19224,10 @@ msgstr "أوقف التشغيل لإضافة كل وردية كوردية شاغ
 #: app/components/staff/schedule/templates-dialog.tsx:295
 msgid "Turn off to save every shift as an open shift."
 msgstr "أوقف التشغيل لحفظ كل وردية كوردية شاغرة."
+
+#: app/components/phone-agent/test-call-phone.tsx:258
+msgid "Turn on agent audio"
+msgstr "تشغيل صوت الوكيل"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:232
 msgid "Turn on the agent"
@@ -19275,7 +19330,7 @@ msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 msgid "Unable to load submissions. Try again."
 msgstr "تعذّر تحميل الردود. حاول مرة أخرى."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:251
+#: app/components/phone-agent/call-detail-sheet.tsx:252
 msgid "Unable to load this call. Try again."
 msgstr "تعذّر تحميل هذه المكالمة. حاول مرة أخرى."
 
@@ -19321,7 +19376,7 @@ msgid "Unknown"
 msgstr "غير معروف"
 
 #: app/components/mailbox/calls-tab.tsx:229
-#: app/components/phone-agent/call-detail-sheet.tsx:328
+#: app/components/phone-agent/call-detail-sheet.tsx:329
 #: app/components/phone-agent/call-request-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:322
 msgid "Unknown caller"
@@ -19362,10 +19417,10 @@ msgid "Unlocked"
 msgstr "فُتح قفلها"
 
 #: app/components/phone-agent/test-call-panel.tsx:631
-msgid "Unmute"
-msgstr "إلغاء الكتم"
+#~ msgid "Unmute"
+#~ msgstr "إلغاء الكتم"
 
-#: app/components/phone-agent/test-call-panel.tsx:626
+#: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Unmute microphone"
 msgstr "إلغاء كتم الميكروفون"
 
@@ -20115,16 +20170,16 @@ msgid "Waiting for a manager"
 msgstr "بانتظار المدير"
 
 #: app/components/phone-agent/test-call-panel.tsx:426
-msgid "Waiting for microphone permission…"
-msgstr "في انتظار إذن الميكروفون…"
+#~ msgid "Waiting for microphone permission…"
+#~ msgstr "في انتظار إذن الميكروفون…"
 
 #: app/components/staff/kiosk-manager.tsx:787
 msgid "Waiting for the tablet…"
 msgstr "بانتظار الجهاز اللوحي…"
 
 #: app/components/phone-agent/test-call-panel.tsx:431
-msgid "Waiting for your agent to join…"
-msgstr "في انتظار انضمام الوكيل…"
+#~ msgid "Waiting for your agent to join…"
+#~ msgstr "في انتظار انضمام الوكيل…"
 
 #: app/components/staff/kiosk-manager.tsx:167
 msgid "Waiting to be paired"
@@ -20978,7 +21033,7 @@ msgstr "أمس"
 
 #: app/components/hiring/candidate-parts.tsx:374
 #: app/components/organization-members.tsx:201
-#: app/components/phone-agent/test-call-panel.tsx:724
+#: app/components/phone-agent/test-call-panel.tsx:677
 msgid "You"
 msgstr "أنت"
 
@@ -21202,9 +21257,13 @@ msgstr "قرأت جميع الردود"
 msgid "You're logged in! Navigating..."
 msgstr "تم تسجيل الدخول! جاري التوجيه..."
 
+#: app/components/phone-agent/test-call-phone.tsx:228
+msgid "You're muted"
+msgstr "الميكروفون مكتوم"
+
 #: app/components/phone-agent/test-call-panel.tsx:563
-msgid "You're muted."
-msgstr "صوتك مكتوم."
+#~ msgid "You're muted."
+#~ msgstr "صوتك مكتوم."
 
 #: app/routes/_auth+/waitlist.tsx:255
 msgid "You're on the Waitlist!"
@@ -21230,7 +21289,7 @@ msgstr "حسابك مجدول للحذف في {deletionDateFormatted}."
 msgid "Your account is secured with two-factor authentication"
 msgstr "حسابك محمي بالمصادقة الثنائية"
 
-#: app/components/phone-agent/test-call-panel.tsx:304
+#: app/components/phone-agent/test-call-panel.tsx:307
 msgid "Your agent didn't join the call. Make sure the voice agent is running and try again."
 msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن الوكيل الصوتي قيد التشغيل وحاول مرة أخرى."
 
@@ -21241,6 +21300,10 @@ msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن ت
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:33
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "ستُستبدل كتلك وترتيبها بالكتل الافتراضية. لا يمكن التراجع عن ذلك."
+
+#: app/components/phone-agent/test-call-panel.tsx:595
+msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
+msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على مكبر الصوت لسماعه."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:412
 msgid "Your business line"
@@ -21278,7 +21341,7 @@ msgstr "يتم تحويل خطك الحالي إلى هذا الرقم."
 msgid "Your feedback"
 msgstr "ملاحظاتك"
 
-#: app/components/phone-agent/test-call-panel.tsx:515
+#: app/components/phone-agent/test-call-panel.tsx:556
 msgid "Your flow isn't published yet, so test the draft."
 msgstr "لم يتم نشر مسار المكالمة بعد، لذا اختبر المسودة."
 

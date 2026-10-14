@@ -67,6 +67,7 @@ import {
 	deleteRecordingObject,
 	expectedRecordingKey,
 	getRecordingStorageConfig,
+	presignRecordingUrl,
 	RECORDING_DELETE_CONCURRENCY,
 } from '../lib/recording-storage.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -1743,6 +1744,52 @@ voiceOperatorRoutes.patch('/requests/:requestId', async (c) => {
 	return updated.length
 		? c.json({ success: true })
 		: c.json({ error: 'Request not found' }, 404)
+})
+
+/**
+ * A short-lived link to play a call's recording. The browser fetches the
+ * audio from the bucket itself; this only checks access and signs. Recordings
+ * past their retention (awaiting the daily purge) or queued for deletion are
+ * gone as far as operators are concerned.
+ */
+voiceOperatorRoutes.get('/:callId/recording', async (c) => {
+	let orgId: string
+	try {
+		orgId = await operatorOrgId(c)
+	} catch (response) {
+		return response as Response
+	}
+	c.header('Cache-Control', 'private, no-store')
+	const callId = c.req.param('callId')
+	const db = await getTenantDb(orgId)
+	const [call] = await db
+		.select({
+			recordingKey: voiceCalls.recordingKey,
+			recordingExpiresAt: voiceCalls.recordingExpiresAt,
+		})
+		.from(voiceCalls)
+		.where(eq(voiceCalls.id, callId))
+		.limit(1)
+	const key = call?.recordingKey
+	if (
+		!key ||
+		// Only the object the worker writes for this call in this organization.
+		key !== expectedRecordingKey(orgId, callId) ||
+		(call.recordingExpiresAt && call.recordingExpiresAt <= new Date())
+	) {
+		return c.json({ error: 'Recording not found' }, 404)
+	}
+	const [queued] = await db
+		.select({ recordingKey: voiceRecordingDeletions.recordingKey })
+		.from(voiceRecordingDeletions)
+		.where(eq(voiceRecordingDeletions.recordingKey, key))
+		.limit(1)
+	if (queued) return c.json({ error: 'Recording not found' }, 404)
+	const signed = presignRecordingUrl(key)
+	if (!signed) {
+		return c.json({ error: 'recording_storage_not_configured' }, 503)
+	}
+	return c.json({ url: signed.url, expiresAt: signed.expiresAt.toISOString() })
 })
 
 voiceOperatorRoutes.get('/:callId', async (c) => {

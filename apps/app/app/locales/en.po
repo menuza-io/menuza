@@ -2186,12 +2186,12 @@ msgstr "After the replays, the call follows the \"No choice\" connection, or han
 msgid "After-hours calls"
 msgstr "After-hours calls"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:451
-#: app/components/phone-agent/test-call-panel.tsx:722
+#: app/components/phone-agent/call-detail-sheet.tsx:444
+#: app/components/phone-agent/test-call-panel.tsx:675
 msgid "Agent"
 msgstr "Agent"
 
-#: app/components/phone-agent/test-call-panel.tsx:437
+#: app/components/phone-agent/test-call-panel.tsx:475
 msgid "Agent is getting ready…"
 msgstr "Agent is getting ready…"
 
@@ -2212,7 +2212,7 @@ msgstr "Agent phone number"
 msgid "Agent settings"
 msgstr "Agent settings"
 
-#: app/components/phone-agent/test-call-panel.tsx:433
+#: app/components/phone-agent/test-call-panel.tsx:471
 msgid "Agent speaking"
 msgstr "Agent speaking"
 
@@ -2396,6 +2396,10 @@ msgstr "All workplaces (default)"
 #: app/components/staff/labor-policy-editor.tsx:615
 msgid "Allow clock-in without a scheduled shift"
 msgstr "Allow clock-in without a scheduled shift"
+
+#: app/components/phone-agent/test-call-panel.tsx:468
+msgid "Allow microphone access"
+msgstr "Allow microphone access"
 
 #: app/components/roles/tenant-role-access-manager.tsx:934
 msgid "Allowed"
@@ -3001,7 +3005,7 @@ msgstr "Back to blocks"
 msgid "Back to broadcasts"
 msgstr ""
 
-#: app/components/phone-agent/call-detail-sheet.tsx:175
+#: app/components/phone-agent/call-detail-sheet.tsx:176
 msgid "Back to calls"
 msgstr "Back to calls"
 
@@ -3374,7 +3378,11 @@ msgstr "By position percentage"
 msgid "by the time clock"
 msgstr "by the time clock"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:190
+#: app/components/phone-agent/test-call-phone.tsx:186
+msgid "Call {number}"
+msgstr "Call {number}"
+
+#: app/components/phone-agent/call-detail-sheet.tsx:191
 msgid "Call back"
 msgstr "Call back"
 
@@ -3383,16 +3391,16 @@ msgstr "Call back"
 msgid "Call comes in"
 msgstr "Call comes in"
 
-#: app/components/phone-agent/test-call-panel.tsx:461
+#: app/components/phone-agent/test-call-panel.tsx:502
 msgid "Call controls"
 msgstr "Call controls"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:166
-#: app/components/phone-agent/call-detail-sheet.tsx:330
+#: app/components/phone-agent/call-detail-sheet.tsx:167
+#: app/components/phone-agent/call-detail-sheet.tsx:331
 msgid "Call details"
 msgstr "Call details"
 
-#: app/components/phone-agent/test-call-panel.tsx:440
+#: app/components/phone-agent/test-call-phone.tsx:166
 msgid "Call ended"
 msgstr "Call ended"
 
@@ -3415,6 +3423,7 @@ msgstr "Call history is unavailable right now. Try again."
 msgid "Call ratings"
 msgstr "Call ratings"
 
+#: app/components/phone-agent/call-recording-player.tsx:127
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:46
 msgid "Call recording"
 msgstr "Call recording"
@@ -3447,7 +3456,7 @@ msgstr "Callbacks, complaints, and other requests your agent takes will appear h
 msgid "Called"
 msgstr "Called"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:453
+#: app/components/phone-agent/call-detail-sheet.tsx:446
 msgid "Caller"
 msgstr "Caller"
 
@@ -3466,6 +3475,10 @@ msgstr "Callers can press 0 at any time to be transferred."
 #: app/components/phone-agent/flow-editor/node-palette.tsx:35
 msgid "Callers hear each step in order. A keypad menu waits for them to press a key or say their choice, then follows that option."
 msgstr "Callers hear each step in order. A keypad menu waits for them to press a key or say their choice, then follows that option."
+
+#: app/components/phone-agent/test-call-phone.tsx:224
+msgid "Calling…"
+msgstr "Calling…"
 
 #: app/components/app-sidebar.tsx:366
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -3544,7 +3557,7 @@ msgstr "Can't text that number"
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:317
-#: app/components/phone-agent/call-detail-sheet.tsx:595
+#: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:693
 #: app/components/phone-agent/phone-number-dialogs.tsx:445
 #: app/components/phone-agent/phone-number-dialogs.tsx:615
@@ -4116,7 +4129,7 @@ msgstr "Choose how overtime is counted before saving."
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "Choose how overtime is counted for people who work at more than one workplace."
 
-#: app/components/phone-agent/test-call-panel.tsx:477
+#: app/components/phone-agent/test-call-panel.tsx:518
 msgid "Choose one"
 msgstr "Choose one"
 
@@ -4747,8 +4760,8 @@ msgid "Connecting to team chat…"
 msgstr "Connecting to team chat…"
 
 #: app/components/phone-agent/test-call-panel.tsx:428
-msgid "Connecting…"
-msgstr "Connecting…"
+#~ msgid "Connecting…"
+#~ msgstr "Connecting…"
 
 #: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
@@ -4980,11 +4993,11 @@ msgstr "Could not copy. Select the PIN and copy it yourself."
 msgid "Could not create a draft. Try again."
 msgstr "Could not create a draft. Try again."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:274
+#: app/components/phone-agent/call-detail-sheet.tsx:275
 msgid "Could not delete this call. Try again."
 msgstr "Could not delete this call. Try again."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:315
+#: app/components/phone-agent/call-detail-sheet.tsx:316
 msgid "Could not erase this caller's data. Try again."
 msgstr "Could not erase this caller's data. Try again."
 
@@ -5039,7 +5052,7 @@ msgstr "Could not upload image."
 msgid "Could not upload image. Try again."
 msgstr "Could not upload image. Try again."
 
-#: app/components/phone-agent/test-call-panel.tsx:283
+#: app/components/phone-agent/test-call-panel.tsx:286
 msgid "Couldn't connect to the test call. Make sure the voice agent is running and try again."
 msgstr "Couldn't connect to the test call. Make sure the voice agent is running and try again."
 
@@ -5059,11 +5072,15 @@ msgstr "Couldn't load requests"
 msgid "Couldn't load the assistant."
 msgstr "Couldn't load the assistant."
 
+#: app/components/phone-agent/call-recording-player.tsx:73
+msgid "Couldn't load the recording. Try again."
+msgstr "Couldn't load the recording. Try again."
+
 #: app/components/phone-agent/voice-picker.tsx:442
 msgid "Couldn't load voices"
 msgstr "Couldn't load voices"
 
-#: app/components/phone-agent/test-call-panel.tsx:403
+#: app/components/phone-agent/test-call-panel.tsx:411
 msgid "Couldn't mute your microphone. Try again."
 msgstr "Couldn't mute your microphone. Try again."
 
@@ -5071,11 +5088,11 @@ msgstr "Couldn't mute your microphone. Try again."
 msgid "Couldn't open {routeTitle}"
 msgstr "Couldn't open {routeTitle}"
 
-#: app/hooks/use-phone-calls.ts:114
+#: app/hooks/use-phone-calls.ts:118
 msgid "Couldn't reach call history. Check your connection and try again."
 msgstr "Couldn't reach call history. Check your connection and try again."
 
-#: app/components/phone-agent/test-call-panel.tsx:357
+#: app/components/phone-agent/test-call-panel.tsx:364
 msgid "Couldn't send that key press. Try again."
 msgstr "Couldn't send that key press. Try again."
 
@@ -5871,8 +5888,8 @@ msgstr "Delete announcement?"
 msgid "Delete application…"
 msgstr "Delete application…"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:529
-#: app/components/phone-agent/call-detail-sheet.tsx:609
+#: app/components/phone-agent/call-detail-sheet.tsx:522
+#: app/components/phone-agent/call-detail-sheet.tsx:602
 msgid "Delete call"
 msgstr "Delete call"
 
@@ -6009,7 +6026,7 @@ msgstr "Delete team notes"
 msgid "Delete template {templateName}"
 msgstr "Delete template {templateName}"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:578
+#: app/components/phone-agent/call-detail-sheet.tsx:571
 msgid "Delete this call?"
 msgstr "Delete this call?"
 
@@ -6038,7 +6055,7 @@ msgid "Deleted training rule \"{title}\""
 msgstr "Deleted training rule \"{title}\""
 
 #: app/components/hiring/erase-dialog.tsx:89
-#: app/components/phone-agent/call-detail-sheet.tsx:605
+#: app/components/phone-agent/call-detail-sheet.tsx:598
 #: app/components/roles/tenant-role-access-manager.tsx:1259
 #: app/components/staff/notes-tab.tsx:205
 #: app/components/staff/timesheets/card-sheet.tsx:437
@@ -6140,7 +6157,7 @@ msgstr "Development"
 msgid "Device"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:572
+#: app/components/phone-agent/test-call-phone.tsx:292
 msgid "Dial pad"
 msgstr "Dial pad"
 
@@ -6350,8 +6367,8 @@ msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
 #: app/components/hiring/job-labels.ts:49
-#: app/components/phone-agent/test-call-panel.tsx:449
-#: app/components/phone-agent/test-call-panel.tsx:509
+#: app/components/phone-agent/test-call-panel.tsx:490
+#: app/components/phone-agent/test-call-panel.tsx:550
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6860,8 +6877,8 @@ msgid "Empty subject"
 msgstr ""
 
 #: app/components/phone-agent/test-call-panel.tsx:613
-msgid "Enable audio"
-msgstr "Enable audio"
+#~ msgid "Enable audio"
+#~ msgstr "Enable audio"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:200
 msgid "Enable Custom S3 Storage"
@@ -6889,7 +6906,7 @@ msgstr "End"
 msgid "End break"
 msgstr "End break"
 
-#: app/components/phone-agent/test-call-panel.tsx:635
+#: app/components/phone-agent/test-call-phone.tsx:400
 msgid "End call"
 msgstr "End call"
 
@@ -7153,15 +7170,15 @@ msgstr ""
 msgid "Epic Startup Team"
 msgstr ""
 
-#: app/components/phone-agent/call-detail-sheet.tsx:564
+#: app/components/phone-agent/call-detail-sheet.tsx:557
 msgid "Erase all data for this caller?"
 msgstr "Erase all data for this caller?"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:538
+#: app/components/phone-agent/call-detail-sheet.tsx:531
 msgid "Erase caller's data"
 msgstr "Erase caller's data"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:607
+#: app/components/phone-agent/call-detail-sheet.tsx:600
 msgid "Erase data"
 msgstr "Erase data"
 
@@ -7230,7 +7247,7 @@ msgstr "Every active member can read and post."
 msgid "Every call"
 msgstr "Every call"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:567
+#: app/components/phone-agent/call-detail-sheet.tsx:560
 msgid "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 msgstr "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 
@@ -7712,7 +7729,7 @@ msgstr "Flip horizontally"
 msgid "Flip vertically"
 msgstr "Flip vertically"
 
-#: app/components/phone-agent/test-call-panel.tsx:491
+#: app/components/phone-agent/test-call-panel.tsx:532
 msgid "Flow"
 msgstr "Flow"
 
@@ -8213,6 +8230,7 @@ msgstr "Hi {personName}, enter your PIN"
 msgid "Hi, {userName}"
 msgstr "Hi, {userName}"
 
+#: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/staff/reveal-gate.tsx:46
 msgid "Hide"
 msgstr "Hide"
@@ -9064,6 +9082,10 @@ msgstr "Key terms"
 msgid "Keyboard shortcuts"
 msgstr "Keyboard shortcuts"
 
+#: app/components/phone-agent/test-call-phone.tsx:243
+msgid "Keypad"
+msgstr "Keypad"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:34
 #: app/components/phone-agent/flow-editor/flow-meta.ts:36
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
@@ -9422,7 +9444,7 @@ msgstr ""
 msgid "Link copied."
 msgstr "Link copied."
 
-#: app/components/phone-agent/test-call-panel.tsx:742
+#: app/components/phone-agent/test-call-panel.tsx:695
 msgid "Link created"
 msgstr "Link created"
 
@@ -9448,7 +9470,7 @@ msgstr "Link to the form"
 msgid "Link URL"
 msgstr ""
 
-#: app/components/phone-agent/call-detail-sheet.tsx:82
+#: app/components/phone-agent/call-detail-sheet.tsx:83
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:59
 msgid "Links sent"
 msgstr "Links sent"
@@ -9457,7 +9479,7 @@ msgstr "Links sent"
 msgid "List"
 msgstr "List"
 
-#: app/components/phone-agent/test-call-panel.tsx:438
+#: app/components/phone-agent/test-call-panel.tsx:476
 msgid "Listening"
 msgstr "Listening"
 
@@ -9467,7 +9489,7 @@ msgstr "Listening"
 msgid "Live"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:688
+#: app/components/phone-agent/test-call-panel.tsx:641
 msgid "Live transcript"
 msgstr "Live transcript"
 
@@ -9509,11 +9531,11 @@ msgstr "Loading applicant"
 msgid "Loading assistant…"
 msgstr "Loading assistant…"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:349
+#: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
 msgstr "Loading call"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:341
+#: app/components/phone-agent/call-detail-sheet.tsx:342
 msgid "Loading call…"
 msgstr "Loading call…"
 
@@ -10373,11 +10395,11 @@ msgstr ""
 msgid "Multiple choice"
 msgstr "Multiple choice"
 
-#: app/components/phone-agent/test-call-panel.tsx:631
+#: app/components/phone-agent/test-call-phone.tsx:233
 msgid "Mute"
 msgstr "Mute"
 
-#: app/components/phone-agent/test-call-panel.tsx:626
+#: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Mute microphone"
 msgstr "Mute microphone"
 
@@ -11265,7 +11287,7 @@ msgid "No submissions yet"
 msgstr "No submissions yet"
 
 #: app/components/mailbox/calls-tab.tsx:370
-#: app/components/phone-agent/call-detail-sheet.tsx:417
+#: app/components/phone-agent/call-detail-sheet.tsx:418
 msgid "No summary for this call."
 msgstr "No summary for this call."
 
@@ -11321,7 +11343,7 @@ msgstr ""
 msgid "No training rules yet"
 msgstr "No training rules yet"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:465
+#: app/components/phone-agent/call-detail-sheet.tsx:458
 msgid "No transcript was saved for this call."
 msgstr "No transcript was saved for this call."
 
@@ -11507,7 +11529,7 @@ msgstr "Not notified"
 msgid "Not now"
 msgstr "Not now"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:495
+#: app/components/phone-agent/call-detail-sheet.tsx:488
 msgid "Not opened yet"
 msgstr "Not opened yet"
 
@@ -11977,7 +11999,7 @@ msgstr "Only one workplace can be the main one."
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 
-#: app/components/phone-agent/test-call-panel.tsx:670
+#: app/components/phone-agent/test-call-panel.tsx:623
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "Only people who can edit the phone agent can start test calls."
 
@@ -12105,7 +12127,7 @@ msgstr ""
 msgid "Open Kiro IDE Settings"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:751
+#: app/components/phone-agent/test-call-panel.tsx:704
 msgid "Open link"
 msgstr "Open link"
 
@@ -12243,7 +12265,7 @@ msgstr "Open your schedule from your email"
 msgid "Opened {0}"
 msgstr ""
 
-#: app/components/phone-agent/call-detail-sheet.tsx:94
+#: app/components/phone-agent/call-detail-sheet.tsx:95
 msgid "Opened {openedAt}"
 msgstr "Opened {openedAt}"
 
@@ -13160,8 +13182,8 @@ msgid "Play preview of {voiceName}"
 msgstr "Play preview of {voiceName}"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:428
-msgid "Playback coming soon."
-msgstr "Playback coming soon."
+#~ msgid "Playback coming soon."
+#~ msgstr "Playback coming soon."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:136
 msgid "Played after a rating of 1 or 2."
@@ -13419,7 +13441,7 @@ msgstr ""
 msgid "Presets"
 msgstr "Presets"
 
-#: app/components/phone-agent/test-call-panel.tsx:582
+#: app/components/phone-agent/test-call-phone.tsx:301
 msgid "Press {key}"
 msgstr "Press {key}"
 
@@ -13435,7 +13457,7 @@ msgstr "Press 0 to reach staff"
 msgid "Press play to hear each voice read your greeting, then pick the one you like."
 msgstr "Press play to hear each voice read your greeting, then pick the one you like."
 
-#: app/components/phone-agent/test-call-panel.tsx:363
+#: app/components/phone-agent/test-call-panel.tsx:371
 msgid "Pressed {key}"
 msgstr "Pressed {key}"
 
@@ -13637,8 +13659,8 @@ msgstr ""
 msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:448
-#: app/components/phone-agent/test-call-panel.tsx:506
+#: app/components/phone-agent/test-call-panel.tsx:489
+#: app/components/phone-agent/test-call-panel.tsx:547
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -13823,8 +13845,8 @@ msgid "Ready"
 msgstr "Ready"
 
 #: app/components/phone-agent/test-call-panel.tsx:441
-msgid "Ready to call"
-msgstr "Ready to call"
+#~ msgid "Ready to call"
+#~ msgstr "Ready to call"
 
 #: app/components/staff/positions-tab.tsx:840
 #: app/components/staff/timesheets/reason-field.tsx:36
@@ -13891,7 +13913,7 @@ msgstr "Record calls"
 msgid "Record the decision quietly."
 msgstr "Record the decision quietly."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:425
+#: app/components/phone-agent/call-recording-player.tsx:113
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:633
 msgid "Recorded"
 msgstr "Recorded"
@@ -13901,9 +13923,17 @@ msgstr "Recorded"
 msgid "Recorded by you, so it is approved right away."
 msgstr "Recorded by you, so it is approved right away."
 
+#: app/components/phone-agent/call-recording-player.tsx:110
+msgid "Recording"
+msgstr "Recording"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:51
 msgid "Recording notice"
 msgstr "Recording notice"
+
+#: app/components/phone-agent/call-recording-player.tsx:67
+msgid "Recording playback isn't set up for your account yet."
+msgstr "Recording playback isn't set up for your account yet."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:47
 msgid "Recording retention"
@@ -14436,7 +14466,7 @@ msgid "Requesting your authorization"
 msgstr ""
 
 #: app/components/my-schedule/my-schedule-page.tsx:193
-#: app/components/phone-agent/call-detail-sheet.tsx:508
+#: app/components/phone-agent/call-detail-sheet.tsx:501
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:407
 msgid "Requests"
 msgstr "Requests"
@@ -15801,7 +15831,7 @@ msgstr "Sent by email to people who have an address on file."
 msgid "sent later"
 msgstr "sent later"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:88
+#: app/components/phone-agent/call-detail-sheet.tsx:89
 msgid "Sent to {formatted}"
 msgstr "Sent to {formatted}"
 
@@ -16095,6 +16125,10 @@ msgstr "Show details"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4124
 msgid "Show form title"
 msgstr "Show form title"
+
+#: app/components/phone-agent/test-call-phone.tsx:247
+msgid "Show keypad"
+msgstr "Show keypad"
 
 #: app/components/chat/chat-message.tsx:110
 msgid "Show less"
@@ -16405,6 +16439,10 @@ msgstr "Spanish"
 msgid "Speak with our team"
 msgstr "Speak with our team"
 
+#: app/components/phone-agent/test-call-phone.tsx:251
+msgid "Speaker"
+msgstr "Speaker"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
 msgstr "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
@@ -16532,7 +16570,7 @@ msgstr "Star"
 msgid "Start"
 msgstr "Start"
 
-#: app/components/phone-agent/test-call-panel.tsx:703
+#: app/components/phone-agent/test-call-panel.tsx:656
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "Start a call to see what you and your agent say in real time."
 
@@ -16541,8 +16579,8 @@ msgstr "Start a call to see what you and your agent say in real time."
 #~ msgstr "Start a conversation with someone on your team."
 
 #: app/components/phone-agent/test-call-panel.tsx:646
-msgid "Start another call"
-msgstr "Start another call"
+#~ msgid "Start another call"
+#~ msgstr "Start another call"
 
 #: app/components/staff/onboarding/templates-page.tsx:174
 #: app/components/staff/schedule/schedule-page.tsx:463
@@ -16556,8 +16594,8 @@ msgid "Start break"
 msgstr "Start break"
 
 #: app/components/phone-agent/test-call-panel.tsx:648
-msgid "Start call"
-msgstr "Start call"
+#~ msgid "Start call"
+#~ msgstr "Start call"
 
 #: app/components/chat/chat-compose-dialog.tsx:424
 msgid "Start conversation"
@@ -16832,7 +16870,7 @@ msgstr ""
 msgid "Summarize this note"
 msgstr ""
 
-#: app/components/phone-agent/call-detail-sheet.tsx:414
+#: app/components/phone-agent/call-detail-sheet.tsx:415
 #: app/components/staff/timesheets/timesheets-page.tsx:538
 msgid "Summary"
 msgstr "Summary"
@@ -17184,10 +17222,10 @@ msgstr "Test again"
 
 #: app/components/app-sidebar.tsx:418
 #: app/components/mailbox/calls-tab.tsx:226
-#: app/components/phone-agent/call-detail-sheet.tsx:325
-#: app/components/phone-agent/call-detail-sheet.tsx:375
+#: app/components/phone-agent/call-detail-sheet.tsx:326
+#: app/components/phone-agent/call-detail-sheet.tsx:376
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:319
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:37
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:44
 msgid "Test call"
 msgstr "Test call"
 
@@ -17195,7 +17233,7 @@ msgstr "Test call"
 msgid "Test calls"
 msgstr "Test calls"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:63
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:72
 msgid "Test calls aren't available yet"
 msgstr "Test calls aren't available yet"
 
@@ -17228,7 +17266,7 @@ msgstr "Test the agent"
 msgid "Test this draft"
 msgstr "Test this draft"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:46
 msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 msgstr "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 
@@ -17603,7 +17641,7 @@ msgstr "The closing date has passed. Choose a new one."
 msgid "The code works once and expires after ten minutes."
 msgstr "The code works once and expires after ten minutes."
 
-#: app/components/phone-agent/test-call-panel.tsx:699
+#: app/components/phone-agent/test-call-panel.tsx:652
 msgid "The conversation and your key presses will appear here."
 msgstr "The conversation and your key presses will appear here."
 
@@ -17902,7 +17940,7 @@ msgstr "The times do not add up. Fix the start or the end."
 msgid "The top of the range must be at least the bottom."
 msgstr "The top of the range must be at least the bottom."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:581
+#: app/components/phone-agent/call-detail-sheet.tsx:574
 msgid "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 msgstr "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 
@@ -17910,7 +17948,7 @@ msgstr "The transcript, summary, recording, texted links, and requests from this
 msgid "The unpaid break is longer than the shift."
 msgstr "The unpaid break is longer than the shift."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:66
+#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:75
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 msgstr "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 
@@ -18139,7 +18177,7 @@ msgstr "They will not be able to clock in at this workplace until you create a n
 msgid "Thinking..."
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:435
+#: app/components/phone-agent/test-call-panel.tsx:473
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -18191,7 +18229,7 @@ msgstr "This call flow is ready to publish."
 msgid "This call or request no longer exists."
 msgstr "This call or request no longer exists."
 
-#: app/components/phone-agent/test-call-panel.tsx:656
+#: app/components/phone-agent/test-call-panel.tsx:609
 msgid "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 
@@ -18452,6 +18490,14 @@ msgstr "This range has more cards than can be added up here. Choose a shorter ra
 #: app/components/staff/timesheets/timesheets-page.tsx:784
 msgid "This range has more cards than we can show. Narrow it with the filters or pick a shorter range."
 msgstr "This range has more cards than we can show. Narrow it with the filters or pick a shorter range."
+
+#: app/components/phone-agent/call-recording-player.tsx:91
+msgid "This recording couldn't be played."
+msgstr "This recording couldn't be played."
+
+#: app/components/phone-agent/call-recording-player.tsx:60
+msgid "This recording is no longer available."
+msgstr "This recording is no longer available."
 
 #: app/components/chat/chat-view.tsx:1013
 msgid "This removes the message for everyone in the channel. This can't be undone."
@@ -18932,7 +18978,7 @@ msgstr "Training rules"
 msgid "Training rules ({activeRuleCount} active)"
 msgstr "Training rules ({activeRuleCount} active)"
 
-#: app/components/phone-agent/call-detail-sheet.tsx:435
+#: app/components/phone-agent/call-detail-sheet.tsx:428
 msgid "Transcript"
 msgstr "Transcript"
 
@@ -19111,7 +19157,8 @@ msgstr ""
 #: app/components/hiring/applicants-page.tsx:399
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
-#: app/components/phone-agent/call-detail-sheet.tsx:366
+#: app/components/phone-agent/call-detail-sheet.tsx:367
+#: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:451
 #: app/components/staff/kiosk-manager.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:243
@@ -19160,6 +19207,10 @@ msgstr "Tuesday"
 msgid "Turn off"
 msgstr "Turn off"
 
+#: app/components/phone-agent/test-call-phone.tsx:257
+msgid "Turn off agent audio"
+msgstr "Turn off agent audio"
+
 #: app/components/staff/schedule-link-section.tsx:107
 msgid "Turn off the link"
 msgstr "Turn off the link"
@@ -19175,6 +19226,10 @@ msgstr "Turn off to add every shift as an open shift."
 #: app/components/staff/schedule/templates-dialog.tsx:295
 msgid "Turn off to save every shift as an open shift."
 msgstr "Turn off to save every shift as an open shift."
+
+#: app/components/phone-agent/test-call-phone.tsx:258
+msgid "Turn on agent audio"
+msgstr "Turn on agent audio"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:232
 msgid "Turn on the agent"
@@ -19277,7 +19332,7 @@ msgstr "Unable to load requests. Try again."
 msgid "Unable to load submissions. Try again."
 msgstr "Unable to load submissions. Try again."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:251
+#: app/components/phone-agent/call-detail-sheet.tsx:252
 msgid "Unable to load this call. Try again."
 msgstr "Unable to load this call. Try again."
 
@@ -19323,7 +19378,7 @@ msgid "Unknown"
 msgstr "Unknown"
 
 #: app/components/mailbox/calls-tab.tsx:229
-#: app/components/phone-agent/call-detail-sheet.tsx:328
+#: app/components/phone-agent/call-detail-sheet.tsx:329
 #: app/components/phone-agent/call-request-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:322
 msgid "Unknown caller"
@@ -19364,10 +19419,10 @@ msgid "Unlocked"
 msgstr "Unlocked"
 
 #: app/components/phone-agent/test-call-panel.tsx:631
-msgid "Unmute"
-msgstr "Unmute"
+#~ msgid "Unmute"
+#~ msgstr "Unmute"
 
-#: app/components/phone-agent/test-call-panel.tsx:626
+#: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Unmute microphone"
 msgstr "Unmute microphone"
 
@@ -20117,16 +20172,16 @@ msgid "Waiting for a manager"
 msgstr "Waiting for a manager"
 
 #: app/components/phone-agent/test-call-panel.tsx:426
-msgid "Waiting for microphone permission…"
-msgstr "Waiting for microphone permission…"
+#~ msgid "Waiting for microphone permission…"
+#~ msgstr "Waiting for microphone permission…"
 
 #: app/components/staff/kiosk-manager.tsx:787
 msgid "Waiting for the tablet…"
 msgstr "Waiting for the tablet…"
 
 #: app/components/phone-agent/test-call-panel.tsx:431
-msgid "Waiting for your agent to join…"
-msgstr "Waiting for your agent to join…"
+#~ msgid "Waiting for your agent to join…"
+#~ msgstr "Waiting for your agent to join…"
 
 #: app/components/staff/kiosk-manager.tsx:167
 msgid "Waiting to be paired"
@@ -20980,7 +21035,7 @@ msgstr "Yesterday"
 
 #: app/components/hiring/candidate-parts.tsx:374
 #: app/components/organization-members.tsx:201
-#: app/components/phone-agent/test-call-panel.tsx:724
+#: app/components/phone-agent/test-call-panel.tsx:677
 msgid "You"
 msgstr ""
 
@@ -21204,9 +21259,13 @@ msgstr "You’re all caught up"
 msgid "You're logged in! Navigating..."
 msgstr ""
 
+#: app/components/phone-agent/test-call-phone.tsx:228
+msgid "You're muted"
+msgstr "You're muted"
+
 #: app/components/phone-agent/test-call-panel.tsx:563
-msgid "You're muted."
-msgstr "You're muted."
+#~ msgid "You're muted."
+#~ msgstr "You're muted."
 
 #: app/routes/_auth+/waitlist.tsx:255
 msgid "You're on the Waitlist!"
@@ -21232,7 +21291,7 @@ msgstr ""
 msgid "Your account is secured with two-factor authentication"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:304
+#: app/components/phone-agent/test-call-panel.tsx:307
 msgid "Your agent didn't join the call. Make sure the voice agent is running and try again."
 msgstr "Your agent didn't join the call. Make sure the voice agent is running and try again."
 
@@ -21243,6 +21302,10 @@ msgstr ""
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:33
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
+
+#: app/components/phone-agent/test-call-panel.tsx:595
+msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
+msgstr "Your browser paused the agent's audio. Tap Speaker to hear it."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:412
 msgid "Your business line"
@@ -21280,7 +21343,7 @@ msgstr "Your existing line forwards to this number."
 msgid "Your feedback"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:515
+#: app/components/phone-agent/test-call-panel.tsx:556
 msgid "Your flow isn't published yet, so test the draft."
 msgstr "Your flow isn't published yet, so test the draft."
 
