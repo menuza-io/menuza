@@ -7,7 +7,10 @@ import { type StaffAssignmentRow } from '#app/utils/staffing/staff-types.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
 import { useStaffAttention } from './use-staff-attention.ts'
 
-afterEach(() => {
+afterEach(async () => {
+	// Let the token mint that every mounted provider starts finish while fetch
+	// is still stubbed; otherwise it lands on the real fetch and MSW warns.
+	await new Promise((resolve) => setTimeout(resolve, 0))
 	vi.unstubAllGlobals()
 })
 
