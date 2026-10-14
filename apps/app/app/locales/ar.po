@@ -1335,7 +1335,11 @@ msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
 
 #: app/components/staff/access-tab.tsx:115
-msgid "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
+#~ msgid "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
+#~ msgstr "يتيح لهم الرمز السري تسجيل الحضور على جهاز لوحي مشترك في مكان عمل واحد. يمكنك تعيين رمز جديد، لكن لا يمكن الاطلاع على رمز قديم."
+
+#: app/components/staff/access-tab.tsx:115
+msgid "A PIN lets them clock in on a shared tablet at one workplace. You can set a new one, but never read an old one."
 msgstr "يتيح لهم الرمز السري تسجيل الحضور على جهاز لوحي مشترك في مكان عمل واحد. يمكنك تعيين رمز جديد، لكن لا يمكن الاطلاع على رمز قديم."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:692
@@ -1636,12 +1640,12 @@ msgid "Add a reason."
 msgstr "أضف سببًا."
 
 #: app/components/staff/labor/labor-page.tsx:219
-msgid "Add a scope in settings, or ask an administrator for access to one."
-msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أحد المسؤولين منحك صلاحية الوصول إلى أحدها."
+#~ msgid "Add a scope in settings, or ask an administrator for access to one."
+#~ msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أحد المسؤولين منحك صلاحية الوصول إلى أحدها."
 
 #: app/components/staff/schedule/schedule-page.tsx:364
-msgid "Add a scope in settings, then plan its shifts here."
-msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
+#~ msgid "Add a scope in settings, then plan its shifts here."
+#~ msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:553
 msgid "Add a second shift later the same day, like lunch and dinner."
@@ -1680,6 +1684,14 @@ msgstr "إضافة بطاقة دوام"
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
 msgstr "أضف عنوانًا بين الحقول."
+
+#: app/components/staff/labor/labor-page.tsx:219
+msgid "Add a workplace in settings, or ask an administrator for access to one."
+msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أحد المسؤولين منحك صلاحية الوصول إلى أحدها."
+
+#: app/components/staff/schedule/schedule-page.tsx:364
+msgid "Add a workplace in settings, then plan its shifts here."
+msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
@@ -1964,7 +1976,11 @@ msgid "Add the link to the form."
 msgstr "أضف رابط النموذج."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
-msgid "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
+#~ msgid "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
+#~ msgstr "أضف الأشخاص الذين يعملون هنا مع مناصبهم وأماكن عملهم. لا يحتاجون إلى حساب لتسجيل الدخول ليكونوا ضمن فريقك."
+
+#: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
+msgid "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
 msgstr "أضف الأشخاص الذين يعملون هنا مع مناصبهم وأماكن عملهم. لا يحتاجون إلى حساب لتسجيل الدخول ليكونوا ضمن فريقك."
 
 #: app/components/staff/positions-tab.tsx:361
@@ -7014,7 +7030,11 @@ msgid "Entered sales"
 msgstr "المبيعات المُدخلة"
 
 #: app/components/staff/labor/labor-page.tsx:384
-msgid "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
+#~ msgid "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
+#~ msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما يكون مصدر مبيعات مكان العمل هذا \"مبيعات أدخلها بنفسي\"."
+
+#: app/components/staff/labor/labor-page.tsx:384
+msgid "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما يكون مصدر مبيعات مكان العمل هذا \"مبيعات أدخلها بنفسي\"."
 
 #: app/components/settings/cards/organization/billing-card.tsx:269
@@ -8343,7 +8363,11 @@ msgstr "كيف يعمل مسار المكالمة"
 #~ msgstr "كيف تعمل قائمة الهاتف"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:162
-msgid "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
+#~ msgid "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
+#~ msgstr "كيف يقسّم تقرير الإكراميات الإكراميات في مكان العمل هذا. هو يُنشئ تقريرًا فقط ولا يدفع لأحد."
+
+#: app/components/staff/labor/tip-settings-dialog.tsx:162
+msgid "How the tip report divides tips for this workplace. It only builds a report; it does not pay anyone."
 msgstr "كيف يقسّم تقرير الإكراميات الإكراميات في مكان العمل هذا. هو يُنشئ تقريرًا فقط ولا يدفع لأحد."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:522
@@ -10294,7 +10318,7 @@ msgstr "يتطلب جدولًا منشورًا. يختار المديرون طر
 msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
-#: app/components/staff/staff-profile-page.tsx:149
+#: app/components/staff/staff-profile-page.tsx:152
 msgid "Needs attention:"
 msgstr "يحتاج إلى انتباه:"
 
@@ -11017,7 +11041,11 @@ msgstr "لا توجد ردود بعد."
 #~ msgstr "لا توجد نتائج."
 
 #: app/components/staff/labor/labor-tips.tsx:67
-msgid "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+#~ msgid "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+#~ msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
+
+#: app/components/staff/labor/labor-tips.tsx:67
+msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
@@ -16816,12 +16844,16 @@ msgid "Templates"
 msgstr "القوالب"
 
 #: app/components/staff/onboarding/templates-page.tsx:233
-msgid "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
-msgstr "تنطبق القوالب على جميع أماكن العمل، لذا يتطلب تغييرها إذن تحديث التوظيف وصلاحية الوصول إلى جميع أماكن العمل."
+#~ msgid "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
+#~ msgstr "تنطبق القوالب على جميع أماكن العمل، لذا يتطلب تغييرها إذن تحديث التوظيف وصلاحية الوصول إلى جميع أماكن العمل."
 
 #: app/utils/staffing/onboarding-errors.ts:15
 msgid "Templates apply to every workplace, so changing one needs access to every workplace."
 msgstr "تنطبق القوالب على جميع أماكن العمل، لذا يتطلب تغيير أي قالب صلاحية الوصول إلى كل مكان عمل."
+
+#: app/components/staff/onboarding/templates-page.tsx:233
+msgid "Templates apply to every workplace, so changing them needs permission to update hiring and access to all workplaces."
+msgstr "تنطبق القوالب على جميع أماكن العمل، لذا يتطلب تغييرها إذن تحديث التوظيف وصلاحية الوصول إلى جميع أماكن العمل."
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:228
 msgid "Templates…"
@@ -17589,7 +17621,11 @@ msgid "Their main position at this workplace"
 msgstr "منصبه الرئيسي في مكان العمل هذا"
 
 #: app/components/staff/positions-tab.tsx:277
-msgid "Their PIN for this scope stops working and their positions here end today. Their history stays."
+#~ msgid "Their PIN for this scope stops working and their positions here end today. Their history stays."
+#~ msgstr "يتوقف رمزهم السري لمكان العمل هذا وتنتهي مناصبهم هنا اليوم. يبقى سجلهم محفوظًا."
+
+#: app/components/staff/positions-tab.tsx:277
+msgid "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 msgstr "يتوقف رمزهم السري لمكان العمل هذا وتنتهي مناصبهم هنا اليوم. يبقى سجلهم محفوظًا."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:167
@@ -17698,7 +17734,11 @@ msgid "They are on the roster."
 msgstr "تمت إضافتهم إلى قائمة الفريق."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
-msgid "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
+#~ msgid "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
+#~ msgstr "يصبحون نشطين من جديد. لا تُستعاد أماكن عملهم ومناصبهم ورموزهم السرية، لذا أضفها من جديد من ملفهم."
+
+#: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
+msgid "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
 msgstr "يصبحون نشطين من جديد. لا تُستعاد أماكن عملهم ومناصبهم ورموزهم السرية، لذا أضفها من جديد من ملفهم."
 
 #: app/components/hiring/candidate-parts.tsx:261
@@ -17766,7 +17806,11 @@ msgid "They were marked not eligible for rehire. I want to rehire them anyway."
 msgstr "تم تحديدهم كغير مؤهلين لإعادة التوظيف. أريد إعادة توظيفهم رغم ذلك."
 
 #: app/components/staff/access-tab.tsx:240
-msgid "They will not be able to clock in at this scope until you create a new PIN."
+#~ msgid "They will not be able to clock in at this scope until you create a new PIN."
+#~ msgstr "لن يتمكنوا من تسجيل الحضور في مكان العمل هذا حتى تنشئ رمزًا سريًا جديدًا."
+
+#: app/components/staff/access-tab.tsx:240
+msgid "They will not be able to clock in at this workplace until you create a new PIN."
 msgstr "لن يتمكنوا من تسجيل الحضور في مكان العمل هذا حتى تنشئ رمزًا سريًا جديدًا."
 
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
@@ -18088,8 +18132,8 @@ msgid "This schedule is no longer available"
 msgstr "هذا الجدول لم يعد متاحًا"
 
 #: app/components/staff/labor-policy-editor.tsx:959
-msgid "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
-msgstr "يتبع مكان العمل هذا القواعد الافتراضية. الحفظ يمنحه نسخته الخاصة، لذا لن تصله التغييرات اللاحقة على القواعد الافتراضية."
+#~ msgid "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
+#~ msgstr "يتبع مكان العمل هذا القواعد الافتراضية. الحفظ يمنحه نسخته الخاصة، لذا لن تصله التغييرات اللاحقة على القواعد الافتراضية."
 
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
@@ -18190,6 +18234,10 @@ msgstr "سيؤدي هذا إلى:"
 #: app/utils/staffing/staff-errors.ts:34
 msgid "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
 msgstr "لدى مكان العمل هذا عدة رموز اقتران غير مستخدمة. ألغِ أحدها أو انتظر انتهاء صلاحيتها."
+
+#: app/components/staff/labor-policy-editor.tsx:959
+msgid "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
+msgstr "يتبع مكان العمل هذا القواعد الافتراضية. الحفظ يمنحه نسخته الخاصة، لذا لن تصله التغييرات اللاحقة على القواعد الافتراضية."
 
 #: app/utils/my-schedule/my-schedule-messages.ts:25
 msgid "Those dates do not make sense. Check them and try again."
@@ -19903,7 +19951,11 @@ msgid "We do not keep a copy, so it cannot be looked up later. Give it to them n
 msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لاحقًا. سلّمه لهم الآن ثم اضغط تم."
 
 #: app/components/staff/labor-policy-editor.tsx:1449
-msgid "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
+#~ msgid "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
+#~ msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
+
+#: app/components/staff/labor-policy-editor.tsx:1449
+msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
 
 #: app/routes/_auth+/login.tsx:570

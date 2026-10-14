@@ -13,6 +13,6 @@ export type ImportableMember = {
 
 /**
  * The generic module has no per-scope address to derive a currency from, so
- * every scope reports this one. A vertical that knows better supplies its own.
+ * every workplace reports this one. A vertical that knows better supplies its own.
  */
 export const DEFAULT_SCOPE_CURRENCY = 'USD' as const

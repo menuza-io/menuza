@@ -36,7 +36,7 @@ import { resolveStaffingScopeIds } from '#app/utils/staffing/scope-claim.server.
  */
 export type StaffReportAccess = {
 	subjects: Array<StaffingReportSubject | typeof STAFF_PAY_REPORT_PERMISSION>
-	/** `null` is every scope. Always present, never widened by omission. */
+	/** `null` is every workplace. Always present, never widened by omission. */
 	scopeIds: string[] | null
 }
 

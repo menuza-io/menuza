@@ -275,7 +275,9 @@ test.describe('Staff roster', () => {
 
 			// A PIN is shown once, with the warning, and is gone after Done.
 			await page.getByRole('link', { name: 'Access and PIN' }).click()
-			await page.getByRole('button', { name: 'Create PIN' }).click()
+			// The attention strip above also offers Create PIN; use the panel's.
+			await expect(page.getByText('No PIN yet')).toBeVisible()
+			await page.getByRole('button', { name: 'Create PIN' }).last().click()
 			await expect(page.getByRole('status', { name: 'New PIN' })).toHaveText(
 				'4821',
 			)

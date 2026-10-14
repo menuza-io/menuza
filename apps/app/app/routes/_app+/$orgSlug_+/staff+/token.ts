@@ -35,7 +35,7 @@ const SCOPE_SECTION: Record<
  * minted here and does no flag lookup of its own.
  *
  * The token carries the member's scope scope (`scopeIds`, `null` for
- * every scope) read from the control plane at mint time; tenant-api applies
+ * every workplace) read from the control plane at mint time; tenant-api applies
  * it on every route. A scope change therefore reaches an already-minted token
  * only when that token expires (15 minutes, 5 with pay or private grants).
  *

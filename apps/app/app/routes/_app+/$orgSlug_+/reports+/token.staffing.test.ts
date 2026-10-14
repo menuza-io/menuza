@@ -176,7 +176,7 @@ describe('reports token for staff subjects', () => {
 		expect(headers['Cache-Control']).toBe('private, no-store')
 	})
 
-	it('carries the pay permission and every scope', async () => {
+	it('carries the pay permission and every workplace', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await setFlags(organization.id, ['enabled', 'timeclock', 'labor'])
 		const { cookie } = await manager(organization.id, [

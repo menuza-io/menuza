@@ -3,7 +3,7 @@ import { and, db, eq, UserOrganization } from '@repo/database'
 /**
  * The `scopeIds` claim for a staffing token (control plane, ids only).
  *
- * `null` means every scope, which is the only answer the generic module
+ * `null` means every workplace, which is the only answer the generic module
  * gives: it has one implicit scope and no per-member limits. An inactive or
  * missing membership resolves to no scopes at all (fail closed). A vertical
  * that limits members to some scopes replaces this resolver; tenant-api

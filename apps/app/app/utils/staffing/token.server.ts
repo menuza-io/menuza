@@ -27,14 +27,14 @@ import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
  *   the staff routes;
  * - one `scope` (staff, schedule, timeclock, labor, hiring);
  * - the permission `grants` the user actually holds, nothing more;
- * - `scopeIds` (`null` means every scope);
+ * - `scopeIds` (`null` means every workplace);
  * - a lifetime of 15 minutes, or 5 when it carries a pay or private grant;
  * - for an impersonated admin session, read-only grants only (no writes, no pay
  *   or private data), so support can look but never change or see wages.
  */
 
 type ScopePolicy = {
-	/** Permissions that may ride in a token of this scope, if the user holds them. */
+	/** Permissions that may ride in a token of this workplace, if the user holds them. */
 	grants: readonly StaffingPermission[]
 	/** Added only when the `staffing.labor` flag is on. */
 	laborGrants?: readonly StaffingPermission[]

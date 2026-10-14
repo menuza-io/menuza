@@ -39,7 +39,7 @@ const inviteSchema = z.object({
  * permission, not an impersonated session, not a Saudi-region organization (a
  * login email is a US-held identifier, so that is a residency decision for the
  * owner), then the same rate limit as the Members page. Attaching a `staffId`
- * additionally needs staffing access to every scope.
+ * additionally needs staffing access to every workplace.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {

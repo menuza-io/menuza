@@ -361,7 +361,9 @@ export function SchedulePage({ orgSlug, scopes: rawScopes }: Props) {
 				}
 				description={
 					<>
-						<Trans>Add a scope in settings, then plan its shifts here.</Trans>
+						<Trans>
+							Add a workplace in settings, then plan its shifts here.
+						</Trans>
 					</>
 				}
 				icons={['calendar', 'users', 'clock']}

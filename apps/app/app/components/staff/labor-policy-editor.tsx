@@ -957,8 +957,8 @@ function InheritsNotice({
 		<Alert role="status">
 			<AlertDescription>
 				<Trans>
-					This scope follows the default rules. Saving gives it its own copy, so
-					later changes to the default will not reach it.
+					This workplace follows the default rules. Saving gives it its own
+					copy, so later changes to the default will not reach it.
 				</Trans>
 			</AlertDescription>
 		</Alert>
@@ -1448,7 +1448,7 @@ function OvertimeEditor({
 					hint={
 						<Trans>
 							We do not pick this for you. Until you choose, overtime is
-							estimated at each scope separately.
+							estimated at each workplace separately.
 						</Trans>
 					}
 				/>

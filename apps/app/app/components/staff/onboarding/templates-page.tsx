@@ -48,7 +48,7 @@ type Editing = { id: string | null; draft: TemplateDraft } | null
 export function OnboardingTemplatesPage({
 	canWrite,
 }: {
-	/** Needs permission to update hiring and access to every scope. */
+	/** Needs permission to update hiring and access to every workplace. */
 	canWrite: boolean
 }) {
 	const { _ } = useLingui()
@@ -231,8 +231,8 @@ export function OnboardingTemplatesPage({
 			{!canWrite && !query.loading ? (
 				<p className="text-muted-foreground max-w-prose text-sm text-pretty">
 					<Trans>
-						Templates apply to every scope, so changing them needs permission to
-						update hiring and access to all scopes.
+						Templates apply to every workplace, so changing them needs
+						permission to update hiring and access to all workplaces.
 					</Trans>
 				</p>
 			) : null}

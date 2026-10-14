@@ -446,8 +446,8 @@ export default function StaffTeamRoute() {
 						description={
 							<>
 								<Trans>
-									Add the people who work here with their positions and scopes.
-									They do not need a login to be on your team.
+									Add the people who work here with their positions and
+									workplaces. They do not need a login to be on your team.
 								</Trans>
 							</>
 						}

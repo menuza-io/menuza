@@ -160,8 +160,8 @@ export function TipSettingsDialog({
 					</DialogTitle>
 					<DialogDescription>
 						<Trans>
-							How the tip report divides tips for this scope. It only builds a
-							report; it does not pay anyone.
+							How the tip report divides tips for this workplace. It only builds
+							a report; it does not pay anyone.
 						</Trans>
 					</DialogDescription>
 				</DialogHeader>

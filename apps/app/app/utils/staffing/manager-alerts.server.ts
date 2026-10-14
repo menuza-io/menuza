@@ -43,7 +43,7 @@ function parseGrant(grant: string) {
 /**
  * Active members whose role grants the permission the alert needs (a stronger
  * grant counts) and whose scope scope covers the alert's scope. An alert
- * that is not about one scope goes only to members with every scope.
+ * that is not about one scope goes only to members with every workplace.
  * Banned members are left out. The result is capped and ordered, so one noisy
  * organization cannot turn an alert into a mass mailing.
  */

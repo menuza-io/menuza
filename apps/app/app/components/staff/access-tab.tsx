@@ -113,8 +113,8 @@ export function AccessTab({
 					</FrameTitle>
 					<FrameDescription>
 						<Trans>
-							A PIN lets them clock in on a shared tablet at one scope. You can
-							set a new one, but never read an old one.
+							A PIN lets them clock in on a shared tablet at one workplace. You
+							can set a new one, but never read an old one.
 						</Trans>
 					</FrameDescription>
 				</FrameHeader>
@@ -238,7 +238,7 @@ export function AccessTab({
 						<AlertDialogDescription>
 							{intent?.kind === 'remove' ? (
 								<Trans>
-									They will not be able to clock in at this scope until you
+									They will not be able to clock in at this workplace until you
 									create a new PIN.
 								</Trans>
 							) : (

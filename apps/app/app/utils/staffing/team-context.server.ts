@@ -47,7 +47,7 @@ export async function loadImportableMembers(
 
 /**
  * Keeps only the scopes a scope-limited manager may use. `null` means
- * every scope (the default); an empty list leaves nothing.
+ * every workplace (the default); an empty list leaves nothing.
  */
 export function filterScopesToScope(
 	scopes: readonly StaffScope[],

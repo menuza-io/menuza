@@ -2,7 +2,7 @@ import { Trans, plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
-import { Button } from '@repo/ui/button'
+import { Button, buttonVariants } from '@repo/ui/button'
 import { Frame, FrameHeader, FramePanel, FrameTitle } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { type ReactNode } from 'react'
@@ -135,12 +135,15 @@ export function ProfileNav({
 						const active = item.id === section
 						const badge = badges[item.id]
 						return (
-							<Button
+							<Link
 								key={item.id}
-								variant={active ? 'secondary' : 'ghost'}
-								className="h-11 justify-between"
+								to={hrefFor(item.id)}
+								preventScrollReset
+								className={cn(
+									buttonVariants({ variant: active ? 'secondary' : 'ghost' }),
+									'h-11 justify-between',
+								)}
 								aria-current={active ? 'page' : undefined}
-								render={<Link to={hrefFor(item.id)} preventScrollReset />}
 							>
 								{item.label}
 								{badge ? (
@@ -151,7 +154,7 @@ export function ProfileNav({
 										{badge.count}
 									</Badge>
 								) : null}
-							</Button>
+							</Link>
 						)
 					})}
 				</div>

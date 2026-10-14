@@ -87,8 +87,8 @@ export default function RehireStaffRoute() {
 						</DialogTitle>
 						<DialogDescription>
 							<Trans>
-								They become active again. Their scopes, positions and PINs are
-								not restored, so add them again from their profile.
+								They become active again. Their workplaces, positions and PINs
+								are not restored, so add them again from their profile.
 							</Trans>
 						</DialogDescription>
 					</DialogHeader>

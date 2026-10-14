@@ -185,7 +185,7 @@ test.describe('Labor (manager)', () => {
 				scopeId,
 				salesSource: 'manual',
 			})
-			await page.getByRole('button', { name: 'Overview' }).click()
+			await page.getByRole('tab', { name: 'Overview' }).click()
 			await expect(page.getByText(/Sales: Entered sales\./)).toBeVisible()
 			await expect(page.getByText(/over target/).first()).toBeAttached()
 		} finally {

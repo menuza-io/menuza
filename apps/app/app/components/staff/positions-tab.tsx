@@ -275,8 +275,8 @@ function ScopeBlock({
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							<Trans>
-								Their PIN for this scope stops working and their positions here
-								end today. Their history stays.
+								Their PIN for this workplace stops working and their positions
+								here end today. Their history stays.
 							</Trans>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

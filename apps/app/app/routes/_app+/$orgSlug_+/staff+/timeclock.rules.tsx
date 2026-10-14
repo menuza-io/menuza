@@ -46,7 +46,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return {
 		orgSlug: params.orgSlug,
 		scopes: await loadTimeclockScopes(access.organizationId, access.scopeIds),
-		/** The organization default is only editable with every scope. */
+		/** The organization default is only editable with every workplace. */
 		canEditDefault: access.scopeIds === null,
 		timeZone: scope.timeZone,
 		canEditTimeZone: canWrite && access.scopeIds === null,
@@ -57,7 +57,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 /**
  * `POST /:orgSlug/staff/timeclock/rules`: set the organization's staff time
- * zone. Needs the labor policy grant and staffing access to every scope; the
+ * zone. Needs the labor policy grant and staffing access to every workplace; the
  * change is written to the audit log with the old and new zone.
  */
 export async function action({ request, params }: Route.ActionArgs) {

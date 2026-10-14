@@ -252,7 +252,7 @@ export type GridGroup = {
 export type WeekGrid = {
 	open: GridRow
 	groups: GridGroup[]
-	/** People on the roster for this scope who are not shown (hidden from the schedule). */
+	/** People on the roster for this workplace who are not shown (hidden from the schedule). */
 	hiddenCount: number
 }
 

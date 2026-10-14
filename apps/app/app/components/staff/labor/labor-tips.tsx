@@ -65,8 +65,8 @@ export function LaborTips({
 				{!settings.configured ? (
 					<p className="text-muted-foreground text-sm text-pretty">
 						<Trans>
-							No rules are saved for this scope yet, so the defaults are used.
-							Delivery tips stay out until you choose to pool them.
+							No rules are saved for this workplace yet, so the defaults are
+							used. Delivery tips stay out until you choose to pool them.
 						</Trans>
 					</p>
 				) : null}

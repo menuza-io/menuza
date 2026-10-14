@@ -217,8 +217,8 @@ export function LaborPage({ scopes: rawScopes, can }: Props) {
 					description={
 						<>
 							<Trans>
-								Add a scope in settings, or ask an administrator for access to
-								one.
+								Add a workplace in settings, or ask an administrator for access
+								to one.
 							</Trans>
 						</>
 					}
@@ -382,8 +382,8 @@ export function LaborPage({ scopes: rawScopes, can }: Props) {
 							{settings.data.salesSource !== 'manual' ? (
 								<p role="status" className="text-sm text-pretty">
 									<Trans>
-										Entered sales are only used when this scope's sales source
-										is "Sales I enter".
+										Entered sales are only used when this workplace's sales
+										source is "Sales I enter".
 									</Trans>{' '}
 									{canEditSettings ? (
 										<Button

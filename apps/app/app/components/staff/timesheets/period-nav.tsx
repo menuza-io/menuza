@@ -26,7 +26,7 @@ function fromLocalDate(value: Date): string {
 
 /**
  * Moves through days or pay periods. The previous and next dates of a period
- * come from the server (it knows the pay cadence and each scope's workweek);
+ * come from the server (it knows the pay cadence and each workplace's workweek);
  * the calendar picks any date and shows the period around it. "Today" is the
  * business date where the workplace is.
  */

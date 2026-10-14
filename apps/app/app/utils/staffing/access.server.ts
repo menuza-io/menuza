@@ -123,7 +123,7 @@ export type StaffingAccessRequirement = {
  * permission (403), then scope scope (403 when the member was limited to
  * selected scopes and none are selected: no staffing access at all).
  * Returns ids only, never staff data. `scopeIds` is the member's scope
- * scope (`null` means every scope), the same value the token will carry.
+ * scope (`null` means every workplace), the same value the token will carry.
  */
 export async function requireStaffingAccess(
 	request: Request,

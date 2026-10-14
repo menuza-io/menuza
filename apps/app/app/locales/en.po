@@ -1337,8 +1337,12 @@ msgid "A picture, logo, or product shot."
 msgstr "A picture, logo, or product shot."
 
 #: app/components/staff/access-tab.tsx:115
-msgid "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
-msgstr "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
+#~ msgid "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
+#~ msgstr "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
+
+#: app/components/staff/access-tab.tsx:115
+msgid "A PIN lets them clock in on a shared tablet at one workplace. You can set a new one, but never read an old one."
+msgstr "A PIN lets them clock in on a shared tablet at one workplace. You can set a new one, but never read an old one."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:692
 msgid "A place for every inquiry"
@@ -1638,12 +1642,12 @@ msgid "Add a reason."
 msgstr "Add a reason."
 
 #: app/components/staff/labor/labor-page.tsx:219
-msgid "Add a scope in settings, or ask an administrator for access to one."
-msgstr "Add a scope in settings, or ask an administrator for access to one."
+#~ msgid "Add a scope in settings, or ask an administrator for access to one."
+#~ msgstr "Add a scope in settings, or ask an administrator for access to one."
 
 #: app/components/staff/schedule/schedule-page.tsx:364
-msgid "Add a scope in settings, then plan its shifts here."
-msgstr "Add a scope in settings, then plan its shifts here."
+#~ msgid "Add a scope in settings, then plan its shifts here."
+#~ msgstr "Add a scope in settings, then plan its shifts here."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:553
 msgid "Add a second shift later the same day, like lunch and dinner."
@@ -1682,6 +1686,14 @@ msgstr "Add a time card"
 #: app/utils/website/field-types.ts:63
 msgid "Add a title between fields."
 msgstr "Add a title between fields."
+
+#: app/components/staff/labor/labor-page.tsx:219
+msgid "Add a workplace in settings, or ask an administrator for access to one."
+msgstr "Add a workplace in settings, or ask an administrator for access to one."
+
+#: app/components/staff/schedule/schedule-page.tsx:364
+msgid "Add a workplace in settings, then plan its shifts here."
+msgstr "Add a workplace in settings, then plan its shifts here."
 
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
@@ -1966,8 +1978,12 @@ msgid "Add the link to the form."
 msgstr "Add the link to the form."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
-msgid "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
-msgstr "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
+#~ msgid "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
+#~ msgstr "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
+
+#: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
+msgid "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
+msgstr "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
 
 #: app/components/staff/positions-tab.tsx:361
 msgid "Add them back to the workplace."
@@ -7016,8 +7032,12 @@ msgid "Entered sales"
 msgstr "Entered sales"
 
 #: app/components/staff/labor/labor-page.tsx:384
-msgid "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
-msgstr "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
+#~ msgid "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
+#~ msgstr "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
+
+#: app/components/staff/labor/labor-page.tsx:384
+msgid "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
+msgstr "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 
 #: app/components/settings/cards/organization/billing-card.tsx:269
 msgid "Enterprise Plan"
@@ -8345,8 +8365,12 @@ msgstr "How the call flow works"
 #~ msgstr "How the phone menu works"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:162
-msgid "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
-msgstr "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
+#~ msgid "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
+#~ msgstr "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
+
+#: app/components/staff/labor/tip-settings-dialog.tsx:162
+msgid "How the tip report divides tips for this workplace. It only builds a report; it does not pay anyone."
+msgstr "How the tip report divides tips for this workplace. It only builds a report; it does not pay anyone."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:522
 msgid "How to send the code"
@@ -10296,7 +10320,7 @@ msgstr "Needs a published schedule. Managers choose how they hear about it in th
 msgid "Needs attention"
 msgstr "Needs attention"
 
-#: app/components/staff/staff-profile-page.tsx:149
+#: app/components/staff/staff-profile-page.tsx:152
 msgid "Needs attention:"
 msgstr "Needs attention:"
 
@@ -11019,8 +11043,12 @@ msgstr "No responses yet."
 #~ msgstr ""
 
 #: app/components/staff/labor/labor-tips.tsx:67
-msgid "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
-msgstr "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+#~ msgid "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+#~ msgstr "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+
+#: app/components/staff/labor/labor-tips.tsx:67
+msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
+msgstr "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
 msgid "No rules yet."
@@ -16818,12 +16846,16 @@ msgid "Templates"
 msgstr "Templates"
 
 #: app/components/staff/onboarding/templates-page.tsx:233
-msgid "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
-msgstr "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
+#~ msgid "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
+#~ msgstr "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
 
 #: app/utils/staffing/onboarding-errors.ts:15
 msgid "Templates apply to every workplace, so changing one needs access to every workplace."
 msgstr "Templates apply to every workplace, so changing one needs access to every workplace."
+
+#: app/components/staff/onboarding/templates-page.tsx:233
+msgid "Templates apply to every workplace, so changing them needs permission to update hiring and access to all workplaces."
+msgstr "Templates apply to every workplace, so changing them needs permission to update hiring and access to all workplaces."
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:228
 msgid "Templates…"
@@ -17591,8 +17623,12 @@ msgid "Their main position at this workplace"
 msgstr "Their main position at this workplace"
 
 #: app/components/staff/positions-tab.tsx:277
-msgid "Their PIN for this scope stops working and their positions here end today. Their history stays."
-msgstr "Their PIN for this scope stops working and their positions here end today. Their history stays."
+#~ msgid "Their PIN for this scope stops working and their positions here end today. Their history stays."
+#~ msgstr "Their PIN for this scope stops working and their positions here end today. Their history stays."
+
+#: app/components/staff/positions-tab.tsx:277
+msgid "Their PIN for this workplace stops working and their positions here end today. Their history stays."
+msgstr "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:167
 msgid "Their PINs stop working now and their positions end on the last day. You can rehire them later."
@@ -17700,8 +17736,12 @@ msgid "They are on the roster."
 msgstr "They are on the roster."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
-msgid "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
-msgstr "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
+#~ msgid "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
+#~ msgstr "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
+
+#: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
+msgid "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
+msgstr "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
 
 #: app/components/hiring/candidate-parts.tsx:261
 msgid "They did not show"
@@ -17768,8 +17808,12 @@ msgid "They were marked not eligible for rehire. I want to rehire them anyway."
 msgstr "They were marked not eligible for rehire. I want to rehire them anyway."
 
 #: app/components/staff/access-tab.tsx:240
-msgid "They will not be able to clock in at this scope until you create a new PIN."
-msgstr "They will not be able to clock in at this scope until you create a new PIN."
+#~ msgid "They will not be able to clock in at this scope until you create a new PIN."
+#~ msgstr "They will not be able to clock in at this scope until you create a new PIN."
+
+#: app/components/staff/access-tab.tsx:240
+msgid "They will not be able to clock in at this workplace until you create a new PIN."
+msgstr "They will not be able to clock in at this workplace until you create a new PIN."
 
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
 msgid "Thinking..."
@@ -18090,8 +18134,8 @@ msgid "This schedule is no longer available"
 msgstr "This schedule is no longer available"
 
 #: app/components/staff/labor-policy-editor.tsx:959
-msgid "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
-msgstr "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
+#~ msgid "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
+#~ msgstr "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
@@ -18192,6 +18236,10 @@ msgstr ""
 #: app/utils/staffing/staff-errors.ts:34
 msgid "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
 msgstr "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
+
+#: app/components/staff/labor-policy-editor.tsx:959
+msgid "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
+msgstr "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 
 #: app/utils/my-schedule/my-schedule-messages.ts:25
 msgid "Those dates do not make sense. Check them and try again."
@@ -19905,8 +19953,12 @@ msgid "We do not keep a copy, so it cannot be looked up later. Give it to them n
 msgstr "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
 
 #: app/components/staff/labor-policy-editor.tsx:1449
-msgid "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
-msgstr "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
+#~ msgid "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
+#~ msgstr "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
+
+#: app/components/staff/labor-policy-editor.tsx:1449
+msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
+msgstr "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 
 #: app/routes/_auth+/login.tsx:570
 msgid "We found your organization:"
