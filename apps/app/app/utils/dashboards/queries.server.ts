@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
+import { getUserImgSrc } from '@repo/common'
 import {
 	and,
 	count,
@@ -375,6 +376,53 @@ export async function listShareableMembers(
 			),
 		)
 		.orderBy(byDisplayName, User.username)
+}
+
+export type DashboardSharing = {
+	shares: Array<{
+		userId: string
+		name: string | null
+		username: string
+		image: string | null
+		access: DashboardShareAccess
+		isActiveMember: boolean
+	}>
+	members: Array<{
+		id: string
+		name: string | null
+		username: string
+		image: string | null
+	}>
+}
+
+function userImage(objectKey: string | null) {
+	return objectKey ? getUserImgSrc(objectKey) : null
+}
+
+/** What the owner's Share dialog shows: who has access and who could get it. */
+export async function loadDashboardSharing({
+	dashboardId,
+	organizationId,
+	ownerId,
+}: {
+	dashboardId: string
+	organizationId: string
+	ownerId: string
+}): Promise<DashboardSharing> {
+	const [shares, members] = await Promise.all([
+		listShares(dashboardId),
+		listShareableMembers(organizationId, ownerId),
+	])
+	return {
+		shares: shares.map(({ imageObjectKey, ...share }) => ({
+			...share,
+			image: userImage(imageObjectKey),
+		})),
+		members: members.map(({ imageObjectKey, ...member }) => ({
+			...member,
+			image: userImage(imageObjectKey),
+		})),
+	}
 }
 
 export async function isShareableMember({

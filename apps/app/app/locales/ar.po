@@ -261,7 +261,7 @@ msgstr "{openCallFollowUps} بحاجة إلى متابعة"
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} بحاجة إلى متابعة"
 
-#: app/components/dashboard/dashboard-switcher.tsx:130
+#: app/components/dashboard/dashboard-switcher.tsx:124
 msgid "{ownerName} · {access}"
 msgstr "{ownerName} · {access}"
 
@@ -546,9 +546,14 @@ msgstr "لون التمييز"
 msgid "Accept"
 msgstr "قبول"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:209
 #: app/components/roles/tenant-role-access-manager.tsx:909
 msgid "Access"
 msgstr "الوصول"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:318
+msgid "Access for {name}"
+msgstr "مستوى الوصول لـ {name}"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:283
 msgid "Access Key ID"
@@ -1830,7 +1835,7 @@ msgstr "ستظهر هنا المكالمات التي يرد عليها وكيل
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
-#: app/components/dashboard/dashboard-switcher.tsx:23
+#: app/components/dashboard/access-labels.ts:11
 msgid "Can edit"
 msgstr "يمكن التعديل"
 
@@ -1925,7 +1930,7 @@ msgid "Cannot run this report"
 msgstr "تعذّر تشغيل هذا التقرير"
 
 #: app/components/dashboard/blocks/report-block.tsx:63
-#: app/components/dashboard/blocks/report-block.tsx:151
+#: app/components/dashboard/blocks/report-block.tsx:158
 msgid "Cannot show this report"
 msgstr "تعذّر عرض هذا التقرير"
 
@@ -2102,6 +2107,10 @@ msgstr "اختر جهة اتصال."
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVIF."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:182
+msgid "Choose a member"
+msgstr "اختر عضوًا"
+
 #: app/components/website/link-inspector.tsx:434
 msgid "Choose a page..."
 msgstr "اختر صفحة..."
@@ -2129,6 +2138,10 @@ msgstr "اختر قيمة صالحة."
 #: app/components/phone-agent/voice-picker.tsx:354
 msgid "Choose a voice"
 msgstr "اختر صوتًا"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:67
+msgid "Choose an active member of this organization."
+msgstr "اختر عضوًا نشطًا في هذه المؤسسة."
 
 #: app/components/website/link-inspector.tsx:577
 msgid "Choose file..."
@@ -2158,6 +2171,10 @@ msgstr "اختر أحد الخيارات المدرجة."
 #: app/components/chat/chat-compose-dialog.tsx:107
 #~ msgid "Choose someone"
 #~ msgstr "اختر شخصًا"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:69
+msgid "Choose View or Edit access."
+msgstr "اختر صلاحية العرض أو التعديل."
 
 #: app/components/phone-agent/voice-picker.tsx:674
 msgid "Choose voice"
@@ -2868,7 +2885,7 @@ msgstr "أنشئ قنوات لفريقك وحدّد الأدوار أو الأش
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
-#: app/components/dashboard/dashboard-switcher.tsx:155
+#: app/components/dashboard/dashboard-switcher.tsx:149
 msgid "Create dashboard"
 msgstr "إنشاء لوحة تحكم"
 
@@ -3777,6 +3794,7 @@ msgstr "مثل: Claude Desktop، Kiro IDE"
 msgid "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 msgstr "يحصل كل خيار على اتصال خاص به في اللوحة. يمكن للمتصلين الضغط على المفتاح أو نطق الخيار أو إحدى كلماته."
 
+#: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:861
@@ -4627,7 +4645,7 @@ msgstr "أدخل اسمًا لمجموعتك"
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:169
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:228
 msgid "Go to Home"
 msgstr "الانتقال إلى الرئيسية"
 
@@ -4717,6 +4735,10 @@ msgstr "حُوّلت إلى خط النشاط التجاري"
 #: app/components/phone-agent/flow-editor/flow-meta.ts:76
 msgid "Hang up"
 msgstr "إنهاء المكالمة"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:196
+msgid "Has access"
+msgstr "لديه صلاحية الوصول"
 
 #: app/components/data-table.tsx:188
 #: app/components/data-table.tsx:813
@@ -4832,8 +4854,8 @@ msgstr "الزيارات"
 msgid "Hold message"
 msgstr "رسالة الانتظار"
 
-#: app/components/dashboard/dashboard-switcher.tsx:63
-#: app/components/dashboard/dashboard-switcher.tsx:87
+#: app/components/dashboard/dashboard-switcher.tsx:57
+#: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
@@ -5109,7 +5131,7 @@ msgstr "موثّق (صحيح)"
 msgid "Its results could not be loaded. Try again later."
 msgstr "تعذّر تحميل نتائجه. حاول مرة أخرى لاحقًا."
 
-#: app/components/dashboard/blocks/report-block.tsx:153
+#: app/components/dashboard/blocks/report-block.tsx:160
 msgid "Its saved settings could not be read."
 msgstr "تعذّرت قراءة إعداداته المحفوظة."
 
@@ -5976,7 +5998,7 @@ msgstr "كتم الميكروفون"
 msgid "Muted"
 msgstr "بدون صوت"
 
-#: app/components/dashboard/dashboard-switcher.tsx:98
+#: app/components/dashboard/dashboard-switcher.tsx:92
 msgid "My dashboards"
 msgstr "لوحات التحكم الخاصة بي"
 
@@ -5998,7 +6020,7 @@ msgstr "لوحات التحكم الخاصة بي"
 msgid "Name"
 msgstr "الاسم"
 
-#: app/components/dashboard/dashboard-switcher.tsx:153
+#: app/components/dashboard/dashboard-switcher.tsx:147
 msgid "Name your dashboard. You can add blocks to it next."
 msgstr "سمِّ لوحة التحكم. يمكنك إضافة الكتل إليها بعد ذلك."
 
@@ -6081,8 +6103,8 @@ msgstr "قناة جديدة"
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
-#: app/components/dashboard/dashboard-switcher.tsx:141
-#: app/components/dashboard/dashboard-switcher.tsx:151
+#: app/components/dashboard/dashboard-switcher.tsx:135
+#: app/components/dashboard/dashboard-switcher.tsx:145
 msgid "New dashboard"
 msgstr "لوحة تحكم جديدة"
 
@@ -6318,6 +6340,10 @@ msgstr "لم يتم العثور على فواتير"
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:538
 msgid "No issues found"
 msgstr "لم يتم العثور على مشكلات"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:298
+msgid "No longer a member of this organization"
+msgstr "لم يعد عضوًا في هذه المؤسسة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:549
 msgid "No matching calls"
@@ -6559,6 +6585,10 @@ msgstr "ليس الآن"
 msgid "Not opened yet"
 msgstr "لم يُفتح بعد"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:393
+msgid "Not shared with anyone yet."
+msgstr "لم تتم مشاركتها مع أي شخص بعد."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1507
 msgid "Not used in any notes, comments, or pages"
 msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو صفحات"
@@ -6765,6 +6795,10 @@ msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإ�
 msgid "Only the owner can rename this dashboard."
 msgstr "يمكن للمالك فقط إعادة تسمية لوحة التحكم هذه."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:71
+msgid "Only the owner can share this dashboard."
+msgstr "يمكن للمالك فقط مشاركة لوحة التحكم هذه."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
 msgid "Only while you're open"
 msgstr "فقط أثناء ساعات العمل"
@@ -6865,7 +6899,7 @@ msgstr "معدل الفتح"
 msgid "Open reference"
 msgstr "فتح المرجع"
 
-#: app/components/dashboard/blocks/report-block.tsx:132
+#: app/components/dashboard/blocks/report-block.tsx:139
 msgid "Open report"
 msgstr "فتح التقرير"
 
@@ -7147,6 +7181,14 @@ msgstr "الأشخاص"
 msgid "People or departments the agent can transfer to, like a manager. Use numbers that don't forward to the agent."
 msgstr "الأشخاص أو الأقسام التي يمكن للوكيل التحويل إليها، مثل المدير. استخدم أرقامًا لا تُحوَّل إلى الوكيل."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:389
+msgid "People with access"
+msgstr "الأشخاص الذين لديهم صلاحية الوصول"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:379
+msgid "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
+msgstr "يجد الأشخاص الذين تشاركها معهم لوحة التحكم هذه ضمن “تمت مشاركتها معي”. تتيح لهم صلاحية العرض الاطلاع عليها، وتتيح لهم صلاحية التعديل أيضًا تغيير كتلها وتخطيطها للجميع."
+
 #: app/components/settings/cards/organization/billing-card.tsx:418
 #: app/routes/organizations+/create.tsx:1412
 msgid "per month"
@@ -7188,6 +7230,10 @@ msgstr "صلاحيات ممنوحة"
 #: app/components/roles/tenant-role-access-manager.tsx:578
 msgid "permissions selected"
 msgstr "صلاحيات محددة"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:168
+msgid "Person"
+msgstr "الشخص"
 
 #: app/components/organization-invitations.tsx:167
 msgid "Personal invite link"
@@ -8004,6 +8050,10 @@ msgstr "إزالة {term}"
 msgid "Remove {value}"
 msgstr "إزالة {value}"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:330
+msgid "Remove access for {name}"
+msgstr "إزالة صلاحية الوصول لـ {name}"
+
 #: app/components/settings/cards/sessions-card.tsx:375
 msgid "Remove access from all devices except this one"
 msgstr "إزالة الوصول من جميع الأجهزة عدا هذا الجهاز"
@@ -8160,7 +8210,7 @@ msgstr "رد…"
 msgid "Report"
 msgstr "تقرير"
 
-#: app/components/dashboard/blocks/report-block.tsx:101
+#: app/components/dashboard/blocks/report-block.tsx:104
 msgid "Report not found"
 msgstr "التقرير غير موجود"
 
@@ -9169,10 +9219,16 @@ msgstr "مفتاح الإعداد"
 msgid "Several people are typing…"
 msgstr "عدة أشخاص يكتبون…"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:229
+#: app/components/dashboard/share-dashboard-dialog.tsx:369
 #: app/components/note/share-note-button.tsx:167
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1010
 msgid "Share"
 msgstr "مشاركة"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:375
+msgid "Share “{name}”"
+msgstr "مشاركة “{name}”"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:446
 msgid "Share an update, maintenance notice, or promotion…"
@@ -9202,7 +9258,11 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/components/dashboard/dashboard-switcher.tsx:117
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:120
+msgid "Shared by {ownerName} · {accessLabel}"
+msgstr "تمت المشاركة بواسطة {ownerName} · {accessLabel}"
+
+#: app/components/dashboard/dashboard-switcher.tsx:111
 msgid "Shared with me"
 msgstr "تمت مشاركتها معي"
 
@@ -10028,6 +10088,14 @@ msgstr "تعذّر حفظ هذا التغيير. حدّث الصفحة وحاو�
 msgid "That report is not available in this organization."
 msgstr "هذا التقرير غير متاح في هذه المؤسسة."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:264
+msgid "The access could not be changed. Please try again."
+msgstr "تعذر تغيير صلاحية الوصول. يُرجى المحاولة مرة أخرى."
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:277
+msgid "The access could not be removed. Please try again."
+msgstr "تعذرت إزالة صلاحية الوصول. يُرجى المحاولة مرة أخرى."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:205
 msgid "The agent answers calls once every step is done."
 msgstr "يرد الوكيل على المكالمات بعد إكمال جميع الخطوات."
@@ -10099,6 +10167,10 @@ msgstr "تعذر حذف لوحة التحكم."
 #: app/components/dashboard/dashboard-name-dialog.tsx:53
 msgid "The dashboard could not be saved. Please try again."
 msgstr "تعذر حفظ لوحة التحكم. يُرجى المحاولة مرة أخرى."
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:73
+msgid "The dashboard could not be shared. Please try again."
+msgstr "تعذرت مشاركة لوحة التحكم. يُرجى المحاولة مرة أخرى."
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
@@ -10186,6 +10258,10 @@ msgstr "السمة"
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:158
+msgid "There is no one else in this organization to share with."
+msgstr "لا يوجد أشخاص آخرون في هذه المؤسسة لمشاركتها معهم."
+
 #: app/routes/_auth+/login.tsx:301
 msgid "There was an issue with your login attempt. Please try again."
 msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى."
@@ -10242,7 +10318,7 @@ msgstr "ستظهر هذه المكالمة في <0>المكالمات</0> قري
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:161
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:220
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
 
@@ -10315,7 +10391,11 @@ msgstr "سيؤدي هذا إلى إزالة الرسالة للجميع في ا�
 msgid "This replaces your draft, including unsaved changes. It can't be undone."
 msgstr "سيحل هذا محل مسودتك، بما في ذلك التغييرات غير المحفوظة. لا يمكن التراجع عن ذلك."
 
-#: app/components/dashboard/blocks/report-block.tsx:103
+#: app/components/dashboard/blocks/report-block.tsx:111
+msgid "This report was deleted."
+msgstr "حُذف هذا التقرير."
+
+#: app/components/dashboard/blocks/report-block.tsx:107
 msgid "This report was deleted. Remove the block or add another report."
 msgstr "حُذف هذا التقرير. أزل الكتلة أو أضف تقريرًا آخر."
 
@@ -11145,6 +11225,7 @@ msgstr "فيديو"
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
+#: app/components/dashboard/access-labels.ts:19
 #: app/components/roles/tenant-role-access-manager.tsx:853
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
@@ -11191,7 +11272,7 @@ msgstr "عرض الموقع المباشر"
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
 
-#: app/components/dashboard/dashboard-switcher.tsx:22
+#: app/components/dashboard/access-labels.ts:10
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:512
 msgid "View only"
 msgstr "عرض فقط"

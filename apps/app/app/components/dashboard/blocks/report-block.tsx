@@ -79,6 +79,7 @@ export function ReportBlock({
 	orgSlug,
 	reports,
 	savedReportOptions,
+	editable = true,
 }: {
 	config: ReportBlockConfig
 	orgSlug: string
@@ -86,6 +87,8 @@ export function ReportBlock({
 	reports: ReportBlockData | null
 	/** Titles for saved reports added since the page data loaded. */
 	savedReportOptions?: readonly SavedReportOption[]
+	/** Whether the viewer can change the dashboard's blocks. */
+	editable?: boolean
 }) {
 	const block = resolveReportBlock(config, {
 		orgSlug,
@@ -100,9 +103,13 @@ export function ReportBlock({
 					icon="file-text"
 					title={<Trans>Report not found</Trans>}
 				>
-					<Trans>
-						This report was deleted. Remove the block or add another report.
-					</Trans>
+					{editable ? (
+						<Trans>
+							This report was deleted. Remove the block or add another report.
+						</Trans>
+					) : (
+						<Trans>This report was deleted.</Trans>
+					)}
 				</ReportBlockMessage>
 			</Card>
 		)

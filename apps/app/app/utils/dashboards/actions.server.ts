@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { requireCustomDashboardAccess } from './access.server.ts'
 import {
 	canEdit,
+	dashboardShareAccessSchema,
 	isOwner,
 	MAX_CUSTOM_DASHBOARDS,
 	parseDashboardConfig,
@@ -18,10 +19,13 @@ import {
 	createDashboard,
 	deleteDashboard,
 	getHomeConfig,
+	isShareableMember,
+	removeShare,
 	renameDashboard,
 	resetHome,
 	saveDashboardConfig,
 	saveHomeConfig,
+	upsertShare,
 } from './queries.server.ts'
 
 export type DashboardActionErrorCode =
@@ -31,6 +35,8 @@ export type DashboardActionErrorCode =
 	| 'unknown-template'
 	| 'unknown-report'
 	| 'limit-reached'
+	| 'invalid-share-target'
+	| 'invalid-access'
 	| 'forbidden'
 
 export type DashboardActionError = {
@@ -278,14 +284,67 @@ export async function handleHomeAction({
 	}
 }
 
+const shareTargetSchema = z.string().min(1)
+
+// Share fields are checked after the owner check, so that recipients get a
+// 403 for any share or unshare they send.
 const customIntentSchema = z.discriminatedUnion('intent', [
 	z.object({ intent: z.literal('save-config'), config: z.string() }),
 	z.object({ intent: z.literal('rename'), name: z.unknown().optional() }),
 	z.object({ intent: z.literal('delete') }),
+	z.object({
+		intent: z.literal('share'),
+		userId: z.unknown().optional(),
+		access: z.unknown().optional(),
+	}),
+	z.object({ intent: z.literal('unshare'), userId: z.unknown().optional() }),
 ])
 
 function notFound() {
 	return new Response('Not Found', { status: 404 })
+}
+
+/**
+ * Gives an active member of the organization, other than the owner, view or
+ * edit access. Sharing again with someone changes their access.
+ */
+async function shareDashboard({
+	dashboard,
+	userId,
+	access,
+}: {
+	dashboard: { id: string; organizationId: string; ownerId: string }
+	userId: unknown
+	access: unknown
+}) {
+	const validAccess = dashboardShareAccessSchema.safeParse(access)
+	if (!validAccess.success) {
+		return dashboardActionError(
+			'invalid-access',
+			'Access must be "view" or "edit".',
+		)
+	}
+	const target = shareTargetSchema.safeParse(userId)
+	if (
+		!target.success ||
+		!(await isShareableMember({
+			organizationId: dashboard.organizationId,
+			ownerId: dashboard.ownerId,
+			userId: target.data,
+		}))
+	) {
+		return dashboardActionError(
+			'invalid-share-target',
+			'Dashboards can only be shared with active members of this organization other than the owner.',
+		)
+	}
+	await upsertShare({
+		dashboardId: dashboard.id,
+		userId: target.data,
+		access: validAccess.data,
+		sharedById: dashboard.ownerId,
+	})
+	return { ok: true as const }
 }
 
 /**
@@ -354,6 +413,25 @@ export async function handleCustomDashboardAction({
 			}
 			await deleteDashboard({ ...target, ownerId: userId })
 			return redirect(`/${organization.slug}`)
+		}
+		case 'share': {
+			if (!isOwner(access)) {
+				return forbidden('Only the owner can share this dashboard.')
+			}
+			return shareDashboard({
+				dashboard,
+				userId: submission.data.userId,
+				access: submission.data.access,
+			})
+		}
+		case 'unshare': {
+			if (!isOwner(access)) {
+				return forbidden('Only the owner can change who has access.')
+			}
+			const recipient = shareTargetSchema.safeParse(submission.data.userId)
+			if (!recipient.success) return invalidRequest()
+			await removeShare({ dashboardId: dashboard.id, userId: recipient.data })
+			return { ok: true as const }
 		}
 	}
 }

@@ -24,12 +24,15 @@ export function DashboardBlockContent({
 	reports,
 	savedReportOptions,
 	organization,
+	editable,
 }: {
 	block: DashboardBlock
 	data: BuiltInBlockData
 	reports: ReportBlockData | null
 	savedReportOptions?: readonly SavedReportOption[]
 	organization: DashboardBlockOrganization
+	/** Whether the viewer can change the dashboard's blocks. */
+	editable?: boolean
 }) {
 	switch (block.type) {
 		case 'stats':
@@ -64,6 +67,7 @@ export function DashboardBlockContent({
 					orgSlug={organization.slug}
 					reports={reports}
 					savedReportOptions={savedReportOptions}
+					editable={editable}
 				/>
 			)
 	}

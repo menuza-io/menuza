@@ -1,4 +1,13 @@
-import { and, Dashboard, DashboardShare, db, eq } from '@repo/database'
+import {
+	and,
+	asc,
+	Dashboard,
+	DashboardShare,
+	db,
+	eq,
+	Notification,
+	UserOrganization,
+} from '@repo/database'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
@@ -545,5 +554,370 @@ describe('custom dashboard action', () => {
 			config: defaultHomeConfig(),
 		})
 		expect(await sharesOf(home.id)).toEqual([])
+	})
+})
+
+function shareRows(dashboardId: string) {
+	return db
+		.select({
+			userId: DashboardShare.userId,
+			access: DashboardShare.access,
+			sharedById: DashboardShare.sharedById,
+		})
+		.from(DashboardShare)
+		.where(eq(DashboardShare.dashboardId, dashboardId))
+		.orderBy(asc(DashboardShare.userId))
+}
+
+function setMembershipActive(
+	userId: string,
+	organizationId: string,
+	active: boolean,
+) {
+	return db
+		.update(UserOrganization)
+		.set({ active })
+		.where(
+			and(
+				eq(UserOrganization.userId, userId),
+				eq(UserOrganization.organizationId, organizationId),
+			),
+		)
+}
+
+async function setupSharing() {
+	const base = await setup()
+	const inactive = await insertTestMember(base.organization.id)
+	await setMembershipActive(inactive.user.id, base.organization.id, false)
+	const outsider = await insertTestUser()
+	await createTestOrganization(outsider.id, 'admin')
+	const { cookie: outsiderCookie } = await createTestSession(outsider.id)
+	return {
+		...base,
+		inactive,
+		outsider: { user: outsider, cookie: outsiderCookie },
+	}
+}
+
+describe('sharing a custom dashboard', () => {
+	it('gives only the owner the share list and the members to share with', async () => {
+		const { owner, editor, viewer, member, organization, dashboard } =
+			await setupSharing()
+
+		const data = await loadDashboard(
+			organization.slug,
+			dashboard.id,
+			owner.cookie,
+		)
+
+		expect(data.sharing).not.toBeNull()
+		const byUserId = (a: { userId: string }, b: { userId: string }) =>
+			a.userId.localeCompare(b.userId)
+		expect([...(data.sharing?.shares ?? [])].sort(byUserId)).toEqual(
+			[
+				{
+					userId: editor.user.id,
+					name: editor.user.name,
+					username: editor.user.username,
+					image: null,
+					access: 'edit',
+					isActiveMember: true,
+				},
+				{
+					userId: viewer.user.id,
+					name: viewer.user.name,
+					username: viewer.user.username,
+					image: null,
+					access: 'view',
+					isActiveMember: true,
+				},
+			].sort(byUserId),
+		)
+		// Active members other than the owner: no inactive member, no outsider.
+		expect(data.sharing?.members.map((person) => person.id).sort()).toEqual(
+			[editor.user.id, viewer.user.id, member.user.id].sort(),
+		)
+		expect(data.sharing?.members).toContainEqual({
+			id: member.user.id,
+			name: member.user.name,
+			username: member.user.username,
+			image: null,
+		})
+
+		for (const recipient of [editor, viewer]) {
+			const asRecipient = await loadDashboard(
+				organization.slug,
+				dashboard.id,
+				recipient.cookie,
+			)
+			expect(asRecipient.sharing).toBeNull()
+		}
+	})
+
+	it('lets the owner share with view or edit access and change it', async () => {
+		const { owner, member, organization, dashboard } = await setupSharing()
+		const share = (access: string) =>
+			postDashboard(organization.slug, dashboard.id, owner.cookie, {
+				intent: 'share',
+				userId: member.user.id,
+				access,
+			})
+		const memberShare = async () =>
+			(await shareRows(dashboard.id)).find(
+				(row) => row.userId === member.user.id,
+			)
+
+		expect(unwrap(await share('view'))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect(await memberShare()).toEqual({
+			userId: member.user.id,
+			access: 'view',
+			sharedById: owner.user.id,
+		})
+		const asViewer = await loadDashboard(
+			organization.slug,
+			dashboard.id,
+			member.cookie,
+		)
+		expect(asViewer.dashboard).toMatchObject({
+			access: 'view',
+			ownerName: 'Olive Owner',
+		})
+		expect(asViewer.switcher.sharedWithMe).toEqual([
+			{
+				id: dashboard.id,
+				name: DASHBOARD_NAME,
+				ownerName: 'Olive Owner',
+				access: 'view',
+			},
+		])
+		expectRejected(
+			await saveConfig(
+				organization.slug,
+				dashboard.id,
+				member.cookie,
+				emptyDashboardConfig(),
+			),
+			403,
+			'forbidden',
+		)
+
+		expect(unwrap(await share('edit'))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect((await memberShare())?.access).toBe('edit')
+		expect(await shareRows(dashboard.id)).toHaveLength(3)
+		const asEditor = await loadDashboard(
+			organization.slug,
+			dashboard.id,
+			member.cookie,
+		)
+		expect(asEditor.dashboard.access).toBe('edit')
+		expect(asEditor.switcher.sharedWithMe[0]?.access).toBe('edit')
+		expect(
+			unwrap(
+				await saveConfig(
+					organization.slug,
+					dashboard.id,
+					member.cookie,
+					emptyDashboardConfig(),
+				),
+			),
+		).toEqual({ status: 200, body: { ok: true } })
+
+		expect(unwrap(await share('view'))).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expectRejected(
+			await saveConfig(
+				organization.slug,
+				dashboard.id,
+				member.cookie,
+				statsConfig(),
+			),
+			403,
+			'forbidden',
+		)
+		expect((await storedDashboard(dashboard.id))?.config).toEqual(
+			emptyDashboardConfig(),
+		)
+	})
+
+	it('takes access away at once when the owner removes it', async () => {
+		const { owner, viewer, editor, organization, dashboard } =
+			await setupSharing()
+		const unshare = () =>
+			postDashboard(organization.slug, dashboard.id, owner.cookie, {
+				intent: 'unshare',
+				userId: viewer.user.id,
+			})
+
+		expect(unwrap(await unshare())).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+		expect((await shareRows(dashboard.id)).map((row) => row.userId)).toEqual([
+			editor.user.id,
+		])
+		await expectNotFound(
+			loadDashboard(organization.slug, dashboard.id, viewer.cookie),
+			DASHBOARD_NAME,
+		)
+		await expectNotFound(
+			saveConfig(organization.slug, dashboard.id, viewer.cookie, statsConfig()),
+			DASHBOARD_NAME,
+		)
+		// Removing access that is already gone changes nothing.
+		expect(unwrap(await unshare())).toEqual({
+			status: 200,
+			body: { ok: true },
+		})
+	})
+
+	it('rejects people who cannot be given access and unknown access levels with a 400', async () => {
+		const {
+			owner,
+			viewer,
+			member,
+			inactive,
+			outsider,
+			organization,
+			dashboard,
+		} = await setupSharing()
+		const before = await shareRows(dashboard.id)
+		const rejected: Array<[Record<string, string>, string]> = [
+			[
+				{ intent: 'share', userId: outsider.user.id, access: 'view' },
+				'invalid-share-target',
+			],
+			[
+				{ intent: 'share', userId: 'no-such-user', access: 'view' },
+				'invalid-share-target',
+			],
+			[
+				{ intent: 'share', userId: inactive.user.id, access: 'view' },
+				'invalid-share-target',
+			],
+			[
+				{ intent: 'share', userId: owner.user.id, access: 'edit' },
+				'invalid-share-target',
+			],
+			[{ intent: 'share', access: 'view' }, 'invalid-share-target'],
+			[
+				{ intent: 'share', userId: viewer.user.id, access: 'admin' },
+				'invalid-access',
+			],
+			[
+				{ intent: 'share', userId: member.user.id, access: 'owner' },
+				'invalid-access',
+			],
+			[{ intent: 'share', userId: member.user.id }, 'invalid-access'],
+			[{ intent: 'unshare' }, 'invalid-request'],
+		]
+
+		for (const [body, code] of rejected) {
+			expectRejected(
+				await postDashboard(
+					organization.slug,
+					dashboard.id,
+					owner.cookie,
+					body,
+				),
+				400,
+				code,
+			)
+		}
+		expect(await shareRows(dashboard.id)).toEqual(before)
+		await expectNotFound(
+			loadDashboard(organization.slug, dashboard.id, outsider.cookie),
+			DASHBOARD_NAME,
+		)
+	})
+
+	it('does not let recipients share, unshare or change their own access', async () => {
+		const { editor, viewer, member, organization, dashboard } =
+			await setupSharing()
+		const before = await shareRows(dashboard.id)
+
+		for (const recipient of [editor, viewer]) {
+			const bodies: Array<Record<string, string>> = [
+				{ intent: 'share', userId: member.user.id, access: 'view' },
+				{ intent: 'share', userId: recipient.user.id, access: 'edit' },
+				{ intent: 'share', userId: member.user.id, access: 'admin' },
+				{ intent: 'unshare', userId: editor.user.id },
+				{ intent: 'unshare', userId: viewer.user.id },
+			]
+			for (const body of bodies) {
+				expectRejected(
+					await postDashboard(
+						organization.slug,
+						dashboard.id,
+						recipient.cookie,
+						body,
+					),
+					403,
+					'forbidden',
+				)
+			}
+		}
+		expect(await shareRows(dashboard.id)).toEqual(before)
+	})
+
+	it('takes access away from recipients whose membership is deactivated', async () => {
+		const { owner, editor, organization, dashboard } = await setupSharing()
+		await setMembershipActive(editor.user.id, organization.id, false)
+
+		await expectNotFound(
+			loadDashboard(organization.slug, dashboard.id, editor.cookie),
+			DASHBOARD_NAME,
+		)
+		await expectNotFound(
+			saveConfig(organization.slug, dashboard.id, editor.cookie, statsConfig()),
+			DASHBOARD_NAME,
+		)
+		const data = await loadDashboard(
+			organization.slug,
+			dashboard.id,
+			owner.cookie,
+		)
+		expect(data.sharing?.members.map((person) => person.id)).not.toContain(
+			editor.user.id,
+		)
+		expect(
+			data.sharing?.shares.find((share) => share.userId === editor.user.id),
+		).toMatchObject({ access: 'edit', isActiveMember: false })
+		expectRejected(
+			await postDashboard(organization.slug, dashboard.id, owner.cookie, {
+				intent: 'share',
+				userId: editor.user.id,
+				access: 'view',
+			}),
+			400,
+			'invalid-share-target',
+		)
+	})
+
+	it('sends the recipient no notification', async () => {
+		const { owner, member, organization, dashboard } = await setupSharing()
+
+		await postDashboard(organization.slug, dashboard.id, owner.cookie, {
+			intent: 'share',
+			userId: member.user.id,
+			access: 'edit',
+		})
+
+		expect(await shareRows(dashboard.id)).toContainEqual(
+			expect.objectContaining({ userId: member.user.id, access: 'edit' }),
+		)
+		expect(
+			await db
+				.select({ id: Notification.id })
+				.from(Notification)
+				.where(eq(Notification.userId, member.user.id)),
+		).toEqual([])
 	})
 })

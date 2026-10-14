@@ -166,8 +166,32 @@ describe('ReportBlock', () => {
 			reportData({ savedReports: { gone: null } }),
 		)
 		expect(screen.getByText('Report not found')).toBeInTheDocument()
+		expect(
+			screen.getByText(
+				'This report was deleted. Remove the block or add another report.',
+			),
+		).toBeInTheDocument()
 		expect(screen.queryByRole('link')).not.toBeInTheDocument()
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('does not ask someone who cannot edit the dashboard to remove a deleted report', () => {
+		mockFetch(() => json(countResult))
+		render(
+			<I18nProvider i18n={i18n}>
+				<MemoryRouter>
+					<ReportBlock
+						config={{ source: 'saved', reportId: 'gone' }}
+						orgSlug="acme"
+						reports={reportData({ savedReports: { gone: null } })}
+						editable={false}
+					/>
+				</MemoryRouter>
+			</I18nProvider>,
+		)
+		expect(screen.getByText('Report not found')).toBeInTheDocument()
+		expect(screen.getByText('This report was deleted.')).toBeInTheDocument()
+		expect(screen.queryByText(/Remove the block/)).not.toBeInTheDocument()
 	})
 
 	it.each([403, 401])(

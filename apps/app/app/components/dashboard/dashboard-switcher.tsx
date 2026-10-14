@@ -1,4 +1,3 @@
-import { type MessageDescriptor } from '@lingui/core'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Button } from '@repo/ui/button'
@@ -14,14 +13,9 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { type DashboardShareAccess } from '#app/utils/dashboards/config.ts'
 import { type SwitcherDashboards } from '#app/utils/dashboards/queries.server.ts'
+import { SHARED_ACCESS_LABELS } from './access-labels.ts'
 import { DashboardNameDialog } from './dashboard-name-dialog.tsx'
-
-const ACCESS_LABELS: Record<DashboardShareAccess, MessageDescriptor> = {
-	view: msg`View only`,
-	edit: msg`Can edit`,
-}
 
 function SwitcherLink({
 	to,
@@ -118,7 +112,7 @@ export function DashboardSwitcher({
 								</DropdownMenuLabel>
 								{dashboards.sharedWithMe.map((dashboard) => {
 									const { ownerName } = dashboard
-									const access = _(ACCESS_LABELS[dashboard.access])
+									const access = _(SHARED_ACCESS_LABELS[dashboard.access])
 									return (
 										<SwitcherLink
 											key={dashboard.id}

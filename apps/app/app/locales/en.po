@@ -263,7 +263,7 @@ msgstr "{openCallFollowUps} need follow-up"
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} need follow-up"
 
-#: app/components/dashboard/dashboard-switcher.tsx:130
+#: app/components/dashboard/dashboard-switcher.tsx:124
 msgid "{ownerName} · {access}"
 msgstr "{ownerName} · {access}"
 
@@ -548,9 +548,14 @@ msgstr ""
 msgid "Accept"
 msgstr ""
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:209
 #: app/components/roles/tenant-role-access-manager.tsx:909
 msgid "Access"
 msgstr "Access"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:318
+msgid "Access for {name}"
+msgstr "Access for {name}"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:283
 msgid "Access Key ID"
@@ -1832,7 +1837,7 @@ msgstr "Calls your agent answers will appear here. Try a test call from your bro
 msgid "Campaign name"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:23
+#: app/components/dashboard/access-labels.ts:11
 msgid "Can edit"
 msgstr "Can edit"
 
@@ -1927,7 +1932,7 @@ msgid "Cannot run this report"
 msgstr "Cannot run this report"
 
 #: app/components/dashboard/blocks/report-block.tsx:63
-#: app/components/dashboard/blocks/report-block.tsx:151
+#: app/components/dashboard/blocks/report-block.tsx:158
 msgid "Cannot show this report"
 msgstr "Cannot show this report"
 
@@ -2104,6 +2109,10 @@ msgstr "Choose a contact."
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:182
+msgid "Choose a member"
+msgstr "Choose a member"
+
 #: app/components/website/link-inspector.tsx:434
 msgid "Choose a page..."
 msgstr ""
@@ -2131,6 +2140,10 @@ msgstr "Choose a valid value."
 #: app/components/phone-agent/voice-picker.tsx:354
 msgid "Choose a voice"
 msgstr "Choose a voice"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:67
+msgid "Choose an active member of this organization."
+msgstr "Choose an active member of this organization."
 
 #: app/components/website/link-inspector.tsx:577
 msgid "Choose file..."
@@ -2160,6 +2173,10 @@ msgstr "Choose one of the listed options."
 #: app/components/chat/chat-compose-dialog.tsx:107
 #~ msgid "Choose someone"
 #~ msgstr "Choose someone"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:69
+msgid "Choose View or Edit access."
+msgstr "Choose View or Edit access."
 
 #: app/components/phone-agent/voice-picker.tsx:674
 msgid "Choose voice"
@@ -2870,7 +2887,7 @@ msgstr "Create channels for your team and choose which roles or people can read 
 msgid "Create Custom Role"
 msgstr "Create Custom Role"
 
-#: app/components/dashboard/dashboard-switcher.tsx:155
+#: app/components/dashboard/dashboard-switcher.tsx:149
 msgid "Create dashboard"
 msgstr "Create dashboard"
 
@@ -3779,6 +3796,7 @@ msgstr ""
 msgid "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 msgstr "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 
+#: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:861
@@ -4629,7 +4647,7 @@ msgstr "Give your group a name"
 msgid "Go there"
 msgstr "Go there"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:169
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:228
 msgid "Go to Home"
 msgstr "Go to Home"
 
@@ -4719,6 +4737,10 @@ msgstr "Handed to the business line"
 #: app/components/phone-agent/flow-editor/flow-meta.ts:76
 msgid "Hang up"
 msgstr "Hang up"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:196
+msgid "Has access"
+msgstr "Has access"
 
 #: app/components/data-table.tsx:188
 #: app/components/data-table.tsx:813
@@ -4834,8 +4856,8 @@ msgstr "Hits"
 msgid "Hold message"
 msgstr "Hold message"
 
-#: app/components/dashboard/dashboard-switcher.tsx:63
-#: app/components/dashboard/dashboard-switcher.tsx:87
+#: app/components/dashboard/dashboard-switcher.tsx:57
+#: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
@@ -5111,7 +5133,7 @@ msgstr ""
 msgid "Its results could not be loaded. Try again later."
 msgstr "Its results could not be loaded. Try again later."
 
-#: app/components/dashboard/blocks/report-block.tsx:153
+#: app/components/dashboard/blocks/report-block.tsx:160
 msgid "Its saved settings could not be read."
 msgstr "Its saved settings could not be read."
 
@@ -5978,7 +6000,7 @@ msgstr "Mute microphone"
 msgid "Muted"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:98
+#: app/components/dashboard/dashboard-switcher.tsx:92
 msgid "My dashboards"
 msgstr "My dashboards"
 
@@ -6000,7 +6022,7 @@ msgstr "My dashboards"
 msgid "Name"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:153
+#: app/components/dashboard/dashboard-switcher.tsx:147
 msgid "Name your dashboard. You can add blocks to it next."
 msgstr "Name your dashboard. You can add blocks to it next."
 
@@ -6083,8 +6105,8 @@ msgstr "New channel"
 msgid "New Customer Journey"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:141
-#: app/components/dashboard/dashboard-switcher.tsx:151
+#: app/components/dashboard/dashboard-switcher.tsx:135
+#: app/components/dashboard/dashboard-switcher.tsx:145
 msgid "New dashboard"
 msgstr "New dashboard"
 
@@ -6320,6 +6342,10 @@ msgstr ""
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:538
 msgid "No issues found"
 msgstr "No issues found"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:298
+msgid "No longer a member of this organization"
+msgstr "No longer a member of this organization"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:549
 msgid "No matching calls"
@@ -6561,6 +6587,10 @@ msgstr "Not now"
 msgid "Not opened yet"
 msgstr "Not opened yet"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:393
+msgid "Not shared with anyone yet."
+msgstr "Not shared with anyone yet."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1507
 msgid "Not used in any notes, comments, or pages"
 msgstr "Not used in any notes, comments, or pages"
@@ -6767,6 +6797,10 @@ msgstr ""
 msgid "Only the owner can rename this dashboard."
 msgstr "Only the owner can rename this dashboard."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:71
+msgid "Only the owner can share this dashboard."
+msgstr "Only the owner can share this dashboard."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
 msgid "Only while you're open"
 msgstr "Only while you're open"
@@ -6867,7 +6901,7 @@ msgstr ""
 msgid "Open reference"
 msgstr "Open reference"
 
-#: app/components/dashboard/blocks/report-block.tsx:132
+#: app/components/dashboard/blocks/report-block.tsx:139
 msgid "Open report"
 msgstr "Open report"
 
@@ -7149,6 +7183,14 @@ msgstr "People"
 msgid "People or departments the agent can transfer to, like a manager. Use numbers that don't forward to the agent."
 msgstr "People or departments the agent can transfer to, like a manager. Use numbers that don't forward to the agent."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:389
+msgid "People with access"
+msgstr "People with access"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:379
+msgid "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
+msgstr "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
+
 #: app/components/settings/cards/organization/billing-card.tsx:418
 #: app/routes/organizations+/create.tsx:1412
 msgid "per month"
@@ -7190,6 +7232,10 @@ msgstr "permissions granted"
 #: app/components/roles/tenant-role-access-manager.tsx:578
 msgid "permissions selected"
 msgstr "permissions selected"
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:168
+msgid "Person"
+msgstr "Person"
 
 #: app/components/organization-invitations.tsx:167
 msgid "Personal invite link"
@@ -8006,6 +8052,10 @@ msgstr "Remove {term}"
 msgid "Remove {value}"
 msgstr "Remove {value}"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:330
+msgid "Remove access for {name}"
+msgstr "Remove access for {name}"
+
 #: app/components/settings/cards/sessions-card.tsx:375
 msgid "Remove access from all devices except this one"
 msgstr ""
@@ -8162,7 +8212,7 @@ msgstr "Reply…"
 msgid "Report"
 msgstr "Report"
 
-#: app/components/dashboard/blocks/report-block.tsx:101
+#: app/components/dashboard/blocks/report-block.tsx:104
 msgid "Report not found"
 msgstr "Report not found"
 
@@ -9171,10 +9221,16 @@ msgstr ""
 msgid "Several people are typing…"
 msgstr "Several people are typing…"
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:229
+#: app/components/dashboard/share-dashboard-dialog.tsx:369
 #: app/components/note/share-note-button.tsx:167
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1010
 msgid "Share"
 msgstr ""
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:375
+msgid "Share “{name}”"
+msgstr "Share “{name}”"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:446
 msgid "Share an update, maintenance notice, or promotion…"
@@ -9204,7 +9260,11 @@ msgstr ""
 msgid "Shared across every page"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:117
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:120
+msgid "Shared by {ownerName} · {accessLabel}"
+msgstr "Shared by {ownerName} · {accessLabel}"
+
+#: app/components/dashboard/dashboard-switcher.tsx:111
 msgid "Shared with me"
 msgstr "Shared with me"
 
@@ -10030,6 +10090,14 @@ msgstr "That change couldn't be saved. Refresh the page and try again."
 msgid "That report is not available in this organization."
 msgstr "That report is not available in this organization."
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:264
+msgid "The access could not be changed. Please try again."
+msgstr "The access could not be changed. Please try again."
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:277
+msgid "The access could not be removed. Please try again."
+msgstr "The access could not be removed. Please try again."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:205
 msgid "The agent answers calls once every step is done."
 msgstr "The agent answers calls once every step is done."
@@ -10101,6 +10169,10 @@ msgstr "The dashboard could not be deleted."
 #: app/components/dashboard/dashboard-name-dialog.tsx:53
 msgid "The dashboard could not be saved. Please try again."
 msgstr "The dashboard could not be saved. Please try again."
+
+#: app/components/dashboard/share-dashboard-dialog.tsx:73
+msgid "The dashboard could not be shared. Please try again."
+msgstr "The dashboard could not be shared. Please try again."
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
@@ -10188,6 +10260,10 @@ msgstr ""
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
+#: app/components/dashboard/share-dashboard-dialog.tsx:158
+msgid "There is no one else in this organization to share with."
+msgstr "There is no one else in this organization to share with."
+
 #: app/routes/_auth+/login.tsx:301
 msgid "There was an issue with your login attempt. Please try again."
 msgstr ""
@@ -10244,7 +10320,7 @@ msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgid "This client will have access to:"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:161
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:220
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "This dashboard does not exist or you do not have access to it."
 
@@ -10317,7 +10393,11 @@ msgstr "This removes the message for everyone in the channel. This can't be undo
 msgid "This replaces your draft, including unsaved changes. It can't be undone."
 msgstr "This replaces your draft, including unsaved changes. It can't be undone."
 
-#: app/components/dashboard/blocks/report-block.tsx:103
+#: app/components/dashboard/blocks/report-block.tsx:111
+msgid "This report was deleted."
+msgstr "This report was deleted."
+
+#: app/components/dashboard/blocks/report-block.tsx:107
 msgid "This report was deleted. Remove the block or add another report."
 msgstr "This report was deleted. Remove the block or add another report."
 
@@ -11147,6 +11227,7 @@ msgstr ""
 msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
+#: app/components/dashboard/access-labels.ts:19
 #: app/components/roles/tenant-role-access-manager.tsx:853
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
@@ -11193,7 +11274,7 @@ msgstr ""
 msgid "View notes from users you have access to"
 msgstr ""
 
-#: app/components/dashboard/dashboard-switcher.tsx:22
+#: app/components/dashboard/access-labels.ts:10
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:512
 msgid "View only"
 msgstr "View only"
