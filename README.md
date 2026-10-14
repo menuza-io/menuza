@@ -52,6 +52,8 @@ management.
 
 - `apps/app` — primary React Router application for operators, organizations,
   sites, billing, and platform features. Runs on port `3001` in development.
+  Each member gets a customizable Home dashboard and can create and share more
+  dashboards (see [Dashboards](./apps/app/README.md#dashboards)).
 - `apps/admin` — React Router platform administration application. It starts
   near port `3005` and chooses a free port when needed.
 - `apps/web` — Astro marketing website. Runs on port `3002`.

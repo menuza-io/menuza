@@ -2660,6 +2660,82 @@ export const SavedReport = sqliteTable(
 	],
 )
 
+// Per-user org dashboards. `config` holds only block types, report/template
+// ids and grid positions, never customer data. A user's `home` dashboard is
+// created lazily on their first change, and each user has at most one per org.
+export const Dashboard = sqliteTable(
+	'Dashboard',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		ownerId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		kind: text({ enum: ['home', 'custom'] }).notNull(),
+		name: text().notNull(),
+		config: text().notNull(), // JSON DashboardConfig
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('Dashboard_organizationId_ownerId_idx').on(
+			table.organizationId,
+			table.ownerId,
+		),
+		uniqueIndex('Dashboard_organizationId_ownerId_home_key')
+			.on(table.organizationId, table.ownerId)
+			.where(sql`${table.kind} = 'home'`),
+	],
+)
+
+// Custom dashboards shared with other org members. Only the owner shares, and
+// a recipient also needs an active membership in the dashboard's org.
+export const DashboardShare = sqliteTable(
+	'DashboardShare',
+	{
+		dashboardId: text()
+			.notNull()
+			.references(() => Dashboard.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		access: text({ enum: ['view', 'edit'] }).notNull(),
+		sharedById: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.dashboardId, table.userId],
+			name: 'DashboardShare_dashboardId_userId_pk',
+		}),
+		index('DashboardShare_userId_idx').on(table.userId),
+	],
+)
+
 // AI phone agent configuration. Holds no caller data: calls, transcripts, and
 // caller numbers live in the regional tenant database.
 export const PhoneAgent = sqliteTable(

@@ -218,6 +218,12 @@ export type NotificationPreferenceInsert = InferInsertModel<
 >
 export type SavedReport = InferSelectModel<typeof schema.SavedReport>
 export type SavedReportInsert = InferInsertModel<typeof schema.SavedReport>
+export type Dashboard = InferSelectModel<typeof schema.Dashboard>
+export type DashboardInsert = InferInsertModel<typeof schema.Dashboard>
+export type DashboardShare = InferSelectModel<typeof schema.DashboardShare>
+export type DashboardShareInsert = InferInsertModel<
+	typeof schema.DashboardShare
+>
 
 export const ConfigFlagLevel = {
 	system: 'system',
