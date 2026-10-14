@@ -73,7 +73,9 @@ Control-plane migration workflow:
 ```sh
 cd packages/database
 npx drizzle-kit generate --name describe_the_change
-npx tsx src/migrate.ts
+cd ../..
+npm run db:migrate:deploy          # LibSQL
+npm run db:migrate:d1:local -w app # Workers local D1
 ```
 
 Tenant migration workflow:
