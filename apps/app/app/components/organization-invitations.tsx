@@ -14,6 +14,7 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Card,
+	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
@@ -47,6 +48,7 @@ import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
 import { type OrganizationRoleOption } from '#app/components/organization-members.tsx'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
+import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 
 const DEFAULT_MEMBER_ROLE_ID = 'org_role_member'
 
@@ -108,12 +110,13 @@ export function OrganizationInvitations({
 	canManageRoles?: boolean
 }) {
 	const { _ } = useLingui()
+	const { roleName, roleDescription } = useRoleLabels()
 	// Create dynamic schema and roles based on available roles
 	const InviteSchema = createInviteSchema()
 	const roles = availableRoles.map((role) => ({
 		value: role.id,
-		label: role.name,
-		description: role.description,
+		label: roleName(role),
+		description: roleDescription(role) ?? '',
 	}))
 	const defaultInviteRoleId = resolveDefaultInviteRoleId(availableRoles)
 
@@ -163,7 +166,7 @@ export function OrganizationInvitations({
 			{/* Invite Link Section */}
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg">
+					<CardTitle>
 						<Trans>Personal invite link</Trans>
 					</CardTitle>
 					<CardDescription>
@@ -256,18 +259,22 @@ export function OrganizationInvitations({
 			{/* Email Invitations Section */}
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg">
+					<CardTitle>
 						<Trans>Invite by email</Trans>
-						{organizationSlug && canManageRoles && (
-							<>
-								{' '}
-								·{' '}
-								<Link to={`/${organizationSlug}/settings/roles`}>
-									<Trans>Manage roles</Trans>
-								</Link>
-							</>
-						)}
 					</CardTitle>
+					{organizationSlug && canManageRoles ? (
+						<CardAction>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="text-muted-foreground"
+								render={<Link to={`/${organizationSlug}/settings/roles`} />}
+							>
+								<Trans>Manage roles</Trans>
+								<Icon name="arrow-right" className="rtl:rotate-180" />
+							</Button>
+						</CardAction>
+					) : null}
 				</CardHeader>
 				<CardContent className="space-y-6">
 					{/* Invitation Form */}
@@ -339,7 +346,7 @@ export function OrganizationInvitations({
 													<ItemTitle>
 														<span>{invitation.email}</span>
 														<Badge variant="secondary" className="text-xs">
-															{invitation.organizationRole.name}
+															{roleName(invitation.organizationRole)}
 														</Badge>
 													</ItemTitle>
 													{invitation.inviter && (

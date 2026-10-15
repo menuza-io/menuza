@@ -21,6 +21,8 @@ export function AnnotatedLayout({ children, className }: AnnotatedLayoutProps) {
 interface AnnotatedSectionProps {
 	className?: string
 	children: ReactNode
+	/** Anchor id, so other parts of the page can link to this section. */
+	id?: string
 	/** Optional left-rail title (Shopify-style annotated settings). */
 	title?: ReactNode
 	/** Optional left-rail description. */
@@ -35,6 +37,7 @@ interface AnnotatedSectionProps {
  * - Content-only: full-width — for cards that already carry their own headers.
  */
 export function AnnotatedSection({
+	id,
 	className,
 	children,
 	title,
@@ -57,8 +60,9 @@ export function AnnotatedSection({
 	if (side) {
 		return (
 			<section
+				id={id}
 				className={cn(
-					'grid grid-cols-1 items-start gap-x-8 gap-y-4 lg:grid-cols-3',
+					'grid scroll-mt-6 grid-cols-1 items-start gap-x-8 gap-y-4 lg:grid-cols-3',
 					className,
 				)}
 			>
@@ -68,5 +72,9 @@ export function AnnotatedSection({
 		)
 	}
 
-	return <section className={cn('min-w-0', className)}>{children}</section>
+	return (
+		<section id={id} className={cn('min-w-0 scroll-mt-6', className)}>
+			{children}
+		</section>
+	)
 }

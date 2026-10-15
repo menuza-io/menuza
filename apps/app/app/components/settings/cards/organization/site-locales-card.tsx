@@ -191,7 +191,7 @@ export function SiteLocalesCard({
 										disabled={isSubmitting}
 										aria-labelledby={`${fields.locales.id}-label`}
 										aria-invalid={Boolean(fields.locales.errors?.length)}
-										className="border-input w-full justify-between font-normal sm:max-w-xs"
+										className="border-input w-full justify-between rounded-md font-normal sm:max-w-xs"
 									>
 										<span className="truncate">{selectedLocalesSummary}</span>
 										<Icon

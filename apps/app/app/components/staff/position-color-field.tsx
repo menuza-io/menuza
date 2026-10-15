@@ -1,17 +1,16 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { FieldLabel, FieldLegend, FieldSet } from '@repo/ui/field'
+import { FieldLegend, FieldSet } from '@repo/ui/field'
 import {
 	POSITION_COLOR_KEYS,
-	PositionDot,
 	type PositionColorKey,
 } from '@repo/ui/position-color'
-import { useId } from 'react'
+import { ColorSwatch } from '#app/components/color-swatch.tsx'
 
 /**
- * Position colors are theme-token keys, so they follow light and dark themes.
- * Native radio inputs give arrow-key navigation and screen-reader names for
- * free; the swatch is the visible label and its name is read aloud.
+ * Position colors are theme-token keys, so they follow light and dark themes:
+ * each swatch paints with its `--position-*` variable rather than a hex value.
+ * Uses the same swatch as the site Accent color picker.
  */
 export function PositionColorField({
 	value,
@@ -23,7 +22,6 @@ export function PositionColorField({
 	legend: string
 }) {
 	const { _ } = useLingui()
-	const name = useId()
 	const labels: Record<PositionColorKey, string> = {
 		neutral: _(t`Neutral`),
 		red: _(t`Red`),
@@ -38,23 +36,40 @@ export function PositionColorField({
 	return (
 		<FieldSet>
 			<FieldLegend variant="label">{legend}</FieldLegend>
-			<div className="flex flex-wrap gap-1">
+			<div
+				role="radiogroup"
+				aria-label={legend}
+				className="flex flex-wrap gap-2"
+				onKeyDown={(event) => {
+					const step =
+						event.key === 'ArrowRight' || event.key === 'ArrowDown'
+							? 1
+							: event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+								? -1
+								: 0
+					if (!step) return
+					event.preventDefault()
+					const count = POSITION_COLOR_KEYS.length
+					const next =
+						POSITION_COLOR_KEYS[
+							(POSITION_COLOR_KEYS.indexOf(value) + step + count) % count
+						]
+					if (!next) return
+					onChange(next)
+					const swatches =
+						event.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]')
+					swatches[POSITION_COLOR_KEYS.indexOf(next)]?.focus()
+				}}
+			>
 				{POSITION_COLOR_KEYS.map((key) => (
-					<FieldLabel
+					<ColorSwatch
 						key={key}
-						className="has-checked:ring-ring has-focus-visible:ring-ring/50 relative grid size-9 cursor-pointer place-items-center rounded-lg ring-1 ring-transparent has-checked:ring-2 has-focus-visible:ring-3"
-					>
-						<input
-							type="radio"
-							name={name}
-							value={key}
-							checked={value === key}
-							onChange={() => onChange(key)}
-							className="sr-only"
-						/>
-						<PositionDot colorKey={key} className="size-4" />
-						<span className="sr-only">{labels[key]}</span>
-					</FieldLabel>
+						label={labels[key]}
+						swatch={`var(--position-${key})`}
+						selected={value === key}
+						radio
+						onSelect={() => onChange(key)}
+					/>
 				))}
 			</div>
 		</FieldSet>

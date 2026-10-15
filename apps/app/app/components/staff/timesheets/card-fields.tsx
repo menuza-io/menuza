@@ -248,7 +248,7 @@ function PositionSelect({
 			>
 				<SelectTrigger
 					id={id}
-					className="h-11 w-full"
+					className="h-11 w-full md:h-8"
 					aria-invalid={error ? true : undefined}
 				>
 					<SelectValue placeholder={_(t`Choose a position`)} />
@@ -304,7 +304,7 @@ function BreakRow({
 						disabled={disabled}
 					>
 						<SelectTrigger
-							className="h-11 w-full"
+							className="h-11 w-full md:h-8"
 							aria-label={_(t`Kind of break ${number}`)}
 						>
 							<SelectValue />

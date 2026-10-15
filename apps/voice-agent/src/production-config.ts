@@ -1,3 +1,9 @@
+import {
+	isLiveKitCloud,
+	modelProviders,
+	usesLiveKitInference,
+} from './model-providers.ts'
+
 const DEV_VOICE_AGENT_TOKEN = 'dev-voice-agent-token-do-not-use-in-prod-32b'
 
 type WorkerEnv = {
@@ -5,6 +11,8 @@ type WorkerEnv = {
 	VOICE_AGENT_TOKEN?: string
 	APP_URL?: string
 	TENANT_API_URL?: string
+	LIVEKIT_URL?: string
+	LIVEKIT_INFERENCE_URL?: string
 	DEEPGRAM_API_KEY?: string
 	GOOGLE_API_KEY?: string
 	CARTESIA_API_KEY?: string
@@ -28,6 +36,22 @@ function isPublicHttpsUrl(value: string | undefined) {
 	}
 }
 
+/**
+ * A missing provider key routes that service through LiveKit Inference, which
+ * only LiveKit Cloud offers. Against a self-hosted server every call would
+ * fail once it tried to listen or speak.
+ */
+export function liveKitInferenceProblem(env: WorkerEnv) {
+	const providers = modelProviders(env)
+	if (!usesLiveKitInference(providers) || isLiveKitCloud(env)) return null
+	const missing = [
+		providers.stt === 'livekit' && 'DEEPGRAM_API_KEY',
+		providers.llm === 'livekit' && 'GOOGLE_API_KEY',
+		providers.tts === 'livekit' && 'CARTESIA_API_KEY',
+	].filter(Boolean)
+	return `${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} not set and LIVEKIT_URL is not LiveKit Cloud, so LiveKit Inference can't stand in`
+}
+
 export function productionConfigProblems(env: WorkerEnv) {
 	if (env.NODE_ENV !== 'production') return []
 	const problems: string[] = []
@@ -42,13 +66,8 @@ export function productionConfigProblems(env: WorkerEnv) {
 			problems.push(`${name} must be a public https:// URL`)
 		}
 	}
-	for (const name of [
-		'DEEPGRAM_API_KEY',
-		'GOOGLE_API_KEY',
-		'CARTESIA_API_KEY',
-	] as const) {
-		if (!env[name]) problems.push(`${name} is not set`)
-	}
+	const inferenceProblem = liveKitInferenceProblem(env)
+	if (inferenceProblem) problems.push(inferenceProblem)
 	return problems
 }
 

@@ -1770,7 +1770,7 @@ function MediaDetailsDialog({
 														className={cn(
 															'h-9 rounded-lg px-3 text-xs font-medium transition-colors',
 															isActive
-																? 'bg-foreground text-background hover:bg-foreground/90 shadow-xs'
+																? 'shadow-xs'
 																: 'text-muted-foreground hover:text-foreground',
 														)}
 													>

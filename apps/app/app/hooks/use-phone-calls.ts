@@ -88,12 +88,16 @@ export function usePhoneCallsClient(orgSlug: string) {
 				}
 				return credentials.current.value
 			}
+			// The API has no trailing-slash routes: `/?q=x` must become `?q=x`,
+			// and a bare `/` the collection root itself.
+			const suffix =
+				path === '/' ? '' : path.startsWith('/?') ? path.slice(1) : path
 			const send = async () => {
 				const { jwt, tenantApiUrl } = await getCredentials()
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
 				if (init.body) headers.set('Content-Type', 'application/json')
-				return fetch(`${tenantApiUrl}/operator/calls${path}`, {
+				return fetch(`${tenantApiUrl}/operator/calls${suffix}`, {
 					...init,
 					headers,
 				})

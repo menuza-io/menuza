@@ -288,7 +288,7 @@ export function ApplicantsPage({
 							onChange={(event) => setSearch(event.target.value)}
 							placeholder={_(t`Search name or job`)}
 							aria-label={_(t`Search applicants`)}
-							className="h-11 ps-8"
+							className="h-11 ps-8 md:h-8"
 						/>
 					</div>
 					<div className="grid grid-cols-2 gap-2 *:last:odd:col-span-2 md:contents">
@@ -332,15 +332,14 @@ export function ApplicantsPage({
 								setParam({ view: picked })
 							}
 						}}
-						variant="outline"
-						spacing={1}
+						variant="segmented"
 						className="md:ms-auto"
 					>
-						<ToggleGroupItem className="h-11" value="board">
+						<ToggleGroupItem className="h-11 md:h-7" value="board">
 							<Icon name="layout-grid" />
 							<Trans>Board</Trans>
 						</ToggleGroupItem>
-						<ToggleGroupItem className="h-11" value="list">
+						<ToggleGroupItem className="h-11 md:h-7" value="list">
 							<Icon name="logs" />
 							<Trans>List</Trans>
 						</ToggleGroupItem>
@@ -357,12 +356,11 @@ export function ApplicantsPage({
 								if (picked)
 									setParam({ stage: picked === 'open' ? null : picked })
 							}}
-							variant="outline"
-							spacing={1}
+							variant="segmented"
 						>
 							{stageChips.map((chip) => (
 								<ToggleGroupItem
-									className="h-11"
+									className="h-11 md:h-7"
 									key={chip.value}
 									value={chip.value}
 								>

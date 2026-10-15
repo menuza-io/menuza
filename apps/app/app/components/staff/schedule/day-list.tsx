@@ -220,7 +220,7 @@ export function DayList(props: BoardProps & { date: string }) {
 			{canWrite ? (
 				<Button
 					variant="outline"
-					className="h-11"
+					className="h-11 md:h-8"
 					onClick={() => onAddShift({ rowKey: OPEN_ROW, date })}
 				>
 					<Icon name="plus" />

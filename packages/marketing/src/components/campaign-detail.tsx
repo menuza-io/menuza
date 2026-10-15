@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Item,
 	ItemContent,
@@ -21,7 +22,8 @@ export function CampaignDetailView({
 	backLabel,
 }: {
 	campaign: CampaignDetail
-	backHref: string
+	/** Optional back link, for apps without a breadcrumb (e.g. Admin). */
+	backHref?: string
 	backLabel?: string
 }) {
 	const { _ } = useLingui()
@@ -55,32 +57,32 @@ export function CampaignDetailView({
 
 	return (
 		<div className="space-y-8">
-			<div className="space-y-4">
-				<Button
-					variant="ghost"
-					size="sm"
-					className="text-muted-foreground -ml-2 gap-1.5"
-					render={<Link to={backHref} />}
-				>
-					<Icon name="arrow-left" className="size-4" />
-					{resolvedBackLabel}
-				</Button>
+			<div className="space-y-3">
+				{backHref ? (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="text-muted-foreground -ms-2 gap-1.5"
+						render={<Link to={backHref} />}
+					>
+						<Icon name="arrow-left" className="size-4 rtl:rotate-180" />
+						{resolvedBackLabel}
+					</Button>
+				) : null}
 
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-					<div className="space-y-2">
-						<div className="flex flex-wrap items-center gap-2">
-							<h1 className="text-2xl tracking-tight">{campaign.name}</h1>
-							<CampaignStatusBadge status={campaign.status} />
-						</div>
-						<p className="text-muted-foreground text-sm">
+				<PageHeader
+					title={campaign.name}
+					description={
+						<>
 							{channelLabel(campaign.channel)}
 							{' · '}
 							{formatAudience(campaign.audience)}
 							{' · '}
 							{_(msg`Sent ${new Date(campaign.createdAt).toLocaleString()}`)}
-						</p>
-					</div>
-				</div>
+						</>
+					}
+					actions={<CampaignStatusBadge status={campaign.status} />}
+				/>
 			</div>
 
 			<section className="space-y-3" aria-labelledby="campaign-message-heading">

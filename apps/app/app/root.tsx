@@ -76,6 +76,8 @@ import {
 	serializeLocaleCookie,
 } from './modules/lingui/lingui.server.ts'
 import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
+import '@fontsource-variable/geist/wght.css'
+import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
@@ -88,8 +90,6 @@ import { type Theme, getTheme } from './utils/theme.server.ts'
 
 export const links: Route.LinksFunction = () => {
 	return [
-		// Preconnect to external services for faster resource loading
-
 		// Preload critical assets
 		{ rel: 'preload', href: iconsHref, as: 'image' },
 
@@ -545,7 +545,7 @@ function Document({
 			className={`${theme} h-full overflow-x-hidden`}
 			style={
 				{
-					'--header-height': 'calc(var(--spacing) * 12)',
+					'--header-height': '2.875rem',
 				} as unknown as React.CSSProperties
 			}
 		>

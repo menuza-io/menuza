@@ -11,7 +11,11 @@ import {
 	createTestCallToken,
 	getLiveKitConfig,
 } from '#app/utils/phone-agent/livekit.server.ts'
-import { getPublishedFlow } from '#app/utils/phone-agent/phone-agent.server.ts'
+import {
+	getPhoneAgent,
+	getPublishedFlow,
+	listPhoneNumbers,
+} from '#app/utils/phone-agent/phone-agent.server.ts'
 import { phoneAgentServerVertical } from '#app/utils/phone-agent/vertical.server.ts'
 import {
 	checkRateLimit,
@@ -29,10 +33,12 @@ export async function loadTestCallPage(
 		orgSlug,
 		ORG_PERMISSIONS.READ_PHONE_AGENT_ANY,
 	)
-	const [scopes, publishedFlow, canStart] = await Promise.all([
+	const [scopes, publishedFlow, canStart, agent, numbers] = await Promise.all([
 		phoneAgentServerVertical.listScopes(orgId),
 		getPublishedFlow(orgId),
 		canUpdatePhoneAgent(request, orgId),
+		getPhoneAgent(orgId),
+		listPhoneNumbers(orgId),
 	])
 	const requested = flowSchema.safeParse(
 		new URL(request.url).searchParams.get('flow'),
@@ -48,6 +54,11 @@ export async function loadTestCallPage(
 				: ('draft' as const),
 		liveKitConfigured: Boolean(getLiveKitConfig()),
 		canStart,
+		agentName: agent.settings.agentName,
+		// Shown on the test phone's dialer; inactive lines don't reach the agent.
+		agentNumbers: numbers
+			.filter((number) => number.isActive)
+			.map(({ scopeId, e164 }) => ({ scopeId, e164 })),
 	}
 }
 

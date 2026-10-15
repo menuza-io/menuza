@@ -90,7 +90,7 @@ export function PersonPicker({
 							disabled={disabled}
 							aria-invalid={error ? true : undefined}
 							aria-label={`${_(t`Who worked`)}: ${value ? staffDisplayName(value, locale) : _(t`Search by name`)}`}
-							className="h-11 w-full justify-between font-normal"
+							className="h-11 w-full justify-between rounded-md font-normal md:h-8"
 						>
 							<span className={value ? '' : 'text-muted-foreground'}>
 								{value ? staffDisplayName(value, locale) : _(t`Search by name`)}

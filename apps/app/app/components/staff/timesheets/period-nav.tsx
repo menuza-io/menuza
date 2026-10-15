@@ -94,7 +94,7 @@ export function PeriodNav({
 					render={
 						<Button
 							variant="outline"
-							className="h-11 min-w-48 justify-between gap-3"
+							className="h-11 min-w-48 justify-between gap-3 rounded-md md:h-8"
 							aria-label={_(t`Choose a date: ${label}`)}
 						>
 							<span className="tabular-nums">{label}</span>

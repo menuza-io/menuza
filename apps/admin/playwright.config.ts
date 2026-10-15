@@ -42,6 +42,9 @@ export default defineConfig({
 			NODE_ENV: 'test',
 			MOCKS: 'true',
 			AUDIT_LOG_SECRET_KEY: 'playwright-only-audit-integrity-key',
+			// Tests seed the default control-plane database from their own
+			// process, so the server must not switch to App's local D1.
+			ADMIN_DEV_SHARE_APP_DB: 'false',
 		},
 	},
 })

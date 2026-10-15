@@ -86,6 +86,7 @@ export function PhoneNumbersSection({
 
 	return (
 		<AnnotatedSection
+			id="phone-numbers"
 			title={<Trans>Phone numbers</Trans>}
 			description={
 				<Trans>

@@ -1,3 +1,4 @@
+import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
@@ -27,9 +28,9 @@ export default function StaffLayout() {
 	return (
 		<ScopeWordingProvider wording={scopeWording}>
 			<StaffClientProvider orgSlug={orgSlug}>
-				<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
+				<WorkspacePage>
 					<Outlet />
-				</div>
+				</WorkspacePage>
 			</StaffClientProvider>
 		</ScopeWordingProvider>
 	)

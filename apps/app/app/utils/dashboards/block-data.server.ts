@@ -14,6 +14,7 @@ import {
 	inArray,
 	OrganizationNote,
 	SavedReport,
+	sql,
 	User,
 	UserImage,
 } from '@repo/database'
@@ -208,22 +209,42 @@ async function loadLeaderboard(
 	})
 }
 
+/** How many members have written at least one note in the organization. */
+export async function loadContributorCount(
+	organizationId: string,
+): Promise<number> {
+	const [row] = await db
+		.select({
+			contributors: sql<number>`count(distinct ${OrganizationNote.createdById})`,
+		})
+		.from(OrganizationNote)
+		.where(eq(OrganizationNote.organizationId, organizationId))
+	return Number(row?.contributors ?? 0)
+}
+
 /**
  * Loads what the built-in blocks of a dashboard show, skipping block types
- * the dashboard does not contain. Onboarding is always the viewer's own.
+ * the dashboard does not contain. `include` loads a type's data even without
+ * its block, for pages that show it elsewhere. Onboarding is always the
+ * viewer's own.
  */
 export async function loadBuiltInBlockData({
 	userId,
 	organization,
 	blocks,
+	include = [],
 	now = new Date(),
 }: {
 	userId: string
 	organization: BlockOrganization
 	blocks: readonly DashboardBlock[]
+	include?: readonly BlockType[]
 	now?: Date
 }): Promise<BuiltInBlockData> {
-	const types = new Set<BlockType>(blocks.map((block) => block.type))
+	const types = new Set<BlockType>([
+		...blocks.map((block) => block.type),
+		...include,
+	])
 	const [notes, onboarding, leaderboard] = await Promise.all([
 		types.has('stats') || types.has('notes-chart')
 			? loadNotesSeries(organization, now)

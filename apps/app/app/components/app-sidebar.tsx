@@ -29,12 +29,12 @@ import { UserRoundPlusIcon } from '@repo/ui/user-round-plus'
 import { motion } from 'motion/react'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useRouteLoaderData, Link } from 'react-router'
+import { useCommandPalette } from '#app/components/command-palette-context.tsx'
 import { NavMain } from '#app/components/nav-main.tsx'
 import { NavUser } from '#app/components/nav-user.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { TeamSwitcher } from '#app/components/team-switcher.tsx'
 import { useChatUnreadCount } from '#app/hooks/use-chat-unread.ts'
-import { useGlobalHotkeys } from '#app/hooks/use-hotkeys.ts'
 import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -43,7 +43,6 @@ import {
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
 import { ChatSidebarLink } from './chat/chat-sidebar-link.tsx'
-import { CommandMenu } from './command-menu'
 import FeedbackModal from './core/feedback-modal'
 import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
@@ -750,48 +749,53 @@ function OrganizationSidebar({
 
 	return (
 		<>
-			<SidebarHeader className="gap-2 px-2 pb-2">
+			<SidebarHeader className="gap-1.5 px-2 pt-2 pb-1">
 				<div
 					className="flex w-full min-w-0 items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-stretch group-data-[collapsible=icon]:gap-1"
 					role="group"
 					aria-label={_(msg`App header`)}
 				>
-					<Link
-						to="/"
-						aria-label={goToHomepageLabel}
-						className="flex min-w-0 flex-1 justify-start overflow-hidden group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center"
-					>
-						<Logo
-							className="h-10 max-w-full gap-1 px-1 text-base transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 motion-reduce:transition-none"
-							aria-hidden="true"
-						/>
-					</Link>
 					{orgSlug ? (
-						<div className="flex shrink-0 items-center ps-1.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:ps-0">
-							<ChatSidebarLink
-								orgSlug={orgSlug}
-								unreadCount={chatUnreadCount}
-								isActive={location.pathname === `/${orgSlug}/chat`}
+						<>
+							<div className="min-w-0 flex-1">
+								<TeamSwitcher />
+							</div>
+							<div className="flex shrink-0 items-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center">
+								<ChatSidebarLink
+									orgSlug={orgSlug}
+									unreadCount={chatUnreadCount}
+									isActive={location.pathname === `/${orgSlug}/chat`}
+								/>
+							</div>
+						</>
+					) : (
+						<Link
+							to="/"
+							aria-label={goToHomepageLabel}
+							className="flex min-w-0 flex-1 justify-start overflow-hidden group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center"
+						>
+							<Logo
+								className="h-8 max-w-full px-1.5 transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 motion-reduce:transition-none"
+								aria-hidden="true"
 							/>
-						</div>
-					) : null}
+						</Link>
+					)}
 				</div>
 				<SidebarMenuButton
 					variant="outline"
 					tooltip={searchNotesLabel}
-					className="text-muted-foreground bg-background rounded-md border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
+					className="text-muted-foreground bg-card border-border-strong rounded-md border text-left font-normal shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent md:hidden"
 					onClick={() => setCommandOpen(true)}
 					aria-haspopup="dialog"
 					aria-expanded={commandOpen}
 					aria-label={searchNotesLabel}
 				>
 					<Icon name="search" className="h-4 w-4 shrink-0" />
-					<span className="min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
-						<Trans>Search menu items...</Trans>
+					<span className="min-w-0 flex-1 truncate group-data-[collapsible=icon]:hidden">
+						<Trans>Search…</Trans>
 					</span>
 					<Kbd className="shrink-0 group-data-[collapsible=icon]:hidden">F</Kbd>
 				</SidebarMenuButton>
-				<TeamSwitcher />
 			</SidebarHeader>
 
 			<SidebarContent>
@@ -858,11 +862,9 @@ export function AppSidebar({
 	const location = useLocation()
 	const [, setHasVisibleFeatureUpdates] = React.useState(true)
 	const [isFeedbackModalOpen, setIsFeedbackModalOpen] = React.useState(false)
-	const [commandOpen, setCommandOpen] = React.useState(false)
+	const { open: commandOpen, setOpen: setCommandOpen } = useCommandPalette()
 	const direction = useDirection()
 	const { isMobile, setOpenMobile } = useSidebar()
-
-	useGlobalHotkeys(setCommandOpen)
 
 	// On mobile the sidebar is an off-canvas sheet, so close it from the click
 	// that navigates instead of leaving it covering the page the user moved to.
@@ -985,7 +987,6 @@ export function AppSidebar({
 					</motion.div>
 				</div>
 			</Sidebar>
-			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 		</>
 	)
 }

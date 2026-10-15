@@ -12,6 +12,7 @@ import {
 	type DashboardBlockPicker,
 } from '#app/utils/dashboards/block-data.server.ts'
 import {
+	type BlockType,
 	type DashboardBlock,
 	type DashboardConfig,
 	type GridItem,
@@ -34,6 +35,8 @@ const EMPTY_STATE_TRIGGER = <Button type="button" />
  * offered where the grid has columns to arrange, not in mobile mode, and not
  * at all when the dashboard is `readOnly`.
  */
+const NO_BLOCK_TYPES: readonly BlockType[] = []
+
 export function DashboardEditor({
 	title,
 	actions,
@@ -44,9 +47,10 @@ export function DashboardEditor({
 	renderBlock,
 	blockTitle,
 	resetConfig,
+	hiddenBlockTypes = NO_BLOCK_TYPES,
 }: {
 	/** Names the open dashboard, such as the dashboard switcher. */
-	title: ReactNode
+	title?: ReactNode
 	/** Further header controls, after the edit controls. */
 	actions?: ReactNode
 	readOnly?: boolean
@@ -57,6 +61,11 @@ export function DashboardEditor({
 	blockTitle?: (block: DashboardBlock) => string | null
 	/** What "Reset to default" restores; without it there is no reset. */
 	resetConfig?: () => DashboardConfig
+	/**
+	 * Block types the page shows elsewhere (Home's KPI row replaces stats):
+	 * hidden in the grid, kept in the saved config, and not offered to add.
+	 */
+	hiddenBlockTypes?: readonly BlockType[]
 }) {
 	const editor = useDashboardEditor({ config, resetConfig })
 	const {
@@ -70,15 +79,18 @@ export function DashboardEditor({
 	const { blocks, layouts } = editor.config
 	const [fitsGrid, setFitsGrid] = useState(false)
 	const editable = fitsGrid && !readOnly
-	const hidden = useMemo(
-		() =>
-			// An onboarding block added since the page data loaded has no progress
-			// yet. It is only offered while it would be shown, so it stays visible.
+	const hidden = useMemo(() => {
+		// An onboarding block added since the page data loaded has no progress
+		// yet. It is only offered while it would be shown, so it stays visible.
+		const fromData =
 			blockData.onboarding || !picker.onboardingAvailable
 				? hiddenBlockIds(blocks, blockData)
-				: [],
-		[blocks, blockData, picker.onboardingAvailable],
-	)
+				: []
+		const byType = blocks
+			.filter((block) => hiddenBlockTypes.includes(block.type))
+			.map((block) => block.id)
+		return [...fromData, ...byType]
+	}, [blocks, blockData, hiddenBlockTypes, picker.onboardingAvailable])
 
 	useEffect(() => {
 		if (editing && !editable) stopEditing()
@@ -107,6 +119,7 @@ export function DashboardEditor({
 		<AddBlockDialog
 			blocks={blocks}
 			picker={picker}
+			excludeTypes={hiddenBlockTypes}
 			onAdd={onAdd}
 			trigger={trigger}
 			renderSections={(select) => (

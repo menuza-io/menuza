@@ -28,13 +28,13 @@ export function ChatSidebarLink({
 			aria-current={isActive ? 'page' : undefined}
 			data-testid="sidebar-team-chat"
 			className={cn(
-				'relative flex h-9 w-auto shrink-0 items-center gap-2 rounded-md px-2 text-sm',
+				'relative flex size-8 shrink-0 items-center justify-center rounded-md',
 				'text-sidebar-foreground ring-sidebar-ring outline-none',
 				'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
 				'focus-visible:ring-2',
 				isActive &&
-					'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
-				'group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2!',
+					'bg-card text-foreground ring-border dark:bg-accent shadow-xs ring-1 dark:not-focus-visible:ring-0',
+				'group-data-[collapsible=icon]:w-full',
 			)}
 		>
 			<Icon name="message-square" className="size-4 shrink-0" aria-hidden />

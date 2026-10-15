@@ -273,7 +273,7 @@ function LinkFileMediaField({
 				<Button
 					type="button"
 					variant="outline"
-					className="h-24 w-full justify-center border-dashed"
+					className="h-24 w-full justify-center rounded-lg border-dashed"
 					onClick={() => setPickerOpen(true)}
 				>
 					<div className="text-kumo-subtle flex flex-col items-center gap-1.5">

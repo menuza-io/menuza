@@ -176,7 +176,7 @@ function SalesRow({
 					placeholder="0.00"
 					aria-invalid={error ? true : undefined}
 					aria-describedby={error ? `${inputId}-error` : undefined}
-					className="h-11 w-32 text-end tabular-nums"
+					className="h-11 w-32 text-end tabular-nums md:h-8"
 					onChange={(event) => {
 						setText(event.target.value)
 						setProblem(null)

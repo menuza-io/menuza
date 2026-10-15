@@ -4,19 +4,28 @@ import { cn } from './../lib/utils'
 
 function Frame({
 	className,
-	stackedPanels = false,
+	variant = 'default',
+	// Kept for API compatibility: panels are always hairline-stacked now.
+	stackedPanels: ignoredStackedPanels = false,
 	...props
-}: React.ComponentProps<'div'> & { stackedPanels?: boolean }) {
+}: React.ComponentProps<'div'> & {
+	/**
+	 * `default`: one bordered surface with hairline-separated sections.
+	 * `inset`: a tinted shell holding raised panels (e.g. flow-editor nodes).
+	 */
+	variant?: 'default' | 'inset'
+	stackedPanels?: boolean
+}) {
 	return (
 		<div
 			className={cn(
-				'bg-muted/50 relative flex flex-col rounded-md p-1',
-				stackedPanels
-					? '*:has-[+[data-slot=frame-panel]]:rounded-b-none *:has-[+[data-slot=frame-panel]]:before:hidden dark:*:has-[+[data-slot=frame-panel]]:before:block *:[[data-slot=frame-panel]+[data-slot=frame-panel]]:rounded-t-none *:[[data-slot=frame-panel]+[data-slot=frame-panel]]:border-t-0 dark:*:[[data-slot=frame-panel]+[data-slot=frame-panel]]:before:hidden'
-					: '*:[[data-slot=frame-panel]+[data-slot=frame-panel]]:mt-1',
+				variant === 'inset'
+					? 'bg-muted/50 relative flex flex-col rounded-lg p-1 *:[[data-slot=frame-panel]+[data-slot=frame-panel]]:mt-1'
+					: 'bg-card shadow-card relative flex flex-col overflow-hidden rounded-xl border *:[[data-slot=frame-panel-header]+[data-slot=frame-panel]]:border-t *:[[data-slot=frame-panel]+[data-slot=frame-panel]]:border-t',
 				className,
 			)}
 			data-slot="frame"
+			data-frame-variant={variant}
 			{...props}
 		/>
 	)
@@ -26,7 +35,8 @@ function FramePanel({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
 		<div
 			className={cn(
-				'bg-background relative rounded-sm border bg-clip-padding p-5 shadow-xs before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-sm)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:bg-clip-border dark:before:shadow-[0_-1px_--theme(--color-white/8%)]',
+				'relative p-5',
+				'in-data-[frame-variant=inset]:bg-card in-data-[frame-variant=inset]:rounded-md in-data-[frame-variant=inset]:border in-data-[frame-variant=inset]:shadow-xs',
 				className,
 			)}
 			data-slot="frame-panel"

@@ -21,6 +21,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	hasOnlyTenantRolePermissions,
 	TENANT_ROLE_PERMISSION_IDS,
@@ -33,6 +34,13 @@ import {
 	requireBuiltInOrganizationAdmin,
 	roleInputSchema,
 } from './roles.server.ts'
+
+const capitalize = (value: string) =>
+	value.charAt(0).toUpperCase() + value.slice(1)
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => capitalize(data.role.name),
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { organization } = await requireBuiltInOrganizationAdmin(

@@ -5,6 +5,7 @@ import { type ReactNode } from 'react'
 import { useLocation } from 'react-router'
 import { useAIPanel } from '#app/components/ai/ai-panel-context.tsx'
 import { AppSidebar } from '#app/components/app-sidebar.tsx'
+import { CommandPaletteProvider } from '#app/components/command-palette-context.tsx'
 import { SiteHeader } from '#app/components/site-header.tsx'
 import { EpicProgress } from './progress-bar'
 
@@ -22,12 +23,7 @@ function AIPanelDockSpacer() {
 
 	if (!showSpacer) return null
 
-	return (
-		<div
-			className="m-2 ml-0 hidden h-[calc(100svh-1rem)] w-[420px] shrink-0 self-start md:block"
-			aria-hidden="true"
-		/>
-	)
+	return <div className="hidden w-105 shrink-0 md:block" aria-hidden="true" />
 }
 
 type MarketingLayoutProps = {
@@ -48,19 +44,19 @@ export function MarketingLayout({
 	const { pathname } = useLocation()
 	const isConversation = /^\/[^/]+\/(?:mailbox|chat)\/?$/.test(pathname)
 	return (
-		<>
+		<CommandPaletteProvider>
 			<SidebarProvider
 				className={cn('min-h-0 flex-1', isConversation && 'h-dvh max-h-dvh')}
 				open={!isCollapsed}
 				style={
 					{
-						'--sidebar-width': 'calc(var(--spacing) * 60)',
-						'--header-height': 'calc(var(--spacing) * 12)',
+						'--sidebar-width': '15.75rem',
+						'--header-height': '2.875rem',
 					} as React.CSSProperties
 				}
 			>
 				<AppSidebar
-					variant="inset"
+					variant="sidebar"
 					onboardingProgress={onboardingProgress}
 					trialStatus={trialStatus || undefined}
 					extensionId={extensionId || undefined}
@@ -68,13 +64,17 @@ export function MarketingLayout({
 				{/* Main column: the inset (sidebar + header + page content). */}
 				<SidebarInset
 					role="main"
-					className={cn('min-w-0', isConversation && 'min-h-0 overflow-hidden')}
+					className={cn(
+						'min-w-0 overflow-x-clip',
+						isConversation && 'min-h-0 overflow-hidden',
+					)}
 				>
 					<SiteHeader isCollapsed={isCollapsed} />
 					<div
 						className={cn(
-							'@container/main flex flex-1 flex-col gap-2 px-4 md:px-2',
-							isConversation && 'min-h-0',
+							'bg-card dark:bg-background @container/main flex flex-1 flex-col gap-2',
+							// Chat and mailbox fill the viewport edge to edge; other pages get gutters.
+							isConversation ? 'min-h-0' : 'px-2 pb-4 md:px-3 md:pb-6',
 						)}
 					>
 						{children}
@@ -83,7 +83,7 @@ export function MarketingLayout({
 				<AIPanelDockSpacer />
 			</SidebarProvider>
 			<EpicProgress />
-		</>
+		</CommandPaletteProvider>
 	)
 }
 

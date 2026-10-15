@@ -480,8 +480,10 @@ test.describe('Accessibility', () => {
 		await navigate('/:slug', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// Open command menu (modal dialog)
-		const searchButton = page.getByRole('button', { name: /^search$/i })
+		// Open command menu (modal dialog) from the header search
+		const searchButton = page.getByRole('button', {
+			name: /search or jump to/i,
+		})
 		await searchButton.click()
 
 		// Verify dialog has proper ARIA attributes

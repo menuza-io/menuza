@@ -72,7 +72,7 @@ export function DateRangeField({
 							id={id}
 							type="button"
 							variant="outline"
-							className="h-11 w-full justify-between gap-3 font-normal"
+							className="h-11 w-full justify-between gap-3 rounded-md font-normal md:h-8"
 							aria-invalid={error ? true : undefined}
 						>
 							<span className={text ? 'tabular-nums' : 'text-muted-foreground'}>

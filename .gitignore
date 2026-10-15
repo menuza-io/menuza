@@ -98,10 +98,11 @@ apps/app/tests/database/
 .impeccable/
 apps/app/tests/fixtures/openimg/**/mock-bucket/orgs/
 
-
 # Local verification artifacts
 /other/screenshots-sites/
 /other/videos/
 
-# Bugpatrol: local data and screenshots of the real app
+# Bugpatrol: local exploration output (sessions, screenshots, recorded routines)
 .bugpatrol/runs/
+.bugpatrol/routines/
+.bugpatrol/appmap.json

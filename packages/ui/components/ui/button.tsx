@@ -5,33 +5,34 @@ import * as React from 'react'
 import { cn } from '../../lib/utils'
 
 const buttonVariants = cva(
-	"focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-[0.9375rem] font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-[3px] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[1.125rem]",
+	"focus-visible:border-ring focus-visible:ring-ring aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 group/button ease-out-quint inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-[13px] font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform] duration-150 outline-none select-none focus-visible:ring-[3px] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 in-data-[slot=button-group]:rounded-md aria-invalid:ring-[3px] motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 	{
 		variants: {
 			variant: {
-				default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+				default:
+					'bg-primary text-primary-foreground shadow-[inset_0_-1px_0_oklch(0_0_0/12%)] hover:bg-[color-mix(in_oklab,var(--primary)_88%,var(--foreground))] active:bg-[color-mix(in_oklab,var(--primary)_78%,var(--foreground))]',
 				outline:
-					'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground',
+					'border-border-strong bg-card text-foreground hover:bg-muted active:bg-accent aria-expanded:bg-muted dark:bg-card dark:hover:bg-muted shadow-xs',
 				secondary:
-					'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+					'bg-secondary text-secondary-foreground hover:bg-accent aria-expanded:bg-accent',
 				ghost:
-					'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground',
+					'hover:bg-muted hover:text-foreground active:bg-accent aria-expanded:bg-accent aria-expanded:text-foreground dark:hover:bg-accent',
 				destructive:
-					'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
-				link: 'text-primary underline-offset-4 hover:underline',
+					'bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/15 dark:hover:bg-destructive/25 dark:focus-visible:ring-destructive/40',
+				link: 'text-primary underline-offset-4 hover:underline active:scale-100',
 			},
 			size: {
 				default:
-					'h-11 gap-2 px-4 has-data-[icon=inline-end]:pr-3.5 has-data-[icon=inline-start]:pl-3.5',
-				xs: "relative h-8 gap-1.5 rounded-[min(var(--radius-md),10px)] px-3 text-sm after:absolute after:-inset-2 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 md:after:hidden [&_svg:not([class*='size-'])]:size-4",
-				sm: "relative h-9 gap-1.5 px-3.5 text-sm after:absolute after:-inset-2 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 md:after:hidden [&_svg:not([class*='size-'])]:size-4",
-				lg: 'h-12 gap-2 px-5 text-base has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4',
-				icon: 'relative size-11 after:absolute after:-inset-2 md:after:hidden',
+					'relative h-8 gap-1.5 px-3 after:absolute after:-inset-1.5 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 md:after:hidden',
+				xs: "relative h-6 gap-1 px-2 text-xs after:absolute after:-inset-2.5 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 md:after:hidden [&_svg:not([class*='size-'])]:size-3.5",
+				sm: "relative h-7 gap-1.5 px-2.5 after:absolute after:-inset-2 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 md:after:hidden [&_svg:not([class*='size-'])]:size-4",
+				lg: 'h-9 gap-2 px-3.5 text-sm has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3',
+				icon: 'relative size-8 after:absolute after:-inset-1.5 md:after:hidden',
 				'icon-xs':
-					"relative size-8 rounded-[min(var(--radius-md),10px)] after:absolute after:-inset-2 in-data-[slot=button-group]:rounded-lg md:after:hidden [&_svg:not([class*='size-'])]:size-4",
+					"relative size-6 after:absolute after:-inset-2.5 md:after:hidden [&_svg:not([class*='size-'])]:size-3.5",
 				'icon-sm':
-					'relative size-9 rounded-[min(var(--radius-md),12px)] after:absolute after:-inset-2 in-data-[slot=button-group]:rounded-lg md:after:hidden',
-				'icon-lg': 'size-12',
+					'relative size-7 after:absolute after:-inset-2 md:after:hidden',
+				'icon-lg': 'size-9',
 			},
 		},
 		defaultVariants: {

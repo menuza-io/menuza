@@ -1,3 +1,4 @@
+import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLocation } from 'react-router'
 
 export default function MarketingLayout() {
@@ -13,8 +14,8 @@ export default function MarketingLayout() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
+		<WorkspacePage>
 			<Outlet />
-		</div>
+		</WorkspacePage>
 	)
 }

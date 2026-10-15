@@ -140,7 +140,7 @@ export function NavMain({
 											<SidebarMenuButton
 												onClick={() => toggleItem(item.title)}
 												tooltip={item.title}
-												isActive={item.isActive}
+												isActive={item.isActive && !isOpen}
 												aria-expanded={isOpen}
 												className="w-full justify-between"
 												onMouseEnter={() =>
@@ -165,7 +165,7 @@ export function NavMain({
 												</div>
 												<Icon
 													name={isOpen ? 'chevron-down' : 'chevron-right'}
-													className="h-4 w-4 rtl:rotate-180"
+													className="h-4 w-4 opacity-60 rtl:rotate-180"
 												/>
 											</SidebarMenuButton>
 											{isOpen && (

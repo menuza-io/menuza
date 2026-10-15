@@ -31,7 +31,6 @@ import {
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
-import { Item, ItemContent, ItemDescription, ItemHeader } from '@repo/ui/item'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -278,39 +277,46 @@ function BoardCard({
 	const others = BOARD_STAGES.filter((option) => option !== stage)
 
 	return (
-		<li ref={setNodeRef} className={cn(isDragging && 'opacity-40')}>
-			<Item variant="outline" size="sm">
-				<ItemHeader>
-					<div className="flex min-w-0 items-center gap-1">
+		<li
+			ref={setNodeRef}
+			className={cn('group/card', isDragging && 'opacity-40')}
+		>
+			<div className="bg-card shadow-card hover:border-border-strong flex flex-col gap-2 rounded-lg border p-3 transition-[border-color,box-shadow] duration-150 hover:shadow-xs">
+				<div className="flex min-w-0 items-center gap-2">
+					{/* The initials double as the drag handle: it shows on hover,
+					    keyboard focus, and always on touch screens. */}
+					<div className="relative size-6 shrink-0">
+						<ApplicantInitials name={name} />
 						{canMove ? (
 							<Button
 								type="button"
 								variant="ghost"
-								size="icon-sm"
+								size="icon-xs"
 								ref={setActivatorNodeRef}
 								{...attributes}
 								{...listeners}
 								aria-label={_(t`Move ${name}`)}
-								className="cursor-grab touch-none active:cursor-grabbing"
+								className="bg-muted text-muted-foreground hover:bg-accent hover:text-foreground absolute inset-0 size-6 cursor-grab touch-none rounded-full opacity-0 group-hover/card:opacity-100 focus-visible:opacity-100 active:scale-100 active:cursor-grabbing pointer-coarse:opacity-100"
 							>
-								<Icon name="grip-vertical" className="size-4" />
+								<Icon name="grip-vertical" className="size-3.5" />
 							</Button>
 						) : null}
-						<Link
-							to={href}
-							className="focus-visible:ring-ring/50 min-w-0 truncate rounded-sm text-sm font-medium outline-none focus-visible:ring-3"
-						>
-							{name}
-						</Link>
 					</div>
+					<Link
+						to={href}
+						className="focus-visible:ring-ring/50 min-w-0 flex-1 truncate rounded-sm text-sm font-medium outline-none focus-visible:ring-3"
+					>
+						{name}
+					</Link>
 					{canMove ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								render={
 									<Button
 										variant="ghost"
-										size="icon-sm"
+										size="icon-xs"
 										aria-label={_(t`Move ${name} to another stage`)}
+										className="text-muted-foreground -me-1 opacity-0 group-hover/card:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100"
 									>
 										<Icon name="ellipsis" />
 									</Button>
@@ -333,27 +339,66 @@ function BoardCard({
 							</DropdownMenuContent>
 						</DropdownMenu>
 					) : null}
-				</ItemHeader>
-				<ItemContent>
-					<ItemDescription>
-						{[applicant.postingTitle, scopeName].filter(Boolean).join(' · ')}
-					</ItemDescription>
-					<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-						<span>{relative(applicant.createdAt)}</span>
-						{applicant.interviewAt !== null ? (
-							<span className="text-foreground inline-flex items-center gap-1">
-								<Icon name="calendar" className="size-3.5 shrink-0" />
-								{labels.formatWhen(applicant.interviewAt, timeZone)}
-							</span>
-						) : null}
+				</div>
+
+				<div className="flex flex-col gap-2 ps-8">
+					<p className="text-muted-foreground truncate text-xs">
+						{[applicant.postingTitle, scopeName, relative(applicant.createdAt)]
+							.filter(Boolean)
+							.join(' · ')}
 					</p>
-					<div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-						<FlagNote count={applicant.flagCount} />
-						<FitLabel score={applicant.screenerScore} labels={labels} />
-					</div>
-				</ItemContent>
-			</Item>
+					{applicant.interviewAt !== null ? (
+						<Badge variant="outline" className="w-fit">
+							<Icon name="calendar" />
+							{labels.formatWhen(applicant.interviewAt, timeZone)}
+						</Badge>
+					) : null}
+					{applicant.screenerScore !== null || applicant.flagCount > 0 ? (
+						<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+							<FitLabel
+								score={applicant.screenerScore}
+								labels={labels}
+								appearance="badge"
+							/>
+							<FlagNote count={applicant.flagCount} />
+						</div>
+					) : null}
+				</div>
+			</div>
 		</li>
+	)
+}
+
+// Soft tints from the position palette; the same name always gets the same one.
+const INITIALS_TINTS = [
+	'bg-position-blue/15 text-position-blue',
+	'bg-position-violet/15 text-position-violet',
+	'bg-position-teal/15 text-position-teal',
+	'bg-position-orange/15 text-position-orange',
+	'bg-position-pink/15 text-position-pink',
+	'bg-position-green/15 text-position-green',
+] as const
+
+function ApplicantInitials({ name }: { name: string }) {
+	const initials =
+		name
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part) => part.charAt(0).toUpperCase())
+			.join('') || '?'
+	let hash = 0
+	for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+	return (
+		<span
+			aria-hidden="true"
+			className={cn(
+				'flex size-6 items-center justify-center rounded-full text-[10px] font-semibold',
+				INITIALS_TINTS[hash % INITIALS_TINTS.length],
+			)}
+		>
+			{initials}
+		</span>
 	)
 }
 

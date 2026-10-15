@@ -364,7 +364,7 @@ export default function StaffTeamRoute() {
 						onChange={(event) => setSearch(event.target.value)}
 						placeholder={_(t`Search name, email or phone`)}
 						aria-label={_(t`Search team`)}
-						className="h-11 ps-8"
+						className="h-11 ps-8 md:h-8"
 					/>
 				</div>
 				<div className="grid grid-cols-2 gap-2 *:last:odd:col-span-2 md:contents">

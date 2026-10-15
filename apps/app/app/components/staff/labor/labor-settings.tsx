@@ -165,7 +165,7 @@ export function LaborSettingsForm({
 										dir="ltr"
 										value={standards[position.id] ?? ''}
 										placeholder="–"
-										className="h-11 w-24 text-end tabular-nums"
+										className="h-11 w-24 text-end tabular-nums md:h-8"
 										onChange={(event) => {
 											const value = event.target.value
 											setStandards((current) => ({

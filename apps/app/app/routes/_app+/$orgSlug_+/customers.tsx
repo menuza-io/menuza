@@ -39,6 +39,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { WorkspacePage, WorkspaceToolbar } from '@repo/ui/workspace'
 import { formatDistanceToNow } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
@@ -433,13 +434,13 @@ export default function CustomersRoute() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
+		<WorkspacePage>
 			<PageHeader
 				title="Customers"
-				description="Search, filter, and update customer contact details."
+				description="Search, filter, and update customer contact details. Data is served from your tenant region."
 			/>
 
-			<div className="mt-8 space-y-4">
+			<WorkspaceToolbar>
 				<Filters
 					fields={CUSTOMER_FILTER_FIELDS}
 					query={filterQuery}
@@ -447,180 +448,180 @@ export default function CustomersRoute() {
 					showClear
 					disabled={loading}
 				/>
+			</WorkspaceToolbar>
 
-				{loading ? (
-					<Frame className="w-full">
-						<Table variant="card">
-							<TableHeader>
-								<TableRow>
-									<TableHead>Name</TableHead>
-									<TableHead className="hidden sm:table-cell">Phone</TableHead>
-									<TableHead className="hidden md:table-cell">Email</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead className="hidden lg:table-cell">Joined</TableHead>
-									<TableHead className="w-16">
-										<span className="sr-only">Actions</span>
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{Array.from({ length: 5 }).map((_, index) => (
-									<TableRow key={index}>
-										<TableCell>
-											<Skeleton className="h-4 w-32" />
-										</TableCell>
-										<TableCell className="hidden sm:table-cell">
-											<Skeleton className="h-4 w-24" />
-										</TableCell>
-										<TableCell className="hidden md:table-cell">
-											<Skeleton className="h-4 w-36" />
-										</TableCell>
-										<TableCell>
-											<Skeleton className="h-5 w-20" />
-										</TableCell>
-										<TableCell className="hidden lg:table-cell">
-											<Skeleton className="h-4 w-24" />
-										</TableCell>
-										<TableCell>
-											<Skeleton className="ml-auto h-8 w-8" />
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</Frame>
-				) : error ? (
-					<p className="text-destructive text-sm">{error}</p>
-				) : filteredCustomers.length === 0 ? (
-					<EmptyState
-						title="No customers found"
-						description={
-							hasFilters
-								? 'Try adjusting your filters or clear them to see all customers.'
-								: 'Customers appear here after they sign up on your site.'
-						}
-						icons={['users', 'user', 'search']}
-					/>
-				) : (
-					<Frame className="w-full">
-						<Table variant="card">
-							<TableHeader>
-								<TableRow>
-									<TableHead>Name</TableHead>
-									<TableHead className="hidden sm:table-cell">Phone</TableHead>
-									<TableHead className="hidden md:table-cell">Email</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead className="hidden lg:table-cell">Joined</TableHead>
-									<TableHead className="w-16">
-										<span className="sr-only">Actions</span>
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{filteredCustomers.map((customer) => (
-									<CustomerRow
-										key={customer.id}
-										customer={customer}
-										onEdit={openEditSheet}
-									/>
-								))}
-							</TableBody>
-							<TableFooter>
-								<TableRow>
-									<TableCell colSpan={5}>
-										{filteredCustomers.length === 1
-											? '1 customer'
-											: `${filteredCustomers.length} customers`}
+			{loading ? (
+				<Frame className="w-full">
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>Name</TableHead>
+								<TableHead className="hidden sm:table-cell">Phone</TableHead>
+								<TableHead className="hidden md:table-cell">Email</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead className="hidden lg:table-cell">Joined</TableHead>
+								<TableHead className="w-16">
+									<span className="sr-only">Actions</span>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{Array.from({ length: 5 }).map((_, index) => (
+								<TableRow key={index}>
+									<TableCell>
+										<Skeleton className="h-4 w-32" />
 									</TableCell>
-									<TableCell />
+									<TableCell className="hidden sm:table-cell">
+										<Skeleton className="h-4 w-24" />
+									</TableCell>
+									<TableCell className="hidden md:table-cell">
+										<Skeleton className="h-4 w-36" />
+									</TableCell>
+									<TableCell>
+										<Skeleton className="h-5 w-20" />
+									</TableCell>
+									<TableCell className="hidden lg:table-cell">
+										<Skeleton className="h-4 w-24" />
+									</TableCell>
+									<TableCell>
+										<Skeleton className="ml-auto h-8 w-8" />
+									</TableCell>
 								</TableRow>
-							</TableFooter>
-						</Table>
-					</Frame>
-				)}
+							))}
+						</TableBody>
+					</Table>
+				</Frame>
+			) : error ? (
+				<p className="text-destructive text-sm">{error}</p>
+			) : filteredCustomers.length === 0 ? (
+				<EmptyState
+					title="No customers found"
+					description={
+						hasFilters
+							? 'Try adjusting your filters or clear them to see all customers.'
+							: 'Customers appear here after they sign up on your site.'
+					}
+					icons={['users', 'user', 'search']}
+				/>
+			) : (
+				<Frame className="w-full">
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>Name</TableHead>
+								<TableHead className="hidden sm:table-cell">Phone</TableHead>
+								<TableHead className="hidden md:table-cell">Email</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead className="hidden lg:table-cell">Joined</TableHead>
+								<TableHead className="w-16">
+									<span className="sr-only">Actions</span>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{filteredCustomers.map((customer) => (
+								<CustomerRow
+									key={customer.id}
+									customer={customer}
+									onEdit={openEditSheet}
+								/>
+							))}
+						</TableBody>
+						<TableFooter>
+							<TableRow>
+								<TableCell colSpan={5}>
+									{filteredCustomers.length === 1
+										? '1 customer'
+										: `${filteredCustomers.length} customers`}
+								</TableCell>
+								<TableCell />
+							</TableRow>
+						</TableFooter>
+					</Table>
+				</Frame>
+			)}
 
-				<Sheet
-					open={editingCustomer !== null}
-					onOpenChange={(open) => {
-						if (!open && !isSaving) {
-							setEditingCustomer(null)
-						}
-					}}
+			<Sheet
+				open={editingCustomer !== null}
+				onOpenChange={(open) => {
+					if (!open && !isSaving) {
+						setEditingCustomer(null)
+					}
+				}}
+			>
+				<SheetContent
+					side="right"
+					className="flex w-full flex-col gap-0 sm:max-w-lg"
 				>
-					<SheetContent
-						side="right"
-						className="flex w-full flex-col gap-0 sm:max-w-lg"
-					>
-						<SheetHeader className="border-b">
-							<SheetTitle>Edit customer</SheetTitle>
-							<SheetDescription>
-								Update name and email. Phone number is managed through site
-								sign-in.
-							</SheetDescription>
-						</SheetHeader>
+					<SheetHeader className="border-b">
+						<SheetTitle>Edit customer</SheetTitle>
+						<SheetDescription>
+							Update name and email. Phone number is managed through site
+							sign-in.
+						</SheetDescription>
+					</SheetHeader>
 
-						{editingCustomer ? (
-							<form
-								onSubmit={handleSave}
-								className="flex min-h-0 flex-1 flex-col"
-							>
-								<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-									<div className="space-y-2">
-										<Label htmlFor="customer-name">Name</Label>
-										<Input
-											id="customer-name"
-											value={editName}
-											onChange={(e) => setEditName(e.target.value)}
-											required
-											autoComplete="name"
-										/>
-									</div>
-
-									<div className="space-y-2">
-										<Label htmlFor="customer-email">Email</Label>
-										<Input
-											id="customer-email"
-											type="email"
-											value={editEmail}
-											onChange={(e) => setEditEmail(e.target.value)}
-											placeholder="Optional"
-											autoComplete="email"
-										/>
-									</div>
-
-									{editingCustomer.phone ? (
-										<div className="space-y-1">
-											<Label className="text-muted-foreground">Phone</Label>
-											<p className="text-sm">{editingCustomer.phone}</p>
-										</div>
-									) : null}
-
-									{saveError ? (
-										<p className="text-destructive text-sm">{saveError}</p>
-									) : null}
+					{editingCustomer ? (
+						<form
+							onSubmit={handleSave}
+							className="flex min-h-0 flex-1 flex-col"
+						>
+							<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+								<div className="space-y-2">
+									<Label htmlFor="customer-name">Name</Label>
+									<Input
+										id="customer-name"
+										value={editName}
+										onChange={(e) => setEditName(e.target.value)}
+										required
+										autoComplete="name"
+									/>
 								</div>
 
-								<SheetFooter className="border-t sm:flex-row sm:justify-end">
-									<Button
-										type="button"
-										variant="outline"
-										disabled={isSaving}
-										onClick={() => setEditingCustomer(null)}
-									>
-										Cancel
-									</Button>
-									<Button
-										type="submit"
-										disabled={isSaving || editName.trim() === ''}
-									>
-										{isSaving ? 'Saving...' : 'Save changes'}
-									</Button>
-								</SheetFooter>
-							</form>
-						) : null}
-					</SheetContent>
-				</Sheet>
-			</div>
-		</div>
+								<div className="space-y-2">
+									<Label htmlFor="customer-email">Email</Label>
+									<Input
+										id="customer-email"
+										type="email"
+										value={editEmail}
+										onChange={(e) => setEditEmail(e.target.value)}
+										placeholder="Optional"
+										autoComplete="email"
+									/>
+								</div>
+
+								{editingCustomer.phone ? (
+									<div className="space-y-1">
+										<Label className="text-muted-foreground">Phone</Label>
+										<p className="text-sm">{editingCustomer.phone}</p>
+									</div>
+								) : null}
+
+								{saveError ? (
+									<p className="text-destructive text-sm">{saveError}</p>
+								) : null}
+							</div>
+
+							<SheetFooter className="border-t sm:flex-row sm:justify-end">
+								<Button
+									type="button"
+									variant="outline"
+									disabled={isSaving}
+									onClick={() => setEditingCustomer(null)}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									disabled={isSaving || editName.trim() === ''}
+								>
+									{isSaving ? 'Saving...' : 'Save changes'}
+								</Button>
+							</SheetFooter>
+						</form>
+					) : null}
+				</SheetContent>
+			</Sheet>
+		</WorkspacePage>
 	)
 }

@@ -4,7 +4,15 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import { FieldLegend, FieldSet } from '@repo/ui/field'
-import { Item, ItemGroup } from '@repo/ui/item'
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemGroup,
+	ItemMedia,
+	ItemTitle,
+} from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useMemo, useState, type FormEvent } from 'react'
@@ -303,30 +311,30 @@ export default function ImportMembersRoute() {
 						{members.map((member) => {
 							const already = linked.has(member.userId)
 							return (
-								<Item key={member.userId} variant="outline" render={<li />}>
-									<div className="w-full">
-										<Label className="flex min-h-14 items-center gap-3 px-3 py-2">
+								<li key={member.userId}>
+									<Item variant="outline" render={<label />}>
+										<ItemMedia>
 											<Checkbox
 												checked={selected.has(member.userId)}
 												disabled={already}
 												onCheckedChange={(on) => toggle(member.userId, on)}
 											/>
-											<span className="flex min-w-0 flex-col">
-												<span className="truncate text-sm font-medium">
-													{member.name}
-												</span>
-												<span className="text-muted-foreground truncate text-xs">
-													{member.email}
-												</span>
-											</span>
-											{already ? (
-												<span className="text-muted-foreground ms-auto text-xs">
+										</ItemMedia>
+										<ItemContent className="min-w-0">
+											<ItemTitle>{member.name}</ItemTitle>
+											<ItemDescription className="truncate">
+												{member.email}
+											</ItemDescription>
+										</ItemContent>
+										{already ? (
+											<ItemActions>
+												<span className="text-muted-foreground text-xs">
 													<Trans>On your team</Trans>
 												</span>
-											) : null}
-										</Label>
-									</div>
-								</Item>
+											</ItemActions>
+										) : null}
+									</Item>
+								</li>
 							)
 						})}
 					</ItemGroup>

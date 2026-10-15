@@ -518,7 +518,7 @@ function EditorBody({
 								<ToggleGroupItem
 									key={date}
 									value={date}
-									className="h-11 min-w-12"
+									className="h-11 min-w-12 md:h-8"
 								>
 									{formatDateLabel(date, locale, { weekday: 'short' })}
 								</ToggleGroupItem>

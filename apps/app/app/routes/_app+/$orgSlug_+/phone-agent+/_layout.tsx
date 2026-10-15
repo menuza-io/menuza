@@ -7,6 +7,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from '@repo/ui/item'
+import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLoaderData, useLocation } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { requirePhoneAgentSectionAccess } from '#app/utils/phone-agent/access.server.ts'
@@ -36,7 +37,7 @@ export default function PhoneAgentLayout() {
 	}
 
 	return (
-		<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-8 md:px-6 lg:px-8">
+		<WorkspacePage>
 			{regionSupported ? null : (
 				<Item variant="muted" role="status">
 					<ItemMedia variant="icon">
@@ -57,7 +58,7 @@ export default function PhoneAgentLayout() {
 				</Item>
 			)}
 			<Outlet />
-		</div>
+		</WorkspacePage>
 	)
 }
 

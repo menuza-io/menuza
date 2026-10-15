@@ -106,8 +106,8 @@ export function EditCardSheet({ entryId }: { entryId: string }) {
 					<Trans>Loading the time card</Trans>
 				</span>
 				<Skeleton className="h-6 w-2/3" />
-				<Skeleton className="h-11 w-full" />
-				<Skeleton className="h-11 w-full" />
+				<Skeleton className="h-11 w-full md:h-8" />
+				<Skeleton className="h-11 w-full md:h-8" />
 				<Skeleton className="h-24 w-full" />
 			</div>
 		</SheetPanel>

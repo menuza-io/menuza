@@ -263,7 +263,7 @@ export function TipSettingsDialog({
 												}))
 												setErrors((e) => ({ ...e, percents: undefined }))
 											}}
-											className="h-11 w-24 text-end tabular-nums"
+											className="h-11 w-24 text-end tabular-nums md:h-8"
 										/>
 									</Field>
 								))

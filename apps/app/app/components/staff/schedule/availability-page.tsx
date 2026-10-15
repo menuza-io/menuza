@@ -158,15 +158,14 @@ export function AvailabilityPage({
 				<ToggleGroup
 					aria-label={_(t`Show availability`)}
 					value={[status]}
-					variant="outline"
-					spacing={1}
+					variant="segmented"
 					onValueChange={(next) => {
 						const picked = next[0]
 						if (picked) setFilter('status', picked, 'pending')
 					}}
 				>
 					{STATUSES.map((value) => (
-						<ToggleGroupItem className="h-11" key={value} value={value}>
+						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
 							{statusLabels[value]}
 						</ToggleGroupItem>
 					))}
