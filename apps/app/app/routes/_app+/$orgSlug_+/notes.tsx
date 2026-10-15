@@ -19,6 +19,7 @@ import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
+import { WorkspacePage, WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useState } from 'react'
 import {
 	Link,
@@ -292,7 +293,7 @@ export default function NotesRoute({
 	)
 
 	return (
-		<div className="mx-auto flex h-full w-full max-w-6xl flex-col py-8 md:px-6 lg:px-8">
+		<WorkspacePage className="h-full">
 			<PageHeader
 				title={_(t`Notes`)}
 				description={_(t`You can create notes for your organization here.`)}
@@ -346,9 +347,11 @@ export default function NotesRoute({
 				}
 			/>
 
-			{/* Search Section */}
-			<div className="pt-8 pb-4">
-				<form onSubmit={handleSearchSubmit} className="relative max-w-md">
+			<WorkspaceToolbar>
+				<form
+					onSubmit={handleSearchSubmit}
+					className="relative min-w-0 flex-1 sm:max-w-md"
+				>
 					<Input
 						type="search"
 						role="searchbox"
@@ -367,9 +370,9 @@ export default function NotesRoute({
 						<Icon name="search" className="text-muted-foreground h-4 w-4" />
 					</div>
 				</form>
-			</div>
+			</WorkspaceToolbar>
 
-			<div className="grow pb-4">
+			<div className="min-h-[20rem] grow">
 				{loaderData.notes.length > 0 ? (
 					viewMode === 'kanban' ? (
 						<NotesKanbanBoard
@@ -428,7 +431,7 @@ export default function NotesRoute({
 					<Outlet />
 				</SheetContent>
 			</Sheet>
-		</div>
+		</WorkspacePage>
 	)
 }
 

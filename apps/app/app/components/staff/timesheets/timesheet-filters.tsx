@@ -77,7 +77,7 @@ export function TimesheetFilters({
 						onChange={(event) => setText(event.target.value)}
 						placeholder={_(t`Search name or position`)}
 						aria-label={_(t`Search time cards`)}
-						className="h-11 ps-8"
+						className="h-11 ps-8 md:h-8"
 					/>
 				</div>
 			) : null}

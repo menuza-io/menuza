@@ -45,6 +45,8 @@ import {
 	serializeLocaleCookie,
 } from './modules/lingui/lingui.server.ts'
 import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
+import '@fontsource-variable/geist/wght.css'
+import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { type Theme, getTheme } from './utils/theme.server.ts'

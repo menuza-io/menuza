@@ -1,3 +1,4 @@
+import { inference } from '@livekit/agents'
 import * as cartesia from '@livekit/agents-plugin-cartesia'
 import * as deepgram from '@livekit/agents-plugin-deepgram'
 import * as google from '@livekit/agents-plugin-google'
@@ -11,10 +12,23 @@ import {
 } from '@repo/phone-agent'
 import { ENV } from 'varlock/env'
 import { type SpeechLanguageControl, sttLanguageFor } from './language.ts'
+import { modelProviders } from './model-providers.ts'
+
+const STT_MODEL = 'nova-3'
+const TTS_MODEL = 'sonic-3'
+const DEFAULT_LLM_MODEL = 'gemini-2.5-flash'
+
+// Inference types language codes with a brand the SDK doesn't export a
+// constructor for; it normalizes plain codes like `es` itself.
+type InferenceLanguage = NonNullable<
+	Parameters<inference.STT<'deepgram/nova-3'>['updateOptions']>[0]['language']
+>
+const asInferenceLanguage = (language: string) => language as InferenceLanguage
 
 /**
- * Deepgram, Gemini, and Cartesia are called on their US endpoints, so the
- * worker may only handle calls whose customer data lives in the US.
+ * Deepgram, Gemini, and Cartesia are called on their US endpoints (directly
+ * or through LiveKit Inference), so the worker may only handle calls whose
+ * customer data lives in the US.
  */
 export function assertUsDataRegion(region: string | undefined) {
 	if (region !== 'us') {
@@ -26,9 +40,17 @@ export function assertUsDataRegion(region: string | undefined) {
 
 export function createTts(language: string, voiceId?: string | null) {
 	const voice = voiceId || ENV.CARTESIA_DEFAULT_VOICE_ID
+	if (modelProviders(ENV).tts === 'livekit') {
+		// Voice ids are Cartesia's either way, so a chosen voice still applies.
+		return new inference.TTS({
+			model: `cartesia/${TTS_MODEL}`,
+			language,
+			...(voice ? { voice } : {}),
+		})
+	}
 	return new cartesia.TTS({
 		apiKey: ENV.CARTESIA_API_KEY,
-		model: 'sonic-3',
+		model: TTS_MODEL,
 		language,
 		...(voice ? { voice } : {}),
 	})
@@ -94,21 +116,41 @@ export function createModels(
 	const primary: AgentLanguage = languages[0] ?? 'en'
 	const keyterm = speechKeyterms(config, vertical)
 
+	const providers = modelProviders(ENV)
 	const sttLanguage = sttLanguageFor(languages, primary)
-	const stt = new LanguageSwitchingSTT({
-		apiKey: ENV.DEEPGRAM_API_KEY,
-		model: 'nova-3',
-		language: sttLanguage,
-		keyterm,
-		smartFormat: true,
-		numerals: true,
-	})
+	const stt =
+		providers.stt === 'livekit'
+			? // Inference forwards language changes to open streams itself.
+				new inference.STT({
+					model: `deepgram/${STT_MODEL}`,
+					language: sttLanguage,
+					modelOptions: { keyterm, smart_format: true, numerals: true },
+				})
+			: new LanguageSwitchingSTT({
+					apiKey: ENV.DEEPGRAM_API_KEY,
+					model: STT_MODEL,
+					language: sttLanguage,
+					keyterm,
+					smartFormat: true,
+					numerals: true,
+				})
+	const setSttLanguage = (language: string) =>
+		stt instanceof LanguageSwitchingSTT
+			? stt.setLanguage(language)
+			: stt.updateOptions({ language: asInferenceLanguage(language) })
 
-	const llm = new google.LLM({
-		apiKey: ENV.GOOGLE_API_KEY,
-		model: ENV.PHONE_AGENT_LLM_MODEL || 'gemini-2.5-flash',
-		temperature: 0.4,
-	})
+	const llmModel = ENV.PHONE_AGENT_LLM_MODEL || DEFAULT_LLM_MODEL
+	const llm =
+		providers.llm === 'livekit'
+			? new inference.LLM({
+					model: `google/${llmModel}`,
+					modelOptions: { temperature: 0.4 },
+				})
+			: new google.LLM({
+					apiKey: ENV.GOOGLE_API_KEY,
+					model: llmModel,
+					temperature: 0.4,
+				})
 
 	// Sonic voices are multilingual, so the owner's voice stays and only the
 	// language changes; Cartesia reads it per utterance, so it takes effect
@@ -117,8 +159,8 @@ export function createModels(
 
 	const speech: SpeechLanguageControl = {
 		setLanguage(language) {
-			tts.updateOptions({ language })
-			if (sttLanguage !== 'multi') stt.setLanguage(language)
+			tts.updateOptions({ language: asInferenceLanguage(language) })
+			if (sttLanguage !== 'multi') setSttLanguage(language)
 		},
 	}
 

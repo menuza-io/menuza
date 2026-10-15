@@ -16,6 +16,7 @@ import {
 	addableBuiltInBlockTypes,
 	BLOCK_DEFINITIONS,
 	MAX_DASHBOARD_BLOCKS,
+	type BlockType,
 	type DashboardBlock,
 	type NewDashboardBlock,
 } from '#app/utils/dashboards/config.ts'
@@ -60,7 +61,7 @@ export function AddBlockOption({
 		<Button
 			type="button"
 			variant="outline"
-			className="h-auto w-full flex-col items-start gap-0.5 px-3 py-2 text-start whitespace-normal"
+			className="h-auto w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-start whitespace-normal"
 			aria-describedby={description ? descriptionId : undefined}
 			onClick={onSelect}
 		>
@@ -86,12 +87,15 @@ export function AddBlockOption({
 export function AddBlockDialog({
 	blocks,
 	picker,
+	excludeTypes = [],
 	onAdd,
 	renderSections,
 	trigger = DEFAULT_TRIGGER,
 }: {
 	blocks: readonly DashboardBlock[]
 	picker: DashboardBlockPicker
+	/** Built-in block types not to offer. */
+	excludeTypes?: readonly BlockType[]
 	onAdd: (block: NewDashboardBlock) => void
 	/** Further sections; `select` adds a block and closes the dialog. */
 	renderSections?: (select: (block: NewDashboardBlock) => void) => ReactNode
@@ -101,7 +105,9 @@ export function AddBlockDialog({
 	const { _ } = useLingui()
 	const [open, setOpen] = useState(false)
 	const full = blocks.length >= MAX_DASHBOARD_BLOCKS
-	const builtIns = addableBuiltInBlockTypes(blocks, picker)
+	const builtIns = addableBuiltInBlockTypes(blocks, picker).filter(
+		(type) => !excludeTypes.includes(type),
+	)
 
 	const select = (block: NewDashboardBlock) => {
 		onAdd(block)

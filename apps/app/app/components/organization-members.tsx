@@ -5,6 +5,7 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Card,
+	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
@@ -33,6 +34,7 @@ import {
 	type MemberLocationAccess,
 	type MemberLocationOption,
 } from '#app/components/member-location-scope.tsx'
+import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 
 export interface OrganizationRoleOption {
 	id: string
@@ -78,6 +80,7 @@ function OrganizationMemberRoleEditor({
 	members: OrganizationMember[]
 	availableRoles?: OrganizationRoleOption[]
 }) {
+	const { roleName, roleDescription } = useRoleLabels()
 	availableRoles ??= []
 	const currentMember = members.find((m) => m.userId === currentUserId)
 	const isAdmin =
@@ -99,7 +102,7 @@ function OrganizationMemberRoleEditor({
 				{member.organizationRole.id === 'org_role_admin' && (
 					<Icon name="settings" className="mr-1 h-3 w-3" />
 				)}
-				{member.organizationRole.name}
+				{roleName(member.organizationRole)}
 			</Badge>
 		)
 	}
@@ -117,18 +120,20 @@ function OrganizationMemberRoleEditor({
 			>
 				<SelectTrigger size="sm" className="w-40">
 					<SelectValue>
-						{availableRoles.find((role) => role.id === roleId)?.name ??
-							member.organizationRole.name}
+						{roleName(
+							availableRoles.find((role) => role.id === roleId) ??
+								member.organizationRole,
+						)}
 					</SelectValue>
 				</SelectTrigger>
 				<SelectContent>
 					{availableRoles.map((availableRole) => (
 						<SelectItem key={availableRole.id} value={availableRole.id}>
 							<div className="flex flex-col text-left">
-								<span>{availableRole.name}</span>
-								{availableRole.description && (
+								<span>{roleName(availableRole)}</span>
+								{roleDescription(availableRole) && (
 									<span className="text-muted-foreground text-xs">
-										{availableRole.description}
+										{roleDescription(availableRole)}
 									</span>
 								)}
 							</div>
@@ -178,16 +183,20 @@ export function OrganizationMembers({
 				</CardTitle>
 				<CardDescription>
 					<Trans>Manage your restaurant's members.</Trans>
-					{organizationSlug && canManageRoles && (
-						<>
-							{' '}
-							·{' '}
-							<Link to={`/${organizationSlug}/settings/roles`}>
-								<Trans>Manage roles</Trans>
-							</Link>
-						</>
-					)}
 				</CardDescription>
+				{organizationSlug && canManageRoles ? (
+					<CardAction>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="text-muted-foreground"
+							render={<Link to={`/${organizationSlug}/settings/roles`} />}
+						>
+							<Trans>Manage roles</Trans>
+							<Icon name="arrow-right" className="rtl:rotate-180" />
+						</Button>
+					</CardAction>
+				) : null}
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">

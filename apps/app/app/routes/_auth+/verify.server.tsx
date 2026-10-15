@@ -3,6 +3,7 @@ import { parseWithZod } from '@conform-to/zod'
 import { invariant } from '@epic-web/invariant'
 import {
 	generateTOTP,
+	getRequestDocumentPath,
 	verifySessionStorage,
 	verifyTOTP,
 	requireUserId,
@@ -134,12 +135,11 @@ export async function requireRecentVerification(request: Request) {
 	const userId = await requireUserId(request)
 	const shouldReverify = await shouldRequestTwoFA(request)
 	if (shouldReverify) {
-		const reqUrl = new URL(request.url)
 		const redirectUrl = getRedirectToUrl({
 			request,
 			target: userId,
 			type: twoFAVerificationType,
-			redirectTo: reqUrl.pathname + reqUrl.search,
+			redirectTo: getRequestDocumentPath(request),
 		})
 		throw await redirectWithToast(redirectUrl.toString(), {
 			title: 'Please Reverify',

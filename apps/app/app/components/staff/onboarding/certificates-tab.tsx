@@ -102,7 +102,7 @@ export function CertificatesTab({
 				</AlertDescription>
 				<Button
 					variant="outline"
-					className="mt-2 h-11 justify-self-start"
+					className="mt-2 h-11 justify-self-start md:h-8"
 					onClick={query.reload}
 				>
 					<Trans>Try again</Trans>

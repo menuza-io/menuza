@@ -141,7 +141,7 @@ export function ProfileNav({
 								preventScrollReset
 								className={cn(
 									buttonVariants({ variant: active ? 'secondary' : 'ghost' }),
-									'h-11 justify-between',
+									'h-11 justify-between md:h-8',
 								)}
 								aria-current={active ? 'page' : undefined}
 							>

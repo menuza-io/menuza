@@ -24,8 +24,15 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function PhoneAgentTestRoute() {
-	const { scopes, hasPublishedFlow, defaultFlow, liveKitConfigured, canStart } =
-		useLoaderData<typeof loader>()
+	const {
+		scopes,
+		hasPublishedFlow,
+		defaultFlow,
+		liveKitConfigured,
+		canStart,
+		agentName,
+		agentNumbers,
+	} = useLoaderData<typeof loader>()
 	const layout = useRouteLoaderData<typeof layoutLoader>(
 		'routes/_app+/$orgSlug_+/phone-agent+/_layout',
 	)
@@ -50,6 +57,8 @@ export default function PhoneAgentTestRoute() {
 					hasPublishedFlow={hasPublishedFlow}
 					defaultFlow={defaultFlow}
 					canStart={canStart}
+					agentName={agentName}
+					agentNumbers={agentNumbers}
 					regionSupported={layout?.regionSupported ?? true}
 				/>
 			) : (

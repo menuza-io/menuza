@@ -594,12 +594,11 @@ export function TimesheetsPage({
 							update({ view: picked })
 						}
 					}}
-					variant="outline"
-					spacing={1}
+					variant="segmented"
 					className="flex-wrap"
 				>
 					{TIMESHEET_VIEWS.map((value) => (
-						<ToggleGroupItem className="h-11" key={value} value={value}>
+						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
 							{viewLabels[value]}
 							{value === 'review' && reviewCount ? (
 								<Badge

@@ -216,7 +216,7 @@ export const WebPreviewConsole = ({
 				render={
 					<Button
 						variant="ghost"
-						className="hover:bg-muted/50 flex w-full items-center justify-between p-4 text-left font-medium"
+						className="hover:bg-muted/50 flex w-full items-center justify-between rounded-none p-4 text-left font-medium"
 					>
 						Console
 						<Icon

@@ -57,6 +57,11 @@ import {
 import sanitizeHtml from 'sanitize-html'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.note.title,
+}
 
 // Simple error boundary for lazy-loaded components
 class LazyLoadErrorBoundary extends Component<

@@ -55,7 +55,10 @@ auto-complete. To run type checking across the whole project, run
 
 ## Linting
 
-This project uses ESLint for linting. That is configured in `.eslintrc.js`.
+This project uses ESLint for linting. Each workspace has its own flat config
+(`eslint.config.js`, for example `apps/app/eslint.config.js`) built on
+`packages/config/eslint-preset.js`. Run it inside a workspace, for example
+`npm run lint -w app`; the root `eslint.config.js` ignores every file.
 
 ## Formatting
 

@@ -77,8 +77,8 @@ export function PayPeriodDialog({
 						<span className="sr-only">
 							<Trans>Loading</Trans>
 						</span>
-						<Skeleton className="h-11 w-full" />
-						<Skeleton className="h-11 w-full" />
+						<Skeleton className="h-11 w-full md:h-8" />
+						<Skeleton className="h-11 w-full md:h-8" />
 					</div>
 				)}
 			</DialogContent>

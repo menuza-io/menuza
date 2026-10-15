@@ -78,13 +78,13 @@ export function FlowNodeShell({
 	return (
 		<div
 			className={cn(
-				'bg-background w-[280px] rounded-md',
+				'bg-background w-[280px] rounded-lg',
 				invalid && 'ring-destructive ring-1',
 				selected && 'ring-ring ring-2',
 				className,
 			)}
 		>
-			<Frame data-tone={tone} className={TONE_FRAME_CLASS}>
+			<Frame variant="inset" data-tone={tone} className={TONE_FRAME_CLASS}>
 				<div className="flex min-w-0 items-center gap-2 px-4 py-3">
 					<FrameTitle
 						data-tone={tone}

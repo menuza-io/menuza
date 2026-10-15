@@ -299,7 +299,7 @@ function Body({
 						/>
 						<Button
 							type="submit"
-							className="h-11 self-end"
+							className="h-11 self-end md:h-8"
 							disabled={action.pending}
 						>
 							<Trans>Save template</Trans>

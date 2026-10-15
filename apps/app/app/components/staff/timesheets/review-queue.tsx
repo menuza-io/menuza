@@ -159,18 +159,17 @@ export function ReviewQueue({
 						const picked = next[0]
 						if (picked) setIssue(picked)
 					}}
-					variant="outline"
-					spacing={1}
+					variant="segmented"
 					className="flex-wrap"
 				>
-					<ToggleGroupItem className="h-11" value="all">
+					<ToggleGroupItem className="h-11 md:h-7" value="all">
 						<Trans>All</Trans>
 						<span className="text-muted-foreground tabular-nums">
 							{rows.length}
 						</span>
 					</ToggleGroupItem>
 					{issueCounts.map(([code, count]) => (
-						<ToggleGroupItem className="h-11" key={code} value={code}>
+						<ToggleGroupItem className="h-11 md:h-7" key={code} value={code}>
 							{text.label(code)}
 							<span className="text-muted-foreground tabular-nums">
 								{count}
@@ -393,7 +392,7 @@ function ReviewItem({
 											}
 										}}
 										aria-invalid={error ? true : undefined}
-										className="h-11 w-36"
+										className="h-11 w-36 md:h-8"
 									/>
 									<Button
 										size="sm"

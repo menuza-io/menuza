@@ -1,8 +1,8 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { cn } from '@repo/ui'
-import { PageTitle } from '@repo/ui/page-title'
-import { Link, Outlet, useLocation, useParams } from 'react-router'
+import { PageHeader } from '@repo/ui/page-header'
+import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
+import { Outlet, useLocation, useParams } from 'react-router'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 
 export default function WebsiteLayout() {
@@ -77,36 +77,15 @@ export default function WebsiteLayout() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
-			<div className="mb-8 md:mb-10">
-				<PageTitle
-					title={_(t`Website`)}
-					description={_(
-						t`Manage your public organization website and appearance.`,
-					)}
-				/>
-			</div>
-
-			<nav className="border-border mb-6 [scrollbar-width:none] overflow-x-auto border-b [&::-webkit-scrollbar]:hidden">
-				<div className="-mb-px flex min-w-max gap-4">
-					{tabs.map((tab) => (
-						<Link
-							key={tab.href}
-							to={tab.href}
-							className={cn(
-								'border-b-2 px-1 pb-3 text-sm font-medium transition-colors',
-								tab.isActive
-									? 'border-primary text-foreground'
-									: 'text-muted-foreground hover:text-foreground border-transparent',
-							)}
-						>
-							{tab.label}
-						</Link>
-					))}
-				</div>
-			</nav>
-
+		<WorkspacePage>
+			<PageHeader
+				title={_(t`Website`)}
+				description={_(
+					t`Manage your public organization website and appearance.`,
+				)}
+			/>
+			<WorkspaceTabBar tabs={tabs} className="mb-2" />
 			<Outlet />
-		</div>
+		</WorkspacePage>
 	)
 }

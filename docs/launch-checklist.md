@@ -299,13 +299,14 @@ Set non-secret storage config via secrets or GitHub Variables:
 
 ### App — AI phone agent (US organizations)
 
-| Secret               | Notes                                            |
-| -------------------- | ------------------------------------------------ |
-| `VOICE_AGENT_TOKEN`  | **Same as US tenant-api and the LiveKit agent**  |
-| `LIVEKIT_URL`        | LiveKit Cloud project URL (test calls, dispatch) |
-| `LIVEKIT_API_KEY`    | LiveKit Cloud project API key                    |
-| `LIVEKIT_API_SECRET` | LiveKit Cloud project API secret                 |
-| `CARTESIA_API_KEY`   | Optional: voice picker previews                  |
+| Secret                                          | Notes                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `VOICE_AGENT_TOKEN`                             | **Same as US tenant-api and the LiveKit agent**                  |
+| `LIVEKIT_URL`                                   | LiveKit Cloud project URL (test calls, dispatch)                 |
+| `LIVEKIT_API_KEY`                               | LiveKit Cloud project API key                                    |
+| `LIVEKIT_API_SECRET`                            | LiveKit Cloud project API secret                                 |
+| `CARTESIA_API_KEY`                              | Optional: voice picker previews                                  |
+| `RECORDING_S3_BUCKET` / `_ENDPOINT` / `_REGION` | Optional: recording playback. Same bucket as tenant-api; no keys |
 
 ```bash
 cd apps/app

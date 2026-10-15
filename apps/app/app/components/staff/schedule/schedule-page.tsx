@@ -625,7 +625,7 @@ export function SchedulePage({ orgSlug, scopes: rawScopes }: Props) {
 						</span>
 					</p>
 					<Button
-						className="h-11 shrink-0"
+						className="h-11 shrink-0 md:h-8"
 						onClick={() => setDialog('publish')}
 					>
 						<Icon name="paper-plane" />

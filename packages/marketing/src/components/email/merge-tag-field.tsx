@@ -398,7 +398,7 @@ export function MergeTagField({
 						type="button"
 						variant="ghost"
 						size="sm"
-						className="text-destructive hover:text-destructive w-full justify-start"
+						className="text-destructive hover:text-destructive w-full justify-start rounded-md"
 						onClick={removeActiveChip}
 					>
 						<Icon name="trash-2" className="size-3.5" />

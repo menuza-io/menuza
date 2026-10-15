@@ -345,7 +345,7 @@ export function NotesPanel({
 					/>
 					<Button
 						type="submit"
-						className="h-11 self-start"
+						className="h-11 self-start md:h-8"
 						disabled={action.pending || !body.trim()}
 					>
 						<Trans>Add note</Trans>

@@ -148,7 +148,7 @@ export function ColumnPicker({ columns }: { columns: SummaryColumns }) {
 				</ul>
 				<Button
 					variant="ghost"
-					className="h-11 justify-start"
+					className="h-11 justify-start rounded-md md:h-8"
 					onClick={columns.reset}
 				>
 					<Icon name="undo-2" />

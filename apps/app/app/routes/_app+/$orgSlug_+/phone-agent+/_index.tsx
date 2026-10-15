@@ -9,6 +9,7 @@ import {
 	RECORDING_RETENTION_DAYS,
 	SUPPORTED_AGENT_LANGUAGES,
 } from '@repo/phone-agent'
+import { cn } from '@repo/ui'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -157,25 +158,46 @@ export default function PhoneAgentSetup() {
 	)
 }
 
-function ChecklistItem({
+type ChecklistStep = {
+	key: string
+	done: boolean
+	title: ReactNode
+	/** Shown only while the step is open. */
+	hint?: ReactNode
+	/** Shortcut to where the step is done; shown only while it is open. */
+	action?: ReactNode
+}
+
+function ChecklistStatusIcon({
 	done,
-	children,
+	isNext,
 }: {
 	done: boolean
-	children: ReactNode
+	isNext: boolean
 }) {
 	const { _ } = useLingui()
+	if (done) {
+		return (
+			<span
+				role="img"
+				aria-label={_(msg`Done`)}
+				className="bg-success/15 text-success flex size-5 shrink-0 items-center justify-center rounded-full"
+			>
+				<Icon name="check" className="size-3" />
+			</span>
+		)
+	}
 	return (
-		<li className="flex items-start gap-3 text-sm">
-			<Icon
-				name={done ? 'circle-check' : 'circle'}
-				className={
-					done ? 'text-primary mt-0.5' : 'text-muted-foreground mt-0.5'
-				}
-				aria-label={done ? _(msg`Done`) : _(msg`Not done`)}
-			/>
-			<div className="min-w-0 flex-1">{children}</div>
-		</li>
+		<span
+			role="img"
+			aria-label={_(msg`Not done`)}
+			className={cn(
+				'flex size-5 shrink-0 items-center justify-center rounded-full border-2',
+				isNext ? 'border-primary' : 'border-border-strong border-dashed',
+			)}
+		>
+			{isNext ? <span className="bg-primary size-2 rounded-full" /> : null}
+		</span>
 	)
 }
 
@@ -194,69 +216,174 @@ function GoLiveChecklist({
 	enabled: boolean
 	activeRuleCount: number
 }) {
+	const { _ } = useLingui()
+	const steps: ChecklistStep[] = [
+		{
+			key: 'number',
+			done: hasNumber,
+			title: <Trans>Connect a phone number</Trans>,
+			hint: <Trans>The number callers dial to reach your agent.</Trans>,
+			action: (
+				<Button
+					variant="outline"
+					size="sm"
+					render={<a href="#phone-numbers" />}
+				>
+					<Trans>Add number</Trans>
+				</Button>
+			),
+		},
+		{
+			key: 'flow',
+			done: flowPublished,
+			title: <Trans>Publish a call flow</Trans>,
+			hint: <Trans>What the agent does on each call.</Trans>,
+			action: (
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${base}/flow`} />}
+				>
+					<Trans>Open call flow</Trans>
+				</Button>
+			),
+		},
+		{
+			key: 'voice',
+			done: liveKitConfigured,
+			title: <Trans>Voice service configured</Trans>,
+			hint: (
+				<Trans>
+					LiveKit credentials are set by your platform administrator.
+				</Trans>
+			),
+		},
+		{
+			key: 'enabled',
+			done: enabled,
+			title: <Trans>Turn on the agent</Trans>,
+			hint: <Trans>Use the switch in Agent settings.</Trans>,
+			action: (
+				<Button
+					variant="outline"
+					size="sm"
+					render={<a href="#agent-settings" />}
+				>
+					<Trans>Go to switch</Trans>
+				</Button>
+			),
+		},
+	]
+	const doneCount = steps.filter((step) => step.done).length
+	const total = steps.length
+	const isLive = doneCount === total
+	const nextKey = steps.find((step) => !step.done)?.key
+
 	return (
-		<Card>
-			<CardContent className="flex flex-col gap-4">
-				<div className="flex flex-col gap-1">
-					<h2 className="text-base font-semibold">
-						<Trans>Go-live checklist</Trans>
-					</h2>
+		<Card className="gap-0 py-0">
+			<div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 pb-3">
+				<div className="flex min-w-0 flex-col gap-1">
+					<div className="flex items-center gap-2">
+						<h2 className="text-sm font-semibold tracking-tight">
+							<Trans>Go-live checklist</Trans>
+						</h2>
+						{isLive ? (
+							<Badge variant="success">
+								<span className="size-1.5 rounded-full bg-current" />
+								<Trans>Live</Trans>
+							</Badge>
+						) : (
+							<Badge variant="secondary" className="tabular-nums">
+								<Trans>
+									{doneCount} of {total} done
+								</Trans>
+							</Badge>
+						)}
+					</div>
 					<p className="text-muted-foreground text-sm">
-						<Trans>The agent answers calls once every step is done.</Trans>
+						{isLive ? (
+							<Trans>Your agent is answering calls.</Trans>
+						) : (
+							<Trans>The agent answers calls once every step is done.</Trans>
+						)}
 					</p>
 				</div>
-				<ul className="flex flex-col gap-3">
-					<ChecklistItem done={hasNumber}>
-						<Trans>Connect a phone number</Trans>
-						<span className="text-muted-foreground block text-xs">
-							<Trans>Add it in Phone numbers below.</Trans>
-						</span>
-					</ChecklistItem>
-					<ChecklistItem done={flowPublished}>
-						<Link
-							to={`${base}/flow`}
-							className="underline-offset-4 hover:underline"
-						>
-							<Trans>Publish a call flow</Trans>
-						</Link>
-					</ChecklistItem>
-					<ChecklistItem done={liveKitConfigured}>
-						<Trans>Voice service configured</Trans>
-						<span className="text-muted-foreground block text-xs">
-							<Trans>
-								LiveKit credentials are set by your platform administrator.
-							</Trans>
-						</span>
-					</ChecklistItem>
-					<ChecklistItem done={enabled}>
-						<Trans>Turn on the agent</Trans>
-						<span className="text-muted-foreground block text-xs">
-							<Trans>Use the switch in Agent settings below.</Trans>
-						</span>
-					</ChecklistItem>
-				</ul>
-				<div className="flex flex-wrap gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						render={
-							<Link to={`${base}/training`}>
-								<Trans>Training rules ({activeRuleCount} active)</Trans>
-							</Link>
-						}
-					/>
-					<Button
-						variant="outline"
-						size="sm"
-						render={
-							<Link to={`${base}/test`}>
-								<Icon name="mic" />
-								<Trans>Test the agent</Trans>
-							</Link>
-						}
-					/>
-				</div>
-			</CardContent>
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${base}/test`} />}
+				>
+					<Icon name="mic" />
+					<Trans>Test the agent</Trans>
+				</Button>
+			</div>
+
+			<div
+				className="bg-muted mx-4 mb-1 h-1 overflow-hidden rounded-full"
+				role="progressbar"
+				aria-valuemin={0}
+				aria-valuemax={total}
+				aria-valuenow={doneCount}
+				aria-label={_(msg`${doneCount} of ${total} steps done`)}
+			>
+				<div
+					className={cn(
+						'ease-out-quint h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none',
+						isLive ? 'bg-success' : 'bg-primary',
+					)}
+					style={{ width: `${(doneCount / total) * 100}%` }}
+				/>
+			</div>
+
+			<ul className="divide-y">
+				{steps.map((step) => (
+					<li
+						key={step.key}
+						className="flex min-h-12 items-center gap-3 px-4 py-2.5"
+					>
+						<ChecklistStatusIcon
+							done={step.done}
+							isNext={step.key === nextKey}
+						/>
+						<div className="min-w-0 flex-1">
+							<p
+								className={cn(
+									'text-sm',
+									step.done
+										? 'text-muted-foreground'
+										: 'text-foreground font-medium',
+								)}
+							>
+								{step.title}
+							</p>
+							{!step.done && step.hint ? (
+								<p className="text-muted-foreground text-xs">{step.hint}</p>
+							) : null}
+						</div>
+						{!step.done && step.action ? (
+							<div className="shrink-0">{step.action}</div>
+						) : null}
+					</li>
+				))}
+			</ul>
+
+			<div className="bg-muted/40 flex items-center justify-between gap-3 border-t px-4 py-2.5">
+				<p className="text-muted-foreground text-xs">
+					<Trans>
+						Training rules teach the agent your answers.{' '}
+						<span className="tabular-nums">{activeRuleCount}</span> active.
+					</Trans>
+				</p>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="text-muted-foreground"
+					render={<Link to={`${base}/training`} />}
+				>
+					<Trans>Training rules</Trans>
+					<Icon name="arrow-right" className="rtl:rotate-180" />
+				</Button>
+			</div>
 		</Card>
 	)
 }
@@ -370,6 +497,7 @@ function SettingsForm({
 			}}
 		>
 			<AnnotatedSection
+				id="agent-settings"
 				title={<Trans>Agent settings</Trans>}
 				description={
 					<Trans>Who answers, in which languages, and with which voice.</Trans>

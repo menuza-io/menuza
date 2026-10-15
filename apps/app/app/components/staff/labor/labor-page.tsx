@@ -10,6 +10,7 @@ import { Icon } from '@repo/ui/icon'
 import { PageHeader } from '@repo/ui/page-header'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { WorkspaceTabDivider } from '@repo/ui/workspace'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -262,13 +263,15 @@ export function LaborPage({ scopes: rawScopes, can }: Props) {
 						if (views.includes(picked)) update({ view: picked })
 					}}
 				>
-					<TabsList aria-label={_(t`Labor view`)}>
-						{views.map((value) => (
-							<TabsTrigger key={value} value={value}>
-								{viewLabels[value]}
-							</TabsTrigger>
-						))}
-					</TabsList>
+					<WorkspaceTabDivider>
+						<TabsList variant="line" aria-label={_(t`Labor view`)}>
+							{views.map((value) => (
+								<TabsTrigger key={value} value={value}>
+									{viewLabels[value]}
+								</TabsTrigger>
+							))}
+						</TabsList>
+					</WorkspaceTabDivider>
 				</Tabs>
 
 				<div className="flex flex-wrap items-center gap-2">

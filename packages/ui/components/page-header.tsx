@@ -5,6 +5,8 @@ import { PageTitle } from './page-title'
 interface PageHeaderProps {
 	title: ReactNode
 	description?: ReactNode
+	meta?: ReactNode
+	eyebrow?: ReactNode
 	actions?: ReactNode
 	headingLevel?: 'h1' | 'h2'
 	size?: 'page' | 'section'
@@ -18,6 +20,8 @@ interface PageHeaderProps {
 export function PageHeader({
 	title,
 	description,
+	meta,
+	eyebrow,
 	actions,
 	headingLevel = 'h1',
 	size = 'page',
@@ -26,18 +30,21 @@ export function PageHeader({
 	return (
 		<div
 			className={cn(
-				'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between',
+				'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+				size === 'section' && 'pb-0',
 				className,
 			)}
 		>
 			<PageTitle
 				title={title}
 				description={description}
+				meta={meta}
+				eyebrow={eyebrow}
 				headingLevel={headingLevel}
 				size={size}
 			/>
 			{actions ? (
-				<div className="flex shrink-0 flex-wrap items-center gap-2">
+				<div className="flex shrink-0 flex-wrap items-center gap-1.5">
 					{actions}
 				</div>
 			) : null}

@@ -3,6 +3,7 @@ import {
 	deleteOrganizationRecordings,
 	deleteRecordingsWithPrefix,
 	organizationRecordingPrefix,
+	presignRecordingUrl,
 } from './recording-storage.ts'
 
 const orgId = 'clw9x0a12000008l00storage1'
@@ -158,5 +159,51 @@ describe('recording prefix deletion', () => {
 			expect.objectContaining({ orgId, prefix }),
 		)
 		errors.mockRestore()
+	})
+})
+
+describe('presignRecordingUrl', () => {
+	const r2Env = {
+		RECORDING_S3_BUCKET: 'recordings',
+		RECORDING_S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com',
+		RECORDING_S3_ACCESS_KEY: 'AKID',
+		RECORDING_S3_SECRET: 'sekret',
+		RECORDING_S3_REGION: '',
+	}
+	const now = new Date('2026-10-14T12:00:00.000Z')
+
+	afterEach(() => {
+		for (const key of Object.keys(r2Env)) process.env[key] = ''
+	})
+
+	it('returns null without storage credentials', () => {
+		expect(presignRecordingUrl('voice-recordings/org/call.ogg')).toBeNull()
+	})
+
+	// The expected signature was cross-checked against @smithy/signature-v4
+	// (the AWS SDK signer) presigning the same request with UNSIGNED-PAYLOAD.
+	it('signs a path-style GET the way the AWS SDK does', () => {
+		Object.assign(process.env, r2Env)
+		const signed = presignRecordingUrl(
+			'voice-recordings/org_1/call 1.ogg',
+			300,
+			now,
+		)!
+		const url = new URL(signed.url)
+		expect(`${url.origin}${url.pathname}`).toBe(
+			'https://acct.r2.cloudflarestorage.com/recordings/voice-recordings/org_1/call%201.ogg',
+		)
+		expect(Object.fromEntries(url.searchParams)).toEqual({
+			'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+			'X-Amz-Credential': 'AKID/20261014/us-east-1/s3/aws4_request',
+			'X-Amz-Date': '20261014T120000Z',
+			'X-Amz-Expires': '300',
+			'X-Amz-SignedHeaders': 'host',
+			'response-cache-control': 'private, no-store',
+			'response-content-type': 'audio/ogg',
+			'X-Amz-Signature':
+				'5cbb76c1de4803488afe42bca53a460fed5d56e5f37da7211e511b7ed1fdfffc',
+		})
+		expect(signed.expiresAt.toISOString()).toBe('2026-10-14T12:05:00.000Z')
 	})
 })

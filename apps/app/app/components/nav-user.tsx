@@ -130,7 +130,7 @@ export function NavUser({
 						render={
 							<SidebarMenuButton
 								size="lg"
-								className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground bg-background rounded-full border"
+								className="text-foreground gap-2 px-1.5"
 							>
 								<UserAvatar
 									user={{
@@ -138,21 +138,24 @@ export function NavUser({
 										email: user.email,
 										image: user.avatar,
 									}}
-									className="h-8 w-8"
+									className="size-7"
 									alt={user.name}
 								/>
 								<div className="grid flex-1 text-sm leading-tight ltr:text-left rtl:text-right">
 									<span className="truncate font-medium">{user.name}</span>
-									<span className="text-muted-foreground truncate text-xs">
+									<span className="text-muted-foreground text-2xs truncate">
 										{user.email}
 									</span>
 								</div>
-								<Icon name="ellipsis-vertical" className="ml-auto size-4" />
+								<Icon
+									name="ellipsis-vertical"
+									className="text-muted-foreground ml-auto size-4"
+								/>
 							</SidebarMenuButton>
 						}
 					></DropdownMenuTrigger>
 					<DropdownMenuContent
-						className="w-(--radix-dropdown-menu-trigger-width) min-w-40 rounded-lg"
+						className="min-w-56"
 						side={isMobile ? 'bottom' : 'top'}
 						align="start"
 						sideOffset={4}

@@ -346,15 +346,15 @@ export default function PhoneAgentCallsRoute() {
 
 			<section
 				aria-labelledby="purpose-summary-heading"
-				className="flex flex-col gap-3"
+				className="flex flex-col gap-2"
 			>
 				<h2
 					id="purpose-summary-heading"
-					className="text-muted-foreground text-sm font-medium"
+					className="text-muted-foreground text-xs font-medium"
 				>
 					<Trans>Last 30 days</Trans>
 				</h2>
-				<div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-5">
+				<div className="bg-card flex divide-x overflow-x-auto rounded-xl border">
 					{labels.purposes.map(({ id: value, label }) => {
 						const active = purpose === value
 						return (
@@ -367,14 +367,19 @@ export default function PhoneAgentCallsRoute() {
 									setTab('calls')
 								}}
 								className={cn(
-									'hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col items-start gap-1 rounded-lg border p-3 text-start transition-colors focus-visible:ring-2 focus-visible:outline-none sm:p-4',
-									active && 'border-primary bg-muted',
+									'hover:bg-muted focus-visible:ring-ring relative flex min-w-32 flex-1 flex-col items-start gap-1.5 px-4 py-3 text-start transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
+									active && 'bg-primary/5 after:bg-primary',
 								)}
 							>
-								<span className="text-muted-foreground w-full truncate text-xs">
+								<span
+									className={cn(
+										'text-foreground/75 w-full truncate text-[13px]',
+										active && 'text-primary font-medium',
+									)}
+								>
 									{label}
 								</span>
-								<span className="text-xl font-semibold tabular-nums sm:text-2xl">
+								<span className="text-xl leading-none font-semibold tracking-tight tabular-nums">
 									{loading && calls.length === 0
 										? '—'
 										: (purposeCounts[value] ?? 0)}
@@ -411,7 +416,7 @@ export default function PhoneAgentCallsRoute() {
 						</TabsTrigger>
 					</TabsList>
 					{tab === 'calls' ? (
-						<div className="flex flex-wrap items-center gap-2">
+						<div className="flex flex-wrap items-center gap-1.5">
 							<Select
 								items={followUpItems}
 								value={followUp}
@@ -420,7 +425,7 @@ export default function PhoneAgentCallsRoute() {
 								}}
 							>
 								<SelectTrigger
-									className="w-44"
+									className="w-40"
 									aria-label={_(msg`Filter by follow-up`)}
 								>
 									<SelectValue />
@@ -464,7 +469,7 @@ export default function PhoneAgentCallsRoute() {
 								}}
 							>
 								<SelectTrigger
-									className="w-40"
+									className="w-36"
 									aria-label={_(msg`Filter by purpose`)}
 								>
 									<SelectValue />
@@ -529,7 +534,7 @@ export default function PhoneAgentCallsRoute() {
 							aria-label={_(msg`Loading calls`)}
 						>
 							{[0, 1, 2, 3, 4].map((key) => (
-								<Skeleton key={key} className="h-16 w-full" />
+								<Skeleton key={key} className="h-14 w-full" />
 							))}
 						</div>
 					) : error ? (
@@ -585,16 +590,16 @@ export default function PhoneAgentCallsRoute() {
 						</Empty>
 					) : (
 						<div className="flex flex-col gap-3">
-							<ul className="divide-y rounded-lg border">
+							<ul className="bg-card divide-y overflow-hidden rounded-xl border">
 								{calls.map((call) => (
 									<li key={call.id}>
 										<button
 											type="button"
-											className="hover:bg-muted/50 focus-visible:ring-ring flex w-full flex-col gap-2 px-4 py-3 text-start focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+											className="hover:bg-muted/60 focus-visible:ring-ring flex w-full flex-col gap-1 px-4 py-2.5 text-start transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
 											onClick={() => selectCall(call.id)}
 										>
-											<div className="flex flex-wrap items-center justify-between gap-2">
-												<div className="flex min-w-0 items-center gap-2">
+											<div className="flex items-center justify-between gap-3">
+												<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 													<Icon
 														name={
 															call.channel === 'web_test' ? 'laptop' : 'phone'
@@ -604,8 +609,30 @@ export default function PhoneAgentCallsRoute() {
 													<span className="min-w-0 truncate text-sm font-medium">
 														{callerLabel(call)}
 													</span>
+													{call.purpose ? (
+														<Badge variant="secondary">
+															{labels.purposeLabel(call.purpose)}
+														</Badge>
+													) : null}
+													{call.outcome ? (
+														<Badge variant={outcomeVariant(call.outcome)}>
+															{_(OUTCOME_LABELS[call.outcome])}
+														</Badge>
+													) : null}
+													<CallInsightBadges call={call} tags={tags} />
+													{call.hasRecording ? (
+														<Badge variant="outline">
+															<Icon name="mic" />
+															<Trans>Recorded</Trans>
+														</Badge>
+													) : null}
+													{call.scopeId && scopeNames[call.scopeId] ? (
+														<span className="text-muted-foreground text-xs">
+															{scopeNames[call.scopeId]}
+														</span>
+													) : null}
 												</div>
-												<div className="text-muted-foreground flex items-center gap-3 text-xs tabular-nums">
+												<div className="text-muted-foreground flex shrink-0 items-center gap-3 text-xs tabular-nums">
 													<span>{formatDuration(call.durationSeconds)}</span>
 													<time
 														dateTime={call.startedAt}
@@ -615,32 +642,8 @@ export default function PhoneAgentCallsRoute() {
 													</time>
 												</div>
 											</div>
-											<div className="flex flex-wrap items-center gap-2">
-												{call.purpose ? (
-													<Badge variant="secondary">
-														{labels.purposeLabel(call.purpose)}
-													</Badge>
-												) : null}
-												{call.outcome ? (
-													<Badge variant={outcomeVariant(call.outcome)}>
-														{_(OUTCOME_LABELS[call.outcome])}
-													</Badge>
-												) : null}
-												<CallInsightBadges call={call} tags={tags} />
-												{call.hasRecording ? (
-													<Badge variant="outline">
-														<Icon name="mic" />
-														<Trans>Recorded</Trans>
-													</Badge>
-												) : null}
-												{call.scopeId && scopeNames[call.scopeId] ? (
-													<span className="text-muted-foreground text-xs">
-														{scopeNames[call.scopeId]}
-													</span>
-												) : null}
-											</div>
 											{call.summary ? (
-												<p className="text-muted-foreground line-clamp-1 text-sm">
+												<p className="text-muted-foreground line-clamp-1 ps-6 text-[13px]">
 													{call.summary}
 												</p>
 											) : null}
