@@ -578,6 +578,7 @@ export function AIChat({
 		messages,
 		sendMessage,
 		status,
+		error,
 		stop: stopGeneration,
 		regenerate,
 		addToolOutput,
@@ -647,7 +648,8 @@ export function AIChat({
 
 	const handleFormSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (input.trim() && status === 'ready') {
+		// `error` status must still allow sending: a new request clears the error.
+		if (input.trim() && (status === 'ready' || status === 'error')) {
 			sendMessage({ text: input })
 			setInput('')
 			setShowFollowUpSuggestions(false)
@@ -668,6 +670,7 @@ export function AIChat({
 	const isSubmitted = status === 'submitted'
 	const isBusy = isStreaming || isSubmitted
 	const canSend = !isBusy && input.trim().length > 0
+	const hasError = status === 'error' && Boolean(error)
 
 	const isPersonalizedGreeting = userName !== brand.name
 	const displayGreeting =
@@ -818,6 +821,32 @@ export function AIChat({
 									</MessageContent>
 								</Message>
 							)}
+							{hasError && (
+								<div
+									role="alert"
+									className="border-destructive/30 bg-destructive/5 flex items-center gap-2.5 rounded-lg border px-3 py-2"
+								>
+									<Icon
+										name="octagon-alert"
+										className="text-destructive size-3.5 shrink-0"
+									/>
+									<p className="text-destructive min-w-0 flex-1 text-sm">
+										<Trans>
+											The assistant couldn't reply. Check your connection and
+											try again.
+										</Trans>
+									</p>
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => regenerate()}
+										className="shrink-0 text-xs"
+									>
+										<Trans>Try again</Trans>
+									</Button>
+								</div>
+							)}
 						</ConversationContent>
 						<ConversationScrollButton className="border-border/80 bg-background/90 hover:border-primary/40 hover:text-primary shadow-sm backdrop-blur-sm" />
 					</Conversation>
@@ -829,6 +858,7 @@ export function AIChat({
 				<div className="mx-auto w-full max-w-3xl">
 					{/* Follow-up suggestions if in active chat */}
 					{messages.length > 0 &&
+						!hasError &&
 						showFollowUpSuggestions &&
 						smartSuggestions.length > 0 && (
 							<div className="-mx-1 mb-2.5">
