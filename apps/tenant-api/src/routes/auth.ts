@@ -19,6 +19,7 @@ import {
 	resolvePublishedOrganization,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
+import { isValidPhone, normalizePhone } from '../lib/phone.ts'
 import {
 	checkGlobalSendCap,
 	rateLimit,
@@ -89,16 +90,6 @@ function getJwtSecret(): string {
 const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY_DAYS = 30
 const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
-
-const NORMALIZED_PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
-
-function normalizePhone(phone: string) {
-	return phone.replace(/[\s\-().]/g, '')
-}
-
-function isValidPhone(phone: string) {
-	return NORMALIZED_PHONE_PATTERN.test(phone)
-}
 
 function customerNeedsName(name: string | null | undefined) {
 	return !name || name.trim().length < 2

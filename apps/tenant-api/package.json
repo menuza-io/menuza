@@ -30,6 +30,7 @@
     "@repo/observability": "*",
     "@repo/phone-agent": "*",
     "@repo/reports": "*",
+    "@repo/reservations": "*",
     "@repo/sms": "*",
     "@repo/staffing": "*",
     "@repo/tenant-db": "*",
