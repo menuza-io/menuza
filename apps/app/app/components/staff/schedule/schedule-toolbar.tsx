@@ -160,7 +160,7 @@ export function ScheduleToolbar({
 							render={
 								<Button
 									variant="outline"
-									className="h-11 min-w-0 flex-1 justify-between gap-3 sm:min-w-48 sm:flex-none"
+									className="h-11 min-w-0 flex-1 justify-between gap-3 rounded-md sm:min-w-48 sm:flex-none md:h-8"
 									aria-label={_(t`Choose a date: ${label}`)}
 								>
 									<span className="tabular-nums">{label}</span>
@@ -255,11 +255,10 @@ export function ScheduleToolbar({
 						if (picked && SCHEDULE_VIEWS.includes(picked))
 							onChange({ view: picked })
 					}}
-					variant="outline"
-					spacing={1}
+					variant="segmented"
 				>
 					{SCHEDULE_VIEWS.map((value) => (
-						<ToggleGroupItem className="h-11" key={value} value={value}>
+						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
 							{viewLabels[value]}
 						</ToggleGroupItem>
 					))}

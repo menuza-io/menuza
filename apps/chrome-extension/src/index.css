@@ -24,6 +24,11 @@
 	--destructive: oklch(0.58 0.22 27);
 	--destructive-foreground: oklch(0.985 0 0);
 	--border: oklch(0.922 0 0);
+	/* Tokens the shared @repo/ui components use. */
+	--border-strong: oklch(0.87 0 0);
+	--elevation-xs: 0 1px 2px oklch(0 0 0 / 5%);
+	--elevation-card: 0 1px 2px oklch(0 0 0 / 4%);
+	--motion-ease: cubic-bezier(0.23, 1, 0.32, 1);
 	--input: oklch(0.922 0 0);
 	--ring: oklch(0.708 0 0);
 	--chart-1: oklch(0.85 0.13 165);
@@ -61,6 +66,9 @@
 	--destructive: oklch(0.704 0.191 22.216);
 	--destructive-foreground: oklch(0.637 0.237 25.331);
 	--border: oklch(1 0 0 / 10%);
+	--border-strong: oklch(1 0 0 / 18%);
+	--elevation-xs: 0 1px 2px oklch(0 0 0 / 30%);
+	--elevation-card: 0 0 0 0 transparent;
 	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.556 0 0);
 	--chart-1: oklch(0.85 0.13 165);
@@ -96,6 +104,10 @@
 	--color-ring: var(--ring);
 	--color-input: var(--input);
 	--color-border: var(--border);
+	--color-border-strong: var(--border-strong);
+	--shadow-xs: var(--elevation-xs);
+	--shadow-card: var(--elevation-card);
+	--ease-out-quint: var(--motion-ease);
 	--color-destructive: var(--destructive);
 	--color-destructive-foreground: var(--destructive-foreground);
 	--color-accent-foreground: var(--accent-foreground);

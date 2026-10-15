@@ -32,12 +32,23 @@ async function ensureOnboardingStepsExist() {
 	}
 }
 
+/** Home's grid; the stats block is replaced by the KPI row above it. */
 const DEFAULT_HOME_BLOCKS = [
-	'Stats',
 	'Notes chart',
 	'Onboarding checklist',
 	'Top contributors',
 ]
+
+const GREETING = /^Good (morning|afternoon|evening),/
+
+function homeGreeting(page: Page) {
+	return page.getByRole('heading', { level: 1, name: GREETING })
+}
+
+/** A KPI tile above the Home grid, found by its label. */
+function homeMetric(page: Page, label: string) {
+	return page.getByRole('main').getByText(label, { exact: true }).locator('..')
+}
 
 function homeBlock(page: Page, name: string) {
 	return page.getByRole('main').getByRole('region', { name, exact: true })
@@ -203,10 +214,12 @@ test.describe('Dashboard', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Verify organization name is displayed
-		await expect(page.getByText(org.name)).toBeVisible()
+		await expect(
+			page.getByText(`Here's what's happening in ${org.name}`),
+		).toBeVisible()
 
 		// Verify dashboard components are present - use more specific selector
-		await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
+		await expect(homeGreeting(page)).toBeVisible()
 		await expect(page.getByRole('main')).toBeVisible()
 	})
 
@@ -418,8 +431,13 @@ test.describe('Dashboard', () => {
 		await navigate('/:slug', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// Verify statistics are displayed - use more specific selectors
-		await expect(page.getByText(/5 total notes/i)).toBeVisible()
+		// Verify statistics are displayed in the KPI row
+		await expect(
+			homeMetric(page, 'Total notes').getByText('5', { exact: true }),
+		).toBeVisible()
+		await expect(
+			homeMetric(page, 'Contributors').getByText('1', { exact: true }),
+		).toBeVisible()
 	})
 
 	test('Dashboard allows quick note creation', async ({
@@ -483,7 +501,7 @@ test.describe('Dashboard', () => {
 		await expect(
 			page.getByRole('heading', { name: /get started/i }),
 		).toBeVisible()
-		await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
+		await expect(homeGreeting(page)).toBeVisible()
 	})
 
 	test('Dashboard navigation works correctly', async ({
@@ -578,11 +596,11 @@ test.describe('Dashboard', () => {
 		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
 		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
 
-		const title = await boxOf(
-			page.getByRole('heading', { level: 1, name: /welcome/i }),
-		)
-		const stats = await boxOf(homeBlock(page, 'Stats'))
-		expect(title.y + title.height).toBeLessThanOrEqual(stats.y)
+		const title = await boxOf(homeGreeting(page))
+		const kpis = await boxOf(homeMetric(page, 'Total notes'))
+		const chart = await boxOf(homeBlock(page, 'Notes chart'))
+		expect(title.y + title.height).toBeLessThanOrEqual(kpis.y)
+		expect(kpis.y + kpis.height).toBeLessThanOrEqual(chart.y)
 
 		const onboarding = await boxOf(homeBlock(page, 'Onboarding checklist'))
 		const leaderboard = await boxOf(homeBlock(page, 'Top contributors'))
@@ -592,11 +610,11 @@ test.describe('Dashboard', () => {
 		// Crossing the lg/md breakpoint and reloading must not save a layout.
 		await page.setViewportSize({ width: 1024, height: 900 })
 		await expect
-			.poll(async () => (await boxOf(homeBlock(page, 'Stats'))).width)
-			.toBeLessThan(stats.width)
+			.poll(async () => (await boxOf(homeBlock(page, 'Notes chart'))).width)
+			.toBeLessThan(chart.width)
 		await page.reload()
 		await page.waitForLoadState('networkidle')
-		await expect(homeBlock(page, 'Stats')).toBeVisible()
+		await expect(homeBlock(page, 'Notes chart')).toBeVisible()
 
 		expect(homePosts).toEqual([])
 		const [homeRows] = await db
@@ -660,7 +678,7 @@ test.describe('Dashboard', () => {
 		const org = await createTestOrganization(user.id, 'admin')
 		const homePosts = recordHomePosts(page, org.slug)
 
-		// Tall enough to drag the leaderboard up to the stats strip without
+		// Tall enough to drag the leaderboard up to the notes chart without
 		// scrolling in between.
 		await page.setViewportSize({ width: 1440, height: 1100 })
 		await navigate('/:slug', { slug: org.slug })
@@ -681,14 +699,12 @@ test.describe('Dashboard', () => {
 				block.getByRole('button', { name: 'Remove block' }),
 			).toBeVisible()
 		}
-		for (const blockId of [
-			'stats',
-			'notes-chart',
-			'onboarding',
-			'leaderboard',
-		]) {
+		for (const blockId of ['notes-chart', 'onboarding', 'leaderboard']) {
 			await expect(resizeHandle(page, blockId)).toBeVisible()
 		}
+		// The KPI row stands in for the stats block, which stays hidden.
+		await expect(homeBlock(page, 'Stats')).toHaveCount(0)
+		await expect(resizeHandle(page, 'stats')).toBeHidden()
 		await expect(page.getByRole('button', { name: 'Add block' })).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: 'Reset to default' }),
@@ -696,10 +712,10 @@ test.describe('Dashboard', () => {
 
 		// Dragging a block by its body does not move it.
 		const initialLayout = await homeLayoutStyles(page)
-		await dragBy(page, homeBlock(page, 'Stats'), { x: 0, y: 600 })
+		await dragBy(page, homeBlock(page, 'Notes chart'), { x: 0, y: 600 })
 		expect(await homeLayoutStyles(page)).toEqual(initialLayout)
 
-		// Drag the leaderboard by its handle above the stats strip.
+		// Drag the leaderboard by its handle above the notes chart.
 		const moved = nextHomePost(page, org.slug)
 		const leaderboardHandle = homeBlock(page, 'Top contributors').getByRole(
 			'button',
@@ -707,15 +723,14 @@ test.describe('Dashboard', () => {
 		)
 		await leaderboardHandle.scrollIntoViewIfNeeded()
 		const handleBox = await boxOf(leaderboardHandle)
-		const statsBox = await boxOf(homeBlock(page, 'Stats'))
+		const chartTop = await boxOf(homeBlock(page, 'Notes chart'))
 		await dragBy(page, leaderboardHandle, {
 			x: 0,
-			y: statsBox.y + 4 - (handleBox.y + handleBox.height / 2),
+			y: chartTop.y + 4 - (handleBox.y + handleBox.height / 2),
 		})
 		expect((await moved).status()).toBe(200)
 		expect(await homeBlockOrder(page)).toEqual([
 			'Top contributors',
-			'Stats',
 			'Notes chart',
 			'Onboarding checklist',
 		])
@@ -982,7 +997,7 @@ test.describe('Dashboard', () => {
 		await expect(
 			deleted.getByRole('link', { name: 'Open report' }),
 		).toHaveCount(0)
-		await expect(homeBlock(page, 'Stats')).toBeVisible()
+		await expect(homeBlock(page, 'Notes chart')).toBeVisible()
 
 		await page.getByRole('button', { name: 'Edit layout' }).click()
 		const removed = nextHomePost(page, org.slug)
@@ -1036,7 +1051,7 @@ test.describe('Dashboard', () => {
 		await expect(
 			block.getByText("You don't have permission to see this report's data."),
 		).toBeVisible()
-		await expect(homeBlock(page, 'Stats')).toBeVisible()
+		await expect(homeBlock(page, 'Notes chart')).toBeVisible()
 		expect(
 			tenantRequests.filter((url) => url.endsWith('/analytics/query')),
 		).toEqual([])
@@ -1056,10 +1071,16 @@ test.describe('Dashboard', () => {
 		await page.waitForLoadState('networkidle')
 
 		const onboarding = homeBlock(page, 'Onboarding checklist')
+		const [chartBefore, onboardingBefore] = await Promise.all([
+			boxOf(homeBlock(page, 'Notes chart')),
+			boxOf(onboarding),
+		])
+		const rowGap = Math.round(
+			onboardingBefore.y - (chartBefore.y + chartBefore.height),
+		)
 		await onboarding.getByRole('button', { name: 'Close' }).click()
 		await expect(onboarding).toHaveCount(0)
 		expect(await homeBlockOrder(page)).toEqual([
-			'Stats',
 			'Notes chart',
 			'Top contributors',
 		])
@@ -1073,16 +1094,14 @@ test.describe('Dashboard', () => {
 		// the row, right below the chart.
 		await expect
 			.poll(async () => {
-				const [stats, chart, leaderboard] = await Promise.all([
-					boxOf(homeBlock(page, 'Stats')),
+				const [chart, leaderboard] = await Promise.all([
 					boxOf(homeBlock(page, 'Notes chart')),
 					boxOf(homeBlock(page, 'Top contributors')),
 				])
 				return {
-					startAligned: Math.round(leaderboard.x) === Math.round(stats.x),
+					startAligned: Math.round(leaderboard.x) === Math.round(chart.x),
 					belowChart:
-						Math.round(leaderboard.y - (chart.y + chart.height)) ===
-						Math.round(chart.y - (stats.y + stats.height)),
+						Math.round(leaderboard.y - (chart.y + chart.height)) === rowGap,
 				}
 			})
 			.toEqual({ startAligned: true, belowChart: true })
@@ -1103,7 +1122,7 @@ test.describe('Dashboard', () => {
 			)
 			.toBeGreaterThan(0)
 		await expect(page).not.toHaveURL(/celebrate=true/, { timeout: 10_000 })
-		await expect(homeBlock(page, 'Stats')).toBeVisible()
+		await expect(homeBlock(page, 'Notes chart')).toBeVisible()
 	})
 
 	test('Home saves a block added just before ?celebrate=true is dropped', async ({

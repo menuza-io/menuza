@@ -1,3 +1,4 @@
+import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { StaffClientProvider } from '#app/components/staff/staff-client-provider.tsx'
@@ -21,9 +22,9 @@ export default function StaffLayout() {
 	const { orgSlug } = useLoaderData<typeof loader>()
 	return (
 		<StaffClientProvider orgSlug={orgSlug}>
-			<div className="mx-auto w-full max-w-6xl py-8 md:px-6 lg:px-8">
+			<WorkspacePage>
 				<Outlet />
-			</div>
+			</WorkspacePage>
 		</StaffClientProvider>
 	)
 }

@@ -181,10 +181,10 @@ function CopyBody({
 					if (picked) setDirection(picked)
 				}}
 			>
-				<ToggleGroupItem className="h-11" value="into">
+				<ToggleGroupItem className="h-11 md:h-8" value="into">
 					<Trans>Copy into this week</Trans>
 				</ToggleGroupItem>
-				<ToggleGroupItem className="h-11" value="from">
+				<ToggleGroupItem className="h-11 md:h-8" value="from">
 					<Trans>Copy this week elsewhere</Trans>
 				</ToggleGroupItem>
 			</ToggleGroup>

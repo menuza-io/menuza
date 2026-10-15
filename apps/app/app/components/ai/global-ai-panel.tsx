@@ -332,12 +332,12 @@ function PanelBody() {
 		<>
 			<header
 				className={cn(
-					'flex w-full shrink-0 items-center justify-between border-b transition-[width,height] ease-linear',
+					'bg-card flex w-full shrink-0 items-center justify-between border-b transition-[width,height] ease-linear',
 					isBuilderRoute ? 'h-12' : 'h-(--header-height)',
 				)}
 			>
 				<div className="flex items-center px-4">
-					<span className="text-base font-medium tracking-normal">
+					<span className="text-sm font-semibold">
 						<Trans>AI Assistant</Trans>
 					</span>
 				</div>
@@ -455,7 +455,7 @@ function AIPanelSurface() {
 					!isMobile &&
 						isFullscreen &&
 						cn(
-							'ring-foreground/10 animate-in fade-in-0 zoom-in-95 fixed rounded-xl shadow-lg ring-1 duration-200',
+							'bg-popover animate-in fade-in-0 zoom-in-95 shadow-pop fixed rounded-2xl duration-200',
 							isBuilderRoute
 								? 'inset-3 z-70 sm:inset-4'
 								: 'inset-3 z-50 sm:inset-4',
@@ -473,9 +473,9 @@ function AIPanelSurface() {
 						!isFullscreen &&
 						!isBuilderRoute &&
 						cn(
-							'fixed top-2 right-2 bottom-2 z-40 rounded-xl shadow-sm',
-							'transition-[width,opacity] duration-300 ease-out',
-							isVisible ? 'w-105 opacity-100' : 'w-0 opacity-0',
+							'fixed inset-y-0 right-0 z-40 border-l',
+							'ease-out-quint transition-[width,opacity] duration-300 motion-reduce:transition-none',
+							isVisible ? 'w-105 opacity-100' : 'w-0 border-l-0 opacity-0',
 						),
 				)}
 			>
@@ -500,12 +500,13 @@ export function GlobalAIToggle() {
 	const { isOpen, toggle } = useAIPanel()
 	return (
 		<Button
-			variant={isOpen ? 'secondary' : 'outline'}
+			variant={isOpen ? 'secondary' : 'ghost'}
+			size="sm"
 			type="button"
 			onClick={toggle}
 			aria-pressed={isOpen}
 			aria-label={isOpen ? 'Close assistant' : 'Open assistant'}
-			className="h-10 gap-1.5 rounded-lg px-2.5 text-sm font-normal"
+			className="text-muted-foreground hover:text-foreground aria-pressed:text-foreground gap-1.5"
 		>
 			<svg
 				fill="none"

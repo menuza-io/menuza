@@ -8,15 +8,25 @@ export function DashboardHeader({
 	title,
 	actions,
 }: {
-	title: ReactNode
+	title?: ReactNode
 	actions?: ReactNode
 }) {
+	if (!title && !actions) return null
+
 	return (
-		<div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
-			<div className="flex min-w-0 items-center">{title}</div>
-			<div className="flex flex-wrap items-center justify-end gap-2">
-				{actions}
-			</div>
+		<div
+			className={
+				title
+					? 'mb-3 flex min-h-9 flex-wrap items-center justify-between gap-2'
+					: 'mb-3 flex min-h-9 flex-wrap items-center justify-end gap-2'
+			}
+		>
+			{title ? <div className="flex min-w-0 items-center">{title}</div> : null}
+			{actions ? (
+				<div className="flex flex-wrap items-center justify-end gap-1.5">
+					{actions}
+				</div>
+			) : null}
 		</div>
 	)
 }

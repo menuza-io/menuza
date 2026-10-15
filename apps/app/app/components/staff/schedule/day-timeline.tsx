@@ -271,7 +271,7 @@ function Lane({
 						onClick={() => onAdd({ rowKey: row.key, date })}
 						aria-label={label}
 						title={_(t`Add a shift`)}
-						className="absolute inset-0 h-full w-full opacity-0 hover:opacity-100 focus-visible:opacity-100"
+						className="absolute inset-0 h-full w-full rounded-md opacity-0 hover:opacity-100 focus-visible:opacity-100"
 					>
 						<Icon
 							name="plus"

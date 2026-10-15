@@ -23,10 +23,12 @@ import {
 	insertTestDashboard,
 	insertTestMember,
 	insertTestShare,
+	insertTestUser,
 } from '#tests/dashboard-utils.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
+	createTestNote,
 	createTestOrganization,
 	getResponseStatus,
 	setupTestOrgWithUser,
@@ -190,6 +192,25 @@ describe('Home dashboard loader', () => {
 		expect(data.blockData.onboarding).not.toBeNull()
 		expect(data.blockData.leaderboard).toEqual([])
 		expect(await homeRowCount(user.id, organization.id)).toBe(0)
+	})
+
+	it('counts every contributor, not only those on the leaderboard', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		const writers = await Promise.all(
+			Array.from({ length: 8 }, () => insertTestUser()),
+		)
+		for (const writer of writers) {
+			await createTestNote(organization.id, writer.id)
+			await createTestNote(organization.id, writer.id)
+		}
+		const outsider = await insertTestUser()
+		const other = await createTestOrganization(outsider.id)
+		await createTestNote(other.id, outsider.id)
+
+		const data = await loadHome(organization.slug, cookie)
+
+		expect(data.blockData.leaderboard).toHaveLength(6)
+		expect(data.contributorCount).toBe(8)
 	})
 
 	it('makes the organization the default one for the user', async () => {

@@ -125,7 +125,7 @@ const GridCell = memo(function GridCell({
 							onClick={() => onAdd(cell)}
 							aria-label={_(t`Add a shift for ${rowLabel} on ${dayLabel}`)}
 							className={cn(
-								'flex-1',
+								'flex-1 rounded-md',
 								empty
 									? 'min-h-11 opacity-0 group-focus-within/cell:opacity-100 group-hover/cell:opacity-100 pointer-coarse:opacity-100'
 									: 'h-8 pointer-coarse:h-11',
@@ -142,7 +142,7 @@ const GridCell = memo(function GridCell({
 								aria-label={_(
 									t`Paste the copied shift for ${rowLabel} on ${dayLabel}`,
 								)}
-								className="w-9 pointer-coarse:min-h-11"
+								className="w-9 rounded-md pointer-coarse:min-h-11"
 							>
 								<Icon name="copy" className="size-4" aria-hidden="true" />
 							</Button>
@@ -375,7 +375,7 @@ export function WeekGrid(props: BoardProps) {
 											variant="ghost"
 											onClick={() => onPickDate(date, 'day')}
 											aria-label={openDayLabel(date)}
-											className="h-auto min-h-11 w-full flex-col items-start justify-center px-2 py-1 text-start font-normal print:hover:bg-transparent"
+											className="h-auto min-h-11 w-full flex-col items-start justify-center rounded-md px-2 py-1 text-start font-normal print:hover:bg-transparent"
 										>
 											<span
 												className={cn(

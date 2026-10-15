@@ -82,7 +82,7 @@ export function UnitField({
 					value={text}
 					aria-invalid={showError || invalid ? true : undefined}
 					aria-describedby={describedBy}
-					className="h-11 max-w-28 text-end tabular-nums"
+					className="h-11 max-w-28 text-end tabular-nums md:h-8"
 					onChange={(event) => {
 						const next = event.target.value
 						setText(next)

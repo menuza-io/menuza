@@ -22,6 +22,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
+import { Icon } from '@repo/ui/icon'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Table,
 	TableBody,
@@ -37,11 +39,16 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.journey.name,
+}
 
 type JourneyStatus = 'draft' | 'active' | 'paused' | 'archived'
 type RunStatus = 'completed' | 'running' | 'failed' | 'cancelled'
@@ -188,72 +195,39 @@ export default function JourneyRunsRoute() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-				<div className="space-y-1">
-					<div className="flex items-center gap-2">
-						<Button
-							render={
-								<Link to={`/${orgSlug}/marketing/automations/${journey.id}`} />
-							}
-							variant="ghost"
-							size="sm"
-							className="text-muted-foreground size-8 p-0"
-						>
-							<svg
-								className="size-4"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<path d="m15 18-6-6 6-6" />
-							</svg>
-						</Button>
-						<h2 className="text-foreground text-xl font-bold tracking-tight">
-							{journey.name} — {_(msg`Execution Runs`)}
-						</h2>
+			<PageHeader
+				title={
+					<span className="flex flex-wrap items-center gap-2">
+						{journey.name}
 						<Badge
-							variant="outline"
-							className={cn(
-								'text-[10px] capitalize',
-								journey.status === 'active' &&
-									'border-emerald-500/30 bg-emerald-500/10 text-emerald-600',
-								journey.status === 'draft' && 'bg-muted text-muted-foreground',
-								journey.status === 'paused' &&
-									'border-amber-500/30 bg-amber-500/10 text-amber-600',
-							)}
+							variant={
+								journey.status === 'active'
+									? 'success'
+									: journey.status === 'paused'
+										? 'warning'
+										: 'secondary'
+							}
 						>
 							{journeyStatusLabels[journeyStatus]}
 						</Badge>
-					</div>
-					<p className="text-muted-foreground pl-10 text-xs">
-						{_(
-							msg`Audit trail and step execution history triggered by "${triggerLabel}".`,
-						)}
-					</p>
-				</div>
-
-				<Button
-					render={
-						<Link to={`/${orgSlug}/marketing/automations/${journey.id}`} />
-					}
-					variant="outline"
-					size="sm"
-					className="gap-1.5 text-xs"
-				>
-					<svg
-						className="size-3.5"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
+					</span>
+				}
+				description={_(
+					msg`Execution runs and step history, triggered by "${triggerLabel}".`,
+				)}
+				actions={
+					<Button
+						render={
+							<Link to={`/${orgSlug}/marketing/automations/${journey.id}`} />
+						}
+						variant="outline"
+						size="sm"
 					>
-						<path d="M12 20h9" />
-						<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-					</svg>
-					<span>{_(msg`Open Visual Builder`)}</span>
-				</Button>
-			</div>
+						<Icon name="pencil" />
+						{_(msg`Open visual builder`)}
+					</Button>
+				}
+			/>
 
 			<Card>
 				<CardHeader className="pb-3">

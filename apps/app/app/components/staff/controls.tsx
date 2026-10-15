@@ -151,7 +151,7 @@ export function SelectField({
 			>
 				<SelectTrigger
 					id={fieldId}
-					className="h-11 w-full"
+					className="h-11 w-full md:h-8"
 					aria-invalid={error ? true : undefined}
 					aria-describedby={describedBy}
 				>
@@ -195,7 +195,7 @@ export function FilterSelect({
 		>
 			<SelectTrigger
 				aria-label={label}
-				className={cn('h-11 w-full md:w-auto md:min-w-36', className)}
+				className={cn('h-11 w-full md:h-8 md:w-auto md:min-w-36', className)}
 			>
 				<SelectValue />
 			</SelectTrigger>

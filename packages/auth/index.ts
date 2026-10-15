@@ -1,4 +1,5 @@
 export * from './src/auth.server.js'
+export * from './src/redirect-path.js'
 export * from './src/verification.server.js'
 export * from './src/totp.server.js'
 export * from './src/backup-codes.server.js'

@@ -1734,7 +1734,7 @@ function AddSectionDialog({
 								className={cn(
 									'group/tile border-border hover:bg-muted/50 focus-visible:ring-ring flex flex-col items-start gap-3 rounded-xl border p-3 text-left transition-[background-color,border-color] duration-150 outline-none focus-visible:ring-2',
 									isSelected
-										? 'border-foreground/30 bg-muted'
+										? 'border-primary/40 bg-primary/5'
 										: 'bg-background',
 								)}
 							>
@@ -1742,7 +1742,7 @@ function AddSectionDialog({
 									className={cn(
 										'flex size-9 items-center justify-center rounded-lg transition-colors',
 										isSelected
-											? 'bg-foreground text-background'
+											? 'bg-primary text-primary-foreground'
 											: 'bg-muted text-muted-foreground group-hover/tile:text-foreground',
 									)}
 								>

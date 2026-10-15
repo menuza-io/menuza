@@ -29,13 +29,11 @@ export function EmptyState({
 	return (
 		<div
 			className={cn(
-				'dark:bg-background bg-muted text-center',
-				'w-full rounded-xl p-1',
-				'',
+				'border-border bg-muted/30 w-full rounded-lg border border-dashed text-center',
 				className,
 			)}
 		>
-			<div className="bg-background ring-border dark:bg-muted/50 hover:dark:bg-muted/70 group rounded-lg p-14 shadow-sm ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:hover:duration-200">
+			<div className="group rounded-lg px-8 py-14 motion-safe:transition motion-safe:duration-300">
 				<div className="isolate flex justify-center">
 					{icons.length === 3 ? (
 						<>

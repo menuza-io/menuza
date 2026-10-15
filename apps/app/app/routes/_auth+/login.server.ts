@@ -4,13 +4,13 @@ import {
 	authSessionStorage,
 	verifySessionStorage,
 	getUserId,
+	safeDocumentRedirect,
 	sessionKey,
 } from '@repo/auth'
 import { combineResponseInits } from '@repo/common'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, db, eq, Verification, Session } from '@repo/database'
 import { redirect } from 'react-router'
-import { safeRedirect } from 'remix-utils/safe-redirect'
 import { handleNewDeviceSignin } from '#app/utils/new-device-signin.server.tsx'
 import { twoFAVerificationType } from '../_app+/security.tsx'
 import { getRedirectToUrl, type VerifyFunctionArgs } from './verify.server.tsx'
@@ -92,7 +92,7 @@ export async function handleNewSession(
 		)
 
 		return redirect(
-			safeRedirect(redirectTo),
+			safeDocumentRedirect(redirectTo),
 			combineResponseInits(
 				{
 					headers: {
@@ -178,7 +178,7 @@ export async function handleVerification({
 		)
 	}
 
-	return redirect(safeRedirect(redirectTo), { headers })
+	return redirect(safeDocumentRedirect(redirectTo), { headers })
 }
 
 export async function shouldRequestTwoFA(request: Request) {

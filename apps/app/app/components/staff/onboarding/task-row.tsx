@@ -148,7 +148,7 @@ export function TaskRow({
 									<Button
 										type="button"
 										variant="link"
-										className="h-11 w-fit px-0"
+										className="h-11 w-fit px-0 md:h-8"
 									/>
 								}
 							>

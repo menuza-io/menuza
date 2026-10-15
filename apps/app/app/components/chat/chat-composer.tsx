@@ -271,7 +271,7 @@ export function ChatComposer({
 				role="group"
 				aria-label={_(msg`Message composer`)}
 				className={cn(
-					'bg-background flex w-full cursor-text flex-col rounded-xl border motion-safe:transition-colors',
+					'bg-card dark:bg-background flex w-full cursor-text flex-col rounded-xl border motion-safe:transition-colors',
 					isFocused && 'border-ring',
 					disabled && 'bg-muted/40 opacity-60',
 				)}

@@ -1,6 +1,7 @@
 import { plural } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
+import { Badge } from '@repo/ui/badge'
 import { Icon } from '@repo/ui/icon'
 import { type ScoreBand, scoreBand } from '#app/utils/hiring/applicant-view.ts'
 import { type ApplicantLabels } from './applicant-labels.ts'
@@ -21,7 +22,7 @@ export function FlagNote({ count }: { count: number }) {
 
 const DOT: Record<ScoreBand, string> = {
 	none: 'bg-muted-foreground/30',
-	strong: 'bg-primary',
+	strong: 'bg-success',
 	mixed: 'bg-muted-foreground',
 	low: 'bg-destructive/70',
 }
@@ -33,14 +34,31 @@ const DOT: Record<ScoreBand, string> = {
 export function FitLabel({
 	score,
 	labels,
+	appearance = 'text',
 	className,
 }: {
 	score: number | null
 	labels: ApplicantLabels
+	/** `badge` for compact cards; only a strong match gets color. */
+	appearance?: 'text' | 'badge'
 	className?: string
 }) {
 	const band = scoreBand(score)
 	if (band === 'none') return null
+	if (appearance === 'badge') {
+		return (
+			<Badge
+				variant={band === 'strong' ? 'success' : 'secondary'}
+				className={className}
+			>
+				<span
+					aria-hidden="true"
+					className={cn('size-1.5 shrink-0 rounded-full', DOT[band])}
+				/>
+				{labels.score[band]}
+			</Badge>
+		)
+	}
 	return (
 		<span
 			className={cn(

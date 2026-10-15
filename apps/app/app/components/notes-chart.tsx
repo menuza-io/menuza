@@ -21,7 +21,7 @@ import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 const chartConfig = {
 	notes: {
 		label: 'Notes Created',
-		color: 'var(--chart-2)',
+		color: 'var(--chart-4)',
 	},
 } satisfies ChartConfig
 
@@ -116,10 +116,7 @@ export const NotesChart = memo(function NotesChart({
 				{trend >= 0 ? (
 					<span className="flex items-center gap-2">
 						<Trans>Trending up by {trend}% this period</Trans>
-						<Icon
-							name="trending-up"
-							className="h-4 w-4 text-green-600 dark:text-green-400"
-						/>
+						<Icon name="trending-up" className="text-primary h-4 w-4" />
 					</span>
 				) : (
 					<span className="flex items-center gap-2">

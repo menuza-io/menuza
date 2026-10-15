@@ -145,7 +145,7 @@ function Toolbar({ editor, label }: { editor: Editor | null; label: string }) {
 					variant={item.active ? 'secondary' : 'ghost'}
 					aria-pressed={item.active}
 					aria-label={item.name}
-					className="h-11 min-w-11 px-3 md:min-w-8"
+					className="h-11 min-w-11 px-3 md:h-8 md:min-w-8"
 					onMouseDown={(event) => event.preventDefault()}
 					onClick={item.run}
 				>

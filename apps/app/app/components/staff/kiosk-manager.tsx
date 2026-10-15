@@ -768,13 +768,13 @@ function PairingCodeStep({
 							dir="ltr"
 							value={url}
 							onFocus={(event) => event.currentTarget.select()}
-							className="h-11 text-xs"
+							className="h-11 text-xs md:h-8"
 						/>
 					</FieldLabel>
 					<Button
 						type="button"
 						variant="outline"
-						className="h-11 w-fit"
+						className="h-11 w-fit md:h-8"
 						onClick={() => void copy()}
 						disabled={expired}
 					>

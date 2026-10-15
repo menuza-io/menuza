@@ -7,11 +7,7 @@ app:
   platform: web
 # Paths are relative to the project root: the folder that holds .bugpatrol/.
   source: .                          # the repo that the fixer edits
-  setup:
-    - run: 'npm run dev'
-      background: true               # keep the app alive for the session
-      readyWhen: 'https?://(localhost|127\.0\.0\.1)'   # start when the output matches
-      timeoutMs: 120000
+  setup: []                          # start the app yourself (npm run dev) before running bugpatrol
   connect:
     url: https://app.epic-startup.test:2999
   instructions: .bugpatrol/instructions.md   # plain English for the explorer: sign in, main flows, never-do list
@@ -24,7 +20,7 @@ agents:
   judge:                             # decides which reports are real bugs, and writes the issues
     use: claude
   fixer:                             # writes a fix in its own git worktree
-    enabled: false                   # turn on when you want Bugpatrol to fix bugs
+    enabled: true                    # turn on when you want Bugpatrol to fix bugs
     use: claude
   github:
-    enabled: false                   # turn on to open PRs and issues (needs the gh CLI)
+    enabled: true                   # turn on to open PRs and issues (needs the gh CLI)

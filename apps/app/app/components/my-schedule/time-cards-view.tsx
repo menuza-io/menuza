@@ -163,7 +163,7 @@ function CardRow({ card, locale }: { card: MyTimeCard; locale: string }) {
 									size="sm"
 									type="button"
 									variant="ghost"
-									className="h-auto min-h-11 w-full items-start justify-between gap-3 p-0 text-start font-normal"
+									className="h-auto min-h-11 w-full items-start justify-between gap-3 rounded-md p-0 text-start font-normal"
 								/>
 							}
 						>

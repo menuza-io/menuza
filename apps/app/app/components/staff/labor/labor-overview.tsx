@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
-import { Item, ItemContent, ItemDescription, ItemGroup } from '@repo/ui/item'
+import { Item, ItemContent, ItemGroup } from '@repo/ui/item'
 import {
 	Table,
 	TableBody,
@@ -374,7 +374,7 @@ function Figures({
 					{label}
 				</h3>
 			) : null}
-			<ItemGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+			<div className="bg-border grid gap-px overflow-hidden rounded-xl border sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col">
 				<Figure term={<Trans>Hours</Trans>}>
 					{hoursOf(summary.totals.paidMinutes, locale)}
 					{summary.totals.overtimeMinutes > 0 ? (
@@ -422,7 +422,7 @@ function Figures({
 						{formatMoneyMinor(row.salesPerLaborHourMinor, row.currency, locale)}
 					</Figure>
 				) : null}
-			</ItemGroup>
+			</div>
 		</section>
 	)
 }
@@ -435,14 +435,12 @@ function Figure({
 	children: React.ReactNode
 }) {
 	return (
-		<Item variant="outline" size="sm" className="items-start">
-			<ItemContent>
-				<ItemDescription>{term}</ItemDescription>
-				<div className="mt-1 text-2xl tracking-tight tabular-nums">
-					{children}
-				</div>
-			</ItemContent>
-		</Item>
+		<div className="bg-card flex min-w-0 flex-col gap-1.5 px-4 py-3 sm:odd:last:col-span-2 lg:odd:last:col-span-1">
+			<div className="text-foreground/75 text-[13px]">{term}</div>
+			<div className="text-xl leading-tight font-semibold tracking-tight tabular-nums">
+				{children}
+			</div>
+		</div>
 	)
 }
 

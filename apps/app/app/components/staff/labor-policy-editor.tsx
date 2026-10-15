@@ -526,7 +526,7 @@ function PolicyForm({
 									<Button
 										type="button"
 										variant="outline"
-										className="h-auto min-h-11 w-full justify-start gap-3 px-4 py-3 text-start"
+										className="h-auto min-h-11 w-full justify-start gap-3 rounded-lg px-4 py-3 text-start"
 									/>
 								}
 							>
@@ -991,7 +991,7 @@ function AdvancedSection({
 						<Button
 							type="button"
 							variant="ghost"
-							className="h-auto min-h-11 w-full justify-start gap-3 px-4 py-3.5 text-start"
+							className="h-auto min-h-11 w-full justify-start gap-3 rounded-lg px-4 py-3.5 text-start"
 						/>
 					}
 				>

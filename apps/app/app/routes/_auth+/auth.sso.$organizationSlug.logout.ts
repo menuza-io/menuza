@@ -1,6 +1,10 @@
-import { authSessionStorage, logout, sessionKey } from '@repo/auth'
+import {
+	authSessionStorage,
+	logout,
+	safeDocumentRedirect,
+	sessionKey,
+} from '@repo/auth'
 import { db, eq, SSOSession } from '@repo/database'
-import { safeRedirect } from 'remix-utils/safe-redirect'
 import { getOrganizationBySlug } from '#app/utils/organization/organizations.server.ts'
 import { ssoAuthService } from '#app/utils/sso/auth.server.ts'
 import { ssoConfigurationService } from '#app/utils/sso/configuration.server.ts'
@@ -60,7 +64,7 @@ async function handleSSOLogout(
 		}
 	}
 
-	const safeRedirectTo = safeRedirect(redirectTo, '/login')
+	const safeRedirectTo = safeDocumentRedirect(redirectTo, '/login')
 
 	// Perform regular logout (this will clean up the session)
 	return logout({ request, redirectTo: safeRedirectTo })

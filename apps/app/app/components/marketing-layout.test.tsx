@@ -14,6 +14,7 @@ vi.mock('#app/components/app-sidebar.tsx', () => ({
 vi.mock('#app/components/site-header.tsx', () => ({
 	SiteHeader: () => null,
 }))
+vi.mock('./command-menu.tsx', () => ({ CommandMenu: () => null }))
 vi.mock('./progress-bar', () => ({ EpicProgress: () => null }))
 
 beforeEach(() => {

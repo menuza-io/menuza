@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router'
 import { JobEditor } from '#app/components/hiring/job-editor.tsx'
 import { JobReadOnly } from '#app/components/hiring/job-read-only.tsx'
 import { useSiteOrigin } from '#app/hooks/use-site-origin.ts'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import { loadHiringContext } from '#app/utils/hiring/hiring-context.server.ts'
 import {
 	POSTING_STEPS,
@@ -16,6 +17,10 @@ import {
 	STAFF_SECTION_REQUIREMENTS,
 } from '#app/utils/staffing/sections.ts'
 import { type Route } from './+types/hiring.$postingId.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.posting.title,
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireStaffingAccess(

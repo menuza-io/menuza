@@ -21,6 +21,7 @@ import {
 	useAIPanelHotkey,
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	resolveEmailBrandingForOrg,
 	type OrganizationEmailBranding,
@@ -31,6 +32,10 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.journey.name,
+}
 
 /** Render every designed email node so the send path never needs React. */
 async function withRenderedEmails(

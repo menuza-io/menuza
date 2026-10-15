@@ -144,12 +144,15 @@ export function TimeclockToday({
 							const picked = next[0] as TodayFilter | undefined
 							if (picked && TODAY_FILTERS.includes(picked)) setFilter(picked)
 						}}
-						variant="outline"
-						spacing={1}
+						variant="segmented"
 						className="flex-wrap"
 					>
 						{TODAY_FILTERS.map((value) => (
-							<ToggleGroupItem className="h-11" key={value} value={value}>
+							<ToggleGroupItem
+								className="h-11 md:h-7"
+								key={value}
+								value={value}
+							>
 								{filterLabels[value]}
 							</ToggleGroupItem>
 						))}

@@ -3,11 +3,16 @@ import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { CampaignDetailView, type CampaignDetail } from '@repo/marketing'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.campaign?.name,
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -44,7 +49,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export default function CampaignDetailRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, campaign, error } = useLoaderData<typeof loader>()
+	const { campaign, error } = useLoaderData<typeof loader>()
 
 	if (error || !campaign) {
 		return (
@@ -54,10 +59,5 @@ export default function CampaignDetailRoute() {
 		)
 	}
 
-	return (
-		<CampaignDetailView
-			campaign={campaign}
-			backHref={`/${orgSlug}/marketing/campaigns`}
-		/>
-	)
+	return <CampaignDetailView campaign={campaign} />
 }

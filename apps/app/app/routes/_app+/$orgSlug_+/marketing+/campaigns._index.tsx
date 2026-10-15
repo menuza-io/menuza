@@ -102,13 +102,13 @@ export default function CampaignsIndexRoute() {
 				<div className="relative max-w-sm flex-1">
 					<Icon
 						name="search"
-						className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+						className="text-muted-foreground pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2"
 					/>
 					<Input
 						placeholder={_(msg`Search campaigns...`)}
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="h-11 pl-10"
+						className="ps-8"
 					/>
 				</div>
 				<div className="flex flex-wrap items-center gap-1">

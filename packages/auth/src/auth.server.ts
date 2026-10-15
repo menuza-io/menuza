@@ -8,9 +8,12 @@ import {
 } from '@repo/database/types'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'react-router'
-import { safeRedirect } from 'remix-utils/safe-redirect'
 import { validateImpersonation } from './impersonation.server.js'
 import { authSessionStorage } from './session.server.js'
+import {
+	getRequestDocumentPath,
+	safeDocumentRedirect,
+} from './redirect-path.js'
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
@@ -107,11 +110,10 @@ export async function requireUserId(
 ) {
 	const userId = await getUserId(request)
 	if (!userId) {
-		const requestUrl = new URL(request.url)
 		redirectTo =
 			redirectTo === null
 				? null
-				: (redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`)
+				: (redirectTo ?? getRequestDocumentPath(request))
 		const loginParams = redirectTo ? new URLSearchParams({ redirectTo }) : null
 		const loginRedirect = ['/login', loginParams?.toString()]
 			.filter(Boolean)
@@ -199,7 +201,7 @@ export async function logout(
 			.where(eq(Session.id, sessionId))
 			.catch(() => {})
 	}
-	throw redirect(safeRedirect(redirectTo), {
+	throw redirect(safeDocumentRedirect(redirectTo), {
 		...responseInit,
 		headers: combineHeaders(
 			{ 'set-cookie': await authSessionStorage.destroySession(authSession) },

@@ -243,7 +243,7 @@ export function CandidateSheet({ applicationId }: { applicationId: string }) {
 							/>
 							<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
 								<Button
-									className="col-span-2 h-11 sm:col-span-1"
+									className="col-span-2 h-11 sm:col-span-1 md:h-8"
 									onClick={() => setDialog({ kind: 'hire' })}
 								>
 									<Icon name="user-plus" />
@@ -424,7 +424,7 @@ export function CandidateSheet({ applicationId }: { applicationId: string }) {
 						{ctx.canWrite && open ? (
 							<Button
 								variant="outline"
-								className="h-11 self-start"
+								className="h-11 self-start md:h-8"
 								onClick={() => setDialog({ kind: 'interview' })}
 							>
 								<Icon name="plus" />

@@ -367,7 +367,7 @@ function InviteToApp({
 			<Button
 				type="button"
 				variant="outline"
-				className="h-11 self-start"
+				className="h-11 self-start md:h-8"
 				disabled={pending || sent}
 				onClick={() =>
 					void fetcher.submit(

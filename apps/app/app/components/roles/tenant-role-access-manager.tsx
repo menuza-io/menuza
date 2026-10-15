@@ -35,6 +35,7 @@ import {
 } from '@repo/ui/table'
 import { useState } from 'react'
 import { Form, Link, useNavigation } from 'react-router'
+import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 import {
 	STAFFING_IMPLIED_PERMISSION_IDS,
 	withImpliedStaffingPermissions,
@@ -618,10 +619,11 @@ export function RoleAccessForm({
 												type="button"
 												onClick={() => applyPreset(preset)}
 												disabled={isSubmitting}
+												aria-pressed={isSelected}
 												className={cn(
 													'rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-all',
 													isSelected
-														? 'bg-foreground text-background border-foreground shadow-xs'
+														? 'bg-primary text-primary-foreground border-primary shadow-xs'
 														: 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40',
 												)}
 											>
@@ -822,6 +824,7 @@ export function ReadOnlyRoleView({
 	/** Whether the Staff module is turned on for this organization. */
 	staffingEnabled?: boolean
 }) {
+	const { roleName, roleDescription } = useRoleLabels()
 	const permissionGroups = getPermissionGroups().filter(
 		(group) => staffingEnabled || !group.staffing,
 	)
@@ -842,13 +845,13 @@ export function ReadOnlyRoleView({
 			<Frame className="w-full">
 				<FrameHeader>
 					<div className="flex items-center gap-2.5">
-						<FrameTitle className="text-lg">{role.name}</FrameTitle>
+						<FrameTitle className="text-lg">{roleName(role)}</FrameTitle>
 						<Badge variant="secondary" className="text-xs font-normal">
 							{role.isBuiltIn ? <Trans>Built-in</Trans> : <Trans>Custom</Trans>}
 						</Badge>
 					</div>
 					<FrameDescription>
-						{role.description || (
+						{roleDescription(role) || (
 							<span className="italic">
 								<Trans>Standard system role.</Trans>
 							</span>
@@ -974,6 +977,7 @@ export function TenantRoleAccessManager({
 	/** Present only while the Staff module is on for the organization. */
 	staffingPresets?: StaffingRolePresetOption[]
 }) {
+	const { roleName, roleDescription } = useRoleLabels()
 	const navigation = useNavigation()
 	const [roleToDelete, setRoleToDelete] = useState<TenantRole | null>(null)
 
@@ -1061,7 +1065,7 @@ export function TenantRoleAccessManager({
 							{customRoles.map((role) => (
 								<TableRow key={role.id}>
 									<TableCell className="text-foreground align-middle">
-										{role.name}
+										{roleName(role)}
 									</TableCell>
 									<TableCell className="text-muted-foreground max-w-md truncate align-middle text-sm">
 										{role.description || '—'}
@@ -1193,12 +1197,12 @@ export function TenantRoleAccessManager({
 							<TableRow key={role.id} className="group cursor-pointer">
 								<TableCell className="text-foreground group-hover:text-primary align-middle transition-colors">
 									<Link to={`${basePath}/${role.id}`} className="block py-1">
-										{role.name}
+										{roleName(role)}
 									</Link>
 								</TableCell>
 								<TableCell className="text-muted-foreground align-middle text-sm">
 									<Link to={`${basePath}/${role.id}`} className="block py-1">
-										{role.description || t`Platform-provided role.`}
+										{roleDescription(role) || t`Platform-provided role.`}
 									</Link>
 								</TableCell>
 								<TableCell className="text-muted-foreground text-center align-middle text-sm">
