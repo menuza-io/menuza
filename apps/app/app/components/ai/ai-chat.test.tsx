@@ -8,13 +8,16 @@ import { userEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 function uiMessageStreamResponse(text: string) {
-	const chunks = [
+	return sseResponse([
 		{ type: 'start' },
 		{ type: 'text-start', id: 't1' },
 		{ type: 'text-delta', id: 't1', delta: text },
 		{ type: 'text-end', id: 't1' },
 		{ type: 'finish' },
-	]
+	])
+}
+
+function sseResponse(chunks: Array<Record<string, unknown>>) {
 	const body =
 		chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join('') +
 		'data: [DONE]\n\n'
@@ -98,4 +101,74 @@ test('lets the user send a new message after a failed request', async () => {
 
 	expect(await screen.findByText('Key points follow.')).toBeInTheDocument()
 	expect(fetchMock).toHaveBeenCalledTimes(2)
+})
+
+async function sendSummarize() {
+	const user = userEvent.setup()
+	render(
+		<I18nProvider i18n={i18n}>
+			<AIChat noteId="note-1" orgSlug="acme" />
+		</I18nProvider>,
+	)
+	await user.click(screen.getByRole('button', { name: 'Summarize this note' }))
+	await user.click(screen.getByRole('button', { name: 'Send' }))
+	return user
+}
+
+test('shows the error when the provider fails inside a 200 stream', async () => {
+	// What `toUIMessageStreamResponse()` sends when the AI provider is not
+	// configured (for example no GOOGLE_GENERATIVE_AI_API_KEY): HTTP 200.
+	vi.stubGlobal(
+		'fetch',
+		vi
+			.fn<typeof fetch>()
+			.mockResolvedValueOnce(
+				sseResponse([
+					{ type: 'start' },
+					{ type: 'error', errorText: 'An error occurred.' },
+				]),
+			),
+	)
+
+	await sendSummarize()
+
+	expect(await screen.findByRole('alert')).toHaveTextContent(
+		"The assistant couldn't reply.",
+	)
+	expect(
+		screen.queryByRole('button', { name: 'Make it more detailed' }),
+	).not.toBeInTheDocument()
+})
+
+test('shows the error when the stream ends without a reply', async () => {
+	const fetchMock = vi
+		.fn<typeof fetch>()
+		.mockResolvedValueOnce(sseResponse([{ type: 'start' }, { type: 'finish' }]))
+		.mockResolvedValueOnce(uiMessageStreamResponse('Here is the summary.'))
+	vi.stubGlobal('fetch', fetchMock)
+
+	const user = await sendSummarize()
+
+	const alert = await screen.findByRole('alert')
+	expect(alert).toHaveTextContent("The assistant couldn't reply.")
+	expect(
+		screen.queryByRole('button', { name: 'Make it more detailed' }),
+	).not.toBeInTheDocument()
+
+	await user.click(within(alert).getByRole('button', { name: 'Try again' }))
+
+	expect(await screen.findByText('Here is the summary.')).toBeInTheDocument()
+	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('shows a loading state while the request is pending', async () => {
+	vi.stubGlobal(
+		'fetch',
+		vi.fn<typeof fetch>(() => new Promise<Response>(() => {})),
+	)
+
+	await sendSummarize()
+
+	expect(await screen.findByText('One moment…')).toBeInTheDocument()
+	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })

@@ -87,6 +87,16 @@ function buildChatApiUrl({
 	return query ? `/api/ai/chat?${query}` : '/api/ai/chat'
 }
 
+function hasReplyContent(message: UIMessage | undefined) {
+	if (!message || message.role !== 'assistant') return false
+	return message.parts.some(
+		(part) =>
+			(part.type === 'text' && part.text.trim().length > 0) ||
+			part.type === 'dynamic-tool' ||
+			part.type.startsWith('tool-'),
+	)
+}
+
 function resolveToolName(part: { toolName?: string; type?: string }) {
 	return (
 		part.toolName ||
@@ -557,6 +567,9 @@ export function AIChat({
 	routeParamsRef.current = routeParams
 	onToolCallRef.current = onToolCall
 	const { _ } = useLingui()
+	// A stream can finish "successfully" with no assistant content (status
+	// goes back to 'ready', not 'error'); treat that as a failed reply.
+	const [hasEmptyReply, setHasEmptyReply] = useState(false)
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
@@ -603,6 +616,9 @@ export function AIChat({
 					output: output ?? 'ok',
 				})
 			})()
+		},
+		onFinish: ({ message, isAbort, isError }) => {
+			setHasEmptyReply(!isAbort && !isError && !hasReplyContent(message))
 		},
 		sendAutomaticallyWhen: ({ messages }) =>
 			lastAssistantMessageIsCompleteWithToolCalls({ messages }),
@@ -670,7 +686,9 @@ export function AIChat({
 	const isSubmitted = status === 'submitted'
 	const isBusy = isStreaming || isSubmitted
 	const canSend = !isBusy && input.trim().length > 0
-	const hasError = status === 'error' && Boolean(error)
+	const hasError =
+		(status === 'error' && Boolean(error)) ||
+		(status === 'ready' && hasEmptyReply)
 
 	const isPersonalizedGreeting = userName !== brand.name
 	const displayGreeting =
