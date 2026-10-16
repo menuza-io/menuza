@@ -43,6 +43,7 @@ export function GeneralSettingsCard({
 		id: 'organization-settings-form',
 		constraint: getZodConstraint(SettingsSchema),
 		lastResult: fetcher.data?.result,
+		shouldRevalidate: 'onInput',
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: SettingsSchema })
 		},

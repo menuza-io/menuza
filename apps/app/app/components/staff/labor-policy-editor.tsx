@@ -61,6 +61,7 @@ import {
 	minutesToHoursText,
 	policyFormProblems,
 	problemFor,
+	sentenceFieldRange,
 	timeValueToMinute,
 } from '#app/utils/staffing/labor-policy-form.ts'
 import { applyPreset, detectPreset } from '#app/utils/staffing/labor-presets.ts'
@@ -314,6 +315,17 @@ function describeProblem(
 	_: I18n['_'],
 ): string | null {
 	if (!problem) return null
+	const range =
+		problem.code === 'out_of_range' ? sentenceFieldRange(problem.path) : null
+	if (range) {
+		const { min, max } = range
+		if (range.unit === 'minutes') {
+			return _(t`Enter between ${min} and ${max} minutes.`)
+		}
+		return min < 1
+			? _(t`Enter more than 0 and up to ${max} hours.`)
+			: _(t`Enter between ${min} and ${max} hours.`)
+	}
 	switch (problem.code) {
 		case 'double_time_before_overtime':
 			return _(t`Double time must start after daily overtime.`)
@@ -382,8 +394,14 @@ function PolicyForm({
 		setStale(false)
 		setPolicy((current) => ({ ...current, ...patch }))
 	}
-	const fieldError = (path: string) =>
-		describeProblem(problemFor(problems, path), _)
+	// `exact` skips problems on child paths, for a cross-field rule on a group.
+	const fieldError = (path: string, exact = false) =>
+		describeProblem(
+			exact
+				? problems.find((problem) => problem.path === path)
+				: problemFor(problems, path),
+			_,
+		)
 
 	const hasProblems = problems.length > 0 || blockingAggregate
 

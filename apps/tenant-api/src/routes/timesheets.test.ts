@@ -158,7 +158,11 @@ describe('/operator/timeclock/timesheets', () => {
 				'localDate',
 				'reducedHours',
 			])
-			expect(JSON.stringify(row!.payload)).not.toMatch(/2000|4500|16000/)
+			// Match whole values. A substring check also hits those digits inside ids.
+			const values = Object.values(row!.payload as Record<string, unknown>)
+			expect(values).not.toContain(2000)
+			expect(values).not.toContain(4500)
+			expect(values).not.toContain(16000)
 		})
 
 		it('accepts instants and rounds them to the minute', async () => {

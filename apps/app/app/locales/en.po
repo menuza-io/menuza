@@ -46,7 +46,7 @@ msgstr "\"Press 1 for…\" options. Callers can also say their choice."
 msgid "({formerCount} former)"
 msgstr "({formerCount} former)"
 
-#: app/components/settings/cards/organization/billing-card.tsx:451
+#: app/components/settings/cards/organization/billing-card.tsx:484
 msgid "(${annualPrice} billed annually per user)"
 msgstr ""
 
@@ -65,7 +65,7 @@ msgid "(you)"
 msgstr "(you)"
 
 #. placeholder {0}: organization._count.users
-#: app/components/settings/cards/organization/billing-card.tsx:169
+#: app/components/settings/cards/organization/billing-card.tsx:189
 msgid "{0, plural, one {# active member} other {# active members}}"
 msgstr ""
 
@@ -448,11 +448,11 @@ msgstr ""
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1415
+#: app/routes/organizations+/create.tsx:1416
 msgid "{basePriceLabel} billed annually"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:451
+#: app/components/staff/labor-policy-editor.tsx:469
 msgid "{breakCount} break rules"
 msgstr "{breakCount} break rules"
 
@@ -717,7 +717,7 @@ msgstr "{memberCount, plural, one {# person} other {# people}}"
 
 #: app/components/hiring/candidate-parts.tsx:205
 #: app/components/hiring/interview-dialog.tsx:220
-#: app/components/staff/labor-policy-editor.tsx:1500
+#: app/components/staff/labor-policy-editor.tsx:1518
 msgid "{minutes} minutes"
 msgstr "{minutes} minutes"
 
@@ -809,7 +809,7 @@ msgstr "{name} was rehired. Add their workplaces again."
 msgid "{notFoundCount} missing URLs logged"
 msgstr "{notFoundCount} missing URLs logged"
 
-#: app/components/staff/labor-policy-editor.tsx:445
+#: app/components/staff/labor-policy-editor.tsx:463
 msgid "{onCount} of 3 on"
 msgstr "{onCount} of 3 on"
 
@@ -956,7 +956,7 @@ msgstr "{replyCount, plural, one {# reply} other {# replies}}"
 msgid "{rest}m"
 msgstr "{rest}m"
 
-#: app/components/staff/labor-policy-editor.tsx:458
+#: app/components/staff/labor-policy-editor.tsx:476
 msgid "{roundingLabel}, {roundingMinutes} minutes"
 msgstr "{roundingLabel}, {roundingMinutes} minutes"
 
@@ -1040,7 +1040,7 @@ msgstr "{weekText} of {limitText}"
 msgid "{who} to cover {when}"
 msgstr "{who} to cover {when}"
 
-#: app/routes/organizations+/create.tsx:701
+#: app/routes/organizations+/create.tsx:702
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr ""
 
@@ -1094,7 +1094,7 @@ msgstr ""
 msgid "✓ Discord points claimed"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:436
+#: app/components/settings/cards/organization/billing-card.tsx:469
 msgid "${basePriceValue} billed annually"
 msgstr ""
 
@@ -1106,7 +1106,7 @@ msgstr "03/31/2026 (month first)"
 msgid "1 announcement"
 msgstr "1 announcement"
 
-#: app/components/staff/labor-policy-editor.tsx:450
+#: app/components/staff/labor-policy-editor.tsx:468
 msgid "1 break rule"
 msgstr "1 break rule"
 
@@ -1114,7 +1114,7 @@ msgstr "1 break rule"
 msgid "1 form"
 msgstr "1 form"
 
-#: app/components/staff/labor-policy-editor.tsx:1324
+#: app/components/staff/labor-policy-editor.tsx:1342
 msgid "1 means no premium. Holiday hours are not counted toward overtime."
 msgstr "1 means no premium. Holiday hours are not counted toward overtime."
 
@@ -1259,13 +1259,13 @@ msgstr "A manager already answered this request, so it cannot be changed here."
 msgid "A manager approved this time card."
 msgstr "A manager approved this time card."
 
-#: app/components/staff/labor-policy-editor.tsx:441
-#: app/components/staff/labor-policy-editor.tsx:584
+#: app/components/staff/labor-policy-editor.tsx:459
+#: app/components/staff/labor-policy-editor.tsx:602
 msgid "A manager approves and locks them"
 msgstr "A manager approves and locks them"
 
-#: app/components/staff/labor-policy-editor.tsx:440
-#: app/components/staff/labor-policy-editor.tsx:580
+#: app/components/staff/labor-policy-editor.tsx:458
+#: app/components/staff/labor-policy-editor.tsx:598
 msgid "A manager approves them"
 msgstr "A manager approves them"
 
@@ -1353,11 +1353,16 @@ msgstr "A position with that name already exists."
 msgid "A required break was not taken or not recorded."
 msgstr "A required break was not taken or not recorded."
 
+#: app/components/organization-invitations.tsx:74
+#: app/components/organization-invitations.tsx:75
+msgid "A role is required"
+msgstr "A role is required"
+
 #: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
 
-#: app/components/staff/labor-policy-editor.tsx:1299
+#: app/components/staff/labor-policy-editor.tsx:1317
 msgid "A second, higher rate after more hours in a day."
 msgstr "A second, higher rate after more hours in a day."
 
@@ -1471,11 +1476,11 @@ msgstr ""
 msgid "Acknowledge a policy"
 msgstr "Acknowledge a policy"
 
-#: app/routes/organizations+/create.tsx:759
+#: app/routes/organizations+/create.tsx:760
 msgid "acme"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:724
+#: app/routes/organizations+/create.tsx:725
 msgid "Acme Inc."
 msgstr ""
 
@@ -1518,7 +1523,7 @@ msgstr ""
 msgid "Activity"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1353
+#: app/components/staff/labor-policy-editor.tsx:1371
 #: app/components/staff/positions-tab.tsx:369
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:195
@@ -1591,7 +1596,7 @@ msgstr "Add a heading"
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1344
+#: app/components/staff/labor-policy-editor.tsx:1362
 msgid "Add a holiday date"
 msgstr "Add a holiday date"
 
@@ -1715,8 +1720,8 @@ msgstr "Add and edit time cards and export hours. Includes View time cards."
 msgid "Add announcement"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:310
-#: app/routes/organizations+/create.tsx:1185
+#: app/components/organization-invitations.tsx:317
+#: app/routes/organizations+/create.tsx:1186
 msgid "Add another invitation"
 msgstr ""
 
@@ -1789,7 +1794,7 @@ msgstr ""
 msgid "Add field"
 msgstr "Add field"
 
-#: app/components/staff/labor-policy-editor.tsx:1440
+#: app/components/staff/labor-policy-editor.tsx:1458
 msgid "Add hours across all workplaces"
 msgstr "Add hours across all workplaces"
 
@@ -1804,7 +1809,7 @@ msgstr ""
 msgid "Add link"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1214
+#: app/components/staff/labor-policy-editor.tsx:1232
 msgid "Add meal break"
 msgstr "Add meal break"
 
@@ -1828,7 +1833,7 @@ msgstr "Add name, email, choices, and more to start collecting responses."
 msgid "Add new page"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:437
+#: ../../packages/ai/src/components/ai-chat.tsx:454
 msgid "Add next steps"
 msgstr ""
 
@@ -1899,7 +1904,7 @@ msgstr ""
 msgid "Add reaction"
 msgstr "Add reaction"
 
-#: app/components/staff/labor-policy-editor.tsx:1233
+#: app/components/staff/labor-policy-editor.tsx:1251
 msgid "Add rest break"
 msgstr "Add rest break"
 
@@ -2027,7 +2032,7 @@ msgstr ""
 msgid "Add your business details to see what the assistant is told."
 msgstr "Add your business details to see what the assistant is told."
 
-#: app/routes/organizations+/create.tsx:976
+#: app/routes/organizations+/create.tsx:977
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr ""
 
@@ -2043,7 +2048,7 @@ msgstr "Added a shift"
 msgid "Added by a manager"
 msgstr "Added by a manager"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:149
+#: ../../packages/ai/src/components/ai-chat.tsx:166
 msgid "Added section"
 msgstr "Added section"
 
@@ -2055,7 +2060,7 @@ msgstr "Added to new hires"
 msgid "Added to the workplace."
 msgstr "Added to the workplace."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:148
+#: ../../packages/ai/src/components/ai-chat.tsx:165
 msgid "Adding section"
 msgstr "Adding section"
 
@@ -2070,15 +2075,15 @@ msgstr "Adding section"
 msgid "Adding…"
 msgstr "Adding…"
 
-#: app/routes/organizations+/create.tsx:1434
+#: app/routes/organizations+/create.tsx:1435
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1427
+#: app/routes/organizations+/create.tsx:1428
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:448
+#: app/components/settings/cards/organization/billing-card.tsx:481
 msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr ""
 
@@ -2113,7 +2118,7 @@ msgstr "Admin impersonation active"
 msgid "Advanced"
 msgstr "Advanced"
 
-#: app/components/staff/labor-policy-editor.tsx:536
+#: app/components/staff/labor-policy-editor.tsx:554
 msgid "Advanced settings"
 msgstr "Advanced settings"
 
@@ -2122,10 +2127,10 @@ msgstr "Advanced settings"
 msgid "Affects pay"
 msgstr "Affects pay"
 
-#: app/components/staff/labor-core-rules.tsx:391
-#: app/components/staff/labor-core-rules.tsx:395
-#: app/components/staff/labor-policy-editor.tsx:1289
-#: app/components/staff/labor-policy-editor.tsx:1314
+#: app/components/staff/labor-core-rules.tsx:407
+#: app/components/staff/labor-core-rules.tsx:411
+#: app/components/staff/labor-policy-editor.tsx:1307
+#: app/components/staff/labor-policy-editor.tsx:1332
 msgid "After"
 msgstr "After"
 
@@ -2214,11 +2219,11 @@ msgstr ""
 msgid "Alcohol service permit"
 msgstr "Alcohol service permit"
 
-#: app/components/staff/labor-policy-editor.tsx:769
+#: app/components/staff/labor-policy-editor.tsx:787
 msgid "Alert after the shift starts by"
 msgstr "Alert after the shift starts by"
 
-#: app/components/staff/labor-policy-editor.tsx:740
+#: app/components/staff/labor-policy-editor.tsx:758
 msgid "Alerts and reminders"
 msgstr "Alerts and reminders"
 
@@ -2251,7 +2256,7 @@ msgstr "All built-in blocks are already on this dashboard."
 msgid "All calls"
 msgstr "All calls"
 
-#: app/components/staff/labor-policy-editor.tsx:1069
+#: app/components/staff/labor-policy-editor.tsx:1087
 msgid "All changes saved."
 msgstr "All changes saved."
 
@@ -2259,7 +2264,7 @@ msgstr "All changes saved."
 msgid "All checks passed. This workflow is ready to publish."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1439
+#: app/routes/organizations+/create.tsx:1440
 msgid "All core features included"
 msgstr ""
 
@@ -2333,11 +2338,11 @@ msgstr "All tags"
 msgid "All workplaces"
 msgstr "All workplaces"
 
-#: app/components/staff/labor-policy-editor.tsx:144
+#: app/components/staff/labor-policy-editor.tsx:145
 msgid "All workplaces (default)"
 msgstr "All workplaces (default)"
 
-#: app/components/staff/labor-policy-editor.tsx:615
+#: app/components/staff/labor-policy-editor.tsx:633
 msgid "Allow clock-in without a scheduled shift"
 msgstr "Allow clock-in without a scheduled shift"
 
@@ -2418,7 +2423,7 @@ msgstr "An interview was scheduled"
 msgid "An interview was updated"
 msgstr "An interview was updated"
 
-#: app/routes/organizations+/create.tsx:625
+#: app/routes/organizations+/create.tsx:626
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
@@ -2428,7 +2433,7 @@ msgstr ""
 msgid "Analytics"
 msgstr "Analytics"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:88
+#: app/components/settings/cards/organization/site-analytics-card.tsx:86
 msgid "Analytics and tracking"
 msgstr "Analytics and tracking"
 
@@ -2707,7 +2712,7 @@ msgstr "As punched"
 msgid "Ask a teammate to cover it"
 msgstr "Ask a teammate to cover it"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:727
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "Ask about this note, or tell me where you'd like to go."
 
@@ -2715,7 +2720,7 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 msgid "Ask AI"
 msgstr "Ask AI"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:729
 msgid "Ask anything…"
 msgstr "Ask anything…"
 
@@ -2732,7 +2737,7 @@ msgstr "Ask for a change"
 msgid "Ask for a rating"
 msgstr "Ask for a rating"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:257
+#: ../../packages/ai/src/components/ai-chat.tsx:274
 msgid "Ask me to try again or choose a different destination."
 msgstr "Ask me to try again or choose a different destination."
 
@@ -2760,7 +2765,7 @@ msgstr ""
 msgid "Assign"
 msgstr "Assign"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:448
+#: ../../packages/ai/src/components/ai-chat.tsx:465
 msgid "Assign responsibilities"
 msgstr ""
 
@@ -3014,11 +3019,11 @@ msgstr "Before transferring, the agent asks if it may text the caller a link the
 msgid "Before you can publish"
 msgstr "Before you can publish"
 
-#: app/components/settings/cards/organization/billing-card.tsx:98
+#: app/components/settings/cards/organization/billing-card.tsx:118
 msgid "Beta Access"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:158
+#: app/components/settings/cards/organization/billing-card.tsx:178
 msgid "Billed monthly"
 msgstr ""
 
@@ -3028,7 +3033,7 @@ msgstr ""
 msgid "Billing"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:88
+#: app/components/settings/cards/organization/billing-card.tsx:108
 msgid "Billing & Subscription"
 msgstr ""
 
@@ -3036,7 +3041,7 @@ msgstr ""
 msgid "Blank"
 msgstr "Blank"
 
-#: app/components/staff/labor-policy-editor.tsx:631
+#: app/components/staff/labor-policy-editor.tsx:649
 msgid "Block clock-in that is too early"
 msgstr "Block clock-in that is too early"
 
@@ -3102,7 +3107,7 @@ msgstr "Break {number}"
 msgid "Break deducted"
 msgstr "Break deducted"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:449
+#: ../../packages/ai/src/components/ai-chat.tsx:466
 msgid "Break down complex tasks"
 msgstr ""
 
@@ -3134,7 +3139,7 @@ msgstr "Break started"
 msgid "Break started, {firstName}"
 msgstr "Break started, {firstName}"
 
-#: app/components/staff/labor-policy-editor.tsx:847
+#: app/components/staff/labor-policy-editor.tsx:865
 #: app/components/staff/timesheets/card-fields.tsx:141
 msgid "Breaks"
 msgstr "Breaks"
@@ -3248,7 +3253,7 @@ msgstr "Bullets"
 msgid "Busiest around {peak}"
 msgstr "Busiest around {peak}"
 
-#: app/components/staff/labor-policy-editor.tsx:1402
+#: app/components/staff/labor-policy-editor.tsx:1420
 msgid "Business day starts at"
 msgstr "Business day starts at"
 
@@ -3569,8 +3574,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
-#: app/routes/organizations+/create.tsx:821
-#: app/routes/organizations+/create.tsx:956
+#: app/routes/organizations+/create.tsx:822
+#: app/routes/organizations+/create.tsx:957
 msgid "Cancel"
 msgstr ""
 
@@ -3786,7 +3791,7 @@ msgstr "Change the sales source"
 msgid "Change time or details"
 msgstr "Change time or details"
 
-#: app/components/phone-agent/voice-picker.tsx:672
+#: app/components/phone-agent/voice-picker.tsx:677
 msgid "Change voice"
 msgstr "Change voice"
 
@@ -3890,7 +3895,7 @@ msgstr ""
 msgid "Check your email"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:673
+#: app/components/staff/labor-policy-editor.tsx:691
 msgid "Checked every few minutes while people are clocked in, and at least once an hour, so a reminder can arrive a little late."
 msgstr "Checked every few minutes while people are clocked in, and at least once an hour, so a reminder can arrive a little late."
 
@@ -4051,11 +4056,11 @@ msgstr ""
 msgid "Choose from library"
 msgstr "Choose from library"
 
-#: app/components/staff/labor-policy-editor.tsx:329
+#: app/components/staff/labor-policy-editor.tsx:341
 msgid "Choose how overtime is counted across workplaces."
 msgstr "Choose how overtime is counted across workplaces."
 
-#: app/components/staff/labor-policy-editor.tsx:1445
+#: app/components/staff/labor-policy-editor.tsx:1463
 msgid "Choose how overtime is counted before saving."
 msgstr "Choose how overtime is counted before saving."
 
@@ -4103,7 +4108,7 @@ msgstr "Choose the role you are working."
 msgid "Choose View or Edit access."
 msgstr "Choose View or Edit access."
 
-#: app/components/phone-agent/voice-picker.tsx:674
+#: app/components/phone-agent/voice-picker.tsx:679
 msgid "Choose voice"
 msgstr "Choose voice"
 
@@ -4145,11 +4150,11 @@ msgstr "Choose who this task is for."
 msgid "Choose who worked."
 msgstr "Choose who worked."
 
-#: app/routes/organizations+/create.tsx:874
+#: app/routes/organizations+/create.tsx:875
 msgid "Choose your plan"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1436
+#: app/components/staff/labor-policy-editor.tsx:1454
 msgid "Choose…"
 msgstr "Choose…"
 
@@ -4266,7 +4271,7 @@ msgstr "Clock out"
 msgid "Clock out {from} to {to}"
 msgstr "Clock out {from} to {to}"
 
-#: app/components/staff/labor-policy-editor.tsx:712
+#: app/components/staff/labor-policy-editor.tsx:730
 msgid "Clock out after the shift ends by"
 msgstr "Clock out after the shift ends by"
 
@@ -4274,7 +4279,7 @@ msgstr "Clock out after the shift ends by"
 msgid "Clock out: {from} to {to}"
 msgstr "Clock out: {from} to {to}"
 
-#: app/components/staff/labor-policy-editor.tsx:698
+#: app/components/staff/labor-policy-editor.tsx:716
 msgid "Clock people out automatically"
 msgstr "Clock people out automatically"
 
@@ -4343,7 +4348,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/hiring/job-editor.tsx:953
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
-#: app/components/phone-agent/voice-picker.tsx:554
+#: app/components/phone-agent/voice-picker.tsx:559
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 msgid "Close"
@@ -4384,7 +4389,7 @@ msgstr "Closed"
 msgid "Closes"
 msgstr "Closes"
 
-#: app/components/staff/labor-policy-editor.tsx:700
+#: app/components/staff/labor-policy-editor.tsx:718
 msgid "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 msgstr "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 
@@ -4512,7 +4517,7 @@ msgstr "Complete a form"
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls."
 
-#: app/routes/organizations+/create.tsx:1115
+#: app/routes/organizations+/create.tsx:1116
 msgid "Complete Setup"
 msgstr ""
 
@@ -4633,7 +4638,7 @@ msgstr ""
 msgid "Connect payout account"
 msgstr "Connect payout account"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:91
+#: app/components/settings/cards/organization/site-analytics-card.tsx:89
 msgid "Connect the analytics platforms you use on your public website. Leave any field blank to disable that integration."
 msgstr "Connect the analytics platforms you use on your public website. Leave any field blank to disable that integration."
 
@@ -4694,11 +4699,15 @@ msgstr "Contact"
 msgid "Contact form"
 msgstr "Contact form"
 
-#: app/routes/organizations+/create.tsx:1377
+#: app/components/settings/cards/organization/billing-card.tsx:322
+msgid "Contact sales"
+msgstr ""
+
+#: app/routes/organizations+/create.tsx:1378
 msgid "Contact support"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:405
+#: app/components/settings/cards/organization/billing-card.tsx:438
 msgid "Contact support for pricing"
 msgstr ""
 
@@ -4727,7 +4736,7 @@ msgstr "Content editor"
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:680
-#: app/routes/organizations+/create.tsx:826
+#: app/routes/organizations+/create.tsx:827
 msgid "Continue"
 msgstr ""
 
@@ -4735,7 +4744,7 @@ msgstr ""
 msgid "Continue payout setup"
 msgstr "Continue payout setup"
 
-#: app/routes/organizations+/create.tsx:959
+#: app/routes/organizations+/create.tsx:960
 msgid "Continue to Payment"
 msgstr ""
 
@@ -4778,7 +4787,7 @@ msgstr "Conversation"
 msgid "Cool"
 msgstr "Cool"
 
-#: app/components/organization-invitations.tsx:212
+#: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
 msgstr ""
@@ -4801,7 +4810,7 @@ msgstr "Copied shifts arrive as drafts. Nothing reaches your team until you publ
 msgid "Copied!"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
@@ -4970,7 +4979,7 @@ msgstr "Couldn't connect to the test call. Make sure the voice agent is running 
 msgid "Couldn't load calls"
 msgstr "Couldn't load calls"
 
-#: app/components/phone-agent/voice-picker.tsx:537
+#: app/components/phone-agent/voice-picker.tsx:542
 msgid "Couldn't load more voices. Try again."
 msgstr "Couldn't load more voices. Try again."
 
@@ -4986,7 +4995,7 @@ msgstr "Couldn't load the assistant."
 msgid "Couldn't load the recording. Try again."
 msgstr "Couldn't load the recording. Try again."
 
-#: app/components/phone-agent/voice-picker.tsx:442
+#: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "Couldn't load voices"
 
@@ -4994,7 +5003,7 @@ msgstr "Couldn't load voices"
 msgid "Couldn't mute your microphone. Try again."
 msgstr "Couldn't mute your microphone. Try again."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:255
+#: ../../packages/ai/src/components/ai-chat.tsx:272
 msgid "Couldn't open {routeTitle}"
 msgstr "Couldn't open {routeTitle}"
 
@@ -5010,7 +5019,7 @@ msgstr "Couldn't send that key press. Try again."
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "Couldn't start your microphone. Check it and try again."
 
-#: app/components/staff/labor-policy-editor.tsx:656
+#: app/components/staff/labor-policy-editor.tsx:674
 msgid "Count as late after"
 msgstr "Count as late after"
 
@@ -5018,7 +5027,7 @@ msgstr "Count as late after"
 msgid "Count online orders as all sales. The share is judged against your target."
 msgstr "Count online orders as all sales. The share is judged against your target."
 
-#: app/components/staff/labor-policy-editor.tsx:1437
+#: app/components/staff/labor-policy-editor.tsx:1455
 msgid "Count overtime at each workplace"
 msgstr "Count overtime at each workplace"
 
@@ -5063,7 +5072,7 @@ msgstr "Create a custom role to assign specific permissions to teammates."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:620
+#: app/routes/organizations+/create.tsx:621
 msgid "Create a new organization"
 msgstr ""
 
@@ -5075,7 +5084,7 @@ msgstr ""
 msgid "Create a password to secure your account"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:460
+#: ../../packages/ai/src/components/ai-chat.tsx:477
 msgid "Create a plan"
 msgstr ""
 
@@ -5089,7 +5098,7 @@ msgstr "Create a ready-made role for the people who run your team. Each one beco
 msgid "Create account"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:408
+#: ../../packages/ai/src/components/ai-chat.tsx:425
 msgid "Create action items"
 msgstr ""
 
@@ -5139,7 +5148,7 @@ msgstr ""
 msgid "Create broadcast"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:435
+#: ../../packages/ai/src/components/ai-chat.tsx:452
 msgid "Create bullet points"
 msgstr ""
 
@@ -5173,7 +5182,7 @@ msgstr "Create group"
 msgid "Create group chats"
 msgstr "Create group chats"
 
-#: app/components/organization-invitations.tsx:229
+#: app/components/organization-invitations.tsx:236
 msgid "Create Link"
 msgstr ""
 
@@ -5281,11 +5290,11 @@ msgstr ""
 msgid "Created By"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:145
+#: ../../packages/ai/src/components/ai-chat.tsx:162
 msgid "Created page"
 msgstr "Created page"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:144
+#: ../../packages/ai/src/components/ai-chat.tsx:161
 msgid "Creating page"
 msgstr "Creating page"
 
@@ -5307,7 +5316,7 @@ msgstr "Credit tips"
 msgid "Credit tips: {from} to {to}"
 msgstr "Credit tips: {from} to {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:202
+#: app/components/settings/cards/notification-preferences-card.tsx:210
 msgid "Critical"
 msgstr ""
 
@@ -5348,7 +5357,7 @@ msgstr ""
 msgid "Current Password"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:470
+#: app/components/settings/cards/organization/billing-card.tsx:503
 msgid "Current Plan"
 msgstr ""
 
@@ -5356,7 +5365,7 @@ msgstr ""
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "Current rates and the full history. Each time you view these, it is recorded."
 
-#: app/components/settings/cards/organization/billing-card.tsx:127
+#: app/components/settings/cards/organization/billing-card.tsx:147
 msgid "Current Subscription"
 msgstr ""
 
@@ -5409,7 +5418,7 @@ msgstr ""
 msgid "Custom URL"
 msgstr "Custom URL"
 
-#: app/components/phone-agent/voice-picker.tsx:624
+#: app/components/phone-agent/voice-picker.tsx:629
 msgid "Custom voice"
 msgstr "Custom voice"
 
@@ -5463,7 +5472,7 @@ msgstr ""
 msgid "Cycles"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1297
+#: app/components/staff/labor-policy-editor.tsx:1315
 msgid "Daily double time"
 msgstr "Daily double time"
 
@@ -5471,15 +5480,15 @@ msgstr "Daily double time"
 msgid "Daily Notes Created"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1275
+#: app/components/staff/labor-policy-editor.tsx:1293
 msgid "Daily overtime"
 msgstr "Daily overtime"
 
-#: app/components/staff/labor-policy-editor.tsx:454
+#: app/components/staff/labor-policy-editor.tsx:472
 msgid "Daily overtime off · Week starts {weekStart}"
 msgstr "Daily overtime off · Week starts {weekStart}"
 
-#: app/components/staff/labor-policy-editor.tsx:453
+#: app/components/staff/labor-policy-editor.tsx:471
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "Daily overtime on · Week starts {weekStart}"
 
@@ -5660,16 +5669,16 @@ msgstr "Declining…"
 msgid "Dedicated"
 msgstr "Dedicated"
 
-#: app/components/staff/labor-core-rules.tsx:326
-#: app/components/staff/labor-core-rules.tsx:330
+#: app/components/staff/labor-core-rules.tsx:340
+#: app/components/staff/labor-core-rules.tsx:344
 msgid "Deduct"
 msgstr "Deduct"
 
-#: app/components/staff/labor-core-rules.tsx:305
+#: app/components/staff/labor-core-rules.tsx:319
 msgid "Deduct an unpaid break"
 msgstr "Deduct an unpaid break"
 
-#: app/components/staff/labor-core-rules.tsx:306
+#: app/components/staff/labor-core-rules.tsx:320
 msgid "Deduct an unpaid break when none was recorded"
 msgstr "Deduct an unpaid break when none was recorded"
 
@@ -5690,7 +5699,7 @@ msgstr ""
 msgid "Default language required"
 msgstr ""
 
-#: app/components/phone-agent/voice-picker.tsx:615
+#: app/components/phone-agent/voice-picker.tsx:620
 msgid "Default voice"
 msgstr "Default voice"
 
@@ -5820,7 +5829,7 @@ msgstr ""
 msgid "Delete feature"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:374
+#: app/components/organization-invitations.tsx:381
 msgid "Delete invitation"
 msgstr ""
 
@@ -5979,7 +5988,7 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4042
-#: app/routes/organizations+/create.tsx:798
+#: app/routes/organizations+/create.tsx:799
 msgid "Description"
 msgstr ""
 
@@ -6075,7 +6084,7 @@ msgstr "Direct messages"
 msgid "Direction"
 msgstr "Direction"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:258
 msgid "Disable"
 msgstr ""
 
@@ -6086,16 +6095,16 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
 #: app/components/staff/details-tab.tsx:245
-#: app/components/staff/labor-policy-editor.tsx:1085
+#: app/components/staff/labor-policy-editor.tsx:1103
 msgid "Discard"
 msgstr "Discard"
 
-#: app/components/staff/labor-policy-editor.tsx:299
+#: app/components/staff/labor-policy-editor.tsx:300
 msgid "Discard and switch"
 msgstr "Discard and switch"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
-#: app/components/staff/labor-policy-editor.tsx:278
+#: app/components/staff/labor-policy-editor.tsx:279
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -6170,8 +6179,8 @@ msgstr "Don't replay"
 msgid "Don't retry"
 msgstr "Don't retry"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:163
-#: ../../packages/ai/src/components/ai-chat.tsx:210
+#: ../../packages/ai/src/components/ai-chat.tsx:180
+#: ../../packages/ai/src/components/ai-chat.tsx:227
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
@@ -6197,7 +6206,7 @@ msgstr "Done {when}"
 msgid "Double time"
 msgstr "Double time"
 
-#: app/components/staff/labor-policy-editor.tsx:319
+#: app/components/staff/labor-policy-editor.tsx:331
 msgid "Double time must start after daily overtime."
 msgstr "Double time must start after daily overtime."
 
@@ -6293,7 +6302,7 @@ msgstr "Draft saved · not published yet"
 msgid "Draft saved · v{publishedVersion} is live"
 msgstr "Draft saved · v{publishedVersion} is live"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:415
+#: ../../packages/ai/src/components/ai-chat.tsx:432
 msgid "Draft something for me"
 msgstr "Draft something for me"
 
@@ -6356,7 +6365,7 @@ msgstr "Due"
 msgid "Due {when}"
 msgstr "Due {when}"
 
-#: app/components/staff/labor-policy-editor.tsx:1150
+#: app/components/staff/labor-policy-editor.tsx:1168
 msgid "Due after"
 msgstr "Due after"
 
@@ -6469,7 +6478,7 @@ msgstr "Earlier"
 msgid "Earlier weeks"
 msgstr "Earlier weeks"
 
-#: app/components/staff/labor-policy-editor.tsx:644
+#: app/components/staff/labor-policy-editor.tsx:662
 msgid "Earliest clock-in, before the shift"
 msgstr "Earliest clock-in, before the shift"
 
@@ -6641,7 +6650,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
-#: app/components/organization-invitations.tsx:450
+#: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -6892,6 +6901,10 @@ msgstr "Enter an amount like 1250.50."
 msgid "Enter an amount like 15.50."
 msgstr "Enter an amount like 15.50."
 
+#: app/components/organization-invitations.tsx:71
+msgid "Enter an email address"
+msgstr "Enter an email address"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
@@ -6900,14 +6913,26 @@ msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 msgid "Enter backup code"
 msgstr ""
 
+#: app/components/staff/labor-policy-editor.tsx:327
+msgid "Enter between {min} and {max} hours."
+msgstr "Enter between {min} and {max} hours."
+
+#: app/components/staff/labor-policy-editor.tsx:323
+msgid "Enter between {min} and {max} minutes."
+msgstr "Enter between {min} and {max} minutes."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."
 
-#: app/components/organization-invitations.tsx:449
-#: app/routes/organizations+/create.tsx:1226
+#: app/components/organization-invitations.tsx:456
+#: app/routes/organizations+/create.tsx:1227
 msgid "Enter email address"
 msgstr ""
+
+#: app/components/staff/labor-policy-editor.tsx:326
+msgid "Enter more than 0 and up to {max} hours."
+msgstr "Enter more than 0 and up to {max} hours."
 
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
@@ -7024,7 +7049,7 @@ msgstr "Entered sales"
 msgid "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 msgstr "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 
-#: app/components/settings/cards/organization/billing-card.tsx:279
+#: app/components/settings/cards/organization/billing-card.tsx:309
 msgid "Enterprise Plan"
 msgstr ""
 
@@ -7252,7 +7277,7 @@ msgstr "Exported {count} rows."
 msgid "Exported {exportedCount} people."
 msgstr "Exported {exportedCount} people."
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:101
+#: app/components/settings/cards/organization/site-analytics-card.tsx:99
 msgid "Facebook Pixel ID"
 msgstr "Facebook Pixel ID"
 
@@ -7493,7 +7518,7 @@ msgstr "Filter by workplace"
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:409
+#: ../../packages/ai/src/components/ai-chat.tsx:426
 msgid "Find potential issues"
 msgstr ""
 
@@ -7535,7 +7560,7 @@ msgstr "Five tasks for the first week: confirm contact details, add an emergency
 msgid "Fix before publishing"
 msgstr "Fix before publishing"
 
-#: app/components/staff/labor-policy-editor.tsx:1061
+#: app/components/staff/labor-policy-editor.tsx:1079
 msgid "Fix the highlighted settings to save."
 msgstr "Fix the highlighted settings to save."
 
@@ -7551,7 +7576,7 @@ msgstr "Fix this card"
 msgid "Fix validation errors before publishing"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1181
+#: app/components/staff/labor-policy-editor.tsx:1199
 msgid "Flag a shift for review when this break was not taken."
 msgstr "Flag a shift for review when this break was not taken."
 
@@ -7559,11 +7584,11 @@ msgstr "Flag a shift for review when this break was not taken."
 msgid "Flag applicants who answer differently. You still decide who to talk to."
 msgstr "Flag applicants who answer differently. You still decide who to talk to."
 
-#: app/components/staff/labor-core-rules.tsx:279
+#: app/components/staff/labor-core-rules.tsx:293
 msgid "Flag long shifts for review"
 msgstr "Flag long shifts for review"
 
-#: app/components/staff/labor-core-rules.tsx:291
+#: app/components/staff/labor-core-rules.tsx:305
 msgid "Flag shifts longer than"
 msgstr "Flag shifts longer than"
 
@@ -7615,7 +7640,7 @@ msgstr "For a shift that was never punched, or a punch that went missing. It is 
 msgid "For our hours, press 1. To speak with our team, press 2."
 msgstr "For our hours, press 1. To speak with our team, press 2."
 
-#: app/components/staff/labor-core-rules.tsx:346
+#: app/components/staff/labor-core-rules.tsx:361
 msgid "For shifts longer than"
 msgstr "For shifts longer than"
 
@@ -7755,7 +7780,7 @@ msgid "General manager"
 msgstr "General manager"
 
 #: app/components/app-sidebar.tsx:463
-#: app/components/settings/cards/organization/general-settings-card.tsx:59
+#: app/components/settings/cards/organization/general-settings-card.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
 msgstr ""
@@ -7796,7 +7821,7 @@ msgid "Get help"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:105
-#: app/components/settings/cards/organization/billing-card.tsx:317
+#: app/components/settings/cards/organization/billing-card.tsx:350
 msgid "Get in touch"
 msgstr ""
 
@@ -7820,7 +7845,7 @@ msgstr "Give away {when}"
 msgid "Give feedback"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:468
+#: ../../packages/ai/src/components/ai-chat.tsx:485
 msgid "Give me examples"
 msgstr ""
 
@@ -7849,7 +7874,7 @@ msgstr "Give visitors room to share thoughtful feedback."
 msgid "Give your group a name"
 msgstr "Give your group a name"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:278
+#: ../../packages/ai/src/components/ai-chat.tsx:295
 msgid "Go there"
 msgstr "Go there"
 
@@ -7890,11 +7915,11 @@ msgstr "Goodbye"
 msgid "Goodbye message"
 msgstr "Goodbye message"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:119
+#: app/components/settings/cards/organization/site-analytics-card.tsx:117
 msgid "Google Analytics ID"
 msgstr "Google Analytics ID"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:110
+#: app/components/settings/cards/organization/site-analytics-card.tsx:108
 msgid "Google Tag Manager ID"
 msgstr "Google Tag Manager ID"
 
@@ -8014,7 +8039,7 @@ msgstr ""
 msgid "Health card"
 msgstr "Health card"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:414
+#: ../../packages/ai/src/components/ai-chat.tsx:431
 msgid "Help me get started"
 msgstr ""
 
@@ -8082,7 +8107,7 @@ msgstr "Hi {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "Hi {personName}, enter your PIN"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:723
 msgid "Hi, {userName}"
 msgstr "Hi, {userName}"
 
@@ -8205,11 +8230,11 @@ msgstr "Hold message"
 msgid "Holiday"
 msgstr "Holiday"
 
-#: app/components/staff/labor-policy-editor.tsx:1322
+#: app/components/staff/labor-policy-editor.tsx:1340
 msgid "Holiday pay rate"
 msgstr "Holiday pay rate"
 
-#: app/components/staff/labor-policy-editor.tsx:1320
+#: app/components/staff/labor-policy-editor.tsx:1338
 msgid "Holidays"
 msgstr "Holidays"
 
@@ -8249,10 +8274,10 @@ msgid "Hourly rate"
 msgstr "Hourly rate"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:291
-#: app/components/staff/labor-core-rules.tsx:288
-#: app/components/staff/labor-core-rules.tsx:343
-#: app/components/staff/labor-policy-editor.tsx:727
-#: app/components/staff/labor-policy-editor.tsx:808
+#: app/components/staff/labor-core-rules.tsx:302
+#: app/components/staff/labor-core-rules.tsx:358
+#: app/components/staff/labor-policy-editor.tsx:745
+#: app/components/staff/labor-policy-editor.tsx:826
 #: app/components/staff/labor-policy-fields.tsx:261
 msgid "hours"
 msgstr ""
@@ -8273,7 +8298,7 @@ msgstr "Hours and people"
 msgid "Hours are scheduled hours, not worked hours."
 msgstr "Hours are scheduled hours, not worked hours."
 
-#: app/components/staff/labor-policy-editor.tsx:1277
+#: app/components/staff/labor-policy-editor.tsx:1295
 msgid "Hours beyond a daily limit are paid at a higher rate."
 msgstr "Hours beyond a daily limit are paid at a higher rate."
 
@@ -8285,11 +8310,11 @@ msgstr "Hours by employee"
 msgid "Hours changed by <0>{delta}</0>"
 msgstr "Hours changed by <0>{delta}</0>"
 
-#: app/components/staff/labor-core-rules.tsx:392
+#: app/components/staff/labor-core-rules.tsx:408
 msgid "hours in a week"
 msgstr "hours in a week"
 
-#: app/components/staff/labor-policy-editor.tsx:1162
+#: app/components/staff/labor-policy-editor.tsx:1180
 msgid "hours into the shift"
 msgstr "hours into the shift"
 
@@ -8313,11 +8338,11 @@ msgstr "How calls reach the agent"
 msgid "How can I help you today?"
 msgstr "How can I help you today?"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:723
 msgid "How can I help?"
 msgstr "How can I help?"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:470
+#: ../../packages/ai/src/components/ai-chat.tsx:487
 msgid "How can I implement this?"
 msgstr ""
 
@@ -8346,7 +8371,7 @@ msgstr "How people sign in"
 msgid "How strict do you want to be?"
 msgstr "How strict do you want to be?"
 
-#: app/components/staff/labor-policy-editor.tsx:606
+#: app/components/staff/labor-policy-editor.tsx:624
 msgid "How strict the clock is about the published schedule. These checks start working once scheduling is turned on."
 msgstr "How strict the clock is about the published schedule. These checks start working once scheduling is turned on."
 
@@ -8383,7 +8408,7 @@ msgstr ""
 msgid "I've Copied the Key"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:461
+#: ../../packages/ai/src/components/ai-chat.tsx:478
 msgid "Identify risks"
 msgstr ""
 
@@ -8545,11 +8570,11 @@ msgstr "Include the country code, like +14155550123."
 msgid "Included when tips are divided."
 msgstr "Included when tips are divided."
 
-#: app/components/settings/cards/organization/billing-card.tsx:444
+#: app/components/settings/cards/organization/billing-card.tsx:477
 msgid "Includes {includesSeatsValue} user seats"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1422
+#: app/routes/organizations+/create.tsx:1423
 msgid "Includes {seats} user seats"
 msgstr ""
 
@@ -8623,6 +8648,10 @@ msgstr "Interview updated"
 msgid "Interviews"
 msgstr "Interviews"
 
+#: app/components/organization-invitations.tsx:72
+msgid "Invalid email address"
+msgstr "Invalid email address"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:160
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
@@ -8667,7 +8696,7 @@ msgstr "Invitation sent."
 msgid "Invitations are not available for this organization."
 msgstr "Invitations are not available for this organization."
 
-#: app/components/organization-invitations.tsx:263
+#: app/components/organization-invitations.tsx:270
 msgid "Invite by email"
 msgstr ""
 
@@ -8688,7 +8717,7 @@ msgstr ""
 msgid "Invite new members"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:973
+#: app/routes/organizations+/create.tsx:974
 msgid "Invite team members"
 msgstr ""
 
@@ -8710,7 +8739,7 @@ msgstr "Invited"
 msgid "Invited by {invitedBy}"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:361
 msgid "Invited by {inviterName}"
 msgstr ""
 
@@ -8871,7 +8900,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/hiring/job-editor.tsx:451
-#: app/components/staff/labor-policy-editor.tsx:289
+#: app/components/staff/labor-policy-editor.tsx:290
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -9016,7 +9045,7 @@ msgstr "Labor cost percent by workplace"
 msgid "Labor rules"
 msgstr "Labor rules"
 
-#: app/components/staff/labor-policy-editor.tsx:488
+#: app/components/staff/labor-policy-editor.tsx:506
 msgid "Labor rules saved."
 msgstr "Labor rules saved."
 
@@ -9120,11 +9149,11 @@ msgstr ""
 msgid "Late"
 msgstr "Late"
 
-#: app/components/staff/labor-policy-editor.tsx:444
+#: app/components/staff/labor-policy-editor.tsx:462
 msgid "Late after {lateMinutes} min · Scheduled people only"
 msgstr "Late after {lateMinutes} min · Scheduled people only"
 
-#: app/components/staff/labor-policy-editor.tsx:443
+#: app/components/staff/labor-policy-editor.tsx:461
 msgid "Late after {lateMinutes} min · Unscheduled clock-ins allowed"
 msgstr "Late after {lateMinutes} min · Unscheduled clock-ins allowed"
 
@@ -9165,6 +9194,7 @@ msgid "Learn more"
 msgstr ""
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "Leave"
 
@@ -9218,6 +9248,10 @@ msgstr "Leave out the < and > characters."
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "Leave the mailbox and discard your reply drafts?"
 
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "Leave this page?"
+
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
 msgstr "Leave without saving?"
@@ -9244,7 +9278,7 @@ msgid "Left the team"
 msgstr "Left the team"
 
 #: app/components/hiring/interview-dialog.tsx:215
-#: app/components/staff/labor-policy-editor.tsx:1166
+#: app/components/staff/labor-policy-editor.tsx:1184
 msgid "Length"
 msgstr "Length"
 
@@ -9367,7 +9401,7 @@ msgstr "Load earlier replies"
 msgid "Load more"
 msgstr "Load more"
 
-#: app/components/phone-agent/voice-picker.tsx:533
+#: app/components/phone-agent/voice-picker.tsx:538
 msgid "Load more voices"
 msgstr "Load more voices"
 
@@ -9417,7 +9451,7 @@ msgstr ""
 msgid "Loading labor figures"
 msgstr "Loading labor figures"
 
-#: app/components/staff/labor-policy-editor.tsx:249
+#: app/components/staff/labor-policy-editor.tsx:250
 msgid "Loading labor rules"
 msgstr "Loading labor rules"
 
@@ -9509,11 +9543,11 @@ msgstr "Loading time cards"
 msgid "Loading today"
 msgstr "Loading today"
 
-#: app/components/phone-agent/voice-picker.tsx:617
+#: app/components/phone-agent/voice-picker.tsx:622
 msgid "Loading voice…"
 msgstr "Loading voice…"
 
-#: app/components/phone-agent/voice-picker.tsx:435
+#: app/components/phone-agent/voice-picker.tsx:440
 msgid "Loading voices"
 msgstr "Loading voices"
 
@@ -9551,7 +9585,7 @@ msgstr "Locked"
 msgid "Locked cards cannot be edited by anyone until they are unlocked, and the unlock is logged."
 msgstr "Locked cards cannot be edited by anyone until they are unlocked, and the unlock is logged."
 
-#: app/components/staff/labor-policy-editor.tsx:588
+#: app/components/staff/labor-policy-editor.tsx:606
 msgid "Locked timesheets cannot be edited until someone unlocks them."
 msgstr "Locked timesheets cannot be edited until someone unlocks them."
 
@@ -9573,7 +9607,7 @@ msgid "Login with a passkey"
 msgstr ""
 
 #: app/components/website/branding-panel.tsx:262
-#: app/routes/organizations+/create.tsx:648
+#: app/routes/organizations+/create.tsx:649
 msgid "Logo"
 msgstr ""
 
@@ -9602,11 +9636,11 @@ msgstr "Long shift"
 msgid "Long text"
 msgstr "Long text"
 
-#: app/components/staff/labor-core-rules.tsx:281
+#: app/components/staff/labor-core-rules.tsx:295
 msgid "Longer shifts are marked for review. They are not cut off."
 msgstr "Longer shifts are marked for review. They are not cut off."
 
-#: app/components/staff/labor-core-rules.tsx:287
+#: app/components/staff/labor-core-rules.tsx:301
 msgid "Longer than"
 msgstr "Longer than"
 
@@ -9687,7 +9721,7 @@ msgstr "Main workplace"
 msgid "Make a test call"
 msgstr "Make a test call"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:434
+#: ../../packages/ai/src/components/ai-chat.tsx:451
 msgid "Make it more detailed"
 msgstr ""
 
@@ -9744,7 +9778,7 @@ msgstr ""
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/components/organization-invitations.tsx:273
+#: app/components/organization-invitations.tsx:280
 #: app/components/organization-members.tsx:182
 msgid "Manage roles"
 msgstr "Manage roles"
@@ -9757,7 +9791,7 @@ msgstr "Manage schedule"
 msgid "Manage staff"
 msgstr "Manage staff"
 
-#: app/components/settings/cards/organization/billing-card.tsx:182
+#: app/components/settings/cards/organization/billing-card.tsx:202
 msgid "Manage Subscription"
 msgstr ""
 
@@ -9777,7 +9811,7 @@ msgstr ""
 msgid "Manage your connected accounts here."
 msgstr ""
 
-#: app/components/settings/cards/notification-preferences-card.tsx:258
+#: app/components/settings/cards/notification-preferences-card.tsx:267
 msgid "Manage your notification settings for different channels and workflows."
 msgstr ""
 
@@ -9789,11 +9823,11 @@ msgstr ""
 msgid "Manage your organization's members."
 msgstr ""
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:62
+#: app/components/settings/cards/organization/general-settings-card.tsx:63
 msgid "Manage your organization's name, slug, and profile image."
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:91
+#: app/components/settings/cards/organization/billing-card.tsx:111
 msgid "Manage your organization's subscription"
 msgstr ""
 
@@ -9940,7 +9974,7 @@ msgstr ""
 msgid "Meal (unpaid)"
 msgstr "Meal (unpaid)"
 
-#: app/components/staff/labor-policy-editor.tsx:1131
+#: app/components/staff/labor-policy-editor.tsx:1149
 msgid "Meal break"
 msgstr "Meal break"
 
@@ -10073,7 +10107,7 @@ msgid "Migrate existing org media after saving"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
-#: app/components/staff/labor-core-rules.tsx:327
+#: app/components/staff/labor-core-rules.tsx:341
 #: app/components/staff/labor-policy-fields.tsx:194
 msgid "minutes"
 msgstr ""
@@ -10082,7 +10116,7 @@ msgstr ""
 msgid "Minutes"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:658
+#: app/components/staff/labor-policy-editor.tsx:676
 msgid "Minutes past the start of a shift before a clock-in is marked late."
 msgstr "Minutes past the start of a shift before a clock-in is marked late."
 
@@ -10143,8 +10177,8 @@ msgstr "month"
 msgid "Month"
 msgstr "Month"
 
-#: app/components/settings/cards/organization/billing-card.tsx:210
-#: app/routes/organizations+/create.tsx:905
+#: app/components/settings/cards/organization/billing-card.tsx:232
+#: app/routes/organizations+/create.tsx:906
 msgid "Monthly"
 msgstr ""
 
@@ -10274,7 +10308,7 @@ msgstr "My schedule link"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/settings/cards/organization/general-settings-card.tsx:83
+#: app/components/settings/cards/organization/general-settings-card.tsx:84
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
@@ -10286,7 +10320,7 @@ msgstr "My schedule link"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
-#: app/routes/organizations+/create.tsx:715
+#: app/routes/organizations+/create.tsx:716
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
 msgid "Name"
@@ -10337,7 +10371,7 @@ msgstr ""
 msgid "Needs a look"
 msgstr "Needs a look"
 
-#: app/components/staff/labor-policy-editor.tsx:757
+#: app/components/staff/labor-policy-editor.tsx:775
 msgid "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 msgstr "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 
@@ -10587,7 +10621,7 @@ msgstr "No 404 errors recorded"
 msgid "No access"
 msgstr "No access"
 
-#: app/components/organization-invitations.tsx:192
+#: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr ""
 
@@ -10595,7 +10629,7 @@ msgstr ""
 msgid "No active sessions"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:164
+#: app/components/settings/cards/organization/billing-card.tsx:184
 msgid "No active subscription"
 msgstr ""
 
@@ -10624,8 +10658,8 @@ msgstr ""
 msgid "No applicants yet"
 msgstr "No applicants yet"
 
-#: app/components/staff/labor-policy-editor.tsx:438
-#: app/components/staff/labor-policy-editor.tsx:577
+#: app/components/staff/labor-policy-editor.tsx:456
+#: app/components/staff/labor-policy-editor.tsx:595
 msgid "No approval needed"
 msgstr "No approval needed"
 
@@ -10645,11 +10679,11 @@ msgstr "No availability to show"
 msgid "No backup codes generated"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:448
+#: app/components/staff/labor-policy-editor.tsx:466
 msgid "No break rules"
 msgstr "No break rules"
 
-#: app/components/staff/labor-policy-editor.tsx:1119
+#: app/components/staff/labor-policy-editor.tsx:1137
 msgid "No break rules. People can still record breaks on the tablet."
 msgstr "No break rules. People can still record breaks on the tablet."
 
@@ -10742,7 +10776,7 @@ msgstr "No custom roles created yet."
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/components/organization-invitations.tsx:480
+#: app/components/organization-invitations.tsx:497
 msgid "No description provided"
 msgstr "No description provided"
 
@@ -11198,11 +11232,11 @@ msgstr "No transfer cases yet."
 msgid "No upcoming shifts are published."
 msgstr "No upcoming shifts are published."
 
-#: app/components/phone-agent/voice-picker.tsx:460
+#: app/components/phone-agent/voice-picker.tsx:465
 msgid "No voices match"
 msgstr "No voices match"
 
-#: app/components/staff/labor-policy-editor.tsx:210
+#: app/components/staff/labor-policy-editor.tsx:211
 msgid "No workplace is available to your account yet."
 msgstr "No workplace is available to your account yet."
 
@@ -11364,7 +11398,7 @@ msgstr "Not me"
 msgid "Not notified"
 msgstr "Not notified"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:287
+#: ../../packages/ai/src/components/ai-chat.tsx:304
 msgid "Not now"
 msgstr "Not now"
 
@@ -11516,7 +11550,7 @@ msgstr "Notes for AI"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:728
 msgid "Notes, navigation, and your site — just ask."
 msgstr "Notes, navigation, and your site — just ask."
 
@@ -11597,7 +11631,7 @@ msgstr "Nothing to show here"
 msgid "Nothing waiting for a manager."
 msgstr "Nothing waiting for a manager."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:255
+#: app/components/settings/cards/notification-preferences-card.tsx:264
 msgid "Notification Preferences"
 msgstr ""
 
@@ -11689,7 +11723,7 @@ msgstr "On break"
 msgid "On leave"
 msgstr "On leave"
 
-#: app/components/staff/labor-core-rules.tsx:342
+#: app/components/staff/labor-core-rules.tsx:357
 msgid "On shifts longer than"
 msgstr "On shifts longer than"
 
@@ -11756,7 +11790,7 @@ msgstr ""
 msgid "One date"
 msgstr "One date"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:862
 msgid "One moment…"
 msgstr "One moment…"
 
@@ -11822,7 +11856,7 @@ msgstr "Online orders, and this workplace sells nothing else"
 msgid "Only a form task has a link."
 msgstr "Only a form task has a link."
 
-#: app/components/staff/labor-policy-editor.tsx:814
+#: app/components/staff/labor-policy-editor.tsx:832
 msgid "Only applies where overtime rules are set below. Exempt people are never counted."
 msgstr "Only applies where overtime rules are set below. Exempt people are never counted."
 
@@ -11883,7 +11917,7 @@ msgstr "Only the owner can share this dashboard."
 msgid "Only what you type here and your business name are used. Nothing is saved until you save."
 msgstr "Only what you type here and your business name are used. Nothing is saved until you save."
 
-#: app/components/staff/labor-core-rules.tsx:319
+#: app/components/staff/labor-core-rules.tsx:333
 msgid "Only where nobody pressed Start break. Each deduction is marked on the time card."
 msgstr "Only where nobody pressed Start break. Each deduction is marked on the time card."
 
@@ -11908,7 +11942,7 @@ msgstr ""
 msgid "Open {day} as a day"
 msgstr "Open {day} as a day"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:268
+#: ../../packages/ai/src/components/ai-chat.tsx:285
 msgid "Open {routeTitle}?"
 msgstr "Open {routeTitle}?"
 
@@ -12108,7 +12142,7 @@ msgstr ""
 msgid "Opened {openedAt}"
 msgstr "Opened {openedAt}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:244
+#: ../../packages/ai/src/components/ai-chat.tsx:261
 msgid "Opened {routeTitle}"
 msgstr "Opened {routeTitle}"
 
@@ -12188,7 +12222,7 @@ msgstr "Organization details and configuration."
 msgid "Organization logo"
 msgstr "Organization logo"
 
-#: app/routes/organizations+/create.tsx:656
+#: app/routes/organizations+/create.tsx:657
 msgid "Organization logo preview"
 msgstr ""
 
@@ -12200,7 +12234,7 @@ msgstr "Organization Settings"
 msgid "Organization site"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1041
+#: app/routes/organizations+/create.tsx:1042
 msgid "Organization size"
 msgstr ""
 
@@ -12303,7 +12337,7 @@ msgstr "Overtime and pay are estimates from your labor rules and each card's rat
 msgid "Overtime and pay are estimates from your labor rules and each card's rate. They are not payroll."
 msgstr "Overtime and pay are estimates from your labor rules and each card's rate. They are not payroll."
 
-#: app/components/staff/labor-policy-editor.tsx:869
+#: app/components/staff/labor-policy-editor.tsx:887
 msgid "Overtime and pay week"
 msgstr "Overtime and pay week"
 
@@ -12332,7 +12366,7 @@ msgstr "Overtime moved after this card was approved. Reopen it and check the new
 msgid "Overtime moved after this card was approved. Reopen it to review the new figures before you pay."
 msgstr "Overtime moved after this card was approved. Reopen it to review the new figures before you pay."
 
-#: app/components/staff/labor-policy-editor.tsx:871
+#: app/components/staff/labor-policy-editor.tsx:889
 msgid "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 
@@ -12377,7 +12411,7 @@ msgstr ""
 msgid "Paid <0>{paid}</0>"
 msgstr "Paid <0>{paid}</0>"
 
-#: app/components/staff/labor-policy-editor.tsx:1174
+#: app/components/staff/labor-policy-editor.tsx:1192
 msgid "Paid break"
 msgstr "Paid break"
 
@@ -12576,10 +12610,10 @@ msgstr "Pay period saved."
 msgid "Pay period settings"
 msgstr "Pay period settings"
 
-#: app/components/staff/labor-core-rules.tsx:376
-#: app/components/staff/labor-core-rules.tsx:380
-#: app/components/staff/labor-policy-editor.tsx:1290
-#: app/components/staff/labor-policy-editor.tsx:1315
+#: app/components/staff/labor-core-rules.tsx:392
+#: app/components/staff/labor-core-rules.tsx:396
+#: app/components/staff/labor-policy-editor.tsx:1308
+#: app/components/staff/labor-policy-editor.tsx:1333
 msgid "Pay rate"
 msgstr "Pay rate"
 
@@ -12588,7 +12622,7 @@ msgstr "Pay rate"
 msgid "Pay type"
 msgstr "Pay type"
 
-#: app/components/staff/labor-policy-editor.tsx:1391
+#: app/components/staff/labor-policy-editor.tsx:1409
 msgid "Pay week"
 msgstr "Pay week"
 
@@ -12620,7 +12654,7 @@ msgstr "Payroll summary (CSV)"
 msgid "Pending"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:336
+#: app/components/organization-invitations.tsx:343
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr ""
@@ -12655,7 +12689,7 @@ msgstr "People who applied through your website. Move them along, book interview
 msgid "People who clocked in late for a scheduled shift, and how often."
 msgstr "People who clocked in late for a scheduled shift, and how often."
 
-#: app/components/staff/labor-policy-editor.tsx:1421
+#: app/components/staff/labor-policy-editor.tsx:1439
 msgid "People who work at more than one workplace"
 msgstr "People who work at more than one workplace"
 
@@ -12675,8 +12709,8 @@ msgstr "People you share with find this dashboard under “Shared with me”. Vi
 msgid "Per hour"
 msgstr "Per hour"
 
-#: app/components/settings/cards/organization/billing-card.tsx:431
-#: app/routes/organizations+/create.tsx:1410
+#: app/components/settings/cards/organization/billing-card.tsx:464
+#: app/routes/organizations+/create.tsx:1411
 msgid "per month"
 msgstr ""
 
@@ -12749,7 +12783,7 @@ msgstr "Personal details"
 msgid "Personal details saved."
 msgstr "Personal details saved."
 
-#: app/components/organization-invitations.tsx:170
+#: app/components/organization-invitations.tsx:177
 msgid "Personal invite link"
 msgstr ""
 
@@ -12863,7 +12897,7 @@ msgstr ""
 msgid "Pick a conversation"
 msgstr "Pick a conversation"
 
-#: app/components/staff/labor-policy-editor.tsx:1256
+#: app/components/staff/labor-policy-editor.tsx:1274
 #: app/utils/staffing/onboarding-view.ts:367
 #: app/utils/staffing/onboarding-view.ts:410
 #: app/utils/staffing/onboarding-view.ts:413
@@ -12988,7 +13022,7 @@ msgstr ""
 msgid "Plan Name"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1337
+#: app/routes/organizations+/create.tsx:1338
 msgid "Plan not available"
 msgstr ""
 
@@ -13104,15 +13138,15 @@ msgstr "Played when transfers are off or outside transfer hours."
 msgid "Played while a transfer is ringing."
 msgstr "Played while a transfer is ringing."
 
-#: app/routes/organizations+/create.tsx:1340
+#: app/routes/organizations+/create.tsx:1341
 msgid "Please check configuration"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:363
+#: app/components/settings/cards/organization/billing-card.tsx:396
 msgid "Please check your Stripe configuration"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:264
+#: app/components/settings/cards/organization/billing-card.tsx:294
 msgid "Please check your Stripe configuration or try again later"
 msgstr ""
 
@@ -13328,12 +13362,12 @@ msgstr "Previous week"
 msgid "Price (USD)"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:402
-#: app/routes/organizations+/create.tsx:1374
+#: app/components/settings/cards/organization/billing-card.tsx:435
+#: app/routes/organizations+/create.tsx:1375
 msgid "Price not configured"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:360
+#: app/components/settings/cards/organization/billing-card.tsx:393
 msgid "Pricing not available"
 msgstr ""
 
@@ -13354,7 +13388,7 @@ msgstr "Print"
 msgid "Print this view"
 msgstr "Print this view"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:446
+#: ../../packages/ai/src/components/ai-chat.tsx:463
 msgid "Prioritize these tasks"
 msgstr ""
 
@@ -13362,7 +13396,7 @@ msgstr ""
 msgid "Priority"
 msgstr "Priority"
 
-#: app/routes/organizations+/create.tsx:1443
+#: app/routes/organizations+/create.tsx:1444
 msgid "Priority support"
 msgstr ""
 
@@ -13579,7 +13613,7 @@ msgstr "Question {number}"
 msgid "Questions"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:308
+#: app/components/settings/cards/organization/billing-card.tsx:335
 msgid "Questions about billing?"
 msgstr ""
 
@@ -13640,7 +13674,7 @@ msgstr ""
 msgid "Read organization details, verified domain, and storage status."
 msgstr "Read organization details, verified domain, and storage status."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:141
+#: ../../packages/ai/src/components/ai-chat.tsx:158
 msgid "Read page details"
 msgstr "Read page details"
 
@@ -13660,7 +13694,7 @@ msgstr "Read-only"
 msgid "Read-only access to organization notes"
 msgstr "Read-only access to organization notes"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:140
+#: ../../packages/ai/src/components/ai-chat.tsx:157
 msgid "Reading page details"
 msgstr "Reading page details"
 
@@ -13877,7 +13911,7 @@ msgid "Relaxed"
 msgstr "Relaxed"
 
 #: app/components/phone-agent/settings-page.tsx:369
-#: app/components/staff/labor-policy-editor.tsx:1076
+#: app/components/staff/labor-policy-editor.tsx:1094
 msgid "Reload"
 msgstr "Reload"
 
@@ -13901,19 +13935,19 @@ msgstr ""
 msgid "Remember your password?"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:671
+#: app/components/staff/labor-policy-editor.tsx:689
 msgid "Remind about a missed clock-out"
 msgstr "Remind about a missed clock-out"
 
-#: app/components/staff/labor-policy-editor.tsx:688
+#: app/components/staff/labor-policy-editor.tsx:706
 msgid "Remind after the shift ends by"
 msgstr "Remind after the shift ends by"
 
-#: app/components/staff/labor-policy-editor.tsx:793
+#: app/components/staff/labor-policy-editor.tsx:811
 msgid "Remind before the shift starts by"
 msgstr "Remind before the shift starts by"
 
-#: app/components/staff/labor-policy-editor.tsx:779
+#: app/components/staff/labor-policy-editor.tsx:797
 msgid "Remind people before their shift"
 msgstr "Remind people before their shift"
 
@@ -13931,7 +13965,7 @@ msgstr "Removal not published"
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
 #: app/components/staff/kiosk-manager.tsx:456
 #: app/components/staff/kiosk-manager.tsx:980
-#: app/components/staff/labor-policy-editor.tsx:1145
+#: app/components/staff/labor-policy-editor.tsx:1163
 #: app/components/staff/labor/labor-sales.tsx:201
 #: app/components/staff/onboarding/certificates-tab.tsx:283
 #: app/components/staff/onboarding/remove-dialog.tsx:60
@@ -13944,7 +13978,7 @@ msgstr "Removal not published"
 msgid "Remove"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1369
+#: app/components/staff/labor-policy-editor.tsx:1387
 msgid "Remove {date}"
 msgstr "Remove {date}"
 
@@ -14027,7 +14061,7 @@ msgstr "Remove from workplace"
 msgid "Remove image"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1285
+#: app/routes/organizations+/create.tsx:1286
 msgid "Remove invite"
 msgstr ""
 
@@ -14124,7 +14158,7 @@ msgstr "Removed"
 msgid "Removed from {name}."
 msgstr "Removed from {name}."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:157
+#: ../../packages/ai/src/components/ai-chat.tsx:174
 msgid "Removed section"
 msgstr "Removed section"
 
@@ -14132,7 +14166,7 @@ msgstr "Removed section"
 msgid "Removed tablets ({removedCount})"
 msgstr "Removed tablets ({removedCount})"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:156
+#: ../../packages/ai/src/components/ai-chat.tsx:173
 msgid "Removing section"
 msgstr "Removing section"
 
@@ -14300,7 +14334,7 @@ msgid "required"
 msgstr ""
 
 #: app/components/hiring/screener-editor.tsx:220
-#: app/components/staff/labor-policy-editor.tsx:1179
+#: app/components/staff/labor-policy-editor.tsx:1197
 #: app/components/website/create-form-dialog.tsx:235
 #: app/components/website/form-builder-sidebar.tsx:604
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:395
@@ -14320,7 +14354,7 @@ msgid "Resend to people not yet reached"
 msgstr "Resend to people not yet reached"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
-#: app/components/organization-invitations.tsx:240
+#: app/components/organization-invitations.tsx:247
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr ""
@@ -14354,7 +14388,7 @@ msgstr "Reset PIN"
 msgid "Reset this PIN?"
 msgstr "Reset this PIN?"
 
-#: app/routes/organizations+/create.tsx:782
+#: app/routes/organizations+/create.tsx:783
 msgid "Reset to auto-generated"
 msgstr ""
 
@@ -14410,7 +14444,7 @@ msgstr "Responses to your website forms will arrive here."
 msgid "Rest (paid)"
 msgstr "Rest (paid)"
 
-#: app/components/staff/labor-policy-editor.tsx:1133
+#: app/components/staff/labor-policy-editor.tsx:1151
 msgid "Rest break"
 msgstr "Rest break"
 
@@ -14548,7 +14582,7 @@ msgstr "Rotate left"
 msgid "Rotate right"
 msgstr "Rotate right"
 
-#: app/components/staff/labor-policy-editor.tsx:1471
+#: app/components/staff/labor-policy-editor.tsx:1489
 msgid "Round hours"
 msgstr "Round hours"
 
@@ -14557,15 +14591,15 @@ msgstr "Round hours"
 msgid "Rounded"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:893
+#: app/components/staff/labor-policy-editor.tsx:911
 msgid "Rounding"
 msgstr "Rounding"
 
-#: app/components/staff/labor-policy-editor.tsx:1491
+#: app/components/staff/labor-policy-editor.tsx:1509
 msgid "Rounding step"
 msgstr "Rounding step"
 
-#: app/components/staff/labor-policy-editor.tsx:895
+#: app/components/staff/labor-policy-editor.tsx:913
 msgid "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 msgstr "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 
@@ -14581,7 +14615,7 @@ msgstr ""
 msgid "Row {rowNumber}"
 msgstr "Row {rowNumber}"
 
-#: app/components/staff/labor-policy-editor.tsx:226
+#: app/components/staff/labor-policy-editor.tsx:227
 msgid "Rules for"
 msgstr "Rules for"
 
@@ -14777,8 +14811,8 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:223
-#: app/routes/organizations+/create.tsx:921
+#: app/components/settings/cards/organization/billing-card.tsx:245
+#: app/routes/organizations+/create.tsx:922
 msgid "Save 20%"
 msgstr ""
 
@@ -14802,11 +14836,11 @@ msgstr ""
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
-#: app/components/settings/cards/organization/general-settings-card.tsx:113
-#: app/components/settings/cards/organization/site-analytics-card.tsx:140
+#: app/components/settings/cards/organization/general-settings-card.tsx:114
+#: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/components/staff/details-tab.tsx:231
-#: app/components/staff/labor-policy-editor.tsx:1088
+#: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/timesheets/card-sheet.tsx:310
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
@@ -14942,7 +14976,7 @@ msgstr ""
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
 #: app/components/staff/kiosk-manager.tsx:910
-#: app/components/staff/labor-policy-editor.tsx:1088
+#: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
 #: app/components/staff/onboarding/certificate-form.tsx:145
@@ -15028,10 +15062,6 @@ msgstr "Schedule & time cards"
 msgid "Schedule & time clock"
 msgstr "Schedule & time clock"
 
-#: app/components/settings/cards/organization/billing-card.tsx:295
-msgid "Schedule a call"
-msgstr ""
-
 #: app/components/hiring/candidate-sheet.tsx:434
 #: app/components/hiring/interview-dialog.tsx:156
 msgid "Schedule an interview"
@@ -15041,7 +15071,7 @@ msgstr "Schedule an interview"
 msgid "Schedule another"
 msgstr "Schedule another"
 
-#: app/components/staff/labor-policy-editor.tsx:539
+#: app/components/staff/labor-policy-editor.tsx:557
 msgid "Schedule checks, alerts, breaks, overtime details, rounding"
 msgstr "Schedule checks, alerts, breaks, overtime details, rounding"
 
@@ -15049,7 +15079,7 @@ msgstr "Schedule checks, alerts, breaks, overtime details, rounding"
 msgid "Schedule controls"
 msgstr "Schedule controls"
 
-#: app/components/staff/labor-policy-editor.tsx:604
+#: app/components/staff/labor-policy-editor.tsx:622
 msgid "Schedule enforcement"
 msgstr "Schedule enforcement"
 
@@ -15375,7 +15405,7 @@ msgstr ""
 msgid "Select a submission to read the details and start a reply."
 msgstr "Select a submission to read the details and start a reply."
 
-#: app/routes/organizations+/create.tsx:877
+#: app/routes/organizations+/create.tsx:878
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr ""
 
@@ -15451,7 +15481,7 @@ msgstr ""
 
 #: app/components/media-library/media-library-picker.tsx:320
 #: app/components/note/share-note-button.tsx:300
-#: app/components/phone-agent/voice-picker.tsx:510
+#: app/components/phone-agent/voice-picker.tsx:515
 msgid "Selected"
 msgstr ""
 
@@ -15467,7 +15497,7 @@ msgstr ""
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:988
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "Send"
@@ -15505,8 +15535,8 @@ msgstr ""
 msgid "Send invitation"
 msgstr "Send invitation"
 
-#: app/components/organization-invitations.tsx:321
-#: app/routes/organizations+/create.tsx:1192
+#: app/components/organization-invitations.tsx:328
+#: app/routes/organizations+/create.tsx:1193
 msgid "Send Invitations"
 msgstr ""
 
@@ -15581,7 +15611,7 @@ msgstr ""
 msgid "sent again"
 msgstr "sent again"
 
-#: app/components/staff/labor-policy-editor.tsx:781
+#: app/components/staff/labor-policy-editor.tsx:799
 msgid "Sent by email to people who have an address on file."
 msgstr "Sent by email to people who have an address on file."
 
@@ -15634,7 +15664,7 @@ msgstr "Set at least one day."
 msgid "Set clock-out"
 msgstr "Set clock-out"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:447
+#: ../../packages/ai/src/components/ai-chat.tsx:464
 msgid "Set deadlines"
 msgstr ""
 
@@ -15744,7 +15774,7 @@ msgstr "Share the house rules"
 msgid "Share this job"
 msgstr "Share this job"
 
-#: app/components/organization-invitations.tsx:173
+#: app/components/organization-invitations.tsx:180
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "Share this link to let people join your organization. They'll see you invited them."
 
@@ -15812,7 +15842,7 @@ msgstr "Shift with the up or right arrow makes a shift end later. Shift with the
 msgid "Shifts"
 msgstr "Shifts"
 
-#: app/components/staff/labor-policy-editor.tsx:1411
+#: app/components/staff/labor-policy-editor.tsx:1429
 msgid "Shifts that run past midnight belong to the day they began."
 msgstr "Shifts that run past midnight belong to the day they began."
 
@@ -15911,7 +15941,7 @@ msgstr "Show replies ({replyCount})"
 msgid "Show requests"
 msgstr "Show requests"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:458
+#: ../../packages/ai/src/components/ai-chat.tsx:475
 msgid "Show specific examples"
 msgstr ""
 
@@ -16018,8 +16048,8 @@ msgstr "Since {startedOn}"
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
+#: app/components/settings/cards/organization/billing-card.tsx:312
+msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr ""
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
@@ -16040,7 +16070,7 @@ msgstr "Size"
 msgid "Size:"
 msgstr "Size:"
 
-#: app/routes/organizations+/create.tsx:996
+#: app/routes/organizations+/create.tsx:997
 msgid "Skip for now"
 msgstr ""
 
@@ -16052,8 +16082,8 @@ msgstr "Skip this task"
 msgid "Skipped"
 msgstr "Skipped"
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:91
-#: app/routes/organizations+/create.tsx:736
+#: app/components/settings/cards/organization/general-settings-card.tsx:92
+#: app/routes/organizations+/create.tsx:737
 msgid "Slug"
 msgstr ""
 
@@ -16171,7 +16201,7 @@ msgstr "Something went wrong. Please try again."
 msgid "Something went wrong. Reload the page and try again."
 msgstr "Something went wrong. Reload the page and try again."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:205
+#: ../../packages/ai/src/components/ai-chat.tsx:222
 #: app/components/hiring/job-editor.tsx:516
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
@@ -16463,7 +16493,11 @@ msgstr "Stats"
 msgid "Status"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:243
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "Stay"
+
+#: ../../packages/ai/src/components/ai-chat.tsx:260
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
 
@@ -16488,7 +16522,7 @@ msgstr "Steps"
 msgid "Still clocked in"
 msgstr "Still clocked in"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:988
 msgid "Stop"
 msgstr "Stop"
 
@@ -16508,7 +16542,7 @@ msgstr "Stop preview"
 msgid "Stopped replying"
 msgstr "Stopped replying"
 
-#: app/components/staff/labor-policy-editor.tsx:633
+#: app/components/staff/labor-policy-editor.tsx:651
 msgid "Stops people from starting long before their shift."
 msgstr "Stops people from starting long before their shift."
 
@@ -16571,7 +16605,7 @@ msgstr ""
 msgid "Submitted"
 msgstr "Submitted"
 
-#: app/components/settings/cards/organization/billing-card.tsx:189
+#: app/components/settings/cards/organization/billing-card.tsx:211
 msgid "Subscribe"
 msgstr ""
 
@@ -16579,7 +16613,7 @@ msgstr ""
 msgid "Subscription Cancelled"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:162
+#: app/components/settings/cards/organization/billing-card.tsx:182
 msgid "Subscription inactive"
 msgstr ""
 
@@ -16597,11 +16631,11 @@ msgstr ""
 msgid "Success message"
 msgstr "Success message"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:407
+#: ../../packages/ai/src/components/ai-chat.tsx:424
 msgid "Suggest improvements"
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:405
+#: ../../packages/ai/src/components/ai-chat.tsx:422
 msgid "Summarize this note"
 msgstr ""
 
@@ -16693,7 +16727,7 @@ msgstr "Tablet time clocks are switched off right now. Ask your manager."
 msgid "Tablets"
 msgstr "Tablets"
 
-#: app/components/staff/labor-core-rules.tsx:264
+#: app/components/staff/labor-core-rules.tsx:278
 msgid "Tablets accept clock-ins"
 msgstr "Tablets accept clock-ins"
 
@@ -16722,7 +16756,7 @@ msgstr "Take a message"
 msgid "Take a voicemail"
 msgstr "Take a voicemail"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:413
+#: ../../packages/ai/src/components/ai-chat.tsx:430
 msgid "Take me to settings"
 msgstr "Take me to settings"
 
@@ -16831,19 +16865,19 @@ msgstr "Teammate"
 msgid "Tell callers which key does what."
 msgstr "Tell callers which key does what."
 
-#: app/components/staff/labor-policy-editor.tsx:752
+#: app/components/staff/labor-policy-editor.tsx:770
 msgid "Tell managers when someone has not clocked in"
 msgstr "Tell managers when someone has not clocked in"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:467
+#: ../../packages/ai/src/components/ai-chat.tsx:484
 msgid "Tell me more"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:803
+#: app/routes/organizations+/create.tsx:804
 msgid "Tell us about your organization..."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1020
+#: app/routes/organizations+/create.tsx:1021
 msgid "Tell us more about your organization"
 msgstr ""
 
@@ -17093,7 +17127,7 @@ msgstr "That code did not work. It may have expired. Make a new one."
 msgid "That date does not start a pay period."
 msgstr "That date does not start a pay period."
 
-#: app/components/staff/labor-policy-editor.tsx:1260
+#: app/components/staff/labor-policy-editor.tsx:1278
 msgid "That date is already listed."
 msgstr "That date is already listed."
 
@@ -17312,6 +17346,14 @@ msgstr ""
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
 
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "The assistant couldn't reply. Check your connection and try again."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "The assistant couldn't reply. Try again."
+
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
 msgstr "The assistant that answers your business calls."
@@ -17376,7 +17418,7 @@ msgstr "The date could not be read."
 msgid "The decline message could not be sent"
 msgstr "The decline message could not be sent"
 
-#: app/components/staff/labor-policy-editor.tsx:322
+#: app/components/staff/labor-policy-editor.tsx:334
 msgid "The deducted break must be shorter than the shift it applies after."
 msgstr "The deducted break must be shorter than the shift it applies after."
 
@@ -17575,7 +17617,7 @@ msgstr "The people who work here: roster, pay, and private details. Only applies
 msgid "The percentages need to add up to 100."
 msgstr "The percentages need to add up to 100."
 
-#: app/components/staff/labor-policy-editor.tsx:325
+#: app/components/staff/labor-policy-editor.tsx:337
 msgid "The reminder must come before the automatic clock-out."
 msgstr "The reminder must come before the automatic clock-out."
 
@@ -17619,7 +17661,7 @@ msgstr "The service could not accept this row."
 msgid "The shift as a bar, with any deducted break marked"
 msgstr "The shift as a bar, with any deducted break marked"
 
-#: app/components/phone-agent/voice-picker.tsx:629
+#: app/components/phone-agent/voice-picker.tsx:634
 msgid "The standard voice for your agent's language."
 msgstr "The standard voice for your agent's language."
 
@@ -17760,7 +17802,7 @@ msgstr "There is nothing new to publish this week."
 msgid "There was an issue with your login attempt. Please try again."
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:914
+#: app/components/staff/labor-policy-editor.tsx:932
 msgid "These are settings, not legal advice. Overtime, break and cost figures are estimates to help you plan, and are not payroll. Check the rules that apply to your business before relying on them."
 msgstr "These are settings, not legal advice. Overtime, break and cost figures are estimates to help you plan, and are not payroll. Check the rules that apply to your business before relying on them."
 
@@ -18016,7 +18058,7 @@ msgstr ""
 msgid "This draft shift is deleted straight away."
 msgstr "This draft shift is deleted straight away."
 
-#: app/routes/organizations+/create.tsx:1023
+#: app/routes/organizations+/create.tsx:1024
 msgid "This helps us customize your experience and provide better insights."
 msgstr ""
 
@@ -18168,8 +18210,8 @@ msgstr "This person is not set up for that position here. You can still schedule
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "This PIN is paused for a few minutes. Ask a manager."
 
-#: app/components/phone-agent/voice-picker.tsx:489
-#: app/components/phone-agent/voice-picker.tsx:638
+#: app/components/phone-agent/voice-picker.tsx:494
+#: app/components/phone-agent/voice-picker.tsx:643
 msgid "This preview couldn't play."
 msgstr "This preview couldn't play."
 
@@ -18274,7 +18316,7 @@ msgstr "This tablet is not ready yet. Ask a manager."
 msgid "This tablet was disconnected"
 msgstr "This tablet was disconnected"
 
-#: app/components/staff/labor-policy-editor.tsx:331
+#: app/components/staff/labor-policy-editor.tsx:343
 msgid "This value is outside the allowed range."
 msgstr "This value is outside the allowed range."
 
@@ -18322,7 +18364,7 @@ msgstr ""
 msgid "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
 msgstr "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
 
-#: app/components/staff/labor-policy-editor.tsx:959
+#: app/components/staff/labor-policy-editor.tsx:977
 msgid "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 msgstr "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 
@@ -18351,7 +18393,7 @@ msgstr "Thursday"
 msgid "Tight"
 msgstr ""
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:128
+#: app/components/settings/cards/organization/site-analytics-card.tsx:126
 msgid "TikTok Pixel ID"
 msgstr "TikTok Pixel ID"
 
@@ -18359,7 +18401,7 @@ msgstr "TikTok Pixel ID"
 msgid "Time"
 msgstr "Time"
 
-#: app/components/staff/labor-core-rules.tsx:369
+#: app/components/staff/labor-core-rules.tsx:385
 msgid "Time and a half is 1.5. Hours past the weekly limit are paid at this rate. Estimates, not payroll."
 msgstr "Time and a half is 1.5. Hours past the weekly limit are paid at this rate. Estimates, not payroll."
 
@@ -18474,7 +18516,7 @@ msgstr "Time zone saved."
 msgid "Times are in the workplace's time zone, {timeZone}."
 msgstr "Times are in the workplace's time zone, {timeZone}."
 
-#: app/components/staff/labor-core-rules.tsx:377
+#: app/components/staff/labor-core-rules.tsx:393
 msgid "times the normal rate"
 msgstr "times the normal rate"
 
@@ -18482,8 +18524,8 @@ msgstr "times the normal rate"
 msgid "Timesheet view"
 msgstr "Timesheet view"
 
-#: app/components/staff/labor-policy-editor.tsx:563
-#: app/components/staff/labor-policy-editor.tsx:568
+#: app/components/staff/labor-policy-editor.tsx:581
+#: app/components/staff/labor-policy-editor.tsx:586
 #: app/components/staff/timesheets/timesheets-page.tsx:583
 #: app/components/workspace-breadcrumb.tsx:30
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:45
@@ -18660,7 +18702,7 @@ msgstr "Total notes"
 msgid "Total notes, the daily average and the trend."
 msgstr "Total notes, the daily average and the trend."
 
-#: app/components/staff/labor-core-rules.tsx:265
+#: app/components/staff/labor-core-rules.tsx:279
 msgid "Track time at this workplace"
 msgstr "Track time at this workplace"
 
@@ -18784,7 +18826,7 @@ msgstr ""
 msgid "Trending up by {trend}% this period"
 msgstr ""
 
-#: app/components/settings/cards/organization/billing-card.tsx:160
+#: app/components/settings/cards/organization/billing-card.tsx:180
 msgid "Trial period active"
 msgstr ""
 
@@ -18858,6 +18900,7 @@ msgstr "Try a different search term."
 msgid "Try adjusting your search or filter."
 msgstr ""
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -18865,9 +18908,9 @@ msgstr ""
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
-#: app/components/phone-agent/voice-picker.tsx:451
+#: app/components/phone-agent/voice-picker.tsx:456
 #: app/components/staff/kiosk-manager.tsx:214
-#: app/components/staff/labor-policy-editor.tsx:243
+#: app/components/staff/labor-policy-editor.tsx:244
 #: app/components/staff/labor/labor-page.tsx:363
 #: app/components/staff/onboarding/certificates-tab.tsx:108
 #: app/components/staff/onboarding/onboarding-tab.tsx:126
@@ -18888,8 +18931,8 @@ msgstr "Try again"
 msgid "Try again later, or ask your manager."
 msgstr "Try again later, or ask your manager."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:970
+#: ../../packages/ai/src/components/ai-chat.tsx:971
 msgid "Try another answer"
 msgstr "Try another answer"
 
@@ -18897,7 +18940,7 @@ msgstr "Try another answer"
 msgid "Try another name, email, or message."
 msgstr "Try another name, email, or message."
 
-#: app/components/phone-agent/voice-picker.tsx:463
+#: app/components/phone-agent/voice-picker.tsx:468
 msgid "Try another search or clear the filters."
 msgstr "Try another search or clear the filters."
 
@@ -18941,7 +18984,7 @@ msgstr "Turn on agent audio"
 msgid "Turn on the agent"
 msgstr "Turn on the agent"
 
-#: app/components/staff/labor-core-rules.tsx:271
+#: app/components/staff/labor-core-rules.tsx:285
 msgid "Turn this off and tablets here will not accept punches."
 msgstr "Turn this off and tablets here will not accept punches."
 
@@ -18965,7 +19008,7 @@ msgstr "Twice a month"
 msgid "Two"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:327
+#: app/components/staff/labor-policy-editor.tsx:339
 msgid "Two break rules start at the same point in the shift."
 msgstr "Two break rules start at the same point in the shift."
 
@@ -19026,7 +19069,7 @@ msgstr "Unable to load calls. Try again."
 msgid "Unable to load more calls. Try again."
 msgstr "Unable to load more calls. Try again."
 
-#: app/components/settings/cards/organization/billing-card.tsx:261
+#: app/components/settings/cards/organization/billing-card.tsx:291
 msgid "Unable to load pricing information"
 msgstr ""
 
@@ -19275,7 +19318,7 @@ msgstr ""
 msgid "Updated {updated}"
 msgstr "Updated {updated}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:153
+#: ../../packages/ai/src/components/ai-chat.tsx:170
 msgid "Updated section"
 msgstr "Updated section"
 
@@ -19283,12 +19326,12 @@ msgstr "Updated section"
 msgid "Updates as you edit"
 msgstr "Updates as you edit"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:152
+#: ../../packages/ai/src/components/ai-chat.tsx:169
 msgid "Updating section"
 msgstr "Updating section"
 
 #: app/components/app-sidebar.tsx:98
-#: app/components/settings/cards/organization/billing-card.tsx:473
+#: app/components/settings/cards/organization/billing-card.tsx:506
 msgid "Upgrade"
 msgstr ""
 
@@ -19340,7 +19383,7 @@ msgstr "Upload new"
 msgid "Upload photo"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:697
+#: app/routes/organizations+/create.tsx:698
 msgid "Upload your logo"
 msgstr ""
 
@@ -19478,7 +19521,7 @@ msgstr "Use at least 3 letters."
 msgid "Use authenticator app instead"
 msgstr ""
 
-#: app/components/phone-agent/voice-picker.tsx:657
+#: app/components/phone-agent/voice-picker.tsx:662
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:425
 msgid "Use default"
 msgstr "Use default"
@@ -19515,7 +19558,7 @@ msgstr "Use these if something goes wrong. They take effect on the next call."
 msgid "Use this rule on calls"
 msgstr "Use this rule on calls"
 
-#: app/components/phone-agent/voice-picker.tsx:513
+#: app/components/phone-agent/voice-picker.tsx:518
 msgid "Use this voice"
 msgstr "Use this voice"
 
@@ -19779,7 +19822,7 @@ msgstr ""
 msgid "Vivid"
 msgstr "Vivid"
 
-#: app/components/phone-agent/voice-picker.tsx:604
+#: app/components/phone-agent/voice-picker.tsx:609
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:43
 msgid "Voice"
 msgstr "Voice"
@@ -19906,11 +19949,11 @@ msgstr "Wanted: Yes. This one matters for the job."
 msgid "Warm"
 msgstr "Warm"
 
-#: app/components/staff/labor-policy-editor.tsx:812
+#: app/components/staff/labor-policy-editor.tsx:830
 msgid "Warn managers about overtime"
 msgstr "Warn managers about overtime"
 
-#: app/components/staff/labor-policy-editor.tsx:827
+#: app/components/staff/labor-policy-editor.tsx:845
 msgid "Warn when this close to the limit"
 msgstr "Warn when this close to the limit"
 
@@ -19946,7 +19989,7 @@ msgid "We could not confirm your access to the schedule. Reload the page."
 msgstr "We could not confirm your access to the schedule. Reload the page."
 
 #: app/components/staff/kiosk-manager.tsx:135
-#: app/components/staff/labor-policy-editor.tsx:202
+#: app/components/staff/labor-policy-editor.tsx:203
 #: app/components/staff/labor/labor-page.tsx:344
 #: app/components/staff/timeclock-today.tsx:108
 #: app/components/staff/timesheets/card-sheet.tsx:92
@@ -20027,7 +20070,7 @@ msgstr "We could not find this workplace's time zone. Set it in the time clock s
 msgid "We could not load availability. Try again."
 msgstr "We could not load availability. Try again."
 
-#: app/components/settings/cards/organization/billing-card.tsx:117
+#: app/components/settings/cards/organization/billing-card.tsx:137
 msgid "We could not load plan pricing right now. You can still manage an existing subscription from the customer portal."
 msgstr "We could not load plan pricing right now. You can still manage an existing subscription from the customer portal."
 
@@ -20071,7 +20114,7 @@ msgstr "We could not save the time zone. Try again."
 msgid "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
 msgstr "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
 
-#: app/components/staff/labor-policy-editor.tsx:1449
+#: app/components/staff/labor-policy-editor.tsx:1467
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 
@@ -20156,12 +20199,12 @@ msgstr "week"
 msgid "Week"
 msgstr "Week"
 
-#: app/components/staff/labor-policy-editor.tsx:1395
+#: app/components/staff/labor-policy-editor.tsx:1413
 msgid "Week starts on"
 msgstr "Week starts on"
 
-#: app/components/staff/labor-core-rules.tsx:360
-#: app/components/staff/labor-core-rules.tsx:361
+#: app/components/staff/labor-core-rules.tsx:376
+#: app/components/staff/labor-core-rules.tsx:377
 msgid "Weekly overtime"
 msgstr "Weekly overtime"
 
@@ -20211,7 +20254,7 @@ msgstr "What applicants read"
 msgid "What applicants see, like \"Evening line cook\"."
 msgstr "What applicants see, like \"Evening line cook\"."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:406
+#: ../../packages/ai/src/components/ai-chat.tsx:423
 msgid "What are the key points?"
 msgstr ""
 
@@ -20219,7 +20262,7 @@ msgstr ""
 msgid "What callers hear before anything else, and when the assistant can't answer."
 msgstr "What callers hear before anything else, and when the assistant can't answer."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:412
+#: ../../packages/ai/src/components/ai-chat.tsx:429
 msgid "What can you help me with?"
 msgstr ""
 
@@ -20236,7 +20279,7 @@ msgstr "What do you want to ask?"
 msgid "What does it pay?"
 msgstr "What does it pay?"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:469
+#: ../../packages/ai/src/components/ai-chat.tsx:486
 msgid "What else should I know?"
 msgstr ""
 
@@ -20288,7 +20331,7 @@ msgstr "What this option does"
 msgid "What to do when the agent mishears or can't help."
 msgstr "What to do when the agent mishears or can't help."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:459
+#: ../../packages/ai/src/components/ai-chat.tsx:476
 msgid "What tools can help?"
 msgstr ""
 
@@ -20304,7 +20347,7 @@ msgstr ""
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "What your hours cost against your sales, the sales you enter, and how tips divide."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:436
+#: ../../packages/ai/src/components/ai-chat.tsx:453
 msgid "What's missing?"
 msgstr ""
 
@@ -20328,7 +20371,7 @@ msgstr "When active, visitors requesting the old URL will be forwarded right awa
 msgid "When off, people only see messages from after they joined."
 msgstr "When off, people only see messages from after they joined."
 
-#: app/components/staff/labor-policy-editor.tsx:620
+#: app/components/staff/labor-policy-editor.tsx:638
 msgid "When off, people with no shift cannot clock in and need a manager."
 msgstr "When off, people with no shift cannot clock in and need a manager."
 
@@ -20417,7 +20460,7 @@ msgstr "Where to go, who to ask for, or the call-in details or meeting link."
 msgid "Whether online tips may be shared depends on where you operate. Delivery tips often belong to the driver, so they are left out unless you choose them."
 msgstr "Whether online tips may be shared depends on where you operate. Delivery tips often belong to the driver, so they are left out unless you choose them."
 
-#: app/components/staff/labor-policy-editor.tsx:849
+#: app/components/staff/labor-policy-editor.tsx:867
 msgid "Which breaks people take, and whether a missing one is flagged."
 msgstr "Which breaks people take, and whether a missing one is flagged."
 
@@ -20469,7 +20512,7 @@ msgstr "Who could take this shift"
 msgid "Who else could take this shift"
 msgstr "Who else could take this shift"
 
-#: app/components/staff/labor-policy-editor.tsx:742
+#: app/components/staff/labor-policy-editor.tsx:760
 msgid "Who gets told when the clock and the schedule disagree. Checked every few minutes while people are clocked in, and at least once an hour."
 msgstr "Who gets told when the clock and the schedule disagree. Checked every few minutes while people are clocked in, and at least once an hour."
 
@@ -20477,7 +20520,7 @@ msgstr "Who gets told when the clock and the schedule disagree. Checked every fe
 msgid "Who is on the clock, the tablets people punch in on, and the rules they follow."
 msgstr "Who is on the clock, the tablets people punch in on, and the rules they follow."
 
-#: app/components/staff/labor-policy-editor.tsx:564
+#: app/components/staff/labor-policy-editor.tsx:582
 msgid "Who signs off on time cards."
 msgstr "Who signs off on time cards."
 
@@ -20573,7 +20616,7 @@ msgstr ""
 msgid "Working"
 msgstr "Working"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:163
+#: ../../packages/ai/src/components/ai-chat.tsx:180
 msgid "Working on it"
 msgstr "Working on it"
 
@@ -20680,8 +20723,8 @@ msgstr "Wrong time entered"
 msgid "year"
 msgstr "year"
 
-#: app/components/settings/cards/organization/billing-card.tsx:221
-#: app/routes/organizations+/create.tsx:919
+#: app/components/settings/cards/organization/billing-card.tsx:243
+#: app/routes/organizations+/create.tsx:920
 msgid "Yearly"
 msgstr ""
 
@@ -20747,7 +20790,7 @@ msgstr "You are clocked in."
 msgid "You are clocked out."
 msgstr "You are clocked out."
 
-#: app/components/settings/cards/organization/billing-card.tsx:102
+#: app/components/settings/cards/organization/billing-card.tsx:122
 msgid "You are covered during our beta phase. No billing required at this time."
 msgstr ""
 
@@ -20803,7 +20846,7 @@ msgstr ""
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:1044
+#: app/components/staff/labor-policy-editor.tsx:1062
 msgid "You can view these rules but not change them."
 msgstr "You can view these rules but not change them."
 
@@ -20819,7 +20862,7 @@ msgstr "You can view this call flow, but you don't have permission to change it.
 msgid "You cannot clock in or out on this tablet right now. Ask a manager."
 msgstr "You cannot clock in or out on this tablet right now. Ask a manager."
 
-#: app/components/staff/labor-policy-editor.tsx:281
+#: app/components/staff/labor-policy-editor.tsx:282
 msgid "You changed some rules and have not saved them. Switching now throws those changes away."
 msgstr "You changed some rules and have not saved them. Switching now throws those changes away."
 
@@ -20872,7 +20915,7 @@ msgstr "You have reached the limit of templates. Archive one you no longer use."
 msgid "You have unsaved changes to the call flow. Leave without saving?"
 msgstr "You have unsaved changes to the call flow. Leave without saving?"
 
-#: app/components/staff/labor-policy-editor.tsx:1065
+#: app/components/staff/labor-policy-editor.tsx:1083
 msgid "You have unsaved changes."
 msgstr "You have unsaved changes."
 
@@ -20987,7 +21030,7 @@ msgstr ""
 msgid "Your dashboard changes could not be saved."
 msgstr "Your dashboard changes could not be saved."
 
-#: app/routes/organizations+/create.tsx:1078
+#: app/routes/organizations+/create.tsx:1079
 msgid "Your department"
 msgstr ""
 
@@ -21035,7 +21078,7 @@ msgstr "Your next shifts"
 msgid "Your note: {text}"
 msgstr "Your note: {text}"
 
-#: app/components/settings/cards/organization/billing-card.tsx:130
+#: app/components/settings/cards/organization/billing-card.tsx:150
 msgid "Your organization's current plan and billing status"
 msgstr ""
 

@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
+import { invalidateUserCache } from '@repo/cache'
 import { db, eq, User } from '@repo/database'
 import { NameSchema, UsernameSchema } from '@repo/validation'
 import { z } from 'zod'
@@ -50,6 +51,8 @@ export async function profileUpdateAction({
 			username: username,
 		})
 		.where(eq(User.id, userId))
+	// The root loader caches name and username for the sidebar user card.
+	await invalidateUserCache(userId)
 
 	return Response.json({
 		result: submission.reply(),

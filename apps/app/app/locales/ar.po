@@ -44,7 +44,7 @@ msgstr "خيارات «اضغط 1 لـ…». يمكن للمتصلين أيضً�
 msgid "({formerCount} former)"
 msgstr "({formerCount} سابق)"
 
-#: app/components/settings/cards/organization/billing-card.tsx:451
+#: app/components/settings/cards/organization/billing-card.tsx:484
 msgid "(${annualPrice} billed annually per user)"
 msgstr "(${annualPrice} يُفوتر سنوياً لكل مستخدم)"
 
@@ -63,7 +63,7 @@ msgid "(you)"
 msgstr "(أنت)"
 
 #. placeholder {0}: organization._count.users
-#: app/components/settings/cards/organization/billing-card.tsx:169
+#: app/components/settings/cards/organization/billing-card.tsx:189
 msgid "{0, plural, one {# active member} other {# active members}}"
 msgstr "{0, plural, one {# عضو نشط} other {# أعضاء نشطون}}"
 
@@ -446,11 +446,11 @@ msgstr "{avgPerDay} متوسط يومي"
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 
-#: app/routes/organizations+/create.tsx:1415
+#: app/routes/organizations+/create.tsx:1416
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
-#: app/components/staff/labor-policy-editor.tsx:451
+#: app/components/staff/labor-policy-editor.tsx:469
 msgid "{breakCount} break rules"
 msgstr "{breakCount} قواعد للاستراحة"
 
@@ -715,7 +715,7 @@ msgstr "{memberCount, plural, zero {لا يوجد أشخاص} one {شخص واح
 
 #: app/components/hiring/candidate-parts.tsx:205
 #: app/components/hiring/interview-dialog.tsx:220
-#: app/components/staff/labor-policy-editor.tsx:1500
+#: app/components/staff/labor-policy-editor.tsx:1518
 msgid "{minutes} minutes"
 msgstr "{minutes} دقيقة"
 
@@ -807,7 +807,7 @@ msgstr "أُعيد توظيف {name}. أضف أماكن عمله من جديد."
 msgid "{notFoundCount} missing URLs logged"
 msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 
-#: app/components/staff/labor-policy-editor.tsx:445
+#: app/components/staff/labor-policy-editor.tsx:463
 msgid "{onCount} of 3 on"
 msgstr "{onCount} من 3 مفعّلة"
 
@@ -954,7 +954,7 @@ msgstr "{replyCount, plural, zero {لا توجد ردود} one {رد واحد} t
 msgid "{rest}m"
 msgstr "{rest} د"
 
-#: app/components/staff/labor-policy-editor.tsx:458
+#: app/components/staff/labor-policy-editor.tsx:476
 msgid "{roundingLabel}, {roundingMinutes} minutes"
 msgstr "{roundingLabel}، {roundingMinutes} دقيقة"
 
@@ -1038,7 +1038,7 @@ msgstr "{weekText} من {limitText}"
 msgid "{who} to cover {when}"
 msgstr "{who} لتغطية {when}"
 
-#: app/routes/organizations+/create.tsx:701
+#: app/routes/organizations+/create.tsx:702
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 
@@ -1092,7 +1092,7 @@ msgstr "<p>مرحباً {{name}}،</p><p>منظمتك {{organizationName}} جا�
 msgid "✓ Discord points claimed"
 msgstr "✓ تم المطالبة بنقاط Discord"
 
-#: app/components/settings/cards/organization/billing-card.tsx:436
+#: app/components/settings/cards/organization/billing-card.tsx:469
 msgid "${basePriceValue} billed annually"
 msgstr "${basePriceValue} يُفوتر سنوياً"
 
@@ -1104,7 +1104,7 @@ msgstr "03/31/2026 (الشهر أولًا)"
 msgid "1 announcement"
 msgstr "إعلان واحد"
 
-#: app/components/staff/labor-policy-editor.tsx:450
+#: app/components/staff/labor-policy-editor.tsx:468
 msgid "1 break rule"
 msgstr "قاعدة استراحة واحدة"
 
@@ -1112,7 +1112,7 @@ msgstr "قاعدة استراحة واحدة"
 msgid "1 form"
 msgstr "نموذج واحد"
 
-#: app/components/staff/labor-policy-editor.tsx:1324
+#: app/components/staff/labor-policy-editor.tsx:1342
 msgid "1 means no premium. Holiday hours are not counted toward overtime."
 msgstr "القيمة 1 تعني بلا علاوة. ساعات العطل لا تُحتسب ضمن العمل الإضافي."
 
@@ -1257,13 +1257,13 @@ msgstr "ردّ أحد المديرين على هذا الطلب بالفعل، �
 msgid "A manager approved this time card."
 msgstr "اعتمد أحد المديرين بطاقة الوقت هذه."
 
-#: app/components/staff/labor-policy-editor.tsx:441
-#: app/components/staff/labor-policy-editor.tsx:584
+#: app/components/staff/labor-policy-editor.tsx:459
+#: app/components/staff/labor-policy-editor.tsx:602
 msgid "A manager approves and locks them"
 msgstr "يعتمدها مدير ويقفلها"
 
-#: app/components/staff/labor-policy-editor.tsx:440
-#: app/components/staff/labor-policy-editor.tsx:580
+#: app/components/staff/labor-policy-editor.tsx:458
+#: app/components/staff/labor-policy-editor.tsx:598
 msgid "A manager approves them"
 msgstr "يعتمدها مدير"
 
@@ -1351,11 +1351,16 @@ msgstr "يوجد منصب بهذا الاسم بالفعل."
 msgid "A required break was not taken or not recorded."
 msgstr "لم تُؤخذ استراحة مطلوبة أو لم تُسجَّل."
 
+#: app/components/organization-invitations.tsx:74
+#: app/components/organization-invitations.tsx:75
+msgid "A role is required"
+msgstr "الدور مطلوب"
+
 #: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
 
-#: app/components/staff/labor-policy-editor.tsx:1299
+#: app/components/staff/labor-policy-editor.tsx:1317
 msgid "A second, higher rate after more hours in a day."
 msgstr "أجر ثانٍ أعلى بعد عدد أكبر من الساعات في اليوم."
 
@@ -1469,11 +1474,11 @@ msgstr "الحساب معلق"
 msgid "Acknowledge a policy"
 msgstr "الإقرار بسياسة"
 
-#: app/routes/organizations+/create.tsx:759
+#: app/routes/organizations+/create.tsx:760
 msgid "acme"
 msgstr "acme"
 
-#: app/routes/organizations+/create.tsx:724
+#: app/routes/organizations+/create.tsx:725
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
@@ -1516,7 +1521,7 @@ msgstr "نشط"
 msgid "Activity"
 msgstr "النشاط"
 
-#: app/components/staff/labor-policy-editor.tsx:1353
+#: app/components/staff/labor-policy-editor.tsx:1371
 #: app/components/staff/positions-tab.tsx:369
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:195
@@ -1589,7 +1594,7 @@ msgstr "أضف عنوانًا"
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة بين الترويسة والتذييل."
 
-#: app/components/staff/labor-policy-editor.tsx:1344
+#: app/components/staff/labor-policy-editor.tsx:1362
 msgid "Add a holiday date"
 msgstr "إضافة تاريخ عطلة"
 
@@ -1713,8 +1718,8 @@ msgstr "إضافة بطاقات الدوام وتعديلها وتصدير ال�
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
-#: app/components/organization-invitations.tsx:310
-#: app/routes/organizations+/create.tsx:1185
+#: app/components/organization-invitations.tsx:317
+#: app/routes/organizations+/create.tsx:1186
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
@@ -1787,7 +1792,7 @@ msgstr "إضافة ميزة"
 msgid "Add field"
 msgstr "إضافة حقل"
 
-#: app/components/staff/labor-policy-editor.tsx:1440
+#: app/components/staff/labor-policy-editor.tsx:1458
 msgid "Add hours across all workplaces"
 msgstr "احتساب الساعات في جميع أماكن العمل"
 
@@ -1802,7 +1807,7 @@ msgstr "إضافة صور"
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/components/staff/labor-policy-editor.tsx:1214
+#: app/components/staff/labor-policy-editor.tsx:1232
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
@@ -1826,7 +1831,7 @@ msgstr "أضف الاسم والبريد الإلكتروني والخيارات
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:437
+#: ../../packages/ai/src/components/ai-chat.tsx:454
 msgid "Add next steps"
 msgstr "إضافة الخطوات التالية"
 
@@ -1897,7 +1902,7 @@ msgstr "إضافة سؤال"
 msgid "Add reaction"
 msgstr "إضافة تفاعل"
 
-#: app/components/staff/labor-policy-editor.tsx:1233
+#: app/components/staff/labor-policy-editor.tsx:1251
 msgid "Add rest break"
 msgstr "إضافة استراحة قصيرة"
 
@@ -2025,7 +2030,7 @@ msgstr "إضافة رابط"
 msgid "Add your business details to see what the assistant is told."
 msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال للمساعد."
 
-#: app/routes/organizations+/create.tsx:976
+#: app/routes/organizations+/create.tsx:977
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
@@ -2041,7 +2046,7 @@ msgstr "إضافة وردية"
 msgid "Added by a manager"
 msgstr "أضافها مدير"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:149
+#: ../../packages/ai/src/components/ai-chat.tsx:166
 msgid "Added section"
 msgstr "تمت إضافة القسم"
 
@@ -2053,7 +2058,7 @@ msgstr "تُضاف للموظفين الجدد"
 msgid "Added to the workplace."
 msgstr "تمت الإضافة إلى مكان العمل."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:148
+#: ../../packages/ai/src/components/ai-chat.tsx:165
 msgid "Adding section"
 msgstr "إضافة قسم"
 
@@ -2068,15 +2073,15 @@ msgstr "إضافة قسم"
 msgid "Adding…"
 msgstr "جارٍ الإضافة…"
 
-#: app/routes/organizations+/create.tsx:1434
+#: app/routes/organizations+/create.tsx:1435
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر"
 
-#: app/routes/organizations+/create.tsx:1427
+#: app/routes/organizations+/create.tsx:1428
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر<0>({annualPriceLabel} يُفوتر سنوياً لكل مستخدم)</0>"
 
-#: app/components/settings/cards/organization/billing-card.tsx:448
+#: app/components/settings/cards/organization/billing-card.tsx:481
 msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 
@@ -2111,7 +2116,7 @@ msgstr "انتحال شخصية المسؤول نشط"
 msgid "Advanced"
 msgstr "متقدم"
 
-#: app/components/staff/labor-policy-editor.tsx:536
+#: app/components/staff/labor-policy-editor.tsx:554
 msgid "Advanced settings"
 msgstr "إعدادات متقدمة"
 
@@ -2120,10 +2125,10 @@ msgstr "إعدادات متقدمة"
 msgid "Affects pay"
 msgstr "يؤثر على الأجور"
 
-#: app/components/staff/labor-core-rules.tsx:391
-#: app/components/staff/labor-core-rules.tsx:395
-#: app/components/staff/labor-policy-editor.tsx:1289
-#: app/components/staff/labor-policy-editor.tsx:1314
+#: app/components/staff/labor-core-rules.tsx:407
+#: app/components/staff/labor-core-rules.tsx:411
+#: app/components/staff/labor-policy-editor.tsx:1307
+#: app/components/staff/labor-policy-editor.tsx:1332
 msgid "After"
 msgstr "بعد"
 
@@ -2212,11 +2217,11 @@ msgstr "استهدف جملة أو جملتين تجعلان الزائر ينق
 msgid "Alcohol service permit"
 msgstr "تصريح تقديم المشروبات الكحولية"
 
-#: app/components/staff/labor-policy-editor.tsx:769
+#: app/components/staff/labor-policy-editor.tsx:787
 msgid "Alert after the shift starts by"
 msgstr "التنبيه بعد بدء الوردية بمقدار"
 
-#: app/components/staff/labor-policy-editor.tsx:740
+#: app/components/staff/labor-policy-editor.tsx:758
 msgid "Alerts and reminders"
 msgstr "التنبيهات والتذكيرات"
 
@@ -2249,7 +2254,7 @@ msgstr "جميع الكتل المدمجة موجودة بالفعل في لوح
 msgid "All calls"
 msgstr "كل المكالمات"
 
-#: app/components/staff/labor-policy-editor.tsx:1069
+#: app/components/staff/labor-policy-editor.tsx:1087
 msgid "All changes saved."
 msgstr "تم حفظ كل التغييرات."
 
@@ -2257,7 +2262,7 @@ msgstr "تم حفظ كل التغييرات."
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
-#: app/routes/organizations+/create.tsx:1439
+#: app/routes/organizations+/create.tsx:1440
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
@@ -2331,11 +2336,11 @@ msgstr "كل الوسوم"
 msgid "All workplaces"
 msgstr "جميع أماكن العمل"
 
-#: app/components/staff/labor-policy-editor.tsx:144
+#: app/components/staff/labor-policy-editor.tsx:145
 msgid "All workplaces (default)"
 msgstr "جميع أماكن العمل (افتراضي)"
 
-#: app/components/staff/labor-policy-editor.tsx:615
+#: app/components/staff/labor-policy-editor.tsx:633
 msgid "Allow clock-in without a scheduled shift"
 msgstr "السماح بتسجيل الحضور دون وردية مجدولة"
 
@@ -2416,7 +2421,7 @@ msgstr "تمت جدولة مقابلة"
 msgid "An interview was updated"
 msgstr "تم تحديث مقابلة"
 
-#: app/routes/organizations+/create.tsx:625
+#: app/routes/organizations+/create.tsx:626
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
@@ -2426,7 +2431,7 @@ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتن�
 msgid "Analytics"
 msgstr "التحليلات"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:88
+#: app/components/settings/cards/organization/site-analytics-card.tsx:86
 msgid "Analytics and tracking"
 msgstr "التحليلات والتتبع"
 
@@ -2705,7 +2710,7 @@ msgstr "كما سُجّلت"
 msgid "Ask a teammate to cover it"
 msgstr "اطلب من زميل تغطيتها"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:727
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب في الذهاب."
 
@@ -2713,7 +2718,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:729
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
 
@@ -2730,7 +2735,7 @@ msgstr "اطلب تغييرًا"
 msgid "Ask for a rating"
 msgstr "طلب تقييم"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:257
+#: ../../packages/ai/src/components/ai-chat.tsx:274
 msgid "Ask me to try again or choose a different destination."
 msgstr "اطلب مني المحاولة مرة أخرى أو اختر وجهة مختلفة."
 
@@ -2758,7 +2763,7 @@ msgstr "الملف"
 msgid "Assign"
 msgstr "تعيين"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:448
+#: ../../packages/ai/src/components/ai-chat.tsx:465
 msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
 
@@ -3012,11 +3017,11 @@ msgstr "قبل التحويل، يسأل الوكيل المتصل إن كان �
 msgid "Before you can publish"
 msgstr "قبل أن تتمكن من النشر"
 
-#: app/components/settings/cards/organization/billing-card.tsx:98
+#: app/components/settings/cards/organization/billing-card.tsx:118
 msgid "Beta Access"
 msgstr "الوصول التجريبي"
 
-#: app/components/settings/cards/organization/billing-card.tsx:158
+#: app/components/settings/cards/organization/billing-card.tsx:178
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
@@ -3026,7 +3031,7 @@ msgstr "الفوترة الشهرية"
 msgid "Billing"
 msgstr "الفواتير"
 
-#: app/components/settings/cards/organization/billing-card.tsx:88
+#: app/components/settings/cards/organization/billing-card.tsx:108
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
@@ -3034,7 +3039,7 @@ msgstr "الفوترة والاشتراك"
 msgid "Blank"
 msgstr "فارغ"
 
-#: app/components/staff/labor-policy-editor.tsx:631
+#: app/components/staff/labor-policy-editor.tsx:649
 msgid "Block clock-in that is too early"
 msgstr "منع تسجيل الحضور المبكر جدًا"
 
@@ -3100,7 +3105,7 @@ msgstr "الاستراحة {number}"
 msgid "Break deducted"
 msgstr "استراحة مخصومة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:449
+#: ../../packages/ai/src/components/ai-chat.tsx:466
 msgid "Break down complex tasks"
 msgstr "تقسيم المهام المعقدة"
 
@@ -3132,7 +3137,7 @@ msgstr "بدأت الاستراحة"
 msgid "Break started, {firstName}"
 msgstr "بدأت استراحتك، {firstName}"
 
-#: app/components/staff/labor-policy-editor.tsx:847
+#: app/components/staff/labor-policy-editor.tsx:865
 #: app/components/staff/timesheets/card-fields.tsx:141
 msgid "Breaks"
 msgstr "الاستراحات"
@@ -3246,7 +3251,7 @@ msgstr "نقاط"
 msgid "Busiest around {peak}"
 msgstr "الأكثر ازدحامًا حوالي {peak}"
 
-#: app/components/staff/labor-policy-editor.tsx:1402
+#: app/components/staff/labor-policy-editor.tsx:1420
 msgid "Business day starts at"
 msgstr "يبدأ يوم العمل عند"
 
@@ -3567,8 +3572,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
-#: app/routes/organizations+/create.tsx:821
-#: app/routes/organizations+/create.tsx:956
+#: app/routes/organizations+/create.tsx:822
+#: app/routes/organizations+/create.tsx:957
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -3784,7 +3789,7 @@ msgstr "تغيير مصدر المبيعات"
 msgid "Change time or details"
 msgstr "تغيير الوقت أو التفاصيل"
 
-#: app/components/phone-agent/voice-picker.tsx:672
+#: app/components/phone-agent/voice-picker.tsx:677
 msgid "Change voice"
 msgstr "تغيير الصوت"
 
@@ -3888,7 +3893,7 @@ msgstr "تحقق من تطبيق المصادقة الثنائية"
 msgid "Check your email"
 msgstr "تحقق من بريدك الإلكتروني"
 
-#: app/components/staff/labor-policy-editor.tsx:673
+#: app/components/staff/labor-policy-editor.tsx:691
 msgid "Checked every few minutes while people are clocked in, and at least once an hour, so a reminder can arrive a little late."
 msgstr "يجري الفحص كل بضع دقائق أثناء وجود أشخاص على رأس العمل، ومرة واحدة على الأقل كل ساعة، لذا قد يصل التذكير متأخرًا قليلًا."
 
@@ -4049,11 +4054,11 @@ msgstr "اختر ملفاً..."
 msgid "Choose from library"
 msgstr "اختر من المكتبة"
 
-#: app/components/staff/labor-policy-editor.tsx:329
+#: app/components/staff/labor-policy-editor.tsx:341
 msgid "Choose how overtime is counted across workplaces."
 msgstr "اختر طريقة احتساب الساعات الإضافية بين أماكن العمل."
 
-#: app/components/staff/labor-policy-editor.tsx:1445
+#: app/components/staff/labor-policy-editor.tsx:1463
 msgid "Choose how overtime is counted before saving."
 msgstr "اختر طريقة احتساب العمل الإضافي قبل الحفظ."
 
@@ -4101,7 +4106,7 @@ msgstr "اختر الدور الذي تعمل فيه."
 msgid "Choose View or Edit access."
 msgstr "اختر صلاحية العرض أو التعديل."
 
-#: app/components/phone-agent/voice-picker.tsx:674
+#: app/components/phone-agent/voice-picker.tsx:679
 msgid "Choose voice"
 msgstr "اختيار الصوت"
 
@@ -4143,11 +4148,11 @@ msgstr "اختر لمن هذه المهمة."
 msgid "Choose who worked."
 msgstr "اختر من عمل."
 
-#: app/routes/organizations+/create.tsx:874
+#: app/routes/organizations+/create.tsx:875
 msgid "Choose your plan"
 msgstr "اختر خطتك"
 
-#: app/components/staff/labor-policy-editor.tsx:1436
+#: app/components/staff/labor-policy-editor.tsx:1454
 msgid "Choose…"
 msgstr "اختر…"
 
@@ -4264,7 +4269,7 @@ msgstr "تسجيل الانصراف"
 msgid "Clock out {from} to {to}"
 msgstr "الانصراف من {from} إلى {to}"
 
-#: app/components/staff/labor-policy-editor.tsx:712
+#: app/components/staff/labor-policy-editor.tsx:730
 msgid "Clock out after the shift ends by"
 msgstr "تسجيل الانصراف بعد انتهاء الوردية بـ"
 
@@ -4272,7 +4277,7 @@ msgstr "تسجيل الانصراف بعد انتهاء الوردية بـ"
 msgid "Clock out: {from} to {to}"
 msgstr "تسجيل الانصراف: من {from} إلى {to}"
 
-#: app/components/staff/labor-policy-editor.tsx:698
+#: app/components/staff/labor-policy-editor.tsx:716
 msgid "Clock people out automatically"
 msgstr "تسجيل انصراف الموظفين تلقائيًا"
 
@@ -4341,7 +4346,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/hiring/job-editor.tsx:953
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
-#: app/components/phone-agent/voice-picker.tsx:554
+#: app/components/phone-agent/voice-picker.tsx:559
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 msgid "Close"
@@ -4382,7 +4387,7 @@ msgstr "مغلق"
 msgid "Closes"
 msgstr "تُغلق"
 
-#: app/components/staff/labor-policy-editor.tsx:700
+#: app/components/staff/labor-policy-editor.tsx:718
 msgid "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 msgstr "يغلق وردية نُسي إنهاؤها ويعلّمها لكي يصلحها مدير. معطّل افتراضيًا."
 
@@ -4510,7 +4515,7 @@ msgstr "تعبئة نموذج"
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "إكمال المكالمات والطلبات وإعادة فتحها، ووسم المكالمات. يتطلب صلاحية عرض المكالمات."
 
-#: app/routes/organizations+/create.tsx:1115
+#: app/routes/organizations+/create.tsx:1116
 msgid "Complete Setup"
 msgstr "إكمال الإعداد"
 
@@ -4631,7 +4636,7 @@ msgstr "ربط نطاق"
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:91
+#: app/components/settings/cards/organization/site-analytics-card.tsx:89
 msgid "Connect the analytics platforms you use on your public website. Leave any field blank to disable that integration."
 msgstr "اربط منصات التحليلات التي تستخدمها على موقعك العام. اترك أي حقل فارغاً لتعطيل ذلك التكامل."
 
@@ -4692,11 +4697,15 @@ msgstr "اتصل"
 msgid "Contact form"
 msgstr "نموذج اتصال"
 
-#: app/routes/organizations+/create.tsx:1377
+#: app/components/settings/cards/organization/billing-card.tsx:322
+msgid "Contact sales"
+msgstr "تواصل مع المبيعات"
+
+#: app/routes/organizations+/create.tsx:1378
 msgid "Contact support"
 msgstr "اتصل بالدعم"
 
-#: app/components/settings/cards/organization/billing-card.tsx:405
+#: app/components/settings/cards/organization/billing-card.tsx:438
 msgid "Contact support for pricing"
 msgstr "اتصل بالدعم للحصول على الأسعار"
 
@@ -4725,7 +4734,7 @@ msgstr "محرر المحتوى"
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:680
-#: app/routes/organizations+/create.tsx:826
+#: app/routes/organizations+/create.tsx:827
 msgid "Continue"
 msgstr "متابعة"
 
@@ -4733,7 +4742,7 @@ msgstr "متابعة"
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
-#: app/routes/organizations+/create.tsx:959
+#: app/routes/organizations+/create.tsx:960
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
@@ -4776,7 +4785,7 @@ msgstr "محادثة"
 msgid "Cool"
 msgstr "بارد"
 
-#: app/components/organization-invitations.tsx:212
+#: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
 msgstr "تم النسخ"
@@ -4799,7 +4808,7 @@ msgstr "تصل الورديات المنسوخة كمسودات. لا يصل ش�
 msgid "Copied!"
 msgstr "تم النسخ!"
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
@@ -4968,7 +4977,7 @@ msgstr "تعذّر الاتصال بالمكالمة التجريبية. تأك�
 msgid "Couldn't load calls"
 msgstr "تعذّر تحميل المكالمات"
 
-#: app/components/phone-agent/voice-picker.tsx:537
+#: app/components/phone-agent/voice-picker.tsx:542
 msgid "Couldn't load more voices. Try again."
 msgstr "تعذّر تحميل المزيد من الأصوات. حاول مرة أخرى."
 
@@ -4984,7 +4993,7 @@ msgstr "تعذر تحميل المساعد."
 msgid "Couldn't load the recording. Try again."
 msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
 
-#: app/components/phone-agent/voice-picker.tsx:442
+#: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "تعذّر تحميل الأصوات"
 
@@ -4992,7 +5001,7 @@ msgstr "تعذّر تحميل الأصوات"
 msgid "Couldn't mute your microphone. Try again."
 msgstr "تعذّر كتم الميكروفون. حاول مرة أخرى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:255
+#: ../../packages/ai/src/components/ai-chat.tsx:272
 msgid "Couldn't open {routeTitle}"
 msgstr "تعذر فتح {routeTitle}"
 
@@ -5008,7 +5017,7 @@ msgstr "تعذّر إرسال ضغطة المفتاح. حاول مرة أخرى.
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "تعذّر تشغيل الميكروفون. تحقّق منه وحاول مرة أخرى."
 
-#: app/components/staff/labor-policy-editor.tsx:656
+#: app/components/staff/labor-policy-editor.tsx:674
 msgid "Count as late after"
 msgstr "يُحتسب متأخرًا بعد"
 
@@ -5016,7 +5025,7 @@ msgstr "يُحتسب متأخرًا بعد"
 msgid "Count online orders as all sales. The share is judged against your target."
 msgstr "احتسب الطلبات عبر الإنترنت كل المبيعات. تُقيَّم النسبة مقابل هدفك."
 
-#: app/components/staff/labor-policy-editor.tsx:1437
+#: app/components/staff/labor-policy-editor.tsx:1455
 msgid "Count overtime at each workplace"
 msgstr "احتساب الساعات الإضافية في كل مكان عمل"
 
@@ -5061,7 +5070,7 @@ msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة 
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
 
-#: app/routes/organizations+/create.tsx:620
+#: app/routes/organizations+/create.tsx:621
 msgid "Create a new organization"
 msgstr "إنشاء منظمة جديدة"
 
@@ -5073,7 +5082,7 @@ msgstr "إنشاء كلمة مرور"
 msgid "Create a password to secure your account"
 msgstr "أنشئ كلمة مرور لحماية حسابك"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:460
+#: ../../packages/ai/src/components/ai-chat.tsx:477
 msgid "Create a plan"
 msgstr "إنشاء خطة"
 
@@ -5087,7 +5096,7 @@ msgstr "أنشئ دورًا جاهزًا للأشخاص الذين يديرون 
 msgid "Create account"
 msgstr "إنشاء حساب"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:408
+#: ../../packages/ai/src/components/ai-chat.tsx:425
 msgid "Create action items"
 msgstr "إنشاء عناصر العمل"
 
@@ -5137,7 +5146,7 @@ msgstr "أنشئ إعلانات شريطية لموقع مؤسستك العام.
 msgid "Create broadcast"
 msgstr "إنشاء بث"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:435
+#: ../../packages/ai/src/components/ai-chat.tsx:452
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
@@ -5171,7 +5180,7 @@ msgstr "إنشاء مجموعة"
 msgid "Create group chats"
 msgstr "إنشاء محادثات جماعية"
 
-#: app/components/organization-invitations.tsx:229
+#: app/components/organization-invitations.tsx:236
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
@@ -5279,11 +5288,11 @@ msgstr "تم الإنشاء {createdDate}"
 msgid "Created By"
 msgstr "أنشأه"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:145
+#: ../../packages/ai/src/components/ai-chat.tsx:162
 msgid "Created page"
 msgstr "تم إنشاء الصفحة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:144
+#: ../../packages/ai/src/components/ai-chat.tsx:161
 msgid "Creating page"
 msgstr "إنشاء الصفحة"
 
@@ -5305,7 +5314,7 @@ msgstr "إكراميات البطاقات"
 msgid "Credit tips: {from} to {to}"
 msgstr "إكراميات البطاقات: من {from} إلى {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:202
+#: app/components/settings/cards/notification-preferences-card.tsx:210
 msgid "Critical"
 msgstr "حرجة"
 
@@ -5346,7 +5355,7 @@ msgstr "المؤسسة الحالية"
 msgid "Current Password"
 msgstr "كلمة المرور الحالية"
 
-#: app/components/settings/cards/organization/billing-card.tsx:470
+#: app/components/settings/cards/organization/billing-card.tsx:503
 msgid "Current Plan"
 msgstr "الخطة الحالية"
 
@@ -5354,7 +5363,7 @@ msgstr "الخطة الحالية"
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "الأجور الحالية والسجل الكامل. يتم تسجيل كل مرة تعرض فيها هذه البيانات."
 
-#: app/components/settings/cards/organization/billing-card.tsx:127
+#: app/components/settings/cards/organization/billing-card.tsx:147
 msgid "Current Subscription"
 msgstr "الاشتراك الحالي"
 
@@ -5407,7 +5416,7 @@ msgstr "حدث تشغيل مخصص"
 msgid "Custom URL"
 msgstr "عنوان URL مخصص"
 
-#: app/components/phone-agent/voice-picker.tsx:624
+#: app/components/phone-agent/voice-picker.tsx:629
 msgid "Custom voice"
 msgstr "صوت مخصص"
 
@@ -5461,7 +5470,7 @@ msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent
 msgid "Cycles"
 msgstr "دورات"
 
-#: app/components/staff/labor-policy-editor.tsx:1297
+#: app/components/staff/labor-policy-editor.tsx:1315
 msgid "Daily double time"
 msgstr "الأجر المضاعف اليومي"
 
@@ -5469,15 +5478,15 @@ msgstr "الأجر المضاعف اليومي"
 msgid "Daily Notes Created"
 msgstr "الملاحظات اليومية المنشأة"
 
-#: app/components/staff/labor-policy-editor.tsx:1275
+#: app/components/staff/labor-policy-editor.tsx:1293
 msgid "Daily overtime"
 msgstr "العمل الإضافي اليومي"
 
-#: app/components/staff/labor-policy-editor.tsx:454
+#: app/components/staff/labor-policy-editor.tsx:472
 msgid "Daily overtime off · Week starts {weekStart}"
 msgstr "الساعات الإضافية اليومية متوقفة · يبدأ الأسبوع {weekStart}"
 
-#: app/components/staff/labor-policy-editor.tsx:453
+#: app/components/staff/labor-policy-editor.tsx:471
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "الساعات الإضافية اليومية مفعّلة · يبدأ الأسبوع {weekStart}"
 
@@ -5658,16 +5667,16 @@ msgstr "جارٍ الرفض…"
 msgid "Dedicated"
 msgstr "مخصص"
 
-#: app/components/staff/labor-core-rules.tsx:326
-#: app/components/staff/labor-core-rules.tsx:330
+#: app/components/staff/labor-core-rules.tsx:340
+#: app/components/staff/labor-core-rules.tsx:344
 msgid "Deduct"
 msgstr "خصم"
 
-#: app/components/staff/labor-core-rules.tsx:305
+#: app/components/staff/labor-core-rules.tsx:319
 msgid "Deduct an unpaid break"
 msgstr "خصم استراحة غير مدفوعة"
 
-#: app/components/staff/labor-core-rules.tsx:306
+#: app/components/staff/labor-core-rules.tsx:320
 msgid "Deduct an unpaid break when none was recorded"
 msgstr "خصم استراحة غير مدفوعة عند عدم تسجيل أي استراحة"
 
@@ -5688,7 +5697,7 @@ msgstr "اللغة الافتراضية"
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
 
-#: app/components/phone-agent/voice-picker.tsx:615
+#: app/components/phone-agent/voice-picker.tsx:620
 msgid "Default voice"
 msgstr "الصوت الافتراضي"
 
@@ -5818,7 +5827,7 @@ msgstr "حذف البيانات والتبديل"
 msgid "Delete feature"
 msgstr "حذف الميزة"
 
-#: app/components/organization-invitations.tsx:374
+#: app/components/organization-invitations.tsx:381
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
@@ -5977,7 +5986,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3732
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4042
-#: app/routes/organizations+/create.tsx:798
+#: app/routes/organizations+/create.tsx:799
 msgid "Description"
 msgstr "الوصف"
 
@@ -6073,7 +6082,7 @@ msgstr "رسائل مباشرة"
 msgid "Direction"
 msgstr "الاتجاه"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:258
 msgid "Disable"
 msgstr "تعطيل"
 
@@ -6084,16 +6093,16 @@ msgstr "تعطيل المصادقة الثنائية"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
 #: app/components/staff/details-tab.tsx:245
-#: app/components/staff/labor-policy-editor.tsx:1085
+#: app/components/staff/labor-policy-editor.tsx:1103
 msgid "Discard"
 msgstr "تجاهل"
 
-#: app/components/staff/labor-policy-editor.tsx:299
+#: app/components/staff/labor-policy-editor.tsx:300
 msgid "Discard and switch"
 msgstr "تجاهل والتبديل"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
-#: app/components/staff/labor-policy-editor.tsx:278
+#: app/components/staff/labor-policy-editor.tsx:279
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
 
@@ -6168,8 +6177,8 @@ msgstr "عدم الإعادة"
 msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:163
-#: ../../packages/ai/src/components/ai-chat.tsx:210
+#: ../../packages/ai/src/components/ai-chat.tsx:180
+#: ../../packages/ai/src/components/ai-chat.tsx:227
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
@@ -6195,7 +6204,7 @@ msgstr "أُنجزت في {when}"
 msgid "Double time"
 msgstr "أجر مضاعف"
 
-#: app/components/staff/labor-policy-editor.tsx:319
+#: app/components/staff/labor-policy-editor.tsx:331
 msgid "Double time must start after daily overtime."
 msgstr "يجب أن يبدأ الأجر المضاعف بعد العمل الإضافي اليومي."
 
@@ -6291,7 +6300,7 @@ msgstr "تم حفظ المسودة · لم تُنشر بعد"
 msgid "Draft saved · v{publishedVersion} is live"
 msgstr "تم حفظ المسودة · الإصدار v{publishedVersion} منشور"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:415
+#: ../../packages/ai/src/components/ai-chat.tsx:432
 msgid "Draft something for me"
 msgstr "اكتب مسودة لي"
 
@@ -6354,7 +6363,7 @@ msgstr "الاستحقاق"
 msgid "Due {when}"
 msgstr "الاستحقاق {when}"
 
-#: app/components/staff/labor-policy-editor.tsx:1150
+#: app/components/staff/labor-policy-editor.tsx:1168
 msgid "Due after"
 msgstr "تُستحق بعد"
 
@@ -6467,7 +6476,7 @@ msgstr "أقدم"
 msgid "Earlier weeks"
 msgstr "الأسابيع السابقة"
 
-#: app/components/staff/labor-policy-editor.tsx:644
+#: app/components/staff/labor-policy-editor.tsx:662
 msgid "Earliest clock-in, before the shift"
 msgstr "أبكر تسجيل حضور قبل الوردية"
 
@@ -6639,7 +6648,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
-#: app/components/organization-invitations.tsx:450
+#: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -6890,6 +6899,10 @@ msgstr "أدخل مبلغًا مثل 1250.50."
 msgid "Enter an amount like 15.50."
 msgstr "أدخل مبلغًا مثل 15.50."
 
+#: app/components/organization-invitations.tsx:71
+msgid "Enter an email address"
+msgstr "أدخل عنوان بريد إلكتروني"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
@@ -6898,14 +6911,26 @@ msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان 
 msgid "Enter backup code"
 msgstr "أدخل الرمز الاحتياطي"
 
+#: app/components/staff/labor-policy-editor.tsx:327
+msgid "Enter between {min} and {max} hours."
+msgstr "أدخل قيمة بين {min} و{max} ساعة."
+
+#: app/components/staff/labor-policy-editor.tsx:323
+msgid "Enter between {min} and {max} minutes."
+msgstr "أدخل قيمة بين {min} و{max} دقيقة."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "أدخل كل نسبة كرقم من 0 إلى 100."
 
-#: app/components/organization-invitations.tsx:449
-#: app/routes/organizations+/create.tsx:1226
+#: app/components/organization-invitations.tsx:456
+#: app/routes/organizations+/create.tsx:1227
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
+
+#: app/components/staff/labor-policy-editor.tsx:326
+msgid "Enter more than 0 and up to {max} hours."
+msgstr "أدخل قيمة أكبر من 0 وحتى {max} ساعة."
 
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
@@ -7022,7 +7047,7 @@ msgstr "المبيعات المُدخلة"
 msgid "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما يكون مصدر مبيعات مكان العمل هذا \"مبيعات أدخلها بنفسي\"."
 
-#: app/components/settings/cards/organization/billing-card.tsx:279
+#: app/components/settings/cards/organization/billing-card.tsx:309
 msgid "Enterprise Plan"
 msgstr "الخطة المؤسسية"
 
@@ -7250,7 +7275,7 @@ msgstr "تم تصدير {count} صفًا."
 msgid "Exported {exportedCount} people."
 msgstr "تم تصدير {exportedCount} شخصًا."
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:101
+#: app/components/settings/cards/organization/site-analytics-card.tsx:99
 msgid "Facebook Pixel ID"
 msgstr "معرّف بكسل Facebook"
 
@@ -7491,7 +7516,7 @@ msgstr "تصفية حسب مكان العمل"
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:409
+#: ../../packages/ai/src/components/ai-chat.tsx:426
 msgid "Find potential issues"
 msgstr "العثور على المشكلات المحتملة"
 
@@ -7533,7 +7558,7 @@ msgstr "خمس مهام للأسبوع الأول: تأكيد بيانات ال�
 msgid "Fix before publishing"
 msgstr "أصلح قبل النشر"
 
-#: app/components/staff/labor-policy-editor.tsx:1061
+#: app/components/staff/labor-policy-editor.tsx:1079
 msgid "Fix the highlighted settings to save."
 msgstr "صحّح الإعدادات المميزة لتتمكن من الحفظ."
 
@@ -7549,7 +7574,7 @@ msgstr "إصلاح هذه البطاقة"
 msgid "Fix validation errors before publishing"
 msgstr "أصلح أخطاء التحقق قبل النشر"
 
-#: app/components/staff/labor-policy-editor.tsx:1181
+#: app/components/staff/labor-policy-editor.tsx:1199
 msgid "Flag a shift for review when this break was not taken."
 msgstr "علّم الوردية للمراجعة عند عدم أخذ هذه الاستراحة."
 
@@ -7557,11 +7582,11 @@ msgstr "علّم الوردية للمراجعة عند عدم أخذ هذه ا�
 msgid "Flag applicants who answer differently. You still decide who to talk to."
 msgstr "يتم تمييز المتقدمين الذين يجيبون بشكل مختلف. وتبقى أنت من يقرر مع من تتحدث."
 
-#: app/components/staff/labor-core-rules.tsx:279
+#: app/components/staff/labor-core-rules.tsx:293
 msgid "Flag long shifts for review"
 msgstr "تمييز الورديات الطويلة للمراجعة"
 
-#: app/components/staff/labor-core-rules.tsx:291
+#: app/components/staff/labor-core-rules.tsx:305
 msgid "Flag shifts longer than"
 msgstr "تعليم الورديات الأطول من"
 
@@ -7613,7 +7638,7 @@ msgstr "لوردية لم تُسجَّل أبدًا أو تسجيل مفقود. 
 msgid "For our hours, press 1. To speak with our team, press 2."
 msgstr "لمعرفة ساعات العمل، اضغط 1. للتحدث مع فريقنا، اضغط 2."
 
-#: app/components/staff/labor-core-rules.tsx:346
+#: app/components/staff/labor-core-rules.tsx:361
 msgid "For shifts longer than"
 msgstr "للورديات الأطول من"
 
@@ -7753,7 +7778,7 @@ msgid "General manager"
 msgstr "المدير العام"
 
 #: app/components/app-sidebar.tsx:463
-#: app/components/settings/cards/organization/general-settings-card.tsx:59
+#: app/components/settings/cards/organization/general-settings-card.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
 msgstr "الإعدادات العامة"
@@ -7794,7 +7819,7 @@ msgid "Get help"
 msgstr "احصل على المساعدة"
 
 #: app/components/app-sidebar.tsx:105
-#: app/components/settings/cards/organization/billing-card.tsx:317
+#: app/components/settings/cards/organization/billing-card.tsx:350
 msgid "Get in touch"
 msgstr "تواصل معنا"
 
@@ -7818,7 +7843,7 @@ msgstr "التخلي عن {when}"
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:468
+#: ../../packages/ai/src/components/ai-chat.tsx:485
 msgid "Give me examples"
 msgstr "أعطني أمثلة"
 
@@ -7847,7 +7872,7 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 msgid "Give your group a name"
 msgstr "أدخل اسمًا لمجموعتك"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:278
+#: ../../packages/ai/src/components/ai-chat.tsx:295
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
@@ -7888,11 +7913,11 @@ msgstr "الوداع"
 msgid "Goodbye message"
 msgstr "رسالة الوداع"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:119
+#: app/components/settings/cards/organization/site-analytics-card.tsx:117
 msgid "Google Analytics ID"
 msgstr "معرّف Google Analytics"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:110
+#: app/components/settings/cards/organization/site-analytics-card.tsx:108
 msgid "Google Tag Manager ID"
 msgstr "معرّف Google Tag Manager"
 
@@ -8012,7 +8037,7 @@ msgstr "العناوين"
 msgid "Health card"
 msgstr "البطاقة الصحية"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:414
+#: ../../packages/ai/src/components/ai-chat.tsx:431
 msgid "Help me get started"
 msgstr "ساعدني في البدء"
 
@@ -8080,7 +8105,7 @@ msgstr "مرحبًا {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "مرحبًا {personName}، أدخل رقمك السري"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:723
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
@@ -8203,11 +8228,11 @@ msgstr "رسالة الانتظار"
 msgid "Holiday"
 msgstr "عطلة رسمية"
 
-#: app/components/staff/labor-policy-editor.tsx:1322
+#: app/components/staff/labor-policy-editor.tsx:1340
 msgid "Holiday pay rate"
 msgstr "أجر العطل"
 
-#: app/components/staff/labor-policy-editor.tsx:1320
+#: app/components/staff/labor-policy-editor.tsx:1338
 msgid "Holidays"
 msgstr "العطل"
 
@@ -8247,10 +8272,10 @@ msgid "Hourly rate"
 msgstr "الأجر بالساعة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:291
-#: app/components/staff/labor-core-rules.tsx:288
-#: app/components/staff/labor-core-rules.tsx:343
-#: app/components/staff/labor-policy-editor.tsx:727
-#: app/components/staff/labor-policy-editor.tsx:808
+#: app/components/staff/labor-core-rules.tsx:302
+#: app/components/staff/labor-core-rules.tsx:358
+#: app/components/staff/labor-policy-editor.tsx:745
+#: app/components/staff/labor-policy-editor.tsx:826
 #: app/components/staff/labor-policy-fields.tsx:261
 msgid "hours"
 msgstr "ساعات"
@@ -8271,7 +8296,7 @@ msgstr "الساعات والأشخاص"
 msgid "Hours are scheduled hours, not worked hours."
 msgstr "الساعات هي الساعات المجدولة وليست ساعات العمل الفعلية."
 
-#: app/components/staff/labor-policy-editor.tsx:1277
+#: app/components/staff/labor-policy-editor.tsx:1295
 msgid "Hours beyond a daily limit are paid at a higher rate."
 msgstr "تُدفع الساعات التي تتجاوز الحد اليومي بأجر أعلى."
 
@@ -8283,11 +8308,11 @@ msgstr "الساعات حسب الموظف"
 msgid "Hours changed by <0>{delta}</0>"
 msgstr "تغيّرت الساعات بمقدار <0>{delta}</0>"
 
-#: app/components/staff/labor-core-rules.tsx:392
+#: app/components/staff/labor-core-rules.tsx:408
 msgid "hours in a week"
 msgstr "ساعات في الأسبوع"
 
-#: app/components/staff/labor-policy-editor.tsx:1162
+#: app/components/staff/labor-policy-editor.tsx:1180
 msgid "hours into the shift"
 msgstr "ساعات من بدء الوردية"
 
@@ -8311,11 +8336,11 @@ msgstr "كيف تصل المكالمات إلى الوكيل"
 msgid "How can I help you today?"
 msgstr "كيف يمكنني مساعدتك اليوم؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:723
 msgid "How can I help?"
 msgstr "كيف يمكنني مساعدتك؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:470
+#: ../../packages/ai/src/components/ai-chat.tsx:487
 msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
@@ -8344,7 +8369,7 @@ msgstr "طريقة تسجيل الدخول"
 msgid "How strict do you want to be?"
 msgstr "ما مدى الصرامة التي تريدها؟"
 
-#: app/components/staff/labor-policy-editor.tsx:606
+#: app/components/staff/labor-policy-editor.tsx:624
 msgid "How strict the clock is about the published schedule. These checks start working once scheduling is turned on."
 msgstr "مدى التزام الساعة بالجدول المنشور. تبدأ هذه الفحوص بالعمل بعد تفعيل الجدولة."
 
@@ -8381,7 +8406,7 @@ msgstr "لن أتمكن من الوصول إلى المؤسسة وبياناته
 msgid "I've Copied the Key"
 msgstr "لقد نسخت المفتاح"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:461
+#: ../../packages/ai/src/components/ai-chat.tsx:478
 msgid "Identify risks"
 msgstr "تحديد المخاطر"
 
@@ -8543,11 +8568,11 @@ msgstr "أضف رمز الدولة، مثل ‎+14155550123."
 msgid "Included when tips are divided."
 msgstr "يُشمل عند تقسيم الإكراميات."
 
-#: app/components/settings/cards/organization/billing-card.tsx:444
+#: app/components/settings/cards/organization/billing-card.tsx:477
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 
-#: app/routes/organizations+/create.tsx:1422
+#: app/routes/organizations+/create.tsx:1423
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
@@ -8621,6 +8646,10 @@ msgstr "تم تحديث المقابلة"
 msgid "Interviews"
 msgstr "المقابلات"
 
+#: app/components/organization-invitations.tsx:72
+msgid "Invalid email address"
+msgstr "عنوان البريد الإلكتروني غير صالح"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:160
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
@@ -8665,7 +8694,7 @@ msgstr "تم إرسال الدعوة."
 msgid "Invitations are not available for this organization."
 msgstr "الدعوات غير متاحة لهذه المؤسسة."
 
-#: app/components/organization-invitations.tsx:263
+#: app/components/organization-invitations.tsx:270
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
@@ -8686,7 +8715,7 @@ msgstr "دعوة أعضاء"
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
-#: app/routes/organizations+/create.tsx:973
+#: app/routes/organizations+/create.tsx:974
 msgid "Invite team members"
 msgstr "دعوة أعضاء الفريق"
 
@@ -8708,7 +8737,7 @@ msgstr "تمت دعوته"
 msgid "Invited by {invitedBy}"
 msgstr "مدعو من قبل {invitedBy}"
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:361
 msgid "Invited by {inviterName}"
 msgstr "مدعو من قبل {inviterName}"
 
@@ -8869,7 +8898,7 @@ msgstr "الإبقاء على المنطقة الحالية"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/hiring/job-editor.tsx:451
-#: app/components/staff/labor-policy-editor.tsx:289
+#: app/components/staff/labor-policy-editor.tsx:290
 msgid "Keep editing"
 msgstr "متابعة التعديل"
 
@@ -9014,7 +9043,7 @@ msgstr "نسبة تكلفة العمالة حسب مكان العمل"
 msgid "Labor rules"
 msgstr "قواعد العمل"
 
-#: app/components/staff/labor-policy-editor.tsx:488
+#: app/components/staff/labor-policy-editor.tsx:506
 msgid "Labor rules saved."
 msgstr "تم حفظ قواعد العمل."
 
@@ -9118,11 +9147,11 @@ msgstr "آخر استخدام"
 msgid "Late"
 msgstr "متأخر"
 
-#: app/components/staff/labor-policy-editor.tsx:444
+#: app/components/staff/labor-policy-editor.tsx:462
 msgid "Late after {lateMinutes} min · Scheduled people only"
 msgstr "التأخر بعد {lateMinutes} د · للمجدولين فقط"
 
-#: app/components/staff/labor-policy-editor.tsx:443
+#: app/components/staff/labor-policy-editor.tsx:461
 msgid "Late after {lateMinutes} min · Unscheduled clock-ins allowed"
 msgstr "التأخر بعد {lateMinutes} د · يُسمح بتسجيل الحضور لغير المجدولين"
 
@@ -9163,6 +9192,7 @@ msgid "Learn more"
 msgstr "اعرف المزيد"
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "مغادرة"
 
@@ -9216,6 +9246,10 @@ msgstr "لا تستخدم الرمزين < و >."
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "هل تريد مغادرة صندوق الوارد وتجاهل مسودات الردود؟"
 
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "هل تريد مغادرة هذه الصفحة؟"
+
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
 msgstr "المغادرة دون حفظ؟"
@@ -9242,7 +9276,7 @@ msgid "Left the team"
 msgstr "غادر الفريق"
 
 #: app/components/hiring/interview-dialog.tsx:215
-#: app/components/staff/labor-policy-editor.tsx:1166
+#: app/components/staff/labor-policy-editor.tsx:1184
 msgid "Length"
 msgstr "المدة"
 
@@ -9365,7 +9399,7 @@ msgstr "تحميل ردود أقدم"
 msgid "Load more"
 msgstr "تحميل المزيد"
 
-#: app/components/phone-agent/voice-picker.tsx:533
+#: app/components/phone-agent/voice-picker.tsx:538
 msgid "Load more voices"
 msgstr "تحميل المزيد من الأصوات"
 
@@ -9415,7 +9449,7 @@ msgstr "جاري تحميل القنوات..."
 msgid "Loading labor figures"
 msgstr "جارٍ تحميل أرقام العمالة"
 
-#: app/components/staff/labor-policy-editor.tsx:249
+#: app/components/staff/labor-policy-editor.tsx:250
 msgid "Loading labor rules"
 msgstr "جارٍ تحميل قواعد العمل"
 
@@ -9507,11 +9541,11 @@ msgstr "جارٍ تحميل بطاقات الدوام"
 msgid "Loading today"
 msgstr "جارٍ تحميل اليوم"
 
-#: app/components/phone-agent/voice-picker.tsx:617
+#: app/components/phone-agent/voice-picker.tsx:622
 msgid "Loading voice…"
 msgstr "جارٍ تحميل الصوت…"
 
-#: app/components/phone-agent/voice-picker.tsx:435
+#: app/components/phone-agent/voice-picker.tsx:440
 msgid "Loading voices"
 msgstr "جارٍ تحميل الأصوات"
 
@@ -9549,7 +9583,7 @@ msgstr "مقفلة"
 msgid "Locked cards cannot be edited by anyone until they are unlocked, and the unlock is logged."
 msgstr "لا يمكن لأحد تعديل البطاقات المقفلة حتى يُفتح قفلها، ويُسجَّل فتح القفل."
 
-#: app/components/staff/labor-policy-editor.tsx:588
+#: app/components/staff/labor-policy-editor.tsx:606
 msgid "Locked timesheets cannot be edited until someone unlocks them."
 msgstr "لا يمكن تعديل سجلات الدوام المقفلة حتى يفتحها أحد."
 
@@ -9571,7 +9605,7 @@ msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
 #: app/components/website/branding-panel.tsx:262
-#: app/routes/organizations+/create.tsx:648
+#: app/routes/organizations+/create.tsx:649
 msgid "Logo"
 msgstr "الشعار"
 
@@ -9600,11 +9634,11 @@ msgstr "وردية طويلة"
 msgid "Long text"
 msgstr "نص طويل"
 
-#: app/components/staff/labor-core-rules.tsx:281
+#: app/components/staff/labor-core-rules.tsx:295
 msgid "Longer shifts are marked for review. They are not cut off."
 msgstr "تُعلَّم الورديات الأطول للمراجعة ولا يتم قطعها."
 
-#: app/components/staff/labor-core-rules.tsx:287
+#: app/components/staff/labor-core-rules.tsx:301
 msgid "Longer than"
 msgstr "أطول من"
 
@@ -9685,7 +9719,7 @@ msgstr "مكان العمل الرئيسي"
 msgid "Make a test call"
 msgstr "إجراء مكالمة تجريبية"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:434
+#: ../../packages/ai/src/components/ai-chat.tsx:451
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
@@ -9742,7 +9776,7 @@ msgstr "إدارة مفاتيح المرور"
 msgid "Manage phone agent"
 msgstr "إدارة وكيل الهاتف"
 
-#: app/components/organization-invitations.tsx:273
+#: app/components/organization-invitations.tsx:280
 #: app/components/organization-members.tsx:182
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
@@ -9755,7 +9789,7 @@ msgstr "إدارة الجدول"
 msgid "Manage staff"
 msgstr "إدارة الموظفين"
 
-#: app/components/settings/cards/organization/billing-card.tsx:182
+#: app/components/settings/cards/organization/billing-card.tsx:202
 msgid "Manage Subscription"
 msgstr "إدارة الاشتراك"
 
@@ -9775,7 +9809,7 @@ msgstr "إدارة جلساتك النشطة. أنت مسجل الدخول عل�
 msgid "Manage your connected accounts here."
 msgstr "إدارة حساباتك المتصلة هنا."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:258
+#: app/components/settings/cards/notification-preferences-card.tsx:267
 msgid "Manage your notification settings for different channels and workflows."
 msgstr "إدارة إعدادات الإشعارات للقنوات ومسارات العمل المختلفة."
 
@@ -9787,11 +9821,11 @@ msgstr "إدارة إعدادات وتفضيلات منظمتك."
 msgid "Manage your organization's members."
 msgstr "إدارة أعضاء منظمتك."
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:62
+#: app/components/settings/cards/organization/general-settings-card.tsx:63
 msgid "Manage your organization's name, slug, and profile image."
 msgstr "إدارة اسم مؤسستك والرابط الثابت وصورة الملف الشخصي."
 
-#: app/components/settings/cards/organization/billing-card.tsx:91
+#: app/components/settings/cards/organization/billing-card.tsx:111
 msgid "Manage your organization's subscription"
 msgstr "إدارة اشتراك مؤسستك"
 
@@ -9938,7 +9972,7 @@ msgstr "خادم MCP"
 msgid "Meal (unpaid)"
 msgstr "وجبة (غير مدفوعة)"
 
-#: app/components/staff/labor-policy-editor.tsx:1131
+#: app/components/staff/labor-policy-editor.tsx:1149
 msgid "Meal break"
 msgstr "استراحة وجبة"
 
@@ -10071,7 +10105,7 @@ msgid "Migrate existing org media after saving"
 msgstr "ترحيل وسائط المؤسسة الحالية بعد الحفظ"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
-#: app/components/staff/labor-core-rules.tsx:327
+#: app/components/staff/labor-core-rules.tsx:341
 #: app/components/staff/labor-policy-fields.tsx:194
 msgid "minutes"
 msgstr "دقائق"
@@ -10080,7 +10114,7 @@ msgstr "دقائق"
 msgid "Minutes"
 msgstr "دقائق"
 
-#: app/components/staff/labor-policy-editor.tsx:658
+#: app/components/staff/labor-policy-editor.tsx:676
 msgid "Minutes past the start of a shift before a clock-in is marked late."
 msgstr "الدقائق بعد بدء الوردية قبل أن يُعلَّم تسجيل الحضور متأخرًا."
 
@@ -10141,8 +10175,8 @@ msgstr "شهر"
 msgid "Month"
 msgstr "الشهر"
 
-#: app/components/settings/cards/organization/billing-card.tsx:210
-#: app/routes/organizations+/create.tsx:905
+#: app/components/settings/cards/organization/billing-card.tsx:232
+#: app/routes/organizations+/create.tsx:906
 msgid "Monthly"
 msgstr "شهري"
 
@@ -10272,7 +10306,7 @@ msgstr "رابط جدولي"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/settings/cards/organization/general-settings-card.tsx:83
+#: app/components/settings/cards/organization/general-settings-card.tsx:84
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
@@ -10284,7 +10318,7 @@ msgstr "رابط جدولي"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
-#: app/routes/organizations+/create.tsx:715
+#: app/routes/organizations+/create.tsx:716
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
 msgid "Name"
@@ -10335,7 +10369,7 @@ msgstr "هل تحتاج إلى تكامل ولكن لا تراه هنا؟"
 msgid "Needs a look"
 msgstr "تحتاج إلى نظرة"
 
-#: app/components/staff/labor-policy-editor.tsx:757
+#: app/components/staff/labor-policy-editor.tsx:775
 msgid "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 msgstr "يتطلب جدولًا منشورًا. يختار المديرون طريقة تلقّي التنبيه من إعدادات الإشعارات."
 
@@ -10585,7 +10619,7 @@ msgstr "لم تُسجَّل أي أخطاء 404"
 msgid "No access"
 msgstr "لا تملك صلاحية الوصول"
 
-#: app/components/organization-invitations.tsx:192
+#: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
 
@@ -10593,7 +10627,7 @@ msgstr "لا يوجد رابط دعوة نشط"
 msgid "No active sessions"
 msgstr "لا توجد جلسات نشطة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:164
+#: app/components/settings/cards/organization/billing-card.tsx:184
 msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
@@ -10622,8 +10656,8 @@ msgstr "لم يتم إنشاء مفاتيح API بعد"
 msgid "No applicants yet"
 msgstr "لا يوجد متقدّمون بعد"
 
-#: app/components/staff/labor-policy-editor.tsx:438
-#: app/components/staff/labor-policy-editor.tsx:577
+#: app/components/staff/labor-policy-editor.tsx:456
+#: app/components/staff/labor-policy-editor.tsx:595
 msgid "No approval needed"
 msgstr "لا حاجة إلى اعتماد"
 
@@ -10643,11 +10677,11 @@ msgstr "لا يوجد توفر لعرضه"
 msgid "No backup codes generated"
 msgstr "لم يتم إنشاء رموز احتياطية"
 
-#: app/components/staff/labor-policy-editor.tsx:448
+#: app/components/staff/labor-policy-editor.tsx:466
 msgid "No break rules"
 msgstr "لا توجد قواعد للاستراحة"
 
-#: app/components/staff/labor-policy-editor.tsx:1119
+#: app/components/staff/labor-policy-editor.tsx:1137
 msgid "No break rules. People can still record breaks on the tablet."
 msgstr "لا توجد قواعد للاستراحات. يمكن للموظفين تسجيل الاستراحات على الجهاز."
 
@@ -10740,7 +10774,7 @@ msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
-#: app/components/organization-invitations.tsx:480
+#: app/components/organization-invitations.tsx:497
 msgid "No description provided"
 msgstr "لم يُقدَّم وصف"
 
@@ -11196,11 +11230,11 @@ msgstr "لا توجد حالات تحويل بعد."
 msgid "No upcoming shifts are published."
 msgstr "لا توجد ورديات قادمة منشورة."
 
-#: app/components/phone-agent/voice-picker.tsx:460
+#: app/components/phone-agent/voice-picker.tsx:465
 msgid "No voices match"
 msgstr "لا توجد أصوات مطابقة"
 
-#: app/components/staff/labor-policy-editor.tsx:210
+#: app/components/staff/labor-policy-editor.tsx:211
 msgid "No workplace is available to your account yet."
 msgstr "لا يتوفر أي مكان عمل لحسابك بعد."
 
@@ -11362,7 +11396,7 @@ msgstr "لست أنا"
 msgid "Not notified"
 msgstr "لم يُبلَّغوا"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:287
+#: ../../packages/ai/src/components/ai-chat.tsx:304
 msgid "Not now"
 msgstr "ليس الآن"
 
@@ -11514,7 +11548,7 @@ msgstr "ملاحظات للذكاء الاصطناعي"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr "تساعدك الملاحظات على تسجيل الأفكار ومحاضر الاجتماعات أو أي شيء مهم لمنظمتك. ابدأ بإنشاء ملاحظتك الأولى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:728
 msgid "Notes, navigation, and your site — just ask."
 msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل."
 
@@ -11595,7 +11629,7 @@ msgstr "لا يوجد ما يُعرض هنا"
 msgid "Nothing waiting for a manager."
 msgstr "لا شيء بانتظار المدير."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:255
+#: app/components/settings/cards/notification-preferences-card.tsx:264
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
@@ -11687,7 +11721,7 @@ msgstr "في استراحة"
 msgid "On leave"
 msgstr "في إجازة"
 
-#: app/components/staff/labor-core-rules.tsx:342
+#: app/components/staff/labor-core-rules.tsx:357
 msgid "On shifts longer than"
 msgstr "في الورديات الأطول من"
 
@@ -11754,7 +11788,7 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One date"
 msgstr "تاريخ واحد"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:862
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
@@ -11820,7 +11854,7 @@ msgstr "الطلبات عبر الإنترنت، ولا يبيع مكان الع
 msgid "Only a form task has a link."
 msgstr "مهمة النموذج فقط لها رابط."
 
-#: app/components/staff/labor-policy-editor.tsx:814
+#: app/components/staff/labor-policy-editor.tsx:832
 msgid "Only applies where overtime rules are set below. Exempt people are never counted."
 msgstr "ينطبق فقط حيث تُحدَّد قواعد العمل الإضافي أدناه. لا يُحتسب الأشخاص المستثنون أبدًا."
 
@@ -11881,7 +11915,7 @@ msgstr "يمكن للمالك فقط مشاركة لوحة التحكم هذه."
 msgid "Only what you type here and your business name are used. Nothing is saved until you save."
 msgstr "يُستخدم فقط ما تكتبه هنا واسم نشاطك التجاري. لا يُحفظ شيء حتى تحفظ."
 
-#: app/components/staff/labor-core-rules.tsx:319
+#: app/components/staff/labor-core-rules.tsx:333
 msgid "Only where nobody pressed Start break. Each deduction is marked on the time card."
 msgstr "فقط حيث لم يضغط أحد على بدء الاستراحة. يُوضَّح كل خصم على بطاقة الدوام."
 
@@ -11906,7 +11940,7 @@ msgstr "فتح"
 msgid "Open {day} as a day"
 msgstr "فتح {day} كيوم"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:268
+#: ../../packages/ai/src/components/ai-chat.tsx:285
 msgid "Open {routeTitle}?"
 msgstr "هل تريد فتح {routeTitle}؟"
 
@@ -12106,7 +12140,7 @@ msgstr "فُتِح {0}"
 msgid "Opened {openedAt}"
 msgstr "فُتح في {openedAt}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:244
+#: ../../packages/ai/src/components/ai-chat.tsx:261
 msgid "Opened {routeTitle}"
 msgstr "تم فتح {routeTitle}"
 
@@ -12186,7 +12220,7 @@ msgstr "تفاصيل المنظمة وإعداداتها."
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
-#: app/routes/organizations+/create.tsx:656
+#: app/routes/organizations+/create.tsx:657
 msgid "Organization logo preview"
 msgstr "معاينة شعار المنظمة"
 
@@ -12198,7 +12232,7 @@ msgstr "إعدادات المنظمة"
 msgid "Organization site"
 msgstr "موقع المؤسسة"
 
-#: app/routes/organizations+/create.tsx:1041
+#: app/routes/organizations+/create.tsx:1042
 msgid "Organization size"
 msgstr "حجم المنظمة"
 
@@ -12301,7 +12335,7 @@ msgstr "الساعات الإضافية والأجر تقديرات مبنية �
 msgid "Overtime and pay are estimates from your labor rules and each card's rate. They are not payroll."
 msgstr "الساعات الإضافية والأجر تقديرات مبنية على قواعد العمل وأجر كل بطاقة. وليست رواتب فعلية."
 
-#: app/components/staff/labor-policy-editor.tsx:869
+#: app/components/staff/labor-policy-editor.tsx:887
 msgid "Overtime and pay week"
 msgstr "العمل الإضافي وأسبوع الأجور"
 
@@ -12330,7 +12364,7 @@ msgstr "انتقلت الساعات الإضافية بعد الموافقة ع�
 msgid "Overtime moved after this card was approved. Reopen it to review the new figures before you pay."
 msgstr "انتقلت الساعات الإضافية بعد الموافقة على هذه البطاقة. أعد فتحها لمراجعة الأرقام الجديدة قبل الدفع."
 
-#: app/components/staff/labor-policy-editor.tsx:871
+#: app/components/staff/labor-policy-editor.tsx:889
 msgid "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 msgstr "قواعد العمل الإضافي المستخدمة لتقدير الساعات والتكلفة. اتركها معطّلة إن لم تستخدمها."
 
@@ -12375,7 +12409,7 @@ msgstr "الصفحات"
 msgid "Paid <0>{paid}</0>"
 msgstr "مدفوع <0>{paid}</0>"
 
-#: app/components/staff/labor-policy-editor.tsx:1174
+#: app/components/staff/labor-policy-editor.tsx:1192
 msgid "Paid break"
 msgstr "استراحة مدفوعة"
 
@@ -12574,10 +12608,10 @@ msgstr "تم حفظ فترة الرواتب."
 msgid "Pay period settings"
 msgstr "إعدادات فترة الرواتب"
 
-#: app/components/staff/labor-core-rules.tsx:376
-#: app/components/staff/labor-core-rules.tsx:380
-#: app/components/staff/labor-policy-editor.tsx:1290
-#: app/components/staff/labor-policy-editor.tsx:1315
+#: app/components/staff/labor-core-rules.tsx:392
+#: app/components/staff/labor-core-rules.tsx:396
+#: app/components/staff/labor-policy-editor.tsx:1308
+#: app/components/staff/labor-policy-editor.tsx:1333
 msgid "Pay rate"
 msgstr "معدل الأجر"
 
@@ -12586,7 +12620,7 @@ msgstr "معدل الأجر"
 msgid "Pay type"
 msgstr "نوع الأجر"
 
-#: app/components/staff/labor-policy-editor.tsx:1391
+#: app/components/staff/labor-policy-editor.tsx:1409
 msgid "Pay week"
 msgstr "أسبوع الأجور"
 
@@ -12618,7 +12652,7 @@ msgstr "ملخص الرواتب (CSV)"
 msgid "Pending"
 msgstr "قيد الانتظار"
 
-#: app/components/organization-invitations.tsx:336
+#: app/components/organization-invitations.tsx:343
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
@@ -12653,7 +12687,7 @@ msgstr "الأشخاص الذين تقدّموا عبر موقعك. انقلهم
 msgid "People who clocked in late for a scheduled shift, and how often."
 msgstr "من تأخروا في تسجيل الحضور لمناوبة مجدولة، وعدد مرات ذلك."
 
-#: app/components/staff/labor-policy-editor.tsx:1421
+#: app/components/staff/labor-policy-editor.tsx:1439
 msgid "People who work at more than one workplace"
 msgstr "من يعملون في أكثر من مكان عمل"
 
@@ -12673,8 +12707,8 @@ msgstr "يجد الأشخاص الذين تشاركها معهم لوحة الت
 msgid "Per hour"
 msgstr "في الساعة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:431
-#: app/routes/organizations+/create.tsx:1410
+#: app/components/settings/cards/organization/billing-card.tsx:464
+#: app/routes/organizations+/create.tsx:1411
 msgid "per month"
 msgstr "شهرياً"
 
@@ -12747,7 +12781,7 @@ msgstr "البيانات الشخصية"
 msgid "Personal details saved."
 msgstr "تم حفظ البيانات الشخصية."
 
-#: app/components/organization-invitations.tsx:170
+#: app/components/organization-invitations.tsx:177
 msgid "Personal invite link"
 msgstr "رابط الدعوة الشخصي"
 
@@ -12861,7 +12895,7 @@ msgstr "اختر كتلة لإدراجها في صفحتك."
 msgid "Pick a conversation"
 msgstr "اختر محادثة"
 
-#: app/components/staff/labor-policy-editor.tsx:1256
+#: app/components/staff/labor-policy-editor.tsx:1274
 #: app/utils/staffing/onboarding-view.ts:367
 #: app/utils/staffing/onboarding-view.ts:410
 #: app/utils/staffing/onboarding-view.ts:413
@@ -12986,7 +13020,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
-#: app/routes/organizations+/create.tsx:1337
+#: app/routes/organizations+/create.tsx:1338
 msgid "Plan not available"
 msgstr "الخطة غير متاحة"
 
@@ -13102,15 +13136,15 @@ msgstr "تُشغَّل عند إيقاف التحويلات أو خارج ساع
 msgid "Played while a transfer is ringing."
 msgstr "تُشغَّل أثناء رنين التحويل."
 
-#: app/routes/organizations+/create.tsx:1340
+#: app/routes/organizations+/create.tsx:1341
 msgid "Please check configuration"
 msgstr "يرجى التحقق من التكوين"
 
-#: app/components/settings/cards/organization/billing-card.tsx:363
+#: app/components/settings/cards/organization/billing-card.tsx:396
 msgid "Please check your Stripe configuration"
 msgstr "يرجى التحقق من تكوين Stripe"
 
-#: app/components/settings/cards/organization/billing-card.tsx:264
+#: app/components/settings/cards/organization/billing-card.tsx:294
 msgid "Please check your Stripe configuration or try again later"
 msgstr "يرجى التحقق من تكوين Stripe أو المحاولة مرة أخرى لاحقاً"
 
@@ -13326,12 +13360,12 @@ msgstr "الأسبوع السابق"
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
-#: app/components/settings/cards/organization/billing-card.tsx:402
-#: app/routes/organizations+/create.tsx:1374
+#: app/components/settings/cards/organization/billing-card.tsx:435
+#: app/routes/organizations+/create.tsx:1375
 msgid "Price not configured"
 msgstr "السعر غير مكوّن"
 
-#: app/components/settings/cards/organization/billing-card.tsx:360
+#: app/components/settings/cards/organization/billing-card.tsx:393
 msgid "Pricing not available"
 msgstr "الأسعار غير متاحة"
 
@@ -13352,7 +13386,7 @@ msgstr "طباعة"
 msgid "Print this view"
 msgstr "طباعة هذا العرض"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:446
+#: ../../packages/ai/src/components/ai-chat.tsx:463
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
@@ -13360,7 +13394,7 @@ msgstr "تحديد أولوية هذه المهام"
 msgid "Priority"
 msgstr "الأولوية"
 
-#: app/routes/organizations+/create.tsx:1443
+#: app/routes/organizations+/create.tsx:1444
 msgid "Priority support"
 msgstr "دعم الأولوية"
 
@@ -13577,7 +13611,7 @@ msgstr "السؤال {number}"
 msgid "Questions"
 msgstr "الأسئلة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:308
+#: app/components/settings/cards/organization/billing-card.tsx:335
 msgid "Questions about billing?"
 msgstr "أسئلة حول الفوترة؟"
 
@@ -13638,7 +13672,7 @@ msgstr "قراءة الوثائق"
 msgid "Read organization details, verified domain, and storage status."
 msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق وحالة التخزين."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:141
+#: ../../packages/ai/src/components/ai-chat.tsx:158
 msgid "Read page details"
 msgstr "تمت قراءة تفاصيل الصفحة"
 
@@ -13658,7 +13692,7 @@ msgstr "قراءة فقط"
 msgid "Read-only access to organization notes"
 msgstr "وصول للقراءة فقط إلى ملاحظات المؤسسة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:140
+#: ../../packages/ai/src/components/ai-chat.tsx:157
 msgid "Reading page details"
 msgstr "قراءة تفاصيل الصفحة"
 
@@ -13875,7 +13909,7 @@ msgid "Relaxed"
 msgstr "مرن"
 
 #: app/components/phone-agent/settings-page.tsx:369
-#: app/components/staff/labor-policy-editor.tsx:1076
+#: app/components/staff/labor-policy-editor.tsx:1094
 msgid "Reload"
 msgstr "إعادة التحميل"
 
@@ -13899,19 +13933,19 @@ msgstr "تذكرني"
 msgid "Remember your password?"
 msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 
-#: app/components/staff/labor-policy-editor.tsx:671
+#: app/components/staff/labor-policy-editor.tsx:689
 msgid "Remind about a missed clock-out"
 msgstr "التذكير بانصراف غير مسجّل"
 
-#: app/components/staff/labor-policy-editor.tsx:688
+#: app/components/staff/labor-policy-editor.tsx:706
 msgid "Remind after the shift ends by"
 msgstr "التذكير بعد انتهاء الوردية بـ"
 
-#: app/components/staff/labor-policy-editor.tsx:793
+#: app/components/staff/labor-policy-editor.tsx:811
 msgid "Remind before the shift starts by"
 msgstr "التذكير قبل بدء الوردية بمقدار"
 
-#: app/components/staff/labor-policy-editor.tsx:779
+#: app/components/staff/labor-policy-editor.tsx:797
 msgid "Remind people before their shift"
 msgstr "تذكير الأشخاص قبل ورديتهم"
 
@@ -13929,7 +13963,7 @@ msgstr "الإزالة غير منشورة"
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
 #: app/components/staff/kiosk-manager.tsx:456
 #: app/components/staff/kiosk-manager.tsx:980
-#: app/components/staff/labor-policy-editor.tsx:1145
+#: app/components/staff/labor-policy-editor.tsx:1163
 #: app/components/staff/labor/labor-sales.tsx:201
 #: app/components/staff/onboarding/certificates-tab.tsx:283
 #: app/components/staff/onboarding/remove-dialog.tsx:60
@@ -13942,7 +13976,7 @@ msgstr "الإزالة غير منشورة"
 msgid "Remove"
 msgstr "إزالة"
 
-#: app/components/staff/labor-policy-editor.tsx:1369
+#: app/components/staff/labor-policy-editor.tsx:1387
 msgid "Remove {date}"
 msgstr "إزالة {date}"
 
@@ -14025,7 +14059,7 @@ msgstr "إزالة من مكان العمل"
 msgid "Remove image"
 msgstr "إزالة الصورة"
 
-#: app/routes/organizations+/create.tsx:1285
+#: app/routes/organizations+/create.tsx:1286
 msgid "Remove invite"
 msgstr "إزالة الدعوة"
 
@@ -14122,7 +14156,7 @@ msgstr "تمت الإزالة"
 msgid "Removed from {name}."
 msgstr "تمت الإزالة من {name}."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:157
+#: ../../packages/ai/src/components/ai-chat.tsx:174
 msgid "Removed section"
 msgstr "تمت إزالة القسم"
 
@@ -14130,7 +14164,7 @@ msgstr "تمت إزالة القسم"
 msgid "Removed tablets ({removedCount})"
 msgstr "الأجهزة المُزالة ({removedCount})"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:156
+#: ../../packages/ai/src/components/ai-chat.tsx:173
 msgid "Removing section"
 msgstr "إزالة القسم"
 
@@ -14298,7 +14332,7 @@ msgid "required"
 msgstr "مطلوب"
 
 #: app/components/hiring/screener-editor.tsx:220
-#: app/components/staff/labor-policy-editor.tsx:1179
+#: app/components/staff/labor-policy-editor.tsx:1197
 #: app/components/website/create-form-dialog.tsx:235
 #: app/components/website/form-builder-sidebar.tsx:604
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:395
@@ -14318,7 +14352,7 @@ msgid "Resend to people not yet reached"
 msgstr "إعادة الإرسال إلى من لم تصلهم الرسالة"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
-#: app/components/organization-invitations.tsx:240
+#: app/components/organization-invitations.tsx:247
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr "إعادة تعيين"
@@ -14352,7 +14386,7 @@ msgstr "إعادة تعيين رمز PIN"
 msgid "Reset this PIN?"
 msgstr "إعادة تعيين رمز PIN هذا؟"
 
-#: app/routes/organizations+/create.tsx:782
+#: app/routes/organizations+/create.tsx:783
 msgid "Reset to auto-generated"
 msgstr "إعادة تعيين إلى التلقائي"
 
@@ -14408,7 +14442,7 @@ msgstr "ستصل ردود نماذج موقعك إلى هنا."
 msgid "Rest (paid)"
 msgstr "راحة (مدفوعة)"
 
-#: app/components/staff/labor-policy-editor.tsx:1133
+#: app/components/staff/labor-policy-editor.tsx:1151
 msgid "Rest break"
 msgstr "استراحة قصيرة"
 
@@ -14546,7 +14580,7 @@ msgstr "تدوير لليسار"
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
-#: app/components/staff/labor-policy-editor.tsx:1471
+#: app/components/staff/labor-policy-editor.tsx:1489
 msgid "Round hours"
 msgstr "تقريب الساعات"
 
@@ -14555,15 +14589,15 @@ msgstr "تقريب الساعات"
 msgid "Rounded"
 msgstr "مستدير"
 
-#: app/components/staff/labor-policy-editor.tsx:893
+#: app/components/staff/labor-policy-editor.tsx:911
 msgid "Rounding"
 msgstr "التقريب"
 
-#: app/components/staff/labor-policy-editor.tsx:1491
+#: app/components/staff/labor-policy-editor.tsx:1509
 msgid "Rounding step"
 msgstr "خطوة التقريب"
 
-#: app/components/staff/labor-policy-editor.tsx:895
+#: app/components/staff/labor-policy-editor.tsx:913
 msgid "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 msgstr "يقرّب وقت الحضور والانصراف عند جمع الساعات. تُحفظ أوقات البصمة الدقيقة دائمًا."
 
@@ -14579,7 +14613,7 @@ msgstr "منطق التوجيه:"
 msgid "Row {rowNumber}"
 msgstr "الصف {rowNumber}"
 
-#: app/components/staff/labor-policy-editor.tsx:226
+#: app/components/staff/labor-policy-editor.tsx:227
 msgid "Rules for"
 msgstr "القواعد الخاصة بـ"
 
@@ -14775,8 +14809,8 @@ msgstr "المملكة العربية السعودية (KSA)"
 msgid "Save"
 msgstr "حفظ"
 
-#: app/components/settings/cards/organization/billing-card.tsx:223
-#: app/routes/organizations+/create.tsx:921
+#: app/components/settings/cards/organization/billing-card.tsx:245
+#: app/routes/organizations+/create.tsx:922
 msgid "Save 20%"
 msgstr "وفّر 20٪"
 
@@ -14800,11 +14834,11 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
-#: app/components/settings/cards/organization/general-settings-card.tsx:113
-#: app/components/settings/cards/organization/site-analytics-card.tsx:140
+#: app/components/settings/cards/organization/general-settings-card.tsx:114
+#: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/components/staff/details-tab.tsx:231
-#: app/components/staff/labor-policy-editor.tsx:1088
+#: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/timesheets/card-sheet.tsx:310
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
@@ -14940,7 +14974,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
 #: app/components/staff/kiosk-manager.tsx:910
-#: app/components/staff/labor-policy-editor.tsx:1088
+#: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
 #: app/components/staff/onboarding/certificate-form.tsx:145
@@ -15026,10 +15060,6 @@ msgstr "الجدول وبطاقات الدوام"
 msgid "Schedule & time clock"
 msgstr "الجدول وساعة الدوام"
 
-#: app/components/settings/cards/organization/billing-card.tsx:295
-msgid "Schedule a call"
-msgstr "حدد موعد مكالمة"
-
 #: app/components/hiring/candidate-sheet.tsx:434
 #: app/components/hiring/interview-dialog.tsx:156
 msgid "Schedule an interview"
@@ -15039,7 +15069,7 @@ msgstr "جدولة مقابلة"
 msgid "Schedule another"
 msgstr "جدولة أخرى"
 
-#: app/components/staff/labor-policy-editor.tsx:539
+#: app/components/staff/labor-policy-editor.tsx:557
 msgid "Schedule checks, alerts, breaks, overtime details, rounding"
 msgstr "فحوصات الجدول، التنبيهات، الاستراحات، تفاصيل الساعات الإضافية، التقريب"
 
@@ -15047,7 +15077,7 @@ msgstr "فحوصات الجدول، التنبيهات، الاستراحات، 
 msgid "Schedule controls"
 msgstr "عناصر تحكم الجدول"
 
-#: app/components/staff/labor-policy-editor.tsx:604
+#: app/components/staff/labor-policy-editor.tsx:622
 msgid "Schedule enforcement"
 msgstr "الالتزام بالجدول"
 
@@ -15373,7 +15403,7 @@ msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 msgid "Select a submission to read the details and start a reply."
 msgstr "اختر ردًا لقراءة تفاصيله وبدء الإجابة عليه."
 
-#: app/routes/organizations+/create.tsx:877
+#: app/routes/organizations+/create.tsx:878
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
@@ -15449,7 +15479,7 @@ msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمت
 
 #: app/components/media-library/media-library-picker.tsx:320
 #: app/components/note/share-note-button.tsx:300
-#: app/components/phone-agent/voice-picker.tsx:510
+#: app/components/phone-agent/voice-picker.tsx:515
 msgid "Selected"
 msgstr "محدد"
 
@@ -15465,7 +15495,7 @@ msgstr "الأعضاء المحددون"
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ المنصة بنسبة {SHOP_PLATFORM_FEE_PERCENT}% ويتم دفع الباقي لك."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:988
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "إرسال"
@@ -15503,8 +15533,8 @@ msgstr "إرسال بريد إلكتروني"
 msgid "Send invitation"
 msgstr "إرسال الدعوة"
 
-#: app/components/organization-invitations.tsx:321
-#: app/routes/organizations+/create.tsx:1192
+#: app/components/organization-invitations.tsx:328
+#: app/routes/organizations+/create.tsx:1193
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
 
@@ -15579,7 +15609,7 @@ msgstr "أُرسل {0}"
 msgid "sent again"
 msgstr "أُعيد إرسالها"
 
-#: app/components/staff/labor-policy-editor.tsx:781
+#: app/components/staff/labor-policy-editor.tsx:799
 msgid "Sent by email to people who have an address on file."
 msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم عنوان بريد محفوظ."
 
@@ -15632,7 +15662,7 @@ msgstr "حدد يومًا واحدًا على الأقل."
 msgid "Set clock-out"
 msgstr "تحديد الانصراف"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:447
+#: ../../packages/ai/src/components/ai-chat.tsx:464
 msgid "Set deadlines"
 msgstr "تعيين المواعيد النهائية"
 
@@ -15742,7 +15772,7 @@ msgstr "مشاركة قواعد المطعم"
 msgid "Share this job"
 msgstr "مشاركة هذه الوظيفة"
 
-#: app/components/organization-invitations.tsx:173
+#: app/components/organization-invitations.tsx:180
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
 
@@ -15810,7 +15840,7 @@ msgstr "Shift مع السهم لأعلى أو لليمين يجعل الوردي
 msgid "Shifts"
 msgstr "الورديات"
 
-#: app/components/staff/labor-policy-editor.tsx:1411
+#: app/components/staff/labor-policy-editor.tsx:1429
 msgid "Shifts that run past midnight belong to the day they began."
 msgstr "الورديات التي تتجاوز منتصف الليل تُنسب إلى اليوم الذي بدأت فيه."
 
@@ -15909,7 +15939,7 @@ msgstr "إظهار الردود ({replyCount})"
 msgid "Show requests"
 msgstr "عرض الطلبات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:458
+#: ../../packages/ai/src/components/ai-chat.tsx:475
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
@@ -16016,9 +16046,9 @@ msgstr "منذ {startedOn}"
 msgid "Single choice"
 msgstr "اختيار واحد"
 
-#: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
-msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
+#: app/components/settings/cards/organization/billing-card.tsx:312
+msgid "Single sign-on, custom SLA, private support channel, and more."
+msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
 #: app/routes/_app+/$orgSlug_+/media.tsx:1226
@@ -16038,7 +16068,7 @@ msgstr "الحجم"
 msgid "Size:"
 msgstr "الحجم:"
 
-#: app/routes/organizations+/create.tsx:996
+#: app/routes/organizations+/create.tsx:997
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
@@ -16050,8 +16080,8 @@ msgstr "تخطي هذه المهمة"
 msgid "Skipped"
 msgstr "تم تخطيها"
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:91
-#: app/routes/organizations+/create.tsx:736
+#: app/components/settings/cards/organization/general-settings-card.tsx:92
+#: app/routes/organizations+/create.tsx:737
 msgid "Slug"
 msgstr "الرابط الثابت"
 
@@ -16169,7 +16199,7 @@ msgstr "حدث خطأ ما. حاول مرة أخرى."
 msgid "Something went wrong. Reload the page and try again."
 msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أخرى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:205
+#: ../../packages/ai/src/components/ai-chat.tsx:222
 #: app/components/hiring/job-editor.tsx:516
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
@@ -16461,7 +16491,11 @@ msgstr "الإحصائيات"
 msgid "Status"
 msgstr "الحالة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:243
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "البقاء"
+
+#: ../../packages/ai/src/components/ai-chat.tsx:260
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
 
@@ -16486,7 +16520,7 @@ msgstr "الخطوات"
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:988
 msgid "Stop"
 msgstr "إيقاف"
 
@@ -16506,7 +16540,7 @@ msgstr "إيقاف المعاينة"
 msgid "Stopped replying"
 msgstr "توقف عن الرد"
 
-#: app/components/staff/labor-policy-editor.tsx:633
+#: app/components/staff/labor-policy-editor.tsx:651
 msgid "Stops people from starting long before their shift."
 msgstr "يمنع الموظفين من البدء قبل ورديتهم بوقت طويل."
 
@@ -16569,7 +16603,7 @@ msgstr "إرسال"
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
-#: app/components/settings/cards/organization/billing-card.tsx:189
+#: app/components/settings/cards/organization/billing-card.tsx:211
 msgid "Subscribe"
 msgstr "اشتراك"
 
@@ -16577,7 +16611,7 @@ msgstr "اشتراك"
 msgid "Subscription Cancelled"
 msgstr "تم إلغاء الاشتراك"
 
-#: app/components/settings/cards/organization/billing-card.tsx:162
+#: app/components/settings/cards/organization/billing-card.tsx:182
 msgid "Subscription inactive"
 msgstr "الاشتراك غير نشط"
 
@@ -16595,11 +16629,11 @@ msgstr "نجاح"
 msgid "Success message"
 msgstr "رسالة النجاح"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:407
+#: ../../packages/ai/src/components/ai-chat.tsx:424
 msgid "Suggest improvements"
 msgstr "اقتراح تحسينات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:405
+#: ../../packages/ai/src/components/ai-chat.tsx:422
 msgid "Summarize this note"
 msgstr "تلخيص هذه الملاحظة"
 
@@ -16691,7 +16725,7 @@ msgstr "ساعات الدوام على الأجهزة اللوحية متوقف�
 msgid "Tablets"
 msgstr "الأجهزة اللوحية"
 
-#: app/components/staff/labor-core-rules.tsx:264
+#: app/components/staff/labor-core-rules.tsx:278
 msgid "Tablets accept clock-ins"
 msgstr "الأجهزة اللوحية تقبل تسجيل الحضور"
 
@@ -16720,7 +16754,7 @@ msgstr "تلقي رسالة"
 msgid "Take a voicemail"
 msgstr "تلقي بريد صوتي"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:413
+#: ../../packages/ai/src/components/ai-chat.tsx:430
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
 
@@ -16829,19 +16863,19 @@ msgstr "الزميل"
 msgid "Tell callers which key does what."
 msgstr "أخبر المتصلين بوظيفة كل مفتاح."
 
-#: app/components/staff/labor-policy-editor.tsx:752
+#: app/components/staff/labor-policy-editor.tsx:770
 msgid "Tell managers when someone has not clocked in"
 msgstr "إبلاغ المديرين عندما لا يسجّل أحدهم حضوره"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:467
+#: ../../packages/ai/src/components/ai-chat.tsx:484
 msgid "Tell me more"
 msgstr "أخبرني المزيد"
 
-#: app/routes/organizations+/create.tsx:803
+#: app/routes/organizations+/create.tsx:804
 msgid "Tell us about your organization..."
 msgstr "أخبرنا عن منظمتك..."
 
-#: app/routes/organizations+/create.tsx:1020
+#: app/routes/organizations+/create.tsx:1021
 msgid "Tell us more about your organization"
 msgstr "أخبرنا المزيد عن منظمتك"
 
@@ -17091,7 +17125,7 @@ msgstr "لم يعمل هذا الرمز. ربما انتهت صلاحيته. أ�
 msgid "That date does not start a pay period."
 msgstr "هذا التاريخ ليس بداية فترة رواتب."
 
-#: app/components/staff/labor-policy-editor.tsx:1260
+#: app/components/staff/labor-policy-editor.tsx:1278
 msgid "That date is already listed."
 msgstr "هذا التاريخ مضاف بالفعل."
 
@@ -17310,6 +17344,14 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
 
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "تعذّر على المساعد الرد. تحقّق من اتصالك وحاول مرة أخرى."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
+
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
 msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
@@ -17374,7 +17416,7 @@ msgstr "تعذّرت قراءة التاريخ."
 msgid "The decline message could not be sent"
 msgstr "تعذّر إرسال رسالة الرفض"
 
-#: app/components/staff/labor-policy-editor.tsx:322
+#: app/components/staff/labor-policy-editor.tsx:334
 msgid "The deducted break must be shorter than the shift it applies after."
 msgstr "يجب أن تكون الاستراحة المخصومة أقصر من الوردية التي تنطبق بعدها."
 
@@ -17573,7 +17615,7 @@ msgstr "الأشخاص الذين يعملون هنا: قائمة الموظفي
 msgid "The percentages need to add up to 100."
 msgstr "يجب أن يكون مجموع النسب 100."
 
-#: app/components/staff/labor-policy-editor.tsx:325
+#: app/components/staff/labor-policy-editor.tsx:337
 msgid "The reminder must come before the automatic clock-out."
 msgstr "يجب أن يأتي التذكير قبل تسجيل الانصراف التلقائي."
 
@@ -17617,7 +17659,7 @@ msgstr "تعذّر على الخدمة قبول هذا الصف."
 msgid "The shift as a bar, with any deducted break marked"
 msgstr "الوردية على شكل شريط، مع تمييز أي استراحة مخصومة"
 
-#: app/components/phone-agent/voice-picker.tsx:629
+#: app/components/phone-agent/voice-picker.tsx:634
 msgid "The standard voice for your agent's language."
 msgstr "الصوت القياسي للغة مساعدك الذكي."
 
@@ -17758,7 +17800,7 @@ msgstr "لا يوجد جديد للنشر هذا الأسبوع."
 msgid "There was an issue with your login attempt. Please try again."
 msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى."
 
-#: app/components/staff/labor-policy-editor.tsx:914
+#: app/components/staff/labor-policy-editor.tsx:932
 msgid "These are settings, not legal advice. Overtime, break and cost figures are estimates to help you plan, and are not payroll. Check the rules that apply to your business before relying on them."
 msgstr "هذه إعدادات وليست استشارة قانونية. أرقام العمل الإضافي والاستراحات والتكلفة تقديرات لمساعدتك في التخطيط وليست كشف رواتب. تحقق من القواعد المطبّقة على نشاطك قبل الاعتماد عليها."
 
@@ -18014,7 +18056,7 @@ msgstr "هذا الجهاز"
 msgid "This draft shift is deleted straight away."
 msgstr "تُحذف مسودة الوردية هذه فورًا."
 
-#: app/routes/organizations+/create.tsx:1023
+#: app/routes/organizations+/create.tsx:1024
 msgid "This helps us customize your experience and provide better insights."
 msgstr "يساعدنا هذا في تخصيص تجربتك وتقديم رؤى أفضل."
 
@@ -18166,8 +18208,8 @@ msgstr "هذا الشخص غير مهيأ لهذا المنصب هنا. ما ز�
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "هذا الرقم السري متوقف مؤقتًا لبضع دقائق. اسأل مديرًا."
 
-#: app/components/phone-agent/voice-picker.tsx:489
-#: app/components/phone-agent/voice-picker.tsx:638
+#: app/components/phone-agent/voice-picker.tsx:494
+#: app/components/phone-agent/voice-picker.tsx:643
 msgid "This preview couldn't play."
 msgstr "تعذّر تشغيل هذه المعاينة."
 
@@ -18272,7 +18314,7 @@ msgstr "هذا الجهاز اللوحي غير جاهز بعد. اسأل مدي
 msgid "This tablet was disconnected"
 msgstr "تم فصل هذا الجهاز اللوحي"
 
-#: app/components/staff/labor-policy-editor.tsx:331
+#: app/components/staff/labor-policy-editor.tsx:343
 msgid "This value is outside the allowed range."
 msgstr "هذه القيمة خارج النطاق المسموح."
 
@@ -18320,7 +18362,7 @@ msgstr "سيؤدي هذا إلى:"
 msgid "This workplace already has several unused pairing codes. Cancel one or wait for them to expire."
 msgstr "لدى مكان العمل هذا عدة رموز اقتران غير مستخدمة. ألغِ أحدها أو انتظر انتهاء صلاحيتها."
 
-#: app/components/staff/labor-policy-editor.tsx:959
+#: app/components/staff/labor-policy-editor.tsx:977
 msgid "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 msgstr "يتبع مكان العمل هذا القواعد الافتراضية. الحفظ يمنحه نسخته الخاصة، لذا لن تصله التغييرات اللاحقة على القواعد الافتراضية."
 
@@ -18349,7 +18391,7 @@ msgstr "الخميس"
 msgid "Tight"
 msgstr "متقارب"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:128
+#: app/components/settings/cards/organization/site-analytics-card.tsx:126
 msgid "TikTok Pixel ID"
 msgstr "معرّف بكسل TikTok"
 
@@ -18357,7 +18399,7 @@ msgstr "معرّف بكسل TikTok"
 msgid "Time"
 msgstr "الوقت"
 
-#: app/components/staff/labor-core-rules.tsx:369
+#: app/components/staff/labor-core-rules.tsx:385
 msgid "Time and a half is 1.5. Hours past the weekly limit are paid at this rate. Estimates, not payroll."
 msgstr "الأجر ونصف يعني 1.5. تُدفع الساعات التي تتجاوز الحد الأسبوعي بهذا المعدل. تقديرات وليست كشف رواتب."
 
@@ -18472,7 +18514,7 @@ msgstr "تم حفظ المنطقة الزمنية."
 msgid "Times are in the workplace's time zone, {timeZone}."
 msgstr "الأوقات بالمنطقة الزمنية لمكان العمل، {timeZone}."
 
-#: app/components/staff/labor-core-rules.tsx:377
+#: app/components/staff/labor-core-rules.tsx:393
 msgid "times the normal rate"
 msgstr "أضعاف المعدل العادي"
 
@@ -18480,8 +18522,8 @@ msgstr "أضعاف المعدل العادي"
 msgid "Timesheet view"
 msgstr "عرض سجلات الدوام"
 
-#: app/components/staff/labor-policy-editor.tsx:563
-#: app/components/staff/labor-policy-editor.tsx:568
+#: app/components/staff/labor-policy-editor.tsx:581
+#: app/components/staff/labor-policy-editor.tsx:586
 #: app/components/staff/timesheets/timesheets-page.tsx:583
 #: app/components/workspace-breadcrumb.tsx:30
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:45
@@ -18658,7 +18700,7 @@ msgstr "إجمالي الملاحظات"
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
-#: app/components/staff/labor-core-rules.tsx:265
+#: app/components/staff/labor-core-rules.tsx:279
 msgid "Track time at this workplace"
 msgstr "تتبّع الوقت في مكان العمل هذا"
 
@@ -18782,7 +18824,7 @@ msgstr "الاتجاه"
 msgid "Trending up by {trend}% this period"
 msgstr "ارتفع بنسبة {trend}٪ في هذه الفترة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:160
+#: app/components/settings/cards/organization/billing-card.tsx:180
 msgid "Trial period active"
 msgstr "فترة تجريبية نشطة"
 
@@ -18856,6 +18898,7 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -18863,9 +18906,9 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
-#: app/components/phone-agent/voice-picker.tsx:451
+#: app/components/phone-agent/voice-picker.tsx:456
 #: app/components/staff/kiosk-manager.tsx:214
-#: app/components/staff/labor-policy-editor.tsx:243
+#: app/components/staff/labor-policy-editor.tsx:244
 #: app/components/staff/labor/labor-page.tsx:363
 #: app/components/staff/onboarding/certificates-tab.tsx:108
 #: app/components/staff/onboarding/onboarding-tab.tsx:126
@@ -18886,8 +18929,8 @@ msgstr "حاول مرة أخرى"
 msgid "Try again later, or ask your manager."
 msgstr "حاول لاحقًا أو اسأل مديرك."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:970
+#: ../../packages/ai/src/components/ai-chat.tsx:971
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 
@@ -18895,7 +18938,7 @@ msgstr "جرب إجابة أخرى"
 msgid "Try another name, email, or message."
 msgstr "جرّب اسمًا أو بريدًا إلكترونيًا أو رسالة أخرى."
 
-#: app/components/phone-agent/voice-picker.tsx:463
+#: app/components/phone-agent/voice-picker.tsx:468
 msgid "Try another search or clear the filters."
 msgstr "جرّب بحثًا آخر أو امسح عوامل التصفية."
 
@@ -18939,7 +18982,7 @@ msgstr "تشغيل صوت الوكيل"
 msgid "Turn on the agent"
 msgstr "شغّل الوكيل"
 
-#: app/components/staff/labor-core-rules.tsx:271
+#: app/components/staff/labor-core-rules.tsx:285
 msgid "Turn this off and tablets here will not accept punches."
 msgstr "عند إيقافه لن تقبل الأجهزة اللوحية هنا أي بصمات."
 
@@ -18963,7 +19006,7 @@ msgstr "مرتان في الشهر"
 msgid "Two"
 msgstr "اثنان"
 
-#: app/components/staff/labor-policy-editor.tsx:327
+#: app/components/staff/labor-policy-editor.tsx:339
 msgid "Two break rules start at the same point in the shift."
 msgstr "قاعدتا استراحة تبدآن عند النقطة نفسها من الوردية."
 
@@ -19024,7 +19067,7 @@ msgstr "تعذّر تحميل المكالمات. حاول مرة أخرى."
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
-#: app/components/settings/cards/organization/billing-card.tsx:261
+#: app/components/settings/cards/organization/billing-card.tsx:291
 msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
 
@@ -19273,7 +19316,7 @@ msgstr "تم التحديث منذ {timeAgo}"
 msgid "Updated {updated}"
 msgstr "تم التحديث {updated}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:153
+#: ../../packages/ai/src/components/ai-chat.tsx:170
 msgid "Updated section"
 msgstr "تم تحديث القسم"
 
@@ -19281,12 +19324,12 @@ msgstr "تم تحديث القسم"
 msgid "Updates as you edit"
 msgstr "يتحدّث أثناء التعديل"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:152
+#: ../../packages/ai/src/components/ai-chat.tsx:169
 msgid "Updating section"
 msgstr "تحديث القسم"
 
 #: app/components/app-sidebar.tsx:98
-#: app/components/settings/cards/organization/billing-card.tsx:473
+#: app/components/settings/cards/organization/billing-card.tsx:506
 msgid "Upgrade"
 msgstr "ترقية"
 
@@ -19338,7 +19381,7 @@ msgstr "تحميل جديد"
 msgid "Upload photo"
 msgstr "تحميل صورة"
 
-#: app/routes/organizations+/create.tsx:697
+#: app/routes/organizations+/create.tsx:698
 msgid "Upload your logo"
 msgstr "تحميل شعارك"
 
@@ -19476,7 +19519,7 @@ msgstr "استخدم 3 أحرف على الأقل."
 msgid "Use authenticator app instead"
 msgstr "استخدم تطبيق المصادقة بدلاً من ذلك"
 
-#: app/components/phone-agent/voice-picker.tsx:657
+#: app/components/phone-agent/voice-picker.tsx:662
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:425
 msgid "Use default"
 msgstr "استخدام الافتراضي"
@@ -19513,7 +19556,7 @@ msgstr "استخدم هذه الخيارات إذا حدث خطأ ما. يسري
 msgid "Use this rule on calls"
 msgstr "تطبيق هذه القاعدة على المكالمات"
 
-#: app/components/phone-agent/voice-picker.tsx:513
+#: app/components/phone-agent/voice-picker.tsx:518
 msgid "Use this voice"
 msgstr "استخدام هذا الصوت"
 
@@ -19777,7 +19820,7 @@ msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم و
 msgid "Vivid"
 msgstr "زاهٍ"
 
-#: app/components/phone-agent/voice-picker.tsx:604
+#: app/components/phone-agent/voice-picker.tsx:609
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:43
 msgid "Voice"
 msgstr "الصوت"
@@ -19904,11 +19947,11 @@ msgstr "المطلوب: نعم. هذا مهم للوظيفة."
 msgid "Warm"
 msgstr "دافئ"
 
-#: app/components/staff/labor-policy-editor.tsx:812
+#: app/components/staff/labor-policy-editor.tsx:830
 msgid "Warn managers about overtime"
 msgstr "تنبيه المديرين بشأن العمل الإضافي"
 
-#: app/components/staff/labor-policy-editor.tsx:827
+#: app/components/staff/labor-policy-editor.tsx:845
 msgid "Warn when this close to the limit"
 msgstr "التنبيه عند الاقتراب من الحد بمقدار"
 
@@ -19944,7 +19987,7 @@ msgid "We could not confirm your access to the schedule. Reload the page."
 msgstr "لم نتمكن من تأكيد وصولك إلى الجدول. أعد تحميل الصفحة."
 
 #: app/components/staff/kiosk-manager.tsx:135
-#: app/components/staff/labor-policy-editor.tsx:202
+#: app/components/staff/labor-policy-editor.tsx:203
 #: app/components/staff/labor/labor-page.tsx:344
 #: app/components/staff/timeclock-today.tsx:108
 #: app/components/staff/timesheets/card-sheet.tsx:92
@@ -20025,7 +20068,7 @@ msgstr "تعذّر العثور على المنطقة الزمنية لمكان 
 msgid "We could not load availability. Try again."
 msgstr "تعذّر تحميل التوفر. حاول مرة أخرى."
 
-#: app/components/settings/cards/organization/billing-card.tsx:117
+#: app/components/settings/cards/organization/billing-card.tsx:137
 msgid "We could not load plan pricing right now. You can still manage an existing subscription from the customer portal."
 msgstr "تعذر تحميل أسعار الخطط حاليًا. لا يزال بإمكانك إدارة اشتراك حالي من بوابة العملاء."
 
@@ -20069,7 +20112,7 @@ msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخر�
 msgid "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
 msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لاحقًا. سلّمه لهم الآن ثم اضغط تم."
 
-#: app/components/staff/labor-policy-editor.tsx:1449
+#: app/components/staff/labor-policy-editor.tsx:1467
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
 
@@ -20154,12 +20197,12 @@ msgstr "أسبوع"
 msgid "Week"
 msgstr "الأسبوع"
 
-#: app/components/staff/labor-policy-editor.tsx:1395
+#: app/components/staff/labor-policy-editor.tsx:1413
 msgid "Week starts on"
 msgstr "يبدأ الأسبوع يوم"
 
-#: app/components/staff/labor-core-rules.tsx:360
-#: app/components/staff/labor-core-rules.tsx:361
+#: app/components/staff/labor-core-rules.tsx:376
+#: app/components/staff/labor-core-rules.tsx:377
 msgid "Weekly overtime"
 msgstr "العمل الإضافي الأسبوعي"
 
@@ -20209,7 +20252,7 @@ msgstr "ما يقرؤه المتقدمون"
 msgid "What applicants see, like \"Evening line cook\"."
 msgstr "ما يراه المتقدمون، مثل \"طاهٍ مسائي\"."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:406
+#: ../../packages/ai/src/components/ai-chat.tsx:423
 msgid "What are the key points?"
 msgstr "ما هي النقاط الرئيسية؟"
 
@@ -20217,7 +20260,7 @@ msgstr "ما هي النقاط الرئيسية؟"
 msgid "What callers hear before anything else, and when the assistant can't answer."
 msgstr "ما يسمعه المتصلون قبل أي شيء آخر، وعندما لا يستطيع المساعد الإجابة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:412
+#: ../../packages/ai/src/components/ai-chat.tsx:429
 msgid "What can you help me with?"
 msgstr "بماذا يمكنك مساعدتي؟"
 
@@ -20234,7 +20277,7 @@ msgstr "ماذا تريد أن تسأل؟"
 msgid "What does it pay?"
 msgstr "كم الأجر؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:469
+#: ../../packages/ai/src/components/ai-chat.tsx:486
 msgid "What else should I know?"
 msgstr "ماذا يجب أن أعرف أيضاً؟"
 
@@ -20286,7 +20329,7 @@ msgstr "وظيفة هذا الخيار"
 msgid "What to do when the agent mishears or can't help."
 msgstr "ما يجب فعله عندما يسيء الوكيل فهم المتصل أو لا يستطيع المساعدة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:459
+#: ../../packages/ai/src/components/ai-chat.tsx:476
 msgid "What tools can help?"
 msgstr "ما الأدوات التي يمكن أن تساعد؟"
 
@@ -20302,7 +20345,7 @@ msgstr "ماذا تريد أن تعرف؟"
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، والمبيعات التي تُدخلها، وكيف تُقسَّم الإكراميات."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:436
+#: ../../packages/ai/src/components/ai-chat.tsx:453
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
@@ -20326,7 +20369,7 @@ msgstr "عند التفعيل، سيتم توجيه الزوار الذين يط
 msgid "When off, people only see messages from after they joined."
 msgstr "عند الإيقاف، يرى الأشخاص الرسائل من بعد انضمامهم فقط."
 
-#: app/components/staff/labor-policy-editor.tsx:620
+#: app/components/staff/labor-policy-editor.tsx:638
 msgid "When off, people with no shift cannot clock in and need a manager."
 msgstr "عند الإيقاف لا يستطيع من ليست لديهم وردية تسجيل الحضور ويحتاجون إلى مدير."
 
@@ -20415,7 +20458,7 @@ msgstr "أين يذهب، وعمّن يسأل، أو تفاصيل الاتصال
 msgid "Whether online tips may be shared depends on where you operate. Delivery tips often belong to the driver, so they are left out unless you choose them."
 msgstr "يعتمد جواز مشاركة إكراميات الطلبات عبر الإنترنت على البلد الذي تعمل فيه. غالبًا ما تعود إكراميات التوصيل للسائق، لذا تُستبعد ما لم تختر ضمّها."
 
-#: app/components/staff/labor-policy-editor.tsx:849
+#: app/components/staff/labor-policy-editor.tsx:867
 msgid "Which breaks people take, and whether a missing one is flagged."
 msgstr "أي الاستراحات يأخذها الموظفون، وهل يُعلَّم غيابها."
 
@@ -20467,7 +20510,7 @@ msgstr "من يمكنه تولي هذه الوردية"
 msgid "Who else could take this shift"
 msgstr "من غيره يمكنه تولي هذه الوردية"
 
-#: app/components/staff/labor-policy-editor.tsx:742
+#: app/components/staff/labor-policy-editor.tsx:760
 msgid "Who gets told when the clock and the schedule disagree. Checked every few minutes while people are clocked in, and at least once an hour."
 msgstr "من يُبلَّغ عندما تختلف ساعة الدوام عن الجدول. يجري الفحص كل بضع دقائق أثناء وجود أشخاص على رأس العمل، ومرة واحدة على الأقل كل ساعة."
 
@@ -20475,7 +20518,7 @@ msgstr "من يُبلَّغ عندما تختلف ساعة الدوام عن ا�
 msgid "Who is on the clock, the tablets people punch in on, and the rules they follow."
 msgstr "من هم على الساعة، والأجهزة اللوحية التي يسجلون عليها، والقواعد التي يتبعونها."
 
-#: app/components/staff/labor-policy-editor.tsx:564
+#: app/components/staff/labor-policy-editor.tsx:582
 msgid "Who signs off on time cards."
 msgstr "من يعتمد بطاقات الدوام."
 
@@ -20571,7 +20614,7 @@ msgstr "التحقق من سير العمل"
 msgid "Working"
 msgstr "يعمل"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:163
+#: ../../packages/ai/src/components/ai-chat.tsx:180
 msgid "Working on it"
 msgstr "جارٍ العمل على ذلك"
 
@@ -20678,8 +20721,8 @@ msgstr "تم إدخال وقت خاطئ"
 msgid "year"
 msgstr "سنة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:221
-#: app/routes/organizations+/create.tsx:919
+#: app/components/settings/cards/organization/billing-card.tsx:243
+#: app/routes/organizations+/create.tsx:920
 msgid "Yearly"
 msgstr "سنوي"
 
@@ -20745,7 +20788,7 @@ msgstr "أنت مسجّل حضورك."
 msgid "You are clocked out."
 msgstr "أنت مسجّل انصرافك."
 
-#: app/components/settings/cards/organization/billing-card.tsx:102
+#: app/components/settings/cards/organization/billing-card.tsx:122
 msgid "You are covered during our beta phase. No billing required at this time."
 msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا توجد فوترة مطلوبة في الوقت الحالي."
 
@@ -20801,7 +20844,7 @@ msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العم
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 
-#: app/components/staff/labor-policy-editor.tsx:1044
+#: app/components/staff/labor-policy-editor.tsx:1062
 msgid "You can view these rules but not change them."
 msgstr "يمكنك عرض هذه القواعد دون تغييرها."
 
@@ -20817,7 +20860,7 @@ msgstr "يمكنك عرض مسار المكالمة هذا، لكن ليست ل�
 msgid "You cannot clock in or out on this tablet right now. Ask a manager."
 msgstr "لا يمكنك تسجيل الحضور أو الانصراف على هذا الجهاز الآن. اسأل مديرًا."
 
-#: app/components/staff/labor-policy-editor.tsx:281
+#: app/components/staff/labor-policy-editor.tsx:282
 msgid "You changed some rules and have not saved them. Switching now throws those changes away."
 msgstr "غيّرت بعض القواعد ولم تحفظها. التبديل الآن سيتجاهل هذه التغييرات."
 
@@ -20870,7 +20913,7 @@ msgstr "وصلت إلى الحد الأقصى من القوالب. أرشِف ق
 msgid "You have unsaved changes to the call flow. Leave without saving?"
 msgstr "لديك تغييرات غير محفوظة على مسار المكالمة. هل تريد المغادرة دون حفظ؟"
 
-#: app/components/staff/labor-policy-editor.tsx:1065
+#: app/components/staff/labor-policy-editor.tsx:1083
 msgid "You have unsaved changes."
 msgstr "لديك تغييرات غير محفوظة."
 
@@ -20985,7 +21028,7 @@ msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك
 msgid "Your dashboard changes could not be saved."
 msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 
-#: app/routes/organizations+/create.tsx:1078
+#: app/routes/organizations+/create.tsx:1079
 msgid "Your department"
 msgstr "قسمك"
 
@@ -21033,7 +21076,7 @@ msgstr "ورديّاتك القادمة"
 msgid "Your note: {text}"
 msgstr "ملاحظتك: {text}"
 
-#: app/components/settings/cards/organization/billing-card.tsx:130
+#: app/components/settings/cards/organization/billing-card.tsx:150
 msgid "Your organization's current plan and billing status"
 msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 
