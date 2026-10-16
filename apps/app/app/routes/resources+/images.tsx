@@ -198,30 +198,43 @@ async function fetchExternalImage(
 	})
 }
 
+/**
+ * Fetches the original image and returns the request that produced it, so a
+ * resize can repeat the same request. `upstream.url` is empty for a constructed
+ * response (the Workers dev S3 mock), and `upstream.headers` are response
+ * headers that lack the storage signature.
+ */
 async function fetchImageSource(
 	request: Request,
 	searchParams: URLSearchParams,
 	objectKey: string | null,
 	organizationId: string | null,
-) {
+): Promise<{
+	upstream: Response
+	source: { url: string; headers?: HeadersInit }
+}> {
 	if (objectKey) {
 		const { url: signedUrl, headers: signedHeaders } =
 			await getSignedGetRequestInfoAsync(objectKey, organizationId ?? undefined)
-		return fetch(signedUrl, { headers: signedHeaders })
+		return {
+			upstream: await fetch(signedUrl, { headers: signedHeaders }),
+			source: { url: signedUrl, headers: signedHeaders },
+		}
 	}
 
 	const src = searchParams.get('src')
 	invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 	if (URL.canParse(src)) {
-		return ssrfSafeFetch(src, {
+		const upstream = await ssrfSafeFetch(src, {
 			signal: AbortSignal.timeout(10_000),
 		})
+		return { upstream, source: { url: upstream.url || src } }
 	}
 
 	const normalizedSrc = src.replace(/\\/g, '/').replace(/\.\.+/g, '')
 	const assetUrl = new URL(normalizedSrc, request.url)
-	return fetch(assetUrl)
+	return { upstream: await fetch(assetUrl), source: { url: assetUrl.href } }
 }
 
 async function getCloudflareImageResponse(
@@ -232,7 +245,7 @@ async function getCloudflareImageResponse(
 	cacheable: boolean,
 ) {
 	const params = parseImageParams(searchParams)
-	const upstream = await fetchImageSource(
+	const { upstream, source } = await fetchImageSource(
 		request,
 		searchParams,
 		objectKey,
@@ -289,8 +302,8 @@ async function getCloudflareImageResponse(
 		if (params.fit != null) imageOptions.fit = params.fit
 		if (params.format != null) imageOptions.format = params.format
 
-		const transformed = await fetch(upstream.url, {
-			headers: upstream.headers,
+		const transformed = await fetch(source.url, {
+			headers: source.headers,
 			cf: { image: imageOptions },
 		} as RequestInit & { cf?: { image: Record<string, number | string> } })
 
