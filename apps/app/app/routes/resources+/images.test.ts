@@ -1,5 +1,6 @@
 import type * as CommonModule from '@repo/common'
 import type * as DatabaseModule from '@repo/database'
+import type * as SecurityModule from '@repo/security'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetMockDb } from '#tests/setup/drizzle-mock.ts'
 import { loader } from './images.tsx'
@@ -24,6 +25,18 @@ vi.mock('@repo/database', async (importOriginal) => {
 		UserOrganization: drizzleTable,
 		and: drizzleOperator,
 		eq: drizzleOperator,
+	}
+})
+
+// The real guard resolves DNS and rejects localhost; these tests only need it
+// to reach `fetch` without following redirects.
+vi.mock('@repo/security', async (importOriginal) => {
+	const actual = await importOriginal<typeof SecurityModule>()
+	return {
+		...actual,
+		ssrfSafeFetch: vi.fn((url: string | URL, init?: RequestInit) =>
+			fetch(url, { ...init, redirect: 'error' }),
+		),
 	}
 })
 
@@ -72,10 +85,90 @@ describe('resources/images on the Workers runtime', () => {
 		const [transformUrl, transformInit] = fetchMock.mock.calls[1]!
 		expect(transformUrl).toBe(SIGNED_URL)
 		expect(transformInit?.headers).toEqual(SIGNED_HEADERS)
+		expect(transformInit?.redirect).toBe('manual')
 		expect((transformInit as { cf?: { image: unknown } }).cf?.image).toEqual({
 			width: 640,
 			height: 384,
 			fit: 'cover',
 		})
+	})
+
+	it('resizes a local asset without forwarding storage headers', async () => {
+		const request = new Request(
+			'http://localhost/resources/images?src=%2Fimg%2Fhero.webp&w=320',
+		)
+
+		const response = await loader({ request, params: {}, context: {} } as any)
+
+		expect(response.status).toBe(200)
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+		const [transformUrl, transformInit] = fetchMock.mock.calls[1]!
+		expect(transformUrl).toBe('http://localhost/img/hero.webp')
+		expect(transformInit?.headers).toBeUndefined()
+	})
+
+	it('falls back to the source URL when the response URL is empty', async () => {
+		const src = 'http://localhost/img/hero.webp'
+		const request = new Request(
+			`http://localhost/resources/images?src=${encodeURIComponent(src)}&w=320`,
+		)
+
+		const response = await loader({ request, params: {}, context: {} } as any)
+
+		expect(response.status).toBe(200)
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+		const [transformUrl, transformInit] = fetchMock.mock.calls[1]!
+		expect(transformUrl).toBe(src)
+		expect(transformInit?.headers).toBeUndefined()
+	})
+
+	it.each([
+		'//evil.example/a.png',
+		'\\\\evil.example\\a.png',
+		'/..//evil.example/a.png',
+	])(
+		'rejects a relative src that resolves to another host (%s)',
+		async (src) => {
+			const request = new Request(
+				`http://localhost/resources/images?src=${encodeURIComponent(src)}&w=320`,
+			)
+
+			const result = await loader({
+				request,
+				params: {},
+				context: {},
+			} as any).catch((error: unknown) => error)
+
+			expect(result).toBeInstanceOf(Response)
+			expect((result as Response).status).toBe(400)
+			expect(fetchMock).not.toHaveBeenCalled()
+		},
+	)
+
+	it('serves the original when the transform fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		fetchMock.mockImplementationOnce(
+			async () =>
+				new Response(new Uint8Array([1, 2, 3]), {
+					status: 200,
+					headers: { 'Content-Type': 'image/png' },
+				}),
+		)
+		fetchMock.mockImplementationOnce(
+			async () => new Response('bad', { status: 502 }),
+		)
+		const request = new Request(
+			'http://localhost/resources/images?src=%2Fimg%2Fhero.png&w=320',
+		)
+
+		const response = await loader({ request, params: {}, context: {} } as any)
+
+		expect(response.status).toBe(200)
+		expect(response.headers.get('Content-Type')).toBe('image/png')
+		expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+			new Uint8Array([1, 2, 3]),
+		)
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('502'))
+		warn.mockRestore()
 	})
 })

@@ -234,6 +234,14 @@ async function fetchImageSource(
 
 	const normalizedSrc = src.replace(/\\/g, '/').replace(/\.\.+/g, '')
 	const assetUrl = new URL(normalizedSrc, request.url)
+	// A protocol-relative value (`//host/x`, `\\host\x`) does not parse as an
+	// absolute URL but resolves to another host, which would bypass the SSRF
+	// guard above. Relative sources may only name this origin's own assets.
+	invariantResponse(
+		assetUrl.origin === new URL(request.url).origin,
+		'Invalid image source',
+		{ status: 400 },
+	)
 	return { upstream: await fetch(assetUrl), source: { url: assetUrl.href } }
 }
 
@@ -302,32 +310,34 @@ async function getCloudflareImageResponse(
 		if (params.fit != null) imageOptions.fit = params.fit
 		if (params.format != null) imageOptions.format = params.format
 
+		// External images returned above, so only storage objects and this
+		// origin's assets reach the transform. Redirects are not followed: the
+		// first fetch did not validate a hop that only the refetch would take.
 		const transformed = await fetch(source.url, {
 			headers: source.headers,
+			redirect: 'manual',
 			cf: { image: imageOptions },
 		} as RequestInit & { cf?: { image: Record<string, number | string> } })
 
 		if (transformed.ok) {
+			// The original is not needed; release its connection.
+			await upstream.body?.cancel()
 			const rawContentType = transformed.headers.get('content-type')
 			const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
-			if (
-				isExternal &&
-				(!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))
-			) {
-				throw new Response('Unsupported Media Type', { status: 415 })
-			}
-			const headers = getImageResponseHeaders(cacheable && !isExternal)
+			const headers = getImageResponseHeaders(cacheable)
 			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
+
+		await transformed.body?.cancel()
+		console.warn(
+			`Image transform failed with status ${transformed.status}; serving the original`,
+		)
 	}
 
 	const rawContentType = upstream.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
-	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
-		throw new Response('Unsupported Media Type', { status: 415 })
-	}
-	const headers = getImageResponseHeaders(cacheable && !isExternal)
+	const headers = getImageResponseHeaders(cacheable)
 	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
