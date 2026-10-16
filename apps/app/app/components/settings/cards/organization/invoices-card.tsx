@@ -137,27 +137,35 @@ export function InvoicesCard({
 									</div>
 									<div className="flex gap-2">
 										{invoice.hostedInvoiceUrl && (
-											<Button variant="outline" size="sm">
-												<Link
-													to={invoice.hostedInvoiceUrl}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													<Icon name="external-link" className="h-4 w-4" />
-													<Trans>View</Trans>
-												</Link>
+											<Button
+												variant="outline"
+												size="sm"
+												render={
+													<Link
+														to={invoice.hostedInvoiceUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+													/>
+												}
+											>
+												<Icon name="external-link" className="h-4 w-4" />
+												<Trans>View</Trans>
 											</Button>
 										)}
 										{invoice.invoicePdf && (
-											<Button variant="outline" size="sm">
-												<Link
-													to={invoice.invoicePdf}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													<Icon name="download" className="h-4 w-4" />
-													PDF
-												</Link>
+											<Button
+												variant="outline"
+												size="sm"
+												render={
+													<Link
+														to={invoice.invoicePdf}
+														target="_blank"
+														rel="noopener noreferrer"
+													/>
+												}
+											>
+												<Icon name="download" className="h-4 w-4" />
+												PDF
 											</Button>
 										)}
 									</div>
