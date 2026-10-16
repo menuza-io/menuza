@@ -1637,6 +1637,10 @@ msgstr "القيمة الاحتياطية"
 msgid "False"
 msgstr "خطأ"
 
+#: app/components/admin/feature-flags.tsx:739
+msgid "Feature flags"
+msgstr "مؤشرات الميزات"
+
 #: app/components/admin-sidebar.tsx:135
 msgid "Feature Flags"
 msgstr "مؤشرات الميزات"
@@ -3436,6 +3440,10 @@ msgstr "محدد"
 #: app/components/admin-ban-user-dialog.tsx:128
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
+
+#: app/components/admin/feature-flags.tsx:741
+msgid "Set system defaults and override them for an organization or a user."
+msgstr "عيّن القيم الافتراضية للنظام وتجاوزها لمؤسسة أو مستخدم."
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277
