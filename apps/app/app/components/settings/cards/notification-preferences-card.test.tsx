@@ -106,3 +106,27 @@ describe('NotificationPreferencesCard schedule alerts', () => {
 		expect(screen.queryByText(PUBLISHED)).toBeNull()
 	})
 })
+
+describe('NotificationPreferencesCard switch names', () => {
+	it('names each switch by its channel and its event', async () => {
+		renderCard(true)
+		await screen.findByText(ATTENDANCE)
+		expect(
+			screen.getByRole('switch', {
+				name: 'Email Notifications when you are mentioned in a comment',
+			}),
+		).toBeTruthy()
+		expect(
+			screen.getByRole('switch', {
+				name: 'In-App Notifications when someone comments on your notes',
+			}),
+		).toBeTruthy()
+		expect(
+			screen.getByRole('switch', { name: `Email ${OVERTIME}` }),
+		).toBeTruthy()
+		const names = screen
+			.getAllByRole('switch')
+			.map((s) => s.getAttribute('aria-labelledby'))
+		expect(new Set(names).size).toBe(names.length)
+	})
+})

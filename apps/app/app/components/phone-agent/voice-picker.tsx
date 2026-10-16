@@ -423,7 +423,12 @@ function VoiceLibraryDialog({
 					</Select>
 				</div>
 
-				<ScrollArea className="min-h-0 flex-1">
+				{/* The dialog only has a max height, so the viewport's h-full
+				    never resolves; flexing it keeps the list above the footer. */}
+				<ScrollArea
+					className="flex min-h-0 flex-1 flex-col"
+					viewportClassName="min-h-0 flex-1"
+				>
 					<div
 						className="flex min-h-64 flex-col gap-3 pe-3"
 						aria-busy={search.status === 'loading'}
