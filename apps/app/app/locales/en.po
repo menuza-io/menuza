@@ -15458,7 +15458,7 @@ msgid "Schedule & time clock"
 msgstr "Schedule & time clock"
 
 #: app/components/settings/cards/organization/billing-card.tsx:293
-msgid "Schedule a call"
+msgid "Contact sales"
 msgstr ""
 
 #: app/components/hiring/candidate-sheet.tsx:434
@@ -16489,7 +16489,7 @@ msgid "Single choice"
 msgstr "Single choice"
 
 #: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
+msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr ""
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
