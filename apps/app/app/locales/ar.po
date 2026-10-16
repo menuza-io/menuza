@@ -1380,6 +1380,11 @@ msgstr "يوجد منصب بهذا الاسم بالفعل."
 msgid "A required break was not taken or not recorded."
 msgstr "لم تُؤخذ استراحة مطلوبة أو لم تُسجَّل."
 
+#: app/components/organization-invitations.tsx:74
+#: app/components/organization-invitations.tsx:75
+msgid "A role is required"
+msgstr "الدور مطلوب"
+
 #: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
@@ -1754,7 +1759,7 @@ msgstr "إضافة بطاقات الدوام وتعديلها وتصدير ال�
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
-#: app/components/organization-invitations.tsx:310
+#: app/components/organization-invitations.tsx:317
 #: app/routes/organizations+/create.tsx:1187
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
@@ -2786,7 +2791,7 @@ msgstr "كما سُجّلت"
 msgid "Ask a teammate to cover it"
 msgstr "اطلب من زميل تغطيتها"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:682
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب في الذهاب."
 
@@ -2798,7 +2803,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:684
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
 
@@ -4921,7 +4926,7 @@ msgstr "محادثة"
 msgid "Cool"
 msgstr "بارد"
 
-#: app/components/organization-invitations.tsx:212
+#: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
 msgstr "تم النسخ"
@@ -4944,7 +4949,7 @@ msgstr "تصل الورديات المنسوخة كمسودات. لا يصل ش�
 msgid "Copied!"
 msgstr "تم النسخ!"
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
@@ -5320,7 +5325,7 @@ msgstr "إنشاء مجموعة"
 msgid "Create group chats"
 msgstr "إنشاء محادثات جماعية"
 
-#: app/components/organization-invitations.tsx:229
+#: app/components/organization-invitations.tsx:236
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
@@ -5999,7 +6004,7 @@ msgstr "حذف البيانات والتبديل"
 msgid "Delete feature"
 msgstr "حذف الميزة"
 
-#: app/components/organization-invitations.tsx:374
+#: app/components/organization-invitations.tsx:381
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
@@ -6254,7 +6259,7 @@ msgstr "رسائل مباشرة"
 msgid "Direction"
 msgstr "الاتجاه"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:258
 msgid "Disable"
 msgstr "تعطيل"
 
@@ -6832,7 +6837,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
-#: app/components/organization-invitations.tsx:450
+#: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -7087,6 +7092,10 @@ msgstr "أدخل مبلغًا مثل 1250.50."
 msgid "Enter an amount like 15.50."
 msgstr "أدخل مبلغًا مثل 15.50."
 
+#: app/components/organization-invitations.tsx:71
+msgid "Enter an email address"
+msgstr "أدخل عنوان بريد إلكتروني"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
@@ -7095,14 +7104,26 @@ msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان 
 msgid "Enter backup code"
 msgstr "أدخل الرمز الاحتياطي"
 
+#: app/components/staff/labor-policy-editor.tsx:327
+msgid "Enter between {min} and {max} hours."
+msgstr "أدخل قيمة بين {min} و{max} ساعة."
+
+#: app/components/staff/labor-policy-editor.tsx:323
+msgid "Enter between {min} and {max} minutes."
+msgstr "أدخل قيمة بين {min} و{max} دقيقة."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "أدخل كل نسبة كرقم من 0 إلى 100."
 
-#: app/components/organization-invitations.tsx:449
+#: app/components/organization-invitations.tsx:456
 #: app/routes/organizations+/create.tsx:1228
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
+
+#: app/components/staff/labor-policy-editor.tsx:326
+msgid "Enter more than 0 and up to {max} hours."
+msgstr "أدخل قيمة أكبر من 0 وحتى {max} ساعة."
 
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
@@ -8319,7 +8340,7 @@ msgstr "مرحبًا {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "مرحبًا {personName}، أدخل رقمك السري"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
@@ -8550,7 +8571,7 @@ msgstr "كيف تصل المكالمات إلى الوكيل"
 msgid "How can I help you today?"
 msgstr "كيف يمكنني مساعدتك اليوم؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "How can I help?"
 msgstr "كيف يمكنني مساعدتك؟"
 
@@ -8876,6 +8897,10 @@ msgstr "تم تحديث المقابلة"
 msgid "Interviews"
 msgstr "المقابلات"
 
+#: app/components/organization-invitations.tsx:72
+msgid "Invalid email address"
+msgstr "عنوان البريد الإلكتروني غير صالح"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:160
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
@@ -8920,7 +8945,7 @@ msgstr "تم إرسال الدعوة."
 msgid "Invitations are not available for this organization."
 msgstr "الدعوات غير متاحة لهذه المؤسسة."
 
-#: app/components/organization-invitations.tsx:263
+#: app/components/organization-invitations.tsx:270
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
@@ -8963,7 +8988,7 @@ msgstr "تمت دعوته"
 msgid "Invited by {invitedBy}"
 msgstr "مدعو من قبل {invitedBy}"
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:361
 msgid "Invited by {inviterName}"
 msgstr "مدعو من قبل {inviterName}"
 
@@ -9422,6 +9447,7 @@ msgid "Learn more"
 msgstr "اعرف المزيد"
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "مغادرة"
 
@@ -9474,6 +9500,10 @@ msgstr "لا تستخدم الرمزين < و >."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:99
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "هل تريد مغادرة صندوق الوارد وتجاهل مسودات الردود؟"
+
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "هل تريد مغادرة هذه الصفحة؟"
 
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
@@ -10011,7 +10041,7 @@ msgstr "إدارة مفاتيح المرور"
 msgid "Manage phone agent"
 msgstr "إدارة وكيل الهاتف"
 
-#: app/components/organization-invitations.tsx:273
+#: app/components/organization-invitations.tsx:280
 #: app/components/organization-members.tsx:182
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
@@ -10866,7 +10896,7 @@ msgstr "لم تُسجَّل أي أخطاء 404"
 msgid "No access"
 msgstr "لا تملك صلاحية الوصول"
 
-#: app/components/organization-invitations.tsx:192
+#: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
 
@@ -11025,7 +11055,7 @@ msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
-#: app/components/organization-invitations.tsx:480
+#: app/components/organization-invitations.tsx:497
 msgid "No description provided"
 msgstr "لم يُقدَّم وصف"
 
@@ -11819,7 +11849,7 @@ msgstr "ملاحظات للذكاء الاصطناعي"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr "تساعدك الملاحظات على تسجيل الأفكار ومحاضر الاجتماعات أو أي شيء مهم لمنظمتك. ابدأ بإنشاء ملاحظتك الأولى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:683
 msgid "Notes, navigation, and your site — just ask."
 msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل."
 
@@ -12067,7 +12097,7 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One date"
 msgstr "تاريخ واحد"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:818
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
@@ -12947,7 +12977,7 @@ msgstr "ملخص الرواتب (CSV)"
 msgid "Pending"
 msgstr "قيد الانتظار"
 
-#: app/components/organization-invitations.tsx:336
+#: app/components/organization-invitations.tsx:343
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr "الدعوات المعلقة"
@@ -13076,7 +13106,7 @@ msgstr "البيانات الشخصية"
 msgid "Personal details saved."
 msgstr "تم حفظ البيانات الشخصية."
 
-#: app/components/organization-invitations.tsx:170
+#: app/components/organization-invitations.tsx:177
 msgid "Personal invite link"
 msgstr "رابط الدعوة الشخصي"
 
@@ -14679,7 +14709,7 @@ msgid "Resend to people not yet reached"
 msgstr "إعادة الإرسال إلى من لم تصلهم الرسالة"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
-#: app/components/organization-invitations.tsx:240
+#: app/components/organization-invitations.tsx:247
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr "إعادة تعيين"
@@ -15430,8 +15460,8 @@ msgid "Schedule & time clock"
 msgstr "الجدول وساعة الدوام"
 
 #: app/components/settings/cards/organization/billing-card.tsx:293
-msgid "Schedule a call"
-msgstr "حدد موعد مكالمة"
+msgid "Contact sales"
+msgstr "تواصل مع المبيعات"
 
 #: app/components/hiring/candidate-sheet.tsx:434
 #: app/components/hiring/interview-dialog.tsx:156
@@ -15901,7 +15931,7 @@ msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ
 #~ msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to your connected Stripe account."
 #~ msgstr "بيع منتج واحد على موقعك العام. تحتفظ المنصة بـ {SHOP_PLATFORM_FEE_PERCENT}% والباقي يُحوَّل إلى حساب Stripe المتصل."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "إرسال"
@@ -15939,7 +15969,7 @@ msgstr "إرسال بريد إلكتروني"
 msgid "Send invitation"
 msgstr "إرسال الدعوة"
 
-#: app/components/organization-invitations.tsx:321
+#: app/components/organization-invitations.tsx:328
 #: app/routes/organizations+/create.tsx:1194
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
@@ -16178,7 +16208,7 @@ msgstr "مشاركة هذه الوظيفة"
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
 
-#: app/components/organization-invitations.tsx:173
+#: app/components/organization-invitations.tsx:180
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانضمام إلى منظمتك. سيرون أنك دعوتهم."
 
@@ -16461,8 +16491,8 @@ msgid "Single choice"
 msgstr "اختيار واحد"
 
 #: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
-msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
+msgid "Single sign-on, custom SLA, private support channel, and more."
+msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
 #: app/routes/_app+/$orgSlug_+/media.tsx:1226
@@ -16921,6 +16951,10 @@ msgstr "الإحصائيات"
 msgid "Status"
 msgstr "الحالة"
 
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "البقاء"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:243
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
@@ -16950,7 +16984,7 @@ msgstr "الخطوات"
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 msgid "Stop"
 msgstr "إيقاف"
 
@@ -17816,6 +17850,14 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 #: app/components/hiring/interview-dialog.tsx:160
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "تعذّر على المساعد الرد. تحقّق من اتصالك وحاول مرة أخرى."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19387,6 +19429,7 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -19417,8 +19460,8 @@ msgstr "حاول مرة أخرى"
 msgid "Try again later, or ask your manager."
 msgstr "حاول لاحقًا أو اسأل مديرك."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:918
+#: ../../packages/ai/src/components/ai-chat.tsx:919
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 

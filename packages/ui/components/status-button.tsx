@@ -126,6 +126,7 @@ export const StatusButton = ({
 						<Button
 							className={getButtonClassName()}
 							disabled={internalStatus === 'pending'}
+							data-status={internalStatus}
 							{...props}
 						>
 							{buttonContent}
@@ -139,6 +140,7 @@ export const StatusButton = ({
 		<Button
 			className={getButtonClassName()}
 			disabled={internalStatus === 'pending'}
+			data-status={internalStatus}
 			{...props}
 		>
 			{buttonContent}

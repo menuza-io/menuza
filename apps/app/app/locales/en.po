@@ -1382,6 +1382,11 @@ msgstr "A position with that name already exists."
 msgid "A required break was not taken or not recorded."
 msgstr "A required break was not taken or not recorded."
 
+#: app/components/organization-invitations.tsx:74
+#: app/components/organization-invitations.tsx:75
+msgid "A role is required"
+msgstr "A role is required"
+
 #: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
@@ -1756,7 +1761,7 @@ msgstr "Add and edit time cards and export hours. Includes View time cards."
 msgid "Add announcement"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:310
+#: app/components/organization-invitations.tsx:317
 #: app/routes/organizations+/create.tsx:1187
 msgid "Add another invitation"
 msgstr ""
@@ -2788,7 +2793,7 @@ msgstr "As punched"
 msgid "Ask a teammate to cover it"
 msgstr "Ask a teammate to cover it"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:682
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "Ask about this note, or tell me where you'd like to go."
 
@@ -2800,7 +2805,7 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 msgid "Ask AI"
 msgstr "Ask AI"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:684
 msgid "Ask anything…"
 msgstr "Ask anything…"
 
@@ -4923,7 +4928,7 @@ msgstr "Conversation"
 msgid "Cool"
 msgstr "Cool"
 
-#: app/components/organization-invitations.tsx:212
+#: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
 msgstr ""
@@ -4946,7 +4951,7 @@ msgstr "Copied shifts arrive as drafts. Nothing reaches your team until you publ
 msgid "Copied!"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
@@ -5322,7 +5327,7 @@ msgstr "Create group"
 msgid "Create group chats"
 msgstr "Create group chats"
 
-#: app/components/organization-invitations.tsx:229
+#: app/components/organization-invitations.tsx:236
 msgid "Create Link"
 msgstr ""
 
@@ -6001,7 +6006,7 @@ msgstr ""
 msgid "Delete feature"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:374
+#: app/components/organization-invitations.tsx:381
 msgid "Delete invitation"
 msgstr ""
 
@@ -6256,7 +6261,7 @@ msgstr "Direct messages"
 msgid "Direction"
 msgstr "Direction"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:258
 msgid "Disable"
 msgstr ""
 
@@ -6834,7 +6839,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
-#: app/components/organization-invitations.tsx:450
+#: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -7089,6 +7094,10 @@ msgstr "Enter an amount like 1250.50."
 msgid "Enter an amount like 15.50."
 msgstr "Enter an amount like 15.50."
 
+#: app/components/organization-invitations.tsx:71
+msgid "Enter an email address"
+msgstr "Enter an email address"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
@@ -7097,14 +7106,26 @@ msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 msgid "Enter backup code"
 msgstr ""
 
+#: app/components/staff/labor-policy-editor.tsx:327
+msgid "Enter between {min} and {max} hours."
+msgstr "Enter between {min} and {max} hours."
+
+#: app/components/staff/labor-policy-editor.tsx:323
+msgid "Enter between {min} and {max} minutes."
+msgstr "Enter between {min} and {max} minutes."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."
 
-#: app/components/organization-invitations.tsx:449
+#: app/components/organization-invitations.tsx:456
 #: app/routes/organizations+/create.tsx:1228
 msgid "Enter email address"
 msgstr ""
+
+#: app/components/staff/labor-policy-editor.tsx:326
+msgid "Enter more than 0 and up to {max} hours."
+msgstr "Enter more than 0 and up to {max} hours."
 
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
@@ -8321,7 +8342,7 @@ msgstr "Hi {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "Hi {personName}, enter your PIN"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "Hi, {userName}"
 msgstr "Hi, {userName}"
 
@@ -8552,7 +8573,7 @@ msgstr "How calls reach the agent"
 msgid "How can I help you today?"
 msgstr "How can I help you today?"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "How can I help?"
 msgstr "How can I help?"
 
@@ -8878,6 +8899,10 @@ msgstr "Interview updated"
 msgid "Interviews"
 msgstr "Interviews"
 
+#: app/components/organization-invitations.tsx:72
+msgid "Invalid email address"
+msgstr "Invalid email address"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:160
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
@@ -8922,7 +8947,7 @@ msgstr "Invitation sent."
 msgid "Invitations are not available for this organization."
 msgstr "Invitations are not available for this organization."
 
-#: app/components/organization-invitations.tsx:263
+#: app/components/organization-invitations.tsx:270
 msgid "Invite by email"
 msgstr ""
 
@@ -8965,7 +8990,7 @@ msgstr "Invited"
 msgid "Invited by {invitedBy}"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:361
 msgid "Invited by {inviterName}"
 msgstr ""
 
@@ -9424,6 +9449,7 @@ msgid "Learn more"
 msgstr ""
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "Leave"
 
@@ -9476,6 +9502,10 @@ msgstr "Leave out the < and > characters."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:99
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "Leave the mailbox and discard your reply drafts?"
+
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "Leave this page?"
 
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
@@ -10013,7 +10043,7 @@ msgstr ""
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/components/organization-invitations.tsx:273
+#: app/components/organization-invitations.tsx:280
 #: app/components/organization-members.tsx:182
 msgid "Manage roles"
 msgstr "Manage roles"
@@ -10868,7 +10898,7 @@ msgstr "No 404 errors recorded"
 msgid "No access"
 msgstr "No access"
 
-#: app/components/organization-invitations.tsx:192
+#: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr ""
 
@@ -11027,7 +11057,7 @@ msgstr "No custom roles created yet."
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/components/organization-invitations.tsx:480
+#: app/components/organization-invitations.tsx:497
 msgid "No description provided"
 msgstr "No description provided"
 
@@ -11821,7 +11851,7 @@ msgstr "Notes for AI"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:683
 msgid "Notes, navigation, and your site — just ask."
 msgstr "Notes, navigation, and your site — just ask."
 
@@ -12069,7 +12099,7 @@ msgstr ""
 msgid "One date"
 msgstr "One date"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:818
 msgid "One moment…"
 msgstr "One moment…"
 
@@ -12949,7 +12979,7 @@ msgstr "Payroll summary (CSV)"
 msgid "Pending"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:336
+#: app/components/organization-invitations.tsx:343
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr ""
@@ -13078,7 +13108,7 @@ msgstr "Personal details"
 msgid "Personal details saved."
 msgstr "Personal details saved."
 
-#: app/components/organization-invitations.tsx:170
+#: app/components/organization-invitations.tsx:177
 msgid "Personal invite link"
 msgstr ""
 
@@ -14681,7 +14711,7 @@ msgid "Resend to people not yet reached"
 msgstr "Resend to people not yet reached"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
-#: app/components/organization-invitations.tsx:240
+#: app/components/organization-invitations.tsx:247
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr ""
@@ -15432,7 +15462,7 @@ msgid "Schedule & time clock"
 msgstr "Schedule & time clock"
 
 #: app/components/settings/cards/organization/billing-card.tsx:293
-msgid "Schedule a call"
+msgid "Contact sales"
 msgstr ""
 
 #: app/components/hiring/candidate-sheet.tsx:434
@@ -15903,7 +15933,7 @@ msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_
 #~ msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to your connected Stripe account."
 #~ msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "Send"
@@ -15941,7 +15971,7 @@ msgstr ""
 msgid "Send invitation"
 msgstr "Send invitation"
 
-#: app/components/organization-invitations.tsx:321
+#: app/components/organization-invitations.tsx:328
 #: app/routes/organizations+/create.tsx:1194
 msgid "Send Invitations"
 msgstr ""
@@ -16180,7 +16210,7 @@ msgstr "Share this job"
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr ""
 
-#: app/components/organization-invitations.tsx:173
+#: app/components/organization-invitations.tsx:180
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "Share this link to let people join your organization. They'll see you invited them."
 
@@ -16463,7 +16493,7 @@ msgid "Single choice"
 msgstr "Single choice"
 
 #: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
+msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr ""
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
@@ -16923,6 +16953,10 @@ msgstr "Stats"
 msgid "Status"
 msgstr ""
 
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "Stay"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:243
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
@@ -16952,7 +16986,7 @@ msgstr "Steps"
 msgid "Still clocked in"
 msgstr "Still clocked in"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 msgid "Stop"
 msgstr "Stop"
 
@@ -17818,6 +17852,14 @@ msgstr ""
 #: app/components/hiring/interview-dialog.tsx:160
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "The assistant couldn't reply. Check your connection and try again."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "The assistant couldn't reply. Try again."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19389,6 +19431,7 @@ msgstr "Try a different search term."
 msgid "Try adjusting your search or filter."
 msgstr ""
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -19419,8 +19462,8 @@ msgstr "Try again"
 msgid "Try again later, or ask your manager."
 msgstr "Try again later, or ask your manager."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:918
+#: ../../packages/ai/src/components/ai-chat.tsx:919
 msgid "Try another answer"
 msgstr "Try another answer"
 

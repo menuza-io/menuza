@@ -1,5 +1,6 @@
 import { usePostHog } from '@posthog/react'
 import { getErrorMessage } from '@repo/common'
+import { NotFoundPage } from '@repo/ui/not-found-page'
 import { useEffect, type ReactElement } from 'react'
 import {
 	type ErrorResponse,
@@ -54,4 +55,17 @@ export function GeneralErrorBoundary({
 				: unexpectedErrorHandler(error)}
 		</div>
 	)
+}
+
+// The App-wide last-resort boundary: a 404 (for example an unknown
+// organization slug) gets a page with a way back into the app, and everything
+// else keeps the default status text. NotFoundPage is a full-screen layout, so
+// it is not wrapped in GeneralErrorBoundary's padded container.
+export function NotFoundErrorBoundary() {
+	const error = useRouteError()
+	if (isRouteErrorResponse(error) && error.status === 404) {
+		if (typeof document !== 'undefined') console.error(error)
+		return <NotFoundPage />
+	}
+	return <GeneralErrorBoundary />
 }
