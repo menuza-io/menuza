@@ -64,6 +64,7 @@ import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { ImpersonationBanner } from './components/impersonation-banner.tsx'
+import { LeavePageDialog } from './components/leave-page-dialog.tsx'
 import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
 import { useToast } from './components/toaster.tsx'
@@ -606,6 +607,7 @@ function AppWithProviders() {
 						</TooltipProvider>
 					</div>
 				</div>
+				<LeavePageDialog />
 				{isKiosk ? null : <EpicToaster />}
 				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
 			</OpenImgContextProvider>
