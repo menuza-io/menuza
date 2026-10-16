@@ -433,6 +433,60 @@ describe('LaborPolicyEditor', () => {
 		})
 	})
 
+	it('explains an out-of-range sentence value and lets you discard it', async () => {
+		const calls = stubApi()
+		view()
+		const input = await screen.findByLabelText('Flag shifts longer than')
+		fireEvent.change(input, { target: { value: '0' } })
+		expect(
+			await screen.findByText('Enter between 1 and 48 hours.'),
+		).toBeTruthy()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		const discard = screen.getByRole('button', { name: 'Discard' })
+		expect(discard).toBeEnabled()
+		fireEvent.click(discard)
+		await waitFor(() =>
+			expect((input as HTMLInputElement).value).toBe(
+				String(BUILTIN_LABOR_POLICY.longShiftMinutes / 60),
+			),
+		)
+		expect(screen.getByText('All changes saved.')).toBeTruthy()
+		expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+	})
+
+	it('marks and explains an out-of-range deduction and weekly limit', async () => {
+		stubApi({
+			view: {
+				breakRules: {
+					rules: [],
+					autoDeduction: { afterMinutes: 6 * 60, deductMinutes: 30 },
+				},
+				weeklyOvertime: { thresholdMinutes: 40 * 60, multiplierBp: 15_000 },
+			},
+		})
+		view()
+		const deduct = await screen.findByLabelText('Deduct')
+		fireEvent.change(deduct, { target: { value: '500' } })
+		expect(
+			await screen.findByText('Enter between 1 and 240 minutes.'),
+		).toBeTruthy()
+		expect(deduct.getAttribute('aria-invalid')).toBe('true')
+
+		const weeklyAfter = screen.getByLabelText('After')
+		fireEvent.change(weeklyAfter, { target: { value: '200' } })
+		expect(
+			await screen.findByText('Enter more than 0 and up to 168 hours.'),
+		).toBeTruthy()
+		expect(weeklyAfter.getAttribute('aria-invalid')).toBe('true')
+		expect(screen.getByLabelText('For shifts longer than')).not.toHaveAttribute(
+			'aria-invalid',
+		)
+		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+	})
+
 	it('shows what the rules do on an example shift, and follows the rules', async () => {
 		stubApi()
 		view()
