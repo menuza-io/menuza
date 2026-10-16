@@ -1676,6 +1676,10 @@ msgstr "Add a reason for the change."
 msgid "Add a reason."
 msgstr "Add a reason."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:184
+msgid "Add a rule to teach the agent how your business works."
+msgstr "Add a rule to teach the agent how your business works."
+
 #: app/components/staff/labor/labor-page.tsx:219
 #~ msgid "Add a scope in settings, or ask an administrator for access to one."
 #~ msgstr "Add a scope in settings, or ask an administrator for access to one."

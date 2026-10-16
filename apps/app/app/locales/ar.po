@@ -1674,6 +1674,10 @@ msgstr "أضف سببًا للتغيير."
 msgid "Add a reason."
 msgstr "أضف سببًا."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:184
+msgid "Add a rule to teach the agent how your business works."
+msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك التجاري."
+
 #: app/components/staff/labor/labor-page.tsx:219
 #~ msgid "Add a scope in settings, or ask an administrator for access to one."
 #~ msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أحد المسؤولين منحك صلاحية الوصول إلى أحدها."

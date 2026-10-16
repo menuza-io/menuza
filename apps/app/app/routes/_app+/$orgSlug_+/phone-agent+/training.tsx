@@ -173,11 +173,20 @@ export default function PhoneAgentTraining() {
 							<EmptyTitle>
 								<Trans>No training rules yet</Trans>
 							</EmptyTitle>
-							<EmptyDescription>
-								<Trans>
-									Start with an example and change it to match your business.
-								</Trans>
-							</EmptyDescription>
+							{canUpdate ? (
+								<EmptyDescription>
+									{EXAMPLES.length ? (
+										<Trans>
+											Start with an example and change it to match your
+											business.
+										</Trans>
+									) : (
+										<Trans>
+											Add a rule to teach the agent how your business works.
+										</Trans>
+									)}
+								</EmptyDescription>
+							) : null}
 						</EmptyHeader>
 						{canUpdate && EXAMPLES.length ? (
 							<EmptyContent>
