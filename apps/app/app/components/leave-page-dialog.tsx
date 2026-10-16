@@ -16,8 +16,8 @@ import { useLeavePrompt } from '#app/utils/navigation-guards.ts'
 export function LeavePageDialog() {
 	const prompt = useLeavePrompt()
 	// Keeps the text while the dialog animates closed.
-	const [lastMessage, setLastMessage] = useState('')
-	if (prompt && prompt.message !== lastMessage) setLastMessage(prompt.message)
+	const [message, setMessage] = useState('')
+	if (prompt && prompt.message !== message) setMessage(prompt.message)
 
 	return (
 		<AlertDialog
@@ -31,7 +31,7 @@ export function LeavePageDialog() {
 					<AlertDialogTitle>
 						<Trans>Leave this page?</Trans>
 					</AlertDialogTitle>
-					<AlertDialogDescription>{lastMessage}</AlertDialogDescription>
+					<AlertDialogDescription>{message}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>

@@ -32,16 +32,17 @@ export type LeavePrompt = {
 	stay: () => void
 }
 
-// One prompt for the whole app: React Router honors one blocker at a time,
-// and `LeavePageDialog` (mounted in root.tsx) shows it.
+// One prompt for the whole app: React Router consults only the most recently
+// registered blocker, so at most one blocker is ever `blocked` and one slot is
+// enough. `LeavePageDialog` (mounted in root.tsx) shows it.
 let leavePrompt: LeavePrompt | null = null
 const leavePromptListeners = new Set<() => void>()
 
 function setLeavePrompt(next: LeavePrompt | null) {
 	const previous = leavePrompt
 	leavePrompt = next
-	// A newer prompt replaces an unanswered one: release the older blocker so
-	// its navigation does not stay blocked with no dialog.
+	// A newer prompt replaces an unanswered one. Reset that blocker so its
+	// navigation is not stuck with no dialog.
 	if (previous && next && previous !== next) previous.stay()
 	for (const listener of leavePromptListeners) listener()
 }
@@ -73,8 +74,7 @@ export function useConfirmBlocker(
 
 	useEffect(() => {
 		if (blocker.state !== 'blocked') return
-		// Answer once: a Leave must never be followed by a reset (or the other
-		// way round), whatever order the dialog's close callbacks fire in.
+		// Answer once: a closing dialog can report "stay" after "leave".
 		let answered = false
 		const answer = (decide: () => void) => () => {
 			if (answered) return

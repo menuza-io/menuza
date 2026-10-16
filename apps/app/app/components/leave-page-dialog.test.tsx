@@ -9,54 +9,18 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react'
-import { useMemo } from 'react'
-import type * as ReactRouterModule from 'react-router'
-import {
-	createMemoryRouter,
-	Link,
-	Outlet,
-	RouterProvider,
-	type Blocker,
-} from 'react-router'
+import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useConfirmBlocker } from '#app/utils/navigation-guards.ts'
+import {
+	type LeavePrompt,
+	useConfirmBlocker,
+	useLeavePrompt,
+} from '#app/utils/navigation-guards.ts'
 import { LeavePageDialog } from './leave-page-dialog.tsx'
-
-const blockerCalls = vi.hoisted(() => ({
-	proceed: vi.fn(),
-	reset: vi.fn(),
-}))
-
-// Records every proceed/reset call while keeping the real blocker behavior.
-vi.mock('react-router', async (importOriginal) => {
-	const actual = await importOriginal<typeof ReactRouterModule>()
-	return {
-		...actual,
-		useBlocker: (...args: Parameters<typeof actual.useBlocker>) => {
-			const blocker = actual.useBlocker(...args)
-			return useMemo((): Blocker => {
-				if (blocker.state !== 'blocked') return blocker
-				return {
-					...blocker,
-					proceed: () => {
-						blockerCalls.proceed()
-						blocker.proceed()
-					},
-					reset: () => {
-						blockerCalls.reset()
-						blocker.reset()
-					},
-				}
-			}, [blocker])
-		},
-	}
-})
 
 afterEach(() => {
 	cleanup()
 	vi.restoreAllMocks()
-	blockerCalls.proceed.mockClear()
-	blockerCalls.reset.mockClear()
 })
 
 const MESSAGE = 'You have unsaved changes. Leave this page and lose them?'
@@ -66,9 +30,23 @@ function DirtyPage() {
 	return <h1>Setup</h1>
 }
 
-function renderApp() {
+function TwoGuardsPage() {
+	useConfirmBlocker(true, 'First guard')
+	useConfirmBlocker(true, MESSAGE)
+	return <h1>Setup</h1>
+}
+
+let seenPrompts: LeavePrompt[] = []
+function PromptProbe() {
+	const prompt = useLeavePrompt()
+	if (prompt && !seenPrompts.includes(prompt)) seenPrompts.push(prompt)
+	return null
+}
+
+function renderApp(page = <DirtyPage />) {
 	i18n.load('en', {})
 	i18n.activate('en')
+	seenPrompts = []
 	const router = createMemoryRouter(
 		[
 			{
@@ -78,10 +56,11 @@ function renderApp() {
 						<Link to="/knowledge">Knowledge</Link>
 						<Outlet />
 						<LeavePageDialog />
+						<PromptProbe />
 					</>
 				),
 				children: [
-					{ index: true, element: <DirtyPage /> },
+					{ index: true, element: page },
 					{ path: 'knowledge', element: <h1>Knowledge page</h1> },
 				],
 			},
@@ -119,31 +98,71 @@ describe('LeavePageDialog', () => {
 		expect(await screen.findByText('Knowledge page')).toBeTruthy()
 	})
 
-	it('Leave proceeds exactly once and never resets the blocker', async () => {
+	it('stays on the page when the dialog is dismissed with Escape', async () => {
 		const router = renderApp()
 
+		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
+		const dialog = await screen.findByRole('alertdialog')
+		fireEvent.keyDown(dialog, { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+		expect(router.state.location.pathname).toBe('/')
+
+		// The blocker was reset, so the next attempt asks again.
 		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
 		await screen.findByRole('alertdialog')
 		fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
 		await waitFor(() =>
 			expect(router.state.location.pathname).toBe('/knowledge'),
 		)
-		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
-
-		expect(blockerCalls.proceed).toHaveBeenCalledTimes(1)
-		expect(blockerCalls.reset).not.toHaveBeenCalled()
 	})
 
-	it('Stay resets exactly once and never proceeds', async () => {
+	it('focuses Stay first and returns focus to the link', async () => {
+		renderApp()
+		const link = screen.getByRole('link', { name: 'Knowledge' })
+		link.focus()
+
+		fireEvent.click(link)
+		await screen.findByRole('alertdialog')
+		const stay = screen.getByRole('button', { name: 'Stay' })
+		await waitFor(() => expect(stay).toHaveFocus())
+
+		fireEvent.click(stay)
+		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+		await waitFor(() => expect(link).toHaveFocus())
+	})
+
+	it('answers a blocked navigation once, so a late Stay cannot undo Leave', async () => {
 		const router = renderApp()
 
 		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
 		await screen.findByRole('alertdialog')
-		fireEvent.click(screen.getByRole('button', { name: 'Stay' }))
-		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+		const [prompt] = seenPrompts
+		expect(prompt).toBeDefined()
+		prompt!.leave()
+		prompt!.stay()
+		prompt!.leave()
 
-		expect(router.state.location.pathname).toBe('/')
-		expect(blockerCalls.reset).toHaveBeenCalledTimes(1)
-		expect(blockerCalls.proceed).not.toHaveBeenCalled()
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe('/knowledge'),
+		)
+		expect(await screen.findByText('Knowledge page')).toBeTruthy()
+		// The blocking page unmounts after Leave; its blocker is removed in an effect.
+		await waitFor(() => expect(router.state.blockers.size).toBe(0))
+	})
+
+	it('settles the one blocker React Router uses when two guards are mounted', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const router = renderApp(<TwoGuardsPage />)
+
+		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
+		const dialog = await screen.findByRole('alertdialog')
+		// React Router consults only the newest blocker; the other never blocks.
+		expect(dialog.textContent).toContain(MESSAGE)
+		expect(seenPrompts).toHaveLength(1)
+
+		fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe('/knowledge'),
+		)
 	})
 })
