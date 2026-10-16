@@ -25,6 +25,7 @@ import {
 type ShopCardProps = {
 	organization: ShopOrganization
 	orders: ShopOrderSummary[]
+	ordersUnavailable?: boolean
 	configuredProcessors?: ShopProcessorId[]
 }
 
@@ -38,6 +39,7 @@ function formatMoney(cents: number, currency = 'usd') {
 export function ShopCard({
 	organization,
 	orders,
+	ordersUnavailable = false,
 	configuredProcessors = [],
 }: ShopCardProps) {
 	const isUsRegion = (organization.dataRegion || 'us') === 'us'
@@ -335,7 +337,7 @@ export function ShopCard({
 				</CardContent>
 			</Card>
 
-			{isUsRegion && orders.length > 0 ? (
+			{isUsRegion && (ordersUnavailable || orders.length > 0) ? (
 				<Card>
 					<CardHeader>
 						<CardTitle>
@@ -346,48 +348,57 @@ export function ShopCard({
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<ul className="divide-y rounded-lg border">
-							{orders.map((order) => (
-								<li
-									key={order.id}
-									className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-								>
-									<div>
-										<p className="font-medium">{order.productName}</p>
-										{order.customerName || order.customerPhone ? (
+						{ordersUnavailable ? (
+							<p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+								<Trans>
+									Orders are unavailable right now. Your shop settings are still
+									saved; try again later.
+								</Trans>
+							</p>
+						) : (
+							<ul className="divide-y rounded-lg border">
+								{orders.map((order) => (
+									<li
+										key={order.id}
+										className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+									>
+										<div>
+											<p className="font-medium">{order.productName}</p>
+											{order.customerName || order.customerPhone ? (
+												<p className="text-muted-foreground">
+													{order.customerName}
+													{order.customerName && order.customerPhone
+														? ' · '
+														: null}
+													{order.customerPhone}
+												</p>
+											) : (
+												<p className="text-muted-foreground">
+													<Trans>Guest checkout</Trans>
+												</p>
+											)}
 											<p className="text-muted-foreground">
-												{order.customerName}
-												{order.customerName && order.customerPhone
-													? ' · '
-													: null}
-												{order.customerPhone}
+												{order.status}
+												{order.paymentProvider
+													? ` · ${normalizeShopProcessor(order.paymentProvider)}`
+													: ''}{' '}
+												·{' '}
+												{order.createdAt
+													? new Date(order.createdAt).toLocaleString()
+													: ''}
 											</p>
-										) : (
-											<p className="text-muted-foreground">
-												<Trans>Guest checkout</Trans>
+										</div>
+										<div className="text-right">
+											<p>{formatMoney(order.amountCents, order.currency)}</p>
+											<p className="text-muted-foreground text-xs">
+												<Trans>You receive</Trans>{' '}
+												{formatMoney(order.orgPayoutCents, order.currency)}
 											</p>
-										)}
-										<p className="text-muted-foreground">
-											{order.status}
-											{order.paymentProvider
-												? ` · ${normalizeShopProcessor(order.paymentProvider)}`
-												: ''}{' '}
-											·{' '}
-											{order.createdAt
-												? new Date(order.createdAt).toLocaleString()
-												: ''}
-										</p>
-									</div>
-									<div className="text-right">
-										<p>{formatMoney(order.amountCents, order.currency)}</p>
-										<p className="text-muted-foreground text-xs">
-											<Trans>You receive</Trans>{' '}
-											{formatMoney(order.orgPayoutCents, order.currency)}
-										</p>
-									</div>
-								</li>
-							))}
-						</ul>
+										</div>
+									</li>
+								))}
+							</ul>
+						)}
 					</CardContent>
 				</Card>
 			) : null}

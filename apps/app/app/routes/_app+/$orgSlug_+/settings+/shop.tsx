@@ -11,6 +11,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ShopCard } from '#app/components/settings/cards/organization/shop-card.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -93,10 +94,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
-	const orders =
-		organization.dataRegion === 'us' && organization.hasProvisionedDb
-			? await listOrganizationShopOrders(organization.id)
-			: []
+	let orders: Awaited<ReturnType<typeof listOrganizationShopOrders>> = []
+	let ordersUnavailable = false
+	if (organization.dataRegion === 'us' && organization.hasProvisionedDb) {
+		try {
+			orders = await listOrganizationShopOrders(organization.id)
+		} catch (error) {
+			console.error(
+				'Failed to load shop orders:',
+				error instanceof Error ? error.message : error,
+			)
+			ordersUnavailable = true
+		}
+	}
 
 	const refreshedOrg = await requireUserOrganization(
 		request,
@@ -112,6 +122,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			),
 		},
 		orders,
+		ordersUnavailable,
 		configuredProcessors: listConfiguredShopProcessors(),
 	}
 }
@@ -377,7 +388,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ShopSettingsRoute() {
-	const { organization, orders, configuredProcessors } =
+	const { organization, orders, ordersUnavailable, configuredProcessors } =
 		useLoaderData<typeof loader>()
 
 	return (
@@ -386,9 +397,14 @@ export default function ShopSettingsRoute() {
 				<ShopCard
 					organization={organization}
 					orders={orders}
+					ordersUnavailable={ordersUnavailable}
 					configuredProcessors={configuredProcessors}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>
 	)
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />
 }
