@@ -146,7 +146,8 @@ describe('LeavePageDialog', () => {
 			expect(router.state.location.pathname).toBe('/knowledge'),
 		)
 		expect(await screen.findByText('Knowledge page')).toBeTruthy()
-		expect(router.state.blockers.size).toBe(0)
+		// The blocking page unmounts after Leave; its blocker is removed in an effect.
+		await waitFor(() => expect(router.state.blockers.size).toBe(0))
 	})
 
 	it('settles the one blocker React Router uses when two guards are mounted', async () => {

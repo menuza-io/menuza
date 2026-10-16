@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
+import { invalidateUserCache } from '@repo/cache'
 import { db, eq, UserImage } from '@repo/database'
 import { z } from 'zod'
 import { uploadProfileImage } from '#app/utils/storage.server.ts'
@@ -59,6 +60,7 @@ export async function photoAction({ formData, userId }: PhotoActionArgs) {
 
 	if (intent === 'delete-photo') {
 		await db.delete(UserImage).where(eq(UserImage.userId, userId))
+		await invalidateUserCache(userId)
 		return Response.json({ status: 'success' })
 	}
 
@@ -66,6 +68,8 @@ export async function photoAction({ formData, userId }: PhotoActionArgs) {
 		await tx.delete(UserImage).where(eq(UserImage.userId, userId))
 		await tx.insert(UserImage).values({ userId, ...image! })
 	})
+	// The root loader caches the image for the sidebar avatar.
+	await invalidateUserCache(userId)
 
 	return Response.json({ status: 'success' })
 }

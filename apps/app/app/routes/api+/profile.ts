@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod'
+import { invalidateUserCache } from '@repo/cache'
 import { db, eq, User, UserImage } from '@repo/database'
 import { NameSchema, UsernameSchema } from '@repo/validation'
 import { data } from 'react-router'
@@ -92,6 +93,8 @@ export async function action({ request }: Route.ActionArgs) {
 				updatedAt: User.updatedAt,
 			})
 		if (!updatedUser) throw new Error('User not found')
+		// The web root loader caches name and username for the sidebar user card.
+		await invalidateUserCache(userId)
 		const [image] = await db
 			.select({ objectKey: UserImage.objectKey })
 			.from(UserImage)
