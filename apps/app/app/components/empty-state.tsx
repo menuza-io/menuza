@@ -80,8 +80,8 @@ export function EmptyState({
 					</p>
 				) : null}
 				{action && (
-					<Button className={cn('mt-4')}>
-						<Link to={action.href}>{action.label}</Link>
+					<Button className={cn('mt-4')} render={<Link to={action.href} />}>
+						{action.label}
 					</Button>
 				)}
 				{children ? (
