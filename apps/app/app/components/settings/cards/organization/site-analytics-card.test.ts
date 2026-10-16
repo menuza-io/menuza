@@ -30,6 +30,15 @@ describe('SiteAnalyticsSchema', () => {
 		expect(submit({}).status).toBe('success')
 	})
 
+	it('treats a whitespace-only field as blank', () => {
+		const submission = submit({ googleTagManagerId: '   ' })
+
+		expect(submission.status).toBe('success')
+		expect(
+			submission.status === 'success' && submission.value.googleTagManagerId,
+		).toBeFalsy()
+	})
+
 	it('only reports the filled-in field that is invalid', () => {
 		const submission = submit({ googleAnalyticsId: 'not a real id' })
 
