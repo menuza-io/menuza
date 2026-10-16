@@ -29,6 +29,7 @@ import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from '#app/utils/reservations/nav.ts'
+import { postRegionalReservationsInternal } from '#app/utils/reservations/regional-internal.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 
 export {
@@ -257,25 +258,25 @@ export async function notifyReservationsContextChanged(
 ): Promise<void> {
 	try {
 		const [org] = await db
-			.select({ dataRegion: Organization.dataRegion })
+			.select({
+				dataRegion: Organization.dataRegion,
+				hasProvisionedDb: Organization.hasProvisionedDb,
+			})
 			.from(Organization)
 			.where(eq(Organization.id, organizationId))
 			.limit(1)
-		if (!org) return
+		if (!org?.hasProvisionedDb) return
 		const dataRegion = org.dataRegion === 'ksa' ? 'ksa' : 'us'
-		const { tenantApiUrl } = resolveRegionalTenantApiUrls(dataRegion)
 		const token = ENV.INTERNAL_COMMAND_TOKEN
 		if (!token || token.length < 16) return
-		await fetch(`${tenantApiUrl}/internal/reservations/context-changed`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
+		await postRegionalReservationsInternal({
+			dataRegion,
+			path: 'context-changed',
+			body: {
 				orgId: organizationId,
 				...(reason ? { reason } : {}),
-			}),
+			},
+			timeoutMs: 5_000,
 		})
 	} catch {
 		// Best-effort cache bust; regional cache also expires after 60s TTL.

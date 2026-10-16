@@ -307,6 +307,30 @@ export type SetupValidationResponse = {
 	warnings: SetupValidationIssueDto[]
 }
 
+export type RsvAreaRecord = DiningAreaDto
+export type RsvTableRecord = TableDto & {
+	posX?: number
+	posY?: number
+	w?: number
+	h?: number
+	rotDeg?: number
+}
+export type RsvCombinationRecord = TableCombinationDto
+export type RsvFloorElementRecord = FloorElementDto & {
+	posX?: number
+	posY?: number
+	w?: number
+	h?: number
+	rotDeg?: number
+	styleJson?: Record<string, unknown>
+}
+export type RsvServiceRecord = ServiceDto & {
+	startMin?: number
+}
+export type ServicePeriodDto = RsvServiceRecord
+export type RsvScheduleBlockRecord = BlockDto
+export type RsvSettingsData = LocationSettingsDto
+
 export const FLOOR_CANVAS_MIN = 0
 export const FLOOR_CANVAS_MAX = 1200
 export const FLOOR_ITEM_MIN_SIZE = 20

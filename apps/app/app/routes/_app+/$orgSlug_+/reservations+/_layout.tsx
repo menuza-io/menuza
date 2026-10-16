@@ -9,6 +9,7 @@ import {
 	Outlet,
 	useLoaderData,
 	useLocation,
+	useOutletContext,
 	useSearchParams,
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -18,12 +19,37 @@ import {
 	orgDefaultLocale,
 } from '#app/utils/location-name.server.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
-import { computeReservationsNavAccess } from '#app/utils/reservations/nav.ts'
+import {
+	computeReservationsNavAccess,
+	type ReservationsNavAccess,
+} from '#app/utils/reservations/nav.ts'
 import {
 	RESERVATIONS_SECTION_PERMISSIONS,
 	type ReservationsSection,
 } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/_layout.ts'
+
+export type ReservationsLayoutLocation = {
+	id: string
+	name: string
+	slug: string
+	timezone: string
+	isDefault: boolean
+	isActive: boolean
+}
+
+export type ReservationsLayoutContext = {
+	orgSlug: string
+	locations: ReservationsLayoutLocation[]
+	activeLocationId: string
+	selectedDate: string
+	selectedService: string
+	nav: ReservationsNavAccess
+}
+
+export function useReservationsLayoutData(): ReservationsLayoutContext {
+	return useOutletContext<ReservationsLayoutContext>()
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireReservationsAccess(request, params.orgSlug, {
@@ -150,6 +176,26 @@ export default function ReservationsLayout() {
 	]
 
 	const visibleSections = sections.filter((section) => section.visible)
+	const activeLocationId =
+		selectedLocationId && selectedLocationId !== 'all'
+			? selectedLocationId
+			: (locations[0]?.id ?? '')
+
+	const isBookSubroute =
+		location.pathname.startsWith(`/${orgSlug}/reservations/book`) ||
+		location.pathname.startsWith(`/${orgSlug}/reservations/timeline`) ||
+		location.pathname.startsWith(`/${orgSlug}/reservations/floor`) ||
+		location.pathname.startsWith(`/${orgSlug}/reservations/calendar`) ||
+		location.pathname.startsWith(`/${orgSlug}/reservations/overview`)
+
+	const layoutContext: ReservationsLayoutContext = {
+		orgSlug,
+		locations,
+		activeLocationId,
+		selectedDate,
+		selectedService,
+		nav,
+	}
 
 	return (
 		<ReservationsClientProvider orgSlug={orgSlug}>
@@ -164,7 +210,10 @@ export default function ReservationsLayout() {
 							className="flex flex-wrap items-center gap-1"
 						>
 							{visibleSections.map((section) => {
-								const isActive = location.pathname.startsWith(section.href)
+								const isActive =
+									section.id === 'book'
+										? isBookSubroute
+										: location.pathname.startsWith(section.href)
 								return (
 									<Link
 										key={section.id}
@@ -257,7 +306,7 @@ export default function ReservationsLayout() {
 						</div>
 					</div>
 
-					<Outlet />
+					<Outlet context={layoutContext} />
 				</div>
 			</WorkspacePage>
 		</ReservationsClientProvider>

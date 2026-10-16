@@ -1,6 +1,6 @@
 import { invariant } from '@epic-web/invariant'
 import { requireUserId } from '@repo/auth'
-import { and, db, eq, Organization, UserOrganization } from '@repo/database'
+import { and, db, eq, or, Organization, UserOrganization } from '@repo/database'
 import { type Organization as OrganizationRow } from '@repo/database/types'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
 
@@ -41,7 +41,12 @@ export async function requireUserOrganization(
 				eq(UserOrganization.active, true),
 			),
 		)
-		.where(and(eq(Organization.slug, orgSlug), eq(Organization.active, true)))
+		.where(
+			and(
+				or(eq(Organization.slug, orgSlug), eq(Organization.id, orgSlug)),
+				eq(Organization.active, true),
+			),
+		)
 		.limit(1)
 
 	if (!organization) {
@@ -77,7 +82,12 @@ export async function validateOrgAccess(
 	const [organization] = await db
 		.select({ id: Organization.id })
 		.from(Organization)
-		.where(and(eq(Organization.slug, orgSlug), eq(Organization.active, true)))
+		.where(
+			and(
+				or(eq(Organization.slug, orgSlug), eq(Organization.id, orgSlug)),
+				eq(Organization.active, true),
+			),
+		)
 		.limit(1)
 
 	if (!organization) {

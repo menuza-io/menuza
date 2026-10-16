@@ -1,32 +1,602 @@
-import { t } from '@lingui/macro'
-import { useLingui } from '@lingui/react'
-import { ReservationsSectionPlaceholder } from '#app/components/reservations/section-placeholder.tsx'
+import { Trans, useLingui } from '@lingui/react/macro'
+import { isImpersonating } from '@repo/auth'
+import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import { Alert, AlertDescription } from '@repo/ui/alert'
+import { Badge } from '@repo/ui/badge'
+import { Button } from '@repo/ui/button'
+import { Card } from '@repo/ui/card'
+import { Icon } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
+import { useMemo, useState } from 'react'
+import { useLoaderData } from 'react-router'
+import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
+import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
+import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
+import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
+import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import {
+	transitionReservationStatus,
+	undoReservationTransition,
+} from '#app/utils/reservations/book-api.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/book.ts'
+import { useReservationsLayoutData } from './_layout.tsx'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireReservationsAccess(
+	const access = await requireReservationsAccess(
 		request,
 		params.orgSlug,
 		RESERVATIONS_SECTION_REQUIREMENTS.book,
 	)
-	return null
+	const impersonated = await isImpersonating(request)
+	return {
+		orgSlug: access.organizationSlug,
+		canManage:
+			!impersonated &&
+			access.grants.includes(RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION),
+	}
 }
 
+export async function action({ request, params }: Route.ActionArgs) {
+	await requireReservationsAccess(request, params.orgSlug, {
+		feature: 'enabled',
+		anyOf: [RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION],
+	})
+	return { ok: true }
+}
+
+type BookStatusFilter =
+	| 'all'
+	| 'upcoming'
+	| 'arrived'
+	| 'seated'
+	| 'completed'
+	| 'cancelled'
+	| 'no_show'
+	| 'unassigned'
+	| 'conflict'
+
 export default function ReservationsBookRoute() {
-	const { _ } = useLingui()
+	const { t } = useLingui()
+	const { orgSlug, canManage } = useLoaderData<typeof loader>()
+	const { activeLocationId, locations } = useReservationsLayoutData()
+	const activeLocation =
+		locations.find((loc) => loc.id === activeLocationId) ?? locations[0]
+	const locationId = activeLocation?.id ?? ''
+
+	const host = useHostStand({
+		orgSlug,
+		locationId,
+		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
+		pollIntervalMs: 10_000,
+	})
+
+	const [searchQuery, setSearchQuery] = useState('')
+	const [statusFilter, setStatusFilter] = useState<BookStatusFilter>('all')
+	const [busyId, setBusyId] = useState<string | null>(null)
+	const [actionError, setActionError] = useState<string | null>(null)
+	const [lastUndo, setLastUndo] = useState<{
+		reservationId: string
+		guestName: string
+		status: string
+		undoToken: string | null
+	} | null>(null)
+
+	const dayFeed = host.dayFeed
+	const reservations = useMemo(
+		() => dayFeed?.reservations ?? [],
+		[dayFeed?.reservations],
+	)
+
+	const filteredReservations = useMemo(() => {
+		const q = searchQuery.trim().toLowerCase()
+		return reservations.filter((rsv) => {
+			if (statusFilter === 'upcoming') {
+				if (
+					rsv.status !== 'booked' &&
+					rsv.status !== 'confirmed' &&
+					rsv.status !== 'pending_payment'
+				) {
+					return false
+				}
+			} else if (statusFilter === 'unassigned') {
+				if (
+					rsv.assignedTableIds.length > 0 ||
+					rsv.status === 'cancelled' ||
+					rsv.status === 'no_show' ||
+					rsv.status === 'completed' ||
+					rsv.status === 'finished'
+				) {
+					return false
+				}
+			} else if (statusFilter === 'completed') {
+				if (rsv.status !== 'completed' && rsv.status !== 'finished') {
+					return false
+				}
+			} else if (statusFilter === 'conflict') {
+				if (!rsv.hasConflict) return false
+			} else if (statusFilter !== 'all') {
+				if (rsv.status !== statusFilter) return false
+			}
+
+			if (!q) return true
+			return (
+				rsv.guestName.toLowerCase().includes(q) ||
+				rsv.guestPhone.toLowerCase().includes(q) ||
+				rsv.confirmationCode.toLowerCase().includes(q) ||
+				rsv.assignedTableLabels.some((lbl) => lbl.toLowerCase().includes(q)) ||
+				(rsv.guestNotes ?? '').toLowerCase().includes(q) ||
+				(rsv.internalNotes ?? '').toLowerCase().includes(q)
+			)
+		})
+	}, [reservations, searchQuery, statusFilter])
+
+	const handleQuickStatus = async (
+		reservationId: string,
+		guestName: string,
+		to: string,
+	) => {
+		setBusyId(reservationId)
+		setActionError(null)
+		try {
+			const current = reservations.find((r) => r.id === reservationId)
+			const res = await transitionReservationStatus(
+				host.client,
+				reservationId,
+				{
+					to,
+					...(current?.version ? { expectedVersion: current.version } : {}),
+				},
+			)
+			setLastUndo({
+				reservationId,
+				guestName,
+				status: to,
+				undoToken: res.undoToken,
+			})
+			host.handleReservationMutated(res.reservation, res.moveNotices)
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : t`Status transition failed.`,
+			)
+		} finally {
+			setBusyId(null)
+		}
+	}
+
+	const handleQuickUndo = async () => {
+		if (!lastUndo) return
+		setBusyId(lastUndo.reservationId)
+		setActionError(null)
+		try {
+			const current = reservations.find((r) => r.id === lastUndo.reservationId)
+			const res = await undoReservationTransition(
+				host.client,
+				lastUndo.reservationId,
+				lastUndo.undoToken,
+				current?.version,
+			)
+			setLastUndo(null)
+			host.handleReservationMutated(res.reservation, [])
+		} catch (err) {
+			setActionError(err instanceof Error ? err.message : t`Undo failed.`)
+		} finally {
+			setBusyId(null)
+		}
+	}
+
+	const statusFilters: Array<{ key: BookStatusFilter; label: string }> = [
+		{ key: 'all', label: t`All` },
+		{ key: 'upcoming', label: t`Upcoming` },
+		{ key: 'arrived', label: t`Arrived` },
+		{ key: 'seated', label: t`Seated` },
+		{ key: 'completed', label: t`Completed` },
+		{ key: 'unassigned', label: t`Unassigned` },
+		{ key: 'conflict', label: t`Conflicts` },
+		{ key: 'no_show', label: t`No-Show` },
+		{ key: 'cancelled', label: t`Cancelled` },
+	]
+
 	return (
-		<ReservationsSectionPlaceholder
-			title={_(t`Book`)}
-			description={_(
-				t`Reservation book, timeline grid, shift notes, and booking management.`,
-			)}
-			emptyTitle={_(t`Reservation book is ready`)}
-			emptyDescription={_(
-				t`Browse reservations by date and service, view table timeline blocks, and create new bookings.`,
-			)}
-			icons={['calendar', 'users', 'clock']}
-		/>
+		<div className="flex flex-col gap-4" data-testid="reservations-book-view">
+			<HostSubnav
+				orgSlug={orgSlug}
+				activeView="book"
+				businessDate={host.businessDate}
+				todayDate={host.todayDate}
+				onDateChange={host.setDate}
+				services={dayFeed?.services ?? []}
+				selectedServiceId={host.selectedServiceId}
+				onServiceChange={host.setServiceId}
+				areas={dayFeed?.areas ?? []}
+				selectedAreaId={host.selectedAreaId}
+				onAreaChange={host.setAreaId}
+				unassignedCount={dayFeed?.unassigned.length ?? 0}
+				conflictCount={dayFeed?.conflicts.length ?? 0}
+				moveNoticeCount={host.allMoveNotices.length}
+				onOpenBookingSheet={() => host.openBookingSheet()}
+				onOpenWalkIn={() => host.openWalkIn()}
+				onOpenConflictPanel={() => host.setConflictPanelOpen(true)}
+				canManage={canManage}
+				refreshing={host.poll.refreshing}
+				onRefresh={() => void host.poll.refresh({ force: true })}
+				serviceNotes={dayFeed?.serviceNotes ?? []}
+			/>
+
+			{host.poll.error || actionError ? (
+				<Alert variant="destructive" data-testid="book-error-banner">
+					<AlertDescription>{actionError ?? host.poll.error}</AlertDescription>
+				</Alert>
+			) : null}
+
+			{lastUndo ? (
+				<div
+					className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+					data-testid="book-undo-banner"
+				>
+					<span>
+						<Trans>
+							Changed {lastUndo.guestName} to {lastUndo.status}. Undo available
+							for 60 seconds.
+						</Trans>
+					</span>
+					<Button
+						type="button"
+						size="xs"
+						variant="outline"
+						onClick={handleQuickUndo}
+						data-testid="book-undo-btn"
+					>
+						<Icon name="undo-2" className="size-3.5" />
+						<span>
+							<Trans>Undo</Trans>
+						</span>
+					</Button>
+				</div>
+			) : null}
+
+			{/* Filter & Search Bar */}
+			<Card className="flex flex-col gap-3 p-3" data-testid="book-filter-bar">
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<div className="relative w-full sm:max-w-xs">
+						<Input
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder={t`Search guest, phone, code, table...`}
+							className="h-8 text-xs"
+							data-testid="book-search-input"
+						/>
+					</div>
+
+					<div className="flex flex-wrap items-center gap-1">
+						{statusFilters.map((f) => (
+							<Button
+								key={f.key}
+								type="button"
+								size="xs"
+								variant={statusFilter === f.key ? 'default' : 'outline'}
+								onClick={() => setStatusFilter(f.key)}
+								data-testid={`book-status-filter-${f.key}`}
+							>
+								{f.label}
+							</Button>
+						))}
+					</div>
+				</div>
+			</Card>
+
+			{/* Reservations Table */}
+			<Card className="overflow-hidden">
+				<div className="overflow-x-auto">
+					<table
+						className="w-full border-collapse text-start text-xs"
+						data-testid="book-reservations-table"
+					>
+						<thead>
+							<tr className="bg-muted/50 border-b text-start font-medium">
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Time</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Guest</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Party</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Table & Area</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Tags & Notes</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-start">
+									<Trans>Status</Trans>
+								</th>
+								<th className="px-3 py-2.5 text-end">
+									<Trans>Actions</Trans>
+								</th>
+							</tr>
+						</thead>
+						<tbody className="divide-y">
+							{filteredReservations.length === 0 ? (
+								<tr>
+									<td
+										colSpan={7}
+										className="text-muted-foreground px-4 py-8 text-center"
+										data-testid="book-empty-state"
+									>
+										<Trans>
+											No reservations match the current filters for{' '}
+											{host.businessDate}.
+										</Trans>
+									</td>
+								</tr>
+							) : (
+								filteredReservations.map((rsv) => (
+									<tr
+										key={rsv.id}
+										className="hover:bg-muted/30 cursor-pointer transition"
+										onClick={() => host.openDetail(rsv.id)}
+										data-testid={`book-row-${rsv.id}`}
+									>
+										<td className="px-3 py-2.5 font-mono font-semibold whitespace-nowrap">
+											<div>{rsv.hhmm}</div>
+											<div className="text-muted-foreground font-sans text-[11px] font-normal">
+												{rsv.durationMin}m
+											</div>
+										</td>
+
+										<td className="px-3 py-2.5">
+											<div className="flex flex-wrap items-center gap-1.5 font-semibold">
+												<span>{rsv.guestName}</span>
+												{rsv.guest?.vipTier && rsv.guest.vipTier !== 'none' ? (
+													<Badge variant="default">{rsv.guest.vipTier}</Badge>
+												) : null}
+												<Badge variant="outline" className="font-mono">
+													#{rsv.confirmationCode}
+												</Badge>
+											</div>
+											<div className="text-muted-foreground">
+												{rsv.guestPhone || '—'}
+												{rsv.guest?.visitCount ? (
+													<span className="ms-2">
+														• {rsv.guest.visitCount} <Trans>visits</Trans>
+													</span>
+												) : null}
+											</div>
+										</td>
+
+										<td className="px-3 py-2.5 font-semibold whitespace-nowrap">
+											{rsv.partySize} <Trans>guests</Trans>
+											<div className="text-muted-foreground text-[11px] font-normal">
+												{rsv.channel}
+											</div>
+										</td>
+
+										<td className="px-3 py-2.5 whitespace-nowrap">
+											<div className="flex flex-wrap items-center gap-1">
+												{rsv.assignedTableLabels.length > 0 ? (
+													<Badge
+														variant="outline"
+														data-testid={`book-row-table-${rsv.id}`}
+													>
+														{rsv.assignedTableLabels.join(', ')}
+													</Badge>
+												) : (
+													<Badge variant="destructive">
+														<Trans>Unassigned</Trans>
+													</Badge>
+												)}
+												{rsv.serverLabel ? (
+													<Badge variant="secondary">{rsv.serverLabel}</Badge>
+												) : null}
+											</div>
+											<div className="text-muted-foreground mt-0.5 text-[11px]">
+												{rsv.areaName ?? '—'} • {rsv.serviceName ?? '—'}
+											</div>
+										</td>
+
+										<td className="px-3 py-2.5">
+											<div className="flex flex-wrap items-center gap-1">
+												{rsv.hasConflict ? (
+													<Badge variant="destructive">
+														{rsv.conflictReason ?? t`Conflict`}
+													</Badge>
+												) : null}
+												{rsv.lateRisk ? (
+													<Badge variant="destructive">
+														<Trans>Late Risk</Trans>
+													</Badge>
+												) : null}
+												{rsv.runningLateMin ? (
+													<Badge variant="secondary">
+														+{rsv.runningLateMin}m
+													</Badge>
+												) : null}
+												{rsv.contactStatus && rsv.contactStatus !== 'none' ? (
+													<Badge variant="outline">{rsv.contactStatus}</Badge>
+												) : null}
+												{rsv.occasion ? (
+													<Badge variant="outline">{rsv.occasion}</Badge>
+												) : null}
+												{rsv.dietaryCodes.map((code) => (
+													<Badge key={code} variant="secondary">
+														{code}
+													</Badge>
+												))}
+											</div>
+											{rsv.guestNotes || rsv.internalNotes ? (
+												<div className="text-muted-foreground mt-1 line-clamp-1 max-w-xs text-[11px]">
+													{rsv.guestNotes ?? rsv.internalNotes}
+												</div>
+											) : null}
+										</td>
+
+										<td className="px-3 py-2.5 whitespace-nowrap">
+											<Badge
+												variant={
+													rsv.status === 'seated'
+														? 'default'
+														: rsv.status === 'cancelled' ||
+															  rsv.status === 'no_show'
+															? 'destructive'
+															: 'secondary'
+												}
+												data-testid={`book-row-status-${rsv.id}`}
+											>
+												{rsv.status}
+											</Badge>
+											{rsv.courseStage && rsv.status === 'seated' ? (
+												<div className="text-muted-foreground mt-0.5 text-[11px]">
+													{rsv.courseStage}
+												</div>
+											) : null}
+										</td>
+
+										<td
+											className="px-3 py-2.5 text-end whitespace-nowrap"
+											onClick={(e) => e.stopPropagation()}
+										>
+											<div className="flex items-center justify-end gap-1">
+												{canManage &&
+												(rsv.status === 'booked' ||
+													rsv.status === 'confirmed') ? (
+													<Button
+														type="button"
+														size="xs"
+														variant="outline"
+														disabled={busyId === rsv.id}
+														onClick={() =>
+															handleQuickStatus(
+																rsv.id,
+																rsv.guestName,
+																'arrived',
+															)
+														}
+														data-testid={`book-arrive-${rsv.id}`}
+													>
+														<Trans>Arrive</Trans>
+													</Button>
+												) : null}
+												{canManage &&
+												(rsv.status === 'booked' ||
+													rsv.status === 'confirmed' ||
+													rsv.status === 'arrived') ? (
+													<Button
+														type="button"
+														size="xs"
+														disabled={busyId === rsv.id}
+														onClick={() =>
+															handleQuickStatus(rsv.id, rsv.guestName, 'seated')
+														}
+														data-testid={`book-seat-${rsv.id}`}
+													>
+														<Trans>Seat</Trans>
+													</Button>
+												) : null}
+												{canManage && rsv.status === 'seated' ? (
+													<Button
+														type="button"
+														size="xs"
+														variant="outline"
+														disabled={busyId === rsv.id}
+														onClick={() =>
+															handleQuickStatus(
+																rsv.id,
+																rsv.guestName,
+																'completed',
+															)
+														}
+														data-testid={`book-complete-${rsv.id}`}
+													>
+														<Trans>Complete</Trans>
+													</Button>
+												) : null}
+												<Button
+													type="button"
+													size="xs"
+													variant="ghost"
+													onClick={() => host.openDetail(rsv.id)}
+													data-testid={`book-details-${rsv.id}`}
+												>
+													<Trans>Details</Trans>
+												</Button>
+											</div>
+										</td>
+									</tr>
+								))
+							)}
+						</tbody>
+					</table>
+				</div>
+			</Card>
+
+			{/* Shared Host Sheets & Dialogs */}
+			<BookingSheet
+				open={host.bookingSheetOpen}
+				onOpenChange={host.setBookingSheetOpen}
+				client={host.client}
+				locationId={locationId}
+				defaultDate={host.businessDate}
+				services={dayFeed?.services ?? []}
+				areas={dayFeed?.areas ?? []}
+				tables={dayFeed?.tables ?? []}
+				initialLocalStartMin={host.bookingDefaults.localStartMin}
+				initialPartySize={host.bookingDefaults.partySize}
+				initialTableId={host.bookingDefaults.tableId}
+				initialAreaId={host.bookingDefaults.areaId ?? host.selectedAreaId}
+				initialServiceId={
+					host.bookingDefaults.serviceId ?? host.selectedServiceId
+				}
+				onCreated={(rsv, notices) =>
+					host.handleReservationMutated(rsv, notices)
+				}
+			/>
+
+			<WalkInDialog
+				open={host.walkInOpen}
+				onOpenChange={host.setWalkInOpen}
+				client={host.client}
+				locationId={locationId}
+				businessDate={host.businessDate}
+				localStartMin={host.liveNow.localStartMin}
+				tableStates={dayFeed?.tableStates ?? []}
+				initialTableId={host.walkInDefaults.tableId}
+				initialPartySize={host.walkInDefaults.partySize}
+				onCreated={(rsv, notices) =>
+					host.handleReservationMutated(rsv, notices)
+				}
+			/>
+
+			<DetailSheet
+				reservationId={host.detailReservationId}
+				fallbackReservation={host.selectedReservation}
+				onClose={host.closeDetail}
+				client={host.client}
+				tables={dayFeed?.tables ?? []}
+				canManage={canManage}
+				onUpdated={(rsv, notices) =>
+					host.handleReservationMutated(rsv, notices)
+				}
+			/>
+
+			<ConflictPanel
+				open={host.conflictPanelOpen}
+				onOpenChange={host.setConflictPanelOpen}
+				client={host.client}
+				conflicts={dayFeed?.conflicts ?? []}
+				unassigned={dayFeed?.unassigned ?? []}
+				moveNotices={host.allMoveNotices}
+				tables={dayFeed?.tables ?? []}
+				canManage={canManage}
+				onSelectReservation={host.openDetail}
+				onResolved={(rsv, notices) =>
+					host.handleReservationMutated(rsv, notices)
+				}
+				onClearMoveNotices={host.clearMoveNotices}
+			/>
+		</div>
 	)
 }

@@ -57,15 +57,22 @@ function sourceFiles(directory: string, pattern: RegExp) {
 describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)', () => {
 	const files = sourceFiles(RESERVATIONS_ROUTES, /\.tsx?$/)
 
-	it('finds all reservations routes including setup sub-routes', () => {
-		expect(files.length).toBeGreaterThanOrEqual(15)
+	it('finds all reservations routes including setup and host stand sub-routes', () => {
+		expect(files.length).toBeGreaterThanOrEqual(16)
 		for (const required of [
+			'today.tsx',
+			'book.tsx',
+			'timeline.tsx',
+			'floor.tsx',
+			'calendar.tsx',
+			'overview.tsx',
 			'settings.tsx',
 			'settings._index.tsx',
 			'settings.tables.tsx',
 			'settings.floor-plan.tsx',
 			'settings.services.tsx',
 			'settings.special-days.tsx',
+			'settings.sections.tsx',
 		]) {
 			expect(files).toContain(required)
 		}

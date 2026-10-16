@@ -1,8 +1,9 @@
 import { z } from 'zod'
 
 export const reservationsSummarySchema = z.object({
+	activeLocations: z.number().int().min(0).optional(),
 	reservations: z.number().int().min(0),
-	upcomingReservations: z.number().int().min(0),
+	upcomingReservations: z.number().int().min(0).default(0),
 	byStatus: z
 		.object({
 			pending: z.number().int().min(0).default(0),
@@ -18,14 +19,32 @@ export const reservationsSummarySchema = z.object({
 		})
 		.optional(),
 	guests: z.number().int().min(0),
-	waitlistEntries: z.number().int().min(0),
+	waitlistEntries: z.number().int().min(0).default(0),
+	activeWaitlist: z.number().int().min(0).optional(),
+	holds: z.number().int().min(0).optional(),
+	activeHolds: z.number().int().min(0).optional(),
 	tables: z.number().int().min(0),
-	experiences: z.number().int().min(0),
-	payments: z.number().int().min(0),
-	auditEntries: z.number().int().min(0),
+	experiences: z.number().int().min(0).default(0),
+	payments: z.number().int().min(0).default(0),
+	unsettledPayments: z.number().int().min(0).optional(),
+	auditEntries: z.number().int().min(0).default(0),
 })
 
 export type ReservationsSummary = z.infer<typeof reservationsSummarySchema>
+
+export const locationReservationsSummarySchema = z.object({
+	locationId: z.string().min(1),
+	futureReservations: z.number().int().min(0),
+	activeFutureReservations: z.number().int().min(0).optional(),
+	activeWaitlist: z.number().int().min(0).default(0),
+	activeHolds: z.number().int().min(0).default(0),
+	tables: z.number().int().min(0).default(0),
+	canDelete: z.boolean().optional(),
+})
+
+export type LocationReservationsSummary = z.infer<
+	typeof locationReservationsSummarySchema
+>
 
 export function summaryHasReservationsData(
 	summary: ReservationsSummary | null,
@@ -36,10 +55,18 @@ export function summaryHasReservationsData(
 		summary.upcomingReservations > 0 ||
 		summary.guests > 0 ||
 		summary.waitlistEntries > 0 ||
+		(summary.holds ?? 0) > 0 ||
 		summary.tables > 0 ||
 		summary.experiences > 0 ||
 		summary.payments > 0
 	)
+}
+
+export function summaryHasUnsettledPayments(
+	summary: ReservationsSummary | null,
+): boolean {
+	if (!summary) return false
+	return (summary.unsettledPayments ?? summary.payments) > 0
 }
 
 /**

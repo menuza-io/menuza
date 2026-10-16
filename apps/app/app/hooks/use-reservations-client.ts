@@ -34,3 +34,11 @@ export function useReservationsClient(
 		[pool, scope, locationKey],
 	)
 }
+
+export function useReservationsScopeClient(
+	_orgSlug: string,
+	scope: ReservationsScope,
+	locationIds?: readonly string[] | null,
+): ReservationsScopedClient {
+	return useReservationsClient(scope, locationIds)
+}

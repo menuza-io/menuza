@@ -8,6 +8,16 @@ import {
 } from '@repo/common/location-types'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, db, eq, ne, OrganizationLocation } from '@repo/database'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Button } from '@repo/ui/button'
 import {
 	Card,
@@ -17,10 +27,12 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
+import { useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	Link,
+	useFetcher,
 	useLoaderData,
 } from 'react-router'
 import { z } from 'zod'
@@ -34,10 +46,12 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { deleteScopeData } from '#app/utils/phone-agent/phone-agent.server.ts'
 import {
 	isReservationsFeatureEnabled,
 	notifyReservationsContextChanged,
 } from '#app/utils/reservations/access.server.ts'
+import { checkLocationReservationsDeleteGuard } from '#app/utils/reservations/region-guard.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
@@ -168,10 +182,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
+		hasProvisionedDb: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -186,6 +202,62 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	if (intent === 'delete-location') {
+		const [existingLocation] = await db
+			.select({
+				id: OrganizationLocation.id,
+				isDefault: OrganizationLocation.isDefault,
+			})
+			.from(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.id, locationId),
+					eq(OrganizationLocation.organizationId, organization.id),
+				),
+			)
+			.limit(1)
+
+		if (!existingLocation) {
+			return Response.json({ error: 'Location not found' }, { status: 404 })
+		}
+
+		const deleteGuard = await checkLocationReservationsDeleteGuard({
+			organizationId: organization.id,
+			dataRegion: organization.dataRegion,
+			hasProvisionedDb: organization.hasProvisionedDb,
+			locationId,
+		})
+		if (!deleteGuard.allowed) {
+			return Response.json(
+				{
+					error: deleteGuard.error,
+					futureReservations: deleteGuard.futureReservations,
+				},
+				{ status: deleteGuard.status },
+			)
+		}
+
+		await db
+			.delete(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.id, locationId),
+					eq(OrganizationLocation.organizationId, organization.id),
+				),
+			)
+		await deleteScopeData(organization.id, locationId, { userId, request })
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
+		await notifyReservationsContextChanged(organization.id, 'locations')
+
+		return redirectWithToast(`/${organization.slug}/settings/locations`, {
+			type: 'success',
+			title: 'Location deleted',
+			description: 'The restaurant location has been removed.',
+		})
+	}
+
 	const rawData: Record<string, unknown> = {}
 	for (const [key, value] of formData.entries()) {
 		rawData[key] = value
@@ -274,31 +346,64 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function EditLocationRoute() {
 	const { organization, location, reservationsEnabled } =
 		useLoaderData<typeof loader>()
+	const deleteFetcher = useFetcher<{
+		error?: string
+		futureReservations?: number
+	}>()
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+
+	const handleConfirmDelete = () => {
+		setConfirmDeleteOpen(false)
+		void deleteFetcher.submit({ intent: 'delete-location' }, { method: 'POST' })
+	}
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="flex items-center gap-3">
-				<Button
-					variant="outline"
-					size="icon"
-					render={<Link to={`/${organization.slug}/settings/locations`} />}
-				>
-					<Icon name="arrow-left" className="size-4" />
-					<span className="sr-only">
-						<Trans>Back</Trans>
-					</span>
-				</Button>
-				<div>
-					<h2 className="text-xl tracking-tight">
-						<Trans>Edit Location</Trans>
-					</h2>
-					<p className="text-muted-foreground text-sm">
-						<Trans>
-							Update location details, hours, and fulfillment preferences.
-						</Trans>
-					</p>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div className="flex items-center gap-3">
+					<Button
+						variant="outline"
+						size="icon"
+						render={<Link to={`/${organization.slug}/settings/locations`} />}
+					>
+						<Icon name="arrow-left" className="size-4" />
+						<span className="sr-only">
+							<Trans>Back</Trans>
+						</span>
+					</Button>
+					<div>
+						<h2 className="text-xl tracking-tight">
+							<Trans>Edit Location</Trans>
+						</h2>
+						<p className="text-muted-foreground text-sm">
+							<Trans>
+								Update location details, hours, and fulfillment preferences.
+							</Trans>
+						</p>
+					</div>
 				</div>
+				<Button
+					type="button"
+					variant="destructive"
+					size="sm"
+					data-testid="delete-location-button"
+					disabled={deleteFetcher.state !== 'idle'}
+					onClick={() => setConfirmDeleteOpen(true)}
+				>
+					<Icon name="trash-2" className="size-4" />
+					<Trans>Delete Location</Trans>
+				</Button>
 			</div>
+
+			{deleteFetcher.data?.error ? (
+				<div
+					role="alert"
+					data-testid="location-delete-error"
+					className="bg-destructive/10 border-destructive/20 text-destructive rounded-md border p-3 text-sm"
+				>
+					{deleteFetcher.data.error}
+				</div>
+			) : null}
 
 			{reservationsEnabled ? (
 				<Card data-testid="location-reservations-card">
@@ -349,6 +454,45 @@ export default function EditLocationRoute() {
 				isEditing={true}
 				initialData={location}
 			/>
+
+			<AlertDialog
+				open={confirmDeleteOpen}
+				onOpenChange={(open) => {
+					if (!open) setConfirmDeleteOpen(false)
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>Delete restaurant location?</Trans>
+						</AlertDialogTitle>
+						{(() => {
+							const locationName = location.name
+							return (
+								<AlertDialogDescription>
+									<Trans>
+										Are you sure you want to delete &quot;{locationName}
+										&quot;? This action cannot be undone and will remove
+										operating hours and delivery zones.
+									</Trans>
+								</AlertDialogDescription>
+							)
+						})()}
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>
+							<Trans>Cancel</Trans>
+						</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							data-testid="confirm-delete-location-button"
+							onClick={handleConfirmDelete}
+						>
+							<Trans>Confirm Delete</Trans>
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

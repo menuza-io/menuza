@@ -11,7 +11,14 @@ import { fetchReservationsSummary } from '#app/utils/reservations/region-guard.s
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
-const querySchema = z.object({ orgSlug: z.string().min(1).max(100) })
+const querySchema = z
+	.object({
+		orgSlug: z.string().min(1).max(100).optional(),
+		orgId: z.string().min(1).max(100).optional(),
+	})
+	.refine((val) => Boolean(val.orgSlug || val.orgId), {
+		message: 'orgSlug or orgId is required',
+	})
 
 /**
  * `GET /resources/reservations/region-summary?orgSlug=...`: how much reservations
@@ -27,7 +34,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const organization = await requireUserOrganization(
 		request,
-		parsed.data.orgSlug,
+		parsed.data.orgSlug ?? parsed.data.orgId,
 		{ id: true, dataRegion: true, hasProvisionedDb: true },
 	)
 	await requireUserWithOrganizationPermission(

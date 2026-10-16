@@ -261,6 +261,12 @@ export default function ReservationsSettingsRoute() {
 			pathname: `${basePath}/special-days`,
 			exact: false,
 		},
+		{
+			id: 'sections',
+			label: _(msg`Sections`),
+			pathname: `${basePath}/sections`,
+			exact: false,
+		},
 	]
 
 	const outletContext: ReservationsSetupOutletContext = {

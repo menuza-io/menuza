@@ -118,6 +118,7 @@ describe('setup-api helpers', () => {
 		const client: ReservationsScopedClient = {
 			scope: 'setup',
 			request: requestMock as any,
+			requestConditional: vi.fn() as any,
 			getToken: vi.fn(),
 			invalidate: vi.fn(),
 		}

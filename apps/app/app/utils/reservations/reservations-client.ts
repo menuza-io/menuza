@@ -6,6 +6,18 @@ import {
 
 const REFRESH_SKEW_MS = 60_000
 
+export class ReservationsApiError extends Error {
+	status: number
+	body: unknown
+
+	constructor(message: string, status: number, body?: unknown) {
+		super(message)
+		this.name = 'ReservationsApiError'
+		this.status = status
+		this.body = body
+	}
+}
+
 export type ReservationsTokenResponse = {
 	jwt: string
 	token?: string
@@ -25,12 +37,27 @@ export type ReservationsRequestOptions = {
 	signal?: AbortSignal
 }
 
+export type ReservationsConditionalResult<T = unknown> =
+	| {
+			status: 200
+			data: T
+			etag: string | null
+	  }
+	| {
+			status: 304
+			etag: string | null
+	  }
+
 export type ReservationsScopedClient = {
 	scope: ReservationsScope
 	request<T = unknown>(
 		path: string,
 		options?: ReservationsRequestOptions,
 	): Promise<T>
+	requestConditional<T = unknown>(
+		path: string,
+		options?: ReservationsRequestOptions & { ifNoneMatch?: string | null },
+	): Promise<ReservationsConditionalResult<T>>
 	getToken(): Promise<ReservationsTokenResponse>
 	invalidate(): void
 }
@@ -180,21 +207,106 @@ export function createReservationsClientPool({
 						} catch {
 							// ignore non-json error body
 						}
-						const err = new Error(
+						throw new ReservationsApiError(
 							(detail as { message?: string; error?: string } | null)
 								?.message ??
 								(detail as { error?: string } | null)?.error ??
 								`Reservations API error (${response.status})`,
-						) as Error & { status?: number; body?: unknown }
-						err.status = response.status
-						err.body = detail
-						throw err
+							response.status,
+							detail,
+						)
 					}
 
 					if (response.status === 204) {
 						return undefined as T
 					}
 					return (await response.json()) as T
+				},
+				async requestConditional<T = unknown>(
+					path: string,
+					options: ReservationsRequestOptions & {
+						ifNoneMatch?: string | null
+					} = {},
+				): Promise<ReservationsConditionalResult<T>> {
+					const execute = async (
+						token: ReservationsTokenResponse,
+					): Promise<Response> => {
+						const baseUrl = token.tenantApiUrl.replace(/\/+$/, '')
+						const relPath = path.startsWith('/') ? path : `/${path}`
+						const url = new URL(`${baseUrl}${relPath}`)
+						if (options.query) {
+							for (const [k, v] of Object.entries(options.query)) {
+								if (v !== undefined && v !== null) {
+									url.searchParams.set(k, String(v))
+								}
+							}
+						}
+						const headers: Record<string, string> = {
+							Accept: 'application/json',
+							Authorization: `Bearer ${token.jwt}`,
+							...options.headers,
+						}
+						if (options.ifNoneMatch) {
+							headers['If-None-Match'] = options.ifNoneMatch
+						}
+						let body: BodyInit | undefined
+						if (options.body !== undefined) {
+							headers['Content-Type'] = 'application/json'
+							body = JSON.stringify(options.body)
+						}
+						return fetchImpl(url.toString(), {
+							method: options.method ?? 'GET',
+							headers,
+							body,
+							cache: 'no-store',
+							signal: options.signal,
+						})
+					}
+
+					let token = await getOrMint(scope, locationIds)
+					let response = await execute(token)
+					if (response.status === 401) {
+						cached.delete(key)
+						token = await getOrMint(scope, locationIds)
+						response = await execute(token)
+					}
+
+					if (response.status === 304) {
+						return {
+							status: 304,
+							etag:
+								response.headers.get('ETag') ??
+								response.headers.get('etag') ??
+								options.ifNoneMatch ??
+								null,
+						}
+					}
+
+					if (!response.ok) {
+						let detail: unknown = null
+						try {
+							detail = await response.json()
+						} catch {
+							// ignore non-json error body
+						}
+						throw new ReservationsApiError(
+							(detail as { message?: string; error?: string } | null)
+								?.message ??
+								(detail as { error?: string } | null)?.error ??
+								`Reservations API error (${response.status})`,
+							response.status,
+							detail,
+						)
+					}
+
+					const etag =
+						response.headers.get('ETag') ?? response.headers.get('etag') ?? null
+					const data = (await response.json()) as T
+					return {
+						status: 200,
+						data,
+						etag,
+					}
 				},
 			}
 		},
