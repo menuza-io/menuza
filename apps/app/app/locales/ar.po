@@ -8714,7 +8714,7 @@ msgstr "مدعو من قبل {inviterName}"
 
 #: app/components/settings/cards/organization/invoices-card.tsx:92
 msgid "Invoice history is temporarily unavailable."
-msgstr ""
+msgstr "سجل الفواتير غير متاح مؤقتًا."
 
 #: app/components/settings/cards/organization/invoices-card.tsx:83
 msgid "Invoices"
@@ -12160,7 +12160,7 @@ msgstr "برتقالي"
 
 #: app/components/settings/cards/organization/shop-card.tsx:353
 msgid "Orders are unavailable right now. Your shop settings are still saved; try again later."
-msgstr ""
+msgstr "الطلبات غير متاحة حاليًا. إعدادات المتجر محفوظة؛ حاول مرة أخرى لاحقًا."
 
 #: app/components/staff/labor/labor-settings.tsx:136
 msgid "Orders one person handles in an hour"
@@ -20027,7 +20027,7 @@ msgstr "تعذّر تحميل التوفر. حاول مرة أخرى."
 
 #: app/components/settings/cards/organization/billing-card.tsx:117
 msgid "We could not load plan pricing right now. You can still manage an existing subscription from the customer portal."
-msgstr ""
+msgstr "تعذر تحميل أسعار الخطط حاليًا. لا يزال بإمكانك إدارة اشتراك حالي من بوابة العملاء."
 
 #: app/components/staff/schedule/month-view.tsx:113
 msgid "We could not load the month. Try again."
