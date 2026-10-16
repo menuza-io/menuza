@@ -43,6 +43,7 @@ import { honeypot } from '@repo/security'
 import { generateSeoMeta, generateOrganizationSchema } from '@repo/seo'
 import { DirectionProvider } from '@repo/ui'
 import { ClientHintCheck, getHints } from '@repo/ui/client-hints'
+import { NotFoundPage } from '@repo/ui/not-found-page'
 import { EpicToaster } from '@repo/ui/sonner'
 import { TooltipProvider } from '@repo/ui/tooltip'
 import { OpenImgContextProvider } from 'openimg/react'
@@ -616,5 +617,8 @@ function AppWithProviders() {
 export default AppWithProviders
 
 // this is a last resort error boundary. There's not much useful information we
-// can offer at this level.
-export const ErrorBoundary = GeneralErrorBoundary
+// can offer at this level, but a 404 (for example an unknown organization slug)
+// still gets a way back into the app.
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary statusHandlers={{ 404: NotFoundPage }} />
+}

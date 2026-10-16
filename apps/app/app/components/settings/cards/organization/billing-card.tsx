@@ -1,8 +1,9 @@
 import { Trans, Plural } from '@lingui/macro'
+import { brand } from '@repo/config/brand'
 import { type Organization } from '@repo/database/types'
 
 import { Badge } from '@repo/ui/badge'
-import { Button } from '@repo/ui/button'
+import { Button, buttonVariants } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
@@ -19,8 +20,15 @@ import {
 	ItemTitle,
 } from '@repo/ui/item'
 import { useState, useEffect } from 'react'
-import { Form, Link } from 'react-router'
+import { Form } from 'react-router'
 import { type getPlansAndPrices } from '#app/utils/payments.server.ts'
+
+// App has no /pricing, /contact or /support routes: an unknown first path
+// segment is read as an organization slug and 404s. Plans are listed further
+// down this card, and sales and billing questions go to the support inbox.
+const PLANS_ANCHOR_ID = 'billing-plans'
+const ENTERPRISE_CONTACT_HREF = `mailto:${brand.supportEmail}?subject=${encodeURIComponent('Enterprise plan')}`
+const BILLING_CONTACT_HREF = `mailto:${brand.supportEmail}?subject=${encodeURIComponent('Billing question')}`
 
 const PLANS = {
 	Base: {
@@ -183,11 +191,9 @@ export function BillingCard({
 									</Button>
 								</Form>
 							) : (
-								<Button>
-									<Link to={`/pricing?orgSlug=${organization.slug}`}>
-										<Trans>Subscribe</Trans>
-									</Link>
-								</Button>
+								<a href={`#${PLANS_ANCHOR_ID}`} className={buttonVariants()}>
+									<Trans>Subscribe</Trans>
+								</a>
 							)}
 						</ItemActions>
 					</Item>
@@ -229,7 +235,7 @@ export function BillingCard({
 
 			{/* Available Plans */}
 			{plansAndPrices ? (
-				<div className="grid gap-6 lg:grid-cols-2">
+				<div id={PLANS_ANCHOR_ID} className="grid gap-6 lg:grid-cols-2">
 					<PricingPlan
 						title={PLANS.Base.name}
 						stripePrice={plansAndPrices.prices.base?.[billingInterval]}
@@ -254,7 +260,7 @@ export function BillingCard({
 					/>
 				</div>
 			) : (
-				<Card>
+				<Card id={PLANS_ANCHOR_ID}>
 					<CardContent className="p-6">
 						<div className="text-muted-foreground text-center">
 							<p>
@@ -281,18 +287,22 @@ export function BillingCard({
 							<ItemDescription>
 								<Trans>
 									Single sign-on, custom SLA, private support channel, and more.{' '}
-									<Link to="/contact" className="text-primary hover:underline">
+									<a
+										href={ENTERPRISE_CONTACT_HREF}
+										className="text-primary hover:underline"
+									>
 										Learn more
-									</Link>
+									</a>
 								</Trans>
 							</ItemDescription>
 						</ItemContent>
 						<ItemActions>
-							<Button variant="outline">
-								<Link to="/contact?subject=Enterprise">
-									<Trans>Schedule a call</Trans>
-								</Link>
-							</Button>
+							<a
+								href={ENTERPRISE_CONTACT_HREF}
+								className={buttonVariants({ variant: 'outline' })}
+							>
+								<Trans>Schedule a call</Trans>
+							</a>
 						</ItemActions>
 					</Item>
 				</CardContent>
@@ -308,11 +318,15 @@ export function BillingCard({
 							</ItemTitle>
 						</ItemContent>
 						<ItemActions>
-							<Button variant="link" className="text-sm">
-								<Link to="/support">
-									<Trans>Get in touch</Trans>
-								</Link>
-							</Button>
+							<a
+								href={BILLING_CONTACT_HREF}
+								className={buttonVariants({
+									variant: 'link',
+									className: 'text-sm',
+								})}
+							>
+								<Trans>Get in touch</Trans>
+							</a>
 						</ItemActions>
 					</Item>
 				</CardContent>
