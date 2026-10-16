@@ -9473,9 +9473,9 @@ msgstr "جارٍ تحميل الأسماء…"
 msgid "Loading notes"
 msgstr "جارٍ تحميل الملاحظات"
 
-#: app/components/command-menu.tsx:109
-msgid "Loading notes..."
-msgstr "جاري تحميل الملاحظات..."
+#: app/components/command-menu.tsx:201
+msgid "Searching…"
+msgstr "جارٍ البحث…"
 
 #: app/components/staff/onboarding/onboarding-tab.tsx:107
 msgid "Loading onboarding"
@@ -10957,9 +10957,13 @@ msgstr "لم يتم إنشاء ملاحظات بعد"
 msgid "No notes found"
 msgstr "لم يتم العثور على ملاحظات"
 
-#: app/components/command-menu.tsx:111
-msgid "No notes found."
-msgstr "لم يتم العثور على ملاحظات."
+#: app/components/command-menu.tsx:203
+msgid "No results found."
+msgstr "لم يتم العثور على نتائج."
+
+#: app/components/command-menu.tsx:208
+msgid "Go to"
+msgstr "الانتقال إلى"
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:399
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
