@@ -8,6 +8,7 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StaffClientProvider } from '#app/components/staff/staff-client-provider.tsx'
 import { localToday } from '#app/utils/staffing/onboarding-view.ts'
@@ -165,15 +166,16 @@ describe('CertificatesTab', () => {
 			certificates: [cert({ expiresOn: addDays(TODAY, 90) })],
 		})
 		show()
-		fireEvent.click(
-			await screen.findByRole('button', {
-				name: 'More actions for Food handler card',
-			}),
-		)
-		fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }))
+		const user = userEvent.setup()
+		const menuTrigger = await screen.findByRole('button', {
+			name: 'More actions for Food handler card',
+		})
+		await user.click(menuTrigger)
+		await waitFor(() => expect(menuTrigger).toHaveAttribute('aria-expanded', 'true'))
+		await user.click(await screen.findByRole('menuitem', { name: 'Remove' }))
 		expect(await screen.findByText('Remove this certificate?')).toBeTruthy()
 		expect(calls.some((c) => c.method === 'DELETE')).toBe(false)
-		fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+		await user.click(screen.getByRole('button', { name: 'Remove' }))
 		await waitFor(() =>
 			expect(calls.find((c) => c.method === 'DELETE')?.url).toMatch(
 				/\/certificates\/staff\/s1\/c1$/,
