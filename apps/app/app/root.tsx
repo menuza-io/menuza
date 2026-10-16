@@ -43,7 +43,6 @@ import { honeypot } from '@repo/security'
 import { generateSeoMeta, generateOrganizationSchema } from '@repo/seo'
 import { DirectionProvider } from '@repo/ui'
 import { ClientHintCheck, getHints } from '@repo/ui/client-hints'
-import { NotFoundPage } from '@repo/ui/not-found-page'
 import { EpicToaster } from '@repo/ui/sonner'
 import { TooltipProvider } from '@repo/ui/tooltip'
 import { OpenImgContextProvider } from 'openimg/react'
@@ -63,7 +62,7 @@ import { ENV } from 'varlock/env'
 import { type Route } from './+types/root.ts'
 import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
-import { GeneralErrorBoundary } from './components/error-boundary.tsx'
+import { NotFoundErrorBoundary } from './components/error-boundary.tsx'
 import { ImpersonationBanner } from './components/impersonation-banner.tsx'
 import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
@@ -619,6 +618,4 @@ export default AppWithProviders
 // this is a last resort error boundary. There's not much useful information we
 // can offer at this level, but a 404 (for example an unknown organization slug)
 // still gets a way back into the app.
-export function ErrorBoundary() {
-	return <GeneralErrorBoundary statusHandlers={{ 404: NotFoundPage }} />
-}
+export const ErrorBoundary = NotFoundErrorBoundary

@@ -27,8 +27,20 @@ import { type getPlansAndPrices } from '#app/utils/payments.server.ts'
 // segment is read as an organization slug and 404s. Plans are listed further
 // down this card, and sales and billing questions go to the support inbox.
 const PLANS_ANCHOR_ID = 'billing-plans'
-const ENTERPRISE_CONTACT_HREF = `mailto:${brand.supportEmail}?subject=${encodeURIComponent('Enterprise plan')}`
-const BILLING_CONTACT_HREF = `mailto:${brand.supportEmail}?subject=${encodeURIComponent('Billing question')}`
+
+// The subjects stay in English on purpose: they are for the support team,
+// which reads English and sorts its inbox by them, not for the operator.
+function mailtoHref(subject: string) {
+	return `mailto:${brand.supportEmail}?subject=${encodeURIComponent(subject)}`
+}
+const ENTERPRISE_CONTACT_HREF = mailtoHref('Enterprise plan')
+const BILLING_CONTACT_HREF = mailtoHref('Billing question')
+
+// Following an in-page link scrolls but does not move focus, so keyboard and
+// screen-reader users would stay on Subscribe. Focus the plans as well.
+function focusPlans() {
+	document.getElementById(PLANS_ANCHOR_ID)?.focus({ preventScroll: true })
+}
 
 const PLANS = {
 	Base: {
@@ -191,7 +203,11 @@ export function BillingCard({
 									</Button>
 								</Form>
 							) : (
-								<a href={`#${PLANS_ANCHOR_ID}`} className={buttonVariants()}>
+								<a
+									href={`#${PLANS_ANCHOR_ID}`}
+									onClick={focusPlans}
+									className={buttonVariants()}
+								>
 									<Trans>Subscribe</Trans>
 								</a>
 							)}
@@ -235,7 +251,11 @@ export function BillingCard({
 
 			{/* Available Plans */}
 			{plansAndPrices ? (
-				<div id={PLANS_ANCHOR_ID} className="grid gap-6 lg:grid-cols-2">
+				<div
+					id={PLANS_ANCHOR_ID}
+					tabIndex={-1}
+					className="grid scroll-mt-4 gap-6 outline-none lg:grid-cols-2"
+				>
 					<PricingPlan
 						title={PLANS.Base.name}
 						stripePrice={plansAndPrices.prices.base?.[billingInterval]}
@@ -260,7 +280,11 @@ export function BillingCard({
 					/>
 				</div>
 			) : (
-				<Card id={PLANS_ANCHOR_ID}>
+				<Card
+					id={PLANS_ANCHOR_ID}
+					tabIndex={-1}
+					className="scroll-mt-4 outline-none"
+				>
 					<CardContent className="p-6">
 						<div className="text-muted-foreground text-center">
 							<p>
@@ -286,13 +310,7 @@ export function BillingCard({
 							</ItemTitle>
 							<ItemDescription>
 								<Trans>
-									Single sign-on, custom SLA, private support channel, and more.{' '}
-									<a
-										href={ENTERPRISE_CONTACT_HREF}
-										className="text-primary hover:underline"
-									>
-										Learn more
-									</a>
+									Single sign-on, custom SLA, private support channel, and more.
 								</Trans>
 							</ItemDescription>
 						</ItemContent>
@@ -301,7 +319,7 @@ export function BillingCard({
 								href={ENTERPRISE_CONTACT_HREF}
 								className={buttonVariants({ variant: 'outline' })}
 							>
-								<Trans>Schedule a call</Trans>
+								<Trans>Contact sales</Trans>
 							</a>
 						</ItemActions>
 					</Item>
@@ -316,6 +334,10 @@ export function BillingCard({
 							<ItemTitle className="text-muted-foreground text-sm font-medium">
 								<Trans>Questions about billing?</Trans>
 							</ItemTitle>
+							{/* Visible too, for anyone without a mail app to open the link. */}
+							<ItemDescription className="select-all">
+								{brand.supportEmail}
+							</ItemDescription>
 						</ItemContent>
 						<ItemActions>
 							<a

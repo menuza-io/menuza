@@ -3,7 +3,7 @@
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { brand } from '@repo/config/brand'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { BillingCard } from './billing-card'
@@ -59,20 +59,29 @@ describe('BillingCard', () => {
 	it('sends contact links to the support inbox', () => {
 		renderBilling()
 
-		for (const name of [/get in touch/i, /schedule a call/i, /learn more/i]) {
+		for (const name of [/get in touch/i, /contact sales/i]) {
 			expect(screen.getByRole('link', { name }).getAttribute('href')).toMatch(
 				new RegExp(`^mailto:${brand.supportEmail}\\?subject=`),
 			)
 		}
 	})
 
-	it('points Subscribe at the plans on the same page', () => {
+	it('points Subscribe at the plans on the same page and focuses them', () => {
 		const { container } = renderBilling()
 
-		const href = screen
-			.getByRole('link', { name: /subscribe/i })
-			.getAttribute('href')
+		const subscribe = screen.getByRole('link', { name: /subscribe/i })
+		const href = subscribe.getAttribute('href')
 		expect(href).toMatch(/^#/)
-		expect(container.querySelector(href!)).not.toBeNull()
+		const plans = container.querySelector<HTMLElement>(href!)
+		expect(plans).not.toBeNull()
+
+		fireEvent.click(subscribe)
+		expect(document.activeElement).toBe(plans)
+	})
+
+	it('shows the support address for people without a mail app', () => {
+		renderBilling()
+
+		expect(screen.getByText(brand.supportEmail)).toBeTruthy()
 	})
 })

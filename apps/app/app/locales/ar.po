@@ -15426,8 +15426,8 @@ msgid "Schedule & time clock"
 msgstr "الجدول وساعة الدوام"
 
 #: app/components/settings/cards/organization/billing-card.tsx:293
-msgid "Schedule a call"
-msgstr "حدد موعد مكالمة"
+msgid "Contact sales"
+msgstr "تواصل مع المبيعات"
 
 #: app/components/hiring/candidate-sheet.tsx:434
 #: app/components/hiring/interview-dialog.tsx:156
@@ -16457,8 +16457,8 @@ msgid "Single choice"
 msgstr "اختيار واحد"
 
 #: app/components/settings/cards/organization/billing-card.tsx:282
-msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
-msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
+msgid "Single sign-on, custom SLA, private support channel, and more."
+msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
 #: app/routes/_app+/$orgSlug_+/media.tsx:1226
