@@ -101,6 +101,8 @@ export function expandImpliedGrants(
 	return RESERVATIONS_PERMISSION_LIST.filter((perm) => set.has(perm))
 }
 
+export const expandImpliedPermissions = expandImpliedGrants
+
 /**
  * Strip all write (`update:*`) and sensitive grants during support impersonation.
  */

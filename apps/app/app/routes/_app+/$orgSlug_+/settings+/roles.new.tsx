@@ -19,8 +19,9 @@ import {
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
 import {
 	hasOnlyTenantRolePermissions,
-	withImpliedStaffingPermissions,
+	withImpliedTenantRolePermissions,
 } from '#app/utils/organization/tenant-role-permissions.ts'
+import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	requireBuiltInOrganizationAdmin,
@@ -32,6 +33,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		request,
 		params.orgSlug,
 	)
+	const [staffingEnabled, reservationsEnabled] = await Promise.all([
+		isStaffingFeatureEnabled(organization.organizationId),
+		isReservationsFeatureEnabled(organization.organizationId),
+	])
 
 	return {
 		organization: {
@@ -39,9 +44,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			name: organization.organizationName,
 			slug: organization.organizationSlug,
 		},
-		staffingEnabled: await isStaffingFeatureEnabled(
-			organization.organizationId,
-		),
+		staffingEnabled,
+		reservationsEnabled,
 	}
 }
 
@@ -71,7 +75,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				'One or more selected access options are not available for custom roles.',
 		}
 	}
-	const permissionIds = withImpliedStaffingPermissions(requestedPermissionIds)
+	const permissionIds = withImpliedTenantRolePermissions(requestedPermissionIds)
 
 	const { name, description } = submission.data
 	const [duplicate] = await db
@@ -148,6 +152,7 @@ export default function CreateRoleRoute() {
 			cancelHref={rolesPath}
 			error={actionData?.error}
 			staffingEnabled={data.staffingEnabled}
+			reservationsEnabled={data.reservationsEnabled}
 		/>
 	)
 }

@@ -19,6 +19,7 @@ export const RESERVATIONS_FLAG_KEYS = {
 export const RESERVATIONS_FLAGS = RESERVATIONS_FLAG_KEYS
 
 export type ReservationsFlagName = keyof typeof RESERVATIONS_FLAG_KEYS
+export type ReservationsFeature = ReservationsFlagName
 export type ReservationsFlagKey =
 	(typeof RESERVATIONS_FLAG_KEYS)[ReservationsFlagName]
 
@@ -44,6 +45,8 @@ export type ReservationsFeatureState = {
 	experiences: boolean
 	voice: boolean
 }
+
+export type ReservationsFeatures = ReservationsFeatureState
 
 export const reservationsFeaturesSchema = z
 	.object({
@@ -86,7 +89,10 @@ export function foldReservationsFeatures(
 	}
 }
 
+export const foldReservationsFeatureState = foldReservationsFeatures
+
 export const PLATFORM_FEE_FLAG_KEY = 'reservations.platform_fee_bp' as const
+export const RESERVATIONS_PLATFORM_FEE_BP_KEY = PLATFORM_FEE_FLAG_KEY
 export const DEFAULT_PLATFORM_FEE_BP = 0
 export const MAX_PLATFORM_FEE_BP = 10_000
 

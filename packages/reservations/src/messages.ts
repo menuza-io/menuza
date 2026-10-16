@@ -35,13 +35,14 @@ export type QuietHoursConfig = {
 	endMin?: number
 }
 
-const NON_URGENT_SCHEDULED_KINDS: ReadonlySet<MessageKind> = new Set([
-	'reminder_24h',
-	'reminder_2h',
-	'reconfirm_request',
-	'post_visit_thank_you',
-	'notify_slot_opened',
-])
+const NON_URGENT_SCHEDULED_KINDS: ReadonlySet<MessageKind> =
+	new Set<MessageKind>([
+		'reminder_24h',
+		'reminder_2h',
+		'reconfirm_request',
+		'post_visit_thank_you',
+		'notify_slot_opened',
+	])
 
 export type ScheduleForInput = {
 	kind: MessageKind

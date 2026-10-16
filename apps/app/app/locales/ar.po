@@ -394,7 +394,7 @@ msgstr "{0, plural, one {أضفنا قائمة مهام للموظف الجدي�
 
 #. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
 #. placeholder {1}: organization.name
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "{0} · Here's what's happening in {1}"
 msgstr "{0} · إليك ما يحدث في {1}"
 
@@ -782,8 +782,7 @@ msgstr "{late, plural, one {متأخرة بيوم} two {متأخرة بيومي�
 msgid "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, =0 {لم يتم إدخال أي رقم} one {تم إدخال رقم واحد} two {تم إدخال رقمين} few {تم إدخال # أرقام} many {تم إدخال # رقمًا} other {تم إدخال # رقم}}"
 
-#: app/components/app-sidebar.tsx:368
-#: app/components/app-sidebar.tsx:320
+#: app/components/app-sidebar.tsx:374
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "عدد غير المقروء: {mailboxUnreadLabelCount}"
 
@@ -1199,7 +1198,6 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{moreSlots} more"
 msgstr "+{moreSlots} إضافية"
 
-#: app/components/dashboard/blocks/stats-block.tsx:25
 #: app/components/dashboard/blocks/stats-block.tsx:24
 msgid "+{trend}%"
 msgstr "+{trend}٪"
@@ -1667,7 +1665,6 @@ msgstr "متروكة"
 msgid "About drop visibility"
 msgstr "حول ظهور الطرح"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:856
 #: app/components/settings/cards/organization/site-theme-card.tsx:817
 msgid "Accent color"
 msgstr "لون التمييز"
@@ -1686,7 +1683,7 @@ msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media libra
 msgstr "يقبل ملفات JPG وPNG وWebP حتى 5 ميجابايت. تُرفع الملفات مباشرة إلى مكتبة الوسائط."
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:209
-#: app/components/roles/tenant-role-access-manager.tsx:1191
+#: app/components/roles/tenant-role-access-manager.tsx:1412
 #: app/components/staff/staff-profile-page.tsx:105
 msgid "Access"
 msgstr "الوصول"
@@ -1704,7 +1701,7 @@ msgstr "مستوى الوصول لـ {name}"
 msgid "Access Key ID"
 msgstr "معرف مفتاح الوصول"
 
-#: app/components/roles/tenant-role-access-manager.tsx:72
+#: app/components/roles/tenant-role-access-manager.tsx:74
 msgid "Access to personal and shared team notes."
 msgstr "الوصول إلى الملاحظات الشخصية وملاحظات الفريق المشتركة."
 
@@ -1736,13 +1733,14 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:199
+#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
 #: app/components/command-menu.tsx:115
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
-#: app/components/roles/tenant-role-access-manager.tsx:1060
+#: app/components/roles/tenant-role-access-manager.tsx:1233
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:505
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:308
@@ -1784,7 +1782,6 @@ msgstr "نشط"
 msgid "Active Location"
 msgstr "فرع نشط"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:673
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:678
 msgid "Activity"
 msgstr "النشاط"
@@ -2016,12 +2013,11 @@ msgstr "إضافة عنصر"
 msgid "Add an Option"
 msgstr "إضافة خيار"
 
-#: app/components/roles/tenant-role-access-manager.tsx:271
-#: app/components/roles/tenant-role-access-manager.tsx:272
+#: app/components/roles/tenant-role-access-manager.tsx:274
 msgid "Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff."
 msgstr "إضافة الموظفين وتعديلهم، وإعادة تعيين أرقام PIN لساعة الدوام، وإنهاء خدمة الأشخاص أو إعادة توظيفهم. يشمل عرض الموظفين."
 
-#: app/components/roles/tenant-role-access-manager.tsx:334
+#: app/components/roles/tenant-role-access-manager.tsx:336
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "إضافة بطاقات الدوام وتعديلها وتصدير الساعات. يشمل عرض بطاقات الدوام."
 
@@ -2030,10 +2026,8 @@ msgstr "إضافة بطاقات الدوام وتعديلها وتصدير ال�
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
-#: app/components/organization-invitations.tsx:303
-#: app/routes/organizations+/create.tsx:1575
 #: app/components/organization-invitations.tsx:310
-#: app/routes/organizations+/create.tsx:1187
+#: app/routes/organizations+/create.tsx:1575
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
@@ -2174,8 +2168,7 @@ msgstr "إضافة فرع"
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
-#: app/components/app-sidebar.tsx:730
-#: app/components/app-sidebar.tsx:672
+#: app/components/app-sidebar.tsx:811
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -2315,7 +2308,7 @@ msgstr "إضافة تذكير"
 msgid "Add rest break"
 msgstr "إضافة استراحة قصيرة"
 
-#: app/components/team-switcher.tsx:334
+#: app/components/team-switcher.tsx:333
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add restaurant"
@@ -2469,6 +2462,10 @@ msgstr "أضف حتى خمس صور عالية الدقة. تُستخدم الص
 msgid "Add URL"
 msgstr "إضافة رابط"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:27
+msgid "Add walk-in parties to quote wait times, send table-ready notifications, and seat guests."
+msgstr "أضف الضيوف الحاضرين مباشرة لتقدير وقت الانتظار وإرسال إشعارات الجاهزية وإجلاسهم."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:373
 msgid "Add your business details to see what the assistant is told."
 msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال للمساعد."
@@ -2579,8 +2576,7 @@ msgstr "انتحال شخصية المسؤول نشط"
 msgid "Advance Scheduled Orders"
 msgstr "الطلبات المجدولة مسبقًا"
 
-#: app/components/app-sidebar.tsx:458
-#: app/components/app-sidebar.tsx:410
+#: app/components/app-sidebar.tsx:464
 #: app/components/workspace-breadcrumb.tsx:53
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:117
 msgid "Advanced"
@@ -2590,8 +2586,8 @@ msgstr "متقدم"
 msgid "Advanced settings"
 msgstr "إعدادات متقدمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:335
-#: app/components/roles/tenant-role-access-manager.tsx:341
+#: app/components/roles/tenant-role-access-manager.tsx:337
+#: app/components/roles/tenant-role-access-manager.tsx:343
 msgid "Affects pay"
 msgstr "يؤثر على الأجور"
 
@@ -2684,7 +2680,7 @@ msgstr "تستخدم مسودات الذكاء الاصطناعي تفاصيل �
 #~ msgid "AI is thinking..."
 #~ msgstr "الذكاء الاصطناعي يفكر..."
 
-#: app/components/roles/tenant-role-access-manager.tsx:209
+#: app/components/roles/tenant-role-access-manager.tsx:211
 msgid "AI phone agent"
 msgstr "وكيل الهاتف الذكي"
 
@@ -2793,7 +2789,7 @@ msgstr "كل الوظائف"
 #: app/components/member-location-scope.tsx:133
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
-#: app/components/team-switcher.tsx:199
+#: app/components/team-switcher.tsx:198
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
 msgid "All locations"
 msgstr "كل الفروع"
@@ -2832,9 +2828,17 @@ msgstr "كل الأغراض"
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
+#: app/components/roles/tenant-role-access-manager.tsx:592
+msgid "All reservations, guestbook, setup & payments"
+msgstr "جميع الحجوزات وسجل الضيوف والإعدادات والمدفوعات"
+
 #: app/components/kiosk/kiosk-chrome.tsx:124
 msgid "All saved"
 msgstr "تم حفظ الكل"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:233
+msgid "All services"
+msgstr "جميع الفترات"
 
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
@@ -2881,17 +2885,16 @@ msgstr "السماح للعملاء بجدولة الطلبات لتواريخ �
 msgid "Allow guests to add custom preparation notes to items."
 msgstr "السماح للعملاء بإضافة ملاحظات تحضير مخصصة للعناصر."
 
-#: app/components/menu/menu-form.tsx:319
-msgid "Allow Special Instructions"
-msgstr "السماح بالتعليمات الخاصة"
-
 #: app/components/phone-agent/test-call-panel.tsx:468
 msgid "Allow microphone access"
 msgstr "اسمح بالوصول إلى الميكروفون"
 
+#: app/components/menu/menu-form.tsx:319
+msgid "Allow Special Instructions"
+msgstr "السماح بالتعليمات الخاصة"
+
 #: app/components/locations/delivery-zones-manager.tsx:222
-#: app/components/roles/tenant-role-access-manager.tsx:934
-#: app/components/roles/tenant-role-access-manager.tsx:937
+#: app/components/roles/tenant-role-access-manager.tsx:1099
 msgid "Allowed"
 msgstr "مسموح"
 
@@ -2969,8 +2972,7 @@ msgstr "تم تحديث مقابلة"
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:526
-#: app/components/app-sidebar.tsx:478
+#: app/components/app-sidebar.tsx:585
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2984,8 +2986,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:542
-#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:601
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
@@ -3084,8 +3085,7 @@ msgstr "تم إنشاء مفتاح API"
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:757
-#: app/components/app-sidebar.tsx:699
+#: app/components/app-sidebar.tsx:838
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -3101,7 +3101,7 @@ msgstr "تسجيل الدخول إلى التطبيق"
 msgid "Appearance"
 msgstr "المظهر"
 
-#: app/components/roles/tenant-role-access-manager.tsx:176
+#: app/components/roles/tenant-role-access-manager.tsx:178
 msgid "Appears on the public site"
 msgstr "يظهر على الموقع العام"
 
@@ -3114,8 +3114,8 @@ msgstr "المتقدّم"
 msgid "Applicant funnel"
 msgstr "مسار المتقدمين"
 
-#: app/components/roles/tenant-role-access-manager.tsx:371
-#: app/components/roles/tenant-role-access-manager.tsx:377
+#: app/components/roles/tenant-role-access-manager.tsx:373
+#: app/components/roles/tenant-role-access-manager.tsx:379
 msgid "Applicant personal data"
 msgstr "بيانات المتقدمين الشخصية"
 
@@ -3184,11 +3184,11 @@ msgstr "موافقة"
 msgid "Approve ({approveCount})"
 msgstr "موافقة ({approveCount})"
 
-#: app/components/roles/tenant-role-access-manager.tsx:339
+#: app/components/roles/tenant-role-access-manager.tsx:341
 msgid "Approve time cards"
 msgstr "اعتماد بطاقات الدوام"
 
-#: app/components/roles/tenant-role-access-manager.tsx:340
+#: app/components/roles/tenant-role-access-manager.tsx:342
 msgid "Approve, lock, and unlock time cards. Includes View time cards."
 msgstr "اعتماد بطاقات الدوام وقفلها وفتحها. يشمل عرض بطاقات الدوام."
 
@@ -3246,8 +3246,7 @@ msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد من حذف \"{locToDeleteName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف ساعات العمل ومناطق التوصيل."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1244
-#: app/components/roles/tenant-role-access-manager.tsx:1248
+#: app/components/roles/tenant-role-access-manager.tsx:1469
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ لا يمكن التراجع عن هذا الإجراء."
 
@@ -3275,6 +3274,10 @@ msgstr "القسم"
 #: app/components/locations/delivery-zones-manager.tsx:386
 msgid "Area Boundary Type"
 msgstr "نوع حدود المنطقة"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:23
+msgid "Areas, tables, combinations, services, turn times, pacing, policies, and blackout dates."
+msgstr "المناطق والطاولات والدمج وفترات الخدمة وأوقات الدوران والوتيرة والسياسات والتواريخ المغلقة."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3502
 msgid "Arrangement"
@@ -3486,8 +3489,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:391
-#: app/components/app-sidebar.tsx:343
+#: app/components/app-sidebar.tsx:397
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
@@ -3532,7 +3534,6 @@ msgstr "حالة التوفر"
 #: app/components/menu/menu-availability-card.tsx:228
 #: app/components/menu/menu-availability-card.tsx:264
 #: app/components/menu/menu-status-badge.tsx:53
-#: app/components/staff/schedule/availability-page.tsx:257
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
 msgid "Available"
@@ -3560,7 +3561,7 @@ msgstr "متاح في ذلك الوقت"
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:202
+#: app/routes/_app+/$orgSlug_+/index.tsx:210
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -3581,7 +3582,6 @@ msgstr "أبيض وأسود"
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
 #: app/components/website/create-page-dialog.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:269
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:196
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
@@ -3753,8 +3753,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:623
-#: app/components/app-sidebar.tsx:568
+#: app/components/app-sidebar.tsx:682
 #: app/components/command-menu.tsx:181
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3768,8 +3767,7 @@ msgstr "الفوترة والاشتراك"
 msgid "Birthdays, large groups, catering, and holidays."
 msgstr "أعياد الميلاد والمجموعات الكبيرة وخدمات تقديم الطعام والعطلات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:482
-#: app/components/roles/tenant-role-access-manager.tsx:483
+#: app/components/roles/tenant-role-access-manager.tsx:617
 msgid "Blank"
 msgstr "فارغ"
 
@@ -3809,18 +3807,31 @@ msgstr "نص المحتوى"
 msgid "Bold"
 msgstr "غامق"
 
+#: app/components/app-sidebar.tsx:489
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:100
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:21
+msgid "Book"
+msgstr "دفتر الحجوزات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:537
+msgid "Book, guestbook & reports"
+msgstr "دفتر الحجوزات وسجل الضيوف والتقارير"
+
+#: app/components/roles/tenant-role-access-manager.tsx:528
+msgid "Book, waitlist & table status"
+msgstr "دفتر الحجوزات وقائمة الانتظار وحالة الطاولات"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:42
 msgid "Branch on whether you're open right now."
 msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 
-#: app/components/app-sidebar.tsx:533
-#: app/components/app-sidebar.tsx:485
+#: app/components/app-sidebar.tsx:592
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5130
 msgid "Branding"
 msgstr "الهوية البصرية"
 
-#: app/components/workspace-breadcrumb.tsx:112
+#: app/components/workspace-breadcrumb.tsx:117
 msgid "Breadcrumb"
 msgstr "مسار التنقل"
 
@@ -3912,21 +3923,24 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:384
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:390
 #: app/components/workspace-breadcrumb.tsx:43
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
 msgstr "البثّات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:410
+#: app/components/roles/tenant-role-access-manager.tsx:465
 msgid "Broadcasts & automations"
 msgstr "البثّات والأتمتة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:177
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:27
+msgid "Browse reservations by date and service, view table timeline blocks, and create new bookings."
+msgstr "تصفح الحجوزات حسب التاريخ والفترة واعرض الجدول الزمني للطاولات وأنشئ حجوزات جديدة."
 
 #: app/components/phone-agent/voice-picker.tsx:363
 msgid "Browse the voices your agent can use."
@@ -3935,6 +3949,10 @@ msgstr "تصفّح الأصوات التي يمكن لمساعدك الذكي ا
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3465
 msgid "Browsers only autoplay video when it is muted."
 msgstr "تقوم المتصفحات بتشغيل الفيديو تلقائياً فقط عند كتم الصوت."
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:236
+msgid "Brunch"
+msgstr "البرانش"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:270
 msgid "Bucket Name"
@@ -3953,7 +3971,7 @@ msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخد�
 msgid "Builder"
 msgstr "المنشئ"
 
-#: app/components/roles/tenant-role-access-manager.tsx:850
+#: app/components/roles/tenant-role-access-manager.tsx:1012
 msgid "Built-in"
 msgstr "مدمج"
 
@@ -3961,7 +3979,7 @@ msgstr "مدمج"
 msgid "Built-in blocks"
 msgstr "الكتل المدمجة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1168
+#: app/components/roles/tenant-role-access-manager.tsx:1389
 msgid "Built-in Roles"
 msgstr "الأدوار المدمجة"
 
@@ -4092,8 +4110,7 @@ msgstr "تفاصيل المكالمة"
 msgid "Call ended"
 msgstr "انتهت المكالمة"
 
-#: app/components/app-sidebar.tsx:432
-#: app/components/app-sidebar.tsx:384
+#: app/components/app-sidebar.tsx:438
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
 #: app/components/workspace-breadcrumb.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
@@ -4170,11 +4187,9 @@ msgstr "يسمع المتصلون كل خطوة بالترتيب. تنتظر ق�
 msgid "Calling…"
 msgstr "جارٍ الاتصال…"
 
-#: app/components/app-sidebar.tsx:413
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
-#: app/components/app-sidebar.tsx:365
+#: app/components/app-sidebar.tsx:419
 #: app/components/workspace-breadcrumb.tsx:46
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:401
 msgid "Calls"
@@ -4222,7 +4237,7 @@ msgstr "اسم الحملة"
 msgid "Can edit"
 msgstr "يمكن التعديل"
 
-#: app/components/roles/tenant-role-access-manager.tsx:98
+#: app/components/roles/tenant-role-access-manager.tsx:100
 msgid "Can edit teammate notes"
 msgstr "يمكنه تعديل ملاحظات الزملاء"
 
@@ -4271,8 +4286,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/roles/tenant-role-access-manager.tsx:797
-#: app/components/roles/tenant-role-access-manager.tsx:1256
+#: app/components/roles/tenant-role-access-manager.tsx:954
+#: app/components/roles/tenant-role-access-manager.tsx:1477
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -4376,22 +4391,19 @@ msgstr "إلغاء الطلب"
 msgid "Cancel this order? Any captured payment requires a separate refund with your payment processor."
 msgstr "هل تريد إلغاء هذا الطلب؟ أي مبلغ محصَّل يتطلب استردادًا منفصلاً لدى مزوّد الدفع."
 
-#: app/components/staff/schedule/time-off-page.tsx:368
 #: app/components/staff/schedule/time-off-page.tsx:367
 msgid "Cancel time off"
 msgstr "إلغاء الإجازة"
 
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/staff/schedule/time-off-page.tsx:287
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
-#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:139
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:139
 msgid "Cancelled"
 msgstr "ملغى"
 
-#: app/components/roles/tenant-role-access-manager.tsx:238
+#: app/components/roles/tenant-role-access-manager.tsx:240
 msgid "Cannot be undone"
 msgstr "لا يمكن التراجع عن ذلك"
 
@@ -4476,7 +4488,7 @@ msgstr "الإكراميات النقدية: من {from} إلى {to}"
 msgid "categories"
 msgstr "تصنيفات"
 
-#: app/components/app-sidebar.tsx:333
+#: app/components/app-sidebar.tsx:339
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:243
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:318
@@ -4577,7 +4589,7 @@ msgstr "سجل التغييرات"
 msgid "Change in Setup"
 msgstr "التغيير من الإعداد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:284
+#: app/components/roles/tenant-role-access-manager.tsx:286
 msgid "Change individual pay rates and salary details. Includes View pay rates."
 msgstr "تغيير أجور الأفراد وتفاصيل الرواتب. يشمل عرض الأجور."
 
@@ -4585,7 +4597,7 @@ msgstr "تغيير أجور الأفراد وتفاصيل الرواتب. يشم
 msgid "Change interview"
 msgstr "تغيير المقابلة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:357
+#: app/components/roles/tenant-role-access-manager.tsx:359
 msgid "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 msgstr "تغيير قواعد العمل، وربط أجهزة ساعة الدوام، وتحديد فترات الأجور. يشمل عرض سياسة العمل."
 
@@ -4596,7 +4608,7 @@ msgstr "تغيير قواعد العمل، وربط أجهزة ساعة الدو
 msgid "Change Password"
 msgstr "تغيير كلمة المرور"
 
-#: app/components/roles/tenant-role-access-manager.tsx:283
+#: app/components/roles/tenant-role-access-manager.tsx:285
 msgid "Change pay rates"
 msgstr "تغيير الأجور"
 
@@ -4613,7 +4625,7 @@ msgstr "تغيير الأجر"
 msgid "Change rules"
 msgstr "تغيير القواعد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:220
+#: app/components/roles/tenant-role-access-manager.tsx:222
 msgid "Change settings, publish call flows, manage numbers, and edit training rules."
 msgstr "تغيير الإعدادات، ونشر مسارات المكالمات، وإدارة الأرقام، وتعديل قواعد التدريب."
 
@@ -4675,6 +4687,14 @@ msgstr "القناة"
 msgid "Channels"
 msgstr "القنوات"
 
+#: app/components/roles/tenant-role-access-manager.tsx:429
+msgid "Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports."
+msgstr "تحصيل رسوم الإلغاء أو عدم الحضور وإصدار المبالغ المستردة للحجوزات. يشمل عرض دفتر الحجوزات وقائمة الانتظار وتقارير الحجوزات."
+
+#: app/components/roles/tenant-role-access-manager.tsx:428
+msgid "Charge fees & refund reservation payments"
+msgstr "تحصيل الرسوم واسترداد مدفوعات الحجوزات"
+
 #: app/components/menu/option-form.tsx:599
 msgid "Charge sales tax on this option at checkout."
 msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند الدفع."
@@ -4683,12 +4703,15 @@ msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند
 msgid "Charge tax at checkout."
 msgstr "تحصيل الضريبة عند الدفع."
 
+#: app/components/roles/tenant-role-access-manager.tsx:430
+msgid "Charges & refunds"
+msgstr "الرسوم والمبالغ المستردة"
+
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
 msgstr "الدردشة"
 
-#: app/components/app-sidebar.tsx:592
-#: app/components/app-sidebar.tsx:537
+#: app/components/app-sidebar.tsx:651
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
@@ -5241,7 +5264,7 @@ msgstr "تسجيل انصراف الموظفين تلقائيًا"
 msgid "Clock was off"
 msgstr "الساعة كانت غير دقيقة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:324
+#: app/components/roles/tenant-role-access-manager.tsx:326
 msgid "Clock yourself in and out. Only useful for people who also work shifts."
 msgstr "تسجيل حضورك وانصرافك بنفسك. مفيد فقط لمن يعملون في الورديات أيضاً."
 
@@ -5362,7 +5385,6 @@ msgstr "تُغلق في"
 msgid "Closes:"
 msgstr "يغلق:"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:522
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:650
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:45
 msgid "Closing"
@@ -5381,7 +5403,7 @@ msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخ�
 msgid "Code sent. It expires in 10 minutes."
 msgstr "تم إرسال الرمز. تنتهي صلاحيته خلال 10 دقائق."
 
-#: app/components/roles/tenant-role-access-manager.tsx:115
+#: app/components/roles/tenant-role-access-manager.tsx:117
 msgid "Collaborator visibility and access control."
 msgstr "رؤية المتعاونين والتحكم في الوصول."
 
@@ -5496,7 +5518,7 @@ msgstr "مكتملة"
 msgid "Complete a form"
 msgstr "تعبئة نموذج"
 
-#: app/components/roles/tenant-role-access-manager.tsx:232
+#: app/components/roles/tenant-role-access-manager.tsx:234
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "إكمال المكالمات والطلبات وإعادة فتحها، ووسم المكالمات. يتطلب صلاحية عرض المكالمات."
 
@@ -5587,6 +5609,10 @@ msgstr "اضبط المناطق المسموح بها والممنوعة عبر 
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "اضبط قواعد التوصيل والأسعار ومزود الخدمة ومناطق الحدود."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:27
+msgid "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
+msgstr "قم بإعداد مناطق الطعام وطاولات الصالة وفترات الخدمة وأوقات الدوران وسياسات الإلغاء."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:863
 #~ msgid "Configure drop announcements, visibility, and checkout limits."
 #~ msgstr "تكوين إعلانات الطرح والظهور وحدود الدفع."
@@ -5664,7 +5690,6 @@ msgstr "اتصال"
 msgid "Connect {displayName}"
 msgstr "ربط {displayName}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:210
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:224
 msgid "Connect a phone number"
 msgstr "ربط رقم هاتف"
@@ -5793,7 +5818,7 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Content"
 msgstr "المحتوى"
 
-#: app/components/roles/tenant-role-access-manager.tsx:395
+#: app/components/roles/tenant-role-access-manager.tsx:450
 msgid "Content editor"
 msgstr "محرر المحتوى"
 
@@ -5848,6 +5873,10 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
+#: app/routes/_app+/$orgSlug_+/index.tsx:231
+msgid "Contributors"
+msgstr "المساهمون"
+
 #: app/components/menu/location-overrides-card.tsx:90
 msgid "Control availability and custom pricing per location."
 msgstr "تحكم في التوفر والأسعار المخصصة لكل فرع."
@@ -5867,10 +5896,6 @@ msgstr "تحكم في توفر الطلبات بشكل عام للعملاء."
 #: app/components/menu/drop-wizard/drop-form.tsx:599
 #~ msgid "Control when customers can view and place orders for this drop."
 #~ msgstr "التحكم في وقت تمكن العملاء من عرض وتقديم الطلبات لهذا الطرح."
-
-#: app/routes/_app+/$orgSlug_+/index.tsx:223
-msgid "Contributors"
-msgstr "المساهمون"
 
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
@@ -5892,7 +5917,6 @@ msgstr "بارد"
 msgid "Coordinates (Lat, Lng)"
 msgstr "الإحداثيات (خط العرض، خط الطول)"
 
-#: app/components/organization-invitations.tsx:209
 #: app/components/organization-invitations.tsx:212
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
@@ -6026,7 +6050,6 @@ msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى."
 msgid "Could not create a reply suggestion. Try again."
 msgstr "تعذر إنشاء اقتراح رد. حاول مجدداً."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:274
 #: app/components/phone-agent/call-detail-sheet.tsx:275
 msgid "Could not delete this call. Try again."
 msgstr "تعذّر حذف هذه المكالمة. حاول مرة أخرى."
@@ -6183,6 +6206,10 @@ msgstr "التغطية مقابل الطلبات المعتادة"
 msgid "Coverage compares the orders you usually get each hour with who is scheduled. Red is short of your staffing standards, grey is clearly over."
 msgstr "تقارن التغطية الطلبات التي تصلك عادة كل ساعة بمن هم مجدولون. الأحمر أقل من معايير التوظيف لديك، والرمادي أكثر منها بوضوح."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:23
+msgid "Covers, utilization, no-show rates, pacing, and deposit/fee reconciliation."
+msgstr "عدد الضيوف ونسب الإشغال وعدم الحضور والوتيرة وتسوية العربون والرسوم."
+
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
 msgid "Create"
@@ -6200,7 +6227,7 @@ msgstr "إنشاء قناة"
 msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 msgstr "أنشئ قناة لبدء التواصل مع فريقك. يمكنك قصر القناة على أدوار أو أشخاص معيّنين."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1037
+#: app/components/roles/tenant-role-access-manager.tsx:1210
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
@@ -6248,9 +6275,13 @@ msgstr "أنشئ كلمة مرور لحماية حسابك"
 msgid "Create a plan"
 msgstr "إنشاء خطة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1124
+#: app/components/roles/tenant-role-access-manager.tsx:1297
 msgid "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "أنشئ دورًا جاهزًا للأشخاص الذين يديرون فريقك. يصبح كل دور دورًا مخصصًا عاديًا يمكنك إعادة تسميته أو تعديله أو حذفه."
+
+#: app/components/roles/tenant-role-access-manager.tsx:1345
+msgid "Create a ready-made role for your host stand, shift leads, reservations team, guestbook, or finance. Each one becomes a normal custom role that you can rename, edit, or delete."
+msgstr "أنشئ دوراً جاهزاً لمكتب الاستقبال أو قادة الورديات أو فريق الحجوزات أو سجل الضيوف أو المالية. يصبح كل دور دوراً مخصصاً عادياً يمكنك إعادة تسميته أو تعديله أو حذفه."
 
 #: app/routes/_app+/index.tsx:33
 msgid "Create a restaurant"
@@ -6302,7 +6333,7 @@ msgstr "أنشئ وأدر قوائمك لتناول الطعام في المطع
 msgid "Create and publish a form from Website → Forms first."
 msgstr "أنشئ نموذجًا وانشره أولًا من الموقع الإلكتروني ← النماذج."
 
-#: app/components/roles/tenant-role-access-manager.tsx:192
+#: app/components/roles/tenant-role-access-manager.tsx:194
 msgid "Create and send one-time email and SMS campaigns."
 msgstr "إنشاء وإرسال حملات بريد إلكتروني ورسائل SMS لمرة واحدة."
 
@@ -6349,8 +6380,7 @@ msgstr "أنشئ قنوات لفريقك وحدّد الأدوار أو الأش
 msgid "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 msgstr "أنشئ خيارات وإضافات وعجائن ودرجات حرارة وخيارات مخصصة لأطباقك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:561
-#: app/components/roles/tenant-role-access-manager.tsx:562
+#: app/components/roles/tenant-role-access-manager.tsx:719
 msgid "Create Custom Role"
 msgstr "إنشاء دور مخصص"
 
@@ -6377,7 +6407,7 @@ msgstr "إنشاء النموذج"
 msgid "Create group"
 msgstr "إنشاء مجموعة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:254
+#: app/components/roles/tenant-role-access-manager.tsx:256
 msgid "Create group chats"
 msgstr "إنشاء محادثات جماعية"
 
@@ -6385,7 +6415,6 @@ msgstr "إنشاء محادثات جماعية"
 msgid "Create Item"
 msgstr "إنشاء عنصر"
 
-#: app/components/organization-invitations.tsx:226
 #: app/components/organization-invitations.tsx:229
 msgid "Create Link"
 msgstr "إنشاء رابط"
@@ -6419,14 +6448,12 @@ msgstr "إنشاء ملاحظة جديدة"
 msgid "Create New Option"
 msgstr "إنشاء خيار جديد"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:395
-#: app/routes/_app+/$orgSlug_+/notes.tsx:407
 #: app/routes/_app+/$orgSlug_+/notes.tsx:398
 #: app/routes/_app+/$orgSlug_+/notes.tsx:410
 msgid "Create Note"
 msgstr "إنشاء ملاحظة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:76
+#: app/components/roles/tenant-role-access-manager.tsx:78
 msgid "Create notes"
 msgstr "إنشاء ملاحظات"
 
@@ -6455,6 +6482,10 @@ msgstr "إنشاء كلمة المرور"
 msgid "Create PIN"
 msgstr "إنشاء رمز PIN"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:27
+msgid "Create prepaid or deposit-backed dining experiences, schedules, and optional add-ons."
+msgstr "أنشئ تجارب طعام مدفوعة مسبقاً أو بضمان عربون مع جداولها وإضافاتها الاختيارية."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Create redirect"
@@ -6464,9 +6495,10 @@ msgstr "إنشاء إعادة توجيه"
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أضفها إلى أي صفحة في الموقع باستخدام كتلة نموذج."
 
-#: app/components/roles/tenant-role-access-manager.tsx:805
-#: app/components/roles/tenant-role-access-manager.tsx:1026
-#: app/components/roles/tenant-role-access-manager.tsx:1155
+#: app/components/roles/tenant-role-access-manager.tsx:962
+#: app/components/roles/tenant-role-access-manager.tsx:1199
+#: app/components/roles/tenant-role-access-manager.tsx:1328
+#: app/components/roles/tenant-role-access-manager.tsx:1376
 msgid "Create role"
 msgstr "إنشاء دور"
 
@@ -6507,31 +6539,36 @@ msgstr "أنشئ أول حملة بريد إلكتروني أو رسالة نص�
 msgid "Create your first page to start building your website."
 msgstr "أنشئ صفحتك الأولى لبدء بناء موقعك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:249
+#: app/components/roles/tenant-role-access-manager.tsx:251
 msgid "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
 msgstr "إنشاء القنوات وتعديلها وحذفها، وتحديد الأدوار والأعضاء الذين يمكنهم الوصول إليها، وإزالة الرسائل في القنوات التي يمكنهم فتحها. لا يمنح الوصول إلى القنوات المقيّدة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:314
+#: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule."
 msgstr "إنشاء الورديات وتعديلها ونشرها، والبتّ في طلبات التوفر والإجازات. يشمل عرض جدول الفريق."
 
-#: app/components/roles/tenant-role-access-manager.tsx:175
+#: app/components/roles/tenant-role-access-manager.tsx:177
 msgid "Create, edit, enable, and delete announcement banners."
 msgstr "إنشاء وتعديل وتمكين وحذف لافتات الإعلانات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:203
+#: app/components/roles/tenant-role-access-manager.tsx:205
 msgid "Create, edit, publish, pause, and delete automated journeys."
 msgstr "إنشاء وتعديل ونشر وإيقاف مؤقت وحذف مسارات الأتمتة."
+
+#: app/components/roles/tenant-role-access-manager.tsx:396
+msgid "Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist."
+msgstr "إنشاء وتعديل وإجلاس وإدارة الحجوزات والحضور المباشر وقائمة الانتظار وملاحظات الخدمة وتعيينات الأقسام. يشمل عرض دفتر الحجوزات وقائمة الانتظار."
 
 #: app/components/roles/tenant-role-access-manager.tsx:157
 #~ msgid "Create, update, and publish web pages and announcements."
 #~ msgstr "إنشاء صفحات ويب وإعلانات وتحديثها ونشرها."
 
-#: app/components/roles/tenant-role-access-manager.tsx:164
+#: app/components/roles/tenant-role-access-manager.tsx:166
 msgid "Create, update, and publish web pages, forms, and redirects."
 msgstr "إنشاء وتحديث ونشر صفحات الويب والنماذج وإعادة التوجيه."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1151
+#: app/components/roles/tenant-role-access-manager.tsx:1324
+#: app/components/roles/tenant-role-access-manager.tsx:1372
 msgid "Created"
 msgstr "تم الإنشاء"
 
@@ -6614,18 +6651,14 @@ msgstr "مستخدم البوت الحالي"
 msgid "Current icon"
 msgstr "الأيقونة الحالية"
 
-#: app/components/team-switcher.tsx:205
-#: app/components/team-switcher.tsx:237
+#: app/components/team-switcher.tsx:204
+#: app/components/team-switcher.tsx:236
 msgid "Current location"
 msgstr "الفرع الحالي"
 
-#: app/components/team-switcher.tsx:179
+#: app/components/team-switcher.tsx:163
 #~ msgid "Current organization"
 #~ msgstr "المؤسسة الحالية"
-
-#: app/components/team-switcher.tsx:163
-msgid "Current organization"
-msgstr "المؤسسة الحالية"
 
 #: app/components/settings/password-form.tsx:82
 msgid "Current Password"
@@ -6639,7 +6672,7 @@ msgstr "الخطة الحالية"
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "الأجور الحالية والسجل الكامل. يتم تسجيل كل مرة تعرض فيها هذه البيانات."
 
-#: app/components/team-switcher.tsx:291
+#: app/components/team-switcher.tsx:290
 msgid "Current restaurant"
 msgstr "المطعم الحالي"
 
@@ -6655,7 +6688,7 @@ msgstr "الوقت الحالي {time}، {date}"
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
-#: app/components/roles/tenant-role-access-manager.tsx:850
+#: app/components/roles/tenant-role-access-manager.tsx:1012
 msgid "Custom"
 msgstr "مخصص"
 
@@ -6663,7 +6696,6 @@ msgstr "مخصص"
 msgid "Custom Availability Hours"
 msgstr "ساعات توفر مخصصة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:663
 #: app/components/settings/cards/organization/site-theme-card.tsx:624
 msgid "Custom colors"
 msgstr "ألوان مخصصة"
@@ -6693,8 +6725,7 @@ msgstr "ساعات مخصصة"
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "خيارات وإضافات وأطباق جانبية مخصصة تُقدَّم مع هذا العنصر."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1007
-#: app/components/roles/tenant-role-access-manager.tsx:1011
+#: app/components/roles/tenant-role-access-manager.tsx:1184
 msgid "Custom Roles"
 msgstr "الأدوار المخصصة"
 
@@ -6758,8 +6789,7 @@ msgstr "معرّف العميل"
 #~ msgid "Customer limits"
 #~ msgstr "حدود العميل"
 
-#: app/components/roles/tenant-role-access-manager.tsx:226
-#: app/components/roles/tenant-role-access-manager.tsx:227
+#: app/components/roles/tenant-role-access-manager.tsx:229
 msgid "Customer personal data"
 msgstr "البيانات الشخصية للعملاء"
 
@@ -6787,8 +6817,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:309
-#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:315
 #: app/components/workspace-breadcrumb.tsx:11
 msgid "Customers"
 msgstr "العملاء"
@@ -6851,10 +6880,8 @@ msgstr "داكن"
 msgid "Dark mode"
 msgstr "الوضع الداكن"
 
-#: app/components/app-sidebar.tsx:135
-#: app/components/app-sidebar.tsx:283
-#: app/components/app-sidebar.tsx:133
-#: app/components/app-sidebar.tsx:280
+#: app/components/app-sidebar.tsx:139
+#: app/components/app-sidebar.tsx:289
 #: app/components/user-dropdown.tsx:61
 #: app/components/workspace-breadcrumb.tsx:76
 msgid "Dashboard"
@@ -6887,6 +6914,8 @@ msgstr "خطأ في الاتصال بقاعدة البيانات"
 #: app/components/staff/schedule/availability-sheet.tsx:289
 #: app/components/staff/timesheets/card-fields.tsx:101
 #: app/components/staff/timesheets/timesheet-table.tsx:209
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:205
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:209
 msgid "Date"
 msgstr "التاريخ"
 
@@ -7071,8 +7100,7 @@ msgstr "الافتراضية: {defaultLanguage}. أول لغة تختارها ه
 msgid "Define allowed and restricted delivery areas by radius, zip codes, or polygon maps."
 msgstr "حدّد مناطق التوصيل المسموح بها والممنوعة حسب النطاق أو الرموز البريدية أو المضلعات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:567
-#: app/components/roles/tenant-role-access-manager.tsx:568
+#: app/components/roles/tenant-role-access-manager.tsx:725
 msgid "Define role details and select what permissions members receive."
 msgstr "حدّد تفاصيل الدور واختر الصلاحيات التي يحصل عليها الأعضاء."
 
@@ -7093,8 +7121,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
-#: app/components/roles/tenant-role-access-manager.tsx:1105
-#: app/components/roles/tenant-role-access-manager.tsx:1263
+#: app/components/roles/tenant-role-access-manager.tsx:1278
+#: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/settings/passkey-manager.tsx:220
 #: app/components/staff/notes-tab.tsx:165
 #: app/components/staff/notes-tab.tsx:207
@@ -7111,8 +7139,6 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:484
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:484
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:547
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1038
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1096
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
@@ -7172,7 +7198,7 @@ msgstr "حذف الطلب…"
 msgid "Delete call"
 msgstr "حذف المكالمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:236
+#: app/components/roles/tenant-role-access-manager.tsx:238
 msgid "Delete calls"
 msgstr "حذف المكالمات"
 
@@ -7203,7 +7229,7 @@ msgstr "حذف العمود"
 msgid "Delete connection"
 msgstr "حذف الاتصال"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1245
+#: app/components/roles/tenant-role-access-manager.tsx:1466
 msgid "Delete custom role"
 msgstr "حذف الدور المخصص"
 
@@ -7298,7 +7324,7 @@ msgstr "حذف الخيار"
 #~ msgid "Delete organization?"
 #~ msgstr "حذف المؤسسة؟"
 
-#: app/components/roles/tenant-role-access-manager.tsx:102
+#: app/components/roles/tenant-role-access-manager.tsx:104
 msgid "Delete own notes"
 msgstr "حذف الملاحظات الخاصة"
 
@@ -7343,7 +7369,7 @@ msgstr "حذف رابط التواصل الاجتماعي"
 msgid "Delete step"
 msgstr "حذف الخطوة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:107
+#: app/components/roles/tenant-role-access-manager.tsx:109
 msgid "Delete team notes"
 msgstr "حذف ملاحظات الفريق"
 
@@ -7381,7 +7407,7 @@ msgstr "تم حذف قاعدة التدريب \"{title}\""
 
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/phone-agent/call-detail-sheet.tsx:598
-#: app/components/roles/tenant-role-access-manager.tsx:1263
+#: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/staff/notes-tab.tsx:205
 #: app/components/staff/timesheets/card-sheet.tsx:437
 msgid "Deleting…"
@@ -7451,6 +7477,10 @@ msgstr "مناطق التوصيل والنطاق الجغرافي"
 msgid "Deny"
 msgstr "رفض"
 
+#: app/components/roles/tenant-role-access-manager.tsx:582
+msgid "Deposit reports, charges & refunds"
+msgstr "تقارير العربون والرسوم والمبالغ المستردة"
+
 #: app/components/hiring/job-editor.tsx:290
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
@@ -7465,17 +7495,11 @@ msgid "Describe when the agent should transfer to a specific contact. For exampl
 msgstr "صف متى يجب على الوكيل التحويل إلى جهة اتصال معينة. على سبيل المثال: \"أسئلة حول حجوزات المجموعات الكبيرة\"."
 
 #: app/components/hiring/job-editor.tsx:700
-#: app/components/roles/tenant-role-access-manager.tsx:593
-#: app/components/roles/tenant-role-access-manager.tsx:707
-#: app/components/roles/tenant-role-access-manager.tsx:900
-#: app/components/roles/tenant-role-access-manager.tsx:1047
-#: app/components/roles/tenant-role-access-manager.tsx:1181
-#: app/components/hiring/job-editor.tsx:657
-#: app/components/roles/tenant-role-access-manager.tsx:594
-#: app/components/roles/tenant-role-access-manager.tsx:709
-#: app/components/roles/tenant-role-access-manager.tsx:903
-#: app/components/roles/tenant-role-access-manager.tsx:1051
-#: app/components/roles/tenant-role-access-manager.tsx:1185
+#: app/components/roles/tenant-role-access-manager.tsx:751
+#: app/components/roles/tenant-role-access-manager.tsx:866
+#: app/components/roles/tenant-role-access-manager.tsx:1065
+#: app/components/roles/tenant-role-access-manager.tsx:1224
+#: app/components/roles/tenant-role-access-manager.tsx:1406
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -7492,8 +7516,7 @@ msgstr "الوصف"
 msgid "Description (Guest-Facing)"
 msgstr "الوصف (الظاهر للعميل)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:684
-#: app/components/roles/tenant-role-access-manager.tsx:686
+#: app/components/roles/tenant-role-access-manager.tsx:843
 msgid "Deselect all"
 msgstr "إلغاء تحديد الكل"
 
@@ -7522,8 +7545,8 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
+#: app/components/workspace-breadcrumb.tsx:134
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
-#: app/components/workspace-breadcrumb.tsx:127
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -7599,6 +7622,10 @@ msgstr "تناول في المطعم / داخلي"
 #: app/components/locations/location-form.tsx:785
 msgid "Dine-In Tips"
 msgstr "بقشيش تناول الطعام في المطعم"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:235
+msgid "Dinner"
+msgstr "العشاء"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
 msgid "Direct / Unknown"
@@ -7861,7 +7888,7 @@ msgstr "مسودة"
 msgid "Draft added. Read it through before you publish."
 msgstr "تمت إضافة المسودة. اقرأها جيدًا قبل النشر."
 
-#: app/components/roles/tenant-role-access-manager.tsx:77
+#: app/components/roles/tenant-role-access-manager.tsx:79
 msgid "Draft and create new notes in the organization."
 msgstr "مسودة وإنشاء ملاحظات جديدة في المنظمة."
 
@@ -7994,7 +8021,7 @@ msgstr "تم الإفلات على {target}."
 msgid "Dropped. Nothing changed."
 msgstr "تم الإفلات. لم يتغير شيء."
 
-#: app/components/app-sidebar.tsx:353
+#: app/components/app-sidebar.tsx:359
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:78
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:201
 msgid "Drops"
@@ -8178,18 +8205,17 @@ msgstr "انصراف مبكر"
 #: app/components/favorite-notes.tsx:116
 #: app/components/menu/drop-wizard/drop-form.tsx:965
 #: app/components/note/comment-item.tsx:232
-#: app/components/roles/tenant-role-access-manager.tsx:1095
+#: app/components/roles/tenant-role-access-manager.tsx:1268
 #: app/components/staff/kiosk-manager.tsx:447
 #: app/components/staff/onboarding/certificates-tab.tsx:278
 #: app/components/staff/onboarding/templates-page.tsx:213
-#: app/components/staff/timesheets/review-queue.tsx:440
+#: app/components/staff/timesheets/review-queue.tsx:439
+#: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:432
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:481
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:405
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:475
-#: app/components/staff/timesheets/review-queue.tsx:439
-#: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:981
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
@@ -8229,11 +8255,11 @@ msgstr "تعديل العمود"
 msgid "Edit comment..."
 msgstr "تعديل التعليق..."
 
-#: app/components/roles/tenant-role-access-manager.tsx:560
+#: app/components/roles/tenant-role-access-manager.tsx:717
 msgid "Edit Custom Role"
 msgstr "تعديل الدور المخصص"
 
-#: app/components/roles/tenant-role-access-manager.tsx:296
+#: app/components/roles/tenant-role-access-manager.tsx:298
 msgid "Edit dates of birth, home addresses, and emergency contacts. Includes View private details."
 msgstr "تعديل تواريخ الميلاد وعناوين السكن وجهات الاتصال في حالات الطوارئ. يشمل عرض التفاصيل الخاصة."
 
@@ -8250,9 +8276,17 @@ msgstr "تعديل التصميم"
 msgid "Edit Details"
 msgstr "تعديل التفاصيل"
 
+#: app/components/roles/tenant-role-access-manager.tsx:406
+msgid "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
+msgstr "تعديل مناطق الطعام والطاولات والدمج وفترات الخدمة والوتيرة والحظر والسياسات والرسائل والأقسام والتجارب. يشمل عرض إعدادات الحجوزات والتجارب."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:450
 msgid "Edit Drop"
 msgstr "تعديل الطرح"
+
+#: app/components/roles/tenant-role-access-manager.tsx:418
+msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
+msgstr "تعديل ملفات الضيوف والوسوم والملاحظات ودمج أو مسح بيانات الضيوف. يشمل عرض سجل الضيوف."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1312
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
@@ -8288,8 +8322,7 @@ msgstr "تعديل الخيار"
 msgid "Edit Option"
 msgstr "تعديل الخيار"
 
-#: app/components/roles/tenant-role-access-manager.tsx:90
-#: app/components/roles/tenant-role-access-manager.tsx:91
+#: app/components/roles/tenant-role-access-manager.tsx:93
 msgid "Edit own notes"
 msgstr "تعديل الملاحظات الخاصة"
 
@@ -8301,7 +8334,7 @@ msgstr "تعديل نافذة الاستلام"
 msgid "Edit position"
 msgstr "تعديل المنصب"
 
-#: app/components/roles/tenant-role-access-manager.tsx:295
+#: app/components/roles/tenant-role-access-manager.tsx:297
 msgid "Edit private details"
 msgstr "تعديل التفاصيل الخاصة"
 
@@ -8317,8 +8350,7 @@ msgstr "تعديل التذكير"
 msgid "Edit Reminder"
 msgstr "تعديل التذكير"
 
-#: app/components/roles/tenant-role-access-manager.tsx:867
-#: app/components/roles/tenant-role-access-manager.tsx:870
+#: app/components/roles/tenant-role-access-manager.tsx:1032
 msgid "Edit role"
 msgstr "تعديل الدور"
 
@@ -8338,7 +8370,7 @@ msgstr "تعديل الوردية"
 msgid "Edit tablet"
 msgstr "تعديل الجهاز اللوحي"
 
-#: app/components/roles/tenant-role-access-manager.tsx:96
+#: app/components/roles/tenant-role-access-manager.tsx:98
 msgid "Edit team notes"
 msgstr "تعديل ملاحظات الفريق"
 
@@ -8346,11 +8378,11 @@ msgstr "تعديل ملاحظات الفريق"
 msgid "Edit template"
 msgstr "تعديل القالب"
 
-#: app/components/roles/tenant-role-access-manager.tsx:333
+#: app/components/roles/tenant-role-access-manager.tsx:335
 msgid "Edit time cards"
 msgstr "تعديل بطاقات الدوام"
 
-#: app/components/roles/tenant-role-access-manager.tsx:163
+#: app/components/roles/tenant-role-access-manager.tsx:165
 msgid "Edit website content"
 msgstr "تعديل محتوى الموقع"
 
@@ -8672,10 +8704,8 @@ msgstr "أدخل الرمز الاحتياطي"
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "أدخل كل نسبة كرقم من 0 إلى 100."
 
-#: app/components/organization-invitations.tsx:442
-#: app/routes/organizations+/create.tsx:1616
 #: app/components/organization-invitations.tsx:449
-#: app/routes/organizations+/create.tsx:1228
+#: app/routes/organizations+/create.tsx:1616
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
 
@@ -8700,7 +8730,6 @@ msgstr "إدخال الرقم السري"
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "أدخل الرموز البريدية التي تنطبق عليها منطقة التوصيل هذه."
 
-#: app/components/staff/labor/labor-overview.tsx:484
 #: app/components/staff/labor/labor-overview.tsx:482
 msgid "Enter sales"
 msgstr "إدخال المبيعات"
@@ -9023,6 +9052,12 @@ msgstr "صفحة موجودة"
 msgid "Experience"
 msgstr "الخبرة"
 
+#: app/components/app-sidebar.tsx:508
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:118
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:21
+msgid "Experiences"
+msgstr "التجارب"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:440
 msgid "Expiration Date"
 msgstr "تاريخ انتهاء الصلاحية"
@@ -9337,6 +9372,10 @@ msgstr "التصفية حسب الوسم"
 msgid "Filter by workplace"
 msgstr "تصفية حسب مكان العمل"
 
+#: app/components/roles/tenant-role-access-manager.tsx:580
+msgid "Finance"
+msgstr "المالية"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:808
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
@@ -9435,12 +9474,11 @@ msgstr "قلب عموديًا"
 msgid "Flow"
 msgstr "مسار المكالمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:231
+#: app/components/roles/tenant-role-access-manager.tsx:233
 msgid "Follow up on calls"
 msgstr "متابعة المكالمات"
 
-#: app/components/app-sidebar.tsx:444
-#: app/components/app-sidebar.tsx:396
+#: app/components/app-sidebar.tsx:450
 #: app/components/workspace-breadcrumb.tsx:51
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:62
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:219
@@ -9536,11 +9574,9 @@ msgstr "التنسيق"
 msgid "Former member"
 msgstr "عضو سابق"
 
-#: app/components/app-sidebar.tsx:521
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/components/app-sidebar.tsx:473
+#: app/components/app-sidebar.tsx:580
 #: app/components/workspace-breadcrumb.tsx:57
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -9625,7 +9661,6 @@ msgstr "التنفيذ والتوقيت"
 msgid "Fulfillment Options"
 msgstr "خيارات التنفيذ"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:791
 #: app/components/settings/cards/organization/site-theme-card.tsx:752
 msgid "Full"
 msgstr "كامل"
@@ -9647,20 +9682,18 @@ msgstr "دوام كامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:564
-#: app/components/app-sidebar.tsx:516
+#: app/components/app-sidebar.tsx:623
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
 msgid "General"
 msgstr "عام"
 
-#: app/components/roles/tenant-role-access-manager.tsx:441
+#: app/components/roles/tenant-role-access-manager.tsx:496
 msgid "General manager"
 msgstr "المدير العام"
 
-#: app/components/app-sidebar.tsx:511
-#: app/components/app-sidebar.tsx:463
+#: app/components/app-sidebar.tsx:570
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -9692,17 +9725,16 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:722
+#: app/components/app-sidebar.tsx:803
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:164
-#: app/components/app-sidebar.tsx:737
+#: app/components/app-sidebar.tsx:168
+#: app/components/app-sidebar.tsx:818
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:107
-#: app/components/app-sidebar.tsx:105
+#: app/components/app-sidebar.tsx:111
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr "تواصل معنا"
@@ -9725,10 +9757,8 @@ msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطو�
 msgid "Give away {when}"
 msgstr "التخلي عن {when}"
 
-#: app/components/app-sidebar.tsx:172
-#: app/components/app-sidebar.tsx:745
-#: app/components/app-sidebar.tsx:170
-#: app/components/app-sidebar.tsx:687
+#: app/components/app-sidebar.tsx:176
+#: app/components/app-sidebar.tsx:826
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -9781,8 +9811,7 @@ msgstr "الانتقال إلى هناك"
 msgid "Go to Home"
 msgstr "الانتقال إلى الرئيسية"
 
-#: app/components/app-sidebar.tsx:228
-#: app/components/app-sidebar.tsx:226
+#: app/components/app-sidebar.tsx:232
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -9794,15 +9823,15 @@ msgstr "انتقل إلى المفتاح"
 msgid "Go-live checklist"
 msgstr "قائمة التحقق قبل الإطلاق"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:164
 msgid "Good afternoon, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:165
 msgid "Good evening, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:153
+#: app/routes/_app+/$orgSlug_+/index.tsx:163
 msgid "Good morning, {userName}"
 msgstr "صباح الخير، {userName}"
 
@@ -9915,9 +9944,26 @@ msgstr "الدفع كضيف"
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "العلامات الغذائية للعميل ومعلومات الإفصاح عن مسببات الحساسية."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:23
+msgid "Guest directory, VIP tags, dietary preferences, visit history, and profile merges."
+msgstr "دليل الضيوف ووسوم كبار الشخصيات والتفضيلات الغذائية وسجل الزيارات ودمج الملفات."
+
 #: app/components/menu/modifier-guest-preview.tsx:189
 msgid "Guest Live Preview"
 msgstr "معاينة مباشرة للعميل"
+
+#: app/components/roles/tenant-role-access-manager.tsx:413
+#: app/components/roles/tenant-role-access-manager.tsx:419
+msgid "Guest personal data"
+msgstr "البيانات الشخصية للضيوف"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:27
+msgid "Guest profiles, preferences, visit history, and notes live in your regional database."
+msgstr "تُحفظ ملفات الضيوف وتفضيلاتهم وسجل زياراتهم وملاحظاتهم في قاعدة البيانات الإقليمية."
+
+#: app/components/roles/tenant-role-access-manager.tsx:560
+msgid "Guest relations"
+msgstr "علاقات الضيوف"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1205
 #~ msgid "Guest storefront indicators and countdowns."
@@ -9935,6 +9981,21 @@ msgstr "الاسم الظاهر للعميل والمعرّف الداخلي و�
 #: app/components/menu/option-form.tsx:401
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "الاسم الظاهر للعميل ورمز المنتج الداخلي والوصف."
+
+#: app/components/roles/tenant-role-access-manager.tsx:570
+msgid "Guestbook manager"
+msgstr "مدير سجل الضيوف"
+
+#: app/components/roles/tenant-role-access-manager.tsx:562
+#: app/components/roles/tenant-role-access-manager.tsx:572
+msgid "Guestbook profiles & merges"
+msgstr "ملفات سجل الضيوف والدمج"
+
+#: app/components/app-sidebar.tsx:501
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:112
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:21
+msgid "Guests"
+msgstr "الضيوف"
 
 #: app/components/menu/modifier-form.tsx:997
 msgid "Guests can pick multiple options."
@@ -9956,7 +10017,6 @@ msgstr "يختار العملاء الكمية لكل خيار."
 msgid "Guests must choose one option before continuing."
 msgstr "يجب على العملاء اختيار خيار واحد قبل المتابعة."
 
-#: app/components/staff/timeclock-today.tsx:306
 #: app/components/staff/timeclock-today.tsx:309
 #: app/components/staff/timesheets/card-fields.tsx:67
 msgid "h"
@@ -10135,14 +10195,15 @@ msgstr "إخفاء الردود ({replyCount})"
 msgid "High"
 msgstr "عالية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:109
-#: app/components/roles/tenant-role-access-manager.tsx:131
-#: app/components/roles/tenant-role-access-manager.tsx:148
-#: app/components/roles/tenant-role-access-manager.tsx:165
-#: app/components/roles/tenant-role-access-manager.tsx:204
-#: app/components/roles/tenant-role-access-manager.tsx:250
-#: app/components/roles/tenant-role-access-manager.tsx:273
-#: app/components/roles/tenant-role-access-manager.tsx:358
+#: app/components/roles/tenant-role-access-manager.tsx:111
+#: app/components/roles/tenant-role-access-manager.tsx:133
+#: app/components/roles/tenant-role-access-manager.tsx:150
+#: app/components/roles/tenant-role-access-manager.tsx:167
+#: app/components/roles/tenant-role-access-manager.tsx:206
+#: app/components/roles/tenant-role-access-manager.tsx:252
+#: app/components/roles/tenant-role-access-manager.tsx:275
+#: app/components/roles/tenant-role-access-manager.tsx:360
+#: app/components/roles/tenant-role-access-manager.tsx:407
 msgid "High impact"
 msgstr "تأثير كبير"
 
@@ -10183,16 +10244,14 @@ msgid "Hired."
 msgstr "تم التوظيف."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:498
-#: app/components/roles/tenant-role-access-manager.tsx:362
-#: app/components/app-sidebar.tsx:450
-#: app/components/roles/tenant-role-access-manager.tsx:363
+#: app/components/app-sidebar.tsx:557
+#: app/components/roles/tenant-role-access-manager.tsx:365
 #: app/components/workspace-breadcrumb.tsx:37
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:42
 msgid "Hiring"
 msgstr "التوظيف"
 
-#: app/components/roles/tenant-role-access-manager.tsx:461
+#: app/components/roles/tenant-role-access-manager.tsx:516
 msgid "Hiring manager"
 msgstr "مدير التوظيف"
 
@@ -10247,13 +10306,17 @@ msgstr "العطل"
 #: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/components/workspace-breadcrumb.tsx:100
-#: app/components/workspace-breadcrumb.tsx:135
-#: app/components/workspace-breadcrumb.tsx:144
+#: app/components/workspace-breadcrumb.tsx:142
+#: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Home"
 msgstr "الرئيسية"
+
+#: app/components/roles/tenant-role-access-manager.tsx:526
+msgid "Host"
+msgstr "مضيف استقبال"
 
 #: app/components/settings/cards/organization/shop-card.tsx:211
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
@@ -10660,21 +10723,18 @@ msgstr "إدراج حقل هنا"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr "إدراج وسوم الدمج:"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1220
+#: app/components/roles/tenant-role-access-manager.tsx:1441
 msgid "Inspect"
 msgstr "استعراض"
 
-#: app/components/app-sidebar.tsx:599
+#: app/components/app-sidebar.tsx:658
 #: app/components/settings/cards/organization/integrations-card.tsx:181
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
-#: app/components/app-sidebar.tsx:544
-#: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
 msgid "Integrations"
 msgstr "التكاملات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:244
+#: app/components/roles/tenant-role-access-manager.tsx:246
 msgid "Internal channels for your team."
 msgstr "قنوات داخلية لفريقك."
 
@@ -10691,7 +10751,6 @@ msgstr "المرجع الداخلي (اختياري)"
 msgid "Internal Reference / SKU (Optional)"
 msgstr "المرجع الداخلي / رمز المنتج (اختياري)"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:637
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:765
 msgid "International format, for example +15551234567. Use a line that doesn't forward to the agent."
 msgstr "بالصيغة الدولية، مثل +15551234567. استخدم خطًا لا يُحوِّل المكالمات إلى الوكيل."
@@ -10798,17 +10857,16 @@ msgstr "الدعوة عبر البريد الإلكتروني"
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
-#: app/components/workspace-header-actions.tsx:46
+#: app/components/workspace-header-actions.tsx:71
 msgid "Invite member"
 msgstr "دعوة عضو"
 
-#: app/components/team-switcher.tsx:316
-#: app/components/team-switcher.tsx:188
+#: app/components/team-switcher.tsx:315
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
 #: app/components/command-menu.tsx:132
-#: app/components/roles/tenant-role-access-manager.tsx:124
+#: app/components/roles/tenant-role-access-manager.tsx:126
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
@@ -10923,7 +10981,7 @@ msgstr "صور العنصر"
 msgid "items"
 msgstr "عناصر"
 
-#: app/components/app-sidebar.tsx:338
+#: app/components/app-sidebar.tsx:344
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:57
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:262
@@ -10966,11 +11024,11 @@ msgstr "المتقدّمون للوظائف: {applicantCount} (غير مشمول
 msgid "Job post"
 msgstr "إعلان وظيفة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:463
+#: app/components/roles/tenant-role-access-manager.tsx:518
 msgid "Job posts & applicants"
 msgstr "الوظائف والمتقدمون"
 
-#: app/components/roles/tenant-role-access-manager.tsx:365
+#: app/components/roles/tenant-role-access-manager.tsx:367
 msgid "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 msgstr "الوظائف والمتقدمون. تنطبق فقط عند تفعيل التوظيف لمؤسستك."
 
@@ -11068,7 +11126,6 @@ msgstr "إبقاؤه"
 msgid "Keep order"
 msgstr "الاحتفاظ بالطلب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:573
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:701
 msgid "Keep recordings for"
 msgstr "الاحتفاظ بالتسجيلات لمدة"
@@ -11156,8 +11213,7 @@ msgstr "إعداد Kiro IDE"
 msgid "Kitchen Throttling Exemption"
 msgstr "إعفاء من تنظيم طلبات المطبخ"
 
-#: app/components/app-sidebar.tsx:418
-#: app/components/app-sidebar.tsx:370
+#: app/components/app-sidebar.tsx:424
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
@@ -11182,10 +11238,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند تفعيل الوسم التلقائي، يطبّق الوكيل الوسم عندما يتطابق الوصف مع المكالمة."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:493
-#: app/components/staff/labor/labor-page.tsx:210
-#: app/components/staff/labor/labor-page.tsx:239
-#: app/components/app-sidebar.tsx:445
+#: app/components/app-sidebar.tsx:552
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
 #: app/components/workspace-breadcrumb.tsx:36
@@ -11264,11 +11317,10 @@ msgid "Large Order Threshold Rule"
 msgstr "قاعدة حد الطلبات الكبيرة"
 
 #. placeholder {0}: notes.daysShown
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:214
 msgid "Last {0} days"
 msgstr "آخر {0} يومًا"
 
-#: app/components/staff/labor/labor-page.tsx:327
 #: app/components/staff/labor/labor-page.tsx:330
 msgid "Last {days} days"
 msgstr "آخر {days} يوم"
@@ -11504,7 +11556,6 @@ msgstr "التراخيص والبطاقات وتواريخ انتهائها."
 #~ msgid "Lifecycle State"
 #~ msgstr "مرحلة دورة الحياة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:776
 #: app/components/settings/cards/organization/site-theme-card.tsx:737
 msgid "Light"
 msgstr "فاتح"
@@ -11523,13 +11574,13 @@ msgstr "الوضع الفاتح"
 #~ msgid "Limit orders per pickup time"
 #~ msgstr "تحديد الطلبات لكل وقت استلام"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:491
-#~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
-#~ msgstr "يساعد تحديد عدد العناصر التي تبيعها على خلق حالة إلحاح وحماس لدى العملاء لطرحك القادم."
-
 #: app/utils/organization/role-label.ts:22
 msgid "Limited access for temporary collaborators"
 msgstr "وصول محدود للمتعاونين المؤقتين"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:491
+#~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
+#~ msgstr "يساعد تحديد عدد العناصر التي تبيعها على خلق حالة إلحاح وحماس لدى العملاء لطرحك القادم."
 
 #: app/components/staff/labor/sales-import-dialog.tsx:259
 msgid "Line {line}: "
@@ -11606,9 +11657,17 @@ msgstr "يستمع"
 msgid "Live"
 msgstr "مباشر"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:23
+msgid "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
+msgstr "مخطط الصالة المباشر والحجوزات القادمة والطاولات المشغولة وإجلاس الحضور المباشر."
+
 #: app/components/phone-agent/test-call-panel.tsx:641
 msgid "Live transcript"
 msgstr "النص المكتوب المباشر"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:23
+msgid "Live walk-in queue, quoted wait times, table-ready notifications, and seating."
+msgstr "قائمة انتظار الحضور المباشر وأوقات الانتظار المقدرة وإشعارات جاهزية الطاولة والإجلاس."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:256
 msgid "LiveKit credentials are set by your platform administrator."
@@ -11737,7 +11796,6 @@ msgstr "جارٍ تحميل النتائج…"
 msgid "Loading reviews"
 msgstr "جارٍ تحميل التقييمات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
@@ -11798,6 +11856,8 @@ msgstr "جارٍ التحميل…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:177
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:181
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
 msgid "Location"
 msgstr "الموقع"
@@ -11826,14 +11886,13 @@ msgstr "تجاوزات الفرع"
 msgid "Location Status"
 msgstr "حالة الفرع"
 
-#: app/components/app-sidebar.tsx:569
+#: app/components/app-sidebar.tsx:628
 #: app/components/member-location-scope.tsx:160
-#: app/components/team-switcher.tsx:183
+#: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:525
 msgid "Locations"
 msgstr "الفروع"
 
-#: app/components/staff/timesheets/timesheets-page.tsx:949
 #: app/components/staff/timesheets/timesheets-page.tsx:948
 msgid "Lock"
 msgstr "قفل"
@@ -11864,7 +11923,6 @@ msgstr "القفل متوقف في مكان العمل هذا. فعّله من �
 msgid "Locks inventory while customer fills in checkout details."
 msgstr "يحجز المخزون أثناء إدخال العميل تفاصيل الدفع."
 
-#: app/components/nav-user.tsx:300
 #: app/components/nav-user.tsx:303
 #: app/components/ui/header.tsx:144
 msgid "Log out"
@@ -11957,6 +12015,10 @@ msgstr "تقييم منخفض"
 msgid "Low ratings"
 msgstr "التقييمات المنخفضة"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:234
+msgid "Lunch"
+msgstr "الغداء"
+
 #: app/components/staff/timeclock-today.tsx:309
 #: app/components/staff/timesheets/card-fields.tsx:68
 #: app/components/staff/timesheets/timesheet-table.tsx:334
@@ -11968,8 +12030,7 @@ msgstr "د"
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/components/app-sidebar.tsx:360
-#: app/components/app-sidebar.tsx:312
+#: app/components/app-sidebar.tsx:366
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Mailbox"
 msgstr "صندوق الوارد"
@@ -11981,6 +12042,10 @@ msgstr "مصادر صندوق الوارد"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1234
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:189
+msgid "Main location"
+msgstr "الفرع الرئيسي"
 
 #: app/components/staff/positions-tab.tsx:254
 msgid "Main position"
@@ -12002,7 +12067,7 @@ msgstr "إجراء مكالمة تجريبية"
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
-#: app/components/roles/tenant-role-access-manager.tsx:92
+#: app/components/roles/tenant-role-access-manager.tsx:94
 msgid "Make modifications to notes created by this user."
 msgstr "إجراء تعديلات على الملاحظات التي أنشأها هذا المستخدم."
 
@@ -12018,16 +12083,15 @@ msgstr "جعلها عامة"
 msgid "Make this the primary location for your restaurant."
 msgstr "اجعل هذا الفرع الرئيسي لمطعمك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:173
-#: app/components/roles/tenant-role-access-manager.tsx:174
+#: app/components/roles/tenant-role-access-manager.tsx:176
 msgid "Manage announcements"
 msgstr "إدارة الإعلانات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:202
+#: app/components/roles/tenant-role-access-manager.tsx:204
 msgid "Manage automations"
 msgstr "إدارة الأتمتة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:191
+#: app/components/roles/tenant-role-access-manager.tsx:193
 msgid "Manage broadcasts"
 msgstr "إدارة البثّات"
 
@@ -12035,11 +12099,15 @@ msgstr "إدارة البثّات"
 msgid "Manage channels"
 msgstr "إدارة القنوات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:248
+#: app/components/roles/tenant-role-access-manager.tsx:250
 msgid "Manage chat channels"
 msgstr "إدارة قنوات الدردشة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:375
+#: app/components/roles/tenant-role-access-manager.tsx:417
+msgid "Manage guestbook"
+msgstr "إدارة سجل الضيوف"
+
+#: app/components/roles/tenant-role-access-manager.tsx:377
 msgid "Manage hiring"
 msgstr "إدارة التوظيف"
 
@@ -12047,16 +12115,15 @@ msgstr "إدارة التوظيف"
 msgid "Manage integrations"
 msgstr "إدارة عمليات الربط"
 
-#: app/components/roles/tenant-role-access-manager.tsx:375
-#: app/components/roles/tenant-role-access-manager.tsx:376
+#: app/components/roles/tenant-role-access-manager.tsx:378
 msgid "Manage job posts, move applicants between stages, and hire. Includes View hiring."
 msgstr "إدارة الوظائف، ونقل المتقدمين بين المراحل، والتوظيف. يشمل عرض التوظيف."
 
-#: app/components/roles/tenant-role-access-manager.tsx:356
+#: app/components/roles/tenant-role-access-manager.tsx:358
 msgid "Manage labor policy"
 msgstr "إدارة سياسة العمل"
 
-#: app/components/team-switcher.tsx:257
+#: app/components/team-switcher.tsx:256
 msgid "Manage locations"
 msgstr "إدارة الفروع"
 
@@ -12069,26 +12136,32 @@ msgstr "إدارة تصنيفات القائمة"
 msgid "Manage Passkeys"
 msgstr "إدارة مفاتيح المرور"
 
-#: app/components/roles/tenant-role-access-manager.tsx:219
+#: app/components/roles/tenant-role-access-manager.tsx:221
 msgid "Manage phone agent"
 msgstr "إدارة وكيل الهاتف"
+
+#: app/components/roles/tenant-role-access-manager.tsx:395
+msgid "Manage reservation book & waitlist"
+msgstr "إدارة دفتر الحجوزات وقائمة الانتظار"
+
+#: app/components/roles/tenant-role-access-manager.tsx:405
+msgid "Manage reservation settings & experiences"
+msgstr "إدارة إعدادات الحجوزات والتجارب"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:528
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "أدر فروع المطعم وساعات العمل وطرق التنفيذ ومناطق التوصيل."
 
-#: app/components/organization-invitations.tsx:266
-#: app/components/organization-members.tsx:186
 #: app/components/organization-invitations.tsx:273
-#: app/components/organization-members.tsx:182
+#: app/components/organization-members.tsx:195
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
 
-#: app/components/roles/tenant-role-access-manager.tsx:313
+#: app/components/roles/tenant-role-access-manager.tsx:315
 msgid "Manage schedule"
 msgstr "إدارة الجدول"
 
-#: app/components/roles/tenant-role-access-manager.tsx:271
+#: app/components/roles/tenant-role-access-manager.tsx:273
 msgid "Manage staff"
 msgstr "إدارة الموظفين"
 
@@ -12128,13 +12201,9 @@ msgstr "إدارة إعدادات الإشعارات للقنوات ومسارا
 #~ msgid "Manage your organization settings and preferences."
 #~ msgstr "إدارة إعدادات وتفضيلات منظمتك."
 
-#: app/components/organization-members.tsx:167
+#: app/components/organization-members.tsx:172
 #~ msgid "Manage your organization's members."
 #~ msgstr "إدارة أعضاء منظمتك."
-
-#: app/components/organization-members.tsx:172
-msgid "Manage your organization's members."
-msgstr "إدارة أعضاء منظمتك."
 
 #: app/components/settings/cards/organization/general-settings-card.tsx:61
 #~ msgid "Manage your organization's name, slug, and profile image."
@@ -12160,11 +12229,11 @@ msgstr "إدارة بياناتك الشخصية وفقاً للمادة 20 من
 msgid "Manage your public organization website and appearance."
 msgstr "إدارة موقع مؤسستك العام ومظهره."
 
-#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:15
+#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
 msgid "Manage your restaurant settings and preferences."
 msgstr "أدر إعدادات مطعمك وتفضيلاتك."
 
-#: app/components/organization-members.tsx:180
+#: app/components/organization-members.tsx:185
 msgid "Manage your restaurant's members."
 msgstr "أدر أعضاء مطعمك."
 
@@ -12206,7 +12275,6 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:492
 #: app/components/ui/notification-bell.tsx:491
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
@@ -12272,10 +12340,8 @@ msgstr "تم التحديد كمراجَعة."
 msgid "Marked unavailable"
 msgstr "محدد كغير متاح"
 
-#: app/components/app-sidebar.tsx:371
-#: app/components/roles/tenant-role-access-manager.tsx:180
-#: app/components/app-sidebar.tsx:323
-#: app/components/roles/tenant-role-access-manager.tsx:181
+#: app/components/app-sidebar.tsx:377
+#: app/components/roles/tenant-role-access-manager.tsx:183
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -12285,7 +12351,7 @@ msgstr "التسويق"
 #~ msgid "Marketing and scheduling"
 #~ msgstr "التسويق والجدولة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:408
+#: app/components/roles/tenant-role-access-manager.tsx:464
 msgid "Marketing manager"
 msgstr "مدير التسويق"
 
@@ -12293,7 +12359,6 @@ msgstr "مدير التسويق"
 msgid "Marketplaces"
 msgstr "الأسواق الإلكترونية"
 
-#: app/components/staff/timesheets/review-queue.tsx:189
 #: app/components/staff/timesheets/review-queue.tsx:188
 msgid "Marking…"
 msgstr "جارٍ التحديد…"
@@ -12371,8 +12436,7 @@ msgstr "تعليمات إعداد MCP OAuth"
 msgid "MCP server"
 msgstr "خادم MCP"
 
-#: app/components/app-sidebar.tsx:609
-#: app/components/app-sidebar.tsx:554
+#: app/components/app-sidebar.tsx:668
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -12401,8 +12465,7 @@ msgstr "تفاصيل الوسائط"
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
-#: app/components/app-sidebar.tsx:303
-#: app/components/app-sidebar.tsx:300
+#: app/components/app-sidebar.tsx:309
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
@@ -12424,8 +12487,7 @@ msgstr "متوسط"
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
 msgstr "التقِ بأعضاء آخرين وشارك التحديثات في المجموعة. يمكن للمدير إضافة نقاط المجتمع بعد انضمامك."
 
-#: app/components/roles/tenant-role-access-manager.tsx:857
-#: app/components/roles/tenant-role-access-manager.tsx:860
+#: app/components/roles/tenant-role-access-manager.tsx:1022
 msgid "member"
 msgstr "عضو"
 
@@ -12433,26 +12495,21 @@ msgstr "عضو"
 msgid "Member"
 msgstr "عضو"
 
-#: app/components/roles/tenant-role-access-manager.tsx:857
+#: app/components/roles/tenant-role-access-manager.tsx:1022
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:576
+#: app/components/app-sidebar.tsx:635
 #: app/components/chat/chat-group-settings-dialog.tsx:83
-#: app/components/organization-members.tsx:177
-#: app/components/roles/tenant-role-access-manager.tsx:1050
-#: app/components/roles/tenant-role-access-manager.tsx:1184
-#: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:286
-#: app/components/app-sidebar.tsx:521
-#: app/components/organization-members.tsx:169
-#: app/components/roles/tenant-role-access-manager.tsx:1054
-#: app/components/roles/tenant-role-access-manager.tsx:1188
+#: app/components/organization-members.tsx:182
+#: app/components/roles/tenant-role-access-manager.tsx:1227
+#: app/components/roles/tenant-role-access-manager.tsx:1409
 #: app/components/workspace-breadcrumb.tsx:63
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:294
 msgid "Members"
 msgstr "الأعضاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:420
+#: app/components/roles/tenant-role-access-manager.tsx:475
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
@@ -12460,7 +12517,7 @@ msgstr "الأعضاء والدعوات"
 msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
-#: app/components/app-sidebar.tsx:315
+#: app/components/app-sidebar.tsx:321
 #: app/components/menu/drop-wizard/drop-form.tsx:706
 #: app/components/menu/drop-wizard/drop-form.tsx:722
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
@@ -12525,7 +12582,7 @@ msgstr "نوع القائمة"
 msgid "Menu Type & Capabilities"
 msgstr "نوع القائمة والإمكانات"
 
-#: app/components/app-sidebar.tsx:328
+#: app/components/app-sidebar.tsx:334
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:298
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:250
@@ -12692,7 +12749,7 @@ msgstr "معلومات مجموعة الإضافات"
 msgid "Modifier Group Name"
 msgstr "اسم مجموعة الإضافات"
 
-#: app/components/app-sidebar.tsx:343
+#: app/components/app-sidebar.tsx:349
 #: app/components/menu/item-form.tsx:539
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:64
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:292
@@ -12703,12 +12760,11 @@ msgstr "مجموعات الإضافات"
 msgid "Modifier Options"
 msgstr "خيارات الإضافات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:96
-#: app/components/roles/tenant-role-access-manager.tsx:97
+#: app/components/roles/tenant-role-access-manager.tsx:99
 msgid "Modify notes created by other team members."
 msgstr "تعديل الملاحظات التي أنشأها أعضاء الفريق الآخرون."
 
-#: app/components/roles/tenant-role-access-manager.tsx:146
+#: app/components/roles/tenant-role-access-manager.tsx:148
 msgid "Modify organization settings"
 msgstr "تعديل إعدادات المنظمة"
 
@@ -12839,7 +12895,6 @@ msgstr "اختيار متعدد"
 msgid "Multiple Choice (Checkboxes)"
 msgstr "اختيار متعدد (مربعات اختيار)"
 
-#: app/components/phone-agent/test-call-panel.tsx:631
 #: app/components/phone-agent/test-call-phone.tsx:233
 msgid "Mute"
 msgstr "كتم الصوت"
@@ -12957,7 +13012,6 @@ msgstr "تحتاج إلى متابعة"
 msgid "Needs reply"
 msgstr "يحتاج إلى رد"
 
-#: app/components/staff/timeclock-today.tsx:378
 #: app/components/staff/timeclock-today.tsx:381
 #: app/components/staff/timesheets/issue-copy.ts:51
 #: app/components/staff/timesheets/timesheets-page.tsx:537
@@ -13034,7 +13088,7 @@ msgstr "لم يُستخدم أبداً"
 
 #: app/components/hiring/applicant-labels.ts:22
 #: app/components/workspace-breadcrumb.tsx:22
-#: app/components/workspace-header-actions.tsx:26
+#: app/components/workspace-header-actions.tsx:44
 msgid "New"
 msgstr "جديد"
 
@@ -13141,7 +13195,7 @@ msgid "New Modifier Option"
 msgstr "خيار إضافات جديد"
 
 #: app/components/staff/notes-tab.tsx:98
-#: app/components/workspace-header-actions.tsx:37
+#: app/components/workspace-header-actions.tsx:57
 msgid "New note"
 msgstr "ملاحظة جديدة"
 
@@ -13182,7 +13236,7 @@ msgstr "إعادة توجيه جديدة"
 msgid "New Redirect"
 msgstr "إعادة توجيه جديدة"
 
-#: app/components/workspace-header-actions.tsx:41
+#: app/components/workspace-header-actions.tsx:62
 msgid "New report"
 msgstr "تقرير جديد"
 
@@ -13271,7 +13325,7 @@ msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
@@ -13426,7 +13480,7 @@ msgstr "لا توجد جهات اتصال بعد."
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1034
+#: app/components/roles/tenant-role-access-manager.tsx:1207
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
@@ -13438,7 +13492,6 @@ msgstr "لا توجد سجلات تسليم بعد."
 msgid "No delivery zones configured"
 msgstr "لم يتم ضبط أي مناطق توصيل"
 
-#: app/components/organization-invitations.tsx:473
 #: app/components/organization-invitations.tsx:480
 msgid "No description provided"
 msgstr "لم يُقدَّم وصف"
@@ -13479,6 +13532,10 @@ msgstr "لم يتم العثور على رموز تعبيرية"
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:25
+msgid "No experiences configured yet"
+msgstr "لم يتم إعداد أي تجارب بعد"
+
 #: app/components/website/form-builder-sidebar.tsx:878
 msgid "No fields yet"
 msgstr "لا توجد حقول بعد"
@@ -13490,6 +13547,10 @@ msgstr "لا توجد حقول بعد"
 #: app/components/staff/schedule/schedule-toolbar.tsx:135
 msgid "No grouping"
 msgstr "بلا تجميع"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:25
+msgid "No guest profiles found"
+msgstr "لم يتم العثور على ملفات ضيوف"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:292
 msgid "No hours in this pay period"
@@ -13640,8 +13701,7 @@ msgstr "لا توجد وسائط تطابق بحثك."
 msgid "No media yet. Upload an image to get started."
 msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة للبدء."
 
-#: app/components/organization-members.tsx:166
-#: app/components/organization-members.tsx:158
+#: app/components/organization-members.tsx:171
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
 
@@ -13941,6 +14001,10 @@ msgstr "لا توجد عمليات إعادة توجيه تطابق هذا ال�
 msgid "No reminder notifications set."
 msgstr "لم يتم ضبط تذكيرات."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:25
+msgid "No reservations scheduled for today"
+msgstr "لا توجد حجوزات مجدولة لليوم"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
 msgid "No responses yet."
 msgstr "لا توجد ردود بعد."
@@ -14184,8 +14248,6 @@ msgstr "لا شيء"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/settings/cards/organization/site-theme-card.tsx:787
-#: app/components/hiring/job-summary.tsx:47
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -14214,7 +14276,7 @@ msgstr "عادي"
 msgid "Not allocated"
 msgstr "غير موزَّع"
 
-#: app/components/roles/tenant-role-access-manager.tsx:941
+#: app/components/roles/tenant-role-access-manager.tsx:1103
 msgid "Not allowed"
 msgstr "غير مسموح"
 
@@ -14393,8 +14455,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:297
-#: app/components/app-sidebar.tsx:294
+#: app/components/app-sidebar.tsx:303
 #: app/components/command-menu.tsx:137
 #: app/components/hiring/candidate-sheet.tsx:360
 #: app/components/staff/notes-tab.tsx:84
@@ -14405,11 +14466,11 @@ msgstr "ملاحظات"
 msgid "Notes"
 msgstr "الملاحظات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:71
+#: app/components/roles/tenant-role-access-manager.tsx:73
 msgid "Notes & Documents"
 msgstr "الملاحظات والمستندات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:396
+#: app/components/roles/tenant-role-access-manager.tsx:451
 msgid "Notes & website"
 msgstr "الملاحظات والموقع"
 
@@ -14529,8 +14590,7 @@ msgstr "رسالة الإشعار"
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:614
-#: app/components/app-sidebar.tsx:559
+#: app/components/app-sidebar.tsx:673
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr "الإشعارات"
@@ -14655,8 +14715,8 @@ msgid "On that date"
 msgstr "في ذلك التاريخ"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:225
-msgid "On the leaderboard"
-msgstr "في لوحة المتصدرين"
+#~ msgid "On the leaderboard"
+#~ msgstr "في لوحة المتصدرين"
 
 #: app/utils/staffing/schedule-errors.ts:84
 msgid "on time off"
@@ -14733,7 +14793,7 @@ msgstr "إحدى هذه الوظائف لم تعد موجودة. أعد التح
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "شخص واحد في كل سطر: الاسم ثم الهاتف أو البريد الإلكتروني. كما يمكن استخدام صف عناوين يضم الاسم والهاتف والبريد الإلكتروني."
 
-#: app/components/roles/tenant-role-access-manager.tsx:182
+#: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "One-time broadcasts and automated journeys."
 msgstr "بثّات لمرة واحدة ومسارات أتمتة."
 
@@ -14897,11 +14957,11 @@ msgstr "فتح {day} كيوم"
 msgid "Open {routeTitle}?"
 msgstr "هل تريد فتح {routeTitle}؟"
 
-#: app/components/roles/tenant-role-access-manager.tsx:87
+#: app/components/roles/tenant-role-access-manager.tsx:89
 msgid "Open and view notes created by any organization teammate."
 msgstr "فتح وعرض الملاحظات التي أنشأها أي زميل في المنظمة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:82
+#: app/components/roles/tenant-role-access-manager.tsx:84
 msgid "Open and view notes created by this user."
 msgstr "فتح وعرض الملاحظات التي أنشأها هذا المستخدم."
 
@@ -14921,6 +14981,10 @@ msgstr "فتح لوحة تحكم الدفع"
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
+#: app/components/site-header.tsx:62
+msgid "Open command menu"
+msgstr "فتح قائمة الأوامر"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1018
 #~ msgid "Open countdown hidden"
 #~ msgstr "العد التنازلي للفتح مخفي"
@@ -14928,10 +14992,6 @@ msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → ال�
 #: app/components/menu/drop-wizard/drop-form.tsx:1017
 #~ msgid "Open countdown visible"
 #~ msgstr "العد التنازلي للفتح ظاهر"
-
-#: app/components/site-header.tsx:62
-msgid "Open command menu"
-msgstr "فتح قائمة الأوامر"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:865
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
@@ -14988,7 +15048,7 @@ msgstr "مفتوح أو مغلق"
 #~ msgid "Open pages and themes in the site builder."
 #~ msgstr "فتح الصفحات والسمات في منشئ الموقع."
 
-#: app/components/roles/tenant-role-access-manager.tsx:159
+#: app/components/roles/tenant-role-access-manager.tsx:161
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
@@ -15224,7 +15284,7 @@ msgstr "حدود اختيارية لهذا القسم في هذا الطرح."
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "اختياري. يعرّف الذكاء الاصطناعي نفسه دائمًا كمساعد ذكي أولًا. اتركه فارغًا ليسأل كيف يمكنه المساعدة."
 
-#: app/components/app-sidebar.tsx:348
+#: app/components/app-sidebar.tsx:354
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:234
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:71
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
@@ -15353,7 +15413,7 @@ msgstr "طلب/ساعة"
 msgid "Organization Created"
 msgstr "تم إنشاء المنظمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:137
+#: app/components/roles/tenant-role-access-manager.tsx:139
 msgid "Organization details and configuration."
 msgstr "تفاصيل المنظمة وإعداداتها."
 
@@ -15365,7 +15425,7 @@ msgstr "شعار المؤسسة"
 #~ msgid "Organization logo preview"
 #~ msgstr "معاينة شعار المنظمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:136
+#: app/components/roles/tenant-role-access-manager.tsx:138
 msgid "Organization Settings"
 msgstr "إعدادات المنظمة"
 
@@ -15527,16 +15587,17 @@ msgstr "انتقلت الساعات الإضافية بعد الموافقة ع�
 msgid "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 msgstr "قواعد العمل الإضافي المستخدمة لتقدير الساعات والتكلفة. اتركها معطّلة إن لم تستخدمها."
 
-#: app/components/app-sidebar.tsx:321
-#: app/components/app-sidebar.tsx:377
-#: app/components/staff/labor/labor-page.tsx:195
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
-#: app/components/app-sidebar.tsx:329
+#: app/components/app-sidebar.tsx:327
+#: app/components/app-sidebar.tsx:383
 #: app/components/staff/labor/labor-page.tsx:196
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:676
 msgid "Overview"
 msgstr "نظرة عامة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:590
+msgid "Owner"
+msgstr "المالك"
 
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
@@ -15574,8 +15635,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:516
-#: app/components/app-sidebar.tsx:468
+#: app/components/app-sidebar.tsx:575
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
@@ -15929,32 +15989,32 @@ msgstr "مقاييس الأداء"
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
 
-#: app/components/roles/tenant-role-access-manager.tsx:237
+#: app/components/roles/tenant-role-access-manager.tsx:239
 msgid "Permanently delete calls, transcripts, and recordings. Needs View calls."
 msgstr "حذف المكالمات والنصوص المكتوبة والتسجيلات نهائيًا. يتطلب صلاحية عرض المكالمات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:108
+#: app/components/roles/tenant-role-access-manager.tsx:110
 msgid "Permanently delete notes created by any teammate."
 msgstr "حذف الملاحظات التي أنشأها أي زميل نهائيًا."
 
-#: app/components/roles/tenant-role-access-manager.tsx:103
+#: app/components/roles/tenant-role-access-manager.tsx:105
 msgid "Permanently delete notes created by this user."
 msgstr "حذف الملاحظات التي أنشأها هذا المستخدم نهائيًا."
 
-#: app/components/roles/tenant-role-access-manager.tsx:706
-#: app/components/roles/tenant-role-access-manager.tsx:900
+#: app/components/roles/tenant-role-access-manager.tsx:863
+#: app/components/roles/tenant-role-access-manager.tsx:1062
 msgid "Permission"
 msgstr "الصلاحية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1057
+#: app/components/roles/tenant-role-access-manager.tsx:1230
 msgid "Permissions"
 msgstr "الصلاحيات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:861
+#: app/components/roles/tenant-role-access-manager.tsx:1023
 msgid "permissions granted"
 msgstr "صلاحيات ممنوحة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:789
+#: app/components/roles/tenant-role-access-manager.tsx:946
 msgid "permissions selected"
 msgstr "صلاحيات محددة"
 
@@ -15964,8 +16024,8 @@ msgstr "صلاحيات محددة"
 msgid "Person"
 msgstr "الشخص"
 
-#: app/components/roles/tenant-role-access-manager.tsx:291
-#: app/components/roles/tenant-role-access-manager.tsx:297
+#: app/components/roles/tenant-role-access-manager.tsx:293
+#: app/components/roles/tenant-role-access-manager.tsx:299
 msgid "Personal data"
 msgstr "بيانات شخصية"
 
@@ -15997,9 +16057,7 @@ msgstr "رابط الدعوة الشخصي"
 msgid "Phone"
 msgstr "الهاتف"
 
-#: app/components/app-sidebar.tsx:400
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:118
-#: app/components/app-sidebar.tsx:352
+#: app/components/app-sidebar.tsx:406
 #: app/components/workspace-breadcrumb.tsx:15
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:119
 msgid "Phone agent"
@@ -16090,8 +16148,7 @@ msgstr "جانب الصورة"
 msgid "Photos and videos"
 msgstr "الصور والفيديوهات"
 
-#: app/components/app-sidebar.tsx:451
-#: app/components/app-sidebar.tsx:403
+#: app/components/app-sidebar.tsx:457
 #: app/components/workspace-breadcrumb.tsx:52
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:55
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:292
@@ -16313,7 +16370,7 @@ msgstr "خطّط الورديات، وانشر الأسبوع لفريقك، و�
 msgid "Platform"
 msgstr "المنصة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1205
+#: app/components/roles/tenant-role-access-manager.tsx:1426
 msgid "Platform-provided role."
 msgstr "دور توفره المنصة."
 
@@ -16630,6 +16687,10 @@ msgstr "الجلب المسبق"
 msgid "Preload"
 msgstr "التحميل المسبق"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:23
+msgid "Prepaid tasting menus, chef's tables, ticketed events, and add-ons."
+msgstr "قوائم التذوق المدفوعة مسبقاً وطاولات الشيف والفعاليات بالتذاكر والإضافات."
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:136
 msgid "Preparing"
 msgstr "قيد التحضير"
@@ -16822,8 +16883,7 @@ msgstr "جارٍ المعالجة…"
 msgid "Product name"
 msgstr "اسم المنتج"
 
-#: app/components/app-sidebar.tsx:141
-#: app/components/app-sidebar.tsx:139
+#: app/components/app-sidebar.tsx:145
 #: app/components/staff/staff-profile-page.tsx:97
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
@@ -17121,7 +17181,7 @@ msgstr "تُقرأ بصوت عالٍ، ثم تنتقل المكالمة إلى �
 msgid "Read documentation"
 msgstr "قراءة الوثائق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:142
+#: app/components/roles/tenant-role-access-manager.tsx:144
 msgid "Read organization details, verified domain, and storage status."
 msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق وحالة التخزين."
 
@@ -17129,7 +17189,7 @@ msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق و�
 msgid "Read page details"
 msgstr "تمت قراءة تفاصيل الصفحة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:170
+#: app/components/roles/tenant-role-access-manager.tsx:172
 msgid "Read the announcement banners shown on the public site."
 msgstr "قراءة لافتات الإعلانات المعروضة على الموقع العام."
 
@@ -17141,7 +17201,7 @@ msgstr "إعادة قراءة الطلب"
 msgid "Read the policy"
 msgstr "قراءة السياسة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:472
+#: app/components/roles/tenant-role-access-manager.tsx:606
 msgid "Read-only"
 msgstr "قراءة فقط"
 
@@ -17293,8 +17353,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:549
-#: app/components/app-sidebar.tsx:501
+#: app/components/app-sidebar.tsx:608
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
@@ -17309,9 +17368,8 @@ msgid "Referrer"
 msgstr "المُحيل"
 
 #: app/components/mailbox/reviews-tab.tsx:611
-#: app/components/staff/timeclock-today.tsx:169
-#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:225
 #: app/components/staff/timeclock-today.tsx:172
+#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:225
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:342
 msgid "Refresh"
 msgstr "تحديث"
@@ -17568,7 +17626,7 @@ msgstr "إزالة الرابط"
 msgid "Remove media"
 msgstr "إزالة الوسائط"
 
-#: app/components/organization-members.tsx:251
+#: app/components/organization-members.tsx:260
 msgid "Remove member"
 msgstr "إزالة العضو"
 
@@ -17576,7 +17634,6 @@ msgstr "إزالة العضو"
 msgid "Remove nested modifier group"
 msgstr "إزالة مجموعة الإضافات الفرعية"
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:688
 #: app/components/phone-agent/phone-number-dialogs.tsx:689
 msgid "Remove number"
 msgstr "إزالة الرقم"
@@ -17628,7 +17685,7 @@ msgstr "إزالة الوسم"
 msgid "Remove task {position}"
 msgstr "إزالة المهمة {position}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:129
+#: app/components/roles/tenant-role-access-manager.tsx:131
 msgid "Remove team members"
 msgstr "إزالة أعضاء الفريق"
 
@@ -17747,7 +17804,6 @@ msgid "Repeat on other days"
 msgstr "التكرار في أيام أخرى"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:665
-#: app/components/settings/cards/organization/site-theme-card.tsx:328
 #: app/components/settings/cards/organization/site-theme-card.tsx:289
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2610
 msgid "Replace"
@@ -17817,9 +17873,11 @@ msgstr "التقرير غير موجود"
 msgid "Report templates"
 msgstr "قوالب التقارير"
 
-#: app/components/app-sidebar.tsx:291
-#: app/components/app-sidebar.tsx:288
+#: app/components/app-sidebar.tsx:297
+#: app/components/app-sidebar.tsx:515
 #: app/components/workspace-breadcrumb.tsx:17
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:124
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:21
 msgid "Reports"
 msgstr "التقارير"
 
@@ -17911,14 +17969,47 @@ msgstr "إعادة الإرسال إلى من لم تصلهم الرسالة"
 msgid "Reservation"
 msgstr "حجز"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:25
+msgid "Reservation book is ready"
+msgstr "دفتر الحجوزات جاهز"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:23
+msgid "Reservation book, timeline grid, shift notes, and booking management."
+msgstr "دفتر الحجوزات وشبكة الجدول الزمني وملاحظات الوردية وإدارة الحجوزات."
+
+#: app/components/roles/tenant-role-access-manager.tsx:386
+msgid "Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization."
+msgstr "دفتر الحجوزات وقائمة الانتظار وسجل الضيوف وإعداد صالة الطعام والتجارب والتقارير ومدفوعات الحجوزات. ينطبق فقط عند تفعيل الحجوزات لمؤسستك."
+
+#: app/components/app-sidebar.tsx:478
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
+#: app/components/roles/tenant-role-access-manager.tsx:384
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 msgid "Reservations"
 msgstr "الحجوزات"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:25
+msgid "Reservations analytics"
+msgstr "تحليلات الحجوزات"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:25
+msgid "Reservations configuration"
+msgstr "إعدادات الحجوزات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:546
+msgid "Reservations manager"
+msgstr "مدير الحجوزات"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:147
+msgid "Reservations navigation"
+msgstr "تنقل الحجوزات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:1342
+msgid "Reservations role presets"
+msgstr "قوالب أدوار الحجوزات"
+
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
-#: app/components/organization-invitations.tsx:237
 #: app/components/organization-invitations.tsx:240
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
@@ -18033,9 +18124,9 @@ msgstr "حجم المطعم"
 msgid "Restaurant Size"
 msgstr "حجم المطعم"
 
-#: app/components/app-sidebar.tsx:153
-#: app/components/nav-user.tsx:189
-#: app/components/team-switcher.tsx:267
+#: app/components/app-sidebar.tsx:157
+#: app/components/nav-user.tsx:192
+#: app/components/team-switcher.tsx:266
 #: app/routes/_app+/organizations.tsx:192
 msgid "Restaurants"
 msgstr "المطاعم"
@@ -18169,7 +18260,7 @@ msgstr "إلغاء التفويض"
 msgid "Revoke session"
 msgstr "إلغاء الجلسة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:130
+#: app/components/roles/tenant-role-access-manager.tsx:132
 msgid "Revoke workspace access and remove non-admin members."
 msgstr "إلغاء الوصول إلى مساحة العمل وإزالة الأعضاء غير المسؤولين."
 
@@ -18197,11 +18288,8 @@ msgid "Ring for (seconds)"
 msgstr "مدة الرنين (بالثواني)"
 
 #: app/components/hiring/job-editor.tsx:204
-#: app/components/roles/tenant-role-access-manager.tsx:1044
-#: app/components/roles/tenant-role-access-manager.tsx:1178
-#: app/components/hiring/job-editor.tsx:187
-#: app/components/roles/tenant-role-access-manager.tsx:1048
-#: app/components/roles/tenant-role-access-manager.tsx:1182
+#: app/components/roles/tenant-role-access-manager.tsx:1221
+#: app/components/roles/tenant-role-access-manager.tsx:1403
 #: app/components/workspace-breadcrumb.tsx:82
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:356
 msgid "Role"
@@ -18211,7 +18299,7 @@ msgstr "الدور"
 msgid "Role (optional)"
 msgstr "الدور (اختياري)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:575
+#: app/components/roles/tenant-role-access-manager.tsx:732
 msgid "Role name"
 msgstr "اسم الدور"
 
@@ -18219,8 +18307,7 @@ msgstr "اسم الدور"
 msgid "Roles"
 msgstr "الأدوار"
 
-#: app/components/app-sidebar.tsx:583
-#: app/components/app-sidebar.tsx:528
+#: app/components/app-sidebar.tsx:642
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
@@ -18449,7 +18536,6 @@ msgstr "نفس السعر للنصف الأيسر أو الأيمن."
 msgid "Sandbox"
 msgstr "بيئة اختبار"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:229
 #: app/components/settings/cards/organization/site-theme-card.tsx:190
 msgid "Sans"
 msgstr "بدون زوائد"
@@ -18476,8 +18562,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
-#: app/components/organization-members.tsx:140
-#: app/components/organization-members.tsx:134
+#: app/components/organization-members.tsx:145
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
@@ -18528,9 +18613,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
-#: app/components/roles/tenant-role-access-manager.tsx:801
-#: app/components/hiring/job-editor.tsx:416
-#: app/components/roles/tenant-role-access-manager.tsx:803
+#: app/components/roles/tenant-role-access-manager.tsx:960
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
@@ -18608,7 +18691,6 @@ msgstr "حفظ الأجر"
 #~ msgid "Save section settings"
 #~ msgstr "حفظ إعدادات القسم"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:703
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:831
 msgid "Save settings"
 msgstr "حفظ الإعدادات"
@@ -18705,7 +18787,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
 #: app/components/phone-agent/settings-page.tsx:378
-#: app/components/roles/tenant-role-access-manager.tsx:801
+#: app/components/roles/tenant-role-access-manager.tsx:958
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
 #: app/components/staff/kiosk-manager.tsx:910
@@ -18786,8 +18868,7 @@ msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو اف
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
-#: app/components/app-sidebar.tsx:488
-#: app/components/app-sidebar.tsx:440
+#: app/components/app-sidebar.tsx:547
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
 #: app/components/workspace-breadcrumb.tsx:33
@@ -18796,11 +18877,11 @@ msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أ
 msgid "Schedule"
 msgstr "الجدول"
 
-#: app/components/roles/tenant-role-access-manager.tsx:431
+#: app/components/roles/tenant-role-access-manager.tsx:486
 msgid "Schedule & time cards"
 msgstr "الجدول وبطاقات الدوام"
 
-#: app/components/roles/tenant-role-access-manager.tsx:302
+#: app/components/roles/tenant-role-access-manager.tsx:304
 msgid "Schedule & time clock"
 msgstr "الجدول وساعة الدوام"
 
@@ -18891,7 +18972,7 @@ msgstr "الساعات المجدولة مقابل الفعلية وتسجيلا
 msgid "Screening"
 msgstr "الفرز"
 
-#: app/components/app-sidebar.tsx:229
+#: app/components/app-sidebar.tsx:233
 msgid "Search"
 msgstr "بحث"
 
@@ -18947,8 +19028,8 @@ msgstr "البحث في مكتبة الوسائط"
 
 #: app/components/app-sidebar.tsx:790
 #: app/components/command-menu.tsx:102
-msgid "Search menu items..."
-msgstr "البحث في عناصر القائمة..."
+#~ msgid "Search menu items..."
+#~ msgstr "البحث في عناصر القائمة..."
 
 #: app/components/chat/chat-view.tsx:426
 #: app/components/chat/chat-view.tsx:427
@@ -18971,7 +19052,6 @@ msgstr "ابحث بالاسم أو المنصب"
 msgid "Search name, email or phone"
 msgstr "ابحث بالاسم أو البريد الإلكتروني أو الهاتف"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:356
 #: app/routes/_app+/$orgSlug_+/notes.tsx:359
 msgid "Search notes"
 msgstr "البحث في الملاحظات"
@@ -19054,13 +19134,17 @@ msgstr "البحث في الأصوات"
 msgid "Search..."
 msgstr "البحث..."
 
-#: app/components/app-sidebar.tsx:738
+#: app/components/app-sidebar.tsx:877
 msgid "Search…"
 msgstr "بحث…"
 
 #: app/components/hiring/job-labels.ts:21
 msgid "Seasonal"
 msgstr "موسمي"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:27
+msgid "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
+msgstr "تظهر هنا المجموعات الجالسة والحجوزات القادمة وحالة الصالة للفرع والفترة المحددين."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:569
 msgid "Second shift ends"
@@ -19113,8 +19197,7 @@ msgstr "الأقسام"
 msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
-#: app/components/app-sidebar.tsx:147
-#: app/components/app-sidebar.tsx:145
+#: app/components/app-sidebar.tsx:151
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr "الأمان"
@@ -19128,51 +19211,63 @@ msgstr "مفتاح الأمان"
 msgid "Security Settings"
 msgstr "إعدادات الأمان"
 
-#: app/components/roles/tenant-role-access-manager.tsx:198
+#: app/components/roles/tenant-role-access-manager.tsx:200
 msgid "See automated journeys and their run history."
 msgstr "عرض مسارات الأتمتة وسجل تشغيلها."
 
-#: app/components/roles/tenant-role-access-manager.tsx:226
+#: app/components/roles/tenant-role-access-manager.tsx:228
 msgid "See call history, caller numbers, transcripts, and recordings."
 msgstr "عرض سجل المكالمات وأرقام المتصلين والنصوص المكتوبة والتسجيلات."
 
-#: app/components/roles/tenant-role-access-manager.tsx:290
+#: app/components/roles/tenant-role-access-manager.tsx:424
+msgid "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
+msgstr "اطلع على تقارير عدد الضيوف والوتيرة وعدم الحضور وقائمة الانتظار والقنوات والعربون والأقسام."
+
+#: app/components/roles/tenant-role-access-manager.tsx:292
 msgid "See dates of birth, home addresses, and emergency contacts."
 msgstr "عرض تواريخ الميلاد وعناوين السكن وجهات الاتصال في حالات الطوارئ."
 
-#: app/components/roles/tenant-role-access-manager.tsx:309
+#: app/components/roles/tenant-role-access-manager.tsx:401
+msgid "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
+msgstr "اطلع على مناطق الطعام والطاولات والدمج وفترات الخدمة والوتيرة والحظر والسياسات والرسائل والأقسام والتجارب."
+
+#: app/components/roles/tenant-role-access-manager.tsx:311
 msgid "See everyone's shifts, availability, and time-off requests."
 msgstr "عرض ورديات الجميع وتوفرهم وطلبات الإجازة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:329
+#: app/components/roles/tenant-role-access-manager.tsx:331
 msgid "See everyone's time cards and hours."
 msgstr "عرض بطاقات الدوام وساعات الجميع."
 
-#: app/components/roles/tenant-role-access-manager.tsx:278
+#: app/components/roles/tenant-role-access-manager.tsx:412
+msgid "See guestbook profiles, visit history, notes, and exports."
+msgstr "اطلع على ملفات الضيوف وسجل الزيارات والملاحظات والتصدير."
+
+#: app/components/roles/tenant-role-access-manager.tsx:280
 msgid "See individual pay rates and wage history."
 msgstr "عرض أجور الأفراد وسجل الأجور."
 
-#: app/components/roles/tenant-role-access-manager.tsx:370
+#: app/components/roles/tenant-role-access-manager.tsx:372
 msgid "See job posts and applicants."
 msgstr "عرض الوظائف والمتقدمين."
 
-#: app/components/roles/tenant-role-access-manager.tsx:346
+#: app/components/roles/tenant-role-access-manager.tsx:348
 msgid "See labor cost and labor percentage."
 msgstr "عرض تكلفة العمالة ونسبتها."
 
-#: app/components/roles/tenant-role-access-manager.tsx:352
+#: app/components/roles/tenant-role-access-manager.tsx:354
 msgid "See labor rules, time clock devices, and pay periods."
 msgstr "عرض قواعد العمل وأجهزة ساعة الدوام وفترات الأجور."
 
-#: app/components/roles/tenant-role-access-manager.tsx:187
+#: app/components/roles/tenant-role-access-manager.tsx:189
 msgid "See one-time email and SMS campaign history."
 msgstr "عرض سجل حملات البريد الإلكتروني ورسائل SMS لمرة واحدة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:120
+#: app/components/roles/tenant-role-access-manager.tsx:122
 msgid "See teammate names, emails, and assigned roles."
 msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية والأدوار المعيّنة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:215
+#: app/components/roles/tenant-role-access-manager.tsx:217
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "عرض إعدادات الوكيل ومسار المكالمة والأرقام وقواعد التدريب."
 
@@ -19180,7 +19275,11 @@ msgstr "عرض إعدادات الوكيل ومسار المكالمة والأ�
 #~ msgid "See the agent's settings, phone menu, numbers, and training rules."
 #~ msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
 
-#: app/components/roles/tenant-role-access-manager.tsx:267
+#: app/components/roles/tenant-role-access-manager.tsx:391
+msgid "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
+msgstr "اطلع على دفتر الحجوزات والجدول الزمني ومخطط الصالة والتقويم والنظرة العامة وقائمة الانتظار."
+
+#: app/components/roles/tenant-role-access-manager.tsx:269
 msgid "See the staff roster, profiles, and positions. Does not include pay or private details."
 msgstr "اطّلع على قائمة الموظفين وملفاتهم ومناصبهم. لا تشمل الأجور أو التفاصيل الخاصة."
 
@@ -19188,7 +19287,7 @@ msgstr "اطّلع على قائمة الموظفين وملفاتهم ومنا�
 msgid "See your jobs"
 msgstr "عرض وظائفك"
 
-#: app/components/roles/tenant-role-access-manager.tsx:319
+#: app/components/roles/tenant-role-access-manager.tsx:321
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "عرض ورديّاتك المنشورة. مفيد فقط لمن يعملون في الورديات أيضاً."
 
@@ -19265,7 +19364,7 @@ msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ ت
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
-#: app/components/roles/tenant-role-access-manager.tsx:688
+#: app/components/roles/tenant-role-access-manager.tsx:845
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
 msgstr "تحديد الكل"
@@ -19307,7 +19406,6 @@ msgstr "اختر خيارًا لإضافته إلى مجموعة الإضافا�
 msgid "Select an order to view its details."
 msgstr "اختر طلبًا لعرض تفاصيله."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:447
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:575
 msgid "Select at least one language."
 msgstr "اختر لغة واحدة على الأقل."
@@ -19448,7 +19546,6 @@ msgstr "إرسال دعوة؟"
 msgid "Send automated notifications to subscribed guests before your drop opens or closes."
 msgstr "أرسل إشعارات تلقائية للضيوف المشتركين قبل فتح طرحك أو إغلاقه."
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:557
 #: app/components/phone-agent/phone-number-dialogs.tsx:558
 msgid "Send code"
 msgstr "إرسال الرمز"
@@ -19462,14 +19559,12 @@ msgstr "إرسال بريد إلكتروني"
 msgid "Send invitation"
 msgstr "إرسال الدعوة"
 
-#: app/components/organization-invitations.tsx:314
-#: app/routes/organizations+/create.tsx:1582
 #: app/components/organization-invitations.tsx:321
-#: app/routes/organizations+/create.tsx:1194
+#: app/routes/organizations+/create.tsx:1582
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:125
+#: app/components/roles/tenant-role-access-manager.tsx:127
 msgid "Send invitations to join the organization workspace."
 msgstr "إرسال دعوات للانضمام إلى مساحة عمل المنظمة."
 
@@ -19515,13 +19610,13 @@ msgstr "جارٍ الإرسال..."
 msgid "Sending…"
 msgstr "جارٍ الإرسال…"
 
-#: app/components/roles/tenant-role-access-manager.tsx:193
+#: app/components/roles/tenant-role-access-manager.tsx:195
 msgid "Sends to customers"
 msgstr "يُرسل إلى العملاء"
 
-#: app/components/roles/tenant-role-access-manager.tsx:279
-#: app/components/roles/tenant-role-access-manager.tsx:285
-#: app/components/roles/tenant-role-access-manager.tsx:347
+#: app/components/roles/tenant-role-access-manager.tsx:281
+#: app/components/roles/tenant-role-access-manager.tsx:287
+#: app/components/roles/tenant-role-access-manager.tsx:349
 msgid "Sensitive pay data"
 msgstr "بيانات أجور حساسة"
 
@@ -19565,6 +19660,8 @@ msgid "Serif"
 msgstr "بزوائد"
 
 #: app/components/note/integration-controls.tsx:296
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:222
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:226
 msgid "Service"
 msgstr "الخدمة"
 
@@ -19601,7 +19698,6 @@ msgstr "حدّد سعر الطبق الأساسي وإعدادات ضريبة ا
 msgid "Set baseline option price delta and sales tax settings."
 msgstr "حدّد فرق سعر الخيار الأساسي وإعدادات ضريبة المبيعات."
 
-#: app/components/staff/timesheets/review-queue.tsx:406
 #: app/components/staff/timesheets/review-queue.tsx:405
 msgid "Set clock-out"
 msgstr "تحديد الانصراف"
@@ -19678,20 +19774,21 @@ msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاست
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "يساعد وضع حد على نفاد الكمية بالكامل"
 
-#: app/components/app-sidebar.tsx:556
-#: app/components/app-sidebar.tsx:508
+#: app/components/app-sidebar.tsx:522
+#: app/components/app-sidebar.tsx:615
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
-#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:130
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:21
+#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: app/components/app-sidebar.tsx:406
-#: app/components/app-sidebar.tsx:358
+#: app/components/app-sidebar.tsx:412
 msgid "Setup"
 msgstr "الإعداد"
 
@@ -19704,6 +19801,10 @@ msgstr "الإعداد غير مكتمل"
 #: app/components/settings/two-factor-form.tsx:179
 msgid "Setup key"
 msgstr "مفتاح الإعداد"
+
+#: app/components/roles/tenant-role-access-manager.tsx:548
+msgid "Setup, book, guestbook & reports"
+msgstr "الإعدادات ودفتر الحجوزات وسجل الضيوف والتقارير"
 
 #: app/components/chat/chat-view.tsx:787
 msgid "Several people are typing…"
@@ -19806,7 +19907,8 @@ msgstr "أصبحت الوردية شاغرة."
 msgid "Shift length {duration}."
 msgstr "مدة الوردية {duration}."
 
-#: app/components/roles/tenant-role-access-manager.tsx:429
+#: app/components/roles/tenant-role-access-manager.tsx:484
+#: app/components/roles/tenant-role-access-manager.tsx:535
 msgid "Shift manager"
 msgstr "مدير الوردية"
 
@@ -19838,12 +19940,11 @@ msgstr "الورديات التي تتجاوز منتصف الليل تُنسب 
 msgid "Shifts, time cards and each labor day follow this time zone."
 msgstr "الورديات وبطاقات الدوام وكل يوم عمل تتبع هذه المنطقة الزمنية."
 
-#: app/components/roles/tenant-role-access-manager.tsx:304
+#: app/components/roles/tenant-role-access-manager.tsx:306
 msgid "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 msgstr "الورديات وبطاقات الدوام وتكلفة العمالة. تنطبق فقط عند تفعيل ميزات الموظفين المطابقة."
 
-#: app/components/app-sidebar.tsx:604
-#: app/components/app-sidebar.tsx:549
+#: app/components/app-sidebar.tsx:663
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr "المتجر"
@@ -20262,6 +20363,10 @@ msgstr "الإسبانية"
 msgid "Speak with our team"
 msgstr "التحدث مع فريقنا"
 
+#: app/components/phone-agent/test-call-phone.tsx:251
+msgid "Speaker"
+msgstr "مكبر الصوت"
+
 #: app/components/locations/special-hours-picker.tsx:88
 msgid "Special Hours & Holiday Overrides"
 msgstr "الساعات الخاصة وتجاوزات الأعياد"
@@ -20269,10 +20374,6 @@ msgstr "الساعات الخاصة وتجاوزات الأعياد"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:27
 msgid "Special occasions"
 msgstr "المناسبات الخاصة"
-
-#: app/components/phone-agent/test-call-phone.tsx:251
-msgid "Speaker"
-msgstr "مكبر الصوت"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
@@ -20299,10 +20400,8 @@ msgstr "وردية مقسّمة"
 msgid "Square"
 msgstr "مربع"
 
-#: app/components/app-sidebar.tsx:472
-#: app/components/roles/tenant-role-access-manager.tsx:259
-#: app/components/app-sidebar.tsx:424
-#: app/components/roles/tenant-role-access-manager.tsx:260
+#: app/components/app-sidebar.tsx:531
+#: app/components/roles/tenant-role-access-manager.tsx:262
 #: app/components/workspace-breadcrumb.tsx:16
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
 msgid "Staff"
@@ -20365,7 +20464,7 @@ msgstr "ردّ الفريق"
 msgid "Staff records will be deleted too"
 msgstr "سيتم حذف سجلات الموظفين أيضًا"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1121
+#: app/components/roles/tenant-role-access-manager.tsx:1294
 msgid "Staff role presets"
 msgstr "أدوار الموظفين الجاهزة"
 
@@ -20378,7 +20477,7 @@ msgstr "أدوات الموظفين قادمة قريباً"
 msgid "Staff transfers"
 msgstr "التحويلات إلى الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:443
+#: app/components/roles/tenant-role-access-manager.tsx:498
 msgid "Staff, pay & labor"
 msgstr "الموظفون والأجور والعمالة"
 
@@ -20399,8 +20498,7 @@ msgstr "تغيّرت المرحلة"
 msgid "Standard organization member with note access"
 msgstr "عضو عادي في المؤسسة مع إمكانية الوصول إلى الملاحظات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1167
-#: app/components/roles/tenant-role-access-manager.tsx:1171
+#: app/components/roles/tenant-role-access-manager.tsx:1392
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
@@ -20412,7 +20510,7 @@ msgstr "قوائم مطعم قياسية لتناول الطعام في المط
 msgid "Standard starter"
 msgstr "بداية قياسية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:856
+#: app/components/roles/tenant-role-access-manager.tsx:1018
 msgid "Standard system role."
 msgstr "دور نظام قياسي."
 
@@ -20469,7 +20567,7 @@ msgstr "ابدأ ببضع كلمات"
 msgid "Start from a past week. Shifts keep their people when they can work them, and open up when they cannot."
 msgstr "ابدأ من أسبوع سابق. تحتفظ الورديات بأصحابها عندما يستطيعون العمل فيها، وتصبح شاغرة عندما لا يستطيعون."
 
-#: app/components/roles/tenant-role-access-manager.tsx:611
+#: app/components/roles/tenant-role-access-manager.tsx:768
 msgid "Start from a template"
 msgstr "البدء من قالب"
 
@@ -20489,7 +20587,7 @@ msgstr "ابدأ من الصفر"
 msgid "Start from the starter list"
 msgstr "البدء من القائمة المبدئية"
 
-#: app/components/roles/tenant-role-access-manager.tsx:255
+#: app/components/roles/tenant-role-access-manager.tsx:257
 msgid "Start group conversations and add teammates."
 msgstr "ابدأ محادثات جماعية وأضف الزملاء."
 
@@ -20579,7 +20677,7 @@ msgstr "الولاية أو المنطقة"
 msgid "Stats"
 msgstr "الإحصائيات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:906
+#: app/components/roles/tenant-role-access-manager.tsx:1068
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/components/staff/details-tab.tsx:206
 #: app/components/staff/staff-roster.tsx:143
@@ -20958,7 +21056,7 @@ msgstr "اسم الوسم"
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1014
+#: app/components/roles/tenant-role-access-manager.tsx:1187
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "أدوار مخصصة لمنظمتك مع صلاحيات مُعدّة."
 
@@ -20975,7 +21073,7 @@ msgstr "تلقي بريد صوتي"
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:221
+#: app/components/roles/tenant-role-access-manager.tsx:223
 msgid "Talks to customers"
 msgstr "يتحدث مع العملاء"
 
@@ -21031,8 +21129,7 @@ msgid "Teal"
 msgstr "فيروزي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:478
-#: app/components/app-sidebar.tsx:430
+#: app/components/app-sidebar.tsx:537
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
@@ -21043,7 +21140,7 @@ msgstr "فيروزي"
 msgid "Team"
 msgstr "الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:114
+#: app/components/roles/tenant-role-access-manager.tsx:116
 msgid "Team & Members"
 msgstr "الفريق والأعضاء"
 
@@ -21053,7 +21150,7 @@ msgstr "قناة الفريق"
 
 #: app/components/chat/chat-sidebar-link.tsx:20
 #: app/components/chat/chat-view.tsx:384
-#: app/components/roles/tenant-role-access-manager.tsx:243
+#: app/components/roles/tenant-role-access-manager.tsx:245
 msgid "Team chat"
 msgstr "دردشة الفريق"
 
@@ -21065,7 +21162,7 @@ msgstr "دردشة الفريق"
 msgid "Team chat isn't running in this environment"
 msgstr "دردشة الفريق غير متاحة في هذه البيئة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:419
+#: app/components/roles/tenant-role-access-manager.tsx:474
 msgid "Team manager"
 msgstr "مدير الفريق"
 
@@ -21210,8 +21307,7 @@ msgstr "جارٍ إنهاء الخدمة…"
 msgid "Test again"
 msgstr "الاختبار مرة أخرى"
 
-#: app/components/app-sidebar.tsx:465
-#: app/components/app-sidebar.tsx:417
+#: app/components/app-sidebar.tsx:471
 #: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:326
 #: app/components/phone-agent/call-detail-sheet.tsx:376
@@ -21605,16 +21701,13 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
 
-#: app/components/roles/tenant-role-access-manager.tsx:209
+#: app/components/roles/tenant-role-access-manager.tsx:212
 msgid "The assistant that answers restaurant calls."
 msgstr "المساعد الذي يرد على مكالمات المطعم."
 
+#: app/components/roles/tenant-role-access-manager.tsx:210
 #~ msgid "The assistant that answers your business calls."
 #~ msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
-
-#: app/components/roles/tenant-role-access-manager.tsx:210
-msgid "The assistant that answers your business calls."
-msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:850
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
@@ -21871,7 +21964,7 @@ msgstr "الأشخاص الذين يعملون في منظمتك: قائمة ا�
 msgid "The people who work here, their positions and where they work."
 msgstr "الأشخاص الذين يعملون هنا ومناصبهم وأماكن عملهم."
 
-#: app/components/roles/tenant-role-access-manager.tsx:262
+#: app/components/roles/tenant-role-access-manager.tsx:264
 msgid "The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization."
 msgstr "الأشخاص الذين يعملون هنا: قائمة الموظفين والأجور والتفاصيل الخاصة. تنطبق فقط عند تفعيل الموظفين لمؤسستك."
 
@@ -22019,8 +22112,7 @@ msgstr "بطاقات الوقت الخاصة بهم بانتظار المراج�
 msgid "Theme"
 msgstr "السمة"
 
-#: app/components/app-sidebar.tsx:84
-#: app/components/app-sidebar.tsx:82
+#: app/components/app-sidebar.tsx:88
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -22776,8 +22868,7 @@ msgstr "بطاقات الدوام (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في النسخة الاحتياطية)"
 
-#: app/components/app-sidebar.tsx:483
-#: app/components/app-sidebar.tsx:435
+#: app/components/app-sidebar.tsx:542
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
@@ -22966,6 +23057,7 @@ msgstr "إلى الأقرب"
 msgid "To: {recipient}"
 msgstr "إلى: {recipient}"
 
+#: app/components/app-sidebar.tsx:484
 #: app/components/chat/chat-view.tsx:932
 #: app/components/my-schedule/shifts-view.tsx:123
 #: app/components/my-schedule/shifts-view.tsx:178
@@ -22973,6 +23065,8 @@ msgstr "إلى: {recipient}"
 #: app/components/staff/schedule/day-timeline.tsx:441
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:94
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:21
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "اليوم"
@@ -23060,7 +23154,7 @@ msgstr "المجموع {totalText} من 100"
 #~ msgid "Total Available"
 #~ msgstr "إجمالي المتوفر"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:197
+#: app/routes/_app+/$orgSlug_+/index.tsx:205
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
@@ -23076,6 +23170,10 @@ msgstr "إجمالي الملاحظات والمتوسط اليومي والات
 msgid "Total units"
 msgstr "إجمالي الوحدات"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:27
+msgid "Track covers by service and channel, turn durations, waitlist conversions, and payment settlements."
+msgstr "تتبع عدد الضيوف حسب الفترة والقناة ومدد الجلوس وتحويلات قائمة الانتظار وتسويات المدفوعات."
+
 #: app/components/staff/labor-core-rules.tsx:265
 msgid "Track time at this workplace"
 msgstr "تتبّع الوقت في مكان العمل هذا"
@@ -23084,8 +23182,7 @@ msgstr "تتبّع الوقت في مكان العمل هذا"
 msgid "Training"
 msgstr "التدريب"
 
-#: app/components/app-sidebar.tsx:425
-#: app/components/app-sidebar.tsx:377
+#: app/components/app-sidebar.tsx:431
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:383
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
@@ -23153,8 +23250,7 @@ msgstr "التحويل إلى الفريق"
 msgid "Transfer when"
 msgstr "التحويل عندما"
 
-#: app/components/app-sidebar.tsx:437
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:443
 #: app/components/workspace-breadcrumb.tsx:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:143
@@ -23194,7 +23290,7 @@ msgstr "ترجمة الكل"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:219
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -23351,7 +23447,6 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
-#: app/components/phone-agent/call-detail-sheet.tsx:366
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:451
@@ -23363,13 +23458,9 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/staff/onboarding/templates-page.tsx:138
 #: app/components/staff/schedule/publication-history.tsx:92
 #: app/components/staff/schedule/schedule-page.tsx:408
-#: app/components/staff/timeclock-today.tsx:229
-#: app/components/staff/timesheets/timesheets-page.tsx:693
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:374
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:798
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:374
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
@@ -23569,7 +23660,6 @@ msgstr "غير مسند"
 #: app/components/menu/menu-availability-card.tsx:231
 #: app/components/menu/menu-availability-card.tsx:280
 #: app/components/menu/menu-status-badge.tsx:65
-#: app/components/staff/schedule/availability-page.tsx:259
 #: app/components/staff/schedule/availability-page.tsx:258
 #: app/components/staff/schedule/availability-sheet.tsx:300
 #: app/components/staff/schedule/week-grid.tsx:107
@@ -23844,7 +23934,7 @@ msgstr "حدّث تفاصيل الخيار وتسعيره."
 msgid "Update Organization Logo"
 msgstr "تحديث شعار المنظمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:147
+#: app/components/roles/tenant-role-access-manager.tsx:149
 msgid "Update organization name, slug, and general preferences."
 msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات العامة."
 
@@ -23856,8 +23946,7 @@ msgstr "تحديث صورة الملف الشخصي"
 msgid "Update reply"
 msgstr "تحديث الرد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:566
-#: app/components/roles/tenant-role-access-manager.tsx:567
+#: app/components/roles/tenant-role-access-manager.tsx:724
 msgid "Update this role’s name, description, and permissions."
 msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 
@@ -23891,8 +23980,7 @@ msgstr "يتحدّث أثناء التعديل"
 msgid "Updating section"
 msgstr "تحديث القسم"
 
-#: app/components/app-sidebar.tsx:100
-#: app/components/app-sidebar.tsx:98
+#: app/components/app-sidebar.tsx:104
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr "ترقية"
@@ -24120,8 +24208,7 @@ msgstr "استخدم الصيغة الدولية، مثل +15551234567."
 msgid "Use item photo"
 msgstr "استخدام صورة الصنف"
 
-#: app/components/roles/tenant-role-access-manager.tsx:322
-#: app/components/roles/tenant-role-access-manager.tsx:323
+#: app/components/roles/tenant-role-access-manager.tsx:325
 msgid "Use own time clock"
 msgstr "استخدام ساعة الدوام الخاصة"
 
@@ -24189,7 +24276,7 @@ msgstr "يُستخدم عند توظيف شخص من المتقدمين. يمك�
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:145
+#: app/routes/_app+/$orgSlug_+/index.tsx:155
 msgid "User"
 msgstr "مستخدم"
 
@@ -24252,7 +24339,6 @@ msgstr "نباتي"
 msgid "Vehicle pickup with car details."
 msgstr "استلام بالسيارة مع بيانات المركبة."
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:587
 #: app/components/phone-agent/phone-number-dialogs.tsx:588
 msgid "Verification code"
 msgstr "رمز التحقق"
@@ -24309,7 +24395,7 @@ msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
 #: app/components/dashboard/access-labels.ts:19
-#: app/components/roles/tenant-role-access-manager.tsx:1087
+#: app/components/roles/tenant-role-access-manager.tsx:1260
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
@@ -24327,15 +24413,15 @@ msgstr "عرض وتنزيل فواتير الدفع الخاصة بك"
 msgid "View and manage this session"
 msgstr "عرض وإدارة هذه الجلسة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:169
+#: app/components/roles/tenant-role-access-manager.tsx:171
 msgid "View announcements"
 msgstr "عرض الإعلانات"
 
-#: app/components/roles/tenant-role-access-manager.tsx:197
+#: app/components/roles/tenant-role-access-manager.tsx:199
 msgid "View automations"
 msgstr "عرض الأتمتة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:186
+#: app/components/roles/tenant-role-access-manager.tsx:188
 msgid "View broadcasts"
 msgstr "عرض البثّات"
 
@@ -24343,7 +24429,7 @@ msgstr "عرض البثّات"
 msgid "View call"
 msgstr "عرض المكالمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:225
+#: app/components/roles/tenant-role-access-manager.tsx:227
 msgid "View calls"
 msgstr "عرض المكالمات"
 
@@ -24351,16 +24437,19 @@ msgstr "عرض المكالمات"
 msgid "View drop"
 msgstr "عرض الطرح"
 
-#: app/components/roles/tenant-role-access-manager.tsx:368
-#: app/components/roles/tenant-role-access-manager.tsx:369
+#: app/components/roles/tenant-role-access-manager.tsx:411
+msgid "View guestbook"
+msgstr "عرض سجل الضيوف"
+
+#: app/components/roles/tenant-role-access-manager.tsx:371
 msgid "View hiring"
 msgstr "عرض التوظيف"
 
-#: app/components/roles/tenant-role-access-manager.tsx:345
+#: app/components/roles/tenant-role-access-manager.tsx:347
 msgid "View labor cost"
 msgstr "عرض تكلفة العمالة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:351
+#: app/components/roles/tenant-role-access-manager.tsx:353
 msgid "View labor policy"
 msgstr "عرض سياسة العمل"
 
@@ -24377,29 +24466,41 @@ msgstr "عرض الملاحظات من المستخدمين الذين لديك 
 msgid "View only"
 msgstr "عرض فقط"
 
-#: app/components/roles/tenant-role-access-manager.tsx:141
+#: app/components/roles/tenant-role-access-manager.tsx:143
 msgid "View organization settings"
 msgstr "عرض إعدادات المنظمة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:81
+#: app/components/roles/tenant-role-access-manager.tsx:83
 msgid "View own notes"
 msgstr "عرض الملاحظات الخاصة"
 
-#: app/components/roles/tenant-role-access-manager.tsx:318
+#: app/components/roles/tenant-role-access-manager.tsx:320
 msgid "View own shifts"
 msgstr "عرض ورديتي"
 
-#: app/components/roles/tenant-role-access-manager.tsx:277
+#: app/components/roles/tenant-role-access-manager.tsx:279
 msgid "View pay rates"
 msgstr "عرض الأجور"
 
-#: app/components/roles/tenant-role-access-manager.tsx:214
+#: app/components/roles/tenant-role-access-manager.tsx:216
 msgid "View phone agent"
 msgstr "عرض وكيل الهاتف"
 
-#: app/components/roles/tenant-role-access-manager.tsx:289
+#: app/components/roles/tenant-role-access-manager.tsx:291
 msgid "View private details"
 msgstr "عرض التفاصيل الخاصة"
+
+#: app/components/roles/tenant-role-access-manager.tsx:390
+msgid "View reservation book & waitlist"
+msgstr "عرض دفتر الحجوزات وقائمة الانتظار"
+
+#: app/components/roles/tenant-role-access-manager.tsx:423
+msgid "View reservation reports"
+msgstr "عرض تقارير الحجوزات"
+
+#: app/components/roles/tenant-role-access-manager.tsx:400
+msgid "View reservation settings & experiences"
+msgstr "عرض إعدادات الحجوزات والتجارب"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:240
 #~ msgid "View responses"
@@ -24409,7 +24510,7 @@ msgstr "عرض التفاصيل الخاصة"
 msgid "View run history"
 msgstr "عرض سجل التشغيل"
 
-#: app/components/roles/tenant-role-access-manager.tsx:266
+#: app/components/roles/tenant-role-access-manager.tsx:268
 msgid "View staff"
 msgstr "عرض الموظفين"
 
@@ -24421,19 +24522,19 @@ msgstr "عرض المتجر"
 msgid "View submission details"
 msgstr "عرض تفاصيل الرد"
 
-#: app/components/roles/tenant-role-access-manager.tsx:119
+#: app/components/roles/tenant-role-access-manager.tsx:121
 msgid "View team members"
 msgstr "عرض أعضاء الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:86
+#: app/components/roles/tenant-role-access-manager.tsx:88
 msgid "View team notes"
 msgstr "عرض ملاحظات الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:308
+#: app/components/roles/tenant-role-access-manager.tsx:310
 msgid "View team schedule"
 msgstr "عرض جدول الفريق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:328
+#: app/components/roles/tenant-role-access-manager.tsx:330
 msgid "View time cards"
 msgstr "عرض بطاقات الدوام"
 
@@ -24441,11 +24542,11 @@ msgstr "عرض بطاقات الدوام"
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
-#: app/components/roles/tenant-role-access-manager.tsx:158
+#: app/components/roles/tenant-role-access-manager.tsx:160
 msgid "View website workspace"
 msgstr "عرض مساحة عمل الموقع"
 
-#: app/components/roles/tenant-role-access-manager.tsx:471
+#: app/components/roles/tenant-role-access-manager.tsx:605
 #: app/utils/organization/role-label.ts:17
 msgid "Viewer"
 msgstr "مشاهد"
@@ -24505,7 +24606,7 @@ msgstr "تم حفظ البريد الصوتي"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:220
+#: app/routes/_app+/$orgSlug_+/index.tsx:228
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -24576,6 +24677,16 @@ msgstr "بانتظار الربط"
 #: app/components/staff/schedule/publication-history.tsx:311
 msgid "Waiting to send"
 msgstr "بانتظار الإرسال"
+
+#: app/components/app-sidebar.tsx:494
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:106
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:21
+msgid "Waitlist"
+msgstr "قائمة الانتظار"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:25
+msgid "Waitlist is currently empty"
+msgstr "قائمة الانتظار فارغة حالياً"
 
 #: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
@@ -24815,15 +24926,14 @@ msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بري�
 msgid "Web"
 msgstr "الويب"
 
-#: app/components/app-sidebar.tsx:505
-#: app/components/app-sidebar.tsx:457
+#: app/components/app-sidebar.tsx:564
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
 msgid "Website"
 msgstr "الموقع الإلكتروني"
 
-#: app/components/roles/tenant-role-access-manager.tsx:153
+#: app/components/roles/tenant-role-access-manager.tsx:155
 msgid "Website & Publishing"
 msgstr "الموقع والنشر"
 
@@ -24831,7 +24941,7 @@ msgstr "الموقع والنشر"
 #~ msgid "Website editor and public pages."
 #~ msgstr "محرر الموقع والصفحات العامة."
 
-#: app/components/roles/tenant-role-access-manager.tsx:154
+#: app/components/roles/tenant-role-access-manager.tsx:156
 msgid "Website editor, announcements, and public pages."
 msgstr "محرر الموقع والإعلانات والصفحات العامة."
 
@@ -24973,15 +25083,14 @@ msgstr "ما الدور الذي تعمل فيه؟"
 msgid "What should your reply include? (optional)"
 msgstr "ما الذي تريد تضمينه في ردك؟ (اختياري)"
 
-#: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
-msgid "What the agent does when it takes an order before texting the ordering link."
-msgstr "ما يفعله الوكيل عند استلام طلب قبل إرسال رابط الطلب برسالة نصية."
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:240
 msgid "What the agent does on each call."
 msgstr "ما يفعله الوكيل في كل مكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:494
+#: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
+msgid "What the agent does when it takes an order before texting the ordering link."
+msgstr "ما يفعله الوكيل عند استلام طلب قبل إرسال رابط الطلب برسالة نصية."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:622
 msgid "What the agent says"
 msgstr "ما يقوله الوكيل"
@@ -25026,7 +25135,6 @@ msgstr "ماذا تريد أن تعرف؟"
 #~ msgid "What you are selling"
 #~ msgstr "ما تبيعه"
 
-#: app/components/staff/labor/labor-page.tsx:241
 #: app/components/staff/labor/labor-page.tsx:242
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، والمبيعات التي تُدخلها، وكيف تُقسَّم الإكراميات."
@@ -25097,7 +25205,6 @@ msgstr "عند المطالبة، وافق على الاتصال في متصفح
 msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
 msgstr "عند النشر، تظهر الطروحات العامة على موقعك. لا يمكن الوصول إلى الطروحات غير المدرجة إلا عبر الرابط."
 
-#: app/components/hiring/applicants-page.tsx:424
 #: app/components/hiring/applicants-page.tsx:422
 msgid "When someone applies on your careers page, they show up here and you get a notification. Share a job to get started."
 msgstr "عندما يتقدّم شخص عبر صفحة الوظائف لديك، سيظهر هنا وستصلك إشعار. شارك وظيفة لتبدأ."
@@ -25524,9 +25631,7 @@ msgid "Yesterday"
 msgstr "أمس"
 
 #: app/components/hiring/candidate-parts.tsx:374
-#: app/components/organization-members.tsx:214
-#: app/components/phone-agent/test-call-panel.tsx:724
-#: app/components/organization-members.tsx:210
+#: app/components/organization-members.tsx:223
 #: app/components/phone-agent/test-call-panel.tsx:677
 msgid "You"
 msgstr "أنت"
@@ -25963,7 +26068,7 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 msgid "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الناس رؤية هذه الوظيفة. <0>انشر موقعك</0>."
 
-#: app/components/roles/tenant-role-access-manager.tsx:484
+#: app/components/roles/tenant-role-access-manager.tsx:618
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
 

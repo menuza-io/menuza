@@ -396,7 +396,7 @@ msgstr "{0, plural, one {We added a new-hire checklist with # task.} other {We a
 
 #. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
 #. placeholder {1}: organization.name
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "{0} · Here's what's happening in {1}"
 msgstr "{0} · Here's what's happening in {1}"
 
@@ -784,8 +784,7 @@ msgstr "{late, plural, one {Overdue by # day} other {Overdue by # days}}"
 msgid "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
 
-#: app/components/app-sidebar.tsx:368
-#: app/components/app-sidebar.tsx:320
+#: app/components/app-sidebar.tsx:374
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
 
@@ -1201,7 +1200,6 @@ msgstr ""
 msgid "+{moreSlots} more"
 msgstr "+{moreSlots} more"
 
-#: app/components/dashboard/blocks/stats-block.tsx:25
 #: app/components/dashboard/blocks/stats-block.tsx:24
 msgid "+{trend}%"
 msgstr ""
@@ -1669,7 +1667,6 @@ msgstr "Abandoned"
 msgid "About drop visibility"
 msgstr "About drop visibility"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:856
 #: app/components/settings/cards/organization/site-theme-card.tsx:817
 msgid "Accent color"
 msgstr ""
@@ -1688,7 +1685,7 @@ msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media libra
 msgstr "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:209
-#: app/components/roles/tenant-role-access-manager.tsx:1191
+#: app/components/roles/tenant-role-access-manager.tsx:1412
 #: app/components/staff/staff-profile-page.tsx:105
 msgid "Access"
 msgstr "Access"
@@ -1706,7 +1703,7 @@ msgstr "Access for {name}"
 msgid "Access Key ID"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:72
+#: app/components/roles/tenant-role-access-manager.tsx:74
 msgid "Access to personal and shared team notes."
 msgstr "Access to personal and shared team notes."
 
@@ -1738,13 +1735,14 @@ msgstr ""
 msgid "Acme Inc."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:199
+#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Across your organization"
 msgstr "Across your organization"
 
 #: app/components/command-menu.tsx:115
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
-#: app/components/roles/tenant-role-access-manager.tsx:1060
+#: app/components/roles/tenant-role-access-manager.tsx:1233
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:505
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:308
@@ -1786,7 +1784,6 @@ msgstr ""
 msgid "Active Location"
 msgstr "Active Location"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:673
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:678
 msgid "Activity"
 msgstr ""
@@ -2018,12 +2015,11 @@ msgstr "Add an item"
 msgid "Add an Option"
 msgstr "Add an Option"
 
-#: app/components/roles/tenant-role-access-manager.tsx:271
-#: app/components/roles/tenant-role-access-manager.tsx:272
+#: app/components/roles/tenant-role-access-manager.tsx:274
 msgid "Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff."
 msgstr "Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff."
 
-#: app/components/roles/tenant-role-access-manager.tsx:334
+#: app/components/roles/tenant-role-access-manager.tsx:336
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "Add and edit time cards and export hours. Includes View time cards."
 
@@ -2032,10 +2028,8 @@ msgstr "Add and edit time cards and export hours. Includes View time cards."
 msgid "Add announcement"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:303
-#: app/routes/organizations+/create.tsx:1575
 #: app/components/organization-invitations.tsx:310
-#: app/routes/organizations+/create.tsx:1187
+#: app/routes/organizations+/create.tsx:1575
 msgid "Add another invitation"
 msgstr ""
 
@@ -2176,8 +2170,7 @@ msgstr "Add Location"
 msgid "Add meal break"
 msgstr "Add meal break"
 
-#: app/components/app-sidebar.tsx:730
-#: app/components/app-sidebar.tsx:672
+#: app/components/app-sidebar.tsx:811
 msgid "Add members"
 msgstr ""
 
@@ -2317,7 +2310,7 @@ msgstr "Add Reminder"
 msgid "Add rest break"
 msgstr "Add rest break"
 
-#: app/components/team-switcher.tsx:334
+#: app/components/team-switcher.tsx:333
 #: app/routes/_app+/organizations.tsx:217
 #: app/routes/_app+/organizations.tsx:391
 msgid "Add restaurant"
@@ -2471,6 +2464,10 @@ msgstr "Add up to five high-resolution photos. The first photo is used on menu c
 msgid "Add URL"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:27
+msgid "Add walk-in parties to quote wait times, send table-ready notifications, and seat guests."
+msgstr "Add walk-in parties to quote wait times, send table-ready notifications, and seat guests."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:373
 msgid "Add your business details to see what the assistant is told."
 msgstr "Add your business details to see what the assistant is told."
@@ -2581,8 +2578,7 @@ msgstr "Admin impersonation active"
 msgid "Advance Scheduled Orders"
 msgstr "Advance Scheduled Orders"
 
-#: app/components/app-sidebar.tsx:458
-#: app/components/app-sidebar.tsx:410
+#: app/components/app-sidebar.tsx:464
 #: app/components/workspace-breadcrumb.tsx:53
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:117
 msgid "Advanced"
@@ -2592,8 +2588,8 @@ msgstr "Advanced"
 msgid "Advanced settings"
 msgstr "Advanced settings"
 
-#: app/components/roles/tenant-role-access-manager.tsx:335
-#: app/components/roles/tenant-role-access-manager.tsx:341
+#: app/components/roles/tenant-role-access-manager.tsx:337
+#: app/components/roles/tenant-role-access-manager.tsx:343
 msgid "Affects pay"
 msgstr "Affects pay"
 
@@ -2686,7 +2682,7 @@ msgstr "AI drafts use your business details and training rules, and only fill em
 #~ msgid "AI is thinking..."
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:209
+#: app/components/roles/tenant-role-access-manager.tsx:211
 msgid "AI phone agent"
 msgstr "AI phone agent"
 
@@ -2795,7 +2791,7 @@ msgstr "All jobs"
 #: app/components/member-location-scope.tsx:133
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
-#: app/components/team-switcher.tsx:199
+#: app/components/team-switcher.tsx:198
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
 msgid "All locations"
 msgstr "All locations"
@@ -2834,9 +2830,17 @@ msgstr "All purposes"
 msgid "All recipients"
 msgstr ""
 
+#: app/components/roles/tenant-role-access-manager.tsx:592
+msgid "All reservations, guestbook, setup & payments"
+msgstr "All reservations, guestbook, setup & payments"
+
 #: app/components/kiosk/kiosk-chrome.tsx:124
 msgid "All saved"
 msgstr "All saved"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:233
+msgid "All services"
+msgstr "All services"
 
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
@@ -2883,17 +2887,16 @@ msgstr "Allow customers to schedule orders for future dates."
 msgid "Allow guests to add custom preparation notes to items."
 msgstr "Allow guests to add custom preparation notes to items."
 
-#: app/components/menu/menu-form.tsx:319
-msgid "Allow Special Instructions"
-msgstr "Allow Special Instructions"
-
 #: app/components/phone-agent/test-call-panel.tsx:468
 msgid "Allow microphone access"
 msgstr "Allow microphone access"
 
+#: app/components/menu/menu-form.tsx:319
+msgid "Allow Special Instructions"
+msgstr "Allow Special Instructions"
+
 #: app/components/locations/delivery-zones-manager.tsx:222
-#: app/components/roles/tenant-role-access-manager.tsx:934
-#: app/components/roles/tenant-role-access-manager.tsx:937
+#: app/components/roles/tenant-role-access-manager.tsx:1099
 msgid "Allowed"
 msgstr "Allowed"
 
@@ -2971,8 +2974,7 @@ msgstr "An interview was updated"
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr ""
 
-#: app/components/app-sidebar.tsx:526
-#: app/components/app-sidebar.tsx:478
+#: app/components/app-sidebar.tsx:585
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2986,8 +2988,7 @@ msgstr "Analytics and tracking"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:542
-#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:601
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
@@ -3086,8 +3087,7 @@ msgstr ""
 msgid "API Keys"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:757
-#: app/components/app-sidebar.tsx:699
+#: app/components/app-sidebar.tsx:838
 msgid "App header"
 msgstr "App header"
 
@@ -3103,7 +3103,7 @@ msgstr "App login"
 msgid "Appearance"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:176
+#: app/components/roles/tenant-role-access-manager.tsx:178
 msgid "Appears on the public site"
 msgstr "Appears on the public site"
 
@@ -3116,8 +3116,8 @@ msgstr "Applicant"
 msgid "Applicant funnel"
 msgstr "Applicant funnel"
 
-#: app/components/roles/tenant-role-access-manager.tsx:371
-#: app/components/roles/tenant-role-access-manager.tsx:377
+#: app/components/roles/tenant-role-access-manager.tsx:373
+#: app/components/roles/tenant-role-access-manager.tsx:379
 msgid "Applicant personal data"
 msgstr "Applicant personal data"
 
@@ -3186,11 +3186,11 @@ msgstr "Approve"
 msgid "Approve ({approveCount})"
 msgstr "Approve ({approveCount})"
 
-#: app/components/roles/tenant-role-access-manager.tsx:339
+#: app/components/roles/tenant-role-access-manager.tsx:341
 msgid "Approve time cards"
 msgstr "Approve time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:340
+#: app/components/roles/tenant-role-access-manager.tsx:342
 msgid "Approve, lock, and unlock time cards. Includes View time cards."
 msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 
@@ -3248,8 +3248,7 @@ msgstr ""
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1244
-#: app/components/roles/tenant-role-access-manager.tsx:1248
+#: app/components/roles/tenant-role-access-manager.tsx:1469
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 
@@ -3277,6 +3276,10 @@ msgstr "Area"
 #: app/components/locations/delivery-zones-manager.tsx:386
 msgid "Area Boundary Type"
 msgstr "Area Boundary Type"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:23
+msgid "Areas, tables, combinations, services, turn times, pacing, policies, and blackout dates."
+msgstr "Areas, tables, combinations, services, turn times, pacing, policies, and blackout dates."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3502
 msgid "Arrangement"
@@ -3488,8 +3491,7 @@ msgstr ""
 msgid "Automation saved successfully"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:391
-#: app/components/app-sidebar.tsx:343
+#: app/components/app-sidebar.tsx:397
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
@@ -3534,7 +3536,6 @@ msgstr "Availability Status"
 #: app/components/menu/menu-availability-card.tsx:228
 #: app/components/menu/menu-availability-card.tsx:264
 #: app/components/menu/menu-status-badge.tsx:53
-#: app/components/staff/schedule/availability-page.tsx:257
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
 msgid "Available"
@@ -3562,7 +3563,7 @@ msgstr "Available then"
 msgid "Available Tools"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:202
+#: app/routes/_app+/$orgSlug_+/index.tsx:210
 msgid "Avg per day"
 msgstr "Avg per day"
 
@@ -3583,7 +3584,6 @@ msgstr "B&W"
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
 #: app/components/website/create-page-dialog.tsx:198
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:234
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:269
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:196
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
@@ -3755,8 +3755,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:623
-#: app/components/app-sidebar.tsx:568
+#: app/components/app-sidebar.tsx:682
 #: app/components/command-menu.tsx:181
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3770,8 +3769,7 @@ msgstr ""
 msgid "Birthdays, large groups, catering, and holidays."
 msgstr "Birthdays, large groups, catering, and holidays."
 
-#: app/components/roles/tenant-role-access-manager.tsx:482
-#: app/components/roles/tenant-role-access-manager.tsx:483
+#: app/components/roles/tenant-role-access-manager.tsx:617
 msgid "Blank"
 msgstr "Blank"
 
@@ -3811,18 +3809,31 @@ msgstr "Body text"
 msgid "Bold"
 msgstr "Bold"
 
+#: app/components/app-sidebar.tsx:489
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:100
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:21
+msgid "Book"
+msgstr "Book"
+
+#: app/components/roles/tenant-role-access-manager.tsx:537
+msgid "Book, guestbook & reports"
+msgstr "Book, guestbook & reports"
+
+#: app/components/roles/tenant-role-access-manager.tsx:528
+msgid "Book, waitlist & table status"
+msgstr "Book, waitlist & table status"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:42
 msgid "Branch on whether you're open right now."
 msgstr "Branch on whether you're open right now."
 
-#: app/components/app-sidebar.tsx:533
-#: app/components/app-sidebar.tsx:485
+#: app/components/app-sidebar.tsx:592
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5130
 msgid "Branding"
 msgstr ""
 
-#: app/components/workspace-breadcrumb.tsx:112
+#: app/components/workspace-breadcrumb.tsx:117
 msgid "Breadcrumb"
 msgstr "Breadcrumb"
 
@@ -3914,21 +3925,24 @@ msgstr ""
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
-#: app/components/app-sidebar.tsx:384
-#: app/components/app-sidebar.tsx:336
+#: app/components/app-sidebar.tsx:390
 #: app/components/workspace-breadcrumb.tsx:43
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
 msgid "Broadcasts"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:410
+#: app/components/roles/tenant-role-access-manager.tsx:465
 msgid "Broadcasts & automations"
 msgstr "Broadcasts & automations"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:177
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:27
+msgid "Browse reservations by date and service, view table timeline blocks, and create new bookings."
+msgstr "Browse reservations by date and service, view table timeline blocks, and create new bookings."
 
 #: app/components/phone-agent/voice-picker.tsx:363
 msgid "Browse the voices your agent can use."
@@ -3937,6 +3951,10 @@ msgstr "Browse the voices your agent can use."
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3465
 msgid "Browsers only autoplay video when it is muted."
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:236
+msgid "Brunch"
+msgstr "Brunch"
 
 #: app/components/settings/cards/organization/s3-storage-card.tsx:270
 msgid "Bucket Name"
@@ -3955,7 +3973,7 @@ msgstr "Build a branded HTML email with blocks."
 msgid "Builder"
 msgstr "Builder"
 
-#: app/components/roles/tenant-role-access-manager.tsx:850
+#: app/components/roles/tenant-role-access-manager.tsx:1012
 msgid "Built-in"
 msgstr "Built-in"
 
@@ -3963,7 +3981,7 @@ msgstr "Built-in"
 msgid "Built-in blocks"
 msgstr "Built-in blocks"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1168
+#: app/components/roles/tenant-role-access-manager.tsx:1389
 msgid "Built-in Roles"
 msgstr "Built-in Roles"
 
@@ -4094,8 +4112,7 @@ msgstr "Call details"
 msgid "Call ended"
 msgstr "Call ended"
 
-#: app/components/app-sidebar.tsx:432
-#: app/components/app-sidebar.tsx:384
+#: app/components/app-sidebar.tsx:438
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
 #: app/components/workspace-breadcrumb.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
@@ -4172,11 +4189,9 @@ msgstr "Callers hear each step in order. A keypad menu waits for them to press a
 msgid "Calling…"
 msgstr "Calling…"
 
-#: app/components/app-sidebar.tsx:413
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
-#: app/components/app-sidebar.tsx:365
+#: app/components/app-sidebar.tsx:419
 #: app/components/workspace-breadcrumb.tsx:46
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:401
 msgid "Calls"
@@ -4224,7 +4239,7 @@ msgstr ""
 msgid "Can edit"
 msgstr "Can edit"
 
-#: app/components/roles/tenant-role-access-manager.tsx:98
+#: app/components/roles/tenant-role-access-manager.tsx:100
 msgid "Can edit teammate notes"
 msgstr "Can edit teammate notes"
 
@@ -4273,8 +4288,8 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/roles/tenant-role-access-manager.tsx:797
-#: app/components/roles/tenant-role-access-manager.tsx:1256
+#: app/components/roles/tenant-role-access-manager.tsx:954
+#: app/components/roles/tenant-role-access-manager.tsx:1477
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -4378,22 +4393,19 @@ msgstr "Cancel request"
 msgid "Cancel this order? Any captured payment requires a separate refund with your payment processor."
 msgstr "Cancel this order? Any captured payment requires a separate refund with your payment processor."
 
-#: app/components/staff/schedule/time-off-page.tsx:368
 #: app/components/staff/schedule/time-off-page.tsx:367
 msgid "Cancel time off"
 msgstr "Cancel time off"
 
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/staff/schedule/time-off-page.tsx:287
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
-#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:139
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:139
 msgid "Cancelled"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:238
+#: app/components/roles/tenant-role-access-manager.tsx:240
 msgid "Cannot be undone"
 msgstr "Cannot be undone"
 
@@ -4478,7 +4490,7 @@ msgstr "Cash tips: {from} to {to}"
 msgid "categories"
 msgstr "categories"
 
-#: app/components/app-sidebar.tsx:333
+#: app/components/app-sidebar.tsx:339
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:243
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:318
@@ -4579,7 +4591,7 @@ msgstr "Change history"
 msgid "Change in Setup"
 msgstr "Change in Setup"
 
-#: app/components/roles/tenant-role-access-manager.tsx:284
+#: app/components/roles/tenant-role-access-manager.tsx:286
 msgid "Change individual pay rates and salary details. Includes View pay rates."
 msgstr "Change individual pay rates and salary details. Includes View pay rates."
 
@@ -4587,7 +4599,7 @@ msgstr "Change individual pay rates and salary details. Includes View pay rates.
 msgid "Change interview"
 msgstr "Change interview"
 
-#: app/components/roles/tenant-role-access-manager.tsx:357
+#: app/components/roles/tenant-role-access-manager.tsx:359
 msgid "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 msgstr "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 
@@ -4598,7 +4610,7 @@ msgstr "Change labor rules, pair time clock devices, and set pay periods. Includ
 msgid "Change Password"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:283
+#: app/components/roles/tenant-role-access-manager.tsx:285
 msgid "Change pay rates"
 msgstr "Change pay rates"
 
@@ -4615,7 +4627,7 @@ msgstr "Change rate"
 msgid "Change rules"
 msgstr "Change rules"
 
-#: app/components/roles/tenant-role-access-manager.tsx:220
+#: app/components/roles/tenant-role-access-manager.tsx:222
 msgid "Change settings, publish call flows, manage numbers, and edit training rules."
 msgstr "Change settings, publish call flows, manage numbers, and edit training rules."
 
@@ -4677,6 +4689,14 @@ msgstr ""
 msgid "Channels"
 msgstr "Channels"
 
+#: app/components/roles/tenant-role-access-manager.tsx:429
+msgid "Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports."
+msgstr "Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports."
+
+#: app/components/roles/tenant-role-access-manager.tsx:428
+msgid "Charge fees & refund reservation payments"
+msgstr "Charge fees & refund reservation payments"
+
 #: app/components/menu/option-form.tsx:599
 msgid "Charge sales tax on this option at checkout."
 msgstr "Charge sales tax on this option at checkout."
@@ -4685,12 +4705,15 @@ msgstr "Charge sales tax on this option at checkout."
 msgid "Charge tax at checkout."
 msgstr "Charge tax at checkout."
 
+#: app/components/roles/tenant-role-access-manager.tsx:430
+msgid "Charges & refunds"
+msgstr "Charges & refunds"
+
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
 msgstr "Chat"
 
-#: app/components/app-sidebar.tsx:592
-#: app/components/app-sidebar.tsx:537
+#: app/components/app-sidebar.tsx:651
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
@@ -5243,7 +5266,7 @@ msgstr "Clock people out automatically"
 msgid "Clock was off"
 msgstr "Clock was off"
 
-#: app/components/roles/tenant-role-access-manager.tsx:324
+#: app/components/roles/tenant-role-access-manager.tsx:326
 msgid "Clock yourself in and out. Only useful for people who also work shifts."
 msgstr "Clock yourself in and out. Only useful for people who also work shifts."
 
@@ -5364,7 +5387,6 @@ msgstr "Closes on"
 msgid "Closes:"
 msgstr "Closes:"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:522
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:650
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:45
 msgid "Closing"
@@ -5383,7 +5405,7 @@ msgstr ""
 msgid "Code sent. It expires in 10 minutes."
 msgstr "Code sent. It expires in 10 minutes."
 
-#: app/components/roles/tenant-role-access-manager.tsx:115
+#: app/components/roles/tenant-role-access-manager.tsx:117
 msgid "Collaborator visibility and access control."
 msgstr "Collaborator visibility and access control."
 
@@ -5498,7 +5520,7 @@ msgstr "Complete"
 msgid "Complete a form"
 msgstr "Complete a form"
 
-#: app/components/roles/tenant-role-access-manager.tsx:232
+#: app/components/roles/tenant-role-access-manager.tsx:234
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls."
 
@@ -5589,6 +5611,10 @@ msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn P
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:27
+msgid "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
+msgstr "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:863
 #~ msgid "Configure drop announcements, visibility, and checkout limits."
 #~ msgstr "Configure drop announcements, visibility, and checkout limits."
@@ -5666,7 +5692,6 @@ msgstr ""
 msgid "Connect {displayName}"
 msgstr "Connect {displayName}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:210
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:224
 msgid "Connect a phone number"
 msgstr "Connect a phone number"
@@ -5795,7 +5820,7 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:395
+#: app/components/roles/tenant-role-access-manager.tsx:450
 msgid "Content editor"
 msgstr "Content editor"
 
@@ -5850,6 +5875,10 @@ msgstr "Contractor"
 msgid "Contrast"
 msgstr "Contrast"
 
+#: app/routes/_app+/$orgSlug_+/index.tsx:231
+msgid "Contributors"
+msgstr "Contributors"
+
 #: app/components/menu/location-overrides-card.tsx:90
 msgid "Control availability and custom pricing per location."
 msgstr "Control availability and custom pricing per location."
@@ -5869,10 +5898,6 @@ msgstr "Control overall ordering availability for guests."
 #: app/components/menu/drop-wizard/drop-form.tsx:599
 #~ msgid "Control when customers can view and place orders for this drop."
 #~ msgstr "Control when customers can view and place orders for this drop."
-
-#: app/routes/_app+/$orgSlug_+/index.tsx:223
-msgid "Contributors"
-msgstr "Contributors"
 
 #: app/components/note/share-note-button.tsx:180
 msgid "Control who can access this note"
@@ -5894,7 +5919,6 @@ msgstr "Cool"
 msgid "Coordinates (Lat, Lng)"
 msgstr "Coordinates (Lat, Lng)"
 
-#: app/components/organization-invitations.tsx:209
 #: app/components/organization-invitations.tsx:212
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
@@ -6028,7 +6052,6 @@ msgstr "Could not create a draft. Try again."
 msgid "Could not create a reply suggestion. Try again."
 msgstr "Could not create a reply suggestion. Try again."
 
-#: app/components/phone-agent/call-detail-sheet.tsx:274
 #: app/components/phone-agent/call-detail-sheet.tsx:275
 msgid "Could not delete this call. Try again."
 msgstr "Could not delete this call. Try again."
@@ -6185,6 +6208,10 @@ msgstr "Coverage against typical orders"
 msgid "Coverage compares the orders you usually get each hour with who is scheduled. Red is short of your staffing standards, grey is clearly over."
 msgstr "Coverage compares the orders you usually get each hour with who is scheduled. Red is short of your staffing standards, grey is clearly over."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:23
+msgid "Covers, utilization, no-show rates, pacing, and deposit/fee reconciliation."
+msgstr "Covers, utilization, no-show rates, pacing, and deposit/fee reconciliation."
+
 #: app/components/website/create-page-dialog.tsx:207
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
 msgid "Create"
@@ -6202,7 +6229,7 @@ msgstr "Create a channel"
 msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 msgstr "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1037
+#: app/components/roles/tenant-role-access-manager.tsx:1210
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "Create a custom role to assign specific permissions to teammates."
 
@@ -6250,9 +6277,13 @@ msgstr ""
 msgid "Create a plan"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1124
+#: app/components/roles/tenant-role-access-manager.tsx:1297
 msgid "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
+
+#: app/components/roles/tenant-role-access-manager.tsx:1345
+msgid "Create a ready-made role for your host stand, shift leads, reservations team, guestbook, or finance. Each one becomes a normal custom role that you can rename, edit, or delete."
+msgstr "Create a ready-made role for your host stand, shift leads, reservations team, guestbook, or finance. Each one becomes a normal custom role that you can rename, edit, or delete."
 
 #: app/routes/_app+/index.tsx:33
 msgid "Create a restaurant"
@@ -6304,7 +6335,7 @@ msgstr "Create and manage your menus for dine-in, online ordering, POS, and cate
 msgid "Create and publish a form from Website → Forms first."
 msgstr "Create and publish a form from Website → Forms first."
 
-#: app/components/roles/tenant-role-access-manager.tsx:192
+#: app/components/roles/tenant-role-access-manager.tsx:194
 msgid "Create and send one-time email and SMS campaigns."
 msgstr "Create and send one-time email and SMS campaigns."
 
@@ -6351,8 +6382,7 @@ msgstr "Create channels for your team and choose which roles or people can read 
 msgid "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 msgstr "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 
-#: app/components/roles/tenant-role-access-manager.tsx:561
-#: app/components/roles/tenant-role-access-manager.tsx:562
+#: app/components/roles/tenant-role-access-manager.tsx:719
 msgid "Create Custom Role"
 msgstr "Create Custom Role"
 
@@ -6379,7 +6409,7 @@ msgstr "Create form"
 msgid "Create group"
 msgstr "Create group"
 
-#: app/components/roles/tenant-role-access-manager.tsx:254
+#: app/components/roles/tenant-role-access-manager.tsx:256
 msgid "Create group chats"
 msgstr "Create group chats"
 
@@ -6387,7 +6417,6 @@ msgstr "Create group chats"
 msgid "Create Item"
 msgstr "Create Item"
 
-#: app/components/organization-invitations.tsx:226
 #: app/components/organization-invitations.tsx:229
 msgid "Create Link"
 msgstr ""
@@ -6421,14 +6450,12 @@ msgstr ""
 msgid "Create New Option"
 msgstr "Create New Option"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:395
-#: app/routes/_app+/$orgSlug_+/notes.tsx:407
 #: app/routes/_app+/$orgSlug_+/notes.tsx:398
 #: app/routes/_app+/$orgSlug_+/notes.tsx:410
 msgid "Create Note"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:76
+#: app/components/roles/tenant-role-access-manager.tsx:78
 msgid "Create notes"
 msgstr "Create notes"
 
@@ -6457,6 +6484,10 @@ msgstr ""
 msgid "Create PIN"
 msgstr "Create PIN"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:27
+msgid "Create prepaid or deposit-backed dining experiences, schedules, and optional add-ons."
+msgstr "Create prepaid or deposit-backed dining experiences, schedules, and optional add-ons."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Create redirect"
@@ -6466,9 +6497,10 @@ msgstr "Create redirect"
 msgid "Create reusable forms, then place them on any website page with a Form block."
 msgstr "Create reusable forms, then place them on any website page with a Form block."
 
-#: app/components/roles/tenant-role-access-manager.tsx:805
-#: app/components/roles/tenant-role-access-manager.tsx:1026
-#: app/components/roles/tenant-role-access-manager.tsx:1155
+#: app/components/roles/tenant-role-access-manager.tsx:962
+#: app/components/roles/tenant-role-access-manager.tsx:1199
+#: app/components/roles/tenant-role-access-manager.tsx:1328
+#: app/components/roles/tenant-role-access-manager.tsx:1376
 msgid "Create role"
 msgstr "Create role"
 
@@ -6509,31 +6541,36 @@ msgstr ""
 msgid "Create your first page to start building your website."
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:249
+#: app/components/roles/tenant-role-access-manager.tsx:251
 msgid "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
 msgstr "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
 
-#: app/components/roles/tenant-role-access-manager.tsx:314
+#: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule."
 msgstr "Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule."
 
-#: app/components/roles/tenant-role-access-manager.tsx:175
+#: app/components/roles/tenant-role-access-manager.tsx:177
 msgid "Create, edit, enable, and delete announcement banners."
 msgstr "Create, edit, enable, and delete announcement banners."
 
-#: app/components/roles/tenant-role-access-manager.tsx:203
+#: app/components/roles/tenant-role-access-manager.tsx:205
 msgid "Create, edit, publish, pause, and delete automated journeys."
 msgstr "Create, edit, publish, pause, and delete automated journeys."
+
+#: app/components/roles/tenant-role-access-manager.tsx:396
+msgid "Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist."
+msgstr "Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist."
 
 #: app/components/roles/tenant-role-access-manager.tsx:157
 #~ msgid "Create, update, and publish web pages and announcements."
 #~ msgstr "Create, update, and publish web pages and announcements."
 
-#: app/components/roles/tenant-role-access-manager.tsx:164
+#: app/components/roles/tenant-role-access-manager.tsx:166
 msgid "Create, update, and publish web pages, forms, and redirects."
 msgstr "Create, update, and publish web pages, forms, and redirects."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1151
+#: app/components/roles/tenant-role-access-manager.tsx:1324
+#: app/components/roles/tenant-role-access-manager.tsx:1372
 msgid "Created"
 msgstr "Created"
 
@@ -6616,18 +6653,14 @@ msgstr ""
 msgid "Current icon"
 msgstr ""
 
-#: app/components/team-switcher.tsx:205
-#: app/components/team-switcher.tsx:237
+#: app/components/team-switcher.tsx:204
+#: app/components/team-switcher.tsx:236
 msgid "Current location"
 msgstr "Current location"
 
-#: app/components/team-switcher.tsx:179
+#: app/components/team-switcher.tsx:163
 #~ msgid "Current organization"
 #~ msgstr ""
-
-#: app/components/team-switcher.tsx:163
-msgid "Current organization"
-msgstr ""
 
 #: app/components/settings/password-form.tsx:82
 msgid "Current Password"
@@ -6641,7 +6674,7 @@ msgstr ""
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "Current rates and the full history. Each time you view these, it is recorded."
 
-#: app/components/team-switcher.tsx:291
+#: app/components/team-switcher.tsx:290
 msgid "Current restaurant"
 msgstr "Current restaurant"
 
@@ -6657,7 +6690,7 @@ msgstr "Current time {time}, {date}"
 msgid "Cursor Setup"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:850
+#: app/components/roles/tenant-role-access-manager.tsx:1012
 msgid "Custom"
 msgstr "Custom"
 
@@ -6665,7 +6698,6 @@ msgstr "Custom"
 msgid "Custom Availability Hours"
 msgstr "Custom Availability Hours"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:663
 #: app/components/settings/cards/organization/site-theme-card.tsx:624
 msgid "Custom colors"
 msgstr "Custom colors"
@@ -6695,8 +6727,7 @@ msgstr "Custom Hours"
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "Custom options, toppings, sides, and choices offered with this item."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1007
-#: app/components/roles/tenant-role-access-manager.tsx:1011
+#: app/components/roles/tenant-role-access-manager.tsx:1184
 msgid "Custom Roles"
 msgstr "Custom Roles"
 
@@ -6760,8 +6791,7 @@ msgstr ""
 #~ msgid "Customer limits"
 #~ msgstr "Customer limits"
 
-#: app/components/roles/tenant-role-access-manager.tsx:226
-#: app/components/roles/tenant-role-access-manager.tsx:227
+#: app/components/roles/tenant-role-access-manager.tsx:229
 msgid "Customer personal data"
 msgstr "Customer personal data"
 
@@ -6789,8 +6819,7 @@ msgstr ""
 msgid "customerId is required"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:309
-#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:315
 #: app/components/workspace-breadcrumb.tsx:11
 msgid "Customers"
 msgstr ""
@@ -6853,10 +6882,8 @@ msgstr ""
 msgid "Dark mode"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:135
-#: app/components/app-sidebar.tsx:283
-#: app/components/app-sidebar.tsx:133
-#: app/components/app-sidebar.tsx:280
+#: app/components/app-sidebar.tsx:139
+#: app/components/app-sidebar.tsx:289
 #: app/components/user-dropdown.tsx:61
 #: app/components/workspace-breadcrumb.tsx:76
 msgid "Dashboard"
@@ -6889,6 +6916,8 @@ msgstr ""
 #: app/components/staff/schedule/availability-sheet.tsx:289
 #: app/components/staff/timesheets/card-fields.tsx:101
 #: app/components/staff/timesheets/timesheet-table.tsx:209
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:205
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:209
 msgid "Date"
 msgstr "Date"
 
@@ -7073,8 +7102,7 @@ msgstr "Default: {defaultLanguage}. The first language you select is the default
 msgid "Define allowed and restricted delivery areas by radius, zip codes, or polygon maps."
 msgstr "Define allowed and restricted delivery areas by radius, zip codes, or polygon maps."
 
-#: app/components/roles/tenant-role-access-manager.tsx:567
-#: app/components/roles/tenant-role-access-manager.tsx:568
+#: app/components/roles/tenant-role-access-manager.tsx:725
 msgid "Define role details and select what permissions members receive."
 msgstr "Define role details and select what permissions members receive."
 
@@ -7095,8 +7123,8 @@ msgstr ""
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
-#: app/components/roles/tenant-role-access-manager.tsx:1105
-#: app/components/roles/tenant-role-access-manager.tsx:1263
+#: app/components/roles/tenant-role-access-manager.tsx:1278
+#: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/settings/passkey-manager.tsx:220
 #: app/components/staff/notes-tab.tsx:165
 #: app/components/staff/notes-tab.tsx:207
@@ -7113,8 +7141,6 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:484
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:484
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:547
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1033
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1038
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1096
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
@@ -7174,7 +7200,7 @@ msgstr "Delete application…"
 msgid "Delete call"
 msgstr "Delete call"
 
-#: app/components/roles/tenant-role-access-manager.tsx:236
+#: app/components/roles/tenant-role-access-manager.tsx:238
 msgid "Delete calls"
 msgstr "Delete calls"
 
@@ -7205,7 +7231,7 @@ msgstr ""
 msgid "Delete connection"
 msgstr "Delete connection"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1245
+#: app/components/roles/tenant-role-access-manager.tsx:1466
 msgid "Delete custom role"
 msgstr "Delete custom role"
 
@@ -7300,7 +7326,7 @@ msgstr "Delete Option"
 #~ msgid "Delete organization?"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:102
+#: app/components/roles/tenant-role-access-manager.tsx:104
 msgid "Delete own notes"
 msgstr "Delete own notes"
 
@@ -7345,7 +7371,7 @@ msgstr ""
 msgid "Delete step"
 msgstr "Delete step"
 
-#: app/components/roles/tenant-role-access-manager.tsx:107
+#: app/components/roles/tenant-role-access-manager.tsx:109
 msgid "Delete team notes"
 msgstr "Delete team notes"
 
@@ -7383,7 +7409,7 @@ msgstr "Deleted training rule \"{title}\""
 
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/phone-agent/call-detail-sheet.tsx:598
-#: app/components/roles/tenant-role-access-manager.tsx:1263
+#: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/staff/notes-tab.tsx:205
 #: app/components/staff/timesheets/card-sheet.tsx:437
 msgid "Deleting…"
@@ -7453,6 +7479,10 @@ msgstr "Delivery Zones & Geo-Fencing"
 msgid "Deny"
 msgstr ""
 
+#: app/components/roles/tenant-role-access-manager.tsx:582
+msgid "Deposit reports, charges & refunds"
+msgstr "Deposit reports, charges & refunds"
+
 #: app/components/hiring/job-editor.tsx:290
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "Describe the role, the pay and what you want to ask."
@@ -7467,17 +7497,11 @@ msgid "Describe when the agent should transfer to a specific contact. For exampl
 msgstr "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 
 #: app/components/hiring/job-editor.tsx:700
-#: app/components/roles/tenant-role-access-manager.tsx:593
-#: app/components/roles/tenant-role-access-manager.tsx:707
-#: app/components/roles/tenant-role-access-manager.tsx:900
-#: app/components/roles/tenant-role-access-manager.tsx:1047
-#: app/components/roles/tenant-role-access-manager.tsx:1181
-#: app/components/hiring/job-editor.tsx:657
-#: app/components/roles/tenant-role-access-manager.tsx:594
-#: app/components/roles/tenant-role-access-manager.tsx:709
-#: app/components/roles/tenant-role-access-manager.tsx:903
-#: app/components/roles/tenant-role-access-manager.tsx:1051
-#: app/components/roles/tenant-role-access-manager.tsx:1185
+#: app/components/roles/tenant-role-access-manager.tsx:751
+#: app/components/roles/tenant-role-access-manager.tsx:866
+#: app/components/roles/tenant-role-access-manager.tsx:1065
+#: app/components/roles/tenant-role-access-manager.tsx:1224
+#: app/components/roles/tenant-role-access-manager.tsx:1406
 #: app/components/settings/cards/organization/shop-card.tsx:268
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -7494,8 +7518,7 @@ msgstr ""
 msgid "Description (Guest-Facing)"
 msgstr "Description (Guest-Facing)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:684
-#: app/components/roles/tenant-role-access-manager.tsx:686
+#: app/components/roles/tenant-role-access-manager.tsx:843
 msgid "Deselect all"
 msgstr "Deselect all"
 
@@ -7524,8 +7547,8 @@ msgstr ""
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
+#: app/components/workspace-breadcrumb.tsx:134
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
-#: app/components/workspace-breadcrumb.tsx:127
 msgid "Details"
 msgstr "Details"
 
@@ -7601,6 +7624,10 @@ msgstr "Dine-In / In-House"
 #: app/components/locations/location-form.tsx:785
 msgid "Dine-In Tips"
 msgstr "Dine-In Tips"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:235
+msgid "Dinner"
+msgstr "Dinner"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
 msgid "Direct / Unknown"
@@ -7863,7 +7890,7 @@ msgstr ""
 msgid "Draft added. Read it through before you publish."
 msgstr "Draft added. Read it through before you publish."
 
-#: app/components/roles/tenant-role-access-manager.tsx:77
+#: app/components/roles/tenant-role-access-manager.tsx:79
 msgid "Draft and create new notes in the organization."
 msgstr "Draft and create new notes in the organization."
 
@@ -7996,7 +8023,7 @@ msgstr "Dropped on {target}."
 msgid "Dropped. Nothing changed."
 msgstr "Dropped. Nothing changed."
 
-#: app/components/app-sidebar.tsx:353
+#: app/components/app-sidebar.tsx:359
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:78
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:201
 msgid "Drops"
@@ -8180,18 +8207,17 @@ msgstr "Early out"
 #: app/components/favorite-notes.tsx:116
 #: app/components/menu/drop-wizard/drop-form.tsx:965
 #: app/components/note/comment-item.tsx:232
-#: app/components/roles/tenant-role-access-manager.tsx:1095
+#: app/components/roles/tenant-role-access-manager.tsx:1268
 #: app/components/staff/kiosk-manager.tsx:447
 #: app/components/staff/onboarding/certificates-tab.tsx:278
 #: app/components/staff/onboarding/templates-page.tsx:213
-#: app/components/staff/timesheets/review-queue.tsx:440
+#: app/components/staff/timesheets/review-queue.tsx:439
+#: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:432
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:481
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:405
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:475
-#: app/components/staff/timesheets/review-queue.tsx:439
-#: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:981
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
@@ -8231,11 +8257,11 @@ msgstr ""
 msgid "Edit comment..."
 msgstr "Edit comment..."
 
-#: app/components/roles/tenant-role-access-manager.tsx:560
+#: app/components/roles/tenant-role-access-manager.tsx:717
 msgid "Edit Custom Role"
 msgstr "Edit Custom Role"
 
-#: app/components/roles/tenant-role-access-manager.tsx:296
+#: app/components/roles/tenant-role-access-manager.tsx:298
 msgid "Edit dates of birth, home addresses, and emergency contacts. Includes View private details."
 msgstr "Edit dates of birth, home addresses, and emergency contacts. Includes View private details."
 
@@ -8252,9 +8278,17 @@ msgstr "Edit design"
 msgid "Edit Details"
 msgstr "Edit Details"
 
+#: app/components/roles/tenant-role-access-manager.tsx:406
+msgid "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
+msgstr "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:450
 msgid "Edit Drop"
 msgstr "Edit Drop"
+
+#: app/components/roles/tenant-role-access-manager.tsx:418
+msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
+msgstr "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1312
 #: app/routes/_app+/$orgSlug_+/media.tsx:1630
@@ -8290,8 +8324,7 @@ msgstr "Edit option"
 msgid "Edit Option"
 msgstr "Edit Option"
 
-#: app/components/roles/tenant-role-access-manager.tsx:90
-#: app/components/roles/tenant-role-access-manager.tsx:91
+#: app/components/roles/tenant-role-access-manager.tsx:93
 msgid "Edit own notes"
 msgstr "Edit own notes"
 
@@ -8303,7 +8336,7 @@ msgstr "Edit pickup window"
 msgid "Edit position"
 msgstr "Edit position"
 
-#: app/components/roles/tenant-role-access-manager.tsx:295
+#: app/components/roles/tenant-role-access-manager.tsx:297
 msgid "Edit private details"
 msgstr "Edit private details"
 
@@ -8319,8 +8352,7 @@ msgstr "Edit reminder"
 msgid "Edit Reminder"
 msgstr "Edit Reminder"
 
-#: app/components/roles/tenant-role-access-manager.tsx:867
-#: app/components/roles/tenant-role-access-manager.tsx:870
+#: app/components/roles/tenant-role-access-manager.tsx:1032
 msgid "Edit role"
 msgstr "Edit role"
 
@@ -8340,7 +8372,7 @@ msgstr "Edit shift"
 msgid "Edit tablet"
 msgstr "Edit tablet"
 
-#: app/components/roles/tenant-role-access-manager.tsx:96
+#: app/components/roles/tenant-role-access-manager.tsx:98
 msgid "Edit team notes"
 msgstr "Edit team notes"
 
@@ -8348,11 +8380,11 @@ msgstr "Edit team notes"
 msgid "Edit template"
 msgstr "Edit template"
 
-#: app/components/roles/tenant-role-access-manager.tsx:333
+#: app/components/roles/tenant-role-access-manager.tsx:335
 msgid "Edit time cards"
 msgstr "Edit time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:163
+#: app/components/roles/tenant-role-access-manager.tsx:165
 msgid "Edit website content"
 msgstr "Edit website content"
 
@@ -8674,10 +8706,8 @@ msgstr ""
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."
 
-#: app/components/organization-invitations.tsx:442
-#: app/routes/organizations+/create.tsx:1616
 #: app/components/organization-invitations.tsx:449
-#: app/routes/organizations+/create.tsx:1228
+#: app/routes/organizations+/create.tsx:1616
 msgid "Enter email address"
 msgstr ""
 
@@ -8702,7 +8732,6 @@ msgstr "Enter PIN"
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "Enter postal or zip codes where this delivery zone applies."
 
-#: app/components/staff/labor/labor-overview.tsx:484
 #: app/components/staff/labor/labor-overview.tsx:482
 msgid "Enter sales"
 msgstr "Enter sales"
@@ -9025,6 +9054,12 @@ msgstr "Existing page"
 msgid "Experience"
 msgstr "Experience"
 
+#: app/components/app-sidebar.tsx:508
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:118
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:21
+msgid "Experiences"
+msgstr "Experiences"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:440
 msgid "Expiration Date"
 msgstr ""
@@ -9339,6 +9374,10 @@ msgstr "Filter by tag"
 msgid "Filter by workplace"
 msgstr "Filter by workplace"
 
+#: app/components/roles/tenant-role-access-manager.tsx:580
+msgid "Finance"
+msgstr "Finance"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:808
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "Find and reuse images uploaded across notes, comments, your website, and organization settings."
@@ -9437,12 +9476,11 @@ msgstr "Flip vertically"
 msgid "Flow"
 msgstr "Flow"
 
-#: app/components/roles/tenant-role-access-manager.tsx:231
+#: app/components/roles/tenant-role-access-manager.tsx:233
 msgid "Follow up on calls"
 msgstr "Follow up on calls"
 
-#: app/components/app-sidebar.tsx:444
-#: app/components/app-sidebar.tsx:396
+#: app/components/app-sidebar.tsx:450
 #: app/components/workspace-breadcrumb.tsx:51
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:62
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:219
@@ -9538,11 +9576,9 @@ msgstr "Formatting"
 msgid "Former member"
 msgstr "Former member"
 
-#: app/components/app-sidebar.tsx:521
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/components/app-sidebar.tsx:473
+#: app/components/app-sidebar.tsx:580
 #: app/components/workspace-breadcrumb.tsx:57
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:153
 msgid "Forms"
@@ -9627,7 +9663,6 @@ msgstr "Fulfillment & Timing"
 msgid "Fulfillment Options"
 msgstr "Fulfillment Options"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:791
 #: app/components/settings/cards/organization/site-theme-card.tsx:752
 msgid "Full"
 msgstr ""
@@ -9649,20 +9684,18 @@ msgstr "Full time"
 msgid "Full width"
 msgstr "Full width"
 
-#: app/components/app-sidebar.tsx:564
-#: app/components/app-sidebar.tsx:516
+#: app/components/app-sidebar.tsx:623
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
 msgid "General"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:441
+#: app/components/roles/tenant-role-access-manager.tsx:496
 msgid "General manager"
 msgstr "General manager"
 
-#: app/components/app-sidebar.tsx:511
-#: app/components/app-sidebar.tsx:463
+#: app/components/app-sidebar.tsx:570
 #: app/components/settings/cards/organization/general-settings-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -9694,17 +9727,16 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:722
+#: app/components/app-sidebar.tsx:803
 msgid "Get chrome extension"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:164
-#: app/components/app-sidebar.tsx:737
+#: app/components/app-sidebar.tsx:168
+#: app/components/app-sidebar.tsx:818
 msgid "Get help"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:107
-#: app/components/app-sidebar.tsx:105
+#: app/components/app-sidebar.tsx:111
 #: app/components/settings/cards/organization/billing-card.tsx:303
 msgid "Get in touch"
 msgstr ""
@@ -9727,10 +9759,8 @@ msgstr ""
 msgid "Give away {when}"
 msgstr "Give away {when}"
 
-#: app/components/app-sidebar.tsx:172
-#: app/components/app-sidebar.tsx:745
-#: app/components/app-sidebar.tsx:170
-#: app/components/app-sidebar.tsx:687
+#: app/components/app-sidebar.tsx:176
+#: app/components/app-sidebar.tsx:826
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -9783,8 +9813,7 @@ msgstr "Go there"
 msgid "Go to Home"
 msgstr "Go to Home"
 
-#: app/components/app-sidebar.tsx:228
-#: app/components/app-sidebar.tsx:226
+#: app/components/app-sidebar.tsx:232
 msgid "Go to homepage"
 msgstr ""
 
@@ -9796,15 +9825,15 @@ msgstr "Go to switch"
 msgid "Go-live checklist"
 msgstr "Go-live checklist"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:164
 msgid "Good afternoon, {userName}"
 msgstr "Good afternoon, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:165
 msgid "Good evening, {userName}"
 msgstr "Good evening, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:153
+#: app/routes/_app+/$orgSlug_+/index.tsx:163
 msgid "Good morning, {userName}"
 msgstr "Good morning, {userName}"
 
@@ -9917,9 +9946,26 @@ msgstr ""
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "Guest dietary tags and allergen disclosure information."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:23
+msgid "Guest directory, VIP tags, dietary preferences, visit history, and profile merges."
+msgstr "Guest directory, VIP tags, dietary preferences, visit history, and profile merges."
+
 #: app/components/menu/modifier-guest-preview.tsx:189
 msgid "Guest Live Preview"
 msgstr "Guest Live Preview"
+
+#: app/components/roles/tenant-role-access-manager.tsx:413
+#: app/components/roles/tenant-role-access-manager.tsx:419
+msgid "Guest personal data"
+msgstr "Guest personal data"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:27
+msgid "Guest profiles, preferences, visit history, and notes live in your regional database."
+msgstr "Guest profiles, preferences, visit history, and notes live in your regional database."
+
+#: app/components/roles/tenant-role-access-manager.tsx:560
+msgid "Guest relations"
+msgstr "Guest relations"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1205
 #~ msgid "Guest storefront indicators and countdowns."
@@ -9937,6 +9983,21 @@ msgstr "Guest-facing name, internal identifier, and description."
 #: app/components/menu/option-form.tsx:401
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "Guest-facing name, internal SKU, and description."
+
+#: app/components/roles/tenant-role-access-manager.tsx:570
+msgid "Guestbook manager"
+msgstr "Guestbook manager"
+
+#: app/components/roles/tenant-role-access-manager.tsx:562
+#: app/components/roles/tenant-role-access-manager.tsx:572
+msgid "Guestbook profiles & merges"
+msgstr "Guestbook profiles & merges"
+
+#: app/components/app-sidebar.tsx:501
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:112
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:21
+msgid "Guests"
+msgstr "Guests"
 
 #: app/components/menu/modifier-form.tsx:997
 msgid "Guests can pick multiple options."
@@ -9958,7 +10019,6 @@ msgstr "Guests choose counts per option."
 msgid "Guests must choose one option before continuing."
 msgstr "Guests must choose one option before continuing."
 
-#: app/components/staff/timeclock-today.tsx:306
 #: app/components/staff/timeclock-today.tsx:309
 #: app/components/staff/timesheets/card-fields.tsx:67
 msgid "h"
@@ -10137,14 +10197,15 @@ msgstr "Hide replies ({replyCount})"
 msgid "High"
 msgstr "High"
 
-#: app/components/roles/tenant-role-access-manager.tsx:109
-#: app/components/roles/tenant-role-access-manager.tsx:131
-#: app/components/roles/tenant-role-access-manager.tsx:148
-#: app/components/roles/tenant-role-access-manager.tsx:165
-#: app/components/roles/tenant-role-access-manager.tsx:204
-#: app/components/roles/tenant-role-access-manager.tsx:250
-#: app/components/roles/tenant-role-access-manager.tsx:273
-#: app/components/roles/tenant-role-access-manager.tsx:358
+#: app/components/roles/tenant-role-access-manager.tsx:111
+#: app/components/roles/tenant-role-access-manager.tsx:133
+#: app/components/roles/tenant-role-access-manager.tsx:150
+#: app/components/roles/tenant-role-access-manager.tsx:167
+#: app/components/roles/tenant-role-access-manager.tsx:206
+#: app/components/roles/tenant-role-access-manager.tsx:252
+#: app/components/roles/tenant-role-access-manager.tsx:275
+#: app/components/roles/tenant-role-access-manager.tsx:360
+#: app/components/roles/tenant-role-access-manager.tsx:407
 msgid "High impact"
 msgstr "High impact"
 
@@ -10185,16 +10246,14 @@ msgid "Hired."
 msgstr "Hired."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:498
-#: app/components/roles/tenant-role-access-manager.tsx:362
-#: app/components/app-sidebar.tsx:450
-#: app/components/roles/tenant-role-access-manager.tsx:363
+#: app/components/app-sidebar.tsx:557
+#: app/components/roles/tenant-role-access-manager.tsx:365
 #: app/components/workspace-breadcrumb.tsx:37
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:42
 msgid "Hiring"
 msgstr "Hiring"
 
-#: app/components/roles/tenant-role-access-manager.tsx:461
+#: app/components/roles/tenant-role-access-manager.tsx:516
 msgid "Hiring manager"
 msgstr "Hiring manager"
 
@@ -10249,13 +10308,17 @@ msgstr "Holidays"
 #: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/components/workspace-breadcrumb.tsx:100
-#: app/components/workspace-breadcrumb.tsx:135
-#: app/components/workspace-breadcrumb.tsx:144
+#: app/components/workspace-breadcrumb.tsx:142
+#: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Home"
 msgstr ""
+
+#: app/components/roles/tenant-role-access-manager.tsx:526
+msgid "Host"
+msgstr "Host"
 
 #: app/components/settings/cards/organization/shop-card.tsx:211
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
@@ -10662,21 +10725,18 @@ msgstr "Insert field here"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1220
+#: app/components/roles/tenant-role-access-manager.tsx:1441
 msgid "Inspect"
 msgstr "Inspect"
 
-#: app/components/app-sidebar.tsx:599
+#: app/components/app-sidebar.tsx:658
 #: app/components/settings/cards/organization/integrations-card.tsx:181
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
-#: app/components/app-sidebar.tsx:544
-#: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
 msgid "Integrations"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:244
+#: app/components/roles/tenant-role-access-manager.tsx:246
 msgid "Internal channels for your team."
 msgstr "Internal channels for your team."
 
@@ -10693,7 +10753,6 @@ msgstr "Internal Reference (Optional)"
 msgid "Internal Reference / SKU (Optional)"
 msgstr "Internal Reference / SKU (Optional)"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:637
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:765
 msgid "International format, for example +15551234567. Use a line that doesn't forward to the agent."
 msgstr "International format, for example +15551234567. Use a line that doesn't forward to the agent."
@@ -10800,17 +10859,16 @@ msgstr ""
 msgid "Invite Checkout payout contact"
 msgstr "Invite Checkout payout contact"
 
-#: app/components/workspace-header-actions.tsx:46
+#: app/components/workspace-header-actions.tsx:71
 msgid "Invite member"
 msgstr "Invite member"
 
-#: app/components/team-switcher.tsx:316
-#: app/components/team-switcher.tsx:188
+#: app/components/team-switcher.tsx:315
 msgid "Invite members"
 msgstr ""
 
 #: app/components/command-menu.tsx:132
-#: app/components/roles/tenant-role-access-manager.tsx:124
+#: app/components/roles/tenant-role-access-manager.tsx:126
 msgid "Invite new members"
 msgstr ""
 
@@ -10925,7 +10983,7 @@ msgstr "Item Photos"
 msgid "items"
 msgstr "items"
 
-#: app/components/app-sidebar.tsx:338
+#: app/components/app-sidebar.tsx:344
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:57
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:262
@@ -10968,11 +11026,11 @@ msgstr "Job applicants: {applicantCount} (not included in the backup)"
 msgid "Job post"
 msgstr "Job post"
 
-#: app/components/roles/tenant-role-access-manager.tsx:463
+#: app/components/roles/tenant-role-access-manager.tsx:518
 msgid "Job posts & applicants"
 msgstr "Job posts & applicants"
 
-#: app/components/roles/tenant-role-access-manager.tsx:365
+#: app/components/roles/tenant-role-access-manager.tsx:367
 msgid "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 msgstr "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 
@@ -11070,7 +11128,6 @@ msgstr "Keep it"
 msgid "Keep order"
 msgstr "Keep order"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:573
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:701
 msgid "Keep recordings for"
 msgstr "Keep recordings for"
@@ -11158,8 +11215,7 @@ msgstr ""
 msgid "Kitchen Throttling Exemption"
 msgstr "Kitchen Throttling Exemption"
 
-#: app/components/app-sidebar.tsx:418
-#: app/components/app-sidebar.tsx:370
+#: app/components/app-sidebar.tsx:424
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
@@ -11184,10 +11240,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:493
-#: app/components/staff/labor/labor-page.tsx:210
-#: app/components/staff/labor/labor-page.tsx:239
-#: app/components/app-sidebar.tsx:445
+#: app/components/app-sidebar.tsx:552
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
 #: app/components/workspace-breadcrumb.tsx:36
@@ -11266,11 +11319,10 @@ msgid "Large Order Threshold Rule"
 msgstr "Large Order Threshold Rule"
 
 #. placeholder {0}: notes.daysShown
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:214
 msgid "Last {0} days"
 msgstr "Last {0} days"
 
-#: app/components/staff/labor/labor-page.tsx:327
 #: app/components/staff/labor/labor-page.tsx:330
 msgid "Last {days} days"
 msgstr "Last {days} days"
@@ -11506,7 +11558,6 @@ msgstr "Licences and cards, and when they expire."
 #~ msgid "Lifecycle State"
 #~ msgstr "Lifecycle State"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:776
 #: app/components/settings/cards/organization/site-theme-card.tsx:737
 msgid "Light"
 msgstr ""
@@ -11525,13 +11576,13 @@ msgstr ""
 #~ msgid "Limit orders per pickup time"
 #~ msgstr "Limit orders per pickup time"
 
-#: app/components/menu/drop-wizard/drop-drawers.tsx:491
-#~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
-#~ msgstr "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
-
 #: app/utils/organization/role-label.ts:22
 msgid "Limited access for temporary collaborators"
 msgstr "Limited access for temporary collaborators"
+
+#: app/components/menu/drop-wizard/drop-drawers.tsx:491
+#~ msgid "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
+#~ msgstr "Limiting how many items you sell builds urgency and keeps customers excited for your next drop."
 
 #: app/components/staff/labor/sales-import-dialog.tsx:259
 msgid "Line {line}: "
@@ -11608,9 +11659,17 @@ msgstr "Listening"
 msgid "Live"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:23
+msgid "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
+msgstr "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
+
 #: app/components/phone-agent/test-call-panel.tsx:641
 msgid "Live transcript"
 msgstr "Live transcript"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:23
+msgid "Live walk-in queue, quoted wait times, table-ready notifications, and seating."
+msgstr "Live walk-in queue, quoted wait times, table-ready notifications, and seating."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:256
 msgid "LiveKit credentials are set by your platform administrator."
@@ -11739,7 +11798,6 @@ msgstr "Loading results…"
 msgid "Loading reviews"
 msgstr "Loading reviews"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
@@ -11800,6 +11858,8 @@ msgstr "Loading…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:177
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:181
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:578
 msgid "Location"
 msgstr "Location"
@@ -11828,14 +11888,13 @@ msgstr "Location Overrides"
 msgid "Location Status"
 msgstr "Location Status"
 
-#: app/components/app-sidebar.tsx:569
+#: app/components/app-sidebar.tsx:628
 #: app/components/member-location-scope.tsx:160
-#: app/components/team-switcher.tsx:183
+#: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:525
 msgid "Locations"
 msgstr "Locations"
 
-#: app/components/staff/timesheets/timesheets-page.tsx:949
 #: app/components/staff/timesheets/timesheets-page.tsx:948
 msgid "Lock"
 msgstr "Lock"
@@ -11866,7 +11925,6 @@ msgstr "Locking is off for this workplace. Turn it on in Labor rules."
 msgid "Locks inventory while customer fills in checkout details."
 msgstr "Locks inventory while customer fills in checkout details."
 
-#: app/components/nav-user.tsx:300
 #: app/components/nav-user.tsx:303
 #: app/components/ui/header.tsx:144
 msgid "Log out"
@@ -11959,6 +12017,10 @@ msgstr "Low rating"
 msgid "Low ratings"
 msgstr "Low ratings"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:234
+msgid "Lunch"
+msgstr "Lunch"
+
 #: app/components/staff/timeclock-today.tsx:309
 #: app/components/staff/timesheets/card-fields.tsx:68
 #: app/components/staff/timesheets/timesheet-table.tsx:334
@@ -11970,8 +12032,7 @@ msgstr "m"
 msgid "m@example.com"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:360
-#: app/components/app-sidebar.tsx:312
+#: app/components/app-sidebar.tsx:366
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Mailbox"
 msgstr "Mailbox"
@@ -11983,6 +12044,10 @@ msgstr "Mailbox sources"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1234
 msgid "Main library"
 msgstr "Main library"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:189
+msgid "Main location"
+msgstr "Main location"
 
 #: app/components/staff/positions-tab.tsx:254
 msgid "Main position"
@@ -12004,7 +12069,7 @@ msgstr "Make a test call"
 msgid "Make it more detailed"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:92
+#: app/components/roles/tenant-role-access-manager.tsx:94
 msgid "Make modifications to notes created by this user."
 msgstr "Make modifications to notes created by this user."
 
@@ -12020,16 +12085,15 @@ msgstr ""
 msgid "Make this the primary location for your restaurant."
 msgstr "Make this the primary location for your restaurant."
 
-#: app/components/roles/tenant-role-access-manager.tsx:173
-#: app/components/roles/tenant-role-access-manager.tsx:174
+#: app/components/roles/tenant-role-access-manager.tsx:176
 msgid "Manage announcements"
 msgstr "Manage announcements"
 
-#: app/components/roles/tenant-role-access-manager.tsx:202
+#: app/components/roles/tenant-role-access-manager.tsx:204
 msgid "Manage automations"
 msgstr "Manage automations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:191
+#: app/components/roles/tenant-role-access-manager.tsx:193
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
 
@@ -12037,11 +12101,15 @@ msgstr "Manage broadcasts"
 msgid "Manage channels"
 msgstr "Manage channels"
 
-#: app/components/roles/tenant-role-access-manager.tsx:248
+#: app/components/roles/tenant-role-access-manager.tsx:250
 msgid "Manage chat channels"
 msgstr "Manage chat channels"
 
-#: app/components/roles/tenant-role-access-manager.tsx:375
+#: app/components/roles/tenant-role-access-manager.tsx:417
+msgid "Manage guestbook"
+msgstr "Manage guestbook"
+
+#: app/components/roles/tenant-role-access-manager.tsx:377
 msgid "Manage hiring"
 msgstr "Manage hiring"
 
@@ -12049,16 +12117,15 @@ msgstr "Manage hiring"
 msgid "Manage integrations"
 msgstr "Manage integrations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:375
-#: app/components/roles/tenant-role-access-manager.tsx:376
+#: app/components/roles/tenant-role-access-manager.tsx:378
 msgid "Manage job posts, move applicants between stages, and hire. Includes View hiring."
 msgstr "Manage job posts, move applicants between stages, and hire. Includes View hiring."
 
-#: app/components/roles/tenant-role-access-manager.tsx:356
+#: app/components/roles/tenant-role-access-manager.tsx:358
 msgid "Manage labor policy"
 msgstr "Manage labor policy"
 
-#: app/components/team-switcher.tsx:257
+#: app/components/team-switcher.tsx:256
 msgid "Manage locations"
 msgstr "Manage locations"
 
@@ -12071,26 +12138,32 @@ msgstr "Manage Menu Categories"
 msgid "Manage Passkeys"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:219
+#: app/components/roles/tenant-role-access-manager.tsx:221
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
+
+#: app/components/roles/tenant-role-access-manager.tsx:395
+msgid "Manage reservation book & waitlist"
+msgstr "Manage reservation book & waitlist"
+
+#: app/components/roles/tenant-role-access-manager.tsx:405
+msgid "Manage reservation settings & experiences"
+msgstr "Manage reservation settings & experiences"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:528
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 
-#: app/components/organization-invitations.tsx:266
-#: app/components/organization-members.tsx:186
 #: app/components/organization-invitations.tsx:273
-#: app/components/organization-members.tsx:182
+#: app/components/organization-members.tsx:195
 msgid "Manage roles"
 msgstr "Manage roles"
 
-#: app/components/roles/tenant-role-access-manager.tsx:313
+#: app/components/roles/tenant-role-access-manager.tsx:315
 msgid "Manage schedule"
 msgstr "Manage schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:271
+#: app/components/roles/tenant-role-access-manager.tsx:273
 msgid "Manage staff"
 msgstr "Manage staff"
 
@@ -12130,13 +12203,9 @@ msgstr ""
 #~ msgid "Manage your organization settings and preferences."
 #~ msgstr ""
 
-#: app/components/organization-members.tsx:167
+#: app/components/organization-members.tsx:172
 #~ msgid "Manage your organization's members."
 #~ msgstr ""
-
-#: app/components/organization-members.tsx:172
-msgid "Manage your organization's members."
-msgstr ""
 
 #: app/components/settings/cards/organization/general-settings-card.tsx:61
 #~ msgid "Manage your organization's name, slug, and profile image."
@@ -12162,11 +12231,11 @@ msgstr ""
 msgid "Manage your public organization website and appearance."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:15
+#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
 msgid "Manage your restaurant settings and preferences."
 msgstr "Manage your restaurant settings and preferences."
 
-#: app/components/organization-members.tsx:180
+#: app/components/organization-members.tsx:185
 msgid "Manage your restaurant's members."
 msgstr "Manage your restaurant's members."
 
@@ -12208,7 +12277,6 @@ msgstr "Mark {reviewableCount} as reviewed"
 msgid "Mark Active"
 msgstr "Mark Active"
 
-#: app/components/ui/notification-bell.tsx:492
 #: app/components/ui/notification-bell.tsx:491
 msgid "Mark all as read"
 msgstr ""
@@ -12274,10 +12342,8 @@ msgstr "Marked as reviewed."
 msgid "Marked unavailable"
 msgstr "Marked unavailable"
 
-#: app/components/app-sidebar.tsx:371
-#: app/components/roles/tenant-role-access-manager.tsx:180
-#: app/components/app-sidebar.tsx:323
-#: app/components/roles/tenant-role-access-manager.tsx:181
+#: app/components/app-sidebar.tsx:377
+#: app/components/roles/tenant-role-access-manager.tsx:183
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
 msgid "Marketing"
@@ -12287,7 +12353,7 @@ msgstr ""
 #~ msgid "Marketing and scheduling"
 #~ msgstr "Marketing and scheduling"
 
-#: app/components/roles/tenant-role-access-manager.tsx:408
+#: app/components/roles/tenant-role-access-manager.tsx:464
 msgid "Marketing manager"
 msgstr "Marketing manager"
 
@@ -12295,7 +12361,6 @@ msgstr "Marketing manager"
 msgid "Marketplaces"
 msgstr "Marketplaces"
 
-#: app/components/staff/timesheets/review-queue.tsx:189
 #: app/components/staff/timesheets/review-queue.tsx:188
 msgid "Marking…"
 msgstr "Marking…"
@@ -12373,8 +12438,7 @@ msgstr ""
 msgid "MCP server"
 msgstr "MCP server"
 
-#: app/components/app-sidebar.tsx:609
-#: app/components/app-sidebar.tsx:554
+#: app/components/app-sidebar.tsx:668
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
 msgid "MCP Server"
 msgstr ""
@@ -12403,8 +12467,7 @@ msgstr "Media details"
 msgid "Media details saved"
 msgstr "Media details saved"
 
-#: app/components/app-sidebar.tsx:303
-#: app/components/app-sidebar.tsx:300
+#: app/components/app-sidebar.tsx:309
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
@@ -12426,8 +12489,7 @@ msgstr ""
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
 msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
-#: app/components/roles/tenant-role-access-manager.tsx:857
-#: app/components/roles/tenant-role-access-manager.tsx:860
+#: app/components/roles/tenant-role-access-manager.tsx:1022
 msgid "member"
 msgstr ""
 
@@ -12435,26 +12497,21 @@ msgstr ""
 msgid "Member"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:857
+#: app/components/roles/tenant-role-access-manager.tsx:1022
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:576
+#: app/components/app-sidebar.tsx:635
 #: app/components/chat/chat-group-settings-dialog.tsx:83
-#: app/components/organization-members.tsx:177
-#: app/components/roles/tenant-role-access-manager.tsx:1050
-#: app/components/roles/tenant-role-access-manager.tsx:1184
-#: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:286
-#: app/components/app-sidebar.tsx:521
-#: app/components/organization-members.tsx:169
-#: app/components/roles/tenant-role-access-manager.tsx:1054
-#: app/components/roles/tenant-role-access-manager.tsx:1188
+#: app/components/organization-members.tsx:182
+#: app/components/roles/tenant-role-access-manager.tsx:1227
+#: app/components/roles/tenant-role-access-manager.tsx:1409
 #: app/components/workspace-breadcrumb.tsx:63
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:294
 msgid "Members"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:420
+#: app/components/roles/tenant-role-access-manager.tsx:475
 msgid "Members & invites"
 msgstr "Members & invites"
 
@@ -12462,7 +12519,7 @@ msgstr "Members & invites"
 msgid "Members who created the most notes."
 msgstr "Members who created the most notes."
 
-#: app/components/app-sidebar.tsx:315
+#: app/components/app-sidebar.tsx:321
 #: app/components/menu/drop-wizard/drop-form.tsx:706
 #: app/components/menu/drop-wizard/drop-form.tsx:722
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
@@ -12527,7 +12584,7 @@ msgstr "Menu Type"
 msgid "Menu Type & Capabilities"
 msgstr "Menu Type & Capabilities"
 
-#: app/components/app-sidebar.tsx:328
+#: app/components/app-sidebar.tsx:334
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:298
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:250
@@ -12694,7 +12751,7 @@ msgstr "Modifier Group Information"
 msgid "Modifier Group Name"
 msgstr "Modifier Group Name"
 
-#: app/components/app-sidebar.tsx:343
+#: app/components/app-sidebar.tsx:349
 #: app/components/menu/item-form.tsx:539
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:64
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:292
@@ -12705,12 +12762,11 @@ msgstr "Modifier Groups"
 msgid "Modifier Options"
 msgstr "Modifier Options"
 
-#: app/components/roles/tenant-role-access-manager.tsx:96
-#: app/components/roles/tenant-role-access-manager.tsx:97
+#: app/components/roles/tenant-role-access-manager.tsx:99
 msgid "Modify notes created by other team members."
 msgstr "Modify notes created by other team members."
 
-#: app/components/roles/tenant-role-access-manager.tsx:146
+#: app/components/roles/tenant-role-access-manager.tsx:148
 msgid "Modify organization settings"
 msgstr "Modify organization settings"
 
@@ -12841,7 +12897,6 @@ msgstr "Multiple choice"
 msgid "Multiple Choice (Checkboxes)"
 msgstr "Multiple Choice (Checkboxes)"
 
-#: app/components/phone-agent/test-call-panel.tsx:631
 #: app/components/phone-agent/test-call-phone.tsx:233
 msgid "Mute"
 msgstr "Mute"
@@ -12959,7 +13014,6 @@ msgstr "Needs follow-up"
 msgid "Needs reply"
 msgstr "Needs reply"
 
-#: app/components/staff/timeclock-today.tsx:378
 #: app/components/staff/timeclock-today.tsx:381
 #: app/components/staff/timesheets/issue-copy.ts:51
 #: app/components/staff/timesheets/timesheets-page.tsx:537
@@ -13036,7 +13090,7 @@ msgstr ""
 
 #: app/components/hiring/applicant-labels.ts:22
 #: app/components/workspace-breadcrumb.tsx:22
-#: app/components/workspace-header-actions.tsx:26
+#: app/components/workspace-header-actions.tsx:44
 msgid "New"
 msgstr "New"
 
@@ -13143,7 +13197,7 @@ msgid "New Modifier Option"
 msgstr "New Modifier Option"
 
 #: app/components/staff/notes-tab.tsx:98
-#: app/components/workspace-header-actions.tsx:37
+#: app/components/workspace-header-actions.tsx:57
 msgid "New note"
 msgstr "New note"
 
@@ -13184,7 +13238,7 @@ msgstr "New redirect"
 msgid "New Redirect"
 msgstr "New Redirect"
 
-#: app/components/workspace-header-actions.tsx:41
+#: app/components/workspace-header-actions.tsx:62
 msgid "New report"
 msgstr "New report"
 
@@ -13273,7 +13327,7 @@ msgid "No active subscription"
 msgstr ""
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "No activity yet"
 msgstr ""
 
@@ -13428,7 +13482,7 @@ msgstr "No contacts yet."
 msgid "No content yet"
 msgstr "No content yet"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1034
+#: app/components/roles/tenant-role-access-manager.tsx:1207
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
@@ -13440,7 +13494,6 @@ msgstr ""
 msgid "No delivery zones configured"
 msgstr "No delivery zones configured"
 
-#: app/components/organization-invitations.tsx:473
 #: app/components/organization-invitations.tsx:480
 msgid "No description provided"
 msgstr "No description provided"
@@ -13481,6 +13534,10 @@ msgstr ""
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:25
+msgid "No experiences configured yet"
+msgstr "No experiences configured yet"
+
 #: app/components/website/form-builder-sidebar.tsx:878
 msgid "No fields yet"
 msgstr "No fields yet"
@@ -13492,6 +13549,10 @@ msgstr "No fields yet"
 #: app/components/staff/schedule/schedule-toolbar.tsx:135
 msgid "No grouping"
 msgstr "No grouping"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/guests.tsx:25
+msgid "No guest profiles found"
+msgstr "No guest profiles found"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:292
 msgid "No hours in this pay period"
@@ -13642,8 +13703,7 @@ msgstr "No media matches your search."
 msgid "No media yet. Upload an image to get started."
 msgstr "No media yet. Upload an image to get started."
 
-#: app/components/organization-members.tsx:166
-#: app/components/organization-members.tsx:158
+#: app/components/organization-members.tsx:171
 msgid "No members found."
 msgstr ""
 
@@ -13943,6 +14003,10 @@ msgstr "No redirects match that search"
 msgid "No reminder notifications set."
 msgstr "No reminder notifications set."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:25
+msgid "No reservations scheduled for today"
+msgstr "No reservations scheduled for today"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
 msgid "No responses yet."
 msgstr "No responses yet."
@@ -14186,8 +14250,6 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/settings/cards/organization/site-theme-card.tsx:787
-#: app/components/hiring/job-summary.tsx:47
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -14216,7 +14278,7 @@ msgstr "Normal"
 msgid "Not allocated"
 msgstr "Not allocated"
 
-#: app/components/roles/tenant-role-access-manager.tsx:941
+#: app/components/roles/tenant-role-access-manager.tsx:1103
 msgid "Not allowed"
 msgstr "Not allowed"
 
@@ -14395,8 +14457,7 @@ msgstr ""
 msgid "notes"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:297
-#: app/components/app-sidebar.tsx:294
+#: app/components/app-sidebar.tsx:303
 #: app/components/command-menu.tsx:137
 #: app/components/hiring/candidate-sheet.tsx:360
 #: app/components/staff/notes-tab.tsx:84
@@ -14407,11 +14468,11 @@ msgstr ""
 msgid "Notes"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:71
+#: app/components/roles/tenant-role-access-manager.tsx:73
 msgid "Notes & Documents"
 msgstr "Notes & Documents"
 
-#: app/components/roles/tenant-role-access-manager.tsx:396
+#: app/components/roles/tenant-role-access-manager.tsx:451
 msgid "Notes & website"
 msgstr "Notes & website"
 
@@ -14531,8 +14592,7 @@ msgstr "Notification Message"
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:614
-#: app/components/app-sidebar.tsx:559
+#: app/components/app-sidebar.tsx:673
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr ""
@@ -14657,8 +14717,8 @@ msgid "On that date"
 msgstr "On that date"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:225
-msgid "On the leaderboard"
-msgstr "On the leaderboard"
+#~ msgid "On the leaderboard"
+#~ msgstr "On the leaderboard"
 
 #: app/utils/staffing/schedule-errors.ts:84
 msgid "on time off"
@@ -14735,7 +14795,7 @@ msgstr "One of those positions no longer exists. Reload and try again."
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 
-#: app/components/roles/tenant-role-access-manager.tsx:182
+#: app/components/roles/tenant-role-access-manager.tsx:184
 msgid "One-time broadcasts and automated journeys."
 msgstr "One-time broadcasts and automated journeys."
 
@@ -14899,11 +14959,11 @@ msgstr "Open {day} as a day"
 msgid "Open {routeTitle}?"
 msgstr "Open {routeTitle}?"
 
-#: app/components/roles/tenant-role-access-manager.tsx:87
+#: app/components/roles/tenant-role-access-manager.tsx:89
 msgid "Open and view notes created by any organization teammate."
 msgstr "Open and view notes created by any organization teammate."
 
-#: app/components/roles/tenant-role-access-manager.tsx:82
+#: app/components/roles/tenant-role-access-manager.tsx:84
 msgid "Open and view notes created by this user."
 msgstr "Open and view notes created by this user."
 
@@ -14923,6 +14983,10 @@ msgstr "Open Checkout dashboard"
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr ""
 
+#: app/components/site-header.tsx:62
+msgid "Open command menu"
+msgstr "Open command menu"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1018
 #~ msgid "Open countdown hidden"
 #~ msgstr "Open countdown hidden"
@@ -14930,10 +14994,6 @@ msgstr ""
 #: app/components/menu/drop-wizard/drop-form.tsx:1017
 #~ msgid "Open countdown visible"
 #~ msgstr "Open countdown visible"
-
-#: app/components/site-header.tsx:62
-msgid "Open command menu"
-msgstr "Open command menu"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:865
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
@@ -14990,7 +15050,7 @@ msgstr "Open or closed"
 #~ msgid "Open pages and themes in the site builder."
 #~ msgstr "Open pages and themes in the site builder."
 
-#: app/components/roles/tenant-role-access-manager.tsx:159
+#: app/components/roles/tenant-role-access-manager.tsx:161
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "Open pages, forms, and themes in the site builder."
 
@@ -15226,7 +15286,7 @@ msgstr "Optional limits for this section on this drop."
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 
-#: app/components/app-sidebar.tsx:348
+#: app/components/app-sidebar.tsx:354
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:234
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:71
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
@@ -15355,7 +15415,7 @@ msgstr "orders/h"
 msgid "Organization Created"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:137
+#: app/components/roles/tenant-role-access-manager.tsx:139
 msgid "Organization details and configuration."
 msgstr "Organization details and configuration."
 
@@ -15367,7 +15427,7 @@ msgstr "Organization logo"
 #~ msgid "Organization logo preview"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:136
+#: app/components/roles/tenant-role-access-manager.tsx:138
 msgid "Organization Settings"
 msgstr "Organization Settings"
 
@@ -15529,16 +15589,17 @@ msgstr "Overtime moved after this card was approved. Reopen it to review the new
 msgid "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 
-#: app/components/app-sidebar.tsx:321
-#: app/components/app-sidebar.tsx:377
-#: app/components/staff/labor/labor-page.tsx:195
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:671
-#: app/components/app-sidebar.tsx:329
+#: app/components/app-sidebar.tsx:327
+#: app/components/app-sidebar.tsx:383
 #: app/components/staff/labor/labor-page.tsx:196
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:36
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:676
 msgid "Overview"
 msgstr ""
+
+#: app/components/roles/tenant-role-access-manager.tsx:590
+msgid "Owner"
+msgstr "Owner"
 
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
@@ -15576,8 +15637,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:516
-#: app/components/app-sidebar.tsx:468
+#: app/components/app-sidebar.tsx:575
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
@@ -15931,32 +15991,32 @@ msgstr ""
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
-#: app/components/roles/tenant-role-access-manager.tsx:237
+#: app/components/roles/tenant-role-access-manager.tsx:239
 msgid "Permanently delete calls, transcripts, and recordings. Needs View calls."
 msgstr "Permanently delete calls, transcripts, and recordings. Needs View calls."
 
-#: app/components/roles/tenant-role-access-manager.tsx:108
+#: app/components/roles/tenant-role-access-manager.tsx:110
 msgid "Permanently delete notes created by any teammate."
 msgstr "Permanently delete notes created by any teammate."
 
-#: app/components/roles/tenant-role-access-manager.tsx:103
+#: app/components/roles/tenant-role-access-manager.tsx:105
 msgid "Permanently delete notes created by this user."
 msgstr "Permanently delete notes created by this user."
 
-#: app/components/roles/tenant-role-access-manager.tsx:706
-#: app/components/roles/tenant-role-access-manager.tsx:900
+#: app/components/roles/tenant-role-access-manager.tsx:863
+#: app/components/roles/tenant-role-access-manager.tsx:1062
 msgid "Permission"
 msgstr "Permission"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1057
+#: app/components/roles/tenant-role-access-manager.tsx:1230
 msgid "Permissions"
 msgstr "Permissions"
 
-#: app/components/roles/tenant-role-access-manager.tsx:861
+#: app/components/roles/tenant-role-access-manager.tsx:1023
 msgid "permissions granted"
 msgstr "permissions granted"
 
-#: app/components/roles/tenant-role-access-manager.tsx:789
+#: app/components/roles/tenant-role-access-manager.tsx:946
 msgid "permissions selected"
 msgstr "permissions selected"
 
@@ -15966,8 +16026,8 @@ msgstr "permissions selected"
 msgid "Person"
 msgstr "Person"
 
-#: app/components/roles/tenant-role-access-manager.tsx:291
-#: app/components/roles/tenant-role-access-manager.tsx:297
+#: app/components/roles/tenant-role-access-manager.tsx:293
+#: app/components/roles/tenant-role-access-manager.tsx:299
 msgid "Personal data"
 msgstr "Personal data"
 
@@ -15999,9 +16059,7 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:400
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:118
-#: app/components/app-sidebar.tsx:352
+#: app/components/app-sidebar.tsx:406
 #: app/components/workspace-breadcrumb.tsx:15
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:119
 msgid "Phone agent"
@@ -16092,8 +16150,7 @@ msgstr ""
 msgid "Photos and videos"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:451
-#: app/components/app-sidebar.tsx:403
+#: app/components/app-sidebar.tsx:457
 #: app/components/workspace-breadcrumb.tsx:52
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:55
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:292
@@ -16315,7 +16372,7 @@ msgstr "Plan shifts, publish the week to your team, and handle time off and avai
 msgid "Platform"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1205
+#: app/components/roles/tenant-role-access-manager.tsx:1426
 msgid "Platform-provided role."
 msgstr "Platform-provided role."
 
@@ -16632,6 +16689,10 @@ msgstr ""
 msgid "Preload"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/reservations+/experiences.tsx:23
+msgid "Prepaid tasting menus, chef's tables, ticketed events, and add-ons."
+msgstr "Prepaid tasting menus, chef's tables, ticketed events, and add-ons."
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:136
 msgid "Preparing"
 msgstr "Preparing"
@@ -16824,8 +16885,7 @@ msgstr "Processing…"
 msgid "Product name"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:141
-#: app/components/app-sidebar.tsx:139
+#: app/components/app-sidebar.tsx:145
 #: app/components/staff/staff-profile-page.tsx:97
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
@@ -17123,7 +17183,7 @@ msgstr "Read aloud, then the call moves on."
 msgid "Read documentation"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:142
+#: app/components/roles/tenant-role-access-manager.tsx:144
 msgid "Read organization details, verified domain, and storage status."
 msgstr "Read organization details, verified domain, and storage status."
 
@@ -17131,7 +17191,7 @@ msgstr "Read organization details, verified domain, and storage status."
 msgid "Read page details"
 msgstr "Read page details"
 
-#: app/components/roles/tenant-role-access-manager.tsx:170
+#: app/components/roles/tenant-role-access-manager.tsx:172
 msgid "Read the announcement banners shown on the public site."
 msgstr "Read the announcement banners shown on the public site."
 
@@ -17143,7 +17203,7 @@ msgstr "Read the order back"
 msgid "Read the policy"
 msgstr "Read the policy"
 
-#: app/components/roles/tenant-role-access-manager.tsx:472
+#: app/components/roles/tenant-role-access-manager.tsx:606
 msgid "Read-only"
 msgstr "Read-only"
 
@@ -17295,8 +17355,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:549
-#: app/components/app-sidebar.tsx:501
+#: app/components/app-sidebar.tsx:608
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
@@ -17311,9 +17370,8 @@ msgid "Referrer"
 msgstr "Referrer"
 
 #: app/components/mailbox/reviews-tab.tsx:611
-#: app/components/staff/timeclock-today.tsx:169
-#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:225
 #: app/components/staff/timeclock-today.tsx:172
+#: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:225
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:342
 msgid "Refresh"
 msgstr "Refresh"
@@ -17570,7 +17628,7 @@ msgstr ""
 msgid "Remove media"
 msgstr ""
 
-#: app/components/organization-members.tsx:251
+#: app/components/organization-members.tsx:260
 msgid "Remove member"
 msgstr ""
 
@@ -17578,7 +17636,6 @@ msgstr ""
 msgid "Remove nested modifier group"
 msgstr "Remove nested modifier group"
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:688
 #: app/components/phone-agent/phone-number-dialogs.tsx:689
 msgid "Remove number"
 msgstr "Remove number"
@@ -17630,7 +17687,7 @@ msgstr "Remove tag"
 msgid "Remove task {position}"
 msgstr "Remove task {position}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:129
+#: app/components/roles/tenant-role-access-manager.tsx:131
 msgid "Remove team members"
 msgstr "Remove team members"
 
@@ -17749,7 +17806,6 @@ msgid "Repeat on other days"
 msgstr "Repeat on other days"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:665
-#: app/components/settings/cards/organization/site-theme-card.tsx:328
 #: app/components/settings/cards/organization/site-theme-card.tsx:289
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2610
 msgid "Replace"
@@ -17819,9 +17875,11 @@ msgstr "Report not found"
 msgid "Report templates"
 msgstr "Report templates"
 
-#: app/components/app-sidebar.tsx:291
-#: app/components/app-sidebar.tsx:288
+#: app/components/app-sidebar.tsx:297
+#: app/components/app-sidebar.tsx:515
 #: app/components/workspace-breadcrumb.tsx:17
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:124
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:21
 msgid "Reports"
 msgstr ""
 
@@ -17913,14 +17971,47 @@ msgstr "Resend to people not yet reached"
 msgid "Reservation"
 msgstr "Reservation"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:25
+msgid "Reservation book is ready"
+msgstr "Reservation book is ready"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:23
+msgid "Reservation book, timeline grid, shift notes, and booking management."
+msgstr "Reservation book, timeline grid, shift notes, and booking management."
+
+#: app/components/roles/tenant-role-access-manager.tsx:386
+msgid "Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization."
+msgstr "Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization."
+
+#: app/components/app-sidebar.tsx:478
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
+#: app/components/roles/tenant-role-access-manager.tsx:384
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 msgid "Reservations"
 msgstr "Reservations"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:25
+msgid "Reservations analytics"
+msgstr "Reservations analytics"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:25
+msgid "Reservations configuration"
+msgstr "Reservations configuration"
+
+#: app/components/roles/tenant-role-access-manager.tsx:546
+msgid "Reservations manager"
+msgstr "Reservations manager"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:147
+msgid "Reservations navigation"
+msgstr "Reservations navigation"
+
+#: app/components/roles/tenant-role-access-manager.tsx:1342
+msgid "Reservations role presets"
+msgstr "Reservations role presets"
+
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
-#: app/components/organization-invitations.tsx:237
 #: app/components/organization-invitations.tsx:240
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
@@ -18035,9 +18126,9 @@ msgstr "Restaurant size"
 msgid "Restaurant Size"
 msgstr "Restaurant Size"
 
-#: app/components/app-sidebar.tsx:153
-#: app/components/nav-user.tsx:189
-#: app/components/team-switcher.tsx:267
+#: app/components/app-sidebar.tsx:157
+#: app/components/nav-user.tsx:192
+#: app/components/team-switcher.tsx:266
 #: app/routes/_app+/organizations.tsx:192
 msgid "Restaurants"
 msgstr "Restaurants"
@@ -18171,7 +18262,7 @@ msgstr ""
 msgid "Revoke session"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:130
+#: app/components/roles/tenant-role-access-manager.tsx:132
 msgid "Revoke workspace access and remove non-admin members."
 msgstr "Revoke workspace access and remove non-admin members."
 
@@ -18199,11 +18290,8 @@ msgid "Ring for (seconds)"
 msgstr "Ring for (seconds)"
 
 #: app/components/hiring/job-editor.tsx:204
-#: app/components/roles/tenant-role-access-manager.tsx:1044
-#: app/components/roles/tenant-role-access-manager.tsx:1178
-#: app/components/hiring/job-editor.tsx:187
-#: app/components/roles/tenant-role-access-manager.tsx:1048
-#: app/components/roles/tenant-role-access-manager.tsx:1182
+#: app/components/roles/tenant-role-access-manager.tsx:1221
+#: app/components/roles/tenant-role-access-manager.tsx:1403
 #: app/components/workspace-breadcrumb.tsx:82
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:356
 msgid "Role"
@@ -18213,7 +18301,7 @@ msgstr "Role"
 msgid "Role (optional)"
 msgstr "Role (optional)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:575
+#: app/components/roles/tenant-role-access-manager.tsx:732
 msgid "Role name"
 msgstr "Role name"
 
@@ -18221,8 +18309,7 @@ msgstr "Role name"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/components/app-sidebar.tsx:583
-#: app/components/app-sidebar.tsx:528
+#: app/components/app-sidebar.tsx:642
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "Roles & access"
@@ -18451,7 +18538,6 @@ msgstr "Same price for left or right half."
 msgid "Sandbox"
 msgstr "Sandbox"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:229
 #: app/components/settings/cards/organization/site-theme-card.tsx:190
 msgid "Sans"
 msgstr ""
@@ -18478,8 +18564,7 @@ msgstr ""
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
-#: app/components/organization-members.tsx:140
-#: app/components/organization-members.tsx:134
+#: app/components/organization-members.tsx:145
 #: app/components/phone-agent/settings-page.tsx:378
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
@@ -18530,9 +18615,7 @@ msgstr ""
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
-#: app/components/roles/tenant-role-access-manager.tsx:801
-#: app/components/hiring/job-editor.tsx:416
-#: app/components/roles/tenant-role-access-manager.tsx:803
+#: app/components/roles/tenant-role-access-manager.tsx:960
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
 #: app/components/settings/cards/organization/general-settings-card.tsx:110
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
@@ -18610,7 +18693,6 @@ msgstr "Save rate"
 #~ msgid "Save section settings"
 #~ msgstr "Save section settings"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:703
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:831
 msgid "Save settings"
 msgstr "Save settings"
@@ -18707,7 +18789,7 @@ msgstr ""
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:466
 #: app/components/phone-agent/settings-page.tsx:378
-#: app/components/roles/tenant-role-access-manager.tsx:801
+#: app/components/roles/tenant-role-access-manager.tsx:958
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
 #: app/components/staff/kiosk-manager.tsx:910
@@ -18788,8 +18870,7 @@ msgstr "Scan the code with the tablet's camera, or open the link below in its br
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
-#: app/components/app-sidebar.tsx:488
-#: app/components/app-sidebar.tsx:440
+#: app/components/app-sidebar.tsx:547
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
 #: app/components/workspace-breadcrumb.tsx:33
@@ -18798,11 +18879,11 @@ msgstr "Scan the code with this tablet's camera, or paste the link below."
 msgid "Schedule"
 msgstr "Schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:431
+#: app/components/roles/tenant-role-access-manager.tsx:486
 msgid "Schedule & time cards"
 msgstr "Schedule & time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:302
+#: app/components/roles/tenant-role-access-manager.tsx:304
 msgid "Schedule & time clock"
 msgstr "Schedule & time clock"
 
@@ -18893,7 +18974,7 @@ msgstr "Scheduled vs actual hours and clock-ins"
 msgid "Screening"
 msgstr "Screening"
 
-#: app/components/app-sidebar.tsx:229
+#: app/components/app-sidebar.tsx:233
 msgid "Search"
 msgstr ""
 
@@ -18949,8 +19030,8 @@ msgstr "Search media library"
 
 #: app/components/app-sidebar.tsx:790
 #: app/components/command-menu.tsx:102
-msgid "Search menu items..."
-msgstr "Search menu items..."
+#~ msgid "Search menu items..."
+#~ msgstr "Search menu items..."
 
 #: app/components/chat/chat-view.tsx:426
 #: app/components/chat/chat-view.tsx:427
@@ -18973,7 +19054,6 @@ msgstr "Search name or position"
 msgid "Search name, email or phone"
 msgstr "Search name, email or phone"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:356
 #: app/routes/_app+/$orgSlug_+/notes.tsx:359
 msgid "Search notes"
 msgstr ""
@@ -19056,13 +19136,17 @@ msgstr "Search voices"
 msgid "Search..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:738
+#: app/components/app-sidebar.tsx:877
 msgid "Search…"
 msgstr "Search…"
 
 #: app/components/hiring/job-labels.ts:21
 msgid "Seasonal"
 msgstr "Seasonal"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:27
+msgid "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
+msgstr "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:569
 msgid "Second shift ends"
@@ -19115,8 +19199,7 @@ msgstr ""
 msgid "Secure your account with an extra verification step"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:147
-#: app/components/app-sidebar.tsx:145
+#: app/components/app-sidebar.tsx:151
 #: app/routes/mcp+/authorize.tsx:405
 msgid "Security"
 msgstr ""
@@ -19130,51 +19213,63 @@ msgstr ""
 msgid "Security Settings"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:198
+#: app/components/roles/tenant-role-access-manager.tsx:200
 msgid "See automated journeys and their run history."
 msgstr "See automated journeys and their run history."
 
-#: app/components/roles/tenant-role-access-manager.tsx:226
+#: app/components/roles/tenant-role-access-manager.tsx:228
 msgid "See call history, caller numbers, transcripts, and recordings."
 msgstr "See call history, caller numbers, transcripts, and recordings."
 
-#: app/components/roles/tenant-role-access-manager.tsx:290
+#: app/components/roles/tenant-role-access-manager.tsx:424
+msgid "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
+msgstr "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
+
+#: app/components/roles/tenant-role-access-manager.tsx:292
 msgid "See dates of birth, home addresses, and emergency contacts."
 msgstr "See dates of birth, home addresses, and emergency contacts."
 
-#: app/components/roles/tenant-role-access-manager.tsx:309
+#: app/components/roles/tenant-role-access-manager.tsx:401
+msgid "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
+msgstr "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
+
+#: app/components/roles/tenant-role-access-manager.tsx:311
 msgid "See everyone's shifts, availability, and time-off requests."
 msgstr "See everyone's shifts, availability, and time-off requests."
 
-#: app/components/roles/tenant-role-access-manager.tsx:329
+#: app/components/roles/tenant-role-access-manager.tsx:331
 msgid "See everyone's time cards and hours."
 msgstr "See everyone's time cards and hours."
 
-#: app/components/roles/tenant-role-access-manager.tsx:278
+#: app/components/roles/tenant-role-access-manager.tsx:412
+msgid "See guestbook profiles, visit history, notes, and exports."
+msgstr "See guestbook profiles, visit history, notes, and exports."
+
+#: app/components/roles/tenant-role-access-manager.tsx:280
 msgid "See individual pay rates and wage history."
 msgstr "See individual pay rates and wage history."
 
-#: app/components/roles/tenant-role-access-manager.tsx:370
+#: app/components/roles/tenant-role-access-manager.tsx:372
 msgid "See job posts and applicants."
 msgstr "See job posts and applicants."
 
-#: app/components/roles/tenant-role-access-manager.tsx:346
+#: app/components/roles/tenant-role-access-manager.tsx:348
 msgid "See labor cost and labor percentage."
 msgstr "See labor cost and labor percentage."
 
-#: app/components/roles/tenant-role-access-manager.tsx:352
+#: app/components/roles/tenant-role-access-manager.tsx:354
 msgid "See labor rules, time clock devices, and pay periods."
 msgstr "See labor rules, time clock devices, and pay periods."
 
-#: app/components/roles/tenant-role-access-manager.tsx:187
+#: app/components/roles/tenant-role-access-manager.tsx:189
 msgid "See one-time email and SMS campaign history."
 msgstr "See one-time email and SMS campaign history."
 
-#: app/components/roles/tenant-role-access-manager.tsx:120
+#: app/components/roles/tenant-role-access-manager.tsx:122
 msgid "See teammate names, emails, and assigned roles."
 msgstr "See teammate names, emails, and assigned roles."
 
-#: app/components/roles/tenant-role-access-manager.tsx:215
+#: app/components/roles/tenant-role-access-manager.tsx:217
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "See the agent's settings, call flow, numbers, and training rules."
 
@@ -19182,7 +19277,11 @@ msgstr "See the agent's settings, call flow, numbers, and training rules."
 #~ msgid "See the agent's settings, phone menu, numbers, and training rules."
 #~ msgstr "See the agent's settings, phone menu, numbers, and training rules."
 
-#: app/components/roles/tenant-role-access-manager.tsx:267
+#: app/components/roles/tenant-role-access-manager.tsx:391
+msgid "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
+msgstr "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
+
+#: app/components/roles/tenant-role-access-manager.tsx:269
 msgid "See the staff roster, profiles, and positions. Does not include pay or private details."
 msgstr "See the staff roster, profiles, and positions. Does not include pay or private details."
 
@@ -19190,7 +19289,7 @@ msgstr "See the staff roster, profiles, and positions. Does not include pay or p
 msgid "See your jobs"
 msgstr "See your jobs"
 
-#: app/components/roles/tenant-role-access-manager.tsx:319
+#: app/components/roles/tenant-role-access-manager.tsx:321
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "See your own published shifts. Only useful for people who also work shifts."
 
@@ -19267,7 +19366,7 @@ msgstr ""
 msgid "Select a website page"
 msgstr "Select a website page"
 
-#: app/components/roles/tenant-role-access-manager.tsx:688
+#: app/components/roles/tenant-role-access-manager.tsx:845
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
 msgstr ""
@@ -19309,7 +19408,6 @@ msgstr "Select an option to add to this modifier group."
 msgid "Select an order to view its details."
 msgstr "Select an order to view its details."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:447
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:575
 msgid "Select at least one language."
 msgstr "Select at least one language."
@@ -19450,7 +19548,6 @@ msgstr "Send an invitation?"
 msgid "Send automated notifications to subscribed guests before your drop opens or closes."
 msgstr "Send automated notifications to subscribed guests before your drop opens or closes."
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:557
 #: app/components/phone-agent/phone-number-dialogs.tsx:558
 msgid "Send code"
 msgstr "Send code"
@@ -19464,14 +19561,12 @@ msgstr ""
 msgid "Send invitation"
 msgstr "Send invitation"
 
-#: app/components/organization-invitations.tsx:314
-#: app/routes/organizations+/create.tsx:1582
 #: app/components/organization-invitations.tsx:321
-#: app/routes/organizations+/create.tsx:1194
+#: app/routes/organizations+/create.tsx:1582
 msgid "Send Invitations"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:125
+#: app/components/roles/tenant-role-access-manager.tsx:127
 msgid "Send invitations to join the organization workspace."
 msgstr "Send invitations to join the organization workspace."
 
@@ -19517,13 +19612,13 @@ msgstr ""
 msgid "Sending…"
 msgstr "Sending…"
 
-#: app/components/roles/tenant-role-access-manager.tsx:193
+#: app/components/roles/tenant-role-access-manager.tsx:195
 msgid "Sends to customers"
 msgstr "Sends to customers"
 
-#: app/components/roles/tenant-role-access-manager.tsx:279
-#: app/components/roles/tenant-role-access-manager.tsx:285
-#: app/components/roles/tenant-role-access-manager.tsx:347
+#: app/components/roles/tenant-role-access-manager.tsx:281
+#: app/components/roles/tenant-role-access-manager.tsx:287
+#: app/components/roles/tenant-role-access-manager.tsx:349
 msgid "Sensitive pay data"
 msgstr "Sensitive pay data"
 
@@ -19567,6 +19662,8 @@ msgid "Serif"
 msgstr ""
 
 #: app/components/note/integration-controls.tsx:296
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:222
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:226
 msgid "Service"
 msgstr ""
 
@@ -19603,7 +19700,6 @@ msgstr "Set baseline dish price and sales tax settings."
 msgid "Set baseline option price delta and sales tax settings."
 msgstr "Set baseline option price delta and sales tax settings."
 
-#: app/components/staff/timesheets/review-queue.tsx:406
 #: app/components/staff/timesheets/review-queue.tsx:405
 msgid "Set clock-out"
 msgstr "Set clock-out"
@@ -19680,20 +19776,21 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "Setting a limit helps you sell out"
 
-#: app/components/app-sidebar.tsx:556
-#: app/components/app-sidebar.tsx:508
+#: app/components/app-sidebar.tsx:522
+#: app/components/app-sidebar.tsx:615
 #: app/components/command-menu.tsx:160
 #: app/components/command-menu.tsx:193
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
-#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:130
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:21
+#: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:406
-#: app/components/app-sidebar.tsx:358
+#: app/components/app-sidebar.tsx:412
 msgid "Setup"
 msgstr "Setup"
 
@@ -19706,6 +19803,10 @@ msgstr ""
 #: app/components/settings/two-factor-form.tsx:179
 msgid "Setup key"
 msgstr ""
+
+#: app/components/roles/tenant-role-access-manager.tsx:548
+msgid "Setup, book, guestbook & reports"
+msgstr "Setup, book, guestbook & reports"
 
 #: app/components/chat/chat-view.tsx:787
 msgid "Several people are typing…"
@@ -19808,7 +19909,8 @@ msgstr "Shift is now open."
 msgid "Shift length {duration}."
 msgstr "Shift length {duration}."
 
-#: app/components/roles/tenant-role-access-manager.tsx:429
+#: app/components/roles/tenant-role-access-manager.tsx:484
+#: app/components/roles/tenant-role-access-manager.tsx:535
 msgid "Shift manager"
 msgstr "Shift manager"
 
@@ -19840,12 +19942,11 @@ msgstr "Shifts that run past midnight belong to the day they began."
 msgid "Shifts, time cards and each labor day follow this time zone."
 msgstr "Shifts, time cards and each labor day follow this time zone."
 
-#: app/components/roles/tenant-role-access-manager.tsx:304
+#: app/components/roles/tenant-role-access-manager.tsx:306
 msgid "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 msgstr "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 
-#: app/components/app-sidebar.tsx:604
-#: app/components/app-sidebar.tsx:549
+#: app/components/app-sidebar.tsx:663
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr ""
@@ -20264,6 +20365,10 @@ msgstr "Spanish"
 msgid "Speak with our team"
 msgstr "Speak with our team"
 
+#: app/components/phone-agent/test-call-phone.tsx:251
+msgid "Speaker"
+msgstr "Speaker"
+
 #: app/components/locations/special-hours-picker.tsx:88
 msgid "Special Hours & Holiday Overrides"
 msgstr "Special Hours & Holiday Overrides"
@@ -20271,10 +20376,6 @@ msgstr "Special Hours & Holiday Overrides"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:27
 msgid "Special occasions"
 msgstr "Special occasions"
-
-#: app/components/phone-agent/test-call-phone.tsx:251
-msgid "Speaker"
-msgstr "Speaker"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
@@ -20301,10 +20402,8 @@ msgstr "Split shift"
 msgid "Square"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:472
-#: app/components/roles/tenant-role-access-manager.tsx:259
-#: app/components/app-sidebar.tsx:424
-#: app/components/roles/tenant-role-access-manager.tsx:260
+#: app/components/app-sidebar.tsx:531
+#: app/components/roles/tenant-role-access-manager.tsx:262
 #: app/components/workspace-breadcrumb.tsx:16
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
 msgid "Staff"
@@ -20367,7 +20466,7 @@ msgstr "Staff picked up"
 msgid "Staff records will be deleted too"
 msgstr "Staff records will be deleted too"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1121
+#: app/components/roles/tenant-role-access-manager.tsx:1294
 msgid "Staff role presets"
 msgstr "Staff role presets"
 
@@ -20380,7 +20479,7 @@ msgstr "Staff tools are on the way"
 msgid "Staff transfers"
 msgstr "Staff transfers"
 
-#: app/components/roles/tenant-role-access-manager.tsx:443
+#: app/components/roles/tenant-role-access-manager.tsx:498
 msgid "Staff, pay & labor"
 msgstr "Staff, pay & labor"
 
@@ -20401,8 +20500,7 @@ msgstr "Stage changed"
 msgid "Standard organization member with note access"
 msgstr "Standard organization member with note access"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1167
-#: app/components/roles/tenant-role-access-manager.tsx:1171
+#: app/components/roles/tenant-role-access-manager.tsx:1392
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "Standard platform roles. Click any role to review its active permissions."
 
@@ -20414,7 +20512,7 @@ msgstr "Standard restaurant menus for dine-in, takeout, and delivery."
 msgid "Standard starter"
 msgstr "Standard starter"
 
-#: app/components/roles/tenant-role-access-manager.tsx:856
+#: app/components/roles/tenant-role-access-manager.tsx:1018
 msgid "Standard system role."
 msgstr "Standard system role."
 
@@ -20471,7 +20569,7 @@ msgstr "Start from a few words"
 msgid "Start from a past week. Shifts keep their people when they can work them, and open up when they cannot."
 msgstr "Start from a past week. Shifts keep their people when they can work them, and open up when they cannot."
 
-#: app/components/roles/tenant-role-access-manager.tsx:611
+#: app/components/roles/tenant-role-access-manager.tsx:768
 msgid "Start from a template"
 msgstr "Start from a template"
 
@@ -20491,7 +20589,7 @@ msgstr "Start from scratch"
 msgid "Start from the starter list"
 msgstr "Start from the starter list"
 
-#: app/components/roles/tenant-role-access-manager.tsx:255
+#: app/components/roles/tenant-role-access-manager.tsx:257
 msgid "Start group conversations and add teammates."
 msgstr "Start group conversations and add teammates."
 
@@ -20581,7 +20679,7 @@ msgstr "State or region"
 msgid "Stats"
 msgstr "Stats"
 
-#: app/components/roles/tenant-role-access-manager.tsx:906
+#: app/components/roles/tenant-role-access-manager.tsx:1068
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/components/staff/details-tab.tsx:206
 #: app/components/staff/staff-roster.tsx:143
@@ -20960,7 +21058,7 @@ msgstr "Tag name"
 msgid "Tags"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1014
+#: app/components/roles/tenant-role-access-manager.tsx:1187
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "Tailored roles specific to your organization with configured permissions."
 
@@ -20977,7 +21075,7 @@ msgstr "Take a voicemail"
 msgid "Take me to settings"
 msgstr "Take me to settings"
 
-#: app/components/roles/tenant-role-access-manager.tsx:221
+#: app/components/roles/tenant-role-access-manager.tsx:223
 msgid "Talks to customers"
 msgstr "Talks to customers"
 
@@ -21033,8 +21131,7 @@ msgid "Teal"
 msgstr "Teal"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:478
-#: app/components/app-sidebar.tsx:430
+#: app/components/app-sidebar.tsx:537
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
@@ -21045,7 +21142,7 @@ msgstr "Teal"
 msgid "Team"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:114
+#: app/components/roles/tenant-role-access-manager.tsx:116
 msgid "Team & Members"
 msgstr "Team & Members"
 
@@ -21055,7 +21152,7 @@ msgstr "Team channel"
 
 #: app/components/chat/chat-sidebar-link.tsx:20
 #: app/components/chat/chat-view.tsx:384
-#: app/components/roles/tenant-role-access-manager.tsx:243
+#: app/components/roles/tenant-role-access-manager.tsx:245
 msgid "Team chat"
 msgstr "Team chat"
 
@@ -21067,7 +21164,7 @@ msgstr "Team chat"
 msgid "Team chat isn't running in this environment"
 msgstr "Team chat isn't running in this environment"
 
-#: app/components/roles/tenant-role-access-manager.tsx:419
+#: app/components/roles/tenant-role-access-manager.tsx:474
 msgid "Team manager"
 msgstr "Team manager"
 
@@ -21212,8 +21309,7 @@ msgstr "Terminating…"
 msgid "Test again"
 msgstr "Test again"
 
-#: app/components/app-sidebar.tsx:465
-#: app/components/app-sidebar.tsx:417
+#: app/components/app-sidebar.tsx:471
 #: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:326
 #: app/components/phone-agent/call-detail-sheet.tsx:376
@@ -21607,16 +21703,13 @@ msgstr ""
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
 
-#: app/components/roles/tenant-role-access-manager.tsx:209
+#: app/components/roles/tenant-role-access-manager.tsx:212
 msgid "The assistant that answers restaurant calls."
 msgstr "The assistant that answers restaurant calls."
 
+#: app/components/roles/tenant-role-access-manager.tsx:210
 #~ msgid "The assistant that answers your business calls."
 #~ msgstr "The assistant that answers your business calls."
-
-#: app/components/roles/tenant-role-access-manager.tsx:210
-msgid "The assistant that answers your business calls."
-msgstr "The assistant that answers your business calls."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:850
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
@@ -21873,7 +21966,7 @@ msgstr "The people who work at your organization: roster, time clock, schedule, 
 msgid "The people who work here, their positions and where they work."
 msgstr "The people who work here, their positions and where they work."
 
-#: app/components/roles/tenant-role-access-manager.tsx:262
+#: app/components/roles/tenant-role-access-manager.tsx:264
 msgid "The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization."
 msgstr "The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization."
 
@@ -22021,8 +22114,7 @@ msgstr "Their time cards are waiting for a review."
 msgid "Theme"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:84
-#: app/components/app-sidebar.tsx:82
+#: app/components/app-sidebar.tsx:88
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr ""
 
@@ -22778,8 +22870,7 @@ msgstr "Time cards (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
-#: app/components/app-sidebar.tsx:483
-#: app/components/app-sidebar.tsx:435
+#: app/components/app-sidebar.tsx:542
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
@@ -22968,6 +23059,7 @@ msgstr "To the nearest"
 msgid "To: {recipient}"
 msgstr "To: {recipient}"
 
+#: app/components/app-sidebar.tsx:484
 #: app/components/chat/chat-view.tsx:932
 #: app/components/my-schedule/shifts-view.tsx:123
 #: app/components/my-schedule/shifts-view.tsx:178
@@ -22975,6 +23067,8 @@ msgstr "To: {recipient}"
 #: app/components/staff/schedule/day-timeline.tsx:441
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:94
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:21
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "Today"
@@ -23062,7 +23156,7 @@ msgstr "Total {totalText} of 100"
 #~ msgid "Total Available"
 #~ msgstr "Total Available"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:197
+#: app/routes/_app+/$orgSlug_+/index.tsx:205
 msgid "Total notes"
 msgstr "Total notes"
 
@@ -23078,6 +23172,10 @@ msgstr "Total notes, the daily average and the trend."
 msgid "Total units"
 msgstr "Total units"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:27
+msgid "Track covers by service and channel, turn durations, waitlist conversions, and payment settlements."
+msgstr "Track covers by service and channel, turn durations, waitlist conversions, and payment settlements."
+
 #: app/components/staff/labor-core-rules.tsx:265
 msgid "Track time at this workplace"
 msgstr "Track time at this workplace"
@@ -23086,8 +23184,7 @@ msgstr "Track time at this workplace"
 msgid "Training"
 msgstr "Training"
 
-#: app/components/app-sidebar.tsx:425
-#: app/components/app-sidebar.tsx:377
+#: app/components/app-sidebar.tsx:431
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:383
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
@@ -23155,8 +23252,7 @@ msgstr "Transfer to the team"
 msgid "Transfer when"
 msgstr "Transfer when"
 
-#: app/components/app-sidebar.tsx:437
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:443
 #: app/components/workspace-breadcrumb.tsx:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:143
@@ -23196,7 +23292,7 @@ msgstr ""
 msgid "Transport"
 msgstr "Transport"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:219
 msgid "Trend"
 msgstr "Trend"
 
@@ -23353,7 +23449,6 @@ msgstr ""
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
-#: app/components/phone-agent/call-detail-sheet.tsx:366
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:451
@@ -23365,13 +23460,9 @@ msgstr ""
 #: app/components/staff/onboarding/templates-page.tsx:138
 #: app/components/staff/schedule/publication-history.tsx:92
 #: app/components/staff/schedule/schedule-page.tsx:408
-#: app/components/staff/timeclock-today.tsx:229
-#: app/components/staff/timesheets/timesheets-page.tsx:693
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:374
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:798
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
+#: app/routes/_app+/$orgSlug_+/mailbox.tsx:374
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
@@ -23571,7 +23662,6 @@ msgstr "Unassigned"
 #: app/components/menu/menu-availability-card.tsx:231
 #: app/components/menu/menu-availability-card.tsx:280
 #: app/components/menu/menu-status-badge.tsx:65
-#: app/components/staff/schedule/availability-page.tsx:259
 #: app/components/staff/schedule/availability-page.tsx:258
 #: app/components/staff/schedule/availability-sheet.tsx:300
 #: app/components/staff/schedule/week-grid.tsx:107
@@ -23846,7 +23936,7 @@ msgstr "Update option details and pricing."
 msgid "Update Organization Logo"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:147
+#: app/components/roles/tenant-role-access-manager.tsx:149
 msgid "Update organization name, slug, and general preferences."
 msgstr "Update organization name, slug, and general preferences."
 
@@ -23858,8 +23948,7 @@ msgstr ""
 msgid "Update reply"
 msgstr "Update reply"
 
-#: app/components/roles/tenant-role-access-manager.tsx:566
-#: app/components/roles/tenant-role-access-manager.tsx:567
+#: app/components/roles/tenant-role-access-manager.tsx:724
 msgid "Update this role’s name, description, and permissions."
 msgstr "Update this role’s name, description, and permissions."
 
@@ -23893,8 +23982,7 @@ msgstr "Updates as you edit"
 msgid "Updating section"
 msgstr "Updating section"
 
-#: app/components/app-sidebar.tsx:100
-#: app/components/app-sidebar.tsx:98
+#: app/components/app-sidebar.tsx:104
 #: app/components/settings/cards/organization/billing-card.tsx:460
 msgid "Upgrade"
 msgstr ""
@@ -24122,8 +24210,7 @@ msgstr "Use international format, for example +15551234567."
 msgid "Use item photo"
 msgstr "Use item photo"
 
-#: app/components/roles/tenant-role-access-manager.tsx:322
-#: app/components/roles/tenant-role-access-manager.tsx:323
+#: app/components/roles/tenant-role-access-manager.tsx:325
 msgid "Use own time clock"
 msgstr "Use own time clock"
 
@@ -24191,7 +24278,7 @@ msgstr "Used when you hire someone from Applicants. Only one template can do thi
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "Useful if staff should log what happened after a transfer."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:145
+#: app/routes/_app+/$orgSlug_+/index.tsx:155
 msgid "User"
 msgstr "User"
 
@@ -24254,7 +24341,6 @@ msgstr "Vegetarian"
 msgid "Vehicle pickup with car details."
 msgstr "Vehicle pickup with car details."
 
-#: app/components/phone-agent/phone-number-dialogs.tsx:587
 #: app/components/phone-agent/phone-number-dialogs.tsx:588
 msgid "Verification code"
 msgstr "Verification code"
@@ -24311,7 +24397,7 @@ msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
 #: app/components/dashboard/access-labels.ts:19
-#: app/components/roles/tenant-role-access-manager.tsx:1087
+#: app/components/roles/tenant-role-access-manager.tsx:1260
 #: app/components/settings/cards/organization/invoices-card.tsx:137
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
@@ -24329,15 +24415,15 @@ msgstr ""
 msgid "View and manage this session"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:169
+#: app/components/roles/tenant-role-access-manager.tsx:171
 msgid "View announcements"
 msgstr "View announcements"
 
-#: app/components/roles/tenant-role-access-manager.tsx:197
+#: app/components/roles/tenant-role-access-manager.tsx:199
 msgid "View automations"
 msgstr "View automations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:186
+#: app/components/roles/tenant-role-access-manager.tsx:188
 msgid "View broadcasts"
 msgstr "View broadcasts"
 
@@ -24345,7 +24431,7 @@ msgstr "View broadcasts"
 msgid "View call"
 msgstr "View call"
 
-#: app/components/roles/tenant-role-access-manager.tsx:225
+#: app/components/roles/tenant-role-access-manager.tsx:227
 msgid "View calls"
 msgstr "View calls"
 
@@ -24353,16 +24439,19 @@ msgstr "View calls"
 msgid "View drop"
 msgstr "View drop"
 
-#: app/components/roles/tenant-role-access-manager.tsx:368
-#: app/components/roles/tenant-role-access-manager.tsx:369
+#: app/components/roles/tenant-role-access-manager.tsx:411
+msgid "View guestbook"
+msgstr "View guestbook"
+
+#: app/components/roles/tenant-role-access-manager.tsx:371
 msgid "View hiring"
 msgstr "View hiring"
 
-#: app/components/roles/tenant-role-access-manager.tsx:345
+#: app/components/roles/tenant-role-access-manager.tsx:347
 msgid "View labor cost"
 msgstr "View labor cost"
 
-#: app/components/roles/tenant-role-access-manager.tsx:351
+#: app/components/roles/tenant-role-access-manager.tsx:353
 msgid "View labor policy"
 msgstr "View labor policy"
 
@@ -24379,29 +24468,41 @@ msgstr ""
 msgid "View only"
 msgstr "View only"
 
-#: app/components/roles/tenant-role-access-manager.tsx:141
+#: app/components/roles/tenant-role-access-manager.tsx:143
 msgid "View organization settings"
 msgstr "View organization settings"
 
-#: app/components/roles/tenant-role-access-manager.tsx:81
+#: app/components/roles/tenant-role-access-manager.tsx:83
 msgid "View own notes"
 msgstr "View own notes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:318
+#: app/components/roles/tenant-role-access-manager.tsx:320
 msgid "View own shifts"
 msgstr "View own shifts"
 
-#: app/components/roles/tenant-role-access-manager.tsx:277
+#: app/components/roles/tenant-role-access-manager.tsx:279
 msgid "View pay rates"
 msgstr "View pay rates"
 
-#: app/components/roles/tenant-role-access-manager.tsx:214
+#: app/components/roles/tenant-role-access-manager.tsx:216
 msgid "View phone agent"
 msgstr "View phone agent"
 
-#: app/components/roles/tenant-role-access-manager.tsx:289
+#: app/components/roles/tenant-role-access-manager.tsx:291
 msgid "View private details"
 msgstr "View private details"
+
+#: app/components/roles/tenant-role-access-manager.tsx:390
+msgid "View reservation book & waitlist"
+msgstr "View reservation book & waitlist"
+
+#: app/components/roles/tenant-role-access-manager.tsx:423
+msgid "View reservation reports"
+msgstr "View reservation reports"
+
+#: app/components/roles/tenant-role-access-manager.tsx:400
+msgid "View reservation settings & experiences"
+msgstr "View reservation settings & experiences"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:240
 #~ msgid "View responses"
@@ -24411,7 +24512,7 @@ msgstr "View private details"
 msgid "View run history"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:266
+#: app/components/roles/tenant-role-access-manager.tsx:268
 msgid "View staff"
 msgstr "View staff"
 
@@ -24423,19 +24524,19 @@ msgstr "View storefront"
 msgid "View submission details"
 msgstr "View submission details"
 
-#: app/components/roles/tenant-role-access-manager.tsx:119
+#: app/components/roles/tenant-role-access-manager.tsx:121
 msgid "View team members"
 msgstr "View team members"
 
-#: app/components/roles/tenant-role-access-manager.tsx:86
+#: app/components/roles/tenant-role-access-manager.tsx:88
 msgid "View team notes"
 msgstr "View team notes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:308
+#: app/components/roles/tenant-role-access-manager.tsx:310
 msgid "View team schedule"
 msgstr "View team schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:328
+#: app/components/roles/tenant-role-access-manager.tsx:330
 msgid "View time cards"
 msgstr "View time cards"
 
@@ -24443,11 +24544,11 @@ msgstr "View time cards"
 msgid "View Timeline →"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:158
+#: app/components/roles/tenant-role-access-manager.tsx:160
 msgid "View website workspace"
 msgstr "View website workspace"
 
-#: app/components/roles/tenant-role-access-manager.tsx:471
+#: app/components/roles/tenant-role-access-manager.tsx:605
 #: app/utils/organization/role-label.ts:17
 msgid "Viewer"
 msgstr "Viewer"
@@ -24507,7 +24608,7 @@ msgstr "Voicemail saved"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:220
+#: app/routes/_app+/$orgSlug_+/index.tsx:228
 msgid "Vs prior period"
 msgstr "Vs prior period"
 
@@ -24578,6 +24679,16 @@ msgstr "Waiting to be paired"
 #: app/components/staff/schedule/publication-history.tsx:311
 msgid "Waiting to send"
 msgstr "Waiting to send"
+
+#: app/components/app-sidebar.tsx:494
+#: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:106
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:21
+msgid "Waitlist"
+msgstr "Waitlist"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:25
+msgid "Waitlist is currently empty"
+msgstr "Waitlist is currently empty"
 
 #: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
@@ -24817,15 +24928,14 @@ msgstr ""
 msgid "Web"
 msgstr "Web"
 
-#: app/components/app-sidebar.tsx:505
-#: app/components/app-sidebar.tsx:457
+#: app/components/app-sidebar.tsx:564
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
 msgid "Website"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:153
+#: app/components/roles/tenant-role-access-manager.tsx:155
 msgid "Website & Publishing"
 msgstr "Website & Publishing"
 
@@ -24833,7 +24943,7 @@ msgstr "Website & Publishing"
 #~ msgid "Website editor and public pages."
 #~ msgstr "Website editor and public pages."
 
-#: app/components/roles/tenant-role-access-manager.tsx:154
+#: app/components/roles/tenant-role-access-manager.tsx:156
 msgid "Website editor, announcements, and public pages."
 msgstr "Website editor, announcements, and public pages."
 
@@ -24975,15 +25085,14 @@ msgstr "What role are you working?"
 msgid "What should your reply include? (optional)"
 msgstr "What should your reply include? (optional)"
 
-#: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
-msgid "What the agent does when it takes an order before texting the ordering link."
-msgstr "What the agent does when it takes an order before texting the ordering link."
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:240
 msgid "What the agent does on each call."
 msgstr "What the agent does on each call."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:494
+#: app/components/phone-agent/restaurant/phone-ordering-section.tsx:53
+msgid "What the agent does when it takes an order before texting the ordering link."
+msgstr "What the agent does when it takes an order before texting the ordering link."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:622
 msgid "What the agent says"
 msgstr "What the agent says"
@@ -25028,7 +25137,6 @@ msgstr ""
 #~ msgid "What you are selling"
 #~ msgstr "What you are selling"
 
-#: app/components/staff/labor/labor-page.tsx:241
 #: app/components/staff/labor/labor-page.tsx:242
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "What your hours cost against your sales, the sales you enter, and how tips divide."
@@ -25099,7 +25207,6 @@ msgstr ""
 msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
 msgstr "When published, Public drops appear on your site. Unlisted drops are only available by link."
 
-#: app/components/hiring/applicants-page.tsx:424
 #: app/components/hiring/applicants-page.tsx:422
 msgid "When someone applies on your careers page, they show up here and you get a notification. Share a job to get started."
 msgstr "When someone applies on your careers page, they show up here and you get a notification. Share a job to get started."
@@ -25526,9 +25633,7 @@ msgid "Yesterday"
 msgstr "Yesterday"
 
 #: app/components/hiring/candidate-parts.tsx:374
-#: app/components/organization-members.tsx:214
-#: app/components/phone-agent/test-call-panel.tsx:724
-#: app/components/organization-members.tsx:210
+#: app/components/organization-members.tsx:223
 #: app/components/phone-agent/test-call-panel.tsx:677
 msgid "You"
 msgstr ""
@@ -25965,7 +26070,7 @@ msgstr "Your website is not published yet, so people cannot see these jobs. <0>P
 msgid "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 msgstr "Your website is not published yet, so people cannot see this job. <0>Publish your website</0>."
 
-#: app/components/roles/tenant-role-access-manager.tsx:484
+#: app/components/roles/tenant-role-access-manager.tsx:618
 msgid "Zero permissions"
 msgstr "Zero permissions"
 

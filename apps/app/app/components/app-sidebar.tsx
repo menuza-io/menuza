@@ -39,6 +39,10 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_RESERVATIONS_NAV,
+	type ReservationsNavAccess,
+} from '#app/utils/reservations/nav.ts'
+import {
 	HIDDEN_STAFFING_NAV,
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
@@ -46,6 +50,7 @@ import { ChatSidebarLink } from './chat/chat-sidebar-link.tsx'
 import FeedbackModal from './core/feedback-modal'
 import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
+import { CalendarIcon } from './icons/calendar-icon'
 import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
@@ -253,6 +258,8 @@ function OrganizationSidebar({
 	// permissions; the Staff group does not exist until both allow it.
 	const staffingNav: StaffingNavAccess =
 		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
+	const reservationsNav: ReservationsNavAccess =
+		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -468,6 +475,61 @@ function OrganizationSidebar({
 			],
 		},
 		{
+			title: _(msg`Reservations`),
+			url: `/${orgSlug}/reservations`,
+			isActive: location.pathname.includes(`/${orgSlug}/reservations`),
+			icon: CalendarIcon,
+			items: [
+				{
+					title: _(msg`Today`),
+					url: `/${orgSlug}/reservations/today`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/today`,
+					),
+				},
+				{
+					title: _(msg`Book`),
+					url: `/${orgSlug}/reservations/book`,
+					isActive: location.pathname.includes(`/${orgSlug}/reservations/book`),
+				},
+				{
+					title: _(msg`Waitlist`),
+					url: `/${orgSlug}/reservations/waitlist`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/waitlist`,
+					),
+				},
+				{
+					title: _(msg`Guests`),
+					url: `/${orgSlug}/reservations/guests`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/guests`,
+					),
+				},
+				{
+					title: _(msg`Experiences`),
+					url: `/${orgSlug}/reservations/experiences`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/experiences`,
+					),
+				},
+				{
+					title: _(msg`Reports`),
+					url: `/${orgSlug}/reservations/reports`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/reports`,
+					),
+				},
+				{
+					title: _(msg`Settings`),
+					url: `/${orgSlug}/reservations/settings`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/settings`,
+					),
+				},
+			],
+		},
+		{
 			title: _(msg`Staff`),
 			url: `/${orgSlug}/staff`,
 			isActive: location.pathname.includes(`/${orgSlug}/staff`),
@@ -648,6 +710,9 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/phone-agent`) {
 				return canReadPhoneAgent || canReadPhoneCalls
 			}
+			if (item.url === `/${orgSlug}/reservations`) {
+				return reservationsNav.visible
+			}
 			if (item.url === `/${orgSlug}/staff`) {
 				return staffingNav.visible
 			}
@@ -678,6 +743,25 @@ function OrganizationSidebar({
 					items: item.items.filter((subItem) =>
 						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,
 					),
+				}
+			}
+			if (item.url === `/${orgSlug}/reservations`) {
+				const allowedByUrl: Record<string, boolean> = {
+					[`/${orgSlug}/reservations/today`]: reservationsNav.today,
+					[`/${orgSlug}/reservations/book`]: reservationsNav.book,
+					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
+					[`/${orgSlug}/reservations/guests`]: reservationsNav.guests,
+					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,
+					[`/${orgSlug}/reservations/reports`]: reservationsNav.reports,
+					[`/${orgSlug}/reservations/settings`]: reservationsNav.settings,
+				}
+				const visibleItems = item.items.filter(
+					(subItem) => allowedByUrl[subItem.url] === true,
+				)
+				return {
+					...item,
+					url: visibleItems[0]?.url ?? item.url,
+					items: visibleItems,
 				}
 			}
 			if (item.url === `/${orgSlug}/staff`) {

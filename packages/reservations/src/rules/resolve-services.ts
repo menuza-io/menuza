@@ -127,7 +127,6 @@ function parseCustomServices(
 	raw: readonly CustomServiceEntryInput[] | string | null | undefined,
 ): CustomServiceEntryInput[] {
 	if (!raw) return []
-	if (Array.isArray(raw)) return [...raw]
 	if (typeof raw === 'string') {
 		try {
 			const parsed = JSON.parse(raw)
@@ -135,8 +134,9 @@ function parseCustomServices(
 		} catch {
 			return []
 		}
+		return []
 	}
-	return []
+	return [...raw]
 }
 
 const SPECIAL_DAY_PRECEDENCE: Readonly<Record<SpecialDayType, number>> = {
@@ -283,7 +283,7 @@ export function resolveServices(
 
 	if (typeof arg1 === 'string') {
 		businessDate = arg1
-		templates = Array.isArray(arg2) ? arg2 : []
+		templates = typeof arg2 === 'string' || !arg2 ? [] : arg2
 		specialDays = arg3
 	} else {
 		businessDate = typeof arg2 === 'string' ? arg2 : ''

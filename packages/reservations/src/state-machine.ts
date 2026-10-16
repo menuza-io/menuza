@@ -33,13 +33,14 @@ export type ReservationActor = (typeof RESERVATION_ACTORS)[number]
 /** Operator undo `finished -> seated` is allowed within 30 minutes of `finished_at`. */
 export const FINISHED_UNDO_WINDOW_MS = 30 * 60_000
 
-const CAPACITY_CONSUMING_STATUSES: ReadonlySet<ReservationStatus> = new Set([
-	'booked',
-	'confirmed',
-	'arrived',
-	'partially_seated',
-	'seated',
-])
+const CAPACITY_CONSUMING_STATUSES: ReadonlySet<ReservationStatus> =
+	new Set<ReservationStatus>([
+		'booked',
+		'confirmed',
+		'arrived',
+		'partially_seated',
+		'seated',
+	])
 
 /**
  * Return `true` iff `status` occupies table capacity (Invariant I2).

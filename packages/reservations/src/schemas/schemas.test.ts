@@ -5,6 +5,7 @@ import {
 	createReservationFromHoldRequestSchema,
 	operatorCreateReservationSchema,
 	publicAvailabilityQuerySchema,
+	reservationsContextSchema,
 	voiceCheckAvailabilitySchema,
 } from './index.ts'
 
@@ -105,6 +106,79 @@ describe('strict Zod API schemas and stable error codes', () => {
 				businessDate: '2026-06-12',
 				partySize: 4,
 				preferredSlotMin: 1140,
+			}).success,
+		).toBe(true)
+
+		expect(
+			reservationsContextSchema.safeParse({
+				orgId: 'org_acme',
+				dataRegion: 'us',
+				features: {
+					enabled: true,
+					online: true,
+					waitlist: true,
+					payments: false,
+					experiences: false,
+					voice: false,
+				},
+				organization: {
+					name: 'Acme Bistro',
+					slug: 'acme',
+					defaultLocale: 'en',
+					locales: ['en', 'ar'],
+					siteOrigin: 'https://acme.epic-startup.test:2999',
+					sitePublished: true,
+					emailTheme: {
+						organizationName: 'Acme Bistro',
+						logoUrl: null,
+						appUrl: 'http://localhost:3001',
+						background: '#F4F4F5',
+						card: '#FFFFFF',
+						foreground: '#18181B',
+						muted: '#F4F4F5',
+						mutedForeground: '#71717A',
+						border: '#E4E4E7',
+						primary: '#2563EB',
+						primaryForeground: '#FFFFFF',
+						accent: '#F4F4F5',
+						accentForeground: '#18181B',
+						radius: 8,
+						headingFont: 'Inter',
+						bodyFont: 'Inter',
+					},
+					logoUrl: null,
+				},
+				locations: [
+					{
+						id: 'loc_1',
+						slug: 'flagship',
+						name: 'Flagship',
+						timeZone: 'America/New_York',
+						currency: 'USD',
+						phone: '+14155552671',
+						address: {
+							formattedAddress: '123 Main St, New York, NY',
+							city: 'New York',
+							lat: 40.7128,
+							lng: -74.006,
+						},
+						storeHours: null,
+						specialHours: null,
+						isActive: true,
+					},
+				],
+				payments: {
+					processor: 'connect',
+					deposit: true,
+					guarantee: true,
+					platformFeeBp: 150,
+				},
+				staffing: {
+					enabled: true,
+				},
+				voice: {
+					enabled: false,
+				},
 			}).success,
 		).toBe(true)
 	})

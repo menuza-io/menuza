@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getRoleWithPermissions,
@@ -26,6 +27,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const role = await getRoleWithPermissions(roleId, organization.organizationId)
 	if (!role) throw new Response('Role not found', { status: 404 })
 
+	const [staffingEnabled, reservationsEnabled] = await Promise.all([
+		isStaffingFeatureEnabled(organization.organizationId),
+		isReservationsFeatureEnabled(organization.organizationId),
+	])
+
 	return {
 		organization: {
 			id: organization.organizationId,
@@ -34,14 +40,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		role,
 		canEdit: isAdmin && !role.isBuiltIn,
-		staffingEnabled: await isStaffingFeatureEnabled(
-			organization.organizationId,
-		),
+		staffingEnabled,
+		reservationsEnabled,
 	}
 }
 
 export default function ViewRoleRoute() {
-	const { organization, role, canEdit, staffingEnabled } =
+	const { organization, role, canEdit, staffingEnabled, reservationsEnabled } =
 		useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
@@ -51,6 +56,7 @@ export default function ViewRoleRoute() {
 			role={role}
 			editHref={canEdit ? `${basePath}/${role.id}/edit` : undefined}
 			staffingEnabled={staffingEnabled}
+			reservationsEnabled={reservationsEnabled}
 		/>
 	)
 }

@@ -41,6 +41,13 @@ import {
 	voiceOperatorRoutes,
 	voiceSystemRoutes,
 } from './routes/voice.ts'
+import {
+	reservationsInternalRoutes,
+	reservationsTickRoutes,
+	reservationsVoiceActionRoutes,
+} from './routes/reservations-internal.ts'
+import { reservationsOperatorRoutes } from './routes/reservations-operator.ts'
+import { reservationsPublicRoutes } from './routes/reservations-public.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
 
@@ -243,6 +250,11 @@ export function createTenantApiApp() {
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
 	app.route('/schedule-link', scheduleLinkRoutes)
+	app.route('/operator/reservations', reservationsOperatorRoutes)
+	app.route('/reservations', reservationsPublicRoutes)
+	app.route('/internal/reservations', reservationsInternalRoutes)
+	app.route('/api/reservations', reservationsTickRoutes)
+	app.route('/api/voice/actions', reservationsVoiceActionRoutes)
 
 	app.notFound((c) => {
 		return c.json({ error: 'Endpoint Not Found' }, 404)

@@ -1,5 +1,6 @@
 import { jwtVerify } from 'jose'
 import { z } from 'zod'
+import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
 	parseKioskDeviceSecret,
 	parseKioskPairingCode,
@@ -51,11 +52,16 @@ async function orgIdFromOperatorJwt(
 
 	try {
 		const secret = new TextEncoder().encode(env.TENANT_OPERATOR_TOKEN)
-		// Staffing tokens carry their own audience so they cannot be replayed on
-		// the generic operator routes (and vice versa); both must route to the
-		// org's Durable Object. The route handlers re-verify audience and scope.
+		// Staffing and reservations tokens carry their own audiences so they
+		// cannot be replayed on the generic operator routes (and vice versa);
+		// all three must route to the org's Durable Object. The route handlers
+		// re-verify audience, typ, and scope.
 		const { payload } = await jwtVerify(token, secret, {
-			audience: ['tenant-api-operator', STAFFING_TOKEN_AUDIENCE],
+			audience: [
+				'tenant-api-operator',
+				STAFFING_TOKEN_AUDIENCE,
+				RESERVATIONS_TOKEN_AUDIENCE,
+			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
 		})
@@ -189,6 +195,32 @@ export async function resolveOrgId(
 	// orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
 	if (pathname.startsWith('/internal/staff/')) {
 		return orgIdFromJsonBody(request)
+	}
+
+	// Reservations tick, internal commands, and voice actions: body orgId,
+	// authenticated by INTERNAL_COMMAND_TOKEN or VOICE_AGENT_TOKEN inside the
+	// route handler. A tick with no body orgId fans out at the edge.
+	if (
+		pathname === '/api/reservations/tick' ||
+		pathname.startsWith('/internal/reservations/') ||
+		pathname.startsWith('/api/reservations/') ||
+		pathname.startsWith('/api/voice/actions/')
+	) {
+		return orgIdFromJsonBody(request)
+	}
+
+	// Operator reservations routes: route strictly by the signed operator JWT,
+	// never by a client-supplied query or body orgId.
+	if (pathname.startsWith('/operator/reservations')) {
+		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Public/guest reservations routes: route by customer JWT or Origin +
+	// slug/host, never by a client-supplied query or body orgId.
+	if (pathname === '/reservations' || pathname.startsWith('/reservations/')) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
 	}
 
 	if (pathname.startsWith('/kiosk/')) {
