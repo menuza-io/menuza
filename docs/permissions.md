@@ -53,24 +53,24 @@ Built-in organization roles are seeded in `packages/database/setup-roles.ts`:
 
 Product areas are gated with these permissions:
 
-| Area                     | Permissions                                                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Notes                    | `create/read/update/delete:note:own\|org`                                                                           |
-| Members                  | `read/create/update/delete:member:any`                                                                              |
-| Organization settings    | `read/update:settings:any`                                                                                          |
-| Website pages/forms/etc. | `read/update:website:any`                                                                                           |
-| Website announcements    | `read/update:announcement:any`                                                                                      |
-| Marketing broadcasts     | `read/update:campaign:any`                                                                                          |
-| Marketing automations    | `read/update:automation:any`                                                                                        |
-| Menus and drops          | `read/update:menu:any`                                                                                              |
-| AI phone agent           | `read/update:phone_agent:any`                                                                                       |
-| AI phone calls           | `read:phone_call:any` (caller numbers, transcripts, recordings)                                                     |
-| AI phone call follow-up  | `update:phone_call:any` (complete/reopen calls and requests, tags)                                                  |
-| AI phone call deletion   | `delete:phone_call:any`                                                                                             |
-| Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`)                                   |
-| Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)                                             |
-| Staff                    | 18 `staff`, `schedule`, `timeclock`, `timesheet`, `labor`, `hiring` permissions                                     |
-| Reservations             | 8 `reservations`, `guestbook`, `reservations_settings`, `reservations_reports`, `reservations_payments` permissions |
+| Area                     | Permissions                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Notes                    | `create/read/update/delete:note:own\|org`                                                                             |
+| Members                  | `read/create/update/delete:member:any`                                                                                |
+| Organization settings    | `read/update:settings:any`                                                                                            |
+| Website pages/forms/etc. | `read/update:website:any`                                                                                             |
+| Website announcements    | `read/update:announcement:any`                                                                                        |
+| Marketing broadcasts     | `read/update:campaign:any`                                                                                            |
+| Marketing automations    | `read/update:automation:any`                                                                                          |
+| Menus and drops          | `read/update:menu:any`                                                                                                |
+| AI phone agent           | `read/update:phone_agent:any`                                                                                         |
+| AI phone calls           | `read:phone_call:any` (caller numbers, transcripts, recordings)                                                       |
+| AI phone call follow-up  | `update:phone_call:any` (complete/reopen calls and requests, tags)                                                    |
+| AI phone call deletion   | `delete:phone_call:any`                                                                                               |
+| Team chat channels       | `update:chat:any` (using chat needs only channel access, see `docs/team-chat.md`)                                     |
+| Team chat groups         | `create:chat:group` (DMs need no extra permission; group creation only)                                               |
+| Staff                    | 18 `staff`, `schedule`, `timeclock`, `timesheet`, `labor`, `hiring` permissions                                       |
+| Reservations             | 8 `reservation`, `reservation_guest`, `reservation_settings`, `reservation_report`, `reservation_payment` permissions |
 
 Organization admins can create custom roles from `/{orgSlug}/settings/roles`;
 only the permission IDs allow-listed in
@@ -187,41 +187,44 @@ device secret lives on the tablet), so revoke kiosks before turning a flag off.
 
 The Reservations module (host stand, booking sheet, waitlist, guestbook CRM,
 setup, experiences, reports, and deposit/prepayment refunds) uses 8 organization
-permissions added by control-plane migration `0023_reservations_foundation` and
+permissions added by control-plane migration `0025_reservations_foundation` and
 mirrored in `ORG_PERMISSIONS`
 (`packages/auth/src/organization-permissions.server.ts`), `@repo/reservations`
 (`RESERVATIONS_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`, the role editor
 groups, and `packages/database/setup-roles.ts`.
 
-| Permission                         | Covers                                                                                       |
-| ---------------------------------- | -------------------------------------------------------------------------------------------- |
-| `read:reservations:any`            | View Today host stand, Book day sheet, floor availability, and Waitlist                      |
-| `update:reservations:any`          | Create/edit/cancel bookings, seat/unseat/move tables, manage walk-ins and waitlist           |
-| `read:guestbook:any`               | View Guestbook CRM profiles, tags, visit/no-show history, and notes                          |
-| `update:guestbook:any`             | Edit guest profiles, tags, dietary/private notes, and merge duplicate guests                 |
-| `read:reservations_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
-| `update:reservations_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
-| `read:reservations_reports:any`    | View covers, utilization, no-show/cancellation analytics, and export CSVs                    |
-| `refund:reservations_payments:any` | Refund or release reservation deposits, no-show charges, and experience prepayments          |
+| Permission                        | Covers                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `read:reservation:any`            | View Today host stand, Book day sheet, floor availability, and Waitlist                      |
+| `update:reservation:any`          | Create/edit/cancel bookings, seat/unseat/move tables, manage walk-ins and waitlist           |
+| `read:reservation_guest:any`      | View Guestbook CRM profiles, tags, visit/no-show history, and notes                          |
+| `update:reservation_guest:any`    | Edit guest profiles, tags, dietary/private notes, and merge duplicate guests                 |
+| `read:reservation_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
+| `update:reservation_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
+| `read:reservation_report:any`     | View covers, utilization, no-show/cancellation analytics, and export CSVs                    |
+| `update:reservation_payment:any`  | Refund, capture, or release reservation deposits, no-show holds, and experience prepayments  |
 
 Rules:
 
 - **Seeding.** The built-in `admin` organization role gets all 8 permissions.
   Built-in `member`, `viewer`, and `guest` roles get none, and existing custom
   roles receive none automatically.
-- **Implied read permissions.** `update:reservations:any` implies
-  `read:reservations:any`; `update:guestbook:any` implies `read:guestbook:any`;
-  `update:reservations_settings:any` implies `read:reservations_settings:any`;
-  `refund:reservations_payments:any` implies `read:reservations:any`. The role
+- **Implied read permissions.** `update:reservation:any` implies
+  `read:reservation:any`; `update:reservation_guest:any` implies
+  `read:reservation_guest:any` and `read:reservation:any`;
+  `update:reservation_settings:any` implies `read:reservation_settings:any`;
+  `update:reservation_payment:any` implies `read:reservation:any`. The role
   editor and server-side save actions enforce these implications, and
   `grantsSatisfying` in `@repo/reservations` honors them at runtime.
 - **Role presets.** When `reservations.enabled` is on, Settings → Roles offers
-  one-click presets for _Host_ (`read/update:reservations:any`,
-  `read:guestbook:any`), _Reservations manager_ (all 8 permissions except
-  `refund:reservations_payments:any`), and _Guest relations_
-  (`read:reservations:any`, `read/update:guestbook:any`). The _Shift manager_
-  staffing preset also includes `read/update:reservations:any` and
-  `read:guestbook:any` when both Staffing and Reservations are enabled.
+  one-click presets for _Host_ (`read:reservation:any`,
+  `update:reservation:any`, `read:reservation_guest:any`), _Reservations
+  manager_ (all 8 permissions except `update:reservation_payment:any`), and
+  _Guest relations_ (`read:reservation:any`, `read:reservation_guest:any`,
+  `update:reservation_guest:any`, `read:reservation_report:any`). The _Shift
+  manager_ staffing preset also includes `read:reservation:any`,
+  `update:reservation:any`, and `read:reservation_guest:any` when both Staffing
+  and Reservations are enabled.
 - **Hidden while Reservations is off.** The role editor, role view page, and
   preset panels show the Reservations permission group and presets only when
   `reservations.enabled` is on for the organization. Editing a role while
@@ -236,10 +239,32 @@ Rules:
   `apps/tenant-api` enforces `locationIds` on every location-scoped endpoint.
 - **Shorter TTL and impersonation restrictions.** Operator `rsv+jwt` tokens have
   a 15-minute TTL, shortened to **5 minutes** when carrying sensitive grants
-  (`read/update:guestbook:any`, `refund:reservations_payments:any`) or during
-  support impersonation (`imp: true`). Under impersonation, all write and
+  (`update:reservation_payment:any`, `update:reservation_settings:any`,
+  `update:reservation_guest:any`) or during support impersonation
+  (`impersonated: true`). Under impersonation, all write (`update:*`) and
   sensitive grants are stripped so support sessions are strictly read-only and
-  cannot access guestbook PII or issue refunds.
+  cannot mutate settings/guests or issue refunds.
+
+#### Reservations feature flags
+
+Permissions alone never open the Reservations module. Every Reservations surface
+and token mint is behind org-level feature flags read with `getFeatureFlag`
+(`@repo/common/feature-flags`) that **default to off**:
+
+| Flag                           | Gates                                                                                          |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `reservations.enabled`         | Master: sidebar group, every `/<orgSlug>/reservations/*` route, operator token mint            |
+| `reservations.online`          | Public `/reserve` widget on Sites, iOS/Android booking flows, and public hold/booking routes   |
+| `reservations.waitlist`        | Operator Waitlist section and public online waitlist join                                      |
+| `reservations.payments`        | Deposit, no-show card hold, and prepaid policies (`rsv_policies`) plus payment action routes   |
+| `reservations.experiences`     | Operator Experiences section and public ticketed experiences                                   |
+| `reservations.voice`           | AI phone agent reservation availability, hold + SMS link, and direct voice booking             |
+| `reservations.platform_fee_bp` | Numeric platform application fee in basis points (`0..2000`, default `0`) on reservation funds |
+
+Enforcement lives in `apps/app/app/utils/reservations/access.server.ts` via
+`requireReservationsAccess(request, params.orgSlug, { feature, anyOf })`, which
+returns **404** when a required flag is off and **403** when the member lacks
+the required permission or has an empty location intersection.
 
 ## Platform (system) permissions
 

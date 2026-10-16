@@ -7,8 +7,9 @@ import { LRUCache } from 'lru-cache'
 import { ENV } from 'varlock/env'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
-export const RESERVATIONS_CONTEXT_FRESH_TTL_MS = 60 * 1000
-export const RESERVATIONS_CONTEXT_STALE_TTL_MS = 5 * 60 * 1000
+export const RESERVATIONS_CONTEXT_FRESH_TTL_MS = 5 * 60 * 1000
+export const RESERVATIONS_CONTEXT_STALE_TTL_MS = 24 * 60 * 60 * 1000
+export const RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS = 30 * 1000
 
 type CacheEntry = {
 	fetchedAt: number
@@ -18,6 +19,11 @@ type CacheEntry = {
 const cache = new LRUCache<string, CacheEntry>({
 	max: 500,
 	ttl: RESERVATIONS_CONTEXT_STALE_TTL_MS,
+})
+
+const lastFailureAt = new LRUCache<string, number>({
+	max: 500,
+	ttl: RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS,
 })
 
 function resolveAppUrl(): string {
@@ -60,8 +66,9 @@ async function fetchReservationsContext(
  * Resolve non-PII organization context for the Reservations module from the US
  * control plane (`GET /resources/reservations/context?orgId=<id>`).
  *
- * - Caches per `orgId` in memory with a 60-second fresh TTL.
- * - Serves up to 5-minute stale entries when the control-plane fetch fails.
+ * - Caches per `orgId` in memory with a 5-minute fresh TTL (`300_000` ms).
+ * - Serves up to 24-hour stale entries (`86_400_000` ms) when the control-plane
+ *   fetch fails, with a 30-second (`30_000` ms) failure cooldown before retrying.
  * - Immediately invalidated when `invalidateReservationsContext(orgId)` is called
  *   (e.g., via `POST /internal/reservations/context-changed`).
  */
@@ -84,12 +91,25 @@ export async function getReservationsContext(
 		return cached.context
 	}
 
+	const failedAt = lastFailureAt.get(orgId)
+	if (
+		!options?.forceRefresh &&
+		failedAt !== undefined &&
+		now - failedAt < RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS &&
+		cached &&
+		now - cached.fetchedAt < RESERVATIONS_CONTEXT_STALE_TTL_MS
+	) {
+		return cached.context
+	}
+
 	const fresh = await fetchReservationsContext(orgId)
 	if (fresh) {
+		lastFailureAt.delete(orgId)
 		cache.set(orgId, { fetchedAt: now, context: fresh })
 		return fresh
 	}
 
+	lastFailureAt.set(orgId, now)
 	if (cached && now - cached.fetchedAt < RESERVATIONS_CONTEXT_STALE_TTL_MS) {
 		return cached.context
 	}
@@ -105,13 +125,16 @@ export async function getReservationsContext(
 export function invalidateReservationsContext(orgId?: string): void {
 	if (orgId) {
 		cache.delete(orgId)
+		lastFailureAt.delete(orgId)
 		return
 	}
 	cache.clear()
+	lastFailureAt.clear()
 }
 
 export function resetReservationsContextCache(): void {
 	cache.clear()
+	lastFailureAt.clear()
 }
 
 export function seedReservationsContextForTest(
@@ -120,4 +143,5 @@ export function seedReservationsContextForTest(
 	fetchedAt = Date.now(),
 ): void {
 	cache.set(orgId, { fetchedAt, context })
+	lastFailureAt.delete(orgId)
 }

@@ -324,4 +324,71 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 		expect(expReq?.status).toBe('expired')
 		expect(expWl?.status).toBe('no_response')
 	})
+
+	it('maps rsv_table_occupancies overlap trigger aborts to 409 conflict', async () => {
+		const now = 1_750_000_000_000
+
+		await withReservationWrite(
+			{ orgId: ORG_ID, locationId: LOC_ID, dates: [DATE], now },
+			async (tx) => {
+				await tx.insert(rsvHolds).values({
+					id: 'hold_occ_1',
+					locationId: LOC_ID,
+					tokenHash: 'hash_occ_1',
+					businessDate: DATE,
+					localStartMin: 1140,
+					startAt: 10_000,
+					endAt: 20_000,
+					partySize: 2,
+					status: 'active',
+					expiresAt: now + 420_000,
+				})
+				await tx.insert(rsvTableOccupancies).values({
+					id: 'occ_1',
+					locationId: LOC_ID,
+					tableId: 'tbl_1',
+					kind: 'hold',
+					holdId: 'hold_occ_1',
+					startAt: 10_000,
+					endAt: 20_000,
+					active: true,
+					overbook: false,
+				})
+			},
+		)
+
+		await expect(
+			withReservationWrite(
+				{ orgId: ORG_ID, locationId: LOC_ID, dates: [DATE], now },
+				async (tx) => {
+					await tx.insert(rsvHolds).values({
+						id: 'hold_occ_2',
+						locationId: LOC_ID,
+						tokenHash: 'hash_occ_2',
+						businessDate: DATE,
+						localStartMin: 1140,
+						startAt: 15_000,
+						endAt: 25_000,
+						partySize: 2,
+						status: 'active',
+						expiresAt: now + 420_000,
+					})
+					await tx.insert(rsvTableOccupancies).values({
+						id: 'occ_2',
+						locationId: LOC_ID,
+						tableId: 'tbl_1',
+						kind: 'hold',
+						holdId: 'hold_occ_2',
+						startAt: 15_000,
+						endAt: 25_000,
+						active: true,
+						overbook: false,
+					})
+				},
+			),
+		).rejects.toMatchObject({
+			status: 409,
+			code: 'conflict',
+		} satisfies Partial<HttpError>)
+	})
 })

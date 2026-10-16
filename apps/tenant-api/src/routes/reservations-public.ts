@@ -45,7 +45,8 @@ async function resolvePublicOrg(
 		...(slug ? { slug } : {}),
 		...(host ? { host } : {}),
 	})
-	if (!org) {
+	const provisioned = Boolean(org?.hasProvisionedDb)
+	if (!org || !provisioned) {
 		return {
 			ok: false,
 			response: json({ error: 'not_found' }, 404),

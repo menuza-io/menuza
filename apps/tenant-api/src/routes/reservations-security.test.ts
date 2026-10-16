@@ -7,6 +7,8 @@ import {
 	RESERVATIONS_SCOPES,
 	RESERVATIONS_TOKEN_AUDIENCE,
 	RESERVATIONS_TOKEN_TYP,
+	restrictGrantsForImpersonation,
+	SCOPE_GRANTS,
 	type ReservationsScope,
 } from '@repo/reservations'
 import {
@@ -46,6 +48,7 @@ const VOICE_TOKEN = 'voice-agent-secret-token-0123456789abcdef'
 const ORG_A = 'org_rsv_sec_a'
 const ORG_B = 'org_rsv_sec_b'
 const ORG_KSA = 'org_rsv_sec_ksa'
+const ORG_UNPROVISIONED = 'org_rsv_sec_unprov'
 
 const LOC_1 = 'loc_downtown'
 const LOC_2 = 'loc_uptown'
@@ -87,6 +90,53 @@ function fill(routePath: string): string {
 		.replace(/\*/g, 'x')
 }
 
+function scopeForRoute(routePath: string): ReservationsScope {
+	if (
+		routePath.startsWith('/operator/reservations/setup') ||
+		routePath.startsWith('/operator/reservations/experiences')
+	) {
+		return 'setup'
+	}
+	if (routePath.startsWith('/operator/reservations/guests')) {
+		return 'guests'
+	}
+	if (routePath.startsWith('/operator/reservations/reports')) {
+		return 'reports'
+	}
+	if (routePath.startsWith('/operator/reservations/payments')) {
+		return 'payments'
+	}
+	return 'book'
+}
+
+function buildRouteInit(
+	route: { method: string; path: string },
+	headers: Record<string, string>,
+	extraBody: Record<string, unknown> = {},
+): RequestInit {
+	if (route.method === 'GET' || route.method === 'HEAD') {
+		return { method: route.method, headers }
+	}
+	return {
+		method: route.method,
+		headers: {
+			'Content-Type': 'application/json',
+			...headers,
+		},
+		body: JSON.stringify({
+			locationId: LOC_1,
+			businessDate: '2026-07-15',
+			localStartMin: 1140,
+			partySize: 2,
+			firstName: 'Test',
+			lastName: 'Guest',
+			paymentId: 'pay_test_1',
+			enabled: true,
+			...extraBody,
+		}),
+	}
+}
+
 function buildOperatorApp() {
 	const app = new Hono()
 	for (const [prefix, router] of Object.entries(OPERATOR_MOUNTS)) {
@@ -119,15 +169,17 @@ async function mintRsvToken(overrides?: {
 }) {
 	const now = Math.floor(Date.now() / 1000)
 	const ttl = overrides?.ttlSeconds ?? 300
+	const scope = overrides?.scope ?? 'book'
+	const impersonated = overrides?.impersonated ?? false
+	const defaultGrants = impersonated
+		? restrictGrantsForImpersonation(SCOPE_GRANTS[scope], true)
+		: [...SCOPE_GRANTS[scope]]
 	return new jose.SignJWT({
 		role: 'operator',
 		orgId: overrides?.orgId ?? ORG_A,
 		region: overrides?.region ?? 'us',
-		scope: overrides?.scope ?? 'book',
-		grants: overrides?.grants ?? [
-			RESERVATIONS_PERMISSIONS.READ_RESERVATION,
-			RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
-		],
+		scope,
+		grants: overrides?.grants ?? defaultGrants,
 		locationIds:
 			overrides?.locationIds === undefined ? null : overrides.locationIds,
 		features: {
@@ -138,7 +190,7 @@ async function mintRsvToken(overrides?: {
 			experiences: true,
 			voice: false,
 		},
-		impersonated: overrides?.impersonated ?? false,
+		impersonated,
 	})
 		.setProtectedHeader({
 			alg: 'HS256',
@@ -188,6 +240,14 @@ describe('Reservations security sweep: operator routes', () => {
 			dataRegion: 'ksa',
 			name: 'Riyadh KSA',
 		})
+		orgs.set(ORG_UNPROVISIONED, {
+			id: ORG_UNPROVISIONED,
+			slug: 'unprovisioned-org',
+			customDomain: null,
+			hasProvisionedDb: false,
+			dataRegion: 'us',
+			name: 'Unprovisioned Org',
+		})
 
 		await provisionTenantDb(ORG_A)
 		await provisionTenantDb(ORG_B)
@@ -217,19 +277,43 @@ describe('Reservations security sweep: operator routes', () => {
 		expect(failures).toEqual([])
 	})
 
-	it('refuses a token signed with wrong secret, wrong audience, or wrong typ (401)', async () => {
+	it('refuses a token signed with wrong secret, wrong audience (tenant-api-staffing or tenant-api-operator), wrong typ, or over-long TTL (401)', async () => {
 		const wrongSecret = await mintRsvToken({
 			signingKey: `${SECRET}-mismatch`,
 		})
-		const wrongAudience = await mintRsvToken({
+		const wrongAudienceStaffing = await mintRsvToken({
 			audience: 'tenant-api-staffing',
+		})
+		const wrongAudienceOperator = await mintRsvToken({
+			audience: 'tenant-api-operator',
 		})
 		const wrongTyp = await mintRsvToken({
 			typ: 'JWT',
 		})
+		const overLongStandardTtl = await mintRsvToken({
+			ttlSeconds: 901,
+		})
+		const overLongImpersonatedTtl = await mintRsvToken({
+			impersonated: true,
+			ttlSeconds: 301,
+		})
+		const overLongSensitiveGrantTtl = await mintRsvToken({
+			scope: 'payments',
+			grants: [RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT],
+			ttlSeconds: 301,
+		})
+		const invalidTokens = [
+			wrongSecret,
+			wrongAudienceStaffing,
+			wrongAudienceOperator,
+			wrongTyp,
+			overLongStandardTtl,
+			overLongImpersonatedTtl,
+			overLongSensitiveGrantTtl,
+		]
 		const failures: string[] = []
 		for (const route of list) {
-			for (const token of [wrongSecret, wrongAudience, wrongTyp]) {
+			for (const token of invalidTokens) {
 				const response = await app.request(fill(route.path), {
 					method: route.method,
 					headers: { Authorization: `Bearer ${token}` },
@@ -276,7 +360,76 @@ describe('Reservations security sweep: operator routes', () => {
 		expect(failures).toEqual([])
 	})
 
-	it('enforces cross-org and cross-location isolation across operator routes', async () => {
+	it('refuses a token with the wrong scope on every route (403)', async () => {
+		const failures: string[] = []
+		for (const route of list) {
+			const expectedScope = scopeForRoute(route.path)
+			const wrongScope = RESERVATIONS_SCOPES.find((s) => s !== expectedScope)!
+			const token = await mintRsvToken({
+				scope: wrongScope,
+				ttlSeconds: 300,
+			})
+			const response = await app.request(fill(route.path), {
+				method: route.method,
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			if (response.status !== 403) {
+				failures.push(
+					`${route.method} ${route.path} (wrongScope=${wrongScope}) -> ${response.status}`,
+				)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('refuses an impersonated token on every write route (403 impersonated_read_only)', async () => {
+		const writeRoutes = list.filter(
+			(route) => route.method !== 'GET' && route.method !== 'HEAD',
+		)
+		expect(writeRoutes.length).toBeGreaterThanOrEqual(4)
+
+		const failures: string[] = []
+		for (const route of writeRoutes) {
+			const token = await mintRsvToken({
+				scope: scopeForRoute(route.path),
+				impersonated: true,
+				ttlSeconds: 300,
+			})
+			const response = await app.request(
+				fill(route.path),
+				buildRouteInit(route, { Authorization: `Bearer ${token}` }),
+			)
+			if (response.status !== 403) {
+				failures.push(`${route.method} ${route.path} -> ${response.status}`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('refuses an active but unprovisioned organization (hasProvisionedDb = false) with uniform 404 across every route', async () => {
+		const failures: string[] = []
+		for (const route of list) {
+			const token = await mintRsvToken({
+				orgId: ORG_UNPROVISIONED,
+				scope: scopeForRoute(route.path),
+				ttlSeconds: 300,
+			})
+			const url = `${fill(route.path)}?locationId=${LOC_1}&date=2026-07-15`
+			const response = await app.request(
+				url,
+				buildRouteInit(route, { Authorization: `Bearer ${token}` }),
+			)
+			const body = (await response.json()) as { error?: string }
+			if (response.status !== 404 || body.error !== 'not_found') {
+				failures.push(
+					`${route.method} ${route.path} -> ${response.status} (${JSON.stringify(body)})`,
+				)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('sweeps every mounted route for cross-org (ORG_B) and excluded locationIds ([LOC_2]) and never returns 5xx', async () => {
 		const dbA = await provisionTenantDb(ORG_A)
 		const dbB = await provisionTenantDb(ORG_B)
 
@@ -297,7 +450,61 @@ describe('Reservations security sweep: operator routes', () => {
 			})
 			.onConflictDoNothing()
 
-		// 1. Cross-org: ORG_A token never sees ORG_B guests
+		const crossOrgFailures: string[] = []
+		const crossLocFailures: string[] = []
+
+		for (const route of list) {
+			const scope = scopeForRoute(route.path)
+
+			// 1. Cross-org sweep: ORG_A token targeting ORG_B via query or X-Org-Id header -> 403/404, never 5xx
+			const tokenOrgA = await mintRsvToken({
+				orgId: ORG_A,
+				scope,
+				ttlSeconds: 300,
+			})
+			const crossOrgUrl = `${fill(route.path)}?orgId=${ORG_B}&locationId=${LOC_1}&date=2026-07-15`
+			const crossOrgRes = await app.request(
+				crossOrgUrl,
+				buildRouteInit(route, {
+					Authorization: `Bearer ${tokenOrgA}`,
+					'X-Org-Id': ORG_B,
+				}),
+			)
+			if (
+				(crossOrgRes.status !== 403 && crossOrgRes.status !== 404) ||
+				crossOrgRes.status >= 500
+			) {
+				crossOrgFailures.push(
+					`${route.method} ${route.path} -> ${crossOrgRes.status}`,
+				)
+			}
+
+			// 2. Cross-location sweep: token scoped to [LOC_2] requesting LOC_1 -> 403/404, never 5xx
+			const tokenLoc2Only = await mintRsvToken({
+				orgId: ORG_A,
+				scope,
+				locationIds: [LOC_2],
+				ttlSeconds: 300,
+			})
+			const crossLocUrl = `${fill(route.path)}?locationId=${LOC_1}&date=2026-07-15`
+			const crossLocRes = await app.request(
+				crossLocUrl,
+				buildRouteInit(route, { Authorization: `Bearer ${tokenLoc2Only}` }),
+			)
+			if (
+				(crossLocRes.status !== 403 && crossLocRes.status !== 404) ||
+				crossLocRes.status >= 500
+			) {
+				crossLocFailures.push(
+					`${route.method} ${route.path} -> ${crossLocRes.status}`,
+				)
+			}
+		}
+
+		expect(crossOrgFailures).toEqual([])
+		expect(crossLocFailures).toEqual([])
+
+		// 3. Data-level verification: ORG_A token never sees ORG_B guests, and [LOC_1] token filters out LOC_2
 		const guestsTokenA = await mintRsvToken({
 			orgId: ORG_A,
 			scope: 'guests',
@@ -316,34 +523,6 @@ describe('Reservations security sweep: operator routes', () => {
 			false,
 		)
 
-		// 2. Cross-location: token scoped to [LOC_1] cannot read or write LOC_2
-		const scopedBookToken = await mintRsvToken({
-			orgId: ORG_A,
-			scope: 'book',
-			grants: [
-				RESERVATIONS_PERMISSIONS.READ_RESERVATION,
-				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
-			],
-			locationIds: [LOC_1],
-		})
-
-		const allowedLocRes = await app.request(
-			`/operator/reservations/book/day?locationId=${LOC_1}&date=2026-07-15`,
-			{
-				headers: { Authorization: `Bearer ${scopedBookToken}` },
-			},
-		)
-		expect(allowedLocRes.status).toBe(200)
-
-		const forbiddenLocRes = await app.request(
-			`/operator/reservations/book/day?locationId=${LOC_2}&date=2026-07-15`,
-			{
-				headers: { Authorization: `Bearer ${scopedBookToken}` },
-			},
-		)
-		expect(forbiddenLocRes.status).toBe(403)
-
-		// 3. Overview filters out LOC_2 when token is scoped to [LOC_1]
 		const scopedSetupToken = await mintRsvToken({
 			orgId: ORG_A,
 			scope: 'setup',

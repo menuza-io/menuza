@@ -9,6 +9,7 @@ import {
 	requireAnyReservationsGrant,
 	requireReservationsFeatureFlag,
 	requireReservationsGrant,
+	requireReservationsLocation,
 	requireReservationsScope,
 	verifyReservationsOperatorToken,
 } from './reservations-auth.ts'
@@ -74,6 +75,25 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 		} else if (options.anyOf && options.anyOf.length > 0) {
 			const denied = requireAnyReservationsGrant(ctx, options.anyOf)
 			if (denied) return denied
+		}
+
+		const requestedOrgId =
+			c.req.query('orgId')?.trim() || c.req.header('X-Org-Id')?.trim()
+		if (requestedOrgId && requestedOrgId !== ctx.orgId) {
+			return Response.json(
+				{
+					error: 'org_mismatch',
+					message: 'Token orgId does not match requested organization',
+				},
+				{ status: 403 },
+			)
+		}
+
+		const requestedLocationId =
+			c.req.param('locationId')?.trim() || c.req.query('locationId')?.trim()
+		if (requestedLocationId) {
+			const locCheck = requireReservationsLocation(ctx, requestedLocationId)
+			if (!locCheck.ok) return locCheck.response
 		}
 
 		c.set(RSV_AUTH_KEY, ctx)

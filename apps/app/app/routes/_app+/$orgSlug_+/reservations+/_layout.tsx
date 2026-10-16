@@ -180,33 +180,35 @@ export default function ReservationsLayout() {
 						</nav>
 
 						<div className="flex flex-wrap items-center gap-3">
-							<div className="flex items-center gap-2">
-								<Label
-									htmlFor="reservations-location-select"
-									className="text-muted-foreground text-xs font-medium"
-								>
-									<Trans>Location</Trans>
-								</Label>
-								<select
-									id="reservations-location-select"
-									aria-label={_(msg`Location`)}
-									value={selectedLocationId}
-									onChange={(event) =>
-										updateParam('locationId', event.target.value)
-									}
-									className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-								>
-									{locations.length === 0 ? (
-										<option value="all">{_(msg`Main location`)}</option>
-									) : (
-										locations.map((loc) => (
-											<option key={loc.id} value={loc.id}>
-												{loc.name}
-											</option>
-										))
-									)}
-								</select>
-							</div>
+							{locations.length > 1 ? (
+								<div className="flex items-center gap-2">
+									<Label
+										htmlFor="reservations-location-select"
+										className="text-muted-foreground text-xs font-medium"
+									>
+										<Trans>Location</Trans>
+									</Label>
+									<select
+										id="reservations-location-select"
+										aria-label={_(msg`Location`)}
+										value={selectedLocationId}
+										onChange={(event) =>
+											updateParam('locationId', event.target.value)
+										}
+										className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
+									>
+										{locations.length === 0 ? (
+											<option value="all">{_(msg`Main location`)}</option>
+										) : (
+											locations.map((loc) => (
+												<option key={loc.id} value={loc.id}>
+													{loc.name}
+												</option>
+											))
+										)}
+									</select>
+								</div>
+							) : null}
 
 							<div className="flex items-center gap-2">
 								<Label

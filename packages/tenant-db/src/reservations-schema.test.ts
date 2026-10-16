@@ -1,4 +1,5 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -137,6 +138,15 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			__dirname,
 			'../../../apps/tenant-api/workers/migrations.generated.ts',
 		)
+		const generatorScriptPath = path.resolve(
+			__dirname,
+			'../../../apps/tenant-api/scripts/generate-do-migrations.mjs',
+		)
+		if (!existsSync(generatedPath)) {
+			execFileSync(process.execPath, [generatorScriptPath], {
+				stdio: 'ignore',
+			})
+		}
 		const sqlContent = readFileSync(sqlPath, 'utf8')
 		const generatedContent = readFileSync(generatedPath, 'utf8')
 
@@ -1161,7 +1171,7 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			overbook: false,
 		})
 
-		// 1. Overlapping INSERT on same table with active=1, overbook=0 fails with 'table_overlap'
+		// 1. Overlapping INSERT on same table with active=1, overbook=0 fails with 'rsv_table_occupancies overlap'
 		await expectRejectsWith(
 			db.insert(schema.rsvTableOccupancies).values({
 				id: 'occ_overlap',
@@ -1174,7 +1184,7 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 				active: true,
 				overbook: false,
 			}),
-			'table_overlap',
+			'rsv_table_occupancies overlap',
 		)
 
 		// 2. Back-to-back INSERT [2000, 3000) and [500, 1000) succeeds
@@ -1201,13 +1211,13 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			overbook: false,
 		})
 
-		// 3. Overlapping UPDATE into [1000, 2000) fails with 'table_overlap'
+		// 3. Overlapping UPDATE into [1000, 2000) fails with 'rsv_table_occupancies overlap'
 		await expectRejectsWith(
 			db
 				.update(schema.rsvTableOccupancies)
 				.set({ startAt: 1800 })
 				.where(eq(schema.rsvTableOccupancies.id, 'occ_after')),
-			'table_overlap',
+			'rsv_table_occupancies overlap',
 		)
 
 		// 4. Updating a row's own window without overlapping others succeeds
@@ -1229,6 +1239,34 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			overbook: true,
 		})
 
+		// 5b. Normal (overbook = 0) INSERT and UPDATE overlapping an overbook = 1 row succeeds
+		await db.insert(schema.rsvTableOccupancies).values({
+			id: 'occ_overbook_solo',
+			locationId: 'loc_1',
+			tableId: 'tbl_1',
+			kind: 'reservation',
+			reservationId: 'rsv_4',
+			startAt: 4000,
+			endAt: 5000,
+			active: true,
+			overbook: true,
+		})
+		await db.insert(schema.rsvTableOccupancies).values({
+			id: 'occ_normal_over_overbook',
+			locationId: 'loc_1',
+			tableId: 'tbl_1',
+			kind: 'reservation',
+			reservationId: 'rsv_5',
+			startAt: 4200,
+			endAt: 4800,
+			active: true,
+			overbook: false,
+		})
+		await db
+			.update(schema.rsvTableOccupancies)
+			.set({ startAt: 4100, endAt: 4900 })
+			.where(eq(schema.rsvTableOccupancies.id, 'occ_normal_over_overbook'))
+
 		// 6. Overlapping INSERT with active = 0 succeeds
 		await db.insert(schema.rsvTableOccupancies).values({
 			id: 'occ_inactive',
@@ -1242,13 +1280,13 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			overbook: false,
 		})
 
-		// Reactivating that inactive row while [1000, 2000) is active fails with 'table_overlap'
+		// Reactivating that inactive row while [1000, 2000) is active fails with 'rsv_table_occupancies overlap'
 		await expectRejectsWith(
 			db
 				.update(schema.rsvTableOccupancies)
 				.set({ active: true })
 				.where(eq(schema.rsvTableOccupancies.id, 'occ_inactive')),
-			'table_overlap',
+			'rsv_table_occupancies overlap',
 		)
 
 		// 7. Overlapping window on a different table (tbl_2) succeeds
@@ -1295,6 +1333,15 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			db
 				.update(schema.rsvHolds)
 				.set({ status: 'converted', reservationId: 'rsv_2' })
+				.where(eq(schema.rsvHolds.id, 'hld_1')),
+			'hold_already_converted',
+		)
+
+		// Updating a converted hold to any other status (e.g. 'expired' or 'released') also fails with 'hold_already_converted'
+		await expectRejectsWith(
+			db
+				.update(schema.rsvHolds)
+				.set({ status: 'expired' })
 				.where(eq(schema.rsvHolds.id, 'hld_1')),
 			'hold_already_converted',
 		)

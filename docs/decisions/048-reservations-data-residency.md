@@ -42,26 +42,29 @@ run in the US control plane and must never store, proxy, or log KSA guest PII.
 ### 1. Plane split: guest PII and operational state in regional `tenant-db`, control metadata in US `@repo/database`
 
 All 24 `rsv_*` tables live exclusively in the regional per-organization SQLite
-database (`packages/tenant-db`):
+database (`packages/tenant-db`, migration `0016_reservations_foundation.sql`):
 
 - Configuration & floor plan: `rsv_location_settings`, `rsv_areas`,
   `rsv_tables`, `rsv_table_combos`, `rsv_table_combo_members`,
   `rsv_floor_elements`, `rsv_services`, `rsv_turn_times`, `rsv_pacing_rules`,
   `rsv_slot_overrides`, `rsv_date_overrides`, `rsv_policies`, `rsv_experiences`,
   `rsv_experience_occurrences`
-- Guest CRM & bookings: `rsv_guests`, `rsv_guest_tags`, `rsv_guest_tag_links`,
-  `rsv_reservations`, `rsv_table_occupancies`, `rsv_reservation_holds`,
-  `rsv_table_blocks`, `rsv_waitlist_entries`, `rsv_reservation_events`,
-  `rsv_day_versions`
+- Guest CRM, bookings, payments & messaging: `rsv_guests`, `rsv_guest_tags`,
+  `rsv_guest_tag_links`, `rsv_reservations`, `rsv_table_occupancies`,
+  `rsv_reservation_holds`, `rsv_table_blocks`, `rsv_waitlist_entries`,
+  `rsv_reservation_events`, `rsv_payment_records`, `rsv_message_templates`,
+  `rsv_message_log`, `rsv_day_versions`, `rsv_idempotency_keys`
 
-The US control plane (`@repo/database`) stores **only**:
+The US control plane (`@repo/database`, migration
+`0025_reservations_foundation.sql`) stores **only**:
 
 - Organization feature flags (`reservations.enabled`, `reservations.online`,
   `reservations.waitlist`, `reservations.payments`, `reservations.experiences`,
   `reservations.voice`) and `reservations.platform_fee_bp`
-- Operator RBAC permissions (`read/update:reservations:any`,
-  `read/update:guestbook:any`, `read/update:reservations_settings:any`,
-  `read:reservations_reports:any`, `refund:reservations_payments:any`) and
+- Operator RBAC permissions (`read:reservation:any`, `update:reservation:any`,
+  `read:reservation_guest:any`, `update:reservation_guest:any`,
+  `read:reservation_settings:any`, `update:reservation_settings:any`,
+  `read:reservation_report:any`, `update:reservation_payment:any`) and
   `UserOrganization.locationScope`
 - Organization Locations (`OrganizationLocation`: id, name, slug, timezone,
   formatted address, coordinates, phone)
@@ -70,33 +73,35 @@ The US control plane (`@repo/database`) stores **only**:
 - Published website reservation block configuration (which contains only
   structural layout options, never guest data)
 
-### 2. Browser-direct operator access with scoped `rsv+jwt` tokens
+### 2. Operator token (`rsv+jwt`) and browser-direct operator access
 
 App loaders and actions in `apps/app` never proxy reservation or guest payloads
 through the US server. Instead:
 
 1. Every `/<orgSlug>/reservations/*` loader and action calls
-   `requireReservationsAccess(request, orgSlug, { section })` first (`404` when
-   the master or section feature flag is off; `403` when the user lacks the
-   required permission or has an empty intersected `locationScope`).
+   `requireReservationsAccess(request, orgSlug, { feature, anyOf })` first
+   (`404` when the master or section feature flag is off; `403` when the user
+   lacks the required permission or has an empty intersected `locationScope`).
 2. The browser fetches a short-lived HS256 operator JWT from
    `GET /<orgSlug>/reservations/token?scope=<book|guests|setup|reports|payments>`
    signed with `TENANT_OPERATOR_TOKEN` (`typ: 'rsv+jwt'`,
-   `aud: 'tenant-api-reservations'`).
-3. Claims include `sub` (userId), `org` (orgId), `reg` (`us` | `ksa`), `scp`,
-   `grants`, `locationIds` (`null` for unrestricted or a non-empty array of
-   allowed `OrganizationLocation.id` values), and `imp` (`true` during support
-   impersonation).
-4. Token TTL is **15 minutes** for standard tokens and **5 minutes** when the
-   token carries sensitive grants (`read/update:guestbook:any`,
-   `refund:reservations_payments:any`) or `imp: true`.
-5. Under support impersonation (`imp: true`), all write grants (`update:*`,
-   `refund:*`) and guestbook/refund grants are stripped at mint time AND
-   re-stripped by `rsvGuard` in `apps/tenant-api`.
+   `aud: 'tenant-api-reservations-operator'`).
+3. Claims include `sub` (userId), `role: 'operator'`, `orgId`, `region`
+   (`'us' | 'ksa'`), `scope`, `grants`, `locationIds` (`null` for unrestricted
+   or a non-empty array of allowed `OrganizationLocation.id` values), `features`
+   (`{ enabled, online, waitlist, payments, experiences, voice }`), and
+   `impersonated` (`boolean`).
+4. Token TTL is **15 minutes** (`900` seconds) for standard tokens and **5
+   minutes** (`300` seconds) when the token carries sensitive grants
+   (`update:reservation_payment:any`, `update:reservation_settings:any`,
+   `update:reservation_guest:any`) or `impersonated: true`.
+5. Under support impersonation (`impersonated: true`), all write (`update:*`)
+   and sensitive grants are stripped at mint time AND re-stripped by `rsvGuard`
+   in `apps/tenant-api`.
 6. The browser calls the regional `tenant-api` (`TENANT_API_URL` or
    `TENANT_API_URL_KSA`) directly with `Authorization: Bearer <token>`.
 
-### 3. Public guest requests resolve organization from `Origin` + slug/host, never client `orgId`
+### 3. Customer and public routes resolve organization from `Origin` + slug/host, never client `orgId`
 
 Public guest endpoints (`/reservations/*` on `apps/tenant-api`) are called
 directly from the guest's browser on `apps/sites` or from the native iOS/Android
@@ -110,27 +115,35 @@ apps:
   slug/custom domain, **ignoring** any `orgId` query parameter or JSON body
   field.
 - `/operator/reservations/*` resolves the target organization strictly from the
-  verified `rsv+jwt` `org` claim, returning `401` before touching any Durable
+  verified `rsv+jwt` `orgId` claim, returning `401` before touching any Durable
   Object when missing or invalid.
+- Both public and operator routes verify that the organization is active and has
+  a provisioned regional database (`Boolean(organization.hasProvisionedDb)`),
+  returning uniform `404 { error: 'not_found' }` otherwise.
 
-### 4. Non-PII organization context pull (`GET /resources/reservations/context`)
+### 4. Location model and non-PII organization context pull (`GET /resources/reservations/context`)
 
-When `apps/tenant-api` needs control-plane metadata for an organization (active
-locations and time zones, feature flags, website branding theme, payment
-connection metadata, and `platformFeeBp`), it calls
-`GET /resources/reservations/context?orgId=<id>` on `apps/app` authenticated
-with `X-Internal-Token: <INTERNAL_COMMAND_TOKEN>`.
+Physical restaurant locations (`OrganizationLocation`) are managed in the US
+control plane and mirrored into `rsv_location_settings` per tenant database:
 
+- When `apps/tenant-api` needs control-plane metadata for an organization
+  (active locations and time zones, feature flags, website branding theme,
+  payment connection metadata, and `platformFeeBp`), it calls
+  `GET /resources/reservations/context?orgId=<id>` on `apps/app` authenticated
+  with `Authorization: Bearer <INTERNAL_COMMAND_TOKEN>`.
 - The response is validated against `reservationsContextSchema` and contains
   **zero guest PII**.
 - `apps/tenant-api/src/lib/reservations-context.ts` caches the response per
-  `orgId` for **60 seconds** fresh and serves up to **5 minutes** stale if a
-  refresh fails.
+  `orgId` for **5 minutes** (`300_000` ms) fresh, serves up to **24 hours**
+  (`86_400_000` ms) stale if a refresh fails, enforces a **30-second** (`30_000`
+  ms) failure cooldown before retrying upstream, and uses a **3-second** timeout
+  with `redirect: 'error'`.
 - When an operator updates locations, flags, branding, or payment accounts in
-  `apps/app`, App posts `POST /internal/reservations/context-changed` to evict
-  the regional cache immediately and sync location time zones.
+  `apps/app`, App posts `POST /internal/reservations/context-changed` with
+  `Authorization: Bearer <INTERNAL_COMMAND_TOKEN>` to evict the regional cache
+  immediately and sync location time zones.
 
-### 5. Serialized per-organization write gate (`withReservationWrite`) and SQLite invariants
+### 5. Concurrency, single-writer discipline (`withReservationWrite`), and SQLite invariants
 
 Reservation holds, bookings, seating assignments, and waitlist promotions must
 never double-book a table even under concurrent requests:
@@ -143,29 +156,125 @@ never double-book a table even under concurrent requests:
    `pending_payment` / `pending_request` reservations, and expired `notified`
    waitlist entries before reading `loadDayStateInTx`, and bumps
    `rsv_day_versions` (`bumpDayVersionsInTx`) on commit.
-3. Database triggers in `0010_reservations_foundation.sql` enforce hard
+3. Database triggers in `0016_reservations_foundation.sql` enforce hard
    invariants as a second line of defense:
-   - `trg_rsv_table_occupancies_no_overlap_insert` / `_update` abort with
-     `RAISE(ABORT, 'table_overlap')` on any overlapping active occupancy for the
-     same table (`start_at < existing.end_at AND end_at > existing.start_at`).
-   - `trg_rsv_reservation_holds_no_overlap_insert` / `_update` abort with
-     `RAISE(ABORT, 'hold_overlap')` when an active hold conflicts with another
-     active hold or active table occupancy.
-   - `trg_rsv_reservation_events_no_update` / `_delete` make
+   - `rsv_occupancy_no_overlap_insert` and `rsv_occupancy_no_overlap_update`
+     abort with `RAISE(ABORT, 'rsv_table_occupancies overlap')` on any
+     overlapping active non-overbooked occupancy
+     (`o.active = 1 AND o.overbook = 0`) for the same table
+     (`NEW.start_at < o.end_at AND NEW.end_at > o.start_at`), which
+     `mapSqliteConstraintError` translates into `409 Conflict`.
+   - `rsv_holds_no_overlap_insert` and `rsv_holds_no_overlap_update` abort with
+     `RAISE(ABORT, 'rsv_reservation_holds overlap')` when a held table conflicts
+     with another active hold or active table occupancy.
+   - `rsv_holds_single_conversion` aborts with
+     `RAISE(ABORT, 'hold_already_converted')` on any update when
+     `OLD.status = 'converted'`.
+   - `rsv_events_no_update` and `rsv_events_no_delete` make
      `rsv_reservation_events` strictly append-only
-     (`RAISE(ABORT, 'append_only')`).
+     (`RAISE(ABORT, 'rsv_reservation_events is append-only')`), allowing only
+     erasure scrubbing (`NEW.payload IS NULL`).
 
-### 6. Customer erasure and region switching
+### 6. Feature flags
+
+Every Reservations screen, operator token mint, and public endpoint is gated by
+organization-level feature flags read with `getFeatureFlag`
+(`@repo/common/feature-flags`), defaulting to `false`:
+
+- `reservations.enabled` — master switch for the sidebar group, all
+  `/<orgSlug>/reservations/*` routes, and operator token minting.
+- `reservations.online` — public `/reserve` widget on Sites, native customer
+  booking flows, and public hold/booking endpoints.
+- `reservations.waitlist` — operator Waitlist section and public online waitlist
+  endpoints.
+- `reservations.payments` — deposit, card-hold, and prepay policies plus payment
+  capture/refund/release endpoints.
+- `reservations.experiences` — operator Experiences section and public ticketed
+  experiences.
+- `reservations.voice` — AI phone agent reservation availability, hold + SMS
+  link, and direct voice booking.
+- `reservations.platform_fee_bp` — integer basis points (`0..2000`, default `0`)
+  applied to reservation deposits and prepayments.
+
+### 7. Permissions and location scoping (`UserOrganization.locationScope`)
+
+Access to operator surfaces and `rsv+jwt` scopes is governed by 8 organization
+permissions seeded in control-plane migration
+`0025_reservations_foundation.sql`:
+
+- `read:reservation:any`, `update:reservation:any`
+- `read:reservation_guest:any`, `update:reservation_guest:any`
+- `read:reservation_settings:any`, `update:reservation_settings:any`
+- `read:reservation_report:any`
+- `update:reservation_payment:any`
+
+Write permissions imply their matching read permission (`update:reservation:any`
+→ `read:reservation:any`; `update:reservation_guest:any` →
+`read:reservation_guest:any` and `read:reservation:any`;
+`update:reservation_settings:any` → `read:reservation_settings:any`;
+`update:reservation_payment:any` → `read:reservation:any`). Four role presets
+are provided (`Host`, `Shift manager` extension, `Reservations manager`,
+`Guest relations`). `UserOrganization.locationScope` (`null` for all locations,
+or a JSON array of `OrganizationLocation.id` strings) restricts operator access
+to an explicit subset of locations and is embedded in the `rsv+jwt`
+`locationIds` claim. In the App UI, the location picker is rendered only when
+`locations.length > 1`.
+
+### 8. Payments and regional webhook termination
+
+Deposit, no-show card hold, and prepaid experience charges use the
+organization's connected Stripe (US) or Checkout.com (KSA) account:
+
+- Payment intents, setup intents, captures, releases, and refunds are initiated
+  from the regional `apps/tenant-api` using non-PII credentials from
+  `ReservationsContext`, and payment state is stored in `rsv_payment_records` in
+  the regional `tenant-db`.
+- Provider webhooks terminate directly at the regional `apps/tenant-api` node so
+  guest metadata and payment records never transit the US control plane.
+
+### 9. Customer messaging and regional tick
+
+- Confirmation, reminder, cancellation, waitlist summon, and payment-link
+  messages are rendered and dispatched directly from the regional
+  `apps/tenant-api` node using templates in `rsv_message_templates` and
+  deduplicated in `rsv_message_log` via `dedup_key`.
+- The regional tick (`POST /api/reservations/tick` authenticated with
+  `Authorization: Bearer <INTERNAL_COMMAND_TOKEN>`, plus in-process Node timers
+  and Durable Object alarms) expires holds, pending payment/request bookings,
+  and notified waitlist entries, dispatches due reminders, and applies
+  configured auto-no-show rules inside the regional data plane.
+
+### 10. AI voice agent boundary
+
+- `apps/voice-agent` interacts with regional reservation state solely through
+  `/api/voice/actions/reservation-*` on `apps/tenant-api`, authenticated with
+  `Authorization: Bearer <VOICE_AGENT_TOKEN>` and gated by `reservations.voice`.
+- Caller phone numbers and guest names are written directly to the regional
+  `tenant-db` and are never stored in US control-plane tables.
+
+### 11. Region switch and customer erasure
 
 - When a customer exercises right-to-erasure
-  (`POST /internal/reservations/erase-customer`), `rsv_guests` PII is scrubbed,
-  active reservations/holds/waitlist rows are cancelled and scrubbed, and
-  `rsv_reservation_events` rows have their `payload` scrubbed to `NULL` while
-  preserving the append-only audit trail
-  (`trigger trg_rsv_reservation_events_no_update` allows only `payload -> NULL`
-  updates).
+  (`POST /internal/reservations/erase-customer` with
+  `Authorization: Bearer <INTERNAL_COMMAND_TOKEN>`), `rsv_guests` PII is
+  scrubbed, active reservations/holds/waitlist rows are cancelled and scrubbed,
+  and `rsv_reservation_events` rows have their `payload` set to `NULL` while
+  preserving the append-only audit trail.
 - Switching `Organization.dataRegion` follows ADR 045: the old regional tenant
   database is destroyed and a fresh database is provisioned in the new region.
+
+### 12. Kill switches
+
+- `RESERVATIONS_PUBLIC_ENABLED` (`apps/tenant-api`): when `false` (`0`, `off`,
+  `no`, `disabled`), every public `/reservations/*` endpoint immediately returns
+  `503`.
+- `RESERVATIONS_SMS_ENABLED` (`apps/tenant-api`): when `false`, outbound
+  reservation and waitlist SMS messages are dropped without queuing a backlog.
+- `RESERVATIONS_EMAIL_ENABLED` (`apps/tenant-api` and `apps/app`): when `false`,
+  outbound reservation emails are dropped without failing booking mutations.
+- `RESERVATIONS_TICK_INTERVAL_SECONDS` (`apps/tenant-api` Node runtime):
+  controls the interval between in-process regional reservation ticks (`0`
+  disables the in-process timer while preserving the cron/DO alarm path).
 
 ## Consequences
 

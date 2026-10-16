@@ -571,10 +571,15 @@ export async function bumpDayVersionsInTx(
 function mapSqliteConstraintError(error: unknown): never {
 	if (error instanceof HttpError) throw error
 	const message = error instanceof Error ? error.message : String(error)
+	const causeText =
+		error instanceof Error
+			? String((error as { cause?: unknown }).cause ?? '')
+			: ''
+	const combined = `${message} ${causeText}`
 	if (
-		message.includes('overlap_conflict') ||
-		message.includes('hold_already_converted') ||
-		message.includes('uniq_rsv_reservations_hold_id')
+		combined.includes('rsv_table_occupancies overlap') ||
+		combined.includes('hold_already_converted') ||
+		combined.includes('uniq_rsv_reservations_hold_id')
 	) {
 		throw conflict('conflict', message)
 	}

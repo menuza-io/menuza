@@ -31,7 +31,8 @@ async function ensureActiveOrgInNodeRegion(
 	ctx: ReservationsAuthContext,
 ): Promise<Response | null> {
 	const org = await findActiveOrganizationById(ctx.orgId)
-	if (!org) {
+	const provisioned = Boolean(org?.hasProvisionedDb)
+	if (!org || !provisioned) {
 		return json({ error: 'not_found', message: 'Organization not found' }, 404)
 	}
 	if (!orgMatchesNodeRegion(org.dataRegion)) {
@@ -389,6 +390,7 @@ reservationsOperatorRoutes.get(
 )
 
 const createGuestBodySchema = z.object({
+	locationId: z.string().trim().min(1).max(128).optional(),
 	firstName: z.string().trim().min(1).max(120),
 	lastName: z.string().trim().max(120).optional().default(''),
 	phoneE164: z.string().trim().max(32).optional().nullable(),
@@ -409,6 +411,15 @@ reservationsOperatorRoutes.post(
 
 		const parsed = await readJsonBody(c, createGuestBodySchema)
 		if ('error' in parsed) return parsed.error
+
+		if (parsed.data.locationId) {
+			const locCheck = await resolveLocationParam(
+				c,
+				ctx,
+				parsed.data.locationId,
+			)
+			if (!locCheck.ok) return locCheck.response
+		}
 
 		const db = await getTenantDb(ctx.orgId)
 		const [guest] = await db

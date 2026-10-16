@@ -48,7 +48,8 @@ async function verifyOrgAndRegion(orgId: string): Promise<Response | null> {
 		return json({ error: 'validation_error', message: 'Invalid orgId' }, 400)
 	}
 	const org = await findActiveOrganizationById(orgId)
-	if (!org) {
+	const provisioned = Boolean(org?.hasProvisionedDb)
+	if (!org || !provisioned) {
 		return json({ error: 'not_found', message: 'Organization not found' }, 404)
 	}
 	if (!orgMatchesNodeRegion(org.dataRegion)) {

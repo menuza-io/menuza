@@ -803,11 +803,12 @@ CREATE TRIGGER rsv_occupancy_no_overlap_insert
 BEFORE INSERT ON rsv_table_occupancies
 WHEN NEW.active = 1 AND NEW.overbook = 0
 BEGIN
-  SELECT RAISE(ABORT, 'table_overlap')
+  SELECT RAISE(ABORT, 'rsv_table_occupancies overlap')
   WHERE EXISTS (
     SELECT 1 FROM rsv_table_occupancies o
     WHERE o.table_id = NEW.table_id
       AND o.active = 1
+      AND o.overbook = 0
       AND o.start_at < NEW.end_at
       AND o.end_at > NEW.start_at
   );
@@ -816,19 +817,20 @@ CREATE TRIGGER rsv_occupancy_no_overlap_update
 BEFORE UPDATE ON rsv_table_occupancies
 WHEN NEW.active = 1 AND NEW.overbook = 0
 BEGIN
-  SELECT RAISE(ABORT, 'table_overlap')
+  SELECT RAISE(ABORT, 'rsv_table_occupancies overlap')
   WHERE EXISTS (
     SELECT 1 FROM rsv_table_occupancies o
     WHERE o.table_id = NEW.table_id
       AND o.id <> NEW.id
       AND o.active = 1
+      AND o.overbook = 0
       AND o.start_at < NEW.end_at
       AND o.end_at > NEW.start_at
   );
 END;--> statement-breakpoint
 CREATE TRIGGER rsv_holds_single_conversion
 BEFORE UPDATE ON rsv_holds
-WHEN OLD.status = 'converted' AND NEW.status = 'converted'
+WHEN OLD.status = 'converted'
 BEGIN
   SELECT RAISE(ABORT, 'hold_already_converted');
 END;--> statement-breakpoint

@@ -89,6 +89,12 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 			).toBe(true)
 		})
 	}
+	it('_layout.tsx renders the location picker only when locations.length > 1 (VAL-FND-022)', () => {
+		const layoutSource = read(path.join(RESERVATIONS_ROUTES, '_layout.tsx'))
+		expect(layoutSource).toMatch(
+			/locations\.length\s*>\s*1\s*\?[\s\S]*?reservations-location-select/,
+		)
+	})
 })
 
 describe('reservations guards: resource routes (VAL-FND-020)', () => {

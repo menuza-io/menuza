@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	getReservationsContext,
 	invalidateReservationsContext,
+	RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS,
 	RESERVATIONS_CONTEXT_FRESH_TTL_MS,
 	RESERVATIONS_CONTEXT_STALE_TTL_MS,
 	resetReservationsContextCache,
@@ -104,7 +105,11 @@ describe('reservations-context cache (VAL-FND-018)', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('fetches context from App and caches within the 60s fresh TTL', async () => {
+	it('fetches context from App and caches within the 5-minute (300_000ms) fresh TTL with redirect: error', async () => {
+		expect(RESERVATIONS_CONTEXT_FRESH_TTL_MS).toBe(300_000)
+		expect(RESERVATIONS_CONTEXT_STALE_TTL_MS).toBe(86_400_000)
+		expect(RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS).toBe(30_000)
+
 		const ctx = makeContext()
 		fetchSpy.mockResolvedValue(
 			new Response(JSON.stringify(ctx), {
@@ -117,8 +122,18 @@ describe('reservations-context cache (VAL-FND-018)', () => {
 		const first = await getReservationsContext(ORG_ID, { now: t0 })
 		expect(first).toEqual(ctx)
 		expect(fetchSpy).toHaveBeenCalledTimes(1)
+		expect(fetchSpy).toHaveBeenCalledWith(
+			`http://localhost:3001/resources/reservations/context?orgId=${ORG_ID}`,
+			expect.objectContaining({
+				redirect: 'error',
+				headers: {
+					Accept: 'application/json',
+					Authorization: `Bearer ${INTERNAL_TOKEN}`,
+				},
+			}),
+		)
 
-		// Within 60s fresh window -> serves from memory without calling fetch
+		// Within 5-minute fresh window -> serves from memory without calling fetch
 		const second = await getReservationsContext(ORG_ID, {
 			now: t0 + RESERVATIONS_CONTEXT_FRESH_TTL_MS - 1_000,
 		})
@@ -126,7 +141,7 @@ describe('reservations-context cache (VAL-FND-018)', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(1)
 	})
 
-	it('serves up to 5-minute stale entry on fetch failure and drops after 5 minutes', async () => {
+	it('serves up to 24-hour stale entry on fetch failure, enforces 30s failure cooldown, and drops after 24 hours', async () => {
 		const ctx = makeContext()
 		fetchSpy.mockResolvedValueOnce(
 			new Response(JSON.stringify(ctx), {
@@ -139,15 +154,31 @@ describe('reservations-context cache (VAL-FND-018)', () => {
 		await getReservationsContext(ORG_ID, { now: t0 })
 		expect(fetchSpy).toHaveBeenCalledTimes(1)
 
-		// After 60s, App returns 503 -> stale fallback within 5 minutes succeeds
+		// After 5m fresh TTL, App returns 503 -> stale fallback within 24h succeeds
+		const tFail = t0 + RESERVATIONS_CONTEXT_FRESH_TTL_MS + 10_000
 		fetchSpy.mockResolvedValueOnce(new Response('Unavailable', { status: 503 }))
 		const stale = await getReservationsContext(ORG_ID, {
-			now: t0 + RESERVATIONS_CONTEXT_FRESH_TTL_MS + 10_000,
+			now: tFail,
 		})
 		expect(stale).toEqual(ctx)
 		expect(fetchSpy).toHaveBeenCalledTimes(2)
 
-		// Beyond 5-minute stale TTL, failed fetch returns null
+		// Within 30s failure cooldown -> serves stale cached entry without calling fetch again
+		const cooldownStale = await getReservationsContext(ORG_ID, {
+			now: tFail + RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS - 1_000,
+		})
+		expect(cooldownStale).toEqual(ctx)
+		expect(fetchSpy).toHaveBeenCalledTimes(2)
+
+		// After 30s failure cooldown -> retries fetch; still within 24h stale window so returns stale
+		fetchSpy.mockResolvedValueOnce(new Response('Unavailable', { status: 503 }))
+		const retriedStale = await getReservationsContext(ORG_ID, {
+			now: tFail + RESERVATIONS_CONTEXT_FAILURE_COOLDOWN_MS + 1_000,
+		})
+		expect(retriedStale).toEqual(ctx)
+		expect(fetchSpy).toHaveBeenCalledTimes(3)
+
+		// Beyond 24-hour stale TTL, failed fetch returns null
 		fetchSpy.mockRejectedValueOnce(new Error('network error'))
 		const expired = await getReservationsContext(ORG_ID, {
 			now: t0 + RESERVATIONS_CONTEXT_STALE_TTL_MS + 1_000,
