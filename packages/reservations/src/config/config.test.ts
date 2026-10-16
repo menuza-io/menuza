@@ -8,6 +8,7 @@ import {
 	SERVICE_TABLE_MODES,
 	SPECIAL_DAY_TYPES,
 	TABLE_SHAPES,
+	blockSchema,
 	canonicalCombinationSignature,
 	combinationSchema,
 	decorElementSchema,
@@ -15,8 +16,10 @@ import {
 	floorPlanSaveSchema,
 	locationSettingsSchema,
 	pacingRuleSchema,
+	policyRuleSchema,
 	serviceSchema,
 	specialDaySchema,
+	tableBlockSchema,
 	tableSchema,
 	turnTimeBucketSchema,
 	validateConfig,
@@ -479,6 +482,7 @@ describe('reservations configuration schemas and validateConfig', () => {
 		})
 
 		const codes = report.issues.map((i) => i.code)
+		expect(Array.isArray(report)).toBe(true)
 		expect(codes).toContain('duplicate_table_label')
 		expect(codes).toContain('unseatable_party_size') // party size 3 has no single table or valid active combo
 		expect(codes).toContain('combination_archived_table')
@@ -490,5 +494,101 @@ describe('reservations configuration schemas and validateConfig', () => {
 		expect(codes).toContain('service_invalid_window')
 		expect(codes).toContain('service_last_seating_after_end')
 		expect(report.valid).toBe(false)
+	})
+
+	it('validates blockSchema, policyRuleSchema, contiguous 1..party_max turn-time buckets, service duration <= 1440m, and returns ConfigIssue[] directly', () => {
+		expect(
+			tableBlockSchema.safeParse({
+				id: 'blk_1',
+				businessDate: '2026-06-12',
+				startMin: 1020,
+				endMin: 1140,
+				tableIds: ['t1'],
+				reason: 'VIP block',
+			}).success,
+		).toBe(true)
+		expect(
+			blockSchema.safeParse({
+				id: 'blk_bad',
+				businessDate: '2026-06-12',
+				startMin: 1140,
+				endMin: 1020,
+				tableIds: ['t1'],
+			}).success,
+		).toBe(false)
+		expect(
+			policyRuleSchema.safeParse({
+				id: 'pol_1',
+				mode: 'deposit',
+				amountPerCoverMinor: 2500,
+				currency: 'USD',
+				minParty: 4,
+				maxParty: 12,
+			}).success,
+		).toBe(true)
+
+		const issues = validateConfig({
+			settings: {
+				minParty: 1,
+				maxOnlineParty: 6,
+				maxParty: 10,
+			},
+			areas: [{ id: 'area_1', name: 'Main', active: true }],
+			tables: [
+				{
+					id: 't1',
+					areaId: 'area_1',
+					label: 'T1',
+					minSeats: 1,
+					maxSeats: 10,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+			],
+			combinations: [],
+			services: [
+				{
+					id: 'srv_long',
+					name: 'Too Long',
+					startMin: 600,
+					endMin: 2100, // 1500m > 1440m
+					lastSeatingMin: 2040,
+					onlineBookable: true,
+					active: true,
+				},
+			],
+			turnTimeBuckets: [
+				// Starts at 2 instead of 1, and stops at 4 instead of maxParty (10)
+				{
+					id: 'tt_partial',
+					serviceId: null,
+					minParty: 2,
+					maxParty: 4,
+					durationMin: 60,
+				},
+			],
+			pacingRules: [],
+			policies: [
+				{
+					id: 'pol_bad_srv',
+					mode: 'deposit',
+					serviceId: 'srv_missing',
+					minParty: 6,
+					maxParty: 4,
+					active: true,
+				},
+			],
+		})
+
+		expect(Array.isArray(issues)).toBe(true)
+		expect(issues.some((i) => i.code === 'turn_time_bucket_gap')).toBe(true)
+		expect(issues.some((i) => i.code === 'service_duration_exceeds_24h')).toBe(
+			true,
+		)
+		expect(issues.some((i) => i.code === 'policy_unknown_service')).toBe(true)
+		expect(issues.some((i) => i.code === 'policy_party_bounds_inverted')).toBe(
+			true,
+		)
 	})
 })

@@ -344,6 +344,104 @@ describe('availability engine, pacing, alternatives, calendar, and experiences',
 			occupancies,
 		})
 		expect(avail2.slots).toHaveLength(0)
+
+		// Staff channels (phone, host, walk_in, waitlist) surface pacing breaches as warnings rather than hiding slots (VAL-FND-006)
+		for (const staffChannel of [
+			'phone',
+			'host',
+			'walk_in',
+			'waitlist',
+		] as const) {
+			const staffAvail = searchAvailability({
+				config,
+				businessDate: '2026-06-12',
+				partySize: 2,
+				nowMs,
+				channel: staffChannel,
+				occupancies,
+			})
+			const slot1800Item = staffAvail.slots.find((s) => s.slotMin === 18 * 60)
+			expect(slot1800Item).toBeDefined()
+			expect(slot1800Item?.warnings).toContain('slot_covers_exceeded')
+		}
+	})
+
+	it('allows walk_in_only tables only for walk_in and waitlist channels, and skips spring-forward gap slots (VAL-FND-003, VAL-FND-006)', () => {
+		const config = makeBaseConfig()
+		config.tables = [
+			{
+				id: 't_walkin',
+				name: 'Bar Walk-In',
+				areaId: 'area_main',
+				minSeats: 1,
+				maxSeats: 4,
+				onlineBookable: true,
+				walkInOnly: true,
+				combinable: false,
+				priority: 10,
+				active: true,
+			},
+		]
+		config.combinations = []
+
+		for (const ch of [
+			'online',
+			'native',
+			'voice_agent',
+			'phone',
+			'host',
+		] as const) {
+			const res = searchAvailability({
+				config,
+				businessDate: '2026-06-12',
+				partySize: 2,
+				nowMs,
+				channel: ch,
+			})
+			expect(res.slots).toHaveLength(0)
+		}
+
+		for (const ch of ['walk_in', 'waitlist'] as const) {
+			const res = searchAvailability({
+				config,
+				businessDate: '2026-06-12',
+				partySize: 2,
+				nowMs,
+				channel: ch,
+			})
+			expect(res.slots.length).toBeGreaterThan(0)
+		}
+
+		// Spring-forward gap on 2027-03-14 in America/New_York: 02:00..02:59 slots must be skipped
+		const dstConfig = makeBaseConfig()
+		dstConfig.services = [
+			{
+				id: 'srv_overnight',
+				name: 'Late Night',
+				slug: 'late-night',
+				daysMask: 0b1111111,
+				startMin: 1 * 60,
+				firstSeatingMin: 1 * 60 + 30,
+				lastSeatingMin: 3 * 60 + 30,
+				endMin: 5 * 60,
+				slotIntervalMin: 30,
+				onlineBookable: true,
+			},
+		]
+		const dstAvail = searchAvailability({
+			config: dstConfig,
+			businessDate: '2027-03-14',
+			partySize: 2,
+			nowMs: localToInstant('2027-03-13', 12 * 60, 'America/New_York')
+				.instantMs,
+			channel: 'online',
+		})
+		const returnedMins = dstAvail.slots.map((s) => s.slotMin)
+		expect(returnedMins).toContain(1 * 60 + 30)
+		expect(returnedMins).not.toContain(2 * 60)
+		expect(returnedMins).not.toContain(2 * 60 + 30)
+		expect(returnedMins).toContain(3 * 60)
+		expect(returnedMins).toContain(3 * 60 + 30)
 	})
 
 	it('suggests up to 6 nearest alternatives at ±15..±120 minutes when preferred slot is full', () => {

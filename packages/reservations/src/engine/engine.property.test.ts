@@ -4,22 +4,24 @@ import { assignTables } from '../assign.ts'
 import { searchAvailability } from '../engine.ts'
 import {
 	arbitraryDayScenario,
+	arbitraryOperationSequence,
 	bruteForceAssignExists,
+	executeOperationSequence,
 	verifyDayInvariants,
 } from '../testing/index.ts'
 
 describe('reservations engine fast-check property tests against brute-force oracle', () => {
-	it('preserves invariants I1-I7 and matches the brute-force oracle across 300 random day scenarios', () => {
-		const rawSeed = (
-			globalThis as {
-				process?: { env?: Record<string, string | undefined> }
-			}
-		).process?.env?.FC_SEED
-		const envSeed = rawSeed ? Number.parseInt(rawSeed, 10) : undefined
+	const rawSeed = (
+		globalThis as {
+			process?: { env?: Record<string, string | undefined> }
+		}
+	).process?.env?.FC_SEED
+	const envSeed = rawSeed ? Number.parseInt(rawSeed, 10) : undefined
 
+	it('preserves invariants I1-I8 and matches the brute-force oracle across 300 random day scenarios', () => {
 		fc.assert(
 			fc.property(arbitraryDayScenario(), (scenario) => {
-				// 1. Verify existing bookings in scenario satisfy invariants I1-I7
+				// 1. Verify existing bookings in scenario satisfy invariants I1-I8
 				const initialCheck = verifyDayInvariants({
 					config: scenario.config,
 					existingBookings: scenario.existingBookings,
@@ -50,10 +52,10 @@ describe('reservations engine fast-check property tests against brute-force orac
 				})
 
 				if (assigned.assigned) {
-					expect(assigned.expansions).toBeLessThanOrEqual(200)
+					expect(assigned.expansions).toBeLessThanOrEqual(2000)
 					expect(oracleHasSolution).toBe(true)
 
-					// Apply assignment and any swaps to existing bookings and verify all invariants I1-I7
+					// Apply assignment and any swaps to existing bookings and verify all invariants I1-I8
 					const swapMap = new Map(
 						assigned.swaps.map((s) => [s.bookingId, s] as const),
 					)
@@ -86,6 +88,8 @@ describe('reservations engine fast-check property tests against brute-force orac
 						existingHolds: scenario.existingHolds,
 						tableBlocks: scenario.tableBlocks,
 						nowMs: scenario.nowMs,
+						previousBookings: scenario.existingBookings,
+						reassignedMoves: assigned.swaps,
 					})
 					expect(postCheck.valid).toBe(true)
 				} else {
@@ -114,6 +118,27 @@ describe('reservations engine fast-check property tests against brute-force orac
 			}),
 			{
 				numRuns: 300,
+				...(envSeed !== undefined && Number.isFinite(envSeed)
+					? { seed: envSeed }
+					: {}),
+			},
+		)
+	})
+
+	it('executes random operation sequences (search, hold, book, modify, cancel, seat, finish, no_show, block, settings, clock) and verifies invariants I1-I8 after every step', () => {
+		fc.assert(
+			fc.property(arbitraryOperationSequence(), (seqScenario) => {
+				const trace = executeOperationSequence(seqScenario)
+				expect(trace.stepsExecuted).toBeGreaterThan(0)
+				for (const stepResult of trace.stepVerifications) {
+					expect(
+						stepResult.invariants.valid,
+						`Step ${stepResult.stepIndex} (${stepResult.opKind}): ${stepResult.invariants.violations.join('; ')}`,
+					).toBe(true)
+				}
+			}),
+			{
+				numRuns: 100,
 				...(envSeed !== undefined && Number.isFinite(envSeed)
 					? { seed: envSeed }
 					: {}),

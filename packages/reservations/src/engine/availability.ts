@@ -13,8 +13,8 @@ import {
 	resolveServiceWindow,
 } from '../time.ts'
 import {
-	MAX_DAY_EXPANSIONS,
-	MAX_REPAIR_EXPANSIONS,
+	MAX_BOOK_EXPANSIONS,
+	MAX_SEARCH_SLOT_EXPANSIONS,
 	assignTables,
 	buildOccupancyIndex,
 } from './assign.ts'
@@ -26,6 +26,7 @@ import {
 	type EngineCombinationInput,
 	type EngineServiceTableModeInput,
 	type EngineTableInput,
+	isGuestChannel,
 } from './day-state.ts'
 import { type EnginePacingRuleInput, evaluatePacing } from './pacing.ts'
 
@@ -127,6 +128,7 @@ export type AvailableSlot = {
 	tableIds: string[]
 	combinationId: string | null
 	repaired: boolean
+	warnings?: string[]
 	status?: 'available'
 }
 
@@ -156,6 +158,7 @@ export type SearchAvailabilityInput = {
 	existingHolds?: readonly ExistingOccupancyInput[]
 	tableBlocks?: readonly ExistingOccupancyInput[]
 	allowRepair?: boolean
+	maxExpansions?: number
 }
 
 export type AvailableSlotWithStatus = AvailableSlot & {
@@ -168,6 +171,7 @@ export type SearchAvailabilityResult = {
 	largePartyMode?: LargePartyMode
 	slots: AvailableSlot[]
 	alternatives: AvailableSlot[]
+	warnings?: string[]
 	expansionsUsed: number
 }
 
@@ -269,7 +273,7 @@ export function searchAvailability(
 ): SearchAvailabilityResult {
 	const { config, businessDate, partySize, nowMs } = input
 	const channel: BookingChannel = input.channel ?? 'online'
-	const isOnlineLike = channel === 'online' || channel === 'voice'
+	const isOnlineLike = isGuestChannel(channel)
 	const { settings } = config
 
 	if (!settings.enabled || (isOnlineLike && !settings.onlineEnabled)) {
@@ -433,6 +437,7 @@ export function searchAvailability(
 	}))
 
 	const slots: AvailableSlot[] = []
+	const dayWarningsSet = new Set<string>()
 	let expansionsUsed = 0
 
 	// Prebuild occupancy index and candidate pool cache once for the entire day
@@ -455,7 +460,7 @@ export function searchAvailability(
 		const turnMin = resolveTurnTimeMin(config, service.id, partySize)
 		const occupyMin = turnMin + settings.bufferMin
 
-		const windowStartMin = service.startMin
+		const windowStartMin = service.firstSeatingMin ?? service.startMin
 		const windowEndMin =
 			service.endMin <= service.startMin
 				? service.endMin + 1440
@@ -468,40 +473,49 @@ export function searchAvailability(
 
 		const window = resolveServiceWindow(
 			businessDate,
-			windowStartMin,
+			service.startMin,
 			windowEndMin,
 			config.timeZone,
 		)
 		const isLinearWindow =
-			window.endMs - window.startMs === (windowEndMin - windowStartMin) * 60_000
+			window.endMs - window.startMs ===
+			(windowEndMin - service.startMin) * 60_000
 
-		// Candidate slots step by intervalMin from startMin through min(lastSeatingMin, endMin - turnMin)
+		// Candidate slots step by intervalMin from firstSeatingMin through min(lastSeatingMin, endMin - turnMin)
 		const maxSlotMin = Math.min(windowLastSeatingMin, windowEndMin - turnMin)
+		const stepMin = service.slotIntervalMin ?? settings.intervalMin
 
 		for (
 			let slotMin = windowStartMin;
 			slotMin <= maxSlotMin;
-			slotMin += settings.intervalMin
+			slotMin += stepMin
 		) {
 			let startAt: number
 			if (isLinearWindow) {
-				startAt = window.startMs + (slotMin - windowStartMin) * 60_000
+				startAt = window.startMs + (slotMin - service.startMin) * 60_000
 			} else {
 				const dayOffset = Math.floor(slotMin / 1440)
 				const clockMin = ((slotMin % 1440) + 1440) % 1440
 				const calendarDate =
 					dayOffset === 0 ? businessDate : addDays(businessDate, dayOffset)
-				startAt = localToInstant(
+				const resolvedSlot = localToInstant(
 					calendarDate,
 					clockMin,
 					config.timeZone,
-				).instantMs
+					{ gap: 'skip', overlap: 'earlier' },
+				)
+				if (resolvedSlot === null) {
+					continue
+				}
+				startAt = resolvedSlot.instantMs
 			}
 			const endAt = startAt + occupyMin * 60_000
 
 			if (startAt < earliestAllowedMs) {
 				continue
 			}
+
+			const slotWarnings: string[] = []
 
 			// Evaluate location-wide pacing first
 			const globalPacing = evaluatePacing({
@@ -514,15 +528,18 @@ export function searchAvailability(
 				existing: pacingExisting,
 			})
 			if (!globalPacing.allowed) {
-				continue
+				if (isOnlineLike) {
+					continue
+				}
+				const warningCode = globalPacing.reason ?? 'pacing_exceeded'
+				slotWarnings.push(warningCode)
+				dayWarningsSet.add(warningCode)
 			}
 
-			const remainingRepairBudget = Math.max(
-				0,
-				MAX_DAY_EXPANSIONS - expansionsUsed,
-			)
+			const dayCap = input.maxExpansions ?? MAX_BOOK_EXPANSIONS
+			const remainingRepairBudget = Math.max(0, dayCap - expansionsUsed)
 			const slotRepairBudget = Math.min(
-				MAX_REPAIR_EXPANSIONS,
+				MAX_SEARCH_SLOT_EXPANSIONS,
 				remainingRepairBudget,
 			)
 			const allowSlotRepair =
@@ -555,7 +572,7 @@ export function searchAvailability(
 			})
 
 			expansionsUsed = Math.min(
-				MAX_DAY_EXPANSIONS,
+				dayCap,
 				expansionsUsed + assignRes.expansionsUsed,
 			)
 
@@ -575,7 +592,14 @@ export function searchAvailability(
 					existing: pacingExisting,
 				})
 				if (!areaPacing.allowed) {
-					continue
+					if (isOnlineLike) {
+						continue
+					}
+					const warningCode = areaPacing.reason ?? 'pacing_exceeded'
+					if (!slotWarnings.includes(warningCode)) {
+						slotWarnings.push(warningCode)
+					}
+					dayWarningsSet.add(warningCode)
 				}
 			}
 
@@ -591,6 +615,7 @@ export function searchAvailability(
 				tableIds: assignRes.tableIds,
 				combinationId: assignRes.combinationId,
 				repaired: assignRes.repaired,
+				...(slotWarnings.length > 0 ? { warnings: slotWarnings } : {}),
 				status: 'available',
 			})
 		}
@@ -610,6 +635,7 @@ export function searchAvailability(
 		status: slots.length > 0 ? 'available' : 'full',
 		slots,
 		alternatives,
+		...(dayWarningsSet.size > 0 ? { warnings: [...dayWarningsSet] } : {}),
 		expansionsUsed,
 	}
 }

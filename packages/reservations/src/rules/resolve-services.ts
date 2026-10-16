@@ -5,7 +5,7 @@ export type WeeklyServiceTemplateInput = {
 	id: string
 	name: string
 	slug: string
-	color: string
+	color?: string
 	daysOfWeek?: readonly number[] | string
 	days_of_week?: readonly number[] | string
 	daysMask?: number
@@ -18,16 +18,21 @@ export type WeeklyServiceTemplateInput = {
 	special_day_id?: string | null
 	startMin?: number
 	start_min?: number
+	firstSeatingMin?: number
+	first_seating_min?: number
 	endMin?: number
 	end_min?: number
 	lastSeatingMin?: number
 	last_seating_min?: number
+	slotIntervalMin?: number
+	slot_interval_min?: number
 	maxCoversPerSlot?: number | null
 	max_covers_per_slot?: number | null
 	maxCoversTotal?: number | null
 	max_covers_total?: number | null
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
+	priority?: number
 	sortOrder?: number
 	sort_order?: number
 	active?: boolean | number
@@ -42,16 +47,21 @@ export type CustomServiceEntryInput = {
 	color?: string
 	startMin?: number
 	start_min?: number
+	firstSeatingMin?: number
+	first_seating_min?: number
 	endMin?: number
 	end_min?: number
 	lastSeatingMin?: number
 	last_seating_min?: number
+	slotIntervalMin?: number
+	slot_interval_min?: number
 	maxCoversPerSlot?: number | null
 	max_covers_per_slot?: number | null
 	maxCoversTotal?: number | null
 	max_covers_total?: number | null
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
+	priority?: number
 	sortOrder?: number
 	sort_order?: number
 	active?: boolean | number
@@ -76,11 +86,15 @@ export type ResolvedService = {
 	slug: string
 	color: string
 	startMin: number
+	firstSeatingMin?: number
 	endMin: number
 	lastSeatingMin: number
+	slotIntervalMin?: number
 	maxCoversPerSlot?: number | null
 	maxCoversTotal?: number | null
 	onlineBookable: boolean
+	effectiveFrom?: string | null
+	priority: number
 	sortOrder: number
 	source: 'template' | 'special_day'
 }
@@ -151,21 +165,28 @@ function normalizeTemplateService(
 	source: 'template' | 'special_day' = 'template',
 ): ResolvedService {
 	const startMin = t.startMin ?? t.start_min ?? 0
+	const firstSeatingMin = t.firstSeatingMin ?? t.first_seating_min
 	const endMin = t.endMin ?? t.end_min ?? 0
 	const lastSeatingMin = t.lastSeatingMin ?? t.last_seating_min ?? endMin
+	const slotIntervalMin = t.slotIntervalMin ?? t.slot_interval_min
 	const maxCoversPerSlot = t.maxCoversPerSlot ?? t.max_covers_per_slot ?? null
 	const maxCoversTotal = t.maxCoversTotal ?? t.max_covers_total ?? null
+	const effectiveFrom = t.effectiveFrom ?? t.effective_from ?? null
 	return {
 		id: t.id,
 		name: t.name,
 		slug: t.slug,
-		color: t.color,
+		color: t.color ?? '#3B82F6',
 		startMin,
+		...(firstSeatingMin !== undefined ? { firstSeatingMin } : {}),
 		endMin: endMin <= startMin ? endMin + 1440 : endMin,
 		lastSeatingMin,
+		...(slotIntervalMin !== undefined ? { slotIntervalMin } : {}),
 		...(maxCoversPerSlot !== null ? { maxCoversPerSlot } : {}),
 		...(maxCoversTotal !== null ? { maxCoversTotal } : {}),
 		onlineBookable: toBool(t.onlineBookable ?? t.online_bookable, true),
+		...(effectiveFrom !== null ? { effectiveFrom } : {}),
+		priority: t.priority ?? 0,
 		sortOrder: t.sortOrder ?? t.sort_order ?? 0,
 		source,
 	}
@@ -205,6 +226,7 @@ function normalizeCustomService(
 		c.onlineBookable ?? c.online_bookable,
 		fallback?.onlineBookable ?? true,
 	)
+	const priority = c.priority ?? fallback?.priority ?? 0
 	const sortOrder = c.sortOrder ?? c.sort_order ?? fallback?.sortOrder ?? index
 
 	return {
@@ -218,6 +240,10 @@ function normalizeCustomService(
 		...(maxCoversPerSlot !== null ? { maxCoversPerSlot } : {}),
 		...(maxCoversTotal !== null ? { maxCoversTotal } : {}),
 		onlineBookable,
+		...(fallback?.effectiveFrom !== undefined && fallback.effectiveFrom !== null
+			? { effectiveFrom: fallback.effectiveFrom }
+			: {}),
+		priority,
 		sortOrder,
 		source: 'special_day',
 	}
@@ -226,6 +252,8 @@ function normalizeCustomService(
 function sortServices(services: ResolvedService[]): ResolvedService[] {
 	return [...services].sort(
 		(a, b) =>
+			(b.effectiveFrom ?? '').localeCompare(a.effectiveFrom ?? '') ||
+			(b.priority ?? 0) - (a.priority ?? 0) ||
 			a.sortOrder - b.sortOrder ||
 			a.startMin - b.startMin ||
 			a.id.localeCompare(b.id),

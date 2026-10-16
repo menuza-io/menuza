@@ -278,14 +278,19 @@ export const serviceSchema = z
 		color: hexColorSchema,
 		daysOfWeek: z.array(z.number().int().min(0).max(6)).min(1).max(7),
 		startMin: z.number().int().min(0).max(1439),
+		firstSeatingMin: z.number().int().min(0).max(2880).optional(),
 		endMin: z.number().int().min(1).max(2880),
 		lastSeatingMin: z.number().int().min(0).max(2880),
+		effectiveFrom: businessDateSchema.nullable().optional(),
+		effectiveTo: businessDateSchema.nullable().optional(),
+		priority: z.number().int().min(-1000).max(10_000).default(0),
 		onlineBookable: z.boolean().default(true),
 		sortOrder: z.number().int().min(0).max(10_000).default(0),
 		active: z.boolean().default(true),
 	})
 	.strict()
 	.superRefine((val, ctx) => {
+		const firstSeatingMin = val.firstSeatingMin ?? val.startMin
 		if (val.endMin <= val.startMin) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -293,11 +298,24 @@ export const serviceSchema = z
 				message: 'endMin must be greater than startMin',
 			})
 		}
-		if (val.lastSeatingMin < val.startMin || val.lastSeatingMin > val.endMin) {
+		if (
+			val.lastSeatingMin < firstSeatingMin ||
+			val.lastSeatingMin > val.endMin
+		) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ['lastSeatingMin'],
-				message: 'lastSeatingMin must lie within [startMin, endMin]',
+				message: 'lastSeatingMin must lie within [firstSeatingMin, endMin]',
+			})
+		}
+		if (
+			val.endMin - firstSeatingMin > 1440 ||
+			val.endMin - val.startMin > 1440
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endMin'],
+				message: 'Service window duration must not exceed 1440 minutes (24h)',
 			})
 		}
 	})
@@ -404,14 +422,17 @@ export const customServiceEntrySchema = z
 		slug: z.string().trim().min(1).max(80).optional(),
 		color: hexColorSchema.optional(),
 		startMin: z.number().int().min(0).max(1439),
+		firstSeatingMin: z.number().int().min(0).max(2880).optional(),
 		endMin: z.number().int().min(1).max(2880),
 		lastSeatingMin: z.number().int().min(0).max(2880),
+		priority: z.number().int().min(-1000).max(10_000).default(0),
 		onlineBookable: z.boolean().default(true),
 		sortOrder: z.number().int().min(0).max(10_000).default(0),
 		active: z.boolean().default(true),
 	})
 	.strict()
 	.superRefine((val, ctx) => {
+		const firstSeatingMin = val.firstSeatingMin ?? val.startMin
 		if (val.endMin <= val.startMin) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -419,11 +440,24 @@ export const customServiceEntrySchema = z
 				message: 'endMin must be greater than startMin',
 			})
 		}
-		if (val.lastSeatingMin < val.startMin || val.lastSeatingMin > val.endMin) {
+		if (
+			val.lastSeatingMin < firstSeatingMin ||
+			val.lastSeatingMin > val.endMin
+		) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ['lastSeatingMin'],
-				message: 'lastSeatingMin must lie within [startMin, endMin]',
+				message: 'lastSeatingMin must lie within [firstSeatingMin, endMin]',
+			})
+		}
+		if (
+			val.endMin - firstSeatingMin > 1440 ||
+			val.endMin - val.startMin > 1440
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endMin'],
+				message: 'Service window duration must not exceed 1440 minutes (24h)',
 			})
 		}
 	})
@@ -472,8 +506,109 @@ export const policyRuleSchema = z
 		active: z.boolean().default(true),
 	})
 	.strict()
+	.superRefine((val, ctx) => {
+		if (
+			val.maxParty !== undefined &&
+			val.maxParty !== null &&
+			val.minParty > val.maxParty
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['minParty'],
+				message: 'minParty must be <= maxParty',
+			})
+		}
+		if (
+			val.windowStartMin !== undefined &&
+			val.windowStartMin !== null &&
+			val.windowEndMin !== undefined &&
+			val.windowEndMin !== null &&
+			val.windowEndMin <= val.windowStartMin
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['windowEndMin'],
+				message: 'windowEndMin must be greater than windowStartMin',
+			})
+		}
+	})
 
 export type PolicyRuleConfig = z.infer<typeof policyRuleSchema>
+
+export const tableBlockSchema = z
+	.object({
+		id: z.string().min(1).max(64),
+		businessDate: businessDateSchema.optional(),
+		tableId: z.string().min(1).max(64).nullable().optional(),
+		tableIds: z.array(z.string().min(1).max(64)).min(1).optional(),
+		areaId: z.string().min(1).max(64).nullable().optional(),
+		startMin: z.number().int().min(0).max(2880).optional(),
+		endMin: z.number().int().min(1).max(2880).optional(),
+		startAt: z.number().int().min(0).optional(),
+		endAt: z.number().int().min(1).optional(),
+		startAtMs: z.number().int().min(0).optional(),
+		endAtMs: z.number().int().min(1).optional(),
+		reason: z.string().trim().max(240).nullable().optional(),
+	})
+	.strict()
+	.superRefine((val, ctx) => {
+		if (
+			val.startMin !== undefined &&
+			val.endMin !== undefined &&
+			val.endMin <= val.startMin
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endMin'],
+				message: 'endMin must be greater than startMin',
+			})
+		}
+		if (
+			val.startAt !== undefined &&
+			val.endAt !== undefined &&
+			val.endAt <= val.startAt
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endAt'],
+				message: 'endAt must be greater than startAt',
+			})
+		}
+		if (
+			val.startAtMs !== undefined &&
+			val.endAtMs !== undefined &&
+			val.endAtMs <= val.startAtMs
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endAtMs'],
+				message: 'endAtMs must be greater than startAtMs',
+			})
+		}
+	})
+
+export type TableBlockConfig = z.infer<typeof tableBlockSchema>
+
+export const locationConfigSchema = z
+	.object({
+		settings: locationSettingsSchema,
+		areas: z.array(diningAreaSchema).default([]),
+		tables: z.array(tableSchema),
+		combinations: z.array(combinationSchema).default([]),
+		decorElements: z.array(decorElementSchema).default([]),
+		services: z.array(serviceSchema).default([]),
+		turnTimeBuckets: z.array(turnTimeBucketSchema).default([]),
+		pacingRules: z.array(pacingRuleSchema).default([]),
+		serviceTableAvailability: z
+			.array(serviceTableAvailabilitySchema)
+			.default([]),
+		specialDays: z.array(specialDaySchema).default([]),
+		policies: z.array(policyRuleSchema).default([]),
+		blocks: z.array(tableBlockSchema).default([]),
+	})
+	.strict()
+
+export type LocationConfig = z.infer<typeof locationConfigSchema>
 
 // Helpful aliases
 export const areaConfigSchema = diningAreaSchema
@@ -483,4 +618,7 @@ export const serviceConfigSchema = serviceSchema
 export const serviceTableModeRuleSchema = serviceTableAvailabilitySchema
 export const specialDayConfigSchema = specialDaySchema
 export const servicePatchSchema = customServiceEntrySchema
+export const blockSchema = tableBlockSchema
+export const blockConfigSchema = tableBlockSchema
+export type BlockConfig = TableBlockConfig
 export type ServicePatchConfig = CustomServiceEntryConfig

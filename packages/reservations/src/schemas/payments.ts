@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { policyModeSchema } from './common.ts'
+import { isoTimestampSchema, policyModeSchema } from './common.ts'
 
 export const PAYMENT_PROVIDERS = ['stripe', 'checkout'] as const
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number]
@@ -48,4 +48,17 @@ export const paymentConfigPublicSummarySchema = z.strictObject({
 	mode: policyModeSchema,
 	amountMinor: z.number().int().min(0),
 	currency: z.string().regex(/^[A-Z]{3}$/),
+})
+
+export const paymentSessionResponseSchema = z.strictObject({
+	reservationId: z.string().trim().min(1),
+	provider: paymentProviderSchema.optional(),
+	processor: z.enum(['stripe', 'checkout', 'connect', 'direct']).optional(),
+	mode: policyModeSchema.optional(),
+	kind: policyModeSchema.optional(),
+	amountMinor: z.number().int().min(0),
+	currency: z.string().regex(/^[A-Z]{3}$/),
+	checkoutUrl: z.string().url().max(2048),
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
 })

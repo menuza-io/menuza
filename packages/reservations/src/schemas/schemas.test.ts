@@ -2,11 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { RESERVATIONS_ERROR_CODES, ReservationsDomainError } from '../errors.ts'
 import {
 	createHoldRequestSchema,
+	createHoldResponseSchema,
 	createReservationFromHoldRequestSchema,
+	largePartyRequestResponseSchema,
+	notifyMeOfferResponseSchema,
 	operatorCreateReservationSchema,
+	paymentSessionResponseSchema,
 	publicAvailabilityQuerySchema,
 	reservationsContextSchema,
 	voiceCheckAvailabilitySchema,
+	waitlistOfferResponseSchema,
 } from './index.ts'
 
 describe('strict Zod API schemas and stable error codes', () => {
@@ -179,6 +184,83 @@ describe('strict Zod API schemas and stable error codes', () => {
 				voice: {
 					enabled: false,
 				},
+			}).success,
+		).toBe(true)
+	})
+
+	it('enforces ISO expiresAt and server now on hold, payment, large-party request, waitlist offer, and notify-me deadline response schemas (VAL-FND-008)', () => {
+		const now = '2026-06-12T18:00:00.000Z'
+		const expiresAt = '2026-06-12T18:05:00.000Z'
+
+		expect(
+			createHoldResponseSchema.safeParse({
+				holdId: 'hold_123',
+				holdToken: 'tok_secret_123',
+				businessDate: '2026-06-12',
+				slotMin: 1140,
+				partySize: 4,
+				expiresAt,
+				now,
+			}).success,
+		).toBe(true)
+
+		// Missing now or malformed expiresAt rejected
+		expect(
+			createHoldResponseSchema.safeParse({
+				holdId: 'hold_123',
+				holdToken: 'tok_secret_123',
+				businessDate: '2026-06-12',
+				slotMin: 1140,
+				partySize: 4,
+				expiresAt: 'not-an-iso-date',
+				now,
+			}).success,
+		).toBe(false)
+
+		expect(
+			paymentSessionResponseSchema.safeParse({
+				reservationId: 'res_123',
+				processor: 'connect',
+				kind: 'deposit',
+				amountMinor: 5000,
+				currency: 'USD',
+				checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test_123',
+				expiresAt,
+				now,
+			}).success,
+		).toBe(true)
+
+		expect(
+			largePartyRequestResponseSchema.safeParse({
+				reservationId: 'res_req_123',
+				status: 'requested',
+				businessDate: '2026-06-12',
+				slotMin: 1140,
+				partySize: 12,
+				expiresAt,
+				now,
+			}).success,
+		).toBe(true)
+
+		expect(
+			waitlistOfferResponseSchema.safeParse({
+				entryId: 'wl_123',
+				status: 'notified',
+				position: 1,
+				quotedWaitMin: 10,
+				expiresAt,
+				now,
+			}).success,
+		).toBe(true)
+
+		expect(
+			notifyMeOfferResponseSchema.safeParse({
+				notifyRequestId: 'nm_123',
+				status: 'notified',
+				businessDate: '2026-06-12',
+				partySize: 4,
+				expiresAt,
+				now,
 			}).success,
 		).toBe(true)
 	})

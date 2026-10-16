@@ -45,31 +45,69 @@ const MS_PER_DAY = 86_400_000
 export const MINUTES_PER_DAY = 1_440
 export const MAX_LOCAL_MIN = 2_880
 
+export type LocalToInstantOptions = {
+	/**
+	 * How to handle nonexistent wall-clock times inside a spring-forward gap:
+	 * - `'skip'` returns `null` (used when generating bookable slots).
+	 * - `'after'` (default) resolves to the post-transition instant (`naive - beforeOffset`).
+	 */
+	gap?: 'skip' | 'after'
+	/**
+	 * How to disambiguate wall-clock times that occur twice during a fall-back fold:
+	 * - `'earlier'` (default) picks the first occurrence (before the fallback).
+	 * - `'later'` picks the second occurrence (after the fallback, used for service ends).
+	 */
+	overlap?: 'earlier' | 'later'
+}
+
 export type LocalInstantResolution = {
 	instantMs: number
 	/** True when the requested wall-clock time fell inside a spring-forward gap and was shifted to the post-gap instant. */
 	adjustedForGap: boolean
-	/** True when the requested wall-clock time occurred twice (fall-back fold) and resolved to the earlier occurrence. */
+	/** Alias for `adjustedForGap`. */
+	inGap: boolean
+	/** True when the requested wall-clock time occurred twice (fall-back fold). */
 	ambiguousFold: boolean
+	/** Alias for `ambiguousFold`. */
+	ambiguous: boolean
+	/** First (DST / pre-fallback) instant when `ambiguousFold` is true. */
+	earlierInstantMs?: number
+	/** Second (standard / post-fallback) instant when `ambiguousFold` is true. */
+	laterInstantMs?: number
+	/** Alias for `laterInstantMs`. */
+	secondInstantMs?: number
 }
 
 /**
  * Convert `businessDate` (`YYYY-MM-DD`) + `localStartMin` (`0..2880`) in `timeZone`
  * to a UTC epoch millisecond instant, with explicit DST gap/fold metadata.
  *
- * Rules (`architecture.md` §6.1 / `research/reservation-engineering.md` §6):
+ * Rules (`architecture.md` §6.1 / `VAL-FND-003`):
  *  - `localStartMin >= 1440` represents a midnight-crossing time on `addDays(businessDate, floor(localStartMin / 1440))`
  *    at `localStartMin % 1440`.
- *  - Spring-forward gap (non-existent wall-clock time): resolves to the post-gap instant
- *    (`naive - beforeOffset`) and sets `adjustedForGap: true`.
- *  - Fall-back fold (ambiguous wall-clock time occurring twice): resolves to the first
- *    (earlier / daylight-saving) occurrence and sets `ambiguousFold: true`.
+ *  - Spring-forward gap (non-existent wall-clock time): returns `null` when `opts?.gap === 'skip'`,
+ *    or resolves to the post-gap instant (`naive - beforeOffset`) with `adjustedForGap: true` when `gap === 'after'` (default).
+ *  - Fall-back fold (ambiguous wall-clock time occurring twice): resolves to the first (`overlap: 'earlier'`, default)
+ *    or second (`overlap: 'later'`) occurrence and sets `ambiguousFold: true`.
  */
 export function localToInstant(
 	businessDate: string,
 	localStartMin: number,
 	timeZone: string,
-): LocalInstantResolution {
+	opts: { gap: 'skip'; overlap?: 'earlier' | 'later' },
+): LocalInstantResolution | null
+export function localToInstant(
+	businessDate: string,
+	localStartMin: number,
+	timeZone: string,
+	opts?: LocalToInstantOptions,
+): LocalInstantResolution
+export function localToInstant(
+	businessDate: string,
+	localStartMin: number,
+	timeZone: string,
+	opts?: LocalToInstantOptions,
+): LocalInstantResolution | null {
 	const dayOffset = Math.floor(localStartMin / MINUTES_PER_DAY)
 	const minuteOfDay =
 		((localStartMin % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
@@ -92,24 +130,39 @@ export function localToInstant(
 	)
 
 	if (matching.length >= 2) {
+		const earlier = matching[0]!
+		const later = matching[matching.length - 1]!
+		const chosen = opts?.overlap === 'later' ? later : earlier
 		return {
-			instantMs: matching[0]!,
+			instantMs: chosen,
 			adjustedForGap: false,
+			inGap: false,
 			ambiguousFold: true,
+			ambiguous: true,
+			earlierInstantMs: earlier,
+			laterInstantMs: later,
+			secondInstantMs: later,
 		}
 	}
 	if (matching.length === 1) {
 		return {
 			instantMs: matching[0]!,
 			adjustedForGap: false,
+			inGap: false,
 			ambiguousFold: false,
+			ambiguous: false,
 		}
+	}
+	if (opts?.gap === 'skip') {
+		return null
 	}
 	// Non-existent wall-clock time (spring-forward gap): use pre-transition offset
 	return {
 		instantMs: naive - before,
 		adjustedForGap: true,
+		inGap: true,
 		ambiguousFold: false,
+		ambiguous: false,
 	}
 }
 
@@ -179,8 +232,14 @@ export function resolveServiceWindow(
 ): ServiceWindowInstants {
 	const normalizedEndMin =
 		endMin <= startMin ? endMin + MINUTES_PER_DAY : endMin
-	const start = localToInstant(businessDate, startMin, timeZone)
-	const end = localToInstant(businessDate, normalizedEndMin, timeZone)
+	const start = localToInstant(businessDate, startMin, timeZone, {
+		gap: 'after',
+		overlap: 'earlier',
+	})
+	const end = localToInstant(businessDate, normalizedEndMin, timeZone, {
+		gap: 'after',
+		overlap: 'later',
+	})
 	return {
 		startMs: start.instantMs,
 		endMs: end.instantMs,

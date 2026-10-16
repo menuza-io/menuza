@@ -11,21 +11,22 @@ describe('message schedule, quiet hours, dedupe keys, and regional channels', ()
 	const timeZone = 'America/New_York'
 	const nowMs = localToInstant('2026-06-10', 12 * 60, timeZone).instantMs
 
-	it('defines all 16 message kinds', () => {
-		expect(MESSAGE_KINDS).toHaveLength(16)
+	it('defines all 18 canonical message kinds from architecture.md §9.3', () => {
+		expect(MESSAGE_KINDS).toHaveLength(18)
 		expect(MESSAGE_KINDS).toContain('confirmation')
-		expect(MESSAGE_KINDS).toContain('reminder_24h')
-		expect(MESSAGE_KINDS).toContain('reminder_2h')
-		expect(MESSAGE_KINDS).toContain('waitlist_table_ready')
-		expect(MESSAGE_KINDS).toContain('post_visit_thank_you')
+		expect(MESSAGE_KINDS).toContain('reminder')
+		expect(MESSAGE_KINDS).toContain('reconfirm_request')
+		expect(MESSAGE_KINDS).toContain('waitlist_ready')
+		expect(MESSAGE_KINDS).toContain('notify_available')
+		expect(MESSAGE_KINDS).toContain('late_payment_refunded')
 	})
 
-	it('shifts non-urgent reminders out of quiet hours (22:00..08:00) and skips late reminders that fall inside quiet hours too close to start', () => {
-		// Reservation at 23:00 on 2026-06-12 -> 24h before is 23:00 on 2026-06-11 (inside 22:00..08:00 quiet hours)
-		// Should shift to 08:00 on 2026-06-12 (which is still 15h before the 23:00 reservation)
+	it('shifts non-urgent reminders earlier out of default quiet hours (21:00..08:00) and skips late reminders that fall inside quiet hours too close to start', () => {
+		// Reservation at 23:00 on 2026-06-12 -> 24h before is 23:00 on 2026-06-11 (inside 21:00..08:00 quiet hours)
+		// Should move EARLIER to 21:00 on 2026-06-11
 		const startLate = localToInstant('2026-06-12', 23 * 60, timeZone).instantMs
 		const sched24h = scheduleFor({
-			kind: 'reminder_24h',
+			kind: 'reminder',
 			startAtMs: startLate,
 			nowMs,
 			timeZone,
@@ -33,11 +34,11 @@ describe('message schedule, quiet hours, dedupe keys, and regional channels', ()
 		expect(sched24h.skip).toBe(false)
 		expect(sched24h.shiftedForQuietHours).toBe(true)
 		const localScheduled = instantToLocal(sched24h.scheduledForMs!, timeZone)
-		expect(localScheduled.calendarDate).toBe('2026-06-12')
-		expect(localScheduled.clockMin).toBe(8 * 60)
+		expect(localScheduled.calendarDate).toBe('2026-06-11')
+		expect(localScheduled.clockMin).toBe(21 * 60)
 
-		// Reservation at 08:30 on 2026-06-12 -> 2h before is 06:30 (inside 22:00..08:00 quiet hours)
-		// Shifting to 08:00 leaves only 30m (< 60m minimum lead) -> reminder_2h is skipped
+		// Reservation at 08:30 on 2026-06-12 -> 2h before is 06:30 (inside 21:00..08:00 quiet hours)
+		// Moving reminder_2h earlier into previous night is outside the 2h reminder window -> reminder_2h is skipped
 		const startEarlyMorning = localToInstant(
 			'2026-06-12',
 			8 * 60 + 30,

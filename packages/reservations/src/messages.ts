@@ -3,44 +3,69 @@ import { instantToLocal, localToInstant } from './time.ts'
 
 /**
  * Transactional message kinds, quiet-hours scheduling, dedupe keys, and
- * regional channel rules (`architecture.md` §9, `VAL-FND-008`).
+ * regional channel rules (`architecture.md` §9, `VAL-FND-008`, `VAL-MSG-016`).
  */
 export const MESSAGE_KINDS = [
 	'confirmation',
-	'reminder_24h',
-	'reminder_2h',
+	'modification',
+	'cancellation_guest',
+	'cancellation_restaurant',
+	'reminder',
 	'reconfirm_request',
-	'cancelled',
-	'modified',
 	'request_received',
 	'request_approved',
 	'request_declined',
-	'payment_link',
-	'payment_expired',
 	'waitlist_joined',
-	'waitlist_table_ready',
-	'notify_slot_opened',
-	'post_visit_thank_you',
-	'no_show_notice',
+	'waitlist_ready',
+	'notify_available',
+	'payment_required',
+	'payment_received',
+	'refund_issued',
+	'fee_charged',
+	'fee_action_required',
+	'late_payment_refunded',
 ] as const
 
-export type MessageKind = (typeof MESSAGE_KINDS)[number]
+export type CanonicalMessageKind = (typeof MESSAGE_KINDS)[number]
+export type LegacyMessageKind =
+	| 'reminder_24h'
+	| 'reminder_2h'
+	| 'cancelled'
+	| 'modified'
+	| 'payment_link'
+	| 'payment_expired'
+	| 'waitlist_table_ready'
+	| 'notify_slot_opened'
+	| 'post_visit_thank_you'
+	| 'no_show_notice'
+
+export type MessageKind = CanonicalMessageKind | LegacyMessageKind
 
 export type MessageChannel = 'email' | 'sms'
 
 export type QuietHoursConfig = {
-	/** Default 22:00 (1320) */
+	/** Default 21:00 (1260) */
 	startMin?: number
 	/** Default 08:00 (480) */
 	endMin?: number
 }
 
+const PRE_ARRIVAL_REMINDER_KINDS: ReadonlySet<MessageKind> =
+	new Set<MessageKind>([
+		'reminder',
+		'reminder_24h',
+		'reminder_2h',
+		'reconfirm_request',
+	])
+
 const NON_URGENT_SCHEDULED_KINDS: ReadonlySet<MessageKind> =
 	new Set<MessageKind>([
+		'reminder',
 		'reminder_24h',
 		'reminder_2h',
 		'reconfirm_request',
 		'post_visit_thank_you',
+		'notify_available',
 		'notify_slot_opened',
 	])
 
@@ -51,6 +76,8 @@ export type ScheduleForInput = {
 	nowMs: number
 	timeZone: string
 	quietHours?: QuietHoursConfig
+	/** Optional reminder offset in minutes before `startAtMs` (default 1440 for `reminder`/`reminder_24h`, 120 for `reminder_2h`). */
+	leadMin?: number
 }
 
 export type ScheduleForResult = {
@@ -65,7 +92,7 @@ function isInsideQuietHours(
 	quietEndMin: number,
 ): boolean {
 	if (quietStartMin > quietEndMin) {
-		// Crosses midnight (e.g. 22:00..08:00)
+		// Crosses midnight (e.g. 21:00..08:00)
 		return clockMin >= quietStartMin || clockMin < quietEndMin
 	}
 	return clockMin >= quietStartMin && clockMin < quietEndMin
@@ -73,21 +100,28 @@ function isInsideQuietHours(
 
 /**
  * Compute when `kind` should be sent (`scheduledForMs`), applying quiet-hours
- * shifting (`22:00..08:00` local) to non-urgent automated messages.
+ * shifting (`21:00..08:00` local default) to non-urgent automated messages (`architecture.md` §9.4).
+ *
+ * Pre-arrival reminders (`reminder`, `reminder_24h`, `reminder_2h`, `reconfirm_request`)
+ * whose target time falls inside quiet hours are moved **earlier** out of quiet hours
+ * (to `quietStartMin`, default `21:00`), or skipped if that earlier send time is in the
+ * past (`< nowMs`) or outside the reminder window.
  */
 export function scheduleFor(input: ScheduleForInput): ScheduleForResult {
-	const quietStartMin = input.quietHours?.startMin ?? 22 * 60 // 22:00
+	const quietStartMin = input.quietHours?.startMin ?? 21 * 60 // 21:00
 	const quietEndMin = input.quietHours?.endMin ?? 8 * 60 // 08:00
 
 	let targetMs: number
 	switch (input.kind) {
+		case 'reminder':
 		case 'reminder_24h':
 		case 'reconfirm_request': {
 			if (input.startAtMs === undefined) {
 				return { skip: true, scheduledForMs: null, shiftedForQuietHours: false }
 			}
-			targetMs = input.startAtMs - 24 * 3600_000
-			// If booking was made less than 24h before start:
+			const leadMs = (input.leadMin ?? 24 * 60) * 60_000
+			targetMs = input.startAtMs - leadMs
+			// If booking was made less than leadMs before start:
 			if (targetMs < input.nowMs) {
 				// Only send if start is still at least 6h away
 				if (input.startAtMs - input.nowMs < 6 * 3600_000) {
@@ -105,7 +139,8 @@ export function scheduleFor(input: ScheduleForInput): ScheduleForResult {
 			if (input.startAtMs === undefined) {
 				return { skip: true, scheduledForMs: null, shiftedForQuietHours: false }
 			}
-			targetMs = input.startAtMs - 2 * 3600_000
+			const leadMs = (input.leadMin ?? 2 * 60) * 60_000
+			targetMs = input.startAtMs - leadMs
 			if (targetMs < input.nowMs) {
 				if (input.startAtMs - input.nowMs < 45 * 60_000) {
 					return {
@@ -147,9 +182,51 @@ export function scheduleFor(input: ScheduleForInput): ScheduleForResult {
 		}
 	}
 
-	// Shift to the next quietEndMin (08:00 local)
+	if (PRE_ARRIVAL_REMINDER_KINDS.has(input.kind)) {
+		// Move pre-arrival reminders EARLIER to quietStartMin (default 21:00) before the quiet window
+		const shiftCalendarDate =
+			quietStartMin > quietEndMin && localTarget.clockMin < quietEndMin
+				? addDays(localTarget.calendarDate, -1)
+				: localTarget.calendarDate
+		const shiftedMs = localToInstant(
+			shiftCalendarDate,
+			quietStartMin,
+			input.timeZone,
+		).instantMs
+
+		// For a 2h reminder (`reminder_2h`), moving earlier into the previous evening (> 4h before start)
+		// or before `nowMs` is outside the short-notice window -> skip
+		const maxShiftBackMs =
+			input.kind === 'reminder_2h' ? 2 * 3600_000 : 18 * 3600_000
+		if (shiftedMs < input.nowMs || targetMs - shiftedMs > maxShiftBackMs) {
+			return {
+				skip: true,
+				scheduledForMs: null,
+				shiftedForQuietHours: true,
+			}
+		}
+
+		if (
+			input.startAtMs !== undefined &&
+			shiftedMs > input.startAtMs - 60 * 60_000
+		) {
+			return {
+				skip: true,
+				scheduledForMs: null,
+				shiftedForQuietHours: true,
+			}
+		}
+
+		return {
+			skip: false,
+			scheduledForMs: shiftedMs,
+			shiftedForQuietHours: true,
+		}
+	}
+
+	// Post-visit or notify-available inside quiet hours: shift to quietEndMin (08:00 local)
 	const shiftCalendarDate =
-		localTarget.clockMin >= quietStartMin
+		quietStartMin > quietEndMin && localTarget.clockMin >= quietStartMin
 			? addDays(localTarget.calendarDate, 1)
 			: localTarget.calendarDate
 	const shiftedMs = localToInstant(
@@ -157,23 +234,6 @@ export function scheduleFor(input: ScheduleForInput): ScheduleForResult {
 		quietEndMin,
 		input.timeZone,
 	).instantMs
-
-	// If this is a pre-arrival reminder, ensure shifted time is still at least 60 minutes before startAtMs
-	if (
-		input.startAtMs !== undefined &&
-		(input.kind === 'reminder_24h' ||
-			input.kind === 'reminder_2h' ||
-			input.kind === 'reconfirm_request')
-	) {
-		const minLeadMs = 60 * 60_000
-		if (shiftedMs > input.startAtMs - minLeadMs) {
-			return {
-				skip: true,
-				scheduledForMs: null,
-				shiftedForQuietHours: true,
-			}
-		}
-	}
 
 	return {
 		skip: false,

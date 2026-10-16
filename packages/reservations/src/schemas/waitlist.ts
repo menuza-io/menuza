@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+	isoTimestampSchema,
 	normalizedPhoneSchema,
 	partySizeSchema,
 	seatingPreferenceSchema,
@@ -45,4 +46,14 @@ export const operatorAddWaitlistEntrySchema = z.strictObject({
 export const operatorSeatWaitlistEntrySchema = z.strictObject({
 	tableIds: z.array(z.string().trim().min(1)).min(1),
 	durationMin: z.number().int().min(15).max(720).optional(),
+})
+
+export const waitlistOfferResponseSchema = z.strictObject({
+	entryId: z.string().trim().min(1),
+	status: waitlistStatusSchema,
+	partySize: partySizeSchema.optional(),
+	position: z.number().int().min(1).optional(),
+	quotedWaitMin: z.number().int().min(0).nullable().optional(),
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
 })

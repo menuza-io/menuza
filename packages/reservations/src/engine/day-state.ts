@@ -1,7 +1,34 @@
 import { type SeatingPreference, type ServiceTableMode } from '../config.ts'
 
-export type BookingChannel =
-	'online' | 'operator' | 'phone' | 'walk_in' | 'voice'
+export type { ServiceTableMode }
+
+export const BOOKING_CHANNELS = [
+	'online',
+	'native',
+	'voice_agent',
+	'phone',
+	'host',
+	'walk_in',
+	'waitlist',
+	'operator',
+	'voice',
+] as const
+
+export type BookingChannel = (typeof BOOKING_CHANNELS)[number]
+
+/**
+ * Guest-facing channels (`online`, `native`, `voice_agent`, plus legacy `'voice'`)
+ * enforce online party limits, horizon/cutoff/notice, online-bookable tables/services,
+ * and hard pacing caps (`architecture.md` §6.3, `VAL-FND-006`).
+ */
+export function isGuestChannel(channel: BookingChannel): boolean {
+	return (
+		channel === 'online' ||
+		channel === 'native' ||
+		channel === 'voice_agent' ||
+		channel === 'voice'
+	)
+}
 
 export type CandidateAttributeTag =
 	'accessible' | 'high_top' | 'window' | 'booth' | 'patio' | 'bar'
@@ -30,12 +57,16 @@ export type EngineTableInput = {
 	areaId?: string
 	area_id?: string
 	label?: string
+	name?: string
 	minSeats?: number
 	min_seats?: number
 	maxSeats?: number
 	max_seats?: number
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
+	walkInOnly?: boolean | number
+	walk_in_only?: boolean | number
+	mode?: ServiceTableMode
 	combinable?: boolean | number
 	priority?: number
 	isAccessible?: boolean | number
@@ -99,19 +130,27 @@ export function isModeAllowedForChannel(
 	channel: BookingChannel,
 ): boolean {
 	if (mode === 'unavailable') return false
-	if (channel === 'online' || channel === 'voice') {
+	if (isGuestChannel(channel)) {
 		return mode === 'online'
 	}
-	if (channel === 'walk_in') {
+	if (channel === 'walk_in' || channel === 'waitlist') {
 		return mode === 'online' || mode === 'staff_only' || mode === 'walk_in_only'
 	}
-	// operator / phone
+	// phone / host / operator
 	return mode === 'online' || mode === 'staff_only'
 }
 
+const HARD_LOCKED_STATUSES = new Set([
+	'partially_arrived',
+	'arrived',
+	'partially_seated',
+	'seated',
+	'finished',
+])
+
 /**
- * Determine whether a booking is immovable by repair or reflow (`architecture.md` §6.6 Invariant I5):
- *  - `status` is `'seated'` or `'partially_seated'`
+ * Determine whether a booking is immovable by repair or reflow (`architecture.md` §6.6 Invariant I5, `VAL-FND-007`):
+ *  - `status` is `'partially_arrived' | 'arrived' | 'partially_seated' | 'seated' | 'finished'`
  *  - `tableLocked === true`
  *  - `startAt <= nowMs + assignmentFreezeMin * 60_000`
  */
@@ -122,7 +161,7 @@ export function isBookingHardLocked(input: {
 	nowMs: number
 	assignmentFreezeMin: number
 }): boolean {
-	if (input.status === 'seated' || input.status === 'partially_seated') {
+	if (input.status && HARD_LOCKED_STATUSES.has(input.status)) {
 		return true
 	}
 	if (toBool(input.tableLocked, false)) {
@@ -227,9 +266,10 @@ export function buildCandidates(input: {
 		const isWindow = toBool(raw.isWindow ?? raw.is_window, false)
 		const isBooth = toBool(raw.isBooth ?? raw.is_booth, false)
 
-		const defaultMode: ServiceTableMode = onlineBookable
-			? 'online'
-			: 'staff_only'
+		const walkInOnly = toBool(raw.walkInOnly ?? raw.walk_in_only, false)
+		const defaultMode: ServiceTableMode =
+			raw.mode ??
+			(walkInOnly ? 'walk_in_only' : onlineBookable ? 'online' : 'staff_only')
 		const mode = tableModeMap.get(raw.id) ?? defaultMode
 
 		activeTablesById.set(raw.id, {
@@ -251,7 +291,7 @@ export function buildCandidates(input: {
 		})
 
 		if (!isModeAllowedForChannel(mode, channel)) continue
-		if ((channel === 'online' || channel === 'voice') && !onlineBookable) {
+		if (isGuestChannel(channel) && !onlineBookable) {
 			continue
 		}
 
@@ -292,7 +332,7 @@ export function buildCandidates(input: {
 			: 'staff_only'
 		const comboMode = comboModeMap.get(rawCombo.id) ?? defaultComboMode
 		if (!isModeAllowedForChannel(comboMode, channel)) continue
-		if ((channel === 'online' || channel === 'voice') && !comboOnline) {
+		if (isGuestChannel(channel) && !comboOnline) {
 			continue
 		}
 

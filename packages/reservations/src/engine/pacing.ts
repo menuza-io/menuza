@@ -1,4 +1,4 @@
-import { type BookingChannel } from './day-state.ts'
+import { type BookingChannel, isGuestChannel } from './day-state.ts'
 
 export type EnginePacingRuleInput = {
 	id: string
@@ -41,6 +41,7 @@ export type PacingEvaluation = {
 }
 
 const INACTIVE_PACING_STATUSES = new Set([
+	'requested',
 	'cancelled',
 	'no_show',
 	'declined',
@@ -152,15 +153,12 @@ export function evaluatePacing(input: {
 			}
 		}
 
-		if (
-			maxOnlineService !== null &&
-			(input.channel === 'online' || input.channel === 'voice')
-		) {
+		if (maxOnlineService !== null && isGuestChannel(input.channel)) {
 			const inServiceOnline = activeExisting.filter((b) => {
 				if (b.serviceId && b.serviceId !== input.serviceId) return false
 				if (rArea !== null && b.areaId !== rArea) return false
-				const ch = b.channel ?? 'online'
-				return ch === 'online' || ch === 'voice'
+				const ch = (b.channel ?? 'online') as BookingChannel
+				return isGuestChannel(ch)
 			})
 			const onlineCovers = inServiceOnline.reduce(
 				(sum, b) => sum + b.partySize,

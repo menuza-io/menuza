@@ -3,6 +3,7 @@ import {
 	attributeTagSchema,
 	businessDateStringSchema,
 	guestOccasionSchema,
+	isoTimestampSchema,
 	normalizedPhoneSchema,
 	partySizeSchema,
 	seatingPreferenceSchema,
@@ -101,4 +102,42 @@ export const publicNotifyMeRequestSchema = z.strictObject({
 	smsOptIn: z.boolean().default(false),
 	turnstileToken: z.string().trim().max(2048).optional().nullable(),
 	website: z.string().max(0).optional(),
+})
+
+export const createHoldResponseSchema = z.strictObject({
+	holdId: z.string().trim().min(1),
+	holdToken: z.string().trim().min(8).max(256),
+	businessDate: businessDateStringSchema,
+	slotMin: slotMinSchema,
+	partySize: partySizeSchema,
+	tableIds: z.array(z.string().trim().min(1)).min(1).optional(),
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
+})
+
+export const largePartyRequestResponseSchema = z.strictObject({
+	reservationId: z.string().trim().min(1),
+	status: z.enum(['requested', 'pending_approval']),
+	businessDate: businessDateStringSchema.optional(),
+	slotMin: slotMinSchema.optional(),
+	partySize: partySizeSchema.optional(),
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
+})
+
+export const notifyMeOfferResponseSchema = z.strictObject({
+	subscriptionId: z.string().trim().min(1).optional(),
+	notifyRequestId: z.string().trim().min(1).optional(),
+	status: z.enum([
+		'watching',
+		'offered',
+		'notified',
+		'booked',
+		'cancelled',
+		'expired',
+	]),
+	businessDate: businessDateStringSchema,
+	partySize: partySizeSchema,
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
 })

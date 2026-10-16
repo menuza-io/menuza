@@ -236,5 +236,48 @@ describe('resolveServices special-day precedence and weekly templates', () => {
 			'2026-06-10',
 		)
 		expect(replaced.services.map((s) => s.id)).toEqual(['srv_special_linked'])
+
+		// Competing weekly templates sort by latest effective_from descending, then priority descending
+		const competing: WeeklyServiceTemplateInput[] = [
+			{
+				id: 'srv_a_old',
+				name: 'Old Dinner',
+				slug: 'dinner-old',
+				daysOfWeek: [3],
+				startMin: 18 * 60,
+				endMin: 23 * 60,
+				lastSeatingMin: 22 * 60,
+				effectiveFrom: '2026-01-01',
+				priority: 10,
+			},
+			{
+				id: 'srv_m_new_low',
+				name: 'New Dinner Low Priority',
+				slug: 'dinner-new-low',
+				daysOfWeek: [3],
+				startMin: 18 * 60,
+				endMin: 23 * 60,
+				lastSeatingMin: 22 * 60,
+				effectiveFrom: '2026-06-01',
+				priority: 1,
+			},
+			{
+				id: 'srv_z_new_high',
+				name: 'New Dinner High Priority',
+				slug: 'dinner-new-high',
+				daysOfWeek: [3],
+				startMin: 18 * 60,
+				endMin: 23 * 60,
+				lastSeatingMin: 22 * 60,
+				effectiveFrom: '2026-06-01',
+				priority: 5,
+			},
+		]
+		const ordered = resolveServices('2026-06-10', competing, [])
+		expect(ordered.services.map((s) => s.id)).toEqual([
+			'srv_z_new_high',
+			'srv_m_new_low',
+			'srv_a_old',
+		])
 	})
 })

@@ -8,8 +8,19 @@ import {
 	SERVICE_TABLE_MODES,
 	SPECIAL_DAY_TYPES,
 } from '../config.ts'
+import { BOOKING_CHANNELS } from '../engine/day-state.ts'
 import { isValidNormalizedPhone, normalizeGuestPhone } from '../phone.ts'
 import { RESERVATION_ACTORS, RESERVATION_STATUSES } from '../state-machine.ts'
+
+export const isoTimestampSchema = z.string().datetime({
+	offset: true,
+	message: 'Expected ISO-8601 timestamp string',
+})
+
+export const deadlineResponseFields = {
+	expiresAt: isoTimestampSchema,
+	now: isoTimestampSchema,
+} as const
 
 export const businessDateStringSchema = z
 	.string()
@@ -39,13 +50,7 @@ export const partySizeSchema = z.number().int().min(1).max(99)
 
 export const slotMinSchema = z.number().int().min(0).max(2880)
 
-export const bookingChannelSchema = z.enum([
-	'online',
-	'operator',
-	'phone',
-	'walk_in',
-	'voice',
-])
+export const bookingChannelSchema = z.enum(BOOKING_CHANNELS)
 
 export const seatingPreferenceSchema = z.enum(SEATING_PREFERENCES)
 export const seatingPreferenceModeSchema = z.enum(SEATING_PREFERENCE_MODES)

@@ -318,6 +318,55 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 		})
 		expect(seatedRes.assigned).toBe(false)
 
+		// Case 2b: status = 'arrived' and 'partially_arrived' are also hard-locked in both repair and reflow (Invariant I5)
+		for (const arrivedStatus of ['arrived', 'partially_arrived'] as const) {
+			const arrivedRes = assignTables({
+				nowMs,
+				assignmentFreezeMin: 60,
+				tables: baseTables,
+				combinations: [],
+				existingBookings: [
+					{
+						id: `r_${arrivedStatus}`,
+						kind: 'reservation',
+						status: arrivedStatus,
+						channel: 'online',
+						partySize: 2,
+						startAt,
+						endAt,
+						tableIds: ['t_med'],
+						tableLocked: false,
+					},
+				],
+				request: { partySize: 4, startAt, endAt, channel: 'online' },
+			})
+			expect(arrivedRes.assigned).toBe(false)
+
+			const reflowArrived = reflowDay({
+				nowMs,
+				assignmentFreezeMin: 60,
+				tables: baseTables,
+				combinations: [],
+				bookings: [
+					{
+						id: `r_${arrivedStatus}`,
+						kind: 'reservation',
+						status: arrivedStatus,
+						channel: 'online',
+						partySize: 2,
+						startAt,
+						endAt,
+						tableIds: ['t_med'],
+						tableLocked: false,
+					},
+				],
+			})
+			expect(reflowArrived.moves).toHaveLength(0)
+			expect(
+				reflowArrived.assignments.get(`r_${arrivedStatus}`)?.tableIds,
+			).toEqual(['t_med'])
+		}
+
 		// Case 3: inside freeze window (startAt = nowMs + 30 min <= nowMs + 60 min)
 		const frozenStart = nowMs + 30 * 60_000
 		const frozenEnd = frozenStart + 90 * 60_000

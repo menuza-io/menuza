@@ -17,12 +17,18 @@ export type ConfigValidationIssueCode =
 	| 'combination_cross_area'
 	| 'combination_duplicate_members'
 	| 'service_invalid_window'
+	| 'service_duration_exceeds_24h'
 	| 'service_last_seating_after_end'
 	| 'service_last_seating_before_start'
 	| 'turn_time_bucket_invalid_range'
 	| 'turn_time_bucket_overlap'
 	| 'turn_time_bucket_gap'
 	| 'pacing_cap_below_min_party'
+	| 'policy_unknown_service'
+	| 'policy_party_bounds_inverted'
+	| 'policy_invalid_window'
+	| 'block_invalid_window'
+	| 'block_unknown_table'
 
 export type ConfigValidationIssue = {
 	code: ConfigValidationIssueCode
@@ -33,6 +39,8 @@ export type ConfigValidationIssue = {
 	serviceId?: string | null
 	details?: Record<string, unknown>
 }
+
+export type ConfigIssue = ConfigValidationIssue
 
 export type ValidateConfigInput = {
 	settings: {
@@ -86,6 +94,8 @@ export type ValidateConfigInput = {
 		name?: string
 		startMin?: number
 		start_min?: number
+		firstSeatingMin?: number
+		first_seating_min?: number
 		endMin?: number
 		end_min?: number
 		lastSeatingMin?: number
@@ -116,6 +126,43 @@ export type ValidateConfigInput = {
 		maxOnlineCoversForService?: number | null
 		max_online_covers_for_service?: number | null
 	}>
+	policies?: ReadonlyArray<{
+		id: string
+		mode?: string
+		amountPerCoverMinor?: number
+		currency?: string
+		cancelCutoffMin?: number
+		serviceId?: string | null
+		service_id?: string | null
+		minParty?: number
+		min_party?: number
+		maxParty?: number | null
+		max_party?: number | null
+		windowStartMin?: number | null
+		window_start_min?: number | null
+		windowEndMin?: number | null
+		window_end_min?: number | null
+		priority?: number
+		active?: boolean | number
+	}>
+	blocks?: ReadonlyArray<{
+		id: string
+		businessDate?: string
+		tableId?: string | null
+		table_id?: string | null
+		tableIds?: readonly string[]
+		areaId?: string | null
+		area_id?: string | null
+		startMin?: number
+		endMin?: number
+		startAt?: number
+		endAt?: number
+		startAtMs?: number
+		start_at?: number
+		endAtMs?: number
+		end_at?: number
+		reason?: string | null
+	}>
 }
 
 export type ValidateConfigReport = {
@@ -125,19 +172,21 @@ export type ValidateConfigReport = {
 	warnings: ConfigValidationIssue[]
 }
 
+export type ValidateConfigResult = ConfigIssue[] & ValidateConfigReport
+
 function isTruthyActive(value: boolean | number | undefined): boolean {
 	if (value === undefined) return true
 	return value === true || value === 1
 }
 
 /**
- * Pure configuration validator for a location's reservations setup.
- * Accepts both camelCase and snake_case inputs so it can validate raw DB rows
- * or API request payloads directly.
+ * Pure configuration validator for a location's reservations setup (`VAL-FND-004`).
+ * Returns `ConfigIssue[]` directly (with `.valid`, `.issues`, `.errors`, and `.warnings`
+ * attached as non-enumerable convenience properties on the returned array).
  */
 export function validateConfig(
 	input: ValidateConfigInput,
-): ValidateConfigReport {
+): ValidateConfigResult {
 	const issues: ConfigValidationIssue[] = []
 
 	const minParty = input.settings.minParty ?? input.settings.min_party ?? 1
@@ -375,10 +424,15 @@ export function validateConfig(
 		}
 	}
 
+	const activeServiceIds = new Set<string>()
+
 	// Validate services
 	for (const rawService of input.services ?? []) {
 		if (!isTruthyActive(rawService.active)) continue
+		activeServiceIds.add(rawService.id)
 		const startMin = rawService.startMin ?? rawService.start_min ?? 0
+		const firstSeatingMin =
+			rawService.firstSeatingMin ?? rawService.first_seating_min ?? startMin
 		const endMin = rawService.endMin ?? rawService.end_min ?? 0
 		const lastSeatingMin =
 			rawService.lastSeatingMin ?? rawService.last_seating_min ?? endMin
@@ -392,6 +446,15 @@ export function validateConfig(
 				serviceId: rawService.id,
 				details: { startMin, endMin },
 			})
+		} else if (endMin - firstSeatingMin > 1440 || endMin - startMin > 1440) {
+			issues.push({
+				code: 'service_duration_exceeds_24h',
+				severity: 'error',
+				field: 'services.endMin',
+				entityId: rawService.id,
+				serviceId: rawService.id,
+				details: { startMin, firstSeatingMin, endMin },
+			})
 		}
 		if (lastSeatingMin > endMin) {
 			issues.push({
@@ -402,14 +465,14 @@ export function validateConfig(
 				serviceId: rawService.id,
 				details: { lastSeatingMin, endMin },
 			})
-		} else if (lastSeatingMin < startMin) {
+		} else if (lastSeatingMin < firstSeatingMin || lastSeatingMin < startMin) {
 			issues.push({
 				code: 'service_last_seating_before_start',
 				severity: 'error',
 				field: 'services.lastSeatingMin',
 				entityId: rawService.id,
 				serviceId: rawService.id,
-				details: { lastSeatingMin, startMin },
+				details: { lastSeatingMin, startMin, firstSeatingMin },
 			})
 		}
 	}
@@ -458,6 +521,21 @@ export function validateConfig(
 		const sorted = [...buckets].sort(
 			(a, b) => a.minParty - b.minParty || a.maxParty - b.maxParty,
 		)
+		const first = sorted[0]
+		if (first && first.minParty > 1) {
+			issues.push({
+				code: 'turn_time_bucket_gap',
+				severity: 'warning',
+				field: 'turnTimeBuckets',
+				entityId: first.id,
+				serviceId,
+				details: {
+					gapStart: 1,
+					gapEnd: first.minParty - 1,
+				},
+			})
+		}
+		let maxCovered = first ? first.maxParty : 0
 		for (let i = 1; i < sorted.length; i++) {
 			const prev = sorted[i - 1]!
 			const curr = sorted[i]!
@@ -488,6 +566,23 @@ export function validateConfig(
 					},
 				})
 			}
+			if (curr.maxParty > maxCovered) {
+				maxCovered = curr.maxParty
+			}
+		}
+		const last = sorted[sorted.length - 1]
+		if (last && maxCovered < maxParty) {
+			issues.push({
+				code: 'turn_time_bucket_gap',
+				severity: 'warning',
+				field: 'turnTimeBuckets',
+				entityId: last.id,
+				serviceId,
+				details: {
+					gapStart: maxCovered + 1,
+					gapEnd: maxParty,
+				},
+			})
 		}
 	}
 
@@ -523,12 +618,103 @@ export function validateConfig(
 		}
 	}
 
+	// Validate policy rules
+	for (const rawPolicy of input.policies ?? []) {
+		if (!isTruthyActive(rawPolicy.active)) continue
+		const serviceId = rawPolicy.serviceId ?? rawPolicy.service_id ?? null
+		const pMinParty = rawPolicy.minParty ?? rawPolicy.min_party ?? 1
+		const pMaxParty = rawPolicy.maxParty ?? rawPolicy.max_party ?? null
+		const windowStartMin =
+			rawPolicy.windowStartMin ?? rawPolicy.window_start_min ?? null
+		const windowEndMin =
+			rawPolicy.windowEndMin ?? rawPolicy.window_end_min ?? null
+
+		if (serviceId !== null && !activeServiceIds.has(serviceId)) {
+			issues.push({
+				code: 'policy_unknown_service',
+				severity: 'error',
+				field: 'policies.serviceId',
+				entityId: rawPolicy.id,
+				serviceId,
+				details: { serviceId },
+			})
+		}
+		if (pMaxParty !== null && pMinParty > pMaxParty) {
+			issues.push({
+				code: 'policy_party_bounds_inverted',
+				severity: 'error',
+				field: 'policies.minParty',
+				entityId: rawPolicy.id,
+				serviceId,
+				details: { minParty: pMinParty, maxParty: pMaxParty },
+			})
+		}
+		if (
+			windowStartMin !== null &&
+			windowEndMin !== null &&
+			windowEndMin <= windowStartMin
+		) {
+			issues.push({
+				code: 'policy_invalid_window',
+				severity: 'error',
+				field: 'policies.windowEndMin',
+				entityId: rawPolicy.id,
+				serviceId,
+				details: { windowStartMin, windowEndMin },
+			})
+		}
+	}
+
+	// Validate blocks
+	for (const rawBlock of input.blocks ?? []) {
+		const tableId = rawBlock.tableId ?? rawBlock.table_id ?? null
+		const startAtMs = rawBlock.startAtMs ?? rawBlock.start_at ?? 0
+		const endAtMs = rawBlock.endAtMs ?? rawBlock.end_at ?? 0
+
+		if (endAtMs <= startAtMs) {
+			issues.push({
+				code: 'block_invalid_window',
+				severity: 'error',
+				field: 'blocks.endAtMs',
+				entityId: rawBlock.id,
+				details: { startAtMs, endAtMs },
+			})
+		}
+		if (tableId !== null && !tableById.has(tableId)) {
+			issues.push({
+				code: 'block_unknown_table',
+				severity: 'error',
+				field: 'blocks.tableId',
+				entityId: rawBlock.id,
+				details: { tableId },
+			})
+		}
+	}
+
 	const errors = issues.filter((i) => i.severity === 'error')
 	const warnings = issues.filter((i) => i.severity === 'warning')
-	return {
-		valid: errors.length === 0,
-		issues,
-		errors,
-		warnings,
-	}
+	const result = issues as ValidateConfigResult
+	Object.defineProperties(result, {
+		valid: {
+			value: errors.length === 0,
+			enumerable: false,
+			configurable: true,
+		},
+		issues: {
+			value: issues,
+			enumerable: false,
+			configurable: true,
+		},
+		errors: {
+			value: errors,
+			enumerable: false,
+			configurable: true,
+		},
+		warnings: {
+			value: warnings,
+			enumerable: false,
+			configurable: true,
+		},
+	})
+	return result
 }

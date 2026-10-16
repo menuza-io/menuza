@@ -1,13 +1,14 @@
 import { type ReservationsErrorCode } from './errors.ts'
 
 /**
- * Reservation lifecycle state machine (`architecture.md` §7, `VAL-FND-008`).
+ * Reservation lifecycle state machine (`architecture.md` §6.4 / §7, `VAL-FND-008`).
  */
 export const RESERVATION_STATUSES = [
+	'requested',
 	'pending_payment',
-	'pending_approval',
 	'booked',
 	'confirmed',
+	'partially_arrived',
 	'arrived',
 	'partially_seated',
 	'seated',
@@ -16,10 +17,12 @@ export const RESERVATION_STATUSES = [
 	'no_show',
 	'declined',
 	'expired',
-	'disputed',
 ] as const
 
-export type ReservationStatus = (typeof RESERVATION_STATUSES)[number]
+export type CanonicalReservationStatus = (typeof RESERVATION_STATUSES)[number]
+export type LegacyReservationStatus = 'pending_approval' | 'disputed'
+export type ReservationStatus =
+	CanonicalReservationStatus | LegacyReservationStatus
 
 export const RESERVATION_ACTORS = [
 	'guest',
@@ -35,27 +38,54 @@ export const FINISHED_UNDO_WINDOW_MS = 30 * 60_000
 
 const CAPACITY_CONSUMING_STATUSES: ReadonlySet<ReservationStatus> =
 	new Set<ReservationStatus>([
+		'pending_payment',
 		'booked',
 		'confirmed',
+		'partially_arrived',
 		'arrived',
 		'partially_seated',
 		'seated',
 	])
 
+export type ConsumesCapacityOptions = {
+	requestHoldsCapacity?: boolean
+	paymentExpiresAtMs?: number | null
+	nowMs?: number
+}
+
 /**
- * Return `true` iff `status` occupies table capacity (Invariant I2).
+ * Return `true` iff `status` occupies table capacity (Invariant I2, `architecture.md` §6.4).
  */
-export function consumesCapacity(status: ReservationStatus): boolean {
+export function consumesCapacity(
+	status: ReservationStatus,
+	opts?: ConsumesCapacityOptions,
+): boolean {
+	if (status === 'requested' || status === 'pending_approval') {
+		return opts?.requestHoldsCapacity === true
+	}
+	if (status === 'pending_payment') {
+		if (
+			opts?.paymentExpiresAtMs !== undefined &&
+			opts.paymentExpiresAtMs !== null &&
+			opts.nowMs !== undefined &&
+			opts.paymentExpiresAtMs <= opts.nowMs
+		) {
+			return false
+		}
+		return true
+	}
 	return CAPACITY_CONSUMING_STATUSES.has(status)
 }
 
 const GUEST_TRANSITIONS: Readonly<
 	Partial<Record<ReservationStatus, readonly ReservationStatus[]>>
 > = {
+	requested: ['cancelled'],
 	pending_payment: ['cancelled'],
 	pending_approval: ['cancelled'],
 	booked: ['confirmed', 'cancelled'],
 	confirmed: ['cancelled'],
+	partially_arrived: ['cancelled'],
 	arrived: ['cancelled'],
 }
 
@@ -69,10 +99,12 @@ const VOICE_TRANSITIONS: Readonly<
 const SYSTEM_TRANSITIONS: Readonly<
 	Partial<Record<ReservationStatus, readonly ReservationStatus[]>>
 > = {
+	requested: ['expired', 'cancelled', 'disputed'],
 	pending_payment: ['booked', 'expired', 'cancelled', 'disputed'],
 	pending_approval: ['expired', 'cancelled', 'disputed'],
 	booked: ['confirmed', 'no_show', 'cancelled', 'disputed'],
 	confirmed: ['no_show', 'cancelled', 'disputed'],
+	partially_arrived: ['disputed'],
 	arrived: ['disputed'],
 	partially_seated: ['disputed'],
 	seated: ['finished', 'disputed'],
@@ -86,10 +118,12 @@ const SYSTEM_TRANSITIONS: Readonly<
 const OPERATOR_TRANSITIONS: Readonly<
 	Partial<Record<ReservationStatus, readonly ReservationStatus[]>>
 > = {
+	requested: ['booked', 'confirmed', 'declined', 'cancelled'],
 	pending_payment: ['booked', 'confirmed', 'cancelled', 'expired'],
 	pending_approval: ['booked', 'confirmed', 'declined', 'cancelled'],
 	booked: [
 		'confirmed',
+		'partially_arrived',
 		'arrived',
 		'partially_seated',
 		'seated',
@@ -98,6 +132,16 @@ const OPERATOR_TRANSITIONS: Readonly<
 	],
 	confirmed: [
 		'booked',
+		'partially_arrived',
+		'arrived',
+		'partially_seated',
+		'seated',
+		'no_show',
+		'cancelled',
+	],
+	partially_arrived: [
+		'booked',
+		'confirmed',
 		'arrived',
 		'partially_seated',
 		'seated',
@@ -107,12 +151,14 @@ const OPERATOR_TRANSITIONS: Readonly<
 	arrived: [
 		'booked',
 		'confirmed',
+		'partially_arrived',
 		'partially_seated',
 		'seated',
 		'no_show',
 		'cancelled',
 	],
 	partially_seated: [
+		'partially_arrived',
 		'arrived',
 		'confirmed',
 		'booked',
@@ -120,7 +166,14 @@ const OPERATOR_TRANSITIONS: Readonly<
 		'finished',
 		'cancelled',
 	],
-	seated: ['arrived', 'confirmed', 'booked', 'partially_seated', 'finished'],
+	seated: [
+		'partially_arrived',
+		'arrived',
+		'confirmed',
+		'booked',
+		'partially_seated',
+		'finished',
+	],
 	finished: ['seated'],
 	no_show: ['booked', 'confirmed', 'arrived', 'seated', 'cancelled'],
 	cancelled: ['booked', 'confirmed'],
@@ -254,6 +307,7 @@ export function quickActionsFor(
 	context?: TransitionContext,
 ): QuickAction[] {
 	switch (status) {
+		case 'requested':
 		case 'pending_approval':
 			return ['approve', 'decline', 'cancel']
 		case 'pending_payment':
@@ -268,6 +322,8 @@ export function quickActionsFor(
 				'cancel',
 			]
 		case 'confirmed':
+			return ['arrive', 'partially_seat', 'seat', 'no_show', 'cancel']
+		case 'partially_arrived':
 			return ['arrive', 'partially_seat', 'seat', 'no_show', 'cancel']
 		case 'arrived':
 			return ['partially_seat', 'seat', 'no_show', 'cancel']

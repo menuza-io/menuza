@@ -3,18 +3,26 @@ import {
 	type AssignBookingRecord,
 	type AssignHoldRecord,
 	type AssignRequestInput,
+	type TableSwap,
 } from '../engine/assign.ts'
 import { type EngineDayConfig } from '../engine/availability.ts'
 import {
 	type AssignCandidate,
+	type BookingChannel,
+	type ServiceTableMode,
 	buildCandidates,
 	isBookingHardLocked,
+	isGuestChannel,
+	isModeAllowedForChannel,
 } from '../engine/day-state.ts'
 import { intervalsOverlap } from '../engine/occupancy.ts'
+import { evaluatePacing } from '../engine/pacing.ts'
 
 export type VerifyDayInvariantsInput = {
 	config: EngineDayConfig
 	existingBookings: readonly AssignBookingRecord[]
+	previousBookings?: readonly AssignBookingRecord[]
+	reassignedMoves?: readonly TableSwap[]
 	existingHolds?: readonly AssignHoldRecord[]
 	tableBlocks?: readonly AssignBlockRecord[]
 	nowMs?: number
@@ -25,20 +33,27 @@ export type VerifyDayInvariantsResult = {
 	violations: string[]
 }
 
+const ACTIVE_INVARIANT_STATUSES = new Set([
+	'pending_payment',
+	'booked',
+	'confirmed',
+	'partially_arrived',
+	'arrived',
+	'partially_seated',
+	'seated',
+])
+
 /**
- * Independent invariant verifier for Invariants I1-I7 (`architecture.md` §6.6, `VAL-FND-009`).
+ * Independent invariant verifier for Invariants I1-I8 (`architecture.md` §6.6, `VAL-FND-009`).
  */
 export function verifyDayInvariants(
 	input: VerifyDayInvariantsInput,
 ): VerifyDayInvariantsResult {
 	const violations: string[] = []
 	const { config } = input
+	const nowMs = input.nowMs ?? 0
 	const activeBookings = input.existingBookings.filter(
-		(b) =>
-			!b.status ||
-			['booked', 'confirmed', 'arrived', 'partially_seated', 'seated'].includes(
-				b.status,
-			),
+		(b) => !b.status || ACTIVE_INVARIANT_STATUSES.has(b.status),
 	)
 
 	const activeTablesById = new Map(
@@ -56,13 +71,21 @@ export function verifyDayInvariants(
 			.filter((c) => c.active !== false && c.active !== 0)
 			.map((c) => [c.id, c] as const),
 	)
+	const servicesById = new Map(config.services.map((s) => [s.id, s] as const))
 
-	// I2 & I3: Party size bounds & active table/area/combo membership
+	// I2, I3, I7, I8: Party size bounds, active table/area/combo membership, channel/mode, and interval/service window
 	for (const b of activeBookings) {
+		if (b.startAt >= b.endAt) {
+			violations.push(
+				`I8: Booking ${b.id} has invalid interval [${b.startAt}, ${b.endAt})`,
+			)
+		}
+
 		if (b.tableIds.length === 0) {
 			violations.push(`I3: Booking ${b.id} has no assigned tables`)
 			continue
 		}
+		const memberAreas = new Set<string>()
 		for (const tid of b.tableIds) {
 			const table = activeTablesById.get(tid)
 			if (!table) {
@@ -70,12 +93,20 @@ export function verifyDayInvariants(
 				continue
 			}
 			const areaId = table.areaId ?? table.area_id ?? ''
+			memberAreas.add(areaId)
 			if (!activeAreasById.has(areaId)) {
 				violations.push(
 					`I3: Booking ${b.id} table ${tid} is in inactive area ${areaId}`,
 				)
 			}
 		}
+		if (memberAreas.size > 1) {
+			violations.push(
+				`I3: Booking ${b.id} spans tables across multiple areas (${[...memberAreas].join(', ')})`,
+			)
+		}
+
+		const channel: BookingChannel = b.channel ?? 'online'
 
 		if (b.tableIds.length === 1) {
 			const table = activeTablesById.get(b.tableIds[0]!)
@@ -86,6 +117,26 @@ export function verifyDayInvariants(
 					violations.push(
 						`I2: Booking ${b.id} partySize ${b.partySize} outside single table ${table.id} [${minS}, ${maxS}]`,
 					)
+				}
+				if (!b.overbook) {
+					const onlineBookable =
+						(table.onlineBookable ?? table.online_bookable ?? true) !== false &&
+						(table.onlineBookable ?? table.online_bookable ?? 1) !== 0
+					const modeRule = config.serviceTableModes.find(
+						(m) =>
+							(m.serviceId ?? m.service_id) === b.serviceId &&
+							(m.tableId ?? m.table_id) === table.id,
+					)
+					const mode: ServiceTableMode =
+						modeRule?.mode ?? (onlineBookable ? 'online' : 'staff_only')
+					if (
+						!isModeAllowedForChannel(mode, channel) ||
+						(isGuestChannel(channel) && !onlineBookable)
+					) {
+						violations.push(
+							`I7: Booking ${b.id} on table ${table.id} (mode=${mode}) is not allowed for channel ${channel}`,
+						)
+					}
 				}
 			}
 		} else if (b.combinationId) {
@@ -102,6 +153,109 @@ export function verifyDayInvariants(
 						`I2: Booking ${b.id} partySize ${b.partySize} outside combo ${combo.id} [${minS}, ${maxS}]`,
 					)
 				}
+				if (!b.overbook) {
+					const onlineBookable =
+						(combo.onlineBookable ?? combo.online_bookable ?? true) !== false &&
+						(combo.onlineBookable ?? combo.online_bookable ?? 1) !== 0
+					const modeRule = config.serviceTableModes.find(
+						(m) =>
+							(m.serviceId ?? m.service_id) === b.serviceId &&
+							(m.combinationId ?? m.combination_id) === combo.id,
+					)
+					const mode: ServiceTableMode =
+						modeRule?.mode ?? (onlineBookable ? 'online' : 'staff_only')
+					if (
+						!isModeAllowedForChannel(mode, channel) ||
+						(isGuestChannel(channel) && !onlineBookable)
+					) {
+						violations.push(
+							`I7: Booking ${b.id} on combo ${combo.id} (mode=${mode}) is not allowed for channel ${channel}`,
+						)
+					}
+				}
+			}
+		}
+
+		// I8: Service window check for guest bookings with localStartMin
+		if (!b.overbook && b.serviceId && b.localStartMin !== undefined) {
+			const svc = servicesById.get(b.serviceId)
+			if (svc && isGuestChannel(channel)) {
+				const startMin = svc.startMin ?? svc.start_min ?? 0
+				const firstMin =
+					svc.firstSeatingMin ?? svc.first_seating_min ?? startMin
+				const rawLastMin =
+					svc.lastSeatingMin ??
+					svc.last_seating_min ??
+					svc.endMin ??
+					svc.end_min ??
+					1440
+				const lastMin = rawLastMin < startMin ? rawLastMin + 1440 : rawLastMin
+				if (b.localStartMin < firstMin || b.localStartMin > lastMin) {
+					violations.push(
+						`I8: Booking ${b.id} localStartMin ${b.localStartMin} outside service ${svc.id} seating window [${firstMin}, ${lastMin}]`,
+					)
+				}
+			}
+		}
+	}
+
+	// I5: Hard-locked bookings never change tables across transitions/repairs/reflows
+	if (input.previousBookings) {
+		const currentById = new Map(
+			input.existingBookings.map((b) => [b.id, b] as const),
+		)
+		for (const prev of input.previousBookings) {
+			if (prev.status && !ACTIVE_INVARIANT_STATUSES.has(prev.status)) continue
+			const hardLocked = isBookingHardLocked({
+				status: prev.status,
+				tableLocked: prev.tableLocked,
+				startAt: prev.startAt,
+				nowMs,
+				assignmentFreezeMin: config.settings.assignmentFreezeMin,
+			})
+			if (!hardLocked) continue
+			const curr = currentById.get(prev.id)
+			if (!curr) continue
+			const prevTables = [...prev.tableIds].sort().join(',')
+			const currTables = [...curr.tableIds].sort().join(',')
+			if (prevTables !== currTables) {
+				violations.push(
+					`I5: Hard-locked booking ${prev.id} moved from [${prevTables}] to [${currTables}]`,
+				)
+			}
+		}
+	}
+
+	// I6: Pacing caps respected for guest bookings
+	if (config.pacingRules.length > 0) {
+		for (let i = 0; i < activeBookings.length; i++) {
+			const b = activeBookings[i]!
+			if (b.overbook) continue
+			const channel: BookingChannel = b.channel ?? 'online'
+			if (!isGuestChannel(channel)) continue
+			if (!b.serviceId || b.localStartMin === undefined) continue
+			const prior = activeBookings.slice(0, i).map((p) => ({
+				id: p.id,
+				serviceId: p.serviceId,
+				areaId: p.areaId,
+				channel: p.channel ?? 'online',
+				partySize: p.partySize,
+				localStartMin: p.localStartMin,
+				status: p.status,
+			}))
+			const pace = evaluatePacing({
+				serviceId: b.serviceId,
+				slotMin: b.localStartMin,
+				partySize: b.partySize,
+				channel,
+				areaId: b.areaId ?? null,
+				rules: config.pacingRules,
+				existing: prior,
+			})
+			if (!pace.allowed) {
+				violations.push(
+					`I6: Booking ${b.id} violates pacing (${pace.reason ?? 'pacing_exceeded'})`,
+				)
 			}
 		}
 	}
@@ -214,11 +368,7 @@ export function bruteForceAssignExists(input: BruteForceOracleInput): boolean {
 	if (candidatesForReq.length === 0) return false
 
 	const activeBookings = input.existingBookings.filter(
-		(b) =>
-			!b.status ||
-			['booked', 'confirmed', 'arrived', 'partially_seated', 'seated'].includes(
-				b.status,
-			),
+		(b) => !b.status || ACTIVE_INVARIANT_STATUSES.has(b.status),
 	)
 
 	const isFreeAgainstFixed = (

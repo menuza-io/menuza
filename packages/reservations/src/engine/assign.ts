@@ -20,8 +20,11 @@ import {
 import { type EnginePacingRuleInput } from './pacing.ts'
 
 export { type AssignCandidate }
+export const MAX_SEARCH_SLOT_EXPANSIONS = 200
 export const MAX_REPAIR_EXPANSIONS = 200
+export const MAX_BOOK_EXPANSIONS = 2_000
 export const MAX_DAY_EXPANSIONS = 2_000
+export const MAX_REFLOW_EXPANSIONS = 5_000
 
 export type ScoreCandidateInput = {
 	candidate: AssignCandidate
@@ -242,6 +245,8 @@ export type AssignEngineInput = AssignTablesInput
 export type AssignTablesResult =
 	| {
 			assigned: true
+			status: 'assigned'
+			budgetExhausted: false
 			tableIds: string[]
 			combinationId: string | null
 			areaId: string
@@ -255,6 +260,8 @@ export type AssignTablesResult =
 	  }
 	| {
 			assigned: false
+			status: 'no_fit'
+			budgetExhausted: boolean
 			tableIds: []
 			combinationId: null
 			repaired: false
@@ -267,8 +274,10 @@ export type AssignTablesResult =
 	  }
 
 const ACTIVE_BOOKING_STATUSES = new Set([
+	'pending_payment',
 	'booked',
 	'confirmed',
+	'partially_arrived',
 	'arrived',
 	'partially_seated',
 	'seated',
@@ -456,8 +465,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	const minTurnMin =
 		input.minTurnMin ?? input.config?.settings?.defaultTurnMin ?? 60
 	const maxExpansions = Math.min(
-		MAX_REPAIR_EXPANSIONS,
-		input.maxExpansions ?? MAX_REPAIR_EXPANSIONS,
+		MAX_BOOK_EXPANSIONS,
+		input.maxExpansions ?? MAX_BOOK_EXPANSIONS,
 	)
 	const allowRepair = input.allowRepair ?? true
 
@@ -491,6 +500,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	if (fittingCandidates.length === 0) {
 		return {
 			assigned: false,
+			status: 'no_fit',
+			budgetExhausted: false,
 			tableIds: [],
 			combinationId: null,
 			repaired: false,
@@ -549,6 +560,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		const best = scoredFree[0]!
 		return {
 			assigned: true,
+			status: 'assigned',
+			budgetExhausted: false,
 			tableIds: [...best.candidate.tableIds],
 			combinationId: best.candidate.kind === 'combo' ? best.candidate.id : null,
 			areaId: best.candidate.areaId,
@@ -565,6 +578,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	if (!allowRepair || maxExpansions <= 0) {
 		return {
 			assigned: false,
+			status: 'no_fit',
+			budgetExhausted: allowRepair,
 			tableIds: [],
 			combinationId: null,
 			repaired: false,
@@ -708,6 +723,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 				]
 				return {
 					assigned: true,
+					status: 'assigned',
+					budgetExhausted: false,
 					tableIds: [...candNew.tableIds],
 					combinationId: candNew.kind === 'combo' ? candNew.id : null,
 					areaId: candNew.areaId,
@@ -831,6 +848,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 						]
 						return {
 							assigned: true,
+							status: 'assigned',
+							budgetExhausted: false,
 							tableIds: [...candNew.tableIds],
 							combinationId: candNew.kind === 'combo' ? candNew.id : null,
 							areaId: candNew.areaId,
@@ -850,6 +869,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 
 	return {
 		assigned: false,
+		status: 'no_fit',
+		budgetExhausted: budgetHit,
 		tableIds: [],
 		combinationId: null,
 		repaired: false,
@@ -881,6 +902,8 @@ export type ReflowDayInput = {
 }
 
 export type ReflowDayResult = {
+	status: 'assigned' | 'no_fit'
+	budgetExhausted: boolean
 	assignments: Map<string, { tableIds: string[]; combinationId: string | null }>
 	reassigned: TableSwap[]
 	moves: TableSwap[]
@@ -893,9 +916,10 @@ export type ReflowDayResult = {
 
 /**
  * Re-assign soft bookings across a day after floor-plan, block, or service changes
- * (`architecture.md` §6.8, `VAL-FND-007`).
- * Hard-locked bookings (`seated`, `partially_seated`, `tableLocked`, or within
- * `assignmentFreezeMin` of `nowMs`) keep their existing tables.
+ * (`architecture.md` §6.8, `VAL-FND-007`, `VAL-FND-009`).
+ * Hard-locked bookings (`partially_arrived`, `arrived`, `partially_seated`, `seated`,
+ * `finished`, `tableLocked`, or within `assignmentFreezeMin` of `nowMs`) keep their
+ * existing tables.
  */
 export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	const tables = input.tables ?? input.config?.tables ?? []
@@ -916,8 +940,8 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	const minTurnMin =
 		input.minTurnMin ?? input.config?.settings?.defaultTurnMin ?? 60
 	const maxExpansions = Math.min(
-		MAX_DAY_EXPANSIONS,
-		input.maxExpansions ?? MAX_DAY_EXPANSIONS,
+		MAX_REFLOW_EXPANSIONS,
+		input.maxExpansions ?? MAX_REFLOW_EXPANSIONS,
 	)
 
 	const activeTableIds = new Set<string>()
@@ -969,17 +993,13 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	const reassigned: TableSwap[] = []
 	const unresolvable: string[] = []
 	let totalExpansions = 0
+	let budgetExhausted = false
 
 	for (const sb of softBookings) {
 		const remainingBudget = Math.max(0, maxExpansions - totalExpansions)
 		if (remainingBudget === 0) {
-			unresolvable.push(sb.id)
-			placedBookings.push({
-				...sb,
-				tableIds: [],
-				combinationId: null,
-			})
-			continue
+			budgetExhausted = true
+			break
 		}
 
 		const currentTablesActive =
@@ -1115,12 +1135,51 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 				})
 			}
 		} else {
+			if (res.budgetExhausted && totalExpansions >= maxExpansions) {
+				budgetExhausted = true
+				break
+			}
 			unresolvable.push(sb.id)
 			placedBookings.push({
 				...sb,
 				tableIds: [],
 				combinationId: null,
 			})
+		}
+	}
+
+	// Never return partial reflow plans when the expansion budget is exhausted (`VAL-FND-009`).
+	if (budgetExhausted) {
+		const originalAssignments = new Map<
+			string,
+			{ tableIds: string[]; combinationId: string | null }
+		>()
+		for (const b of activeBookings) {
+			originalAssignments.set(b.id, {
+				tableIds: [...b.tableIds],
+				combinationId: b.combinationId ?? null,
+			})
+		}
+		const conflicts = detectConflicts({
+			tables,
+			areas,
+			combinations,
+			bookings: activeBookings,
+			blocks,
+			pacingRules,
+		})
+		const allSoftIds = softBookings.map((sb) => sb.id)
+		return {
+			status: 'no_fit',
+			budgetExhausted: true,
+			assignments: originalAssignments,
+			reassigned: [],
+			moves: [],
+			unresolvable: allSoftIds,
+			unassignedIds: allSoftIds,
+			conflicts,
+			expansions: totalExpansions,
+			expansionsUsed: totalExpansions,
 		}
 	}
 
@@ -1134,6 +1193,8 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	})
 
 	return {
+		status: unresolvable.length === 0 ? 'assigned' : 'no_fit',
+		budgetExhausted: false,
 		assignments,
 		reassigned,
 		moves: reassigned,

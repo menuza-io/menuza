@@ -5,9 +5,22 @@ import {
 	type AssignHoldRecord,
 	type AssignRequestInput,
 	assignTables,
+	reflowDay,
 } from '../engine/assign.ts'
-import { type EngineDayConfig } from '../engine/availability.ts'
+import {
+	type EngineDayConfig,
+	searchAvailability,
+} from '../engine/availability.ts'
+import {
+	type BookingChannel,
+	isBookingHardLocked,
+} from '../engine/day-state.ts'
+import { evaluatePacing } from '../engine/pacing.ts'
 import { localToInstant } from '../time.ts'
+import {
+	type VerifyDayInvariantsResult,
+	verifyDayInvariants,
+} from './oracle.ts'
 
 export type RandomDayScenario = {
 	config: EngineDayConfig
@@ -462,5 +475,480 @@ export function buildScaleRestaurantFixture(
 		businessDate,
 		nowMs,
 		existingBookings,
+	}
+}
+
+export type OperationStepKind =
+	| 'search'
+	| 'hold'
+	| 'book'
+	| 'modify'
+	| 'cancel'
+	| 'seat'
+	| 'finish'
+	| 'no_show'
+	| 'block'
+	| 'settings'
+	| 'clock'
+
+export type RandomOperationStep = {
+	kind: OperationStepKind
+	slotIndex: number
+	partySize: number
+	channel: BookingChannel
+	targetIndex: number
+	clockDeltaMin: number
+	bufferMin: 0 | 15
+}
+
+export type RandomOperationSequenceScenario = {
+	initialScenario: RandomDayScenario
+	steps: RandomOperationStep[]
+}
+
+export type OperationStepVerification = {
+	stepIndex: number
+	opKind: OperationStepKind
+	invariants: VerifyDayInvariantsResult
+}
+
+export type OperationSequenceTrace = {
+	stepsExecuted: number
+	stepVerifications: OperationStepVerification[]
+}
+
+export function arbitraryOperationSequence(): fc.Arbitrary<RandomOperationSequenceScenario> {
+	const stepArb: fc.Arbitrary<RandomOperationStep> = fc.record({
+		kind: fc.constantFrom<OperationStepKind>(
+			'search',
+			'hold',
+			'book',
+			'modify',
+			'cancel',
+			'seat',
+			'finish',
+			'no_show',
+			'block',
+			'settings',
+			'clock',
+		),
+		slotIndex: fc.integer({ min: 0, max: 12 }),
+		partySize: fc.integer({ min: 1, max: 6 }),
+		channel: fc.constantFrom<BookingChannel>(
+			'online',
+			'native',
+			'voice_agent',
+			'phone',
+			'host',
+			'walk_in',
+		),
+		targetIndex: fc.integer({ min: 0, max: 15 }),
+		clockDeltaMin: fc.integer({ min: 5, max: 30 }),
+		bufferMin: fc.constantFrom<0 | 15>(0, 15),
+	})
+
+	return fc.record({
+		initialScenario: arbitraryDayScenario(),
+		steps: fc.array(stepArb, { minLength: 8, maxLength: 16 }),
+	})
+}
+
+export function executeOperationSequence(
+	seqScenario: RandomOperationSequenceScenario,
+): OperationSequenceTrace {
+	let config: EngineDayConfig = {
+		...seqScenario.initialScenario.config,
+		settings: { ...seqScenario.initialScenario.config.settings },
+		tables: seqScenario.initialScenario.config.tables.map((t) => ({ ...t })),
+		combinations: seqScenario.initialScenario.config.combinations.map((c) => ({
+			...c,
+			tableIds: [...(c.tableIds ?? [])],
+		})),
+	}
+	let bookings: AssignBookingRecord[] =
+		seqScenario.initialScenario.existingBookings.map((b) => ({
+			...b,
+			tableIds: [...b.tableIds],
+		}))
+	let holds: AssignHoldRecord[] = seqScenario.initialScenario.existingHolds.map(
+		(h) => ({
+			...h,
+			tableIds: [...h.tableIds],
+		}),
+	)
+	const blocks: AssignBlockRecord[] =
+		seqScenario.initialScenario.tableBlocks.map((blk) => ({
+			...blk,
+			tableIds: blk.tableIds ? [...blk.tableIds] : undefined,
+		}))
+	let nowMs = seqScenario.initialScenario.nowMs
+	const stepVerifications: OperationStepVerification[] = []
+
+	const applySwaps = (
+		list: AssignBookingRecord[],
+		swaps: ReadonlyArray<{
+			bookingId: string
+			toTableIds: string[]
+			toCombinationId: string | null
+		}>,
+	): AssignBookingRecord[] => {
+		if (swaps.length === 0) return list
+		const map = new Map(swaps.map((s) => [s.bookingId, s] as const))
+		return list.map((b) => {
+			const sw = map.get(b.id)
+			if (!sw) return b
+			return {
+				...b,
+				tableIds: [...sw.toTableIds],
+				combinationId: sw.toCombinationId,
+			}
+		})
+	}
+
+	for (let stepIndex = 0; stepIndex < seqScenario.steps.length; stepIndex++) {
+		const step = seqScenario.steps[stepIndex]!
+		const previousBookings = bookings.map((b) => ({
+			...b,
+			tableIds: [...b.tableIds],
+		}))
+
+		// Expire holds before running the step
+		holds = holds.filter(
+			(h) => h.expiresAt === undefined || h.expiresAt > nowMs,
+		)
+
+		const slotMin = 1020 + step.slotIndex * 15
+		const startAt = slotMinToMs(slotMin)
+		const turnMin = config.settings.defaultTurnMin + config.settings.bufferMin
+		const endAt = slotMinToMs(slotMin + turnMin)
+
+		switch (step.kind) {
+			case 'search': {
+				searchAvailability({
+					config,
+					businessDate: seqScenario.initialScenario.businessDate,
+					partySize: step.partySize,
+					preferredSlotMin: slotMin,
+					channel: step.channel,
+					existingBookings: bookings,
+					existingHolds: holds,
+					tableBlocks: blocks,
+					nowMs,
+				})
+				break
+			}
+			case 'hold': {
+				const res = assignTables({
+					config,
+					request: {
+						partySize: step.partySize,
+						startAt,
+						endAt,
+						channel: step.channel,
+						serviceId: 'srv_dinner',
+					},
+					existingBookings: bookings,
+					existingHolds: holds,
+					tableBlocks: blocks,
+					nowMs,
+				})
+				if (res.assigned) {
+					bookings = applySwaps(bookings, res.swaps)
+					holds.push({
+						id: `hold_step_${stepIndex}`,
+						partySize: step.partySize,
+						startAt,
+						endAt,
+						tableIds: [...res.tableIds],
+						combinationId: res.combinationId,
+						expiresAt: nowMs + config.settings.holdTtlSec * 1_000,
+					})
+				}
+				break
+			}
+			case 'book': {
+				const pace = evaluatePacing({
+					serviceId: 'srv_dinner',
+					slotMin,
+					partySize: step.partySize,
+					channel: step.channel,
+					areaId: null,
+					rules: config.pacingRules,
+					existing: bookings.map((b) => ({
+						id: b.id,
+						serviceId: b.serviceId,
+						areaId: b.areaId,
+						channel: b.channel ?? 'online',
+						partySize: b.partySize,
+						localStartMin: b.localStartMin,
+						status: b.status,
+					})),
+				})
+				if (!pace.allowed) break
+				const res = assignTables({
+					config,
+					request: {
+						partySize: step.partySize,
+						startAt,
+						endAt,
+						channel: step.channel,
+						serviceId: 'srv_dinner',
+					},
+					existingBookings: bookings,
+					existingHolds: holds,
+					tableBlocks: blocks,
+					nowMs,
+				})
+				if (res.assigned) {
+					bookings = applySwaps(bookings, res.swaps)
+					bookings.push({
+						id: `bk_step_${stepIndex}`,
+						kind: 'reservation',
+						partySize: step.partySize,
+						localStartMin: slotMin,
+						startAt,
+						endAt,
+						tableIds: [...res.tableIds],
+						combinationId: res.combinationId,
+						status: 'confirmed',
+						tableLocked: false,
+						channel: step.channel,
+						serviceId: 'srv_dinner',
+						areaId: res.areaId,
+					})
+				}
+				break
+			}
+			case 'modify': {
+				const modifiable = bookings.filter(
+					(b) =>
+						(b.status === 'booked' || b.status === 'confirmed') &&
+						!isBookingHardLocked({
+							status: b.status,
+							tableLocked: b.tableLocked,
+							startAt: b.startAt,
+							nowMs,
+							assignmentFreezeMin: config.settings.assignmentFreezeMin,
+						}),
+				)
+				if (modifiable.length > 0) {
+					const target = modifiable[step.targetIndex % modifiable.length]!
+					const remaining = bookings.filter((b) => b.id !== target.id)
+					const res = assignTables({
+						config,
+						request: {
+							partySize: step.partySize,
+							startAt,
+							endAt,
+							channel: target.channel ?? 'online',
+							serviceId: target.serviceId ?? 'srv_dinner',
+						},
+						existingBookings: remaining,
+						existingHolds: holds,
+						tableBlocks: blocks,
+						nowMs,
+					})
+					if (res.assigned) {
+						const swapped = applySwaps(remaining, res.swaps)
+						swapped.push({
+							...target,
+							partySize: step.partySize,
+							localStartMin: slotMin,
+							startAt,
+							endAt,
+							tableIds: [...res.tableIds],
+							combinationId: res.combinationId,
+							areaId: res.areaId,
+						})
+						bookings = swapped
+					}
+				}
+				break
+			}
+			case 'cancel': {
+				const cancellable = bookings.filter(
+					(b) => b.status === 'booked' || b.status === 'confirmed',
+				)
+				if (cancellable.length > 0) {
+					const target = cancellable[step.targetIndex % cancellable.length]!
+					bookings = bookings.map((b) =>
+						b.id === target.id ? { ...b, status: 'cancelled' } : b,
+					)
+				}
+				break
+			}
+			case 'seat': {
+				const seatable = bookings.filter(
+					(b) =>
+						b.status === 'booked' ||
+						b.status === 'confirmed' ||
+						b.status === 'arrived' ||
+						b.status === 'partially_arrived',
+				)
+				if (seatable.length > 0) {
+					const target = seatable[step.targetIndex % seatable.length]!
+					const nextStatus =
+						target.status === 'booked' || target.status === 'confirmed'
+							? 'arrived'
+							: 'seated'
+					bookings = bookings.map((b) =>
+						b.id === target.id ? { ...b, status: nextStatus } : b,
+					)
+				}
+				break
+			}
+			case 'finish': {
+				const finishable = bookings.filter(
+					(b) => b.status === 'seated' || b.status === 'partially_seated',
+				)
+				if (finishable.length > 0) {
+					const target = finishable[step.targetIndex % finishable.length]!
+					bookings = bookings.map((b) =>
+						b.id === target.id ? { ...b, status: 'finished' } : b,
+					)
+				}
+				break
+			}
+			case 'no_show': {
+				const candidates = bookings.filter(
+					(b) => b.status === 'booked' || b.status === 'confirmed',
+				)
+				if (candidates.length > 0) {
+					const target = candidates[step.targetIndex % candidates.length]!
+					bookings = bookings.map((b) =>
+						b.id === target.id ? { ...b, status: 'no_show' } : b,
+					)
+				}
+				break
+			}
+			case 'block': {
+				if (config.tables.length > 0) {
+					const tbl = config.tables[step.targetIndex % config.tables.length]!
+					const blkStart = slotMinToMs(slotMin)
+					const blkEnd = slotMinToMs(slotMin + 60)
+					const hasHardConflict =
+						bookings.some(
+							(b) =>
+								b.status !== 'cancelled' &&
+								b.status !== 'no_show' &&
+								b.status !== 'finished' &&
+								b.tableIds.includes(tbl.id) &&
+								b.startAt < blkEnd &&
+								blkStart < b.endAt &&
+								isBookingHardLocked({
+									status: b.status,
+									tableLocked: b.tableLocked,
+									startAt: b.startAt,
+									nowMs,
+									assignmentFreezeMin: config.settings.assignmentFreezeMin,
+								}),
+						) ||
+						holds.some(
+							(h) =>
+								h.tableIds.includes(tbl.id) &&
+								h.startAt < blkEnd &&
+								blkStart < h.endAt,
+						)
+					if (!hasHardConflict) {
+						const candidateBlocks: AssignBlockRecord[] = [
+							...blocks,
+							{
+								id: `blk_step_${stepIndex}`,
+								tableIds: [tbl.id],
+								startAt: blkStart,
+								endAt: blkEnd,
+							},
+						]
+						const reflowed = reflowDay({
+							config,
+							existingBookings: bookings,
+							existingHolds: holds,
+							tableBlocks: candidateBlocks,
+							nowMs,
+						})
+						if (
+							!reflowed.budgetExhausted &&
+							reflowed.unresolvable.length === 0 &&
+							reflowed.conflicts.length === 0
+						) {
+							blocks.push({
+								id: `blk_step_${stepIndex}`,
+								tableIds: [tbl.id],
+								startAt: blkStart,
+								endAt: blkEnd,
+							})
+							bookings = bookings.map((b) => {
+								const assigned = reflowed.assignments.get(b.id)
+								if (!assigned) return b
+								return {
+									...b,
+									tableIds: [...assigned.tableIds],
+									combinationId: assigned.combinationId,
+								}
+							})
+						}
+					}
+				}
+				break
+			}
+			case 'settings': {
+				config = {
+					...config,
+					settings: {
+						...config.settings,
+						bufferMin: step.bufferMin,
+					},
+				}
+				const reflowed = reflowDay({
+					config,
+					existingBookings: bookings,
+					existingHolds: holds,
+					tableBlocks: blocks,
+					nowMs,
+				})
+				if (
+					!reflowed.budgetExhausted &&
+					reflowed.unresolvable.length === 0 &&
+					reflowed.conflicts.length === 0
+				) {
+					bookings = bookings.map((b) => {
+						const assigned = reflowed.assignments.get(b.id)
+						if (!assigned) return b
+						return {
+							...b,
+							tableIds: [...assigned.tableIds],
+							combinationId: assigned.combinationId,
+						}
+					})
+				}
+				break
+			}
+			case 'clock': {
+				nowMs += step.clockDeltaMin * 60_000
+				holds = holds.filter(
+					(h) => h.expiresAt === undefined || h.expiresAt > nowMs,
+				)
+				break
+			}
+		}
+
+		const invariants = verifyDayInvariants({
+			config,
+			existingBookings: bookings,
+			previousBookings,
+			existingHolds: holds,
+			tableBlocks: blocks,
+			nowMs,
+		})
+		stepVerifications.push({
+			stepIndex,
+			opKind: step.kind,
+			invariants,
+		})
+	}
+
+	return {
+		stepsExecuted: seqScenario.steps.length,
+		stepVerifications,
 	}
 }

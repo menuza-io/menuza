@@ -14,10 +14,11 @@ describe('booking state machine, capacity consumption, undo rules, and quick act
 
 	it('defines all 13 statuses and 4 actors', () => {
 		expect(RESERVATION_STATUSES).toEqual([
+			'requested',
 			'pending_payment',
-			'pending_approval',
 			'booked',
 			'confirmed',
+			'partially_arrived',
 			'arrived',
 			'partially_seated',
 			'seated',
@@ -26,7 +27,6 @@ describe('booking state machine, capacity consumption, undo rules, and quick act
 			'no_show',
 			'declined',
 			'expired',
-			'disputed',
 		])
 		expect(RESERVATION_ACTORS).toEqual(['guest', 'operator', 'system', 'voice'])
 		expect(FINISHED_UNDO_WINDOW_MS).toBe(30 * 60_000)
@@ -34,14 +34,16 @@ describe('booking state machine, capacity consumption, undo rules, and quick act
 
 	it('correctly identifies which statuses consume table capacity (Invariant I2)', () => {
 		const consuming = [
+			'pending_payment',
 			'booked',
 			'confirmed',
+			'partially_arrived',
 			'arrived',
 			'partially_seated',
 			'seated',
 		] as const
 		const nonConsuming = [
-			'pending_payment',
+			'requested',
 			'pending_approval',
 			'finished',
 			'cancelled',
@@ -57,6 +59,9 @@ describe('booking state machine, capacity consumption, undo rules, and quick act
 		for (const s of nonConsuming) {
 			expect(consumesCapacity(s)).toBe(false)
 		}
+		expect(consumesCapacity('requested', { requestHoldsCapacity: true })).toBe(
+			true,
+		)
 	})
 
 	it('enforces allowed and forbidden transitions per actor (guest, operator, system, voice)', () => {
