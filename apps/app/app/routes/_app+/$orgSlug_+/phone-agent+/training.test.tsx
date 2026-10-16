@@ -59,6 +59,7 @@ describe('training rules empty state', () => {
 			),
 		).toBeTruthy()
 		expect(screen.queryByText(/Start with an example/)).toBeNull()
+		expect(screen.getByRole('button', { name: /Add rule/ })).toBeTruthy()
 	})
 
 	it('offers the examples when the vertical has some', async () => {
@@ -79,9 +80,27 @@ describe('training rules empty state', () => {
 		).toBeTruthy()
 	})
 
-	it('asks a read-only member to add nothing', async () => {
-		await renderEmpty({ canUpdate: false })
+	it('tells a read-only member who can add rules', async () => {
+		await renderEmpty({
+			canUpdate: false,
+			verticalUi: {
+				ruleExamples: [
+					{
+						category: 'general',
+						title: { id: 'Mention the daily special' },
+						description: { id: 'Tell callers about the special.' },
+					},
+				],
+			},
+		})
+		expect(
+			screen.getByText('Ask an administrator to add training rules.'),
+		).toBeTruthy()
 		expect(screen.queryByText(/Add a rule to teach/)).toBeNull()
 		expect(screen.queryByText(/Start with an example/)).toBeNull()
+		expect(screen.queryByRole('button', { name: /Add rule/ })).toBeNull()
+		expect(
+			screen.queryByRole('button', { name: 'Mention the daily special' }),
+		).toBeNull()
 	})
 })

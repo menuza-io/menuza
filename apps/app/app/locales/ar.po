@@ -617,7 +617,7 @@ msgstr "اكتمل {doneCount} من {total}"
 msgid "{doneCount} of {total} steps done"
 msgstr "اكتملت {doneCount} من {total} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:158
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, zero {لم تُستبعد أي قاعدة.} one {تم استبعاد قاعدة واحدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} two {تم استبعاد قاعدتين لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} few {تم استبعاد # قواعد لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} many {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} other {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.}}"
 
@@ -1560,7 +1560,7 @@ msgstr "إضافة {0}"
 msgid "Add {label}"
 msgstr "إضافة {label}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:224
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
 msgid "Add a {categoryLabel} rule"
 msgstr "إضافة قاعدة {categoryLabel}"
 
@@ -1674,7 +1674,7 @@ msgstr "أضف سببًا للتغيير."
 msgid "Add a reason."
 msgstr "أضف سببًا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:184
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
 msgid "Add a rule to teach the agent how your business works."
 msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك التجاري."
 
@@ -1958,9 +1958,9 @@ msgstr "إضافة مراجعة"
 #~ msgstr "إضافة مراجع"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 msgid "Add rule"
 msgstr "إضافة قاعدة"
 
@@ -2800,6 +2800,10 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 #: app/components/ai/global-ai-panel.tsx:532
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:130
+msgid "Ask an administrator to add training rules."
+msgstr "اطلب من أحد المسؤولين إضافة قواعد التدريب."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:681
 msgid "Ask anything…"
@@ -3658,8 +3662,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1084
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
@@ -3785,7 +3789,7 @@ msgstr "الإكراميات النقدية بلا رسوم بطاقة. حتى 1
 msgid "Cash tips: {from} to {to}"
 msgstr "الإكراميات النقدية: من {from} إلى {to}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:476
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:480
 msgid "Category"
 msgstr "التصنيف"
 
@@ -5914,11 +5918,11 @@ msgstr "حذف"
 msgid "Delete “{name}”?"
 msgstr "حذف «{name}»؟"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:381
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:385
 msgid "Delete \"{ruleTitle}\""
 msgstr "حذف \"{ruleTitle}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:659
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:663
 msgid "Delete \"{ruleTitle}\"?"
 msgstr "حذف \"{ruleTitle}\"؟"
 
@@ -6068,7 +6072,7 @@ msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 msgid "Delete review"
 msgstr "حذف المراجعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:688
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:692
 msgid "Delete rule"
 msgstr "حذف القاعدة"
 
@@ -6694,7 +6698,7 @@ msgstr "انصراف مبكر"
 msgid "Edit"
 msgstr "تعديل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:372
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:376
 msgid "Edit \"{ruleTitle}\""
 msgstr "تعديل \"{ruleTitle}\""
 
@@ -6777,7 +6781,7 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Edit role"
 msgstr "تعديل الدور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
 msgid "Edit rule"
 msgstr "تعديل القاعدة"
 
@@ -11383,7 +11387,7 @@ msgstr "لا توجد ردود بعد."
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:252
 msgid "No rules yet."
 msgstr "لا توجد قواعد بعد."
 
@@ -11476,7 +11480,7 @@ msgstr "لا إكراميات لتقسيمها في هذه الفترة"
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:174
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:182
 msgid "No training rules yet"
 msgstr "لا توجد قواعد تدريب بعد"
 
@@ -13688,7 +13692,7 @@ msgstr "طباعة هذا العرض"
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:549
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:553
 msgid "Priority"
 msgstr "الأولوية"
 
@@ -14956,7 +14960,7 @@ msgstr "الصف {rowNumber}"
 msgid "Rules for"
 msgstr "القواعد الخاصة بـ"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:142
 msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 msgstr "تعلّم القواعد الوكيل كيف يعمل نشاطك التجاري. تُضمَّن القواعد ذات الأولوية العالية أولًا، وعندما تكثر القواعد يُستبعد الباقي."
 
@@ -15198,7 +15202,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
@@ -16851,7 +16855,7 @@ msgstr "بدء قائمة مهام الموظف الجديد"
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:177
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
 msgid "Start with an example and change it to match your business."
 msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري."
 
@@ -17764,7 +17768,7 @@ msgstr "الوكيل متوقف، لذا ليس لهذه الإعدادات أي
 msgid "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 msgstr "سيتوقف الوكيل عن الرد على هذا الرقم. حدّث إعادة توجيه المكالمات أو توجيه SIP حتى يظل المتصلون قادرين على الوصول إليك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:662
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:666
 msgid "The agent stops following this rule. To pause it instead, turn it off."
 msgstr "سيتوقف الوكيل عن اتباع هذه القاعدة. لإيقافها مؤقتًا بدلًا من ذلك، عطّلها."
 
@@ -19036,7 +19040,7 @@ msgstr "تظهر هنا إكراميات الطلبات عبر الإنترنت 
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:501
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:505
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
@@ -19187,7 +19191,7 @@ msgstr "التدريب"
 #: app/components/app-sidebar.tsx:377
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:383
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "قواعد التدريب"
 
@@ -19904,7 +19908,7 @@ msgstr "الرابط:"
 msgid "Usage"
 msgstr "الاستخدام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:358
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:362
 msgid "Use \"{ruleTitle}\""
 msgstr "استخدام \"{ruleTitle}\""
 
@@ -20043,7 +20047,7 @@ msgstr "استخدم المفتاح في إعدادات الوكيل."
 msgid "Use these if something goes wrong. They take effect on the next call."
 msgstr "استخدم هذه الخيارات إذا حدث خطأ ما. يسري مفعولها من المكالمة التالية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:603
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:607
 msgid "Use this rule on calls"
 msgstr "تطبيق هذه القاعدة على المكالمات"
 
@@ -20820,7 +20824,7 @@ msgstr "ما يفعله الوكيل في كل مكالمة."
 msgid "What the agent says"
 msgstr "ما يقوله الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:525
 msgid "What the agent should do"
 msgstr "ما يجب أن يفعله الوكيل"
 
@@ -21185,7 +21189,7 @@ msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقو�
 #~ msgid "Write a reply..."
 #~ msgstr "اكتب رداً..."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:450
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
@@ -21283,7 +21287,7 @@ msgstr "أنت"
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "لديك بالفعل {MAX_CUSTOM_DASHBOARDS} لوحة تحكم في هذه المؤسسة، وهو الحد الأقصى المسموح به. احذف واحدة لإنشاء أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:620
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك بالفعل {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 
@@ -21424,7 +21428,7 @@ msgstr "ليست لديك صلاحية للقيام بذلك."
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:162
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:170
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 

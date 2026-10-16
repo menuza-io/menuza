@@ -619,7 +619,7 @@ msgstr "{doneCount} of {total} done"
 msgid "{doneCount} of {total} steps done"
 msgstr "{doneCount} of {total} steps done"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:158
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 
@@ -1562,7 +1562,7 @@ msgstr ""
 msgid "Add {label}"
 msgstr "Add {label}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:224
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
 msgid "Add a {categoryLabel} rule"
 msgstr "Add a {categoryLabel} rule"
 
@@ -1676,7 +1676,7 @@ msgstr "Add a reason for the change."
 msgid "Add a reason."
 msgstr "Add a reason."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:184
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
 msgid "Add a rule to teach the agent how your business works."
 msgstr "Add a rule to teach the agent how your business works."
 
@@ -1960,9 +1960,9 @@ msgstr ""
 #~ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 msgid "Add rule"
 msgstr "Add rule"
 
@@ -2802,6 +2802,10 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 #: app/components/ai/global-ai-panel.tsx:532
 msgid "Ask AI"
 msgstr "Ask AI"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:130
+msgid "Ask an administrator to add training rules."
+msgstr "Ask an administrator to add training rules."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:681
 msgid "Ask anything…"
@@ -3660,8 +3664,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1084
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
@@ -3787,7 +3791,7 @@ msgstr "Cash tips have no card fee. Up to 10 percent."
 msgid "Cash tips: {from} to {to}"
 msgstr "Cash tips: {from} to {to}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:476
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:480
 msgid "Category"
 msgstr "Category"
 
@@ -5916,11 +5920,11 @@ msgstr ""
 msgid "Delete “{name}”?"
 msgstr "Delete “{name}”?"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:381
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:385
 msgid "Delete \"{ruleTitle}\""
 msgstr "Delete \"{ruleTitle}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:659
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:663
 msgid "Delete \"{ruleTitle}\"?"
 msgstr "Delete \"{ruleTitle}\"?"
 
@@ -6070,7 +6074,7 @@ msgstr "Delete redirect rule?"
 msgid "Delete review"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:688
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:692
 msgid "Delete rule"
 msgstr "Delete rule"
 
@@ -6696,7 +6700,7 @@ msgstr "Early out"
 msgid "Edit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:372
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:376
 msgid "Edit \"{ruleTitle}\""
 msgstr "Edit \"{ruleTitle}\""
 
@@ -6779,7 +6783,7 @@ msgstr "Edit redirect"
 msgid "Edit role"
 msgstr "Edit role"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
 msgid "Edit rule"
 msgstr "Edit rule"
 
@@ -11385,7 +11389,7 @@ msgstr "No responses yet."
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:252
 msgid "No rules yet."
 msgstr "No rules yet."
 
@@ -11478,7 +11482,7 @@ msgstr "No tips to divide in this range"
 msgid "No tools available."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:174
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:182
 msgid "No training rules yet"
 msgstr "No training rules yet"
 
@@ -13690,7 +13694,7 @@ msgstr "Print this view"
 msgid "Prioritize these tasks"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:549
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:553
 msgid "Priority"
 msgstr "Priority"
 
@@ -14958,7 +14962,7 @@ msgstr "Row {rowNumber}"
 msgid "Rules for"
 msgstr "Rules for"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:142
 msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 msgstr "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 
@@ -15200,7 +15204,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
@@ -16853,7 +16857,7 @@ msgstr "Start the new-hire checklist"
 msgid "Start with a template"
 msgstr "Start with a template"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:177
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
 msgid "Start with an example and change it to match your business."
 msgstr "Start with an example and change it to match your business."
 
@@ -17766,7 +17770,7 @@ msgstr "The agent is off, so these have no effect yet."
 msgid "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 msgstr "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:662
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:666
 msgid "The agent stops following this rule. To pause it instead, turn it off."
 msgstr "The agent stops following this rule. To pause it instead, turn it off."
 
@@ -19038,7 +19042,7 @@ msgstr "Tips on online orders and cash tips people declare on their time cards a
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:501
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:505
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
@@ -19189,7 +19193,7 @@ msgstr "Training"
 #: app/components/app-sidebar.tsx:377
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:383
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "Training rules"
 
@@ -19906,7 +19910,7 @@ msgstr "URL:"
 msgid "Usage"
 msgstr "Usage"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:358
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:362
 msgid "Use \"{ruleTitle}\""
 msgstr "Use \"{ruleTitle}\""
 
@@ -20045,7 +20049,7 @@ msgstr "Use the switch in Agent settings."
 msgid "Use these if something goes wrong. They take effect on the next call."
 msgstr "Use these if something goes wrong. They take effect on the next call."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:603
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:607
 msgid "Use this rule on calls"
 msgstr "Use this rule on calls"
 
@@ -20822,7 +20826,7 @@ msgstr "What the agent does on each call."
 msgid "What the agent says"
 msgstr "What the agent says"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:525
 msgid "What the agent should do"
 msgstr "What the agent should do"
 
@@ -21187,7 +21191,7 @@ msgstr "Write a policy. You record when they have read and accepted it."
 #~ msgid "Write a reply..."
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:450
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "Write it the way you'd explain it to a new staff member."
 
@@ -21285,7 +21289,7 @@ msgstr ""
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:620
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 
@@ -21426,7 +21430,7 @@ msgstr "You don't have permission to do that."
 msgid "You don't have permission to see this report's data."
 msgstr "You don't have permission to see this report's data."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:162
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:170
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 
