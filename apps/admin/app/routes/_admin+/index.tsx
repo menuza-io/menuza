@@ -12,6 +12,7 @@ import {
 	db,
 	eq,
 	gt,
+	sql,
 } from '@repo/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { PageHeader } from '@repo/ui/page-header'
@@ -31,7 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		totalOrganizations,
 		activeOrganizations,
 		totalNotes,
-		totalSessions,
+		activeUsers,
 		recentUsers,
 		recentOrganizations,
 		subscriptionStats,
@@ -63,9 +64,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 			([personal, org]) => (personal[0]?.count ?? 0) + (org[0]?.count ?? 0),
 		),
 
-		// Active sessions count
+		// Users with at least one unexpired session (one user can have many)
 		db
-			.select({ count: count() })
+			.select({ count: sql<number>`count(distinct ${Session.userId})` })
 			.from(Session)
 			.where(gt(Session.expirationDate, new Date()))
 			.then(([row]) => row?.count ?? 0),
@@ -105,7 +106,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			totalOrganizations,
 			activeOrganizations,
 			totalNotes,
-			totalSessions,
+			activeUsers,
 			recentUsers,
 			recentOrganizations,
 			subscriptionStats,
@@ -232,7 +233,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
-							<Trans>Active Sessions</Trans>
+							<Trans>Active Users</Trans>
 						</CardTitle>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -252,7 +253,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{metrics.totalSessions.toLocaleString()}
+							{metrics.activeUsers.toLocaleString()}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							<Trans>Currently logged in users</Trans>
