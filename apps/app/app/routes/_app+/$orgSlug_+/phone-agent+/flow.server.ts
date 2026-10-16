@@ -1,6 +1,7 @@
 import {
 	defaultFlowFor,
 	FlowGraphSchema,
+	pickSafeTransferTarget,
 	type FlowGraph,
 	type FlowValidationIssue,
 } from '@repo/phone-agent'
@@ -23,6 +24,7 @@ import {
 	publishFlow,
 	saveDraftFlow,
 } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { listAgentLines } from '#app/utils/phone-agent/runtime-config.server.ts'
 import { recordFlowPublished } from '#app/utils/phone-agent/settings-history.server.ts'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
 
@@ -48,10 +50,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// Sequential on purpose: both helpers lazily create rows on first access.
 	const draft = await getDraftFlow(orgId)
 	const published = await getPublishedFlow(orgId)
-	const [versions, canUpdate, agent] = await Promise.all([
+	const [versions, canUpdate, agent, agentLines] = await Promise.all([
 		listPublishedFlowVersions(orgId),
 		canUpdatePhoneAgent(request, orgId),
 		getPhoneAgent(orgId),
+		listAgentLines(orgId),
 	])
 
 	return {
@@ -61,8 +64,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			: null,
 		versions,
 		canUpdate,
-		// Transfer steps without their own number call this one.
-		hasStaffPhone: Boolean(agent.settings.escalationPhone),
+		// Transfer steps without their own number call the staff phone even
+		// when "Transfer to staff" is off (press 0 and the assistant need both),
+		// unless it rings one of the agent's own lines.
+		hasStaffPhone: Boolean(
+			pickSafeTransferTarget([agent.settings.escalationPhone], agentLines),
+		),
 		draftDiffersFromPublished: published
 			? JSON.stringify(draft.graph) !== JSON.stringify(published.graph)
 			: true,

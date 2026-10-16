@@ -17,6 +17,7 @@ import {
 	type FlowNodeData,
 	type FlowNodeType,
 	type FlowValidationIssue,
+	type FlowWarning,
 } from '@repo/phone-agent'
 import {
 	AlertDialog,
@@ -119,6 +120,20 @@ function groupIssues(issues: FlowValidationIssue[], key: 'nodeId' | 'edgeId') {
 		map.set(id, [...(map.get(id) ?? []), issue])
 	}
 	return map
+}
+
+function FlowWarningText({ warning }: { warning: FlowWarning }) {
+	const { label } = warning
+	switch (warning.code) {
+		case 'transfer_no_phone':
+			return (
+				<Trans>
+					"{label}" has no number to call, so callers go straight to its
+					no-answer path. Enter a number for this step, or set a staff phone
+					number in Setup.
+				</Trans>
+			)
+	}
 }
 
 // Interpolated so Lingui keeps the braces instead of reading a placeholder.
@@ -532,7 +547,7 @@ export function FlowEditor({
 									variant={
 										listedIssues.length
 											? 'destructive'
-											: warnings.length
+											: warningCount
 												? 'outline'
 												: 'ghost'
 									}
@@ -542,15 +557,15 @@ export function FlowEditor({
 						>
 							<Icon
 								name={
-									listedIssues.length || warnings.length
+									listedIssues.length || warningCount
 										? 'alert-triangle'
 										: 'check'
 								}
 							/>
 							{listedIssues.length ? (
 								<Trans>{issueCount} to fix</Trans>
-							) : warnings.length ? (
-								<Trans>{warningCount} to review</Trans>
+							) : warningCount ? (
+								<Trans>{warningCount} warnings to review</Trans>
 							) : (
 								<Trans>Ready</Trans>
 							)}
@@ -560,7 +575,7 @@ export function FlowEditor({
 								<PopoverTitle>
 									{listedIssues.length ? (
 										<Trans>Fix before publishing</Trans>
-									) : warnings.length ? (
+									) : warningCount ? (
 										<Trans>Check before publishing</Trans>
 									) : (
 										<Trans>No issues found</Trans>
@@ -569,7 +584,7 @@ export function FlowEditor({
 								<PopoverDescription>
 									{listedIssues.length ? (
 										<Trans>Select an issue to jump to its step.</Trans>
-									) : warnings.length ? (
+									) : warningCount ? (
 										<Trans>
 											These don't stop publishing, but callers may not get what
 											they expect.
@@ -579,7 +594,7 @@ export function FlowEditor({
 									)}
 								</PopoverDescription>
 							</PopoverHeader>
-							{listedIssues.length || warnings.length ? (
+							{listedIssues.length || warningCount ? (
 								<ul className="max-h-72 space-y-1 overflow-y-auto">
 									{listedIssues.map((issue, index) => (
 										<li key={`${issue.code}-${index}`}>
@@ -617,7 +632,7 @@ export function FlowEditor({
 													className="text-warning mt-0.5 shrink-0"
 												/>
 												<span className="text-foreground">
-													{warning.message}
+													<FlowWarningText warning={warning} />
 												</span>
 											</button>
 										</li>
@@ -630,6 +645,7 @@ export function FlowEditor({
 								<Link
 									to={staffPhoneHref}
 									className="text-xs underline underline-offset-4"
+									onClick={() => setIssuesOpen(false)}
 								>
 									<Trans>Set a staff phone number in Setup</Trans>
 								</Link>

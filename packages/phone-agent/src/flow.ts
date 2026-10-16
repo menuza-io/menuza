@@ -401,16 +401,22 @@ export function validateFlowGraph(graph: FlowGraph): FlowValidationIssue[] {
 	return issues
 }
 
-/** Problems that don't block publishing but change what callers get. */
+/**
+ * Problems that don't block publishing but change what callers get. The UI
+ * words each code itself, so this package carries no UI strings.
+ */
 export type FlowWarning = {
 	code: 'transfer_no_phone'
-	message: string
 	nodeId: string
+	/** The step's label, for the UI's sentence. */
+	label: string
 }
 
 /**
  * A transfer step without its own number calls the staff phone from Setup.
- * Without one, the call goes straight to the step's "no answer" path.
+ * Without one it can dial, the call goes straight to the step's "no answer"
+ * path. `hasStaffPhone` should already exclude a staff phone the runtime
+ * refuses, such as one that rings the agent's own line.
  */
 export function flowWarnings(
 	graph: FlowGraph,
@@ -421,8 +427,8 @@ export function flowWarnings(
 		.filter((node) => node.type === 'transfer' && !node.data.phone)
 		.map((node) => ({
 			code: 'transfer_no_phone',
-			message: `"${node.data.label}" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Setup.`,
 			nodeId: node.id,
+			label: node.data.label,
 		}))
 }
 

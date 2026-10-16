@@ -164,7 +164,11 @@ describe('flowWarnings', () => {
 	it('warns when a transfer step has no number and no staff phone is set', () => {
 		const graph = createDefaultFlowGraph()
 		expect(flowWarnings(graph, { hasStaffPhone: false })).toEqual([
-			expect.objectContaining({ code: 'transfer_no_phone', nodeId: 'staff' }),
+			{
+				code: 'transfer_no_phone',
+				nodeId: 'staff',
+				label: expect.any(String),
+			},
 		])
 		expect(flowWarnings(graph, { hasStaffPhone: true })).toEqual([])
 	})
