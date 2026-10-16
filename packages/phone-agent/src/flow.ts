@@ -401,6 +401,31 @@ export function validateFlowGraph(graph: FlowGraph): FlowValidationIssue[] {
 	return issues
 }
 
+/** Problems that don't block publishing but change what callers get. */
+export type FlowWarning = {
+	code: 'transfer_no_phone'
+	message: string
+	nodeId: string
+}
+
+/**
+ * A transfer step without its own number calls the staff phone from Setup.
+ * Without one, the call goes straight to the step's "no answer" path.
+ */
+export function flowWarnings(
+	graph: FlowGraph,
+	context: { hasStaffPhone: boolean },
+): FlowWarning[] {
+	if (context.hasStaffPhone) return []
+	return graph.nodes
+		.filter((node) => node.type === 'transfer' && !node.data.phone)
+		.map((node) => ({
+			code: 'transfer_no_phone',
+			message: `"${node.data.label}" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Setup.`,
+			nodeId: node.id,
+		}))
+}
+
 export function parseFlowGraph(value: unknown): FlowGraph {
 	const raw = typeof value === 'string' ? (JSON.parse(value) as unknown) : value
 	return FlowGraphSchema.parse(raw)

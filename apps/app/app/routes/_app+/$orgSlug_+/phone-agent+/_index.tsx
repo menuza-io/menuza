@@ -727,7 +727,10 @@ function SettingsForm({
 							) : null}
 						</div>
 
-						<div className="flex flex-col gap-3">
+						<div
+							id="staff-transfer"
+							className="flex scroll-mt-24 flex-col gap-3"
+						>
 							<div className="flex items-center justify-between gap-4">
 								<Label htmlFor="phone-agent-escalate">
 									<Trans>Transfer to staff when the agent can't help</Trans>

@@ -17,6 +17,7 @@ import {
 } from '#app/utils/phone-agent/access.server.ts'
 import {
 	getDraftFlow,
+	getPhoneAgent,
 	getPublishedFlow,
 	listPublishedFlowVersions,
 	publishFlow,
@@ -47,9 +48,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// Sequential on purpose: both helpers lazily create rows on first access.
 	const draft = await getDraftFlow(orgId)
 	const published = await getPublishedFlow(orgId)
-	const [versions, canUpdate] = await Promise.all([
+	const [versions, canUpdate, agent] = await Promise.all([
 		listPublishedFlowVersions(orgId),
 		canUpdatePhoneAgent(request, orgId),
+		getPhoneAgent(orgId),
 	])
 
 	return {
@@ -59,6 +61,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			: null,
 		versions,
 		canUpdate,
+		// Transfer steps without their own number call this one.
+		hasStaffPhone: Boolean(agent.settings.escalationPhone),
 		draftDiffersFromPublished: published
 			? JSON.stringify(draft.graph) !== JSON.stringify(published.graph)
 			: true,

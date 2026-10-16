@@ -97,6 +97,8 @@ export default function PhoneAgentTransfers() {
 	const data = useLoaderData<LoaderData>()
 	const { canUpdate } = data
 	const staffPhone = data.escalationPhone
+	// Press 0 and the assistant's general transfer only ring this number.
+	const hasStaffPhone = Boolean(data.autoEscalate && data.escalationPhone)
 	const [transfers, setTransfers] = useState(data.transfers)
 	const [contacts, setContacts] = useState(data.contacts)
 	const [cases, setCases] = useState(data.transferCases)
@@ -202,7 +204,7 @@ export default function PhoneAgentTransfers() {
 						<Card>
 							<CardContent className="flex flex-col gap-5">
 								<p className="text-muted-foreground text-sm">
-									{data.autoEscalate && data.escalationPhone ? (
+									{hasStaffPhone ? (
 										<Trans>Staff phone: {staffPhone}</Trans>
 									) : (
 										<Trans>
@@ -211,7 +213,7 @@ export default function PhoneAgentTransfers() {
 										</Trans>
 									)}{' '}
 									<Link
-										to={`/${orgSlug}/phone-agent`}
+										to={`/${orgSlug}/phone-agent#staff-transfer`}
 										className="underline underline-offset-4"
 									>
 										<Trans>Change in Setup</Trans>
@@ -245,10 +247,31 @@ export default function PhoneAgentTransfers() {
 												Callers can press 0 at any time to be transferred.
 											</Trans>
 										</p>
+										{transfers.pressZeroForStaff && !hasStaffPhone ? (
+											<p
+												id="transfer-press-zero-warning"
+												className="text-warning flex items-start gap-1.5 text-xs"
+											>
+												<Icon
+													name="alert-triangle"
+													size="xs"
+													className="mt-0.5 shrink-0"
+												/>
+												<Trans>
+													Pressing 0 won't reach anyone until you set a staff
+													phone number in Setup.
+												</Trans>
+											</p>
+										) : null}
 									</div>
 									<Switch
 										id="transfer-press-zero"
 										checked={transfers.pressZeroForStaff}
+										aria-describedby={
+											transfers.pressZeroForStaff && !hasStaffPhone
+												? 'transfer-press-zero-warning'
+												: undefined
+										}
 										disabled={disabled}
 										onCheckedChange={(checked) =>
 											setTransfers((current) => ({

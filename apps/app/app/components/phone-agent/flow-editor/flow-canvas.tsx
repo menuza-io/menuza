@@ -11,6 +11,7 @@ import {
 import {
 	FLOW_NODE_TYPES,
 	FlowGraphSchema,
+	flowWarnings,
 	validateFlowGraph,
 	type FlowGraph,
 	type FlowNodeData,
@@ -88,6 +89,10 @@ export type FlowEditorProps = {
 	readOnly: boolean
 	backHref: string
 	testHref: string
+	/** Whether Setup has a staff phone for transfer steps without a number. */
+	hasStaffPhone: boolean
+	/** Setup, scrolled to the staff phone setting. */
+	staffPhoneHref: string
 	published: { version: number; publishedAt: Date | null } | null
 	draftDiffersFromPublished: boolean
 	pendingIntent: FlowEditorIntent | null
@@ -158,6 +163,8 @@ export function FlowEditor({
 	readOnly,
 	backHref,
 	testHref,
+	hasStaffPhone,
+	staffPhoneHref,
 	published,
 	draftDiffersFromPublished,
 	pendingIntent,
@@ -206,6 +213,10 @@ export function FlowEditor({
 	const issues = useMemo(
 		() => JSON.parse(issuesJson) as FlowValidationIssue[],
 		[issuesJson],
+	)
+	const warnings = useMemo(
+		() => flowWarnings(graph, { hasStaffPhone }),
+		[graph, hasStaffPhone],
 	)
 
 	useDirtyBeforeUnload(dirty)
@@ -462,6 +473,7 @@ export function FlowEditor({
 
 	const publishedVersion = published?.version
 	const issueCount = listedIssues.length
+	const warningCount = warnings.length
 	let status: ReactNode
 	if (pendingIntent === 'save') status = <Trans>Saving…</Trans>
 	else if (pendingIntent === 'publish') status = <Trans>Publishing…</Trans>
@@ -517,14 +529,28 @@ export function FlowEditor({
 						<PopoverTrigger
 							render={
 								<Button
-									variant={listedIssues.length ? 'destructive' : 'ghost'}
+									variant={
+										listedIssues.length
+											? 'destructive'
+											: warnings.length
+												? 'outline'
+												: 'ghost'
+									}
 									size="sm"
 								/>
 							}
 						>
-							<Icon name={listedIssues.length ? 'alert-triangle' : 'check'} />
+							<Icon
+								name={
+									listedIssues.length || warnings.length
+										? 'alert-triangle'
+										: 'check'
+								}
+							/>
 							{listedIssues.length ? (
 								<Trans>{issueCount} to fix</Trans>
+							) : warnings.length ? (
+								<Trans>{warningCount} to review</Trans>
 							) : (
 								<Trans>Ready</Trans>
 							)}
@@ -534,6 +560,8 @@ export function FlowEditor({
 								<PopoverTitle>
 									{listedIssues.length ? (
 										<Trans>Fix before publishing</Trans>
+									) : warnings.length ? (
+										<Trans>Check before publishing</Trans>
 									) : (
 										<Trans>No issues found</Trans>
 									)}
@@ -541,12 +569,17 @@ export function FlowEditor({
 								<PopoverDescription>
 									{listedIssues.length ? (
 										<Trans>Select an issue to jump to its step.</Trans>
+									) : warnings.length ? (
+										<Trans>
+											These don't stop publishing, but callers may not get what
+											they expect.
+										</Trans>
 									) : (
 										<Trans>This call flow is ready to publish.</Trans>
 									)}
 								</PopoverDescription>
 							</PopoverHeader>
-							{listedIssues.length ? (
+							{listedIssues.length || warnings.length ? (
 								<ul className="max-h-72 space-y-1 overflow-y-auto">
 									{listedIssues.map((issue, index) => (
 										<li key={`${issue.code}-${index}`}>
@@ -568,7 +601,38 @@ export function FlowEditor({
 											</button>
 										</li>
 									))}
+									{warnings.map((warning) => (
+										<li key={`${warning.code}-${warning.nodeId}`}>
+											<button
+												type="button"
+												className="hover:bg-muted flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-start text-xs"
+												onClick={() => {
+													selectNode(warning.nodeId)
+													setIssuesOpen(false)
+												}}
+											>
+												<Icon
+													name="alert-triangle"
+													size="xs"
+													className="text-warning mt-0.5 shrink-0"
+												/>
+												<span className="text-foreground">
+													{warning.message}
+												</span>
+											</button>
+										</li>
+									))}
 								</ul>
+							) : null}
+							{warnings.some(
+								(warning) => warning.code === 'transfer_no_phone',
+							) ? (
+								<Link
+									to={staffPhoneHref}
+									className="text-xs underline underline-offset-4"
+								>
+									<Trans>Set a staff phone number in Setup</Trans>
+								</Link>
 							) : null}
 						</PopoverContent>
 					</Popover>
