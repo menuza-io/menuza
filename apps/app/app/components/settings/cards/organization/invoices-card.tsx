@@ -39,9 +39,13 @@ type Invoice = {
 
 type InvoicesCardProps = {
 	invoices: Invoice[]
+	invoicesUnavailable?: boolean
 }
 
-export function InvoicesCard({ invoices }: InvoicesCardProps) {
+export function InvoicesCard({
+	invoices,
+	invoicesUnavailable,
+}: InvoicesCardProps) {
 	const formatCurrency = (amount: number, currency: string) => {
 		return new Intl.NumberFormat('en-US', {
 			style: 'currency',
@@ -83,13 +87,19 @@ export function InvoicesCard({ invoices }: InvoicesCardProps) {
 				</FrameDescription>
 			</FrameHeader>
 			<FramePanel className="p-0">
-				{invoices.length === 0 ? (
+				{invoicesUnavailable ? (
+					<div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+						<Trans>Invoice history is temporarily unavailable.</Trans>
+					</div>
+				) : null}
+				{!invoicesUnavailable && invoices.length === 0 ? (
 					<EmptyState
 						title={t`No invoices found`}
 						description={t`Invoices will appear here once you have an active subscription.`}
 						icons={['file-text']}
 					/>
-				) : (
+				) : null}
+				{invoices.length > 0 ? (
 					<div className="space-y-3 p-6">
 						{invoices.map((invoice) => (
 							<Item key={invoice.id} size="sm">
@@ -155,7 +165,7 @@ export function InvoicesCard({ invoices }: InvoicesCardProps) {
 							</Item>
 						))}
 					</div>
-				)}
+				) : null}
 			</FramePanel>
 		</Frame>
 	)

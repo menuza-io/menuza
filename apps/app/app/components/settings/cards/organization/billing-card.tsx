@@ -54,12 +54,14 @@ type BillingCardProps = {
 		}
 	}
 	plansAndPrices?: Awaited<ReturnType<typeof getPlansAndPrices>> | null
+	plansUnavailable?: boolean
 	isClosedBeta?: boolean
 }
 
 export function BillingCard({
 	organization,
 	plansAndPrices,
+	plansUnavailable,
 	isClosedBeta,
 	currentPriceId,
 }: BillingCardProps & { currentPriceId?: string | null }) {
@@ -110,6 +112,14 @@ export function BillingCard({
 
 	return (
 		<div className="space-y-6">
+			{plansUnavailable ? (
+				<div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+					<Trans>
+						We could not load plan pricing right now. You can still manage an
+						existing subscription from the customer portal.
+					</Trans>
+				</div>
+			) : null}
 			{/* Current Subscription Status */}
 			<Card>
 				<CardHeader>
