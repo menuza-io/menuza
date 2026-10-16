@@ -9706,8 +9706,8 @@ msgstr "Loading names…"
 msgid "Loading notes"
 msgstr "Loading notes"
 
-#: app/components/command-menu.tsx:109
-msgid "Loading notes..."
+#: app/components/command-menu.tsx:201
+msgid "Searching…"
 msgstr ""
 
 #: app/components/staff/onboarding/onboarding-tab.tsx:107
@@ -11218,8 +11218,12 @@ msgstr ""
 msgid "No notes found"
 msgstr ""
 
-#: app/components/command-menu.tsx:111
-msgid "No notes found."
+#: app/components/command-menu.tsx:203
+msgid "No results found."
+msgstr ""
+
+#: app/components/command-menu.tsx:208
+msgid "Go to"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/notes.tsx:399
