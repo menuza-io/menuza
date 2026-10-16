@@ -817,7 +817,9 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 
 		await navigate('/:slug/reservations/settings', { slug: org.slug })
 		await expect(page.getByTestId('setup-readonly-banner')).toBeVisible()
-		await expect(page.getByTestId('setup-save-general-button')).toHaveCount(0)
+		await expect(page.getByTestId('setup-general-form')).toBeVisible()
+		await expect(page.getByTestId('setup-general-loading')).toHaveCount(0)
+		await expect(page.getByTestId('setup-save-general-button')).toBeDisabled()
 
 		await page.getByTestId('setup-tab-floor-plan').click()
 		await expect(page.getByTestId('floor-plan-save-button')).toBeDisabled()

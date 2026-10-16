@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
@@ -57,17 +58,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return null
 }
 
-const SHAPE_OPTIONS: ReadonlyArray<{ value: TableShape; label: string }> = [
-	{ value: 'round', label: 'Round' },
-	{ value: 'square', label: 'Square' },
-	{ value: 'rect', label: 'Rectangle' },
-	{ value: 'booth', label: 'Booth' },
-	{ value: 'bar', label: 'Bar' },
-	{ value: 'high_top', label: 'High-top' },
+const SHAPE_OPTIONS: ReadonlyArray<{
+	value: TableShape
+	label: MessageDescriptor
+}> = [
+	{ value: 'round', label: msg`Round` },
+	{ value: 'square', label: msg`Square` },
+	{ value: 'rect', label: msg`Rectangle` },
+	{ value: 'booth', label: msg`Booth` },
+	{ value: 'bar', label: msg`Bar` },
+	{ value: 'high_top', label: msg`High-top` },
 ]
 
 export default function ReservationsSettingsTablesRoute() {
 	const { _ } = useLingui()
+	const coversLabel = (minCovers: number, maxCovers: number) =>
+		_(msg`${minCovers}–${maxCovers} covers`)
+	const shapeLabel = (shape: string) => {
+		const option = SHAPE_OPTIONS.find((s) => s.value === shape)
+		return option ? _(option.label) : shape
+	}
 	const { orgSlug, selectedLocationId, canWrite, client, refreshSummary } =
 		useReservationsSetupContext()
 	const [searchParams] = useSearchParams()
@@ -864,7 +874,7 @@ export default function ReservationsSettingsTablesRoute() {
 								>
 									{SHAPE_OPTIONS.map((s) => (
 										<option key={s.value} value={s.value}>
-											{s.label}
+											{_(s.label)}
 										</option>
 									))}
 								</select>
@@ -989,10 +999,10 @@ export default function ReservationsSettingsTablesRoute() {
 														/>
 													</div>
 												) : (
-													`${table.minCovers}–${table.maxCovers} covers`
+													coversLabel(table.minCovers, table.maxCovers)
 												)}
 											</TableCell>
-											<TableCell>{table.shape}</TableCell>
+											<TableCell>{shapeLabel(table.shape)}</TableCell>
 											<TableCell>
 												<div className="flex flex-wrap gap-1">
 													{table.combinable ? (

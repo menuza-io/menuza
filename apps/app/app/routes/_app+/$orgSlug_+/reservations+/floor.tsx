@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
@@ -96,11 +97,11 @@ type OccupiedDropPromptState = {
 }
 
 const COURSE_STAGES = [
-	{ id: 'appetizer', label: 'Appetizer' },
-	{ id: 'main', label: 'Main' },
-	{ id: 'dessert', label: 'Dessert' },
-	{ id: 'check', label: 'Check' },
-	{ id: 'bussing', label: 'Bussing' },
+	{ id: 'appetizer', label: msg`Appetizer` },
+	{ id: 'main', label: msg`Main` },
+	{ id: 'dessert', label: msg`Dessert` },
+	{ id: 'check', label: msg`Check` },
+	{ id: 'bussing', label: msg`Bussing` },
 ] as const
 
 const HIGH_CONTRAST_SECTION_HEX: Record<string, string> = {
@@ -115,7 +116,7 @@ const HIGH_CONTRAST_SECTION_HEX: Record<string, string> = {
 }
 
 export default function ReservationsFloorRoute() {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -145,7 +146,7 @@ export default function ReservationsFloorRoute() {
 	// Live clock ticking every 30s without network requests (VAL-HOST-013)
 	const liveClock = useLiveNow({
 		timeZone: activeLocation?.timezone ?? 'UTC',
-		intervalMs: 30_000,
+		intervalMs: 15_000,
 	})
 	const nowMs = liveClock.nowMs
 
@@ -1480,7 +1481,7 @@ export default function ReservationsFloorRoute() {
 																)
 															}
 														>
-															{stage.label}
+															{i18n._(stage.label)}
 														</Button>
 													))}
 												</div>

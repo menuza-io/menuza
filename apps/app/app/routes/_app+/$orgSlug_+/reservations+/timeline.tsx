@@ -269,8 +269,9 @@ export default function ReservationsTimelineRoute() {
 					targetStartMin,
 					targetDurationMin,
 				})
+				const lockedGuestName = reservation.guestName
 				setAriaAnnouncement(
-					`${reservation.guestName} is locked to its table. Confirm Unlock and move to proceed.`,
+					t`${lockedGuestName} is locked to its table. Confirm Unlock and move to proceed.`,
 				)
 				return
 			}
@@ -300,8 +301,11 @@ export default function ReservationsTimelineRoute() {
 					const tblLabel =
 						tables.find((tbl) => tbl.id === targetTableId)?.label ??
 						targetTableId
+					const assignedGuestName = reservation.guestName
+					const assignedPartySize = reservation.partySize
+					const assignedTime = formatHhmm(targetStartMin)
 					setAriaAnnouncement(
-						`Assigned ${reservation.guestName} (${reservation.partySize}) to ${tblLabel} at ${formatHhmm(targetStartMin)} (${targetDurationMin}m)`,
+						t`Assigned ${assignedGuestName} (${assignedPartySize}) to ${tblLabel} at ${assignedTime} (${targetDurationMin}m)`,
 					)
 					host.handleReservationMutated(res.reservation, res.moveNotices)
 					if (fromUnassignedDrop) {
@@ -329,9 +333,11 @@ export default function ReservationsTimelineRoute() {
 					})
 					const tblLabel =
 						tables.find((tbl) => tbl.id === (targetTableId ?? currentTableId))
-							?.label ?? 'Unassigned'
+							?.label ?? t`Unassigned`
+					const updatedGuestName = reservation.guestName
+					const updatedTime = formatHhmm(targetStartMin)
 					setAriaAnnouncement(
-						`Updated ${reservation.guestName} on ${tblLabel} to ${formatHhmm(targetStartMin)} (${targetDurationMin}m)`,
+						t`Updated ${updatedGuestName} on ${tblLabel} to ${updatedTime} (${targetDurationMin}m)`,
 					)
 					host.handleReservationMutated(res.reservation, res.moveNotices)
 					if (fromUnassignedDrop && targetTableId) {
@@ -367,13 +373,14 @@ export default function ReservationsTimelineRoute() {
 						targetDurationMin,
 						message: err.message,
 					})
-					setAriaAnnouncement(`Conflict detected: ${err.message}`)
+					const conflictMessage = err.message
+					setAriaAnnouncement(t`Conflict detected: ${conflictMessage}`)
 					return
 				}
 				const msg =
 					err instanceof Error ? err.message : t`Failed to move reservation.`
 				setMutationError(msg)
-				setAriaAnnouncement(`Move failed: ${msg}`)
+				setAriaAnnouncement(t`Move failed: ${msg}`)
 			}
 		},
 		[allowOverbookDrop, host, overbookReasonInput, t, tables],
@@ -408,8 +415,11 @@ export default function ReservationsTimelineRoute() {
 					durationMin: rsv.durationMin,
 				}
 				setKbGrab(initialGrab)
+				const grabbedGuestName = rsv.guestName
+				const grabbedPartySize = rsv.partySize
+				const grabbedTime = rsv.hhmm
 				setAriaAnnouncement(
-					`Grabbed ${rsv.guestName} (${rsv.partySize}) at ${rsv.hhmm}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel.`,
+					t`Grabbed ${grabbedGuestName} (${grabbedPartySize}) at ${grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel.`,
 				)
 			}
 			return
@@ -419,7 +429,8 @@ export default function ReservationsTimelineRoute() {
 			e.preventDefault()
 			e.stopPropagation()
 			setKbGrab(null)
-			setAriaAnnouncement(`Cancelled moving ${rsv.guestName}.`)
+			const cancelledGuestName = rsv.guestName
+			setAriaAnnouncement(t`Cancelled moving ${cancelledGuestName}.`)
 			return
 		}
 
@@ -434,8 +445,9 @@ export default function ReservationsTimelineRoute() {
 				Math.min(360, kbGrab.durationMin + delta),
 			)
 			setKbGrab({ ...kbGrab, durationMin: nextDuration })
+			const resizedGuestName = rsv.guestName
 			setAriaAnnouncement(
-				`Duration ${nextDuration} minutes for ${rsv.guestName}`,
+				t`Duration ${nextDuration} minutes for ${resizedGuestName}`,
 			)
 			return
 		}
@@ -449,7 +461,9 @@ export default function ReservationsTimelineRoute() {
 				Math.min(gridEndMin - SLOT_STEP_MIN, kbGrab.localStartMin + delta),
 			)
 			setKbGrab({ ...kbGrab, localStartMin: nextStart })
-			setAriaAnnouncement(`Time ${formatHhmm(nextStart)} for ${rsv.guestName}`)
+			const shiftedTime = formatHhmm(nextStart)
+			const shiftedGuestName = rsv.guestName
+			setAriaAnnouncement(t`Time ${shiftedTime} for ${shiftedGuestName}`)
 			return
 		}
 
@@ -465,8 +479,12 @@ export default function ReservationsTimelineRoute() {
 			const nextTable = tables[nextIdx]
 			if (nextTable) {
 				setKbGrab({ ...kbGrab, tableId: nextTable.id })
+				const nextTableLabel = nextTable.label
+				const nextTableMin = nextTable.minCovers
+				const nextTableMax = nextTable.maxCovers
+				const movedGuestName = rsv.guestName
 				setAriaAnnouncement(
-					`Table ${nextTable.label} (${nextTable.minCovers}-${nextTable.maxCovers}) for ${rsv.guestName}`,
+					t`Table ${nextTableLabel} (${nextTableMin}-${nextTableMax}) for ${movedGuestName}`,
 				)
 			}
 		}

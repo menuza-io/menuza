@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
 import { Alert, AlertDescription } from '@repo/ui/alert'
@@ -14,7 +15,7 @@ import {
 	SheetTitle,
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
 	assignReservationTable,
 	type DayMoveNotice,
@@ -32,20 +33,30 @@ import { type ReservationsScopedClient } from '#app/utils/reservations/reservati
 import { type RsvTableRecord } from '#app/utils/reservations/setup-api.ts'
 
 const COURSE_STAGES = [
-	{ value: 'seated', label: 'Seated' },
-	{ value: 'appetizer', label: 'Appetizer' },
-	{ value: 'entree', label: 'Entree' },
-	{ value: 'dessert', label: 'Dessert' },
-	{ value: 'check_dropped', label: 'Check Dropped' },
-	{ value: 'bussing', label: 'Bussing' },
+	{ value: 'seated', label: msg`Seated` },
+	{ value: 'appetizer', label: msg`Appetizer` },
+	{ value: 'entree', label: msg`Entree` },
+	{ value: 'dessert', label: msg`Dessert` },
+	{ value: 'check_dropped', label: msg`Check Dropped` },
+	{ value: 'bussing', label: msg`Bussing` },
 ] as const
 
 const CONTACT_STATUSES = [
-	{ value: 'none', label: 'Not Contacted' },
-	{ value: 'sms_sent', label: 'SMS Sent' },
-	{ value: 'left_voicemail', label: 'Left Voicemail' },
-	{ value: 'confirmed_by_phone', label: 'Confirmed by Phone' },
+	{ value: 'none', label: msg`Not Contacted` },
+	{ value: 'sms_sent', label: msg`SMS Sent` },
+	{ value: 'left_voicemail', label: msg`Left Voicemail` },
+	{ value: 'confirmed_by_phone', label: msg`Confirmed by Phone` },
 ] as const
+
+type EditableField =
+	| 'table'
+	| 'lock'
+	| 'server'
+	| 'guestNotes'
+	| 'internalNotes'
+	| 'partySize'
+	| 'time'
+	| 'duration'
 
 export function DetailSheet({
 	reservationId,
@@ -67,7 +78,7 @@ export function DetailSheet({
 		moveNotices?: DayMoveNotice[],
 	) => void
 }) {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const open = Boolean(reservationId)
 
 	const [detail, setDetail] = useState<ReservationDetailResponse | null>(null)
@@ -96,16 +107,32 @@ export function DetailSheet({
 
 	const reservation = detail?.reservation ?? fallbackReservation
 
-	const syncFormFromReservation = useCallback((rsv: DayReservationView) => {
-		setSelectedTableId(rsv.assignedTableIds[0] ?? '')
-		setLockAssignment(Boolean(rsv.locked))
-		setServerLabel(rsv.serverLabel ?? '')
-		setGuestNotes(rsv.guestNotes ?? '')
-		setInternalNotes(rsv.internalNotes ?? '')
-		setPartySizeEdit(rsv.partySize)
-		setTimeEdit(rsv.hhmm || formatHhmm(rsv.localStartMin))
-		setDurationEdit(rsv.durationMin)
+	// Fields the operator edited and has not saved. Incoming props and polls
+	// must never overwrite them.
+	const dirtyFieldsRef = useRef(new Set<EditableField>())
+	const markDirty = useCallback((field: EditableField) => {
+		dirtyFieldsRef.current.add(field)
 	}, [])
+	const clearDirty = useCallback((fields: EditableField[]) => {
+		for (const field of fields) dirtyFieldsRef.current.delete(field)
+	}, [])
+
+	const syncFormFromReservation = useCallback((rsv: DayReservationView) => {
+		const dirty = dirtyFieldsRef.current
+		if (!dirty.has('table')) setSelectedTableId(rsv.assignedTableIds[0] ?? '')
+		if (!dirty.has('lock')) setLockAssignment(Boolean(rsv.locked))
+		if (!dirty.has('server')) setServerLabel(rsv.serverLabel ?? '')
+		if (!dirty.has('guestNotes')) setGuestNotes(rsv.guestNotes ?? '')
+		if (!dirty.has('internalNotes')) setInternalNotes(rsv.internalNotes ?? '')
+		if (!dirty.has('partySize')) setPartySizeEdit(rsv.partySize)
+		if (!dirty.has('time')) {
+			setTimeEdit(rsv.hhmm || formatHhmm(rsv.localStartMin))
+		}
+		if (!dirty.has('duration')) setDurationEdit(rsv.durationMin)
+	}, [])
+
+	const fallbackRef = useRef(fallbackReservation)
+	fallbackRef.current = fallbackReservation
 
 	const loadDetail = useCallback(async () => {
 		if (!reservationId) {
@@ -119,8 +146,8 @@ export function DetailSheet({
 			setDetail(res)
 			syncFormFromReservation(res.reservation)
 		} catch (err) {
-			if (fallbackReservation) {
-				syncFormFromReservation(fallbackReservation)
+			if (fallbackRef.current) {
+				syncFormFromReservation(fallbackRef.current)
 			} else {
 				setError(
 					err instanceof Error
@@ -131,19 +158,27 @@ export function DetailSheet({
 		} finally {
 			setLoading(false)
 		}
-	}, [client, fallbackReservation, reservationId, syncFormFromReservation, t])
+	}, [client, reservationId, syncFormFromReservation, t])
 
+	const syncedReservationIdRef = useRef<string | null>(null)
 	useEffect(() => {
+		if (syncedReservationIdRef.current !== reservationId) {
+			syncedReservationIdRef.current = reservationId
+			dirtyFieldsRef.current.clear()
+		}
 		if (fallbackReservation) {
 			syncFormFromReservation(fallbackReservation)
 		}
+	}, [fallbackReservation, reservationId, syncFormFromReservation])
+
+	useEffect(() => {
 		if (reservationId) {
 			void loadDetail()
 		} else {
 			setDetail(null)
 			setError(null)
 		}
-	}, [fallbackReservation, loadDetail, reservationId, syncFormFromReservation])
+	}, [loadDetail, reservationId])
 
 	const handleStatusTransition = async (toStatus: string) => {
 		if (!reservation) return
@@ -277,6 +312,7 @@ export function DetailSheet({
 				reflowLaterParties: true,
 				expectedVersion: reservation.version,
 			})
+			clearDirty(['table', 'lock', 'server'])
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
@@ -310,6 +346,14 @@ export function DetailSheet({
 				reflowLaterParties: true,
 				expectedVersion: reservation.version,
 			})
+			clearDirty([
+				'partySize',
+				'time',
+				'duration',
+				'server',
+				'guestNotes',
+				'internalNotes',
+			])
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
@@ -519,7 +563,7 @@ export function DetailSheet({
 															onClick={() => handleCourseStage(st.value)}
 															data-testid={`detail-course-${st.value}`}
 														>
-															{st.label}
+															{i18n._(st.label)}
 														</Button>
 													)
 												})}
@@ -588,7 +632,7 @@ export function DetailSheet({
 										>
 											{CONTACT_STATUSES.map((cs) => (
 												<option key={cs.value} value={cs.value}>
-													{cs.label}
+													{i18n._(cs.label)}
 												</option>
 											))}
 										</select>
@@ -605,7 +649,10 @@ export function DetailSheet({
 									<div className="flex flex-wrap items-center gap-2">
 										<select
 											value={selectedTableId}
-											onChange={(e) => setSelectedTableId(e.target.value)}
+											onChange={(e) => {
+												markDirty('table')
+												setSelectedTableId(e.target.value)
+											}}
 											className="border-input bg-background h-8 flex-1 rounded-md border px-2 text-xs"
 											data-testid="detail-table-select"
 										>
@@ -631,7 +678,10 @@ export function DetailSheet({
 											<input
 												type="checkbox"
 												checked={lockAssignment}
-												onChange={(e) => setLockAssignment(e.target.checked)}
+												onChange={(e) => {
+													markDirty('lock')
+													setLockAssignment(e.target.checked)
+												}}
 												data-testid="detail-lock-assignment"
 											/>
 											<span>
@@ -722,11 +772,12 @@ export function DetailSheet({
 												min={1}
 												max={40}
 												value={partySizeEdit}
-												onChange={(e) =>
+												onChange={(e) => {
+													markDirty('partySize')
 													setPartySizeEdit(
 														Math.max(1, Number(e.target.value) || 1),
 													)
-												}
+												}}
 												className="h-8 text-xs"
 												data-testid="detail-party-size-input"
 											/>
@@ -740,7 +791,10 @@ export function DetailSheet({
 												type="time"
 												step={900}
 												value={timeEdit}
-												onChange={(e) => setTimeEdit(e.target.value)}
+												onChange={(e) => {
+													markDirty('time')
+													setTimeEdit(e.target.value)
+												}}
 												className="h-8 text-xs"
 												data-testid="detail-time-input"
 											/>
@@ -756,11 +810,12 @@ export function DetailSheet({
 												max={360}
 												step={15}
 												value={durationEdit}
-												onChange={(e) =>
+												onChange={(e) => {
+													markDirty('duration')
 													setDurationEdit(
 														Math.max(15, Number(e.target.value) || 60),
 													)
-												}
+												}}
 												className="h-8 text-xs"
 												data-testid="detail-duration-input"
 											/>
@@ -774,7 +829,10 @@ export function DetailSheet({
 										<Input
 											id="detail-server-input"
 											value={serverLabel}
-											onChange={(e) => setServerLabel(e.target.value)}
+											onChange={(e) => {
+												markDirty('server')
+												setServerLabel(e.target.value)
+											}}
 											className="h-8 text-xs"
 											data-testid="detail-server-input"
 										/>
@@ -788,7 +846,10 @@ export function DetailSheet({
 											id="detail-guest-notes"
 											rows={2}
 											value={guestNotes}
-											onChange={(e) => setGuestNotes(e.target.value)}
+											onChange={(e) => {
+												markDirty('guestNotes')
+												setGuestNotes(e.target.value)
+											}}
 											className="text-xs"
 											data-testid="detail-guest-notes-input"
 										/>
@@ -802,7 +863,10 @@ export function DetailSheet({
 											id="detail-internal-notes"
 											rows={2}
 											value={internalNotes}
-											onChange={(e) => setInternalNotes(e.target.value)}
+											onChange={(e) => {
+												markDirty('internalNotes')
+												setInternalNotes(e.target.value)
+											}}
 											className="text-xs"
 											data-testid="detail-internal-notes-input"
 										/>

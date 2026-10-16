@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FloorPlanCanvas } from '#app/components/reservations/floor-plan-canvas.tsx'
 import {
@@ -111,7 +111,7 @@ const SAMPLE_ELEMENTS: FloorElementDto[] = [
 
 describe('FloorPlanCanvas', () => {
 	it('renders the floor plan canvas with dir="ltr", nudges selected table via keyboard arrows (+1 and +10 with Shift), and announces coordinates via aria-live', () => {
-		const onSave = vi.fn(async () => {})
+		const onSave = vi.fn(async () => true)
 		const onDiscard = vi.fn()
 
 		renderWithI18n(
@@ -169,7 +169,7 @@ describe('FloorPlanCanvas', () => {
 	})
 
 	it('discards unsaved changes when clicking Leave without saving and shows 409 stale-version banner when conflictMessage is set', () => {
-		const onSave = vi.fn(async () => {})
+		const onSave = vi.fn(async () => true)
 		const onReloadLatest = vi.fn()
 		const onLeave = vi.fn()
 
@@ -219,7 +219,7 @@ describe('FloorPlanCanvas', () => {
 				canWrite={false}
 				saving={false}
 				conflictMessage={null}
-				onSave={vi.fn(async () => {})}
+				onSave={vi.fn(async () => true)}
 				onReloadLatest={vi.fn()}
 				onLeave={vi.fn()}
 			/>,
@@ -228,5 +228,64 @@ describe('FloorPlanCanvas', () => {
 		const saveButton = screen.getByTestId('floor-plan-save-button')
 		expect(saveButton).toBeDisabled()
 		expect(screen.queryByTestId('floor-plan-add-table-button')).toBeNull()
+	})
+
+	it('keeps the draft dirty and the Discard button when a save fails', async () => {
+		const onSave = vi.fn(async () => false)
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={onSave}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight' })
+		expect(screen.getByTestId('floor-plan-discard-button')).toBeTruthy()
+
+		fireEvent.click(screen.getByTestId('floor-plan-save-button'))
+		await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+		await Promise.resolve()
+
+		expect(screen.getByTestId('floor-plan-discard-button')).toBeTruthy()
+	})
+
+	it('clears the draft state after a successful save', async () => {
+		const onSave = vi.fn(async () => true)
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={onSave}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight' })
+		fireEvent.click(screen.getByTestId('floor-plan-save-button'))
+		await waitFor(() =>
+			expect(screen.queryByTestId('floor-plan-discard-button')).toBeNull(),
+		)
 	})
 })

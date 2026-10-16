@@ -73,7 +73,7 @@ export default function ReservationsOverviewRoute() {
 		orgSlug,
 		locationId,
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
-		pollIntervalMs: 15_000,
+		pollIntervalMs: 60_000,
 	})
 
 	const [overview, setOverview] = useState<DayOverviewResponse | null>(null)

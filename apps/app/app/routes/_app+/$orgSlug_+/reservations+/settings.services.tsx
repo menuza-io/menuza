@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
@@ -78,11 +79,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 type AvailabilityTargetType = 'area' | 'table' | 'combo'
 
-function formatDaysOfWeek(days: number[]): string {
+const AVAILABILITY_MODE_LABELS: Record<string, MessageDescriptor> = {
+	online: msg`Online & In-house`,
+	staff_only: msg`Staff only`,
+	walk_in_only: msg`Walk-in only`,
+	unavailable: msg`Unavailable`,
+}
+
+function formatDaysOfWeek(
+	days: number[],
+	translate: (descriptor: MessageDescriptor) => string,
+): string {
 	if (!days || days.length === 0) return '—'
-	if (days.length === 7) return 'Every day'
+	if (days.length === 7) return translate(msg`Every day`)
 	return WEEKDAY_OPTIONS.filter((d) => days.includes(d.value))
-		.map((d) => d.shortLabel)
+		.map((d) => translate(d.shortLabel))
 		.join(', ')
 }
 
@@ -648,9 +659,9 @@ export default function ReservationsSettingsServicesRoute() {
 												size="sm"
 												variant={active ? 'default' : 'outline'}
 												onClick={() => handleToggleDay(day.value)}
-												data-testid={`setup-service-day-${day.shortLabel}`}
+												data-testid={`setup-service-day-${day.code}`}
 											>
-												{day.shortLabel}
+												{_(day.shortLabel)}
 											</Button>
 										)
 									})}
@@ -763,7 +774,7 @@ export default function ReservationsSettingsServicesRoute() {
 												)}
 											</TableCell>
 											<TableCell className="text-xs">
-												{formatDaysOfWeek(svc.daysOfWeek)}
+												{formatDaysOfWeek(svc.daysOfWeek, _)}
 											</TableCell>
 											<TableCell className="font-mono text-xs">
 												{isEditing ? (
@@ -1417,7 +1428,11 @@ export default function ReservationsSettingsServicesRoute() {
 												{targetLabel}
 											</TableCell>
 											<TableCell>
-												<Badge variant="outline">{rule.mode}</Badge>
+												<Badge variant="outline">
+													{AVAILABILITY_MODE_LABELS[rule.mode]
+														? _(AVAILABILITY_MODE_LABELS[rule.mode]!)
+														: rule.mode}
+												</Badge>
 											</TableCell>
 											<TableCell className="text-right">
 												{canWrite ? (

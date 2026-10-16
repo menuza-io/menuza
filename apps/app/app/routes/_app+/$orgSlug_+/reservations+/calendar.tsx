@@ -81,7 +81,7 @@ export default function ReservationsCalendarRoute() {
 		orgSlug: loaderData.orgSlug,
 		locationId,
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
-		pollIntervalMs: 30_000,
+		pollIntervalMs: 60_000,
 	})
 
 	const selectedMonth = useMemo(() => {

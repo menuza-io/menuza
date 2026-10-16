@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
 import { Alert, AlertDescription } from '@repo/ui/alert'
@@ -34,23 +35,23 @@ import {
 } from '#app/utils/reservations/setup-api.ts'
 
 const DIETARY_OPTIONS = [
-	{ code: 'vegetarian', label: 'Vegetarian' },
-	{ code: 'vegan', label: 'Vegan' },
-	{ code: 'gluten_free', label: 'Gluten-Free' },
-	{ code: 'halal', label: 'Halal' },
-	{ code: 'nut_allergy', label: 'Nut Allergy' },
-	{ code: 'dairy_free', label: 'Dairy-Free' },
-	{ code: 'shellfish_allergy', label: 'Shellfish Allergy' },
+	{ code: 'vegetarian', label: msg`Vegetarian` },
+	{ code: 'vegan', label: msg`Vegan` },
+	{ code: 'gluten_free', label: msg`Gluten-Free` },
+	{ code: 'halal', label: msg`Halal` },
+	{ code: 'nut_allergy', label: msg`Nut Allergy` },
+	{ code: 'dairy_free', label: msg`Dairy-Free` },
+	{ code: 'shellfish_allergy', label: msg`Shellfish Allergy` },
 ] as const
 
 const OCCASION_OPTIONS = [
-	{ value: '', label: 'None' },
-	{ value: 'birthday', label: 'Birthday' },
-	{ value: 'anniversary', label: 'Anniversary' },
-	{ value: 'date_night', label: 'Date Night' },
-	{ value: 'business', label: 'Business Meal' },
-	{ value: 'celebration', label: 'Celebration' },
-	{ value: 'vip', label: 'VIP' },
+	{ value: '', label: msg`None` },
+	{ value: 'birthday', label: msg`Birthday` },
+	{ value: 'anniversary', label: msg`Anniversary` },
+	{ value: 'date_night', label: msg`Date Night` },
+	{ value: 'business', label: msg`Business Meal` },
+	{ value: 'celebration', label: msg`Celebration` },
+	{ value: 'vip', label: msg`VIP` },
 ] as const
 
 export function BookingSheet({
@@ -87,7 +88,7 @@ export function BookingSheet({
 		moveNotices: DayMoveNotice[],
 	) => void
 }) {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const [date, setDate] = useState(defaultDate)
 	const [partySize, setPartySize] = useState(initialPartySize)
 	const [localStartMin, setLocalStartMin] = useState(
@@ -697,7 +698,7 @@ export function BookingSheet({
 							>
 								{OCCASION_OPTIONS.map((opt) => (
 									<option key={opt.value} value={opt.value}>
-										{opt.label}
+										{i18n._(opt.label)}
 									</option>
 								))}
 							</select>
@@ -734,7 +735,7 @@ export function BookingSheet({
 										onClick={() => toggleDietary(opt.code)}
 										data-testid={`booking-dietary-${opt.code}`}
 									>
-										{opt.label}
+										{i18n._(opt.label)}
 									</Button>
 								)
 							})}

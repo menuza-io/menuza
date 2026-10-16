@@ -77,8 +77,8 @@ export default function ReservationsSettingsFloorPlanRoute() {
 		void loadFloorPlan()
 	}, [loadFloorPlan])
 
-	const handleSave = async (draft: FloorPlanSaveDraft) => {
-		if (!canWrite || !selectedLocationId) return
+	const handleSave = async (draft: FloorPlanSaveDraft): Promise<boolean> => {
+		if (!canWrite || !selectedLocationId) return false
 		setSaving(true)
 		setErrorMessage(null)
 		setConflictMessage(null)
@@ -92,6 +92,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 			const newFloorPlanVersion = refreshed.floorPlanVersion
 			setSavedBanner(_(msg`Floor plan saved (v${newFloorPlanVersion}).`))
 			await refreshSummary()
+			return true
 		} catch (err) {
 			if (isVersionConflictError(err)) {
 				setConflictMessage(
@@ -104,6 +105,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 					extractApiErrorMessage(err, _(msg`Failed to save floor plan.`)),
 				)
 			}
+			return false
 		} finally {
 			setSaving(false)
 		}

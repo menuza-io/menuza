@@ -77,7 +77,12 @@ export function useHostStand({
 		key: pollKey,
 		fetcher,
 		intervalMs: pollIntervalMs,
-		paused: paused || pausePolling || bookingSheetOpen || walkInOpen,
+		paused:
+			paused ||
+			pausePolling ||
+			bookingSheetOpen ||
+			walkInOpen ||
+			Boolean(detailReservationId),
 		enabled: Boolean(locationId),
 	})
 
@@ -86,7 +91,7 @@ export function useHostStand({
 	const liveNow = useLiveNow({
 		timeZone,
 		dayStartMin: dayFeed?.dayStartMin ?? 240,
-		intervalMs: 30_000,
+		intervalMs: 15_000,
 	})
 
 	const businessDate =

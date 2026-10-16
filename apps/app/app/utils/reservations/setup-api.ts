@@ -1,3 +1,5 @@
+import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
 export type LocalizedCopy = {
@@ -339,16 +341,53 @@ export const FLOOR_GRID_STEP = 10
 
 export const WEEKDAY_OPTIONS: ReadonlyArray<{
 	value: number
-	shortLabel: string
-	fullLabel: string
+	/** Stable English code for test ids; never render it. */
+	code: string
+	shortLabel: MessageDescriptor
+	fullLabel: MessageDescriptor
 }> = [
-	{ value: 0, shortLabel: 'Sun', fullLabel: 'Sunday' },
-	{ value: 1, shortLabel: 'Mon', fullLabel: 'Monday' },
-	{ value: 2, shortLabel: 'Tue', fullLabel: 'Tuesday' },
-	{ value: 3, shortLabel: 'Wed', fullLabel: 'Wednesday' },
-	{ value: 4, shortLabel: 'Thu', fullLabel: 'Thursday' },
-	{ value: 5, shortLabel: 'Fri', fullLabel: 'Friday' },
-	{ value: 6, shortLabel: 'Sat', fullLabel: 'Saturday' },
+	{
+		value: 0,
+		code: 'Sun',
+		shortLabel: msg`Sun`,
+		fullLabel: msg`Sunday`,
+	},
+	{
+		value: 1,
+		code: 'Mon',
+		shortLabel: msg`Mon`,
+		fullLabel: msg`Monday`,
+	},
+	{
+		value: 2,
+		code: 'Tue',
+		shortLabel: msg`Tue`,
+		fullLabel: msg`Tuesday`,
+	},
+	{
+		value: 3,
+		code: 'Wed',
+		shortLabel: msg`Wed`,
+		fullLabel: msg`Wednesday`,
+	},
+	{
+		value: 4,
+		code: 'Thu',
+		shortLabel: msg`Thu`,
+		fullLabel: msg`Thursday`,
+	},
+	{
+		value: 5,
+		code: 'Fri',
+		shortLabel: msg`Fri`,
+		fullLabel: msg`Friday`,
+	},
+	{
+		value: 6,
+		code: 'Sat',
+		shortLabel: msg`Sat`,
+		fullLabel: msg`Saturday`,
+	},
 ]
 
 export function snapToGrid(value: number, grid = FLOOR_GRID_STEP): number {

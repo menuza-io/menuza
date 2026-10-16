@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
@@ -50,7 +51,8 @@ export type FloorPlanCanvasProps = {
 	conflictMessage: string | null
 	lastConflicts?: SetupConflictDto[]
 	lastReflowedMoves?: ReflowedMoveDto[]
-	onSave: (draft: FloorPlanSaveDraft) => Promise<void>
+	/** Resolves true only when the save succeeded; false keeps the local draft dirty. */
+	onSave: (draft: FloorPlanSaveDraft) => Promise<boolean>
 	onReloadLatest: () => void
 	onLeave: () => void
 }
@@ -70,28 +72,36 @@ type DragSession = {
 	initialHeight: number
 }
 
-const TABLE_SHAPES: ReadonlyArray<{ value: TableShape; label: string }> = [
-	{ value: 'round', label: 'Round' },
-	{ value: 'square', label: 'Square' },
-	{ value: 'rect', label: 'Rectangle' },
-	{ value: 'booth', label: 'Booth' },
-	{ value: 'bar', label: 'Bar seat' },
-	{ value: 'high_top', label: 'High-top' },
+const TABLE_SHAPES: ReadonlyArray<{
+	value: TableShape
+	label: MessageDescriptor
+}> = [
+	{ value: 'round', label: msg`Round` },
+	{ value: 'square', label: msg`Square` },
+	{ value: 'rect', label: msg`Rectangle` },
+	{ value: 'booth', label: msg`Booth` },
+	{ value: 'bar', label: msg`Bar seat` },
+	{ value: 'high_top', label: msg`High-top` },
 ]
 
 const ELEMENT_KINDS: ReadonlyArray<{
 	value: FloorElementKind
-	label: string
+	label: MessageDescriptor
 	defaultWidth: number
 	defaultHeight: number
 }> = [
-	{ value: 'wall', label: 'Wall', defaultWidth: 160, defaultHeight: 20 },
-	{ value: 'bar', label: 'Bar counter', defaultWidth: 160, defaultHeight: 60 },
-	{ value: 'door', label: 'Door', defaultWidth: 60, defaultHeight: 20 },
-	{ value: 'window', label: 'Window', defaultWidth: 120, defaultHeight: 20 },
-	{ value: 'label', label: 'Label', defaultWidth: 120, defaultHeight: 40 },
-	{ value: 'plant', label: 'Plant', defaultWidth: 40, defaultHeight: 40 },
-	{ value: 'zone', label: 'Zone', defaultWidth: 200, defaultHeight: 160 },
+	{ value: 'wall', label: msg`Wall`, defaultWidth: 160, defaultHeight: 20 },
+	{
+		value: 'bar',
+		label: msg`Bar counter`,
+		defaultWidth: 160,
+		defaultHeight: 60,
+	},
+	{ value: 'door', label: msg`Door`, defaultWidth: 60, defaultHeight: 20 },
+	{ value: 'window', label: msg`Window`, defaultWidth: 120, defaultHeight: 20 },
+	{ value: 'label', label: msg`Label`, defaultWidth: 120, defaultHeight: 40 },
+	{ value: 'plant', label: msg`Plant`, defaultWidth: 40, defaultHeight: 40 },
+	{ value: 'zone', label: msg`Zone`, defaultWidth: 200, defaultHeight: 160 },
 ]
 
 const ROTATION_PRESETS = [0, 90, 180, 270] as const
@@ -318,7 +328,7 @@ export function FloorPlanCanvas({
 			id: makeClientId('el'),
 			areaId: currentAreaId || null,
 			kind: preset.value,
-			label: preset.label,
+			label: _(preset.label),
 			x: snapToGrid(120 + offset),
 			y: snapToGrid(60 + offset),
 			width: preset.defaultWidth,
@@ -329,7 +339,7 @@ export function FloorPlanCanvas({
 		setDraftElements((prev) => [...prev, created])
 		setSelected({ kind: 'element', id: created.id })
 		setDirty(true)
-		const presetLabel = preset.label
+		const presetLabel = _(preset.label)
 		const createdX = created.x
 		const createdY = created.y
 		setLiveAnnouncement(
@@ -585,7 +595,7 @@ export function FloorPlanCanvas({
 			}
 			return clean as T
 		}
-		await onSave({
+		const saved = await onSave({
 			expectedFloorPlanVersion: floorPlanVersion,
 			areas: draftAreas.map((a) =>
 				stripNullish({
@@ -622,7 +632,7 @@ export function FloorPlanCanvas({
 			) as unknown as FloorElementDto[],
 			archiveMissingTables: true,
 		})
-		setDirty(false)
+		if (saved) setDirty(false)
 	}
 
 	return (
@@ -771,7 +781,10 @@ export function FloorPlanCanvas({
 							type="button"
 							variant="outline"
 							size="sm"
-							onClick={onReloadLatest}
+							onClick={() => {
+								setDirty(false)
+								onReloadLatest()
+							}}
 							data-testid="floor-plan-reload-button"
 						>
 							<Icon name="refresh-cw" className="size-3.5" />
@@ -866,7 +879,7 @@ export function FloorPlanCanvas({
 								>
 									{ELEMENT_KINDS.map((kind) => (
 										<option key={kind.value} value={kind.value}>
-											{kind.label}
+											{_(kind.label)}
 										</option>
 									))}
 								</select>
@@ -963,12 +976,17 @@ export function FloorPlanCanvas({
 						{visibleElements.map((el) => {
 							const isSelected =
 								selected?.kind === 'element' && selected.id === el.id
+							const elementName = el.label || el.kind
+							const elementX = el.x
+							const elementY = el.y
 							return (
 								<div
 									key={el.id}
 									role="button"
 									tabIndex={0}
-									aria-label={`Element ${el.label || el.kind} (${el.x}, ${el.y})`}
+									aria-label={_(
+										msg`Element ${elementName} (${elementX}, ${elementY})`,
+									)}
 									data-testid={`floor-element-${el.id}`}
 									onClick={(e) => {
 										e.stopPropagation()
@@ -1033,12 +1051,19 @@ export function FloorPlanCanvas({
 									: table.shape === 'booth'
 										? 'rounded-2xl border-2'
 										: 'rounded-lg'
+							const tableName = table.label
+							const tableMinCovers = table.minCovers
+							const tableMaxCovers = table.maxCovers
+							const tableX = table.x
+							const tableY = table.y
 							return (
 								<div
 									key={table.id}
 									role="button"
 									tabIndex={0}
-									aria-label={`Table ${table.label}, ${table.minCovers}-${table.maxCovers} covers at (${table.x}, ${table.y})`}
+									aria-label={_(
+										msg`Table ${tableName}, ${tableMinCovers}-${tableMaxCovers} covers at (${tableX}, ${tableY})`,
+									)}
 									data-testid={`floor-table-${table.label}`}
 									onClick={(e) => {
 										e.stopPropagation()
@@ -1154,7 +1179,7 @@ export function FloorPlanCanvas({
 										>
 											{TABLE_SHAPES.map((s) => (
 												<option key={s.value} value={s.value}>
-													{s.label}
+													{_(s.label)}
 												</option>
 											))}
 										</select>

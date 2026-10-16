@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
@@ -58,15 +59,18 @@ type DraftSectionRow = {
 	tableIds: string[]
 }
 
-const COLOR_TOKENS: ReadonlyArray<{ token: string; label: string }> = [
-	{ token: '1', label: '1 · Blue' },
-	{ token: '2', label: '2 · Emerald' },
-	{ token: '3', label: '3 · Amber' },
-	{ token: '4', label: '4 · Violet' },
-	{ token: '5', label: '5 · Pink' },
-	{ token: '6', label: '6 · Cyan' },
-	{ token: '7', label: '7 · Orange' },
-	{ token: '8', label: '8 · Lime' },
+const COLOR_TOKENS: ReadonlyArray<{
+	token: string
+	label: MessageDescriptor
+}> = [
+	{ token: '1', label: msg`1 · Blue` },
+	{ token: '2', label: msg`2 · Emerald` },
+	{ token: '3', label: msg`3 · Amber` },
+	{ token: '4', label: msg`4 · Violet` },
+	{ token: '5', label: msg`5 · Pink` },
+	{ token: '6', label: msg`6 · Cyan` },
+	{ token: '7', label: msg`7 · Orange` },
+	{ token: '8', label: msg`8 · Lime` },
 ]
 
 function makeInitialDraftSections(): DraftSectionRow[] {
@@ -448,7 +452,7 @@ export default function ReservationsSettingsSectionsRoute() {
 											>
 												{COLOR_TOKENS.map((ct) => (
 													<option key={ct.token} value={ct.token}>
-														{ct.label}
+														{_(ct.label)}
 													</option>
 												))}
 											</select>
@@ -470,8 +474,8 @@ export default function ReservationsSettingsSectionsRoute() {
 																	),
 																)
 															}}
-															title={ct.label}
-															aria-label={`Color token ${ct.token}`}
+															title={_(ct.label)}
+															aria-label={_(ct.label)}
 															data-testid={`${prefix}-section-color-token-${idx}-${ct.token}`}
 															className={`size-5 rounded-full border transition ${
 																isSelected

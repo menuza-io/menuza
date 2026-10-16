@@ -59,7 +59,7 @@ export default function ReservationsTodayRoute() {
 		orgSlug,
 		locationId,
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
-		pollIntervalMs: 10_000,
+		pollIntervalMs: 5_000,
 	})
 
 	const [actionBusyId, setActionBusyId] = useState<string | null>(null)

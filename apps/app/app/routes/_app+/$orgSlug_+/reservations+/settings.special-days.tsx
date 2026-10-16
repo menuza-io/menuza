@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
@@ -62,6 +63,22 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 function getDefaultDateString(): string {
 	return new Date().toISOString().slice(0, 10)
+}
+
+const SPECIAL_DAY_KIND_LABELS: Record<string, MessageDescriptor> = {
+	closed: msg`Closed (all day)`,
+	online_closed: msg`Online closed (walk-ins/phone open)`,
+	modified: msg`Modified hours (patch service)`,
+	replace: msg`Replace with custom service`,
+}
+
+const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
+	private_event: msg`Private event`,
+	maintenance: msg`Maintenance`,
+	weather: msg`Weather`,
+	vip_hold: msg`VIP hold`,
+	staffing: msg`Staffing`,
+	other: msg`Other`,
 }
 
 export default function ReservationsSettingsSpecialDaysRoute() {
@@ -745,7 +762,9 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 														sd.kind === 'closed' ? 'destructive' : 'outline'
 													}
 												>
-													{sd.kind}
+													{SPECIAL_DAY_KIND_LABELS[sd.kind]
+														? _(SPECIAL_DAY_KIND_LABELS[sd.kind]!)
+														: sd.kind}
 												</Badge>
 											</TableCell>
 											<TableCell className="text-muted-foreground text-xs">
@@ -1018,7 +1037,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 												{formatMinutesLabel(endMinVal)}
 											</TableCell>
 											<TableCell>
-												<Badge variant="outline">{blk.reason}</Badge>
+												<Badge variant="outline">
+													{BLOCK_REASON_LABELS[blk.reason]
+														? _(BLOCK_REASON_LABELS[blk.reason]!)
+														: blk.reason}
+												</Badge>
 											</TableCell>
 											<TableCell className="text-muted-foreground text-xs">
 												{blk.note || '—'}
