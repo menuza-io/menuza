@@ -2791,7 +2791,7 @@ msgstr "كما سُجّلت"
 msgid "Ask a teammate to cover it"
 msgstr "اطلب من زميل تغطيتها"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:682
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب في الذهاب."
 
@@ -2803,7 +2803,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:684
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
 
@@ -8340,7 +8340,7 @@ msgstr "مرحبًا {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "مرحبًا {personName}، أدخل رقمك السري"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
@@ -8571,7 +8571,7 @@ msgstr "كيف تصل المكالمات إلى الوكيل"
 msgid "How can I help you today?"
 msgstr "كيف يمكنني مساعدتك اليوم؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "How can I help?"
 msgstr "كيف يمكنني مساعدتك؟"
 
@@ -11845,7 +11845,7 @@ msgstr "ملاحظات للذكاء الاصطناعي"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr "تساعدك الملاحظات على تسجيل الأفكار ومحاضر الاجتماعات أو أي شيء مهم لمنظمتك. ابدأ بإنشاء ملاحظتك الأولى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:683
 msgid "Notes, navigation, and your site — just ask."
 msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل."
 
@@ -12093,7 +12093,7 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One date"
 msgstr "تاريخ واحد"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:818
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
@@ -15927,7 +15927,7 @@ msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ
 #~ msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to your connected Stripe account."
 #~ msgstr "بيع منتج واحد على موقعك العام. تحتفظ المنصة بـ {SHOP_PLATFORM_FEE_PERCENT}% والباقي يُحوَّل إلى حساب Stripe المتصل."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "إرسال"
@@ -16980,7 +16980,7 @@ msgstr "الخطوات"
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 msgid "Stop"
 msgstr "إيقاف"
 
@@ -17846,6 +17846,14 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 #: app/components/hiring/interview-dialog.tsx:160
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "تعذّر على المساعد الرد. تحقّق من اتصالك وحاول مرة أخرى."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19417,6 +19425,7 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -19447,8 +19456,8 @@ msgstr "حاول مرة أخرى"
 msgid "Try again later, or ask your manager."
 msgstr "حاول لاحقًا أو اسأل مديرك."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:918
+#: ../../packages/ai/src/components/ai-chat.tsx:919
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 

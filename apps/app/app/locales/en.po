@@ -2793,7 +2793,7 @@ msgstr "As punched"
 msgid "Ask a teammate to cover it"
 msgstr "Ask a teammate to cover it"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:679
+#: ../../packages/ai/src/components/ai-chat.tsx:682
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "Ask about this note, or tell me where you'd like to go."
 
@@ -2805,7 +2805,7 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 msgid "Ask AI"
 msgstr "Ask AI"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:681
+#: ../../packages/ai/src/components/ai-chat.tsx:684
 msgid "Ask anything…"
 msgstr "Ask anything…"
 
@@ -8342,7 +8342,7 @@ msgstr "Hi {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "Hi {personName}, enter your PIN"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "Hi, {userName}"
 msgstr "Hi, {userName}"
 
@@ -8573,7 +8573,7 @@ msgstr "How calls reach the agent"
 msgid "How can I help you today?"
 msgstr "How can I help you today?"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:675
+#: ../../packages/ai/src/components/ai-chat.tsx:678
 msgid "How can I help?"
 msgstr "How can I help?"
 
@@ -11847,7 +11847,7 @@ msgstr "Notes for AI"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:680
+#: ../../packages/ai/src/components/ai-chat.tsx:683
 msgid "Notes, navigation, and your site — just ask."
 msgstr "Notes, navigation, and your site — just ask."
 
@@ -12095,7 +12095,7 @@ msgstr ""
 msgid "One date"
 msgstr "One date"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:815
+#: ../../packages/ai/src/components/ai-chat.tsx:818
 msgid "One moment…"
 msgstr "One moment…"
 
@@ -15929,7 +15929,7 @@ msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_
 #~ msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to your connected Stripe account."
 #~ msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "Send"
@@ -16982,7 +16982,7 @@ msgstr "Steps"
 msgid "Still clocked in"
 msgstr "Still clocked in"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:899
+#: ../../packages/ai/src/components/ai-chat.tsx:929
 msgid "Stop"
 msgstr "Stop"
 
@@ -17848,6 +17848,14 @@ msgstr ""
 #: app/components/hiring/interview-dialog.tsx:160
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:882
+msgid "The assistant couldn't reply. Check your connection and try again."
+msgstr "The assistant couldn't reply. Check your connection and try again."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "The assistant couldn't reply. Try again."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19419,6 +19427,7 @@ msgstr "Try a different search term."
 msgid "Try adjusting your search or filter."
 msgstr ""
 
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -19449,8 +19458,8 @@ msgstr "Try again"
 msgid "Try again later, or ask your manager."
 msgstr "Try again later, or ask your manager."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:888
-#: ../../packages/ai/src/components/ai-chat.tsx:889
+#: ../../packages/ai/src/components/ai-chat.tsx:918
+#: ../../packages/ai/src/components/ai-chat.tsx:919
 msgid "Try another answer"
 msgstr "Try another answer"
 
