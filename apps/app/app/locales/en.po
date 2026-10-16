@@ -9419,6 +9419,7 @@ msgid "Learn more"
 msgstr ""
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "Leave"
 
@@ -9471,6 +9472,10 @@ msgstr "Leave out the < and > characters."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:99
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "Leave the mailbox and discard your reply drafts?"
+
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "Leave this page?"
 
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
@@ -16909,6 +16914,10 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr ""
+
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "Stay"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:243
 msgid "Stayed on current page"

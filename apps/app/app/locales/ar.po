@@ -9417,6 +9417,7 @@ msgid "Learn more"
 msgstr "اعرف المزيد"
 
 #: app/components/hiring/job-editor.tsx:459
+#: app/components/leave-page-dialog.tsx:44
 msgid "Leave"
 msgstr "مغادرة"
 
@@ -9469,6 +9470,10 @@ msgstr "لا تستخدم الرمزين < و >."
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:99
 msgid "Leave the mailbox and discard your reply drafts?"
 msgstr "هل تريد مغادرة صندوق الوارد وتجاهل مسودات الردود؟"
+
+#: app/components/leave-page-dialog.tsx:32
+msgid "Leave this page?"
+msgstr "هل تريد مغادرة هذه الصفحة؟"
 
 #: app/components/hiring/job-editor.tsx:443
 msgid "Leave without saving?"
@@ -16907,6 +16912,10 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
 msgid "Status"
 msgstr "الحالة"
+
+#: app/components/leave-page-dialog.tsx:38
+msgid "Stay"
+msgstr "البقاء"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:243
 msgid "Stayed on current page"
