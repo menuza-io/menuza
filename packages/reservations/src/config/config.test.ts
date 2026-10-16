@@ -591,4 +591,168 @@ describe('reservations configuration schemas and validateConfig', () => {
 			true,
 		)
 	})
+
+	it('detects combination_too_few_members and combination_uncombinable_table and returns empty issues for a valid config', () => {
+		const comboIssues = validateConfig({
+			settings: {
+				minParty: 1,
+				maxOnlineParty: 6,
+				maxParty: 8,
+			},
+			areas: [{ id: 'area_1', name: 'Main', active: true }],
+			tables: [
+				{
+					id: 't1',
+					areaId: 'area_1',
+					label: 'T1',
+					minSeats: 1,
+					maxSeats: 4,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+				{
+					id: 't2',
+					areaId: 'area_1',
+					label: 'T2',
+					minSeats: 1,
+					maxSeats: 4,
+					onlineBookable: true,
+					combinable: false,
+					active: true,
+				},
+				{
+					id: 't3',
+					areaId: 'area_1',
+					label: 'T3',
+					minSeats: 1,
+					maxSeats: 8,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+			],
+			combinations: [
+				{
+					id: 'combo_single',
+					name: 'Single Member Combo',
+					minSeats: 1,
+					maxSeats: 4,
+					active: true,
+					tableIds: ['t1'],
+				},
+				{
+					id: 'combo_uncombinable',
+					name: 'Uncombinable Member Combo',
+					minSeats: 2,
+					maxSeats: 8,
+					active: true,
+					tableIds: ['t1', 't2'],
+				},
+			],
+			services: [
+				{
+					id: 'srv_dinner',
+					name: 'Dinner',
+					startMin: 1020,
+					endMin: 1320,
+					lastSeatingMin: 1260,
+					onlineBookable: true,
+					active: true,
+				},
+			],
+			turnTimeBuckets: [
+				{
+					id: 'tt_all',
+					serviceId: null,
+					minParty: 1,
+					maxParty: 8,
+					durationMin: 90,
+				},
+			],
+			pacingRules: [],
+		})
+		const codes = comboIssues.map((i) => i.code)
+		expect(codes).toContain('combination_too_few_members')
+		expect(codes).toContain('combination_uncombinable_table')
+		expect(comboIssues.valid).toBe(false)
+
+		const validReport = validateConfig({
+			settings: {
+				minParty: 1,
+				maxOnlineParty: 6,
+				maxParty: 8,
+			},
+			areas: [{ id: 'area_1', name: 'Main', active: true }],
+			tables: [
+				{
+					id: 't1',
+					areaId: 'area_1',
+					label: 'T1',
+					minSeats: 1,
+					maxSeats: 4,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+				{
+					id: 't2',
+					areaId: 'area_1',
+					label: 'T2',
+					minSeats: 1,
+					maxSeats: 4,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+			],
+			combinations: [
+				{
+					id: 'combo_valid',
+					name: 'T1+T2',
+					minSeats: 3,
+					maxSeats: 8,
+					active: true,
+					tableIds: ['t1', 't2'],
+				},
+			],
+			services: [
+				{
+					id: 'srv_dinner',
+					name: 'Dinner',
+					startMin: 1020,
+					endMin: 1320,
+					lastSeatingMin: 1260,
+					onlineBookable: true,
+					active: true,
+				},
+			],
+			turnTimeBuckets: [
+				{
+					id: 'tt_1_4',
+					serviceId: null,
+					minParty: 1,
+					maxParty: 4,
+					durationMin: 75,
+				},
+				{
+					id: 'tt_5_8',
+					serviceId: null,
+					minParty: 5,
+					maxParty: 8,
+					durationMin: 90,
+				},
+			],
+			pacingRules: [
+				{
+					id: 'pr_1',
+					serviceId: 'srv_dinner',
+					maxCoversPerSlot: 20,
+				},
+			],
+		})
+		expect(validReport).toHaveLength(0)
+		expect(validReport.issues).toEqual([])
+		expect(validReport.valid).toBe(true)
+	})
 })

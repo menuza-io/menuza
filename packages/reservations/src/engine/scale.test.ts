@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	MAX_BOOK_EXPANSIONS,
-	MAX_DAY_EXPANSIONS,
 	MAX_REFLOW_EXPANSIONS,
-	MAX_REPAIR_EXPANSIONS,
 	MAX_SEARCH_SLOT_EXPANSIONS,
 	assignTables,
 	reflowDay,
@@ -98,6 +96,7 @@ describe('reservations engine scale and bounded expansion budget tests', () => {
 		})
 		expect(reflow.expansions).toBeLessThanOrEqual(MAX_REFLOW_EXPANSIONS)
 		expect(reflow.budgetExhausted).toBe(false)
+		expect(reflow.unresolvable.length).toBe(0)
 
 		// 4. Calendar summary expansion cap (MAX_CALENDAR_EXPANSIONS = 5,000)
 		const cal = calendarAvailabilitySummary({

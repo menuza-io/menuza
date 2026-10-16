@@ -6,24 +6,28 @@ import {
 	type CandidateAttributeTag,
 	type EngineAreaInput,
 	type EngineCombinationInput,
+	type EngineServiceAvailabilityInput,
 	type EngineServiceTableModeInput,
 	type EngineTableInput,
 	buildCandidates,
 	candidateMatchesPreference,
 	isBookingHardLocked,
+	isGuestChannel,
 } from './day-state.ts'
 import {
 	OccupancyIndex,
 	type TableIntervalEntry,
 	intervalsOverlap,
 } from './occupancy.ts'
-import { type EnginePacingRuleInput } from './pacing.ts'
+import {
+	type EnginePacingRuleInput,
+	type PacingViolationReason,
+	evaluatePacing,
+} from './pacing.ts'
 
 export { type AssignCandidate }
 export const MAX_SEARCH_SLOT_EXPANSIONS = 200
-export const MAX_REPAIR_EXPANSIONS = 200
 export const MAX_BOOK_EXPANSIONS = 2_000
-export const MAX_DAY_EXPANSIONS = 2_000
 export const MAX_REFLOW_EXPANSIONS = 5_000
 
 export type ScoreCandidateInput = {
@@ -179,6 +183,7 @@ export type AssignRequestInput = {
 	partySize: number
 	startAt: number
 	endAt: number
+	localStartMin?: number
 	channel?: BookingChannel
 	serviceId?: string | null
 	areaId?: string | null
@@ -191,11 +196,13 @@ export type AssignTablesConfigSubset = {
 	areas?: readonly EngineAreaInput[]
 	combinations?: readonly EngineCombinationInput[]
 	serviceTableModes?: readonly EngineServiceTableModeInput[]
+	serviceAvailability?: readonly EngineServiceAvailabilityInput[]
 	pacingRules?: readonly EnginePacingRuleInput[]
 	settings?: {
 		assignmentFreezeMin?: number
 		defaultTurnMin?: number
 		bufferMin?: number
+		intervalMin?: number
 	}
 }
 
@@ -208,6 +215,8 @@ export type AssignTablesInput = {
 	partySize?: number
 	startAt?: number
 	endAt?: number
+	localStartMin?: number
+	slotMin?: number
 	channel?: BookingChannel
 	serviceId?: string | null
 	areaId?: string | null
@@ -219,6 +228,10 @@ export type AssignTablesInput = {
 	areas?: readonly EngineAreaInput[]
 	combinations?: readonly EngineCombinationInput[]
 	serviceTableModes?: readonly EngineServiceTableModeInput[]
+	serviceAvailability?: readonly EngineServiceAvailabilityInput[]
+	pacingRules?: readonly EnginePacingRuleInput[]
+	serviceOnlineCapPerInterval?: number | null
+	serviceConcurrentCoversCap?: number | null
 	bookings?: readonly AssignBookingRecord[]
 	existingBookings?: readonly AssignBookingRecord[]
 	holds?: readonly AssignHoldRecord[]
@@ -228,10 +241,15 @@ export type AssignTablesInput = {
 	nowMs?: number
 	assignmentFreezeMin?: number
 	minTurnMin?: number
+	bufferMin?: number
+	buffer_min?: number
+	baseBufferMin?: number
+	intervalMin?: number
 	serviceStartAt?: number
 	serviceEndAt?: number
 	maxExpansions?: number
 	allowRepair?: boolean
+	skipPacing?: boolean
 	prebuiltOccupancy?: PrebuiltOccupancyContext
 	candidatePoolCache?: Map<string, AssignCandidate[]>
 	existingCandidatesCache?: Map<
@@ -257,6 +275,7 @@ export type AssignTablesResult =
 			repairedMoves: TableSwap[]
 			expansions: number
 			expansionsUsed: number
+			warnings?: string[]
 	  }
 	| {
 			assigned: false
@@ -269,8 +288,12 @@ export type AssignTablesResult =
 			repairedMoves: []
 			expansions: number
 			expansionsUsed: number
+			warnings?: string[]
 			reason:
-				'no_fitting_candidate' | 'tables_occupied' | 'repair_budget_exhausted'
+				| 'no_fitting_candidate'
+				| 'tables_occupied'
+				| 'repair_budget_exhausted'
+				| PacingViolationReason
 	  }
 
 const ACTIVE_BOOKING_STATUSES = new Set([
@@ -434,14 +457,20 @@ export function buildOccupancyIndex(input: {
 
 /**
  * Best-fit table assignment with bounded 1-step and 2-step swap repair
- * (`architecture.md` §6.5, §6.7, `VAL-FND-007`).
+ * (`architecture.md` §6.5, §6.7, `VAL-FND-006`, `VAL-FND-007`).
  */
 export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	const req = input.request
 	const partySize = req?.partySize ?? input.partySize ?? 1
 	const startAt = req?.startAt ?? input.startAt ?? 0
 	const endAt = req?.endAt ?? input.endAt ?? 0
+	const slotMin =
+		req?.localStartMin ??
+		input.localStartMin ??
+		input.slotMin ??
+		Math.floor(startAt / 60_000)
 	const channel = req?.channel ?? input.channel ?? 'online'
+	const isOnlineLike = isGuestChannel(channel)
 	const serviceId = req?.serviceId ?? input.serviceId
 	const areaId = req?.areaId ?? input.areaId
 	const seatingPreference = req?.seatingPreference ?? input.seatingPreference
@@ -455,7 +484,11 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	const areas = input.areas ?? input.config?.areas
 	const combinations = input.combinations ?? input.config?.combinations
 	const serviceTableModes =
-		input.serviceTableModes ?? input.config?.serviceTableModes
+		input.serviceTableModes ??
+		input.serviceAvailability ??
+		input.config?.serviceTableModes ??
+		input.config?.serviceAvailability
+	const pacingRules = input.pacingRules ?? input.config?.pacingRules ?? []
 
 	const nowMs = input.nowMs ?? 0
 	const assignmentFreezeMin =
@@ -464,11 +497,117 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		0
 	const minTurnMin =
 		input.minTurnMin ?? input.config?.settings?.defaultTurnMin ?? 60
+	const intervalMin =
+		input.intervalMin ?? input.config?.settings?.intervalMin ?? 15
+	const baseBufferMin =
+		input.baseBufferMin ?? input.config?.settings?.bufferMin ?? 0
+	const directBufferMin = input.bufferMin ?? input.buffer_min ?? 0
 	const maxExpansions = Math.min(
 		MAX_BOOK_EXPANSIONS,
 		input.maxExpansions ?? MAX_BOOK_EXPANSIONS,
 	)
 	const allowRepair = input.allowRepair ?? true
+
+	const candidateExtraBufferMs = (cand: AssignCandidate): number => {
+		const candReset = cand.resetBufferMin ?? 0
+		const extraMin = Math.max(directBufferMin, candReset - baseBufferMin)
+		return Math.max(0, extraMin) * 60_000
+	}
+
+	const hasPacingInputs =
+		!input.skipPacing &&
+		Boolean(
+			serviceId &&
+			(pacingRules.length > 0 ||
+				(serviceTableModes && serviceTableModes.length > 0) ||
+				input.serviceOnlineCapPerInterval !== undefined ||
+				input.serviceConcurrentCoversCap !== undefined),
+		)
+
+	const pacingExisting = hasPacingInputs
+		? existingBookings.map((b) => ({
+				id: b.id,
+				kind: b.kind ?? 'reservation',
+				serviceId: b.serviceId ?? serviceId,
+				areaId: b.areaId ?? null,
+				channel: b.channel ?? 'online',
+				partySize: b.partySize,
+				localStartMin: b.localStartMin ?? Math.floor(b.startAt / 60_000),
+				startAt: b.startAt,
+				endAt: b.endAt,
+				status: b.status,
+			}))
+		: []
+
+	const warnings: string[] = []
+	const addWarnings = (items: readonly string[]) => {
+		for (const w of items) {
+			if (!warnings.includes(w)) warnings.push(w)
+		}
+	}
+
+	if (hasPacingInputs && serviceId) {
+		const globalPacing = evaluatePacing({
+			serviceId,
+			slotMin,
+			startAt,
+			endAt,
+			durationMin: minTurnMin,
+			intervalMin,
+			partySize,
+			channel,
+			areaId: areaId ?? null,
+			rules: pacingRules,
+			serviceAvailability: serviceTableModes,
+			serviceOnlineCapPerInterval: input.serviceOnlineCapPerInterval,
+			serviceConcurrentCoversCap: input.serviceConcurrentCoversCap,
+			existing: pacingExisting,
+		})
+		if (!globalPacing.allowed) {
+			if (isOnlineLike) {
+				return {
+					assigned: false,
+					status: 'no_fit',
+					budgetExhausted: false,
+					tableIds: [],
+					combinationId: null,
+					repaired: false,
+					swaps: [],
+					repairedMoves: [],
+					expansions: 0,
+					expansionsUsed: 0,
+					warnings: globalPacing.warnings,
+					reason: globalPacing.reason ?? 'no_fitting_candidate',
+				}
+			}
+			addWarnings(globalPacing.warnings)
+		}
+	}
+
+	const checkCandidateAreaPacing = (
+		candAreaId: string,
+	): { allowed: boolean; warnings: PacingViolationReason[] } => {
+		if (!hasPacingInputs || !serviceId || areaId) {
+			return { allowed: true, warnings: [] }
+		}
+		const areaEval = evaluatePacing({
+			serviceId,
+			slotMin,
+			startAt,
+			endAt,
+			durationMin: minTurnMin,
+			intervalMin,
+			partySize,
+			channel,
+			areaId: candAreaId,
+			rules: pacingRules,
+			serviceAvailability: serviceTableModes,
+			serviceOnlineCapPerInterval: input.serviceOnlineCapPerInterval,
+			serviceConcurrentCoversCap: input.serviceConcurrentCoversCap,
+			existing: pacingExisting,
+		})
+		return { allowed: areaEval.allowed, warnings: areaEval.warnings }
+	}
 
 	const candidatePoolCache =
 		input.candidatePoolCache ?? new Map<string, AssignCandidate[]>()
@@ -481,17 +620,24 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			combinations,
 			serviceTableModes,
 			serviceId,
+			slotMin,
 			channel,
 		})
 		candidatePoolCache.set(primaryCacheKey, allCandidates)
 	}
 
 	// Candidates that fit the new party's size (and optional area filter)
+	let areaPacingRejectReason: PacingViolationReason | undefined
 	const fittingCandidates = allCandidates.filter((c) => {
 		if (partySize < c.minSeats || partySize > c.maxSeats) {
 			return false
 		}
 		if (areaId && c.areaId !== areaId) {
+			return false
+		}
+		const areaCheck = checkCandidateAreaPacing(c.areaId)
+		if (!areaCheck.allowed && isOnlineLike) {
+			areaPacingRejectReason = areaCheck.warnings[0]
 			return false
 		}
 		return true
@@ -509,7 +655,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			repairedMoves: [],
 			expansions: 0,
 			expansionsUsed: 0,
-			reason: 'no_fitting_candidate',
+			...(warnings.length > 0 ? { warnings } : {}),
+			reason: areaPacingRejectReason ?? 'no_fitting_candidate',
 		}
 	}
 
@@ -531,12 +678,19 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	const occupiedCandidates: AssignCandidate[] = []
 
 	for (const candidate of fittingCandidates) {
-		if (occupancy.areTablesFree(candidate.tableIds, startAt, endAt)) {
+		const extraMs = candidateExtraBufferMs(candidate)
+		if (
+			occupancy.areTablesFree(
+				candidate.tableIds,
+				startAt - extraMs,
+				endAt + extraMs,
+			)
+		) {
 			const { gapBeforeMin, gapAfterMin } = computeCandidateGaps(
 				occupancy,
 				candidate,
-				startAt,
-				endAt,
+				startAt - extraMs,
+				endAt + extraMs,
 				input.serviceStartAt,
 				input.serviceEndAt,
 			)
@@ -558,6 +712,10 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	if (scoredFree.length > 0) {
 		scoredFree.sort(compareScoredCandidates)
 		const best = scoredFree[0]!
+		const areaCheck = checkCandidateAreaPacing(best.candidate.areaId)
+		if (!areaCheck.allowed) {
+			addWarnings(areaCheck.warnings)
+		}
 		return {
 			assigned: true,
 			status: 'assigned',
@@ -572,6 +730,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			repairedMoves: [],
 			expansions,
 			expansionsUsed: expansions,
+			...(warnings.length > 0 ? { warnings } : {}),
 		}
 	}
 
@@ -587,17 +746,19 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			repairedMoves: [],
 			expansions,
 			expansionsUsed: expansions,
+			...(warnings.length > 0 ? { warnings } : {}),
 			reason: allowRepair ? 'repair_budget_exhausted' : 'tables_occupied',
 		}
 	}
 
 	const scoredOccupied: Array<{ candidate: AssignCandidate; score: number }> =
 		occupiedCandidates.map((candidate) => {
+			const extraMs = candidateExtraBufferMs(candidate)
 			const { gapBeforeMin, gapAfterMin } = computeCandidateGaps(
 				occupancy,
 				candidate,
-				startAt,
-				endAt,
+				startAt - extraMs,
+				endAt + extraMs,
 				input.serviceStartAt,
 				input.serviceEndAt,
 			)
@@ -672,10 +833,11 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		}
 		expansions++
 
+		const extraNewMs = candidateExtraBufferMs(candNew)
 		const conflicts = occupancy.conflictsForTables(
 			candNew.tableIds,
-			startAt,
-			endAt,
+			startAt - extraNewMs,
+			endAt + extraNewMs,
 		)
 		if (conflicts.some((c) => c.ownerKind !== 'reservation' || c.hardLocked)) {
 			continue
@@ -697,8 +859,14 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			}
 			expansions++
 
+			const extraB1Ms = candidateExtraBufferMs(candB1)
 			if (
-				intervalsOverlap(b1.startAt, b1.endAt, startAt, endAt) &&
+				intervalsOverlap(
+					b1.startAt - extraB1Ms,
+					b1.endAt + extraB1Ms,
+					startAt - extraNewMs,
+					endAt + extraNewMs,
+				) &&
 				candB1.tableIds.some((t) => candNew.tableIds.includes(t))
 			) {
 				continue
@@ -707,8 +875,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			if (
 				occupancy.areTablesFree(
 					candB1.tableIds,
-					b1.startAt,
-					b1.endAt,
+					b1.startAt - extraB1Ms,
+					b1.endAt + extraB1Ms,
 					ignoreSet1,
 				)
 			) {
@@ -721,6 +889,10 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 						toCombinationId: comboId,
 					},
 				]
+				const areaCheck = checkCandidateAreaPacing(candNew.areaId)
+				if (!areaCheck.allowed) {
+					addWarnings(areaCheck.warnings)
+				}
 				return {
 					assigned: true,
 					status: 'assigned',
@@ -735,6 +907,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 					repairedMoves: moves,
 					expansions,
 					expansionsUsed: expansions,
+					...(warnings.length > 0 ? { warnings } : {}),
 				}
 			}
 		}
@@ -747,10 +920,11 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 				budgetHit = true
 				break
 			}
+			const extraNewMs = candidateExtraBufferMs(candNew)
 			const conflicts = occupancy.conflictsForTables(
 				candNew.tableIds,
-				startAt,
-				endAt,
+				startAt - extraNewMs,
+				endAt + extraNewMs,
 			)
 			if (
 				conflicts.some((c) => c.ownerKind !== 'reservation' || c.hardLocked)
@@ -774,8 +948,14 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 				}
 				expansions++
 
+				const extraB1Ms = candidateExtraBufferMs(candB1)
 				if (
-					intervalsOverlap(b1.startAt, b1.endAt, startAt, endAt) &&
+					intervalsOverlap(
+						b1.startAt - extraB1Ms,
+						b1.endAt + extraB1Ms,
+						startAt - extraNewMs,
+						endAt + extraNewMs,
+					) &&
 					candB1.tableIds.some((t) => candNew.tableIds.includes(t))
 				) {
 					continue
@@ -783,8 +963,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 
 				const b1Conflicts = occupancy.conflictsForTables(
 					candB1.tableIds,
-					b1.startAt,
-					b1.endAt,
+					b1.startAt - extraB1Ms,
+					b1.endAt + extraB1Ms,
 					ignoreB1,
 				)
 				if (
@@ -809,14 +989,25 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 					}
 					expansions++
 
+					const extraB2Ms = candidateExtraBufferMs(candB2)
 					if (
-						intervalsOverlap(b2.startAt, b2.endAt, startAt, endAt) &&
+						intervalsOverlap(
+							b2.startAt - extraB2Ms,
+							b2.endAt + extraB2Ms,
+							startAt - extraNewMs,
+							endAt + extraNewMs,
+						) &&
 						candB2.tableIds.some((t) => candNew.tableIds.includes(t))
 					) {
 						continue
 					}
 					if (
-						intervalsOverlap(b2.startAt, b2.endAt, b1.startAt, b1.endAt) &&
+						intervalsOverlap(
+							b2.startAt - extraB2Ms,
+							b2.endAt + extraB2Ms,
+							b1.startAt - extraB1Ms,
+							b1.endAt + extraB1Ms,
+						) &&
 						candB2.tableIds.some((t) => candB1.tableIds.includes(t))
 					) {
 						continue
@@ -825,8 +1016,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 					if (
 						occupancy.areTablesFree(
 							candB2.tableIds,
-							b2.startAt,
-							b2.endAt,
+							b2.startAt - extraB2Ms,
+							b2.endAt + extraB2Ms,
 							ignoreB1B2,
 						)
 					) {
@@ -846,6 +1037,10 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 								toCombinationId: c2Id,
 							},
 						]
+						const areaCheck = checkCandidateAreaPacing(candNew.areaId)
+						if (!areaCheck.allowed) {
+							addWarnings(areaCheck.warnings)
+						}
 						return {
 							assigned: true,
 							status: 'assigned',
@@ -860,6 +1055,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 							repairedMoves: moves,
 							expansions,
 							expansionsUsed: expansions,
+							...(warnings.length > 0 ? { warnings } : {}),
 						}
 					}
 				}
@@ -878,6 +1074,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		repairedMoves: [],
 		expansions,
 		expansionsUsed: expansions,
+		...(warnings.length > 0 ? { warnings } : {}),
 		reason: budgetHit ? 'repair_budget_exhausted' : 'tables_occupied',
 	}
 }
@@ -888,6 +1085,7 @@ export type ReflowDayInput = {
 	areas?: readonly EngineAreaInput[]
 	combinations?: readonly EngineCombinationInput[]
 	serviceTableModes?: readonly EngineServiceTableModeInput[]
+	serviceAvailability?: readonly EngineServiceAvailabilityInput[]
 	pacingRules?: readonly EnginePacingRuleInput[]
 	bookings?: readonly AssignBookingRecord[]
 	existingBookings?: readonly AssignBookingRecord[]
@@ -898,6 +1096,8 @@ export type ReflowDayInput = {
 	nowMs?: number
 	assignmentFreezeMin?: number
 	minTurnMin?: number
+	bufferMin?: number
+	baseBufferMin?: number
 	maxExpansions?: number
 }
 
@@ -926,7 +1126,10 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	const areas = input.areas ?? input.config?.areas
 	const combinations = input.combinations ?? input.config?.combinations
 	const serviceTableModes =
-		input.serviceTableModes ?? input.config?.serviceTableModes
+		input.serviceTableModes ??
+		input.serviceAvailability ??
+		input.config?.serviceTableModes ??
+		input.config?.serviceAvailability
 	const pacingRules = input.pacingRules ?? input.config?.pacingRules
 	const bookings = input.existingBookings ?? input.bookings ?? []
 	const holds = input.existingHolds ?? input.holds
@@ -939,6 +1142,9 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 		0
 	const minTurnMin =
 		input.minTurnMin ?? input.config?.settings?.defaultTurnMin ?? 60
+	const baseBufferMin =
+		input.baseBufferMin ?? input.config?.settings?.bufferMin ?? 0
+	const directBufferMin = input.bufferMin ?? 0
 	const maxExpansions = Math.min(
 		MAX_REFLOW_EXPANSIONS,
 		input.maxExpansions ?? MAX_REFLOW_EXPANSIONS,
@@ -1035,12 +1241,22 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 				)
 			: undefined
 
+		const currentExtraMs = matchingCurrentCand
+			? Math.max(
+					0,
+					Math.max(
+						directBufferMin,
+						(matchingCurrentCand.resetBufferMin ?? 0) - baseBufferMin,
+					),
+				) * 60_000
+			: 0
+
 		if (
 			matchingCurrentCand &&
 			currentOcc.areTablesFree(
 				matchingCurrentCand.tableIds,
-				sb.startAt,
-				sb.endAt,
+				sb.startAt - currentExtraMs,
+				sb.endAt + currentExtraMs,
 			)
 		) {
 			totalExpansions++
@@ -1076,7 +1292,10 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 			nowMs,
 			assignmentFreezeMin,
 			minTurnMin,
-			maxExpansions: Math.min(MAX_REPAIR_EXPANSIONS, remainingBudget),
+			bufferMin: directBufferMin,
+			baseBufferMin,
+			skipPacing: true,
+			maxExpansions: Math.min(MAX_BOOK_EXPANSIONS, remainingBudget),
 			allowRepair: true,
 		})
 
@@ -1135,21 +1354,16 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 				})
 			}
 		} else {
-			if (res.budgetExhausted && totalExpansions >= maxExpansions) {
+			if (res.budgetExhausted || totalExpansions >= maxExpansions) {
 				budgetExhausted = true
-				break
 			}
 			unresolvable.push(sb.id)
-			placedBookings.push({
-				...sb,
-				tableIds: [],
-				combinationId: null,
-			})
+			break
 		}
 	}
 
-	// Never return partial reflow plans when the expansion budget is exhausted (`VAL-FND-009`).
-	if (budgetExhausted) {
+	// Never return partial reflow plans when any soft booking cannot be placed or budget is exhausted (`VAL-FND-009`).
+	if (budgetExhausted || unresolvable.length > 0) {
 		const originalAssignments = new Map<
 			string,
 			{ tableIds: string[]; combinationId: string | null }
@@ -1168,15 +1382,17 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 			blocks,
 			pacingRules,
 		})
-		const allSoftIds = softBookings.map((sb) => sb.id)
+		const failedIds = budgetExhausted
+			? softBookings.map((sb) => sb.id)
+			: unresolvable
 		return {
 			status: 'no_fit',
-			budgetExhausted: true,
+			budgetExhausted,
 			assignments: originalAssignments,
 			reassigned: [],
 			moves: [],
-			unresolvable: allSoftIds,
-			unassignedIds: allSoftIds,
+			unresolvable: failedIds,
+			unassignedIds: failedIds,
 			conflicts,
 			expansions: totalExpansions,
 			expansionsUsed: totalExpansions,
@@ -1193,13 +1409,13 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 	})
 
 	return {
-		status: unresolvable.length === 0 ? 'assigned' : 'no_fit',
+		status: 'assigned',
 		budgetExhausted: false,
 		assignments,
 		reassigned,
 		moves: reassigned,
-		unresolvable,
-		unassignedIds: unresolvable,
+		unresolvable: [],
+		unassignedIds: [],
 		conflicts,
 		expansions: totalExpansions,
 		expansionsUsed: totalExpansions,

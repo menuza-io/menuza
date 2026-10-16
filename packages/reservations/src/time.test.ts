@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+	type LocalToInstantOptions,
 	currentBusinessDate,
 	formatHhmm,
 	instantToLocal,
@@ -10,6 +11,17 @@ import {
 
 describe('reservations DST-safe time math', () => {
 	it('resolves US spring-forward gap (America/New_York 2026-03-08 & 2027-03-14 02:30) with gap: skip vs after', () => {
+		const widenedOpts: LocalToInstantOptions | undefined = { gap: 'skip' }
+		const widenedRes = localToInstant(
+			'2027-03-14',
+			2 * 60 + 30,
+			'America/New_York',
+			widenedOpts,
+		)
+		const _nullCheck: null extends typeof widenedRes ? true : false = true
+		expect(_nullCheck).toBe(true)
+		expect(widenedRes).toBeNull()
+
 		const res = localToInstant('2026-03-08', 2 * 60 + 30, 'America/New_York')
 		// 02:30 EST (UTC-5) shifts forward to 03:30 EDT (UTC-4) = 07:30 UTC
 		expect(res.instantMs).toBe(Date.parse('2026-03-08T07:30:00.000Z'))

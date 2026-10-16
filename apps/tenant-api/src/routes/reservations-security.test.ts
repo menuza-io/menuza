@@ -541,6 +541,120 @@ describe('Reservations security sweep: operator routes', () => {
 		}
 		expect(overviewJson.locations.map((l) => l.locationId)).toEqual([LOC_1])
 	})
+
+	it('VAL-SETUP-027 & VAL-SETUP-028: enforces read vs update grants on all setup routes and blocks cross-location/cross-org setup mutations by entity ID', async () => {
+		const setupRoutes = list.filter((r) =>
+			r.path.startsWith('/operator/reservations/setup'),
+		)
+		expect(setupRoutes.length).toBeGreaterThanOrEqual(20)
+
+		const readOnlySetupToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'setup',
+			grants: [RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS],
+			ttlSeconds: 300,
+		})
+
+		// 1. Read-only setup token is rejected with 403 missing_grant on EVERY setup mutation route
+		const writeSetupRoutes = setupRoutes.filter(
+			(r) => r.method !== 'GET' && r.method !== 'HEAD',
+		)
+		expect(writeSetupRoutes.length).toBeGreaterThanOrEqual(15)
+		const readOnlyMutationFailures: string[] = []
+		for (const route of writeSetupRoutes) {
+			const res = await app.request(
+				fill(route.path),
+				buildRouteInit(route, {
+					Authorization: `Bearer ${readOnlySetupToken}`,
+				}),
+			)
+			if (res.status !== 403) {
+				readOnlyMutationFailures.push(
+					`${route.method} ${route.path} -> ${res.status}`,
+				)
+			}
+		}
+		expect(readOnlyMutationFailures).toEqual([])
+
+		// 2. Full setup token scoped to LOC_1 creates an area in LOC_1, then a token scoped to LOC_2 is rejected (403) when trying to update or delete that LOC_1 area by ID
+		const loc1WriteToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'setup',
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+			],
+			locationIds: [LOC_1],
+			ttlSeconds: 300,
+		})
+		const createAreaRes = await app.request(
+			'/operator/reservations/setup/areas',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${loc1WriteToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_1,
+					name: 'LOC_1 Only Room',
+				}),
+			},
+		)
+		expect(createAreaRes.status).toBe(201)
+		const { area } = (await createAreaRes.json()) as { area: { id: string } }
+
+		const loc2WriteToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'setup',
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+			],
+			locationIds: [LOC_2],
+			ttlSeconds: 300,
+		})
+		const crossLocPatchArea = await app.request(
+			`/operator/reservations/setup/areas/${area.id}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${loc2WriteToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ name: 'Hijacked Area' }),
+			},
+		)
+		expect(crossLocPatchArea.status).toBe(403)
+
+		const crossLocDeleteArea = await app.request(
+			`/operator/reservations/setup/areas/${area.id}`,
+			{
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${loc2WriteToken}` },
+			},
+		)
+		expect(crossLocDeleteArea.status).toBe(403)
+
+		// 3. Cross-org token (ORG_B) attempting to mutate ORG_A's area by ID gets 404 (not found in ORG_B's DB)
+		const orgBWriteToken = await mintRsvToken({
+			orgId: ORG_B,
+			scope: 'setup',
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+			],
+			ttlSeconds: 300,
+		})
+		const crossOrgDeleteArea = await app.request(
+			`/operator/reservations/setup/areas/${area.id}`,
+			{
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${orgBWriteToken}` },
+			},
+		)
+		expect(crossOrgDeleteArea.status).toBe(404)
+	})
 })
 
 describe('Reservations security sweep: mounts and non-operator surfaces', () => {

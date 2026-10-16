@@ -60,7 +60,7 @@ export type LocalToInstantOptions = {
 	overlap?: 'earlier' | 'later'
 }
 
-export type LocalInstantResolution = {
+export type LocalInstantResolution = number & {
 	instantMs: number
 	/** True when the requested wall-clock time fell inside a spring-forward gap and was shifted to the post-gap instant. */
 	adjustedForGap: boolean
@@ -76,6 +76,25 @@ export type LocalInstantResolution = {
 	laterInstantMs?: number
 	/** Alias for `laterInstantMs`. */
 	secondInstantMs?: number
+	valueOf(): number
+}
+
+function makeResolution(fields: {
+	instantMs: number
+	adjustedForGap: boolean
+	inGap: boolean
+	ambiguousFold: boolean
+	ambiguous: boolean
+	earlierInstantMs?: number
+	laterInstantMs?: number
+	secondInstantMs?: number
+}): LocalInstantResolution {
+	return {
+		...fields,
+		valueOf() {
+			return fields.instantMs
+		},
+	} as unknown as LocalInstantResolution
 }
 
 /**
@@ -94,14 +113,19 @@ export function localToInstant(
 	businessDate: string,
 	localStartMin: number,
 	timeZone: string,
-	opts: { gap: 'skip'; overlap?: 'earlier' | 'later' },
-): LocalInstantResolution | null
+): LocalInstantResolution
+export function localToInstant(
+	businessDate: string,
+	localStartMin: number,
+	timeZone: string,
+	opts: { gap?: 'after'; overlap?: 'earlier' | 'later' },
+): LocalInstantResolution
 export function localToInstant(
 	businessDate: string,
 	localStartMin: number,
 	timeZone: string,
 	opts?: LocalToInstantOptions,
-): LocalInstantResolution
+): LocalInstantResolution | null
 export function localToInstant(
 	businessDate: string,
 	localStartMin: number,
@@ -133,7 +157,7 @@ export function localToInstant(
 		const earlier = matching[0]!
 		const later = matching[matching.length - 1]!
 		const chosen = opts?.overlap === 'later' ? later : earlier
-		return {
+		return makeResolution({
 			instantMs: chosen,
 			adjustedForGap: false,
 			inGap: false,
@@ -142,28 +166,28 @@ export function localToInstant(
 			earlierInstantMs: earlier,
 			laterInstantMs: later,
 			secondInstantMs: later,
-		}
+		})
 	}
 	if (matching.length === 1) {
-		return {
+		return makeResolution({
 			instantMs: matching[0]!,
 			adjustedForGap: false,
 			inGap: false,
 			ambiguousFold: false,
 			ambiguous: false,
-		}
+		})
 	}
 	if (opts?.gap === 'skip') {
 		return null
 	}
 	// Non-existent wall-clock time (spring-forward gap): use pre-transition offset
-	return {
+	return makeResolution({
 		instantMs: naive - before,
 		adjustedForGap: true,
 		inGap: true,
 		ambiguousFold: false,
 		ambiguous: false,
-	}
+	})
 }
 
 export type LocalBusinessTime = {

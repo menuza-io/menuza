@@ -448,8 +448,13 @@ export function buildScaleRestaurantFixture(
 
 		for (let tIdx = 0; tIdx < tables.length; tIdx++) {
 			if (existingBookings.length >= bookingCount) break outer
-			// Leave a few tables free in Dinner so availability & swap repair have realistic candidates
-			if (slotMin === 1170 && tIdx >= 110) continue
+			// Leave a few tables free in Dinner (1080, 1170, 1260) so availability, swap repair, and block reflow have candidates
+			if (
+				(slotMin === 1080 || slotMin === 1170 || slotMin === 1260) &&
+				tIdx >= 115
+			) {
+				continue
+			}
 
 			const tbl = tables[tIdx]!
 			existingBookings.push({
@@ -462,7 +467,7 @@ export function buildScaleRestaurantFixture(
 				tableIds: [tbl.id],
 				combinationId: null,
 				status: 'confirmed',
-				tableLocked: existingBookings.length % 7 === 0,
+				tableLocked: tIdx > 0 && existingBookings.length % 7 === 0,
 				channel: 'online',
 				serviceId,
 				areaId: tbl.areaId,
@@ -622,9 +627,49 @@ export function executeOperationSequence(
 		const turnMin = config.settings.defaultTurnMin + config.settings.bufferMin
 		const endAt = slotMinToMs(slotMin + turnMin)
 
+		let searchedSlots:
+			| ReadonlyArray<{
+					slotMin: number
+					startAt: number
+					endAt: number
+					serviceId: string
+					areaId: string | null
+					tableIds: readonly string[]
+					combinationId: string | null
+			  }>
+			| undefined
+		let searchHoldCheck: { failedSlots: readonly number[] } | undefined
+		let failedModifyCheck:
+			| {
+					before: readonly AssignBookingRecord[]
+					after: readonly AssignBookingRecord[]
+			  }
+			| undefined
+		let releaseMonotonicityCheck:
+			| {
+					slotsBefore: readonly number[]
+					slotsAfter: readonly number[]
+			  }
+			| undefined
+
+		const getAvailableSlotMins = (
+			currBookings: readonly AssignBookingRecord[],
+			currHolds: readonly AssignHoldRecord[],
+		): number[] =>
+			searchAvailability({
+				config,
+				businessDate: seqScenario.initialScenario.businessDate,
+				partySize: 2,
+				channel: 'online',
+				existingBookings: currBookings,
+				existingHolds: currHolds,
+				tableBlocks: blocks,
+				nowMs,
+			}).slots.map((s) => s.slotMin)
+
 		switch (step.kind) {
 			case 'search': {
-				searchAvailability({
+				const searchRes = searchAvailability({
 					config,
 					businessDate: seqScenario.initialScenario.businessDate,
 					partySize: step.partySize,
@@ -635,6 +680,28 @@ export function executeOperationSequence(
 					tableBlocks: blocks,
 					nowMs,
 				})
+				searchedSlots = searchRes.slots
+				const failedSlots: number[] = []
+				for (const s of searchRes.slots) {
+					const holdAttempt = assignTables({
+						config,
+						request: {
+							partySize: step.partySize,
+							startAt: s.startAt,
+							endAt: s.endAt,
+							channel: step.channel,
+							serviceId: s.serviceId,
+						},
+						existingBookings: bookings,
+						existingHolds: holds,
+						tableBlocks: blocks,
+						nowMs,
+					})
+					if (!holdAttempt.assigned) {
+						failedSlots.push(s.slotMin)
+					}
+				}
+				searchHoldCheck = { failedSlots }
 				break
 			}
 			case 'hold': {
@@ -670,6 +737,8 @@ export function executeOperationSequence(
 				const pace = evaluatePacing({
 					serviceId: 'srv_dinner',
 					slotMin,
+					startAt,
+					endAt,
 					partySize: step.partySize,
 					channel: step.channel,
 					areaId: null,
@@ -681,6 +750,8 @@ export function executeOperationSequence(
 						channel: b.channel ?? 'online',
 						partySize: b.partySize,
 						localStartMin: b.localStartMin,
+						startAt: b.startAt,
+						endAt: b.endAt,
 						status: b.status,
 					})),
 				})
@@ -761,6 +832,11 @@ export function executeOperationSequence(
 							areaId: res.areaId,
 						})
 						bookings = swapped
+					} else {
+						failedModifyCheck = {
+							before: previousBookings,
+							after: bookings,
+						}
 					}
 				}
 				break
@@ -770,10 +846,13 @@ export function executeOperationSequence(
 					(b) => b.status === 'booked' || b.status === 'confirmed',
 				)
 				if (cancellable.length > 0) {
+					const slotsBefore = getAvailableSlotMins(bookings, holds)
 					const target = cancellable[step.targetIndex % cancellable.length]!
 					bookings = bookings.map((b) =>
 						b.id === target.id ? { ...b, status: 'cancelled' } : b,
 					)
+					const slotsAfter = getAvailableSlotMins(bookings, holds)
+					releaseMonotonicityCheck = { slotsBefore, slotsAfter }
 				}
 				break
 			}
@@ -802,10 +881,13 @@ export function executeOperationSequence(
 					(b) => b.status === 'seated' || b.status === 'partially_seated',
 				)
 				if (finishable.length > 0) {
+					const slotsBefore = getAvailableSlotMins(bookings, holds)
 					const target = finishable[step.targetIndex % finishable.length]!
 					bookings = bookings.map((b) =>
 						b.id === target.id ? { ...b, status: 'finished' } : b,
 					)
+					const slotsAfter = getAvailableSlotMins(bookings, holds)
+					releaseMonotonicityCheck = { slotsBefore, slotsAfter }
 				}
 				break
 			}
@@ -814,10 +896,13 @@ export function executeOperationSequence(
 					(b) => b.status === 'booked' || b.status === 'confirmed',
 				)
 				if (candidates.length > 0) {
+					const slotsBefore = getAvailableSlotMins(bookings, holds)
 					const target = candidates[step.targetIndex % candidates.length]!
 					bookings = bookings.map((b) =>
 						b.id === target.id ? { ...b, status: 'no_show' } : b,
 					)
+					const slotsAfter = getAvailableSlotMins(bookings, holds)
+					releaseMonotonicityCheck = { slotsBefore, slotsAfter }
 				}
 				break
 			}
@@ -939,6 +1024,10 @@ export function executeOperationSequence(
 			existingHolds: holds,
 			tableBlocks: blocks,
 			nowMs,
+			searchedSlots,
+			searchHoldCheck,
+			failedModifyCheck,
+			releaseMonotonicityCheck,
 		})
 		stepVerifications.push({
 			stepIndex,

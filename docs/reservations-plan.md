@@ -19,24 +19,36 @@ and [the API contract](./reservations-contract.md) for wire schemas.
      (`evaluatePolicy`), guest tag rules, formula-safe CSV export, and Zod wire
      schemas live in `@repo/reservations`.
 2. **Regional data plane (`packages/tenant-db`, `apps/tenant-api`):**
-   - 24 `rsv_*` tables in `packages/tenant-db` (migration
+   - 41 `rsv_*` tables in `packages/tenant-db` (migration
      `0016_reservations_foundation.sql`) with SQLite triggers preventing
      overlapping active non-overbooked table occupancies
      (`rsv_occupancy_no_overlap_insert` / `rsv_occupancy_no_overlap_update`
      raising `'rsv_table_occupancies overlap'` when
-     `o.active = 1 AND o.overbook = 0`), overlapping active holds
-     (`rsv_holds_no_overlap_insert` / `rsv_holds_no_overlap_update` raising
-     `'rsv_reservation_holds overlap'`), mutating converted holds
+     `o.active = 1 AND o.overbook = 0`), mutating converted holds
      (`rsv_holds_single_conversion` raising `'hold_already_converted'` when
      `OLD.status = 'converted'`), and mutations/deletions on
-     `rsv_reservation_events` (`rsv_events_no_update` / `rsv_events_no_delete`
-     raising `'rsv_reservation_events is append-only'`).
+     `rsv_reservation_events`, `rsv_audit_log`, and `rsv_guest_merges`
+     (`rsv_reservation_events_no_delete`, `rsv_reservation_events_no_update`,
+     `rsv_audit_log_no_delete`, `rsv_audit_log_no_update`,
+     `rsv_guest_merges_no_delete`, `rsv_guest_merges_no_update` raising
+     `'append_only'`).
    - Serialized per-organization write helper `withReservationWrite` combining
      in-process `runExclusive(orgId)` locking, `BEGIN IMMEDIATE` transactions,
      `retryOnSqliteBusy`, inline expiration sweeps, idempotency key storage,
      `mapSqliteConstraintError` (mapping `'rsv_table_occupancies overlap'` and
-     `'rsv_reservation_holds overlap'` to `409`), and `rsv_day_versions`
-     bumping.
+     `'hold_already_converted'` to `409`), and `rsv_day_versions` bumping.
+   - **Guest identity without login:** guests can book, join the waitlist, and
+     manage/cancel bookings without an account using opaque capability tokens
+     (`rsv_m_` for reservation manage tokens, `rsv_w_` for waitlist tokens).
+     Only HMAC-SHA256 digests (`manage_token_hash`, `token_hash`, keyed with
+     `AUTH_HMAC_SECRET`) are stored in `tenant-db`, and public manage links pass
+     the token in the URL fragment (`#t=rsv_m_...`) so it never transits HTTP
+     `Referer` headers or Sites SSR; customer phone-OTP / `Bearer` JWT sign-in
+     is optional.
+   - **Shared org alarm (`apps/tenant-api/src/lib/org-alarm.ts`):** multiplexes
+     `staffing` and `reservations` regional ticks across the single per-org
+     Cloudflare Durable Object `alarm()` slot and the Node/OCI periodic interval
+     loop.
 3. **Control plane (`packages/database`, `packages/auth`, `apps/app`):**
    - Control-plane migration `0025_reservations_foundation.sql` seeding the 8
      organization permissions (`read:reservation:any`, `update:reservation:any`,
@@ -44,7 +56,10 @@ and [the API contract](./reservations-contract.md) for wire schemas.
      `read:reservation_settings:any`, `update:reservation_settings:any`,
      `read:reservation_report:any`, `update:reservation_payment:any`), 4 role
      presets (`Host`, `Shift manager` extension, `Reservations manager`,
-     `Guest relations`), implied read-from-write normalization, and
+     `Guest relations`), implied read-from-write normalization
+     (`update:reservation:any` → `read:reservation:any`,
+     `update:reservation_guest:any` → `read:reservation_guest:any`,
+     `update:reservation_settings:any` → `read:reservation_settings:any`), and
      `UserOrganization.locationScope` enforcement.
    - 6 boolean feature flags (`reservations.enabled`, `reservations.online`,
      `reservations.waitlist`, `reservations.payments`,

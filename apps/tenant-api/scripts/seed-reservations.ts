@@ -17,6 +17,7 @@ import { businessDayStartMs } from '@repo/zoned-time'
 import {
 	getTenantDb,
 	provisionTenantDb,
+	refreshReservationsTriggers,
 	rsvAreas,
 	rsvDayVersions,
 	rsvExperiences,
@@ -330,6 +331,7 @@ async function seedTenantReservations(params: {
 }) {
 	await provisionTenantDb(params.orgId)
 	const tenantDb = await getTenantDb(params.orgId)
+	await refreshReservationsTriggers(tenantDb)
 	const now = Date.now()
 	const prefix = params.slug.replace(/[^a-z0-9]/g, '_')
 	const locId = params.locationId
@@ -542,7 +544,7 @@ async function seedTenantReservations(params: {
 			label: 'C1',
 			minCovers: 1,
 			maxCovers: 2,
-			shape: 'counter' as const,
+			shape: 'bar' as const,
 			x: 100,
 			y: 100,
 			priority: 6,

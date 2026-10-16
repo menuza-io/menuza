@@ -1,16 +1,10 @@
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import {
 	getTenantDb,
-	rsvAreas,
 	rsvDayVersions,
 	rsvExperiences,
 	rsvGuests,
-	rsvLocationSettings,
 	rsvReservations,
-	rsvServices,
-	rsvTableCombos,
-	rsvTables,
-	rsvTurnTimes,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
@@ -20,12 +14,12 @@ import { handleRouteError, json, readJsonBody, readQuery } from '../lib/http.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import {
-	filterReservationsLocations,
 	requireReservationsLocation,
 	type ReservationsAuthContext,
 } from '../lib/reservations-auth.ts'
 import { getRsvAuth, rsvGuard } from '../lib/reservations-guard.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
 
 async function ensureActiveOrgInNodeRegion(
 	ctx: ReservationsAuthContext,
@@ -61,10 +55,6 @@ async function resolveLocationParam(
 
 export const reservationsOperatorRoutes = new Hono()
 
-const optionalLocationQuerySchema = z.object({
-	locationId: z.string().trim().min(1).max(128).optional(),
-})
-
 const requiredLocationQuerySchema = z.object({
 	locationId: z.string().trim().min(1).max(128),
 	date: z
@@ -74,122 +64,7 @@ const requiredLocationQuerySchema = z.object({
 })
 
 // 1. Setup scope routes
-reservationsOperatorRoutes.get(
-	'/setup/overview',
-	rsvGuard({
-		scope: 'setup',
-		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const query = readQuery(c, optionalLocationQuerySchema)
-		if ('error' in query) return query.error
-
-		if (query.data.locationId) {
-			const locCheck = await resolveLocationParam(c, ctx, query.data.locationId)
-			if (!locCheck.ok) return locCheck.response
-		}
-
-		const db = await getTenantDb(ctx.orgId)
-		const [locations, areas, tables, combos, services, turnTimes] =
-			await Promise.all([
-				db.select().from(rsvLocationSettings),
-				db.select().from(rsvAreas),
-				db.select().from(rsvTables),
-				db.select().from(rsvTableCombos),
-				db.select().from(rsvServices),
-				db.select().from(rsvTurnTimes),
-			])
-
-		const targetLoc = query.data.locationId
-		const filterLoc = <T extends { locationId: string }>(rows: T[]) => {
-			const scoped = filterReservationsLocations(ctx, rows)
-			return targetLoc
-				? scoped.filter((row) => row.locationId === targetLoc)
-				: scoped
-		}
-
-		return json({
-			ok: true,
-			orgId: ctx.orgId,
-			locations: filterLoc(locations),
-			areas: filterLoc(areas),
-			tables: filterLoc(tables),
-			combos: filterLoc(combos),
-			services: filterLoc(services),
-			turnTimes: filterLoc(turnTimes),
-		})
-	},
-)
-
-const updateLocationSettingsBodySchema = z.object({
-	enabled: z.boolean().optional(),
-	onlineEnabled: z.boolean().optional(),
-	timeZone: z.string().trim().min(1).max(64).optional(),
-})
-
-reservationsOperatorRoutes.post(
-	'/setup/locations/:locationId/settings',
-	rsvGuard({
-		scope: 'setup',
-		write: true,
-		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const locationId = c.req.param('locationId')
-		const locCheck = await resolveLocationParam(c, ctx, locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		const parsed = await readJsonBody(c, updateLocationSettingsBodySchema)
-		if ('error' in parsed) return parsed.error
-
-		try {
-			const db = await getTenantDb(ctx.orgId)
-			const now = Date.now()
-			await db
-				.insert(rsvLocationSettings)
-				.values({
-					locationId: locCheck.locationId,
-					enabled: parsed.data.enabled ?? true,
-					onlineEnabled: parsed.data.onlineEnabled ?? false,
-					timeZone: parsed.data.timeZone ?? 'UTC',
-					updatedAt: now,
-				})
-				.onConflictDoUpdate({
-					target: rsvLocationSettings.locationId,
-					set: {
-						...(parsed.data.enabled !== undefined
-							? { enabled: parsed.data.enabled }
-							: {}),
-						...(parsed.data.onlineEnabled !== undefined
-							? { onlineEnabled: parsed.data.onlineEnabled }
-							: {}),
-						...(parsed.data.timeZone !== undefined
-							? { timeZone: parsed.data.timeZone }
-							: {}),
-						updatedAt: now,
-					},
-				})
-
-			const updated = await db
-				.select()
-				.from(rsvLocationSettings)
-				.where(eq(rsvLocationSettings.locationId, locCheck.locationId))
-				.get()
-
-			return json({ ok: true, orgId: ctx.orgId, settings: updated })
-		} catch (error) {
-			return handleRouteError(error)
-		}
-	},
-)
+reservationsOperatorRoutes.route('/setup', operatorReservationsSetupRoutes)
 
 reservationsOperatorRoutes.get(
 	'/experiences',
@@ -503,3 +378,5 @@ reservationsOperatorRoutes.post(
 		})
 	},
 )
+
+export const reservationsOperatorRouter = reservationsOperatorRoutes

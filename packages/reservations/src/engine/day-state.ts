@@ -45,6 +45,7 @@ export type AssignCandidate = {
 	onlineBookable: boolean
 	isOutdoor: boolean
 	isBar: boolean
+	resetBufferMin?: number
 	isAccessible?: boolean
 	isHighTop?: boolean
 	isWindow?: boolean
@@ -60,8 +61,14 @@ export type EngineTableInput = {
 	name?: string
 	minSeats?: number
 	min_seats?: number
+	minCovers?: number
+	min_covers?: number
 	maxSeats?: number
 	max_seats?: number
+	maxCovers?: number
+	max_covers?: number
+	resetBufferMin?: number | null
+	reset_buffer_min?: number | null
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
 	walkInOnly?: boolean | number
@@ -98,10 +105,15 @@ export type EngineAreaInput = {
 export type EngineCombinationInput = {
 	id: string
 	name?: string
+	label?: string
 	minSeats?: number
 	min_seats?: number
+	minCovers?: number
+	min_covers?: number
 	maxSeats?: number
 	max_seats?: number
+	maxCovers?: number
+	max_covers?: number
 	priority?: number
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
@@ -111,14 +123,29 @@ export type EngineCombinationInput = {
 }
 
 export type EngineServiceTableModeInput = {
+	id?: string
 	serviceId?: string
 	service_id?: string
+	areaId?: string | null
+	area_id?: string | null
 	tableId?: string | null
 	table_id?: string | null
 	combinationId?: string | null
 	combination_id?: string | null
-	mode: ServiceTableMode
+	comboId?: string | null
+	combo_id?: string | null
+	fromMin?: number | null
+	from_min?: number | null
+	toMin?: number | null
+	to_min?: number | null
+	mode?: ServiceTableMode
+	onlineCapPerInterval?: number | null
+	online_cap_per_interval?: number | null
+	concurrentCoversCap?: number | null
+	concurrent_covers_cap?: number | null
 }
+
+export type EngineServiceAvailabilityInput = EngineServiceTableModeInput
 
 function toBool(v: boolean | number | undefined, fallback = true): boolean {
 	if (v === undefined) return fallback
@@ -173,14 +200,16 @@ export function isBookingHardLocked(input: {
 
 /**
  * Build the list of valid single-table and combination candidates for a location
- * (Invariant I3: active tables, active areas, same area for combos, service modes).
+ * (Invariant I1/I2/I3: active tables, active areas, same area for combos, service modes).
  */
 export function buildCandidates(input: {
 	tables: readonly EngineTableInput[]
 	areas?: readonly EngineAreaInput[]
 	combinations?: readonly EngineCombinationInput[]
 	serviceTableModes?: readonly EngineServiceTableModeInput[]
+	serviceAvailability?: readonly EngineServiceAvailabilityInput[]
 	serviceId?: string | null
+	slotMin?: number | null
 	channel?: BookingChannel
 }): AssignCandidate[] {
 	const channel: BookingChannel = input.channel ?? 'online'
@@ -195,16 +224,33 @@ export function buildCandidates(input: {
 		}
 	}
 
+	const areaModeMap = new Map<string, ServiceTableMode>()
 	const tableModeMap = new Map<string, ServiceTableMode>()
 	const comboModeMap = new Map<string, ServiceTableMode>()
-	if (input.serviceId && input.serviceTableModes) {
-		for (const rule of input.serviceTableModes) {
+	const modeRules = input.serviceTableModes ?? input.serviceAvailability
+	if (input.serviceId && modeRules) {
+		for (const rule of modeRules) {
 			const sId = rule.serviceId ?? rule.service_id
 			if (sId !== input.serviceId) continue
+			if (input.slotMin !== undefined && input.slotMin !== null) {
+				const fromMin = rule.fromMin ?? rule.from_min ?? null
+				const toMin = rule.toMin ?? rule.to_min ?? null
+				if (fromMin !== null && input.slotMin < fromMin) continue
+				if (toMin !== null && input.slotMin >= toMin) continue
+			}
+			const rMode = rule.mode
+			if (!rMode) continue
+			const aId = rule.areaId ?? rule.area_id ?? null
 			const tId = rule.tableId ?? rule.table_id ?? null
-			const cId = rule.combinationId ?? rule.combination_id ?? null
-			if (tId) tableModeMap.set(tId, rule.mode)
-			if (cId) comboModeMap.set(cId, rule.mode)
+			const cId =
+				rule.combinationId ??
+				rule.combination_id ??
+				rule.comboId ??
+				rule.combo_id ??
+				null
+			if (aId) areaModeMap.set(aId, rMode)
+			if (tId) tableModeMap.set(tId, rMode)
+			if (cId) comboModeMap.set(cId, rMode)
 		}
 	}
 
@@ -229,6 +275,7 @@ export function buildCandidates(input: {
 			onlineBookable: boolean
 			isOutdoor: boolean
 			isBar: boolean
+			resetBufferMin: number
 			isAccessible: boolean
 			isHighTop: boolean
 			isWindow: boolean
@@ -247,8 +294,10 @@ export function buildCandidates(input: {
 			continue
 		}
 		const areaInfo = activeAreas.get(areaId)
-		const minSeats = raw.minSeats ?? raw.min_seats ?? 1
-		const maxSeats = raw.maxSeats ?? raw.max_seats ?? 1
+		const minSeats =
+			raw.minSeats ?? raw.min_seats ?? raw.minCovers ?? raw.min_covers ?? 1
+		const maxSeats =
+			raw.maxSeats ?? raw.max_seats ?? raw.maxCovers ?? raw.max_covers ?? 1
 		if (minSeats > maxSeats) continue
 
 		const onlineBookable = toBool(
@@ -258,6 +307,10 @@ export function buildCandidates(input: {
 		const combinable =
 			toBool(raw.combinable, false) || tablesInActiveCombo.has(raw.id)
 		const priority = raw.priority ?? 0
+		const resetBufferMin = Math.max(
+			0,
+			raw.resetBufferMin ?? raw.reset_buffer_min ?? 0,
+		)
 		const isPatio = toBool(raw.isPatio ?? raw.is_patio, false)
 		const isOutdoor = (areaInfo?.isOutdoor ?? false) || isPatio
 		const isBar = toBool(raw.isBar ?? raw.is_bar, false)
@@ -270,7 +323,8 @@ export function buildCandidates(input: {
 		const defaultMode: ServiceTableMode =
 			raw.mode ??
 			(walkInOnly ? 'walk_in_only' : onlineBookable ? 'online' : 'staff_only')
-		const mode = tableModeMap.get(raw.id) ?? defaultMode
+		const mode =
+			tableModeMap.get(raw.id) ?? areaModeMap.get(areaId) ?? defaultMode
 
 		activeTablesById.set(raw.id, {
 			id: raw.id,
@@ -282,6 +336,7 @@ export function buildCandidates(input: {
 			onlineBookable,
 			isOutdoor,
 			isBar,
+			resetBufferMin,
 			isAccessible,
 			isHighTop,
 			isWindow,
@@ -307,6 +362,7 @@ export function buildCandidates(input: {
 			onlineBookable,
 			isOutdoor,
 			isBar,
+			resetBufferMin,
 			isAccessible,
 			isHighTop,
 			isWindow,
@@ -319,8 +375,18 @@ export function buildCandidates(input: {
 		if (!toBool(rawCombo.active, true)) continue
 		const tableIds = rawCombo.tableIds ?? rawCombo.table_ids ?? []
 		if (tableIds.length < 2) continue
-		const minSeats = rawCombo.minSeats ?? rawCombo.min_seats ?? 1
-		const maxSeats = rawCombo.maxSeats ?? rawCombo.max_seats ?? 1
+		const minSeats =
+			rawCombo.minSeats ??
+			rawCombo.min_seats ??
+			rawCombo.minCovers ??
+			rawCombo.min_covers ??
+			1
+		const maxSeats =
+			rawCombo.maxSeats ??
+			rawCombo.max_seats ??
+			rawCombo.maxCovers ??
+			rawCombo.max_covers ??
+			1
 		if (minSeats > maxSeats) continue
 
 		const comboOnline = toBool(
@@ -330,11 +396,6 @@ export function buildCandidates(input: {
 		const defaultComboMode: ServiceTableMode = comboOnline
 			? 'online'
 			: 'staff_only'
-		const comboMode = comboModeMap.get(rawCombo.id) ?? defaultComboMode
-		if (!isModeAllowedForChannel(comboMode, channel)) continue
-		if (isGuestChannel(channel) && !comboOnline) {
-			continue
-		}
 
 		let areaId: string | null = null
 		let allMembersValid = true
@@ -342,6 +403,7 @@ export function buildCandidates(input: {
 		let isOutdoor = false
 		let isBar = false
 		let isAccessible = true
+		let comboResetBufferMin = 0
 
 		for (const tableId of tableIds) {
 			const member = activeTablesById.get(tableId)
@@ -359,10 +421,7 @@ export function buildCandidates(input: {
 				allMembersValid = false
 				break
 			}
-			if (
-				(channel === 'online' || channel === 'voice') &&
-				!member.onlineBookable
-			) {
+			if (isGuestChannel(channel) && !member.onlineBookable) {
 				allMembersValid = false
 				break
 			}
@@ -370,9 +429,21 @@ export function buildCandidates(input: {
 			isOutdoor = isOutdoor || member.isOutdoor
 			isBar = isBar || member.isBar
 			isAccessible = isAccessible && member.isAccessible
+			if (member.resetBufferMin > comboResetBufferMin) {
+				comboResetBufferMin = member.resetBufferMin
+			}
 		}
 
 		if (!allMembersValid || !areaId) continue
+
+		const comboMode =
+			comboModeMap.get(rawCombo.id) ??
+			areaModeMap.get(areaId) ??
+			defaultComboMode
+		if (!isModeAllowedForChannel(comboMode, channel)) continue
+		if (isGuestChannel(channel) && !comboOnline) {
+			continue
+		}
 
 		candidates.push({
 			id: rawCombo.id,
@@ -386,6 +457,7 @@ export function buildCandidates(input: {
 			onlineBookable: allOnlineBookable,
 			isOutdoor,
 			isBar,
+			resetBufferMin: comboResetBufferMin,
 			isAccessible,
 		})
 	}

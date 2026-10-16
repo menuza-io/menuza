@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-	MAX_DAY_EXPANSIONS,
-	MAX_REPAIR_EXPANSIONS,
+	MAX_BOOK_EXPANSIONS,
+	MAX_REFLOW_EXPANSIONS,
+	MAX_SEARCH_SLOT_EXPANSIONS,
 	assignTables,
 	reflowDay,
 	scoreCandidate,
@@ -90,7 +91,8 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 	})
 
 	it('performs a 1-step swap repair when direct candidates are occupied by a movable soft booking', () => {
-		expect(MAX_REPAIR_EXPANSIONS).toBe(200)
+		expect(MAX_SEARCH_SLOT_EXPANSIONS).toBe(200)
+		expect(MAX_BOOK_EXPANSIONS).toBe(2_000)
 		// Setup:
 		// Table t_small (2..2) and Table t_med (2..4).
 		// Existing soft booking R1 (partySize 2) is sitting on t_med (2..4), while t_small (2..2) is free!
@@ -157,7 +159,9 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 					toCombinationId: null,
 				},
 			])
-			expect(result.expansionsUsed).toBeLessThanOrEqual(MAX_REPAIR_EXPANSIONS)
+			expect(result.expansionsUsed).toBeLessThanOrEqual(
+				MAX_SEARCH_SLOT_EXPANSIONS,
+			)
 		}
 	})
 
@@ -399,7 +403,7 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 	})
 
 	it('reflowDay reassigns soft bookings after a block or table shrink while keeping hard-locked bookings put', () => {
-		expect(MAX_DAY_EXPANSIONS).toBe(2_000)
+		expect(MAX_REFLOW_EXPANSIONS).toBe(5_000)
 
 		const bookings: AssignDayBooking[] = [
 			// Soft booking on t1, which is now blocked -> should move to t2
@@ -478,7 +482,7 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 			],
 		})
 
-		expect(reflow.expansionsUsed).toBeLessThanOrEqual(MAX_DAY_EXPANSIONS)
+		expect(reflow.expansionsUsed).toBeLessThanOrEqual(MAX_REFLOW_EXPANSIONS)
 		expect(reflow.moves).toEqual([
 			{
 				bookingId: 'b_soft_blocked',
@@ -493,5 +497,51 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 				(c) => c.bookingId === 'b_hard_shrunk' && c.kind === 'shrunk_capacity',
 			),
 		).toBe(true)
+
+		// When a soft booking cannot fit anywhere, reflowDay resets to original assignments (moves: [], status: 'no_fit')
+		const unresolvableReflow = reflowDay({
+			nowMs,
+			assignmentFreezeMin: 60,
+			areas: [{ id: 'a1', name: 'Main', active: true }],
+			tables: [
+				{
+					id: 't1',
+					areaId: 'a1',
+					label: 'T1',
+					minSeats: 2,
+					maxSeats: 2,
+					onlineBookable: true,
+					combinable: false,
+					priority: 10,
+					active: true,
+				},
+			],
+			combinations: [],
+			bookings: [
+				{
+					id: 'b_ok',
+					kind: 'reservation',
+					status: 'booked',
+					channel: 'online',
+					partySize: 2,
+					startAt,
+					endAt,
+					tableIds: ['t1'],
+				},
+				{
+					id: 'b_impossible',
+					kind: 'reservation',
+					status: 'booked',
+					channel: 'online',
+					partySize: 6,
+					startAt,
+					endAt,
+					tableIds: ['t1'],
+				},
+			],
+		})
+		expect(unresolvableReflow.status).toBe('no_fit')
+		expect(unresolvableReflow.moves).toEqual([])
+		expect(unresolvableReflow.unresolvable).toContain('b_impossible')
 	})
 })

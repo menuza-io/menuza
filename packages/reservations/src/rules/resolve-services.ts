@@ -26,12 +26,28 @@ export type WeeklyServiceTemplateInput = {
 	last_seating_min?: number
 	slotIntervalMin?: number
 	slot_interval_min?: number
+	intervalMin?: number | null
+	interval_min?: number | null
 	maxCoversPerSlot?: number | null
 	max_covers_per_slot?: number | null
 	maxCoversTotal?: number | null
 	max_covers_total?: number | null
+	onlineCapPerInterval?: number | null
+	online_cap_per_interval?: number | null
+	concurrentCoversCap?: number | null
+	concurrent_covers_cap?: number | null
+	onlineFromMin?: number | null
+	online_from_min?: number | null
+	onlineToMin?: number | null
+	online_to_min?: number | null
+	maxParty?: number | null
+	max_party?: number | null
+	onlinePartyMax?: number | null
+	online_party_max?: number | null
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
+	onlineEnabled?: boolean | number
+	online_enabled?: boolean | number
 	priority?: number
 	sortOrder?: number
 	sort_order?: number
@@ -55,12 +71,20 @@ export type CustomServiceEntryInput = {
 	last_seating_min?: number
 	slotIntervalMin?: number
 	slot_interval_min?: number
+	intervalMin?: number | null
+	interval_min?: number | null
 	maxCoversPerSlot?: number | null
 	max_covers_per_slot?: number | null
 	maxCoversTotal?: number | null
 	max_covers_total?: number | null
+	onlineCapPerInterval?: number | null
+	online_cap_per_interval?: number | null
+	concurrentCoversCap?: number | null
+	concurrent_covers_cap?: number | null
 	onlineBookable?: boolean | number
 	online_bookable?: boolean | number
+	onlineEnabled?: boolean | number
+	online_enabled?: boolean | number
 	priority?: number
 	sortOrder?: number
 	sort_order?: number
@@ -92,6 +116,12 @@ export type ResolvedService = {
 	slotIntervalMin?: number
 	maxCoversPerSlot?: number | null
 	maxCoversTotal?: number | null
+	onlineCapPerInterval?: number | null
+	concurrentCoversCap?: number | null
+	onlineFromMin?: number | null
+	onlineToMin?: number | null
+	maxParty?: number | null
+	onlinePartyMax?: number | null
 	onlineBookable: boolean
 	effectiveFrom?: string | null
 	priority: number
@@ -164,13 +194,26 @@ function normalizeTemplateService(
 	t: WeeklyServiceTemplateInput,
 	source: 'template' | 'special_day' = 'template',
 ): ResolvedService {
-	const startMin = t.startMin ?? t.start_min ?? 0
 	const firstSeatingMin = t.firstSeatingMin ?? t.first_seating_min
+	const startMin = t.startMin ?? t.start_min ?? firstSeatingMin ?? 0
 	const endMin = t.endMin ?? t.end_min ?? 0
 	const lastSeatingMin = t.lastSeatingMin ?? t.last_seating_min ?? endMin
-	const slotIntervalMin = t.slotIntervalMin ?? t.slot_interval_min
+	const slotIntervalMin =
+		t.slotIntervalMin ??
+		t.slot_interval_min ??
+		t.intervalMin ??
+		t.interval_min ??
+		undefined
 	const maxCoversPerSlot = t.maxCoversPerSlot ?? t.max_covers_per_slot ?? null
 	const maxCoversTotal = t.maxCoversTotal ?? t.max_covers_total ?? null
+	const onlineCapPerInterval =
+		t.onlineCapPerInterval ?? t.online_cap_per_interval ?? null
+	const concurrentCoversCap =
+		t.concurrentCoversCap ?? t.concurrent_covers_cap ?? null
+	const onlineFromMin = t.onlineFromMin ?? t.online_from_min ?? null
+	const onlineToMin = t.onlineToMin ?? t.online_to_min ?? null
+	const maxParty = t.maxParty ?? t.max_party ?? null
+	const onlinePartyMax = t.onlinePartyMax ?? t.online_party_max ?? null
 	const effectiveFrom = t.effectiveFrom ?? t.effective_from ?? null
 	return {
 		id: t.id,
@@ -184,7 +227,19 @@ function normalizeTemplateService(
 		...(slotIntervalMin !== undefined ? { slotIntervalMin } : {}),
 		...(maxCoversPerSlot !== null ? { maxCoversPerSlot } : {}),
 		...(maxCoversTotal !== null ? { maxCoversTotal } : {}),
-		onlineBookable: toBool(t.onlineBookable ?? t.online_bookable, true),
+		...(onlineCapPerInterval !== null ? { onlineCapPerInterval } : {}),
+		...(concurrentCoversCap !== null ? { concurrentCoversCap } : {}),
+		...(onlineFromMin !== null ? { onlineFromMin } : {}),
+		...(onlineToMin !== null ? { onlineToMin } : {}),
+		...(maxParty !== null ? { maxParty } : {}),
+		...(onlinePartyMax !== null ? { onlinePartyMax } : {}),
+		onlineBookable: toBool(
+			t.onlineBookable ??
+				t.online_bookable ??
+				t.onlineEnabled ??
+				t.online_enabled,
+			true,
+		),
 		...(effectiveFrom !== null ? { effectiveFrom } : {}),
 		priority: t.priority ?? 0,
 		sortOrder: t.sortOrder ?? t.sort_order ?? 0,
@@ -209,11 +264,20 @@ function normalizeCustomService(
 			.replace(/[^a-z0-9]+/g, '-')
 			.replace(/^-|-$/g, '')
 	const color = c.color ?? fallback?.color ?? '#3B82F6'
-	const startMin = c.startMin ?? c.start_min ?? fallback?.startMin ?? 0
+	const firstSeatingMin =
+		c.firstSeatingMin ?? c.first_seating_min ?? fallback?.firstSeatingMin
+	const startMin =
+		c.startMin ?? c.start_min ?? firstSeatingMin ?? fallback?.startMin ?? 0
 	const rawEndMin = c.endMin ?? c.end_min ?? fallback?.endMin ?? 0
 	const endMin = rawEndMin <= startMin ? rawEndMin + 1440 : rawEndMin
 	const lastSeatingMin =
 		c.lastSeatingMin ?? c.last_seating_min ?? fallback?.lastSeatingMin ?? endMin
+	const slotIntervalMin =
+		c.slotIntervalMin ??
+		c.slot_interval_min ??
+		c.intervalMin ??
+		c.interval_min ??
+		fallback?.slotIntervalMin
 	const maxCoversPerSlot =
 		c.maxCoversPerSlot !== undefined || c.max_covers_per_slot !== undefined
 			? (c.maxCoversPerSlot ?? c.max_covers_per_slot ?? null)
@@ -222,8 +286,20 @@ function normalizeCustomService(
 		c.maxCoversTotal !== undefined || c.max_covers_total !== undefined
 			? (c.maxCoversTotal ?? c.max_covers_total ?? null)
 			: (fallback?.maxCoversTotal ?? null)
+	const onlineCapPerInterval =
+		c.onlineCapPerInterval !== undefined ||
+		c.online_cap_per_interval !== undefined
+			? (c.onlineCapPerInterval ?? c.online_cap_per_interval ?? null)
+			: (fallback?.onlineCapPerInterval ?? null)
+	const concurrentCoversCap =
+		c.concurrentCoversCap !== undefined || c.concurrent_covers_cap !== undefined
+			? (c.concurrentCoversCap ?? c.concurrent_covers_cap ?? null)
+			: (fallback?.concurrentCoversCap ?? null)
 	const onlineBookable = toBool(
-		c.onlineBookable ?? c.online_bookable,
+		c.onlineBookable ??
+			c.online_bookable ??
+			c.onlineEnabled ??
+			c.online_enabled,
 		fallback?.onlineBookable ?? true,
 	)
 	const priority = c.priority ?? fallback?.priority ?? 0
@@ -235,10 +311,14 @@ function normalizeCustomService(
 		slug,
 		color,
 		startMin,
+		...(firstSeatingMin !== undefined ? { firstSeatingMin } : {}),
 		endMin,
 		lastSeatingMin,
+		...(slotIntervalMin !== undefined ? { slotIntervalMin } : {}),
 		...(maxCoversPerSlot !== null ? { maxCoversPerSlot } : {}),
 		...(maxCoversTotal !== null ? { maxCoversTotal } : {}),
+		...(onlineCapPerInterval !== null ? { onlineCapPerInterval } : {}),
+		...(concurrentCoversCap !== null ? { concurrentCoversCap } : {}),
 		onlineBookable,
 		...(fallback?.effectiveFrom !== undefined && fallback.effectiveFrom !== null
 			? { effectiveFrom: fallback.effectiveFrom }

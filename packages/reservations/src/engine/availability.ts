@@ -24,6 +24,7 @@ import {
 	type CandidateAttributeTag,
 	type EngineAreaInput,
 	type EngineCombinationInput,
+	type EngineServiceAvailabilityInput,
 	type EngineServiceTableModeInput,
 	type EngineTableInput,
 	isGuestChannel,
@@ -94,6 +95,7 @@ export type EngineDayConfig = {
 	turnTimeBuckets: EngineTurnTimeBucketInput[]
 	pacingRules: EnginePacingRuleInput[]
 	serviceTableModes: EngineServiceTableModeInput[]
+	serviceAvailability?: EngineServiceAvailabilityInput[]
 	specialDays: SpecialDayRuleInput[]
 }
 
@@ -433,6 +435,8 @@ export function searchAvailability(
 		channel: o.channel ?? 'online',
 		partySize: o.partySize ?? 0,
 		localStartMin: o.localStartMin,
+		startAt: o.startAt,
+		endAt: o.endAt,
 		status: o.status,
 	}))
 
@@ -452,10 +456,26 @@ export function searchAvailability(
 		string,
 		Array<{ candidate: AssignCandidate; score: number }>
 	>()
+	const serviceModes = config.serviceAvailability ?? config.serviceTableModes
 
 	for (const service of resolvedDay.services) {
 		if (input.serviceId && service.id !== input.serviceId) continue
 		if (isOnlineLike && !service.onlineBookable) continue
+		if (
+			service.maxParty !== null &&
+			service.maxParty !== undefined &&
+			partySize > service.maxParty
+		) {
+			continue
+		}
+		if (
+			isOnlineLike &&
+			service.onlinePartyMax !== null &&
+			service.onlinePartyMax !== undefined &&
+			partySize > service.onlinePartyMax
+		) {
+			continue
+		}
 
 		const turnMin = resolveTurnTimeMin(config, service.id, partySize)
 		const occupyMin = turnMin + settings.bufferMin
@@ -490,6 +510,23 @@ export function searchAvailability(
 			slotMin <= maxSlotMin;
 			slotMin += stepMin
 		) {
+			if (isOnlineLike) {
+				if (
+					service.onlineFromMin !== null &&
+					service.onlineFromMin !== undefined &&
+					slotMin < service.onlineFromMin
+				) {
+					continue
+				}
+				if (
+					service.onlineToMin !== null &&
+					service.onlineToMin !== undefined &&
+					slotMin > service.onlineToMin
+				) {
+					continue
+				}
+			}
+
 			let startAt: number
 			if (isLinearWindow) {
 				startAt = window.startMs + (slotMin - service.startMin) * 60_000
@@ -521,19 +558,31 @@ export function searchAvailability(
 			const globalPacing = evaluatePacing({
 				serviceId: service.id,
 				slotMin,
+				startAt,
+				endAt,
+				durationMin: turnMin,
+				intervalMin: stepMin,
 				partySize,
 				channel,
 				areaId: input.areaId ?? null,
 				rules: config.pacingRules,
+				serviceAvailability: serviceModes,
+				serviceOnlineCapPerInterval: service.onlineCapPerInterval,
+				serviceConcurrentCoversCap: service.concurrentCoversCap,
 				existing: pacingExisting,
 			})
 			if (!globalPacing.allowed) {
 				if (isOnlineLike) {
 					continue
 				}
-				const warningCode = globalPacing.reason ?? 'pacing_exceeded'
-				slotWarnings.push(warningCode)
-				dayWarningsSet.add(warningCode)
+				const codes =
+					globalPacing.warnings.length > 0
+						? globalPacing.warnings
+						: [globalPacing.reason ?? 'pacing_exceeded']
+				for (const code of codes) {
+					if (!slotWarnings.includes(code)) slotWarnings.push(code)
+					dayWarningsSet.add(code)
+				}
 			}
 
 			const dayCap = input.maxExpansions ?? MAX_BOOK_EXPANSIONS
@@ -549,6 +598,7 @@ export function searchAvailability(
 				partySize,
 				startAt,
 				endAt,
+				slotMin,
 				channel,
 				serviceId: service.id,
 				areaId: input.areaId ?? null,
@@ -557,15 +607,17 @@ export function searchAvailability(
 				tables: config.tables,
 				areas: config.areas,
 				combinations: config.combinations,
-				serviceTableModes: config.serviceTableModes,
+				serviceTableModes: serviceModes,
 				bookings: assignBookings,
 				nowMs,
 				assignmentFreezeMin: settings.assignmentFreezeMin,
 				minTurnMin: turnMin,
+				baseBufferMin: settings.bufferMin,
 				serviceStartAt: window.startMs,
 				serviceEndAt: window.endMs,
 				maxExpansions: slotRepairBudget,
 				allowRepair: allowSlotRepair,
+				skipPacing: true,
 				prebuiltOccupancy,
 				candidatePoolCache,
 				existingCandidatesCache,
@@ -585,21 +637,31 @@ export function searchAvailability(
 				const areaPacing = evaluatePacing({
 					serviceId: service.id,
 					slotMin,
+					startAt,
+					endAt,
+					durationMin: turnMin,
+					intervalMin: stepMin,
 					partySize,
 					channel,
 					areaId: assignRes.areaId,
 					rules: config.pacingRules,
+					serviceAvailability: serviceModes,
+					serviceOnlineCapPerInterval: service.onlineCapPerInterval,
+					serviceConcurrentCoversCap: service.concurrentCoversCap,
 					existing: pacingExisting,
 				})
 				if (!areaPacing.allowed) {
 					if (isOnlineLike) {
 						continue
 					}
-					const warningCode = areaPacing.reason ?? 'pacing_exceeded'
-					if (!slotWarnings.includes(warningCode)) {
-						slotWarnings.push(warningCode)
+					const codes =
+						areaPacing.warnings.length > 0
+							? areaPacing.warnings
+							: [areaPacing.reason ?? 'pacing_exceeded']
+					for (const code of codes) {
+						if (!slotWarnings.includes(code)) slotWarnings.push(code)
+						dayWarningsSet.add(code)
 					}
-					dayWarningsSet.add(warningCode)
 				}
 			}
 
@@ -721,4 +783,166 @@ export function calendarSummary(
 }
 
 export const calendarAvailabilitySummary = calendarSummary
-export const alternatives = suggestAlternatives
+
+export type AlternativeOtherDate = {
+	date: string
+	firstLocalMin: number
+	firstSlotHhmm: string
+}
+
+export type AlternativesResult = {
+	sameDay: AvailableSlot[]
+	otherDates: AlternativeOtherDate[]
+}
+
+export type AlternativesOtherDayInput = {
+	date?: string
+	businessDate?: string
+	firstLocalMin?: number
+	slots?: readonly AvailableSlot[]
+}
+
+export type AlternativesInput = {
+	slots?: readonly AvailableSlot[]
+	preferredSlotMin?: number | null
+	otherDays?: readonly AlternativesOtherDayInput[]
+	config?: EngineDayConfig
+	businessDate?: string
+	partySize?: number
+	nowMs?: number
+	channel?: BookingChannel
+	areaId?: string | null
+	serviceId?: string | null
+	seatingPreference?: SeatingPreference | null
+	requestedAttributes?: readonly CandidateAttributeTag[]
+	occupanciesByDate?: Readonly<
+		Record<string, readonly ExistingOccupancyInput[]>
+	>
+	bookingsByDate?: Readonly<Record<string, readonly ExistingOccupancyInput[]>>
+	dayOffsets?: readonly number[]
+}
+
+/**
+ * Compute same-day nearby alternatives (`±15..120` min, up to 6) and nearby
+ * alternative dates (`{ date, firstLocalMin }`) (`architecture.md` §6.2, `VAL-FND-006`).
+ */
+export function alternatives(
+	inputOrSlots: AlternativesInput | readonly AvailableSlot[],
+	preferredSlotMinArg?: number,
+	otherDaysArg?: readonly AlternativesOtherDayInput[],
+): AlternativesResult {
+	if (Array.isArray(inputOrSlots)) {
+		const slots = inputOrSlots as readonly AvailableSlot[]
+		const preferredSlotMin = preferredSlotMinArg ?? 0
+		const sameDay = suggestAlternatives(slots, preferredSlotMin)
+		const otherDates: AlternativeOtherDate[] = []
+		for (const od of otherDaysArg ?? []) {
+			const date = od.date ?? od.businessDate
+			if (!date) continue
+			const firstMin = od.firstLocalMin ?? od.slots?.[0]?.slotMin
+			if (firstMin === undefined) continue
+			otherDates.push({
+				date,
+				firstLocalMin: firstMin,
+				firstSlotHhmm: formatHhmm(firstMin),
+			})
+		}
+		return { sameDay, otherDates }
+	}
+
+	const input = inputOrSlots as AlternativesInput
+	const preferredMin = input.preferredSlotMin ?? 0
+	let daySlots = input.slots
+	if (
+		!daySlots &&
+		input.config &&
+		input.businessDate &&
+		input.partySize !== undefined &&
+		input.nowMs !== undefined
+	) {
+		const mapByDate = input.occupanciesByDate ?? input.bookingsByDate
+		const dayRes = searchAvailability({
+			config: input.config,
+			businessDate: input.businessDate,
+			partySize: input.partySize,
+			preferredSlotMin: preferredMin,
+			seatingPreference: input.seatingPreference,
+			requestedAttributes: input.requestedAttributes,
+			areaId: input.areaId,
+			serviceId: input.serviceId,
+			nowMs: input.nowMs,
+			channel: input.channel,
+			occupancies: mapByDate?.[input.businessDate] ?? [],
+		})
+		daySlots = dayRes.slots
+	}
+
+	const sameDay = daySlots ? suggestAlternatives(daySlots, preferredMin) : []
+	const otherDates: AlternativeOtherDate[] = []
+
+	if (input.otherDays && input.otherDays.length > 0) {
+		for (const od of input.otherDays) {
+			const date = od.date ?? od.businessDate
+			if (!date) continue
+			const firstMin = od.firstLocalMin ?? od.slots?.[0]?.slotMin
+			if (firstMin === undefined) continue
+			otherDates.push({
+				date,
+				firstLocalMin: firstMin,
+				firstSlotHhmm: formatHhmm(firstMin),
+			})
+		}
+	} else if (
+		input.config &&
+		input.businessDate &&
+		input.partySize !== undefined &&
+		input.nowMs !== undefined
+	) {
+		const mapByDate = input.occupanciesByDate ?? input.bookingsByDate
+		const offsets = input.dayOffsets ?? [-1, 1, -2, 2, 3, -3]
+		for (const offset of offsets) {
+			if (offset === 0) continue
+			if (otherDates.length >= MAX_ALTERNATIVES) break
+			const candidateDate = addDays(input.businessDate, offset)
+			const dayRes = searchAvailability({
+				config: input.config,
+				businessDate: candidateDate,
+				partySize: input.partySize,
+				seatingPreference: input.seatingPreference,
+				requestedAttributes: input.requestedAttributes,
+				areaId: input.areaId,
+				serviceId: input.serviceId,
+				nowMs: input.nowMs,
+				channel: input.channel,
+				occupancies: mapByDate?.[candidateDate] ?? [],
+				allowRepair: false,
+			})
+			if (dayRes.slots.length > 0) {
+				let bestSlot = dayRes.slots[0]!
+				if (
+					input.preferredSlotMin !== undefined &&
+					input.preferredSlotMin !== null
+				) {
+					for (const s of dayRes.slots) {
+						if (
+							Math.abs(s.slotMin - input.preferredSlotMin) <
+							Math.abs(bestSlot.slotMin - input.preferredSlotMin)
+						) {
+							bestSlot = s
+						}
+					}
+				}
+				otherDates.push({
+					date: candidateDate,
+					firstLocalMin: bestSlot.slotMin,
+					firstSlotHhmm: bestSlot.slotHhmm,
+				})
+			}
+		}
+	}
+
+	return {
+		sameDay,
+		otherDates,
+	}
+}

@@ -76,8 +76,9 @@ export class OccupancyIndex {
 	}
 
 	/**
-	 * Return all active non-overbooked entries on `tableId` overlapping `[startAt, endAt)`,
-	 * optionally ignoring `ignoreOwnerIds`.
+	 * Return all active entries on `tableId` overlapping `[startAt, endAt)`,
+	 * optionally ignoring `ignoreOwnerIds`. Overbook rows count as occupying their
+	 * tables so guest channels never borrow capacity from staff overbooks (Invariant I3).
 	 */
 	overlappingOnTable(
 		tableId: string,
@@ -91,7 +92,6 @@ export class OccupancyIndex {
 		// Since intervals may have varying durations, scan entries with entry.startAt < endAt
 		for (const entry of list) {
 			if (entry.startAt >= endAt) break
-			if (entry.overbook) continue
 			if (ignoreOwnerIds?.has(entry.ownerId)) continue
 			if (entry.endAt > startAt) {
 				out.push(entry)
@@ -102,6 +102,7 @@ export class OccupancyIndex {
 
 	/**
 	 * Fast boolean check whether all `tableIds` are completely free over `[startAt, endAt)`.
+	 * Overbook rows count as occupying their tables (Invariant I3).
 	 */
 	areTablesFree(
 		tableIds: readonly string[],
@@ -114,7 +115,6 @@ export class OccupancyIndex {
 			if (!list || list.length === 0) continue
 			for (const entry of list) {
 				if (entry.startAt >= endAt) break
-				if (entry.overbook) continue
 				if (ignoreOwnerIds?.has(entry.ownerId)) continue
 				if (entry.endAt > startAt) return false
 			}
@@ -163,7 +163,6 @@ export class OccupancyIndex {
 		let prevEnd: number | null = null
 		let nextStart: number | null = null
 		for (const entry of list) {
-			if (entry.overbook) continue
 			if (ignoreOwnerIds?.has(entry.ownerId)) continue
 			if (entry.endAt <= startAt) {
 				if (prevEnd === null || entry.endAt > prevEnd) {

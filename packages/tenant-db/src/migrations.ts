@@ -102,6 +102,125 @@ async function recordLegacyBaselineIfComplete(db: TenantDatabase) {
 	return true
 }
 
+const LEGACY_RSV_TRIGGERS = [
+	'trg_rsv_table_occupancies_no_overlap_insert',
+	'trg_rsv_table_occupancies_no_overlap_update',
+	'trg_rsv_holds_converted_once',
+	'trg_rsv_reservation_events_append_only_update',
+	'trg_rsv_reservation_events_append_only_delete',
+	'trg_rsv_audit_log_append_only_update',
+	'trg_rsv_audit_log_append_only_delete',
+	'trg_rsv_guest_merges_append_only_update',
+	'trg_rsv_guest_merges_append_only_delete',
+] as const
+
+const CANONICAL_RSV_TRIGGERS: ReadonlyArray<{ name: string; ddl: string }> = [
+	{
+		name: 'rsv_occupancy_no_overlap_insert',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_occupancy_no_overlap_insert
+BEFORE INSERT ON rsv_table_occupancies
+WHEN NEW.active = 1 AND NEW.overbook = 0
+BEGIN
+  SELECT RAISE(ABORT, 'rsv_table_occupancies overlap')
+  WHERE EXISTS (
+    SELECT 1 FROM rsv_table_occupancies o
+    WHERE o.table_id = NEW.table_id
+      AND o.active = 1
+      AND o.overbook = 0
+      AND o.start_at < NEW.end_at
+      AND o.end_at > NEW.start_at
+  );
+END;`,
+	},
+	{
+		name: 'rsv_occupancy_no_overlap_update',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_occupancy_no_overlap_update
+BEFORE UPDATE ON rsv_table_occupancies
+WHEN NEW.active = 1 AND NEW.overbook = 0
+BEGIN
+  SELECT RAISE(ABORT, 'rsv_table_occupancies overlap')
+  WHERE EXISTS (
+    SELECT 1 FROM rsv_table_occupancies o
+    WHERE o.table_id = NEW.table_id
+      AND o.id <> NEW.id
+      AND o.active = 1
+      AND o.overbook = 0
+      AND o.start_at < NEW.end_at
+      AND o.end_at > NEW.start_at
+  );
+END;`,
+	},
+	{
+		name: 'rsv_holds_single_conversion',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_holds_single_conversion
+BEFORE UPDATE ON rsv_holds
+WHEN OLD.status = 'converted'
+BEGIN
+  SELECT RAISE(ABORT, 'hold_already_converted');
+END;`,
+	},
+	{
+		name: 'rsv_reservation_events_no_delete',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_reservation_events_no_delete
+BEFORE DELETE ON rsv_reservation_events BEGIN SELECT RAISE(ABORT, 'append_only'); END;`,
+	},
+	{
+		name: 'rsv_reservation_events_no_update',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_reservation_events_no_update
+BEFORE UPDATE ON rsv_reservation_events
+WHEN NOT (
+  NEW.data = '{"redacted":true}'
+  AND NEW.id = OLD.id
+  AND NEW.reservation_id = OLD.reservation_id
+  AND NEW.type = OLD.type
+)
+BEGIN
+  SELECT RAISE(ABORT, 'append_only');
+END;`,
+	},
+	{
+		name: 'rsv_audit_log_no_delete',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_audit_log_no_delete
+BEFORE DELETE ON rsv_audit_log BEGIN SELECT RAISE(ABORT, 'append_only'); END;`,
+	},
+	{
+		name: 'rsv_audit_log_no_update',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_audit_log_no_update
+BEFORE UPDATE ON rsv_audit_log
+WHEN NOT (
+  NEW.changes = '{"redacted":true}'
+  AND NEW.id = OLD.id
+  AND NEW.entity_id = OLD.entity_id
+  AND NEW.action = OLD.action
+)
+BEGIN
+  SELECT RAISE(ABORT, 'append_only');
+END;`,
+	},
+	{
+		name: 'rsv_guest_merges_no_delete',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_guest_merges_no_delete
+BEFORE DELETE ON rsv_guest_merges BEGIN SELECT RAISE(ABORT, 'append_only'); END;`,
+	},
+	{
+		name: 'rsv_guest_merges_no_update',
+		ddl: `CREATE TRIGGER IF NOT EXISTS rsv_guest_merges_no_update
+BEFORE UPDATE ON rsv_guest_merges BEGIN SELECT RAISE(ABORT, 'append_only'); END;`,
+	},
+]
+
+export async function refreshReservationsTriggers(
+	db: TenantDatabase,
+): Promise<void> {
+	for (const legacyName of LEGACY_RSV_TRIGGERS) {
+		await db.run(sql.raw(`DROP TRIGGER IF EXISTS ${legacyName}`))
+	}
+	for (const trigger of CANONICAL_RSV_TRIGGERS) {
+		await db.run(sql.raw(`DROP TRIGGER IF EXISTS ${trigger.name}`))
+		await db.run(sql.raw(trigger.ddl))
+	}
+}
+
 /**
  * Apply pending Drizzle migrations to a tenant database. Idempotent and safe to
  * call on every connection open (Drizzle tracks applied migrations).
@@ -117,6 +236,7 @@ export async function applyTenantMigrations(
 	while (true) {
 		try {
 			await migrate(db, { migrationsFolder })
+			await refreshReservationsTriggers(db)
 			return
 		} catch (error) {
 			if (retries > 0 && isSqliteBusy(error)) {
