@@ -7097,9 +7097,13 @@ msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 msgid "Enter backup code"
 msgstr ""
 
-#: app/components/staff/labor-policy-editor.tsx:318
-msgid "Enter between 1 and 48 hours."
-msgstr "Enter between 1 and 48 hours."
+#: app/components/staff/labor-policy-editor.tsx:327
+msgid "Enter between {min} and {max} hours."
+msgstr "Enter between {min} and {max} hours."
+
+#: app/components/staff/labor-policy-editor.tsx:323
+msgid "Enter between {min} and {max} minutes."
+msgstr "Enter between {min} and {max} minutes."
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
@@ -7109,6 +7113,10 @@ msgstr "Enter each percentage as a number from 0 to 100."
 #: app/routes/organizations+/create.tsx:1228
 msgid "Enter email address"
 msgstr ""
+
+#: app/components/staff/labor-policy-editor.tsx:326
+msgid "Enter more than 0 and up to {max} hours."
+msgstr "Enter more than 0 and up to {max} hours."
 
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."

@@ -457,6 +457,36 @@ describe('LaborPolicyEditor', () => {
 		expect(calls.some((c) => c.method === 'PUT')).toBe(false)
 	})
 
+	it('marks and explains an out-of-range deduction and weekly limit', async () => {
+		stubApi({
+			view: {
+				breakRules: {
+					rules: [],
+					autoDeduction: { afterMinutes: 6 * 60, deductMinutes: 30 },
+				},
+				weeklyOvertime: { thresholdMinutes: 40 * 60, multiplierBp: 15_000 },
+			},
+		})
+		view()
+		const deduct = await screen.findByLabelText('Deduct')
+		fireEvent.change(deduct, { target: { value: '500' } })
+		expect(
+			await screen.findByText('Enter between 1 and 240 minutes.'),
+		).toBeTruthy()
+		expect(deduct.getAttribute('aria-invalid')).toBe('true')
+
+		const weeklyAfter = screen.getByLabelText('After')
+		fireEvent.change(weeklyAfter, { target: { value: '200' } })
+		expect(
+			await screen.findByText('Enter more than 0 and up to 168 hours.'),
+		).toBeTruthy()
+		expect(weeklyAfter.getAttribute('aria-invalid')).toBe('true')
+		expect(screen.getByLabelText('For shifts longer than')).not.toHaveAttribute(
+			'aria-invalid',
+		)
+		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+	})
+
 	it('shows what the rules do on an example shift, and follows the rules', async () => {
 		stubApi()
 		view()
