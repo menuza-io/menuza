@@ -1141,7 +1141,7 @@ function CreateOrganizationInvitations({
 		defaultValue: {
 			invites: [{ email: '', role: 'member' }],
 		},
-		shouldRevalidate: 'onBlur',
+		shouldRevalidate: 'onInput',
 	})
 
 	const invitesList = fields.invites.getFieldList()

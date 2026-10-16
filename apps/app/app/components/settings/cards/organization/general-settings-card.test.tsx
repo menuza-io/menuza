@@ -36,7 +36,7 @@ describe('GeneralSettingsCard', () => {
 		const user = userEvent.setup()
 		renderCard()
 
-		const name = screen.getByLabelText('Name')
+		const name = screen.getByLabelText(/^name/i)
 		const save = screen.getByRole('button', { name: /save changes/i })
 
 		await user.clear(name)
@@ -44,12 +44,12 @@ describe('GeneralSettingsCard', () => {
 
 		expect(name).toHaveAttribute('aria-invalid', 'true')
 		expect(screen.getByText('Required')).toBeInTheDocument()
-		expect(save).toHaveClass('bg-destructive')
+		expect(save).toHaveAttribute('data-status', 'error')
 
 		await user.type(name, 'acme4')
 
 		expect(name).not.toHaveAttribute('aria-invalid')
 		expect(screen.queryByText('Required')).not.toBeInTheDocument()
-		expect(save).not.toHaveClass('bg-destructive')
+		expect(save).toHaveAttribute('data-status', 'idle')
 	})
 })
