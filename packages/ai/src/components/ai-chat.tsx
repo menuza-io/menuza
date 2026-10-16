@@ -9,7 +9,14 @@ import {
 	DefaultChatTransport,
 	lastAssistantMessageIsCompleteWithToolCalls,
 } from 'ai'
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, {
+	useState,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useCallback,
+} from 'react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -567,9 +574,12 @@ export function AIChat({
 	routeParamsRef.current = routeParams
 	onToolCallRef.current = onToolCall
 	const { _ } = useLingui()
-	// A stream can finish "successfully" with no assistant content (status
-	// goes back to 'ready', not 'error'); treat that as a failed reply.
-	const [hasEmptyReply, setHasEmptyReply] = useState(false)
+	const errorMessageId = useId()
+	// Id of the last message when the user pressed Stop, so a reply they cut
+	// off is not reported as a failed one.
+	const [stoppedAtMessageId, setStoppedAtMessageId] = useState<string>()
+	// Return focus to the input once a retry settles (the button unmounts).
+	const refocusInputRef = useRef(false)
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
@@ -617,9 +627,6 @@ export function AIChat({
 				})
 			})()
 		},
-		onFinish: ({ message, isAbort, isError }) => {
-			setHasEmptyReply(!isAbort && !isError && !hasReplyContent(message))
-		},
 		sendAutomaticallyWhen: ({ messages }) =>
 			lastAssistantMessageIsCompleteWithToolCalls({ messages }),
 	})
@@ -662,10 +669,38 @@ export function AIChat({
 		}
 	}
 
+	const isStreaming = status === 'streaming'
+	const isSubmitted = status === 'submitted'
+	const isBusy = isStreaming || isSubmitted
+	// `error` status must still allow sending: a new request clears the error.
+	const canSend = !isBusy && input.trim().length > 0
+	const lastMessage = messages[messages.length - 1]
+	// A stream can finish "successfully" with no assistant content (status
+	// goes back to 'ready', not 'error'); treat that as a failed reply. Derived
+	// from the last message so it never goes stale.
+	const hasEmptyReply =
+		status === 'ready' &&
+		lastMessage !== undefined &&
+		lastMessage.id !== stoppedAtMessageId &&
+		!hasReplyContent(lastMessage)
+	const hasRequestError = status === 'error' && Boolean(error)
+	const hasError = hasRequestError || hasEmptyReply
+
+	useEffect(() => {
+		if (refocusInputRef.current && !isBusy) {
+			refocusInputRef.current = false
+			textareaRef.current?.focus()
+		}
+	}, [isBusy])
+
+	const handleRetry = () => {
+		refocusInputRef.current = true
+		void regenerate()
+	}
+
 	const handleFormSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
-		// `error` status must still allow sending: a new request clears the error.
-		if (input.trim() && (status === 'ready' || status === 'error')) {
+		if (canSend) {
 			sendMessage({ text: input })
 			setInput('')
 			setShowFollowUpSuggestions(false)
@@ -682,14 +717,6 @@ export function AIChat({
 		}
 	}
 
-	const isStreaming = status === 'streaming'
-	const isSubmitted = status === 'submitted'
-	const isBusy = isStreaming || isSubmitted
-	const canSend = !isBusy && input.trim().length > 0
-	const hasError =
-		(status === 'error' && Boolean(error)) ||
-		(status === 'ready' && hasEmptyReply)
-
 	const isPersonalizedGreeting = userName !== brand.name
 	const displayGreeting =
 		greeting ||
@@ -701,7 +728,6 @@ export function AIChat({
 			: _(t`Notes, navigation, and your site — just ask.`))
 	const inputPlaceholder = placeholder || _(t`Ask anything…`)
 
-	const lastMessage = messages[messages.length - 1]
 	const lastIsAssistant = lastMessage?.role === 'assistant'
 	const canRegenerate = !isBusy && lastIsAssistant
 
@@ -848,17 +874,25 @@ export function AIChat({
 										name="octagon-alert"
 										className="text-destructive size-3.5 shrink-0"
 									/>
-									<p className="text-destructive min-w-0 flex-1 text-sm">
-										<Trans>
-											The assistant couldn't reply. Check your connection and
-											try again.
-										</Trans>
+									<p
+										id={errorMessageId}
+										className="text-destructive min-w-0 flex-1 text-sm"
+									>
+										{hasRequestError ? (
+											<Trans>
+												The assistant couldn't reply. Check your connection and
+												try again.
+											</Trans>
+										) : (
+											<Trans>The assistant couldn't reply. Try again.</Trans>
+										)}
 									</p>
 									<Button
 										type="button"
 										variant="outline"
 										size="sm"
-										onClick={() => regenerate()}
+										aria-describedby={errorMessageId}
+										onClick={handleRetry}
 										className="shrink-0 text-xs"
 									>
 										<Trans>Try again</Trans>
@@ -942,7 +976,14 @@ export function AIChat({
 
 							<button
 								type={isStreaming ? 'button' : 'submit'}
-								onClick={isStreaming ? () => stopGeneration() : undefined}
+								onClick={
+									isStreaming
+										? () => {
+												setStoppedAtMessageId(lastMessage?.id)
+												void stopGeneration()
+											}
+										: undefined
+								}
 								disabled={!isStreaming && !canSend}
 								aria-label={isStreaming ? _(t`Stop`) : _(t`Send`)}
 								className={cn(

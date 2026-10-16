@@ -66,7 +66,9 @@ test('shows an error with a retry when the chat request fails', async () => {
 	await user.click(screen.getByRole('button', { name: 'Send' }))
 
 	const alert = await screen.findByRole('alert')
-	expect(alert).toHaveTextContent("The assistant couldn't reply.")
+	expect(alert).toHaveTextContent(
+		"The assistant couldn't reply. Check your connection and try again.",
+	)
 	// Follow-up chips must not pretend a reply arrived.
 	expect(
 		screen.queryByRole('button', { name: 'Make it more detailed' }),
@@ -155,9 +157,76 @@ test('shows the error when the stream ends without a reply', async () => {
 		screen.queryByRole('button', { name: 'Make it more detailed' }),
 	).not.toBeInTheDocument()
 
+	expect(alert).not.toHaveTextContent('Check your connection')
+
 	await user.click(within(alert).getByRole('button', { name: 'Try again' }))
 
 	expect(await screen.findByText('Here is the summary.')).toBeInTheDocument()
+	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+	// The retry button unmounts, so focus goes back to the input.
+	expect(screen.getByRole('textbox')).toHaveFocus()
+})
+
+test('clears the empty-reply error when the user sends a new message', async () => {
+	vi.stubGlobal(
+		'fetch',
+		vi
+			.fn<typeof fetch>()
+			.mockResolvedValueOnce(
+				sseResponse([{ type: 'start' }, { type: 'finish' }]),
+			)
+			.mockResolvedValueOnce(uiMessageStreamResponse('Key points follow.')),
+	)
+
+	const user = await sendSummarize()
+	await screen.findByRole('alert')
+
+	await user.type(
+		screen.getByRole('textbox'),
+		'What are the key points?{Enter}',
+	)
+
+	expect(await screen.findByText('Key points follow.')).toBeInTheDocument()
+	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('does not report a reply the user stopped as failed', async () => {
+	const encoder = new TextEncoder()
+	vi.stubGlobal(
+		'fetch',
+		vi.fn<typeof fetch>((_input, init) => {
+			const body = new ReadableStream<Uint8Array>({
+				start(controller) {
+					for (const chunk of [
+						{ type: 'start' },
+						{ type: 'text-start', id: 't1' },
+					]) {
+						controller.enqueue(
+							encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`),
+						)
+					}
+					init?.signal?.addEventListener('abort', () => {
+						controller.error(new DOMException('Aborted', 'AbortError'))
+					})
+				},
+			})
+			return Promise.resolve(
+				new Response(body, {
+					headers: {
+						'content-type': 'text/event-stream',
+						'x-vercel-ai-ui-message-stream': 'v1',
+					},
+				}),
+			)
+		}),
+	)
+
+	const user = await sendSummarize()
+	await user.click(await screen.findByRole('button', { name: 'Stop' }))
+
+	expect(
+		await screen.findByRole('button', { name: 'Send' }),
+	).toBeInTheDocument()
 	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 

@@ -17813,9 +17813,13 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:834
+#: ../../packages/ai/src/components/ai-chat.tsx:882
 msgid "The assistant couldn't reply. Check your connection and try again."
 msgstr "تعذّر على المساعد الرد. تحقّق من اتصالك وحاول مرة أخرى."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19387,7 +19391,7 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:846
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397

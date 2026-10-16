@@ -17815,9 +17815,13 @@ msgstr ""
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:834
+#: ../../packages/ai/src/components/ai-chat.tsx:882
 msgid "The assistant couldn't reply. Check your connection and try again."
 msgstr "The assistant couldn't reply. Check your connection and try again."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:887
+msgid "The assistant couldn't reply. Try again."
+msgstr "The assistant couldn't reply. Try again."
 
 #: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "The assistant that answers your business calls."
@@ -19389,7 +19393,7 @@ msgstr "Try a different search term."
 msgid "Try adjusting your search or filter."
 msgstr ""
 
-#: ../../packages/ai/src/components/ai-chat.tsx:846
+#: ../../packages/ai/src/components/ai-chat.tsx:898
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
