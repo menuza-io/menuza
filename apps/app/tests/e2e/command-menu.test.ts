@@ -166,7 +166,7 @@ test.describe('Command Menu', () => {
 		await page.getByPlaceholder(/search/i).fill('nonexistent-search-term-xyz')
 		await page.waitForTimeout(500)
 
-		// Verify empty state message (based on actual UI)
-		await expect(page.getByText(/no notes found/i)).toBeVisible()
+		// The menu searches pages and notes, so an unknown query is not a notes miss.
+		await expect(page.getByText(/no results found/i)).toBeVisible()
 	})
 })

@@ -30,7 +30,7 @@ import {
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { Link, useLoaderData, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import {
@@ -91,12 +91,35 @@ function HoursSelect({
 	)
 }
 
+function StaffPhoneWarning({
+	id,
+	show,
+	children,
+}: {
+	id: string
+	show: boolean
+	children: ReactNode
+}) {
+	// Always mounted so turning the switch on announces the warning.
+	return (
+		<div role="status">
+			{show ? (
+				<p id={id} className="text-warning flex items-start gap-1.5 text-xs">
+					<Icon name="alert-triangle" size="xs" className="mt-0.5 shrink-0" />
+					{children}
+				</p>
+			) : null}
+		</div>
+	)
+}
+
 export default function PhoneAgentTransfers() {
 	const { _ } = useLingui()
 	const { orgSlug = '' } = useParams()
 	const data = useLoaderData<LoaderData>()
 	const { canUpdate } = data
 	const staffPhone = data.escalationPhone
+	const hasStaffPhone = data.hasStaffPhone
 	const [transfers, setTransfers] = useState(data.transfers)
 	const [contacts, setContacts] = useState(data.contacts)
 	const [cases, setCases] = useState(data.transferCases)
@@ -202,7 +225,7 @@ export default function PhoneAgentTransfers() {
 						<Card>
 							<CardContent className="flex flex-col gap-5">
 								<p className="text-muted-foreground text-sm">
-									{data.autoEscalate && data.escalationPhone ? (
+									{hasStaffPhone ? (
 										<Trans>Staff phone: {staffPhone}</Trans>
 									) : (
 										<Trans>
@@ -211,7 +234,7 @@ export default function PhoneAgentTransfers() {
 										</Trans>
 									)}{' '}
 									<Link
-										to={`/${orgSlug}/phone-agent`}
+										to={`/${orgSlug}/phone-agent#staff-transfer`}
 										className="underline underline-offset-4"
 									>
 										<Trans>Change in Setup</Trans>
@@ -245,10 +268,24 @@ export default function PhoneAgentTransfers() {
 												Callers can press 0 at any time to be transferred.
 											</Trans>
 										</p>
+										<StaffPhoneWarning
+											id="transfer-press-zero-warning"
+											show={transfers.pressZeroForStaff && !hasStaffPhone}
+										>
+											<Trans>
+												Pressing 0 won't reach anyone until you set a staff phone
+												number in Setup.
+											</Trans>
+										</StaffPhoneWarning>
 									</div>
 									<Switch
 										id="transfer-press-zero"
 										checked={transfers.pressZeroForStaff}
+										aria-describedby={
+											transfers.pressZeroForStaff && !hasStaffPhone
+												? 'transfer-press-zero-warning'
+												: undefined
+										}
 										disabled={disabled}
 										onCheckedChange={(checked) =>
 											setTransfers((current) => ({
@@ -269,10 +306,24 @@ export default function PhoneAgentTransfers() {
 												caller a link they can use should nobody pick up.
 											</Trans>
 										</p>
+										<StaffPhoneWarning
+											id="transfer-text-offer-warning"
+											show={transfers.offerTextWhenNoAnswer && !hasStaffPhone}
+										>
+											<Trans>
+												A text after a missed transfer is only offered once a
+												call can reach staff. Set a staff phone number in Setup.
+											</Trans>
+										</StaffPhoneWarning>
 									</div>
 									<Switch
 										id="transfer-text-offer"
 										checked={transfers.offerTextWhenNoAnswer}
+										aria-describedby={
+											transfers.offerTextWhenNoAnswer && !hasStaffPhone
+												? 'transfer-text-offer-warning'
+												: undefined
+										}
 										disabled={disabled}
 										onCheckedChange={(checked) =>
 											setTransfers((current) => ({
