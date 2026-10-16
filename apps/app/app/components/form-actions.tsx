@@ -23,10 +23,8 @@ export function FormActions({
 
 	return (
 		<div className="grid w-full grid-cols-2 gap-6">
-			<Button variant="secondary">
-				<Link to={cancelTo}>
-					<Trans>Cancel</Trans>
-				</Link>
+			<Button variant="secondary" render={<Link to={cancelTo} />}>
+				<Trans>Cancel</Trans>
 			</Button>
 			<StatusButton
 				type="submit"

@@ -1637,6 +1637,10 @@ msgstr "Fallback"
 msgid "False"
 msgstr "False"
 
+#: app/components/admin/feature-flags.tsx:739
+msgid "Feature flags"
+msgstr "Feature flags"
+
 #: app/components/admin-sidebar.tsx:135
 msgid "Feature Flags"
 msgstr ""
@@ -3436,6 +3440,10 @@ msgstr ""
 #: app/components/admin-ban-user-dialog.tsx:128
 msgid "Set expiration date (optional)"
 msgstr ""
+
+#: app/components/admin/feature-flags.tsx:741
+msgid "Set system defaults and override them for an organization or a user."
+msgstr "Set system defaults and override them for an organization or a user."
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277
