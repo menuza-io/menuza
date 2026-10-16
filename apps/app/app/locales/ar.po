@@ -40,7 +40,7 @@ msgstr "خيارات «اضغط 1 لـ…». يمكن للمتصلين أيضً�
 msgid "({formerCount} former)"
 msgstr "({formerCount} سابق)"
 
-#: app/components/settings/cards/organization/billing-card.tsx:438
+#: app/components/settings/cards/organization/billing-card.tsx:451
 msgid "(${annualPrice} billed annually per user)"
 msgstr "(${annualPrice} يُفوتر سنوياً لكل مستخدم)"
 
@@ -59,7 +59,7 @@ msgid "(you)"
 msgstr "(أنت)"
 
 #. placeholder {0}: organization._count.users
-#: app/components/settings/cards/organization/billing-card.tsx:159
+#: app/components/settings/cards/organization/billing-card.tsx:169
 msgid "{0, plural, one {# active member} other {# active members}}"
 msgstr "{0, plural, one {# عضو نشط} other {# أعضاء نشطون}}"
 
@@ -386,7 +386,7 @@ msgstr "{0, plural, one {أضفنا قائمة مهام للموظف الجدي�
 
 #. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
 #. placeholder {1}: organization.name
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "{0} · Here's what's happening in {1}"
 msgstr "{0} · إليك ما يحدث في {1}"
 
@@ -400,32 +400,11 @@ msgstr "{0} / 1600 حرف"
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:284
-#~ msgid "{0} characters"
-#~ msgstr "{0} حرف"
-
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
 #: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:158
-#~ msgid "{0} recipients"
-#~ msgstr "{0} مستلم"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:344
-#~ msgid "{0} runs"
-#~ msgstr "{0} تشغيل"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:342
-#~ msgid "{0} steps"
-#~ msgstr "{0} خطوات"
-
-#: app/components/app-sidebar.tsx:302
-#~ msgid "{0} unread"
-#~ msgstr "عدد غير المقروء: {0}"
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:158
 msgid "{addedCount} added, {existingCount} already on your team, {notAddedCount} not added."
@@ -463,7 +442,7 @@ msgstr "{avgPerDay} متوسط يومي"
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 
-#: app/routes/organizations+/create.tsx:1417
+#: app/routes/organizations+/create.tsx:1415
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
@@ -478,10 +457,6 @@ msgstr "{cancelled, plural, one {# محذوفة} two {# محذوفتان} few {#
 #: app/components/staff/schedule/publication-history.tsx:223
 msgid "{changed, plural, one {# changed} other {# changed}}"
 msgstr "{changed, plural, one {# معدّلة} two {# معدّلتان} few {# معدّلة} many {# معدّلة} other {# معدّلة}}"
-
-#: app/components/app-sidebar.tsx:316
-#~ msgid "{chatUnreadLabelCount} unread"
-#~ msgstr "عدد غير المقروء: {chatUnreadLabelCount}"
 
 #: app/components/website/form-builder-sidebar.tsx:228
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
@@ -963,10 +938,6 @@ msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام �
 msgid "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 msgstr "{remainingMinutes, plural, zero {متبقي # دقيقة} one {متبقي دقيقة واحدة} two {متبقي دقيقتان} few {متبقي # دقائق} many {متبقي # دقيقة} other {متبقي # دقيقة}}"
 
-#: app/components/impersonation-banner.tsx:43
-#~ msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
-#~ msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # دقيقة} one {تنتهي الصلاحية خلال دقيقة واحدة} two {تنتهي الصلاحية خلال دقيقتين} few {تنتهي الصلاحية خلال # دقائق} many {تنتهي الصلاحية خلال # دقيقة} other {تنتهي الصلاحية خلال # دقيقة}}"
-
 #: app/components/staff/labor-example.tsx:216
 msgid "{remainingText} until overtime starts."
 msgstr "المتبقي {remainingText} قبل بدء الساعات الإضافية."
@@ -1018,10 +989,6 @@ msgstr "{stepCount} خطوات"
 #: app/components/staff/schedule/week-grid.tsx:628
 msgid "{text} overtime"
 msgstr "{text} وقت إضافي"
-
-#: app/components/chat/chat-view.tsx:410
-#~ msgid "{threadReplyCount, plural, one {# reply} other {# replies}}"
-#~ msgstr "{threadReplyCount, plural, zero {لا توجد ردود} one {رد واحد} two {ردان} few {# ردود} many {# رداً} other {# رد}}"
 
 #: app/components/chat/chat-view.tsx:847
 msgid "{threadTotalReplies, plural, one {# reply} other {# replies}}"
@@ -1117,7 +1084,7 @@ msgstr "<p>مرحباً {{name}}،</p><p>منظمتك {{organizationName}} جا�
 msgid "✓ Discord points claimed"
 msgstr "✓ تم المطالبة بنقاط Discord"
 
-#: app/components/settings/cards/organization/billing-card.tsx:423
+#: app/components/settings/cards/organization/billing-card.tsx:436
 msgid "${basePriceValue} billed annually"
 msgstr "${basePriceValue} يُفوتر سنوياً"
 
@@ -1357,10 +1324,6 @@ msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
 
 #: app/components/staff/access-tab.tsx:115
-#~ msgid "A PIN lets them clock in on a shared tablet at one scope. You can set a new one, but never read an old one."
-#~ msgstr "يتيح لهم الرمز السري تسجيل الحضور على جهاز لوحي مشترك في مكان عمل واحد. يمكنك تعيين رمز جديد، لكن لا يمكن الاطلاع على رمز قديم."
-
-#: app/components/staff/access-tab.tsx:115
 msgid "A PIN lets them clock in on a shared tablet at one workplace. You can set a new one, but never read an old one."
 msgstr "يتيح لهم الرمز السري تسجيل الحضور على جهاز لوحي مشترك في مكان عمل واحد. يمكنك تعيين رمز جديد، لكن لا يمكن الاطلاع على رمز قديم."
 
@@ -1502,7 +1465,8 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:199
+#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
@@ -1536,7 +1500,7 @@ msgstr "نشط"
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:678
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:684
 msgid "Activity"
 msgstr "النشاط"
 
@@ -1597,10 +1561,6 @@ msgstr "أضف تعليقاً..."
 msgid "Add a contact first."
 msgstr "أضف جهة اتصال أولًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:503
-#~ msgid "Add a field"
-#~ msgstr "إضافة حقل"
-
 #: app/components/staff/review-rows.tsx:15
 msgid "Add a first name."
 msgstr "أضف الاسم الأول."
@@ -1608,10 +1568,6 @@ msgstr "أضف الاسم الأول."
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:76
 msgid "Add a general application"
 msgstr "إضافة طلب توظيف عام"
-
-#: app/components/settings/cards/organization/site-analytics-card.tsx:66
-#~ msgid "Add a Google Analytics 4 Measurement ID to track visitors on your tenant website. Leave blank to disable tracking."
-#~ msgstr "أضف معرّف قياس Google Analytics 4 لتتبع زوار موقع المستأجر. اتركه فارغاً لتعطيل التتبع."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:166
 msgid "Add a heading"
@@ -1677,14 +1633,6 @@ msgstr "أضف سببًا."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
 msgid "Add a rule to teach the agent how your business works."
 msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك التجاري."
-
-#: app/components/staff/labor/labor-page.tsx:219
-#~ msgid "Add a scope in settings, or ask an administrator for access to one."
-#~ msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أحد المسؤولين منحك صلاحية الوصول إلى أحدها."
-
-#: app/components/staff/schedule/schedule-page.tsx:364
-#~ msgid "Add a scope in settings, then plan its shifts here."
-#~ msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:553
 msgid "Add a second shift later the same day, like lunch and dinner."
@@ -1758,7 +1706,7 @@ msgid "Add announcement"
 msgstr "إضافة إعلان"
 
 #: app/components/organization-invitations.tsx:310
-#: app/routes/organizations+/create.tsx:1187
+#: app/routes/organizations+/create.tsx:1185
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
@@ -1841,10 +1789,6 @@ msgstr "احتساب الساعات في جميع أماكن العمل"
 msgid "Add images"
 msgstr "إضافة صور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:212
-#~ msgid "Add it in Phone numbers below."
-#~ msgstr "أضفه في قسم أرقام الهاتف أدناه."
-
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3220
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4458
 msgid "Add link"
@@ -1883,7 +1827,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add note"
 msgstr "إضافة ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:838
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
@@ -1953,10 +1897,6 @@ msgstr "إضافة استراحة قصيرة"
 msgid "Add review"
 msgstr "إضافة مراجعة"
 
-#: app/components/data-table.tsx:324
-#~ msgid "Add reviewer"
-#~ msgstr "إضافة مراجع"
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
@@ -1968,10 +1908,6 @@ msgstr "إضافة قاعدة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1706
 msgid "Add section"
 msgstr "إضافة قسم"
-
-#: app/components/data-table.tsx:544
-#~ msgid "Add Section"
-#~ msgstr "إضافة قسم"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:243
 msgid "Add shift"
@@ -2020,10 +1956,6 @@ msgstr "أضف التكوين التالي إلى الملف:"
 #: app/utils/staffing/onboarding-view.ts:351
 msgid "Add the link to the form."
 msgstr "أضف رابط النموذج."
-
-#: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
-#~ msgid "Add the people who work here with their positions and scopes. They do not need a login to be on your team."
-#~ msgstr "أضف الأشخاص الذين يعملون هنا مع مناصبهم وأماكن عملهم. لا يحتاجون إلى حساب لتسجيل الدخول ليكونوا ضمن فريقك."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:448
 msgid "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
@@ -2085,7 +2017,7 @@ msgstr "إضافة رابط"
 msgid "Add your business details to see what the assistant is told."
 msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال للمساعد."
 
-#: app/routes/organizations+/create.tsx:978
+#: app/routes/organizations+/create.tsx:976
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
@@ -2128,15 +2060,15 @@ msgstr "إضافة قسم"
 msgid "Adding…"
 msgstr "جارٍ الإضافة…"
 
-#: app/routes/organizations+/create.tsx:1436
+#: app/routes/organizations+/create.tsx:1434
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر"
 
-#: app/routes/organizations+/create.tsx:1429
+#: app/routes/organizations+/create.tsx:1427
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر<0>({annualPriceLabel} يُفوتر سنوياً لكل مستخدم)</0>"
 
-#: app/components/settings/cards/organization/billing-card.tsx:435
+#: app/components/settings/cards/organization/billing-card.tsx:448
 msgid "Additional users: ${monthlyPrice}/user/month"
 msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 
@@ -2164,10 +2096,6 @@ msgstr "مسؤول"
 #: app/components/impersonation-banner.tsx:35
 msgid "Admin impersonation active"
 msgstr "انتحال شخصية المسؤول نشط"
-
-#: app/components/impersonation-banner.tsx:33
-#~ msgid "Admin Impersonation Active"
-#~ msgstr "انتحال شخصية المسؤول نشط"
 
 #: app/components/app-sidebar.tsx:410
 #: app/components/workspace-breadcrumb.tsx:53
@@ -2238,23 +2166,15 @@ msgstr "إعدادات الوكيل"
 msgid "Agent speaking"
 msgstr "الوكيل يتحدث"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:181
-#~ msgid "AI"
-#~ msgstr "الذكاء الاصطناعي"
-
 #: app/components/phone-agent/flow-editor/flow-meta.ts:48
 #: app/components/phone-agent/flow-editor/flow-meta.ts:50
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
 #: app/components/ai/global-ai-panel.tsx:341
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:679
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:685
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
-
-#: ../../packages/ai/src/components/ai-chat.tsx:192
-#~ msgid "AI Assistant ready to help with this note"
-#~ msgstr "مساعد الذكاء الاصطناعي جاهز للمساعدة في هذه الملاحظة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:488
 msgid "AI draft"
@@ -2267,10 +2187,6 @@ msgstr "لم يتم تفعيل صياغة الردود بالذكاء الاصط
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:337
 msgid "AI drafts use your business details and training rules, and only fill empty answers. Review each one before saving."
 msgstr "تستخدم مسودات الذكاء الاصطناعي تفاصيل نشاطك التجاري وقواعد التدريب، ولا تملأ إلا الإجابات الفارغة. راجع كل واحدة قبل الحفظ."
-
-#: ../../packages/ai/src/components/ai-chat.tsx:228
-#~ msgid "AI is thinking..."
-#~ msgstr "الذكاء الاصطناعي يفكر..."
 
 #: app/components/roles/tenant-role-access-manager.tsx:209
 msgid "AI phone agent"
@@ -2316,10 +2232,6 @@ msgstr "المحاذاة"
 msgid "All"
 msgstr "الكل"
 
-#: app/components/data-table.tsx:351
-#~ msgid "All assigned"
-#~ msgstr "جميعهم معينون"
-
 #: app/components/dashboard/add-block-dialog.tsx:158
 msgid "All built-in blocks are already on this dashboard."
 msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
@@ -2337,7 +2249,7 @@ msgstr "تم حفظ كل التغييرات."
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
-#: app/routes/organizations+/create.tsx:1441
+#: app/routes/organizations+/create.tsx:1439
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
@@ -2744,10 +2656,6 @@ msgstr "مؤرشف"
 msgid "Are you open right now?"
 msgstr "هل أنت مفتوح الآن؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:422
-#~ msgid "Are you sure you want to delete \"{0}\"?"
-#~ msgstr "هل أنت متأكد أنك تريد حذف \"{0}\"؟"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:458
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
@@ -2793,10 +2701,6 @@ msgstr "اطلب من زميل تغطيتها"
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب في الذهاب."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:273
-#~ msgid "Ask about this note..."
-#~ msgstr "اسأل عن هذه الملاحظة..."
-
 #: app/components/ai/global-ai-panel.tsx:532
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
@@ -2825,10 +2729,6 @@ msgstr "طلب تقييم"
 #: ../../packages/ai/src/components/ai-chat.tsx:257
 msgid "Ask me to try again or choose a different destination."
 msgstr "اطلب مني المحاولة مرة أخرى أو اختر وجهة مختلفة."
-
-#: ../../packages/ai/src/components/ai-chat.tsx:196
-#~ msgid "Ask questions, request summaries, get suggestions, or discuss the content of this note."
-#~ msgstr "اطرح أسئلة، اطلب ملخصات، احصل على اقتراحات، أو ناقش محتوى هذه الملاحظة."
 
 #: app/components/staff/timesheets/card-sheet.tsx:378
 msgid "Ask someone who can approve time cards to reopen it."
@@ -2866,10 +2766,6 @@ msgstr "تعليمات المساعد"
 msgid "Assistant paused"
 msgstr "المساعد متوقف مؤقتًا"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:413
-#~ msgid "Attempt: {0} • Executed: {1}"
-#~ msgstr "المحاولة: {0} • نُفِّذ: {1}"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
@@ -2877,14 +2773,6 @@ msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:210
-#~ msgid "Audit trail and step execution history triggered by \"{0}\"."
-#~ msgstr "سجل التدقيق وتاريخ تنفيذ الخطوات المُفعَّل بواسطة \"{0}\"."
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:231
-#~ msgid "Audit trail and step execution history triggered by \"{triggerLabel}\"."
-#~ msgstr "سجل التدقيق وتاريخ تنفيذ الخطوات المُفعَّل بواسطة \"{triggerLabel}\"."
 
 #: app/components/settings/two-factor-form.tsx:87
 #: app/components/settings/two-factor-form.tsx:241
@@ -3001,7 +2889,7 @@ msgstr "متاح في ذلك الوقت"
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:202
+#: app/routes/_app+/$orgSlug_+/index.tsx:210
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -3120,11 +3008,11 @@ msgstr "قبل التحويل، يسأل الوكيل المتصل إن كان �
 msgid "Before you can publish"
 msgstr "قبل أن تتمكن من النشر"
 
-#: app/components/settings/cards/organization/billing-card.tsx:96
+#: app/components/settings/cards/organization/billing-card.tsx:98
 msgid "Beta Access"
 msgstr "الوصول التجريبي"
 
-#: app/components/settings/cards/organization/billing-card.tsx:148
+#: app/components/settings/cards/organization/billing-card.tsx:158
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
@@ -3134,7 +3022,7 @@ msgstr "الفوترة الشهرية"
 msgid "Billing"
 msgstr "الفواتير"
 
-#: app/components/settings/cards/organization/billing-card.tsx:86
+#: app/components/settings/cards/organization/billing-card.tsx:88
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
@@ -3188,7 +3076,7 @@ msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 msgid "Branding"
 msgstr "الهوية البصرية"
 
-#: app/components/workspace-breadcrumb.tsx:112
+#: app/components/workspace-breadcrumb.tsx:117
 msgid "Breadcrumb"
 msgstr "مسار التنقل"
 
@@ -3487,10 +3375,6 @@ msgstr "الحد الزمني للمكالمة"
 msgid "Call views"
 msgstr "طرق عرض المكالمات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:39
-#~ msgid "Call your phone menu from this browser and use the dial pad to press keys. Test calls use the same phone menu, rules, and business details as real calls and appear in Calls marked as tests."
-#~ msgstr "اتصل بقائمة الهاتف من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار قائمة الهاتف والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
-
 #: app/components/phone-agent/vertical-labels.ts:22
 msgid "Callback"
 msgstr "معاودة اتصال"
@@ -3595,7 +3479,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/dashboard/dashboard-name-dialog.tsx:149
 #: app/components/dashboard/dashboard-options-menu.tsx:78
-#: app/components/form-actions.tsx:28
+#: app/components/form-actions.tsx:27
 #: app/components/hiring/decline-dialog.tsx:167
 #: app/components/hiring/hire-dialog.tsx:311
 #: app/components/hiring/interview-dialog.tsx:279
@@ -3661,7 +3545,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1084
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1093
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
@@ -3680,7 +3564,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
 #: app/routes/organizations+/create.tsx:821
-#: app/routes/organizations+/create.tsx:957
+#: app/routes/organizations+/create.tsx:956
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -3688,7 +3572,7 @@ msgstr "إلغاء"
 msgid "Cancel deletion"
 msgstr "إلغاء الحذف"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:424
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:428
 msgid "Cancel editing"
 msgstr "إلغاء التعديل"
 
@@ -3751,7 +3635,7 @@ msgid "Card position"
 msgstr "موضع البطاقة"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:168
-#: app/routes/_app+/$orgSlug_+/notes.tsx:321
+#: app/routes/_app+/$orgSlug_+/notes.tsx:326
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4010
 msgid "Cards"
 msgstr "بطاقات"
@@ -3760,7 +3644,7 @@ msgstr "بطاقات"
 msgid "Cards appear here when people clock in on a tablet. You can also add one for a shift nobody punched."
 msgstr "تظهر البطاقات هنا عندما يسجّل الموظفون حضورهم على جهاز لوحي. يمكنك أيضًا إضافة بطاقة لوردية لم يسجّلها أحد."
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:311
+#: app/routes/_app+/$orgSlug_+/notes.tsx:316
 msgid "Cards view"
 msgstr "عرض البطاقات"
 
@@ -3880,10 +3764,6 @@ msgstr "تغيير القواعد"
 msgid "Change settings, publish call flows, manage numbers, and edit training rules."
 msgstr "تغيير الإعدادات، ونشر مسارات المكالمات، وإدارة الأرقام، وتعديل قواعد التدريب."
 
-#: app/components/roles/tenant-role-access-manager.tsx:213
-#~ msgid "Change settings, publish phone menus, manage numbers, and edit training rules."
-#~ msgstr "تغيير الإعدادات، ونشر قوائم الهاتف، وإدارة الأرقام، وتعديل قواعد التدريب."
-
 #: app/components/settings/cards/organization/site-theme-card.tsx:658
 msgid "Change specific colors here. They start from Accent, Gray, and Appearance above, and work in both light and dark."
 msgstr "غيّر ألواناً محددة هنا. تبدأ من اللون المميز والرمادي والمظهر أعلاه، وتعمل في الوضعين الفاتح والداكن."
@@ -3947,25 +3827,13 @@ msgstr "الدردشة"
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
 
-#: app/routes/_app+/$orgSlug_+/chat.tsx:223
-#~ msgid "Chat needs the Cloudflare dev server (`npm run dev:cf -w app` on port 3001). The HTTPS app URL on :2999 uses the Node server unless nothing is listening on 3001 or you set APP_DEV_UPSTREAM for the dev proxy."
-#~ msgstr "تحتاج الدردشة إلى خادم التطوير Cloudflare (`npm run dev:cf -w app` على المنفذ 3001). عنوان التطبيق HTTPS على :2999 يستخدم خادم Node ما لم يكن المنفذ 3001 فارغًا أو تضبط APP_DEV_UPSTREAM لوسيط التطوير."
-
 #: app/components/chat/chat-unavailable.tsx:31
 msgid "Chat needs the Cloudflare Workers dev server (the default <0>npm run dev</0> app, not <1>dev:node</1>). After pulling migrations, run local D1 migrate for the app if channels never appear."
 msgstr "تحتاج الدردشة إلى خادم تطوير Cloudflare Workers (التطبيق الافتراضي <0>npm run dev</0> وليس <1>dev:node</1>). بعد سحب الترحيلات، نفّذ ترحيل D1 المحلي للتطبيق إذا لم تظهر القنوات."
 
-#: app/routes/_app+/$orgSlug_+/chat.tsx:223
-#~ msgid "Chat runs on Cloudflare Durable Objects. Start the app with `npm run dev:cf -w app` to use it locally."
-#~ msgstr "تعمل الدردشة على Cloudflare Durable Objects. شغّل التطبيق باستخدام `npm run dev:cf -w app` لاستخدامها محلياً."
-
 #: app/components/chat/chat-unavailable.tsx:48
 msgid "Chat settings"
 msgstr "إعدادات الدردشة"
-
-#: app/routes/_app+/$orgSlug_+/chat.tsx:223
-#~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
-#~ msgstr "تستخدم الدردشة Cloudflare Durable Objects. شغّل المشروع بـ <0>npm run dev</0> (وليس <1>npm run dev:node -w app</1> لخادم Node فقط). إن لم تُحمَّل الدردشة، طبّق ترحيلات D1 المحلية — راجع docs/team-chat.md."
 
 #: app/components/hiring/job-editor.tsx:320
 msgid "Check it over"
@@ -4032,11 +3900,11 @@ msgstr "القائمة المراد إضافتها"
 msgid "Checklists for new hires. Pick one to add automatically when you hire someone."
 msgstr "قوائم مهام للموظفين الجدد. اختر واحدة لتُضاف تلقائيًا عند توظيف شخص."
 
-#: app/components/settings/cards/organization/shop-card.tsx:101
+#: app/components/settings/cards/organization/shop-card.tsx:103
 msgid "Checkout payout not connected"
 msgstr "دفعات الخروج غير متصلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:228
+#: app/components/settings/cards/organization/shop-card.tsx:230
 msgid "Checkout processor"
 msgstr "معالج الدفع عند الخروج"
 
@@ -4201,14 +4069,6 @@ msgstr "اختر أحد الخيارات المدرجة."
 msgid "Choose Pair a tablet and create a code."
 msgstr "اختر «ربط جهاز لوحي» وأنشئ رمزًا."
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:110
-#~ msgid "Choose retention"
-#~ msgstr "اختر مدة الاحتفاظ"
-
-#: app/components/chat/chat-compose-dialog.tsx:107
-#~ msgid "Choose someone"
-#~ msgstr "اختر شخصًا"
-
 #: app/components/my-schedule/availability-sheet.tsx:104
 msgid "Choose something for at least one day."
 msgstr "اختر شيئًا ليوم واحد على الأقل."
@@ -4333,10 +4193,6 @@ msgstr "مسح الساعات"
 #: app/components/chat/chat-view.tsx:435
 msgid "Clear search"
 msgstr "مسح البحث"
-
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:625
-#~ msgid "Clear the message to generate a new AI draft."
-#~ msgstr "امسح الرسالة لإنشاء مسودة جديدة بالذكاء الاصطناعي."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:871
 msgid "Click \"Add Server\" and paste this configuration:"
@@ -4601,7 +4457,7 @@ msgstr "تعليق"
 msgid "Comment actions"
 msgstr "إجراءات التعليق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:677
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:683
 msgid "Comments"
 msgstr "التعليقات"
 
@@ -4646,7 +4502,7 @@ msgstr "تعبئة نموذج"
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "إكمال المكالمات والطلبات وإعادة فتحها، ووسم المكالمات. يتطلب صلاحية عرض المكالمات."
 
-#: app/routes/organizations+/create.tsx:1117
+#: app/routes/organizations+/create.tsx:1115
 msgid "Complete Setup"
 msgstr "إكمال الإعداد"
 
@@ -4763,13 +4619,9 @@ msgstr "ربط رقم هاتف"
 msgid "Connect domain"
 msgstr "ربط نطاق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:130
+#: app/components/settings/cards/organization/shop-card.tsx:132
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
-
-#: app/components/settings/cards/organization/shop-card.tsx:93
-#~ msgid "Connect Stripe"
-#~ msgstr "ربط Stripe"
 
 #: app/components/settings/cards/organization/site-analytics-card.tsx:91
 msgid "Connect the analytics platforms you use on your public website. Leave any field blank to disable that integration."
@@ -4815,10 +4667,6 @@ msgstr "متصل في {createdAtDate}"
 msgid "Connecting to team chat…"
 msgstr "جارٍ الاتصال بدردشة الفريق…"
 
-#: app/components/phone-agent/test-call-panel.tsx:428
-#~ msgid "Connecting…"
-#~ msgstr "جارٍ الاتصال…"
-
 #: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
 msgstr "انقطع الاتصال. جارٍ إعادة الاتصال…"
@@ -4836,11 +4684,11 @@ msgstr "اتصل"
 msgid "Contact form"
 msgstr "نموذج اتصال"
 
-#: app/routes/organizations+/create.tsx:1379
+#: app/routes/organizations+/create.tsx:1377
 msgid "Contact support"
 msgstr "اتصل بالدعم"
 
-#: app/components/settings/cards/organization/billing-card.tsx:392
+#: app/components/settings/cards/organization/billing-card.tsx:405
 msgid "Contact support for pricing"
 msgstr "اتصل بالدعم للحصول على الأسعار"
 
@@ -4873,15 +4721,11 @@ msgstr "محرر المحتوى"
 msgid "Continue"
 msgstr "متابعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:128
+#: app/components/settings/cards/organization/shop-card.tsx:130
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:91
-#~ msgid "Continue Stripe setup"
-#~ msgstr "متابعة إعداد Stripe"
-
-#: app/routes/organizations+/create.tsx:961
+#: app/routes/organizations+/create.tsx:959
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
@@ -4908,7 +4752,7 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:223
+#: app/routes/_app+/$orgSlug_+/index.tsx:231
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -4919,10 +4763,6 @@ msgstr "التحكم في من يمكنه الوصول إلى هذه الملا�
 #: app/components/chat/chat-view.tsx:545
 msgid "Conversation"
 msgstr "محادثة"
-
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:245
-#~ msgid "Conversations start here. Review and reply to your website submissions."
-#~ msgstr "تبدأ المحادثات هنا. راجع الردود الواردة من موقعك وأجب عنها."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1242
 msgid "Cool"
@@ -4995,8 +4835,8 @@ msgstr "نسخ إلى هذا الأسبوع"
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:363
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:374
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:367
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:378
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
@@ -5209,10 +5049,6 @@ msgstr "أنشئ قناة لبدء التواصل مع فريقك. يمكنك ق
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:163
-#~ msgid "Create a form"
-#~ msgstr "إنشاء نموذج"
-
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:391
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
@@ -5339,8 +5175,8 @@ msgstr "إنشاء ملاحظة جديدة"
 msgid "Create New Note"
 msgstr "إنشاء ملاحظة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:398
-#: app/routes/_app+/$orgSlug_+/notes.tsx:410
+#: app/routes/_app+/$orgSlug_+/notes.tsx:403
+#: app/routes/_app+/$orgSlug_+/notes.tsx:415
 msgid "Create Note"
 msgstr "إنشاء ملاحظة"
 
@@ -5418,10 +5254,6 @@ msgstr "إنشاء وتعديل وتمكين وحذف لافتات الإعلا�
 #: app/components/roles/tenant-role-access-manager.tsx:203
 msgid "Create, edit, publish, pause, and delete automated journeys."
 msgstr "إنشاء وتعديل ونشر وإيقاف مؤقت وحذف مسارات الأتمتة."
-
-#: app/components/roles/tenant-role-access-manager.tsx:157
-#~ msgid "Create, update, and publish web pages and announcements."
-#~ msgstr "إنشاء صفحات ويب وإعلانات وتحديثها ونشرها."
 
 #: app/components/roles/tenant-role-access-manager.tsx:164
 msgid "Create, update, and publish web pages, forms, and redirects."
@@ -5506,7 +5338,7 @@ msgstr "المؤسسة الحالية"
 msgid "Current Password"
 msgstr "كلمة المرور الحالية"
 
-#: app/components/settings/cards/organization/billing-card.tsx:457
+#: app/components/settings/cards/organization/billing-card.tsx:470
 msgid "Current Plan"
 msgstr "الخطة الحالية"
 
@@ -5514,7 +5346,7 @@ msgstr "الخطة الحالية"
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "الأجور الحالية والسجل الكامل. يتم تسجيل كل مرة تعرض فيها هذه البيانات."
 
-#: app/components/settings/cards/organization/billing-card.tsx:117
+#: app/components/settings/cards/organization/billing-card.tsx:127
 msgid "Current Subscription"
 msgstr "الاشتراك الحالي"
 
@@ -5600,14 +5432,6 @@ msgstr "معرّف العميل"
 msgid "Customer personal data"
 msgstr "البيانات الشخصية للعملاء"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:16
-#~ msgid "Customer Signup"
-#~ msgstr "تسجيل العميل"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:46
-#~ msgid "Customer Signup (Registration)"
-#~ msgstr "تسجيل العميل (التسجيل)"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
@@ -5621,13 +5445,9 @@ msgstr "معرّف العميل مطلوب"
 msgid "Customers"
 msgstr "العملاء"
 
-#: app/components/settings/cards/organization/shop-card.tsx:295
+#: app/components/settings/cards/organization/shop-card.tsx:297
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
-
-#: app/components/data-table.tsx:509
-#~ msgid "Customize Columns"
-#~ msgstr "تخصيص الأعمدة"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
@@ -5681,14 +5501,6 @@ msgstr "خيارات لوحة التحكم"
 #: app/components/workspace-breadcrumb.tsx:21
 msgid "Dashboards"
 msgstr "لوحات التحكم"
-
-#: app/components/data-table.tsx:494
-#~ msgid "Data Table"
-#~ msgstr "جدول البيانات"
-
-#: app/components/data-table.tsx:497
-#~ msgid "Data Table is a table that displays data in a grid format."
-#~ msgstr "جدول البيانات هو جدول يعرض البيانات بتنسيق شبكة."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:135
 msgid "Database connection error"
@@ -5901,8 +5713,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/staff/schedule/templates-dialog.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1038
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1096
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1047
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1105
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
@@ -5942,10 +5754,6 @@ msgstr "هل تريد حذف إدخال سجل 404؟"
 msgid "Delete account"
 msgstr "حذف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:433
-#~ msgid "Delete announcement"
-#~ msgstr "حذف الإعلان"
-
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:488
 msgid "Delete announcement?"
 msgstr "هل تريد حذف الإعلان؟"
@@ -5976,10 +5784,6 @@ msgstr "حذف القناة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4396
 msgid "Delete column"
 msgstr "حذف العمود"
-
-#: app/components/note/comment-item.tsx:176
-#~ msgid "Delete comment"
-#~ msgstr "حذف التعليق"
 
 #: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:31
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:221
@@ -6039,7 +5843,7 @@ msgstr "حذف الرسالة؟"
 msgid "Delete node"
 msgstr "حذف العقدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1073
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1082
 msgid "Delete note?"
 msgstr "هل تريد حذف الملاحظة؟"
 
@@ -6159,7 +5963,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/roles/tenant-role-access-manager.tsx:903
 #: app/components/roles/tenant-role-access-manager.tsx:1051
 #: app/components/roles/tenant-role-access-manager.tsx:1185
-#: app/components/settings/cards/organization/shop-card.tsx:268
+#: app/components/settings/cards/organization/shop-card.tsx:270
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
@@ -6198,7 +6002,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
-#: app/components/workspace-breadcrumb.tsx:127
+#: app/components/workspace-breadcrumb.tsx:134
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -6587,10 +6391,6 @@ msgstr "مثل: bob@gmail.com"
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr "مثال: checkout_abandoned, tier_upgraded"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:173
-#~ msgid "e.g. contact-us, demo-request"
-#~ msgstr "مثال: contact-us, demo-request"
-
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:391
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
@@ -6611,17 +6411,9 @@ msgstr "مثل التحدث مع فريقنا"
 msgid "e.g. urgent, meeting, project"
 msgstr "مثل: عاجل، اجتماع، مشروع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:158
-#~ msgid "e.g. VIP, lead-hot, subscriber"
-#~ msgstr "مثال: VIP, lead-hot, subscriber"
-
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:272
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "مثال: مرحبًا {{firstName}}!"
-
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:263
-#~ msgid "e.g. Welcome {{name}}!"
-#~ msgstr "مثال: مرحباً {{name}}!"
 
 #: app/components/website/link-inspector.tsx:481
 msgid "e.g. You've got mail!"
@@ -6689,7 +6481,7 @@ msgstr "انصراف مبكر"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:981
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:990
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
@@ -6753,7 +6545,7 @@ msgstr "تعديل التخطيط"
 msgid "Edit message"
 msgstr "تعديل الرسالة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:852
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:861
 msgid "Edit note"
 msgstr "تعديل الملاحظة"
 
@@ -6944,15 +6736,11 @@ msgstr "رسالة فارغة"
 msgid "Empty subject"
 msgstr "موضوع فارغ"
 
-#: app/components/phone-agent/test-call-panel.tsx:613
-#~ msgid "Enable audio"
-#~ msgstr "تفعيل الصوت"
-
 #: app/components/settings/cards/organization/s3-storage-card.tsx:200
 msgid "Enable Custom S3 Storage"
 msgstr "تفعيل تخزين S3 مخصص"
 
-#: app/components/settings/cards/organization/shop-card.tsx:194
+#: app/components/settings/cards/organization/shop-card.tsx:196
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
@@ -7107,7 +6895,7 @@ msgid "Enter each percentage as a number from 0 to 100."
 msgstr "أدخل كل نسبة كرقم من 0 إلى 100."
 
 #: app/components/organization-invitations.tsx:449
-#: app/routes/organizations+/create.tsx:1228
+#: app/routes/organizations+/create.tsx:1226
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
 
@@ -7222,15 +7010,11 @@ msgstr "أدخل اسم المستخدم أو البريد الإلكتروني"
 msgid "Entered sales"
 msgstr "المبيعات المُدخلة"
 
-#: app/components/staff/labor/labor-page.tsx:384
-#~ msgid "Entered sales are only used when this scope's sales source is \"Sales I enter\"."
-#~ msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما يكون مصدر مبيعات مكان العمل هذا \"مبيعات أدخلها بنفسي\"."
-
 #: app/components/staff/labor/labor-page.tsx:387
 msgid "Entered sales are only used when this workplace's sales source is \"Sales I enter\"."
 msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما يكون مصدر مبيعات مكان العمل هذا \"مبيعات أدخلها بنفسي\"."
 
-#: app/components/settings/cards/organization/billing-card.tsx:269
+#: app/components/settings/cards/organization/billing-card.tsx:279
 msgid "Enterprise Plan"
 msgstr "الخطة المؤسسية"
 
@@ -7390,17 +7174,9 @@ msgstr "مثال على الطلب"
 msgid "Example shift"
 msgstr "وردية نموذجية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:240
-#~ msgid "Execution History ({0})"
-#~ msgstr "سجل التنفيذ ({0})"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:235
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:213
-#~ msgid "Execution Runs"
-#~ msgstr "عمليات التنفيذ"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:216
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
@@ -7440,10 +7216,6 @@ msgstr "تنتهي صلاحيته خلال {left}"
 #: app/components/staff/onboarding/certificates-tab.tsx:237
 msgid "Expires today"
 msgstr "تنتهي اليوم"
-
-#: ../../packages/ai/src/components/ai-chat.tsx:86
-#~ msgid "Explain this platform"
-#~ msgstr "اشرح هذه المنصة"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:627
 msgid "Export"
@@ -7533,7 +7305,7 @@ msgstr "فشل العثور على الرحلة الأصلية"
 msgid "Failed to format graph for validation"
 msgstr "فشل تنسيق الرسم البياني للتحقق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:890
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:899
 msgid "Failed to load AI Assistant"
 msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 
@@ -7577,7 +7349,7 @@ msgstr "فشل نشر الرحلة"
 msgid "Failed to save automation"
 msgstr "فشل حفظ الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:440
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:444
 msgid "Failed to save:"
 msgstr "فشل الحفظ:"
 
@@ -7604,10 +7376,6 @@ msgstr "إجابات الأسئلة الشائعة"
 #: app/components/settings/cards/organization/site-icon-card.tsx:204
 msgid "Favicon and app icon variants generated."
 msgstr "تم إنشاء متغيرات الأيقونة المفضلة وأيقونة التطبيق."
-
-#: app/components/data-table.tsx:382
-#~ msgid "Favorite"
-#~ msgstr "المفضلة"
 
 #: app/components/favorite-notes.tsx:64
 msgid "Favorites"
@@ -7765,10 +7533,6 @@ msgstr "صحّح الإعدادات المميزة لتتمكن من الحفظ.
 msgid "Fix the issues in the call flow before publishing."
 msgstr "أصلح المشكلات في مسار المكالمة قبل النشر."
 
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:453
-#~ msgid "Fix the issues in the phone menu before publishing."
-#~ msgstr "أصلح المشكلات في قائمة الهاتف قبل النشر."
-
 #: app/components/staff/timesheets/review-queue.tsx:417
 msgid "Fix this card"
 msgstr "إصلاح هذه البطاقة"
@@ -7863,10 +7627,6 @@ msgstr "هل نسيت كلمة المرور؟"
 msgid "Form"
 msgstr "النموذج"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:169
-#~ msgid "Form Identifier / Slug"
-#~ msgstr "معرّف النموذج / المسار"
-
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:178
 msgid "Form name"
 msgstr "اسم النموذج"
@@ -7879,11 +7639,6 @@ msgstr "إعدادات النموذج"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:316
 msgid "Form submissions"
 msgstr "ردود النماذج"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:32
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:50
-#~ msgid "Form Submitted"
-#~ msgstr "تم إرسال النموذج"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
@@ -7990,7 +7745,7 @@ msgid "General manager"
 msgstr "المدير العام"
 
 #: app/components/app-sidebar.tsx:463
-#: app/components/settings/cards/organization/general-settings-card.tsx:58
+#: app/components/settings/cards/organization/general-settings-card.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
 msgstr "الإعدادات العامة"
@@ -8031,7 +7786,7 @@ msgid "Get help"
 msgstr "احصل على المساعدة"
 
 #: app/components/app-sidebar.tsx:105
-#: app/components/settings/cards/organization/billing-card.tsx:303
+#: app/components/settings/cards/organization/billing-card.tsx:317
 msgid "Get in touch"
 msgstr "تواصل معنا"
 
@@ -8104,15 +7859,15 @@ msgstr "انتقل إلى المفتاح"
 msgid "Go-live checklist"
 msgstr "قائمة التحقق قبل الإطلاق"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:164
 msgid "Good afternoon, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:165
 msgid "Good evening, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:153
+#: app/routes/_app+/$orgSlug_+/index.tsx:163
 msgid "Good morning, {userName}"
 msgstr "صباح الخير، {userName}"
 
@@ -8124,10 +7879,6 @@ msgstr "الوداع"
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:564
 msgid "Goodbye message"
 msgstr "رسالة الوداع"
-
-#: app/components/settings/cards/organization/site-analytics-card.tsx:63
-#~ msgid "Google Analytics"
-#~ msgstr "Google Analytics"
 
 #: app/components/settings/cards/organization/site-analytics-card.tsx:119
 msgid "Google Analytics ID"
@@ -8208,7 +7959,7 @@ msgstr "مجموعات"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/settings/cards/organization/shop-card.tsx:367
+#: app/components/settings/cards/organization/shop-card.tsx:377
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -8236,11 +7987,6 @@ msgstr "لديه صلاحية الوصول"
 #: app/utils/staffing/schedule-errors.ts:64
 msgid "Has approved time off"
 msgstr "لديه إجازة معتمدة"
-
-#: app/components/data-table.tsx:188
-#: app/components/data-table.tsx:813
-#~ msgid "Header"
-#~ msgstr "العنوان"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/components/hiring/description-editor.tsx:115
@@ -8461,19 +8207,19 @@ msgstr "العطل"
 #: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/components/workspace-breadcrumb.tsx:100
-#: app/components/workspace-breadcrumb.tsx:135
-#: app/components/workspace-breadcrumb.tsx:144
+#: app/components/workspace-breadcrumb.tsx:142
+#: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
 msgid "Home"
 msgstr "الرئيسية"
 
-#: app/components/settings/cards/organization/shop-card.tsx:211
+#: app/components/settings/cards/organization/shop-card.tsx:213
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 msgstr "يصبح الدفع المستضاف متاحاً بمجرد قيام المنصة بتهيئة معالج التاجر المسجل."
 
-#: app/components/settings/cards/organization/shop-card.tsx:95
+#: app/components/settings/cards/organization/shop-card.tsx:97
 msgid "Hosted checkout not connected"
 msgstr "الدفع المستضاف غير متصل"
 
@@ -8597,14 +8343,6 @@ msgstr "مدى التزام الساعة بالجدول المنشور. تبدأ
 #: app/components/phone-agent/flow-editor/node-palette.tsx:24
 msgid "How the call flow works"
 msgstr "كيف يعمل مسار المكالمة"
-
-#: app/components/phone-agent/flow-editor/node-palette.tsx:24
-#~ msgid "How the phone menu works"
-#~ msgstr "كيف تعمل قائمة الهاتف"
-
-#: app/components/staff/labor/tip-settings-dialog.tsx:162
-#~ msgid "How the tip report divides tips for this scope. It only builds a report; it does not pay anyone."
-#~ msgstr "كيف يقسّم تقرير الإكراميات الإكراميات في مكان العمل هذا. هو يُنشئ تقريرًا فقط ولا يدفع لأحد."
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:162
 msgid "How the tip report divides tips for this workplace. It only builds a report; it does not pay anyone."
@@ -8797,11 +8535,11 @@ msgstr "أضف رمز الدولة، مثل ‎+14155550123."
 msgid "Included when tips are divided."
 msgstr "يُشمل عند تقسيم الإكراميات."
 
-#: app/components/settings/cards/organization/billing-card.tsx:431
+#: app/components/settings/cards/organization/billing-card.tsx:444
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 
-#: app/routes/organizations+/create.tsx:1424
+#: app/routes/organizations+/create.tsx:1422
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
@@ -8822,14 +8560,6 @@ msgstr "إدراج كتلة هنا"
 msgid "Insert field here"
 msgstr "إدراج حقل هنا"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:86
-#~ msgid "Insert merge tag"
-#~ msgstr "إدراج وسم دمج"
-
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:384
-#~ msgid "Insert Merge Tags:"
-#~ msgstr "إدراج وسوم الدمج:"
-
 #: app/components/roles/tenant-role-access-manager.tsx:1220
 msgid "Inspect"
 msgstr "استعراض"
@@ -8837,7 +8567,7 @@ msgstr "استعراض"
 #: app/components/app-sidebar.tsx:544
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1029
 msgid "Integrations"
 msgstr "التكاملات"
 
@@ -8931,11 +8661,11 @@ msgstr "الدعوات غير متاحة لهذه المؤسسة."
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
-#: app/components/settings/cards/organization/shop-card.tsx:163
+#: app/components/settings/cards/organization/shop-card.tsx:165
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
-#: app/components/workspace-header-actions.tsx:46
+#: app/components/workspace-header-actions.tsx:71
 msgid "Invite member"
 msgstr "دعوة عضو"
 
@@ -8948,7 +8678,7 @@ msgstr "دعوة أعضاء"
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
-#: app/routes/organizations+/create.tsx:975
+#: app/routes/organizations+/create.tsx:973
 msgid "Invite team members"
 msgstr "دعوة أعضاء الفريق"
 
@@ -8974,11 +8704,15 @@ msgstr "مدعو من قبل {invitedBy}"
 msgid "Invited by {inviterName}"
 msgstr "مدعو من قبل {inviterName}"
 
-#: app/components/settings/cards/organization/invoices-card.tsx:79
+#: app/components/settings/cards/organization/invoices-card.tsx:92
+msgid "Invoice history is temporarily unavailable."
+msgstr "سجل الفواتير غير متاح مؤقتًا."
+
+#: app/components/settings/cards/organization/invoices-card.tsx:83
 msgid "Invoices"
 msgstr "الفواتير"
 
-#: app/components/settings/cards/organization/invoices-card.tsx:89
+#: app/components/settings/cards/organization/invoices-card.tsx:98
 msgid "Invoices will appear here once you have an active subscription."
 msgstr "ستظهر الفواتير هنا بمجرد أن يكون لديك اشتراك نشط."
 
@@ -9109,11 +8843,11 @@ msgstr "معرّف الرحلة مطلوب"
 msgid "Jump into an existing organization, accept pending invitations, or add a new one."
 msgstr "انتقل إلى منظمة موجودة، أو اقبل الدعوات المعلقة، أو أضف منظمة جديدة."
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:335
+#: app/routes/_app+/$orgSlug_+/notes.tsx:340
 msgid "Kanban"
 msgstr "كانبان"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:325
+#: app/routes/_app+/$orgSlug_+/notes.tsx:330
 msgid "Kanban board"
 msgstr "لوحة كانبان"
 
@@ -9130,10 +8864,6 @@ msgstr "الإبقاء على المنطقة الحالية"
 #: app/components/staff/labor-policy-editor.tsx:289
 msgid "Keep editing"
 msgstr "متابعة التعديل"
-
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:114
-#~ msgid "Keep forever"
-#~ msgstr "الاحتفاظ دائمًا"
 
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
@@ -9315,7 +9045,7 @@ msgid "Large"
 msgstr "كبير"
 
 #. placeholder {0}: notes.daysShown
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:214
 msgid "Last {0} days"
 msgstr "آخر {0} يومًا"
 
@@ -9532,12 +9262,6 @@ msgstr "فاتح"
 msgid "Light mode"
 msgstr "الوضع الفاتح"
 
-#: app/components/data-table.tsx:257
-#: app/components/data-table.tsx:274
-#: app/components/data-table.tsx:871
-#~ msgid "Limit"
-#~ msgstr "الحد الأقصى"
-
 #: app/utils/organization/role-label.ts:22
 msgid "Limited access for temporary collaborators"
 msgstr "وصول محدود للمتعاونين المؤقتين"
@@ -9560,8 +9284,8 @@ msgstr "رابط (اختياري)"
 msgid "Link columns"
 msgstr "أعمدة الروابط"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:363
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:374
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:367
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:378
 msgid "Link copied!"
 msgstr "تم نسخ الرابط!"
 
@@ -9646,7 +9370,7 @@ msgstr "تحميل الرسائل الأقدم"
 msgid "Loading"
 msgstr "جاري التحميل"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:914
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:923
 msgid "Loading AI Assistant..."
 msgstr "جاري تحميل مساعد الذكاء الاصطناعي..."
 
@@ -9949,10 +9673,6 @@ msgstr "المنصب الرئيسي"
 msgid "Main workplace"
 msgstr "مكان العمل الرئيسي"
 
-#: app/components/data-table.tsx:379
-#~ msgid "Make a copy"
-#~ msgstr "عمل نسخة"
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:586
 msgid "Make a test call"
 msgstr "إجراء مكالمة تجريبية"
@@ -10027,7 +9747,7 @@ msgstr "إدارة الجدول"
 msgid "Manage staff"
 msgstr "إدارة الموظفين"
 
-#: app/components/settings/cards/organization/billing-card.tsx:172
+#: app/components/settings/cards/organization/billing-card.tsx:182
 msgid "Manage Subscription"
 msgstr "إدارة الاشتراك"
 
@@ -10059,11 +9779,11 @@ msgstr "إدارة إعدادات وتفضيلات منظمتك."
 msgid "Manage your organization's members."
 msgstr "إدارة أعضاء منظمتك."
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:61
+#: app/components/settings/cards/organization/general-settings-card.tsx:62
 msgid "Manage your organization's name, slug, and profile image."
 msgstr "إدارة اسم مؤسستك والرابط الثابت وصورة الملف الشخصي."
 
-#: app/components/settings/cards/organization/billing-card.tsx:89
+#: app/components/settings/cards/organization/billing-card.tsx:91
 msgid "Manage your organization's subscription"
 msgstr "إدارة اشتراك مؤسستك"
 
@@ -10214,10 +9934,6 @@ msgstr "وجبة (غير مدفوعة)"
 msgid "Meal break"
 msgstr "استراحة وجبة"
 
-#: app/components/settings/cards/organization/site-analytics-card.tsx:76
-#~ msgid "Measurement ID"
-#~ msgstr "معرّف القياس"
-
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3408
 msgid "Media"
 msgstr "الوسائط"
@@ -10282,10 +9998,6 @@ msgstr "الأعضاء والدعوات"
 msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
-#~ msgid "Merge tags are replaced per recipient when the email is sent."
-#~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
-
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:390
@@ -10316,10 +10028,6 @@ msgstr "محتوى الرسالة مطلوب"
 #: app/components/chat/chat-composer.tsx:218
 msgid "Message is too long."
 msgstr "الرسالة طويلة جداً."
-
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:81
-#~ msgid "Message retention"
-#~ msgstr "الاحتفاظ بالرسائل"
 
 #: app/components/phone-agent/call-data.ts:134
 msgid "Message taken"
@@ -10425,7 +10133,7 @@ msgstr "شهر"
 msgid "Month"
 msgstr "الشهر"
 
-#: app/components/settings/cards/organization/billing-card.tsx:200
+#: app/components/settings/cards/organization/billing-card.tsx:210
 #: app/routes/organizations+/create.tsx:905
 msgid "Monthly"
 msgstr "شهري"
@@ -10556,7 +10264,7 @@ msgstr "رابط جدولي"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/settings/cards/organization/general-settings-card.tsx:82
+#: app/components/settings/cards/organization/general-settings-card.tsx:83
 #: app/components/settings/cards/profile-card.tsx:97
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
@@ -10677,7 +10385,7 @@ msgstr "لم يُستخدم أبداً"
 
 #: app/components/hiring/applicant-labels.ts:22
 #: app/components/workspace-breadcrumb.tsx:22
-#: app/components/workspace-header-actions.tsx:26
+#: app/components/workspace-header-actions.tsx:44
 msgid "New"
 msgstr "جديد"
 
@@ -10760,11 +10468,11 @@ msgid "New message"
 msgstr "رسالة جديدة"
 
 #: app/components/staff/notes-tab.tsx:98
-#: app/components/workspace-header-actions.tsx:37
+#: app/components/workspace-header-actions.tsx:57
 msgid "New note"
 msgstr "ملاحظة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:343
+#: app/routes/_app+/$orgSlug_+/notes.tsx:348
 msgid "New Note"
 msgstr "ملاحظة جديدة"
 
@@ -10797,7 +10505,7 @@ msgstr "إعادة توجيه جديدة"
 msgid "New Redirect"
 msgstr "إعادة توجيه جديدة"
 
-#: app/components/workspace-header-actions.tsx:41
+#: app/components/workspace-header-actions.tsx:62
 msgid "New report"
 msgstr "تقرير جديد"
 
@@ -10877,12 +10585,12 @@ msgstr "لا يوجد رابط دعوة نشط"
 msgid "No active sessions"
 msgstr "لا توجد جلسات نشطة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:154
+#: app/components/settings/cards/organization/billing-card.tsx:164
 msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
@@ -10976,10 +10684,6 @@ msgstr "لا توجد قنوات متاحة"
 msgid "No channels yet"
 msgstr "لا توجد قنوات بعد"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:358
-#~ msgid "No channels yet. Create the first one."
-#~ msgstr "لا توجد قنوات بعد. أنشئ أول قناة."
-
 #: app/components/phone-agent/flow-editor/flow-meta.ts:100
 msgid "No choice"
 msgstr "بلا اختيار"
@@ -11016,7 +10720,7 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No contacts yet."
 msgstr "لا توجد جهات اتصال بعد."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:835
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:844
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
@@ -11064,10 +10768,6 @@ msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمت
 msgid "No fields yet"
 msgstr "لا توجد حقول بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
-#~ msgid "No forms yet."
-#~ msgstr "لا توجد نماذج بعد."
-
 #: app/components/staff/schedule/schedule-toolbar.tsx:135
 msgid "No grouping"
 msgstr "بلا تجميع"
@@ -11100,7 +10800,7 @@ msgstr "لم تُرسل دعوة: البريد الإلكتروني متوقف"
 msgid "No invitation sent: no email on file"
 msgstr "لم تُرسل دعوة: لا يوجد بريد إلكتروني مسجّل"
 
-#: app/components/settings/cards/organization/invoices-card.tsx:88
+#: app/components/settings/cards/organization/invoices-card.tsx:97
 msgid "No invoices found"
 msgstr "لم يتم العثور على فواتير"
 
@@ -11193,10 +10893,6 @@ msgstr "لم يُعثَر على رسائل مطابقة لبحثك."
 msgid "No messages yet"
 msgstr "لا توجد رسائل بعد"
 
-#: app/components/chat/chat-view.tsx:494
-#~ msgid "No messages yet. Say hello!"
-#~ msgstr "لا توجد رسائل بعد. ابدأ بالترحيب!"
-
 #: app/components/phone-agent/test-call-errors.ts:21
 msgid "No microphone was found. Connect one and try again."
 msgstr "لم يتم العثور على ميكروفون. وصّل ميكروفونًا وحاول مرة أخرى."
@@ -11207,7 +10903,7 @@ msgstr "لا توجد أسماء لعرضها. اطلب من مدير إعداد
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1182
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
 msgid "No note with the id \"{noteId}\" exists"
 msgstr "لا توجد ملاحظة بالمعرف \"{noteId}\""
 
@@ -11215,7 +10911,7 @@ msgstr "لا توجد ملاحظة بالمعرف \"{noteId}\""
 msgid "No notes created yet"
 msgstr "لم يتم إنشاء ملاحظات بعد"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:392
+#: app/routes/_app+/$orgSlug_+/notes.tsx:397
 msgid "No notes found"
 msgstr "لم يتم العثور على ملاحظات"
 
@@ -11223,7 +10919,7 @@ msgstr "لم يتم العثور على ملاحظات"
 msgid "No notes found."
 msgstr "لم يتم العثور على ملاحظات."
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:394
+#: app/routes/_app+/$orgSlug_+/notes.tsx:399
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr "لا توجد ملاحظات تطابق بحثك عن \"{searchValue}\". جرب مصطلح بحث مختلف أو أنشئ ملاحظة جديدة."
 
@@ -11289,7 +10985,7 @@ msgstr "لا يُتوقع عادة وجود طلبات"
 msgid "No organization found"
 msgstr "لم يتم العثور على منظمة"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:446
+#: app/routes/_app+/$orgSlug_+/notes.tsx:451
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr "لا توجد منظمة بالمعرف \"{orgSlug}\""
 
@@ -11374,14 +11070,6 @@ msgstr "لا توجد عمليات إعادة توجيه تطابق هذا ال�
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:640
 msgid "No responses yet."
 msgstr "لا توجد ردود بعد."
-
-#: app/components/data-table.tsx:612
-#~ msgid "No results."
-#~ msgstr "لا توجد نتائج."
-
-#: app/components/staff/labor/labor-tips.tsx:67
-#~ msgid "No rules are saved for this scope yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
-#~ msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
 
 #: app/components/staff/labor/labor-tips.tsx:67
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
@@ -11632,7 +11320,7 @@ msgstr "غير متاح في منطقة بياناتك بعد"
 msgid "Not available when we need them"
 msgstr "غير متاح عندما نحتاج إليه"
 
-#: app/components/settings/cards/organization/shop-card.tsx:106
+#: app/components/settings/cards/organization/shop-card.tsx:108
 msgid "Not connected"
 msgstr "غير متصل"
 
@@ -11729,7 +11417,7 @@ msgstr "ملاحظة"
 msgid "Note"
 msgstr "ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:991
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1000
 msgid "Note actions"
 msgstr "إجراءات الملاحظة"
 
@@ -11745,7 +11433,7 @@ msgstr "تمت إضافة الملاحظة."
 msgid "Note changed"
 msgstr "تم تغيير الملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:434
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:438
 msgid "Note content..."
 msgstr "محتوى الملاحظة..."
 
@@ -11762,7 +11450,7 @@ msgstr "ملاحظة لمديرك"
 msgid "Note removed"
 msgstr "تمت إزالة الملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:407
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:411
 msgid "Note title..."
 msgstr "عنوان الملاحظة..."
 
@@ -11781,7 +11469,7 @@ msgstr "ملاحظات"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
 #: app/components/staff/staff-profile-page.tsx:93
 #: app/components/workspace-breadcrumb.tsx:10
-#: app/routes/_app+/$orgSlug_+/notes.tsx:298
+#: app/routes/_app+/$orgSlug_+/notes.tsx:303
 msgid "Notes"
 msgstr "الملاحظات"
 
@@ -11814,7 +11502,7 @@ msgstr "الملاحظات المنشأة كل يوم."
 msgid "Notes for AI"
 msgstr "ملاحظات للذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:406
+#: app/routes/_app+/$orgSlug_+/notes.tsx:411
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr "تساعدك الملاحظات على تسجيل الأفكار ومحاضر الاجتماعات أو أي شيء مهم لمنظمتك. ابدأ بإنشاء ملاحظتك الأولى."
 
@@ -11973,10 +11661,6 @@ msgstr "المسار القديم (المصدر)"
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:84
-#~ msgid "Older team chat messages are removed automatically from your organization's chat room. Direct messages and groups (when enabled) follow the same policy."
-#~ msgstr "تُزال رسائل الدردشة الجماعية الأقدم تلقائيًا من غرفة الدردشة في مؤسستك. الرسائل المباشرة والمجموعات (عند تفعيلها) تتبع نفس السياسة."
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:128
 msgid "On"
 msgstr "تشغيل"
@@ -12002,10 +11686,6 @@ msgstr "في الورديات الأطول من"
 #: app/components/staff/schedule/availability-sheet.tsx:297
 msgid "On that date"
 msgstr "في ذلك التاريخ"
-
-#: app/routes/_app+/$orgSlug_+/index.tsx:225
-msgid "On the leaderboard"
-msgstr "في لوحة المتصدرين"
 
 #: app/utils/staffing/schedule-errors.ts:84
 msgid "on time off"
@@ -12238,7 +11918,7 @@ msgstr "فتح مسار المكالمة"
 msgid "Open checklist"
 msgstr "فتح قائمة المهام"
 
-#: app/components/settings/cards/organization/shop-card.tsx:174
+#: app/components/settings/cards/organization/shop-card.tsx:176
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
 
@@ -12258,7 +11938,7 @@ msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 msgid "Open Graph image"
 msgstr "صورة Open Graph"
 
-#: app/components/settings/cards/organization/shop-card.tsx:205
+#: app/components/settings/cards/organization/shop-card.tsx:207
 msgid "Open hosted dashboard"
 msgstr "فتح لوحة التحكم المستضافة"
 
@@ -12296,15 +11976,11 @@ msgstr "فتح القائمة"
 msgid "Open or closed"
 msgstr "مفتوح أو مغلق"
 
-#: app/components/roles/tenant-role-access-manager.tsx:152
-#~ msgid "Open pages and themes in the site builder."
-#~ msgstr "فتح الصفحات والسمات في منشئ الموقع."
-
 #: app/components/roles/tenant-role-access-manager.tsx:159
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
-#: app/components/settings/cards/organization/shop-card.tsx:142
+#: app/components/settings/cards/organization/shop-card.tsx:144
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
@@ -12352,10 +12028,6 @@ msgstr "ورديات شاغرة"
 #: app/components/staff/schedule/copy-week-dialog.tsx:219
 msgid "Open shifts are left out when you copy only some people."
 msgstr "تُترك الورديات الشاغرة عند نسخ بعض الأشخاص فقط."
-
-#: app/components/settings/cards/organization/shop-card.tsx:105
-#~ msgid "Open Stripe dashboard"
-#~ msgstr "فتح لوحة Stripe"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:95
 msgid "Open team chat"
@@ -12412,10 +12084,6 @@ msgstr "افتح هذا على الجهاز اللوحي"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
 msgid "Open visual builder"
 msgstr "فتح المنشئ المرئي"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:254
-#~ msgid "Open Visual Builder"
-#~ msgstr "فتح المُنشئ المرئي"
 
 #: app/utils/my-schedule/my-schedule-messages.ts:80
 msgid "Open your schedule from your email"
@@ -12482,11 +12150,15 @@ msgstr "أو الصقه أدناه"
 msgid "Orange"
 msgstr "برتقالي"
 
+#: app/components/settings/cards/organization/shop-card.tsx:353
+msgid "Orders are unavailable right now. Your shop settings are still saved; try again later."
+msgstr "الطلبات غير متاحة حاليًا. إعدادات المتجر محفوظة؛ حاول مرة أخرى لاحقًا."
+
 #: app/components/staff/labor/labor-settings.tsx:136
 msgid "Orders one person handles in an hour"
 msgstr "الطلبات التي يتولاها شخص واحد في الساعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:345
+#: app/components/settings/cards/organization/shop-card.tsx:347
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
@@ -12518,7 +12190,7 @@ msgstr "إعدادات المنظمة"
 msgid "Organization site"
 msgstr "موقع المؤسسة"
 
-#: app/routes/organizations+/create.tsx:1043
+#: app/routes/organizations+/create.tsx:1041
 msgid "Organization size"
 msgstr "حجم المنظمة"
 
@@ -12656,7 +12328,7 @@ msgstr "قواعد العمل الإضافي المستخدمة لتقدير ا�
 
 #: app/components/app-sidebar.tsx:329
 #: app/components/staff/labor/labor-page.tsx:196
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:676
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:682
 msgid "Overview"
 msgstr "نظرة عامة"
 
@@ -12670,10 +12342,6 @@ msgstr "صفحة"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:419
 msgid "Page actions"
 msgstr "إجراءات الصفحة"
-
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5864
-#~ msgid "Page settings"
-#~ msgstr "إعدادات الصفحة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2404
 msgid "Page Settings"
@@ -12914,11 +12582,11 @@ msgstr "نوع الأجر"
 msgid "Pay week"
 msgstr "أسبوع الأجور"
 
-#: app/components/settings/cards/organization/shop-card.tsx:90
+#: app/components/settings/cards/organization/shop-card.tsx:92
 msgid "Payments enabled"
 msgstr "المدفوعات مفعّلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:115
+#: app/components/settings/cards/organization/shop-card.tsx:117
 msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
 
@@ -12997,8 +12665,8 @@ msgstr "يجد الأشخاص الذين تشاركها معهم لوحة الت
 msgid "Per hour"
 msgstr "في الساعة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:418
-#: app/routes/organizations+/create.tsx:1412
+#: app/components/settings/cards/organization/billing-card.tsx:431
+#: app/routes/organizations+/create.tsx:1410
 msgid "per month"
 msgstr "شهرياً"
 
@@ -13106,14 +12774,6 @@ msgstr "مكالمة هاتفية (للخطوط الأرضية)"
 #: app/components/website/link-inspector.tsx:501
 msgid "Phone links only work on devices that can place phone calls."
 msgstr "تعمل روابط الهاتف فقط على الأجهزة القادرة على إجراء مكالمات هاتفية."
-
-#: app/components/app-sidebar.tsx:374
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:492
-#: app/components/phone-agent/flow-editor/node-palette.tsx:101
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
-#~ msgid "Phone menu"
-#~ msgstr "قائمة الهاتف"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:509
 #: app/utils/website/field-types.ts:49
@@ -13318,7 +12978,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
-#: app/routes/organizations+/create.tsx:1339
+#: app/routes/organizations+/create.tsx:1337
 msgid "Plan not available"
 msgstr "الخطة غير متاحة"
 
@@ -13345,10 +13005,6 @@ msgstr "تشغيل الرسالة"
 #: app/components/phone-agent/voice-picker.tsx:180
 msgid "Play preview of {voiceName}"
 msgstr "تشغيل معاينة {voiceName}"
-
-#: app/components/phone-agent/call-detail-sheet.tsx:428
-#~ msgid "Playback coming soon."
-#~ msgstr "التشغيل متاح قريبًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:136
 msgid "Played after a rating of 1 or 2."
@@ -13438,15 +13094,15 @@ msgstr "تُشغَّل عند إيقاف التحويلات أو خارج ساع
 msgid "Played while a transfer is ringing."
 msgstr "تُشغَّل أثناء رنين التحويل."
 
-#: app/routes/organizations+/create.tsx:1342
+#: app/routes/organizations+/create.tsx:1340
 msgid "Please check configuration"
 msgstr "يرجى التحقق من التكوين"
 
-#: app/components/settings/cards/organization/billing-card.tsx:350
+#: app/components/settings/cards/organization/billing-card.tsx:363
 msgid "Please check your Stripe configuration"
 msgstr "يرجى التحقق من تكوين Stripe"
 
-#: app/components/settings/cards/organization/billing-card.tsx:254
+#: app/components/settings/cards/organization/billing-card.tsx:264
 msgid "Please check your Stripe configuration or try again later"
 msgstr "يرجى التحقق من تكوين Stripe أو المحاولة مرة أخرى لاحقاً"
 
@@ -13615,10 +13271,6 @@ msgstr "اضغط {key}"
 msgid "Press 0 to reach staff"
 msgstr "اضغط 0 للتحدث مع الموظفين"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:280
-#~ msgid "Press Enter to send, Shift+Enter for new line"
-#~ msgstr "اضغط Enter للإرسال، Shift+Enter لسطر جديد"
-
 #: app/components/phone-agent/voice-picker.tsx:358
 msgid "Press play to hear each voice read your greeting, then pick the one you like."
 msgstr "اضغط تشغيل لتسمع كل صوت يقرأ تحيتك، ثم اختر الصوت الذي يعجبك."
@@ -13658,16 +13310,16 @@ msgstr "الفترة السابقة"
 msgid "Previous week"
 msgstr "الأسبوع السابق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:283
+#: app/components/settings/cards/organization/shop-card.tsx:285
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
-#: app/components/settings/cards/organization/billing-card.tsx:389
-#: app/routes/organizations+/create.tsx:1376
+#: app/components/settings/cards/organization/billing-card.tsx:402
+#: app/routes/organizations+/create.tsx:1374
 msgid "Price not configured"
 msgstr "السعر غير مكوّن"
 
-#: app/components/settings/cards/organization/billing-card.tsx:347
+#: app/components/settings/cards/organization/billing-card.tsx:360
 msgid "Pricing not available"
 msgstr "الأسعار غير متاحة"
 
@@ -13696,7 +13348,7 @@ msgstr "تحديد أولوية هذه المهام"
 msgid "Priority"
 msgstr "الأولوية"
 
-#: app/routes/organizations+/create.tsx:1445
+#: app/routes/organizations+/create.tsx:1443
 msgid "Priority support"
 msgstr "دعم الأولوية"
 
@@ -13708,7 +13360,7 @@ msgstr "الخصوصية"
 msgid "Privacy & Data Rights"
 msgstr "الخصوصية وحقوق البيانات"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:701
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:707
 msgid "Private"
 msgstr "خاص"
 
@@ -13726,7 +13378,7 @@ msgstr "قيد المعالجة"
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
-#: app/components/settings/cards/organization/shop-card.tsx:254
+#: app/components/settings/cards/organization/shop-card.tsx:256
 msgid "Product name"
 msgstr "اسم المنتج"
 
@@ -13787,10 +13439,6 @@ msgstr "نشر ({count})"
 msgid "Publish a call flow"
 msgstr "انشر مسار المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:220
-#~ msgid "Publish a phone menu"
-#~ msgstr "انشر قائمة الهاتف"
-
 #: app/components/settings/cards/organization/site-card.tsx:218
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
 msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار الوصول إليه عبر النطاق الفرعي لمؤسستك، أو نطاق مخصص تقوم بربطه."
@@ -13821,7 +13469,7 @@ msgstr "نشر هذا الأسبوع"
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:327
+#: app/components/settings/cards/organization/shop-card.tsx:329
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
@@ -13841,10 +13489,6 @@ msgstr "منشور"
 msgid "Published call flow version {version}"
 msgstr "تم نشر الإصدار {version} من مسار المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
-#~ msgid "Published phone menu version {version}"
-#~ msgstr "تم نشر الإصدار {version} من قائمة الهاتف"
-
 #: app/components/staff/schedule/publish-dialog.tsx:331
 msgid "Published quietly. Nobody was emailed."
 msgstr "نُشر بهدوء. لم يصل بريد إلى أحد."
@@ -13852,10 +13496,6 @@ msgstr "نُشر بهدوء. لم يصل بريد إلى أحد."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
 msgid "Published the call flow"
 msgstr "تم نشر مسار المكالمة"
-
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
-#~ msgid "Published the phone menu"
-#~ msgstr "تم نشر قائمة الهاتف"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:471
 msgid "Published v{publishedVersion}"
@@ -13925,7 +13565,7 @@ msgstr "السؤال {number}"
 msgid "Questions"
 msgstr "الأسئلة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:297
+#: app/components/settings/cards/organization/billing-card.tsx:308
 msgid "Questions about billing?"
 msgstr "أسئلة حول الفوترة؟"
 
@@ -13933,7 +13573,7 @@ msgstr "أسئلة حول الفوترة؟"
 msgid "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
 msgstr "الأسئلة اختيارية. سؤال قصير بنعم أو لا عن العمل في عطلة نهاية الأسبوع أو الخبرة يوفّر عليك قراءة كل طلب."
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:350
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:354
 msgid "Quick edit"
 msgstr "تعديل سريع"
 
@@ -14014,10 +13654,6 @@ msgstr "قراءة تفاصيل الصفحة"
 msgid "Ready"
 msgstr "جاهز"
 
-#: app/components/phone-agent/test-call-panel.tsx:441
-#~ msgid "Ready to call"
-#~ msgstr "جاهز للاتصال"
-
 #: app/components/staff/positions-tab.tsx:840
 #: app/components/staff/timesheets/reason-field.tsx:36
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:96
@@ -14042,7 +13678,7 @@ msgstr "يتلقى الإكراميات"
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:342
+#: app/components/settings/cards/organization/shop-card.tsx:344
 msgid "Recent orders"
 msgstr "الطلبات الأخيرة"
 
@@ -14158,7 +13794,7 @@ msgstr "تحديث"
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:161
+#: app/components/settings/cards/organization/shop-card.tsx:163
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
@@ -14232,7 +13868,7 @@ msgid "Reload"
 msgstr "إعادة التحميل"
 
 #: app/components/chat/chat-unavailable.tsx:58
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:898
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:907
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
 
@@ -14377,7 +14013,7 @@ msgstr "إزالة من مكان العمل"
 msgid "Remove image"
 msgstr "إزالة الصورة"
 
-#: app/routes/organizations+/create.tsx:1287
+#: app/routes/organizations+/create.tsx:1285
 msgid "Remove invite"
 msgstr "إزالة الدعوة"
 
@@ -14584,10 +14220,6 @@ msgstr "الرد في سلسلة الردود"
 msgid "Reply…"
 msgstr "رد…"
 
-#: app/components/note/comment-input.tsx:150
-#~ msgid "Replying to comment"
-#~ msgstr "الرد على التعليق"
-
 #: app/components/workspace-breadcrumb.tsx:77
 #: app/utils/dashboards/config.ts:107
 msgid "Report"
@@ -14733,17 +14365,9 @@ msgstr "هل تريد إعادة التعيين إلى مسار المكالمة
 msgid "Reset to the default layout?"
 msgstr "إعادة التعيين إلى التخطيط الافتراضي؟"
 
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:681
-#~ msgid "Reset to the default phone menu?"
-#~ msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف الافتراضية؟"
-
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
 msgid "Reset to the published call flow?"
 msgstr "هل تريد إعادة التعيين إلى مسار المكالمة المنشور؟"
-
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:679
-#~ msgid "Reset to the published phone menu?"
-#~ msgstr "هل تريد إعادة التعيين إلى قائمة الهاتف المنشورة؟"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:155
 msgid "Reset to the usual columns"
@@ -14796,10 +14420,6 @@ msgstr "القنوات المقيّدة مرئية فقط للأدوار وال�
 msgid "Result"
 msgstr "النتيجة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:93
-#~ msgid "Retention period"
-#~ msgstr "مدة الاحتفاظ"
-
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
 msgstr "إعادة المحاولة"
@@ -14837,15 +14457,6 @@ msgstr "راجع بطاقات الوقت لهذا الأسبوع."
 #: app/utils/staffing/alert-copy.ts:42
 msgid "Review the time cards that need a look."
 msgstr "راجع بطاقات الوقت التي تحتاج إلى نظرة."
-
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:611
-#~ msgid "Review your reply, then send it from your email app."
-#~ msgstr "راجع ردك، ثم أرسله من تطبيق البريد لديك."
-
-#: app/components/data-table.tsx:286
-#: app/components/data-table.tsx:878
-#~ msgid "Reviewers"
-#~ msgstr "المراجعون"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4311
 msgid "Reviews"
@@ -14976,10 +14587,6 @@ msgstr "سجل التشغيل"
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:366
-#~ msgid "Run ID: {0}"
-#~ msgstr "معرّف التشغيل: {0}"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:361
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
@@ -14997,21 +14604,9 @@ msgstr "قيد التشغيل"
 msgid "Runs"
 msgstr "عمليات التشغيل"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:33
-#~ msgid "Runs on website form submission"
-#~ msgstr "يُشغَّل عند إرسال نموذج الموقع"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:17
-#~ msgid "Runs when a new customer registers"
-#~ msgstr "يُشغَّل عند تسجيل عميل جديد"
-
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:46
 msgid "Runs when a new tenant organization is created"
 msgstr "يُشغَّل عند إنشاء منظمة مستأجر جديدة"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:29
-#~ msgid "Runs when a tag is applied to customer"
-#~ msgstr "يُشغَّل عند إضافة وسم للعميل"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:58
 msgid "Runs when a tenant cancels their subscription"
@@ -15168,7 +14763,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 msgid "Save"
 msgstr "حفظ"
 
-#: app/components/settings/cards/organization/billing-card.tsx:213
+#: app/components/settings/cards/organization/billing-card.tsx:223
 #: app/routes/organizations+/create.tsx:921
 msgid "Save 20%"
 msgstr "وفّر 20٪"
@@ -15193,14 +14788,14 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
 #: app/components/settings/cards/organization/announcement-sheet.tsx:523
-#: app/components/settings/cards/organization/general-settings-card.tsx:112
+#: app/components/settings/cards/organization/general-settings-card.tsx:113
 #: app/components/settings/cards/organization/site-analytics-card.tsx:140
 #: app/components/settings/cards/profile-card.tsx:192
 #: app/components/staff/details-tab.tsx:231
 #: app/components/staff/labor-policy-editor.tsx:1088
 #: app/components/staff/timesheets/card-sheet.tsx:310
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:414
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
@@ -15231,7 +14826,7 @@ msgstr "حفظ البيانات الشخصية"
 msgid "Save phrases"
 msgstr "حفظ العبارات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:313
+#: app/components/settings/cards/organization/shop-card.tsx:315
 msgid "Save product"
 msgstr "حفظ المنتج"
 
@@ -15301,11 +14896,6 @@ msgstr "تم حفظ قاعدة التدريب \"{title}\""
 #: app/components/hiring/job-editor.tsx:149
 msgid "Saved."
 msgstr "تم الحفظ."
-
-#: app/components/data-table.tsx:236
-#: app/components/data-table.tsx:267
-#~ msgid "Saving {headerValue}"
-#~ msgstr "جاري حفظ {headerValue}"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1163
 msgid "Saving as new copy…"
@@ -15424,7 +15014,7 @@ msgstr "الجدول وبطاقات الدوام"
 msgid "Schedule & time clock"
 msgstr "الجدول وساعة الدوام"
 
-#: app/components/settings/cards/organization/billing-card.tsx:283
+#: app/components/settings/cards/organization/billing-card.tsx:295
 msgid "Schedule a call"
 msgstr "حدد موعد مكالمة"
 
@@ -15553,18 +15143,13 @@ msgstr "ابحث بالاسم أو المنصب"
 msgid "Search name, email or phone"
 msgstr "ابحث بالاسم أو البريد الإلكتروني أو الهاتف"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:359
+#: app/routes/_app+/$orgSlug_+/notes.tsx:364
 msgid "Search notes"
 msgstr "البحث في الملاحظات"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:360
+#: app/routes/_app+/$orgSlug_+/notes.tsx:365
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
-
-#: app/components/app-sidebar.tsx:733
-#: app/components/command-menu.tsx:102
-#~ msgid "Search notes..."
-#~ msgstr "البحث في الملاحظات..."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:508
 msgid "Search or filter to narrow the list."
@@ -15583,10 +15168,6 @@ msgstr "البحث في الصفحات..."
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:379
 msgid "Search people"
 msgstr "البحث عن أشخاص"
-
-#: app/components/chat/chat-compose-dialog.tsx:137
-#~ msgid "Search people to add"
-#~ msgstr "ابحث عن أشخاص لإضافتهم"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2463
 msgid "Search preview"
@@ -15667,10 +15248,6 @@ msgstr "مفتاح الوصول السري"
 msgid "Section height"
 msgstr "ارتفاع القسم"
 
-#: app/components/data-table.tsx:196
-#~ msgid "Section Type"
-#~ msgstr "نوع القسم"
-
 #: app/components/staff/staff-profile-page.tsx:126
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5124
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5625
@@ -15743,10 +15320,6 @@ msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "عرض إعدادات الوكيل ومسار المكالمة والأرقام وقواعد التدريب."
 
-#: app/components/roles/tenant-role-access-manager.tsx:208
-#~ msgid "See the agent's settings, phone menu, numbers, and training rules."
-#~ msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
-
 #: app/components/roles/tenant-role-access-manager.tsx:267
 msgid "See the staff roster, profiles, and positions. Does not include pay or private details."
 msgstr "اطّلع على قائمة الموظفين وملفاتهم ومناصبهم. لا تشمل الأجور أو التفاصيل الخاصة."
@@ -15776,10 +15349,6 @@ msgstr "تحديد {name}، {primary}"
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 msgstr "اختر مكالمة لقراءة الملخص والنص، ومعاودة الاتصال بالعميل، ثم وضع علامة مكتملة عليها."
 
-#: app/components/chat/chat-view.tsx:463
-#~ msgid "Select a channel to start."
-#~ msgstr "اختر قناة للبدء."
-
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4104
 msgid "Select a form"
 msgstr "اختر نموذجًا"
@@ -15787,10 +15356,6 @@ msgstr "اختر نموذجًا"
 #: app/components/website/create-page-dialog.tsx:102
 msgid "Select a starting layout for your new page."
 msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
-
-#: app/components/data-table.tsx:852
-#~ msgid "Select a status"
-#~ msgstr "اختر حالة"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:695
 msgid "Select a submission to read the details and start a reply."
@@ -15850,10 +15415,6 @@ msgstr "اختر العامل"
 msgid "Select Organization"
 msgstr "اختر المنظمة"
 
-#: app/components/data-table.tsx:179
-#~ msgid "Select row"
-#~ msgstr "تحديد صف"
-
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:482
 msgid "Select status"
 msgstr "اختر الحالة"
@@ -15888,13 +15449,9 @@ msgstr "البطاقات المحددة"
 msgid "Selected Members"
 msgstr "الأعضاء المحددون"
 
-#: app/components/settings/cards/organization/shop-card.tsx:71
+#: app/components/settings/cards/organization/shop-card.tsx:73
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ المنصة بنسبة {SHOP_PLATFORM_FEE_PERCENT}% ويتم دفع الباقي لك."
-
-#: app/components/settings/cards/organization/shop-card.tsx:52
-#~ msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to your connected Stripe account."
-#~ msgstr "بيع منتج واحد على موقعك العام. تحتفظ المنصة بـ {SHOP_PLATFORM_FEE_PERCENT}% والباقي يُحوَّل إلى حساب Stripe المتصل."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:899
 #: app/components/my-schedule/availability-sheet.tsx:203
@@ -15935,7 +15492,7 @@ msgid "Send invitation"
 msgstr "إرسال الدعوة"
 
 #: app/components/organization-invitations.tsx:321
-#: app/routes/organizations+/create.tsx:1194
+#: app/routes/organizations+/create.tsx:1192
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
 
@@ -16118,9 +15675,9 @@ msgstr "الإعدادات"
 msgid "Setup"
 msgstr "الإعداد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:93
-#: app/components/settings/cards/organization/shop-card.tsx:99
-#: app/components/settings/cards/organization/shop-card.tsx:104
+#: app/components/settings/cards/organization/shop-card.tsx:95
+#: app/components/settings/cards/organization/shop-card.tsx:101
+#: app/components/settings/cards/organization/shop-card.tsx:106
 msgid "Setup incomplete"
 msgstr "الإعداد غير مكتمل"
 
@@ -16137,7 +15694,7 @@ msgstr "عدة أشخاص يكتبون…"
 #: app/components/note/share-note-button.tsx:167
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1015
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1024
 msgid "Share"
 msgstr "مشاركة"
 
@@ -16168,10 +15725,6 @@ msgstr "مشاركة قواعد المطعم"
 #: app/components/hiring/job-editor.tsx:873
 msgid "Share this job"
 msgstr "مشاركة هذه الوظيفة"
-
-#: app/components/organization-invitations.tsx:167
-#~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
-#~ msgstr "شارك هذا الرابط للسماح للآخرين بالانضمام إلى مؤسستك كعضو. سيرون أنك دعوتهم."
 
 #: app/components/organization-invitations.tsx:173
 msgid "Share this link to let people join your organization. They'll see you invited them."
@@ -16262,7 +15815,7 @@ msgstr "المتجر"
 msgid "Shop order reports are only available for US organizations."
 msgstr "تقارير طلبات المتجر متاحة للمؤسسات الأمريكية فقط."
 
-#: app/components/settings/cards/organization/shop-card.tsx:80
+#: app/components/settings/cards/organization/shop-card.tsx:82
 msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكية فقط. سيتم دعم الدفع في السعودية بشكل منفصل."
 
@@ -16323,16 +15876,12 @@ msgstr "إظهار لوحة المفاتيح"
 msgid "Show less"
 msgstr "عرض أقل"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:87
-#~ msgid "Show me features"
-#~ msgstr "أرني الميزات"
-
 #: app/components/chat/chat-message.tsx:110
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:504
 msgid "Show more"
 msgstr "عرض المزيد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:309
+#: app/components/settings/cards/organization/shop-card.tsx:311
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
@@ -16363,10 +15912,6 @@ msgstr "عرض {shownCount} من {total}"
 #: app/components/hiring/applicants-page.tsx:484
 msgid "Showing the newest {shown} of {total}. Search or filter to narrow the list."
 msgstr "عرض أحدث {shown} من {total}. ابحث أو صفِّ لتضييق القائمة."
-
-#: app/components/data-table.tsx:749
-#~ msgid "Showing total visitors for the last 6 months"
-#~ msgstr "عرض إجمالي الزوار لآخر 6 أشهر"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2512
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
@@ -16455,7 +16000,7 @@ msgstr "منذ {startedOn}"
 msgid "Single choice"
 msgstr "اختيار واحد"
 
-#: app/components/settings/cards/organization/billing-card.tsx:272
+#: app/components/settings/cards/organization/billing-card.tsx:282
 msgid "Single sign-on, custom SLA, private support channel, and more. <0>Learn more</0>"
 msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد. <0>اعرف المزيد</0>"
 
@@ -16464,7 +16009,7 @@ msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخص
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
-#: app/components/settings/cards/organization/shop-card.tsx:68
+#: app/components/settings/cards/organization/shop-card.tsx:70
 msgid "Site shop"
 msgstr "متجر الموقع"
 
@@ -16477,7 +16022,7 @@ msgstr "الحجم"
 msgid "Size:"
 msgstr "الحجم:"
 
-#: app/routes/organizations+/create.tsx:998
+#: app/routes/organizations+/create.tsx:996
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
@@ -16489,7 +16034,7 @@ msgstr "تخطي هذه المهمة"
 msgid "Skipped"
 msgstr "تم تخطيها"
 
-#: app/components/settings/cards/organization/general-settings-card.tsx:90
+#: app/components/settings/cards/organization/general-settings-card.tsx:91
 #: app/routes/organizations+/create.tsx:736
 msgid "Slug"
 msgstr "الرابط الثابت"
@@ -16760,7 +16305,7 @@ msgstr "دور نظام قياسي."
 msgid "Standing application"
 msgstr "طلب توظيف دائم"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1011
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
 msgid "Star"
 msgstr "تمييز بنجمة"
 
@@ -16772,14 +16317,6 @@ msgstr "بدء"
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "ابدأ مكالمة لترى ما تقوله أنت والوكيل في الوقت الفعلي."
 
-#: app/components/chat/chat-view.tsx:372
-#~ msgid "Start a conversation with someone on your team."
-#~ msgstr "ابدأ محادثة مع شخص في فريقك."
-
-#: app/components/phone-agent/test-call-panel.tsx:646
-#~ msgid "Start another call"
-#~ msgstr "بدء مكالمة أخرى"
-
 #: app/components/staff/onboarding/templates-page.tsx:174
 #: app/components/staff/schedule/schedule-page.tsx:463
 msgid "Start blank"
@@ -16790,10 +16327,6 @@ msgstr "ابدأ فارغًا"
 #: app/components/kiosk/kiosk-screens.tsx:593
 msgid "Start break"
 msgstr "بدء الاستراحة"
-
-#: app/components/phone-agent/test-call-panel.tsx:648
-#~ msgid "Start call"
-#~ msgstr "بدء المكالمة"
 
 #: app/components/chat/chat-compose-dialog.tsx:424
 msgid "Start conversation"
@@ -16846,10 +16379,6 @@ msgstr "ابدأ المحادثة بإضافة التعليق الأول."
 #: app/components/hiring/hire-dialog.tsx:288
 msgid "Start the new-hire checklist"
 msgstr "بدء قائمة مهام الموظف الجديد"
-
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:166
-#~ msgid "Start with a practical field set that is ready to publish."
-#~ msgstr "ابدأ بمجموعة حقول عملية جاهزة للنشر."
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:172
 msgid "Start with a template"
@@ -16924,10 +16453,6 @@ msgstr "تم البقاء في الصفحة الحالية"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:391
-#~ msgid "Step Executions ({0})"
-#~ msgstr "تنفيذات الخطوات ({0})"
-
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:386
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
@@ -16956,10 +16481,6 @@ msgstr "إيقاف التوليد"
 #: app/components/impersonation-banner.tsx:65
 msgid "Stop impersonation"
 msgstr "إيقاف انتحال الشخصية"
-
-#: app/components/impersonation-banner.tsx:60
-#~ msgid "Stop Impersonation"
-#~ msgstr "إيقاف انتحال الشخصية"
 
 #: app/components/phone-agent/voice-picker.tsx:180
 msgid "Stop preview"
@@ -17032,7 +16553,7 @@ msgstr "إرسال"
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
-#: app/components/settings/cards/organization/billing-card.tsx:178
+#: app/components/settings/cards/organization/billing-card.tsx:189
 msgid "Subscribe"
 msgstr "اشتراك"
 
@@ -17040,7 +16561,7 @@ msgstr "اشتراك"
 msgid "Subscription Cancelled"
 msgstr "تم إلغاء الاشتراك"
 
-#: app/components/settings/cards/organization/billing-card.tsx:152
+#: app/components/settings/cards/organization/billing-card.tsx:162
 msgid "Subscription inactive"
 msgstr "الاشتراك غير نشط"
 
@@ -17061,10 +16582,6 @@ msgstr "رسالة النجاح"
 #: ../../packages/ai/src/components/ai-chat.tsx:407
 msgid "Suggest improvements"
 msgstr "اقتراح تحسينات"
-
-#: ../../packages/ai/src/components/ai-chat.tsx:246
-#~ msgid "Suggested questions"
-#~ msgstr "أسئلة مقترحة"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:405
 msgid "Summarize this note"
@@ -17123,13 +16640,9 @@ msgstr "التبديل غير متاح في مكان العمل هذا. اسأل
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:192
+#: app/components/settings/cards/organization/shop-card.tsx:194
 msgid "Sync hosted product"
 msgstr "مزامنة المنتج المستضاف"
-
-#: app/components/settings/cards/organization/site-theme-card.tsx:345
-#~ msgid "System"
-#~ msgstr "النظام"
 
 #: app/components/nav-user.tsx:91
 msgid "System theme"
@@ -17165,11 +16678,6 @@ msgstr "الأجهزة اللوحية"
 #: app/components/staff/labor-core-rules.tsx:264
 msgid "Tablets accept clock-ins"
 msgstr "الأجهزة اللوحية تقبل تسجيل الحضور"
-
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:28
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:49
-#~ msgid "Tag Added"
-#~ msgstr "تمت إضافة وسم"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:470
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:471
@@ -17208,12 +16716,6 @@ msgstr "يتحدث مع العملاء"
 msgid "Tall"
 msgstr "طويل"
 
-#: app/components/data-table.tsx:226
-#: app/components/data-table.tsx:243
-#: app/components/data-table.tsx:865
-#~ msgid "Target"
-#~ msgstr "الهدف"
-
 #: app/components/staff/labor/labor-overview.tsx:412
 msgid "Target {target}"
 msgstr "الهدف {target}"
@@ -17221,10 +16723,6 @@ msgstr "الهدف {target}"
 #: app/components/staff/labor/labor-overview.tsx:414
 msgid "Target {target}, not applied"
 msgstr "الهدف {target}، غير مطبَّق"
-
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:154
-#~ msgid "Target Tag Name"
-#~ msgstr "اسم الوسم المستهدف"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Target Value"
@@ -17281,10 +16779,6 @@ msgstr "قناة الفريق"
 msgid "Team chat"
 msgstr "دردشة الفريق"
 
-#: app/routes/_app+/$orgSlug_+/chat.tsx:220
-#~ msgid "Team chat isn't available here"
-#~ msgstr "دردشة الفريق غير متاحة هنا"
-
 #: app/components/chat/chat-unavailable.tsx:28
 msgid "Team chat isn't running in this environment"
 msgstr "دردشة الفريق غير متاحة في هذه البيئة"
@@ -17331,7 +16825,7 @@ msgstr "أخبرني المزيد"
 msgid "Tell us about your organization..."
 msgstr "أخبرنا عن منظمتك..."
 
-#: app/routes/organizations+/create.tsx:1022
+#: app/routes/organizations+/create.tsx:1020
 msgid "Tell us more about your organization"
 msgstr "أخبرنا المزيد عن منظمتك"
 
@@ -17351,10 +16845,6 @@ msgstr "أخبر فريقك"
 msgid "Tells them the position has been filled."
 msgstr "تخبرهم بأن الوظيفة قد شُغلت."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:191
-#~ msgid "Template"
-#~ msgstr "القالب"
-
 #: app/components/staff/onboarding/template-editor.tsx:101
 #: app/components/staff/schedule/templates-dialog.tsx:280
 msgid "Template name"
@@ -17372,10 +16862,6 @@ msgstr "تم حفظ القالب."
 #: app/components/staff/schedule/templates-dialog.tsx:80
 msgid "Templates"
 msgstr "القوالب"
-
-#: app/components/staff/onboarding/templates-page.tsx:233
-#~ msgid "Templates apply to every scope, so changing them needs permission to update hiring and access to all scopes."
-#~ msgstr "تنطبق القوالب على جميع أماكن العمل، لذا يتطلب تغييرها إذن تحديث التوظيف وصلاحية الوصول إلى جميع أماكن العمل."
 
 #: app/utils/staffing/onboarding-errors.ts:15
 msgid "Templates apply to every workplace, so changing one needs access to every workplace."
@@ -17456,10 +16942,6 @@ msgstr "وضع الاختبار — لا يتم حفظ الردود"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
 msgid "Test run"
 msgstr "تشغيل اختباري"
-
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:203
-#~ msgid "Test run triggered successfully (Run ID: {0})"
-#~ msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {0})"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:279
 msgid "Test run triggered successfully (Run ID: {runId})"
@@ -18188,10 +17670,6 @@ msgid "Their main position at this workplace"
 msgstr "منصبه الرئيسي في مكان العمل هذا"
 
 #: app/components/staff/positions-tab.tsx:277
-#~ msgid "Their PIN for this scope stops working and their positions here end today. Their history stays."
-#~ msgstr "يتوقف رمزهم السري لمكان العمل هذا وتنتهي مناصبهم هنا اليوم. يبقى سجلهم محفوظًا."
-
-#: app/components/staff/positions-tab.tsx:277
 msgid "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 msgstr "يتوقف رمزهم السري لمكان العمل هذا وتنتهي مناصبهم هنا اليوم. يبقى سجلهم محفوظًا."
 
@@ -18305,10 +17783,6 @@ msgid "They are on the roster."
 msgstr "تمت إضافتهم إلى قائمة الفريق."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
-#~ msgid "They become active again. Their scopes, positions and PINs are not restored, so add them again from their profile."
-#~ msgstr "يصبحون نشطين من جديد. لا تُستعاد أماكن عملهم ومناصبهم ورموزهم السرية، لذا أضفها من جديد من ملفهم."
-
-#: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:89
 msgid "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
 msgstr "يصبحون نشطين من جديد. لا تُستعاد أماكن عملهم ومناصبهم ورموزهم السرية، لذا أضفها من جديد من ملفهم."
 
@@ -18377,10 +17851,6 @@ msgid "They were marked not eligible for rehire. I want to rehire them anyway."
 msgstr "تم تحديدهم كغير مؤهلين لإعادة التوظيف. أريد إعادة توظيفهم رغم ذلك."
 
 #: app/components/staff/access-tab.tsx:240
-#~ msgid "They will not be able to clock in at this scope until you create a new PIN."
-#~ msgstr "لن يتمكنوا من تسجيل الحضور في مكان العمل هذا حتى تنشئ رمزًا سريًا جديدًا."
-
-#: app/components/staff/access-tab.tsx:240
 msgid "They will not be able to clock in at this workplace until you create a new PIN."
 msgstr "لن يتمكنوا من تسجيل الحضور في مكان العمل هذا حتى تنشئ رمزًا سريًا جديدًا."
 
@@ -18404,7 +17874,7 @@ msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت م�
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1076
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1085
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الملاحظة وتعليقاتها نهائياً."
 
@@ -18524,7 +17994,7 @@ msgstr "هذا الجهاز"
 msgid "This draft shift is deleted straight away."
 msgstr "تُحذف مسودة الوردية هذه فورًا."
 
-#: app/routes/organizations+/create.tsx:1025
+#: app/routes/organizations+/create.tsx:1023
 msgid "This helps us customize your experience and provide better insights."
 msgstr "يساعدنا هذا في تخصيص تجربتك وتقديم رؤى أفضل."
 
@@ -18672,14 +18142,6 @@ msgstr "يشغل هذا الشخص عدة مناصب هنا. اختر المنص
 msgid "This person is not set up for that position here. You can still schedule them."
 msgstr "هذا الشخص غير مهيأ لهذا المنصب هنا. ما زال بإمكانك جدولته."
 
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:432
-#~ msgid "This phone menu can't be saved yet"
-#~ msgstr "لا يمكن حفظ قائمة الهاتف هذه بعد"
-
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:545
-#~ msgid "This phone menu is ready to publish."
-#~ msgstr "قائمة الهاتف هذه جاهزة للنشر."
-
 #: app/utils/kiosk/kiosk-messages.ts:48
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "هذا الرقم السري متوقف مؤقتًا لبضع دقائق. اسأل مديرًا."
@@ -18737,10 +18199,6 @@ msgstr "عدد أعمدة هذا الصف يختلف عن عدد أعمدة ال
 #: app/utils/my-schedule/my-schedule-messages.ts:70
 msgid "This schedule is no longer available"
 msgstr "هذا الجدول لم يعد متاحًا"
-
-#: app/components/staff/labor-policy-editor.tsx:959
-#~ msgid "This scope follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
-#~ msgstr "يتبع مكان العمل هذا القواعد الافتراضية. الحفظ يمنحه نسخته الخاصة، لذا لن تصله التغييرات اللاحقة على القواعد الافتراضية."
 
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
@@ -19172,7 +18630,7 @@ msgstr "الإجمالي"
 msgid "Total {totalText} of 100"
 msgstr "المجموع {totalText} من 100"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:197
+#: app/routes/_app+/$orgSlug_+/index.tsx:205
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
@@ -19194,10 +18652,6 @@ msgstr "التدريب"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "قواعد التدريب"
-
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:244
-#~ msgid "Training rules ({activeRuleCount} active)"
-#~ msgstr "قواعد التدريب ({activeRuleCount} مفعّلة)"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:372
 msgid "Training rules teach the agent your answers. <0>{activeRuleCount}</0> active."
@@ -19296,7 +18750,7 @@ msgstr "ترجمة الكل"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:219
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -19308,7 +18762,7 @@ msgstr "الاتجاه"
 msgid "Trending up by {trend}% this period"
 msgstr "ارتفع بنسبة {trend}٪ في هذه الفترة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:150
+#: app/components/settings/cards/organization/billing-card.tsx:160
 msgid "Trial period active"
 msgstr "فترة تجريبية نشطة"
 
@@ -19550,7 +19004,7 @@ msgstr "تعذّر تحميل المكالمات. حاول مرة أخرى."
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
-#: app/components/settings/cards/organization/billing-card.tsx:251
+#: app/components/settings/cards/organization/billing-card.tsx:261
 msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
 
@@ -19614,7 +19068,7 @@ msgstr "غير معروف"
 msgid "Unknown caller"
 msgstr "متصل غير معروف"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:442
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
@@ -19647,10 +19101,6 @@ msgstr "فتح قفل هذه البطاقة؟"
 #: app/components/staff/timesheets/card-history.tsx:53
 msgid "Unlocked"
 msgstr "فُتح قفلها"
-
-#: app/components/phone-agent/test-call-panel.tsx:631
-#~ msgid "Unmute"
-#~ msgstr "إلغاء الكتم"
 
 #: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Unmute microphone"
@@ -19707,7 +19157,7 @@ msgid "Unscheduled"
 msgstr "غير مجدولة"
 
 #: app/components/favorite-notes.tsx:142
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1011
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
@@ -19724,7 +19174,7 @@ msgstr "حتى"
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:695
 msgid "Untitled Note"
 msgstr "ملاحظة بدون عنوان"
 
@@ -19795,7 +19245,7 @@ msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 msgid "Updated"
 msgstr "تم التحديث"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:694
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:700
 msgid "Updated {timeAgo} ago"
 msgstr "تم التحديث منذ {timeAgo}"
 
@@ -19816,7 +19266,7 @@ msgid "Updating section"
 msgstr "تحديث القسم"
 
 #: app/components/app-sidebar.tsx:98
-#: app/components/settings/cards/organization/billing-card.tsx:460
+#: app/components/settings/cards/organization/billing-card.tsx:473
 msgid "Upgrade"
 msgstr "ترقية"
 
@@ -19923,10 +19373,6 @@ msgstr "استخدم {count} أو أكثر."
 #: app/components/dashboard/dashboard-name-dialog.tsx:47
 msgid "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
 msgstr "استخدم {DASHBOARD_NAME_MAX_LENGTH} حرفًا أو أقل."
-
-#: app/components/note/comment-input.tsx:152
-#~ msgid "Use @ to mention someone • Cmd+Enter to submit"
-#~ msgstr "استخدم @ للإشارة إلى شخص • Cmd+Enter للإرسال"
 
 #: app/utils/staffing/timesheet-form.ts:266
 msgid "Use 1000 characters or fewer."
@@ -20035,10 +19481,6 @@ msgstr "استخدام المحدد"
 msgid "Use the country code, like +14155550123."
 msgstr "استخدم رمز الدولة، مثل ‎+14155550123."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:234
-#~ msgid "Use the switch in Agent settings below."
-#~ msgstr "استخدم المفتاح في إعدادات الوكيل أدناه."
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:265
 msgid "Use the switch in Agent settings."
 msgstr "استخدم المفتاح في إعدادات الوكيل."
@@ -20083,7 +19525,7 @@ msgstr "يُستخدم عند توظيف شخص من المتقدمين. يمك�
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:145
+#: app/routes/_app+/$orgSlug_+/index.tsx:155
 msgid "User"
 msgstr "مستخدم"
 
@@ -20176,7 +19618,7 @@ msgstr "صورة مصغرة للفيديو"
 
 #: app/components/dashboard/access-labels.ts:19
 #: app/components/roles/tenant-role-access-manager.tsx:1087
-#: app/components/settings/cards/organization/invoices-card.tsx:137
+#: app/components/settings/cards/organization/invoices-card.tsx:152
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
 msgstr "عرض"
@@ -20185,7 +19627,7 @@ msgstr "عرض"
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/settings/cards/organization/invoices-card.tsx:82
+#: app/components/settings/cards/organization/invoices-card.tsx:86
 msgid "View and download your billing invoices"
 msgstr "عرض وتنزيل فواتير الدفع الخاصة بك"
 
@@ -20261,10 +19703,6 @@ msgstr "عرض وكيل الهاتف"
 #: app/components/roles/tenant-role-access-manager.tsx:289
 msgid "View private details"
 msgstr "عرض التفاصيل الخاصة"
-
-#: app/routes/_app+/$orgSlug_+/website+/forms.tsx:240
-#~ msgid "View responses"
-#~ msgstr "عرض الردود"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:396
 msgid "View run history"
@@ -20358,7 +19796,7 @@ msgstr "تم حفظ البريد الصوتي"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:220
+#: app/routes/_app+/$orgSlug_+/index.tsx:228
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -20410,17 +19848,9 @@ msgstr "بانتظار القرار"
 msgid "Waiting for a manager"
 msgstr "بانتظار المدير"
 
-#: app/components/phone-agent/test-call-panel.tsx:426
-#~ msgid "Waiting for microphone permission…"
-#~ msgstr "في انتظار إذن الميكروفون…"
-
 #: app/components/staff/kiosk-manager.tsx:787
 msgid "Waiting for the tablet…"
 msgstr "بانتظار الجهاز اللوحي…"
-
-#: app/components/phone-agent/test-call-panel.tsx:431
-#~ msgid "Waiting for your agent to join…"
-#~ msgstr "في انتظار انضمام الوكيل…"
 
 #: app/components/staff/kiosk-manager.tsx:167
 msgid "Waiting to be paired"
@@ -20575,6 +20005,10 @@ msgstr "تعذّر العثور على المنطقة الزمنية لمكان 
 msgid "We could not load availability. Try again."
 msgstr "تعذّر تحميل التوفر. حاول مرة أخرى."
 
+#: app/components/settings/cards/organization/billing-card.tsx:117
+msgid "We could not load plan pricing right now. You can still manage an existing subscription from the customer portal."
+msgstr "تعذر تحميل أسعار الخطط حاليًا. لا يزال بإمكانك إدارة اشتراك حالي من بوابة العملاء."
+
 #: app/components/staff/schedule/month-view.tsx:113
 msgid "We could not load the month. Try again."
 msgstr "تعذّر تحميل الشهر. حاول مرة أخرى."
@@ -20614,10 +20048,6 @@ msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخر�
 #: app/components/staff/pin-panel.tsx:55
 msgid "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
 msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لاحقًا. سلّمه لهم الآن ثم اضغط تم."
-
-#: app/components/staff/labor-policy-editor.tsx:1449
-#~ msgid "We do not pick this for you. Until you choose, overtime is estimated at each scope separately."
-#~ msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
 
 #: app/components/staff/labor-policy-editor.tsx:1449
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
@@ -20679,10 +20109,6 @@ msgstr "الموقع الإلكتروني"
 msgid "Website & Publishing"
 msgstr "الموقع والنشر"
 
-#: app/components/roles/tenant-role-access-manager.tsx:147
-#~ msgid "Website editor and public pages."
-#~ msgstr "محرر الموقع والصفحات العامة."
-
 #: app/components/roles/tenant-role-access-manager.tsx:154
 msgid "Website editor, announcements, and public pages."
 msgstr "محرر الموقع والإعلانات والصفحات العامة."
@@ -20730,10 +20156,6 @@ msgstr "أسابيع"
 #: app/routes/_auth+/onboarding.tsx:356
 msgid "Welcome"
 msgstr "مرحباً"
-
-#: app/routes/_app+/$orgSlug_+/index.tsx:161
-#~ msgid "Welcome {userName}!"
-#~ msgstr "مرحباً {userName}!"
 
 #: app/routes/_auth+/onboarding.tsx:412
 msgid "Welcome aboard!"
@@ -20907,10 +20329,6 @@ msgstr "عند المطالبة، وافق على الاتصال في متصفح
 #: app/components/hiring/applicants-page.tsx:422
 msgid "When someone applies on your careers page, they show up here and you get a notification. Share a job to get started."
 msgstr "عندما يتقدّم شخص عبر صفحة الوظائف لديك، سيظهر هنا وستصلك إشعار. شارك وظيفة لتبدأ."
-
-#: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
-#~ msgid "When someone does <0>{0}</0>"
-#~ msgstr "عندما يقوم شخص بـ <0>{0}</0>"
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:75
 msgid "When someone signs up using an email that matches your verified domain, they will be automatically added to your organization as a member."
@@ -21185,10 +20603,6 @@ msgstr "اكتب رسالة…"
 msgid "Write a policy. You record when they have read and accepted it."
 msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقوا عليها."
 
-#: app/components/note/comment-item.tsx:267
-#~ msgid "Write a reply..."
-#~ msgstr "اكتب رداً..."
-
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
@@ -21228,10 +20642,6 @@ msgstr "اكتب ردك…"
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:127
-#~ msgid "Write your text message. Max 160 characters."
-#~ msgstr "اكتب رسالتك النصية. بحد أقصى 160 حرفاً."
-
 #: app/components/hiring/localized-fields.tsx:35
 msgid "Writing the {language} version. Anything you leave blank is shown in {fallback}."
 msgstr "أنت تكتب نسخة {language}. أي حقل تتركه فارغًا يظهر بـ {fallback}."
@@ -21248,7 +20658,7 @@ msgstr "تم إدخال وقت خاطئ"
 msgid "year"
 msgstr "سنة"
 
-#: app/components/settings/cards/organization/billing-card.tsx:211
+#: app/components/settings/cards/organization/billing-card.tsx:221
 #: app/routes/organizations+/create.tsx:919
 msgid "Yearly"
 msgstr "سنوي"
@@ -21315,13 +20725,9 @@ msgstr "أنت مسجّل حضورك."
 msgid "You are clocked out."
 msgstr "أنت مسجّل انصرافك."
 
-#: app/components/settings/cards/organization/billing-card.tsx:100
+#: app/components/settings/cards/organization/billing-card.tsx:102
 msgid "You are covered during our beta phase. No billing required at this time."
 msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا توجد فوترة مطلوبة في الوقت الحالي."
-
-#: app/components/impersonation-banner.tsx:36
-#~ msgid "You are impersonating <0>{targetName}</0>"
-#~ msgstr "أنت تنتحل شخصية <0>{targetName}</0>"
 
 #: app/utils/kiosk/kiosk-messages.ts:64
 msgid "You are not clocked in."
@@ -21351,7 +20757,7 @@ msgstr "يمكنك إلغاء هذا الطلب قبل التاريخ المحد
 msgid "You can change your photo later"
 msgstr "يمكنك تغيير صورتك لاحقاً"
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:299
+#: app/routes/_app+/$orgSlug_+/notes.tsx:304
 msgid "You can create notes for your organization here."
 msgstr "يمكنك إنشاء ملاحظات لمنظمتك هنا."
 
@@ -21387,10 +20793,6 @@ msgstr "يمكنك عرض هذه الإعدادات دون تغييرها."
 msgid "You can view this call flow, but you don't have permission to change it."
 msgstr "يمكنك عرض مسار المكالمة هذا، لكن ليست لديك صلاحية لتغييره."
 
-#: app/components/phone-agent/flow-editor/node-palette.tsx:86
-#~ msgid "You can view this phone menu, but you don't have permission to change it."
-#~ msgstr "يمكنك عرض قائمة الهاتف هذه، لكن ليست لديك صلاحية لتغييرها."
-
 #: app/components/kiosk/kiosk-screens.tsx:415
 msgid "You cannot clock in or out on this tablet right now. Ask a manager."
 msgstr "لا يمكنك تسجيل الحضور أو الانصراف على هذا الجهاز الآن. اسأل مديرًا."
@@ -21412,7 +20814,7 @@ msgstr "لا تملك صلاحية الوصول إلى مكان العمل ذل�
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1175
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1184
 msgid "You do not have permission to view this note"
 msgstr "ليس لديك إذن لعرض هذه الملاحظة"
 
@@ -21448,10 +20850,6 @@ msgstr "وصلت إلى الحد الأقصى من القوالب. أرشِف ق
 msgid "You have unsaved changes to the call flow. Leave without saving?"
 msgstr "لديك تغييرات غير محفوظة على مسار المكالمة. هل تريد المغادرة دون حفظ؟"
 
-#: app/components/phone-agent/flow-editor/flow-canvas.tsx:215
-#~ msgid "You have unsaved changes to the phone menu. Leave without saving?"
-#~ msgstr "لديك تغييرات غير محفوظة على قائمة الهاتف. هل تريد المغادرة دون حفظ؟"
-
 #: app/components/staff/labor-policy-editor.tsx:1065
 msgid "You have unsaved changes."
 msgstr "لديك تغييرات غير محفوظة."
@@ -21464,7 +20862,7 @@ msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة 
 msgid "You have used the drafting tool a lot. Try again in an hour."
 msgstr "استخدمت أداة الكتابة كثيرًا. حاول مجددًا بعد ساعة."
 
-#: app/routes/_app+/$orgSlug_+/notes.tsx:404
+#: app/routes/_app+/$orgSlug_+/notes.tsx:409
 msgid "You haven't created any notes yet!"
 msgstr "لم تقم بإنشاء أي ملاحظات بعد!"
 
@@ -21487,7 +20885,7 @@ msgstr "تحتاج إلى صلاحية الأجور لتغيير الإكرام�
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
 
-#: app/components/settings/cards/organization/shop-card.tsx:384
+#: app/components/settings/cards/organization/shop-card.tsx:394
 msgid "You receive"
 msgstr "تستلم"
 
@@ -21506,10 +20904,6 @@ msgstr "تم تسجيل الدخول! جاري التوجيه..."
 #: app/components/phone-agent/test-call-phone.tsx:228
 msgid "You're muted"
 msgstr "الميكروفون مكتوم"
-
-#: app/components/phone-agent/test-call-panel.tsx:563
-#~ msgid "You're muted."
-#~ msgstr "صوتك مكتوم."
 
 #: app/routes/_auth+/waitlist.tsx:255
 msgid "You're on the Waitlist!"
@@ -21563,7 +20957,7 @@ msgstr "خط نشاطك التجاري"
 msgid "Your changes to this job will be lost."
 msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:319
+#: app/components/settings/cards/organization/shop-card.tsx:321
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
 
@@ -21571,7 +20965,7 @@ msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك
 msgid "Your dashboard changes could not be saved."
 msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 
-#: app/routes/organizations+/create.tsx:1080
+#: app/routes/organizations+/create.tsx:1078
 msgid "Your department"
 msgstr "قسمك"
 
@@ -21619,11 +21013,7 @@ msgstr "ورديّاتك القادمة"
 msgid "Your note: {text}"
 msgstr "ملاحظتك: {text}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:162
-#~ msgid "Your organization dashboard"
-#~ msgstr "لوحة تحكم مؤسستك"
-
-#: app/components/settings/cards/organization/billing-card.tsx:120
+#: app/components/settings/cards/organization/billing-card.tsx:130
 msgid "Your organization's current plan and billing status"
 msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 
