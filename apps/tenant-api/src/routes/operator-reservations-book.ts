@@ -3,7 +3,12 @@ import { getTenantDb, rsvReservations } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
-import { badRequest, handleRouteError, json } from '../lib/http.ts'
+import {
+	badRequest,
+	ECHOING_CODES,
+	handleRouteError,
+	json,
+} from '../lib/http.ts'
 import {
 	hasReservationsGrant,
 	requireReservationsLocation,
@@ -28,11 +33,13 @@ import {
 	updateReservationRunningLate,
 } from '../services/rsv-booking-service.js'
 import {
+	getBookConflicts,
 	getDayChanges,
 	getDayFeed,
 	getMonthCalendarSummary,
 	getOperatorAvailability,
 	getPreServiceOverview,
+	getReservationEvents,
 	getSectionAssignments,
 	getServiceNotes,
 	matchesDayFeedEtag,
@@ -111,7 +118,9 @@ async function parseBody<T extends z.ZodTypeAny>(
 					issues: parsed.error.issues.map((issue) => ({
 						path: issue.path.join('.'),
 						code: issue.code,
-						message: issue.message,
+						...(ECHOING_CODES.has(issue.code)
+							? {}
+							: { message: issue.message }),
 					})),
 				},
 				400,
@@ -139,7 +148,9 @@ function parseQuery<T extends z.ZodTypeAny>(
 					issues: parsed.error.issues.map((issue) => ({
 						path: issue.path.join('.'),
 						code: issue.code,
-						message: issue.message,
+						...(ECHOING_CODES.has(issue.code)
+							? {}
+							: { message: issue.message }),
 					})),
 				},
 				400,
@@ -267,6 +278,55 @@ operatorReservationsBookRoutes.get(
 				sinceVersion,
 			)
 			return json({ ok: true, orgId: ctx.orgId, ...changes })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const conflictsQuerySchema = z.object({
+	locationId: z.string().trim().min(1).max(128),
+	date: z.string().regex(DATE_RE).optional(),
+	businessDate: z.string().regex(DATE_RE).optional(),
+})
+
+operatorReservationsBookRoutes.get(
+	'/conflicts',
+	rsvGuard({
+		scope: 'book',
+		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const q = parseQuery(c, conflictsQuerySchema)
+		if ('error' in q) return q.error
+
+		const locCheck = resolveLocation(ctx, q.data.locationId)
+		if (!locCheck.ok) return locCheck.response
+
+		const businessDate =
+			q.data.date ??
+			q.data.businessDate ??
+			new Date().toISOString().slice(0, 10)
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const canReadGuestSensitive = hasReservationsGrant(
+				ctx,
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+			)
+			const conflicts = await getBookConflicts(
+				db,
+				locCheck.locationId,
+				businessDate,
+				{
+					canReadGuestSensitive,
+				},
+			)
+			return json({ ok: true, orgId: ctx.orgId, ...conflicts })
 		} catch (error) {
 			return handleRouteError(error)
 		}
@@ -667,6 +727,7 @@ async function handlePutSectionAssignments(c: Context) {
 			locationId: locCheck.locationId,
 			businessDate,
 			serviceId,
+			actorId: ctx.userId,
 			assignments: items.map((item) => ({
 				sectionId: (item.sectionId ?? item.layoutId)!,
 				staffId: item.staffId ?? null,
@@ -793,8 +854,13 @@ const createBookingBodySchema = z.object({
 	areaPrefStrict: z.boolean().optional(),
 	tableIds: z.array(z.string().trim().min(1)).optional(),
 	comboId: z.string().trim().max(128).optional().nullable(),
+	lock: z.boolean().optional(),
+	locked: z.boolean().optional(),
+	tableLocked: z.boolean().optional(),
 	lockTable: z.boolean().optional(),
 	assignment: z.enum(['soft', 'locked']).optional(),
+	skipPayment: z.boolean().optional(),
+	paymentPolicyMode: z.string().trim().max(40).optional().nullable(),
 	guestId: z.string().trim().min(1).max(128).optional(),
 	guest: guestInlineSchema.optional(),
 	firstName: z.string().trim().min(1).max(120).optional(),
@@ -996,6 +1062,35 @@ operatorReservationsBookRoutes.get(
 	},
 )
 
+operatorReservationsBookRoutes.get(
+	'/reservations/:id/events',
+	rsvGuard({
+		scope: 'book',
+		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const rsvId = c.req.param('id')
+		const locCheck = await resolveReservationLocation(
+			ctx,
+			rsvId,
+			c.req.query('locationId'),
+		)
+		if (!locCheck.ok) return locCheck.response
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const res = await getReservationEvents(db, rsvId)
+			return json({ ok: true, orgId: ctx.orgId, ...res })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
 const patchReservationSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
 	expectedVersion: z.number().int().min(1).optional(),
@@ -1011,8 +1106,12 @@ const patchReservationSchema = z.object({
 	areaPrefStrict: z.boolean().optional(),
 	tableIds: z.array(z.string().trim().min(1)).optional(),
 	comboId: z.string().trim().max(128).optional().nullable(),
+	lock: z.boolean().optional(),
+	locked: z.boolean().optional(),
 	lockTable: z.boolean().optional(),
+	unlock: z.boolean().optional(),
 	assignment: z.enum(['soft', 'locked']).optional(),
+	reflowLaterParties: z.boolean().optional(),
 	occasionTagId: z.string().trim().max(128).optional().nullable(),
 	occasion: z.string().trim().max(128).optional().nullable(),
 	dietaryNotes: z.string().max(1000).optional().nullable(),
@@ -1125,7 +1224,12 @@ const statusTransitionSchema = z.object({
 	expectedVersion: z.number().int().min(1).optional(),
 	tableIds: z.array(z.string().trim().min(1)).optional(),
 	comboId: z.string().trim().max(128).optional().nullable(),
+	covers: z.number().int().min(1).max(99).optional().nullable(),
 	coversActual: z.number().int().min(1).max(99).optional().nullable(),
+	seatedCovers: z.number().int().min(1).max(99).optional().nullable(),
+	seatedPartySize: z.number().int().min(1).max(99).optional().nullable(),
+	arrivedCovers: z.number().int().min(1).max(99).optional().nullable(),
+	arrivedPartySize: z.number().int().min(1).max(99).optional().nullable(),
 	cancelReason: z.string().max(500).optional().nullable(),
 	reason: z.string().max(500).optional().nullable(),
 	overbook: z.boolean().optional(),
@@ -1221,6 +1325,39 @@ const contactStatusSchema = z.object({
 	expectedVersion: z.number().int().min(1).optional(),
 })
 
+async function handleUpdateContactStatus(c: Context) {
+	const ctx = getRsvAuth(c)
+	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+	if (orgErr) return orgErr
+
+	const parsed = await parseBody(c, contactStatusSchema)
+	if ('error' in parsed) return parsed.error
+
+	const rsvId = c.req.param('id')!
+	const locCheck = await resolveReservationLocation(
+		ctx,
+		rsvId,
+		parsed.data.locationId ?? c.req.query('locationId'),
+	)
+	if (!locCheck.ok) return locCheck.response
+
+	try {
+		const result = await updateReservationContactStatus({
+			orgId: ctx.orgId,
+			reservationId: rsvId,
+			actorId: ctx.userId,
+			input: {
+				...parsed.data,
+				contactStatus:
+					parsed.data.contactStatus ?? parsed.data.status ?? 'none',
+			},
+		})
+		return json({ ok: true, orgId: ctx.orgId, ...result })
+	} catch (error) {
+		return handleRouteError(error)
+	}
+}
+
 operatorReservationsBookRoutes.post(
 	'/reservations/:id/contact',
 	rsvGuard({
@@ -1228,38 +1365,17 @@ operatorReservationsBookRoutes.post(
 		write: true,
 		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
 	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
+	handleUpdateContactStatus,
+)
 
-		const parsed = await parseBody(c, contactStatusSchema)
-		if ('error' in parsed) return parsed.error
-
-		const rsvId = c.req.param('id')
-		const locCheck = await resolveReservationLocation(
-			ctx,
-			rsvId,
-			parsed.data.locationId ?? c.req.query('locationId'),
-		)
-		if (!locCheck.ok) return locCheck.response
-
-		try {
-			const result = await updateReservationContactStatus({
-				orgId: ctx.orgId,
-				reservationId: rsvId,
-				actorId: ctx.userId,
-				input: {
-					...parsed.data,
-					contactStatus:
-						parsed.data.contactStatus ?? parsed.data.status ?? 'none',
-				},
-			})
-			return json({ ok: true, orgId: ctx.orgId, ...result })
-		} catch (error) {
-			return handleRouteError(error)
-		}
-	},
+operatorReservationsBookRoutes.post(
+	'/reservations/:id/contact-status',
+	rsvGuard({
+		scope: 'book',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+	}),
+	handleUpdateContactStatus,
 )
 
 const runningLateSchema = z.object({
@@ -1316,6 +1432,38 @@ const courseStatusSchema = z.object({
 	expectedVersion: z.number().int().min(1).optional(),
 })
 
+async function handleUpdateCourseStatus(c: Context) {
+	const ctx = getRsvAuth(c)
+	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+	if (orgErr) return orgErr
+
+	const parsed = await parseBody(c, courseStatusSchema)
+	if ('error' in parsed) return parsed.error
+
+	const rsvId = c.req.param('id')!
+	const locCheck = await resolveReservationLocation(
+		ctx,
+		rsvId,
+		parsed.data.locationId ?? c.req.query('locationId'),
+	)
+	if (!locCheck.ok) return locCheck.response
+
+	try {
+		const result = await updateReservationCourseStatus({
+			orgId: ctx.orgId,
+			reservationId: rsvId,
+			actorId: ctx.userId,
+			input: {
+				...parsed.data,
+				courseStatus: parsed.data.courseStatus ?? parsed.data.course ?? null,
+			},
+		})
+		return json({ ok: true, orgId: ctx.orgId, ...result })
+	} catch (error) {
+		return handleRouteError(error)
+	}
+}
+
 operatorReservationsBookRoutes.post(
 	'/reservations/:id/course',
 	rsvGuard({
@@ -1323,37 +1471,17 @@ operatorReservationsBookRoutes.post(
 		write: true,
 		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
 	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
+	handleUpdateCourseStatus,
+)
 
-		const parsed = await parseBody(c, courseStatusSchema)
-		if ('error' in parsed) return parsed.error
-
-		const rsvId = c.req.param('id')
-		const locCheck = await resolveReservationLocation(
-			ctx,
-			rsvId,
-			parsed.data.locationId ?? c.req.query('locationId'),
-		)
-		if (!locCheck.ok) return locCheck.response
-
-		try {
-			const result = await updateReservationCourseStatus({
-				orgId: ctx.orgId,
-				reservationId: rsvId,
-				actorId: ctx.userId,
-				input: {
-					...parsed.data,
-					courseStatus: parsed.data.courseStatus ?? parsed.data.course ?? null,
-				},
-			})
-			return json({ ok: true, orgId: ctx.orgId, ...result })
-		} catch (error) {
-			return handleRouteError(error)
-		}
-	},
+operatorReservationsBookRoutes.post(
+	'/reservations/:id/course-status',
+	rsvGuard({
+		scope: 'book',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+	}),
+	handleUpdateCourseStatus,
 )
 
 const notesUpdateSchema = z.object({

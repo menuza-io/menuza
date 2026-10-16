@@ -754,5 +754,57 @@ describe('reservations configuration schemas and validateConfig', () => {
 		expect(validReport).toHaveLength(0)
 		expect(validReport.issues).toEqual([])
 		expect(validReport.valid).toBe(true)
+
+		// Turn time > 480 min should be rejected
+		expect(
+			turnTimeBucketSchema.safeParse({
+				id: 'tt_too_long',
+				serviceId: null,
+				minParty: 1,
+				maxParty: 4,
+				durationMin: 500,
+			}).success,
+		).toBe(false)
+		const tooLongReport = validateConfig({
+			settings: { minParty: 1, maxOnlineParty: 4, maxParty: 4 },
+			areas: [{ id: 'area_1', name: 'Main', active: true }],
+			tables: [
+				{
+					id: 't1',
+					areaId: 'area_1',
+					label: 'T1',
+					minSeats: 1,
+					maxSeats: 4,
+					onlineBookable: true,
+					combinable: true,
+					active: true,
+				},
+			],
+			combinations: [],
+			services: [
+				{
+					id: 'srv_dinner',
+					name: 'Dinner',
+					startMin: 1020,
+					endMin: 1320,
+					lastSeatingMin: 1260,
+					onlineBookable: true,
+					active: true,
+				},
+			],
+			turnTimeBuckets: [
+				{
+					id: 'tt_500',
+					serviceId: null,
+					minParty: 1,
+					maxParty: 4,
+					durationMin: 500,
+				},
+			],
+			pacingRules: [],
+		})
+		expect(tooLongReport.map((i) => i.code)).toContain(
+			'turn_time_bucket_invalid_range',
+		)
 	})
 })

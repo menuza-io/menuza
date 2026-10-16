@@ -26,8 +26,10 @@ import {
 	rsvTurnTimes,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { addDays } from '@repo/zoned-time'
 import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.js'
+import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	getFloorPlan,
 	reflowFutureBookingsForLocation,
@@ -187,39 +189,45 @@ export async function createAreaForLocation(
 		sortOrder?: number
 	},
 ) {
-	await ensureSettingsRowForLocation(db, input.locationId)
-	const now = Date.now()
-	const id = createId('area')
-	await db.insert(rsvAreas).values({
-		id,
-		locationId: input.locationId,
-		name: input.name.trim(),
-		nameI18n: input.nameI18n ?? { en: input.name.trim() },
-		sort: input.sort ?? input.sortOrder ?? 0,
-		onlineBookable: input.onlineBookable ?? true,
-		guestSelectable: input.guestSelectable ?? true,
-		canvasW: input.canvasW ?? 1200,
-		canvasH: input.canvasH ?? 800,
-		archivedAt: null,
-		createdAt: now,
-		updatedAt: now,
-		version: 1,
+	return withSetupWrite(db, async (db) => {
+		await ensureSettingsRowForLocation(db, input.locationId)
+		const now = Date.now()
+		const id = createId('area')
+		await db.insert(rsvAreas).values({
+			id,
+			locationId: input.locationId,
+			name: input.name.trim(),
+			nameI18n: input.nameI18n ?? { en: input.name.trim() },
+			sort: input.sort ?? input.sortOrder ?? 0,
+			onlineBookable: input.onlineBookable ?? true,
+			guestSelectable: input.guestSelectable ?? true,
+			canvasW: input.canvasW ?? 1200,
+			canvasH: input.canvasH ?? 800,
+			archivedAt: null,
+			createdAt: now,
+			updatedAt: now,
+			version: 1,
+		})
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			input.locationId,
+			input.actorId,
+		)
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'area.create',
+			entityKind: 'area',
+			entityId: id,
+			diff: { name: input.name.trim() },
+		})
+		const row = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, id))
+			.get()
+		return { area: serializeArea(row!), floorPlanVersion }
 	})
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		input.locationId,
-		input.actorId,
-	)
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'area.create',
-		entityKind: 'area',
-		entityId: id,
-		diff: { name: input.name.trim() },
-	})
-	const row = await db.select().from(rsvAreas).where(eq(rsvAreas.id, id)).get()
-	return { area: serializeArea(row!), floorPlanVersion }
 }
 
 export async function updateAreaForLocation(
@@ -240,94 +248,98 @@ export async function updateAreaForLocation(
 		archived?: boolean
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvAreas)
-		.where(eq(rsvAreas.id, areaId))
-		.get()
-	if (!existing) throw notFound('Area not found')
-	if (patch.locationId && patch.locationId !== existing.locationId) {
-		throw notFound('Area not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, areaId))
+			.get()
+		if (!existing) throw notFound('Area not found')
+		if (patch.locationId && patch.locationId !== existing.locationId) {
+			throw notFound('Area not found in location')
+		}
 
-	const now = Date.now()
-	const shouldArchive =
-		patch.archived === true ||
-		patch.active === false ||
-		(patch.archived === undefined &&
-			patch.active === undefined &&
-			existing.archivedAt !== null)
-	const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+		const now = Date.now()
+		const shouldArchive =
+			patch.archived === true ||
+			patch.active === false ||
+			(patch.archived === undefined &&
+				patch.active === undefined &&
+				existing.archivedAt !== null)
+		const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
 
-	await db
-		.update(rsvAreas)
-		.set({
-			...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
-			...(patch.nameI18n !== undefined ? { nameI18n: patch.nameI18n } : {}),
-			...(patch.onlineBookable !== undefined
-				? { onlineBookable: patch.onlineBookable }
-				: {}),
-			...(patch.guestSelectable !== undefined
-				? { guestSelectable: patch.guestSelectable }
-				: {}),
-			...(patch.canvasW !== undefined ? { canvasW: patch.canvasW } : {}),
-			...(patch.canvasH !== undefined ? { canvasH: patch.canvasH } : {}),
-			...(patch.sort !== undefined || patch.sortOrder !== undefined
-				? { sort: patch.sort ?? patch.sortOrder ?? existing.sort }
-				: {}),
-			archivedAt: nextArchivedAt,
-			updatedAt: now,
-			version: existing.version + 1,
-		})
-		.where(eq(rsvAreas.id, areaId))
+		await db
+			.update(rsvAreas)
+			.set({
+				...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+				...(patch.nameI18n !== undefined ? { nameI18n: patch.nameI18n } : {}),
+				...(patch.onlineBookable !== undefined
+					? { onlineBookable: patch.onlineBookable }
+					: {}),
+				...(patch.guestSelectable !== undefined
+					? { guestSelectable: patch.guestSelectable }
+					: {}),
+				...(patch.canvasW !== undefined ? { canvasW: patch.canvasW } : {}),
+				...(patch.canvasH !== undefined ? { canvasH: patch.canvasH } : {}),
+				...(patch.sort !== undefined || patch.sortOrder !== undefined
+					? { sort: patch.sort ?? patch.sortOrder ?? existing.sort }
+					: {}),
+				archivedAt: nextArchivedAt,
+				updatedAt: now,
+				version: existing.version + 1,
+			})
+			.where(eq(rsvAreas.id, areaId))
 
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		patch.actorId,
-	)
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			patch.actorId,
+		)
 
-	let reflowResult: { conflicts: ConflictItem[]; reflowedMoves: ReflowMove[] } =
-		{
+		let reflowResult: {
+			conflicts: ConflictItem[]
+			reflowedMoves: ReflowMove[]
+		} = {
 			conflicts: [],
 			reflowedMoves: [],
 		}
-	if (
-		(existing.archivedAt === null && nextArchivedAt !== null) ||
-		(patch.onlineBookable === false && existing.onlineBookable === true)
-	) {
-		const areaTables = await db
-			.select()
-			.from(rsvTables)
-			.where(eq(rsvTables.areaId, areaId))
-			.all()
-		reflowResult = await reflowFutureBookingsForLocation(
-			db,
-			existing.locationId,
-			{
-				invalidatedTableIds:
-					nextArchivedAt !== null ? areaTables.map((t) => t.id) : [],
-			},
-		)
-	}
+		if (
+			(existing.archivedAt === null && nextArchivedAt !== null) ||
+			(patch.onlineBookable === false && existing.onlineBookable === true)
+		) {
+			const areaTables = await db
+				.select()
+				.from(rsvTables)
+				.where(eq(rsvTables.areaId, areaId))
+				.all()
+			reflowResult = await reflowFutureBookingsForLocation(
+				db,
+				existing.locationId,
+				{
+					invalidatedTableIds:
+						nextArchivedAt !== null ? areaTables.map((t) => t.id) : [],
+				},
+			)
+		}
 
-	await writeSetupAudit(db, {
-		actorId: patch.actorId,
-		locationId: existing.locationId,
-		action: 'area.update',
-		entityKind: 'area',
-		entityId: areaId,
+		await writeSetupAudit(db, {
+			actorId: patch.actorId,
+			locationId: existing.locationId,
+			action: 'area.update',
+			entityKind: 'area',
+			entityId: areaId,
+		})
+		const updated = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, areaId))
+			.get()
+		return {
+			area: serializeArea(updated!),
+			floorPlanVersion,
+			...reflowResult,
+		}
 	})
-	const updated = await db
-		.select()
-		.from(rsvAreas)
-		.where(eq(rsvAreas.id, areaId))
-		.get()
-	return {
-		area: serializeArea(updated!),
-		floorPlanVersion,
-		...reflowResult,
-	}
 }
 
 export async function archiveAreaForLocation(
@@ -336,70 +348,72 @@ export async function archiveAreaForLocation(
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvAreas)
-		.where(eq(rsvAreas.id, areaId))
-		.get()
-	if (!existing) throw notFound('Area not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Area not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, areaId))
+			.get()
+		if (!existing) throw notFound('Area not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Area not found in location')
+		}
 
-	const now = Date.now()
-	await db
-		.update(rsvAreas)
-		.set({
-			archivedAt: now,
-			updatedAt: now,
-			version: existing.version + 1,
-		})
-		.where(eq(rsvAreas.id, areaId))
-
-	const areaTables = await db
-		.select()
-		.from(rsvTables)
-		.where(and(eq(rsvTables.areaId, areaId), isNull(rsvTables.archivedAt)))
-		.all()
-
-	if (areaTables.length > 0) {
+		const now = Date.now()
 		await db
-			.update(rsvTables)
-			.set({ archivedAt: now, updatedAt: now })
-			.where(eq(rsvTables.areaId, areaId))
-	}
+			.update(rsvAreas)
+			.set({
+				archivedAt: now,
+				updatedAt: now,
+				version: existing.version + 1,
+			})
+			.where(eq(rsvAreas.id, areaId))
 
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		actorId,
-	)
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-		{
-			invalidatedTableIds: areaTables.map((t) => t.id),
-		},
-	)
+		const areaTables = await db
+			.select()
+			.from(rsvTables)
+			.where(and(eq(rsvTables.areaId, areaId), isNull(rsvTables.archivedAt)))
+			.all()
 
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'area.archive',
-		entityKind: 'area',
-		entityId: areaId,
+		if (areaTables.length > 0) {
+			await db
+				.update(rsvTables)
+				.set({ archivedAt: now, updatedAt: now })
+				.where(eq(rsvTables.areaId, areaId))
+		}
+
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			actorId,
+		)
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+			{
+				invalidatedTableIds: areaTables.map((t) => t.id),
+			},
+		)
+
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'area.archive',
+			entityKind: 'area',
+			entityId: areaId,
+		})
+
+		const updated = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, areaId))
+			.get()
+		return {
+			area: serializeArea(updated!),
+			floorPlanVersion,
+			...reflowResult,
+		}
 	})
-
-	const updated = await db
-		.select()
-		.from(rsvAreas)
-		.where(eq(rsvAreas.id, areaId))
-		.get()
-	return {
-		area: serializeArea(updated!),
-		floorPlanVersion,
-		...reflowResult,
-	}
 }
 
 // ============================================================================
@@ -450,97 +464,100 @@ export async function createTableForLocation(
 		rotation?: number
 	},
 ) {
-	const area = await db
-		.select()
-		.from(rsvAreas)
-		.where(
-			and(
-				eq(rsvAreas.id, input.areaId),
-				eq(rsvAreas.locationId, input.locationId),
-			),
-		)
-		.get()
-	if (!area) throw badRequest('invalid_area', 'Area does not exist in location')
+	return withSetupWrite(db, async (db) => {
+		const area = await db
+			.select()
+			.from(rsvAreas)
+			.where(
+				and(
+					eq(rsvAreas.id, input.areaId),
+					eq(rsvAreas.locationId, input.locationId),
+				),
+			)
+			.get()
+		if (!area)
+			throw badRequest('invalid_area', 'Area does not exist in location')
 
-	const minCovers = input.minCovers ?? input.minSeats ?? 1
-	const maxCovers = input.maxCovers ?? input.maxSeats ?? 2
-	if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
-		throw badRequest(
-			'invalid_capacity',
-			'minCovers must be >= 1 and <= maxCovers (<= 99)',
-		)
-	}
-	const resetBufferMin = input.resetBufferMin ?? 0
-	if (resetBufferMin < 0 || resetBufferMin > 120) {
-		throw badRequest(
-			'invalid_reset_buffer',
-			'resetBufferMin must be between 0 and 120',
-		)
-	}
+		const minCovers = input.minCovers ?? input.minSeats ?? 1
+		const maxCovers = input.maxCovers ?? input.maxSeats ?? 2
+		if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
+			throw badRequest(
+				'invalid_capacity',
+				'minCovers must be >= 1 and <= maxCovers (<= 99)',
+			)
+		}
+		const resetBufferMin = input.resetBufferMin ?? 0
+		if (resetBufferMin < 0 || resetBufferMin > 120) {
+			throw badRequest(
+				'invalid_reset_buffer',
+				'resetBufferMin must be between 0 and 120',
+			)
+		}
 
-	const trimmedLabel = input.label.trim()
-	const dup = await db
-		.select()
-		.from(rsvTables)
-		.where(
-			and(
-				eq(rsvTables.locationId, input.locationId),
-				eq(rsvTables.label, trimmedLabel),
-				isNull(rsvTables.archivedAt),
-			),
-		)
-		.get()
-	if (dup) {
-		throw conflict(
-			'duplicate_table_label',
-			`Active table with label "${trimmedLabel}" already exists in this location`,
-		)
-	}
+		const trimmedLabel = input.label.trim()
+		const dup = await db
+			.select()
+			.from(rsvTables)
+			.where(
+				and(
+					eq(rsvTables.locationId, input.locationId),
+					eq(rsvTables.label, trimmedLabel),
+					isNull(rsvTables.archivedAt),
+				),
+			)
+			.get()
+		if (dup) {
+			throw conflict(
+				'duplicate_table_label',
+				`Active table with label "${trimmedLabel}" already exists in this location`,
+			)
+		}
 
-	const now = Date.now()
-	const id = createId('tbl')
-	await db.insert(rsvTables).values({
-		id,
-		locationId: input.locationId,
-		areaId: input.areaId,
-		label: trimmedLabel,
-		shape: input.shape ?? 'square',
-		minCovers,
-		maxCovers,
-		onlineBookable: input.onlineBookable ?? input.onlineEnabled ?? true,
-		combinable: input.combinable ?? false,
-		priority: input.priority ?? 0,
-		resetBufferMin,
-		x: input.x ?? 0,
-		y: input.y ?? 0,
-		w: input.w ?? input.width ?? 60,
-		h: input.h ?? input.height ?? 60,
-		rotation: input.rotation ?? 0,
-		archivedAt: null,
-		createdAt: now,
-		updatedAt: now,
+		const now = Date.now()
+		const id = createId('tbl')
+		await db.insert(rsvTables).values({
+			id,
+			locationId: input.locationId,
+			areaId: input.areaId,
+			label: trimmedLabel,
+			shape: input.shape ?? 'square',
+			minCovers,
+			maxCovers,
+			onlineBookable: input.onlineBookable ?? input.onlineEnabled ?? true,
+			combinable: input.combinable ?? false,
+			priority: input.priority ?? 0,
+			resetBufferMin,
+			x: input.x ?? 0,
+			y: input.y ?? 0,
+			w: input.w ?? input.width ?? 60,
+			h: input.h ?? input.height ?? 60,
+			rotation: input.rotation ?? 0,
+			archivedAt: null,
+			createdAt: now,
+			updatedAt: now,
+		})
+
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			input.locationId,
+			input.actorId,
+		)
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'table.create',
+			entityKind: 'table',
+			entityId: id,
+			diff: { label: trimmedLabel, minCovers, maxCovers },
+		})
+
+		const row = await db
+			.select()
+			.from(rsvTables)
+			.where(eq(rsvTables.id, id))
+			.get()
+		return { table: serializeTable(row!), floorPlanVersion }
 	})
-
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		input.locationId,
-		input.actorId,
-	)
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'table.create',
-		entityKind: 'table',
-		entityId: id,
-		diff: { label: trimmedLabel, minCovers, maxCovers },
-	})
-
-	const row = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.id, id))
-		.get()
-	return { table: serializeTable(row!), floorPlanVersion }
 }
 
 export async function updateTableForLocation(
@@ -572,148 +589,155 @@ export async function updateTableForLocation(
 		archived?: boolean
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.id, tableId))
-		.get()
-	if (!existing) throw notFound('Table not found')
-	if (patch.locationId && patch.locationId !== existing.locationId) {
-		throw notFound('Table not found in location')
-	}
-
-	const nextLabel =
-		patch.label !== undefined ? patch.label.trim() : existing.label
-	if (nextLabel !== existing.label) {
-		const dup = await db
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
 			.select()
 			.from(rsvTables)
-			.where(
-				and(
-					eq(rsvTables.locationId, existing.locationId),
-					eq(rsvTables.label, nextLabel),
-					isNull(rsvTables.archivedAt),
-				),
-			)
+			.where(eq(rsvTables.id, tableId))
 			.get()
-		if (dup && dup.id !== tableId) {
-			throw conflict(
-				'duplicate_table_label',
-				`Active table with label "${nextLabel}" already exists in this location`,
+		if (!existing) throw notFound('Table not found')
+		if (patch.locationId && patch.locationId !== existing.locationId) {
+			throw notFound('Table not found in location')
+		}
+
+		const nextLabel =
+			patch.label !== undefined ? patch.label.trim() : existing.label
+		if (nextLabel !== existing.label) {
+			const dup = await db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.locationId, existing.locationId),
+						eq(rsvTables.label, nextLabel),
+						isNull(rsvTables.archivedAt),
+					),
+				)
+				.get()
+			if (dup && dup.id !== tableId) {
+				throw conflict(
+					'duplicate_table_label',
+					`Active table with label "${nextLabel}" already exists in this location`,
+				)
+			}
+		}
+
+		const nextMinCovers =
+			patch.minCovers ?? patch.minSeats ?? existing.minCovers
+		const nextMaxCovers =
+			patch.maxCovers ?? patch.maxSeats ?? existing.maxCovers
+		if (
+			nextMinCovers < 1 ||
+			nextMaxCovers < nextMinCovers ||
+			nextMaxCovers > 99
+		) {
+			throw badRequest(
+				'invalid_capacity',
+				'minCovers must be >= 1 and <= maxCovers (<= 99)',
 			)
 		}
-	}
+		const nextResetBuffer =
+			patch.resetBufferMin !== undefined
+				? (patch.resetBufferMin ?? 0)
+				: existing.resetBufferMin
+		if (nextResetBuffer < 0 || nextResetBuffer > 120) {
+			throw badRequest(
+				'invalid_reset_buffer',
+				'resetBufferMin must be between 0 and 120',
+			)
+		}
 
-	const nextMinCovers = patch.minCovers ?? patch.minSeats ?? existing.minCovers
-	const nextMaxCovers = patch.maxCovers ?? patch.maxSeats ?? existing.maxCovers
-	if (
-		nextMinCovers < 1 ||
-		nextMaxCovers < nextMinCovers ||
-		nextMaxCovers > 99
-	) {
-		throw badRequest(
-			'invalid_capacity',
-			'minCovers must be >= 1 and <= maxCovers (<= 99)',
+		const now = Date.now()
+		const shouldArchive =
+			patch.archived === true ||
+			patch.active === false ||
+			(patch.archived === undefined &&
+				patch.active === undefined &&
+				existing.archivedAt !== null)
+		const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+		const nextOnlineBookable =
+			patch.onlineBookable ?? patch.onlineEnabled ?? existing.onlineBookable
+
+		await db
+			.update(rsvTables)
+			.set({
+				...(patch.areaId !== undefined ? { areaId: patch.areaId } : {}),
+				label: nextLabel,
+				...(patch.shape !== undefined ? { shape: patch.shape } : {}),
+				minCovers: nextMinCovers,
+				maxCovers: nextMaxCovers,
+				onlineBookable: nextOnlineBookable,
+				...(patch.combinable !== undefined
+					? { combinable: patch.combinable }
+					: {}),
+				...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+				resetBufferMin: nextResetBuffer,
+				...(patch.x !== undefined ? { x: patch.x } : {}),
+				...(patch.y !== undefined ? { y: patch.y } : {}),
+				...(patch.w !== undefined || patch.width !== undefined
+					? { w: patch.w ?? patch.width ?? existing.w }
+					: {}),
+				...(patch.h !== undefined || patch.height !== undefined
+					? { h: patch.h ?? patch.height ?? existing.h }
+					: {}),
+				...(patch.rotation !== undefined ? { rotation: patch.rotation } : {}),
+				archivedAt: nextArchivedAt,
+				updatedAt: now,
+			})
+			.where(eq(rsvTables.id, tableId))
+
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			patch.actorId,
 		)
-	}
-	const nextResetBuffer =
-		patch.resetBufferMin !== undefined
-			? (patch.resetBufferMin ?? 0)
-			: existing.resetBufferMin
-	if (nextResetBuffer < 0 || nextResetBuffer > 120) {
-		throw badRequest(
-			'invalid_reset_buffer',
-			'resetBufferMin must be between 0 and 120',
-		)
-	}
 
-	const now = Date.now()
-	const shouldArchive =
-		patch.archived === true ||
-		patch.active === false ||
-		(patch.archived === undefined &&
-			patch.active === undefined &&
-			existing.archivedAt !== null)
-	const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
-	const nextOnlineBookable =
-		patch.onlineBookable ?? patch.onlineEnabled ?? existing.onlineBookable
+		const capacityShrunk =
+			nextMaxCovers < existing.maxCovers || nextMinCovers > existing.minCovers
+		const newlyArchived =
+			existing.archivedAt === null && nextArchivedAt !== null
 
-	await db
-		.update(rsvTables)
-		.set({
-			...(patch.areaId !== undefined ? { areaId: patch.areaId } : {}),
-			label: nextLabel,
-			...(patch.shape !== undefined ? { shape: patch.shape } : {}),
-			minCovers: nextMinCovers,
-			maxCovers: nextMaxCovers,
-			onlineBookable: nextOnlineBookable,
-			...(patch.combinable !== undefined
-				? { combinable: patch.combinable }
-				: {}),
-			...(patch.priority !== undefined ? { priority: patch.priority } : {}),
-			resetBufferMin: nextResetBuffer,
-			...(patch.x !== undefined ? { x: patch.x } : {}),
-			...(patch.y !== undefined ? { y: patch.y } : {}),
-			...(patch.w !== undefined || patch.width !== undefined
-				? { w: patch.w ?? patch.width ?? existing.w }
-				: {}),
-			...(patch.h !== undefined || patch.height !== undefined
-				? { h: patch.h ?? patch.height ?? existing.h }
-				: {}),
-			...(patch.rotation !== undefined ? { rotation: patch.rotation } : {}),
-			archivedAt: nextArchivedAt,
-			updatedAt: now,
-		})
-		.where(eq(rsvTables.id, tableId))
-
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		patch.actorId,
-	)
-
-	const capacityShrunk =
-		nextMaxCovers < existing.maxCovers || nextMinCovers > existing.minCovers
-	const newlyArchived = existing.archivedAt === null && nextArchivedAt !== null
-
-	let reflowResult: { conflicts: ConflictItem[]; reflowedMoves: ReflowMove[] } =
-		{
+		let reflowResult: {
+			conflicts: ConflictItem[]
+			reflowedMoves: ReflowMove[]
+		} = {
 			conflicts: [],
 			reflowedMoves: [],
 		}
-	if (newlyArchived || capacityShrunk) {
-		reflowResult = await reflowFutureBookingsForLocation(
-			db,
-			existing.locationId,
-			{
-				invalidatedTableIds: newlyArchived ? [tableId] : [],
+		if (newlyArchived || capacityShrunk) {
+			reflowResult = await reflowFutureBookingsForLocation(
+				db,
+				existing.locationId,
+				{
+					invalidatedTableIds: newlyArchived ? [tableId] : [],
+				},
+			)
+		}
+
+		await writeSetupAudit(db, {
+			actorId: patch.actorId,
+			locationId: existing.locationId,
+			action: 'table.update',
+			entityKind: 'table',
+			entityId: tableId,
+			diff: {
+				minCovers: nextMinCovers,
+				maxCovers: nextMaxCovers,
+				archivedAt: nextArchivedAt,
 			},
-		)
-	}
+		})
 
-	await writeSetupAudit(db, {
-		actorId: patch.actorId,
-		locationId: existing.locationId,
-		action: 'table.update',
-		entityKind: 'table',
-		entityId: tableId,
-		diff: {
-			minCovers: nextMinCovers,
-			maxCovers: nextMaxCovers,
-			archivedAt: nextArchivedAt,
-		},
+		const updated = await db
+			.select()
+			.from(rsvTables)
+			.where(eq(rsvTables.id, tableId))
+			.get()
+		return {
+			table: serializeTable(updated!),
+			floorPlanVersion,
+			...reflowResult,
+		}
 	})
-
-	const updated = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.id, tableId))
-		.get()
-	return {
-		table: serializeTable(updated!),
-		floorPlanVersion,
-		...reflowResult,
-	}
 }
 
 export async function archiveTableForLocation(
@@ -722,57 +746,59 @@ export async function archiveTableForLocation(
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.id, tableId))
-		.get()
-	if (!existing) throw notFound('Table not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Table not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvTables)
+			.where(eq(rsvTables.id, tableId))
+			.get()
+		if (!existing) throw notFound('Table not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Table not found in location')
+		}
 
-	const now = Date.now()
-	await db
-		.update(rsvTables)
-		.set({
-			archivedAt: now,
-			updatedAt: now,
+		const now = Date.now()
+		await db
+			.update(rsvTables)
+			.set({
+				archivedAt: now,
+				updatedAt: now,
+			})
+			.where(eq(rsvTables.id, tableId))
+
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			actorId,
+		)
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+			{
+				invalidatedTableIds: [tableId],
+			},
+		)
+
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'table.archive',
+			entityKind: 'table',
+			entityId: tableId,
 		})
-		.where(eq(rsvTables.id, tableId))
 
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		actorId,
-	)
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-		{
-			invalidatedTableIds: [tableId],
-		},
-	)
-
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'table.archive',
-		entityKind: 'table',
-		entityId: tableId,
+		const updated = await db
+			.select()
+			.from(rsvTables)
+			.where(eq(rsvTables.id, tableId))
+			.get()
+		return {
+			archived: true,
+			table: serializeTable(updated!),
+			floorPlanVersion,
+			...reflowResult,
+		}
 	})
-
-	const updated = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.id, tableId))
-		.get()
-	return {
-		archived: true,
-		table: serializeTable(updated!),
-		floorPlanVersion,
-		...reflowResult,
-	}
 }
 
 // ============================================================================
@@ -795,128 +821,130 @@ export async function createComboForLocation(
 		tableIds: string[]
 	},
 ) {
-	const uniqueTableIds = [...new Set(input.tableIds)].sort()
-	if (uniqueTableIds.length < 2) {
-		throw badRequest(
-			'invalid_combination',
-			'Combination must contain at least 2 distinct tables',
-		)
-	}
-	const minCovers = input.minCovers ?? input.minSeats ?? 2
-	const maxCovers = input.maxCovers ?? input.maxSeats ?? 6
-	if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
-		throw badRequest(
-			'invalid_capacity',
-			'minCovers must be >= 1 and <= maxCovers (<= 99)',
-		)
-	}
-
-	const tables = await db
-		.select()
-		.from(rsvTables)
-		.where(
-			and(
-				eq(rsvTables.locationId, input.locationId),
-				inArray(rsvTables.id, uniqueTableIds),
-			),
-		)
-		.all()
-	if (tables.length !== uniqueTableIds.length) {
-		throw badRequest(
-			'invalid_combination_tables',
-			'All combination tables must belong to this location',
-		)
-	}
-	for (const tbl of tables) {
-		if (tbl.archivedAt !== null || !tbl.combinable) {
+	return withSetupWrite(db, async (db) => {
+		const uniqueTableIds = [...new Set(input.tableIds)].sort()
+		if (uniqueTableIds.length < 2) {
 			throw badRequest(
-				'table_not_combinable',
-				`Table "${tbl.label}" is not combinable or is archived`,
+				'invalid_combination',
+				'Combination must contain at least 2 distinct tables',
 			)
 		}
-	}
+		const minCovers = input.minCovers ?? input.minSeats ?? 2
+		const maxCovers = input.maxCovers ?? input.maxSeats ?? 6
+		if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
+			throw badRequest(
+				'invalid_capacity',
+				'minCovers must be >= 1 and <= maxCovers (<= 99)',
+			)
+		}
 
-	const activeCombos = await db
-		.select()
-		.from(rsvTableCombos)
-		.where(
-			and(
-				eq(rsvTableCombos.locationId, input.locationId),
-				isNull(rsvTableCombos.archivedAt),
-			),
-		)
-		.all()
-	if (activeCombos.length > 0) {
-		const activeComboIds = activeCombos.map((c) => c.id)
-		const existingMembers = await db
+		const tables = await db
 			.select()
-			.from(rsvTableComboMembers)
-			.where(inArray(rsvTableComboMembers.comboId, activeComboIds))
+			.from(rsvTables)
+			.where(
+				and(
+					eq(rsvTables.locationId, input.locationId),
+					inArray(rsvTables.id, uniqueTableIds),
+				),
+			)
 			.all()
-		const canonicalKey = uniqueTableIds.join(',')
-		for (const c of activeCombos) {
-			const cKey = existingMembers
-				.filter((m) => m.comboId === c.id)
-				.map((m) => m.tableId)
-				.sort()
-				.join(',')
-			if (cKey === canonicalKey) {
-				throw conflict(
-					'duplicate_combination',
-					'An active combination with the same member tables already exists',
+		if (tables.length !== uniqueTableIds.length) {
+			throw badRequest(
+				'invalid_combination_tables',
+				'All combination tables must belong to this location',
+			)
+		}
+		for (const tbl of tables) {
+			if (tbl.archivedAt !== null || !tbl.combinable) {
+				throw badRequest(
+					'table_not_combinable',
+					`Table "${tbl.label}" is not combinable or is archived`,
 				)
 			}
 		}
-	}
 
-	const now = Date.now()
-	const id = createId('cmb')
-	const label = (input.label ?? input.name ?? 'Combo').trim()
-	await db.insert(rsvTableCombos).values({
-		id,
-		locationId: input.locationId,
-		label,
-		minCovers,
-		maxCovers,
-		onlineBookable: input.onlineBookable ?? true,
-		priority: input.priority ?? 0,
-		archivedAt: null,
-		createdAt: now,
-		updatedAt: now,
-	})
+		const activeCombos = await db
+			.select()
+			.from(rsvTableCombos)
+			.where(
+				and(
+					eq(rsvTableCombos.locationId, input.locationId),
+					isNull(rsvTableCombos.archivedAt),
+				),
+			)
+			.all()
+		if (activeCombos.length > 0) {
+			const activeComboIds = activeCombos.map((c) => c.id)
+			const existingMembers = await db
+				.select()
+				.from(rsvTableComboMembers)
+				.where(inArray(rsvTableComboMembers.comboId, activeComboIds))
+				.all()
+			const canonicalKey = uniqueTableIds.join(',')
+			for (const c of activeCombos) {
+				const cKey = existingMembers
+					.filter((m) => m.comboId === c.id)
+					.map((m) => m.tableId)
+					.sort()
+					.join(',')
+				if (cKey === canonicalKey) {
+					throw conflict(
+						'duplicate_combination',
+						'An active combination with the same member tables already exists',
+					)
+				}
+			}
+		}
 
-	for (const tid of uniqueTableIds) {
-		await db.insert(rsvTableComboMembers).values({
-			comboId: id,
-			tableId: tid,
+		const now = Date.now()
+		const id = createId('cmb')
+		const label = (input.label ?? input.name ?? 'Combo').trim()
+		await db.insert(rsvTableCombos).values({
+			id,
+			locationId: input.locationId,
+			label,
+			minCovers,
+			maxCovers,
+			onlineBookable: input.onlineBookable ?? true,
+			priority: input.priority ?? 0,
+			archivedAt: null,
+			createdAt: now,
+			updatedAt: now,
 		})
-	}
 
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		input.locationId,
-		input.actorId,
-	)
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'combo.create',
-		entityKind: 'combination',
-		entityId: id,
-		diff: { label, tableIds: uniqueTableIds },
+		for (const tid of uniqueTableIds) {
+			await db.insert(rsvTableComboMembers).values({
+				comboId: id,
+				tableId: tid,
+			})
+		}
+
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			input.locationId,
+			input.actorId,
+		)
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'combo.create',
+			entityKind: 'combination',
+			entityId: id,
+			diff: { label, tableIds: uniqueTableIds },
+		})
+
+		const row = await db
+			.select()
+			.from(rsvTableCombos)
+			.where(eq(rsvTableCombos.id, id))
+			.get()
+		const serialized = serializeCombo(row!, uniqueTableIds)
+		return {
+			combo: serialized,
+			combination: serialized,
+			floorPlanVersion,
+		}
 	})
-
-	const row = await db
-		.select()
-		.from(rsvTableCombos)
-		.where(eq(rsvTableCombos.id, id))
-		.get()
-	const serialized = serializeCombo(row!, uniqueTableIds)
-	return {
-		combo: serialized,
-		combination: serialized,
-		floorPlanVersion,
-	}
 }
 
 export async function updateComboForLocation(
@@ -938,141 +966,198 @@ export async function updateComboForLocation(
 		tableIds?: string[]
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTableCombos)
-		.where(eq(rsvTableCombos.id, comboId))
-		.get()
-	if (!existing) throw notFound('Combination not found')
-	if (patch.locationId && patch.locationId !== existing.locationId) {
-		throw notFound('Combination not found in location')
-	}
-
-	const nextMinCovers = patch.minCovers ?? patch.minSeats ?? existing.minCovers
-	const nextMaxCovers = patch.maxCovers ?? patch.maxSeats ?? existing.maxCovers
-	if (
-		nextMinCovers < 1 ||
-		nextMaxCovers < nextMinCovers ||
-		nextMaxCovers > 99
-	) {
-		throw badRequest(
-			'invalid_capacity',
-			'minCovers must be >= 1 and <= maxCovers (<= 99)',
-		)
-	}
-
-	let nextTableIds: string[] | undefined
-	if (patch.tableIds !== undefined) {
-		nextTableIds = [...new Set(patch.tableIds)]
-		if (nextTableIds.length < 2) {
-			throw badRequest(
-				'invalid_combination',
-				'Combination must contain at least 2 distinct tables',
-			)
-		}
-		const tables = await db
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
 			.select()
-			.from(rsvTables)
-			.where(
-				and(
-					eq(rsvTables.locationId, existing.locationId),
-					inArray(rsvTables.id, nextTableIds),
-				),
-			)
-			.all()
-		if (tables.length !== nextTableIds.length) {
+			.from(rsvTableCombos)
+			.where(eq(rsvTableCombos.id, comboId))
+			.get()
+		if (!existing) throw notFound('Combination not found')
+		if (patch.locationId && patch.locationId !== existing.locationId) {
+			throw notFound('Combination not found in location')
+		}
+
+		const nextMinCovers =
+			patch.minCovers ?? patch.minSeats ?? existing.minCovers
+		const nextMaxCovers =
+			patch.maxCovers ?? patch.maxSeats ?? existing.maxCovers
+		if (
+			nextMinCovers < 1 ||
+			nextMaxCovers < nextMinCovers ||
+			nextMaxCovers > 99
+		) {
 			throw badRequest(
-				'invalid_combination_tables',
-				'All combination tables must belong to this location',
+				'invalid_capacity',
+				'minCovers must be >= 1 and <= maxCovers (<= 99)',
 			)
 		}
-		for (const tbl of tables) {
-			if (tbl.archivedAt !== null || !tbl.combinable) {
+
+		const now = Date.now()
+		const shouldArchive =
+			patch.archived === true ||
+			patch.active === false ||
+			(patch.archived === undefined &&
+				patch.active === undefined &&
+				existing.archivedAt !== null)
+		const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+
+		let nextTableIds: string[] | undefined
+		if (patch.tableIds !== undefined) {
+			nextTableIds = [...new Set(patch.tableIds)].sort()
+			if (nextTableIds.length < 2) {
 				throw badRequest(
-					'table_not_combinable',
-					`Table "${tbl.label}" is not combinable or is archived`,
+					'invalid_combination',
+					'Combination must contain at least 2 distinct tables',
 				)
 			}
+			const tables = await db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.locationId, existing.locationId),
+						inArray(rsvTables.id, nextTableIds),
+					),
+				)
+				.all()
+			if (tables.length !== nextTableIds.length) {
+				throw badRequest(
+					'invalid_combination_tables',
+					'All combination tables must belong to this location',
+				)
+			}
+			for (const tbl of tables) {
+				if (tbl.archivedAt !== null || !tbl.combinable) {
+					throw badRequest(
+						'table_not_combinable',
+						`Table "${tbl.label}" is not combinable or is archived`,
+					)
+				}
+			}
 		}
+
+		if (nextArchivedAt === null) {
+			const effectiveTableIds =
+				nextTableIds ??
+				(
+					await db
+						.select()
+						.from(rsvTableComboMembers)
+						.where(eq(rsvTableComboMembers.comboId, comboId))
+						.all()
+				)
+					.map((m) => m.tableId)
+					.sort()
+			const canonicalKey = effectiveTableIds.join(',')
+			const activeCombos = await db
+				.select()
+				.from(rsvTableCombos)
+				.where(
+					and(
+						eq(rsvTableCombos.locationId, existing.locationId),
+						isNull(rsvTableCombos.archivedAt),
+					),
+				)
+				.all()
+			const otherComboIds = activeCombos
+				.filter((c) => c.id !== comboId)
+				.map((c) => c.id)
+			if (otherComboIds.length > 0) {
+				const existingMembers = await db
+					.select()
+					.from(rsvTableComboMembers)
+					.where(inArray(rsvTableComboMembers.comboId, otherComboIds))
+					.all()
+				for (const otherId of otherComboIds) {
+					const otherKey = existingMembers
+						.filter((m) => m.comboId === otherId)
+						.map((m) => m.tableId)
+						.sort()
+						.join(',')
+					if (otherKey === canonicalKey) {
+						throw conflict(
+							'duplicate_combination',
+							'An active combination with the same member tables already exists',
+						)
+					}
+				}
+			}
+		}
+
+		if (nextTableIds !== undefined) {
+			await db
+				.delete(rsvTableComboMembers)
+				.where(eq(rsvTableComboMembers.comboId, comboId))
+			for (const tid of nextTableIds) {
+				await db.insert(rsvTableComboMembers).values({
+					comboId,
+					tableId: tid,
+				})
+			}
+		}
+
 		await db
-			.delete(rsvTableComboMembers)
-			.where(eq(rsvTableComboMembers.comboId, comboId))
-		for (const tid of nextTableIds) {
-			await db.insert(rsvTableComboMembers).values({
-				comboId,
-				tableId: tid,
+			.update(rsvTableCombos)
+			.set({
+				...(patch.label !== undefined || patch.name !== undefined
+					? { label: (patch.label ?? patch.name ?? existing.label).trim() }
+					: {}),
+				minCovers: nextMinCovers,
+				maxCovers: nextMaxCovers,
+				...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+				...(patch.onlineBookable !== undefined
+					? { onlineBookable: patch.onlineBookable }
+					: {}),
+				archivedAt: nextArchivedAt,
+				updatedAt: now,
 			})
-		}
-	}
+			.where(eq(rsvTableCombos.id, comboId))
 
-	const now = Date.now()
-	const shouldArchive =
-		patch.archived === true ||
-		patch.active === false ||
-		(patch.archived === undefined &&
-			patch.active === undefined &&
-			existing.archivedAt !== null)
-	const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			patch.actorId,
+		)
 
-	await db
-		.update(rsvTableCombos)
-		.set({
-			...(patch.label !== undefined || patch.name !== undefined
-				? { label: (patch.label ?? patch.name ?? existing.label).trim() }
-				: {}),
-			minCovers: nextMinCovers,
-			maxCovers: nextMaxCovers,
-			...(patch.priority !== undefined ? { priority: patch.priority } : {}),
-			...(patch.onlineBookable !== undefined
-				? { onlineBookable: patch.onlineBookable }
-				: {}),
-			archivedAt: nextArchivedAt,
-			updatedAt: now,
-		})
-		.where(eq(rsvTableCombos.id, comboId))
-
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		patch.actorId,
-	)
-
-	let reflowResult: { conflicts: ConflictItem[]; reflowedMoves: ReflowMove[] } =
-		{
+		let reflowResult: {
+			conflicts: ConflictItem[]
+			reflowedMoves: ReflowMove[]
+		} = {
 			conflicts: [],
 			reflowedMoves: [],
 		}
-	if (
-		nextMaxCovers < existing.maxCovers ||
-		nextMinCovers > existing.minCovers ||
-		nextArchivedAt !== null
-	) {
-		reflowResult = await reflowFutureBookingsForLocation(
-			db,
-			existing.locationId,
-		)
-	}
+		if (
+			nextMaxCovers < existing.maxCovers ||
+			nextMinCovers > existing.minCovers ||
+			nextArchivedAt !== null
+		) {
+			reflowResult = await reflowFutureBookingsForLocation(
+				db,
+				existing.locationId,
+			)
+		}
 
-	const members = await db
-		.select()
-		.from(rsvTableComboMembers)
-		.where(eq(rsvTableComboMembers.comboId, comboId))
-		.all()
-	const updated = await db
-		.select()
-		.from(rsvTableCombos)
-		.where(eq(rsvTableCombos.id, comboId))
-		.get()
-	const serialized = serializeCombo(
-		updated!,
-		members.map((m) => m.tableId),
-	)
-	return {
-		combo: serialized,
-		combination: serialized,
-		floorPlanVersion,
-		...reflowResult,
-	}
+		const members = await db
+			.select()
+			.from(rsvTableComboMembers)
+			.where(eq(rsvTableComboMembers.comboId, comboId))
+			.all()
+		const updated = await db
+			.select()
+			.from(rsvTableCombos)
+			.where(eq(rsvTableCombos.id, comboId))
+			.get()
+		const serialized = serializeCombo(
+			updated!,
+			members.map((m) => m.tableId),
+		)
+		return {
+			combo: serialized,
+			combination: serialized,
+			floorPlanVersion,
+			...reflowResult,
+		}
+	})
 }
 
 export async function deleteComboForLocation(
@@ -1081,39 +1166,41 @@ export async function deleteComboForLocation(
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTableCombos)
-		.where(eq(rsvTableCombos.id, comboId))
-		.get()
-	if (!existing) throw notFound('Combination not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Combination not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvTableCombos)
+			.where(eq(rsvTableCombos.id, comboId))
+			.get()
+		if (!existing) throw notFound('Combination not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Combination not found in location')
+		}
 
-	const now = Date.now()
-	await db
-		.update(rsvTableCombos)
-		.set({ archivedAt: now, updatedAt: now })
-		.where(eq(rsvTableCombos.id, comboId))
+		const now = Date.now()
+		await db
+			.update(rsvTableCombos)
+			.set({ archivedAt: now, updatedAt: now })
+			.where(eq(rsvTableCombos.id, comboId))
 
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		existing.locationId,
-		actorId,
-	)
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-	)
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'combo.delete',
-		entityKind: 'combination',
-		entityId: comboId,
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			existing.locationId,
+			actorId,
+		)
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+		)
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'combo.delete',
+			entityKind: 'combination',
+			entityId: comboId,
+		})
+		return { deleted: true, id: comboId, floorPlanVersion, ...reflowResult }
 	})
-	return { deleted: true, id: comboId, floorPlanVersion, ...reflowResult }
 }
 
 // ============================================================================
@@ -1159,41 +1246,44 @@ export async function createFloorElementForLocation(
 		rotation?: number
 	},
 ) {
-	const area = await db
-		.select()
-		.from(rsvAreas)
-		.where(
-			and(
-				eq(rsvAreas.id, input.areaId),
-				eq(rsvAreas.locationId, input.locationId),
-			),
-		)
-		.get()
-	if (!area) throw badRequest('invalid_area', 'Area does not exist in location')
+	return withSetupWrite(db, async (db) => {
+		const area = await db
+			.select()
+			.from(rsvAreas)
+			.where(
+				and(
+					eq(rsvAreas.id, input.areaId),
+					eq(rsvAreas.locationId, input.locationId),
+				),
+			)
+			.get()
+		if (!area)
+			throw badRequest('invalid_area', 'Area does not exist in location')
 
-	const id = createId('el')
-	await db.insert(rsvFloorElements).values({
-		id,
-		areaId: input.areaId,
-		kind: input.kind,
-		label: input.label ?? null,
-		x: input.x ?? 0,
-		y: input.y ?? 0,
-		w: input.w ?? input.width ?? 60,
-		h: input.h ?? input.height ?? 20,
-		rotation: input.rotation ?? 0,
+		const id = createId('el')
+		await db.insert(rsvFloorElements).values({
+			id,
+			areaId: input.areaId,
+			kind: input.kind,
+			label: input.label ?? null,
+			x: input.x ?? 0,
+			y: input.y ?? 0,
+			w: input.w ?? input.width ?? 60,
+			h: input.h ?? input.height ?? 20,
+			rotation: input.rotation ?? 0,
+		})
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			input.locationId,
+			input.actorId,
+		)
+		const row = await db
+			.select()
+			.from(rsvFloorElements)
+			.where(eq(rsvFloorElements.id, id))
+			.get()
+		return { element: serializeElement(row!), floorPlanVersion }
 	})
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		input.locationId,
-		input.actorId,
-	)
-	const row = await db
-		.select()
-		.from(rsvFloorElements)
-		.where(eq(rsvFloorElements.id, id))
-		.get()
-	return { element: serializeElement(row!), floorPlanVersion }
 }
 
 export async function deleteFloorElementForLocation(
@@ -1202,29 +1292,31 @@ export async function deleteFloorElementForLocation(
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvFloorElements)
-		.where(eq(rsvFloorElements.id, elementId))
-		.get()
-	if (!existing) throw notFound('Floor element not found')
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvFloorElements)
+			.where(eq(rsvFloorElements.id, elementId))
+			.get()
+		if (!existing) throw notFound('Floor element not found')
 
-	const area = await db
-		.select()
-		.from(rsvAreas)
-		.where(eq(rsvAreas.id, existing.areaId))
-		.get()
-	if (!area || (locationId && area.locationId !== locationId)) {
-		throw notFound('Floor element not found in location')
-	}
+		const area = await db
+			.select()
+			.from(rsvAreas)
+			.where(eq(rsvAreas.id, existing.areaId))
+			.get()
+		if (!area || (locationId && area.locationId !== locationId)) {
+			throw notFound('Floor element not found in location')
+		}
 
-	await db.delete(rsvFloorElements).where(eq(rsvFloorElements.id, elementId))
-	const floorPlanVersion = await bumpFloorPlanVersion(
-		db,
-		area.locationId,
-		actorId,
-	)
-	return { deleted: true, id: elementId, floorPlanVersion }
+		await db.delete(rsvFloorElements).where(eq(rsvFloorElements.id, elementId))
+		const floorPlanVersion = await bumpFloorPlanVersion(
+			db,
+			area.locationId,
+			actorId,
+		)
+		return { deleted: true, id: elementId, floorPlanVersion }
+	})
 }
 
 export async function saveFloorPlan(
@@ -1334,310 +1426,404 @@ export async function saveFloorPlan(
 	},
 	actorId: string | null,
 ) {
-	const settings = await ensureSettingsRowForLocation(db, locationId)
-	const expectedFpVersion =
-		payload.expectedFloorPlanVersion ??
-		payload.expectedVersion ??
-		payload.floorPlanVersion
-	if (
-		expectedFpVersion !== undefined &&
-		expectedFpVersion !== settings.floorPlanVersion
-	) {
-		throw conflict(
-			'stale_version',
-			'Floor plan has been modified by another session; reload before saving.',
-			{
-				floorPlanVersion: settings.floorPlanVersion,
-				currentFloorPlanVersion: settings.floorPlanVersion,
-			},
-		)
-	}
-
-	const now = Date.now()
-	const invalidatedTableIds: string[] = []
-
-	// Validate duplicate labels among active tables in payload
-	if (payload.tables) {
-		const seenLabels = new Set<string>()
-		for (const t of payload.tables) {
-			const isArchived =
-				t.archived === true ||
-				t.active === false ||
-				(t.archivedAt !== undefined && t.archivedAt !== null)
-			if (isArchived) continue
-			const key = t.label.trim().toLowerCase()
-			if (seenLabels.has(key)) {
+	return withSetupWrite(
+		db,
+		async (db) => {
+			const settings = await ensureSettingsRowForLocation(db, locationId)
+			const expectedFpVersion =
+				payload.expectedFloorPlanVersion ??
+				payload.expectedVersion ??
+				payload.floorPlanVersion
+			if (
+				expectedFpVersion !== undefined &&
+				expectedFpVersion !== settings.floorPlanVersion
+			) {
 				throw conflict(
-					'duplicate_table_label',
-					`Duplicate active table label "${t.label}" in floor plan save`,
+					'stale_version',
+					'Floor plan has been modified by another session; reload before saving.',
+					{
+						floorPlanVersion: settings.floorPlanVersion,
+						currentFloorPlanVersion: settings.floorPlanVersion,
+					},
 				)
 			}
-			seenLabels.add(key)
-		}
-	}
 
-	// Upsert areas if provided
-	if (payload.areas) {
-		for (const a of payload.areas) {
-			const id = a.id ?? createId('area')
-			const existing = await db
-				.select()
-				.from(rsvAreas)
-				.where(and(eq(rsvAreas.id, id), eq(rsvAreas.locationId, locationId)))
-				.get()
-			const isArchived =
-				a.archived === true ||
-				a.active === false ||
-				(a.archivedAt !== undefined && a.archivedAt !== null)
-			if (existing) {
-				await db
-					.update(rsvAreas)
-					.set({
-						name: a.name.trim(),
-						...(a.nameI18n !== undefined ? { nameI18n: a.nameI18n } : {}),
-						...(a.onlineBookable !== undefined
-							? { onlineBookable: a.onlineBookable }
-							: {}),
-						...(a.guestSelectable !== undefined
-							? { guestSelectable: a.guestSelectable }
-							: {}),
-						...(a.canvasW !== undefined ? { canvasW: a.canvasW } : {}),
-						...(a.canvasH !== undefined ? { canvasH: a.canvasH } : {}),
-						sort: a.sort ?? a.sortOrder ?? existing.sort,
-						archivedAt: isArchived ? (existing.archivedAt ?? now) : null,
-						updatedAt: now,
-						version: existing.version + 1,
-					})
-					.where(eq(rsvAreas.id, id))
-			} else {
-				await db.insert(rsvAreas).values({
-					id,
-					locationId,
-					name: a.name.trim(),
-					nameI18n: a.nameI18n ?? { en: a.name.trim() },
-					sort: a.sort ?? a.sortOrder ?? 0,
-					onlineBookable: a.onlineBookable ?? true,
-					guestSelectable: a.guestSelectable ?? true,
-					canvasW: a.canvasW ?? 1200,
-					canvasH: a.canvasH ?? 800,
-					archivedAt: isArchived ? now : null,
-					createdAt: now,
-					updatedAt: now,
-					version: 1,
-				})
-			}
-		}
-	}
+			const now = Date.now()
+			const invalidatedTableIds: string[] = []
 
-	// Upsert tables if provided
-	if (payload.tables) {
-		const existingTables = await db
-			.select()
-			.from(rsvTables)
-			.where(eq(rsvTables.locationId, locationId))
-			.all()
-		const existingById = new Map(existingTables.map((t) => [t.id, t]))
-		const seenIds = new Set<string>()
-
-		for (const t of payload.tables) {
-			const id = t.id ?? createId('tbl')
-			seenIds.add(id)
-			const existing = existingById.get(id)
-			const minCovers = t.minCovers ?? t.minSeats ?? existing?.minCovers ?? 1
-			const maxCovers = t.maxCovers ?? t.maxSeats ?? existing?.maxCovers ?? 2
-			if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
-				throw badRequest(
-					'invalid_capacity',
-					'minCovers must be >= 1 and <= maxCovers (<= 99)',
-				)
-			}
-			const isArchived =
-				t.archived === true ||
-				t.active === false ||
-				(t.archivedAt !== undefined && t.archivedAt !== null)
-			const nextArchivedAt = isArchived ? (existing?.archivedAt ?? now) : null
-
-			if (existing) {
-				if (existing.archivedAt === null && nextArchivedAt !== null) {
-					invalidatedTableIds.push(id)
+			// Validate duplicate labels among active tables in payload
+			if (payload.tables) {
+				const seenLabels = new Set<string>()
+				for (const t of payload.tables) {
+					const isArchived =
+						t.archived === true ||
+						t.active === false ||
+						(t.archivedAt !== undefined && t.archivedAt !== null)
+					if (isArchived) continue
+					const key = t.label.trim().toLowerCase()
+					if (seenLabels.has(key)) {
+						throw conflict(
+							'duplicate_table_label',
+							`Duplicate active table label "${t.label}" in floor plan save`,
+						)
+					}
+					seenLabels.add(key)
 				}
-				await db
-					.update(rsvTables)
-					.set({
-						areaId: t.areaId,
-						label: t.label.trim(),
-						shape: t.shape ?? existing.shape,
-						minCovers,
-						maxCovers,
-						onlineBookable:
-							t.onlineBookable ?? t.onlineEnabled ?? existing.onlineBookable,
-						combinable: t.combinable ?? existing.combinable,
-						priority: t.priority ?? existing.priority,
-						resetBufferMin:
-							t.resetBufferMin !== undefined
-								? (t.resetBufferMin ?? 0)
-								: existing.resetBufferMin,
-						x: t.x ?? existing.x,
-						y: t.y ?? existing.y,
-						w: t.w ?? t.width ?? existing.w,
-						h: t.h ?? t.height ?? existing.h,
-						rotation: t.rotation ?? existing.rotation,
-						archivedAt: nextArchivedAt,
-						updatedAt: now,
-					})
-					.where(eq(rsvTables.id, id))
-			} else {
-				await db.insert(rsvTables).values({
-					id,
-					locationId,
-					areaId: t.areaId,
-					label: t.label.trim(),
-					shape: t.shape ?? 'square',
-					minCovers,
-					maxCovers,
-					onlineBookable: t.onlineBookable ?? t.onlineEnabled ?? true,
-					combinable: t.combinable ?? false,
-					priority: t.priority ?? 0,
-					resetBufferMin: t.resetBufferMin ?? 0,
-					x: t.x ?? 0,
-					y: t.y ?? 0,
-					w: t.w ?? t.width ?? 60,
-					h: t.h ?? t.height ?? 60,
-					rotation: t.rotation ?? 0,
-					archivedAt: nextArchivedAt,
-					createdAt: now,
-					updatedAt: now,
-				})
 			}
-		}
 
-		if (payload.archiveMissingTables) {
-			for (const existing of existingTables) {
-				if (existing.archivedAt === null && !seenIds.has(existing.id)) {
+			// Upsert areas if provided
+			if (payload.areas) {
+				for (const a of payload.areas) {
+					const id = a.id ?? createId('area')
+					const existing = await db
+						.select()
+						.from(rsvAreas)
+						.where(
+							and(eq(rsvAreas.id, id), eq(rsvAreas.locationId, locationId)),
+						)
+						.get()
+					const isArchived =
+						a.archived === true ||
+						a.active === false ||
+						(a.archivedAt !== undefined && a.archivedAt !== null)
+					if (existing) {
+						await db
+							.update(rsvAreas)
+							.set({
+								name: a.name.trim(),
+								...(a.nameI18n !== undefined ? { nameI18n: a.nameI18n } : {}),
+								...(a.onlineBookable !== undefined
+									? { onlineBookable: a.onlineBookable }
+									: {}),
+								...(a.guestSelectable !== undefined
+									? { guestSelectable: a.guestSelectable }
+									: {}),
+								...(a.canvasW !== undefined ? { canvasW: a.canvasW } : {}),
+								...(a.canvasH !== undefined ? { canvasH: a.canvasH } : {}),
+								sort: a.sort ?? a.sortOrder ?? existing.sort,
+								archivedAt: isArchived ? (existing.archivedAt ?? now) : null,
+								updatedAt: now,
+								version: existing.version + 1,
+							})
+							.where(eq(rsvAreas.id, id))
+					} else {
+						await db.insert(rsvAreas).values({
+							id,
+							locationId,
+							name: a.name.trim(),
+							nameI18n: a.nameI18n ?? { en: a.name.trim() },
+							sort: a.sort ?? a.sortOrder ?? 0,
+							onlineBookable: a.onlineBookable ?? true,
+							guestSelectable: a.guestSelectable ?? true,
+							canvasW: a.canvasW ?? 1200,
+							canvasH: a.canvasH ?? 800,
+							archivedAt: isArchived ? now : null,
+							createdAt: now,
+							updatedAt: now,
+							version: 1,
+						})
+					}
+				}
+			}
+
+			// Upsert tables if provided
+			if (payload.tables) {
+				const existingTables = await db
+					.select()
+					.from(rsvTables)
+					.where(eq(rsvTables.locationId, locationId))
+					.all()
+				const existingById = new Map(existingTables.map((t) => [t.id, t]))
+				const seenIds = new Set<string>()
+
+				for (const t of payload.tables) {
+					const id = t.id ?? createId('tbl')
+					seenIds.add(id)
+					const existing = existingById.get(id)
+					const minCovers =
+						t.minCovers ?? t.minSeats ?? existing?.minCovers ?? 1
+					const maxCovers =
+						t.maxCovers ?? t.maxSeats ?? existing?.maxCovers ?? 2
+					if (minCovers < 1 || maxCovers < minCovers || maxCovers > 99) {
+						throw badRequest(
+							'invalid_capacity',
+							'minCovers must be >= 1 and <= maxCovers (<= 99)',
+						)
+					}
+					const isArchived =
+						t.archived === true ||
+						t.active === false ||
+						(t.archivedAt !== undefined && t.archivedAt !== null)
+					const nextArchivedAt = isArchived
+						? (existing?.archivedAt ?? now)
+						: null
+
+					if (existing) {
+						if (existing.archivedAt === null && nextArchivedAt !== null) {
+							invalidatedTableIds.push(id)
+						}
+						await db
+							.update(rsvTables)
+							.set({
+								areaId: t.areaId,
+								label: t.label.trim(),
+								shape: t.shape ?? existing.shape,
+								minCovers,
+								maxCovers,
+								onlineBookable:
+									t.onlineBookable ??
+									t.onlineEnabled ??
+									existing.onlineBookable,
+								combinable: t.combinable ?? existing.combinable,
+								priority: t.priority ?? existing.priority,
+								resetBufferMin:
+									t.resetBufferMin !== undefined
+										? (t.resetBufferMin ?? 0)
+										: existing.resetBufferMin,
+								x: t.x ?? existing.x,
+								y: t.y ?? existing.y,
+								w: t.w ?? t.width ?? existing.w,
+								h: t.h ?? t.height ?? existing.h,
+								rotation: t.rotation ?? existing.rotation,
+								archivedAt: nextArchivedAt,
+								updatedAt: now,
+							})
+							.where(eq(rsvTables.id, id))
+					} else {
+						await db.insert(rsvTables).values({
+							id,
+							locationId,
+							areaId: t.areaId,
+							label: t.label.trim(),
+							shape: t.shape ?? 'square',
+							minCovers,
+							maxCovers,
+							onlineBookable: t.onlineBookable ?? t.onlineEnabled ?? true,
+							combinable: t.combinable ?? false,
+							priority: t.priority ?? 0,
+							resetBufferMin: t.resetBufferMin ?? 0,
+							x: t.x ?? 0,
+							y: t.y ?? 0,
+							w: t.w ?? t.width ?? 60,
+							h: t.h ?? t.height ?? 60,
+							rotation: t.rotation ?? 0,
+							archivedAt: nextArchivedAt,
+							createdAt: now,
+							updatedAt: now,
+						})
+					}
+				}
+
+				if (payload.archiveMissingTables) {
+					for (const existing of existingTables) {
+						if (existing.archivedAt === null && !seenIds.has(existing.id)) {
+							await db
+								.update(rsvTables)
+								.set({ archivedAt: now, updatedAt: now })
+								.where(eq(rsvTables.id, existing.id))
+							invalidatedTableIds.push(existing.id)
+						}
+					}
+				}
+			}
+
+			// Upsert combinations if provided
+			const combosInput = payload.combos ?? payload.combinations
+			if (combosInput) {
+				for (const c of combosInput) {
+					const id = c.id ?? createId('cmb')
+					const existing = await db
+						.select()
+						.from(rsvTableCombos)
+						.where(
+							and(
+								eq(rsvTableCombos.id, id),
+								eq(rsvTableCombos.locationId, locationId),
+							),
+						)
+						.get()
+					const minCovers =
+						c.minCovers ?? c.minSeats ?? existing?.minCovers ?? 2
+					const maxCovers =
+						c.maxCovers ?? c.maxSeats ?? existing?.maxCovers ?? 6
+					const isArchived =
+						c.archived === true ||
+						c.active === false ||
+						(c.archivedAt !== undefined && c.archivedAt !== null)
+					const nextArchivedAt = isArchived
+						? (existing?.archivedAt ?? now)
+						: null
+					const label = (c.label ?? c.name ?? existing?.label ?? 'Combo').trim()
+					const uniqueTableIds = [...new Set(c.tableIds)].sort()
+
+					if (!isArchived) {
+						if (uniqueTableIds.length < 2) {
+							throw badRequest(
+								'invalid_combination',
+								'Combination must contain at least 2 distinct tables',
+							)
+						}
+						const memberTables = await db
+							.select()
+							.from(rsvTables)
+							.where(
+								and(
+									eq(rsvTables.locationId, locationId),
+									inArray(rsvTables.id, uniqueTableIds),
+								),
+							)
+							.all()
+						if (memberTables.length !== uniqueTableIds.length) {
+							throw badRequest(
+								'invalid_combination_tables',
+								'All combination tables must belong to this location',
+							)
+						}
+						for (const tbl of memberTables) {
+							if (tbl.archivedAt !== null || !tbl.combinable) {
+								throw badRequest(
+									'table_not_combinable',
+									`Table "${tbl.label}" is not combinable or is archived`,
+								)
+							}
+						}
+					}
+
+					if (existing) {
+						await db
+							.update(rsvTableCombos)
+							.set({
+								label,
+								minCovers,
+								maxCovers,
+								priority: c.priority ?? existing.priority,
+								onlineBookable: c.onlineBookable ?? existing.onlineBookable,
+								archivedAt: nextArchivedAt,
+								updatedAt: now,
+							})
+							.where(eq(rsvTableCombos.id, id))
+						await db
+							.delete(rsvTableComboMembers)
+							.where(eq(rsvTableComboMembers.comboId, id))
+					} else {
+						await db.insert(rsvTableCombos).values({
+							id,
+							locationId,
+							label,
+							minCovers,
+							maxCovers,
+							priority: c.priority ?? 0,
+							onlineBookable: c.onlineBookable ?? true,
+							archivedAt: nextArchivedAt,
+							createdAt: now,
+							updatedAt: now,
+						})
+					}
+					for (const tid of uniqueTableIds) {
+						await db.insert(rsvTableComboMembers).values({
+							comboId: id,
+							tableId: tid,
+						})
+					}
+				}
+
+				const activeCombos = await db
+					.select()
+					.from(rsvTableCombos)
+					.where(
+						and(
+							eq(rsvTableCombos.locationId, locationId),
+							isNull(rsvTableCombos.archivedAt),
+						),
+					)
+					.all()
+				if (activeCombos.length > 1) {
+					const activeComboIds = activeCombos.map((c) => c.id)
+					const allMembers = await db
+						.select()
+						.from(rsvTableComboMembers)
+						.where(inArray(rsvTableComboMembers.comboId, activeComboIds))
+						.all()
+					const seenCanonicalKeys = new Set<string>()
+					for (const ac of activeCombos) {
+						const key = allMembers
+							.filter((m) => m.comboId === ac.id)
+							.map((m) => m.tableId)
+							.sort()
+							.join(',')
+						if (seenCanonicalKeys.has(key)) {
+							throw conflict(
+								'duplicate_combination',
+								'An active combination with the same member tables already exists',
+							)
+						}
+						seenCanonicalKeys.add(key)
+					}
+				}
+			}
+
+			// Upsert floor elements if provided
+			const elementsInput = payload.elements ?? payload.floorElements
+			if (elementsInput) {
+				const locAreas = await db
+					.select()
+					.from(rsvAreas)
+					.where(eq(rsvAreas.locationId, locationId))
+					.all()
+				const locAreaIds = locAreas.map((a) => a.id)
+				if (locAreaIds.length > 0) {
 					await db
-						.update(rsvTables)
-						.set({ archivedAt: now, updatedAt: now })
-						.where(eq(rsvTables.id, existing.id))
-					invalidatedTableIds.push(existing.id)
+						.delete(rsvFloorElements)
+						.where(inArray(rsvFloorElements.areaId, locAreaIds))
+				}
+				for (const el of elementsInput) {
+					const id = el.id ?? createId('el')
+					await db.insert(rsvFloorElements).values({
+						id,
+						areaId: el.areaId,
+						kind: el.kind,
+						label: el.label ?? null,
+						x: el.x ?? 0,
+						y: el.y ?? 0,
+						w: el.w ?? el.width ?? 60,
+						h: el.h ?? el.height ?? 20,
+						rotation: el.rotation ?? 0,
+					})
 				}
 			}
-		}
-	}
 
-	// Upsert combinations if provided
-	const combosInput = payload.combos ?? payload.combinations
-	if (combosInput) {
-		for (const c of combosInput) {
-			const id = c.id ?? createId('cmb')
-			const existing = await db
-				.select()
-				.from(rsvTableCombos)
-				.where(
-					and(
-						eq(rsvTableCombos.id, id),
-						eq(rsvTableCombos.locationId, locationId),
-					),
-				)
-				.get()
-			const minCovers = c.minCovers ?? c.minSeats ?? existing?.minCovers ?? 2
-			const maxCovers = c.maxCovers ?? c.maxSeats ?? existing?.maxCovers ?? 6
-			const isArchived =
-				c.archived === true ||
-				c.active === false ||
-				(c.archivedAt !== undefined && c.archivedAt !== null)
-			const nextArchivedAt = isArchived ? (existing?.archivedAt ?? now) : null
-			const label = (c.label ?? c.name ?? existing?.label ?? 'Combo').trim()
+			const floorPlanVersion = await bumpFloorPlanVersion(
+				db,
+				locationId,
+				actorId,
+			)
+			const reflowResult = await reflowFutureBookingsForLocation(
+				db,
+				locationId,
+				{
+					invalidatedTableIds,
+				},
+			)
 
-			if (existing) {
-				await db
-					.update(rsvTableCombos)
-					.set({
-						label,
-						minCovers,
-						maxCovers,
-						priority: c.priority ?? existing.priority,
-						onlineBookable: c.onlineBookable ?? existing.onlineBookable,
-						archivedAt: nextArchivedAt,
-						updatedAt: now,
-					})
-					.where(eq(rsvTableCombos.id, id))
-				await db
-					.delete(rsvTableComboMembers)
-					.where(eq(rsvTableComboMembers.comboId, id))
-			} else {
-				await db.insert(rsvTableCombos).values({
-					id,
-					locationId,
-					label,
-					minCovers,
-					maxCovers,
-					priority: c.priority ?? 0,
-					onlineBookable: c.onlineBookable ?? true,
-					archivedAt: nextArchivedAt,
-					createdAt: now,
-					updatedAt: now,
-				})
-			}
-			for (const tid of new Set(c.tableIds)) {
-				await db.insert(rsvTableComboMembers).values({
-					comboId: id,
-					tableId: tid,
-				})
-			}
-		}
-	}
-
-	// Upsert floor elements if provided
-	const elementsInput = payload.elements ?? payload.floorElements
-	if (elementsInput) {
-		const locAreas = await db
-			.select()
-			.from(rsvAreas)
-			.where(eq(rsvAreas.locationId, locationId))
-			.all()
-		const locAreaIds = locAreas.map((a) => a.id)
-		if (locAreaIds.length > 0) {
-			await db
-				.delete(rsvFloorElements)
-				.where(inArray(rsvFloorElements.areaId, locAreaIds))
-		}
-		for (const el of elementsInput) {
-			const id = el.id ?? createId('el')
-			await db.insert(rsvFloorElements).values({
-				id,
-				areaId: el.areaId,
-				kind: el.kind,
-				label: el.label ?? null,
-				x: el.x ?? 0,
-				y: el.y ?? 0,
-				w: el.w ?? el.width ?? 60,
-				h: el.h ?? el.height ?? 20,
-				rotation: el.rotation ?? 0,
+			await writeSetupAudit(db, {
+				actorId,
+				locationId,
+				action: 'floor_plan.save',
+				entityKind: 'floor_plan',
+				entityId: locationId,
+				diff: { floorPlanVersion },
 			})
-		}
-	}
 
-	const floorPlanVersion = await bumpFloorPlanVersion(db, locationId, actorId)
-	const reflowResult = await reflowFutureBookingsForLocation(db, locationId, {
-		invalidatedTableIds,
-	})
-
-	await writeSetupAudit(db, {
-		actorId,
-		locationId,
-		action: 'floor_plan.save',
-		entityKind: 'floor_plan',
-		entityId: locationId,
-		diff: { floorPlanVersion },
-	})
-
-	const floorPlan = await getFloorPlan(db, orgId, locationId)
-	return {
-		...floorPlan,
-		floorPlanVersion,
-		floor_plan_version: floorPlanVersion,
-		...reflowResult,
-	}
+			const floorPlan = await getFloorPlan(db, orgId, locationId)
+			return {
+				...floorPlan,
+				floorPlanVersion,
+				floor_plan_version: floorPlanVersion,
+				...reflowResult,
+			}
+		},
+		orgId,
+	)
 }
 
 // ============================================================================
@@ -1700,78 +1886,85 @@ export async function createServiceForLocation(
 		sortOrder?: number
 	},
 ) {
-	await ensureSettingsRowForLocation(db, input.locationId)
-	const firstSeatingMin = input.firstSeatingMin ?? input.startMin ?? 0
-	const lastSeatingMin = input.lastSeatingMin
-	const endMin = input.endMin
+	return withSetupWrite(db, async (db) => {
+		await ensureSettingsRowForLocation(db, input.locationId)
+		const firstSeatingMin = input.firstSeatingMin ?? input.startMin ?? 0
+		const lastSeatingMin = input.lastSeatingMin
+		const endMin = input.endMin
 
-	if (firstSeatingMin > lastSeatingMin || lastSeatingMin > endMin) {
-		throw badRequest(
-			'invalid_seating_order',
-			'firstSeatingMin <= lastSeatingMin <= endMin is required',
-		)
-	}
-	if (endMin - firstSeatingMin > 1440) {
-		throw badRequest(
-			'invalid_service_span',
-			'Service span (endMin - firstSeatingMin) cannot exceed 1440 minutes',
-		)
-	}
-
-	let daysMask = input.daysMask ?? 127
-	if (input.daysMask === undefined && input.daysOfWeek) {
-		daysMask = 0
-		for (const d of input.daysOfWeek) {
-			daysMask |= 1 << d
+		if (firstSeatingMin > lastSeatingMin || lastSeatingMin > endMin) {
+			throw badRequest(
+				'invalid_seating_order',
+				'firstSeatingMin <= lastSeatingMin <= endMin is required',
+			)
 		}
-	}
+		if (endMin - firstSeatingMin > 1440) {
+			throw badRequest(
+				'invalid_service_span',
+				'Service span (endMin - firstSeatingMin) cannot exceed 1440 minutes',
+			)
+		}
 
-	const id = createId('srv')
-	await db.insert(rsvServices).values({
-		id,
-		locationId: input.locationId,
-		name: input.name.trim(),
-		nameI18n: input.nameI18n ?? { en: input.name.trim() },
-		daysMask,
-		firstSeatingMin,
-		lastSeatingMin,
-		endMin,
-		intervalMin: input.intervalMin ?? null,
-		effectiveFrom: input.effectiveFrom ?? null,
-		effectiveTo: input.effectiveTo ?? null,
-		priority: input.priority ?? 0,
-		specialDayId: input.specialDayId ?? null,
-		onlineEnabled: input.onlineEnabled ?? input.onlineBookable ?? true,
-		onlineFromMin: input.onlineFromMin ?? null,
-		onlineToMin: input.onlineToMin ?? null,
-		maxParty: input.maxParty ?? null,
-		onlinePartyMax: input.onlinePartyMax ?? null,
-		onlineCapPerInterval: input.onlineCapPerInterval ?? null,
-		concurrentCoversCap: input.concurrentCoversCap ?? null,
-		policyId: input.policyId ?? null,
-		sectionLayoutId: input.sectionLayoutId ?? null,
-		allowOverrunPastEnd: input.allowOverrunPastEnd ?? true,
-		colorToken: input.colorToken ?? input.color ?? 'neutral',
-		sort: input.sort ?? input.sortOrder ?? 0,
-		archivedAt: null,
-		version: 1,
+		let daysMask = input.daysMask ?? 127
+		if (input.daysMask === undefined && input.daysOfWeek) {
+			daysMask = 0
+			for (const d of input.daysOfWeek) {
+				daysMask |= 1 << d
+			}
+		}
+
+		const id = createId('srv')
+		await db.insert(rsvServices).values({
+			id,
+			locationId: input.locationId,
+			name: input.name.trim(),
+			nameI18n: input.nameI18n ?? { en: input.name.trim() },
+			daysMask,
+			firstSeatingMin,
+			lastSeatingMin,
+			endMin,
+			intervalMin: input.intervalMin ?? null,
+			effectiveFrom: input.effectiveFrom ?? null,
+			effectiveTo: input.effectiveTo ?? null,
+			priority: input.priority ?? 0,
+			specialDayId: input.specialDayId ?? null,
+			onlineEnabled: input.onlineEnabled ?? input.onlineBookable ?? true,
+			onlineFromMin: input.onlineFromMin ?? null,
+			onlineToMin: input.onlineToMin ?? null,
+			maxParty: input.maxParty ?? null,
+			onlinePartyMax: input.onlinePartyMax ?? null,
+			onlineCapPerInterval: input.onlineCapPerInterval ?? null,
+			concurrentCoversCap: input.concurrentCoversCap ?? null,
+			policyId: input.policyId ?? null,
+			sectionLayoutId: input.sectionLayoutId ?? null,
+			allowOverrunPastEnd: input.allowOverrunPastEnd ?? true,
+			colorToken: input.colorToken ?? input.color ?? 'neutral',
+			sort: input.sort ?? input.sortOrder ?? 0,
+			archivedAt: null,
+			version: 1,
+		})
+
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'service.create',
+			entityKind: 'service',
+			entityId: id,
+			diff: {
+				name: input.name.trim(),
+				firstSeatingMin,
+				lastSeatingMin,
+				endMin,
+			},
+		})
+
+		const row = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, id))
+			.get()
+		return serializeService(row!)
 	})
-
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'service.create',
-		entityKind: 'service',
-		entityId: id,
-		diff: { name: input.name.trim(), firstSeatingMin, lastSeatingMin, endMin },
-	})
-
-	const row = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, id))
-		.get()
-	return serializeService(row!)
 }
 
 export async function updateServiceForLocation(
@@ -1811,124 +2004,131 @@ export async function updateServiceForLocation(
 		archived?: boolean
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, serviceId))
-		.get()
-	if (!existing) throw notFound('Service not found')
-	if (patch.locationId && patch.locationId !== existing.locationId) {
-		throw notFound('Service not found in location')
-	}
-
-	const firstSeatingMin =
-		patch.firstSeatingMin ?? patch.startMin ?? existing.firstSeatingMin
-	const lastSeatingMin = patch.lastSeatingMin ?? existing.lastSeatingMin
-	const endMin = patch.endMin ?? existing.endMin
-	if (firstSeatingMin > lastSeatingMin || lastSeatingMin > endMin) {
-		throw badRequest(
-			'invalid_seating_order',
-			'firstSeatingMin <= lastSeatingMin <= endMin is required',
-		)
-	}
-	if (endMin - firstSeatingMin > 1440) {
-		throw badRequest(
-			'invalid_service_span',
-			'Service span (endMin - firstSeatingMin) cannot exceed 1440 minutes',
-		)
-	}
-
-	let daysMask = patch.daysMask ?? existing.daysMask
-	if (patch.daysMask === undefined && patch.daysOfWeek) {
-		daysMask = 0
-		for (const d of patch.daysOfWeek) {
-			daysMask |= 1 << d
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, serviceId))
+			.get()
+		if (!existing) throw notFound('Service not found')
+		if (patch.locationId && patch.locationId !== existing.locationId) {
+			throw notFound('Service not found in location')
 		}
-	}
 
-	const now = Date.now()
-	const shouldArchive =
-		patch.archived === true ||
-		patch.active === false ||
-		(patch.archived === undefined &&
-			patch.active === undefined &&
-			existing.archivedAt !== null)
-	const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+		const firstSeatingMin =
+			patch.firstSeatingMin ?? patch.startMin ?? existing.firstSeatingMin
+		const lastSeatingMin = patch.lastSeatingMin ?? existing.lastSeatingMin
+		const endMin = patch.endMin ?? existing.endMin
+		if (firstSeatingMin > lastSeatingMin || lastSeatingMin > endMin) {
+			throw badRequest(
+				'invalid_seating_order',
+				'firstSeatingMin <= lastSeatingMin <= endMin is required',
+			)
+		}
+		if (endMin - firstSeatingMin > 1440) {
+			throw badRequest(
+				'invalid_service_span',
+				'Service span (endMin - firstSeatingMin) cannot exceed 1440 minutes',
+			)
+		}
 
-	await db
-		.update(rsvServices)
-		.set({
-			...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
-			...(patch.nameI18n !== undefined ? { nameI18n: patch.nameI18n } : {}),
-			daysMask,
-			firstSeatingMin,
-			lastSeatingMin,
-			endMin,
-			...(patch.intervalMin !== undefined
-				? { intervalMin: patch.intervalMin }
-				: {}),
-			...(patch.effectiveFrom !== undefined
-				? { effectiveFrom: patch.effectiveFrom }
-				: {}),
-			...(patch.effectiveTo !== undefined
-				? { effectiveTo: patch.effectiveTo }
-				: {}),
-			...(patch.priority !== undefined ? { priority: patch.priority } : {}),
-			...(patch.onlineEnabled !== undefined ||
-			patch.onlineBookable !== undefined
-				? {
-						onlineEnabled:
-							patch.onlineEnabled ??
-							patch.onlineBookable ??
-							existing.onlineEnabled,
-					}
-				: {}),
-			...(patch.onlineFromMin !== undefined
-				? { onlineFromMin: patch.onlineFromMin }
-				: {}),
-			...(patch.onlineToMin !== undefined
-				? { onlineToMin: patch.onlineToMin }
-				: {}),
-			...(patch.maxParty !== undefined ? { maxParty: patch.maxParty } : {}),
-			...(patch.onlinePartyMax !== undefined
-				? { onlinePartyMax: patch.onlinePartyMax }
-				: {}),
-			...(patch.onlineCapPerInterval !== undefined
-				? { onlineCapPerInterval: patch.onlineCapPerInterval }
-				: {}),
-			...(patch.concurrentCoversCap !== undefined
-				? { concurrentCoversCap: patch.concurrentCoversCap }
-				: {}),
-			...(patch.policyId !== undefined ? { policyId: patch.policyId } : {}),
-			...(patch.sectionLayoutId !== undefined
-				? { sectionLayoutId: patch.sectionLayoutId }
-				: {}),
-			...(patch.allowOverrunPastEnd !== undefined
-				? { allowOverrunPastEnd: patch.allowOverrunPastEnd }
-				: {}),
-			...(patch.colorToken !== undefined || patch.color !== undefined
-				? {
-						colorToken: patch.colorToken ?? patch.color ?? existing.colorToken,
-					}
-				: {}),
-			...(patch.sort !== undefined || patch.sortOrder !== undefined
-				? { sort: patch.sort ?? patch.sortOrder ?? existing.sort }
-				: {}),
-			archivedAt: nextArchivedAt,
-			version: existing.version + 1,
-		})
-		.where(eq(rsvServices.id, serviceId))
+		let daysMask = patch.daysMask ?? existing.daysMask
+		if (patch.daysMask === undefined && patch.daysOfWeek) {
+			daysMask = 0
+			for (const d of inputDaysOfWeek(patch.daysOfWeek)) {
+				daysMask |= 1 << d
+			}
+		}
 
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-	)
-	const updated = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, serviceId))
-		.get()
-	return { service: serializeService(updated!), ...reflowResult }
+		const now = Date.now()
+		const shouldArchive =
+			patch.archived === true ||
+			patch.active === false ||
+			(patch.archived === undefined &&
+				patch.active === undefined &&
+				existing.archivedAt !== null)
+		const nextArchivedAt = shouldArchive ? (existing.archivedAt ?? now) : null
+
+		await db
+			.update(rsvServices)
+			.set({
+				...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+				...(patch.nameI18n !== undefined ? { nameI18n: patch.nameI18n } : {}),
+				daysMask,
+				firstSeatingMin,
+				lastSeatingMin,
+				endMin,
+				...(patch.intervalMin !== undefined
+					? { intervalMin: patch.intervalMin }
+					: {}),
+				...(patch.effectiveFrom !== undefined
+					? { effectiveFrom: patch.effectiveFrom }
+					: {}),
+				...(patch.effectiveTo !== undefined
+					? { effectiveTo: patch.effectiveTo }
+					: {}),
+				...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+				...(patch.onlineEnabled !== undefined ||
+				patch.onlineBookable !== undefined
+					? {
+							onlineEnabled:
+								patch.onlineEnabled ??
+								patch.onlineBookable ??
+								existing.onlineEnabled,
+						}
+					: {}),
+				...(patch.onlineFromMin !== undefined
+					? { onlineFromMin: patch.onlineFromMin }
+					: {}),
+				...(patch.onlineToMin !== undefined
+					? { onlineToMin: patch.onlineToMin }
+					: {}),
+				...(patch.maxParty !== undefined ? { maxParty: patch.maxParty } : {}),
+				...(patch.onlinePartyMax !== undefined
+					? { onlinePartyMax: patch.onlinePartyMax }
+					: {}),
+				...(patch.onlineCapPerInterval !== undefined
+					? { onlineCapPerInterval: patch.onlineCapPerInterval }
+					: {}),
+				...(patch.concurrentCoversCap !== undefined
+					? { concurrentCoversCap: patch.concurrentCoversCap }
+					: {}),
+				...(patch.policyId !== undefined ? { policyId: patch.policyId } : {}),
+				...(patch.sectionLayoutId !== undefined
+					? { sectionLayoutId: patch.sectionLayoutId }
+					: {}),
+				...(patch.allowOverrunPastEnd !== undefined
+					? { allowOverrunPastEnd: patch.allowOverrunPastEnd }
+					: {}),
+				...(patch.colorToken !== undefined || patch.color !== undefined
+					? {
+							colorToken:
+								patch.colorToken ?? patch.color ?? existing.colorToken,
+						}
+					: {}),
+				...(patch.sort !== undefined || patch.sortOrder !== undefined
+					? { sort: patch.sort ?? patch.sortOrder ?? existing.sort }
+					: {}),
+				archivedAt: nextArchivedAt,
+				version: existing.version + 1,
+			})
+			.where(eq(rsvServices.id, serviceId))
+
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+		)
+		const updated = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, serviceId))
+			.get()
+		return { service: serializeService(updated!), ...reflowResult }
+	})
+}
+
+function inputDaysOfWeek(days: number[]): number[] {
+	return days
 }
 
 export async function archiveServiceForLocation(
@@ -1937,42 +2137,44 @@ export async function archiveServiceForLocation(
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, serviceId))
-		.get()
-	if (!existing) throw notFound('Service not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Service not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, serviceId))
+			.get()
+		if (!existing) throw notFound('Service not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Service not found in location')
+		}
 
-	const now = Date.now()
-	await db
-		.update(rsvServices)
-		.set({
-			archivedAt: now,
-			version: existing.version + 1,
+		const now = Date.now()
+		await db
+			.update(rsvServices)
+			.set({
+				archivedAt: now,
+				version: existing.version + 1,
+			})
+			.where(eq(rsvServices.id, serviceId))
+
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+		)
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'service.archive',
+			entityKind: 'service',
+			entityId: serviceId,
 		})
-		.where(eq(rsvServices.id, serviceId))
-
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-	)
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'service.archive',
-		entityKind: 'service',
-		entityId: serviceId,
+		const updated = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, serviceId))
+			.get()
+		return { service: serializeService(updated!), ...reflowResult }
 	})
-	const updated = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, serviceId))
-		.get()
-	return { service: serializeService(updated!), ...reflowResult }
 }
 
 // ============================================================================
@@ -2011,39 +2213,67 @@ export async function createTurnTimeForLocation(
 		daysMask?: number | null
 	},
 ) {
-	const partyMin = input.partyMin ?? input.minParty ?? 1
-	const partyMax = input.partyMax ?? input.maxParty ?? 2
-	const minutes = input.minutes ?? input.turnMin ?? input.durationMin ?? 90
+	return withSetupWrite(db, async (db) => {
+		const partyMin = input.partyMin ?? input.minParty ?? 1
+		const partyMax = input.partyMax ?? input.maxParty ?? 2
+		const minutes = input.minutes ?? input.turnMin ?? input.durationMin ?? 90
+		const targetServiceId = input.serviceId ?? null
+		const daysMask = input.daysMask ?? null
 
-	if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
-		throw badRequest(
-			'invalid_party_range',
-			'partyMin must be >= 1 and <= partyMax (<= 99)',
-		)
-	}
-	if (minutes < 15 || minutes > 720) {
-		throw badRequest(
-			'invalid_turn_minutes',
-			'Turn time minutes must be between 15 and 720',
-		)
-	}
+		if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
+			throw badRequest(
+				'invalid_party_range',
+				'partyMin must be >= 1 and <= partyMax (<= 99)',
+			)
+		}
+		if (minutes < 15 || minutes > 480) {
+			throw badRequest(
+				'invalid_turn_minutes',
+				'Turn time minutes must be between 15 and 480',
+			)
+		}
 
-	const id = createId('tt')
-	await db.insert(rsvTurnTimes).values({
-		id,
-		locationId: input.locationId,
-		serviceId: input.serviceId ?? null,
-		partyMin,
-		partyMax,
-		minutes,
-		daysMask: input.daysMask ?? null,
+		const existingBuckets = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(
+				and(
+					eq(rsvTurnTimes.locationId, input.locationId),
+					targetServiceId === null
+						? isNull(rsvTurnTimes.serviceId)
+						: eq(rsvTurnTimes.serviceId, targetServiceId),
+				),
+			)
+			.all()
+		for (const other of existingBuckets) {
+			const partyOverlap =
+				partyMin <= other.partyMax && partyMax >= other.partyMin
+			const maskOverlap = ((daysMask ?? 127) & (other.daysMask ?? 127)) !== 0
+			if (partyOverlap && maskOverlap) {
+				throw badRequest(
+					'overlapping_turn_time_bucket',
+					`Turn time party range [${partyMin}, ${partyMax}] overlaps existing bucket [${other.partyMin}, ${other.partyMax}]`,
+				)
+			}
+		}
+
+		const id = createId('tt')
+		await db.insert(rsvTurnTimes).values({
+			id,
+			locationId: input.locationId,
+			serviceId: targetServiceId,
+			partyMin,
+			partyMax,
+			minutes,
+			daysMask,
+		})
+		const row = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(eq(rsvTurnTimes.id, id))
+			.get()
+		return serializeTurnTime(row!)
 	})
-	const row = await db
-		.select()
-		.from(rsvTurnTimes)
-		.where(eq(rsvTurnTimes.id, id))
-		.get()
-	return serializeTurnTime(row!)
 }
 
 export async function updateTurnTimeForLocation(
@@ -2063,43 +2293,83 @@ export async function updateTurnTimeForLocation(
 		daysMask?: number | null
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTurnTimes)
-		.where(eq(rsvTurnTimes.id, turnTimeId))
-		.get()
-	if (!existing) throw notFound('Turn time bucket not found')
-	if (patch.locationId && patch.locationId !== existing.locationId) {
-		throw notFound('Turn time bucket not found in location')
-	}
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(eq(rsvTurnTimes.id, turnTimeId))
+			.get()
+		if (!existing) throw notFound('Turn time bucket not found')
+		if (patch.locationId && patch.locationId !== existing.locationId) {
+			throw notFound('Turn time bucket not found in location')
+		}
 
-	const partyMin = patch.partyMin ?? patch.minParty ?? existing.partyMin
-	const partyMax = patch.partyMax ?? patch.maxParty ?? existing.partyMax
-	const minutes =
-		patch.minutes ?? patch.turnMin ?? patch.durationMin ?? existing.minutes
-	if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
-		throw badRequest(
-			'invalid_party_range',
-			'partyMin must be >= 1 and <= partyMax (<= 99)',
-		)
-	}
+		const partyMin = patch.partyMin ?? patch.minParty ?? existing.partyMin
+		const partyMax = patch.partyMax ?? patch.maxParty ?? existing.partyMax
+		const minutes =
+			patch.minutes ?? patch.turnMin ?? patch.durationMin ?? existing.minutes
+		const targetServiceId =
+			patch.serviceId !== undefined ? patch.serviceId : existing.serviceId
+		const daysMask =
+			patch.daysMask !== undefined ? patch.daysMask : existing.daysMask
 
-	await db
-		.update(rsvTurnTimes)
-		.set({
-			...(patch.serviceId !== undefined ? { serviceId: patch.serviceId } : {}),
-			partyMin,
-			partyMax,
-			minutes,
-			...(patch.daysMask !== undefined ? { daysMask: patch.daysMask } : {}),
-		})
-		.where(eq(rsvTurnTimes.id, turnTimeId))
-	const updated = await db
-		.select()
-		.from(rsvTurnTimes)
-		.where(eq(rsvTurnTimes.id, turnTimeId))
-		.get()
-	return serializeTurnTime(updated!)
+		if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
+			throw badRequest(
+				'invalid_party_range',
+				'partyMin must be >= 1 and <= partyMax (<= 99)',
+			)
+		}
+		if (minutes < 15 || minutes > 480) {
+			throw badRequest(
+				'invalid_turn_minutes',
+				'Turn time minutes must be between 15 and 480',
+			)
+		}
+
+		const existingBuckets = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(
+				and(
+					eq(rsvTurnTimes.locationId, existing.locationId),
+					targetServiceId === null
+						? isNull(rsvTurnTimes.serviceId)
+						: eq(rsvTurnTimes.serviceId, targetServiceId),
+				),
+			)
+			.all()
+		for (const other of existingBuckets) {
+			if (other.id === turnTimeId) continue
+			const partyOverlap =
+				partyMin <= other.partyMax && partyMax >= other.partyMin
+			const maskOverlap = ((daysMask ?? 127) & (other.daysMask ?? 127)) !== 0
+			if (partyOverlap && maskOverlap) {
+				throw badRequest(
+					'overlapping_turn_time_bucket',
+					`Turn time party range [${partyMin}, ${partyMax}] overlaps existing bucket [${other.partyMin}, ${other.partyMax}]`,
+				)
+			}
+		}
+
+		await db
+			.update(rsvTurnTimes)
+			.set({
+				...(patch.serviceId !== undefined
+					? { serviceId: patch.serviceId }
+					: {}),
+				partyMin,
+				partyMax,
+				minutes,
+				...(patch.daysMask !== undefined ? { daysMask: patch.daysMask } : {}),
+			})
+			.where(eq(rsvTurnTimes.id, turnTimeId))
+		const updated = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(eq(rsvTurnTimes.id, turnTimeId))
+			.get()
+		return serializeTurnTime(updated!)
+	})
 }
 
 export async function deleteTurnTimeForLocation(
@@ -2108,17 +2378,19 @@ export async function deleteTurnTimeForLocation(
 	ignoredActorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvTurnTimes)
-		.where(eq(rsvTurnTimes.id, turnTimeId))
-		.get()
-	if (!existing) throw notFound('Turn time bucket not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Turn time bucket not found in location')
-	}
-	await db.delete(rsvTurnTimes).where(eq(rsvTurnTimes.id, turnTimeId))
-	return { deleted: true, id: turnTimeId }
+	return withSetupWrite(db, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvTurnTimes)
+			.where(eq(rsvTurnTimes.id, turnTimeId))
+			.get()
+		if (!existing) throw notFound('Turn time bucket not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Turn time bucket not found in location')
+		}
+		await db.delete(rsvTurnTimes).where(eq(rsvTurnTimes.id, turnTimeId))
+		return { deleted: true, id: turnTimeId }
+	})
 }
 
 // ============================================================================
@@ -2148,7 +2420,7 @@ export async function listPacingRulesForLocation(
 }
 
 export async function createPacingRuleForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	input: {
 		actorId: string | null
 		locationId?: string
@@ -2167,45 +2439,50 @@ export async function createPacingRuleForLocation(
 		channel?: 'all' | 'online'
 	},
 ) {
-	const srv = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, input.serviceId))
-		.get()
-	if (!srv || (input.locationId && srv.locationId !== input.locationId)) {
-		throw badRequest('invalid_service', 'Service does not exist in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const srv = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, input.serviceId))
+			.get()
+		if (!srv || (input.locationId && srv.locationId !== input.locationId)) {
+			throw badRequest('invalid_service', 'Service does not exist in location')
+		}
 
-	const id = createId('pac')
-	await db.insert(rsvPacingRules).values({
-		id,
-		serviceId: input.serviceId,
-		fromMin: input.fromMin ?? input.windowStartMin ?? null,
-		toMin: input.toMin ?? input.windowEndMin ?? null,
-		bucketMin: input.bucketMin ?? 15,
-		maxCovers: input.maxCovers ?? input.maxCoversPerSlot ?? null,
-		maxParties: input.maxParties ?? input.maxPartiesPerSlot ?? null,
-		rollingMin: input.rollingMin ?? null,
-		rollingMaxCovers: input.rollingMaxCovers ?? null,
-		channel: input.channel ?? 'all',
+		const id = createId('pac')
+		await db.insert(rsvPacingRules).values({
+			id,
+			serviceId: input.serviceId,
+			fromMin: input.fromMin ?? input.windowStartMin ?? null,
+			toMin: input.toMin ?? input.windowEndMin ?? null,
+			bucketMin: input.bucketMin ?? 15,
+			maxCovers: input.maxCovers ?? input.maxCoversPerSlot ?? null,
+			maxParties: input.maxParties ?? input.maxPartiesPerSlot ?? null,
+			rollingMin: input.rollingMin ?? null,
+			rollingMaxCovers: input.rollingMaxCovers ?? null,
+			channel: input.channel ?? 'all',
+		})
+
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			srv.locationId,
+		)
+		const row = await db
+			.select()
+			.from(rsvPacingRules)
+			.where(eq(rsvPacingRules.id, id))
+			.get()
+		const serialized = serializePacingRule(row!)
+		return {
+			pacingRule: serialized,
+			rule: serialized,
+			...reflowResult,
+		}
 	})
-
-	const reflowResult = await reflowFutureBookingsForLocation(db, srv.locationId)
-	const row = await db
-		.select()
-		.from(rsvPacingRules)
-		.where(eq(rsvPacingRules.id, id))
-		.get()
-	const serialized = serializePacingRule(row!)
-	return {
-		pacingRule: serialized,
-		rule: serialized,
-		...reflowResult,
-	}
 }
 
 export async function updatePacingRuleForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	ruleId: string,
 	patch: {
 		actorId: string | null
@@ -2224,84 +2501,94 @@ export async function updatePacingRuleForLocation(
 		channel?: 'all' | 'online'
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvPacingRules)
-		.where(eq(rsvPacingRules.id, ruleId))
-		.get()
-	if (!existing) throw notFound('Pacing rule not found')
-	const srv = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, existing.serviceId))
-		.get()
-	if (!srv || (patch.locationId && srv.locationId !== patch.locationId)) {
-		throw notFound('Pacing rule not found in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvPacingRules)
+			.where(eq(rsvPacingRules.id, ruleId))
+			.get()
+		if (!existing) throw notFound('Pacing rule not found')
+		const srv = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, existing.serviceId))
+			.get()
+		if (!srv || (patch.locationId && srv.locationId !== patch.locationId)) {
+			throw notFound('Pacing rule not found in location')
+		}
 
-	await db
-		.update(rsvPacingRules)
-		.set({
-			...(patch.fromMin !== undefined || patch.windowStartMin !== undefined
-				? { fromMin: patch.fromMin ?? patch.windowStartMin ?? null }
-				: {}),
-			...(patch.toMin !== undefined || patch.windowEndMin !== undefined
-				? { toMin: patch.toMin ?? patch.windowEndMin ?? null }
-				: {}),
-			...(patch.bucketMin !== undefined ? { bucketMin: patch.bucketMin } : {}),
-			...(patch.maxCovers !== undefined || patch.maxCoversPerSlot !== undefined
-				? { maxCovers: patch.maxCovers ?? patch.maxCoversPerSlot ?? null }
-				: {}),
-			...(patch.maxParties !== undefined ||
-			patch.maxPartiesPerSlot !== undefined
-				? { maxParties: patch.maxParties ?? patch.maxPartiesPerSlot ?? null }
-				: {}),
-			...(patch.rollingMin !== undefined
-				? { rollingMin: patch.rollingMin }
-				: {}),
-			...(patch.rollingMaxCovers !== undefined
-				? { rollingMaxCovers: patch.rollingMaxCovers }
-				: {}),
-			...(patch.channel !== undefined ? { channel: patch.channel } : {}),
-		})
-		.where(eq(rsvPacingRules.id, ruleId))
+		await db
+			.update(rsvPacingRules)
+			.set({
+				...(patch.fromMin !== undefined || patch.windowStartMin !== undefined
+					? { fromMin: patch.fromMin ?? patch.windowStartMin ?? null }
+					: {}),
+				...(patch.toMin !== undefined || patch.windowEndMin !== undefined
+					? { toMin: patch.toMin ?? patch.windowEndMin ?? null }
+					: {}),
+				...(patch.bucketMin !== undefined
+					? { bucketMin: patch.bucketMin }
+					: {}),
+				...(patch.maxCovers !== undefined ||
+				patch.maxCoversPerSlot !== undefined
+					? { maxCovers: patch.maxCovers ?? patch.maxCoversPerSlot ?? null }
+					: {}),
+				...(patch.maxParties !== undefined ||
+				patch.maxPartiesPerSlot !== undefined
+					? { maxParties: patch.maxParties ?? patch.maxPartiesPerSlot ?? null }
+					: {}),
+				...(patch.rollingMin !== undefined
+					? { rollingMin: patch.rollingMin }
+					: {}),
+				...(patch.rollingMaxCovers !== undefined
+					? { rollingMaxCovers: patch.rollingMaxCovers }
+					: {}),
+				...(patch.channel !== undefined ? { channel: patch.channel } : {}),
+			})
+			.where(eq(rsvPacingRules.id, ruleId))
 
-	const reflowResult = await reflowFutureBookingsForLocation(db, srv.locationId)
-	const updated = await db
-		.select()
-		.from(rsvPacingRules)
-		.where(eq(rsvPacingRules.id, ruleId))
-		.get()
-	const serialized = serializePacingRule(updated!)
-	return {
-		pacingRule: serialized,
-		rule: serialized,
-		...reflowResult,
-	}
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			srv.locationId,
+		)
+		const updated = await db
+			.select()
+			.from(rsvPacingRules)
+			.where(eq(rsvPacingRules.id, ruleId))
+			.get()
+		const serialized = serializePacingRule(updated!)
+		return {
+			pacingRule: serialized,
+			rule: serialized,
+			...reflowResult,
+		}
+	})
 }
 
 export async function deletePacingRuleForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	ruleId: string,
 	ignoredActorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvPacingRules)
-		.where(eq(rsvPacingRules.id, ruleId))
-		.get()
-	if (!existing) throw notFound('Pacing rule not found')
-	const srv = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, existing.serviceId))
-		.get()
-	if (!srv || (locationId && srv.locationId !== locationId)) {
-		throw notFound('Pacing rule not found in location')
-	}
-	await db.delete(rsvPacingRules).where(eq(rsvPacingRules.id, ruleId))
-	return { deleted: true, id: ruleId }
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvPacingRules)
+			.where(eq(rsvPacingRules.id, ruleId))
+			.get()
+		if (!existing) throw notFound('Pacing rule not found')
+		const srv = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, existing.serviceId))
+			.get()
+		if (!srv || (locationId && srv.locationId !== locationId)) {
+			throw notFound('Pacing rule not found in location')
+		}
+		await db.delete(rsvPacingRules).where(eq(rsvPacingRules.id, ruleId))
+		return { deleted: true, id: ruleId }
+	})
 }
 
 // ============================================================================
@@ -2331,7 +2618,7 @@ export async function listServiceAvailabilityForLocation(
 }
 
 export async function upsertServiceAvailabilityForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	input: {
 		actorId: string | null
 		locationId?: string
@@ -2345,101 +2632,117 @@ export async function upsertServiceAvailabilityForLocation(
 		mode: 'online' | 'staff_only' | 'walk_in_only' | 'unavailable'
 	},
 ) {
-	const srv = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, input.serviceId))
-		.get()
-	if (!srv || (input.locationId && srv.locationId !== input.locationId)) {
-		throw badRequest('invalid_service', 'Service does not exist in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const srv = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, input.serviceId))
+			.get()
+		if (!srv || (input.locationId && srv.locationId !== input.locationId)) {
+			throw badRequest('invalid_service', 'Service does not exist in location')
+		}
 
-	const areaId = input.areaId ?? null
-	const tableId = input.tableId ?? null
-	const comboId = input.comboId ?? input.combinationId ?? null
-	const targetCount = (areaId ? 1 : 0) + (tableId ? 1 : 0) + (comboId ? 1 : 0)
-	if (targetCount !== 1) {
-		throw badRequest(
-			'invalid_target',
-			'Exactly one of areaId, tableId, or comboId is required',
-		)
-	}
+		const areaId = input.areaId ?? null
+		const tableId = input.tableId ?? null
+		const comboId = input.comboId ?? input.combinationId ?? null
+		const targetCount = (areaId ? 1 : 0) + (tableId ? 1 : 0) + (comboId ? 1 : 0)
+		if (targetCount !== 1) {
+			throw badRequest(
+				'invalid_target',
+				'Exactly one of areaId, tableId, or comboId is required',
+			)
+		}
 
-	const existingRows = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.serviceId, input.serviceId))
-		.all()
-	const matching = existingRows.find(
-		(r) =>
-			r.areaId === areaId &&
-			r.tableId === tableId &&
-			r.comboId === comboId &&
-			r.fromMin === (input.fromMin ?? null) &&
-			r.toMin === (input.toMin ?? null),
-	)
-
-	if (matching) {
-		await db
-			.update(rsvServiceAvailability)
-			.set({ mode: input.mode })
-			.where(eq(rsvServiceAvailability.id, matching.id))
-		const updated = await db
+		const existingRows = await db
 			.select()
 			.from(rsvServiceAvailability)
-			.where(eq(rsvServiceAvailability.id, matching.id))
-			.get()
-		return serializeServiceAvailability(updated!)
-	}
+			.where(eq(rsvServiceAvailability.serviceId, input.serviceId))
+			.all()
+		const matching = existingRows.find(
+			(r) =>
+				r.areaId === areaId &&
+				r.tableId === tableId &&
+				r.comboId === comboId &&
+				r.fromMin === (input.fromMin ?? null) &&
+				r.toMin === (input.toMin ?? null),
+		)
 
-	const id = createId('sa')
-	await db.insert(rsvServiceAvailability).values({
-		id,
-		serviceId: input.serviceId,
-		areaId,
-		tableId,
-		comboId,
-		mode: input.mode,
-		fromMin: input.fromMin ?? null,
-		toMin: input.toMin ?? null,
+		if (matching) {
+			await db
+				.update(rsvServiceAvailability)
+				.set({ mode: input.mode })
+				.where(eq(rsvServiceAvailability.id, matching.id))
+			const updated = await db
+				.select()
+				.from(rsvServiceAvailability)
+				.where(eq(rsvServiceAvailability.id, matching.id))
+				.get()
+			return serializeServiceAvailability(updated!)
+		}
+
+		const id = createId('sa')
+		await db.insert(rsvServiceAvailability).values({
+			id,
+			serviceId: input.serviceId,
+			areaId,
+			tableId,
+			comboId,
+			mode: input.mode,
+			fromMin: input.fromMin ?? null,
+			toMin: input.toMin ?? null,
+		})
+		const row = await db
+			.select()
+			.from(rsvServiceAvailability)
+			.where(eq(rsvServiceAvailability.id, id))
+			.get()
+		return serializeServiceAvailability(row!)
 	})
-	const row = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.id, id))
-		.get()
-	return serializeServiceAvailability(row!)
 }
 
 export async function deleteServiceAvailabilityForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	id: string,
 	ignoredActorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.id, id))
-		.get()
-	if (!existing) throw notFound('Service availability rule not found')
-	const srv = await db
-		.select()
-		.from(rsvServices)
-		.where(eq(rsvServices.id, existing.serviceId))
-		.get()
-	if (!srv || (locationId && srv.locationId !== locationId)) {
-		throw notFound('Service availability rule not found in location')
-	}
-	await db
-		.delete(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.id, id))
-	return { deleted: true, id }
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvServiceAvailability)
+			.where(eq(rsvServiceAvailability.id, id))
+			.get()
+		if (!existing) throw notFound('Service availability rule not found')
+		const srv = await db
+			.select()
+			.from(rsvServices)
+			.where(eq(rsvServices.id, existing.serviceId))
+			.get()
+		if (!srv || (locationId && srv.locationId !== locationId)) {
+			throw notFound('Service availability rule not found in location')
+		}
+		await db
+			.delete(rsvServiceAvailability)
+			.where(eq(rsvServiceAvailability.id, id))
+		return { deleted: true, id }
+	})
 }
 
 // ============================================================================
 // Special Days
 // ============================================================================
+
+function expandDateRange(fromDate: string, toDate: string): string[] {
+	const dates: string[] = []
+	let curr = fromDate
+	let guard = 0
+	while (curr <= toDate && guard < 370) {
+		dates.push(curr)
+		curr = addDays(curr, 1)
+		guard++
+	}
+	return dates
+}
 
 export async function listSpecialDaysForLocation(
 	db: TenantDatabase,
@@ -2484,7 +2787,7 @@ export async function listSpecialDaysForLocation(
 }
 
 export async function createSpecialDayForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	input: {
 		actorId: string | null
 		locationId: string
@@ -2504,88 +2807,91 @@ export async function createSpecialDayForLocation(
 		customServices?: Array<Record<string, unknown>> | null
 	},
 ) {
-	const singleDate = input.businessDate ?? input.date
-	const fromDate = input.fromDate ?? singleDate
-	const toDate = input.toDate ?? singleDate ?? fromDate
-	if (!fromDate || !toDate || fromDate > toDate) {
-		throw badRequest(
-			'invalid_date_range',
-			'fromDate and toDate (with fromDate <= toDate) are required',
-		)
-	}
-	const kind = input.kind ?? input.type ?? 'closed'
-	const id = createId('sd')
-	const now = Date.now()
+	return withSetupWrite(outerDb, async (db) => {
+		const singleDate = input.businessDate ?? input.date
+		const fromDate = input.fromDate ?? singleDate
+		const toDate = input.toDate ?? singleDate ?? fromDate
+		if (!fromDate || !toDate || fromDate > toDate) {
+			throw badRequest(
+				'invalid_date_range',
+				'fromDate and toDate (with fromDate <= toDate) are required',
+			)
+		}
+		const kind = input.kind ?? input.type ?? 'closed'
+		const id = createId('sd')
+		const now = Date.now()
 
-	await db.insert(rsvSpecialDays).values({
-		id,
-		locationId: input.locationId,
-		fromDate,
-		toDate,
-		kind,
-		serviceId: input.serviceId ?? null,
-		patch: input.patch ?? null,
-		name: input.name ?? input.label ?? null,
-		publicNoteI18n:
-			input.publicNoteI18n ?? (input.note ? { en: input.note } : null),
-		createdBy: input.actorId,
-		createdAt: now,
-		version: 1,
-	})
-
-	const customServicesInput = input.services ?? input.customServices ?? []
-	const createdServices: Array<ReturnType<typeof serializeService>> = []
-	for (const s of customServicesInput) {
-		const srv = await createServiceForLocation(db, {
-			actorId: input.actorId,
+		await db.insert(rsvSpecialDays).values({
+			id,
 			locationId: input.locationId,
-			specialDayId: id,
-			name: String(s.name ?? 'Special Service'),
-			daysMask: typeof s.daysMask === 'number' ? s.daysMask : 127,
-			firstSeatingMin: Number(
-				s.firstSeatingMin ?? s.first_seating_min ?? s.startMin ?? 1020,
-			),
-			lastSeatingMin: Number(s.lastSeatingMin ?? s.last_seating_min ?? 1260),
-			endMin: Number(s.endMin ?? s.end_min ?? 1380),
-			intervalMin:
-				typeof s.intervalMin === 'number'
-					? s.intervalMin
-					: typeof s.interval_min === 'number'
-						? s.interval_min
-						: null,
-			onlineEnabled:
-				typeof s.onlineEnabled === 'boolean'
-					? s.onlineEnabled
-					: typeof s.online_enabled === 'boolean'
-						? s.online_enabled
-						: true,
+			fromDate,
+			toDate,
+			kind,
+			serviceId: input.serviceId ?? null,
+			patch: input.patch ?? null,
+			name: input.name ?? input.label ?? null,
+			publicNoteI18n:
+				input.publicNoteI18n ?? (input.note ? { en: input.note } : null),
+			createdBy: input.actorId,
+			createdAt: now,
+			version: 1,
 		})
-		createdServices.push(srv)
-	}
 
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		input.locationId,
-		{
-			affectedDates: [fromDate, toDate],
-		},
-	)
-	const row = await db
-		.select()
-		.from(rsvSpecialDays)
-		.where(eq(rsvSpecialDays.id, id))
-		.get()
-	return {
-		specialDay: {
-			...serializeSpecialDay(row!),
-			services: createdServices,
-		},
-		...reflowResult,
-	}
+		const customServicesInput = input.services ?? input.customServices ?? []
+		const createdServices: Array<ReturnType<typeof serializeService>> = []
+		for (const s of customServicesInput) {
+			const srv = await createServiceForLocation(db, {
+				actorId: input.actorId,
+				locationId: input.locationId,
+				specialDayId: id,
+				name: String(s.name ?? 'Special Service'),
+				daysMask: typeof s.daysMask === 'number' ? s.daysMask : 127,
+				firstSeatingMin: Number(
+					s.firstSeatingMin ?? s.first_seating_min ?? s.startMin ?? 1020,
+				),
+				lastSeatingMin: Number(s.lastSeatingMin ?? s.last_seating_min ?? 1260),
+				endMin: Number(s.endMin ?? s.end_min ?? 1380),
+				intervalMin:
+					typeof s.intervalMin === 'number'
+						? s.intervalMin
+						: typeof s.interval_min === 'number'
+							? s.interval_min
+							: null,
+				onlineEnabled:
+					typeof s.onlineEnabled === 'boolean'
+						? s.onlineEnabled
+						: typeof s.online_enabled === 'boolean'
+							? s.online_enabled
+							: true,
+			})
+			createdServices.push(srv)
+		}
+
+		const affectedDates = expandDateRange(fromDate, toDate)
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			input.locationId,
+			{
+				affectedDates,
+			},
+		)
+		const row = await db
+			.select()
+			.from(rsvSpecialDays)
+			.where(eq(rsvSpecialDays.id, id))
+			.get()
+		return {
+			specialDay: {
+				...serializeSpecialDay(row!),
+				services: createdServices,
+			},
+			...reflowResult,
+		}
+	})
 }
 
 export async function updateSpecialDayForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	specialDayId: string,
 	patch: {
 		actorId: string | null
@@ -2603,78 +2909,91 @@ export async function updateSpecialDayForLocation(
 		publicNoteI18n?: Record<string, string> | null
 	},
 ) {
-	const existing = await db
-		.select()
-		.from(rsvSpecialDays)
-		.where(eq(rsvSpecialDays.id, specialDayId))
-		.get()
-	if (!existing) throw notFound('Special day not found')
-	if (patch.locationId && existing.locationId !== patch.locationId) {
-		throw notFound('Special day not found in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvSpecialDays)
+			.where(eq(rsvSpecialDays.id, specialDayId))
+			.get()
+		if (!existing) throw notFound('Special day not found')
+		if (patch.locationId && existing.locationId !== patch.locationId) {
+			throw notFound('Special day not found in location')
+		}
 
-	const singleDate = patch.businessDate ?? patch.date
-	const fromDate = patch.fromDate ?? singleDate ?? existing.fromDate
-	const toDate = patch.toDate ?? singleDate ?? existing.toDate
+		const singleDate = patch.businessDate ?? patch.date
+		const fromDate = patch.fromDate ?? singleDate ?? existing.fromDate
+		const toDate = patch.toDate ?? singleDate ?? existing.toDate
 
-	await db
-		.update(rsvSpecialDays)
-		.set({
-			fromDate,
-			toDate,
-			...(patch.kind !== undefined || patch.type !== undefined
-				? { kind: patch.kind ?? patch.type ?? existing.kind }
-				: {}),
-			...(patch.serviceId !== undefined ? { serviceId: patch.serviceId } : {}),
-			...(patch.patch !== undefined ? { patch: patch.patch } : {}),
-			...(patch.name !== undefined || patch.label !== undefined
-				? { name: patch.name ?? patch.label ?? null }
-				: {}),
-			...(patch.publicNoteI18n !== undefined
-				? { publicNoteI18n: patch.publicNoteI18n }
-				: {}),
-			version: existing.version + 1,
-		})
-		.where(eq(rsvSpecialDays.id, specialDayId))
+		await db
+			.update(rsvSpecialDays)
+			.set({
+				fromDate,
+				toDate,
+				...(patch.kind !== undefined || patch.type !== undefined
+					? { kind: patch.kind ?? patch.type ?? existing.kind }
+					: {}),
+				...(patch.serviceId !== undefined
+					? { serviceId: patch.serviceId }
+					: {}),
+				...(patch.patch !== undefined ? { patch: patch.patch } : {}),
+				...(patch.name !== undefined || patch.label !== undefined
+					? { name: patch.name ?? patch.label ?? null }
+					: {}),
+				...(patch.publicNoteI18n !== undefined
+					? { publicNoteI18n: patch.publicNoteI18n }
+					: {}),
+				version: existing.version + 1,
+			})
+			.where(eq(rsvSpecialDays.id, specialDayId))
 
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		existing.locationId,
-		{
-			affectedDates: [fromDate, toDate],
-		},
-	)
-	const updated = await db
-		.select()
-		.from(rsvSpecialDays)
-		.where(eq(rsvSpecialDays.id, specialDayId))
-		.get()
-	return {
-		specialDay: serializeSpecialDay(updated!),
-		...reflowResult,
-	}
+		const affectedDates = [
+			...new Set([
+				...expandDateRange(existing.fromDate, existing.toDate),
+				...expandDateRange(fromDate, toDate),
+			]),
+		]
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			existing.locationId,
+			{
+				affectedDates,
+			},
+		)
+		const updated = await db
+			.select()
+			.from(rsvSpecialDays)
+			.where(eq(rsvSpecialDays.id, specialDayId))
+			.get()
+		return {
+			specialDay: serializeSpecialDay(updated!),
+			...reflowResult,
+		}
+	})
 }
 
 export async function deleteSpecialDayForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	specialDayId: string,
 	ignoredActorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvSpecialDays)
-		.where(eq(rsvSpecialDays.id, specialDayId))
-		.get()
-	if (!existing) throw notFound('Special day not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Special day not found in location')
-	}
-	await db.delete(rsvSpecialDays).where(eq(rsvSpecialDays.id, specialDayId))
-	await reflowFutureBookingsForLocation(db, existing.locationId, {
-		affectedDates: [existing.fromDate, existing.toDate],
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvSpecialDays)
+			.where(eq(rsvSpecialDays.id, specialDayId))
+			.get()
+		if (!existing) throw notFound('Special day not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Special day not found in location')
+		}
+		await db.delete(rsvSpecialDays).where(eq(rsvSpecialDays.id, specialDayId))
+		const affectedDates = expandDateRange(existing.fromDate, existing.toDate)
+		await reflowFutureBookingsForLocation(db, existing.locationId, {
+			affectedDates,
+		})
+		return { deleted: true, id: specialDayId }
 	})
-	return { deleted: true, id: specialDayId }
 }
 
 // ============================================================================
@@ -2698,7 +3017,7 @@ export async function listBlocksForLocation(
 }
 
 export async function createBlockForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	input: {
 		actorId: string | null
 		locationId: string
@@ -2713,251 +3032,258 @@ export async function createBlockForLocation(
 		note?: string | null
 	},
 ) {
-	const hasArea = Boolean(input.areaId)
-	const hasTable = Boolean(input.tableId)
-	if (hasArea === hasTable) {
-		throw badRequest(
-			'invalid_block_target',
-			'Block must target either a tableId or an areaId (not both)',
-		)
-	}
-
-	const settings = await ensureSettingsRowForLocation(db, input.locationId)
-	const tz = isValidTimeZone(settings.timeZone) ? settings.timeZone : 'UTC'
-
-	let startAt = input.startAt
-	let endAt = input.endAt
-	if (startAt === undefined && input.startMin !== undefined) {
-		startAt = localToInstant(input.businessDate, input.startMin, tz)
-	}
-	if (endAt === undefined && input.endMin !== undefined) {
-		endAt = localToInstant(input.businessDate, input.endMin, tz)
-	}
-	if (startAt === undefined || endAt === undefined || endAt <= startAt) {
-		throw badRequest('invalid_block_window', 'endAt must be > startAt')
-	}
-
-	let targetTableIds: string[] = []
-	if (input.tableId) {
-		const tbl = await db
-			.select()
-			.from(rsvTables)
-			.where(
-				and(
-					eq(rsvTables.id, input.tableId),
-					eq(rsvTables.locationId, input.locationId),
-				),
+	return withSetupWrite(outerDb, async (db) => {
+		const hasArea = Boolean(input.areaId)
+		const hasTable = Boolean(input.tableId)
+		if (hasArea === hasTable) {
+			throw badRequest(
+				'invalid_block_target',
+				'Block must target either a tableId or an areaId (not both)',
 			)
-			.get()
-		if (!tbl) throw badRequest('invalid_table', 'Table not found in location')
-		targetTableIds = [tbl.id]
-	} else if (input.areaId) {
-		const area = await db
-			.select()
-			.from(rsvAreas)
-			.where(
-				and(
-					eq(rsvAreas.id, input.areaId),
-					eq(rsvAreas.locationId, input.locationId),
-				),
-			)
-			.get()
-		if (!area) throw badRequest('invalid_area', 'Area not found in location')
-		const areaTables = await db
-			.select()
-			.from(rsvTables)
-			.where(
-				and(eq(rsvTables.areaId, input.areaId), isNull(rsvTables.archivedAt)),
-			)
-			.all()
-		targetTableIds = areaTables.map((t) => t.id)
-	}
-
-	const now = Date.now()
-	const id = createId('blk')
-	await db.insert(rsvBlocks).values({
-		id,
-		locationId: input.locationId,
-		areaId: input.areaId ?? null,
-		tableId: input.tableId ?? null,
-		businessDate: input.businessDate,
-		startAt,
-		endAt,
-		reason: input.reason ?? null,
-		note: input.note ?? null,
-		createdBy: input.actorId,
-		createdAt: now,
-	})
-
-	// Before inserting block occupancies into `rsv_table_occupancies`,
-	// deactivate any overlapping SOFT reservation occupancies on `targetTableIds`
-	// so `trg_rsv_occupancies_no_overlap_insert` allows the block occupancy and
-	// `reflowFutureBookingsForLocation` can reassign those soft reservations.
-	const preDeactivatedOriginalTables = new Map<string, string[]>()
-	if (targetTableIds.length > 0) {
-		const overlappingOccs = await db
-			.select()
-			.from(rsvTableOccupancies)
-			.where(
-				and(
-					eq(rsvTableOccupancies.locationId, input.locationId),
-					inArray(rsvTableOccupancies.tableId, targetTableIds),
-					eq(rsvTableOccupancies.active, true),
-					lte(rsvTableOccupancies.startAt, endAt - 1),
-					gte(rsvTableOccupancies.endAt, startAt + 1),
-				),
-			)
-			.all()
-
-		const overlappingResIds = [
-			...new Set(
-				overlappingOccs
-					.filter((o) => o.kind === 'reservation' && o.reservationId)
-					.map((o) => o.reservationId!),
-			),
-		]
-
-		if (overlappingResIds.length > 0) {
-			const resRows = await db
-				.select()
-				.from(rsvReservations)
-				.where(inArray(rsvReservations.id, overlappingResIds))
-				.all()
-
-			for (const r of resRows) {
-				if (r.assignment === 'soft' && SOFT_REFLOWABLE_STATUSES.has(r.status)) {
-					const allResOccs = await db
-						.select()
-						.from(rsvTableOccupancies)
-						.where(
-							and(
-								eq(rsvTableOccupancies.reservationId, r.id),
-								eq(rsvTableOccupancies.active, true),
-							),
-						)
-						.all()
-					preDeactivatedOriginalTables.set(
-						r.id,
-						allResOccs.map((o) => o.tableId),
-					)
-					if (allResOccs.length > 0) {
-						await db
-							.update(rsvTableOccupancies)
-							.set({ active: false })
-							.where(
-								inArray(
-									rsvTableOccupancies.id,
-									allResOccs.map((o) => o.id),
-								),
-							)
-					}
-					if (r.comboId) {
-						await db
-							.update(rsvReservations)
-							.set({ comboId: null, updatedAt: now })
-							.where(eq(rsvReservations.id, r.id))
-					}
-				}
-			}
 		}
 
-		// Expand block into rsv_table_occupancies for each target table
-		for (const tid of targetTableIds) {
-			const remainingOverlap = await db
+		const settings = await ensureSettingsRowForLocation(db, input.locationId)
+		const tz = isValidTimeZone(settings.timeZone) ? settings.timeZone : 'UTC'
+
+		let startAt = input.startAt
+		let endAt = input.endAt
+		if (startAt === undefined && input.startMin !== undefined) {
+			startAt = localToInstant(input.businessDate, input.startMin, tz)
+		}
+		if (endAt === undefined && input.endMin !== undefined) {
+			endAt = localToInstant(input.businessDate, input.endMin, tz)
+		}
+		if (startAt === undefined || endAt === undefined || endAt <= startAt) {
+			throw badRequest('invalid_block_window', 'endAt must be > startAt')
+		}
+
+		let targetTableIds: string[] = []
+		if (input.tableId) {
+			const tbl = await db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.id, input.tableId),
+						eq(rsvTables.locationId, input.locationId),
+					),
+				)
+				.get()
+			if (!tbl) throw badRequest('invalid_table', 'Table not found in location')
+			targetTableIds = [tbl.id]
+		} else if (input.areaId) {
+			const area = await db
+				.select()
+				.from(rsvAreas)
+				.where(
+					and(
+						eq(rsvAreas.id, input.areaId),
+						eq(rsvAreas.locationId, input.locationId),
+					),
+				)
+				.get()
+			if (!area) throw badRequest('invalid_area', 'Area not found in location')
+			const areaTables = await db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(eq(rsvTables.areaId, input.areaId), isNull(rsvTables.archivedAt)),
+				)
+				.all()
+			targetTableIds = areaTables.map((t) => t.id)
+		}
+
+		const now = Date.now()
+		const id = createId('blk')
+		await db.insert(rsvBlocks).values({
+			id,
+			locationId: input.locationId,
+			areaId: input.areaId ?? null,
+			tableId: input.tableId ?? null,
+			businessDate: input.businessDate,
+			startAt,
+			endAt,
+			reason: input.reason ?? null,
+			note: input.note ?? null,
+			createdBy: input.actorId,
+			createdAt: now,
+		})
+
+		// Before inserting block occupancies into `rsv_table_occupancies`,
+		// deactivate any overlapping SOFT reservation occupancies on `targetTableIds`
+		// so `trg_rsv_occupancies_no_overlap_insert` allows the block occupancy and
+		// `reflowFutureBookingsForLocation` can reassign those soft reservations.
+		const preDeactivatedOriginalTables = new Map<string, string[]>()
+		if (targetTableIds.length > 0) {
+			const overlappingOccs = await db
 				.select()
 				.from(rsvTableOccupancies)
 				.where(
 					and(
-						eq(rsvTableOccupancies.tableId, tid),
+						eq(rsvTableOccupancies.locationId, input.locationId),
+						inArray(rsvTableOccupancies.tableId, targetTableIds),
 						eq(rsvTableOccupancies.active, true),
-						eq(rsvTableOccupancies.overbook, false),
 						lte(rsvTableOccupancies.startAt, endAt - 1),
 						gte(rsvTableOccupancies.endAt, startAt + 1),
 					),
 				)
-				.get()
+				.all()
 
-			await db.insert(rsvTableOccupancies).values({
-				id: createId('occ'),
-				locationId: input.locationId,
-				tableId: tid,
-				kind: 'block',
-				blockId: id,
-				startAt,
-				endAt,
-				active: true,
-				overbook: Boolean(remainingOverlap),
-				createdAt: now,
-			})
+			const overlappingResIds = [
+				...new Set(
+					overlappingOccs
+						.filter((o) => o.kind === 'reservation' && o.reservationId)
+						.map((o) => o.reservationId!),
+				),
+			]
+
+			if (overlappingResIds.length > 0) {
+				const resRows = await db
+					.select()
+					.from(rsvReservations)
+					.where(inArray(rsvReservations.id, overlappingResIds))
+					.all()
+
+				for (const r of resRows) {
+					if (
+						r.assignment === 'soft' &&
+						SOFT_REFLOWABLE_STATUSES.has(r.status)
+					) {
+						const allResOccs = await db
+							.select()
+							.from(rsvTableOccupancies)
+							.where(
+								and(
+									eq(rsvTableOccupancies.reservationId, r.id),
+									eq(rsvTableOccupancies.active, true),
+								),
+							)
+							.all()
+						preDeactivatedOriginalTables.set(
+							r.id,
+							allResOccs.map((o) => o.tableId),
+						)
+						if (allResOccs.length > 0) {
+							await db
+								.update(rsvTableOccupancies)
+								.set({ active: false })
+								.where(
+									inArray(
+										rsvTableOccupancies.id,
+										allResOccs.map((o) => o.id),
+									),
+								)
+						}
+						if (r.comboId) {
+							await db
+								.update(rsvReservations)
+								.set({ comboId: null, updatedAt: now })
+								.where(eq(rsvReservations.id, r.id))
+						}
+					}
+				}
+			}
+
+			// Expand block into rsv_table_occupancies for each target table
+			for (const tid of targetTableIds) {
+				const remainingOverlap = await db
+					.select()
+					.from(rsvTableOccupancies)
+					.where(
+						and(
+							eq(rsvTableOccupancies.tableId, tid),
+							eq(rsvTableOccupancies.active, true),
+							eq(rsvTableOccupancies.overbook, false),
+							lte(rsvTableOccupancies.startAt, endAt - 1),
+							gte(rsvTableOccupancies.endAt, startAt + 1),
+						),
+					)
+					.get()
+
+				await db.insert(rsvTableOccupancies).values({
+					id: createId('occ'),
+					locationId: input.locationId,
+					tableId: tid,
+					kind: 'block',
+					blockId: id,
+					startAt,
+					endAt,
+					active: true,
+					overbook: Boolean(remainingOverlap),
+					createdAt: now,
+				})
+			}
 		}
-	}
 
-	await bumpDayVersion(db, input.locationId, input.businessDate)
-	const reflowResult = await reflowFutureBookingsForLocation(
-		db,
-		input.locationId,
-		{
-			affectedDates: [input.businessDate],
-			invalidatedTableIds: targetTableIds,
-			preDeactivatedOriginalTables,
-		},
-	)
+		await bumpDayVersion(db, input.locationId, input.businessDate)
+		const reflowResult = await reflowFutureBookingsForLocation(
+			db,
+			input.locationId,
+			{
+				affectedDates: [input.businessDate],
+				invalidatedTableIds: targetTableIds,
+				preDeactivatedOriginalTables,
+			},
+		)
 
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'block.create',
-		entityKind: 'block',
-		entityId: id,
-		diff: {
-			businessDate: input.businessDate,
-			tableId: input.tableId ?? null,
-			areaId: input.areaId ?? null,
-		},
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'block.create',
+			entityKind: 'block',
+			entityId: id,
+			diff: {
+				businessDate: input.businessDate,
+				tableId: input.tableId ?? null,
+				areaId: input.areaId ?? null,
+			},
+		})
+
+		const row = await db
+			.select()
+			.from(rsvBlocks)
+			.where(eq(rsvBlocks.id, id))
+			.get()
+		return {
+			block: serializeBlock(row!),
+			...reflowResult,
+		}
 	})
-
-	const row = await db
-		.select()
-		.from(rsvBlocks)
-		.where(eq(rsvBlocks.id, id))
-		.get()
-	return {
-		block: serializeBlock(row!),
-		...reflowResult,
-	}
 }
 
 export async function deleteBlockForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	blockId: string,
 	actorId: string | null,
 	locationId?: string,
 ) {
-	const existing = await db
-		.select()
-		.from(rsvBlocks)
-		.where(eq(rsvBlocks.id, blockId))
-		.get()
-	if (!existing) throw notFound('Block not found')
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Block not found in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvBlocks)
+			.where(eq(rsvBlocks.id, blockId))
+			.get()
+		if (!existing) throw notFound('Block not found')
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Block not found in location')
+		}
 
-	await db
-		.update(rsvTableOccupancies)
-		.set({ active: false })
-		.where(eq(rsvTableOccupancies.blockId, blockId))
-	await db.delete(rsvBlocks).where(eq(rsvBlocks.id, blockId))
+		await db
+			.update(rsvTableOccupancies)
+			.set({ active: false })
+			.where(eq(rsvTableOccupancies.blockId, blockId))
+		await db.delete(rsvBlocks).where(eq(rsvBlocks.id, blockId))
 
-	await bumpDayVersion(db, existing.locationId, existing.businessDate)
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'block.delete',
-		entityKind: 'block',
-		entityId: blockId,
+		await bumpDayVersion(db, existing.locationId, existing.businessDate)
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'block.delete',
+			entityKind: 'block',
+			entityId: blockId,
+		})
+		return { deleted: true, id: blockId }
 	})
-	return { deleted: true, id: blockId }
 }
 
 // ============================================================================
@@ -3144,7 +3470,7 @@ export async function listSectionLayoutsForLocation(
 }
 
 export async function createSectionLayoutForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	input: {
 		locationId: string
 		actorId: string | null
@@ -3154,124 +3480,25 @@ export async function createSectionLayoutForLocation(
 		sections: SectionInput[]
 	},
 ): Promise<{ layout: SerializedSectionLayout }> {
-	const name = input.name?.trim()
-	if (!name) {
-		throw badRequest('invalid_name', 'Layout name is required')
-	}
-
-	const normalizedSections = await validateAndNormalizeSections(
-		db,
-		input.locationId,
-		input.sections ?? [],
-	)
-
-	const layoutId = createId('secl')
-	await db.insert(rsvSectionLayouts).values({
-		id: layoutId,
-		locationId: input.locationId,
-		name,
-		archivedAt: null,
-	})
-
-	for (const sec of normalizedSections) {
-		await db.insert(rsvSections).values({
-			id: sec.id,
-			layoutId,
-			name: sec.name,
-			colorToken: sec.colorToken,
-			sort: sec.sort,
-		})
-		for (const tableId of sec.tableIds) {
-			await db.insert(rsvSectionTables).values({
-				sectionId: sec.id,
-				tableId,
-				layoutId,
-			})
+	return withSetupWrite(outerDb, async (db) => {
+		const name = input.name?.trim()
+		if (!name) {
+			throw badRequest('invalid_name', 'Layout name is required')
 		}
-	}
 
-	if (input.serviceId) {
-		await db
-			.update(rsvServices)
-			.set({ sectionLayoutId: layoutId })
-			.where(
-				and(
-					eq(rsvServices.id, input.serviceId),
-					eq(rsvServices.locationId, input.locationId),
-				),
-			)
-	}
-
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: input.locationId,
-		action: 'section_layout.create',
-		entityKind: 'section_layout',
-		entityId: layoutId,
-		diff: {
-			name,
-			sectionCount: normalizedSections.length,
-		},
-	})
-
-	const row = await db
-		.select()
-		.from(rsvSectionLayouts)
-		.where(eq(rsvSectionLayouts.id, layoutId))
-		.get()
-
-	return {
-		layout: await hydrateSectionLayout(db, row!),
-	}
-}
-
-export async function updateSectionLayoutForLocation(
-	db: TenantDatabase,
-	layoutId: string,
-	input: {
-		locationId?: string
-		actorId: string | null
-		name?: string
-		serviceId?: string | null
-		isDefault?: boolean
-		sections?: SectionInput[]
-	},
-): Promise<{ layout: SerializedSectionLayout }> {
-	const existing = await db
-		.select()
-		.from(rsvSectionLayouts)
-		.where(eq(rsvSectionLayouts.id, layoutId))
-		.get()
-	if (!existing || existing.archivedAt !== null) {
-		throw notFound('Section layout not found')
-	}
-	if (input.locationId && existing.locationId !== input.locationId) {
-		throw notFound('Section layout not found in location')
-	}
-
-	const nextName = input.name !== undefined ? input.name.trim() : existing.name
-	if (!nextName) {
-		throw badRequest('invalid_name', 'Layout name is required')
-	}
-
-	if (nextName !== existing.name) {
-		await db
-			.update(rsvSectionLayouts)
-			.set({ name: nextName })
-			.where(eq(rsvSectionLayouts.id, layoutId))
-	}
-
-	if (input.sections !== undefined) {
 		const normalizedSections = await validateAndNormalizeSections(
 			db,
-			existing.locationId,
-			input.sections,
+			input.locationId,
+			input.sections ?? [],
 		)
 
-		await db
-			.delete(rsvSectionTables)
-			.where(eq(rsvSectionTables.layoutId, layoutId))
-		await db.delete(rsvSections).where(eq(rsvSections.layoutId, layoutId))
+		const layoutId = createId('secl')
+		await db.insert(rsvSectionLayouts).values({
+			id: layoutId,
+			locationId: input.locationId,
+			name,
+			archivedAt: null,
+		})
 
 		for (const sec of normalizedSections) {
 			await db.insert(rsvSections).values({
@@ -3289,76 +3516,182 @@ export async function updateSectionLayoutForLocation(
 				})
 			}
 		}
-	}
 
-	if (input.serviceId) {
-		await db
-			.update(rsvServices)
-			.set({ sectionLayoutId: layoutId })
-			.where(
-				and(
-					eq(rsvServices.id, input.serviceId),
-					eq(rsvServices.locationId, existing.locationId),
-				),
-			)
-	}
+		if (input.serviceId) {
+			await db
+				.update(rsvServices)
+				.set({ sectionLayoutId: layoutId })
+				.where(
+					and(
+						eq(rsvServices.id, input.serviceId),
+						eq(rsvServices.locationId, input.locationId),
+					),
+				)
+		}
 
-	await writeSetupAudit(db, {
-		actorId: input.actorId,
-		locationId: existing.locationId,
-		action: 'section_layout.update',
-		entityKind: 'section_layout',
-		entityId: layoutId,
-		diff: {
-			name: nextName,
-		},
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: input.locationId,
+			action: 'section_layout.create',
+			entityKind: 'section_layout',
+			entityId: layoutId,
+			diff: {
+				name,
+				sectionCount: normalizedSections.length,
+			},
+		})
+
+		const row = await db
+			.select()
+			.from(rsvSectionLayouts)
+			.where(eq(rsvSectionLayouts.id, layoutId))
+			.get()
+
+		return {
+			layout: await hydrateSectionLayout(db, row!),
+		}
 	})
+}
 
-	const updated = await db
-		.select()
-		.from(rsvSectionLayouts)
-		.where(eq(rsvSectionLayouts.id, layoutId))
-		.get()
+export async function updateSectionLayoutForLocation(
+	outerDb: TenantDatabase,
+	layoutId: string,
+	input: {
+		locationId?: string
+		actorId: string | null
+		name?: string
+		serviceId?: string | null
+		isDefault?: boolean
+		sections?: SectionInput[]
+	},
+): Promise<{ layout: SerializedSectionLayout }> {
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvSectionLayouts)
+			.where(eq(rsvSectionLayouts.id, layoutId))
+			.get()
+		if (!existing || existing.archivedAt !== null) {
+			throw notFound('Section layout not found')
+		}
+		if (input.locationId && existing.locationId !== input.locationId) {
+			throw notFound('Section layout not found in location')
+		}
 
-	return {
-		layout: await hydrateSectionLayout(db, updated!),
-	}
+		const nextName =
+			input.name !== undefined ? input.name.trim() : existing.name
+		if (!nextName) {
+			throw badRequest('invalid_name', 'Layout name is required')
+		}
+
+		if (nextName !== existing.name) {
+			await db
+				.update(rsvSectionLayouts)
+				.set({ name: nextName })
+				.where(eq(rsvSectionLayouts.id, layoutId))
+		}
+
+		if (input.sections !== undefined) {
+			const normalizedSections = await validateAndNormalizeSections(
+				db,
+				existing.locationId,
+				input.sections,
+			)
+
+			await db
+				.delete(rsvSectionTables)
+				.where(eq(rsvSectionTables.layoutId, layoutId))
+			await db.delete(rsvSections).where(eq(rsvSections.layoutId, layoutId))
+
+			for (const sec of normalizedSections) {
+				await db.insert(rsvSections).values({
+					id: sec.id,
+					layoutId,
+					name: sec.name,
+					colorToken: sec.colorToken,
+					sort: sec.sort,
+				})
+				for (const tableId of sec.tableIds) {
+					await db.insert(rsvSectionTables).values({
+						sectionId: sec.id,
+						tableId,
+						layoutId,
+					})
+				}
+			}
+		}
+
+		if (input.serviceId) {
+			await db
+				.update(rsvServices)
+				.set({ sectionLayoutId: layoutId })
+				.where(
+					and(
+						eq(rsvServices.id, input.serviceId),
+						eq(rsvServices.locationId, existing.locationId),
+					),
+				)
+		}
+
+		await writeSetupAudit(db, {
+			actorId: input.actorId,
+			locationId: existing.locationId,
+			action: 'section_layout.update',
+			entityKind: 'section_layout',
+			entityId: layoutId,
+			diff: {
+				name: nextName,
+			},
+		})
+
+		const updated = await db
+			.select()
+			.from(rsvSectionLayouts)
+			.where(eq(rsvSectionLayouts.id, layoutId))
+			.get()
+
+		return {
+			layout: await hydrateSectionLayout(db, updated!),
+		}
+	})
 }
 
 export async function deleteSectionLayoutForLocation(
-	db: TenantDatabase,
+	outerDb: TenantDatabase,
 	layoutId: string,
 	actorId: string | null,
 	locationId?: string,
 ): Promise<{ deleted: true; id: string }> {
-	const existing = await db
-		.select()
-		.from(rsvSectionLayouts)
-		.where(eq(rsvSectionLayouts.id, layoutId))
-		.get()
-	if (!existing || existing.archivedAt !== null) {
-		throw notFound('Section layout not found')
-	}
-	if (locationId && existing.locationId !== locationId) {
-		throw notFound('Section layout not found in location')
-	}
+	return withSetupWrite(outerDb, async (db) => {
+		const existing = await db
+			.select()
+			.from(rsvSectionLayouts)
+			.where(eq(rsvSectionLayouts.id, layoutId))
+			.get()
+		if (!existing || existing.archivedAt !== null) {
+			throw notFound('Section layout not found')
+		}
+		if (locationId && existing.locationId !== locationId) {
+			throw notFound('Section layout not found in location')
+		}
 
-	const now = Date.now()
-	await db
-		.update(rsvSectionLayouts)
-		.set({ archivedAt: now })
-		.where(eq(rsvSectionLayouts.id, layoutId))
-	await db
-		.delete(rsvSectionTables)
-		.where(eq(rsvSectionTables.layoutId, layoutId))
+		const now = Date.now()
+		await db
+			.update(rsvSectionLayouts)
+			.set({ archivedAt: now })
+			.where(eq(rsvSectionLayouts.id, layoutId))
+		await db
+			.delete(rsvSectionTables)
+			.where(eq(rsvSectionTables.layoutId, layoutId))
 
-	await writeSetupAudit(db, {
-		actorId,
-		locationId: existing.locationId,
-		action: 'section_layout.delete',
-		entityKind: 'section_layout',
-		entityId: layoutId,
+		await writeSetupAudit(db, {
+			actorId,
+			locationId: existing.locationId,
+			action: 'section_layout.delete',
+			entityKind: 'section_layout',
+			entityId: layoutId,
+		})
+
+		return { deleted: true, id: layoutId }
 	})
-
-	return { deleted: true, id: layoutId }
 }

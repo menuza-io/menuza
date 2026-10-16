@@ -328,7 +328,7 @@ export const turnTimeBucketSchema = z
 		serviceId: z.string().min(1).max(64).nullable(),
 		minParty: z.number().int().min(1).max(200),
 		maxParty: z.number().int().min(1).max(200),
-		durationMin: z.number().int().min(1).max(720),
+		durationMin: z.number().int().min(15).max(480),
 	})
 	.strict()
 	.superRefine((val, ctx) => {

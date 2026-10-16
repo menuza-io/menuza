@@ -495,7 +495,7 @@ export function validateConfig(
 		const bMax = rawBucket.maxParty ?? rawBucket.max_party ?? 1
 		const durationMin = rawBucket.durationMin ?? rawBucket.duration_min ?? 0
 
-		if (bMin > bMax || bMin < 1 || durationMin <= 0) {
+		if (bMin > bMax || bMin < 1 || durationMin < 15 || durationMin > 480) {
 			issues.push({
 				code: 'turn_time_bucket_invalid_range',
 				severity: 'error',

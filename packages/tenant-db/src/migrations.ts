@@ -212,6 +212,17 @@ BEFORE UPDATE ON rsv_guest_merges BEGIN SELECT RAISE(ABORT, 'append_only'); END;
 export async function refreshReservationsTriggers(
 	db: TenantDatabase,
 ): Promise<void> {
+	const rsvResCols = await db.all<{ name: string }>(
+		sql`PRAGMA table_info(rsv_reservations)`,
+	)
+	if (
+		rsvResCols.length > 0 &&
+		!rsvResCols.some((c) => c.name === 'covers_actual')
+	) {
+		await db.run(
+			sql.raw('ALTER TABLE rsv_reservations ADD COLUMN covers_actual integer'),
+		)
+	}
 	for (const legacyName of LEGACY_RSV_TRIGGERS) {
 		await db.run(sql.raw(`DROP TRIGGER IF EXISTS ${legacyName}`))
 	}

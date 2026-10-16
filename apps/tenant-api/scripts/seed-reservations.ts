@@ -362,6 +362,8 @@ async function seedTenantReservations(params: {
 			onlinePartyMax: 8,
 			partyMax: 20,
 			holdMinutes: 7,
+			contactStatusesEnabled: true,
+			courseStatusesEnabled: true,
 			updatedAt: now,
 		})
 		.onConflictDoUpdate({
@@ -371,6 +373,8 @@ async function seedTenantReservations(params: {
 				onlineEnabled: true,
 				waitlistEnabled: true,
 				waitlistOnline: true,
+				contactStatusesEnabled: true,
+				courseStatusesEnabled: true,
 				timeZone: params.timeZone,
 				currency: params.currency,
 				updatedAt: now,
@@ -982,7 +986,6 @@ async function seedTenantReservations(params: {
 			id: layoutId,
 			locationId: locId,
 			name: '3-Server Dinner',
-			sortOrder: 0,
 		})
 		.onConflictDoUpdate({
 			target: rsvSectionLayouts.id,
@@ -994,7 +997,7 @@ async function seedTenantReservations(params: {
 			id: `sec_${prefix}_a`,
 			name: 'Section A (Main Front)',
 			colorToken: '1',
-			sortOrder: 0,
+			sort: 0,
 			tableIds: [`tbl_${prefix}_m1`, `tbl_${prefix}_m2`, `tbl_${prefix}_m3`],
 			serverLabel: 'Amira',
 		},
@@ -1002,7 +1005,7 @@ async function seedTenantReservations(params: {
 			id: `sec_${prefix}_b`,
 			name: 'Section B (Main Back)',
 			colorToken: '2',
-			sortOrder: 1,
+			sort: 1,
 			tableIds: [`tbl_${prefix}_m4`, `tbl_${prefix}_m5`, `tbl_${prefix}_m6`],
 			serverLabel: 'Karim',
 		},
@@ -1010,7 +1013,7 @@ async function seedTenantReservations(params: {
 			id: `sec_${prefix}_c`,
 			name: 'Section C (Patio)',
 			colorToken: '3',
-			sortOrder: 2,
+			sort: 2,
 			tableIds: [
 				`tbl_${prefix}_p1`,
 				`tbl_${prefix}_p2`,
@@ -1028,11 +1031,15 @@ async function seedTenantReservations(params: {
 				layoutId,
 				name: sec.name,
 				colorToken: sec.colorToken,
-				sortOrder: sec.sortOrder,
+				sort: sec.sort,
 			})
 			.onConflictDoUpdate({
 				target: rsvSections.id,
-				set: { name: sec.name, colorToken: sec.colorToken },
+				set: {
+					name: sec.name,
+					colorToken: sec.colorToken,
+					sort: sec.sort,
+				},
 			})
 		for (const tableId of sec.tableIds) {
 			await tenantDb
@@ -1073,22 +1080,26 @@ async function seedTenantReservations(params: {
 	}
 
 	await tenantDb
+		.delete(rsvServiceNotes)
+		.where(
+			and(eq(rsvServiceNotes.locationId, locId), eq(rsvServiceNotes.body, '')),
+		)
+	await tenantDb
 		.insert(rsvServiceNotes)
 		.values({
 			id: `snt_${prefix}_${businessDate}_dinner`,
 			locationId: locId,
 			businessDate,
 			serviceId: svcDinnerId,
-			notes:
-				'VIP guests at 18:00 (Table M1). Chef tasting menu available tonight.',
-			updatedByUserId: 'seed-reservations',
+			body: 'VIP guests at 18:00 (Table M1). Chef tasting menu available tonight.',
+			updatedBy: 'seed-reservations',
 			updatedAt: now,
 		})
 		.onConflictDoUpdate({
 			target: rsvServiceNotes.id,
 			set: {
-				notes:
-					'VIP guests at 18:00 (Table M1). Chef tasting menu available tonight.',
+				body: 'VIP guests at 18:00 (Table M1). Chef tasting menu available tonight.',
+				updatedBy: 'seed-reservations',
 				updatedAt: now,
 			},
 		})
@@ -1103,13 +1114,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 18 * 60, // 18:00
 			durationMin: 90,
 			partySize: 2,
-			arrivedPartySize: 0,
+			arrivedCovers: 0,
+			seatedCovers: null,
+			coversActual: null,
 			status: 'confirmed' as const,
 			tableId: `tbl_${prefix}_m1`,
 			occasionTagId: `tag_${prefix}_anniversary`,
 			dietaryNotes: null,
-			guestNotes: 'Window seat if available',
-			internalNotes: 'Complimentary champagne',
+			guestRequests: 'Window seat if available',
+			staffNotes: 'Complimentary champagne',
 		},
 		{
 			id: `rsv_${prefix}_2`,
@@ -1120,13 +1133,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 18 * 60 + 30, // 18:30
 			durationMin: 90,
 			partySize: 4,
-			arrivedPartySize: 4,
+			arrivedCovers: 4,
+			seatedCovers: 4,
+			coversActual: 4,
 			status: 'seated' as const,
 			tableId: `tbl_${prefix}_m3`,
 			occasionTagId: null,
 			dietaryNotes: null,
-			guestNotes: null,
-			internalNotes: null,
+			guestRequests: null,
+			staffNotes: null,
 		},
 		{
 			id: `rsv_${prefix}_3`,
@@ -1137,13 +1152,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 19 * 60, // 19:00
 			durationMin: 90,
 			partySize: 4,
-			arrivedPartySize: 0,
+			arrivedCovers: 0,
+			seatedCovers: null,
+			coversActual: null,
 			status: 'booked' as const,
 			tableId: `tbl_${prefix}_p2`,
 			occasionTagId: `tag_${prefix}_birthday`,
 			dietaryNotes: 'Severe tree nut allergy',
-			guestNotes: 'Birthday celebration',
-			internalNotes: 'Alert kitchen on seating',
+			guestRequests: 'Birthday celebration',
+			staffNotes: 'Alert kitchen on seating',
 		},
 		{
 			id: `rsv_${prefix}_4`,
@@ -1154,13 +1171,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 19 * 60 + 30, // 19:30
 			durationMin: 105,
 			partySize: 6,
-			arrivedPartySize: 3,
+			arrivedCovers: 3,
+			seatedCovers: null,
+			coversActual: null,
 			status: 'arrived' as const,
 			tableId: `tbl_${prefix}_m5`,
 			occasionTagId: null,
 			dietaryNotes: null,
-			guestNotes: null,
-			internalNotes: '3 of 6 waiting at bar',
+			guestRequests: null,
+			staffNotes: '3 of 6 waiting at bar',
 		},
 		{
 			id: `rsv_${prefix}_5`,
@@ -1171,13 +1190,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 12 * 60 + 30, // 12:30
 			durationMin: 75,
 			partySize: 2,
-			arrivedPartySize: 2,
+			arrivedCovers: 2,
+			seatedCovers: 2,
+			coversActual: 2,
 			status: 'finished' as const,
 			tableId: null,
 			occasionTagId: null,
 			dietaryNotes: null,
-			guestNotes: null,
-			internalNotes: null,
+			guestRequests: null,
+			staffNotes: null,
 		},
 		{
 			id: `rsv_${prefix}_6`,
@@ -1188,13 +1209,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 20 * 60, // 20:00
 			durationMin: 90,
 			partySize: 2,
-			arrivedPartySize: 0,
+			arrivedCovers: 0,
+			seatedCovers: null,
+			coversActual: null,
 			status: 'cancelled' as const,
 			tableId: null,
 			occasionTagId: null,
 			dietaryNotes: null,
-			guestNotes: null,
-			internalNotes: null,
+			guestRequests: null,
+			staffNotes: null,
 		},
 		{
 			id: `rsv_${prefix}_7`,
@@ -1205,13 +1228,15 @@ async function seedTenantReservations(params: {
 			localStartMin: 13 * 60, // 13:00
 			durationMin: 75,
 			partySize: 2,
-			arrivedPartySize: 0,
+			arrivedCovers: 0,
+			seatedCovers: null,
+			coversActual: null,
 			status: 'no_show' as const,
 			tableId: null,
 			occasionTagId: null,
 			dietaryNotes: null,
-			guestNotes: null,
-			internalNotes: null,
+			guestRequests: null,
+			staffNotes: null,
 		},
 	]
 
@@ -1238,14 +1263,16 @@ async function seedTenantReservations(params: {
 				endAt,
 				durationMin: rsv.durationMin,
 				partySize: rsv.partySize,
-				arrivedPartySize: rsv.arrivedPartySize,
+				arrivedCovers: rsv.arrivedCovers,
+				seatedCovers: rsv.seatedCovers,
+				coversActual: rsv.coversActual,
 				status: rsv.status,
 				channel: 'host',
 				guestLocale: params.currency === 'SAR' ? 'ar' : 'en',
 				occasionTagId: rsv.occasionTagId,
 				dietaryNotes: rsv.dietaryNotes,
-				guestNotes: rsv.guestNotes,
-				internalNotes: rsv.internalNotes,
+				guestRequests: rsv.guestRequests,
+				staffNotes: rsv.staffNotes,
 				seatedAt:
 					rsv.status === 'seated' || rsv.status === 'finished' ? startAt : null,
 				finishedAt: rsv.status === 'finished' ? endAt : null,
@@ -1262,12 +1289,14 @@ async function seedTenantReservations(params: {
 					businessDate,
 					startAt,
 					endAt,
-					arrivedPartySize: rsv.arrivedPartySize,
+					arrivedCovers: rsv.arrivedCovers,
+					seatedCovers: rsv.seatedCovers,
+					coversActual: rsv.coversActual,
 					status: rsv.status,
 					occasionTagId: rsv.occasionTagId,
 					dietaryNotes: rsv.dietaryNotes,
-					guestNotes: rsv.guestNotes,
-					internalNotes: rsv.internalNotes,
+					guestRequests: rsv.guestRequests,
+					staffNotes: rsv.staffNotes,
 					updatedAt: now,
 				},
 			})
@@ -1416,6 +1445,25 @@ async function main() {
 		timeZone: orgInfo.timeZone,
 		currency: orgInfo.currency,
 	})
+
+	// Also refresh triggers/schema on any other existing local tenant_*.db files in this directory
+	const dbDir =
+		process.env.TENANT_DB_DIR ??
+		path.resolve(import.meta.dirname, '../../../packages/database/db')
+	if (fs.existsSync(dbDir)) {
+		for (const file of fs.readdirSync(dbDir)) {
+			const match = /^tenant_([a-zA-Z0-9_-]+)\.db$/.exec(file)
+			if (match && match[1] && match[1] !== orgInfo.orgId) {
+				try {
+					await provisionTenantDb(match[1])
+					const otherDb = await getTenantDb(match[1])
+					await refreshReservationsTriggers(otherDb)
+				} catch {
+					// Ignore non-standard test files
+				}
+			}
+		}
+	}
 }
 
 await main()

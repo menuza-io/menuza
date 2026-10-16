@@ -3,7 +3,7 @@ import { getTenantDb, rsvGuests } from '@repo/tenant-db'
 import { desc } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
-import { handleRouteError, json } from '../lib/http.ts'
+import { ECHOING_CODES, handleRouteError, json } from '../lib/http.ts'
 import {
 	hasReservationsGrant,
 	requireReservationsLocation,
@@ -45,7 +45,9 @@ async function parseBody<T extends z.ZodTypeAny>(
 					issues: parsed.error.issues.map((issue) => ({
 						path: issue.path.join('.'),
 						code: issue.code,
-						message: issue.message,
+						...(ECHOING_CODES.has(issue.code)
+							? {}
+							: { message: issue.message }),
 					})),
 				},
 				400,
@@ -73,7 +75,9 @@ function parseQuery<T extends z.ZodTypeAny>(
 					issues: parsed.error.issues.map((issue) => ({
 						path: issue.path.join('.'),
 						code: issue.code,
-						message: issue.message,
+						...(ECHOING_CODES.has(issue.code)
+							? {}
+							: { message: issue.message }),
 					})),
 				},
 				400,

@@ -505,6 +505,10 @@ export interface CreateOperatorReservationInput {
 	lock?: boolean
 	locked?: boolean
 	tableLocked?: boolean
+	lockTable?: boolean
+	assignment?: 'soft' | 'locked'
+	skipPayment?: boolean
+	paymentPolicyMode?: string | null
 	overbook?: boolean
 	overbookReason?: string | null
 	channel?: 'phone' | 'walk_in' | 'in_person' | 'online' | 'voice' | 'import'
@@ -673,6 +677,7 @@ export async function createOperatorReservation(params: {
 					: null
 
 			if (explicitTables) {
+				const overlappingResIds = new Set<string>()
 				for (const tid of explicitTables) {
 					const tbl = state.tableById.get(tid)
 					if (!tbl || tbl.archivedAt !== null) {
@@ -686,11 +691,135 @@ export async function createOperatorReservation(params: {
 					const overlapping = state.activeOccRows.filter(
 						(o) => o.tableId === tid && o.startAt < occEnd && o.endAt > startAt,
 					)
-					if (overlapping.length > 0 && !isOverbook) {
-						throw conflict(
-							'table_occupied',
-							`Table ${tbl.label} is already occupied during this window`,
-						)
+					for (const occ of overlapping) {
+						if (occ.kind === 'block' || occ.kind === 'hold') {
+							if (!isOverbook) {
+								throw conflict(
+									'table_occupied',
+									`Table ${tbl.label} is already occupied during this window`,
+								)
+							}
+						} else if (occ.reservationId) {
+							overlappingResIds.add(occ.reservationId)
+						}
+					}
+				}
+				if (overlappingResIds.size > 0 && !isOverbook) {
+					for (const otherId of overlappingResIds) {
+						const other = state.dayResRows.find((r) => r.id === otherId)
+						if (!other) continue
+						const isHardLocked =
+							other.assignment === 'locked' ||
+							!SOFT_REFLOWABLE_STATUSES.has(other.status) ||
+							isInsideFreezeWindow(other.startAt, now, state.freezeMin)
+						if (isHardLocked) {
+							throw conflict(
+								'table_occupied',
+								`Cannot displace reservation ${other.confirmationCode} (locked, seated, or within freeze window)`,
+							)
+						}
+						const otherOccs = state.occsByResId.get(other.id) ?? []
+						const otherFromTables = otherOccs.map((o) => o.tableId)
+						await tx
+							.update(rsvTableOccupancies)
+							.set({ active: false })
+							.where(
+								and(
+									eq(rsvTableOccupancies.reservationId, other.id),
+									eq(rsvTableOccupancies.active, true),
+								),
+							)
+						const simulatedBookings: AssignBookingRecord[] = [
+							...state.buildEngineBookings(new Set([other.id])),
+							{
+								id: 'new_explicit_booking',
+								partySize: input.partySize,
+								localStartMin,
+								startAt,
+								endAt,
+								tableIds: explicitTables,
+								combinationId: input.comboId ?? null,
+								status: 'booked',
+								tableLocked: true,
+								overbook: false,
+								channel: 'host',
+								serviceId,
+							},
+						]
+						const reflowAssign = assignTables({
+							partySize: other.partySize,
+							startAt: other.startAt,
+							endAt: other.endAt,
+							localStartMin: other.localStartMin,
+							channel: other.channel === 'online' ? 'online' : 'host',
+							serviceId: other.serviceId,
+							areaId: other.areaPrefStrict ? other.areaPrefId : null,
+							tables: state.engineTables,
+							areas: state.engineAreas,
+							combinations: state.engineCombos,
+							serviceAvailability: state.engineServiceAvail,
+							pacingRules: [],
+							bookings: simulatedBookings,
+							holds: state.engineHolds,
+							blocks: state.engineBlocks,
+							nowMs: effectiveFreezeNow(other.startAt, now),
+							assignmentFreezeMin: state.freezeMin,
+							skipPacing: true,
+						})
+						if (!reflowAssign.assigned) {
+							throw conflict(
+								'table_occupied',
+								`Cannot reflow displaced reservation ${other.confirmationCode} to another table`,
+							)
+						}
+						for (const tid of reflowAssign.tableIds) {
+							const tbl = state.tableById.get(tid)
+							const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
+							await tx.insert(rsvTableOccupancies).values({
+								id: createId('occ'),
+								locationId,
+								tableId: tid,
+								kind: 'reservation',
+								reservationId: other.id,
+								startAt: other.startAt,
+								endAt: other.endAt + resetMs,
+								active: true,
+								overbook: false,
+								createdAt: now,
+							})
+						}
+						await tx
+							.update(rsvReservations)
+							.set({
+								comboId: reflowAssign.combinationId,
+								scheduleVersion: other.scheduleVersion + 1,
+								version: other.version + 1,
+								updatedAt: now,
+							})
+							.where(eq(rsvReservations.id, other.id))
+						await tx.insert(rsvReservationEvents).values({
+							id: createId('rev'),
+							reservationId: other.id,
+							at: now,
+							actorKind: 'operator',
+							actorId: params.actorId,
+							type: 'auto_reassigned',
+							fromStatus: other.status,
+							toStatus: other.status,
+							data: {
+								fromTableIds: otherFromTables,
+								toTableIds: reflowAssign.tableIds,
+								toCombinationId: reflowAssign.combinationId ?? null,
+								reason: 'reflow',
+							},
+						})
+						moves.push({
+							reservationId: other.id,
+							bookingId: other.id,
+							fromTableIds: otherFromTables,
+							toTableIds: [...reflowAssign.tableIds],
+							toCombinationId: reflowAssign.combinationId,
+						})
 					}
 				}
 				assignedTableIds = explicitTables
@@ -802,6 +931,22 @@ export async function createOperatorReservation(params: {
 									updatedAt: now,
 								})
 								.where(eq(rsvReservations.id, swappedBooking.id))
+							await tx.insert(rsvReservationEvents).values({
+								id: createId('rev'),
+								reservationId: swappedBooking.id,
+								at: now,
+								actorKind: 'operator',
+								actorId: params.actorId,
+								type: 'auto_reassigned',
+								fromStatus: swappedBooking.status,
+								toStatus: swappedBooking.status,
+								data: {
+									fromTableIds: swap.fromTableIds,
+									toTableIds: swap.toTableIds,
+									toCombinationId: swap.toCombinationId ?? null,
+									reason: 'reflow',
+								},
+							})
 							moves.push({
 								reservationId: swap.bookingId,
 								bookingId: swap.bookingId,
@@ -828,7 +973,11 @@ export async function createOperatorReservation(params: {
 			const resId = createId('rsv')
 			const confirmationCode = generateConfirmationCode()
 			const isLocked = Boolean(
-				input.lock ?? input.locked ?? input.tableLocked ?? false,
+				input.lock ??
+				input.locked ??
+				input.tableLocked ??
+				input.lockTable ??
+				input.assignment === 'locked',
 			)
 			const assignmentMode: 'soft' | 'locked' = isLocked ? 'locked' : 'soft'
 
@@ -1158,6 +1307,7 @@ export async function createWalkIn(params: {
 				partySize: input.partySize,
 				arrivedCovers: input.partySize,
 				seatedCovers: input.partySize,
+				coversActual: input.partySize,
 				status: 'seated',
 				contactStatus: null,
 				channel: 'walk_in',
@@ -1666,12 +1816,13 @@ export async function assignReservationTables(params: {
 							at: now,
 							actorKind: 'operator',
 							actorId: params.actorId,
-							type: 'table_changed',
+							type: 'auto_reassigned',
 							fromStatus: other.status,
 							toStatus: other.status,
 							data: {
 								fromTableIds: otherFromTables,
 								toTableIds: reflowAssign.tableIds,
+								toCombinationId: reflowAssign.combinationId ?? null,
 								reason: 'reflow',
 							},
 						})
@@ -1730,7 +1881,9 @@ export async function assignReservationTables(params: {
 			const eventType =
 				nextAssignment === 'locked' && current.assignment !== 'locked'
 					? 'locked'
-					: 'table_changed'
+					: nextAssignment === 'soft' && current.assignment === 'locked'
+						? 'unlocked'
+						: 'table_changed'
 
 			await tx.insert(rsvReservationEvents).values({
 				id: createId('rev'),
@@ -1803,6 +1956,10 @@ export async function updateReservation(params: {
 		tableIds?: string[]
 		lock?: boolean
 		locked?: boolean
+		lockTable?: boolean
+		unlock?: boolean
+		assignment?: 'soft' | 'locked'
+		reflowLaterParties?: boolean
 		overbook?: boolean
 		overbookReason?: string | null
 		expectedVersion?: number
@@ -2007,6 +2164,12 @@ export async function updateReservation(params: {
 					}
 
 					if (overlappingResIds.size > 0 && !isOverbook) {
+						if (params.input.reflowLaterParties === false) {
+							throw conflict(
+								'table_occupied',
+								'Target window overlaps another reservation',
+							)
+						}
 						for (const otherId of overlappingResIds) {
 							const other = state.dayResRows.find((r) => r.id === otherId)
 							if (!other) continue
@@ -2106,6 +2269,23 @@ export async function updateReservation(params: {
 								})
 								.where(eq(rsvReservations.id, other.id))
 
+							await tx.insert(rsvReservationEvents).values({
+								id: createId('rev'),
+								reservationId: other.id,
+								at: now,
+								actorKind: 'operator',
+								actorId: params.actorId,
+								type: 'auto_reassigned',
+								fromStatus: other.status,
+								toStatus: other.status,
+								data: {
+									fromTableIds: otherFromTables,
+									toTableIds: reflowAssign.tableIds,
+									toCombinationId: reflowAssign.combinationId ?? null,
+									reason: 'reflow',
+								},
+							})
+
 							moves.push({
 								reservationId: other.id,
 								bookingId: other.id,
@@ -2155,6 +2335,16 @@ export async function updateReservation(params: {
 						? params.input.staffNotes
 						: current.staffNotes
 
+			const nextAssignment =
+				params.input.unlock === true || params.input.assignment === 'soft'
+					? 'soft'
+					: params.input.lock === true ||
+						  params.input.locked === true ||
+						  params.input.lockTable === true ||
+						  params.input.assignment === 'locked'
+						? 'locked'
+						: current.assignment
+
 			await tx
 				.update(rsvReservations)
 				.set({
@@ -2166,6 +2356,7 @@ export async function updateReservation(params: {
 					partySize: nextPartySize,
 					serviceId: nextServiceId,
 					comboId: nextComboId,
+					assignment: nextAssignment,
 					areaPrefId: nextAreaPrefId,
 					...(params.input.areaPrefStrict !== undefined
 						? { areaPrefStrict: params.input.areaPrefStrict }
@@ -2236,11 +2427,14 @@ export async function transitionReservationStatus(params: {
 	actorId: string
 	input: {
 		status: string
-		seatedPartySize?: number
-		seatedCovers?: number
-		arrivedPartySize?: number
-		arrivedCovers?: number
+		covers?: number | null
+		coversActual?: number | null
+		seatedPartySize?: number | null
+		seatedCovers?: number | null
+		arrivedPartySize?: number | null
+		arrivedCovers?: number | null
 		cancelReason?: string | null
+		reason?: string | null
 		expectedVersion?: number
 		nowMs?: number
 	}
@@ -2289,23 +2483,37 @@ export async function transitionReservationStatus(params: {
 				)
 			}
 
+			const explicitCovers =
+				params.input.coversActual ??
+				params.input.covers ??
+				params.input.seatedPartySize ??
+				params.input.seatedCovers ??
+				undefined
+
 			const arrivedCovers =
 				params.input.arrivedPartySize ??
 				params.input.arrivedCovers ??
-				(targetStatus === 'arrived' || targetStatus === 'seated'
-					? (current.arrivedCovers ?? current.partySize)
-					: current.arrivedCovers)
+				(targetStatus === 'arrived'
+					? (params.input.covers ?? current.arrivedCovers ?? current.partySize)
+					: targetStatus === 'seated'
+						? (current.arrivedCovers ?? explicitCovers ?? current.partySize)
+						: current.arrivedCovers)
 			const seatedCovers =
-				params.input.seatedPartySize ??
-				params.input.seatedCovers ??
+				explicitCovers ??
 				(targetStatus === 'seated'
 					? (current.seatedCovers ?? arrivedCovers ?? current.partySize)
 					: current.seatedCovers)
+			const coversActual =
+				params.input.coversActual ??
+				(targetStatus === 'seated' || targetStatus === 'finished'
+					? (explicitCovers ?? current.coversActual ?? seatedCovers)
+					: (current.coversActual ?? explicitCovers ?? null))
 
 			const patch: Partial<typeof rsvReservations.$inferInsert> = {
 				status: targetStatus as typeof current.status,
 				arrivedCovers,
 				seatedCovers,
+				coversActual,
 				version: current.version + 1,
 				updatedAt: now,
 			}
@@ -2340,7 +2548,7 @@ export async function transitionReservationStatus(params: {
 				}
 
 				if (current.guestId) {
-					const coversCount = seatedCovers ?? current.partySize
+					const coversCount = coversActual ?? seatedCovers ?? current.partySize
 					await tx
 						.update(rsvGuests)
 						.set({
@@ -2355,7 +2563,8 @@ export async function transitionReservationStatus(params: {
 			} else if (targetStatus === 'cancelled') {
 				patch.cancelledAt = now
 				patch.cancelledBy = 'restaurant'
-				patch.cancelReason = params.input.cancelReason ?? null
+				patch.cancelReason =
+					params.input.cancelReason ?? params.input.reason ?? null
 				await tx
 					.update(rsvTableOccupancies)
 					.set({ active: false })
@@ -2571,7 +2780,8 @@ export async function undoReservationTransition(params: {
 				}
 
 				if (current.guestId) {
-					const coversCount = current.seatedCovers ?? current.partySize
+					const coversCount =
+						current.coversActual ?? current.seatedCovers ?? current.partySize
 					await tx
 						.update(rsvGuests)
 						.set({
@@ -2693,12 +2903,12 @@ const CONTACT_STATUS_MAP: Record<
 	(typeof RSV_CONTACT_STATUS_VALUES)[number] | null
 > = {
 	none: null,
-	not_contacted: null,
+	not_contacted: 'not_contacted',
 	left_message: 'left_message',
 	no_answer: 'no_answer',
-	confirmed_by_phone: 'left_message',
-	confirmed_phone: 'left_message',
-	confirmed_sms: 'left_message',
+	confirmed_by_phone: 'confirmed_by_phone',
+	confirmed_phone: 'confirmed_phone',
+	confirmed_sms: 'confirmed_sms',
 	wrong_number: 'wrong_number',
 }
 
@@ -2750,6 +2960,18 @@ export async function updateReservationContactStatus(params: {
 				throw conflict(
 					'invalid_state_for_contact_status',
 					'Contact status can only be updated before arrival',
+				)
+			}
+
+			const locSettings = await tx
+				.select()
+				.from(rsvLocationSettings)
+				.where(eq(rsvLocationSettings.locationId, current.locationId))
+				.get()
+			if (locSettings && !locSettings.contactStatusesEnabled) {
+				throw conflict(
+					'contact_statuses_disabled',
+					'Contact statuses are disabled for this location',
 				)
 			}
 
@@ -2901,15 +3123,15 @@ const COURSE_STATUS_MAP: Record<
 	string,
 	(typeof RSV_COURSE_STATUS_VALUES)[number]
 > = {
-	ordered: 'appetizer',
+	ordered: 'ordered',
 	appetizer: 'appetizer',
-	apps: 'appetizer',
-	starters: 'appetizer',
+	apps: 'apps',
+	starters: 'starters',
 	entree: 'entree',
-	mains: 'entree',
+	mains: 'mains',
 	dessert: 'dessert',
 	check_dropped: 'check_dropped',
-	check: 'check_dropped',
+	check: 'check',
 	paid: 'paid',
 	bussing: 'bussing',
 }
@@ -2962,6 +3184,18 @@ export async function updateReservationCourseStatus(params: {
 				throw conflict(
 					'invalid_state_for_course_status',
 					'Course status can only be updated while the party is seated',
+				)
+			}
+
+			const locSettings = await tx
+				.select()
+				.from(rsvLocationSettings)
+				.where(eq(rsvLocationSettings.locationId, current.locationId))
+				.get()
+			if (locSettings && !locSettings.courseStatusesEnabled) {
+				throw conflict(
+					'course_statuses_disabled',
+					'Course statuses are disabled for this location',
 				)
 			}
 

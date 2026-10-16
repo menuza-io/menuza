@@ -1523,4 +1523,326 @@ describe('/operator/reservations/setup/* routes', () => {
 		const audits = await db.select().from(rsvAuditLog).all()
 		expect(audits.length).toBeGreaterThan(0)
 	})
+
+	it('enforces hold-duration bounds (3..20, 10..60, 5..30), turn-time max 480 & non-overlapping buckets, combo validation on update & saveFloorPlan, and unconditional special-day day-version bumps', async () => {
+		const token = await mintToken()
+		const app = buildApp()
+		const db = await getTenantDb(ORG_ID)
+
+		// 1. Hold duration bounds (VAL-SETUP-005):
+		// holdMinutes: 3..20, paymentHoldMinutes: 10..60, voiceHoldMinutes: 5..30
+		for (const badBody of [
+			{ locationId: LOC_MAIN, holdMinutes: 2 },
+			{ locationId: LOC_MAIN, holdMinutes: 21 },
+			{ locationId: LOC_MAIN, paymentHoldMinutes: 9 },
+			{ locationId: LOC_MAIN, paymentHoldMinutes: 61 },
+			{ locationId: LOC_MAIN, voiceHoldMinutes: 4 },
+			{ locationId: LOC_MAIN, voiceHoldMinutes: 31 },
+		]) {
+			const res = await app.request(
+				`/operator/reservations/setup/locations/${LOC_MAIN}/settings`,
+				{
+					method: 'PUT',
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(badBody),
+				},
+			)
+			expect(res.status).toBe(400)
+		}
+
+		// Valid boundary values succeed
+		const validHoldRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/settings`,
+			{
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					holdMinutes: 3,
+					paymentHoldMinutes: 60,
+					voiceHoldMinutes: 30,
+				}),
+			},
+		)
+		expect(validHoldRes.status).toBe(200)
+
+		// 2. Turn-time minutes 15..480 and non-overlapping party buckets (VAL-SETUP-019)
+		const tooLongTurnRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/turn-times`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					partyMin: 1,
+					partyMax: 2,
+					minutes: 500,
+				}),
+			},
+		)
+		expect(tooLongTurnRes.status).toBe(400)
+
+		const tt1Res = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/turn-times`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					partyMin: 1,
+					partyMax: 4,
+					minutes: 90,
+				}),
+			},
+		)
+		expect(tt1Res.status).toBe(201)
+
+		// Overlapping bucket [3, 6] in same (locationId, serviceId=null) scope -> 400
+		const overlapCreateRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/turn-times`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					partyMin: 3,
+					partyMax: 6,
+					minutes: 120,
+				}),
+			},
+		)
+		expect(overlapCreateRes.status).toBe(400)
+
+		// Non-overlapping bucket [5, 8] succeeds -> 201, then updating it to [4, 8] -> 400
+		const tt2Res = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/turn-times`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					partyMin: 5,
+					partyMax: 8,
+					minutes: 120,
+				}),
+			},
+		)
+		expect(tt2Res.status).toBe(201)
+		const tt2 = ((await tt2Res.json()) as any).turnTime
+		const overlapUpdateRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/turn-times/${tt2.id}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					partyMin: 4,
+					partyMax: 8,
+				}),
+			},
+		)
+		expect(overlapUpdateRes.status).toBe(400)
+
+		// 3. Special-day create, update, and delete unconditionally bump rsv_day_versions (VAL-SETUP-022)
+		const sdCreateRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/special-days`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					fromDate: '2027-12-24',
+					toDate: '2027-12-25',
+					kind: 'closed',
+					name: 'Holiday Closure',
+				}),
+			},
+		)
+		expect(sdCreateRes.status).toBe(201)
+		const sd = ((await sdCreateRes.json()) as any).specialDay
+
+		const dvAfterCreate24 = await db
+			.select()
+			.from(rsvDayVersions)
+			.where(eq(rsvDayVersions.businessDate, '2027-12-24'))
+			.get()
+		const dvAfterCreate25 = await db
+			.select()
+			.from(rsvDayVersions)
+			.where(eq(rsvDayVersions.businessDate, '2027-12-25'))
+			.get()
+		expect(dvAfterCreate24?.version).toBeGreaterThanOrEqual(1)
+		expect(dvAfterCreate25?.version).toBeGreaterThanOrEqual(1)
+
+		const v24BeforeUpdate = dvAfterCreate24!.version
+		const sdUpdateRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/special-days/${sd.id}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name: 'Updated Holiday Closure',
+				}),
+			},
+		)
+		expect(sdUpdateRes.status).toBe(200)
+		const dvAfterUpdate24 = await db
+			.select()
+			.from(rsvDayVersions)
+			.where(eq(rsvDayVersions.businessDate, '2027-12-24'))
+			.get()
+		expect(dvAfterUpdate24!.version).toBeGreaterThan(v24BeforeUpdate)
+
+		const v24BeforeDelete = dvAfterUpdate24!.version
+		const sdDeleteRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/special-days/${sd.id}`,
+			{
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		)
+		expect(sdDeleteRes.status).toBe(200)
+		const dvAfterDelete24 = await db
+			.select()
+			.from(rsvDayVersions)
+			.where(eq(rsvDayVersions.businessDate, '2027-12-24'))
+			.get()
+		expect(dvAfterDelete24!.version).toBeGreaterThan(v24BeforeDelete)
+
+		// 4. Combo validation on update and saveFloorPlan (VAL-SETUP-010)
+		const areaRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/areas`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ locationId: LOC_MAIN, name: 'Combo Test Area' }),
+			},
+		)
+		const area = ((await areaRes.json()) as any).area
+		const createTbl = async (label: string, combinable: boolean) => {
+			const r = await app.request(
+				`/operator/reservations/setup/locations/${LOC_MAIN}/tables`,
+				{
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						locationId: LOC_MAIN,
+						areaId: area.id,
+						label,
+						minCovers: 1,
+						maxCovers: 4,
+						combinable,
+					}),
+				},
+			)
+			return ((await r.json()) as any).table
+		}
+		const ct1 = await createTbl('CT1', true)
+		const ct2 = await createTbl('CT2', true)
+		const ct3 = await createTbl('CT3', true)
+		const ctFixed = await createTbl('CT_FIXED', false)
+
+		const c1Res = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/combos`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					label: 'CT1+CT2',
+					minCovers: 2,
+					maxCovers: 8,
+					tableIds: [ct1.id, ct2.id],
+				}),
+			},
+		)
+		expect(c1Res.status).toBe(201)
+
+		const c2Res = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/combos`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					label: 'CT2+CT3',
+					minCovers: 2,
+					maxCovers: 8,
+					tableIds: [ct2.id, ct3.id],
+				}),
+			},
+		)
+		expect(c2Res.status).toBe(201)
+		const c2 = ((await c2Res.json()) as any).combo
+
+		// Updating c2 to duplicate c1's member set [ct2.id, ct1.id] -> 400 or 409
+		const dupPatchRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/combos/${c2.id}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					tableIds: [ct2.id, ct1.id],
+				}),
+			},
+		)
+		expect([400, 409]).toContain(dupPatchRes.status)
+
+		// Updating c2 to include non-combinable table ctFixed -> 400
+		const nonCombPatchRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/combos/${c2.id}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					tableIds: [ct2.id, ctFixed.id],
+				}),
+			},
+		)
+		expect(nonCombPatchRes.status).toBe(400)
+	})
 })

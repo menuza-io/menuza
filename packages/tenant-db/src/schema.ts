@@ -2970,17 +2970,29 @@ export type RsvReservationStatus =
 	(typeof RSV_RESERVATION_STATUS_VALUES)[number]
 
 export const RSV_CONTACT_STATUS_VALUES = [
+	'not_contacted',
 	'left_message',
 	'no_answer',
 	'wrong_number',
+	'confirmed',
+	'confirmed_by_phone',
+	'confirmed_phone',
+	'confirmed_sms',
 ] as const
 export type RsvContactStatus = (typeof RSV_CONTACT_STATUS_VALUES)[number]
 
 export const RSV_COURSE_STATUS_VALUES = [
+	'Ordered',
+	'ordered',
 	'appetizer',
+	'apps',
+	'starters',
 	'entree',
+	'mains',
 	'dessert',
 	'check_dropped',
+	'check_presented',
+	'check',
 	'paid',
 	'bussing',
 ] as const
@@ -3981,6 +3993,7 @@ export const rsvReservations = sqliteTable(
 		partySize: integer('party_size').notNull(),
 		arrivedCovers: integer('arrived_covers'),
 		seatedCovers: integer('seated_covers'),
+		coversActual: integer('covers_actual'),
 		status: text('status', { enum: RSV_RESERVATION_STATUS_VALUES })
 			.notNull()
 			.default('booked'),

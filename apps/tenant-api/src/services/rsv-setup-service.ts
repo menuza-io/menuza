@@ -30,6 +30,7 @@ import {
 	rsvLocationSettings,
 	rsvPacingRules,
 	rsvPolicies,
+	rsvReservationEvents,
 	rsvReservations,
 	rsvServiceAvailability,
 	rsvServices,
@@ -43,6 +44,7 @@ import {
 } from '@repo/tenant-db'
 import { addDays } from '@repo/zoned-time'
 import { and, asc, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { withSetupWrite } from '../lib/reservations-write.ts'
 import { badRequest, conflict, notFound } from '../lib/http.js'
 import { getReservationsContext } from '../lib/reservations-context.js'
 
@@ -445,176 +447,216 @@ export async function updateLocationSettings(
 	actorId: string,
 	patch: UpdateLocationSettingsPatch,
 ) {
-	const current = await ensureLocationSettingsRow(db, orgId, locationId)
+	return withSetupWrite(
+		db,
+		async (db) => {
+			if (
+				patch.holdMinutes !== undefined &&
+				(patch.holdMinutes < 3 || patch.holdMinutes > 20)
+			) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['holdMinutes'],
+					issues: [{ path: 'holdMinutes', code: 'out_of_range' }],
+				})
+			}
+			if (
+				patch.paymentHoldMinutes !== undefined &&
+				(patch.paymentHoldMinutes < 10 || patch.paymentHoldMinutes > 60)
+			) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['paymentHoldMinutes'],
+					issues: [{ path: 'paymentHoldMinutes', code: 'out_of_range' }],
+				})
+			}
+			if (
+				patch.voiceHoldMinutes !== undefined &&
+				(patch.voiceHoldMinutes < 5 || patch.voiceHoldMinutes > 30)
+			) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['voiceHoldMinutes'],
+					issues: [{ path: 'voiceHoldMinutes', code: 'out_of_range' }],
+				})
+			}
 
-	if (
-		patch.expectedVersion !== undefined &&
-		patch.expectedVersion !== current.version
-	) {
-		const serializedCurrent = await getLocationSettingsWithContext(
-			db,
-			orgId,
-			locationId,
-		)
-		throw conflict('stale_version', 'stale_version', {
-			current: serializedCurrent,
-			settings: serializedCurrent,
-			version: current.version,
-		})
-	}
+			const current = await ensureLocationSettingsRow(db, orgId, locationId)
 
-	if (patch.timeZone !== undefined && !isValidTimeZone(patch.timeZone)) {
-		throw badRequest('invalid', 'invalid', {
-			fields: ['timeZone'],
-			issues: [{ path: 'timeZone', code: 'invalid_time_zone' }],
-		})
-	}
+			if (
+				patch.expectedVersion !== undefined &&
+				patch.expectedVersion !== current.version
+			) {
+				const serializedCurrent = await getLocationSettingsWithContext(
+					db,
+					orgId,
+					locationId,
+				)
+				throw conflict('stale_version', 'stale_version', {
+					current: serializedCurrent,
+					settings: serializedCurrent,
+					version: current.version,
+				})
+			}
 
-	const mergedOnlinePartyMin = patch.onlinePartyMin ?? current.onlinePartyMin
-	const mergedOnlinePartyMax = patch.onlinePartyMax ?? current.onlinePartyMax
-	const mergedPartyMax = patch.partyMax ?? current.partyMax
+			if (patch.timeZone !== undefined && !isValidTimeZone(patch.timeZone)) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['timeZone'],
+					issues: [{ path: 'timeZone', code: 'invalid_time_zone' }],
+				})
+			}
 
-	if (
-		mergedOnlinePartyMin > mergedOnlinePartyMax ||
-		mergedOnlinePartyMax > mergedPartyMax
-	) {
-		throw badRequest('invalid', 'invalid', {
-			fields: ['onlinePartyMin', 'onlinePartyMax', 'partyMax'],
-			issues: [
-				{
-					path: 'onlinePartyMax',
-					code: 'invalid_party_bounds',
-				},
-			],
-		})
-	}
+			const mergedOnlinePartyMin =
+				patch.onlinePartyMin ?? current.onlinePartyMin
+			const mergedOnlinePartyMax =
+				patch.onlinePartyMax ?? current.onlinePartyMax
+			const mergedPartyMax = patch.partyMax ?? current.partyMax
 
-	const now = Date.now()
-	const nextVersion = current.version + 1
+			if (
+				mergedOnlinePartyMin > mergedOnlinePartyMax ||
+				mergedOnlinePartyMax > mergedPartyMax
+			) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['onlinePartyMin', 'onlinePartyMax', 'partyMax'],
+					issues: [
+						{
+							path: 'onlinePartyMax',
+							code: 'invalid_party_bounds',
+						},
+					],
+				})
+			}
 
-	await db
-		.update(rsvLocationSettings)
-		.set({
-			...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
-			...(patch.onlineEnabled !== undefined
-				? { onlineEnabled: patch.onlineEnabled }
-				: {}),
-			...(patch.waitlistEnabled !== undefined
-				? { waitlistEnabled: patch.waitlistEnabled }
-				: {}),
-			...(patch.waitlistOnline !== undefined
-				? { waitlistOnline: patch.waitlistOnline }
-				: {}),
-			...(patch.notifyMeEnabled !== undefined
-				? { notifyMeEnabled: patch.notifyMeEnabled }
-				: {}),
-			...(patch.timeZone !== undefined
-				? { timeZone: patch.timeZone, tzSyncedAt: now }
-				: {}),
-			...(patch.currency !== undefined ? { currency: patch.currency } : {}),
-			...(patch.dayStartMin !== undefined
-				? { dayStartMin: patch.dayStartMin }
-				: {}),
-			...(patch.intervalMin !== undefined
-				? { intervalMin: patch.intervalMin }
-				: {}),
-			...(patch.horizonDays !== undefined
-				? { horizonDays: patch.horizonDays }
-				: {}),
-			...(patch.releaseLocalMin !== undefined
-				? { releaseLocalMin: patch.releaseLocalMin }
-				: {}),
-			...(patch.minNoticeMin !== undefined
-				? { minNoticeMin: patch.minNoticeMin }
-				: {}),
-			...(patch.sameDayCutoffMin !== undefined
-				? { sameDayCutoffMin: patch.sameDayCutoffMin }
-				: {}),
-			...(patch.onlinePartyMin !== undefined
-				? { onlinePartyMin: patch.onlinePartyMin }
-				: {}),
-			...(patch.onlinePartyMax !== undefined
-				? { onlinePartyMax: patch.onlinePartyMax }
-				: {}),
-			...(patch.partyMax !== undefined ? { partyMax: patch.partyMax } : {}),
-			...(patch.largePartyMode !== undefined
-				? { largePartyMode: patch.largePartyMode }
-				: {}),
-			...(patch.largePartyNoteI18n !== undefined
-				? { largePartyNoteI18n: patch.largePartyNoteI18n ?? {} }
-				: {}),
-			...(patch.requestHoldsCapacity !== undefined
-				? { requestHoldsCapacity: patch.requestHoldsCapacity }
-				: {}),
-			...(patch.requestDeadlineHours !== undefined
-				? { requestDeadlineHours: patch.requestDeadlineHours }
-				: {}),
-			...(patch.contactPhone !== undefined
-				? { contactPhone: patch.contactPhone }
-				: {}),
-			...(patch.publicNoteI18n !== undefined
-				? { publicNoteI18n: patch.publicNoteI18n ?? {} }
-				: {}),
-			...(patch.seatingPrefMode !== undefined
-				? { seatingPrefMode: patch.seatingPrefMode }
-				: {}),
-			...(patch.holdMinutes !== undefined
-				? { holdMinutes: patch.holdMinutes }
-				: {}),
-			...(patch.paymentHoldMinutes !== undefined
-				? { paymentHoldMinutes: patch.paymentHoldMinutes }
-				: {}),
-			...(patch.voiceHoldMinutes !== undefined
-				? { voiceHoldMinutes: patch.voiceHoldMinutes }
-				: {}),
-			...(patch.voiceMode !== undefined ? { voiceMode: patch.voiceMode } : {}),
-			...(patch.freezeMin !== undefined ? { freezeMin: patch.freezeMin } : {}),
-			...(patch.lateGraceMin !== undefined
-				? { lateGraceMin: patch.lateGraceMin }
-				: {}),
-			...(patch.autoNoShowAfterMin !== undefined
-				? { autoNoShowAfterMin: patch.autoNoShowAfterMin }
-				: {}),
-			...(patch.maxActivePerPhone !== undefined
-				? { maxActivePerPhone: patch.maxActivePerPhone }
-				: {}),
-			...(patch.blockSamePhoneOverlap !== undefined
-				? { blockSamePhoneOverlap: patch.blockSamePhoneOverlap }
-				: {}),
-			...(patch.guestModifyCutoffMin !== undefined
-				? { guestModifyCutoffMin: patch.guestModifyCutoffMin }
-				: {}),
-			...(patch.contactStatusesEnabled !== undefined
-				? { contactStatusesEnabled: patch.contactStatusesEnabled }
-				: {}),
-			...(patch.courseStatusesEnabled !== undefined
-				? { courseStatusesEnabled: patch.courseStatusesEnabled }
-				: {}),
-			...(patch.defaultPolicyId !== undefined
-				? { defaultPolicyId: patch.defaultPolicyId }
-				: {}),
-			...(patch.waitlistResponseMin !== undefined
-				? { waitlistResponseMin: patch.waitlistResponseMin }
-				: {}),
-			...(patch.waitlistMaxParties !== undefined
-				? { waitlistMaxParties: patch.waitlistMaxParties }
-				: {}),
-			version: nextVersion,
-			updatedAt: now,
-			updatedBy: actorId,
-		})
-		.where(eq(rsvLocationSettings.locationId, locationId))
+			const now = Date.now()
+			const nextVersion = current.version + 1
 
-	await writeSetupAuditLog(db, {
-		actorId,
-		locationId,
-		action: 'settings.update',
-		entityType: 'location_settings',
-		entityId: locationId,
-		changes: { version: nextVersion },
-	})
+			await db
+				.update(rsvLocationSettings)
+				.set({
+					...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
+					...(patch.onlineEnabled !== undefined
+						? { onlineEnabled: patch.onlineEnabled }
+						: {}),
+					...(patch.waitlistEnabled !== undefined
+						? { waitlistEnabled: patch.waitlistEnabled }
+						: {}),
+					...(patch.waitlistOnline !== undefined
+						? { waitlistOnline: patch.waitlistOnline }
+						: {}),
+					...(patch.notifyMeEnabled !== undefined
+						? { notifyMeEnabled: patch.notifyMeEnabled }
+						: {}),
+					...(patch.timeZone !== undefined
+						? { timeZone: patch.timeZone, tzSyncedAt: now }
+						: {}),
+					...(patch.currency !== undefined ? { currency: patch.currency } : {}),
+					...(patch.dayStartMin !== undefined
+						? { dayStartMin: patch.dayStartMin }
+						: {}),
+					...(patch.intervalMin !== undefined
+						? { intervalMin: patch.intervalMin }
+						: {}),
+					...(patch.horizonDays !== undefined
+						? { horizonDays: patch.horizonDays }
+						: {}),
+					...(patch.releaseLocalMin !== undefined
+						? { releaseLocalMin: patch.releaseLocalMin }
+						: {}),
+					...(patch.minNoticeMin !== undefined
+						? { minNoticeMin: patch.minNoticeMin }
+						: {}),
+					...(patch.sameDayCutoffMin !== undefined
+						? { sameDayCutoffMin: patch.sameDayCutoffMin }
+						: {}),
+					...(patch.onlinePartyMin !== undefined
+						? { onlinePartyMin: patch.onlinePartyMin }
+						: {}),
+					...(patch.onlinePartyMax !== undefined
+						? { onlinePartyMax: patch.onlinePartyMax }
+						: {}),
+					...(patch.partyMax !== undefined ? { partyMax: patch.partyMax } : {}),
+					...(patch.largePartyMode !== undefined
+						? { largePartyMode: patch.largePartyMode }
+						: {}),
+					...(patch.largePartyNoteI18n !== undefined
+						? { largePartyNoteI18n: patch.largePartyNoteI18n ?? {} }
+						: {}),
+					...(patch.requestHoldsCapacity !== undefined
+						? { requestHoldsCapacity: patch.requestHoldsCapacity }
+						: {}),
+					...(patch.requestDeadlineHours !== undefined
+						? { requestDeadlineHours: patch.requestDeadlineHours }
+						: {}),
+					...(patch.contactPhone !== undefined
+						? { contactPhone: patch.contactPhone }
+						: {}),
+					...(patch.publicNoteI18n !== undefined
+						? { publicNoteI18n: patch.publicNoteI18n ?? {} }
+						: {}),
+					...(patch.seatingPrefMode !== undefined
+						? { seatingPrefMode: patch.seatingPrefMode }
+						: {}),
+					...(patch.holdMinutes !== undefined
+						? { holdMinutes: patch.holdMinutes }
+						: {}),
+					...(patch.paymentHoldMinutes !== undefined
+						? { paymentHoldMinutes: patch.paymentHoldMinutes }
+						: {}),
+					...(patch.voiceHoldMinutes !== undefined
+						? { voiceHoldMinutes: patch.voiceHoldMinutes }
+						: {}),
+					...(patch.voiceMode !== undefined
+						? { voiceMode: patch.voiceMode }
+						: {}),
+					...(patch.freezeMin !== undefined
+						? { freezeMin: patch.freezeMin }
+						: {}),
+					...(patch.lateGraceMin !== undefined
+						? { lateGraceMin: patch.lateGraceMin }
+						: {}),
+					...(patch.autoNoShowAfterMin !== undefined
+						? { autoNoShowAfterMin: patch.autoNoShowAfterMin }
+						: {}),
+					...(patch.maxActivePerPhone !== undefined
+						? { maxActivePerPhone: patch.maxActivePerPhone }
+						: {}),
+					...(patch.blockSamePhoneOverlap !== undefined
+						? { blockSamePhoneOverlap: patch.blockSamePhoneOverlap }
+						: {}),
+					...(patch.guestModifyCutoffMin !== undefined
+						? { guestModifyCutoffMin: patch.guestModifyCutoffMin }
+						: {}),
+					...(patch.contactStatusesEnabled !== undefined
+						? { contactStatusesEnabled: patch.contactStatusesEnabled }
+						: {}),
+					...(patch.courseStatusesEnabled !== undefined
+						? { courseStatusesEnabled: patch.courseStatusesEnabled }
+						: {}),
+					...(patch.defaultPolicyId !== undefined
+						? { defaultPolicyId: patch.defaultPolicyId }
+						: {}),
+					...(patch.waitlistResponseMin !== undefined
+						? { waitlistResponseMin: patch.waitlistResponseMin }
+						: {}),
+					...(patch.waitlistMaxParties !== undefined
+						? { waitlistMaxParties: patch.waitlistMaxParties }
+						: {}),
+					version: nextVersion,
+					updatedAt: now,
+					updatedBy: actorId,
+				})
+				.where(eq(rsvLocationSettings.locationId, locationId))
 
-	return getLocationSettingsWithContext(db, orgId, locationId)
+			await writeSetupAuditLog(db, {
+				actorId,
+				locationId,
+				action: 'settings.update',
+				entityType: 'location_settings',
+				entityId: locationId,
+				changes: { version: nextVersion },
+			})
+
+			return getLocationSettingsWithContext(db, orgId, locationId)
+		},
+		orgId,
+	)
 }
 
 export async function listCombosForLocation(
@@ -673,6 +715,7 @@ export async function reflowFutureBookingsForLocation(
 		affectedDates?: string[]
 		invalidatedTableIds?: string[]
 		preDeactivatedOriginalTables?: Map<string, string[]>
+		skipExplicitDayVersionBump?: boolean
 	},
 ): Promise<{ conflicts: ConflictItem[]; reflowedMoves: ReflowMove[] }> {
 	const settings = await db
@@ -748,7 +791,8 @@ export async function reflowFutureBookingsForLocation(
 		)
 		.all()
 
-	const datesSet = new Set<string>(opts?.affectedDates ?? [])
+	const explicitDatesSet = new Set<string>(opts?.affectedDates ?? [])
+	const datesSet = new Set<string>(explicitDatesSet)
 	for (const r of upcomingReservations) {
 		datesSet.add(r.businessDate)
 	}
@@ -1259,6 +1303,11 @@ export async function reflowFutureBookingsForLocation(
 				}
 			}
 			await bumpDayVersion(db, locationId, businessDate)
+		} else if (
+			!opts?.skipExplicitDayVersionBump &&
+			explicitDatesSet.has(businessDate)
+		) {
+			await bumpDayVersion(db, locationId, businessDate)
 		}
 
 		// Step 2: Detect conflicts on this businessDate after reflow
@@ -1330,6 +1379,24 @@ export async function reflowFutureBookingsForLocation(
 				details: { ...c.details, businessDate },
 			})
 		}
+	}
+
+	for (const move of reflowedMoves) {
+		const reservationId = move.reservationId ?? move.bookingId
+		if (!reservationId) continue
+		await db.insert(rsvReservationEvents).values({
+			id: `rve_${randomUUID()}`,
+			reservationId,
+			at: nowMs,
+			actorKind: 'system',
+			actorId: null,
+			type: 'auto_reassigned',
+			data: {
+				fromTableIds: move.fromTableIds,
+				toTableIds: move.toTableIds,
+				toCombinationId: move.toCombinationId ?? null,
+			},
+		})
 	}
 
 	return { conflicts: allConflicts, reflowedMoves }
@@ -1526,6 +1593,7 @@ export async function detectLocationConflicts(
 
 	const { conflicts } = await reflowFutureBookingsForLocation(db, locationId, {
 		affectedDates: dates,
+		skipExplicitDayVersionBump: true,
 	})
 	return { conflicts }
 }
@@ -1583,147 +1651,153 @@ export async function rederiveLocationTimes(
 	actorId: string,
 	overrideTimeZone?: string,
 ) {
-	const settings = await ensureLocationSettingsRow(db, orgId, locationId)
-	const contextTz = await resolveContextLocationTimeZone(orgId, locationId)
-	const targetTimeZone = overrideTimeZone ?? contextTz ?? settings.timeZone
-	if (!isValidTimeZone(targetTimeZone)) {
-		throw badRequest('invalid', 'invalid', {
-			fields: ['timeZone'],
-			issues: [{ path: 'timeZone', code: 'invalid_time_zone' }],
-		})
-	}
-
-	const now = Date.now()
-	const today = currentBusinessDate(
-		now,
-		targetTimeZone,
-		settings.dayStartMin ?? 240,
-	)
-
-	await db
-		.update(rsvLocationSettings)
-		.set({
-			timeZone: targetTimeZone,
-			tzSyncedAt: now,
-			version: settings.version + 1,
-			updatedAt: now,
-			updatedBy: actorId,
-		})
-		.where(eq(rsvLocationSettings.locationId, locationId))
-
-	const futureReservations = await db
-		.select()
-		.from(rsvReservations)
-		.where(
-			and(
-				eq(rsvReservations.locationId, locationId),
-				gte(rsvReservations.businessDate, today),
-				inArray(rsvReservations.status, [...ACTIVE_RESERVATION_STATUSES]),
-			),
-		)
-		.all()
-
-	const allTables = await db
-		.select()
-		.from(rsvTables)
-		.where(eq(rsvTables.locationId, locationId))
-		.all()
-	const tableById = new Map(allTables.map((t) => [t.id, t]))
-
-	const affectedDates = new Set<string>()
-	const occIdsToReactivate: string[] = []
-	let updatedReservations = 0
-
-	for (const r of futureReservations) {
-		const resolved = localToInstant(
-			r.businessDate,
-			r.localStartMin,
-			targetTimeZone,
-		)
-		if (!resolved) continue
-		const newStartAt = resolved.instantMs
-		const newEndAt = newStartAt + r.durationMin * 60_000
-
-		await db
-			.update(rsvReservations)
-			.set({
-				startAt: newStartAt,
-				endAt: newEndAt,
-				timeZone: targetTimeZone,
-				scheduleVersion: r.scheduleVersion + 1,
-				version: r.version + 1,
-				updatedAt: now,
-			})
-			.where(eq(rsvReservations.id, r.id))
-
-		const occs = await db
-			.select()
-			.from(rsvTableOccupancies)
-			.where(
-				and(
-					eq(rsvTableOccupancies.reservationId, r.id),
-					eq(rsvTableOccupancies.active, true),
-				),
-			)
-			.all()
-
-		for (const occ of occs) {
-			const tbl = tableById.get(occ.tableId)
-			const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
-			await db
-				.update(rsvTableOccupancies)
-				.set({
-					active: false,
-					startAt: newStartAt,
-					endAt: newEndAt + resetMs,
-				})
-				.where(eq(rsvTableOccupancies.id, occ.id))
-			occIdsToReactivate.push(occ.id)
-		}
-
-		affectedDates.add(r.businessDate)
-		updatedReservations += 1
-	}
-
-	for (const occId of occIdsToReactivate) {
-		await db
-			.update(rsvTableOccupancies)
-			.set({ active: true })
-			.where(eq(rsvTableOccupancies.id, occId))
-	}
-
-	for (const d of affectedDates) {
-		await bumpDayVersion(db, locationId, d)
-	}
-
-	await writeSetupAuditLog(db, {
-		actorId,
-		locationId,
-		action: 'settings.rederive_times',
-		entityType: 'location_settings',
-		entityId: locationId,
-		changes: {
-			previousTimeZone: settings.timeZone,
-			newTimeZone: targetTimeZone,
-			updatedReservations,
-		},
-	})
-
-	const updatedSettings = await getLocationSettingsWithContext(
+	return withSetupWrite(
 		db,
-		orgId,
-		locationId,
-	)
+		async (db) => {
+			const settings = await ensureLocationSettingsRow(db, orgId, locationId)
+			const contextTz = await resolveContextLocationTimeZone(orgId, locationId)
+			const targetTimeZone = overrideTimeZone ?? contextTz ?? settings.timeZone
+			if (!isValidTimeZone(targetTimeZone)) {
+				throw badRequest('invalid', 'invalid', {
+					fields: ['timeZone'],
+					issues: [{ path: 'timeZone', code: 'invalid_time_zone' }],
+				})
+			}
 
-	return {
-		timeZone: targetTimeZone,
-		time_zone: targetTimeZone,
-		tzSyncedAt: now,
-		tz_synced_at: now,
-		updatedReservations,
-		updated_reservations: updatedReservations,
-		settings: updatedSettings,
-	}
+			const now = Date.now()
+			const today = currentBusinessDate(
+				now,
+				targetTimeZone,
+				settings.dayStartMin ?? 240,
+			)
+
+			await db
+				.update(rsvLocationSettings)
+				.set({
+					timeZone: targetTimeZone,
+					tzSyncedAt: now,
+					version: settings.version + 1,
+					updatedAt: now,
+					updatedBy: actorId,
+				})
+				.where(eq(rsvLocationSettings.locationId, locationId))
+
+			const futureReservations = await db
+				.select()
+				.from(rsvReservations)
+				.where(
+					and(
+						eq(rsvReservations.locationId, locationId),
+						gte(rsvReservations.businessDate, today),
+						inArray(rsvReservations.status, [...ACTIVE_RESERVATION_STATUSES]),
+					),
+				)
+				.all()
+
+			const allTables = await db
+				.select()
+				.from(rsvTables)
+				.where(eq(rsvTables.locationId, locationId))
+				.all()
+			const tableById = new Map(allTables.map((t) => [t.id, t]))
+
+			const affectedDates = new Set<string>()
+			const occIdsToReactivate: string[] = []
+			let updatedReservations = 0
+
+			for (const r of futureReservations) {
+				const resolved = localToInstant(
+					r.businessDate,
+					r.localStartMin,
+					targetTimeZone,
+				)
+				if (!resolved) continue
+				const newStartAt = resolved.instantMs
+				const newEndAt = newStartAt + r.durationMin * 60_000
+
+				await db
+					.update(rsvReservations)
+					.set({
+						startAt: newStartAt,
+						endAt: newEndAt,
+						timeZone: targetTimeZone,
+						scheduleVersion: r.scheduleVersion + 1,
+						version: r.version + 1,
+						updatedAt: now,
+					})
+					.where(eq(rsvReservations.id, r.id))
+
+				const occs = await db
+					.select()
+					.from(rsvTableOccupancies)
+					.where(
+						and(
+							eq(rsvTableOccupancies.reservationId, r.id),
+							eq(rsvTableOccupancies.active, true),
+						),
+					)
+					.all()
+
+				for (const occ of occs) {
+					const tbl = tableById.get(occ.tableId)
+					const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
+					await db
+						.update(rsvTableOccupancies)
+						.set({
+							active: false,
+							startAt: newStartAt,
+							endAt: newEndAt + resetMs,
+						})
+						.where(eq(rsvTableOccupancies.id, occ.id))
+					occIdsToReactivate.push(occ.id)
+				}
+
+				affectedDates.add(r.businessDate)
+				updatedReservations += 1
+			}
+
+			for (const occId of occIdsToReactivate) {
+				await db
+					.update(rsvTableOccupancies)
+					.set({ active: true })
+					.where(eq(rsvTableOccupancies.id, occId))
+			}
+
+			for (const d of affectedDates) {
+				await bumpDayVersion(db, locationId, d)
+			}
+
+			await writeSetupAuditLog(db, {
+				actorId,
+				locationId,
+				action: 'settings.rederive_times',
+				entityType: 'location_settings',
+				entityId: locationId,
+				changes: {
+					previousTimeZone: settings.timeZone,
+					newTimeZone: targetTimeZone,
+					updatedReservations,
+				},
+			})
+
+			const updatedSettings = await getLocationSettingsWithContext(
+				db,
+				orgId,
+				locationId,
+			)
+
+			return {
+				timeZone: targetTimeZone,
+				time_zone: targetTimeZone,
+				tzSyncedAt: now,
+				tz_synced_at: now,
+				updatedReservations,
+				updated_reservations: updatedReservations,
+				settings: updatedSettings,
+			}
+		},
+		orgId,
+	)
 }
 
 export * from './rsv-setup-crud.js'

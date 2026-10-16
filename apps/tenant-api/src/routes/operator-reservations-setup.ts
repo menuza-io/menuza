@@ -41,6 +41,7 @@ import {
 	getRsvAuth,
 	rsvGuard,
 } from '../lib/reservations-guard.ts'
+import { withReservationWrite } from '../lib/reservations-write.ts'
 import {
 	archiveAreaForLocation,
 	archiveServiceForLocation,
@@ -963,6 +964,21 @@ operatorReservationsSetupRoutes.put(
 	writeSetupGuard,
 	updateComboHandler,
 )
+operatorReservationsSetupRoutes.patch(
+	'/locations/:locationId/combos/:id',
+	writeSetupGuard,
+	updateComboHandler,
+)
+operatorReservationsSetupRoutes.put(
+	'/locations/:locationId/combinations/:id',
+	writeSetupGuard,
+	updateComboHandler,
+)
+operatorReservationsSetupRoutes.patch(
+	'/locations/:locationId/combinations/:id',
+	writeSetupGuard,
+	updateComboHandler,
+)
 operatorReservationsSetupRoutes.delete(
 	'/combos/:id',
 	writeSetupGuard,
@@ -975,6 +991,11 @@ operatorReservationsSetupRoutes.delete(
 )
 operatorReservationsSetupRoutes.delete(
 	'/locations/:locationId/combos/:id',
+	writeSetupGuard,
+	deleteComboHandler,
+)
+operatorReservationsSetupRoutes.delete(
+	'/locations/:locationId/combinations/:id',
 	writeSetupGuard,
 	deleteComboHandler,
 )
@@ -1314,6 +1335,11 @@ operatorReservationsSetupRoutes.put(
 	writeSetupGuard,
 	updateTurnTimeHandler,
 )
+operatorReservationsSetupRoutes.patch(
+	'/locations/:locationId/turn-times/:id',
+	writeSetupGuard,
+	updateTurnTimeHandler,
+)
 operatorReservationsSetupRoutes.delete(
 	'/turn-times/:id',
 	writeSetupGuard,
@@ -1540,31 +1566,37 @@ const updateServiceAvailabilityHandler = wrapHandler(async (c) => {
 	const body = await readNormalizedBody(c)
 	checkExplicitLocations(c, body)
 	const id = c.req.param('id')!
-	const db = await getTenantDb(ctx.orgId)
-	const current = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.id, id))
-		.get()
-	if (!current) throw notFound('Service availability rule not found')
-	await requireServiceLocationAccess(c, db, current.serviceId)
-	const parsed = parseSchemaOrThrow(setupServiceAvailabilityUpdateSchema, body)
-	if (parsed.mode) {
-		await db
-			.update(rsvServiceAvailability)
-			.set({
-				mode: parsed.mode,
-				...(parsed.fromMin !== undefined ? { fromMin: parsed.fromMin } : {}),
-				...(parsed.toMin !== undefined ? { toMin: parsed.toMin } : {}),
-			})
+	const rawDb = await getTenantDb(ctx.orgId)
+	return withReservationWrite({ orgId: ctx.orgId, db: rawDb }, async (tx) => {
+		const db = tx as unknown as TenantDatabase
+		const current = await db
+			.select()
+			.from(rsvServiceAvailability)
 			.where(eq(rsvServiceAvailability.id, id))
-	}
-	const updated = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(eq(rsvServiceAvailability.id, id))
-		.get()
-	return json({ ...updated, serviceAvailability: updated, rule: updated })
+			.get()
+		if (!current) throw notFound('Service availability rule not found')
+		await requireServiceLocationAccess(c, db, current.serviceId)
+		const parsed = parseSchemaOrThrow(
+			setupServiceAvailabilityUpdateSchema,
+			body,
+		)
+		if (parsed.mode) {
+			await db
+				.update(rsvServiceAvailability)
+				.set({
+					mode: parsed.mode,
+					...(parsed.fromMin !== undefined ? { fromMin: parsed.fromMin } : {}),
+					...(parsed.toMin !== undefined ? { toMin: parsed.toMin } : {}),
+				})
+				.where(eq(rsvServiceAvailability.id, id))
+		}
+		const updated = await db
+			.select()
+			.from(rsvServiceAvailability)
+			.where(eq(rsvServiceAvailability.id, id))
+			.get()
+		return json({ ...updated, serviceAvailability: updated, rule: updated })
+	})
 })
 
 const deleteServiceAvailabilityHandler = wrapHandler(async (c) => {
@@ -1737,6 +1769,11 @@ operatorReservationsSetupRoutes.patch(
 	updateSpecialDayHandler,
 )
 operatorReservationsSetupRoutes.put(
+	'/locations/:locationId/special-days/:id',
+	writeSetupGuard,
+	updateSpecialDayHandler,
+)
+operatorReservationsSetupRoutes.patch(
 	'/locations/:locationId/special-days/:id',
 	writeSetupGuard,
 	updateSpecialDayHandler,

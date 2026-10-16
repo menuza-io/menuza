@@ -1,4 +1,14 @@
 import { randomUUID } from 'node:crypto'
+import {
+	detectConflicts,
+	resolveServices,
+	type ConflictBlockInput,
+	type ConflictBookingInput,
+	type EngineAreaInput,
+	type EngineCombinationInput,
+	type EnginePacingRuleInput,
+	type EngineTableInput,
+} from '@repo/reservations'
 import { dayOfWeek } from '@repo/zoned-time'
 import {
 	rsvAreas,
@@ -14,6 +24,7 @@ import {
 	rsvSectionAssignments,
 	rsvServiceAvailability,
 	rsvServiceNotes,
+	rsvServices,
 	rsvSpecialDays,
 	rsvTableOccupancies,
 	rsvTables,
@@ -22,7 +33,8 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
-import { badRequest } from '../lib/http.ts'
+import { badRequest, conflict, notFound } from '../lib/http.ts'
+import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	loadGuestTagsMap,
 	serializeGuestRow,
@@ -69,7 +81,7 @@ export function parseTimeToMinutes(value: string | number): number {
 			}
 		}
 	}
-	throw badRequest('invalid_time', `Invalid time value: ${String(value)}`)
+	throw badRequest('invalid_time', 'Invalid time value')
 }
 
 export async function getCurrentDayVersion(
@@ -175,6 +187,8 @@ export interface SerializedBookReservation {
 	seatedCovers: number | null
 	seated_covers: number | null
 	seatedPartySize: number | null
+	coversActual: number | null
+	covers_actual: number | null
 	status: string
 	contactStatus: string
 	contact_status: string
@@ -424,6 +438,8 @@ export async function serializeReservationsForBook(
 			seatedCovers: r.seatedCovers,
 			seated_covers: r.seatedCovers,
 			seatedPartySize: r.seatedCovers,
+			coversActual: r.coversActual ?? r.seatedCovers,
+			covers_actual: r.coversActual ?? r.seatedCovers,
 			status: r.status,
 			contactStatus: resolvedContactStatus,
 			contact_status: resolvedContactStatus,
@@ -1292,71 +1308,83 @@ export async function upsertServiceNotes(
 		expectedVersion?: number
 	},
 ) {
-	const businessDate = input.businessDate ?? input.date ?? ''
-	const bodyText = (input.notes ?? input.note ?? input.body ?? '').trim()
-	const serviceId = input.serviceId ?? null
-	const actorId = input.actorId ?? null
-	const now = Date.now()
+	return withSetupWrite(db, async (tx) => {
+		const businessDate = input.businessDate ?? input.date ?? ''
+		const bodyText = (input.notes ?? input.note ?? input.body ?? '').trim()
+		const serviceId = input.serviceId ?? null
+		const actorId = input.actorId ?? null
+		const now = Date.now()
 
-	const existingRows = await db
-		.select()
-		.from(rsvServiceNotes)
-		.where(
-			and(
-				eq(rsvServiceNotes.locationId, input.locationId),
-				eq(rsvServiceNotes.businessDate, businessDate),
-			),
-		)
-		.all()
-	const existing = existingRows.find((r) => r.serviceId === serviceId)
+		const existingRows = await tx
+			.select()
+			.from(rsvServiceNotes)
+			.where(
+				and(
+					eq(rsvServiceNotes.locationId, input.locationId),
+					eq(rsvServiceNotes.businessDate, businessDate),
+				),
+			)
+			.all()
+		const existing = existingRows.find((r) => r.serviceId === serviceId)
 
-	let noteId: string
-	let nextVersion = 1
-	if (existing) {
-		noteId = existing.id
-		nextVersion = existing.version + 1
-		await db
-			.update(rsvServiceNotes)
-			.set({
+		if (input.expectedVersion !== undefined) {
+			const currentVersion = existing?.version ?? 0
+			if (currentVersion !== input.expectedVersion) {
+				throw conflict(
+					'stale_version',
+					'Service notes were modified by another user',
+				)
+			}
+		}
+
+		let noteId: string
+		let nextVersion = 1
+		if (existing) {
+			noteId = existing.id
+			nextVersion = existing.version + 1
+			await tx
+				.update(rsvServiceNotes)
+				.set({
+					body: bodyText,
+					updatedBy: actorId,
+					updatedAt: now,
+					version: nextVersion,
+				})
+				.where(eq(rsvServiceNotes.id, existing.id))
+		} else {
+			noteId = createId('snote')
+			await tx.insert(rsvServiceNotes).values({
+				id: noteId,
+				locationId: input.locationId,
+				businessDate,
+				serviceId,
 				body: bodyText,
 				updatedBy: actorId,
 				updatedAt: now,
-				version: nextVersion,
+				version: 1,
 			})
-			.where(eq(rsvServiceNotes.id, existing.id))
-	} else {
-		noteId = createId('snote')
-		await db.insert(rsvServiceNotes).values({
+		}
+
+		await bumpDayVersionRow(tx, input.locationId, businessDate)
+
+		const record = {
 			id: noteId,
 			locationId: input.locationId,
 			businessDate,
+			date: businessDate,
 			serviceId,
+			notes: bodyText,
+			note: bodyText,
 			body: bodyText,
-			updatedBy: actorId,
+			version: nextVersion,
 			updatedAt: now,
-			version: 1,
-		})
-	}
-
-	await bumpDayVersionRow(db, input.locationId, businessDate)
-
-	const record = {
-		id: noteId,
-		locationId: input.locationId,
-		businessDate,
-		date: businessDate,
-		serviceId,
-		notes: bodyText,
-		note: bodyText,
-		body: bodyText,
-		version: nextVersion,
-		updatedAt: now,
-		updatedBy: actorId,
-	}
-	return {
-		...record,
-		serviceNote: record,
-	}
+			updatedBy: actorId,
+		}
+		return {
+			...record,
+			serviceNote: record,
+		}
+	})
 }
 
 export async function getSectionAssignments(
@@ -1415,55 +1443,288 @@ export async function putSectionAssignments(
 		throw badRequest('invalid_service', 'serviceId is required')
 	}
 
-	await db
-		.delete(rsvSectionAssignments)
-		.where(
-			and(
-				eq(rsvSectionAssignments.locationId, input.locationId),
-				eq(rsvSectionAssignments.businessDate, input.businessDate),
-				eq(rsvSectionAssignments.serviceId, input.serviceId),
-			),
-		)
+	return withSetupWrite(db, async (tx) => {
+		await tx
+			.delete(rsvSectionAssignments)
+			.where(
+				and(
+					eq(rsvSectionAssignments.locationId, input.locationId),
+					eq(rsvSectionAssignments.businessDate, input.businessDate),
+					eq(rsvSectionAssignments.serviceId, input.serviceId),
+				),
+			)
 
-	for (const item of input.assignments ?? []) {
-		if (!item.sectionId) continue
-		await db.insert(rsvSectionAssignments).values({
-			id: createId('sassign'),
+		for (const item of input.assignments ?? []) {
+			if (!item.sectionId) continue
+			await tx.insert(rsvSectionAssignments).values({
+				id: createId('sassign'),
+				locationId: input.locationId,
+				businessDate: input.businessDate,
+				serviceId: input.serviceId,
+				sectionId: item.sectionId,
+				staffId: item.staffId ?? null,
+				serverLabel: item.serverLabel?.trim() || null,
+				version: 1,
+			})
+		}
+
+		await bumpDayVersionRow(tx, input.locationId, input.businessDate)
+
+		const now = Date.now()
+		await tx.insert(rsvAuditLog).values({
+			id: createId('aud'),
+			at: now,
+			actorKind: 'operator',
+			actorId: input.actorId ?? null,
 			locationId: input.locationId,
-			businessDate: input.businessDate,
-			serviceId: input.serviceId,
-			sectionId: item.sectionId,
-			staffId: item.staffId ?? null,
-			serverLabel: item.serverLabel?.trim() || null,
-			version: 1,
+			action: 'section_assignment.put',
+			entityType: 'section_assignment',
+			entityId: `${input.businessDate}:${input.serviceId}`,
+			changes: {
+				businessDate: input.businessDate,
+				serviceId: input.serviceId,
+				count: (input.assignments ?? []).length,
+			},
 		})
-	}
 
-	await bumpDayVersionRow(db, input.locationId, input.businessDate)
+		return getSectionAssignments(
+			tx,
+			input.locationId,
+			input.businessDate,
+			input.serviceId,
+		)
+	})
+}
 
-	const now = Date.now()
-	await db.insert(rsvAuditLog).values({
-		id: createId('aud'),
-		at: now,
-		actorKind: 'operator',
-		actorId: input.actorId ?? null,
-		locationId: input.locationId,
-		action: 'section_assignment.put',
-		entityType: 'section_assignment',
-		entityId: `${input.businessDate}:${input.serviceId}`,
-		changes: {
-			businessDate: input.businessDate,
-			serviceId: input.serviceId,
-			count: (input.assignments ?? []).length,
-		},
+export async function getBookConflicts(
+	db: TenantDatabase,
+	orgIdOrLocationId: string,
+	locationIdOrDate: string,
+	businessDateOrOpts?: string | { canReadGuestSensitive?: boolean },
+	maybeOpts?: { canReadGuestSensitive?: boolean },
+) {
+	const hasExplicitOrgId = typeof businessDateOrOpts === 'string'
+	const orgId = hasExplicitOrgId ? orgIdOrLocationId : ''
+	const locationId = hasExplicitOrgId ? locationIdOrDate : orgIdOrLocationId
+	const businessDate = hasExplicitOrgId ? businessDateOrOpts : locationIdOrDate
+	const opts = hasExplicitOrgId ? maybeOpts : businessDateOrOpts
+	const canReadGuestSensitive = opts?.canReadGuestSensitive ?? true
+
+	const [feed, allAreas, allTables, allServices, allSpecialDays] =
+		await Promise.all([
+			getDayFeed(db, orgId, locationId, businessDate, {
+				canReadGuestSensitive,
+			}),
+			db
+				.select()
+				.from(rsvAreas)
+				.where(eq(rsvAreas.locationId, locationId))
+				.all(),
+			db
+				.select()
+				.from(rsvTables)
+				.where(eq(rsvTables.locationId, locationId))
+				.all(),
+			db
+				.select()
+				.from(rsvServices)
+				.where(eq(rsvServices.locationId, locationId))
+				.all(),
+			db
+				.select()
+				.from(rsvSpecialDays)
+				.where(eq(rsvSpecialDays.locationId, locationId))
+				.all(),
+		])
+
+	const areaById = new Map(allAreas.map((a) => [a.id, a]))
+	const engineAreas: EngineAreaInput[] = allAreas.map((a) => ({
+		id: a.id,
+		name: a.name,
+		sortOrder: a.sort,
+		active: a.archivedAt === null,
+	}))
+	const engineTables: EngineTableInput[] = allTables.map((t) => {
+		const area = areaById.get(t.areaId)
+		const areaActive = area ? area.archivedAt === null : true
+		const areaOnline = area ? area.onlineBookable : true
+		return {
+			id: t.id,
+			areaId: t.areaId,
+			label: t.label,
+			minSeats: t.minCovers,
+			maxSeats: t.maxCovers,
+			minCovers: t.minCovers,
+			maxCovers: t.maxCovers,
+			onlineBookable: t.onlineBookable && areaOnline,
+			combinable: t.combinable,
+			priority: t.priority,
+			resetBufferMin: t.resetBufferMin,
+			active: t.archivedAt === null && areaActive,
+		}
+	})
+	const engineCombos: EngineCombinationInput[] = feed.combos.map((c) => ({
+		id: c.id,
+		name: c.label,
+		label: c.label,
+		minSeats: c.minCovers,
+		maxSeats: c.maxCovers,
+		minCovers: c.minCovers,
+		maxCovers: c.maxCovers,
+		onlineBookable: c.onlineBookable,
+		priority: c.priority,
+		active: c.archivedAt === null,
+		tableIds: c.tableIds,
+	}))
+
+	const svcIds = allServices
+		.filter((s) => s.archivedAt === null)
+		.map((s) => s.id)
+	const allPacing =
+		svcIds.length > 0
+			? await db
+					.select()
+					.from(rsvPacingRules)
+					.where(inArray(rsvPacingRules.serviceId, svcIds))
+					.all()
+			: []
+	const enginePacingRules: EnginePacingRuleInput[] = allPacing.map((p) => ({
+		id: p.id,
+		serviceId: p.serviceId,
+		windowMinutes: p.bucketMin,
+		fromMin: p.fromMin,
+		toMin: p.toMin,
+		maxCoversPerSlot: p.maxCovers,
+		maxPartiesPerSlot: p.maxParties,
+		rollingMin: p.rollingMin,
+		rollingMaxCovers: p.rollingMaxCovers,
+		channelScope: p.channel as 'all' | 'online',
+	}))
+
+	const matchingSpecialDays = allSpecialDays
+		.filter((sd) => sd.fromDate <= businessDate && businessDate <= sd.toDate)
+		.map((sd) => ({
+			id: sd.id,
+			businessDate,
+			type: sd.kind as 'closed' | 'online_closed' | 'modified' | 'replace',
+			name: sd.name,
+		}))
+
+	const resolvedServices = resolveServices(
+		businessDate,
+		allServices.map((s) => ({
+			id: s.id,
+			name: s.name,
+			slug: s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+			daysMask: s.daysMask,
+			effectiveFrom: s.effectiveFrom,
+			effectiveTo: s.effectiveTo,
+			specialDayId: s.specialDayId,
+			firstSeatingMin: s.firstSeatingMin,
+			startMin: s.firstSeatingMin,
+			lastSeatingMin: s.lastSeatingMin,
+			endMin: s.endMin,
+			intervalMin: s.intervalMin,
+			onlineEnabled: s.onlineEnabled,
+			active: s.archivedAt === null,
+		})),
+		matchingSpecialDays,
+	)
+
+	const bookings: ConflictBookingInput[] = feed.reservations.map((r) => ({
+		id: r.id,
+		status: r.status,
+		channel: r.channel === 'online' ? 'online' : 'host',
+		partySize: r.partySize,
+		localStartMin: r.localStartMin,
+		startAt: r.startAt,
+		endAt: r.endAt,
+		tableIds: r.tableIds,
+		combinationId: r.comboId,
+		serviceId: r.serviceId,
+		areaId: r.areaPrefStrict ? r.areaPrefId : null,
+		overbook: r.overbooked,
+	}))
+
+	const blocks: ConflictBlockInput[] = feed.blocks.map((b) => ({
+		id: b.id,
+		tableIds: b.tableId ? [b.tableId] : [],
+		areaId: b.areaId,
+		startAt: b.startAt,
+		endAt: b.endAt,
+	}))
+
+	const rawConflicts = detectConflicts({
+		tables: engineTables,
+		areas: engineAreas,
+		combinations: engineCombos,
+		bookings,
+		blocks,
+		services: resolvedServices.services,
+		pacingRules: enginePacingRules,
+		dayClosed: resolvedServices.closed,
 	})
 
-	return getSectionAssignments(
-		db,
-		input.locationId,
-		input.businessDate,
-		input.serviceId,
+	const conflicts = rawConflicts.map((c) => ({
+		...c,
+		reservationId: c.bookingId ?? null,
+		details: { ...c.details, businessDate },
+	}))
+
+	const unassigned = feed.reservations.filter(
+		(r) =>
+			r.status !== 'cancelled' &&
+			r.status !== 'no_show' &&
+			r.status !== 'finished' &&
+			(r.assignment === 'unassigned' || r.tableIds.length === 0),
 	)
+
+	return {
+		locationId,
+		businessDate,
+		date: businessDate,
+		unassigned,
+		unassignedReservations: unassigned,
+		conflicts,
+		items: conflicts,
+	}
+}
+
+export async function getReservationEvents(db: DbOrTx, reservationId: string) {
+	const res = await db
+		.select()
+		.from(rsvReservations)
+		.where(eq(rsvReservations.id, reservationId))
+		.get()
+	if (!res) {
+		throw notFound('not_found', 'Reservation not found')
+	}
+
+	const rows = await db
+		.select()
+		.from(rsvReservationEvents)
+		.where(eq(rsvReservationEvents.reservationId, reservationId))
+		.orderBy(asc(rsvReservationEvents.at), asc(rsvReservationEvents.id))
+		.all()
+
+	return {
+		reservationId: res.id,
+		locationId: res.locationId,
+		events: rows.map((e) => ({
+			id: e.id,
+			reservationId: e.reservationId,
+			reservation_id: e.reservationId,
+			at: e.at,
+			createdAt: e.at,
+			created_at: e.at,
+			actorKind: e.actorKind,
+			actor_kind: e.actorKind,
+			actorId: e.actorId,
+			actor_id: e.actorId,
+			type: e.type,
+			data: e.data ?? {},
+		})),
+	}
 }
 
 export async function getRegionalReservationSummary(
@@ -1626,11 +1887,23 @@ export async function getRegionalReservationSummary(
 	const guests = Number(guestsCountRow?.count ?? 0)
 	const auditEntries = Number(auditCountRow?.count ?? 0)
 
+	const primaryLocationId =
+		locFilter && locFilter.length === 1 ? locFilter[0]! : undefined
+	const futureReservations = upcomingResRows.length
+	const canDelete =
+		futureReservations === 0 &&
+		activeWaitlistRows.length === 0 &&
+		activeHoldRows.length === 0
+
 	return {
+		...(primaryLocationId ? { locationId: primaryLocationId } : {}),
 		activeLocations,
 		reservations: totalReservations,
 		totalReservations,
-		upcomingReservations: upcomingResRows.length,
+		upcomingReservations: futureReservations,
+		futureReservations,
+		activeFutureReservations: futureReservations,
+		activeReservations: futureReservations,
 		guests,
 		tables: tableRows.length,
 		auditEntries,
@@ -1638,6 +1911,7 @@ export async function getRegionalReservationSummary(
 		waitlistEntries: activeWaitlistRows.length,
 		activeHolds: activeHoldRows.length,
 		holds: activeHoldRows.length,
+		canDelete,
 		byLocation,
 	}
 }

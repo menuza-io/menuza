@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHash } from 'node:crypto'
 import {
 	rsvAreas,
@@ -31,6 +32,37 @@ export const IDEMPOTENCY_TTL_MS = 48 * 60 * 60 * 1000
 export type ReservationWriteTx = Parameters<
 	Parameters<TenantDatabase['transaction']>[0]
 >[0]
+
+type ActiveReservationWriteContext = {
+	orgId: string
+	tx: ReservationWriteTx
+	helpers: ReservationWriteHelpers
+}
+
+const activeWriteStorage =
+	new AsyncLocalStorage<ActiveReservationWriteContext>()
+
+export async function getReservationDb(orgId: string): Promise<TenantDatabase> {
+	const active = activeWriteStorage.getStore()
+	if (active && active.orgId === orgId) {
+		return active.tx as unknown as TenantDatabase
+	}
+	return getTenantDb(orgId)
+}
+
+export async function withSetupWrite<T>(
+	db: TenantDatabase | ReservationWriteTx,
+	fn: (tx: TenantDatabase) => Promise<T>,
+	orgId = 'setup',
+): Promise<T> {
+	const active = activeWriteStorage.getStore()
+	if (active) {
+		return fn(active.tx as unknown as TenantDatabase)
+	}
+	return withReservationWrite({ orgId, db: db as TenantDatabase }, async (tx) =>
+		fn(tx as unknown as TenantDatabase),
+	)
+}
 
 export type SweepSummary = {
 	expiredHolds: number
@@ -635,6 +667,32 @@ export async function withReservationWrite<T>(
 	}
 
 	const initialDates = normalizeDates(options.dates)
+
+	const active = activeWriteStorage.getStore()
+	if (active && !idempotency) {
+		let innerPrimaryDayState = active.helpers.dayState
+		if (options.locationId && initialDates.length > 0) {
+			innerPrimaryDayState = null
+			for (const date of initialDates) {
+				active.helpers.markAffectedDate(options.locationId, date)
+				const loaded = await active.helpers.loadDayState(
+					options.locationId,
+					date,
+				)
+				if (!innerPrimaryDayState) innerPrimaryDayState = loaded
+			}
+		}
+		if (options.onAfterCommit) {
+			active.helpers.afterCommit(options.onAfterCommit)
+		}
+		const innerHelpers: ReservationWriteHelpers = {
+			...active.helpers,
+			locationId: options.locationId ?? active.helpers.locationId,
+			dayState: innerPrimaryDayState,
+		}
+		return fn(active.tx, innerHelpers)
+	}
+
 	if (options.locationId) {
 		for (const d of initialDates) {
 			markAffectedDate(options.locationId, d)
@@ -751,7 +809,10 @@ export async function withReservationWrite<T>(
 						},
 					}
 
-					const value = await fn(tx, helpers)
+					const value = await activeWriteStorage.run(
+						{ orgId, tx, helpers },
+						() => fn(tx, helpers),
+					)
 
 					for (const [locId, datesSet] of affectedDatesByLocation.entries()) {
 						const remaining = Array.from(datesSet).filter(

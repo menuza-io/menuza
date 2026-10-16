@@ -262,6 +262,27 @@ describe('Reservations security sweep: operator routes', () => {
 
 	it('discovers all mounted operator reservation routes', () => {
 		expect(list.length).toBeGreaterThanOrEqual(8)
+		const keys = new Set(list.map((r) => `${r.method} ${r.path}`))
+		expect(keys.has('GET /operator/reservations/book/conflicts')).toBe(true)
+		expect(
+			keys.has('GET /operator/reservations/book/reservations/:id/events'),
+		).toBe(true)
+		expect(
+			keys.has('POST /operator/reservations/book/reservations/:id/contact'),
+		).toBe(true)
+		expect(
+			keys.has(
+				'POST /operator/reservations/book/reservations/:id/contact-status',
+			),
+		).toBe(true)
+		expect(
+			keys.has('POST /operator/reservations/book/reservations/:id/course'),
+		).toBe(true)
+		expect(
+			keys.has(
+				'POST /operator/reservations/book/reservations/:id/course-status',
+			),
+		).toBe(true)
 	})
 
 	it('refuses every route with no token (401)', async () => {
@@ -741,6 +762,29 @@ describe('Reservations security sweep: operator routes', () => {
 			},
 		)
 		expect(authSumRes.status).toBe(200)
+
+		const authLocSumRes = await internalApp.request(
+			'/internal/reservations/location-summary',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${INTERNAL_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ orgId: ORG_A, locationId: LOC_1 }),
+			},
+		)
+		expect(authLocSumRes.status).toBe(200)
+		await expect(authLocSumRes.json()).resolves.toMatchObject({
+			ok: true,
+			orgId: ORG_A,
+			locationId: LOC_1,
+			futureReservations: expect.any(Number),
+			activeReservations: expect.any(Number),
+			activeWaitlist: expect.any(Number),
+			activeHolds: expect.any(Number),
+			tables: expect.any(Number),
+		})
 	})
 })
 

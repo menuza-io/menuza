@@ -128,11 +128,20 @@ async function handleInternalSummary(c: any) {
 		locationIds: parsed.data.locationIds ?? null,
 		date: parsed.data.date ?? null,
 	})
+	const locationId =
+		parsed.data.locationId ?? parsed.data.locationIds?.[0] ?? undefined
+	const region = (process.env.DATA_REGION ?? 'us') as 'us' | 'ksa'
 
 	return json({
 		ok: true,
 		orgId: parsed.data.orgId,
+		region,
+		...(locationId ? { locationId } : {}),
 		...summary,
+		summary: {
+			...(locationId ? { locationId } : {}),
+			...summary,
+		},
 	})
 }
 

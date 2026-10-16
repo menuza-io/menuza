@@ -39,7 +39,7 @@ const ORG_ID = 'org_book_route_test'
 const LOC_MAIN = 'loc_main'
 const LOC_OTHER = 'loc_other'
 const USER_ID = 'usr_book_operator'
-const DATE = '2026-08-20'
+const DATE = '2027-08-20'
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 
@@ -753,7 +753,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 
 		// 4. Calendar summary
 		const calRes = await app.request(
-			`/operator/reservations/book/calendar?locationId=${LOC_MAIN}&month=2026-08`,
+			`/operator/reservations/book/calendar?locationId=${LOC_MAIN}&month=${DATE.slice(0, 7)}`,
 			{ headers: { Authorization: `Bearer ${token}` } },
 		)
 		expect(calRes.status).toBe(200)
@@ -904,5 +904,330 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			}>
 		}
 		expect(assignedJson.assignments).toHaveLength(2)
+	})
+
+	it('satisfies scrutiny findings: location-summary schema, book/conflicts, reservations/:id/events, seated covers propagation, contact/course-status routes & enabled flags, auto_reassigned events, and service-notes expectedVersion', async () => {
+		const token = await mintToken()
+		const app = buildApp()
+		const db = await getTenantDb(ORG_ID)
+
+		// 1. Create a booking on tbl_1 (soft) for 2 guests
+		const createRes = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'scrutiny-idem-1',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					time: '19:00',
+					partySize: 2,
+					guest: {
+						firstName: 'Tariq',
+						lastName: 'Mansour',
+						phone: '+14155550177',
+					},
+				}),
+			},
+		)
+		expect(createRes.status).toBe(201)
+		const created = ((await createRes.json()) as any).reservation
+
+		// 2. POST /internal/reservations/location-summary returns locationReservationsSummarySchema shape (VAL-BOOK-031)
+		const locSummaryRes = await app.request(
+			'/internal/reservations/location-summary',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${INTERNAL_SECRET}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					orgId: ORG_ID,
+					locationId: LOC_MAIN,
+				}),
+			},
+		)
+		expect(locSummaryRes.status).toBe(200)
+		const locSummary = (await locSummaryRes.json()) as {
+			ok: boolean
+			orgId: string
+			region: string
+			locationId: string
+			futureReservations: number
+			activeWaitlist: number
+			activeHolds: number
+			tables: number
+		}
+		expect(locSummary.ok).toBe(true)
+		expect(locSummary.locationId).toBe(LOC_MAIN)
+		expect(typeof locSummary.futureReservations).toBe('number')
+		expect(locSummary.futureReservations).toBeGreaterThanOrEqual(1)
+		expect(typeof locSummary.tables).toBe('number')
+
+		// Empty location returns futureReservations === 0
+		const emptyLocSummaryRes = await app.request(
+			'/internal/reservations/location-summary',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${INTERNAL_SECRET}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					orgId: ORG_ID,
+					locationId: LOC_OTHER,
+				}),
+			},
+		)
+		expect(emptyLocSummaryRes.status).toBe(200)
+		const emptyLocSummary = (await emptyLocSummaryRes.json()) as {
+			locationId: string
+			futureReservations: number
+		}
+		expect(emptyLocSummary.locationId).toBe(LOC_OTHER)
+		expect(emptyLocSummary.futureReservations).toBe(0)
+
+		// 3. Soft reflow emits type = 'auto_reassigned' event (VAL-HOST-008)
+		// Create a second booking explicitly locked onto tbl_1 at 19:00 so soft booking on tbl_1 reflows to tbl_2
+		const lockCreateRes = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'scrutiny-idem-2',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					time: '19:00',
+					partySize: 2,
+					tableIds: ['tbl_1'],
+					locked: true,
+					guest: {
+						firstName: 'Locked',
+						lastName: 'VIP',
+						phone: '+14155550178',
+					},
+				}),
+			},
+		)
+		expect(lockCreateRes.status).toBe(201)
+
+		// 4. GET /operator/reservations/book/reservations/:id/events returns chronological events including auto_reassigned (VAL-BOOK-013, VAL-HOST-008)
+		const eventsRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/events`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		)
+		expect(eventsRes.status).toBe(200)
+		const eventsBody = (await eventsRes.json()) as {
+			events: Array<{
+				type: string
+				data: { fromTableIds?: string[]; toTableIds?: string[] } | null
+			}>
+		}
+		expect(eventsBody.events.map((e) => e.type)).toContain('auto_reassigned')
+
+		// 5. GET /operator/reservations/book/conflicts?locationId=&date= (VAL-BOOK-012)
+		const conflictsRes = await app.request(
+			`/operator/reservations/book/conflicts?locationId=${LOC_MAIN}&date=${DATE}`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
+		)
+		expect(conflictsRes.status).toBe(200)
+		const conflictsJson = (await conflictsRes.json()) as {
+			unassigned: unknown[]
+			conflicts: unknown[]
+		}
+		expect(Array.isArray(conflictsJson.unassigned)).toBe(true)
+		expect(Array.isArray(conflictsJson.conflicts)).toBe(true)
+
+		// 6. Contact status via /contact-status route & contact_statuses_enabled enforcement (VAL-BOOK-022)
+		const detail1Res = await app.request(
+			`/operator/reservations/book/reservations/${created.id}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		const curV1 = ((await detail1Res.json()) as any).reservation.version
+		const contactRouteRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/contact-status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					status: 'confirmed',
+					expectedVersion: curV1,
+				}),
+			},
+		)
+		expect(contactRouteRes.status).toBe(200)
+		expect(
+			((await contactRouteRes.json()) as any).reservation.contactStatus,
+		).toBe('confirmed')
+
+		// Disable contact_statuses_enabled -> 409
+		await db
+			.update(rsvLocationSettings)
+			.set({ contactStatusesEnabled: false })
+			.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+
+		const disabledContactRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/contact-status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ status: 'left_message' }),
+			},
+		)
+		expect(disabledContactRes.status).toBe(409)
+
+		await db
+			.update(rsvLocationSettings)
+			.set({ contactStatusesEnabled: true })
+			.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+
+		// 7. Seating with { status: 'seated', covers: 4, expectedVersion } writes covers_actual=4 and increments rsv_guests.covers by 4 (VAL-BOOK-017)
+		const detail2Res = await app.request(
+			`/operator/reservations/book/reservations/${created.id}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		const curV2 = ((await detail2Res.json()) as any).reservation.version
+		const seatRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					status: 'seated',
+					covers: 4,
+					expectedVersion: curV2,
+				}),
+			},
+		)
+		expect(seatRes.status).toBe(200)
+		const seatedRsv = ((await seatRes.json()) as any).reservation
+		expect(seatedRsv.coversActual).toBe(4)
+		expect(seatedRsv.seatedCovers).toBe(4)
+
+		// 8. Course status via /course-status route & course_statuses_enabled enforcement (VAL-BOOK-023)
+		const courseRouteRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/course-status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					course: 'starters',
+					expectedVersion: seatedRsv.version,
+				}),
+			},
+		)
+		expect(courseRouteRes.status).toBe(200)
+		const afterCourseRsv = ((await courseRouteRes.json()) as any).reservation
+		expect(afterCourseRsv.courseStatus).toBe('starters')
+
+		// Disable course_statuses_enabled -> 409
+		await db
+			.update(rsvLocationSettings)
+			.set({ courseStatusesEnabled: false })
+			.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+
+		const disabledCourseRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/course-status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ course: 'dessert' }),
+			},
+		)
+		expect(disabledCourseRes.status).toBe(409)
+
+		await db
+			.update(rsvLocationSettings)
+			.set({ courseStatusesEnabled: true })
+			.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+
+		// Finish reservation and verify guest.covers == 4
+		const finishRes = await app.request(
+			`/operator/reservations/book/reservations/${created.id}/status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					status: 'finished',
+					expectedVersion: afterCourseRsv.version,
+				}),
+			},
+		)
+		expect(finishRes.status).toBe(200)
+		const guestRow = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, created.guestId))
+			.get()
+		expect(guestRow?.covers).toBe(4)
+
+		// 9. upsertServiceNotes enforces expectedVersion (409 stale_version)
+		const note1Res = await app.request(
+			'/operator/reservations/book/service-notes',
+			{
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					serviceId: 'svc_dinner',
+					body: 'First note',
+				}),
+			},
+		)
+		expect(note1Res.status).toBe(200)
+
+		const staleNoteRes = await app.request(
+			'/operator/reservations/book/service-notes',
+			{
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					serviceId: 'svc_dinner',
+					body: 'Stale note',
+					expectedVersion: 99,
+				}),
+			},
+		)
+		expect(staleNoteRes.status).toBe(409)
 	})
 })

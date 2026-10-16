@@ -475,6 +475,7 @@ CREATE TABLE `rsv_reservations` (
 	`party_size` integer NOT NULL,
 	`arrived_covers` integer,
 	`seated_covers` integer,
+	`covers_actual` integer,
 	`status` text DEFAULT 'booked' NOT NULL,
 	`contact_status` text,
 	`running_late_min` integer,
