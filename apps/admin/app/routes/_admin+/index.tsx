@@ -66,7 +66,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 		// Users with at least one unexpired session (one user can have many)
 		db
-			.select({ count: sql<number>`count(distinct ${Session.userId})` })
+			.select({
+				count: sql<number>`count(distinct ${Session.userId})`.mapWith(Number),
+			})
 			.from(Session)
 			.where(gt(Session.expirationDate, new Date()))
 			.then(([row]) => row?.count ?? 0),
