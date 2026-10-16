@@ -596,7 +596,7 @@ msgstr "اكتمل {doneCount} من {total}"
 msgid "{doneCount} of {total} steps done"
 msgstr "اكتملت {doneCount} من {total} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:158
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, zero {لم تُستبعد أي قاعدة.} one {تم استبعاد قاعدة واحدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} two {تم استبعاد قاعدتين لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} few {تم استبعاد # قواعد لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} many {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} other {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.}}"
 
@@ -1462,7 +1462,7 @@ msgstr "الحساب"
 msgid "Account ID copied to clipboard"
 msgstr "تم نسخ معرف الحساب إلى الحافظة"
 
-#: app/components/command-menu.tsx:169
+#: app/components/command-menu.tsx:314
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
@@ -1487,7 +1487,7 @@ msgstr "شركة Acme"
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
-#: app/components/command-menu.tsx:115
+#: app/components/command-menu.tsx:260
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1060
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
@@ -1541,7 +1541,7 @@ msgstr "إضافة {0}"
 msgid "Add {label}"
 msgstr "إضافة {label}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:224
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
 msgid "Add a {categoryLabel} rule"
 msgstr "إضافة قاعدة {categoryLabel}"
 
@@ -1646,6 +1646,10 @@ msgstr "أضف سببًا للتغيير."
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:67
 msgid "Add a reason."
 msgstr "أضف سببًا."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+msgid "Add a rule to teach the agent how your business works."
+msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك التجاري."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:553
 msgid "Add a second shift later the same day, like lunch and dinner."
@@ -1911,9 +1915,9 @@ msgid "Add review"
 msgstr "إضافة مراجعة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 msgid "Add rule"
 msgstr "إضافة قاعدة"
 
@@ -2440,6 +2444,7 @@ msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
 #: app/components/app-sidebar.tsx:494
+#: app/components/command-menu.tsx:137
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
@@ -2718,6 +2723,10 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:130
+msgid "Ask an administrator to add training rules."
+msgstr "اطلب من أحد المسؤولين إضافة قواعد التدريب."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:729
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
@@ -2846,6 +2855,7 @@ msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
 #: app/components/app-sidebar.tsx:343
+#: app/components/command-menu.tsx:99
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
@@ -3026,7 +3036,7 @@ msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
 #: app/components/app-sidebar.tsx:568
-#: app/components/command-menu.tsx:181
+#: app/components/command-menu.tsx:326
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
 msgstr "الفواتير"
@@ -3178,6 +3188,7 @@ msgid "Broadcast preview"
 msgstr "معاينة البث"
 
 #: app/components/app-sidebar.tsx:336
+#: app/components/command-menu.tsx:98
 #: app/components/workspace-breadcrumb.tsx:43
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
@@ -3292,7 +3303,7 @@ msgstr "نص الزر"
 msgid "Buttons"
 msgstr "الأزرار"
 
-#: app/components/command-menu.tsx:152
+#: app/components/command-menu.tsx:297
 msgid "by {createdByName}"
 msgstr "بواسطة {createdByName}"
 
@@ -3352,6 +3363,7 @@ msgid "Call ended"
 msgstr "انتهت المكالمة"
 
 #: app/components/app-sidebar.tsx:384
+#: app/components/command-menu.tsx:113
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:519
 #: app/components/workspace-breadcrumb.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
@@ -3425,6 +3437,7 @@ msgid "Calling…"
 msgstr "جارٍ الاتصال…"
 
 #: app/components/app-sidebar.tsx:365
+#: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
@@ -3555,8 +3568,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1093
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
@@ -3682,7 +3695,7 @@ msgstr "الإكراميات النقدية بلا رسوم بطاقة. حتى 1
 msgid "Cash tips: {from} to {to}"
 msgstr "الإكراميات النقدية: من {from} إلى {to}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:476
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:480
 msgid "Category"
 msgstr "التصنيف"
 
@@ -3827,6 +3840,7 @@ msgstr "القناة"
 msgid "Channels"
 msgstr "القنوات"
 
+#: app/components/command-menu.tsx:87
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
 msgstr "الدردشة"
@@ -5184,7 +5198,7 @@ msgstr "إنشاء محادثات جماعية"
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
-#: app/components/command-menu.tsx:123
+#: app/components/command-menu.tsx:268
 msgid "Create new note"
 msgstr "إنشاء ملاحظة جديدة"
 
@@ -5458,6 +5472,7 @@ msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
 #: app/components/app-sidebar.tsx:306
+#: app/components/command-menu.tsx:86
 #: app/components/workspace-breadcrumb.tsx:11
 msgid "Customers"
 msgstr "العملاء"
@@ -5506,6 +5521,7 @@ msgstr "الوضع الداكن"
 
 #: app/components/app-sidebar.tsx:133
 #: app/components/app-sidebar.tsx:280
+#: app/components/command-menu.tsx:82
 #: app/components/user-dropdown.tsx:61
 #: app/components/workspace-breadcrumb.tsx:76
 msgid "Dashboard"
@@ -5747,11 +5763,11 @@ msgstr "حذف"
 msgid "Delete “{name}”?"
 msgstr "حذف «{name}»؟"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:381
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:385
 msgid "Delete \"{ruleTitle}\""
 msgstr "حذف \"{ruleTitle}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:659
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:663
 msgid "Delete \"{ruleTitle}\"?"
 msgstr "حذف \"{ruleTitle}\"؟"
 
@@ -5893,7 +5909,7 @@ msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 msgid "Delete review"
 msgstr "حذف المراجعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:688
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:692
 msgid "Delete rule"
 msgstr "حذف القاعدة"
 
@@ -6507,7 +6523,7 @@ msgstr "انصراف مبكر"
 msgid "Edit"
 msgstr "تعديل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:372
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:376
 msgid "Edit \"{ruleTitle}\""
 msgstr "تعديل \"{ruleTitle}\""
 
@@ -6590,7 +6606,7 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Edit role"
 msgstr "تعديل الدور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
 msgid "Edit rule"
 msgstr "تعديل القاعدة"
 
@@ -7686,6 +7702,7 @@ msgid "Former member"
 msgstr "عضو سابق"
 
 #: app/components/app-sidebar.tsx:473
+#: app/components/command-menu.tsx:136
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
@@ -7875,6 +7892,10 @@ msgstr "أدخل اسمًا لمجموعتك"
 #: ../../packages/ai/src/components/ai-chat.tsx:295
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
+
+#: app/components/command-menu.tsx:243
+msgid "Go to"
+msgstr "الانتقال إلى"
 
 #: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:228
 msgid "Go to Home"
@@ -8179,6 +8200,7 @@ msgstr "تم التوظيف."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
 #: app/components/app-sidebar.tsx:450
+#: app/components/command-menu.tsx:125
 #: app/components/roles/tenant-role-access-manager.tsx:363
 #: app/components/workspace-breadcrumb.tsx:37
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:42
@@ -8710,7 +8732,7 @@ msgstr "دعوة عضو"
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
-#: app/components/command-menu.tsx:132
+#: app/components/command-menu.tsx:277
 #: app/components/roles/tenant-role-access-manager.tsx:124
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
@@ -8991,6 +9013,7 @@ msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
 #: app/components/app-sidebar.tsx:370
+#: app/components/command-menu.tsx:112
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
@@ -9012,6 +9035,7 @@ msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
 #: app/components/app-sidebar.tsx:445
+#: app/components/command-menu.tsx:124
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
 #: app/components/workspace-breadcrumb.tsx:36
@@ -9473,10 +9497,6 @@ msgstr "جارٍ تحميل الأسماء…"
 msgid "Loading notes"
 msgstr "جارٍ تحميل الملاحظات"
 
-#: app/components/command-menu.tsx:201
-msgid "Searching…"
-msgstr "جارٍ البحث…"
-
 #: app/components/staff/onboarding/onboarding-tab.tsx:107
 msgid "Loading onboarding"
 msgstr "جارٍ تحميل التهيئة"
@@ -9695,6 +9715,7 @@ msgid "m@example.com"
 msgstr "م@مثال.com"
 
 #: app/components/app-sidebar.tsx:312
+#: app/components/command-menu.tsx:89
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Mailbox"
 msgstr "صندوق الوارد"
@@ -9925,6 +9946,7 @@ msgid "Marked unavailable"
 msgstr "محدد كغير متاح"
 
 #: app/components/app-sidebar.tsx:323
+#: app/components/command-menu.tsx:94
 #: app/components/roles/tenant-role-access-manager.tsx:181
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
@@ -9989,6 +10011,7 @@ msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
 #: app/components/app-sidebar.tsx:300
+#: app/components/command-menu.tsx:85
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
@@ -10957,14 +10980,6 @@ msgstr "لم يتم إنشاء ملاحظات بعد"
 msgid "No notes found"
 msgstr "لم يتم العثور على ملاحظات"
 
-#: app/components/command-menu.tsx:203
-msgid "No results found."
-msgstr "لم يتم العثور على نتائج."
-
-#: app/components/command-menu.tsx:208
-msgid "Go to"
-msgstr "الانتقال إلى"
-
 #: app/routes/_app+/$orgSlug_+/notes.tsx:399
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr "لا توجد ملاحظات تطابق بحثك عن \"{searchValue}\". جرب مصطلح بحث مختلف أو أنشئ ملاحظة جديدة."
@@ -11117,11 +11132,15 @@ msgstr "لا توجد عمليات إعادة توجيه تطابق هذا ال�
 msgid "No responses yet."
 msgstr "لا توجد ردود بعد."
 
+#: app/components/command-menu.tsx:238
+msgid "No results found."
+msgstr "لم يتم العثور على نتائج."
+
 #: app/components/staff/labor/labor-tips.tsx:67
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:252
 msgid "No rules yet."
 msgstr "لا توجد قواعد بعد."
 
@@ -11214,7 +11233,7 @@ msgstr "لا إكراميات لتقسيمها في هذه الفترة"
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:174
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:182
 msgid "No training rules yet"
 msgstr "لا توجد قواعد تدريب بعد"
 
@@ -11509,7 +11528,8 @@ msgid "notes"
 msgstr "ملاحظات"
 
 #: app/components/app-sidebar.tsx:294
-#: app/components/command-menu.tsx:137
+#: app/components/command-menu.tsx:84
+#: app/components/command-menu.tsx:282
 #: app/components/hiring/candidate-sheet.tsx:350
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
@@ -12403,6 +12423,7 @@ msgid "Page URL"
 msgstr "رابط الصفحة"
 
 #: app/components/app-sidebar.tsx:468
+#: app/components/command-menu.tsx:135
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
@@ -12804,6 +12825,7 @@ msgid "Phone"
 msgstr "الهاتف"
 
 #: app/components/app-sidebar.tsx:352
+#: app/components/command-menu.tsx:103
 #: app/components/workspace-breadcrumb.tsx:15
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:130
 msgid "Phone agent"
@@ -13394,7 +13416,7 @@ msgstr "طباعة هذا العرض"
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:549
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:553
 msgid "Priority"
 msgstr "الأولوية"
 
@@ -13820,6 +13842,7 @@ msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
 #: app/components/app-sidebar.tsx:501
+#: app/components/command-menu.tsx:138
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
@@ -14284,6 +14307,7 @@ msgid "Report templates"
 msgstr "قوالب التقارير"
 
 #: app/components/app-sidebar.tsx:288
+#: app/components/command-menu.tsx:83
 #: app/components/workspace-breadcrumb.tsx:17
 msgid "Reports"
 msgstr "التقارير"
@@ -14621,7 +14645,7 @@ msgstr "الصف {rowNumber}"
 msgid "Rules for"
 msgstr "القواعد الخاصة بـ"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:142
 msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 msgstr "تعلّم القواعد الوكيل كيف يعمل نشاطك التجاري. تُضمَّن القواعد ذات الأولوية العالية أولًا، وعندما تكثر القواعد يُستبعد الباقي."
 
@@ -14847,7 +14871,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
@@ -15048,6 +15072,7 @@ msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
 #: app/components/app-sidebar.tsx:440
+#: app/components/command-menu.tsx:123
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
 #: app/components/workspace-breadcrumb.tsx:33
@@ -15201,7 +15226,7 @@ msgstr "البحث في الملاحظات بالعنوان أو المحتوى.
 msgid "Search or filter to narrow the list."
 msgstr "ابحث أو صفِّ لتضييق القائمة."
 
-#: app/components/command-menu.tsx:102
+#: app/components/command-menu.tsx:229
 #: app/components/site-header.tsx:52
 msgid "Search or jump to…"
 msgstr "ابحث أو انتقل إلى…"
@@ -15264,6 +15289,10 @@ msgstr "البحث..."
 #: app/components/app-sidebar.tsx:738
 msgid "Search…"
 msgstr "بحث…"
+
+#: app/components/command-menu.tsx:236
+msgid "Searching…"
+msgstr "جارٍ البحث…"
 
 #: app/components/hiring/job-labels.ts:21
 msgid "Seasonal"
@@ -15711,8 +15740,8 @@ msgid "Set up this tablet"
 msgstr "إعداد هذا الجهاز اللوحي"
 
 #: app/components/app-sidebar.tsx:508
-#: app/components/command-menu.tsx:160
-#: app/components/command-menu.tsx:193
+#: app/components/command-menu.tsx:305
+#: app/components/command-menu.tsx:338
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
@@ -15722,6 +15751,7 @@ msgid "Settings"
 msgstr "الإعدادات"
 
 #: app/components/app-sidebar.tsx:358
+#: app/components/command-menu.tsx:111
 msgid "Setup"
 msgstr "الإعداد"
 
@@ -16253,6 +16283,7 @@ msgid "Square"
 msgstr "مربع"
 
 #: app/components/app-sidebar.tsx:424
+#: app/components/command-menu.tsx:117
 #: app/components/roles/tenant-role-access-manager.tsx:260
 #: app/components/workspace-breadcrumb.tsx:16
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
@@ -16434,7 +16465,7 @@ msgstr "بدء قائمة مهام الموظف الجديد"
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:177
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
 msgid "Start with an example and change it to match your business."
 msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري."
 
@@ -16809,6 +16840,7 @@ msgstr "فيروزي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
 #: app/components/app-sidebar.tsx:430
+#: app/components/command-menu.tsx:121
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
@@ -17304,7 +17336,7 @@ msgstr "الوكيل متوقف، لذا ليس لهذه الإعدادات أي
 msgid "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 msgstr "سيتوقف الوكيل عن الرد على هذا الرقم. حدّث إعادة توجيه المكالمات أو توجيه SIP حتى يظل المتصلون قادرين على الوصول إليك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:662
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:666
 msgid "The agent stops following this rule. To pause it instead, turn it off."
 msgstr "سيتوقف الوكيل عن اتباع هذه القاعدة. لإيقافها مؤقتًا بدلًا من ذلك، عطّلها."
 
@@ -18443,6 +18475,7 @@ msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في النسخة الاحتياطية)"
 
 #: app/components/app-sidebar.tsx:435
+#: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
@@ -18564,7 +18597,7 @@ msgstr "تظهر هنا إكراميات الطلبات عبر الإنترنت 
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:501
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:505
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
@@ -18715,7 +18748,7 @@ msgstr "التدريب"
 #: app/components/app-sidebar.tsx:377
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:394
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "قواعد التدريب"
 
@@ -19425,7 +19458,7 @@ msgstr "الرابط:"
 msgid "Usage"
 msgstr "الاستخدام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:358
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:362
 msgid "Use \"{ruleTitle}\""
 msgstr "استخدام \"{ruleTitle}\""
 
@@ -19556,7 +19589,7 @@ msgstr "استخدم المفتاح في إعدادات الوكيل."
 msgid "Use these if something goes wrong. They take effect on the next call."
 msgstr "استخدم هذه الخيارات إذا حدث خطأ ما. يسري مفعولها من المكالمة التالية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:603
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:607
 msgid "Use this rule on calls"
 msgstr "تطبيق هذه القاعدة على المكالمات"
 
@@ -20166,6 +20199,7 @@ msgid "Web"
 msgstr "الويب"
 
 #: app/components/app-sidebar.tsx:457
+#: app/components/command-menu.tsx:129
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
@@ -20313,7 +20347,7 @@ msgstr "ما يفعله الوكيل في كل مكالمة."
 msgid "What the agent says"
 msgstr "ما يقوله الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:525
 msgid "What the agent should do"
 msgstr "ما يجب أن يفعله الوكيل"
 
@@ -20670,7 +20704,7 @@ msgstr "اكتب رسالة…"
 msgid "Write a policy. You record when they have read and accepted it."
 msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقوا عليها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:450
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
@@ -20764,7 +20798,7 @@ msgstr "أنت"
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "لديك بالفعل {MAX_CUSTOM_DASHBOARDS} لوحة تحكم في هذه المؤسسة، وهو الحد الأقصى المسموح به. احذف واحدة لإنشاء أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:620
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك بالفعل {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 
@@ -20897,7 +20931,7 @@ msgstr "ليست لديك صلاحية للقيام بذلك."
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:162
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:170
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 

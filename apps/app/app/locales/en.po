@@ -598,7 +598,7 @@ msgstr "{doneCount} of {total} done"
 msgid "{doneCount} of {total} steps done"
 msgstr "{doneCount} of {total} steps done"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:150
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:158
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 
@@ -1464,7 +1464,7 @@ msgstr ""
 msgid "Account ID copied to clipboard"
 msgstr ""
 
-#: app/components/command-menu.tsx:169
+#: app/components/command-menu.tsx:314
 msgid "Account settings"
 msgstr ""
 
@@ -1489,7 +1489,7 @@ msgstr ""
 msgid "Across your organization"
 msgstr "Across your organization"
 
-#: app/components/command-menu.tsx:115
+#: app/components/command-menu.tsx:260
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1060
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
@@ -1543,7 +1543,7 @@ msgstr ""
 msgid "Add {label}"
 msgstr "Add {label}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:224
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
 msgid "Add a {categoryLabel} rule"
 msgstr "Add a {categoryLabel} rule"
 
@@ -1648,6 +1648,10 @@ msgstr "Add a reason for the change."
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:67
 msgid "Add a reason."
 msgstr "Add a reason."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+msgid "Add a rule to teach the agent how your business works."
+msgstr "Add a rule to teach the agent how your business works."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:553
 msgid "Add a second shift later the same day, like lunch and dinner."
@@ -1913,9 +1917,9 @@ msgid "Add review"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 msgid "Add rule"
 msgstr "Add rule"
 
@@ -2442,6 +2446,7 @@ msgid "Announcement actions"
 msgstr "Announcement actions"
 
 #: app/components/app-sidebar.tsx:494
+#: app/components/command-menu.tsx:137
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
@@ -2720,6 +2725,10 @@ msgstr "Ask about this note, or tell me where you'd like to go."
 msgid "Ask AI"
 msgstr "Ask AI"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:130
+msgid "Ask an administrator to add training rules."
+msgstr "Ask an administrator to add training rules."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:729
 msgid "Ask anything…"
 msgstr "Ask anything…"
@@ -2848,6 +2857,7 @@ msgid "Automation saved successfully"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:343
+#: app/components/command-menu.tsx:99
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:279
@@ -3028,7 +3038,7 @@ msgid "Billed monthly"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:568
-#: app/components/command-menu.tsx:181
+#: app/components/command-menu.tsx:326
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
 msgstr ""
@@ -3180,6 +3190,7 @@ msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
 #: app/components/app-sidebar.tsx:336
+#: app/components/command-menu.tsx:98
 #: app/components/workspace-breadcrumb.tsx:43
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:86
@@ -3294,7 +3305,7 @@ msgstr "Button label"
 msgid "Buttons"
 msgstr ""
 
-#: app/components/command-menu.tsx:152
+#: app/components/command-menu.tsx:297
 msgid "by {createdByName}"
 msgstr ""
 
@@ -3354,6 +3365,7 @@ msgid "Call ended"
 msgstr "Call ended"
 
 #: app/components/app-sidebar.tsx:384
+#: app/components/command-menu.tsx:113
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:519
 #: app/components/workspace-breadcrumb.tsx:49
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
@@ -3427,6 +3439,7 @@ msgid "Calling…"
 msgstr "Calling…"
 
 #: app/components/app-sidebar.tsx:365
+#: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
@@ -3557,8 +3570,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1093
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
@@ -3684,7 +3697,7 @@ msgstr "Cash tips have no card fee. Up to 10 percent."
 msgid "Cash tips: {from} to {to}"
 msgstr "Cash tips: {from} to {to}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:476
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:480
 msgid "Category"
 msgstr "Category"
 
@@ -3829,6 +3842,7 @@ msgstr ""
 msgid "Channels"
 msgstr "Channels"
 
+#: app/components/command-menu.tsx:87
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
 msgstr "Chat"
@@ -5186,7 +5200,7 @@ msgstr "Create group chats"
 msgid "Create Link"
 msgstr ""
 
-#: app/components/command-menu.tsx:123
+#: app/components/command-menu.tsx:268
 msgid "Create new note"
 msgstr ""
 
@@ -5460,6 +5474,7 @@ msgid "customerId is required"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:306
+#: app/components/command-menu.tsx:86
 #: app/components/workspace-breadcrumb.tsx:11
 msgid "Customers"
 msgstr ""
@@ -5508,6 +5523,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:133
 #: app/components/app-sidebar.tsx:280
+#: app/components/command-menu.tsx:82
 #: app/components/user-dropdown.tsx:61
 #: app/components/workspace-breadcrumb.tsx:76
 msgid "Dashboard"
@@ -5749,11 +5765,11 @@ msgstr ""
 msgid "Delete “{name}”?"
 msgstr "Delete “{name}”?"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:381
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:385
 msgid "Delete \"{ruleTitle}\""
 msgstr "Delete \"{ruleTitle}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:659
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:663
 msgid "Delete \"{ruleTitle}\"?"
 msgstr "Delete \"{ruleTitle}\"?"
 
@@ -5895,7 +5911,7 @@ msgstr "Delete redirect rule?"
 msgid "Delete review"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:688
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:692
 msgid "Delete rule"
 msgstr "Delete rule"
 
@@ -6509,7 +6525,7 @@ msgstr "Early out"
 msgid "Edit"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:372
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:376
 msgid "Edit \"{ruleTitle}\""
 msgstr "Edit \"{ruleTitle}\""
 
@@ -6592,7 +6608,7 @@ msgstr "Edit redirect"
 msgid "Edit role"
 msgstr "Edit role"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:447
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
 msgid "Edit rule"
 msgstr "Edit rule"
 
@@ -7688,6 +7704,7 @@ msgid "Former member"
 msgstr "Former member"
 
 #: app/components/app-sidebar.tsx:473
+#: app/components/command-menu.tsx:136
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:33
@@ -7877,6 +7894,10 @@ msgstr "Give your group a name"
 #: ../../packages/ai/src/components/ai-chat.tsx:295
 msgid "Go there"
 msgstr "Go there"
+
+#: app/components/command-menu.tsx:243
+msgid "Go to"
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:228
 msgid "Go to Home"
@@ -8181,6 +8202,7 @@ msgstr "Hired."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
 #: app/components/app-sidebar.tsx:450
+#: app/components/command-menu.tsx:125
 #: app/components/roles/tenant-role-access-manager.tsx:363
 #: app/components/workspace-breadcrumb.tsx:37
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:42
@@ -8712,7 +8734,7 @@ msgstr "Invite member"
 msgid "Invite members"
 msgstr ""
 
-#: app/components/command-menu.tsx:132
+#: app/components/command-menu.tsx:277
 #: app/components/roles/tenant-role-access-manager.tsx:124
 msgid "Invite new members"
 msgstr ""
@@ -8993,6 +9015,7 @@ msgid "Kiro IDE Setup"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:370
+#: app/components/command-menu.tsx:112
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
@@ -9014,6 +9037,7 @@ msgstr "Label calls to find them later. With automatic tagging on, the agent app
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
 #: app/components/app-sidebar.tsx:445
+#: app/components/command-menu.tsx:124
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
 #: app/components/workspace-breadcrumb.tsx:36
@@ -9475,10 +9499,6 @@ msgstr "Loading names…"
 msgid "Loading notes"
 msgstr "Loading notes"
 
-#: app/components/command-menu.tsx:201
-msgid "Searching…"
-msgstr ""
-
 #: app/components/staff/onboarding/onboarding-tab.tsx:107
 msgid "Loading onboarding"
 msgstr "Loading onboarding"
@@ -9697,6 +9717,7 @@ msgid "m@example.com"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:312
+#: app/components/command-menu.tsx:89
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Mailbox"
 msgstr "Mailbox"
@@ -9927,6 +9948,7 @@ msgid "Marked unavailable"
 msgstr "Marked unavailable"
 
 #: app/components/app-sidebar.tsx:323
+#: app/components/command-menu.tsx:94
 #: app/components/roles/tenant-role-access-manager.tsx:181
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
@@ -9991,6 +10013,7 @@ msgid "Media details saved"
 msgstr "Media details saved"
 
 #: app/components/app-sidebar.tsx:300
+#: app/components/command-menu.tsx:85
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
 #: app/routes/_app+/$orgSlug_+/media.tsx:806
@@ -10959,14 +10982,6 @@ msgstr ""
 msgid "No notes found"
 msgstr ""
 
-#: app/components/command-menu.tsx:203
-msgid "No results found."
-msgstr ""
-
-#: app/components/command-menu.tsx:208
-msgid "Go to"
-msgstr ""
-
 #: app/routes/_app+/$orgSlug_+/notes.tsx:399
 msgid "No notes match your search for \"{searchValue}\". Try a different search term or create a new note."
 msgstr ""
@@ -11119,11 +11134,15 @@ msgstr "No redirects match that search"
 msgid "No responses yet."
 msgstr "No responses yet."
 
+#: app/components/command-menu.tsx:238
+msgid "No results found."
+msgstr ""
+
 #: app/components/staff/labor/labor-tips.tsx:67
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:248
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:252
 msgid "No rules yet."
 msgstr "No rules yet."
 
@@ -11216,7 +11235,7 @@ msgstr "No tips to divide in this range"
 msgid "No tools available."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:174
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:182
 msgid "No training rules yet"
 msgstr "No training rules yet"
 
@@ -11511,7 +11530,8 @@ msgid "notes"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:294
-#: app/components/command-menu.tsx:137
+#: app/components/command-menu.tsx:84
+#: app/components/command-menu.tsx:282
 #: app/components/hiring/candidate-sheet.tsx:350
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
@@ -12405,6 +12425,7 @@ msgid "Page URL"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:468
+#: app/components/command-menu.tsx:135
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:548
@@ -12806,6 +12827,7 @@ msgid "Phone"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:352
+#: app/components/command-menu.tsx:103
 #: app/components/workspace-breadcrumb.tsx:15
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:130
 msgid "Phone agent"
@@ -13396,7 +13418,7 @@ msgstr "Print this view"
 msgid "Prioritize these tasks"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:549
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:553
 msgid "Priority"
 msgstr "Priority"
 
@@ -13822,6 +13844,7 @@ msgid "Redirected"
 msgstr "Redirected"
 
 #: app/components/app-sidebar.tsx:501
+#: app/components/command-menu.tsx:138
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
 msgid "Redirects"
@@ -14286,6 +14309,7 @@ msgid "Report templates"
 msgstr "Report templates"
 
 #: app/components/app-sidebar.tsx:288
+#: app/components/command-menu.tsx:83
 #: app/components/workspace-breadcrumb.tsx:17
 msgid "Reports"
 msgstr ""
@@ -14623,7 +14647,7 @@ msgstr "Row {rowNumber}"
 msgid "Rules for"
 msgstr "Rules for"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:142
 msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 msgstr "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
 
@@ -14849,7 +14873,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:630
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
@@ -15050,6 +15074,7 @@ msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
 #: app/components/app-sidebar.tsx:440
+#: app/components/command-menu.tsx:123
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
 #: app/components/workspace-breadcrumb.tsx:33
@@ -15203,7 +15228,7 @@ msgstr ""
 msgid "Search or filter to narrow the list."
 msgstr "Search or filter to narrow the list."
 
-#: app/components/command-menu.tsx:102
+#: app/components/command-menu.tsx:229
 #: app/components/site-header.tsx:52
 msgid "Search or jump to…"
 msgstr "Search or jump to…"
@@ -15266,6 +15291,10 @@ msgstr ""
 #: app/components/app-sidebar.tsx:738
 msgid "Search…"
 msgstr "Search…"
+
+#: app/components/command-menu.tsx:236
+msgid "Searching…"
+msgstr ""
 
 #: app/components/hiring/job-labels.ts:21
 msgid "Seasonal"
@@ -15713,8 +15742,8 @@ msgid "Set up this tablet"
 msgstr "Set up this tablet"
 
 #: app/components/app-sidebar.tsx:508
-#: app/components/command-menu.tsx:160
-#: app/components/command-menu.tsx:193
+#: app/components/command-menu.tsx:305
+#: app/components/command-menu.tsx:338
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
@@ -15724,6 +15753,7 @@ msgid "Settings"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:358
+#: app/components/command-menu.tsx:111
 msgid "Setup"
 msgstr "Setup"
 
@@ -16255,6 +16285,7 @@ msgid "Square"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:424
+#: app/components/command-menu.tsx:117
 #: app/components/roles/tenant-role-access-manager.tsx:260
 #: app/components/workspace-breadcrumb.tsx:16
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
@@ -16436,7 +16467,7 @@ msgstr "Start the new-hire checklist"
 msgid "Start with a template"
 msgstr "Start with a template"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:177
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
 msgid "Start with an example and change it to match your business."
 msgstr "Start with an example and change it to match your business."
 
@@ -16811,6 +16842,7 @@ msgstr "Teal"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
 #: app/components/app-sidebar.tsx:430
+#: app/components/command-menu.tsx:121
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
@@ -17306,7 +17338,7 @@ msgstr "The agent is off, so these have no effect yet."
 msgid "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 msgstr "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:662
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:666
 msgid "The agent stops following this rule. To pause it instead, turn it off."
 msgstr "The agent stops following this rule. To pause it instead, turn it off."
 
@@ -18445,6 +18477,7 @@ msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
 #: app/components/app-sidebar.tsx:435
+#: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
@@ -18566,7 +18599,7 @@ msgstr "Tips on online orders and cash tips people declare on their time cards a
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:501
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:505
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
@@ -18717,7 +18750,7 @@ msgstr "Training"
 #: app/components/app-sidebar.tsx:377
 #: app/components/workspace-breadcrumb.tsx:48
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:394
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "Training rules"
 
@@ -19427,7 +19460,7 @@ msgstr "URL:"
 msgid "Usage"
 msgstr "Usage"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:358
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:362
 msgid "Use \"{ruleTitle}\""
 msgstr "Use \"{ruleTitle}\""
 
@@ -19558,7 +19591,7 @@ msgstr "Use the switch in Agent settings."
 msgid "Use these if something goes wrong. They take effect on the next call."
 msgstr "Use these if something goes wrong. They take effect on the next call."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:603
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:607
 msgid "Use this rule on calls"
 msgstr "Use this rule on calls"
 
@@ -20168,6 +20201,7 @@ msgid "Web"
 msgstr "Web"
 
 #: app/components/app-sidebar.tsx:457
+#: app/components/command-menu.tsx:129
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
@@ -20315,7 +20349,7 @@ msgstr "What the agent does on each call."
 msgid "What the agent says"
 msgstr "What the agent says"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:525
 msgid "What the agent should do"
 msgstr "What the agent should do"
 
@@ -20672,7 +20706,7 @@ msgstr "Write a message…"
 msgid "Write a policy. You record when they have read and accepted it."
 msgstr "Write a policy. You record when they have read and accepted it."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:450
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "Write it the way you'd explain it to a new staff member."
 
@@ -20766,7 +20800,7 @@ msgstr ""
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:620
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 
@@ -20899,7 +20933,7 @@ msgstr "You don't have permission to do that."
 msgid "You don't have permission to see this report's data."
 msgstr "You don't have permission to see this report's data."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:162
+#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:170
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 
