@@ -7097,6 +7097,10 @@ msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 msgid "Enter backup code"
 msgstr ""
 
+#: app/components/staff/labor-policy-editor.tsx:318
+msgid "Enter between 1 and 48 hours."
+msgstr "Enter between 1 and 48 hours."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:118
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."

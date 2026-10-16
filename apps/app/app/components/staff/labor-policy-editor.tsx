@@ -314,6 +314,9 @@ function describeProblem(
 	_: I18n['_'],
 ): string | null {
 	if (!problem) return null
+	if (problem.code === 'out_of_range' && problem.path === 'longShiftMinutes') {
+		return _(t`Enter between 1 and 48 hours.`)
+	}
 	switch (problem.code) {
 		case 'double_time_before_overtime':
 			return _(t`Double time must start after daily overtime.`)

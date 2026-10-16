@@ -236,15 +236,11 @@ export function CoreRules({
 	const autoShown = auto ?? { afterMinutes: 6 * 60, deductMinutes: 30 }
 	const weekly = policy.weeklyOvertime
 	const weeklyShown = weekly ?? WEEKLY_OVERTIME_PRESET
+	// The boxes only parse; an out-of-range number still reaches the policy, so
+	// the form's validation marks it, explains it and blocks the save.
 	const minutesText = (value: number) => String(value)
 	const minutesFrom = (text: string) =>
-		/^\d{1,3}$/.test(text.trim()) && Number(text) >= 1 && Number(text) <= 240
-			? Number(text)
-			: null
-	const hoursFrom = (min: number, max: number) => (text: string) => {
-		const minutes = hoursTextToMinutes(text)
-		return minutes !== null && minutes >= min && minutes <= max ? minutes : null
-	}
+		/^\d{1,5}$/.test(text.trim()) ? Number(text) : null
 	const setAuto = (next: { afterMinutes: number; deductMinutes: number }) =>
 		update({
 			breakRules: { rules: policy.breakRules.rules, autoDeduction: next },
@@ -294,7 +290,7 @@ export function CoreRules({
 									update({ longShiftMinutes })
 								}
 								toText={minutesToHoursText}
-								fromText={hoursFrom(60, 48 * 60)}
+								fromText={hoursTextToMinutes}
 								error={fieldError('longShiftMinutes')}
 							/>
 						</RuleNumber>
@@ -349,7 +345,7 @@ export function CoreRules({
 									setAuto({ ...autoShown, afterMinutes })
 								}
 								toText={minutesToHoursText}
-								fromText={hoursFrom(1, 24 * 60)}
+								fromText={hoursTextToMinutes}
 								disabled={auto === null}
 							/>
 						</RuleNumber>
@@ -400,7 +396,7 @@ export function CoreRules({
 									})
 								}
 								toText={minutesToHoursText}
-								fromText={hoursFrom(1, 60 * 24 * 7)}
+								fromText={hoursTextToMinutes}
 								disabled={weekly === null}
 							/>
 						</RuleNumber>

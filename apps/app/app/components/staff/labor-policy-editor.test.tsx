@@ -433,6 +433,30 @@ describe('LaborPolicyEditor', () => {
 		})
 	})
 
+	it('explains an out-of-range sentence value and lets you discard it', async () => {
+		const calls = stubApi()
+		view()
+		const input = await screen.findByLabelText('Flag shifts longer than')
+		fireEvent.change(input, { target: { value: '0' } })
+		expect(
+			await screen.findByText('Enter between 1 and 48 hours.'),
+		).toBeTruthy()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		const discard = screen.getByRole('button', { name: 'Discard' })
+		expect(discard).toBeEnabled()
+		fireEvent.click(discard)
+		await waitFor(() =>
+			expect((input as HTMLInputElement).value).toBe(
+				String(BUILTIN_LABOR_POLICY.longShiftMinutes / 60),
+			),
+		)
+		expect(screen.getByText('All changes saved.')).toBeTruthy()
+		expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+	})
+
 	it('shows what the rules do on an example shift, and follows the rules', async () => {
 		stubApi()
 		view()
