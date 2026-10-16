@@ -45,6 +45,8 @@ vi.mock('react-router', async (importOriginal) => ({
 	useRouteLoaderData: () => rootData,
 }))
 
+const originalScrollIntoView = Element.prototype.scrollIntoView
+
 beforeEach(() => {
 	vi.stubGlobal(
 		'ResizeObserver',
@@ -63,6 +65,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.unstubAllGlobals()
+	Element.prototype.scrollIntoView = originalScrollIntoView
 })
 
 function renderMenu() {
@@ -98,6 +101,18 @@ describe('CommandMenu', () => {
 		const option = within(listbox).getByRole('option', { name: 'Staff' })
 		await user.click(option)
 		expect(router.state.location.pathname).toBe('/acme/staff/timeclock')
+	})
+
+	it('finds a section by one of its sub-section names', async () => {
+		const user = userEvent.setup()
+		renderMenu()
+
+		await user.type(await screen.findByRole('combobox'), 'time clock')
+
+		const listbox = screen.getByRole('listbox')
+		expect(
+			within(listbox).getByRole('option', { name: 'Staff' }),
+		).toBeInTheDocument()
 	})
 
 	it('shows a generic empty state when nothing matches', async () => {
@@ -157,6 +172,40 @@ describe('getNavigationCommands', () => {
 			'/acme/mailbox',
 			'/acme/phone-agent/calls',
 			'/acme/website/announcements',
+		])
+	})
+
+	it('lands on Setup and the website overview with full read access', () => {
+		expect(
+			urls({
+				orgSlug: 'acme',
+				permissions: [
+					{ action: 'read', entity: 'phone_agent' },
+					{ action: 'read', entity: 'website' },
+				],
+				staffingNav: HIDDEN_STAFFING_NAV,
+			}),
+		).toEqual([
+			'/acme',
+			'/acme/reports',
+			'/acme/notes',
+			'/acme/media',
+			'/acme/customers',
+			'/acme/chat',
+			'/acme/mailbox',
+			'/acme/phone-agent',
+			'/acme/website',
+		])
+	})
+
+	it('only offers sub-section keywords the member can open', () => {
+		const website = getNavigationCommands({
+			orgSlug: 'acme',
+			permissions: [{ action: 'read', entity: 'announcement' }],
+			staffingNav: HIDDEN_STAFFING_NAV,
+		}).find((command) => command.icon === 'monitor')
+		expect(website?.keywords?.map((keyword) => keyword.message)).toEqual([
+			'Announcements',
 		])
 	})
 })

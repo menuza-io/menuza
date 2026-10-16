@@ -33,6 +33,15 @@ interface NavigationCommand {
 	label: MessageDescriptor
 	url: string
 	icon: IconName
+	/** Sub-section names, so typing "time clock" still finds Staff. */
+	keywords?: MessageDescriptor[]
+}
+
+/** The descriptors whose access flag is true. */
+function allowed(
+	entries: ReadonlyArray<readonly [MessageDescriptor, boolean]>,
+): MessageDescriptor[] {
+	return entries.filter(([, ok]) => ok).map(([label]) => label)
 }
 
 /**
@@ -56,6 +65,9 @@ export function getNavigationCommands({
 	const canReadWebsite = can('read', 'website')
 	const canReadPhoneAgent = can('read', 'phone_agent')
 	const canReadPhoneCalls = can('read', 'phone_call')
+	const canReadCampaigns = can('read', 'campaign')
+	const canReadAutomations = can('read', 'automation')
+	const canReadAnnouncements = can('read', 'announcement')
 	const staffUrl = (
 		[
 			['team', staffingNav.team],
@@ -78,10 +90,14 @@ export function getNavigationCommands({
 			url: `/${orgSlug}/mailbox`,
 			icon: 'mail',
 		},
-		(can('read', 'campaign') || can('read', 'automation')) && {
+		(canReadCampaigns || canReadAutomations) && {
 			label: msg`Marketing`,
 			url: `/${orgSlug}/marketing`,
 			icon: 'send',
+			keywords: allowed([
+				[msg`Broadcasts`, canReadCampaigns],
+				[msg`Automations`, canReadAutomations],
+			]),
 		},
 		(canReadPhoneAgent || canReadPhoneCalls) && {
 			label: msg`Phone agent`,
@@ -90,18 +106,37 @@ export function getNavigationCommands({
 				? `/${orgSlug}/phone-agent`
 				: `/${orgSlug}/phone-agent/calls`,
 			icon: 'phone',
+			keywords: allowed([
+				[msg`Calls`, canReadPhoneCalls],
+				[msg`Setup`, canReadPhoneAgent],
+				[msg`Knowledge`, canReadPhoneAgent],
+				[msg`Call flow`, canReadPhoneAgent],
+			]),
 		},
 		staffingNav.visible && {
 			label: msg`Staff`,
 			url: staffUrl ? `/${orgSlug}/staff/${staffUrl}` : `/${orgSlug}/staff`,
 			icon: 'person',
+			keywords: allowed([
+				[msg`Team`, staffingNav.team],
+				[msg`Time clock`, staffingNav.timeclock],
+				[msg`Schedule`, staffingNav.schedule],
+				[msg`Labor`, staffingNav.labor],
+				[msg`Hiring`, staffingNav.hiring],
+			]),
 		},
-		(canReadWebsite || can('read', 'announcement')) && {
+		(canReadWebsite || canReadAnnouncements) && {
 			label: msg`Website`,
 			url: canReadWebsite
 				? `/${orgSlug}/website`
 				: `/${orgSlug}/website/announcements`,
 			icon: 'monitor',
+			keywords: allowed([
+				[msg`Pages`, canReadWebsite],
+				[msg`Forms`, canReadWebsite],
+				[msg`Announcements`, canReadAnnouncements],
+				[msg`Redirects`, canReadWebsite],
+			]),
 		},
 	]
 	return commands.filter((command) => command !== false)
@@ -209,6 +244,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 							{navigationCommands.map((command) => (
 								<CommandItem
 									key={command.url}
+									keywords={command.keywords?.map((keyword) => _(keyword))}
 									onSelect={() => {
 										void navigate(command.url)
 										onOpenChange(false)
