@@ -288,8 +288,11 @@ msgstr ""
 
 #: app/components/admin-user-detail.tsx:271
 #: app/components/admin-user-detail.tsx:733
-#: app/routes/_admin+/index.tsx:235
 msgid "Active Sessions"
+msgstr ""
+
+#: app/routes/_admin+/index.tsx:236
+msgid "Active Users"
 msgstr ""
 
 #: app/components/sso-configuration-overview.tsx:305
@@ -1086,7 +1089,7 @@ msgstr ""
 msgid "Current active login sessions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:258
+#: app/routes/_admin+/index.tsx:259
 msgid "Currently logged in users"
 msgstr ""
 
