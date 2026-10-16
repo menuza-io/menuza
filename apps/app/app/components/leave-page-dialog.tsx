@@ -9,15 +9,15 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
-import { useRef } from 'react'
+import { useState } from 'react'
 import { useLeavePrompt } from '#app/utils/navigation-guards.ts'
 
 /** Asks before a blocked navigation leaves a page (see `useConfirmBlocker`). */
 export function LeavePageDialog() {
 	const prompt = useLeavePrompt()
 	// Keeps the text while the dialog animates closed.
-	const lastMessage = useRef('')
-	if (prompt) lastMessage.current = prompt.message
+	const [lastMessage, setLastMessage] = useState('')
+	if (prompt && prompt.message !== lastMessage) setLastMessage(prompt.message)
 
 	return (
 		<AlertDialog
@@ -31,7 +31,7 @@ export function LeavePageDialog() {
 					<AlertDialogTitle>
 						<Trans>Leave this page?</Trans>
 					</AlertDialogTitle>
-					<AlertDialogDescription>{lastMessage.current}</AlertDialogDescription>
+					<AlertDialogDescription>{lastMessage}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>

@@ -9,14 +9,54 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react'
-import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router'
+import { useMemo } from 'react'
+import type * as ReactRouterModule from 'react-router'
+import {
+	createMemoryRouter,
+	Link,
+	Outlet,
+	RouterProvider,
+	type Blocker,
+} from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useConfirmBlocker } from '#app/utils/navigation-guards.ts'
 import { LeavePageDialog } from './leave-page-dialog.tsx'
 
+const blockerCalls = vi.hoisted(() => ({
+	proceed: vi.fn(),
+	reset: vi.fn(),
+}))
+
+// Records every proceed/reset call while keeping the real blocker behavior.
+vi.mock('react-router', async (importOriginal) => {
+	const actual = await importOriginal<typeof ReactRouterModule>()
+	return {
+		...actual,
+		useBlocker: (...args: Parameters<typeof actual.useBlocker>) => {
+			const blocker = actual.useBlocker(...args)
+			return useMemo((): Blocker => {
+				if (blocker.state !== 'blocked') return blocker
+				return {
+					...blocker,
+					proceed: () => {
+						blockerCalls.proceed()
+						blocker.proceed()
+					},
+					reset: () => {
+						blockerCalls.reset()
+						blocker.reset()
+					},
+				}
+			}, [blocker])
+		},
+	}
+})
+
 afterEach(() => {
 	cleanup()
 	vi.restoreAllMocks()
+	blockerCalls.proceed.mockClear()
+	blockerCalls.reset.mockClear()
 })
 
 const MESSAGE = 'You have unsaved changes. Leave this page and lose them?'
@@ -77,5 +117,33 @@ describe('LeavePageDialog', () => {
 			expect(router.state.location.pathname).toBe('/knowledge'),
 		)
 		expect(await screen.findByText('Knowledge page')).toBeTruthy()
+	})
+
+	it('Leave proceeds exactly once and never resets the blocker', async () => {
+		const router = renderApp()
+
+		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
+		await screen.findByRole('alertdialog')
+		fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe('/knowledge'),
+		)
+		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+
+		expect(blockerCalls.proceed).toHaveBeenCalledTimes(1)
+		expect(blockerCalls.reset).not.toHaveBeenCalled()
+	})
+
+	it('Stay resets exactly once and never proceeds', async () => {
+		const router = renderApp()
+
+		fireEvent.click(screen.getByRole('link', { name: 'Knowledge' }))
+		await screen.findByRole('alertdialog')
+		fireEvent.click(screen.getByRole('button', { name: 'Stay' }))
+		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+
+		expect(router.state.location.pathname).toBe('/')
+		expect(blockerCalls.reset).toHaveBeenCalledTimes(1)
+		expect(blockerCalls.proceed).not.toHaveBeenCalled()
 	})
 })
