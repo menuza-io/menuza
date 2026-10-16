@@ -427,6 +427,76 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Manage job posts, move applicants between stages, and hire',
 	},
+	{
+		id: 'org_perm_read_reservation_any',
+		action: 'read',
+		entity: 'reservation',
+		access: 'any',
+		context: 'organization',
+		description:
+			'View the reservation book, timeline, floor plan, calendar, overview, and waitlist',
+	},
+	{
+		id: 'org_perm_update_reservation_any',
+		action: 'update',
+		entity: 'reservation',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Create, modify, seat, and manage reservations, walk-ins, waitlist, service notes, and section assignments',
+	},
+	{
+		id: 'org_perm_read_reservation_settings_any',
+		action: 'read',
+		entity: 'reservation_settings',
+		access: 'any',
+		context: 'organization',
+		description:
+			'View reservation setup, floor plan, services, policies, messages, sections, and experiences',
+	},
+	{
+		id: 'org_perm_update_reservation_settings_any',
+		action: 'update',
+		entity: 'reservation_settings',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Edit reservation setup, floor plan, services, blocks, policies, messages, sections, and experiences',
+	},
+	{
+		id: 'org_perm_read_reservation_guest_any',
+		action: 'read',
+		entity: 'reservation_guest',
+		access: 'any',
+		context: 'organization',
+		description: 'View guestbook profiles, visit history, notes, and exports',
+	},
+	{
+		id: 'org_perm_update_reservation_guest_any',
+		action: 'update',
+		entity: 'reservation_guest',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Edit guestbook profiles, tags, notes, and merge or erase guests',
+	},
+	{
+		id: 'org_perm_read_reservation_report_any',
+		action: 'read',
+		entity: 'reservation_report',
+		access: 'any',
+		context: 'organization',
+		description: 'View reservation reports and analytics',
+	},
+	{
+		id: 'org_perm_update_reservation_payment_any',
+		action: 'update',
+		entity: 'reservation_payment',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Charge cancellation or no-show fees and request reservation refunds',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

@@ -2,8 +2,15 @@
  * Unit tests for organization permissions
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { db } from '@repo/database'
+import {
+	RESERVATIONS_PERMISSIONS,
+	RESERVATIONS_PERMISSION_LIST,
+} from '../../reservations/src/permissions'
 import {
 	parseOrganizationPermissionString,
 	userHasOrganizationPermission,
@@ -377,6 +384,57 @@ describe('Organization Permissions', () => {
 				'update:labor_policy:any',
 			)
 			expect(ORG_PERMISSIONS.UPDATE_HIRING_ANY).toBe('update:hiring:any')
+		})
+
+		it('should mirror all 8 reservations permissions with zero drift against RESERVATIONS_PERMISSIONS and setup-roles.ts (VAL-FND-013)', () => {
+			expect(ORG_PERMISSIONS.READ_RESERVATION_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+			)
+			expect(ORG_PERMISSIONS.UPDATE_RESERVATION_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+			)
+			expect(ORG_PERMISSIONS.READ_RESERVATION_SETTINGS_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+			)
+			expect(ORG_PERMISSIONS.UPDATE_RESERVATION_SETTINGS_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+			)
+			expect(ORG_PERMISSIONS.READ_RESERVATION_GUEST_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+			)
+			expect(ORG_PERMISSIONS.UPDATE_RESERVATION_GUEST_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+			)
+			expect(ORG_PERMISSIONS.READ_RESERVATION_REPORT_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_REPORT,
+			)
+			expect(ORG_PERMISSIONS.UPDATE_RESERVATION_PAYMENT_ANY).toBe(
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			)
+
+			const fromAuth = Object.entries(ORG_PERMISSIONS)
+				.filter(([key]) => key.includes('RESERVATION'))
+				.map(([, value]) => value)
+				.sort()
+			expect(fromAuth).toEqual([...RESERVATIONS_PERMISSION_LIST].sort())
+
+			const __dirname = path.dirname(fileURLToPath(import.meta.url))
+			const setupRolesSource = fs.readFileSync(
+				path.resolve(__dirname, '../../database/setup-roles.ts'),
+				'utf8',
+			)
+			const migrationSource = fs.readFileSync(
+				path.resolve(
+					__dirname,
+					'../../database/drizzle/0025_reservations_foundation.sql',
+				),
+				'utf8',
+			)
+			for (const perm of RESERVATIONS_PERMISSION_LIST) {
+				const permId = `org_perm_${perm.replaceAll(':', '_')}`
+				expect(setupRolesSource).toContain(`id: '${permId}'`)
+				expect(migrationSource).toContain(`'${permId}'`)
+			}
 		})
 	})
 
