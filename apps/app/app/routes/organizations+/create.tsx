@@ -952,10 +952,8 @@ function SubscriptionStep({
 					<ErrorList errors={form.errors} id={form.errorId} />
 
 					<div className="flex justify-between pt-4">
-						<Button variant="outline">
-							<Link to="/organizations">
-								<Trans>Cancel</Trans>
-							</Link>
+						<Button variant="outline" render={<Link to="/organizations" />}>
+							<Trans>Cancel</Trans>
 						</Button>
 						<Button type="submit" disabled={!selectedPriceId}>
 							<Trans>Continue to Payment</Trans>
