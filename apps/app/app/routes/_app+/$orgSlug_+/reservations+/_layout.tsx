@@ -80,7 +80,10 @@ export default function ReservationsLayout() {
 	const [searchParams, setSearchParams] = useSearchParams()
 
 	const selectedLocationId =
-		searchParams.get('locationId') ?? locations[0]?.id ?? 'all'
+		searchParams.get('locationId') ??
+		searchParams.get('location') ??
+		locations[0]?.id ??
+		'all'
 	const selectedDate = searchParams.get('date') ?? todayDate
 	const selectedService = searchParams.get('service') ?? 'all'
 
@@ -88,8 +91,10 @@ export default function ReservationsLayout() {
 		const next = new URLSearchParams(searchParams)
 		if (!value || value === 'all') {
 			next.delete(key)
+			if (key === 'locationId') next.delete('location')
 		} else {
 			next.set(key, value)
+			if (key === 'locationId') next.set('location', value)
 		}
 		setSearchParams(next, { replace: true })
 	}

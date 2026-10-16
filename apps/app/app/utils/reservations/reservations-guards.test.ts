@@ -57,8 +57,18 @@ function sourceFiles(directory: string, pattern: RegExp) {
 describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)', () => {
 	const files = sourceFiles(RESERVATIONS_ROUTES, /\.tsx?$/)
 
-	it('finds all reservations routes', () => {
-		expect(files.length).toBeGreaterThanOrEqual(10)
+	it('finds all reservations routes including setup sub-routes', () => {
+		expect(files.length).toBeGreaterThanOrEqual(15)
+		for (const required of [
+			'settings.tsx',
+			'settings._index.tsx',
+			'settings.tables.tsx',
+			'settings.floor-plan.tsx',
+			'settings.services.tsx',
+			'settings.special-days.tsx',
+		]) {
+			expect(files).toContain(required)
+		}
 	})
 
 	for (const file of files) {
@@ -93,6 +103,19 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 		const layoutSource = read(path.join(RESERVATIONS_ROUTES, '_layout.tsx'))
 		expect(layoutSource).toMatch(
 			/locations\.length\s*>\s*1\s*\?[\s\S]*?reservations-location-select/,
+		)
+	})
+
+	it('settings+/locations.$locationId.tsx checks reservations.enabled and notifies context-changed (VAL-SETUP-022, VAL-CROSS-001)', () => {
+		const locationSettingsSource = read(
+			path.join(
+				APP_DIR,
+				'routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx',
+			),
+		)
+		expect(locationSettingsSource).toMatch(/\bisReservationsFeatureEnabled\(/)
+		expect(locationSettingsSource).toMatch(
+			/\bnotifyReservationsContextChanged\(/,
 		)
 	})
 })

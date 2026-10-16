@@ -9,6 +9,13 @@ import {
 import { redirectWithToast } from '@repo/common/toast'
 import { and, db, eq, ne, OrganizationLocation } from '@repo/database'
 import { Button } from '@repo/ui/button'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import {
 	type ActionFunctionArgs,
@@ -27,6 +34,10 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	isReservationsFeatureEnabled,
+	notifyReservationsContextChanged,
+} from '#app/utils/reservations/access.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
@@ -144,9 +155,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		})(),
 	}
 
+	const reservationsEnabled = await isReservationsFeatureEnabled(
+		organization.id,
+		'enabled',
+	)
+
 	return {
 		organization,
 		location,
+		reservationsEnabled,
 	}
 }
 
@@ -245,6 +262,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await notifyReservationsContextChanged(organization.id, 'locations')
 
 	return redirectWithToast(`/${organization.slug}/settings/locations`, {
 		type: 'success',
@@ -254,7 +272,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditLocationRoute() {
-	const { organization, location } = useLoaderData<typeof loader>()
+	const { organization, location, reservationsEnabled } =
+		useLoaderData<typeof loader>()
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -280,6 +299,48 @@ export default function EditLocationRoute() {
 					</p>
 				</div>
 			</div>
+
+			{reservationsEnabled ? (
+				<Card data-testid="location-reservations-card">
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+						<div>
+							<CardTitle className="flex items-center gap-2 text-base">
+								<Icon name="calendar" className="size-4" />
+								<Trans>Reservations</Trans>
+							</CardTitle>
+							<CardDescription>
+								<Trans>
+									Configure dining areas, floor plan tables, service periods,
+									turn times, and online booking rules for this location.
+								</Trans>
+							</CardDescription>
+						</div>
+						<Button
+							variant="outline"
+							size="sm"
+							data-testid="location-reservations-settings-link"
+							render={
+								<Link
+									to={`/${organization.slug}/reservations/settings?location=${encodeURIComponent(location.id ?? '')}`}
+								/>
+							}
+						>
+							<Icon name="settings" className="size-4" />
+							<Trans>Manage reservations settings</Trans>
+						</Button>
+					</CardHeader>
+					<CardContent className="text-muted-foreground">
+						<p className="text-xs">
+							<Trans>
+								Location time zone is used to compute reservation seating slots.
+								Changing the time zone will prompt you to re-derive future
+								reservation times in Reservations Settings.
+							</Trans>{' '}
+							({location.timezone ?? 'America/New_York'})
+						</p>
+					</CardContent>
+				</Card>
+			) : null}
 
 			<LocationForm
 				orgSlug={organization.slug}
