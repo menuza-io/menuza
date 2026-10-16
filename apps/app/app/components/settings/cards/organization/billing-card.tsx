@@ -191,9 +191,11 @@ export function BillingCard({
 									</Button>
 								</Form>
 							) : (
-								<a href={`#${PLANS_ANCHOR_ID}`} className={buttonVariants()}>
+								<Button
+									render={<Link to={`#${PLANS_ANCHOR_ID}`} />}
+								>
 									<Trans>Subscribe</Trans>
-								</a>
+								</Button>
 							)}
 						</ItemActions>
 					</Item>
@@ -297,12 +299,12 @@ export function BillingCard({
 							</ItemDescription>
 						</ItemContent>
 						<ItemActions>
-							<a
-								href={ENTERPRISE_CONTACT_HREF}
-								className={buttonVariants({ variant: 'outline' })}
+							<Button
+								variant="outline"
+								render={<Link to={ENTERPRISE_CONTACT_HREF} />}
 							>
 								<Trans>Schedule a call</Trans>
-							</a>
+							</Button>
 						</ItemActions>
 					</Item>
 				</CardContent>
@@ -318,15 +320,13 @@ export function BillingCard({
 							</ItemTitle>
 						</ItemContent>
 						<ItemActions>
-							<a
-								href={BILLING_CONTACT_HREF}
-								className={buttonVariants({
-									variant: 'link',
-									className: 'text-sm',
-								})}
+							<Button
+								variant="link"
+								className="text-sm"
+								render={<Link to={BILLING_CONTACT_HREF} />}
 							>
 								<Trans>Get in touch</Trans>
-							</a>
+							</Button>
 						</ItemActions>
 					</Item>
 				</CardContent>
