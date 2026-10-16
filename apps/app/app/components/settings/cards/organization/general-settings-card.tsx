@@ -12,6 +12,7 @@ import {
 import { FieldGroup } from '@repo/ui/field'
 import { StatusButton } from '@repo/ui/status-button'
 import { useFetcher } from 'react-router'
+import { organizationSlugSchema } from '@repo/common'
 import { z } from 'zod'
 import { Field, ErrorList } from '#app/components/forms.tsx'
 
@@ -19,7 +20,7 @@ import { OrganizationPhoto } from './organization-photo-card'
 
 const SettingsSchema = z.object({
 	name: z.string().min(1, 'Name is required'),
-	slug: z.string().min(1, 'Slug is required'),
+	slug: organizationSlugSchema,
 })
 
 export const organizationUpdateActionIntent = 'update-settings'
@@ -42,6 +43,7 @@ export function GeneralSettingsCard({
 		id: 'organization-settings-form',
 		constraint: getZodConstraint(SettingsSchema),
 		lastResult: fetcher.data?.result,
+		shouldRevalidate: 'onInput',
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: SettingsSchema })
 		},
