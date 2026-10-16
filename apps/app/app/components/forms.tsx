@@ -31,7 +31,7 @@ export function ErrorList({
 	const errorsToRender = errors?.filter(Boolean)
 	if (!errorsToRender?.length) return null
 	return (
-		<ul id={id} className="flex flex-col gap-1">
+		<ul id={id} role="alert" className="flex flex-col gap-1">
 			{errorsToRender.map((e) => (
 				<li key={e} className="text-destructive text-[10px]">
 					{e}

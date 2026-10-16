@@ -8,6 +8,7 @@ import {
 	FormProvider,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
@@ -59,15 +60,19 @@ function resolveDefaultInviteRoleId(availableRoles: OrganizationRoleOption[]) {
 }
 
 // Create dynamic invite schema based on available roles
-function createInviteSchema() {
+function createInviteSchema(
+	translate: (descriptor: MessageDescriptor) => string,
+) {
 	return z.object({
 		invites: z
 			.array(
 				z.object({
 					email: z
-						.string({ required_error: 'Enter an email address' })
-						.email('Invalid email address'),
-					roleId: z.string().min(1, 'A role is required'),
+						.string({ required_error: translate(msg`Enter an email address`) })
+						.email(translate(msg`Invalid email address`)),
+					roleId: z
+						.string({ required_error: translate(msg`A role is required`) })
+						.min(1, translate(msg`A role is required`)),
 				}),
 			)
 			.min(1, 'At least one invite is required')
@@ -114,7 +119,7 @@ export function OrganizationInvitations({
 	const { _ } = useLingui()
 	const { roleName, roleDescription } = useRoleLabels()
 	// Create dynamic schema and roles based on available roles
-	const InviteSchema = createInviteSchema()
+	const InviteSchema = createInviteSchema(_)
 	const roles = availableRoles.map((role) => ({
 		value: role.id,
 		label: roleName(role),
@@ -462,7 +467,17 @@ function InviteFieldset({
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								render={
-									<InputGroupButton variant="ghost">
+									<InputGroupButton
+										variant="ghost"
+										aria-invalid={
+											inviteFields.roleId.errors?.length ? 'true' : undefined
+										}
+										aria-describedby={
+											inviteFields.roleId.errors?.length
+												? inviteFields.roleId.errorId
+												: undefined
+										}
+									>
 										{roles.find((r) => r.value === role.value)?.label}
 										<Icon name="chevron-down" />
 									</InputGroupButton>
@@ -501,11 +516,15 @@ function InviteFieldset({
 						)}
 					</InputGroupAddon>
 				</InputGroup>
-				<ErrorList id={meta.errorId} errors={meta.errors} />
 				<ErrorList
 					id={inviteFields.email.errorId}
 					errors={inviteFields.email.errors}
 				/>
+				<ErrorList
+					id={inviteFields.roleId.errorId}
+					errors={inviteFields.roleId.errors}
+				/>
+				<ErrorList id={meta.errorId} errors={meta.errors} />
 			</fieldset>
 		</div>
 	)

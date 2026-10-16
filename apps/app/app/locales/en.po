@@ -388,7 +388,7 @@ msgstr "{0, plural, one {We added a new-hire checklist with # task.} other {We a
 
 #. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
 #. placeholder {1}: organization.name
-#: app/routes/_app+/$orgSlug_+/index.tsx:160
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "{0} · Here's what's happening in {1}"
 msgstr "{0} · Here's what's happening in {1}"
 
@@ -1382,6 +1382,11 @@ msgstr "A position with that name already exists."
 msgid "A required break was not taken or not recorded."
 msgstr "A required break was not taken or not recorded."
 
+#: app/components/organization-invitations.tsx:74
+#: app/components/organization-invitations.tsx:75
+msgid "A role is required"
+msgstr "A role is required"
+
 #: app/utils/dashboards/config.ts:108
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
@@ -1504,7 +1509,8 @@ msgstr ""
 msgid "Acme Inc."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:199
+#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Across your organization"
 msgstr "Across your organization"
 
@@ -1755,7 +1761,7 @@ msgstr "Add and edit time cards and export hours. Includes View time cards."
 msgid "Add announcement"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:310
+#: app/components/organization-invitations.tsx:317
 #: app/routes/organizations+/create.tsx:1187
 msgid "Add another invitation"
 msgstr ""
@@ -2995,7 +3001,7 @@ msgstr "Available then"
 msgid "Available Tools"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:202
+#: app/routes/_app+/$orgSlug_+/index.tsx:210
 msgid "Avg per day"
 msgstr "Avg per day"
 
@@ -3182,7 +3188,7 @@ msgstr "Branch on whether you're open right now."
 msgid "Branding"
 msgstr ""
 
-#: app/components/workspace-breadcrumb.tsx:112
+#: app/components/workspace-breadcrumb.tsx:117
 msgid "Breadcrumb"
 msgstr "Breadcrumb"
 
@@ -4902,7 +4908,7 @@ msgstr "Contractor"
 msgid "Contrast"
 msgstr "Contrast"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:223
+#: app/routes/_app+/$orgSlug_+/index.tsx:231
 msgid "Contributors"
 msgstr "Contributors"
 
@@ -4922,7 +4928,7 @@ msgstr "Conversation"
 msgid "Cool"
 msgstr "Cool"
 
-#: app/components/organization-invitations.tsx:212
+#: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
 msgid "Copied"
 msgstr ""
@@ -4945,7 +4951,7 @@ msgstr "Copied shifts arrive as drafts. Nothing reaches your team until you publ
 msgid "Copied!"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:217
+#: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:316
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:569
@@ -5321,7 +5327,7 @@ msgstr "Create group"
 msgid "Create group chats"
 msgstr "Create group chats"
 
-#: app/components/organization-invitations.tsx:229
+#: app/components/organization-invitations.tsx:236
 msgid "Create Link"
 msgstr ""
 
@@ -6000,7 +6006,7 @@ msgstr ""
 msgid "Delete feature"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:374
+#: app/components/organization-invitations.tsx:381
 msgid "Delete invitation"
 msgstr ""
 
@@ -6192,7 +6198,7 @@ msgstr ""
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
-#: app/components/workspace-breadcrumb.tsx:127
+#: app/components/workspace-breadcrumb.tsx:134
 msgid "Details"
 msgstr "Details"
 
@@ -6255,7 +6261,7 @@ msgstr "Direct messages"
 msgid "Direction"
 msgstr "Direction"
 
-#: app/components/organization-invitations.tsx:251
+#: app/components/organization-invitations.tsx:258
 msgid "Disable"
 msgstr ""
 
@@ -6833,7 +6839,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
-#: app/components/organization-invitations.tsx:450
+#: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -7088,6 +7094,10 @@ msgstr "Enter an amount like 1250.50."
 msgid "Enter an amount like 15.50."
 msgstr "Enter an amount like 15.50."
 
+#: app/components/organization-invitations.tsx:71
+msgid "Enter an email address"
+msgstr "Enter an email address"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
@@ -7100,7 +7110,7 @@ msgstr ""
 msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."
 
-#: app/components/organization-invitations.tsx:449
+#: app/components/organization-invitations.tsx:456
 #: app/routes/organizations+/create.tsx:1228
 msgid "Enter email address"
 msgstr ""
@@ -8098,15 +8108,15 @@ msgstr "Go to switch"
 msgid "Go-live checklist"
 msgstr "Go-live checklist"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:154
+#: app/routes/_app+/$orgSlug_+/index.tsx:164
 msgid "Good afternoon, {userName}"
 msgstr "Good afternoon, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:165
 msgid "Good evening, {userName}"
 msgstr "Good evening, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:153
+#: app/routes/_app+/$orgSlug_+/index.tsx:163
 msgid "Good morning, {userName}"
 msgstr "Good morning, {userName}"
 
@@ -8455,8 +8465,8 @@ msgstr "Holidays"
 #: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
 #: app/components/workspace-breadcrumb.tsx:100
-#: app/components/workspace-breadcrumb.tsx:135
-#: app/components/workspace-breadcrumb.tsx:144
+#: app/components/workspace-breadcrumb.tsx:142
+#: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5890
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5912
@@ -8877,6 +8887,10 @@ msgstr "Interview updated"
 msgid "Interviews"
 msgstr "Interviews"
 
+#: app/components/organization-invitations.tsx:72
+msgid "Invalid email address"
+msgstr "Invalid email address"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:160
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:123
 msgid "Invalid graph format"
@@ -8921,7 +8935,7 @@ msgstr "Invitation sent."
 msgid "Invitations are not available for this organization."
 msgstr "Invitations are not available for this organization."
 
-#: app/components/organization-invitations.tsx:263
+#: app/components/organization-invitations.tsx:270
 msgid "Invite by email"
 msgstr ""
 
@@ -8929,7 +8943,7 @@ msgstr ""
 msgid "Invite Checkout payout contact"
 msgstr "Invite Checkout payout contact"
 
-#: app/components/workspace-header-actions.tsx:46
+#: app/components/workspace-header-actions.tsx:71
 msgid "Invite member"
 msgstr "Invite member"
 
@@ -8964,7 +8978,7 @@ msgstr "Invited"
 msgid "Invited by {invitedBy}"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:354
+#: app/components/organization-invitations.tsx:361
 msgid "Invited by {inviterName}"
 msgstr ""
 
@@ -9309,7 +9323,7 @@ msgid "Large"
 msgstr ""
 
 #. placeholder {0}: notes.daysShown
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:214
 msgid "Last {0} days"
 msgstr "Last {0} days"
 
@@ -10008,7 +10022,7 @@ msgstr ""
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/components/organization-invitations.tsx:273
+#: app/components/organization-invitations.tsx:280
 #: app/components/organization-members.tsx:182
 msgid "Manage roles"
 msgstr "Manage roles"
@@ -10671,7 +10685,7 @@ msgstr ""
 
 #: app/components/hiring/applicant-labels.ts:22
 #: app/components/workspace-breadcrumb.tsx:22
-#: app/components/workspace-header-actions.tsx:26
+#: app/components/workspace-header-actions.tsx:44
 msgid "New"
 msgstr "New"
 
@@ -10754,7 +10768,7 @@ msgid "New message"
 msgstr "New message"
 
 #: app/components/staff/notes-tab.tsx:98
-#: app/components/workspace-header-actions.tsx:37
+#: app/components/workspace-header-actions.tsx:57
 msgid "New note"
 msgstr "New note"
 
@@ -10791,7 +10805,7 @@ msgstr "New redirect"
 msgid "New Redirect"
 msgstr "New Redirect"
 
-#: app/components/workspace-header-actions.tsx:41
+#: app/components/workspace-header-actions.tsx:62
 msgid "New report"
 msgstr "New report"
 
@@ -10863,7 +10877,7 @@ msgstr "No 404 errors recorded"
 msgid "No access"
 msgstr "No access"
 
-#: app/components/organization-invitations.tsx:192
+#: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr ""
 
@@ -10876,7 +10890,7 @@ msgid "No active subscription"
 msgstr ""
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:207
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "No activity yet"
 msgstr ""
 
@@ -11022,7 +11036,7 @@ msgstr "No custom roles created yet."
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/components/organization-invitations.tsx:480
+#: app/components/organization-invitations.tsx:497
 msgid "No description provided"
 msgstr "No description provided"
 
@@ -11998,8 +12012,8 @@ msgid "On that date"
 msgstr "On that date"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:225
-msgid "On the leaderboard"
-msgstr "On the leaderboard"
+#~ msgid "On the leaderboard"
+#~ msgstr "On the leaderboard"
 
 #: app/utils/staffing/schedule-errors.ts:84
 msgid "on time off"
@@ -12936,7 +12950,7 @@ msgstr "Payroll summary (CSV)"
 msgid "Pending"
 msgstr ""
 
-#: app/components/organization-invitations.tsx:336
+#: app/components/organization-invitations.tsx:343
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr ""
@@ -13065,7 +13079,7 @@ msgstr "Personal details"
 msgid "Personal details saved."
 msgstr "Personal details saved."
 
-#: app/components/organization-invitations.tsx:170
+#: app/components/organization-invitations.tsx:177
 msgid "Personal invite link"
 msgstr ""
 
@@ -14668,7 +14682,7 @@ msgid "Resend to people not yet reached"
 msgstr "Resend to people not yet reached"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
-#: app/components/organization-invitations.tsx:240
+#: app/components/organization-invitations.tsx:247
 #: app/routes/_app+/$orgSlug_+/media.tsx:1789
 msgid "Reset"
 msgstr ""
@@ -15928,7 +15942,7 @@ msgstr ""
 msgid "Send invitation"
 msgstr "Send invitation"
 
-#: app/components/organization-invitations.tsx:321
+#: app/components/organization-invitations.tsx:328
 #: app/routes/organizations+/create.tsx:1194
 msgid "Send Invitations"
 msgstr ""
@@ -16167,7 +16181,7 @@ msgstr "Share this job"
 #~ msgid "Share this link to let people join your organization as a Member. They'll see you invited them."
 #~ msgstr ""
 
-#: app/components/organization-invitations.tsx:173
+#: app/components/organization-invitations.tsx:180
 msgid "Share this link to let people join your organization. They'll see you invited them."
 msgstr "Share this link to let people join your organization. They'll see you invited them."
 
@@ -19166,7 +19180,7 @@ msgstr ""
 msgid "Total {totalText} of 100"
 msgstr "Total {totalText} of 100"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:197
+#: app/routes/_app+/$orgSlug_+/index.tsx:205
 msgid "Total notes"
 msgstr "Total notes"
 
@@ -19290,7 +19304,7 @@ msgstr ""
 msgid "Transport"
 msgstr "Transport"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:219
 msgid "Trend"
 msgstr "Trend"
 
@@ -20077,7 +20091,7 @@ msgstr "Used when you hire someone from Applicants. Only one template can do thi
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "Useful if staff should log what happened after a transfer."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:145
+#: app/routes/_app+/$orgSlug_+/index.tsx:155
 msgid "User"
 msgstr "User"
 
@@ -20352,7 +20366,7 @@ msgstr "Voicemail saved"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:220
+#: app/routes/_app+/$orgSlug_+/index.tsx:228
 msgid "Vs prior period"
 msgstr "Vs prior period"
 
