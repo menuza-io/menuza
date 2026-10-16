@@ -64,7 +64,9 @@ function createInviteSchema() {
 		invites: z
 			.array(
 				z.object({
-					email: z.string().email('Invalid email address'),
+					email: z
+						.string({ required_error: 'Enter an email address' })
+						.email('Invalid email address'),
 					roleId: z.string().min(1, 'A role is required'),
 				}),
 			)
@@ -500,6 +502,10 @@ function InviteFieldset({
 					</InputGroupAddon>
 				</InputGroup>
 				<ErrorList id={meta.errorId} errors={meta.errors} />
+				<ErrorList
+					id={inviteFields.email.errorId}
+					errors={inviteFields.email.errors}
+				/>
 			</fieldset>
 		</div>
 	)
