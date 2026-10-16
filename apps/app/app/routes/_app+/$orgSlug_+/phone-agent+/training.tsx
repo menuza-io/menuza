@@ -126,6 +126,14 @@ export default function PhoneAgentTraining() {
 		</Button>
 	) : null
 
+	const emptyDescription = !canUpdate ? (
+		<Trans>Ask an administrator to add training rules.</Trans>
+	) : EXAMPLES.length ? (
+		<Trans>Start with an example and change it to match your business.</Trans>
+	) : (
+		<Trans>Add a rule to teach the agent how your business works.</Trans>
+	)
+
 	return (
 		<div className="flex flex-col gap-8">
 			<PageHeader
@@ -173,11 +181,7 @@ export default function PhoneAgentTraining() {
 							<EmptyTitle>
 								<Trans>No training rules yet</Trans>
 							</EmptyTitle>
-							<EmptyDescription>
-								<Trans>
-									Start with an example and change it to match your business.
-								</Trans>
-							</EmptyDescription>
+							<EmptyDescription>{emptyDescription}</EmptyDescription>
 						</EmptyHeader>
 						{canUpdate && EXAMPLES.length ? (
 							<EmptyContent>
@@ -620,7 +624,7 @@ function RuleDialog({
 					) : null}
 
 					<DialogFooter>
-						<Button type="button" variant="ghost" onClick={onClose}>
+						<Button type="button" variant="outline" onClick={onClose}>
 							<Trans>Cancel</Trans>
 						</Button>
 						<Button
@@ -671,7 +675,7 @@ function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
 					</p>
 				) : null}
 				<DialogFooter>
-					<Button type="button" variant="ghost" onClick={onClose}>
+					<Button type="button" variant="outline" onClick={onClose}>
 						<Trans>Cancel</Trans>
 					</Button>
 					<Button

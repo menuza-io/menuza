@@ -889,10 +889,10 @@ export default function MediaLibraryRoute({
 								<button
 									type="button"
 									onClick={() => setSelectedAsset(asset)}
-									className="absolute inset-0 z-0 cursor-pointer rounded-xl"
+									className="absolute inset-0 z-10 cursor-pointer rounded-xl"
 									aria-label={`Open details for ${name}`}
 								/>
-								<div className="bg-muted relative aspect-square overflow-hidden">
+								<div className="bg-muted pointer-events-none relative aspect-square overflow-hidden">
 									<img
 										src={asset.url}
 										alt={asset.altText ?? ''}
@@ -901,12 +901,12 @@ export default function MediaLibraryRoute({
 										width={360}
 										height={360}
 									/>
-									<div className="absolute inset-x-0 bottom-0 flex justify-end p-2 opacity-0 focus-within:opacity-100 motion-safe:transition-opacity motion-safe:group-hover:opacity-100">
+									<div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-end p-2 opacity-0 focus-within:opacity-100 motion-safe:transition-opacity motion-safe:group-hover:opacity-100">
 										<Button
 											type="button"
 											variant="secondary"
 											size="sm"
-											className="relative z-10"
+											className="pointer-events-auto"
 											onClick={(e) => {
 												e.stopPropagation()
 												void navigator.clipboard.writeText(
@@ -920,7 +920,7 @@ export default function MediaLibraryRoute({
 										</Button>
 									</div>
 								</div>
-								<div className="space-y-1 px-3 py-3">
+								<div className="pointer-events-none space-y-1 px-3 py-3">
 									<p className="truncate text-sm font-medium" title={name}>
 										{name}
 									</p>

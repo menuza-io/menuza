@@ -12,6 +12,7 @@ import {
 	multiplierTextToBp,
 	policyFormProblems,
 	problemFor,
+	sentenceFieldRange,
 	starterPolicy,
 	timeValueToMinute,
 	WEEKLY_OVERTIME_PRESET,
@@ -110,6 +111,32 @@ describe('policyFormProblems', () => {
 		const problems = [{ path: 'breakRules.rules.1', code: 'duplicate_rule' }]
 		expect(problemFor(problems, 'breakRules')?.code).toBe('duplicate_rule')
 		expect(problemFor(problems, 'rounding')).toBeUndefined()
+	})
+})
+
+describe('sentenceFieldRange', () => {
+	it('reads each sentence box range from the schema, in the unit it shows', () => {
+		expect(sentenceFieldRange('longShiftMinutes')).toEqual({
+			unit: 'hours',
+			min: 1,
+			max: 48,
+		})
+		expect(
+			sentenceFieldRange('breakRules.autoDeduction.deductMinutes'),
+		).toEqual({ unit: 'minutes', min: 1, max: 240 })
+		expect(sentenceFieldRange('breakRules.autoDeduction.afterMinutes')).toEqual(
+			{ unit: 'hours', min: 1 / 60, max: 24 },
+		)
+		expect(sentenceFieldRange('weeklyOvertime.thresholdMinutes')).toEqual({
+			unit: 'hours',
+			min: 1 / 60,
+			max: 168,
+		})
+	})
+
+	it('has no range for other settings', () => {
+		expect(sentenceFieldRange('lateGraceMinutes')).toBeNull()
+		expect(sentenceFieldRange('weeklyOvertime')).toBeNull()
 	})
 })
 

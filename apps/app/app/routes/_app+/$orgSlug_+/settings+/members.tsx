@@ -187,7 +187,9 @@ const InviteSchema = z.object({
 		.array(
 			z
 				.object({
-					email: z.string().email('Invalid email address'),
+					email: z
+						.string({ required_error: 'Enter an email address' })
+						.email('Invalid email address'),
 					roleId: z.string().min(1).optional(),
 					// Accept legacy callers while all current forms submit roleId.
 					role: z

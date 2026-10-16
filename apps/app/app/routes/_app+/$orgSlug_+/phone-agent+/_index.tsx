@@ -28,10 +28,11 @@ import {
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import {
 	Link,
 	useLoaderData,
+	useLocation,
 	useParams,
 	useRouteLoaderData,
 } from 'react-router'
@@ -49,6 +50,7 @@ import { type loader as layoutLoader } from './_layout.tsx'
 export { action, loader } from './_index.server.ts'
 
 const LAYOUT_ROUTE_ID = 'routes/_app+/$orgSlug_+/phone-agent+/_layout'
+const STAFF_TRANSFER_HASH = '#staff-transfer'
 
 const LANGUAGE_LABELS: Record<AgentLanguage, MessageDescriptor> = {
 	en: msg`English`,
@@ -112,6 +114,15 @@ export default function PhoneAgentSetup() {
 	} = useLoaderData<LoaderData>()
 	const layout = useRouteLoaderData<typeof layoutLoader>(LAYOUT_ROUTE_ID)
 	const base = `/${orgSlug}/phone-agent`
+	const { hash } = useLocation()
+
+	// Client navigations do not scroll to a hash on their own. Land on the
+	// transfer toggle (the phone field is only shown while that toggle is on).
+	useEffect(() => {
+		if (hash !== STAFF_TRANSFER_HASH) return
+		document.getElementById('staff-transfer')?.scrollIntoView({ block: 'start' })
+		document.getElementById('phone-agent-escalate')?.focus()
+	}, [hash])
 
 	return (
 		<div className="flex flex-col gap-8">
@@ -727,7 +738,10 @@ function SettingsForm({
 							) : null}
 						</div>
 
-						<div className="flex flex-col gap-3">
+						<div
+							id="staff-transfer"
+							className="flex scroll-mt-24 flex-col gap-3"
+						>
 							<div className="flex items-center justify-between gap-4">
 								<Label htmlFor="phone-agent-escalate">
 									<Trans>Transfer to staff when the agent can't help</Trans>

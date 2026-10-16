@@ -34,6 +34,7 @@ import {
 import { ENV } from 'varlock/env'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { enrichNotesListUploadsWithImageSrc } from '#app/utils/note-upload-url.server.ts'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -154,22 +155,26 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		getNotesViewMode(request),
 	])
 
-	const formattedNotes = notes
-		.filter(
-			(note) =>
-				note.isPublic ||
-				note.createdById === userId ||
-				note.noteAccess.some((access) => access.userId === userId),
-		)
-		.map((note) => ({
-			...note,
-			createdBy: note.user,
-			createdByName: note.user?.name || note.user?.username || 'Unknown',
-			statusId: note.statusId ?? null,
-			statusName: note.status?.name ?? null,
-			position: note.position ?? null,
-			uploads: note.organizationNoteUploads,
-		}))
+	const visibleNotes = notes.filter(
+		(note) =>
+			note.isPublic ||
+			note.createdById === userId ||
+			note.noteAccess.some((access) => access.userId === userId),
+	)
+
+	const notesWithUploadUrls = await enrichNotesListUploadsWithImageSrc(
+		visibleNotes,
+		organization.id,
+	)
+
+	const formattedNotes = notesWithUploadUrls.map((note) => ({
+		...note,
+		createdBy: note.user,
+		createdByName: note.user?.name || note.user?.username || 'Unknown',
+		statusId: note.statusId ?? null,
+		statusName: note.status?.name ?? null,
+		position: note.position ?? null,
+	}))
 
 	return {
 		organization,

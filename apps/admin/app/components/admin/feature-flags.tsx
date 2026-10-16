@@ -12,6 +12,7 @@ import {
 } from '@repo/ui/dialog'
 import { Frame, FrameHeader, FrameTitle } from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
+import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -54,7 +55,7 @@ function FeatureFlagDialog({
 	level?: 'system' | 'organization' | 'user'
 	organizationId?: string
 	userId?: string
-	children: React.ReactNode
+	children: React.ReactElement
 }) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher()
@@ -87,7 +88,7 @@ function FeatureFlagDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger>{children}</DialogTrigger>
+			<DialogTrigger render={children} />
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>
@@ -207,7 +208,7 @@ function OverrideDialog({
 	level: 'organization' | 'user'
 	organizationId?: string
 	userId?: string
-	children: React.ReactNode
+	children: React.ReactElement
 }) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher()
@@ -232,7 +233,7 @@ function OverrideDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger>{children}</DialogTrigger>
+			<DialogTrigger render={children} />
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>
@@ -734,6 +735,14 @@ export function FeatureFlags() {
 
 	return (
 		<div className="space-y-6">
+			<PageHeader
+				title={<Trans>Feature flags</Trans>}
+				description={
+					<Trans>
+						Set system defaults and override them for an organization or a user.
+					</Trans>
+				}
+			/>
 			<Tabs defaultValue="system" className="w-full">
 				<div className="flex gap-3">
 					<TabsList>

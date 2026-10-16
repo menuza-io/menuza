@@ -68,7 +68,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return Response.json({ result: submission.reply() })
 	}
 
-	const normalize = (value: string) => value.trim() || null
+	const normalize = (value: string | undefined) => value?.trim() || null
 
 	try {
 		await db

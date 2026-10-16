@@ -198,30 +198,51 @@ async function fetchExternalImage(
 	})
 }
 
+/**
+ * Fetches the original image and returns the request that produced it, so a
+ * resize can repeat the same request. `upstream.url` is empty for a constructed
+ * response (the Workers dev S3 mock), and `upstream.headers` are response
+ * headers that lack the storage signature.
+ */
 async function fetchImageSource(
 	request: Request,
 	searchParams: URLSearchParams,
 	objectKey: string | null,
 	organizationId: string | null,
-) {
+): Promise<{
+	upstream: Response
+	source: { url: string; headers?: HeadersInit }
+}> {
 	if (objectKey) {
 		const { url: signedUrl, headers: signedHeaders } =
 			await getSignedGetRequestInfoAsync(objectKey, organizationId ?? undefined)
-		return fetch(signedUrl, { headers: signedHeaders })
+		return {
+			upstream: await fetch(signedUrl, { headers: signedHeaders }),
+			source: { url: signedUrl, headers: signedHeaders },
+		}
 	}
 
 	const src = searchParams.get('src')
 	invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 	if (URL.canParse(src)) {
-		return ssrfSafeFetch(src, {
+		const upstream = await ssrfSafeFetch(src, {
 			signal: AbortSignal.timeout(10_000),
 		})
+		return { upstream, source: { url: upstream.url || src } }
 	}
 
 	const normalizedSrc = src.replace(/\\/g, '/').replace(/\.\.+/g, '')
 	const assetUrl = new URL(normalizedSrc, request.url)
-	return fetch(assetUrl)
+	// A protocol-relative value (`//host/x`, `\\host\x`) does not parse as an
+	// absolute URL but resolves to another host, which would bypass the SSRF
+	// guard above. Relative sources may only name this origin's own assets.
+	invariantResponse(
+		assetUrl.origin === new URL(request.url).origin,
+		'Invalid image source',
+		{ status: 400 },
+	)
+	return { upstream: await fetch(assetUrl), source: { url: assetUrl.href } }
 }
 
 async function getCloudflareImageResponse(
@@ -232,7 +253,7 @@ async function getCloudflareImageResponse(
 	cacheable: boolean,
 ) {
 	const params = parseImageParams(searchParams)
-	const upstream = await fetchImageSource(
+	const { upstream, source } = await fetchImageSource(
 		request,
 		searchParams,
 		objectKey,
@@ -289,32 +310,34 @@ async function getCloudflareImageResponse(
 		if (params.fit != null) imageOptions.fit = params.fit
 		if (params.format != null) imageOptions.format = params.format
 
-		const transformed = await fetch(upstream.url, {
-			headers: upstream.headers,
+		// External images returned above, so only storage objects and this
+		// origin's assets reach the transform. Redirects are not followed: the
+		// first fetch did not validate a hop that only the refetch would take.
+		const transformed = await fetch(source.url, {
+			headers: source.headers,
+			redirect: 'manual',
 			cf: { image: imageOptions },
 		} as RequestInit & { cf?: { image: Record<string, number | string> } })
 
 		if (transformed.ok) {
+			// The original is not needed; release its connection.
+			await upstream.body?.cancel()
 			const rawContentType = transformed.headers.get('content-type')
 			const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
-			if (
-				isExternal &&
-				(!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))
-			) {
-				throw new Response('Unsupported Media Type', { status: 415 })
-			}
-			const headers = getImageResponseHeaders(cacheable && !isExternal)
+			const headers = getImageResponseHeaders(cacheable)
 			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
 		}
+
+		await transformed.body?.cancel()
+		console.warn(
+			`Image transform failed with status ${transformed.status}; serving the original`,
+		)
 	}
 
 	const rawContentType = upstream.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
-	if (isExternal && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
-		throw new Response('Unsupported Media Type', { status: 415 })
-	}
-	const headers = getImageResponseHeaders(cacheable && !isExternal)
+	const headers = getImageResponseHeaders(cacheable)
 	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
 }
