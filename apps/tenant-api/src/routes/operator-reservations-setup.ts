@@ -19,6 +19,7 @@ import {
 	rsvFloorElements,
 	rsvLocationSettings,
 	rsvPacingRules,
+	rsvSectionLayouts,
 	rsvServiceAvailability,
 	rsvServices,
 	rsvSpecialDays,
@@ -31,14 +32,15 @@ import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { badRequest, handleRouteError, json, notFound } from '../lib/http.ts'
-import { findActiveOrganizationById } from '../lib/origin.ts'
-import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import {
 	filterReservationsLocations,
 	requireReservationsLocation,
-	type ReservationsAuthContext,
 } from '../lib/reservations-auth.ts'
-import { getRsvAuth, rsvGuard } from '../lib/reservations-guard.ts'
+import {
+	ensureActiveOrgInNodeRegion,
+	getRsvAuth,
+	rsvGuard,
+} from '../lib/reservations-guard.ts'
 import {
 	archiveAreaForLocation,
 	archiveServiceForLocation,
@@ -48,6 +50,7 @@ import {
 	createComboForLocation,
 	createFloorElementForLocation,
 	createPacingRuleForLocation,
+	createSectionLayoutForLocation,
 	createServiceForLocation,
 	createSpecialDayForLocation,
 	createTableForLocation,
@@ -56,6 +59,7 @@ import {
 	deleteComboForLocation,
 	deleteFloorElementForLocation,
 	deletePacingRuleForLocation,
+	deleteSectionLayoutForLocation,
 	deleteServiceAvailabilityForLocation,
 	deleteSpecialDayForLocation,
 	deleteTurnTimeForLocation,
@@ -67,6 +71,7 @@ import {
 	listCombosForLocation,
 	listFloorElementsForLocation,
 	listPacingRulesForLocation,
+	listSectionLayoutsForLocation,
 	listServiceAvailabilityForLocation,
 	listServicesForLocation,
 	listSpecialDaysForLocation,
@@ -78,6 +83,7 @@ import {
 	updateComboForLocation,
 	updateLocationSettings,
 	updatePacingRuleForLocation,
+	updateSectionLayoutForLocation,
 	updateServiceForLocation,
 	updateSpecialDayForLocation,
 	updateTableForLocation,
@@ -317,26 +323,6 @@ const writeSetupGuard = rsvGuard({
 	grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
 	write: true,
 })
-
-async function ensureActiveOrgInNodeRegion(
-	ctx: ReservationsAuthContext,
-): Promise<Response | null> {
-	const org = await findActiveOrganizationById(ctx.orgId)
-	const provisioned = Boolean(org?.hasProvisionedDb)
-	if (!org || !provisioned) {
-		return json({ error: 'not_found', message: 'Organization not found' }, 404)
-	}
-	if (!orgMatchesNodeRegion(org.dataRegion)) {
-		return json(
-			{
-				error: 'region_mismatch',
-				message: `Organization dataRegion "${org.dataRegion}" does not match node "${getNodeRegion()}"`,
-			},
-			403,
-		)
-	}
-	return null
-}
 
 function wrapHandler(
 	handler: (c: Context) => Promise<Response>,
@@ -1967,4 +1953,192 @@ operatorReservationsSetupRoutes.post(
 	'/rederive-times',
 	writeSetupGuard,
 	rederiveTimesHandler,
+)
+
+// ============================================================================
+// Section Layouts CRUD
+// ============================================================================
+
+const setupSectionLayoutSchema = z.object({
+	locationId: z.string().min(1),
+	name: z.string().trim().min(1),
+	serviceId: z.string().nullable().optional(),
+	isDefault: z.boolean().optional(),
+	sections: z
+		.array(
+			z.object({
+				id: z.string().optional(),
+				name: z.string().trim().min(1),
+				colorToken: z.string().optional(),
+				sort: z.number().int().optional(),
+				sortOrder: z.number().int().optional(),
+				tableIds: z.array(z.string()).optional(),
+			}),
+		)
+		.default([]),
+})
+
+const setupSectionLayoutPatchSchema = z.object({
+	name: z.string().trim().min(1).optional(),
+	serviceId: z.string().nullable().optional(),
+	isDefault: z.boolean().optional(),
+	sections: z
+		.array(
+			z.object({
+				id: z.string().optional(),
+				name: z.string().trim().min(1),
+				colorToken: z.string().optional(),
+				sort: z.number().int().optional(),
+				sortOrder: z.number().int().optional(),
+				tableIds: z.array(z.string()).optional(),
+			}),
+		)
+		.optional(),
+})
+
+const listSectionLayoutsHandler = wrapHandler(async (c) => {
+	const ctx = getRsvAuth(c)
+	const locationId = requireLocationId(c)
+	const db = await getTenantDb(ctx.orgId)
+	const layouts = await listSectionLayoutsForLocation(db, locationId)
+	return json({ locationId, layouts, sectionLayouts: layouts })
+})
+
+const createSectionLayoutHandler = wrapHandler(async (c) => {
+	const ctx = getRsvAuth(c)
+	const body = await readNormalizedBody(c)
+	const locationId = requireLocationId(c, body)
+	const parsed = parseSchemaOrThrow(setupSectionLayoutSchema, {
+		...body,
+		locationId,
+	})
+	const db = await getTenantDb(ctx.orgId)
+	const res = await createSectionLayoutForLocation(db, {
+		actorId: ctx.userId,
+		...parsed,
+	})
+	return json({ ...res.layout, ...res }, 201)
+})
+
+const updateSectionLayoutHandler = wrapHandler(async (c) => {
+	const ctx = getRsvAuth(c)
+	checkExplicitLocations(c)
+	const layoutId = c.req.param('id')!
+	const body = await readNormalizedBody(c)
+	const db = await getTenantDb(ctx.orgId)
+	const current = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+	if (!current || current.archivedAt !== null) {
+		throw notFound('Section layout not found')
+	}
+	assertAllowedLocation(c, current.locationId)
+	const parsed = parseSchemaOrThrow(setupSectionLayoutPatchSchema, body)
+	const res = await updateSectionLayoutForLocation(db, layoutId, {
+		actorId: ctx.userId,
+		locationId: current.locationId,
+		...parsed,
+	})
+	return json({ ...res.layout, ...res })
+})
+
+const deleteSectionLayoutHandler = wrapHandler(async (c) => {
+	const ctx = getRsvAuth(c)
+	checkExplicitLocations(c)
+	const layoutId = c.req.param('id')!
+	const db = await getTenantDb(ctx.orgId)
+	const current = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+	if (!current || current.archivedAt !== null) {
+		throw notFound('Section layout not found')
+	}
+	assertAllowedLocation(c, current.locationId)
+	const res = await deleteSectionLayoutForLocation(
+		db,
+		layoutId,
+		ctx.userId,
+		current.locationId,
+	)
+	return json(res)
+})
+
+operatorReservationsSetupRoutes.get(
+	'/locations/:locationId/sections',
+	readSetupGuard,
+	listSectionLayoutsHandler,
+)
+operatorReservationsSetupRoutes.get(
+	'/sections/layouts',
+	readSetupGuard,
+	listSectionLayoutsHandler,
+)
+operatorReservationsSetupRoutes.get(
+	'/sections',
+	readSetupGuard,
+	listSectionLayoutsHandler,
+)
+operatorReservationsSetupRoutes.post(
+	'/locations/:locationId/sections',
+	writeSetupGuard,
+	createSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.post(
+	'/sections/layouts',
+	writeSetupGuard,
+	createSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.post(
+	'/sections',
+	writeSetupGuard,
+	createSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.put(
+	'/locations/:locationId/sections/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.patch(
+	'/locations/:locationId/sections/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.put(
+	'/sections/layouts/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.patch(
+	'/sections/layouts/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.put(
+	'/sections/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.patch(
+	'/sections/:id',
+	writeSetupGuard,
+	updateSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.delete(
+	'/locations/:locationId/sections/:id',
+	writeSetupGuard,
+	deleteSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.delete(
+	'/sections/layouts/:id',
+	writeSetupGuard,
+	deleteSectionLayoutHandler,
+)
+operatorReservationsSetupRoutes.delete(
+	'/sections/:id',
+	writeSetupGuard,
+	deleteSectionLayoutHandler,
 )

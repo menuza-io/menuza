@@ -1,0 +1,908 @@
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { brand } from '@repo/config/brand'
+import {
+	RESERVATIONS_PERMISSIONS,
+	RESERVATIONS_TOKEN_AUDIENCE,
+	RESERVATIONS_TOKEN_TYP,
+	type ReservationsScope,
+} from '@repo/reservations'
+import {
+	destroyTenantDb,
+	getTenantDb,
+	provisionTenantDb,
+	rsvAreas,
+	rsvAuditLog,
+	rsvGuests,
+	rsvLocationSettings,
+	rsvServices,
+	rsvTables,
+} from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
+import { Hono } from 'hono'
+import * as jose from 'jose'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { type PublishedOrganization } from '../lib/origin.ts'
+import {
+	resetReservationsContextCache,
+	seedReservationsContextForTest,
+} from '../lib/reservations-context.ts'
+import { reservationsInternalRoutes } from './reservations-internal.ts'
+import { reservationsOperatorRoutes } from './reservations-operator.ts'
+
+const OPERATOR_SECRET =
+	'test-reservations-operator-secret-key-32-chars-minimum!!'
+const INTERNAL_SECRET =
+	'test-reservations-internal-secret-key-32-chars-minimum!!'
+const ORG_ID = 'org_book_route_test'
+const LOC_MAIN = 'loc_main'
+const LOC_OTHER = 'loc_other'
+const USER_ID = 'usr_book_operator'
+const DATE = '2026-08-20'
+
+const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
+
+vi.mock('../lib/origin.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../lib/origin.ts')>()),
+	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+}))
+
+let tempDir: string
+
+function buildApp() {
+	const app = new Hono()
+	app.route('/operator/reservations', reservationsOperatorRoutes)
+	app.route('/internal/reservations', reservationsInternalRoutes)
+	return app
+}
+
+async function mintToken(opts?: {
+	scope?: ReservationsScope
+	grants?: string[]
+	locationIds?: string[] | null
+	sub?: string
+}) {
+	const now = Math.floor(Date.now() / 1000)
+	const scope = opts?.scope ?? 'book'
+	const defaultGrants =
+		scope === 'guests'
+			? [
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+					RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+				]
+			: scope === 'setup'
+				? [
+						RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+					]
+				: [
+						RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+						RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+					]
+	return new jose.SignJWT({
+		role: 'operator',
+		orgId: ORG_ID,
+		region: 'us',
+		scope,
+		grants: opts?.grants ?? defaultGrants,
+		locationIds: opts?.locationIds ?? null,
+		features: {
+			enabled: true,
+			online: true,
+			waitlist: true,
+			experiences: true,
+			payments: true,
+			voice: false,
+		},
+		impersonated: false,
+	})
+		.setProtectedHeader({
+			alg: 'HS256',
+			typ: RESERVATIONS_TOKEN_TYP,
+		})
+		.setSubject(opts?.sub ?? USER_ID)
+		.setIssuer(brand.shortName)
+		.setAudience(RESERVATIONS_TOKEN_AUDIENCE)
+		.setIssuedAt(now)
+		.setExpirationTime(now + 300)
+		.sign(new TextEncoder().encode(OPERATOR_SECRET))
+}
+
+describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/summary routes', () => {
+	beforeEach(async () => {
+		tempDir = mkdtempSync(path.join(tmpdir(), 'rsv-book-route-test-'))
+		process.env.TENANT_DB_DIR = tempDir
+		process.env.DATA_REGION = 'us'
+		process.env.TENANT_OPERATOR_TOKEN = OPERATOR_SECRET
+		process.env.INTERNAL_COMMAND_TOKEN = INTERNAL_SECRET
+		resetReservationsContextCache()
+
+		orgs.set(ORG_ID, {
+			id: ORG_ID,
+			slug: 'acme-bistro',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+			name: 'Acme Bistro',
+		})
+
+		await provisionTenantDb(ORG_ID)
+		const db = await getTenantDb(ORG_ID)
+		const now = Date.now()
+
+		await db.insert(rsvLocationSettings).values({
+			locationId: LOC_MAIN,
+			timeZone: 'America/New_York',
+			dayStartMin: 240,
+			intervalMin: 15,
+			freezeMin: 30,
+			contactStatusesEnabled: true,
+			courseStatusesEnabled: true,
+			enabled: true,
+			version: 1,
+			updatedAt: now,
+		})
+
+		await db.insert(rsvAreas).values({
+			id: 'area_main',
+			locationId: LOC_MAIN,
+			name: 'Main Room',
+			sort: 0,
+			onlineBookable: true,
+			guestSelectable: true,
+		})
+
+		await db.insert(rsvTables).values([
+			{
+				id: 'tbl_1',
+				locationId: LOC_MAIN,
+				areaId: 'area_main',
+				label: 'T1',
+				minCovers: 1,
+				maxCovers: 2,
+				onlineBookable: true,
+				resetBufferMin: 15,
+			},
+			{
+				id: 'tbl_2',
+				locationId: LOC_MAIN,
+				areaId: 'area_main',
+				label: 'T2',
+				minCovers: 1,
+				maxCovers: 4,
+				onlineBookable: true,
+				resetBufferMin: 15,
+			},
+		])
+
+		await db.insert(rsvServices).values({
+			id: 'svc_dinner',
+			locationId: LOC_MAIN,
+			name: 'Dinner',
+			daysMask: 127,
+			firstSeatingMin: 17 * 60,
+			lastSeatingMin: 21 * 60 + 30,
+			endMin: 22 * 60,
+			onlineEnabled: true,
+			sort: 0,
+		})
+
+		seedReservationsContextForTest(ORG_ID, {
+			orgId: ORG_ID,
+			dataRegion: 'us',
+			features: {
+				enabled: true,
+				online: true,
+				waitlist: true,
+				experiences: true,
+				payments: true,
+				voice: false,
+			},
+			organization: {
+				name: 'Acme Bistro',
+				slug: 'acme-bistro',
+				defaultLocale: 'en',
+				locales: ['en'],
+				siteOrigin: 'https://acme-bistro.menuza.test',
+				sitePublished: true,
+				logoUrl: null,
+				emailTheme: {
+					organizationName: 'Acme Bistro',
+					logoUrl: null,
+					appUrl: 'https://app.menuza.test',
+					background: '#ffffff',
+					card: '#f9fafb',
+					foreground: '#111827',
+					muted: '#f3f4f6',
+					mutedForeground: '#6b7280',
+					border: '#e5e7eb',
+					primary: '#111827',
+					primaryForeground: '#ffffff',
+					accent: '#2563eb',
+					accentForeground: '#ffffff',
+					radius: 8,
+					headingFont: 'Inter, sans-serif',
+					bodyFont: 'Inter, sans-serif',
+				},
+			},
+			locations: [
+				{
+					id: LOC_MAIN,
+					name: 'Main',
+					slug: 'main',
+					timeZone: 'America/New_York',
+					address: '100 Main St',
+					phone: '+12125550100',
+					active: true,
+				},
+			],
+			payments: {
+				processor: null,
+				deposit: false,
+				guarantee: false,
+				platformFeeBp: 0,
+			},
+			staffing: {
+				enabled: false,
+				scheduling: false,
+				labor: false,
+			},
+		})
+	})
+
+	afterEach(async () => {
+		await destroyTenantDb(ORG_ID)
+		rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	it('GET /book/day returns composite ETag and 304 Not Modified on match, and GET /book/changes tracks dayVersion', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+
+		const res1 = await app.request(
+			`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(res1.status).toBe(200)
+		const etag1 = res1.headers.get('ETag')
+		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1"`)
+		const body1 = (await res1.json()) as {
+			dayVersion: number
+			settingsVersion: number
+			etag: string
+		}
+		expect(body1.dayVersion).toBe(0)
+		expect(body1.settingsVersion).toBe(1)
+
+		// Conditional GET with matching ETag -> 304
+		const res304 = await app.request(
+			`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}`,
+			{
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'If-None-Match': etag1!,
+				},
+			},
+		)
+		expect(res304.status).toBe(304)
+
+		// Conditional GET with short ETag "<dayVersion>.<settingsVersion>" -> 304
+		const res304Short = await app.request(
+			`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}`,
+			{
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'If-None-Match': `"0.1"`,
+				},
+			},
+		)
+		expect(res304Short.status).toBe(304)
+
+		// Changes endpoint before mutation
+		const chg0 = await app.request(
+			`/operator/reservations/book/changes?locationId=${LOC_MAIN}&date=${DATE}&since=0`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(chg0.status).toBe(200)
+		expect(await chg0.json()).toMatchObject({ dayVersion: 0, changed: false })
+	})
+
+	it('creates booking via POST /book/reservations, transitions status, supports undo, and enforces expectedVersion (409 stale_version)', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+
+		// Create booking
+		const createRes = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'route-idem-1',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					time: '18:30',
+					partySize: 2,
+					guest: {
+						firstName: 'Clara',
+						lastName: 'Vance',
+						phone: '+14155550177',
+					},
+				}),
+			},
+		)
+		expect(createRes.status).toBe(201)
+		const created = (await createRes.json()) as {
+			reservation: { id: string; version: number; status: string }
+		}
+		expect(created.reservation.status).toBe('booked')
+		const rsvId = created.reservation.id
+
+		// Stale expectedVersion on PATCH -> 409 stale_version
+		const stalePatch = await app.request(
+			`/operator/reservations/book/reservations/${rsvId}`,
+			{
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					partySize: 3,
+					expectedVersion: 999,
+				}),
+			},
+		)
+		expect(stalePatch.status).toBe(409)
+		const staleBody = (await stalePatch.json()) as { error: string }
+		expect(staleBody.error).toBe('stale_version')
+
+		// Transition booked -> seated -> finished, then undo finished -> seated
+		const seatRes = await app.request(
+			`/operator/reservations/book/reservations/${rsvId}/status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					status: 'seated',
+					expectedVersion: created.reservation.version,
+				}),
+			},
+		)
+		expect(seatRes.status).toBe(200)
+		const seated = (await seatRes.json()) as {
+			reservation: { version: number; status: string }
+		}
+		expect(seated.reservation.status).toBe('seated')
+
+		const finRes = await app.request(
+			`/operator/reservations/book/reservations/${rsvId}/status`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					status: 'finished',
+					expectedVersion: seated.reservation.version,
+				}),
+			},
+		)
+		expect(finRes.status).toBe(200)
+		const finished = (await finRes.json()) as {
+			reservation: { version: number; status: string }
+		}
+		expect(finished.reservation.status).toBe('finished')
+
+		const undoRes = await app.request(
+			`/operator/reservations/book/reservations/${rsvId}/undo`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: finished.reservation.version,
+				}),
+			},
+		)
+		expect(undoRes.status).toBe(200)
+		const undone = (await undoRes.json()) as {
+			reservation: { status: string }
+		}
+		expect(undone.reservation.status).toBe('seated')
+	})
+
+	it('enforces guest export sensitive grant (VAL-GUEST-021, VAL-GUEST-022) and guest erase (VAL-BOOK-027, VAL-GUEST-025)', async () => {
+		const app = buildApp()
+		const db = await getTenantDb(ORG_ID)
+		const now = Date.now()
+		await db.insert(rsvGuests).values({
+			id: 'gst_export_1',
+			firstName: 'Diana',
+			lastName: 'Prince',
+			phoneE164: '+14155550188',
+			emailNorm: 'diana@example.com',
+			allergyNotes: 'contract-allergy-export-secret',
+			createdAt: now,
+			updatedAt: now,
+		})
+
+		const readOnlyGuestToken = await mintToken({
+			scope: 'guests',
+			grants: [RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST],
+		})
+		const fullGuestToken = await mintToken({
+			scope: 'guests',
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+			],
+		})
+
+		// Default export omits sensitive allergyNotes
+		const expDefault = await app.request(
+			'/operator/reservations/guests/gst_export_1/export',
+			{ headers: { Authorization: `Bearer ${readOnlyGuestToken}` } },
+		)
+		expect(expDefault.status).toBe(200)
+		const expDefaultText = await expDefault.text()
+		expect(expDefaultText).not.toContain('contract-allergy-export-secret')
+
+		// Read-only guest token requesting includeSensitive=1 -> 403
+		const expForbidden = await app.request(
+			'/operator/reservations/guests/gst_export_1/export?includeSensitive=1',
+			{ headers: { Authorization: `Bearer ${readOnlyGuestToken}` } },
+		)
+		expect(expForbidden.status).toBe(403)
+
+		// Update guest token requesting includeSensitive=1 -> 200 with allergyNotes
+		const expAllowed = await app.request(
+			'/operator/reservations/guests/gst_export_1/export?includeSensitive=1',
+			{ headers: { Authorization: `Bearer ${fullGuestToken}` } },
+		)
+		expect(expAllowed.status).toBe(200)
+		const expAllowedText = await expAllowed.text()
+		expect(expAllowedText).toContain('contract-allergy-export-secret')
+
+		// Check audit log for guest.export: 2 rows (default + allowed), none for forbidden, no PII
+		const exportAudits = await db
+			.select()
+			.from(rsvAuditLog)
+			.where(eq(rsvAuditLog.action, 'guest.export'))
+			.all()
+		expect(exportAudits).toHaveLength(2)
+		for (const row of exportAudits) {
+			expect(JSON.stringify(row.changes)).not.toContain('Diana')
+			expect(JSON.stringify(row.changes)).not.toContain('contract-allergy')
+		}
+
+		// Erase guest -> 200
+		const eraseRes = await app.request(
+			'/operator/reservations/guests/gst_export_1/erase',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${fullGuestToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({}),
+			},
+		)
+		expect(eraseRes.status).toBe(200)
+		const erasedGuest = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, 'gst_export_1'))
+			.get()
+		expect(erasedGuest?.firstName).toBe('Erased')
+		expect(erasedGuest?.lastName).toBe('guest')
+		expect(erasedGuest?.phoneE164).toBeNull()
+		expect(erasedGuest?.allergyNotes).toBeNull()
+	})
+
+	it('POST /internal/reservations/summary returns counts only with no PII', async () => {
+		const app = buildApp()
+		const res = await app.request('/internal/reservations/summary', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${INTERNAL_SECRET}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ orgId: ORG_ID }),
+		})
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as Record<string, unknown>
+		expect(body).toMatchObject({
+			reservations: expect.any(Number),
+			upcomingReservations: expect.any(Number),
+			guests: expect.any(Number),
+			tables: 2,
+			auditEntries: expect.any(Number),
+		})
+	})
+
+	it('never echoes rejected input values in 400 validation errors', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const marker = 'BAD_DATE_MARKER_99999'
+
+		const res = await app.request(
+			`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${marker}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(res.status).toBe(400)
+		const text = await res.text()
+		expect(text).not.toContain(marker)
+	})
+
+	it('supports walk-ins, assign/lock/swap/reflow, contact/late/course/notes, calendar, overview allergy redaction, service-notes, and section assignments', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const noGuestGrantToken = await mintToken({
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+			],
+		})
+
+		// 1. Staff availability with pacing warnings
+		const availRes = await app.request(
+			`/operator/reservations/book/availability?locationId=${LOC_MAIN}&date=${DATE}&partySize=2`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(availRes.status).toBe(200)
+		const availBody = (await availRes.json()) as {
+			slots: Array<{ slotLocal: string }>
+		}
+		expect(availBody.slots.length).toBeGreaterThan(0)
+
+		// 2. Create two bookings and swap their tables via POST /reservations/:id/assign
+		const r1Res = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'idem-book-test-r1',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					businessDate: DATE,
+					slotLocal: '19:00',
+					partySize: 2,
+					tableIds: ['tbl_1'],
+					guest: { firstName: 'Grace', allergyNotes: 'Peanut allergy' },
+					dietaryNotes: 'No peanuts',
+				}),
+			},
+		)
+		expect(r1Res.status).toBe(201)
+		const r1 = ((await r1Res.json()) as any).reservation
+
+		const r2Res = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'idem-book-test-r2',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					businessDate: DATE,
+					slotLocal: '19:00',
+					partySize: 2,
+					tableIds: ['tbl_2'],
+					guest: { firstName: 'Hank' },
+				}),
+			},
+		)
+		expect(r2Res.status).toBe(201)
+		const r2 = ((await r2Res.json()) as any).reservation
+
+		// Swap r1 and r2
+		const swapRes = await app.request(
+			`/operator/reservations/book/reservations/${r1.id}/assign`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: r1.version,
+					swapWithReservationId: r2.id,
+					lock: true,
+				}),
+			},
+		)
+		expect(swapRes.status).toBe(200)
+		const swapped = ((await swapRes.json()) as any).reservation
+		expect(swapped.tableIds).toEqual(['tbl_2'])
+		expect(swapped.tableLocked).toBe(true)
+
+		// Unlock r1
+		const unlockRes = await app.request(
+			`/operator/reservations/book/reservations/${r1.id}/assign`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: swapped.version,
+					unlock: true,
+				}),
+			},
+		)
+		expect(unlockRes.status).toBe(200)
+		const unlocked = ((await unlockRes.json()) as any).reservation
+		expect(unlocked.tableLocked).toBe(false)
+
+		// 3. Contact, running-late, course, notes endpoints
+		const contactRes = await app.request(
+			`/operator/reservations/book/reservations/${r1.id}/contact`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: unlocked.version,
+					contactStatus: 'confirmed',
+				}),
+			},
+		)
+		expect(contactRes.status).toBe(200)
+		const afterContact = ((await contactRes.json()) as any).reservation
+		expect(afterContact.contactStatus).toBe('confirmed')
+
+		const lateRes = await app.request(
+			`/operator/reservations/book/reservations/${r1.id}/running-late`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: afterContact.version,
+					runningLateMinutes: 15,
+				}),
+			},
+		)
+		expect(lateRes.status).toBe(200)
+		const afterLate = ((await lateRes.json()) as any).reservation
+		expect(afterLate.runningLateMinutes).toBe(15)
+
+		// Create a walk-in (starts in seated status) and tag its course progress
+		const walkInRes = await app.request(
+			'/operator/reservations/book/walk-ins',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': 'idem-book-test-walkin',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					businessDate: DATE,
+					slotLocal: '21:15',
+					partySize: 2,
+					tableIds: ['tbl_1'],
+					guest: { firstName: 'Henry' },
+				}),
+			},
+		)
+		expect(walkInRes.status).toBe(201)
+		const walkIn = ((await walkInRes.json()) as any).reservation
+		expect(walkIn.status).toBe('seated')
+
+		const courseRes = await app.request(
+			`/operator/reservations/book/reservations/${walkIn.id}/course`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: walkIn.version,
+					courseStatus: 'mains',
+				}),
+			},
+		)
+		expect(courseRes.status).toBe(200)
+		const afterCourse = ((await courseRes.json()) as any).reservation
+		expect(afterCourse.courseStatus).toBe('mains')
+
+		const notesRes = await app.request(
+			`/operator/reservations/book/reservations/${r1.id}/notes`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					expectedVersion: afterLate.version,
+					staffNotes: 'Window seat requested',
+				}),
+			},
+		)
+		expect(notesRes.status).toBe(200)
+		const afterNotes = ((await notesRes.json()) as any).reservation
+		expect(afterNotes.staffNotes).toBe('Window seat requested')
+
+		// 4. Calendar summary
+		const calRes = await app.request(
+			`/operator/reservations/book/calendar?locationId=${LOC_MAIN}&month=2026-08`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(calRes.status).toBe(200)
+		const calBody = (await calRes.json()) as {
+			days: Array<{ date: string; totalBookings: number }>
+		}
+		const daySummary = calBody.days.find((d) => d.date === DATE)
+		expect(daySummary?.totalBookings).toBe(3)
+
+		// 5. Pre-service overview redacts allergy text without read:reservation_guest:any
+		const ovRedactedRes = await app.request(
+			`/operator/reservations/book/overview?locationId=${LOC_MAIN}&date=${DATE}`,
+			{ headers: { Authorization: `Bearer ${noGuestGrantToken}` } },
+		)
+		expect(ovRedactedRes.status).toBe(200)
+		const ovRedacted = (await ovRedactedRes.json()) as {
+			allergyList: Array<{
+				hasAllergy: boolean
+				dietaryNotes: string | null
+				allergyNotes: string | null
+			}>
+		}
+		expect(ovRedacted.allergyList).toHaveLength(1)
+		expect(ovRedacted.allergyList[0]?.hasAllergy).toBe(true)
+		expect(ovRedacted.allergyList[0]?.dietaryNotes).toBeNull()
+		expect(ovRedacted.allergyList[0]?.allergyNotes).toBeNull()
+
+		const ovFullRes = await app.request(
+			`/operator/reservations/book/overview?locationId=${LOC_MAIN}&date=${DATE}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(ovFullRes.status).toBe(200)
+		const ovFull = (await ovFullRes.json()) as {
+			allergyList: Array<{
+				hasAllergy: boolean
+				dietaryNotes: string | null
+				allergyNotes: string | null
+			}>
+		}
+		expect(ovFull.allergyList[0]?.dietaryNotes).toBe('No peanuts')
+		expect(ovFull.allergyList[0]?.allergyNotes).toBe('Peanut allergy')
+
+		// 6. Service notes GET/PUT
+		const putNotesRes = await app.request(
+			'/operator/reservations/book/service-notes',
+			{
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					serviceId: 'svc_dinner',
+					notes: '86 halibut tonight',
+				}),
+			},
+		)
+		expect(putNotesRes.status).toBe(200)
+
+		const getNotesRes = await app.request(
+			`/operator/reservations/book/service-notes?locationId=${LOC_MAIN}&date=${DATE}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(getNotesRes.status).toBe(200)
+		const notesJson = (await getNotesRes.json()) as {
+			serviceNotes: Array<{ notes: string }>
+		}
+		expect(notesJson.serviceNotes[0]?.notes).toBe('86 halibut tonight')
+
+		// 7. Section layouts CRUD (VAL-HOST-018, VAL-HOST-019) & section assignments (VAL-HOST-020)
+		const setupToken = await mintToken({ scope: 'setup' })
+		const dupLayoutRes = await app.request(
+			'/operator/reservations/setup/sections/layouts',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${setupToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					name: 'Dup Layout',
+					sections: [
+						{ name: 'Sec A', colorToken: '1', tableIds: ['tbl_1'] },
+						{ name: 'Sec B', colorToken: '2', tableIds: ['tbl_1'] },
+					],
+				}),
+			},
+		)
+		expect(dupLayoutRes.status).toBe(409)
+		expect(((await dupLayoutRes.json()) as any).error).toBe(
+			'table_in_multiple_sections',
+		)
+
+		const createLayoutRes = await app.request(
+			'/operator/reservations/setup/sections/layouts',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${setupToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					name: 'Dinner 2-Server',
+					sections: [
+						{ name: 'Section A', colorToken: '1', tableIds: ['tbl_1'] },
+						{ name: 'Section B', colorToken: '2', tableIds: ['tbl_2'] },
+					],
+				}),
+			},
+		)
+		expect(createLayoutRes.status).toBe(201)
+		const createdLayout = ((await createLayoutRes.json()) as any).layout
+		expect(createdLayout.sections).toHaveLength(2)
+
+		const secAId = createdLayout.sections[0].id
+		const secBId = createdLayout.sections[1].id
+
+		const putAssignRes = await app.request(
+			'/operator/reservations/book/sections/assignments',
+			{
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_MAIN,
+					date: DATE,
+					serviceId: 'svc_dinner',
+					layoutId: createdLayout.id,
+					assignments: [
+						{ sectionId: secAId, serverLabel: 'Samir' },
+						{ sectionId: secBId, staffId: 'stf_demo_1', serverLabel: 'Nadia' },
+					],
+				}),
+			},
+		)
+		expect(putAssignRes.status).toBe(200)
+		const assignedJson = (await putAssignRes.json()) as {
+			assignments: Array<{
+				sectionId: string
+				staffId: string | null
+				serverLabel: string | null
+			}>
+		}
+		expect(assignedJson.assignments).toHaveLength(2)
+	})
+})

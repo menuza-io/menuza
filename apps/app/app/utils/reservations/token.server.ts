@@ -1,6 +1,8 @@
 import { brand } from '@repo/config/brand'
 import {
+	hasGrantSatisfying,
 	maxTokenTtlSeconds,
+	RESERVATIONS_PERMISSIONS,
 	RESERVATIONS_TOKEN_AUDIENCE,
 	RESERVATIONS_TOKEN_TYP,
 	reservationsTokenClaimsSchema,
@@ -85,7 +87,16 @@ export async function mintReservationsToken(
 		exp: ignoredExp,
 		...payload
 	} = claims
-	const jwt = await new SignJWT(payload)
+	const canReadGuest =
+		input.scope === 'book' &&
+		!input.impersonated &&
+		hasGrantSatisfying(
+			input.grants,
+			RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+		)
+	const jwt = await new SignJWT(
+		canReadGuest ? { ...payload, canReadGuest: true } : payload,
+	)
 		.setProtectedHeader({ alg: 'HS256', typ: RESERVATIONS_TOKEN_TYP })
 		.setAudience(RESERVATIONS_TOKEN_AUDIENCE)
 		.setIssuer(brand.shortName)

@@ -1,45 +1,26 @@
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import {
 	getTenantDb,
-	rsvDayVersions,
 	rsvExperiences,
-	rsvGuests,
 	rsvReservations,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
-import { handleRouteError, json, readJsonBody, readQuery } from '../lib/http.ts'
-import { findActiveOrganizationById } from '../lib/origin.ts'
-import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
+import { json, readJsonBody, readQuery } from '../lib/http.ts'
 import {
 	requireReservationsLocation,
 	type ReservationsAuthContext,
 } from '../lib/reservations-auth.ts'
-import { getRsvAuth, rsvGuard } from '../lib/reservations-guard.ts'
-import { withReservationWrite } from '../lib/reservations-write.ts'
+import {
+	ensureActiveOrgInNodeRegion,
+	getRsvAuth,
+	rsvGuard,
+} from '../lib/reservations-guard.ts'
+import { operatorReservationsBookRoutes } from './operator-reservations-book.ts'
+import { operatorReservationsGuestsRoutes } from './operator-reservations-guests.ts'
 import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
-
-async function ensureActiveOrgInNodeRegion(
-	ctx: ReservationsAuthContext,
-): Promise<Response | null> {
-	const org = await findActiveOrganizationById(ctx.orgId)
-	const provisioned = Boolean(org?.hasProvisionedDb)
-	if (!org || !provisioned) {
-		return json({ error: 'not_found', message: 'Organization not found' }, 404)
-	}
-	if (!orgMatchesNodeRegion(org.dataRegion)) {
-		return json(
-			{
-				error: 'region_mismatch',
-				message: `Organization dataRegion "${org.dataRegion}" does not match node "${getNodeRegion()}"`,
-			},
-			403,
-		)
-	}
-	return null
-}
 
 async function resolveLocationParam(
 	c: Context,
@@ -95,128 +76,7 @@ reservationsOperatorRoutes.get(
 )
 
 // 2. Book & Waitlist scope routes
-reservationsOperatorRoutes.get(
-	'/book/day',
-	rsvGuard({
-		scope: 'book',
-		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const query = readQuery(c, requiredLocationQuerySchema)
-		if ('error' in query) return query.error
-
-		const locCheck = await resolveLocationParam(c, ctx, query.data.locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		const businessDate =
-			query.data.date ?? new Date().toISOString().slice(0, 10)
-		const db = await getTenantDb(ctx.orgId)
-		const [reservations, versionRow] = await Promise.all([
-			db
-				.select()
-				.from(rsvReservations)
-				.where(eq(rsvReservations.locationId, locCheck.locationId)),
-			db
-				.select()
-				.from(rsvDayVersions)
-				.where(eq(rsvDayVersions.locationId, locCheck.locationId))
-				.get(),
-		])
-
-		return json({
-			ok: true,
-			orgId: ctx.orgId,
-			locationId: locCheck.locationId,
-			businessDate,
-			dayVersion: versionRow?.version ?? 0,
-			reservations: reservations.filter((r) => r.businessDate === businessDate),
-		})
-	},
-)
-
-const createOperatorReservationSchema = z.object({
-	locationId: z.string().trim().min(1).max(128),
-	businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-	localStartMin: z.number().int().min(0).max(1800),
-	partySize: z.number().int().min(1).max(99),
-	firstName: z.string().trim().min(1).max(120),
-	lastName: z.string().trim().max(120).optional().default(''),
-	phoneE164: z.string().trim().max(32).optional().nullable(),
-})
-
-reservationsOperatorRoutes.post(
-	'/book/reservations',
-	rsvGuard({
-		scope: 'book',
-		write: true,
-		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const parsed = await readJsonBody(c, createOperatorReservationSchema)
-		if ('error' in parsed) return parsed.error
-
-		const locCheck = await resolveLocationParam(c, ctx, parsed.data.locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		try {
-			const created = await withReservationWrite(
-				{
-					orgId: ctx.orgId,
-					locationId: locCheck.locationId,
-					dates: [parsed.data.businessDate],
-				},
-				async (tx, helpers) => {
-					const [guest] = await tx
-						.insert(rsvGuests)
-						.values({
-							firstName: parsed.data.firstName,
-							lastName: parsed.data.lastName,
-							phoneE164: parsed.data.phoneE164 ?? null,
-						})
-						.returning()
-
-					const startAt = helpers.now + 3_600_000
-					const endAt = startAt + 90 * 60_000
-					const confirmationCode = `RSV${Math.random().toString(36).slice(2, 8).toUpperCase()}`
-
-					const [reservation] = await tx
-						.insert(rsvReservations)
-						.values({
-							locationId: locCheck.locationId,
-							guestId: guest!.id,
-							confirmationCode,
-							businessDate: parsed.data.businessDate,
-							localStartMin: parsed.data.localStartMin,
-							timeZone: helpers.dayState?.settings?.timeZone ?? 'UTC',
-							startAt,
-							endAt,
-							durationMin: 90,
-							partySize: parsed.data.partySize,
-							status: 'booked',
-							channel: 'host',
-							createdByKind: 'operator',
-							createdById: ctx.userId,
-						})
-						.returning()
-
-					return reservation!
-				},
-			)
-
-			return json({ ok: true, orgId: ctx.orgId, reservation: created }, 201)
-		} catch (error) {
-			return handleRouteError(error)
-		}
-	},
-)
+reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 
 reservationsOperatorRoutes.get(
 	'/waitlist',
@@ -247,69 +107,7 @@ reservationsOperatorRoutes.get(
 )
 
 // 3. Guests scope routes
-reservationsOperatorRoutes.get(
-	'/guests',
-	rsvGuard({
-		scope: 'guests',
-		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const db = await getTenantDb(ctx.orgId)
-		const guests = await db.select().from(rsvGuests)
-		return json({ ok: true, orgId: ctx.orgId, guests })
-	},
-)
-
-const createGuestBodySchema = z.object({
-	locationId: z.string().trim().min(1).max(128).optional(),
-	firstName: z.string().trim().min(1).max(120),
-	lastName: z.string().trim().max(120).optional().default(''),
-	phoneE164: z.string().trim().max(32).optional().nullable(),
-	emailNorm: z.string().trim().email().max(255).optional().nullable(),
-})
-
-reservationsOperatorRoutes.post(
-	'/guests',
-	rsvGuard({
-		scope: 'guests',
-		write: true,
-		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const parsed = await readJsonBody(c, createGuestBodySchema)
-		if ('error' in parsed) return parsed.error
-
-		if (parsed.data.locationId) {
-			const locCheck = await resolveLocationParam(
-				c,
-				ctx,
-				parsed.data.locationId,
-			)
-			if (!locCheck.ok) return locCheck.response
-		}
-
-		const db = await getTenantDb(ctx.orgId)
-		const [guest] = await db
-			.insert(rsvGuests)
-			.values({
-				firstName: parsed.data.firstName,
-				lastName: parsed.data.lastName,
-				phoneE164: parsed.data.phoneE164 ?? null,
-				emailNorm: parsed.data.emailNorm?.toLowerCase() ?? null,
-			})
-			.returning()
-
-		return json({ ok: true, orgId: ctx.orgId, guest }, 201)
-	},
-)
+reservationsOperatorRoutes.route('/guests', operatorReservationsGuestsRoutes)
 
 // 4. Reports scope routes
 reservationsOperatorRoutes.get(

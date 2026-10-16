@@ -13,6 +13,9 @@ import {
 	rsvLocationSettings,
 	rsvPacingRules,
 	rsvReservations,
+	rsvSectionLayouts,
+	rsvSections,
+	rsvSectionTables,
 	rsvServiceAvailability,
 	rsvServices,
 	rsvSpecialDays,
@@ -2955,4 +2958,407 @@ export async function deleteBlockForLocation(
 		entityId: blockId,
 	})
 	return { deleted: true, id: blockId }
+}
+
+// ============================================================================
+// Section Layouts (Server Sections)
+// ============================================================================
+
+export interface SectionInput {
+	id?: string
+	name: string
+	colorToken?: string
+	color_token?: string
+	sort?: number
+	sortOrder?: number
+	tableIds?: string[]
+	table_ids?: string[]
+}
+
+export interface SerializedSection {
+	id: string
+	layoutId: string
+	layout_id: string
+	name: string
+	colorToken: string
+	color_token: string
+	sort: number
+	sortOrder: number
+	tableIds: string[]
+	table_ids: string[]
+}
+
+export interface SerializedSectionLayout {
+	id: string
+	locationId: string
+	location_id: string
+	name: string
+	archivedAt: number | null
+	archived_at: number | null
+	sections: SerializedSection[]
+}
+
+async function validateAndNormalizeSections(
+	db: TenantDatabase,
+	locationId: string,
+	sections: SectionInput[],
+): Promise<
+	Array<{
+		id: string
+		name: string
+		colorToken: string
+		sort: number
+		tableIds: string[]
+	}>
+> {
+	const seenTables = new Set<string>()
+	const allRequestedTables = new Set<string>()
+	const normalized: Array<{
+		id: string
+		name: string
+		colorToken: string
+		sort: number
+		tableIds: string[]
+	}> = []
+
+	for (let idx = 0; idx < sections.length; idx++) {
+		const sec = sections[idx]!
+		const name = sec.name?.trim()
+		if (!name) {
+			throw badRequest('invalid_section', 'Section name is required')
+		}
+		const rawTableIds = sec.tableIds ?? sec.table_ids ?? []
+		const dedupedInSection = [...new Set(rawTableIds)]
+		for (const tid of dedupedInSection) {
+			if (seenTables.has(tid)) {
+				throw conflict(
+					'table_in_multiple_sections',
+					`Table ${tid} is assigned to multiple sections in the same layout`,
+				)
+			}
+			seenTables.add(tid)
+			allRequestedTables.add(tid)
+		}
+		normalized.push({
+			id: sec.id?.trim() || createId('sec'),
+			name,
+			colorToken: sec.colorToken ?? sec.color_token ?? 'slate',
+			sort: sec.sort ?? sec.sortOrder ?? idx,
+			tableIds: dedupedInSection,
+		})
+	}
+
+	if (allRequestedTables.size > 0) {
+		const validTables = await db
+			.select()
+			.from(rsvTables)
+			.where(
+				and(
+					eq(rsvTables.locationId, locationId),
+					inArray(rsvTables.id, [...allRequestedTables]),
+					isNull(rsvTables.archivedAt),
+				),
+			)
+			.all()
+		if (validTables.length !== allRequestedTables.size) {
+			throw badRequest(
+				'invalid_table',
+				'One or more tables do not belong to this location or are archived',
+			)
+		}
+	}
+
+	return normalized
+}
+
+async function hydrateSectionLayout(
+	db: TenantDatabase,
+	layout: typeof rsvSectionLayouts.$inferSelect,
+): Promise<SerializedSectionLayout> {
+	const secRows = await db
+		.select()
+		.from(rsvSections)
+		.where(eq(rsvSections.layoutId, layout.id))
+		.orderBy(asc(rsvSections.sort), asc(rsvSections.id))
+		.all()
+
+	const tableRows = await db
+		.select()
+		.from(rsvSectionTables)
+		.where(eq(rsvSectionTables.layoutId, layout.id))
+		.all()
+
+	const tablesBySection = new Map<string, string[]>()
+	for (const row of tableRows) {
+		const list = tablesBySection.get(row.sectionId) ?? []
+		list.push(row.tableId)
+		tablesBySection.set(row.sectionId, list)
+	}
+
+	return {
+		id: layout.id,
+		locationId: layout.locationId,
+		location_id: layout.locationId,
+		name: layout.name,
+		archivedAt: layout.archivedAt,
+		archived_at: layout.archivedAt,
+		sections: secRows.map((s) => {
+			const tids = tablesBySection.get(s.id) ?? []
+			return {
+				id: s.id,
+				layoutId: s.layoutId,
+				layout_id: s.layoutId,
+				name: s.name,
+				colorToken: s.colorToken,
+				color_token: s.colorToken,
+				sort: s.sort,
+				sortOrder: s.sort,
+				tableIds: tids,
+				table_ids: tids,
+			}
+		}),
+	}
+}
+
+export async function listSectionLayoutsForLocation(
+	db: TenantDatabase,
+	locationId: string,
+): Promise<SerializedSectionLayout[]> {
+	const layouts = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(
+			and(
+				eq(rsvSectionLayouts.locationId, locationId),
+				isNull(rsvSectionLayouts.archivedAt),
+			),
+		)
+		.orderBy(asc(rsvSectionLayouts.name), asc(rsvSectionLayouts.id))
+		.all()
+
+	const results: SerializedSectionLayout[] = []
+	for (const layout of layouts) {
+		results.push(await hydrateSectionLayout(db, layout))
+	}
+	return results
+}
+
+export async function createSectionLayoutForLocation(
+	db: TenantDatabase,
+	input: {
+		locationId: string
+		actorId: string | null
+		name: string
+		serviceId?: string | null
+		isDefault?: boolean
+		sections: SectionInput[]
+	},
+): Promise<{ layout: SerializedSectionLayout }> {
+	const name = input.name?.trim()
+	if (!name) {
+		throw badRequest('invalid_name', 'Layout name is required')
+	}
+
+	const normalizedSections = await validateAndNormalizeSections(
+		db,
+		input.locationId,
+		input.sections ?? [],
+	)
+
+	const layoutId = createId('secl')
+	await db.insert(rsvSectionLayouts).values({
+		id: layoutId,
+		locationId: input.locationId,
+		name,
+		archivedAt: null,
+	})
+
+	for (const sec of normalizedSections) {
+		await db.insert(rsvSections).values({
+			id: sec.id,
+			layoutId,
+			name: sec.name,
+			colorToken: sec.colorToken,
+			sort: sec.sort,
+		})
+		for (const tableId of sec.tableIds) {
+			await db.insert(rsvSectionTables).values({
+				sectionId: sec.id,
+				tableId,
+				layoutId,
+			})
+		}
+	}
+
+	if (input.serviceId) {
+		await db
+			.update(rsvServices)
+			.set({ sectionLayoutId: layoutId })
+			.where(
+				and(
+					eq(rsvServices.id, input.serviceId),
+					eq(rsvServices.locationId, input.locationId),
+				),
+			)
+	}
+
+	await writeSetupAudit(db, {
+		actorId: input.actorId,
+		locationId: input.locationId,
+		action: 'section_layout.create',
+		entityKind: 'section_layout',
+		entityId: layoutId,
+		diff: {
+			name,
+			sectionCount: normalizedSections.length,
+		},
+	})
+
+	const row = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+
+	return {
+		layout: await hydrateSectionLayout(db, row!),
+	}
+}
+
+export async function updateSectionLayoutForLocation(
+	db: TenantDatabase,
+	layoutId: string,
+	input: {
+		locationId?: string
+		actorId: string | null
+		name?: string
+		serviceId?: string | null
+		isDefault?: boolean
+		sections?: SectionInput[]
+	},
+): Promise<{ layout: SerializedSectionLayout }> {
+	const existing = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+	if (!existing || existing.archivedAt !== null) {
+		throw notFound('Section layout not found')
+	}
+	if (input.locationId && existing.locationId !== input.locationId) {
+		throw notFound('Section layout not found in location')
+	}
+
+	const nextName = input.name !== undefined ? input.name.trim() : existing.name
+	if (!nextName) {
+		throw badRequest('invalid_name', 'Layout name is required')
+	}
+
+	if (nextName !== existing.name) {
+		await db
+			.update(rsvSectionLayouts)
+			.set({ name: nextName })
+			.where(eq(rsvSectionLayouts.id, layoutId))
+	}
+
+	if (input.sections !== undefined) {
+		const normalizedSections = await validateAndNormalizeSections(
+			db,
+			existing.locationId,
+			input.sections,
+		)
+
+		await db
+			.delete(rsvSectionTables)
+			.where(eq(rsvSectionTables.layoutId, layoutId))
+		await db.delete(rsvSections).where(eq(rsvSections.layoutId, layoutId))
+
+		for (const sec of normalizedSections) {
+			await db.insert(rsvSections).values({
+				id: sec.id,
+				layoutId,
+				name: sec.name,
+				colorToken: sec.colorToken,
+				sort: sec.sort,
+			})
+			for (const tableId of sec.tableIds) {
+				await db.insert(rsvSectionTables).values({
+					sectionId: sec.id,
+					tableId,
+					layoutId,
+				})
+			}
+		}
+	}
+
+	if (input.serviceId) {
+		await db
+			.update(rsvServices)
+			.set({ sectionLayoutId: layoutId })
+			.where(
+				and(
+					eq(rsvServices.id, input.serviceId),
+					eq(rsvServices.locationId, existing.locationId),
+				),
+			)
+	}
+
+	await writeSetupAudit(db, {
+		actorId: input.actorId,
+		locationId: existing.locationId,
+		action: 'section_layout.update',
+		entityKind: 'section_layout',
+		entityId: layoutId,
+		diff: {
+			name: nextName,
+		},
+	})
+
+	const updated = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+
+	return {
+		layout: await hydrateSectionLayout(db, updated!),
+	}
+}
+
+export async function deleteSectionLayoutForLocation(
+	db: TenantDatabase,
+	layoutId: string,
+	actorId: string | null,
+	locationId?: string,
+): Promise<{ deleted: true; id: string }> {
+	const existing = await db
+		.select()
+		.from(rsvSectionLayouts)
+		.where(eq(rsvSectionLayouts.id, layoutId))
+		.get()
+	if (!existing || existing.archivedAt !== null) {
+		throw notFound('Section layout not found')
+	}
+	if (locationId && existing.locationId !== locationId) {
+		throw notFound('Section layout not found in location')
+	}
+
+	const now = Date.now()
+	await db
+		.update(rsvSectionLayouts)
+		.set({ archivedAt: now })
+		.where(eq(rsvSectionLayouts.id, layoutId))
+	await db
+		.delete(rsvSectionTables)
+		.where(eq(rsvSectionTables.layoutId, layoutId))
+
+	await writeSetupAudit(db, {
+		actorId,
+		locationId: existing.locationId,
+		action: 'section_layout.delete',
+		entityKind: 'section_layout',
+		entityId: layoutId,
+	})
+
+	return { deleted: true, id: layoutId }
 }

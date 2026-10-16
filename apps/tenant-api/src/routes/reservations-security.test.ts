@@ -655,6 +655,93 @@ describe('Reservations security sweep: operator routes', () => {
 		)
 		expect(crossOrgDeleteArea.status).toBe(404)
 	})
+
+	it('enforces book write grants, sensitive guest export grant, guest erase grant, and internal summary auth', async () => {
+		const internalApp = new Hono()
+		for (const [prefix, router] of Object.entries(OTHER_MOUNTS)) {
+			internalApp.route(prefix, router)
+		}
+
+		// 1. Read-only book token is refused on book write routes
+		const readOnlyBookToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'book',
+			grants: [RESERVATIONS_PERMISSIONS.READ_RESERVATION],
+			ttlSeconds: 300,
+		})
+		const createBookRes = await app.request(
+			'/operator/reservations/book/reservations',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${readOnlyBookToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: LOC_1,
+					businessDate: '2026-07-15',
+					slotLocal: '19:00',
+					partySize: 2,
+				}),
+			},
+		)
+		expect(createBookRes.status).toBe(403)
+
+		// 2. Read-only guest token is refused on includeSensitive=1 export and on erase
+		const readOnlyGuestToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'guests',
+			grants: [RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST],
+			ttlSeconds: 300,
+		})
+		const sensExportRes = await app.request(
+			'/operator/reservations/guests/gst_sec_1/export?includeSensitive=1',
+			{
+				headers: { Authorization: `Bearer ${readOnlyGuestToken}` },
+			},
+		)
+		expect(sensExportRes.status).toBe(403)
+		await expect(sensExportRes.json()).resolves.toMatchObject({
+			error: 'missing_grant',
+		})
+
+		const eraseDeniedRes = await app.request(
+			'/operator/reservations/guests/gst_sec_1/erase',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${readOnlyGuestToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({}),
+			},
+		)
+		expect(eraseDeniedRes.status).toBe(403)
+
+		// 3. POST /internal/reservations/summary requires INTERNAL_COMMAND_TOKEN
+		const unauthSumRes = await internalApp.request(
+			'/internal/reservations/summary',
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ orgId: ORG_A }),
+			},
+		)
+		expect(unauthSumRes.status).toBe(401)
+
+		const authSumRes = await internalApp.request(
+			'/internal/reservations/summary',
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${INTERNAL_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ orgId: ORG_A }),
+			},
+		)
+		expect(authSumRes.status).toBe(200)
+	})
 })
 
 describe('Reservations security sweep: mounts and non-operator surfaces', () => {

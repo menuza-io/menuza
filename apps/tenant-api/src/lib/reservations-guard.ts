@@ -1,9 +1,19 @@
 import {
+	and,
+	db as controlPlaneDb,
+	eq as cpEq,
+	Organization,
+} from '@repo/database'
+import {
 	type ReservationsFeatureState,
 	type ReservationsPermission,
 	type ReservationsScope,
 } from '@repo/reservations'
 import { type Context, type MiddlewareHandler } from 'hono'
+import { ENV } from 'varlock/env'
+import { json } from './http.ts'
+import { findActiveOrganizationById } from './origin.ts'
+import { getNodeRegion, orgMatchesNodeRegion } from './region.ts'
 import {
 	type ReservationsOperatorContext,
 	requireAnyReservationsGrant,
@@ -107,4 +117,58 @@ export function getRsvAuth(c: Context): ReservationsOperatorContext {
 		throw new Error('getRsvAuth called outside rsvGuard middleware')
 	}
 	return value
+}
+
+export async function findActiveReservationsOrganization(orgId: string) {
+	let org = await findActiveOrganizationById(orgId)
+	if (
+		!org &&
+		ENV.NODE_ENV === 'development' &&
+		ENV.TENANT_API_RUNTIME !== 'workers'
+	) {
+		try {
+			const [dbOrg] = await controlPlaneDb
+				.select({
+					id: Organization.id,
+					slug: Organization.slug,
+					customDomain: Organization.customDomain,
+					hasProvisionedDb: Organization.hasProvisionedDb,
+					dataRegion: Organization.dataRegion,
+				})
+				.from(Organization)
+				.where(
+					and(cpEq(Organization.id, orgId), cpEq(Organization.active, true)),
+				)
+				.limit(1)
+			if (dbOrg) {
+				org = {
+					...dbOrg,
+					dataRegion: dbOrg.dataRegion === 'ksa' ? 'ksa' : 'us',
+				}
+			}
+		} catch {
+			// Ignore fallback error
+		}
+	}
+	return org
+}
+
+export async function ensureActiveOrgInNodeRegion(ctx: {
+	orgId: string
+}): Promise<Response | null> {
+	const org = await findActiveReservationsOrganization(ctx.orgId)
+	const provisioned = Boolean(org?.hasProvisionedDb)
+	if (!org || !provisioned) {
+		return json({ error: 'not_found', message: 'Organization not found' }, 404)
+	}
+	if (!orgMatchesNodeRegion(org.dataRegion)) {
+		return json(
+			{
+				error: 'region_mismatch',
+				message: `Organization dataRegion "${org.dataRegion}" does not match node "${getNodeRegion()}"`,
+			},
+			403,
+		)
+	}
+	return null
 }

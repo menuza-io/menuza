@@ -114,16 +114,47 @@ export async function verifyReservationsOperatorToken(
 		rawRecord && typeof rawRecord.scope === 'string'
 			? (rawRecord.scope as ReservationsScope)
 			: 'book'
+	const allowedScopeGrants = new Set<string>(
+		(SCOPE_GRANTS as Record<string, readonly string[]>)[rawScope] ?? [],
+	)
 	const placeholderGrant =
 		(SCOPE_GRANTS as Record<string, readonly string[]>)[rawScope]?.[0] ??
 		'read:reservation:any'
 
+	const extraBookGuestGrants: ReservationsPermission[] = []
+	if (rawScope === 'book' && rawRecord && Array.isArray(rawRecord.grants)) {
+		for (const g of rawRecord.grants) {
+			if (
+				g === 'read:reservation_guest:any' ||
+				g === 'update:reservation_guest:any'
+			) {
+				extraBookGuestGrants.push(g)
+			}
+		}
+	}
+
+	const rawWithoutExtraKeys = rawRecord
+		? (() => {
+				const { canReadGuest: _canReadGuest, ...rest } = rawRecord
+				return rest
+			})()
+		: null
+
 	const payloadToValidate = hasEmptyGrants
 		? {
-				...rawRecord,
+				...rawWithoutExtraKeys,
 				grants: [placeholderGrant],
 			}
-		: payload
+		: extraBookGuestGrants.length > 0 &&
+			  rawWithoutExtraKeys &&
+			  Array.isArray(rawWithoutExtraKeys.grants)
+			? {
+					...rawWithoutExtraKeys,
+					grants: rawWithoutExtraKeys.grants.filter((g) =>
+						allowedScopeGrants.has(String(g)),
+					),
+				}
+			: (rawWithoutExtraKeys ?? payload)
 
 	const parsed = reservationsTokenClaimsSchema.safeParse(payloadToValidate)
 	if (!parsed.success) {
@@ -166,8 +197,11 @@ export async function verifyReservationsOperatorToken(
 		}
 	}
 
+	const allClaimGrants: ReservationsPermission[] = hasEmptyGrants
+		? []
+		: Array.from(new Set([...claims.grants, ...extraBookGuestGrants]))
 	const lifetime = claims.exp - claims.iat
-	const maxLifetime = maxTokenTtlSeconds(claims.grants, claims.impersonated)
+	const maxLifetime = maxTokenTtlSeconds(allClaimGrants, claims.impersonated)
 	if (!(lifetime > 0) || lifetime > maxLifetime) {
 		return {
 			ok: false,
@@ -176,8 +210,17 @@ export async function verifyReservationsOperatorToken(
 		}
 	}
 
+	if (
+		rawScope === 'book' &&
+		!claims.impersonated &&
+		rawRecord?.canReadGuest === true &&
+		!allClaimGrants.includes('read:reservation_guest:any')
+	) {
+		allClaimGrants.push('read:reservation_guest:any')
+	}
+
 	const effectiveGrants = restrictGrantsForImpersonation(
-		claims.grants,
+		allClaimGrants,
 		claims.impersonated,
 	)
 
