@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react/macro'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
@@ -45,6 +46,7 @@ import {
 	gte,
 	sql,
 	Organization,
+	OrganizationLocation,
 	OrganizationSiteAsset,
 	WebsitePage,
 	WebsitePageSection,
@@ -141,11 +143,13 @@ import {
 	TranslateProvider,
 	useSectionTranslator,
 } from '#app/components/website/translate-provider.tsx'
+import { displayLocationName } from '#app/utils/location-name.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
@@ -156,8 +160,11 @@ import {
 } from '#app/utils/storage.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import {
-	ADDABLE_BLOCK_TYPES,
+	addableBlockTypes,
 	BLOCK_TYPES,
+	MAX_RESERVATION_PARTY_SIZE,
+	MIN_RESERVATION_PARTY_SIZE,
+	RESERVATION_BLOCK_LAYOUTS,
 	composePageSectionsWithChrome,
 	getDefaultConfig,
 	isLockedBlockType,
@@ -587,10 +594,43 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// The page editor remains usable while the regional data plane is offline.
 	}
 
+	const reservationsState = await getReservationsFeatureState(organization.id)
+	const reservationsOnline =
+		reservationsState.enabled && reservationsState.online
+	const reservationLocations = reservationsOnline
+		? (
+				await db
+					.select({
+						id: OrganizationLocation.id,
+						name: OrganizationLocation.name,
+					})
+					.from(OrganizationLocation)
+					.where(
+						and(
+							eq(OrganizationLocation.organizationId, organization.id),
+							eq(OrganizationLocation.isActive, true),
+						),
+					)
+					.orderBy(
+						desc(OrganizationLocation.isDefault),
+						asc(OrganizationLocation.createdAt),
+					)
+			).map((location) => ({
+				id: location.id,
+				name: displayLocationName(
+					location.name,
+					organization.siteDefaultLocale,
+					organization.siteDefaultLocale ?? 'en',
+				),
+			}))
+		: []
+
 	return {
 		organization,
 		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
+		reservationsOnline,
+		reservationLocations,
 		themeConfig,
 		sitePages,
 		page: {
@@ -1042,6 +1082,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				{ status: 'error', error: 'Unknown section type' },
 				{ status: 400 },
 			)
+		}
+		if (type === 'reservation') {
+			const reservationsState = await getReservationsFeatureState(
+				organization.id,
+			)
+			if (!reservationsState.enabled || !reservationsState.online) {
+				return Response.json(
+					{ status: 'error', error: 'Online reservations are not enabled' },
+					{ status: 403 },
+				)
+			}
 		}
 
 		let sectionConfig = getDefaultConfig(type as BlockType)
@@ -1656,9 +1707,14 @@ function AddSectionDialog({
 	onAdd: (type: BlockType, position: number) => void
 	trigger?: 'button' | 'insert' | 'footer' | 'link'
 }) {
+	const { reservationsOnline } = useLoaderData<typeof loader>()
+	const addableTypes = useMemo(
+		() => addableBlockTypes({ reservationsOnline }),
+		[reservationsOnline],
+	)
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<BlockType>(
-		ADDABLE_BLOCK_TYPES[0]?.type ?? 'hero',
+		addableTypes[0]?.type ?? 'hero',
 	)
 
 	const confirmAdd = (type: BlockType = selected) => {
@@ -1671,7 +1727,7 @@ function AddSectionDialog({
 			open={open}
 			onOpenChange={(next) => {
 				setOpen(next)
-				if (next) setSelected(ADDABLE_BLOCK_TYPES[0]?.type ?? 'hero')
+				if (next) setSelected(addableTypes[0]?.type ?? 'hero')
 			}}
 		>
 			{trigger === 'insert' ? (
@@ -1721,7 +1777,7 @@ function AddSectionDialog({
 						}
 					}}
 				>
-					{ADDABLE_BLOCK_TYPES.map((block) => {
+					{addableTypes.map((block) => {
 						const isSelected = selected === block.type
 						return (
 							<button
@@ -2114,6 +2170,8 @@ function previewText(
 			return loc(config.videoUrl) || loc(config.title) || 'Video section'
 		case 'form':
 			return loc(config.formName) || 'Choose a form'
+		case 'reservation':
+			return loc(config.heading) || loc(config.buttonLabel) || 'Book a table'
 		case 'cta':
 			return loc(config.heading) || 'Call to action'
 		default:
@@ -2824,6 +2882,10 @@ function renderBlockEditor(props: {
 			return <VideoEditor config={config} updateField={updateField} />
 		case 'form':
 			return <FormBlockEditor config={config} updateField={updateField} />
+		case 'reservation':
+			return (
+				<ReservationBlockEditor config={config} updateField={updateField} />
+			)
 		case 'cta':
 			return (
 				<CtaEditor config={config} updateField={updateField} {...editorProps} />
@@ -4129,6 +4191,107 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 						onCheckedChange={(checked) => updateField('showTitle', checked)}
 					/>
 				</div>
+			</EditorSection>
+		</div>
+	)
+}
+
+function ReservationBlockEditor({ config, updateField }: EditorProps) {
+	const { t } = useLingui()
+	const { reservationLocations } = useLoaderData<typeof loader>()
+	const locationId = String(config.locationId || '')
+	const layout = config.layout === 'inline' ? 'inline' : 'button'
+	const partySize = Number(config.defaultPartySize)
+	const defaultPartySize = Number.isFinite(partySize)
+		? Math.min(
+				MAX_RESERVATION_PARTY_SIZE,
+				Math.max(MIN_RESERVATION_PARTY_SIZE, Math.round(partySize)),
+			)
+		: 2
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={t`Heading`}
+					value={(config.heading as string) ?? ''}
+					onChange={(v) => updateField('heading', v)}
+				/>
+				<FieldTextarea
+					label={t`Description`}
+					value={(config.body as string) ?? ''}
+					onChange={(v) => updateField('body', v)}
+					rows={3}
+				/>
+				<FieldInput
+					label={t`Button label`}
+					value={(config.buttonLabel as string) ?? ''}
+					onChange={(v) => updateField('buttonLabel', v)}
+				/>
+			</EditorSection>
+			<EditorSection title={<Trans>Booking</Trans>}>
+				{reservationLocations.length > 1 ? (
+					<div className="space-y-2">
+						<Label htmlFor="block-reservation-location">
+							<Trans>Location</Trans>
+						</Label>
+						<select
+							id="block-reservation-location"
+							value={locationId}
+							onChange={(event) =>
+								updateField('locationId', event.target.value)
+							}
+							className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
+						>
+							<option value="">
+								<Trans>Let guests choose</Trans>
+							</option>
+							{reservationLocations.map((location) => (
+								<option key={location.id} value={location.id}>
+									{location.name}
+								</option>
+							))}
+						</select>
+					</div>
+				) : null}
+				<div className="space-y-2">
+					<Label htmlFor="block-reservation-party-size">
+						<Trans>Default party size</Trans>
+					</Label>
+					<Input
+						id="block-reservation-party-size"
+						type="number"
+						inputMode="numeric"
+						min={MIN_RESERVATION_PARTY_SIZE}
+						max={MAX_RESERVATION_PARTY_SIZE}
+						value={defaultPartySize}
+						onChange={(event) => {
+							const next = Number(event.target.value)
+							if (Number.isFinite(next)) {
+								updateField(
+									'defaultPartySize',
+									Math.min(
+										MAX_RESERVATION_PARTY_SIZE,
+										Math.max(MIN_RESERVATION_PARTY_SIZE, Math.round(next)),
+									),
+								)
+							}
+						}}
+					/>
+				</div>
+				<FieldChoice
+					label={<Trans>Layout</Trans>}
+					value={layout}
+					onChange={(v) => updateField('layout', v)}
+					options={RESERVATION_BLOCK_LAYOUTS.map((value) => ({
+						value,
+						label:
+							value === 'inline' ? (
+								<Trans>Inline</Trans>
+							) : (
+								<Trans>Button</Trans>
+							),
+					}))}
+				/>
 			</EditorSection>
 		</div>
 	)

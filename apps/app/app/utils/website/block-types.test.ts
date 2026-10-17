@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+	addableBlockTypes,
 	ADDABLE_BLOCK_TYPES,
+	getDefaultConfig,
+	LOCALIZED_FIELDS,
 	composePageSectionsWithChrome,
 	extraLockedChromeIds,
 	isLockedBlockType,
@@ -28,6 +31,33 @@ describe('website block types', () => {
 		expect(ADDABLE_BLOCK_TYPES.some((block) => block.type === 'form')).toBe(
 			true,
 		)
+	})
+
+	it('offers the reservation block only while online booking is on', () => {
+		expect(
+			addableBlockTypes({ reservationsOnline: true }).some(
+				(block) => block.type === 'reservation',
+			),
+		).toBe(true)
+		const off = addableBlockTypes({ reservationsOnline: false })
+		expect(off.some((block) => block.type === 'reservation')).toBe(false)
+		expect(off.some((block) => block.type === 'form')).toBe(true)
+	})
+
+	it('defines the reservation block defaults and localized fields', () => {
+		expect(getDefaultConfig('reservation')).toEqual({
+			heading: 'Reserve a table',
+			body: '',
+			buttonLabel: 'Book a table',
+			locationId: '',
+			defaultPartySize: 2,
+			layout: 'button',
+		})
+		expect(LOCALIZED_FIELDS.reservation).toEqual([
+			'heading',
+			'body',
+			'buttonLabel',
+		])
 	})
 
 	it('pins header first and footer last when reordering', () => {

@@ -83,6 +83,17 @@ export function isCareersPage(pathname: string) {
 	return segments[offset] === 'careers'
 }
 
+/**
+ * The booking pages read live availability and the manage page is a
+ * capability link, so neither is ever served from the HTML edge cache.
+ * Handles locale-prefixed paths like `/ar/reserve/manage`.
+ */
+export function isReservationsPage(pathname: string) {
+	const segments = pathname.split('/').filter(Boolean)
+	const offset = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segments[0] ?? '') ? 1 : 0
+	return segments[offset] === 'reserve'
+}
+
 export function shouldCachePublishedHtml(
 	request: Request,
 	url: URL,
@@ -94,6 +105,7 @@ export function shouldCachePublishedHtml(
 	if (url.pathname.startsWith('/api/')) return false
 	if (isDropVisibilityPage(url.pathname)) return false
 	if (isCareersPage(url.pathname)) return false
+	if (isReservationsPage(url.pathname)) return false
 	return true
 }
 
@@ -119,13 +131,19 @@ export function isSitesCareersRoute(pathname: string) {
 	return slug === 'careers' || slug.startsWith('careers/')
 }
 
+export function isSitesReservationsRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return slug === 'reserve' || slug.startsWith('reserve/')
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
 	return (
 		isSitesShopRoute(pathname) ||
 		isSitesMenuRoute(pathname) ||
-		isSitesCareersRoute(pathname)
+		isSitesCareersRoute(pathname) ||
+		isSitesReservationsRoute(pathname)
 	)
 }
 

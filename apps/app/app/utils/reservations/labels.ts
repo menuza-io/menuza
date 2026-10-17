@@ -10,6 +10,8 @@ import { msg } from '@lingui/core/macro'
 export const RESERVATION_STATUS_LABELS: Record<string, MessageDescriptor> = {
 	pending_payment: msg`Pending payment`,
 	pending_approval: msg`Pending approval`,
+	requested: msg`Pending approval`,
+	declined: msg`Declined`,
 	booked: msg`Booked`,
 	confirmed: msg`Confirmed`,
 	arrived: msg`Arrived`,

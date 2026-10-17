@@ -29,9 +29,8 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
-import { ADDABLE_BLOCK_TYPES } from '#app/utils/website/block-types.ts'
-
-const ADDABLE_SECTION_TYPES = ADDABLE_BLOCK_TYPES.map((block) => block.type)
+import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
+import { addableBlockTypes } from '#app/utils/website/block-types.ts'
 
 type PageSectionRow = {
 	id: string
@@ -134,8 +133,14 @@ async function loadPageContext(
 	}
 }
 
-const getPageEditorTools = (organizationId: string) =>
-	({
+const getPageEditorTools = (
+	organizationId: string,
+	options: { reservationsOnline: boolean },
+) => {
+	const addableSectionTypes = addableBlockTypes(options).map(
+		(block) => block.type,
+	)
+	return {
 		getPageContext: {
 			description:
 				'Inspect a website page by ID. Returns title, slug, and every section with its ID, type, position, and JSON config. Call this before editing a page whose full section configs are not already in the prompt.',
@@ -185,7 +190,7 @@ const getPageEditorTools = (organizationId: string) =>
 			}),
 		},
 		addSection: {
-			description: `Add a new section (block) to a website page. Always provide a complete, useful JSON config with real content; never use placeholder text such as "Question 1" or "Answer 1". For FAQ sections, include several specific question-and-answer pairs relevant to the user's topic. Valid types: ${ADDABLE_SECTION_TYPES.join(', ')}.`,
+			description: `Add a new section (block) to a website page. Always provide a complete, useful JSON config with real content; never use placeholder text such as "Question 1" or "Answer 1". For FAQ sections, include several specific question-and-answer pairs relevant to the user's topic. Valid types: ${addableSectionTypes.join(', ')}.`,
 			inputSchema: z.object({
 				pageId: z.string().describe('The ID of the page to add the section to'),
 				type: z
@@ -223,7 +228,8 @@ const getPageEditorTools = (organizationId: string) =>
 				sectionId: z.string().describe('The ID of the section to remove'),
 			}),
 		},
-	}) as Record<string, any>
+	} as Record<string, any>
+}
 
 const getNavigationTools = () =>
 	({
@@ -322,6 +328,9 @@ ${
 export const maxDuration = 30
 
 export const action = async (args: ActionFunctionArgs) => {
+	// The page-editor tools are built synchronously, after hasWebsiteAccess has
+	// run for the same organization, so the flag is read there.
+	const reservationsOnlineByOrg = new Map<string, boolean>()
 	return handleChat(args, {
 		requireUserId,
 		requireOrgMembership: (request, organizationId) =>
@@ -335,7 +344,10 @@ export const action = async (args: ActionFunctionArgs) => {
 		buildPageEditorSystemPrompt,
 		brandSystemPrompt: brand.ai.systemPrompt,
 		getPageEditorTools: ({ organizationId }) =>
-			getPageEditorTools(organizationId),
+			getPageEditorTools(organizationId, {
+				reservationsOnline:
+					reservationsOnlineByOrg.get(organizationId) ?? false,
+			}),
 		getNavigationTools,
 		getNavigableRoutes: () => {
 			const launchStatus = getLaunchStatus()
@@ -358,6 +370,11 @@ export const action = async (args: ActionFunctionArgs) => {
 					request,
 					organizationId,
 					ORG_PERMISSIONS.READ_WEBSITE_ANY,
+				)
+				const reservations = await getReservationsFeatureState(organizationId)
+				reservationsOnlineByOrg.set(
+					organizationId,
+					reservations.enabled && reservations.online,
 				)
 				return true
 			} catch {

@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useOutletContext, useSearchParams } from 'react-router'
 import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
 import { useReservationsPoll } from '#app/hooks/use-reservations-poll.ts'
@@ -9,6 +9,13 @@ import {
 	type DayReservationView,
 	fetchBookDayConditional,
 } from '#app/utils/reservations/book-api.ts'
+
+type ServiceClockOutletContext = {
+	reportServiceClock?: (clock: {
+		locationId: string
+		dayStartMin: number
+	}) => void
+}
 
 export function useHostStand({
 	orgSlug,
@@ -99,6 +106,18 @@ export function useHostStand({
 	})
 
 	const dayFeed = poll.data
+	const layout = useOutletContext<ServiceClockOutletContext | null>()
+	const reportServiceClock = layout?.reportServiceClock
+	const feedLocationId = dayFeed?.locationId
+	const feedDayStartMin = dayFeed?.dayStartMin
+	useEffect(() => {
+		if (reportServiceClock && feedLocationId && feedDayStartMin !== undefined) {
+			reportServiceClock({
+				locationId: feedLocationId,
+				dayStartMin: feedDayStartMin,
+			})
+		}
+	}, [reportServiceClock, feedLocationId, feedDayStartMin])
 	const timeZone = dayFeed?.timezone ?? defaultTimeZone
 	const liveNow = useLiveNow({
 		timeZone,

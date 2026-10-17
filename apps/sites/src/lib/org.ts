@@ -1,8 +1,8 @@
-import { type DropStatus } from '@repo/common/menu-types'
 import {
 	type PublicJobPosting,
 	type PublicJobPostingListItem,
 } from '@repo/common/job-posting'
+import { type DropStatus } from '@repo/common/menu-types'
 import { type SiteFontSelection } from '@repo/common/site-fonts'
 import { edgeCache } from '~/lib/site-headers'
 import { getAppServiceBinding, getPublicAppUrl } from '~/lib/worker-env'
@@ -699,6 +699,30 @@ export async function fetchPublishedCareers(options: {
 	if (!params) return null
 	return fetchAppJson<PublicCareersListing>(
 		`${getAppUrl()}/resources/sites/careers?${params.toString()}`,
+		false,
+	)
+}
+
+/** Which online-booking features the restaurant has on. */
+export interface PublicReservationsGate {
+	online: boolean
+	waitlist: boolean
+	experiences: boolean
+	notifyMe: boolean
+}
+
+/**
+ * The online-booking gate, or `null` when the module is off (`reservations.enabled`
+ * and `reservations.online` are both required). Flags only: no guest data.
+ */
+export async function fetchPublishedReservations(options: {
+	slug?: string | null
+	host?: string | null
+}): Promise<PublicReservationsGate | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	return fetchAppJson<PublicReservationsGate>(
+		`${getAppUrl()}/resources/sites/reservations?${params.toString()}`,
 		false,
 	)
 }

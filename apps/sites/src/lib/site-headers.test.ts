@@ -3,6 +3,7 @@ import {
 	asAstroResponse,
 	isCareersPage,
 	isDropVisibilityPage,
+	isReservationsPage,
 	isSitesAppRoute,
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
@@ -42,6 +43,9 @@ describe('isSitesAppRoute', () => {
 		expect(isSitesAppRoute('/careers')).toBe(true)
 		expect(isSitesAppRoute('/careers/line-cook')).toBe(true)
 		expect(isSitesAppRoute('/careers-and-more')).toBe(false)
+		expect(isSitesAppRoute('/reserve')).toBe(true)
+		expect(isSitesAppRoute('/reserve/manage')).toBe(true)
+		expect(isSitesAppRoute('/reserved')).toBe(false)
 		expect(isSitesAppRoute('/')).toBe(false)
 		expect(isSitesAppRoute('/about')).toBe(false)
 	})
@@ -165,6 +169,29 @@ describe('careers pages', () => {
 			expect(
 				shouldCachePublishedHtml(
 					new Request(`https://acme.example${path}`, { method: 'GET' }),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(false)
+		}
+	})
+})
+
+describe('reservations pages', () => {
+	it('are recognized with and without a locale prefix', () => {
+		for (const path of ['/reserve', '/reserve/manage', '/ar/reserve/manage']) {
+			expect(isReservationsPage(path)).toBe(true)
+		}
+		for (const path of ['/', '/about', '/blog/reserve', '/reserved']) {
+			expect(isReservationsPage(path)).toBe(false)
+		}
+	})
+
+	it('are never served from the HTML edge cache', () => {
+		for (const path of ['/reserve', '/reserve/manage', '/ar/reserve']) {
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`),
 					new URL(`https://acme.example${path}`),
 					true,
 				),

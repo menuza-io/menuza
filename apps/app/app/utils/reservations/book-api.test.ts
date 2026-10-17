@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+	approveReservationRequest,
 	assignReservationTable,
+	declineReservationRequest,
 	fetchBookDayConditional,
 	fetchReservationEvents,
 	normalizeDayFeedResponse,
@@ -342,5 +344,60 @@ describe('book-api', () => {
 		)
 		expect(entries).toHaveLength(1)
 		expect(entries[0]).toMatchObject({ id: 'ev1', action: 'seated' })
+	})
+	it('reads the day start from settings and defaults to 04:00', () => {
+		const base = { locationId: 'loc-1', businessDate: '2026-04-20' }
+		expect(
+			normalizeDayFeedResponse({ ...base, settings: { dayStartMin: 300 } })
+				.dayStartMin,
+		).toBe(300)
+		expect(
+			normalizeDayFeedResponse({
+				...base,
+				dayStartMin: 120,
+				settings: { dayStartMin: 300 },
+			}).dayStartMin,
+		).toBe(120)
+		expect(normalizeDayFeedResponse(base).dayStartMin).toBe(240)
+	})
+
+	it('approves and declines large-party requests through the request routes', async () => {
+		const requestSpy = vi.fn(async () => ({
+			ok: true,
+			reservation: {
+				id: 'rsv-req',
+				guestName: 'Big Party',
+				partySize: 12,
+				localStartMin: 1140,
+				durationMin: 120,
+				status: 'booked',
+				version: 2,
+			},
+		}))
+		const client = createMockClient(requestSpy)
+
+		const approved = await approveReservationRequest(client, 'rsv-req', {
+			locationId: 'loc-1',
+		})
+		expect(approved.reservation.id).toBe('rsv-req')
+		expect(requestSpy).toHaveBeenLastCalledWith(
+			'/operator/reservations/book/requests/rsv-req/approve',
+			{ method: 'POST', body: { locationId: 'loc-1' } },
+		)
+
+		await declineReservationRequest(client, 'rsv-req', {
+			locationId: 'loc-1',
+			reason: '  Fully booked  ',
+		})
+		expect(requestSpy).toHaveBeenLastCalledWith(
+			'/operator/reservations/book/requests/rsv-req/decline',
+			{ method: 'POST', body: { locationId: 'loc-1', reason: 'Fully booked' } },
+		)
+
+		await declineReservationRequest(client, 'rsv-req')
+		expect(requestSpy).toHaveBeenLastCalledWith(
+			'/operator/reservations/book/requests/rsv-req/decline',
+			{ method: 'POST', body: {} },
+		)
 	})
 })

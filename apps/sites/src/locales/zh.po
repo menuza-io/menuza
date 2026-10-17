@@ -14,6 +14,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:93
 msgid "(optional)"
 msgstr "（选填）"
 
@@ -26,6 +27,10 @@ msgstr "每{unit} {amount}"
 msgid "{count} Cal"
 msgstr "{count} 卡"
 
+#: src/lib/reservations/labels.ts:41
+msgid "{count} guests"
+msgstr "{count} 位"
+
 #: src/lib/ordering-labels.ts:72
 msgid "{count} items"
 msgstr "{count} 件商品"
@@ -33,6 +38,14 @@ msgstr "{count} 件商品"
 #: src/lib/ordering-labels.ts:107
 msgid "{count} min"
 msgstr "{count} 分钟"
+
+#: src/lib/reservations/labels.ts:191
+msgid "{count} minutes late"
+msgstr "晚到 {count} 分钟"
+
+#: src/lib/reservations/labels.ts:64
+msgid "{date} at {time}"
+msgstr "{date} {time}"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -66,6 +79,18 @@ msgstr "{n} 个限量活动正在接受下单"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} min"
 msgstr "{n}分钟"
+
+#: src/lib/reservations/labels.ts:146
+msgid "{name} will review your request and get back to you."
+msgstr "{name} 将审核您的请求并回复您。"
+
+#: src/lib/reservations/labels.ts:52
+msgid "{party} on {date}"
+msgstr "{date}，{party}"
+
+#: src/lib/reservations/labels.ts:72
+msgid "{party}, {date} at {time}"
+msgstr "{party}，{date} {time}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "{time} left to complete payment."
@@ -106,6 +131,10 @@ msgstr "1 个限量活动即将开始"
 msgid "1 drop ordering now"
 msgstr "1 个限量活动正在接受下单"
 
+#: src/lib/reservations/labels.ts:40
+msgid "1 guest"
+msgstr "1 位"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Accepted"
 msgstr "已接单"
@@ -132,6 +161,7 @@ msgstr "添加配送地址"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropSummaryCard.astro.ts:3
+#: src/lib/reservations/labels.ts:150
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Add to calendar"
@@ -170,6 +200,10 @@ msgstr "所有职位"
 msgid "All locations"
 msgstr "所有门店"
 
+#: src/lib/reservations/labels.ts:45
+msgid "All times are in the restaurant's time zone: {zone}."
+msgstr "所有时间均为餐厅所在时区：{zone}。"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
@@ -191,6 +225,10 @@ msgstr "立即申请"
 msgid "Apt, suite or floor"
 msgstr "公寓、单元或楼层"
 
+#: src/lib/reservations/labels.ts:164
+msgid "Arrived"
+msgstr "已到达"
+
 #: src/lib/ordering-labels.ts:134
 msgid "Arrives in {min}–{max} min"
 msgstr "{min}–{max} 分钟送达"
@@ -198,6 +236,22 @@ msgstr "{min}–{max} 分钟送达"
 #: src/lib/ordering-labels.ts:131
 msgid "ASAP"
 msgstr "尽快"
+
+#: src/lib/reservations/labels.ts:51
+msgid "Available times"
+msgstr "可订时间"
+
+#: src/lib/reservations/labels.ts:162
+msgid "Awaiting approval"
+msgstr "等待审批"
+
+#: src/lib/reservations/labels.ts:163
+msgid "Awaiting payment"
+msgstr "等待付款"
+
+#: src/lib/reservations/labels.ts:79
+msgid "Back"
+msgstr "返回"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -217,6 +271,26 @@ msgstr "返回商店"
 msgid "Be first when the next drop opens"
 msgstr "下一场限量活动开始时抢先知道"
 
+#: src/lib/reservations/labels.ts:65
+msgid "Book {time}"
+msgstr "预订 {time}"
+
+#: src/components/blocks/ReservationBlock.astro.ts:3
+#: src/components/reservations/UpcomingReservations.astro.ts:3
+#: src/lib/reservations/labels.ts:209
+#: src/lib/reservations/labels.ts:212
+msgid "Book a table"
+msgstr "预订餐位"
+
+#: src/lib/reservations/labels.ts:23
+#: src/pages/reserve/index.astro.ts:3
+msgid "Book a table at {name}."
+msgstr "在 {name} 预订餐位。"
+
+#: src/lib/reservations/labels.ts:113
+msgid "Booking…"
+msgstr "正在预订…"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
@@ -226,6 +300,10 @@ msgstr "浏览商店"
 msgid "Buy now"
 msgstr "立即购买"
 
+#: src/lib/reservations/labels.ts:108
+msgid "By booking, you agree that {name} may contact you about this reservation."
+msgstr "预订即表示您同意 {name} 就本次预订与您联系。"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
 msgstr "注册即表示您同意 {org} 向此号码定期发送自动营销短信。同意并非购买的条件。可能产生短信和数据费用。回复 STOP 即可退订。"
@@ -234,6 +312,20 @@ msgstr "注册即表示您同意 {org} 向此号码定期发送自动营销短�
 msgid "Call"
 msgstr "致电"
 
+#: src/lib/reservations/labels.ts:129
+#: src/lib/reservations/labels.ts:202
+msgid "Call {phone}"
+msgstr "致电 {phone}"
+
+#: src/lib/reservations/labels.ts:182
+msgid "Cancel reservation"
+msgstr "取消预订"
+
+#: src/lib/reservations/labels.ts:183
+msgid "Cancel this reservation?"
+msgstr "要取消这个预订吗？"
+
+#: src/lib/reservations/labels.ts:167
 #: src/pages/menu/success.astro.ts:3
 msgid "Cancelled"
 msgstr "已取消"
@@ -260,6 +352,14 @@ msgstr "更改"
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Change number"
 msgstr "更换号码"
+
+#: src/lib/reservations/labels.ts:78
+msgid "Change time"
+msgstr "更改时间"
+
+#: src/lib/reservations/labels.ts:178
+msgid "Change time or party size"
+msgstr "更改时间或人数"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -318,6 +418,10 @@ msgstr "选择日期"
 msgid "Choose a location"
 msgstr "选择取货地点"
 
+#: src/lib/reservations/labels.ts:181
+msgid "Choose a new time"
+msgstr "选择新的时间"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Choose a pickup time to continue"
@@ -325,6 +429,7 @@ msgstr "请选择取货时间以继续"
 
 #: src/components/drops/PickupPicker.astro.ts:3
 #: src/lib/ordering-labels.ts:139
+#: src/lib/reservations/labels.ts:33
 msgid "Choose a time"
 msgstr "选择时间"
 
@@ -398,6 +503,10 @@ msgstr "完成付款"
 msgid "Complete payment to keep it."
 msgstr "请完成付款以保留订单。"
 
+#: src/lib/reservations/labels.ts:122
+msgid "Complete the verification check before booking."
+msgstr "请先完成验证再预订。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Complete the verification check before sending."
 msgstr "请在发送前完成验证。"
@@ -406,6 +515,7 @@ msgstr "请在发送前完成验证。"
 msgid "Complete the verification check before submitting."
 msgstr "提交前请完成验证。"
 
+#: src/lib/reservations/labels.ts:166
 #: src/pages/menu/success.astro.ts:3
 msgid "Completed"
 msgstr "已完成"
@@ -413,6 +523,26 @@ msgstr "已完成"
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Confirm"
 msgstr "确认"
+
+#: src/lib/reservations/labels.ts:188
+msgid "Confirm I am coming"
+msgstr "确认我会到场"
+
+#: src/lib/reservations/labels.ts:112
+msgid "Confirm reservation"
+msgstr "确认预订"
+
+#: src/lib/reservations/labels.ts:149
+msgid "Confirmation code"
+msgstr "确认码"
+
+#: src/lib/reservations/labels.ts:161
+msgid "Confirmed"
+msgstr "已确认"
+
+#: src/lib/reservations/labels.ts:198
+msgid "Contact"
+msgstr "联系方式"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Contact details"
@@ -437,6 +567,14 @@ msgstr "自定义菜品"
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
+
+#: src/lib/reservations/labels.ts:37
+msgid "Date"
+msgstr "日期"
+
+#: src/lib/reservations/labels.ts:168
+msgid "Declined"
+msgstr "已拒绝"
 
 #: src/lib/ordering-labels.ts:57
 msgid "Decrease quantity"
@@ -496,6 +634,11 @@ msgstr "外送订单"
 msgid "Delivery time"
 msgstr "配送时间"
 
+#: src/lib/reservations/labels.ts:96
+#: src/lib/reservations/labels.ts:201
+msgid "Dietary needs"
+msgstr "饮食需求"
+
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
 msgstr "路线"
@@ -517,6 +660,7 @@ msgid "Drops"
 msgstr "限量活动"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:91
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "电子邮件"
@@ -524,6 +668,10 @@ msgstr "电子邮件"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Email address"
 msgstr "电子邮箱"
+
+#: src/lib/reservations/labels.ts:102
+msgid "Email me news and offers from {name}"
+msgstr "通过电子邮件向我发送 {name} 的资讯和优惠"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -538,11 +686,16 @@ msgstr "已于{when}结束"
 msgid "Enter a delivery address to continue."
 msgstr "请输入配送地址以继续。"
 
+#: src/lib/reservations/labels.ts:118
+msgid "Enter a phone number with its country code, like {example}."
+msgstr "请输入带国家/地区区号的电话号码，例如 {example}。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Enter a phone number with its country code, like +1 415 555 0123."
 msgstr "请输入带国家区号的电话号码，例如 +1 415 555 0123。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:121
 msgid "Enter a valid email address."
 msgstr "请输入有效的电子邮箱地址。"
 
@@ -563,6 +716,10 @@ msgstr "预估税费"
 msgid "Estimated time"
 msgstr "预计时间"
 
+#: src/lib/reservations/labels.ts:170
+msgid "Expired"
+msgstr "已过期"
+
 #: src/pages/profile.astro.ts:3
 msgid "Expires"
 msgstr "到期"
@@ -580,9 +737,19 @@ msgstr "浏览菜单"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "浏览我们的菜单，添加您喜爱的菜品。"
 
+#: src/lib/reservations/labels.ts:32
+#: src/lib/reservations/labels.ts:39
+msgid "Find a table"
+msgstr "查找餐位"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:83
 msgid "First name"
 msgstr "名"
+
+#: src/lib/reservations/labels.ts:127
+msgid "For a larger party, please contact the restaurant directly."
+msgstr "人数较多时，请直接联系餐厅。"
 
 #: src/lib/ordering-labels.ts:104
 #: src/pages/menu/checkout.astro.ts:3
@@ -639,6 +806,14 @@ msgstr "无麸质"
 msgid "Gluten-Free"
 msgstr "无麸质"
 
+#: src/lib/reservations/labels.ts:69
+msgid "Held for {time}"
+msgstr "保留 {time}"
+
+#: src/lib/reservations/labels.ts:177
+msgid "Hello, {name}"
+msgstr "您好，{name}"
+
 #: src/lib/careers/labels.ts:31
 msgid "hour"
 msgstr "小时"
@@ -647,10 +822,18 @@ msgstr "小时"
 msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 msgstr "我同意 {organization} 保留我的资料和回答，用于考虑我的申请并就此联系我。如我提出要求，他们将予以删除。"
 
+#: src/lib/reservations/labels.ts:190
+msgid "I am running late"
+msgstr "我会晚到"
+
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "{t}后"
+
+#: src/lib/reservations/labels.ts:88
+msgid "Include your country code, for example {example}."
+msgstr "请包含国家/地区区号，例如 {example}。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Include your country code, for example +1 415 555 0123."
@@ -668,9 +851,25 @@ msgstr "实习"
 msgid "Invalid verification code."
 msgstr "验证码无效。"
 
+#: src/lib/reservations/labels.ts:238
+msgid "It is too late to cancel online. Please call the restaurant."
+msgstr "已过在线取消时限，请致电餐厅。"
+
+#: src/lib/reservations/labels.ts:241
+msgid "It is too late to change this online. Please call the restaurant."
+msgstr "已过在线修改时限，请致电餐厅。"
+
 #: src/lib/ordering-labels.ts:111
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
+
+#: src/lib/reservations/labels.ts:185
+msgid "Keep my reservation"
+msgstr "保留我的预订"
+
+#: src/lib/reservations/labels.ts:153
+msgid "Keep the manage link. Anyone who has it can change or cancel this booking."
+msgstr "请保存管理链接。任何拥有该链接的人都可以修改或取消此预订。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Keep this page open — we'll confirm your order as soon as your payment completes."
@@ -684,7 +883,12 @@ msgstr "继续输入以查看匹配的地址。"
 msgid "Language"
 msgstr "语言"
 
+#: src/lib/reservations/labels.ts:42
+msgid "Larger party"
+msgstr "更多人数"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:84
 msgid "Last name"
 msgstr "姓"
 
@@ -718,13 +922,40 @@ msgstr "链接已复制"
 msgid "Loading your receipt…"
 msgstr "正在加载您的收据…"
 
+#: src/components/reservations/UpcomingReservations.astro.ts:3
+#: src/lib/reservations/labels.ts:24
+#: src/pages/reserve/index.astro.ts:3
+#: src/pages/reserve/manage.astro.ts:3
+msgid "Loading…"
+msgstr "加载中…"
+
+#: src/lib/reservations/labels.ts:35
+msgid "Location"
+msgstr "门店"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "退出"
 
+#: src/lib/reservations/labels.ts:48
+msgid "Looking for tables…"
+msgstr "正在查找餐位…"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Looks like you haven't added any dishes to your order yet."
 msgstr "看起来您还没有在订单中添加任何菜品。"
+
+#: src/lib/reservations/labels.ts:155
+msgid "Make another reservation"
+msgstr "再预订一次"
+
+#: src/lib/reservations/labels.ts:208
+msgid "Manage"
+msgstr "管理"
+
+#: src/lib/reservations/labels.ts:151
+msgid "Manage reservation"
+msgstr "管理预订"
 
 #: src/pages/menu.astro.ts:3
 msgid "Menu & ordering"
@@ -811,6 +1042,10 @@ msgstr "没有匹配的地址"
 msgid "No minimum"
 msgstr "无起送金额"
 
+#: src/lib/reservations/labels.ts:95
+msgid "No occasion"
+msgstr "无特殊场合"
+
 #: src/pages/careers/index.astro.ts:3
 msgid "No openings right now."
 msgstr "目前没有空缺职位。"
@@ -832,9 +1067,17 @@ msgstr "暂无已保存的支付方式。"
 msgid "No scheduled times are available right now."
 msgstr "目前没有可预约的时间。"
 
+#: src/lib/reservations/labels.ts:53
+msgid "No tables available for that search"
+msgstr "该搜索条件下没有可订餐位"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "No tip"
 msgstr "不付小费"
+
+#: src/lib/reservations/labels.ts:169
+msgid "No-show"
+msgstr "未到店"
 
 #: src/lib/ordering-labels.ts:54
 msgid "None"
@@ -844,9 +1087,31 @@ msgstr "无"
 msgid "Not available right now"
 msgstr "目前不可用"
 
+#: src/lib/reservations/labels.ts:94
+#: src/lib/reservations/labels.ts:199
+msgid "Occasion"
+msgstr "场合"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
 msgstr "目前无法在线申请。请询问店内的团队成员。"
+
+#: src/lib/reservations/labels.ts:59
+msgid "Online booking is closed for this date. Please call the restaurant."
+msgstr "该日期不接受在线预订，请致电餐厅。"
+
+#: src/lib/reservations/labels.ts:25
+msgid "Online booking is not available right now"
+msgstr "暂时无法在线预订"
+
+#: src/lib/reservations/labels.ts:226
+msgid "Online booking is paused right now. Please call the restaurant."
+msgstr "在线预订已暂停，请致电餐厅。"
+
+#: src/lib/reservations/labels.ts:28
+#: src/pages/reserve/index.astro.ts:3
+msgid "Online booking needs JavaScript. Please call the restaurant to book a table."
+msgstr "在线预订需要启用 JavaScript。请致电餐厅预订餐位。"
 
 #: src/lib/ordering-labels.ts:59
 msgid "Only {count} left"
@@ -871,6 +1136,10 @@ msgstr "营业中"
 #: src/pages/careers/index.astro.ts:3
 msgid "Open positions at {name}"
 msgstr "{name} 的在招职位"
+
+#: src/lib/reservations/labels.ts:175
+msgid "Open the link from your confirmation to manage a reservation."
+msgstr "请打开确认信息中的链接来管理预订。"
 
 #: src/lib/ordering-labels.ts:126
 #: src/pages/menu.astro.ts:3
@@ -966,6 +1235,18 @@ msgstr "订单于{when}开放"
 msgid "Orders open: {title}"
 msgstr "开放订购：{title}"
 
+#: src/lib/reservations/labels.ts:63
+msgid "Other dates with tables"
+msgstr "其他有餐位的日期"
+
+#: src/lib/reservations/labels.ts:97
+msgid "Other dietary needs"
+msgstr "其他饮食需求"
+
+#: src/lib/reservations/labels.ts:62
+msgid "Other times that day"
+msgstr "当天其他时间"
+
 #: src/pages/menu.astro.ts:3
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "我们的厨房正在准备美味佳肴。请稍后回来查看完整的在线菜单。"
@@ -973,6 +1254,18 @@ msgstr "我们的厨房正在准备美味佳肴。请稍后回来查看完整的
 #: src/lib/careers/labels.ts:16
 msgid "Part time"
 msgstr "兼职"
+
+#: src/lib/reservations/labels.ts:125
+msgid "Parties larger than {count}"
+msgstr "超过 {count} 人的团体"
+
+#: src/lib/reservations/labels.ts:158
+msgid "Party"
+msgstr "人数"
+
+#: src/lib/reservations/labels.ts:36
+msgid "Party size"
+msgstr "用餐人数"
 
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
@@ -1019,6 +1312,7 @@ msgid "Payment methods"
 msgstr "支付方式"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:85
 msgid "Phone"
 msgstr "电话"
 
@@ -1080,13 +1374,25 @@ msgstr "正在提交您的订单…"
 msgid "Please agree so we can keep your application."
 msgstr "请表示同意，以便我们保存您的申请。"
 
+#: src/lib/reservations/labels.ts:26
+msgid "Please call the restaurant to book a table."
+msgstr "请致电餐厅预订餐位。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Please check the answers marked below and try again."
 msgstr "请检查下方标记的回答后重试。"
 
+#: src/lib/reservations/labels.ts:114
+msgid "Please check the fields marked below."
+msgstr "请检查下方标记的字段。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Please check your connection and try again."
 msgstr "请检查网络连接后重试。"
+
+#: src/lib/reservations/labels.ts:250
+msgid "Please check your details and try again."
+msgstr "请检查您的信息后重试。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Please enter your delivery address."
@@ -1201,9 +1507,23 @@ msgstr "已完成购买的收据将在此显示状态和金额。"
 msgid "Remove"
 msgstr "移除"
 
+#: src/lib/reservations/labels.ts:132
+msgid "Request a table for more than {count} guests"
+msgstr "申请超过 {count} 位客人的餐位"
+
+#: src/lib/reservations/labels.ts:143
+msgid "Request received"
+msgstr "已收到请求"
+
 #: src/lib/ordering-labels.ts:34
 msgid "Required"
 msgstr "必填"
+
+#: src/components/blocks/ReservationBlock.astro.ts:3
+#: src/lib/reservations/labels.ts:22
+#: src/pages/reserve/index.astro.ts:3
+msgid "Reserve a table"
+msgstr "预订餐位"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Return to homepage"
@@ -1220,6 +1540,10 @@ msgstr "右半"
 #: src/lib/ordering-labels.ts:141
 msgid "Save"
 msgstr "保存"
+
+#: src/lib/reservations/labels.ts:179
+msgid "Save changes"
+msgstr "保存更改"
 
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
@@ -1250,6 +1574,10 @@ msgstr "搜索菜单"
 msgid "Seasonal"
 msgstr "季节性"
 
+#: src/lib/reservations/labels.ts:165
+msgid "Seated"
+msgstr "已入座"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
 msgstr "安全结账。提交订单即表示您同意餐厅的条款。"
@@ -1269,6 +1597,10 @@ msgstr "提交申请"
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "发送验证码"
+
+#: src/lib/reservations/labels.ts:138
+msgid "Send request"
+msgstr "发送请求"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
@@ -1328,6 +1660,10 @@ msgstr "自您通话以来部分价格已变动。购物车显示的是当前价
 msgid "Something went wrong."
 msgstr "出了点问题。"
 
+#: src/lib/reservations/labels.ts:254
+msgid "Something went wrong. Please try again."
+msgstr "出了点问题，请重试。"
+
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
 msgstr "特别说明"
@@ -1335,6 +1671,11 @@ msgstr "特别说明"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Special Instructions"
 msgstr "特别说明"
+
+#: src/lib/reservations/labels.ts:98
+#: src/lib/reservations/labels.ts:200
+msgid "Special requests"
+msgstr "特殊要求"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -1372,6 +1713,14 @@ msgstr "短信通知我"
 msgid "Text me new drops"
 msgstr "短信通知新活动"
 
+#: src/lib/reservations/labels.ts:105
+msgid "Text me news and offers from {name}"
+msgstr "通过短信向我发送 {name} 的资讯和优惠"
+
+#: src/lib/reservations/labels.ts:99
+msgid "Text me reminders about this reservation"
+msgstr "通过短信向我发送本次预订的提醒"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
 msgstr "感谢您的订单！"
@@ -1384,6 +1733,22 @@ msgstr "感谢您的购买！"
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。"
 
+#: src/lib/reservations/labels.ts:189
+msgid "Thanks. The restaurant knows you are coming."
+msgstr "谢谢，餐厅已知晓您会到场。"
+
+#: src/lib/reservations/labels.ts:61
+msgid "That date is too far ahead to book online."
+msgstr "该日期太远，无法在线预订。"
+
+#: src/lib/reservations/labels.ts:249
+msgid "That party size is not available online."
+msgstr "该人数无法在线预订。"
+
+#: src/lib/reservations/labels.ts:244
+msgid "That party size needs a request. Please use the large-party option."
+msgstr "该人数需要提交请求，请使用大团体选项。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
 msgstr "该取餐时段刚刚约满。请选择其他时间。"
@@ -1391,6 +1756,10 @@ msgstr "该取餐时段刚刚约满。请选择其他时间。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup time is no longer available. Please choose a different time."
 msgstr "该取餐时间已不可用。请选择其他时间。"
+
+#: src/lib/reservations/labels.ts:216
+msgid "That time was just taken. Please choose another time."
+msgstr "该时间刚刚被订走，请选择其他时间。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The hold on your order was released. Please place a new order."
@@ -1404,7 +1773,20 @@ msgstr "您通话中的商品已无货。您仍可从菜单中点餐。"
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "链接可能不完整。您可以从菜单开始新的订单。"
 
+#: src/lib/reservations/labels.ts:57
+msgid "The restaurant is closed on this date."
+msgstr "餐厅在该日期休息。"
+
+#: src/lib/reservations/labels.ts:247
+msgid "The restaurant is not taking requests for that date."
+msgstr "餐厅不接受该日期的请求。"
+
+#: src/lib/reservations/labels.ts:136
+msgid "The restaurant reviews large-party requests and replies to confirm."
+msgstr "餐厅会审核大团体请求并回复确认。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:223
 msgid "The verification check did not pass. Please try again."
 msgstr "验证未通过，请重试。"
 
@@ -1433,6 +1815,7 @@ msgid "This form is currently unavailable."
 msgstr "此表单当前不可用。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:115
 msgid "This is required."
 msgstr "此项为必填。"
 
@@ -1456,6 +1839,14 @@ msgstr "此订单未达到配送起送金额。"
 msgid "This order link has expired. You can still order from the menu."
 msgstr "此订单链接已过期。您仍可从菜单中点餐。"
 
+#: src/lib/reservations/labels.ts:232
+msgid "This phone number already has a reservation at that time."
+msgstr "该手机号在该时间已有预订。"
+
+#: src/lib/reservations/labels.ts:235
+msgid "This phone number has too many upcoming reservations."
+msgstr "该手机号的未来预订过多。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
 msgstr "此收据仅在下单时使用的设备上可用。"
@@ -1463,6 +1854,10 @@ msgstr "此收据仅在下单时使用的设备上可用。"
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
+
+#: src/lib/reservations/labels.ts:38
+msgid "Time"
+msgstr "时间"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1498,6 +1893,10 @@ msgstr "从此处提交的申请过多，请稍后再试。"
 msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多。请稍后重试。"
 
+#: src/lib/reservations/labels.ts:220
+msgid "Too many attempts. Please wait a moment and try again."
+msgstr "尝试次数过多，请稍候再试。"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1518,6 +1917,10 @@ msgstr "重试"
 msgid "Try another address"
 msgstr "换一个地址"
 
+#: src/lib/reservations/labels.ts:55
+msgid "Try one of these times or dates instead, or change your search."
+msgstr "请试试这些时间或日期，或更改搜索条件。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Try payment again"
 msgstr "重新支付"
@@ -1533,6 +1936,11 @@ msgstr "无法提交表单。请重试。"
 #: src/lib/ordering-labels.ts:41
 msgid "Up to {count}"
 msgstr "最多 {count} 项"
+
+#: src/components/reservations/UpcomingReservations.astro.ts:3
+#: src/lib/reservations/labels.ts:205
+msgid "Upcoming reservations"
+msgstr "即将到来的预订"
 
 #: src/pages/profile.astro.ts:3
 msgid "Update your basic details below."
@@ -1605,11 +2013,20 @@ msgstr "下次想抢先一步？"
 msgid "We could not confirm this order."
 msgstr "我们无法确认此订单。"
 
+#: src/lib/reservations/labels.ts:229
+msgid "We could not find that reservation. The link may have expired."
+msgstr "找不到该预订，链接可能已过期。"
+
+#: src/lib/reservations/labels.ts:207
+msgid "We could not load your reservations."
+msgstr "无法加载您的预订。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We could not place your order. Please try again."
 msgstr "无法提交您的订单。请重试。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/reservations/labels.ts:252
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "无法连接服务器。请检查网络后重试。"
 
@@ -1653,13 +2070,29 @@ msgstr "此地址可配送"
 msgid "We don't deliver to this address yet"
 msgstr "暂不支持配送至此地址"
 
+#: src/lib/reservations/labels.ts:111
+msgid "We filled in your details from your profile."
+msgstr "我们已根据您的个人资料填写了信息。"
+
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "我们已载入您通话中的订单。请核对后结账。"
 
+#: src/lib/reservations/labels.ts:92
+msgid "We send your confirmation here."
+msgstr "我们会把确认信息发送到这里。"
+
+#: src/lib/reservations/labels.ts:142
+msgid "We sent a confirmation to your email or phone."
+msgstr "我们已向您的邮箱或手机发送了确认信息。"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "We texted a 6-digit code to {phone}."
 msgstr "我们已向 {phone} 发送了 6 位验证码。"
+
+#: src/lib/reservations/labels.ts:192
+msgid "We told the restaurant you are running late."
+msgstr "我们已告知餐厅您会晚到。"
 
 #: src/lib/ordering-labels.ts:149
 msgid "We'll check that your address is in our delivery area before you order."
@@ -1708,6 +2141,7 @@ msgid "What's your name?"
 msgstr "您叫什么名字？"
 
 #: src/lib/ordering-labels.ts:130
+#: src/lib/reservations/labels.ts:157
 msgid "When"
 msgstr "时间"
 
@@ -1715,6 +2149,7 @@ msgstr "时间"
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "当您在商店购买商品时，您的收据将显示在这里。"
 
+#: src/lib/reservations/labels.ts:156
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Where"
 msgstr "地点"
@@ -1739,9 +2174,29 @@ msgstr "年"
 msgid "Yes"
 msgstr "是"
 
+#: src/lib/reservations/labels.ts:184
+msgid "Yes, cancel it"
+msgstr "是，取消"
+
+#: src/lib/reservations/labels.ts:141
+msgid "You are booked"
+msgstr "预订成功"
+
+#: src/lib/reservations/labels.ts:187
+msgid "You can cancel until {time}."
+msgstr "您可在 {time} 前取消。"
+
 #: src/lib/ordering-labels.ts:121
 msgid "You can still order for pickup."
 msgstr "您仍可下单自取。"
+
+#: src/lib/reservations/labels.ts:206
+msgid "You have no upcoming reservations."
+msgstr "您没有即将到来的预订。"
+
+#: src/lib/reservations/labels.ts:195
+msgid "You told us you are about {count} minutes late."
+msgstr "您告知我们大约会晚到 {count} 分钟。"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "You're on the list. We'll text you when the next drop opens."
@@ -1754,6 +2209,19 @@ msgstr "您的购物车是空的"
 #: src/lib/ordering-labels.ts:166
 msgid "Your delivery check expired. Confirm your address again."
 msgstr "配送核验已过期，请重新确认地址。"
+
+#: src/lib/reservations/labels.ts:34
+#: src/lib/reservations/labels.ts:82
+msgid "Your details"
+msgstr "您的信息"
+
+#: src/lib/reservations/labels.ts:77
+msgid "Your hold expired"
+msgstr "保留已过期"
+
+#: src/lib/reservations/labels.ts:218
+msgid "Your hold expired. Please choose a time again."
+msgstr "保留已过期，请重新选择时间。"
 
 #: src/pages/menu.astro.ts:3
 msgid "Your order"
@@ -1791,6 +2259,23 @@ msgstr "支付时限已过期"
 msgid "Your Profile"
 msgstr "您的资料"
 
+#: src/lib/reservations/labels.ts:173
+#: src/pages/reserve/manage.astro.ts:3
+msgid "Your reservation"
+msgstr "您的预订"
+
+#: src/lib/reservations/labels.ts:186
+msgid "Your reservation has been cancelled."
+msgstr "您的预订已取消。"
+
+#: src/lib/reservations/labels.ts:180
+msgid "Your reservation was updated."
+msgstr "您的预订已更新。"
+
 #: src/lib/ordering-labels.ts:162
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "您预约的时间已不可用，请重新选择。"
+
+#: src/lib/reservations/labels.ts:68
+msgid "Your table is held"
+msgstr "您的餐位已保留"

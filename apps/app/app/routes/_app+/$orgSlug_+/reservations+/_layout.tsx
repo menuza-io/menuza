@@ -4,6 +4,7 @@ import { asc, db, desc, eq, OrganizationLocation } from '@repo/database'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { WorkspacePage } from '@repo/ui/workspace'
+import { useCallback, useState } from 'react'
 import {
 	Link,
 	Outlet,
@@ -14,11 +15,13 @@ import {
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ReservationsClientProvider } from '#app/components/reservations/reservations-client-provider.tsx'
+import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import {
 	displayLocationName,
 	orgDefaultLocale,
 } from '#app/utils/location-name.server.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { DEFAULT_DAY_START_MIN } from '#app/utils/reservations/business-date.ts'
 import {
 	computeReservationsNavAccess,
 	type ReservationsNavAccess,
@@ -43,8 +46,15 @@ export type ReservationsLayoutContext = {
 	locations: ReservationsLayoutLocation[]
 	activeLocationId: string
 	selectedDate: string
+	/** Business date "now" falls on for the active location (time zone and day start). */
+	todayDate: string
 	selectedService: string
 	nav: ReservationsNavAccess
+	/** Screens report the active location's day start once its feed has loaded. */
+	reportServiceClock: (clock: {
+		locationId: string
+		dayStartMin: number
+	}) => void
 }
 
 export function useReservationsLayoutData(): ReservationsLayoutContext {
@@ -95,13 +105,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		orgSlug: access.organizationSlug,
 		locations: scopedLocations,
 		nav,
-		todayDate: new Date().toISOString().slice(0, 10),
+		nowMs: Date.now(),
 	}
 }
 
 export default function ReservationsLayout() {
 	const { _ } = useLingui()
-	const { orgSlug, locations, nav, todayDate } = useLoaderData<typeof loader>()
+	const { orgSlug, locations, nav, nowMs } = useLoaderData<typeof loader>()
 	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
 
@@ -110,6 +120,37 @@ export default function ReservationsLayout() {
 		searchParams.get('location') ??
 		locations[0]?.id ??
 		'all'
+	const activeLocationId =
+		selectedLocationId && selectedLocationId !== 'all'
+			? selectedLocationId
+			: (locations[0]?.id ?? '')
+	const activeLocation =
+		locations.find((loc) => loc.id === activeLocationId) ?? locations[0]
+
+	const [serviceClock, setServiceClock] = useState<{
+		locationId: string
+		dayStartMin: number
+	} | null>(null)
+	const reportServiceClock = useCallback(
+		(clock: { locationId: string; dayStartMin: number }) => {
+			setServiceClock((prev) =>
+				prev?.locationId === clock.locationId &&
+				prev.dayStartMin === clock.dayStartMin
+					? prev
+					: clock,
+			)
+		},
+		[],
+	)
+	const liveNow = useLiveNow({
+		timeZone: activeLocation?.timezone,
+		dayStartMin:
+			serviceClock && serviceClock.locationId === activeLocation?.id
+				? serviceClock.dayStartMin
+				: DEFAULT_DAY_START_MIN,
+		initialNowMs: nowMs,
+	})
+	const todayDate = liveNow.businessDate
 	const selectedDate = searchParams.get('date') ?? todayDate
 	const selectedService = searchParams.get('service') ?? 'all'
 
@@ -176,11 +217,6 @@ export default function ReservationsLayout() {
 	]
 
 	const visibleSections = sections.filter((section) => section.visible)
-	const activeLocationId =
-		selectedLocationId && selectedLocationId !== 'all'
-			? selectedLocationId
-			: (locations[0]?.id ?? '')
-
 	const isBookSubroute =
 		location.pathname.startsWith(`/${orgSlug}/reservations/book`) ||
 		location.pathname.startsWith(`/${orgSlug}/reservations/timeline`) ||
@@ -193,8 +229,10 @@ export default function ReservationsLayout() {
 		locations,
 		activeLocationId,
 		selectedDate,
+		todayDate,
 		selectedService,
 		nav,
+		reportServiceClock,
 	}
 
 	return (

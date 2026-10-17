@@ -2,6 +2,8 @@
 import { msg } from '@lingui/core/macro'
 import SitePage from '~/components/SitePage.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
+import UpcomingReservations from '~/components/reservations/UpcomingReservations.astro'
+import { fetchPublishedReservations } from '~/lib/org'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -30,6 +32,13 @@ const expires = i18n._(msg`Expires`)
 if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
 }
+
+// The panel only exists while online booking is on; its data is fetched from
+// tenant-api by the browser, so nothing about a guest is rendered here.
+const reservationsGate = await fetchPublishedReservations({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+})
 ---
 
 <SitePage
@@ -122,6 +131,8 @@ if (!organization) {
 		</div>
 
 		<DropAlertsSignup source="profile" layout="toggle" class="w-full" />
+
+		{reservationsGate ? <UpcomingReservations /> : null}
 
 		<div class="w-full rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
 			<div class="mb-4 space-y-1">

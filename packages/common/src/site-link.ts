@@ -67,6 +67,8 @@ export const SITE_LINK_RESERVED_PATHS = new Set([
 	'profile',
 	'verify',
 	'complete-name',
+	'reserve',
+	'experiences',
 ])
 
 const DEFAULT_LINK: SiteLink = {

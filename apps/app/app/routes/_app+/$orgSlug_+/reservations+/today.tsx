@@ -7,13 +7,20 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
+import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import {
+	RequestsPanel,
+	RequestsTabs,
+	type ReservationsViewTab,
+} from '#app/components/reservations/requests-panel.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
+import { useReservationRequests } from '#app/components/reservations/use-reservation-requests.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import {
@@ -75,6 +82,7 @@ export default function ReservationsTodayRoute() {
 		pollIntervalMs: 5_000,
 	})
 
+	const [view, setView] = useState<ReservationsViewTab>('reservations')
 	const [actionBusyId, setActionBusyId] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const [lastUndo, setLastUndo] = useState<{
@@ -88,7 +96,16 @@ export default function ReservationsTodayRoute() {
 
 	const dayFeed = host.dayFeed
 	const stats = dayFeed?.stats
-	const reservations = dayFeed?.reservations ?? []
+	const reservations = useMemo(
+		() => dayFeed?.reservations ?? [],
+		[dayFeed?.reservations],
+	)
+	const requests = useReservationRequests({
+		client: host.client,
+		locationId,
+		reservations,
+		onMutated: host.handleReservationMutated,
+	})
 
 	const upcomingList = reservations.filter(
 		(r) =>
@@ -208,11 +225,19 @@ export default function ReservationsTodayRoute() {
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
-			{host.poll.error || actionError ? (
+			{host.poll.error || actionError || requests.error ? (
 				<Alert variant="destructive" data-testid="today-error-banner">
-					<AlertDescription>{actionError ?? host.poll.error}</AlertDescription>
+					<AlertDescription>
+						{actionError ?? requests.error ?? host.poll.error}
+					</AlertDescription>
 				</Alert>
 			) : null}
+
+			<RequestsTabs
+				value={view}
+				onValueChange={setView}
+				pendingCount={requests.pending.length}
+			/>
 
 			{lastUndo ? (
 				<div
@@ -240,384 +265,419 @@ export default function ReservationsTodayRoute() {
 				</div>
 			) : null}
 
-			{/* KPI Summary Cards */}
-			<div
-				className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
-				data-testid="today-kpi-cards"
-			>
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Total Covers</Trans>
-					</div>
+			{view === 'requests' ? (
+				<RequestsPanel
+					requests={requests.pending}
+					decided={requests.decided}
+					canManage={canManage}
+					busyId={requests.busyId}
+					onApprove={requests.approve}
+					onDecline={requests.decline}
+					onOpenDetail={host.openDetail}
+				/>
+			) : (
+				<>
+					{/* KPI Summary Cards */}
 					<div
-						className="mt-1 text-xl font-bold"
-						data-testid="today-kpi-total-covers"
+						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+						data-testid="today-kpi-cards"
 					>
-						{stats?.totalCovers ?? 0}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.totalParties ?? 0} <Trans>parties</Trans>
-					</div>
-				</Card>
-
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Arriving Soon</Trans>
-					</div>
-					<div
-						className="mt-1 text-xl font-bold"
-						data-testid="today-kpi-arriving-covers"
-					>
-						{stats?.arrivingSoonCovers ?? 0}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.arrivingSoonParties ?? 0} <Trans>next 30m</Trans>
-					</div>
-				</Card>
-
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Currently Seated</Trans>
-					</div>
-					<div
-						className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400"
-						data-testid="today-kpi-seated-covers"
-					>
-						{stats?.seatedCovers ?? 0}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.seatedParties ?? 0} <Trans>tables active</Trans>
-					</div>
-				</Card>
-
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Walk-Ins Today</Trans>
-					</div>
-					<div
-						className="mt-1 text-xl font-bold"
-						data-testid="today-kpi-walkin-covers"
-					>
-						{stats?.walkInCovers ?? 0}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.walkInParties ?? 0} <Trans>walk-in parties</Trans>
-					</div>
-				</Card>
-
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Completed</Trans>
-					</div>
-					<div
-						className="mt-1 text-xl font-bold"
-						data-testid="today-kpi-completed-covers"
-					>
-						{stats?.completedCovers ?? 0}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.completedParties ?? 0} <Trans>turns finished</Trans>
-					</div>
-				</Card>
-
-				<Card className="p-3">
-					<div className="text-muted-foreground text-xs">
-						<Trans>Attention Needed</Trans>
-					</div>
-					<div
-						className="mt-1 text-xl font-bold text-amber-600 dark:text-amber-400"
-						data-testid="today-kpi-attention"
-					>
-						{(stats?.unassignedCount ?? 0) +
-							(stats?.conflictCount ?? 0) +
-							(stats?.lateRiskCount ?? 0)}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{stats?.unassignedCount ?? 0} <Trans>unassigned</Trans> •{' '}
-						{stats?.conflictCount ?? 0} <Trans>conflicts</Trans>
-					</div>
-				</Card>
-			</div>
-
-			{/* 3-Column Live Shift Board */}
-			<div
-				className="grid grid-cols-1 gap-4 lg:grid-cols-3"
-				data-testid="today-board"
-			>
-				{/* Column 1: Upcoming & Arriving */}
-				<Card className="flex flex-col">
-					<CardHeader className="pb-2">
-						<CardTitle className="flex items-center justify-between text-base">
-							<span>
-								<Trans>Upcoming & Arriving</Trans>
-							</span>
-							<Badge variant="secondary">{upcomingList.length}</Badge>
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-2.5">
-						{upcomingList.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-								<Trans>No upcoming reservations for this filter.</Trans>
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
+								<Trans>Total Covers</Trans>
 							</div>
-						) : (
-							upcomingList.map((rsv) => (
-								<div
-									key={rsv.id}
-									className="bg-background hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-3 text-xs transition"
-									data-testid={`today-upcoming-card-${rsv.id}`}
-								>
-									<div className="flex items-start justify-between gap-2">
-										<button
-											type="button"
-											onClick={() => host.openDetail(rsv.id)}
-											className="text-start font-semibold hover:underline"
-											data-testid={`today-open-detail-${rsv.id}`}
-										>
-											{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
-										</button>
-										<div className="flex flex-wrap items-center gap-1">
-											{rsv.guest?.vipTier && rsv.guest.vipTier !== 'none' ? (
-												<Badge variant="default">
-													{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
-												</Badge>
-											) : null}
-											{rsv.assignedTableLabels.length > 0 ? (
-												<Badge variant="outline">
-													{rsv.assignedTableLabels.join(', ')}
-												</Badge>
-											) : (
-												<Badge variant="destructive">
-													<Trans>Unassigned</Trans>
-												</Badge>
-											)}
-											<Badge variant="secondary">
-												{label(RESERVATION_STATUS_LABELS, rsv.status)}
-											</Badge>
-										</div>
-									</div>
+							<div
+								className="mt-1 text-xl font-bold"
+								data-testid="today-kpi-total-covers"
+							>
+								{stats?.totalCovers ?? 0}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.totalParties ?? 0} <Trans>parties</Trans>
+							</div>
+						</Card>
 
-									{(rsv.lateRisk ||
-										rsv.runningLateMin ||
-										rsv.dietaryCodes.length > 0 ||
-										rsv.occasion ||
-										rsv.guestNotes) && (
-										<div className="flex flex-wrap items-center gap-1.5">
-											{rsv.lateRisk ? (
-												<Badge variant="destructive">
-													<Trans>Late Risk</Trans>
-												</Badge>
-											) : null}
-											{rsv.runningLateMin ? (
-												<Badge variant="secondary">
-													+{rsv.runningLateMin}m <Trans>late</Trans>
-												</Badge>
-											) : null}
-											{rsv.occasion ? (
-												<Badge variant="outline">
-													{label(OCCASION_LABELS, rsv.occasion)}
-												</Badge>
-											) : null}
-											{rsv.dietaryCodes.map((c) => (
-												<Badge key={c} variant="outline">
-													{label(DIETARY_LABELS, c)}
-												</Badge>
-											))}
-										</div>
-									)}
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
+								<Trans>Arriving Soon</Trans>
+							</div>
+							<div
+								className="mt-1 text-xl font-bold"
+								data-testid="today-kpi-arriving-covers"
+							>
+								{stats?.arrivingSoonCovers ?? 0}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.arrivingSoonParties ?? 0} <Trans>next 30m</Trans>
+							</div>
+						</Card>
 
-									{canManage ? (
-										<div className="flex flex-wrap items-center gap-1.5 pt-1">
-											{rsv.status !== 'arrived' ? (
-												<Button
-													type="button"
-													size="xs"
-													variant="outline"
-													disabled={actionBusyId === rsv.id}
-													onClick={() =>
-														handleQuickStatus(rsv.id, rsv.guestName, 'arrived')
-													}
-													data-testid={`today-arrive-${rsv.id}`}
-												>
-													<Trans>Arrived</Trans>
-												</Button>
-											) : null}
-											<Button
-												type="button"
-												size="xs"
-												disabled={actionBusyId === rsv.id}
-												onClick={() =>
-													handleQuickStatus(rsv.id, rsv.guestName, 'seated')
-												}
-												data-testid={`today-seat-${rsv.id}`}
-											>
-												<Icon name="check" className="size-3.5" />
-												<span>
-													<Trans>Seat</Trans>
-												</span>
-											</Button>
-											<Button
-												type="button"
-												size="xs"
-												variant="ghost"
-												disabled={actionBusyId === rsv.id}
-												onClick={() => handleQuickLate(rsv.id, 15)}
-												data-testid={`today-late-${rsv.id}`}
-											>
-												+15m
-											</Button>
-											<Button
-												type="button"
-												size="xs"
-												variant="ghost"
-												onClick={() => host.openDetail(rsv.id)}
-											>
-												<Trans>Details</Trans>
-											</Button>
-										</div>
-									) : null}
-								</div>
-							))
-						)}
-					</CardContent>
-				</Card>
-
-				{/* Column 2: Currently Seated */}
-				<Card className="flex flex-col">
-					<CardHeader className="pb-2">
-						<CardTitle className="flex items-center justify-between text-base">
-							<span>
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
 								<Trans>Currently Seated</Trans>
-							</span>
-							<Badge variant="default">{seatedList.length}</Badge>
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-2.5">
-						{seatedList.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-								<Trans>No parties currently seated.</Trans>
 							</div>
-						) : (
-							seatedList.map((rsv) => {
-								const elapsedMin = host.liveNow.elapsedMinutesSince(
-									rsv.seatedAt ?? rsv.slotStartAt,
-								)
-								const overTurn = elapsedMin > rsv.durationMin
-								return (
-									<div
-										key={rsv.id}
-										className="bg-background flex flex-col gap-2 rounded-lg border p-3 text-xs"
-										data-testid={`today-seated-card-${rsv.id}`}
-									>
-										<div className="flex items-start justify-between gap-2">
+							<div
+								className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400"
+								data-testid="today-kpi-seated-covers"
+							>
+								{stats?.seatedCovers ?? 0}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.seatedParties ?? 0} <Trans>tables active</Trans>
+							</div>
+						</Card>
+
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
+								<Trans>Walk-Ins Today</Trans>
+							</div>
+							<div
+								className="mt-1 text-xl font-bold"
+								data-testid="today-kpi-walkin-covers"
+							>
+								{stats?.walkInCovers ?? 0}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.walkInParties ?? 0} <Trans>walk-in parties</Trans>
+							</div>
+						</Card>
+
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
+								<Trans>Completed</Trans>
+							</div>
+							<div
+								className="mt-1 text-xl font-bold"
+								data-testid="today-kpi-completed-covers"
+							>
+								{stats?.completedCovers ?? 0}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.completedParties ?? 0} <Trans>turns finished</Trans>
+							</div>
+						</Card>
+
+						<Card className="p-3">
+							<div className="text-muted-foreground text-xs">
+								<Trans>Attention Needed</Trans>
+							</div>
+							<div
+								className="mt-1 text-xl font-bold text-amber-600 dark:text-amber-400"
+								data-testid="today-kpi-attention"
+							>
+								{(stats?.unassignedCount ?? 0) +
+									(stats?.conflictCount ?? 0) +
+									(stats?.lateRiskCount ?? 0)}
+							</div>
+							<div className="text-muted-foreground text-xs">
+								{stats?.unassignedCount ?? 0} <Trans>unassigned</Trans> •{' '}
+								{stats?.conflictCount ?? 0} <Trans>conflicts</Trans>
+							</div>
+						</Card>
+					</div>
+
+					{/* 3-Column Live Shift Board */}
+					<div
+						className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+						data-testid="today-board"
+					>
+						{/* Column 1: Upcoming & Arriving */}
+						<Card className="flex flex-col">
+							<CardHeader className="pb-2">
+								<CardTitle className="flex items-center justify-between text-base">
+									<span>
+										<Trans>Upcoming & Arriving</Trans>
+									</span>
+									<Badge variant="secondary">{upcomingList.length}</Badge>
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex flex-col gap-2.5">
+								{upcomingList.length === 0 ? (
+									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
+										<Trans>No upcoming reservations for this filter.</Trans>
+									</div>
+								) : (
+									upcomingList.map((rsv) => (
+										<div
+											key={rsv.id}
+											className="bg-background hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-3 text-xs transition"
+											data-testid={`today-upcoming-card-${rsv.id}`}
+										>
+											<div className="flex items-start justify-between gap-2">
+												<button
+													type="button"
+													onClick={() => host.openDetail(rsv.id)}
+													className="text-start font-semibold hover:underline"
+													data-testid={`today-open-detail-${rsv.id}`}
+												>
+													{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
+												</button>
+												<div className="flex flex-wrap items-center gap-1">
+													{rsv.guest?.vipTier &&
+													rsv.guest.vipTier !== 'none' ? (
+														<Badge variant="default">
+															{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
+														</Badge>
+													) : null}
+													{rsv.assignedTableLabels.length > 0 ? (
+														<Badge variant="outline">
+															{rsv.assignedTableLabels.join(', ')}
+														</Badge>
+													) : (
+														<Badge variant="destructive">
+															<Trans>Unassigned</Trans>
+														</Badge>
+													)}
+													<ChannelBadge
+														channel={rsv.channel}
+														testId={`today-channel-${rsv.id}`}
+													/>
+													<Badge variant="secondary">
+														{label(RESERVATION_STATUS_LABELS, rsv.status)}
+													</Badge>
+												</div>
+											</div>
+
+											{(rsv.lateRisk ||
+												rsv.runningLateMin ||
+												rsv.dietaryCodes.length > 0 ||
+												rsv.occasion ||
+												rsv.guestNotes) && (
+												<div className="flex flex-wrap items-center gap-1.5">
+													{rsv.lateRisk ? (
+														<Badge variant="destructive">
+															<Trans>Late Risk</Trans>
+														</Badge>
+													) : null}
+													{rsv.runningLateMin ? (
+														<Badge variant="secondary">
+															+{rsv.runningLateMin}m <Trans>late</Trans>
+														</Badge>
+													) : null}
+													{rsv.occasion ? (
+														<Badge variant="outline">
+															{label(OCCASION_LABELS, rsv.occasion)}
+														</Badge>
+													) : null}
+													{rsv.dietaryCodes.map((c) => (
+														<Badge key={c} variant="outline">
+															{label(DIETARY_LABELS, c)}
+														</Badge>
+													))}
+												</div>
+											)}
+
+											{canManage ? (
+												<div className="flex flex-wrap items-center gap-1.5 pt-1">
+													{rsv.status !== 'arrived' ? (
+														<Button
+															type="button"
+															size="xs"
+															variant="outline"
+															disabled={actionBusyId === rsv.id}
+															onClick={() =>
+																handleQuickStatus(
+																	rsv.id,
+																	rsv.guestName,
+																	'arrived',
+																)
+															}
+															data-testid={`today-arrive-${rsv.id}`}
+														>
+															<Trans>Arrived</Trans>
+														</Button>
+													) : null}
+													<Button
+														type="button"
+														size="xs"
+														disabled={actionBusyId === rsv.id}
+														onClick={() =>
+															handleQuickStatus(rsv.id, rsv.guestName, 'seated')
+														}
+														data-testid={`today-seat-${rsv.id}`}
+													>
+														<Icon name="check" className="size-3.5" />
+														<span>
+															<Trans>Seat</Trans>
+														</span>
+													</Button>
+													<Button
+														type="button"
+														size="xs"
+														variant="ghost"
+														disabled={actionBusyId === rsv.id}
+														onClick={() => handleQuickLate(rsv.id, 15)}
+														data-testid={`today-late-${rsv.id}`}
+													>
+														+15m
+													</Button>
+													<Button
+														type="button"
+														size="xs"
+														variant="ghost"
+														onClick={() => host.openDetail(rsv.id)}
+													>
+														<Trans>Details</Trans>
+													</Button>
+												</div>
+											) : null}
+										</div>
+									))
+								)}
+							</CardContent>
+						</Card>
+
+						{/* Column 2: Currently Seated */}
+						<Card className="flex flex-col">
+							<CardHeader className="pb-2">
+								<CardTitle className="flex items-center justify-between text-base">
+									<span>
+										<Trans>Currently Seated</Trans>
+									</span>
+									<Badge variant="default">{seatedList.length}</Badge>
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex flex-col gap-2.5">
+								{seatedList.length === 0 ? (
+									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
+										<Trans>No parties currently seated.</Trans>
+									</div>
+								) : (
+									seatedList.map((rsv) => {
+										const elapsedMin = host.liveNow.elapsedMinutesSince(
+											rsv.seatedAt ?? rsv.slotStartAt,
+										)
+										const overTurn = elapsedMin > rsv.durationMin
+										return (
+											<div
+												key={rsv.id}
+												className="bg-background flex flex-col gap-2 rounded-lg border p-3 text-xs"
+												data-testid={`today-seated-card-${rsv.id}`}
+											>
+												<div className="flex items-start justify-between gap-2">
+													<button
+														type="button"
+														onClick={() => host.openDetail(rsv.id)}
+														className="text-start font-semibold hover:underline"
+													>
+														{rsv.assignedTableLabels.join(', ') || t`Table`} •{' '}
+														{rsv.guestName} ({rsv.partySize})
+													</button>
+													<div className="flex items-center gap-1">
+														<ChannelBadge
+															channel={rsv.channel}
+															testId={`today-channel-${rsv.id}`}
+														/>
+														<Badge
+															variant={overTurn ? 'destructive' : 'secondary'}
+															data-testid={`today-elapsed-${rsv.id}`}
+														>
+															{elapsedMin}m / {rsv.durationMin}m
+														</Badge>
+														{rsv.courseStage ? (
+															<Badge variant="outline">
+																{label(COURSE_STAGE_LABELS, rsv.courseStage)}
+															</Badge>
+														) : null}
+													</div>
+												</div>
+
+												{rsv.serverLabel ? (
+													<div className="text-muted-foreground">
+														<Trans>Server:</Trans> {rsv.serverLabel}
+													</div>
+												) : null}
+
+												{canManage ? (
+													<div className="flex items-center justify-between gap-2 pt-1">
+														<Button
+															type="button"
+															size="xs"
+															variant="outline"
+															disabled={actionBusyId === rsv.id}
+															onClick={() =>
+																handleQuickStatus(
+																	rsv.id,
+																	rsv.guestName,
+																	'completed',
+																)
+															}
+															data-testid={`today-complete-${rsv.id}`}
+														>
+															<Icon name="check" className="size-3.5" />
+															<span>
+																<Trans>Complete Turn</Trans>
+															</span>
+														</Button>
+														<Button
+															type="button"
+															size="xs"
+															variant="ghost"
+															onClick={() => host.openDetail(rsv.id)}
+														>
+															<Trans>Details</Trans>
+														</Button>
+													</div>
+												) : null}
+											</div>
+										)
+									})
+								)}
+							</CardContent>
+						</Card>
+
+						{/* Column 3: Finished, Waitlist & Attention */}
+						<Card className="flex flex-col">
+							<CardHeader className="pb-2">
+								<CardTitle className="flex items-center justify-between text-base">
+									<span>
+										<Trans>Completed, No-Show & Cancelled</Trans>
+									</span>
+									<Badge variant="outline">{finishedList.length}</Badge>
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="flex flex-col gap-2.5">
+								{finishedList.length === 0 ? (
+									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
+										<Trans>No completed or cancelled reservations yet.</Trans>
+									</div>
+								) : (
+									finishedList.map((rsv) => (
+										<div
+											key={rsv.id}
+											className="bg-muted/20 flex items-center justify-between gap-2 rounded-lg border p-2.5 text-xs"
+											data-testid={`today-finished-card-${rsv.id}`}
+										>
 											<button
 												type="button"
 												onClick={() => host.openDetail(rsv.id)}
-												className="text-start font-semibold hover:underline"
+												className="text-start font-medium hover:underline"
 											>
-												{rsv.assignedTableLabels.join(', ') || t`Table`} •{' '}
-												{rsv.guestName} ({rsv.partySize})
+												{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
 											</button>
 											<div className="flex items-center gap-1">
+												<ChannelBadge
+													channel={rsv.channel}
+													testId={`today-channel-${rsv.id}`}
+												/>
 												<Badge
-													variant={overTurn ? 'destructive' : 'secondary'}
-													data-testid={`today-elapsed-${rsv.id}`}
+													variant={
+														rsv.status === 'completed'
+															? 'secondary'
+															: 'destructive'
+													}
 												>
-													{elapsedMin}m / {rsv.durationMin}m
+													{label(RESERVATION_STATUS_LABELS, rsv.status)}
 												</Badge>
-												{rsv.courseStage ? (
-													<Badge variant="outline">
-														{label(COURSE_STAGE_LABELS, rsv.courseStage)}
-													</Badge>
-												) : null}
 											</div>
 										</div>
-
-										{rsv.serverLabel ? (
-											<div className="text-muted-foreground">
-												<Trans>Server:</Trans> {rsv.serverLabel}
-											</div>
-										) : null}
-
-										{canManage ? (
-											<div className="flex items-center justify-between gap-2 pt-1">
-												<Button
-													type="button"
-													size="xs"
-													variant="outline"
-													disabled={actionBusyId === rsv.id}
-													onClick={() =>
-														handleQuickStatus(
-															rsv.id,
-															rsv.guestName,
-															'completed',
-														)
-													}
-													data-testid={`today-complete-${rsv.id}`}
-												>
-													<Icon name="check" className="size-3.5" />
-													<span>
-														<Trans>Complete Turn</Trans>
-													</span>
-												</Button>
-												<Button
-													type="button"
-													size="xs"
-													variant="ghost"
-													onClick={() => host.openDetail(rsv.id)}
-												>
-													<Trans>Details</Trans>
-												</Button>
-											</div>
-										) : null}
-									</div>
-								)
-							})
-						)}
-					</CardContent>
-				</Card>
-
-				{/* Column 3: Finished, Waitlist & Attention */}
-				<Card className="flex flex-col">
-					<CardHeader className="pb-2">
-						<CardTitle className="flex items-center justify-between text-base">
-							<span>
-								<Trans>Completed, No-Show & Cancelled</Trans>
-							</span>
-							<Badge variant="outline">{finishedList.length}</Badge>
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-2.5">
-						{finishedList.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-								<Trans>No completed or cancelled reservations yet.</Trans>
-							</div>
-						) : (
-							finishedList.map((rsv) => (
-								<div
-									key={rsv.id}
-									className="bg-muted/20 flex items-center justify-between gap-2 rounded-lg border p-2.5 text-xs"
-									data-testid={`today-finished-card-${rsv.id}`}
-								>
-									<button
-										type="button"
-										onClick={() => host.openDetail(rsv.id)}
-										className="text-start font-medium hover:underline"
-									>
-										{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
-									</button>
-									<Badge
-										variant={
-											rsv.status === 'completed' ? 'secondary' : 'destructive'
-										}
-									>
-										{label(RESERVATION_STATUS_LABELS, rsv.status)}
-									</Badge>
-								</div>
-							))
-						)}
-					</CardContent>
-				</Card>
-			</div>
+									))
+								)}
+							</CardContent>
+						</Card>
+					</div>
+				</>
+			)}
 
 			{/* Shared Host Sheets & Dialogs */}
 			<BookingSheet

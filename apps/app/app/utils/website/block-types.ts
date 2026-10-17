@@ -233,6 +233,19 @@ export const BLOCK_TYPES = {
 			showTitle: true,
 		},
 	},
+	reservation: {
+		label: 'Book a table',
+		icon: 'calendar' as IconName,
+		description: 'Let guests book a table from your site',
+		defaultConfig: {
+			heading: 'Reserve a table',
+			body: '',
+			buttonLabel: 'Book a table',
+			locationId: '',
+			defaultPartySize: 2,
+			layout: 'button',
+		},
+	},
 	footer: {
 		label: 'Footer',
 		icon: 'share-2' as IconName,
@@ -263,9 +276,25 @@ export const BLOCK_TYPE_LIST = Object.entries(BLOCK_TYPES).map(
 	}),
 )
 
-export const ADDABLE_BLOCK_TYPES = BLOCK_TYPE_LIST.filter(
-	(block) => !isLockedBlockType(block.type),
-)
+export const RESERVATION_BLOCK_LAYOUTS = ['button', 'inline'] as const
+export const MIN_RESERVATION_PARTY_SIZE = 1
+export const MAX_RESERVATION_PARTY_SIZE = 20
+
+/**
+ * The block types an editor may add. The reservation block is offered only when
+ * online booking is on (`reservations.enabled` and `reservations.online`).
+ */
+export function addableBlockTypes(options: { reservationsOnline: boolean }) {
+	return BLOCK_TYPE_LIST.filter(
+		(block) =>
+			!isLockedBlockType(block.type) &&
+			(block.type !== 'reservation' || options.reservationsOnline),
+	)
+}
+
+export const ADDABLE_BLOCK_TYPES = addableBlockTypes({
+	reservationsOnline: true,
+})
 
 export function pinLockedChromeOrder(
 	orderedIds: string[],
@@ -397,6 +426,7 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 		'items.[].ctaLabel',
 	],
 	video: ['title', 'subtitle'],
+	reservation: ['heading', 'body', 'buttonLabel'],
 	footer: [
 		'copyright',
 		'ctaLabel',

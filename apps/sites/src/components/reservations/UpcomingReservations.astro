@@ -1,0 +1,53 @@
+---
+import { msg } from '@lingui/core/macro'
+import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
+
+const i18n = Astro.locals.i18n
+const title = i18n._(msg`Upcoming reservations`)
+const loading = i18n._(msg`Loading…`)
+const book = i18n._(msg`Book a table`)
+---
+
+<ReservationLabels />
+<div
+	id="upcoming-reservations-panel"
+	class="w-full rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8"
+>
+	<div class="mb-4 space-y-1">
+		<h2 class="font-heading text-lg text-foreground">{title}</h2>
+	</div>
+	<ul id="upcoming-reservations" class="divide-y rounded-lg border" aria-busy="true">
+		<li class="px-4 py-6 text-center text-sm text-muted-foreground">{loading}</li>
+	</ul>
+	<a
+		href="/reserve"
+		data-book-link
+		class="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+	>
+		{book}
+	</a>
+</div>
+
+<script>
+	import { getAccessToken } from '~/lib/client-auth'
+	import { browserLocaleHref } from '~/lib/locale'
+	import {
+		createBrowserReservationsApi,
+		readReservationLabels,
+	} from '~/lib/reservations/client'
+	import { initUpcomingPanel } from '~/lib/reservations/upcoming'
+
+	const list = document.getElementById('upcoming-reservations')
+	const bookLink = document.querySelector<HTMLAnchorElement>('[data-book-link]')
+	if (bookLink) bookLink.href = browserLocaleHref('/reserve')
+	if (list && getAccessToken()) {
+		void initUpcomingPanel(list, {
+			api: createBrowserReservationsApi(),
+			labels: readReservationLabels(),
+			locale: document.documentElement.lang || 'en',
+			manageHref: (token) =>
+				`${browserLocaleHref('/reserve/manage')}#t=${encodeURIComponent(token)}`,
+			bookHref: browserLocaleHref('/reserve'),
+		}).finally(() => list.removeAttribute('aria-busy'))
+	}
+</script>

@@ -1,0 +1,16 @@
+---
+import { buildReservationLabels } from '~/lib/reservations/labels'
+
+/**
+ * Emits the translated interface strings for the reservation client modules.
+ * Read with `JSON.parse(document.getElementById('reservation-labels').textContent)`.
+ */
+const labels = buildReservationLabels(Astro.locals.i18n)
+---
+
+<script
+	id="reservation-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

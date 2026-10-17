@@ -1,3 +1,4 @@
+import { DEFAULT_DAY_START_MIN } from '#app/utils/reservations/business-date.ts'
 import {
 	type ReservationsConditionalResult,
 	type ReservationsScopedClient,
@@ -1006,6 +1007,17 @@ export function normalizeSectionLayout(
 	}
 }
 
+/** The feed carries the day start in `settings`; a root value wins when present. */
+function resolveDayStartMin(rootValue: unknown, settings: RsvSettingsData) {
+	const fromSettings = (settings as Record<string, unknown>).dayStartMin
+	for (const candidate of [rootValue, fromSettings]) {
+		if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+			return candidate
+		}
+	}
+	return DEFAULT_DAY_START_MIN
+}
+
 export function normalizeDayFeedResponse(
 	raw: Record<string, unknown>,
 	etagHeader?: string | null,
@@ -1523,7 +1535,7 @@ export function normalizeDayFeedResponse(
 		},
 		businessDate,
 		timezone,
-		dayStartMin: Number(raw.dayStartMin ?? 0),
+		dayStartMin: resolveDayStartMin(raw.dayStartMin, settings),
 		settings,
 		areas,
 		tables,
@@ -2500,6 +2512,47 @@ export async function transitionReservationStatus(
 				: Date.now() + 10 * 60_000,
 		moveNotices: normalizeMovesList(raw.moveNotices ?? raw.moves),
 	}
+}
+
+/** Decides a large-party request (`pending_approval`) from the public site. */
+async function decideReservationRequest(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	decision: 'approve' | 'decline',
+	input: { locationId?: string; reason?: string },
+): Promise<{ reservation: DayReservationView }> {
+	const reason = input.reason?.trim()
+	const raw = await client.request<Record<string, unknown>>(
+		`/operator/reservations/book/requests/${encodeURIComponent(reservationId)}/${decision}`,
+		{
+			method: 'POST',
+			body: {
+				...(input.locationId ? { locationId: input.locationId } : {}),
+				...(decision === 'decline' && reason ? { reason } : {}),
+			},
+		},
+	)
+	return {
+		reservation: normalizeReservationView(
+			(raw.reservation ?? raw) as Record<string, unknown>,
+		),
+	}
+}
+
+export function approveReservationRequest(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	input: { locationId?: string } = {},
+) {
+	return decideReservationRequest(client, reservationId, 'approve', input)
+}
+
+export function declineReservationRequest(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	input: { locationId?: string; reason?: string } = {},
+) {
+	return decideReservationRequest(client, reservationId, 'decline', input)
 }
 
 export async function assignReservationTable(

@@ -69,6 +69,22 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	mcp: <Trans>MCP server</Trans>,
 	runs: <Trans>Runs</Trans>,
 	status: <Trans>Status</Trans>,
+	// Reservations
+	reservations: <Trans>Reservations</Trans>,
+	today: <Trans>Today</Trans>,
+	book: <Trans>Book</Trans>,
+	timeline: <Trans>Timeline</Trans>,
+	floor: <Trans>Floor</Trans>,
+	calendar: <Trans>Calendar</Trans>,
+	overview: <Trans>Overview</Trans>,
+	waitlist: <Trans>Waitlist</Trans>,
+	guests: <Trans>Guests</Trans>,
+	experiences: <Trans>Experiences</Trans>,
+	tables: <Trans>Tables</Trans>,
+	'floor-plan': <Trans>Floor plan</Trans>,
+	sections: <Trans>Sections</Trans>,
+	services: <Trans>Services</Trans>,
+	'special-days': <Trans>Special days</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
