@@ -1,18 +1,34 @@
 import { useCallback, useState } from 'react'
 import { useWaitlist } from '#app/components/reservations/waitlist/use-waitlist.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
-import { type WaitlistEntry } from '#app/utils/reservations/waitlist-api.ts'
+import {
+	type WaitlistEntry,
+	type WaitlistSeatConflict,
+	type WaitlistSeatResolution,
+} from '#app/utils/reservations/waitlist-api.ts'
 
 export type FloorTableRef = { id: string; label: string }
 
 export type WaitlistSeatOutcome =
 	| { ok: true; entry: WaitlistEntry; table: FloorTableRef }
-	| { ok: false; message: string; code: string | null }
+	| {
+			ok: false
+			message: string
+			code: string | null
+			conflict?: WaitlistSeatConflict | null
+	  }
 
 export type OverbookPrompt = {
 	entry: WaitlistEntry
 	table: FloorTableRef
+	/** What the server found on the table and which resolutions it accepts. */
+	conflict: WaitlistSeatConflict | null
 }
+
+/** How the host settled a taken table: trade places, move the occupant, or seat on top. */
+export type SeatChoice =
+	| { resolution: Exclude<WaitlistSeatResolution, 'overbook'> }
+	| { resolution: 'overbook'; reason: string }
 
 /**
  * Waitlist state for the floor plan: the live queue plus the drag, the
@@ -45,38 +61,44 @@ export function useFloorWaitlist({
 		async (
 			entry: WaitlistEntry,
 			table: FloorTableRef,
-			overbook?: { reason: string },
+			choice?: SeatChoice,
 		): Promise<WaitlistSeatOutcome> => {
 			const result = await seat(entry, {
 				tableIds: [table.id],
-				...(overbook
-					? { overbook: true, overbookReason: overbook.reason }
-					: {}),
+				...(choice?.resolution === 'overbook'
+					? { overbook: true, overbookReason: choice.reason }
+					: choice
+						? { resolution: choice.resolution }
+						: {}),
 			})
 			return result.ok
 				? { ok: true, entry: result.value.entry, table }
-				: { ok: false, message: result.message, code: result.code }
+				: {
+						ok: false,
+						message: result.message,
+						code: result.code,
+						conflict: result.conflict ?? null,
+					}
 		},
 		[seat],
 	)
 
-	/** `null` means the prompt opened (or the party is gone) and nothing was sent. */
+	/**
+	 * Always asks the server first: it knows whether the table is really taken
+	 * and which of swap, move and overbook it will accept. `null` means the
+	 * prompt opened (or the party is gone) and nothing was seated.
+	 */
 	const dropOnTable = useCallback(
 		async (
 			entryId: string,
 			table: FloorTableRef,
-			occupied: boolean,
 		): Promise<WaitlistSeatOutcome | null> => {
 			const entry = active.find((candidate) => candidate.id === entryId)
 			if (!entry) return null
-			if (occupied) {
-				setPrompt({ entry, table })
-				return null
-			}
 			const outcome = await seatAt(entry, table)
 			if (!outcome.ok && outcome.code === 'table_occupied') {
 				clearActionError()
-				setPrompt({ entry, table })
+				setPrompt({ entry, table, conflict: outcome.conflict ?? null })
 				return null
 			}
 			return outcome
@@ -84,12 +106,15 @@ export function useFloorWaitlist({
 		[active, clearActionError, seatAt],
 	)
 
-	const resolveOverbook = useCallback(
-		async (reason: string): Promise<WaitlistSeatOutcome | null> => {
+	const resolvePrompt = useCallback(
+		async (choice: SeatChoice): Promise<WaitlistSeatOutcome | null> => {
 			if (!prompt) return null
 			const outcome = await seatAt(prompt.entry, prompt.table, {
-				reason: reason.trim() || 'Waitlist overbook',
-			})
+				...choice,
+				...(choice.resolution === 'overbook'
+					? { reason: choice.reason.trim() || 'Waitlist overbook' }
+					: {}),
+			} as SeatChoice)
 			if (outcome.ok) setPrompt(null)
 			return outcome
 		},
@@ -108,7 +133,7 @@ export function useFloorWaitlist({
 		busyUi,
 		seatAt,
 		dropOnTable,
-		resolveOverbook,
+		resolvePrompt,
 	}
 }
 

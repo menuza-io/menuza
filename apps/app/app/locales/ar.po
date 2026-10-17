@@ -434,7 +434,7 @@ msgid "{0} is locked to its current table. Unlock and move?"
 msgstr "{0} مقفل على طاولته الحالية. هل تريد إلغاء القفل والنقل؟"
 
 #. placeholder {0}: saved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:217
+#: app/components/reservations/waitlist/use-waitlist.ts:232
 msgid "{0} is now {label}."
 msgstr "{0} الآن: {label}."
 
@@ -454,7 +454,7 @@ msgid "{0} modifier groups"
 msgstr "{0} مجموعات إضافات"
 
 #. placeholder {0}: moved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:260
+#: app/components/reservations/waitlist/use-waitlist.ts:275
 msgid "{0} moved to position {position} of {total}."
 msgstr "تم نقل {0} إلى الترتيب {position} من {total}."
 
@@ -482,12 +482,12 @@ msgstr "{0} من {1} مستهدف"
 #~ msgstr "عدد غير المقروء: {0}"
 
 #. placeholder {0}: entry.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:170
+#: app/components/reservations/waitlist/use-waitlist.ts:185
 msgid "{0} was added to the waitlist."
 msgstr "تمت إضافة {0} إلى قائمة الانتظار."
 
 #. placeholder {0}: saved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:203
+#: app/components/reservations/waitlist/use-waitlist.ts:218
 msgid "{0} was already notified."
 msgstr "تم إشعار {0} مسبقًا."
 
@@ -755,8 +755,8 @@ msgid "{from} to {to}"
 msgstr "من {from} إلى {to}"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:235
-msgid "{guest} ({size}) can be seated there anyway, on top of the booking or block. A waitlist party cannot swap places with another party."
-msgstr "يمكن إجلاس {guest} ({size}) هناك على أي حال، فوق الحجز أو الحظر. لا يمكن لمجموعة من قائمة الانتظار تبديل مكانها مع مجموعة أخرى."
+#~ msgid "{guest} ({size}) can be seated there anyway, on top of the booking or block. A waitlist party cannot swap places with another party."
+#~ msgstr "يمكن إجلاس {guest} ({size}) هناك على أي حال، فوق الحجز أو الحظر. لا يمكن لمجموعة من قائمة الانتظار تبديل مكانها مع مجموعة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1101
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
@@ -2112,8 +2112,8 @@ msgstr "إضافة سؤال"
 msgid "Add a reason for the change."
 msgstr "أضف سببًا للتغيير."
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:91
-#: app/utils/reservations/waitlist-errors.ts:11
+#: app/components/reservations/waitlist/seat-dialog.tsx:93
+#: app/utils/reservations/waitlist-errors.ts:15
 msgid "Add a reason to seat this party over a booking."
 msgstr "أضف سببًا لإجلاس هذه المجموعة فوق حجز."
 
@@ -2987,7 +2987,7 @@ msgstr "المحاذاة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:238
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1747
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1736
 msgid "All"
 msgstr "الكل"
 
@@ -3009,7 +3009,7 @@ msgid "All active reservations have assigned tables."
 msgstr "جميع الحجوزات النشطة لديها طاولات معينة."
 
 #: app/components/reservations/host-subnav.tsx:287
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1034
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1030
 msgid "All areas"
 msgstr "جميع المناطق"
 
@@ -3696,8 +3696,8 @@ msgid "Arrive"
 msgstr "وصل"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:240
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1106
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1749
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1102
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1738
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:493
 #: app/utils/reservations/labels.ts:17
 msgid "Arrived"
@@ -3817,7 +3817,7 @@ msgid "Assign Table"
 msgstr "تعيين طاولة"
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1828
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1817
 msgid "Assign to {0}"
 msgstr "تعيين إلى {0}"
 
@@ -3944,7 +3944,7 @@ msgstr "تلقائي / أي طاولة"
 msgid "Auto clock-out"
 msgstr "انصراف تلقائي"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:156
+#: app/components/reservations/waitlist/seat-dialog.tsx:168
 #: app/components/reservations/walk-in-dialog.tsx:194
 msgid "Auto-assign best open table"
 msgstr "تعيين أفضل طاولة متاحة تلقائياً"
@@ -4055,7 +4055,7 @@ msgstr "حالة التوفر"
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:347
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1098
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1094
 #: app/utils/reservations/labels.ts:119
 #: app/utils/reservations/labels.ts:120
 msgid "Available"
@@ -4337,7 +4337,7 @@ msgstr "تمت إزالة الحظر."
 msgid "Block start time must be earlier than end time."
 msgstr "يجب أن يكون وقت بدء الحظر قبل وقت الانتهاء."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1681
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1677
 msgid "Block table for service"
 msgstr "حظر الطاولة للخدمة"
 
@@ -4346,13 +4346,13 @@ msgid "Block types"
 msgstr "أنواع الكتل"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:355
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1126
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1122
 #: app/utils/reservations/labels.ts:131
 msgid "Blocked"
 msgstr "محظورة"
 
 #. placeholder {0}: tableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:764
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:760
 msgid "Blocked table {0} for the rest of the service."
 msgstr "تم حظر الطاولة {0} لبقية فترة الخدمة."
 
@@ -4413,6 +4413,22 @@ msgstr "متاح للحجز عبر الإنترنت"
 #: app/utils/reservations/labels.ts:15
 msgid "Booked"
 msgstr "محجوز"
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:331
+#~ msgid "Booked by {name} ({size}){0}."
+#~ msgstr ""
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:333
+msgid "Booked by {name} ({size}){codeSuffix}."
+msgstr "محجوزة باسم {name} ({size}){codeSuffix}."
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:338
+#~ msgid "Booked by a party of {size}{0}."
+#~ msgstr ""
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:340
+msgid "Booked by a party of {size}{codeSuffix}."
+msgstr "محجوزة لمجموعة من {size}{codeSuffix}."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4231
 msgid "Booking"
@@ -4946,8 +4962,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/reservations/requests-panel.tsx:176
 #: app/components/reservations/waitlist/add-party-dialog.tsx:199
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:136
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:249
-#: app/components/reservations/waitlist/seat-dialog.tsx:217
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:263
+#: app/components/reservations/waitlist/seat-dialog.tsx:257
 #: app/components/reservations/walk-in-dialog.tsx:314
 #: app/components/roles/tenant-role-access-manager.tsx:954
 #: app/components/roles/tenant-role-access-manager.tsx:1477
@@ -5004,7 +5020,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1084
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:959
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:955
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:794
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:858
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:680
@@ -5662,7 +5678,7 @@ msgstr "اختر نقطة بداية"
 msgid "Choose a subject and timeframe to see a live visualization."
 msgstr "اختر موضوعًا وإطارًا زمنيًا لرؤية عرض مرئي مباشر."
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:186
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:187
 msgid "Choose a table for {guest}"
 msgstr "اختيار طاولة لـ {guest}"
 
@@ -5741,9 +5757,13 @@ msgstr "اختر طريقة احتساب الساعات الإضافية لمن 
 #. placeholder {1}: occupiedDropPrompt.draggedReservation.partySize
 #. placeholder {2}: occupiedDropPrompt.draggedReservation.hhmm
 #. placeholder {3}: occupiedDropPrompt.targetTable.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:943
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:939
 msgid "Choose how to place {0} ({1}p, {2}) onto {3}:"
 msgstr "اختر كيفية وضع {0} ({1} أشخاص، {2}) على {3}:"
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:251
+msgid "Choose how to seat {guest} ({size}) at table {tableLabel}."
+msgstr "اختر كيف تُجلس {guest} ({size}) على الطاولة {tableLabel}."
 
 #: app/components/phone-agent/test-call-panel.tsx:518
 msgid "Choose one"
@@ -6952,7 +6972,7 @@ msgstr "الزوايا"
 msgid "Costs are estimates from pay rates and scheduled hours. They are not payroll."
 msgstr "التكاليف تقديرات مبنية على معدلات الأجر والساعات المجدولة، وليست كشف رواتب."
 
-#: app/components/reservations/waitlist/use-waitlist.ts:39
+#: app/components/reservations/waitlist/use-waitlist.ts:48
 msgid "Could not add this party to the waitlist."
 msgstr "تعذرت إضافة هذه المجموعة إلى قائمة الانتظار."
 
@@ -6965,7 +6985,7 @@ msgstr "تعذّرت الموافقة على الطلب."
 msgid "Could not be sent"
 msgstr "تعذّر الإرسال"
 
-#: app/components/reservations/waitlist/use-waitlist.ts:42
+#: app/components/reservations/waitlist/use-waitlist.ts:51
 msgid "Could not change the status."
 msgstr "تعذر تغيير الحالة."
 
@@ -7032,11 +7052,11 @@ msgstr "تعذر نشر ردك."
 msgid "Could not reach the time clock. Check the connection and try again."
 msgstr "تعذّر الوصول إلى ساعة الدوام. تحقق من الاتصال وحاول مرة أخرى."
 
-#: app/components/reservations/waitlist/use-waitlist.ts:40
+#: app/components/reservations/waitlist/use-waitlist.ts:49
 msgid "Could not save the changes."
 msgstr "تعذر حفظ التغييرات."
 
-#: app/components/reservations/waitlist/use-waitlist.ts:44
+#: app/components/reservations/waitlist/use-waitlist.ts:53
 msgid "Could not save the new order. The list has been reloaded."
 msgstr "تعذر حفظ الترتيب الجديد. أُعيد تحميل القائمة."
 
@@ -7044,7 +7064,7 @@ msgstr "تعذر حفظ الترتيب الجديد. أُعيد تحميل ال�
 msgid "Could not save the waitlist settings."
 msgstr "تعذر حفظ إعدادات قائمة الانتظار."
 
-#: app/components/reservations/waitlist/use-waitlist.ts:43
+#: app/components/reservations/waitlist/use-waitlist.ts:52
 msgid "Could not seat this party."
 msgstr "تعذر إجلاس هذه المجموعة."
 
@@ -7052,7 +7072,7 @@ msgstr "تعذر إجلاس هذه المجموعة."
 msgid "Could not send message."
 msgstr "تعذّر إرسال الرسالة."
 
-#: app/components/reservations/waitlist/use-waitlist.ts:41
+#: app/components/reservations/waitlist/use-waitlist.ts:50
 msgid "Could not send the table-ready message."
 msgstr "تعذر إرسال رسالة جاهزية الطاولة."
 
@@ -7161,7 +7181,7 @@ msgstr "تم تغيير المرحلة"
 msgid "Course Progression"
 msgstr "تقدم الأطباق"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1555
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1551
 msgid "Course stage:"
 msgstr "مرحلة الطبق:"
 
@@ -7187,8 +7207,8 @@ msgstr "تقارن التغطية الطلبات التي تصلك عادة كل
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:272
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:466
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1194
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1473
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1190
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1469
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:489
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:540
 msgid "covers"
@@ -8627,7 +8647,7 @@ msgstr "الحلويات"
 msgid "Dessert / check"
 msgstr "الحلويات / الحساب"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1114
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1110
 msgid "Dessert / Check"
 msgstr "الحلويات / الفاتورة"
 
@@ -8643,11 +8663,11 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها."
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيتم إزالة جميع بياناتك بشكل دائم من خوادمنا."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1639
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1635
 msgid "Detail"
 msgstr "التفاصيل"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1525
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1521
 msgid "Detail sheet"
 msgstr "لوحة التفاصيل"
 
@@ -8886,7 +8906,7 @@ msgstr "الأطباق والمشروبات في هذا التصنيف."
 #: app/components/feature-updates.tsx:134
 #: app/components/feature-updates.tsx:214
 #: app/components/reservations/waitlist/waitlist-screen.tsx:150
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:913
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:909
 msgid "Dismiss"
 msgstr "تجاهل"
 
@@ -9150,11 +9170,11 @@ msgstr "اسحب وأعد ترتيب تصنيفات وعناصر القائمة 
 msgid "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 msgstr "اسحب الأشرطة لإعادة تعيين الطاولة أو تغيير الوقت بفترات 15 دقيقة. حدد شريطاً واضغط Space/Enter للنقل بلوحة المفاتيح."
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:85
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:86
 msgid "Drag onto a table to seat"
 msgstr "اسحب إلى طاولة لإجلاس المجموعة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1741
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1730
 msgid "Drag onto table to seat/assign"
 msgstr "اسحب إلى الطاولة للإجلاس أو التعيين"
 
@@ -9989,7 +10009,7 @@ msgstr "أدخل مبلغ الأجر، أو اختر عدم إظهاره."
 msgid "Enter a valid email address."
 msgstr "أدخل عنوان بريد إلكتروني صالحًا."
 
-#: app/utils/reservations/waitlist-errors.ts:17
+#: app/utils/reservations/waitlist-errors.ts:21
 msgid "Enter a valid phone number, including the country code."
 msgstr "أدخل رقم هاتف صحيحًا يتضمن رمز الدولة."
 
@@ -10610,7 +10630,7 @@ msgstr "فشل جلب معلومات المستخدم الحالي"
 msgid "Failed to find original journey"
 msgstr "فشل العثور على الرحلة الأصلية"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:726
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:722
 msgid "Failed to finish reservation."
 msgstr "فشل إنهاء الحجز."
 
@@ -10742,7 +10762,7 @@ msgstr "تعذّر حفظ الخيار. يرجى التحقق من الحقول 
 msgid "Failed to save reservation settings."
 msgstr "فشل في حفظ إعدادات الحجوزات."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:804
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:800
 msgid "Failed to save section server assignments."
 msgstr "فشل حفظ تعيينات نادلين الأقسام."
 
@@ -10758,7 +10778,7 @@ msgstr "فشل الحفظ:"
 msgid "Failed to search for users"
 msgstr "فشل البحث عن المستخدمين"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:680
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:676
 msgid "Failed to seat party."
 msgstr "فشل إجلاس المجموعة."
 
@@ -10779,7 +10799,7 @@ msgid "Failed to update contact status."
 msgstr "فشل تحديث حالة التواصل."
 
 #: app/components/reservations/detail-sheet.tsx:316
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:706
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:702
 msgid "Failed to update course stage."
 msgstr "فشل تحديث مرحلة الطبق."
 
@@ -10807,7 +10827,7 @@ msgstr "فشل في تحديث فترة الخدمة."
 msgid "Failed to update special day."
 msgstr "فشل في تحديث اليوم الخاص."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:770
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:766
 msgid "Failed to update table block."
 msgstr "فشل تحديث حظر الطاولة."
 
@@ -10957,7 +10977,7 @@ msgstr "البحث عن الصور وإعادة استخدامها عبر الم
 msgid "Find potential issues"
 msgstr "العثور على المشكلات المحتملة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1596
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1592
 msgid "Finish & clear table"
 msgstr "إنهاء وإخلاء الطاولة"
 
@@ -10974,7 +10994,7 @@ msgid "Finishing"
 msgstr "على وشك الانتهاء"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:390
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1118
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1114
 msgid "Finishing (<15m)"
 msgstr "على وشك الانتهاء (<15د)"
 
@@ -11974,7 +11994,7 @@ msgstr "إخفاء الردود ({replyCount})"
 msgid "High"
 msgstr "عالية"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1070
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1066
 msgid "High contrast"
 msgstr "تباين عالٍ"
 
@@ -13607,7 +13627,7 @@ msgstr "يستمع"
 msgid "Live"
 msgstr "مباشر"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1082
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1078
 msgid "Live 5s ETag"
 msgstr "مباشر كل 5 ثوانٍ (ETag)"
 
@@ -13806,7 +13826,7 @@ msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الص
 msgid "Loading submissions"
 msgstr "جارٍ تحميل الردود"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:174
+#: app/components/reservations/waitlist/seat-dialog.tsx:186
 msgid "Loading tables..."
 msgstr "جارٍ تحميل الطاولات..."
 
@@ -13830,7 +13850,7 @@ msgstr "جارٍ تحميل بطاقة الدوام"
 msgid "Loading the time clock"
 msgstr "جارٍ تحميل ساعة الدوام"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:106
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:107
 #: app/components/reservations/waitlist/waitlist-screen.tsx:168
 msgid "Loading the waitlist..."
 msgstr "جارٍ تحميل قائمة الانتظار..."
@@ -14427,7 +14447,7 @@ msgid "Marked {0} as {lastUndoStatusLabel}. Undo available for 60s."
 msgstr "تم تحديد {0} كـ {lastUndoStatusLabel}. يمكنك التراجع خلال 60 ثانية."
 
 #. placeholder {0}: rsv.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:722
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:718
 msgid "Marked {0} as finished."
 msgstr "تم تحديد {0} كمكتمل."
 
@@ -15068,6 +15088,11 @@ msgstr "نقل المهمة {position} للأسفل"
 msgid "Move task {position} up"
 msgstr "نقل المهمة {position} للأعلى"
 
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:290
+#: app/components/reservations/waitlist/seat-dialog.tsx:219
+msgid "Move the booking to a free table"
+msgstr "انقل الحجز إلى طاولة شاغرة"
+
 #: app/components/hiring/applicant-board.tsx:328
 msgid "Move to"
 msgstr "نقل إلى"
@@ -15558,7 +15583,7 @@ msgstr "الوردية القادمة: {upcomingDay}، <0>{upcomingRange}</0>"
 msgid "Next week"
 msgstr "الأسبوع التالي"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1605
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1601
 msgid "Next:"
 msgstr "التالي:"
 
@@ -16222,6 +16247,10 @@ msgstr "لا توجد مجموعات إضافات أخرى متاحة للتضم
 #~ msgid "No other modifier options found in this organization."
 #~ msgstr "لم يتم العثور على خيارات تعديل أخرى في هذه المنشأة."
 
+#: app/utils/reservations/waitlist-errors.ts:12
+msgid "No other table is free for the party on that table. Swap, pick another table, or seat over the booking."
+msgstr "لا توجد طاولة أخرى شاغرة للمجموعة الجالسة على تلك الطاولة. بدّل، أو اختر طاولة أخرى، أو أجلسهم فوق الحجز."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1195
 msgid "No pacing rules configured."
 msgstr "لم يتم إعداد قواعد تدفق."
@@ -16243,7 +16272,7 @@ msgstr "لا توجد معاملات مطلوبة"
 msgid "No parties currently seated."
 msgstr "لا توجد مجموعات جالسة حالياً."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1771
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1760
 msgid "No parties match this filter."
 msgstr "لا توجد مجموعات تطابق هذا الفلتر."
 
@@ -16312,7 +16341,7 @@ msgstr "بلا تفضيل"
 msgid "No pronunciations yet."
 msgstr "لا توجد طرق نطق بعد."
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:162
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:163
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:75
 #: app/components/reservations/waitlist/waitlist-queue.tsx:147
 msgid "No quote"
@@ -16403,7 +16432,7 @@ msgstr "لا توجد ملاحظات محفوظة لـ {activeServiceName} بع�
 msgid "No screening questions"
 msgstr "لا توجد أسئلة فرز"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1156
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1152
 msgid "No section layout configured for this location yet. Configure sections under Settings → Sections."
 msgstr "لم يتم إعداد تخطيط أقسام لهذا الفرع بعد. قم بإعداد الأقسام ضمن الإعدادات ← الأقسام."
 
@@ -16468,7 +16497,7 @@ msgstr "لم يتم إعداد مجموعات طاولات بعد."
 msgid "No table is assigned"
 msgstr "لم يتم تعيين طاولة"
 
-#: app/utils/reservations/waitlist-errors.ts:12
+#: app/utils/reservations/waitlist-errors.ts:16
 msgid "No table is free for this party right now. Pick a table yourself or seat the party over a booking."
 msgstr "لا توجد طاولة متاحة لهذه المجموعة الآن. اختر طاولة بنفسك أو أجلس المجموعة فوق حجز."
 
@@ -16640,7 +16669,7 @@ msgstr "لا أحد مسجّل حضوره الآن."
 msgid "Nobody is scheduled this day yet."
 msgstr "لم تتم جدولة أحد في هذا اليوم بعد."
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:113
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:114
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:47
 #: app/components/reservations/waitlist/waitlist-queue.tsx:467
 msgid "Nobody is waiting right now."
@@ -17059,7 +17088,7 @@ msgid "Notified"
 msgstr "تم الإشعار"
 
 #. placeholder {0}: saved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:202
+#: app/components/reservations/waitlist/use-waitlist.ts:217
 msgid "Notified {0}. They have {minutes} min to answer."
 msgstr "تم إشعار {0}. أمامهم {minutes} دقيقة للرد."
 
@@ -18167,9 +18196,9 @@ msgstr "فوق الهدف"
 msgid "over the whole range"
 msgstr "على الفترة كاملة"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:256
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:257
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:992
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:298
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:299
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:988
 msgid "Overbook reason (optional)"
 msgstr "سبب الحجز الزائد (اختياري)"
 
@@ -18177,9 +18206,13 @@ msgstr "سبب الحجز الزائد (اختياري)"
 msgid "Overbook reason..."
 msgstr "سبب الحجز الزائد..."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1005
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1001
 msgid "Overbook table"
 msgstr "حجز زائد على الطاولة"
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:311
+msgid "Overbook: seat anyway"
+msgstr "حجز زائد: أجلسهم على أي حال"
 
 #. placeholder {0}: draggedReservation.guestName
 #. placeholder {1}: targetTable.label
@@ -18222,7 +18255,7 @@ msgstr "تجاوز ما إذا كانت مناطق طعام أو طاولات أ
 #: app/components/staff/timesheets/payroll-summary.tsx:170
 #: app/components/staff/timesheets/timesheet-table.tsx:224
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:386
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1122
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1118
 #: app/utils/reservations/labels.ts:129
 msgid "Overtime"
 msgstr "الساعات الإضافية"
@@ -18469,7 +18502,7 @@ msgid "Parties"
 msgstr "المجموعات"
 
 #. placeholder {0}: sideReservations.length
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1738
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1727
 msgid "Parties ({0})"
 msgstr "المجموعات ({0})"
 
@@ -19022,7 +19055,7 @@ msgstr "اختر موقعًا لعرض قائمة الانتظار الخاصة 
 msgid "Pick a starting point, then adjust anything below."
 msgstr "اختر نقطة بداية، ثم عدّل أي شيء أدناه."
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:132
+#: app/components/reservations/waitlist/seat-dialog.tsx:144
 msgid "Pick a table, or let the system choose the best open one."
 msgstr "اختر طاولة، أو دع النظام يختار أفضل طاولة متاحة."
 
@@ -19403,7 +19436,7 @@ msgstr "السياسات"
 msgid "Policy"
 msgstr "السياسة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1080
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1076
 msgid "Polling paused"
 msgstr "التحديث المباشر متوقف مؤقتاً"
 
@@ -20020,7 +20053,7 @@ msgstr "اذكر وقت الانتظار المتوقع ثم أضف المجمو
 msgid "Quote this party {quotedText}. They would be number {position} in line."
 msgstr "أخبر هذه المجموعة بانتظار {quotedText}. سيكون ترتيبهم رقم {position} في الطابور."
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:160
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:161
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:77
 msgid "Quoted {quoted}"
 msgstr "الوقت المذكور {quoted}"
@@ -20158,7 +20191,7 @@ msgstr "جاهز"
 #~ msgid "Ready to call"
 #~ msgstr "جاهز للاتصال"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:201
+#: app/components/reservations/waitlist/seat-dialog.tsx:241
 #: app/components/staff/positions-tab.tsx:840
 #: app/components/staff/timesheets/reason-field.tsx:36
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:966
@@ -20336,7 +20369,7 @@ msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
 msgid "Referrer"
 msgstr "المُحيل"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:985
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:981
 msgid "Reflow later parties"
 msgstr "إعادة توزيع الحجوزات اللاحقة"
 
@@ -21097,7 +21130,7 @@ msgid "Reserved {0}"
 msgstr "محجوزة {0}"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:418
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1102
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1098
 msgid "Reserved ≤30m"
 msgstr "محجوزة ≤30د"
 
@@ -21856,7 +21889,7 @@ msgstr "حفظ طرق النطق والمصطلحات الرئيسية"
 msgid "Save rate"
 msgstr "حفظ الأجر"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1148
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1144
 msgid "Save section servers"
 msgstr "حفظ نادلين الأقسام"
 
@@ -21918,7 +21951,7 @@ msgid "Saved"
 msgstr "تم الحفظ"
 
 #. placeholder {0}: saved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:188
+#: app/components/reservations/waitlist/use-waitlist.ts:203
 msgid "Saved changes for {0}."
 msgstr "تم حفظ التغييرات على {0}."
 
@@ -21939,7 +21972,7 @@ msgstr "التقارير المحفوظة"
 msgid "Saved Section Layouts"
 msgstr "تخطيطات الأقسام المحفوظة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:798
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:794
 msgid "Saved section server assignments for this service."
 msgstr "تم حفظ تعيينات نادلين الأقسام لهذه الخدمة."
 
@@ -22376,41 +22409,41 @@ msgstr "موسمي"
 
 #: app/components/reservations/waitlist/waitlist-queue.tsx:251
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:648
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1625
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1621
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:507
 msgid "Seat"
 msgstr "إجلاس"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:127
+#: app/components/reservations/waitlist/seat-dialog.tsx:139
 msgid "Seat {guest} ({partySize})"
 msgstr "إجلاس {guest} ({partySize})"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:173
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:174
 msgid "Seat {guest} at {tableLabel}"
 msgstr "إجلاس {guest} على {tableLabel}"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:269
-msgid "Seat anyway"
-msgstr "إجلاس على أي حال"
+#~ msgid "Seat anyway"
+#~ msgstr "إجلاس على أي حال"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1545
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1541
 msgid "Seat arrived party now"
 msgstr "إجلاس المجموعة الواصلة الآن"
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1827
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1816
 msgid "Seat at {0}"
 msgstr "إجلاس على {0}"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:177
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:178
 msgid "Seat at {tableLabel}"
 msgstr "إجلاس على {tableLabel}"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:190
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:191
 msgid "Seat at..."
 msgstr "إجلاس على..."
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:229
+#: app/components/reservations/waitlist/seat-dialog.tsx:269
 msgid "Seat now"
 msgstr "إجلاس الآن"
 
@@ -22418,12 +22451,12 @@ msgstr "إجلاس الآن"
 msgid "Seat Party"
 msgstr "إجلاس المجموعة"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:193
+#: app/components/reservations/waitlist/seat-dialog.tsx:233
 msgid "Seat this party even though the table is booked or in use."
 msgstr "أجلس هذه المجموعة رغم أن الطاولة محجوزة أو مستخدمة."
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1660
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1656
 msgid "Seat walk-in at {0}"
 msgstr "إجلاس ضيف مباشر على {0}"
 
@@ -22438,8 +22471,8 @@ msgstr "إجلاس مجموعة حضور مباشر"
 #: app/components/reservations/detail-sheet.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:241
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:407
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1110
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1751
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1106
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1740
 #: app/utils/reservations/labels.ts:19
 #: app/utils/reservations/labels.ts:28
 #: app/utils/reservations/labels.ts:123
@@ -22455,8 +22488,8 @@ msgstr "تم إجلاس {0} على {1}."
 
 #. placeholder {0}: rsv.guestName
 #. placeholder {0}: saved.displayName
-#: app/components/reservations/waitlist/use-waitlist.ts:233
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:677
+#: app/components/reservations/waitlist/use-waitlist.ts:248
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:673
 msgid "Seated {0}."
 msgstr "تم إجلاس {0}."
 
@@ -22464,7 +22497,7 @@ msgstr "تم إجلاس {0}."
 msgid "Seated {guest} at {tableLabel} from the waitlist."
 msgstr "تم إجلاس {guest} على {tableLabel} من قائمة الانتظار."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1906
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1895
 msgid "Seated {guest} from the waitlist."
 msgstr "تم إجلاس {guest} من قائمة الانتظار."
 
@@ -22485,7 +22518,7 @@ msgstr "تفضيل الجلوس:"
 msgid "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 msgstr "يجب أن تحقق أوقات الجلوس الشرط: أول جلوس <= آخر جلوس <= نهاية الخدمة."
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:227
+#: app/components/reservations/waitlist/seat-dialog.tsx:267
 #: app/components/reservations/walk-in-dialog.tsx:324
 msgid "Seating..."
 msgstr "جارٍ الإجلاس..."
@@ -22554,11 +22587,11 @@ msgstr "تم تحديث تخطيط الأقسام \"{0}\"."
 msgid "Section name (e.g. Section A)"
 msgstr "اسم القسم (مثال: القسم أ)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1059
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1055
 msgid "Section overlay"
 msgstr "طبقة الأقسام"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1136
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1132
 msgid "Section Overlay & Server Assignments"
 msgstr "طبقة الأقسام وتعيينات النادلين"
 
@@ -23149,7 +23182,7 @@ msgstr "اسم النادل / القسم"
 msgid "Server name"
 msgstr "اسم النادل"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1202
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1198
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:593
 msgid "Server:"
 msgstr "النادل:"
@@ -23799,7 +23832,7 @@ msgstr "متجر الموقع"
 msgid "Size"
 msgstr "الحجم"
 
-#: app/components/reservations/waitlist/seat-dialog.tsx:167
+#: app/components/reservations/waitlist/seat-dialog.tsx:179
 msgid "Size mismatch"
 msgstr "السعة غير مناسبة"
 
@@ -24417,7 +24450,7 @@ msgstr "تم التراجع عن تغيير الحالة"
 msgid "Status changed to {statusLabel}. You can undo within 60 seconds."
 msgstr "تم تغيير الحالة إلى {statusLabel}. يمكنك التراجع خلال 60 ثانية."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1094
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1090
 msgid "Status legend:"
 msgstr "دليل الحالات:"
 
@@ -24700,7 +24733,7 @@ msgstr "تبديل {when} مع {who}"
 msgid "Swap it for one of theirs"
 msgstr "بدّلها بإحدى ورديات الزميل"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:973
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:969
 msgid "Swap tables"
 msgstr "تبديل الطاولات"
 
@@ -24711,6 +24744,11 @@ msgstr "تبديل المتغير"
 #: app/components/staff/schedule/time-off-page.tsx:385
 msgid "Swap, cover and drop requests"
 msgstr "طلبات التبديل والتغطية والإسقاط"
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:277
+#: app/components/reservations/waitlist/seat-dialog.tsx:207
+msgid "Swap: unseat the booking"
+msgstr "تبديل: إخلاء الحجز"
 
 #. placeholder {0}: draggedReservation.guestName
 #. placeholder {1}: occupantReservation.guestName
@@ -24756,7 +24794,7 @@ msgid "System theme"
 msgstr "نظام السمة"
 
 #: app/components/reservations/detail-sheet.tsx:856
-#: app/components/reservations/waitlist/seat-dialog.tsx:147
+#: app/components/reservations/waitlist/seat-dialog.tsx:159
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1323
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:898
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1043
@@ -24768,7 +24806,7 @@ msgstr "طاولة"
 #. placeholder {0}: occupiedDropPrompt.targetTable.label
 #. placeholder {1}: occupiedDropPrompt.occupantReservation.guestName
 #. placeholder {2}: occupiedDropPrompt.occupantReservation.partySize
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:936
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:932
 msgid "Table {0} is occupied by {1} ({2}p)"
 msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 
@@ -24784,11 +24822,11 @@ msgstr "تم إنشاء الطاولة {createdTableLabel}."
 msgid "Table {nextTableLabel} ({nextTableMin}-{nextTableMax}) for {movedGuestName}"
 msgstr "الطاولة {nextTableLabel} ({nextTableMin}-{nextTableMax}) لـ {movedGuestName}"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:225
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:232
 msgid "Table {tableLabel} is not free"
 msgstr "الطاولة {tableLabel} غير متاحة"
 
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:232
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:239
 msgid "Table {tableLabel} is not free for this party"
 msgstr "الطاولة {tableLabel} غير متاحة لهذه المجموعة"
 
@@ -24881,7 +24919,7 @@ msgstr "تم فتح قفل الطاولة"
 msgid "Table/area block created."
 msgstr "تم إنشاء حظر الطاولة/المنطقة."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1193
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1189
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:980
 msgid "tables"
 msgstr "طاولات"
@@ -25520,7 +25558,7 @@ msgstr "هذا التقرير غير متاح في هذه المؤسسة."
 msgid "That role is not available. Choose another."
 msgstr "هذا الدور غير متاح. اختر دورًا آخر."
 
-#: app/utils/reservations/waitlist-errors.ts:18
+#: app/utils/reservations/waitlist-errors.ts:22
 msgid "That seating area is not available at this location."
 msgstr "منطقة الجلوس هذه غير متاحة في هذا الموقع."
 
@@ -25541,9 +25579,13 @@ msgstr "لم تعد هذه الوردية في جدولك. حدّث الصفحة
 msgid "That start time has not happened yet."
 msgstr "وقت البدء هذا لم يحدث بعد."
 
-#: app/utils/reservations/waitlist-errors.ts:10
+#: app/utils/reservations/waitlist-errors.ts:14
 msgid "That table cannot be used here. Pick another table."
 msgstr "لا يمكن استخدام هذه الطاولة هنا. اختر طاولة أخرى."
+
+#: app/utils/reservations/waitlist-errors.ts:10
+msgid "That table is blocked or held for this party's time. Pick another table or seat the party over it."
+msgstr "هذه الطاولة محجوبة أو محتجزة في وقت هذه المجموعة. اختر طاولة أخرى أو أجلس المجموعة فوقها."
 
 #: app/utils/reservations/waitlist-errors.ts:9
 msgid "That table is taken for this party's time. Pick another table or seat the party over the booking."
@@ -25933,6 +25975,14 @@ msgstr "يجب أن يكون الحد الأقصى للمجموعات عددًا
 msgid "The party no longer fits the assigned table"
 msgstr "لم تعد المجموعة تناسب الطاولة المعيّنة"
 
+#: app/utils/reservations/waitlist-errors.ts:13
+msgid "The party on that table cannot move onto the table being seated."
+msgstr "لا يمكن نقل المجموعة الجالسة على تلك الطاولة إلى الطاولة التي يتم الإجلاس عليها."
+
+#: app/utils/reservations/waitlist-errors.ts:11
+msgid "The party on that table has already arrived, so you cannot swap with them. Move them, pick another table, or seat over the booking."
+msgstr "وصلت المجموعة على تلك الطاولة بالفعل، فلا يمكن التبديل معها. انقلها، أو اختر طاولة أخرى، أو أجلس فوق الحجز."
+
 #: app/components/settings/password-form.tsx:33
 msgid "The passwords must match"
 msgstr "يجب أن تتطابق كلمات المرور"
@@ -26024,6 +26074,18 @@ msgstr "سجّل النظام انصرافه. تأكد أن الوقت صحيح.
 #: app/utils/reservations/setup-api.ts:153
 msgid "The table is blocked during this booking"
 msgstr "الطاولة محظورة أثناء هذا الحجز"
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:329
+msgid "The table is blocked."
+msgstr "الطاولة محجوبة."
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:346
+msgid "The table is booked."
+msgstr "الطاولة محجوزة."
+
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:330
+msgid "The table is on hold."
+msgstr "الطاولة محتجزة."
 
 #: app/components/staff/timesheets/issue-copy.ts:35
 msgid "The tablet clock was off when this was punched. Check the times."
@@ -26554,7 +26616,7 @@ msgstr "هذه الصفحة لك وحدك. لا تشارك الرابط الذي
 msgid "This page opens from the link in your schedule email. Find the latest email from your manager and tap the button in it."
 msgstr "تُفتح هذه الصفحة من الرابط في رسالة الجدول. ابحث عن آخر رسالة من مديرك واضغط الزر فيها."
 
-#: app/utils/reservations/waitlist-errors.ts:13
+#: app/utils/reservations/waitlist-errors.ts:17
 msgid "This party is no longer on the waitlist. The list has been reloaded."
 msgstr "لم تعد هذه المجموعة في قائمة الانتظار. أُعيد تحميل القائمة."
 
@@ -27774,9 +27836,9 @@ msgstr "غير معين"
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:243
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:522
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1214
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1748
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1809
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1210
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1737
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1798
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:596
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:666
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:336
@@ -27845,12 +27907,12 @@ msgstr "غير متوفر حتى {formattedUntil}"
 msgid "Unavailable until <0>{0}</0>"
 msgstr "غير متوفر حتى <0>{0}</0>"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1679
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1675
 msgid "Unblock table"
 msgstr "إلغاء حظر الطاولة"
 
 #. placeholder {0}: tableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:742
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:738
 msgid "Unblocked table {0}."
 msgstr "تم إلغاء حظر الطاولة {0}."
 
@@ -28086,7 +28148,7 @@ msgstr "حتى 5 عناوين."
 
 #: app/components/staff/schedule/time-off-page.tsx:182
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:239
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1750
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1739
 msgid "Upcoming"
 msgstr "القادمة"
 
@@ -28181,7 +28243,7 @@ msgstr "تم تحديث {updatedGuestName} على {tblLabel} إلى {updatedTime
 #~ msgid "Updated course stage to {courseStage}."
 #~ msgstr "تم تحديث مرحلة الطبق إلى {courseStage}."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:702
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:698
 msgid "Updated course stage to {stageLabel}."
 msgstr "تم تحديث مرحلة الوجبة إلى {stageLabel}."
 
@@ -28944,7 +29006,7 @@ msgid "Waiting to send"
 msgstr "بانتظار الإرسال"
 
 #: app/components/app-sidebar.tsx:496
-#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:78
+#: app/components/reservations/waitlist/floor-waitlist-panel.tsx:79
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:34
 #: app/components/reservations/waitlist/waitlist-screen.tsx:64
 #: app/components/reservations/waitlist/waitlist-settings.tsx:256

@@ -18,6 +18,8 @@ import {
 	type UpdateWaitlistEntryPatch,
 	type WaitlistEntry,
 	type WaitlistListing,
+	type WaitlistSeatConflict,
+	waitlistSeatConflictOf,
 	type WaitlistStatusTarget,
 	waitlistListingSignature,
 } from '#app/utils/reservations/waitlist-api.ts'
@@ -34,7 +36,13 @@ import {
 
 export type WaitlistActionResult<T = undefined> =
 	| { ok: true; value: T }
-	| { ok: false; message: string; stale: boolean; code: string | null }
+	| {
+			ok: false
+			message: string
+			stale: boolean
+			code: string | null
+			conflict?: WaitlistSeatConflict | null
+	  }
 
 const FALLBACKS = {
 	add: msg`Could not add this party to the waitlist.`,
@@ -150,7 +158,13 @@ export function useWaitlist({
 				setActionError(message)
 				setAnnouncement(message)
 				if (info.status === 409 || info.status === 404) await reload()
-				return { ok: false, message, stale: info.stale, code: info.code }
+				return {
+					ok: false,
+					message,
+					stale: info.stale,
+					code: info.code,
+					conflict: waitlistSeatConflictOf(err),
+				}
 			} finally {
 				setBusyId(null)
 			}

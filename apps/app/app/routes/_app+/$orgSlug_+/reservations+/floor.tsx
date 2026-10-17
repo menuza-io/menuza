@@ -21,7 +21,7 @@ import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import {
 	FloorWaitlistPanel,
 	WAITLIST_DRAG_TYPE,
-	WaitlistOverbookPrompt,
+	WaitlistSeatPrompt,
 } from '#app/components/reservations/waitlist/floor-waitlist-panel.tsx'
 import { SeatDialog } from '#app/components/reservations/waitlist/seat-dialog.tsx'
 import {
@@ -648,15 +648,11 @@ export default function ReservationsFloorRoute() {
 		if (!showWaitlist) return
 		setActionError(null)
 		setActionBanner(null)
-		const occupied = Boolean(
-			targetState.currentReservation || targetState.isBlocked,
-		)
 		await finishWaitlistSeat(
-			await floorWaitlist.dropOnTable(
-				entryId,
-				{ id: targetState.table.id, label: targetState.table.label },
-				occupied,
-			),
+			await floorWaitlist.dropOnTable(entryId, {
+				id: targetState.table.id,
+				label: targetState.table.label,
+			}),
 		)
 	}
 
@@ -1011,11 +1007,11 @@ export default function ReservationsFloorRoute() {
 			) : null}
 
 			{floorWaitlist.prompt ? (
-				<WaitlistOverbookPrompt
+				<WaitlistSeatPrompt
 					prompt={floorWaitlist.prompt}
 					busy={floorWaitlist.waitlist.busyId !== null}
-					onOverbook={(reason) =>
-						void floorWaitlist.resolveOverbook(reason).then(finishWaitlistSeat)
+					onChoose={(choice) =>
+						void floorWaitlist.resolvePrompt(choice).then(finishWaitlistSeat)
 					}
 					onCancel={floorWaitlist.cancelPrompt}
 				/>
@@ -1713,14 +1709,7 @@ export default function ReservationsFloorRoute() {
 								setActionError(null)
 								setActionBanner(null)
 								void floorWaitlist
-									.dropOnTable(
-										entry.id,
-										table,
-										Boolean(
-											selectedTableState?.currentReservation ||
-											selectedTableState?.isBlocked,
-										),
-									)
+									.dropOnTable(entry.id, table)
 									.then(finishWaitlistSeat)
 							}}
 							onChooseTable={(entry) => floorWaitlist.setSeatDialogId(entry.id)}

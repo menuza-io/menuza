@@ -25,6 +25,7 @@ import {
 import {
 	type SeatWaitlistInput,
 	type WaitlistEntry,
+	type WaitlistSeatConflict,
 } from '#app/utils/reservations/waitlist-api.ts'
 import { tableCandidates } from '#app/utils/reservations/waitlist-view.ts'
 
@@ -61,6 +62,7 @@ export function SeatDialog({
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [blocked, setBlocked] = useState(false)
+	const [conflict, setConflict] = useState<WaitlistSeatConflict | null>(null)
 
 	const entryId = entry?.id ?? null
 	useEffect(() => {
@@ -70,6 +72,7 @@ export function SeatDialog({
 		setReason('')
 		setError(null)
 		setBlocked(false)
+		setConflict(null)
 		setSubmitting(false)
 		onOpened?.()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,10 +87,9 @@ export function SeatDialog({
 	const needsOverbook = Boolean(selected && !selected.free)
 	const showOverbook = needsOverbook || blocked
 
-	const handleSubmit = async (event: React.FormEvent) => {
-		event.preventDefault()
+	const submit = async (resolution?: 'swap' | 'move') => {
 		if (!entry || submitting) return
-		if (overbook && !reason.trim()) {
+		if (!resolution && overbook && !reason.trim()) {
 			setError(t`Add a reason to seat this party over a booking.`)
 			return
 		}
@@ -95,7 +97,10 @@ export function SeatDialog({
 		setError(null)
 		const result = await onSeat(entry, {
 			...(tableId ? { tableIds: [tableId] } : {}),
-			...(overbook ? { overbook: true, overbookReason: reason.trim() } : {}),
+			...(resolution ? { resolution } : {}),
+			...(!resolution && overbook
+				? { overbook: true, overbookReason: reason.trim() }
+				: {}),
 		})
 		setSubmitting(false)
 		if (result.ok) {
@@ -103,6 +108,7 @@ export function SeatDialog({
 			return
 		}
 		setError(result.message)
+		setConflict(result.conflict ?? null)
 		if (
 			result.code === 'table_occupied' ||
 			result.code === 'no_availability' ||
@@ -112,6 +118,12 @@ export function SeatDialog({
 		}
 	}
 
+	const handleSubmit = (event: React.FormEvent) => {
+		event.preventDefault()
+		void submit()
+	}
+
+	const resolutions = conflict?.resolutions ?? []
 	const guest = entry?.displayName ?? ''
 
 	return (
@@ -181,6 +193,34 @@ export function SeatDialog({
 							className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs"
 							data-testid="waitlist-seat-overbook"
 						>
+							{resolutions.includes('swap') || resolutions.includes('move') ? (
+								<div className="flex flex-wrap gap-2">
+									{resolutions.includes('swap') ? (
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											disabled={submitting}
+											onClick={() => void submit('swap')}
+											data-testid="waitlist-seat-swap"
+										>
+											<Trans>Swap: unseat the booking</Trans>
+										</Button>
+									) : null}
+									{resolutions.includes('move') ? (
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											disabled={submitting}
+											onClick={() => void submit('move')}
+											data-testid="waitlist-seat-move"
+										>
+											<Trans>Move the booking to a free table</Trans>
+										</Button>
+									) : null}
+								</div>
+							) : null}
 							<label className="flex items-start gap-2">
 								<input
 									type="checkbox"

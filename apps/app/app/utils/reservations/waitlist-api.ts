@@ -6,6 +6,7 @@ import {
 	waitlistEntrySchema,
 	waitlistListingSchema,
 	waitlistQuoteSchema,
+	waitlistSeatConflictSchema,
 	type WaitlistEntry,
 	type WaitlistListing,
 	type WaitlistQuote,
@@ -27,7 +28,8 @@ import {
 const WAITLIST_BASE = '/operator/reservations/book/waitlist'
 const SETUP_BASE = '/operator/reservations/setup'
 
-export type { WaitlistStatus, WaitlistStatusTarget }
+export type { WaitlistSeatResolution, WaitlistStatus, WaitlistStatusTarget }
+export type WaitlistSeatConflict = z.infer<typeof waitlistSeatConflictSchema>
 export {
 	ACTIVE_WAITLIST_STATUSES,
 	WAITLIST_STATUSES,
@@ -278,4 +280,14 @@ export async function saveWaitlistSettings(
 export function waitlistListingSignature(listing: WaitlistListing): string {
 	const { now: ignoredNow, ...rest } = listing
 	return JSON.stringify(rest)
+}
+
+/** The occupants and accepted resolutions of a 409 `table_occupied`, or null for any other error. */
+export function waitlistSeatConflictOf(
+	err: unknown,
+): WaitlistSeatConflict | null {
+	const body =
+		err && typeof err === 'object' ? (err as { body?: unknown }).body : null
+	const parsed = waitlistSeatConflictSchema.safeParse(body)
+	return parsed.success ? parsed.data : null
 }

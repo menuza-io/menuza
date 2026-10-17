@@ -76,7 +76,11 @@ type ApiOverrides = {
 }
 
 function setup(
-	options: ApiOverrides & { hash?: string; hidden?: () => boolean } = {},
+	options: ApiOverrides & {
+		hash?: string
+		hidden?: () => boolean
+		visitorZone?: string | null
+	} = {},
 ) {
 	const storage = memoryStorage()
 	const join =
@@ -146,6 +150,7 @@ function setup(
 				pageLocation,
 				history: { replaceState, state: null },
 				bookHref: '/reserve',
+				visitorZone: options.visitorZone ?? null,
 				storage,
 				pollMs: 15_000,
 				isHidden: options.hidden ?? (() => false),
@@ -299,6 +304,19 @@ describe('waitlist pure helpers', () => {
 })
 
 describe('waitlist page: join', () => {
+	it('names the restaurant zone only when the visitor is in another one', async () => {
+		const away = setup({ visitorZone: 'Asia/Riyadh' })
+		await away.start()
+		const note = q<HTMLElement>(away.root, '[data-zone-note]')
+		expect(note.hidden).toBe(false)
+		expect(note.textContent).toContain('America/New_York')
+
+		document.body.replaceChildren()
+		const home = setup({ visitorZone: 'America/New_York' })
+		await home.start()
+		expect(q<HTMLElement>(home.root, '[data-zone-note]').hidden).toBe(true)
+	})
+
 	it('refuses with the unavailable card when no location takes online joins', async () => {
 		const ctx = setup({
 			locations: [location({ waitlist: { enabled: true, online: false } })],

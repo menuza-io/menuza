@@ -192,6 +192,26 @@ describe('WaitlistScreen', () => {
 		})
 	})
 
+	it('offers swap and move from the Seat dialog once the table is refused', async () => {
+		const fake = setup({ occupiedTableIds: ['t1'] })
+		await screen.findByTestId('waitlist-card-w1')
+		fireEvent.click(screen.getByTestId('waitlist-seat-w1'))
+		const select = await screen.findByTestId('waitlist-seat-table')
+		await waitFor(() =>
+			expect(within(select).getAllByRole('option').length).toBeGreaterThan(1),
+		)
+		fireEvent.change(select, { target: { value: 't1' } })
+		fireEvent.click(screen.getByTestId('waitlist-seat-submit'))
+
+		fireEvent.click(await screen.findByTestId('waitlist-seat-swap'))
+		await waitFor(() => expect(fake.callsTo('/w1/seat')).toHaveLength(2))
+		expect(fake.callsTo('/w1/seat')[1]?.body).toMatchObject({
+			tableIds: ['t1'],
+			resolution: 'swap',
+		})
+		expect(fake.callsTo('/w1/seat')[1]?.body).not.toHaveProperty('overbook')
+	})
+
 	it('reorders with the Move buttons and keeps the order after a refresh', async () => {
 		const fake = setup()
 		await screen.findByTestId('waitlist-card-w1')

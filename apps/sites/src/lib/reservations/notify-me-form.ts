@@ -3,7 +3,7 @@ import { createAttemptKeys } from './attempt.ts'
 import { isPlausibleEmail, isPlausiblePhone } from './details.ts'
 import { waitlistErrorKey } from './errors.ts'
 import { type ReservationLabels } from './labels.ts'
-import { formatHhmm, parseHhmm, todayIn } from './time.ts'
+import { formatHhmm, parseHhmm, todayIn, zoneNote } from './time.ts'
 import { type Availability } from './types.ts'
 import {
 	bannerErrorClass,
@@ -129,6 +129,10 @@ export type NotifyMeDeps = {
 	phoneExample: string
 	turnstileSiteKey: string
 	locationId: string
+	/** The restaurant's zone: the from/to window is read in it. */
+	timeZone?: string
+	/** Overrides the browser's zone (tests); `null` means unknown. */
+	visitorZone?: string | null
 	partySize: { min: number; max: number }
 	/** What the guest searched for; the form starts from it. */
 	search: { partySize: number; date: string; preferredMin: number | null }
@@ -254,6 +258,14 @@ export function createNotifyMeForm(deps: NotifyMeDeps) {
 
 	const times = el('div', 'grid gap-4 sm:grid-cols-2')
 	times.append(from.wrapper, to.wrapper)
+	const zone = deps.timeZone ? zoneNote(deps.timeZone, deps.visitorZone) : null
+	const zoneBox = el(
+		'p',
+		'text-sm text-muted-foreground',
+		zone ? fillTemplate(labels.restaurantZone, { zone }) : '',
+	)
+	zoneBox.dataset.zoneNote = 'true'
+	zoneBox.hidden = !zone
 	const contacts = el('div', 'grid gap-4 sm:grid-cols-2')
 	contacts.append(phone.wrapper, email.wrapper)
 	const basics = el('div', 'grid gap-4 sm:grid-cols-2')
@@ -261,6 +273,7 @@ export function createNotifyMeForm(deps: NotifyMeDeps) {
 	form.append(
 		basics,
 		times,
+		zoneBox,
 		contacts,
 		contactError,
 		el(

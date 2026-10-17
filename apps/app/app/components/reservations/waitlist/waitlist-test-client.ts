@@ -27,7 +27,12 @@ const ACTIVE = new Set(['waiting', 'notified', 'on_the_way'])
  */
 export function createFakeWaitlistClient(
 	initial: WaitlistEntry[],
-	options: { responseMin?: number; occupiedTableIds?: string[] } = {},
+	options: {
+		responseMin?: number
+		occupiedTableIds?: string[]
+		/** Status of the booking sitting on an occupied table (default `booked`). */
+		occupantStatus?: string
+	} = {},
 ) {
 	let entries = initial.map((entry) => ({ ...entry }))
 	const calls: FakeCall[] = []
@@ -195,12 +200,28 @@ export function createFakeWaitlistClient(
 				}
 				if (action === 'seat') {
 					const tableIds: string[] = body.tableIds ?? []
-					if (
-						!body.overbook &&
-						tableIds.some((tableId) => occupied.has(tableId))
-					) {
+					const taken = tableIds.some((tableId) => occupied.has(tableId))
+					if (taken && !body.overbook && !body.resolution) {
+						const occupantStatus = options.occupantStatus ?? 'booked'
+						const occupant = {
+							kind: 'reservation',
+							reservationId: 'rsv_occ',
+							confirmationCode: 'ABC123',
+							status: occupantStatus,
+							partySize: 3,
+							startAt: WAITLIST_NOW,
+							endAt: WAITLIST_NOW + 90 * 60_000,
+							tableIds,
+							guestName: 'Lina Haddad',
+						}
 						throw new ReservationsApiError('occupied', 409, {
 							error: 'table_occupied',
+							occupant,
+							occupants: [occupant],
+							resolutions:
+								occupantStatus === 'seated'
+									? ['move', 'overbook']
+									: ['swap', 'move', 'overbook'],
 						})
 					}
 					return {

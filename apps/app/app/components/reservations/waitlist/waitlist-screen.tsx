@@ -139,16 +139,18 @@ export function WaitlistScreen({
 
 			{waitlist.actionError ? (
 				<Alert variant="destructive" data-testid="waitlist-action-error">
-					<AlertDescription className="flex items-center justify-between gap-2">
-						<span>{waitlist.actionError}</span>
-						<Button
-							type="button"
-							size="xs"
-							variant="ghost"
-							onClick={waitlist.clearActionError}
-						>
-							<Trans>Dismiss</Trans>
-						</Button>
+					<AlertDescription>
+						<div className="flex items-center justify-between gap-2">
+							<span>{waitlist.actionError}</span>
+							<Button
+								type="button"
+								size="xs"
+								variant="ghost"
+								onClick={waitlist.clearActionError}
+							>
+								<Trans>Dismiss</Trans>
+							</Button>
+						</div>
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -169,16 +171,18 @@ export function WaitlistScreen({
 				</div>
 			) : !listing ? (
 				<Alert variant="destructive" data-testid="waitlist-load-error">
-					<AlertDescription className="flex items-center justify-between gap-2">
-						<span>{waitlist.loadError}</span>
-						<Button
-							type="button"
-							size="xs"
-							variant="outline"
-							onClick={() => void waitlist.refresh()}
-						>
-							<Trans>Retry</Trans>
-						</Button>
+					<AlertDescription>
+						<div className="flex items-center justify-between gap-2">
+							<span>{waitlist.loadError}</span>
+							<Button
+								type="button"
+								size="xs"
+								variant="outline"
+								onClick={() => void waitlist.refresh()}
+							>
+								<Trans>Retry</Trans>
+							</Button>
+						</div>
 					</AlertDescription>
 				</Alert>
 			) : (

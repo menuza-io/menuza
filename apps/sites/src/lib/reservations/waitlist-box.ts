@@ -13,6 +13,7 @@ import {
 } from './fragment.ts'
 import { formatHoldClock } from './hold.ts'
 import { type ReservationLabels } from './labels.ts'
+import { zoneNote } from './time.ts'
 import {
 	type ReservationLocation,
 	type WaitlistJoinResponse,
@@ -198,6 +199,8 @@ export type WaitlistDeps = {
 	/** The page heading and subtitle, retitled when the status view replaces the join form. */
 	headingEl?: HTMLElement | null
 	subtitleEl?: HTMLElement | null
+	/** Overrides the browser's zone (tests); `null` means unknown. */
+	visitorZone?: string | null
 	loadPrefill?: () => Promise<{
 		name: string
 		phone: string
@@ -352,6 +355,9 @@ export async function initWaitlistPage(root: HTMLElement, deps: WaitlistDeps) {
 			locationSelect.append(option)
 		}
 		locationSelect.value = location.id
+		const zoneBox = el('p', 'text-sm text-muted-foreground')
+		zoneBox.dataset.zoneNote = 'true'
+		zoneBox.hidden = true
 		const locationWrap = el('div', 'flex flex-col gap-2')
 		const locationLabel = el('label', labelClass, labels.fieldLocation)
 		locationLabel.htmlFor = locationSelect.id
@@ -426,6 +432,11 @@ export async function initWaitlistPage(root: HTMLElement, deps: WaitlistDeps) {
 				areaSelect.append(option)
 			}
 			areaWrap.hidden = (location.areas ?? []).length === 0
+			const zone = zoneNote(location.timeZone, deps.visitorZone)
+			zoneBox.hidden = !zone
+			zoneBox.textContent = zone
+				? fillTemplate(labels.restaurantZone, { zone })
+				: ''
 		}
 		applyLocation()
 		locationSelect.addEventListener('change', () => {
@@ -470,7 +481,14 @@ export async function initWaitlistPage(root: HTMLElement, deps: WaitlistDeps) {
 
 		const row = el('div', 'grid gap-4 sm:grid-cols-2')
 		row.append(partyWrap, areaWrap)
-		form.append(locationWrap, name.wrapper, phone.wrapper, email.wrapper, row)
+		form.append(
+			locationWrap,
+			zoneBox,
+			name.wrapper,
+			phone.wrapper,
+			email.wrapper,
+			row,
+		)
 		if (sms) form.append(sms.wrap)
 		form.append(
 			el(

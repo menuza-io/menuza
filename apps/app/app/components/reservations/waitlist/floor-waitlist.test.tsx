@@ -7,7 +7,7 @@ import { renderStaff } from '#tests/staff-render.tsx'
 import {
 	FloorWaitlistPanel,
 	WAITLIST_DRAG_TYPE,
-	WaitlistOverbookPrompt,
+	WaitlistSeatPrompt,
 } from './floor-waitlist-panel.tsx'
 import { type FloorTableRef, useFloorWaitlist } from './use-floor-waitlist.ts'
 import { createFakeWaitlistClient } from './waitlist-test-client.ts'
@@ -24,8 +24,8 @@ function Harness({
 }) {
 	const floor = useFloorWaitlist({ client, locationId: 'loc_1', enabled: true })
 	const [outcome, setOutcome] = useState('')
-	const drop = async (table: FloorTableRef, occupied: boolean, id: string) => {
-		const result = await floor.dropOnTable(id, table, occupied)
+	const drop = async (table: FloorTableRef, id: string) => {
+		const result = await floor.dropOnTable(id, table)
 		if (result) setOutcome(result.ok ? `seated:${table.label}` : result.message)
 	}
 	return (
@@ -48,10 +48,7 @@ function Harness({
 				}}
 				onChooseTable={() => undefined}
 			/>
-			{[
-				{ table: T1, occupied: false },
-				{ table: T2, occupied: true },
-			].map(({ table, occupied }) => (
+			{[T1, T2].map((table) => (
 				<div
 					key={table.id}
 					data-testid={`table-${table.id}`}
@@ -59,16 +56,16 @@ function Harness({
 					onDrop={(event) => {
 						const id = event.dataTransfer.getData(WAITLIST_DRAG_TYPE)
 						floor.setDraggingId(null)
-						if (id) void drop(table, occupied, id)
+						if (id) void drop(table, id)
 					}}
 				/>
 			))}
 			{floor.prompt ? (
-				<WaitlistOverbookPrompt
+				<WaitlistSeatPrompt
 					prompt={floor.prompt}
 					busy={floor.waitlist.busyId !== null}
-					onOverbook={(reason) =>
-						void floor.resolveOverbook(reason).then((result) => {
+					onChoose={(choice) =>
+						void floor.resolvePrompt(choice).then((result) => {
 							if (result?.ok) setOutcome(`seated:${result.table.label}`)
 						})
 					}
@@ -148,16 +145,20 @@ describe('floor waitlist panel', () => {
 		})
 	})
 
-	it('asks before seating over a table the floor shows as taken', async () => {
-		const fake = createFakeWaitlistClient(queue())
+	it('names the occupant and offers swap, move and overbook when the table is taken', async () => {
+		const fake = createFakeWaitlistClient(queue(), { occupiedTableIds: ['t2'] })
 		renderStaff(<Harness client={fake.client} />)
 		await screen.findByTestId('floor-waitlist-card-w1')
 		fireEvent.drop(screen.getByTestId('table-t2'), dropData('w1'))
 
-		expect(
-			await screen.findByTestId('floor-waitlist-overbook-prompt'),
-		).toHaveTextContent('Table T2 is not free for this party')
-		expect(fake.callsTo('/w1/seat')).toHaveLength(0)
+		const prompt = await screen.findByTestId('floor-waitlist-overbook-prompt')
+		expect(prompt).toHaveTextContent('Table T2 is not free for this party')
+		expect(screen.getByTestId('floor-waitlist-occupant')).toHaveTextContent(
+			'Lina Haddad (3)',
+		)
+		expect(screen.getByTestId('floor-waitlist-resolve-swap')).toBeTruthy()
+		expect(screen.getByTestId('floor-waitlist-resolve-move')).toBeTruthy()
+		expect(fake.callsTo('/w1/seat')).toHaveLength(1)
 
 		fireEvent.change(screen.getByTestId('floor-waitlist-overbook-reason'), {
 			target: { value: 'VIP' },
@@ -167,7 +168,7 @@ describe('floor waitlist panel', () => {
 		await waitFor(() =>
 			expect(screen.getByTestId('outcome')).toHaveTextContent('seated:T2'),
 		)
-		expect(fake.callsTo('/w1/seat')[0]?.body).toEqual({
+		expect(fake.callsTo('/w1/seat')[1]?.body).toEqual({
 			tableIds: ['t2'],
 			expectedVersion: 1,
 			overbook: true,
@@ -176,33 +177,60 @@ describe('floor waitlist panel', () => {
 		expect(screen.queryByTestId('floor-waitlist-overbook-prompt')).toBeNull()
 	})
 
-	it('opens the same prompt when the server refuses a table that looked free', async () => {
-		const fake = createFakeWaitlistClient(queue(), { occupiedTableIds: ['t1'] })
+	it('swaps with the booking on the table', async () => {
+		const fake = createFakeWaitlistClient(queue(), { occupiedTableIds: ['t2'] })
 		renderStaff(<Harness client={fake.client} />)
 		await screen.findByTestId('floor-waitlist-card-w1')
-		fireEvent.drop(screen.getByTestId('table-t1'), dropData('w1'))
+		fireEvent.drop(screen.getByTestId('table-t2'), dropData('w1'))
+		fireEvent.click(await screen.findByTestId('floor-waitlist-resolve-swap'))
 
-		expect(
-			await screen.findByTestId('floor-waitlist-overbook-prompt'),
-		).toBeTruthy()
-		expect(fake.callsTo('/w1/seat')).toHaveLength(1)
-
-		fireEvent.click(screen.getByTestId('floor-waitlist-overbook-confirm'))
-		await waitFor(() => expect(fake.callsTo('/w1/seat')).toHaveLength(2))
-		expect(fake.callsTo('/w1/seat')[1]?.body).toMatchObject({
-			overbook: true,
-			overbookReason: 'Waitlist overbook',
+		await waitFor(() =>
+			expect(screen.getByTestId('outcome')).toHaveTextContent('seated:T2'),
+		)
+		expect(fake.callsTo('/w1/seat')[1]?.body).toEqual({
+			tableIds: ['t2'],
+			expectedVersion: 1,
+			resolution: 'swap',
 		})
 	})
 
-	it('cancelling the prompt sends nothing', async () => {
-		const fake = createFakeWaitlistClient(queue())
+	it('moves the booking to a free table', async () => {
+		const fake = createFakeWaitlistClient(queue(), { occupiedTableIds: ['t2'] })
+		renderStaff(<Harness client={fake.client} />)
+		await screen.findByTestId('floor-waitlist-card-w1')
+		fireEvent.drop(screen.getByTestId('table-t2'), dropData('w1'))
+		fireEvent.click(await screen.findByTestId('floor-waitlist-resolve-move'))
+
+		await waitFor(() =>
+			expect(screen.getByTestId('outcome')).toHaveTextContent('seated:T2'),
+		)
+		expect(fake.callsTo('/w1/seat')[1]?.body).toMatchObject({
+			resolution: 'move',
+		})
+	})
+
+	it('hides swap when the party on the table has already been seated', async () => {
+		const fake = createFakeWaitlistClient(queue(), {
+			occupiedTableIds: ['t2'],
+			occupantStatus: 'seated',
+		})
+		renderStaff(<Harness client={fake.client} />)
+		await screen.findByTestId('floor-waitlist-card-w1')
+		fireEvent.drop(screen.getByTestId('table-t2'), dropData('w1'))
+		await screen.findByTestId('floor-waitlist-overbook-prompt')
+		expect(screen.queryByTestId('floor-waitlist-resolve-swap')).toBeNull()
+		expect(screen.getByTestId('floor-waitlist-resolve-move')).toBeTruthy()
+	})
+
+	it('cancelling the prompt seats nobody', async () => {
+		const fake = createFakeWaitlistClient(queue(), { occupiedTableIds: ['t2'] })
 		renderStaff(<Harness client={fake.client} />)
 		await screen.findByTestId('floor-waitlist-card-w1')
 		fireEvent.drop(screen.getByTestId('table-t2'), dropData('w1'))
 		fireEvent.click(await screen.findByTestId('floor-waitlist-overbook-cancel'))
 		expect(screen.queryByTestId('floor-waitlist-overbook-prompt')).toBeNull()
-		expect(fake.callsTo('/w1/seat')).toHaveLength(0)
+		expect(fake.callsTo('/w1/seat')).toHaveLength(1)
+		expect(screen.getByTestId('outcome')).toHaveTextContent('')
 	})
 
 	it('shows an empty message when nobody is waiting', async () => {

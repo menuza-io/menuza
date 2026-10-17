@@ -88,7 +88,10 @@ describe('notify-me validation and body', () => {
 	})
 })
 
-function setup(overrides: Partial<ReservationsApi['notifyMe']> = {}) {
+function setup(
+	overrides: Partial<ReservationsApi['notifyMe']> = {},
+	zones: { timeZone?: string; visitorZone?: string | null } = {},
+) {
 	const create = vi.fn(async (..._args: unknown[]) => ({
 		request: {},
 		cancelToken: 'cancel-token',
@@ -106,6 +109,7 @@ function setup(overrides: Partial<ReservationsApi['notifyMe']> = {}) {
 		phoneExample: '+1 415 555 0123',
 		turnstileSiteKey: '',
 		locationId: 'loc_1',
+		...zones,
 		partySize: { min: 1, max: 8 },
 		search: { partySize: 4, date: '2030-05-01', preferredMin: null },
 		dateRange: { min: '2030-04-01', max: '2030-07-01' },
@@ -123,6 +127,24 @@ function setup(overrides: Partial<ReservationsApi['notifyMe']> = {}) {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('notify-me form', () => {
+	it('names the restaurant zone when the visitor is elsewhere', () => {
+		const { q } = setup(
+			{},
+			{ timeZone: 'America/New_York', visitorZone: 'Asia/Riyadh' },
+		)
+		const note = q<HTMLElement>('[data-zone-note]')
+		expect(note.hidden).toBe(false)
+		expect(note.textContent).toContain('America/New_York')
+	})
+
+	it('hides the zone note when the zones match', () => {
+		const { q } = setup(
+			{},
+			{ timeZone: 'America/New_York', visitorZone: 'America/New_York' },
+		)
+		expect(q<HTMLElement>('[data-zone-note]').hidden).toBe(true)
+	})
+
 	it('prefills the search and the default window', () => {
 		const { q } = setup()
 		expect(q<HTMLSelectElement>('[name=partySize]').value).toBe('4')

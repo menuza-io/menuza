@@ -9,6 +9,7 @@ import { useState } from 'react'
 import {
 	type FloorTableRef,
 	type OverbookPrompt,
+	type SeatChoice,
 } from '#app/components/reservations/waitlist/use-floor-waitlist.ts'
 import {
 	useFormatMinutes,
@@ -201,16 +202,20 @@ export function FloorWaitlistPanel({
 	)
 }
 
-/** Shown when a waitlist party is dropped on a table that is taken or blocked: seat over it, or cancel. */
-export function WaitlistOverbookPrompt({
+/**
+ * Shown when the server refuses a waitlist party's table because it is taken.
+ * It offers only the resolutions the server named: swap places with a party
+ * that has not arrived, move that party to a free table, or seat on top.
+ */
+export function WaitlistSeatPrompt({
 	prompt,
 	busy,
-	onOverbook,
+	onChoose,
 	onCancel,
 }: {
 	prompt: OverbookPrompt
 	busy: boolean
-	onOverbook: (reason: string) => void
+	onChoose: (choice: SeatChoice) => void
 	onCancel: () => void
 }) {
 	const { t } = useLingui()
@@ -218,6 +223,8 @@ export function WaitlistOverbookPrompt({
 	const guest = prompt.entry.displayName
 	const size = prompt.entry.partySize
 	const tableLabel = prompt.table.label
+	const resolutions = prompt.conflict?.resolutions ?? ['overbook']
+	const occupants = prompt.conflict?.occupants ?? []
 	return (
 		<Card
 			className="border-amber-500 bg-amber-500/10 p-4"
@@ -227,15 +234,22 @@ export function WaitlistOverbookPrompt({
 		>
 			<div className="flex flex-col gap-3">
 				<div className="flex items-start justify-between gap-2">
-					<div>
+					<div className="flex flex-col gap-1">
 						<h3 className="text-sm font-semibold">
 							<Trans>Table {tableLabel} is not free for this party</Trans>
 						</h3>
+						{occupants.map((occupant, index) => (
+							<p
+								key={occupant.reservationId ?? `${occupant.kind}-${index}`}
+								className="text-muted-foreground text-xs"
+								data-testid="floor-waitlist-occupant"
+							>
+								<OccupantLine occupant={occupant} />
+							</p>
+						))}
 						<p className="text-muted-foreground text-xs">
 							<Trans>
-								{guest} ({size}) can be seated there anyway, on top of the
-								booking or block. A waitlist party cannot swap places with
-								another party.
+								Choose how to seat {guest} ({size}) at table {tableLabel}.
 							</Trans>
 						</p>
 					</div>
@@ -250,6 +264,34 @@ export function WaitlistOverbookPrompt({
 					</Button>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
+					{resolutions.includes('swap') ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="outline"
+							disabled={busy}
+							onClick={() => onChoose({ resolution: 'swap' })}
+							data-testid="floor-waitlist-resolve-swap"
+						>
+							<Icon name="refresh-cw" className="me-1.5 size-3.5" />
+							<Trans>Swap: unseat the booking</Trans>
+						</Button>
+					) : null}
+					{resolutions.includes('move') ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="outline"
+							disabled={busy}
+							onClick={() => onChoose({ resolution: 'move' })}
+							data-testid="floor-waitlist-resolve-move"
+						>
+							<Icon name="move-up-right" className="me-1.5 size-3.5" />
+							<Trans>Move the booking to a free table</Trans>
+						</Button>
+					) : null}
+				</div>
+				<div className="flex flex-wrap items-center gap-2">
 					<Input
 						value={reason}
 						onChange={(event) => setReason(event.target.value)}
@@ -262,14 +304,44 @@ export function WaitlistOverbookPrompt({
 						type="button"
 						size="sm"
 						disabled={busy}
-						onClick={() => onOverbook(reason)}
+						onClick={() => onChoose({ resolution: 'overbook', reason })}
 						data-testid="floor-waitlist-overbook-confirm"
 					>
 						<Icon name="alert-triangle" className="me-1.5 size-3.5" />
-						<Trans>Seat anyway</Trans>
+						<Trans>Overbook: seat anyway</Trans>
 					</Button>
 				</div>
 			</div>
 		</Card>
 	)
+}
+
+function OccupantLine({
+	occupant,
+}: {
+	occupant: NonNullable<OverbookPrompt['conflict']>['occupant']
+}) {
+	const name = occupant.guestName
+	const size = occupant.partySize
+	const codeSuffix = occupant.confirmationCode
+		? ` · ${occupant.confirmationCode}`
+		: ''
+	if (occupant.kind === 'block') return <Trans>The table is blocked.</Trans>
+	if (occupant.kind === 'hold') return <Trans>The table is on hold.</Trans>
+	if (name && size) {
+		return (
+			<Trans>
+				Booked by {name} ({size}){codeSuffix}.
+			</Trans>
+		)
+	}
+	if (size) {
+		return (
+			<Trans>
+				Booked by a party of {size}
+				{codeSuffix}.
+			</Trans>
+		)
+	}
+	return <Trans>The table is booked.</Trans>
 }

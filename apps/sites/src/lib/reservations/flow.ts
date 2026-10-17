@@ -422,6 +422,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 					phoneExample: deps.phoneExample ?? '+1 415 555 0123',
 					turnstileSiteKey: deps.turnstileSiteKey,
 					locationId: location.id,
+					timeZone: result.timeZone || location.timeZone,
 					partySize: location.partySize,
 					search: {
 						partySize: result.partySize,
