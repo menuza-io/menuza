@@ -14,6 +14,7 @@ export {
 	invalidateUserCache,
 	invalidateUserSecurityCache,
 	invalidateUserOrganizationsCache,
+	invalidateUserFavoritesCache,
 	type CacheKVNamespace,
 	type CacheKeyInfo,
 	type CacheStats,

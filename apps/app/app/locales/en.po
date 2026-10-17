@@ -371,7 +371,7 @@ msgid "{0, plural, one {Reopen # card?} other {Reopen # cards?}}"
 msgstr "{0, plural, one {Reopen # card?} other {Reopen # cards?}}"
 
 #. placeholder {0}: selectedMemberIds.length
-#: app/components/note/share-note-button.tsx:327
+#: app/components/note/share-note-button.tsx:371
 msgid "{0, plural, one {Share with 1 member} other {Share with # members}}"
 msgstr ""
 
@@ -651,7 +651,7 @@ msgstr "{flagged, plural, one {# warning:} other {# warnings:}}"
 msgid "{formCount} forms"
 msgstr "{formCount} forms"
 
-#: app/components/staff/positions-tab.tsx:697
+#: app/components/staff/positions-tab.tsx:704
 msgid "{from} to {to}"
 msgstr "{from} to {to}"
 
@@ -878,11 +878,11 @@ msgstr "{pairedName} is ready. People can clock in with their PIN."
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {# person} other {# people}}"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:93
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:98
 msgid "{positionName} archived."
 msgstr "{positionName} archived."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:94
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:99
 msgid "{positionName} restored."
 msgstr "{positionName} restored."
 
@@ -1519,12 +1519,12 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:684
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr ""
 
 #: app/components/staff/labor-policy-editor.tsx:1371
-#: app/components/staff/positions-tab.tsx:369
+#: app/components/staff/positions-tab.tsx:375
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:195
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:140
@@ -1555,7 +1555,7 @@ msgstr "Add a block to see your email come to life."
 msgid "Add a break"
 msgstr "Add a break"
 
-#: app/components/staff/onboarding/certificate-form.tsx:85
+#: app/components/staff/onboarding/certificate-form.tsx:86
 msgid "Add a certificate"
 msgstr "Add a certificate"
 
@@ -1608,7 +1608,7 @@ msgstr "Add a job title."
 msgid "Add a last name."
 msgstr "Add a last name."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:462
+#: app/components/settings/cards/organization/announcement-sheet.tsx:480
 msgid "Add a link"
 msgstr ""
 
@@ -1626,13 +1626,13 @@ msgstr "Add a number or email to start sending alerts."
 msgid "Add a phone number or an email."
 msgstr "Add a phone number or an email."
 
-#: app/components/staff/positions-tab.tsx:450
-#: app/components/staff/positions-tab.tsx:507
-#: app/components/staff/positions-tab.tsx:510
+#: app/components/staff/positions-tab.tsx:461
+#: app/components/staff/positions-tab.tsx:509
+#: app/components/staff/positions-tab.tsx:512
 msgid "Add a position"
 msgstr "Add a position"
 
-#: app/components/staff/positions-tab.tsx:434
+#: app/components/staff/positions-tab.tsx:445
 msgid "Add a position on the Positions page first."
 msgstr "Add a position on the Positions page first."
 
@@ -1640,7 +1640,7 @@ msgstr "Add a position on the Positions page first."
 msgid "Add a question"
 msgstr "Add a question"
 
-#: app/components/staff/positions-tab.tsx:791
+#: app/utils/staffing/staff-validation.ts:112
 msgid "Add a reason for the change."
 msgstr "Add a reason for the change."
 
@@ -1719,7 +1719,7 @@ msgstr "Add and edit staff, reset time clock PINs, and terminate or rehire peopl
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "Add and edit time cards and export hours. Includes View time cards."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:525
+#: app/components/settings/cards/organization/announcement-sheet.tsx:552
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
 msgid "Add announcement"
 msgstr ""
@@ -1766,7 +1766,7 @@ msgstr "Add block"
 msgid "Add card"
 msgstr ""
 
-#: app/components/staff/onboarding/certificate-form.tsx:149
+#: app/components/staff/onboarding/certificate-form.tsx:150
 #: app/components/staff/onboarding/certificates-tab.tsx:160
 msgid "Add certificate"
 msgstr "Add certificate"
@@ -1821,7 +1821,7 @@ msgstr "Add meal break"
 msgid "Add members"
 msgstr ""
 
-#: app/components/note/share-note-button.tsx:253
+#: app/components/note/share-note-button.tsx:278
 msgid "Add Members"
 msgstr ""
 
@@ -1846,7 +1846,7 @@ msgstr ""
 msgid "Add note"
 msgstr "Add note"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:853
 msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
@@ -1860,7 +1860,7 @@ msgstr "Add number"
 msgid "Add one in your business settings first."
 msgstr "Add one in your business settings first."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:279
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "Add option"
 
@@ -1882,9 +1882,9 @@ msgstr "Add phone number"
 msgid "Add photo or video"
 msgstr ""
 
-#: app/components/staff/positions-tab.tsx:594
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:113
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:178
+#: app/components/staff/positions-tab.tsx:598
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:118
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:183
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:377
 msgid "Add position"
 msgstr "Add position"
@@ -1980,7 +1980,7 @@ msgstr "Add the link to the form."
 msgid "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
 msgstr "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
 
-#: app/components/staff/positions-tab.tsx:361
+#: app/components/staff/positions-tab.tsx:367
 msgid "Add them back to the workplace."
 msgstr "Add them back to the workplace."
 
@@ -2011,8 +2011,8 @@ msgstr "Add time card"
 msgid "Add time off"
 msgstr "Add time off"
 
-#: app/components/staff/positions-tab.tsx:345
 #: app/components/staff/positions-tab.tsx:351
+#: app/components/staff/positions-tab.tsx:357
 msgid "Add to a workplace"
 msgstr "Add to a workplace"
 
@@ -2060,7 +2060,7 @@ msgstr "Added section"
 msgid "Added to new hires"
 msgstr "Added to new hires"
 
-#: app/components/staff/positions-tab.tsx:335
+#: app/components/staff/positions-tab.tsx:341
 msgid "Added to the workplace."
 msgstr "Added to the workplace."
 
@@ -2071,8 +2071,8 @@ msgstr "Adding section"
 #: app/components/staff/notes-tab.tsx:111
 #: app/components/staff/onboarding/onboarding-tab.tsx:170
 #: app/components/staff/onboarding/task-form.tsx:147
-#: app/components/staff/positions-tab.tsx:369
-#: app/components/staff/positions-tab.tsx:592
+#: app/components/staff/positions-tab.tsx:375
+#: app/components/staff/positions-tab.tsx:596
 #: app/components/staff/timesheets/card-sheet.tsx:565
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:196
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:147
@@ -2147,7 +2147,7 @@ msgstr "After {days} days"
 msgid "After someone clocks in, briefly show their next shifts. Only works once scheduling is on."
 msgstr "After someone clocks in, briefly show their next shifts. Only works once scheduling is on."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:420
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:445
 msgid "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 msgstr "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 
@@ -2191,7 +2191,7 @@ msgid "AI assistant"
 msgstr "AI assistant"
 
 #: app/components/ai/global-ai-panel.tsx:341
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:685
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:691
 msgid "AI Assistant"
 msgstr ""
 
@@ -2304,7 +2304,7 @@ msgstr "All numbers assigned to your business are in use. Contact support to get
 msgid "All of this workplace's sales are online orders, so the share can be judged against the target."
 msgstr "All of this workplace's sales are online orders, so the share can be judged against the target."
 
-#: app/components/note/share-note-button.tsx:193
+#: app/components/note/share-note-button.tsx:212
 msgid "All organization members can view this note"
 msgstr ""
 
@@ -2658,7 +2658,7 @@ msgstr "Approving a swap or cover changes the schedule as a draft. Publish the w
 msgid "Arabic"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:249
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "Archive"
 
@@ -2668,7 +2668,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:199
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 msgid "Archived"
 msgstr ""
 
@@ -3516,7 +3516,7 @@ msgstr "Can't text that number"
 #: app/components/my-schedule/time-off-sheet.tsx:227
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
-#: app/components/note/share-note-button.tsx:317
+#: app/components/note/share-note-button.tsx:357
 #: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:773
 #: app/components/phone-agent/phone-number-dialogs.tsx:446
@@ -3525,7 +3525,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/roles/tenant-role-access-manager.tsx:797
 #: app/components/roles/tenant-role-access-manager.tsx:1256
-#: app/components/settings/cards/organization/announcement-sheet.tsx:519
+#: app/components/settings/cards/organization/announcement-sheet.tsx:546
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
 #: app/components/settings/email-form.tsx:82
@@ -3541,14 +3541,14 @@ msgstr "Can't text that number"
 #: app/components/staff/labor/sales-import-dialog.tsx:243
 #: app/components/staff/labor/tip-settings-dialog.tsx:288
 #: app/components/staff/notes-tab.tsx:196
-#: app/components/staff/onboarding/certificate-form.tsx:158
+#: app/components/staff/onboarding/certificate-form.tsx:159
 #: app/components/staff/onboarding/onboarding-tab.tsx:181
 #: app/components/staff/onboarding/remove-dialog.tsx:52
 #: app/components/staff/onboarding/task-form.tsx:155
 #: app/components/staff/onboarding/task-row.tsx:190
-#: app/components/staff/positions-tab.tsx:290
-#: app/components/staff/positions-tab.tsx:603
-#: app/components/staff/positions-tab.tsx:860
+#: app/components/staff/positions-tab.tsx:296
+#: app/components/staff/positions-tab.tsx:610
+#: app/components/staff/positions-tab.tsx:869
 #: app/components/staff/schedule-link-section.tsx:140
 #: app/components/staff/schedule/availability-sheet.tsx:199
 #: app/components/staff/schedule/copy-week-dialog.tsx:228
@@ -3569,12 +3569,12 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1093
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:153
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:250
@@ -3707,7 +3707,7 @@ msgstr "Category"
 msgid "Center"
 msgstr ""
 
-#: app/components/staff/onboarding/certificate-form.tsx:89
+#: app/components/staff/onboarding/certificate-form.tsx:90
 msgid "Certificate"
 msgstr "Certificate"
 
@@ -3775,8 +3775,8 @@ msgstr ""
 msgid "Change pay rates"
 msgstr "Change pay rates"
 
-#: app/components/staff/positions-tab.tsx:716
-#: app/components/staff/positions-tab.tsx:815
+#: app/components/staff/positions-tab.tsx:723
+#: app/components/staff/positions-tab.tsx:822
 msgid "Change rate"
 msgstr "Change rate"
 
@@ -3998,13 +3998,13 @@ msgid "Choose a person"
 msgstr "Choose a person"
 
 #: app/components/hiring/hire-dialog.tsx:233
-#: app/components/staff/positions-tab.tsx:531
+#: app/components/staff/positions-tab.tsx:533
 #: app/components/staff/timesheets/card-fields.tsx:254
 msgid "Choose a position"
 msgstr "Choose a position"
 
 #: app/components/hiring/hire-dialog.tsx:94
-#: app/components/staff/positions-tab.tsx:460
+#: app/utils/staffing/staff-validation.ts:90
 msgid "Choose a position."
 msgstr "Choose a position."
 
@@ -4486,7 +4486,7 @@ msgstr ""
 msgid "Comment actions"
 msgstr "Comment actions"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:683
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Comments"
 msgstr ""
 
@@ -4733,7 +4733,7 @@ msgstr "Contacts"
 msgid "Contains (Partial Match)"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:425
+#: app/components/settings/cards/organization/announcement-sheet.tsx:434
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
@@ -4789,7 +4789,7 @@ msgstr "Contrast"
 msgid "Contributors"
 msgstr "Contributors"
 
-#: app/components/note/share-note-button.tsx:180
+#: app/components/note/share-note-button.tsx:199
 msgid "Control who can access this note"
 msgstr ""
 
@@ -5344,7 +5344,7 @@ msgstr "Ctrl or Cmd with C copies the shift. With V it pastes on the focused shi
 
 #: app/components/hiring/job-editor.tsx:747
 #: app/components/staff/timesheets/payroll-summary.tsx:175
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:431
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:432
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:246
 msgid "Currency"
 msgstr "Currency"
@@ -5375,7 +5375,7 @@ msgstr ""
 msgid "Current Plan"
 msgstr ""
 
-#: app/components/staff/positions-tab.tsx:150
+#: app/components/staff/positions-tab.tsx:156
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "Current rates and the full history. Each time you view these, it is recorded."
 
@@ -5711,7 +5711,7 @@ msgstr "Default hourly rate"
 msgid "Default language"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:430
+#: app/components/settings/cards/organization/announcement-sheet.tsx:439
 msgid "Default language required"
 msgstr ""
 
@@ -5748,8 +5748,8 @@ msgstr ""
 #: app/components/staff/schedule/templates-dialog.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1047
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1105
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1112
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
@@ -5878,7 +5878,7 @@ msgstr "Delete message?"
 msgid "Delete node"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1082
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1089
 msgid "Delete note?"
 msgstr "Delete note?"
 
@@ -5919,7 +5919,7 @@ msgstr "Delete rule"
 msgid "Delete social link"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:361
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:386
 msgid "Delete step"
 msgstr "Delete step"
 
@@ -6186,7 +6186,7 @@ msgstr ""
 msgid "Don't have an account?"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:345
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:370
 msgid "Don't replay"
 msgstr "Don't replay"
 
@@ -6201,6 +6201,7 @@ msgstr "Don't retry"
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
 #: app/components/kiosk/kiosk-screens.tsx:720
+#: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -6438,7 +6439,7 @@ msgstr "e.g. product or brand names"
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:177
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:202
 msgid "e.g. Speak with our team"
 msgstr "e.g. Speak with our team"
 
@@ -6474,7 +6475,7 @@ msgstr "Each day on its own"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:237
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:262
 msgid "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 msgstr "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 
@@ -6516,9 +6517,9 @@ msgstr "Early out"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:990
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:996
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:235
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
@@ -6529,7 +6530,7 @@ msgstr ""
 msgid "Edit \"{ruleTitle}\""
 msgstr "Edit \"{ruleTitle}\""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:325
+#: app/components/settings/cards/organization/announcement-sheet.tsx:327
 msgid "Edit announcement"
 msgstr ""
 
@@ -6537,7 +6538,7 @@ msgstr ""
 msgid "Edit card"
 msgstr "Edit card"
 
-#: app/components/staff/onboarding/certificate-form.tsx:85
+#: app/components/staff/onboarding/certificate-form.tsx:86
 msgid "Edit certificate"
 msgstr "Edit certificate"
 
@@ -6580,7 +6581,7 @@ msgstr "Edit layout"
 msgid "Edit message"
 msgstr "Edit message"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:861
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:867
 msgid "Edit note"
 msgstr "Edit note"
 
@@ -6783,8 +6784,12 @@ msgstr "Enable hosted checkout"
 msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:373
+#: app/components/settings/cards/organization/announcement-sheet.tsx:382
 msgid "Enabled"
+msgstr ""
+
+#: app/components/settings/cards/organization/announcement-sheet.tsx:340
+msgid "Enabled banners appear at the top of your public site."
 msgstr ""
 
 #: app/components/staff/timesheets/card-fields.tsx:332
@@ -6878,7 +6883,7 @@ msgstr "Enter a full phone number with the country code, like +14155550123."
 msgid "Enter a last name."
 msgstr "Enter a last name."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:311
+#: app/utils/staffing/staff-validation.ts:72
 msgid "Enter a name."
 msgstr "Enter a name."
 
@@ -6911,9 +6916,9 @@ msgstr "Enter an amount like 12.50."
 msgid "Enter an amount like 1250.50."
 msgstr "Enter an amount like 1250.50."
 
-#: app/components/staff/positions-tab.tsx:467
-#: app/components/staff/positions-tab.tsx:787
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:320
+#: app/utils/staffing/staff-validation.ts:78
+#: app/utils/staffing/staff-validation.ts:94
+#: app/utils/staffing/staff-validation.ts:109
 msgid "Enter an amount like 15.50."
 msgstr "Enter an amount like 15.50."
 
@@ -7004,7 +7009,7 @@ msgstr "Enter the start time."
 msgid "Enter the time they left."
 msgstr "Enter the time they left."
 
-#: app/components/staff/positions-tab.tsx:472
+#: app/utils/staffing/staff-validation.ts:97
 msgid "Enter the yearly salary."
 msgstr "Enter the yearly salary."
 
@@ -7087,7 +7092,7 @@ msgstr "Erase data"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
-#: app/components/settings/cards/organization/announcement-sheet.tsx:271
+#: app/components/settings/cards/organization/announcement-sheet.tsx:273
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
 msgid "Error"
 msgstr ""
@@ -7154,7 +7159,7 @@ msgstr "Every call"
 msgid "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 msgstr "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:380
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:405
 msgid "Every call starts here. Connect it to the first thing callers should hear."
 msgstr "Every call starts here. Connect it to the first thing callers should hear."
 
@@ -7251,7 +7256,7 @@ msgid "Expired"
 msgstr ""
 
 #: app/components/settings/cards/sessions-card.tsx:302
-#: app/components/staff/onboarding/certificate-form.tsx:119
+#: app/components/staff/onboarding/certificate-form.tsx:120
 msgid "Expires"
 msgstr ""
 
@@ -7356,7 +7361,7 @@ msgstr ""
 msgid "Failed to format graph for validation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:899
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:905
 msgid "Failed to load AI Assistant"
 msgstr ""
 
@@ -7559,7 +7564,7 @@ msgstr "First day"
 msgid "First name"
 msgstr "First name"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:465
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:490
 msgid "First thing the AI says"
 msgstr "First thing the AI says"
 
@@ -7652,7 +7657,7 @@ msgstr "For"
 msgid "For a shift that was never punched, or a punch that went missing. It is marked as added by a manager."
 msgstr "For a shift that was never punched, or a punch that went missing. It is marked as added by a manager."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:407
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:432
 msgid "For our hours, press 1. To speak with our team, press 2."
 msgstr "For our hours, press 1. To speak with our team, press 2."
 
@@ -7744,7 +7749,7 @@ msgstr "Friday"
 msgid "From"
 msgstr "From"
 
-#: app/components/staff/positions-tab.tsx:701
+#: app/components/staff/positions-tab.tsx:708
 msgid "From {from}"
 msgstr "From {from}"
 
@@ -7752,7 +7757,7 @@ msgstr "From {from}"
 msgid "From a file"
 msgstr "From a file"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:478
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:503
 msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
 msgstr "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
 
@@ -7932,7 +7937,7 @@ msgstr "Good morning, {userName}"
 msgid "Goodbye"
 msgstr "Goodbye"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:564
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:589
 msgid "Goodbye message"
 msgstr "Goodbye message"
 
@@ -8284,12 +8289,12 @@ msgstr "Hosted checkout not connected"
 msgid "hour"
 msgstr "hour"
 
-#: app/components/staff/positions-tab.tsx:551
+#: app/components/staff/positions-tab.tsx:554
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:253
 msgid "Hourly"
 msgstr "Hourly"
 
-#: app/components/staff/positions-tab.tsx:560
+#: app/components/staff/positions-tab.tsx:563
 #: app/components/staff/timesheets/payroll-summary.tsx:176
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:244
 msgid "Hourly rate"
@@ -8356,7 +8361,7 @@ msgstr "How"
 msgid "How calls reach the agent"
 msgstr "How calls reach the agent"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:474
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:499
 msgid "How can I help you today?"
 msgstr "How can I help you today?"
 
@@ -8446,7 +8451,7 @@ msgstr "If nobody answers"
 msgid "If something looks wrong, talk to your manager."
 msgstr "If something looks wrong, talk to your manager."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:417
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:442
 msgid "If the caller doesn't choose"
 msgstr "If the caller doesn't choose"
 
@@ -8600,7 +8605,7 @@ msgstr ""
 msgid "Includes {seats} user seats"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:269
+#: app/components/settings/cards/organization/announcement-sheet.tsx:271
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Info"
 msgstr ""
@@ -8624,7 +8629,7 @@ msgstr "Inspect"
 #: app/components/app-sidebar.tsx:544
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1029
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
 msgid "Integrations"
 msgstr ""
 
@@ -8785,7 +8790,7 @@ msgstr ""
 msgid "Is Verified (True)"
 msgstr ""
 
-#: app/components/staff/onboarding/certificate-form.tsx:111
+#: app/components/staff/onboarding/certificate-form.tsx:112
 msgid "Issued"
 msgstr "Issued"
 
@@ -8940,8 +8945,8 @@ msgid "Keep their details on file"
 msgstr "Keep their details on file"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:132
-msgid "Keep track of food handler cards and other certificates, and get a reminder before one expires."
-msgstr "Keep track of food handler cards and other certificates, and get a reminder before one expires."
+msgid "Keep track of licences and certificates, and get a reminder before one expires."
+msgstr "Keep track of licences and certificates, and get a reminder before one expires."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:418
 msgid "Keep transferred calls open"
@@ -8965,7 +8970,7 @@ msgstr "Keeps original indexing"
 msgid "Kept with the card and shown in its history."
 msgstr "Kept with the card and shown in its history."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:157
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:182
 msgid "Key"
 msgstr "Key"
 
@@ -9213,7 +9218,7 @@ msgid "Lead capture"
 msgstr "Lead capture"
 
 #: app/components/feature-updates.tsx:205
-#: app/components/settings/cards/organization/announcement-sheet.tsx:486
+#: app/components/settings/cards/organization/announcement-sheet.tsx:512
 msgid "Learn more"
 msgstr ""
 
@@ -9231,7 +9236,7 @@ msgstr "Leave a reply..."
 msgid "Leave empty for one rate."
 msgstr "Leave empty for one rate."
 
-#: app/components/staff/onboarding/certificate-form.tsx:121
+#: app/components/staff/onboarding/certificate-form.tsx:122
 msgid "Leave empty if it never expires."
 msgstr "Leave empty if it never expires."
 
@@ -9247,15 +9252,15 @@ msgstr ""
 msgid "Leave empty to skip"
 msgstr "Leave empty to skip"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:566
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:591
 msgid "Leave empty to use the closing line from Setup."
 msgstr "Leave empty to use the closing line from Setup."
 
-#: app/components/staff/positions-tab.tsx:570
+#: app/components/staff/positions-tab.tsx:574
 msgid "Leave empty to use the position's default rate."
 msgstr "Leave empty to use the position's default rate."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:512
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:537
 msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
 msgstr "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
 
@@ -9366,7 +9371,7 @@ msgstr "Link copied."
 msgid "Link created"
 msgstr "Link created"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:480
+#: app/components/settings/cards/organization/announcement-sheet.tsx:498
 msgid "Link label"
 msgstr ""
 
@@ -9384,7 +9389,7 @@ msgstr "Link to a form you host elsewhere. Nothing is collected here."
 msgid "Link to the form"
 msgstr "Link to the form"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:468
+#: app/components/settings/cards/organization/announcement-sheet.tsx:486
 msgid "Link URL"
 msgstr ""
 
@@ -9438,7 +9443,7 @@ msgstr "Load older messages"
 msgid "Loading"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:923
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:929
 msgid "Loading AI Assistant..."
 msgstr ""
 
@@ -9503,7 +9508,7 @@ msgstr "Loading notes"
 msgid "Loading onboarding"
 msgstr "Loading onboarding"
 
-#: app/components/staff/positions-tab.tsx:641
+#: app/components/staff/positions-tab.tsx:648
 msgid "Loading pay"
 msgstr "Loading pay"
 
@@ -9511,7 +9516,7 @@ msgstr "Loading pay"
 msgid "Loading personal details"
 msgstr "Loading personal details"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:138
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:143
 msgid "Loading positions"
 msgstr "Loading positions"
 
@@ -9730,11 +9735,11 @@ msgstr "Mailbox sources"
 msgid "Main library"
 msgstr "Main library"
 
-#: app/components/staff/positions-tab.tsx:254
+#: app/components/staff/positions-tab.tsx:260
 msgid "Main position"
 msgstr "Main position"
 
-#: app/components/staff/positions-tab.tsx:211
+#: app/components/staff/positions-tab.tsx:217
 msgid "Main workplace"
 msgstr "Main workplace"
 
@@ -9754,7 +9759,11 @@ msgstr "Make modifications to notes created by this user."
 msgid "Make open"
 msgstr "Make open"
 
-#: app/components/note/share-note-button.tsx:325
+#: app/components/note/share-note-button.tsx:369
+msgid "Make Private"
+msgstr ""
+
+#: app/components/note/share-note-button.tsx:367
 msgid "Make Public"
 msgstr ""
 
@@ -10067,7 +10076,7 @@ msgstr "Members who created the most notes."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:390
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:580
 msgid "Message"
 msgstr ""
@@ -10456,7 +10465,7 @@ msgstr ""
 msgid "New"
 msgstr "New"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:327
+#: app/components/settings/cards/organization/announcement-sheet.tsx:329
 msgid "New announcement"
 msgstr ""
 
@@ -10512,7 +10521,7 @@ msgstr "New hires get a starter checklist"
 msgid "New hires will no longer get it. Checklists already added to people stay as they are."
 msgstr "New hires will no longer get it. Checklists already added to people stay as they are."
 
-#: app/components/staff/positions-tab.tsx:823
+#: app/components/staff/positions-tab.tsx:830
 msgid "New hourly rate"
 msgstr "New hourly rate"
 
@@ -10589,7 +10598,7 @@ msgstr "New tag"
 msgid "New template"
 msgstr "New template"
 
-#: app/components/staff/positions-tab.tsx:821
+#: app/components/staff/positions-tab.tsx:828
 msgid "New yearly salary"
 msgstr "New yearly salary"
 
@@ -10787,7 +10796,7 @@ msgstr ""
 msgid "No contacts yet."
 msgstr "No contacts yet."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:844
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:850
 msgid "No content yet"
 msgstr "No content yet"
 
@@ -10936,9 +10945,17 @@ msgstr "No media matches your search."
 msgid "No media yet. Upload an image to get started."
 msgstr "No media yet. Upload an image to get started."
 
+#: app/components/note/share-note-button.tsx:340
+msgid "No members found"
+msgstr ""
+
 #: app/components/organization-members.tsx:158
 msgid "No members found."
 msgstr ""
+
+#: app/components/note/share-note-button.tsx:214
+msgid "No members have been given direct access."
+msgstr "No members have been given direct access."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:123
 msgid "No message heard"
@@ -10970,7 +10987,7 @@ msgstr "No names to show. Ask a manager to set up your PIN."
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
 msgid "No note with the id \"{noteId}\" exists"
 msgstr ""
 
@@ -11052,6 +11069,10 @@ msgstr ""
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr ""
 
+#: app/components/note/share-note-button.tsx:338
+msgid "No other members to share with"
+msgstr ""
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:598
 msgid "No pages match that search"
 msgstr ""
@@ -11069,7 +11090,7 @@ msgstr ""
 msgid "No passkeys registered yet"
 msgstr ""
 
-#: app/components/staff/positions-tab.tsx:663
+#: app/components/staff/positions-tab.tsx:670
 msgid "No pay is set yet."
 msgstr "No pay is set yet."
 
@@ -11097,7 +11118,7 @@ msgstr "No PIN yet at {missingCount} workplaces"
 msgid "No position"
 msgstr "No position"
 
-#: app/components/staff/positions-tab.tsx:231
+#: app/components/staff/positions-tab.tsx:237
 msgid "No position here yet."
 msgstr "No position here yet."
 
@@ -11105,7 +11126,7 @@ msgstr "No position here yet."
 msgid "No position yet"
 msgstr "No position yet"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:161
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
 msgid "No positions yet"
 msgstr "No positions yet"
 
@@ -11371,7 +11392,7 @@ msgstr "Not answering: verify line"
 msgid "Not approved"
 msgstr "Not approved"
 
-#: app/components/staff/positions-tab.tsx:103
+#: app/components/staff/positions-tab.tsx:109
 msgid "Not at any workplace yet. Add one below."
 msgstr "Not at any workplace yet. Add one below."
 
@@ -11473,7 +11494,7 @@ msgstr "Not yet"
 msgid "note"
 msgstr ""
 
-#: app/components/staff/onboarding/certificate-form.tsx:129
+#: app/components/staff/onboarding/certificate-form.tsx:130
 #: app/components/staff/schedule/availability-page.tsx:350
 #: app/components/staff/schedule/availability-sheet.tsx:328
 #: app/components/staff/schedule/time-off-page.tsx:471
@@ -11484,7 +11505,7 @@ msgstr ""
 msgid "Note"
 msgstr "Note"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1000
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Note actions"
 msgstr "Note actions"
 
@@ -11910,8 +11931,8 @@ msgid "Only scheduled people clock in. Missing breaks are taken off."
 msgstr "Only scheduled people clock in. Missing breaks are taken off."
 
 #: app/components/note/share-note-button.tsx:195
-msgid "Only selected members can access this note"
-msgstr ""
+#~ msgid "Only selected members can access this note"
+#~ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:334
 msgid "Only selected roles and people"
@@ -11948,6 +11969,10 @@ msgstr "Only where nobody pressed Start break. Each deduction is marked on the t
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
 msgid "Only while you're open"
 msgstr "Only while you're open"
+
+#: app/components/note/share-note-button.tsx:
+#~ msgid "Only you can access this note"
+#~ msgstr ""
 
 #: app/components/hiring/candidate-parts.tsx:343
 msgid "Only your team sees notes. The applicant never does."
@@ -12024,7 +12049,7 @@ msgstr ""
 msgid "Open in email app"
 msgstr "Open in email app"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:503
+#: app/components/settings/cards/organization/announcement-sheet.tsx:530
 msgid "Open in new tab"
 msgstr ""
 
@@ -12186,7 +12211,7 @@ msgstr ""
 msgid "Operator Invited"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:274
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:299
 msgid "Option {nextKey}"
 msgstr "Option {nextKey}"
 
@@ -12194,11 +12219,11 @@ msgstr "Option {nextKey}"
 msgid "Optional caption for display"
 msgstr "Optional caption for display"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:467
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:492
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:234
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 msgid "Options"
 msgstr "Options"
 
@@ -12396,7 +12421,7 @@ msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do
 
 #: app/components/app-sidebar.tsx:329
 #: app/components/staff/labor/labor-page.tsx:196
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:682
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
 msgid "Overview"
 msgstr ""
 
@@ -12610,7 +12635,7 @@ msgstr ""
 msgid "Pay"
 msgstr "Pay"
 
-#: app/components/staff/positions-tab.tsx:148
+#: app/components/staff/positions-tab.tsx:154
 msgid "Pay and rates"
 msgstr "Pay and rates"
 
@@ -12642,7 +12667,7 @@ msgstr "Pay period settings"
 msgid "Pay rate"
 msgstr "Pay rate"
 
-#: app/components/staff/positions-tab.tsx:547
+#: app/components/staff/positions-tab.tsx:550
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:243
 msgid "Pay type"
 msgstr "Pay type"
@@ -12845,7 +12870,7 @@ msgstr "Phone call (for landlines)"
 msgid "Phone links only work on devices that can place phone calls."
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:509
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:534
 #: app/utils/website/field-types.ts:49
 #: app/utils/website/field-types.ts:52
 msgid "Phone number"
@@ -13194,7 +13219,7 @@ msgid "Please enter your email or username"
 msgstr ""
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:161
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:536
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:561
 msgid "Please hold while we connect you."
 msgstr "Please hold while we connect you."
 
@@ -13202,7 +13227,7 @@ msgstr "Please hold while we connect you."
 msgid "Please leave your name, number, and message after this, then press pound or hang up."
 msgstr "Please leave your name, number, and message after this, then press pound or hang up."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:555
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:580
 msgid "Please leave your name, number, and message after this."
 msgstr "Please leave your name, number, and message after this."
 
@@ -13242,14 +13267,14 @@ msgstr "Pool by day"
 #: app/components/hiring/hire-dialog.tsx:226
 #: app/components/hiring/job-editor.tsx:630
 #: app/components/hiring/job-summary.tsx:40
-#: app/components/staff/positions-tab.tsx:528
+#: app/components/staff/positions-tab.tsx:530
 #: app/components/staff/schedule/shift-editor-sheet.tsx:457
 #: app/components/staff/timesheets/card-fields.tsx:241
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:212
 msgid "Position"
 msgstr "Position"
 
-#: app/components/staff/positions-tab.tsx:493
+#: app/components/staff/positions-tab.tsx:494
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:354
 msgid "Position added."
 msgstr "Position added."
@@ -13268,7 +13293,7 @@ msgstr "Position: {from} to {to}"
 
 #: app/components/staff/staff-roster.tsx:137
 #: app/components/workspace-breadcrumb.tsx:26
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:104
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:109
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:241
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:301
 msgid "Positions"
@@ -13278,7 +13303,7 @@ msgstr "Positions"
 msgid "Positions and pay"
 msgstr "Positions and pay"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:171
 msgid "Positions such as Server or Line cook let you say what each person does and where."
 msgstr "Positions such as Server or Line cook let you say what each person does and where."
 
@@ -13434,7 +13459,7 @@ msgstr "Privacy"
 msgid "Privacy & Data Rights"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:707
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:713
 msgid "Private"
 msgstr ""
 
@@ -13480,8 +13505,8 @@ msgstr ""
 msgid "Project management"
 msgstr "Project management"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:402
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:545
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:427
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:570
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -13490,7 +13515,7 @@ msgstr "Prompt"
 msgid "Pronunciations"
 msgstr "Pronunciations"
 
-#: app/components/note/share-note-button.tsx:189
+#: app/components/note/share-note-button.tsx:208
 msgid "Public Access"
 msgstr ""
 
@@ -13655,7 +13680,7 @@ msgstr ""
 msgid "Quote"
 msgstr ""
 
-#: app/components/staff/positions-tab.tsx:805
+#: app/components/staff/positions-tab.tsx:812
 msgid "Rate updated."
 msgstr "Rate updated."
 
@@ -13688,7 +13713,7 @@ msgstr "React with {emoji}"
 msgid "Read a message aloud, then continue."
 msgstr "Read a message aloud, then continue."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:391
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:416
 msgid "Read aloud, then the call moves on."
 msgstr "Read aloud, then the call moves on."
 
@@ -13728,7 +13753,7 @@ msgstr "Reading page details"
 msgid "Ready"
 msgstr "Ready"
 
-#: app/components/staff/positions-tab.tsx:840
+#: app/components/staff/positions-tab.tsx:848
 #: app/components/staff/timesheets/reason-field.tsx:36
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:96
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:116
@@ -13937,13 +13962,13 @@ msgstr "Relationship"
 msgid "Relaxed"
 msgstr "Relaxed"
 
-#: app/components/phone-agent/settings-page.tsx:369
+#: app/components/phone-agent/settings-page.tsx:371
 #: app/components/staff/labor-policy-editor.tsx:1094
 msgid "Reload"
 msgstr "Reload"
 
 #: app/components/chat/chat-unavailable.tsx:58
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:907
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:913
 msgid "Reload page"
 msgstr ""
 
@@ -13986,7 +14011,7 @@ msgstr "Reminders, not hard blocks. No overtime until you turn it on."
 msgid "Removal not published"
 msgstr "Removal not published"
 
-#: app/components/note/share-note-button.tsx:240
+#: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
@@ -13997,7 +14022,7 @@ msgstr "Removal not published"
 #: app/components/staff/onboarding/certificates-tab.tsx:283
 #: app/components/staff/onboarding/remove-dialog.tsx:60
 #: app/components/staff/onboarding/task-row.tsx:236
-#: app/components/staff/positions-tab.tsx:301
+#: app/components/staff/positions-tab.tsx:307
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:314
@@ -14073,11 +14098,11 @@ msgstr ""
 msgid "Remove field"
 msgstr "Remove field"
 
-#: app/components/staff/positions-tab.tsx:274
+#: app/components/staff/positions-tab.tsx:280
 msgid "Remove from {name}?"
 msgstr "Remove from {name}?"
 
-#: app/components/staff/positions-tab.tsx:223
+#: app/components/staff/positions-tab.tsx:229
 msgid "Remove from workplace"
 msgstr "Remove from workplace"
 
@@ -14108,7 +14133,7 @@ msgstr ""
 msgid "Remove number"
 msgstr "Remove number"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:188
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:213
 msgid "Remove option"
 msgstr "Remove option"
 
@@ -14181,7 +14206,7 @@ msgstr "Remove variable"
 msgid "Removed"
 msgstr "Removed"
 
-#: app/components/staff/positions-tab.tsx:198
+#: app/components/staff/positions-tab.tsx:204
 msgid "Removed from {name}."
 msgstr "Removed from {name}."
 
@@ -14200,7 +14225,7 @@ msgstr "Removing section"
 #: app/components/staff/access-tab.tsx:274
 #: app/components/staff/kiosk-manager.tsx:980
 #: app/components/staff/onboarding/remove-dialog.tsx:60
-#: app/components/staff/positions-tab.tsx:299
+#: app/components/staff/positions-tab.tsx:305
 msgid "Removing…"
 msgstr "Removing…"
 
@@ -14272,11 +14297,11 @@ msgstr "Replace their weekly pattern"
 msgid "Replaced by a newer message"
 msgstr "Replaced by a newer message"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:348
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:373
 msgid "Replay {n} times"
 msgstr "Replay {n} times"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:347
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:372
 msgid "Replay once"
 msgstr "Replay once"
 
@@ -14476,7 +14501,7 @@ msgstr "Rest (paid)"
 msgid "Rest break"
 msgstr "Rest break"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:247
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "Restore"
 
@@ -14741,7 +14766,7 @@ msgstr "Said while callers choose an option."
 msgid "Said while connecting callers to your team."
 msgstr "Said while connecting callers to your team."
 
-#: app/components/staff/positions-tab.tsx:552
+#: app/components/staff/positions-tab.tsx:555
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:253
 msgid "Salary"
 msgstr "Salary"
@@ -14817,7 +14842,7 @@ msgstr ""
 #: app/components/dashboard/dashboard-options-menu.tsx:153
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:134
-#: app/components/phone-agent/settings-page.tsx:378
+#: app/components/phone-agent/settings-page.tsx:380
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
@@ -14825,7 +14850,7 @@ msgstr ""
 #: app/components/staff/labor/labor-sales.tsx:203
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
-#: app/components/staff/onboarding/certificate-form.tsx:147
+#: app/components/staff/onboarding/certificate-form.tsx:148
 #: app/components/staff/onboarding/task-row.tsx:179
 #: app/components/staff/schedule/availability-sheet.tsx:202
 #: app/components/staff/schedule/shift-editor-sheet.tsx:392
@@ -14835,7 +14860,7 @@ msgstr ""
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:457
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr ""
 
@@ -14863,7 +14888,7 @@ msgstr ""
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
-#: app/components/settings/cards/organization/announcement-sheet.tsx:523
+#: app/components/settings/cards/organization/announcement-sheet.tsx:550
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
 #: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
@@ -14910,7 +14935,7 @@ msgstr ""
 msgid "Save pronunciations and key terms"
 msgstr "Save pronunciations and key terms"
 
-#: app/components/staff/positions-tab.tsx:852
+#: app/components/staff/positions-tab.tsx:861
 msgid "Save rate"
 msgstr "Save rate"
 
@@ -14953,7 +14978,7 @@ msgstr "Save your changes before closing."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
-#: app/components/phone-agent/settings-page.tsx:374
+#: app/components/phone-agent/settings-page.tsx:376
 msgid "Saved"
 msgstr "Saved"
 
@@ -14999,7 +15024,7 @@ msgstr ""
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
-#: app/components/phone-agent/settings-page.tsx:378
+#: app/components/phone-agent/settings-page.tsx:380
 #: app/components/roles/tenant-role-access-manager.tsx:801
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
@@ -15007,9 +15032,9 @@ msgstr ""
 #: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
-#: app/components/staff/onboarding/certificate-form.tsx:145
+#: app/components/staff/onboarding/certificate-form.tsx:146
 #: app/components/staff/onboarding/template-editor.tsx:92
-#: app/components/staff/positions-tab.tsx:852
+#: app/components/staff/positions-tab.tsx:861
 #: app/components/staff/schedule/availability-sheet.tsx:202
 #: app/components/staff/schedule/shift-editor-sheet.tsx:390
 #: app/components/staff/schedule/time-off-sheet.tsx:175
@@ -15019,16 +15044,16 @@ msgstr ""
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:457
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
 msgstr "Saving…"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:490
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:515
 msgid "Say after sending"
 msgstr "Say after sending"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:533
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:558
 msgid "Say before transferring"
 msgstr "Say before transferring"
 
@@ -15271,7 +15296,7 @@ msgstr "Search team"
 msgid "Search team members"
 msgstr "Search team members"
 
-#: app/components/note/share-note-button.tsx:261
+#: app/components/note/share-note-button.tsx:286
 msgid "Search team members..."
 msgstr ""
 
@@ -15504,7 +15529,7 @@ msgstr ""
 msgid "Select trigger type"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:405
+#: app/components/settings/cards/organization/announcement-sheet.tsx:414
 msgid "Select type"
 msgstr ""
 
@@ -15513,7 +15538,7 @@ msgid "Select which event initiates this automated journey."
 msgstr ""
 
 #: app/components/media-library/media-library-picker.tsx:320
-#: app/components/note/share-note-button.tsx:300
+#: app/components/note/share-note-button.tsx:329
 #: app/components/phone-agent/voice-picker.tsx:515
 msgid "Selected"
 msgstr ""
@@ -15522,9 +15547,13 @@ msgstr ""
 msgid "Selected cards"
 msgstr "Selected cards"
 
-#: app/components/note/share-note-button.tsx:216
+#: app/components/note/share-note-button.tsx:237
 msgid "Selected Members"
 msgstr ""
+
+#: app/components/note/share-note-button.tsx:216
+msgid "Selected members have direct access."
+msgstr "Selected members have direct access."
 
 #: app/components/settings/cards/organization/shop-card.tsx:73
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
@@ -15773,10 +15802,10 @@ msgstr "Several people are typing…"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:229
 #: app/components/dashboard/share-dashboard-dialog.tsx:369
-#: app/components/note/share-note-button.tsx:167
+#: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1024
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1030
 msgid "Share"
 msgstr ""
 
@@ -15784,11 +15813,11 @@ msgstr ""
 msgid "Share “{name}”"
 msgstr "Share “{name}”"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:446
+#: app/components/settings/cards/organization/announcement-sheet.tsx:463
 msgid "Share an update, maintenance notice, or promotion…"
 msgstr ""
 
-#: app/components/note/share-note-button.tsx:177
+#: app/components/note/share-note-button.tsx:196
 msgid "Share Note"
 msgstr ""
 
@@ -15926,7 +15955,7 @@ msgstr "Short notice."
 msgid "Show"
 msgstr "Show"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:126
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:131
 msgid "Show archived"
 msgstr "Show archived"
 
@@ -15979,7 +16008,7 @@ msgstr "Show requests"
 msgid "Show specific examples"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:376
+#: app/components/settings/cards/organization/announcement-sheet.tsx:385
 msgid "Show this banner on your public site"
 msgstr ""
 
@@ -16073,7 +16102,7 @@ msgstr ""
 msgid "Since {since} · {elapsed}"
 msgstr "Since {since} · {elapsed}"
 
-#: app/components/staff/positions-tab.tsx:262
+#: app/components/staff/positions-tab.tsx:268
 msgid "Since {startedOn}"
 msgstr "Since {startedOn}"
 
@@ -16388,7 +16417,7 @@ msgstr "Standard system role."
 msgid "Standing application"
 msgstr "Standing application"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
 msgid "Star"
 msgstr "Star"
 
@@ -16496,12 +16525,12 @@ msgstr "Starting…"
 msgid "Starts"
 msgstr "Starts"
 
-#: app/components/staff/positions-tab.tsx:260
+#: app/components/staff/positions-tab.tsx:266
 msgid "Starts {startedOn}"
 msgstr "Starts {startedOn}"
 
-#: app/components/staff/positions-tab.tsx:538
-#: app/components/staff/positions-tab.tsx:832
+#: app/components/staff/positions-tab.tsx:541
+#: app/components/staff/positions-tab.tsx:840
 msgid "Starts on"
 msgstr "Starts on"
 
@@ -16544,7 +16573,7 @@ msgstr ""
 msgid "Step Executions ({timelineCount})"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:366
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:391
 msgid "Step name"
 msgstr "Step name"
 
@@ -16656,7 +16685,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:272
+#: app/components/settings/cards/organization/announcement-sheet.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:347
 msgid "Success"
 msgstr ""
@@ -16846,7 +16875,7 @@ msgstr "Teal"
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:102
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:107
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:207
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:281
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:291
@@ -16889,7 +16918,7 @@ msgstr ""
 msgid "Team Size"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:200
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:225
 msgid "team, person, help"
 msgstr "team, person, help"
 
@@ -16897,7 +16926,7 @@ msgstr "team, person, help"
 msgid "Teammate"
 msgstr "Teammate"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:403
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:428
 msgid "Tell callers which key does what."
 msgstr "Tell callers which key does what."
 
@@ -17569,7 +17598,7 @@ msgstr "The job is filled"
 msgid "The job is live."
 msgstr "The job is live."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:106
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:111
 msgid "The jobs people do here. Assign them from a person's profile."
 msgstr "The jobs people do here. Assign them from a person's profile."
 
@@ -17589,7 +17618,7 @@ msgstr "The law requires this line, so it can't be changed."
 msgid "The link in their earlier emails stops working right away. They get a new one in the next schedule email."
 msgstr "The link in their earlier emails stops working right away. They get a new one in the next schedule email."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:492
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:517
 msgid "The link opens your website. It's texted to the number they're calling from."
 msgstr "The link opens your website. It's texted to the number they're calling from."
 
@@ -17605,7 +17634,7 @@ msgstr "The main paragraph copy of your email."
 msgid "The MCP client will only have access to data from the selected organization"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:547
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:572
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 
@@ -17761,11 +17790,11 @@ msgstr "Their details are removed on {retentionDate}."
 msgid "Their hours are frozen as shown. You can reopen a card later if something is wrong, and the reason is logged."
 msgstr "Their hours are frozen as shown. You can reopen a card later if something is wrong, and the reason is logged."
 
-#: app/components/staff/positions-tab.tsx:582
+#: app/components/staff/positions-tab.tsx:586
 msgid "Their main position at this workplace"
 msgstr "Their main position at this workplace"
 
-#: app/components/staff/positions-tab.tsx:277
+#: app/components/staff/positions-tab.tsx:283
 msgid "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 msgstr "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 
@@ -17926,7 +17955,7 @@ msgstr "They may have been removed, or you may not have access to their workplac
 msgid "They may have been removed, or you may not have access to them."
 msgstr "They may have been removed, or you may not have access to them."
 
-#: app/components/staff/positions-tab.tsx:102
+#: app/components/staff/positions-tab.tsx:108
 msgid "They no longer work at any workplace."
 msgstr "They no longer work at any workplace."
 
@@ -17974,7 +18003,7 @@ msgstr ""
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "This action cannot be undone. Are you sure you want to delete this announcement?"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1085
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1092
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "This action cannot be undone. The note and its comments will be permanently removed."
 
@@ -18587,7 +18616,7 @@ msgstr "Tip shares"
 
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:209
 msgid "Tips"
 msgstr "Tips"
 
@@ -18958,7 +18987,7 @@ msgstr ""
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:415
 msgid "Try again"
@@ -19060,7 +19089,7 @@ msgstr ""
 #: app/components/hiring/job-editor.tsx:642
 #: app/components/hiring/job-summary.tsx:41
 #: app/components/my-schedule/time-off-sheet.tsx:153
-#: app/components/settings/cards/organization/announcement-sheet.tsx:388
+#: app/components/settings/cards/organization/announcement-sheet.tsx:397
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
@@ -19259,7 +19288,7 @@ msgid "Unscheduled"
 msgstr "Unscheduled"
 
 #: app/components/favorite-notes.tsx:142
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
 msgid "Unstar"
 msgstr ""
 
@@ -19276,7 +19305,7 @@ msgstr "Until"
 msgid "Untitled image"
 msgstr "Untitled image"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:695
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:701
 msgid "Untitled Note"
 msgstr ""
 
@@ -19347,7 +19376,7 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:700
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:706
 msgid "Updated {timeAgo} ago"
 msgstr ""
 
@@ -19533,6 +19562,10 @@ msgstr "Use a number like 18 or 18.50."
 msgid "Use a template"
 msgstr "Use a template"
 
+#: app/components/phone-agent/settings-page.tsx:154
+msgid "Use a time zone name such as America/New_York."
+msgstr "Use a time zone name such as America/New_York."
+
 #: app/components/phone-agent/settings-page.tsx:134
 msgid "Use a US or Canada phone number."
 msgstr "Use a US or Canada phone number."
@@ -19647,7 +19680,7 @@ msgstr ""
 msgid "Username or email is required"
 msgstr ""
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:453
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:478
 msgid "Uses your opening hours and special hours for the line the caller reached. Connect the Open and Closed outputs to different steps."
 msgstr "Uses your opening hours and special hours for the line the caller reached. Connect the Open and Closed outputs to different steps."
 
@@ -19994,7 +20027,7 @@ msgstr "Warn managers about overtime"
 msgid "Warn when this close to the limit"
 msgstr "Warn when this close to the limit"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:270
+#: app/components/settings/cards/organization/announcement-sheet.tsx:272
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
 msgid "Warning"
 msgstr ""
@@ -20160,7 +20193,7 @@ msgid "We found your organization:"
 msgstr ""
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:158
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:500
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:525
 msgid "We just sent you a text with a link to our website."
 msgstr "We just sent you a text with a link to our website."
 
@@ -20321,7 +20354,7 @@ msgstr "What does it pay?"
 msgid "What else should I know?"
 msgstr ""
 
-#: app/components/staff/onboarding/certificate-form.tsx:101
+#: app/components/staff/onboarding/certificate-form.tsx:102
 msgid "What is it called"
 msgstr "What is it called"
 
@@ -20361,7 +20394,7 @@ msgstr "What the assistant is told"
 msgid "What they are asked to read and accept."
 msgstr "What they are asked to read and accept."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:176
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:201
 msgid "What this option does"
 msgstr "What this option does"
 
@@ -20618,7 +20651,7 @@ msgstr "Word"
 msgid "Word, e.g. Nguyen"
 msgstr "Word, e.g. Nguyen"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:196
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:221
 msgid "Words callers might say"
 msgstr "Words callers might say"
 
@@ -20667,7 +20700,7 @@ msgstr "Working…"
 #: app/components/hiring/hire-dialog.tsx:196
 #: app/components/staff/kiosk-manager.tsx:582
 #: app/components/staff/labor/labor-page.tsx:280
-#: app/components/staff/positions-tab.tsx:515
+#: app/components/staff/positions-tab.tsx:517
 #: app/components/staff/schedule/schedule-toolbar.tsx:268
 #: app/components/staff/staff-roster.tsx:140
 #: app/components/staff/timeclock-today.tsx:134
@@ -20710,7 +20743,7 @@ msgstr "Write a policy. You record when they have read and accepted it."
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "Write it the way you'd explain it to a new staff member."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:331
+#: app/components/settings/cards/organization/announcement-sheet.tsx:334
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr ""
 
@@ -20766,7 +20799,7 @@ msgstr "year"
 msgid "Yearly"
 msgstr ""
 
-#: app/components/staff/positions-tab.tsx:558
+#: app/components/staff/positions-tab.tsx:561
 msgid "Yearly salary"
 msgstr "Yearly salary"
 
@@ -20888,7 +20921,7 @@ msgstr ""
 msgid "You can view these rules but not change them."
 msgstr "You can view these rules but not change them."
 
-#: app/components/phone-agent/settings-page.tsx:355
+#: app/components/phone-agent/settings-page.tsx:357
 msgid "You can view these settings but not change them."
 msgstr "You can view these settings but not change them."
 
@@ -20917,7 +20950,7 @@ msgstr "You do not have access to that workplace."
 msgid "You do not have permission to do that."
 msgstr "You do not have permission to do that."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1184
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
 msgid "You do not have permission to view this note"
 msgstr ""
 
@@ -20957,7 +20990,7 @@ msgstr "You have unsaved changes to the call flow. Leave without saving?"
 msgid "You have unsaved changes."
 msgstr "You have unsaved changes."
 
-#: app/components/phone-agent/settings-page.tsx:186
+#: app/components/phone-agent/settings-page.tsx:188
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "You have unsaved changes. Leave this page and lose them?"
 

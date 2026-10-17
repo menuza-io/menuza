@@ -35,6 +35,7 @@ export const SETTINGS_ERROR_CODES = [
 	'contact_required',
 	'code_format',
 	'closes_before_opens',
+	'timezone',
 ] as const
 export type SettingsErrorCode = (typeof SETTINGS_ERROR_CODES)[number]
 

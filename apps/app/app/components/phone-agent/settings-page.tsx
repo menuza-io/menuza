@@ -150,6 +150,8 @@ export function useSettingsErrorText() {
 					return _(msg`Enter the 6-digit code.`)
 				case 'closes_before_opens':
 					return _(msg`Closing time must be after opening time.`)
+				case 'timezone':
+					return _(msg`Use a time zone name such as America/New_York.`)
 			}
 		},
 		[_],

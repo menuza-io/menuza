@@ -199,6 +199,11 @@ describe('buildAgentInstructions', () => {
 		expect(text).not.toContain('send_order_link')
 	})
 
+	it('falls back to UTC for an unknown stored time zone', () => {
+		const text = promptWith({ timezone: 'Not/AZone' })
+		expect(text).toContain('It is Monday 6:00 PM local time.')
+	})
+
 	it('adds the scope name and the after-hours line', () => {
 		const text = promptWith({
 			scopeName: 'Uptown',

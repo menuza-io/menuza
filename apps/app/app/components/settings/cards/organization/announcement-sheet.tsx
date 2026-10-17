@@ -205,7 +205,9 @@ export function AnnouncementSheet({
 	const [formInstance, setFormInstance] = useState(0)
 
 	const defaultLocale = localesConfig.defaultLocale
-	const { activeLocale } = useContext(LocaleContext)
+	const { activeLocale, locales } = useContext(LocaleContext)
+	// LocaleSwitcher hides itself below two locales; match it here.
+	const hasMultipleLocales = locales.length > 1
 
 	const [isEnabled, setIsEnabled] = useState(announcement?.isEnabled ?? true)
 	const [type, setType] = useState<AnnouncementType>(
@@ -328,10 +330,17 @@ export function AnnouncementSheet({
 						)}
 					</SheetTitle>
 					<SheetDescription>
-						<Trans>
-							Write the banner in the default language, then switch locales to
-							translate. Enabled banners appear at the top of your public site.
-						</Trans>
+						{hasMultipleLocales ? (
+							<Trans>
+								Write the banner in the default language, then switch locales to
+								translate. Enabled banners appear at the top of your public
+								site.
+							</Trans>
+						) : (
+							<Trans>
+								Enabled banners appear at the top of your public site.
+							</Trans>
+						)}
 					</SheetDescription>
 				</SheetHeader>
 
@@ -425,7 +434,7 @@ export function AnnouncementSheet({
 									<Trans>Content</Trans>
 								</FieldLabel>
 								<div className="flex items-center gap-1">
-									{missingDefaultContent ? (
+									{hasMultipleLocales && missingDefaultContent ? (
 										<Badge variant="secondary">
 											<Trans>Default language required</Trans>
 										</Badge>
@@ -441,6 +450,14 @@ export function AnnouncementSheet({
 								id={`${form.id}-content`}
 								value={contentJson}
 								onChange={setContentJson}
+								aria-invalid={
+									fields.contentJson.errors?.length ? true : undefined
+								}
+								aria-describedby={
+									fields.contentJson.errors?.length
+										? fields.contentJson.errorId
+										: undefined
+								}
 								rows={4}
 								placeholder={_(
 									msg`Share an update, maintenance notice, or promotion…`,
@@ -448,6 +465,7 @@ export function AnnouncementSheet({
 								disabled={isSubmitting}
 							/>
 							<FieldError
+								id={fields.contentJson.errorId}
 								errors={convertErrorsToFieldFormat(fields.contentJson.errors)}
 							/>
 						</Field>
@@ -483,10 +501,19 @@ export function AnnouncementSheet({
 											id={`${form.id}-link-label`}
 											value={linkLabelJson}
 											onChange={setLinkLabelJson}
+											aria-invalid={
+												fields.linkLabelJson.errors?.length ? true : undefined
+											}
+											aria-describedby={
+												fields.linkLabelJson.errors?.length
+													? fields.linkLabelJson.errorId
+													: undefined
+											}
 											placeholder={_(msg`Learn more`)}
 											disabled={isSubmitting}
 										/>
 										<FieldError
+											id={fields.linkLabelJson.errorId}
 											errors={convertErrorsToFieldFormat(
 												fields.linkLabelJson.errors,
 											)}

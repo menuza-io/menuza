@@ -19,6 +19,7 @@ import { type StaffClient } from '#app/utils/staffing/staff-client.ts'
 import { SelectField, TextField } from '../controls.tsx'
 import {
 	CERTIFICATE_KIND_ORDER,
+	certificateKindChoices,
 	useOnboardingLabels,
 } from './onboarding-labels.ts'
 
@@ -26,7 +27,7 @@ function initialValues(
 	existing: StaffCertificate | null,
 ): CertificateFormValues {
 	return {
-		kind: existing?.kind ?? 'food_handler',
+		kind: existing?.kind ?? CERTIFICATE_KIND_ORDER[0]!,
 		label: existing?.label ?? '',
 		issuedOn: existing?.issuedOn ?? '',
 		expiresOn: existing?.expiresOn ?? '',
@@ -91,7 +92,7 @@ export function CertificateForm({
 				onValueChange={(next) =>
 					set('kind', next as CertificateFormValues['kind'])
 				}
-				options={CERTIFICATE_KIND_ORDER.map((kind) => ({
+				options={certificateKindChoices(existing?.kind ?? null).map((kind) => ({
 					value: kind,
 					label: labels.certificateKind(kind),
 				}))}

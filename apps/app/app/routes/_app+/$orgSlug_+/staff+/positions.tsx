@@ -39,6 +39,7 @@ import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
 import { STAFF_SECTION_REQUIREMENTS } from '#app/utils/staffing/sections.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
+import { focusFirstInvalidField } from '#app/utils/staffing/staff-form-focus.ts'
 import {
 	minorToInput,
 	parseMoneyToMinor,
@@ -47,6 +48,10 @@ import {
 	positionsSchema,
 	type StaffPositionRow,
 } from '#app/utils/staffing/staff-types.ts'
+import {
+	hasErrors,
+	validatePositionForm,
+} from '#app/utils/staffing/staff-validation.ts'
 import { loadStaffScopes } from '#app/utils/staffing/team-context.server.ts'
 import { type Route } from './+types/positions.ts'
 
@@ -300,27 +305,22 @@ function PositionDialog({
 	const [currency, setCurrency] = useState<string>(
 		position?.currency ?? currencies[0] ?? 'USD',
 	)
-	const [error, setError] = useState<string | null>(null)
-	const [nameError, setNameError] = useState<string | null>(null)
+	// After the first Save, errors follow the values, so each one clears as
+	// soon as its field is valid.
+	const [submitted, setSubmitted] = useState(false)
+	const validate = () => validatePositionForm({ name, rate }, _, { canSetRate })
+	const errors = submitted ? validate() : {}
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		setError(null)
-		setNameError(null)
-		if (!name.trim()) {
-			setNameError(_(t`Enter a name.`))
+		setSubmitted(true)
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
 			return
 		}
 		let defaultRateMinor: number | null | undefined
 		if (canSetRate) {
-			if (rate.trim() === '') defaultRateMinor = null
-			else {
-				defaultRateMinor = parseMoneyToMinor(rate)
-				if (defaultRateMinor === null) {
-					setError(_(t`Enter an amount like 15.50.`))
-					return
-				}
-			}
+			defaultRateMinor = rate.trim() === '' ? null : parseMoneyToMinor(rate)
 		}
 		const body = {
 			name: name.trim(),
@@ -387,7 +387,7 @@ function PositionDialog({
 						label={<Trans>Name</Trans>}
 						value={name}
 						onChange={(event) => setName(event.target.value)}
-						error={nameError}
+						error={errors.name}
 						maxLength={60}
 						autoFocus
 					/>
@@ -425,6 +425,7 @@ function PositionDialog({
 								dir="ltr"
 								value={rate}
 								onChange={(event) => setRate(event.target.value)}
+								error={errors.rate}
 							/>
 							{currencies.length > 1 ? (
 								<SelectField
@@ -439,9 +440,9 @@ function PositionDialog({
 							) : null}
 						</div>
 					) : null}
-					{error || action.error ? (
+					{action.error ? (
 						<Alert variant="destructive">
-							<AlertDescription>{error ?? action.error}</AlertDescription>
+							<AlertDescription>{action.error}</AlertDescription>
 						</Alert>
 					) : null}
 					<DialogFooter>
