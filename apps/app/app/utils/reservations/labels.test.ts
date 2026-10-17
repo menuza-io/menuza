@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+	CONTACT_STATUS_LABELS,
 	enumLabel,
 	humanizeEnum,
 	RESERVATION_STATUS_LABELS,
@@ -18,6 +19,20 @@ describe('reservation labels', () => {
 			'Half done',
 		)
 		expect(enumLabel(translate, RESERVATION_STATUS_LABELS, null)).toBe('')
+	})
+
+	it('keys contact statuses on the canonical left_message | no_answer | wrong_number values', () => {
+		expect(Object.keys(CONTACT_STATUS_LABELS).sort()).toEqual([
+			'left_message',
+			'no_answer',
+			'none',
+			'not_contacted',
+			'wrong_number',
+		])
+		for (const value of ['left_message', 'no_answer', 'wrong_number']) {
+			const label = enumLabel(translate, CONTACT_STATUS_LABELS, value)
+			expect(label).toMatch(/^T:/)
+		}
 	})
 
 	it('strips the org prefix from tag ids', () => {

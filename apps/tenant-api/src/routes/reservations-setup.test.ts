@@ -1528,6 +1528,76 @@ describe('/operator/reservations/setup/* routes', () => {
 		expect(audits.length).toBeGreaterThan(0)
 	})
 
+	it('GET /locations/:id/conflicts is a dry run: repeated reads write no events, occupancies, reservation versions, or day versions', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const db = await getTenantDb(ORG_ID)
+
+		await db.insert(rsvLocationSettings).values({
+			locationId: LOC_MAIN,
+			timeZone: 'America/New_York',
+			enabled: true,
+		})
+		await db.insert(rsvAreas).values({
+			id: 'area_dry',
+			locationId: LOC_MAIN,
+			name: 'Main',
+		})
+		await db.insert(rsvTables).values({
+			id: 'tbl_dry_1',
+			locationId: LOC_MAIN,
+			areaId: 'area_dry',
+			label: 'D1',
+			minCovers: 1,
+			maxCovers: 4,
+		})
+		await db.insert(rsvGuests).values({
+			id: 'gst_dry',
+			firstName: 'Dry',
+			lastName: 'Run',
+		})
+		// A soft booking with no table is something a real reflow would assign and record.
+		const startAt = Date.UTC(2037, 9, 20, 22, 0, 0)
+		await db.insert(rsvReservations).values({
+			id: 'res_dry',
+			confirmationCode: 'DRYRUN01',
+			locationId: LOC_MAIN,
+			guestId: 'gst_dry',
+			businessDate: '2037-10-20',
+			localStartMin: 1080,
+			durationMin: 90,
+			startAt,
+			endAt: startAt + 90 * 60_000,
+			timeZone: 'America/New_York',
+			partySize: 2,
+			status: 'booked',
+			channel: 'online',
+			assignment: 'soft',
+			scheduleVersion: 1,
+			version: 1,
+		})
+
+		const snapshot = async () => ({
+			events: await db.select().from(rsvReservationEvents).all(),
+			occupancies: await db.select().from(rsvTableOccupancies).all(),
+			dayVersions: await db.select().from(rsvDayVersions).all(),
+			reservations: await db.select().from(rsvReservations).all(),
+		})
+		const before = await snapshot()
+
+		for (let i = 0; i < 2; i++) {
+			const res = await app.request(
+				`/operator/reservations/setup/locations/${LOC_MAIN}/conflicts?date=2037-10-20`,
+				{ headers: { Authorization: `Bearer ${token}` } },
+			)
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as { conflicts: unknown[] }
+			expect(Array.isArray(body.conflicts)).toBe(true)
+		}
+
+		expect(await snapshot()).toEqual(before)
+	})
+
 	it('VAL-SETUP-023 & VAL-CROSS-006: POST /locations/:id/blocks accepts the UI payload { date, startMin, endMin }, stores epoch instants, reflows soft bookings and emits auto_reassigned', async () => {
 		const app = buildApp()
 		const token = await mintToken()

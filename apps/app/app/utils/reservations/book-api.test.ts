@@ -4,6 +4,7 @@ import {
 	fetchBookDayConditional,
 	fetchReservationEvents,
 	normalizeDayFeedResponse,
+	normalizeReservationView,
 	saveSectionServerAssignments,
 	saveServiceNotes,
 	transitionReservationStatus,
@@ -28,6 +29,33 @@ function createMockClient(
 }
 
 describe('book-api', () => {
+	it('uses the occasion value as sent and never derives it from the tag id', () => {
+		const base = {
+			id: 'rsv-occ',
+			confirmationCode: 'OCC123',
+			partySize: 2,
+			businessDate: '2026-04-20',
+			localStartMin: 1140,
+			durationMin: 90,
+			status: 'booked',
+			version: 1,
+		}
+		expect(
+			normalizeReservationView({
+				...base,
+				occasion: 'anniversary',
+				occasionTagId: 'tag_acme_anniversary',
+			}).occasion,
+		).toBe('anniversary')
+		expect(
+			normalizeReservationView({
+				...base,
+				occasion: null,
+				occasionTagId: 'tag_acme_anniversary',
+			}).occasion,
+		).toBeNull()
+	})
+
 	it('normalizes day feed response including tables, reservations, pacing, section layouts, and service notes', () => {
 		const feed = normalizeDayFeedResponse(
 			{

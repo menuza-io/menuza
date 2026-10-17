@@ -1480,6 +1480,77 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			expect(crossQuery.status).toBe(200)
 		})
 
+		it('returns the bare occasion value in occasion and keeps the tag id only in occasionTagId on create, detail, and the day feed', async () => {
+			const app = buildApp()
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+			await db.insert(rsvTags).values({
+				id: 'tag_acme_anniversary',
+				scope: 'visit',
+				category: 'occasion',
+				name: 'Anniversary',
+				systemKey: 'anniversary' as never,
+			})
+
+			const created = await book(app, token, 'occ-1', {
+				occasion: 'anniversary',
+			})
+			const expected = {
+				occasion: 'anniversary',
+				occasionTagId: 'tag_acme_anniversary',
+			}
+			expect(created).toMatchObject(expected)
+
+			const detailRes = await app.request(
+				`/operator/reservations/book/reservations/${created.id}`,
+				{ headers: { Authorization: `Bearer ${token}` } },
+			)
+			expect(detailRes.status).toBe(200)
+			const detail = (await detailRes.json()) as any
+			expect(detail.reservation).toMatchObject(expected)
+
+			const day = (await (await getDay(app, token)).json()) as any
+			expect(
+				day.reservations.find((r: any) => r.id === created.id),
+			).toMatchObject(expected)
+
+			const adHoc = await book(app, token, 'occ-2', { occasion: 'Pre-theatre' })
+			expect(adHoc.occasion).toBe('Pre-theatre')
+		})
+
+		it('defaults the business date from the location time zone, not the UTC date, on the day, changes, overview, availability, and service-notes routes', async () => {
+			const app = buildApp()
+			const realNow = Date.now()
+			const token = await mintToken()
+			const booked = await book(app, token, 'tz-default', { time: '19:00' })
+
+			// 21:00 on DATE in New York is already the next calendar day in UTC.
+			const eveningUtcNextDay = Date.UTC(2027, 7, 21, 1, 0, 0)
+			vi.useFakeTimers({ toFake: ['Date'], now: eveningUtcNextDay })
+			try {
+				const eveningToken = await mintToken()
+				const get = async (path: string) => {
+					const res = await app.request(
+						`/operator/reservations/book/${path}${path.includes('?') ? '&' : '?'}locationId=${LOC_MAIN}`,
+						{ headers: { Authorization: `Bearer ${eveningToken}` } },
+					)
+					expect(res.status).toBe(200)
+					return (await res.json()) as any
+				}
+
+				const day = await get('day')
+				expect(day.businessDate).toBe(DATE)
+				expect(day.reservations.map((r: any) => r.id)).toContain(booked.id)
+				expect((await get('changes')).businessDate).toBe(DATE)
+				expect((await get('overview')).date).toBe(DATE)
+				expect((await get('availability?partySize=2')).businessDate).toBe(DATE)
+				expect((await get('service-notes')).businessDate).toBe(DATE)
+			} finally {
+				vi.useRealTimers()
+				expect(Date.now()).toBeGreaterThanOrEqual(realNow)
+			}
+		})
+
 		it('includes moveNotices for auto_reassigned bookings and locked bookings displaced by a block as blocked_table conflicts (VAL-CROSS-006)', async () => {
 			const app = buildApp()
 			const token = await mintToken()

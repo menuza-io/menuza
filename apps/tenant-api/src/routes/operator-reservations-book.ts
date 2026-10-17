@@ -32,6 +32,7 @@ import {
 	updateReservationNotes,
 	updateReservationRunningLate,
 } from '../services/rsv-booking-service.js'
+import { resolveBusinessDate } from '../services/rsv-business-date.js'
 import {
 	getBookConflicts,
 	getDayChanges,
@@ -193,10 +194,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const businessDate =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const businessDate = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
@@ -272,10 +274,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const businessDate =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const businessDate = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 		const sinceVersion =
 			q.data.since ?? q.data.sinceVersion ?? q.data.dayVersion ?? 0
 
@@ -317,10 +320,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const businessDate =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const businessDate = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
@@ -371,10 +375,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const date =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const date = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
@@ -459,10 +464,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const date =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const date = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
@@ -510,10 +516,11 @@ operatorReservationsBookRoutes.get(
 		const locCheck = resolveLocation(ctx, q.data.locationId)
 		if (!locCheck.ok) return locCheck.response
 
-		const date =
-			q.data.date ??
-			q.data.businessDate ??
-			new Date().toISOString().slice(0, 10)
+		const date = await resolveBusinessDate(
+			ctx.orgId,
+			locCheck.locationId,
+			q.data.date ?? q.data.businessDate,
+		)
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
@@ -559,11 +566,11 @@ async function handleUpsertServiceNotes(c: Context) {
 	const locCheck = resolveLocation(ctx, locationId)
 	if (!locCheck.ok) return locCheck.response
 
-	const businessDate =
-		parsed.data.date ??
-		parsed.data.businessDate ??
-		c.req.query('date')?.trim() ??
-		new Date().toISOString().slice(0, 10)
+	const businessDate = await resolveBusinessDate(
+		ctx.orgId,
+		locCheck.locationId,
+		parsed.data.date ?? parsed.data.businessDate ?? c.req.query('date')?.trim(),
+	)
 	const noteText =
 		parsed.data.notes ??
 		parsed.data.note ??
@@ -634,8 +641,11 @@ async function handleGetSectionAssignments(c: Context) {
 	const locCheck = resolveLocation(ctx, q.data.locationId)
 	if (!locCheck.ok) return locCheck.response
 
-	const date =
-		q.data.date ?? q.data.businessDate ?? new Date().toISOString().slice(0, 10)
+	const date = await resolveBusinessDate(
+		ctx.orgId,
+		locCheck.locationId,
+		q.data.date ?? q.data.businessDate,
+	)
 
 	try {
 		const db = await getTenantDb(ctx.orgId)
@@ -709,11 +719,11 @@ async function handlePutSectionAssignments(c: Context) {
 	const locCheck = resolveLocation(ctx, locationId)
 	if (!locCheck.ok) return locCheck.response
 
-	const businessDate =
-		parsed.data.date ??
-		parsed.data.businessDate ??
-		c.req.query('date')?.trim() ??
-		new Date().toISOString().slice(0, 10)
+	const businessDate = await resolveBusinessDate(
+		ctx.orgId,
+		locCheck.locationId,
+		parsed.data.date ?? parsed.data.businessDate ?? c.req.query('date')?.trim(),
+	)
 	const serviceId =
 		parsed.data.serviceId ?? c.req.query('serviceId')?.trim() ?? 'default'
 

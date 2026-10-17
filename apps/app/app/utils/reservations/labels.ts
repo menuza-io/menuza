@@ -33,9 +33,10 @@ export const COURSE_STAGE_LABELS: Record<string, MessageDescriptor> = {
 
 export const CONTACT_STATUS_LABELS: Record<string, MessageDescriptor> = {
 	none: msg`Not Contacted`,
-	sms_sent: msg`SMS Sent`,
-	left_voicemail: msg`Left Voicemail`,
-	confirmed_by_phone: msg`Confirmed by Phone`,
+	not_contacted: msg`Not Contacted`,
+	left_message: msg`Left Message`,
+	no_answer: msg`No Answer`,
+	wrong_number: msg`Wrong Number`,
 }
 
 export const CHANNEL_LABELS: Record<string, MessageDescriptor> = {

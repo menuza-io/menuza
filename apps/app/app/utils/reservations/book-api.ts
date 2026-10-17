@@ -1,4 +1,3 @@
-import { stripTagPrefix } from '#app/utils/reservations/labels.ts'
 import {
 	type ReservationsConditionalResult,
 	type ReservationsScopedClient,
@@ -885,13 +884,8 @@ export function normalizeReservationView(
 			(typeof raw.courseStage === 'string' && raw.courseStage) ||
 			(typeof raw.courseStatus === 'string' && raw.courseStatus) ||
 			null,
-		occasion: (() => {
-			const code =
-				(typeof raw.occasion === 'string' && raw.occasion) ||
-				(typeof raw.occasionTagId === 'string' && raw.occasionTagId) ||
-				null
-			return code ? stripTagPrefix(code) : null
-		})(),
+		occasion:
+			typeof raw.occasion === 'string' && raw.occasion ? raw.occasion : null,
 		dietaryCodes,
 		dietaryNotes,
 		hasAllergy: Boolean(

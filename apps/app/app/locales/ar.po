@@ -3038,11 +3038,11 @@ msgid "All workplaces (default)"
 msgstr "جميع أماكن العمل (افتراضي)"
 
 #: app/components/reservations/booking-sheet.tsx:454
-#: app/components/reservations/detail-sheet.tsx:871
+#: app/components/reservations/detail-sheet.tsx:876
 msgid "Allergies:"
 msgstr "الحساسية:"
 
-#: app/utils/reservations/labels.ts:73
+#: app/utils/reservations/labels.ts:74
 msgid "Allergy"
 msgstr "حساسية"
 
@@ -3188,8 +3188,8 @@ msgid "Analytics and tracking"
 msgstr "التحليلات والتتبع"
 
 #: app/components/reservations/booking-sheet.tsx:51
-#: app/utils/reservations/labels.ts:64
-#: app/utils/reservations/labels.ts:74
+#: app/utils/reservations/labels.ts:65
+#: app/utils/reservations/labels.ts:75
 msgid "Anniversary"
 msgstr "ذكرى سنوية"
 
@@ -3563,7 +3563,7 @@ msgstr "وصل"
 msgid "Arrived / Waiting"
 msgstr "وصل / في الانتظار"
 
-#: app/utils/reservations/labels.ts:102
+#: app/utils/reservations/labels.ts:103
 msgid "Arrived, waiting"
 msgstr "وصل، في الانتظار"
 
@@ -3659,7 +3659,7 @@ msgstr "تعيين المسؤوليات"
 #~ msgid "Assign sections and items to this drop, and set pooled or per-item limits."
 #~ msgstr "عيّن الأقسام والعناصر لهذا الطرح، وحدد حدودًا مجمعة أو لكل عنصر."
 
-#: app/components/reservations/detail-sheet.tsx:737
+#: app/components/reservations/detail-sheet.tsx:742
 #: app/components/reservations/walk-in-dialog.tsx:185
 msgid "Assign Table"
 msgstr "تعيين طاولة"
@@ -3903,8 +3903,8 @@ msgstr "حالة التوفر"
 #: app/components/staff/schedule/availability-sheet.tsx:301
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:322
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1030
-#: app/utils/reservations/labels.ts:99
 #: app/utils/reservations/labels.ts:100
+#: app/utils/reservations/labels.ts:101
 msgid "Available"
 msgstr "متوفر"
 
@@ -4080,7 +4080,7 @@ msgid "Bar"
 msgstr "بار"
 
 #: app/components/reservations/floor-plan-canvas.tsx:96
-#: app/utils/reservations/labels.ts:177
+#: app/utils/reservations/labels.ts:178
 msgid "Bar counter"
 msgstr "كاونتر البار"
 
@@ -4150,8 +4150,8 @@ msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
 #: app/components/reservations/booking-sheet.tsx:50
-#: app/utils/reservations/labels.ts:63
-#: app/utils/reservations/labels.ts:75
+#: app/utils/reservations/labels.ts:64
+#: app/utils/reservations/labels.ts:76
 msgid "Birthday"
 msgstr "عيد ميلاد"
 
@@ -4189,7 +4189,7 @@ msgstr "أنواع الكتل"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:330
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1058
-#: app/utils/reservations/labels.ts:111
+#: app/utils/reservations/labels.ts:112
 msgid "Blocked"
 msgstr "محظورة"
 
@@ -4487,7 +4487,7 @@ msgid "Business info"
 msgstr "معلومات النشاط التجاري"
 
 #: app/components/reservations/booking-sheet.tsx:53
-#: app/utils/reservations/labels.ts:66
+#: app/utils/reservations/labels.ts:67
 msgid "Business Meal"
 msgstr "وجبة عمل"
 
@@ -4503,7 +4503,7 @@ msgstr "إعدادات نوع النشاط التجاري"
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:111
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:377
 #: app/utils/reservations/labels.ts:31
-#: app/utils/reservations/labels.ts:110
+#: app/utils/reservations/labels.ts:111
 msgid "Bussing"
 msgstr "تنظيف الطاولة"
 
@@ -5053,7 +5053,7 @@ msgid "Catering goes to the manager"
 msgstr "طلبات التموين تُحوَّل إلى المدير"
 
 #: app/components/reservations/booking-sheet.tsx:54
-#: app/utils/reservations/labels.ts:67
+#: app/utils/reservations/labels.ts:68
 msgid "Celebration"
 msgstr "احتفال"
 
@@ -5100,7 +5100,7 @@ msgstr "تغيير تاريخ الاستحقاق"
 msgid "Change Email"
 msgstr "تغيير البريد الإلكتروني"
 
-#: app/components/reservations/detail-sheet.tsx:1047
+#: app/components/reservations/detail-sheet.tsx:1052
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:413
 msgid "Change history"
 msgstr "سجل التغييرات"
@@ -5277,7 +5277,7 @@ msgstr "تم تقديم الفاتورة"
 
 #: app/components/reservations/detail-sheet.tsx:57
 #: app/utils/reservations/labels.ts:30
-#: app/utils/reservations/labels.ts:107
+#: app/utils/reservations/labels.ts:108
 msgid "Check Dropped"
 msgstr "تم تقديم الحساب"
 
@@ -6338,8 +6338,8 @@ msgstr "مؤكد"
 
 #: app/components/reservations/detail-sheet.tsx:65
 #: app/utils/reservations/labels.ts:38
-msgid "Confirmed by Phone"
-msgstr "تم التأكيد عبر الهاتف"
+#~ msgid "Confirmed by Phone"
+#~ msgstr "تم التأكيد عبر الهاتف"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:497
 msgid "Conflict"
@@ -6474,7 +6474,7 @@ msgstr "اتصل"
 msgid "Contact form"
 msgstr "نموذج اتصال"
 
-#: app/utils/reservations/labels.ts:162
+#: app/utils/reservations/labels.ts:163
 msgid "Contact status changed"
 msgstr "تم تغيير حالة التواصل"
 
@@ -6883,7 +6883,7 @@ msgstr "الدولة"
 msgid "Country code"
 msgstr "رمز الدولة"
 
-#: app/utils/reservations/labels.ts:163
+#: app/utils/reservations/labels.ts:164
 msgid "Course changed"
 msgstr "تم تغيير المرحلة"
 
@@ -7308,7 +7308,7 @@ msgstr "إنشاء وتحديث ونشر صفحات الويب والنماذج 
 
 #: app/components/roles/tenant-role-access-manager.tsx:1324
 #: app/components/roles/tenant-role-access-manager.tsx:1372
-#: app/utils/reservations/labels.ts:153
+#: app/utils/reservations/labels.ts:154
 msgid "Created"
 msgstr "تم الإنشاء"
 
@@ -7612,7 +7612,7 @@ msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "الساعات الإضافية اليومية مفعّلة · يبدأ الأسبوع {weekStart}"
 
 #: app/components/reservations/booking-sheet.tsx:44
-#: app/utils/reservations/labels.ts:86
+#: app/utils/reservations/labels.ts:87
 msgid "Dairy-Free"
 msgstr "خالٍ من الألبان"
 
@@ -7677,7 +7677,7 @@ msgid "Date & time"
 msgstr "التاريخ والوقت"
 
 #: app/components/reservations/booking-sheet.tsx:52
-#: app/utils/reservations/labels.ts:65
+#: app/utils/reservations/labels.ts:66
 msgid "Date Night"
 msgstr "أمسية رومانسية"
 
@@ -8328,11 +8328,11 @@ msgstr "سطح المكتب"
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:109
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:378
 #: app/utils/reservations/labels.ts:29
-#: app/utils/reservations/labels.ts:105
+#: app/utils/reservations/labels.ts:106
 msgid "Dessert"
 msgstr "الحلويات"
 
-#: app/utils/reservations/labels.ts:106
+#: app/utils/reservations/labels.ts:107
 msgid "Dessert / check"
 msgstr "الحلويات / الحساب"
 
@@ -8379,7 +8379,7 @@ msgstr "التفاصيل"
 msgid "Details & Address"
 msgstr "التفاصيل والعنوان"
 
-#: app/utils/reservations/labels.ts:155
+#: app/utils/reservations/labels.ts:156
 msgid "Details changed"
 msgstr "تم تغيير التفاصيل"
 
@@ -8439,7 +8439,7 @@ msgid "Dietary & Allergy Alerts"
 msgstr "تنبيهات النظام الغذائي والحساسية"
 
 #: app/components/reservations/booking-sheet.tsx:760
-#: app/components/reservations/detail-sheet.tsx:804
+#: app/components/reservations/detail-sheet.tsx:809
 msgid "Dietary notes"
 msgstr "ملاحظات غذائية"
 
@@ -8474,7 +8474,7 @@ msgstr "تناول في المطعم / داخلي"
 msgid "Dine-In Tips"
 msgstr "بقشيش تناول الطعام في المطعم"
 
-#: app/components/reservations/detail-sheet.tsx:788
+#: app/components/reservations/detail-sheet.tsx:793
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1322
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:877
 msgid "Dining area"
@@ -8703,7 +8703,7 @@ msgid "Done {when}"
 msgstr "أُنجزت في {when}"
 
 #: app/components/reservations/floor-plan-canvas.tsx:100
-#: app/utils/reservations/labels.ts:178
+#: app/utils/reservations/labels.ts:179
 msgid "Door"
 msgstr "باب"
 
@@ -8973,7 +8973,7 @@ msgstr "تكرار"
 msgid "Duration"
 msgstr "المدة"
 
-#: app/components/reservations/detail-sheet.tsx:927
+#: app/components/reservations/detail-sheet.tsx:932
 msgid "Duration (m)"
 msgstr "المدة (د)"
 
@@ -9843,7 +9843,7 @@ msgstr "الخطة المؤسسية"
 
 #: app/components/reservations/detail-sheet.tsx:55
 #: app/utils/reservations/labels.ts:28
-#: app/utils/reservations/labels.ts:104
+#: app/utils/reservations/labels.ts:105
 msgid "Entree"
 msgstr "طبق رئيسي"
 
@@ -10642,7 +10642,7 @@ msgstr "إنهاء الإعداد"
 msgid "Finished"
 msgstr "منتهي"
 
-#: app/utils/reservations/labels.ts:108
+#: app/utils/reservations/labels.ts:109
 msgid "Finishing"
 msgstr "على وشك الانتهاء"
 
@@ -10816,7 +10816,7 @@ msgstr "لمعرفة ساعات العمل، اضغط 1. للتحدث مع فر�
 msgid "For shifts longer than"
 msgstr "للورديات الأطول من"
 
-#: app/components/reservations/detail-sheet.tsx:763
+#: app/components/reservations/detail-sheet.tsx:768
 msgid "Force overbook / ignore table overlap"
 msgstr "فرض الحجز الزائد / تجاهل تداخل الطاولة"
 
@@ -11125,7 +11125,7 @@ msgstr "أدخل اسمًا لمجموعتك"
 #: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
 #: app/components/reservations/booking-sheet.tsx:41
-#: app/utils/reservations/labels.ts:83
+#: app/utils/reservations/labels.ts:84
 msgid "Gluten-Free"
 msgstr "خالٍ من الغلوتين"
 
@@ -11149,7 +11149,7 @@ msgstr "انتقل إلى المفتاح"
 msgid "Go-live checklist"
 msgstr "قائمة التحقق قبل الإطلاق"
 
-#: app/utils/reservations/labels.ts:93
+#: app/utils/reservations/labels.ts:94
 msgid "Gold"
 msgstr "ذهبي"
 
@@ -11283,7 +11283,7 @@ msgstr "مجموعات"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:388
 #: app/utils/organization/role-label.ts:21
-#: app/utils/reservations/labels.ts:169
+#: app/utils/reservations/labels.ts:170
 msgid "Guest"
 msgstr "ضيف"
 
@@ -11291,7 +11291,7 @@ msgstr "ضيف"
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
-#: app/components/reservations/detail-sheet.tsx:836
+#: app/components/reservations/detail-sheet.tsx:841
 msgid "Guest CRM Profile"
 msgstr "ملف الضيف (CRM)"
 
@@ -11320,11 +11320,11 @@ msgstr "اسم الضيف (اختياري)"
 msgid "Guest name and phone number are required."
 msgstr "اسم الضيف ورقم الهاتف مطلوبان."
 
-#: app/components/reservations/detail-sheet.tsx:814
+#: app/components/reservations/detail-sheet.tsx:819
 msgid "Guest notes"
 msgstr "ملاحظات الضيف"
 
-#: app/components/reservations/detail-sheet.tsx:966
+#: app/components/reservations/detail-sheet.tsx:971
 msgid "Guest Notes"
 msgstr "ملاحظات الضيف"
 
@@ -11375,7 +11375,7 @@ msgstr "ملفات سجل الضيوف والدمج"
 #: app/components/reservations/conflict-panel.tsx:282
 #: app/components/reservations/conflict-panel.tsx:372
 #: app/components/reservations/detail-sheet.tsx:477
-#: app/components/reservations/detail-sheet.tsx:1029
+#: app/components/reservations/detail-sheet.tsx:1034
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:459
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:600
 msgid "guests"
@@ -11417,7 +11417,7 @@ msgid "h"
 msgstr "س"
 
 #: app/components/reservations/booking-sheet.tsx:42
-#: app/utils/reservations/labels.ts:84
+#: app/utils/reservations/labels.ts:85
 msgid "Halal"
 msgstr "حلال"
 
@@ -11742,7 +11742,7 @@ msgstr "إجراءات المضيف والحالة"
 msgid "Host Notes"
 msgstr "ملاحظات المضيف"
 
-#: app/utils/reservations/labels.ts:46
+#: app/utils/reservations/labels.ts:47
 msgid "Host stand"
 msgstr "منصة الاستقبال"
 
@@ -12049,7 +12049,7 @@ msgstr "الوسوم المهمة"
 msgid "Important:"
 msgstr "مهم:"
 
-#: app/utils/reservations/labels.ts:154
+#: app/utils/reservations/labels.ts:155
 msgid "Imported"
 msgstr "مستورد"
 
@@ -12195,11 +12195,11 @@ msgid "Internal channels for your team."
 msgstr "قنوات داخلية لفريقك."
 
 #: app/components/reservations/booking-sheet.tsx:790
-#: app/components/reservations/detail-sheet.tsx:983
+#: app/components/reservations/detail-sheet.tsx:988
 msgid "Internal Host Notes"
 msgstr "ملاحظات المضيف الداخلية"
 
-#: app/components/reservations/detail-sheet.tsx:822
+#: app/components/reservations/detail-sheet.tsx:827
 msgid "Internal notes"
 msgstr "ملاحظات داخلية"
 
@@ -12712,7 +12712,7 @@ msgstr "إدارة المعرفة"
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:926
-#: app/utils/reservations/labels.ts:180
+#: app/utils/reservations/labels.ts:181
 msgid "Label"
 msgstr "التسمية"
 
@@ -13034,6 +13034,11 @@ msgstr "غادر {leftAt}"
 msgid "Left ½"
 msgstr "النصف الأيسر"
 
+#: app/components/reservations/detail-sheet.tsx:63
+#: app/utils/reservations/labels.ts:37
+msgid "Left Message"
+msgstr "تم ترك رسالة"
+
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:349
 msgid "Left on {leftOn}"
 msgstr "غادر في {leftOn}"
@@ -13051,8 +13056,8 @@ msgstr "غادر الفريق"
 
 #: app/components/reservations/detail-sheet.tsx:64
 #: app/utils/reservations/labels.ts:37
-msgid "Left Voicemail"
-msgstr "ترك رسالة صوتية"
+#~ msgid "Left Voicemail"
+#~ msgstr "ترك رسالة صوتية"
 
 #: app/components/hiring/interview-dialog.tsx:215
 #: app/components/staff/labor-policy-editor.tsx:1166
@@ -13349,7 +13354,7 @@ msgstr "جارٍ تحميل تفاصيل الحجز..."
 msgid "Loading reservation settings…"
 msgstr "جارٍ تحميل إعدادات الحجوزات…"
 
-#: app/components/reservations/detail-sheet.tsx:1095
+#: app/components/reservations/detail-sheet.tsx:1100
 msgid "Loading reservation..."
 msgstr "جارٍ تحميل الحجز..."
 
@@ -13490,7 +13495,7 @@ msgstr "قفل"
 msgid "Lock ({lockCount})"
 msgstr "قفل ({lockCount})"
 
-#: app/components/reservations/detail-sheet.tsx:752
+#: app/components/reservations/detail-sheet.tsx:757
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1172
 msgid "Lock table assignment"
 msgstr "قفل تعيين الطاولة"
@@ -14431,7 +14436,7 @@ msgstr "ينقصه شيء تحتاجه الوظيفة"
 msgid "Mobile"
 msgstr "الجوال"
 
-#: app/utils/reservations/labels.ts:43
+#: app/utils/reservations/labels.ts:44
 msgid "Mobile app"
 msgstr "تطبيق الجوال"
 
@@ -14481,7 +14486,7 @@ msgstr "تعديل الملاحظات التي أنشأها أعضاء الفر�
 msgid "Modify organization settings"
 msgstr "تعديل إعدادات المنظمة"
 
-#: app/components/reservations/detail-sheet.tsx:885
+#: app/components/reservations/detail-sheet.tsx:890
 msgid "Modify Time, Party Size & Notes"
 msgstr "تعديل الوقت وعدد الضيوف والملاحظات"
 
@@ -14622,21 +14627,21 @@ msgstr "تم نقل {tableLabel} إلى ({currentX}, {nextY})"
 msgid "Moved {tableLabel} to ({nextX}, {currentY})"
 msgstr "تم نقل {tableLabel} إلى ({nextX}, {currentY})"
 
-#: app/utils/reservations/labels.ts:165
+#: app/utils/reservations/labels.ts:166
 msgid "Moved automatically"
 msgstr "تم النقل تلقائيًا"
 
-#: app/utils/reservations/labels.ts:127
+#: app/utils/reservations/labels.ts:128
 msgid "Moved automatically after a turn was extended"
 msgstr "تم النقل تلقائيًا بعد تمديد مدة الجلوس"
 
-#: app/utils/reservations/labels.ts:125
 #: app/utils/reservations/labels.ts:126
+#: app/utils/reservations/labels.ts:127
 msgid "Moved automatically because a table was blocked"
 msgstr "تم النقل تلقائيًا لأن الطاولة محظورة"
 
-#: app/utils/reservations/labels.ts:123
 #: app/utils/reservations/labels.ts:124
+#: app/utils/reservations/labels.ts:125
 msgid "Moved automatically to make room"
 msgstr "تم النقل تلقائيًا لتوفير مكان"
 
@@ -15151,6 +15156,11 @@ msgstr "لا توجد إعلانات بعد"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:99
 msgid "No answer"
+msgstr "لا يوجد رد"
+
+#: app/components/reservations/detail-sheet.tsx:64
+#: app/utils/reservations/labels.ts:38
+msgid "No Answer"
 msgstr "لا يوجد رد"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:685
@@ -16110,7 +16120,7 @@ msgstr "لم يحضر"
 
 #: app/components/reservations/booking-sheet.tsx:413
 #: app/components/reservations/booking-sheet.tsx:447
-#: app/components/reservations/detail-sheet.tsx:849
+#: app/components/reservations/detail-sheet.tsx:854
 msgid "no-shows"
 msgstr "حالات عدم حضور"
 
@@ -16243,6 +16253,7 @@ msgstr "غير متصل"
 
 #: app/components/reservations/detail-sheet.tsx:62
 #: app/utils/reservations/labels.ts:35
+#: app/utils/reservations/labels.ts:36
 msgid "Not Contacted"
 msgstr "لم يتم التواصل"
 
@@ -16386,7 +16397,7 @@ msgstr "عنوان الملاحظة..."
 msgid "Note to Customers"
 msgstr "ملاحظة للعملاء"
 
-#: app/utils/reservations/labels.ts:164
+#: app/utils/reservations/labels.ts:165
 msgid "Note updated"
 msgstr "تم تحديث الملاحظة"
 
@@ -16567,7 +16578,7 @@ msgid "Numbers the agent answers. We assign agent numbers to your business; forw
 msgstr "الأرقام التي يرد عليها الوكيل. نخصص أرقام الوكيل لنشاطك التجاري، وتبدأ الخطوط المحوّلة في الرد بمجرد التحقق منها."
 
 #: app/components/reservations/booking-sheet.tsx:43
-#: app/utils/reservations/labels.ts:85
+#: app/utils/reservations/labels.ts:86
 msgid "Nut Allergy"
 msgstr "حساسية المكسرات"
 
@@ -16584,7 +16595,7 @@ msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
 #: app/components/reservations/booking-sheet.tsx:706
-#: app/components/reservations/detail-sheet.tsx:782
+#: app/components/reservations/detail-sheet.tsx:787
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:714
 msgid "Occasion"
 msgstr "المناسبة"
@@ -16779,7 +16790,7 @@ msgstr "رابط كلمة المرور لمرة واحدة"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:709
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:899
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1015
-#: app/utils/reservations/labels.ts:42
+#: app/utils/reservations/labels.ts:43
 msgid "Online"
 msgstr "متصل"
 
@@ -17231,7 +17242,7 @@ msgstr "نظام التشغيل"
 msgid "operator"
 msgstr "مشغّل"
 
-#: app/utils/reservations/labels.ts:170
+#: app/utils/reservations/labels.ts:171
 msgid "Operator"
 msgstr "المشغّل"
 
@@ -17547,7 +17558,7 @@ msgstr "خارجي / فناء"
 msgid "Outline"
 msgstr "محدد"
 
-#: app/utils/reservations/labels.ts:119
+#: app/utils/reservations/labels.ts:120
 #: app/utils/reservations/setup-api.ts:158
 msgid "Outside service hours"
 msgstr "خارج ساعات الخدمة"
@@ -17572,7 +17583,7 @@ msgstr "زيادة {over} س"
 msgid "Over {target}."
 msgstr "فوق {target}."
 
-#: app/utils/reservations/labels.ts:117
+#: app/utils/reservations/labels.ts:118
 msgid "Over capacity"
 msgstr "تجاوز السعة"
 
@@ -17639,7 +17650,7 @@ msgstr "تجاوز ما إذا كانت مناطق طعام أو طاولات أ
 #: app/components/staff/timesheets/timesheet-table.tsx:224
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:361
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1054
-#: app/utils/reservations/labels.ts:109
+#: app/utils/reservations/labels.ts:110
 msgid "Overtime"
 msgstr "الساعات الإضافية"
 
@@ -17905,7 +17916,7 @@ msgid "Party of {partySize}"
 msgstr "مجموعة من {partySize}"
 
 #: app/components/reservations/booking-sheet.tsx:484
-#: app/components/reservations/detail-sheet.tsx:890
+#: app/components/reservations/detail-sheet.tsx:895
 #: app/components/reservations/walk-in-dialog.tsx:152
 msgid "Party Size"
 msgstr "عدد الضيوف"
@@ -17941,7 +17952,7 @@ msgstr "كلمة المرور شائعة جداً"
 msgid "Password login is disabled because your organization \"{orgName}\" requires SSO."
 msgstr "تسجيل الدخول بكلمة المرور معطل لأن منظمتك \"{orgName}\" تتطلب تسجيل الدخول الموحد."
 
-#: app/components/reservations/detail-sheet.tsx:1019
+#: app/components/reservations/detail-sheet.tsx:1024
 msgid "Past Visit History"
 msgstr "سجل الزيارات السابقة"
 
@@ -18250,7 +18261,7 @@ msgstr "رابط الدعوة الشخصي"
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:617
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:173
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:238
-#: app/utils/reservations/labels.ts:45
+#: app/utils/reservations/labels.ts:46
 msgid "Phone"
 msgstr "الهاتف"
 
@@ -18581,7 +18592,7 @@ msgid "Plan shifts, publish the week to your team, and handle time off and avail
 msgstr "خطّط الورديات، وانشر الأسبوع لفريقك، وتعامل مع الإجازات والتوفر."
 
 #: app/components/reservations/floor-plan-canvas.tsx:103
-#: app/utils/reservations/labels.ts:181
+#: app/utils/reservations/labels.ts:182
 msgid "Plant"
 msgstr "نبات"
 
@@ -18593,7 +18604,7 @@ msgstr "المنصة"
 msgid "Platform-provided role."
 msgstr "دور توفره المنصة."
 
-#: app/utils/reservations/labels.ts:94
+#: app/utils/reservations/labels.ts:95
 msgid "Platinum"
 msgstr "بلاتيني"
 
@@ -19738,7 +19749,7 @@ msgstr "تم التسجيل منذ {timeAgo}"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3851
-#: app/utils/reservations/labels.ts:76
+#: app/utils/reservations/labels.ts:77
 msgid "Regular"
 msgstr "عادي"
 
@@ -20386,7 +20397,7 @@ msgstr "محجوزة {0}"
 msgid "Reserved ≤30m"
 msgstr "محجوزة ≤30د"
 
-#: app/utils/reservations/labels.ts:101
+#: app/utils/reservations/labels.ts:102
 msgid "Reserved soon"
 msgstr "محجوزة قريبًا"
 
@@ -20804,7 +20815,7 @@ msgstr "معرّف التشغيل مطلوب"
 msgid "Running"
 msgstr "قيد التشغيل"
 
-#: app/utils/reservations/labels.ts:161
+#: app/utils/reservations/labels.ts:162
 msgid "Running late"
 msgstr "متأخر"
 
@@ -21060,7 +21071,7 @@ msgstr "حفظ التغييرات"
 #: app/components/locations/location-form.tsx:1002
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
 #: app/components/menu/modifier-form.tsx:2181
-#: app/components/reservations/detail-sheet.tsx:1006
+#: app/components/reservations/detail-sheet.tsx:1011
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:804
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
@@ -21665,7 +21676,7 @@ msgstr "إجلاس مجموعة حضور مباشر"
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1635
 #: app/utils/reservations/labels.ts:17
 #: app/utils/reservations/labels.ts:26
-#: app/utils/reservations/labels.ts:103
+#: app/utils/reservations/labels.ts:104
 msgid "Seated"
 msgstr "جالس"
 
@@ -21684,7 +21695,7 @@ msgstr "تم إجلاس {0}."
 #~ msgid "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
 #~ msgstr "تظهر هنا المجموعات الجالسة والحجوزات القادمة وحالة الصالة للفرع والفترة المحددين."
 
-#: app/components/reservations/detail-sheet.tsx:876
+#: app/components/reservations/detail-sheet.tsx:881
 msgid "Seating Preference:"
 msgstr "تفضيل الجلوس:"
 
@@ -22311,7 +22322,7 @@ msgid "Server (Optional)"
 msgstr "النادل (اختياري)"
 
 #: app/components/reservations/booking-sheet.tsx:725
-#: app/components/reservations/detail-sheet.tsx:950
+#: app/components/reservations/detail-sheet.tsx:955
 msgid "Server / Section Label"
 msgstr "اسم النادل / القسم"
 
@@ -22636,7 +22647,7 @@ msgid "Shared with me"
 msgstr "تمت مشاركتها معي"
 
 #: app/components/reservations/booking-sheet.tsx:45
-#: app/utils/reservations/labels.ts:87
+#: app/utils/reservations/labels.ts:88
 msgid "Shellfish Allergy"
 msgstr "حساسية المحار"
 
@@ -22918,7 +22929,7 @@ msgstr "تسجيل الدخول باسم"
 msgid "Signing out..."
 msgstr "جاري تسجيل الخروج..."
 
-#: app/utils/reservations/labels.ts:92
+#: app/utils/reservations/labels.ts:93
 msgid "Silver"
 msgstr "فضي"
 
@@ -23030,8 +23041,8 @@ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 �
 
 #: app/components/reservations/detail-sheet.tsx:63
 #: app/utils/reservations/labels.ts:36
-msgid "SMS Sent"
-msgstr "تم إرسال رسالة نصية"
+#~ msgid "SMS Sent"
+#~ msgstr "تم إرسال رسالة نصية"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4480
 msgid "Social links"
@@ -23124,7 +23135,7 @@ msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أ�
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
 
-#: app/components/reservations/detail-sheet.tsx:776
+#: app/components/reservations/detail-sheet.tsx:781
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:337
 msgid "Source"
 msgstr "المصدر"
@@ -23320,7 +23331,7 @@ msgstr "تغيّرت المرحلة"
 msgid "Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying."
 msgstr "إصدار مخطط الصالة قديم (تعارض 409): قام مشغل آخر بحفظ تغييرات منذ فتحك لهذا المخطط. أعد تحميل أحدث مخطط صالة أو راجع مسودتك قبل إعادة التطبيق."
 
-#: app/utils/reservations/labels.ts:91
+#: app/utils/reservations/labels.ts:92
 msgid "Standard"
 msgstr "عادي"
 
@@ -23551,7 +23562,7 @@ msgstr "الإحصائيات"
 msgid "Status"
 msgstr "الحالة"
 
-#: app/utils/reservations/labels.ts:160
+#: app/utils/reservations/labels.ts:161
 msgid "Status change undone"
 msgstr "تم التراجع عن تغيير الحالة"
 
@@ -23889,7 +23900,7 @@ msgstr "مزامنة المنتج المستضاف"
 msgid "Synced {lastSync}"
 msgstr "تمت المزامنة {lastSync}"
 
-#: app/utils/reservations/labels.ts:171
+#: app/utils/reservations/labels.ts:172
 msgid "System"
 msgstr "النظام"
 
@@ -23897,7 +23908,7 @@ msgstr "النظام"
 msgid "System theme"
 msgstr "نظام السمة"
 
-#: app/components/reservations/detail-sheet.tsx:794
+#: app/components/reservations/detail-sheet.tsx:799
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1323
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:876
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1021
@@ -23949,20 +23960,20 @@ msgstr "حظر الطاولات والمناطق"
 msgid "Table archived."
 msgstr "تمت أرشفة الطاولة."
 
-#: app/utils/reservations/labels.ts:157
+#: app/utils/reservations/labels.ts:158
 msgid "Table assigned"
 msgstr "تم تعيين الطاولة"
 
 #: app/components/reservations/booking-sheet.tsx:577
-#: app/components/reservations/detail-sheet.tsx:711
+#: app/components/reservations/detail-sheet.tsx:716
 msgid "Table Assignment"
 msgstr "تعيين الطاولة"
 
-#: app/utils/reservations/labels.ts:115
+#: app/utils/reservations/labels.ts:116
 msgid "Table blocked"
 msgstr "طاولة محظورة"
 
-#: app/utils/reservations/labels.ts:156
+#: app/utils/reservations/labels.ts:157
 msgid "Table changed"
 msgstr "تم تغيير الطاولة"
 
@@ -23994,7 +24005,7 @@ msgstr "تسمية الطاولة"
 msgid "Table label is required."
 msgstr "تسمية الطاولة مطلوبة."
 
-#: app/utils/reservations/labels.ts:158
+#: app/utils/reservations/labels.ts:159
 msgid "Table locked"
 msgstr "تم قفل الطاولة"
 
@@ -24002,11 +24013,11 @@ msgstr "تم قفل الطاولة"
 msgid "Table ordering and in-house steps."
 msgstr "الطلب من الطاولة وخطوات الخدمة الداخلية."
 
-#: app/utils/reservations/labels.ts:116
+#: app/utils/reservations/labels.ts:117
 msgid "Table overlap"
 msgstr "تداخل الطاولات"
 
-#: app/utils/reservations/labels.ts:159
+#: app/utils/reservations/labels.ts:160
 msgid "Table unlocked"
 msgstr "تم فتح قفل الطاولة"
 
@@ -25910,7 +25921,7 @@ msgstr "معرّف بكسل TikTok"
 #: app/components/hiring/interview-dialog.tsx:196
 #: app/components/menu/menu-availability-card.tsx:357
 #: app/components/reservations/booking-sheet.tsx:502
-#: app/components/reservations/detail-sheet.tsx:910
+#: app/components/reservations/detail-sheet.tsx:915
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:385
 msgid "Time"
 msgstr "الوقت"
@@ -26794,10 +26805,10 @@ msgstr "غير معين"
 #: app/components/reservations/conflict-panel.tsx:375
 #: app/components/reservations/conflict-panel.tsx:376
 #: app/components/reservations/detail-sheet.tsx:480
-#: app/components/reservations/detail-sheet.tsx:723
-#: app/components/reservations/detail-sheet.tsx:799
-#: app/components/reservations/detail-sheet.tsx:1066
-#: app/components/reservations/detail-sheet.tsx:1066
+#: app/components/reservations/detail-sheet.tsx:728
+#: app/components/reservations/detail-sheet.tsx:804
+#: app/components/reservations/detail-sheet.tsx:1071
+#: app/components/reservations/detail-sheet.tsx:1071
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:377
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
@@ -26810,7 +26821,7 @@ msgstr "غير معين"
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:666
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:336
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:390
-#: app/utils/reservations/labels.ts:118
+#: app/utils/reservations/labels.ts:119
 msgid "Unassigned"
 msgstr "غير مسند"
 
@@ -27574,7 +27585,7 @@ msgid "Variations"
 msgstr "التنويعات"
 
 #: app/components/reservations/booking-sheet.tsx:40
-#: app/utils/reservations/labels.ts:82
+#: app/utils/reservations/labels.ts:83
 msgid "Vegan"
 msgstr "نباتي صرف"
 
@@ -27583,7 +27594,7 @@ msgstr "نباتي صرف"
 #: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
 #: app/components/reservations/booking-sheet.tsx:39
-#: app/utils/reservations/labels.ts:81
+#: app/utils/reservations/labels.ts:82
 msgid "Vegetarian"
 msgstr "نباتي"
 
@@ -27808,9 +27819,9 @@ msgid "Violet"
 msgstr "بنفسجي"
 
 #: app/components/reservations/booking-sheet.tsx:55
-#: app/utils/reservations/labels.ts:68
-#: app/utils/reservations/labels.ts:77
-#: app/utils/reservations/labels.ts:95
+#: app/utils/reservations/labels.ts:69
+#: app/utils/reservations/labels.ts:78
+#: app/utils/reservations/labels.ts:96
 msgid "VIP"
 msgstr "كبار الشخصيات"
 
@@ -27841,7 +27852,7 @@ msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم و
 
 #: app/components/reservations/booking-sheet.tsx:409
 #: app/components/reservations/booking-sheet.tsx:443
-#: app/components/reservations/detail-sheet.tsx:845
+#: app/components/reservations/detail-sheet.tsx:850
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:452
 msgid "visits"
 msgstr "زيارات"
@@ -27855,8 +27866,8 @@ msgstr "زاهٍ"
 msgid "Voice"
 msgstr "الصوت"
 
-#: app/utils/reservations/labels.ts:44
-#: app/utils/reservations/labels.ts:172
+#: app/utils/reservations/labels.ts:45
+#: app/utils/reservations/labels.ts:173
 msgid "Voice agent"
 msgstr "الوكيل الصوتي"
 
@@ -27969,7 +27980,7 @@ msgstr "بانتظار الإرسال"
 #: app/components/app-sidebar.tsx:496
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:148
 #: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:21
-#: app/utils/reservations/labels.ts:48
+#: app/utils/reservations/labels.ts:49
 msgid "Waitlist"
 msgstr "قائمة الانتظار"
 
@@ -27990,7 +28001,7 @@ msgid "Waive deposit / card hold"
 msgstr "الإعفاء من العربون / تفويض البطاقة"
 
 #: app/components/reservations/host-subnav.tsx:154
-#: app/utils/reservations/labels.ts:47
+#: app/utils/reservations/labels.ts:48
 msgid "Walk-in"
 msgstr "حضور مباشر"
 
@@ -28012,7 +28023,7 @@ msgid "Walk-Ins Today"
 msgstr "الحضور المباشر اليوم"
 
 #: app/components/reservations/floor-plan-canvas.tsx:93
-#: app/utils/reservations/labels.ts:176
+#: app/utils/reservations/labels.ts:177
 msgid "Wall"
 msgstr "جدار"
 
@@ -28777,7 +28788,7 @@ msgstr "ستتم إعادة التوجيه إلى"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1121
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1205
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1005
-#: app/utils/reservations/labels.ts:179
+#: app/utils/reservations/labels.ts:180
 msgid "Window"
 msgstr "نافذة"
 
@@ -28948,6 +28959,11 @@ msgstr "أنت تكتب نسخة {language}. أي حقل تتركه فارغًا
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:59
 msgid "Wrong key"
 msgstr "زر خاطئ"
+
+#: app/components/reservations/detail-sheet.tsx:65
+#: app/utils/reservations/labels.ts:39
+msgid "Wrong Number"
+msgstr "رقم خاطئ"
 
 #: app/utils/staffing/timesheet-form.ts:404
 msgid "Wrong time entered"
@@ -29459,7 +29475,7 @@ msgid "Zip Codes (comma or space separated)"
 msgstr "الرموز البريدية (مفصولة بفواصل أو مسافات)"
 
 #: app/components/reservations/floor-plan-canvas.tsx:104
-#: app/utils/reservations/labels.ts:182
+#: app/utils/reservations/labels.ts:183
 msgid "Zone"
 msgstr "منطقة"
 

@@ -256,6 +256,15 @@ export interface SerializedBookReservation {
 	guest: SerializedGuestSummary | null
 }
 
+/**
+ * The occasion code a client chooses (`anniversary`), as opposed to the tag id
+ * that stores it (`tag_acme_anniversary`). Ad-hoc occasions have no system key,
+ * so their id is the best remaining code.
+ */
+function bareOccasionValue(tagId: string, systemKey: string | null): string {
+	return systemKey ?? tagId.replace(/^tag_occ_/, '')
+}
+
 export async function serializeReservationsForBook(
 	db: DbOrTx,
 	rows: Array<typeof rsvReservations.$inferSelect>,
@@ -332,6 +341,25 @@ export async function serializeReservationsForBook(
 	const tagsMap = await loadGuestTagsMap(db, guestIds, {
 		canReadSensitive,
 	})
+
+	const occasionTagIds = [
+		...new Set(
+			rows
+				.map((r) => r.occasionTagId)
+				.filter((id): id is string => Boolean(id)),
+		),
+	]
+	const occasionTagRows =
+		occasionTagIds.length > 0
+			? await db
+					.select({ id: rsvTags.id, systemKey: rsvTags.systemKey })
+					.from(rsvTags)
+					.where(inArray(rsvTags.id, occasionTagIds))
+					.all()
+			: []
+	const occasionByTagId = new Map(
+		occasionTagRows.map((t) => [t.id, bareOccasionValue(t.id, t.systemKey)]),
+	)
 
 	const auxEvents =
 		resIds.length > 0
@@ -467,7 +495,10 @@ export async function serializeReservationsForBook(
 			area_pref_strict: r.areaPrefStrict,
 			occasionTagId: r.occasionTagId,
 			occasion_tag_id: r.occasionTagId,
-			occasion: r.occasionTagId,
+			occasion: r.occasionTagId
+				? (occasionByTagId.get(r.occasionTagId) ??
+					bareOccasionValue(r.occasionTagId, null))
+				: null,
 			guestRequests: r.guestRequests,
 			guest_requests: r.guestRequests,
 			dietaryNotes,

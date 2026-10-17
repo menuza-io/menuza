@@ -129,3 +129,34 @@ describe('DetailSheet unsaved edits', () => {
 		)
 	})
 })
+
+describe('DetailSheet contact tracking', () => {
+	beforeEach(() => {
+		fetchReservationDetail.mockReset()
+		fetchReservationDetail.mockRejectedValue(new Error('offline'))
+	})
+
+	it('offers the canonical contact statuses and shows the stored one', async () => {
+		renderSheet(makeReservation({ contactStatus: 'left_message' }))
+
+		const select = (await screen.findByTestId(
+			'detail-contact-select',
+		)) as unknown as HTMLSelectElement
+		expect(Array.from(select.options).map((o) => o.value)).toEqual([
+			'none',
+			'left_message',
+			'no_answer',
+			'wrong_number',
+		])
+		expect(select.value).toBe('left_message')
+	})
+
+	it('treats not_contacted as the unset option', async () => {
+		renderSheet(makeReservation({ contactStatus: 'not_contacted' }))
+
+		const select = (await screen.findByTestId(
+			'detail-contact-select',
+		)) as unknown as HTMLSelectElement
+		expect(select.value).toBe('none')
+	})
+})

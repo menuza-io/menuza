@@ -399,7 +399,10 @@ export function searchAvailability(
 	const earliestAllowedMs = nowMs + minNoticeMs
 
 	const occupancies: ExistingOccupancyInput[] = [
-		...(input.occupancies ?? []),
+		...(input.occupancies ?? []).filter(
+			(o) =>
+				o.kind !== 'hold' || o.expiresAt === undefined || o.expiresAt > nowMs,
+		),
 		...(input.existingBookings ?? []),
 		...(input.existingHolds ?? [])
 			.filter((h) => h.expiresAt === undefined || h.expiresAt > nowMs)

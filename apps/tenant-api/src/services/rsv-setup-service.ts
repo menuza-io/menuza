@@ -716,6 +716,8 @@ export async function reflowFutureBookingsForLocation(
 		invalidatedTableIds?: string[]
 		preDeactivatedOriginalTables?: Map<string, string[]>
 		skipExplicitDayVersionBump?: boolean
+		/** Compute moves and conflicts against an in-memory copy; nothing is written. */
+		dryRun?: boolean
 	},
 ): Promise<{ conflicts: ConflictItem[]; reflowedMoves: ReflowMove[] }> {
 	const settings = await db
@@ -725,6 +727,7 @@ export async function reflowFutureBookingsForLocation(
 		.get()
 	const timeZone = settings?.timeZone ?? 'UTC'
 	const nowMs = Date.now()
+	const dryRun = opts?.dryRun === true
 	const today = currentBusinessDate(
 		nowMs,
 		isValidTimeZone(timeZone) ? timeZone : 'UTC',
@@ -905,6 +908,81 @@ export async function reflowFutureBookingsForLocation(
 			)
 			.all()
 
+		let liveOccRows = activeOccRows
+		const loadActiveOccs = async () =>
+			dryRun
+				? liveOccRows
+				: db
+						.select()
+						.from(rsvTableOccupancies)
+						.where(
+							and(
+								eq(rsvTableOccupancies.locationId, locationId),
+								eq(rsvTableOccupancies.active, true),
+							),
+						)
+						.all()
+		const deactivateReservationOccs = async (reservationId: string) => {
+			if (dryRun) {
+				liveOccRows = liveOccRows.filter(
+					(o) => o.reservationId !== reservationId,
+				)
+				return
+			}
+			await db
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(
+					and(
+						eq(rsvTableOccupancies.reservationId, reservationId),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+		}
+		const assignReservationOcc = async (
+			r: { id: string; startAt: number; endAt: number },
+			tableId: string,
+		) => {
+			const resetMs = (tableById.get(tableId)?.resetBufferMin ?? 0) * 60_000
+			const row = {
+				id: `occ_${randomUUID()}`,
+				locationId,
+				tableId,
+				kind: 'reservation' as const,
+				reservationId: r.id,
+				startAt: r.startAt,
+				endAt: r.endAt + resetMs,
+				active: true,
+				overbook: false,
+				createdAt: nowMs,
+			}
+			if (dryRun) {
+				liveOccRows = [...liveOccRows, { ...row, holdId: null, blockId: null }]
+				return
+			}
+			await db.insert(rsvTableOccupancies).values(row)
+		}
+		const setReservationCombo = async (
+			reservationId: string,
+			comboId: string | null,
+			bumpVersions: boolean,
+		) => {
+			if (dryRun) return
+			await db
+				.update(rsvReservations)
+				.set(
+					bumpVersions
+						? {
+								comboId,
+								scheduleVersion: sql`${rsvReservations.scheduleVersion} + 1`,
+								version: sql`${rsvReservations.version} + 1`,
+								updatedAt: nowMs,
+							}
+						: { comboId, updatedAt: nowMs },
+				)
+				.where(eq(rsvReservations.id, reservationId))
+		}
+
 		const occsByResId = new Map<
 			string,
 			Array<typeof rsvTableOccupancies.$inferSelect>
@@ -1000,22 +1078,11 @@ export async function reflowFutureBookingsForLocation(
 			if (assignmentInvalid && isSoft) {
 				needsReflow = true
 				if (resOccs.length > 0) {
-					await db
-						.update(rsvTableOccupancies)
-						.set({ active: false })
-						.where(
-							inArray(
-								rsvTableOccupancies.id,
-								resOccs.map((o) => o.id),
-							),
-						)
+					await deactivateReservationOccs(r.id)
 					occsByResId.set(r.id, [])
 				}
 				if (r.comboId) {
-					await db
-						.update(rsvReservations)
-						.set({ comboId: null, updatedAt: nowMs })
-						.where(eq(rsvReservations.id, r.id))
+					await setReservationCombo(r.id, null, false)
 					r.comboId = null
 				}
 			}
@@ -1023,16 +1090,7 @@ export async function reflowFutureBookingsForLocation(
 
 		// Reload active occupancies after deactivating invalid soft assignments
 		const refreshedOccRows = needsReflow
-			? await db
-					.select()
-					.from(rsvTableOccupancies)
-					.where(
-						and(
-							eq(rsvTableOccupancies.locationId, locationId),
-							eq(rsvTableOccupancies.active, true),
-						),
-					)
-					.all()
+			? await loadActiveOccs()
 			: activeOccRows
 
 		const refreshedOccsByResId = new Map<
@@ -1115,40 +1173,11 @@ export async function reflowFutureBookingsForLocation(
 					const origSorted = [...origIds].sort().join(',')
 
 					if (prevIds !== nextIds || r.comboId !== nextAssign.combinationId) {
-						await db
-							.update(rsvTableOccupancies)
-							.set({ active: false })
-							.where(
-								and(
-									eq(rsvTableOccupancies.reservationId, r.id),
-									eq(rsvTableOccupancies.active, true),
-								),
-							)
+						await deactivateReservationOccs(r.id)
 						for (const tid of nextAssign.tableIds) {
-							const tbl = tableById.get(tid)
-							const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
-							await db.insert(rsvTableOccupancies).values({
-								id: `occ_${randomUUID()}`,
-								locationId,
-								tableId: tid,
-								kind: 'reservation',
-								reservationId: r.id,
-								startAt: r.startAt,
-								endAt: r.endAt + resetMs,
-								active: true,
-								overbook: false,
-								createdAt: nowMs,
-							})
+							await assignReservationOcc(r, tid)
 						}
-						await db
-							.update(rsvReservations)
-							.set({
-								comboId: nextAssign.combinationId,
-								scheduleVersion: sql`${rsvReservations.scheduleVersion} + 1`,
-								version: sql`${rsvReservations.version} + 1`,
-								updatedAt: nowMs,
-							})
-							.where(eq(rsvReservations.id, r.id))
+						await setReservationCombo(r.id, nextAssign.combinationId, true)
 						r.comboId = nextAssign.combinationId
 					}
 
@@ -1173,16 +1202,7 @@ export async function reflowFutureBookingsForLocation(
 						r.assignment === 'soft' &&
 						SOFT_REFLOWABLE_STATUSES.has(r.status)
 					) {
-						const currentOccs = await db
-							.select()
-							.from(rsvTableOccupancies)
-							.where(
-								and(
-									eq(rsvTableOccupancies.locationId, locationId),
-									eq(rsvTableOccupancies.active, true),
-								),
-							)
-							.all()
+						const currentOccs = await loadActiveOccs()
 						const currentOccsByResId = new Map<
 							string,
 							Array<typeof rsvTableOccupancies.$inferSelect>
@@ -1223,40 +1243,15 @@ export async function reflowFutureBookingsForLocation(
 									(row) => row.id === swap.bookingId,
 								)
 								if (!swappedRes) continue
-								await db
-									.update(rsvTableOccupancies)
-									.set({ active: false })
-									.where(
-										and(
-											eq(rsvTableOccupancies.reservationId, swappedRes.id),
-											eq(rsvTableOccupancies.active, true),
-										),
-									)
+								await deactivateReservationOccs(swappedRes.id)
 								for (const tid of swap.toTableIds) {
-									const tbl = tableById.get(tid)
-									const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
-									await db.insert(rsvTableOccupancies).values({
-										id: `occ_${randomUUID()}`,
-										locationId,
-										tableId: tid,
-										kind: 'reservation',
-										reservationId: swappedRes.id,
-										startAt: swappedRes.startAt,
-										endAt: swappedRes.endAt + resetMs,
-										active: true,
-										overbook: false,
-										createdAt: nowMs,
-									})
+									await assignReservationOcc(swappedRes, tid)
 								}
-								await db
-									.update(rsvReservations)
-									.set({
-										comboId: swap.toCombinationId,
-										scheduleVersion: sql`${rsvReservations.scheduleVersion} + 1`,
-										version: sql`${rsvReservations.version} + 1`,
-										updatedAt: nowMs,
-									})
-									.where(eq(rsvReservations.id, swappedRes.id))
+								await setReservationCombo(
+									swappedRes.id,
+									swap.toCombinationId,
+									true,
+								)
 								reflowedMoves.push({
 									...swap,
 									reservationId: swappedRes.id,
@@ -1265,30 +1260,9 @@ export async function reflowFutureBookingsForLocation(
 							}
 
 							for (const tid of assignRes.tableIds) {
-								const tbl = tableById.get(tid)
-								const resetMs = (tbl?.resetBufferMin ?? 0) * 60_000
-								await db.insert(rsvTableOccupancies).values({
-									id: `occ_${randomUUID()}`,
-									locationId,
-									tableId: tid,
-									kind: 'reservation',
-									reservationId: r.id,
-									startAt: r.startAt,
-									endAt: r.endAt + resetMs,
-									active: true,
-									overbook: false,
-									createdAt: nowMs,
-								})
+								await assignReservationOcc(r, tid)
 							}
-							await db
-								.update(rsvReservations)
-								.set({
-									comboId: assignRes.combinationId,
-									scheduleVersion: sql`${rsvReservations.scheduleVersion} + 1`,
-									version: sql`${rsvReservations.version} + 1`,
-									updatedAt: nowMs,
-								})
-								.where(eq(rsvReservations.id, r.id))
+							await setReservationCombo(r.id, assignRes.combinationId, true)
 							r.comboId = assignRes.combinationId
 							reflowedMoves.push({
 								bookingId: r.id,
@@ -1302,8 +1276,9 @@ export async function reflowFutureBookingsForLocation(
 					}
 				}
 			}
-			await bumpDayVersion(db, locationId, businessDate)
+			if (!dryRun) await bumpDayVersion(db, locationId, businessDate)
 		} else if (
+			!dryRun &&
 			!opts?.skipExplicitDayVersionBump &&
 			explicitDatesSet.has(businessDate)
 		) {
@@ -1311,16 +1286,7 @@ export async function reflowFutureBookingsForLocation(
 		}
 
 		// Step 2: Detect conflicts on this businessDate after reflow
-		const finalOccRows = await db
-			.select()
-			.from(rsvTableOccupancies)
-			.where(
-				and(
-					eq(rsvTableOccupancies.locationId, locationId),
-					eq(rsvTableOccupancies.active, true),
-				),
-			)
-			.all()
+		const finalOccRows = await loadActiveOccs()
 		const finalOccsByResId = new Map<
 			string,
 			Array<typeof rsvTableOccupancies.$inferSelect>
@@ -1381,7 +1347,7 @@ export async function reflowFutureBookingsForLocation(
 		}
 	}
 
-	for (const move of reflowedMoves) {
+	for (const move of dryRun ? [] : reflowedMoves) {
 		const reservationId = move.reservationId ?? move.bookingId
 		if (!reservationId) continue
 		await db.insert(rsvReservationEvents).values({
@@ -1594,6 +1560,7 @@ export async function detectLocationConflicts(
 	const { conflicts } = await reflowFutureBookingsForLocation(db, locationId, {
 		affectedDates: dates,
 		skipExplicitDayVersionBump: true,
+		dryRun: true,
 	})
 	return { conflicts }
 }

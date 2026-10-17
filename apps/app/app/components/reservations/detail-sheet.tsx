@@ -60,9 +60,9 @@ const COURSE_STAGES = [
 
 const CONTACT_STATUSES = [
 	{ value: 'none', label: msg`Not Contacted` },
-	{ value: 'sms_sent', label: msg`SMS Sent` },
-	{ value: 'left_voicemail', label: msg`Left Voicemail` },
-	{ value: 'confirmed_by_phone', label: msg`Confirmed by Phone` },
+	{ value: 'left_message', label: msg`Left Message` },
+	{ value: 'no_answer', label: msg`No Answer` },
+	{ value: 'wrong_number', label: msg`Wrong Number` },
 ] as const
 
 type EditableField =
@@ -688,7 +688,12 @@ export function DetailSheet({
 										</Label>
 										<select
 											id="detail-contact-select"
-											value={reservation.contactStatus ?? 'none'}
+											value={
+												reservation.contactStatus &&
+												reservation.contactStatus !== 'not_contacted'
+													? reservation.contactStatus
+													: 'none'
+											}
 											onChange={(e) => handleContactStatus(e.target.value)}
 											disabled={busy}
 											className="border-input bg-background h-8 rounded-md border px-2 text-xs"
