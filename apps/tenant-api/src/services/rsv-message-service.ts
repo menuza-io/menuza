@@ -11,6 +11,7 @@ import {
 } from '@repo/tenant-db'
 import { localToInstant, type ReservationsContext } from '@repo/reservations'
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import {
 	buildCalendarUrl,
@@ -33,6 +34,7 @@ import {
 	isReservationsSmsEnabled,
 } from '../lib/reservations-switches.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { loadBookingContacts } from './rsv-booking-contact.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
 
 /**
@@ -189,15 +191,20 @@ async function resolveSubject(
 		if (!guest || guest.erasedAt) {
 			return { ok: false, outcome: 'suppressed', code: 'guest_erased' }
 		}
+		// A public booking messages the contact typed for THAT booking, not
+		// whatever a profile with the same phone number holds.
+		const bookingContact = (
+			await loadBookingContacts(db, [reservation.id])
+		).get(reservation.id)
 		return {
 			ok: true,
 			subject: {
 				kind: 'reservation',
 				locationId: reservation.locationId,
-				email: guest.emailNorm,
+				email: bookingContact ? bookingContact.email : guest.emailNorm,
 				phone: guest.phoneE164,
 				smsAllowed: reservation.smsOptIn,
-				firstName: guest.firstName,
+				firstName: bookingContact ? bookingContact.firstName : guest.firstName,
 				locale: row.locale || reservation.guestLocale,
 				whenMs: reservation.startAt,
 				timeZone: reservation.timeZone,
@@ -608,10 +615,12 @@ export async function deliverMessagesByIds(
 	if (ids.length === 0) return emptyDeliveryTotals()
 	const db = options.db ?? (await getTenantDb(orgId))
 	const now = options.now ?? Date.now()
-	const rows = await db
-		.select()
-		.from(rsvMessages)
-		.where(and(inArray(rsvMessages.id, [...ids]), DUE(now)))
+	const rows = await queryInChunks([...ids], (chunk) =>
+		db
+			.select()
+			.from(rsvMessages)
+			.where(and(inArray(rsvMessages.id, chunk), DUE(now))),
+	)
 	return deliverRows(db, orgId, rows, now)
 }
 

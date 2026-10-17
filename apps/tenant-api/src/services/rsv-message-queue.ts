@@ -14,8 +14,10 @@ import {
 	type ResolvedMessagingSettings,
 	type ToggleableMessageKind,
 } from '../lib/reservations-messaging-settings.ts'
+import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { type ReservationWriteTx } from '../lib/reservations-write.ts'
+import { loadBookingContacts } from './rsv-booking-contact.ts'
 
 /**
  * Enqueue side of guest messages. Everything here runs inside the caller's
@@ -196,11 +198,14 @@ export async function enqueueReservationMessage(
 
 	const settings = await loadMessagingSettings(tx, reservation.locationId)
 	if (!input.force && !settings.kinds[input.kind]) return []
+	const bookingContact = (await loadBookingContacts(tx, [reservation.id])).get(
+		reservation.id,
+	)
 
 	const channels = channelsFor({
 		dataRegion: nodeRegion(),
 		smsOptIn: reservation.smsOptIn && settings.smsEnabled && !!guest.phoneE164,
-		emailProvided: !!guest.emailNorm,
+		emailProvided: bookingContact ? !!bookingContact.email : !!guest.emailNorm,
 	})
 	const milestone =
 		input.variant === undefined
@@ -254,15 +259,14 @@ export async function cancelPendingReservationMessages(
 			!row.dedupeKey.endsWith(`:${options.keepVersion}`),
 	)
 	if (doomed.length === 0) return 0
-	await tx
-		.update(rsvMessages)
-		.set({ status: 'cancelled' })
-		.where(
-			inArray(
-				rsvMessages.id,
-				doomed.map((row) => row.id),
-			),
-		)
+	await forEachInChunks(
+		doomed.map((row) => row.id),
+		(chunk) =>
+			tx
+				.update(rsvMessages)
+				.set({ status: 'cancelled' })
+				.where(inArray(rsvMessages.id, chunk)),
+	)
 	return doomed.length
 }
 
@@ -291,35 +295,40 @@ export async function reconcileScheduledMessages(
 	if (reservations.length === 0) return
 	const ids = reservations.map((row) => row.id)
 
-	const pending = await tx
-		.select({
-			id: rsvMessages.id,
-			reservationId: rsvMessages.reservationId,
-			kind: rsvMessages.kind,
-			dedupeKey: rsvMessages.dedupeKey,
-		})
-		.from(rsvMessages)
-		.where(
-			and(
-				inArray(rsvMessages.reservationId, ids),
-				eq(rsvMessages.status, 'pending'),
-				inArray(rsvMessages.kind, [...SCHEDULED_KINDS]),
+	const pending = await queryInChunks(ids, (chunk) =>
+		tx
+			.select({
+				id: rsvMessages.id,
+				reservationId: rsvMessages.reservationId,
+				kind: rsvMessages.kind,
+				dedupeKey: rsvMessages.dedupeKey,
+			})
+			.from(rsvMessages)
+			.where(
+				and(
+					inArray(rsvMessages.reservationId, chunk),
+					eq(rsvMessages.status, 'pending'),
+					inArray(rsvMessages.kind, [...SCHEDULED_KINDS]),
+				),
 			),
-		)
+	)
 	const settings = await loadMessagingSettings(tx, input.locationId)
 	const guestIds = [...new Set(reservations.map((row) => row.guestId))]
-	const guests = await tx
-		.select({
-			id: rsvGuests.id,
-			emailNorm: rsvGuests.emailNorm,
-			phoneE164: rsvGuests.phoneE164,
-			locale: rsvGuests.locale,
-			erasedAt: rsvGuests.erasedAt,
-		})
-		.from(rsvGuests)
-		.where(inArray(rsvGuests.id, guestIds))
+	const guests = await queryInChunks(guestIds, (chunk) =>
+		tx
+			.select({
+				id: rsvGuests.id,
+				emailNorm: rsvGuests.emailNorm,
+				phoneE164: rsvGuests.phoneE164,
+				locale: rsvGuests.locale,
+				erasedAt: rsvGuests.erasedAt,
+			})
+			.from(rsvGuests)
+			.where(inArray(rsvGuests.id, chunk)),
+	)
 	const guestById = new Map(guests.map((guest) => [guest.id, guest]))
 	const region = nodeRegion()
+	const contactByReservation = await loadBookingContacts(tx, ids)
 
 	const doomed: string[] = []
 	const inserts: InsertRow[] = []
@@ -349,7 +358,9 @@ export async function reconcileScheduledMessages(
 			dataRegion: region,
 			smsOptIn:
 				reservation.smsOptIn && settings.smsEnabled && !!guest.phoneE164,
-			emailProvided: !!guest.emailNorm,
+			emailProvided: contactByReservation.has(reservation.id)
+				? !!contactByReservation.get(reservation.id)?.email
+				: !!guest.emailNorm,
 		})
 		for (const kind of wanted as Set<'reminder' | 'reconfirm_request'>) {
 			const schedule = scheduleFor({
@@ -387,10 +398,12 @@ export async function reconcileScheduledMessages(
 	}
 
 	if (doomed.length > 0) {
-		await tx
-			.update(rsvMessages)
-			.set({ status: 'cancelled' })
-			.where(inArray(rsvMessages.id, doomed))
+		await forEachInChunks(doomed, (chunk) =>
+			tx
+				.update(rsvMessages)
+				.set({ status: 'cancelled' })
+				.where(inArray(rsvMessages.id, chunk)),
+		)
 	}
 	await upsertScheduledMessages(tx, inserts)
 }

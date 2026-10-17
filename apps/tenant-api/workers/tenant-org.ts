@@ -6,6 +6,7 @@ import {
 import { migrate } from 'drizzle-orm/durable-sqlite/migrator'
 import {
 	schema,
+	registerTenantDbTransactionRunner,
 	setTenantDbResolver,
 	TENANT_ORG_ID_PATTERN,
 	type TenantDatabase,
@@ -52,7 +53,13 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 	private async ensureDb() {
 		if (this.db) return this.db
 
-		this.db = drizzle(this.ctx.storage, { schema })
+		const db = drizzle(this.ctx.storage, { schema })
+		// Drizzle's `db.transaction` is `transactionSync` here and does not await
+		// async callbacks, so multi-step writes use the async storage transaction.
+		registerTenantDbTransactionRunner(db, (fn) =>
+			this.ctx.storage.transaction(fn),
+		)
+		this.db = db
 		await migrate(this.db, durableSqliteMigrations)
 		return this.db
 	}

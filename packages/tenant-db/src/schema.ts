@@ -4200,6 +4200,11 @@ export const rsvTableOccupancies = sqliteTable(
 			table.active,
 			table.startAt,
 		),
+		index('idx_rsv_table_occupancies_location_active_end').on(
+			table.locationId,
+			table.active,
+			table.endAt,
+		),
 		index('idx_rsv_table_occupancies_reservation').on(table.reservationId),
 		index('idx_rsv_table_occupancies_hold').on(table.holdId),
 		index('idx_rsv_table_occupancies_block').on(table.blockId),

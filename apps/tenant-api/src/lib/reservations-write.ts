@@ -22,9 +22,11 @@ import {
 	rsvWaitlistEntries,
 	getTenantDb,
 	getTenantDbOrgId,
+	runTenantTransaction,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, eq, gt, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, isNotNull, lt, lte, sql } from 'drizzle-orm'
+import { forEachInChunks, queryInChunks } from './chunked-in.ts'
 import { runExclusive } from './concurrency.ts'
 import {
 	enqueueReservationMessage,
@@ -34,6 +36,33 @@ import { conflict, HttpError } from './http.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
 export const IDEMPOTENCY_TTL_MS = 48 * 60 * 60 * 1000
+
+const OCCUPANCY_WINDOW_BEFORE_MS = 2 * 24 * 60 * 60 * 1000
+const OCCUPANCY_WINDOW_AFTER_MS = 3 * 24 * 60 * 60 * 1000
+
+/**
+ * Bounds an occupancy read to rows that can matter for one business date.
+ * The date is read as UTC midnight and padded by days on both sides, which
+ * covers any location time zone and overnight services; a row only counts
+ * when it overlaps the padded window (`end_at > from AND start_at < to`).
+ * `lastBusinessDate` widens the window for a multi-day read (availability).
+ * An unparseable date adds no filter.
+ */
+export function occupancyWindowFilter(
+	businessDate: string,
+	lastBusinessDate: string = businessDate,
+) {
+	const base = Date.parse(`${businessDate}T00:00:00Z`)
+	const last = Date.parse(`${lastBusinessDate}T00:00:00Z`)
+	if (!Number.isFinite(base) || !Number.isFinite(last)) return []
+	return [
+		gt(rsvTableOccupancies.endAt, base - OCCUPANCY_WINDOW_BEFORE_MS),
+		lt(
+			rsvTableOccupancies.startAt,
+			Math.max(base, last) + OCCUPANCY_WINDOW_AFTER_MS,
+		),
+	]
+}
 
 export type ReservationWriteTx = Parameters<
 	Parameters<TenantDatabase['transaction']>[0]
@@ -239,19 +268,21 @@ export async function sweepExpiredInTx(
 
 	if (expiredHoldRows.length > 0) {
 		const holdIds = expiredHoldRows.map((row) => row.id)
-		await tx
-			.update(rsvTableOccupancies)
-			.set({ active: false })
-			.where(
-				and(
-					inArray(rsvTableOccupancies.holdId, holdIds),
-					eq(rsvTableOccupancies.active, true),
-				),
-			)
-		await tx
-			.update(rsvHolds)
-			.set({ status: 'expired' })
-			.where(inArray(rsvHolds.id, holdIds))
+		await forEachInChunks(holdIds, async (chunk) => {
+			await tx
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(
+					and(
+						inArray(rsvTableOccupancies.holdId, chunk),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+			await tx
+				.update(rsvHolds)
+				.set({ status: 'expired' })
+				.where(inArray(rsvHolds.id, chunk))
+		})
 		for (const row of expiredHoldRows) {
 			recordAffected(row.locationId, row.businessDate)
 		}
@@ -282,23 +313,25 @@ export async function sweepExpiredInTx(
 
 	if (expiredPaymentRows.length > 0) {
 		const resIds = expiredPaymentRows.map((row) => row.id)
-		await tx
-			.update(rsvTableOccupancies)
-			.set({ active: false })
-			.where(
-				and(
-					inArray(rsvTableOccupancies.reservationId, resIds),
-					eq(rsvTableOccupancies.active, true),
-				),
-			)
-		await tx
-			.update(rsvReservations)
-			.set({
-				status: 'expired',
-				updatedAt: now,
-				version: sql`${rsvReservations.version} + 1`,
-			})
-			.where(inArray(rsvReservations.id, resIds))
+		await forEachInChunks(resIds, async (chunk) => {
+			await tx
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(
+					and(
+						inArray(rsvTableOccupancies.reservationId, chunk),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+			await tx
+				.update(rsvReservations)
+				.set({
+					status: 'expired',
+					updatedAt: now,
+					version: sql`${rsvReservations.version} + 1`,
+				})
+				.where(inArray(rsvReservations.id, chunk))
+		})
 		for (const row of expiredPaymentRows) {
 			await tx.insert(rsvReservationEvents).values({
 				reservationId: row.id,
@@ -338,23 +371,25 @@ export async function sweepExpiredInTx(
 
 	if (expiredRequestRows.length > 0) {
 		const resIds = expiredRequestRows.map((row) => row.id)
-		await tx
-			.update(rsvTableOccupancies)
-			.set({ active: false })
-			.where(
-				and(
-					inArray(rsvTableOccupancies.reservationId, resIds),
-					eq(rsvTableOccupancies.active, true),
-				),
-			)
-		await tx
-			.update(rsvReservations)
-			.set({
-				status: 'expired',
-				updatedAt: now,
-				version: sql`${rsvReservations.version} + 1`,
-			})
-			.where(inArray(rsvReservations.id, resIds))
+		await forEachInChunks(resIds, async (chunk) => {
+			await tx
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(
+					and(
+						inArray(rsvTableOccupancies.reservationId, chunk),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+			await tx
+				.update(rsvReservations)
+				.set({
+					status: 'expired',
+					updatedAt: now,
+					version: sql`${rsvReservations.version} + 1`,
+				})
+				.where(inArray(rsvReservations.id, chunk))
+		})
 		for (const row of expiredRequestRows) {
 			await tx.insert(rsvReservationEvents).values({
 				reservationId: row.id,
@@ -394,13 +429,15 @@ export async function sweepExpiredInTx(
 
 	if (expiredWaitlistRows.length > 0) {
 		const entryIds = expiredWaitlistRows.map((row) => row.id)
-		await tx
-			.update(rsvWaitlistEntries)
-			.set({
-				status: 'no_response',
-				version: sql`${rsvWaitlistEntries.version} + 1`,
-			})
-			.where(inArray(rsvWaitlistEntries.id, entryIds))
+		await forEachInChunks(entryIds, (chunk) =>
+			tx
+				.update(rsvWaitlistEntries)
+				.set({
+					status: 'no_response',
+					version: sql`${rsvWaitlistEntries.version} + 1`,
+				})
+				.where(inArray(rsvWaitlistEntries.id, chunk)),
+		)
 		for (const row of expiredWaitlistRows) {
 			recordAffected(row.locationId, row.businessDate)
 		}
@@ -514,6 +551,7 @@ export async function loadDayStateInTx(
 				and(
 					eq(rsvTableOccupancies.locationId, locationId),
 					eq(rsvTableOccupancies.active, true),
+					...occupancyWindowFilter(businessDate),
 				),
 			),
 		tx
@@ -528,28 +566,28 @@ export async function loadDayStateInTx(
 	])
 
 	const comboIds = combos.map((c) => c.id)
-	const comboMembers =
-		comboIds.length > 0
-			? await tx
-					.select()
-					.from(rsvTableComboMembers)
-					.where(inArray(rsvTableComboMembers.comboId, comboIds))
-			: []
+	const comboMembers = await queryInChunks(comboIds, (chunk) =>
+		tx
+			.select()
+			.from(rsvTableComboMembers)
+			.where(inArray(rsvTableComboMembers.comboId, chunk)),
+	)
 
 	const serviceIds = services.map((s) => s.id)
-	const [serviceAvailability, pacingRules] =
-		serviceIds.length > 0
-			? await Promise.all([
-					tx
-						.select()
-						.from(rsvServiceAvailability)
-						.where(inArray(rsvServiceAvailability.serviceId, serviceIds)),
-					tx
-						.select()
-						.from(rsvPacingRules)
-						.where(inArray(rsvPacingRules.serviceId, serviceIds)),
-				])
-			: [[], []]
+	const [serviceAvailability, pacingRules] = await Promise.all([
+		queryInChunks(serviceIds, (chunk) =>
+			tx
+				.select()
+				.from(rsvServiceAvailability)
+				.where(inArray(rsvServiceAvailability.serviceId, chunk)),
+		),
+		queryInChunks(serviceIds, (chunk) =>
+			tx
+				.select()
+				.from(rsvPacingRules)
+				.where(inArray(rsvPacingRules.serviceId, chunk)),
+		),
+	])
 
 	return {
 		locationId,
@@ -708,21 +746,6 @@ export async function withReservationWrite<T>(
 				}
 			: undefined)
 
-	const postCommitHooks: Array<() => void | Promise<void>> = []
-	if (options.onAfterCommit) {
-		postCommitHooks.push(options.onAfterCommit)
-	}
-
-	const affectedDatesByLocation = new Map<string, Set<string>>()
-	const markAffectedDate = (locId: string, businessDate: string) => {
-		let set = affectedDatesByLocation.get(locId)
-		if (!set) {
-			set = new Set<string>()
-			affectedDatesByLocation.set(locId, set)
-		}
-		set.add(businessDate)
-	}
-
 	const initialDates = normalizeDates(options.dates)
 
 	const active = activeWriteStorage.getStore()
@@ -750,20 +773,41 @@ export async function withReservationWrite<T>(
 		return fn(active.tx, innerHelpers)
 	}
 
-	if (options.locationId) {
-		for (const d of initialDates) {
-			markAffectedDate(options.locationId, d)
-		}
-	}
-
-	const explicitlyBumped = new Set<string>()
+	// Per-attempt state lives in `attempt` (below), never out here: a
+	// SQLITE_BUSY retry re-runs the whole closure, and state left over from a
+	// rolled-back attempt would skip day-version bumps or run its hooks.
+	const committed: {
+		current: {
+			affectedDatesByLocation: Map<string, Set<string>>
+			postCommitHooks: Array<() => void | Promise<void>>
+		} | null
+	} = { current: null }
 
 	const outcome = await runExclusive(orgId, async () => {
 		const db = options.db ?? (await getTenantDb(orgId))
 
 		return retryOnSqliteBusy(async () => {
+			const postCommitHooks: Array<() => void | Promise<void>> = []
+			if (options.onAfterCommit) {
+				postCommitHooks.push(options.onAfterCommit)
+			}
+			const affectedDatesByLocation = new Map<string, Set<string>>()
+			const markAffectedDate = (locId: string, businessDate: string) => {
+				let set = affectedDatesByLocation.get(locId)
+				if (!set) {
+					set = new Set<string>()
+					affectedDatesByLocation.set(locId, set)
+				}
+				set.add(businessDate)
+			}
+			if (options.locationId) {
+				for (const d of initialDates) {
+					markAffectedDate(options.locationId, d)
+				}
+			}
+			const explicitlyBumped = new Set<string>()
 			try {
-				return await db.transaction(async (tx) => {
+				const result = await runTenantTransaction(db, async (tx) => {
 					const swept = await sweepExpiredInTx(tx, {
 						locationId: options.locationId,
 						now,
@@ -935,20 +979,23 @@ export async function withReservationWrite<T>(
 						value,
 					}
 				})
+				committed.current = { affectedDatesByLocation, postCommitHooks }
+				return result
 			} catch (error) {
 				mapSqliteConstraintError(error)
 			}
 		})
 	})
 
-	for (const [locId, datesSet] of affectedDatesByLocation.entries()) {
+	const finished = committed.current
+	for (const [locId, datesSet] of finished?.affectedDatesByLocation ?? []) {
 		for (const businessDate of datesSet) {
 			invalidateReservationDayCache(orgId, locId, businessDate)
 		}
 	}
 
 	if (!outcome.replayed) {
-		for (const hook of postCommitHooks) {
+		for (const hook of finished?.postCommitHooks ?? []) {
 			await hook()
 		}
 	}

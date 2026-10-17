@@ -107,7 +107,12 @@ export async function loadPublicEngineState(
 	},
 ): Promise<PublicEngineState | null> {
 	const { locationId, fromDate, toDate, now } = params
-	const sched = await loadLocationSchedulingState(db, locationId, fromDate)
+	const sched = await loadLocationSchedulingState(
+		db,
+		locationId,
+		fromDate,
+		toDate,
+	)
 	const settings = sched.settings
 	if (!settings) return null
 

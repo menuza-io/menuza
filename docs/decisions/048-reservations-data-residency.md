@@ -202,6 +202,25 @@ never double-book a table even under concurrent requests:
    - `rsv_guest_merges_no_delete` and `rsv_guest_merges_no_update` make
      `rsv_guest_merges` strictly append-only (`RAISE(ABORT, 'append_only')`).
 
+4. **Transactions on the Durable Object runtime.** Drizzle's durable-sqlite
+   `db.transaction` calls `storage.transactionSync` and does not await an async
+   callback, so it cannot roll back writes made after the first `await`. The
+   write gate therefore runs through `runTenantTransaction` (`@repo/tenant-db`).
+   libsql keeps `db.transaction`; the `TenantOrg` object registers
+   `ctx.storage.transaction` (the async variant, which rolls back on a throw)
+   for its handle. Retry-scoped state (affected dates, day-version bookkeeping,
+   post-commit hooks) is created per attempt inside the retried closure.
+5. **Bound parameters.** Durable Object SQLite allows at most 100 bound
+   parameters per statement. Any `IN (...)` list sized by data (reservation,
+   guest, message, hold ids) goes through `queryInChunks` / `forEachInChunks`
+   (`apps/tenant-api/src/lib/chunked-in.ts`, 90 ids per statement). Lists of
+   setup rows (services, combos, locations) are small and also chunked in the
+   scheduling-state loaders.
+6. **Occupancy reads are time-windowed.** Scheduling state loads only active
+   occupancies overlapping the business date padded by 2 days before and 3 days
+   after (`occupancyWindowFilter`), backed by
+   `idx_rsv_table_occupancies_location_active_end`.
+
 ### 6. Feature flags
 
 Every Reservations screen, operator token mint, and public endpoint is gated by

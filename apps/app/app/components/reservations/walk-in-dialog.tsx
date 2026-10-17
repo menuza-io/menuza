@@ -13,12 +13,11 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
 	createWalkInReservation,
 	type DayMoveNotice,
 	type DayReservationView,
-	generateIdempotencyKey,
 	type LiveTableState,
 } from '#app/utils/reservations/book-api.ts'
 import {
@@ -26,6 +25,11 @@ import {
 	LIVE_TABLE_STATUS_LABELS,
 } from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
+import {
+	afterFailedSubmit,
+	keyForSubmit,
+	newSubmitKey,
+} from '#app/utils/reservations/submit-key.ts'
 
 export function WalkInDialog({
 	open,
@@ -65,9 +69,7 @@ export function WalkInDialog({
 	const [forceOverbook, setForceOverbook] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [idempotencyKey, setIdempotencyKey] = useState(() =>
-		generateIdempotencyKey('walkin'),
-	)
+	const keyRef = useRef(newSubmitKey('walkin'))
 
 	useEffect(() => {
 		if (!open) return
@@ -79,7 +81,7 @@ export function WalkInDialog({
 		setNotes('')
 		setForceOverbook(false)
 		setError(null)
-		setIdempotencyKey(generateIdempotencyKey('walkin'))
+		keyRef.current = newSubmitKey('walkin')
 	}, [initialPartySize, initialTableId, open])
 
 	// Sort candidate tables: open tables that fit partySize first, then other open tables, then occupied
@@ -98,27 +100,29 @@ export function WalkInDialog({
 		setSubmitting(true)
 		setError(null)
 		try {
+			const input = {
+				locationId,
+				partySize,
+				date: businessDate,
+				...(localStartMin !== undefined ? { localStartMin } : {}),
+				...(selectedTableId ? { tableIds: [selectedTableId] } : {}),
+				...(guestName.trim() ? { guestName: guestName.trim() } : {}),
+				...(guestPhone.trim() ? { guestPhone: guestPhone.trim() } : {}),
+				...(serverLabel.trim() ? { serverLabel: serverLabel.trim() } : {}),
+				...(notes.trim() ? { internalNotes: notes.trim() } : {}),
+				forceOverbook,
+			}
+			// Same form, same key: a retry after a lost response replays.
 			const res = await createWalkInReservation(
 				client,
-				{
-					locationId,
-					partySize,
-					date: businessDate,
-					...(localStartMin !== undefined ? { localStartMin } : {}),
-					...(selectedTableId ? { tableIds: [selectedTableId] } : {}),
-					...(guestName.trim() ? { guestName: guestName.trim() } : {}),
-					...(guestPhone.trim() ? { guestPhone: guestPhone.trim() } : {}),
-					...(serverLabel.trim() ? { serverLabel: serverLabel.trim() } : {}),
-					...(notes.trim() ? { internalNotes: notes.trim() } : {}),
-					forceOverbook,
-				},
-				idempotencyKey,
+				input,
+				keyForSubmit(keyRef, 'walkin', input),
 			)
 			onCreated(res.reservation, res.moveNotices ?? [])
 			onOpenChange(false)
 		} catch (err) {
 			setError(err instanceof Error ? err.message : t`Failed to seat walk-in.`)
-			setIdempotencyKey(generateIdempotencyKey('walkin'))
+			afterFailedSubmit(keyRef, 'walkin', err)
 		} finally {
 			setSubmitting(false)
 		}

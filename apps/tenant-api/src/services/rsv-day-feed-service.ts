@@ -46,6 +46,7 @@ import {
 	lte,
 	sql,
 } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
@@ -291,31 +292,35 @@ export async function serializeReservationsForBook(
 	opts?: { canReadGuestSensitive?: boolean },
 ): Promise<SerializedBookReservation[]> {
 	if (rows.length === 0) return []
-	const canReadSensitive = opts?.canReadGuestSensitive ?? true
+	const canReadSensitive = opts?.canReadGuestSensitive === true
 
 	const resIds = rows.map((r) => r.id)
-	const occRows = await db
-		.select()
-		.from(rsvTableOccupancies)
-		.where(
-			and(
-				inArray(rsvTableOccupancies.reservationId, resIds),
-				eq(rsvTableOccupancies.active, true),
-			),
-		)
-		.all()
+	const occRows = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvTableOccupancies)
+			.where(
+				and(
+					inArray(rsvTableOccupancies.reservationId, chunk),
+					eq(rsvTableOccupancies.active, true),
+				),
+			)
+			.all(),
+	)
 
 	// For finished/cancelled/no_show reservations, fall back to their most recent inactive occupancy so historical table assignment is still visible
-	const inactiveOccRows = await db
-		.select()
-		.from(rsvTableOccupancies)
-		.where(
-			and(
-				inArray(rsvTableOccupancies.reservationId, resIds),
-				eq(rsvTableOccupancies.active, false),
-			),
-		)
-		.all()
+	const inactiveOccRows = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvTableOccupancies)
+			.where(
+				and(
+					inArray(rsvTableOccupancies.reservationId, chunk),
+					eq(rsvTableOccupancies.active, false),
+				),
+			)
+			.all(),
+	)
 
 	const activeTableIdsByRes = new Map<string, string[]>()
 	for (const occ of occRows) {
@@ -334,14 +339,13 @@ export async function serializeReservationsForBook(
 	}
 
 	const locationIds = [...new Set(rows.map((r) => r.locationId))]
-	const tableRows =
-		locationIds.length > 0
-			? await db
-					.select()
-					.from(rsvTables)
-					.where(inArray(rsvTables.locationId, locationIds))
-					.all()
-			: []
+	const tableRows = await queryInChunks(locationIds, (chunk) =>
+		db
+			.select()
+			.from(rsvTables)
+			.where(inArray(rsvTables.locationId, chunk))
+			.all(),
+	)
 	const tableLabelById = new Map(tableRows.map((t) => [t.id, t.label]))
 
 	const guestIds = [
@@ -349,14 +353,9 @@ export async function serializeReservationsForBook(
 			rows.map((r) => r.guestId).filter((id): id is string => Boolean(id)),
 		),
 	]
-	const guestRows =
-		guestIds.length > 0
-			? await db
-					.select()
-					.from(rsvGuests)
-					.where(inArray(rsvGuests.id, guestIds))
-					.all()
-			: []
+	const guestRows = await queryInChunks(guestIds, (chunk) =>
+		db.select().from(rsvGuests).where(inArray(rsvGuests.id, chunk)).all(),
+	)
 	const guestById = new Map(guestRows.map((g) => [g.id, g]))
 	const pinnedNotesMap = await loadPinnedNotesMap(db, guestIds)
 	const tagsMap = await loadGuestTagsMap(db, guestIds, {
@@ -370,36 +369,34 @@ export async function serializeReservationsForBook(
 				.filter((id): id is string => Boolean(id)),
 		),
 	]
-	const occasionTagRows =
-		occasionTagIds.length > 0
-			? await db
-					.select({ id: rsvTags.id, systemKey: rsvTags.systemKey })
-					.from(rsvTags)
-					.where(inArray(rsvTags.id, occasionTagIds))
-					.all()
-			: []
+	const occasionTagRows = await queryInChunks(occasionTagIds, (chunk) =>
+		db
+			.select({ id: rsvTags.id, systemKey: rsvTags.systemKey })
+			.from(rsvTags)
+			.where(inArray(rsvTags.id, chunk))
+			.all(),
+	)
 	const occasionByTagId = new Map(
 		occasionTagRows.map((t) => [t.id, bareOccasionValue(t.id, t.systemKey)]),
 	)
 
-	const auxEvents =
-		resIds.length > 0
-			? await db
-					.select()
-					.from(rsvReservationEvents)
-					.where(
-						and(
-							inArray(rsvReservationEvents.reservationId, resIds),
-							inArray(rsvReservationEvents.type, [
-								'running_late',
-								'contact_status',
-								'course',
-							]),
-						),
-					)
-					.orderBy(asc(rsvReservationEvents.at))
-					.all()
-			: []
+	const auxEvents = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvReservationEvents)
+			.where(
+				and(
+					inArray(rsvReservationEvents.reservationId, chunk),
+					inArray(rsvReservationEvents.type, [
+						'running_late',
+						'contact_status',
+						'course',
+					]),
+				),
+			)
+			.orderBy(asc(rsvReservationEvents.at))
+			.all(),
+	)
 	const runningLateNoteByRes = new Map<string, string>()
 	const contactStatusByRes = new Map<string, string>()
 	const courseStatusByRes = new Map<string, string>()
@@ -613,21 +610,20 @@ async function applyDayFeedFilters(
 		const wanted = filters.tag.toLowerCase()
 		const matches = (tag: { id: string; name: string }) =>
 			tag.id === filters.tag || tag.name.toLowerCase() === wanted
-		const reservationTagRows = await db
-			.select({
-				reservationId: rsvReservationTags.reservationId,
-				id: rsvTags.id,
-				name: rsvTags.name,
-			})
-			.from(rsvReservationTags)
-			.innerJoin(rsvTags, eq(rsvReservationTags.tagId, rsvTags.id))
-			.where(
-				inArray(
-					rsvReservationTags.reservationId,
-					result.map((r) => r.id),
-				),
-			)
-			.all()
+		const reservationTagRows = await queryInChunks(
+			result.map((r) => r.id),
+			(chunk) =>
+				db
+					.select({
+						reservationId: rsvReservationTags.reservationId,
+						id: rsvTags.id,
+						name: rsvTags.name,
+					})
+					.from(rsvReservationTags)
+					.innerJoin(rsvTags, eq(rsvReservationTags.tagId, rsvTags.id))
+					.where(inArray(rsvReservationTags.reservationId, chunk))
+					.all(),
+		)
 		const taggedReservationIds = new Set(
 			reservationTagRows.filter(matches).map((row) => row.reservationId),
 		)
@@ -649,18 +645,24 @@ async function loadMoveNotices(
 	if (reservations.length === 0) return []
 	const byId = new Map(reservations.map((r) => [r.id, r]))
 	const labelById = new Map(tables.map((t) => [t.id, t.label]))
-	const events = await db
-		.select()
-		.from(rsvReservationEvents)
-		.where(
-			and(
-				inArray(rsvReservationEvents.reservationId, [...byId.keys()]),
-				eq(rsvReservationEvents.type, 'auto_reassigned'),
-			),
+	const events = (
+		await queryInChunks([...byId.keys()], (chunk) =>
+			db
+				.select()
+				.from(rsvReservationEvents)
+				.where(
+					and(
+						inArray(rsvReservationEvents.reservationId, chunk),
+						eq(rsvReservationEvents.type, 'auto_reassigned'),
+					),
+				)
+				.orderBy(desc(rsvReservationEvents.at))
+				.limit(50)
+				.all(),
 		)
-		.orderBy(desc(rsvReservationEvents.at))
-		.limit(50)
-		.all()
+	)
+		.sort((a, b) => b.at - a.at)
+		.slice(0, 50)
 
 	const toIds = (value: unknown): string[] =>
 		Array.isArray(value) ? value.filter((v) => typeof v === 'string') : []
@@ -823,7 +825,7 @@ export async function getDayFeed(
 	const businessDate = hasExplicitOrgId ? businessDateOrOpts : locationIdOrDate
 	const opts = hasExplicitOrgId ? maybeOpts : businessDateOrOpts
 
-	const canReadGuestSensitive = opts?.canReadGuestSensitive ?? true
+	const canReadGuestSensitive = opts?.canReadGuestSensitive === true
 	const settings = await getLocationSettingsWithContext(db, orgId, locationId)
 	const dayVersion = await getCurrentDayVersion(db, locationId, businessDate)
 	const settingsVersion = settings.version ?? 1
@@ -831,8 +833,8 @@ export async function getDayFeed(
 
 	const filters = normalizeDayFeedFilters(opts?.filters)
 	const etagSuffix = filtersEtagSuffix(filters)
-	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}${etagSuffix}"`
-	const shortEtag = `"${dayVersion}.${settingsVersion}${etagSuffix}"`
+	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}:${floorPlanVersion}${etagSuffix}"`
+	const shortEtag = `"${dayVersion}.${settingsVersion}.${floorPlanVersion}${etagSuffix}"`
 
 	const [
 		areas,
@@ -955,14 +957,13 @@ export async function getDayFeed(
 
 	// Pacing buckets (15-min intervals across active services)
 	const svcIds = services.map((s) => s.id)
-	const pacingRules =
-		svcIds.length > 0
-			? await db
-					.select()
-					.from(rsvPacingRules)
-					.where(inArray(rsvPacingRules.serviceId, svcIds))
-					.all()
-			: []
+	const pacingRules = await queryInChunks(svcIds, (chunk) =>
+		db
+			.select()
+			.from(rsvPacingRules)
+			.where(inArray(rsvPacingRules.serviceId, chunk))
+			.all(),
+	)
 
 	const defaultMaxCoversPerBucket = Math.max(
 		tables.reduce((sum, t) => sum + (t.maxCovers ?? 0), 0),
@@ -1379,19 +1380,18 @@ export async function getOperatorAvailability(
 	)
 
 	const resIds = activeRes.map((r) => r.id)
-	const occRows =
-		resIds.length > 0
-			? await db
-					.select()
-					.from(rsvTableOccupancies)
-					.where(
-						and(
-							inArray(rsvTableOccupancies.reservationId, resIds),
-							eq(rsvTableOccupancies.active, true),
-						),
-					)
-					.all()
-			: []
+	const occRows = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvTableOccupancies)
+			.where(
+				and(
+					inArray(rsvTableOccupancies.reservationId, chunk),
+					eq(rsvTableOccupancies.active, true),
+				),
+			)
+			.all(),
+	)
 
 	const liveHolds = await db
 		.select()
@@ -1405,22 +1405,20 @@ export async function getOperatorAvailability(
 			),
 		)
 		.all()
-	const holdOccRows =
-		liveHolds.length > 0
-			? await db
-					.select()
-					.from(rsvTableOccupancies)
-					.where(
-						and(
-							inArray(
-								rsvTableOccupancies.holdId,
-								liveHolds.map((h) => h.id),
-							),
-							eq(rsvTableOccupancies.active, true),
-						),
-					)
-					.all()
-			: []
+	const holdOccRows = await queryInChunks(
+		liveHolds.map((h) => h.id),
+		(chunk) =>
+			db
+				.select()
+				.from(rsvTableOccupancies)
+				.where(
+					and(
+						inArray(rsvTableOccupancies.holdId, chunk),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+				.all(),
+	)
 
 	const targetServices =
 		dayState.state === 'closed'
@@ -1603,7 +1601,7 @@ export async function getPreServiceOverview(
 			? businessDateOrOpts
 			: undefined
 
-	const canReadGuestSensitive = opts?.canReadGuestSensitive ?? true
+	const canReadGuestSensitive = opts?.canReadGuestSensitive === true
 	const feed = await getDayFeed(db, orgId, locationId, businessDate, {
 		canReadGuestSensitive,
 	})
@@ -1937,7 +1935,7 @@ export async function getBookConflicts(
 	const locationId = hasExplicitOrgId ? locationIdOrDate : orgIdOrLocationId
 	const businessDate = hasExplicitOrgId ? businessDateOrOpts : locationIdOrDate
 	const opts = hasExplicitOrgId ? maybeOpts : businessDateOrOpts
-	const canReadGuestSensitive = opts?.canReadGuestSensitive ?? true
+	const canReadGuestSensitive = opts?.canReadGuestSensitive === true
 
 	const [feed, allAreas, allTables, allServices, allSpecialDays] =
 		await Promise.all([
@@ -2009,14 +2007,13 @@ export async function getBookConflicts(
 	const svcIds = allServices
 		.filter((s) => s.archivedAt === null)
 		.map((s) => s.id)
-	const allPacing =
-		svcIds.length > 0
-			? await db
-					.select()
-					.from(rsvPacingRules)
-					.where(inArray(rsvPacingRules.serviceId, svcIds))
-					.all()
-			: []
+	const allPacing = await queryInChunks(svcIds, (chunk) =>
+		db
+			.select()
+			.from(rsvPacingRules)
+			.where(inArray(rsvPacingRules.serviceId, chunk))
+			.all(),
+	)
 	const enginePacingRules: EnginePacingRuleInput[] = allPacing.map((p) => ({
 		id: p.id,
 		serviceId: p.serviceId,

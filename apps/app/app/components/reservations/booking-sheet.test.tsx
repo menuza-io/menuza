@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import {
+	apiError,
 	createScriptedClient,
 	type ScriptedCall,
 } from '#app/components/reservations/scripted-test-client.ts'
@@ -257,5 +258,67 @@ describe('BookingSheet availability states', () => {
 		expect(calls.find((c) => c.method === 'POST')!.body).not.toHaveProperty(
 			'overbook',
 		)
+	})
+})
+
+describe('BookingSheet idempotency key', () => {
+	const postKeys = (calls: ScriptedCall[]) =>
+		calls
+			.filter((c) => c.method === 'POST')
+			.map((c) => c.headers?.['Idempotency-Key'])
+
+	async function submitAndSettle(calls: ScriptedCall[], count: number) {
+		fireEvent.click(screen.getByTestId('booking-submit-btn'))
+		await waitFor(() => expect(postKeys(calls)).toHaveLength(count))
+		await waitFor(() =>
+			expect(screen.getByTestId('booking-submit-btn')).toBeEnabled(),
+		)
+	}
+
+	function outcomes(...replies: Array<'network' | 'ok' | number>) {
+		let post = 0
+		return (call: ScriptedCall) => {
+			if (call.method === 'GET') return availability({ slots: [slot(1140)] })
+			const reply = replies[post++] ?? 'ok'
+			if (reply === 'ok') return created
+			if (reply === 'network') throw new TypeError('Failed to fetch')
+			return apiError(reply, reply >= 500 ? 'server_error' : 'rejected')
+		}
+	}
+
+	beforeEach(() => {
+		toasts.warning.mockReset()
+	})
+
+	it('keeps the key across a network error and a 5xx, so a lost response replays', async () => {
+		const { calls } = renderSheet(outcomes('network', 503, 'ok'))
+		await fillGuest()
+		await submitAndSettle(calls, 1)
+		await submitAndSettle(calls, 2)
+		await submitAndSettle(calls, 3)
+		const keys = postKeys(calls)
+		expect(keys[0]).toBeTruthy()
+		expect(new Set(keys).size).toBe(1)
+	})
+
+	it('takes a new key after a definite 4xx rejection', async () => {
+		const { calls } = renderSheet(outcomes(409, 'ok'))
+		await fillGuest()
+		await submitAndSettle(calls, 1)
+		await submitAndSettle(calls, 2)
+		const [first, second] = postKeys(calls)
+		expect(second).not.toBe(first)
+	})
+
+	it('takes a new key when the form changed since the failed attempt', async () => {
+		const { calls } = renderSheet(outcomes('network', 'ok'))
+		await fillGuest()
+		await submitAndSettle(calls, 1)
+		fireEvent.change(screen.getByTestId('booking-guest-name'), {
+			target: { value: 'Grace Hopper' },
+		})
+		await submitAndSettle(calls, 2)
+		const [first, second] = postKeys(calls)
+		expect(second).not.toBe(first)
 	})
 })

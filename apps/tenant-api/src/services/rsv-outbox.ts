@@ -2,6 +2,7 @@ import { rsvOutbox, type TenantDatabase } from '@repo/tenant-db'
 import { and, asc, eq, inArray, lte } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { forEachInChunks } from '../lib/chunked-in.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { type ReservationWriteTx } from '../lib/reservations-write.ts'
 
@@ -199,10 +200,12 @@ export async function deliverOutbox(
 		const outcome = await post({ ...base, count })
 		const ids = group.map((row) => row.id)
 		if (outcome.status === 'delivered') {
-			await db
-				.update(rsvOutbox)
-				.set({ status: 'sent', deliveredAt: now, lastError: null })
-				.where(inArray(rsvOutbox.id, ids))
+			await forEachInChunks(ids, (chunk) =>
+				db
+					.update(rsvOutbox)
+					.set({ status: 'sent', deliveredAt: now, lastError: null })
+					.where(inArray(rsvOutbox.id, chunk)),
+			)
 			totals.delivered += ids.length
 			continue
 		}

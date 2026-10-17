@@ -7,6 +7,7 @@ import {
 	type rsvTableOccupancies,
 } from '@repo/tenant-db'
 import { inArray } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict } from '../lib/http.ts'
 import { type ReservationWriteTx } from '../lib/reservations-write.ts'
 import {
@@ -47,27 +48,27 @@ async function describeOccupants(
 			),
 		),
 	]
-	const reservations = reservationIds.length
-		? await tx
-				.select()
-				.from(rsvReservations)
-				.where(inArray(rsvReservations.id, reservationIds))
-				.all()
-		: []
+	const reservations = await queryInChunks(reservationIds, (chunk) =>
+		tx
+			.select()
+			.from(rsvReservations)
+			.where(inArray(rsvReservations.id, chunk))
+			.all(),
+	)
 	const guestIds = canReadGuest
 		? [...new Set(reservations.map((r) => r.guestId))]
 		: []
-	const guests = guestIds.length
-		? await tx
-				.select({
-					id: rsvGuests.id,
-					firstName: rsvGuests.firstName,
-					lastName: rsvGuests.lastName,
-				})
-				.from(rsvGuests)
-				.where(inArray(rsvGuests.id, guestIds))
-				.all()
-		: []
+	const guests = await queryInChunks(guestIds, (chunk) =>
+		tx
+			.select({
+				id: rsvGuests.id,
+				firstName: rsvGuests.firstName,
+				lastName: rsvGuests.lastName,
+			})
+			.from(rsvGuests)
+			.where(inArray(rsvGuests.id, chunk))
+			.all(),
+	)
 	const guestById = new Map(guests.map((g) => [g.id, g]))
 	const reservationById = new Map(reservations.map((r) => [r.id, r]))
 

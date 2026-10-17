@@ -44,6 +44,7 @@ import {
 } from '@repo/tenant-db'
 import { addDays } from '@repo/zoned-time'
 import { and, asc, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { badRequest, conflict, notFound } from '../lib/http.js'
 import { getReservationsContext } from '../lib/reservations-context.js'
@@ -680,16 +681,15 @@ export async function listCombosForLocation(
 
 	if (combos.length === 0) return []
 
-	const members = await db
-		.select()
-		.from(rsvTableComboMembers)
-		.where(
-			inArray(
-				rsvTableComboMembers.comboId,
-				combos.map((c) => c.id),
-			),
-		)
-		.all()
+	const members = await queryInChunks(
+		combos.map((c) => c.id),
+		(chunk) =>
+			db
+				.select()
+				.from(rsvTableComboMembers)
+				.where(inArray(rsvTableComboMembers.comboId, chunk))
+				.all(),
+	)
 
 	const membersByCombo = new Map<string, string[]>()
 	for (const m of members) {
@@ -756,22 +756,20 @@ export async function reflowFutureBookingsForLocation(
 		)
 		.all()
 	const serviceIds = allServices.map((s) => s.id)
-	const allPacing =
-		serviceIds.length > 0
-			? await db
-					.select()
-					.from(rsvPacingRules)
-					.where(inArray(rsvPacingRules.serviceId, serviceIds))
-					.all()
-			: []
-	const allServiceAvail =
-		serviceIds.length > 0
-			? await db
-					.select()
-					.from(rsvServiceAvailability)
-					.where(inArray(rsvServiceAvailability.serviceId, serviceIds))
-					.all()
-			: []
+	const allPacing = await queryInChunks(serviceIds, (chunk) =>
+		db
+			.select()
+			.from(rsvPacingRules)
+			.where(inArray(rsvPacingRules.serviceId, chunk))
+			.all(),
+	)
+	const allServiceAvail = await queryInChunks(serviceIds, (chunk) =>
+		db
+			.select()
+			.from(rsvServiceAvailability)
+			.where(inArray(rsvServiceAvailability.serviceId, chunk))
+			.all(),
+	)
 	const allSpecialDays = await db
 		.select()
 		.from(rsvSpecialDays)

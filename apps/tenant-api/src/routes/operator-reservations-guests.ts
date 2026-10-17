@@ -170,7 +170,10 @@ operatorReservationsGuestsRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const guests = await searchGuests(db, q.data.q ?? '', q.data.limit)
+			const guests = await searchGuests(db, q.data.q ?? '', {
+				limit: q.data.limit,
+				canReadSensitive: true,
+			})
 			return json({ ok: true, orgId: ctx.orgId, guests })
 		} catch (error) {
 			return handleRouteError(error)
@@ -215,10 +218,14 @@ operatorReservationsGuestsRoutes.post(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const guest = await createGuestProfile(db, {
-				...parsed.data,
-				actorId: ctx.userId,
-			})
+			const guest = await createGuestProfile(
+				db,
+				{
+					...parsed.data,
+					actorId: ctx.userId,
+				},
+				{ canReadSensitive: true },
+			)
 			return json({ ok: true, orgId: ctx.orgId, guest }, 201)
 		} catch (error) {
 			return handleRouteError(error)

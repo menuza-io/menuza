@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import {
 	assignTables,
-	currentBusinessDate,
+	canTransition,
 	instantToLocal,
 	localToInstant,
 	type AssignBlockRecord,
@@ -12,6 +12,7 @@ import {
 	type EnginePacingRuleInput,
 	type EngineServiceAvailabilityInput,
 	type EngineTableInput,
+	type ReservationStatus,
 } from '@repo/reservations'
 import {
 	getTenantDb,
@@ -38,14 +39,19 @@ import {
 	type RSV_CONTACT_STATUS_VALUES,
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
-import { enqueueReservationMessage } from './rsv-message-queue.ts'
+import {
+	cancelPendingReservationMessages,
+	enqueueReservationMessage,
+} from './rsv-message-queue.ts'
 import {
 	ACTIVE_OCCUPANCY_STATUSES,
 	findOperatorPacingBreaches,
 } from './rsv-operator-pacing.ts'
 import {
 	hashIdempotencyPayload,
+	occupancyWindowFilter,
 	withReservationWrite,
 	type ReservationWriteTx,
 } from '../lib/reservations-write.ts'
@@ -62,6 +68,10 @@ import {
 	type DbOrTx,
 } from './rsv-guest-service.ts'
 import { isLateCancellation } from './rsv-late-cancel.ts'
+
+function guestAccess(params: { canReadGuestSensitive?: boolean }) {
+	return { canReadGuestSensitive: params.canReadGuestSensitive === true }
+}
 
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
@@ -97,6 +107,7 @@ export async function loadLocationSchedulingState(
 	db: DbOrTx,
 	locationId: string,
 	businessDate: string,
+	lastBusinessDate: string = businessDate,
 ) {
 	const [
 		settingsRow,
@@ -185,37 +196,37 @@ export async function loadLocationSchedulingState(
 				and(
 					eq(rsvTableOccupancies.locationId, locationId),
 					eq(rsvTableOccupancies.active, true),
+					...occupancyWindowFilter(businessDate, lastBusinessDate),
 				),
 			)
 			.all(),
 	])
 
 	const comboIds = combos.map((c) => c.id)
-	const comboMembers =
-		comboIds.length > 0
-			? await db
-					.select()
-					.from(rsvTableComboMembers)
-					.where(inArray(rsvTableComboMembers.comboId, comboIds))
-					.all()
-			: []
+	const comboMembers = await queryInChunks(comboIds, (chunk) =>
+		db
+			.select()
+			.from(rsvTableComboMembers)
+			.where(inArray(rsvTableComboMembers.comboId, chunk))
+			.all(),
+	)
 
 	const svcIds = services.map((s) => s.id)
 	const [pacingRules, serviceAvail] = await Promise.all([
-		svcIds.length > 0
-			? db
-					.select()
-					.from(rsvPacingRules)
-					.where(inArray(rsvPacingRules.serviceId, svcIds))
-					.all()
-			: Promise.resolve([]),
-		svcIds.length > 0
-			? db
-					.select()
-					.from(rsvServiceAvailability)
-					.where(inArray(rsvServiceAvailability.serviceId, svcIds))
-					.all()
-			: Promise.resolve([]),
+		queryInChunks(svcIds, (chunk) =>
+			db
+				.select()
+				.from(rsvPacingRules)
+				.where(inArray(rsvPacingRules.serviceId, chunk))
+				.all(),
+		),
+		queryInChunks(svcIds, (chunk) =>
+			db
+				.select()
+				.from(rsvServiceAvailability)
+				.where(inArray(rsvServiceAvailability.serviceId, chunk))
+				.all(),
+		),
 	])
 
 	const areaById = new Map(areas.map((a) => [a.id, a]))
@@ -539,6 +550,8 @@ export type BookingWarning = {
 }
 
 export async function createOperatorReservation(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	locationId: string
 	actorId: string
@@ -1132,7 +1145,11 @@ export async function createOperatorReservation(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, resId))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [createdRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[createdRow!],
+				guestAccess(params),
+			)
 
 			return {
 				reservation: serialized!,
@@ -1155,6 +1172,8 @@ export type WalkInOccupiedInfo = {
 }
 
 export async function createWalkIn(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	locationId: string
 	actorId: string
@@ -1231,14 +1250,15 @@ export async function createWalkIn(params: {
 	const dayStartMin = settingsRow?.dayStartMin ?? 240
 	const now = Date.now()
 
-	const businessDate =
-		input.date?.trim() || currentBusinessDate(now, timeZone, dayStartMin)
+	// Date and minute come from one call so they agree on the business day.
+	const nowLocal = instantToLocal(now, timeZone, dayStartMin)
+	const businessDate = input.date?.trim() || nowLocal.businessDate
 	const localStartMin =
 		input.localStartMin !== undefined
 			? input.localStartMin
 			: input.time !== undefined
 				? parseTimeToMinutes(input.time)
-				: instantToLocal(now, timeZone).localStartMin
+				: nowLocal.localStartMin
 
 	return withReservationWrite<{
 		reservation: SerializedBookReservation
@@ -1500,7 +1520,11 @@ export async function createWalkIn(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, resId))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [createdRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[createdRow!],
+				guestAccess(params),
+			)
 
 			return {
 				reservation: serialized!,
@@ -1522,7 +1546,7 @@ export async function getReservationDetail(
 		.get()
 	if (!row) throw notFound('Reservation not found')
 
-	const canReadSensitive = opts?.canReadGuestSensitive ?? true
+	const canReadSensitive = opts?.canReadGuestSensitive === true
 	const [serialized] = await serializeReservationsForBook(db, [row], {
 		canReadGuestSensitive: canReadSensitive,
 	})
@@ -1564,6 +1588,8 @@ export async function getReservationDetail(
 }
 
 export async function assignReservationTables(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -1621,6 +1647,13 @@ export async function assignReservationTables(params: {
 				)
 			}
 
+			if (!ACTIVE_OCCUPANCY_STATUSES.has(current.status)) {
+				throw conflict(
+					'reservation_not_active',
+					`Cannot assign tables to a ${current.status} reservation`,
+				)
+			}
+
 			const state = await loadLocationSchedulingState(
 				tx,
 				current.locationId,
@@ -1661,9 +1694,11 @@ export async function assignReservationTables(params: {
 					.from(rsvReservations)
 					.where(eq(rsvReservations.id, current.id))
 					.get()
-				const [serialized] = await serializeReservationsForBook(tx, [
-					updatedRow!,
-				])
+				const [serialized] = await serializeReservationsForBook(
+					tx,
+					[updatedRow!],
+					guestAccess(params),
+				)
 				return { reservation: serialized!, moves }
 			}
 
@@ -2038,7 +2073,11 @@ export async function assignReservationTables(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return {
 				reservation: serialized!,
 				moves,
@@ -2048,6 +2087,8 @@ export async function assignReservationTables(params: {
 }
 
 export async function updateReservation(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -2526,7 +2567,11 @@ export async function updateReservation(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return {
 				reservation: serialized!,
 				moves,
@@ -2535,9 +2580,11 @@ export async function updateReservation(params: {
 	)
 }
 
+// `pending_approval` leaves through approveReservationRequest / decline, which
+// check capacity and message the guest; this generic route may only cancel it.
 const VALID_STATUS_TRANSITIONS: Record<string, Set<string>> = {
 	pending_payment: new Set(['booked', 'confirmed', 'cancelled']),
-	pending_approval: new Set(['booked', 'confirmed', 'cancelled']),
+	pending_approval: new Set(['cancelled']),
 	booked: new Set(['confirmed', 'arrived', 'seated', 'cancelled', 'no_show']),
 	confirmed: new Set(['arrived', 'seated', 'cancelled', 'no_show']),
 	arrived: new Set(['seated', 'cancelled', 'no_show']),
@@ -2548,6 +2595,8 @@ const VALID_STATUS_TRANSITIONS: Record<string, Set<string>> = {
 }
 
 export async function transitionReservationStatus(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -2638,6 +2687,7 @@ export async function transitionReservationStatus(params: {
 						orgId: params.orgId,
 						reservationId: current.id,
 						actorId: params.actorId,
+						canReadGuestSensitive: params.canReadGuestSensitive,
 						input: {
 							tableIds: requestedTableIds,
 							comboId: params.input.comboId ?? null,
@@ -2682,6 +2732,23 @@ export async function transitionReservationStatus(params: {
 					? (explicitCovers ?? current.coversActual ?? seatedCovers)
 					: (current.coversActual ?? explicitCovers ?? null))
 
+			// Occupancy rows this transition releases, so an undo restores exactly
+			// these rows and not every row ever written for the reservation.
+			let releasedOccupancyIds: string[] = []
+			const releasedActiveOccupancies = async () =>
+				(
+					await tx
+						.select({ id: rsvTableOccupancies.id })
+						.from(rsvTableOccupancies)
+						.where(
+							and(
+								eq(rsvTableOccupancies.reservationId, current.id),
+								eq(rsvTableOccupancies.active, true),
+							),
+						)
+						.all()
+				).map((row) => row.id)
+
 			const patch: Partial<typeof rsvReservations.$inferInsert> = {
 				status: targetStatus as typeof current.status,
 				arrivedCovers,
@@ -2709,6 +2776,7 @@ export async function transitionReservationStatus(params: {
 						),
 					)
 					.all()
+				releasedOccupancyIds = activeOccs.map((occ) => occ.id)
 				for (const occ of activeOccs) {
 					const shortenedEnd = Math.max(occ.startAt + 1, now)
 					await tx
@@ -2738,6 +2806,7 @@ export async function transitionReservationStatus(params: {
 				patch.cancelledBy = 'restaurant'
 				patch.cancelReason =
 					params.input.cancelReason ?? params.input.reason ?? null
+				releasedOccupancyIds = await releasedActiveOccupancies()
 				await tx
 					.update(rsvTableOccupancies)
 					.set({ active: false })
@@ -2763,6 +2832,7 @@ export async function transitionReservationStatus(params: {
 				}
 			} else if (targetStatus === 'no_show') {
 				patch.noShowAt = now
+				releasedOccupancyIds = await releasedActiveOccupancies()
 				await tx
 					.update(rsvTableOccupancies)
 					.set({ active: false })
@@ -2807,6 +2877,7 @@ export async function transitionReservationStatus(params: {
 					seatedCovers,
 					arrivedCovers,
 					cancelReason: params.input.cancelReason ?? null,
+					...(releasedOccupancyIds.length > 0 ? { releasedOccupancyIds } : {}),
 					...(params.actorKind === 'system' && params.input.reason
 						? { reason: params.input.reason }
 						: {}),
@@ -2826,7 +2897,11 @@ export async function transitionReservationStatus(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return { reservation: serialized! }
 		},
 	)
@@ -2835,6 +2910,8 @@ export async function transitionReservationStatus(params: {
 const UNDO_FINISHED_WINDOW_MS = 30 * 60_000
 
 export async function undoReservationTransition(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -2878,7 +2955,9 @@ export async function undoReservationTransition(params: {
 				)
 			}
 
-			// Find the latest status-transition event for this reservation
+			// Find the status transition to reverse. An earlier `status_undo` never
+			// counts (undo must not undo itself): once the latest status change is an
+			// undo, there is nothing left to undo.
 			const events = await tx
 				.select()
 				.from(rsvReservationEvents)
@@ -2886,27 +2965,67 @@ export async function undoReservationTransition(params: {
 				.orderBy(desc(rsvReservationEvents.at), desc(rsvReservationEvents.id))
 				.all()
 
-			const lastStatusEvent = events.find(
-				(e) =>
-					e.fromStatus !== null &&
-					e.toStatus === current.status &&
-					e.fromStatus !== e.toStatus,
-			)
-			const previousStatus =
-				lastStatusEvent?.fromStatus ??
-				(current.status === 'finished'
-					? 'seated'
-					: current.status === 'seated'
-						? 'arrived'
-						: current.status === 'arrived'
-							? 'confirmed'
-							: null)
+			let lastStatusEvent: (typeof events)[number] | undefined
+			let blockedByUndo = false
+			for (const e of events) {
+				if (e.fromStatus === null || e.fromStatus === e.toStatus) continue
+				if (e.type === 'status_undo') {
+					blockedByUndo = true
+					break
+				}
+				if (e.toStatus === current.status) {
+					lastStatusEvent = e
+					break
+				}
+			}
+			const previousStatus = blockedByUndo
+				? null
+				: (lastStatusEvent?.fromStatus ??
+					(current.status === 'finished'
+						? 'seated'
+						: current.status === 'seated'
+							? 'arrived'
+							: current.status === 'arrived'
+								? 'confirmed'
+								: null))
 
-			if (!previousStatus) {
+			// The finished window is checked below with its own error code, so the
+			// state machine is asked without a clock here.
+			if (
+				!previousStatus ||
+				!canTransition(
+					current.status as ReservationStatus,
+					previousStatus as ReservationStatus,
+					'operator',
+				)
+			) {
 				throw conflict(
 					'cannot_undo',
 					`No undoable status transition found for status ${current.status}`,
 				)
+			}
+
+			// Occupancy rows to bring back: the ones the undone transition released.
+			// Older events carry no ids; fall back to the newest batch of rows.
+			const loadReleasedOccupancies = async () => {
+				const rows = await tx
+					.select()
+					.from(rsvTableOccupancies)
+					.where(
+						and(
+							eq(rsvTableOccupancies.reservationId, current.id),
+							eq(rsvTableOccupancies.active, false),
+						),
+					)
+					.all()
+				const data = lastStatusEvent?.data as
+					{ releasedOccupancyIds?: string[] } | null | undefined
+				if (data && Array.isArray(data.releasedOccupancyIds)) {
+					const ids = new Set(data.releasedOccupancyIds)
+					return rows.filter((row) => ids.has(row.id))
+				}
+				const newest = Math.max(0, ...rows.map((row) => row.createdAt))
+				return rows.filter((row) => row.createdAt === newest)
 			}
 
 			if (current.status === 'finished') {
@@ -2919,11 +3038,7 @@ export async function undoReservationTransition(params: {
 				}
 
 				// Re-check table occupancy and reactivate
-				const prevOccs = await tx
-					.select()
-					.from(rsvTableOccupancies)
-					.where(eq(rsvTableOccupancies.reservationId, current.id))
-					.all()
+				const prevOccs = await loadReleasedOccupancies()
 
 				const tables = await tx
 					.select()
@@ -2985,11 +3100,7 @@ export async function undoReservationTransition(params: {
 				current.status === 'no_show'
 			) {
 				// Reactivate occupancies if still free
-				const prevOccs = await tx
-					.select()
-					.from(rsvTableOccupancies)
-					.where(eq(rsvTableOccupancies.reservationId, current.id))
-					.all()
+				const prevOccs = await loadReleasedOccupancies()
 				for (const occ of prevOccs) {
 					const conflictingOcc = await tx
 						.select()
@@ -3017,6 +3128,11 @@ export async function undoReservationTransition(params: {
 
 				if (current.guestId) {
 					if (current.status === 'cancelled') {
+						// A cancellation notice still waiting to go out is now untrue.
+						await cancelPendingReservationMessages(tx, current.id, [
+							'cancellation_restaurant',
+							'cancellation_guest',
+						])
 						await tx
 							.update(rsvGuests)
 							.set({
@@ -3077,7 +3193,11 @@ export async function undoReservationTransition(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return { reservation: serialized! }
 		},
 	)
@@ -3105,6 +3225,8 @@ const CONTACT_STATUS_MAP: Record<
 }
 
 export async function updateReservationContactStatus(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -3201,7 +3323,11 @@ export async function updateReservationContactStatus(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			// Preserve caller's contactStatus alias if e.g. 'confirmed_by_phone'
 			serialized!.contactStatus = params.input.contactStatus
 			serialized!.contact_status = params.input.contactStatus
@@ -3218,6 +3344,8 @@ const RESENDABLE_STATUSES = new Set(['booked', 'confirmed'])
  * message carries a fresh one.
  */
 export async function resendReservationConfirmation(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -3299,13 +3427,19 @@ export async function resendReservationConfirmation(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return { queued: ids.length, rotated: rotate, reservation: serialized! }
 		},
 	)
 }
 
 export async function updateReservationRunningLate(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -3400,7 +3534,11 @@ export async function updateReservationRunningLate(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return { reservation: serialized! }
 		},
 	)
@@ -3424,6 +3562,8 @@ const COURSE_STATUS_MAP: Record<
 }
 
 export async function updateReservationCourseStatus(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -3520,7 +3660,11 @@ export async function updateReservationCourseStatus(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			if (rawCourse) {
 				serialized!.courseStatus = rawCourse
 				serialized!.course_status = rawCourse
@@ -3531,6 +3675,8 @@ export async function updateReservationCourseStatus(params: {
 }
 
 export async function updateReservationNotes(params: {
+	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
+	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
@@ -3622,7 +3768,11 @@ export async function updateReservationNotes(params: {
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, current.id))
 				.get()
-			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			const [serialized] = await serializeReservationsForBook(
+				tx,
+				[updatedRow!],
+				guestAccess(params),
+			)
 			return { reservation: serialized! }
 		},
 	)

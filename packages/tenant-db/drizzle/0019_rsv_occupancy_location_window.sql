@@ -1,0 +1,1 @@
+CREATE INDEX `idx_rsv_table_occupancies_location_active_end` ON `rsv_table_occupancies` (`location_id`,`active`,`end_at`);

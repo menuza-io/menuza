@@ -5,6 +5,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
+	registerTenantDbTransactionRunner,
 	rsvAreas,
 	rsvDayVersions,
 	rsvGuests,
@@ -15,7 +16,7 @@ import {
 	rsvTables,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HttpError } from './http.ts'
 import {
@@ -481,5 +482,125 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 				.where(eq(rsvTables.id, 'tbl_partial'))
 				.all(),
 		).toEqual([])
+	})
+	it('uses the registered async transaction runner and rolls back writes made after an await (Durable Object driver semantics)', async () => {
+		const real = await getTenantDb(ORG_ID)
+		// Mimics drizzle's durable-sqlite `transaction`: the callback is invoked
+		// but never awaited, and nothing is rolled back when it rejects later.
+		const fake = new Proxy(real, {
+			get(target, prop, receiver) {
+				if (prop === 'transaction') {
+					return (fn: (tx: unknown) => Promise<unknown>) => {
+						void fn(target).catch(() => {})
+						return Promise.resolve(undefined)
+					}
+				}
+				return Reflect.get(target, prop, receiver)
+			},
+		}) as typeof real
+		registerTenantDbTransactionRunner(fake, async (fn) => {
+			await real.run(sql`BEGIN`)
+			try {
+				const out = await fn()
+				await real.run(sql`COMMIT`)
+				return out
+			} catch (error) {
+				await real.run(sql`ROLLBACK`)
+				throw error
+			}
+		})
+
+		await expect(
+			withReservationWrite(
+				{ orgId: ORG_ID, db: fake, locationId: LOC_ID, dates: [DATE] },
+				async (tx) => {
+					await new Promise((resolve) => setTimeout(resolve, 5))
+					await tx.insert(rsvGuests).values({
+						id: 'guest_late',
+						firstName: 'Late',
+						lastName: 'Write',
+						phoneE164: '+12125550111',
+					})
+					throw new Error('late failure')
+				},
+			),
+		).rejects.toThrow('late failure')
+
+		expect(
+			await real
+				.select()
+				.from(rsvGuests)
+				.where(eq(rsvGuests.id, 'guest_late'))
+				.all(),
+		).toEqual([])
+	})
+
+	it('resets day-version bookkeeping and hooks per attempt when a SQLITE_BUSY retry re-runs the write', async () => {
+		let attempts = 0
+		const hookRuns: number[] = []
+		await withReservationWrite(
+			{ orgId: ORG_ID, locationId: LOC_ID, dates: [DATE] },
+			async (_tx, helpers) => {
+				attempts += 1
+				const attempt = attempts
+				helpers.afterCommit(() => {
+					hookRuns.push(attempt)
+				})
+				await helpers.bumpDayVersions(LOC_ID, DATE)
+				if (attempt === 1) throw new Error('SQLITE_BUSY: database is locked')
+			},
+		)
+		expect(attempts).toBe(2)
+		expect(hookRuns).toEqual([2])
+
+		const db = await getTenantDb(ORG_ID)
+		const row = await db
+			.select()
+			.from(rsvDayVersions)
+			.where(eq(rsvDayVersions.locationId, LOC_ID))
+			.get()
+		expect(row?.version).toBe(1)
+	})
+	it('loads only occupancies near the business date', async () => {
+		const db = await getTenantDb(ORG_ID)
+		const dayStart = Date.parse(`${DATE}T16:00:00Z`)
+		const monthLater = dayStart + 30 * 24 * 60 * 60 * 1000
+		for (const [id, startAt] of [
+			['occ_near', dayStart],
+			['occ_far', monthLater],
+		] as const) {
+			await db.insert(rsvReservations).values({
+				id: `res_${id}`,
+				locationId: LOC_ID,
+				guestId: 'guest_1',
+				confirmationCode: id.toUpperCase().slice(0, 8),
+				businessDate: DATE,
+				localStartMin: 1200,
+				timeZone: 'America/New_York',
+				startAt,
+				endAt: startAt + 3_600_000,
+				durationMin: 60,
+				partySize: 2,
+				status: 'booked',
+			})
+			await db.insert(rsvTableOccupancies).values({
+				id,
+				locationId: LOC_ID,
+				tableId: 'tbl_1',
+				kind: 'reservation',
+				reservationId: `res_${id}`,
+				startAt,
+				endAt: startAt + 3_600_000,
+				active: true,
+			})
+		}
+		await withReservationWrite(
+			{ orgId: ORG_ID, locationId: LOC_ID, dates: [DATE] },
+			async (_tx, helpers) => {
+				const ids = helpers.dayState?.occupancies.map((o) => o.id) ?? []
+				expect(ids).toContain('occ_near')
+				expect(ids).not.toContain('occ_far')
+			},
+		)
 	})
 })

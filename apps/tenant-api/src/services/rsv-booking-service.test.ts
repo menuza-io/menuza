@@ -22,7 +22,7 @@ import {
 	rsvTags,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import {
 	assignReservationTables,
 	createOperatorReservation,
@@ -308,6 +308,7 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 			locationId: LOC_ID,
 			actorId: 'user_kody',
 			idempotencyKey: 'idem-book-1',
+			canReadGuestSensitive: true,
 			input: {
 				locationId: LOC_ID,
 				date: DATE,
@@ -620,6 +621,54 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 		expect(walkIn.reservation.guest?.name).toBe('Walk-in Guest')
 	})
 
+	it('walk-in start minute uses the location day start, like its business date', async () => {
+		const db = await getTenantDb(ORG_ID)
+		await db.insert(rsvLocationSettings).values({
+			locationId: 'loc_midnight',
+			timeZone: 'UTC',
+			dayStartMin: 0,
+			intervalMin: 15,
+			freezeMin: 30,
+			enabled: true,
+			version: 1,
+			updatedAt: Date.now(),
+		})
+		await db.insert(rsvTables).values({
+			id: 'tbl_midnight',
+			locationId: 'loc_midnight',
+			areaId: 'area_main',
+			label: 'M1',
+			minCovers: 1,
+			maxCovers: 4,
+			resetBufferMin: 10,
+		})
+		const at = Date.parse('2026-08-15T02:00:00Z')
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(at)
+		try {
+			const walkIn = await createWalkIn({
+				orgId: ORG_ID,
+				locationId: 'loc_midnight',
+				actorId: 'user_kody',
+				idempotencyKey: 'idem-walkin-midnight',
+				input: {
+					locationId: 'loc_midnight',
+					partySize: 2,
+					tableIds: ['tbl_midnight'],
+				},
+			})
+			const row = await db
+				.select()
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, walkIn.reservation.id))
+				.get()
+			expect(row?.businessDate).toBe('2026-08-15')
+			expect(row?.startAt).toBe(at)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
 	it('enforces state machine transitions, seatedPartySize covers, and 30-min undo window', async () => {
 		const created = await createOperatorReservation({
 			orgId: ORG_ID,
@@ -799,6 +848,114 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 		).rejects.toMatchObject({ status: 409 })
 	})
 
+	it('undo restores only the occupancies the undone transition released and cannot undo itself', async () => {
+		const db = await getTenantDb(ORG_ID)
+		const created = await createOperatorReservation({
+			orgId: ORG_ID,
+			locationId: LOC_ID,
+			actorId: 'user_kody',
+			idempotencyKey: 'idem-undo-occ-1',
+			input: {
+				locationId: LOC_ID,
+				date: DATE,
+				time: '21:00',
+				partySize: 2,
+				tableIds: ['tbl_1'],
+				guest: { firstName: 'Undo', lastName: 'Occupancy' },
+			},
+		})
+		const reassigned = await assignReservationTables({
+			orgId: ORG_ID,
+			reservationId: created.reservation.id,
+			actorId: 'user_kody',
+			input: { tableIds: ['tbl_2'] },
+		})
+		const cancelled = await transitionReservationStatus({
+			orgId: ORG_ID,
+			reservationId: created.reservation.id,
+			actorId: 'user_kody',
+			input: {
+				status: 'cancelled',
+				expectedVersion: reassigned.reservation.version,
+			},
+		})
+
+		// A cancelled reservation cannot be given tables.
+		await expect(
+			assignReservationTables({
+				orgId: ORG_ID,
+				reservationId: created.reservation.id,
+				actorId: 'user_kody',
+				input: { tableIds: ['tbl_1'] },
+			}),
+		).rejects.toMatchObject({ status: 409, code: 'reservation_not_active' })
+
+		const undone = await undoReservationTransition({
+			orgId: ORG_ID,
+			reservationId: created.reservation.id,
+			actorId: 'user_kody',
+			input: { expectedVersion: cancelled.reservation.version },
+		})
+		expect(undone.reservation.status).not.toBe('cancelled')
+		const occs = await db
+			.select()
+			.from(rsvTableOccupancies)
+			.where(eq(rsvTableOccupancies.reservationId, created.reservation.id))
+			.all()
+		const activeTables = occs.filter((o) => o.active).map((o) => o.tableId)
+		expect(activeTables).toEqual(['tbl_2'])
+
+		// The latest status change is now an undo: a second undo is refused.
+		await expect(
+			undoReservationTransition({
+				orgId: ORG_ID,
+				reservationId: created.reservation.id,
+				actorId: 'user_kody',
+				input: {},
+			}),
+		).rejects.toMatchObject({ status: 409, code: 'cannot_undo' })
+		const afterSecond = await db
+			.select()
+			.from(rsvReservations)
+			.where(eq(rsvReservations.id, created.reservation.id))
+			.get()
+		expect(afterSecond?.status).toBe(undone.reservation.status)
+	})
+
+	it('the generic status route cannot approve a pending_approval request', async () => {
+		const db = await getTenantDb(ORG_ID)
+		const created = await createOperatorReservation({
+			orgId: ORG_ID,
+			locationId: LOC_ID,
+			actorId: 'user_kody',
+			idempotencyKey: 'idem-pending-approval-1',
+			input: {
+				locationId: LOC_ID,
+				date: DATE,
+				time: '20:00',
+				partySize: 2,
+				guest: { firstName: 'Pending', lastName: 'Approval' },
+			},
+		})
+		await db
+			.update(rsvReservations)
+			.set({ status: 'pending_approval' })
+			.where(eq(rsvReservations.id, created.reservation.id))
+		for (const status of ['booked', 'confirmed']) {
+			await expect(
+				transitionReservationStatus({
+					orgId: ORG_ID,
+					reservationId: created.reservation.id,
+					actorId: 'user_kody',
+					input: { status },
+				}),
+			).rejects.toMatchObject({
+				status: 409,
+				code: 'invalid_status_transition',
+			})
+		}
+	})
+
 	it('serves day feed with composite ETag, changes, calendar, overview (redacting allergy text without guest grant), service notes, and section assignments', async () => {
 		const db = await getTenantDb(ORG_ID)
 
@@ -850,7 +1007,7 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 			canReadGuestSensitive: false,
 		})
 		expect(feed.etag).toBe(
-			`"${LOC_ID}:${DATE}:${feed.dayVersion}:${feed.settingsVersion}"`,
+			`"${LOC_ID}:${DATE}:${feed.dayVersion}:${feed.settingsVersion}:${feed.floorPlanVersion}"`,
 		)
 
 		const changesUnchanged = await getDayChanges(

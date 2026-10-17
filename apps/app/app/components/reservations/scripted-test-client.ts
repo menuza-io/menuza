@@ -10,6 +10,7 @@ export type ScriptedCall = {
 	method: string
 	body: Record<string, any> | undefined
 	query: Record<string, unknown> | undefined
+	headers: Record<string, string> | undefined
 }
 
 export type ScriptedReply = unknown | ReservationsApiError
@@ -26,6 +27,7 @@ export function createScriptedClient(
 				method: options.method ?? 'GET',
 				body: options.body as Record<string, any> | undefined,
 				query: options.query,
+				headers: options.headers,
 			}
 			calls.push(call)
 			const reply = await handler(call)

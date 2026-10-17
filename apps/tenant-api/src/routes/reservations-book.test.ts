@@ -275,7 +275,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		)
 		expect(res1.status).toBe(200)
 		const etag1 = res1.headers.get('ETag')
-		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1"`)
+		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1:1"`)
 		const body1 = (await res1.json()) as {
 			dayVersion: number
 			settingsVersion: number
@@ -296,17 +296,42 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		)
 		expect(res304.status).toBe(304)
 
-		// Conditional GET with short ETag "<dayVersion>.<settingsVersion>" -> 304
+		// Conditional GET with short ETag "<dayVersion>.<settingsVersion>.<floorPlanVersion>" -> 304
 		const res304Short = await app.request(
 			`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}`,
 			{
 				headers: {
 					Authorization: `Bearer ${token}`,
-					'If-None-Match': `"0.1"`,
+					'If-None-Match': `"0.1.1"`,
 				},
 			},
 		)
 		expect(res304Short.status).toBe(304)
+
+		// A floor-plan edit bumps floorPlanVersion, so the old ETag no longer matches.
+		const db = await getTenantDb(ORG_ID)
+		await db
+			.update(rsvLocationSettings)
+			.set({ floorPlanVersion: 2 })
+			.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+		try {
+			const resFloor = await app.request(
+				`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'If-None-Match': etag1!,
+					},
+				},
+			)
+			expect(resFloor.status).toBe(200)
+			expect(resFloor.headers.get('ETag')).toBe(`"${LOC_MAIN}:${DATE}:0:1:2"`)
+		} finally {
+			await db
+				.update(rsvLocationSettings)
+				.set({ floorPlanVersion: 1 })
+				.where(eq(rsvLocationSettings.locationId, LOC_MAIN))
+		}
 
 		// Changes endpoint before mutation
 		const chg0 = await app.request(
@@ -315,6 +340,80 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		)
 		expect(chg0.status).toBe(200)
 		expect(await chg0.json()).toMatchObject({ dayVersion: 0, changed: false })
+	})
+
+	it('keeps guest allergy notes out of every book response unless the caller holds the guest grant', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const noGuestGrant = await mintToken({
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+			],
+		})
+		const SECRET = 'sweep-allergy-secret'
+		const send = (tok: string, method: string, url: string, body?: unknown) =>
+			app.request(`/operator/reservations/book${url}`, {
+				method,
+				headers: {
+					Authorization: `Bearer ${tok}`,
+					'Content-Type': 'application/json',
+					'Idempotency-Key': `sweep-${Math.random()}`,
+				},
+				body: body === undefined ? undefined : JSON.stringify(body),
+			})
+
+		const created = await send(token, 'POST', '/reservations', {
+			locationId: LOC_MAIN,
+			date: DATE,
+			time: '18:30',
+			partySize: 2,
+			guest: {
+				firstName: 'Sweep',
+				lastName: 'Guest',
+				phone: '+14155550188',
+				allergyNotes: SECRET,
+			},
+		})
+		expect(created.status).toBe(201)
+		expect(await created.clone().text()).toContain(SECRET)
+		const id = ((await created.json()) as any).reservation.id as string
+
+		// Guest lookup: redacted without the grant, full with it, and no tiny queries.
+		const lookupNo = await send(noGuestGrant, 'GET', '/guests/lookup?q=Sweep')
+		expect(lookupNo.status).toBe(200)
+		expect(await lookupNo.text()).not.toContain(SECRET)
+		const lookupYes = await send(token, 'GET', '/guests/lookup?q=Sweep')
+		expect(await lookupYes.text()).toContain(SECRET)
+		const tooShort = await send(token, 'GET', '/guests/lookup?q=S')
+		expect(tooShort.status).toBe(400)
+		const empty = await send(token, 'GET', '/guests/lookup')
+		expect(empty.status).toBe(400)
+
+		// Every mutation response is redacted without the grant.
+		const calls: Array<[string, string, unknown]> = [
+			['POST', `/reservations/${id}/status`, { status: 'confirmed' }],
+			['PATCH', `/reservations/${id}`, { staffNotes: 'hello' }],
+			['POST', `/reservations/${id}/assign`, { tableIds: ['tbl_1'] }],
+			[
+				'POST',
+				`/reservations/${id}/contact-status`,
+				{ contactStatus: 'left_message' },
+			],
+			['POST', `/reservations/${id}/running-late`, { runningLateNote: 'soon' }],
+			['POST', `/reservations/${id}/notes`, { internalNotes: 'note' }],
+		]
+		for (const [method, url, body] of calls) {
+			const res = await send(noGuestGrant, method, url, body)
+			const text = await res.text()
+			expect(text, `${method} ${url} -> ${res.status}`).not.toContain(SECRET)
+		}
+		// With the grant a mutation keeps the notes.
+		const yes = await send(token, 'POST', `/reservations/${id}/notes`, {
+			internalNotes: 'again',
+		})
+		expect(yes.status).toBe(200)
+		expect(await yes.text()).toContain(SECRET)
 	})
 
 	it('creates booking via POST /book/reservations, transitions status, supports undo, and enforces expectedVersion (409 stale_version)', async () => {
@@ -1431,7 +1530,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			const unfilteredRes = await getDay(app, token)
 			const unfiltered = (await unfilteredRes.json()) as any
 			expect(unfilteredRes.headers.get('ETag')).toBe(
-				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1"`,
+				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1:1"`,
 			)
 			expect(unfiltered.counters).toEqual({ parties: 3, covers: 9 })
 

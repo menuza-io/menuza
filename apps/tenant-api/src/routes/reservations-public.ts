@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { getTenantDb, rsvHolds } from '@repo/tenant-db'
+import { customers, getTenantDb, rsvHolds } from '@repo/tenant-db'
 import { and, eq, gt } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
@@ -126,16 +126,27 @@ function checkPartySize(partySize: number) {
 async function optionalCustomer(
 	c: Context,
 	org: PublishedOrganization,
-): Promise<{ customerId: string | null } | { error: Response }> {
+): Promise<
+	| { customerId: string | null; verifiedPhone: string | null }
+	| { error: Response }
+> {
 	if (!getBearerToken(c.req.header('Authorization'))) {
-		return { customerId: null }
+		return { customerId: null, verifiedPhone: null }
 	}
 	try {
 		const auth = await authenticateCustomer(c)
 		if (auth.organization.id !== org.id) {
 			return { error: json({ error: 'forbidden' }, 403) }
 		}
-		return { customerId: auth.customerId }
+		const row = await auth.db
+			.select({ phone: customers.phone, verified: customers.phoneVerified })
+			.from(customers)
+			.where(eq(customers.id, auth.customerId))
+			.get()
+		return {
+			customerId: auth.customerId,
+			verifiedPhone: row?.verified && row.phone ? row.phone : null,
+		}
 	} catch (thrown) {
 		if (thrown instanceof Response) return { error: thrown }
 		throw thrown
@@ -620,9 +631,15 @@ reservationsPublicRoutes.post(
 			client: client.client,
 			channel: client.channel,
 			customerId: customer.customerId,
+			customerPhone: customer.verifiedPhone,
 			ipHash,
 			idempotencyKey: key,
-			requestHash: hashIdempotencyPayload(body.data),
+			// The Turnstile token is single use and the honeypot is not part of the
+			// booking: a retry with a fresh token must replay, not conflict.
+			requestHash: hashIdempotencyPayload({
+				holdToken: body.data.holdToken,
+				...bookingInputFrom(body.data),
+			}),
 		})
 		return bookingResponse(g.value, reservationId, 201)
 	}),
@@ -673,9 +690,14 @@ reservationsPublicRoutes.post(
 			client: client.client,
 			channel: client.channel,
 			customerId: customer.customerId,
+			customerPhone: customer.verifiedPhone,
 			ipHash,
 			idempotencyKey: key,
-			requestHash: hashIdempotencyPayload(body.data),
+			requestHash: hashIdempotencyPayload({
+				locationId: body.data.locationId,
+				slot: body.data.slot,
+				...bookingInputFrom(body.data),
+			}),
 		})
 		return bookingResponse(g.value, reservationId, 201)
 	}),

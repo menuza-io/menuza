@@ -1,4 +1,4 @@
-import type { TenantDatabase } from './types.ts'
+import type { TenantDatabase, TenantTransaction } from './types.ts'
 
 type TenantDbResolver = (
 	orgId: string,
@@ -50,4 +50,39 @@ export async function resolveTenantOrgIds(
 		return await listTenantOrgIdsProvider()
 	}
 	return fallback()
+}
+
+type AsyncTransactionRunner = <T>(fn: () => Promise<T>) => Promise<T>
+
+const transactionRunners = new WeakMap<object, AsyncTransactionRunner>()
+
+/**
+ * Registers a runtime-specific async transaction for a database handle.
+ *
+ * Drizzle's Durable Object driver wraps `transaction()` in
+ * `storage.transactionSync`, which does not await an async callback: only
+ * code before the first `await` is inside the savepoint, and a later throw
+ * does not roll anything back. The Durable Object registers
+ * `ctx.storage.transaction` here (the async variant, which does roll back).
+ * Statements issued on the handle inside `fn` are part of that transaction.
+ */
+export function registerTenantDbTransactionRunner(
+	db: object,
+	runner: AsyncTransactionRunner,
+) {
+	transactionRunners.set(db, runner)
+}
+
+/**
+ * Runs `fn` in one real transaction on either runtime. libsql keeps the
+ * driver's own `db.transaction`; a handle with a registered runner (Durable
+ * Object SQLite) uses that runner and passes the handle itself as `tx`.
+ */
+export async function runTenantTransaction<T>(
+	db: TenantDatabase,
+	fn: (tx: TenantTransaction) => Promise<T>,
+): Promise<T> {
+	const runner = transactionRunners.get(db)
+	if (!runner) return db.transaction(fn)
+	return runner(() => fn(db as unknown as TenantTransaction))
 }

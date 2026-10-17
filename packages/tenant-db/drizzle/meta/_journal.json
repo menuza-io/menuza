@@ -134,6 +134,13 @@
 			"when": 1792229122667,
 			"tag": "0018_rsv_notify_slot",
 			"breakpoints": true
+		},
+		{
+			"idx": 19,
+			"version": "6",
+			"when": 1792266143098,
+			"tag": "0019_rsv_occupancy_location_window",
+			"breakpoints": true
 		}
 	]
 }

@@ -14,6 +14,7 @@ import {
 	getTenantDb,
 	rsvAreas,
 	rsvGuests,
+	rsvMessages,
 	rsvHolds,
 	rsvLocationSettings,
 	rsvRateCounters,
@@ -804,6 +805,127 @@ describe('POST /reservations (booking)', () => {
 		)
 		expect(JSON.stringify(stored)).not.toContain('rsv_m_')
 		expect(JSON.stringify(stored)).not.toContain(hold.body.holdToken)
+	})
+
+	it('replays when only the single-use Turnstile token or honeypot changes, and conflicts on a different guest or slot', async () => {
+		const hold = await createHold(19 * 60)
+		const key = idemKey()
+		const first = await book(hold.body.holdToken, 12, {
+			key,
+			extra: { turnstileToken: 'token-one' },
+		})
+		expect(first.status).toBe(201)
+		const retry = await book(hold.body.holdToken, 12, {
+			key,
+			extra: { turnstileToken: 'token-two' },
+		})
+		expect(retry.status).toBe(201)
+		expect(retry.body.reservation.id).toBe(first.body.reservation.id)
+
+		const otherGuest = await book(hold.body.holdToken, 13, {
+			key,
+			extra: { turnstileToken: 'token-two' },
+		})
+		expect(otherGuest.status).toBe(409)
+		expect(otherGuest.body.error).toBe('idempotency_conflict')
+		const otherHold = await createHold(20 * 60 + 30)
+		expect(otherHold.status).toBe(201)
+		const otherSlot = await book(otherHold.body.holdToken, 12, { key })
+		expect(otherSlot.status).toBe(409)
+		expect(otherSlot.body.error).toBe('idempotency_conflict')
+	})
+
+	it('never edits a matched guest profile from a public request and keeps the typed contact on the booking', async () => {
+		const db = await getTenantDb(ORG)
+		const phone = '+14155551090'
+		await db.insert(rsvGuests).values({
+			id: 'gst_owner',
+			firstName: 'Real',
+			lastName: 'Owner',
+			phoneE164: phone,
+			emailNorm: null,
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})
+		await db.insert(customers).values({
+			id: 'cus_unverified',
+			name: 'Mallory',
+			phone: '+14155550000',
+			phoneVerified: false,
+		})
+		const token = await mintCustomerToken(ORG, 'cus_unverified')
+		const hold = await createHold(19 * 60)
+		const booked = await book(hold.body.holdToken, 90, {
+			headers: { Authorization: `Bearer ${token}` },
+			guest: {
+				firstName: 'Mallory',
+				lastName: 'Typed',
+				phone,
+				email: 'mallory@example.com',
+			},
+		})
+		expect(booked.status).toBe(201)
+
+		const owner = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, 'gst_owner'))
+			.get()
+		expect(owner).toMatchObject({
+			firstName: 'Real',
+			emailNorm: null,
+			customerId: null,
+		})
+		const reservation = await db
+			.select()
+			.from(rsvReservations)
+			.where(eq(rsvReservations.id, booked.body.reservation.id))
+			.get()
+		expect(reservation?.guestId).toBe('gst_owner')
+
+		const view = await call('GET', '/reservations/manage', {
+			token: booked.body.manageToken,
+		})
+		expect(view.body.firstName).toBe('Mallory')
+		expect(view.text).not.toContain('Real')
+
+		// The confirmation goes to the address typed for this booking.
+		const messages = await db.select().from(rsvMessages).all()
+		expect(
+			messages.filter((m) => m.kind === 'confirmation').map((m) => m.channel),
+		).toContain('email')
+	})
+
+	it('links a matched profile to a signed-in customer only for the customer’s verified phone', async () => {
+		const db = await getTenantDb(ORG)
+		const phone = '+14155551091'
+		await db.insert(rsvGuests).values({
+			id: 'gst_linkable',
+			firstName: 'Lin',
+			lastName: 'Kable',
+			phoneE164: phone,
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})
+		await db.insert(customers).values({
+			id: 'cus_verified',
+			name: 'Lin',
+			phone,
+			phoneVerified: true,
+		})
+		const token = await mintCustomerToken(ORG, 'cus_verified')
+		const hold = await createHold(19 * 60)
+		const booked = await book(hold.body.holdToken, 91, {
+			headers: { Authorization: `Bearer ${token}` },
+			guest: { phone },
+		})
+		expect(booked.status).toBe(201)
+		const guest = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, 'gst_linkable'))
+			.get()
+		expect(guest?.customerId).toBe('cus_verified')
 	})
 
 	it('answers 409 slot_unavailable with alternatives when the last unit is gone (VAL-ONLINE-015)', async () => {

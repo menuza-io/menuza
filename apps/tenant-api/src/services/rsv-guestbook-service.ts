@@ -15,6 +15,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
@@ -360,7 +361,7 @@ export async function listGuests(
 				})
 			: null
 
-	const canReadSensitive = input.canReadSensitive ?? true
+	const canReadSensitive = input.canReadSensitive === true
 	const tagsMap = await loadGuestTagsMap(
 		db,
 		page.map((r) => r.guest.id),
@@ -495,8 +496,13 @@ export async function updateGuestProfile(
 			.from(rsvGuests)
 			.where(eq(rsvGuests.id, guestId))
 			.get()
-		const tagsMap = await loadGuestTagsMap(tx, [guestId])
-		return serializeGuestRow(next!, tagsMap.get(guestId) ?? [])
+		// Only holders of the guest-write grant reach this, so they may read it all.
+		const tagsMap = await loadGuestTagsMap(tx, [guestId], {
+			canReadSensitive: true,
+		})
+		return serializeGuestRow(next!, tagsMap.get(guestId) ?? [], {
+			canReadSensitive: true,
+		})
 	})
 }
 
@@ -943,9 +949,13 @@ export async function mergeGuests(
 			.from(rsvGuests)
 			.where(eq(rsvGuests.id, keep.id))
 			.get()
-		const tagsMap = await loadGuestTagsMap(tx, [keep.id])
+		const tagsMap = await loadGuestTagsMap(tx, [keep.id], {
+			canReadSensitive: true,
+		})
 		return {
-			guest: serializeGuestRow(next!, tagsMap.get(keep.id) ?? []),
+			guest: serializeGuestRow(next!, tagsMap.get(keep.id) ?? [], {
+				canReadSensitive: true,
+			}),
 			movedCounts,
 		}
 	})
@@ -1028,32 +1038,32 @@ export async function reconcileGuestCounters(
 	}
 	if (ids.length === 0) return { checked: 0, repaired: 0 }
 
-	const stats = await db
-		.select({
-			guestId: rsvReservations.guestId,
-			visits: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'finished' THEN 1 ELSE 0 END)`,
-			covers: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'finished' THEN COALESCE(${rsvReservations.coversActual}, ${rsvReservations.seatedCovers}, ${rsvReservations.partySize}) ELSE 0 END)`,
-			noShows: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'no_show' THEN 1 ELSE 0 END)`,
-			cancels: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'cancelled' AND COALESCE(${rsvReservations.cancelReason}, '') <> 'guest_erased' THEN 1 ELSE 0 END)`,
-			lateCancels: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'cancelled' AND ${rsvReservations.lateCancel} = 1 AND COALESCE(${rsvReservations.cancelReason}, '') <> 'guest_erased' THEN 1 ELSE 0 END)`,
-			firstVisitAt: sql<
-				number | null
-			>`MIN(CASE WHEN ${rsvReservations.status} = 'finished' THEN ${rsvReservations.finishedAt} END)`,
-			lastVisitAt: sql<
-				number | null
-			>`MAX(CASE WHEN ${rsvReservations.status} = 'finished' THEN ${rsvReservations.finishedAt} END)`,
-		})
-		.from(rsvReservations)
-		.where(inArray(rsvReservations.guestId, ids))
-		.groupBy(rsvReservations.guestId)
-		.all()
+	const stats = await queryInChunks(ids, (chunk) =>
+		db
+			.select({
+				guestId: rsvReservations.guestId,
+				visits: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'finished' THEN 1 ELSE 0 END)`,
+				covers: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'finished' THEN COALESCE(${rsvReservations.coversActual}, ${rsvReservations.seatedCovers}, ${rsvReservations.partySize}) ELSE 0 END)`,
+				noShows: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'no_show' THEN 1 ELSE 0 END)`,
+				cancels: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'cancelled' AND COALESCE(${rsvReservations.cancelReason}, '') <> 'guest_erased' THEN 1 ELSE 0 END)`,
+				lateCancels: sql<number>`SUM(CASE WHEN ${rsvReservations.status} = 'cancelled' AND ${rsvReservations.lateCancel} = 1 AND COALESCE(${rsvReservations.cancelReason}, '') <> 'guest_erased' THEN 1 ELSE 0 END)`,
+				firstVisitAt: sql<
+					number | null
+				>`MIN(CASE WHEN ${rsvReservations.status} = 'finished' THEN ${rsvReservations.finishedAt} END)`,
+				lastVisitAt: sql<
+					number | null
+				>`MAX(CASE WHEN ${rsvReservations.status} = 'finished' THEN ${rsvReservations.finishedAt} END)`,
+			})
+			.from(rsvReservations)
+			.where(inArray(rsvReservations.guestId, chunk))
+			.groupBy(rsvReservations.guestId)
+			.all(),
+	)
 	const byGuest = new Map(stats.map((s) => [s.guestId, s]))
 
-	const guests = await db
-		.select()
-		.from(rsvGuests)
-		.where(inArray(rsvGuests.id, ids))
-		.all()
+	const guests = await queryInChunks(ids, (chunk) =>
+		db.select().from(rsvGuests).where(inArray(rsvGuests.id, chunk)).all(),
+	)
 	let repaired = 0
 	for (const guest of guests) {
 		if (guest.mergedIntoId || guest.erasedAt) continue

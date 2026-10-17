@@ -16,14 +16,13 @@ import {
 	SheetTitle,
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
 	createPhoneReservation,
 	type DayMoveNotice,
 	type DayReservationGuestSummary,
 	type DayReservationView,
-	generateIdempotencyKey,
 	type BookingWarning,
 	type OperatorAvailabilitySlot,
 	type OperatorDayState,
@@ -35,6 +34,11 @@ import {
 	ReservationsApiError,
 	type ReservationsScopedClient,
 } from '#app/utils/reservations/reservations-client.ts'
+import {
+	afterFailedSubmit,
+	keyForSubmit,
+	newSubmitKey,
+} from '#app/utils/reservations/submit-key.ts'
 import {
 	type RsvAreaRecord,
 	type RsvServiceRecord,
@@ -159,9 +163,7 @@ export function BookingSheet({
 	// Submission state
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [idempotencyKey, setIdempotencyKey] = useState(() =>
-		generateIdempotencyKey('book'),
-	)
+	const keyRef = useRef(newSubmitKey('book'))
 
 	// Reset defaults when opened
 	useEffect(() => {
@@ -177,7 +179,7 @@ export function BookingSheet({
 		setDurationMin('')
 		setOverrideClosedDay(false)
 		setError(null)
-		setIdempotencyKey(generateIdempotencyKey('book'))
+		keyRef.current = newSubmitKey('book')
 	}, [
 		defaultDate,
 		initialAreaId,
@@ -346,41 +348,43 @@ export function BookingSheet({
 		setError(null)
 		try {
 			const parsedDuration = durationMin ? Number(durationMin) : undefined
+			const input = {
+				locationId,
+				date,
+				localStartMin,
+				partySize,
+				serviceId: serviceId || null,
+				areaId: areaId || null,
+				tableIds: tableId ? [tableId] : undefined,
+				durationMin:
+					parsedDuration && Number.isFinite(parsedDuration)
+						? parsedDuration
+						: undefined,
+				channel: 'phone' as const,
+				guest: {
+					fullName: guestName.trim(),
+					phone: guestPhone.trim(),
+					email: guestEmail.trim() || null,
+					dietaryCodes,
+				},
+				occasion: occasion || null,
+				dietaryCodes,
+				dietaryNotes: dietaryNotes.trim() || null,
+				guestNotes: guestNotes.trim() || null,
+				internalNotes: internalNotes.trim() || null,
+				serverLabel: serverLabel.trim() || null,
+				overridePacing: overridePacing || slotIsHeld,
+				overrideBlockedTable,
+				overrideScheduleBlock,
+				overrideClosedDay: closedDay && overrideClosedDay,
+				skipPayment: paymentPolicyMode === 'waive',
+				paymentPolicyMode,
+			}
+			// Same form, same key: a retry after a lost response replays.
 			const res = await createPhoneReservation(
 				client,
-				{
-					locationId,
-					date,
-					localStartMin,
-					partySize,
-					serviceId: serviceId || null,
-					areaId: areaId || null,
-					tableIds: tableId ? [tableId] : undefined,
-					durationMin:
-						parsedDuration && Number.isFinite(parsedDuration)
-							? parsedDuration
-							: undefined,
-					channel: 'phone',
-					guest: {
-						fullName: guestName.trim(),
-						phone: guestPhone.trim(),
-						email: guestEmail.trim() || null,
-						dietaryCodes,
-					},
-					occasion: occasion || null,
-					dietaryCodes,
-					dietaryNotes: dietaryNotes.trim() || null,
-					guestNotes: guestNotes.trim() || null,
-					internalNotes: internalNotes.trim() || null,
-					serverLabel: serverLabel.trim() || null,
-					overridePacing: overridePacing || slotIsHeld,
-					overrideBlockedTable,
-					overrideScheduleBlock,
-					overrideClosedDay: closedDay && overrideClosedDay,
-					skipPayment: paymentPolicyMode === 'waive',
-					paymentPolicyMode,
-				},
-				idempotencyKey,
+				input,
+				keyForSubmit(keyRef, 'book', input),
 			)
 			onCreated(res.reservation, res.moveNotices ?? [])
 			for (const warning of res.warnings) {
@@ -402,7 +406,7 @@ export function BookingSheet({
 			setServerLabel('')
 		} catch (err) {
 			setError(errorText(err))
-			setIdempotencyKey(generateIdempotencyKey('book'))
+			afterFailedSubmit(keyRef, 'book', err)
 		} finally {
 			setSubmitting(false)
 		}

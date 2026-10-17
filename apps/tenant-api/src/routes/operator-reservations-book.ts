@@ -55,6 +55,16 @@ import {
 	declineReservationRequest,
 } from '../services/rsv-request-service.js'
 
+/** Guest allergy notes and sensitive tags need the guest-data grant. */
+function canReadGuests(ctx: ReservationsAuthContext): boolean {
+	return hasReservationsGrant(
+		ctx,
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	)
+}
+
+const GUEST_LOOKUP_MIN_QUERY = 2
+
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const MONTH_RE = /^\d{4}-\d{2}$/
 const TIME_RE = /^\d{2}:\d{2}$/
@@ -853,8 +863,17 @@ operatorReservationsBookRoutes.get(
 		if ('error' in q) return q.error
 
 		try {
+			if (q.data.q.length < GUEST_LOOKUP_MIN_QUERY) {
+				throw badRequest(
+					'query_too_short',
+					`q must be at least ${GUEST_LOOKUP_MIN_QUERY} characters`,
+				)
+			}
 			const db = await getTenantDb(ctx.orgId)
-			const guests = await searchGuests(db, q.data.q, q.data.limit)
+			const guests = await searchGuests(db, q.data.q, {
+				limit: q.data.limit,
+				canReadSensitive: canReadGuests(ctx),
+			})
 			return json({ ok: true, orgId: ctx.orgId, guests })
 		} catch (error) {
 			return handleRouteError(error)
@@ -989,6 +1008,7 @@ operatorReservationsBookRoutes.post(
 			const mappedChannel = rawChannel === 'host' ? 'in_person' : rawChannel
 
 			const created = await createOperatorReservation({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				locationId: locCheck.locationId,
 				actorId: ctx.userId,
@@ -1068,6 +1088,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const created = await createWalkIn({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				locationId: locCheck.locationId,
 				actorId: ctx.userId,
@@ -1215,6 +1236,7 @@ operatorReservationsBookRoutes.patch(
 
 		try {
 			const updated = await updateReservation({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1272,6 +1294,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await assignReservationTables({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1328,6 +1351,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await transitionReservationStatus({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1373,6 +1397,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await resendReservationConfirmation({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1415,6 +1440,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await undoReservationTransition({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1452,6 +1478,7 @@ async function handleUpdateContactStatus(c: Context) {
 
 	try {
 		const result = await updateReservationContactStatus({
+			canReadGuestSensitive: canReadGuests(ctx),
 			orgId: ctx.orgId,
 			reservationId: rsvId,
 			actorId: ctx.userId,
@@ -1522,6 +1549,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await updateReservationRunningLate({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
@@ -1559,6 +1587,7 @@ async function handleUpdateCourseStatus(c: Context) {
 
 	try {
 		const result = await updateReservationCourseStatus({
+			canReadGuestSensitive: canReadGuests(ctx),
 			orgId: ctx.orgId,
 			reservationId: rsvId,
 			actorId: ctx.userId,
@@ -1627,6 +1656,7 @@ operatorReservationsBookRoutes.post(
 
 		try {
 			const result = await updateReservationNotes({
+				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,

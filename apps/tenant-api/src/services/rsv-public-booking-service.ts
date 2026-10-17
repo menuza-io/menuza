@@ -33,6 +33,10 @@ import {
 	slotUnavailable,
 	type PublicSlotRequest,
 } from './rsv-hold-service.ts'
+import {
+	bookingContactData,
+	loadBookingContacts,
+} from './rsv-booking-contact.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
 	loadPublicEngineState,
@@ -161,7 +165,7 @@ export async function buildManageView(
 	row: typeof rsvReservations.$inferSelect,
 	now: number,
 ) {
-	const [guest, settings, occasion] = await Promise.all([
+	const [guest, settings, occasion, contacts] = await Promise.all([
 		db.select().from(rsvGuests).where(eq(rsvGuests.id, row.guestId)).get(),
 		db
 			.select()
@@ -171,7 +175,16 @@ export async function buildManageView(
 		row.occasionTagId
 			? db.select().from(rsvTags).where(eq(rsvTags.id, row.occasionTagId)).get()
 			: Promise.resolve(undefined),
+		loadBookingContacts(db, [row.id]),
 	])
+	// What the booker typed for this booking, never the profile's name or email.
+	const bookingContact = contacts.get(row.id)
+	const firstName = bookingContact
+		? bookingContact.firstName
+		: (guest?.firstName ?? null)
+	const contactEmail = bookingContact
+		? bookingContact.email
+		: (guest?.emailNorm ?? null)
 	const policyId =
 		(row.policySnapshot as { policyId?: string } | null)?.policyId ??
 		settings?.defaultPolicyId ??
@@ -190,7 +203,7 @@ export async function buildManageView(
 		now: new Date(now).toISOString(),
 		reservation: {
 			...summary,
-			firstName: guest?.firstName ?? null,
+			firstName,
 			occasion: occasion
 				? {
 						id: occasion.id,
@@ -212,10 +225,10 @@ export async function buildManageView(
 			},
 		},
 		status: summary.status,
-		firstName: guest?.firstName ?? null,
+		firstName,
 		contact: {
 			phone: maskPhone(guest?.phoneE164 ?? null),
-			email: maskEmail(guest?.emailNorm ?? null),
+			email: maskEmail(contactEmail),
 		},
 		policy:
 			policy && policy.kind !== 'none'
@@ -251,13 +264,21 @@ export function normalizePublicPhone(raw: string): string | null {
 }
 
 /**
- * Public bookings never rewrite an existing guest's name: anyone can type
- * someone else's phone number. Only blank fields are filled in.
+ * Public bookings never rewrite an existing guest profile: anyone can type
+ * someone else's phone number. Name, email and phone of a matched profile stay
+ * as they are (the contact typed for this booking is kept on the booking's
+ * first event), and the profile is linked to a signed-in customer only when the
+ * customer's verified phone is the guest's phone.
  */
 async function resolvePublicGuest(
 	tx: DbOrTx,
 	input: PublicGuestInput,
-	options: { customerId: string | null; marketing: boolean; now: number },
+	options: {
+		customerId: string | null
+		customerPhone?: string | null
+		marketing: boolean
+		now: number
+	},
 ): Promise<typeof rsvGuests.$inferSelect> {
 	const phone = normalizePublicPhone(input.phone)
 	if (!phone) throw invalidField('guest.phone')
@@ -285,29 +306,28 @@ async function resolvePublicGuest(
 			.get()
 	}
 
-	const consent =
-		options.marketing && email
-			? {
-					marketingEmailConsentAt: options.now,
-					consentSource: 'online_reservation',
-				}
-			: {}
-
 	if (guest) {
-		let customerPatch: { customerId?: string } = {}
-		if (options.customerId && !guest.customerId) {
+		const verifiedPhone = options.customerPhone
+			? normalizePublicPhone(options.customerPhone)
+			: null
+		const patch: Partial<typeof rsvGuests.$inferInsert> = {}
+		if (
+			options.customerId &&
+			!guest.customerId &&
+			verifiedPhone !== null &&
+			verifiedPhone === guest.phoneE164
+		) {
 			const owner = await tx
 				.select({ id: rsvGuests.id })
 				.from(rsvGuests)
 				.where(eq(rsvGuests.customerId, options.customerId))
 				.get()
-			if (!owner) customerPatch = { customerId: options.customerId }
+			if (!owner) patch.customerId = options.customerId
 		}
-		const patch = {
-			...(email && !guest.emailNorm ? { emailNorm: email } : {}),
-			...(!guest.phoneE164 ? { phoneE164: phone } : {}),
-			...customerPatch,
-			...consent,
+		// Marketing consent only counts for the address the profile holds.
+		if (options.marketing && email && guest.emailNorm === email) {
+			patch.marketingEmailConsentAt = options.now
+			patch.consentSource = 'online_reservation'
 		}
 		if (Object.keys(patch).length > 0) {
 			await tx
@@ -323,6 +343,13 @@ async function resolvePublicGuest(
 		return guest
 	}
 
+	const consent =
+		options.marketing && email
+			? {
+					marketingEmailConsentAt: options.now,
+					consentSource: 'online_reservation',
+				}
+			: {}
 	const id = `gst_${randomUUID()}`
 	await tx.insert(rsvGuests).values({
 		id,
@@ -434,6 +461,8 @@ export async function bookFromHold(params: {
 	client: string
 	channel: 'online' | 'native'
 	customerId: string | null
+	/** The signed-in customer's verified phone, when there is one. */
+	customerPhone?: string | null
 	ipHash: string
 	idempotencyKey: string
 	requestHash: string
@@ -502,6 +531,7 @@ export async function bookFromHold(params: {
 			)
 			const guest = await resolvePublicGuest(tx, params.input.guest, {
 				customerId: params.customerId,
+				customerPhone: params.customerPhone,
 				marketing: params.input.marketing,
 				now,
 			})
@@ -569,7 +599,11 @@ export async function bookFromHold(params: {
 				type: 'created',
 				fromStatus: null,
 				toStatus: 'booked',
-				data: { channel: params.channel, partySize: hold.partySize },
+				data: {
+					channel: params.channel,
+					partySize: hold.partySize,
+					...bookingContactData(params.input.guest),
+				},
 			})
 			await enqueueReservationMessage(
 				tx,
@@ -693,6 +727,8 @@ export async function createLargePartyRequest(params: {
 	client: string
 	channel: 'online' | 'native'
 	customerId: string | null
+	/** The signed-in customer's verified phone, when there is one. */
+	customerPhone?: string | null
 	ipHash: string
 	idempotencyKey: string
 	requestHash: string
@@ -751,6 +787,7 @@ export async function createLargePartyRequest(params: {
 			)
 			const guest = await resolvePublicGuest(tx, params.input.guest, {
 				customerId: params.customerId,
+				customerPhone: params.customerPhone,
 				marketing: params.input.marketing,
 				now,
 			})
@@ -831,6 +868,7 @@ export async function createLargePartyRequest(params: {
 				data: {
 					partySize: slot.partySize,
 					holdsCapacity: tableIds.length > 0,
+					...bookingContactData(params.input.guest),
 				},
 			})
 			await enqueueReservationMessage(

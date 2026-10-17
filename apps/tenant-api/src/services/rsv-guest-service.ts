@@ -16,6 +16,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
+import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, forbidden, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
@@ -157,22 +158,24 @@ export async function loadPinnedNotesMap(
 ): Promise<Map<string, Array<{ id: string; body: string }>>> {
 	const map = new Map<string, Array<{ id: string; body: string }>>()
 	if (guestIds.length === 0) return map
-	const rows = await db
-		.select({
-			id: rsvGuestNotes.id,
-			guestId: rsvGuestNotes.guestId,
-			body: rsvGuestNotes.body,
-		})
-		.from(rsvGuestNotes)
-		.where(
-			and(
-				inArray(rsvGuestNotes.guestId, guestIds),
-				eq(rsvGuestNotes.pinned, true),
-				isNull(rsvGuestNotes.deletedAt),
-			),
-		)
-		.orderBy(desc(rsvGuestNotes.createdAt))
-		.all()
+	const rows = await queryInChunks(guestIds, (chunk) =>
+		db
+			.select({
+				id: rsvGuestNotes.id,
+				guestId: rsvGuestNotes.guestId,
+				body: rsvGuestNotes.body,
+			})
+			.from(rsvGuestNotes)
+			.where(
+				and(
+					inArray(rsvGuestNotes.guestId, chunk),
+					eq(rsvGuestNotes.pinned, true),
+					isNull(rsvGuestNotes.deletedAt),
+				),
+			)
+			.orderBy(desc(rsvGuestNotes.createdAt))
+			.all(),
+	)
 	for (const row of rows) {
 		const list = map.get(row.guestId) ?? []
 		list.push({ id: row.id, body: row.body })
@@ -189,22 +192,24 @@ export async function loadGuestTagsMap(
 	const map = new Map<string, SerializedGuestTag[]>()
 	if (guestIds.length === 0) return map
 
-	const rows = await db
-		.select({
-			guestId: rsvGuestTags.guestId,
-			id: rsvTags.id,
-			scope: rsvTags.scope,
-			category: rsvTags.category,
-			name: rsvTags.name,
-			colorToken: rsvTags.colorToken,
-			sensitive: rsvTags.sensitive,
-		})
-		.from(rsvGuestTags)
-		.innerJoin(rsvTags, eq(rsvGuestTags.tagId, rsvTags.id))
-		.where(inArray(rsvGuestTags.guestId, guestIds))
-		.all()
+	const rows = await queryInChunks(guestIds, (chunk) =>
+		db
+			.select({
+				guestId: rsvGuestTags.guestId,
+				id: rsvTags.id,
+				scope: rsvTags.scope,
+				category: rsvTags.category,
+				name: rsvTags.name,
+				colorToken: rsvTags.colorToken,
+				sensitive: rsvTags.sensitive,
+			})
+			.from(rsvGuestTags)
+			.innerJoin(rsvTags, eq(rsvGuestTags.tagId, rsvTags.id))
+			.where(inArray(rsvGuestTags.guestId, chunk))
+			.all(),
+	)
 
-	const canReadSensitive = opts?.canReadSensitive ?? true
+	const canReadSensitive = opts?.canReadSensitive === true
 	for (const r of rows) {
 		if (!canReadSensitive && r.sensitive) continue
 		const list = map.get(r.guestId) ?? []
@@ -227,7 +232,7 @@ export function serializeGuestRow(
 	tags: SerializedGuestTag[],
 	opts?: { canReadSensitive?: boolean },
 ): SerializedGuestSummary {
-	const canReadSensitive = opts?.canReadSensitive ?? true
+	const canReadSensitive = opts?.canReadSensitive === true
 	const hasRawAllergy = Boolean(
 		row.allergyNotes && row.allergyNotes.trim().length > 0,
 	)
@@ -589,7 +594,7 @@ export async function getGuestSummary(
 		.get()
 	if (!row) throw notFound('Guest not found')
 
-	const canReadSensitive = opts?.canReadSensitive ?? true
+	const canReadSensitive = opts?.canReadSensitive === true
 	const tagsMap = await loadGuestTagsMap(db, [guestId], { canReadSensitive })
 	const liveNotes = await db
 		.select()
@@ -704,23 +709,21 @@ export async function exportGuestProfile(
 		.all()
 
 	const resIds = reservations.map((r) => r.id)
-	const paymentIntents =
-		resIds.length > 0
-			? await db
-					.select()
-					.from(rsvPayments)
-					.where(inArray(rsvPayments.reservationId, resIds))
-					.all()
-			: []
+	const paymentIntents = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvPayments)
+			.where(inArray(rsvPayments.reservationId, chunk))
+			.all(),
+	)
 
-	const messages =
-		resIds.length > 0
-			? await db
-					.select()
-					.from(rsvMessages)
-					.where(inArray(rsvMessages.reservationId, resIds))
-					.all()
-			: []
+	const messages = await queryInChunks(resIds, (chunk) =>
+		db
+			.select()
+			.from(rsvMessages)
+			.where(inArray(rsvMessages.reservationId, chunk))
+			.all(),
+	)
 
 	const now = Date.now()
 	await db.insert(rsvAuditLog).values({
@@ -837,18 +840,23 @@ async function notifyGuestBeforeErasure(
 	const orgId = getTenantDbOrgId(db)
 	if (!orgId) return
 	try {
-		const upcoming = await db
-			.select({ id: rsvReservations.id })
-			.from(rsvReservations)
-			.where(
-				and(
-					inArray(rsvReservations.guestId, [...guestIds]),
-					inArray(rsvReservations.status, [
-						...CANCELLABLE_FUTURE_STATUSES,
-					] as never[]),
-				),
-			)
-			.all()
+		const upcoming = await queryInChunks(
+			[...guestIds],
+			(chunk) =>
+				db
+					.select({ id: rsvReservations.id })
+					.from(rsvReservations)
+					.where(
+						and(
+							inArray(rsvReservations.guestId, chunk),
+							inArray(rsvReservations.status, [
+								...CANCELLABLE_FUTURE_STATUSES,
+							] as never[]),
+						),
+					)
+					.all(),
+			80,
+		)
 		if (upcoming.length === 0) return
 		const ids = await withSetupWrite(
 			db,
@@ -941,37 +949,42 @@ export async function eraseGuestProfile(
 	await notifyGuestBeforeErasure(db, allGuestIds, now)
 
 	// Delete guest notes and tags
-	await db
-		.delete(rsvGuestNotes)
-		.where(inArray(rsvGuestNotes.guestId, allGuestIds))
-	await db
-		.delete(rsvGuestTags)
-		.where(inArray(rsvGuestTags.guestId, allGuestIds))
+	await forEachInChunks(allGuestIds, async (chunk) => {
+		await db.delete(rsvGuestNotes).where(inArray(rsvGuestNotes.guestId, chunk))
+		await db.delete(rsvGuestTags).where(inArray(rsvGuestTags.guestId, chunk))
+	})
 
 	// Anonymize guest row(s)
 	const erasedAt = existing.erasedAt ?? now
-	await db
-		.update(rsvGuests)
-		.set({
-			firstName: 'Erased',
-			lastName: 'guest',
-			phoneE164: null,
-			emailNorm: null,
-			allergyNotes: null,
-			customerId: null,
-			marketingCustomerId: null,
-			erasedAt,
-			updatedAt: now,
-			version: existing.version + 1,
-		})
-		.where(inArray(rsvGuests.id, allGuestIds))
+	await forEachInChunks(
+		allGuestIds,
+		(chunk) =>
+			db
+				.update(rsvGuests)
+				.set({
+					firstName: 'Erased',
+					lastName: 'guest',
+					phoneE164: null,
+					emailNorm: null,
+					allergyNotes: null,
+					customerId: null,
+					marketingCustomerId: null,
+					erasedAt,
+					updatedAt: now,
+					version: existing.version + 1,
+				})
+				.where(inArray(rsvGuests.id, chunk)),
+		70,
+	)
 
 	// Inspect all reservations for this guest
-	const guestReservations = await db
-		.select()
-		.from(rsvReservations)
-		.where(inArray(rsvReservations.guestId, allGuestIds))
-		.all()
+	const guestReservations = await queryInChunks(allGuestIds, (chunk) =>
+		db
+			.select()
+			.from(rsvReservations)
+			.where(inArray(rsvReservations.guestId, chunk))
+			.all(),
+	)
 
 	let cancelledFutureCount = 0
 	const affectedDayKeys = new Set<string>()
@@ -1058,45 +1071,53 @@ export async function eraseGuestProfile(
 	const resIds = guestReservations.map((r) => r.id)
 	if (resIds.length > 0) {
 		// Redact reservation events payload JSON (allowed by rsv_reservation_events_no_update trigger)
-		await db.run(
-			sql`UPDATE rsv_reservation_events SET data = '{"redacted":true}' WHERE reservation_id IN (${sql.join(
-				resIds.map((id) => sql`${id}`),
-				sql`, `,
-			)})`,
+		await forEachInChunks(resIds, (chunk) =>
+			db.run(
+				sql`UPDATE rsv_reservation_events SET data = '{"redacted":true}' WHERE reservation_id IN (${sql.join(
+					chunk.map((id) => sql`${id}`),
+					sql`, `,
+				)})`,
+			),
 		)
 
 		// Scrub any stored card metadata on payment records for this guest's reservations
-		await db
-			.update(rsvPayments)
-			.set({
-				customerRef: null,
-				paymentMethodRef: null,
-				cardBrand: null,
-				cardLast4: null,
-				updatedAt: now,
-			})
-			.where(inArray(rsvPayments.reservationId, resIds))
+		await forEachInChunks(resIds, (chunk) =>
+			db
+				.update(rsvPayments)
+				.set({
+					customerRef: null,
+					paymentMethodRef: null,
+					cardBrand: null,
+					cardLast4: null,
+					updatedAt: now,
+				})
+				.where(inArray(rsvPayments.reservationId, chunk)),
+		)
 	}
 
 	// Scrub waitlist entries for this guest
-	await db
-		.update(rsvWaitlistEntries)
-		.set({
-			displayName: 'Removed Guest',
-			phoneE164: null,
-			emailNorm: null,
-			notes: null,
-		})
-		.where(inArray(rsvWaitlistEntries.guestId, allGuestIds))
+	await forEachInChunks(allGuestIds, (chunk) =>
+		db
+			.update(rsvWaitlistEntries)
+			.set({
+				displayName: 'Removed Guest',
+				phoneE164: null,
+				emailNorm: null,
+				notes: null,
+			})
+			.where(inArray(rsvWaitlistEntries.guestId, chunk)),
+	)
 
 	// Redact prior audit log entries for this guest or their reservations (allowed by rsv_audit_log_no_update trigger)
 	const entityIdsToRedact = [...allGuestIds, ...resIds]
 	if (entityIdsToRedact.length > 0) {
-		await db.run(
-			sql`UPDATE rsv_audit_log SET changes = '{"redacted":true}' WHERE entity_id IN (${sql.join(
-				entityIdsToRedact.map((id) => sql`${id}`),
-				sql`, `,
-			)})`,
+		await forEachInChunks(entityIdsToRedact, (chunk) =>
+			db.run(
+				sql`UPDATE rsv_audit_log SET changes = '{"redacted":true}' WHERE entity_id IN (${sql.join(
+					chunk.map((id) => sql`${id}`),
+					sql`, `,
+				)})`,
+			),
 		)
 	}
 
