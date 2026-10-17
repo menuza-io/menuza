@@ -21,6 +21,9 @@ import {
 import { and, desc, eq, inArray, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { enqueueReservationMessage } from './rsv-message-queue.ts'
+import { markNotifyRequestsBooked } from './rsv-notify-service.ts'
+import { enqueueManagerAlert } from './rsv-outbox.ts'
 import {
 	buildAlternatives,
 	alternativesWindow,
@@ -191,7 +194,9 @@ export async function buildManageView(
 			occasion: occasion
 				? {
 						id: occasion.id,
-						name: pickI18n(occasion.nameI18n, row.guestLocale) ?? occasion.name,
+						name:
+							pickI18n(occasion.nameI18n, row.guestLocale, false) ??
+							occasion.name,
 					}
 				: null,
 			requests: row.guestRequests,
@@ -447,7 +452,7 @@ export async function bookFromHold(params: {
 			idempotencyKey: params.idempotencyKey,
 			requestHash: params.requestHash,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const hold = await tx
 				.select()
 				.from(rsvHolds)
@@ -565,6 +570,17 @@ export async function bookFromHold(params: {
 				fromStatus: null,
 				toStatus: 'booked',
 				data: { channel: params.channel, partySize: hold.partySize },
+			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId, kind: 'confirmation' },
+			)
+			await markNotifyRequestsBooked(tx, {
+				locationId: hold.locationId,
+				businessDate: hold.businessDate,
+				guestId: guest.id,
+				now,
 			})
 			return { reservationId }
 		},
@@ -694,7 +710,7 @@ export async function createLargePartyRequest(params: {
 			idempotencyKey: params.idempotencyKey,
 			requestHash: params.requestHash,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const window = alternativesWindow(slot.date)
 			const state = await loadPublicEngineState(tx, {
 				locationId: params.locationId,
@@ -817,6 +833,18 @@ export async function createLargePartyRequest(params: {
 					holdsCapacity: tableIds.length > 0,
 				},
 			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId, kind: 'request_received' },
+			)
+			await enqueueManagerAlert(tx, {
+				orgId: params.orgId,
+				kind: 'large_party_request',
+				locationId: params.locationId,
+				dedupeKey: `large_party_request:${reservationId}`,
+				now,
+			})
 			return { reservationId }
 		},
 	)
@@ -888,7 +916,7 @@ export async function guestCancelReservation(params: {
 			dates: pre.businessDate,
 			now,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const current = await loadReservationById(tx, pre.id)
 			if (!current) throw new HttpError(404, 'not_found')
 			if (current.status === 'cancelled') return { reservationId: current.id }
@@ -930,6 +958,11 @@ export async function guestCancelReservation(params: {
 				toStatus: 'cancelled',
 				data: { cancelledBy: 'guest' },
 			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId: current.id, kind: 'cancellation_guest' },
+			)
 			return { reservationId: current.id }
 		},
 	)
@@ -1043,7 +1076,7 @@ export async function guestModifyReservation(params: {
 			dates: [pre.businessDate, targetDate],
 			now,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const current = await loadReservationById(tx, pre.id)
 			if (!current) throw new HttpError(404, 'not_found')
 			if (current.status !== 'booked' && current.status !== 'confirmed') {
@@ -1157,6 +1190,11 @@ export async function guestModifyReservation(params: {
 					to: { date: targetDate, localMin: match.slotMin, partySize },
 				},
 			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId: current.id, kind: 'modification' },
+			)
 			return { reservationId: current.id }
 		},
 	)

@@ -12,10 +12,17 @@ import {
 	rsvTableOccupancies,
 	rsvTags,
 	rsvWaitlistEntries,
+	getTenantDbOrgId,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
 import { badRequest, forbidden, notFound } from '../lib/http.ts'
+import { withSetupWrite } from '../lib/reservations-write.ts'
+import {
+	cancelPendingReservationMessages,
+	enqueueReservationMessage,
+} from './rsv-message-queue.ts'
+import { deliverMessagesByIds } from './rsv-message-service.ts'
 
 export type DbOrTx =
 	TenantDatabase | Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
@@ -715,6 +722,63 @@ const CANCELLABLE_FUTURE_STATUSES = new Set([
 	'confirmed',
 ])
 
+/**
+ * The guest hears about the cancellation while their name and contact still
+ * exist: the message is built and sent now, because once the profile is
+ * anonymized there is nobody left to write to. A failed send is not allowed to
+ * block the erasure.
+ */
+async function notifyGuestBeforeErasure(
+	db: TenantDatabase,
+	guestIds: readonly string[],
+	now: number,
+) {
+	const orgId = getTenantDbOrgId(db)
+	if (!orgId) return
+	try {
+		const upcoming = await db
+			.select({ id: rsvReservations.id })
+			.from(rsvReservations)
+			.where(
+				and(
+					inArray(rsvReservations.guestId, [...guestIds]),
+					inArray(rsvReservations.status, [
+						...CANCELLABLE_FUTURE_STATUSES,
+					] as never[]),
+				),
+			)
+			.all()
+		if (upcoming.length === 0) return
+		const ids = await withSetupWrite(
+			db,
+			async (tx) => {
+				const queued: string[] = []
+				for (const reservation of upcoming) {
+					await cancelPendingReservationMessages(tx, reservation.id)
+					queued.push(
+						...(await enqueueReservationMessage(
+							tx,
+							{ orgId, now },
+							{
+								reservationId: reservation.id,
+								kind: 'cancellation_restaurant',
+							},
+						)),
+					)
+				}
+				return queued
+			},
+			orgId,
+		)
+		await deliverMessagesByIds(orgId, ids, { db, now })
+	} catch (error) {
+		console.error(
+			'[reservations] erasure notice failed',
+			error instanceof Error ? error.name : 'error',
+		)
+	}
+}
+
 export async function eraseGuestProfile(
 	dbOrOpts:
 		| TenantDatabase
@@ -772,6 +836,8 @@ export async function eraseGuestProfile(
 		.where(eq(rsvGuests.mergedIntoId, guestId))
 		.all()
 	const allGuestIds = [guestId, ...mergedRows.map((m) => m.id)]
+
+	await notifyGuestBeforeErasure(db, allGuestIds, now)
 
 	// Delete guest notes and tags
 	await db

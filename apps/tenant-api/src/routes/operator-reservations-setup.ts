@@ -92,6 +92,16 @@ import {
 	upsertServiceAvailabilityForLocation,
 	validateLocationSetup,
 } from '../services/rsv-setup-service.js'
+import {
+	getMessageSettings,
+	messageSettingsPatchSchema,
+	previewMessage,
+	updateMessageSettings,
+} from '../services/rsv-message-settings-service.ts'
+import {
+	getWaitlistSettings,
+	updateWaitlistSettings,
+} from '../services/rsv-waitlist-settings.ts'
 
 const I18N_MAP_KEYS = new Set([
 	'nameI18n',
@@ -100,6 +110,8 @@ const I18N_MAP_KEYS = new Set([
 	'public_note_i18n',
 	'largePartyNoteI18n',
 	'large_party_note_i18n',
+	// Message kinds are snake_case identifiers, not field names.
+	'kinds',
 ])
 
 function snakeToCamel(key: string): string {
@@ -520,6 +532,130 @@ operatorReservationsSetupRoutes.post(
 	'/settings',
 	writeSetupGuard,
 	updateSettingsHandler,
+)
+
+// ============================================================================
+// Waitlist settings (GET / PUT)
+// ============================================================================
+
+const waitlistSettingsPatchSchema = z.object({
+	expectedVersion: z.number().int().min(1).optional(),
+	waitlistEnabled: z.boolean().optional(),
+	waitlistOnline: z.boolean().optional(),
+	notifyMeEnabled: z.boolean().optional(),
+	waitlistResponseMin: z.number().int().min(1).max(120).optional(),
+	waitlistMaxParties: z.number().int().min(1).max(500).nullable().optional(),
+})
+
+const waitlistReadGuard = rsvGuard({
+	scope: 'setup',
+	feature: 'waitlist',
+	grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+})
+
+const waitlistWriteGuard = rsvGuard({
+	scope: 'setup',
+	feature: 'waitlist',
+	grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+	write: true,
+})
+
+operatorReservationsSetupRoutes.get(
+	'/locations/:locationId/waitlist',
+	waitlistReadGuard,
+	wrapHandler(async (c) => {
+		const ctx = getRsvAuth(c)
+		const locationId = requireLocationId(c)
+		const db = await getTenantDb(ctx.orgId)
+		const waitlist = await getWaitlistSettings(db, ctx.orgId, locationId)
+		return json({ ok: true, orgId: ctx.orgId, ...waitlist, waitlist })
+	}),
+)
+
+operatorReservationsSetupRoutes.put(
+	'/locations/:locationId/waitlist',
+	waitlistWriteGuard,
+	wrapHandler(async (c) => {
+		const ctx = getRsvAuth(c)
+		const body = await readNormalizedBody(c)
+		const locationId = requireLocationId(c, body)
+		const parsed = parseSchemaOrThrow(waitlistSettingsPatchSchema, body)
+		const db = await getTenantDb(ctx.orgId)
+		const waitlist = await updateWaitlistSettings(
+			db,
+			ctx.orgId,
+			locationId,
+			ctx.userId,
+			parsed,
+		)
+		return json({ ok: true, orgId: ctx.orgId, ...waitlist, waitlist })
+	}),
+)
+
+// ============================================================================
+// Guest messages: switches, timing and per-kind notes (GET / PUT / preview)
+// ============================================================================
+
+const messagesReadGuard = rsvGuard({
+	scope: 'setup',
+	grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+})
+
+const messagesWriteGuard = rsvGuard({
+	scope: 'setup',
+	grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+	write: true,
+})
+
+operatorReservationsSetupRoutes.get(
+	'/message-texts/preview',
+	messagesReadGuard,
+	wrapHandler(async (c) => {
+		const ctx = getRsvAuth(c)
+		const locationId = requireLocationId(c)
+		const db = await getTenantDb(ctx.orgId)
+		const preview = await previewMessage(db, ctx.orgId, locationId, {
+			kind: c.req.query('kind') ?? '',
+			locale: c.req.query('locale') ?? 'en',
+		})
+		return json({ ok: true, orgId: ctx.orgId, ...preview })
+	}),
+)
+
+operatorReservationsSetupRoutes.get(
+	'/message-texts',
+	messagesReadGuard,
+	wrapHandler(async (c) => {
+		const ctx = getRsvAuth(c)
+		const locationId = requireLocationId(c)
+		const db = await getTenantDb(ctx.orgId)
+		const settings = await getMessageSettings(db, ctx.orgId, locationId)
+		return json({ ok: true, orgId: ctx.orgId, ...settings })
+	}),
+)
+
+operatorReservationsSetupRoutes.put(
+	'/message-texts',
+	messagesWriteGuard,
+	wrapHandler(async (c) => {
+		const ctx = getRsvAuth(c)
+		const body = await readNormalizedBody(c)
+		const locationId = requireLocationId(c, body)
+		const { locationId: ignoredLocationId, ...rest } = body as Record<
+			string,
+			unknown
+		>
+		const parsed = parseSchemaOrThrow(messageSettingsPatchSchema, rest)
+		const db = await getTenantDb(ctx.orgId)
+		const settings = await updateMessageSettings(
+			db,
+			ctx.orgId,
+			locationId,
+			ctx.userId,
+			parsed,
+		)
+		return json({ ok: true, orgId: ctx.orgId, ...settings })
+	}),
 )
 
 // ============================================================================

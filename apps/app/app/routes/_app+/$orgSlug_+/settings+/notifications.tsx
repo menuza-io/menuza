@@ -5,6 +5,7 @@ import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { NotificationPreferencesCard } from '#app/components/settings/cards/notification-preferences-card.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { reservationAlertVisibleOrgIds } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
 	isStaffingFeatureEnabled,
 	userHasStaffingPermission,
@@ -42,11 +43,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			org.id,
 			STAFFING_PERMISSIONS.READ_HIRING,
 		))
+	// Reservations alerts are offered where the module is on and the member is
+	// one of the people the alerts are sent to.
+	const showReservationsAlerts = (
+		await reservationAlertVisibleOrgIds(userId, [org.id])
+	).has(org.id)
 	return {
 		organizationId: org.id,
 		showStaffingAlerts,
 		showScheduleAlerts,
 		showHiringAlerts,
+		showReservationsAlerts,
 	}
 }
 
@@ -56,6 +63,7 @@ export default function NotificationSettings() {
 		showStaffingAlerts,
 		showScheduleAlerts,
 		showHiringAlerts,
+		showReservationsAlerts,
 	} = useLoaderData<typeof loader>()
 	return (
 		<AnnotatedLayout>
@@ -65,6 +73,7 @@ export default function NotificationSettings() {
 					showStaffingAlerts={showStaffingAlerts}
 					showScheduleAlerts={showScheduleAlerts}
 					showHiringAlerts={showHiringAlerts}
+					showReservationsAlerts={showReservationsAlerts}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

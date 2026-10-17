@@ -1,10 +1,5 @@
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
-import {
-	getTenantDb,
-	rsvExperiences,
-	rsvReservations,
-	rsvWaitlistEntries,
-} from '@repo/tenant-db'
+import { getTenantDb, rsvExperiences, rsvReservations } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
@@ -21,6 +16,7 @@ import {
 import { operatorReservationsBookRoutes } from './operator-reservations-book.ts'
 import { operatorReservationsGuestsRoutes } from './operator-reservations-guests.ts'
 import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
+import { operatorReservationsWaitlistRoutes } from './reservations-waitlist.ts'
 
 async function resolveLocationParam(
 	c: Context,
@@ -76,35 +72,11 @@ reservationsOperatorRoutes.get(
 )
 
 // 2. Book & Waitlist scope routes
-reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
-
-reservationsOperatorRoutes.get(
-	'/waitlist',
-	rsvGuard({
-		scope: 'book',
-		feature: 'waitlist',
-		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const query = readQuery(c, requiredLocationQuerySchema)
-		if ('error' in query) return query.error
-
-		const locCheck = await resolveLocationParam(c, ctx, query.data.locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		const db = await getTenantDb(ctx.orgId)
-		const entries = await db
-			.select()
-			.from(rsvWaitlistEntries)
-			.where(eq(rsvWaitlistEntries.locationId, locCheck.locationId))
-
-		return json({ ok: true, orgId: ctx.orgId, entries })
-	},
+reservationsOperatorRoutes.route(
+	'/book/waitlist',
+	operatorReservationsWaitlistRoutes,
 )
+reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 
 // 3. Guests scope routes
 reservationsOperatorRoutes.route('/guests', operatorReservationsGuestsRoutes)

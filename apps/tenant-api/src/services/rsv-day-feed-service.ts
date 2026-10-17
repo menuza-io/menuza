@@ -201,6 +201,8 @@ export interface SerializedBookReservation {
 	courseStatus: string | null
 	course_status: string | null
 	channel: string
+	/** The `X-Client` value recorded at booking (`web`, `ios`, `android`, `operator`, ...). */
+	client: string | null
 	assignment: 'soft' | 'locked' | 'unassigned'
 	locked: boolean
 	tableLocked: boolean
@@ -480,6 +482,7 @@ export async function serializeReservationsForBook(
 			courseStatus: resolvedCourseStatus,
 			course_status: resolvedCourseStatus,
 			channel: r.channel,
+			client: r.client ?? null,
 			assignment: r.assignment,
 			locked: r.assignment === 'locked',
 			tableLocked: r.assignment === 'locked',
@@ -1028,7 +1031,10 @@ export async function getDayFeed(
 			(r) => r.assignment === 'unassigned' || r.tableIds.length === 0,
 		).length,
 		waitlistWaitingCount: waitlistRows.filter(
-			(w) => w.status === 'waiting' || w.status === 'notified',
+			(w) =>
+				w.status === 'waiting' ||
+				w.status === 'notified' ||
+				w.status === 'on_the_way',
 		).length,
 	}
 
@@ -2125,7 +2131,11 @@ export async function getRegionalReservationSummary(
 		.from(rsvWaitlistEntries)
 		.where(
 			and(
-				inArray(rsvWaitlistEntries.status, ['waiting', 'notified']),
+				inArray(rsvWaitlistEntries.status, [
+					'waiting',
+					'notified',
+					'on_the_way',
+				]),
 				...(locFilter
 					? [inArray(rsvWaitlistEntries.locationId, locFilter)]
 					: []),

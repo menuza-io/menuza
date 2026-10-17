@@ -2,6 +2,12 @@ import { type RouteConfig } from '@react-router/dev/routes'
 import { remixRoutesOptionAdapter } from '@react-router/remix-routes-option-adapter'
 import { flatRoutes } from 'remix-flat-routes'
 
+/**
+ * Dev-only route folders. `build:cf` sets `STRIP_DEV_MOCKS=true`, so a deployed
+ * Worker never contains them (each also answers 404 unless `MOCKS=true`).
+ */
+const DEV_MOCK_ROUTE_FOLDERS = ['mock-payments+', 'mock-email+']
+
 export default remixRoutesOptionAdapter((defineRoutes) => {
 	return flatRoutes('routes', defineRoutes, {
 		ignoredRouteFiles: [
@@ -16,6 +22,9 @@ export default remixRoutesOptionAdapter((defineRoutes) => {
 			// my-route.[server].tsx
 			'**/*.server.*',
 			'**/*.client.*',
+			...(process.env.STRIP_DEV_MOCKS === 'true'
+				? DEV_MOCK_ROUTE_FOLDERS.map((folder) => `${folder}/**`)
+				: []),
 		],
 	})
 }) satisfies RouteConfig

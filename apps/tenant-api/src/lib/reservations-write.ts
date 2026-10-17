@@ -7,6 +7,7 @@ import {
 	rsvHolds,
 	rsvIdempotencyKeys,
 	rsvLocationSettings,
+	rsvNotifyRequests,
 	rsvPacingRules,
 	rsvReservationEvents,
 	rsvReservations,
@@ -25,6 +26,10 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, gt, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm'
 import { runExclusive } from './concurrency.ts'
+import {
+	enqueueReservationMessage,
+	reconcileScheduledMessages,
+} from '../services/rsv-message-queue.ts'
 import { conflict, HttpError } from './http.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
@@ -76,6 +81,8 @@ export type SweepSummary = {
 	expiredPendingPayments: number
 	expiredPendingRequests: number
 	expiredWaitlistOffers: number
+	/** Ids of requests that lapsed unanswered, so the guest can be told. */
+	expiredRequestIds: string[]
 	affectedLocationDates: Array<{ locationId: string; businessDate: string }>
 }
 
@@ -409,6 +416,7 @@ export async function sweepExpiredInTx(
 		expiredPendingPayments: expiredPaymentRows.length,
 		expiredPendingRequests: expiredRequestRows.length,
 		expiredWaitlistOffers: expiredWaitlistRows.length,
+		expiredRequestIds: expiredRequestRows.map((row) => row.id),
 		affectedLocationDates: Array.from(affected.values()),
 	}
 }
@@ -591,6 +599,32 @@ export async function bumpDayVersionsInTx(
 				},
 			})
 
+		// Any write on a day someone is waiting on may have freed a slot. The
+		// matcher recomputes real availability, so a false alarm costs one pass.
+		const watching = await tx
+			.select({ id: rsvNotifyRequests.id })
+			.from(rsvNotifyRequests)
+			.where(
+				and(
+					eq(rsvNotifyRequests.locationId, locationId),
+					eq(rsvNotifyRequests.businessDate, businessDate),
+					inArray(rsvNotifyRequests.status, ['active', 'notified']),
+				),
+			)
+			.limit(1)
+			.get()
+		if (watching) {
+			await tx
+				.update(rsvDayVersions)
+				.set({ availabilityIncreasedAt: now })
+				.where(
+					and(
+						eq(rsvDayVersions.locationId, locationId),
+						eq(rsvDayVersions.businessDate, businessDate),
+					),
+				)
+		}
+
 		const row = await tx
 			.select({ version: rsvDayVersions.version })
 			.from(rsvDayVersions)
@@ -721,6 +755,19 @@ export async function withReservationWrite<T>(
 					for (const item of swept.affectedLocationDates) {
 						markAffectedDate(item.locationId, item.businessDate)
 					}
+					const queueCtx = {
+						orgId,
+						now,
+						afterCommit: (hook: () => void | Promise<void>) => {
+							postCommitHooks.push(hook)
+						},
+					}
+					for (const requestId of swept.expiredRequestIds) {
+						await enqueueReservationMessage(tx, queueCtx, {
+							reservationId: requestId,
+							kind: 'request_declined',
+						})
+					}
 
 					if (idempotency) {
 						const existing = await tx
@@ -820,6 +867,15 @@ export async function withReservationWrite<T>(
 						{ orgId, tx, helpers },
 						() => fn(tx, helpers),
 					)
+
+					// Reminders follow the booking: whatever this write changed, the
+					// scheduled rows of the touched days are brought back in line.
+					for (const [locId, datesSet] of affectedDatesByLocation.entries()) {
+						await reconcileScheduledMessages(tx, queueCtx, {
+							locationId: locId,
+							dates: [...datesSet],
+						})
+					}
 
 					for (const [locId, datesSet] of affectedDatesByLocation.entries()) {
 						const remaining = Array.from(datesSet).filter(

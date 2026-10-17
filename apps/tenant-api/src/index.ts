@@ -2,15 +2,32 @@ import 'varlock/auto-load'
 import { serve } from '@hono/node-server'
 import { ENV } from 'varlock/env'
 import { createTenantApiApp } from './app.ts'
+import {
+	captureDevEmail,
+	devEmailCaptureDir,
+	isDevEmailCaptureOn,
+} from './lib/dev-email-capture.ts'
 import { registerRestaurantOrderSource } from './restaurant/staffing-order-source.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
+import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
+import { startReservationsTickInterval } from './lib/reservations-tick-interval.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
 assertDataRegion()
 
 registerRestaurantOrderSource()
+
+if (process.env.NODE_ENV === 'production' && devEmailCaptureDir()) {
+	console.warn('DEV_EMAIL_CAPTURE_DIR is ignored in production')
+}
+if (isDevEmailCaptureOn()) {
+	setTenantEmailDevCapture((record) =>
+		captureDevEmail(record, { region: getNodeRegion() }),
+	)
+	console.log(`DEV EMAIL CAPTURE ACTIVE -> ${devEmailCaptureDir()}`)
+}
 
 const app = createTenantApiApp()
 
@@ -28,3 +45,6 @@ serve({
 
 // Sub-hourly staff tick on this node; the hourly cron remains the safety net.
 startStaffTickInterval()
+
+// Sub-hourly reservations tick (messages, expiry, waitlist) on this node.
+startReservationsTickInterval()

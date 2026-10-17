@@ -49,19 +49,27 @@ export type PublicEngineState = {
 		string,
 		Awaited<ReturnType<typeof loadLocationSchedulingState>>['tables'][number]
 	>
+	/** Areas a guest may choose; a slot in any other area carries no area. */
+	selectableAreas: Map<
+		string,
+		{ name: string; nameI18n: Record<string, string> | null }
+	>
 	occupanciesFor: (businessDate: string) => ExistingOccupancyInput[]
 }
 
 export function pickI18n(
 	map: Record<string, string> | null | undefined,
 	locale?: string | null,
+	/** Names have a canonical column to fall back to, so they must not borrow another locale's text. */
+	fallbackToAnyLocale = true,
 ): string | null {
 	if (!map) return null
 	const exact = locale ? map[locale] : undefined
 	if (exact) return exact
 	const base = locale?.split('-')[0]
 	if (base && map[base]) return map[base]!
-	return map.en ?? Object.values(map).find(Boolean) ?? null
+	if (map.en) return map.en
+	return fallbackToAnyLocale ? (Object.values(map).find(Boolean) ?? null) : null
 }
 
 export function toEngineSettings(
@@ -313,6 +321,13 @@ export async function loadPublicEngineState(
 		timeZone: sched.timeZone,
 		specialDays: specialDayRows,
 		tableById: sched.tableById,
+		selectableAreas: new Map(
+			sched.areas
+				.filter(
+					(a) => a.guestSelectable && a.onlineBookable && a.archivedAt === null,
+				)
+				.map((a) => [a.id, { name: a.name, nameI18n: a.nameI18n }]),
+		),
 		occupanciesFor: (businessDate) => [
 			...(byDate.get(addDays(businessDate, -1)) ?? []),
 			...(byDate.get(businessDate) ?? []),
@@ -348,14 +363,28 @@ export type PublicSlot = {
 	time: string
 	serviceId: string
 	serviceName: string
+	/** Set only when the slot sits in a guest-selectable seating area. */
+	areaId: string | null
+	areaLabel: string | null
 }
 
-export function toPublicSlot(slot: AvailableSlot): PublicSlot {
-	return {
-		localMin: slot.slotMin,
-		time: slot.slotHhmm,
-		serviceId: slot.serviceId,
-		serviceName: slot.serviceName,
+/** Maps engine slots to the public shape, naming the seating area when a guest may choose it. */
+export function publicSlotMapper(
+	state: Pick<PublicEngineState, 'selectableAreas'>,
+	locale?: string | null,
+): (slot: AvailableSlot) => PublicSlot {
+	return (slot) => {
+		const area = state.selectableAreas.get(slot.areaId)
+		return {
+			localMin: slot.slotMin,
+			time: slot.slotHhmm,
+			serviceId: slot.serviceId,
+			serviceName: slot.serviceName,
+			areaId: area ? slot.areaId : null,
+			areaLabel: area
+				? (pickI18n(area.nameI18n, locale, false) ?? area.name)
+				: null,
+		}
 	}
 }
 

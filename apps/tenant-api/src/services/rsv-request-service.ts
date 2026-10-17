@@ -13,6 +13,7 @@ import {
 	insertOccupancyRows,
 } from './rsv-hold-service.ts'
 import { planRequestTables } from './rsv-public-booking-service.ts'
+import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import { loadPublicEngineState } from './rsv-public-engine.ts'
 
 async function loadPendingRequest(orgId: string, reservationId: string) {
@@ -47,7 +48,7 @@ export async function approveReservationRequest(params: {
 			dates: pre.businessDate,
 			now,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const current = await tx
 				.select()
 				.from(rsvReservations)
@@ -122,6 +123,11 @@ export async function approveReservationRequest(params: {
 				toStatus: 'booked',
 				data: { tablesAssigned: tableCount > 0 },
 			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId: current.id, kind: 'request_approved' },
+			)
 			return { reservationId: current.id }
 		},
 	)
@@ -143,7 +149,7 @@ export async function declineReservationRequest(params: {
 			dates: pre.businessDate,
 			now,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const current = await tx
 				.select()
 				.from(rsvReservations)
@@ -175,6 +181,11 @@ export async function declineReservationRequest(params: {
 				toStatus: 'declined',
 				data: { reason: params.reason?.trim() || null },
 			})
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId: current.id, kind: 'request_declined' },
+			)
 			return { reservationId: current.id }
 		},
 	)

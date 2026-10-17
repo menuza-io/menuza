@@ -145,6 +145,21 @@ async function invokeTenantStaffTick(env: Env) {
 	})
 }
 
+/**
+ * The reservations tick: due guest messages and reminders, expired holds and
+ * requests, automatic no-shows and manager alerts for every organization on
+ * each regional node. Like the staff tick it rides the hourly trigger as the
+ * safety net for the Durable Object alarms (US) and the in-process interval
+ * (OCI). Every task is idempotent. The response is counts only.
+ */
+async function invokeTenantReservationsTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/reservations/tick',
+		body: {},
+		label: 'Tenant reservations tick',
+	})
+}
+
 async function invokeJob(env: Env, path: string) {
 	const response = await fetch(
 		`${env.APP_BASE_URL.replace(/\/$/, '')}${path}`,
@@ -362,6 +377,7 @@ export default {
 			for (const [name, run] of [
 				['Tenant engagement sync', invokeTenantEngagementSync],
 				['Tenant staff tick', invokeTenantStaffTick],
+				['Tenant reservations tick', invokeTenantReservationsTick],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

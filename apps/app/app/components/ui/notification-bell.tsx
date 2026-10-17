@@ -30,6 +30,11 @@ import { useNavigate, useFetcher, useParams } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
+import { reservationAlertCopy } from '#app/utils/reservations/alert-copy.ts'
+import {
+	reservationAlertKindFromNotificationType,
+	reservationAlertPath,
+} from '#app/utils/reservations/manager-alerts.ts'
 import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
 
 interface Notification {
@@ -95,12 +100,26 @@ function NotificationItem({
 		? staffingAlertCopy(staffingKind, Number(payload?.count), _)
 		: null
 
+	const reservationsKind = reservationAlertKindFromNotificationType(
+		notification.type,
+	)
+	const reservations = reservationsKind
+		? reservationAlertCopy(
+				reservationsKind,
+				Number(payload?.count),
+				_,
+				typeof payload?.locationName === 'string' ? payload.locationName : null,
+			)
+		: null
+
 	const subject =
 		staffing?.subject ??
+		reservations?.subject ??
 		(notification.type === 'mention'
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
-	const body = staffing?.body ?? payload?.commentContent ?? ''
+	const body =
+		staffing?.body ?? reservations?.body ?? payload?.commentContent ?? ''
 
 	const handlePress = () => {
 		if (!notification.isRead) {
@@ -111,6 +130,10 @@ function NotificationItem({
 				typeof payload.scopeId === 'string' ? payload.scopeId : null
 			void navigate(
 				`/${payload.orgSlug}${managerAlertPath(staffingKind, scopeId)}`,
+			)
+		} else if (reservationsKind && typeof payload?.orgSlug === 'string') {
+			void navigate(
+				`/${payload.orgSlug}${reservationAlertPath(reservationsKind)}`,
 			)
 		} else if (payload.noteUrl) {
 			void navigate(payload.noteUrl)
@@ -142,7 +165,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{staffingKind ? (
+						{reservationsKind ? (
+							<Icon name="calendar" className="h-4 w-4" />
+						) : staffingKind ? (
 							<Icon name="clock" className="h-4 w-4" />
 						) : (
 							payload.commenterName?.[0] || 'N'

@@ -120,6 +120,13 @@
 			"when": 1792108794217,
 			"tag": "0016_reservations_foundation",
 			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "6",
+			"when": 1792216284333,
+			"tag": "0017_reservations_messages_waitlist",
+			"breakpoints": true
 		}
 	]
 }

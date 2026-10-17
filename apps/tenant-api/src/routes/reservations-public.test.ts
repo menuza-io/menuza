@@ -1376,3 +1376,153 @@ describe('data placement', () => {
 		void and
 	})
 })
+
+describe('guest-selectable seating areas', () => {
+	async function seedAreas() {
+		const db = await getTenantDb(ORG)
+		await db.insert(rsvAreas).values([
+			{
+				id: 'area_pub_patio',
+				locationId: PUBLIC_LOC,
+				name: 'Patio',
+				nameI18n: { ar: 'الشرفة' },
+				sort: 1,
+				onlineBookable: true,
+				guestSelectable: true,
+			},
+			{
+				id: 'area_pub_bar',
+				locationId: PUBLIC_LOC,
+				name: 'Bar',
+				sort: 2,
+				onlineBookable: true,
+				guestSelectable: false,
+			},
+			{
+				id: 'area_pub_old',
+				locationId: PUBLIC_LOC,
+				name: 'Old Room',
+				sort: 3,
+				onlineBookable: true,
+				guestSelectable: true,
+				archivedAt: new Date(),
+			},
+			{
+				id: 'area_pub_closed',
+				locationId: PUBLIC_LOC,
+				name: 'Closed Room',
+				sort: 4,
+				onlineBookable: false,
+				guestSelectable: true,
+			},
+		])
+		return db
+	}
+
+	it('config lists only active, online, guest-selectable areas without internals', async () => {
+		await seedAreas()
+		const { status, body, text } = await call('GET', '/reservations/config')
+		expect(status).toBe(200)
+		expect(body.locations[0].areas).toEqual([
+			{ id: 'area_pub_main', name: 'Main Room' },
+			{ id: 'area_pub_patio', name: 'Patio' },
+		])
+		expect(text).not.toContain('Bar')
+		expect(text).not.toContain('Old Room')
+		expect(text).not.toContain('Closed Room')
+	})
+
+	it('config localizes area names', async () => {
+		await seedAreas()
+		const { body } = await call('GET', '/reservations/config?locale=ar')
+		const names = body.locations[0].areas.map((a: { name: string }) => a.name)
+		expect(names).toContain('الشرفة')
+		expect(names).toContain('Main Room')
+	})
+
+	it('availability slots carry areaId and areaLabel only for selectable areas', async () => {
+		const db = await seedAreas()
+		const withArea = await availability(2)
+		expect(withArea.status).toBe(200)
+		expect(withArea.body.slots.length).toBeGreaterThan(0)
+		for (const slot of withArea.body.slots) {
+			expect(slot.areaId).toBe('area_pub_main')
+			expect(slot.areaLabel).toBe('Main Room')
+		}
+
+		await db
+			.update(rsvAreas)
+			.set({ guestSelectable: false })
+			.where(eq(rsvAreas.id, 'area_pub_main'))
+		clearReservationDayCacheForTest()
+		const without = await availability(2)
+		expect(without.status).toBe(200)
+		expect(without.body.slots.length).toBeGreaterThan(0)
+		for (const slot of without.body.slots) {
+			expect(slot.areaId).toBeNull()
+			expect(slot.areaLabel).toBeNull()
+		}
+		expect(without.text).not.toContain('Main Room')
+	})
+})
+
+describe('operator reads of the recorded client', () => {
+	async function bookAs(client: string | undefined, n: number, date: string) {
+		const hold = await createHold(19 * 60, 2, {}, {}, date)
+		expect(hold.status, hold.text).toBe(201)
+		const booked = await book(hold.body.holdToken, n, {
+			headers: client === undefined ? {} : { 'X-Client': client },
+		})
+		expect(booked.status, booked.text).toBe(201)
+		return booked.body.reservation.id as string
+	}
+
+	async function feedRow(id: string, date: string) {
+		const feed = await operatorCall(
+			'GET',
+			`/book/day?locationId=${PUBLIC_LOC}&date=${date}`,
+		)
+		expect(feed.status).toBe(200)
+		const row = feed.body.reservations.find((r: { id: string }) => r.id === id)
+		expect(row, JSON.stringify(feed.body).slice(0, 300)).toBeTruthy()
+		return row
+	}
+
+	it('returns client next to channel in the day feed and detail', async () => {
+		const cases: Array<[string | undefined, string, string]> = [
+			['ios', 'native', 'ios'],
+			['android', 'native', 'android'],
+			[undefined, 'online', 'web'],
+		]
+		for (const [i, [header, channel, client]] of cases.entries()) {
+			const date = dateAhead(20 + i)
+			const id = await bookAs(header, 60 + i, date)
+			const row = await feedRow(id, date)
+			expect(row).toMatchObject({ channel, client })
+			const detail = await operatorCall('GET', `/book/reservations/${id}`)
+			expect(detail.status).toBe(200)
+			expect(detail.body.reservation).toMatchObject({ channel, client })
+		}
+	})
+
+	it('sanitizes unknown or hostile X-Client values to web', async () => {
+		const date = dateAhead(30)
+		const id = await bookAs('<script>' + 'x'.repeat(300), 70, date)
+		const row = await feedRow(id, date)
+		expect(row).toMatchObject({ channel: 'online', client: 'web' })
+	})
+
+	it('reports a null client for rows that never recorded one', async () => {
+		const date = dateAhead(31)
+		const id = await bookAs('ios', 71, date)
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvReservations)
+			.set({ client: null })
+			.where(eq(rsvReservations.id, id))
+		const row = await feedRow(id, date)
+		expect(row.client).toBeNull()
+		const detail = await operatorCall('GET', `/book/reservations/${id}`)
+		expect(detail.body.reservation.client).toBeNull()
+	})
+})

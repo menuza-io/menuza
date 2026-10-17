@@ -4,11 +4,12 @@ import {
 	type ReservationsContext,
 } from '@repo/reservations'
 import {
+	rsvAreas,
 	rsvLocationSettings,
 	rsvTags,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { buildAlternatives, alternativesWindow } from './rsv-hold-service.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
@@ -18,7 +19,7 @@ import {
 	pickI18n,
 	readDayVersion,
 	searchPublicDay,
-	toPublicSlot,
+	publicSlotMapper,
 	uniqueSlotsByTime,
 	type LocationSettingsRow,
 } from './rsv-public-engine.ts'
@@ -91,12 +92,31 @@ export async function getPublicConfig(
 		.from(rsvTags)
 		.where(and(eq(rsvTags.guestSelectable, true), isNull(rsvTags.archivedAt)))
 		.all()
+	const areaRows =
+		locations.length > 0
+			? await db
+					.select()
+					.from(rsvAreas)
+					.where(
+						and(
+							inArray(
+								rsvAreas.locationId,
+								locations.map((l) => l.facts.id),
+							),
+							eq(rsvAreas.guestSelectable, true),
+							eq(rsvAreas.onlineBookable, true),
+							isNull(rsvAreas.archivedAt),
+						),
+					)
+					.orderBy(asc(rsvAreas.sort))
+					.all()
+			: []
 	const chips = (category: string) =>
 		tags
 			.filter((t) => t.category === category)
 			.map((t) => ({
 				id: t.id,
-				name: pickI18n(t.nameI18n, locale) ?? t.name,
+				name: pickI18n(t.nameI18n, locale, false) ?? t.name,
 			}))
 	return {
 		organization: {
@@ -123,10 +143,20 @@ export async function getPublicConfig(
 			holdMinutes: l.settings.holdMinutes,
 			largeParty: largePartyBlock(l, locale),
 			waitlist: {
-				enabled: l.settings.waitlistEnabled,
-				online: l.settings.waitlistEnabled && l.settings.waitlistOnline,
+				enabled: ctx.features.waitlist && l.settings.waitlistEnabled,
+				online:
+					ctx.features.waitlist &&
+					ctx.features.online &&
+					l.settings.waitlistEnabled &&
+					l.settings.waitlistOnline,
 			},
-			notifyMe: l.settings.notifyMeEnabled,
+			notifyMe: ctx.features.waitlist && l.settings.notifyMeEnabled,
+			areas: areaRows
+				.filter((a) => a.locationId === l.facts.id)
+				.map((a) => ({
+					id: a.id,
+					name: pickI18n(a.nameI18n, locale, false) ?? a.name,
+				})),
 			publicNote: pickI18n(l.settings.publicNoteI18n, locale),
 		})),
 		occasions: chips('occasion'),
@@ -143,6 +173,8 @@ export type AvailabilityParams = {
 	now?: number
 	excludeReservationId?: string
 	location: BookableLocation
+	/** The organization flags: a switched-off module offers no waitlist or notify-me hint. */
+	features: Pick<ReservationsContext['features'], 'waitlist' | 'online'>
 }
 
 export async function getPublicAvailability(
@@ -208,7 +240,7 @@ export async function getPublicAvailability(
 		date: params.date,
 		partySize: params.partySize,
 		status: result.status,
-		slots: slots.map(toPublicSlot),
+		slots: slots.map(publicSlotMapper(state, params.locale)),
 		alternatives,
 		...(result.status === 'large_party'
 			? { largeParty: largePartyBlock(params.location, params.locale ?? null) }
@@ -223,8 +255,12 @@ export async function getPublicAvailability(
 				}
 			: {}),
 		...(onlineClosedDay ? { onlineClosed: onlineClosedDay } : {}),
-		notifyMe: settings.notifyMeEnabled,
-		waitlist: settings.waitlistEnabled && settings.waitlistOnline,
+		notifyMe: params.features.waitlist && settings.notifyMeEnabled,
+		waitlist:
+			params.features.waitlist &&
+			params.features.online &&
+			settings.waitlistEnabled &&
+			settings.waitlistOnline,
 	}
 }
 

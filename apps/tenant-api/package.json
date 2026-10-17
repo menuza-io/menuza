@@ -5,8 +5,8 @@
   "description": "Regional Tenant Data Node for multi-region isolated customer auth and DB storage",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "dev:ksa": "DATA_REGION=ksa PORT=3009 tsx watch src/index.ts",
+    "dev": "DEV_EMAIL_CAPTURE_DIR=.dev-mail/us tsx watch src/index.ts",
+    "dev:ksa": "DATA_REGION=ksa PORT=3009 DEV_EMAIL_CAPTURE_DIR=.dev-mail/ksa tsx watch src/index.ts",
     "start": "node --import=tsx src/index.ts",
     "generate:do-migrations": "node scripts/generate-do-migrations.mjs",
     "codegen": "../../node_modules/.bin/varlock codegen --path .",

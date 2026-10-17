@@ -644,7 +644,7 @@ msgstr "{dayName}: عدد المجدولين {people}، والورديات ال�
 msgid "{days} days"
 msgstr "{days} يومًا"
 
-#: app/components/ui/notification-bell.tsx:66
+#: app/components/ui/notification-bell.tsx:71
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -754,7 +754,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:62
+#: app/components/ui/notification-bell.tsx:67
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -838,13 +838,37 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:58
+#: app/components/ui/notification-bell.tsx:63
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
+
+#: app/utils/reservations/alert-copy.ts:61
+msgid "{n, plural, one {# booking has a failed payment} other {# bookings have a failed payment}}"
+msgstr "{n, plural, one {حجز واحد فشلت دفعته} two {حجزان فشلت دفعتهما} few {# حجوزات فشلت دفعاتها} many {# حجزًا فشلت دفعاتها} other {# حجز فشلت دفعاتها}}"
+
+#: app/utils/reservations/alert-copy.ts:71
+msgid "{n, plural, one {# booking needs a payment review} other {# bookings need a payment review}}"
+msgstr "{n, plural, one {حجز واحد تحتاج دفعته إلى مراجعة} two {حجزان تحتاج دفعتاهما إلى مراجعة} few {# حجوزات تحتاج دفعاتها إلى مراجعة} many {# حجزًا تحتاج دفعاتها إلى مراجعة} other {# حجز تحتاج دفعاتها إلى مراجعة}}"
+
+#: app/utils/reservations/alert-copy.ts:51
+msgid "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
+msgstr "{n, plural, one {حجز واحد لم تعد له طاولة} two {حجزان لم تعد لهما طاولة} few {# حجوزات لم تعد لها طاولة} many {# حجزًا لم تعد لها طاولة} other {# حجز لم تعد لها طاولة}}"
 
 #: app/utils/staffing/alert-copy.ts:126
 msgid "{n, plural, one {# certificate is expiring or has expired} other {# certificates are expiring or have expired}}"
 msgstr "{n, plural, one {شهادة واحدة توشك على الانتهاء أو انتهت} two {شهادتان توشكان على الانتهاء أو انتهتا} few {# شهادات توشك على الانتهاء أو انتهت} many {# شهادة توشك على الانتهاء أو انتهت} other {# شهادة توشك على الانتهاء أو انتهت}}"
+
+#: app/utils/reservations/alert-copy.ts:41
+msgid "{n, plural, one {# guest joined the waitlist remotely} other {# guests joined the waitlist remotely}}"
+msgstr "{n, plural, one {انضم ضيف واحد إلى قائمة الانتظار عن بُعد} two {انضم ضيفان إلى قائمة الانتظار عن بُعد} few {انضم # ضيوف إلى قائمة الانتظار عن بُعد} many {انضم # ضيفًا إلى قائمة الانتظار عن بُعد} other {انضم # ضيف إلى قائمة الانتظار عن بُعد}}"
+
+#: app/utils/reservations/alert-copy.ts:93
+msgid "{n, plural, one {# guest message could not be delivered} other {# guest messages could not be delivered}}"
+msgstr "{n, plural, one {تعذّر تسليم رسالة واحدة إلى ضيف} two {تعذّر تسليم رسالتين إلى ضيوف} few {تعذّر تسليم # رسائل إلى ضيوف} many {تعذّر تسليم # رسالة إلى ضيوف} other {تعذّر تسليم # رسالة إلى ضيوف}}"
+
+#: app/utils/reservations/alert-copy.ts:31
+msgid "{n, plural, one {# large-party request is waiting} other {# large-party requests are waiting}}"
+msgstr "{n, plural, one {طلب واحد لمجموعة كبيرة بانتظار القرار} two {طلبان لمجموعات كبيرة بانتظار القرار} few {# طلبات لمجموعات كبيرة بانتظار القرار} many {# طلبًا لمجموعات كبيرة بانتظار القرار} other {# طلب لمجموعات كبيرة بانتظار القرار}}"
 
 #: app/utils/staffing/alert-copy.ts:96
 msgid "{n, plural, one {# new applicant} other {# new applicants}}"
@@ -853,6 +877,10 @@ msgstr "{n, plural, one {متقدّم جديد} two {متقدّمان جديدا
 #: app/utils/staffing/alert-copy.ts:111
 msgid "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 msgstr "{n, plural, one {مهمة تهيئة واحدة تحتاج إلى انتباه} two {مهمتا تهيئة تحتاجان إلى انتباه} few {# مهام تهيئة تحتاج إلى انتباه} many {# مهمة تهيئة تحتاج إلى انتباه} other {# مهمة تهيئة تحتاج إلى انتباه}}"
+
+#: app/utils/reservations/alert-copy.ts:81
+msgid "{n, plural, one {# payment dispute was opened} other {# payment disputes were opened}}"
+msgstr "{n, plural, one {تم فتح نزاع واحد على دفعة} two {تم فتح نزاعين على دفعات} few {تم فتح # نزاعات على دفعات} many {تم فتح # نزاعًا على دفعات} other {تم فتح # نزاع على دفعات}}"
 
 #: app/utils/staffing/alert-copy.ts:21
 msgid "{n, plural, one {# person has not clocked in} other {# people have not clocked in}}"
@@ -1101,7 +1129,7 @@ msgstr "{runsCount} تشغيل"
 msgid "{seconds, plural, one {Closing in # second} other {Closing in # seconds}}"
 msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق خلال ثانيتين} few {يُغلق خلال # ثوانٍ} many {يُغلق خلال # ثانية} other {يُغلق خلال # ثانية}}"
 
-#: app/components/ui/notification-bell.tsx:54
+#: app/components/ui/notification-bell.tsx:59
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -2956,8 +2984,8 @@ msgstr "كل الفروع"
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "ستُحذف جميع الرسائل في هذه القناة نهائياً للجميع. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/components/ui/notification-bell.tsx:365
-#: app/components/ui/notification-bell.tsx:466
+#: app/components/ui/notification-bell.tsx:390
+#: app/components/ui/notification-bell.tsx:491
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -3119,7 +3147,7 @@ msgstr "موجود بالفعل."
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
-#: app/components/ui/notification-bell.tsx:189
+#: app/components/ui/notification-bell.tsx:214
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -7370,7 +7398,7 @@ msgstr "إكراميات البطاقات"
 msgid "Credit tips: {from} to {to}"
 msgstr "إكراميات البطاقات: من {from} إلى {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:202
+#: app/components/settings/cards/notification-preferences-card.tsx:218
 msgid "Critical"
 msgstr "حرجة"
 
@@ -9438,7 +9466,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
 #: app/components/reservations/booking-sheet.tsx:689
-#: app/components/settings/cards/notification-preferences-card.tsx:26
+#: app/components/settings/cards/notification-preferences-card.tsx:27
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
 #: app/components/staff/review-rows.tsx:112
@@ -11723,7 +11751,7 @@ msgstr "مدير التوظيف"
 msgid "Hiring sections"
 msgstr "أقسام التوظيف"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:42
+#: app/components/settings/cards/notification-preferences-card.tsx:43
 msgid "Hiring: someone applied for a job"
 msgstr "التوظيف: تقدّم شخص إلى وظيفة"
 
@@ -12134,7 +12162,7 @@ msgstr "قيد المعالجة"
 msgid "In your manager account, open Staff, Time clock, then Tablets."
 msgstr "من حساب المدير، افتح «الموظفون» ثم «ساعة الدوام» ثم «الأجهزة اللوحية»."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:27
+#: app/components/settings/cards/notification-preferences-card.tsx:28
 msgid "In-App"
 msgstr "داخل التطبيق"
 
@@ -13542,6 +13570,10 @@ msgstr "تغيرت المنطقة الزمنية للفرع"
 msgid "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 msgstr "تُستخدم المنطقة الزمنية للفرع لحساب فترات الجلوس للحجوزات. سيؤدي تغيير المنطقة الزمنية إلى مطالبتك بإعادة احتساب أوقات الحجوزات المستقبلية في إعدادات الحجوزات."
 
+#: app/utils/reservations/alert-copy.ts:21
+msgid "Location: {locationName}"
+msgstr "الموقع: {locationName}"
+
 #: app/components/app-sidebar.tsx:630
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
@@ -13883,7 +13915,7 @@ msgstr "إدارة حساباتك المتصلة هنا."
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "إدارة القوائم والفئات والعناصر والطروحات ومجموعات المعدلات."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:258
+#: app/components/settings/cards/notification-preferences-card.tsx:277
 msgid "Manage your notification settings for different channels and workflows."
 msgstr "إدارة إعدادات الإشعارات للقنوات ومسارات العمل المختلفة."
 
@@ -13965,7 +13997,7 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:491
+#: app/components/ui/notification-bell.tsx:516
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -13985,7 +14017,7 @@ msgstr "وضع علامة غير منجزة"
 msgid "Mark as preselected"
 msgstr "تعيين كمحدد مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:191
+#: app/components/ui/notification-bell.tsx:216
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -16549,7 +16581,7 @@ msgstr "تعذرت الإجابة عن أي شيء من تفاصيل نشاطك 
 msgid "Nothing has been set up for this person."
 msgstr "لم يتم إعداد أي شيء لهذا الشخص."
 
-#: app/components/ui/notification-bell.tsx:248
+#: app/components/ui/notification-bell.tsx:273
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -16606,7 +16638,7 @@ msgstr "لا شيء بانتظار المدير."
 msgid "Notification Message"
 msgstr "رسالة الإشعار"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:255
+#: app/components/settings/cards/notification-preferences-card.tsx:274
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
@@ -16615,11 +16647,11 @@ msgstr "تفضيلات الإشعارات"
 msgid "Notifications"
 msgstr "الإشعارات"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:38
+#: app/components/settings/cards/notification-preferences-card.tsx:39
 msgid "Notifications when someone comments on your notes"
 msgstr "إشعارات عندما يعلق شخص ما على ملاحظاتك"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:37
+#: app/components/settings/cards/notification-preferences-card.tsx:38
 msgid "Notifications when you are mentioned in a comment"
 msgstr "إشعارات عندما يتم ذكرك في تعليق"
 
@@ -17128,7 +17160,7 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:481
+#: app/components/ui/notification-bell.tsx:506
 msgid "Open menu"
 msgstr "فتح القائمة"
 
@@ -17250,9 +17282,30 @@ msgstr "افتح الفريق لترى من تحتاج شهادته إلى تج�
 msgid "Open the time clock to see who is missing."
 msgstr "افتح ساعة الدوام لمعرفة من لم يسجّل حضوره."
 
+#: app/utils/reservations/alert-copy.ts:46
+msgid "Open the waitlist to see who is waiting."
+msgstr "افتح قائمة الانتظار لمعرفة من ينتظر."
+
 #: app/components/staff/kiosk-manager.tsx:733
 msgid "Open this on the tablet"
 msgstr "افتح هذا على الجهاز اللوحي"
+
+#: app/utils/reservations/alert-copy.ts:36
+msgid "Open Today to approve or decline."
+msgstr "افتح «اليوم» للموافقة أو الرفض."
+
+#: app/utils/reservations/alert-copy.ts:56
+msgid "Open Today to assign a table."
+msgstr "افتح «اليوم» لتعيين طاولة."
+
+#: app/utils/reservations/alert-copy.ts:98
+msgid "Open Today to check on the affected guests."
+msgstr "افتح «اليوم» للاطمئنان على الضيوف المتأثرين."
+
+#: app/utils/reservations/alert-copy.ts:66
+#: app/utils/reservations/alert-copy.ts:76
+msgid "Open Today to review the bookings."
+msgstr "افتح «اليوم» لمراجعة الحجوزات."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
 msgid "Open visual builder"
@@ -20462,6 +20515,34 @@ msgstr "أقسام إعداد الحجوزات"
 msgid "Reservations: {reservationsCount}"
 msgstr "الحجوزات: {reservationsCount}"
 
+#: app/components/settings/cards/notification-preferences-card.tsx:46
+msgid "Reservations: a booking no longer has a table"
+msgstr "الحجوزات: حجز لم تعد له طاولة"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:45
+msgid "Reservations: a guest joined the waitlist remotely"
+msgstr "الحجوزات: انضم ضيف إلى قائمة الانتظار عن بُعد"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:44
+msgid "Reservations: a large-party request is waiting"
+msgstr "الحجوزات: طلب لمجموعة كبيرة بانتظار القرار"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:49
+msgid "Reservations: a payment dispute was opened"
+msgstr "الحجوزات: تم فتح نزاع على دفعة"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:47
+msgid "Reservations: a payment failed"
+msgstr "الحجوزات: فشلت دفعة"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:48
+msgid "Reservations: a payment needs a review"
+msgstr "الحجوزات: دفعة تحتاج إلى مراجعة"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:50
+msgid "Reservations: guest messages could not be delivered"
+msgstr "الحجوزات: تعذّر تسليم رسائل إلى الضيوف"
+
 #. placeholder {0}: upcomingRes.hhmm
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:397
 msgid "Reserved {0}"
@@ -20570,6 +20651,10 @@ msgstr "حل تداخلات الطاولات وتعيينات الطاولات �
 #: app/components/phone-agent/call-data.ts:131
 msgid "Resolved"
 msgstr "تم الحل"
+
+#: app/utils/reservations/alert-copy.ts:87
+msgid "Respond with your payment provider before the deadline."
+msgstr "رد عبر مزوّد الدفع لديك قبل الموعد النهائي."
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:610
@@ -21485,7 +21570,7 @@ msgstr "أقسام الجدول"
 msgid "Schedule view"
 msgstr "عرض الجدول"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:41
+#: app/components/settings/cards/notification-preferences-card.tsx:42
 msgid "Schedule: a week was published"
 msgstr "الجدول: نُشر أسبوع"
 
@@ -26064,11 +26149,11 @@ msgstr "ساعة الدوام"
 msgid "Time clock sections"
 msgstr "أقسام ساعة الدوام"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:39
+#: app/components/settings/cards/notification-preferences-card.tsx:40
 msgid "Time clock: someone has not clocked in or forgot to clock out"
 msgstr "ساعة الدوام: لم يسجّل أحدهم حضوره أو نسي تسجيل انصرافه"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:40
+#: app/components/settings/cards/notification-preferences-card.tsx:41
 msgid "Time clock: someone is close to overtime or has reached it"
 msgstr "ساعة الدوام: أحدهم قريب من العمل الإضافي أو بلغه"
 
@@ -26271,7 +26356,7 @@ msgstr "اليوم"
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:422
+#: app/components/ui/notification-bell.tsx:447
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -27130,8 +27215,8 @@ msgstr "إلغاء النشر"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:366
-#: app/components/ui/notification-bell.tsx:471
+#: app/components/ui/notification-bell.tsx:391
+#: app/components/ui/notification-bell.tsx:496
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -28695,7 +28780,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:251
+#: app/components/ui/notification-bell.tsx:276
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 

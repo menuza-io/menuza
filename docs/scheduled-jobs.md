@@ -37,10 +37,10 @@ as the Admin cache route).
 | `0 5 * * *` | `/resources/jobs/form-submission-retention` | Not scheduled (see below)                       |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
-tenant engagement sync and the staff tick (below). The two are independent
-requests, so one failing never blocks the other. The Workers free plan allows
-five cron triggers per Worker, so new daily jobs share an existing trigger (each
-job is still its own request with its own error logging).
+tenant engagement sync, the staff tick and the reservations tick (below). They
+are independent requests, so one failing never blocks the others. The Workers
+free plan allows five cron triggers per Worker, so new daily jobs share an
+existing trigger (each job is still its own request with its own error logging).
 
 ### Staff tick
 
@@ -84,6 +84,29 @@ period has passed (the organization's setting, 365 days by default) are deleted,
 master `staffing.enabled` flag is on even if `staffing.hiring` was turned off,
 and it only ever selects declined rows. An organization with applicants but no
 staff yet is still ticked, so its first managers are told about new applicants.
+
+### Reservations tick
+
+`POST /api/reservations/tick` on each tenant-api node (token:
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`) runs the Reservations module's
+scheduled work for every organization on that node: expiring holds and
+large-party requests, automatic no-shows, due guest messages and reminders with
+their retries, and delivery of manager alerts to the App. It adds **no cron
+slot**: it is the third request in the hourly fan-out
+(`Tenant reservations tick`), after the staff tick, and a failing node or task
+never blocks the others. The response is counts only.
+
+Hourly is the safety net. The US Workers node arms a per-organization Durable
+Object alarm and the Node (OCI) node runs an in-process interval
+(`RESERVATIONS_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it
+off), so reminders and retries are not an hour late where Reservations is in
+use. Every task is idempotent, so the drivers may overlap.
+
+Manager alerts reach the App at `POST /resources/reservations/notify` (the
+regional node posts `{ orgId, eventId, kind, locationId, count }` with the
+internal token). The App turns each into one in-app notification per eligible
+member, plus an email unless `RESERVATIONS_EMAIL_ENABLED=false` (the switch also
+stops guest email on a tenant-api node; in-app notifications are unaffected).
 
 ### Staffing outbox
 

@@ -39,9 +39,11 @@ import {
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
+import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import {
 	hashIdempotencyPayload,
 	withReservationWrite,
+	type ReservationWriteTx,
 } from '../lib/reservations-write.ts'
 import {
 	getOperatorAvailability,
@@ -587,7 +589,7 @@ export async function createOperatorReservation(params: {
 			idempotencyKey,
 			requestHash: hashIdempotencyPayload(input),
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const now = Date.now()
 			const state = await loadLocationSchedulingState(
 				tx,
@@ -1023,6 +1025,7 @@ export async function createOperatorReservation(params: {
 				locationId,
 				guestId: guest.id,
 				confirmationCode,
+				guestLocale: guest.locale || 'en',
 				businessDate,
 				localStartMin,
 				timeZone: state.timeZone,
@@ -1115,6 +1118,12 @@ export async function createOperatorReservation(params: {
 				})
 			}
 
+			await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{ reservationId: resId, kind: 'confirmation' },
+			)
+
 			const createdRow = await tx
 				.select()
 				.from(rsvReservations)
@@ -1135,6 +1144,13 @@ export async function createWalkIn(params: {
 	locationId: string
 	actorId: string
 	idempotencyKey: string
+	/** Seating from the waitlist records this channel on the new reservation. */
+	channel?: 'walk_in' | 'waitlist'
+	/** Runs inside the same transaction, once the reservation row exists. */
+	afterCreate?: (
+		tx: ReservationWriteTx,
+		created: { reservationId: string; guestId: string },
+	) => Promise<void>
 	input: {
 		locationId?: string
 		date?: string
@@ -1328,6 +1344,7 @@ export async function createWalkIn(params: {
 				locationId,
 				guestId: guest.id,
 				confirmationCode,
+				guestLocale: guest.locale || 'en',
 				businessDate,
 				localStartMin,
 				timeZone: state.timeZone,
@@ -1341,7 +1358,7 @@ export async function createWalkIn(params: {
 				coversActual: input.partySize,
 				status: 'seated',
 				contactStatus: null,
-				channel: 'walk_in',
+				channel: params.channel ?? 'walk_in',
 				client: 'operator',
 				assignment: 'locked',
 				comboId: assignedComboId,
@@ -1411,6 +1428,13 @@ export async function createWalkIn(params: {
 					},
 				},
 			])
+
+			if (params.afterCreate) {
+				await params.afterCreate(tx, {
+					reservationId: resId,
+					guestId: guest.id,
+				})
+			}
 
 			const createdRow = await tx
 				.select()
@@ -2426,6 +2450,18 @@ export async function updateReservation(params: {
 				},
 			})
 
+			const guestVisibleChange =
+				targetBusinessDate !== current.businessDate ||
+				nextLocalStartMin !== current.localStartMin ||
+				nextPartySize !== current.partySize
+			if (scheduleChanged && guestVisibleChange) {
+				await enqueueReservationMessage(
+					tx,
+					{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+					{ reservationId: current.id, kind: 'modification' },
+				)
+			}
+
 			const updatedRow = await tx
 				.select()
 				.from(rsvReservations)
@@ -2456,6 +2492,8 @@ export async function transitionReservationStatus(params: {
 	orgId: string
 	reservationId: string
 	actorId: string
+	/** The tick acts as `system` (no operator id on the event). */
+	actorKind?: 'operator' | 'system'
 	input: {
 		status: string
 		covers?: number | null
@@ -2490,7 +2528,7 @@ export async function transitionReservationStatus(params: {
 			locationId: existing.locationId,
 			dates: existing.businessDate,
 		},
-		async (tx) => {
+		async (tx, helpers) => {
 			const now = params.input.nowMs ?? Date.now()
 			let current = await tx
 				.select()
@@ -2690,8 +2728,8 @@ export async function transitionReservationStatus(params: {
 				id: createId('rev'),
 				reservationId: current.id,
 				at: now,
-				actorKind: 'operator',
-				actorId: params.actorId,
+				actorKind: params.actorKind ?? 'operator',
+				actorId: params.actorKind === 'system' ? null : params.actorId,
 				type: targetStatus as
 					| 'confirmed'
 					| 'arrived'
@@ -2705,8 +2743,19 @@ export async function transitionReservationStatus(params: {
 					seatedCovers,
 					arrivedCovers,
 					cancelReason: params.input.cancelReason ?? null,
+					...(params.actorKind === 'system' && params.input.reason
+						? { reason: params.input.reason }
+						: {}),
 				},
 			})
+
+			if (targetStatus === 'cancelled') {
+				await enqueueReservationMessage(
+					tx,
+					{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+					{ reservationId: current.id, kind: 'cancellation_restaurant' },
+				)
+			}
 
 			const updatedRow = await tx
 				.select()
@@ -3090,6 +3139,101 @@ export async function updateReservationContactStatus(params: {
 			serialized!.contactStatus = params.input.contactStatus
 			serialized!.contact_status = params.input.contactStatus
 			return { reservation: serialized! }
+		},
+	)
+}
+
+const RESENDABLE_STATUSES = new Set(['booked', 'confirmed'])
+
+/**
+ * Operator "resend confirmation". With `rotate`, the manage link version is
+ * bumped first, so the link in every earlier email stops working and the new
+ * message carries a fresh one.
+ */
+export async function resendReservationConfirmation(params: {
+	orgId: string
+	reservationId: string
+	actorId: string
+	input: { rotate?: boolean }
+}): Promise<{
+	queued: number
+	rotated: boolean
+	reservation: SerializedBookReservation
+}> {
+	const db = await getTenantDb(params.orgId)
+	const existing = await db
+		.select()
+		.from(rsvReservations)
+		.where(eq(rsvReservations.id, params.reservationId))
+		.get()
+	if (!existing) throw notFound('Reservation not found')
+
+	return withReservationWrite(
+		{
+			orgId: params.orgId,
+			locationId: existing.locationId,
+			dates: existing.businessDate,
+		},
+		async (tx, helpers) => {
+			const now = Date.now()
+			const current = await tx
+				.select()
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, params.reservationId))
+				.get()
+			if (!current) throw notFound('Reservation not found')
+			if (!RESENDABLE_STATUSES.has(current.status)) {
+				throw conflict(
+					'invalid_state_for_resend',
+					'Only an upcoming booking can be re-sent',
+				)
+			}
+
+			const rotate = params.input.rotate === true
+			if (rotate) {
+				await tx
+					.update(rsvReservations)
+					.set({
+						manageTokenVersion: current.manageTokenVersion + 1,
+						version: current.version + 1,
+						updatedAt: now,
+					})
+					.where(eq(rsvReservations.id, current.id))
+			}
+
+			const ids = await enqueueReservationMessage(
+				tx,
+				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+				{
+					reservationId: current.id,
+					kind: 'confirmation',
+					variant: `r${now}-${randomUUID().slice(0, 8)}`,
+					force: true,
+				},
+			)
+			if (ids.length === 0) {
+				throw conflict('no_destination', 'The guest has no contact to send to')
+			}
+
+			await tx.insert(rsvReservationEvents).values({
+				id: createId('rev'),
+				reservationId: current.id,
+				at: now,
+				actorKind: 'operator',
+				actorId: params.actorId,
+				type: 'confirmation_resent',
+				fromStatus: current.status,
+				toStatus: current.status,
+				data: { rotated: rotate, messages: ids.length },
+			})
+
+			const updatedRow = await tx
+				.select()
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, current.id))
+				.get()
+			const [serialized] = await serializeReservationsForBook(tx, [updatedRow!])
+			return { queued: ids.length, rotated: rotate, reservation: serialized! }
 		},
 	)
 }

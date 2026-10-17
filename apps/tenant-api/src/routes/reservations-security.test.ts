@@ -18,7 +18,9 @@ import {
 	rsvGuests,
 	rsvHolds,
 	rsvLocationSettings,
+	rsvNotifyRequests,
 	rsvReservations,
+	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -45,6 +47,8 @@ import {
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
 import {
 	deriveManageToken,
+	deriveNotifyToken,
+	deriveWaitlistToken,
 	resetPublicRateLimits,
 } from '../lib/reservations-public-auth.ts'
 import {
@@ -318,6 +322,26 @@ describe('Reservations security sweep: operator routes', () => {
 				'POST /operator/reservations/book/reservations/:id/course-status',
 			),
 		).toBe(true)
+		for (const key of [
+			'POST /operator/reservations/book/reservations/:id/resend',
+			'GET /operator/reservations/setup/message-texts',
+			'PUT /operator/reservations/setup/message-texts',
+			'GET /operator/reservations/setup/message-texts/preview',
+		]) {
+			expect(keys.has(key), key).toBe(true)
+		}
+	})
+
+	it('maps the guest-message routes to the scopes the sweep expects', () => {
+		expect(scopeForRoute('/operator/reservations/setup/message-texts')).toBe(
+			'setup',
+		)
+		expect(
+			scopeForRoute('/operator/reservations/setup/message-texts/preview'),
+		).toBe('setup')
+		expect(
+			scopeForRoute('/operator/reservations/book/reservations/:id/resend'),
+		).toBe('book')
 	})
 
 	it('refuses every route with no token (401)', async () => {
@@ -1215,6 +1239,12 @@ describe('Reservations security sweep: public /reservations/* routes', () => {
 			'POST /reservations/manage/late',
 			'GET /reservations/manage/calendar.ics',
 			'GET /reservations/mine',
+			'POST /reservations/waitlist/join',
+			'GET /reservations/waitlist/status',
+			'POST /reservations/waitlist/status/leave',
+			'POST /reservations/waitlist/status/on-my-way',
+			'POST /reservations/notify-me',
+			'POST /reservations/notify-me/cancel',
 		]) {
 			expect(keys.has(expected), expected).toBe(true)
 		}
@@ -1314,6 +1344,151 @@ describe('Reservations security sweep: public /reservations/* routes', () => {
 				expect(res.status).toBe(404)
 			}
 		}
+	})
+
+	async function enableWaitlist(orgId: string) {
+		const db = await getTenantDb(orgId)
+		await db
+			.update(rsvLocationSettings)
+			.set({
+				waitlistEnabled: true,
+				waitlistOnline: true,
+				notifyMeEnabled: true,
+			})
+			.where(eq(rsvLocationSettings.locationId, PUBLIC_LOC))
+		return db
+	}
+
+	const joinBody = (n: number) => ({
+		locationId: PUBLIC_LOC,
+		name: `Sweep Waiter ${n}`,
+		partySize: 2,
+		phone: `+1415555${7000 + n}`,
+		email: `waiter${n}@example.com`,
+	})
+
+	const notifyBody = (n: number) => ({
+		locationId: PUBLIC_LOC,
+		date: DAY,
+		partySize: 2,
+		fromLocalMin: 18 * 60,
+		toLocalMin: 20 * 60,
+		email: `sweep-notify${n}@example.com`,
+	})
+
+	it('treats forged, cross-org, rotated and missing waitlist and notify-me tokens as the uniform 404 (VAL-WAIT-014, VAL-WAIT-024)', async () => {
+		const db = await enableWaitlist(ORG_PUB)
+		await enableWaitlist(ORG_OTHER)
+		const join = async (origin: string, n: number) => {
+			const res = await request('POST', '/reservations/waitlist/join', {
+				origin,
+				headers: { 'Idempotency-Key': `wl-sweep-key-${n}-abcdefgh` },
+				body: joinBody(n),
+			})
+			expect(res.status).toBe(201)
+			return (await res.json()) as {
+				entry: { id: string }
+				statusToken: string
+			}
+		}
+		const mine = await join(PUB_ORIGIN, 1)
+		const other = await join(OTHER_ORIGIN, 2)
+		const notifyRes = await request('POST', '/reservations/notify-me', {
+			headers: { 'Idempotency-Key': 'nfy-sweep-key-1-abcdefgh' },
+			body: notifyBody(1),
+		})
+		expect(notifyRes.status).toBe(201)
+		const notify = (await notifyRes.json()) as { cancelToken: string }
+		const notifyRow = (await db.select().from(rsvNotifyRequests).all())[0]!
+
+		const waitlistRoutes: Array<[string, string]> = [
+			['GET', '/reservations/waitlist/status'],
+			['POST', '/reservations/waitlist/status/leave'],
+			['POST', '/reservations/waitlist/status/on-my-way'],
+		]
+		const forged = `${mine.statusToken.split('.')[0]}.forgedforgedforged`
+		const crossOrg = deriveWaitlistToken(ORG_OTHER, mine.entry.id, 1)
+		const check = async (token: string | undefined) => {
+			for (const [method, urlPath] of waitlistRoutes) {
+				const res = await request(method, urlPath, { token })
+				expect(res.status, `${method} ${urlPath}`).toBe(404)
+				await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+			}
+		}
+		await check(undefined)
+		await check('garbage')
+		await check(forged)
+		await check(crossOrg)
+		await check(other.statusToken)
+		await check(notify.cancelToken)
+		await check(deriveManageToken(ORG_PUB, mine.entry.id, 1))
+
+		await db
+			.update(rsvWaitlistEntries)
+			.set({ statusTokenVersion: 2 })
+			.where(eq(rsvWaitlistEntries.id, mine.entry.id))
+		await check(mine.statusToken)
+		await db
+			.update(rsvWaitlistEntries)
+			.set({ statusTokenVersion: 1, joinedAt: Date.now() - 3 * 86_400_000 })
+			.where(eq(rsvWaitlistEntries.id, mine.entry.id))
+		await check(mine.statusToken)
+		const rows = await db.select().from(rsvWaitlistEntries).all()
+		expect(rows.every((r) => r.status === 'waiting')).toBe(true)
+
+		const cancelChecks = [
+			undefined,
+			'garbage',
+			`${notify.cancelToken.split('.')[0]}.forgedforgedforged`,
+			deriveNotifyToken(ORG_OTHER, notifyRow.id, 1),
+			deriveNotifyToken(ORG_PUB, notifyRow.id, 2),
+			mine.statusToken,
+		]
+		for (const token of cancelChecks) {
+			const res = await request('POST', '/reservations/notify-me/cancel', {
+				token,
+			})
+			expect(res.status).toBe(404)
+			await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+		}
+		const crossOrigin = await request(
+			'POST',
+			'/reservations/notify-me/cancel',
+			{
+				origin: OTHER_ORIGIN,
+				token: notify.cancelToken,
+			},
+		)
+		expect(crossOrigin.status).toBe(404)
+		expect((await db.select().from(rsvNotifyRequests).get())?.status).toBe(
+			'active',
+		)
+	})
+
+	it('requires a customer token or Turnstile for waitlist join and notify-me when Turnstile is configured', async () => {
+		const db = await enableWaitlist(ORG_PUB)
+		const entriesBefore = (await db.select().from(rsvWaitlistEntries).all())
+			.length
+		const requestsBefore = (await db.select().from(rsvNotifyRequests).all())
+			.length
+		process.env.TURNSTILE_SECRET_KEY = 'sweep-turnstile-secret-key'
+		const join = await request('POST', '/reservations/waitlist/join', {
+			headers: { 'Idempotency-Key': 'wl-turnstile-key-abcdefgh' },
+			body: joinBody(30),
+		})
+		expect(join.status).toBe(403)
+		await expect(join.json()).resolves.toEqual({ error: 'verification_failed' })
+		const notify = await request('POST', '/reservations/notify-me', {
+			headers: { 'Idempotency-Key': 'nfy-turnstile-key-abcdefgh' },
+			body: notifyBody(30),
+		})
+		expect(notify.status).toBe(403)
+		expect(await db.select().from(rsvWaitlistEntries).all()).toHaveLength(
+			entriesBefore,
+		)
+		expect(await db.select().from(rsvNotifyRequests).all()).toHaveLength(
+			requestsBefore,
+		)
 	})
 
 	it('requires a customer token or Turnstile for holds and requests when Turnstile is configured (VAL-ONLINE-042)', async () => {

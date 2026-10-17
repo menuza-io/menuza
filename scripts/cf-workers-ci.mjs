@@ -46,6 +46,7 @@ const APPS = {
 		buildEnv: {
 			NODE_OPTIONS: '--max-old-space-size=6144',
 			DEPLOY_TARGET: 'cloudflare',
+			STRIP_DEV_MOCKS: 'true',
 		},
 		deploy: {
 			cwd: 'apps/app',

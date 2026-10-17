@@ -588,6 +588,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   and notices (dropped, not held, so re-enabling sends no backlog); in the App
   it stops manager alert emails (in-app notifications are unaffected). `false`
   (also `0`, `off`, `no`, `disabled`).
+- `RESERVATIONS_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true`
+  is on). Kill switch for reservations email: on tenant-api it drops guest
+  emails (dropped, not held); in the App it stops manager-alert emails (in-app
+  notifications are unaffected). `false` (also `0`, `off`, `no`, `disabled`).
+  See `docs/scheduled-jobs.md#reservations-tick`.
 - `STAFFING_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable

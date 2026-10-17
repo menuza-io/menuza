@@ -59,6 +59,7 @@ import {
 	requireBookableLocation,
 } from '../services/rsv-public-service.ts'
 import { authenticateCustomer } from './auth.ts'
+import { registerPublicWaitlistRoutes } from './reservations-public-waitlist.ts'
 
 export const reservationsPublicRoutes = new Hono()
 
@@ -344,6 +345,7 @@ reservationsPublicRoutes.get(
 			locale: readLocale(c),
 			now,
 			location,
+			features: g.value.context.features,
 		})
 
 		const etag = `"${result.dayVersion}.${result.settingsVersion}"`
@@ -814,6 +816,7 @@ reservationsPublicRoutes.get(
 			now,
 			excludeReservationId: row.id,
 			location,
+			features: g.context.features,
 		})
 		return json(result)
 	}),
@@ -960,6 +963,15 @@ reservationsPublicRoutes.get(
 		})
 	}),
 )
+
+registerPublicWaitlistRoutes(reservationsPublicRoutes, {
+	gate,
+	guarded,
+	methodNotAllowed,
+	optionalCustomer,
+	readLocale,
+	missingIdempotencyKey,
+})
 
 // Mutation paths answer every other method with a non-2xx and never run.
 for (const path of [

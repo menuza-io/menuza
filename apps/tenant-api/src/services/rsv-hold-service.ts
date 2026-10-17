@@ -17,7 +17,8 @@ import {
 	otherDateAlternatives,
 	sameDayAlternatives,
 	searchPublicDay,
-	toPublicSlot,
+	publicSlotMapper,
+	type PublicSlot,
 	uniqueSlotsByTime,
 	type PublicEngineState,
 } from './rsv-public-engine.ts'
@@ -37,7 +38,7 @@ export type PublicSlotRequest = {
 }
 
 export type PublicAlternatives = {
-	sameDay: ReturnType<typeof toPublicSlot>[]
+	sameDay: PublicSlot[]
 	otherDates: Array<{ date: string; firstLocalMin: number }>
 }
 
@@ -62,7 +63,7 @@ export function buildAlternatives(
 		sameDay: sameDayAlternatives(
 			uniqueSlotsByTime(result.slots),
 			params.localMin,
-		).map(toPublicSlot),
+		).map(publicSlotMapper(state)),
 		otherDates: otherDateAlternatives(state, {
 			businessDate: params.date,
 			partySize: params.partySize,

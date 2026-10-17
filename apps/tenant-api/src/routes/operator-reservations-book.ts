@@ -24,6 +24,7 @@ import {
 	createOperatorReservation,
 	createWalkIn,
 	getReservationDetail,
+	resendReservationConfirmation,
 	transitionReservationStatus,
 	undoReservationTransition,
 	updateReservation,
@@ -1292,6 +1293,48 @@ operatorReservationsBookRoutes.post(
 					...parsed.data,
 					status: parsed.data.status ?? parsed.data.toStatus ?? '',
 				},
+			})
+			return json({ ok: true, orgId: ctx.orgId, ...result })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const resendSchema = z.object({
+	locationId: z.string().trim().min(1).max(128).optional(),
+	rotate: z.boolean().optional(),
+})
+
+operatorReservationsBookRoutes.post(
+	'/reservations/:id/resend',
+	rsvGuard({
+		scope: 'book',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, resendSchema)
+		if ('error' in parsed) return parsed.error
+
+		const rsvId = c.req.param('id')
+		const locCheck = await resolveReservationLocation(
+			ctx,
+			rsvId,
+			parsed.data.locationId ?? c.req.query('locationId'),
+		)
+		if (!locCheck.ok) return locCheck.response
+
+		try {
+			const result = await resendReservationConfirmation({
+				orgId: ctx.orgId,
+				reservationId: rsvId,
+				actorId: ctx.userId,
+				input: { rotate: parsed.data.rotate },
 			})
 			return json({ ok: true, orgId: ctx.orgId, ...result })
 		} catch (error) {

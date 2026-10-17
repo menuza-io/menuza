@@ -499,7 +499,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				return { ctx, promises }
 			}
 
-			it('runs the engagement sync and the staff tick on every regional node', async () => {
+			it('runs the engagement sync, the staff tick and the reservations tick on every regional node', async () => {
 				const fetchMock = vi.fn(
 					async () => new Response(JSON.stringify({ success: true })),
 				)
@@ -509,7 +509,11 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
 				const results = await Promise.allSettled(promises)
 
-				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'fulfilled'])
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
 					init.method,
@@ -520,6 +524,16 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					expect.arrayContaining([
 						['https://tenant-us.example.com/api/staff/tick', 'POST', token],
 						['https://tenant-ksa.example.com/api/staff/tick', 'POST', token],
+						[
+							'https://tenant-us.example.com/api/reservations/tick',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-ksa.example.com/api/reservations/tick',
+							'POST',
+							token,
+						],
 						[
 							'https://tenant-us.example.com/api/marketing/sync-engagement',
 							'POST',
@@ -532,7 +546,41 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(4)
+				expect(calls).toHaveLength(6)
+			})
+
+			it('sends the reservations tick an empty body so each node runs every organization', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				await Promise.allSettled(promises)
+				const ticks = fetchMock.mock.calls.filter(([url]: any) =>
+					String(url).endsWith('/api/reservations/tick'),
+				) as any[]
+				expect(ticks).toHaveLength(2)
+				for (const [, init] of ticks) {
+					expect(JSON.parse(init.body)).toEqual({})
+					expect(init.headers['Content-Type']).toBe('application/json')
+				}
+			})
+
+			it('lists the reservations tick in the hourly fan-out after the staff tick', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				await Promise.allSettled(promises)
+				const paths = fetchMock.mock.calls.map(
+					([url]: any) => new URL(String(url)).pathname,
+				)
+				expect(paths.indexOf('/api/reservations/tick')).toBeGreaterThan(
+					paths.indexOf('/api/staff/tick'),
+				)
 			})
 
 			it('sends the staff tick an empty body so each node runs every organization', async () => {
@@ -563,14 +611,42 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
 				const results = await Promise.allSettled(promises)
 
-				// Engagement sync fulfilled; the staff tick failed on one node.
-				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected'])
+				// Engagement sync and reservations tick fulfilled; the staff tick failed
+				// on one node.
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
 					'https://tenant-us.example.com/api/staff/tick',
 				)
 				expect(String((results[1] as PromiseRejectedResult).reason)).toContain(
 					'Tenant staff tick failed for https://tenant-ksa.example.com',
+				)
+				errorSpy.mockRestore()
+			})
+
+			it('keeps the reservations tick running when the staff tick fails, and names it when it fails itself', async () => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-us') &&
+					url.endsWith('/api/reservations/tick')
+						? new Response('down', { status: 500, statusText: 'Error' })
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'rejected',
+				])
+				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
+					'Tenant reservations tick failed for https://tenant-us.example.com',
 				)
 				errorSpy.mockRestore()
 			})

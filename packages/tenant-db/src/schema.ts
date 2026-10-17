@@ -3131,6 +3131,9 @@ export const RSV_PAYMENT_RECORD_STATUS_VALUES = [
 export type RsvPaymentRecordStatus =
 	(typeof RSV_PAYMENT_RECORD_STATUS_VALUES)[number]
 
+export const RSV_OUTBOX_STATUS_VALUES = ['pending', 'sent', 'failed'] as const
+export type RsvOutboxStatus = (typeof RSV_OUTBOX_STATUS_VALUES)[number]
+
 export const RSV_OUTBOX_KIND_VALUES = [
 	'manager_alert',
 	'payment_command',
@@ -4472,6 +4475,9 @@ export const rsvOutbox = sqliteTable(
 		payload: text('payload', { mode: 'json' })
 			.$type<Record<string, unknown>>()
 			.notNull(),
+		status: text('status', { enum: RSV_OUTBOX_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
 		attempts: integer('attempts').notNull().default(0),
 		nextAttemptAt: integer('next_attempt_at').notNull().default(nowMs),
 		deliveredAt: integer('delivered_at'),
@@ -4523,6 +4529,7 @@ export const rsvDayVersions = sqliteTable(
 		locationId: text('location_id').notNull(),
 		businessDate: text('business_date').notNull(),
 		version: integer('version').notNull().default(1),
+		availabilityIncreasedAt: integer('availability_increased_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
 	(table) => [primaryKey({ columns: [table.locationId, table.businessDate] })],

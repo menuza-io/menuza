@@ -228,6 +228,102 @@ export function verifyManageToken(
 	return timingSafeEqualString(expected, presented)
 }
 
+export const WAITLIST_TOKEN_PREFIX = 'rsv_w_'
+export const NOTIFY_TOKEN_PREFIX = 'rsv_n_'
+
+function deriveBoundToken(
+	prefix: string,
+	purpose: string,
+	orgId: string,
+	id: string,
+	version: number,
+): string {
+	const mac = createHmac('sha256', capabilityKey())
+		.update(`${purpose}:${orgId}:${id}:${version}`)
+		.digest()
+	return `${prefix}${b64url(id)}.${b64url(mac)}`
+}
+
+function parseBoundTokenId(
+	prefix: string,
+	token: string | undefined | null,
+): string | null {
+	if (!token || token.length > MAX_TOKEN_LENGTH) return null
+	if (!token.startsWith(prefix)) return null
+	const body = token.slice(prefix.length)
+	const dot = body.indexOf('.')
+	if (dot <= 0 || dot === body.length - 1) return null
+	const id = Buffer.from(body.slice(0, dot), 'base64url').toString('utf8')
+	if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) return null
+	return id
+}
+
+/** Waitlist status link token: derived from the entry id and `status_token_version`. */
+export function deriveWaitlistToken(
+	orgId: string,
+	entryId: string,
+	version: number,
+): string {
+	return deriveBoundToken(
+		WAITLIST_TOKEN_PREFIX,
+		'waitlist',
+		orgId,
+		entryId,
+		version,
+	)
+}
+
+export function parseWaitlistTokenId(
+	token: string | undefined | null,
+): string | null {
+	return parseBoundTokenId(WAITLIST_TOKEN_PREFIX, token)
+}
+
+export function verifyWaitlistToken(
+	orgId: string,
+	entryId: string,
+	version: number,
+	presented: string,
+): boolean {
+	return timingSafeEqualString(
+		deriveWaitlistToken(orgId, entryId, version),
+		presented,
+	)
+}
+
+/** Notify-me cancel token: derived from the request id and `token_version`. */
+export function deriveNotifyToken(
+	orgId: string,
+	requestId: string,
+	version: number,
+): string {
+	return deriveBoundToken(
+		NOTIFY_TOKEN_PREFIX,
+		'notify',
+		orgId,
+		requestId,
+		version,
+	)
+}
+
+export function parseNotifyTokenId(
+	token: string | undefined | null,
+): string | null {
+	return parseBoundTokenId(NOTIFY_TOKEN_PREFIX, token)
+}
+
+export function verifyNotifyToken(
+	orgId: string,
+	requestId: string,
+	version: number,
+	presented: string,
+): boolean {
+	return timingSafeEqualString(
+		deriveNotifyToken(orgId, requestId, version),
+		presented,
+	)
+}
+
 export function newHoldToken(): string {
 	return `${HOLD_TOKEN_PREFIX}${randomBytes(16).toString('base64url')}`
 }

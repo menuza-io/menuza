@@ -9,10 +9,7 @@ import {
 	invalidateReservationsContext,
 } from '../lib/reservations-context.ts'
 import { ensureActiveOrgInNodeRegion } from '../lib/reservations-guard.ts'
-import {
-	invalidateReservationDayCache,
-	sweepExpiredInTx,
-} from '../lib/reservations-write.ts'
+import { invalidateReservationDayCache } from '../lib/reservations-write.ts'
 import {
 	bearerMatches,
 	getInternalCommandToken,
@@ -148,51 +145,7 @@ async function handleInternalSummary(c: any) {
 reservationsInternalRoutes.post('/summary', handleInternalSummary)
 reservationsInternalRoutes.post('/location-summary', handleInternalSummary)
 
-const tickBodySchema = z.strictObject({
-	orgId: z.string().regex(TENANT_ORG_ID_PATTERN).optional(),
-	nowMs: z.number().int().positive().optional(),
-})
-
-export const reservationsTickRoutes = new Hono()
-
-reservationsTickRoutes.post('/tick', async (c) => {
-	const authErr = requireInternalAuth(c.req.header('Authorization'))
-	if (authErr) return authErr
-
-	const parsed = await readJsonBody(c, tickBodySchema)
-	if ('error' in parsed) return parsed.error
-
-	const now = parsed.data.nowMs ?? Date.now()
-	if (!parsed.data.orgId) {
-		return json({
-			ok: true,
-			orgId: null,
-			swept: {
-				expiredHolds: 0,
-				expiredPendingPayments: 0,
-				expiredPendingRequests: 0,
-				expiredWaitlistOffers: 0,
-			},
-		})
-	}
-
-	const orgErr = await verifyOrgAndRegion(parsed.data.orgId)
-	if (orgErr) return orgErr
-
-	const db = await getTenantDb(parsed.data.orgId)
-	const swept = await sweepExpiredInTx(db, { now })
-
-	return json({
-		ok: true,
-		orgId: parsed.data.orgId,
-		swept: {
-			expiredHolds: swept.expiredHolds,
-			expiredPendingPayments: swept.expiredPendingPayments,
-			expiredPendingRequests: swept.expiredPendingRequests,
-			expiredWaitlistOffers: swept.expiredWaitlistOffers,
-		},
-	})
-})
+export { reservationsTickRoutes } from './reservations-tick.ts'
 
 const voiceAvailabilitySchema = z.strictObject({
 	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
