@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import {
+	currentBusinessDate,
 	isValidTimeZone,
 	localToInstant,
 	type ConflictItem,
@@ -129,6 +130,30 @@ async function bumpDayVersion(
 				updatedAt: now,
 			},
 		})
+}
+
+/**
+ * Pacing and service-availability rules apply to every bookable date, and a date
+ * nobody has written yet has no version row to move. Bump the whole booking
+ * horizon so a cached public availability body cannot revalidate as 304.
+ */
+async function bumpBookingHorizonDayVersions(
+	db: TenantDatabase,
+	locationId: string,
+) {
+	const settings = await ensureSettingsRowForLocation(db, locationId)
+	const timeZone = isValidTimeZone(settings.timeZone)
+		? settings.timeZone
+		: 'UTC'
+	const today = currentBusinessDate(
+		Date.now(),
+		timeZone,
+		settings.dayStartMin ?? 240,
+	)
+	const last = addDays(today, Math.min(settings.horizonDays ?? 30, 366))
+	for (const date of expandDateRange(today, last)) {
+		await bumpDayVersion(db, locationId, date)
+	}
 }
 
 async function writeSetupAudit(
@@ -2465,6 +2490,7 @@ export async function createPacingRuleForLocation(
 			rollingMaxCovers: input.rollingMaxCovers ?? null,
 			channel: input.channel ?? 'all',
 		})
+		await bumpBookingHorizonDayVersions(db, srv.locationId)
 
 		const reflowResult = await reflowFutureBookingsForLocation(
 			db,
@@ -2549,6 +2575,7 @@ export async function updatePacingRuleForLocation(
 				...(patch.channel !== undefined ? { channel: patch.channel } : {}),
 			})
 			.where(eq(rsvPacingRules.id, ruleId))
+		await bumpBookingHorizonDayVersions(db, srv.locationId)
 
 		const reflowResult = await reflowFutureBookingsForLocation(
 			db,
@@ -2590,6 +2617,7 @@ export async function deletePacingRuleForLocation(
 			throw notFound('Pacing rule not found in location')
 		}
 		await db.delete(rsvPacingRules).where(eq(rsvPacingRules.id, ruleId))
+		await bumpBookingHorizonDayVersions(db, srv.locationId)
 		return { deleted: true, id: ruleId }
 	})
 }
@@ -2670,6 +2698,8 @@ export async function upsertServiceAvailabilityForLocation(
 				r.toMin === (input.toMin ?? null),
 		)
 
+		await bumpBookingHorizonDayVersions(db, srv.locationId)
+
 		if (matching) {
 			await db
 				.update(rsvServiceAvailability)
@@ -2727,6 +2757,7 @@ export async function deleteServiceAvailabilityForLocation(
 		await db
 			.delete(rsvServiceAvailability)
 			.where(eq(rsvServiceAvailability.id, id))
+		await bumpBookingHorizonDayVersions(db, srv.locationId)
 		return { deleted: true, id }
 	})
 }

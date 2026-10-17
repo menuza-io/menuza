@@ -189,18 +189,21 @@ function slotTimes(body: { slots: Array<{ localMin: number }> }) {
 	return body.slots.map((s) => s.localMin)
 }
 
-async function mintOperatorToken() {
+async function mintOperatorToken(
+	scope = 'book',
+	grants: string[] = [
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+		RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	],
+) {
 	const now = Math.floor(Date.now() / 1000)
 	return new jose.SignJWT({
 		role: 'operator',
 		orgId: ORG,
 		region: 'us',
-		scope: 'book',
-		grants: [
-			RESERVATIONS_PERMISSIONS.READ_RESERVATION,
-			RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
-			RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-		],
+		scope,
+		grants,
 		locationIds: null,
 		features: {
 			enabled: true,
@@ -369,6 +372,120 @@ describe('GET /reservations/availability', () => {
 		})
 		expect(after.status).toBe(200)
 		expect(after.res.headers.get('ETag')).not.toBe(etag)
+	})
+
+	it('changes the ETag on the very first write for a never-mutated date, so the old tag gets 200 (VAL-CROSS-007)', async () => {
+		const holdDate = dateAhead(12)
+		const first = await availability(2, holdDate)
+		expect(first.body.dayVersion).toBe(0)
+		const etag = first.res.headers.get('ETag')!
+		expect(
+			(
+				await availability(2, holdDate, '', {
+					headers: { 'If-None-Match': etag },
+				})
+			).status,
+		).toBe(304)
+
+		const hold = await createHold(19 * 60, 2, {}, {}, holdDate)
+		expect(hold.status).toBe(201)
+
+		const after = await availability(2, holdDate, '', {
+			headers: { 'If-None-Match': etag },
+		})
+		expect(after.status).toBe(200)
+		expect(after.body.dayVersion).toBe(1)
+		expect(after.res.headers.get('ETag')).not.toBe(etag)
+	})
+
+	it('changes the ETag on the first special-day write for a fresh date (VAL-CROSS-007)', async () => {
+		const specialDate = dateAhead(14)
+		const first = await availability(2, specialDate)
+		expect(first.status).toBe(200)
+		expect(first.body.dayVersion).toBe(0)
+		const etag = first.res.headers.get('ETag')!
+		expect(
+			(
+				await availability(2, specialDate, '', {
+					headers: { 'If-None-Match': etag },
+				})
+			).status,
+		).toBe(304)
+
+		const token = await mintOperatorToken('setup', [
+			RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+			RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+		])
+		const created = await app.request(
+			`/operator/reservations/setup/locations/${PUBLIC_LOC}/special-days`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locationId: PUBLIC_LOC,
+					fromDate: specialDate,
+					toDate: specialDate,
+					kind: 'closed',
+					name: 'Private event',
+				}),
+			},
+		)
+		expect(created.status).toBe(201)
+
+		const after = await availability(2, specialDate, '', {
+			headers: { 'If-None-Match': etag },
+		})
+		expect(after.status).toBe(200)
+		expect(after.body.status).toBe('closed')
+		expect(after.res.headers.get('ETag')).not.toBe(etag)
+	})
+
+	it('changes the ETag on a never-mutated date after a pacing rule or service availability write', async () => {
+		const date = dateAhead(16)
+		const token = await mintOperatorToken('setup', [
+			RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+			RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+		])
+		const setup = (method: string, urlPath: string, body?: unknown) =>
+			app.request(`/operator/reservations/setup${urlPath}`, {
+				method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: body === undefined ? undefined : JSON.stringify(body),
+			})
+		const currentEtag = async () =>
+			(await availability(2, date)).res.headers.get('ETag')!
+
+		let etag = await currentEtag()
+		const pacing = await setup(
+			'POST',
+			`/locations/${PUBLIC_LOC}/pacing-rules`,
+			{ serviceId: 'svc_pub_dinner', bucketMin: 15, maxCovers: 4 },
+		)
+		expect(pacing.status).toBe(201)
+		const afterPacing = await availability(2, date, '', {
+			headers: { 'If-None-Match': etag },
+		})
+		expect(afterPacing.status).toBe(200)
+		expect(afterPacing.res.headers.get('ETag')).not.toBe(etag)
+
+		etag = afterPacing.res.headers.get('ETag')!
+		const sa = await setup('POST', '/service-availability', {
+			serviceId: 'svc_pub_dinner',
+			tableId: 'tbl_pub_4',
+			mode: 'staff_only',
+		})
+		expect(sa.status).toBe(201)
+		const afterSa = await availability(2, date, '', {
+			headers: { 'If-None-Match': etag },
+		})
+		expect(afterSa.status).toBe(200)
+		expect(afterSa.res.headers.get('ETag')).not.toBe(etag)
 	})
 
 	it('changes the ETag when the waitlist or online flag changes, so a 304 cannot hide it', async () => {

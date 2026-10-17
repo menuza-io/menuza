@@ -453,6 +453,52 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 		})
 	})
 
+	it('operator availability flags a max_parties breach the same way the booking write rejects it', async () => {
+		const db = await getTenantDb(ORG_ID)
+		await db.insert(rsvPacingRules).values({
+			id: 'pace_dinner_parties',
+			serviceId: 'svc_dinner',
+			bucketMin: 15,
+			maxCovers: null,
+			maxParties: 1,
+			channel: 'all',
+		})
+		try {
+			const avail = await getOperatorAvailability(db, LOC_ID, {
+				date: DATE,
+				partySize: 2,
+				serviceId: 'svc_dinner',
+			})
+			const at = (time: string) => avail.slots.find((s) => s.time === time)!
+			// Alice's 19:00 booking already fills the one-party bucket 19:00-19:15.
+			expect(at('19:00')).toMatchObject({
+				pacingWarning: true,
+				available: false,
+			})
+			expect(at('19:15').pacingWarning).toBe(false)
+
+			await expect(
+				createOperatorReservation({
+					orgId: ORG_ID,
+					locationId: LOC_ID,
+					actorId: 'user_kody',
+					idempotencyKey: 'idem-parties-fail',
+					input: {
+						locationId: LOC_ID,
+						date: DATE,
+						time: '19:00',
+						partySize: 2,
+						guest: { firstName: 'Cara', lastName: 'Pace' },
+					},
+				}),
+			).rejects.toMatchObject({ status: 409, code: 'pacing_parties_exceeded' })
+		} finally {
+			await db
+				.delete(rsvPacingRules)
+				.where(eq(rsvPacingRules.id, 'pace_dinner_parties'))
+		}
+	})
+
 	it('supports Assign (soft), Assign & Lock (locked), unlock, atomic Swap, soft reflow, and refuses displacing locked/seated/frozen bookings', async () => {
 		const swapDate = '2026-08-16'
 		// Create Booking A at 20:30 on T1 (soft) and Booking B at 20:30 on T2 (soft)

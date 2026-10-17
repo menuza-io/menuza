@@ -41,6 +41,10 @@ import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import {
+	ACTIVE_OCCUPANCY_STATUSES,
+	findOperatorPacingBreaches,
+} from './rsv-operator-pacing.ts'
+import {
 	hashIdempotencyPayload,
 	withReservationWrite,
 	type ReservationWriteTx,
@@ -79,15 +83,6 @@ const SOFT_REFLOWABLE_STATUSES = new Set([
 	'pending_approval',
 	'booked',
 	'confirmed',
-])
-
-const ACTIVE_OCCUPANCY_STATUSES = new Set([
-	'pending_payment',
-	'pending_approval',
-	'booked',
-	'confirmed',
-	'arrived',
-	'seated',
 ])
 
 export interface ReservationMoveReport {
@@ -662,32 +657,19 @@ export async function createOperatorReservation(params: {
 			const activeDayRes = state.dayResRows.filter((r) =>
 				ACTIVE_OCCUPANCY_STATUSES.has(r.status),
 			)
-			for (const pr of state.pacingRules) {
-				if (serviceId && pr.serviceId !== serviceId) continue
-				if (pr.fromMin !== null && localStartMin < pr.fromMin) continue
-				if (pr.toMin !== null && localStartMin >= pr.toMin) continue
-				const bucketMin = pr.bucketMin || 15
-				const bucketStart = Math.floor(localStartMin / bucketMin) * bucketMin
-				const bucketEnd = bucketStart + bucketMin
-				const inBucket = activeDayRes.filter(
-					(r) => r.localStartMin >= bucketStart && r.localStartMin < bucketEnd,
-				)
-				const bucketCovers = inBucket.reduce((s, r) => s + r.partySize, 0)
-				if (
-					pr.maxCovers !== null &&
-					bucketCovers + input.partySize > pr.maxCovers
-				) {
-					const message =
-						'Pacing limit exceeded for this interval; overbook override required'
-					if (!isOverbook) throw conflict('pacing_exceeded', message)
-					warnings.push({ code: 'pacing_exceeded', message })
-				}
-				if (pr.maxParties !== null && inBucket.length + 1 > pr.maxParties) {
-					const message =
-						'Max parties limit exceeded for this interval; overbook override required'
-					if (!isOverbook) throw conflict('pacing_parties_exceeded', message)
-					warnings.push({ code: 'pacing_parties_exceeded', message })
-				}
+			for (const code of findOperatorPacingBreaches({
+				rules: state.pacingRules,
+				serviceId,
+				localStartMin,
+				partySize: input.partySize,
+				activeReservations: activeDayRes,
+			})) {
+				const message =
+					code === 'pacing_exceeded'
+						? 'Pacing limit exceeded for this interval; overbook override required'
+						: 'Max parties limit exceeded for this interval; overbook override required'
+				if (!isOverbook) throw conflict(code, message)
+				warnings.push({ code, message })
 			}
 
 			let assignedTableIds: string[] = []

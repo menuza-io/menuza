@@ -450,5 +450,7 @@ export async function readDayVersion(
 			),
 		)
 		.get()
-	return row?.version ?? 1
+	// A date nobody has written yet has no row; the first write inserts
+	// version 1, so "no row" must read as 0 or that write leaves the ETag unchanged.
+	return row?.version ?? 0
 }

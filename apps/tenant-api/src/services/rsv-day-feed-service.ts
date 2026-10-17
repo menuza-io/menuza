@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import {
 	detectConflicts,
+	evaluatePacing,
 	resolveServices,
 	type ConflictBlockInput,
 	type ConflictBookingInput,
@@ -64,6 +65,10 @@ import {
 	listSpecialDaysForLocation,
 	listTablesForLocation,
 } from './rsv-setup-service.ts'
+import {
+	ACTIVE_OCCUPANCY_STATUSES,
+	findOperatorPacingBreaches,
+} from './rsv-operator-pacing.ts'
 import { loadStaffDayState } from './rsv-special-days.ts'
 
 function createId(prefix: string): string {
@@ -1458,9 +1463,37 @@ export async function getOperatorAvailability(
 		suggestedTableIds: string[]
 	}> = []
 
+	const pacedRes = dayResRows.filter((r) =>
+		ACTIVE_OCCUPANCY_STATUSES.has(r.status),
+	)
+	const pacingExisting = pacedRes.map((r) => ({
+		id: r.id,
+		serviceId: r.serviceId,
+		channel: r.channel,
+		partySize: r.partySize,
+		localStartMin: r.localStartMin,
+		startAt: r.startAt,
+		endAt: r.endAt,
+		status: r.status,
+	}))
+
 	for (const svc of targetServices) {
 		const interval = svc.intervalMin ?? 15
-		const rule = pacingRules.find((pr) => pr.serviceId === svc.id)
+		const svcPacingRules = pacingRules.filter((pr) => pr.serviceId === svc.id)
+		const engineSvcPacingRules: EnginePacingRuleInput[] = svcPacingRules.map(
+			(p) => ({
+				id: p.id,
+				serviceId: p.serviceId,
+				windowMinutes: p.bucketMin,
+				fromMin: p.fromMin,
+				toMin: p.toMin,
+				maxCoversPerSlot: p.maxCovers,
+				maxPartiesPerSlot: p.maxParties,
+				rollingMin: p.rollingMin,
+				rollingMaxCovers: p.rollingMaxCovers,
+				channelScope: p.channel as 'all' | 'online',
+			}),
+		)
 		for (let m = svc.firstSeatingMin; m <= svc.lastSeatingMin; m += interval) {
 			const durationMin = input.durationMin ?? 90
 			const overlappingRes = activeRes.filter(
@@ -1494,14 +1527,25 @@ export async function getOperatorAvailability(
 			const freeTable = eligibleTables.find(
 				(t) => !occupiedTids.has(t.id) && !heldTids.has(t.id),
 			)
-			const bucketCovers = activeRes
-				.filter((r) => r.localStartMin >= m && r.localStartMin < m + 15)
-				.reduce((s, r) => s + r.partySize, 0)
-			const pacingWarning = Boolean(
-				rule?.maxCovers !== null &&
-				rule?.maxCovers !== undefined &&
-				bucketCovers + input.partySize > rule.maxCovers,
-			)
+			const pacingWarning =
+				findOperatorPacingBreaches({
+					rules: svcPacingRules,
+					serviceId: svc.id,
+					localStartMin: m,
+					partySize: input.partySize,
+					activeReservations: pacedRes,
+				}).length > 0 ||
+				!evaluatePacing({
+					serviceId: svc.id,
+					slotMin: m,
+					startAt: m * 60_000,
+					durationMin,
+					intervalMin: interval,
+					partySize: input.partySize,
+					channel: 'host',
+					rules: engineSvcPacingRules,
+					existing: pacingExisting,
+				}).allowed
 			const hhmm = formatMinutesToHHMM(m)
 
 			slots.push({
