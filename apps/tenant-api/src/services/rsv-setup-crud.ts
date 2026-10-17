@@ -29,7 +29,10 @@ import {
 import { addDays } from '@repo/zoned-time'
 import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.js'
-import { withSetupWrite } from '../lib/reservations-write.ts'
+import {
+	isOccupancyOverlapError,
+	withSetupWrite,
+} from '../lib/reservations-write.ts'
 import {
 	getFloorPlan,
 	reflowFutureBookingsForLocation,
@@ -3093,138 +3096,178 @@ export async function createBlockForLocation(
 			targetTableIds = areaTables.map((t) => t.id)
 		}
 
-		const now = Date.now()
-		const id = createId('blk')
-		await db.insert(rsvBlocks).values({
-			id,
-			locationId: input.locationId,
-			areaId: input.areaId ?? null,
-			tableId: input.tableId ?? null,
-			businessDate: input.businessDate,
-			startAt,
-			endAt,
-			reason: input.reason ?? null,
-			note: input.note ?? null,
-			createdBy: input.actorId,
-			createdAt: now,
-		})
+		const overlappingReservationIds =
+			targetTableIds.length > 0
+				? [
+						...new Set(
+							(
+								await db
+									.select({ reservationId: rsvTableOccupancies.reservationId })
+									.from(rsvTableOccupancies)
+									.where(
+										and(
+											eq(rsvTableOccupancies.locationId, input.locationId),
+											inArray(rsvTableOccupancies.tableId, targetTableIds),
+											eq(rsvTableOccupancies.active, true),
+											eq(rsvTableOccupancies.kind, 'reservation'),
+											lte(rsvTableOccupancies.startAt, endAt - 1),
+											gte(rsvTableOccupancies.endAt, startAt + 1),
+										),
+									)
+									.all()
+							).flatMap((o) => (o.reservationId ? [o.reservationId] : [])),
+						),
+					]
+				: []
 
-		// Before inserting block occupancies into `rsv_table_occupancies`,
-		// deactivate any overlapping SOFT reservation occupancies on `targetTableIds`
-		// so `trg_rsv_occupancies_no_overlap_insert` allows the block occupancy and
-		// `reflowFutureBookingsForLocation` can reassign those soft reservations.
-		const preDeactivatedOriginalTables = new Map<string, string[]>()
-		if (targetTableIds.length > 0) {
-			const overlappingOccs = await db
-				.select()
-				.from(rsvTableOccupancies)
-				.where(
-					and(
-						eq(rsvTableOccupancies.locationId, input.locationId),
-						inArray(rsvTableOccupancies.tableId, targetTableIds),
-						eq(rsvTableOccupancies.active, true),
-						lte(rsvTableOccupancies.startAt, endAt - 1),
-						gte(rsvTableOccupancies.endAt, startAt + 1),
-					),
-				)
-				.all()
+		let reflowResult: Awaited<
+			ReturnType<typeof reflowFutureBookingsForLocation>
+		>
+		let id: string
+		try {
+			const now = Date.now()
+			id = createId('blk')
+			await db.insert(rsvBlocks).values({
+				id,
+				locationId: input.locationId,
+				areaId: input.areaId ?? null,
+				tableId: input.tableId ?? null,
+				businessDate: input.businessDate,
+				startAt,
+				endAt,
+				reason: input.reason ?? null,
+				note: input.note ?? null,
+				createdBy: input.actorId,
+				createdAt: now,
+			})
 
-			const overlappingResIds = [
-				...new Set(
-					overlappingOccs
-						.filter((o) => o.kind === 'reservation' && o.reservationId)
-						.map((o) => o.reservationId!),
-				),
-			]
-
-			if (overlappingResIds.length > 0) {
-				const resRows = await db
-					.select()
-					.from(rsvReservations)
-					.where(inArray(rsvReservations.id, overlappingResIds))
-					.all()
-
-				for (const r of resRows) {
-					if (
-						r.assignment === 'soft' &&
-						SOFT_REFLOWABLE_STATUSES.has(r.status)
-					) {
-						const allResOccs = await db
-							.select()
-							.from(rsvTableOccupancies)
-							.where(
-								and(
-									eq(rsvTableOccupancies.reservationId, r.id),
-									eq(rsvTableOccupancies.active, true),
-								),
-							)
-							.all()
-						preDeactivatedOriginalTables.set(
-							r.id,
-							allResOccs.map((o) => o.tableId),
-						)
-						if (allResOccs.length > 0) {
-							await db
-								.update(rsvTableOccupancies)
-								.set({ active: false })
-								.where(
-									inArray(
-										rsvTableOccupancies.id,
-										allResOccs.map((o) => o.id),
-									),
-								)
-						}
-						if (r.comboId) {
-							await db
-								.update(rsvReservations)
-								.set({ comboId: null, updatedAt: now })
-								.where(eq(rsvReservations.id, r.id))
-						}
-					}
-				}
-			}
-
-			// Expand block into rsv_table_occupancies for each target table
-			for (const tid of targetTableIds) {
-				const remainingOverlap = await db
+			// Before inserting block occupancies into `rsv_table_occupancies`,
+			// deactivate any overlapping SOFT reservation occupancies on `targetTableIds`
+			// so `trg_rsv_occupancies_no_overlap_insert` allows the block occupancy and
+			// `reflowFutureBookingsForLocation` can reassign those soft reservations.
+			const preDeactivatedOriginalTables = new Map<string, string[]>()
+			if (targetTableIds.length > 0) {
+				const overlappingOccs = await db
 					.select()
 					.from(rsvTableOccupancies)
 					.where(
 						and(
-							eq(rsvTableOccupancies.tableId, tid),
+							eq(rsvTableOccupancies.locationId, input.locationId),
+							inArray(rsvTableOccupancies.tableId, targetTableIds),
 							eq(rsvTableOccupancies.active, true),
-							eq(rsvTableOccupancies.overbook, false),
 							lte(rsvTableOccupancies.startAt, endAt - 1),
 							gte(rsvTableOccupancies.endAt, startAt + 1),
 						),
 					)
-					.get()
+					.all()
 
-				await db.insert(rsvTableOccupancies).values({
-					id: createId('occ'),
-					locationId: input.locationId,
-					tableId: tid,
-					kind: 'block',
-					blockId: id,
-					startAt,
-					endAt,
-					active: true,
-					overbook: Boolean(remainingOverlap),
-					createdAt: now,
-				})
+				const overlappingResIds = [
+					...new Set(
+						overlappingOccs
+							.filter((o) => o.kind === 'reservation' && o.reservationId)
+							.map((o) => o.reservationId!),
+					),
+				]
+
+				if (overlappingResIds.length > 0) {
+					const resRows = await db
+						.select()
+						.from(rsvReservations)
+						.where(inArray(rsvReservations.id, overlappingResIds))
+						.all()
+
+					for (const r of resRows) {
+						if (
+							r.assignment === 'soft' &&
+							SOFT_REFLOWABLE_STATUSES.has(r.status)
+						) {
+							const allResOccs = await db
+								.select()
+								.from(rsvTableOccupancies)
+								.where(
+									and(
+										eq(rsvTableOccupancies.reservationId, r.id),
+										eq(rsvTableOccupancies.active, true),
+									),
+								)
+								.all()
+							preDeactivatedOriginalTables.set(
+								r.id,
+								allResOccs.map((o) => o.tableId),
+							)
+							if (allResOccs.length > 0) {
+								await db
+									.update(rsvTableOccupancies)
+									.set({ active: false })
+									.where(
+										inArray(
+											rsvTableOccupancies.id,
+											allResOccs.map((o) => o.id),
+										),
+									)
+							}
+							if (r.comboId) {
+								await db
+									.update(rsvReservations)
+									.set({ comboId: null, updatedAt: now })
+									.where(eq(rsvReservations.id, r.id))
+							}
+						}
+					}
+				}
+
+				// Expand block into rsv_table_occupancies for each target table
+				for (const tid of targetTableIds) {
+					const remainingOverlap = await db
+						.select()
+						.from(rsvTableOccupancies)
+						.where(
+							and(
+								eq(rsvTableOccupancies.tableId, tid),
+								eq(rsvTableOccupancies.active, true),
+								eq(rsvTableOccupancies.overbook, false),
+								lte(rsvTableOccupancies.startAt, endAt - 1),
+								gte(rsvTableOccupancies.endAt, startAt + 1),
+							),
+						)
+						.get()
+
+					await db.insert(rsvTableOccupancies).values({
+						id: createId('occ'),
+						locationId: input.locationId,
+						tableId: tid,
+						kind: 'block',
+						blockId: id,
+						startAt,
+						endAt,
+						active: true,
+						overbook: Boolean(remainingOverlap),
+						createdAt: now,
+					})
+				}
 			}
-		}
 
-		await bumpDayVersion(db, input.locationId, input.businessDate)
-		const reflowResult = await reflowFutureBookingsForLocation(
-			db,
-			input.locationId,
-			{
-				affectedDates: [input.businessDate],
-				invalidatedTableIds: targetTableIds,
-				preDeactivatedOriginalTables,
-			},
-		)
+			await bumpDayVersion(db, input.locationId, input.businessDate)
+			reflowResult = await reflowFutureBookingsForLocation(
+				db,
+				input.locationId,
+				{
+					affectedDates: [input.businessDate],
+					invalidatedTableIds: targetTableIds,
+					preDeactivatedOriginalTables,
+				},
+			)
+		} catch (error) {
+			// A reflow target the engine believed free was taken: roll the whole block back.
+			if (isOccupancyOverlapError(error)) {
+				throw conflict(
+					'block_conflict',
+					'The block conflicts with existing reservations',
+					{ reservationIds: overlappingReservationIds },
+				)
+			}
+			throw error
+		}
 
 		await writeSetupAudit(db, {
 			actorId: input.actorId,

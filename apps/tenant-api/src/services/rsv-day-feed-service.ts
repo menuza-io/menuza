@@ -33,7 +33,18 @@ import {
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gt,
+	gte,
+	inArray,
+	isNull,
+	lte,
+	sql,
+} from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
@@ -53,6 +64,7 @@ import {
 	listSpecialDaysForLocation,
 	listTablesForLocation,
 } from './rsv-setup-service.ts'
+import { loadStaffDayState } from './rsv-special-days.ts'
 
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
@@ -1338,8 +1350,9 @@ export async function getOperatorAvailability(
 	const input =
 		typeof locationIdOrInput === 'string' ? maybeInput! : locationIdOrInput
 
-	const [services, tables, serviceAvail, pacingRules, dayResRows] =
+	const [dayState, services, tables, serviceAvail, pacingRules, dayResRows] =
 		await Promise.all([
+			loadStaffDayState(db, locationId, input.date),
 			listServicesForLocation(db, locationId),
 			listTablesForLocation(db, locationId),
 			db.select().from(rsvServiceAvailability).all(),
@@ -1375,9 +1388,41 @@ export async function getOperatorAvailability(
 					.all()
 			: []
 
-	const targetServices = input.serviceId
-		? services.filter((s) => s.id === input.serviceId)
-		: services
+	const liveHolds = await db
+		.select()
+		.from(rsvHolds)
+		.where(
+			and(
+				eq(rsvHolds.locationId, locationId),
+				eq(rsvHolds.businessDate, input.date),
+				eq(rsvHolds.status, 'active'),
+				gt(rsvHolds.expiresAt, Date.now()),
+			),
+		)
+		.all()
+	const holdOccRows =
+		liveHolds.length > 0
+			? await db
+					.select()
+					.from(rsvTableOccupancies)
+					.where(
+						and(
+							inArray(
+								rsvTableOccupancies.holdId,
+								liveHolds.map((h) => h.id),
+							),
+							eq(rsvTableOccupancies.active, true),
+						),
+					)
+					.all()
+			: []
+
+	const targetServices =
+		dayState.state === 'closed'
+			? []
+			: input.serviceId
+				? services.filter((s) => s.id === input.serviceId)
+				: services
 
 	const walkInOnlyTableIds = new Set(
 		serviceAvail
@@ -1408,6 +1453,8 @@ export async function getOperatorAvailability(
 		available: boolean
 		pacingWarning: boolean
 		overbookAvailable: boolean
+		held: boolean
+		heldTableIds: string[]
 		suggestedTableIds: string[]
 	}> = []
 
@@ -1426,7 +1473,27 @@ export async function getOperatorAvailability(
 					.filter((o) => overlappingRes.some((r) => r.id === o.reservationId))
 					.map((o) => o.tableId),
 			)
-			const freeTable = eligibleTables.find((t) => !occupiedTids.has(t.id))
+			const heldTids = new Set<string>()
+			for (const hold of liveHolds) {
+				const holdDurMin = Math.max(
+					1,
+					Math.round((hold.endAt - hold.startAt) / 60_000),
+				)
+				if (
+					hold.localStartMin < m + durationMin &&
+					hold.localStartMin + holdDurMin > m
+				) {
+					for (const o of holdOccRows) {
+						if (o.holdId === hold.id) heldTids.add(o.tableId)
+					}
+				}
+			}
+			const heldEligibleIds = eligibleTables
+				.filter((t) => heldTids.has(t.id) && !occupiedTids.has(t.id))
+				.map((t) => t.id)
+			const freeTable = eligibleTables.find(
+				(t) => !occupiedTids.has(t.id) && !heldTids.has(t.id),
+			)
 			const bucketCovers = activeRes
 				.filter((r) => r.localStartMin >= m && r.localStartMin < m + 15)
 				.reduce((s, r) => s + r.partySize, 0)
@@ -1445,6 +1512,8 @@ export async function getOperatorAvailability(
 				available: Boolean(freeTable) && !pacingWarning,
 				pacingWarning,
 				overbookAvailable: true,
+				held: heldEligibleIds.length > 0,
+				heldTableIds: heldEligibleIds,
 				suggestedTableIds: freeTable ? [freeTable.id] : [],
 			})
 		}
@@ -1455,6 +1524,9 @@ export async function getOperatorAvailability(
 		businessDate: input.date,
 		date: input.date,
 		partySize: input.partySize,
+		closed: dayState.state === 'closed',
+		onlineClosed: dayState.state === 'online_closed',
+		dayState,
 		slots,
 	}
 }

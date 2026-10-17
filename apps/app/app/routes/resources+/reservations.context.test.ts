@@ -172,6 +172,11 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 			voice: false,
 		})
 		expect(body.organization.sitePublished).toBe(true)
+		const siteOrigin = new URL(body.organization.siteOrigin!)
+		expect(
+			siteOrigin.hostname.startsWith(`${organization.slug.toLowerCase()}.`),
+		).toBe(true)
+		expect(siteOrigin.origin).not.toBe(new URL(ENV.BASE_URL).origin)
 		expect(body.organization.emailTheme.primary).toMatch(/^#[0-9a-fA-F]{6}$/)
 		expect(body.organization.emailTheme.background).toMatch(/^#[0-9a-fA-F]{6}$/)
 		expect(body.locations).toHaveLength(1)

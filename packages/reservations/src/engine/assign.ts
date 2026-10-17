@@ -300,6 +300,7 @@ export type AssignTablesResult =
 
 const ACTIVE_BOOKING_STATUSES = new Set([
 	'pending_payment',
+	'pending_approval',
 	'booked',
 	'confirmed',
 	'partially_arrived',

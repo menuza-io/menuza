@@ -591,4 +591,44 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 			expect(run(nowMs - 60_000, via).assigned).toBe(true)
 		}
 	})
+
+	it('treats a pending_approval request as occupying its tables', () => {
+		const run = (status: string) =>
+			assignTables({
+				nowMs,
+				assignmentFreezeMin: 60,
+				tables: [
+					{
+						id: 't_only',
+						areaId: 'a1',
+						label: 'T1',
+						minSeats: 2,
+						maxSeats: 4,
+						onlineBookable: true,
+						combinable: false,
+						priority: 0,
+						active: true,
+					},
+				],
+				combinations: [],
+				existingBookings: [
+					{
+						id: 'pending_1',
+						kind: 'reservation',
+						status,
+						channel: 'online',
+						partySize: 4,
+						startAt,
+						endAt,
+						tableIds: ['t_only'],
+						tableLocked: false,
+					},
+				],
+				request: { partySize: 4, startAt, endAt, channel: 'host' },
+			})
+
+		expect(run('pending_approval').assigned).toBe(false)
+		expect(run('booked').assigned).toBe(false)
+		expect(run('cancelled').assigned).toBe(true)
+	})
 })

@@ -20,6 +20,7 @@ import {
 	getReservationsFeatureState,
 	getReservationsPlatformFeeBp,
 } from '#app/utils/reservations/access.server.ts'
+import { resolveSitesOrigin } from '#app/utils/reservations/sites-origin.server.ts'
 import { resolveRestaurantOnlinePayment } from '#app/utils/restaurant-orders/payment-config.server.ts'
 import { getStaffingFeatureState } from '#app/utils/staffing/access.server.ts'
 
@@ -178,7 +179,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 	const defaultLocale = org.siteDefaultLocale || 'en'
 	const locales = parseLocales(org.siteLocales, defaultLocale)
-	const siteOrigin = org.customDomain ? `https://${org.customDomain}` : appUrl
+	const siteOrigin = resolveSitesOrigin({
+		slug: org.slug,
+		customDomain: org.customDomain,
+		baseUrl: appUrl,
+		hostSuffixes: ENV.PUBLIC_SITE_HOST_SUFFIXES,
+	})
 	const paymentActive = Boolean(features.payments && onlinePayment.enabled)
 
 	const payload = reservationsContextSchema.parse({

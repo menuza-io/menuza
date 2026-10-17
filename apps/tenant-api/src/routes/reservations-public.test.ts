@@ -1163,6 +1163,26 @@ describe('large-party requests', () => {
 		expect((after[0] as { n: number }).n).toBe(0)
 	})
 
+	it('never plans a table a pending request already holds and never leaks SQL text', async () => {
+		const first = await call('POST', '/reservations/requests', {
+			headers: { 'Idempotency-Key': idemKey() },
+			body: requestBody(64, 19 * 60, 12),
+		})
+		expect(first.status).toBe(201)
+		const second = await call('POST', '/reservations/requests', {
+			headers: { 'Idempotency-Key': idemKey() },
+			body: requestBody(65, 19 * 60, 12),
+		})
+		expect(second.status).toBe(201)
+
+		const db = await getTenantDb(ORG)
+		const rows = await db.all(
+			sql`select table_id as tableId, count(*) as n from rsv_table_occupancies where active = 1 group by table_id`,
+		)
+		for (const row of rows as Array<{ n: number }>) expect(row.n).toBe(1)
+		expect(JSON.stringify(second.body)).not.toMatch(/Failed query|insert into/i)
+	})
+
 	it('refuses requests when the location is in contact mode', async () => {
 		await setSettings({ largePartyMode: 'contact' })
 		const res = await call('POST', '/reservations/requests', {

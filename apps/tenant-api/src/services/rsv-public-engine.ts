@@ -1,6 +1,5 @@
 import {
 	addDays,
-	daysBetween,
 	resolveServices,
 	searchAvailability,
 	suggestAlternatives,
@@ -10,7 +9,6 @@ import {
 	type EngineSettingsInput,
 	type ExistingOccupancyInput,
 	type SearchAvailabilityResult,
-	type SpecialDayRuleInput,
 	type WeeklyServiceTemplateInput,
 } from '@repo/reservations'
 import {
@@ -23,6 +21,13 @@ import {
 import { and, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import { loadLocationSchedulingState } from './rsv-booking-service.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
+import {
+	loadSpecialDayRows,
+	pickI18n,
+	specialDayRules,
+} from './rsv-special-days.ts'
+
+export { pickI18n }
 
 /** Reservation states that occupy tables and count against capacity. */
 export const CAPACITY_STATUSES = [
@@ -55,21 +60,6 @@ export type PublicEngineState = {
 		{ name: string; nameI18n: Record<string, string> | null }
 	>
 	occupanciesFor: (businessDate: string) => ExistingOccupancyInput[]
-}
-
-export function pickI18n(
-	map: Record<string, string> | null | undefined,
-	locale?: string | null,
-	/** Names have a canonical column to fall back to, so they must not borrow another locale's text. */
-	fallbackToAnyLocale = true,
-): string | null {
-	if (!map) return null
-	const exact = locale ? map[locale] : undefined
-	if (exact) return exact
-	const base = locale?.split('-')[0]
-	if (base && map[base]) return map[base]!
-	if (map.en) return map.en
-	return fallbackToAnyLocale ? (Object.values(map).find(Boolean) ?? null) : null
 }
 
 export function toEngineSettings(
@@ -105,37 +95,6 @@ export function toEngineSettings(
 	}
 }
 
-function specialDayRules(
-	rows: Array<typeof rsvSpecialDays.$inferSelect>,
-	fromDate: string,
-	toDate: string,
-): SpecialDayRuleInput[] {
-	const out: SpecialDayRuleInput[] = []
-	for (const row of rows) {
-		const start = row.fromDate > fromDate ? row.fromDate : fromDate
-		const end = row.toDate < toDate ? row.toDate : toDate
-		const patch = row.patch as Record<string, unknown> | null
-		const custom = Array.isArray(patch?.customServices)
-			? (patch.customServices as SpecialDayRuleInput['customServices'])
-			: Array.isArray(patch)
-				? (patch as SpecialDayRuleInput['customServices'])
-				: []
-		const note = pickI18n(row.publicNoteI18n)
-		const span = daysBetween(start, end)
-		for (let i = 0; i <= span; i++) {
-			out.push({
-				id: row.id,
-				businessDate: addDays(start, i),
-				type: row.kind,
-				name: row.name,
-				note,
-				customServices: custom,
-			})
-		}
-	}
-	return out
-}
-
 export async function loadPublicEngineState(
 	db: DbOrTx,
 	params: {
@@ -157,17 +116,7 @@ export async function loadPublicEngineState(
 
 	const [specialDayRows, reservationRows, holdRows, blockRows] =
 		await Promise.all([
-			db
-				.select()
-				.from(rsvSpecialDays)
-				.where(
-					and(
-						eq(rsvSpecialDays.locationId, locationId),
-						lte(rsvSpecialDays.fromDate, toDate),
-						gte(rsvSpecialDays.toDate, fromDate),
-					),
-				)
-				.all(),
+			loadSpecialDayRows(db, locationId, fromDate, toDate),
 			db
 				.select()
 				.from(rsvReservations)

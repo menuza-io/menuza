@@ -1716,6 +1716,117 @@ describe('/operator/reservations/setup/* routes', () => {
 		expect(events.map((e) => e.type)).toContain('auto_reassigned')
 	})
 
+	it('POST /blocks whose reflow collides with an occupancy the engine cannot see answers a typed 409 block_conflict without SQL text and rolls back', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const db = await getTenantDb(ORG_ID)
+
+		await db.insert(rsvLocationSettings).values({
+			locationId: LOC_MAIN,
+			timeZone: 'America/New_York',
+			enabled: true,
+		})
+		await db.insert(rsvAreas).values({
+			id: 'area_bc',
+			locationId: LOC_MAIN,
+			name: 'Main',
+		})
+		await db.insert(rsvTables).values([
+			{
+				id: 'tbl_bc_1',
+				locationId: LOC_MAIN,
+				areaId: 'area_bc',
+				label: 'C1',
+				minCovers: 1,
+				maxCovers: 4,
+			},
+			{
+				id: 'tbl_bc_2',
+				locationId: LOC_MAIN,
+				areaId: 'area_bc',
+				label: 'C2',
+				minCovers: 1,
+				maxCovers: 4,
+			},
+		])
+		await db.insert(rsvGuests).values({
+			id: 'gst_bc',
+			firstName: 'Bea',
+			lastName: 'Conflict',
+		})
+		const startAt = Date.UTC(2027, 9, 20, 22, 0, 0)
+		const endAt = startAt + 90 * 60_000
+		const seed = async (
+			id: string,
+			tableId: string,
+			status: 'booked' | 'cancelled',
+		) => {
+			await db.insert(rsvReservations).values({
+				id,
+				confirmationCode: id.slice(-8).toUpperCase(),
+				locationId: LOC_MAIN,
+				guestId: 'gst_bc',
+				businessDate: '2027-10-20',
+				localStartMin: 1080,
+				durationMin: 90,
+				startAt,
+				endAt,
+				timeZone: 'America/New_York',
+				partySize: 2,
+				status,
+				channel: 'phone',
+				assignment: 'soft',
+				scheduleVersion: 1,
+				version: 1,
+			})
+			await db.insert(rsvTableOccupancies).values({
+				id: `occ_${id}`,
+				locationId: LOC_MAIN,
+				tableId,
+				kind: 'reservation',
+				reservationId: id,
+				startAt,
+				endAt,
+				active: true,
+				overbook: false,
+			})
+		}
+		await seed('res_bc_soft', 'tbl_bc_1', 'booked')
+		// Stale active occupancy of a cancelled reservation: invisible to the engine, visible to the trigger.
+		await seed('res_bc_stale', 'tbl_bc_2', 'cancelled')
+
+		const res = await app.request('/operator/reservations/setup/blocks', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				locationId: LOC_MAIN,
+				tableId: 'tbl_bc_1',
+				businessDate: '2027-10-20',
+				startAt,
+				endAt,
+				reason: 'Maintenance',
+			}),
+		})
+		expect(res.status).toBe(409)
+		const text = await res.text()
+		expect(text).not.toMatch(/Failed query|insert into|rsv_table/i)
+		expect(JSON.parse(text)).toMatchObject({
+			error: 'block_conflict',
+			reservationIds: ['res_bc_soft'],
+		})
+
+		expect(await db.select().from(rsvBlocks).all()).toHaveLength(0)
+		const soft = await db
+			.select()
+			.from(rsvTableOccupancies)
+			.where(eq(rsvTableOccupancies.reservationId, 'res_bc_soft'))
+			.all()
+		expect(soft.map((o) => [o.tableId, o.active])).toEqual([['tbl_bc_1', true]])
+	})
+
 	it('enforces hold-duration bounds (3..20, 10..60, 5..30), turn-time max 480 & non-overlapping buckets, combo validation on update & saveFloorPlan, and unconditional special-day day-version bumps', async () => {
 		const token = await mintToken()
 		const app = buildApp()

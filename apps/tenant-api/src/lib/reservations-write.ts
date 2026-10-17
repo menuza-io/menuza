@@ -641,20 +641,36 @@ export async function bumpDayVersionsInTx(
 	return result
 }
 
-function mapSqliteConstraintError(error: unknown): never {
-	if (error instanceof HttpError) throw error
+function sqliteErrorText(error: unknown): string {
 	const message = error instanceof Error ? error.message : String(error)
 	const causeText =
 		error instanceof Error
 			? String((error as { cause?: unknown }).cause ?? '')
 			: ''
-	const combined = `${message} ${causeText}`
+	return `${message} ${causeText}`
+}
+
+/** True when the occupancy overlap trigger aborted a statement. */
+export function isOccupancyOverlapError(error: unknown): boolean {
+	return (
+		!(error instanceof HttpError) &&
+		sqliteErrorText(error).includes('rsv_table_occupancies overlap')
+	)
+}
+
+function mapSqliteConstraintError(error: unknown): never {
+	if (error instanceof HttpError) throw error
+	// Never forward the driver message: drizzle wraps the failing statement and
+	// its bound parameters ("Failed query: ...") into it.
+	if (isOccupancyOverlapError(error)) {
+		throw new HttpError(409, 'slot_unavailable')
+	}
+	const combined = sqliteErrorText(error)
 	if (
-		combined.includes('rsv_table_occupancies overlap') ||
 		combined.includes('hold_already_converted') ||
 		combined.includes('uniq_rsv_reservations_hold_id')
 	) {
-		throw conflict('conflict', message)
+		throw conflict('conflict')
 	}
 	throw error
 }

@@ -51,6 +51,7 @@ import {
 	serializeReservationsForBook,
 	type SerializedBookReservation,
 } from './rsv-day-feed-service.ts'
+import { loadStaffDayState } from './rsv-special-days.ts'
 import {
 	getGuestSummary,
 	resolveOrCreateGuestForBooking,
@@ -536,6 +537,12 @@ export interface CreateOperatorReservationInput {
 	} | null
 }
 
+/** A rule the staff booking went past because the operator explicitly overrode it. */
+export type BookingWarning = {
+	code: 'closed_day' | 'pacing_exceeded' | 'pacing_parties_exceeded'
+	message: string
+}
+
 export async function createOperatorReservation(params: {
 	orgId: string
 	locationId: string
@@ -545,6 +552,7 @@ export async function createOperatorReservation(params: {
 }): Promise<{
 	reservation: SerializedBookReservation
 	moves: ReservationMoveReport[]
+	warnings: BookingWarning[]
 }> {
 	const idempotencyKey = params.idempotencyKey?.trim()
 	if (!idempotencyKey) {
@@ -581,6 +589,7 @@ export async function createOperatorReservation(params: {
 	return withReservationWrite<{
 		reservation: SerializedBookReservation
 		moves: ReservationMoveReport[]
+		warnings: BookingWarning[]
 	}>(
 		{
 			orgId: params.orgId,
@@ -633,6 +642,22 @@ export async function createOperatorReservation(params: {
 				)
 			}
 
+			const warnings: BookingWarning[] = []
+
+			// `online_closed` only stops the guest channel, so staff may still book.
+			const dayState = await loadStaffDayState(tx, locationId, businessDate)
+			if (dayState.state === 'closed') {
+				const message = dayState.name
+					? `The location is closed on this date (${dayState.name}); overbook override required`
+					: 'The location is closed on this date; overbook override required'
+				if (!isOverbook) {
+					throw conflict('closed_day', message, {
+						specialDay: { name: dayState.name, note: dayState.note },
+					})
+				}
+				warnings.push({ code: 'closed_day', message })
+			}
+
 			// Check pacing rules for this slot
 			const activeDayRes = state.dayResRows.filter((r) =>
 				ACTIVE_OCCUPANCY_STATUSES.has(r.status),
@@ -650,23 +675,18 @@ export async function createOperatorReservation(params: {
 				const bucketCovers = inBucket.reduce((s, r) => s + r.partySize, 0)
 				if (
 					pr.maxCovers !== null &&
-					bucketCovers + input.partySize > pr.maxCovers &&
-					!isOverbook
+					bucketCovers + input.partySize > pr.maxCovers
 				) {
-					throw conflict(
-						'pacing_exceeded',
-						'Pacing limit exceeded for this interval; overbook override required',
-					)
+					const message =
+						'Pacing limit exceeded for this interval; overbook override required'
+					if (!isOverbook) throw conflict('pacing_exceeded', message)
+					warnings.push({ code: 'pacing_exceeded', message })
 				}
-				if (
-					pr.maxParties !== null &&
-					inBucket.length + 1 > pr.maxParties &&
-					!isOverbook
-				) {
-					throw conflict(
-						'pacing_parties_exceeded',
-						'Max parties limit exceeded for this interval; overbook override required',
-					)
+				if (pr.maxParties !== null && inBucket.length + 1 > pr.maxParties) {
+					const message =
+						'Max parties limit exceeded for this interval; overbook override required'
+					if (!isOverbook) throw conflict('pacing_parties_exceeded', message)
+					warnings.push({ code: 'pacing_parties_exceeded', message })
 				}
 			}
 
@@ -1135,6 +1155,7 @@ export async function createOperatorReservation(params: {
 			return {
 				reservation: serialized!,
 				moves,
+				warnings,
 			}
 		},
 	)

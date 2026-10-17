@@ -326,7 +326,7 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 		expect(expWl?.status).toBe('no_response')
 	})
 
-	it('maps rsv_table_occupancies overlap trigger aborts to 409 conflict', async () => {
+	it('maps rsv_table_occupancies overlap trigger aborts to the uniform 409 slot_unavailable without SQL text', async () => {
 		const now = 1_750_000_000_000
 
 		await withReservationWrite(
@@ -389,7 +389,8 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 			),
 		).rejects.toMatchObject({
 			status: 409,
-			code: 'conflict',
+			code: 'slot_unavailable',
+			message: 'slot_unavailable',
 		} satisfies Partial<HttpError>)
 	})
 

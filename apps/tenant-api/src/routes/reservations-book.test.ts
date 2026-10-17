@@ -16,9 +16,12 @@ import {
 	rsvAuditLog,
 	rsvGuests,
 	rsvBlocks,
+	rsvHolds,
 	rsvLocationSettings,
+	rsvPacingRules,
 	rsvReservationTags,
 	rsvServices,
+	rsvSpecialDays,
 	rsvTableOccupancies,
 	rsvTables,
 	rsvTags,
@@ -1596,6 +1599,228 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 				reservationId: locked.id,
 				tableIds: ['tbl_1'],
 				blockId: 'blk_displace',
+			})
+		})
+	})
+
+	describe('staff availability and booking honour special days, pacing overrides and live holds', () => {
+		type Slot = {
+			slotLocal: string
+			available: boolean
+			held: boolean
+			heldTableIds: string[]
+			suggestedTableIds: string[]
+		}
+
+		async function availability(token: string, partySize = 2) {
+			const res = await buildApp().request(
+				`/operator/reservations/book/availability?locationId=${LOC_MAIN}&date=${DATE}&partySize=${partySize}`,
+				{ headers: { Authorization: `Bearer ${token}` } },
+			)
+			expect(res.status).toBe(200)
+			return (await res.json()) as {
+				closed: boolean
+				onlineClosed: boolean
+				dayState: { state: string; name?: string | null }
+				slots: Slot[]
+			}
+		}
+
+		async function bookAt(
+			token: string,
+			key: string,
+			extra: Record<string, unknown> = {},
+		) {
+			const res = await buildApp().request(
+				'/operator/reservations/book/reservations',
+				{
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+						'Idempotency-Key': key,
+					},
+					body: JSON.stringify({
+						locationId: LOC_MAIN,
+						date: DATE,
+						time: '19:00',
+						partySize: 2,
+						guest: { firstName: key, lastName: 'Guest' },
+						...extra,
+					}),
+				},
+			)
+			return { status: res.status, body: (await res.json()) as any }
+		}
+
+		async function addSpecialDay(kind: 'closed' | 'online_closed') {
+			const db = await getTenantDb(ORG_ID)
+			await db.insert(rsvSpecialDays).values({
+				id: `sp_${kind}`,
+				locationId: LOC_MAIN,
+				fromDate: DATE,
+				toDate: DATE,
+				kind,
+				name: kind === 'closed' ? 'Private buyout' : 'Phone only',
+			})
+		}
+
+		it('returns no slots and a closed day state on a closed special day, and refuses a staff booking without an explicit overbook', async () => {
+			const token = await mintToken()
+			await addSpecialDay('closed')
+
+			const avail = await availability(token)
+			expect(avail.slots).toEqual([])
+			expect(avail.closed).toBe(true)
+			expect(avail.dayState).toMatchObject({
+				state: 'closed',
+				name: 'Private buyout',
+			})
+
+			const refused = await bookAt(token, 'closed-refused')
+			expect(refused.status).toBe(409)
+			expect(refused.body.error).toBe('closed_day')
+
+			const overridden = await bookAt(token, 'closed-override', {
+				overbook: true,
+				overbookReason: 'Owner asked for a table',
+			})
+			expect(overridden.status).toBe(201)
+			expect(overridden.body.warnings).toEqual([
+				expect.objectContaining({ code: 'closed_day' }),
+			])
+		})
+
+		it('still offers slots on an online_closed day but flags the day, and a staff booking needs no override', async () => {
+			const token = await mintToken()
+			await addSpecialDay('online_closed')
+
+			const avail = await availability(token)
+			expect(avail.slots.length).toBeGreaterThan(0)
+			expect(avail.closed).toBe(false)
+			expect(avail.onlineClosed).toBe(true)
+			expect(avail.dayState.state).toBe('online_closed')
+
+			const booked = await bookAt(token, 'online-closed-book')
+			expect(booked.status).toBe(201)
+			expect(booked.body.warnings).toEqual([])
+		})
+
+		it('carries a pacing warning when staff overbook past a pacing limit and still refuses without the override', async () => {
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+			await db.insert(rsvPacingRules).values({
+				id: 'pace_parties',
+				serviceId: 'svc_dinner',
+				bucketMin: 15,
+				maxParties: 1,
+				channel: 'all',
+			})
+
+			expect((await bookAt(token, 'pace-first')).status).toBe(201)
+
+			const refused = await bookAt(token, 'pace-refused')
+			expect(refused.status).toBe(409)
+			expect(refused.body.error).toBe('pacing_parties_exceeded')
+
+			const over = await bookAt(token, 'pace-over', {
+				overbook: true,
+				overbookReason: 'Regular guest',
+			})
+			expect(over.status).toBe(201)
+			expect(over.body.warnings).toEqual([
+				expect.objectContaining({ code: 'pacing_parties_exceeded' }),
+			])
+		})
+
+		it('withholds a slot while a guest hold on every table is live and offers it again after the hold expires', async () => {
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+			const startAt = Date.UTC(2027, 7, 20, 23, 0, 0)
+			await db.insert(rsvHolds).values({
+				id: 'hold_live',
+				locationId: LOC_MAIN,
+				tokenHash: 'hold-live-token-hash',
+				businessDate: DATE,
+				localStartMin: 19 * 60,
+				startAt,
+				endAt: startAt + 90 * 60_000,
+				partySize: 2,
+				serviceId: 'svc_dinner',
+				status: 'active',
+				expiresAt: Date.now() + 3 * 60_000,
+			})
+			for (const tableId of ['tbl_1', 'tbl_2']) {
+				await db.insert(rsvTableOccupancies).values({
+					id: `occ_hold_${tableId}`,
+					locationId: LOC_MAIN,
+					tableId,
+					kind: 'hold',
+					holdId: 'hold_live',
+					startAt,
+					endAt: startAt + 90 * 60_000,
+				})
+			}
+
+			const during = await availability(token)
+			const held = during.slots.find((s) => s.slotLocal === '19:00')!
+			expect(held).toMatchObject({
+				available: false,
+				held: true,
+				suggestedTableIds: [],
+			})
+			expect(held.heldTableIds.sort()).toEqual(['tbl_1', 'tbl_2'])
+			expect(during.slots.find((s) => s.slotLocal === '17:00')).toMatchObject({
+				available: true,
+				held: false,
+			})
+
+			await db
+				.update(rsvHolds)
+				.set({ status: 'expired', expiresAt: Date.now() - 1_000 })
+				.where(eq(rsvHolds.id, 'hold_live'))
+			await db
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(eq(rsvTableOccupancies.holdId, 'hold_live'))
+
+			const after = await availability(token)
+			expect(after.slots.find((s) => s.slotLocal === '19:00')).toMatchObject({
+				available: true,
+				held: false,
+			})
+		})
+
+		it('ignores a hold whose expiry has passed even before the sweep marks it expired', async () => {
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+			const startAt = Date.UTC(2027, 7, 20, 23, 0, 0)
+			await db.insert(rsvHolds).values({
+				id: 'hold_stale',
+				locationId: LOC_MAIN,
+				tokenHash: 'hold-stale-token-hash',
+				businessDate: DATE,
+				localStartMin: 19 * 60,
+				startAt,
+				endAt: startAt + 90 * 60_000,
+				partySize: 2,
+				status: 'active',
+				expiresAt: Date.now() - 60_000,
+			})
+			await db.insert(rsvTableOccupancies).values({
+				id: 'occ_hold_stale',
+				locationId: LOC_MAIN,
+				tableId: 'tbl_1',
+				kind: 'hold',
+				holdId: 'hold_stale',
+				startAt,
+				endAt: startAt + 90 * 60_000,
+			})
+
+			const avail = await availability(token)
+			expect(avail.slots.find((s) => s.slotLocal === '19:00')).toMatchObject({
+				available: true,
+				held: false,
 			})
 		})
 	})
