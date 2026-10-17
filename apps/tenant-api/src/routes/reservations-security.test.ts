@@ -268,6 +268,16 @@ describe('Reservations security sweep: operator routes', () => {
 			keys.has('GET /operator/reservations/book/reservations/:id/events'),
 		).toBe(true)
 		expect(
+			keys.has(
+				'DELETE /operator/reservations/setup/locations/:locationId/pacing/:id',
+			),
+		).toBe(true)
+		expect(
+			keys.has(
+				'DELETE /operator/reservations/setup/locations/:locationId/service-availability/:id',
+			),
+		).toBe(true)
+		expect(
 			keys.has('POST /operator/reservations/book/reservations/:id/contact'),
 		).toBe(true)
 		expect(
@@ -675,6 +685,102 @@ describe('Reservations security sweep: operator routes', () => {
 			},
 		)
 		expect(crossOrgDeleteArea.status).toBe(404)
+	})
+
+	it('VAL-SETUP-020 & VAL-SETUP-021: location-scoped pacing and service-availability deletes return 200 for rows in that location and 404 for rows in another', async () => {
+		const dbA = await provisionTenantDb(ORG_A)
+		await dbA
+			.insert(rsvLocationSettings)
+			.values([
+				{ locationId: LOC_1, timeZone: 'America/New_York', enabled: true },
+				{ locationId: LOC_2, timeZone: 'America/Chicago', enabled: true },
+			])
+			.onConflictDoNothing()
+
+		const token = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'setup',
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_SETTINGS,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_SETTINGS,
+			],
+			ttlSeconds: 300,
+		})
+		const post = async (route: string, body: Record<string, unknown>) => {
+			const res = await app.request(`/operator/reservations/setup/${route}`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			})
+			expect(res.status).toBe(201)
+			return (await res.json()) as Record<string, any>
+		}
+		const del = (route: string) =>
+			app.request(`/operator/reservations/setup/${route}`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${token}` },
+			})
+
+		const service = (await post('services', {
+			locationId: LOC_1,
+			name: 'Scoped Dinner',
+			daysMask: 127,
+			firstSeatingMin: 1020,
+			lastSeatingMin: 1290,
+			endMin: 1380,
+		})) as { service: { id: string } }
+		const area = (await post('areas', {
+			locationId: LOC_1,
+			name: 'Scoped Room',
+		})) as { area: { id: string } }
+
+		const makePacing = async () =>
+			(
+				(await post('pacing', {
+					serviceId: service.service.id,
+					bucketMin: 15,
+					maxCovers: 12,
+					channel: 'online',
+				})) as { pacingRule: { id: string } }
+			).pacingRule.id
+		const makeAvailability = async () =>
+			(
+				(await post('service-availability', {
+					serviceId: service.service.id,
+					areaId: area.area.id,
+					mode: 'staff_only',
+				})) as { serviceAvailability: { id: string } }
+			).serviceAvailability.id
+
+		const pacingId = await makePacing()
+		expect((await del(`locations/${LOC_2}/pacing/${pacingId}`)).status).toBe(
+			404,
+		)
+		expect((await del(`locations/${LOC_1}/pacing/${pacingId}`)).status).toBe(
+			200,
+		)
+		expect((await del(`locations/${LOC_1}/pacing/${pacingId}`)).status).toBe(
+			404,
+		)
+
+		const availabilityId = await makeAvailability()
+		expect(
+			(await del(`locations/${LOC_2}/service-availability/${availabilityId}`))
+				.status,
+		).toBe(404)
+		expect(
+			(await del(`locations/${LOC_1}/service-availability/${availabilityId}`))
+				.status,
+		).toBe(200)
+
+		// The unscoped routes keep working.
+		expect((await del(`pacing/${await makePacing()}`)).status).toBe(200)
+		expect(
+			(await del(`service-availability/${await makeAvailability()}`)).status,
+		).toBe(200)
 	})
 
 	it('enforces book write grants, sensitive guest export grant, guest erase grant, and internal summary auth', async () => {

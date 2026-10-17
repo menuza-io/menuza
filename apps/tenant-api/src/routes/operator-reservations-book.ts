@@ -170,6 +170,10 @@ const dayQuerySchema = z.object({
 	locationId: z.string().trim().min(1).max(128),
 	date: z.string().regex(DATE_RE).optional(),
 	businessDate: z.string().regex(DATE_RE).optional(),
+	serviceId: z.string().trim().min(1).max(128).optional(),
+	areaId: z.string().trim().min(1).max(128).optional(),
+	source: z.string().trim().min(1).max(128).optional(),
+	tag: z.string().trim().min(1).max(128).optional(),
 })
 
 operatorReservationsBookRoutes.get(
@@ -202,6 +206,12 @@ operatorReservationsBookRoutes.get(
 			)
 			const feed = await getDayFeed(db, locCheck.locationId, businessDate, {
 				canReadGuestSensitive,
+				filters: {
+					serviceId: q.data.serviceId,
+					areaId: q.data.areaId,
+					source: q.data.source,
+					tag: q.data.tag,
+				},
 			})
 
 			const ifNoneMatch = c.req.header('If-None-Match')

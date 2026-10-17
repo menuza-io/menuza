@@ -249,6 +249,12 @@ async function requireServiceLocationAccess(
 	return svc
 }
 
+/** A location-scoped alias must not reach a row that belongs to another location. */
+function assertRowInRequestedLocation(c: Context, rowLocationId: string) {
+	const requested = c.req.param('locationId')
+	if (requested && requested !== rowLocationId) throw notFound()
+}
+
 const setupAreaUpdateSchema = setupAreaInputSchema.partial()
 const setupTableUpdateSchema = setupTableInputSchema.partial()
 const setupComboUpdateSchema = setupComboInputSchema.partial()
@@ -1413,7 +1419,8 @@ const updatePacingHandler = wrapHandler(async (c) => {
 		.where(eq(rsvPacingRules.id, ruleId))
 		.get()
 	if (!current) throw notFound('Pacing rule not found')
-	await requireServiceLocationAccess(c, db, current.serviceId)
+	const svc = await requireServiceLocationAccess(c, db, current.serviceId)
+	assertRowInRequestedLocation(c, svc.locationId)
 	const parsed = parseSchemaOrThrow(setupPacingRuleUpdateSchema, body)
 	const res = await updatePacingRuleForLocation(db, ruleId, {
 		actorId: ctx.userId,
@@ -1433,7 +1440,8 @@ const deletePacingHandler = wrapHandler(async (c) => {
 		.where(eq(rsvPacingRules.id, ruleId))
 		.get()
 	if (!current) throw notFound('Pacing rule not found')
-	await requireServiceLocationAccess(c, db, current.serviceId)
+	const svc = await requireServiceLocationAccess(c, db, current.serviceId)
+	assertRowInRequestedLocation(c, svc.locationId)
 	const result = await deletePacingRuleForLocation(db, ruleId, ctx.userId)
 	return json(result)
 })
@@ -1508,6 +1516,23 @@ operatorReservationsSetupRoutes.delete(
 	writeSetupGuard,
 	deletePacingHandler,
 )
+for (const segment of ['pacing', 'pacing-rules']) {
+	operatorReservationsSetupRoutes.put(
+		`/locations/:locationId/${segment}/:id`,
+		writeSetupGuard,
+		updatePacingHandler,
+	)
+	operatorReservationsSetupRoutes.patch(
+		`/locations/:locationId/${segment}/:id`,
+		writeSetupGuard,
+		updatePacingHandler,
+	)
+	operatorReservationsSetupRoutes.delete(
+		`/locations/:locationId/${segment}/:id`,
+		writeSetupGuard,
+		deletePacingHandler,
+	)
+}
 
 // ============================================================================
 // Service Availability CRUD
@@ -1575,7 +1600,8 @@ const updateServiceAvailabilityHandler = wrapHandler(async (c) => {
 			.where(eq(rsvServiceAvailability.id, id))
 			.get()
 		if (!current) throw notFound('Service availability rule not found')
-		await requireServiceLocationAccess(c, db, current.serviceId)
+		const svc = await requireServiceLocationAccess(c, db, current.serviceId)
+		assertRowInRequestedLocation(c, svc.locationId)
 		const parsed = parseSchemaOrThrow(
 			setupServiceAvailabilityUpdateSchema,
 			body,
@@ -1610,7 +1636,8 @@ const deleteServiceAvailabilityHandler = wrapHandler(async (c) => {
 		.where(eq(rsvServiceAvailability.id, id))
 		.get()
 	if (!current) throw notFound('Service availability rule not found')
-	await requireServiceLocationAccess(c, db, current.serviceId)
+	const svc = await requireServiceLocationAccess(c, db, current.serviceId)
+	assertRowInRequestedLocation(c, svc.locationId)
 	const result = await deleteServiceAvailabilityForLocation(db, id, ctx.userId)
 	return json(result)
 })
@@ -1657,6 +1684,21 @@ operatorReservationsSetupRoutes.patch(
 )
 operatorReservationsSetupRoutes.delete(
 	'/service-availability/:id',
+	writeSetupGuard,
+	deleteServiceAvailabilityHandler,
+)
+operatorReservationsSetupRoutes.put(
+	'/locations/:locationId/service-availability/:id',
+	writeSetupGuard,
+	updateServiceAvailabilityHandler,
+)
+operatorReservationsSetupRoutes.patch(
+	'/locations/:locationId/service-availability/:id',
+	writeSetupGuard,
+	updateServiceAvailabilityHandler,
+)
+operatorReservationsSetupRoutes.delete(
+	'/locations/:locationId/service-availability/:id',
 	writeSetupGuard,
 	deleteServiceAvailabilityHandler,
 )
@@ -1812,6 +1854,7 @@ const createBlockHandler = wrapHandler(async (c) => {
 	const locationId = requireLocationId(c, body)
 	const parsed = parseSchemaOrThrow(setupBlockInputSchema, {
 		...body,
+		businessDate: body.businessDate ?? body.date,
 		locationId,
 	})
 	const db = await getTenantDb(ctx.orgId)
@@ -1835,6 +1878,7 @@ const deleteBlockHandler = wrapHandler(async (c) => {
 		.get()
 	if (!current) throw notFound('Block not found')
 	assertAllowedLocation(c, current.locationId)
+	assertRowInRequestedLocation(c, current.locationId)
 	const result = await deleteBlockForLocation(
 		db,
 		blockId,

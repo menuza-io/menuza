@@ -150,6 +150,8 @@ export type AssignBookingRecord = {
 	serviceId?: string | null
 	areaId?: string | null
 	seatingPreference?: SeatingPreference | null
+	/** Only read for `kind: 'hold'`: a hold with `expiresAt <= now` holds no capacity. */
+	expiresAt?: number
 }
 
 export type AssignDayBooking = AssignBookingRecord
@@ -375,6 +377,7 @@ export function buildOccupancyIndex(input: {
 			continue
 		}
 		if (b.kind === 'hold') {
+			if (b.expiresAt !== undefined && b.expiresAt <= input.nowMs) continue
 			for (const tableId of b.tableIds) {
 				entries.push({
 					ownerId: `hold:${b.id}`,

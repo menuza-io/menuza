@@ -21,6 +21,7 @@ import { HttpError } from './http.ts'
 import {
 	hashIdempotencyPayload,
 	withReservationWrite,
+	withSetupWrite,
 } from './reservations-write.ts'
 
 const ORG_ID = 'clw9x0a12000008l00rsvw01'
@@ -390,5 +391,94 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 			status: 409,
 			code: 'conflict',
 		} satisfies Partial<HttpError>)
+	})
+
+	it("withSetupWrite locks on the org id so it serializes with that org's reservation writes", async () => {
+		const db = await getTenantDb(ORG_ID)
+		const order: string[] = []
+		let release!: () => void
+		const gate = new Promise<void>((resolve) => {
+			release = resolve
+		})
+
+		const setup = withSetupWrite(db, async () => {
+			order.push('start:setup')
+			await gate
+			order.push('end:setup')
+		})
+		await new Promise((resolve) => setTimeout(resolve, 10))
+		const reservation = withReservationWrite(
+			{ orgId: ORG_ID, locationId: LOC_ID, dates: [DATE] },
+			async () => {
+				order.push('start:reservation')
+			},
+		)
+		await new Promise((resolve) => setTimeout(resolve, 25))
+		expect(order).toEqual(['start:setup'])
+		release()
+		await Promise.all([setup, reservation])
+		expect(order).toEqual(['start:setup', 'end:setup', 'start:reservation'])
+	})
+
+	it("withSetupWrite does not serialize against another org's writes", async () => {
+		const otherOrg = 'clw9x0a12000008l00rsvw02'
+		await provisionTenantDb(otherOrg)
+		try {
+			const db = await getTenantDb(ORG_ID)
+			let release!: () => void
+			const gate = new Promise<void>((resolve) => {
+				release = resolve
+			})
+			const setup = withSetupWrite(db, async () => {
+				await gate
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			let otherRan = false
+			await withReservationWrite({ orgId: otherOrg }, async () => {
+				otherRan = true
+			})
+			expect(otherRan).toBe(true)
+			release()
+			await setup
+		} finally {
+			await destroyTenantDb(otherOrg)
+		}
+	})
+
+	it('withSetupWrite rolls back every row when the mutation fails part-way', async () => {
+		const db = await getTenantDb(ORG_ID)
+		await expect(
+			withSetupWrite(db, async (tx) => {
+				await tx.insert(rsvAreas).values({
+					id: 'area_partial',
+					locationId: LOC_ID,
+					name: 'Partial',
+				})
+				await tx.insert(rsvTables).values({
+					id: 'tbl_partial',
+					locationId: LOC_ID,
+					areaId: 'area_partial',
+					label: 'P1',
+					minCovers: 1,
+					maxCovers: 2,
+				})
+				throw new Error('boom')
+			}),
+		).rejects.toThrow('boom')
+
+		expect(
+			await db
+				.select()
+				.from(rsvAreas)
+				.where(eq(rsvAreas.id, 'area_partial'))
+				.all(),
+		).toEqual([])
+		expect(
+			await db
+				.select()
+				.from(rsvTables)
+				.where(eq(rsvTables.id, 'tbl_partial'))
+				.all(),
+		).toEqual([])
 	})
 })

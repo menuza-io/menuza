@@ -610,4 +610,39 @@ describe('availability engine, pacing, alternatives, calendar, and experiences',
 		expect(expResult[0]?.seatings).toHaveLength(1)
 		expect(expResult[0]?.seatings[0]?.remainingCovers).toBe(4)
 	})
+
+	it('ignores holds whose expiresAt has passed and honours live holds', () => {
+		const base = makeBaseConfig()
+		const config: EngineDayConfig = {
+			...base,
+			tables: base.tables.filter((t) => t.id === 't2'),
+			combinations: [],
+		}
+		const slotStart = localToInstant(
+			'2026-06-12',
+			17 * 60,
+			'America/New_York',
+		).instantMs
+		const hold = {
+			id: 'hold_1',
+			partySize: 2,
+			localStartMin: 17 * 60,
+			startAt: slotStart,
+			endAt: slotStart + 5 * 60 * 60_000,
+			tableIds: ['t2'],
+		}
+		const search = (expiresAt: number) =>
+			searchAvailability({
+				config,
+				businessDate: '2026-06-12',
+				partySize: 2,
+				nowMs,
+				channel: 'online',
+				existingHolds: [{ ...hold, expiresAt }],
+			})
+
+		expect(search(nowMs + 60_000).slots).toHaveLength(0)
+		expect(search(nowMs).slots.length).toBeGreaterThan(0)
+		expect(search(nowMs - 60_000).slots.length).toBeGreaterThan(0)
+	})
 })

@@ -3048,10 +3048,10 @@ export async function createBlockForLocation(
 		let startAt = input.startAt
 		let endAt = input.endAt
 		if (startAt === undefined && input.startMin !== undefined) {
-			startAt = localToInstant(input.businessDate, input.startMin, tz)
+			startAt = localToInstant(input.businessDate, input.startMin, tz).instantMs
 		}
 		if (endAt === undefined && input.endMin !== undefined) {
-			endAt = localToInstant(input.businessDate, input.endMin, tz)
+			endAt = localToInstant(input.businessDate, input.endMin, tz).instantMs
 		}
 		if (startAt === undefined || endAt === undefined || endAt <= startAt) {
 			throw badRequest('invalid_block_window', 'endAt must be > startAt')

@@ -15,11 +15,15 @@ import {
 	rsvAreas,
 	rsvAuditLog,
 	rsvGuests,
+	rsvBlocks,
 	rsvLocationSettings,
+	rsvReservationTags,
 	rsvServices,
+	rsvTableOccupancies,
 	rsvTables,
+	rsvTags,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -1229,5 +1233,299 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			},
 		)
 		expect(staleNoteRes.status).toBe(409)
+	})
+
+	describe('day feed and seating (foh-core UT fixes)', () => {
+		async function post(
+			app: ReturnType<typeof buildApp>,
+			token: string,
+			url: string,
+			body: unknown,
+			headers: Record<string, string> = {},
+		) {
+			return app.request(`/operator/reservations/book${url}`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+					...headers,
+				},
+				body: JSON.stringify(body),
+			})
+		}
+
+		async function book(
+			app: ReturnType<typeof buildApp>,
+			token: string,
+			key: string,
+			extra: Record<string, unknown>,
+		) {
+			const res = await post(
+				app,
+				token,
+				'/reservations',
+				{
+					locationId: LOC_MAIN,
+					date: DATE,
+					time: '19:00',
+					partySize: 2,
+					guest: {
+						firstName: key,
+						lastName: 'Guest',
+						phone: `+1415555${String(Math.abs(hash(key)))
+							.slice(0, 4)
+							.padStart(4, '0')}`,
+					},
+					...extra,
+				},
+				{ 'Idempotency-Key': key },
+			)
+			expect(res.status).toBe(201)
+			return ((await res.json()) as any).reservation as {
+				id: string
+				version: number
+			}
+		}
+
+		function hash(value: string) {
+			let h = 0
+			for (const ch of value) h = (h * 31 + ch.charCodeAt(0)) | 0
+			return h
+		}
+
+		async function getDay(
+			app: ReturnType<typeof buildApp>,
+			token: string,
+			query = '',
+			headers: Record<string, string> = {},
+		) {
+			return app.request(
+				`/operator/reservations/book/day?locationId=${LOC_MAIN}&date=${DATE}${query}`,
+				{ headers: { Authorization: `Bearer ${token}`, ...headers } },
+			)
+		}
+
+		it('seats from arrived with tableIds: writes an active occupancy row, shows the table in the day feed, and 409s when the table is taken (VAL-HOST-014)', async () => {
+			const app = buildApp()
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+
+			const walkIn = await book(app, token, 'seat-a', { time: '18:00' })
+			const arrivedRes = await post(
+				app,
+				token,
+				`/reservations/${walkIn.id}/status`,
+				{ status: 'arrived', expectedVersion: walkIn.version },
+			)
+			expect(arrivedRes.status).toBe(200)
+			const arrived = ((await arrivedRes.json()) as any).reservation
+			// Release any table auto-assignment so the seat call must assign.
+			await db
+				.update(rsvTableOccupancies)
+				.set({ active: false })
+				.where(eq(rsvTableOccupancies.reservationId, walkIn.id))
+
+			const seatRes = await post(
+				app,
+				token,
+				`/reservations/${walkIn.id}/status`,
+				{
+					status: 'seated',
+					expectedVersion: arrived.version,
+					tableIds: ['tbl_2'],
+				},
+			)
+			expect(seatRes.status).toBe(200)
+			expect(((await seatRes.json()) as any).reservation.status).toBe('seated')
+
+			const occRows = await db
+				.select()
+				.from(rsvTableOccupancies)
+				.where(
+					and(
+						eq(rsvTableOccupancies.reservationId, walkIn.id),
+						eq(rsvTableOccupancies.active, true),
+					),
+				)
+				.all()
+			expect(occRows.map((o) => o.tableId)).toEqual(['tbl_2'])
+			expect(occRows[0]!.kind).toBe('reservation')
+
+			const dayBody = (await (await getDay(app, token)).json()) as any
+			const row = dayBody.reservations.find((r: any) => r.id === walkIn.id)
+			expect(row.status).toBe('seated')
+			expect(row.tableIds).toEqual(['tbl_2'])
+
+			// A second party cannot be seated at the same table in the same window.
+			const other = await book(app, token, 'seat-b', { time: '18:00' })
+			const otherArrivedRes = await post(
+				app,
+				token,
+				`/reservations/${other.id}/status`,
+				{ status: 'arrived', expectedVersion: other.version },
+			)
+			const otherArrived = ((await otherArrivedRes.json()) as any).reservation
+			const conflictRes = await post(
+				app,
+				token,
+				`/reservations/${other.id}/status`,
+				{
+					status: 'seated',
+					expectedVersion: otherArrived.version,
+					tableIds: ['tbl_2'],
+				},
+			)
+			expect(conflictRes.status).toBe(409)
+			const after = (await (await getDay(app, token)).json()) as any
+			expect(
+				after.reservations.find((r: any) => r.id === other.id).status,
+			).toBe('arrived')
+		})
+
+		it('filters the day feed by serviceId, areaId, source and tag, returns { parties, covers } counters and a per-query ETag (VAL-BOOK-008/009)', async () => {
+			const app = buildApp()
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+
+			const phone = await book(app, token, 'flt-phone', {
+				channel: 'phone',
+				partySize: 3,
+				time: '18:00',
+			})
+			await book(app, token, 'flt-online', {
+				channel: 'online',
+				partySize: 2,
+				time: '18:30',
+			})
+			await db.insert(rsvServices).values({
+				id: 'svc_lunch',
+				locationId: LOC_MAIN,
+				name: 'Lunch',
+				daysMask: 127,
+				firstSeatingMin: 11 * 60,
+				lastSeatingMin: 14 * 60,
+				endMin: 15 * 60,
+				onlineEnabled: true,
+				sort: 1,
+			})
+			await book(app, token, 'flt-early', {
+				channel: 'host',
+				serviceId: 'svc_lunch',
+				partySize: 4,
+				time: '12:00',
+			})
+
+			await db.insert(rsvTags).values({
+				id: 'tag_window',
+				scope: 'reservation',
+				category: 'custom',
+				name: 'Window',
+			})
+			await db
+				.insert(rsvReservationTags)
+				.values({ reservationId: phone.id, tagId: 'tag_window' })
+
+			const unfilteredRes = await getDay(app, token)
+			const unfiltered = (await unfilteredRes.json()) as any
+			expect(unfilteredRes.headers.get('ETag')).toBe(
+				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1"`,
+			)
+			expect(unfiltered.counters).toEqual({ parties: 3, covers: 9 })
+
+			const bySource = (await (
+				await getDay(app, token, '&source=phone')
+			).json()) as any
+			expect(bySource.reservations.map((r: any) => r.id)).toEqual([phone.id])
+			expect(bySource.counters).toEqual({ parties: 1, covers: 3 })
+
+			const byService = (await (
+				await getDay(app, token, '&serviceId=svc_dinner')
+			).json()) as any
+			expect(byService.counters).toEqual({ parties: 2, covers: 5 })
+			const byLunch = (await (
+				await getDay(app, token, '&serviceId=svc_lunch')
+			).json()) as any
+			expect(byLunch.counters).toEqual({ parties: 1, covers: 4 })
+
+			const byArea = (await (
+				await getDay(app, token, '&areaId=area_main')
+			).json()) as any
+			expect(byArea.reservations.length).toBeGreaterThan(0)
+			const byOtherArea = (await (
+				await getDay(app, token, '&areaId=area_missing')
+			).json()) as any
+			expect(byOtherArea.counters).toEqual({ parties: 0, covers: 0 })
+
+			const byTag = (await (
+				await getDay(app, token, '&tag=Window')
+			).json()) as any
+			expect(byTag.reservations.map((r: any) => r.id)).toEqual([phone.id])
+			expect(byTag.counters).toEqual({ parties: 1, covers: 3 })
+
+			// ETag differs per query and a matching conditional GET returns 304.
+			const filteredRes = await getDay(app, token, '&source=phone')
+			const filteredEtag = filteredRes.headers.get('ETag')!
+			expect(filteredEtag).not.toBe(unfilteredRes.headers.get('ETag'))
+			const otherEtag = (
+				await getDay(app, token, '&source=online')
+			).headers.get('ETag')
+			expect(otherEtag).not.toBe(filteredEtag)
+			const notModified = await getDay(app, token, '&source=phone', {
+				'If-None-Match': filteredEtag,
+			})
+			expect(notModified.status).toBe(304)
+			const crossQuery = await getDay(app, token, '&source=online', {
+				'If-None-Match': filteredEtag,
+			})
+			expect(crossQuery.status).toBe(200)
+		})
+
+		it('includes moveNotices for auto_reassigned bookings and locked bookings displaced by a block as blocked_table conflicts (VAL-CROSS-006)', async () => {
+			const app = buildApp()
+			const token = await mintToken()
+			const db = await getTenantDb(ORG_ID)
+
+			const soft = await book(app, token, 'mv-soft', { time: '19:00' })
+			await book(app, token, 'mv-locked', {
+				time: '19:00',
+				tableIds: ['tbl_1'],
+				locked: true,
+			})
+
+			const day = (await (await getDay(app, token)).json()) as any
+			expect(day.moveNotices.length).toBeGreaterThan(0)
+			const notice = day.moveNotices.find(
+				(n: any) => n.reservationId === soft.id,
+			)
+			expect(notice).toMatchObject({
+				reservationId: soft.id,
+				toTableIds: ['tbl_2'],
+			})
+			expect(notice.fromTableIds).toEqual(['tbl_1'])
+			expect(typeof notice.at).toBe('number')
+			expect(day.conflicts).toEqual([])
+
+			const locked = day.reservations.find((r: any) => r.locked === true)
+			await db.insert(rsvBlocks).values({
+				id: 'blk_displace',
+				locationId: LOC_MAIN,
+				tableId: 'tbl_1',
+				businessDate: DATE,
+				startAt: locked.startAt - 15 * 60_000,
+				endAt: locked.endAt + 15 * 60_000,
+				reason: 'maintenance',
+			})
+
+			const after = (await (await getDay(app, token)).json()) as any
+			const blocked = after.conflicts.filter(
+				(c: any) => c.kind === 'blocked_table',
+			)
+			expect(blocked).toHaveLength(1)
+			expect(blocked[0]).toMatchObject({
+				reservationId: locked.id,
+				tableIds: ['tbl_1'],
+				blockId: 'blk_displace',
+			})
+		})
 	})
 })

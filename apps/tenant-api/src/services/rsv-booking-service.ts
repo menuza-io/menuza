@@ -2435,6 +2435,10 @@ export async function transitionReservationStatus(params: {
 		arrivedCovers?: number | null
 		cancelReason?: string | null
 		reason?: string | null
+		tableIds?: string[]
+		comboId?: string | null
+		overbook?: boolean
+		overbookReason?: string | null
 		expectedVersion?: number
 		nowMs?: number
 	}
@@ -2457,7 +2461,7 @@ export async function transitionReservationStatus(params: {
 		},
 		async (tx) => {
 			const now = params.input.nowMs ?? Date.now()
-			const current = await tx
+			let current = await tx
 				.select()
 				.from(rsvReservations)
 				.where(eq(rsvReservations.id, params.reservationId))
@@ -2481,6 +2485,47 @@ export async function transitionReservationStatus(params: {
 					'invalid_status_transition',
 					`Cannot transition reservation from ${current.status} to ${targetStatus}`,
 				)
+			}
+
+			const requestedTableIds = [...new Set(params.input.tableIds ?? [])]
+			if (targetStatus === 'seated' && requestedTableIds.length > 0) {
+				const activeOccs = await tx
+					.select()
+					.from(rsvTableOccupancies)
+					.where(
+						and(
+							eq(rsvTableOccupancies.reservationId, current.id),
+							eq(rsvTableOccupancies.active, true),
+						),
+					)
+					.all()
+				const activeTableIds = new Set(activeOccs.map((o) => o.tableId))
+				const unchanged =
+					activeTableIds.size === requestedTableIds.length &&
+					requestedTableIds.every((id) => activeTableIds.has(id))
+				if (!unchanged) {
+					// Re-enters this transaction, so a refused assignment (409) rolls the
+					// whole seat transition back.
+					await assignReservationTables({
+						orgId: params.orgId,
+						reservationId: current.id,
+						actorId: params.actorId,
+						input: {
+							tableIds: requestedTableIds,
+							comboId: params.input.comboId ?? null,
+							overbook: params.input.overbook,
+							overbookReason: params.input.overbookReason,
+							nowMs: now,
+						},
+					})
+					const reloaded = await tx
+						.select()
+						.from(rsvReservations)
+						.where(eq(rsvReservations.id, current.id))
+						.get()
+					if (!reloaded) throw notFound('Reservation not found')
+					current = reloaded
+				}
 			}
 
 			const explicitCovers =

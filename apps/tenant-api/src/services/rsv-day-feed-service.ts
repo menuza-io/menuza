@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
 	detectConflicts,
 	resolveServices,
@@ -20,6 +20,7 @@ import {
 	rsvLocationSettings,
 	rsvPacingRules,
 	rsvReservationEvents,
+	rsvReservationTags,
 	rsvReservations,
 	rsvSectionAssignments,
 	rsvServiceAvailability,
@@ -32,7 +33,7 @@ import {
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
@@ -508,12 +509,257 @@ export async function serializeReservationsForBook(
 	})
 }
 
+async function applyDayFeedFilters(
+	db: DbOrTx,
+	reservations: SerializedBookReservation[],
+	input: {
+		filters: DayFeedFilters
+		tables: Array<{ id: string; areaId: string }>
+		services: Array<{ id: string; firstSeatingMin: number; endMin: number }>
+	},
+): Promise<SerializedBookReservation[]> {
+	const { filters } = input
+	if (Object.keys(filters).length === 0) return reservations
+	let result = reservations
+
+	if (filters.serviceId) {
+		const svc = input.services.find((x) => x.id === filters.serviceId)
+		result = result.filter((r) => {
+			if (r.serviceId) return r.serviceId === filters.serviceId
+			return (
+				svc !== undefined &&
+				r.localStartMin >= svc.firstSeatingMin &&
+				r.localStartMin < svc.endMin
+			)
+		})
+	}
+
+	if (filters.areaId) {
+		const areaByTable = new Map(input.tables.map((t) => [t.id, t.areaId]))
+		result = result.filter((r) =>
+			r.tableIds.length > 0
+				? r.tableIds.some((tid) => areaByTable.get(tid) === filters.areaId)
+				: r.areaPrefId === filters.areaId,
+		)
+	}
+
+	if (filters.source) {
+		const sources = new Set(
+			filters.source
+				.split(',')
+				.map((v) => v.trim().toLowerCase())
+				.filter(Boolean),
+		)
+		result = result.filter((r) => sources.has(r.channel.toLowerCase()))
+	}
+
+	if (filters.tag && result.length > 0) {
+		const wanted = filters.tag.toLowerCase()
+		const matches = (tag: { id: string; name: string }) =>
+			tag.id === filters.tag || tag.name.toLowerCase() === wanted
+		const reservationTagRows = await db
+			.select({
+				reservationId: rsvReservationTags.reservationId,
+				id: rsvTags.id,
+				name: rsvTags.name,
+			})
+			.from(rsvReservationTags)
+			.innerJoin(rsvTags, eq(rsvReservationTags.tagId, rsvTags.id))
+			.where(
+				inArray(
+					rsvReservationTags.reservationId,
+					result.map((r) => r.id),
+				),
+			)
+			.all()
+		const taggedReservationIds = new Set(
+			reservationTagRows.filter(matches).map((row) => row.reservationId),
+		)
+		result = result.filter(
+			(r) =>
+				taggedReservationIds.has(r.id) ||
+				(r.guest?.tags ?? []).some((tag) => matches(tag)),
+		)
+	}
+
+	return result
+}
+
+async function loadMoveNotices(
+	db: DbOrTx,
+	reservations: SerializedBookReservation[],
+	tables: Array<{ id: string; label: string }>,
+) {
+	if (reservations.length === 0) return []
+	const byId = new Map(reservations.map((r) => [r.id, r]))
+	const labelById = new Map(tables.map((t) => [t.id, t.label]))
+	const events = await db
+		.select()
+		.from(rsvReservationEvents)
+		.where(
+			and(
+				inArray(rsvReservationEvents.reservationId, [...byId.keys()]),
+				eq(rsvReservationEvents.type, 'auto_reassigned'),
+			),
+		)
+		.orderBy(desc(rsvReservationEvents.at))
+		.limit(50)
+		.all()
+
+	const toIds = (value: unknown): string[] =>
+		Array.isArray(value) ? value.filter((v) => typeof v === 'string') : []
+	const notices = []
+	for (const ev of events) {
+		const r = byId.get(ev.reservationId)
+		if (!r) continue
+		const data = (ev.data ?? {}) as Record<string, unknown>
+		const fromTableIds = toIds(data.fromTableIds)
+		const toTableIds = toIds(data.toTableIds)
+		notices.push({
+			reservationId: r.id,
+			confirmationCode: r.confirmationCode,
+			guestName: r.guest?.name ?? '',
+			partySize: r.partySize,
+			localStartMin: r.localStartMin,
+			hhmm: r.time,
+			fromTableIds,
+			fromTableLabels: fromTableIds.map((id) => labelById.get(id) ?? id),
+			toTableIds,
+			toTableLabels: toTableIds.map((id) => labelById.get(id) ?? id),
+			reason: typeof data.reason === 'string' ? data.reason : 'reflow',
+			at: ev.at,
+		})
+	}
+	return notices
+}
+
+/**
+ * Bookings sitting on a table that a block covers (locked bookings are never
+ * moved by a block) and bookings that share a table in overlapping windows.
+ */
+function detectDayFeedConflicts(
+	reservations: SerializedBookReservation[],
+	blocks: Array<{
+		id: string
+		tableId: string | null
+		areaId: string | null
+		startAt: number
+		endAt: number
+		reason: string | null
+	}>,
+	tables: Array<{ id: string; label: string; areaId: string }>,
+) {
+	const labelById = new Map(tables.map((t) => [t.id, t.label]))
+	const active = reservations.filter(
+		(r) =>
+			r.status !== 'cancelled' &&
+			r.status !== 'no_show' &&
+			r.status !== 'finished' &&
+			r.tableIds.length > 0,
+	)
+	const base = (r: SerializedBookReservation) => ({
+		reservationId: r.id,
+		bookingId: r.id,
+		confirmationCode: r.confirmationCode,
+		guestName: r.guest?.name ?? '',
+		partySize: r.partySize,
+		localStartMin: r.localStartMin,
+		hhmm: r.time,
+		suggestedTableIds: [] as string[],
+		suggestedTableLabels: [] as string[],
+	})
+	const conflicts: Array<
+		ReturnType<typeof base> & {
+			kind: 'blocked_table' | 'table_overlap'
+			reason: 'table_blocked' | 'table_overlap'
+			tableIds: string[]
+			blockId?: string
+			message: string
+		}
+	> = []
+
+	for (const blk of blocks) {
+		const blockedTableIds = new Set<string>()
+		if (blk.tableId) blockedTableIds.add(blk.tableId)
+		if (blk.areaId) {
+			for (const t of tables)
+				if (t.areaId === blk.areaId) blockedTableIds.add(t.id)
+		}
+		for (const r of active) {
+			if (r.startAt >= blk.endAt || r.endAt <= blk.startAt) continue
+			const hit = r.tableIds.filter((tid) => blockedTableIds.has(tid))
+			if (hit.length === 0) continue
+			conflicts.push({
+				...base(r),
+				kind: 'blocked_table',
+				reason: 'table_blocked',
+				tableIds: hit,
+				blockId: blk.id,
+				message: `Table ${hit.map((tid) => labelById.get(tid) ?? tid).join(', ')} is blocked during this booking`,
+			})
+		}
+	}
+
+	for (let i = 0; i < active.length; i++) {
+		for (let j = i + 1; j < active.length; j++) {
+			const a = active[i]!
+			const b = active[j]!
+			if (a.startAt >= b.endAt || a.endAt <= b.startAt) continue
+			const shared = a.tableIds.filter((tid) => b.tableIds.includes(tid))
+			if (shared.length === 0) continue
+			conflicts.push({
+				...base(b),
+				kind: 'table_overlap',
+				reason: 'table_overlap',
+				tableIds: shared,
+				message: `Overlaps with ${a.confirmationCode} on ${shared.map((tid) => labelById.get(tid) ?? tid).join(', ')}`,
+			})
+		}
+	}
+	return conflicts
+}
+
+export type DayFeedFilters = {
+	serviceId?: string
+	areaId?: string
+	/** Booking channel (`phone`, `walk_in`, ...); comma-separated for several. */
+	source?: string
+	/** Tag id or name, matched against the guest's and the reservation's tags. */
+	tag?: string
+}
+
+type DayFeedOptions = {
+	canReadGuestSensitive?: boolean
+	filters?: DayFeedFilters
+}
+
+function normalizeDayFeedFilters(
+	filters: DayFeedFilters | undefined,
+): DayFeedFilters {
+	const out: DayFeedFilters = {}
+	for (const key of ['serviceId', 'areaId', 'source', 'tag'] as const) {
+		const value = filters?.[key]?.trim()
+		if (value) out[key] = value
+	}
+	return out
+}
+
+function filtersEtagSuffix(filters: DayFeedFilters): string {
+	const keys = Object.keys(filters)
+	if (keys.length === 0) return ''
+	const digest = createHash('sha1')
+		.update(JSON.stringify(filters, Object.keys(filters).sort()))
+		.digest('hex')
+		.slice(0, 10)
+	return `.f${digest}`
+}
+
 export async function getDayFeed(
 	db: TenantDatabase,
 	orgIdOrLocationId: string,
 	locationIdOrDate: string,
-	businessDateOrOpts?: string | { canReadGuestSensitive?: boolean },
-	maybeOpts?: { canReadGuestSensitive?: boolean },
+	businessDateOrOpts?: string | DayFeedOptions,
+	maybeOpts?: DayFeedOptions,
 ) {
 	const hasExplicitOrgId = typeof businessDateOrOpts === 'string'
 	const orgId = hasExplicitOrgId ? orgIdOrLocationId : ''
@@ -527,8 +773,10 @@ export async function getDayFeed(
 	const settingsVersion = settings.version ?? 1
 	const floorPlanVersion = settings.floorPlanVersion ?? 1
 
-	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}"`
-	const shortEtag = `"${dayVersion}.${settingsVersion}"`
+	const filters = normalizeDayFeedFilters(opts?.filters)
+	const etagSuffix = filtersEtagSuffix(filters)
+	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}${etagSuffix}"`
+	const shortEtag = `"${dayVersion}.${settingsVersion}${etagSuffix}"`
 
 	const [
 		areas,
@@ -626,9 +874,28 @@ export async function getDayFeed(
 		db.select().from(rsvTags).orderBy(asc(rsvTags.name)).all(),
 	])
 
-	const reservations = await serializeReservationsForBook(db, resRows, {
+	const allReservations = await serializeReservationsForBook(db, resRows, {
 		canReadGuestSensitive,
 	})
+	const reservations = await applyDayFeedFilters(db, allReservations, {
+		filters,
+		tables,
+		services,
+	})
+	const counterReservations = reservations.filter(
+		(r) => r.status !== 'cancelled' && r.status !== 'no_show',
+	)
+	const counters = {
+		parties: counterReservations.length,
+		covers: counterReservations.reduce((sum, r) => sum + r.partySize, 0),
+	}
+
+	const moveNotices = await loadMoveNotices(db, allReservations, tables)
+	const dayConflicts = detectDayFeedConflicts(
+		allReservations,
+		blockRows,
+		tables,
+	)
 
 	// Pacing buckets (15-min intervals across active services)
 	const svcIds = services.map((s) => s.id)
@@ -775,6 +1042,10 @@ export async function getDayFeed(
 			version: n.version,
 		})),
 		reservations,
+		counters,
+		filters,
+		moveNotices,
+		conflicts: dayConflicts,
 		blocks: blockRows.map((b) => ({
 			id: b.id,
 			locationId: b.locationId,

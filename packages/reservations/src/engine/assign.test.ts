@@ -544,4 +544,51 @@ describe('assignTables, scoreCandidate, bounded repair, and reflowDay', () => {
 		expect(unresolvableReflow.moves).toEqual([])
 		expect(unresolvableReflow.unresolvable).toContain('b_impossible')
 	})
+
+	it('ignores expired holds in occupancies and in existingHolds (Invariant I4)', () => {
+		const tables = [
+			{
+				id: 't_only',
+				areaId: 'a1',
+				label: 'T1',
+				minSeats: 2,
+				maxSeats: 4,
+				onlineBookable: true,
+				combinable: false,
+				priority: 0,
+				active: true,
+			},
+		]
+		const request = {
+			partySize: 2,
+			startAt,
+			endAt,
+			channel: 'online' as const,
+		}
+		const hold = (expiresAt: number) => ({
+			id: 'h1',
+			kind: 'hold' as const,
+			partySize: 2,
+			startAt,
+			endAt,
+			tableIds: ['t_only'],
+			expiresAt,
+		})
+		const run = (expiresAt: number, via: 'bookings' | 'holds') =>
+			assignTables({
+				nowMs,
+				assignmentFreezeMin: 60,
+				tables,
+				combinations: [],
+				existingBookings: via === 'bookings' ? [hold(expiresAt)] : [],
+				existingHolds: via === 'holds' ? [hold(expiresAt)] : [],
+				request,
+			})
+
+		for (const via of ['bookings', 'holds'] as const) {
+			expect(run(nowMs + 60_000, via).assigned).toBe(false)
+			expect(run(nowMs, via).assigned).toBe(true)
+			expect(run(nowMs - 60_000, via).assigned).toBe(true)
+		}
+	})
 })

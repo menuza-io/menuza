@@ -401,10 +401,12 @@ export function searchAvailability(
 	const occupancies: ExistingOccupancyInput[] = [
 		...(input.occupancies ?? []),
 		...(input.existingBookings ?? []),
-		...(input.existingHolds ?? []).map((h) => ({
-			...h,
-			kind: 'hold' as const,
-		})),
+		...(input.existingHolds ?? [])
+			.filter((h) => h.expiresAt === undefined || h.expiresAt > nowMs)
+			.map((h) => ({
+				...h,
+				kind: 'hold' as const,
+			})),
 		...(input.tableBlocks ?? []).map((b) => ({
 			...b,
 			kind: 'block' as const,

@@ -20,6 +20,7 @@ import {
 	rsvTurnTimes,
 	rsvWaitlistEntries,
 	getTenantDb,
+	getTenantDbOrgId,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, eq, gt, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm'
@@ -53,11 +54,17 @@ export async function getReservationDb(orgId: string): Promise<TenantDatabase> {
 export async function withSetupWrite<T>(
 	db: TenantDatabase | ReservationWriteTx,
 	fn: (tx: TenantDatabase) => Promise<T>,
-	orgId = 'setup',
+	explicitOrgId?: string,
 ): Promise<T> {
 	const active = activeWriteStorage.getStore()
 	if (active) {
 		return fn(active.tx as unknown as TenantDatabase)
+	}
+	// The lock must be the org's own key so setup writes serialize with that
+	// org's reservation writes and never with another org's.
+	const orgId = explicitOrgId ?? getTenantDbOrgId(db)
+	if (!orgId) {
+		throw new Error('withSetupWrite needs a database handle from getTenantDb')
 	}
 	return withReservationWrite({ orgId, db: db as TenantDatabase }, async (tx) =>
 		fn(tx as unknown as TenantDatabase),

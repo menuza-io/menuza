@@ -11,12 +11,16 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
+	rsvAreas,
 	rsvAuditLog,
+	rsvBlocks,
 	rsvDayVersions,
+	rsvReservationEvents,
 	rsvGuests,
 	rsvLocationSettings,
 	rsvReservations,
 	rsvTableOccupancies,
+	rsvTables,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -1522,6 +1526,124 @@ describe('/operator/reservations/setup/* routes', () => {
 		// Verify audit log entries were written
 		const audits = await db.select().from(rsvAuditLog).all()
 		expect(audits.length).toBeGreaterThan(0)
+	})
+
+	it('VAL-SETUP-023 & VAL-CROSS-006: POST /locations/:id/blocks accepts the UI payload { date, startMin, endMin }, stores epoch instants, reflows soft bookings and emits auto_reassigned', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const db = await getTenantDb(ORG_ID)
+
+		await db.insert(rsvLocationSettings).values({
+			locationId: LOC_MAIN,
+			timeZone: 'America/New_York',
+			enabled: true,
+		})
+		await db.insert(rsvAreas).values({
+			id: 'area_ui_blk',
+			locationId: LOC_MAIN,
+			name: 'Main',
+		})
+		await db.insert(rsvTables).values([
+			{
+				id: 'tbl_ui_1',
+				locationId: LOC_MAIN,
+				areaId: 'area_ui_blk',
+				label: 'U1',
+				minCovers: 1,
+				maxCovers: 4,
+			},
+			{
+				id: 'tbl_ui_2',
+				locationId: LOC_MAIN,
+				areaId: 'area_ui_blk',
+				label: 'U2',
+				minCovers: 1,
+				maxCovers: 4,
+			},
+		])
+		await db.insert(rsvGuests).values({
+			id: 'gst_ui_blk',
+			firstName: 'Una',
+			lastName: 'Block',
+		})
+		const startAt = Date.UTC(2027, 9, 20, 22, 0, 0)
+		const endAt = startAt + 90 * 60_000
+		await db.insert(rsvReservations).values({
+			id: 'res_ui_soft',
+			confirmationCode: 'UIBLK001',
+			locationId: LOC_MAIN,
+			guestId: 'gst_ui_blk',
+			businessDate: '2027-10-20',
+			localStartMin: 1080,
+			durationMin: 90,
+			startAt,
+			endAt,
+			timeZone: 'America/New_York',
+			partySize: 2,
+			status: 'booked',
+			channel: 'online',
+			assignment: 'soft',
+			scheduleVersion: 1,
+			version: 1,
+		})
+		await db.insert(rsvTableOccupancies).values({
+			id: 'occ_ui_soft',
+			locationId: LOC_MAIN,
+			tableId: 'tbl_ui_1',
+			kind: 'reservation',
+			reservationId: 'res_ui_soft',
+			startAt,
+			endAt,
+			active: true,
+			overbook: false,
+		})
+
+		const res = await app.request(
+			`/operator/reservations/setup/locations/${LOC_MAIN}/blocks`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					date: '2027-10-20',
+					startMin: 1080,
+					endMin: 1170,
+					tableId: 'tbl_ui_1',
+					reason: 'Maintenance',
+				}),
+			},
+		)
+		expect(res.status).toBe(201)
+		const body = (await res.json()) as {
+			block: { id: string; tableId: string }
+			reflowedMoves: Array<{ bookingId: string; toTableIds: string[] }>
+		}
+		expect(body.reflowedMoves).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					bookingId: 'res_ui_soft',
+					toTableIds: ['tbl_ui_2'],
+				}),
+			]),
+		)
+
+		const row = await db
+			.select()
+			.from(rsvBlocks)
+			.where(eq(rsvBlocks.id, body.block.id))
+			.get()
+		expect(row?.businessDate).toBe('2027-10-20')
+		expect(row?.startAt).toBe(startAt)
+		expect(row?.endAt).toBe(endAt)
+
+		const events = await db
+			.select()
+			.from(rsvReservationEvents)
+			.where(eq(rsvReservationEvents.reservationId, 'res_ui_soft'))
+			.all()
+		expect(events.map((e) => e.type)).toContain('auto_reassigned')
 	})
 
 	it('enforces hold-duration bounds (3..20, 10..60, 5..30), turn-time max 480 & non-overlapping buckets, combo validation on update & saveFloorPlan, and unconditional special-day day-version bumps', async () => {

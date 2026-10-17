@@ -125,7 +125,7 @@ describe('reservations engine fast-check property tests against brute-force orac
 		)
 	})
 
-	it('executes random operation sequences (search, hold, book, modify, cancel, seat, finish, no_show, block, settings, clock) and verifies invariants I1-I8 after every step', () => {
+	it('executes random operation sequences (search, hold, book, modify, cancel, seat, finish, no_show, block, settings, clock) and verifies invariants I1-I8 and the brute-force oracle after every step', () => {
 		fc.assert(
 			fc.property(arbitraryOperationSequence(), (seqScenario) => {
 				const trace = executeOperationSequence(seqScenario)
@@ -135,6 +135,11 @@ describe('reservations engine fast-check property tests against brute-force orac
 						stepResult.invariants.valid,
 						`Step ${stepResult.stepIndex} (${stepResult.opKind}): ${stepResult.invariants.violations.join('; ')}`,
 					).toBe(true)
+					expect(stepResult.oracle.probes).toBeGreaterThan(0)
+					expect(
+						stepResult.oracle.mismatches,
+						`Step ${stepResult.stepIndex} (${stepResult.opKind}) oracle`,
+					).toEqual([])
 				}
 			}),
 			{

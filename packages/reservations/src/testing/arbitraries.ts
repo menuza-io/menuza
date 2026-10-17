@@ -19,6 +19,7 @@ import { evaluatePacing } from '../engine/pacing.ts'
 import { localToInstant } from '../time.ts'
 import {
 	type VerifyDayInvariantsResult,
+	bruteForceAssignExists,
 	verifyDayInvariants,
 } from './oracle.ts'
 
@@ -511,10 +512,17 @@ export type RandomOperationSequenceScenario = {
 	steps: RandomOperationStep[]
 }
 
+export type OperationStepOracleCheck = {
+	probes: number
+	/** Probe requests where `assignTables` and the brute-force oracle disagree. */
+	mismatches: string[]
+}
+
 export type OperationStepVerification = {
 	stepIndex: number
 	opKind: OperationStepKind
 	invariants: VerifyDayInvariantsResult
+	oracle: OperationStepOracleCheck
 }
 
 export type OperationSequenceTrace = {
@@ -1029,10 +1037,45 @@ export function executeOperationSequence(
 			failedModifyCheck,
 			releaseMonotonicityCheck,
 		})
+
+		const oracle: OperationStepOracleCheck = { probes: 0, mismatches: [] }
+		const probePartySizes = [step.partySize, (step.partySize % 6) + 1]
+		for (const partySize of new Set(probePartySizes)) {
+			const request: AssignRequestInput = {
+				partySize,
+				startAt,
+				endAt,
+				channel: step.channel,
+				serviceId: 'srv_dinner',
+			}
+			const assigned = assignTables({
+				config,
+				request,
+				existingBookings: bookings,
+				existingHolds: holds,
+				tableBlocks: blocks,
+				nowMs,
+			}).assigned
+			const oracleHasSolution = bruteForceAssignExists({
+				config,
+				request,
+				existingBookings: bookings,
+				existingHolds: holds,
+				tableBlocks: blocks,
+				nowMs,
+			})
+			oracle.probes++
+			if (assigned !== oracleHasSolution) {
+				oracle.mismatches.push(
+					`party ${partySize} at slot ${slotMin}: engine assigned=${assigned}, oracle=${oracleHasSolution}`,
+				)
+			}
+		}
 		stepVerifications.push({
 			stepIndex,
 			opKind: step.kind,
 			invariants,
+			oracle,
 		})
 	}
 
