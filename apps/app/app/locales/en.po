@@ -768,6 +768,10 @@ msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, t
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 
+#: app/components/reservations/booking-sheet.tsx:775
+msgid "{heldTables} is held by a guest who is checking out. The booking uses another table."
+msgstr "{heldTables} is held by a guest who is checking out. The booking uses another table."
+
 #: app/components/reservations/waitlist/waitlist-clock.tsx:27
 msgid "{hours} h {minutes} min"
 msgstr "{hours} h {minutes} min"
@@ -1614,6 +1618,18 @@ msgstr "A former team member has this email or phone number. Rehire them from th
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:203
 msgid "A general application stays open all the time, so people can apply even when no job is posted."
 msgstr "A general application stays open all the time, so people can apply even when no job is posted."
+
+#: app/components/reservations/booking-sheet.tsx:773
+#~ msgid "A guest is checking out with {0} at this time. Booking it overrides their hold."
+#~ msgstr "A guest is checking out with {0} at this time. Booking it overrides their hold."
+
+#: app/components/reservations/booking-sheet.tsx:780
+msgid "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
+msgstr "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
+
+#: app/components/reservations/booking-sheet.tsx:785
+msgid "A guest is checking out with a table at this time. Booking it overrides their hold."
+msgstr "A guest is checking out with a table at this time. Booking it overrides their hold."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:19
 msgid "A large title that opens a section."
@@ -3202,7 +3218,7 @@ msgstr "Allergies and dietary needs"
 msgid "Allergies and dietary needs:"
 msgstr "Allergies and dietary needs:"
 
-#: app/components/reservations/booking-sheet.tsx:454
+#: app/components/reservations/booking-sheet.tsx:533
 #: app/components/reservations/detail-sheet.tsx:943
 msgid "Allergies:"
 msgstr "Allergies:"
@@ -3356,7 +3372,7 @@ msgstr "Analytics and tracking"
 msgid "Android app"
 msgstr "Android app"
 
-#: app/components/reservations/booking-sheet.tsx:51
+#: app/components/reservations/booking-sheet.tsx:71
 #: app/utils/reservations/labels.ts:84
 #: app/utils/reservations/labels.ts:94
 msgid "Anniversary"
@@ -3436,7 +3452,7 @@ msgstr "Answers to common questions, and how the agent hears and says the names 
 msgid "Any area"
 msgstr "Any area"
 
-#: app/components/reservations/booking-sheet.tsx:566
+#: app/components/reservations/booking-sheet.tsx:645
 msgid "Any Area"
 msgstr "Any Area"
 
@@ -3977,11 +3993,11 @@ msgid "Authorized Clients"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
-#: app/components/reservations/booking-sheet.tsx:525
+#: app/components/reservations/booking-sheet.tsx:604
 msgid "Auto"
 msgstr "Auto"
 
-#: app/components/reservations/booking-sheet.tsx:546
+#: app/components/reservations/booking-sheet.tsx:625
 msgid "Auto / Any"
 msgstr "Auto / Any"
 
@@ -3994,7 +4010,7 @@ msgstr "Auto clock-out"
 msgid "Auto-assign best open table"
 msgstr "Auto-assign best open table"
 
-#: app/components/reservations/booking-sheet.tsx:586
+#: app/components/reservations/booking-sheet.tsx:665
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:378
 msgid "Auto-assign best table"
 msgstr "Auto-assign best table"
@@ -4124,7 +4140,7 @@ msgstr "Available at this location"
 msgid "Available during…"
 msgstr "Available during…"
 
-#: app/components/reservations/booking-sheet.tsx:600
+#: app/components/reservations/booking-sheet.tsx:679
 msgid "Available Slots"
 msgstr "Available Slots"
 
@@ -4368,7 +4384,7 @@ msgstr ""
 msgid "Billing & Subscription"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:50
+#: app/components/reservations/booking-sheet.tsx:70
 #: app/utils/reservations/labels.ts:83
 #: app/utils/reservations/labels.ts:95
 msgid "Birthday"
@@ -4495,6 +4511,18 @@ msgstr "Booked by {name} ({size}){codeSuffix}."
 msgid "Booked by a party of {size}{codeSuffix}."
 msgstr "Booked by a party of {size}{codeSuffix}."
 
+#: app/components/reservations/booking-sheet.tsx:300
+msgid "Booked on a closed day."
+msgstr "Booked on a closed day."
+
+#: app/components/reservations/booking-sheet.tsx:302
+msgid "Booked over the pacing cover limit."
+msgstr "Booked over the pacing cover limit."
+
+#: app/components/reservations/booking-sheet.tsx:304
+msgid "Booked over the pacing party limit."
+msgstr "Booked over the pacing party limit."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4231
 msgid "Booking"
 msgstr "Booking"
@@ -4519,7 +4547,7 @@ msgstr "Booking changed"
 msgid "Booking confirmation"
 msgstr "Booking confirmation"
 
-#: app/components/reservations/booking-sheet.tsx:883
+#: app/components/reservations/booking-sheet.tsx:1044
 msgid "Booking..."
 msgstr "Booking..."
 
@@ -4548,7 +4576,7 @@ msgstr "Bookings today"
 msgid "Booth"
 msgstr "Booth"
 
-#: app/components/reservations/booking-sheet.tsx:783
+#: app/components/reservations/booking-sheet.tsx:931
 msgid "Booth preferred, high chair..."
 msgstr "Booth preferred, high chair..."
 
@@ -4758,7 +4786,7 @@ msgstr "Business hours"
 msgid "Business info"
 msgstr "Business info"
 
-#: app/components/reservations/booking-sheet.tsx:53
+#: app/components/reservations/booking-sheet.tsx:73
 #: app/utils/reservations/labels.ts:86
 msgid "Business Meal"
 msgstr "Business Meal"
@@ -5060,7 +5088,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/reservations/booking-sheet.tsx:873
+#: app/components/reservations/booking-sheet.tsx:1034
 #: app/components/reservations/detail-sheet.tsx:1277
 #: app/components/reservations/guests/guest-merge-dialog.tsx:161
 #: app/components/reservations/guests/guest-notes-panel.tsx:106
@@ -5376,7 +5404,7 @@ msgstr "Catering & Large Events"
 msgid "Catering goes to the manager"
 msgstr "Catering goes to the manager"
 
-#: app/components/reservations/booking-sheet.tsx:54
+#: app/components/reservations/booking-sheet.tsx:74
 #: app/utils/reservations/labels.ts:87
 msgid "Celebration"
 msgstr "Celebration"
@@ -5682,7 +5710,7 @@ msgstr "Checking for staff records…"
 msgid "Checking references…"
 msgstr "Checking references…"
 
-#: app/components/reservations/booking-sheet.tsx:604
+#: app/components/reservations/booking-sheet.tsx:683
 msgid "Checking slots..."
 msgstr "Checking slots..."
 
@@ -6310,9 +6338,25 @@ msgstr "Closed (all day)"
 msgid "Closed all day"
 msgstr "Closed all day"
 
+#: app/components/reservations/booking-sheet.tsx:707
+msgid "Closed for online bookings on this date. Staff can still book."
+msgstr "Closed for online bookings on this date. Staff can still book."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:588
 msgid "Closed for private event"
 msgstr "Closed for private event"
+
+#: app/components/reservations/booking-sheet.tsx:686
+#~ msgid "Closed on this date ({0}). No slots are offered. Turn on the override below to book anyway."
+#~ msgstr "Closed on this date ({0}). No slots are offered. Turn on the override below to book anyway."
+
+#: app/components/reservations/booking-sheet.tsx:691
+msgid "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
+msgstr "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
+
+#: app/components/reservations/booking-sheet.tsx:696
+msgid "Closed on this date. No slots are offered. Turn on the override below to book anyway."
+msgstr "Closed on this date. No slots are offered. Turn on the override below to book anyway."
 
 #: app/components/hiring/job-summary.tsx:62
 msgid "Closes"
@@ -7687,7 +7731,7 @@ msgstr "Create prepaid or deposit-backed dining experiences, schedules, and opti
 msgid "Create redirect"
 msgstr "Create redirect"
 
-#: app/components/reservations/booking-sheet.tsx:885
+#: app/components/reservations/booking-sheet.tsx:1046
 msgid "Create Reservation"
 msgstr "Create Reservation"
 
@@ -8081,7 +8125,7 @@ msgstr "Daily overtime off · Week starts {weekStart}"
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "Daily overtime on · Week starts {weekStart}"
 
-#: app/components/reservations/booking-sheet.tsx:44
+#: app/components/reservations/booking-sheet.tsx:50
 #: app/utils/reservations/labels.ts:106
 msgid "Dairy-Free"
 msgstr "Dairy-Free"
@@ -8131,7 +8175,7 @@ msgstr ""
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
-#: app/components/reservations/booking-sheet.tsx:470
+#: app/components/reservations/booking-sheet.tsx:549
 #: app/components/reservations/guests/guest-profile-screen.tsx:468
 #: app/components/reservations/reports/report-panels.tsx:289
 #: app/components/reservations/reports/report-panels.tsx:366
@@ -8151,7 +8195,7 @@ msgstr "Date"
 msgid "Date & time"
 msgstr "Date & time"
 
-#: app/components/reservations/booking-sheet.tsx:52
+#: app/components/reservations/booking-sheet.tsx:72
 #: app/utils/reservations/labels.ts:85
 msgid "Date Night"
 msgstr "Date Night"
@@ -8761,7 +8805,7 @@ msgstr "Delivery Zones & Geo-Fencing"
 msgid "Deny"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:846
+#: app/components/reservations/booking-sheet.tsx:1007
 msgid "Deposit / Card Hold Policy:"
 msgstr "Deposit / Card Hold Policy:"
 
@@ -8931,18 +8975,18 @@ msgstr "Dietary & Allergens"
 msgid "Dietary & Allergy Alerts"
 msgstr "Dietary & Allergy Alerts"
 
-#: app/components/reservations/booking-sheet.tsx:760
+#: app/components/reservations/booking-sheet.tsx:908
 #: app/components/reservations/detail-sheet.tsx:876
 msgid "Dietary notes"
 msgstr "Dietary notes"
 
-#: app/components/reservations/booking-sheet.tsx:767
+#: app/components/reservations/booking-sheet.tsx:915
 msgid "Dietary notes, e.g. no sesame, severe peanut allergy"
 msgstr "Dietary notes, e.g. no sesame, severe peanut allergy"
 
 #: app/components/menu/modifier-form.tsx:1686
 #: app/components/menu/modifier-form.tsx:2041
-#: app/components/reservations/booking-sheet.tsx:740
+#: app/components/reservations/booking-sheet.tsx:888
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
@@ -8977,7 +9021,7 @@ msgstr "Dine-In Tips"
 msgid "Dining area"
 msgstr "Dining area"
 
-#: app/components/reservations/booking-sheet.tsx:557
+#: app/components/reservations/booking-sheet.tsx:636
 msgid "Dining Area"
 msgstr "Dining Area"
 
@@ -9483,7 +9527,7 @@ msgstr ""
 msgid "Duration (m)"
 msgstr "Duration (m)"
 
-#: app/components/reservations/booking-sheet.tsx:517
+#: app/components/reservations/booking-sheet.tsx:596
 msgid "Duration (min)"
 msgstr "Duration (min)"
 
@@ -9926,7 +9970,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
-#: app/components/reservations/booking-sheet.tsx:689
+#: app/components/reservations/booking-sheet.tsx:837
 #: app/components/reservations/guests/guest-profile-screen.tsx:715
 #: app/components/settings/cards/notification-preferences-card.tsx:27
 #: app/components/settings/cards/profile-card.tsx:132
@@ -10783,7 +10827,7 @@ msgstr ""
 msgid "Failed to create pacing rule."
 msgstr "Failed to create pacing rule."
 
-#: app/components/reservations/booking-sheet.tsx:324
+#: app/components/reservations/booking-sheet.tsx:318
 msgid "Failed to create reservation."
 msgstr "Failed to create reservation."
 
@@ -11526,7 +11570,7 @@ msgstr "Fri"
 msgid "Friday"
 msgstr "Friday"
 
-#: app/components/reservations/booking-sheet.tsx:797
+#: app/components/reservations/booking-sheet.tsx:945
 msgid "Friends of chef, comp welcome drink..."
 msgstr "Friends of chef, comp welcome drink..."
 
@@ -11584,7 +11628,7 @@ msgstr ""
 msgid "Full access to organization settings and members"
 msgstr "Full access to organization settings and members"
 
-#: app/components/reservations/booking-sheet.tsx:667
+#: app/components/reservations/booking-sheet.tsx:815
 msgid "Full name"
 msgstr "Full name"
 
@@ -11731,7 +11775,7 @@ msgstr "Give your group a name"
 #: app/components/menu/modifier-form.tsx:1704
 #: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
-#: app/components/reservations/booking-sheet.tsx:41
+#: app/components/reservations/booking-sheet.tsx:47
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
 msgstr "Gluten-Free"
@@ -11951,7 +11995,7 @@ msgstr "Guest messages"
 msgid "Guest Messages"
 msgstr "Guest Messages"
 
-#: app/components/reservations/booking-sheet.tsx:661
+#: app/components/reservations/booking-sheet.tsx:809
 msgid "Guest Name"
 msgstr "Guest Name"
 
@@ -11959,7 +12003,7 @@ msgstr "Guest Name"
 msgid "Guest Name (Optional)"
 msgstr "Guest Name (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:267
+#: app/components/reservations/booking-sheet.tsx:336
 msgid "Guest name and phone number are required."
 msgstr "Guest name and phone number are required."
 
@@ -11984,7 +12028,7 @@ msgstr "Guest personal data"
 msgid "Guest relations"
 msgstr "Guest relations"
 
-#: app/components/reservations/booking-sheet.tsx:776
+#: app/components/reservations/booking-sheet.tsx:924
 msgid "Guest Request / Notes"
 msgstr "Guest Request / Notes"
 
@@ -12084,7 +12128,7 @@ msgstr "Guests: {guestsCount}"
 msgid "h"
 msgstr "h"
 
-#: app/components/reservations/booking-sheet.tsx:42
+#: app/components/reservations/booking-sheet.tsx:48
 #: app/utils/reservations/labels.ts:104
 msgid "Halal"
 msgstr "Halal"
@@ -12146,6 +12190,10 @@ msgstr "Height"
 #: app/components/reservations/floor-plan-canvas.tsx:1316
 msgid "Height (20–600)"
 msgstr "Height (20–600)"
+
+#: app/components/reservations/booking-sheet.tsx:753
+msgid "Held"
+msgstr "Held"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:414
 msgid "Help me get started"
@@ -12871,7 +12919,7 @@ msgstr ""
 msgid "Internal channels for your team."
 msgstr "Internal channels for your team."
 
-#: app/components/reservations/booking-sheet.tsx:790
+#: app/components/reservations/booking-sheet.tsx:938
 #: app/components/reservations/detail-sheet.tsx:1141
 msgid "Internal Host Notes"
 msgstr "Internal Host Notes"
@@ -14378,7 +14426,7 @@ msgstr "Looks right"
 msgid "Looks right ({reviewCount})"
 msgstr "Looks right ({reviewCount})"
 
-#: app/components/reservations/booking-sheet.tsx:364
+#: app/components/reservations/booking-sheet.tsx:443
 msgid "Lookup Returning Guest (Phone or Name)"
 msgstr "Lookup Returning Guest (Phone or Name)"
 
@@ -15843,7 +15891,7 @@ msgstr ""
 msgid "New Password"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:344
+#: app/components/reservations/booking-sheet.tsx:423
 msgid "New Phone / Host Reservation"
 msgstr "New Phone / Host Reservation"
 
@@ -17061,8 +17109,8 @@ msgstr "No-Show"
 msgid "No-show rate"
 msgstr "No-show rate"
 
-#: app/components/reservations/booking-sheet.tsx:413
-#: app/components/reservations/booking-sheet.tsx:447
+#: app/components/reservations/booking-sheet.tsx:492
+#: app/components/reservations/booking-sheet.tsx:526
 #: app/components/reservations/detail-sheet.tsx:921
 msgid "no-shows"
 msgstr "no-shows"
@@ -17147,7 +17195,7 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/reservations/booking-sheet.tsx:49
+#: app/components/reservations/booking-sheet.tsx:69
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -17569,7 +17617,7 @@ msgstr "Numbers"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 
-#: app/components/reservations/booking-sheet.tsx:43
+#: app/components/reservations/booking-sheet.tsx:49
 #: app/utils/reservations/labels.ts:105
 msgid "Nut Allergy"
 msgstr "Nut Allergy"
@@ -17586,7 +17634,7 @@ msgstr "Nutritional Information"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:706
+#: app/components/reservations/booking-sheet.tsx:854
 #: app/components/reservations/detail-sheet.tsx:854
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:714
 msgid "Occasion"
@@ -18300,7 +18348,7 @@ msgstr "Operator"
 msgid "Operator Invited"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:806
+#: app/components/reservations/booking-sheet.tsx:954
 msgid "Operator Overrides & Deposit Policy"
 msgstr "Operator Overrides & Deposit Policy"
 
@@ -18373,7 +18421,7 @@ msgstr "Optional limits for this section on this drop."
 msgid "Optional note"
 msgstr "Optional note"
 
-#: app/components/reservations/booking-sheet.tsx:731
+#: app/components/reservations/booking-sheet.tsx:879
 msgid "Optional server name"
 msgstr "Optional server name"
 
@@ -18695,9 +18743,13 @@ msgstr "Overlaps another shift for this person"
 msgid "Overlaps with another booking on {tableNames}"
 msgstr "Overlaps with another booking on {tableNames}"
 
-#: app/components/reservations/booking-sheet.tsx:828
+#: app/components/reservations/booking-sheet.tsx:989
 msgid "Override blocked table"
 msgstr "Override blocked table"
+
+#: app/components/reservations/booking-sheet.tsx:977
+msgid "Override closed day"
+msgstr "Override closed day"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:498
 msgid "Override recurring services for holidays, Ramadan, private buyouts, or seasonal schedules (`closed`, `online_closed`, `modified`, or `replace`)."
@@ -18707,11 +18759,11 @@ msgstr "Override recurring services for holidays, Ramadan, private buyouts, or s
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "Override regular operating hours on holidays, events, or closures."
 
-#: app/components/reservations/booking-sheet.tsx:839
+#: app/components/reservations/booking-sheet.tsx:1000
 msgid "Override schedule block"
 msgstr "Override schedule block"
 
-#: app/components/reservations/booking-sheet.tsx:817
+#: app/components/reservations/booking-sheet.tsx:965
 msgid "Override slot pacing cap"
 msgstr "Override slot pacing cap"
 
@@ -19021,7 +19073,7 @@ msgstr "Party of {partySize}"
 msgid "Party size"
 msgstr "Party size"
 
-#: app/components/reservations/booking-sheet.tsx:484
+#: app/components/reservations/booking-sheet.tsx:563
 #: app/components/reservations/detail-sheet.tsx:1048
 #: app/components/reservations/walk-in-dialog.tsx:152
 msgid "Party Size"
@@ -19417,7 +19469,7 @@ msgstr "Phone number"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 #: app/components/locations/location-form.tsx:371
-#: app/components/reservations/booking-sheet.tsx:675
+#: app/components/reservations/booking-sheet.tsx:823
 msgid "Phone Number"
 msgstr ""
 
@@ -20065,7 +20117,7 @@ msgstr "Postal code"
 msgid "Posted {selectedReplyDate}"
 msgstr "Posted {selectedReplyDate}"
 
-#: app/components/reservations/booking-sheet.tsx:459
+#: app/components/reservations/booking-sheet.tsx:538
 msgid "Preference:"
 msgstr "Preference:"
 
@@ -22794,7 +22846,7 @@ msgstr "Search by name"
 msgid "Search by name or email..."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:371
+#: app/components/reservations/booking-sheet.tsx:450
 msgid "Search by phone (+1...) or guest name..."
 msgstr "Search by phone (+1...) or guest name..."
 
@@ -22898,7 +22950,7 @@ msgstr "Search redirects..."
 msgid "Search results"
 msgstr "Search results"
 
-#: app/components/reservations/booking-sheet.tsx:347
+#: app/components/reservations/booking-sheet.tsx:426
 msgid "Search returning guests, check live slot availability, and book with optional operator overrides."
 msgstr "Search returning guests, check live slot availability, and book with optional operator overrides."
 
@@ -22940,7 +22992,7 @@ msgstr ""
 msgid "Search…"
 msgstr "Search…"
 
-#: app/components/reservations/booking-sheet.tsx:376
+#: app/components/reservations/booking-sheet.tsx:455
 msgid "Searching..."
 msgstr "Searching..."
 
@@ -23323,7 +23375,7 @@ msgstr "Select a service and target entity."
 msgid "Select a service and valid hours for modified schedule."
 msgstr "Select a service and valid hours for modified schedule."
 
-#: app/components/reservations/booking-sheet.tsx:650
+#: app/components/reservations/booking-sheet.tsx:766
 msgid "Select a slot above or enter any time in the Time field."
 msgstr "Select a slot above or enter any time in the Time field."
 
@@ -23609,7 +23661,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:860
+#: app/components/reservations/booking-sheet.tsx:1021
 msgid "Send SMS payment link"
 msgstr "Send SMS payment link"
 
@@ -23714,7 +23766,7 @@ msgstr ""
 msgid "Server (Optional)"
 msgstr "Server (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:725
+#: app/components/reservations/booking-sheet.tsx:873
 #: app/components/reservations/detail-sheet.tsx:1108
 msgid "Server / Section Label"
 msgstr "Server / Section Label"
@@ -23729,7 +23781,7 @@ msgid "Server:"
 msgstr "Server:"
 
 #: app/components/note/integration-controls.tsx:296
-#: app/components/reservations/booking-sheet.tsx:537
+#: app/components/reservations/booking-sheet.tsx:616
 #: app/components/reservations/guests/guest-profile-screen.tsx:477
 #: app/components/reservations/host-subnav.tsx:249
 #: app/components/reservations/reports/report-panels.tsx:158
@@ -24051,7 +24103,7 @@ msgstr "Shared link"
 msgid "Shared with me"
 msgstr "Shared with me"
 
-#: app/components/reservations/booking-sheet.tsx:45
+#: app/components/reservations/booking-sheet.tsx:51
 #: app/utils/reservations/labels.ts:107
 msgid "Shellfish Allergy"
 msgstr "Shellfish Allergy"
@@ -24783,7 +24835,7 @@ msgstr "Standard organization member with note access"
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "Standard platform roles. Click any role to review its active permissions."
 
-#: app/components/reservations/booking-sheet.tsx:859
+#: app/components/reservations/booking-sheet.tsx:1020
 msgid "Standard policy"
 msgstr "Standard policy"
 
@@ -25422,7 +25474,7 @@ msgstr "Table archived."
 msgid "Table assigned"
 msgstr "Table assigned"
 
-#: app/components/reservations/booking-sheet.tsx:577
+#: app/components/reservations/booking-sheet.tsx:656
 #: app/components/reservations/detail-sheet.tsx:773
 msgid "Table Assignment"
 msgstr "Table Assignment"
@@ -26527,6 +26579,11 @@ msgstr "The link was turned off."
 msgid "The list could not be refreshed. What you see may be out of date."
 msgstr "The list could not be refreshed. What you see may be out of date."
 
+#: app/components/reservations/booking-sheet.tsx:311
+#: app/components/reservations/booking-sheet.tsx:341
+msgid "The location is closed on this date. Turn on the closed-day override to book anyway."
+msgstr "The location is closed on this date. Turn on the closed-day override to book anyway."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "The main paragraph copy of your email."
@@ -27455,6 +27512,14 @@ msgstr "This tablet is not ready yet. Ask a manager."
 msgid "This tablet was disconnected"
 msgstr "This tablet was disconnected"
 
+#: app/components/reservations/booking-sheet.tsx:796
+msgid "This time is over its pacing limit. Creating the booking overbooks the slot."
+msgstr "This time is over its pacing limit. Creating the booking overbooks the slot."
+
+#: app/components/reservations/booking-sheet.tsx:314
+msgid "This time is over its pacing limit. Turn on the pacing override to book anyway."
+msgstr "This time is over its pacing limit. Turn on the pacing override to book anyway."
+
 #: app/components/staff/labor-policy-editor.tsx:331
 msgid "This value is outside the allowed range."
 msgstr "This value is outside the allowed range."
@@ -27572,7 +27637,7 @@ msgstr "TikTok Pixel ID"
 
 #: app/components/hiring/interview-dialog.tsx:196
 #: app/components/menu/menu-availability-card.tsx:357
-#: app/components/reservations/booking-sheet.tsx:502
+#: app/components/reservations/booking-sheet.tsx:581
 #: app/components/reservations/detail-sheet.tsx:1068
 #: app/components/reservations/guests/guest-profile-screen.tsx:471
 #: app/components/reservations/reports/report-panels.tsx:290
@@ -29275,7 +29340,7 @@ msgstr "variations"
 msgid "Variations"
 msgstr "Variations"
 
-#: app/components/reservations/booking-sheet.tsx:40
+#: app/components/reservations/booking-sheet.tsx:46
 #: app/utils/reservations/labels.ts:102
 msgid "Vegan"
 msgstr "Vegan"
@@ -29284,7 +29349,7 @@ msgstr "Vegan"
 #: app/components/menu/modifier-form.tsx:1722
 #: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
-#: app/components/reservations/booking-sheet.tsx:39
+#: app/components/reservations/booking-sheet.tsx:45
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
 msgstr "Vegetarian"
@@ -29509,7 +29574,7 @@ msgstr "Viewer"
 msgid "Violet"
 msgstr "Violet"
 
-#: app/components/reservations/booking-sheet.tsx:55
+#: app/components/reservations/booking-sheet.tsx:75
 #: app/utils/reservations/labels.ts:88
 #: app/utils/reservations/labels.ts:97
 #: app/utils/reservations/labels.ts:115
@@ -29549,8 +29614,8 @@ msgstr "Visit history, tags, and notes for this guest. Details stay in your regi
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:409
-#: app/components/reservations/booking-sheet.tsx:443
+#: app/components/reservations/booking-sheet.tsx:488
+#: app/components/reservations/booking-sheet.tsx:522
 #: app/components/reservations/detail-sheet.tsx:917
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:495
 msgid "visits"
@@ -29733,7 +29798,7 @@ msgstr "Waitlist: guest joined"
 msgid "Waitlist: table is ready"
 msgstr "Waitlist: table is ready"
 
-#: app/components/reservations/booking-sheet.tsx:861
+#: app/components/reservations/booking-sheet.tsx:1022
 msgid "Waive deposit / card hold"
 msgstr "Waive deposit / card hold"
 

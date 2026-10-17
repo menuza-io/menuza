@@ -486,6 +486,9 @@ export type OperatorAvailabilitySlot = {
 	available: boolean
 	pacingWarning: boolean
 	canOverridePacing: boolean
+	/** A guest's live checkout hold covers the table(s) this slot would use. */
+	held: boolean
+	heldTableIds: string[]
 	durationMin: number
 	suggestedTableIds: string[]
 	candidateTables: Array<{
@@ -505,11 +508,37 @@ export type OperatorAvailabilitySlot = {
 	reason?: string
 }
 
+/** How a special day treats staff booking: `closed` needs an override, `online_closed` only stops guests. */
+export type OperatorDayState = {
+	state: 'open' | 'closed' | 'online_closed'
+	name: string | null
+	note: string | null
+}
+
 export type OperatorAvailabilityResponse = {
 	locationId: string
 	businessDate: string
 	timezone: string
+	dayState: OperatorDayState
 	slots: OperatorAvailabilitySlot[]
+}
+
+function normalizeDayState(raw: Record<string, unknown>): OperatorDayState {
+	const nested =
+		raw.dayState && typeof raw.dayState === 'object'
+			? (raw.dayState as Record<string, unknown>)
+			: {}
+	const state =
+		nested.state === 'closed' || raw.closed === true
+			? 'closed'
+			: nested.state === 'online_closed' || raw.onlineClosed === true
+				? 'online_closed'
+				: 'open'
+	return {
+		state,
+		name: typeof nested.name === 'string' ? nested.name : null,
+		note: typeof nested.note === 'string' ? nested.note : null,
+	}
 }
 
 export type ReservationAuditEntry = {
@@ -1992,6 +2021,10 @@ export async function searchBookAvailability(
 				available,
 				pacingWarning,
 				canOverridePacing,
+				held: s.held === true,
+				heldTableIds: Array.isArray(s.heldTableIds)
+					? s.heldTableIds.map(String)
+					: [],
 				durationMin: Number(s.durationMin ?? input.durationMin ?? 90),
 				suggestedTableIds,
 				candidateTables: Array.isArray(s.candidateTables)
@@ -2012,6 +2045,7 @@ export async function searchBookAvailability(
 		locationId: String(raw.locationId ?? input.locationId),
 		businessDate: String(raw.businessDate ?? raw.date ?? input.date),
 		timezone: String(raw.timezone ?? 'UTC'),
+		dayState: normalizeDayState(raw),
 		slots,
 	}
 }
@@ -2174,6 +2208,24 @@ function normalizeMovesList(rawMoves: unknown): DayMoveNotice[] {
 		}))
 }
 
+/** A rule the host went past with an explicit override. */
+export type BookingWarning = {
+	code: 'closed_day' | 'pacing_exceeded' | 'pacing_parties_exceeded'
+	message: string
+}
+
+function normalizeBookingWarnings(raw: unknown): BookingWarning[] {
+	if (!Array.isArray(raw)) return []
+	return raw
+		.filter((w): w is Record<string, unknown> =>
+			Boolean(w && typeof w === 'object'),
+		)
+		.map((w) => ({
+			code: String(w.code) as BookingWarning['code'],
+			message: String(w.message ?? ''),
+		}))
+}
+
 export async function createPhoneReservation(
 	client: ReservationsScopedClient,
 	input: {
@@ -2207,6 +2259,8 @@ export async function createPhoneReservation(
 		overridePacing?: boolean
 		overrideBlockedTable?: boolean
 		overrideScheduleBlock?: boolean
+		/** Book on a day a special day closed (tenant-api answers 409 closed_day without it). */
+		overrideClosedDay?: boolean
 		overbookReason?: string | null
 		skipPayment?: boolean
 		paymentPolicyMode?: 'none' | 'send_link' | 'waive'
@@ -2216,6 +2270,7 @@ export async function createPhoneReservation(
 	reservation: DayReservationView
 	replayed?: boolean
 	moveNotices?: DayMoveNotice[]
+	warnings: BookingWarning[]
 }> {
 	const nameParts = input.guest.fullName.trim().split(/\s+/)
 	const firstName = nameParts[0] || 'Guest'
@@ -2223,7 +2278,8 @@ export async function createPhoneReservation(
 	const isOverbook = Boolean(
 		input.overridePacing ||
 		input.overrideBlockedTable ||
-		input.overrideScheduleBlock,
+		input.overrideScheduleBlock ||
+		input.overrideClosedDay,
 	)
 	const dietaryText = [
 		...(input.dietaryCodes ?? []),
@@ -2290,7 +2346,9 @@ export async function createPhoneReservation(
 							overbook: true,
 							overbookReason:
 								input.overbookReason?.trim() ||
-								'Operator pacing/table override',
+								(input.overrideClosedDay
+									? 'Operator closed-day override'
+									: 'Operator pacing/table override'),
 						}
 					: {}),
 				channel:
@@ -2306,6 +2364,7 @@ export async function createPhoneReservation(
 		),
 		replayed: Boolean(raw.replayed),
 		moveNotices: normalizeMovesList(raw.moveNotices ?? raw.moves),
+		warnings: normalizeBookingWarnings(raw.warnings),
 	}
 }
 

@@ -17,18 +17,24 @@ import {
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
 import { useCallback, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import {
 	createPhoneReservation,
 	type DayMoveNotice,
 	type DayReservationGuestSummary,
 	type DayReservationView,
 	generateIdempotencyKey,
+	type BookingWarning,
 	type OperatorAvailabilitySlot,
+	type OperatorDayState,
 	searchBookAvailability,
 	searchBookGuests,
 } from '#app/utils/reservations/book-api.ts'
 import { enumLabel, VIP_TIER_LABELS } from '#app/utils/reservations/labels.ts'
-import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
+import {
+	ReservationsApiError,
+	type ReservationsScopedClient,
+} from '#app/utils/reservations/reservations-client.ts'
 import {
 	type RsvAreaRecord,
 	type RsvServiceRecord,
@@ -44,6 +50,20 @@ const DIETARY_OPTIONS = [
 	{ code: 'dairy_free', label: msg`Dairy-Free` },
 	{ code: 'shellfish_allergy', label: msg`Shellfish Allergy` },
 ] as const
+
+const OPEN_DAY: OperatorDayState = { state: 'open', name: null, note: null }
+
+const WARNING_CODES = new Set<string>([
+	'closed_day',
+	'pacing_exceeded',
+	'pacing_parties_exceeded',
+])
+
+function apiErrorCode(err: unknown): string | null {
+	if (!(err instanceof ReservationsApiError)) return null
+	const code = (err.body as { error?: unknown } | null)?.error
+	return typeof code === 'string' ? code : null
+}
 
 const OCCASION_OPTIONS = [
 	{ value: '', label: msg`None` },
@@ -126,12 +146,14 @@ export function BookingSheet({
 	const [overridePacing, setOverridePacing] = useState(false)
 	const [overrideBlockedTable, setOverrideBlockedTable] = useState(false)
 	const [overrideScheduleBlock, setOverrideScheduleBlock] = useState(false)
+	const [overrideClosedDay, setOverrideClosedDay] = useState(false)
 	const [paymentPolicyMode, setPaymentPolicyMode] = useState<
 		'none' | 'send_link' | 'waive'
 	>('none')
 
 	// Availability slots
 	const [slots, setSlots] = useState<OperatorAvailabilitySlot[]>([])
+	const [dayState, setDayState] = useState<OperatorDayState>(OPEN_DAY)
 	const [loadingSlots, setLoadingSlots] = useState(false)
 
 	// Submission state
@@ -153,6 +175,7 @@ export function BookingSheet({
 		setAreaId(initialAreaId ?? '')
 		setTableId(initialTableId ?? '')
 		setDurationMin('')
+		setOverrideClosedDay(false)
 		setError(null)
 		setIdempotencyKey(generateIdempotencyKey('book'))
 	}, [
@@ -179,8 +202,10 @@ export function BookingSheet({
 				includePacingOverride: true,
 			})
 			setSlots(res.slots ?? [])
+			setDayState(res.dayState)
 		} catch {
 			setSlots([])
+			setDayState(OPEN_DAY)
 		} finally {
 			setLoadingSlots(false)
 		}
@@ -250,6 +275,50 @@ export function BookingSheet({
 		}
 	}
 
+	const closedDay = dayState.state === 'closed'
+	const selectedSlot =
+		slots.find(
+			(s) =>
+				s.localStartMin === localStartMin &&
+				(!serviceId || s.serviceId === serviceId),
+		) ?? null
+	const slotHasHeldTables = Boolean(selectedSlot?.held)
+	// A hold only blocks the slot when no other table is free.
+	const slotIsHeld = Boolean(selectedSlot?.held && !selectedSlot.available)
+	const slotIsOverPaced =
+		overridePacing || selectedSlot?.status === 'pacing_full'
+	const heldTableLabels = (selectedSlot?.heldTableIds ?? []).map(
+		(id) => tables.find((tbl) => tbl.id === id)?.label ?? id,
+	)
+
+	const dayName = dayState.name
+	const heldTables = heldTableLabels.join(', ')
+
+	const warningText = (code: BookingWarning['code']) => {
+		switch (code) {
+			case 'closed_day':
+				return t`Booked on a closed day.`
+			case 'pacing_exceeded':
+				return t`Booked over the pacing cover limit.`
+			case 'pacing_parties_exceeded':
+				return t`Booked over the pacing party limit.`
+		}
+	}
+
+	const errorText = (err: unknown) => {
+		switch (apiErrorCode(err)) {
+			case 'closed_day':
+				return t`The location is closed on this date. Turn on the closed-day override to book anyway.`
+			case 'pacing_exceeded':
+			case 'pacing_parties_exceeded':
+				return t`This time is over its pacing limit. Turn on the pacing override to book anyway.`
+			default:
+				return err instanceof Error
+					? err.message
+					: t`Failed to create reservation.`
+		}
+	}
+
 	const handleSelectSlot = (slot: OperatorAvailabilitySlot) => {
 		setLocalStartMin(slot.localStartMin)
 		setTimeInput(slot.hhmm)
@@ -265,6 +334,12 @@ export function BookingSheet({
 		e.preventDefault()
 		if (!guestName.trim() || !guestPhone.trim()) {
 			setError(t`Guest name and phone number are required.`)
+			return
+		}
+		if (closedDay && !overrideClosedDay) {
+			setError(
+				t`The location is closed on this date. Turn on the closed-day override to book anyway.`,
+			)
 			return
 		}
 		setSubmitting(true)
@@ -298,15 +373,21 @@ export function BookingSheet({
 					guestNotes: guestNotes.trim() || null,
 					internalNotes: internalNotes.trim() || null,
 					serverLabel: serverLabel.trim() || null,
-					overridePacing,
+					overridePacing: overridePacing || slotIsHeld,
 					overrideBlockedTable,
 					overrideScheduleBlock,
+					overrideClosedDay: closedDay && overrideClosedDay,
 					skipPayment: paymentPolicyMode === 'waive',
 					paymentPolicyMode,
 				},
 				idempotencyKey,
 			)
 			onCreated(res.reservation, res.moveNotices ?? [])
+			for (const warning of res.warnings) {
+				if (WARNING_CODES.has(warning.code)) {
+					toast.warning(warningText(warning.code))
+				}
+			}
 			onOpenChange(false)
 			// Reset guest fields for next booking
 			setSelectedGuest(null)
@@ -320,9 +401,7 @@ export function BookingSheet({
 			setInternalNotes('')
 			setServerLabel('')
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : t`Failed to create reservation.`,
-			)
+			setError(errorText(err))
 			setIdempotencyKey(generateIdempotencyKey('book'))
 		} finally {
 			setSubmitting(false)
@@ -605,6 +684,33 @@ export function BookingSheet({
 								</span>
 							) : null}
 						</div>
+						{closedDay ? (
+							<Alert variant="destructive" data-testid="booking-closed-day">
+								<AlertDescription>
+									{dayState.name ? (
+										<Trans>
+											Closed on this date ({dayName}). No slots are offered.
+											Turn on the override below to book anyway.
+										</Trans>
+									) : (
+										<Trans>
+											Closed on this date. No slots are offered. Turn on the
+											override below to book anyway.
+										</Trans>
+									)}
+								</AlertDescription>
+							</Alert>
+						) : null}
+						{dayState.state === 'online_closed' ? (
+							<Alert data-testid="booking-online-closed">
+								<AlertDescription>
+									<Trans>
+										Closed for online bookings on this date. Staff can still
+										book.
+									</Trans>
+								</AlertDescription>
+							</Alert>
+						) : null}
 						{slots.length > 0 ? (
 							<div
 								className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto rounded-lg border p-2"
@@ -614,6 +720,7 @@ export function BookingSheet({
 									.filter(
 										(s) =>
 											s.status === 'available' ||
+											s.held ||
 											(s.status === 'pacing_full' && s.canOverridePacing),
 									)
 									.slice(0, 32)
@@ -628,15 +735,24 @@ export function BookingSheet({
 												variant={
 													isSelected
 														? 'default'
-														: isPacingFull
+														: isPacingFull || slot.held
 															? 'secondary'
 															: 'outline'
 												}
 												onClick={() => handleSelectSlot(slot)}
 												data-testid={`booking-slot-${slot.localStartMin}`}
+												data-held={slot.held ? 'true' : undefined}
 											>
 												<span>{slot.hhmm}</span>
-												{isPacingFull ? (
+												{slot.held ? (
+													<span
+														className="inline-flex items-center gap-0.5"
+														data-testid={`booking-slot-held-${slot.localStartMin}`}
+													>
+														<Icon name="lock" className="size-3" />
+														<Trans>Held</Trans>
+													</span>
+												) : isPacingFull ? (
 													<span className="text-amber-600 dark:text-amber-400">
 														*
 													</span>
@@ -645,13 +761,45 @@ export function BookingSheet({
 										)
 									})}
 							</div>
-						) : (
+						) : closedDay ? null : (
 							<p className="text-muted-foreground text-xs">
 								<Trans>
 									Select a slot above or enter any time in the Time field.
 								</Trans>
 							</p>
 						)}
+						{slotHasHeldTables ? (
+							<Alert data-testid="booking-held-warning">
+								<AlertDescription>
+									{!slotIsHeld ? (
+										<Trans>
+											{heldTables} is held by a guest who is checking out. The
+											booking uses another table.
+										</Trans>
+									) : heldTableLabels.length > 0 ? (
+										<Trans>
+											A guest is checking out with {heldTables} at this time.
+											Booking it overrides their hold.
+										</Trans>
+									) : (
+										<Trans>
+											A guest is checking out with a table at this time. Booking
+											it overrides their hold.
+										</Trans>
+									)}
+								</AlertDescription>
+							</Alert>
+						) : null}
+						{slotIsOverPaced ? (
+							<Alert data-testid="booking-pacing-warning">
+								<AlertDescription>
+									<Trans>
+										This time is over its pacing limit. Creating the booking
+										overbooks the slot.
+									</Trans>
+								</AlertDescription>
+							</Alert>
+						) : null}
 					</div>
 
 					{/* Guest Details */}
@@ -817,6 +965,19 @@ export function BookingSheet({
 									<Trans>Override slot pacing cap</Trans>
 								</span>
 							</label>
+							{closedDay ? (
+								<label className="flex items-center gap-1.5 font-medium">
+									<input
+										type="checkbox"
+										checked={overrideClosedDay}
+										onChange={(e) => setOverrideClosedDay(e.target.checked)}
+										data-testid="booking-override-closed-day"
+									/>
+									<span>
+										<Trans>Override closed day</Trans>
+									</span>
+								</label>
+							) : null}
 							<label className="flex items-center gap-1.5">
 								<input
 									type="checkbox"
@@ -874,7 +1035,7 @@ export function BookingSheet({
 							</Button>
 							<Button
 								type="submit"
-								disabled={submitting}
+								disabled={submitting || (closedDay && !overrideClosedDay)}
 								data-testid="booking-submit-btn"
 							>
 								<Icon name="check" className="size-4" />

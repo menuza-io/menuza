@@ -9,7 +9,7 @@ import { useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/reservations/report-access.server.ts'
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/$reportId.ts'
@@ -32,7 +32,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}
 	// A report on staff data looks like it does not exist to someone without
 	// the flag or permission.
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
@@ -40,12 +40,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const { catalog: fullCatalog, scopeWording } =
 		await organizationReportCatalog(organization.id)
 	const definition = parseDefinition(report.definition)
-	if (!definitionAllowed(fullCatalog, definition, staff.subjects)) {
+	if (!definitionAllowed(fullCatalog, definition, grants)) {
 		throw new Response('Not Found', { status: 404 })
 	}
 	return {
 		scopeWording,
-		catalog: catalogForGrants(fullCatalog, staff.subjects),
+		catalog: catalogForGrants(fullCatalog, grants),
 		definition,
 		orgSlug: organization.slug,
 		hasProvisionedDb: organization.hasProvisionedDb,
@@ -61,14 +61,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 	})
 	const form = await request.formData()
 	const definition = parseDefinition(form.get('definition'))
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
 	)
-	if (
-		!definitionAllowed(getCatalog('organization'), definition, staff.subjects)
-	) {
+	if (!definitionAllowed(getCatalog('organization'), definition, grants)) {
 		throw new Response('Forbidden', { status: 403 })
 	}
 	const saved = await saveReport({

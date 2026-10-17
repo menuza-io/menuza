@@ -11,7 +11,7 @@ import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/reservations/report-access.server.ts'
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { type Route } from './+types/_index.ts'
 
@@ -28,14 +28,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 	})
 	// Staff reports show only to people whose flags and permissions grant them.
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
 	)
 	const { catalog: fullCatalog, scopeWording } =
 		await organizationReportCatalog(organization.id)
-	const catalog = catalogForGrants(fullCatalog, staff.subjects)
+	const catalog = catalogForGrants(fullCatalog, grants)
 	return {
 		scopeWording,
 		orgSlug: organization.slug,
@@ -45,7 +45,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				definitionAllowed(
 					fullCatalog,
 					parseDefinition(report.definition),
-					staff.subjects,
+					grants,
 				),
 			)
 			.map((report) => {
@@ -60,7 +60,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		templates: templatesForGrants(
 			fullCatalog,
 			templatesFor('organization'),
-			staff.subjects,
+			grants,
 		),
 	}
 }
