@@ -1,11 +1,9 @@
 # Reservations module: architecture
 
 Status: authoritative architecture for the Menuza Reservations mission.
-Repository: `/home/factory-user/repos/menuza`, branch `pr/reservations`. Paths
-are relative to the repository root unless they are absolute. The mission
-directory is
-`/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500`
-(written `{missionDir}` below).
+Repository: `/Users/zama/menuza`, branch `pr/reservations`. Paths are relative
+to the repository root unless they are absolute. The mission directory is
+`/Users/zama/menuza/.factory/mission` (written `{missionDir}` below).
 
 ## How to use this document
 

@@ -3,8 +3,8 @@
 # mission packages once they exist. Needs a 4 GB heap (App runs out at the V8
 # default). Never run this at the same time as the App ESLint run.
 set -uo pipefail
-REPO=/home/factory-user/repos/menuza
-MISSION=/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500
+REPO=/Users/zama/menuza
+MISSION=/Users/zama/menuza/.factory/mission
 cd "$REPO"
 export NODE_OPTIONS=--max-old-space-size=4096
 

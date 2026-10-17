@@ -4,8 +4,8 @@ These notes record each conflict found while merging the sources into
 `{missionDir}/architecture.md`, and how it was settled. Priority order:
 `mission.md`, then `research/architecture-draft.md`, then the codebase
 deep-dives (`research/codebase/*`), then domain research. A fact checked in the
-repository (`/home/factory-user/repos/menuza`, branch `pr/reservations`)
-overrides any document.
+repository (`/Users/zama/menuza`, branch `pr/reservations`) overrides any
+document.
 
 Each bullet gives the topic, the sources that disagree, the resolution, and the
 reason.

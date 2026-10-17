@@ -9,9 +9,8 @@ What does NOT belong here: the public tenant-api route contract and limits (see
 `payments-reference.md`, `payment-mocks.md`), native clients (see
 `native-reference.md`).
 
-Paths are relative to `/home/factory-user/repos/menuza` and were verified.
-Decisions are summarized in one line; the full text is in `architecture.md`
-section 11.
+Paths are relative to `/Users/zama/menuza` and were verified. Decisions are
+summarized in one line; the full text is in `architecture.md` section 11.
 
 ## Non-negotiable rules
 

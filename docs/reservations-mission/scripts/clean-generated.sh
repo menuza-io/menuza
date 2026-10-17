@@ -5,7 +5,7 @@
 # changes (for example a worker adding an env var) intact, so never `git checkout`
 # these files blindly. Prints `git status --porcelain` afterwards.
 set -uo pipefail
-cd /home/factory-user/repos/menuza
+cd /Users/zama/menuza
 files=$(git ls-files -m | grep -E '(^|/)src/env\.ts$' || true)
 if [ -n "$files" ]; then
 	# shellcheck disable=SC2086

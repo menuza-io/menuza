@@ -62,7 +62,7 @@ repeated minutes (`01:00`–`01:59`) resolve once to the first occurrence with
 second `01:45`; `day_start_min` boundary transitions (`+/- 1` minute around
 `240`) and `Asia/Riyadh` services crossing midnight (`localMin > 1440`)
 round-trip accurately. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/time.test.ts`)
+(`cd /Users/zama/menuza/packages/reservations && CI=true npx vitest run src/time.test.ts`)
 Evidence: Vitest test report showing all New York, Los Angeles, London, Riyadh,
 and `day_start_min` boundary test cases passing. Milestone: foundation
 
@@ -79,7 +79,7 @@ sets within a location, services where
 `first_seating_min <= last_seating_min <= end_min` or
 `end_min - first_seating_min <= 1440` is violated, and invalid policy
 references. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/config`)
+(`cd /Users/zama/menuza/packages/reservations && CI=true npx vitest run src/config`)
 Evidence: Vitest output confirming `validateConfig` returns empty issues for
 valid configs and specific `ConfigIssue` codes for each invalid configuration
 case. Milestone: foundation
@@ -95,7 +95,7 @@ reason/note; `replace` substitutes only the special day's linked services
 (`special_day_id`); `modified` applies the validated `servicePatchSchema` patch
 to the target `service_id`; and `online_closed` disables online booking for the
 date while preserving staff services. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/rules`)
+(`cd /Users/zama/menuza/packages/reservations && CI=true npx vitest run src/rules`)
 Evidence: Vitest output verifying all five precedence tiers, date-range
 filtering (`effective_from`/`effective_to`), `days_mask` bitmask matching (bit 0
 = Monday), and overnight services (`end_min > 1440`). Milestone: foundation
@@ -116,7 +116,7 @@ borrowing capacity from staff overbooks). Staff channels (`phone`, `host`,
 `walk_in`, `waitlist`) surface pacing breaches as warnings rather than hiding
 slots, and allow `walk_in_only` tables only for `walk_in` and `waitlist`. Tool:
 `terminal`
-(`cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/engine`)
+(`cd /Users/zama/menuza/packages/reservations && CI=true npx vitest run src/engine`)
 Evidence: Vitest output covering slot generation, pacing rules, `alternatives`
 (same-day nearby slots and other dates), `calendarSummary`, expired-hold
 ignoring (I4), and overbook isolation (I3). Milestone: foh-core
@@ -135,7 +135,7 @@ reservation within `freeze_min` of `start_at` (invariant I5). `detectConflicts`
 identifies unassigned capacity-consuming bookings, table overlaps, bookings
 outside resolved service hours, and bookings on archived/shrunk/blocked tables.
 Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/engine`)
+(`cd /Users/zama/menuza/packages/reservations && CI=true npx vitest run src/engine`)
 Evidence: Vitest output for `assign.test.ts` and `conflicts.test.ts` confirming
 best-fit scoring, bounded repair moves, reflow after table/duration changes, and
 strict preservation of locked/arrived/frozen bookings. Milestone: foundation
@@ -153,7 +153,7 @@ with opt-in), `phone.ts` (`normalizeGuestPhone` shared with
 `apps/tenant-api/src/routes/auth.ts`), `schemas/` (strict Zod DTOs where every
 deadline response includes ISO `expiresAt` and server `now`), and `errors.ts`
 (all 24 stable error codes). Tool: `terminal`
-(`CI=true npm run test -w @repo/reservations && cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/auth.test.ts`)
+(`CI=true npm run test -w @repo/reservations && cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/auth.test.ts`)
 Evidence: Vitest output for `state-machine`, `policy`, `messages`, `phone`, and
 `schemas` in `@repo/reservations`, plus `auth.test.ts` passing in `tenant-api`.
 Milestone: foundation
@@ -199,7 +199,7 @@ Milestone: foh-core
 `party_size between 1 and 99`, and single-owner checks on
 `rsv_service_availability`, `rsv_blocks`, and `rsv_table_occupancies`. Tool:
 `terminal`
-(`cd /home/factory-user/repos/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
+(`cd /Users/zama/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
 Evidence: Vitest `reservations-schema.test.ts` passing all table creation, CHECK
 constraint, unique index, and Durable Object migration bundle checks. Milestone:
 foundation
@@ -216,7 +216,7 @@ overlapping half-open interval
 (`o.end_at = NEW.start_at`), inactive rows (`active = 0`), and explicit staff
 overbook rows (`overbook = 1`) succeed without triggering an abort. Tool:
 `terminal`
-(`cd /home/factory-user/repos/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
+(`cd /Users/zama/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
 Evidence: Schema trigger test cases verifying overlap abort on insert/update,
 boundary-touching pass, `active = 0` pass, and `overbook = 1` bypass. Milestone:
 foundation
@@ -233,7 +233,7 @@ redaction updates setting `data = '{"redacted":true}'` (or
 `changes = '{"redacted":true}'`), while
 `rsv_guest_merges_no_delete`/`_no_update` abort all updates and deletes
 unconditionally. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
+(`cd /Users/zama/menuza/packages/tenant-db && CI=true npx vitest run src/reservations-schema.test.ts`)
 Evidence: Schema trigger test cases asserting SQLite `ABORT` on second hold
 conversion, event/audit/merge delete or mutation, and success on redaction
 update. Milestone: foundation
@@ -252,7 +252,7 @@ organization-context permissions (`read:reservation:any`,
 `packages/auth/src/organization-permissions.server.ts` (`ORG_PERMISSIONS`), with
 a unit test verifying zero drift against `RESERVATIONS_PERMISSIONS`. Tool:
 `terminal`
-(`sqlite3 /home/factory-user/repos/menuza/packages/database/db/data.db "SELECT id, action, entity, access FROM Permission WHERE entity LIKE 'reservation%' ORDER BY id;" && sqlite3 /home/factory-user/repos/menuza/packages/database/db/data.db "SELECT A, COUNT(*) FROM _OrganizationPermissionToRole WHERE B LIKE 'org_perm_%_reservation%' GROUP BY A;"`)
+(`sqlite3 /Users/zama/menuza/packages/database/db/data.db "SELECT id, action, entity, access FROM Permission WHERE entity LIKE 'reservation%' ORDER BY id;" && sqlite3 /Users/zama/menuza/packages/database/db/data.db "SELECT A, COUNT(*) FROM _OrganizationPermissionToRole WHERE B LIKE 'org_perm_%_reservation%' GROUP BY A;"`)
 Evidence: `sqlite3` query output on `data.db` (and local D1 via
 `wrangler d1 execute DB --local`) showing 8 permission rows and
 `org_role_admin|8` with no `org_role_member` rows, plus passing auth drift
@@ -266,7 +266,7 @@ rows (`level = 'system'`, `organizationId = NULL`, `userId = NULL`,
 `reservations.online`, `reservations.waitlist`, `reservations.payments`,
 `reservations.experiences`, `reservations.voice`) using `WHERE NOT EXISTS` so
 re-running or seeding never creates duplicate system rows. Tool: `terminal`
-(`sqlite3 /home/factory-user/repos/menuza/packages/database/db/data.db "SELECT key, level, value, COUNT(*) FROM ConfigFlag WHERE key LIKE 'reservations.%' AND level='system' GROUP BY key, level, value ORDER BY key;"`)
+(`sqlite3 /Users/zama/menuza/packages/database/db/data.db "SELECT key, level, value, COUNT(*) FROM ConfigFlag WHERE key LIKE 'reservations.%' AND level='system' GROUP BY key, level, value ORDER BY key;"`)
 Evidence: `sqlite3` output on `data.db` and local D1 showing exactly 1 system
 row with `value = 'false'` for each of the 6 `reservations.*` flag keys.
 Milestone: foundation
@@ -286,7 +286,7 @@ Reservations permission group when `reservations.enabled` is off for the
 organization and displays it when `reservations.enabled` is `true`. Tool:
 `agent-browser` (App `http://localhost:3001/acme/settings/members` or roles
 editor with `reservations.enabled` toggled off vs on) and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run app/utils/reservations`)
+(`cd /Users/zama/menuza/apps/app && CI=true npx vitest run app/utils/reservations`)
 Evidence: Vitest unit test output for `role-presets` and implied permissions,
 plus `agent-browser` snapshot showing the Reservations permission group hidden
 when `reservations.enabled` is `false` and visible when `true`. Milestone:
@@ -308,7 +308,7 @@ or 5 minutes (300 s) when any sensitive grant is included (`guests`, `payments`)
 or `impersonated` is true. Minting returns 404 when `reservations.enabled` is
 off, 404/403 for `scope=payments` when `reservations.payments` is off, and 403
 when the member lacks any grant in `SCOPE_GRANTS[scope]`. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run app/utils/reservations/token.test.ts`)
+(`cd /Users/zama/menuza/apps/app && CI=true npx vitest run app/utils/reservations/token.test.ts`)
 and `agent-browser` (logged in as `kody` on
 `http://localhost:3001/acme/reservations/token?scope=setup`) Evidence: Vitest
 token minting test suite output and decoded JWT header/payload from
@@ -330,7 +330,7 @@ nothing). `apps/tenant-api/workers/org-router.ts` routes
 `Origin` binding before the `?orgId=` fallback, and `/internal/reservations/*`,
 `/api/reservations/*`, and `/api/voice/actions/*` via `orgIdFromJsonBody`. Tool:
 `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-routing.test.ts src/lib/reservations-auth.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-routing.test.ts src/lib/reservations-auth.test.ts`)
 Evidence: Passing Vitest runs for `reservations-routing.test.ts` and
 `reservations-auth.test.ts`. Milestone: foundation
 
@@ -349,7 +349,7 @@ immediately invalidates the cached entry for `orgId`. Tool: `curl` (against
 `http://localhost:3001/resources/reservations/context?orgId=t58bgatqh3rv0s3movrecyj1`
 without token -> 401/403, with `INTERNAL_COMMAND_TOKEN` -> 200 JSON) and
 `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-context.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-context.test.ts`)
 Evidence: HTTP status codes and response JSON from `curl` plus passing Vitest
 tests for `reservations-context` and `context-changed`. Milestone: foundation
 
@@ -364,7 +364,7 @@ hash or `409 idempotency_conflict` on a mismatched hash), loads fresh day state,
 runs the caller's mutation callback, increments `rsv_day_versions.version` for
 affected business dates, and commits before running post-commit cache
 invalidation and outbound hooks. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-write.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/lib/reservations-write.test.ts`)
 Evidence: Passing Vitest tests for `withReservationWrite` verifying per-org
 serialization, idempotency replay vs `409 idempotency_conflict`, expired-hold
 sweep inside the transaction, and `rsv_day_versions` increments. Milestone:
@@ -386,7 +386,7 @@ and that every `resources+/reservations.*` route calls
 `requireInternalCommandAuth` (or `requireUserWithOrganizationPermission` on
 `reservations.region-summary.ts`) before any `db` or `fetch` call. Tool:
 `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts && cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run app/utils/reservations/reservations-guards.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts && cd /Users/zama/menuza/apps/app && CI=true npx vitest run app/utils/reservations/reservations-guards.test.ts`)
 Evidence: Both Vitest guard and security sweep suites pass with 0 failures.
 Milestone: foundation
 
@@ -423,12 +423,12 @@ serial (sets `reservations.enabled = true` on `acme` and `riyadh-grill`)
 ### VAL-FND-023: Idempotent `seed:reservations` script for US (`acme`) and KSA (`riyadh-grill`)
 
 `npm run seed:reservations -w tenant-api -- acme` and
-`TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa npm run seed:reservations -w tenant-api -- riyadh-grill`
+`TENANT_DB_DIR=/Users/zama/menuza/packages/database/db/ksa npm run seed:reservations -w tenant-api -- riyadh-grill`
 execute without error against the local US and KSA tenant SQLite databases,
 applying migrations if needed and seeding foundational location settings, areas,
 tables, combinations, services, and turn times idempotently when run twice in
 succession. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza && npm run seed:reservations -w tenant-api -- acme && npm run seed:reservations -w tenant-api -- acme && TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa npm run seed:reservations -w tenant-api -- riyadh-grill`)
+(`cd /Users/zama/menuza && npm run seed:reservations -w tenant-api -- acme && npm run seed:reservations -w tenant-api -- acme && TENANT_DB_DIR=/Users/zama/menuza/packages/database/db/ksa npm run seed:reservations -w tenant-api -- riyadh-grill`)
 Evidence: Command exit code 0 on first and second invocation and stable row
 counts in `rsv_location_settings`, `rsv_areas`, and `rsv_tables` in both tenant
 DB files. Milestone: foundation Isolation: serial (writes demo seed data to
@@ -497,7 +497,7 @@ bookings, or cleared to `null`). Saved values persist in `rsv_location_settings`
 and immediately govern `searchAvailability` for the `online` channel on that
 location. Tool: `agent-browser`
 (`http://localhost:3001/acme/reservations/settings`) and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 Evidence: Persisted `min_notice_min` and `same_day_cutoff_min` in
 `GET /operator/reservations/setup/locations/:id/settings` and passing route
 tests. Milestone: foh-core Isolation: serial (updates `rsv_location_settings` on
@@ -679,7 +679,7 @@ resize, rotate, label, and delete non-bookable decor elements
 for the area without creating bookable tables in `rsv_tables`. Tool:
 `agent-browser` (`http://localhost:3001/acme/reservations/settings/floor-plan`)
 and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 Evidence: `GET /operator/reservations/setup/locations/:id/floor-plan` response
 showing persisted `elements` across the 7 kinds and `rsv_floor_elements` rows in
 SQLite. Milestone: foh-core Isolation: serial (modifies `rsv_floor_elements` on
@@ -709,7 +709,7 @@ runs `reflow` to move soft future bookings to alternative fitting tables where
 available, leaves any unplaceable or locked booking unassigned as a conflict,
 bumps `rsv_day_versions`, and returns the resulting `conflicts` array in the
 response. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 Evidence: Vitest test in `reservations-setup.test.ts` verifying that
 shrinking/archiving an occupied table via `PUT /floor-plan` reflows a soft
 booking to a free table and reports an unplaceable booking in `conflicts`.
@@ -809,7 +809,7 @@ and delete blocks (`rsv_blocks`) on either a specific `table_id` or an entire
 deleting the block removes/deactivates its occupancy rows and increments
 `rsv_day_versions`. Tool: `agent-browser`
 (`http://localhost:3001/acme/reservations/settings/special-days`) and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 Evidence: `rsv_blocks` and `rsv_table_occupancies` (`kind = 'block'`) rows
 created for single-table and area blocks, reflow verification in
 `reservations-setup.test.ts`, and cleanup on `DELETE /blocks/:id`. Milestone:
@@ -838,7 +838,7 @@ window is narrowed or a `closed` special day is added), or seated on
 archived/blocked tables, and the conflicts panel on
 `/acme/reservations/settings` lists each conflict with its date and reason code.
 Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 and `agent-browser` (`http://localhost:3001/acme/reservations/settings`)
 Evidence: Vitest test and UI conflicts view showing conflicts returned by
 `GET /operator/reservations/setup/locations/:id/conflicts`. Milestone: foh-core
@@ -855,7 +855,7 @@ the cached context) differs from `rsv_location_settings.time_zone`,
 `business_date + local_start_min` intent (invariant I11), updates their
 `rsv_table_occupancies` intervals, bumps `rsv_day_versions`, and clears the
 mismatch banner. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 and `agent-browser` (`http://localhost:3001/acme/reservations/settings`)
 Evidence: Mismatch banner visible when `rsv_location_settings.time_zone` is set
 to a different zone than the location context, followed by
@@ -875,7 +875,7 @@ save/create/delete controls in the UI are disabled or hidden and any direct
 refused by `rsvGuard` with HTTP `403 forbidden`. Tool: `curl` (against
 `http://localhost:3007/operator/reservations/setup/locations/<id>/settings` with
 a read-only `setup` token) and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts`)
 Evidence: `GET` returns 200 while `PUT /locations/:id/settings`,
 `PUT /locations/:id/floor-plan`, and `POST /services` return 403 `forbidden`.
 Milestone: foh-core
@@ -892,7 +892,7 @@ cross-location cases for every setup route tail segment. Tool: `curl` (sending a
 `riyadh-grill` token to
 `http://localhost:3007/operator/reservations/setup/locations/<acmeLocationId>/settings`)
 and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts src/routes/reservations-setup.test.ts`)
 Evidence: HTTP 401/403/404 response from `curl` and 100% pass rate on
 `reservations-security.test.ts` and `reservations-setup.test.ts`. Milestone:
 foh-core
@@ -910,7 +910,7 @@ turn times, pacing, and special days directly against port 3009
 (`packages/database/db/ksa/tenant_<orgId>.db`), with zero requests or rows
 written to the US node on port 3007. Tool: `agent-browser`
 (`http://localhost:3001/riyadh-grill/reservations/settings`) and `terminal`
-(`sqlite3 /home/factory-user/repos/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db "SELECT location_id, time_zone, currency, enabled, online_enabled FROM rsv_location_settings;"`)
+(`sqlite3 /Users/zama/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db "SELECT location_id, time_zone, currency, enabled, online_enabled FROM rsv_location_settings;"`)
 Evidence: Captured browser requests targeting
 `http://localhost:3009/operator/reservations/setup/...` and `sqlite3` output
 from KSA tenant DB showing `Asia/Riyadh` and `SAR`. Milestone: foh-core
@@ -927,7 +927,7 @@ field paths only, and the response body never contains the substring
 `"ECHO_SECRET_SENTINEL_999"`. Tool: `curl`
 (`PUT http://localhost:3007/operator/reservations/setup/locations/<id>/settings`
 with `"interval_min":"ECHO_SECRET_SENTINEL_999"`) and `terminal`
-(`cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
+(`cd /Users/zama/menuza/apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts`)
 Evidence: HTTP 400 response body confirmed not to contain
 `"ECHO_SECRET_SENTINEL_999"` alongside field-path error structure. Milestone:
 foh-core
@@ -942,9 +942,9 @@ all navigation tabs, headings, form labels, and buttons, and running
 or empty `msgstr` entries in `apps/app/app/locales/ar/messages.po`. Tool:
 `agent-browser`
 (`http://localhost:3001/riyadh-grill/reservations/settings?lng=ar`) and
-`terminal` (`cd /home/factory-user/repos/menuza && npm run lingui:check`)
-Evidence: Accessibility snapshot in Arabic showing localized labels with
-`dir="rtl"` and exit code 0 from `npm run lingui:check`. Milestone: foh-core
+`terminal` (`cd /Users/zama/menuza && npm run lingui:check`) Evidence:
+Accessibility snapshot in Arabic showing localized labels with `dir="rtl"` and
+exit code 0 from `npm run lingui:check`. Milestone: foh-core
 
 ### VAL-SETUP-032: Setup Playwright E2E spec passes against the production App build
 
@@ -954,7 +954,7 @@ App server on port 3101 with tenant-api stubbed (`**/operator/reservations/**`),
 exercising location settings, tables/combinations, floor plan editor Save and
 version conflict, services/turn times/pacing, and special days/blocks, and
 passes with `--retries=0`. Tool: `terminal`
-(`cd /home/factory-user/repos/menuza && npm run build -w app && cd apps/app && PORT=3101 CI=true npx playwright test tests/e2e/reservations-setup.test.ts --workers=1 --reporter=line --retries=0`)
+(`cd /Users/zama/menuza && npm run build -w app && cd apps/app && PORT=3101 CI=true npx playwright test tests/e2e/reservations-setup.test.ts --workers=1 --reporter=line --retries=0`)
 Evidence: Playwright exit code 0 with all tests in `reservations-setup.test.ts`
 passing. Milestone: foh-core Isolation: serial (runs App build and Playwright
 server on port 3101)
@@ -3969,7 +3969,7 @@ Evidence: terminal(npx vitest run <activation test file> in packages/payments)
 
 ### VAL-PMOCK-005: Production build excludes the mock (layers 1, 2 and 4)
 
-Run `cd /home/factory-user/repos/menuza && npm run build:cf -w app`. Then: (a)
+Run `cd /Users/zama/menuza && npm run build:cf -w app`. Then: (a)
 `grep -r "__MENUZA_PAYMENTS_MOCK__" apps/app/build` finds nothing (the vite
 define eliminated the mock branch and the sentinel string); (b) the build output
 contains no compiled route modules for `mock-payments+` or `mock-email+` (the

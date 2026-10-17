@@ -4,7 +4,7 @@
 # any error outside that per-file baseline. Warnings never fail.
 # Needs a 4 GB heap (peak about 4.1 GB): never run it beside the App typecheck.
 set -uo pipefail
-cd /home/factory-user/repos/menuza/apps/app
+cd /Users/zama/menuza/apps/app
 out=/tmp/menuza-app-eslint.json
 rm -f "$out"
 NODE_OPTIONS=--max-old-space-size=4096 npx eslint . -f json -o "$out"

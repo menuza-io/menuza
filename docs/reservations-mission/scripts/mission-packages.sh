@@ -4,7 +4,7 @@
 # Turbo fails on a --filter for a package that does not exist yet, so the gates
 # add these only once they exist.
 set -euo pipefail
-cd /home/factory-user/repos/menuza
+cd /Users/zama/menuza
 node -e '
 const fs = require("fs")
 const script = process.argv[1]

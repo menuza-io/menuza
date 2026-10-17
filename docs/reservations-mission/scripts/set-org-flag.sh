@@ -16,7 +16,7 @@ set -euo pipefail
 slug="${1:?org slug required}"
 key="${2:?flag key required}"
 value="${3:?json value or 'delete' required}"
-REPO=/home/factory-user/repos/menuza
+REPO=/Users/zama/menuza
 cd "$REPO/apps/app"
 
 d1() { npx wrangler d1 execute DB --local --json --command "$1" 2>/dev/null; }

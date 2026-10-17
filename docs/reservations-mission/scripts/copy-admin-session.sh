@@ -5,7 +5,7 @@
 # a browser session, run this to copy kody's newest session row into data.db, then
 # open http://localhost:3005/ in the same browser session. Never prints the id.
 set -euo pipefail
-REPO=/home/factory-user/repos/menuza
+REPO=/Users/zama/menuza
 cd "$REPO/apps/app"
 db="$REPO/packages/database/db/data.db"
 U=$(sqlite3 "$db" "select id from User where username='kody'")

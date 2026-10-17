@@ -1,7 +1,7 @@
 # Menuza: operations and testing discovery (for the Reservations mission)
 
-Repo: `/home/factory-user/repos/menuza`. Everything below was observed read-only
-on 2026-10-15 (no tracked files changed; `git status` clean afterwards).
+Repo: `/Users/zama/menuza`. Everything below was observed read-only on
+2026-10-15 (no tracked files changed; `git status` clean afterwards).
 Confidence: H = verified by reading code/config or running a command, M =
 inferred from code, L = plausible but unverified.
 

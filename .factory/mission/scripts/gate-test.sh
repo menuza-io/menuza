@@ -4,8 +4,8 @@
 # log and a summary. About 12 minutes when warm (App tests alone take ~7.5 min).
 # Run it alone: no App build, typecheck, lint or Playwright run at the same time.
 set -uo pipefail
-REPO=/home/factory-user/repos/menuza
-MISSION=/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500
+REPO=/Users/zama/menuza
+MISSION=/Users/zama/menuza/.factory/mission
 LOGDIR=/tmp/menuza-gate
 mkdir -p "$LOGDIR"
 cd "$REPO"

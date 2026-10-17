@@ -3,8 +3,8 @@
 # It never installs dependencies, migrates databases or starts services:
 # see services.yaml (commands.install, commands.migrate_control_plane, services.*).
 set -uo pipefail
-REPO=/home/factory-user/repos/menuza
-MISSION=/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500
+REPO=/Users/zama/menuza
+MISSION=/Users/zama/menuza/.factory/mission
 cd "$REPO" || exit 1
 
 warn() { echo "WARNING: $*"; }

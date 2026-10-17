@@ -6,9 +6,9 @@ reservation payment flows (and the existing restaurant order payments) run
 locally with no provider keys. The user decided that there will be no real
 Stripe or Checkout.com keys, and that validation runs against these mocks.
 
-Paths are relative to `/home/factory-user/repos/menuza` unless absolute. No
-repository file was modified. This builds on `payments-deep-dive.md` and
-`checkout-com-setup.md` in this folder and does not repeat them.
+Paths are relative to `/Users/zama/menuza` unless absolute. No repository file
+was modified. This builds on `payments-deep-dive.md` and `checkout-com-setup.md`
+in this folder and does not repeat them.
 
 Confidence labels:
 

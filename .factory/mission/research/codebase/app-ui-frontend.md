@@ -1,8 +1,7 @@
 # App UI and frontend capabilities (for a Reservations module)
 
 Scope: `apps/app` (operator App), `packages/ui`, `apps/admin`, `apps/mobile`.
-Read-only investigation. All paths are absolute under
-`/home/factory-user/repos/menuza`.
+Read-only investigation. All paths are absolute under `/Users/zama/menuza`.
 
 ---
 

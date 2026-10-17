@@ -6,7 +6,7 @@ staffing labor forecast, marketing journeys, reports, Home dashboards,
 "Experiences", and the existing customer UI. This builds on
 `staffing-module-blueprint.md` (flags, tokens, ticks, outbox, vocabulary) and
 `ordering-locations-sites-payments.md` (sections 3, 4, 5, 9, 11), and does not
-repeat them. All paths are relative to `/home/factory-user/repos/menuza`.
+repeat them. All paths are relative to `/Users/zama/menuza`.
 
 Naming note carried through every section: the phone-agent core test bans
 `/reserv/i`, `order`, `menu`, `location`, `store`, `food` and similar words

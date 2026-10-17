@@ -1,10 +1,10 @@
 # Native apps (iOS + Android) feasibility deep-dive for reservations
 
-Repo: `/home/factory-user/repos/menuza`. Everything below was read-only; no
-toolchain was installed. Machine: Ubuntu 24.04.4 x64, 4 CPUs, 7.9 GB RAM, 30 GB
-free on `/`, **passwordless sudo available** (`sudo -n true` succeeds), no
-Docker/Podman, no Swift, no JDK, no Gradle, no Android SDK, no `/dev/kvm`.
-`curl` and `unzip` exist.
+Repo: `/Users/zama/menuza`. Everything below was read-only; no toolchain was
+installed. Machine: Ubuntu 24.04.4 x64, 4 CPUs, 7.9 GB RAM, 30 GB free on `/`,
+**passwordless sudo available** (`sudo -n true` succeeds), no Docker/Podman, no
+Swift, no JDK, no Gradle, no Android SDK, no `/dev/kvm`. `curl` and `unzip`
+exist.
 
 ---
 

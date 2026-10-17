@@ -14,8 +14,8 @@ procedures (use `user-testing.md`), design (use `architecture.md`).
 
 - Headless Linux sandbox (x64), 4 CPUs, 7.9 GB RAM, 6 GB swap, about 25 GB free
   disk. `HOME=/home/factory-user`.
-- Repo: `/home/factory-user/repos/menuza`, branch `pr/reservations`, created
-  from `main` at `05741ca5`. Workers commit there. Nothing is pushed.
+- Repo: `/Users/zama/menuza`, branch `pr/reservations`, created from `main` at
+  `05741ca5`. Workers commit there. Nothing is pushed.
 - Node 22.18.0 and npm 10.9.0. React Router's CLI prints "Oops, Node v22.18.0
   detected"; ignore it, commands still succeed.
 - Turbo 2.10.8. Turbo fails outright when a `--filter` names a package that does

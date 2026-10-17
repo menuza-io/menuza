@@ -9,10 +9,9 @@ harness, risks, and features F1 to F9 with acceptance.
 contract (see `architecture.md` sections 12 and 13), provider call shapes and
 existing payment code (see `library/payments-reference.md`).
 
-Paths are relative to `/home/factory-user/repos/menuza`. Installed SDKs:
-`stripe` 18.5.0, `checkout-sdk-node` 4.1.0. "Verify" marks provider behavior
-recalled from docs that could not be confirmed; keep those in the fidelity table
-(F9).
+Paths are relative to `/Users/zama/menuza`. Installed SDKs: `stripe` 18.5.0,
+`checkout-sdk-node` 4.1.0. "Verify" marks provider behavior recalled from docs
+that could not be confirmed; keep those in the fidelity table (F9).
 
 ## 1. Decisions (one line each; see architecture.md section 13)
 

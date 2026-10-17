@@ -1,8 +1,8 @@
 # Reservations module: architecture draft
 
 Status: draft for the mission's authoritative architecture document. Repository:
-`/home/factory-user/repos/menuza` at `5f61fd1c`. Paths are relative to the repo
-root unless absolute. Inputs: `AGENTS.md`, the research notes in
+`/Users/zama/menuza` at `5f61fd1c`. Paths are relative to the repo root unless
+absolute. Inputs: `AGENTS.md`, the research notes in
 `/home/factory-user/reservations-planning/research/` and the codebase notes in
 `/home/factory-user/reservations-planning/codebase/`. Payments provider details
 and native app UI are owned by parallel deep-dives and appear here only as

@@ -5,7 +5,7 @@
 # binding". Re-run this after every `npm install`. It writes only into
 # node_modules and never touches tracked files.
 set -euo pipefail
-repo="${1:-/home/factory-user/repos/menuza}"
+repo="${1:-/Users/zama/menuza}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 cd "$tmp"

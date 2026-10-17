@@ -8,7 +8,7 @@ What does NOT belong here: the route-by-route screen list and loader contracts
 (see `architecture.md` section 10), tenant-api and token internals (see
 `staffing-patterns.md`), Sites pages (see `sites-patterns.md`).
 
-Paths are relative to `/home/factory-user/repos/menuza` and were verified.
+Paths are relative to `/Users/zama/menuza` and were verified.
 
 ## Rules from `apps/app/AGENTS.md` (must follow)
 

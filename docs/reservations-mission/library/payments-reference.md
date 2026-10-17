@@ -9,8 +9,8 @@ cards, and payment gotchas, all verified against the repo.
 (see `architecture.md` section 12), and Sites UI details (see
 `library/sites-patterns.md`).
 
-Paths are relative to `/home/factory-user/repos/menuza`. Line numbers were
-checked on branch `pr/reservations`.
+Paths are relative to `/Users/zama/menuza`. Line numbers were checked on branch
+`pr/reservations`.
 
 ## 1. Ground rules (one line each; details in architecture.md section 12)
 

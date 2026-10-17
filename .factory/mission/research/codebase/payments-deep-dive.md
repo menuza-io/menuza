@@ -5,7 +5,7 @@ reservation deposits, prepaid Experiences, card guarantees with no-show and
 late-cancel fees, and refunds. It also covers how to validate all of this
 locally against real Stripe test mode. This report builds on section 4 of
 `ordering-locations-sites-payments.md` and does not repeat it. Paths are
-relative to `/home/factory-user/repos/menuza` unless they are absolute.
+relative to `/Users/zama/menuza` unless they are absolute.
 
 I did not modify any repository file. The local databases were queried read-only
 (`sqlite3 -readonly`, `mode=ro`). Secret values were never printed. Only whether

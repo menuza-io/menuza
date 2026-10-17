@@ -3,8 +3,8 @@
 Scope: how Checkout.com is wired into the App today, what the sandbox provides,
 and the simplest realistic setup for local end-to-end tests of a KSA deposit in
 SAR, a saved card with a later merchant-initiated (MIT) no-show fee, and a
-refund. Paths are relative to `/home/factory-user/repos/menuza` unless absolute.
-No repository file was modified.
+refund. Paths are relative to `/Users/zama/menuza` unless absolute. No
+repository file was modified.
 
 Confidence labels used below:
 

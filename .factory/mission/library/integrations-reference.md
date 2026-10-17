@@ -10,7 +10,7 @@ gotchas, all verified against the repo.
 (`library/payments-reference.md`), staffing module patterns in general
 (`library/staffing-patterns.md`).
 
-Paths are relative to `/home/factory-user/repos/menuza`.
+Paths are relative to `/Users/zama/menuza`.
 
 ## 1. Decisions (one line each; see architecture.md section 14)
 

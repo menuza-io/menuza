@@ -1,6 +1,6 @@
 # Dependency readiness: Reservations mission
 
-- Repo: `/home/factory-user/repos/menuza` at commit `5f61fd1c` on branch `main`.
+- Repo: `/Users/zama/menuza` at commit `5f61fd1c` on branch `main`.
 - Date: 2026-10-15.
 - Machine: Linux x64, 4 CPUs, 7.9 GB RAM, 6 GB swap.
 - No tracked files were left modified and nothing was committed.
@@ -335,9 +335,9 @@ The full gate takes about 15 to 17 minutes when warm.
 - `/home/factory-user/reservations-planning/readiness/dependency-readiness.md`
   (this file)
 - `/home/factory-user/reservations-planning/readiness/add-linux-bindings.sh`
-- `/home/factory-user/repos/menuza/apps/admin/.env` (gitignored; 3 keys copied
-  from `apps/app/.env`)
+- `/Users/zama/menuza/apps/admin/.env` (gitignored; 3 keys copied from
+  `apps/app/.env`)
 - Outside the repo: `~/android-sdk`, `~/swift`, `~/.gradle`, and the system
   packages JDK 17 and the Swift apt dependencies.
-- `/home/factory-user/repos/menuza/apps/android/app/tenant.properties`
-  (gitignored, written by the CI tenant generation).
+- `/Users/zama/menuza/apps/android/app/tenant.properties` (gitignored, written
+  by the CI tenant generation).

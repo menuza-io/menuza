@@ -8,9 +8,9 @@ What does NOT belong here: reservations domain logic (see `engine-notes.md`),
 App UI conventions (see `app-ui-patterns.md`), Sites conventions (see
 `sites-patterns.md`).
 
-All paths are relative to `/home/factory-user/repos/menuza` and were verified to
-exist. Copy the pattern, not the vocabulary: reservations is restaurant-specific
-and may use restaurant words; staffing core must not.
+All paths are relative to `/Users/zama/menuza` and were verified to exist. Copy
+the pattern, not the vocabulary: reservations is restaurant-specific and may use
+restaurant words; staffing core must not.
 
 ## Superseded research
 

@@ -42,7 +42,7 @@ runtime state.
 ## Paths
 
 The files were written for a sandbox where the repository lived at
-`/home/factory-user/repos/menuza` and the mission folder at
-`/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500`.
-Replace those prefixes with your local repository path and this folder when you
-run commands from `services.yaml` or `scripts/`.
+`/Users/zama/menuza` and the mission folder at
+`/Users/zama/menuza/.factory/mission`. Replace those prefixes with your local
+repository path and this folder when you run commands from `services.yaml` or
+`scripts/`.

@@ -1,8 +1,7 @@
 # Staffing module blueprint (for a new regional, feature-flagged Reservations module)
 
-Repository: `/home/factory-user/repos/menuza` (commit `5f61fd1c`). All paths
-below are relative to the repo root unless absolute. Investigation was
-read-only.
+Repository: `/Users/zama/menuza` (commit `5f61fd1c`). All paths below are
+relative to the repo root unless absolute. Investigation was read-only.
 
 ---
 

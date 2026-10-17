@@ -1,7 +1,7 @@
 # Reservations planning: ordering, locations, Sites, payments (codebase analysis)
 
-Scope: read-only investigation of `/home/factory-user/repos/menuza` to find what
-an OpenTable-like Reservations module can reuse and where it must integrate. All
+Scope: read-only investigation of `/Users/zama/menuza` to find what an
+OpenTable-like Reservations module can reuse and where it must integrate. All
 paths are relative to the repo root unless absolute.
 
 ---

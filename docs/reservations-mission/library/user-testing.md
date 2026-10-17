@@ -87,7 +87,7 @@ commands; service logs are appended to `/tmp/menuza-logs/<service>.log`.
   no `/login` route.
 - Admin reads and writes flags in `data.db`, while App dev reads local D1. After
   saving the platform fee in Admin, read the saved value from `data.db`
-  (`sqlite3 /home/factory-user/repos/menuza/packages/database/db/data.db "select key, level, organizationId, value from ConfigFlag where key='reservations.platform_fee_bp'"`)
+  (`sqlite3 /Users/zama/menuza/packages/database/db/data.db "select key, level, organizationId, value from ConfigFlag where key='reservations.platform_fee_bp'"`)
   and mirror it into D1 before checking amounts in the App:
   `commands.set_org_flag acme reservations.platform_fee_bp <value>` for an org
   override; for the system default, update the `level='system'` row in D1 with
@@ -139,7 +139,7 @@ commands; service logs are appended to `/tmp/menuza-logs/<service>.log`.
   tenant-api only logs `[OCI EMAIL MOCK] To: … | Subject: …`, and App email
   under Workers dev fails against the real Resend API.
   - **Guest emails (tenant-api):** one JSON file per email in
-    `/home/factory-user/repos/menuza/apps/tenant-api/.dev-mail/us/` (US node) or
+    `/Users/zama/menuza/apps/tenant-api/.dev-mail/us/` (US node) or
     `.../.dev-mail/ksa/` (KSA node), named `<YYYYMMDDTHHmmssSSS>-<uuid>.json`.
     Record fields: `id`, `capturedAt`, `source`, `region`, `to`, `from`,
     `subject`, `html`, `text`, `meta` (`orgId`, `messageKind`, `messageId`; ids
@@ -289,7 +289,7 @@ Isolation rules:
   `KodyLovesYou!2026`); open `/login` directly, never log out to switch users.
 - **Flags are shared state and this surface owns them for this round.** Only
   this validator may change `reservations.*` flags. Use
-  `bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/set-org-flag.sh <org-slug> <key> <value>`
+  `bash /Users/zama/menuza/.factory/mission/scripts/set-org-flag.sh <org-slug> <key> <value>`
   (writes local D1 and `data.db`).
   - Start from `reservations.enabled = false` for `acme` (VAL-FND-021), then set
     `reservations.enabled = true` for `acme` and `riyadh-grill`, and leave both
@@ -1031,7 +1031,7 @@ restore any location setting you change).
 - Screenshots and snapshots go to absolute paths under
   `{missionDir}/evidence/foh-core/<group>/`.
 - Read-only SQLite evidence:
-  `sqlite3 /home/factory-user/repos/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db "SELECT ..."`
+  `sqlite3 /Users/zama/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db "SELECT ..."`
   (SELECT only). acme location id for the seeded restaurant:
   `v17plv08r5v357bie335lyq8`.
 - HTML5 drag is unreliable through CDP (dispatch `DragEvent`s or use the
@@ -1319,7 +1319,7 @@ Each group owns its dates, phones and emails. Do not use another group's.
   `document.documentElement.dataset.tenantApiUrl`. Sites SSR never renders guest
   data: assert that by curl-ing the HTML, not by the browser.
 - Read-only SQLite evidence:
-  `sqlite3 /home/factory-user/repos/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db "SELECT ..."`
+  `sqlite3 /Users/zama/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db "SELECT ..."`
   (acme) and `.../db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db` (KSA). SELECT only.
   Local D1 reads:
   `cd apps/app && npx wrangler d1 execute DB --local --json --command "SELECT ..."`.
@@ -1929,7 +1929,7 @@ the report and pick another fresh future date inside the 60-day horizon.
   capture (single fetch emits `<path>.data` XHRs; a `.data` redirect answers
   202).
 - Screenshots/snapshots to absolute paths under
-  `/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/evidence/guest-channels-and-crm/r3-cross007/`,
+  `/Users/zama/menuza/.factory/mission/evidence/guest-channels-and-crm/r3-cross007/`,
   named after the assertion id and step.
 - Booking sheet: slot buttons are addressed by minute testid
   (`booking-slot-1140` = 19:00). Native `<select>` needs `agent-browser select`;

@@ -1,6 +1,6 @@
 # Validation readiness: Reservations mission
 
-- Repo: `/home/factory-user/repos/menuza` at commit `5f61fd1c` on `main`.
+- Repo: `/Users/zama/menuza` at commit `5f61fd1c` on `main`.
 - Date: 2026-10-15, 18:38 to 19:24 UTC.
 - Machine: 4 CPUs, 7956 MB RAM, 6 GB swap.
 - At the end, `git status --porcelain` is empty, nothing was committed, and no
@@ -35,7 +35,7 @@ listener can leave a `tsx watch` orphan behind; this was observed.
 ```yaml
 services:
   tenant-api-us:
-    start: 'cd /home/factory-user/repos/menuza/apps/tenant-api && npm run dev'
+    start: 'cd /Users/zama/menuza/apps/tenant-api && npm run dev'
     port: 3007
     healthcheck: 'curl -sf http://localhost:3007/health' # {"status":"ok","region":"us"} about 6 s after start
     stop:
@@ -43,19 +43,16 @@ services:
       tr -d ' ')"
   tenant-api-ksa:
     start:
-      'mkdir -p /home/factory-user/repos/menuza/packages/database/db/ksa && cd
-      /home/factory-user/repos/menuza/apps/tenant-api &&
-      TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa npm
-      run dev:ksa'
+      'mkdir -p /Users/zama/menuza/packages/database/db/ksa && cd
+      /Users/zama/menuza/apps/tenant-api &&
+      TENANT_DB_DIR=/Users/zama/menuza/packages/database/db/ksa npm run dev:ksa'
     port: 3009
     healthcheck: 'curl -sf http://localhost:3009/health' # region "ksa"
     stop:
       "kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3009 -sTCP:LISTEN | head -1) |
       tr -d ' ')"
   app:
-    start:
-      'cd /home/factory-user/repos/menuza/apps/app && VITE_DIRECT_DEV=1 npm run
-      dev'
+    start: 'cd /Users/zama/menuza/apps/app && VITE_DIRECT_DEV=1 npm run dev'
     port: 3001
     healthcheck: 'curl -sf --max-time 60
       http://localhost:3001/resources/healthcheck' # warm start 69 s; cold start (after npm install) up to about 15 min
@@ -64,8 +61,8 @@ services:
     depends_on: [tenant-api-us]
   sites:
     start:
-      'cd /home/factory-user/repos/menuza/apps/sites &&
-      PUBLIC_APP_URL=http://localhost:3001 npm run dev'
+      'cd /Users/zama/menuza/apps/sites && PUBLIC_APP_URL=http://localhost:3001
+      npm run dev'
     port: 3008
     healthcheck: "curl -sf -o /dev/null -H 'Host: acme.menuza.test:3008'
       http://localhost:3008/" # listening after 6 s; first page 2 s
@@ -76,7 +73,7 @@ services:
   admin:
     start:
       'lsof -ti tcp:3005 -sTCP:LISTEN && exit 1; cd
-      /home/factory-user/repos/menuza/apps/admin && PORT=3005 npm run dev'
+      /Users/zama/menuza/apps/admin && PORT=3005 npm run dev'
     port: 3005
     healthcheck: 'curl -sf --max-time 60
       http://localhost:3005/resources/healthcheck' # listening after 5 s; first healthcheck 13 s
@@ -84,10 +81,10 @@ services:
       "kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3005 -sTCP:LISTEN | head -1) |
       tr -d ' ')"
 commands:
-  e2e_app_build: 'cd /home/factory-user/repos/menuza && npm run build -w app' # 110 s
+  e2e_app_build: 'cd /Users/zama/menuza && npm run build -w app' # 110 s
   e2e_app_spec:
-    'cd /home/factory-user/repos/menuza/apps/app && PORT=3101 CI=true npx
-    playwright test tests/e2e/<spec>.test.ts --workers=1 --reporter=line'
+    'cd /Users/zama/menuza/apps/app && PORT=3101 CI=true npx playwright test
+    tests/e2e/<spec>.test.ts --workers=1 --reporter=line'
   # Fallback if a process group was lost (stops BOTH tenant-api nodes):
   stop_all_tenant_api:
     "pkill -f 'tsx watch src/index.ts'; pkill -f 'tsx/dist/loader.*src/index.ts'"
@@ -222,7 +219,7 @@ gitignored directory, or log the text body. Treat this as a feature task.
 - **Node mode with MSW (Playwright `start:mocks`, App `npm run dev:node`, Admin
   `npm run dev`):** the Resend and OCI requests are intercepted. Each email is
   written to
-  `/home/factory-user/repos/menuza/packages/test-utils/fixtures/email/<recipient>.json`
+  `/Users/zama/menuza/packages/test-utils/fixtures/email/<recipient>.json`
   (gitignored; fields `to`, `from`, `subject`, `html`, `text`). Stdout also
   shows `🔶 mocked email contents:`. In e2e tests, use `readEmail` /
   `requireEmail` from `@repo/test-utils/mocks/utils`.
@@ -244,11 +241,11 @@ All steps succeeded after fix B2.
    but **no file existed**. The KSA process held a cached connection to the US
    file, which had been deleted (B2).
 4. I restarted KSA with
-   `TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa` and
-   re-ran provisioning: `POST :3009/api/provision` with the internal token
+   `TENANT_DB_DIR=/Users/zama/menuza/packages/database/db/ksa` and re-ran
+   provisioning: `POST :3009/api/provision` with the internal token
    returned 200.
    - The file now exists:
-     `/home/factory-user/repos/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db`.
+     `/Users/zama/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db`.
 5. Published the site with the switch on the same page. D1 shows
    `dataRegion=ksa, hasProvisionedDb=1, sitePublished=1, active=1`.
    - The organization exists **only in D1**, not in `data.db`. tenant-api
@@ -264,8 +261,7 @@ All steps succeeded after fix B2.
 
 ## Playwright result
 
-- Build: `cd /home/factory-user/repos/menuza && npm run build -w app` exited 0
-  in 110 s.
+- Build: `cd /Users/zama/menuza && npm run build -w app` exited 0 in 110 s.
   - I ran it with all five dev services up. Available memory fell to 800 MB and
     swap use peaked at 3.4 GB.
 - Test:
@@ -336,8 +332,8 @@ Concurrency recommendation:
      the file the US node just deleted, so "provision" succeeds against a file
      that no longer exists.
    - **Fix:** start KSA with
-     `TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa`
-     (gitignored). The directory and the KSA database are kept.
+     `TENANT_DB_DIR=/Users/zama/menuza/packages/database/db/ksa` (gitignored).
+     The directory and the KSA database are kept.
 3. **B3 – App HMR websocket targets the HTTPS proxy.** The browser logs
    `failed to connect to websocket`, so pages do not auto-reload after vite
    re-optimizes dependencies; the result is stale chunks and "Invalid hook
@@ -394,7 +390,7 @@ Smaller notes:
   - `04-app-ksa-org-website-settings.png`
   - `05-sites-ksa-org-home.png`
   - `06-admin-feature-flags.png`
-- `/home/factory-user/repos/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db`
+- `/Users/zama/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db`
   (gitignored)
 - Logs in `/tmp/vr/`: `tenant-us.log`, `tenant-ksa.log`, `app.log` (cold start),
   `app2.log` (warm start), `sites.log`, `admin.log`, `app-build.log`,

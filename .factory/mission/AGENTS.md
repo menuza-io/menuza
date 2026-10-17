@@ -21,8 +21,8 @@ Where to find things:
 
 **Repository and git**
 
-- Work only in `/home/factory-user/repos/menuza` on branch `pr/reservations`.
-  Commit your feature's changes there.
+- Work only in `/Users/zama/menuza` on branch `pr/reservations`. Commit your
+  feature's changes there.
 - Never push, deploy, or change git identity or config. Never touch the
   `upstream` remote or the `feat/resy-reservation-integration` branch.
 - Never rewrite or discard commits or uncommitted work you did not create in

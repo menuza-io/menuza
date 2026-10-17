@@ -10,7 +10,7 @@ native gotchas, verified against the repo.
 exports (see `library/environment.md`), command strings (see `services.yaml`
 `commands.android_*` and `commands.ios_*`).
 
-Paths are relative to `/home/factory-user/repos/menuza`.
+Paths are relative to `/Users/zama/menuza`.
 
 ## 1. Decisions (one line each; see architecture.md section 15)
 
