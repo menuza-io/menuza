@@ -1,3 +1,5 @@
+import { invalidateUserFavoritesCache } from '@repo/cache'
+import type * as cacheModule from '@repo/cache'
 import {
 	and,
 	db,
@@ -9,7 +11,7 @@ import {
 	OrganizationNoteFavorite,
 	UserOrganization,
 } from '@repo/database'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	createAuthenticatedRequest,
 	createTestNote,
@@ -19,7 +21,17 @@ import {
 	getResponseStatus,
 	setupTestOrgWithUser,
 } from '#tests/test-utils.ts'
+import { action as editorAction } from './__org-note-editor.server.tsx'
 import { action, loader } from './notes.$noteId.tsx'
+
+vi.mock('@repo/cache', async (importOriginal) => ({
+	...(await importOriginal<typeof cacheModule>()),
+	invalidateUserFavoritesCache: vi.fn().mockResolvedValue(undefined),
+}))
+
+afterEach(() => {
+	vi.mocked(invalidateUserFavoritesCache).mockClear()
+})
 
 describe('notes.$noteId route integration', () => {
 	describe('loader', () => {
@@ -304,10 +316,69 @@ describe('notes.$noteId route integration', () => {
 			expect(favAfter).toBeUndefined()
 		})
 
+		it('clears the sidebar favorites cache when a starred note is renamed', async () => {
+			const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+			const otherUser = await createTestUser()
+			const note = await createTestNote(organization.id, user.id, {
+				title: 'QA test note',
+			})
+			await db.insert(OrganizationNoteFavorite).values([
+				{ userId: user.id, noteId: note.id },
+				{ userId: otherUser.id, noteId: note.id },
+			])
+
+			const formData = new FormData()
+			formData.append('id', note.id)
+			formData.append('title', 'QA test note edited')
+			formData.append('content', note.content)
+
+			const request = createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/notes/${note.id}/edit`,
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+
+			const response = (await editorAction({
+				request,
+				params: { orgSlug: organization.slug, noteId: note.id },
+				context: {},
+			} as any)) as Response
+
+			expect(response.status).toBe(302)
+			expect(invalidateUserFavoritesCache).toHaveBeenCalledWith(user.id)
+			expect(invalidateUserFavoritesCache).toHaveBeenCalledWith(otherUser.id)
+		})
+
+		it('clears the favorites cache of the user who toggles a star', async () => {
+			const { user, organization, cookie } =
+				await setupTestOrgWithUser('member')
+			const note = await createTestNote(organization.id, user.id)
+
+			const formData = new FormData()
+			formData.append('intent', 'toggle-favorite')
+			formData.append('noteId', note.id)
+
+			const response = await action({
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/notes/${note.id}`,
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: { orgSlug: organization.slug, noteId: note.id },
+				context: {},
+			} as any)
+
+			expect(getResponseStatus(response)).toBe(200)
+			expect(invalidateUserFavoritesCache).toHaveBeenCalledWith(user.id)
+		})
+
 		it('allows owner to delete note and redirects to notes list', async () => {
 			const { user, organization, cookie } =
 				await setupTestOrgWithUser('member')
 			const note = await createTestNote(organization.id, user.id)
+			await db
+				.insert(OrganizationNoteFavorite)
+				.values({ userId: user.id, noteId: note.id })
 
 			const formData = new FormData()
 			formData.append('intent', 'delete-note')
@@ -347,6 +418,7 @@ describe('notes.$noteId route integration', () => {
 				.limit(1)
 
 			expect(dbNote).toBeUndefined()
+			expect(invalidateUserFavoritesCache).toHaveBeenCalledWith(user.id)
 		})
 	})
 })

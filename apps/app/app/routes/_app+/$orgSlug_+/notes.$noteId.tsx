@@ -232,7 +232,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	// Get organization members for sharing
 	const organizationMembers = await db.query.UserOrganization.findMany({
 		columns: { userId: true },
-		with: { user: { columns: { id: true, name: true, username: true } } },
+		with: {
+			user: {
+				columns: { id: true, name: true, username: true },
+				with: { image: { columns: { objectKey: true } } },
+			},
+		},
 		where: (membership, { and, eq }) =>
 			and(
 				eq(membership.organizationId, note.organizationId),
@@ -523,6 +528,7 @@ type NoteLoaderData = {
 			id: string
 			name: string | null
 			username: string
+			image: { objectKey: string } | null
 		}
 	}>
 	comments: Array<{
@@ -1057,6 +1063,7 @@ function NoteSheetActions({
 				open={shareOpen}
 				onOpenChange={setShareOpen}
 				noteId={note.id}
+				noteOwnerId={note.createdById}
 				isPublic={note.isPublic}
 				noteAccess={note.noteAccess}
 				organizationMembers={organizationMembers}

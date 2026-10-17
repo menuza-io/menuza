@@ -42,7 +42,7 @@ import { useOnboardingLabels } from './onboarding-labels.ts'
 import { RemoveDialog } from './remove-dialog.tsx'
 
 /**
- * Certificates with an expiry (food handler cards and the like) on a person's
+ * Licences and certificates with an expiry (first aid and the like) on a person's
  * profile. The ones that need attention come first, and each says in words
  * whether it is fine, expiring or expired. Managers are also told by the
  * regional daily check when one is about to lapse.
@@ -130,8 +130,8 @@ export function CertificatesTab({
 						<p className="text-muted-foreground max-w-prose text-sm text-pretty">
 							{canWrite ? (
 								<Trans>
-									Keep track of food handler cards and other certificates, and
-									get a reminder before one expires.
+									Keep track of licences and certificates, and get a reminder
+									before one expires.
 								</Trans>
 							) : (
 								<Trans>No certificates are recorded for this person.</Trans>

@@ -222,6 +222,15 @@ function matchesSelectOperator(
 	}
 }
 
+// A chip with no value yet (e.g. "Status is any of any status" right after
+// Add Filter) narrows nothing, so it must not filter or count as a filter.
+export function isActiveCustomerCondition(condition: FilterCondition) {
+	if (condition.operator === 'empty' || condition.operator === 'not_empty') {
+		return true
+	}
+	return condition.values.some((value) => String(value ?? '').trim() !== '')
+}
+
 function matchesCustomerCondition(
 	customer: CustomerListItem,
 	condition: FilterCondition,
@@ -363,7 +372,8 @@ export default function CustomersRoute() {
 	}, [jwt, tenantApiUrl])
 
 	const filterConditions = useMemo(
-		() => flattenFilterConditions(filterQuery),
+		() =>
+			flattenFilterConditions(filterQuery).filter(isActiveCustomerCondition),
 		[filterQuery],
 	)
 
@@ -377,7 +387,8 @@ export default function CustomersRoute() {
 		[customers, filterConditions],
 	)
 
-	const hasFilters = filterConditions.length > 0
+	// With no customers at all, no filter is why the list is empty.
+	const hasFilters = customers.length > 0 && filterConditions.length > 0
 
 	function openEditSheet(customer: CustomerListItem) {
 		setEditingCustomer(customer)

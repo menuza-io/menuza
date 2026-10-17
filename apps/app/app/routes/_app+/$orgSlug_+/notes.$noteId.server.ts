@@ -32,6 +32,10 @@ import {
 	sanitizeTextContent,
 } from '#app/utils/content-sanitization.server.ts'
 import {
+	getNoteFavoriteUserIds,
+	invalidateFavoritesCaches,
+} from '#app/utils/note-favorites.server.ts'
+import {
 	notifyCommentMentions,
 	notifyNoteOwner,
 } from '#app/utils/notifications.server.ts'
@@ -201,7 +205,10 @@ export async function handleDeleteNoteIntent({
 	})
 
 	await noteHooks.beforeNoteDeleted(note.id, userId)
+	// Favorites cascade with the note, so read who starred it first.
+	const favoriteUserIds = await getNoteFavoriteUserIds(note.id)
 	await db.delete(OrganizationNote).where(eq(OrganizationNote.id, note.id))
+	await invalidateFavoritesCaches(favoriteUserIds)
 
 	return redirectWithToast(`/${note.organizationSlug}/notes`, {
 		type: 'success',
@@ -1152,6 +1159,7 @@ export async function handleToggleFavoriteIntent({
 		} else {
 			await db.insert(OrganizationNoteFavorite).values({ userId, noteId })
 		}
+		await invalidateFavoritesCaches([userId])
 
 		return data({ result: { status: 'success' } })
 	} catch {

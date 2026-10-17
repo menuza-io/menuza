@@ -1,6 +1,7 @@
 import { Plural, Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Avatar, AvatarFallback } from '@repo/ui/avatar'
+import { getUserImgSrc } from '@repo/common'
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -22,6 +23,7 @@ import { useFetcher } from 'react-router'
 
 type ShareNoteButtonProps = {
 	noteId: string
+	noteOwnerId: string
 	isPublic: boolean
 	noteAccess: Array<{
 		id: string
@@ -37,6 +39,7 @@ type ShareNoteButtonProps = {
 			id: string
 			name: string | null
 			username: string
+			image?: { objectKey: string } | null
 		}
 	}>
 	open?: boolean
@@ -46,6 +49,7 @@ type ShareNoteButtonProps = {
 
 export function ShareNoteButton({
 	noteId,
+	noteOwnerId,
 	isPublic,
 	noteAccess,
 	organizationMembers,
@@ -137,7 +141,12 @@ export function ShareNoteButton({
 		void fetcher.submit(formData, { method: 'POST' })
 	}
 
-	const filteredMembers = organizationMembers.filter(
+	// The owner always has access, so they are never offered as a member
+	const shareableMembers = organizationMembers.filter(
+		(member) => member.user.id !== noteOwnerId,
+	)
+
+	const filteredMembers = shareableMembers.filter(
 		(member) =>
 			(member.user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				member.user.username
@@ -147,10 +156,17 @@ export function ShareNoteButton({
 	)
 
 	const getSelectedMemberDetails = () => {
-		return organizationMembers
+		return shareableMembers
 			.filter((member) => selectedMemberIds.includes(member.user.id))
 			.map((member) => member.user)
 	}
+
+	const initialMemberIds = new Set(noteAccess.map((access) => access.user.id))
+	const hasMemberChanges =
+		selectedMemberIds.length !== initialMemberIds.size ||
+		selectedMemberIds.some((id) => !initialMemberIds.has(id))
+	const hasChanges =
+		localIsPublic !== isPublic || (!localIsPublic && hasMemberChanges)
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -191,6 +207,8 @@ export function ShareNoteButton({
 							<div className="text-muted-foreground text-sm">
 								{localIsPublic ? (
 									<Trans>All organization members can view this note</Trans>
+								) : selectedMemberIds.length === 0 ? (
+									<Trans>Only you can access this note</Trans>
 								) : (
 									<Trans>Only selected members can access this note</Trans>
 								)}
@@ -223,6 +241,10 @@ export function ShareNoteButton({
 												className="flex items-center gap-2 pr-1"
 											>
 												<Avatar className="h-5 w-5">
+													<AvatarImage
+														src={getUserImgSrc(user.image?.objectKey)}
+														alt=""
+													/>
 													<AvatarFallback className="text-xs">
 														{(user.name || user.username)
 															.charAt(0)
@@ -280,6 +302,10 @@ export function ShareNoteButton({
 										>
 											<div className="flex items-center gap-3">
 												<Avatar className="h-8 w-8">
+													<AvatarImage
+														src={getUserImgSrc(member.user.image?.objectKey)}
+														alt=""
+													/>
 													<AvatarFallback className="text-sm">
 														{(member.user.name || member.user.username)
 															.charAt(0)
@@ -302,6 +328,15 @@ export function ShareNoteButton({
 											)}
 										</button>
 									))}
+									{filteredMembers.length === 0 ? (
+										<p className="text-muted-foreground py-2 text-center text-sm">
+											{shareableMembers.length === 0 ? (
+												<Trans>No other members to share with</Trans>
+											) : (
+												<Trans>No members found</Trans>
+											)}
+										</p>
+									) : null}
 								</div>
 							</div>
 						</>
@@ -316,21 +351,29 @@ export function ShareNoteButton({
 						>
 							<Trans>Cancel</Trans>
 						</Button>
-						<StatusButton
-							status={fetcher.state !== 'idle' ? 'pending' : 'idle'}
-							onClick={handleSubmit}
-							disabled={fetcher.state !== 'idle'}
-						>
-							{localIsPublic ? (
-								<Trans>Make Public</Trans>
-							) : (
-								<Plural
-									value={selectedMemberIds.length}
-									one="Share with 1 member"
-									other="Share with # members"
-								/>
-							)}
-						</StatusButton>
+						{hasChanges ? (
+							<StatusButton
+								status={fetcher.state !== 'idle' ? 'pending' : 'idle'}
+								onClick={handleSubmit}
+								disabled={fetcher.state !== 'idle'}
+							>
+								{localIsPublic ? (
+									<Trans>Make Public</Trans>
+								) : selectedMemberIds.length === 0 ? (
+									<Trans>Make Private</Trans>
+								) : (
+									<Plural
+										value={selectedMemberIds.length}
+										one="Share with 1 member"
+										other="Share with # members"
+									/>
+								)}
+							</StatusButton>
+						) : (
+							<Button onClick={() => setOpen(false)}>
+								<Trans>Done</Trans>
+							</Button>
+						)}
 					</div>
 				</div>
 			</DialogContent>

@@ -4421,6 +4421,10 @@ msgstr "Closing"
 msgid "Closing time must be after opening time."
 msgstr "Closing time must be after opening time."
 
+#: app/components/phone-agent/settings-page.tsx:154
+msgid "Use a time zone name such as America/New_York."
+msgstr "Use a time zone name such as America/New_York."
+
 #: app/components/settings/cards/organization/site-card.tsx:427
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr ""
@@ -6787,6 +6791,10 @@ msgstr "Enable redirect immediately"
 msgid "Enabled"
 msgstr ""
 
+#: app/components/settings/cards/organization/announcement-sheet.tsx:340
+msgid "Enabled banners appear at the top of your public site."
+msgstr ""
+
 #: app/components/staff/timesheets/card-fields.tsx:332
 msgid "End"
 msgstr "End"
@@ -8940,8 +8948,8 @@ msgid "Keep their details on file"
 msgstr "Keep their details on file"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:132
-msgid "Keep track of food handler cards and other certificates, and get a reminder before one expires."
-msgstr "Keep track of food handler cards and other certificates, and get a reminder before one expires."
+msgid "Keep track of licences and certificates, and get a reminder before one expires."
+msgstr "Keep track of licences and certificates, and get a reminder before one expires."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:418
 msgid "Keep transferred calls open"
@@ -21191,3 +21199,19 @@ msgstr "Your website is not published yet, so people cannot see this job. <0>Pub
 #: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "Zero permissions"
 msgstr "Zero permissions"
+
+#: app/components/note/share-note-button.tsx
+msgid "Only you can access this note"
+msgstr ""
+
+#: app/components/note/share-note-button.tsx
+msgid "Make Private"
+msgstr ""
+
+#: app/components/note/share-note-button.tsx
+msgid "No other members to share with"
+msgstr ""
+
+#: app/components/note/share-note-button.tsx
+msgid "No members found"
+msgstr ""

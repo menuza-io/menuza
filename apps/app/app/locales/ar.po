@@ -4419,6 +4419,10 @@ msgstr "الختام"
 msgid "Closing time must be after opening time."
 msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
+#: app/components/phone-agent/settings-page.tsx:154
+msgid "Use a time zone name such as America/New_York."
+msgstr "استخدم اسم منطقة زمنية مثل America/New_York."
+
 #: app/components/settings/cards/organization/site-card.tsx:427
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
@@ -6785,6 +6789,10 @@ msgstr "تفعيل إعادة التوجيه فوراً"
 msgid "Enabled"
 msgstr "مفعّل"
 
+#: app/components/settings/cards/organization/announcement-sheet.tsx:340
+msgid "Enabled banners appear at the top of your public site."
+msgstr "تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
+
 #: app/components/staff/timesheets/card-fields.tsx:332
 msgid "End"
 msgstr "النهاية"
@@ -8938,8 +8946,8 @@ msgid "Keep their details on file"
 msgstr "الاحتفاظ ببياناتهم"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:132
-msgid "Keep track of food handler cards and other certificates, and get a reminder before one expires."
-msgstr "تابع بطاقات مناولة الأغذية والشهادات الأخرى، واحصل على تذكير قبل انتهاء إحداها."
+msgid "Keep track of licences and certificates, and get a reminder before one expires."
+msgstr "تابع التراخيص والشهادات، واحصل على تذكير قبل انتهاء إحداها."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:418
 msgid "Keep transferred calls open"
@@ -21189,3 +21197,19 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 #: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
+
+#: app/components/note/share-note-button.tsx
+msgid "Only you can access this note"
+msgstr "أنت فقط يمكنك الوصول إلى هذه الملاحظة"
+
+#: app/components/note/share-note-button.tsx
+msgid "Make Private"
+msgstr "جعلها خاصة"
+
+#: app/components/note/share-note-button.tsx
+msgid "No other members to share with"
+msgstr "لا يوجد أعضاء آخرون للمشاركة معهم"
+
+#: app/components/note/share-note-button.tsx
+msgid "No members found"
+msgstr "لم يتم العثور على أعضاء"

@@ -5,6 +5,7 @@ import {
 	PhoneAgentSettingsSchema,
 	unsupportedPhoneFields,
 } from '@repo/phone-agent'
+import { isValidTimeZone } from '@repo/staffing'
 import { z } from 'zod'
 import {
 	getPhoneAgent,
@@ -171,6 +172,11 @@ export function validateSettingsRelations(
 	})
 	// Availability has no overnight slots, so an inverted one is never open.
 	if (!changedKeys || changedKeys.includes('business')) {
+		// Checked here, not in the schema: a stored unknown zone would fail
+		// parsePhoneAgentSettings and reset every setting to its default.
+		if (!isValidTimeZone(settings.business.timezone)) {
+			errors['business.timezone'] = settingsError('timezone')
+		}
 		const inverted = (slots: ReadonlyArray<{ start: string; end: string }>) =>
 			slots.some((slot) => slot.end <= slot.start)
 		if (
