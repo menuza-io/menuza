@@ -334,6 +334,39 @@ export async function resolveOrganizationForBrowserAuth(
 	return null
 }
 
+/**
+ * Resolve the organization for a public guest route strictly from the browser
+ * `Origin`. Only a tenant subdomain or custom domain names an organization; the
+ * platform's own App and Admin origins, a missing Origin and an unknown
+ * subdomain all resolve nothing. `slug` / `host` hints are honored only outside
+ * production for an origin that names no tenant (local tools and tests), and a
+ * hint that disagrees with a real Origin is refused.
+ */
+export async function resolveOrganizationForPublicOrigin(
+	origin: string | undefined,
+	hint: { slug?: string; host?: string } = {},
+): Promise<PublishedOrganization | null> {
+	const binding = resolveOriginBinding(origin)
+	if (binding.kind === 'slug' || binding.kind === 'custom') {
+		const organization = await resolveOrganizationFromBinding(binding)
+		if (!organization) return null
+		if (hint.slug && hint.slug.toLowerCase() !== organization.slug) return null
+		if (
+			hint.host &&
+			(!organization.customDomain ||
+				hint.host.toLowerCase() !== organization.customDomain)
+		) {
+			return null
+		}
+		return organization
+	}
+	if (ENV.NODE_ENV === 'production') return null
+	if (!hint.slug && !hint.host) return null
+	return resolvePublishedOrganization(
+		hint.slug ? { slug: hint.slug } : { host: hint.host },
+	)
+}
+
 export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 	const cached = corsCache.get(origin)
 	if (cached !== undefined) return cached

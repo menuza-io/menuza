@@ -94,7 +94,7 @@ export interface ReservationMoveReport {
 	toCombinationId: string | null
 }
 
-async function loadLocationSchedulingState(
+export async function loadLocationSchedulingState(
 	db: DbOrTx,
 	locationId: string,
 	businessDate: string,
@@ -961,6 +961,37 @@ export async function createOperatorReservation(params: {
 						assignRes.reason ?? 'no_availability',
 						'No available tables for this party size and time',
 					)
+				} else {
+					// An explicit staff overbook outranks a guest's live hold: seat the
+					// party on a held table so the guest's conversion sees it taken.
+					const liveHoldIds = new Set(
+						state.dayHolds
+							.filter(
+								(h) =>
+									h.expiresAt > now && h.startAt < endAt && h.endAt > startAt,
+							)
+							.map((h) => h.id),
+					)
+					const heldTableId = state.activeOccRows
+						.filter(
+							(o) =>
+								o.kind === 'hold' &&
+								o.holdId !== null &&
+								liveHoldIds.has(o.holdId) &&
+								o.startAt < endAt &&
+								o.endAt > startAt,
+						)
+						.map((o) => o.tableId)
+						.find((tid) => {
+							const tbl = state.tableById.get(tid)
+							return (
+								tbl !== undefined &&
+								tbl.archivedAt === null &&
+								tbl.minCovers <= input.partySize &&
+								tbl.maxCovers >= input.partySize
+							)
+						})
+					if (heldTableId) assignedTableIds = [heldTableId]
 				}
 			}
 

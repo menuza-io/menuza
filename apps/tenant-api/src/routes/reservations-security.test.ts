@@ -13,10 +13,14 @@ import {
 } from '@repo/reservations'
 import {
 	destroyTenantDb,
+	getTenantDb,
 	provisionTenantDb,
 	rsvGuests,
+	rsvHolds,
 	rsvLocationSettings,
+	rsvReservations,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import {
@@ -39,6 +43,15 @@ import {
 	reservationsVoiceActionRoutes,
 } from './reservations-internal.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
+import {
+	deriveManageToken,
+	resetPublicRateLimits,
+} from '../lib/reservations-public-auth.ts'
+import {
+	dateAhead,
+	PUBLIC_LOC,
+	seedPublicOrg,
+} from './reservations-public-fixture.ts'
 import { reservationsPublicRoutes } from './reservations-public.ts'
 
 const SECRET = 'reservations-security-test-secret-0123456789'
@@ -54,10 +67,22 @@ const LOC_1 = 'loc_downtown'
 const LOC_2 = 'loc_uptown'
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
+const originOrgs = vi.hoisted(
+	() =>
+		new Map<string, string>([
+			['http://acme-public.menuza.test:3008', 'org_rsv_sec_public'],
+			['http://other-public.menuza.test:3008', 'org_rsv_sec_other'],
+			['http://riyadh-public.menuza.test:3008', 'org_rsv_sec_ksa'],
+		]),
+)
 
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+	resolveOrganizationForPublicOrigin: vi.fn(async (origin?: string) => {
+		const id = origin ? originOrgs.get(origin) : undefined
+		return id ? (orgs.get(id) ?? null) : null
+	}),
 	resolveOrganizationForBrowserAuth: vi.fn(
 		async (_origin: string | undefined, hint?: { slug?: string }) => {
 			if (!hint?.slug) return null
@@ -903,7 +928,7 @@ describe('Reservations security sweep: mounts and non-operator surfaces', () => 
 
 	beforeEach(() => {
 		resetReservationsContextCache()
-		delete process.env.RESERVATIONS_PUBLIC_ENABLED
+		process.env.RESERVATIONS_PUBLIC_ENABLED = 'true'
 	})
 
 	it('app.ts mounts all reservations operator, public, internal, tick, and voice routers', () => {
@@ -1033,7 +1058,388 @@ describe('Reservations security sweep: mounts and non-operator surfaces', () => 
 
 	it('RESERVATIONS_PUBLIC_ENABLED=false kill switch answers 503 on /reservations/*', async () => {
 		process.env.RESERVATIONS_PUBLIC_ENABLED = 'false'
-		const res = await otherApp.request('/reservations/config?slug=acme-a')
+		const res = await otherApp.request('/reservations/config?slug=acme-a', {
+			headers: { Origin: 'http://acme-public.menuza.test:3008' },
+		})
 		expect(res.status).toBe(503)
+		await expect(res.json()).resolves.toEqual({ error: 'unavailable' })
+		process.env.RESERVATIONS_PUBLIC_ENABLED = 'true'
+	})
+})
+
+describe('Reservations security sweep: public /reservations/* routes', () => {
+	const ORG_PUB = 'org_rsv_sec_public'
+	const ORG_OTHER = 'org_rsv_sec_other'
+	const ORG_PUB_KSA = 'org_rsv_sec_ksa'
+	const PUB_ORIGIN = 'http://acme-public.menuza.test:3008'
+	const OTHER_ORIGIN = 'http://other-public.menuza.test:3008'
+	const KSA_PUB_ORIGIN = 'http://riyadh-public.menuza.test:3008'
+	const DISTINCT_PHONE = 'zz-not-a-phone-zz'
+	const DISTINCT_EMAIL = 'not-an-email-zz'
+	const DAY = dateAhead(9)
+
+	let dir: string
+	const app = new Hono()
+	app.route('/reservations', reservationsPublicRoutes)
+	const routes = (() => {
+		const seen = new Set<string>()
+		const list: Array<{ method: string; path: string }> = []
+		for (const route of app.routes) {
+			if (route.method === 'ALL') continue
+			const key = `${route.method} ${route.path}`
+			if (seen.has(key)) continue
+			seen.add(key)
+			list.push({ method: route.method, path: route.path })
+		}
+		return list
+	})()
+
+	function request(
+		method: string,
+		urlPath: string,
+		options: {
+			origin?: string | null
+			token?: string
+			headers?: Record<string, string>
+			body?: unknown
+		} = {},
+	) {
+		const headers: Record<string, string> = { ...options.headers }
+		if (options.origin !== null) headers.Origin = options.origin ?? PUB_ORIGIN
+		if (options.token) headers['X-Reservation-Token'] = options.token
+		let body: string | undefined
+		if (method !== 'GET' && method !== 'HEAD') {
+			headers['Content-Type'] = 'application/json'
+			body = JSON.stringify(options.body ?? {})
+		}
+		return app.request(urlPath, { method, headers, body })
+	}
+
+	const withQuery = (routePath: string) =>
+		`${routePath}?locationId=${PUBLIC_LOC}&date=${DAY}&partySize=2&from=${DAY}&to=${DAY}`
+
+	async function bookOne(n: number, origin = PUB_ORIGIN, date = DAY) {
+		const holdRes = await request('POST', '/reservations/holds', {
+			origin,
+			body: {
+				locationId: PUBLIC_LOC,
+				slot: { date, localMin: 19 * 60, partySize: 2 },
+			},
+		})
+		expect(holdRes.status).toBe(201)
+		const hold = (await holdRes.json()) as { holdToken: string }
+		const res = await request('POST', '/reservations', {
+			origin,
+			headers: { 'Idempotency-Key': `sweep-key-${n}-abcdefgh` },
+			body: {
+				holdToken: hold.holdToken,
+				guest: {
+					firstName: `Sweep${n}`,
+					lastName: 'Guest',
+					phone: `+1415555${6000 + n}`,
+				},
+				locale: 'en',
+			},
+		})
+		expect(res.status).toBe(201)
+		return (await res.json()) as {
+			reservation: { id: string }
+			manageToken: string
+		}
+	}
+
+	beforeAll(async () => {
+		dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rsv-sec-public-'))
+		process.env.TENANT_DB_DIR = dir
+		process.env.DATA_REGION = 'us'
+		process.env.AUTH_HMAC_SECRET = 'sweep-auth-hmac-secret-0123456789abcdef'
+		process.env.JWT_SECRET = 'sweep-customer-jwt-secret-0123456789'
+		orgs.set(ORG_PUB, {
+			id: ORG_PUB,
+			slug: 'acme-public',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+			name: 'Acme Public',
+		})
+		orgs.set(ORG_OTHER, {
+			id: ORG_OTHER,
+			slug: 'other-public',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+			name: 'Other Public',
+		})
+		orgs.set(ORG_PUB_KSA, {
+			id: ORG_PUB_KSA,
+			slug: 'riyadh-public',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'ksa',
+			name: 'Riyadh Public',
+		})
+		resetReservationsContextCache()
+		await seedPublicOrg(ORG_PUB)
+		await seedPublicOrg(ORG_OTHER)
+	})
+
+	beforeEach(() => {
+		process.env.RESERVATIONS_PUBLIC_ENABLED = 'true'
+		process.env.TURNSTILE_SECRET_KEY = ''
+		resetPublicRateLimits()
+	})
+
+	afterAll(async () => {
+		await destroyTenantDb(ORG_PUB)
+		await destroyTenantDb(ORG_OTHER)
+		fs.rmSync(dir, { recursive: true, force: true })
+		process.env.TURNSTILE_SECRET_KEY = ''
+	})
+
+	it('discovers every public route', () => {
+		const keys = new Set(routes.map((r) => `${r.method} ${r.path}`))
+		for (const expected of [
+			'GET /reservations/config',
+			'GET /reservations/availability',
+			'GET /reservations/calendar',
+			'POST /reservations/holds',
+			'GET /reservations/holds/current',
+			'POST /reservations/holds/release',
+			'POST /reservations',
+			'POST /reservations/requests',
+			'GET /reservations/manage',
+			'GET /reservations/manage/availability',
+			'POST /reservations/manage/modify',
+			'POST /reservations/manage/cancel',
+			'POST /reservations/manage/confirm',
+			'POST /reservations/manage/late',
+			'GET /reservations/manage/calendar.ics',
+			'GET /reservations/mine',
+		]) {
+			expect(keys.has(expected), expected).toBe(true)
+		}
+	})
+
+	it('answers the identical 404 without an Origin binding on every route (VAL-ONLINE-024)', async () => {
+		const failures: string[] = []
+		const bodies = new Set<string>()
+		for (const route of routes) {
+			const urlPath = withQuery(route.path.replace(/:[A-Za-z]+/g, 'x'))
+			for (const variant of [
+				{ origin: null as string | null },
+				{ origin: 'http://no-such-org.menuza.test:3008' },
+				{ origin: null as string | null, orgIdQuery: true },
+			]) {
+				const finalPath = variant.orgIdQuery
+					? `${urlPath}&orgId=${ORG_PUB}`
+					: urlPath
+				const res = await request(route.method, finalPath, {
+					origin: variant.origin,
+				})
+				const text = await res.text()
+				bodies.add(text)
+				if (res.status !== 404) {
+					failures.push(`${route.method} ${route.path} -> ${res.status}`)
+				}
+			}
+		}
+		expect(failures).toEqual([])
+		expect([...bodies]).toEqual([JSON.stringify({ error: 'not_found' })])
+	})
+
+	it('fails closed for the wrong region and between organizations (VAL-ONLINE-025)', async () => {
+		for (const route of routes) {
+			const urlPath = withQuery(route.path.replace(/:[A-Za-z]+/g, 'x'))
+			const res = await request(route.method, urlPath, {
+				origin: KSA_PUB_ORIGIN,
+			})
+			expect(res.status, `${route.method} ${route.path}`).toBe(404)
+			await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+		}
+	})
+
+	it('treats forged, cross-org, rotated and expired capability tokens as 404 (VAL-ONLINE-026)', async () => {
+		const mine = await bookOne(1)
+		const other = await bookOne(2, OTHER_ORIGIN)
+		const db = await getTenantDb(ORG_PUB)
+		const tokenRoutes: Array<[string, string]> = [
+			['GET', '/reservations/manage'],
+			['GET', '/reservations/manage/availability'],
+			['GET', '/reservations/manage/calendar.ics'],
+			['POST', '/reservations/manage/modify'],
+			['POST', '/reservations/manage/cancel'],
+			['POST', '/reservations/manage/confirm'],
+			['POST', '/reservations/manage/late'],
+		]
+		const forged = `${mine.manageToken.split('.')[0]}.forgedforgedforged`
+		const crossOrg = deriveManageToken(ORG_OTHER, mine.reservation.id, 1)
+		const otherOrgs = other.manageToken
+		const check = async (token: string | undefined) => {
+			for (const [method, urlPath] of tokenRoutes) {
+				const res = await request(method, urlPath, { token })
+				expect(res.status, `${method} ${urlPath}`).toBe(404)
+				await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+			}
+		}
+		await check(undefined)
+		await check('garbage')
+		await check(forged)
+		await check(crossOrg)
+		await check(otherOrgs)
+
+		const before = await db.select().from(rsvReservations).all()
+		await db
+			.update(rsvReservations)
+			.set({ manageTokenVersion: 2 })
+			.where(eq(rsvReservations.id, mine.reservation.id))
+		await check(mine.manageToken)
+		await db
+			.update(rsvReservations)
+			.set({
+				manageTokenVersion: 1,
+				startAt: Date.now() - 9 * 86_400_000,
+				endAt: Date.now() - 8 * 86_400_000,
+			})
+			.where(eq(rsvReservations.id, mine.reservation.id))
+		await check(mine.manageToken)
+		const after = await db.select().from(rsvReservations).all()
+		expect(after.map((r) => r.status)).toEqual(before.map((r) => r.status))
+
+		for (const [method, urlPath] of [
+			['GET', '/reservations/holds/current'],
+			['POST', '/reservations/holds/release'],
+		] as const) {
+			for (const token of ['garbage', 'rsv_h_forgedforgedforgedforged']) {
+				const res = await request(method, urlPath, { token })
+				expect(res.status).toBe(404)
+			}
+		}
+	})
+
+	it('requires a customer token or Turnstile for holds and requests when Turnstile is configured (VAL-ONLINE-042)', async () => {
+		const countsDb = await getTenantDb(ORG_PUB)
+		const holdsBefore = (await countsDb.select().from(rsvHolds).all()).length
+		const reservationsBefore = (
+			await countsDb.select().from(rsvReservations).all()
+		).length
+		process.env.TURNSTILE_SECRET_KEY = 'sweep-turnstile-secret-key'
+		const holdRes = await request('POST', '/reservations/holds', {
+			body: {
+				locationId: PUBLIC_LOC,
+				slot: { date: DAY, localMin: 19 * 60, partySize: 2 },
+			},
+		})
+		expect(holdRes.status).toBe(403)
+		await expect(holdRes.json()).resolves.toEqual({
+			error: 'verification_failed',
+		})
+		const requestRes = await request('POST', '/reservations/requests', {
+			headers: { 'Idempotency-Key': 'turnstile-key-abcdefgh' },
+			body: {
+				locationId: PUBLIC_LOC,
+				slot: { date: DAY, localMin: 19 * 60, partySize: 12 },
+				guest: { firstName: 'T', lastName: 'G', phone: '+14155557001' },
+				locale: 'en',
+			},
+		})
+		expect(requestRes.status).toBe(403)
+		const db = await getTenantDb(ORG_PUB)
+		expect(await db.select().from(rsvHolds).all()).toHaveLength(holdsBefore)
+		expect(await db.select().from(rsvReservations).all()).toHaveLength(
+			reservationsBefore,
+		)
+	})
+
+	it('never mutates through GET and never accepts other methods on POST routes (VAL-ONLINE-023)', async () => {
+		const target = await bookOne(3, PUB_ORIGIN, dateAhead(11))
+		const db = await getTenantDb(ORG_PUB)
+		const snapshot = async () =>
+			JSON.stringify([
+				await db.select().from(rsvReservations).all(),
+				await db.select().from(rsvHolds).all(),
+			])
+		const before = await snapshot()
+		for (const route of routes.filter((r) => r.method === 'GET')) {
+			await request('GET', withQuery(route.path), { token: target.manageToken })
+		}
+		for (const route of routes.filter((r) => r.method === 'POST')) {
+			const urlPath = `${route.path.replace(/\/$/, '') || '/reservations'}?t=${encodeURIComponent(target.manageToken)}`
+			for (const method of ['GET', 'PUT', 'PATCH', 'DELETE']) {
+				const res = await request(method, urlPath, {
+					token: target.manageToken,
+				})
+				expect(res.status, `${method} ${route.path}`).toBeGreaterThanOrEqual(
+					400,
+				)
+			}
+		}
+		expect(await snapshot()).toBe(before)
+	})
+
+	it('names invalid fields and never echoes submitted values (VAL-ONLINE-018)', async () => {
+		const bad = {
+			holdToken: 'rsv_h_validvalidvalidvalid',
+			guest: {
+				firstName: 'Echo',
+				phone: DISTINCT_PHONE,
+				email: DISTINCT_EMAIL,
+			},
+			locale: 'en',
+		}
+		const targets: Array<[string, unknown]> = [
+			['/reservations', bad],
+			[
+				'/reservations/requests',
+				{
+					locationId: PUBLIC_LOC,
+					slot: { date: DAY, localMin: 1140, partySize: 12 },
+					guest: bad.guest,
+					locale: 'en',
+				},
+			],
+			[
+				'/reservations/holds',
+				{
+					locationId: PUBLIC_LOC,
+					slot: {
+						date: DISTINCT_PHONE,
+						localMin: DISTINCT_EMAIL,
+						partySize: 2,
+					},
+				},
+			],
+		]
+		for (const [urlPath, body] of targets) {
+			const res = await request('POST', urlPath, {
+				headers: { 'Idempotency-Key': 'echo-key-abcdefgh' },
+				body,
+			})
+			const text = await res.text()
+			expect(res.status, urlPath).toBe(400)
+			expect(text).not.toContain(DISTINCT_PHONE)
+			expect(text).not.toContain(DISTINCT_EMAIL)
+			expect(JSON.parse(text).error).toBe('invalid')
+		}
+		for (const urlPath of [
+			`/reservations/availability?locationId=${PUBLIC_LOC}&date=${DISTINCT_PHONE}&partySize=${DISTINCT_EMAIL}`,
+			`/reservations/calendar?locationId=${PUBLIC_LOC}&from=${DISTINCT_PHONE}&to=${DISTINCT_EMAIL}&partySize=2`,
+		]) {
+			const res = await request('GET', urlPath)
+			const text = await res.text()
+			expect(res.status).toBe(400)
+			expect(text).not.toContain(DISTINCT_PHONE)
+			expect(text).not.toContain(DISTINCT_EMAIL)
+		}
+	})
+
+	it('answers 503 unavailable on every public route when the switch is off (VAL-ONLINE-029)', async () => {
+		process.env.RESERVATIONS_PUBLIC_ENABLED = 'false'
+		for (const route of routes) {
+			const res = await request(route.method, withQuery(route.path), {
+				token: 'rsv_m_x.y',
+			})
+			expect(res.status, `${route.method} ${route.path}`).toBe(503)
+			await expect(res.json()).resolves.toEqual({ error: 'unavailable' })
+		}
 	})
 })

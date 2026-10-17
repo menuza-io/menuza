@@ -1489,7 +1489,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 				scope: 'visit',
 				category: 'occasion',
 				name: 'Anniversary',
-				systemKey: 'anniversary' as never,
+				systemKey: 'anniversary',
 			})
 
 			const created = await book(app, token, 'occ-1', {

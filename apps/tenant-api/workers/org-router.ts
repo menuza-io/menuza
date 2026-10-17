@@ -10,6 +10,7 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { brand } from '@repo/config/brand'
 import {
 	resolveOrganizationForBrowserAuth,
+	resolveOrganizationForPublicOrigin,
 	findActiveOrganizationById,
 } from '../src/lib/origin.ts'
 import { getBearerToken } from '../src/lib/secrets.ts'
@@ -215,12 +216,18 @@ export async function resolveOrgId(
 		return orgIdFromOperatorJwt(request, env)
 	}
 
-	// Public/guest reservations routes: route by customer JWT or Origin +
-	// slug/host, never by a client-supplied query or body orgId.
+	// Public/guest reservations routes: the organization is the one the
+	// browser's Origin names (plus slug/host hints outside production), never a
+	// customer JWT, query or body orgId.
 	if (pathname === '/reservations' || pathname.startsWith('/reservations/')) {
-		const fromJwt = await orgIdFromCustomerJwt(request, env)
-		if (fromJwt) return fromJwt
-		return orgIdFromOrderIdentity(request, url)
+		const organization = await resolveOrganizationForPublicOrigin(
+			request.headers.get('Origin') ?? undefined,
+			{
+				slug: url.searchParams.get('slug') ?? undefined,
+				host: url.searchParams.get('host') ?? undefined,
+			},
+		)
+		return organization?.id ?? null
 	}
 
 	if (pathname.startsWith('/kiosk/')) {

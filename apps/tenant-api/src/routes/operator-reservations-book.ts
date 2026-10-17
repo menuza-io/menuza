@@ -48,6 +48,10 @@ import {
 	upsertServiceNotes,
 } from '../services/rsv-day-feed-service.js'
 import { getGuestSummary, searchGuests } from '../services/rsv-guest-service.js'
+import {
+	approveReservationRequest,
+	declineReservationRequest,
+} from '../services/rsv-request-service.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const MONTH_RE = /^\d{4}-\d{2}$/
@@ -1549,3 +1553,74 @@ operatorReservationsBookRoutes.post(
 		}
 	},
 )
+
+const requestDecisionSchema = z.object({
+	locationId: z.string().trim().min(1).max(128).optional(),
+	reason: z.string().trim().max(500).optional().nullable(),
+})
+
+function requestDecisionHandler(decision: 'approve' | 'decline') {
+	return async (c: Context) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const raw = await c.req.json().catch(() => ({}))
+		const parsed = requestDecisionSchema.safeParse(raw ?? {})
+		if (!parsed.success) {
+			return handleRouteError(badRequest('validation_error'))
+		}
+
+		const rsvId = c.req.param('id') ?? ''
+		const locCheck = await resolveReservationLocation(
+			ctx,
+			rsvId,
+			parsed.data.locationId ?? c.req.query('locationId'),
+		)
+		if (!locCheck.ok) return locCheck.response
+
+		try {
+			if (decision === 'approve') {
+				await approveReservationRequest({
+					orgId: ctx.orgId,
+					reservationId: rsvId,
+					actorId: ctx.userId,
+				})
+			} else {
+				await declineReservationRequest({
+					orgId: ctx.orgId,
+					reservationId: rsvId,
+					actorId: ctx.userId,
+					reason: parsed.data.reason,
+				})
+			}
+			const db = await getTenantDb(ctx.orgId)
+			const detail = await getReservationDetail(db, rsvId, {
+				canReadGuestSensitive: hasReservationsGrant(
+					ctx,
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+				),
+			})
+			return json({ ok: true, orgId: ctx.orgId, ...detail })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	}
+}
+
+for (const decision of ['approve', 'decline'] as const) {
+	for (const path of [
+		`/reservations/:id/${decision}`,
+		`/requests/:id/${decision}`,
+	]) {
+		operatorReservationsBookRoutes.post(
+			path,
+			rsvGuard({
+				scope: 'book',
+				write: true,
+				grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+			}),
+			requestDecisionHandler(decision),
+		)
+	}
+}

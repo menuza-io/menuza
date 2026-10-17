@@ -2948,6 +2948,8 @@ export type RsvTagCategory = (typeof RSV_TAG_CATEGORY_VALUES)[number]
 export const RSV_TAG_SYSTEM_KEY_VALUES = [
 	'first_visit',
 	'frequent_no_show',
+	'birthday',
+	'anniversary',
 ] as const
 export type RsvTagSystemKey = (typeof RSV_TAG_SYSTEM_KEY_VALUES)[number]
 

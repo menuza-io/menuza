@@ -14,6 +14,21 @@ import {
 import { buildScaleRestaurantFixture } from '../testing/index.ts'
 import { localToInstant } from '../time.ts'
 
+const TIMING_RUNS = 5
+
+/** Median of several timed runs, after one untimed warm-up, so a single scheduler hiccup on a loaded machine cannot fail the latency bound. */
+function timeMedianMs<T>(run: () => T): { result: T; medianMs: number } {
+	let result = run()
+	const samples: number[] = []
+	for (let i = 0; i < TIMING_RUNS; i++) {
+		const start = performance.now()
+		result = run()
+		samples.push(performance.now() - start)
+	}
+	samples.sort((a, b) => a - b)
+	return { result, medianMs: samples[Math.floor(samples.length / 2)]! }
+}
+
 describe('reservations engine scale and bounded expansion budget tests', () => {
 	it('handles 120 tables, 80 combinations, and 900 bookings/day within expansion budgets (200 search/slot, 2000 book, 5000 reflow) and < 50ms per day', () => {
 		const fixture = buildScaleRestaurantFixture({
@@ -38,35 +53,35 @@ describe('reservations engine scale and bounded expansion budget tests', () => {
 		const slot1170End = slot1170Start + 75 * 60_000
 
 		// 1. Booking expansion cap (MAX_BOOK_EXPANSIONS = 2,000)
-		const t0 = performance.now()
-		const assignment = assignTables({
-			config: fixture.config,
-			request: {
-				serviceId: 'srv_dinner',
-				startAt: slot1170Start,
-				endAt: slot1170End,
-				partySize: 4,
-				channel: 'online',
-			},
-			existingBookings: fixture.existingBookings,
-			nowMs: fixture.nowMs,
-		})
-		const assignElapsedMs = performance.now() - t0
+		const { result: assignment, medianMs: assignElapsedMs } = timeMedianMs(() =>
+			assignTables({
+				config: fixture.config,
+				request: {
+					serviceId: 'srv_dinner',
+					startAt: slot1170Start,
+					endAt: slot1170End,
+					partySize: 4,
+					channel: 'online',
+				},
+				existingBookings: fixture.existingBookings,
+				nowMs: fixture.nowMs,
+			}),
+		)
 		expect(assignment.expansions).toBeLessThanOrEqual(MAX_BOOK_EXPANSIONS)
 		expect(assignElapsedMs).toBeLessThan(50)
 
 		// 2. Full-day availability search latency (< 50ms) and per-slot expansion cap (200 per slot)
-		const t1 = performance.now()
-		const dayAvail = searchAvailability({
-			config: fixture.config,
-			businessDate: '2026-06-12',
-			partySize: 4,
-			preferredSlotMin: 1170,
-			channel: 'online',
-			existingBookings: fixture.existingBookings,
-			nowMs: fixture.nowMs,
-		})
-		const availElapsedMs = performance.now() - t1
+		const { result: dayAvail, medianMs: availElapsedMs } = timeMedianMs(() =>
+			searchAvailability({
+				config: fixture.config,
+				businessDate: '2026-06-12',
+				partySize: 4,
+				preferredSlotMin: 1170,
+				channel: 'online',
+				existingBookings: fixture.existingBookings,
+				nowMs: fixture.nowMs,
+			}),
+		)
 		expect(dayAvail.slots.length).toBeGreaterThan(0)
 		expect(availElapsedMs).toBeLessThan(50)
 

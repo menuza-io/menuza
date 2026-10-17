@@ -12,6 +12,7 @@ export interface TenantApiWorkerEnv {
 	GLOBAL_SMS_CAP?: string
 	STAFFING_KIOSK_ENABLED?: string
 	STAFFING_EMAIL_ENABLED?: string
+	RESERVATIONS_PUBLIC_ENABLED?: string
 	TWILIO_ACCOUNT_SID?: string
 	TWILIO_FROM_NUMBER?: string
 	JWT_SECRET: string

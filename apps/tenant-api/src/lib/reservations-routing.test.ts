@@ -14,6 +14,7 @@ const resolveOrigin = vi.hoisted(() => vi.fn())
 vi.mock('./origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('./origin.ts')>()),
 	resolveOrganizationForBrowserAuth: resolveOrigin,
+	resolveOrganizationForPublicOrigin: resolveOrigin,
 }))
 
 const JWT_SECRET = 'c'.repeat(40)
@@ -110,7 +111,7 @@ describe('reservations routing on the Workers edge (VAL-FND-017)', () => {
 		expect(await resolveOrgId(unauthReq, env)).toBeNull()
 	})
 
-	it('routes /reservations/* from customer JWT or Origin + slug/host, never from client orgId', async () => {
+	it('routes /reservations/* from Origin + slug/host only, never from a customer JWT or client orgId', async () => {
 		// Origin + slug
 		const publicGet = new Request(
 			`https://api.test/reservations/config?slug=acme&orgId=${ORG_B}`,
@@ -120,15 +121,23 @@ describe('reservations routing on the Workers edge (VAL-FND-017)', () => {
 		)
 		expect(await resolveOrgId(publicGet, env)).toBe(ORG_A)
 
-		// Customer JWT
+		// A customer JWT never picks the organization: without an Origin that
+		// names one the request is unrouted, with one the Origin wins.
 		const custToken = await signCustomerJwt(ORG_A)
 		const custReq = new Request(
-			`https://api.test/reservations/me?orgId=${ORG_B}`,
+			`https://api.test/reservations/mine?orgId=${ORG_B}`,
 			{
 				headers: { Authorization: `Bearer ${custToken}` },
 			},
 		)
-		expect(await resolveOrgId(custReq, env)).toBe(ORG_A)
+		expect(await resolveOrgId(custReq, env)).toBeNull()
+		const custWithOrigin = new Request('https://api.test/reservations/mine', {
+			headers: {
+				Authorization: `Bearer ${custToken}`,
+				Origin: 'https://evil.example.com',
+			},
+		})
+		expect(await resolveOrgId(custWithOrigin, env)).toBeNull()
 
 		// Unknown origin and no customer JWT -> null even if body/query claims ORG_B
 		const forgedPost = new Request(
