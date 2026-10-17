@@ -76,6 +76,11 @@ reservationsOperatorRoutes.route(
 	'/book/waitlist',
 	operatorReservationsWaitlistRoutes,
 )
+// The sub-router's own root only answers without the trailing slash.
+reservationsOperatorRoutes.route(
+	'/book/waitlist/',
+	operatorReservationsWaitlistRoutes,
+)
 reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 
 // 3. Guests scope routes

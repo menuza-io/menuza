@@ -648,6 +648,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 					partySize,
 					serviceId: slot.serviceId || null,
 				},
+				areaPref: slot.areaId || null,
 				replaceHoldToken: hold?.token ?? null,
 				website: '',
 				turnstileToken: searchChallenge.token(),

@@ -20,6 +20,7 @@ import {
 	rsvReservations,
 	rsvServiceAvailability,
 	rsvSpecialDays,
+	rsvTableOccupancies,
 	rsvTables,
 } from '@repo/tenant-db'
 import { and, eq, sql } from 'drizzle-orm'
@@ -1463,6 +1464,79 @@ describe('guest-selectable seating areas', () => {
 			expect(slot.areaLabel).toBeNull()
 		}
 		expect(without.text).not.toContain('Main Room')
+	})
+})
+
+describe('hold areaPref', () => {
+	async function seedPatio() {
+		const db = await getTenantDb(ORG)
+		await db.insert(rsvAreas).values({
+			id: 'area_pub_patio',
+			locationId: PUBLIC_LOC,
+			name: 'Patio',
+			sort: 1,
+			onlineBookable: true,
+			guestSelectable: true,
+		})
+		await db.insert(rsvTables).values({
+			id: 'tbl_pub_patio2',
+			locationId: PUBLIC_LOC,
+			areaId: 'area_pub_patio',
+			label: 'P2',
+			minCovers: 1,
+			maxCovers: 2,
+			onlineBookable: true,
+			resetBufferMin: 0,
+		})
+		await db.delete(rsvTables).where(eq(rsvTables.id, 'tbl_pub_4'))
+		clearReservationDayCacheForTest()
+		return db
+	}
+
+	async function holdTables() {
+		const db = await getTenantDb(ORG)
+		const rows = await db
+			.select({ tableId: rsvTableOccupancies.tableId })
+			.from(rsvTableOccupancies)
+			.where(eq(rsvTableOccupancies.kind, 'hold'))
+			.all()
+		return rows.map((r) => r.tableId)
+	}
+
+	it('seats the hold in the chosen guest-selectable area', async () => {
+		await seedPatio()
+		const patio = await createHold(19 * 60, 2, { areaPref: 'area_pub_patio' })
+		expect(patio.status).toBe(201)
+		expect(await holdTables()).toEqual(['tbl_pub_patio2'])
+	})
+
+	it('refuses a time that is full in the chosen area even if another area is free', async () => {
+		await seedPatio()
+		expect(
+			(await createHold(19 * 60, 2, { areaPref: 'area_pub_patio' })).status,
+		).toBe(201)
+		const second = await createHold(19 * 60, 2, {
+			areaPref: 'area_pub_patio',
+		})
+		expect(second.status).toBe(409)
+		expect(second.body.error).toBe('slot_unavailable')
+		const other = await createHold(19 * 60, 2, { areaPref: 'area_pub_main' })
+		expect(other.status).toBe(201)
+		expect((await holdTables()).sort()).toEqual(['tbl_pub_2', 'tbl_pub_patio2'])
+	})
+
+	it('ignores an area the guest may not choose, and treats an empty value as none', async () => {
+		await seedPatio()
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvAreas)
+			.set({ guestSelectable: false })
+			.where(eq(rsvAreas.id, 'area_pub_patio'))
+		clearReservationDayCacheForTest()
+		expect(
+			(await createHold(19 * 60, 2, { areaPref: 'area_pub_patio' })).status,
+		).toBe(201)
+		expect((await createHold(20 * 60, 2, { areaPref: '' })).status).toBe(201)
 	})
 })
 

@@ -106,6 +106,20 @@ describe('reservations api', () => {
 		expect(new Set(writes)).toEqual(new Set(['POST']))
 	})
 
+	it('sends the chosen slot area as areaPref when holding', async () => {
+		const { api, fetchImpl } = setup()
+		await api.createHold({
+			locationId: 'l',
+			slot: { date: '2030-01-01', localMin: 1140, partySize: 2 },
+			areaPref: 'area_patio',
+		})
+		const { url, init } = lastCall(fetchImpl)
+		expect(url).toBe('http://localhost:3007/reservations/holds')
+		expect(JSON.parse(init.body as string)).toMatchObject({
+			areaPref: 'area_patio',
+		})
+	})
+
 	it('throws a typed error carrying the server code', async () => {
 		const { api } = setup([
 			jsonResponse({ error: 'slot_unavailable', alternatives: [] }, 409),

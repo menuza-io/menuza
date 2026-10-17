@@ -90,18 +90,41 @@ export const publicConfirmReservationRequestSchema = z.strictObject({
 	confirmed: z.literal(true).default(true),
 })
 
-export const publicNotifyMeRequestSchema = z.strictObject({
-	locationSlug: z.string().trim().min(1).max(80),
-	businessDate: businessDateStringSchema,
-	partySize: partySizeSchema,
-	windowStartMin: slotMinSchema,
-	windowEndMin: slotMinSchema,
-	guestName: z.string().trim().min(1).max(120),
-	guestPhone: normalizedPhoneSchema.optional().nullable(),
-	guestEmail: z.string().trim().email().max(160),
-	smsOptIn: z.boolean().default(false),
-	turnstileToken: z.string().trim().max(2048).optional().nullable(),
-	website: z.string().max(0).optional(),
+export const publicNotifyMeRequestSchema = z.object({
+	locationId: z.string().trim().min(1).max(128),
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`))),
+	partySize: z.number().int().min(1).max(99),
+	fromLocalMin: z.number().int().min(0).max(2880),
+	toLocalMin: z.number().int().min(0).max(2880),
+	areaId: z.string().trim().min(1).max(128).optional().nullable(),
+	phone: z.string().trim().max(32).optional().nullable(),
+	email: z.string().trim().max(254).optional().nullable(),
+	locale: z.string().trim().min(2).max(16).optional(),
+	website: z.string().max(200).optional(),
+	turnstileToken: z.string().max(4096).optional(),
+})
+
+/** `POST /notify-me`; `cancelToken` is shown once and cancels the request. */
+export const publicNotifyMeResponseSchema = z.object({
+	request: z.object({
+		id: z.string(),
+		status: z.literal('active'),
+		locationId: z.string(),
+		date: z.string(),
+		partySize: partySizeSchema,
+		fromLocalMin: z.number().int(),
+		toLocalMin: z.number().int(),
+	}),
+	cancelToken: z.string(),
+	now: isoTimestampSchema,
+})
+
+export const publicNotifyMeCancelResponseSchema = z.object({
+	cancelled: z.literal(true),
+	now: isoTimestampSchema,
 })
 
 export const createHoldResponseSchema = z.strictObject({

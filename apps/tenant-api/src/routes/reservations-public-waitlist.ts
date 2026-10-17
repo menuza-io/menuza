@@ -1,4 +1,8 @@
 import { createHash } from 'node:crypto'
+import {
+	publicJoinWaitlistSchema,
+	publicNotifyMeRequestSchema,
+} from '@repo/reservations'
 import { getTenantDb } from '@repo/tenant-db'
 import { type Context, type Hono } from 'hono'
 import { z } from 'zod'
@@ -61,44 +65,8 @@ export type PublicRouteKit = {
 	missingIdempotencyKey: () => HttpError
 }
 
-const idField = z.string().trim().min(1).max(128)
-
-const joinSchema = z
-	.object({
-		locationId: idField,
-		name: z.string().trim().min(1).max(120).optional(),
-		displayName: z.string().trim().min(1).max(120).optional(),
-		partySize: z.number().int().min(1).max(99),
-		phone: z.string().trim().max(32).optional().nullable(),
-		email: z.string().trim().max(254).optional().nullable(),
-		smsOptIn: z.boolean().optional(),
-		areaId: idField.optional().nullable(),
-		notes: z.string().trim().max(300).optional().nullable(),
-		locale: z.string().trim().min(2).max(16).optional(),
-		website: z.string().max(200).optional(),
-		turnstileToken: z.string().max(4096).optional(),
-	})
-	.refine((v) => Boolean(v.name ?? v.displayName), {
-		path: ['name'],
-		message: 'required',
-	})
-
-const notifySchema = z.object({
-	locationId: idField,
-	date: z
-		.string()
-		.regex(/^\d{4}-\d{2}-\d{2}$/)
-		.refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`))),
-	partySize: z.number().int().min(1).max(99),
-	fromLocalMin: z.number().int().min(0).max(2880),
-	toLocalMin: z.number().int().min(0).max(2880),
-	areaId: idField.optional().nullable(),
-	phone: z.string().trim().max(32).optional().nullable(),
-	email: z.string().trim().max(254).optional().nullable(),
-	locale: z.string().trim().min(2).max(16).optional(),
-	website: z.string().max(200).optional(),
-	turnstileToken: z.string().max(4096).optional(),
-})
+const joinSchema = publicJoinWaitlistSchema
+const notifySchema = publicNotifyMeRequestSchema
 
 const cancelSchema = z.object({ cancelToken: z.string().max(512).optional() })
 
@@ -121,6 +89,9 @@ async function readOptionalBody<S extends z.ZodTypeAny>(
 	if (!text.trim()) return { data: schema.parse({}) as z.infer<S> }
 	return readPublicBody(c, schema)
 }
+
+/** Hono is strict about a trailing slash; the contract uses both forms. */
+const bothForms = (path: string) => [path, `${path}/`]
 
 export function registerPublicWaitlistRoutes(
 	router: Hono,
@@ -154,8 +125,9 @@ export function registerPublicWaitlistRoutes(
 		return { db, location }
 	}
 
-	router.post(
-		'/waitlist/join',
+	router.on(
+		'POST',
+		bothForms('/waitlist/join'),
 		guarded(async (c) => {
 			const g = await gate(c, 'booking', {
 				name: 'waitlist-join',
@@ -305,8 +277,9 @@ export function registerPublicWaitlistRoutes(
 		)
 	}
 
-	router.get(
-		'/waitlist/status',
+	router.on(
+		'GET',
+		bothForms('/waitlist/status'),
 		guarded(async (c) => {
 			const resolved = await resolveEntry(c, {
 				name: 'waitlist-status',
@@ -336,8 +309,9 @@ export function registerPublicWaitlistRoutes(
 		return resolved
 	}
 
-	router.post(
-		'/waitlist/status/leave',
+	router.on(
+		'POST',
+		bothForms('/waitlist/status/leave'),
 		guarded(async (c) => {
 			const resolved = await resolveEntryMutation(c)
 			if (!resolved.ok) return resolved.response
@@ -352,8 +326,9 @@ export function registerPublicWaitlistRoutes(
 		}),
 	)
 
-	router.post(
-		'/waitlist/status/on-my-way',
+	router.on(
+		'POST',
+		bothForms('/waitlist/status/on-my-way'),
 		guarded(async (c) => {
 			const resolved = await resolveEntryMutation(c)
 			if (!resolved.ok) return resolved.response
@@ -368,8 +343,9 @@ export function registerPublicWaitlistRoutes(
 		}),
 	)
 
-	router.post(
-		'/notify-me',
+	router.on(
+		'POST',
+		bothForms('/notify-me'),
 		guarded(async (c) => {
 			const g = await gate(c, 'booking', {
 				name: 'notify-me',
@@ -480,8 +456,9 @@ export function registerPublicWaitlistRoutes(
 		}),
 	)
 
-	router.post(
-		'/notify-me/cancel',
+	router.on(
+		'POST',
+		bothForms('/notify-me/cancel'),
 		guarded(async (c) => {
 			const g = await gate(c, 'manage', {
 				name: 'notify-cancel',
@@ -517,6 +494,8 @@ export function registerPublicWaitlistRoutes(
 		'/notify-me',
 		'/notify-me/cancel',
 	]) {
-		router.all(path, async (c) => methodNotAllowed(c))
+		for (const form of bothForms(path)) {
+			router.all(form, async (c) => methodNotAllowed(c))
+		}
 	}
 }

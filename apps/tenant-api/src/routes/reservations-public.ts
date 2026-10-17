@@ -201,6 +201,7 @@ const bookingDetailsShape = {
 const holdSchema = z.object({
 	locationId: idField,
 	slot: slotSchema,
+	areaPref: z.preprocess(emptyToNull, idField.nullish()),
 	replaceHoldToken: z.string().max(256).nullish(),
 	website: z.string().max(500).optional(),
 	turnstileToken: z.string().max(2048).nullish(),
@@ -469,6 +470,7 @@ reservationsPublicRoutes.post(
 			orgId: org.id,
 			locationId: body.data.locationId,
 			slot: body.data.slot,
+			areaPref: body.data.areaPref ?? null,
 			tokenHash: hashHoldToken(holdToken),
 			replaceTokenHash: isWellFormedHoldToken(replace)
 				? hashHoldToken(replace)

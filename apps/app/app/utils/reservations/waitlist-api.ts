@@ -1,3 +1,18 @@
+import {
+	ACTIVE_WAITLIST_STATUSES,
+	WAITLIST_STATUSES,
+	waitlistEntryChangeResponseSchema,
+	waitlistEntryResponseSchema,
+	waitlistEntrySchema,
+	waitlistListingSchema,
+	waitlistQuoteSchema,
+	type WaitlistEntry,
+	type WaitlistListing,
+	type WaitlistQuote,
+	type WaitlistSeatResolution,
+	type WaitlistStatus,
+	type WaitlistStatusTarget,
+} from '@repo/reservations'
 import { z } from 'zod'
 import {
 	generateIdempotencyKey,
@@ -12,92 +27,18 @@ import {
 const WAITLIST_BASE = '/operator/reservations/book/waitlist'
 const SETUP_BASE = '/operator/reservations/setup'
 
-export const WAITLIST_STATUSES = [
-	'waiting',
-	'notified',
-	'on_the_way',
-	'seated',
-	'cancelled',
-	'left',
-	'no_response',
-] as const
+export type { WaitlistStatus, WaitlistStatusTarget }
+export {
+	ACTIVE_WAITLIST_STATUSES,
+	WAITLIST_STATUSES,
+	waitlistEntrySchema,
+	waitlistListingSchema,
+	waitlistQuoteSchema,
+}
+export type { WaitlistEntry, WaitlistListing, WaitlistQuote }
 
-export type WaitlistStatus = (typeof WAITLIST_STATUSES)[number]
-
-/** Statuses the host can still act on; the server counts exactly these in the queue. */
-export const ACTIVE_WAITLIST_STATUSES = [
-	'waiting',
-	'notified',
-	'on_the_way',
-] as const satisfies readonly WaitlistStatus[]
-
-/** Statuses `POST /:id/status` accepts. */
-export type WaitlistStatusTarget =
-	'waiting' | 'on_the_way' | 'no_response' | 'left' | 'cancelled'
-
-const epochMs = z.number().nullable()
-
-export const waitlistEntrySchema = z.object({
-	id: z.string(),
-	locationId: z.string(),
-	businessDate: z.string(),
-	displayName: z.string(),
-	phone: z.string().nullable(),
-	email: z.string().nullable(),
-	partySize: z.number().int(),
-	areaPrefId: z.string().nullable(),
-	channel: z.enum(['walk_in', 'remote']),
-	status: z.enum(WAITLIST_STATUSES),
-	quotedMin: z.number().nullable(),
-	quotedReadyAt: epochMs,
-	notifiedAt: epochMs,
-	responseDeadlineAt: epochMs,
-	reservationId: z.string().nullable(),
-	sortKey: z.number(),
-	notes: z.string().nullable(),
-	smsOptIn: z.boolean(),
-	version: z.number().int(),
-	joinedAt: z.number(),
-	createdAt: z.number(),
-	position: z.number().int().nullable(),
-})
-
-export type WaitlistEntry = z.infer<typeof waitlistEntrySchema>
-
-export const waitlistListingSchema = z.object({
-	locationId: z.string(),
-	businessDate: z.string(),
-	now: z.number(),
-	waitlistResponseMin: z.number().int(),
-	counts: z.object({
-		active: z.number().int(),
-		waiting: z.number().int(),
-		notified: z.number().int(),
-		onTheWay: z.number().int(),
-	}),
-	entries: z.array(waitlistEntrySchema),
-})
-
-export type WaitlistListing = z.infer<typeof waitlistListingSchema>
-
-export const waitlistQuoteSchema = z.object({
-	locationId: z.string(),
-	businessDate: z.string(),
-	partySize: z.number().int(),
-	quotedMin: z.number().nullable(),
-	quotedReadyAt: epochMs,
-	position: z.number().int(),
-	now: z.number(),
-})
-
-export type WaitlistQuote = z.infer<typeof waitlistQuoteSchema>
-
-const entryEnvelopeSchema = z.object({ entry: waitlistEntrySchema })
-
-const entryChangeSchema = z.object({
-	entry: waitlistEntrySchema,
-	changed: z.boolean().optional(),
-})
+const entryEnvelopeSchema = waitlistEntryResponseSchema
+const entryChangeSchema = waitlistEntryChangeResponseSchema
 
 export type WaitlistEntryChange = { entry: WaitlistEntry; changed: boolean }
 
@@ -226,6 +167,9 @@ export type SeatWaitlistInput = {
 	tableIds?: string[]
 	overbook?: boolean
 	overbookReason?: string | null
+	/** What to do when the table is taken (a 409 `table_occupied` names the occupant). */
+	resolution?: WaitlistSeatResolution
+	moveToTableIds?: string[]
 	expectedVersion?: number
 }
 
@@ -246,6 +190,10 @@ export async function seatWaitlistEntry(
 					: {}),
 				...(input.expectedVersion !== undefined
 					? { expectedVersion: input.expectedVersion }
+					: {}),
+				...(input.resolution ? { resolution: input.resolution } : {}),
+				...(input.moveToTableIds && input.moveToTableIds.length > 0
+					? { moveToTableIds: input.moveToTableIds }
 					: {}),
 				...(input.overbook
 					? {

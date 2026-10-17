@@ -161,6 +161,7 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 		createHold(input: {
 			locationId: string
 			slot: SlotRef
+			areaPref?: string | null
 			replaceHoldToken?: string | null
 			turnstileToken?: string | null
 			website?: string

@@ -3,10 +3,21 @@ import os from 'node:os'
 import path from 'node:path'
 import { brand } from '@repo/config/brand'
 import {
+	currentBusinessDate,
+	instantToLocal,
+	publicJoinWaitlistResponseSchema,
+	publicNotifyMeResponseSchema,
+	publicWaitlistStatusResponseSchema,
 	RESERVATIONS_PERMISSIONS,
 	RESERVATIONS_TOKEN_AUDIENCE,
 	RESERVATIONS_TOKEN_TYP,
 	restrictGrantsForImpersonation,
+	waitlistEntryChangeResponseSchema,
+	waitlistEntryResponseSchema,
+	waitlistListingSchema,
+	waitlistQuoteSchema,
+	waitlistSeatConflictSchema,
+	waitlistSeatResponseSchema,
 } from '@repo/reservations'
 import {
 	destroyTenantDb,
@@ -17,9 +28,11 @@ import {
 	rsvNotifyRequests,
 	rsvRateCounters,
 	rsvReservations,
+	rsvTableOccupancies,
+	rsvTables,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -30,6 +43,7 @@ import {
 } from '../lib/reservations-context.ts'
 import { resetPublicRateLimits } from '../lib/reservations-public-auth.ts'
 import { clearReservationDayCacheForTest } from '../lib/reservations-write.ts'
+import { createOperatorReservation } from '../services/rsv-booking-service.ts'
 import { runNotifyMeMatching } from '../services/rsv-notify-service.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
 import {
@@ -1089,5 +1103,481 @@ describe('public notify-me', () => {
 			body: {},
 		})
 		expect(cancel.status).toBe(200)
+	})
+})
+
+describe('trailing slash', () => {
+	it('answers every operator waitlist route the same with and without a trailing slash', async () => {
+		const list = await operator('GET', `${WL}?locationId=${PUBLIC_LOC}`)
+		const listSlash = await operator('GET', `${WL}/?locationId=${PUBLIC_LOC}`)
+		expect(listSlash.status).toBe(200)
+		expect(listSlash.body).toEqual({ ...list.body, now: listSlash.body.now })
+
+		const quote = await operator(
+			'GET',
+			`${WL}/quote/?locationId=${PUBLIC_LOC}&partySize=2`,
+		)
+		expect(quote.status).toBe(200)
+
+		const created = await operator('POST', `${WL}/`, {
+			body: { locationId: PUBLIC_LOC, displayName: 'Slash', partySize: 2 },
+		})
+		expect(created.status).toBe(201)
+		const id = created.body.entry.id
+
+		const patched = await operator('PATCH', `${WL}/${id}/`, {
+			body: { partySize: 3 },
+		})
+		expect(patched.status).toBe(200)
+		const notified = await operator('POST', `${WL}/${id}/notify/`)
+		expect(notified.status).toBe(200)
+		const status = await operator('POST', `${WL}/${id}/status/`, {
+			body: { status: 'on_the_way' },
+		})
+		expect(status.status).toBe(200)
+		const reordered = await operator('POST', `${WL}/reorder/`, {
+			body: { locationId: PUBLIC_LOC, ids: [id] },
+		})
+		expect(reordered.status).toBe(200)
+		const seated = await operator('POST', `${WL}/${id}/seat/`, {
+			body: { tableIds: ['tbl_pub_4'] },
+		})
+		expect(seated.status).toBe(200)
+		expect(seated.body.entry.status).toBe('seated')
+
+		const noToken = await app.request(`/operator/reservations${WL}/`, {
+			method: 'GET',
+		})
+		expect(noToken.status).toBe(401)
+	})
+
+	it('answers every public waitlist and notify-me route with a trailing slash', async () => {
+		const joined = await call('POST', '/reservations/waitlist/join/', {
+			headers: { 'Idempotency-Key': idemKey() },
+			body: joinBody(41),
+		})
+		expect(joined.status).toBe(201)
+		const token = joined.body.statusToken
+		const status = await call('GET', '/reservations/waitlist/status/', {
+			token,
+		})
+		expect(status.status).toBe(200)
+		const onWay = await call(
+			'POST',
+			'/reservations/waitlist/status/on-my-way/',
+			{
+				token,
+			},
+		)
+		expect(onWay.status).toBe(200)
+		const left = await call('POST', '/reservations/waitlist/status/leave/', {
+			token,
+		})
+		expect(left.status).toBe(200)
+		const nmBody = {
+			locationId: PUBLIC_LOC,
+			date: dateAhead(2),
+			partySize: 2,
+			fromLocalMin: 18 * 60,
+			toLocalMin: 20 * 60,
+			email: 'slash@example.com',
+			website: '',
+		}
+		const notify = await call('POST', '/reservations/notify-me/', {
+			headers: { 'Idempotency-Key': idemKey() },
+			body: nmBody,
+		})
+		expect(notify.status).toBe(201)
+		const cancel = await call('POST', '/reservations/notify-me/cancel/', {
+			body: { cancelToken: notify.body.cancelToken },
+		})
+		expect(cancel.status).toBe(200)
+		const wrongMethod = await call('GET', '/reservations/waitlist/join/')
+		const wrongMethodBare = await call('GET', '/reservations/waitlist/join')
+		expect(wrongMethod.status).toBe(wrongMethodBare.status)
+		expect(wrongMethod.res.headers.get('Allow')).toBe('POST')
+		expect(wrongMethodBare.res.headers.get('Allow')).toBe('POST')
+	})
+})
+
+describe('@repo/reservations waitlist schemas parse real route payloads', () => {
+	it('parses operator responses', async () => {
+		const empty = await operator('GET', `${WL}?locationId=${PUBLIC_LOC}`)
+		expect(waitlistListingSchema.parse(empty.body).entries).toEqual([])
+
+		const quote = await operator(
+			'GET',
+			`${WL}/quote?locationId=${PUBLIC_LOC}&partySize=2`,
+		)
+		expect(waitlistQuoteSchema.parse(quote.body).partySize).toBe(2)
+
+		const created = await operator('POST', WL, {
+			body: {
+				locationId: PUBLIC_LOC,
+				displayName: 'Schema Guest',
+				partySize: 2,
+				phone: '+14155550177',
+				notes: 'window',
+			},
+		})
+		const entry = waitlistEntryResponseSchema.parse(created.body).entry
+		expect(entry).toMatchObject({
+			displayName: 'Schema Guest',
+			firstName: 'Schema',
+		})
+
+		const patched = await operator('PATCH', `${WL}/${entry.id}`, {
+			body: { partySize: 3 },
+		})
+		expect(
+			waitlistEntryResponseSchema.parse(patched.body).entry.partySize,
+		).toBe(3)
+
+		const notified = await operator('POST', `${WL}/${entry.id}/notify`)
+		expect(
+			waitlistEntryChangeResponseSchema.parse(notified.body),
+		).toMatchObject({
+			changed: true,
+			entry: { status: 'notified' },
+		})
+		const status = await operator('POST', `${WL}/${entry.id}/status`, {
+			body: { status: 'waiting' },
+		})
+		expect(
+			waitlistEntryChangeResponseSchema.parse(status.body).entry.status,
+		).toBe('waiting')
+
+		const listed = await operator('GET', `${WL}?locationId=${PUBLIC_LOC}`)
+		expect(waitlistListingSchema.parse(listed.body).entries).toHaveLength(1)
+
+		const seated = await operator('POST', `${WL}/${entry.id}/seat`, {
+			body: { tableIds: ['tbl_pub_4'] },
+		})
+		const parsed = waitlistSeatResponseSchema.parse(seated.body)
+		expect(parsed.entry.status).toBe('seated')
+		expect(parsed.reservation?.id).toBe(parsed.entry.reservationId)
+	})
+
+	it('parses public join, status and notify-me responses', async () => {
+		const joined = await join(51)
+		const parsed = publicJoinWaitlistResponseSchema.parse(joined.body)
+		expect(parsed.entry.status).toBe('waiting')
+		const status = await call('GET', '/reservations/waitlist/status', {
+			token: parsed.statusToken,
+		})
+		expect(publicWaitlistStatusResponseSchema.parse(status.body).position).toBe(
+			1,
+		)
+		const notified = await operator('POST', `${WL}/${parsed.entry.id}/notify`)
+		expect(notified.status).toBe(200)
+		const notifiedStatus = await call('GET', '/reservations/waitlist/status', {
+			token: parsed.statusToken,
+		})
+		expect(
+			publicWaitlistStatusResponseSchema.parse(notifiedStatus.body).status,
+		).toBe('notified')
+
+		const nm = await call('POST', '/reservations/notify-me', {
+			headers: { 'Idempotency-Key': idemKey() },
+			body: {
+				locationId: PUBLIC_LOC,
+				date: dateAhead(2),
+				partySize: 2,
+				fromLocalMin: 18 * 60,
+				toLocalMin: 20 * 60,
+				email: 'schema@example.com',
+			},
+		})
+		expect(publicNotifyMeResponseSchema.parse(nm.body).request.status).toBe(
+			'active',
+		)
+	})
+})
+
+describe('seating a waitlist party on an occupied table', () => {
+	const T2 = 'tbl_pub_2'
+
+	async function addEntry(name: string, partySize = 2) {
+		const res = await operator('POST', WL, {
+			body: { locationId: PUBLIC_LOC, displayName: name, partySize },
+		})
+		return res.body.entry as { id: string; version: number }
+	}
+
+	async function seat(
+		id: string,
+		body: Record<string, unknown>,
+		token?: string,
+	) {
+		return operator('POST', `${WL}/${id}/seat`, { body, token })
+	}
+
+	async function activeTables(reservationId: string) {
+		const db = await getTenantDb(ORG)
+		const rows = await db
+			.select({ tableId: rsvTableOccupancies.tableId })
+			.from(rsvTableOccupancies)
+			.where(
+				and(
+					eq(rsvTableOccupancies.reservationId, reservationId),
+					eq(rsvTableOccupancies.active, true),
+				),
+			)
+			.all()
+		return rows.map((r) => r.tableId)
+	}
+
+	async function seatedOccupant(name = 'Occupant Party') {
+		const entry = await addEntry(name)
+		const res = await seat(entry.id, { tableIds: [T2] })
+		expect(res.status).toBe(200)
+		return res.body.reservation.id as string
+	}
+
+	async function bookedOccupant() {
+		const now = Date.now()
+		const businessDate = currentBusinessDate(now, 'UTC', 240)
+		const { localStartMin } = instantToLocal(now, 'UTC')
+		const { reservation } = await createOperatorReservation({
+			orgId: ORG,
+			locationId: PUBLIC_LOC,
+			actorId: 'usr_wl_operator',
+			idempotencyKey: idemKey(),
+			input: {
+				date: businessDate,
+				localStartMin,
+				partySize: 2,
+				tableIds: [T2],
+				channel: 'phone',
+				guest: { firstName: 'Booked', lastName: 'Guest' },
+			},
+		})
+		expect(reservation.status).not.toBe('seated')
+		return reservation.id
+	}
+
+	async function addSpareTable() {
+		const db = await getTenantDb(ORG)
+		await db.insert(rsvTables).values({
+			id: 'tbl_wl_spare',
+			locationId: PUBLIC_LOC,
+			areaId: 'area_pub_main',
+			label: 'S2',
+			minCovers: 1,
+			maxCovers: 2,
+			onlineBookable: true,
+			resetBufferMin: 0,
+		})
+		clearReservationDayCacheForTest()
+	}
+
+	async function audit(action: string) {
+		const db = await getTenantDb(ORG)
+		return (await db.select().from(rsvAuditLog).all()).filter(
+			(row) => row.action === action,
+		)
+	}
+
+	it('answers 409 with the occupant and the accepted resolutions, and changes nothing', async () => {
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Next Party')
+		const res = await seat(entry.id, { tableIds: [T2] })
+		expect(res.status).toBe(409)
+		const conflict = waitlistSeatConflictSchema.parse(res.body)
+		expect(conflict.occupant).toMatchObject({
+			kind: 'reservation',
+			reservationId: occupantId,
+			status: 'seated',
+			partySize: 2,
+			guestName: 'Occupant Party',
+			tableIds: [T2],
+		})
+		expect(conflict.resolutions).toEqual(['move', 'overbook'])
+
+		const db = await getTenantDb(ORG)
+		const row = await db
+			.select()
+			.from(rsvWaitlistEntries)
+			.where(eq(rsvWaitlistEntries.id, entry.id))
+			.get()
+		expect(row?.status).toBe('waiting')
+
+		const noGuest = await mintOperatorToken({
+			grants: [
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+			],
+		})
+		const hidden = await seat(entry.id, { tableIds: [T2] }, noGuest)
+		expect(hidden.status).toBe(409)
+		expect(hidden.body.occupant.guestName).toBeNull()
+		expect(hidden.text).not.toContain('Occupant Party')
+	})
+
+	it('move: sends the occupant to a free table and seats the party, audited', async () => {
+		await addSpareTable()
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Mover')
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'move' })
+		expect(res.status).toBe(200)
+		const parsed = waitlistSeatResponseSchema.parse(res.body)
+		expect(parsed.entry.status).toBe('seated')
+		expect(parsed.moves).toEqual([
+			expect.objectContaining({
+				reservationId: occupantId,
+				fromTableIds: [T2],
+				toTableIds: ['tbl_wl_spare'],
+			}),
+		])
+		expect(await activeTables(occupantId)).toEqual(['tbl_wl_spare'])
+		expect(await activeTables(parsed.reservation!.id)).toEqual([T2])
+		const rows = await audit('waitlist.seat_resolution')
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toMatchObject({
+			entityId: occupantId,
+			changes: expect.objectContaining({ resolution: 'move' }),
+		})
+	})
+
+	it('move: honours an explicit target table', async () => {
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Mover')
+		const res = await seat(entry.id, {
+			tableIds: [T2],
+			resolution: 'move',
+			moveToTableIds: ['tbl_pub_4'],
+		})
+		expect(res.status).toBe(200)
+		expect(await activeTables(occupantId)).toEqual(['tbl_pub_4'])
+	})
+
+	it('move: refuses when no other table fits, and rolls everything back', async () => {
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Stuck')
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'move' })
+		expect(res.status).toBe(409)
+		expect(res.body.error).toBe('no_move_target')
+		expect(await activeTables(occupantId)).toEqual([T2])
+		const db = await getTenantDb(ORG)
+		const row = await db
+			.select()
+			.from(rsvWaitlistEntries)
+			.where(eq(rsvWaitlistEntries.id, entry.id))
+			.get()
+		expect(row).toMatchObject({ status: 'waiting', reservationId: null })
+		expect(await audit('waitlist.seat_resolution')).toHaveLength(0)
+	})
+
+	it('move onto a table that holds a locked party fails whole: the occupant stays put', async () => {
+		const occupantId = await seatedOccupant()
+		const other = await addEntry('Other', 3)
+		const otherSeat = await seat(other.id, { tableIds: ['tbl_pub_4'] })
+		expect(otherSeat.status).toBe(200)
+		const entry = await addEntry('Blocked Mover')
+		const res = await seat(entry.id, {
+			tableIds: [T2],
+			resolution: 'move',
+			moveToTableIds: ['tbl_pub_4'],
+		})
+		expect(res.status).toBe(409)
+		expect(res.body.error).toBe('locked_table_conflict')
+		expect(await activeTables(occupantId)).toEqual([T2])
+		expect(await activeTables(otherSeat.body.reservation.id)).toEqual([
+			'tbl_pub_4',
+		])
+		const db = await getTenantDb(ORG)
+		const rows = await db.select().from(rsvReservations).all()
+		expect(rows).toHaveLength(2)
+		expect(await audit('waitlist.seat_resolution')).toHaveLength(0)
+	})
+
+	it('swap: unseats a booked occupant and seats the party', async () => {
+		const occupantId = await bookedOccupant()
+		const entry = await addEntry('Swapper')
+		const conflict = await seat(entry.id, { tableIds: [T2] })
+		expect(conflict.status).toBe(409)
+		expect(conflict.body.resolutions).toEqual(['swap', 'move', 'overbook'])
+
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'swap' })
+		expect(res.status).toBe(200)
+		expect(res.body.entry.status).toBe('seated')
+		expect(await activeTables(occupantId)).toEqual([])
+		expect(await activeTables(res.body.reservation.id)).toEqual([T2])
+		const db = await getTenantDb(ORG)
+		const occupant = await db
+			.select()
+			.from(rsvReservations)
+			.where(eq(rsvReservations.id, occupantId))
+			.get()
+		expect(occupant?.assignment).toBe('soft')
+		expect(['booked', 'confirmed']).toContain(occupant?.status)
+		const rows = await audit('waitlist.seat_resolution')
+		expect(rows[0]).toMatchObject({
+			entityId: occupantId,
+			changes: expect.objectContaining({ resolution: 'swap', toTableIds: [] }),
+		})
+	})
+
+	it('swap: refuses an arrived or seated occupant', async () => {
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Swapper')
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'swap' })
+		expect(res.status).toBe(409)
+		expect(res.body.error).toBe('swap_target_seated')
+		expect(await activeTables(occupantId)).toEqual([T2])
+	})
+
+	it('overbook: seats anyway and records the overbook in the audit log', async () => {
+		const occupantId = await seatedOccupant()
+		const entry = await addEntry('Overbooker')
+		const res = await seat(entry.id, {
+			tableIds: [T2],
+			resolution: 'overbook',
+			overbookReason: 'regular guest',
+		})
+		expect(res.status).toBe(200)
+		expect(await activeTables(occupantId)).toEqual([T2])
+		expect(await activeTables(res.body.reservation.id)).toEqual([T2])
+		const rows = await audit('reservation.overbook')
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toMatchObject({
+			entityId: res.body.reservation.id,
+			changes: expect.objectContaining({ reason: 'regular guest' }),
+		})
+		const db = await getTenantDb(ORG)
+		const reservation = await db
+			.select()
+			.from(rsvReservations)
+			.where(eq(rsvReservations.id, res.body.reservation.id))
+			.get()
+		expect(reservation?.overbooked).toBe(true)
+	})
+
+	it('overbook without a reason uses a default one', async () => {
+		await seatedOccupant()
+		const entry = await addEntry('Overbooker')
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'overbook' })
+		expect(res.status).toBe(200)
+		expect((await audit('reservation.overbook'))[0]?.changes).toMatchObject({
+			reason: 'Waitlist overbook',
+		})
+	})
+
+	it('a resolution does nothing when the table is free', async () => {
+		const entry = await addEntry('Free Table')
+		const res = await seat(entry.id, { tableIds: [T2], resolution: 'swap' })
+		expect(res.status).toBe(200)
+		expect(res.body.moves).toEqual([])
+		expect(await audit('waitlist.seat_resolution')).toHaveLength(0)
+	})
+
+	it('rejects an unknown resolution without echoing it', async () => {
+		const entry = await addEntry('Bad')
+		const res = await seat(entry.id, {
+			tableIds: [T2],
+			resolution: 'SECRET-RESOLUTION',
+		})
+		expect(res.status).toBe(400)
+		expect(res.text).not.toContain('SECRET-RESOLUTION')
 	})
 })

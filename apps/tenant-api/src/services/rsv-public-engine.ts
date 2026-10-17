@@ -344,6 +344,7 @@ export function searchPublicDay(
 		now: number
 		preferredSlotMin?: number | null
 		channel?: BookingChannel
+		areaId?: string | null
 	},
 ): SearchAvailabilityResult {
 	return searchAvailability({
@@ -353,6 +354,7 @@ export function searchPublicDay(
 		preferredSlotMin: params.preferredSlotMin ?? null,
 		nowMs: params.now,
 		channel: params.channel ?? 'online',
+		areaId: params.areaId ?? null,
 		occupancies: state.occupanciesFor(params.businessDate),
 		allowRepair: false,
 	})

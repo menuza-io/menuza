@@ -173,6 +173,8 @@ export async function createHold(params: {
 	slot: PublicSlotRequest
 	tokenHash: string
 	replaceTokenHash?: string | null
+	/** A guest-selectable seating area the hold must sit in; ignored when the area is not selectable. */
+	areaPref?: string | null
 	source: 'web' | 'native'
 	ipHash: string
 	now?: number
@@ -233,6 +235,10 @@ export async function createHold(params: {
 				now,
 				preferredSlotMin: slot.localMin,
 				channel: channelFor(params.source),
+				areaId:
+					params.areaPref && state.selectableAreas.has(params.areaPref)
+						? params.areaPref
+						: null,
 			})
 			if (result.status === 'disabled') throw new HttpError(404, 'not_found')
 			if (result.status === 'party_out_of_bounds') {

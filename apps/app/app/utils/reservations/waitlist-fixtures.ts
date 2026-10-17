@@ -11,7 +11,10 @@ export function makeWaitlistEntry(
 	return {
 		locationId: 'loc_1',
 		businessDate: '2026-04-20',
+		guestId: null,
 		displayName: `Guest ${overrides.id}`,
+		firstName: 'Guest',
+		lastName: overrides.id,
 		phone: null,
 		email: null,
 		partySize: 2,
@@ -26,6 +29,7 @@ export function makeWaitlistEntry(
 		sortKey: 1,
 		notes: null,
 		smsOptIn: false,
+		locale: 'en',
 		version: 1,
 		joinedAt: WAITLIST_NOW - 5 * 60_000,
 		createdAt: WAITLIST_NOW - 5 * 60_000,

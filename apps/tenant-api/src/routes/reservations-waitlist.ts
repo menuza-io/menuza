@@ -1,4 +1,14 @@
-import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import {
+	operatorAddWaitlistEntrySchema as createBodySchema,
+	operatorNotifyWaitlistEntrySchema as notifyBodySchema,
+	operatorReorderWaitlistSchema as reorderBodySchema,
+	operatorWaitlistListQuerySchema as listQuerySchema,
+	operatorSeatWaitlistEntrySchema as seatBodySchema,
+	operatorUpdateWaitlistEntrySchema as updateBodySchema,
+	operatorWaitlistQuoteQuerySchema as quoteQuerySchema,
+	operatorWaitlistStatusSchema as statusBodySchema,
+	RESERVATIONS_PERMISSIONS,
+} from '@repo/reservations'
 import { getTenantDb } from '@repo/tenant-db'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
@@ -32,81 +42,6 @@ import {
 	setWaitlistEntryStatus,
 	updateWaitlistEntry,
 } from '../services/rsv-waitlist-service.ts'
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const id = z.string().trim().min(1).max(128)
-
-const listQuerySchema = z.object({
-	locationId: id,
-	date: z.string().regex(DATE_RE).optional(),
-	businessDate: z.string().regex(DATE_RE).optional(),
-})
-
-const quoteQuerySchema = z.object({
-	locationId: id,
-	partySize: z.coerce.number().int().min(1).max(99),
-	areaId: id.optional(),
-	areaPrefId: id.optional(),
-})
-
-const entryFields = {
-	displayName: z.string().trim().min(1).max(120),
-	partySize: z.number().int().min(1).max(99),
-	phone: z.string().trim().max(32).optional().nullable(),
-	email: z.string().trim().max(254).optional().nullable(),
-	smsOptIn: z.boolean().optional(),
-	areaPrefId: id.optional().nullable(),
-	areaId: id.optional().nullable(),
-	notes: z.string().max(1000).optional().nullable(),
-	locale: z.string().trim().min(2).max(16).optional(),
-}
-
-const createBodySchema = z.object({
-	locationId: id,
-	...entryFields,
-	idempotencyKey: z.string().trim().min(1).max(128).optional(),
-})
-
-const updateBodySchema = z.object({
-	locationId: id.optional(),
-	expectedVersion: z.number().int().min(1).optional(),
-	displayName: entryFields.displayName.optional(),
-	partySize: entryFields.partySize.optional(),
-	phone: entryFields.phone,
-	email: entryFields.email,
-	smsOptIn: entryFields.smsOptIn,
-	areaPrefId: entryFields.areaPrefId,
-	areaId: entryFields.areaId,
-	notes: entryFields.notes,
-})
-
-const notifyBodySchema = z.object({
-	locationId: id.optional(),
-	expectedVersion: z.number().int().min(1).optional(),
-})
-
-const statusBodySchema = z.object({
-	locationId: id.optional(),
-	status: z.enum(['waiting', 'on_the_way', 'no_response', 'left', 'cancelled']),
-	expectedVersion: z.number().int().min(1).optional(),
-})
-
-const seatBodySchema = z.object({
-	locationId: id.optional(),
-	tableIds: z.array(id).max(20).optional(),
-	partySize: z.number().int().min(1).max(99).optional(),
-	expectedVersion: z.number().int().min(1).optional(),
-	overbook: z.boolean().optional(),
-	overbookReason: z.string().max(500).optional().nullable(),
-	idempotencyKey: z.string().trim().min(1).max(128).optional(),
-})
-
-const reorderBodySchema = z.object({
-	locationId: id,
-	date: z.string().regex(DATE_RE).optional(),
-	businessDate: z.string().regex(DATE_RE).optional(),
-	ids: z.array(id).min(1).max(500),
-})
 
 /** Action routes may be called with no body at all. */
 async function readActionBody<S extends z.ZodTypeAny>(c: Context, schema: S) {
@@ -160,6 +95,10 @@ async function loadEntryFor(
 
 export const operatorReservationsWaitlistRoutes = new Hono()
 
+/** Hono is strict about a trailing slash; the contract uses both forms. */
+const entryIdOf = (c: Context) => c.req.param('id') ?? ''
+const both = (path: string) => [path, `${path}/`]
+
 const READ = {
 	scope: 'book',
 	feature: 'waitlist',
@@ -199,26 +138,31 @@ operatorReservationsWaitlistRoutes.get('/', rsvGuard(READ), async (c) => {
 	}
 })
 
-operatorReservationsWaitlistRoutes.get('/quote', rsvGuard(READ), async (c) => {
-	const ctx = getRsvAuth(c)
-	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-	if (orgErr) return orgErr
-	const query = readQuery(c, quoteQuerySchema)
-	if ('error' in query) return query.error
-	const loc = requireReservationsLocation(ctx, query.data.locationId)
-	if (!loc.ok) return loc.response
-	try {
-		const db = await getTenantDb(ctx.orgId)
-		const quote = await getOperatorWaitlistQuote(db, {
-			locationId: loc.locationId,
-			partySize: query.data.partySize,
-			areaId: query.data.areaId ?? query.data.areaPrefId ?? null,
-		})
-		return json({ ok: true, orgId: ctx.orgId, ...quote })
-	} catch (error) {
-		return handleRouteError(error)
-	}
-})
+operatorReservationsWaitlistRoutes.on(
+	'GET',
+	both('/quote'),
+	rsvGuard(READ),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+		const query = readQuery(c, quoteQuerySchema)
+		if ('error' in query) return query.error
+		const loc = requireReservationsLocation(ctx, query.data.locationId)
+		if (!loc.ok) return loc.response
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const quote = await getOperatorWaitlistQuote(db, {
+				locationId: loc.locationId,
+				partySize: query.data.partySize,
+				areaId: query.data.areaId ?? query.data.areaPrefId ?? null,
+			})
+			return json({ ok: true, orgId: ctx.orgId, ...quote })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
 
 operatorReservationsWaitlistRoutes.post('/', rsvGuard(WRITE), async (c) => {
 	const ctx = getRsvAuth(c)
@@ -257,8 +201,9 @@ operatorReservationsWaitlistRoutes.post('/', rsvGuard(WRITE), async (c) => {
 	}
 })
 
-operatorReservationsWaitlistRoutes.post(
-	'/reorder',
+operatorReservationsWaitlistRoutes.on(
+	'POST',
+	both('/reorder'),
 	rsvGuard(WRITE),
 	async (c) => {
 		const ctx = getRsvAuth(c)
@@ -293,42 +238,44 @@ operatorReservationsWaitlistRoutes.post(
 	},
 )
 
-operatorReservationsWaitlistRoutes.patch('/:id', rsvGuard(WRITE), async (c) => {
-	const ctx = getRsvAuth(c)
-	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-	if (orgErr) return orgErr
-	const parsed = await readJsonBody(c, updateBodySchema)
-	if ('error' in parsed) return parsed.error
-	const loaded = await loadEntryFor(
-		ctx,
-		c.req.param('id'),
-		parsed.data.locationId,
-	)
-	if ('response' in loaded) return loaded.response
-	try {
-		const { locationId: ignoredLocationId, areaId, ...rest } = parsed.data
-		await updateWaitlistEntry({
-			orgId: ctx.orgId,
-			entry: loaded.entry,
-			input: {
-				...rest,
-				areaPrefId: rest.areaPrefId === undefined ? areaId : rest.areaPrefId,
-			},
-		})
-		const db = await getTenantDb(ctx.orgId)
-		const entry = await getSerializedEntry(
-			db,
-			loaded.entry.id,
-			canReadGuest(ctx),
-		)
-		return json({ ok: true, orgId: ctx.orgId, entry })
-	} catch (error) {
-		return handleRouteError(error)
-	}
-})
+operatorReservationsWaitlistRoutes.on(
+	'PATCH',
+	both('/:id'),
+	rsvGuard(WRITE),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+		const parsed = await readJsonBody(c, updateBodySchema)
+		if ('error' in parsed) return parsed.error
+		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
+		if ('response' in loaded) return loaded.response
+		try {
+			const { locationId: ignoredLocationId, areaId, ...rest } = parsed.data
+			await updateWaitlistEntry({
+				orgId: ctx.orgId,
+				entry: loaded.entry,
+				input: {
+					...rest,
+					areaPrefId: rest.areaPrefId === undefined ? areaId : rest.areaPrefId,
+				},
+			})
+			const db = await getTenantDb(ctx.orgId)
+			const entry = await getSerializedEntry(
+				db,
+				loaded.entry.id,
+				canReadGuest(ctx),
+			)
+			return json({ ok: true, orgId: ctx.orgId, entry })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
 
-operatorReservationsWaitlistRoutes.post(
-	'/:id/notify',
+operatorReservationsWaitlistRoutes.on(
+	'POST',
+	both('/:id/notify'),
 	rsvGuard(WRITE),
 	async (c) => {
 		const ctx = getRsvAuth(c)
@@ -336,11 +283,7 @@ operatorReservationsWaitlistRoutes.post(
 		if (orgErr) return orgErr
 		const parsed = await readActionBody(c, notifyBodySchema)
 		if ('error' in parsed) return parsed.error
-		const loaded = await loadEntryFor(
-			ctx,
-			c.req.param('id'),
-			parsed.data.locationId,
-		)
+		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {
 			const out = await notifyWaitlistEntry({
@@ -361,8 +304,9 @@ operatorReservationsWaitlistRoutes.post(
 	},
 )
 
-operatorReservationsWaitlistRoutes.post(
-	'/:id/status',
+operatorReservationsWaitlistRoutes.on(
+	'POST',
+	both('/:id/status'),
 	rsvGuard(WRITE),
 	async (c) => {
 		const ctx = getRsvAuth(c)
@@ -370,11 +314,7 @@ operatorReservationsWaitlistRoutes.post(
 		if (orgErr) return orgErr
 		const parsed = await readJsonBody(c, statusBodySchema)
 		if ('error' in parsed) return parsed.error
-		const loaded = await loadEntryFor(
-			ctx,
-			c.req.param('id'),
-			parsed.data.locationId,
-		)
+		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {
 			const out = await setWaitlistEntryStatus({
@@ -396,8 +336,9 @@ operatorReservationsWaitlistRoutes.post(
 	},
 )
 
-operatorReservationsWaitlistRoutes.post(
-	'/:id/seat',
+operatorReservationsWaitlistRoutes.on(
+	'POST',
+	both('/:id/seat'),
 	rsvGuard(WRITE),
 	async (c) => {
 		const ctx = getRsvAuth(c)
@@ -405,11 +346,7 @@ operatorReservationsWaitlistRoutes.post(
 		if (orgErr) return orgErr
 		const parsed = await readActionBody(c, seatBodySchema)
 		if ('error' in parsed) return parsed.error
-		const loaded = await loadEntryFor(
-			ctx,
-			c.req.param('id'),
-			parsed.data.locationId,
-		)
+		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {
 			const seated = await seatWaitlistEntry({
@@ -421,6 +358,7 @@ operatorReservationsWaitlistRoutes.post(
 					parsed.data.idempotencyKey ||
 					null,
 				input: parsed.data,
+				canReadGuest: canReadGuest(ctx),
 			})
 			const db = await getTenantDb(ctx.orgId)
 			const entry = await getSerializedEntry(

@@ -24,8 +24,13 @@ import {
 } from './rsv-booking-service.ts'
 import { getLocationBusinessDate } from './rsv-business-date.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
+import { type ReservationMoveReport } from './rsv-booking-service.ts'
 import { enqueueWaitlistMessage } from './rsv-message-queue.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
+import {
+	waitlistOccupiedHandler,
+	type WaitlistSeatResolution,
+} from './rsv-waitlist-seat-resolution.ts'
 import { normalizePublicPhone } from './rsv-public-booking-service.ts'
 
 export type WaitlistEntryRow = typeof rsvWaitlistEntries.$inferSelect
@@ -871,7 +876,12 @@ export async function seatWaitlistEntry(params: {
 		expectedVersion?: number
 		overbook?: boolean
 		overbookReason?: string | null
+		/** What to do when the table is taken; without one the seat is refused. */
+		resolution?: WaitlistSeatResolution
+		/** With `move`: the table the occupant goes to (default: the best free one). */
+		moveToTableIds?: string[]
 	}
+	canReadGuest?: boolean
 }) {
 	const { entry, input } = params
 	if (!ACTIVE.has(entry.status)) {
@@ -885,6 +895,11 @@ export async function seatWaitlistEntry(params: {
 	}
 	const partySize = input.partySize ?? entry.partySize
 	const nameParts = entry.displayName.trim().split(/\s+/)
+	const overbook = input.overbook || input.resolution === 'overbook'
+	const overbookReason =
+		input.overbookReason?.trim() ||
+		(input.resolution === 'overbook' ? 'Waitlist overbook' : null)
+	const occupantMoves: ReservationMoveReport[] = []
 	const created = await createWalkIn({
 		orgId: params.orgId,
 		locationId: entry.locationId,
@@ -893,12 +908,21 @@ export async function seatWaitlistEntry(params: {
 			? `wl-seat:${params.idempotencyKey}`
 			: `wl-seat:${entry.id}:${entry.version}`,
 		channel: 'waitlist',
+		onOccupied: waitlistOccupiedHandler({
+			orgId: params.orgId,
+			actorId: params.actorId,
+			resolution:
+				input.resolution === 'overbook' ? undefined : input.resolution,
+			moveToTableIds: input.moveToTableIds,
+			canReadGuest: params.canReadGuest ?? false,
+			moves: occupantMoves,
+		}),
 		input: {
 			locationId: entry.locationId,
 			partySize,
 			tableIds: input.tableIds,
-			overbook: input.overbook,
-			overbookReason: input.overbookReason,
+			overbook,
+			overbookReason,
 			staffNotes: entry.notes,
 			guest: {
 				firstName: nameParts[0] || entry.displayName,
@@ -934,7 +958,7 @@ export async function seatWaitlistEntry(params: {
 				.where(eq(rsvWaitlistEntries.id, entry.id))
 		},
 	})
-	return created
+	return { ...created, moves: [...created.moves, ...occupantMoves] }
 }
 
 // ---------------------------------------------------------------------------

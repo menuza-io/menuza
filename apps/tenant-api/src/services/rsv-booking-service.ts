@@ -1139,6 +1139,17 @@ export async function createOperatorReservation(params: {
 	)
 }
 
+export type WalkInOccupiedInfo = {
+	locationId: string
+	businessDate: string
+	partySize: number
+	startAt: number
+	endAt: number
+	tableIds: string[]
+	/** Active occupancies (reservations, holds, blocks) overlapping the tables. */
+	occupancies: Array<typeof rsvTableOccupancies.$inferSelect>
+}
+
 export async function createWalkIn(params: {
 	orgId: string
 	locationId: string
@@ -1146,6 +1157,15 @@ export async function createWalkIn(params: {
 	idempotencyKey: string
 	/** Seating from the waitlist records this channel on the new reservation. */
 	channel?: 'walk_in' | 'waitlist'
+	/**
+	 * Runs in the same transaction when explicit tables are taken and the seat
+	 * is not an overbook. Free the tables or throw; without it the walk-in is
+	 * refused with `table_occupied`.
+	 */
+	onOccupied?: (
+		tx: ReservationWriteTx,
+		info: WalkInOccupiedInfo,
+	) => Promise<void>
 	/** Runs inside the same transaction, once the reservation row exists. */
 	afterCreate?: (
 		tx: ReservationWriteTx,
@@ -1274,6 +1294,8 @@ export async function createWalkIn(params: {
 					: null
 
 			if (explicitTables) {
+				const occupied: Array<typeof rsvTableOccupancies.$inferSelect> = []
+				let firstOccupiedLabel: string | null = null
 				for (const tid of explicitTables) {
 					const tbl = state.tableById.get(tid)
 					if (!tbl || tbl.archivedAt !== null) {
@@ -1287,12 +1309,27 @@ export async function createWalkIn(params: {
 					const overlapping = state.activeOccRows.filter(
 						(o) => o.tableId === tid && o.startAt < occEnd && o.endAt > startAt,
 					)
-					if (overlapping.length > 0 && !isOverbook) {
+					if (overlapping.length > 0) {
+						firstOccupiedLabel ??= tbl.label
+						occupied.push(...overlapping)
+					}
+				}
+				if (occupied.length > 0 && !isOverbook) {
+					if (!params.onOccupied) {
 						throw conflict(
 							'table_occupied',
-							`Table ${tbl.label} is currently occupied`,
+							`Table ${firstOccupiedLabel} is currently occupied`,
 						)
 					}
+					await params.onOccupied(tx, {
+						locationId,
+						businessDate,
+						partySize: input.partySize,
+						startAt,
+						endAt,
+						tableIds: explicitTables,
+						occupancies: occupied,
+					})
 				}
 				assignedTableIds = explicitTables
 			} else {
@@ -1428,6 +1465,24 @@ export async function createWalkIn(params: {
 					},
 				},
 			])
+
+			if (isOverbook) {
+				await tx.insert(rsvAuditLog).values({
+					id: createId('aud'),
+					at: txNow,
+					actorKind: 'operator',
+					actorId: params.actorId,
+					locationId,
+					action: 'reservation.overbook',
+					entityType: 'reservation',
+					entityId: resId,
+					changes: {
+						reason: input.overbookReason?.trim() ?? 'operator_override',
+						tableIds: assignedTableIds,
+						channel: params.channel ?? 'walk_in',
+					},
+				})
+			}
 
 			if (params.afterCreate) {
 				await params.afterCreate(tx, {
